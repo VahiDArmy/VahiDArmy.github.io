@@ -11,7 +11,7 @@ img {
   margin: 0 auto;
   width: 600px;
 }
-p, li {
+p {
   font-size: 16px;
   line-height: 2;
   letter-spacing: 1px;
@@ -34,7 +34,11 @@ body {
   border: 5px solid black;
 }
 li {
-  background-image: url(images/bullet-pass.svg);
+  background-image: url(images/bullet-tick.svg);
   margin-left: 12px;
   padding: 2px 0 2px 22px;
+  font-size: 16px;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: #59ECF7;
 }
