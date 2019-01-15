@@ -11,11 +11,12 @@ img {
   margin: 0 auto;
   width: 600px;
 }
-p {
+p, li {
   font-size: 16px;
   line-height: 2;
   letter-spacing: 1px;
-  color: #59ECF7;
+  /*color: #59ECF7;*/
+  color: red;
 }
 html {
   background-color: #700F75;
