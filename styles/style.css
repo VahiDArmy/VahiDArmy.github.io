@@ -40,5 +40,6 @@ li {
   font-size: 16px;
   line-height: 2;
   letter-spacing: 1px;
-  color: #59ECF7;
+  color: red;
+  /*color: #59ECF7;*/
 }
