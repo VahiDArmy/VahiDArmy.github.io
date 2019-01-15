@@ -34,7 +34,7 @@ body {
   padding: 0 20px 20px 20px;
   border: 5px solid black;
 }
-li {
+/*li {
   background-image: url(images/bullet-tick.svg);
   margin-left: 12px;
   padding: 2px 0 2px 22px;
@@ -43,7 +43,7 @@ li {
   letter-spacing: 1px;
   color: red;
   /*color: #59ECF7;*/
-}
+}*/
 ul {
   list-style-image: url('images/bullet-tick.svg');
 }
