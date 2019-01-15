@@ -44,5 +44,5 @@ body {
   /*color: #59ECF7;*/
 }*/
 ul {
-  list-style-image: url('images/bullet-tick.svg');
+  list-style-image: url('../images/bullet-tick.svg');
 }
