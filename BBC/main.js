@@ -86,6 +86,15 @@ function loop() {
     );
     balls.push(ball);
   }
+  
+  // --------------------------------
+  var lastBall = balls[balls.length-1];
+  if (c===0) {
+    let newLastBall = new Ball(lastBall.x, lastBall.y, lastBall.velX, lastBall.velY, lastBall.color, lastBall.size);
+    balls.push(newLastBall);
+    c = 1;
+  }
+  // --------------------------------
 
   for (var i = 0; i < balls.length; i++) {
     balls[i].draw();
