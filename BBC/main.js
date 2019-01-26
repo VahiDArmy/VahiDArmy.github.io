@@ -67,6 +67,7 @@ Ball.prototype.collisionDetect = function() {
 }
 
 var balls = [];
+let c = 0;
 
 function loop() {
   ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
