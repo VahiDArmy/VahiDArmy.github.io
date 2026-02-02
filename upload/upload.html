@@ -45,7 +45,7 @@ async function convertAndUpload() {
 
         status.innerText = "Sending to API...";
 
-        const response = await fetch("vahid8910.pythonanywhere.com//api/base64-to-binary", {
+        const response = await fetch("https://vahid8910.pythonanywhere.com/api/base64-to-binary", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
