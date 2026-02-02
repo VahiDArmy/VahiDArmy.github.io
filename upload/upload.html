@@ -1,28 +1,25 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Base64 Binary API Demo</title>
+    <title>Base64 Binary API</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div class="container">
-    <h1>✨ File → Base64 → Binary</h1>
-    <p class="subtitle">
-        File stays local. Only text goes to server.
-    </p>
+    <h1>File Converter</h1>
 
     <input type="file" id="fileInput">
     <input type="text" id="filename" placeholder="Output filename">
 
-    <button onclick="convertAndUpload()">
-        Convert & Download
-    </button>
+    <button onclick="convertAndUpload()">Convert & Download</button>
+
+    <button onclick="loadFiles()">Fetch Previous Files</button>
 
     <p id="status"></p>
 
-    <footer>Browser handles encoding • API handles decoding</footer>
+    <h3>Stored Files</h3>
+    <ul id="fileList"></ul>
 </div>
 
 <script>
@@ -32,25 +29,23 @@ async function convertAndUpload() {
     const status = document.getElementById("status");
 
     if (!fileInput.files.length) {
-        alert("Choose a file first.");
+        alert("Select file first");
         return;
     }
 
     const file = fileInput.files[0];
     const filename = filenameInput.value || file.name;
 
-    status.innerText = "Reading local file...";
+    status.innerText = "Reading file...";
 
     const reader = new FileReader();
 
     reader.onload = async function () {
-        status.innerText = "Encoding to Base64...";
-
         const base64Text = reader.result.split(",")[1];
 
-        status.innerText = "Sending text to API...";
+        status.innerText = "Sending to API...";
 
-        const response = await fetch("https://vahid8910.pythonanywhere.com/api/base64-to-binary", {
+        const response = await fetch("/api/base64-to-binary", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -58,13 +53,6 @@ async function convertAndUpload() {
                 filename: filename
             })
         });
-
-        if (!response.ok) {
-            status.innerText = "Server error.";
-            return;
-        }
-
-        status.innerText = "Downloading result...";
 
         const blob = await response.blob();
 
@@ -77,9 +65,30 @@ async function convertAndUpload() {
         URL.revokeObjectURL(url);
 
         status.innerText = "Done.";
+        loadFiles();
     };
 
     reader.readAsDataURL(file);
+}
+
+
+async function loadFiles() {
+    const list = document.getElementById("fileList");
+    list.innerHTML = "";
+
+    const res = await fetch("/api/files");
+    const files = await res.json();
+
+    files.forEach(f => {
+        const li = document.createElement("li");
+        const link = document.createElement("a");
+
+        link.href = "/api/download/" + f;
+        link.innerText = f;
+
+        li.appendChild(link);
+        list.appendChild(li);
+    });
 }
 </script>
 
