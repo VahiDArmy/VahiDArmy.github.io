@@ -5,19 +5,17 @@
 <title>Base64 File Transfer</title>
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    margin: 40px;
-}
+body { font-family: Arial; margin: 40px; }
+button { padding: 6px 12px; margin-left: 6px; }
+.fileRow { margin: 4px 0; }
 
-button {
-    padding: 8px 14px;
-    margin-left: 6px;
-}
-
-#fileList a {
-    display: block;
-    margin: 4px 0;
+#log {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #f7f7f7;
+    height: 120px;
+    overflow-y: auto;
 }
 </style>
 </head>
@@ -30,12 +28,20 @@ button {
 <button onclick="upload()">Upload</button>
 
 <h3>Stored Files</h3>
-<div id="fileList">Loading...</div>
+<div id="fileList"></div>
+
+<h3>Log</h3>
+<div id="log"></div>
 
 <script>
-const API = "https://vahid8910.pythonanywhere.com/api";
+const API = "/api";
 
-/* Load file list on page start */
+function log(msg) {
+    const box = document.getElementById("log");
+    box.innerHTML += msg + "<br>";
+    box.scrollTop = box.scrollHeight;
+}
+
 function listFiles() {
     fetch(API + "/files")
         .then(r => r.json())
@@ -43,64 +49,85 @@ function listFiles() {
             const container = document.getElementById("fileList");
             container.innerHTML = "";
 
-            if (files.length === 0) {
-                container.textContent = "No files stored.";
-                return;
-            }
-
             files.forEach(name => {
+                const row = document.createElement("div");
+                row.className = "fileRow";
+
                 const link = document.createElement("a");
                 link.href = API + "/download/" + name;
                 link.textContent = name;
-                container.appendChild(link);
+
+                const del = document.createElement("button");
+                del.textContent = "Delete";
+                del.onclick = () => deleteFile(name);
+
+                row.appendChild(link);
+                row.appendChild(del);
+                container.appendChild(row);
             });
-        });
+        })
+        .catch(() => log("Error loading file list"));
 }
 
-
-/* Upload: file → Base64 text → API */
 function upload() {
-    const fileInput = document.getElementById("fileInput");
-    const file = fileInput.files[0];
+    const file = document.getElementById("fileInput").files[0];
 
     if (!file) {
-        alert("Choose a file first");
+        log("No file selected");
         return;
     }
 
     if (file.size > 30 * 1024 * 1024) {
-        alert("Max allowed size is 30MB");
+        log("File too large");
         return;
     }
+
+    log("Converting file to Base64 in browser...");
 
     const reader = new FileReader();
 
     reader.onload = function () {
-        /* result looks like:
-           data:application/octet-stream;base64,XXXXX
-           so we extract only the text */
         const base64Text = reader.result.split(',')[1];
+
+        log("Uploading text to server...");
 
         fetch(API + "/upload", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 filename: file.name,
                 data: base64Text
             })
         })
         .then(r => r.json())
-        .then(() => {
-            alert("Upload complete");
-            listFiles();
-        });
+        .then(resp => {
+            if (resp.error) {
+                log("Upload error: " + resp.error);
+            } else {
+                log("Upload finished successfully");
+                listFiles();
+            }
+        })
+        .catch(() => log("Upload failed"));
     };
 
-    /* Browser converts file locally */
     reader.readAsDataURL(file);
 }
 
-/* initial load */
+function deleteFile(name) {
+    fetch(API + "/delete/" + name, { method: "DELETE" })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.error) {
+                log("Delete failed: " + resp.error);
+            } else {
+                log("Deleted: " + name);
+                listFiles();
+            }
+        })
+        .catch(() => log("Delete error"));
+}
+
 listFiles();
 </script>
 
