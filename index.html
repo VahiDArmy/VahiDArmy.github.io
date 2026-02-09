@@ -1,24 +1,266 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-  <head>
-    <meta charset="utf-8">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-    <link href="styles/style.css" rel="stylesheet" type="text/css">
-    <title>My test page</title>
-  </head>
-  <body>
-    <h1>Uncle Ruckus, no relation</h1>
-      <img src="images/default.jpg" alt="Uncle Ruckus, no relation">
-      <p>At Mozilla, we’re a global community of</p>
-      <ul>
-        <li>technologists</li>
-        <li>thinkers</li>
-        <li>builders</li>
-      </ul>
-      <p>working together ... </p>
-      <a href="https://www.mozilla.org/en-US/about/manifesto/">Mozilla Manifesto</a>
-      <button>Change user</button>
-      <a href="BBC/index.html"><button>Bouncing Balls Code</button></a>
-      <script src="scripts/main.js"></script>
-  </body>
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>B64-split & ctxt.io uploader / retriever</title>
+<style>
+  body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;margin:20px;max-width:900px}
+  input,button,textarea{font:inherit;padding:8px;margin:6px 0;width:100%}
+  .row{display:flex;gap:10px}
+  .col{flex:1}
+  .small{width:120px}
+  pre{white-space:pre-wrap;background:#f6f6f6;padding:10px;border-radius:6px}
+  .status{font-size:0.9rem;color:#333}
+</style>
+</head>
+<body>
+<h2>Upload (file → base64 → split → ctxt.io)</h2>
+
+<label><strong>Choose file</strong></label>
+<input id="file" type="file" />
+
+<label><strong>Max chars per paste</strong></label>
+<input id="maxChars" type="number" value="15000" />
+
+<div class="row">
+  <div class="col"><button id="encodeUpload">Encode & Upload</button></div>
+  <div class="col small"><button id="downloadKey">Download Key File</button></div>
+</div>
+
+<div>
+  <strong>Status</strong>
+  <div id="status" class="status"></div>
+</div>
+
+<hr/>
+<h2>Retrieve (key file or manual ids)</h2>
+
+<label><strong>Load key file (JSON produced by uploader)</strong></label>
+<input id="keyfile" type="file" />
+
+<label><strong>Or paste up to 10 short IDs (one per line)</strong></label>
+<textarea id="manualIds" rows="6" placeholder="abc123&#10;def456"></textarea>
+
+<div class="row">
+  <div class="col"><button id="rebuildAndDownload">Rebuild & Download</button></div>
+</div>
+
+<div>
+  <strong>Output / Logs</strong>
+  <pre id="out"></pre>
+</div>
+
+<script>
+(async function(){
+  const fileInput = document.getElementById('file');
+  const maxCharsInput = document.getElementById('maxChars');
+  const encodeBtn = document.getElementById('encodeUpload');
+  const statusEl = document.getElementById('status');
+  const downloadKeyBtn = document.getElementById('downloadKey');
+  const keyfileInput = document.getElementById('keyfile');
+  const manualIdsTA = document.getElementById('manualIds');
+  const rebuildBtn = document.getElementById('rebuildAndDownload');
+  const out = document.getElementById('out');
+
+  let lastKey = null;
+
+  function log(s){ out.textContent += s + "\n"; out.scrollTop = out.scrollHeight; }
+
+  function fileToBase64(file){
+    return new Promise((res,rej)=>{
+      const r = new FileReader();
+      r.onload = ()=> res(r.result.split(',')[1]); // data:*;base64,....
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  function splitIntoChunks(str, n){
+    const arr=[];
+    for(let i=0;i<str.length;i+=n) arr.push(str.slice(i,i+n));
+    return arr;
+  }
+
+  // Attempt upload to ctxt.io using the same form fields used by the web UI.
+  // If CORS prevents it, the response will error.
+  async function uploadToCtxt(text, expire='30d'){
+    // Build form like the web UI (subject to site changes)
+    const form = new FormData();
+    form.append('text', text);
+    form.append('expiry', expire);
+    form.append('name', '');
+    form.append('title', '');
+    // Submit
+    const r = await fetch('https://ctxt.io/', { method:'POST', body: form, mode: 'cors', credentials:'omit' });
+    if (!r.ok) {
+      throw new Error('Upload failed: '+ r.status);
+    }
+    const html = await r.text();
+    // Attempt to extract the short URL from returned HTML — looks for <meta http-equiv="refresh" content="0; url=/abcd">
+    const m = html.match(/url=([^\"]+)/i) || html.match(/href="(\/[A-Za-z0-9\-_]+)"/);
+    if (m){
+      let path = m[1];
+      if (path.startsWith('/')) path = path.slice(1);
+      return path; // short-id / paste id
+    }
+    // Fallback: try to find full URL
+    const m2 = html.match(/https?:\/\/ctxt\.io\/([A-Za-z0-9\-_]+)/i);
+    if (m2) return m2[1];
+    // If not found, throw with snippet
+    throw new Error('Could not parse upload response. Response length:'+html.length);
+  }
+
+  encodeBtn.addEventListener('click', async ()=>{
+    statusEl.textContent = '';
+    out.textContent = '';
+    const file = fileInput.files[0];
+    if (!file) { statusEl.textContent='No file selected'; return; }
+    const maxChars = parseInt(maxCharsInput.value,10) || 15000;
+    statusEl.textContent = 'Reading file...';
+    try{
+      const b64 = await fileToBase64(file);
+      statusEl.textContent = 'Splitting base64...';
+      const chunks = splitIntoChunks(b64, maxChars);
+      const total = chunks.length;
+      statusEl.textContent = `Uploading ${total} chunk(s) to ctxt.io...`;
+      const ids = [];
+      for(let i=0;i<chunks.length;i++){
+        const headerFlag = `B64_${String(i).padStart(3,'0')}::${String(total).padStart(3,'0')}`;
+        const lines = headerFlag + '\n' + chunks[i];
+        statusEl.textContent = `Uploading chunk ${i+1}/${total}...`;
+        log('Uploading chunk '+(i+1));
+        try{
+          const id = await uploadToCtxt(lines);
+          ids.push(id);
+          log('Uploaded -> '+id);
+        }catch(err){
+          log('Upload error: '+err.message);
+          statusEl.textContent = 'Upload failed (see logs). Possible CORS or ctxt.io change.';
+          throw err;
+        }
+      }
+      // Compose key file
+      const key = {
+        filename: file.name,
+        size: file.size,
+        totalParts: total,
+        parts: ids, // in order
+        flagExample: `B64_000::${String(total).padStart(3,'0')}`
+      };
+      lastKey = key;
+      statusEl.textContent = 'All uploaded. Key file ready.';
+      log('Key file JSON:');
+      log(JSON.stringify(key, null, 2));
+    }catch(err){
+      console.error(err);
+      statusEl.textContent = 'Error: '+err.message;
+    }
+  });
+
+  downloadKeyBtn.addEventListener('click', ()=>{
+    if (!lastKey){ statusEl.textContent='No key ready'; return; }
+    const blob = new Blob([JSON.stringify(lastKey, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (lastKey.filename || 'file') + '.key.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  async function fetchCtxtId(id){
+    // ctxt.io paste view URL
+    const url = 'https://ctxt.io/'+id;
+    const r = await fetch(url, {mode:'cors', credentials:'omit'});
+    if (!r.ok) throw new Error('Fetch paste failed: '+r.status);
+    const html = await r.text();
+    // The paste content is inside a <textarea id="paste" ...> or in page body; attempt extraction
+    // Try to find the content within a <pre> or <textarea>
+    let m = html.match(/<textarea[^>]*id=['"]?paste['"]?[^>]*>([\s\S]*?)<\/textarea>/i);
+    if (!m) m = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+    if (!m) {
+      // Try to find raw body text between comments
+      throw new Error('Could not extract paste content for id '+id);
+    }
+    // HTML entities may be encoded; create element to decode
+    const txt = m[1].replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    return txt;
+  }
+
+  rebuildBtn.addEventListener('click', async ()=>{
+    out.textContent = '';
+    statusEl.textContent = 'Starting retrieval...';
+    // Prefer keyfile if provided
+    let key = null;
+    if (keyfileInput.files[0]){
+      try{
+        const txt = await keyfileInput.files[0].text();
+        key = JSON.parse(txt);
+      }catch(e){
+        statusEl.textContent = 'Invalid key file';
+        return;
+      }
+    }
+    let ids = [];
+    if (key && Array.isArray(key.parts)) ids = key.parts.slice();
+    // manual entries appended after key parts or used alone
+    const manual = manualIdsTA.value.trim().split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if (manual.length) {
+      // If no key supplied, assume the manual lines are in order and represent parts
+      if (!ids.length) ids = manual.slice(0,10);
+      else {
+        // merge: fill missing positions with manual in next available slots (keeps key order first)
+        for (const mline of manual){
+          if (ids.length>=10) break;
+          ids.push(mline);
+        }
+      }
+    }
+    if (!ids.length){ statusEl.textContent = 'No ids provided'; return; }
+    statusEl.textContent = `Fetching ${ids.length} paste(s)...`;
+    try{
+      const parts = [];
+      for(let i=0;i<ids.length;i++){
+        const id = ids[i];
+        statusEl.textContent = `Fetching ${i+1}/${ids.length}: ${id}`;
+        log('Fetching '+id);
+        const content = await fetchCtxtId(id);
+        // content expected: first line header B64_xxx::total, second line onward base64
+        const lines = content.split(/\r?\n/);
+        if (lines.length < 2) { throw new Error('Paste '+id+' has no base64 payload'); }
+        const payload = lines.slice(1).join(''); // remove header line
+        parts.push(payload);
+      }
+      statusEl.textContent = 'Concatenating parts...';
+      const fullB64 = parts.join('');
+      log('Total base64 length: '+fullB64.length);
+      statusEl.textContent = 'Decoding and preparing download...';
+      // Decode base64 to binary and trigger download
+      const byteChars = atob(fullB64);
+      const byteNumbers = new Array(byteChars.length);
+      for (let i=0;i<byteChars.length;i++) byteNumbers[i] = byteChars.charCodeAt(i);
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray]);
+      const dlUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = dlUrl;
+      a.download = (key && key.filename) ? key.filename : 'download.bin';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(dlUrl);
+      statusEl.textContent = 'Download started';
+      log('Done.');
+    }catch(err){
+      console.error(err);
+      statusEl.textContent = 'Error: '+err.message;
+      log('Error: '+err.message);
+    }
+  });
+
+})();
+</script>
+</body>
 </html>
