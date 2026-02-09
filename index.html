@@ -115,7 +115,7 @@
     out.textContent = '';
     const file = fileInput.files[0];
     if (!file) { statusEl.textContent='No file selected'; return; }
-    const maxChars = parseInt(maxCharsInput.value,10) || 15000;
+    const maxChars = parseInt(maxCharsInput.value,10) || 500000;
     statusEl.textContent = 'Reading file...';
     try{
       const b64 = await fileToBase64(file);
@@ -264,3 +264,4 @@
 </script>
 </body>
 </html>
+
