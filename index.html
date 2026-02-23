@@ -2,7 +2,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Base64 Cosmic Slicer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Offline Bootstrap-like minimal styling --><style>
+<meta name="viewport" content="width=device-width, initial-scale=1"><style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
 
 body{
@@ -14,7 +14,6 @@ body{
   overflow-x:hidden;
 }
 
-/* Galaxy background */
 body::after{
   content:"";
   position:fixed;
@@ -27,7 +26,6 @@ body::after{
   z-index:-2;
 }
 
-/* Bigger Moon */
 body::before{
   content:"";
   position:fixed;
@@ -41,16 +39,19 @@ body::before{
   z-index:-1;
 }
 
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:24px;
-}
+.container{ max-width:1100px; margin:auto; padding:24px; }
 
 .title{
   font-family:'Cinzel', serif;
   text-align:center;
   font-size:28px;
+  margin-bottom:6px;
+}
+
+.counter{
+  text-align:center;
+  font-size:14px;
+  opacity:.8;
   margin-bottom:20px;
 }
 
@@ -63,52 +64,31 @@ body::before{
   box-shadow:0 10px 30px rgba(0,0,0,.5);
 }
 
-.row{
-  display:flex;
-  gap:8px;
-  margin-bottom:8px;
-}
+.row{ display:flex; gap:8px; margin-bottom:8px; }
 
 input[type="text"]{
-  flex:1;
-  padding:8px;
-  border-radius:8px;
-  border:1px solid #334155;
-  background:#020617;
-  color:#e5e7eb;
+  flex:1; padding:8px; border-radius:8px;
+  border:1px solid #334155; background:#020617; color:#e5e7eb;
 }
 
 button{
-  padding:8px 14px;
-  border-radius:8px;
-  border:none;
-  cursor:pointer;
-  background:#6366f1;
-  color:white;
+  padding:8px 14px; border-radius:8px; border:none;
+  cursor:pointer; background:#6366f1; color:white;
 }
-
 button.secondary{ background:#475569; }
 button.danger{ background:#b91c1c; }
 
 .log{
-  font-size:12px;
-  max-height:200px;
-  overflow:auto;
-  background:#000814;
-  padding:10px;
-  border-radius:8px;
+  font-size:12px; max-height:200px; overflow:auto;
+  background:#000814; padding:10px; border-radius:8px;
 }
 
-.footer-note{
-  font-size:13px;
-  opacity:.85;
-  margin-top:30px;
-  text-align:center;
-}
+.footer-note{ font-size:13px; opacity:.85; margin-top:30px; text-align:center; }
 </style></head>
 <body><div class="container"><div class="title">
 He sought revenge against the dark lords, who had "Wronged" him.
-</div><div class="card">
+</div>
+<div class="counter" id="counter">Slices reconstructed: 0</div><div class="card">
 <h3>Encode File</h3>
 <input type="file" id="fileInput">
 <div id="sliceList"></div>
@@ -135,6 +115,11 @@ function log(msg){
   const el=document.getElementById('log');
   el.innerHTML += msg+"<br>";
   el.scrollTop = el.scrollHeight;
+}
+
+function updateCounter(){
+  document.getElementById('counter').textContent =
+    'Slices reconstructed: ' + pastedSlices.length;
 }
 
 // ---------- ENCODE ----------
@@ -192,35 +177,34 @@ function addPasteRow(){
   const input=document.createElement('input');
   input.type='text';
   input.placeholder='Paste slice here';
+  input.dataset.full='';
 
   const pasteBtn=document.createElement('button');
   pasteBtn.textContent='Paste';
 
   pasteBtn.onclick=async()=>{
     const text=await navigator.clipboard.readText();
+    if(!text){ log('Clipboard empty'); return; }
 
-    if(!text){
-      log('Clipboard empty');
-      return;
+    // remove old value if exists
+    if(input.dataset.full){
+      const oldIndex = pastedSlices.indexOf(input.dataset.full);
+      if(oldIndex !== -1) pastedSlices.splice(oldIndex,1);
     }
 
-    // allow re-paste into same row by removing previous value first
-    const existingIndex = pastedSlices.indexOf(input.value);
-    if(existingIndex !== -1){
-      pastedSlices.splice(existingIndex,1);
-    }
-
-    // check duplicate ONLY against other rows
+    // duplicate check
     if(pastedSlices.includes(text)){
       log('Duplicate slice detected, ignored');
       return;
     }
 
+    input.dataset.full=text;
     input.value=text.slice(0,60)+'...';
     pastedSlices.push(text);
+    updateCounter();
+
     log('Slice pasted. Total '+pastedSlices.length);
 
-    // add next row only if this was the last row
     if(row === container.lastElementChild){
       addPasteRow();
     }
@@ -230,10 +214,13 @@ function addPasteRow(){
   clearBtn.textContent='Clear';
   clearBtn.className='danger';
   clearBtn.onclick=()=>{
-    const idx = pastedSlices.indexOf(input.dataset.full);
-    if(idx !== -1) pastedSlices.splice(idx,1);
-    input.value='';
+    if(input.dataset.full){
+      const idx = pastedSlices.indexOf(input.dataset.full);
+      if(idx !== -1) pastedSlices.splice(idx,1);
+    }
     input.dataset.full='';
+    input.value='';
+    updateCounter();
     log('Row cleared');
   };
 
@@ -247,10 +234,7 @@ addPasteRow();
 
 // ---------- FINISH ----------
 function finishRebuild(){
-  if(!pastedSlices.length){
-    log('No slices to rebuild');
-    return;
-  }
+  if(!pastedSlices.length){ log('No slices to rebuild'); return; }
 
   log('Combining slices...');
   const combined=pastedSlices.join('');
@@ -264,10 +248,7 @@ function finishRebuild(){
     const url=URL.createObjectURL(blob);
 
     let name=document.getElementById('fileNameInput').value.trim();
-
-    if(!name){
-      name='output.bin';
-    }
+    if(!name) name='output.bin';
 
     const link=document.createElement('a');
     link.href=url;
