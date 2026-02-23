@@ -1,31 +1,24 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Base64 Slicer & Rebuilder</title>
-
-<style>
-/* =======================
-   🌌 COSMIC BACKGROUND
-   ======================= */
-
+<title>Base64 Slicer & Rebuilder</title><style>
+/* ===== Cosmic background ===== */
 body{
   margin:0;
   padding:24px;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
   color:#e5e7eb;
   overflow-x:hidden;
   background:
     radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0 2px, transparent 3px),
     radial-gradient(circle at 20% 70%, rgba(255,255,255,0.06) 0 1px, transparent 2px),
     radial-gradient(circle at 60% 40%, rgba(255,255,255,0.07) 0 1px, transparent 2px),
-    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
     radial-gradient(ellipse at 70% 60%, rgba(56,189,248,.15), transparent 60%),
     radial-gradient(ellipse at 30% 40%, rgba(147,51,234,.18), transparent 65%),
     #020617;
 }
 
-/* 🌙 Moon */
+/* moon */
 body::before{
   content:"";
   position:fixed;
@@ -34,17 +27,10 @@ body::before{
   width:120px;
   height:120px;
   border-radius:50%;
-  background:
-    radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%);
-  box-shadow:
-    0 0 40px rgba(255,255,255,.35),
-    inset -10px -10px 20px rgba(0,0,0,.25);
+  background: radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%);
+  box-shadow:0 0 40px rgba(255,255,255,.35), inset -10px -10px 20px rgba(0,0,0,.25);
   z-index:-1;
 }
-
-/* =========================
-   Mini Bootstrap (offline)
-   ========================= */
 
 :root{
   --card:#111827cc;
@@ -56,9 +42,16 @@ body::before{
   --muted:#94a3b8;
 }
 
-.container{
-  max-width:1100px;
-  margin:auto;
+.container{max-width:1100px;margin:auto;}
+
+/* Title font vibe (offline safe) */
+.doom-title{
+  font-family: Georgia, "Times New Roman", serif;
+  font-size:28px;
+  letter-spacing:.5px;
+  color:#f1f5f9;
+  text-align:center;
+  margin-bottom:18px;
 }
 
 h1{ color:#38bdf8; margin-top:0; }
@@ -74,8 +67,7 @@ h2{ color:#7dd3fc; margin-top:0; }
   box-shadow:0 10px 25px rgba(0,0,0,.45);
 }
 
-input[type="text"],
-input[type="file"]{
+input[type="text"], input[type="file"]{
   width:100%;
   padding:8px 10px;
   background:#020617;
@@ -93,34 +85,14 @@ input[type="file"]{
   font-weight:600;
   white-space:nowrap;
 }
-
 .btn-primary{ background:var(--primary); color:white; }
 .btn-primary:hover{ background:var(--primary-hover); }
-
 .btn-success{ background:var(--success); color:white; }
 .btn-danger{ background:var(--danger); color:white; }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
 
-.btn:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
-
-.slice-row,
-.paste-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:6px 0;
-  font-size:13px;
-}
-
-.badge{
-  background:#1e293b;
-  padding:2px 8px;
-  border-radius:999px;
-  font-size:11px;
-  color:var(--muted);
-}
+.slice-row,.paste-row{ display:flex; align-items:center; gap:8px; margin:6px 0; font-size:13px; }
+.badge{ background:#1e293b; padding:2px 8px; border-radius:999px; font-size:11px; color:var(--muted); }
 
 #log{
   background:#020617;
@@ -140,39 +112,34 @@ input[type="file"]{
   font-weight:600;
   text-decoration:none;
 }
-</style>
-</head>
 
-<body>
-<div class="container">
-
-<h1>Base64 Slicer & Rebuilder</h1>
-
-<div class="card">
+.footer-note{
+  margin-top:30px;
+  font-size:13px;
+  color:#94a3b8;
+  text-align:center;
+}
+</style></head><body>
+<div class="container"><div class="doom-title">“He sought revenge against the dark lords, who had \"Wronged\" him.”</div><h1>Base64 Slicer & Rebuilder</h1><div class="card">
   <h2>Step 1 — File → Base64 → Slices</h2>
   <input type="file" id="fileInput">
   <div id="sliceList"></div>
-</div>
-
-<div class="card">
+</div><div class="card">
   <h2>Step 2 — Paste & Rebuild</h2>
   <div id="pasteArea"></div>
   <a id="downloadLink" class="download-link" style="display:none;" download="reconstructed.bin">
     Download reconstructed file
   </a>
-</div>
-
-<div class="card">
+</div><div class="card">
   <h2>System Log</h2>
   <div id="log"></div>
-</div>
-
-</div>
-
-<script>
+</div><div class="footer-note">
+  Doom Testament text cannot be embedded due to copyright. If you want, I can include a brief summary instead.
+</div></div><script>
 const SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
+let lastPastedText = null;
 
 function log(msg){
   const logDiv=document.getElementById("log");
@@ -246,7 +213,7 @@ function renderSlices(){
   log("Slice list rendered.");
 }
 
-/* ---------- PASTE FLOW (WITH FIX) ---------- */
+/* ---------- PASTE FLOW WITH DUP CHECK ---------- */
 function addPasteRow(){
   const area=document.getElementById("pasteArea");
   const index=pastedSlices.length;
@@ -279,6 +246,19 @@ function addPasteRow(){
   pasteBtn.onclick=async()=>{
     try{
       const text=await navigator.clipboard.readText();
+
+      // duplicate detection
+      if(text===lastPastedText){
+        log(`WARNING: Duplicate paste detected for slice ${index+1}. Ignored.`);
+        return;
+      }
+
+      if(pastedSlices.includes(text)){
+        log(`WARNING: This slice already exists earlier. Ignored.`);
+        return;
+      }
+
+      lastPastedText=text;
       pastedSlices[index]=text;
       input.value=text.slice(0,80)+" ...";
       log(`Slice ${index+1} pasted.`);
@@ -346,6 +326,5 @@ function rebuildFile(){
 /* ---------- INIT ---------- */
 addPasteRow();
 log("System ready.");
-</script>
-</body>
+</script></body>
 </html>
