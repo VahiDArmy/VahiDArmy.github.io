@@ -63,41 +63,50 @@ let fileVersion = 0;
 function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
 function updateCounter(){ document.getElementById('counter').textContent = fileVersion; }
 
-// ENCODE
-document.getElementById('fileInput').addEventListener('change', async e=>{
- const file=e.target.files[0]; if(!file) return;
+// ENCODE (FIXED SIZE-SAFE)
+document.getElementById('fileInput').addEventListener('change', async function(e){
+ const file = e.target.files[0];
+ if(!file) return;
+
  fileVersion++;
  log('Reading file...');
- const buffer=await file.arrayBuffer();
- const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
- slices=[];
 
- const header=`FILENAME:${file.name}`;
- const headerBlock=header+'
-';
+ const buffer = await file.arrayBuffer();
+ const bytes = new Uint8Array(buffer);
+ let binary = '';
+ for(let i=0;i<bytes.length;i++){ binary += String.fromCharCode(bytes[i]); }
+ const base64 = btoa(binary);
 
- // ensure first slice NEVER exceeds SLICE_SIZE
- const firstPayloadSize = SLICE_SIZE - headerBlock.length;
- const firstChunk = base64.slice(0, firstPayloadSize);
+ slices = [];
+
+ const header = 'FILENAME:' + file.name;
+ const headerBlock = header + '\n';
+
+ let index = 0;
+ const firstPayloadSize = Math.max(0, SLICE_SIZE - headerBlock.length);
+ const firstChunk = base64.slice(index, index + firstPayloadSize);
  slices.push(headerBlock + firstChunk);
+ index += firstPayloadSize;
 
- // remaining chunks normal
- for(let i=firstPayloadSize;i<base64.length;i+=SLICE_SIZE){
-   slices.push(base64.slice(i,i+SLICE_SIZE));
+ while(index < base64.length){
+   slices.push(base64.slice(index, index + SLICE_SIZE));
+   index += SLICE_SIZE;
  }
 
- log('Created '+slices.length+' slices with header (size-safe)');
+ log('Created ' + slices.length + ' slices with header (size-safe)');
  renderSlices();
  updateCounter();
 });
- updateCounter();
-});
-function renderSlices(){ const list=document.getElementById('sliceList'); list.innerHTML='';
+
+function renderSlices(){
+ const list=document.getElementById('sliceList');
+ list.innerHTML='';
  slices.forEach((s,i)=>{
- const row=document.createElement('div'); row.className='row';
- const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
- const btn=document.createElement('button'); btn.textContent='Copy'; btn.onclick=()=>{navigator.clipboard.writeText(s); log('Copied slice '+(i+1));};
- row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
+   const row=document.createElement('div'); row.className='row';
+   const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
+   const btn=document.createElement('button'); btn.textContent='Copy';
+   btn.onclick=function(){ navigator.clipboard.writeText(s); log('Copied slice '+(i+1)); };
+   row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
  });
 }
 
@@ -106,10 +115,16 @@ function addPasteRow(){
  const container=document.getElementById('pasteContainer');
  const row=document.createElement('div'); row.className='row';
  const input=document.createElement('input'); input.type='text'; input.placeholder='Paste slice here'; input.dataset.full='';
+
  const pasteBtn=document.createElement('button'); pasteBtn.textContent='Paste';
- pasteBtn.onclick=async()=>{
-  const text=await navigator.clipboard.readText(); if(!text){ log('Clipboard empty'); return; }
-  if(input.dataset.full){ const oldIndex=pastedSlices.indexOf(input.dataset.full); if(oldIndex!==-1)pastedSlices.splice(oldIndex,1); }
+ pasteBtn.onclick=async function(){
+  const text=await navigator.clipboard.readText();
+  if(!text){ log('Clipboard empty'); return; }
+
+  if(input.dataset.full){
+    const oldIndex=pastedSlices.indexOf(input.dataset.full);
+    if(oldIndex!==-1) pastedSlices.splice(oldIndex,1);
+  }
 
   if(pastedSlices.length===0 && text.startsWith('FILENAME:')){
     const idx=text.indexOf('\n');
@@ -120,9 +135,10 @@ function addPasteRow(){
       else{ detectedName=header; detectedExt=''; }
       document.getElementById('fileNameInput').value=detectedName;
       document.getElementById('fileExtInput').value=detectedExt;
-      input.dataset.full=text.slice(idx+1);
-      input.value=input.dataset.full.slice(0,60)+'...';
-      pastedSlices.push(input.dataset.full);
+      const payload=text.slice(idx+1);
+      input.dataset.full=payload;
+      input.value=payload.slice(0,60)+'...';
+      pastedSlices.push(payload);
       log('Header detected. File name: '+detectedName+', Ext: '+detectedExt);
       updateCounter();
       addPasteRow();
@@ -131,28 +147,69 @@ function addPasteRow(){
   }
 
   if(pastedSlices.includes(text)){ log('Duplicate slice detected, ignored'); return; }
-  input.dataset.full=text; input.value=text.slice(0,60)+'...'; pastedSlices.push(text); updateCounter(); log('Slice pasted. Total '+pastedSlices.length);
+
+  input.dataset.full=text;
+  input.value=text.slice(0,60)+'...';
+  pastedSlices.push(text);
+  updateCounter();
+  log('Slice pasted. Total '+pastedSlices.length);
+
   if(row===container.lastElementChild) addPasteRow();
  };
- const clearBtn=document.createElement('button'); clearBtn.textContent='Clear'; clearBtn.className='danger'; clearBtn.onclick=()=>{ if(input.dataset.full){ const idx=pastedSlices.indexOf(input.dataset.full); if(idx!==-1)pastedSlices.splice(idx,1); } input.dataset.full=''; input.value=''; updateCounter(); log('Row cleared'); };
- row.appendChild(input); row.appendChild(pasteBtn); row.appendChild(clearBtn); container.appendChild(row);
+
+ const clearBtn=document.createElement('button');
+ clearBtn.textContent='Clear';
+ clearBtn.className='danger';
+ clearBtn.onclick=function(){
+   if(input.dataset.full){
+     const idx=pastedSlices.indexOf(input.dataset.full);
+     if(idx!==-1) pastedSlices.splice(idx,1);
+   }
+   input.dataset.full='';
+   input.value='';
+   updateCounter();
+   log('Row cleared');
+ };
+
+ row.appendChild(input);
+ row.appendChild(pasteBtn);
+ row.appendChild(clearBtn);
+ container.appendChild(row);
 }
 addPasteRow();
 
 function finishRebuild(){
  if(!pastedSlices.length){ log('No slices to rebuild'); return; }
  log('Combining slices...');
+
  const combined=pastedSlices.join('');
  try{
-  const binary=atob(combined); const bytes=new Uint8Array(binary.length); for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-  const blob=new Blob([bytes]); const url=URL.createObjectURL(blob);
+  const binary=atob(combined);
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+
+  const blob=new Blob([bytes]);
+  const url=URL.createObjectURL(blob);
+
   let name=document.getElementById('fileNameInput').value.trim();
   let ext=document.getElementById('fileExtInput').value.trim();
-  if(!name) name='output'; if(ext) name=name+'.'+ext;
-  const link=document.createElement('a'); link.href=url; link.download=name; link.textContent='Download '+name;
-  const area=document.getElementById('downloadArea'); area.innerHTML=''; area.appendChild(link);
+
+  if(!name) name='output';
+  if(ext) name=name+'.'+ext;
+
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=name;
+  link.textContent='Download '+name;
+
+  const area=document.getElementById('downloadArea');
+  area.innerHTML='';
+  area.appendChild(link);
+
   log('Rebuild complete');
- }catch(e){ log('Decode failed'); }
+ }catch(e){
+  log('Decode failed');
+ }
 }
 </script></body>
- </html>
+</html>
