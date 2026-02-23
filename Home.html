@@ -23,7 +23,7 @@ button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 <body>
 <div class="container">
 <div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
-<div class="counter" id="counter">Slices reconstructed: 0 | Source file version: 0</div><div class="card">
+<div class="counter" id="counter">0</div><div class="card">
 <h3>Encode File</h3>
 <input type="file" id="fileInput">
 <div id="sliceList"></div>
@@ -61,7 +61,7 @@ let detectedExt = '';
 let fileVersion = 0;
 
 function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
-function updateCounter(){ document.getElementById('counter').textContent = 'Slices reconstructed: ' + pastedSlices.length + ' | Source file version: ' + fileVersion; }
+function updateCounter(){ document.getElementById('counter').textContent = fileVersion; }
 
 // ENCODE
 document.getElementById('fileInput').addEventListener('change', async e=>{
@@ -71,12 +71,25 @@ document.getElementById('fileInput').addEventListener('change', async e=>{
  const buffer=await file.arrayBuffer();
  const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
  slices=[];
+
  const header=`FILENAME:${file.name}`;
- let firstSlice=header+'\n'+base64.slice(0,SLICE_SIZE-header.length-1);
- slices.push(firstSlice);
- for(let i=SLICE_SIZE-header.length-1;i<base64.length;i+=SLICE_SIZE){ slices.push(base64.slice(i,i+SLICE_SIZE)); }
- log('Created '+slices.length+' slices with header');
+ const headerBlock=header+'
+';
+
+ // ensure first slice NEVER exceeds SLICE_SIZE
+ const firstPayloadSize = SLICE_SIZE - headerBlock.length;
+ const firstChunk = base64.slice(0, firstPayloadSize);
+ slices.push(headerBlock + firstChunk);
+
+ // remaining chunks normal
+ for(let i=firstPayloadSize;i<base64.length;i+=SLICE_SIZE){
+   slices.push(base64.slice(i,i+SLICE_SIZE));
+ }
+
+ log('Created '+slices.length+' slices with header (size-safe)');
  renderSlices();
+ updateCounter();
+});
  updateCounter();
 });
 function renderSlices(){ const list=document.getElementById('sliceList'); list.innerHTML='';
