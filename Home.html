@@ -23,7 +23,7 @@ button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 <body>
 <div class="container">
 <div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
-<div class="counter" id="counter">Slices reconstructed: 0</div><div class="card">
+<div class="counter" id="counter">Slices reconstructed: 0 | Source file version: 0</div><div class="card">
 <h3>Encode File</h3>
 <input type="file" id="fileInput">
 <div id="sliceList"></div>
@@ -58,13 +58,15 @@ let slices = [];
 let pastedSlices = [];
 let detectedName = '';
 let detectedExt = '';
+let fileVersion = 0;
 
 function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
-function updateCounter(){ document.getElementById('counter').textContent = 'Slices reconstructed: ' + pastedSlices.length; }
+function updateCounter(){ document.getElementById('counter').textContent = 'Slices reconstructed: ' + pastedSlices.length + ' | Source file version: ' + fileVersion; }
 
 // ENCODE
 document.getElementById('fileInput').addEventListener('change', async e=>{
  const file=e.target.files[0]; if(!file) return;
+ fileVersion++;
  log('Reading file...');
  const buffer=await file.arrayBuffer();
  const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -75,9 +77,9 @@ document.getElementById('fileInput').addEventListener('change', async e=>{
  for(let i=SLICE_SIZE-header.length-1;i<base64.length;i+=SLICE_SIZE){ slices.push(base64.slice(i,i+SLICE_SIZE)); }
  log('Created '+slices.length+' slices with header');
  renderSlices();
+ updateCounter();
 });
-function renderSlices(){
- const list=document.getElementById('sliceList'); list.innerHTML='';
+function renderSlices(){ const list=document.getElementById('sliceList'); list.innerHTML='';
  slices.forEach((s,i)=>{
  const row=document.createElement('div'); row.className='row';
  const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
@@ -96,11 +98,10 @@ function addPasteRow(){
   const text=await navigator.clipboard.readText(); if(!text){ log('Clipboard empty'); return; }
   if(input.dataset.full){ const oldIndex=pastedSlices.indexOf(input.dataset.full); if(oldIndex!==-1)pastedSlices.splice(oldIndex,1); }
 
-  // detect header on first slice
   if(pastedSlices.length===0 && text.startsWith('FILENAME:')){
     const idx=text.indexOf('\n');
     if(idx!==-1){
-      const header=text.slice(9,idx); // FILENAME:
+      const header=text.slice(9,idx);
       const parts=header.split('.');
       if(parts.length>1){ detectedExt=parts.pop(); detectedName=parts.join('.'); }
       else{ detectedName=header; detectedExt=''; }
