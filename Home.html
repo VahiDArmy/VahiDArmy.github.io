@@ -2,7 +2,8 @@
 <head>
 <meta charset="UTF-8">
 <title>Base64 Cosmic Slicer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"><style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
 body{margin:0; min-height:100vh; background:#020617; color:#e5e7eb; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; overflow-x:hidden;}
 body::after{content:""; position:fixed; inset:0; background:radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent), radial-gradient(800px 600px at 50% 50%, rgba(99,102,241,.25), transparent); z-index:-2;}
@@ -17,7 +18,8 @@ button{padding:8px 14px; border-radius:8px; border:none; cursor:pointer; backgro
 button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 .log{font-size:12px; max-height:200px; overflow:auto; background:#000814; padding:10px; border-radius:8px;}
 .footer-note{font-size:13px; opacity:.85; margin-top:30px; text-align:center;}
-</style></head>
+</style>
+</head>
 <body>
 <div class="container">
 <div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
@@ -54,6 +56,8 @@ The Slayer was once a mortal warrior who stood against the forces of Hell withou
 const SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
+let detectedName = '';
+let detectedExt = '';
 
 function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
 function updateCounter(){ document.getElementById('counter').textContent = 'Slices reconstructed: ' + pastedSlices.length; }
@@ -65,16 +69,22 @@ document.getElementById('fileInput').addEventListener('change', async e=>{
  const buffer=await file.arrayBuffer();
  const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
  slices=[];
- for(let i=0;i<base64.length;i+=SLICE_SIZE){ slices.push(base64.slice(i,i+SLICE_SIZE)); }
- log('Created '+slices.length+' slices');
+ const header=`FILENAME:${file.name}`;
+ let firstSlice=header+'\n'+base64.slice(0,SLICE_SIZE-header.length-1);
+ slices.push(firstSlice);
+ for(let i=SLICE_SIZE-header.length-1;i<base64.length;i+=SLICE_SIZE){ slices.push(base64.slice(i,i+SLICE_SIZE)); }
+ log('Created '+slices.length+' slices with header');
  renderSlices();
 });
-function renderSlices(){ const list=document.getElementById('sliceList'); list.innerHTML=''; slices.forEach((s,i)=>{
+function renderSlices(){
+ const list=document.getElementById('sliceList'); list.innerHTML='';
+ slices.forEach((s,i)=>{
  const row=document.createElement('div'); row.className='row';
  const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
  const btn=document.createElement('button'); btn.textContent='Copy'; btn.onclick=()=>{navigator.clipboard.writeText(s); log('Copied slice '+(i+1));};
  row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
-}); }
+ });
+}
 
 // REBUILD
 function addPasteRow(){
@@ -85,6 +95,27 @@ function addPasteRow(){
  pasteBtn.onclick=async()=>{
   const text=await navigator.clipboard.readText(); if(!text){ log('Clipboard empty'); return; }
   if(input.dataset.full){ const oldIndex=pastedSlices.indexOf(input.dataset.full); if(oldIndex!==-1)pastedSlices.splice(oldIndex,1); }
+
+  // detect header on first slice
+  if(pastedSlices.length===0 && text.startsWith('FILENAME:')){
+    const idx=text.indexOf('\n');
+    if(idx!==-1){
+      const header=text.slice(9,idx); // FILENAME:
+      const parts=header.split('.');
+      if(parts.length>1){ detectedExt=parts.pop(); detectedName=parts.join('.'); }
+      else{ detectedName=header; detectedExt=''; }
+      document.getElementById('fileNameInput').value=detectedName;
+      document.getElementById('fileExtInput').value=detectedExt;
+      input.dataset.full=text.slice(idx+1);
+      input.value=input.dataset.full.slice(0,60)+'...';
+      pastedSlices.push(input.dataset.full);
+      log('Header detected. File name: '+detectedName+', Ext: '+detectedExt);
+      updateCounter();
+      addPasteRow();
+      return;
+    }
+  }
+
   if(pastedSlices.includes(text)){ log('Duplicate slice detected, ignored'); return; }
   input.dataset.full=text; input.value=text.slice(0,60)+'...'; pastedSlices.push(text); updateCounter(); log('Slice pasted. Total '+pastedSlices.length);
   if(row===container.lastElementChild) addPasteRow();
