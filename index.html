@@ -1,51 +1,43 @@
 <!DOCTYPE html><html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Cosmic Base64 Slicer</title><!-- Offline Bootstrap (minimal essential styles) --><style>
-:root{
-  --bs-bg:#0b1020;
-  --bs-card:#111827cc;
-  --bs-border:#334155;
-  --bs-text:#e5e7eb;
-  --bs-accent:#60a5fa;
-}
+<meta charset="UTF-8">
+<title>Base64 Cosmic Slicer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"><!-- Offline Bootstrap-like minimal styling --><style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
 
 body{
   margin:0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color:var(--bs-text);
-  background:
-    radial-gradient(ellipse at bottom,#1b2735 0%,#090a0f 100%);
   min-height:100vh;
+  background:#020617;
+  color:#e5e7eb;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  overflow-x:hidden;
 }
 
-/* Galaxy stars */
+/* Galaxy background */
 body::after{
   content:"";
   position:fixed;
   inset:0;
   background:
-    radial-gradient(2px 2px at 20% 30%,#fff,transparent),
-    radial-gradient(2px 2px at 80% 70%,#fff,transparent),
-    radial-gradient(1px 1px at 60% 40%,#fff,transparent),
-    radial-gradient(1px 1px at 30% 80%,#fff,transparent);
-  opacity:.35;
-  pointer-events:none;
+    radial-gradient(2px 2px at 20% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 70% 60%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent),
+    radial-gradient(800px 600px at 50% 50%, rgba(99,102,241,.25), transparent);
   z-index:-2;
 }
 
-/* BIGGER moon */
+/* Bigger Moon */
 body::before{
   content:"";
   position:fixed;
-  top:40px;
-  right:60px;
-  width:220px;
-  height:220px;
+  top:30px;
+  right:40px;
+  width:260px;
+  height:260px;
   border-radius:50%;
   background: radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%);
-  box-shadow:0 0 80px rgba(255,255,255,.5), inset -22px -22px 36px rgba(0,0,0,.3);
+  box-shadow:0 0 90px rgba(255,255,255,.45), inset -25px -25px 40px rgba(0,0,0,.3);
   z-index:-1;
 }
 
@@ -55,91 +47,79 @@ body::before{
   padding:24px;
 }
 
+.title{
+  font-family:'Cinzel', serif;
+  text-align:center;
+  font-size:28px;
+  margin-bottom:20px;
+}
+
 .card{
-  background:var(--bs-card);
-  border:1px solid var(--bs-border);
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:18px;
-  backdrop-filter: blur(10px);
+  background:rgba(15,23,42,.75);
+  backdrop-filter:blur(6px);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.5);
 }
 
-.btn{
-  background:#1f2937;
-  border:1px solid var(--bs-border);
-  color:white;
-  padding:6px 12px;
-  border-radius:8px;
-  cursor:pointer;
-  margin-left:6px;
-}
-
-.btn:hover{background:#374151}
-
-.input-line{
+.row{
   display:flex;
   gap:8px;
-  margin-top:8px;
+  margin-bottom:8px;
 }
 
 input[type="text"]{
   flex:1;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #334155;
   background:#020617;
-  border:1px solid var(--bs-border);
   color:#e5e7eb;
-  padding:6px;
-  border-radius:6px;
 }
 
-textarea{
-  width:100%;
-  height:48px;
-  resize:none;
-  background:#020617;
-  border:1px solid var(--bs-border);
-  color:#e5e7eb;
-  padding:6px;
-  border-radius:6px;
+button{
+  padding:8px 14px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  background:#6366f1;
+  color:white;
 }
+
+button.secondary{ background:#475569; }
+button.danger{ background:#b91c1c; }
 
 .log{
   font-size:12px;
-  max-height:160px;
+  max-height:200px;
   overflow:auto;
-  background:#020617;
-  padding:8px;
+  background:#000814;
+  padding:10px;
   border-radius:8px;
-}
-
-.title{
-  text-align:center;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size:28px;
-  margin-bottom:20px;
-  letter-spacing:.5px;
 }
 
 .footer-note{
   font-size:13px;
-  opacity:.9;
-  line-height:1.5;
+  opacity:.85;
+  margin-top:30px;
+  text-align:center;
 }
-</style></head><body>
-<div class="container"><div class="title">
+</style></head>
+<body><div class="container"><div class="title">
 He sought revenge against the dark lords, who had "Wronged" him.
 </div><div class="card">
 <h3>Encode File</h3>
-<input type="file" id="fileInput" />
+<input type="file" id="fileInput">
 <div id="sliceList"></div>
 </div><div class="card">
 <h3>Rebuild</h3>
-<div class="input-line">
-<input type="text" id="fileName" placeholder="Optional file name (example: Image)" />
-<input type="text" id="fileExt" placeholder="Extension after dot (example: jpg)" />
+<div id="pasteContainer"></div>
+<div style="margin-top:10px">
+<input type="text" id="fileNameInput" placeholder="Output name (optional). Example: Image.jpg">
+<button onclick="finishRebuild()">Finish</button>
 </div>
-<div id="pasteArea"></div>
-<button class="btn" id="finishBtn" style="display:none">Finish</button>
-<div id="download"></div>
+<div id="downloadArea"></div>
 </div><div class="card">
 <h3>Log</h3>
 <div class="log" id="log"></div>
@@ -148,7 +128,8 @@ He sought revenge against the dark lords, who had "Wronged" him.
 The Slayer was once a mortal warrior who stood against the forces of Hell without hesitation. Through endless battles he became a living weapon of vengeance. The demons feared him, naming him the Doom Slayer. Sealed away by the dark lords after they could not kill him, he remained entombed until the age when Hell rose again. When awakened, he resumed the eternal war, driven not by glory but by relentless, unyielding retribution.
 </div></div><script>
 const SLICE_SIZE = 500000;
-let collected = [];
+let slices = [];
+let pastedSlices = [];
 
 function log(msg){
   const el=document.getElementById('log');
@@ -156,95 +137,151 @@ function log(msg){
   el.scrollTop = el.scrollHeight;
 }
 
-function copyText(t){
-  navigator.clipboard.writeText(t);
-  log("Slice copied to clipboard");
-}
-
-// ENCODE
+// ---------- ENCODE ----------
 document.getElementById('fileInput').addEventListener('change', async e=>{
   const file=e.target.files[0];
   if(!file) return;
 
-  log("Reading file...");
+  log('Reading file...');
 
-  // auto-fill name/ext
-  const parts=file.name.split('.');
-  if(parts.length>1){
-    document.getElementById('fileName').value=parts.slice(0,-1).join('.');
-    document.getElementById('fileExt').value=parts.pop();
-  }else{
-    document.getElementById('fileName').value=file.name;
+  const buffer=await file.arrayBuffer();
+  const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
+
+  slices=[];
+  for(let i=0;i<base64.length;i+=SLICE_SIZE){
+    slices.push(base64.slice(i,i+SLICE_SIZE));
   }
 
-  const buf=await file.arrayBuffer();
-  const b64=btoa(String.fromCharCode(...new Uint8Array(buf)));
+  log('Created '+slices.length+' slices');
+  renderSlices();
+});
 
-  log("Base64 ready. Slicing...");
-
+function renderSlices(){
   const list=document.getElementById('sliceList');
-  list.innerHTML="";
+  list.innerHTML='';
 
-  let i=0;
-  for(let pos=0; pos<b64.length; pos+=SLICE_SIZE){
-    const slice=b64.slice(pos,pos+SLICE_SIZE);
+  slices.forEach((s,i)=>{
     const row=document.createElement('div');
-    row.className='input-line';
-    row.innerHTML=`<textarea readonly>${slice.slice(0,60)}...</textarea><button class="btn">Copy</button>`;
-row.querySelector('button').onclick=()=>copyText(slice);
-list.appendChild(row);
-i++;
+    row.className='row';
 
+    const preview=document.createElement('input');
+    preview.type='text';
+    preview.value=s.slice(0,60)+'...';
+    preview.readOnly=true;
+
+    const btn=document.createElement('button');
+    btn.textContent='Copy';
+    btn.onclick=()=>{
+      navigator.clipboard.writeText(s);
+      log('Copied slice '+(i+1));
+    };
+
+    row.appendChild(preview);
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
 }
 
-log("Total slices: "+i); });
+// ---------- REBUILD ----------
+function addPasteRow(){
+  const container=document.getElementById('pasteContainer');
 
-// PASTE FLOW function addPasteRow(){ const area=document.getElementById('pasteArea');
+  const row=document.createElement('div');
+  row.className='row';
 
-const row=document.createElement('div'); row.className='input-line'; row.innerHTML=<textarea placeholder="Paste slice here"></textarea> <button class="btn">Paste</button> <button class="btn">Clear</button>;
+  const input=document.createElement('input');
+  input.type='text';
+  input.placeholder='Paste slice here';
 
-const ta=row.querySelector('textarea');
+  const pasteBtn=document.createElement('button');
+  pasteBtn.textContent='Paste';
 
-row.children[1].onclick=async()=>{ const text=await navigator.clipboard.readText();
+  pasteBtn.onclick=async()=>{
+    const text=await navigator.clipboard.readText();
 
-if(!text){
-  log("Clipboard empty");
-  return;
+    if(!text){
+      log('Clipboard empty');
+      return;
+    }
+
+    // allow re-paste into same row by removing previous value first
+    const existingIndex = pastedSlices.indexOf(input.value);
+    if(existingIndex !== -1){
+      pastedSlices.splice(existingIndex,1);
+    }
+
+    // check duplicate ONLY against other rows
+    if(pastedSlices.includes(text)){
+      log('Duplicate slice detected, ignored');
+      return;
+    }
+
+    input.value=text.slice(0,60)+'...';
+    pastedSlices.push(text);
+    log('Slice pasted. Total '+pastedSlices.length);
+
+    // add next row only if this was the last row
+    if(row === container.lastElementChild){
+      addPasteRow();
+    }
+  };
+
+  const clearBtn=document.createElement('button');
+  clearBtn.textContent='Clear';
+  clearBtn.className='danger';
+  clearBtn.onclick=()=>{
+    const idx = pastedSlices.indexOf(input.dataset.full);
+    if(idx !== -1) pastedSlices.splice(idx,1);
+    input.value='';
+    input.dataset.full='';
+    log('Row cleared');
+  };
+
+  row.appendChild(input);
+  row.appendChild(pasteBtn);
+  row.appendChild(clearBtn);
+  container.appendChild(row);
 }
-
-if(collected.includes(text)){
-  log("Duplicate slice ignored");
-  return;
-}
-
-ta.value=text.slice(0,60)+"...";
-collected.push(text);
-log("Slice accepted. Count: "+collected.length);
 
 addPasteRow();
-document.getElementById('finishBtn').style.display='inline-block';
 
-};
+// ---------- FINISH ----------
+function finishRebuild(){
+  if(!pastedSlices.length){
+    log('No slices to rebuild');
+    return;
+  }
 
-row.children[2].onclick=()=>{ ta.value=""; log("Row cleared"); };
+  log('Combining slices...');
+  const combined=pastedSlices.join('');
 
-area.appendChild(row); }
+  try{
+    const binary=atob(combined);
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
 
-addPasteRow();
+    const blob=new Blob([bytes]);
+    const url=URL.createObjectURL(blob);
 
-// FINISH document.getElementById('finishBtn').onclick=()=>{ if(!collected.length){ log("Nothing to rebuild"); return; }
+    let name=document.getElementById('fileNameInput').value.trim();
 
-log("Combining slices..."); const b64=collected.join('');
+    if(!name){
+      name='output.bin';
+    }
 
-const bin=atob(b64); const bytes=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+    const link=document.createElement('a');
+    link.href=url;
+    link.download=name;
+    link.textContent='Download '+name;
 
-const blob=new Blob([bytes]); const url=URL.createObjectURL(blob);
+    const area=document.getElementById('downloadArea');
+    area.innerHTML='';
+    area.appendChild(link);
 
-// build filename const name=document.getElementById('fileName').value.trim() || 'RebuiltFile'; const ext=document.getElementById('fileExt').value.trim(); const finalName = ext ? ${name}.${ext} : name;
-
-document.getElementById('download').innerHTML= <a class="btn" href="${url}" download="${finalName}">Download ${finalName}</a>;
-
-log("Rebuild ready: "+finalName); }; </script>
-
-</body>
-  </html>
+    log('Rebuild complete');
+  }catch(e){
+    log('Decode failed');
+  }
+}
+</script></body>
+</html>
