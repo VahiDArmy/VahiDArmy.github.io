@@ -3,96 +3,190 @@
 <head>
 <meta charset="UTF-8">
 <title>Base64 Slicer & Rebuilder</title>
+
 <style>
-    body {
-        font-family: Arial, sans-serif;
-        background: #0f172a;
-        color: #e5e7eb;
-        padding: 20px;
-    }
+/* =========================
+   Mini Bootstrap (offline)
+   ========================= */
 
-    h2 {
-        margin-top: 30px;
-        color: #38bdf8;
-    }
+:root{
+  --bg:#0f172a;
+  --card:#111827;
+  --border:#334155;
+  --primary:#2563eb;
+  --primary-hover:#1d4ed8;
+  --success:#22c55e;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --danger:#ef4444;
+}
 
-    .card {
-        background: #111827;
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    }
+*{box-sizing:border-box}
 
-    button {
-        background: #2563eb;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        margin-left: 6px;
-    }
+body{
+  margin:0;
+  padding:24px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+  line-height:1.45;
+}
 
-    button:hover {
-        background: #1d4ed8;
-    }
+/* Container */
+.container{
+  max-width:1100px;
+  margin:auto;
+}
 
-    input[type="text"] {
-        width: calc(100% - 160px);
-        padding: 6px;
-        background: #020617;
-        color: #e5e7eb;
-        border: 1px solid #334155;
-        border-radius: 6px;
-    }
+/* Typography */
+h1{
+  margin-top:0;
+  color:#38bdf8;
+}
 
-    .slice-row, .paste-row {
-        display: flex;
-        align-items: center;
-        margin: 6px 0;
-        gap: 8px;
-    }
+h2{
+  color:#7dd3fc;
+  margin-top:0;
+}
 
-    #log {
-        background: #020617;
-        padding: 10px;
-        height: 200px;
-        overflow-y: auto;
-        font-family: monospace;
-        font-size: 12px;
-        border-radius: 8px;
-        border: 1px solid #334155;
-    }
+/* Cards */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:20px;
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
 
-    .download-link {
-        display: inline-block;
-        margin-top: 10px;
-        color: #4ade80;
-    }
+/* Grid */
+.row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+}
+
+.col{
+  flex:1;
+  min-width:0;
+}
+
+/* Inputs */
+input[type="text"],
+input[type="file"]{
+  width:100%;
+  padding:8px 10px;
+  background:#020617;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:8px;
+  outline:none;
+}
+
+input[type="text"]:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(37,99,235,.25);
+}
+
+/* Buttons */
+.btn{
+  border:none;
+  padding:7px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+  transition:.15s ease;
+  white-space:nowrap;
+}
+
+.btn-primary{
+  background:var(--primary);
+  color:white;
+}
+.btn-primary:hover{ background:var(--primary-hover); }
+
+.btn-success{
+  background:var(--success);
+  color:white;
+}
+
+.btn-danger{
+  background:var(--danger);
+  color:white;
+}
+
+.btn:disabled{
+  opacity:.5;
+  cursor:not-allowed;
+}
+
+/* Rows */
+.slice-row,
+.paste-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:6px 0;
+  font-size:13px;
+}
+
+/* Log */
+#log{
+  background:#020617;
+  padding:12px;
+  height:220px;
+  overflow-y:auto;
+  font-family:ui-monospace, monospace;
+  font-size:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+}
+
+/* Download link */
+.download-link{
+  display:inline-block;
+  margin-top:10px;
+  color:#4ade80;
+  font-weight:600;
+  text-decoration:none;
+}
+.download-link:hover{ text-decoration:underline; }
+
+/* Badge */
+.badge{
+  background:#1e293b;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:11px;
+  color:var(--muted);
+}
 </style>
 </head>
+
 <body>
+<div class="container">
 
 <h1>Base64 Slicer & Rebuilder</h1>
 
 <div class="card">
-    <h2>Step 1 — File → Base64 → Slices</h2>
-    <input type="file" id="fileInput">
-    <div id="sliceList"></div>
+  <h2>Step 1 — File → Base64 → Slices</h2>
+  <input type="file" id="fileInput">
+  <div id="sliceList"></div>
 </div>
 
 <div class="card">
-    <h2>Step 2 — Paste & Rebuild</h2>
-    <div id="pasteArea"></div>
-    <a id="downloadLink" class="download-link" style="display:none;" download="reconstructed.bin">
-        Download reconstructed file
-    </a>
+  <h2>Step 2 — Paste & Rebuild</h2>
+  <div id="pasteArea"></div>
+  <a id="downloadLink" class="download-link" style="display:none;" download="reconstructed.bin">
+    Download reconstructed file
+  </a>
 </div>
 
 <div class="card">
-    <h2>System Log</h2>
-    <div id="log"></div>
+  <h2>System Log</h2>
+  <div id="log"></div>
+</div>
+
 </div>
 
 <script>
@@ -101,155 +195,164 @@ let slices = [];
 let pastedSlices = [];
 
 function log(msg) {
-    const logDiv = document.getElementById("log");
-    const time = new Date().toLocaleTimeString();
-    logDiv.innerHTML += `[${time}] ${msg}<br>`;
-    logDiv.scrollTop = logDiv.scrollHeight;
+  const logDiv = document.getElementById("log");
+  const time = new Date().toLocaleTimeString();
+  logDiv.innerHTML += `[${time}] ${msg}<br>`;
+  logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// ---------- FILE PROCESSING ----------
-document.getElementById("fileInput").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+/* ---------- FILE PROCESSING ---------- */
+document.getElementById("fileInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    log("File selected: " + file.name);
-    log("Reading file as Base64...");
+  log("File selected: " + file.name);
+  log("Reading file as Base64...");
 
-    const reader = new FileReader();
+  const reader = new FileReader();
 
-    reader.onload = () => {
-        const base64 = reader.result.split(",")[1];
-        log("Base64 conversion complete.");
-        createSlices(base64);
-    };
+  reader.onload = () => {
+    const base64 = reader.result.split(",")[1];
+    log("Base64 conversion complete.");
+    createSlices(base64);
+  };
 
-    reader.readAsDataURL(file);
+  reader.readAsDataURL(file);
 });
 
 function createSlices(base64) {
-    slices = [];
-    document.getElementById("sliceList").innerHTML = "";
+  slices = [];
+  document.getElementById("sliceList").innerHTML = "";
 
-    log("Creating 500000-char slices...");
+  log("Creating 500000-char slices...");
 
-    for (let i = 0; i < base64.length; i += SLICE_SIZE) {
-        slices.push(base64.slice(i, i + SLICE_SIZE));
-    }
+  for (let i = 0; i < base64.length; i += SLICE_SIZE) {
+    slices.push(base64.slice(i, i + SLICE_SIZE));
+  }
 
-    log(`Total slices created: ${slices.length}`);
-    renderSlices();
+  log(`Total slices created: ${slices.length}`);
+  renderSlices();
 }
 
 function renderSlices() {
-    const container = document.getElementById("sliceList");
-    container.innerHTML = "";
+  const container = document.getElementById("sliceList");
+  container.innerHTML = "";
 
-    slices.forEach((slice, index) => {
-        const row = document.createElement("div");
-        row.className = "slice-row";
-
-        const preview = document.createElement("input");
-        preview.type = "text";
-        preview.value = slice.slice(0, 80) + " ...";
-        preview.readOnly = true;
-
-        const btn = document.createElement("button");
-        btn.textContent = "Copy";
-
-        btn.onclick = async () => {
-            await navigator.clipboard.writeText(slice);
-            log(`Slice ${index + 1} copied to clipboard.`);
-        };
-
-        row.appendChild(document.createTextNode(`#${index + 1}`));
-        row.appendChild(preview);
-        row.appendChild(btn);
-        container.appendChild(row);
-    });
-
-    log("Slice list rendered.");
-}
-
-// ---------- PASTE FLOW ----------
-function addPasteRow() {
-    const area = document.getElementById("pasteArea");
-    const index = pastedSlices.length;
-
+  slices.forEach((slice, index) => {
     const row = document.createElement("div");
-    row.className = "paste-row";
+    row.className = "slice-row";
 
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = "Paste slice here...";
+    const badge = document.createElement("span");
+    badge.className = "badge";
+    badge.textContent = "#" + (index + 1);
 
-    const pasteBtn = document.createElement("button");
-    pasteBtn.textContent = "Paste";
+    const preview = document.createElement("input");
+    preview.type = "text";
+    preview.value = slice.slice(0, 80) + " ...";
+    preview.readOnly = true;
 
-    const finishBtn = document.createElement("button");
-    finishBtn.textContent = "Finish";
+    const btn = document.createElement("button");
+    btn.className = "btn btn-primary";
+    btn.textContent = "Copy";
 
-    pasteBtn.onclick = async () => {
-        try {
-            const text = await navigator.clipboard.readText();
-            input.value = text.slice(0, 80) + " ...";
-            pastedSlices[index] = text;
-            log(`Slice ${index + 1} pasted.`);
-
-            // disable paste button after use
-            pasteBtn.disabled = true;
-            finishBtn.style.display = "inline-block";
-
-            addPasteRow();
-        } catch {
-            log("Clipboard paste failed.");
-        }
+    btn.onclick = async () => {
+      await navigator.clipboard.writeText(slice);
+      log(`Slice ${index + 1} copied to clipboard.`);
     };
 
-    finishBtn.style.display = "none";
-    finishBtn.onclick = rebuildFile;
+    row.appendChild(badge);
+    row.appendChild(preview);
+    row.appendChild(btn);
+    container.appendChild(row);
+  });
 
-    row.appendChild(document.createTextNode(`#${index + 1}`));
-    row.appendChild(input);
-    row.appendChild(pasteBtn);
-    row.appendChild(finishBtn);
-    area.appendChild(row);
-
-    log("Waiting for next paste...");
+  log("Slice list rendered.");
 }
 
-// ---------- REBUILD ----------
-function rebuildFile() {
-    log("Combining slices...");
-    const combined = pastedSlices.join("");
+/* ---------- PASTE FLOW ---------- */
+function addPasteRow() {
+  const area = document.getElementById("pasteArea");
+  const index = pastedSlices.length;
 
-    log("Decoding Base64 back to binary...");
+  const row = document.createElement("div");
+  row.className = "paste-row";
 
+  const badge = document.createElement("span");
+  badge.className = "badge";
+  badge.textContent = "#" + (index + 1);
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Paste slice here...";
+
+  const pasteBtn = document.createElement("button");
+  pasteBtn.className = "btn btn-primary";
+  pasteBtn.textContent = "Paste";
+
+  const finishBtn = document.createElement("button");
+  finishBtn.className = "btn btn-success";
+  finishBtn.textContent = "Finish";
+  finishBtn.style.display = "none";
+
+  pasteBtn.onclick = async () => {
     try {
-        const byteChars = atob(combined);
-        const byteNumbers = new Array(byteChars.length);
+      const text = await navigator.clipboard.readText();
+      input.value = text.slice(0, 80) + " ...";
+      pastedSlices[index] = text;
+      log(`Slice ${index + 1} pasted.`);
 
-        for (let i = 0; i < byteChars.length; i++) {
-            byteNumbers[i] = byteChars.charCodeAt(i);
-        }
+      pasteBtn.disabled = true;
+      finishBtn.style.display = "inline-block";
 
-        const blob = new Blob([new Uint8Array(byteNumbers)]);
-        const url = URL.createObjectURL(blob);
-
-        const link = document.getElementById("downloadLink");
-        link.href = url;
-        link.style.display = "inline-block";
-
-        log("Reconstruction complete. Download ready.");
-    } catch (e) {
-        log("ERROR: Base64 decode failed.");
-        console.error(e);
+      addPasteRow();
+    } catch {
+      log("Clipboard paste failed.");
     }
+  };
+
+  finishBtn.onclick = rebuildFile;
+
+  row.appendChild(badge);
+  row.appendChild(input);
+  row.appendChild(pasteBtn);
+  row.appendChild(finishBtn);
+  area.appendChild(row);
+
+  log("Waiting for next paste...");
 }
 
-// ---------- INIT ----------
+/* ---------- REBUILD ---------- */
+function rebuildFile() {
+  log("Combining slices...");
+  const combined = pastedSlices.join("");
+
+  log("Decoding Base64 back to binary...");
+
+  try {
+    const byteChars = atob(combined);
+    const byteNumbers = new Array(byteChars.length);
+
+    for (let i = 0; i < byteChars.length; i++) {
+      byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+
+    const blob = new Blob([new Uint8Array(byteNumbers)]);
+    const url = URL.createObjectURL(blob);
+
+    const link = document.getElementById("downloadLink");
+    link.href = url;
+    link.style.display = "inline-block";
+
+    log("Reconstruction complete. Download ready.");
+  } catch (e) {
+    log("ERROR: Base64 decode failed.");
+    console.error(e);
+  }
+}
+
+/* ---------- INIT ---------- */
 addPasteRow();
 log("System ready.");
 </script>
-
 </body>
 </html>
