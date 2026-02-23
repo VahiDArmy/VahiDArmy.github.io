@@ -2,101 +2,46 @@
 <head>
 <meta charset="UTF-8">
 <title>Base64 Cosmic Slicer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"><style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
-
-body{
-  margin:0;
-  min-height:100vh;
-  background:#020617;
-  color:#e5e7eb;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  overflow-x:hidden;
-}
-
-body::after{
-  content:"";
-  position:fixed;
-  inset:0;
-  background:
-    radial-gradient(2px 2px at 20% 30%, #fff, transparent),
-    radial-gradient(1px 1px at 70% 60%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent),
-    radial-gradient(800px 600px at 50% 50%, rgba(99,102,241,.25), transparent);
-  z-index:-2;
-}
-
-body::before{
-  content:"";
-  position:fixed;
-  top:30px;
-  right:40px;
-  width:260px;
-  height:260px;
-  border-radius:50%;
-  background: radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%);
-  box-shadow:0 0 90px rgba(255,255,255,.45), inset -25px -25px 40px rgba(0,0,0,.3);
-  z-index:-1;
-}
-
-.container{ max-width:1100px; margin:auto; padding:24px; }
-
-.title{
-  font-family:'Cinzel', serif;
-  text-align:center;
-  font-size:28px;
-  margin-bottom:6px;
-}
-
-.counter{
-  text-align:center;
-  font-size:14px;
-  opacity:.8;
-  margin-bottom:20px;
-}
-
-.card{
-  background:rgba(15,23,42,.75);
-  backdrop-filter:blur(6px);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.5);
-}
-
-.row{ display:flex; gap:8px; margin-bottom:8px; }
-
-input[type="text"]{
-  flex:1; padding:8px; border-radius:8px;
-  border:1px solid #334155; background:#020617; color:#e5e7eb;
-}
-
-button{
-  padding:8px 14px; border-radius:8px; border:none;
-  cursor:pointer; background:#6366f1; color:white;
-}
-button.secondary{ background:#475569; }
-button.danger{ background:#b91c1c; }
-
-.log{
-  font-size:12px; max-height:200px; overflow:auto;
-  background:#000814; padding:10px; border-radius:8px;
-}
-
-.footer-note{ font-size:13px; opacity:.85; margin-top:30px; text-align:center; }
-</style></head>
-<body><div class="container"><div class="title">
-He sought revenge against the dark lords, who had "Wronged" him.
-</div>
-<div class="counter" id="counter">Slices reconstructed: 0</div><div class="card">
+body{margin:0; min-height:100vh; background:#020617; color:#e5e7eb; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; overflow-x:hidden;}
+body::after{content:""; position:fixed; inset:0; background:radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent), radial-gradient(800px 600px at 50% 50%, rgba(99,102,241,.25), transparent); z-index:-2;}
+body::before{content:""; position:fixed; top:30px; right:40px; width:260px; height:260px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%); box-shadow:0 0 90px rgba(255,255,255,.45), inset -25px -25px 40px rgba(0,0,0,.3); z-index:-1;}
+.container{max-width:1100px; margin:auto; padding:24px;}
+.title{font-family:'Cinzel', serif; text-align:center; font-size:28px; margin-bottom:6px;}
+.counter{text-align:center; font-size:14px; opacity:.8; margin-bottom:20px;}
+.card{background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
+.row{display:flex; gap:8px; margin-bottom:8px;}
+input[type="text"], select{flex:1; padding:8px; border-radius:8px; border:1px solid #334155; background:#020617; color:#e5e7eb;}
+button{padding:8px 14px; border-radius:8px; border:none; cursor:pointer; background:#6366f1; color:white;}
+button.secondary{background:#475569;} button.danger{background:#b91c1c;}
+.log{font-size:12px; max-height:200px; overflow:auto; background:#000814; padding:10px; border-radius:8px;}
+.footer-note{font-size:13px; opacity:.85; margin-top:30px; text-align:center;}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
+<div class="counter" id="counter">0</div><div class="card">
 <h3>Encode File</h3>
 <input type="file" id="fileInput">
 <div id="sliceList"></div>
 </div><div class="card">
 <h3>Rebuild</h3>
 <div id="pasteContainer"></div>
-<div style="margin-top:10px">
-<input type="text" id="fileNameInput" placeholder="Output name (optional). Example: Image.jpg">
+<div style="margin-top:10px; display:flex; gap:8px;">
+<input type="text" id="fileNameInput" placeholder="Output file name (optional)" />
+<select id="fileExtInput">
+<option value="">Extension (optional)</option>
+<option value="jpg">JPG</option>
+<option value="png">PNG</option>
+<option value="pdf">PDF</option>
+<option value="txt">TXT</option>
+<option value="mp4">MP4</option>
+<option value="zip">ZIP</option>
+<option value="bin">BIN</option>
+</select>
 <button onclick="finishRebuild()">Finish</button>
 </div>
 <div id="downloadArea"></div>
@@ -106,163 +51,166 @@ He sought revenge against the dark lords, who had "Wronged" him.
 </div><div class="footer-note">
 <strong>Doom Testament (summary):</strong><br>
 The Slayer was once a mortal warrior who stood against the forces of Hell without hesitation. Through endless battles he became a living weapon of vengeance. The demons feared him, naming him the Doom Slayer. Sealed away by the dark lords after they could not kill him, he remained entombed until the age when Hell rose again. When awakened, he resumed the eternal war, driven not by glory but by relentless, unyielding retribution.
-</div></div><script>
+</div>
+</div><script>
 const SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
+let detectedName = '';
+let detectedExt = '';
+let fileVersion = 0;
 
-function log(msg){
-  const el=document.getElementById('log');
-  el.innerHTML += msg+"<br>";
-  el.scrollTop = el.scrollHeight;
-}
+function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
+function updateCounter(){ document.getElementById('counter').textContent = fileVersion; }
 
-function updateCounter(){
-  document.getElementById('counter').textContent =
-    'Slices reconstructed: ' + pastedSlices.length;
-}
+// ENCODE (FIXED SIZE-SAFE)
+document.getElementById('fileInput').addEventListener('change', async function(e){
+ const file = e.target.files[0];
+ if(!file) return;
 
-// ---------- ENCODE ----------
-document.getElementById('fileInput').addEventListener('change', async e=>{
-  const file=e.target.files[0];
-  if(!file) return;
+ fileVersion++;
+ log('Reading file...');
 
-  log('Reading file...');
+ const buffer = await file.arrayBuffer();
+ const bytes = new Uint8Array(buffer);
+ let binary = '';
+ for(let i=0;i<bytes.length;i++){ binary += String.fromCharCode(bytes[i]); }
+ const base64 = btoa(binary);
 
-  const buffer=await file.arrayBuffer();
-  const base64=btoa(String.fromCharCode(...new Uint8Array(buffer)));
+ slices = [];
 
-  slices=[];
-  for(let i=0;i<base64.length;i+=SLICE_SIZE){
-    slices.push(base64.slice(i,i+SLICE_SIZE));
-  }
+ const header = 'FILENAME:' + file.name;
+ const headerBlock = header + '\n';
 
-  log('Created '+slices.length+' slices');
-  renderSlices();
+ let index = 0;
+ const firstPayloadSize = Math.max(0, SLICE_SIZE - headerBlock.length);
+ const firstChunk = base64.slice(index, index + firstPayloadSize);
+ slices.push(headerBlock + firstChunk);
+ index += firstPayloadSize;
+
+ while(index < base64.length){
+   slices.push(base64.slice(index, index + SLICE_SIZE));
+   index += SLICE_SIZE;
+ }
+
+ log('Created ' + slices.length + ' slices with header (size-safe)');
+ renderSlices();
+ updateCounter();
 });
 
 function renderSlices(){
-  const list=document.getElementById('sliceList');
-  list.innerHTML='';
-
-  slices.forEach((s,i)=>{
-    const row=document.createElement('div');
-    row.className='row';
-
-    const preview=document.createElement('input');
-    preview.type='text';
-    preview.value=s.slice(0,60)+'...';
-    preview.readOnly=true;
-
-    const btn=document.createElement('button');
-    btn.textContent='Copy';
-    btn.onclick=()=>{
-      navigator.clipboard.writeText(s);
-      log('Copied slice '+(i+1));
-    };
-
-    row.appendChild(preview);
-    row.appendChild(btn);
-    list.appendChild(row);
-  });
+ const list=document.getElementById('sliceList');
+ list.innerHTML='';
+ slices.forEach((s,i)=>{
+   const row=document.createElement('div'); row.className='row';
+   const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
+   const btn=document.createElement('button'); btn.textContent='Copy';
+   btn.onclick=function(){ navigator.clipboard.writeText(s + '
+'); log('Copied slice '+(i+1)+' with newline'); };
+   row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
+ });
 }
 
-// ---------- REBUILD ----------
+// REBUILD
 function addPasteRow(){
-  const container=document.getElementById('pasteContainer');
+ const container=document.getElementById('pasteContainer');
+ const row=document.createElement('div'); row.className='row';
+ const input=document.createElement('input'); input.type='text'; input.placeholder='Paste slice here'; input.dataset.full='';
 
-  const row=document.createElement('div');
-  row.className='row';
+ const pasteBtn=document.createElement('button'); pasteBtn.textContent='Paste';
+ pasteBtn.onclick=async function(){
+  const text=await navigator.clipboard.readText();
+  if(!text){ log('Clipboard empty'); return; }
 
-  const input=document.createElement('input');
-  input.type='text';
-  input.placeholder='Paste slice here';
-  input.dataset.full='';
+  if(input.dataset.full){
+    const oldIndex=pastedSlices.indexOf(input.dataset.full);
+    if(oldIndex!==-1) pastedSlices.splice(oldIndex,1);
+  }
 
-  const pasteBtn=document.createElement('button');
-  pasteBtn.textContent='Paste';
-
-  pasteBtn.onclick=async()=>{
-    const text=await navigator.clipboard.readText();
-    if(!text){ log('Clipboard empty'); return; }
-
-    // remove old value if exists
-    if(input.dataset.full){
-      const oldIndex = pastedSlices.indexOf(input.dataset.full);
-      if(oldIndex !== -1) pastedSlices.splice(oldIndex,1);
-    }
-
-    // duplicate check
-    if(pastedSlices.includes(text)){
-      log('Duplicate slice detected, ignored');
+  if(pastedSlices.length===0 && text.startsWith('FILENAME:')){
+    const idx=text.indexOf('\n');
+    if(idx!==-1){
+      const header=text.slice(9,idx);
+      const parts=header.split('.');
+      if(parts.length>1){ detectedExt=parts.pop(); detectedName=parts.join('.'); }
+      else{ detectedName=header; detectedExt=''; }
+      document.getElementById('fileNameInput').value=detectedName;
+      document.getElementById('fileExtInput').value=detectedExt;
+      const payload=text.slice(idx+1);
+      input.dataset.full=payload;
+      input.value=payload.slice(0,60)+'...';
+      pastedSlices.push(payload);
+      log('Header detected. File name: '+detectedName+', Ext: '+detectedExt);
+      updateCounter();
+      addPasteRow();
       return;
     }
+  }
 
-    input.dataset.full=text;
-    input.value=text.slice(0,60)+'...';
-    pastedSlices.push(text);
-    updateCounter();
+  if(pastedSlices.includes(text)){ log('Duplicate slice detected, ignored'); return; }
 
-    log('Slice pasted. Total '+pastedSlices.length);
+  input.dataset.full=text;
+  input.value=text.slice(0,60)+'...';
+  pastedSlices.push(text);
+  updateCounter();
+  log('Slice pasted. Total '+pastedSlices.length);
 
-    if(row === container.lastElementChild){
-      addPasteRow();
-    }
-  };
+  if(row===container.lastElementChild) addPasteRow();
+ };
 
-  const clearBtn=document.createElement('button');
-  clearBtn.textContent='Clear';
-  clearBtn.className='danger';
-  clearBtn.onclick=()=>{
-    if(input.dataset.full){
-      const idx = pastedSlices.indexOf(input.dataset.full);
-      if(idx !== -1) pastedSlices.splice(idx,1);
-    }
-    input.dataset.full='';
-    input.value='';
-    updateCounter();
-    log('Row cleared');
-  };
+ const clearBtn=document.createElement('button');
+ clearBtn.textContent='Clear';
+ clearBtn.className='danger';
+ clearBtn.onclick=function(){
+   if(input.dataset.full){
+     const idx=pastedSlices.indexOf(input.dataset.full);
+     if(idx!==-1) pastedSlices.splice(idx,1);
+   }
+   input.dataset.full='';
+   input.value='';
+   updateCounter();
+   log('Row cleared');
+ };
 
-  row.appendChild(input);
-  row.appendChild(pasteBtn);
-  row.appendChild(clearBtn);
-  container.appendChild(row);
+ row.appendChild(input);
+ row.appendChild(pasteBtn);
+ row.appendChild(clearBtn);
+ container.appendChild(row);
 }
-
 addPasteRow();
 
-// ---------- FINISH ----------
 function finishRebuild(){
-  if(!pastedSlices.length){ log('No slices to rebuild'); return; }
+ if(!pastedSlices.length){ log('No slices to rebuild'); return; }
+ log('Combining slices...');
 
-  log('Combining slices...');
-  const combined=pastedSlices.join('');
+ const combined=pastedSlices.join('');
+ try{
+  const binary=atob(combined);
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
 
-  try{
-    const binary=atob(combined);
-    const bytes=new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+  const blob=new Blob([bytes]);
+  const url=URL.createObjectURL(blob);
 
-    const blob=new Blob([bytes]);
-    const url=URL.createObjectURL(blob);
+  let name=document.getElementById('fileNameInput').value.trim();
+  let ext=document.getElementById('fileExtInput').value.trim();
 
-    let name=document.getElementById('fileNameInput').value.trim();
-    if(!name) name='output.bin';
+  if(!name) name='output';
+  if(ext) name=name+'.'+ext;
 
-    const link=document.createElement('a');
-    link.href=url;
-    link.download=name;
-    link.textContent='Download '+name;
+  const link=document.createElement('a');
+  link.href=url;
+  link.download=name;
+  link.textContent='Download '+name;
 
-    const area=document.getElementById('downloadArea');
-    area.innerHTML='';
-    area.appendChild(link);
+  const area=document.getElementById('downloadArea');
+  area.innerHTML='';
+  area.appendChild(link);
 
-    log('Rebuild complete');
-  }catch(e){
-    log('Decode failed');
-  }
+  log('Rebuild complete');
+ }catch(e){
+  log('Decode failed');
+ }
 }
 </script></body>
 </html>
