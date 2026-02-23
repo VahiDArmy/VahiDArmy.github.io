@@ -5,122 +5,106 @@
 <title>Base64 Slicer & Rebuilder</title>
 
 <style>
+/* =======================
+   🌌 COSMIC BACKGROUND
+   ======================= */
+
+body{
+  margin:0;
+  padding:24px;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
+  color:#e5e7eb;
+  overflow-x:hidden;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,0.08) 0 2px, transparent 3px),
+    radial-gradient(circle at 20% 70%, rgba(255,255,255,0.06) 0 1px, transparent 2px),
+    radial-gradient(circle at 60% 40%, rgba(255,255,255,0.07) 0 1px, transparent 2px),
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.05) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 70% 60%, rgba(56,189,248,.15), transparent 60%),
+    radial-gradient(ellipse at 30% 40%, rgba(147,51,234,.18), transparent 65%),
+    #020617;
+}
+
+/* 🌙 Moon */
+body::before{
+  content:"";
+  position:fixed;
+  top:60px;
+  right:80px;
+  width:120px;
+  height:120px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%);
+  box-shadow:
+    0 0 40px rgba(255,255,255,.35),
+    inset -10px -10px 20px rgba(0,0,0,.25);
+  z-index:-1;
+}
+
 /* =========================
    Mini Bootstrap (offline)
    ========================= */
 
 :root{
-  --bg:#0f172a;
-  --card:#111827;
+  --card:#111827cc;
   --border:#334155;
   --primary:#2563eb;
   --primary-hover:#1d4ed8;
   --success:#22c55e;
-  --text:#e5e7eb;
-  --muted:#94a3b8;
   --danger:#ef4444;
+  --muted:#94a3b8;
 }
 
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  padding:24px;
-  background:var(--bg);
-  color:var(--text);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-  line-height:1.45;
-}
-
-/* Container */
 .container{
   max-width:1100px;
   margin:auto;
 }
 
-/* Typography */
-h1{
-  margin-top:0;
-  color:#38bdf8;
-}
+h1{ color:#38bdf8; margin-top:0; }
+h2{ color:#7dd3fc; margin-top:0; }
 
-h2{
-  color:#7dd3fc;
-  margin-top:0;
-}
-
-/* Cards */
 .card{
   background:var(--card);
+  backdrop-filter: blur(10px);
   border:1px solid var(--border);
   border-radius:12px;
   padding:18px;
   margin-bottom:20px;
-  box-shadow:0 10px 25px rgba(0,0,0,.35);
+  box-shadow:0 10px 25px rgba(0,0,0,.45);
 }
 
-/* Grid */
-.row{
-  display:flex;
-  flex-wrap:wrap;
-  gap:12px;
-}
-
-.col{
-  flex:1;
-  min-width:0;
-}
-
-/* Inputs */
 input[type="text"],
 input[type="file"]{
   width:100%;
   padding:8px 10px;
   background:#020617;
-  color:var(--text);
+  color:#e5e7eb;
   border:1px solid var(--border);
   border-radius:8px;
   outline:none;
 }
 
-input[type="text"]:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 2px rgba(37,99,235,.25);
-}
-
-/* Buttons */
 .btn{
   border:none;
   padding:7px 14px;
   border-radius:8px;
   cursor:pointer;
   font-weight:600;
-  transition:.15s ease;
   white-space:nowrap;
 }
 
-.btn-primary{
-  background:var(--primary);
-  color:white;
-}
+.btn-primary{ background:var(--primary); color:white; }
 .btn-primary:hover{ background:var(--primary-hover); }
 
-.btn-success{
-  background:var(--success);
-  color:white;
-}
-
-.btn-danger{
-  background:var(--danger);
-  color:white;
-}
+.btn-success{ background:var(--success); color:white; }
+.btn-danger{ background:var(--danger); color:white; }
 
 .btn:disabled{
   opacity:.5;
   cursor:not-allowed;
 }
 
-/* Rows */
 .slice-row,
 .paste-row{
   display:flex;
@@ -130,7 +114,14 @@ input[type="text"]:focus{
   font-size:13px;
 }
 
-/* Log */
+.badge{
+  background:#1e293b;
+  padding:2px 8px;
+  border-radius:999px;
+  font-size:11px;
+  color:var(--muted);
+}
+
 #log{
   background:#020617;
   padding:12px;
@@ -142,23 +133,12 @@ input[type="text"]:focus{
   border:1px solid var(--border);
 }
 
-/* Download link */
 .download-link{
   display:inline-block;
   margin-top:10px;
   color:#4ade80;
   font-weight:600;
   text-decoration:none;
-}
-.download-link:hover{ text-decoration:underline; }
-
-/* Badge */
-.badge{
-  background:#1e293b;
-  padding:2px 8px;
-  border-radius:999px;
-  font-size:11px;
-  color:var(--muted);
 }
 </style>
 </head>
@@ -194,70 +174,67 @@ const SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
 
-function log(msg) {
-  const logDiv = document.getElementById("log");
-  const time = new Date().toLocaleTimeString();
-  logDiv.innerHTML += `[${time}] ${msg}<br>`;
-  logDiv.scrollTop = logDiv.scrollHeight;
+function log(msg){
+  const logDiv=document.getElementById("log");
+  const time=new Date().toLocaleTimeString();
+  logDiv.innerHTML+=`[${time}] ${msg}<br>`;
+  logDiv.scrollTop=logDiv.scrollHeight;
 }
 
 /* ---------- FILE PROCESSING ---------- */
-document.getElementById("fileInput").addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+document.getElementById("fileInput").addEventListener("change",(e)=>{
+  const file=e.target.files[0];
+  if(!file) return;
 
-  log("File selected: " + file.name);
+  log("File selected: "+file.name);
   log("Reading file as Base64...");
 
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    const base64 = reader.result.split(",")[1];
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const base64=reader.result.split(",")[1];
     log("Base64 conversion complete.");
     createSlices(base64);
   };
-
   reader.readAsDataURL(file);
 });
 
-function createSlices(base64) {
-  slices = [];
-  document.getElementById("sliceList").innerHTML = "";
-
+function createSlices(base64){
+  slices=[];
+  document.getElementById("sliceList").innerHTML="";
   log("Creating 500000-char slices...");
 
-  for (let i = 0; i < base64.length; i += SLICE_SIZE) {
-    slices.push(base64.slice(i, i + SLICE_SIZE));
+  for(let i=0;i<base64.length;i+=SLICE_SIZE){
+    slices.push(base64.slice(i,i+SLICE_SIZE));
   }
 
   log(`Total slices created: ${slices.length}`);
   renderSlices();
 }
 
-function renderSlices() {
-  const container = document.getElementById("sliceList");
-  container.innerHTML = "";
+function renderSlices(){
+  const container=document.getElementById("sliceList");
+  container.innerHTML="";
 
-  slices.forEach((slice, index) => {
-    const row = document.createElement("div");
-    row.className = "slice-row";
+  slices.forEach((slice,index)=>{
+    const row=document.createElement("div");
+    row.className="slice-row";
 
-    const badge = document.createElement("span");
-    badge.className = "badge";
-    badge.textContent = "#" + (index + 1);
+    const badge=document.createElement("span");
+    badge.className="badge";
+    badge.textContent="#"+(index+1);
 
-    const preview = document.createElement("input");
-    preview.type = "text";
-    preview.value = slice.slice(0, 80) + " ...";
-    preview.readOnly = true;
+    const preview=document.createElement("input");
+    preview.type="text";
+    preview.value=slice.slice(0,80)+" ...";
+    preview.readOnly=true;
 
-    const btn = document.createElement("button");
-    btn.className = "btn btn-primary";
-    btn.textContent = "Copy";
+    const btn=document.createElement("button");
+    btn.className="btn btn-primary";
+    btn.textContent="Copy";
 
-    btn.onclick = async () => {
+    btn.onclick=async()=>{
       await navigator.clipboard.writeText(slice);
-      log(`Slice ${index + 1} copied to clipboard.`);
+      log(`Slice ${index+1} copied to clipboard.`);
     };
 
     row.appendChild(badge);
@@ -269,52 +246,68 @@ function renderSlices() {
   log("Slice list rendered.");
 }
 
-/* ---------- PASTE FLOW ---------- */
-function addPasteRow() {
-  const area = document.getElementById("pasteArea");
-  const index = pastedSlices.length;
+/* ---------- PASTE FLOW (WITH FIX) ---------- */
+function addPasteRow(){
+  const area=document.getElementById("pasteArea");
+  const index=pastedSlices.length;
 
-  const row = document.createElement("div");
-  row.className = "paste-row";
+  const row=document.createElement("div");
+  row.className="paste-row";
 
-  const badge = document.createElement("span");
-  badge.className = "badge";
-  badge.textContent = "#" + (index + 1);
+  const badge=document.createElement("span");
+  badge.className="badge";
+  badge.textContent="#"+(index+1);
 
-  const input = document.createElement("input");
-  input.type = "text";
-  input.placeholder = "Paste slice here...";
+  const input=document.createElement("input");
+  input.type="text";
+  input.placeholder="Paste slice here...";
 
-  const pasteBtn = document.createElement("button");
-  pasteBtn.className = "btn btn-primary";
-  pasteBtn.textContent = "Paste";
+  const pasteBtn=document.createElement("button");
+  pasteBtn.className="btn btn-primary";
+  pasteBtn.textContent="Paste";
 
-  const finishBtn = document.createElement("button");
-  finishBtn.className = "btn btn-success";
-  finishBtn.textContent = "Finish";
-  finishBtn.style.display = "none";
+  const clearBtn=document.createElement("button");
+  clearBtn.className="btn btn-danger";
+  clearBtn.textContent="Clear";
+  clearBtn.style.display="none";
 
-  pasteBtn.onclick = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      input.value = text.slice(0, 80) + " ...";
-      pastedSlices[index] = text;
-      log(`Slice ${index + 1} pasted.`);
+  const finishBtn=document.createElement("button");
+  finishBtn.className="btn btn-success";
+  finishBtn.textContent="Finish";
+  finishBtn.style.display="none";
 
-      pasteBtn.disabled = true;
-      finishBtn.style.display = "inline-block";
+  pasteBtn.onclick=async()=>{
+    try{
+      const text=await navigator.clipboard.readText();
+      pastedSlices[index]=text;
+      input.value=text.slice(0,80)+" ...";
+      log(`Slice ${index+1} pasted.`);
+
+      pasteBtn.disabled=true;
+      clearBtn.style.display="inline-block";
+      finishBtn.style.display="inline-block";
 
       addPasteRow();
-    } catch {
+    }catch{
       log("Clipboard paste failed.");
     }
   };
 
-  finishBtn.onclick = rebuildFile;
+  clearBtn.onclick=()=>{
+    pastedSlices[index]=undefined;
+    input.value="";
+    pasteBtn.disabled=false;
+    clearBtn.style.display="none";
+    finishBtn.style.display="none";
+    log(`Slice ${index+1} cleared. Ready to repaste.`);
+  };
+
+  finishBtn.onclick=rebuildFile;
 
   row.appendChild(badge);
   row.appendChild(input);
   row.appendChild(pasteBtn);
+  row.appendChild(clearBtn);
   row.appendChild(finishBtn);
   area.appendChild(row);
 
@@ -322,29 +315,29 @@ function addPasteRow() {
 }
 
 /* ---------- REBUILD ---------- */
-function rebuildFile() {
+function rebuildFile(){
   log("Combining slices...");
-  const combined = pastedSlices.join("");
+  const combined=pastedSlices.filter(Boolean).join("");
 
   log("Decoding Base64 back to binary...");
 
-  try {
-    const byteChars = atob(combined);
-    const byteNumbers = new Array(byteChars.length);
+  try{
+    const byteChars=atob(combined);
+    const byteNumbers=new Array(byteChars.length);
 
-    for (let i = 0; i < byteChars.length; i++) {
-      byteNumbers[i] = byteChars.charCodeAt(i);
+    for(let i=0;i<byteChars.length;i++){
+      byteNumbers[i]=byteChars.charCodeAt(i);
     }
 
-    const blob = new Blob([new Uint8Array(byteNumbers)]);
-    const url = URL.createObjectURL(blob);
+    const blob=new Blob([new Uint8Array(byteNumbers)]);
+    const url=URL.createObjectURL(blob);
 
-    const link = document.getElementById("downloadLink");
-    link.href = url;
-    link.style.display = "inline-block";
+    const link=document.getElementById("downloadLink");
+    link.href=url;
+    link.style.display="inline-block";
 
     log("Reconstruction complete. Download ready.");
-  } catch (e) {
+  }catch(e){
     log("ERROR: Base64 decode failed.");
     console.error(e);
   }
