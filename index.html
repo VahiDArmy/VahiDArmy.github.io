@@ -18,7 +18,6 @@ body{
     #020617;
 }
 
-/* moon */
 body::before{
   content:"";
   position:fixed;
@@ -44,7 +43,6 @@ body::before{
 
 .container{max-width:1100px;margin:auto;}
 
-/* Title font vibe (offline safe) */
 .doom-title{
   font-family: Georgia, "Times New Roman", serif;
   font-size:28px;
@@ -127,6 +125,8 @@ input[type="text"], input[type="file"]{
 </div><div class="card">
   <h2>Step 2 — Paste & Rebuild</h2>
   <div id="pasteArea"></div>
+  <button id="globalFinish" class="btn btn-success" style="display:none;margin-top:10px;">Finish & Rebuild</button>
+  <br>
   <a id="downloadLink" class="download-link" style="display:none;" download="reconstructed.bin">
     Download reconstructed file
   </a>
@@ -141,6 +141,7 @@ const SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
 let lastPastedText = null;
+let originalFileName = "reconstructed.bin";
 
 function log(msg){
   const logDiv=document.getElementById("log");
@@ -153,6 +154,8 @@ function log(msg){
 document.getElementById("fileInput").addEventListener("change",(e)=>{
   const file=e.target.files[0];
   if(!file) return;
+
+  originalFileName = file.name || "reconstructed.bin";
 
   log("File selected: "+file.name);
   log("Reading file as Base64...");
@@ -214,7 +217,7 @@ function renderSlices(){
   log("Slice list rendered.");
 }
 
-/* ---------- PASTE FLOW WITH DUP CHECK ---------- */
+/* ---------- PASTE FLOW ---------- */
 function addPasteRow(){
   const area=document.getElementById("pasteArea");
   const index=pastedSlices.length;
@@ -239,16 +242,15 @@ function addPasteRow(){
   clearBtn.textContent="Clear";
   clearBtn.style.display="none";
 
-  const finishBtn=document.createElement("button");
-  finishBtn.className="btn btn-success";
-  finishBtn.textContent="Finish";
-  finishBtn.style.display="none";
-
   pasteBtn.onclick=async()=>{
     try{
       const text=await navigator.clipboard.readText();
 
-      // duplicate detection
+      if(!text){
+        log(`WARNING: Clipboard empty for slice ${index+1}.`);
+        return;
+      }
+
       if(text===lastPastedText){
         log(`WARNING: Duplicate paste detected for slice ${index+1}. Ignored.`);
         return;
@@ -266,9 +268,12 @@ function addPasteRow(){
 
       pasteBtn.disabled=true;
       clearBtn.style.display="inline-block";
-      finishBtn.style.display="inline-block";
+      document.getElementById("globalFinish").style.display="inline-block";
 
-      addPasteRow();
+      // create next row only if this was the latest
+      if(index === pastedSlices.length - 1){
+        addPasteRow();
+      }
     }catch{
       log("Clipboard paste failed.");
     }
@@ -279,23 +284,21 @@ function addPasteRow(){
     input.value="";
     pasteBtn.disabled=false;
     clearBtn.style.display="none";
-    finishBtn.style.display="none";
     log(`Slice ${index+1} cleared. Ready to repaste.`);
   };
-
-  finishBtn.onclick=rebuildFile;
 
   row.appendChild(badge);
   row.appendChild(input);
   row.appendChild(pasteBtn);
   row.appendChild(clearBtn);
-  row.appendChild(finishBtn);
   area.appendChild(row);
 
   log("Waiting for next paste...");
 }
 
 /* ---------- REBUILD ---------- */
+document.getElementById("globalFinish").onclick=rebuildFile;
+
 function rebuildFile(){
   log("Combining slices...");
   const combined=pastedSlices.filter(Boolean).join("");
@@ -315,6 +318,7 @@ function rebuildFile(){
 
     const link=document.getElementById("downloadLink");
     link.href=url;
+    link.download=originalFileName;
     link.style.display="inline-block";
 
     log("Reconstruction complete. Download ready.");
