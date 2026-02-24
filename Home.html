@@ -13,7 +13,7 @@ body::before{content:""; position:fixed; top:30px; right:40px; width:260px; heig
 .counter{text-align:center; font-size:14px; opacity:.8; margin-bottom:20px;}
 .card{background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
 .row{display:flex; gap:8px; margin-bottom:8px;}
-input[type="text"], select{flex:1; padding:8px; border-radius:8px; border:1px solid #334155; background:#020617; color:#e5e7eb;}
+input[type="text"], input[type="number"], select{flex:1; padding:8px; border-radius:8px; border:1px solid #334155; background:#020617; color:#e5e7eb;}
 button{padding:8px 14px; border-radius:8px; border:none; cursor:pointer; background:#6366f1; color:white;}
 button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 .log{font-size:12px; max-height:200px; overflow:auto; background:#000814; padding:10px; border-radius:8px;}
@@ -67,12 +67,14 @@ let fileVersion = 0;
 function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
 function updateCounter(){ document.getElementById('counter').textContent = fileVersion; }
 
-// ENCODE (FIXED SIZE-SAFE)
+// ENCODE
 document.getElementById('fileInput').addEventListener('change', async function(e){
  const file = e.target.files[0];
  if(!file) return;
 
- SLICE_SIZE = parseInt(document.getElementById('sliceSizeInput').value) || 500000;
+ const sizeInput = document.getElementById('sliceSizeInput');
+ SLICE_SIZE = parseInt(sizeInput.value) || 500000;
+
  fileVersion++;
  log('Reading file...');
 
@@ -110,8 +112,7 @@ function renderSlices(){
    const row=document.createElement('div'); row.className='row';
    const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
    const btn=document.createElement('button'); btn.textContent='Copy';
-   btn.onclick=function(){ navigator.clipboard.writeText(s + '
-'); log('Copied slice '+(i+1)+' with newline'); };
+   btn.onclick=function(){ navigator.clipboard.writeText(s + '\n'); log('Copied slice '+(i+1)+' with newline'); };
    row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
  });
 }
