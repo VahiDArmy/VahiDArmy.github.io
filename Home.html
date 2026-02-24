@@ -25,6 +25,10 @@ button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 <div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
 <div class="counter" id="counter">0</div><div class="card">
 <h3>Encode File</h3>
+<div style="margin-bottom:8px; display:flex; gap:8px; align-items:center;">
+<input type="number" id="sliceSizeInput" value="500000" min="1000" step="1000" style="max-width:180px;" />
+<span style="font-size:12px; opacity:.8;">Chars per slice</span>
+</div>
 <input type="file" id="fileInput">
 <div id="sliceList"></div>
 </div><div class="card">
@@ -53,7 +57,7 @@ button.secondary{background:#475569;} button.danger{background:#b91c1c;}
 The Slayer was once a mortal warrior who stood against the forces of Hell without hesitation. Through endless battles he became a living weapon of vengeance. The demons feared him, naming him the Doom Slayer. Sealed away by the dark lords after they could not kill him, he remained entombed until the age when Hell rose again. When awakened, he resumed the eternal war, driven not by glory but by relentless, unyielding retribution.
 </div>
 </div><script>
-const SLICE_SIZE = 500000;
+let SLICE_SIZE = 500000;
 let slices = [];
 let pastedSlices = [];
 let detectedName = '';
@@ -68,6 +72,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
  const file = e.target.files[0];
  if(!file) return;
 
+ SLICE_SIZE = parseInt(document.getElementById('sliceSizeInput').value) || 500000;
  fileVersion++;
  log('Reading file...');
 
@@ -105,7 +110,8 @@ function renderSlices(){
    const row=document.createElement('div'); row.className='row';
    const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
    const btn=document.createElement('button'); btn.textContent='Copy';
-   btn.onclick=function(){ navigator.clipboard.writeText(s); log('Copied slice '+(i+1)); };
+   btn.onclick=function(){ navigator.clipboard.writeText(s + '
+'); log('Copied slice '+(i+1)+' with newline'); };
    row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
  });
 }
