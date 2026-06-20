@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
     <title>File Base64 Slicer & Rebuilder</title>
     <style>
         :root {
@@ -51,12 +51,13 @@
             font-family: var(--font);
             min-height: 100vh;
             line-height: 1.6;
-            padding: 20px;
+            padding: 16px;
             background-image:
                 radial-gradient(ellipse at 20% 20%, rgba(96, 165, 250, 0.03) 0%, transparent 60%),
                 radial-gradient(ellipse at 80% 60%, rgba(52, 211, 153, 0.03) 0%, transparent 60%),
                 radial-gradient(ellipse at 50% 90%, rgba(139, 92, 246, 0.02) 0%, transparent 50%);
             background-attachment: fixed;
+            -webkit-tap-highlight-color: transparent;
         }
         .container {
             max-width: 1400px;
@@ -67,13 +68,13 @@
         }
         header {
             text-align: center;
-            padding: 24px 20px 8px;
+            padding: 16px 10px 4px;
         }
         header .logo {
             display: inline-flex;
             align-items: center;
-            gap: 12px;
-            font-size: 1.7rem;
+            gap: 8px;
+            font-size: 1.5rem;
             font-weight: 700;
             letter-spacing: -0.02em;
             background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
@@ -82,12 +83,12 @@
             background-clip: text;
         }
         header .logo .icon {
-            font-size: 2rem;
+            font-size: 1.8rem;
             -webkit-text-fill-color: initial;
         }
         header .subtitle {
             color: var(--text3);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             margin-top: 2px;
             letter-spacing: 0.03em;
         }
@@ -107,7 +108,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius);
-            padding: 22px 24px;
+            padding: 18px 16px;
             box-shadow: var(--shadow-md);
             transition: border-color var(--transition), box-shadow var(--transition);
         }
@@ -119,14 +120,14 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 18px;
-            padding-bottom: 14px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
         }
         .card-header .icon {
-            font-size: 1.5rem;
-            width: 38px;
-            height: 38px;
+            font-size: 1.4rem;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -135,12 +136,12 @@
             flex-shrink: 0;
         }
         .card-header h2 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             letter-spacing: -0.01em;
         }
         .card-header .badge {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 3px 10px;
             border-radius: 20px;
             font-weight: 500;
@@ -158,10 +159,10 @@
 
         label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
             color: var(--text2);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
             letter-spacing: 0.03em;
             text-transform: uppercase;
         }
@@ -169,29 +170,29 @@
         input[type="number"],
         textarea {
             width: 100%;
-            padding: 10px 14px;
+            padding: 10px 12px;
             background: var(--surface2);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             color: var(--text);
             font-family: var(--font);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: all var(--transition);
             outline: none;
         }
         input[type="file"] {
             cursor: pointer;
-            padding: 12px 14px;
+            padding: 10px 12px;
         }
         input[type="file"]::file-selector-button {
             background: var(--accent2);
             color: #fff;
             border: none;
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: var(--radius-xs);
             cursor: pointer;
             font-weight: 600;
-            margin-right: 12px;
+            margin-right: 10px;
             transition: all var(--transition);
             font-family: var(--font);
         }
@@ -215,10 +216,10 @@
         }
         textarea {
             font-family: var(--mono);
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             line-height: 1.5;
             resize: vertical;
-            min-height: 65px;
+            min-height: 70px;
             transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.3s ease;
         }
 
@@ -234,11 +235,13 @@
             gap: 4px;
         }
 
+        /* Buttons – mobile friendly */
         button {
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 6px;
-            padding: 10px 18px;
+            padding: 11px 18px;
             font-size: 0.85rem;
             font-weight: 600;
             border: 1px solid transparent;
@@ -249,6 +252,8 @@
             letter-spacing: 0.02em;
             white-space: nowrap;
             user-select: none;
+            min-height: 44px;
+            min-width: 44px;
         }
         button:active {
             transform: scale(0.97);
@@ -290,15 +295,14 @@
             box-shadow: 0 0 0 5px var(--danger-bg);
         }
         .btn-sm {
-            padding: 6px 12px;
+            padding: 8px 14px;
             font-size: 0.75rem;
-            border-radius: var(--radius-xs);
+            min-height: 40px;
         }
         .btn-xs {
-            padding: 4px 9px;
+            padding: 5px 10px;
             font-size: 0.7rem;
-            border-radius: var(--radius-xs);
-            gap: 3px;
+            min-height: 36px;
         }
         button:disabled {
             opacity: 0.4;
@@ -307,19 +311,20 @@
             filter: grayscale(20%);
         }
 
-        /* ── Slice list (upload) ── */
+        /* Upload slice list */
         .slice-list-container {
-            max-height: 380px;
+            max-height: 320px;
             overflow-y: auto;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             background: var(--surface2);
-            margin-top: 10px;
+            margin-top: 8px;
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
+            -webkit-overflow-scrolling: touch;
         }
         .slice-list-container::-webkit-scrollbar {
-            width: 6px;
+            width: 5px;
         }
         .slice-list-container::-webkit-scrollbar-track {
             background: transparent;
@@ -331,8 +336,8 @@
         .slice-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
+            gap: 8px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
             flex-wrap: wrap;
         }
@@ -341,34 +346,35 @@
         }
         .slice-item .slice-num {
             font-weight: 700;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--accent);
-            min-width: 50px;
+            min-width: 44px;
         }
         .slice-item .slice-meta {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text3);
-            min-width: 100px;
+            min-width: 80px;
         }
         .slice-item .slice-preview {
             flex: 1;
             font-family: var(--mono);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text2);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 300px;
+            max-width: 180px;
             opacity: 0.7;
         }
         .no-slices {
             text-align: center;
-            padding: 30px;
+            padding: 24px;
             color: var(--text3);
             font-style: italic;
+            font-size: 0.8rem;
         }
 
-        /* ── Rebuild section ── */
+        /* Rebuild section */
         .paste-area {
             position: relative;
             margin-bottom: 10px;
@@ -395,7 +401,7 @@
         }
         .paste-row textarea {
             flex: 1;
-            min-width: 200px;
+            min-width: 180px;
         }
         .paste-feedback {
             font-size: 0.7rem;
@@ -408,14 +414,15 @@
         .paste-feedback.warn { color: var(--warn-neon); }
 
         .collected-slices {
-            margin-top: 10px;
+            margin-top: 8px;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            max-height: 260px;
+            max-height: 240px;
             overflow-y: auto;
             background: var(--surface2);
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
+            -webkit-overflow-scrolling: touch;
         }
         .collected-slices::-webkit-scrollbar {
             width: 5px;
@@ -431,9 +438,9 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border-bottom: 1px solid var(--border);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             animation: slideDown 0.25s ease;
         }
         @keyframes slideDown {
@@ -444,7 +451,7 @@
             background: var(--accent-glow);
             color: var(--accent);
             font-weight: 700;
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-size: 0.7rem;
         }
@@ -457,8 +464,9 @@
             color: var(--danger);
             cursor: pointer;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.1rem;
             line-height: 1;
+            padding: 4px 8px;
             transition: var(--transition);
         }
         .collected-item .slice-remove:hover {
@@ -480,7 +488,7 @@
             transition: width 0.4s ease;
         }
         .progress-text {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text2);
             margin-top: 4px;
             font-weight: 500;
@@ -488,7 +496,7 @@
 
         .download-link-area {
             margin-top: 12px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             background: var(--success-bg);
             border: 1px solid rgba(52, 211, 153, 0.3);
             border-radius: var(--radius-sm);
@@ -504,27 +512,28 @@
             color: var(--success);
             font-weight: 700;
             text-decoration: underline;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             word-break: break-all;
         }
 
-        /* ── Log ── */
+        /* Log */
         .log-section .card-header {
-            margin-bottom: 10px;
-            padding-bottom: 10px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
         }
         .log-container {
-            max-height: 200px;
+            max-height: 180px;
             overflow-y: auto;
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            padding: 10px 14px;
+            padding: 10px 12px;
             font-family: var(--mono);
-            font-size: 0.72rem;
+            font-size: 0.68rem;
             line-height: 1.7;
             scrollbar-width: thin;
             scrollbar-color: var(--border) transparent;
+            -webkit-overflow-scrolling: touch;
         }
         .log-container::-webkit-scrollbar {
             width: 5px;
@@ -545,13 +554,13 @@
 
         .toast {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             z-index: 9999;
-            padding: 10px 18px;
+            padding: 10px 16px;
             border-radius: var(--radius-sm);
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             animation: slideIn 0.3s ease, fadeOut 0.3s ease 1.8s forwards;
             pointer-events: none;
             box-shadow: var(--shadow-lg);
@@ -569,9 +578,15 @@
 
         @media (max-width: 640px) {
             body { padding: 10px; }
-            .card { padding: 14px 16px; }
+            .card { padding: 14px 12px; }
             .slice-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .slice-item .slice-preview { max-width: 100%; }
             .paste-row { flex-direction: column; align-items: stretch; }
+            .paste-row textarea { min-width: 100%; }
+            .form-row { flex-direction: column; align-items: stretch; }
+            button { width: 100%; justify-content: center; }
+            .btn-sm { width: auto; }
+            .collected-item { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -597,14 +612,4 @@
                         <label for="maxChars">Max Chars per Slice</label>
                         <input type="number" id="maxChars" value="500000" min="1000" max="5000000" step="1000">
                     </div>
-                    <div class="form-group" style="flex:1; min-width:200px;">
-                        <label for="fileInput">Choose File</label>
-                        <input type="file" id="fileInput">
-                    </div>
-                </div>
-                <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn-primary" id="processBtn" disabled>⚡ Process File</button>
-                    <button class="btn-danger btn-sm" id="clearAllUploadBtn" disabled>🗑️ Clear All Slices</button>
-                </div>
-                <div class="slice-list-container" id="sliceListContainer">
-                    <div class="no-slices" id="noSlicesMsg">No slices
+                    <div cla
