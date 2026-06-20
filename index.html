@@ -1,216 +1,610 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Base64 Cosmic Slicer</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&display=swap');
-body{margin:0; min-height:100vh; background:#020617; color:#e5e7eb; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; overflow-x:hidden;}
-body::after{content:""; position:fixed; inset:0; background:radial-gradient(2px 2px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #fff, transparent), radial-gradient(1.5px 1.5px at 40% 80%, #fff, transparent), radial-gradient(800px 600px at 50% 50%, rgba(99,102,241,.25), transparent); z-index:-2;}
-body::before{content:""; position:fixed; top:30px; right:40px; width:260px; height:260px; border-radius:50%; background: radial-gradient(circle at 30% 30%, #fff, #dbeafe 60%, #94a3b8 100%); box-shadow:0 0 90px rgba(255,255,255,.45), inset -25px -25px 40px rgba(0,0,0,.3); z-index:-1;}
-.container{max-width:1100px; margin:auto; padding:24px;}
-.title{font-family:'Cinzel', serif; text-align:center; font-size:28px; margin-bottom:6px;}
-.counter{text-align:center; font-size:14px; opacity:.8; margin-bottom:20px;}
-.card{background:rgba(15,23,42,.75); backdrop-filter:blur(6px); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
-.row{display:flex; gap:8px; margin-bottom:8px;}
-input[type="text"], select{flex:1; padding:8px; border-radius:8px; border:1px solid #334155; background:#020617; color:#e5e7eb;}
-button{padding:8px 14px; border-radius:8px; border:none; cursor:pointer; background:#6366f1; color:white;}
-button.secondary{background:#475569;} button.danger{background:#b91c1c;}
-.log{font-size:12px; max-height:200px; overflow:auto; background:#000814; padding:10px; border-radius:8px;}
-.footer-note{font-size:13px; opacity:.85; margin-top:30px; text-align:center;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Base64 Slicer & Rebuilder</title>
+    <style>
+        :root {
+            --bg: #0a0e14;
+            --surface: #141b22;
+            --surface2: #1a212b;
+            --border: #2a3340;
+            --border-active: #3b4a5c;
+            --text: #e2e8f0;
+            --text2: #b0b8c4;
+            --text3: #7a8494;
+            --accent: #60a5fa;
+            --accent2: #3b82f6;
+            --accent-glow: rgba(96, 165, 250, 0.15);
+            --success: #34d399;
+            --success-neon: #00ff88;
+            --success-bg: rgba(52, 211, 153, 0.12);
+            --warn: #fbbf24;
+            --warn-neon: #ffaa00;
+            --warn-bg: rgba(251, 191, 36, 0.12);
+            --danger: #f87171;
+            --danger-bg: rgba(248, 113, 113, 0.12);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --radius-xs: 5px;
+            --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.45);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font);
+            min-height: 100vh;
+            line-height: 1.6;
+            padding: 20px;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(96, 165, 250, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 60%, rgba(52, 211, 153, 0.03) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 90%, rgba(139, 92, 246, 0.02) 0%, transparent 50%);
+            background-attachment: fixed;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 24px 20px 8px;
+        }
+        header .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.7rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        header .logo .icon {
+            font-size: 2rem;
+            -webkit-text-fill-color: initial;
+        }
+        header .subtitle {
+            color: var(--text3);
+            font-size: 0.85rem;
+            margin-top: 2px;
+            letter-spacing: 0.03em;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 960px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-md);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .card:hover {
+            border-color: var(--border-active);
+            box-shadow: var(--shadow-lg);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .card-header .icon {
+            font-size: 1.5rem;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+        .card-header h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+        }
+        .card-header .badge {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .badge-upload {
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+        .badge-download {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text2);
+            margin-bottom: 5px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+        input[type="file"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text);
+            font-family: var(--font);
+            font-size: 0.9rem;
+            transition: all var(--transition);
+            outline: none;
+        }
+        input[type="file"] {
+            cursor: pointer;
+            padding: 12px 14px;
+        }
+        input[type="file"]::file-selector-button {
+            background: var(--accent2);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            font-weight: 600;
+            margin-right: 12px;
+            transition: all var(--transition);
+            font-family: var(--font);
+        }
+        input[type="file"]::file-selector-button:hover {
+            background: #2563eb;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+        }
+        input[type="number"]:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        input[type="number"] {
+            max-width: 200px;
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+            height: 28px;
+        }
+        textarea {
+            font-family: var(--mono);
+            font-size: 0.75rem;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 65px;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.3s ease;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+            font-family: var(--font);
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            user-select: none;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        .btn-primary {
+            background: var(--accent2);
+            color: #fff;
+            border-color: var(--accent2);
+        }
+        .btn-primary:hover {
+            background: #2563eb;
+            box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.2);
+        }
+        .btn-success {
+            background: #059669;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #047857;
+            box-shadow: 0 0 0 5px rgba(5, 150, 105, 0.2);
+        }
+        .btn-outline {
+            background: transparent;
+            border-color: var(--border);
+            color: var(--text2);
+        }
+        .btn-outline:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+        }
+        .btn-danger {
+            background: transparent;
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        .btn-danger:hover {
+            background: var(--danger-bg);
+            box-shadow: 0 0 0 5px var(--danger-bg);
+        }
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            border-radius: var(--radius-xs);
+        }
+        .btn-xs {
+            padding: 4px 9px;
+            font-size: 0.7rem;
+            border-radius: var(--radius-xs);
+            gap: 3px;
+        }
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+            filter: grayscale(20%);
+        }
+
+        /* ── Slice list (upload) ── */
+        .slice-list-container {
+            max-height: 380px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: var(--surface2);
+            margin-top: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .slice-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .slice-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .slice-list-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .slice-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .slice-item:last-child {
+            border-bottom: none;
+        }
+        .slice-item .slice-num {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--accent);
+            min-width: 50px;
+        }
+        .slice-item .slice-meta {
+            font-size: 0.75rem;
+            color: var(--text3);
+            min-width: 100px;
+        }
+        .slice-item .slice-preview {
+            flex: 1;
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            color: var(--text2);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 300px;
+            opacity: 0.7;
+        }
+        .no-slices {
+            text-align: center;
+            padding: 30px;
+            color: var(--text3);
+            font-style: italic;
+        }
+
+        /* ── Rebuild section ── */
+        .paste-area {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .paste-area textarea {
+            border: 2px solid var(--border);
+            transition: border-color 0.2s ease, box-shadow 0.25s ease, background 0.25s ease;
+        }
+        .paste-area.success-glow textarea {
+            border-color: var(--success-neon) !important;
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.35), 0 0 40px rgba(0, 255, 136, 0.12), 0 0 0 4px rgba(0, 255, 136, 0.06) !important;
+            background: #0a1a14 !important;
+        }
+        .paste-area.warn-glow textarea {
+            border-color: var(--warn-neon) !important;
+            box-shadow: 0 0 18px rgba(255, 170, 0, 0.4), 0 0 40px rgba(255, 170, 0, 0.12), 0 0 0 4px rgba(255, 170, 0, 0.06) !important;
+            background: #1a1408 !important;
+        }
+        .paste-row {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .paste-row textarea {
+            flex: 1;
+            min-width: 200px;
+        }
+        .paste-feedback {
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-top: 4px;
+            min-height: 20px;
+            transition: color 0.2s ease;
+        }
+        .paste-feedback.success { color: var(--success-neon); }
+        .paste-feedback.warn { color: var(--warn-neon); }
+
+        .collected-slices {
+            margin-top: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            max-height: 260px;
+            overflow-y: auto;
+            background: var(--surface2);
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .collected-slices::-webkit-scrollbar {
+            width: 5px;
+        }
+        .collected-slices::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .collected-slices::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .collected-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.8rem;
+            animation: slideDown 0.25s ease;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .collected-item .slice-badge {
+            background: var(--accent-glow);
+            color: var(--accent);
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+        .collected-item .slice-info {
+            flex: 1;
+            color: var(--text2);
+            font-size: 0.72rem;
+        }
+        .collected-item .slice-remove {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            line-height: 1;
+            transition: var(--transition);
+        }
+        .collected-item .slice-remove:hover {
+            color: #ff8a8a;
+            transform: scale(1.2);
+        }
+
+        .progress-bar-outer {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #34d399);
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text2);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .download-link-area {
+            margin-top: 12px;
+            padding: 14px 16px;
+            background: var(--success-bg);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: var(--radius-sm);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .download-link-area.visible {
+            display: flex;
+        }
+        .download-link-area a {
+            color: var(--success);
+            font-weight: 700;
+            text-decoration: underline;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        /* ── Log ── */
+        .log-section .card-header {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+        }
+        .log-container {
+            max-height: 200px;
+            overflow-y: auto;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            line-height: 1.7;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .log-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .log-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .log-container::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        .log-entry { color: var(--text3); padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.015); }
+        .log-entry .ts { color: var(--accent); margin-right: 8px; }
+        .log-entry.info { color: var(--text2); }
+        .log-entry.success { color: var(--success); }
+        .log-entry.warn { color: var(--warn); }
+        .log-entry.error { color: var(--danger); }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.8rem;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 1.8s forwards;
+            pointer-events: none;
+            box-shadow: var(--shadow-lg);
+        }
+        .toast.copied { background: #1a3a2e; border: 1px solid var(--success); color: var(--success); }
+        .toast.error { background: #3a1a1a; border: 1px solid var(--danger); color: var(--danger); }
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-8px); }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            .card { padding: 14px 16px; }
+            .slice-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+            .paste-row { flex-direction: column; align-items: stretch; }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-<div class="title">He sought revenge against the dark lords, who had "Wronged" him.</div>
-<div class="counter" id="counter">0</div><div class="card">
-<h3>Encode File</h3>
-<input type="file" id="fileInput">
-<div id="sliceList"></div>
-</div><div class="card">
-<h3>Rebuild</h3>
-<div id="pasteContainer"></div>
-<div style="margin-top:10px; display:flex; gap:8px;">
-<input type="text" id="fileNameInput" placeholder="Output file name (optional)" />
-<select id="fileExtInput">
-<option value="">Extension (optional)</option>
-<option value="jpg">JPG</option>
-<option value="png">PNG</option>
-<option value="pdf">PDF</option>
-<option value="txt">TXT</option>
-<option value="mp4">MP4</option>
-<option value="zip">ZIP</option>
-<option value="bin">BIN</option>
-</select>
-<button onclick="finishRebuild()">Finish</button>
-</div>
-<div id="downloadArea"></div>
-</div><div class="card">
-<h3>Log</h3>
-<div class="log" id="log"></div>
-</div><div class="footer-note">
-<strong>Doom Testament (summary):</strong><br>
-The Slayer was once a mortal warrior who stood against the forces of Hell without hesitation. Through endless battles he became a living weapon of vengeance. The demons feared him, naming him the Doom Slayer. Sealed away by the dark lords after they could not kill him, he remained entombed until the age when Hell rose again. When awakened, he resumed the eternal war, driven not by glory but by relentless, unyielding retribution.
-</div>
-</div><script>
-const SLICE_SIZE = 500000;
-let slices = [];
-let pastedSlices = [];
-let detectedName = '';
-let detectedExt = '';
-let fileVersion = 0;
+    <div class="container">
+        <header>
+            <div class="logo">
+                <span class="icon">🔪</span> File Base64 Slicer & Rebuilder
+            </div>
+            <p class="subtitle">Slice files into base64 text chunks &bull; Paste them back to rebuild perfectly</p>
+        </header>
 
-function log(msg){ const el=document.getElementById('log'); el.innerHTML += msg+"<br>"; el.scrollTop = el.scrollHeight; }
-function updateCounter(){ document.getElementById('counter').textContent = fileVersion; }
-
-// ENCODE (FIXED SIZE-SAFE)
-document.getElementById('fileInput').addEventListener('change', async function(e){
- const file = e.target.files[0];
- if(!file) return;
-
- fileVersion++;
- log('Reading file...');
-
- const buffer = await file.arrayBuffer();
- const bytes = new Uint8Array(buffer);
- let binary = '';
- for(let i=0;i<bytes.length;i++){ binary += String.fromCharCode(bytes[i]); }
- const base64 = btoa(binary);
-
- slices = [];
-
- const header = 'FILENAME:' + file.name;
- const headerBlock = header + '\n';
-
- let index = 0;
- const firstPayloadSize = Math.max(0, SLICE_SIZE - headerBlock.length);
- const firstChunk = base64.slice(index, index + firstPayloadSize);
- slices.push(headerBlock + firstChunk);
- index += firstPayloadSize;
-
- while(index < base64.length){
-   slices.push(base64.slice(index, index + SLICE_SIZE));
-   index += SLICE_SIZE;
- }
-
- log('Created ' + slices.length + ' slices with header (size-safe)');
- renderSlices();
- updateCounter();
-});
-
-function renderSlices(){
- const list=document.getElementById('sliceList');
- list.innerHTML='';
- slices.forEach((s,i)=>{
-   const row=document.createElement('div'); row.className='row';
-   const preview=document.createElement('input'); preview.type='text'; preview.value=s.slice(0,60)+'...'; preview.readOnly=true;
-   const btn=document.createElement('button'); btn.textContent='Copy';
-   btn.onclick=function(){ navigator.clipboard.writeText(s + '
-'); log('Copied slice '+(i+1)+' with newline'); };
-   row.appendChild(preview); row.appendChild(btn); list.appendChild(row);
- });
-}
-
-// REBUILD
-function addPasteRow(){
- const container=document.getElementById('pasteContainer');
- const row=document.createElement('div'); row.className='row';
- const input=document.createElement('input'); input.type='text'; input.placeholder='Paste slice here'; input.dataset.full='';
-
- const pasteBtn=document.createElement('button'); pasteBtn.textContent='Paste';
- pasteBtn.onclick=async function(){
-  const text=await navigator.clipboard.readText();
-  if(!text){ log('Clipboard empty'); return; }
-
-  if(input.dataset.full){
-    const oldIndex=pastedSlices.indexOf(input.dataset.full);
-    if(oldIndex!==-1) pastedSlices.splice(oldIndex,1);
-  }
-
-  if(pastedSlices.length===0 && text.startsWith('FILENAME:')){
-    const idx=text.indexOf('\n');
-    if(idx!==-1){
-      const header=text.slice(9,idx);
-      const parts=header.split('.');
-      if(parts.length>1){ detectedExt=parts.pop(); detectedName=parts.join('.'); }
-      else{ detectedName=header; detectedExt=''; }
-      document.getElementById('fileNameInput').value=detectedName;
-      document.getElementById('fileExtInput').value=detectedExt;
-      const payload=text.slice(idx+1);
-      input.dataset.full=payload;
-      input.value=payload.slice(0,60)+'...';
-      pastedSlices.push(payload);
-      log('Header detected. File name: '+detectedName+', Ext: '+detectedExt);
-      updateCounter();
-      addPasteRow();
-      return;
-    }
-  }
-
-  if(pastedSlices.includes(text)){ log('Duplicate slice detected, ignored'); return; }
-
-  input.dataset.full=text;
-  input.value=text.slice(0,60)+'...';
-  pastedSlices.push(text);
-  updateCounter();
-  log('Slice pasted. Total '+pastedSlices.length);
-
-  if(row===container.lastElementChild) addPasteRow();
- };
-
- const clearBtn=document.createElement('button');
- clearBtn.textContent='Clear';
- clearBtn.className='danger';
- clearBtn.onclick=function(){
-   if(input.dataset.full){
-     const idx=pastedSlices.indexOf(input.dataset.full);
-     if(idx!==-1) pastedSlices.splice(idx,1);
-   }
-   input.dataset.full='';
-   input.value='';
-   updateCounter();
-   log('Row cleared');
- };
-
- row.appendChild(input);
- row.appendChild(pasteBtn);
- row.appendChild(clearBtn);
- container.appendChild(row);
-}
-addPasteRow();
-
-function finishRebuild(){
- if(!pastedSlices.length){ log('No slices to rebuild'); return; }
- log('Combining slices...');
-
- const combined=pastedSlices.join('');
- try{
-  const binary=atob(combined);
-  const bytes=new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-
-  const blob=new Blob([bytes]);
-  const url=URL.createObjectURL(blob);
-
-  let name=document.getElementById('fileNameInput').value.trim();
-  let ext=document.getElementById('fileExtInput').value.trim();
-
-  if(!name) name='output';
-  if(ext) name=name+'.'+ext;
-
-  const link=document.createElement('a');
-  link.href=url;
-  link.download=name;
-  link.textContent='Download '+name;
-
-  const area=document.getElementById('downloadArea');
-  area.innerHTML='';
-  area.appendChild(link);
-
-  log('Rebuild complete');
- }catch(e){
-  log('Decode failed');
- }
-}
-</script></body>
-</html>
+        <div class="two-column">
+            <!-- UPLOAD SECTION -->
+            <section class="card upload-section">
+                <div class="card-header">
+                    <span class="icon">📤</span>
+                    <h2>Upload &amp; Slice</h2>
+                    <span class="badge badge-upload">Encode</span>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="maxChars">Max Chars per Slice</label>
+                        <input type="number" id="maxChars" value="500000" min="1000" max="5000000" step="1000">
+                    </div>
+                    <div class="form-group" style="flex:1; min-width:200px;">
+                        <label for="fileInput">Choose File</label>
+                        <input type="file" id="fileInput">
+                    </div>
+                </div>
+                <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn-primary" id="processBtn" disabled>⚡ Process File</button>
+                    <button class="btn-danger btn-sm" id="clearAllUploadBtn" disabled>🗑️ Clear All Slices</button>
+                </div>
+                <div class="slice-list-container" id="sliceListContainer">
+                    <div class="no-slices" id="noSlicesMsg">No slices
