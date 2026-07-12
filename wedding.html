@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Dashboard · S/V Aggregator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 16px;
+            font-family: 'Rajdhani', sans-serif;
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(0, 229, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 127, 0.05) 0%, transparent 50%);
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: rgba(10, 10, 30, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 28px;
+            padding: 24px 20px;
+            border: 1px solid rgba(0, 229, 255, 0.12);
+            box-shadow: 0 0 60px rgba(0, 229, 255, 0.08), 0 0 120px rgba(255, 0, 127, 0.04);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+            border-bottom: 2px solid rgba(0, 229, 255, 0.08);
+            padding-bottom: 14px;
+            gap: 10px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #00e5ff, #ff00aa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+            letter-spacing: 1px;
+        }
+
+        .badge-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: #8a8aaa;
+            background: rgba(0, 229, 255, 0.06);
+            padding: 5px 16px;
+            border-radius: 40px;
+            border: 1px solid rgba(0, 229, 255, 0.12);
+            letter-spacing: 2px;
+        }
+        .badge-header span {
+            color: #00e5ff;
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            color: #7a7aaa;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin: 24px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .section-title:first-of-type {
+            margin-top: 0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 229, 255, 0.06);
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+            margin-bottom: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: 'Rajdhani', sans-serif;
+            color: #e0e0ff;
+            font-size: 0.88rem;
+            min-width: 500px;
+        }
+
+        thead {
+            background: rgba(0, 229, 255, 0.04);
+            border-bottom: 2px solid rgba(0, 229, 255, 0.12);
+        }
+
+        thead th {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 0.65rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 10px 12px;
+            color: #00e5ff;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+            white-space: nowrap;
+            text-align: left;
+        }
+        thead th:first-child { padding-left: 16px; }
+
+        tbody td {
+            padding: 8px 12px;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            vertical-align: middle;
+        }
+        tbody td:first-child { padding-left: 16px; }
+
+        tbody tr:hover {
+            background: rgba(0, 229, 255, 0.03);
+        }
+
+        .highlight-row td {
+            background: rgba(0, 229, 255, 0.04);
+            border-left: 2px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 1px 12px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.5px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid;
+            min-width: 30px;
+            text-align: center;
+        }
+        .badge-s { color: #39ff14; border-color: #39ff14; text-shadow: 0 0 8px #39ff1440; }
+        .badge-v { color: #ff00aa; border-color: #ff00aa; text-shadow: 0 0 8px #ff00aa40; }
+        .badge-m { color: #ffb800; border-color: #ffb800; text-shadow: 0 0 8px #ffb80040; }
+
+        .criteria-select {
+            background: rgba(0, 0, 0, 0.6);
+            color: #e0e0ff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 4px 10px 4px 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            min-width: 48px;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%238a8aaa'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            padding-right: 28px;
+        }
+        .criteria-select:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+        .criteria-select option {
+            background: #0a0a1a;
+            color: #e0e0ff;
+        }
+        .criteria-select.sel-s { color: #39ff14; border-color: #39ff1440; }
+        .criteria-select.sel-v { color: #ff00aa; border-color: #ff00aa40; }
+        .criteria-select.sel-m { color: #ffb800; border-color: #ffb80040; }
+
+        /* ----- ADD ROW PANEL ----- */
+        .add-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 14px;
+            border: 1px dashed rgba(0, 229, 255, 0.15);
+        }
+        .add-panel label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.6rem;
+            color: #7a7aaa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .add-panel input,
+        .add-panel select {
+            background: rgba(0, 0, 0, 0.6);
+            color: #e0e0ff;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.2s ease;
+            min-width: 120px;
+        }
+        .add-panel input:focus,
+        .add-panel select:focus {
+            border-color: #00e5ff;
+            box-shadow: 0 0 20px rgba(0, 229, 255, 0.1);
+        }
+        .add-panel input::placeholder {
+            color: #4a4a7a;
+            font-weight: 400;
+        }
+        .add-panel select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0l4 6 4-6z' fill='%238a8aaa'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            padding-right: 28px;
+            cursor: pointer;
+        }
+        .add-panel select option {
+            background: #0a0a1a;
+        }
+        .add-btn {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(255, 0, 170, 0.15));
+            color: #00e5ff;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 30px;
+            padding: 6px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+            letter-spacing: 1px;
+        }
+        .add-btn:hover {
+            background: linear-gradient(135deg, rgba(0, 229, 255, 0.25), rgba(255, 0, 170, 0.25));
+            border-color: #00e5ff;
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+            transform: scale(1.02);
+        }
+
+        .chart-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 229, 255, 0.06);
+            padding: 20px 15px 15px;
+            margin-top: 6px;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+
+        .chart-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            color: #7a7aaa;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            color: #8a8aaa;
+            font-weight: 600;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .legend-dot.money { background: #00e5ff; box-shadow: 0 0 12px rgba(0, 229, 255, 0.3); }
+        .legend-dot.qty { background: #39ff14; box-shadow: 0 0 12px rgba(57, 255, 20, 0.3); }
+        .legend-dot.excl { background: #ff00aa; box-shadow: 0 0 12px rgba(255, 0, 170, 0.3); }
+
+        .chart-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 280px;
+        }
+
+        #chartCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 14px 10px; }
+            h1 { font-size: 1.1rem; }
+            .badge-header { font-size: 0.55rem; padding: 4px 10px; }
+
+            thead th, tbody td {
+                padding: 6px 8px;
+                font-size: 0.7rem;
+            }
+            thead th:first-child, tbody td:first-child { padding-left: 10px; }
+            table { min-width: 400px; font-size: 0.75rem; }
+
+            .add-panel { flex-direction: column; align-items: stretch; }
+            .add-panel input, .add-panel select { min-width: unset; width: 100%; }
+            .add-btn { width: 100%; text-align: center; }
+
+            .chart-container { padding: 12px 8px; }
+            .chart-canvas-wrapper { height: 200px; }
+            .chart-title { font-size: 0.6rem; }
+            .legend-item { font-size: 0.55rem; gap: 4px; }
+            .legend-dot { width: 10px; height: 10px; }
+
+            .section-title { font-size: 0.65rem; margin-top: 18px; }
+            .criteria-select { font-size: 0.6rem; padding: 2px 22px 2px 10px; min-width: 38px; }
+        }
+
+        @media (max-width: 400px) {
+            .chart-canvas-wrapper { height: 160px; }
+            .chart-legend { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>✦ NEON · S/V</h1>
+        <div class="badge-header">FILTER: <span>S</span> + <span>V</span></div>
+    </div>
+
+    <!-- ===== TABLE 1: AGENT ROSTER (EDITABLE) ===== -->
+    <div class="section-title">📋 Agent Roster <span style="color:#5a5a8a;font-size:0.6rem;font-weight:400;">(click class to edit)</span></div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Codename</th>
+                    <th>Class</th>
+                    <th>Power</th>
+                </tr>
+            </thead>
+            <tbody id="memberTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ===== ADD ROW PANEL ===== -->
+    <div class="add-panel">
+        <label for="newName">Add Agent</label>
+        <input type="text" id="newName" placeholder="Codename (e.g., Xav.P)" value="">
+        <select id="newCriteria">
+            <option value="S">S</option>
+            <option value="V">V</option>
+            <option value="M">M</option>
+        </select>
+        <button class="add-btn" id="addBtn">+ ADD</button>
+    </div>
+
+    <!-- ===== TABLE 2: STRATEGIC SUMMARY ===== -->
+    <div class="section-title" style="margin-top:24px;">📊 Strategic Summary</div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Class</th>
+                    <th>Total Power</th>
+                    <th>Quantity</th>
+                    <th>Exclusive Qty</th>
+                </tr>
+            </thead>
+            <tbody id="aggregatedTableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- ===== CHART: NEON AGGREGATED VIEW ===== -->
+    <div class="section-title" style="margin-top:24px;">📈 Aggregated Comparison</div>
+    <div class="chart-container">
+        <div class="chart-header">
+            <span class="chart-title">S · V · M — Power / Quantity / Exclusive</span>
+            <div class="chart-legend">
+                <span class="legend-item"><span class="legend-dot money"></span> Total Power</span>
+                <span class="legend-item"><span class="legend-dot qty"></span> Quantity</span>
+                <span class="legend-item"><span class="legend-dot excl"></span> Exclusive</span>
+            </div>
+        </div>
+        <div class="chart-canvas-wrapper">
+            <canvas id="chartCanvas"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function() {
+        // ----- AGENT ROSTER (ABBREVIATED CODENAMES ONLY) -----
+        let members = [
+            { name: "Faz.A", criteria: "S", value: 150 },
+            { name: "Ham.M", criteria: "S", value: 150 },
+            { name: "Gho.F", criteria: "S", value: 150 },
+            { name: "Cha.M", criteria: "S", value: 150 },
+            { name: "Moh.R", criteria: "S", value: 150 },
+            { name: "Gha.N", criteria: "S", value: 150 },
+            { name: "Aza.A", criteria: "V", value: 300 },
+            { name: "Kari",  criteria: "S", value: 150 },
+            { name: "Lar.I", criteria: "S", value: 150 },
+            { name: "Gha.M", criteria: "S", value: 150 },
+            { name: "Hos.H", criteria: "S", value: 150 },
+            { name: "Ash.A", criteria: "S", value: 150 },
+            { name: "Mal.V", criteria: "M", value: 300 },
+            { name: "Tal.H", criteria: "M", value: 300 },
+            { name: "Far.A", criteria: "M", value: 300 },
+            { name: "Zar.H", criteria: "M", value: 300 },
+            { name: "Bay.P", criteria: "M", value: 300 },
+            { name: "Hos.M", criteria: "V", value: 300 },
+            { name: "Kiae",  criteria: "S", value: 150 },
+            { name: "Mani",  criteria: "S", value: 150 },
+            { name: "Vahi",  criteria: "S", value: 150 },
+            { name: "Rahg",  criteria: "S", value: 150 }
+        ];
+
+        // ----- RENDER MEMBER TABLE -----
+        const memberTbody = document.getElementById('memberTableBody');
+
+        function renderMembers() {
+            memberTbody.innerHTML = '';
+            members.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                const selectClass = `sel-${row.criteria.toLowerCase()}`;
+                const select = document.createElement('select');
+                select.className = `criteria-select ${selectClass}`;
+                select.dataset.index = index;
+                ['S', 'V', 'M'].forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt;
+                    option.textContent = opt;
+                    if (opt === row.criteria) option.selected = true;
+                    select.appendChild(option);
+                });
+
+                select.addEventListener('change', function(e) {
+                    const idx = parseInt(this.dataset.index);
+                    const newCriteria = this.value;
+                    members[idx].criteria = newCriteria;
+                    members[idx].value = (newCriteria === 'S') ? 150 : 300;
+
+                    this.className = `criteria-select sel-${newCriteria.toLowerCase()}`;
+                    const tr = this.closest('tr');
+                    tr.querySelectorAll('td')[2].textContent = members[idx].value;
+
+                    renderAggregated();
+                    updateChart();
+                    highlightRows();
+                });
+
+                tr.innerHTML = `
+                    <td>${row.name}</td>
+                    <td></td>
+                    <td>${row.value}</td>
+                `;
+                tr.querySelectorAll('td')[1].appendChild(select);
+
+                if (row.criteria === 'S' || row.criteria === 'V') {
+                    tr.classList.add('highlight-row');
+                }
+                memberTbody.appendChild(tr);
+            });
+        }
+
+        function highlightRows() {
+            const rows = memberTbody.querySelectorAll('tr');
+            rows.forEach((tr, idx) => {
+                const member = members[idx];
+                if (!member) return;
+                if (member.criteria === 'S' || member.criteria === 'V') {
+                    tr.classList.add('highlight-row');
+                } else {
+                    tr.classList.remove('highlight-row');
+                }
+            });
+        }
+
+        // ----- COMPUTE AGGREGATED -----
+        function computeAggregated() {
+            let cntS = 0, cntV = 0, cntM = 0;
+            let sumS = 0, sumV = 0, sumM = 0;
+
+            members.forEach(m => {
+                if (m.criteria === 'S') { cntS++; sumS += m.value; }
+                else if (m.criteria === 'V') { cntV++; sumV += m.value; }
+                else if (m.criteria === 'M') { cntM++; sumM += m.value; }
+            });
+
+            const totalRows = members.length;
+
+            const vMoney = sumV + sumS;
+            const vQty = cntV + cntS;
+            const vExcl = cntV;
+
+            const mMoney = sumM + sumS;
+            const mQty = cntM + cntS;
+            const mExcl = cntM;
+
+            const sMoney = vMoney + mMoney;
+            const sQty = totalRows;
+            const sExcl = cntS;
+
+            return [
+                { criteria: 'V', money: vMoney, quantity: vQty, exclusive: vExcl },
+                { criteria: 'M', money: mMoney, quantity: mQty, exclusive: mExcl },
+                { criteria: 'S', money: sMoney, quantity: sQty, exclusive: sExcl }
+            ];
+        }
+
+        // ----- RENDER AGGREGATED TABLE -----
+        const aggTbody = document.getElementById('aggregatedTableBody');
+
+        function renderAggregated() {
+            const data = computeAggregated();
+            aggTbody.innerHTML = '';
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const badgeClass = `badge-${row.criteria.toLowerCase()}`;
+                const badge = `<span class="badge ${badgeClass}">${row.criteria}</span>`;
+                tr.innerHTML = `
+                    <td>${badge}</td>
+                    <td>${row.money.toLocaleString()}</td>
+                    <td>${row.quantity}</td>
+                    <td>${row.exclusive}</td>
+                `;
+                if (row.criteria === 'S' || row.criteria === 'V') {
+                    tr.classList.add('highlight-row');
+                }
+                aggTbody.appendChild(tr);
+            });
+        }
+
+        // ----- CHART DRAWING -----
+        const canvas = document.getElementById('chartCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            ctx.scale(dpr, dpr);
+        }
+
+        function drawChart() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const W = rect.width;
+            const H = rect.height;
+            const data = computeAggregated();
+
+            const margin = { top: 20, bottom: 30, left: 10, right: 10 };
+            const chartW = W - margin.left - margin.right;
+            const chartH = H - margin.top - margin.bottom;
+
+            const categories = ['V', 'M', 'S'];
+            const series = [
+                { key: 'money', label: 'Total Power', color: '#00e5ff', glow: 'rgba(0,229,255,0.3)' },
+                { key: 'quantity', label: 'Quantity', color: '#39ff14', glow: 'rgba(57,255,20,0.3)' },
+                { key: 'exclusive', label: 'Exclusive', color: '#ff00aa', glow: 'rgba(255,0,170,0.3)' }
+            ];
+
+            const seriesMax = {};
+            series.forEach(s => {
+                seriesMax[s.key] = Math.max(...data.map(d => d[s.key]), 1);
+            });
+
+            const groupWidth = chartW / categories.length;
+            const barWidth = groupWidth * 0.2;
+            const gap = groupWidth * 0.05;
+
+            ctx.clearRect(0, 0, W, H);
+
+            categories.forEach((cat, catIdx) => {
+                const row = data.find(d => d.criteria === cat);
+                if (!row) return;
+
+                const xBase = margin.left + catIdx * groupWidth + gap;
+
+                series.forEach((s, sIdx) => {
+                    const val = row[s.key] || 0;
+                    const maxVal = seriesMax[s.key];
+                    const barH = (val / maxVal) * chartH;
+                    const x = xBase + sIdx * (barWidth + gap);
+                    const y = margin.top + chartH - barH;
+
+                    const grad = ctx.createRadialGradient(
+                        x + barWidth/2, y + barH/2, 0,
+                        x + barWidth/2, y + barH/2, barH * 0.6
+                    );
+                    grad.addColorStop(0, s.glow);
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(x - barH * 0.3, y - barH * 0.1, barWidth + barH * 0.6, barH + barH * 0.2);
+
+                    ctx.shadowColor = s.color;
+                    ctx.shadowBlur = 20;
+                    ctx.fillStyle = s.color;
+                    ctx.beginPath();
+                    const radius = 4;
+                    ctx.moveTo(x + radius, y);
+                    ctx.lineTo(x + barWidth - radius, y);
+                    ctx.quadraticCurveTo(x + barWidth, y, x + barWidth, y + radius);
+                    ctx.lineTo(x + barWidth, y + barH);
+                    ctx.lineTo(x, y + barH);
+                    ctx.lineTo(x, y + radius);
+                    ctx.quadraticCurveTo(x, y, x + radius, y);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+
+                    if (val > 0) {
+                        ctx.fillStyle = s.color;
+                        ctx.font = 'bold 9px Orbitron, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.shadowColor = s.color;
+                        ctx.shadowBlur = 10;
+                        ctx.fillText(Math.round(val).toLocaleString(), x + barWidth/2, y - 4);
+                        ctx.shadowBlur = 0;
+                    }
+                });
+
+                ctx.fillStyle = '#8a8aaa';
+                ctx.font = 'bold 10px Orbitron, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,229,255,0.1)';
+                ctx.shadowBlur = 8;
+                ctx.fillText(cat, xBase + (series.length * (barWidth + gap)) / 2 - gap/2, margin.top + chartH + 16);
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function updateChart() {
+            resizeCanvas();
+            drawChart();
+        }
+
+        // ----- ADD NEW ROW FUNCTIONALITY -----
+        const newNameInput = document.getElementById('newName');
+        const newCriteriaSelect = document.getElementById('newCriteria');
+        const addBtn = document.getElementById('addBtn');
+
+        addBtn.addEventListener('click', function() {
+            let name = newNameInput.value.trim();
+            if (!name) {
+                // Auto-generate a name if empty
+                const count = members.length + 1;
+                name = `Agent${count}`;
+            }
+
+            const criteria = newCriteriaSelect.value;
+            const value = (criteria === 'S') ? 150 : 300;
+
+            // Push new member
+            members.push({ name: name, criteria: criteria, value: value });
+
+            // Clear input field
+            newNameInput.value = '';
+
+            // Re-render everything
+            renderMembers();
+            renderAggregated();
+            updateChart();
+            highlightRows();
+
+            // Small animation feedback (optional)
+            addBtn.style.transform = 'scale(0.95)';
+            setTimeout(() => { addBtn.style.transform = 'scale(1)'; }, 150);
+        });
+
+        // Allow pressing "Enter" in the input field to add
+        newNameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addBtn.click();
+            }
+        });
+
+        // ----- INIT -----
+        renderMembers();
+        renderAggregated();
+        updateChart();
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(updateChart, 200);
+        });
+
+        document.querySelector('h1').addEventListener('click', () => {
+            updateChart();
+        });
+
+        console.log('✅ Cyberpunk Roster + Chart + Add Row ready. Add new agents dynamically!');
+    })();
+</script>
+</body>
+</html>
