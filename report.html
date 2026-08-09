@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HQL — رده‌بندی و گزارش عمومی ماهانه</title>
+  
+  <!-- Persian Font: Vazirmatn -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js/dist/jalaali.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --line: #e2e8f0;
+      --primary: #2563eb;
+      --purple: #8b5cf6;
+      --gold: #f59e0b;
+      --silver: #94a3b8;
+      --bronze: #d97706;
+      --shadow: 0 10px 25px -5px rgba(15,23,42,0.05);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top right, #eef4ff, #f8fafc);
+      color: var(--text);
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, sans-serif;
+      min-height: 100vh;
+      padding: 20px 12px 40px;
+    }
+
+    .app { max-width: 900px; margin: auto; }
+    
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      color: #fff;
+      font-size: 20px;
+    }
+    .brand h1 { font-size: 18px; margin: 0; font-weight: 800; }
+    
+    .btn-back {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-back:hover { background: #f1f5f9; }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .header-box { text-align: center; margin-bottom: 24px; }
+    .header-box h2 { font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+    .header-box p { color: var(--muted); font-size: 13px; margin: 0; }
+
+    .month-badge {
+      display: inline-block;
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    /* Leaderboard Table Styles */
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { text-align: right; padding: 14px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: var(--muted); font-weight: 600; background: #fafafa; }
+    .scroll { overflow-x: auto; border-radius: 12px; border: 1px solid var(--line); }
+
+    .rank {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      background: #f1f5f9;
+      color: var(--muted);
+    }
+    .rank-1 { background: #fef3c7; color: var(--gold); border: 1px solid #fde68a; }
+    .rank-2 { background: #f1f5f9; color: var(--silver); border: 1px solid #e2e8f0; }
+    .rank-3 { background: #ffedd5; color: var(--bronze); border: 1px solid #fed7aa; }
+
+    .user-name { font-weight: 700; color: var(--text); }
+    .calories-val { font-weight: 800; color: var(--primary); font-size: 15px; }
+
+    .empty { text-align: center; padding: 40px; color: var(--muted); }
+    .loading { text-align: center; padding: 40px; color: var(--muted); font-weight: 500; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo">🏆</div>
+      <div><h1>جدول رده‌بندی عمومی</h1></div>
+    </div>
+    <a href="index.html" class="btn-back">بازگشت به داشبورد</a>
+  </header>
+
+  <main class="card">
+    <div class="header-box">
+      <h2>رتبه‌بندی کالری‌سوزی کاربران</h2>
+      <p>محاسبه شده بر اساس مجموع کالری دویده شده از ابتدای ماه جاری</p>
+      <div id="monthBadge" class="month-badge">در حال محاسبه ماه...</div>
+    </div>
+
+    <div id="loading" class="loading">در حال دریافت و پردازش اطلاعات کاربران...</div>
+
+    <div id="leaderboardWrapper" class="scroll hidden">
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 70px; text-align: center;">رتبه</th>
+            <th>کاربر</th>
+            <th>کالری سوزانده‌شده (ماه)</th>
+            <th>مسافت دویده شده (ماه)</th>
+            <th>تعداد روزهای ثبت‌شده</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   1) SUPABASE CONFIG (استفاده از همان Credentialها)
+========================================================= */
+const SUPABASE_URL = "https://igvhuwxqljtxtpikebcq.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_rwuDqMKTGOmUXpZZTWDcFg_Pmvrr67v";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const PERSIAN_MONTHS = [
+  "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
+  "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"
+];
+
+const fmt = (n, d=0) => Number(n||0).toLocaleString("fa-IR", {maximumFractionDigits: d});
+
+/* =========================================================
+   2) CALCULATION OF JALALI MONTH START DATE
+========================================================= */
+function getJalaliMonthStartISO() {
+  const now = new Date();
+  const jNow = jalaali.toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  
+  // تنظیم عنوان ماه در فرم
+  document.getElementById("monthBadge").textContent = `ماه جاری: ${PERSIAN_MONTHS[jNow.jm - 1]} ${jNow.jy}`;
+
+  // تبدیل روز ۱ ام همین ماه شمسی به میلادی جهت فیلتر دیتابیس
+  const gStart = jalaali.toGregorian(jNow.jy, jNow.jm, 1);
+  return `${gStart.gy}-${String(gStart.gm).padStart(2,'0')}-${String(gStart.gd).padStart(2,'0')}`;
+}
+
+/* =========================================================
+   3) FETCH & RANK USERS BY MONTHLY CALORIES
+========================================================= */
+async function loadLeaderboard() {
+  const monthStartISO = getJalaliMonthStartISO();
+
+  try {
+    // ۱. دریافت تمام پروفایل‌ها
+    const { data: profiles, error: profErr } = await sb
+      .from("profiles")
+      .select("id, display_name");
+
+    if (profErr) throw profErr;
+
+    // ۲. دریافت رکوردهای ثبت شده از اول ماه جاری تا امروز
+    const { data: logs, error: logErr } = await sb
+      .from("daily_logs")
+      .select("user_id, calories, km")
+      .gte("log_date", monthStartISO);
+
+    if (logErr) throw logErr;
+
+    // ۳. تجمیع آمار کالری برای هر کاربر
+    const userStats = {};
+    (profiles || []).forEach(p => {
+      userStats[p.id] = {
+        name: p.display_name || "کاربر بدون نام",
+        calories: 0,
+        km: 0,
+        days: 0
+      };
+    });
+
+    (logs || []).forEach(l => {
+      if (userStats[l.user_id]) {
+        userStats[l.user_id].calories += Number(l.calories || 0);
+        userStats[l.user_id].km += Number(l.km || 0);
+        userStats[l.user_id].days += 1;
+      }
+    });
+
+    // ۴. تبدیل به آرایه و سورت بر اساس کالری (نزولی)
+    const sortedUsers = Object.values(userStats).sort((a, b) => b.calories - a.calories);
+
+    renderLeaderboard(sortedUsers);
+  } catch (err) {
+    console.error(err);
+    document.getElementById("loading").textContent = "خطا در بارگذاری اطلاعات عمومی.";
+  }
+}
+
+function renderLeaderboard(users) {
+  document.getElementById("loading").classList.add("hidden");
+  document.getElementById("leaderboardWrapper").classList.remove("hidden");
+
+  const tbody = document.getElementById("leaderboardBody");
+  
+  if (!users.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty">هیچ داده‌ای برای این ماه ثبت نشده است.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = users.map((u, index) => {
+    const rank = index + 1;
+    let rankBadgeClass = "rank";
+    if (rank === 1) rankBadgeClass += " rank-1";
+    if (rank === 2) rankBadgeClass += " rank-2";
+    if (rank === 3) rankBadgeClass += " rank-3";
+
+    return `
+      <tr>
+        <td style="text-align: center;"><span class="${rankBadgeClass}">${rank}</span></td>
+        <td class="user-name">${u.name}</td>
+        <td class="calories-val">${fmt(u.calories)} کالری</td>
+        <td>${fmt(u.km, 2)} کیلومتر</td>
+        <td>${fmt(u.days)} روز</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// اجرا هنگام بارگذاری صفحه
+loadLeaderboard();
+</script>
+</body>
+</html>
