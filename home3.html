@@ -228,7 +228,7 @@
     .notice { padding: 12px 14px; border-radius: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 12px; line-height: 1.6; }
     .admin-badge { background: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
     
-    /* Footer & Version Counter */
+    /* Footer & Version Badge */
     .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0 10px; }
     .version-tag { display: inline-block; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
 
@@ -256,7 +256,7 @@
     <div class="nav">
       <button type="button" data-page="dashboard">داشبورد من</button>
       <button type="button" data-page="log" id="navLogBtn">ثبت روزانه</button>
-      <!-- ONLY CHANGE: Simple HTML link pointing to report.html -->
+      <!-- Standard HTML link to report.html -->
       <a href="report.html" class="report-link">گزارش عمومی</a>
       <button type="button" id="adminNav" data-page="admin" class="hidden">مدیریت</button>
       <button type="button" id="logout" class="danger">خروج</button>
@@ -365,7 +365,7 @@
   <div id="toast" class="toast hidden"></div>
   <footer class="footer">
     RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت
-    <div><span class="version-tag">v2.1.2</span></div>
+    <div><span class="version-tag">v2.1.3-FIXED</span></div>
   </footer>
 </div>
 
@@ -385,7 +385,7 @@ const $ = id => document.getElementById(id);
 const fmt = (n, d=0) => Number(n||0).toLocaleString("fa-IR", {maximumFractionDigits: d});
 
 /* =========================================================
-   2) JALALI (شمسی) DATE HELPER FUNCTIONS
+   2) JALALI DATE HELPER FUNCTIONS
 ========================================================= */
 const PERSIAN_MONTHS = [
   "فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور",
@@ -394,6 +394,7 @@ const PERSIAN_MONTHS = [
 
 function initJalaliSelectors() {
   const ySel = $("jYear"), mSel = $("jMonth"), dSel = $("jDay");
+  if (!ySel || !mSel || !dSel) return;
   ySel.innerHTML = ""; mSel.innerHTML = ""; dSel.innerHTML = "";
 
   const now = new Date();
@@ -412,9 +413,9 @@ function initJalaliSelectors() {
 }
 
 function setJalaliSelectorValue(jy, jm, jd) {
-  $("jYear").value = jy;
-  $("jMonth").value = jm;
-  $("jDay").value = jd;
+  if ($("jYear")) $("jYear").value = jy;
+  if ($("jMonth")) $("jMonth").value = jm;
+  if ($("jDay")) $("jDay").value = jd;
 }
 
 function getJalaliFromSelector() {
@@ -480,6 +481,4 @@ async function init() {
   });
 }
 
-async function enter(user) {
-  currentUser = user;
-  const { data: profile, error
+async function en
