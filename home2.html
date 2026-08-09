@@ -228,7 +228,7 @@
     .notice { padding: 12px 14px; border-radius: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 12px; line-height: 1.6; }
     .admin-badge { background: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
     
-    /* Footer & Version Tag */
+    /* Footer & Version Counter */
     .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0 10px; }
     .version-tag { display: inline-block; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
 
@@ -256,7 +256,7 @@
     <div class="nav">
       <button type="button" data-page="dashboard">داشبورد من</button>
       <button type="button" data-page="log" id="navLogBtn">ثبت روزانه</button>
-      <!-- Pure HTML Link directly targeting report.html -->
+      <!-- ONLY CHANGE: Simple HTML link pointing to report.html -->
       <a href="report.html" class="report-link">گزارش عمومی</a>
       <button type="button" id="adminNav" data-page="admin" class="hidden">مدیریت</button>
       <button type="button" id="logout" class="danger">خروج</button>
@@ -365,7 +365,7 @@
   <div id="toast" class="toast hidden"></div>
   <footer class="footer">
     RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت
-    <div><span class="version-tag">v2.1.1</span></div>
+    <div><span class="version-tag">v2.1.2</span></div>
   </footer>
 </div>
 
@@ -482,4 +482,4 @@ async function init() {
 
 async function enter(user) {
   currentUser = user;
-  const { data: profile, error } = await s
+  const { data: profile, error
