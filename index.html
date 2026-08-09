@@ -80,7 +80,7 @@
     .brand small { color: var(--muted); font-size: 12px; }
 
     .nav { display: flex; gap: 8px; flex-wrap: wrap; }
-    .nav button, .ghost, .nav a {
+    .nav button, .ghost, .nav a.nav-link {
       border: 1px solid var(--line);
       background: #fff;
       color: var(--text);
@@ -93,7 +93,7 @@
       align-items: center;
       justify-content: center;
     }
-    .nav button:hover, .ghost:hover, .nav a:hover { background: #f1f5f9; }
+    .nav button:hover, .ghost:hover, .nav a.nav-link:hover { background: #f1f5f9; }
     .nav button.active {
       background: var(--primary);
       color: #fff;
@@ -237,7 +237,7 @@
       .row, .check-grid { grid-template-columns: 1fr; }
       .topbar { align-items: stretch; flex-direction: column; gap: 12px; }
       .nav { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-      .nav button, .nav a { padding: 8px; text-align: center; font-size: 12px; }
+      .nav button, .nav a.nav-link { padding: 8px; text-align: center; font-size: 12px; }
       .card { padding: 14px; }
       .kpi .value { font-size: 20px; }
     }
@@ -253,8 +253,8 @@
     <div class="nav">
       <button type="button" data-page="dashboard">داشبورد من</button>
       <button type="button" data-page="log" id="navLogBtn">ثبت روزانه</button>
-      <!-- دکمه گزارش عمومی لینک مستقیم به صفحه جدید report.html -->
-      <a href="report.html">گزارش عمومی</a>
+      <!-- Direct HTML anchor link isolated from JS page switcher -->
+      <a href="report.html" class="nav-link">گزارش عمومی</a>
       <button type="button" id="adminNav" data-page="admin" class="hidden">مدیریت</button>
       <button type="button" id="logout" class="danger">خروج</button>
     </div>
@@ -483,6 +483,4 @@ async function enter(user) {
     toast("پروفایل پیدا نشد؛ SQL راه‌اندازی را بررسی کنید.", "err");
     return;
   }
-  currentProfile = profile;
-  $("authView").classList.add("hidden");
-  
+  currentProfile = profile
