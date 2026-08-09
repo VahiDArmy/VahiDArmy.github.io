@@ -227,7 +227,10 @@
 
     .notice { padding: 12px 14px; border-radius: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 12px; line-height: 1.6; }
     .admin-badge { background: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    
+    /* Footer & Version Counter */
     .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0 10px; }
+    .version-tag { display: inline-block; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
 
     /* Responsive */
     @media(max-width:900px){ .kpis { grid-template-columns: repeat(2, 1fr); } .two { grid-template-columns: 1fr; } }
@@ -253,7 +256,6 @@
     <div class="nav">
       <button type="button" data-page="dashboard">داشبورد من</button>
       <button type="button" data-page="log" id="navLogBtn">ثبت روزانه</button>
-      <!-- Direct HTML anchor link isolated from JS page switcher -->
       <a href="report.html" class="nav-link">گزارش عمومی</a>
       <button type="button" id="adminNav" data-page="admin" class="hidden">مدیریت</button>
       <button type="button" id="logout" class="danger">خروج</button>
@@ -361,7 +363,10 @@
   </main>
 
   <div id="toast" class="toast hidden"></div>
-  <footer class="footer">RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت</footer>
+  <footer class="footer">
+    RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت
+    <div><span class="version-tag">v2.1.0</span></div>
+  </footer>
 </div>
 
 <script>
@@ -477,10 +482,4 @@ async function init() {
 
 async function enter(user) {
   currentUser = user;
-  const { data: profile, error } = await sb.from("profiles").select("id,display_name,role").eq("id", user.id).single();
-  if (error) {
-    console.error(error);
-    toast("پروفایل پیدا نشد؛ SQL راه‌اندازی را بررسی کنید.", "err");
-    return;
-  }
-  currentProfile = profile
+  const { data: profile, error } = await sb.from("profiles").selec
