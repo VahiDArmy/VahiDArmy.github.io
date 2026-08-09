@@ -80,7 +80,7 @@
     .brand small { color: var(--muted); font-size: 12px; }
 
     .nav { display: flex; gap: 8px; flex-wrap: wrap; }
-    .nav button, .ghost {
+    .nav button, .ghost, .nav a.report-link {
       border: 1px solid var(--line);
       background: #fff;
       color: var(--text);
@@ -88,8 +88,12 @@
       border-radius: 10px;
       font-weight: 500;
       font-size: 13px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .nav button:hover, .ghost:hover { background: #f1f5f9; }
+    .nav button:hover, .ghost:hover, .nav a.report-link:hover { background: #f1f5f9; }
     .nav button.active {
       background: var(--primary);
       color: #fff;
@@ -132,7 +136,6 @@
     .section-title h2 { font-size: 16px; margin: 0; font-weight: 700; }
     .muted { color: var(--muted); }
     .two { grid-template-columns: 1.4fr 1fr; }
-    .three { grid-template-columns: repeat(3, 1fr); }
 
     /* Forms & Inputs */
     label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
@@ -224,17 +227,20 @@
 
     .notice { padding: 12px 14px; border-radius: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 12px; line-height: 1.6; }
     .admin-badge { background: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+    
+    /* Footer & Version Tag */
     .footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0 10px; }
+    .version-tag { display: inline-block; background: #e2e8f0; color: #475569; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-top: 6px; }
 
     /* Responsive */
-    @media(max-width:900px){ .kpis { grid-template-columns: repeat(2, 1fr); } .two, .three { grid-template-columns: 1fr; } }
+    @media(max-width:900px){ .kpis { grid-template-columns: repeat(2, 1fr); } .two { grid-template-columns: 1fr; } }
     @media(max-width:600px){
       .app { padding: 12px; }
       .kpis { grid-template-columns: 1fr 1fr; }
       .row, .check-grid { grid-template-columns: 1fr; }
       .topbar { align-items: stretch; flex-direction: column; gap: 12px; }
       .nav { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-      .nav button { padding: 8px; text-align: center; font-size: 12px; }
+      .nav button, .nav a.report-link { padding: 8px; text-align: center; font-size: 12px; }
       .card { padding: 14px; }
       .kpi .value { font-size: 20px; }
     }
@@ -250,7 +256,8 @@
     <div class="nav">
       <button type="button" data-page="dashboard">داشبورد من</button>
       <button type="button" data-page="log" id="navLogBtn">ثبت روزانه</button>
-      <button type="button" data-page="public">گزارش عمومی</button>
+      <!-- Pure HTML Link directly targeting report.html -->
+      <a href="report.html" class="report-link">گزارش عمومی</a>
       <button type="button" id="adminNav" data-page="admin" class="hidden">مدیریت</button>
       <button type="button" id="logout" class="danger">خروج</button>
     </div>
@@ -294,7 +301,6 @@
         <div class="card"><div class="section-title"><h2>رعایت عادت‌ها</h2></div><div id="habits"></div></div>
       </div>
       
-      <!-- Dashboard Table Section Title -->
       <div class="card" style="margin-top:16px">
         <div class="section-title">
           <div>
@@ -342,22 +348,6 @@
       </div>
     </section>
 
-    <!-- PUBLIC REPORT PAGE -->
-    <section id="publicPage" class="page hidden">
-      <div class="section-title"><div><h2>گزارش عمومی</h2><span class="muted">بدون نمایش اطلاعات خصوصی کاربران</span></div></div>
-      <div class="grid kpis">
-        <div class="card kpi"><div class="label">کاربران ثبت‌نام‌شده</div><div class="value" id="pUsers">—</div></div>
-        <div class="card kpi"><div class="label">مجموع کیلومتر</div><div class="value" id="pKm">—</div></div>
-        <div class="card kpi"><div class="label">مجموع کالری</div><div class="value" id="pCal">—</div></div>
-        <div class="card kpi"><div class="label">چربی معادل</div><div class="value" id="pFat">—</div></div>
-      </div>
-      <div class="grid three" style="margin-top:16px">
-        <div class="card"><h3>شام ساعت ۸</h3><div id="pDinner">—</div></div>
-        <div class="card"><h3>خواب قبل از ۱۱:۳۰</h3><div id="pSleep">—</div></div>
-        <div class="card"><h3>نخوردن شیرینی</h3><div id="pSweet">—</div></div>
-      </div>
-    </section>
-
     <!-- ADMIN PAGE -->
     <section id="adminPage" class="page hidden">
       <div class="section-title"><div><h2>پنل مدیریت</h2><span class="muted">فقط برای Super User</span></div><span class="admin-badge">ADMIN</span></div>
@@ -373,7 +363,10 @@
   </main>
 
   <div id="toast" class="toast hidden"></div>
-  <footer class="footer">RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت</footer>
+  <footer class="footer">
+    RunTrack • طراحی شده برای ثبت ساده و شخصی پیشرفت
+    <div><span class="version-tag">v2.1.1</span></div>
+  </footer>
 </div>
 
 <script>
@@ -403,7 +396,6 @@ function initJalaliSelectors() {
   const ySel = $("jYear"), mSel = $("jMonth"), dSel = $("jDay");
   ySel.innerHTML = ""; mSel.innerHTML = ""; dSel.innerHTML = "";
 
-  // Compute current Jalali year
   const now = new Date();
   const currentJ = jalaali.toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
 
@@ -433,7 +425,6 @@ function getJalaliFromSelector() {
   };
 }
 
-// Converts standard YYYY-MM-DD ISO string to formatted Jalali string
 function toJalaliString(isoDateStr) {
   if (!isoDateStr) return "—";
   const parts = isoDateStr.split("-");
@@ -443,7 +434,6 @@ function toJalaliString(isoDateStr) {
   return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
 }
 
-// Converts Jalali object to Gregorian YYYY-MM-DD ISO string for database storage
 function jalaliToGregorianISO(jy, jm, jd) {
   const g = jalaali.toGregorian(jy, jm, jd);
   return `${g.gy}-${String(g.gm).padStart(2,'0')}-${String(g.gd).padStart(2,'0')}`;
@@ -466,7 +456,6 @@ function showPage(name) {
   document.querySelectorAll(".nav button[data-page]").forEach(x => x.classList.toggle("active", x.dataset.page === name));
   
   if (name === "dashboard") loadDashboard();
-  if (name === "public") loadPublic();
   if (name === "admin" && currentProfile?.role === "admin") loadAdmin();
 }
 
@@ -493,337 +482,4 @@ async function init() {
 
 async function enter(user) {
   currentUser = user;
-  const { data: profile, error } = await sb.from("profiles").select("id,display_name,role").eq("id", user.id).single();
-  if (error) {
-    console.error(error);
-    toast("پروفایل پیدا نشد؛ SQL راه‌اندازی را بررسی کنید.", "err");
-    return;
-  }
-  currentProfile = profile;
-  $("authView").classList.add("hidden");
-  $("topbar").classList.remove("hidden");
-  $("siteView").classList.remove("hidden");
-  $("welcome").textContent = (profile.display_name || user.email || "") + " خوش آمدید";
-  $("adminNav").classList.toggle("hidden", profile.role !== "admin");
-  $("roleBadge").innerHTML = profile.role === "admin" ? '<span class="admin-badge">Super User</span>' : "";
-  showPage("dashboard");
-}
-
-function leave() {
-  currentUser = null; 
-  currentProfile = null;
-  $("topbar").classList.add("hidden");
-  $("siteView").classList.add("hidden");
-  $("authView").classList.remove("hidden");
-}
-
-$("tabLogin").onclick = () => setAuthMode("login");
-$("tabSignup").onclick = () => setAuthMode("signup");
-
-$("authForm").onsubmit = async e => {
-  e.preventDefault();
-  if (!ready) { toast("تنظیمات Supabase کامل نشده.", "err"); return; }
-  const email = $("email").value.trim(), password = $("password").value;
-  $("authSubmit").disabled = true;
-  try {
-    if (mode === "login") {
-      const { error } = await sb.auth.signInWithPassword({ email, password }); 
-      if (error) throw error;
-      toast("ورود موفق بود", "ok");
-    } else {
-      const name = $("displayName").value.trim();
-      const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name } } });
-      if (error) throw error;
-      if (!data.session) $("authMsg").textContent = "حساب ساخته شد.";
-      else toast("حساب ساخته شد", "ok");
-    }
-  } catch(err) {
-    $("authMsg").textContent = err.message || "خطا در ورود";
-    toast("عملیات ناموفق بود", "err");
-  } finally {
-    $("authSubmit").disabled = false;
-  }
-};
-
-$("logout").onclick = async () => { if (sb) await sb.auth.signOut(); };
-document.querySelectorAll("[data-page]").forEach(b => b.addEventListener("click", () => {
-  if (b.dataset.page === "log") resetLogForm();
-  showPage(b.dataset.page);
-}));
-$("addNewRecordBtn").onclick = () => { resetLogForm(); showPage("log"); };
-
-/* =========================================================
-   4) DASHBOARD & LOGS MANAGEMENT
-========================================================= */
-async function loadDashboard() {
-  if (!currentUser) return;
-  const { data, error } = await sb.from("daily_logs").select("*").eq("user_id", currentUser.id).order("log_date", { ascending: false });
-  if (error) { toast("خطا در دریافت اطلاعات", "err"); console.error(error); return; }
-  
-  activeLogs = data || [];
-  const km = activeLogs.reduce((a, r) => a + Number(r.km || 0), 0);
-  const cal = activeLogs.reduce((a, r) => a + Number(r.calories || 0), 0);
-  const fat = cal / 7700;
-  const weights = activeLogs.map(r => Number(r.weight)).filter(Boolean);
-  
-  $("kKm").textContent = fmt(km, 2);
-  $("kCal").textContent = fmt(cal);
-  $("kFat").textContent = fmt(fat, 3);
-  $("kWeight").textContent = weights.length ? fmt(weights.reduce((a, b) => a + b, 0) / weights.length, 1) : "—";
-  
-  renderChart(activeLogs.slice(0, 14).reverse());
-  renderHabits(activeLogs);
-  renderRecent(activeLogs);
-}
-
-function renderChart(rows) {
-  const vals = rows.map(r => Number(r.calories || 0)), max = Math.max(...vals, 1);
-  $("chart").innerHTML = rows.length ? rows.map(r => {
-    const h = Math.max(3, (Number(r.calories || 0) / max) * 150);
-    const jStr = toJalaliString(r.log_date).slice(-5);
-    return `<div class="col"><i style="height:${h}px" title="${fmt(r.calories)} کالری"></i><span>${jStr}</span></div>`;
-  }).join("") : `<div class="empty">هنوز رکوردی ثبت نشده است.</div>`;
-}
-
-function renderHabits(rows) {
-  const calc = key => { let n = rows.length, b = rows.filter(r => r[key]).length; return [b, n ? Math.round(b / n * 100) : 0]; };
-  const items = [["شام ساعت ۸", "dinner_ok"], ["خواب قبل از ۱۱:۳۰", "sleep_ok"], ["نخوردن شیرینی", "sweet_ok"]];
-  $("habits").innerHTML = items.map(([name, key]) => {
-    const [b, p] = calc(key);
-    return `<div style="margin:12px 0"><div class="section-title" style="margin-bottom:6px"><span>${name}</span><b>${fmt(p)}%</b></div><div class="bar"><i style="width:${p}%"></i></div><small class="muted">${fmt(b)} از ${fmt(rows.length)} روز</small></div>`;
-  }).join("");
-}
-
-function status(v) { return `<span class="status ${v ? "yes" : "no"}">${v ? "بله" : "خیر"}</span>`; }
-
-function renderRecent(rows) {
-  if (!rows.length) {
-    $("recent").innerHTML = `<div class="empty">اولین رکوردت را ثبت کن.</div>`;
-    return;
-  }
-  
-  let html = `<table>
-    <thead>
-      <tr>
-        <th>تاریخ (شمسی)</th>
-        <th>کیلومتر</th>
-        <th>وزن</th>
-        <th>کالری</th>
-        <th>چربی معادل</th>
-        <th>عادت‌ها</th>
-        <th>عملیات</th>
-      </tr>
-    </thead>
-    <tbody>`;
-    
-  rows.forEach(r => {
-    html += `<tr>
-      <td>${toJalaliString(r.log_date)}</td>
-      <td>${fmt(r.km, 2)}</td>
-      <td>${fmt(r.weight, 1)}</td>
-      <td>${fmt(r.calories)}</td>
-      <td>${fmt(Number(r.calories) / 7700, 3)}</td>
-      <td>${status(r.dinner_ok)} ${status(r.sleep_ok)} ${status(r.sweet_ok)}</td>
-      <td>
-        <button class="ghost btn-action edit-btn" data-id="${r.id}">ویرایش</button>
-        <button class="danger btn-action delete-btn" data-id="${r.id}">حذف</button>
-      </td>
-    </tr>`;
-  });
-  
-  html += `</tbody></table>`;
-  $("recent").innerHTML = html;
-
-  // Safe DOM Event Bindings
-  document.querySelectorAll(".edit-btn").forEach(btn => {
-    btn.onclick = () => editRecord(btn.dataset.id);
-  });
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.onclick = () => deleteRecord(btn.dataset.id);
-  });
-}
-
-/* =========================================================
-   5) EDIT & DELETE LOGIC
-========================================================= */
-function resetLogForm() {
-  $("editRecordId").value = "";
-  $("logFormTitle").textContent = "ثبت روزانه جدید";
-  $("logFormSubtitle").textContent = "هر روز یک رکورد";
-  $("saveRecordBtn").textContent = "ذخیره رکورد";
-  $("cancelEditBtn").classList.add("hidden");
-  $("weight").value = "";
-  $("km").value = "";
-  $("dinner").checked = false;
-  $("sleep").checked = false;
-  $("sweet").checked = false;
-  
-  const now = new Date();
-  const currentJ = jalaali.toJalaali(now.getFullYear(), now.getMonth() + 1, now.getDate());
-  setJalaliSelectorValue(currentJ.jy, currentJ.jm, currentJ.jd);
-}
-
-function editRecord(id) {
-  const rec = activeLogs.find(r => r.id === id);
-  if (!rec) return;
-
-  $("editRecordId").value = rec.id;
-  $("logFormTitle").textContent = "ویرایش رکورد";
-  $("logFormSubtitle").textContent = "ویرایش اطلاعات روز " + toJalaliString(rec.log_date);
-  $("saveRecordBtn").textContent = "به‌روزرسانی رکورد";
-  $("cancelEditBtn").classList.remove("hidden");
-
-  $("weight").value = rec.weight;
-  $("km").value = rec.km;
-  $("dinner").checked = rec.dinner_ok;
-  $("sleep").checked = rec.sleep_ok;
-  $("sweet").checked = rec.sweet_ok;
-
-  const parts = rec.log_date.split("-");
-  const j = jalaali.toJalaali(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-  setJalaliSelectorValue(j.jy, j.jm, j.jd);
-
-  showPage("log");
-}
-
-$("cancelEditBtn").onclick = () => {
-  resetLogForm();
-  showPage("dashboard");
-};
-
-async function deleteRecord(id) {
-  if (!confirm("آیا از حذف این رکورد اطمینان دارید؟")) return;
-  const { error } = await sb.from("daily_logs").delete().eq("id", id);
-  if (error) { toast(error.message, "err"); return; }
-  toast("رکورد با موفقیت حذف شد", "ok");
-  loadDashboard();
-}
-
-$("logForm").onsubmit = async e => {
-  e.preventDefault();
-  if (!currentUser) return;
-
-  const editId = $("editRecordId").value;
-  const jObj = getJalaliFromSelector();
-  const isoDate = jalaliToGregorianISO(jObj.jy, jObj.jm, jObj.jd);
-
-  const payload = {
-    user_id: currentUser.id,
-    log_date: isoDate,
-    weight: Number($("weight").value),
-    km: Number($("km").value),
-    dinner_ok: $("dinner").checked,
-    sleep_ok: $("sleep").checked,
-    sweet_ok: $("sweet").checked
-  };
-  payload.calories = payload.weight * payload.km;
-
-  let error;
-  if (editId) {
-    payload.id = editId;
-    ({ error } = await sb.from("daily_logs").upsert(payload));
-  } else {
-    ({ error } = await sb.from("daily_logs").upsert(payload, { onConflict: "user_id,log_date" }));
-  }
-
-  if (error) { toast(error.message, "err"); return; }
-  
-  toast(editId ? "رکورد به روز شد" : "رکورد ذخیره شد", "ok");
-  resetLogForm();
-  showPage("dashboard");
-};
-
-/* =========================================================
-   6) PUBLIC & ADMIN VIEWS
-========================================================= */
-async function loadPublic() {
-  const { data, error } = await sb.rpc("get_public_summary");
-  if (error) { console.error(error); toast("برای گزارش عمومی باید RPC راه‌اندازی شود.", "err"); return; }
-  
-  const x = data?.[0] || data || {};
-  $("pUsers").textContent = fmt(x.user_count);
-  $("pKm").textContent = fmt(x.total_km, 2);
-  $("pCal").textContent = fmt(x.total_calories);
-  $("pFat").textContent = fmt(Number(x.total_calories || 0) / 7700, 3);
-  
-  $("pDinner").innerHTML = publicPct(x.dinner_rate);
-  $("pSleep").innerHTML = publicPct(x.sleep_rate);
-  $("pSweet").innerHTML = publicPct(x.sweet_rate);
-}
-
-function publicPct(v) {
-  const p = Math.round(Number(v || 0));
-  return `<b style="font-size:24px">${fmt(p)}%</b><div class="bar" style="margin-top:8px"><i style="width:${p}%"></i></div>`;
-}
-
-async function loadAdmin() {
-  const { data, error } = await sb.from("profiles").select("id,display_name,role,created_at").order("created_at", { ascending: false });
-  if (error) { toast("دسترسی ادمین رد شد", "err"); return; }
-  
-  let html = `<table><thead><tr><th>نام</th><th>نقش</th><th>تاریخ عضویت</th><th>عملیات</th></tr></thead><tbody>`;
-  (data || []).forEach(u => {
-    html += `<tr>
-      <td>${u.display_name || "بدون نام"}</td>
-      <td>${u.role === "admin" ? '<span class="admin-badge">Admin</span>' : "User"}</td>
-      <td>${toJalaliString(u.created_at ? u.created_at.slice(0,10) : "")}</td>
-      <td><button type="button" class="ghost btn-action admin-view-btn" data-id="${u.id}" data-name="${u.display_name || "کاربر"}">مشاهده داده‌ها</button></td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  
-  $("adminUsers").innerHTML = html;
-  
-  document.querySelectorAll(".admin-view-btn").forEach(btn => {
-    btn.onclick = () => openAdminUser(btn.dataset.id, btn.dataset.name);
-  });
-}
-
-async function openAdminUser(id, name) {
-  const { data, error } = await sb.from("daily_logs").select("*").eq("user_id", id).order("log_date", { ascending: false });
-  if (error) { toast("خطا در دریافت داده کاربر", "err"); return; }
-  
-  $("adminDetail").classList.remove("hidden");
-  $("adminDetailTitle").textContent = `داده‌های ${name}`;
-  
-  if (!data?.length) {
-    $("adminRecords").innerHTML = `<div class="empty">رکوردی ندارد.</div>`;
-    return;
-  }
-  
-  let html = `<table><thead><tr><th>تاریخ</th><th>کیلومتر</th><th>وزن</th><th>کالری</th><th>شام</th><th>خواب</th><th>شیرینی</th><th>عملیات</th></tr></thead><tbody>`;
-  data.forEach(r => {
-    html += `<tr>
-      <td>${toJalaliString(r.log_date)}</td>
-      <td>${fmt(r.km, 2)}</td>
-      <td>${fmt(r.weight, 1)}</td>
-      <td>${fmt(r.calories)}</td>
-      <td>${status(r.dinner_ok)}</td>
-      <td>${status(r.sleep_ok)}</td>
-      <td>${status(r.sweet_ok)}</td>
-      <td><button type="button" class="danger btn-action admin-del-btn" data-id="${r.id}">حذف</button></td>
-    </tr>`;
-  });
-  html += `</tbody></table>`;
-  
-  $("adminRecords").innerHTML = html;
-  document.querySelectorAll(".admin-del-btn").forEach(btn => {
-    btn.onclick = () => deleteAdminRecord(btn.dataset.id);
-  });
-}
-
-async function deleteAdminRecord(id) {
-  if (!confirm("این رکورد حذف شود؟")) return;
-  const { error } = await sb.from("daily_logs").delete().eq("id", id);
-  if (error) { toast(error.message, "err"); return; }
-  toast("رکورد حذف شد", "ok");
-  loadAdmin();
-  $("adminDetail").classList.add("hidden");
-}
-
-$("refreshAdmin").onclick = loadAdmin;
-$("closeDetail").onclick = () => $("adminDetail").classList.add("hidden");
-
-init();
-</script>
-</body>
-</html>
+  const { data: profile, error } = await s
