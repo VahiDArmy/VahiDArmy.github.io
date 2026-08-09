@@ -167,7 +167,7 @@
         <div class="card"><div class="section-title"><h2>روند ۱۴ رکورد اخیر</h2></div><div id="chart" class="chart"></div></div>
         <div class="card"><div class="section-title"><h2>رعایت عادت‌ها</h2></div><div id="habits"></div></div>
       </div>
-      <div class="card" style="margin-top:16px"><div class="section-title"><h2>رکوردهای اخیر</h2><button type="button" class="ghost" data-page="log">+ ثبت رکورد</button></div><div id="recent" class="scroll"></div></div>
+      <div class="card" style="margin-top:16px"><div class="section-title"><h2>رکوردهای اخیر</h2><button type="button" class="ghost" onclick="showPage('log')">+ ثبت رکورد</button></div><div id="recent" class="scroll"></div></div>
     </section>
 
     <section id="logPage" class="page hidden">
@@ -210,7 +210,7 @@
     </section>
   </main>
   <div id="toast" class="toast hidden"></div>
-  <footer class="footer">RunTrack • v2.1.4 FIXED</footer>
+  <footer class="footer">RunTrack • v2.1.5 FIXED</footer>
 </div>
 <script>
 /* =========================================================
@@ -260,6 +260,7 @@ function showPage(name){
   const p=$(name+"Page"); if(p) p.classList.remove("hidden");
   document.querySelectorAll(".nav button[data-page]").forEach(x=>x.classList.toggle("active",x.dataset.page===name));
   if(name==="dashboard") loadDashboard();
+  if(name==="log") initJalaliSelectors();
   if(name==="admin" && currentProfile?.role==="admin") loadAdmin();
 }
 
