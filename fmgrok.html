@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NeonVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@600;700&family=Vazirmatn:wght@400;500;600;700&family=IBM+Plex+Mono&display=swap" rel="stylesheet" />
+<style>
+:root{--bg:#07060f;--surface:#110e1c;--surface2:#1a1628;--fg:#e8f4ff;--muted:#8b90b8;--subtle:#5c6188;--border:#2c2742;--primary:#5ce1ff;--accent:#ff4ecd;--danger:#ff5c7a;--ok:#3ee0a0}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:Vazirmatn,system-ui,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:none;background:none;color:inherit}button:disabled{opacity:.4;cursor:not-allowed}
+.app{min-height:100dvh;display:flex;flex-direction:column;position:relative}
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.45}
+.orb-c{width:28rem;height:28rem;background:color-mix(in oklab,var(--primary) 55%,transparent);top:-8rem;inset-inline-start:-6rem}
+.orb-m{width:22rem;height:22rem;background:color-mix(in oklab,var(--accent) 50%,transparent);bottom:-6rem;inset-inline-end:-4rem}
+header{position:sticky;top:0;z-index:20;border-bottom:1px solid var(--border);background:color-mix(in oklab,var(--bg) 75%,transparent);backdrop-filter:blur(12px)}
+.bar{max-width:1400px;margin:0 auto;padding:.7rem 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.logo{width:2rem;height:2rem;border-radius:.5rem;background:linear-gradient(145deg,#9ef0ff,var(--primary) 40%,var(--accent));box-shadow:0 0 18px color-mix(in oklab,var(--primary) 40%,transparent)}
+.brand{font-family:Oxanium,sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.18em;color:var(--primary)}
+.tag{font-size:.7rem;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.35rem;min-height:2.35rem;padding:.35rem .8rem;border-radius:.65rem;border:1px solid var(--border);background:color-mix(in oklab,var(--surface) 70%,transparent)}
+.btn:hover:not(:disabled){border-color:color-mix(in oklab,var(--primary) 50%,transparent);background:var(--surface2)}
+.btn-primary{border-color:transparent;background:var(--primary);color:#041018;box-shadow:0 0 16px color-mix(in oklab,var(--primary) 40%,transparent)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--muted)}
+.btn-icon{width:2.35rem;padding:0}
+.input,.select{width:100%;min-height:2.35rem;padding:.45rem .7rem;border-radius:.65rem;border:1px solid var(--border);background:var(--surface);color:var(--fg);outline:none}
+.input:focus,.select:focus{border-color:color-mix(in oklab,var(--primary) 70%,transparent);box-shadow:0 0 0 3px color-mix(in oklab,var(--primary) 22%,transparent)}
+.badge{display:inline-flex;border-radius:999px;padding:.12rem .5rem;font-size:.7rem;border:1px solid var(--border);background:var(--surface2);color:var(--muted)}
+.badge-ok{border-color:color-mix(in oklab,var(--ok) 30%,transparent);background:color-mix(in oklab,var(--ok) 12%,transparent);color:var(--ok)}
+main{max-width:1400px;margin:0 auto;width:100%;flex:1;display:grid;grid-template-columns:1fr}
+@media(min-width:960px){main.has-preview{grid-template-columns:1fr min(28rem,40%)}}
+.panel{padding:.75rem 1rem 1.25rem;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:.45rem;align-items:center;margin-bottom:.8rem}
+.crumbs{display:flex;flex-wrap:wrap;gap:.2rem;align-items:center;font-size:.9rem;margin-bottom:.7rem}
+.crumb{color:var(--muted);padding:.15rem .35rem;border-radius:.35rem}.crumb:hover{color:var(--primary)}.crumb.active{color:var(--fg)}
+.files{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+@media(min-width:640px){.files{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1100px){.files{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.card{text-align:start;border:1px solid var(--border);background:color-mix(in oklab,var(--surface) 80%,transparent);border-radius:1rem;padding:.85rem}
+.card:hover{border-color:color-mix(in oklab,var(--primary) 40%,transparent);box-shadow:0 0 22px color-mix(in oklab,var(--primary) 16%,transparent)}
+.card.active{border-color:color-mix(in oklab,var(--primary) 60%,transparent)}
+.card-name{margin:.5rem 0 .1rem;font-size:.9rem;font-weight:600;word-break:break-word}
+.card-meta{font-size:.72rem;color:var(--subtle)}
+.preview{border-inline-start:1px solid var(--border);background:color-mix(in oklab,var(--surface) 85%,transparent);display:flex;flex-direction:column;min-height:48vh}
+@media(max-width:959px){.preview{border-inline-start:none;border-top:1px solid var(--border)}}
+.preview-head,.preview-tools,.preview-foot{padding:.65rem .85rem;border-bottom:1px solid var(--border)}
+.preview-foot{border-bottom:none;border-top:1px solid var(--border);margin-top:auto;display:grid;gap:.5rem}
+.preview-body{flex:1;min-height:0;overflow:auto;padding:.75rem}
+.preview-body textarea{width:100%;min-height:100%;border:0;background:transparent;color:var(--fg);font-family:"IBM Plex Mono",monospace;font-size:.82rem;resize:none;outline:none}
+.preview-body img{max-width:100%;max-height:55vh;display:block;margin:0 auto;border-radius:.5rem}
+footer{border-top:1px solid var(--border);font-size:.72rem;color:var(--muted);padding:.55rem 1rem}
+.foot-inner{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.empty,.error,.loading{border:1px dashed var(--border);border-radius:1rem;padding:2rem 1rem;text-align:center;color:var(--muted)}
+.error{border-color:color-mix(in oklab,var(--danger) 35%,transparent);background:color-mix(in oklab,var(--danger) 10%,transparent);color:var(--danger)}
+.modal-back{position:fixed;inset:0;z-index:50;background:color-mix(in oklab,var(--bg) 75%,transparent);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{width:min(100%,28rem);background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.1rem;box-shadow:0 16px 40px rgba(0,0,0,.4)}
+.modal h2{margin:0 0 .35rem;font-family:Oxanium,sans-serif;font-size:1.15rem}
+.modal p{margin:0 0 .85rem;color:var(--muted);font-size:.9rem;line-height:1.6}
+.modal .row{display:grid;gap:.4rem;margin-bottom:.85rem}
+.modal .actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end}
+.toast{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);z-index:60;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:.55rem 1rem;font-size:.85rem}
+.ms-auto{margin-inline-start:auto}.hidden{display:none!important}label{font-size:.75rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bg"><div class="orb orb-c"></div><div class="orb orb-m"></div></div>
+  <header><div class="bar">
+    <div class="logo"></div>
+    <div><div class="brand">NEONVAULT</div><div class="tag" id="tagline">گیت‌هاب، مثل یک فایل‌منیجر</div></div>
+    <select class="select" id="repoSelect" style="max-width:14rem;width:auto"></select>
+    <div class="ms-auto" style="display:flex;gap:.4rem">
+      <button class="btn btn-ghost" id="langBtn" type="button">EN</button>
+      <button class="btn" id="tokenBtn" type="button">اتصال توکن</button>
+    </div>
+  </div></header>
+  <main id="main">
+    <section class="panel">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="toolbar">
+        <input class="input" id="search" placeholder="جستجو…" style="flex:1;min-width:10rem"/>
+        <button class="btn btn-icon" id="refreshBtn" type="button">↻</button>
+        <button class="btn btn-icon" id="newFileBtn" type="button">＋</button>
+        <button class="btn btn-icon" id="newFolderBtn" type="button">📁</button>
+        <button class="btn btn-icon" id="uploadBtn" type="button">↑</button>
+        <input type="file" id="fileInput" class="hidden" multiple/>
+        <span class="badge" id="modeBadge">فقط خواندنی</span>
+        <span class="badge" id="branchBadge">master</span>
+      </div>
+      <div id="listArea" class="files"></div>
+    </section>
+    <aside class="preview hidden" id="preview">
+      <div class="preview-head" style="display:flex;gap:.5rem;align-items:center">
+        <div style="min-width:0;flex:1">
+          <div id="pvName" style="font-weight:600;word-break:break-word"></div>
+          <div id="pvPath" style="font-family:IBM Plex Mono,monospace;font-size:.72rem;color:var(--subtle)"></div>
+        </div>
+        <button class="btn btn-ghost btn-icon" id="pvClose" type="button">✕</button>
+      </div>
+      <div class="preview-tools" style="display:flex;flex-wrap:wrap;gap:.4rem;align-items:center">
+        <span class="badge" id="pvSize"></span>
+        <button class="btn btn-ghost" id="pvDownload" type="button">دانلود</button>
+        <a class="btn btn-ghost" id="pvGithub" href="#" target="_blank" rel="noreferrer">گیت‌هاب</a>
+      </div>
+      <div class="preview-body" id="pvBody"></div>
+      <div class="preview-foot hidden" id="pvFoot">
+        <input class="input" id="commitMsg" placeholder="پیام کامیت"/>
+        <button class="btn btn-primary" id="saveBtn" type="button">ذخیره در گیت‌هاب</button>
+      </div>
+    </aside>
+  </main>
+  <footer><div class="foot-inner"><span id="itemCount">0</span><span id="rateInfo"></span><span class="ms-auto" id="userLabel">vahidarmy</span></div></footer>
+</div>
+
+<div class="modal-back hidden" id="tokenModal"><div class="modal">
+  <h2 id="tokenTitle">تنظیمات توکن</h2>
+  <p id="tokenHint">توکن فقط در همین مرورگر می‌ماند. Fine-grained PAT با Contents: Read and write.</p>
+  <div class="row"><label for="tokenInput">توکن</label><input class="input" id="tokenInput" type="password" autocomplete="off" placeholder="github_pat_…"/></div>
+  <div class="actions">
+    <button class="btn" id="tokenCancel" type="button">انصراف</button>
+    <button class="btn" id="tokenDisconnect" type="button">قطع</button>
+    <button class="btn btn-primary" id="tokenSave" type="button">ذخیره</button>
+  </div>
+</div></div>
+
+<div class="modal-back hidden" id="createModal"><div class="modal">
+  <h2 id="createTitle">فایل جدید</h2>
+  <div class="row"><label for="createName">نام</label><input class="input" id="createName"/></div>
+  <div class="actions">
+    <button class="btn" id="createCancel" type="button">انصراف</button>
+    <button class="btn btn-primary" id="createOk" type="button">ایجاد</button>
+  </div>
+</div></div>
+
+<div class="modal-back hidden" id="welcomeModal"><div class="modal">
+  <h2>به NeonVault خوش آمدید</h2>
+  <p>مخزن عمومی قابل مرور است. برای ویرایش توکن را وصل کنید.</p>
+  <div class="actions"><button class="btn btn-primary" id="welcomeOk" type="button">باشه</button></div>
+</div></div>
+<div class="toast hidden" id="toast"></div>
+
+<script>
+(()=>{
+const API="https://api.github.com", OWNER="vahidarmy", REPO="VahiDArmy.github.io", KEY="neonvault-html-v1";
+const dict={fa:{tagline:"گیت‌هاب، مثل یک فایل‌منیجر",connect:"اتصال توکن",writeOn:"نوشتن فعال",readOnly:"فقط خواندنی",search:"جستجو…",items:"مورد",empty:"این پوشه خالی است",loading:"در حال بارگذاری…",needToken:"برای نوشتن توکن لازم است.",saved:"کامیت شد",created:"ساخته شد",deleted:"حذف شد",uploaded:"آپلود شد",failed:"ناموفق",tokenBad:"توکن رد شد.",network:"ارتباط برقرار نشد.",commitDefault:"به‌روزرسانی از NeonVault",folder:"پوشه",binary:"فایل باینری است.",tooLarge:"بزرگ‌تر از ۱ مگابایت.",invalidName:"نام نامعتبر.",confirmDelete:"حذف شود؟"},
+en:{tagline:"GitHub file manager",connect:"Connect token",writeOn:"Write on",readOnly:"Read only",search:"Search…",items:"items",empty:"Empty folder",loading:"Loading…",needToken:"Token required to write.",saved:"Saved",created:"Created",deleted:"Deleted",uploaded:"Uploaded",failed:"Failed",tokenBad:"Token rejected.",network:"Network error.",commitDefault:"Update via NeonVault",folder:"Folder",binary:"Binary file.",tooLarge:"Over 1MB.",invalidName:"Invalid name.",confirmDelete:"Delete?"}};
+let S={lang:"fa",token:null,owner:OWNER,repo:REPO,branch:"master",path:"",items:[],selected:null,draft:"",createKind:"file",welcomeSeen:false,rate:null,user:null};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch{}
+const $=id=>document.getElementById(id), t=k=>dict[S.lang][k]||k;
+const persist=()=>localStorage.setItem(KEY,JSON.stringify({lang:S.lang,token:S.token,owner:S.owner,repo:S.repo,branch:S.branch,welcomeSeen:S.welcomeSeen}));
+function toast(m){const el=$("toast");el.textContent=m;el.classList.remove("hidden");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.add("hidden"),2200)}
+const fmt=n=>{if(!n||n<=0)return"0 B";const u=["B","KB","MB","GB"],i=Math.min(Math.floor(Math.log(n)/Math.log(1024)),u.length-1),v=n/1024**i;return`${v<10&&i>0?v.toFixed(1):Math.round(v)} ${u[i]}`};
+const join=(...p)=>p.flatMap(x=>String(x).split("/")).filter(Boolean).join("/");
+const enc=p=>p.split("/").filter(Boolean).map(encodeURIComponent).join("/");
+const t2b=text=>{const b=new TextEncoder().encode(text);let s="";b.forEach(x=>s+=String.fromCharCode(x));return btoa(s)};
+const b2t=b64=>{const bin=atob(String(b64).replace(/\n/g,""));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)))};
+async function f2b(file){const b=new Uint8Array(await file.arrayBuffer());let s="";b.forEach(x=>s+=String.fromCharCode(x));return btoa(s)}
+async function gh(path,init={}){const h=new Headers(init.headers||{});h.set("Accept","application/vnd.github+json");h.set("X-GitHub-Api-Version","2022-11-28");if(S.token)h.set("Authorization",`Bearer ${S.token}`);if(init.body&&!h.has("Content-Type"))h.set("Content-Type","application/json");let res;try{res=await fetch(API+path,{...init,headers:h})}catch{throw new Error(t("network"))}
+const lim=Number(res.headers.get("x-ratelimit-limit")||"");if(Number.isFinite(lim))S.rate={limit:lim,remaining:Number(res.headers.get("x-ratelimit-remaining")||0)};
+if(res.status===204)return null;const json=res.headers.get("content-type")?.includes("json")?await res.json():await res.text();
+if(!res.ok){const msg=typeof json==="object"&&json?.message?json.message:`GitHub ${res.status}`;throw new Error((res.status===401||res.status===403)?t("tokenBad")+" "+msg:msg)}return json}
+const editable=(n,ty)=>{if(ty!=="file")return false;const e=(n.split(".").pop()||"").toLowerCase();return ["html","htm","css","js","ts","json","md","txt","yml","yaml","xml","svg","env","csv","log","py"].includes(e)||!n.includes(".")};
+const isImg=n=>["png","jpg","jpeg","gif","webp","svg","ico"].includes((n.split(".").pop()||"").toLowerCase());
+const glyph=it=>it.type==="dir"?"📁":isImg(it.name)?"🖼":"📄";
+
+function applyI18n(){document.documentElement.lang=S.lang;document.documentElement.dir=S.lang==="fa"?"rtl":"ltr";
+$("tagline").textContent=t("tagline");$("langBtn").textContent=S.lang==="fa"?"EN":"فا";
+$("tokenBtn").textContent=S.token?(S.user?.login||t("writeOn")):t("connect");
+$("search").placeholder=t("search");$("modeBadge").textContent=S.token?t("writeOn"):t("readOnly");
+$("modeBadge").className="badge"+(S.token?" badge-ok":"");$("commitMsg").placeholder=S.lang==="fa"?"پیام کامیت":"Commit message";
+$("saveBtn").textContent=S.lang==="fa"?"ذخیره در گیت‌هاب":"Save to GitHub"}
+
+function renderCrumbs(){const parts=S.path.split("/").filter(Boolean);const nodes=[{label:S.repo,path:""}];let cur="";
+for(const p of parts){cur=join(cur,p);nodes.push({label:p,path:cur})}
+$("crumbs").innerHTML=nodes.map((n,i)=>`<button type="button" class="crumb${i===nodes.length-1?" active":""}" data-path="${n.path}">${n.label}</button>`).join('<span style="color:var(--subtle)">/</span>');
+$("crumbs").querySelectorAll(".crumb").forEach(btn=>btn.onclick=()=>{S.path=btn.dataset.path||"";S.selected=null;loadContents()})}
+
+function renderList(){const q=($("search").value||"").trim().toLowerCase();const items=S.items.filter(i=>!q||i.name.toLowerCase().includes(q));
+$("itemCount").textContent=`${items.length} ${t("items")}`;$("branchBadge").textContent=S.branch;
+$("rateInfo").textContent=S.rate?`API ${S.rate.remaining}/${S.rate.limit}`:"";$("userLabel").textContent=S.user?.login||S.owner;
+if(!items.length){$("listArea").className="";$("listArea").innerHTML=`<div class="empty">${t("empty")}</div>`;return}
+$("listArea").className="files";
+$("listArea").innerHTML=items.map(it=>`<button type="button" class="card${S.selected?.path===it.path?" active":""}" data-path="${it.path}"><div style="font-size:1.5rem">${glyph(it)}</div><div class="card-name">${it.name}</div><div class="card-meta">${it.type==="dir"?t("folder"):fmt(it.size)}</div></button>`).join("");
+$("listArea").querySelectorAll(".card").forEach(card=>{card.onclick=()=>{const it=S.items.find(i=>i.path===card.dataset.path);if(!it)return;if(it.type==="dir"){S.path=it.path;S.selected=null;loadContents()}else openFile(it)};
+card.oncontextmenu=e=>{e.preventDefault();const it=S.items.find(i=>i.path===card.dataset.path);if(!it||it.type==="dir")return;if(!confirm(t("confirmDelete")+"\n"+it.name))return;deleteItem(it)}})}
+
+async function openFile(it){S.selected=it;$("preview").classList.remove("hidden");$("main").classList.add("has-preview");
+$("pvName").textContent=it.name;$("pvPath").textContent=it.path;$("pvSize").textContent=fmt(it.size);
+$("pvGithub").href=it.html_url||`https://github.com/${S.owner}/${S.repo}/blob/${S.branch}/${it.path}`;
+$("pvBody").innerHTML=`<div class="loading">${t("loading")}</div>`;$("pvFoot").classList.add("hidden");renderList();
+try{if(isImg(it.name)){$("pvBody").innerHTML=`<img src="${it.download_url||`https://raw.githubusercontent.com/${S.owner}/${S.repo}/${S.branch}/${it.path}`}" alt="${it.name}"/>`;return}
+if(!editable(it.name,it.type)||it.size>900000){$("pvBody").innerHTML=`<div class="empty">${t("binary")}</div>`;return}
+let text="";if(S.token){const d=await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(it.path)}?ref=${encodeURIComponent(S.branch)}`);text=d.content?b2t(d.content):"";S.selected={...it,sha:d.sha}}
+else{const res=await fetch(it.download_url||`https://raw.githubusercontent.com/${S.owner}/${S.repo}/${S.branch}/${it.path}`);text=await res.text()}
+S.draft=text;$("pvBody").innerHTML=`<textarea id="editor" spellcheck="false"></textarea>`;const ed=$("editor");ed.value=text;ed.oninput=()=>S.draft=ed.value;$("pvFoot").classList.remove("hidden")}
+catch(e){$("pvBody").innerHTML=`<div class="error">${e.message||t("failed")}</div>`}}
+
+async function loadRepos(){try{const repos=S.token?await gh("/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member"):await gh(`/users/${encodeURIComponent(S.owner)}/repos?per_page=100&sort=updated`);
+$("repoSelect").innerHTML=(repos||[]).map(r=>`<option value="${r.owner.login}/${r.name}" data-branch="${r.default_branch}" ${r.name===S.repo&&r.owner.login===S.owner?"selected":""}>${r.name}</option>`).join("")||`<option value="${S.owner}/${S.repo}">${S.repo}</option>`}
+catch{$("repoSelect").innerHTML=`<option value="${S.owner}/${S.repo}">${S.repo}</option>`}}
+async function loadRepoMeta(){try{const r=await gh(`/repos/${S.owner}/${S.repo}`);if(r?.default_branch){S.branch=r.default_branch;persist()}}catch{}}
+async function loadContents(){renderCrumbs();$("listArea").className="";$("listArea").innerHTML=`<div class="loading">${t("loading")}</div>`;
+if(!S.selected){$("preview").classList.add("hidden");$("main").classList.remove("has-preview")}
+try{const data=await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(S.path)}?ref=${encodeURIComponent(S.branch)}`);const items=Array.isArray(data)?data:[data];
+S.items=items.filter(i=>i.type==="file"||i.type==="dir").sort((a,b)=>a.type===b.type?a.name.localeCompare(b.name):a.type==="dir"?-1:1);renderList()}
+catch(e){$("listArea").innerHTML=`<div class="error">${e.message||t("failed")}</div>`}}
+async function saveFile(){if(!S.token)return toast(t("needToken"));if(!S.selected)return;
+try{await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(S.selected.path)}`,{method:"PUT",body:JSON.stringify({message:($("commitMsg").value||"").trim()||t("commitDefault"),content:t2b(S.draft),branch:S.branch,sha:S.selected.sha})});toast(t("saved"));await loadContents();const it=S.items.find(i=>i.path===S.selected.path);if(it)openFile(it)}catch(e){toast(e.message||t("failed"))}}
+async function createEntry(){if(!S.token)return toast(t("needToken"));const name=($("createName").value||"").trim();if(!name||name.includes("/"))return toast(t("invalidName"));
+const path=S.createKind==="folder"?join(S.path,name,".gitkeep"):join(S.path,name);
+try{await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(path)}`,{method:"PUT",body:JSON.stringify({message:`${t("created")}: ${name}`,content:t2b(""),branch:S.branch})});$("createModal").classList.add("hidden");toast(t("created"));await loadContents()}catch(e){toast(e.message||t("failed"))}}
+async function deleteItem(it){if(!S.token)return toast(t("needToken"));
+try{await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(it.path)}`,{method:"DELETE",body:JSON.stringify({message:`${t("deleted")}: ${it.name}`,sha:it.sha,branch:S.branch})});
+if(S.selected?.path===it.path){S.selected=null;$("preview").classList.add("hidden");$("main").classList.remove("has-preview")}toast(t("deleted"));await loadContents()}catch(e){toast(e.message||t("failed"))}}
+async function uploadFiles(files){if(!S.token)return toast(t("needToken"));
+for(const file of files){if(file.size>900000){toast(file.name+": "+t("tooLarge"));continue}
+try{const content=await f2b(file);const path=join(S.path,file.name);const existing=S.items.find(i=>i.name===file.name&&i.type==="file");
+await gh(`/repos/${S.owner}/${S.repo}/contents/${enc(path)}`,{method:"PUT",body:JSON.stringify({message:`${t("uploaded")}: ${file.name}`,content,branch:S.branch,...(existing?{sha:existing.sha}:{})})})}catch(e){toast(e.message||t("failed"));return}}
+toast(t("uploaded"));await loadContents()}
+
+$("langBtn").onclick=()=>{S.lang=S.lang==="fa"?"en":"fa";persist();applyI18n();renderList()};
+$("tokenBtn").onclick=()=>{$("tokenInput").value="";$("tokenModal").classList.remove("hidden")};
+$("tokenCancel").onclick=()=>$("tokenModal").classList.add("hidden");
+$("tokenDisconnect").onclick=()=>{S.token=null;S.user=null;persist();applyI18n();$("tokenModal").classList.add("hidden");loadRepos();loadContents()};
+$("tokenSave").onclick=async()=>{const v=($("tokenInput").value||"").trim();if(!v)return;const prev=S.token;S.token=v;
+try{S.user=await gh("/user");persist();applyI18n();$("tokenModal").classList.add("hidden");toast((S.lang==="fa"?"وصل شد: ":"Connected: ")+S.user.login);await loadRepos();await loadContents()}catch(e){S.token=prev;toast(e.message||t("tokenBad"))}};
+$("repoSelect").onchange=async()=>{const[o,r]=($("repoSelect").value||"").split("/");if(!o||!r)return;S.owner=o;S.repo=r;const opt=$("repoSelect").selectedOptions[0];if(opt?.dataset.branch)S.branch=opt.dataset.branch;S.path="";S.selected=null;persist();await loadRepoMeta();await loadContents()};
+$("search").oninput=renderList;$("refreshBtn").onclick=loadContents;
+$("newFileBtn").onclick=()=>{S.createKind="file";$("createTitle").textContent=S.lang==="fa"?"فایل جدید":"New file";$("createName").value="";$("createModal").classList.remove("hidden")};
+$("newFolderBtn").onclick=()=>{S.createKind="folder";$("createTitle").textContent=S.lang==="fa"?"پوشه جدید":"New folder";$("createName").value="";$("createModal").classList.remove("hidden")};
+$("createCancel").onclick=()=>$("createModal").classList.add("hidden");$("createOk").onclick=createEntry;
+$("uploadBtn").onclick=()=>$("fileInput").click();$("fileInput").onchange=()=>{if($("fileInput").files?.length)uploadFiles($("fileInput").files);$("fileInput").value=""};
+$("pvClose").onclick=()=>{S.selected=null;$("preview").classList.add("hidden");$("main").classList.remove("has-preview");renderList()};
+$("saveBtn").onclick=saveFile;
+$("pvDownload").onclick=()=>{if(!S.selected)return;if(editable(S.selected.name,S.selected.type)){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([S.draft||""],{type:"text/plain;charset=utf-8"}));a.download=S.selected.name;a.click()}else if(S.selected.download_url)window.open(S.selected.download_url,"_blank","noopener")};
+$("welcomeOk").onclick=()=>{S.welcomeSeen=true;persist();$("welcomeModal").classList.add("hidden")};
+document.addEventListener("dragover",e=>e.preventDefault());document.addEventListener("drop",e=>{e.preventDefault();if(e.dataTransfer?.files?.length)uploadFiles(e.dataTransfer.files)});
+(async()=>{applyI18n();if(!S.welcomeSeen)$("welcomeModal").classList.remove("hidden");if(S.token){try{S.user=await gh("/user")}catch{S.user=null}}applyI18n();await loadRepos();await loadRepoMeta();await loadContents()})();
+})();
+</script>
+</body>
+</html>
