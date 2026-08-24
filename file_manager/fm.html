@@ -1,64 +1,389 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="UTF-8" />
-  <title>VahidArmy File Manager</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>File Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #121212;
+  color: #e5e5e5;
+}
+
+/* Header */
+header {
+  background: #1e1e1e;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+header button {
+  background: #333;
+  color: #eee;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  margin-left: 6px;
+}
+
+/* Mobile drawer */
+#drawer {
+  position: fixed;
+  top: 0;
+  left: -260px;
+  width: 260px;
+  height: 100%;
+  background: #1a1a1a;
+  padding: 12px;
+  overflow-y: auto;
+  transition: left 0.25s ease;
+  border-right: 1px solid #333;
+}
+#drawer.open {
+  left: 0;
+}
+#drawer div {
+  padding: 8px 0;
+  border-bottom: 1px solid #222;
+  cursor: pointer;
+}
+
+/* Files list */
+#files {
+  padding: 12px;
+}
+#files div {
+  padding: 10px;
+  background: #1e1e1e;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#files div span {
+  cursor: pointer;
+}
+
+/* Editor */
+#editor {
+  padding: 12px;
+  border-top: 1px solid #333;
+}
+#editor textarea {
+  width: 100%;
+  height: 260px;
+  background: #000;
+  color: #eee;
+  border: none;
+  padding: 10px;
+  font-family: monospace;
+  border-radius: 6px;
+}
+
+/* Status */
+#status {
+  padding: 10px;
+  background: #1e1e1e;
+  font-size: 12px;
+  border-top: 1px solid #333;
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+}
+button:hover {
+  background: #444;
+}
+</style>
 </head>
+
 <body>
-  <div id="app">
-    <header class="topbar">
-      <div class="logo">⚡ VahidArmy File Manager</div>
-      <div class="path" id="current-path">/</div>
-      <div class="actions">
-        <button id="btn-new-file">فایل جدید</button>
-        <button id="btn-new-folder">پوشه جدید</button>
-        <button id="btn-upload">آپلود</button>
-        <button id="btn-set-token">توکن</button>
-      </div>
-    </header>
 
-    <div class="layout">
-      <aside class="sidebar">
-        <h3>پوشه‌ها</h3>
-        <ul id="tree"></ul>
-      </aside>
-
-      <main class="main">
-        <section class="file-list">
-          <h3>فایل‌ها</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>نام</th>
-                <th>نوع</th>
-                <th>اندازه</th>
-                <th>عملیات</th>
-              </tr>
-            </thead>
-            <tbody id="files"></tbody>
-          </table>
-        </section>
-
-        <section class="editor">
-          <div class="editor-header">
-            <span id="editor-filename">هیچ فایلی انتخاب نشده</span>
-            <div>
-              <button id="btn-save">ذخیره</button>
-              <button id="btn-delete">حذف</button>
-            </div>
-          </div>
-          <textarea id="editor-content" placeholder="محتوای فایل..."></textarea>
-        </section>
-      </main>
-    </div>
-
-    <footer class="statusbar">
-      <span id="status">آماده</span>
-    </footer>
+<header>
+  <button id="menuBtn">☰</button>
+  <div>/ <span id="path"></span></div>
+  <div>
+    <button id="setToken">توکن</button>
+    <button id="newFile">فایل</button>
+    <button id="newFolder">پوشه</button>
   </div>
+</header>
 
-  <script src="app.js"></script>
+<div id="drawer"></div>
+
+<div id="files"></div>
+
+<div id="editor">
+  <div style="margin-bottom:6px;">
+    <span id="filename"></span>
+    <button id="saveBtn">ذخیره</button>
+    <button id="deleteBtn">حذف</button>
+  </div>
+  <textarea id="content"></textarea>
+</div>
+
+<div id="status">Ready</div>
+
+<script>
+const OWNER = "vahidarmy";
+const REPO = "vahidarmy.github.io";
+const BRANCH = "main";
+
+let currentPath = "";
+let currentFile = null;
+
+/* Token */
+function token() {
+  return localStorage.getItem("gh_pat") || "";
+}
+function status(msg) {
+  document.getElementById("status").textContent = msg;
+}
+
+/* GitHub API */
+async function api(path, opt={}) {
+  const t = token();
+  if (!t) { alert("توکن تنظیم نشده"); throw "no token"; }
+
+  const r = await fetch("https://api.github.com" + path, {
+    ...opt,
+    headers: {
+      "Authorization": "Bearer " + t,
+      "Accept": "application/vnd.github+json",
+      ...(opt.headers || {})
+    }
+  });
+
+  if (!r.ok) {
+    status("Error " + r.status);
+    throw await r.text();
+  }
+  return r.json();
+}
+
+/* Load path */
+async function load(path="") {
+  currentPath = path;
+  document.getElementById("path").textContent = path;
+  status("Loading...");
+
+  const data = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}`);
+  renderFiles(data);
+  renderTree(path);
+  status("Ready");
+}
+
+/* Drawer tree */
+function renderTree(path) {
+  const d = document.getElementById("drawer");
+  d.innerHTML = "";
+
+  const root = document.createElement("div");
+  root.textContent = "/";
+  root.onclick = () => { toggleDrawer(); load(""); };
+  d.appendChild(root);
+
+  if (!path) return;
+
+  let acc = "";
+  path.split("/").forEach(p => {
+    acc = acc ? acc + "/" + p : p;
+    const item = document.createElement("div");
+    item.textContent = "/" + acc;
+    item.onclick = () => { toggleDrawer(); load(acc); };
+    d.appendChild(item);
+  });
+}
+
+/* Files list */
+function renderFiles(items) {
+  const f = document.getElementById("files");
+  f.innerHTML = "";
+
+  items.forEach(item => {
+    const row = document.createElement("div");
+
+    const name = document.createElement("span");
+    name.textContent = item.name;
+    name.onclick = () => {
+      if (item.type === "dir") load(item.path);
+      else openFile(item);
+    };
+
+    const actions = document.createElement("div");
+
+    const r = document.createElement("button");
+    r.textContent = "Rename";
+    r.onclick = () => renameItem(item);
+
+    const d = document.createElement("button");
+    d.textContent = "Delete";
+    d.onclick = () => deleteItem(item);
+
+    actions.appendChild(r);
+    actions.appendChild(d);
+
+    row.appendChild(name);
+    row.appendChild(actions);
+
+    f.appendChild(row);
+  });
+}
+
+/* Open file */
+async function openFile(item) {
+  status("Opening...");
+  const d = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(item.path)}`);
+  const txt = atob(d.content.replace(/\n/g,""));
+  currentFile = { path: item.path, sha: d.sha };
+  document.getElementById("filename").textContent = item.path;
+  document.getElementById("content").value = txt;
+  status("Opened");
+}
+
+/* Save */
+async function saveFile() {
+  if (!currentFile) return;
+  const txt = document.getElementById("content").value;
+
+  const body = {
+    message: "Edit " + currentFile.path,
+    content: btoa(txt),
+    sha: currentFile.sha,
+    branch: BRANCH
+  };
+
+  status("Saving...");
+  const r = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(currentFile.path)}`, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+
+  currentFile.sha = r.content.sha;
+  status("Saved");
+}
+
+/* New file */
+async function newFile() {
+  const name = prompt("نام فایل:");
+  if (!name) return;
+
+  const full = currentPath ? currentPath + "/" + name : name;
+
+  const body = {
+    message: "Create " + full,
+    content: btoa(""),
+    branch: BRANCH
+  };
+
+  await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(full)}`, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+
+  load(currentPath);
+}
+
+/* New folder */
+async function newFolder() {
+  const name = prompt("نام پوشه:");
+  if (!name) return;
+
+  const full = (currentPath ? currentPath + "/" : "") + name + "/.gitkeep";
+
+  const body = {
+    message: "Create folder " + name,
+    content: btoa(""),
+    branch: BRANCH
+  };
+
+  await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(full)}`, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+
+  load(currentPath);
+}
+
+/* Delete */
+async function deleteItem(item) {
+  if (!confirm("حذف شود؟")) return;
+
+  const d = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(item.path)}`);
+
+  const body = {
+    message: "Delete " + item.path,
+    sha: d.sha,
+    branch: BRANCH
+  };
+
+  await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(item.path)}`, {
+    method: "DELETE",
+    body: JSON.stringify(body)
+  });
+
+  load(currentPath);
+}
+
+/* Rename */
+async function renameItem(item) {
+  const newName = prompt("نام جدید:", item.name);
+  if (!newName || newName === item.name) return;
+
+  const newPath = (currentPath ? currentPath + "/" : "") + newName;
+
+  const d = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(item.path)}`);
+
+  await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(newPath)}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      message: "Rename create " + newPath,
+      content: d.content,
+      branch: BRANCH
+    })
+  });
+
+  await api(`/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(item.path)}`, {
+    method: "DELETE",
+    body: JSON.stringify({
+      message: "Rename delete " + item.path,
+      sha: d.sha,
+      branch: BRANCH
+    })
+  });
+
+  load(currentPath);
+}
+
+/* Drawer toggle */
+function toggleDrawer() {
+  const d = document.getElementById("drawer");
+  d.classList.toggle("open");
+}
+
+/* Buttons */
+document.getElementById("menuBtn").onclick = toggleDrawer;
+document.getElementById("setToken").onclick = () => {
+  const t = prompt("PAT:");
+  if (t) localStorage.setItem("gh_pat", t);
+};
+document.getElementById("newFile").onclick = newFile;
+document.getElementById("newFolder").onclick = newFolder;
+document.getElementById("saveBtn").onclick = saveFile;
+document.getElementById("deleteBtn").onclick = () => {
+  if (currentFile) deleteItem({ path: currentFile.path });
+};
+
+/* Start at root */
+load("");
+</script>
+
 </body>
 </html>
