@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Neon GitHub File Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-deep: #05050f;
+  --bg-panel: #0a0a1a;
+  --bg-card: #0f0f24;
+  --bg-hover: #151530;
+  --neon-cyan: #00f5ff;
+  --neon-purple: #bf00ff;
+  --neon-pink: #ff00aa;
+  --neon-blue: #0066ff;
+  --neon-green: #00ff9d;
+  --neon-orange: #ff6b00;
+  --text-primary: #e0e0ff;
+  --text-secondary: #8888aa;
+  --text-muted: #555577;
+  --border: #1a1a3a;
+  --glow-cyan: 0 0 10px #00f5ff, 0 0 20px #00f5ff55, 0 0 40px #00f5ff22;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; overflow: hidden;
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg-deep); color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: linear-gradient(90deg, #00f5ff08 1px, transparent 1px),
+              linear-gradient(#00f5ff08 1px, transparent 1px);
+  background-size: 40px 40px; pointer-events: none; z-index: 0;
+  animation: gridPulse 8s ease-in-out infinite;
+}
+@keyframes gridPulse { 0%,100%{opacity:.3} 50%{opacity:.6} }
+#particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+/* LOGIN */
+#login-screen {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  z-index: 1000; background: radial-gradient(ellipse at center, #0a0a2a 0%, #05050f 70%);
+  transition: opacity .5s, visibility .5s;
+}
+#login-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.login-box {
+  width: 100%; max-width: 440px; padding: 48px 40px;
+  background: linear-gradient(145deg, #0f0f28, #0a0a1c);
+  border: 1px solid #1a1a4a; border-radius: 20px;
+  box-shadow: 0 0 40px #bf00ff22, 0 0 80px #00f5ff11, inset 0 1px 0 #ffffff08;
+  position: relative; overflow: hidden;
+}
+.login-box::before {
+  content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+  background: conic-gradient(from 0deg, transparent, #00f5ff11, transparent 30%);
+  animation: rotateGlow 12s linear infinite; pointer-events: none;
+}
+@keyframes rotateGlow { to { transform: rotate(360deg); } }
+.login-logo { text-align: center; margin-bottom: 36px; position: relative; }
+.login-logo h1 {
+  font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 800; letter-spacing: 3px;
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple), var(--neon-pink));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.login-logo p { color: var(--text-secondary); font-size: .95rem; margin-top: 8px; letter-spacing: 1px; }
+.login-logo .icon { font-size: 3rem; margin-bottom: 12px; filter: drop-shadow(0 0 12px var(--neon-cyan)); }
+.form-group { margin-bottom: 20px; position: relative; }
+.form-group label {
+  display: block; font-size: .8rem; font-weight: 600; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--neon-cyan); margin-bottom: 8px;
+}
+.form-group input {
+  width: 100%; padding: 14px 16px; background: #080818; border: 1px solid #1a1a4a;
+  border-radius: var(--radius-sm); color: var(--text-primary);
+  font-family: 'Fira Code', monospace; font-size: .9rem; outline: none; transition: var(--transition);
+}
+.form-group input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px #00f5ff22, var(--glow-cyan); }
+.form-group input::placeholder { color: var(--text-muted); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border: none; border-radius: var(--radius-sm);
+  font-family: 'Rajdhani', sans-serif; font-size: 1rem; font-weight: 600;
+  letter-spacing: 1px; cursor: pointer; transition: var(--transition); position: relative; overflow: hidden;
+}
+.btn-primary {
+  width: 100%; background: linear-gradient(135deg, #00c4d4, #8b00d4); color: #fff;
+  box-shadow: 0 4px 20px #00f5ff33;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 30px #00f5ff55, 0 0 20px #bf00ff44; }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.login-error { color: var(--neon-pink); font-size: .85rem; text-align: center; margin-top: 12px; min-height: 20px; }
+.login-hint {
+  margin-top: 24px; padding: 14px; background: #080818; border-radius: var(--radius-sm);
+  border: 1px solid #1a1a3a; font-size: .8rem; color: var(--text-secondary); line-height: 1.5;
+}
+.login-hint a { color: var(--neon-cyan); text-decoration: none; }
+.login-hint a:hover { text-decoration: underline; }
+
+/* APP */
+#app { display: none; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
+#app.active { display: flex; }
+.header {
+  display: flex; align-items: center; gap: 16px; padding: 12px 20px;
+  background: linear-gradient(180deg, #0c0c22, #0a0a18); border-bottom: 1px solid #1a1a3a;
+  box-shadow: 0 2px 20px #00000088; flex-shrink: 0; z-index: 10;
+}
+.header-logo {
+  font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 2px;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space: nowrap;
+}
+.header-repo { font-size: .85rem; color: var(--text-secondary); font-family: 'Fira Code', monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-box { flex: 1; max-width: 360px; position: relative; margin-left: auto; }
+.search-box input {
+  width: 100%; padding: 9px 14px 9px 38px; background: #080818; border: 1px solid #1a1a3a;
+  border-radius: 20px; color: var(--text-primary); font-family: 'Rajdhani', sans-serif;
+  font-size: .95rem; outline: none; transition: var(--transition);
+}
+.search-box input:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px #00f5ff18; }
+.search-box .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; pointer-events: none; }
+.header-actions { display: flex; gap: 8px; align-items: center; }
+.btn-icon {
+  width: 38px; height: 38px; padding: 0; border-radius: 10px; background: #12122a;
+  border: 1px solid #1a1a3a; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer;
+  transition: var(--transition); display: flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { background: #1a1a3a; color: var(--neon-cyan); border-color: var(--neon-cyan); box-shadow: 0 0 12px #00f5ff33; }
+.btn-icon.danger:hover { color: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 12px #ff00aa33; }
+
+.toolbar {
+  display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+  background: #0a0a18; border-bottom: 1px solid #151530; flex-shrink: 0; flex-wrap: wrap;
+}
+.breadcrumb { display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; padding: 4px 0; }
+.breadcrumb::-webkit-scrollbar { display: none; }
+.crumb {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 6px;
+  font-size: .9rem; font-weight: 500; color: var(--text-secondary); cursor: pointer;
+  transition: var(--transition); white-space: nowrap;
+}
+.crumb:hover { background: #151530; color: var(--neon-cyan); }
+.crumb.active { color: var(--neon-cyan); background: #00f5ff12; }
+.crumb-sep { color: var(--text-muted); font-size: .75rem; }
+.toolbar-btns { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-sm {
+  padding: 8px 14px; font-size: .9rem; border-radius: 8px; background: #12122a;
+  border: 1px solid #1a1a3a; color: var(--text-primary); cursor: pointer; transition: var(--transition);
+  display: inline-flex; align-items: center; gap: 6px; font-family: 'Rajdhani', sans-serif; font-weight: 600;
+}
+.btn-sm:hover { background: #1a1a3a; border-color: var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 10px #00f5ff22; }
+.btn-sm.accent { background: linear-gradient(135deg, #00a0b0, #7a00b0); border: none; color: #fff; }
+.btn-sm.accent:hover { box-shadow: 0 0 16px #00f5ff44; transform: translateY(-1px); }
+
+.main { flex: 1; display: flex; overflow: hidden; position: relative; }
+.file-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.file-list-header {
+  display: grid; grid-template-columns: 1fr 100px 140px 120px; gap: 8px; padding: 10px 20px;
+  background: #0c0c1c; border-bottom: 1px solid #151530; font-size: .75rem; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); flex-shrink: 0;
+}
+.file-list {
+  flex: 1; overflow-y: auto; overflow-x: hidden; padding: 8px 12px 80px;
+  scrollbar-width: thin; scrollbar-color: #1a1a4a transparent;
+}
+.file-list::-webkit-scrollbar { width: 6px; }
+.file-list::-webkit-scrollbar-track { background: transparent; }
+.file-list::-webkit-scrollbar-thumb { background: #1a1a4a; border-radius: 3px; }
+.file-list::-webkit-scrollbar-thumb:hover { background: #2a2a5a; }
+.file-item {
+  display: grid; grid-template-columns: 1fr 100px 140px 120px; gap: 8px; align-items: center;
+  padding: 10px 12px; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition);
+  border: 1px solid transparent; position: relative; animation: fadeInUp .3s ease backwards;
+}
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.file-item:hover { background: var(--bg-hover); border-color: #1a1a4a; }
+.file-item.selected { background: #00f5ff12; border-color: #00f5ff44; }
+.file-name { display: flex; align-items: center; gap: 10px; min-width: 0; overflow: hidden; }
+.file-icon { font-size: 1.3rem; flex-shrink: 0; width: 28px; text-align: center; filter: drop-shadow(0 0 4px currentColor); }
+.file-icon.folder { color: var(--neon-cyan); }
+.file-icon.file { color: var(--text-secondary); }
+.file-icon.image { color: var(--neon-pink); }
+.file-icon.code { color: var(--neon-green); }
+.file-icon.text { color: var(--neon-blue); }
+.file-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .95rem; font-weight: 500; }
+.file-size, .file-date, .file-actions { font-size: .85rem; color: var(--text-secondary); font-family: 'Fira Code', monospace; }
+.file-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .2s; }
+.file-item:hover .file-actions { opacity: 1; }
+.file-action-btn {
+  width: 28px; height: 28px; border: none; border-radius: 6px; background: #1a1a3a;
+  color: var(--text-secondary); cursor: pointer; font-size: .85rem;
+  display: flex; align-items: center; justify-content: center; transition: var(--transition);
+}
+.file-action-btn:hover { background: #2a2a5a; color: var(--neon-cyan); }
+.file-action-btn.danger:hover { color: var(--neon-pink); background: #ff00aa22; }
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100%; color: var(--text-muted); gap: 12px; padding: 40px;
+}
+.empty-state .icon { font-size: 3.5rem; opacity: .4; }
+.empty-state p { font-size: 1.1rem; }
+
+.side-panel {
+  width: 0; background: #0a0a18; border-left: 1px solid #151530;
+  display: flex; flex-direction: column; overflow: hidden;
+  transition: width .35s cubic-bezier(0.4, 0, 0.2, 1); flex-shrink: 0;
+}
+.side-panel.open { width: 50%; min-width: 320px; }
+.side-panel-header {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  background: #0c0c1c; border-bottom: 1px solid #151530; flex-shrink: 0;
+}
+.side-panel-title {
+  flex: 1; font-size: .95rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; font-family: 'Fira Code', monospace;
+}
+.side-panel-body { flex: 1; overflow: auto; position: relative; }
+#editor {
+  width: 100%; height: 100%; background: #080812; border: none; outline: none;
+  color: #d0d0ff; font-family: 'Fira Code', monospace; font-size: .9rem; line-height: 1.6;
+  padding: 16px; resize: none; tab-size: 2; white-space: pre; overflow: auto;
+}
+#editor:focus { box-shadow: inset 0 0 0 1px #00f5ff33; }
+.image-preview {
+  display: flex; align-items: center; justify-content: center; height: 100%;
+  padding: 20px; background: #05050f;
+}
+.image-preview img {
+  max-width: 100%; max-height: 100%; border-radius: 8px;
+  box-shadow: 0 0 30px #00000088; object-fit: contain;
+}
+
+.status-bar {
+  display: flex; align-items: center; gap: 16px; padding: 6px 20px;
+  background: #080812; border-top: 1px solid #151530; font-size: .8rem;
+  color: var(--text-muted); flex-shrink: 0; font-family: 'Fira Code', monospace;
+}
+.status-bar .dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.status-item { display: flex; align-items: center; gap: 6px; }
+
+.modal-overlay {
+  position: fixed; inset: 0; background: #000000bb; display: flex; align-items: center;
+  justify-content: center; z-index: 2000; opacity: 0; visibility: hidden;
+  transition: all .25s; backdrop-filter: blur(4px);
+}
+.modal-overlay.show { opacity: 1; visibility: visible; }
+.modal {
+  background: linear-gradient(145deg, #0f0f28, #0a0a1c); border: 1px solid #1a1a4a;
+  border-radius: 16px; padding: 28px; width: 90%; max-width: 420px;
+  box-shadow: 0 0 40px #bf00ff22, 0 20px 60px #00000088;
+  transform: scale(.9) translateY(20px); transition: transform .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.show .modal { transform: scale(1) translateY(0); }
+.modal h3 {
+  font-family: 'Orbitron', sans-serif; font-size: 1.15rem; margin-bottom: 18px; letter-spacing: 1px;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.modal input, .modal textarea {
+  width: 100%; padding: 12px 14px; background: #080818; border: 1px solid #1a1a4a;
+  border-radius: var(--radius-sm); color: var(--text-primary); font-family: 'Fira Code', monospace;
+  font-size: .9rem; outline: none; margin-bottom: 16px; transition: var(--transition);
+}
+.modal input:focus, .modal textarea:focus { border-color: var(--neon-cyan); box-shadow: 0 0 0 3px #00f5ff22; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-cancel { background: #12122a; border: 1px solid #1a1a3a; color: var(--text-secondary); }
+.btn-cancel:hover { background: #1a1a3a; color: var(--text-primary); }
+.btn-confirm { background: linear-gradient(135deg, #00a0b0, #7a00b0); color: #fff; border: none; }
+.btn-confirm:hover { box-shadow: 0 0 16px #00f5ff44; }
+.btn-danger { background: linear-gradient(135deg, #aa0044, #880033); color: #fff; border: none; }
+.btn-danger:hover { box-shadow: 0 0 16px #ff00aa44; }
+
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 3000;
+  display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+}
+.toast {
+  padding: 12px 20px; background: #0f0f28; border: 1px solid #1a1a4a; border-radius: 10px;
+  color: var(--text-primary); font-size: .9rem; font-weight: 500;
+  box-shadow: 0 8px 30px #00000088; display: flex; align-items: center; gap: 10px;
+  animation: toastIn .35s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto; max-width: 360px;
+}
+.toast.success { border-color: #00ff9d44; box-shadow: 0 0 20px #00ff9d22; }
+.toast.error { border-color: #ff00aa44; box-shadow: 0 0 20px #ff00aa22; }
+.toast.info { border-color: #00f5ff44; box-shadow: 0 0 20px #00f5ff22; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(40px) scale(.9); } to { opacity: 1; transform: translateX(0) scale(1); } }
+.toast.removing { animation: toastOut .3s forwards; }
+@keyframes toastOut { to { opacity: 0; transform: translateX(40px) scale(.9); } }
+
+.loading-overlay {
+  position: absolute; inset: 0; background: #05050fcc; display: flex; align-items: center;
+  justify-content: center; z-index: 50; opacity: 0; visibility: hidden; transition: all .2s;
+}
+.loading-overlay.show { opacity: 1; visibility: visible; }
+.spinner {
+  width: 48px; height: 48px; border: 3px solid #1a1a4a; border-top-color: var(--neon-cyan);
+  border-radius: 50%; animation: spin .8s linear infinite; box-shadow: 0 0 20px #00f5ff44;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.drop-overlay {
+  position: absolute; inset: 0; background: #00f5ff11; border: 3px dashed var(--neon-cyan);
+  border-radius: 12px; margin: 12px; display: flex; align-items: center; justify-content: center;
+  z-index: 40; opacity: 0; visibility: hidden; transition: all .2s; pointer-events: none;
+}
+.drop-overlay.show { opacity: 1; visibility: visible; }
+.drop-overlay span {
+  font-family: 'Orbitron', sans-serif; font-size: 1.3rem; letter-spacing: 2px;
+  color: var(--neon-cyan); text-shadow: var(--glow-cyan);
+}
+
+.context-menu {
+  position: fixed; background: #0f0f28; border: 1px solid #1a1a4a; border-radius: 10px;
+  padding: 6px; z-index: 2500; min-width: 180px;
+  box-shadow: 0 10px 40px #000000aa, 0 0 20px #bf00ff22; display: none; animation: ctxIn .15s ease;
+}
+@keyframes ctxIn { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
+.context-menu.show { display: block; }
+.ctx-item {
+  display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-radius: 6px;
+  cursor: pointer; font-size: .9rem; color: var(--text-primary); transition: background .15s;
+}
+.ctx-item:hover { background: #1a1a3a; color: var(--neon-cyan); }
+.ctx-item.danger:hover { color: var(--neon-pink); background: #ff00aa15; }
+.ctx-sep { height: 1px; background: #1a1a3a; margin: 4px 8px; }
+
+.upload-progress {
+  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: #0f0f28; border: 1px solid #1a1a4a; border-radius: 12px; padding: 14px 24px;
+  z-index: 1500; display: none; align-items: center; gap: 14px;
+  box-shadow: 0 8px 30px #00000088, 0 0 20px #00f5ff22; min-width: 280px;
+}
+.upload-progress.show { display: flex; }
+.upload-progress .bar { flex: 1; height: 6px; background: #1a1a3a; border-radius: 3px; overflow: hidden; }
+.upload-progress .bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+  border-radius: 3px; transition: width .3s; width: 0%;
+}
+#file-input { display: none; }
+
+@media (max-width: 900px) {
+  .file-list-header { grid-template-columns: 1fr 80px; }
+  .file-list-header span:nth-child(3), .file-list-header span:nth-child(4) { display: none; }
+  .file-item { grid-template-columns: 1fr 80px; }
+  .file-size, .file-date { display: none; }
+  .side-panel.open { width: 100%; position: absolute; inset: 0; z-index: 30; min-width: 0; }
+  .header-repo { display: none; }
+  .search-box { max-width: 180px; }
+}
+@media (max-width: 600px) {
+  .header { padding: 10px 12px; gap: 8px; }
+  .header-logo { font-size: .9rem; }
+  .toolbar { padding: 8px 12px; }
+  .file-list { padding: 6px 8px 60px; }
+  .toolbar-btns .btn-sm span:last-child { display: none; }
+  .status-bar { font-size: .7rem; padding: 5px 12px; }
+  .login-box { margin: 16px; padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">◈</div>
+      <h1>NEON FILE MANAGER</h1>
+      <p>GitHub Repository Explorer</p>
+    </div>
+    <div class="form-group">
+      <label>Personal Access Token</label>
+      <input type="password" id="token-input" placeholder="github_pat_xxxxxxxxxxxx" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="form-group">
+      <label>Owner / Repo (optional)</label>
+      <input type="text" id="repo-input" value="VahiDArmy/VahiDArmy.github.io" placeholder="owner/repo">
+    </div>
+    <div class="form-group">
+      <label>Branch</label>
+      <input type="text" id="branch-input" value="master" placeholder="master">
+    </div>
+    <button class="btn btn-primary" id="login-btn" onclick="doLogin()">
+      <span>⚡ Connect</span>
+    </button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint">
+      Use a <strong>Fine-grained</strong> PAT with <strong>Contents: Read and write</strong> permission.<br>
+      <a href="https://github.com/settings/tokens?type=beta" target="_blank">Create token →</a>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="header">
+    <div class="header-logo">◈ NEON FM</div>
+    <div class="header-repo" id="header-repo"></div>
+    <div class="search-box">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="search-input" placeholder="Search files..." oninput="onSearch(this.value)">
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" title="Refresh" onclick="loadPath(currentPath)">↻</button>
+      <button class="btn-icon" title="Logout" onclick="doLogout()">⏻</button>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="breadcrumb" id="breadcrumb"></div>
+    <div class="toolbar-btns">
+      <button class="btn-sm" onclick="showNewFolderModal()"><span>📁</span> <span>New Folder</span></button>
+      <button class="btn-sm" onclick="showNewFileModal()"><span>📄</span> <span>New File</span></button>
+      <button class="btn-sm accent" onclick="document.getElementById('file-input').click()"><span>⬆</span> <span>Upload</span></button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="file-panel">
+      <div class="file-list-header">
+        <span>Name</span><span>Size</span><span>Modified</span><span>Actions</span>
+      </div>
+      <div class="file-list" id="file-list">
+        <div class="empty-state"><div class="icon">📂</div><p>Loading...</p></div>
+      </div>
+      <div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+      <div class="drop-overlay" id="drop-overlay"><span>⬇ DROP FILES HERE</span></div>
+    </div>
+    <div class="side-panel" id="side-panel">
+      <div class="side-panel-header">
+        <div class="side-panel-title" id="side-title">Editor</div>
+        <button class="btn-icon" title="Save" id="save-btn" onclick="saveFile()" style="display:none">💾</button>
+        <button class="btn-icon" title="Download" id="dl-btn" onclick="downloadCurrent()" style="display:none">⬇</button>
+        <button class="btn-icon" title="Close" onclick="closeSidePanel()">✕</button>
+      </div>
+      <div class="side-panel-body" id="side-body"></div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-item"><div class="dot"></div> <span id="status-conn">Connected</span></div>
+    <div class="status-item" id="status-path">/</div>
+    <div class="status-item" id="status-count">0 items</div>
+    <div class="status-item" style="margin-left:auto" id="status-msg"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-overlay"><div class="modal" id="modal-content"></div></div>
+<div class="context-menu" id="context-menu"></div>
+<div class="upload-progress" id="upload-progress">
+  <span id="upload-text">Uploading...</span>
+  <div class="bar"><div class="bar-fill" id="upload-bar"></div></div>
+</div>
+<div id="toast-container"></div>
+<input type="file" id="file-input" multiple>
+
+<script>
+const CONFIG = { owner: 'VahiDArmy', repo: 'VahiDArmy.github.io', branch: 'master', apiBase: 'https://api.github.com' };
+let token = '', currentPath = '', currentFiles = [], currentFileSha = null, currentFilePath = null, currentFileContent = null, isEditing = false, searchQuery = '', selectedItems = new Set();
+
+(function initParticles() {
+  const canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
+  let w, h, particles = [];
+  function resize() { w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+  class Particle {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random()*w; this.y = Math.random()*h; this.size = Math.random()*1.5+.5;
+      this.speedX = (Math.random()-.5)*.3; this.speedY = (Math.random()-.5)*.3;
+      this.alpha = Math.random()*.4+.1; this.color = Math.random()>.5 ? '#00f5ff' : '#bf00ff';
+    }
+    update() { this.x += this.speedX; this.y += this.speedY; if (this.x<0||this.x>w||this.y<0||this.y>h) this.reset(); }
+    draw() { ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill(); }
+  }
+  for (let i=0;i<60;i++) particles.push(new Particle());
+  function animate() {
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p => { p.update(); p.draw(); });
+    ctx.globalAlpha = .08;
+    for (let i=0;i<particles.length;i++) for (let j=i+1;j<particles.length;j++) {
+      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist<120) { ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle='#00f5ff'; ctx.lineWidth=.5; ctx.stroke(); }
+    }
+    ctx.globalAlpha = 1; requestAnimationFrame(animate);
+  }
+  animate();
+})();
+
+async function ghFetch(endpoint, options = {}) {
+  const url = endpoint.startsWith('http') ? endpoint : `\( {CONFIG.apiBase} \){endpoint}`;
+  const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28', ...options.headers };
+  const res = await fetch(url, { ...options, headers });
+  if (!res.ok) { let msg = `HTTP ${res.status}`; try { const err = await res.json(); msg = err.message || msg; } catch {} throw new Error(msg); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+function encodePath(path) { if (!path) return ''; return path.split('/').map(encodeURIComponent).join('/'); }
+
+async function doLogin() {
+  const tokenEl = document.getElementById('token-input'), repoEl = document.getElementById('repo-input'), branchEl = document.getElementById('branch-input');
+  const errEl = document.getElementById('login-error'), btn = document.getElementById('login-btn');
+  token = tokenEl.value.trim();
+  if (!token) { errEl.textContent = 'Please enter your access token'; return; }
+  const repoVal = repoEl.value.trim() || 'VahiDArmy/VahiDArmy.github.io';
+  const parts = repoVal.split('/');
+  if (parts.length !== 2) { errEl.textContent = 'Repo format must be owner/repo'; return; }
+  CONFIG.owner = parts[0]; CONFIG.repo = parts[1]; CONFIG.branch = branchEl.value.trim() || 'master';
+  btn.disabled = true; btn.innerHTML = '<span>Connecting...</span>'; errEl.textContent = '';
+  try {
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}`);
+    document.getElementById('login-screen').classList.add('hidden');
+    document.getElementById('app').classList.add('active');
+    document.getElementById('header-repo').textContent = `\( {CONFIG.owner}/ \){CONFIG.repo} @ ${CONFIG.branch}`;
+    loadPath(''); toast('Connected successfully', 'success');
+  } catch (e) { errEl.textContent = e.message || 'Authentication failed'; }
+  finally { btn.disabled = false; btn.innerHTML = '<span>⚡ Connect</span>'; }
+}
+function doLogout() {
+  token = ''; currentPath = ''; currentFiles = [];
+  document.getElementById('app').classList.remove('active');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('token-input').value = ''; closeSidePanel();
+}
+document.getElementById('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function loadPath(path) {
+  currentPath = path || ''; searchQuery = ''; document.getElementById('search-input').value = '';
+  selectedItems.clear(); showLoading(true); updateBreadcrumb();
+  document.getElementById('status-path').textContent = '/' + currentPath;
+  try {
+    const endpoint = `/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(currentPath)}?ref= \){CONFIG.branch}`;
+    let data = await ghFetch(endpoint);
+    if (!Array.isArray(data)) data = [data];
+    currentFiles = data.map(item => ({ name: item.name, path: item.path, type: item.type, size: item.size || 0, sha: item.sha, download_url: item.download_url, html_url: item.html_url }));
+    currentFiles.sort((a, b) => { if (a.type !== b.type) return a.type === 'dir' ? -1 : 1; return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); });
+    renderFileList(currentFiles);
+    document.getElementById('status-count').textContent = `\( {currentFiles.length} item \){currentFiles.length !== 1 ? 's' : ''}`;
+  } catch (e) {
+    if (e.message.includes('404') || e.message.includes('Not Found')) { currentFiles = []; renderFileList([]); document.getElementById('status-count').textContent = '0 items'; }
+    else { toast(e.message, 'error'); renderFileList([]); }
+  } finally { showLoading(false); }
+}
+
+function renderFileList(files) {
+  const list = document.getElementById('file-list');
+  let filtered = files;
+  if (searchQuery) { const q = searchQuery.toLowerCase(); filtered = files.filter(f => f.name.toLowerCase().includes(q)); }
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">\( {searchQuery ? '⌕' : '📂'}</div><p> \){searchQuery ? 'No matching files' : 'This folder is empty'}</p></div>`;
+    return;
+  }
+  list.innerHTML = filtered.map((f, i) => {
+    const icon = getFileIcon(f); const size = f.type === 'dir' ? '—' : formatSize(f.size);
+    return `<div class="file-item \( {selectedItems.has(f.path) ? 'selected' : ''}" data-path=" \){esc(f.path)}" data-type="\( {f.type}" data-name=" \){esc(f.name)}" data-sha="\( {f.sha || ''}" style="animation-delay: \){i*0.02}s" ondblclick="onItemOpen(this)" onclick="onItemClick(event,this)" oncontextmenu="onContextMenu(event,this)">
+      <div class="file-name"><span class="file-icon \( {icon.cls}"> \){icon.emoji}</span><span class="file-label" title="\( {esc(f.name)}"> \){esc(f.name)}</span></div>
+      <div class="file-size">${size}</div><div class="file-date">—</div>
+      <div class="file-actions">
+        \( {f.type === 'file' ? `<button class="file-action-btn" title="Download" onclick="event.stopPropagation();downloadFile(' \){esc(f.path)}','${esc(f.name)}')">⬇</button>` : ''}
+        <button class="file-action-btn" title="Rename" onclick="event.stopPropagation();showRenameModal('\( {esc(f.path)}',' \){esc(f.name)}')">✎</button>
+        <button class="file-action-btn danger" title="Delete" onclick="event.stopPropagation();showDeleteModal('\( {esc(f.path)}',' \){esc(f.name)}','${f.type}')">🗑</button>
+      </div></div>`;
+  }).join('');
+}
+
+function getFileIcon(f) {
+  if (f.type === 'dir') return { emoji: '📁', cls: 'folder' };
+  const ext = f.name.split('.').pop().toLowerCase();
+  const images = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'];
+  const code = ['js','ts','jsx','tsx','py','java','c','cpp','h','cs','go','rs','php','rb','swift','kt','sql','sh','bash','json','yml','yaml','xml','toml','html','css','scss','less','vue','svelte'];
+  const text = ['md','txt','log','csv','tsv','ini','cfg','conf','env','gitignore','dockerignore','editorconfig'];
+  if (images.includes(ext)) return { emoji: '🖼', cls: 'image' };
+  if (code.includes(ext)) return { emoji: '💻', cls: 'code' };
+  if (text.includes(ext)) return { emoji: '📄', cls: 'text' };
+  return { emoji: '📃', cls: 'file' };
+}
+function formatSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024, sizes = ['B','KB','MB','GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(i > 0 ? 1 : 0)) + ' ' + sizes[i];
+}
+function esc(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function updateBreadcrumb() {
+  const el = document.getElementById('breadcrumb');
+  const parts = currentPath ? currentPath.split('/') : [];
+  let html = `<span class="crumb ${!currentPath ? 'active' : ''}" onclick="loadPath('')">🏠 root</span>`;
+  let acc = '';
+  parts.forEach((p, i) => {
+    acc += (acc ? '/' : '') + p;
+    html += `<span class="crumb-sep">›</span><span class="crumb \( {i === parts.length-1 ? 'active' : ''}" onclick="loadPath(' \){esc(acc)}')">${esc(p)}</span>`;
+  });
+  el.innerHTML = html;
+}
+
+function onItemClick(e, el) {
+  if (e.ctrlKey || e.metaKey) {
+    const path = el.dataset.path;
+    if (selectedItems.has(path)) selectedItems.delete(path); else selectedItems.add(path);
+    el.classList.toggle('selected');
+  } else {
+    document.querySelectorAll('.file-item.selected').forEach(i => i.classList.remove('selected'));
+    selectedItems.clear(); selectedItems.add(el.dataset.path); el.classList.add('selected');
+  }
+}
+function onItemOpen(el) {
+  if (el.dataset.type === 'dir') loadPath(el.dataset.path);
+  else openFile(el.dataset.path, el.dataset.name, el.dataset.sha);
+}
+
+async function openFile(path, name, sha) {
+  showLoading(true); currentFilePath = path; currentFileSha = sha; isEditing = false;
+  try {
+    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
+    currentFileSha = data.sha;
+    const panel = document.getElementById('side-panel'), body = document.getElementById('side-body');
+    document.getElementById('side-title').textContent = name;
+    document.getElementById('save-btn').style.display = 'none';
+    document.getElementById('dl-btn').style.display = 'flex';
+    const ext = name.split('.').pop().toLowerCase();
+    const isImage = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'].includes(ext);
+    if (isImage && data.download_url) {
+      body.innerHTML = `<div class="image-preview"><img src="\( {data.download_url}" alt=" \){esc(name)}"></div>`;
+    } else {
+      let content = '';
+      if (data.encoding === 'base64') {
+        try { content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))); }
+        catch { content = atob(data.content.replace(/\n/g, '')); }
+      } else content = data.content || '';
+      currentFileContent = content;
+      body.innerHTML = `<textarea id="editor" spellcheck="false">${escTextarea(content)}</textarea>`;
+      document.getElementById('save-btn').style.display = 'flex'; isEditing = true;
+      document.getElementById('editor').addEventListener('input', () => { document.getElementById('status-msg').textContent = '● Unsaved changes'; });
+    }
+    panel.classList.add('open');
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+function escTextarea(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function closeSidePanel() {
+  document.getElementById('side-panel').classList.remove('open');
+  currentFilePath = null; currentFileSha = null; currentFileContent = null; isEditing = false;
+  document.getElementById('status-msg').textContent = '';
+}
+async function saveFile() {
+  if (!currentFilePath || !isEditing) return;
+  const editor = document.getElementById('editor'); if (!editor) return;
+  const newContent = editor.value; showLoading(true);
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(newContent)));
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(currentFilePath)}`, {
+      method: 'PUT', body: JSON.stringify({ message: `Update ${currentFilePath.split('/').pop()} via Neon FM`, content: encoded, sha: currentFileSha, branch: CONFIG.branch })
+    });
+    const updated = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(currentFilePath)}?ref= \){CONFIG.branch}`);
+    currentFileSha = updated.sha; currentFileContent = newContent;
+    document.getElementById('status-msg').textContent = '✓ Saved'; toast('File saved successfully', 'success');
+    setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 3000);
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+function downloadCurrent() { if (currentFilePath) downloadFile(currentFilePath, currentFilePath.split('/').pop()); }
+async function downloadFile(path, name) {
+  try {
+    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
+    if (data.download_url) { const a = document.createElement('a'); a.href = data.download_url; a.download = name; a.target = '_blank'; a.click(); }
+    else if (data.content) {
+      const content = atob(data.content.replace(/\n/g, ''));
+      const blob = new Blob([content], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
+    }
+    toast('Download started', 'info');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+function showNewFolderModal() {
+  showModal(`<h3>New Folder</h3><input type="text" id="modal-input" placeholder="folder-name" autofocus>
+    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-confirm" onclick="createFolder()">Create</button></div>`);
+  setTimeout(() => document.getElementById('modal-input')?.focus(), 100);
+}
+async function createFolder() {
+  const name = document.getElementById('modal-input')?.value.trim();
+  if (!name) return toast('Enter a folder name', 'error');
+  if (/[\\/:*?"<>|]/.test(name)) return toast('Invalid characters in name', 'error');
+  const path = currentPath ? `\( {currentPath}/ \){name}/.gitkeep` : `${name}/.gitkeep`;
+  closeModal(); showLoading(true);
+  try {
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
+      method: 'PUT', body: JSON.stringify({ message: `Create folder ${name} via Neon FM`, content: btoa(''), branch: CONFIG.branch })
+    });
+    toast(`Folder "${name}" created`, 'success'); loadPath(currentPath);
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+function showNewFileModal() {
+  showModal(`<h3>New File</h3><input type="text" id="modal-input" placeholder="filename.ext" autofocus>
+    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-confirm" onclick="createFile()">Create</button></div>`);
+  setTimeout(() => document.getElementById('modal-input')?.focus(), 100);
+}
+async function createFile() {
+  const name = document.getElementById('modal-input')?.value.trim();
+  if (!name) return toast('Enter a file name', 'error');
+  if (/[\\/:*?"<>|]/.test(name)) return toast('Invalid characters in name', 'error');
+  const path = currentPath ? `\( {currentPath}/ \){name}` : name;
+  closeModal(); showLoading(true);
+  try {
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
+      method: 'PUT', body: JSON.stringify({ message: `Create ${name} via Neon FM`, content: btoa(''), branch: CONFIG.branch })
+    });
+    toast(`File "${name}" created`, 'success'); await loadPath(currentPath); openFile(path, name, null);
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+function showRenameModal(path, name) {
+  showModal(`<h3>Rename</h3><input type="text" id="modal-input" value="${esc(name)}" autofocus>
+    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-confirm" onclick="doRename('\( {esc(path)}',' \){esc(name)}')">Rename</button></div>`);
+  setTimeout(() => { const inp = document.getElementById('modal-input'); if (inp) { inp.focus(); inp.select(); } }, 100);
+}
+async function doRename(oldPath, oldName) {
+  const newName = document.getElementById('modal-input')?.value.trim();
+  if (!newName || newName === oldName) return closeModal();
+  if (/[\\/:*?"<>|]/.test(newName)) return toast('Invalid characters', 'error');
+  closeModal(); showLoading(true);
+  try {
+    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(oldPath)}?ref= \){CONFIG.branch}`);
+    if (data.type === 'dir' || Array.isArray(data)) { toast('Folder rename requires moving all contents. Use Git for complex renames.', 'info'); showLoading(false); return; }
+    const parent = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+    const newPath = parent ? `\( {parent}/ \){newName}` : newName;
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(newPath)}`, {
+      method: 'PUT', body: JSON.stringify({ message: `Rename ${oldName} → ${newName} via Neon FM`, content: data.content, branch: CONFIG.branch })
+    });
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(oldPath)}`, {
+      method: 'DELETE', body: JSON.stringify({ message: `Delete old ${oldName} after rename via Neon FM`, sha: data.sha, branch: CONFIG.branch })
+    });
+    toast(`Renamed to "${newName}"`, 'success'); loadPath(currentPath);
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+
+function showDeleteModal(path, name, type) {
+  showModal(`<h3>Delete ${type === 'dir' ? 'Folder' : 'File'}</h3>
+    <p style="color:var(--text-secondary);margin-bottom:16px;font-size:.95rem">Are you sure you want to delete <strong style="color:var(--neon-pink)">${esc(name)}</strong>?
+    ${type === 'dir' ? '<br><br><span style="color:var(--neon-orange)">⚠ This will delete the folder and all its contents.</span>' : ''}</p>
+    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-danger" onclick="doDelete('\( {esc(path)}',' \){esc(name)}','${type}')">Delete</button></div>`);
+}
+async function doDelete(path, name, type) {
+  closeModal(); showLoading(true);
+  try {
+    if (type === 'dir') await deleteRecursive(path);
+    else {
+      const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
+      await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
+        method: 'DELETE', body: JSON.stringify({ message: `Delete ${name} via Neon FM`, sha: data.sha, branch: CONFIG.branch })
+      });
+    }
+    toast(`Deleted "${name}"`, 'success');
+    if (currentFilePath === path) closeSidePanel();
+    loadPath(currentPath);
+  } catch (e) { toast(e.message, 'error'); }
+  finally { showLoading(false); }
+}
+async function deleteRecursive(dirPath) {
+  const items = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(dirPath)}?ref= \){CONFIG.branch}`);
+  if (!Array.isArray(items)) {
+    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(dirPath)}`, {
+      method: 'DELETE', body: JSON.stringify({ message: `Delete ${dirPath} via Neon FM`, sha: items.sha, branch: CONFIG.branch })
+    });
+    return;
+  }
+  for (const item of items) {
+    if (item.type === 'dir') await deleteRecursive(item.path);
+    else await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(item.path)}`, {
+      method: 'DELETE', body: JSON.stringify({ message: `Delete ${item.name} via Neon FM`, sha: item.sha, branch: CONFIG.branch })
+    });
+  }
+}
+
+document.getElementById('file-input').addEventListener('change', async e => {
+  const files = Array.from(e.target.files); if (files.length) await uploadFiles(files); e.target.value = '';
+});
+const filePanel = document.querySelector('.file-panel'), dropOverlay = document.getElementById('drop-overlay');
+['dragenter','dragover'].forEach(evt => filePanel.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropOverlay.classList.add('show'); }));
+['dragleave','drop'].forEach(evt => filePanel.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropOverlay.classList.remove('show'); }));
+filePanel.addEventListener('drop', async e => { const files = Array.from(e.dataTransfer.files); if (files.length) await uploadFiles(files); });
+
+async function uploadFiles(files) {
+  const progress = document.getElementById('upload-progress'), bar = document.getElementById('upload-bar'), text = document.getElementById('upload-text');
+  progress.classList.add('show'); let done = 0; const total = files.length;
+  for (const file of files) {
+    text.textContent = `Uploading \( {file.name} ( \){done+1}/\( {total})`; bar.style.width = ` \){(done/total)*100}%`;
+    try {
+      const content = await readFileAsBase64(file);
+      const path = currentPath ? `\( {currentPath}/ \){file.name}` : file.name;
+      let sha = null;
+      try { const existing = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`); sha = existing.sha; } catch {}
+      const body = { message: `Upload ${file.name} via Neon FM`, content, branch: CONFIG.branch };
+      if (sha) body.sha = sha;
+      await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, { method: 'PUT', body: JSON.stringify(body) });
+      done++; bar.style.width = `${(done/total)*100}%`;
+    } catch (e) { toast(`Failed: ${file.name} — ${e.message}`, 'error'); }
+  }
+  text.textContent = `Done (\( {done}/ \){total})`;
+  setTimeout(() => progress.classList.remove('show'), 1500);
+  if (done > 0) { toast(`Uploaded \( {done} file \){done>1?'s':''}`, 'success'); loadPath(currentPath); }
+}
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject; reader.readAsDataURL(file);
+  });
+}
+
+function onSearch(q) { searchQuery = q.trim(); renderFileList(currentFiles); }
+
+function onContextMenu(e, el) {
+  e.preventDefault();
+  const menu = document.getElementById('context-menu'), path = el.dataset.path, name = el.dataset.name, type = el.dataset.type;
+  document.querySelectorAll('.file-item.selected').forEach(i => i.classList.remove('selected'));
+  selectedItems.clear(); selectedItems.add(path); el.classList.add('selected');
+  menu.innerHTML = `
+    \( {type === 'file' ? `<div class="ctx-item" onclick="openFile(' \){esc(path)}','\( {esc(name)}',' \){el.dataset.sha}');hideContext()">📂 Open</div>` : `<div class="ctx-item" onclick="loadPath('${esc(path)}');hideContext()">📂 Open</div>`}
+    \( {type === 'file' ? `<div class="ctx-item" onclick="downloadFile(' \){esc(path)}','${esc(name)}');hideContext()">⬇ Download</div>` : ''}
+    <div class="ctx-sep"></div>
+    <div class="ctx-item" onclick="showRenameModal('\( {esc(path)}',' \){esc(name)}');hideContext()">✎ Rename</div>
+    <div class="ctx-item danger" onclick="showDeleteModal('\( {esc(path)}',' \){esc(name)}','${type}');hideContext()">🗑 Delete</div>`;
+  menu.style.left = Math.min(e.clientX, innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, innerHeight - 200) + 'px';
+  menu.classList.add('show');
+}
+function hideContext() { document.getElementById('context-menu').classList.remove('show'); }
+document.addEventListener('click', hideContext);
+document.addEventListener('contextmenu', e => { if (!e.target.closest('.file-item')) hideContext(); });
+
+function showModal(html) { document.getElementById('modal-content').innerHTML = html; document.getElementById('modal-overlay').classList.add('show'); }
+function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+function showLoading(show) { document.getElementById('loading').classList.toggle('show', show); }
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toast-container'), el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  el.innerHTML = `<span>\( {icons[type]||'ℹ'}</span> <span> \){esc(msg)}</span>`;
+  container.appendChild(el);
+  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (isEditing) saveFile(); }
+  if (e.key === 'Escape') { closeModal(); hideContext(); if (document.getElementById('side-panel').classList.contains('open')) closeSidePanel(); }
+  if (e.key === 'Delete' && selectedItems.size === 1) {
+    const path = [...selectedItems][0]; const item = currentFiles.find(f => f.path === path);
+    if (item) showDeleteModal(item.path, item.name, item.type);
+  }
+});
+window.addEventListener('beforeunload', e => {
+  if (isEditing && document.getElementById('status-msg')?.textContent.includes('Unsaved')) { e.preventDefault(); e.returnValue = ''; }
+});
+console.log('%c◈ Neon GitHub File Manager ready', 'color:#00f5ff;font-size:14px;font-weight:bold');
+</script>
+</body>
+</html>
