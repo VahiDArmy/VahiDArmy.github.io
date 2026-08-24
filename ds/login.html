@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ورود ادمین</title>
+
+  <!-- فونت‌ها -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- استایل -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="login-page">
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <h1 class="logo">ورود ادمین</h1>
+      <a href="index.html" class="btn btn-outline">بازگشت</a>
+    </div>
+  </header>
+
+  <main class="container main-content login-container">
+    <section class="card login-card">
+      <form id="loginForm" class="login-form">
+        <div class="form-group">
+          <label for="loginEmail">ایمیل</label>
+          <input type="email" id="loginEmail" required autofocus>
+        </div>
+        <div class="form-group">
+          <label for="loginPassword">رمز عبور</label>
+          <input type="password" id="loginPassword" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">ورود</button>
+        <p id="loginError" class="error-message"></p>
+      </form>
+    </section>
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
