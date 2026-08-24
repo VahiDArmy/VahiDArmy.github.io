@@ -45,7 +45,6 @@ body::before {
 @keyframes gridPulse { 0%,100%{opacity:.3} 50%{opacity:.6} }
 #particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 
-/* LOGIN */
 #login-screen {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   z-index: 1000; background: radial-gradient(ellipse at center, #0a0a2a 0%, #05050f 70%);
@@ -106,7 +105,6 @@ body::before {
 .login-hint a { color: var(--neon-cyan); text-decoration: none; }
 .login-hint a:hover { text-decoration: underline; }
 
-/* APP */
 #app { display: none; flex-direction: column; height: 100vh; position: relative; z-index: 1; }
 #app.active { display: flex; }
 .header {
@@ -135,7 +133,6 @@ body::before {
   transition: var(--transition); display: flex; align-items: center; justify-content: center;
 }
 .btn-icon:hover { background: #1a1a3a; color: var(--neon-cyan); border-color: var(--neon-cyan); box-shadow: 0 0 12px #00f5ff33; }
-.btn-icon.danger:hover { color: var(--neon-pink); border-color: var(--neon-pink); box-shadow: 0 0 12px #ff00aa33; }
 
 .toolbar {
   display: flex; align-items: center; gap: 10px; padding: 10px 20px;
@@ -471,410 +468,769 @@ const CONFIG = { owner: 'VahiDArmy', repo: 'VahiDArmy.github.io', branch: 'maste
 let token = '', currentPath = '', currentFiles = [], currentFileSha = null, currentFilePath = null, currentFileContent = null, isEditing = false, searchQuery = '', selectedItems = new Set();
 
 (function initParticles() {
-  const canvas = document.getElementById('particles'), ctx = canvas.getContext('2d');
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
   let w, h, particles = [];
-  function resize() { w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
-  resize(); addEventListener('resize', resize);
-  class Particle {
-    constructor() { this.reset(); }
-    reset() {
-      this.x = Math.random()*w; this.y = Math.random()*h; this.size = Math.random()*1.5+.5;
-      this.speedX = (Math.random()-.5)*.3; this.speedY = (Math.random()-.5)*.3;
-      this.alpha = Math.random()*.4+.1; this.color = Math.random()>.5 ? '#00f5ff' : '#bf00ff';
-    }
-    update() { this.x += this.speedX; this.y += this.speedY; if (this.x<0||this.x>w||this.y<0||this.y>h) this.reset(); }
-    draw() { ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle=this.color; ctx.globalAlpha=this.alpha; ctx.fill(); }
+
+  function resize() {
+    w = canvas.width = window.innerWidth;
+    h = canvas.height = window.innerHeight;
   }
-  for (let i=0;i<60;i++) particles.push(new Particle());
+  resize();
+  window.addEventListener('resize', resize);
+
+  function Particle() {
+    this.reset = function () {
+      this.x = Math.random() * w;
+      this.y = Math.random() * h;
+      this.size = Math.random() * 1.5 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.3;
+      this.speedY = (Math.random() - 0.5) * 0.3;
+      this.alpha = Math.random() * 0.4 + 0.1;
+      this.color = Math.random() > 0.5 ? '#00f5ff' : '#bf00ff';
+    };
+    this.update = function () {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0 || this.x > w || this.y < 0 || this.y > h) this.reset();
+    };
+    this.draw = function () {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.color;
+      ctx.globalAlpha = this.alpha;
+      ctx.fill();
+    };
+    this.reset();
+  }
+
+  for (let i = 0; i < 60; i++) particles.push(new Particle());
+
   function animate() {
-    ctx.clearRect(0,0,w,h);
-    particles.forEach(p => { p.update(); p.draw(); });
-    ctx.globalAlpha = .08;
-    for (let i=0;i<particles.length;i++) for (let j=i+1;j<particles.length;j++) {
-      const dx=particles[i].x-particles[j].x, dy=particles[i].y-particles[j].y, dist=Math.sqrt(dx*dx+dy*dy);
-      if (dist<120) { ctx.beginPath(); ctx.moveTo(particles[i].x,particles[i].y); ctx.lineTo(particles[j].x,particles[j].y); ctx.strokeStyle='#00f5ff'; ctx.lineWidth=.5; ctx.stroke(); }
+    ctx.clearRect(0, 0, w, h);
+    particles.forEach(function (p) {
+      p.update();
+      p.draw();
+    });
+    ctx.globalAlpha = 0.08;
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = '#00f5ff';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
     }
-    ctx.globalAlpha = 1; requestAnimationFrame(animate);
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(animate);
   }
   animate();
 })();
 
-async function ghFetch(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `\( {CONFIG.apiBase} \){endpoint}`;
-  const headers = { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${token}`, 'X-GitHub-Api-Version': '2022-11-28', ...options.headers };
-  const res = await fetch(url, { ...options, headers });
-  if (!res.ok) { let msg = `HTTP ${res.status}`; try { const err = await res.json(); msg = err.message || msg; } catch {} throw new Error(msg); }
+async function ghFetch(endpoint, options) {
+  options = options || {};
+  const url = endpoint.indexOf('http') === 0 ? endpoint : CONFIG.apiBase + endpoint;
+  const headers = {
+    'Accept': 'application/vnd.github+json',
+    'Authorization': 'Bearer ' + token,
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  if (options.headers) {
+    for (var k in options.headers) headers[k] = options.headers[k];
+  }
+  const res = await fetch(url, {
+    method: options.method || 'GET',
+    headers: headers,
+    body: options.body || undefined
+  });
+  if (!res.ok) {
+    var msg = 'HTTP ' + res.status;
+    try { var err = await res.json(); msg = err.message || msg; } catch (e) {}
+    throw new Error(msg);
+  }
   if (res.status === 204) return null;
   return res.json();
 }
-function encodePath(path) { if (!path) return ''; return path.split('/').map(encodeURIComponent).join('/'); }
+
+function encodePath(path) {
+  if (!path) return '';
+  return path.split('/').map(encodeURIComponent).join('/');
+}
 
 async function doLogin() {
-  const tokenEl = document.getElementById('token-input'), repoEl = document.getElementById('repo-input'), branchEl = document.getElementById('branch-input');
-  const errEl = document.getElementById('login-error'), btn = document.getElementById('login-btn');
+  var tokenEl = document.getElementById('token-input');
+  var repoEl = document.getElementById('repo-input');
+  var branchEl = document.getElementById('branch-input');
+  var errEl = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+
   token = tokenEl.value.trim();
   if (!token) { errEl.textContent = 'Please enter your access token'; return; }
-  const repoVal = repoEl.value.trim() || 'VahiDArmy/VahiDArmy.github.io';
-  const parts = repoVal.split('/');
+
+  var repoVal = repoEl.value.trim() || 'VahiDArmy/VahiDArmy.github.io';
+  var parts = repoVal.split('/');
   if (parts.length !== 2) { errEl.textContent = 'Repo format must be owner/repo'; return; }
-  CONFIG.owner = parts[0]; CONFIG.repo = parts[1]; CONFIG.branch = branchEl.value.trim() || 'master';
-  btn.disabled = true; btn.innerHTML = '<span>Connecting...</span>'; errEl.textContent = '';
+  CONFIG.owner = parts[0];
+  CONFIG.repo = parts[1];
+  CONFIG.branch = branchEl.value.trim() || 'master';
+
+  btn.disabled = true;
+  btn.innerHTML = '<span>Connecting...</span>';
+  errEl.textContent = '';
+
   try {
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}`);
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo);
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('app').classList.add('active');
-    document.getElementById('header-repo').textContent = `\( {CONFIG.owner}/ \){CONFIG.repo} @ ${CONFIG.branch}`;
-    loadPath(''); toast('Connected successfully', 'success');
-  } catch (e) { errEl.textContent = e.message || 'Authentication failed'; }
-  finally { btn.disabled = false; btn.innerHTML = '<span>⚡ Connect</span>'; }
+    document.getElementById('header-repo').textContent = CONFIG.owner + '/' + CONFIG.repo + ' @ ' + CONFIG.branch;
+    loadPath('');
+    toast('Connected successfully', 'success');
+  } catch (e) {
+    errEl.textContent = e.message || 'Authentication failed';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>⚡ Connect</span>';
+  }
 }
+
 function doLogout() {
-  token = ''; currentPath = ''; currentFiles = [];
+  token = '';
+  currentPath = '';
+  currentFiles = [];
   document.getElementById('app').classList.remove('active');
   document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('token-input').value = ''; closeSidePanel();
+  document.getElementById('token-input').value = '';
+  closeSidePanel();
 }
-document.getElementById('token-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+document.getElementById('token-input').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') doLogin();
+});
 
 async function loadPath(path) {
-  currentPath = path || ''; searchQuery = ''; document.getElementById('search-input').value = '';
-  selectedItems.clear(); showLoading(true); updateBreadcrumb();
+  currentPath = path || '';
+  searchQuery = '';
+  document.getElementById('search-input').value = '';
+  selectedItems.clear();
+  showLoading(true);
+  updateBreadcrumb();
   document.getElementById('status-path').textContent = '/' + currentPath;
+
   try {
-    const endpoint = `/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(currentPath)}?ref= \){CONFIG.branch}`;
-    let data = await ghFetch(endpoint);
+    var endpoint = '/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(currentPath) + '?ref=' + CONFIG.branch;
+    var data = await ghFetch(endpoint);
     if (!Array.isArray(data)) data = [data];
-    currentFiles = data.map(item => ({ name: item.name, path: item.path, type: item.type, size: item.size || 0, sha: item.sha, download_url: item.download_url, html_url: item.html_url }));
-    currentFiles.sort((a, b) => { if (a.type !== b.type) return a.type === 'dir' ? -1 : 1; return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }); });
+
+    currentFiles = data.map(function (item) {
+      return {
+        name: item.name,
+        path: item.path,
+        type: item.type,
+        size: item.size || 0,
+        sha: item.sha,
+        download_url: item.download_url,
+        html_url: item.html_url
+      };
+    });
+
+    currentFiles.sort(function (a, b) {
+      if (a.type !== b.type) return a.type === 'dir' ? -1 : 1;
+      return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+    });
+
     renderFileList(currentFiles);
-    document.getElementById('status-count').textContent = `\( {currentFiles.length} item \){currentFiles.length !== 1 ? 's' : ''}`;
+    document.getElementById('status-count').textContent = currentFiles.length + ' item' + (currentFiles.length !== 1 ? 's' : '');
   } catch (e) {
-    if (e.message.includes('404') || e.message.includes('Not Found')) { currentFiles = []; renderFileList([]); document.getElementById('status-count').textContent = '0 items'; }
-    else { toast(e.message, 'error'); renderFileList([]); }
-  } finally { showLoading(false); }
+    if (e.message.indexOf('404') !== -1 || e.message.indexOf('Not Found') !== -1) {
+      currentFiles = [];
+      renderFileList([]);
+      document.getElementById('status-count').textContent = '0 items';
+    } else {
+      toast(e.message, 'error');
+      renderFileList([]);
+    }
+  } finally {
+    showLoading(false);
+  }
 }
 
 function renderFileList(files) {
-  const list = document.getElementById('file-list');
-  let filtered = files;
-  if (searchQuery) { const q = searchQuery.toLowerCase(); filtered = files.filter(f => f.name.toLowerCase().includes(q)); }
+  var list = document.getElementById('file-list');
+  var filtered = files;
+  if (searchQuery) {
+    var q = searchQuery.toLowerCase();
+    filtered = files.filter(function (f) { return f.name.toLowerCase().indexOf(q) !== -1; });
+  }
+
   if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">\( {searchQuery ? '⌕' : '📂'}</div><p> \){searchQuery ? 'No matching files' : 'This folder is empty'}</p></div>`;
+    list.innerHTML = '<div class="empty-state"><div class="icon">' + (searchQuery ? '⌕' : '📂') + '</div><p>' + (searchQuery ? 'No matching files' : 'This folder is empty') + '</p></div>';
     return;
   }
-  list.innerHTML = filtered.map((f, i) => {
-    const icon = getFileIcon(f); const size = f.type === 'dir' ? '—' : formatSize(f.size);
-    return `<div class="file-item \( {selectedItems.has(f.path) ? 'selected' : ''}" data-path=" \){esc(f.path)}" data-type="\( {f.type}" data-name=" \){esc(f.name)}" data-sha="\( {f.sha || ''}" style="animation-delay: \){i*0.02}s" ondblclick="onItemOpen(this)" onclick="onItemClick(event,this)" oncontextmenu="onContextMenu(event,this)">
-      <div class="file-name"><span class="file-icon \( {icon.cls}"> \){icon.emoji}</span><span class="file-label" title="\( {esc(f.name)}"> \){esc(f.name)}</span></div>
-      <div class="file-size">${size}</div><div class="file-date">—</div>
-      <div class="file-actions">
-        \( {f.type === 'file' ? `<button class="file-action-btn" title="Download" onclick="event.stopPropagation();downloadFile(' \){esc(f.path)}','${esc(f.name)}')">⬇</button>` : ''}
-        <button class="file-action-btn" title="Rename" onclick="event.stopPropagation();showRenameModal('\( {esc(f.path)}',' \){esc(f.name)}')">✎</button>
-        <button class="file-action-btn danger" title="Delete" onclick="event.stopPropagation();showDeleteModal('\( {esc(f.path)}',' \){esc(f.name)}','${f.type}')">🗑</button>
-      </div></div>`;
-  }).join('');
+
+  var html = '';
+  for (var i = 0; i < filtered.length; i++) {
+    var f = filtered[i];
+    var icon = getFileIcon(f);
+    var size = f.type === 'dir' ? '—' : formatSize(f.size);
+    html += '<div class="file-item ' + (selectedItems.has(f.path) ? 'selected' : '') + '" data-path="' + esc(f.path) + '" data-type="' + f.type + '" data-name="' + esc(f.name) + '" data-sha="' + (f.sha || '') + '" style="animation-delay:' + (i * 0.02) + 's" ondblclick="onItemOpen(this)" onclick="onItemClick(event,this)" oncontextmenu="onContextMenu(event,this)">' +
+      '<div class="file-name"><span class="file-icon ' + icon.cls + '">' + icon.emoji + '</span><span class="file-label" title="' + esc(f.name) + '">' + esc(f.name) + '</span></div>' +
+      '<div class="file-size">' + size + '</div><div class="file-date">—</div>' +
+      '<div class="file-actions">' +
+        (f.type === 'file' ? '<button class="file-action-btn" title="Download" onclick="event.stopPropagation();downloadFile(\'' + esc(f.path) + '\',\'' + esc(f.name) + '\')">⬇</button>' : '') +
+        '<button class="file-action-btn" title="Rename" onclick="event.stopPropagation();showRenameModal(\'' + esc(f.path) + '\',\'' + esc(f.name) + '\')">✎</button>' +
+        '<button class="file-action-btn danger" title="Delete" onclick="event.stopPropagation();showDeleteModal(\'' + esc(f.path) + '\',\'' + esc(f.name) + '\',\'' + f.type + '\')">🗑</button>' +
+      '</div></div>';
+  }
+  list.innerHTML = html;
 }
 
 function getFileIcon(f) {
   if (f.type === 'dir') return { emoji: '📁', cls: 'folder' };
-  const ext = f.name.split('.').pop().toLowerCase();
-  const images = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'];
-  const code = ['js','ts','jsx','tsx','py','java','c','cpp','h','cs','go','rs','php','rb','swift','kt','sql','sh','bash','json','yml','yaml','xml','toml','html','css','scss','less','vue','svelte'];
-  const text = ['md','txt','log','csv','tsv','ini','cfg','conf','env','gitignore','dockerignore','editorconfig'];
-  if (images.includes(ext)) return { emoji: '🖼', cls: 'image' };
-  if (code.includes(ext)) return { emoji: '💻', cls: 'code' };
-  if (text.includes(ext)) return { emoji: '📄', cls: 'text' };
+  var ext = f.name.split('.').pop().toLowerCase();
+  var images = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'];
+  var code = ['js','ts','jsx','tsx','py','java','c','cpp','h','cs','go','rs','php','rb','swift','kt','sql','sh','bash','json','yml','yaml','xml','toml','html','css','scss','less','vue','svelte'];
+  var text = ['md','txt','log','csv','tsv','ini','cfg','conf','env','gitignore','dockerignore','editorconfig'];
+  if (images.indexOf(ext) !== -1) return { emoji: '🖼', cls: 'image' };
+  if (code.indexOf(ext) !== -1) return { emoji: '💻', cls: 'code' };
+  if (text.indexOf(ext) !== -1) return { emoji: '📄', cls: 'text' };
   return { emoji: '📃', cls: 'file' };
 }
+
 function formatSize(bytes) {
   if (bytes === 0) return '0 B';
-  const k = 1024, sizes = ['B','KB','MB','GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  var k = 1024, sizes = ['B','KB','MB','GB'];
+  var i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(i > 0 ? 1 : 0)) + ' ' + sizes[i];
 }
-function esc(str) { if (!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 function updateBreadcrumb() {
-  const el = document.getElementById('breadcrumb');
-  const parts = currentPath ? currentPath.split('/') : [];
-  let html = `<span class="crumb ${!currentPath ? 'active' : ''}" onclick="loadPath('')">🏠 root</span>`;
-  let acc = '';
-  parts.forEach((p, i) => {
-    acc += (acc ? '/' : '') + p;
-    html += `<span class="crumb-sep">›</span><span class="crumb \( {i === parts.length-1 ? 'active' : ''}" onclick="loadPath(' \){esc(acc)}')">${esc(p)}</span>`;
-  });
+  var el = document.getElementById('breadcrumb');
+  var parts = currentPath ? currentPath.split('/') : [];
+  var html = '<span class="crumb ' + (!currentPath ? 'active' : '') + '" onclick="loadPath(\'\')">🏠 root</span>';
+  var acc = '';
+  for (var i = 0; i < parts.length; i++) {
+    acc += (acc ? '/' : '') + parts[i];
+    html += '<span class="crumb-sep">›</span><span class="crumb ' + (i === parts.length - 1 ? 'active' : '') + '" onclick="loadPath(\'' + esc(acc) + '\')">' + esc(parts[i]) + '</span>';
+  }
   el.innerHTML = html;
 }
 
 function onItemClick(e, el) {
   if (e.ctrlKey || e.metaKey) {
-    const path = el.dataset.path;
-    if (selectedItems.has(path)) selectedItems.delete(path); else selectedItems.add(path);
+    var path = el.dataset.path;
+    if (selectedItems.has(path)) selectedItems.delete(path);
+    else selectedItems.add(path);
     el.classList.toggle('selected');
   } else {
-    document.querySelectorAll('.file-item.selected').forEach(i => i.classList.remove('selected'));
-    selectedItems.clear(); selectedItems.add(el.dataset.path); el.classList.add('selected');
+    var items = document.querySelectorAll('.file-item.selected');
+    for (var i = 0; i < items.length; i++) items[i].classList.remove('selected');
+    selectedItems.clear();
+    selectedItems.add(el.dataset.path);
+    el.classList.add('selected');
   }
 }
+
 function onItemOpen(el) {
   if (el.dataset.type === 'dir') loadPath(el.dataset.path);
   else openFile(el.dataset.path, el.dataset.name, el.dataset.sha);
 }
 
 async function openFile(path, name, sha) {
-  showLoading(true); currentFilePath = path; currentFileSha = sha; isEditing = false;
+  showLoading(true);
+  currentFilePath = path;
+  currentFileSha = sha;
+  isEditing = false;
+
   try {
-    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
+    var data = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path) + '?ref=' + CONFIG.branch);
     currentFileSha = data.sha;
-    const panel = document.getElementById('side-panel'), body = document.getElementById('side-body');
+    var panel = document.getElementById('side-panel');
+    var body = document.getElementById('side-body');
     document.getElementById('side-title').textContent = name;
     document.getElementById('save-btn').style.display = 'none';
     document.getElementById('dl-btn').style.display = 'flex';
-    const ext = name.split('.').pop().toLowerCase();
-    const isImage = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'].includes(ext);
+
+    var ext = name.split('.').pop().toLowerCase();
+    var isImage = ['png','jpg','jpeg','gif','webp','svg','bmp','ico'].indexOf(ext) !== -1;
+
     if (isImage && data.download_url) {
-      body.innerHTML = `<div class="image-preview"><img src="\( {data.download_url}" alt=" \){esc(name)}"></div>`;
+      body.innerHTML = '<div class="image-preview"><img src="' + data.download_url + '" alt="' + esc(name) + '"></div>';
     } else {
-      let content = '';
+      var content = '';
       if (data.encoding === 'base64') {
-        try { content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, '')))); }
-        catch { content = atob(data.content.replace(/\n/g, '')); }
-      } else content = data.content || '';
+        try {
+          content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+        } catch (e) {
+          content = atob(data.content.replace(/\n/g, ''));
+        }
+      } else {
+        content = data.content || '';
+      }
       currentFileContent = content;
-      body.innerHTML = `<textarea id="editor" spellcheck="false">${escTextarea(content)}</textarea>`;
-      document.getElementById('save-btn').style.display = 'flex'; isEditing = true;
-      document.getElementById('editor').addEventListener('input', () => { document.getElementById('status-msg').textContent = '● Unsaved changes'; });
+      body.innerHTML = '<textarea id="editor" spellcheck="false">' + escTextarea(content) + '</textarea>';
+      document.getElementById('save-btn').style.display = 'flex';
+      isEditing = true;
+      document.getElementById('editor').addEventListener('input', function () {
+        document.getElementById('status-msg').textContent = '● Unsaved changes';
+      });
     }
     panel.classList.add('open');
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
-function escTextarea(str) { return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function escTextarea(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 function closeSidePanel() {
   document.getElementById('side-panel').classList.remove('open');
-  currentFilePath = null; currentFileSha = null; currentFileContent = null; isEditing = false;
+  currentFilePath = null;
+  currentFileSha = null;
+  currentFileContent = null;
+  isEditing = false;
   document.getElementById('status-msg').textContent = '';
 }
+
 async function saveFile() {
   if (!currentFilePath || !isEditing) return;
-  const editor = document.getElementById('editor'); if (!editor) return;
-  const newContent = editor.value; showLoading(true);
+  var editor = document.getElementById('editor');
+  if (!editor) return;
+  var newContent = editor.value;
+  showLoading(true);
   try {
-    const encoded = btoa(unescape(encodeURIComponent(newContent)));
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(currentFilePath)}`, {
-      method: 'PUT', body: JSON.stringify({ message: `Update ${currentFilePath.split('/').pop()} via Neon FM`, content: encoded, sha: currentFileSha, branch: CONFIG.branch })
+    var encoded = btoa(unescape(encodeURIComponent(newContent)));
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(currentFilePath), {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Update ' + currentFilePath.split('/').pop() + ' via Neon FM',
+        content: encoded,
+        sha: currentFileSha,
+        branch: CONFIG.branch
+      })
     });
-    const updated = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(currentFilePath)}?ref= \){CONFIG.branch}`);
-    currentFileSha = updated.sha; currentFileContent = newContent;
-    document.getElementById('status-msg').textContent = '✓ Saved'; toast('File saved successfully', 'success');
-    setTimeout(() => { document.getElementById('status-msg').textContent = ''; }, 3000);
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+    var updated = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(currentFilePath) + '?ref=' + CONFIG.branch);
+    currentFileSha = updated.sha;
+    currentFileContent = newContent;
+    document.getElementById('status-msg').textContent = '✓ Saved';
+    toast('File saved successfully', 'success');
+    setTimeout(function () { document.getElementById('status-msg').textContent = ''; }, 3000);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
-function downloadCurrent() { if (currentFilePath) downloadFile(currentFilePath, currentFilePath.split('/').pop()); }
+
+function downloadCurrent() {
+  if (currentFilePath) downloadFile(currentFilePath, currentFilePath.split('/').pop());
+}
+
 async function downloadFile(path, name) {
   try {
-    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
-    if (data.download_url) { const a = document.createElement('a'); a.href = data.download_url; a.download = name; a.target = '_blank'; a.click(); }
-    else if (data.content) {
-      const content = atob(data.content.replace(/\n/g, ''));
-      const blob = new Blob([content], { type: 'application/octet-stream' });
-      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; a.click(); URL.revokeObjectURL(url);
+    var data = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path) + '?ref=' + CONFIG.branch);
+    if (data.download_url) {
+      var a = document.createElement('a');
+      a.href = data.download_url;
+      a.download = name;
+      a.target = '_blank';
+      a.click();
+    } else if (data.content) {
+      var content = atob(data.content.replace(/\n/g, ''));
+      var blob = new Blob([content], { type: 'application/octet-stream' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
     }
     toast('Download started', 'info');
-  } catch (e) { toast(e.message, 'error'); }
+  } catch (e) {
+    toast(e.message, 'error');
+  }
 }
 
 function showNewFolderModal() {
-  showModal(`<h3>New Folder</h3><input type="text" id="modal-input" placeholder="folder-name" autofocus>
-    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-confirm" onclick="createFolder()">Create</button></div>`);
-  setTimeout(() => document.getElementById('modal-input')?.focus(), 100);
+  showModal('<h3>New Folder</h3><input type="text" id="modal-input" placeholder="folder-name" autofocus>' +
+    '<div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-confirm" onclick="createFolder()">Create</button></div>');
+  setTimeout(function () { var el = document.getElementById('modal-input'); if (el) el.focus(); }, 100);
 }
+
 async function createFolder() {
-  const name = document.getElementById('modal-input')?.value.trim();
+  var name = document.getElementById('modal-input') && document.getElementById('modal-input').value.trim();
   if (!name) return toast('Enter a folder name', 'error');
   if (/[\\/:*?"<>|]/.test(name)) return toast('Invalid characters in name', 'error');
-  const path = currentPath ? `\( {currentPath}/ \){name}/.gitkeep` : `${name}/.gitkeep`;
-  closeModal(); showLoading(true);
+  var path = currentPath ? currentPath + '/' + name + '/.gitkeep' : name + '/.gitkeep';
+  closeModal();
+  showLoading(true);
   try {
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
-      method: 'PUT', body: JSON.stringify({ message: `Create folder ${name} via Neon FM`, content: btoa(''), branch: CONFIG.branch })
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path), {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Create folder ' + name + ' via Neon FM',
+        content: btoa(''),
+        branch: CONFIG.branch
+      })
     });
-    toast(`Folder "${name}" created`, 'success'); loadPath(currentPath);
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+    toast('Folder "' + name + '" created', 'success');
+    loadPath(currentPath);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
 function showNewFileModal() {
-  showModal(`<h3>New File</h3><input type="text" id="modal-input" placeholder="filename.ext" autofocus>
-    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-confirm" onclick="createFile()">Create</button></div>`);
-  setTimeout(() => document.getElementById('modal-input')?.focus(), 100);
+  showModal('<h3>New File</h3><input type="text" id="modal-input" placeholder="filename.ext" autofocus>' +
+    '<div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-confirm" onclick="createFile()">Create</button></div>');
+  setTimeout(function () { var el = document.getElementById('modal-input'); if (el) el.focus(); }, 100);
 }
+
 async function createFile() {
-  const name = document.getElementById('modal-input')?.value.trim();
+  var name = document.getElementById('modal-input') && document.getElementById('modal-input').value.trim();
   if (!name) return toast('Enter a file name', 'error');
   if (/[\\/:*?"<>|]/.test(name)) return toast('Invalid characters in name', 'error');
-  const path = currentPath ? `\( {currentPath}/ \){name}` : name;
-  closeModal(); showLoading(true);
+  var path = currentPath ? currentPath + '/' + name : name;
+  closeModal();
+  showLoading(true);
   try {
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
-      method: 'PUT', body: JSON.stringify({ message: `Create ${name} via Neon FM`, content: btoa(''), branch: CONFIG.branch })
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path), {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Create ' + name + ' via Neon FM',
+        content: btoa(''),
+        branch: CONFIG.branch
+      })
     });
-    toast(`File "${name}" created`, 'success'); await loadPath(currentPath); openFile(path, name, null);
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+    toast('File "' + name + '" created', 'success');
+    await loadPath(currentPath);
+    openFile(path, name, null);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
 function showRenameModal(path, name) {
-  showModal(`<h3>Rename</h3><input type="text" id="modal-input" value="${esc(name)}" autofocus>
-    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-confirm" onclick="doRename('\( {esc(path)}',' \){esc(name)}')">Rename</button></div>`);
-  setTimeout(() => { const inp = document.getElementById('modal-input'); if (inp) { inp.focus(); inp.select(); } }, 100);
+  showModal('<h3>Rename</h3><input type="text" id="modal-input" value="' + esc(name) + '" autofocus>' +
+    '<div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-confirm" onclick="doRename(\'' + esc(path) + '\',\'' + esc(name) + '\')">Rename</button></div>');
+  setTimeout(function () {
+    var inp = document.getElementById('modal-input');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 100);
 }
+
 async function doRename(oldPath, oldName) {
-  const newName = document.getElementById('modal-input')?.value.trim();
+  var newName = document.getElementById('modal-input') && document.getElementById('modal-input').value.trim();
   if (!newName || newName === oldName) return closeModal();
   if (/[\\/:*?"<>|]/.test(newName)) return toast('Invalid characters', 'error');
-  closeModal(); showLoading(true);
+  closeModal();
+  showLoading(true);
   try {
-    const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(oldPath)}?ref= \){CONFIG.branch}`);
-    if (data.type === 'dir' || Array.isArray(data)) { toast('Folder rename requires moving all contents. Use Git for complex renames.', 'info'); showLoading(false); return; }
-    const parent = oldPath.includes('/') ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
-    const newPath = parent ? `\( {parent}/ \){newName}` : newName;
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(newPath)}`, {
-      method: 'PUT', body: JSON.stringify({ message: `Rename ${oldName} → ${newName} via Neon FM`, content: data.content, branch: CONFIG.branch })
+    var data = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(oldPath) + '?ref=' + CONFIG.branch);
+    if (data.type === 'dir' || Array.isArray(data)) {
+      toast('Folder rename requires moving all contents. Use Git for complex renames.', 'info');
+      showLoading(false);
+      return;
+    }
+    var parent = oldPath.indexOf('/') !== -1 ? oldPath.substring(0, oldPath.lastIndexOf('/')) : '';
+    var newPath = parent ? parent + '/' + newName : newName;
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(newPath), {
+      method: 'PUT',
+      body: JSON.stringify({
+        message: 'Rename ' + oldName + ' → ' + newName + ' via Neon FM',
+        content: data.content,
+        branch: CONFIG.branch
+      })
     });
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(oldPath)}`, {
-      method: 'DELETE', body: JSON.stringify({ message: `Delete old ${oldName} after rename via Neon FM`, sha: data.sha, branch: CONFIG.branch })
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(oldPath), {
+      method: 'DELETE',
+      body: JSON.stringify({
+        message: 'Delete old ' + oldName + ' after rename via Neon FM',
+        sha: data.sha,
+        branch: CONFIG.branch
+      })
     });
-    toast(`Renamed to "${newName}"`, 'success'); loadPath(currentPath);
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+    toast('Renamed to "' + newName + '"', 'success');
+    loadPath(currentPath);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
 
 function showDeleteModal(path, name, type) {
-  showModal(`<h3>Delete ${type === 'dir' ? 'Folder' : 'File'}</h3>
-    <p style="color:var(--text-secondary);margin-bottom:16px;font-size:.95rem">Are you sure you want to delete <strong style="color:var(--neon-pink)">${esc(name)}</strong>?
-    ${type === 'dir' ? '<br><br><span style="color:var(--neon-orange)">⚠ This will delete the folder and all its contents.</span>' : ''}</p>
-    <div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
-    <button class="btn btn-danger" onclick="doDelete('\( {esc(path)}',' \){esc(name)}','${type}')">Delete</button></div>`);
+  showModal('<h3>Delete ' + (type === 'dir' ? 'Folder' : 'File') + '</h3>' +
+    '<p style="color:var(--text-secondary);margin-bottom:16px;font-size:.95rem">Are you sure you want to delete <strong style="color:var(--neon-pink)">' + esc(name) + '</strong>?' +
+    (type === 'dir' ? '<br><br><span style="color:var(--neon-orange)">⚠ This will delete the folder and all its contents.</span>' : '') + '</p>' +
+    '<div class="modal-actions"><button class="btn btn-cancel" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-danger" onclick="doDelete(\'' + esc(path) + '\',\'' + esc(name) + '\',\'' + type + '\')">Delete</button></div>');
 }
+
 async function doDelete(path, name, type) {
-  closeModal(); showLoading(true);
+  closeModal();
+  showLoading(true);
   try {
-    if (type === 'dir') await deleteRecursive(path);
-    else {
-      const data = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`);
-      await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, {
-        method: 'DELETE', body: JSON.stringify({ message: `Delete ${name} via Neon FM`, sha: data.sha, branch: CONFIG.branch })
+    if (type === 'dir') {
+      await deleteRecursive(path);
+    } else {
+      var data = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path) + '?ref=' + CONFIG.branch);
+      await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path), {
+        method: 'DELETE',
+        body: JSON.stringify({
+          message: 'Delete ' + name + ' via Neon FM',
+          sha: data.sha,
+          branch: CONFIG.branch
+        })
       });
     }
-    toast(`Deleted "${name}"`, 'success');
+    toast('Deleted "' + name + '"', 'success');
     if (currentFilePath === path) closeSidePanel();
     loadPath(currentPath);
-  } catch (e) { toast(e.message, 'error'); }
-  finally { showLoading(false); }
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    showLoading(false);
+  }
 }
+
 async function deleteRecursive(dirPath) {
-  const items = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(dirPath)}?ref= \){CONFIG.branch}`);
+  var items = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(dirPath) + '?ref=' + CONFIG.branch);
   if (!Array.isArray(items)) {
-    await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(dirPath)}`, {
-      method: 'DELETE', body: JSON.stringify({ message: `Delete ${dirPath} via Neon FM`, sha: items.sha, branch: CONFIG.branch })
+    await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(dirPath), {
+      method: 'DELETE',
+      body: JSON.stringify({
+        message: 'Delete ' + dirPath + ' via Neon FM',
+        sha: items.sha,
+        branch: CONFIG.branch
+      })
     });
     return;
   }
-  for (const item of items) {
-    if (item.type === 'dir') await deleteRecursive(item.path);
-    else await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(item.path)}`, {
-      method: 'DELETE', body: JSON.stringify({ message: `Delete ${item.name} via Neon FM`, sha: item.sha, branch: CONFIG.branch })
-    });
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    if (item.type === 'dir') {
+      await deleteRecursive(item.path);
+    } else {
+      await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(item.path), {
+        method: 'DELETE',
+        body: JSON.stringify({
+          message: 'Delete ' + item.name + ' via Neon FM',
+          sha: item.sha,
+          branch: CONFIG.branch
+        })
+      });
+    }
   }
 }
 
-document.getElementById('file-input').addEventListener('change', async e => {
-  const files = Array.from(e.target.files); if (files.length) await uploadFiles(files); e.target.value = '';
+document.getElementById('file-input').addEventListener('change', async function (e) {
+  var files = Array.prototype.slice.call(e.target.files);
+  if (files.length) await uploadFiles(files);
+  e.target.value = '';
 });
-const filePanel = document.querySelector('.file-panel'), dropOverlay = document.getElementById('drop-overlay');
-['dragenter','dragover'].forEach(evt => filePanel.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropOverlay.classList.add('show'); }));
-['dragleave','drop'].forEach(evt => filePanel.addEventListener(evt, e => { e.preventDefault(); e.stopPropagation(); dropOverlay.classList.remove('show'); }));
-filePanel.addEventListener('drop', async e => { const files = Array.from(e.dataTransfer.files); if (files.length) await uploadFiles(files); });
+
+var filePanel = document.querySelector('.file-panel');
+var dropOverlay = document.getElementById('drop-overlay');
+
+['dragenter', 'dragover'].forEach(function (evt) {
+  filePanel.addEventListener(evt, function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropOverlay.classList.add('show');
+  });
+});
+['dragleave', 'drop'].forEach(function (evt) {
+  filePanel.addEventListener(evt, function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropOverlay.classList.remove('show');
+  });
+});
+filePanel.addEventListener('drop', async function (e) {
+  var files = Array.prototype.slice.call(e.dataTransfer.files);
+  if (files.length) await uploadFiles(files);
+});
 
 async function uploadFiles(files) {
-  const progress = document.getElementById('upload-progress'), bar = document.getElementById('upload-bar'), text = document.getElementById('upload-text');
-  progress.classList.add('show'); let done = 0; const total = files.length;
-  for (const file of files) {
-    text.textContent = `Uploading \( {file.name} ( \){done+1}/\( {total})`; bar.style.width = ` \){(done/total)*100}%`;
+  var progress = document.getElementById('upload-progress');
+  var bar = document.getElementById('upload-bar');
+  var text = document.getElementById('upload-text');
+  progress.classList.add('show');
+  var done = 0;
+  var total = files.length;
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    text.textContent = 'Uploading ' + file.name + ' (' + (done + 1) + '/' + total + ')';
+    bar.style.width = ((done / total) * 100) + '%';
     try {
-      const content = await readFileAsBase64(file);
-      const path = currentPath ? `\( {currentPath}/ \){file.name}` : file.name;
-      let sha = null;
-      try { const existing = await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/\( {encodePath(path)}?ref= \){CONFIG.branch}`); sha = existing.sha; } catch {}
-      const body = { message: `Upload ${file.name} via Neon FM`, content, branch: CONFIG.branch };
+      var content = await readFileAsBase64(file);
+      var path = currentPath ? currentPath + '/' + file.name : file.name;
+      var sha = null;
+      try {
+        var existing = await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path) + '?ref=' + CONFIG.branch);
+        sha = existing.sha;
+      } catch (e) {}
+      var body = {
+        message: 'Upload ' + file.name + ' via Neon FM',
+        content: content,
+        branch: CONFIG.branch
+      };
       if (sha) body.sha = sha;
-      await ghFetch(`/repos/\( {CONFIG.owner}/ \){CONFIG.repo}/contents/${encodePath(path)}`, { method: 'PUT', body: JSON.stringify(body) });
-      done++; bar.style.width = `${(done/total)*100}%`;
-    } catch (e) { toast(`Failed: ${file.name} — ${e.message}`, 'error'); }
+      await ghFetch('/repos/' + CONFIG.owner + '/' + CONFIG.repo + '/contents/' + encodePath(path), {
+        method: 'PUT',
+        body: JSON.stringify(body)
+      });
+      done++;
+      bar.style.width = ((done / total) * 100) + '%';
+    } catch (e) {
+      toast('Failed: ' + file.name + ' — ' + e.message, 'error');
+    }
   }
-  text.textContent = `Done (\( {done}/ \){total})`;
-  setTimeout(() => progress.classList.remove('show'), 1500);
-  if (done > 0) { toast(`Uploaded \( {done} file \){done>1?'s':''}`, 'success'); loadPath(currentPath); }
+  text.textContent = 'Done (' + done + '/' + total + ')';
+  setTimeout(function () { progress.classList.remove('show'); }, 1500);
+  if (done > 0) {
+    toast('Uploaded ' + done + ' file' + (done > 1 ? 's' : ''), 'success');
+    loadPath(currentPath);
+  }
 }
+
 function readFileAsBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject; reader.readAsDataURL(file);
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      resolve(reader.result.split(',')[1]);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
-function onSearch(q) { searchQuery = q.trim(); renderFileList(currentFiles); }
+function onSearch(q) {
+  searchQuery = q.trim();
+  renderFileList(currentFiles);
+}
 
 function onContextMenu(e, el) {
   e.preventDefault();
-  const menu = document.getElementById('context-menu'), path = el.dataset.path, name = el.dataset.name, type = el.dataset.type;
-  document.querySelectorAll('.file-item.selected').forEach(i => i.classList.remove('selected'));
-  selectedItems.clear(); selectedItems.add(path); el.classList.add('selected');
-  menu.innerHTML = `
-    \( {type === 'file' ? `<div class="ctx-item" onclick="openFile(' \){esc(path)}','\( {esc(name)}',' \){el.dataset.sha}');hideContext()">📂 Open</div>` : `<div class="ctx-item" onclick="loadPath('${esc(path)}');hideContext()">📂 Open</div>`}
-    \( {type === 'file' ? `<div class="ctx-item" onclick="downloadFile(' \){esc(path)}','${esc(name)}');hideContext()">⬇ Download</div>` : ''}
-    <div class="ctx-sep"></div>
-    <div class="ctx-item" onclick="showRenameModal('\( {esc(path)}',' \){esc(name)}');hideContext()">✎ Rename</div>
-    <div class="ctx-item danger" onclick="showDeleteModal('\( {esc(path)}',' \){esc(name)}','${type}');hideContext()">🗑 Delete</div>`;
-  menu.style.left = Math.min(e.clientX, innerWidth - 200) + 'px';
-  menu.style.top = Math.min(e.clientY, innerHeight - 200) + 'px';
+  var menu = document.getElementById('context-menu');
+  var path = el.dataset.path;
+  var name = el.dataset.name;
+  var type = el.dataset.type;
+
+  var items = document.querySelectorAll('.file-item.selected');
+  for (var i = 0; i < items.length; i++) items[i].classList.remove('selected');
+  selectedItems.clear();
+  selectedItems.add(path);
+  el.classList.add('selected');
+
+  var html = '';
+  if (type === 'file') {
+    html += '<div class="ctx-item" onclick="openFile(\'' + esc(path) + '\',\'' + esc(name) + '\',\'' + el.dataset.sha + '\');hideContext()">📂 Open</div>';
+    html += '<div class="ctx-item" onclick="downloadFile(\'' + esc(path) + '\',\'' + esc(name) + '\');hideContext()">⬇ Download</div>';
+  } else {
+    html += '<div class="ctx-item" onclick="loadPath(\'' + esc(path) + '\');hideContext()">📂 Open</div>';
+  }
+  html += '<div class="ctx-sep"></div>';
+  html += '<div class="ctx-item" onclick="showRenameModal(\'' + esc(path) + '\',\'' + esc(name) + '\');hideContext()">✎ Rename</div>';
+  html += '<div class="ctx-item danger" onclick="showDeleteModal(\'' + esc(path) + '\',\'' + esc(name) + '\',\'' + type + '\');hideContext()">🗑 Delete</div>';
+  menu.innerHTML = html;
+
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - 200) + 'px';
   menu.classList.add('show');
 }
-function hideContext() { document.getElementById('context-menu').classList.remove('show'); }
-document.addEventListener('click', hideContext);
-document.addEventListener('contextmenu', e => { if (!e.target.closest('.file-item')) hideContext(); });
 
-function showModal(html) { document.getElementById('modal-content').innerHTML = html; document.getElementById('modal-overlay').classList.add('show'); }
-function closeModal() { document.getElementById('modal-overlay').classList.remove('show'); }
-document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-
-function showLoading(show) { document.getElementById('loading').classList.toggle('show', show); }
-function toast(msg, type = 'info') {
-  const container = document.getElementById('toast-container'), el = document.createElement('div');
-  el.className = `toast ${type}`;
-  const icons = { success: '✓', error: '✕', info: 'ℹ' };
-  el.innerHTML = `<span>\( {icons[type]||'ℹ'}</span> <span> \){esc(msg)}</span>`;
-  container.appendChild(el);
-  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, 3500);
+function hideContext() {
+  document.getElementById('context-menu').classList.remove('show');
 }
 
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); if (isEditing) saveFile(); }
-  if (e.key === 'Escape') { closeModal(); hideContext(); if (document.getElementById('side-panel').classList.contains('open')) closeSidePanel(); }
+document.addEventListener('click', hideContext);
+document.addEventListener('contextmenu', function (e) {
+  if (!e.target.closest('.file-item')) hideContext();
+});
+
+function showModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+document.getElementById('modal-overlay').addEventListener('click', function (e) {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+function showLoading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+
+function toast(msg, type) {
+  type = type || 'info';
+  var container = document.getElementById('toast-container');
+  var el = document.createElement('div');
+  el.className = 'toast ' + type;
+  var icons = { success: '✓', error: '✕', info: 'ℹ' };
+  el.innerHTML = '<span>' + (icons[type] || 'ℹ') + '</span> <span>' + esc(msg) + '</span>';
+  container.appendChild(el);
+  setTimeout(function () {
+    el.classList.add('removing');
+    setTimeout(function () { el.remove(); }, 300);
+  }, 3500);
+}
+
+document.addEventListener('keydown', function (e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (isEditing) saveFile();
+  }
+  if (e.key === 'Escape') {
+    closeModal();
+    hideContext();
+    if (document.getElementById('side-panel').classList.contains('open')) closeSidePanel();
+  }
   if (e.key === 'Delete' && selectedItems.size === 1) {
-    const path = [...selectedItems][0]; const item = currentFiles.find(f => f.path === path);
+    var path = Array.from(selectedItems)[0];
+    var item = null;
+    for (var i = 0; i < currentFiles.length; i++) {
+      if (currentFiles[i].path === path) { item = currentFiles[i]; break; }
+    }
     if (item) showDeleteModal(item.path, item.name, item.type);
   }
 });
-window.addEventListener('beforeunload', e => {
-  if (isEditing && document.getElementById('status-msg')?.textContent.includes('Unsaved')) { e.preventDefault(); e.returnValue = ''; }
+
+window.addEventListener('beforeunload', function (e) {
+  if (isEditing && document.getElementById('status-msg') && document.getElementById('status-msg').textContent.indexOf('Unsaved') !== -1) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
 });
+
 console.log('%c◈ Neon GitHub File Manager ready', 'color:#00f5ff;font-size:14px;font-weight:bold');
 </script>
 </body>
