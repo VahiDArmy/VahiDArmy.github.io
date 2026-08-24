@@ -1,4 +1,4 @@
 const SUPABASE_URL = 'https://kakjzcqfaaazgtmaqcgg.supabase.co';
 const SUPABASE_ANON_KEY = 'https://kakjzcqfaaazgtmaqcgg.supabase.co';
-const ADMIN_UUID = '1fc6d3d5-8cec-4578-bcea-c619dcdb37d7'; // اختیاری، برای بررسی در کلاینت
+const ADMIN_UUID = '542cfcbe-cfc9-4cce-9977-4da5e613c1d5'; // اختیاری، برای بررسی در کلاینت
 const DATA_PATH = '../quran/'; // مسیر نسبی پوشه داده‌ها از ریشه سایت
