@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفسیر شخصی قرآن</title>
+
+  <!-- فونت‌ها -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- استایل -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- هدر -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <h1 class="logo">تفسیر شخصی قرآن</h1>
+      <div class="header-actions">
+        <button id="themeToggle" class="btn btn-icon" title="تغییر تم">
+          🌙
+        </button>
+        <button id="adminBtn" class="btn btn-outline">ورود ادمین</button>
+        <span id="adminStatus" class="admin-status"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- محتوای اصلی -->
+  <main class="container main-content">
+
+    <!-- بخش آخرین تفسیر -->
+    <section class="card last-annotation-section">
+      <h2 class="section-title">آخرین تفسیر</h2>
+      <div id="lastAnnotationContainer">
+        <p class="loading-text">در حال بارگذاری...</p>
+      </div>
+    </section>
+
+    <!-- بخش تفسیر آیه بعدی -->
+    <section class="card new-annotation-section">
+      <h2 class="section-title">تفسیر آیه</h2>
+
+      <!-- انتخاب سوره و آیه -->
+      <div class="select-group">
+        <div class="select-field">
+          <label for="surahSelect">سوره</label>
+          <select id="surahSelect">
+            <option value="">-- انتخاب سوره --</option>
+          </select>
+        </div>
+        <div class="select-field">
+          <label for="ayahSelect">آیه</label>
+          <select id="ayahSelect" disabled>
+            <option value="">-- ابتدا سوره را انتخاب کنید --</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- نمایش آیه و ترجمه -->
+      <div class="ayah-preview">
+        <p id="ayahText" class="ayah-text"></p>
+        <div class="translation-collapse" id="translationCollapse">
+          <button class="collapse-toggle" id="translationToggle">
+            نمایش ترجمه <span class="arrow">▾</span>
+          </button>
+          <div class="collapse-content" id="translationContent">
+            <p id="translationText" class="translation-text"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- فرم تفسیر (فقط ادمین) -->
+      <div id="annotationFormWrapper" class="annotation-form" style="display: none;">
+        <textarea id="annotationContent" rows="6" placeholder="تفسیر خود را بنویسید..."></textarea>
+        <div class="form-actions">
+          <button id="saveAnnotationBtn" class="btn btn-primary">ذخیره تفسیر</button>
+          <span id="saveStatus" class="save-status"></span>
+        </div>
+      </div>
+
+      <!-- بخش کامنت‌ها -->
+      <div class="comments-section">
+        <h3 class="comments-title">نظرات و انتقادات</h3>
+        <div id="commentsList" class="comments-list">
+          <!-- کامنت‌های تأیید شده اینجا نمایش داده می‌شوند -->
+        </div>
+        <form id="commentForm" class="comment-form">
+          <input type="text" id="commentAuthor" placeholder="نام شما (اختیاری)" maxlength="50">
+          <select id="commentType">
+            <option value="critique">نقد</option>
+            <option value="oppose">مخالف</option>
+            <option value="agree">موافق</option>
+          </select>
+          <textarea id="commentContent" rows="3" placeholder="نظر خود را بنویسید..." required></textarea>
+          <!-- ضد اسپم honeypot -->
+          <input type="text" id="honeypot" class="hp-field" tabindex="-1" autocomplete="off">
+          <button type="submit" class="btn btn-secondary">ارسال نظر</button>
+        </form>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>ساخته شده با ❤️ برای قرآن</p>
+    </div>
+  </footer>
+
+  <!-- اسکریپت‌ها -->
+  <script src="js/config.js"></script>
+  <script src="js/data-loader.js"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>
