@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="UTF-8" />
+  <title>VahidArmy File Manager</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="logo">⚡ VahidArmy File Manager</div>
+      <div class="path" id="current-path">/</div>
+      <div class="actions">
+        <button id="btn-new-file">فایل جدید</button>
+        <button id="btn-new-folder">پوشه جدید</button>
+        <button id="btn-upload">آپلود</button>
+        <button id="btn-set-token">توکن</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h3>پوشه‌ها</h3>
+        <ul id="tree"></ul>
+      </aside>
+
+      <main class="main">
+        <section class="file-list">
+          <h3>فایل‌ها</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>نوع</th>
+                <th>اندازه</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody id="files"></tbody>
+          </table>
+        </section>
+
+        <section class="editor">
+          <div class="editor-header">
+            <span id="editor-filename">هیچ فایلی انتخاب نشده</span>
+            <div>
+              <button id="btn-save">ذخیره</button>
+              <button id="btn-delete">حذف</button>
+            </div>
+          </div>
+          <textarea id="editor-content" placeholder="محتوای فایل..."></textarea>
+        </section>
+      </main>
+    </div>
+
+    <footer class="statusbar">
+      <span id="status">آماده</span>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
