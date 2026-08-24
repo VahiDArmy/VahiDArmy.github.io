@@ -54,5 +54,4 @@ async function loadAyahAndAnnotation(surah, ayah) {
 // رویدادها
 document.addEventListener('DOMContentLoaded', () => {
   // دراپ‌داون‌ها در ui.js مقداردهی اولیه می‌شوند
-  // این تابع بعد از تغییر آیه صدا زده می‌شود
 });
