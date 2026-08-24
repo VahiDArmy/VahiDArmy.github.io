@@ -1,16 +1,7 @@
 let currentSurah = null;
 let currentAyah = null;
-let currentAnnotationId = null; // برای ویرایش
+let currentAnnotationId = null;
 
-// تابعی که بعد از تغییر احراز هویت ادمین صدا زده می‌شود
-function onAdminStateChange() {
-  // اگر آیه انتخاب شده، وضعیت فرم تفسیر را به‌روز کن
-  if (currentSurah && currentAyah) {
-    loadAnnotationForEdit(currentSurah, currentAyah);
-  }
-}
-
-// تابعی که بعد از تغییر انتخاب آیه صدا زده می‌شود
 function onAyahSelectionChange() {
   const surahSelect = document.getElementById('surahSelect');
   const ayahSelect = document.getElementById('ayahSelect');
@@ -29,12 +20,10 @@ function onAyahSelectionChange() {
 }
 
 async function loadAyahAndAnnotation(surah, ayah) {
-  // بارگذاری متن آیه و ترجمه
   const surahData = await loadSurahData(surah);
   const ayahData = getAyahFromSurah(surahData, ayah);
   displayAyah(ayahData);
 
-  // بارگذاری تفسیر موجود (اگر ادمین باشد برای ویرایش، در غیر این صورت فقط نمایش)
   const { data, error } = await supabaseClient
     .from('annotations')
     .select('*')
@@ -55,11 +44,9 @@ async function loadAyahAndAnnotation(surah, ayah) {
     document.getElementById('annotationContent').value = '';
   }
 
-  // اگر ادمین نباشد، فرم مخفی است
   updateAdminUI();
 }
 
-// بارگذاری آخرین تفسیر
 async function loadLastAnnotation() {
   const container = document.getElementById('lastAnnotationContainer');
   container.innerHTML = '<p class="loading-text">در حال بارگذاری آخرین تفسیر...</p>';
@@ -82,7 +69,6 @@ async function loadLastAnnotation() {
     return;
   }
 
-  // بارگذاری آیه مربوطه
   const surahData = await loadSurahData(data.surah);
   const ayahData = getAyahFromSurah(surahData, data.ayah);
 
@@ -98,11 +84,10 @@ async function loadLastAnnotation() {
   `;
 }
 
-// ذخیره یا به‌روزرسانی تفسیر
 async function saveAnnotation() {
   const content = document.getElementById('annotationContent').value.trim();
   if (!content) {
-    alert('متن تفسیر خالی است');
+    alert('متن تفسیر خالی است'); // این alert را هم می‌توان به inline تغییر داد ولی فقط ادمین می‌بیند
     return;
   }
   if (!currentSurah || !currentAyah) {
@@ -125,13 +110,11 @@ async function saveAnnotation() {
 
   let result;
   if (currentAnnotationId) {
-    // ویرایش
     result = await supabaseClient
       .from('annotations')
       .update({ content, updated_at: new Date() })
       .eq('id', currentAnnotationId);
   } else {
-    // ثبت جدید
     result = await supabaseClient
       .from('annotations')
       .insert([
@@ -158,21 +141,16 @@ async function saveAnnotation() {
 
   saveStatus.textContent = 'ذخیره شد ✓';
   saveBtn.disabled = false;
-  // بارگذاری مجدد آخرین تفسیر
   loadLastAnnotation();
 }
 
-// رویدادها
 document.addEventListener('DOMContentLoaded', async () => {
-  // بارگذاری آخرین تفسیر
   await loadLastAnnotation();
 
-  // دکمه ذخیره تفسیر
   const saveBtn = document.getElementById('saveAnnotationBtn');
   if (saveBtn) {
     saveBtn.addEventListener('click', saveAnnotation);
   }
 
-  // فراخوانی اولیه برای وضعیت ادمین
   updateAdminUI();
 });
