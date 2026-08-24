@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Drive | GitHub File Manager</title>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        :root {
+            --bg-color: #0d0f17;
+            --card-bg: rgba(22, 27, 46, 0.7);
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff007f;
+            --neon-purple: #9d00ff;
+            --text-color: #e2e8f0;
+            --border-glow: 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Vazirmatn', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(255, 0, 127, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(0, 243, 255, 0.08) 0%, transparent 40%);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), var(--border-glow);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+            letter-spacing: 1px;
+        }
+
+        .config-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            background: rgba(13, 15, 23, 0.8);
+            border: 1px solid rgba(255, 0, 127, 0.4);
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            outline: none;
+            transition: 0.3s;
+            direction: ltr;
+        }
+
+        input:focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 8px var(--neon-cyan);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            border: none;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.8);
+        }
+
+        .btn-connect {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.4);
+        }
+
+        .btn-connect:hover {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(0, 243, 255, 0.4);
+            padding: 25px;
+            text-align: center;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            background: rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--neon-pink);
+            box-shadow: inset 0 0 15px rgba(255, 0, 127, 0.2);
+        }
+
+        .file-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-left: 5px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 243, 255, 0.05);
+            border-color: rgba(0, 243, 255, 0.3);
+        }
+
+        .file-name {
+            direction: ltr;
+            word-break: break-all;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 5px;
+        }
+
+        .btn-del {
+            background: #ff3366;
+            box-shadow: none;
+        }
+
+        .btn-del:hover {
+            box-shadow: 0 0 10px #ff3366;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--neon-cyan);
+            min-height: 20px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-purple);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>NEON DRIVE</h1>
+    
+    <div class="config-panel">
+        <input type="password" id="token" placeholder="GitHub Personal Access Token">
+        <input type="text" id="repo" placeholder="نام ریپازیتوری (مثلا my-files)">
+        <button class="btn btn-connect" onclick="loadFiles()">اتصال و بروزرسانی</button>
+    </div>
+
+    <div class="upload-area">
+        <input type="file" id="fileInput" style="display: none;" onchange="uploadFile()">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">انتخاب فایل و آپلود</button>
+        <span style="font-size: 0.85rem; color: #8a99ad;">فایل‌ها مستقیم در ریشه ریپازیتوری ذخیره می‌شوند</span>
+    </div>
+
+    <ul class="file-list" id="fileList">
+        <!-- فایل‌ها اینجا رندر می‌شوند -->
+    </ul>
+
+    <div class="status" id="status"></div>
+</div>
+
+<script>
+    const USERNAME = 'vahidarmy';
+
+    function getHeaders() {
+        const token = document.getElementById('token').value;
+        return {
+            'Authorization': `token ${token}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        };
+    }
+
+    function setStatus(msg) {
+        document.getElementById('status').innerText = msg;
+    }
+
+    async function loadFiles() {
+        const repo = document.getElementById('repo').value;
+        if (!repo) return alert('لطفا نام ریپازیتوری را وارد کنید.');
+
+        setStatus('در حال دریافت لیست فایل‌ها...');
+        const url = `https://api.github.com/repos/${USERNAME}/${repo}/contents/`;
+
+        try {
+            const res = await fetch(url, { headers: getHeaders() });
+            if (!res.ok) throw new Error('خطا در برقراری ارتباط یا توکن نامعتبر');
+            const data = await res.json();
+            
+            const listEl = document.getElementById('fileList');
+            listEl.innerHTML = '';
+
+            data.filter(item => item.type === 'file').forEach(file => {
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.innerHTML = `
+                    <span class="file-name">${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                    <div class="file-actions">
+                        <a href="${file.download_url}" target="_blank" class="btn btn-sm btn-connect" style="text-decoration:none;">دانلود</a>
+                        <button class="btn btn-sm btn-del" onclick="deleteFile('${file.name}', '${file.sha}')">حذف</button>
+                    </div>
+                `;
+                listEl.appendChild(li);
+            });
+            setStatus('لیست بروزرسانی شد.');
+        } catch (err) {
+            setStatus(err.message);
+        }
+    }
+
+    async function uploadFile() {
+        const fileInput = document.getElementById('fileInput');
+        const repo = document.getElementById('repo').value;
+        if (fileInput.files.length === 0) return;
+
+        const file = fileInput.files[0];
+        setStatus(`در حال آپلود ${file.name}...`);
+
+        const reader = new FileReader();
+        reader.onload = async function() {
+            const content = reader.result.split(',')[1]; // Base64
+            const url = `https://api.github.com/repos/${USERNAME}/${repo}/contents/${file.name}`;
+
+            try {
+                const res = await fetch(url, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        message: `Upload ${file.name} via Neon Drive`,
+                        content: content
+                    })
+                });
+
+                if (!res.ok) throw new Error('خطا در آپلود فایل');
+                setStatus('فایل با موفقیت آپلود شد.');
+                loadFiles();
+            } catch (err) {
+                setStatus(err.message);
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function deleteFile(fileName, sha) {
+        if (!confirm(`آیا از حذف ${fileName} اطمینان دارید؟`)) return;
+        
+        const repo = document.getElementById('repo').value;
+        setStatus(`در حال حذف ${fileName}...`);
+        const url = `https://api.github.com/repos/${USERNAME}/${repo}/contents/${fileName}`;
+
+        try {
+            const res = await fetch(url, {
+                method: 'DELETE',
+                headers: getHeaders(),
+                body: JSON.stringify({
+                    message: `Delete ${fileName}`,
+                    sha: sha
+                })
+            });
+
+            if (!res.ok) throw new Error('خطا در حذف فایل');
+            setStatus('فایل حذف شد.');
+            loadFiles();
+        } catch (err) {
+            setStatus(err.message);
+        }
+    }
+</script>
+
+</body>
+</html>
