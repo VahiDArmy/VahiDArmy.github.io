@@ -1,313 +1,178 @@
-// ========== تم ==========
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  updateThemeIcon();
-}
+let currentSurah = null;
+let currentAyah = null;
+let currentAnnotationId = null; // برای ویرایش
 
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
-  updateThemeIcon();
-}
-
-function updateThemeIcon() {
-  const icon = document.getElementById('themeToggle');
-  if (icon) {
-    const theme = document.documentElement.getAttribute('data-theme');
-    icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+// تابعی که بعد از تغییر احراز هویت ادمین صدا زده می‌شود
+function onAdminStateChange() {
+  // اگر آیه انتخاب شده، وضعیت فرم تفسیر را به‌روز کن
+  if (currentSurah && currentAyah) {
+    loadAnnotationForEdit(currentSurah, currentAyah);
   }
 }
 
-// ========== دراپ‌داون‌ها ==========
-let metadataCache = null;
+// تابعی که بعد از تغییر انتخاب آیه صدا زده می‌شود
+function onAyahSelectionChange() {
+  const surahSelect = document.getElementById('surahSelect');
+  const ayahSelect = document.getElementById('ayahSelect');
+  currentSurah = surahSelect.value ? parseInt(surahSelect.value) : null;
+  currentAyah = ayahSelect.value ? parseInt(ayahSelect.value) : null;
 
-async function getMetadata() {
-  if (!metadataCache) {
-    metadataCache = await loadMetadata();
-  }
-  return metadataCache;
-}
-
-async function populateSurahSelect(selectElement) {
-  const metadata = await getMetadata();
-  selectElement.innerHTML = '<option value="">-- انتخاب سوره --</option>';
-  metadata.forEach(surah => {
-    const option = document.createElement('option');
-    option.value = surah.number;
-    option.textContent = `${surah.number} - ${surah.name}`;
-    selectElement.appendChild(option);
-  });
-}
-
-async function populateAyahSelect(surahNumber, selectElement) {
-  selectElement.innerHTML = '<option value="">-- انتخاب آیه --</option>';
-  if (!surahNumber) {
-    selectElement.disabled = true;
-    return;
-  }
-  const metadata = await getMetadata();
-  const surahMeta = metadata.find(s => s.number === parseInt(surahNumber));
-  if (!surahMeta) {
-    selectElement.disabled = true;
-    return;
-  }
-  const totalAyahs = surahMeta.totalAyahs;
-  for (let i = 1; i <= totalAyahs; i++) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = i;
-    selectElement.appendChild(option);
-  }
-  selectElement.disabled = false;
-}
-
-// ========== نمایش آیه و ترجمه ==========
-function displayAyah(ayahData) {
-  const ayahTextEl = document.getElementById('ayahText');
-  const translationTextEl = document.getElementById('translationText');
-  if (!ayahData) {
-    ayahTextEl.textContent = 'آیه انتخاب نشده است';
-    translationTextEl.textContent = '';
-    return;
-  }
-  ayahTextEl.textContent = ayahData.text;
-  translationTextEl.textContent = ayahData.translation;
-}
-
-// ========== احراز هویت ادمین ==========
-let adminSession = null;
-
-async function checkAdminAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  adminSession = session;
-  updateAdminUI();
-  return session;
-}
-
-async function signInAdmin(email, password) {
-  const { data, error } = await supabaseClient.auth.signInWithPassword({
-    email, password
-  });
-  if (error) {
-    console.error('خطا در ورود:', error.message);
-    document.getElementById('loginError').textContent = 'ورود ناموفق: ' + error.message;
-    return false;
-  }
-  adminSession = data.session;
-  // پاک کردن پیام خطا
-  document.getElementById('loginError').textContent = '';
-  // مخفی کردن فرم
-  document.getElementById('adminLoginForm').style.display = 'none';
-  updateAdminUI();
-  return true;
-}
-
-async function signOutAdmin() {
-  await supabaseClient.auth.signOut();
-  adminSession = null;
-  updateAdminUI();
-}
-
-function updateAdminUI() {
-  const adminBtn = document.getElementById('adminBtn');
-  const adminStatus = document.getElementById('adminStatus');
-  const annotationForm = document.getElementById('annotationFormWrapper');
-  const adminLoginForm = document.getElementById('adminLoginForm');
-  const isAdmin = adminSession && adminSession.user && adminSession.user.id === ADMIN_UUID;
-
-  if (adminBtn) {
-    adminBtn.textContent = isAdmin ? 'خروج ادمین' : 'ورود ادمین';
-  }
-  if (adminStatus) {
-    adminStatus.textContent = isAdmin ? 'وضعیت: ادمین' : '';
-  }
-  if (annotationForm) {
-    annotationForm.style.display = isAdmin ? 'block' : 'none';
-  }
-  // اگر ادمین وارد شده، فرم ورود مخفی باشد
-  if (adminLoginForm) {
-    adminLoginForm.style.display = 'none';
+  if (currentSurah && currentAyah) {
+    loadAyahAndAnnotation(currentSurah, currentAyah);
+    loadComments(currentSurah, currentAyah);
+  } else {
+    document.getElementById('ayahText').textContent = '';
+    document.getElementById('translationText').textContent = '';
+    document.getElementById('annotationContent').value = '';
+    document.getElementById('commentsList').innerHTML = '<p class="empty-text">سوره و آیه را انتخاب کنید.</p>';
   }
 }
 
-// ========== کامنت‌ها ==========
-async function loadComments(surah, ayah) {
-  const commentsList = document.getElementById('commentsList');
-  if (!commentsList) return;
-  commentsList.innerHTML = '<p class="loading-text">در حال بارگذاری نظرات...</p>';
+async function loadAyahAndAnnotation(surah, ayah) {
+  // بارگذاری متن آیه و ترجمه
+  const surahData = await loadSurahData(surah);
+  const ayahData = getAyahFromSurah(surahData, ayah);
+  displayAyah(ayahData);
 
+  // بارگذاری تفسیر موجود (اگر ادمین باشد برای ویرایش، در غیر این صورت فقط نمایش)
   const { data, error } = await supabaseClient
-    .from('comments')
+    .from('annotations')
     .select('*')
     .eq('surah', surah)
     .eq('ayah', ayah)
-    .eq('status', 'approved')
-    .order('created_at', { ascending: false });
+    .maybeSingle();
 
   if (error) {
-    console.error('خطا در بارگذاری کامنت‌ها:', error);
-    commentsList.innerHTML = '<p>خطا در بارگذاری نظرات</p>';
+    console.error('خطا در بارگذاری تفسیر:', error);
     return;
   }
 
-  if (data.length === 0) {
-    commentsList.innerHTML = '<p class="empty-text">هنوز نظری ثبت نشده است.</p>';
-    return;
+  if (data) {
+    currentAnnotationId = data.id;
+    document.getElementById('annotationContent').value = data.content;
+  } else {
+    currentAnnotationId = null;
+    document.getElementById('annotationContent').value = '';
   }
 
-  commentsList.innerHTML = '';
-  data.forEach(comment => {
-    const item = document.createElement('div');
-    item.className = 'comment-item';
-    item.innerHTML = `
-      <div class="comment-header">
-        <span class="comment-author">${comment.author_name || 'ناشناس'}</span>
-        <span class="comment-type">${comment.type || 'critique'}</span>
-        <span class="comment-date">${new Date(comment.created_at).toLocaleDateString('fa-IR')}</span>
-      </div>
-      <div class="comment-content">${comment.content}</div>
-    `;
-    commentsList.appendChild(item);
-  });
+  // اگر ادمین نباشد، فرم مخفی است
+  updateAdminUI();
 }
 
-async function submitComment(surah, ayah) {
-  const honeypot = document.getElementById('honeypot');
-  if (honeypot && honeypot.value) {
-    // ربات تشخیص داده شد
-    return;
-  }
-
-  const author = document.getElementById('commentAuthor')?.value.trim() || null;
-  const type = document.getElementById('commentType')?.value || 'critique';
-  const content = document.getElementById('commentContent')?.value.trim();
-
-  if (!content) {
-    alert('متن نظر نمی‌تواند خالی باشد');
-    return;
-  }
+// بارگذاری آخرین تفسیر
+async function loadLastAnnotation() {
+  const container = document.getElementById('lastAnnotationContainer');
+  container.innerHTML = '<p class="loading-text">در حال بارگذاری آخرین تفسیر...</p>';
 
   const { data, error } = await supabaseClient
-    .from('comments')
-    .insert([
-      {
-        surah: parseInt(surah),
-        ayah: parseInt(ayah),
-        author_name: author,
-        type: type,
-        content: content,
-        status: 'pending' // پیش‌فرض در انتظار تأیید
-      }
-    ]);
+    .from('annotations')
+    .select('*')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   if (error) {
-    console.error('خطا در ثبت نظر:', error);
-    alert('خطا در ارسال نظر. لطفاً دوباره تلاش کنید.');
+    console.error('خطا در بارگذاری آخرین تفسیر:', error);
+    container.innerHTML = '<p>خطا در بارگذاری</p>';
     return;
   }
 
-  // پاک کردن فرم
-  document.getElementById('commentContent').value = '';
-  document.getElementById('commentAuthor').value = '';
-  alert('نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود.');
-  // بارگذاری مجدد کامنت‌ها (فقط تأیید شده‌ها)
-  loadComments(surah, ayah);
+  if (!data) {
+    container.innerHTML = '<p class="empty-text">هنوز تفسیری ثبت نشده است.</p>';
+    return;
+  }
+
+  // بارگذاری آیه مربوطه
+  const surahData = await loadSurahData(data.surah);
+  const ayahData = getAyahFromSurah(surahData, data.ayah);
+
+  container.innerHTML = `
+    <div class="last-annotation-info">
+      <p class="last-ayah-ref">سوره ${data.surah}، آیه ${data.ayah}</p>
+      <p class="ayah-text small">${ayahData ? ayahData.text : ''}</p>
+      <p class="translation-text">${ayahData ? ayahData.translation : ''}</p>
+    </div>
+    <div class="annotation-content">
+      ${data.content}
+    </div>
+  `;
 }
 
-// ========== مقداردهی اولیه ==========
+// ذخیره یا به‌روزرسانی تفسیر
+async function saveAnnotation() {
+  const content = document.getElementById('annotationContent').value.trim();
+  if (!content) {
+    alert('متن تفسیر خالی است');
+    return;
+  }
+  if (!currentSurah || !currentAyah) {
+    alert('ابتدا آیه را انتخاب کنید');
+    return;
+  }
+
+  const saveBtn = document.getElementById('saveAnnotationBtn');
+  const saveStatus = document.getElementById('saveStatus');
+  saveBtn.disabled = true;
+  saveStatus.textContent = 'در حال ذخیره...';
+
+  const isAdmin = adminSession && adminSession.user.id === ADMIN_UUID;
+  if (!isAdmin) {
+    alert('شما اجازه ذخیره تفسیر ندارید');
+    saveBtn.disabled = false;
+    saveStatus.textContent = '';
+    return;
+  }
+
+  let result;
+  if (currentAnnotationId) {
+    // ویرایش
+    result = await supabaseClient
+      .from('annotations')
+      .update({ content, updated_at: new Date() })
+      .eq('id', currentAnnotationId);
+  } else {
+    // ثبت جدید
+    result = await supabaseClient
+      .from('annotations')
+      .insert([
+        {
+          surah: currentSurah,
+          ayah: currentAyah,
+          content,
+        }
+      ])
+      .select()
+      .single();
+  }
+
+  if (result.error) {
+    console.error('خطا در ذخیره تفسیر:', result.error);
+    saveStatus.textContent = 'خطا در ذخیره';
+    saveBtn.disabled = false;
+    return;
+  }
+
+  if (!currentAnnotationId && result.data) {
+    currentAnnotationId = result.data.id;
+  }
+
+  saveStatus.textContent = 'ذخیره شد ✓';
+  saveBtn.disabled = false;
+  // بارگذاری مجدد آخرین تفسیر
+  loadLastAnnotation();
+}
+
+// رویدادها
 document.addEventListener('DOMContentLoaded', async () => {
-  // تم
-  initTheme();
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+  // بارگذاری آخرین تفسیر
+  await loadLastAnnotation();
 
-  // احراز هویت
-  await checkAdminAuth();
-
-  // دکمه ادمین
-  const adminBtn = document.getElementById('adminBtn');
-  if (adminBtn) {
-    adminBtn.addEventListener('click', () => {
-      const isAdmin = adminSession && adminSession.user.id === ADMIN_UUID;
-      if (isAdmin) {
-        // خروج
-        signOutAdmin();
-      } else {
-        // نمایش فرم ورود
-        const loginForm = document.getElementById('adminLoginForm');
-        loginForm.style.display = 'block';
-        // فوکوس روی فیلد ایمیل
-        document.getElementById('loginEmail').focus();
-      }
-    });
+  // دکمه ذخیره تفسیر
+  const saveBtn = document.getElementById('saveAnnotationBtn');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', saveAnnotation);
   }
 
-  // مدیریت ارسال فرم ورود
-  const loginForm = document.getElementById('loginForm');
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      if (email && password) {
-        await signInAdmin(email, password);
-      }
-    });
-  }
-
-  // دکمه انصراف
-  const cancelLoginBtn = document.getElementById('cancelLoginBtn');
-  if (cancelLoginBtn) {
-    cancelLoginBtn.addEventListener('click', () => {
-      document.getElementById('adminLoginForm').style.display = 'none';
-      document.getElementById('loginError').textContent = '';
-    });
-  }
-
-  // دراپ‌داون‌ها را در صورت وجود پر کن
-  const surahSelect = document.getElementById('surahSelect');
-  if (surahSelect) {
-    await populateSurahSelect(surahSelect);
-    surahSelect.addEventListener('change', async (e) => {
-      const surahNumber = e.target.value;
-      const ayahSelect = document.getElementById('ayahSelect');
-      await populateAyahSelect(surahNumber, ayahSelect);
-      // در صورت تغییر، رویداد تغییر آیه را صدا بزن
-      if (typeof onAyahSelectionChange === 'function') onAyahSelectionChange();
-    });
-  }
-
-  const ayahSelect = document.getElementById('ayahSelect');
-  if (ayahSelect) {
-    ayahSelect.addEventListener('change', () => {
-      if (typeof onAyahSelectionChange === 'function') onAyahSelectionChange();
-    });
-  }
-
-  // نمایش/عدم نمایش ترجمه
-  const translationToggle = document.getElementById('translationToggle');
-  if (translationToggle) {
-    translationToggle.addEventListener('click', () => {
-      const collapse = document.getElementById('translationCollapse');
-      collapse.classList.toggle('open');
-    });
-  }
-
-  // ارسال کامنت
-  const commentForm = document.getElementById('commentForm');
-  if (commentForm) {
-    commentForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const surahSelect = document.getElementById('surahSelect');
-      const ayahSelect = document.getElementById('ayahSelect');
-      if (surahSelect && ayahSelect && surahSelect.value && ayahSelect.value) {
-        submitComment(surahSelect.value, ayahSelect.value);
-      } else {
-        alert('ابتدا سوره و آیه را انتخاب کنید.');
-      }
-    });
-  }
+  // فراخوانی اولیه برای وضعیت ادمین
+  updateAdminUI();
 });
