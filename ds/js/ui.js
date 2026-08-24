@@ -93,10 +93,14 @@ async function signInAdmin(email, password) {
   });
   if (error) {
     console.error('خطا در ورود:', error.message);
-    alert('ورود ناموفق: ' + error.message);
+    document.getElementById('loginError').textContent = 'ورود ناموفق: ' + error.message;
     return false;
   }
   adminSession = data.session;
+  // پاک کردن پیام خطا
+  document.getElementById('loginError').textContent = '';
+  // مخفی کردن فرم
+  document.getElementById('adminLoginForm').style.display = 'none';
   updateAdminUI();
   return true;
 }
@@ -111,6 +115,7 @@ function updateAdminUI() {
   const adminBtn = document.getElementById('adminBtn');
   const adminStatus = document.getElementById('adminStatus');
   const annotationForm = document.getElementById('annotationFormWrapper');
+  const adminLoginForm = document.getElementById('adminLoginForm');
   const isAdmin = adminSession && adminSession.user && adminSession.user.id === ADMIN_UUID;
 
   if (adminBtn) {
@@ -121,6 +126,10 @@ function updateAdminUI() {
   }
   if (annotationForm) {
     annotationForm.style.display = isAdmin ? 'block' : 'none';
+  }
+  // اگر ادمین وارد شده، فرم ورود مخفی باشد
+  if (adminLoginForm) {
+    adminLoginForm.style.display = 'none';
   }
 }
 
@@ -221,21 +230,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   // دکمه ادمین
   const adminBtn = document.getElementById('adminBtn');
   if (adminBtn) {
-    adminBtn.addEventListener('click', async () => {
+    adminBtn.addEventListener('click', () => {
       const isAdmin = adminSession && adminSession.user.id === ADMIN_UUID;
       if (isAdmin) {
-        await signOutAdmin();
+        // خروج
+        signOutAdmin();
       } else {
-        const email = prompt('ایمیل ادمین:');
-        if (!email) return;
-        const password = prompt('رمز عبور:');
-        if (!password) return;
+        // نمایش فرم ورود
+        const loginForm = document.getElementById('adminLoginForm');
+        loginForm.style.display = 'block';
+        // فوکوس روی فیلد ایمیل
+        document.getElementById('loginEmail').focus();
+      }
+    });
+  }
+
+  // مدیریت ارسال فرم ورود
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      if (email && password) {
         await signInAdmin(email, password);
       }
-      // بعد از ورود/خروج، وضعیت فرم‌ها به‌روز شود
-      updateAdminUI();
-      // اگر صفحه ایندکس است، رویداد انتخاب آیه را دوباره صدا بزن
-      if (typeof onAdminStateChange === 'function') onAdminStateChange();
+    });
+  }
+
+  // دکمه انصراف
+  const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+  if (cancelLoginBtn) {
+    cancelLoginBtn.addEventListener('click', () => {
+      document.getElementById('adminLoginForm').style.display = 'none';
+      document.getElementById('loginError').textContent = '';
     });
   }
 
