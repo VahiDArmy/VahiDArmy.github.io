@@ -30,7 +30,7 @@ header button {
   border-radius: 6px;
 }
 
-/* Mobile-first layout */
+/* Files list */
 #files {
   padding: 12px;
 }
@@ -47,28 +47,35 @@ header button {
   cursor: pointer;
 }
 
-/* Editor panel */
-#editor {
+/* Bottom Sheet Editor */
+#editorSheet {
   position: fixed;
-  bottom: 0;
+  bottom: -100%;
   left: 0;
   right: 0;
   background: #1a1a1a;
   border-top: 1px solid #333;
-  padding: 12px;
+  padding: 16px;
+  transition: bottom 0.3s ease;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.4);
 }
-#editor input {
+#editorSheet.open {
+  bottom: 0;
+}
+
+#editorSheet input {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
   background: #000;
   color: #eee;
   border: none;
   border-radius: 6px;
 }
-#editor textarea {
+
+#editorSheet textarea {
   width: 100%;
-  height: 160px;
+  height: 200px;
   background: #000;
   color: #eee;
   border: none;
@@ -76,14 +83,15 @@ header button {
   border-radius: 6px;
   font-family: monospace;
 }
-#editor button {
+
+#editorSheet button {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   background: #333;
   color: #eee;
   border: none;
   border-radius: 6px;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 /* Status */
@@ -109,7 +117,8 @@ header button {
 
 <div id="files"></div>
 
-<div id="editor">
+<!-- Bottom Sheet Editor -->
+<div id="editorSheet">
   <input id="editor-name" placeholder="نام فایل (مثلاً index.html)">
   <textarea id="editor-content" placeholder="محتوای فایل..."></textarea>
   <button id="saveBtn">ذخیره</button>
@@ -211,7 +220,16 @@ async function openFile(item) {
   document.getElementById("editor-name").value = item.path;
   document.getElementById("editor-content").value = txt;
 
+  openSheet();
   status("Opened");
+}
+
+/* Bottom Sheet Controls */
+function openSheet() {
+  document.getElementById("editorSheet").classList.add("open");
+}
+function closeSheet() {
+  document.getElementById("editorSheet").classList.remove("open");
 }
 
 /* Save */
@@ -250,6 +268,7 @@ async function saveFile() {
   });
 
   status("Saved");
+  closeSheet();
   load(currentPath);
 }
 
