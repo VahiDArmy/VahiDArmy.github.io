@@ -19,12 +19,10 @@ function onAyahSelectionChange() {
 }
 
 async function loadAyahAndAnnotation(surah, ayah) {
-  // بارگذاری آیه و ترجمه
   const surahData = await loadSurahData(surah);
   const ayahData = getAyahFromSurah(surahData, ayah);
   displayAyah(ayahData);
 
-  // بارگذاری تفسیر (فقط نمایش)
   const annotationDisplay = document.getElementById('annotationDisplay');
   const { data, error } = await supabaseClient
     .from('annotations')
@@ -51,7 +49,6 @@ async function loadAyahAndAnnotation(surah, ayah) {
   }
 }
 
-// رویدادها
 document.addEventListener('DOMContentLoaded', () => {
   // دراپ‌داون‌ها در ui.js مقداردهی اولیه می‌شوند
 });
