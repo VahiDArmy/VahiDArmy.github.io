@@ -1,1 +1,219 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Vazirmatn', sans-serif;
+  background: radial-gradient(circle at top, #1a1a2e 0, #000 60%);
+  color: #e0e0ff;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Topbar */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: rgba(10, 10, 25, 0.95);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.25);
+}
+
+.logo {
+  font-weight: 600;
+  color: #00f6ff;
+  text-shadow: 0 0 8px rgba(0, 246, 255, 0.8);
+}
+
+.path {
+  font-size: 0.9rem;
+  color: #aaaafc;
+}
+
+.actions button {
+  margin-left: 0.4rem;
+}
+
+/* Layout */
+
+.layout {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+/* Sidebar */
+
+.sidebar {
+  width: 260px;
+  padding: 0.8rem;
+  border-right: 1px solid rgba(0, 255, 255, 0.2);
+  background: linear-gradient(180deg, rgba(10, 10, 30, 0.95), rgba(5, 5, 20, 0.95));
+}
+
+.sidebar h3 {
+  margin-top: 0;
+  color: #ff00e6;
+  text-shadow: 0 0 8px rgba(255, 0, 230, 0.7);
+}
+
+#tree {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+#tree li {
+  padding: 0.2rem 0.3rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+#tree li:hover {
+  background: rgba(0, 255, 255, 0.1);
+}
+
+/* Main */
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.8rem;
+}
+
+/* File list */
+
+.file-list {
+  flex: 1;
+  overflow: auto;
+  margin-bottom: 0.6rem;
+}
+
+.file-list h3 {
+  margin-top: 0;
+  color: #00ff85;
+  text-shadow: 0 0 8px rgba(0, 255, 133, 0.7);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+thead {
+  background: rgba(20, 20, 40, 0.9);
+}
+
+th, td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+tbody tr:hover {
+  background: rgba(0, 255, 255, 0.08);
+}
+
+/* Editor */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 0, 230, 0.4);
+  border-radius: 6px;
+  background: rgba(10, 10, 30, 0.9);
+  box-shadow: 0 0 15px rgba(255, 0, 230, 0.3);
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 0, 230, 0.3);
+}
+
+#editor-filename {
+  font-size: 0.85rem;
+  color: #ccc;
+}
+
+#editor-content {
+  width: 100%;
+  min-height: 160px;
+  max-height: 260px;
+  padding: 0.6rem;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: #050514;
+  color: #e0e0ff;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+/* Buttons */
+
+button {
+  background: linear-gradient(135deg, #00f6ff, #ff00e6);
+  border: none;
+  color: #050514;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 246, 255, 0.6);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 14px rgba(255, 0, 230, 0.7);
+}
+
+button:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 6px rgba(0, 246, 255, 0.5);
+}
+
+/* Status bar */
+
+.statusbar {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  background: rgba(5, 5, 20, 0.95);
+  border-top: 1px solid rgba(0, 255, 255, 0.2);
+  color: #aaaafc;
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  }
+
+  .main {
+    padding: 0.6rem;
+  }
+}
