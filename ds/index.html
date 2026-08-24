@@ -23,11 +23,21 @@
     <div class="container header-inner">
       <h1 class="logo">تفسیر شخصی قرآن</h1>
       <div class="header-actions">
-        <button id="themeToggle" class="btn btn-icon" title="تغییر تم">
-          🌙
-        </button>
+        <button id="themeToggle" class="btn btn-icon" title="تغییر تم">🌙</button>
         <button id="adminBtn" class="btn btn-outline">ورود ادمین</button>
         <span id="adminStatus" class="admin-status"></span>
+      </div>
+    </div>
+    <!-- فرم ورود ادمین (مخفی) -->
+    <div id="adminLoginForm" class="admin-login-form" style="display: none;">
+      <div class="container">
+        <form id="loginForm" class="login-form-inline">
+          <input type="email" id="loginEmail" placeholder="ایمیل" required>
+          <input type="password" id="loginPassword" placeholder="رمز عبور" required>
+          <button type="submit" class="btn btn-primary btn-sm">ورود</button>
+          <button type="button" id="cancelLoginBtn" class="btn btn-outline btn-sm">انصراف</button>
+        </form>
+        <p id="loginError" class="login-error"></p>
       </div>
     </div>
   </header>
@@ -43,7 +53,7 @@
       </div>
     </section>
 
-    <!-- بخش تفسیر آیه بعدی -->
+    <!-- بخش تفسیر آیه -->
     <section class="card new-annotation-section">
       <h2 class="section-title">تفسیر آیه</h2>
 
