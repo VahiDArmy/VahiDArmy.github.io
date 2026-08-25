@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تفسیر شخصی قرآن</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <h1 class="logo">تفسیر شخصی قرآن</h1>
+    <div class="header-actions">
+      <button id="themeToggle" class="btn btn-icon">🌙</button>
+      <a href="browse.html" class="btn btn-outline">مرور</a>
+      <button id="adminBtn" class="btn btn-outline">ورود ادمین</button>
+      <span id="adminStatus" class="admin-status"></span>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar-container">
+  <div class="container">
+    <div class="progress-info">
+      <span id="currentPosition">سوره ۱، آیه ۱</span>
+      <span id="progressPercent">۰٪</span>
+    </div>
+    <div class="progress-bar">
+      <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+    </div>
+  </div>
+</div>
+
+<main class="container main-content">
+
+  <section class="card">
+    <h2 class="section-title">آخرین تفسیر</h2>
+    <div id="lastAnnotationContainer"><p class="loading-text">در حال بارگذاری...</p></div>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">تفسیر آیه</h2>
+    <div class="select-group">
+      <div class="select-field">
+        <label for="surahSelect">سوره</label>
+        <select id="surahSelect"></select>
+      </div>
+      <div class="select-field">
+        <label for="ayahSelect">آیه</label>
+        <select id="ayahSelect" disabled></select>
+      </div>
+    </div>
+
+    <div class="nav-buttons">
+      <button id="prevAyahBtn" class="btn btn-outline">→ آیه قبل</button>
+      <button id="nextAyahBtn" class="btn btn-outline">آیه بعد ←</button>
+    </div>
+
+    <div class="ayah-preview">
+      <p id="ayahText" class="ayah-text"></p>
+      <div class="translation-collapse" id="translationCollapse">
+        <button class="collapse-toggle" id="translationToggle">نمایش ترجمه <span class="arrow">▾</span></button>
+        <div class="collapse-content" id="translationContent">
+          <p id="translationText" class="translation-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- بخش نوشتن تفسیر جدید (فقط ادمین) -->
+    <div id="newAnnotationArea" class="new-annotation-area" style="display:none;">
+      <textarea id="newAnnotationTextarea" class="new-annotation-textarea" placeholder="تفسیر جدید..."></textarea>
+      <div class="annotation-actions">
+        <button id="saveNewAnnotationBtn" class="btn btn-primary">ثبت تفسیر</button>
+      </div>
+    </div>
+
+    <!-- لیست تفاسیر قبلی -->
+    <div id="annotationsList" class="annotations-list"></div>
+
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container">ساخته شده با ❤️ برای قرآن</div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/data-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/index.js"></script>
+</body>
+</html>
