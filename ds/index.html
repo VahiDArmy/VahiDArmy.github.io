@@ -53,6 +53,11 @@
       </div>
     </div>
 
+    <div class="nav-buttons">
+      <button id="prevAyahBtn" class="btn btn-outline">→ آیه قبل</button>
+      <button id="nextAyahBtn" class="btn btn-outline">آیه بعد ←</button>
+    </div>
+
     <div class="ayah-preview">
       <p id="ayahText" class="ayah-text"></p>
       <div class="translation-collapse" id="translationCollapse">
@@ -67,6 +72,7 @@
       <textarea id="annotationContent" rows="6" placeholder="تفسیر خود را بنویسید..."></textarea>
       <div class="form-actions">
         <button id="saveAnnotationBtn" class="btn btn-primary">ذخیره تفسیر</button>
+        <button id="cancelAnnotationBtn" class="btn btn-outline">انصراف</button>
         <span id="saveStatus" class="save-status"></span>
       </div>
     </div>
@@ -75,7 +81,7 @@
       <h3 class="comments-title">نظرات و انتقادات</h3>
       <div id="commentsList" class="comments-list"></div>
       <form id="commentForm" class="comment-form">
-        <input type="text" id="commentAuthor" placeholder="نام شما (اختیاری)" maxlength="50">
+        <input type="text" id="commentAuthor" placeholder="نام شما (الزامی)" maxlength="50">
         <select id="commentType">
           <option value="critique">نقد</option>
           <option value="oppose">مخالف</option>
