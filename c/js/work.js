@@ -122,7 +122,7 @@
           ${
             t.tags && t.tags.length
               ? `<div class="tag-pills">${t.tags
-                  .map((tg) => `<a class="tag-pill" href="tags.html?tag=${encodeURIComponent(tg)}">${escapeHtml(tg)}</a>`)
+                  .map((tg) => UI.tagPill(tg, { href: `tags.html?tag=${encodeURIComponent(tg)}` }))
                   .join('')}</div>`
               : ''
           }
