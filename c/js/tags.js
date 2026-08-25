@@ -18,12 +18,7 @@
       return;
     }
     tagCloudEl.innerHTML = tags
-      .map(
-        ({ tag, count }) => `
-      <a class="tag-pill" href="tags.html?tag=${encodeURIComponent(tag)}">
-        ${escapeHtml(tag)} <span class="tag-pill__count">${UI.toPersianDigits(count)}</span>
-      </a>`
-      )
+      .map(({ tag, count }) => UI.tagPill(tag, { href: `tags.html?tag=${encodeURIComponent(tag)}`, count }))
       .join('');
   }
 
@@ -58,10 +53,7 @@
           ${
             t.tags && t.tags.length
               ? `<div class="tag-pills">${t.tags
-                  .map(
-                    (tg) =>
-                      `<a class="tag-pill${tg === tag ? ' tag-pill--active' : ''}" href="tags.html?tag=${encodeURIComponent(tg)}">${escapeHtml(tg)}</a>`
-                  )
+                  .map((tg) => UI.tagPill(tg, { href: `tags.html?tag=${encodeURIComponent(tg)}`, active: tg === tag }))
                   .join('')}</div>`
               : ''
           }
