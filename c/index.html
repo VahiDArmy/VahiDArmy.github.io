@@ -25,6 +25,7 @@
     <nav class="nav-tabs" aria-label="ناوبری اصلی">
       <a href="index.html" class="active">کار</a>
       <a href="browse.html">مرور</a>
+      <a href="tags.html">برچسب‌ها</a>
     </nav>
     <div class="header-actions">
       <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
@@ -99,6 +100,10 @@
           <label for="tafsirContent">نظر و برداشت شما</label>
           <textarea id="tafsirContent" rows="4" spellcheck="false" autocorrect="off" autocapitalize="off" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
         </div>
+        <div class="field">
+          <label for="tafsirTags">برچسب‌ها (اختیاری، با ویرگول جدا کنید)</label>
+          <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت, اخلاق فردی" />
+        </div>
         <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
       </form>
     </div>
@@ -113,6 +118,7 @@
 <nav class="mobile-tabbar" aria-label="ناوبری موبایل">
   <a href="index.html" class="active">کار</a>
   <a href="browse.html">مرور</a>
+  <a href="tags.html">برچسب‌ها</a>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
