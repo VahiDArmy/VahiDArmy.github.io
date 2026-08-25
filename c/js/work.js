@@ -11,8 +11,20 @@
   const tafsirsListEl = document.getElementById('workTafsirsList');
   const tafsirForm = document.getElementById('tafsirForm');
   const tafsirContent = document.getElementById('tafsirContent');
+  const tafsirTags = document.getElementById('tafsirTags');
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
+
+  function parseTags(str) {
+    return Array.from(
+      new Set(
+        str
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean)
+      )
+    );
+  }
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
@@ -52,6 +64,7 @@
     editingId = null;
     editBanner.hidden = true;
     tafsirContent.value = '';
+    tafsirTags.value = '';
     submitBtn.textContent = 'ثبت تفسیر';
   }
 
@@ -59,6 +72,7 @@
     editingId = t.id;
     editBanner.hidden = false;
     tafsirContent.value = t.content;
+    tafsirTags.value = (t.tags || []).join(', ');
     submitBtn.textContent = 'به‌روزرسانی تفسیر';
     tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
     tafsirContent.focus();
@@ -105,6 +119,13 @@
           </div>
           <p class="tafsir-card__body${needsClamp ? ' is-clamped' : ''}" data-body="${t.id}">${escapeHtml(t.content)}</p>
           ${needsClamp ? `<button class="tafsir-card__more" data-toggle="${t.id}">نمایش کامل</button>` : ''}
+          ${
+            t.tags && t.tags.length
+              ? `<div class="tag-pills">${t.tags
+                  .map((tg) => `<a class="tag-pill" href="tags.html?tag=${encodeURIComponent(tg)}">${escapeHtml(tg)}</a>`)
+                  .join('')}</div>`
+              : ''
+          }
           <div class="tafsir-card__actions">
             <button class="btn btn--sm" data-edit="${t.id}">ویرایش</button>
             <button class="btn btn--sm" data-delete="${t.id}">حذف</button>
@@ -193,15 +214,17 @@
     e.preventDefault();
     const content = tafsirContent.value.trim();
     if (!content) return;
+    const tags = parseTags(tafsirTags.value);
 
     if (editingId) {
-      await Store.updateTafsir(editingId, content);
+      await Store.updateTafsir(editingId, content, tags);
       UI.toast('تفسیر به‌روزرسانی شد');
       exitEditMode();
       await renderTafsirsList();
     } else {
-      await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content });
+      await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
       tafsirContent.value = '';
+      tafsirTags.value = '';
       await renderTafsirsList();
       await refreshProgress();
       UI.toast('تفسیر با موفقیت ثبت شد');
