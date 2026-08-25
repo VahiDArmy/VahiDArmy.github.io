@@ -40,9 +40,9 @@
   box-sizing: border-box;
 }
 
-html, body {
+html {
   width: 100%;
-  overflow-x: hidden; /* جلوگیری از اسکرول افقی */
+  overflow-x: hidden;
 }
 
 body {
@@ -53,21 +53,18 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  direction: rtl;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   transition: background-color 0.3s, color 0.3s;
 }
 
 .container {
   width: 100%;
-  max-width: 100%; /* در موبایل تمام عرض */
+  max-width: 800px;
   margin: 0 auto;
   padding: 0 15px;
-}
-
-/* در دسکتاپ حداکثر 800px */
-@media (min-width: 800px) {
-  .container {
-    max-width: 800px;
-  }
 }
 
 /* هدر */
@@ -520,11 +517,11 @@ body {
     min-width: 100%;
   }
   .header-inner {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
   .header-actions {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
   }
 }
