@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ورود | RaiseMind</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/layout.css" />
+<link rel="stylesheet" href="css/components.css" />
+<style>
+  .login-wrap {
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .login-card {
+    width: 100%;
+    max-width: 360px;
+  }
+  .login-card .brand {
+    justify-content: center;
+    margin-bottom: 24px;
+    font-size: 1.3rem;
+  }
+  .login-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    margin-top: 10px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="brand"><span class="brand__mark">Raise</span><span>Mind</span></div>
+    <div class="card">
+      <form id="loginForm">
+        <div class="field">
+          <label for="email">ایمیل</label>
+          <input type="text" id="email" name="email" required autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">رمز عبور</label>
+          <input type="text" id="password" name="password" required autocomplete="current-password" style="-webkit-text-security: disc;" />
+        </div>
+        <button type="submit" class="btn btn--primary" style="width:100%">ورود</button>
+        <p class="login-error" id="loginError">ایمیل یا رمز عبور اشتباه است.</p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/theme.js"></script>
+<script>
+  (async function () {
+    const session = await Auth.getSession();
+    if (session) {
+      const next = new URLSearchParams(location.search).get('next') || 'index.html';
+      location.href = next;
+      return;
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const errorEl = document.getElementById('loginError');
+      errorEl.style.display = 'none';
+      try {
+        await Auth.signIn(email, password);
+        const next = new URLSearchParams(location.search).get('next') || 'index.html';
+        location.href = next;
+      } catch (err) {
+        errorEl.style.display = 'block';
+      }
+    });
+  })();
+</script>
+</body>
+</html>
