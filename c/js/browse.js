@@ -72,6 +72,13 @@
             <span>${date}</span>
           </div>
           <p class="tafsir-card__body">${escapeHtml(t.content)}</p>
+          ${
+            t.tags && t.tags.length
+              ? `<div class="tag-pills">${t.tags
+                  .map((tg) => `<a class="tag-pill" href="tags.html?tag=${encodeURIComponent(tg)}">${escapeHtml(tg)}</a>`)
+                  .join('')}</div>`
+              : ''
+          }
           <div class="comment-list" data-comments="${t.id}"></div>
           <form class="comment-form" data-comment-form="${t.id}" style="margin-top:12px;">
             <div class="name-row">
