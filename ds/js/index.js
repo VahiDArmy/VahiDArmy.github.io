@@ -75,8 +75,8 @@ async function loadLastAnnotation() {
   container.innerHTML = `
     <div class="last-annotation-info">
       <p class="last-ayah-ref">سوره ${data.surah}، آیه ${data.ayah}</p>
-      <p class="ayah-text small">${ayahData ? ayahData.text : ''}</p>
-      <p class="translation-text">${ayahData ? ayahData.translation : ''}</p>
+      <p class="ayah-text small">${ayahData ? ayahData.ar : ''}</p>
+      <p class="translation-text">${ayahData ? ayahData.fa : ''}</p>
     </div>
     <div class="annotation-content">
       ${data.content}
@@ -87,7 +87,7 @@ async function loadLastAnnotation() {
 async function saveAnnotation() {
   const content = document.getElementById('annotationContent').value.trim();
   if (!content) {
-    alert('متن تفسیر خالی است'); // این alert را هم می‌توان به inline تغییر داد ولی فقط ادمین می‌بیند
+    alert('متن تفسیر خالی است');
     return;
   }
   if (!currentSurah || !currentAyah) {
