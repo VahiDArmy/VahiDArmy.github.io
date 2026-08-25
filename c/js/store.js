@@ -34,8 +34,9 @@ const Store = (function () {
       .single();
     if (error) throw error;
 
-    await maybeAdvanceRound(round);
-    return data;
+    const { advanced, newRound } = await maybeAdvanceRound(round);
+    // این دو فیلد فقط برای اطلاع کلاینت هستند و در جدول ذخیره نمی‌شوند
+    return { ...data, roundAdvanced: advanced, newRound };
   }
 
   async function updateTafsir(id, content) {
@@ -74,6 +75,11 @@ const Store = (function () {
     return data;
   }
 
+  async function deleteComment(id) {
+    const { error } = await sb.from('comments').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async function getCurrentRound() {
     const { data, error } = await sb.from('site_meta').select('current_round').eq('id', 1).single();
     if (error) throw error;
@@ -96,7 +102,9 @@ const Store = (function () {
     const progress = await getProgress();
     if (progress.round === round && progress.completed >= progress.total) {
       await sb.from('site_meta').update({ current_round: round + 1 }).eq('id', 1);
+      return { advanced: true, newRound: round + 1 };
     }
+    return { advanced: false, newRound: round };
   }
 
   return {
@@ -107,6 +115,7 @@ const Store = (function () {
     deleteTafsir,
     getComments,
     addComment,
+    deleteComment,
     getCurrentRound,
     getProgress,
   };
