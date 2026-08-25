@@ -14,7 +14,23 @@ const surahNamesFa = [
   "مسد", "اخلاص", "فلق", "ناس"
 ];
 
-// ========== وضعیت پیشرفت ==========
+// ========== تعداد آیات هر سوره ==========
+const AYAH_COUNTS = [
+  7,286,200,176,120,165,206,75,129,109,
+  123,111,43,52,99,128,111,110,98,135,
+  112,78,118,64,77,227,93,88,69,60,
+  34,30,73,54,45,83,182,88,75,85,
+  54,53,89,59,37,35,38,29,18,45,
+  60,49,62,55,78,96,29,22,24,13,
+  14,11,11,18,12,12,30,52,52,44,
+  28,28,20,56,40,31,50,40,46,42,
+  29,19,36,25,22,17,19,26,30,20,
+  15,21,11,8,8,19,5,8,8,11,
+  11,8,3,9,5,4,7,3,6,3,
+  5,4,5,6
+];
+
+// ========== ذخیره پیشرفت ==========
 const PROGRESS_KEY = 'quran_progress';
 
 function getProgress() {
@@ -31,30 +47,27 @@ function saveProgress(surah, ayah) {
   updateProgressDisplay();
 }
 
-function updateProgressDisplay() {
-  const progress = getProgress();
-  const globalAyahNumber = getGlobalAyahNumber(progress.surah, progress.ayah);
-  const percent = (globalAyahNumber / TOTAL_AYAHS_IN_QURAN) * 100;
-  const percentEl = document.getElementById('progressPercent');
-  const positionEl = document.getElementById('currentPosition');
-  if (percentEl) percentEl.textContent = percent.toFixed(2) + '٪';
-  if (positionEl) positionEl.textContent = `سوره ${progress.surah}، آیه ${progress.ayah}`;
+function getGlobalAyahNumber(surah, ayah) {
+  let sum = 0;
+  for (let i = 0; i < surah - 1; i++) {
+    sum += AYAH_COUNTS[i] || 0;
+  }
+  return sum + ayah;
 }
 
-async function getGlobalAyahNumber(surah, ayah) {
-  let count = 0;
-  for (let i = 1; i < surah; i++) {
-    const data = await loadSurahData(i);
-    if (data && data.ayah_count) count += data.ayah_count;
-  }
-  count += ayah;
-  return count;
+function updateProgressDisplay() {
+  const progress = getProgress();
+  const global = getGlobalAyahNumber(progress.surah, progress.ayah);
+  const percent = (global / 6236) * 100;
+  document.getElementById('currentPosition').textContent = `سوره ${progress.surah}، آیه ${progress.ayah}`;
+  document.getElementById('progressPercent').textContent = percent.toFixed(2) + '٪';
+  document.getElementById('progressFill').style.width = percent + '%';
 }
 
 // ========== تم ==========
 function initTheme() {
-  const savedTheme = localStorage.getItem('theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', savedTheme);
+  const saved = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
   updateThemeIcon();
 }
 
@@ -106,7 +119,7 @@ async function populateAyahSelect(surahNumber, selectElement) {
   selectElement.disabled = false;
 }
 
-// ========== نمایش آیه و ترجمه ==========
+// ========== نمایش آیه ==========
 function displayAyah(ayahData) {
   const ayahTextEl = document.getElementById('ayahText');
   const translationTextEl = document.getElementById('translationText');
@@ -129,16 +142,20 @@ async function checkAdminAuth() {
   return session;
 }
 
+function isAdmin() {
+  return adminSession && adminSession.user && adminSession.user.id === ADMIN_UUID;
+}
+
 function updateAdminUI() {
   const adminBtn = document.getElementById('adminBtn');
   const adminStatus = document.getElementById('adminStatus');
   const annotationForm = document.getElementById('annotationFormWrapper');
-  const isAdmin = adminSession && adminSession.user && adminSession.user.id === ADMIN_UUID;
+  const admin = isAdmin();
 
   if (adminBtn) {
-    adminBtn.textContent = isAdmin ? 'خروج ادمین' : 'ورود ادمین';
+    adminBtn.textContent = admin ? 'خروج ادمین' : 'ورود ادمین';
     adminBtn.onclick = () => {
-      if (isAdmin) {
+      if (admin) {
         signOutAdmin();
       } else {
         window.location.href = 'login.html';
@@ -146,10 +163,10 @@ function updateAdminUI() {
     };
   }
   if (adminStatus) {
-    adminStatus.textContent = isAdmin ? 'وضعیت: ادمین' : '';
+    adminStatus.textContent = admin ? 'وضعیت: ادمین' : '';
   }
   if (annotationForm) {
-    annotationForm.style.display = isAdmin ? 'block' : 'none';
+    annotationForm.style.display = admin ? 'block' : 'none';
   }
 }
 
@@ -174,7 +191,6 @@ async function loadComments(surah, ayah) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('خطا در بارگذاری کامنت‌ها:', error);
     commentsList.innerHTML = '<p>خطا در بارگذاری نظرات</p>';
     return;
   }
@@ -190,12 +206,24 @@ async function loadComments(surah, ayah) {
     item.className = 'comment-item';
     item.innerHTML = `
       <div class="comment-header">
-        <span class="comment-author">${comment.author_name || 'ناشناس'}</span>
-        <span class="comment-type">${comment.type || 'critique'}</span>
-        <span class="comment-date">${new Date(comment.created_at).toLocaleDateString('fa-IR')}</span>
+        <span>${comment.author_name || 'ناشناس'}</span>
+        <span>${comment.type || 'critique'}</span>
+        <span>${new Date(comment.created_at).toLocaleDateString('fa-IR')}</span>
       </div>
       <div class="comment-content">${comment.content}</div>
     `;
+    if (isAdmin()) {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'comment-delete-btn';
+      delBtn.textContent = 'حذف';
+      delBtn.addEventListener('click', async () => {
+        if (confirm('این نظر حذف شود؟')) {
+          const { error } = await supabaseClient.from('comments').delete().eq('id', comment.id);
+          if (!error) loadComments(surah, ayah);
+        }
+      });
+      item.appendChild(delBtn);
+    }
     commentsList.appendChild(item);
   });
 }
@@ -204,33 +232,38 @@ async function submitComment(surah, ayah) {
   const honeypot = document.getElementById('honeypot');
   if (honeypot && honeypot.value) return;
 
-  const author = document.getElementById('commentAuthor')?.value.trim() || null;
-  const type = document.getElementById('commentType')?.value || 'critique';
-  const content = document.getElementById('commentContent')?.value.trim();
+  const authorInput = document.getElementById('commentAuthor');
+  const contentInput = document.getElementById('commentContent');
+  const typeInput = document.getElementById('commentType');
   const commentStatus = document.getElementById('commentStatus');
 
+  const author = authorInput.value.trim();
+  const content = contentInput.value.trim();
+  const type = typeInput.value;
+
+  if (!author) {
+    commentStatus.textContent = 'نام الزامی است';
+    commentStatus.style.color = 'var(--danger)';
+    return;
+  }
   if (!content) {
-    commentStatus.textContent = 'متن نظر نمی‌تواند خالی باشد';
+    commentStatus.textContent = 'متن نظر خالی است';
     commentStatus.style.color = 'var(--danger)';
     return;
   }
 
-  const { data, error } = await supabaseClient
+  const { error } = await supabaseClient
     .from('comments')
-    .insert([
-      { surah: parseInt(surah), ayah: parseInt(ayah), author_name: author, type, content, status: 'pending' }
-    ]);
+    .insert([{ surah: parseInt(surah), ayah: parseInt(ayah), author_name: author, type, content, status: 'pending' }]);
 
   if (error) {
-    console.error('خطا در ثبت نظر:', error);
-    commentStatus.textContent = 'خطا در ارسال نظر. لطفاً دوباره تلاش کنید.';
+    commentStatus.textContent = 'خطا در ثبت نظر';
     commentStatus.style.color = 'var(--danger)';
     return;
   }
 
-  document.getElementById('commentContent').value = '';
-  document.getElementById('commentAuthor').value = '';
-  commentStatus.textContent = 'نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود.';
+  contentInput.value = '';
+  commentStatus.textContent = 'نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود';
   commentStatus.style.color = 'var(--success)';
   loadComments(surah, ayah);
 }
@@ -247,9 +280,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (surahSelect) {
     await populateSurahSelect(surahSelect);
     surahSelect.addEventListener('change', async (e) => {
-      const surahNumber = e.target.value;
       const ayahSelect = document.getElementById('ayahSelect');
-      await populateAyahSelect(surahNumber, ayahSelect);
+      await populateAyahSelect(e.target.value, ayahSelect);
       if (typeof onAyahSelectionChange === 'function') onAyahSelectionChange();
     });
   }
@@ -264,8 +296,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const translationToggle = document.getElementById('translationToggle');
   if (translationToggle) {
     translationToggle.addEventListener('click', () => {
-      const collapse = document.getElementById('translationCollapse');
-      collapse.classList.toggle('open');
+      document.getElementById('translationCollapse').classList.toggle('open');
     });
   }
 
@@ -275,12 +306,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       e.preventDefault();
       const surahSelect = document.getElementById('surahSelect');
       const ayahSelect = document.getElementById('ayahSelect');
-      if (surahSelect && ayahSelect && surahSelect.value && ayahSelect.value) {
+      if (surahSelect.value && ayahSelect.value) {
         submitComment(surahSelect.value, ayahSelect.value);
       } else {
-        const commentStatus = document.getElementById('commentStatus');
-        commentStatus.textContent = 'ابتدا سوره و آیه را انتخاب کنید.';
-        commentStatus.style.color = 'var(--danger)';
+        document.getElementById('commentStatus').textContent = 'ابتدا آیه را انتخاب کنید';
       }
     });
   }
