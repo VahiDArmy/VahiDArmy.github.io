@@ -9,6 +9,21 @@
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(surahSelect, index, 1);
 
+  // آیا کاربر لاگین کرده (برای نمایش دکمهٔ حذف نظر)
+  const session = await Auth.getSession();
+
+  // --- نمایش لینک «آخرین آیهٔ کار شده» بالای صفحه ---
+  const lastWorkedLink = document.getElementById('lastWorkedLink');
+  const lastWorkedText = document.getElementById('lastWorkedText');
+  (async () => {
+    const latest = await Store.getLatestTafsir();
+    if (!latest) return;
+    const surahData = await QuranData.getSurah(latest.surah);
+    lastWorkedText.textContent = `${surahData.name_fa} ${UI.toPersianDigits(latest.ayah)}`;
+    lastWorkedLink.href = `#/${latest.surah}/${latest.ayah}`;
+    lastWorkedLink.hidden = false;
+  })();
+
   function parseHash() {
     const m = location.hash.match(/^#\/(\d+)\/(\d+)$/);
     if (!m) return { surah: 1, ayah: 1 };
@@ -63,10 +78,16 @@
           </div>
           <p class="tafsir-card__body">${escapeHtml(t.content)}</p>
           <div class="comment-list" data-comments="${t.id}"></div>
-          <form class="comment-form" data-comment-form="${t.id}" style="margin-top:10px; display:flex; gap:6px;">
-            <input type="text" name="content" placeholder="نظر شما…" required
-              style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.85rem;">
-            <button type="submit" class="btn btn--sm btn--primary">ارسال</button>
+          <form class="comment-form" data-comment-form="${t.id}">
+            <input type="text" name="guestName" placeholder="نام شما" required maxlength="60"
+              spellcheck="false" autocorrect="off" autocapitalize="off"
+              style="background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.85rem;">
+            <div style="display:flex; gap:6px;">
+              <input type="text" name="content" placeholder="نظر شما…" required
+                spellcheck="false" autocorrect="off" autocapitalize="off"
+                style="flex:1; background:var(--surface-2); border:1px solid var(--border); color:var(--text); padding:9px 12px; border-radius:10px; font-family:inherit; font-size:0.85rem;">
+              <button type="submit" class="btn btn--sm btn--primary">ارسال</button>
+            </div>
           </form>
         </div>`;
       })
@@ -77,12 +98,14 @@
     tafsirsListEl.querySelectorAll('[data-comment-form]').forEach((form) => {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const input = form.querySelector('input[name="content"]');
-        const content = input.value.trim();
-        if (!content) return;
+        const nameInput = form.querySelector('input[name="guestName"]');
+        const contentInput = form.querySelector('input[name="content"]');
+        const guestName = nameInput.value.trim();
+        const content = contentInput.value.trim();
+        if (!guestName || !content) return;
         const tafsirId = form.getAttribute('data-comment-form');
-        await Store.addComment({ tafsirId, content });
-        input.value = '';
+        await Store.addComment({ tafsirId, guestName, content });
+        contentInput.value = '';
         loadComments(tafsirId);
         UI.toast('نظر شما ثبت شد');
       });
@@ -99,12 +122,25 @@
       <div class="comment">
         <div class="comment__head">
           <span class="comment__name">${escapeHtml(c.guest_name)}</span>
-          <span class="comment__date">${new Date(c.created_at).toLocaleDateString('fa-IR')}</span>
+          <span style="display:flex; align-items:center; gap:8px;">
+            <span class="comment__date">${new Date(c.created_at).toLocaleDateString('fa-IR')}</span>
+            ${session ? `<button type="button" class="comment__delete" data-delete-comment="${c.id}" aria-label="حذف نظر">حذف</button>` : ''}
+          </span>
         </div>
         <div class="comment__body">${escapeHtml(c.content)}</div>
       </div>`
       )
       .join('');
+
+    if (session) {
+      wrap.querySelectorAll('[data-delete-comment]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('این نظر حذف شود؟')) return;
+          await Store.deleteComment(btn.getAttribute('data-delete-comment'));
+          loadComments(tafsirId);
+        });
+      });
+    }
   }
 
   function escapeHtml(str) {
