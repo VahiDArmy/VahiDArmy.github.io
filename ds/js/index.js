@@ -78,9 +78,7 @@ async function loadLastAnnotation() {
       <p class="ayah-text small">${ayahData ? ayahData.ar : ''}</p>
       <p class="translation-text">${ayahData ? ayahData.fa : ''}</p>
     </div>
-    <div class="annotation-content">
-      ${data.content}
-    </div>
+    <div class="annotation-content">${data.content}</div>
   `;
 }
 
@@ -117,13 +115,7 @@ async function saveAnnotation() {
   } else {
     result = await supabaseClient
       .from('annotations')
-      .insert([
-        {
-          surah: currentSurah,
-          ayah: currentAyah,
-          content,
-        }
-      ])
+      .insert([{ surah: currentSurah, ayah: currentAyah, content }])
       .select()
       .single();
   }
@@ -148,9 +140,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadLastAnnotation();
 
   const saveBtn = document.getElementById('saveAnnotationBtn');
-  if (saveBtn) {
-    saveBtn.addEventListener('click', saveAnnotation);
+  if (saveBtn) saveBtn.addEventListener('click', saveAnnotation);
+
+  // بارگذاری آیه پیش‌فرض یا آخرین پیشرفت
+  const progress = getProgress();
+  const surahSelect = document.getElementById('surahSelect');
+  const ayahSelect = document.getElementById('ayahSelect');
+  if (surahSelect && ayahSelect) {
+    surahSelect.value = progress.surah;
+    await populateAyahSelect(progress.surah, ayahSelect);
+    ayahSelect.value = progress.ayah;
+    currentSurah = progress.surah;
+    currentAyah = progress.ayah;
+    if (currentSurah && currentAyah) {
+      loadAyahAndAnnotation(currentSurah, currentAyah);
+      loadComments(currentSurah, currentAyah);
+    }
   }
 
   updateAdminUI();
+  updateProgressDisplay();
 });
