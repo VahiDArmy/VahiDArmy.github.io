@@ -115,7 +115,14 @@
   background: var(--border-soft);
 }
 
-/* ---- Bottom mobile nav (small screens) ---- */
+/* ---- Mobile: maximize width, minimal margins ---- */
+@media (max-width: 560px) {
+  .container { padding-inline: 5px; }
+  .site-header__inner { padding-inline: 10px; }
+  .card { padding: 14px 10px; }
+  .tafsir-card { padding: 14px 10px; }
+  .ayah-frame__inner { padding: 22px 12px 16px; }
+}
 .mobile-tabbar {
   display: none;
 }
