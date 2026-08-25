@@ -360,26 +360,13 @@
   gap: 4px;
   padding: 3px 11px;
   border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-dim);
+  border: 1px solid;
   font-size: 0.74rem;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  transition: filter 0.2s ease;
 }
-a.tag-pill:hover {
-  border-color: var(--neon);
-  color: var(--neon);
-}
-.tag-pill__count {
-  color: var(--text-faint);
-  font-size: 0.7rem;
-}
-.tag-pill--active {
-  background: var(--neon);
-  border-color: var(--neon);
-  color: #06110E;
-  font-weight: 700;
-}
+a.tag-pill:hover { filter: brightness(1.25); }
+.tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
