@@ -21,25 +21,31 @@ function updateThemeIcon() {
   }
 }
 
+// ========== نام سوره‌ها (فارسی) ==========
+const surahNamesFa = [
+  "فاتحه", "بقره", "آل‌عمران", "نساء", "مائده", "انعام", "اعراف", "انفال", "توبه", "یونس",
+  "هود", "یوسف", "رعد", "ابراهیم", "حجر", "نحل", "اسراء", "کهف", "مریم", "طه",
+  "انبیاء", "حج", "مؤمنون", "نور", "فرقان", "شعراء", "نمل", "قصص", "عنکبوت", "روم",
+  "لقمان", "سجده", "احزاب", "سبأ", "فاطر", "یس", "صافات", "ص", "زمر", "غافر",
+  "فصلت", "شوری", "زخرف", "دخان", "جاثیه", "احقاف", "محمد", "فتح", "حجرات", "ق",
+  "ذاریات", "طور", "نجم", "قمر", "الرحمن", "واقعه", "حدید", "مجادله", "حشر", "ممتحنه",
+  "صف", "جمعه", "منافقون", "تغابن", "طلاق", "تحریم", "ملک", "قلم", "حاقه", "معارج",
+  "نوح", "جن", "مزمل", "مدثر", "قیامت", "انسان", "مرسلات", "نبأ", "نازعات", "عبس",
+  "تکویر", "انفطار", "مطففین", "انشقاق", "بروج", "طارق", "اعلی", "غاشیه", "فجر", "بلد",
+  "شمس", "لیل", "ضحی", "شرح", "تین", "علق", "قدر", "بینه", "زلزله", "عادیات",
+  "قارعه", "تکاثر", "عصر", "همزه", "فیل", "قریش", "ماعون", "کوثر", "کافرون", "نصر",
+  "مسد", "اخلاص", "فلق", "ناس"
+];
+
 // ========== دراپ‌داون‌ها ==========
-let metadataCache = null;
-
-async function getMetadata() {
-  if (!metadataCache) {
-    metadataCache = await loadMetadata();
-  }
-  return metadataCache;
-}
-
 async function populateSurahSelect(selectElement) {
-  const metadata = await getMetadata();
   selectElement.innerHTML = '<option value="">-- انتخاب سوره --</option>';
-  metadata.forEach(surah => {
+  for (let i = 1; i <= 114; i++) {
     const option = document.createElement('option');
-    option.value = surah.number;
-    option.textContent = `${surah.number} - ${surah.name}`;
+    option.value = i;
+    option.textContent = `${i} - ${surahNamesFa[i-1]}`;
     selectElement.appendChild(option);
-  });
+  }
 }
 
 async function populateAyahSelect(surahNumber, selectElement) {
@@ -48,13 +54,12 @@ async function populateAyahSelect(surahNumber, selectElement) {
     selectElement.disabled = true;
     return;
   }
-  const metadata = await getMetadata();
-  const surahMeta = metadata.find(s => s.number === parseInt(surahNumber));
-  if (!surahMeta) {
+  const surahData = await loadSurahData(surahNumber);
+  if (!surahData || !surahData.ayahs) {
     selectElement.disabled = true;
     return;
   }
-  const totalAyahs = surahMeta.totalAyahs;
+  const totalAyahs = surahData.ayahs.length;
   for (let i = 1; i <= totalAyahs; i++) {
     const option = document.createElement('option');
     option.value = i;
@@ -73,8 +78,8 @@ function displayAyah(ayahData) {
     translationTextEl.textContent = '';
     return;
   }
-  ayahTextEl.textContent = ayahData.text;
-  translationTextEl.textContent = ayahData.translation;
+  ayahTextEl.textContent = ayahData.ar;
+  translationTextEl.textContent = ayahData.fa;
 }
 
 // ========== احراز هویت ادمین ==========
@@ -161,7 +166,6 @@ async function loadComments(surah, ayah) {
 async function submitComment(surah, ayah) {
   const honeypot = document.getElementById('honeypot');
   if (honeypot && honeypot.value) {
-    // ربات تشخیص داده شد
     return;
   }
 
@@ -185,7 +189,7 @@ async function submitComment(surah, ayah) {
         author_name: author,
         type: type,
         content: content,
-        status: 'pending' // پیش‌فرض در انتظار تأیید
+        status: 'pending'
       }
     ]);
 
@@ -196,26 +200,21 @@ async function submitComment(surah, ayah) {
     return;
   }
 
-  // پاک کردن فرم
   document.getElementById('commentContent').value = '';
   document.getElementById('commentAuthor').value = '';
   commentStatus.textContent = 'نظر شما ثبت شد و پس از تأیید نمایش داده می‌شود.';
   commentStatus.style.color = 'var(--success)';
-  // بارگذاری مجدد کامنت‌ها
   loadComments(surah, ayah);
 }
 
 // ========== مقداردهی اولیه ==========
 document.addEventListener('DOMContentLoaded', async () => {
-  // تم
   initTheme();
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 
-  // احراز هویت
   await checkAdminAuth();
 
-  // دراپ‌داون‌ها
   const surahSelect = document.getElementById('surahSelect');
   if (surahSelect) {
     await populateSurahSelect(surahSelect);
@@ -234,7 +233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // ترجمه collapse
   const translationToggle = document.getElementById('translationToggle');
   if (translationToggle) {
     translationToggle.addEventListener('click', () => {
@@ -243,7 +241,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // فرم کامنت
   const commentForm = document.getElementById('commentForm');
   if (commentForm) {
     commentForm.addEventListener('submit', (e) => {
