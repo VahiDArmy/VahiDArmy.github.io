@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // ورود موفق - انتقال به صفحه اصلی
     window.location.href = 'index.html';
   });
 });
