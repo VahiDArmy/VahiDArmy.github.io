@@ -52,7 +52,6 @@
       <div class="progress-hero__text">
         <p class="progress-hero__title">
           دور <span id="roundNumber">۱</span>
-          <span class="progress-hero__badge" id="roundBadge" hidden>دور تازه تکمیل شد ✦</span>
         </p>
         <p class="progress-hero__count"><span id="completedCount" class="count-up">۰</span> از ۶٬۲۳۶ آیه</p>
       </div>
@@ -79,14 +78,21 @@
         </div>
       </div>
 
-      <div id="formAyahPreview"></div>
+      <div id="formAyahPreview" class="sticky-ayah"></div>
+
+      <button type="button" id="nextAyahBtn" class="btn" style="width:100%; margin-bottom:16px;">› آیه بعدی</button>
+
+      <div id="editingNotice" class="editing-notice" hidden>در حال ویرایش یک تفسیر موجود هستید.</div>
 
       <form id="tafsirForm">
         <div class="field" style="margin-top:16px">
           <label for="tafsirContent">نظر و برداشت شما</label>
-          <textarea id="tafsirContent" rows="6" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
+          <textarea id="tafsirContent" rows="5" spellcheck="false" autocorrect="off" autocapitalize="off" data-gramm="false" translate="no" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
         </div>
-        <button type="submit" class="btn btn--primary" style="width:100%">ثبت تفسیر</button>
+        <div style="display:flex; gap:10px;">
+          <button type="submit" id="tafsirSubmitBtn" class="btn btn--primary" style="flex:1">ثبت تفسیر</button>
+          <button type="button" id="cancelEditBtn" class="btn" hidden>انصراف</button>
+        </div>
       </form>
     </div>
   </section>
