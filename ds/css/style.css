@@ -1,5 +1,5 @@
 /* ============================
-   متغیرهای سراسری و تم‌ها
+   متغیرها و تم‌ها
    ============================ */
 :root {
   --bg: #0a0a12;
@@ -32,16 +32,13 @@
 }
 
 /* ============================
-   استایل‌های پایه
+   پایه
    ============================ */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-html {
+html, body {
   width: 100%;
+  max-width: 100vw;
   overflow-x: hidden;
 }
 
@@ -54,9 +51,6 @@ body {
   display: flex;
   flex-direction: column;
   direction: rtl;
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
   transition: background-color 0.3s, color 0.3s;
 }
 
@@ -64,14 +58,16 @@ body {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 0 15px;
+  padding: 0 10px;
 }
 
-/* هدر */
+/* ============================
+   هدر
+   ============================ */
 .site-header {
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border);
-  padding: 15px 0;
+  padding: 10px 0;
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
 }
 
@@ -80,11 +76,11 @@ body {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .logo {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--primary);
   text-shadow: var(--glow-primary);
@@ -93,24 +89,57 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .admin-status {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
 }
 
-/* دکمه‌ها */
+/* نوار پیشرفت */
+.progress-bar-container {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 0;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--bg-input);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary);
+  box-shadow: var(--glow-primary);
+  transition: width 0.5s;
+}
+
+/* ============================
+   دکمه‌ها
+   ============================ */
 .btn {
   display: inline-block;
-  padding: 10px 20px;
+  padding: 8px 15px;
   border: 2px solid var(--border);
   border-radius: 8px;
   background-color: transparent;
   color: var(--text);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s;
   text-decoration: none;
@@ -128,120 +157,92 @@ body {
   background-color: rgba(0, 240, 255, 0.1);
 }
 
-.btn-primary:hover {
-  background-color: rgba(0, 240, 255, 0.2);
-}
-
 .btn-secondary {
   border-color: var(--secondary);
   color: var(--secondary);
   background-color: rgba(255, 0, 255, 0.1);
 }
 
-.btn-secondary:hover {
-  background-color: rgba(255, 0, 255, 0.2);
-}
-
 .btn-icon {
-  padding: 8px 12px;
-  font-size: 1.2rem;
+  padding: 6px 10px;
+  font-size: 1rem;
 }
 
-.btn-outline {
-  border-color: var(--border);
-}
+.btn-outline { border-color: var(--border); }
+.btn-block { width: 100%; }
 
-.btn-block {
-  width: 100%;
-}
-
-/* محتوای اصلی */
+/* ============================
+   محتوا
+   ============================ */
 .main-content {
   flex: 1;
-  padding: 20px 0;
+  padding: 15px 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 15px;
 }
 
-/* کارت‌ها */
 .card {
   background-color: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
+  padding: 15px;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-  transition: background-color 0.3s;
 }
 
 .section-title {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   color: var(--primary);
   text-shadow: var(--glow-primary);
 }
 
-/* انتخاب سوره و آیه */
+/* ============================
+   انتخاب سوره/آیه
+   ============================ */
 .select-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 20px;
+  gap: 10px;
+  margin-bottom: 15px;
 }
 
 .select-field {
   flex: 1;
-  min-width: 150px;
+  min-width: 120px;
 }
 
 .select-field label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: 500;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
 .select-field select {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   background-color: var(--bg-input);
   color: var(--text);
   border: 2px solid var(--border);
   border-radius: 8px;
   font-family: inherit;
-  font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  font-size: 0.95rem;
 }
 
-.select-field select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: var(--glow-primary);
-}
-
-.select-field select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* نمایش آیه */
-.ayah-preview {
-  margin-bottom: 20px;
-}
-
+/* ============================
+   آیه و ترجمه
+   ============================ */
 .ayah-text {
   font-family: 'Amiri', serif;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   line-height: 2.2;
   text-align: center;
-  margin-bottom: 10px;
-  color: var(--text);
+  margin-bottom: 8px;
   direction: rtl;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
 }
 
-/* ترجمه collapse */
 .translation-collapse {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -251,277 +252,114 @@ body {
 
 .collapse-toggle {
   width: 100%;
-  padding: 10px;
+  padding: 8px;
   background: none;
   border: none;
   color: var(--text-secondary);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: color 0.3s;
-}
-
-.collapse-toggle:hover {
-  color: var(--primary);
-}
-
-.arrow {
-  transition: transform 0.3s;
 }
 
 .collapse-content {
   max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
-  padding: 0 10px;
+  padding: 0 8px;
 }
 
 .translation-collapse.open .collapse-content {
   max-height: 200px;
-  padding: 10px;
-}
-
-.translation-collapse.open .arrow {
-  transform: rotate(180deg);
+  padding: 8px;
 }
 
 .translation-text {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.8;
-  color: var(--text);
 }
 
-/* فرم تفسیر */
-.annotation-form {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.annotation-form textarea {
+/* ============================
+   فرم‌ها
+   ============================ */
+.annotation-form textarea,
+.comment-form input,
+.comment-form select,
+.comment-form textarea,
+.form-group input {
   width: 100%;
-  padding: 15px;
+  padding: 10px;
   background-color: var(--bg-input);
   color: var(--text);
   border: 2px solid var(--border);
   border-radius: 8px;
   font-family: inherit;
-  font-size: 1rem;
-  resize: vertical;
-  transition: border-color 0.3s;
+  font-size: 0.95rem;
+  margin-bottom: 8px;
 }
 
-.annotation-form textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: var(--glow-primary);
-}
-
-.form-actions {
-  margin-top: 10px;
+.comment-form {
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.save-status {
-  font-size: 0.9rem;
-  color: var(--success);
-}
-
-/* نمایش تفسیر در صفحه مرور */
-.annotation-display {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.annotation-content {
-  margin-top: 10px;
-  line-height: 1.8;
-}
-
-/* کامنت‌ها */
-.comments-section {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-
-.comments-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 15px;
-  color: var(--secondary);
-  text-shadow: var(--glow-secondary);
+  flex-direction: column;
+  gap: 8px;
 }
 
 .comments-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .comment-item {
   background-color: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
+  font-size: 0.9rem;
 }
 
 .comment-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 5px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
+  margin-bottom: 4px;
 }
 
-.comment-type {
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  background-color: rgba(255, 0, 255, 0.1);
-  color: var(--secondary);
-  border: 1px solid var(--secondary);
-}
-
-.comment-content {
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-
-.comment-form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.comment-form input,
-.comment-form select,
-.comment-form textarea {
-  width: 100%;
-  padding: 10px;
-  background-color: var(--bg-input);
-  color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 0.95rem;
-}
-
-.comment-form input:focus,
-.comment-form select:focus,
-.comment-form textarea:focus {
-  outline: none;
-  border-color: var(--secondary);
-  box-shadow: var(--glow-secondary);
-}
-
-/* فیلد مخفی ضد اسپم */
 .hp-field {
   position: absolute;
   left: -9999px;
   opacity: 0;
   height: 0;
-  overflow: hidden;
-}
-
-/* پیام وضعیت کامنت */
-.comment-status {
-  margin-top: 10px;
-  color: var(--success);
-  font-size: 0.9rem;
-}
-
-/* صفحه ورود */
-.login-container {
-  justify-content: center;
-  align-items: center;
-  min-height: 70vh;
-}
-
-.login-card {
-  max-width: 400px;
-  width: 100%;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.form-group label {
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.form-group input {
-  padding: 12px;
-  background-color: var(--bg-input);
-  color: var(--text);
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  font-family: inherit;
-  font-size: 1rem;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: var(--glow-primary);
-}
-
-.error-message {
-  color: var(--danger);
-  font-size: 0.9rem;
-  min-height: 20px;
-}
-
-/* فوتر */
-.site-footer {
-  background-color: var(--bg-card);
-  border-top: 1px solid var(--border);
-  padding: 15px 0;
-  text-align: center;
-  color: var(--text-secondary);
-  margin-top: auto;
 }
 
 /* ============================
-   ریسپانسیو برای موبایل
+   فوتر
+   ============================ */
+.site-footer {
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border);
+  padding: 10px 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ============================
+   موبایل
    ============================ */
 @media (max-width: 600px) {
-  .logo {
-    font-size: 1.2rem;
-  }
-  .ayah-text {
-    font-size: 1.5rem;
+  .header-inner {
+    flex-direction: row;
+    justify-content: space-between;
   }
   .select-group {
     flex-direction: column;
   }
   .select-field {
     min-width: 100%;
-  }
-  .header-inner {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .header-actions {
-    width: auto;
   }
 }
