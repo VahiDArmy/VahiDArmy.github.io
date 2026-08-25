@@ -24,21 +24,21 @@ const Store = (function () {
     return data;
   }
 
-  async function addTafsir({ surah, ayah, content }) {
+  async function addTafsir({ surah, ayah, content, tags }) {
     const round = await getCurrentRound();
     const { data, error } = await sb
       .from('tafsirs')
-      .insert({ surah, ayah, round_number: round, content })
+      .insert({ surah, ayah, round_number: round, content, tags: tags || [] })
       .select()
       .single();
     if (error) throw error;
     return data;
   }
 
-  async function updateTafsir(id, content) {
+  async function updateTafsir(id, content, tags) {
     const { data, error } = await sb
       .from('tafsirs')
-      .update({ content })
+      .update({ content, tags: tags || [] })
       .eq('id', id)
       .select()
       .single();
@@ -74,6 +74,30 @@ const Store = (function () {
   async function deleteComment(id) {
     const { error } = await sb.from('comments').delete().eq('id', id);
     if (error) throw error;
+  }
+
+  async function getAllTags() {
+    const { data, error } = await sb.from('tafsirs').select('tags');
+    if (error) throw error;
+    const freq = new Map();
+    for (const row of data) {
+      for (const tag of row.tags || []) {
+        freq.set(tag, (freq.get(tag) || 0) + 1);
+      }
+    }
+    return Array.from(freq.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  async function getTafsirsByTag(tag) {
+    const { data, error } = await sb
+      .from('tafsirs')
+      .select('*')
+      .contains('tags', [tag])
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
   }
 
   async function getCurrentRound() {
@@ -150,6 +174,8 @@ const Store = (function () {
     getComments,
     addComment,
     deleteComment,
+    getAllTags,
+    getTafsirsByTag,
     getCurrentRound,
     getSiteMeta,
     getProgress,
