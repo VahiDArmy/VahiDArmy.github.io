@@ -1,3 +1,56 @@
+// ========== نام سوره‌ها ==========
+const surahNamesFa = [
+  "فاتحه", "بقره", "آل‌عمران", "نساء", "مائده", "انعام", "اعراف", "انفال", "توبه", "یونس",
+  "هود", "یوسف", "رعد", "ابراهیم", "حجر", "نحل", "اسراء", "کهف", "مریم", "طه",
+  "انبیاء", "حج", "مؤمنون", "نور", "فرقان", "شعراء", "نمل", "قصص", "عنکبوت", "روم",
+  "لقمان", "سجده", "احزاب", "سبأ", "فاطر", "یس", "صافات", "ص", "زمر", "غافر",
+  "فصلت", "شوری", "زخرف", "دخان", "جاثیه", "احقاف", "محمد", "فتح", "حجرات", "ق",
+  "ذاریات", "طور", "نجم", "قمر", "الرحمن", "واقعه", "حدید", "مجادله", "حشر", "ممتحنه",
+  "صف", "جمعه", "منافقون", "تغابن", "طلاق", "تحریم", "ملک", "قلم", "حاقه", "معارج",
+  "نوح", "جن", "مزمل", "مدثر", "قیامت", "انسان", "مرسلات", "نبأ", "نازعات", "عبس",
+  "تکویر", "انفطار", "مطففین", "انشقاق", "بروج", "طارق", "اعلی", "غاشیه", "فجر", "بلد",
+  "شمس", "لیل", "ضحی", "شرح", "تین", "علق", "قدر", "بینه", "زلزله", "عادیات",
+  "قارعه", "تکاثر", "عصر", "همزه", "فیل", "قریش", "ماعون", "کوثر", "کافرون", "نصر",
+  "مسد", "اخلاص", "فلق", "ناس"
+];
+
+// ========== وضعیت پیشرفت ==========
+const PROGRESS_KEY = 'quran_progress';
+
+function getProgress() {
+  const saved = localStorage.getItem(PROGRESS_KEY);
+  if (saved) {
+    try { return JSON.parse(saved); } catch(e) {}
+  }
+  return { surah: 1, ayah: 1 };
+}
+
+function saveProgress(surah, ayah) {
+  const progress = { surah: parseInt(surah), ayah: parseInt(ayah) };
+  localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  updateProgressDisplay();
+}
+
+function updateProgressDisplay() {
+  const progress = getProgress();
+  const globalAyahNumber = getGlobalAyahNumber(progress.surah, progress.ayah);
+  const percent = (globalAyahNumber / TOTAL_AYAHS_IN_QURAN) * 100;
+  const percentEl = document.getElementById('progressPercent');
+  const positionEl = document.getElementById('currentPosition');
+  if (percentEl) percentEl.textContent = percent.toFixed(2) + '٪';
+  if (positionEl) positionEl.textContent = `سوره ${progress.surah}، آیه ${progress.ayah}`;
+}
+
+async function getGlobalAyahNumber(surah, ayah) {
+  let count = 0;
+  for (let i = 1; i < surah; i++) {
+    const data = await loadSurahData(i);
+    if (data && data.ayah_count) count += data.ayah_count;
+  }
+  count += ayah;
+  return count;
+}
+
 // ========== تم ==========
 function initTheme() {
   const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -20,22 +73,6 @@ function updateThemeIcon() {
     icon.textContent = theme === 'dark' ? '☀️' : '🌙';
   }
 }
-
-// ========== نام سوره‌ها (فارسی) ==========
-const surahNamesFa = [
-  "فاتحه", "بقره", "آل‌عمران", "نساء", "مائده", "انعام", "اعراف", "انفال", "توبه", "یونس",
-  "هود", "یوسف", "رعد", "ابراهیم", "حجر", "نحل", "اسراء", "کهف", "مریم", "طه",
-  "انبیاء", "حج", "مؤمنون", "نور", "فرقان", "شعراء", "نمل", "قصص", "عنکبوت", "روم",
-  "لقمان", "سجده", "احزاب", "سبأ", "فاطر", "یس", "صافات", "ص", "زمر", "غافر",
-  "فصلت", "شوری", "زخرف", "دخان", "جاثیه", "احقاف", "محمد", "فتح", "حجرات", "ق",
-  "ذاریات", "طور", "نجم", "قمر", "الرحمن", "واقعه", "حدید", "مجادله", "حشر", "ممتحنه",
-  "صف", "جمعه", "منافقون", "تغابن", "طلاق", "تحریم", "ملک", "قلم", "حاقه", "معارج",
-  "نوح", "جن", "مزمل", "مدثر", "قیامت", "انسان", "مرسلات", "نبأ", "نازعات", "عبس",
-  "تکویر", "انفطار", "مطففین", "انشقاق", "بروج", "طارق", "اعلی", "غاشیه", "فجر", "بلد",
-  "شمس", "لیل", "ضحی", "شرح", "تین", "علق", "قدر", "بینه", "زلزله", "عادیات",
-  "قارعه", "تکاثر", "عصر", "همزه", "فیل", "قریش", "ماعون", "کوثر", "کافرون", "نصر",
-  "مسد", "اخلاص", "فلق", "ناس"
-];
 
 // ========== دراپ‌داون‌ها ==========
 async function populateSurahSelect(selectElement) {
@@ -165,9 +202,7 @@ async function loadComments(surah, ayah) {
 
 async function submitComment(surah, ayah) {
   const honeypot = document.getElementById('honeypot');
-  if (honeypot && honeypot.value) {
-    return;
-  }
+  if (honeypot && honeypot.value) return;
 
   const author = document.getElementById('commentAuthor')?.value.trim() || null;
   const type = document.getElementById('commentType')?.value || 'critique';
@@ -183,14 +218,7 @@ async function submitComment(surah, ayah) {
   const { data, error } = await supabaseClient
     .from('comments')
     .insert([
-      {
-        surah: parseInt(surah),
-        ayah: parseInt(ayah),
-        author_name: author,
-        type: type,
-        content: content,
-        status: 'pending'
-      }
+      { surah: parseInt(surah), ayah: parseInt(ayah), author_name: author, type, content, status: 'pending' }
     ]);
 
   if (error) {
@@ -256,4 +284,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
+
+  updateProgressDisplay();
 });
