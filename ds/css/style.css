@@ -2,7 +2,6 @@
    متغیرهای سراسری و تم‌ها
    ============================ */
 :root {
-  /* رنگ‌های تم دارک (پیش‌فرض) */
   --bg: #0a0a12;
   --bg-card: #12121e;
   --bg-input: #1a1a2e;
@@ -18,7 +17,6 @@
   --success: #33ff99;
 }
 
-/* تم روشن */
 [data-theme="light"] {
   --bg: #f0f0f8;
   --bg-card: #ffffff;
@@ -42,6 +40,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  width: 100%;
+  overflow-x: hidden; /* جلوگیری از اسکرول افقی */
+}
+
 body {
   font-family: 'Vazirmatn', sans-serif;
   background-color: var(--bg);
@@ -55,9 +58,16 @@ body {
 
 .container {
   width: 100%;
-  max-width: 800px;
+  max-width: 100%; /* در موبایل تمام عرض */
   margin: 0 auto;
   padding: 0 15px;
+}
+
+/* در دسکتاپ حداکثر 800px */
+@media (min-width: 800px) {
+  .container {
+    max-width: 800px;
+  }
 }
 
 /* هدر */
@@ -273,7 +283,7 @@ body {
 }
 
 .translation-collapse.open .collapse-content {
-  max-height: 200px; /* یا بیشتر */
+  max-height: 200px;
   padding: 10px;
 }
 
@@ -493,7 +503,9 @@ body {
   margin-top: auto;
 }
 
-/* ریسپانسیو */
+/* ============================
+   ریسپانسیو برای موبایل
+   ============================ */
 @media (max-width: 600px) {
   .logo {
     font-size: 1.2rem;
@@ -506,5 +518,13 @@ body {
   }
   .select-field {
     min-width: 100%;
+  }
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
   }
 }
