@@ -40,7 +40,7 @@ const UI = (function () {
     requestAnimationFrame(() => {
       circle.style.strokeDashoffset = offset;
     });
-    if (labelEl) labelEl.textContent = `${Math.round(percent)}٪`;
+    if (labelEl) labelEl.textContent = `${toPersianDigits(percent.toFixed(2))}٪`;
   }
 
   function countUp(el, target, duration = 900) {
