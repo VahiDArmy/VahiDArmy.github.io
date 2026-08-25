@@ -15,6 +15,7 @@
     <h1 class="logo">تفسیر شخصی قرآن</h1>
     <div class="header-actions">
       <button id="themeToggle" class="btn btn-icon">🌙</button>
+      <a href="browse.html" class="btn btn-outline">مرور</a>
       <button id="adminBtn" class="btn btn-outline">ورود ادمین</button>
       <span id="adminStatus" class="admin-status"></span>
     </div>
@@ -68,24 +69,17 @@
       </div>
     </div>
 
-    <div id="annotationsContainer" class="annotations-list"></div>
-
-    <div class="comments-section">
-      <h3 class="comments-title">نظرات و انتقادات</h3>
-      <div id="commentsList" class="comments-list"></div>
-      <form id="commentForm" class="comment-form">
-        <input type="text" id="commentAuthor" placeholder="نام شما (الزامی)" maxlength="50">
-        <select id="commentType">
-          <option value="critique">نقد</option>
-          <option value="oppose">مخالف</option>
-          <option value="agree">موافق</option>
-        </select>
-        <textarea id="commentContent" rows="3" placeholder="نظر خود را بنویسید..." required></textarea>
-        <input type="text" id="honeypot" class="hp-field" tabindex="-1" autocomplete="off">
-        <button type="submit" class="btn btn-secondary">ارسال نظر</button>
-      </form>
-      <p id="commentStatus" class="comment-status"></p>
+    <!-- بخش نوشتن تفسیر جدید (فقط ادمین) -->
+    <div id="newAnnotationArea" class="new-annotation-area" style="display:none;">
+      <textarea id="newAnnotationTextarea" class="new-annotation-textarea" placeholder="تفسیر جدید..."></textarea>
+      <div class="annotation-actions">
+        <button id="saveNewAnnotationBtn" class="btn btn-primary">ثبت تفسیر</button>
+      </div>
     </div>
+
+    <!-- لیست تفاسیر قبلی -->
+    <div id="annotationsList" class="annotations-list"></div>
+
   </section>
 
 </main>
