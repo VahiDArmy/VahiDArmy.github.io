@@ -4,18 +4,13 @@ let currentAyah = null;
 function onAyahSelectionChange() {
   const surahSelect = document.getElementById('surahSelect');
   const ayahSelect = document.getElementById('ayahSelect');
-  currentSurah = surahSelect.value ? parseInt(surahSelect.value) : null;
-  currentAyah = ayahSelect.value ? parseInt(ayahSelect.value) : null;
+  currentSurah = parseInt(surahSelect.value);
+  currentAyah = parseInt(ayahSelect.value);
 
   if (currentSurah && currentAyah) {
+    saveProgress(currentSurah, currentAyah);
     loadAyahAndAnnotation(currentSurah, currentAyah);
     loadComments(currentSurah, currentAyah);
-    saveProgress(currentSurah, currentAyah);
-  } else {
-    document.getElementById('ayahText').textContent = '';
-    document.getElementById('translationText').textContent = '';
-    document.getElementById('annotationDisplay').innerHTML = '';
-    document.getElementById('commentsList').innerHTML = '<p class="empty-text">سوره و آیه را انتخاب کنید.</p>';
   }
 }
 
@@ -32,38 +27,60 @@ async function loadAyahAndAnnotation(surah, ayah) {
     .eq('ayah', ayah)
     .maybeSingle();
 
-  if (error) {
-    console.error('خطا در بارگذاری تفسیر:', error);
-    annotationDisplay.innerHTML = '';
-    return;
-  }
-
+  if (error) return;
   if (data) {
-    annotationDisplay.innerHTML = `
-      <div class="annotation-content">
-        <h3>تفسیر شخصی</h3>
-        <p>${data.content}</p>
-      </div>
-    `;
+    annotationDisplay.innerHTML = `<h3>تفسیر شخصی</h3><p>${data.content}</p>`;
   } else {
-    annotationDisplay.innerHTML = '<p class="empty-text">تفسیری برای این آیه ثبت نشده است.</p>';
+    annotationDisplay.innerHTML = '<p>تفسیری ثبت نشده است.</p>';
   }
 }
 
+async function goToAyah(delta) {
+  if (!currentSurah || !currentAyah) return;
+  const surahData = await loadSurahData(currentSurah);
+  const ayahCount = surahData.ayahs.length;
+  let newSurah = currentSurah;
+  let newAyah = currentAyah + delta;
+
+  if (delta > 0 && newAyah > ayahCount) {
+    newSurah = currentSurah + 1;
+    newAyah = 1;
+    if (newSurah > 114) return;
+  } else if (delta < 0 && newAyah < 1) {
+    newSurah = currentSurah - 1;
+    if (newSurah < 1) return;
+    const prevData = await loadSurahData(newSurah);
+    newAyah = prevData.ayahs.length;
+  }
+
+  const surahSelect = document.getElementById('surahSelect');
+  const ayahSelect = document.getElementById('ayahSelect');
+  surahSelect.value = newSurah;
+  await populateAyahSelect(newSurah, ayahSelect);
+  ayahSelect.value = newAyah;
+  currentSurah = newSurah;
+  currentAyah = newAyah;
+  saveProgress(newSurah, newAyah);
+  loadAyahAndAnnotation(newSurah, newAyah);
+  loadComments(newSurah, newAyah);
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
+  const prevBtn = document.getElementById('prevAyahBtn');
+  const nextBtn = document.getElementById('nextAyahBtn');
+  if (prevBtn) prevBtn.addEventListener('click', () => goToAyah(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => goToAyah(1));
+
   const progress = getProgress();
   const surahSelect = document.getElementById('surahSelect');
   const ayahSelect = document.getElementById('ayahSelect');
-  if (surahSelect && ayahSelect) {
-    surahSelect.value = progress.surah;
-    await populateAyahSelect(progress.surah, ayahSelect);
-    ayahSelect.value = progress.ayah;
-    currentSurah = progress.surah;
-    currentAyah = progress.ayah;
-    if (currentSurah && currentAyah) {
-      loadAyahAndAnnotation(currentSurah, currentAyah);
-      loadComments(currentSurah, currentAyah);
-    }
-  }
+  surahSelect.value = progress.surah;
+  await populateAyahSelect(progress.surah, ayahSelect);
+  ayahSelect.value = progress.ayah;
+  currentSurah = progress.surah;
+  currentAyah = progress.ayah;
+  saveProgress(progress.surah, progress.ayah);
+  loadAyahAndAnnotation(progress.surah, progress.ayah);
+  loadComments(progress.surah, progress.ayah);
   updateProgressDisplay();
 });
