@@ -10,6 +10,7 @@ function onAyahSelectionChange() {
   if (currentSurah && currentAyah) {
     loadAyahAndAnnotation(currentSurah, currentAyah);
     loadComments(currentSurah, currentAyah);
+    saveProgress(currentSurah, currentAyah);
   } else {
     document.getElementById('ayahText').textContent = '';
     document.getElementById('translationText').textContent = '';
@@ -49,6 +50,20 @@ async function loadAyahAndAnnotation(surah, ayah) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // دراپ‌داون‌ها در ui.js مقداردهی اولیه می‌شوند
+document.addEventListener('DOMContentLoaded', async () => {
+  const progress = getProgress();
+  const surahSelect = document.getElementById('surahSelect');
+  const ayahSelect = document.getElementById('ayahSelect');
+  if (surahSelect && ayahSelect) {
+    surahSelect.value = progress.surah;
+    await populateAyahSelect(progress.surah, ayahSelect);
+    ayahSelect.value = progress.ayah;
+    currentSurah = progress.surah;
+    currentAyah = progress.ayah;
+    if (currentSurah && currentAyah) {
+      loadAyahAndAnnotation(currentSurah, currentAyah);
+      loadComments(currentSurah, currentAyah);
+    }
+  }
+  updateProgressDisplay();
 });
