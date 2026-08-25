@@ -5,6 +5,6 @@
 // کلاینت مشکلی ندارد، امنیت واقعی را RLS در دیتابیس تأمین می‌کند.
 // =============================================================
 const CONFIG = {
-  SUPABASE_URL: 'https://YOUR-PROJECT-REF.supabase.co',
-  SUPABASE_ANON_KEY: 'YOUR-ANON-PUBLIC-KEY',
+  SUPABASE_URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6',
 };
