@@ -60,5 +60,30 @@ const UI = (function () {
     return String(str).replace(/[0-9]/g, (d) => fa[d]);
   }
 
-  return { populateSurahSelect, populateAyahSelect, toast, setProgressRing, countUp, toPersianDigits };
+  function hashStr(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h << 5) - h + s.charCodeAt(i) | 0;
+    return Math.abs(h);
+  }
+
+  function tagColor(tag) {
+    const hue = hashStr(tag) % 360;
+    return {
+      bg: `hsla(${hue},70%,50%,0.15)`,
+      border: `hsla(${hue},70%,55%,0.45)`,
+      color: `hsl(${hue},80%,70%)`,
+    };
+  }
+
+  function tagPill(tag, { href, count, active } = {}) {
+    const c = tagColor(tag);
+    const style = active
+      ? `background:${c.color};border-color:${c.color};color:#0B0E14;`
+      : `background:${c.bg};border-color:${c.border};color:${c.color};`;
+    const countHtml = count != null ? ` <span class="tag-pill__count">${toPersianDigits(count)}</span>` : '';
+    const tagEsc = tag.replace(/</g, '&lt;');
+    return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
+  }
+
+  return { populateSurahSelect, populateAyahSelect, toast, setProgressRing, countUp, toPersianDigits, tagColor, tagPill };
 })();
