@@ -170,7 +170,7 @@
   document.getElementById('endRoundBtn').addEventListener('click', async () => {
     const p = await Store.getProgress();
     const ok = confirm(
-      `دور ${UI.toPersianDigits(p.round)} با پیشرفت ${UI.toPersianDigits(Math.round(p.percent))}٪ خواندن (${UI.toPersianDigits(p.tafsirCount)} تفسیر نوشته‌شده) بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} از آیهٔ اول شروع می‌شود. ادامه می‌دهید؟`
+      `دور ${UI.toPersianDigits(p.round)} با پیشرفت ${UI.toPersianDigits(p.percent.toFixed(2))}٪ خواندن (${UI.toPersianDigits(p.tafsirCount)} تفسیر نوشته‌شده) بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} از آیهٔ اول شروع می‌شود. ادامه می‌دهید؟`
     );
     if (!ok) return;
     const newRound = await Store.endRound();
