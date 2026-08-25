@@ -9,10 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loginError.textContent = '';
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
     if (error) {
       console.error('خطا در ورود:', error.message);
