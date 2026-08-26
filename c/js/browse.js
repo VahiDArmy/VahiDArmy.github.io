@@ -43,7 +43,19 @@
     surahSelect.value = surah;
     UI.populateAyahSelect(ayahSelect, surahData.ayah_count, actualAyah);
 
-    renderAyahFrame(frameEl, ayahData, surahData);
+    const markOptions = isOwner
+      ? {
+          marked: await Store.isMarked(surah, actualAyah),
+          onToggleMark: async (btn) => {
+            const nowMarked = !btn.classList.contains('is-marked');
+            await Store.toggleMark(surah, actualAyah, nowMarked);
+            btn.classList.toggle('is-marked', nowMarked);
+            btn.setAttribute('aria-pressed', String(nowMarked));
+          },
+        }
+      : { marked: await Store.isMarked(surah, actualAyah) };
+
+    renderAyahFrame(frameEl, ayahData, surahData, markOptions);
 
     prevBtn.disabled = surah === 1 && actualAyah === 1;
     nextBtn.disabled = surah === 114 && actualAyah === surahData.ayah_count;
