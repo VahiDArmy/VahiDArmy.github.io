@@ -1,10 +1,15 @@
 // رندر قاب آیه (عنصر امضای طراحی) + نوار باریک ترجمه با قابلیت باز/بسته شدن
-function renderAyahFrame(container, ayah, surahMeta) {
+// options.marked: آیا این آیه نشان‌گذاری شده؟  options.onToggleMark: اگر داده شود، چراغ کلیک‌پذیر می‌شود
+function renderAyahFrame(container, ayah, surahMeta, options = {}) {
+  const { marked = false, onToggleMark = null } = options;
   container.innerHTML = `
     <div class="ayah-frame">
       <div class="ayah-frame__inner">
         <div class="ayah-frame__ref">
-          <span class="ayah-frame__ref-text">سورهٔ <b>${surahMeta.name_fa}</b> · آیهٔ ${UI.toPersianDigits(ayah.v)}</span>
+          <span class="ayah-frame__ref-text">
+            ${onToggleMark ? `<button type="button" class="mark-toggle${marked ? ' is-marked' : ''}" aria-label="نشان‌گذاری این آیه" aria-pressed="${marked}"></button>` : marked ? `<span class="mark-toggle is-marked" aria-hidden="true"></span>` : ''}
+            سورهٔ <b>${surahMeta.name_fa}</b> · آیهٔ ${UI.toPersianDigits(ayah.v)}
+          </span>
           <span class="ayah-frame__ref-text">${surahMeta.revelation}</span>
         </div>
         <p class="ayah-frame__arabic">${ayah.ar}</p>
@@ -28,6 +33,11 @@ function renderAyahFrame(container, ayah, surahMeta) {
     toggle.setAttribute('aria-expanded', String(isOpen));
     toggle.firstChild.textContent = isOpen ? 'پنهان کردن ترجمه ' : 'نمایش ترجمهٔ فولادوند ';
   });
+
+  if (onToggleMark) {
+    const markBtn = container.querySelector('button.mark-toggle');
+    markBtn.addEventListener('click', () => onToggleMark(markBtn));
+  }
 }
 
 function ayahSkeleton(container) {
