@@ -201,6 +201,31 @@
 }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
 
+/* ---- Mark light: small amber neon toggle in the ayah top bar ---- */
+.mark-toggle {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+span.mark-toggle { cursor: default; }
+.mark-toggle.is-marked {
+  background: #FFB020;
+  border-color: #FFB020;
+  box-shadow:
+    0 0 3px 1px #FFB020,
+    0 0 10px 3px rgba(255, 176, 32, 0.75),
+    0 0 20px 7px rgba(255, 176, 32, 0.4);
+}
+button.mark-toggle:hover { border-color: #FFB020; }
+
 .ayah-frame__arabic {
   font-family: var(--font-quran);
   font-size: 1.7rem;
