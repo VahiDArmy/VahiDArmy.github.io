@@ -100,6 +100,27 @@ const Store = (function () {
     return data;
   }
 
+  async function isMarked(surah, ayah) {
+    const { data, error } = await sb
+      .from('marked_ayahs')
+      .select('surah')
+      .eq('surah', surah)
+      .eq('ayah', ayah)
+      .maybeSingle();
+    if (error) throw error;
+    return !!data;
+  }
+
+  async function toggleMark(surah, ayah, mark) {
+    if (mark) {
+      const { error } = await sb.from('marked_ayahs').insert({ surah, ayah });
+      if (error) throw error;
+    } else {
+      const { error } = await sb.from('marked_ayahs').delete().eq('surah', surah).eq('ayah', ayah);
+      if (error) throw error;
+    }
+  }
+
   async function getCurrentRound() {
     const { data, error } = await sb.from('site_meta').select('current_round').eq('id', 1).single();
     if (error) throw error;
@@ -176,6 +197,8 @@ const Store = (function () {
     deleteComment,
     getAllTags,
     getTafsirsByTag,
+    isMarked,
+    toggleMark,
     getCurrentRound,
     getSiteMeta,
     getProgress,
