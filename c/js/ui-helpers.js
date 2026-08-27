@@ -72,7 +72,28 @@ const UI = (function () {
       bg: `hsla(${hue},70%,50%,0.15)`,
       border: `hsla(${hue},70%,55%,0.45)`,
       color: `hsl(${hue},80%,70%)`,
+      glow: `hsla(${hue},85%,60%,0.85)`,
     };
+  }
+
+  // اگر کلمه‌ای در متن دقیقاً با یکی از برچسب‌های همان تفسیر یکی باشد،
+  // رنگی (هم‌رنگ با برچسب) + کمی گلو + لینک به صفحهٔ آن برچسب می‌شود.
+  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
+  function highlightTags(escapedHtml, tags) {
+    if (!tags || !tags.length) return escapedHtml;
+    const clean = tags.map((t) => t.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (!clean.length) return escapedHtml;
+    const pattern = clean.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    let re;
+    try {
+      re = new RegExp(`(?<![\\p{L}\\p{N}])(${pattern})(?![\\p{L}\\p{N}])`, 'gu');
+    } catch (e) {
+      re = new RegExp(`(${pattern})`, 'g'); // مرورگرهای خیلی قدیمی: بدون مرز کلمه
+    }
+    return escapedHtml.replace(re, (match) => {
+      const c = tagColor(match);
+      return `<a class="tag-inline" style="color:${c.color};text-shadow:0 0 5px ${c.glow},0 0 12px ${c.bg};" href="tags.html?tag=${encodeURIComponent(match)}">${match}</a>`;
+    });
   }
 
   function tagPill(tag, { href, count, active } = {}) {
@@ -85,5 +106,68 @@ const UI = (function () {
     return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
   }
 
-  return { populateSurahSelect, populateAyahSelect, toast, setProgressRing, countUp, toPersianDigits, tagColor, tagPill };
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // اجازه می‌دهد بعد از هر کلمهٔ تگ، یک پسوند رایج فارسی (ی، ها، ...) هم بیاید
+  // مثلاً تگ «حقیقت بالاتر» با متن «حقیقتی بالاتر» هم تطبیق پیدا کند
+  function tagToRegexSource(tag) {
+    const words = tag
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => escapeRegExp(w) + '[یهاءٔ]{0,2}');
+    return words.join('\\s+');
+  }
+
+  // کلمات/عبارت‌هایی از متن تفسیر که با یکی از تگ‌های خودش هم‌خانواده‌اند را
+  // رنگی، با کمی گلو، و لینک‌شده به صفحهٔ همان برچسب می‌کند.
+  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
+  function highlightTags(escapedHtml, tags) {
+    if (!tags || !tags.length) return escapedHtml;
+    let matches = [];
+    tags.forEach((tag) => {
+      const re = new RegExp(tagToRegexSource(tag), 'g');
+      let m;
+      while ((m = re.exec(escapedHtml))) {
+        matches.push({ start: m.index, end: m.index + m[0].length, text: m[0], tag });
+        if (m[0].length === 0) re.lastIndex++;
+      }
+    });
+    if (!matches.length) return escapedHtml;
+
+    matches.sort((a, b) => a.start - b.start || b.end - b.start - (a.end - a.start));
+    const filtered = [];
+    let lastEnd = -1;
+    for (const m of matches) {
+      if (m.start >= lastEnd) {
+        filtered.push(m);
+        lastEnd = m.end;
+      }
+    }
+
+    let out = '';
+    let cursor = 0;
+    for (const m of filtered) {
+      out += escapedHtml.slice(cursor, m.start);
+      const c = tagColor(m.tag);
+      out += `<a class="tag-mention" style="color:${c.color};text-shadow:0 0 6px ${c.border}" href="tags.html?tag=${encodeURIComponent(m.tag)}">${m.text}</a>`;
+      cursor = m.end;
+    }
+    out += escapedHtml.slice(cursor);
+    return out;
+  }
+
+  return {
+    populateSurahSelect,
+    populateAyahSelect,
+    toast,
+    setProgressRing,
+    countUp,
+    toPersianDigits,
+    tagColor,
+    tagPill,
+    highlightTags,
+  };
 })();
