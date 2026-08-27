@@ -19,7 +19,7 @@
     return Array.from(
       new Set(
         str
-          .split(',')
+          .split(/[,،]/)
           .map((t) => t.trim())
           .filter(Boolean)
       )
@@ -125,7 +125,7 @@
             <span class="tafsir-card__round">دور ${UI.toPersianDigits(t.round_number)}</span>
             <span>${date}</span>
           </div>
-          <p class="tafsir-card__body${needsClamp ? ' is-clamped' : ''}" data-body="${t.id}">${escapeHtml(t.content)}</p>
+          <p class="tafsir-card__body${needsClamp ? ' is-clamped' : ''}" data-body="${t.id}">${UI.highlightTags(escapeHtml(t.content), t.tags)}</p>
           ${needsClamp ? `<button class="tafsir-card__more" data-toggle="${t.id}">نمایش کامل</button>` : ''}
           ${
             t.tags && t.tags.length
