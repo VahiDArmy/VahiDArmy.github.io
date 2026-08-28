@@ -10,7 +10,12 @@ function renderAyahFrame(container, ayah, surahMeta, options = {}) {
             ${onToggleMark ? `<button type="button" class="mark-toggle${marked ? ' is-marked' : ''}" aria-label="نشان‌گذاری این آیه" aria-pressed="${marked}"></button>` : marked ? `<span class="mark-toggle is-marked" aria-hidden="true"></span>` : ''}
             سورهٔ <b>${surahMeta.name_fa}</b> · آیهٔ ${UI.toPersianDigits(ayah.v)}
           </span>
-          <span class="ayah-frame__ref-text">${surahMeta.revelation}</span>
+          <span class="ayah-frame__ref-text">
+            ${surahMeta.revelation}
+            <button type="button" class="copy-ayah-btn" aria-label="کپی آیه و ترجمه" title="کپی آیه و ترجمه">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </span>
         </div>
         <p class="ayah-frame__arabic">${ayah.ar}</p>
         <div class="translation-bar">
@@ -38,6 +43,28 @@ function renderAyahFrame(container, ayah, surahMeta, options = {}) {
     const markBtn = container.querySelector('button.mark-toggle');
     markBtn.addEventListener('click', () => onToggleMark(markBtn));
   }
+
+  container.querySelector('.copy-ayah-btn').addEventListener('click', async () => {
+    const text = `${ayah.ar}\n\n${ayah.fa}\n\n— سورهٔ ${surahMeta.name_fa}، آیهٔ ${ayah.v}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      UI.toast('آیه و ترجمه کپی شد');
+    } catch (e) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        UI.toast('آیه و ترجمه کپی شد');
+      } catch (e2) {
+        UI.toast('کپی ناموفق بود — متن را دستی انتخاب کنید');
+      }
+      document.body.removeChild(ta);
+    }
+  });
 }
 
 function ayahSkeleton(container) {
