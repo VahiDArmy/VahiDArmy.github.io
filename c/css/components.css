@@ -200,6 +200,22 @@
   color: var(--text-faint);
 }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
+.copy-ayah-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-inline-start: 4px;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  border-radius: 6px;
+  vertical-align: middle;
+  transition: color 0.2s ease;
+}
+.copy-ayah-btn:hover { color: var(--neon); }
 
 /* ---- Mark light: small amber neon toggle in the ayah top bar ---- */
 .mark-toggle {
