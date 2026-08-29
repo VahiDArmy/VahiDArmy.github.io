@@ -90,7 +90,7 @@ if __name__ == "__main__":
           {
             name: "notes.txt",
             type: "file",
-            content: "This is a data folder.\nYou can put text files here.\n(Python can read them later if needed)"
+            content: "This is a data folder.\\nYou can put text files here.\\n(Python can read them later if needed)"
           }
         ]
       },
@@ -130,6 +130,7 @@ Open main.py and click Run!
   const modalTitle = $("#modal-title");
   const modalInput = $("#modal-input");
   const sidebar = $("#sidebar");
+  const btnReopen = $("#btn-reopen-sidebar");
 
   let modalMode = null;
   let modalParentPath = "";
@@ -525,6 +526,15 @@ Open main.py and click Run!
     });
   }
 
+  // ---------- Sidebar reopen (mobile) ----------
+  function updateSidebarButton() {
+    if (sidebar.classList.contains("collapsed")) {
+      btnReopen.classList.add("visible");
+    } else {
+      btnReopen.classList.remove("visible");
+    }
+  }
+
   // ---------- Events ----------
   btnRun.addEventListener("click", runCode);
   $("#btn-clear").addEventListener("click", clearOutput);
@@ -545,6 +555,12 @@ Open main.py and click Run!
 
   $("#btn-toggle-sidebar").addEventListener("click", () => {
     sidebar.classList.toggle("collapsed");
+    updateSidebarButton();
+  });
+
+  btnReopen.addEventListener("click", () => {
+    sidebar.classList.remove("collapsed");
+    updateSidebarButton();
   });
 
   // ---------- Boot ----------
@@ -556,6 +572,7 @@ Open main.py and click Run!
 
       renderTree();
       openFile("src/main.py");
+      updateSidebarButton();
 
       loader.classList.add("hidden");
       if (editor) editor.focus();
