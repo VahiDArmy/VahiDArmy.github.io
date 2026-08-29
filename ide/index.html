@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeonPy — Cyber Python IDE</title>
+  <link rel="stylesheet" data-name="vs/editor/editor.main" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/editor/editor.main.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="logo">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">Neon<span>Py</span></span>
+      </div>
+      <div class="actions">
+        <button id="btn-run" class="btn btn-run" title="Run (Ctrl+Enter)">
+          <span class="btn-icon">▶</span>
+          <span class="btn-label">Run</span>
+        </button>
+        <button id="btn-clear" class="btn btn-ghost">
+          <span class="btn-icon">⌫</span>
+          <span class="btn-label">Clear</span>
+        </button>
+        <button id="btn-reset" class="btn btn-ghost">
+          <span class="btn-icon">↺</span>
+          <span class="btn-label">Reset</span>
+        </button>
+      </div>
+      <div class="status" id="status">
+        <span class="status-dot"></span>
+        <span class="status-text">Loading Python…</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel panel-editor">
+        <div class="panel-header">
+          <span class="panel-title">main.py</span>
+          <span class="badge">Python 3</span>
+        </div>
+        <div id="editor" class="editor-container"></div>
+      </section>
+      <div class="resizer" id="resizer"></div>
+      <section class="panel panel-output">
+        <div class="panel-header">
+          <span class="panel-title">Output</span>
+          <span class="badge badge-dim">Pyodide</span>
+        </div>
+        <pre id="output" class="output-container"></pre>
+      </section>
+    </main>
+
+    <footer class="bottombar">
+      <div class="info">NeonPy IDE • Runs 100% in browser</div>
+      <div class="shortcuts"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> Run</div>
+    </footer>
+  </div>
+
+  <div id="loader" class="loader">
+    <div class="loader-content">
+      <div class="neon-ring"></div>
+      <p class="loader-text">Initializing Python Runtime</p>
+      <p class="loader-sub">Please wait a few seconds…</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.27.2/full/pyodide.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
