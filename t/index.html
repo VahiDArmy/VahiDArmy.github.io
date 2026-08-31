@@ -10,8 +10,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div class="mist"></div>
+  <div class="mist mist2"></div>
+
   <div class="app">
-    <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h1>NOVA</h1>
@@ -26,16 +28,19 @@
       <div class="token-area">
         <input type="password" id="tokenInput" placeholder="Fine-grained token…" />
         <button class="btn-token" id="btnSaveToken">ذخیره توکن</button>
+        <div class="rate-box" id="rateBox">
+          <span class="rate-label">API</span>
+          <span class="rate-value" id="rateValue">—</span>
+        </div>
       </div>
     </aside>
 
-    <!-- Editor -->
     <main class="editor">
       <div class="editor-top">
         <input type="text" id="titleInput" placeholder="عنوان (اختیاری) — اگر خالی باشد تاریخ شمسی ثبت می‌شود" />
         <div class="glow-control">
           <label>Glow</label>
-          <input type="range" id="glowRange" min="0.3" max="1.8" step="0.1" value="1" />
+          <input type="range" id="glowRange" min="0.4" max="1.6" step="0.1" value="1" />
         </div>
       </div>
 
