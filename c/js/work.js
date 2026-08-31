@@ -24,6 +24,9 @@
   const linkAyahSelect = document.getElementById('linkAyahSelect');
   const linkAyahPreview = document.getElementById('linkAyahPreview');
 
+  // ---- ذخیره موقعیت توکن برای جایگزینی ----
+  let pendingTokenRange = null; // { start, end, surah, ayah, excerpt }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -37,13 +40,12 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
-  let index = null; // will be populated
+  let index = null;
 
   ayahSkeleton(stickyFrame);
   index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
 
-  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
@@ -182,7 +184,7 @@
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   // =============================================================
-  //  LINK TOOL – improved: detect token at cursor position
+  //  LINK TOOL – با ذخیره موقعیت توکن
   // =============================================================
 
   function openLinkModal() {
@@ -191,17 +193,14 @@
 
   function closeLinkModal() {
     linkToolModal.classList.remove('is-open');
+    // پاک کردن موقعیت ذخیره شده پس از بستن مودال
+    pendingTokenRange = null;
   }
 
-  // Find a token that surrounds the given position (cursor)
+  // پیدا کردن توکن در موقعیت مکان‌نما
   function findTokenAtPosition(text, pos) {
-    // Look for '[[', then the token, then ']]'
-    // We'll search backwards for '[[', and forwards for ']]'
-    // But we need to ensure the brackets are properly matched.
-    // Simpler: scan left from pos until we find '[[' or start; scan right for ']]' or end.
     let start = pos;
     let end = pos;
-    // Move left to find '[[' 
     let foundOpen = false;
     while (start > 0) {
       if (text.substring(start-2, start) === '[[') {
@@ -212,7 +211,6 @@
       start--;
     }
     if (!foundOpen) return null;
-    // Move right to find ']]'
     let foundClose = false;
     while (end < text.length) {
       if (text.substring(end, end+2) === ']]') {
@@ -223,7 +221,6 @@
       end++;
     }
     if (!foundClose) return null;
-    // Extract the token between start and end
     const token = text.substring(start, end);
     const parsed = AyahLinks.parseToken(token);
     if (parsed) {
@@ -232,32 +229,29 @@
     return null;
   }
 
-  // Detect if the user has a token at cursor, or a selection
+  // دریافت توکن در مکان‌نما یا انتخاب
   function getTokenAtCaretOrSelection() {
     const textarea = tafsirContent;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    // If there's a selection, try to parse it as a token first
     if (start !== end) {
       const selected = textarea.value.substring(start, end);
       const parsed = AyahLinks.parseToken(selected);
       if (parsed) return { ...parsed, start, end };
     }
-    // Otherwise, find token at cursor position (use start)
     return findTokenAtPosition(textarea.value, start);
   }
 
-  // Pre-fill the modal with given surah/ayah/excerpt
+  // پر کردن مودال با داده‌های سوره/آیه/گزیده
   async function prefillLinkModal(surah, ayah, excerpt) {
     UI.populateSurahSelect(linkSurahSelect, index, surah);
     const surahData = await QuranData.getSurah(surah);
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, ayah);
     await updateLinkPreview();
-    // Store the excerpt for later use
     linkToolModal.dataset.prefilledExcerpt = excerpt || '';
   }
 
-  // Update preview when dropdowns change
+  // به‌روزرسانی پیش‌نمایش
   async function updateLinkPreview() {
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
@@ -268,39 +262,46 @@
       <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
-  // Insert or replace token in textarea
+  // درج یا جایگزینی توکن در تکست‌آریا با استفاده از محدوده ذخیره شده
   function insertOrReplaceToken(surah, ayah, excerpt) {
     const textarea = tafsirContent;
-    let start = textarea.selectionStart;
-    let end = textarea.selectionEnd;
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
 
-    // If there's no selection, we might have a token at cursor (but we already set selection when we found it)
-    // However, if selection length is 0, we just insert at cursor.
-    if (start === end) {
-      // Insert at cursor
+    if (pendingTokenRange) {
+      // جایگزینی توکن قبلی با توکن جدید
+      const { start, end } = pendingTokenRange;
       textarea.setRangeText(token, start, end, 'end');
+      pendingTokenRange = null;
     } else {
-      // Replace selection
-      textarea.setRangeText(token, start, end, 'end');
+      // درج در موقعیت فعلی مکان‌نما
+      const pos = textarea.selectionStart;
+      textarea.setRangeText(token, pos, pos, 'end');
     }
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
-  // ---- Link tool event handlers ----
+  // ---- رویدادهای دکمه‌های لینک ----
 
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
 
-    // Try to get token at cursor or from selection
+    // پیدا کردن توکن در مکان‌نما یا انتخاب
     const tokenData = getTokenAtCaretOrSelection();
     if (tokenData) {
-      // Auto-select the token in the textarea so user sees what's being replaced
+      // ذخیره موقعیت برای جایگزینی
+      pendingTokenRange = {
+        start: tokenData.start,
+        end: tokenData.end,
+        surah: tokenData.surah,
+        ayah: tokenData.ayah,
+        excerpt: tokenData.excerpt,
+      };
+      // هایلایت کردن توکن در تکست‌آریا
       tafsirContent.setSelectionRange(tokenData.start, tokenData.end);
       await prefillLinkModal(tokenData.surah, tokenData.ayah, tokenData.excerpt);
     } else {
-      // Default to current ayah
+      pendingTokenRange = null;
       await prefillLinkModal(current.surah, current.ayah, '');
     }
     openLinkModal();
@@ -330,13 +331,12 @@
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
 
-    // Get excerpt from user selection inside the preview, if any
+    // دریافت گزیده از انتخاب کاربر در پیش‌نمایش
     const selection = window.getSelection();
     const selectedText = selection ? selection.toString().trim() : '';
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
 
-    // If the modal was pre-filled with an excerpt and user didn't select new text, keep the old excerpt
     let finalExcerpt = excerpt;
     if (!finalExcerpt && linkToolModal.dataset.prefilledExcerpt) {
       finalExcerpt = linkToolModal.dataset.prefilledExcerpt;
@@ -346,9 +346,8 @@
     closeLinkModal();
   });
 
-  // ---- Done with link tool ----
+  // ---- بقیه کدها بدون تغییر ----
 
-  // --- جابه‌جایی با دراپ‌داون ---
   selectRow.surah.addEventListener('change', async () => {
     current = { surah: Number(selectRow.surah.value), ayah: 1 };
     await renderCurrentAyah();
@@ -358,7 +357,6 @@
     await renderCurrentAyah();
   });
 
-  // --- بعدی/قبلی ---
   prevBtn.addEventListener('click', async () => {
     if (current.ayah > 1) {
       current.ayah -= 1;
@@ -378,7 +376,6 @@
     await renderCurrentAyah();
   });
 
-  // --- ثبت / به‌روزرسانی تفسیر ---
   tafsirForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const content = tafsirContent.value.trim();
@@ -402,7 +399,6 @@
     }
   });
 
-  // ---- end round ----
   document.getElementById('endRoundBtn').addEventListener('click', async () => {
     const p = await Store.getProgress();
     const ok = confirm(
@@ -415,6 +411,5 @@
     await renderCurrentAyah();
   });
 
-  // ---- initial render ----
   await renderCurrentAyah();
 })();
