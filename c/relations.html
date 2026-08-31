@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
@@ -59,6 +59,37 @@
     text-align: center;
     padding: 20px;
   }
+
+  /* مودال نمایش آیه */
+  #ayahModal .modal-card {
+    max-width: 480px;
+  }
+  #ayahModal .modal-card__head {
+    margin-bottom: 10px;
+  }
+  #ayahModal .ayah-preview-ar {
+    font-family: var(--font-quran);
+    font-size: 1.5rem;
+    line-height: 2.6;
+    text-align: center;
+    padding: 12px 0;
+    color: var(--text);
+  }
+  #ayahModal .ayah-preview-fa {
+    font-size: 0.95rem;
+    line-height: 2;
+    color: var(--text-dim);
+    padding: 8px 0 16px;
+    border-top: 1px dashed var(--border-soft);
+  }
+  #ayahModal .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  #ayahModal .modal-actions .btn {
+    flex: 1;
+  }
 </style>
 </head>
 <body>
@@ -87,7 +118,7 @@
 
   <section class="section" aria-label="نقشهٔ رابطه‌ها">
     <div class="section__label">نقشهٔ ارجاع‌های بین آیات</div>
-    <p style="font-size:0.8rem; color:var(--text-faint); margin:-4px 0 12px;">هر نقطه یک آیه است؛ هر خط یعنی در تفسیر یک آیه به آیهٔ دیگری ارجاع داده شده. روی نقطه‌ها بزنید تا به آن آیه بروید.</p>
+    <p style="font-size:0.8rem; color:var(--text-faint); margin:-4px 0 12px;">هر نقطه یک آیه است؛ هر خط یعنی در تفسیر یک آیه به آیهٔ دیگری ارجاع داده شده. روی نقطه‌ها بزنید تا اطلاعات آیه را ببینید.</p>
     <div id="graphWrap">
       <svg id="graphSvg"></svg>
     </div>
@@ -99,6 +130,24 @@
   </section>
 
 </main>
+
+<!-- مودال نمایش اطلاعات آیه -->
+<div class="modal-overlay" id="ayahModal">
+  <div class="modal-card card">
+    <div class="modal-card__head">
+      <span id="ayahModalTitle">سورهٔ ... ، آیهٔ ...</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="closeAyahModalBtn" aria-label="بستن">✕</button>
+    </div>
+    <div id="ayahModalBody">
+      <div class="ayah-preview-ar" id="ayahModalArabic"></div>
+      <div class="ayah-preview-fa" id="ayahModalTranslation"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn--ghost" id="closeAyahModalBtn2">بستن</button>
+      <a class="btn btn--primary" id="ayahModalLink" href="#">مشاهدهٔ آیه در مرور</a>
+    </div>
+  </div>
+</div>
 
 <footer style="text-align:center; padding:20px; font-size:0.72rem; color:var(--text-faint);">
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
