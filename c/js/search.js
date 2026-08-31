@@ -9,7 +9,6 @@
   const index = await QuranData.getIndex();
   const nameOf = (n) => (index.find((s) => s.number === n) || {}).name_fa || n;
 
-  // پر کردن انتخابگر برچسب‌ها
   async function populateTagSelect() {
     const tags = await Store.getAllTags();
     tagSelect.innerHTML = '<option value="">همهٔ برچسب‌ها</option>';
@@ -22,7 +21,6 @@
   }
   await populateTagSelect();
 
-  // خواندن پارامترهای URL
   const params = new URLSearchParams(location.search);
   const q = params.get('q') || '';
   const tag = params.get('tag') || '';
@@ -32,7 +30,6 @@
   async function performSearch() {
     const query = searchInput.value.trim();
     const selectedTag = tagSelect.value;
-    // به‌روزرسانی URL بدون ریلود
     const newParams = new URLSearchParams();
     if (query) newParams.set('q', query);
     if (selectedTag) newParams.set('tag', selectedTag);
@@ -54,16 +51,25 @@
       return;
     }
 
+    // تابع تبدیل که هم برچسب‌ها را هایلایت می‌کند و هم عبارت جستجو را
+    function transformSegment(escapedText, tags, query) {
+      let html = escapedText;
+      if (query) {
+        const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        html = html.replace(re, '<mark>$1</mark>');
+      }
+      return UI.highlightTags(html, tags);
+    }
+
     resultsList.innerHTML = results
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
         const surahName = nameOf(t.surah);
-        // هایلایت کردن کلمهٔ جستجو در متن
-        let contentHtml = t.content;
-        if (query) {
-          const re = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-          contentHtml = contentHtml.replace(re, '<mark>$1</mark>');
-        }
+        const contentHtml = AyahLinks.renderContent(
+          t.content,
+          index,
+          (seg) => transformSegment(seg, t.tags, query)
+        );
         return `
         <div class="tafsir-card">
           <div class="tafsir-card__meta">
@@ -73,7 +79,7 @@
             </a>
             <span>${date}</span>
           </div>
-          <p class="tafsir-card__body">${AyahLinks.renderContent(contentHtml, index, (seg) => UI.highlightTags(seg, t.tags))}</p>
+          <p class="tafsir-card__body">${contentHtml}</p>
           ${
             t.tags && t.tags.length
               ? `<div class="tag-pills">${t.tags
@@ -88,7 +94,6 @@
       })
       .join('');
 
-    // رویداد کپی
     resultsList.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-copy');
@@ -114,7 +119,6 @@
     performSearch();
   });
 
-  // اجرای جستجو اگر پارامتر وجود داشت
   if (q || tag) {
     await performSearch();
   }
