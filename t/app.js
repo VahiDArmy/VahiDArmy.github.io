@@ -1,4 +1,4 @@
-/* NOVA Text Holder - stronger particles + fixed repo name + auto dir */
+/* NOVA Text Holder - balanced particles + fixed repo + auto dir */
 
 const OWNER = 'VahiDArmy';
 const REPO  = 'VahiDArmy.github.io';
@@ -35,7 +35,7 @@ function applyDirection(el) {
   el.style.textAlign = rtl ? 'right' : 'left';
 }
 
-/* ========== Stronger Three.js Particles ========== */
+/* ========== Balanced Three.js Particles ========== */
 function initParticles() {
   if (typeof THREE === 'undefined') {
     console.warn('Three.js not loaded');
@@ -51,39 +51,38 @@ function initParticles() {
     antialias: false,
     powerPreference: 'low-power'
   });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x000000, 0);
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.z = 16;
+  camera.position.z = 18;
 
   const isMobile = window.innerWidth < 768;
-  const COUNT = isMobile ? 110 : 220;
+  const COUNT = isMobile ? 60 : 100;
 
   const positions = new Float32Array(COUNT * 3);
   const velocities = new Float32Array(COUNT * 3);
   const colors = new Float32Array(COUNT * 3);
 
   const palette = [
-    [0.0, 0.95, 1.0],
-    [0.4, 1.0, 0.25],
-    [1.0, 0.45, 0.05],
-    [0.75, 0.25, 1.0],
-    [0.15, 0.9, 0.75],
-    [1.0, 0.85, 0.3]
+    [0.0, 0.85, 1.0],
+    [0.45, 1.0, 0.3],
+    [1.0, 0.4, 0.1],
+    [0.65, 0.25, 1.0],
+    [0.2, 0.85, 0.7]
   ];
 
   for (let i = 0; i < COUNT; i++) {
     const i3 = i * 3;
-    positions[i3]     = (Math.random() - 0.5) * 42;
-    positions[i3 + 1] = (Math.random() - 0.5) * 30;
-    positions[i3 + 2] = (Math.random() - 0.5) * 22;
+    positions[i3]     = (Math.random() - 0.5) * 40;
+    positions[i3 + 1] = (Math.random() - 0.5) * 28;
+    positions[i3 + 2] = (Math.random() - 0.5) * 20;
 
-    velocities[i3]     = (Math.random() - 0.5) * 0.012;
-    velocities[i3 + 1] = (Math.random() - 0.5) * 0.009 + 0.003;
-    velocities[i3 + 2] = (Math.random() - 0.5) * 0.008;
+    velocities[i3]     = (Math.random() - 0.5) * 0.007;
+    velocities[i3 + 1] = (Math.random() - 0.5) * 0.005 + 0.002;
+    velocities[i3 + 2] = (Math.random() - 0.5) * 0.005;
 
     const c = palette[Math.floor(Math.random() * palette.length)];
     colors[i3]     = c[0];
@@ -101,18 +100,17 @@ function initParticles() {
   const ctx = texCanvas.getContext('2d');
   const grd = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
   grd.addColorStop(0, 'rgba(255,255,255,1)');
-  grd.addColorStop(0.25, 'rgba(255,255,255,0.7)');
-  grd.addColorStop(0.55, 'rgba(255,255,255,0.25)');
+  grd.addColorStop(0.3, 'rgba(255,255,255,0.55)');
   grd.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = grd;
   ctx.fillRect(0, 0, 64, 64);
   const texture = new THREE.CanvasTexture(texCanvas);
 
   const material = new THREE.PointsMaterial({
-    size: 1.15,
+    size: 0.7,
     map: texture,
     transparent: true,
-    opacity: 0.85,
+    opacity: 0.55,
     vertexColors: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
@@ -132,30 +130,30 @@ function initParticles() {
     requestAnimationFrame(animate);
 
     const pos = geometry.attributes.position.array;
-    const t = Date.now() * 0.00018;
+    const t = Date.now() * 0.00015;
 
     for (let i = 0; i < COUNT; i++) {
       const i3 = i * 3;
-      pos[i3]     += velocities[i3] + Math.sin(t + i * 0.7) * 0.0022;
-      pos[i3 + 1] += velocities[i3 + 1] + Math.cos(t * 0.8 + i) * 0.0018;
+      pos[i3]     += velocities[i3] + Math.sin(t + i) * 0.0015;
+      pos[i3 + 1] += velocities[i3 + 1] + Math.cos(t * 0.7 + i) * 0.0012;
       pos[i3 + 2] += velocities[i3 + 2];
 
-      if (pos[i3] > 23) pos[i3] = -23;
-      if (pos[i3] < -23) pos[i3] = 23;
-      if (pos[i3 + 1] > 17) pos[i3 + 1] = -17;
-      if (pos[i3 + 1] < -17) pos[i3 + 1] = 17;
-      if (pos[i3 + 2] > 13) pos[i3 + 2] = -13;
-      if (pos[i3 + 2] < -13) pos[i3 + 2] = 13;
+      if (pos[i3] > 22) pos[i3] = -22;
+      if (pos[i3] < -22) pos[i3] = 22;
+      if (pos[i3 + 1] > 16) pos[i3 + 1] = -16;
+      if (pos[i3 + 1] < -16) pos[i3 + 1] = 16;
+      if (pos[i3 + 2] > 12) pos[i3 + 2] = -12;
+      if (pos[i3 + 2] < -12) pos[i3 + 2] = 12;
     }
 
     geometry.attributes.position.needsUpdate = true;
 
-    camera.position.x += (mouseX * 2.2 - camera.position.x) * 0.025;
-    camera.position.y += (-mouseY * 1.6 - camera.position.y) * 0.025;
+    camera.position.x += (mouseX * 1.6 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY * 1.2 - camera.position.y) * 0.02;
     camera.lookAt(0, 0, 0);
 
     const tg = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--time-glow')) || 1;
-    material.opacity = 0.55 + 0.35 * tg;
+    material.opacity = 0.4 + 0.25 * tg;
 
     renderer.render(scene, camera);
   }
