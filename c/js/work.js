@@ -15,6 +15,15 @@
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
 
+  // ---- Link tool elements ----
+  const linkToolModal = document.getElementById('linkToolModal');
+  const openLinkToolBtn = document.getElementById('openLinkToolBtn');
+  const cancelLinkBtn = document.getElementById('cancelLinkBtn');
+  const insertLinkBtn = document.getElementById('insertLinkBtn');
+  const linkSurahSelect = document.getElementById('linkSurahSelect');
+  const linkAyahSelect = document.getElementById('linkAyahSelect');
+  const linkAyahPreview = document.getElementById('linkAyahPreview');
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -28,12 +37,13 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
+  let index = null; // will be populated
 
   ayahSkeleton(stickyFrame);
-  const index = await QuranData.getIndex();
+  index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
 
-  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن (جایی که آخرین بار متوقف شدید) ---
+  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
@@ -102,10 +112,8 @@
     prevBtn.disabled = current.surah === 1 && current.ayah === 1;
     nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
-    // اگر جلوتر از نشانک خواندن هستیم، نشانک را همراه خودمان جلو می‌بریم
     await Store.advanceBookmarkIfAhead(current.surah, current.ayah);
     await refreshProgress();
-
     await renderTafsirsList();
   }
 
@@ -173,23 +181,40 @@
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
-  // --- ابزار افزودن لینک به آیهٔ دیگر (پاپ‌آپ) ---
-  const linkToolModal = document.getElementById('linkToolModal');
-  const openLinkToolBtn = document.getElementById('openLinkToolBtn');
-  const cancelLinkBtn = document.getElementById('cancelLinkBtn');
-  const insertLinkBtn = document.getElementById('insertLinkBtn');
-  const linkSurahSelect = document.getElementById('linkSurahSelect');
-  const linkAyahSelect = document.getElementById('linkAyahSelect');
-  const linkAyahPreview = document.getElementById('linkAyahPreview');
+  // =============================================================
+  //  LINK TOOL – enhanced with selection detection & replacement
+  // =============================================================
 
-  function insertAtCursor(textarea, text) {
-    const start = textarea.selectionStart ?? textarea.value.length;
-    const end = textarea.selectionEnd ?? textarea.value.length;
-    textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
-    const newPos = start + text.length;
-    textarea.setSelectionRange(newPos, newPos);
+  function openLinkModal() {
+    linkToolModal.classList.add('is-open');
   }
 
+  function closeLinkModal() {
+    linkToolModal.classList.remove('is-open');
+  }
+
+  // Detect if the user has selected a token in the textarea
+  function getSelectedToken() {
+    const textarea = tafsirContent;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start === end) return null; // no selection
+    const selected = textarea.value.substring(start, end);
+    return AyahLinks.parseToken(selected);
+  }
+
+  // Pre-fill the modal with given surah/ayah/excerpt
+  async function prefillLinkModal(surah, ayah, excerpt) {
+    UI.populateSurahSelect(linkSurahSelect, index, surah);
+    const surahData = await QuranData.getSurah(surah);
+    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, ayah);
+    await updateLinkPreview();
+    // We don't set the excerpt anywhere because it's only used on insert
+    // We'll store it in a data attribute for later use
+    linkToolModal.dataset.prefilledExcerpt = excerpt || '';
+  }
+
+  // Update preview when dropdowns change
   async function updateLinkPreview() {
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
@@ -200,28 +225,55 @@
       <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
-function openLinkModal() {
-  linkToolModal.classList.add('is-open');
-}
-function closeLinkModal() {
-  linkToolModal.classList.remove('is-open');
-}
+  // Insert or replace token in textarea
+  function insertOrReplaceToken(surah, ayah, excerpt) {
+    const textarea = tafsirContent;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const token = AyahLinks.makeToken(surah, ayah, excerpt);
+    if (start !== end) {
+      // Replace selection
+      textarea.setRangeText(token, start, end, 'end');
+    } else {
+      // Insert at cursor
+      textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
+      const newPos = start + token.length;
+      textarea.setSelectionRange(newPos, newPos);
+    }
+    textarea.focus();
+    // Trigger input event for any listeners
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  // ---- Link tool event handlers ----
 
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
-    UI.populateSurahSelect(linkSurahSelect, index, 1);
-    const surahData = await QuranData.getSurah(1);
-    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
-    await updateLinkPreview();
+
+    // Check if there is a selected token
+    const tokenData = getSelectedToken();
+    if (tokenData) {
+      // Pre-fill modal with that token's data
+      await prefillLinkModal(tokenData.surah, tokenData.ayah, tokenData.excerpt);
+    } else {
+      // Default to current ayah (or first ayah)
+      const defaultSurah = current.surah;
+      const defaultAyah = current.ayah;
+      await prefillLinkModal(defaultSurah, defaultAyah, '');
+    }
     openLinkModal();
   });
 
   cancelLinkBtn.addEventListener('click', closeLinkModal);
+
   linkToolModal.addEventListener('click', (e) => {
-    if (e.target === linkToolModal) closeLinkModal();
+    if (e.target === linkToolModal && linkToolModal.classList.contains('is-open')) {
+      closeLinkModal();
+    }
   });
+
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !linkToolModal.hidden) closeLinkModal();
+    if (e.key === 'Escape' && linkToolModal.classList.contains('is-open')) closeLinkModal();
   });
 
   linkSurahSelect.addEventListener('change', async () => {
@@ -229,33 +281,31 @@ function closeLinkModal() {
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
     await updateLinkPreview();
   });
+
   linkAyahSelect.addEventListener('change', updateLinkPreview);
 
   insertLinkBtn.addEventListener('click', () => {
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
+
+    // Get excerpt from user selection inside the preview, if any
     const selection = window.getSelection();
     const selectedText = selection ? selection.toString().trim() : '';
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
-    insertAtCursor(tafsirContent, AyahLinks.makeToken(s, a, excerpt));
+
+    // If the modal was pre-filled with an excerpt and user didn't select new text, keep the old excerpt
+    // But we override if they selected something in the preview
+    let finalExcerpt = excerpt;
+    if (!finalExcerpt && linkToolModal.dataset.prefilledExcerpt) {
+      finalExcerpt = linkToolModal.dataset.prefilledExcerpt;
+    }
+
+    insertOrReplaceToken(s, a, finalExcerpt);
     closeLinkModal();
-    tafsirContent.focus();
   });
 
-  await renderCurrentAyah();
-
-  document.getElementById('endRoundBtn').addEventListener('click', async () => {
-    const p = await Store.getProgress();
-    const ok = confirm(
-      `دور ${UI.toPersianDigits(p.round)} با پیشرفت ${UI.toPersianDigits(p.percent.toFixed(2))}٪ خواندن (${UI.toPersianDigits(p.tafsirCount)} تفسیر نوشته‌شده) بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} از آیهٔ اول شروع می‌شود. ادامه می‌دهید؟`
-    );
-    if (!ok) return;
-    const newRound = await Store.endRound();
-    UI.toast(`دور ${UI.toPersianDigits(newRound)} آغاز شد ✦`);
-    current = { surah: 1, ayah: 1 };
-    await renderCurrentAyah();
-  });
+  // ---- Done with link tool ----
 
   // --- جابه‌جایی با دراپ‌داون ---
   selectRow.surah.addEventListener('change', async () => {
@@ -267,7 +317,7 @@ function closeLinkModal() {
     await renderCurrentAyah();
   });
 
-  // --- بعدی/قبلی (با عبور از مرز سوره) ---
+  // --- بعدی/قبلی ---
   prevBtn.addEventListener('click', async () => {
     if (current.ayah > 1) {
       current.ayah -= 1;
@@ -310,4 +360,20 @@ function closeLinkModal() {
       UI.toast('تفسیر با موفقیت ثبت شد');
     }
   });
+
+  // ---- end round ----
+  document.getElementById('endRoundBtn').addEventListener('click', async () => {
+    const p = await Store.getProgress();
+    const ok = confirm(
+      `دور ${UI.toPersianDigits(p.round)} با پیشرفت ${UI.toPersianDigits(p.percent.toFixed(2))}٪ خواندن (${UI.toPersianDigits(p.tafsirCount)} تفسیر نوشته‌شده) بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} از آیهٔ اول شروع می‌شود. ادامه می‌دهید؟`
+    );
+    if (!ok) return;
+    const newRound = await Store.endRound();
+    UI.toast(`دور ${UI.toPersianDigits(newRound)} آغاز شد ✦`);
+    current = { surah: 1, ayah: 1 };
+    await renderCurrentAyah();
+  });
+
+  // ---- initial render ----
+  await renderCurrentAyah();
 })();
