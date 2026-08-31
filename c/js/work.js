@@ -200,12 +200,12 @@
       <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
-  function openLinkModal() {
-    linkToolModal.hidden = false;
-  }
-  function closeLinkModal() {
-    linkToolModal.hidden = true;
-  }
+function openLinkModal() {
+  linkToolModal.classList.add('is-open');
+}
+function closeLinkModal() {
+  linkToolModal.classList.remove('is-open');
+}
 
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
