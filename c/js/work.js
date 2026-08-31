@@ -1,7 +1,5 @@
 // =============================================================
-// صفحهٔ کار — یک «آیهٔ در حال کار» واحد که هم می‌شود بهش تفسیر جدید
-// اضافه کرد، هم تفسیرهای قبلی‌اش را دید/ویرایش/حذف کرد، هم با دکمهٔ
-// بعدی/قبلی جابه‌جا شد. پیش‌فرض: آخرین آیه‌ای که رویش تفسیر ثبت شده.
+// صفحهٔ کار — یک «آیهٔ در حال کار» واحد
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
@@ -25,6 +23,9 @@
 
   let pendingTokenRange = null;
   let currentTokenInfo = null;
+
+  // ========== اطمینان از مخفی بودن بنر در ابتدا ==========
+  editBanner.hidden = true;
 
   function parseTags(str) {
     return Array.from(
@@ -73,7 +74,7 @@
 
   function exitEditMode() {
     editingId = null;
-    editBanner.hidden = true;
+    editBanner.hidden = true;        // مخفی کردن بنر
     tafsirContent.value = '';
     tafsirTags.value = '';
     submitBtn.textContent = 'ثبت تفسیر';
@@ -82,7 +83,7 @@
 
   function enterEditMode(t) {
     editingId = t.id;
-    editBanner.hidden = false;
+    editBanner.hidden = false;       // نمایش بنر
     tafsirContent.value = t.content;
     tafsirTags.value = (t.tags || []).join(', ');
     submitBtn.textContent = 'به‌روزرسانی تفسیر';
@@ -93,7 +94,7 @@
 
   async function renderCurrentAyah() {
     ayahSkeleton(stickyFrame);
-    exitEditMode();
+    exitEditMode(); // <- این خط بنر را مخفی می‌کند
 
     const surahData = await QuranData.getSurah(current.surah);
     const ayahData = surahData.ayahs.find((a) => a.v === current.ayah) || surahData.ayahs[0];
@@ -130,7 +131,6 @@
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
         const needsClamp = t.content.length > 220 || (t.content.match(/\n/g) || []).length > 2;
-        const surahName = (index.find((s) => s.number === current.surah) || {}).name_fa || current.surah;
         return `
         <div class="tafsir-card">
           <div class="tafsir-card__meta">
@@ -149,13 +149,12 @@
           <div class="tafsir-card__actions">
             <button class="btn btn--sm" data-edit="${t.id}">ویرایش</button>
             <button class="btn btn--sm" data-delete="${t.id}">حذف</button>
-            <button class="btn btn--sm" data-copy="${t.id}" data-content="${escapeHtml(t.content.replace(/"/g, '&quot;'))}">📋 کپی</button>
+            <button class="btn btn--sm" data-copy="${t.id}">📋 کپی</button>
           </div>
         </div>`;
       })
       .join('');
 
-    // ---- رویدادهای موجود ----
     tafsirsListEl.querySelectorAll('[data-toggle]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-toggle');
@@ -184,7 +183,6 @@
       });
     });
 
-    // ---- رویداد جدید: کپی تفسیر ----
     tafsirsListEl.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-copy');
@@ -270,10 +268,6 @@
     setTimeout(updateLinkButtonState, 50);
   });
 
-  // =============================================================
-  //  Modal open/close
-  // =============================================================
-
   function openLinkModal() {
     linkToolModal.classList.add('is-open');
   }
@@ -318,7 +312,6 @@
     setTimeout(updateLinkButtonState, 50);
   }
 
-  // ---- رویداد دکمه باز کردن مودال ----
   openLinkToolBtn.addEventListener('click', async () => {
     updateLinkButtonState();
     tafsirContent.blur();
