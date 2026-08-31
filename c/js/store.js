@@ -100,6 +100,28 @@ const Store = (function () {
     return data;
   }
 
+  async function syncAyahLinks(tafsirId, fromSurah, fromAyah, links) {
+    const { error: delErr } = await sb.from('ayah_links').delete().eq('tafsir_id', tafsirId);
+    if (delErr) throw delErr;
+    if (!links.length) return;
+    const rows = links.map((l) => ({
+      tafsir_id: tafsirId,
+      from_surah: fromSurah,
+      from_ayah: fromAyah,
+      to_surah: l.surah,
+      to_ayah: l.ayah,
+      excerpt: l.excerpt,
+    }));
+    const { error } = await sb.from('ayah_links').insert(rows);
+    if (error) throw error;
+  }
+
+  async function getAllLinks() {
+    const { data, error } = await sb.from('ayah_links').select('*');
+    if (error) throw error;
+    return data;
+  }
+
   async function isMarked(surah, ayah) {
     const { data, error } = await sb
       .from('marked_ayahs')
@@ -199,6 +221,8 @@ const Store = (function () {
     getTafsirsByTag,
     isMarked,
     toggleMark,
+    syncAyahLinks,
+    getAllLinks,
     getCurrentRound,
     getSiteMeta,
     getProgress,
