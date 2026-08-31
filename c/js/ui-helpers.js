@@ -76,54 +76,6 @@ const UI = (function () {
     };
   }
 
-  // اگر کلمه‌ای در متن دقیقاً با یکی از برچسب‌های همان تفسیر یکی باشد،
-  // رنگی (هم‌رنگ با برچسب) + کمی گلو + لینک به صفحهٔ آن برچسب می‌شود.
-  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
-  function highlightTags(escapedHtml, tags) {
-    if (!tags || !tags.length) return escapedHtml;
-    const clean = tags.map((t) => t.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
-    if (!clean.length) return escapedHtml;
-    const pattern = clean.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    let re;
-    try {
-      re = new RegExp(`(?<![\\p{L}\\p{N}])(${pattern})(?![\\p{L}\\p{N}])`, 'gu');
-    } catch (e) {
-      re = new RegExp(`(${pattern})`, 'g'); // مرورگرهای خیلی قدیمی: بدون مرز کلمه
-    }
-    return escapedHtml.replace(re, (match) => {
-      const c = tagColor(match);
-      return `<a class="tag-inline" style="color:${c.color};text-shadow:0 0 5px ${c.glow},0 0 12px ${c.bg};" href="tags.html?tag=${encodeURIComponent(match)}">${match}</a>`;
-    });
-  }
-
-  function tagPill(tag, { href, count, active } = {}) {
-    const c = tagColor(tag);
-    const style = active
-      ? `background:${c.color};border-color:${c.color};color:#0B0E14;`
-      : `background:${c.bg};border-color:${c.border};color:${c.color};`;
-    const countHtml = count != null ? ` <span class="tag-pill__count">${toPersianDigits(count)}</span>` : '';
-    const tagEsc = tag.replace(/</g, '&lt;');
-    return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
-  }
-
-  function escapeRegExp(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  }
-
-  // اجازه می‌دهد بعد از هر کلمهٔ تگ، یک پسوند رایج فارسی (ی، ها، ...) هم بیاید
-  // مثلاً تگ «حقیقت بالاتر» با متن «حقیقتی بالاتر» هم تطبیق پیدا کند
-  function tagToRegexSource(tag) {
-    const words = tag
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((w) => escapeRegExp(w) + '[یهاءٔ]{0,2}');
-    return words.join('\\s+');
-  }
-
-  // کلمات/عبارت‌هایی از متن تفسیر که با یکی از تگ‌های خودش هم‌خانواده‌اند را
-  // رنگی، با کمی گلو، و لینک‌شده به صفحهٔ همان برچسب می‌کند.
-  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
   function highlightTags(escapedHtml, tags) {
     if (!tags || !tags.length) return escapedHtml;
     let matches = [];
@@ -159,6 +111,52 @@ const UI = (function () {
     return out;
   }
 
+  function tagPill(tag, { href, count, active } = {}) {
+    const c = tagColor(tag);
+    const style = active
+      ? `background:${c.color};border-color:${c.color};color:#0B0E14;`
+      : `background:${c.bg};border-color:${c.border};color:${c.color};`;
+    const countHtml = count != null ? ` <span class="tag-pill__count">${toPersianDigits(count)}</span>` : '';
+    const tagEsc = tag.replace(/</g, '&lt;');
+    return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
+  }
+
+  function escapeRegExp(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function tagToRegexSource(tag) {
+    const words = tag
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((w) => escapeRegExp(w) + '[یهاءٔ]{0,2}');
+    return words.join('\\s+');
+  }
+
+  // ========== تابع جدید: کپی متن در کلیپ‌بورد ==========
+  async function copyToClipboard(text, successMessage = 'متن کپی شد') {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast(successMessage);
+    } catch (e) {
+      // Fallback برای مرورگرهای قدیمی
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+        toast(successMessage);
+      } catch (e2) {
+        toast('کپی ناموفق بود — متن را دستی انتخاب کنید');
+      }
+      document.body.removeChild(ta);
+    }
+  }
+
   return {
     populateSurahSelect,
     populateAyahSelect,
@@ -169,5 +167,6 @@ const UI = (function () {
     tagColor,
     tagPill,
     highlightTags,
+    copyToClipboard, // خروجی جدید
   };
 })();
