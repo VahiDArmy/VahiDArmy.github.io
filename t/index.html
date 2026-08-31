@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOVA • Text Holder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #05050a;
+      --neon-cyan: #00f0ff;
+      --neon-magenta: #ff00aa;
+      --neon-purple: #b400ff;
+      --glow-cyan: 0 0 8px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff55;
+      --glow-magenta: 0 0 8px #ff00aa, 0 0 20px #ff00aa, 0 0 40px #ff00aa55;
+      --panel: rgba(10, 10, 25, 0.85);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      background-image:
+        radial-gradient(ellipse at 20% 20%, #1a0033 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, #001a33 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, #0a0015 0%, transparent 70%);
+      color: #e0e0ff;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow-x: hidden;
+    }
+
+    /* subtle animated grid */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Title */
+    header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.8rem, 5vw, 2.8rem);
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+      animation: titlePulse 4s ease-in-out infinite;
+    }
+
+    @keyframes titlePulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.25); }
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      letter-spacing: 3px;
+      color: #7a7aaa;
+      margin-top: 6px;
+    }
+
+    /* Main panel */
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(0, 240, 255, 0.35);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow:
+        0 0 0 1px rgba(255, 0, 170, 0.15),
+        0 0 40px rgba(0, 240, 255, 0.08),
+        inset 0 0 60px rgba(0, 0, 30, 0.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      padding: 1px;
+      background: linear-gradient(135deg, var(--neon-cyan), transparent 40%, transparent 60%, var(--neon-magenta));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Textarea */
+    #holder {
+      width: 100%;
+      min-height: 380px;
+      background: rgba(0, 0, 15, 0.6);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: 10px;
+      padding: 18px 20px;
+      color: #c8f0ff;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      caret-color: var(--neon-cyan);
+    }
+
+    #holder:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 240, 255, 0.05);
+    }
+
+    #holder::placeholder {
+      color: #445577;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: 1px solid;
+      cursor: pointer;
+      background: transparent;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-copy {
+      color: var(--neon-cyan);
+      border-color: var(--neon-cyan);
+    }
+    .btn-copy:hover {
+      background: rgba(0, 240, 255, 0.12);
+      box-shadow: var(--glow-cyan);
+    }
+
+    .btn-clear {
+      color: var(--neon-magenta);
+      border-color: var(--neon-magenta);
+    }
+    .btn-clear:hover {
+      background: rgba(255, 0, 170, 0.12);
+      box-shadow: var(--glow-magenta);
+    }
+
+    .btn-download {
+      color: var(--neon-purple);
+      border-color: var(--neon-purple);
+    }
+    .btn-download:hover {
+      background: rgba(180, 0, 255, 0.12);
+      box-shadow: 0 0 8px #b400ff, 0 0 20px #b400ff55;
+    }
+
+    .status {
+      font-size: 0.8rem;
+      color: #667788;
+      letter-spacing: 1px;
+    }
+
+    .status.saved {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 8px #00f0ff66;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: #445566;
+      letter-spacing: 2px;
+    }
+
+    footer a {
+      color: var(--neon-cyan);
+      text-decoration: none;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    footer a:hover {
+      opacity: 1;
+      text-shadow: 0 0 10px var(--neon-cyan);
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 600px) {
+      #holder {
+        min-height: 300px;
+        font-size: 1rem;
+      }
+      button {
+        padding: 9px 14px;
+        font-size: 0.7rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>NOVA</h1>
+      <div class="subtitle">TEXT HOLDER • NEON</div>
+    </header>
+
+    <div class="panel">
+      <textarea
+        id="holder"
+        placeholder="Type or paste anything here…&#10;Your text is auto-saved in this browser."
+        spellcheck="false"
+      ></textarea>
+
+      <div class="toolbar">
+        <div class="btn-group">
+          <button class="btn-copy" onclick="copyText()">Copy</button>
+          <button class="btn-clear" onclick="clearText()">Clear</button>
+          <button class="btn-download" onclick="downloadText()">Download</button>
+        </div>
+        <div class="status" id="status">Ready</div>
+      </div>
+    </div>
+
+    <footer>
+      vahidarmy.github.io • local storage only
+    </footer>
+  </div>
+
+  <script>
+    const textarea = document.getElementById('holder');
+    const statusEl = document.getElementById('status');
+    const STORAGE_KEY = 'nova-text-holder';
+
+    // Load saved text
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      textarea.value = saved;
+      setStatus('Loaded from memory', true);
+    }
+
+    // Auto-save on input (debounced)
+    let saveTimeout;
+    textarea.addEventListener('input', () => {
+      clearTimeout(saveTimeout);
+      statusEl.textContent = 'Saving…';
+      statusEl.classList.remove('saved');
+      saveTimeout = setTimeout(() => {
+        localStorage.setItem(STORAGE_KEY, textarea.value);
+        setStatus('Saved', true);
+      }, 400);
+    });
+
+    function setStatus(msg, isSaved = false) {
+      statusEl.textContent = msg;
+      statusEl.classList.toggle('saved', isSaved);
+    }
+
+    function copyText() {
+      if (!textarea.value.trim()) {
+        setStatus('Nothing to copy');
+        return;
+      }
+      navigator.clipboard.writeText(textarea.value).then(() => {
+        setStatus('Copied!', true);
+        setTimeout(() => setStatus('Saved', true), 1500);
+      }).catch(() => {
+        // fallback
+        textarea.select();
+        document.execCommand('copy');
+        setStatus('Copied!', true);
+      });
+    }
+
+    function clearText() {
+      if (!textarea.value) return;
+      if (confirm('Clear all text?')) {
+        textarea.value = '';
+        localStorage.removeItem(STORAGE_KEY);
+        setStatus('Cleared');
+        textarea.focus();
+      }
+    }
+
+    function downloadText() {
+      const text = textarea.value;
+      if (!text.trim()) {
+        setStatus('Nothing to download');
+        return;
+      }
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nova-text.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus('Downloaded', true);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        localStorage.setItem(STORAGE_KEY, textarea.value);
+        setStatus('Saved', true);
+      }
+    });
+  </script>
+</body>
+</html>
