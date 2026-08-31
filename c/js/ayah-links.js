@@ -51,5 +51,12 @@ const AyahLinks = (function () {
     return clean ? `[[${surah}:${ayah}|${clean}]]` : `[[${surah}:${ayah}]]`;
   }
 
+// Parse a single token string like "[[2:255]]" or "[[2:255|excerpt]]"
+function parseToken(str) {
+  const m = str.match(/^\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]$/);
+  if (!m) return null;
+  return { surah: Number(m[1]), ayah: Number(m[2]), excerpt: m[3] ? m[3].trim() : null };
+}
+
   return { extract, renderContent, makeToken };
 })();
