@@ -18,11 +18,7 @@
       --panel: rgba(10, 10, 25, 0.85);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       min-height: 100vh;
@@ -41,7 +37,6 @@
       overflow-x: hidden;
     }
 
-    /* subtle animated grid */
     body::before {
       content: "";
       position: fixed;
@@ -61,14 +56,10 @@
       max-width: 900px;
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: 18px;
     }
 
-    /* Title */
-    header {
-      text-align: center;
-      margin-bottom: 8px;
-    }
+    header { text-align: center; margin-bottom: 4px; }
 
     h1 {
       font-family: 'Orbitron', sans-serif;
@@ -96,7 +87,6 @@
       margin-top: 6px;
     }
 
-    /* Main panel */
     .panel {
       background: var(--panel);
       border: 1px solid rgba(0, 240, 255, 0.35);
@@ -125,10 +115,33 @@
       opacity: 0.7;
     }
 
-    /* Textarea */
+    .token-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .token-box input {
+      flex: 1;
+      min-width: 200px;
+      background: rgba(0, 0, 15, 0.7);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #c8f0ff;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .token-box input:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+
     #holder {
       width: 100%;
-      min-height: 380px;
+      min-height: 340px;
       background: rgba(0, 0, 15, 0.6);
       border: 1px solid rgba(0, 240, 255, 0.25);
       border-radius: 10px;
@@ -148,11 +161,8 @@
       box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 240, 255, 0.05);
     }
 
-    #holder::placeholder {
-      color: #445577;
-    }
+    #holder::placeholder { color: #445577; }
 
-    /* Toolbar */
     .toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -170,44 +180,33 @@
 
     button {
       font-family: 'Orbitron', sans-serif;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      padding: 10px 20px;
+      padding: 10px 18px;
       border-radius: 8px;
       border: 1px solid;
       cursor: pointer;
       background: transparent;
       transition: all 0.25s ease;
-      position: relative;
-      overflow: hidden;
     }
 
-    .btn-copy {
-      color: var(--neon-cyan);
-      border-color: var(--neon-cyan);
-    }
-    .btn-copy:hover {
-      background: rgba(0, 240, 255, 0.12);
-      box-shadow: var(--glow-cyan);
-    }
+    .btn-cyan { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+    .btn-cyan:hover { background: rgba(0, 240, 255, 0.12); box-shadow: var(--glow-cyan); }
 
-    .btn-clear {
-      color: var(--neon-magenta);
-      border-color: var(--neon-magenta);
-    }
-    .btn-clear:hover {
-      background: rgba(255, 0, 170, 0.12);
-      box-shadow: var(--glow-magenta);
-    }
+    .btn-magenta { color: var(--neon-magenta); border-color: var(--neon-magenta); }
+    .btn-magenta:hover { background: rgba(255, 0, 170, 0.12); box-shadow: var(--glow-magenta); }
 
-    .btn-download {
-      color: var(--neon-purple);
-      border-color: var(--neon-purple);
+    .btn-purple { color: var(--neon-purple); border-color: var(--neon-purple); }
+    .btn-purple:hover { background: rgba(180, 0, 255, 0.12); box-shadow: 0 0 8px #b400ff, 0 0 20px #b400ff55; }
+
+    .btn-save-token {
+      color: #00ff9d;
+      border-color: #00ff9d;
     }
-    .btn-download:hover {
-      background: rgba(180, 0, 255, 0.12);
-      box-shadow: 0 0 8px #b400ff, 0 0 20px #b400ff55;
+    .btn-save-token:hover {
+      background: rgba(0, 255, 157, 0.12);
+      box-shadow: 0 0 8px #00ff9d, 0 0 20px #00ff9d55;
     }
 
     .status {
@@ -215,42 +214,20 @@
       color: #667788;
       letter-spacing: 1px;
     }
+    .status.ok { color: var(--neon-cyan); text-shadow: 0 0 8px #00f0ff66; }
+    .status.err { color: #ff4466; }
 
-    .status.saved {
-      color: var(--neon-cyan);
-      text-shadow: 0 0 8px #00f0ff66;
-    }
-
-    /* Footer */
     footer {
       text-align: center;
-      margin-top: 12px;
+      margin-top: 8px;
       font-size: 0.75rem;
       color: #445566;
       letter-spacing: 2px;
     }
 
-    footer a {
-      color: var(--neon-cyan);
-      text-decoration: none;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-    footer a:hover {
-      opacity: 1;
-      text-shadow: 0 0 10px var(--neon-cyan);
-    }
-
-    /* Mobile tweaks */
     @media (max-width: 600px) {
-      #holder {
-        min-height: 300px;
-        font-size: 1rem;
-      }
-      button {
-        padding: 9px 14px;
-        font-size: 0.7rem;
-      }
+      #holder { min-height: 280px; font-size: 1rem; }
+      button { padding: 9px 14px; font-size: 0.68rem; }
     }
   </style>
 </head>
@@ -258,58 +235,206 @@
   <div class="container">
     <header>
       <h1>NOVA</h1>
-      <div class="subtitle">TEXT HOLDER • NEON</div>
+      <div class="subtitle">TEXT HOLDER • REPO</div>
     </header>
 
     <div class="panel">
+      <!-- Token input -->
+      <div class="token-box">
+        <input type="password" id="tokenInput" placeholder="Paste fine-grained token…" />
+        <button class="btn-save-token" onclick="saveToken()">Save Token</button>
+      </div>
+
       <textarea
         id="holder"
-        placeholder="Type or paste anything here…&#10;Your text is auto-saved in this browser."
+        placeholder="Type or paste anything here…&#10;Click Save to Cloud to store it in your GitHub repo."
         spellcheck="false"
       ></textarea>
 
       <div class="toolbar">
         <div class="btn-group">
-          <button class="btn-copy" onclick="copyText()">Copy</button>
-          <button class="btn-clear" onclick="clearText()">Clear</button>
-          <button class="btn-download" onclick="downloadText()">Download</button>
+          <button class="btn-cyan" onclick="saveToCloud()">Save to Cloud</button>
+          <button class="btn-purple" onclick="loadFromCloud()">Load from Cloud</button>
+          <button class="btn-magenta" onclick="clearText()">Clear</button>
+          <button class="btn-cyan" onclick="copyText()">Copy</button>
         </div>
         <div class="status" id="status">Ready</div>
       </div>
     </div>
 
     <footer>
-      vahidarmy.github.io • local storage only
+      vahidarmy.github.io • token stored only in this browser
     </footer>
   </div>
 
   <script>
     const textarea = document.getElementById('holder');
     const statusEl = document.getElementById('status');
-    const STORAGE_KEY = 'nova-text-holder';
+    const tokenInput = document.getElementById('tokenInput');
 
-    // Load saved text
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      textarea.value = saved;
-      setStatus('Loaded from memory', true);
+    // ===== CONFIG =====
+    const OWNER = 'vahidarmy';
+    const REPO  = 'vahidarmy.github.io';
+    const PATH  = 'nova-text.txt';          // file that will store your text
+    // ==================
+
+    const TOKEN_KEY = 'nova-github-token';
+    const LOCAL_KEY = 'nova-text-holder';
+
+    // Load token + local backup on start
+    const savedToken = localStorage.getItem(TOKEN_KEY);
+    if (savedToken) {
+      tokenInput.placeholder = '•••••••••••••••• (token saved)';
     }
 
-    // Auto-save on input (debounced)
-    let saveTimeout;
+    const localText = localStorage.getItem(LOCAL_KEY);
+    if (localText) textarea.value = localText;
+
+    // Keep local backup while typing
     textarea.addEventListener('input', () => {
-      clearTimeout(saveTimeout);
-      statusEl.textContent = 'Saving…';
-      statusEl.classList.remove('saved');
-      saveTimeout = setTimeout(() => {
-        localStorage.setItem(STORAGE_KEY, textarea.value);
-        setStatus('Saved', true);
-      }, 400);
+      localStorage.setItem(LOCAL_KEY, textarea.value);
     });
 
-    function setStatus(msg, isSaved = false) {
+    function setStatus(msg, type = '') {
       statusEl.textContent = msg;
-      statusEl.classList.toggle('saved', isSaved);
+      statusEl.className = 'status ' + type;
+    }
+
+    function getToken() {
+      return localStorage.getItem(TOKEN_KEY) || tokenInput.value.trim();
+    }
+
+    function saveToken() {
+      const token = tokenInput.value.trim();
+      if (!token) {
+        setStatus('Enter a token first', 'err');
+        return;
+      }
+      localStorage.setItem(TOKEN_KEY, token);
+      tokenInput.value = '';
+      tokenInput.placeholder = '•••••••••••••••• (token saved)';
+      setStatus('Token saved in this browser', 'ok');
+    }
+
+    // Encode text to base64 (GitHub Contents API requires base64)
+    function toBase64(str) {
+      return btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function fromBase64(str) {
+      return decodeURIComponent(escape(atob(str)));
+    }
+
+    async function saveToCloud() {
+      const token = getToken();
+      if (!token) {
+        setStatus('Save your GitHub token first', 'err');
+        return;
+      }
+
+      const content = textarea.value;
+      setStatus('Saving…');
+
+      try {
+        // 1. Try to get current file (to obtain SHA)
+        let sha = null;
+        const getRes = await fetch(
+          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          }
+        );
+
+        if (getRes.ok) {
+          const data = await getRes.json();
+          sha = data.sha;
+        } else if (getRes.status !== 404) {
+          const err = await getRes.json();
+          throw new Error(err.message || 'Failed to check existing file');
+        }
+
+        // 2. Create or update the file
+        const body = {
+          message: 'Update NOVA text holder',
+          content: toBase64(content || ' '),
+          ...(sha ? { sha } : {})
+        };
+
+        const putRes = await fetch(
+          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+          }
+        );
+
+        if (!putRes.ok) {
+          const err = await putRes.json();
+          throw new Error(err.message || 'GitHub error');
+        }
+
+        localStorage.setItem(LOCAL_KEY, content);
+        setStatus('Saved to cloud ✓', 'ok');
+      } catch (e) {
+        setStatus('Error: ' + e.message, 'err');
+      }
+    }
+
+    async function loadFromCloud() {
+      const token = getToken();
+      if (!token) {
+        setStatus('Save your GitHub token first', 'err');
+        return;
+      }
+
+      setStatus('Loading…');
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          }
+        );
+
+        if (res.status === 404) {
+          setStatus('No cloud file yet. Save first.', 'err');
+          return;
+        }
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || 'Could not load file');
+        }
+
+        const data = await res.json();
+        const text = fromBase64(data.content);
+        textarea.value = text === ' ' ? '' : text;
+        localStorage.setItem(LOCAL_KEY, textarea.value);
+        setStatus('Loaded from cloud ✓', 'ok');
+      } catch (e) {
+        setStatus('Error: ' + e.message, 'err');
+      }
+    }
+
+    function clearText() {
+      if (!textarea.value) return;
+      if (confirm('Clear all text?')) {
+        textarea.value = '';
+        localStorage.removeItem(LOCAL_KEY);
+        setStatus('Cleared');
+      }
     }
 
     function copyText() {
@@ -318,50 +443,13 @@
         return;
       }
       navigator.clipboard.writeText(textarea.value).then(() => {
-        setStatus('Copied!', true);
-        setTimeout(() => setStatus('Saved', true), 1500);
+        setStatus('Copied!', 'ok');
       }).catch(() => {
-        // fallback
         textarea.select();
         document.execCommand('copy');
-        setStatus('Copied!', true);
+        setStatus('Copied!', 'ok');
       });
     }
-
-    function clearText() {
-      if (!textarea.value) return;
-      if (confirm('Clear all text?')) {
-        textarea.value = '';
-        localStorage.removeItem(STORAGE_KEY);
-        setStatus('Cleared');
-        textarea.focus();
-      }
-    }
-
-    function downloadText() {
-      const text = textarea.value;
-      if (!text.trim()) {
-        setStatus('Nothing to download');
-        return;
-      }
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'nova-text.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-      setStatus('Downloaded', true);
-    }
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        localStorage.setItem(STORAGE_KEY, textarea.value);
-        setStatus('Saved', true);
-      }
-    });
   </script>
 </body>
 </html>
