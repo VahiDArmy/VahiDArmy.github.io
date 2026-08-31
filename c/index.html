@@ -26,6 +26,7 @@
       <a href="index.html" class="active">کار</a>
       <a href="browse.html">مرور</a>
       <a href="tags.html">برچسب‌ها</a>
+      <a href="relations.html">رابطه‌ها</a>
     </nav>
     <div class="header-actions">
       <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
@@ -99,10 +100,25 @@
         <div class="field">
           <label for="tafsirContent">نظر و برداشت شما</label>
           <textarea id="tafsirContent" rows="4" spellcheck="false" autocorrect="off" autocapitalize="off" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
+          <button type="button" class="btn btn--sm" id="openLinkToolBtn" style="margin-top:8px;">﹢ لینک به آیهٔ دیگر</button>
         </div>
+
+        <div class="card" id="linkToolPanel" hidden style="margin-bottom:14px; background:var(--surface-2);">
+          <div class="select-row" style="margin-bottom:10px;">
+            <div class="select-wrap"><select id="linkSurahSelect" aria-label="سورهٔ مقصد"></select></div>
+            <div class="select-wrap"><select id="linkAyahSelect" aria-label="آیهٔ مقصد"></select></div>
+          </div>
+          <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--surface); border-radius:10px; margin-bottom:8px;"></div>
+          <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 10px;">می‌توانید بخشی از متن بالا را انتخاب (select) کنید تا فقط همان گزیده درج شود؛ وگرنه کل آیه ارجاع داده می‌شود.</p>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="btn btn--primary btn--sm" id="insertLinkBtn" style="flex:1;">درج لینک</button>
+            <button type="button" class="btn btn--sm" id="cancelLinkBtn">انصراف</button>
+          </div>
+        </div>
+
         <div class="field">
-          <label for="tafsirTags">برچسب‌ها (اختیاری، با ویرگول جدا کنید)</label>
-          <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت, اخلاق فردی" />
+          <label for="tafsirTags">برچسب‌ها (اختیاری، با ، یا , جدا کنید)</label>
+          <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت، اخلاق فردی" />
         </div>
         <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
       </form>
@@ -119,6 +135,7 @@
   <a href="index.html" class="active">کار</a>
   <a href="browse.html">مرور</a>
   <a href="tags.html">برچسب‌ها</a>
+  <a href="relations.html">رابطه‌ها</a>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -129,6 +146,7 @@
 <script src="js/store.js"></script>
 <script src="js/theme.js"></script>
 <script src="js/ayah-render.js"></script>
+<script src="js/ayah-links.js"></script>
 <script>
   (async function () {
     const session = await Auth.requireAuth();
