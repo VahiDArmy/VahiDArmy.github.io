@@ -125,7 +125,7 @@
             <span class="tafsir-card__round">دور ${UI.toPersianDigits(t.round_number)}</span>
             <span>${date}</span>
           </div>
-          <p class="tafsir-card__body${needsClamp ? ' is-clamped' : ''}" data-body="${t.id}">${UI.highlightTags(escapeHtml(t.content), t.tags)}</p>
+          <p class="tafsir-card__body${needsClamp ? ' is-clamped' : ''}" data-body="${t.id}">${AyahLinks.renderContent(t.content, index, (seg) => UI.highlightTags(seg, t.tags))}</p>
           ${needsClamp ? `<button class="tafsir-card__more" data-toggle="${t.id}">نمایش کامل</button>` : ''}
           ${
             t.tags && t.tags.length
@@ -172,6 +172,65 @@
   }
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
+
+  // --- ابزار افزودن لینک به آیهٔ دیگر ---
+  const linkToolPanel = document.getElementById('linkToolPanel');
+  const openLinkToolBtn = document.getElementById('openLinkToolBtn');
+  const cancelLinkBtn = document.getElementById('cancelLinkBtn');
+  const insertLinkBtn = document.getElementById('insertLinkBtn');
+  const linkSurahSelect = document.getElementById('linkSurahSelect');
+  const linkAyahSelect = document.getElementById('linkAyahSelect');
+  const linkAyahPreview = document.getElementById('linkAyahPreview');
+
+  function insertAtCursor(textarea, text) {
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
+    const newPos = start + text.length;
+    textarea.setSelectionRange(newPos, newPos);
+  }
+
+  async function updateLinkPreview() {
+    const s = Number(linkSurahSelect.value);
+    const a = Number(linkAyahSelect.value);
+    const surahData = await QuranData.getSurah(s);
+    const ayahObj = surahData.ayahs.find((x) => x.v === a) || surahData.ayahs[0];
+    linkAyahPreview.innerHTML = `
+      <p style="margin:0 0 8px; font-family:var(--font-quran); font-size:1.15rem; line-height:2.2;">${ayahObj.ar}</p>
+      <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
+  }
+
+  openLinkToolBtn.addEventListener('click', async () => {
+    linkToolPanel.hidden = false;
+    UI.populateSurahSelect(linkSurahSelect, index, 1);
+    const surahData = await QuranData.getSurah(1);
+    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
+    await updateLinkPreview();
+    linkToolPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  cancelLinkBtn.addEventListener('click', () => {
+    linkToolPanel.hidden = true;
+  });
+
+  linkSurahSelect.addEventListener('change', async () => {
+    const surahData = await QuranData.getSurah(Number(linkSurahSelect.value));
+    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
+    await updateLinkPreview();
+  });
+  linkAyahSelect.addEventListener('change', updateLinkPreview);
+
+  insertLinkBtn.addEventListener('click', () => {
+    const s = Number(linkSurahSelect.value);
+    const a = Number(linkAyahSelect.value);
+    const selection = window.getSelection();
+    const selectedText = selection ? selection.toString().trim() : '';
+    const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
+    const excerpt = withinPreview && selectedText ? selectedText : null;
+    insertAtCursor(tafsirContent, AyahLinks.makeToken(s, a, excerpt));
+    linkToolPanel.hidden = true;
+    tafsirContent.focus();
+  });
 
   await renderCurrentAyah();
 
@@ -226,11 +285,13 @@
 
     if (editingId) {
       await Store.updateTafsir(editingId, content, tags);
+      await Store.syncAyahLinks(editingId, current.surah, current.ayah, AyahLinks.extract(content));
       UI.toast('تفسیر به‌روزرسانی شد');
       exitEditMode();
       await renderTafsirsList();
     } else {
-      await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
+      const newTafsir = await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
+      await Store.syncAyahLinks(newTafsir.id, current.surah, current.ayah, AyahLinks.extract(content));
       tafsirContent.value = '';
       tafsirTags.value = '';
       await renderTafsirsList();
