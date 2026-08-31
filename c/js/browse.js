@@ -9,7 +9,6 @@
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(surahSelect, index, 1);
 
-  // آیا بازدیدکنندهٔ فعلی خود شما (مالک) هستید؟ برای نمایش دکمهٔ حذف نظرات/تفسیرها
   let isOwner = false;
   try {
     const session = await Auth.getSession();
@@ -74,6 +73,7 @@
         </div>`;
       return;
     }
+    const surahName = (index.find((s) => s.number === surah) || {}).name_fa || surah;
     tafsirsListEl.innerHTML = tafsirs
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
@@ -91,6 +91,9 @@
                   .join('')}</div>`
               : ''
           }
+          <div class="tafsir-card__actions">
+            <button class="btn btn--sm" data-copy="${t.id}" data-content="${escapeHtml(t.content.replace(/"/g, '&quot;'))}">📋 کپی</button>
+          </div>
           <div class="comment-list" data-comments="${t.id}"></div>
           <form class="comment-form" data-comment-form="${t.id}" style="margin-top:12px;">
             <div class="name-row">
@@ -120,6 +123,18 @@
         contentInput.value = '';
         loadComments(tafsirId);
         UI.toast('نظر شما ثبت شد');
+      });
+    });
+
+    // ---- رویداد کپی ----
+    tafsirsListEl.querySelectorAll('[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-copy');
+        const t = tafsirs.find((x) => x.id === id);
+        if (!t) return;
+        const surahName = (index.find((s) => s.number === surah) || {}).name_fa || surah;
+        const text = `سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(ayah)}\n\n${t.content}`;
+        await UI.copyToClipboard(text, 'تفسیر کپی شد');
       });
     });
   }
@@ -159,7 +174,6 @@
     return div.innerHTML;
   }
 
-  // --- ناوبری با دراپ‌داون ---
   surahSelect.addEventListener('change', async () => {
     setHash(Number(surahSelect.value), 1);
   });
@@ -167,7 +181,6 @@
     setHash(Number(surahSelect.value), Number(ayahSelect.value));
   });
 
-  // --- دکمه بعدی/قبلی ---
   prevBtn.addEventListener('click', async () => {
     const { surah, ayah } = parseHash() || { surah: 1, ayah: 1 };
     if (ayah > 1) return setHash(surah, ayah - 1);
@@ -185,12 +198,10 @@
 
   window.addEventListener('hashchange', render);
 
-  // --- تعیین آیهٔ شروع ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     setHash(Number(params.get('surah')), Number(params.get('ayah')), true);
   } else if (!location.hash) {
-    // پیش‌فرض: آخرین آیه‌ای که تفسیر داشته (نه همیشه آیهٔ ۱)
     const latest = await Store.getLatestTafsir();
     if (latest) setHash(latest.surah, latest.ayah, true);
     else setHash(1, 1, true);
