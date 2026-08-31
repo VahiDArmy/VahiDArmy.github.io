@@ -1,4 +1,4 @@
-/* NOVA Text Holder - multi note + Persian timestamp + full delete */
+/* NOVA Text Holder - multi note + Persian timestamp + full delete + rate limit + time glow */
 
 const OWNER = 'vahidarmy';
 const REPO  = 'vahidarmy.github.io';
@@ -14,6 +14,7 @@ const notesList   = document.getElementById('notesList');
 const statusEl    = document.getElementById('status');
 const glowRange   = document.getElementById('glowRange');
 const sidebar     = document.getElementById('sidebar');
+const rateValue   = document.getElementById('rateValue');
 
 let notes = [];
 let currentId = null;
@@ -52,6 +53,58 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+/* ---- Time-based variable glow ---- */
+function startTimeGlow() {
+  function tick() {
+    const t = Date.now() / 1000;
+    // slow breathing + subtle wave
+    const value = 0.75 + 0.35 * Math.sin(t * 0.35) + 0.15 * Math.sin(t * 0.9);
+    document.documentElement.style.setProperty('--time-glow', value.toFixed(3));
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
+/* ---- Rate Limit ---- */
+async function updateRateLimit() {
+  const token = getToken();
+  if (!token) {
+    rateValue.textContent = '—';
+    rateValue.className = 'rate-value';
+    return;
+  }
+
+  try {
+    const res = await fetch('https://api.github.com/rate_limit', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
+
+    if (!res.ok) {
+      rateValue.textContent = 'err';
+      return;
+    }
+
+    const data = await res.json();
+    const core = data.resources.core;
+    const remaining = core.remaining;
+    const limit = core.limit;
+
+    rateValue.textContent = `${remaining} / ${limit}`;
+    rateValue.className = 'rate-value';
+
+    if (remaining < 200) {
+      rateValue.classList.add('critical');
+    } else if (remaining < 1000) {
+      rateValue.classList.add('low');
+    }
+  } catch (e) {
+    rateValue.textContent = '—';
+  }
+}
+
 function renderList() {
   notesList.innerHTML = '';
   const sorted = [...notes].sort((a, b) => b.updated - a.updated);
@@ -75,7 +128,6 @@ function renderList() {
     info.appendChild(title);
     info.appendChild(date);
 
-    // individual delete button
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-del';
     delBtn.innerHTML = '×';
@@ -139,7 +191,6 @@ function saveCurrentLocally() {
   renderList();
 }
 
-/* ---- cloud helpers ---- */
 async function pushToCloud(showStatus = true) {
   const token = getToken();
   if (!token) {
@@ -190,6 +241,8 @@ async function pushToCloud(showStatus = true) {
       const err = await putRes.json();
       throw new Error(err.message || 'خطای گیت‌هاب');
     }
+
+    updateRateLimit();
     return true;
   } catch (e) {
     if (showStatus) setStatus('خطا: ' + e.message, 'err');
@@ -249,12 +302,12 @@ async function loadFromCloud() {
       renderList();
     }
     setStatus('بارگذاری شد ✓', 'ok');
+    updateRateLimit();
   } catch (e) {
     setStatus('خطا: ' + e.message, 'err');
   }
 }
 
-/* ---- full delete (local + cloud) ---- */
 async function deleteNote(id) {
   if (!confirm('این یادداشت برای همیشه حذف شود؟ (از کلود هم پاک می‌شود)')) return;
 
@@ -308,9 +361,10 @@ function saveToken() {
   tokenInput.value = '';
   tokenInput.placeholder = '•••••••••••• (ذخیره شد)';
   setStatus('توکن ذخیره شد', 'ok');
+  updateRateLimit();
 }
 
-/* glow */
+/* glow slider */
 glowRange.addEventListener('input', () => {
   document.documentElement.style.setProperty('--glow-strength', glowRange.value);
 });
@@ -357,8 +411,10 @@ contentEl.addEventListener('input', () => {
 
   if (!notes.length) newNote();
 
-  // on small screens start collapsed
   if (window.innerWidth <= 768) {
     sidebar.classList.add('collapsed');
   }
+
+  updateRateLimit();
+  startTimeGlow();   // start the living glow
 })();
