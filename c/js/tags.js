@@ -49,7 +49,7 @@
             </a>
             <span>${date}</span>
           </div>
-          <p class="tafsir-card__body">${escapeHtml(t.content)}</p>
+          <p class="tafsir-card__body">${AyahLinks.renderContent(t.content, index, (seg) => UI.highlightTags(seg, t.tags))}</p>
           ${
             t.tags && t.tags.length
               ? `<div class="tag-pills">${t.tags
