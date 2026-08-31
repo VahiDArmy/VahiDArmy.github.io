@@ -40,12 +40,13 @@
     taggedTafsirsListEl.innerHTML = tafsirs
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
+        const surahName = nameOf(t.surah);
         return `
         <div class="tafsir-card">
           <div class="tafsir-card__meta">
             <span class="tafsir-card__round">دور ${UI.toPersianDigits(t.round_number)}</span>
             <a href="browse.html?surah=${t.surah}&ayah=${t.ayah}" style="color:var(--neon); font-weight:600;">
-              سورهٔ ${nameOf(t.surah)}، آیهٔ ${UI.toPersianDigits(t.ayah)}
+              سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(t.ayah)}
             </a>
             <span>${date}</span>
           </div>
@@ -57,9 +58,24 @@
                   .join('')}</div>`
               : ''
           }
+          <div class="tafsir-card__actions">
+            <button class="btn btn--sm" data-copy="${t.id}">📋 کپی</button>
+          </div>
         </div>`;
       })
       .join('');
+
+    // ---- رویداد کپی ----
+    taggedTafsirsListEl.querySelectorAll('[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-copy');
+        const t = tafsirs.find((x) => x.id === id);
+        if (!t) return;
+        const surahName = nameOf(t.surah);
+        const text = `سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(t.ayah)}\n\n${t.content}`;
+        await UI.copyToClipboard(text, 'تفسیر کپی شد');
+      });
+    });
   }
 
   const params = new URLSearchParams(location.search);
