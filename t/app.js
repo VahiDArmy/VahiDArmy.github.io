@@ -301,3 +301,155 @@ async function pushToCloud(showStatus = true) {
     const putRes = await fetch(
       `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
       {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      }
+    );
+    if (!putRes.ok) {
+      const err = await putRes.json();
+      throw new Error(err.message || 'خطای گیت‌هاب');
+    }
+    updateRateLimit();
+    return true;
+  } catch (e) {
+    if (showStatus) setStatus('خطا: ' + e.message, 'err');
+    return false;
+  }
+}
+
+async function saveToCloud() {
+  saveCurrentLocally();
+  setStatus('در حال ذخیره…');
+  const ok = await pushToCloud(true);
+  if (ok) setStatus('ذخیره شد ✓', 'ok');
+}
+
+async function loadFromCloud() {
+  const token = getToken();
+  if (!token) {
+    setStatus('اول توکن را ذخیره کنید', 'err');
+    return;
+  }
+  setStatus('در حال بارگذاری…');
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
+      { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/vnd.github.v3+json' } }
+    );
+    if (res.status === 404) {
+      setStatus('هنوز فایلی وجود ندارد', 'err');
+      return;
+    }
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'خطا در بارگذاری');
+    }
+    const data = await res.json();
+    const parsed = JSON.parse(fromBase64(data.content));
+    if (!Array.isArray(parsed)) throw new Error('فرمت نامعتبر');
+    notes = parsed;
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(notes));
+    if (notes.length) selectNote(notes[0].id);
+    else {
+      currentId = null;
+      titleInput.value = '';
+      contentEl.value = '';
+      renderList();
+    }
+    setStatus('بارگذاری شد ✓', 'ok');
+    updateRateLimit();
+  } catch (e) {
+    setStatus('خطا: ' + e.message, 'err');
+  }
+}
+
+async function deleteNote(id) {
+  if (!confirm('این یادداشت برای همیشه حذف شود؟ (از کلود هم پاک می‌شود)')) return;
+  notes = notes.filter(n => n.id !== id);
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(notes));
+  if (currentId === id) {
+    currentId = notes.length ? notes[0].id : null;
+    if (currentId) selectNote(currentId);
+    else {
+      titleInput.value = '';
+      contentEl.value = '';
+      renderList();
+    }
+  } else {
+    renderList();
+  }
+  setStatus('در حال حذف از کلود…');
+  const ok = await pushToCloud(true);
+  if (ok) setStatus('حذف کامل شد ✓', 'ok');
+  else setStatus('محلی حذف شد، اما کلود به‌روز نشد', 'err');
+}
+
+function copyText() {
+  const text = contentEl.value;
+  if (!text.trim()) { setStatus('متنی نیست'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    setStatus('کپی شد!', 'ok');
+  }).catch(() => {
+    contentEl.select();
+    document.execCommand('copy');
+    setStatus('کپی شد!', 'ok');
+  });
+}
+
+function saveToken() {
+  const token = tokenInput.value.trim();
+  if (!token) { setStatus('توکن را وارد کنید', 'err'); return; }
+  localStorage.setItem(TOKEN_KEY, token);
+  tokenInput.value = '';
+  tokenInput.placeholder = '•••••••••••• (ذخیره شد)';
+  setStatus('توکن ذخیره شد', 'ok');
+  updateRateLimit();
+}
+
+glowRange.addEventListener('input', () => {
+  document.documentElement.style.setProperty('--glow-strength', glowRange.value);
+});
+
+document.getElementById('btnToggle').addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+});
+
+document.getElementById('btnNew').addEventListener('click', newNote);
+document.getElementById('btnSave').addEventListener('click', saveToCloud);
+document.getElementById('btnLoad').addEventListener('click', loadFromCloud);
+document.getElementById('btnCopy').addEventListener('click', copyText);
+document.getElementById('btnSaveToken').addEventListener('click', saveToken);
+
+titleInput.addEventListener('input', () => {
+  if (!currentId) newNote();
+  applyDirection(titleInput);
+  saveCurrentLocally();
+});
+contentEl.addEventListener('input', () => {
+  if (!currentId) newNote();
+  applyDirection(contentEl);
+  saveCurrentLocally();
+});
+
+(function init() {
+  const savedToken = localStorage.getItem(TOKEN_KEY);
+  if (savedToken) tokenInput.placeholder = '•••••••••••• (ذخیره شد)';
+  const local = localStorage.getItem(LOCAL_KEY);
+  if (local) {
+    try {
+      notes = JSON.parse(local);
+      if (notes.length) selectNote(notes[0].id);
+    } catch (e) { notes = []; }
+  }
+  document.documentElement.style.setProperty('--glow-strength', glowRange.value);
+  if (!notes.length) newNote();
+  if (window.innerWidth <= 768) sidebar.classList.add('collapsed');
+  updateRateLimit();
+  startTimeGlow();
+  initParticles();
+})();
