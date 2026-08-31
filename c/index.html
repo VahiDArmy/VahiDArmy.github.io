@@ -103,19 +103,6 @@
           <button type="button" class="btn btn--sm" id="openLinkToolBtn" style="margin-top:8px;">﹢ لینک به آیهٔ دیگر</button>
         </div>
 
-        <div class="card" id="linkToolPanel" hidden style="margin-bottom:14px; background:var(--surface-2);">
-          <div class="select-row" style="margin-bottom:10px;">
-            <div class="select-wrap"><select id="linkSurahSelect" aria-label="سورهٔ مقصد"></select></div>
-            <div class="select-wrap"><select id="linkAyahSelect" aria-label="آیهٔ مقصد"></select></div>
-          </div>
-          <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--surface); border-radius:10px; margin-bottom:8px;"></div>
-          <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 10px;">می‌توانید بخشی از متن بالا را انتخاب (select) کنید تا فقط همان گزیده درج شود؛ وگرنه کل آیه ارجاع داده می‌شود.</p>
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="btn btn--primary btn--sm" id="insertLinkBtn" style="flex:1;">درج لینک</button>
-            <button type="button" class="btn btn--sm" id="cancelLinkBtn">انصراف</button>
-          </div>
-        </div>
-
         <div class="field">
           <label for="tafsirTags">برچسب‌ها (اختیاری، با ، یا , جدا کنید)</label>
           <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت، اخلاق فردی" />
@@ -126,6 +113,23 @@
   </section>
 
 </main>
+
+<!-- پاپ‌آپ انتخاب آیهٔ مقصد برای لینک -->
+<div class="modal-overlay" id="linkToolModal" hidden>
+  <div class="modal-card card">
+    <div class="modal-card__head">
+      <span>افزودن لینک به آیهٔ دیگر</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="cancelLinkBtn" aria-label="بستن">✕</button>
+    </div>
+    <div class="select-row" style="margin-bottom:10px;">
+      <div class="select-wrap"><select id="linkSurahSelect" aria-label="سورهٔ مقصد"></select></div>
+      <div class="select-wrap"><select id="linkAyahSelect" aria-label="آیهٔ مقصد"></select></div>
+    </div>
+    <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--surface-2); border-radius:10px; margin-bottom:8px; user-select:text;"></div>
+    <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 14px;">می‌توانید بخشی از متن بالا را انتخاب (select) کنید تا فقط همان گزیده درج شود؛ وگرنه کل آیه ارجاع داده می‌شود.</p>
+    <button type="button" class="btn btn--primary" id="insertLinkBtn" style="width:100%;">درج لینک</button>
+  </div>
+</div>
 
 <footer style="text-align:center; padding:20px; font-size:0.72rem; color:var(--text-faint);">
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
