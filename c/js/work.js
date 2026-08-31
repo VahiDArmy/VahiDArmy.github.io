@@ -1,3 +1,4 @@
+
 // =============================================================
 // صفحهٔ کار — یک «آیهٔ در حال کار» واحد که هم می‌شود بهش تفسیر جدید
 // اضافه کرد، هم تفسیرهای قبلی‌اش را دید/ویرایش/حذف کرد، هم با دکمهٔ
@@ -209,8 +210,7 @@
     const surahData = await QuranData.getSurah(surah);
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, ayah);
     await updateLinkPreview();
-    // We don't set the excerpt anywhere because it's only used on insert
-    // We'll store it in a data attribute for later use
+    // We'll store the excerpt in a data attribute for later use
     linkToolModal.dataset.prefilledExcerpt = excerpt || '';
   }
 
