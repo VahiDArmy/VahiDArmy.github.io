@@ -560,14 +560,13 @@ a.tag-pill:hover { filter: brightness(1.25); }
   z-index: 200;
   background: rgba(4, 6, 10, 0.72);
   backdrop-filter: blur(3px);
-  display: none;               /* hidden by default */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 16px;
 }
-
 .modal-overlay.is-open {
-  display: flex;               /* shown when class is added */
+  display: flex;
 }
 .modal-card {
   width: 100%;
