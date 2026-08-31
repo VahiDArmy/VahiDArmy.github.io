@@ -1,455 +1,59 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NOVA • Text Holder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #05050a;
-      --neon-cyan: #00f0ff;
-      --neon-magenta: #ff00aa;
-      --neon-purple: #b400ff;
-      --glow-cyan: 0 0 8px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff55;
-      --glow-magenta: 0 0 8px #ff00aa, 0 0 20px #ff00aa, 0 0 40px #ff00aa55;
-      --panel: rgba(10, 10, 25, 0.85);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      background-image:
-        radial-gradient(ellipse at 20% 20%, #1a0033 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, #001a33 0%, transparent 50%),
-        radial-gradient(ellipse at 50% 50%, #0a0015 0%, transparent 70%);
-      color: #e0e0ff;
-      font-family: 'Share Tech Mono', monospace;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      overflow-x: hidden;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    header { text-align: center; margin-bottom: 4px; }
-
-    h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-weight: 700;
-      font-size: clamp(1.8rem, 5vw, 2.8rem);
-      letter-spacing: 6px;
-      text-transform: uppercase;
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
-      animation: titlePulse 4s ease-in-out infinite;
-    }
-
-    @keyframes titlePulse {
-      0%, 100% { filter: brightness(1); }
-      50% { filter: brightness(1.25); }
-    }
-
-    .subtitle {
-      font-size: 0.85rem;
-      letter-spacing: 3px;
-      color: #7a7aaa;
-      margin-top: 6px;
-    }
-
-    .panel {
-      background: var(--panel);
-      border: 1px solid rgba(0, 240, 255, 0.35);
-      border-radius: 16px;
-      padding: 20px;
-      box-shadow:
-        0 0 0 1px rgba(255, 0, 170, 0.15),
-        0 0 40px rgba(0, 240, 255, 0.08),
-        inset 0 0 60px rgba(0, 0, 30, 0.6);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      border-radius: 16px;
-      padding: 1px;
-      background: linear-gradient(135deg, var(--neon-cyan), transparent 40%, transparent 60%, var(--neon-magenta));
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
-      opacity: 0.7;
-    }
-
-    .token-box {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .token-box input {
-      flex: 1;
-      min-width: 200px;
-      background: rgba(0, 0, 15, 0.7);
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: #c8f0ff;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 0.9rem;
-      outline: none;
-    }
-    .token-box input:focus {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
-    }
-
-    #holder {
-      width: 100%;
-      min-height: 340px;
-      background: rgba(0, 0, 15, 0.6);
-      border: 1px solid rgba(0, 240, 255, 0.25);
-      border-radius: 10px;
-      padding: 18px 20px;
-      color: #c8f0ff;
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 1.05rem;
-      line-height: 1.6;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      caret-color: var(--neon-cyan);
-    }
-
-    #holder:focus {
-      border-color: var(--neon-cyan);
-      box-shadow: var(--glow-cyan), inset 0 0 20px rgba(0, 240, 255, 0.05);
-    }
-
-    #holder::placeholder { color: #445577; }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 16px;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    button {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.72rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      padding: 10px 18px;
-      border-radius: 8px;
-      border: 1px solid;
-      cursor: pointer;
-      background: transparent;
-      transition: all 0.25s ease;
-    }
-
-    .btn-cyan { color: var(--neon-cyan); border-color: var(--neon-cyan); }
-    .btn-cyan:hover { background: rgba(0, 240, 255, 0.12); box-shadow: var(--glow-cyan); }
-
-    .btn-magenta { color: var(--neon-magenta); border-color: var(--neon-magenta); }
-    .btn-magenta:hover { background: rgba(255, 0, 170, 0.12); box-shadow: var(--glow-magenta); }
-
-    .btn-purple { color: var(--neon-purple); border-color: var(--neon-purple); }
-    .btn-purple:hover { background: rgba(180, 0, 255, 0.12); box-shadow: 0 0 8px #b400ff, 0 0 20px #b400ff55; }
-
-    .btn-save-token {
-      color: #00ff9d;
-      border-color: #00ff9d;
-    }
-    .btn-save-token:hover {
-      background: rgba(0, 255, 157, 0.12);
-      box-shadow: 0 0 8px #00ff9d, 0 0 20px #00ff9d55;
-    }
-
-    .status {
-      font-size: 0.8rem;
-      color: #667788;
-      letter-spacing: 1px;
-    }
-    .status.ok { color: var(--neon-cyan); text-shadow: 0 0 8px #00f0ff66; }
-    .status.err { color: #ff4466; }
-
-    footer {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 0.75rem;
-      color: #445566;
-      letter-spacing: 2px;
-    }
-
-    @media (max-width: 600px) {
-      #holder { min-height: 280px; font-size: 1rem; }
-      button { padding: 9px 14px; font-size: 0.68rem; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Share+Tech+Mono&family=Vazirmatn:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>NOVA</h1>
-      <div class="subtitle">TEXT HOLDER • REPO</div>
-    </header>
-
-    <div class="panel">
-      <!-- Token input -->
-      <div class="token-box">
-        <input type="password" id="tokenInput" placeholder="Paste fine-grained token…" />
-        <button class="btn-save-token" onclick="saveToken()">Save Token</button>
+  <div class="app">
+    <!-- Sidebar: list of notes -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>NOVA</h1>
+        <p class="tagline">TEXT HOLDER</p>
       </div>
 
-      <textarea
-        id="holder"
-        placeholder="Type or paste anything here…&#10;Click Save to Cloud to store it in your GitHub repo."
-        spellcheck="false"
-      ></textarea>
+      <button class="btn-new" id="btnNew">+ یادداشت جدید</button>
+
+      <div class="notes-list" id="notesList">
+        <!-- notes will be injected here -->
+      </div>
+
+      <div class="token-area">
+        <input type="password" id="tokenInput" placeholder="Fine-grained token…" />
+        <button class="btn-token" id="btnSaveToken">ذخیره توکن</button>
+      </div>
+    </aside>
+
+    <!-- Main editor -->
+    <main class="editor">
+      <div class="editor-top">
+        <input type="text" id="titleInput" placeholder="عنوان (اختیاری) — اگر خالی باشد تاریخ شمسی ثبت می‌شود" />
+        <div class="glow-control">
+          <label>Glow</label>
+          <input type="range" id="glowRange" min="0.3" max="1.8" step="0.1" value="1" />
+        </div>
+      </div>
+
+      <textarea id="content" placeholder="متن خود را اینجا بنویسید..." spellcheck="false"></textarea>
 
       <div class="toolbar">
-        <div class="btn-group">
-          <button class="btn-cyan" onclick="saveToCloud()">Save to Cloud</button>
-          <button class="btn-purple" onclick="loadFromCloud()">Load from Cloud</button>
-          <button class="btn-magenta" onclick="clearText()">Clear</button>
-          <button class="btn-cyan" onclick="copyText()">Copy</button>
+        <div class="left-actions">
+          <button class="btn cyan" id="btnSave">ذخیره در کلود</button>
+          <button class="btn purple" id="btnLoad">بارگذاری از کلود</button>
+          <button class="btn magenta" id="btnDelete">حذف</button>
+          <button class="btn cyan" id="btnCopy">کپی</button>
         </div>
-        <div class="status" id="status">Ready</div>
+        <div class="status" id="status">آماده</div>
       </div>
-    </div>
-
-    <footer>
-      vahidarmy.github.io • token stored only in this browser
-    </footer>
+    </main>
   </div>
 
-  <script>
-    const textarea = document.getElementById('holder');
-    const statusEl = document.getElementById('status');
-    const tokenInput = document.getElementById('tokenInput');
-
-    // ===== CONFIG =====
-    const OWNER = 'vahidarmy';
-    const REPO  = 'vahidarmy.github.io';
-    const PATH  = 'nova-text.txt';          // file that will store your text
-    // ==================
-
-    const TOKEN_KEY = 'nova-github-token';
-    const LOCAL_KEY = 'nova-text-holder';
-
-    // Load token + local backup on start
-    const savedToken = localStorage.getItem(TOKEN_KEY);
-    if (savedToken) {
-      tokenInput.placeholder = '•••••••••••••••• (token saved)';
-    }
-
-    const localText = localStorage.getItem(LOCAL_KEY);
-    if (localText) textarea.value = localText;
-
-    // Keep local backup while typing
-    textarea.addEventListener('input', () => {
-      localStorage.setItem(LOCAL_KEY, textarea.value);
-    });
-
-    function setStatus(msg, type = '') {
-      statusEl.textContent = msg;
-      statusEl.className = 'status ' + type;
-    }
-
-    function getToken() {
-      return localStorage.getItem(TOKEN_KEY) || tokenInput.value.trim();
-    }
-
-    function saveToken() {
-      const token = tokenInput.value.trim();
-      if (!token) {
-        setStatus('Enter a token first', 'err');
-        return;
-      }
-      localStorage.setItem(TOKEN_KEY, token);
-      tokenInput.value = '';
-      tokenInput.placeholder = '•••••••••••••••• (token saved)';
-      setStatus('Token saved in this browser', 'ok');
-    }
-
-    // Encode text to base64 (GitHub Contents API requires base64)
-    function toBase64(str) {
-      return btoa(unescape(encodeURIComponent(str)));
-    }
-
-    function fromBase64(str) {
-      return decodeURIComponent(escape(atob(str)));
-    }
-
-    async function saveToCloud() {
-      const token = getToken();
-      if (!token) {
-        setStatus('Save your GitHub token first', 'err');
-        return;
-      }
-
-      const content = textarea.value;
-      setStatus('Saving…');
-
-      try {
-        // 1. Try to get current file (to obtain SHA)
-        let sha = null;
-        const getRes = await fetch(
-          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
-          }
-        );
-
-        if (getRes.ok) {
-          const data = await getRes.json();
-          sha = data.sha;
-        } else if (getRes.status !== 404) {
-          const err = await getRes.json();
-          throw new Error(err.message || 'Failed to check existing file');
-        }
-
-        // 2. Create or update the file
-        const body = {
-          message: 'Update NOVA text holder',
-          content: toBase64(content || ' '),
-          ...(sha ? { sha } : {})
-        };
-
-        const putRes = await fetch(
-          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
-          {
-            method: 'PUT',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-          }
-        );
-
-        if (!putRes.ok) {
-          const err = await putRes.json();
-          throw new Error(err.message || 'GitHub error');
-        }
-
-        localStorage.setItem(LOCAL_KEY, content);
-        setStatus('Saved to cloud ✓', 'ok');
-      } catch (e) {
-        setStatus('Error: ' + e.message, 'err');
-      }
-    }
-
-    async function loadFromCloud() {
-      const token = getToken();
-      if (!token) {
-        setStatus('Save your GitHub token first', 'err');
-        return;
-      }
-
-      setStatus('Loading…');
-
-      try {
-        const res = await fetch(
-          `https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Accept': 'application/vnd.github.v3+json'
-            }
-          }
-        );
-
-        if (res.status === 404) {
-          setStatus('No cloud file yet. Save first.', 'err');
-          return;
-        }
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || 'Could not load file');
-        }
-
-        const data = await res.json();
-        const text = fromBase64(data.content);
-        textarea.value = text === ' ' ? '' : text;
-        localStorage.setItem(LOCAL_KEY, textarea.value);
-        setStatus('Loaded from cloud ✓', 'ok');
-      } catch (e) {
-        setStatus('Error: ' + e.message, 'err');
-      }
-    }
-
-    function clearText() {
-      if (!textarea.value) return;
-      if (confirm('Clear all text?')) {
-        textarea.value = '';
-        localStorage.removeItem(LOCAL_KEY);
-        setStatus('Cleared');
-      }
-    }
-
-    function copyText() {
-      if (!textarea.value.trim()) {
-        setStatus('Nothing to copy');
-        return;
-      }
-      navigator.clipboard.writeText(textarea.value).then(() => {
-        setStatus('Copied!', 'ok');
-      }).catch(() => {
-        textarea.select();
-        document.execCommand('copy');
-        setStatus('Copied!', 'ok');
-      });
-    }
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
