@@ -145,7 +145,7 @@
     gap: 3px;
     font-size: 0.7rem;
     color: var(--text-faint);
-    padding: 4px 18px;
+    padding: 4px 10px;
     border-radius: 12px;
   }
   .mobile-tabbar a.active { color: var(--neon); }
