@@ -24,8 +24,6 @@ const AyahLinks = (function () {
   }
 
   // متن را به HTML امن تبدیل می‌کند؛ ارجاع‌ها به لینک بنفش فسفری تبدیل می‌شوند.
-  // transformSegment (اختیاری) روی هر تکه‌متن ساده (بین ارجاع‌ها) اجرا می‌شود —
-  // مثلاً برای هایلایت کردن برچسب‌ها بدون تودرتو شدن با لینک آیه.
   function renderContent(content, surahIndex, transformSegment) {
     const nameOf = (n) => (surahIndex.find((s) => s.number === n) || {}).name_fa || n;
     const transform = transformSegment || ((s) => s);
@@ -51,12 +49,12 @@ const AyahLinks = (function () {
     return clean ? `[[${surah}:${ayah}|${clean}]]` : `[[${surah}:${ayah}]]`;
   }
 
-// Parse a single token string like "[[2:255]]" or "[[2:255|excerpt]]"
-function parseToken(str) {
-  const m = str.match(/^\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]$/);
-  if (!m) return null;
-  return { surah: Number(m[1]), ayah: Number(m[2]), excerpt: m[3] ? m[3].trim() : null };
-}
+  // Parse a single token string like "[[2:255]]" or "[[2:255|excerpt]]"
+  function parseToken(str) {
+    const m = str.match(/^\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]$/);
+    if (!m) return null;
+    return { surah: Number(m[1]), ayah: Number(m[2]), excerpt: m[3] ? m[3].trim() : null };
+  }
 
-  return { extract, renderContent, makeToken };
+  return { extract, renderContent, makeToken, parseToken };
 })();
