@@ -1,5 +1,5 @@
 // =============================================================
-// صفحهٔ کار — یک «آیهٔ در حال کار» واحد
+// صفحهٔ کار — مدیریت تفسیرها با حالت ویرایش ساده
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
@@ -10,9 +10,11 @@
   const tafsirForm = document.getElementById('tafsirForm');
   const tafsirContent = document.getElementById('tafsirContent');
   const tafsirTags = document.getElementById('tafsirTags');
-  const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
+  const tafsirFormCard = document.getElementById('tafsirFormCard');
 
+  // ---- عناصر لینک ----
   const linkToolModal = document.getElementById('linkToolModal');
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const cancelLinkBtn = document.getElementById('cancelLinkBtn');
@@ -23,10 +25,11 @@
 
   let pendingTokenRange = null;
   let currentTokenInfo = null;
+  let editingId = null; // اگر null باشد، در حالت افزودن هستیم
+  let current = { surah: 1, ayah: 1 };
+  let index = null;
 
-  // ========== اطمینان از مخفی بودن بنر در ابتدا ==========
-  editBanner.hidden = true;
-
+  // ---- توابع کمکی ----
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -38,10 +41,29 @@
     );
   }
 
-  let editingId = null;
-  let current = { surah: 1, ayah: 1 };
-  let index = null;
+  function resetForm() {
+    editingId = null;
+    tafsirContent.value = '';
+    tafsirTags.value = '';
+    submitBtn.textContent = 'ثبت تفسیر';
+    cancelEditBtn.style.display = 'none';
+    tafsirFormCard.classList.remove('is-editing');
+    resetLinkButton();
+  }
 
+  function enterEditMode(t) {
+    editingId = t.id;
+    tafsirContent.value = t.content;
+    tafsirTags.value = (t.tags || []).join(', ');
+    submitBtn.textContent = 'به‌روزرسانی تفسیر';
+    cancelEditBtn.style.display = 'block';
+    tafsirFormCard.classList.add('is-editing');
+    tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tafsirContent.focus();
+    setTimeout(() => updateLinkButtonState(), 100);
+  }
+
+  // ---- بارگذاری داده‌ها ----
   ayahSkeleton(stickyFrame);
   index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
@@ -54,6 +76,7 @@
     current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
   }
 
+  // ---- توابع اصلی ----
   async function refreshProgress() {
     const p = await Store.getProgress();
     const surahMeta = (await QuranData.getIndex()).find((s) => s.number === p.bookmarkSurah);
@@ -66,35 +89,9 @@
     return p;
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
-
-  function exitEditMode() {
-    editingId = null;
-    editBanner.hidden = true;        // مخفی کردن بنر
-    tafsirContent.value = '';
-    tafsirTags.value = '';
-    submitBtn.textContent = 'ثبت تفسیر';
-    resetLinkButton();
-  }
-
-  function enterEditMode(t) {
-    editingId = t.id;
-    editBanner.hidden = false;       // نمایش بنر
-    tafsirContent.value = t.content;
-    tafsirTags.value = (t.tags || []).join(', ');
-    submitBtn.textContent = 'به‌روزرسانی تفسیر';
-    tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    tafsirContent.focus();
-    setTimeout(() => updateLinkButtonState(), 100);
-  }
-
   async function renderCurrentAyah() {
     ayahSkeleton(stickyFrame);
-    exitEditMode(); // <- این خط بنر را مخفی می‌کند
+    resetForm();
 
     const surahData = await QuranData.getSurah(current.surah);
     const ayahData = surahData.ayahs.find((a) => a.v === current.ayah) || surahData.ayahs[0];
@@ -155,6 +152,7 @@
       })
       .join('');
 
+    // رویدادهای دکمه‌ها
     tafsirsListEl.querySelectorAll('[data-toggle]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-toggle');
@@ -176,7 +174,7 @@
         const id = btn.getAttribute('data-delete');
         if (!confirm('همین یک تفسیر حذف شود؟ (تفسیرهای دیگر این آیه دست‌نخورده می‌مانند)')) return;
         await Store.deleteTafsir(id);
-        if (editingId === id) exitEditMode();
+        if (editingId === id) resetForm();
         UI.toast('تفسیر حذف شد');
         await renderTafsirsList();
         await refreshProgress();
@@ -195,12 +193,10 @@
     });
   }
 
-  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
+  // ---- رویداد انصراف ----
+  cancelEditBtn.addEventListener('click', resetForm);
 
-  // =============================================================
-  //  LINK TOOL
-  // =============================================================
-
+  // ---- لینک تول (بدون تغییر) ----
   function resetLinkButton() {
     openLinkToolBtn.textContent = '﹢ لینک به آیهٔ دیگر';
     currentTokenInfo = null;
@@ -268,6 +264,7 @@
     setTimeout(updateLinkButtonState, 50);
   });
 
+  // ---- مودال لینک ----
   function openLinkModal() {
     linkToolModal.classList.add('is-open');
   }
@@ -372,8 +369,7 @@
     closeLinkModal();
   });
 
-  // ---- بقیه کدها ----
-
+  // ---- بقیه رویدادها ----
   selectRow.surah.addEventListener('change', async () => {
     current = { surah: Number(selectRow.surah.value), ayah: 1 };
     await renderCurrentAyah();
@@ -402,6 +398,7 @@
     await renderCurrentAyah();
   });
 
+  // ---- ثبت تفسیر ----
   tafsirForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const content = tafsirContent.value.trim();
@@ -409,12 +406,14 @@
     const tags = parseTags(tafsirTags.value);
 
     if (editingId) {
+      // حالت ویرایش
       await Store.updateTafsir(editingId, content, tags);
       await Store.syncAyahLinks(editingId, current.surah, current.ayah, AyahLinks.extract(content));
       UI.toast('تفسیر به‌روزرسانی شد');
-      exitEditMode();
+      resetForm();
       await renderTafsirsList();
     } else {
+      // حالت افزودن جدید
       const newTafsir = await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
       await Store.syncAyahLinks(newTafsir.id, current.surah, current.ayah, AyahLinks.extract(content));
       tafsirContent.value = '';
