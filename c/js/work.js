@@ -196,7 +196,7 @@
   // ---- رویداد انصراف ----
   cancelEditBtn.addEventListener('click', resetForm);
 
-  // ---- لینک تول (بدون تغییر) ----
+  // ---- لینک تول ----
   function resetLinkButton() {
     openLinkToolBtn.textContent = '﹢ لینک به آیهٔ دیگر';
     currentTokenInfo = null;
