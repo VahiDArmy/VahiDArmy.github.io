@@ -15,7 +15,6 @@
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
 
-  // ---- Link tool elements ----
   const linkToolModal = document.getElementById('linkToolModal');
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const cancelLinkBtn = document.getElementById('cancelLinkBtn');
@@ -131,6 +130,7 @@
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
         const needsClamp = t.content.length > 220 || (t.content.match(/\n/g) || []).length > 2;
+        const surahName = (index.find((s) => s.number === current.surah) || {}).name_fa || current.surah;
         return `
         <div class="tafsir-card">
           <div class="tafsir-card__meta">
@@ -149,11 +149,13 @@
           <div class="tafsir-card__actions">
             <button class="btn btn--sm" data-edit="${t.id}">ویرایش</button>
             <button class="btn btn--sm" data-delete="${t.id}">حذف</button>
+            <button class="btn btn--sm" data-copy="${t.id}" data-content="${escapeHtml(t.content.replace(/"/g, '&quot;'))}">📋 کپی</button>
           </div>
         </div>`;
       })
       .join('');
 
+    // ---- رویدادهای موجود ----
     tafsirsListEl.querySelectorAll('[data-toggle]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-toggle');
@@ -179,6 +181,18 @@
         UI.toast('تفسیر حذف شد');
         await renderTafsirsList();
         await refreshProgress();
+      });
+    });
+
+    // ---- رویداد جدید: کپی تفسیر ----
+    tafsirsListEl.querySelectorAll('[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-copy');
+        const t = tafsirs.find((x) => x.id === id);
+        if (!t) return;
+        const surahName = (index.find((s) => s.number === current.surah) || {}).name_fa || current.surah;
+        const text = `سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)}\n\n${t.content}`;
+        await UI.copyToClipboard(text, 'تفسیر کپی شد');
       });
     });
   }
@@ -306,9 +320,7 @@
 
   // ---- رویداد دکمه باز کردن مودال ----
   openLinkToolBtn.addEventListener('click', async () => {
-    // === رفع یک‌کلیک: ابتدا وضعیت را به‌روز می‌کنیم ===
     updateLinkButtonState();
-
     tafsirContent.blur();
 
     const tokenData = currentTokenInfo;
