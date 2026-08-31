@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>نقشهٔ رابطه‌ها | RaiseMind</title>
+<meta name="description" content="نقشهٔ ارجاع‌های بین آیات" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/layout.css" />
+<link rel="stylesheet" href="css/components.css" />
+<style>
+  #graphWrap {
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    min-height: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  #graphSvg { width: 100%; height: 100%; display: block; }
+  .graph-node circle {
+    fill: var(--surface-2);
+    stroke: var(--violet);
+    stroke-width: 1.5px;
+    filter: drop-shadow(0 0 4px var(--violet-glow));
+    cursor: pointer;
+    transition: filter 0.2s ease;
+  }
+  .graph-node:hover circle {
+    filter: drop-shadow(0 0 10px var(--violet-glow)) drop-shadow(0 0 18px var(--violet-glow));
+  }
+  .graph-node text {
+    fill: var(--text-dim);
+    font-family: var(--font-ui);
+    font-size: 9px;
+    pointer-events: none;
+  }
+  .graph-edge {
+    stroke: var(--violet);
+    stroke-opacity: 0.45;
+    stroke-width: 1.2px;
+    fill: none;
+  }
+  .empty-state-graph {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <div class="brand">
+      <span class="brand__mark">Raise</span><span>Mind</span>
+      <span class="brand__fa">· ارتقا ذهن</span>
+    </div>
+    <nav class="nav-tabs" aria-label="ناوبری اصلی">
+      <a href="index.html">کار</a>
+      <a href="browse.html">مرور</a>
+      <a href="tags.html">برچسب‌ها</a>
+      <a href="relations.html" class="active">رابطه‌ها</a>
+    </nav>
+    <div class="header-actions">
+      <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="section" aria-label="نقشهٔ رابطه‌ها">
+    <div class="section__label">نقشهٔ ارجاع‌های بین آیات</div>
+    <p style="font-size:0.8rem; color:var(--text-faint); margin:-4px 0 12px;">هر نقطه یک آیه است؛ هر خط یعنی در تفسیر یک آیه به آیهٔ دیگری ارجاع داده شده. روی نقطه‌ها بزنید تا به آن آیه بروید.</p>
+    <div id="graphWrap">
+      <svg id="graphSvg"></svg>
+    </div>
+  </section>
+
+  <section class="section" aria-label="فهرست رابطه‌ها">
+    <div class="section__label">فهرست کامل</div>
+    <div id="linksList"></div>
+  </section>
+
+</main>
+
+<footer style="text-align:center; padding:20px; font-size:0.72rem; color:var(--text-faint);">
+  متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
+</footer>
+
+<nav class="mobile-tabbar" aria-label="ناوبری موبایل">
+  <a href="index.html">کار</a>
+  <a href="browse.html">مرور</a>
+  <a href="tags.html">برچسب‌ها</a>
+  <a href="relations.html" class="active">رابطه‌ها</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/quran-data.js"></script>
+<script src="js/ui-helpers.js"></script>
+<script src="js/store.js"></script>
+<script src="js/theme.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="js/relations.js"></script>
+</body>
+</html>
