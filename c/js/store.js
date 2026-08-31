@@ -159,8 +159,6 @@ const Store = (function () {
     return data;
   }
 
-  // پیشرفت بر اساس «نشانک خواندن» محاسبه می‌شود، نه تعداد تفسیرها —
-  // چون طبیعی است خیلی از آیات هیچ‌وقت تفسیری از شما نگیرند.
   async function getProgress() {
     const meta = await getSiteMeta();
     const readIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
@@ -182,8 +180,6 @@ const Store = (function () {
     };
   }
 
-  // اگر آیهٔ داده‌شده جلوتر از نشانک فعلی باشد، نشانک را جلو می‌برد.
-  // اگر عقب‌تر باشد (مثلاً برگشتید عقب برای مرور)، نشانک دست‌نخورده می‌ماند.
   async function advanceBookmarkIfAhead(surah, ayah) {
     const meta = await getSiteMeta();
     const newIndex = await QuranData.cumulativeIndex(surah, ayah);
@@ -197,7 +193,6 @@ const Store = (function () {
     return true;
   }
 
-  // پایان دور فعلی به‌صورت دستی + بازنشانی نشانک برای دور جدید
   async function endRound() {
     const round = await getCurrentRound();
     const { error } = await sb
@@ -206,6 +201,20 @@ const Store = (function () {
       .eq('id', 1);
     if (error) throw error;
     return round + 1;
+  }
+
+  // ---- تابع جدید: جستجوی تفاسیر ----
+  async function searchTafsirs(query, tag) {
+    let q = sb.from('tafsirs').select('*');
+    if (query) {
+      q = q.ilike('content', `%${query}%`);
+    }
+    if (tag) {
+      q = q.contains('tags', [tag]);
+    }
+    const { data, error } = await q.order('created_at', { ascending: false });
+    if (error) throw error;
+    return data;
   }
 
   return {
@@ -228,5 +237,6 @@ const Store = (function () {
     getProgress,
     advanceBookmarkIfAhead,
     endRound,
+    searchTafsirs, // خروجی جدید
   };
 })();
