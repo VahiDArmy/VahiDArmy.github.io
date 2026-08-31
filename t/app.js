@@ -1,4 +1,4 @@
-/* NOVA Text Holder - multi note + Persian timestamp */
+/* NOVA Text Holder - multi note + Persian timestamp + full delete */
 
 const OWNER = 'vahidarmy';
 const REPO  = 'vahidarmy.github.io';
@@ -13,6 +13,7 @@ const contentEl   = document.getElementById('content');
 const notesList   = document.getElementById('notesList');
 const statusEl    = document.getElementById('status');
 const glowRange   = document.getElementById('glowRange');
+const sidebar     = document.getElementById('sidebar');
 
 let notes = [];
 let currentId = null;
@@ -60,6 +61,9 @@ function renderList() {
     div.className = 'note-item' + (n.id === currentId ? ' active' : '');
     div.dataset.id = n.id;
 
+    const info = document.createElement('div');
+    info.className = 'note-info';
+
     const title = document.createElement('div');
     title.className = 'note-title';
     title.textContent = n.title || 'بدون عنوان';
@@ -68,8 +72,21 @@ function renderList() {
     date.className = 'note-date';
     date.textContent = new Date(n.updated).toLocaleString('fa-IR');
 
-    div.appendChild(title);
-    div.appendChild(date);
+    info.appendChild(title);
+    info.appendChild(date);
+
+    // individual delete button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-del';
+    delBtn.innerHTML = '×';
+    delBtn.title = 'حذف کامل';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteNote(n.id);
+    });
+
+    div.appendChild(info);
+    div.appendChild(delBtn);
 
     div.addEventListener('click', () => selectNote(n.id));
     notesList.appendChild(div);
@@ -122,15 +139,13 @@ function saveCurrentLocally() {
   renderList();
 }
 
-async function saveToCloud() {
+/* ---- cloud helpers ---- */
+async function pushToCloud(showStatus = true) {
   const token = getToken();
   if (!token) {
-    setStatus('اول توکن را ذخیره کنید', 'err');
-    return;
+    if (showStatus) setStatus('اول توکن را ذخیره کنید', 'err');
+    return false;
   }
-
-  saveCurrentLocally();
-  setStatus('در حال ذخیره…');
 
   try {
     let sha = null;
@@ -175,11 +190,18 @@ async function saveToCloud() {
       const err = await putRes.json();
       throw new Error(err.message || 'خطای گیت‌هاب');
     }
-
-    setStatus('ذخیره شد ✓', 'ok');
+    return true;
   } catch (e) {
-    setStatus('خطا: ' + e.message, 'err');
+    if (showStatus) setStatus('خطا: ' + e.message, 'err');
+    return false;
   }
+}
+
+async function saveToCloud() {
+  saveCurrentLocally();
+  setStatus('در حال ذخیره…');
+  const ok = await pushToCloud(true);
+  if (ok) setStatus('ذخیره شد ✓', 'ok');
 }
 
 async function loadFromCloud() {
@@ -232,22 +254,33 @@ async function loadFromCloud() {
   }
 }
 
-function deleteCurrent() {
-  if (!currentId) return;
-  if (!confirm('این یادداشت حذف شود؟')) return;
+/* ---- full delete (local + cloud) ---- */
+async function deleteNote(id) {
+  if (!confirm('این یادداشت برای همیشه حذف شود؟ (از کلود هم پاک می‌شود)')) return;
 
-  notes = notes.filter(n => n.id !== currentId);
+  notes = notes.filter(n => n.id !== id);
   localStorage.setItem(LOCAL_KEY, JSON.stringify(notes));
-  currentId = notes.length ? notes[0].id : null;
 
-  if (currentId) {
-    selectNote(currentId);
+  if (currentId === id) {
+    currentId = notes.length ? notes[0].id : null;
+    if (currentId) {
+      selectNote(currentId);
+    } else {
+      titleInput.value = '';
+      contentEl.value = '';
+      renderList();
+    }
   } else {
-    titleInput.value = '';
-    contentEl.value = '';
     renderList();
   }
-  setStatus('حذف شد');
+
+  setStatus('در حال حذف از کلود…');
+  const ok = await pushToCloud(true);
+  if (ok) {
+    setStatus('حذف کامل شد ✓', 'ok');
+  } else {
+    setStatus('محلی حذف شد، اما کلود به‌روز نشد', 'err');
+  }
 }
 
 function copyText() {
@@ -277,14 +310,20 @@ function saveToken() {
   setStatus('توکن ذخیره شد', 'ok');
 }
 
+/* glow */
 glowRange.addEventListener('input', () => {
   document.documentElement.style.setProperty('--glow-strength', glowRange.value);
 });
 
+/* mobile toggle */
+document.getElementById('btnToggle').addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+});
+
+/* events */
 document.getElementById('btnNew').addEventListener('click', newNote);
 document.getElementById('btnSave').addEventListener('click', saveToCloud);
 document.getElementById('btnLoad').addEventListener('click', loadFromCloud);
-document.getElementById('btnDelete').addEventListener('click', deleteCurrent);
 document.getElementById('btnCopy').addEventListener('click', copyText);
 document.getElementById('btnSaveToken').addEventListener('click', saveToken);
 
@@ -297,6 +336,7 @@ contentEl.addEventListener('input', () => {
   saveCurrentLocally();
 });
 
+/* init */
 (function init() {
   const savedToken = localStorage.getItem(TOKEN_KEY);
   if (savedToken) {
@@ -307,9 +347,7 @@ contentEl.addEventListener('input', () => {
   if (local) {
     try {
       notes = JSON.parse(local);
-      if (notes.length) {
-        selectNote(notes[0].id);
-      }
+      if (notes.length) selectNote(notes[0].id);
     } catch (e) {
       notes = [];
     }
@@ -317,7 +355,10 @@ contentEl.addEventListener('input', () => {
 
   document.documentElement.style.setProperty('--glow-strength', glowRange.value);
 
-  if (!notes.length) {
-    newNote();
+  if (!notes.length) newNote();
+
+  // on small screens start collapsed
+  if (window.innerWidth <= 768) {
+    sidebar.classList.add('collapsed');
   }
 })();
