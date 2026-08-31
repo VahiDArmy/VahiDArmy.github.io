@@ -173,8 +173,8 @@
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
-  // --- ابزار افزودن لینک به آیهٔ دیگر ---
-  const linkToolPanel = document.getElementById('linkToolPanel');
+  // --- ابزار افزودن لینک به آیهٔ دیگر (پاپ‌آپ) ---
+  const linkToolModal = document.getElementById('linkToolModal');
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const cancelLinkBtn = document.getElementById('cancelLinkBtn');
   const insertLinkBtn = document.getElementById('insertLinkBtn');
@@ -200,17 +200,28 @@
       <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
+  function openLinkModal() {
+    linkToolModal.hidden = false;
+  }
+  function closeLinkModal() {
+    linkToolModal.hidden = true;
+  }
+
   openLinkToolBtn.addEventListener('click', async () => {
-    linkToolPanel.hidden = false;
+    tafsirContent.blur();
     UI.populateSurahSelect(linkSurahSelect, index, 1);
     const surahData = await QuranData.getSurah(1);
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
     await updateLinkPreview();
-    linkToolPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    openLinkModal();
   });
 
-  cancelLinkBtn.addEventListener('click', () => {
-    linkToolPanel.hidden = true;
+  cancelLinkBtn.addEventListener('click', closeLinkModal);
+  linkToolModal.addEventListener('click', (e) => {
+    if (e.target === linkToolModal) closeLinkModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !linkToolModal.hidden) closeLinkModal();
   });
 
   linkSurahSelect.addEventListener('change', async () => {
@@ -228,7 +239,7 @@
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
     insertAtCursor(tafsirContent, AyahLinks.makeToken(s, a, excerpt));
-    linkToolPanel.hidden = true;
+    closeLinkModal();
     tafsirContent.focus();
   });
 
