@@ -1,4 +1,4 @@
-/* NOVA Text Holder - multi note + Persian timestamp + full delete + rate limit + time glow */
+/* NOVA Text Holder - multi note + Persian + rate limit + time glow + Three.js particles */
 
 const OWNER = 'vahidarmy';
 const REPO  = 'vahidarmy.github.io';
@@ -19,6 +19,139 @@ const rateValue   = document.getElementById('rateValue');
 let notes = [];
 let currentId = null;
 
+/* ========== Three.js Particle Mist ========== */
+function initParticles() {
+  if (typeof THREE === 'undefined') return;
+
+  const canvas = document.getElementById('bg-canvas');
+  const renderer = new THREE.WebGLRenderer({
+    canvas,
+    alpha: true,
+    antialias: false,
+    powerPreference: 'low-power'
+  });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 18;
+
+  const isMobile = window.innerWidth < 768;
+  const COUNT = isMobile ? 70 : 130;
+
+  const positions = new Float32Array(COUNT * 3);
+  const velocities = new Float32Array(COUNT * 3);
+  const colors = new Float32Array(COUNT * 3);
+  const sizes = new Float32Array(COUNT);
+
+  const palette = [
+    [0.0, 0.9, 1.0],   // cyan
+    [0.5, 1.0, 0.3],   // half-life green
+    [1.0, 0.4, 0.05],  // orange
+    [0.6, 0.2, 1.0],   // purple
+    [0.2, 0.8, 0.7]    // teal
+  ];
+
+  for (let i = 0; i < COUNT; i++) {
+    const i3 = i * 3;
+    positions[i3]     = (Math.random() - 0.5) * 40;
+    positions[i3 + 1] = (Math.random() - 0.5) * 28;
+    positions[i3 + 2] = (Math.random() - 0.5) * 20;
+
+    velocities[i3]     = (Math.random() - 0.5) * 0.008;
+    velocities[i3 + 1] = (Math.random() - 0.5) * 0.006 + 0.002;
+    velocities[i3 + 2] = (Math.random() - 0.5) * 0.005;
+
+    const c = palette[Math.floor(Math.random() * palette.length)];
+    colors[i3]     = c[0];
+    colors[i3 + 1] = c[1];
+    colors[i3 + 2] = c[2];
+
+    sizes[i] = Math.random() * 3.5 + 1.2;
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+  const texCanvas = document.createElement('canvas');
+  texCanvas.width = 64;
+  texCanvas.height = 64;
+  const ctx = texCanvas.getContext('2d');
+  const grd = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.3, 'rgba(255,255,255,0.5)');
+  grd.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, 64, 64);
+  const texture = new THREE.CanvasTexture(texCanvas);
+
+  const material = new THREE.PointsMaterial({
+    size: 0.55,
+    map: texture,
+    transparent: true,
+    opacity: 0.55,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    sizeAttenuation: true
+  });
+
+  const points = new THREE.Points(geometry, material);
+  scene.add(points);
+
+  let mouseX = 0, mouseY = 0;
+  window.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const pos = geometry.attributes.position.array;
+    const t = Date.now() * 0.00015;
+
+    for (let i = 0; i < COUNT; i++) {
+      const i3 = i * 3;
+
+      pos[i3]     += velocities[i3] + Math.sin(t + i) * 0.0015;
+      pos[i3 + 1] += velocities[i3 + 1] + Math.cos(t * 0.7 + i) * 0.0012;
+      pos[i3 + 2] += velocities[i3 + 2];
+
+      if (pos[i3] > 22) pos[i3] = -22;
+      if (pos[i3] < -22) pos[i3] = 22;
+      if (pos[i3 + 1] > 16) pos[i3 + 1] = -16;
+      if (pos[i3 + 1] < -16) pos[i3 + 1] = 16;
+      if (pos[i3 + 2] > 12) pos[i3 + 2] = -12;
+      if (pos[i3 + 2] < -12) pos[i3 + 2] = 12;
+    }
+
+    geometry.attributes.position.needsUpdate = true;
+
+    camera.position.x += (mouseX * 1.5 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY * 1.2 - camera.position.y) * 0.02;
+    camera.lookAt(0, 0, 0);
+
+    const tg = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--time-glow')) || 1;
+    material.opacity = 0.35 + 0.25 * tg;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+/* ========== App Logic ========== */
 function setStatus(msg, type = '') {
   statusEl.textContent = msg;
   statusEl.className = 'status ' + type;
@@ -53,11 +186,9 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-/* ---- Time-based variable glow ---- */
 function startTimeGlow() {
   function tick() {
     const t = Date.now() / 1000;
-    // slow breathing + subtle wave
     const value = 0.75 + 0.35 * Math.sin(t * 0.35) + 0.15 * Math.sin(t * 0.9);
     document.documentElement.style.setProperty('--time-glow', value.toFixed(3));
     requestAnimationFrame(tick);
@@ -65,7 +196,6 @@ function startTimeGlow() {
   requestAnimationFrame(tick);
 }
 
-/* ---- Rate Limit ---- */
 async function updateRateLimit() {
   const token = getToken();
   if (!token) {
@@ -95,11 +225,8 @@ async function updateRateLimit() {
     rateValue.textContent = `${remaining} / ${limit}`;
     rateValue.className = 'rate-value';
 
-    if (remaining < 200) {
-      rateValue.classList.add('critical');
-    } else if (remaining < 1000) {
-      rateValue.classList.add('low');
-    }
+    if (remaining < 200) rateValue.classList.add('critical');
+    else if (remaining < 1000) rateValue.classList.add('low');
   } catch (e) {
     rateValue.textContent = '—';
   }
@@ -157,12 +284,7 @@ function selectNote(id) {
 
 function newNote() {
   const id = uid();
-  const note = {
-    id,
-    title: '',
-    content: '',
-    updated: Date.now()
-  };
+  const note = { id, title: '', content: '', updated: Date.now() };
   notes.unshift(note);
   currentId = id;
   titleInput.value = '';
@@ -293,9 +415,8 @@ async function loadFromCloud() {
     notes = parsed;
     localStorage.setItem(LOCAL_KEY, JSON.stringify(notes));
 
-    if (notes.length) {
-      selectNote(notes[0].id);
-    } else {
+    if (notes.length) selectNote(notes[0].id);
+    else {
       currentId = null;
       titleInput.value = '';
       contentEl.value = '';
@@ -316,9 +437,8 @@ async function deleteNote(id) {
 
   if (currentId === id) {
     currentId = notes.length ? notes[0].id : null;
-    if (currentId) {
-      selectNote(currentId);
-    } else {
+    if (currentId) selectNote(currentId);
+    else {
       titleInput.value = '';
       contentEl.value = '';
       renderList();
@@ -329,11 +449,8 @@ async function deleteNote(id) {
 
   setStatus('در حال حذف از کلود…');
   const ok = await pushToCloud(true);
-  if (ok) {
-    setStatus('حذف کامل شد ✓', 'ok');
-  } else {
-    setStatus('محلی حذف شد، اما کلود به‌روز نشد', 'err');
-  }
+  if (ok) setStatus('حذف کامل شد ✓', 'ok');
+  else setStatus('محلی حذف شد، اما کلود به‌روز نشد', 'err');
 }
 
 function copyText() {
@@ -364,17 +481,14 @@ function saveToken() {
   updateRateLimit();
 }
 
-/* glow slider */
 glowRange.addEventListener('input', () => {
   document.documentElement.style.setProperty('--glow-strength', glowRange.value);
 });
 
-/* mobile toggle */
 document.getElementById('btnToggle').addEventListener('click', () => {
   sidebar.classList.toggle('collapsed');
 });
 
-/* events */
 document.getElementById('btnNew').addEventListener('click', newNote);
 document.getElementById('btnSave').addEventListener('click', saveToCloud);
 document.getElementById('btnLoad').addEventListener('click', loadFromCloud);
@@ -393,28 +507,23 @@ contentEl.addEventListener('input', () => {
 /* init */
 (function init() {
   const savedToken = localStorage.getItem(TOKEN_KEY);
-  if (savedToken) {
-    tokenInput.placeholder = '•••••••••••• (ذخیره شد)';
-  }
+  if (savedToken) tokenInput.placeholder = '•••••••••••• (ذخیره شد)';
 
   const local = localStorage.getItem(LOCAL_KEY);
   if (local) {
     try {
       notes = JSON.parse(local);
       if (notes.length) selectNote(notes[0].id);
-    } catch (e) {
-      notes = [];
-    }
+    } catch (e) { notes = []; }
   }
 
   document.documentElement.style.setProperty('--glow-strength', glowRange.value);
 
   if (!notes.length) newNote();
 
-  if (window.innerWidth <= 768) {
-    sidebar.classList.add('collapsed');
-  }
+  if (window.innerWidth <= 768) sidebar.classList.add('collapsed');
 
   updateRateLimit();
-  startTimeGlow();   // start the living glow
+  startTimeGlow();
+  initParticles();
 })();
