@@ -560,13 +560,13 @@ a.tag-pill:hover { filter: brightness(1.25); }
   z-index: 200;
   background: rgba(4, 6, 10, 0.72);
   backdrop-filter: blur(3px);
-  display: none;               /* مخفی به‌طور پیش‌فرض */
+  display: none;
   align-items: center;
   justify-content: center;
   padding: 16px;
 }
 .modal-overlay.is-open {
-  display: flex;               /* نمایش وقتی کلاس اضافه شود */
+  display: flex;
 }
 .modal-card {
   width: 100%;
@@ -580,4 +580,11 @@ a.tag-pill:hover { filter: brightness(1.25); }
   justify-content: space-between;
   font-weight: 700;
   margin-bottom: 14px;
+}
+
+/* ---- Edit mode styling for the form card ---- */
+#tafsirFormCard.is-editing {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 2px var(--neon-glow), 0 0 20px var(--neon-glow);
+  transition: all 0.3s ease;
 }
