@@ -1,4 +1,3 @@
-
 // =============================================================
 // صفحهٔ کار — یک «آیهٔ در حال کار» واحد که هم می‌شود بهش تفسیر جدید
 // اضافه کرد، هم تفسیرهای قبلی‌اش را دید/ویرایش/حذف کرد، هم با دکمهٔ
@@ -183,7 +182,7 @@
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   // =============================================================
-  //  LINK TOOL – enhanced with selection detection & replacement
+  //  LINK TOOL – improved: detect token at cursor position
   // =============================================================
 
   function openLinkModal() {
@@ -194,14 +193,58 @@
     linkToolModal.classList.remove('is-open');
   }
 
-  // Detect if the user has selected a token in the textarea
-  function getSelectedToken() {
+  // Find a token that surrounds the given position (cursor)
+  function findTokenAtPosition(text, pos) {
+    // Look for '[[', then the token, then ']]'
+    // We'll search backwards for '[[', and forwards for ']]'
+    // But we need to ensure the brackets are properly matched.
+    // Simpler: scan left from pos until we find '[[' or start; scan right for ']]' or end.
+    let start = pos;
+    let end = pos;
+    // Move left to find '[[' 
+    let foundOpen = false;
+    while (start > 0) {
+      if (text.substring(start-2, start) === '[[') {
+        foundOpen = true;
+        start -= 2;
+        break;
+      }
+      start--;
+    }
+    if (!foundOpen) return null;
+    // Move right to find ']]'
+    let foundClose = false;
+    while (end < text.length) {
+      if (text.substring(end, end+2) === ']]') {
+        foundClose = true;
+        end += 2;
+        break;
+      }
+      end++;
+    }
+    if (!foundClose) return null;
+    // Extract the token between start and end
+    const token = text.substring(start, end);
+    const parsed = AyahLinks.parseToken(token);
+    if (parsed) {
+      return { ...parsed, start, end };
+    }
+    return null;
+  }
+
+  // Detect if the user has a token at cursor, or a selection
+  function getTokenAtCaretOrSelection() {
     const textarea = tafsirContent;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    if (start === end) return null; // no selection
-    const selected = textarea.value.substring(start, end);
-    return AyahLinks.parseToken(selected);
+    // If there's a selection, try to parse it as a token first
+    if (start !== end) {
+      const selected = textarea.value.substring(start, end);
+      const parsed = AyahLinks.parseToken(selected);
+      if (parsed) return { ...parsed, start, end };
+    }
+    // Otherwise, find token at cursor position (use start)
+    return findTokenAtPosition(textarea.value, start);
   }
 
   // Pre-fill the modal with given surah/ayah/excerpt
@@ -210,7 +253,7 @@
     const surahData = await QuranData.getSurah(surah);
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, ayah);
     await updateLinkPreview();
-    // We'll store the excerpt in a data attribute for later use
+    // Store the excerpt for later use
     linkToolModal.dataset.prefilledExcerpt = excerpt || '';
   }
 
@@ -228,20 +271,20 @@
   // Insert or replace token in textarea
   function insertOrReplaceToken(surah, ayah, excerpt) {
     const textarea = tafsirContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    let start = textarea.selectionStart;
+    let end = textarea.selectionEnd;
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
-    if (start !== end) {
-      // Replace selection
+
+    // If there's no selection, we might have a token at cursor (but we already set selection when we found it)
+    // However, if selection length is 0, we just insert at cursor.
+    if (start === end) {
+      // Insert at cursor
       textarea.setRangeText(token, start, end, 'end');
     } else {
-      // Insert at cursor
-      textarea.value = textarea.value.slice(0, start) + token + textarea.value.slice(end);
-      const newPos = start + token.length;
-      textarea.setSelectionRange(newPos, newPos);
+      // Replace selection
+      textarea.setRangeText(token, start, end, 'end');
     }
     textarea.focus();
-    // Trigger input event for any listeners
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
@@ -250,16 +293,15 @@
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
 
-    // Check if there is a selected token
-    const tokenData = getSelectedToken();
+    // Try to get token at cursor or from selection
+    const tokenData = getTokenAtCaretOrSelection();
     if (tokenData) {
-      // Pre-fill modal with that token's data
+      // Auto-select the token in the textarea so user sees what's being replaced
+      tafsirContent.setSelectionRange(tokenData.start, tokenData.end);
       await prefillLinkModal(tokenData.surah, tokenData.ayah, tokenData.excerpt);
     } else {
-      // Default to current ayah (or first ayah)
-      const defaultSurah = current.surah;
-      const defaultAyah = current.ayah;
-      await prefillLinkModal(defaultSurah, defaultAyah, '');
+      // Default to current ayah
+      await prefillLinkModal(current.surah, current.ayah, '');
     }
     openLinkModal();
   });
@@ -295,7 +337,6 @@
     const excerpt = withinPreview && selectedText ? selectedText : null;
 
     // If the modal was pre-filled with an excerpt and user didn't select new text, keep the old excerpt
-    // But we override if they selected something in the preview
     let finalExcerpt = excerpt;
     if (!finalExcerpt && linkToolModal.dataset.prefilledExcerpt) {
       finalExcerpt = linkToolModal.dataset.prefilledExcerpt;
