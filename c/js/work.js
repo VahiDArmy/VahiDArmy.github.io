@@ -24,11 +24,8 @@
   const linkAyahSelect = document.getElementById('linkAyahSelect');
   const linkAyahPreview = document.getElementById('linkAyahPreview');
 
-  // ---- ذخیره موقعیت توکن برای جایگزینی ----
-  let pendingTokenRange = null; // { start, end, surah, ayah, excerpt }
-
-  // ---- متغیر برای نگهداری اطلاعات توکن فعلی (برای به‌روزرسانی دکمه) ----
-  let currentTokenInfo = null; // { surah, ayah, excerpt, start, end }
+  let pendingTokenRange = null;
+  let currentTokenInfo = null;
 
   function parseTags(str) {
     return Array.from(
@@ -92,7 +89,6 @@
     submitBtn.textContent = 'به‌روزرسانی تفسیر';
     tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
     tafsirContent.focus();
-    // بعد از فوکوس، وضعیت دکمه را به‌روز می‌کنیم
     setTimeout(() => updateLinkButtonState(), 100);
   }
 
@@ -190,7 +186,7 @@
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   // =============================================================
-  //  LINK TOOL – با تشخیص خودکار توکن و به‌روزرسانی دکمه
+  //  LINK TOOL
   // =============================================================
 
   function resetLinkButton() {
@@ -198,7 +194,6 @@
     currentTokenInfo = null;
   }
 
-  // پیدا کردن توکن در موقعیت مکان‌نما
   function findTokenAtPosition(text, pos) {
     let start = pos;
     let end = pos;
@@ -230,11 +225,9 @@
     return null;
   }
 
-  // به‌روزرسانی دکمه بر اساس موقعیت مکان‌نما
   function updateLinkButtonState() {
     const textarea = tafsirContent;
     const pos = textarea.selectionStart;
-    // اگر انتخاب شده باشد، از آن استفاده می‌کنیم
     let tokenData = null;
     if (textarea.selectionStart !== textarea.selectionEnd) {
       const selected = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
@@ -248,28 +241,23 @@
     }
 
     if (tokenData) {
-      // هایلایت کردن توکن (انتخاب خودکار)
       textarea.setSelectionRange(tokenData.start, tokenData.end);
-      // به‌روزرسانی دکمه
       const surahName = (index.find((s) => s.number === tokenData.surah) || {}).name_fa || tokenData.surah;
       openLinkToolBtn.textContent = `ویرایش لینک به سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(tokenData.ayah)}`;
       currentTokenInfo = tokenData;
     } else {
-      // اگر توکنی نبود، دکمه را به حالت اولیه برگردان
       resetLinkButton();
     }
   }
 
-  // رویدادهای تشخیص توکن در تکست‌آریا
   tafsirContent.addEventListener('click', updateLinkButtonState);
   tafsirContent.addEventListener('keyup', updateLinkButtonState);
-  // همچنین هنگام فوکوس دوباره
   tafsirContent.addEventListener('focus', () => {
     setTimeout(updateLinkButtonState, 50);
   });
 
   // =============================================================
-  //  باز کردن مودال با استفاده از توکن انتخاب‌شده یا موقعیت مکان‌نما
+  //  Modal open/close
   // =============================================================
 
   function openLinkModal() {
@@ -281,7 +269,6 @@
     pendingTokenRange = null;
   }
 
-  // پر کردن مودال با داده‌های سوره/آیه/گزیده
   async function prefillLinkModal(surah, ayah, excerpt) {
     UI.populateSurahSelect(linkSurahSelect, index, surah);
     const surahData = await QuranData.getSurah(surah);
@@ -290,7 +277,6 @@
     linkToolModal.dataset.prefilledExcerpt = excerpt || '';
   }
 
-  // به‌روزرسانی پیش‌نمایش
   async function updateLinkPreview() {
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
@@ -301,7 +287,6 @@
       <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
-  // درج یا جایگزینی توکن در تکست‌آریا با استفاده از محدوده ذخیره شده
   function insertOrReplaceToken(surah, ayah, excerpt) {
     const textarea = tafsirContent;
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
@@ -316,16 +301,16 @@
     }
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
-    // بعد از جایگزینی، دکمه را به‌روز می‌کنیم
     setTimeout(updateLinkButtonState, 50);
   }
 
-  // ---- رویدادهای دکمه‌های لینک ----
-
+  // ---- رویداد دکمه باز کردن مودال ----
   openLinkToolBtn.addEventListener('click', async () => {
+    // === رفع یک‌کلیک: ابتدا وضعیت را به‌روز می‌کنیم ===
+    updateLinkButtonState();
+
     tafsirContent.blur();
 
-    // از اطلاعات ذخیره شده در currentTokenInfo استفاده می‌کنیم
     const tokenData = currentTokenInfo;
     if (tokenData) {
       pendingTokenRange = {
@@ -335,7 +320,6 @@
         ayah: tokenData.ayah,
         excerpt: tokenData.excerpt,
       };
-      // دوباره هایلایت می‌کنیم (احتمالاً قبلاً هایلایت شده)
       tafsirContent.setSelectionRange(tokenData.start, tokenData.end);
       await prefillLinkModal(tokenData.surah, tokenData.ayah, tokenData.excerpt);
     } else {
@@ -383,7 +367,7 @@
     closeLinkModal();
   });
 
-  // ---- بقیه کدها بدون تغییر ----
+  // ---- بقیه کدها ----
 
   selectRow.surah.addEventListener('change', async () => {
     current = { surah: Number(selectRow.surah.value), ayah: 1 };
