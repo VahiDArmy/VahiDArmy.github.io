@@ -217,6 +217,19 @@
 }
 .copy-ayah-btn:hover { color: var(--neon); }
 
+/* ---- Ayah-to-ayah reference link (phosphorescent violet) ---- */
+.ayah-link {
+  color: var(--violet);
+  font-weight: 700;
+  border-bottom: 1px dashed var(--violet);
+  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
+  transition: text-shadow 0.2s ease, color 0.2s ease;
+}
+.ayah-link:hover {
+  color: #C9BFFF;
+  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
+}
+
 /* ---- Mark light: small amber neon toggle in the ayah top bar ---- */
 .mark-toggle {
   display: inline-block;
