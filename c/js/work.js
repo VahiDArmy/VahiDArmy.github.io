@@ -27,6 +27,9 @@
   // ---- ذخیره موقعیت توکن برای جایگزینی ----
   let pendingTokenRange = null; // { start, end, surah, ayah, excerpt }
 
+  // ---- متغیر برای نگهداری اطلاعات توکن فعلی (برای به‌روزرسانی دکمه) ----
+  let currentTokenInfo = null; // { surah, ayah, excerpt, start, end }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -78,6 +81,7 @@
     tafsirContent.value = '';
     tafsirTags.value = '';
     submitBtn.textContent = 'ثبت تفسیر';
+    resetLinkButton();
   }
 
   function enterEditMode(t) {
@@ -88,6 +92,8 @@
     submitBtn.textContent = 'به‌روزرسانی تفسیر';
     tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
     tafsirContent.focus();
+    // بعد از فوکوس، وضعیت دکمه را به‌روز می‌کنیم
+    setTimeout(() => updateLinkButtonState(), 100);
   }
 
   async function renderCurrentAyah() {
@@ -184,17 +190,12 @@
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   // =============================================================
-  //  LINK TOOL – با ذخیره موقعیت توکن
+  //  LINK TOOL – با تشخیص خودکار توکن و به‌روزرسانی دکمه
   // =============================================================
 
-  function openLinkModal() {
-    linkToolModal.classList.add('is-open');
-  }
-
-  function closeLinkModal() {
-    linkToolModal.classList.remove('is-open');
-    // پاک کردن موقعیت ذخیره شده پس از بستن مودال
-    pendingTokenRange = null;
+  function resetLinkButton() {
+    openLinkToolBtn.textContent = '﹢ لینک به آیهٔ دیگر';
+    currentTokenInfo = null;
   }
 
   // پیدا کردن توکن در موقعیت مکان‌نما
@@ -229,17 +230,55 @@
     return null;
   }
 
-  // دریافت توکن در مکان‌نما یا انتخاب
-  function getTokenAtCaretOrSelection() {
+  // به‌روزرسانی دکمه بر اساس موقعیت مکان‌نما
+  function updateLinkButtonState() {
     const textarea = tafsirContent;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    if (start !== end) {
-      const selected = textarea.value.substring(start, end);
+    const pos = textarea.selectionStart;
+    // اگر انتخاب شده باشد، از آن استفاده می‌کنیم
+    let tokenData = null;
+    if (textarea.selectionStart !== textarea.selectionEnd) {
+      const selected = textarea.value.substring(textarea.selectionStart, textarea.selectionEnd);
       const parsed = AyahLinks.parseToken(selected);
-      if (parsed) return { ...parsed, start, end };
+      if (parsed) {
+        tokenData = { ...parsed, start: textarea.selectionStart, end: textarea.selectionEnd };
+      }
     }
-    return findTokenAtPosition(textarea.value, start);
+    if (!tokenData) {
+      tokenData = findTokenAtPosition(textarea.value, pos);
+    }
+
+    if (tokenData) {
+      // هایلایت کردن توکن (انتخاب خودکار)
+      textarea.setSelectionRange(tokenData.start, tokenData.end);
+      // به‌روزرسانی دکمه
+      const surahName = (index.find((s) => s.number === tokenData.surah) || {}).name_fa || tokenData.surah;
+      openLinkToolBtn.textContent = `ویرایش لینک به سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(tokenData.ayah)}`;
+      currentTokenInfo = tokenData;
+    } else {
+      // اگر توکنی نبود، دکمه را به حالت اولیه برگردان
+      resetLinkButton();
+    }
+  }
+
+  // رویدادهای تشخیص توکن در تکست‌آریا
+  tafsirContent.addEventListener('click', updateLinkButtonState);
+  tafsirContent.addEventListener('keyup', updateLinkButtonState);
+  // همچنین هنگام فوکوس دوباره
+  tafsirContent.addEventListener('focus', () => {
+    setTimeout(updateLinkButtonState, 50);
+  });
+
+  // =============================================================
+  //  باز کردن مودال با استفاده از توکن انتخاب‌شده یا موقعیت مکان‌نما
+  // =============================================================
+
+  function openLinkModal() {
+    linkToolModal.classList.add('is-open');
+  }
+
+  function closeLinkModal() {
+    linkToolModal.classList.remove('is-open');
+    pendingTokenRange = null;
   }
 
   // پر کردن مودال با داده‌های سوره/آیه/گزیده
@@ -268,17 +307,17 @@
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
 
     if (pendingTokenRange) {
-      // جایگزینی توکن قبلی با توکن جدید
       const { start, end } = pendingTokenRange;
       textarea.setRangeText(token, start, end, 'end');
       pendingTokenRange = null;
     } else {
-      // درج در موقعیت فعلی مکان‌نما
       const pos = textarea.selectionStart;
       textarea.setRangeText(token, pos, pos, 'end');
     }
     textarea.focus();
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    // بعد از جایگزینی، دکمه را به‌روز می‌کنیم
+    setTimeout(updateLinkButtonState, 50);
   }
 
   // ---- رویدادهای دکمه‌های لینک ----
@@ -286,10 +325,9 @@
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
 
-    // پیدا کردن توکن در مکان‌نما یا انتخاب
-    const tokenData = getTokenAtCaretOrSelection();
+    // از اطلاعات ذخیره شده در currentTokenInfo استفاده می‌کنیم
+    const tokenData = currentTokenInfo;
     if (tokenData) {
-      // ذخیره موقعیت برای جایگزینی
       pendingTokenRange = {
         start: tokenData.start,
         end: tokenData.end,
@@ -297,7 +335,7 @@
         ayah: tokenData.ayah,
         excerpt: tokenData.excerpt,
       };
-      // هایلایت کردن توکن در تکست‌آریا
+      // دوباره هایلایت می‌کنیم (احتمالاً قبلاً هایلایت شده)
       tafsirContent.setSelectionRange(tokenData.start, tokenData.end);
       await prefillLinkModal(tokenData.surah, tokenData.ayah, tokenData.excerpt);
     } else {
@@ -331,7 +369,6 @@
     const s = Number(linkSurahSelect.value);
     const a = Number(linkAyahSelect.value);
 
-    // دریافت گزیده از انتخاب کاربر در پیش‌نمایش
     const selection = window.getSelection();
     const selectedText = selection ? selection.toString().trim() : '';
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
