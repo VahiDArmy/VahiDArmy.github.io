@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>NOVA • Text Holder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,18 +11,17 @@
 </head>
 <body>
   <div class="app">
-    <!-- Sidebar: list of notes -->
-    <aside class="sidebar">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <h1>NOVA</h1>
         <p class="tagline">TEXT HOLDER</p>
+        <button class="btn-toggle" id="btnToggle" aria-label="toggle">☰</button>
       </div>
 
       <button class="btn-new" id="btnNew">+ یادداشت جدید</button>
 
-      <div class="notes-list" id="notesList">
-        <!-- notes will be injected here -->
-      </div>
+      <div class="notes-list" id="notesList"></div>
 
       <div class="token-area">
         <input type="password" id="tokenInput" placeholder="Fine-grained token…" />
@@ -30,7 +29,7 @@
       </div>
     </aside>
 
-    <!-- Main editor -->
+    <!-- Editor -->
     <main class="editor">
       <div class="editor-top">
         <input type="text" id="titleInput" placeholder="عنوان (اختیاری) — اگر خالی باشد تاریخ شمسی ثبت می‌شود" />
@@ -46,7 +45,6 @@
         <div class="left-actions">
           <button class="btn cyan" id="btnSave">ذخیره در کلود</button>
           <button class="btn purple" id="btnLoad">بارگذاری از کلود</button>
-          <button class="btn magenta" id="btnDelete">حذف</button>
           <button class="btn cyan" id="btnCopy">کپی</button>
         </div>
         <div class="status" id="status">آماده</div>
