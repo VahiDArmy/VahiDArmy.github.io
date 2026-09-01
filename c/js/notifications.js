@@ -53,12 +53,6 @@
     }
   }
 
-  // شروع خودکار بعد از بارگذاری صفحه
   document.addEventListener('DOMContentLoaded', startListening);
-
-  // توقف در صورت خروج (اختیاری)
   window.addEventListener('beforeunload', stopListening);
-
-  // در صورت تغییر لاگین (مثلاً خروج از سیستم) – می‌توان از رویداد استفاده کرد
-  // اما با رفرش صفحه قطع می‌شود.
 })();
