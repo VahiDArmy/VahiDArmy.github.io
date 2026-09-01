@@ -13,6 +13,19 @@
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
+<style>
+  /* استایل دکمه بارگیری بیشتر */
+  #loadMoreCommentsBtn {
+    width: 100%;
+    margin-top: 12px;
+  }
+  #allCommentsList .tafsir-card:first-child {
+    margin-top: 0;
+  }
+  #allCommentsList .tafsir-card {
+    margin-top: 10px;
+  }
+</style>
 </head>
 <body>
 
@@ -61,6 +74,24 @@
   <section class="section" aria-label="تفسیرها">
     <div class="section__label">تفسیرهای این آیه</div>
     <div id="tafsirsList"></div>
+  </section>
+
+  <!-- ===== بخش جدید: همه نظرات (با صفحه‌بندی) ===== -->
+  <section class="section" aria-label="همه نظرات">
+    <div class="section__label" style="cursor:pointer; user-select:none;" id="allCommentsToggle">
+      <span>📋 همه نظرات</span>
+      <span style="font-size:0.7rem; color:var(--text-faint);" id="allCommentsCount"></span>
+      <span style="margin-inline-start:auto;">▼</span>
+    </div>
+    <div id="allCommentsContainer" style="display:none; margin-top:10px;">
+      <div id="allCommentsList"></div>
+      <button class="btn btn--ghost" id="loadMoreCommentsBtn" style="display:none; width:100%; margin-top:12px;">
+        بارگیری بیشتر ▼
+      </button>
+      <div id="allCommentsLoading" style="display:none; text-align:center; padding:12px; color:var(--text-faint);">
+        در حال بارگیری...
+      </div>
+    </div>
   </section>
 
 </main>
