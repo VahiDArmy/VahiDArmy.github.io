@@ -27,7 +27,6 @@ const UI = (function () {
     }
     const inner = el.querySelector('.toast__inner');
     inner.textContent = message;
-    // تنظیم کلیک
     if (urlOrCallback) {
       el.style.cursor = 'pointer';
       el.onclick = (e) => {
@@ -46,7 +45,6 @@ const UI = (function () {
     clearTimeout(el._timer);
     el._timer = setTimeout(() => {
       el.classList.remove('show');
-      // پاک کردن کلیک بعد از مخفی شدن
       setTimeout(() => { el.onclick = null; el.style.cursor = 'default'; }, 300);
     }, 4000);
   }
