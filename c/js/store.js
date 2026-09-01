@@ -10,6 +10,31 @@ const Store = (function () {
       .limit(1)
       .maybeSingle();
     if (error) throw error;
+    // ---- دریافت همهٔ کامنت‌ها به همراه اطلاعات تفسیر ----
+    async function getAllCommentsWithTafsirInfo() {
+        // ابتدا همهٔ کامنت‌ها را با اطلاعات تفسیر (سوره و آیه) دریافت می‌کنیم
+        const { data, error } = await sb
+        .from('comments')
+        .select(`
+            *,
+            tafsirs (
+            surah,
+            ayah
+            )
+        `)
+        .order('created_at', { ascending: false });
+        if (error) throw error;
+        // flatten کردن داده
+        return data.map((c) => ({
+        id: c.id,
+        tafsir_id: c.tafsir_id,
+        guest_name: c.guest_name,
+        content: c.content,
+        created_at: c.created_at,
+        surah: c.tafsirs ? c.tafsirs.surah : null,
+        ayah: c.tafsirs ? c.tafsirs.ayah : null,
+        }));
+    }
     return data;
   }
 
