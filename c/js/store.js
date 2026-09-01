@@ -239,7 +239,7 @@ const Store = (function () {
     }
     const { data, error } = await q.order('created_at', { ascending: false });
     if (error) throw error;
-    return data;
+    return {data, getAllCommentsWithTafsirInfo};
   }
 
   return {
