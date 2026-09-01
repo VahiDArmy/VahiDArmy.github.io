@@ -17,7 +17,7 @@ const UI = (function () {
     selectEl.innerHTML = html;
   }
 
-  function toast(message) {
+  function toast(message, urlOrCallback = null) {
     let el = document.querySelector('.toast');
     if (!el) {
       el = document.createElement('div');
@@ -25,10 +25,30 @@ const UI = (function () {
       el.innerHTML = '<div class="toast__inner"></div>';
       document.body.appendChild(el);
     }
-    el.querySelector('.toast__inner').textContent = message;
+    const inner = el.querySelector('.toast__inner');
+    inner.textContent = message;
+    // تنظیم کلیک
+    if (urlOrCallback) {
+      el.style.cursor = 'pointer';
+      el.onclick = (e) => {
+        if (typeof urlOrCallback === 'string') {
+          location.href = urlOrCallback;
+        } else if (typeof urlOrCallback === 'function') {
+          urlOrCallback();
+        }
+        el.classList.remove('show');
+      };
+    } else {
+      el.style.cursor = 'default';
+      el.onclick = null;
+    }
     el.classList.add('show');
     clearTimeout(el._timer);
-    el._timer = setTimeout(() => el.classList.remove('show'), 2600);
+    el._timer = setTimeout(() => {
+      el.classList.remove('show');
+      // پاک کردن کلیک بعد از مخفی شدن
+      setTimeout(() => { el.onclick = null; el.style.cursor = 'default'; }, 300);
+    }, 4000);
   }
 
   function setProgressRing(ringEl, percent, labelEl) {
@@ -134,13 +154,11 @@ const UI = (function () {
     return words.join('\\s+');
   }
 
-  // ========== تابع جدید: کپی متن در کلیپ‌بورد ==========
   async function copyToClipboard(text, successMessage = 'متن کپی شد') {
     try {
       await navigator.clipboard.writeText(text);
       toast(successMessage);
     } catch (e) {
-      // Fallback برای مرورگرهای قدیمی
       const ta = document.createElement('textarea');
       ta.value = text;
       ta.style.position = 'fixed';
@@ -167,6 +185,6 @@ const UI = (function () {
     tagColor,
     tagPill,
     highlightTags,
-    copyToClipboard, // خروجی جدید
+    copyToClipboard,
   };
 })();
