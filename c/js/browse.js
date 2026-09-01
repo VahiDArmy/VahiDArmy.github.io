@@ -6,7 +6,7 @@
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
-  // ---- عناصر جدید برای همه کامنت‌ها ----
+  // ---- عناصر جدید برای همه کامنت‌ها (با چک وجود) ----
   const allCommentsToggle = document.getElementById('allCommentsToggle');
   const allCommentsList = document.getElementById('allCommentsList');
   const allCommentsCount = document.getElementById('allCommentsCount');
@@ -170,7 +170,7 @@
           await Store.deleteComment(btn.getAttribute('data-delete-comment'));
           loadComments(tafsirId);
           // اگر لیست همه نظرات باز است، آن را نیز به‌روز کن
-          if (allCommentsVisible) {
+          if (allCommentsVisible && allCommentsList) {
             allCommentsData = await Store.getAllCommentsWithTafsirInfo();
             renderAllComments();
           }
@@ -185,8 +185,9 @@
     return div.innerHTML;
   }
 
-  // ---- توابع مربوط به همه نظرات ----
+  // ---- توابع مربوط به همه نظرات (فقط در صورت وجود المان‌ها) ----
   async function loadAllComments() {
+    if (!allCommentsList) return;
     if (allCommentsLoaded) return;
     allCommentsList.innerHTML = `<div class="skeleton" style="height:40px;"></div>`;
     try {
@@ -200,12 +201,13 @@
   }
 
   function renderAllComments() {
+    if (!allCommentsList) return;
     if (!allCommentsData.length) {
       allCommentsList.innerHTML = `<p style="color:var(--text-faint); font-size:0.85rem;">هنوز هیچ نظری ثبت نشده.</p>`;
-      allCommentsCount.textContent = '(۰)';
+      if (allCommentsCount) allCommentsCount.textContent = '(۰)';
       return;
     }
-    allCommentsCount.textContent = `(${UI.toPersianDigits(allCommentsData.length)})`;
+    if (allCommentsCount) allCommentsCount.textContent = `(${UI.toPersianDigits(allCommentsData.length)})`;
     allCommentsList.innerHTML = allCommentsData
       .map((c) => {
         const surahName = (index.find((s) => s.number === c.surah) || {}).name_fa || c.surah;
@@ -237,21 +239,25 @@
           allCommentsData = await Store.getAllCommentsWithTafsirInfo();
           renderAllComments();
           UI.toast('نظر حذف شد');
-          // همچنین اگر همان کامنت در لیست تفسیرها بود، آنجا هم به‌روز شود (اما سخت است، فعلاً صرف‌نظر)
         });
       });
     }
   }
 
-  // ---- رویداد کلیک روی هدر همه نظرات ----
-  allCommentsToggle.addEventListener('click', async () => {
-    allCommentsVisible = !allCommentsVisible;
-    allCommentsList.style.display = allCommentsVisible ? 'block' : 'none';
-    allCommentsToggle.querySelector('span:last-child').textContent = allCommentsVisible ? '▲' : '▼';
-    if (allCommentsVisible) {
-      await loadAllComments();
-    }
-  });
+  // ---- رویداد کلیک روی هدر همه نظرات (فقط در صورت وجود المان) ----
+  if (allCommentsToggle) {
+    allCommentsToggle.addEventListener('click', async () => {
+      allCommentsVisible = !allCommentsVisible;
+      if (allCommentsList) {
+        allCommentsList.style.display = allCommentsVisible ? 'block' : 'none';
+      }
+      const arrow = allCommentsToggle.querySelector('span:last-child');
+      if (arrow) arrow.textContent = allCommentsVisible ? '▲' : '▼';
+      if (allCommentsVisible) {
+        await loadAllComments();
+      }
+    });
+  }
 
   // ---- رویدادهای ناوبری ----
   surahSelect.addEventListener('change', async () => {
