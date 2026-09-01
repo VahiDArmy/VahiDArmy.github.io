@@ -6,13 +6,20 @@
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
-  // ---- عناصر جدید برای همه کامنت‌ها (با چک وجود) ----
+  // ---- عناصر جدید برای همه نظرات (با صفحه‌بندی) ----
   const allCommentsToggle = document.getElementById('allCommentsToggle');
+  const allCommentsContainer = document.getElementById('allCommentsContainer');
   const allCommentsList = document.getElementById('allCommentsList');
   const allCommentsCount = document.getElementById('allCommentsCount');
-  let allCommentsLoaded = false;
-  let allCommentsData = [];
+  const loadMoreBtn = document.getElementById('loadMoreCommentsBtn');
+  const loadingIndicator = document.getElementById('allCommentsLoading');
+
   let allCommentsVisible = false;
+  let currentOffset = 0;
+  const PAGE_SIZE = 10;
+  let totalComments = 0;
+  let isLoading = false;
+  let hasMore = true;
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(surahSelect, index, 1);
@@ -130,6 +137,8 @@
         contentInput.value = '';
         loadComments(tafsirId);
         UI.toast('نظر شما ثبت شد');
+        // اگر بخش همه نظرات باز است، دوباره بارگیری نمی‌کنیم (صفحه‌بندی به‌روز نمی‌شود)
+        // اما می‌توانیم بعداً یک دکمهٔ «به‌روزرسانی» اضافه کنیم
       });
     });
 
@@ -169,10 +178,12 @@
           if (!confirm('این نظر حذف شود؟')) return;
           await Store.deleteComment(btn.getAttribute('data-delete-comment'));
           loadComments(tafsirId);
-          // اگر لیست همه نظرات باز است، آن را نیز به‌روز کن
-          if (allCommentsVisible && allCommentsList) {
-            allCommentsData = await Store.getAllCommentsWithTafsirInfo();
-            renderAllComments();
+          // اگر بخش همه نظرات باز است، کل لیست را از نو بارگیری می‌کنیم
+          if (allCommentsVisible) {
+            currentOffset = 0;
+            allCommentsList.innerHTML = '';
+            hasMore = true;
+            await loadMoreComments(true);
           }
         });
       });
@@ -185,77 +196,136 @@
     return div.innerHTML;
   }
 
-  // ---- توابع مربوط به همه نظرات (فقط در صورت وجود المان‌ها) ----
-  async function loadAllComments() {
-    if (!allCommentsList) return;
-    if (allCommentsLoaded) return;
-    allCommentsList.innerHTML = `<div class="skeleton" style="height:40px;"></div>`;
+  // =============================================================
+  //  توابع مربوط به همه نظرات (با صفحه‌بندی)
+  // =============================================================
+
+  // بارگیری اولین صفحه یا بازنشانی
+  async function loadMoreComments(reset = false) {
+    if (isLoading) return;
+    if (!hasMore && !reset) return;
+
+    isLoading = true;
+    loadingIndicator.style.display = 'block';
+    loadMoreBtn.style.display = 'none';
+
     try {
-      allCommentsData = await Store.getAllCommentsWithTafsirInfo();
-      allCommentsLoaded = true;
-      renderAllComments();
-    } catch (err) {
-      allCommentsList.innerHTML = `<p style="color:var(--text-faint);">خطا در بارگذاری نظرات</p>`;
-      console.error(err);
-    }
-  }
+      if (reset) {
+        currentOffset = 0;
+        allCommentsList.innerHTML = '';
+        hasMore = true;
+        // دریافت تعداد کل
+        totalComments = await Store.getCommentsCount();
+        if (allCommentsCount) {
+          allCommentsCount.textContent = `(${UI.toPersianDigits(totalComments)})`;
+        }
+      }
 
-  function renderAllComments() {
-    if (!allCommentsList) return;
-    if (!allCommentsData.length) {
-      allCommentsList.innerHTML = `<p style="color:var(--text-faint); font-size:0.85rem;">هنوز هیچ نظری ثبت نشده.</p>`;
-      if (allCommentsCount) allCommentsCount.textContent = '(۰)';
-      return;
-    }
-    if (allCommentsCount) allCommentsCount.textContent = `(${UI.toPersianDigits(allCommentsData.length)})`;
-    allCommentsList.innerHTML = allCommentsData
-      .map((c) => {
-        const surahName = (index.find((s) => s.number === c.surah) || {}).name_fa || c.surah;
-        const date = new Date(c.created_at).toLocaleDateString('fa-IR');
-        return `
-        <div class="tafsir-card" style="padding:12px 16px; margin-top:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-            <span style="font-weight:600; color:var(--neon);">${escapeHtml(c.guest_name)}</span>
-            <span style="font-size:0.75rem; color:var(--text-faint);">${date}</span>
-          </div>
-          <div style="font-size:0.85rem; color:var(--text-dim); line-height:1.8; white-space:pre-wrap; margin:4px 0 8px;">${escapeHtml(c.content)}</div>
-          <div style="display:flex; gap:10px; font-size:0.75rem; flex-wrap:wrap;">
-            <a href="browse.html?surah=${c.surah}&ayah=${c.ayah}" style="color:var(--neon); text-decoration:underline;">
-              سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(c.ayah)}
-            </a>
-            <span style="color:var(--text-faint);">تفسیر #${c.tafsir_id.slice(0,8)}</span>
-          </div>
-          ${isOwner ? `<button class="btn btn--sm" style="margin-top:6px;" data-delete-global-comment="${c.id}">🗑 حذف</button>` : ''}
-        </div>`;
-      })
-      .join('');
+      const comments = await Store.getCommentsPaginated(PAGE_SIZE, currentOffset);
+      if (!comments.length) {
+        hasMore = false;
+        if (currentOffset === 0) {
+          allCommentsList.innerHTML = `<p style="color:var(--text-faint); font-size:0.85rem;">هنوز هیچ نظری ثبت نشده.</p>`;
+          if (allCommentsCount) allCommentsCount.textContent = '(۰)';
+        }
+        loadMoreBtn.style.display = 'none';
+        isLoading = false;
+        loadingIndicator.style.display = 'none';
+        return;
+      }
 
-    if (isOwner) {
-      allCommentsList.querySelectorAll('[data-delete-global-comment]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-delete-global-comment');
-          if (!confirm('این نظر حذف شود؟')) return;
-          await Store.deleteComment(id);
-          allCommentsData = await Store.getAllCommentsWithTafsirInfo();
-          renderAllComments();
-          UI.toast('نظر حذف شد');
+      // رندر کامنت‌ها
+      const html = comments
+        .map((c) => {
+          const surahName = (index.find((s) => s.number === c.surah) || {}).name_fa || c.surah;
+          const date = new Date(c.created_at).toLocaleDateString('fa-IR');
+          return `
+          <div class="tafsir-card" style="padding:12px 16px; margin-top:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <span style="font-weight:600; color:var(--neon);">${escapeHtml(c.guest_name)}</span>
+              <span style="font-size:0.75rem; color:var(--text-faint);">${date}</span>
+            </div>
+            <div style="font-size:0.85rem; color:var(--text-dim); line-height:1.8; white-space:pre-wrap; margin:4px 0 8px;">${escapeHtml(c.content)}</div>
+            <div style="display:flex; gap:10px; font-size:0.75rem; flex-wrap:wrap;">
+              <a href="browse.html?surah=${c.surah}&ayah=${c.ayah}" style="color:var(--neon); text-decoration:underline;">
+                سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(c.ayah)}
+              </a>
+              <span style="color:var(--text-faint);">تفسیر #${c.tafsir_id.slice(0,8)}</span>
+            </div>
+            ${isOwner ? `<button class="btn btn--sm" style="margin-top:6px;" data-delete-global-comment="${c.id}">🗑 حذف</button>` : ''}
+          </div>`;
+        })
+        .join('');
+
+      if (reset) {
+        allCommentsList.innerHTML = html;
+      } else {
+        allCommentsList.insertAdjacentHTML('beforeend', html);
+      }
+
+      currentOffset += comments.length;
+      hasMore = comments.length === PAGE_SIZE;
+
+      // نمایش دکمه بارگیری بیشتر اگر کامنت بیشتری وجود دارد
+      if (hasMore) {
+        loadMoreBtn.style.display = 'block';
+      } else {
+        loadMoreBtn.style.display = 'none';
+      }
+
+      // رویدادهای حذف برای کامنت‌های تازه اضافه شده
+      if (isOwner) {
+        allCommentsList.querySelectorAll('[data-delete-global-comment]').forEach((btn) => {
+          // حذف رویدادهای تکراری
+          btn.removeEventListener('click', handleGlobalDelete);
+          btn.addEventListener('click', handleGlobalDelete);
         });
-      });
+      }
+
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در بارگیری نظرات');
+    } finally {
+      isLoading = false;
+      loadingIndicator.style.display = 'none';
     }
   }
 
-  // ---- رویداد کلیک روی هدر همه نظرات (فقط در صورت وجود المان) ----
+  // تابع جداگانه برای رویداد حذف کامنت سراسری
+  async function handleGlobalDelete(e) {
+    const btn = e.currentTarget;
+    const id = btn.getAttribute('data-delete-global-comment');
+    if (!confirm('این نظر حذف شود؟')) return;
+    await Store.deleteComment(id);
+    UI.toast('نظر حذف شد');
+    // بازنشانی و بارگیری مجدد
+    currentOffset = 0;
+    allCommentsList.innerHTML = '';
+    hasMore = true;
+    await loadMoreComments(true);
+  }
+
+  // ---- رویداد کلیک روی هدر همه نظرات ----
   if (allCommentsToggle) {
     allCommentsToggle.addEventListener('click', async () => {
       allCommentsVisible = !allCommentsVisible;
-      if (allCommentsList) {
-        allCommentsList.style.display = allCommentsVisible ? 'block' : 'none';
-      }
+      allCommentsContainer.style.display = allCommentsVisible ? 'block' : 'none';
       const arrow = allCommentsToggle.querySelector('span:last-child');
       if (arrow) arrow.textContent = allCommentsVisible ? '▲' : '▼';
       if (allCommentsVisible) {
-        await loadAllComments();
+        // بارگیری اولین صفحه
+        currentOffset = 0;
+        allCommentsList.innerHTML = '';
+        hasMore = true;
+        await loadMoreComments(true);
       }
+    });
+  }
+
+  // ---- رویداد دکمه بارگیری بیشتر ----
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', () => {
+      loadMoreComments(false);
     });
   }
 
