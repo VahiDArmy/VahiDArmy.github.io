@@ -6,6 +6,11 @@
   const prevBtn = document.getElementById('prevBtn');
   const nextBtn = document.getElementById('nextBtn');
 
+  // ---- عناصر جدید برای همه کامنت‌ها ----
+  const allCommentsToggle = document.getElementById('allCommentsToggle');
+  const allCommentsList = document.getElementById('allCommentsList');
+  const allCommentsCount = document.getElementById('allCommentsCount');
+
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(surahSelect, index, 1);
 
@@ -16,6 +21,71 @@
   } catch (e) {
     isOwner = false;
   }
+
+  // ---- بارگذاری همه کامنت‌ها (فقط در صورت باز شدن) ----
+  let allCommentsLoaded = false;
+  let allCommentsData = [];
+
+  async function loadAllComments() {
+    if (allCommentsLoaded) return;
+    allCommentsList.innerHTML = `<div class="skeleton" style="height:40px;"></div>`;
+    try {
+      allCommentsData = await Store.getAllCommentsWithTafsirInfo();
+      allCommentsLoaded = true;
+      renderAllComments();
+    } catch (err) {
+      allCommentsList.innerHTML = `<p style="color:var(--text-faint);">خطا در بارگذاری نظرات</p>`;
+      console.error(err);
+    }
+  }
+
+  function renderAllComments() {
+    if (!allCommentsData.length) {
+      allCommentsList.innerHTML = `<p style="color:var(--text-faint); font-size:0.85rem;">هنوز هیچ نظری ثبت نشده.</p>`;
+      allCommentsCount.textContent = '(۰)';
+      return;
+    }
+    allCommentsCount.textContent = `(${UI.toPersianDigits(allCommentsData.length)})`;
+    allCommentsList.innerHTML = allCommentsData
+      .map((c) => {
+        const surahName = (index.find((s) => s.number === c.surah) || {}).name_fa || c.surah;
+        const date = new Date(c.created_at).toLocaleDateString('fa-IR');
+        return `
+        <div class="tafsir-card" style="padding:12px 16px; margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <span style="font-weight:600; color:var(--neon);">${escapeHtml(c.guest_name)}</span>
+            <span style="font-size:0.75rem; color:var(--text-faint);">${date}</span>
+          </div>
+          <div style="font-size:0.85rem; color:var(--text-dim); line-height:1.8; white-space:pre-wrap; margin:4px 0 8px;">${escapeHtml(c.content)}</div>
+          <div style="display:flex; gap:10px; font-size:0.75rem;">
+            <a href="browse.html?surah=${c.surah}&ayah=${c.ayah}" style="color:var(--neon); text-decoration:underline;">
+              سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(c.ayah)}
+            </a>
+            <span style="color:var(--text-faint);">تفسیر #${c.tafsir_id.slice(0,8)}</span>
+          </div>
+        </div>`;
+      })
+      .join('');
+  }
+
+  // ---- رویداد کلیک روی هدر بخش کامنت‌ها ----
+  let allCommentsVisible = false;
+  allCommentsToggle.addEventListener('click', async () => {
+    allCommentsVisible = !allCommentsVisible;
+    allCommentsList.style.display = allCommentsVisible ? 'block' : 'none';
+    allCommentsToggle.querySelector('span:last-child').textContent = allCommentsVisible ? '▲' : '▼';
+    if (allCommentsVisible) {
+      await loadAllComments();
+    }
+  });
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---- بقیه کدهای browse.js (بدون تغییر) ----
 
   function parseHash() {
     const m = location.hash.match(/^#\/(\d+)\/(\d+)$/);
@@ -73,7 +143,6 @@
         </div>`;
       return;
     }
-    const surahName = (index.find((s) => s.number === surah) || {}).name_fa || surah;
     tafsirsListEl.innerHTML = tafsirs
       .map((t) => {
         const date = new Date(t.created_at).toLocaleDateString('fa-IR');
@@ -92,7 +161,7 @@
               : ''
           }
           <div class="tafsir-card__actions">
-            <button class="btn btn--sm" data-copy="${t.id}" data-content="${escapeHtml(t.content.replace(/"/g, '&quot;'))}">📋 کپی</button>
+            <button class="btn btn--sm" data-copy="${t.id}">📋 کپی</button>
           </div>
           <div class="comment-list" data-comments="${t.id}"></div>
           <form class="comment-form" data-comment-form="${t.id}" style="margin-top:12px;">
@@ -126,7 +195,6 @@
       });
     });
 
-    // ---- رویداد کپی ----
     tafsirsListEl.querySelectorAll('[data-copy]').forEach((btn) => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-copy');
@@ -163,15 +231,14 @@
           if (!confirm('این نظر حذف شود؟')) return;
           await Store.deleteComment(btn.getAttribute('data-delete-comment'));
           loadComments(tafsirId);
+          // همچنین لیست همه کامنت‌ها را به‌روز می‌کنیم اگر باز باشد
+          if (allCommentsVisible) {
+            allCommentsData = await Store.getAllCommentsWithTafsirInfo();
+            renderAllComments();
+          }
         });
       });
     }
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
   }
 
   surahSelect.addEventListener('change', async () => {
