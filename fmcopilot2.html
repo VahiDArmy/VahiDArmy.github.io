@@ -5,86 +5,155 @@
 <title>vahidarmy File Manager</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Monaco Editor CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-
 <style>
+  * { box-sizing: border-box; }
+
   body {
     margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     background: #05060a;
     color: #e9ecf5;
-    font-family: system-ui;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
   }
 
-  .layout {
+  .top {
+    padding: 10px 12px;
+    background: #0b0d14;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-size: 13px;
+  }
+
+  .top span {
+    display: block;
+    opacity: 0.7;
+    font-size: 11px;
+  }
+
+  .main {
     flex: 1;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr auto;
-  }
-
-  @media (min-width: 768px) {
-    .layout {
-      grid-template-columns: 260px 1fr;
-      grid-template-rows: 1fr auto;
-    }
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    gap: 8px;
   }
 
   .panel {
     background: #0b0d14;
     border-radius: 10px;
-    margin: 6px;
+    padding: 8px;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0;
   }
 
   .panel-header {
-    padding: 10px;
     font-size: 12px;
-    letter-spacing: 0.08em;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 6px;
+    opacity: 0.8;
   }
 
   .file-list {
     list-style: none;
-    padding: 0;
     margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    max-height: 50vh;
   }
 
   .file-item {
-    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 6px;
     font-size: 13px;
+    background: #05060a;
+  }
+
+  .file-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .file-icon {
+    width: 20px;
+    text-align: center;
+  }
+
+  .file-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .file-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
+    border: none;
+    background: #15192a;
+    color: #e9ecf5;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 11px;
     cursor: pointer;
   }
 
-  .file-item:hover {
-    background: rgba(255,255,255,0.05);
+  .icon-btn.danger {
+    background: #ff4f6a;
+    color: #05060a;
   }
 
-  #editor {
+  .editor-area {
     flex: 1;
-    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-top: 8px;
   }
 
-  /* Bottom bar */
-  .bottom-bar {
-    background: #101426;
+  .editor-title {
+    font-size: 12px;
+    margin-bottom: 4px;
+    opacity: 0.8;
+  }
+
+  textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #05060a;
+    color: #e9ecf5;
     padding: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    outline: none;
+  }
+
+  .bottom-bar {
+    padding: 8px;
+    background: #0b0d14;
+    border-top: 1px solid rgba(255,255,255,0.08);
     display: flex;
     gap: 8px;
     justify-content: center;
-    border-top: 1px solid rgba(255,255,255,0.05);
   }
 
   .btn {
+    border: none;
     background: #15192a;
     color: #e9ecf5;
-    padding: 8px 14px;
     border-radius: 999px;
+    padding: 6px 12px;
     font-size: 12px;
     cursor: pointer;
   }
@@ -95,30 +164,29 @@
   }
 </style>
 </head>
-
 <body>
-<div class="layout">
 
-  <!-- File panel -->
-  <div class="panel" id="panel-files">
-    <div class="panel-header">Files (root only)</div>
-    <ul class="file-list" id="file-list"></ul>
-  </div>
+<div class="top">
+  File Manager – <strong>vahidarmy.github.io</strong>
+  <span>Root only · click icons to open or delete</span>
+</div>
 
-  <!-- Editor panel -->
+<div class="main">
   <div class="panel">
-    <div class="panel-header" id="editor-title">No file selected</div>
-    <div id="editor"></div>
-  </div>
+    <div class="panel-header">Files in /</div>
+    <ul class="file-list" id="file-list"></ul>
 
-  <!-- Bottom bar -->
-  <div class="bottom-bar">
-    <button class="btn" id="btn-open-window">Open in new window</button>
-    <button class="btn btn-accent" id="btn-save">Save</button>
-    <button class="btn" id="btn-run">Run Python</button>
-    <button class="btn" id="btn-refresh">Refresh</button>
+    <div class="editor-area">
+      <div class="editor-title" id="editor-title">No file selected</div>
+      <textarea id="editor-text" spellcheck="false"></textarea>
+    </div>
   </div>
+</div>
 
+<div class="bottom-bar">
+  <button class="btn" id="btn-set-token">Set PAT</button>
+  <button class="btn" id="btn-refresh">Refresh</button>
+  <button class="btn btn-accent" id="btn-save">Save current file</button>
 </div>
 
 <script>
@@ -127,23 +195,14 @@ const REPO = "vahidarmy.github.io";
 const BASE_URL = "https://vahidarmy.github.io/";
 
 let currentFile = null;
-let editor = null;
 
-/* ------------------ Monaco Editor Init ------------------ */
-require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
-require(["vs/editor/editor.main"], function () {
-  editor = monaco.editor.create(document.getElementById("editor"), {
-    value: "",
-    language: "javascript",
-    theme: "vs-dark",
-    automaticLayout: true,
-    fontSize: 13
-  });
-});
-
-/* ------------------ GitHub API ------------------ */
 function getToken() {
   return localStorage.getItem("github_pat") || "";
+}
+
+function setToken() {
+  const t = prompt("Enter GitHub PAT:", getToken());
+  if (t) localStorage.setItem("github_pat", t.trim());
 }
 
 async function gh(path, options = {}) {
@@ -152,108 +211,138 @@ async function gh(path, options = {}) {
     alert("Set PAT first");
     throw "No PAT";
   }
-
   options.headers = {
     "Authorization": "Bearer " + token,
     "Accept": "application/vnd.github+json",
     "X-GitHub-Api-Version": "2022-11-28"
   };
-
   const res = await fetch("https://api.github.com" + path, options);
   if (!res.ok) throw await res.text();
   return res.json();
 }
 
-/* ------------------ Load root directory ------------------ */
 async function loadRoot() {
   const list = document.getElementById("file-list");
-  list.innerHTML = "<li style='padding:8px;opacity:.7'>Loading...</li>";
+  list.innerHTML = "<li style='padding:6px;font-size:12px;opacity:.7'>Loading...</li>";
+  try {
+    const data = await gh(`/repos/${USERNAME}/${REPO}/contents/`);
+    list.innerHTML = "";
+    data
+      .filter(i => i.type === "file") // root files only
+      .forEach(item => {
+        const li = document.createElement("li");
+        li.className = "file-item";
 
-  const data = await gh(`/repos/${USERNAME}/${REPO}/contents/`);
-  list.innerHTML = "";
+        const left = document.createElement("div");
+        left.className = "file-left";
 
-  data.forEach(item => {
-    const li = document.createElement("li");
-    li.className = "file-item";
-    li.textContent = item.name;
-    li.dataset.path = item.path;
-    li.dataset.sha = item.sha;
-    li.dataset.type = item.type;
+        const icon = document.createElement("div");
+        icon.className = "file-icon";
+        icon.textContent = "📄";
 
-    li.onclick = () => openFile(item);
+        const name = document.createElement("div");
+        name.className = "file-name";
+        name.textContent = item.name;
 
-    list.appendChild(li);
-  });
+        left.appendChild(icon);
+        left.appendChild(name);
+
+        const actions = document.createElement("div");
+        actions.className = "file-actions";
+
+        const openBtn = document.createElement("button");
+        openBtn.className = "icon-btn";
+        openBtn.textContent = "Open";
+        openBtn.onclick = () => openInNewTab(item);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "icon-btn danger";
+        delBtn.textContent = "Del";
+        delBtn.onclick = () => deleteFile(item);
+
+        const editBtn = document.createElement("button");
+        editBtn.className = "icon-btn";
+        editBtn.textContent = "Edit";
+        editBtn.onclick = () => openFileInEditor(item);
+
+        actions.appendChild(openBtn);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+
+        li.appendChild(left);
+        li.appendChild(actions);
+        list.appendChild(li);
+      });
+  } catch (e) {
+    list.innerHTML = "<li style='padding:6px;font-size:12px;color:#ff4f6a'>Error loading root</li>";
+    console.error(e);
+  }
 }
 
-/* ------------------ Open file ------------------ */
-async function openFile(item) {
-  if (item.type !== "file") return;
-
-  const data = await gh(`/repos/${USERNAME}/${REPO}/contents/${item.path}`);
-  const content = atob(data.content.replace(/\n/g, ""));
-
-  currentFile = item;
-  document.getElementById("editor-title").textContent = item.path;
-
-  // Detect language
-  const ext = item.name.split(".").pop();
-  const lang = {
-    html: "html",
-    css: "css",
-    js: "javascript",
-    py: "python"
-  }[ext] || "plaintext";
-
-  monaco.editor.setModelLanguage(editor.getModel(), lang);
-  editor.setValue(content);
+function openInNewTab(item) {
+  window.open(BASE_URL + item.path, "_blank");
 }
 
-/* ------------------ Save file ------------------ */
-async function saveFile() {
-  if (!currentFile) return;
-
-  const text = editor.getValue();
-  const body = {
-    message: "Update " + currentFile.path,
-    content: btoa(text),
-    sha: currentFile.sha
-  };
-
-  await gh(`/repos/${USERNAME}/${REPO}/contents/${currentFile.path}`, {
-    method: "PUT",
-    body: JSON.stringify(body)
-  });
-
-  alert("Saved");
-  loadRoot();
+async function deleteFile(item) {
+  if (!confirm("Delete " + item.path + " ?")) return;
+  try {
+    await gh(`/repos/${USERNAME}/${REPO}/contents/${item.path}`, {
+      method: "DELETE",
+      body: JSON.stringify({
+        message: "Delete " + item.path,
+        sha: item.sha
+      })
+    });
+    loadRoot();
+  } catch (e) {
+    alert("Delete failed");
+    console.error(e);
+  }
 }
 
-/* ------------------ Open in new window ------------------ */
-function openInNewWindow() {
-  if (!currentFile) return;
-  window.open(BASE_URL + currentFile.path, "_blank");
+async function openFileInEditor(item) {
+  try {
+    const data = await gh(`/repos/${USERNAME}/${REPO}/contents/${item.path}`);
+    const content = atob(data.content.replace(/\n/g, ""));
+    currentFile = { path: item.path, sha: item.sha };
+    document.getElementById("editor-title").textContent = item.path;
+    document.getElementById("editor-text").value = content;
+  } catch (e) {
+    alert("Open failed");
+    console.error(e);
+  }
 }
 
-/* ------------------ Run Python ------------------ */
-function runPython() {
-  const ext = currentFile?.name.split(".").pop();
-  if (ext !== "py") {
-    alert("Not a Python file");
+async function saveCurrentFile() {
+  if (!currentFile) {
+    alert("No file selected");
     return;
   }
-  alert("Python runner will be added (Skulpt)");
+  const text = document.getElementById("editor-text").value;
+  try {
+    const body = {
+      message: "Update " + currentFile.path,
+      content: btoa(text),
+      sha: currentFile.sha
+    };
+    const res = await gh(`/repos/${USERNAME}/${REPO}/contents/${currentFile.path}`, {
+      method: "PUT",
+      body: JSON.stringify(body)
+    });
+    currentFile.sha = res.content.sha;
+    alert("Saved");
+    loadRoot();
+  } catch (e) {
+    alert("Save failed");
+    console.error(e);
+  }
 }
 
-/* ------------------ Buttons ------------------ */
-document.getElementById("btn-save").onclick = saveFile;
-document.getElementById("btn-open-window").onclick = openInNewWindow;
-document.getElementById("btn-run").onclick = runPython;
+document.getElementById("btn-set-token").onclick = setToken;
 document.getElementById("btn-refresh").onclick = loadRoot;
+document.getElementById("btn-save").onclick = saveCurrentFile;
 
-/* ------------------ Start ------------------ */
 loadRoot();
 </script>
-
 </body>
 </html>
