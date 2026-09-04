@@ -160,18 +160,48 @@ function showAuth() {
 }
 
 async function showDashboard() {
-  $("#auth-view")?.classList.remove("active");
-  $("#app-view")?.classList.add("active");
+  console.log("showDashboard شروع شد");
 
-  if ($("#user-email")) {
-    $("#user-email").textContent = currentUser.email;
+  const authView = document.querySelector("#auth-view");
+  const appView = document.querySelector("#app-view");
+
+  console.log("authView:", authView);
+  console.log("appView:", appView);
+
+  if (!authView || !appView) {
+    console.error(
+      "عنصر auth-view یا app-view در HTML پیدا نشد."
+    );
+
+    showMessage(
+      "ساختار HTML صفحه‌ها پیدا نشد. idها را بررسی کنید.",
+      "error"
+    );
+
+    return;
   }
 
-  await loadGoals();
-  await loadTodayLogs();
-  await loadWeightLogs();
-}
+  authView.classList.remove("active");
+  appView.classList.add("active");
 
+  console.log("کلاس‌های صفحات تغییر کردند");
+
+  const userEmail = document.querySelector("#user-email");
+
+  if (userEmail && currentUser) {
+    userEmail.textContent = currentUser.email;
+  }
+
+  try {
+    await loadGoals();
+    await loadTodayLogs();
+    await loadWeightLogs();
+
+    console.log("اطلاعات داشبورد بارگذاری شد");
+  } catch (error) {
+    console.error("خطا در بارگذاری داشبورد:", error);
+  }
+}
 /* ---------------------------------------------------------
    ورود و ثبت‌نام
    --------------------------------------------------------- */
