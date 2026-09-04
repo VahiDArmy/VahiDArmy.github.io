@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes" />
-    <title>GitHub File Manager</title>
+    <title>FileForge — GitHub File Manager</title>
 
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- Font Awesome 6 (Free) - updated to stable version -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- Font Awesome 6 (Free) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <!-- Prism.js (lightweight) -->
+    <!-- Prism.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js">
     </script>
@@ -32,16 +32,16 @@
             box-sizing: border-box;
         }
         :root {
-            --bg-primary: #0b0e14;
-            --bg-secondary: #131820;
-            --bg-card: rgba(255, 255, 255, 0.04);
-            --bg-glass: rgba(255, 255, 255, 0.06);
+            --bg-primary: rgba(11, 14, 20, 0.82);
+            --bg-secondary: rgba(19, 24, 32, 0.70);
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-glass: rgba(255, 255, 255, 0.04);
             --border-glass: rgba(255, 255, 255, 0.08);
             --text-primary: #f0f4ff;
             --text-secondary: #a8b5d9;
             --text-muted: #5e6f94;
             --accent: #7c6df0;
-            --accent-glow: rgba(124, 109, 240, 0.35);
+            --accent-glow: rgba(124, 109, 240, 0.45);
             --accent-secondary: #4fc3ff;
             --danger: #ff5e7a;
             --success: #4cd9a0;
@@ -50,19 +50,20 @@
             --radius-sm: 8px;
             --shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
             --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
         }
         html,
         body {
             height: 100%;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
+            background: #0b0e14;
             color: var(--text-primary);
             overflow: hidden;
             user-select: none;
         }
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
         ::-webkit-scrollbar-track {
             background: transparent;
@@ -81,11 +82,11 @@
             width: 600px;
             height: 600px;
             border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.15;
+            filter: blur(140px);
+            opacity: 0.18;
             pointer-events: none;
             z-index: 0;
-            animation: floatGlow 12s ease-in-out infinite alternate;
+            animation: floatGlow 14s ease-in-out infinite alternate;
         }
         .bg-glow.g1 {
             top: -200px;
@@ -105,7 +106,7 @@
             width: 400px;
             height: 400px;
             background: #f9c74f;
-            opacity: 0.06;
+            opacity: 0.08;
             animation-delay: 8s;
         }
         @keyframes floatGlow {
@@ -113,7 +114,7 @@
                 transform: translate(0, 0) scale(1);
             }
             100% {
-                transform: translate(40px, -30px) scale(1.15);
+                transform: translate(50px, -40px) scale(1.2);
             }
         }
 
@@ -127,6 +128,7 @@
             padding: 12px;
             gap: 12px;
             background: transparent;
+            backdrop-filter: blur(2px);
         }
 
         /* ===== TOP BAR ===== */
@@ -135,14 +137,19 @@
             align-items: center;
             justify-content: space-between;
             padding: 10px 20px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: var(--radius);
             flex-shrink: 0;
             gap: 12px;
             flex-wrap: wrap;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            transition: var(--transition);
+        }
+        .topbar:hover {
+            border-color: rgba(255, 255, 255, 0.12);
         }
         .topbar .brand {
             display: flex;
@@ -155,7 +162,17 @@
         .topbar .brand i {
             color: var(--accent);
             font-size: 1.3rem;
-            filter: drop-shadow(0 0 12px var(--accent-glow));
+            filter: drop-shadow(0 0 20px var(--accent-glow));
+            animation: pulseGlow 3s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%,
+            100% {
+                filter: drop-shadow(0 0 20px var(--accent-glow));
+            }
+            50% {
+                filter: drop-shadow(0 0 40px var(--accent-glow));
+            }
         }
         .topbar .brand span {
             background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
@@ -174,10 +191,10 @@
         .topbar .path-display {
             font-size: 0.8rem;
             color: var(--text-secondary);
-            background: var(--bg-card);
+            background: rgba(255, 255, 255, 0.04);
             padding: 4px 14px;
             border-radius: 30px;
-            border: 1px solid var(--border-glass);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             flex: 1;
             min-width: 120px;
             overflow: hidden;
@@ -187,6 +204,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            backdrop-filter: blur(8px);
         }
         .topbar .path-display i {
             color: var(--accent-secondary);
@@ -203,8 +221,8 @@
             flex-wrap: wrap;
         }
         .topbar .actions .token-input {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 30px;
             padding: 6px 14px;
             color: var(--text-primary);
@@ -213,10 +231,11 @@
             outline: none;
             transition: var(--transition);
             font-family: inherit;
+            backdrop-filter: blur(4px);
         }
         .topbar .actions .token-input:focus {
             border-color: var(--accent);
-            box-shadow: 0 0 20px var(--accent-glow);
+            box-shadow: 0 0 30px var(--accent-glow);
         }
         .topbar .actions .token-input::placeholder {
             color: var(--text-muted);
@@ -232,48 +251,58 @@
             font-size: 0.78rem;
             cursor: pointer;
             transition: var(--transition);
-            background: var(--bg-card);
+            background: rgba(255, 255, 255, 0.05);
             color: var(--text-secondary);
-            border: 1px solid var(--border-glass);
+            border: 1px solid rgba(255, 255, 255, 0.07);
             font-family: inherit;
             white-space: nowrap;
+            backdrop-filter: blur(4px);
         }
         .btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
             color: var(--text-primary);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .btn:active {
+            transform: scale(0.97);
         }
         .btn-primary {
             background: var(--accent);
             color: #fff;
             border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
         }
         .btn-primary:hover {
             background: #6a5cd6;
             border-color: #6a5cd6;
             color: #fff;
-            box-shadow: 0 6px 30px var(--accent-glow);
+            box-shadow: 0 0 50px var(--accent-glow);
         }
         .btn-success {
             background: var(--success);
             color: #0b0e14;
             border-color: var(--success);
+            box-shadow: 0 0 30px rgba(76, 217, 160, 0.3);
         }
         .btn-success:hover {
             background: #3bc48a;
             border-color: #3bc48a;
             color: #0b0e14;
+            box-shadow: 0 0 50px rgba(76, 217, 160, 0.4);
         }
         .btn-danger {
             background: var(--danger);
             color: #fff;
             border-color: var(--danger);
+            box-shadow: 0 0 30px rgba(255, 94, 122, 0.3);
         }
         .btn-danger:hover {
             background: #e94a66;
             border-color: #e94a66;
             color: #fff;
+            box-shadow: 0 0 50px rgba(255, 94, 122, 0.4);
         }
         .btn-sm {
             padding: 4px 12px;
@@ -285,6 +314,16 @@
             padding: 0;
             justify-content: center;
             border-radius: 50%;
+        }
+        .btn-upload {
+            background: rgba(79, 195, 255, 0.15);
+            border-color: rgba(79, 195, 255, 0.25);
+            color: var(--accent-secondary);
+        }
+        .btn-upload:hover {
+            background: rgba(79, 195, 255, 0.25);
+            border-color: rgba(79, 195, 255, 0.4);
+            box-shadow: 0 0 40px rgba(79, 195, 255, 0.2);
         }
 
         /* ===== MAIN LAYOUT ===== */
@@ -299,10 +338,10 @@
         .sidebar {
             width: 260px;
             min-width: 200px;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius);
             padding: 12px 6px 12px 12px;
             display: flex;
@@ -310,13 +349,17 @@
             overflow: hidden;
             flex-shrink: 0;
             transition: var(--transition);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .sidebar:hover {
+            border-color: rgba(255, 255, 255, 0.10);
         }
         .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 6px 10px 6px;
-            border-bottom: 1px solid var(--border-glass);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
         }
         .sidebar-header h4 {
@@ -350,13 +393,15 @@
             white-space: nowrap;
         }
         .tree-item:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.07);
             color: var(--text-primary);
+            transform: translateX(3px);
         }
         .tree-item.active {
-            background: rgba(124, 109, 240, 0.15);
+            background: rgba(124, 109, 240, 0.18);
             color: var(--text-primary);
             border-left: 3px solid var(--accent);
+            box-shadow: inset 0 0 30px rgba(124, 109, 240, 0.05);
         }
         .tree-item .icon {
             width: 20px;
@@ -368,13 +413,6 @@
             flex: 1;
             overflow: hidden;
             text-overflow: ellipsis;
-        }
-        .tree-item .badge {
-            font-size: 0.6rem;
-            background: var(--bg-card);
-            padding: 0 8px;
-            border-radius: 20px;
-            color: var(--text-muted);
         }
         .tree-item.folder>.icon {
             color: var(--warning);
@@ -394,7 +432,7 @@
             padding-left: 20px;
             overflow: hidden;
             max-height: 0;
-            transition: max-height 0.3s ease, opacity 0.25s ease;
+            transition: max-height 0.35s ease, opacity 0.3s ease;
             opacity: 0;
         }
         .tree-children.open {
@@ -411,15 +449,20 @@
         /* ===== CONTENT AREA ===== */
         .content {
             flex: 1;
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             min-width: 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: var(--transition);
+        }
+        .content:hover {
+            border-color: rgba(255, 255, 255, 0.09);
         }
 
         /* File List View */
@@ -433,8 +476,8 @@
             align-content: start;
         }
         .file-list .file-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius-sm);
             padding: 14px 10px;
             display: flex;
@@ -445,12 +488,16 @@
             transition: var(--transition);
             text-align: center;
             position: relative;
+            backdrop-filter: blur(4px);
         }
         .file-list .file-card:hover {
-            background: rgba(255, 255, 255, 0.07);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
             border-color: var(--accent);
+        }
+        .file-list .file-card:active {
+            transform: scale(0.96);
         }
         .file-list .file-card .f-icon {
             font-size: 2.2rem;
@@ -489,10 +536,11 @@
             align-items: center;
             gap: 6px;
             padding: 6px 14px;
-            border-bottom: 1px solid var(--border-glass);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
             flex-wrap: wrap;
-            background: var(--bg-card);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
         }
         .editor-toolbar .file-name {
             font-weight: 600;
@@ -523,11 +571,12 @@
         }
         .editor-toolbar .tabs .tab-btn:hover {
             color: var(--text-primary);
-            background: var(--bg-card);
+            background: rgba(255, 255, 255, 0.06);
         }
         .editor-toolbar .tabs .tab-btn.active {
             background: var(--accent);
             color: #fff;
+            box-shadow: 0 0 30px var(--accent-glow);
         }
         .editor-toolbar .open-browser-btn {
             display: none;
@@ -540,16 +589,46 @@
             display: flex;
             overflow: hidden;
             position: relative;
+            background: rgba(0, 0, 0, 0.25);
         }
-        .editor-body textarea {
+        /* Line numbers */
+        .editor-body .line-numbers {
+            padding: 16px 0 16px 14px;
+            min-width: 48px;
+            background: rgba(0, 0, 0, 0.2);
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
+            border-right: 1px solid rgba(255, 255, 255, 0.04);
+            flex-shrink: 0;
+            padding-right: 10px;
+        }
+        .editor-body .line-numbers span {
+            display: block;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .editor-body .line-numbers span.active {
+            opacity: 1;
+            color: var(--text-secondary);
+        }
+        .editor-body .editor-textarea-wrap {
             flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .editor-body .editor-textarea-wrap textarea {
             width: 100%;
             height: 100%;
             background: transparent;
             border: none;
             outline: none;
             color: var(--text-primary);
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-family: var(--font-mono);
             font-size: 0.85rem;
             line-height: 1.7;
             padding: 16px 20px;
@@ -559,14 +638,17 @@
             top: 0;
             left: 0;
             z-index: 2;
-            background: rgba(0, 0, 0, 0.2);
             letter-spacing: 0.2px;
+            caret-color: var(--accent);
+        }
+        .editor-body .editor-textarea-wrap textarea::selection {
+            background: rgba(124, 109, 240, 0.35);
         }
         .editor-body .highlight-preview {
             flex: 1;
             padding: 16px 20px;
             overflow: auto;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-family: var(--font-mono);
             font-size: 0.85rem;
             line-height: 1.7;
             white-space: pre-wrap;
@@ -586,14 +668,14 @@
             flex: 1;
             overflow: auto;
             padding: 16px 20px;
-            background: rgba(0, 0, 0, 0.3);
-            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            font-family: var(--font-mono);
             font-size: 0.8rem;
             white-space: pre-wrap;
             word-break: break-all;
             color: var(--text-secondary);
             display: none;
-            border-top: 1px solid var(--border-glass);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
         .python-output.visible {
             display: block;
@@ -616,15 +698,15 @@
         /* ===== CONTEXT MENU ===== */
         .ctx-menu {
             position: fixed;
-            background: rgba(18, 24, 34, 0.96);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glass);
+            background: rgba(18, 24, 34, 0.94);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: var(--radius-sm);
             padding: 6px 0;
             min-width: 190px;
             z-index: 9999;
-            box-shadow: var(--shadow);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
             opacity: 0;
             transform: scale(0.96) translateY(-4px);
             transition: opacity 0.15s ease, transform 0.15s ease;
@@ -668,7 +750,7 @@
         }
         .ctx-menu .ctx-divider {
             height: 1px;
-            background: var(--border-glass);
+            background: rgba(255, 255, 255, 0.06);
             margin: 4px 12px;
         }
 
@@ -685,17 +767,17 @@
             width: 100%;
         }
         .toast {
-            background: rgba(18, 24, 34, 0.94);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-glass);
+            background: rgba(18, 24, 34, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: var(--radius-sm);
             padding: 14px 20px;
-            box-shadow: var(--shadow);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             gap: 12px;
-            animation: slideUp 0.35s ease forwards;
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             font-size: 0.85rem;
             color: var(--text-primary);
             transform-origin: bottom right;
@@ -726,11 +808,16 @@
             cursor: pointer;
             font-size: 1rem;
             padding: 0 4px;
+            transition: var(--transition);
+        }
+        .toast .t-close:hover {
+            color: var(--text-primary);
+            transform: rotate(90deg);
         }
         @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px) scale(0.95);
+                transform: translateY(30px) scale(0.92);
             }
             to {
                 opacity: 1;
@@ -743,7 +830,7 @@
         @keyframes slideDown {
             to {
                 opacity: 0;
-                transform: translateY(20px) scale(0.95);
+                transform: translateY(30px) scale(0.92);
             }
         }
 
@@ -751,9 +838,9 @@
         .drag-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(124, 109, 240, 0.08);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(124, 109, 240, 0.06);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 9998;
             display: none;
             align-items: center;
@@ -762,6 +849,7 @@
             border-radius: 20px;
             margin: 20px;
             pointer-events: none;
+            box-shadow: inset 0 0 80px rgba(124, 109, 240, 0.05);
         }
         .drag-overlay.active {
             display: flex;
@@ -770,12 +858,25 @@
             font-size: 1.4rem;
             color: var(--text-secondary);
             text-align: center;
+            animation: pulseDrop 2s ease-in-out infinite;
+        }
+        @keyframes pulseDrop {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
         }
         .drag-overlay .drop-zone i {
             font-size: 4rem;
             color: var(--accent);
             display: block;
             margin-bottom: 16px;
+            filter: drop-shadow(0 0 40px var(--accent-glow));
         }
 
         /* ===== RESPONSIVE ===== */
@@ -799,12 +900,17 @@
             .topbar {
                 padding: 6px 12px;
                 flex-wrap: wrap;
+                gap: 6px;
             }
             .topbar .brand {
                 font-size: 0.95rem;
             }
             .topbar .nav-controls {
                 order: 2;
+            }
+            .topbar .nav-controls .btn {
+                padding: 3px 8px;
+                font-size: 0.65rem;
             }
             .topbar .path-display {
                 font-size: 0.65rem;
@@ -814,9 +920,9 @@
                 flex-basis: 100%;
             }
             .topbar .actions .token-input {
-                width: 100px;
-                font-size: 0.65rem;
-                padding: 4px 10px;
+                width: 80px;
+                font-size: 0.6rem;
+                padding: 4px 8px;
             }
             .btn {
                 font-size: 0.65rem;
@@ -835,6 +941,7 @@
                 flex: 0;
                 opacity: 0;
                 pointer-events: none;
+                box-shadow: none;
             }
             .sidebar.open {
                 width: 220px;
@@ -843,8 +950,9 @@
                 opacity: 1;
                 pointer-events: auto;
                 flex: 0 0 220px;
-                border: 1px solid var(--border-glass);
+                border: 1px solid rgba(255, 255, 255, 0.08);
                 margin-right: 6px;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
             }
             .file-list {
                 grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
@@ -860,9 +968,15 @@
             .file-list .file-card .f-name {
                 font-size: 0.65rem;
             }
-            .editor-body textarea {
+            .editor-body .line-numbers {
+                min-width: 32px;
+                padding: 12px 0 12px 8px;
+                font-size: 0.7rem;
+                padding-right: 6px;
+            }
+            .editor-body .editor-textarea-wrap textarea {
                 font-size: 0.75rem;
-                padding: 10px 14px;
+                padding: 12px 14px;
             }
             .editor-body .highlight-preview {
                 font-size: 0.75rem;
@@ -870,9 +984,14 @@
             }
             .editor-toolbar {
                 padding: 4px 10px;
+                gap: 4px;
             }
             .editor-toolbar .file-name {
                 font-size: 0.7rem;
+            }
+            .editor-toolbar .tabs .tab-btn {
+                font-size: 0.6rem;
+                padding: 3px 8px;
             }
             .ctx-menu {
                 min-width: 150px;
@@ -884,7 +1003,7 @@
             .toast-container {
                 bottom: 16px;
                 right: 16px;
-                max-width: 280px;
+                max-width: 260px;
             }
             .toast {
                 font-size: 0.75rem;
@@ -896,8 +1015,8 @@
         }
         .mobile-toggle {
             display: none;
-            background: var(--bg-card);
-            border: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 50%;
             width: 34px;
             height: 34px;
@@ -908,7 +1027,8 @@
             transition: var(--transition);
         }
         .mobile-toggle:hover {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.10);
+            color: var(--text-primary);
         }
 
         /* ===== MISC ===== */
@@ -971,7 +1091,7 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid var(--border-glass);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             border-top-color: var(--accent);
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
@@ -1002,6 +1122,37 @@
             max-width: 300px;
             text-align: center;
         }
+
+        /* Upload button in file list */
+        .upload-zone-btn {
+            grid-column: 1 / -1;
+            padding: 20px;
+            text-align: center;
+            border: 2px dashed rgba(79, 195, 255, 0.2);
+            border-radius: var(--radius-sm);
+            background: rgba(79, 195, 255, 0.04);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 0.9rem;
+        }
+        .upload-zone-btn:hover {
+            border-color: rgba(79, 195, 255, 0.4);
+            background: rgba(79, 195, 255, 0.08);
+            color: var(--text-secondary);
+            transform: scale(1.01);
+        }
+        .upload-zone-btn i {
+            font-size: 1.6rem;
+            color: var(--accent-secondary);
+        }
+        .upload-zone-btn input[type="file"] {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -1028,7 +1179,6 @@
                 <i class="fas fa-code-branch"></i>
                 <span>FileForge</span>
             </div>
-            <!-- Navigation controls -->
             <div class="nav-controls">
                 <button class="btn btn-sm" id="homeBtn" title="Home (root)"><i class="fas fa-home"></i></button>
                 <button class="btn btn-sm" id="upBtn" title="Up folder"><i class="fas fa-arrow-up"></i></button>
@@ -1086,7 +1236,10 @@
                         <button class="btn btn-sm" id="closeEditorBtn"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="editor-body">
-                        <textarea id="editorTextarea" spellcheck="false"></textarea>
+                        <div class="line-numbers" id="lineNumbers"></div>
+                        <div class="editor-textarea-wrap">
+                            <textarea id="editorTextarea" spellcheck="false"></textarea>
+                        </div>
                         <div class="highlight-preview" id="highlightPreview"></div>
                         <div class="python-output" id="pythonOutput">
                             <span class="out-label"><i class="fas fa-terminal"></i> Python Output</span>
@@ -1163,6 +1316,7 @@
             const homeBtn = $('homeBtn');
             const upBtn = $('upBtn');
             const openBrowserBtn = $('openBrowserBtn');
+            const lineNumbers = $('lineNumbers');
 
             let pyodideReady = false;
             let pyodideInstance = null;
@@ -1430,7 +1584,13 @@
                             <i class="fas fa-folder-open"></i>
                             <p>Empty folder</p>
                         </div>
+                        <div class="upload-zone-btn" id="uploadZoneBtn">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Click to upload files</span>
+                            <input type="file" id="fileInput" multiple />
+                        </div>
                     `;
+                    setupUploadZone();
                     return;
                 }
                 const tree = buildTree(items);
@@ -1473,6 +1633,36 @@
 
                     fileList.appendChild(card);
                 }
+                // Add upload zone at the end
+                const uploadZone = document.createElement('div');
+                uploadZone.className = 'upload-zone-btn';
+                uploadZone.id = 'uploadZoneBtn';
+                uploadZone.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Click to upload files</span>
+                    <input type="file" id="fileInput" multiple />
+                `;
+                fileList.appendChild(uploadZone);
+                setupUploadZone();
+            }
+
+            function setupUploadZone() {
+                const zone = document.getElementById('uploadZoneBtn');
+                const input = document.getElementById('fileInput');
+                if (!zone || !input) return;
+                zone.addEventListener('click', () => input.click());
+                input.addEventListener('change', async (e) => {
+                    const files = e.target.files;
+                    if (!files || files.length === 0) return;
+                    const targetPath = CONFIG.currentPath || '';
+                    for (const file of files) {
+                        await uploadFile(file, targetPath);
+                    }
+                    await navigateTo(CONFIG.currentPath);
+                    await rebuildTree();
+                    input.value = '';
+                    toast(`Uploaded ${files.length} file(s)`, 'success');
+                });
             }
 
             function formatSize(bytes) {
@@ -1509,6 +1699,27 @@
                     fileTree.innerHTML = `<div class="tree-empty text-muted">Error: ${e.message}</div>`;
                 }
             }
+
+            // ============================================================
+            // LINE NUMBERS
+            // ============================================================
+            function updateLineNumbers() {
+                const text = editorTextarea.value;
+                const lines = text.split('\n').length;
+                let html = '';
+                for (let i = 1; i <= lines; i++) {
+                    html += `<span>${i}</span>`;
+                }
+                lineNumbers.innerHTML = html;
+                // Sync scroll
+                lineNumbers.scrollTop = editorTextarea.scrollTop;
+            }
+
+            editorTextarea.addEventListener('scroll', () => {
+                lineNumbers.scrollTop = editorTextarea.scrollTop;
+            });
+
+            editorTextarea.addEventListener('input', updateLineNumbers);
 
             // ============================================================
             // EDITOR
@@ -1571,10 +1782,10 @@
                     const isPython = currentFileLanguage === 'python';
                     pythonTabBtn.style.display = isPython ? 'inline-flex' : 'none';
 
-                    // Show "Open in Browser" only for HTML files
                     const isHtml = currentFileLanguage === 'html' || currentFile.name.endsWith('.htm');
                     openBrowserBtn.classList.toggle('visible', isHtml);
 
+                    updateLineNumbers();
                     updatePreview();
                     toast(`Opened ${item.name}`, 'info', 2000);
                 } catch (e) {
@@ -1626,6 +1837,7 @@
                 pythonOutputContent.innerHTML = '';
                 pythonOutput.classList.remove('visible');
                 openBrowserBtn.classList.remove('visible');
+                lineNumbers.innerHTML = '';
             }
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1640,6 +1852,7 @@
 
                     if (tab === 'edit') {
                         editorTextarea.style.display = 'block';
+                        updateLineNumbers();
                     } else if (tab === 'preview') {
                         updatePreview();
                         highlightPreview.classList.add('visible');
@@ -1655,6 +1868,7 @@
                     updatePreview();
                 }
                 currentFileContent = editorTextarea.value;
+                updateLineNumbers();
             });
 
             document.addEventListener('keydown', (e) => {
@@ -1673,11 +1887,9 @@
             saveFileBtn.addEventListener('click', saveCurrentFile);
             closeEditorBtn.addEventListener('click', closeEditor);
 
-            // Open in browser
             openBrowserBtn.addEventListener('click', () => {
                 if (!currentFile) return;
                 const path = currentFile.path;
-                // Build URL: https://vahidarmy.github.io/path/to/file
                 const url = `https://${CONFIG.owner}.github.io/${path}`;
                 window.open(url, '_blank');
                 toast(`Opening ${path}`, 'info', 2000);
