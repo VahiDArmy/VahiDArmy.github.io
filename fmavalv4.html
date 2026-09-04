@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIGV File Manager</title>
+    <style>
+        /* ======== Cyberpunk Neon Theme ======== */
+        :root {
+            --bg: #0a0e17;
+            --bg2: #111827;
+            --neon-pink: #ff2a6d;
+            --neon-purple: #b537f2;
+            --neon-cyan: #05d9e8;
+            --neon-green: #00ff9f;
+            --neon-yellow: #f7b32b;
+            --text: #e0e0e0;
+            --border: #2a2a3a;
+            --shadow-1: 0 0 15px rgba(255, 42, 109, 0.2);
+            --shadow-2: 0 0 15px rgba(5, 217, 232, 0.2);
+            --font-mono: 'Courier New', monospace;
+            --font-sans: 'Segoe UI', Tahoma, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-sans);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ---- Header ---- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: var(--bg2);
+            border-bottom: 2px solid var(--neon-pink);
+            box-shadow: var(--shadow-1);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h1 {
+            font-size: 1.2rem;
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+            margin-left: 10px;
+            letter-spacing: 1px;
+        }
+        .header .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .header .badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid;
+            background: transparent;
+        }
+        .badge.connected {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+            box-shadow: 0 0 8px rgba(0,255,159,0.3);
+        }
+        .badge.disconnected {
+            color: var(--neon-pink);
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 8px rgba(255,42,109,0.3);
+        }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-cyan);
+        }
+        .btn.pink {
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+        }
+        .btn.pink:hover {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        /* ---- Toolbar / Breadcrumb ---- */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: #0d1322;
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+            color: var(--neon-purple);
+            flex-wrap: wrap;
+            direction: ltr;
+        }
+        .breadcrumb span {
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .breadcrumb span:hover {
+            background: rgba(181,55,242,0.2);
+        }
+        .breadcrumb .separator {
+            color: var(--neon-cyan);
+            cursor: default;
+        }
+        .info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--neon-cyan);
+        }
+        .info span {
+            border: 1px solid var(--border);
+            padding: 3px 10px;
+            border-radius: 15px;
+            background: rgba(5,217,232,0.05);
+        }
+
+        /* ---- File Grid ---- */
+        .grid-container {
+            padding: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            min-height: 400px;
+        }
+        .file-card {
+            width: 140px;
+            min-height: 140px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            position: relative;
+            text-align: center;
+        }
+        .file-card:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: var(--shadow-2);
+            transform: translateY(-3px);
+        }
+        .file-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+        .file-card .name {
+            font-size: 0.85rem;
+            word-break: break-all;
+            max-height: 40px;
+            overflow: hidden;
+            width: 100%;
+            color: #ddd;
+        }
+        .file-card .meta {
+            font-size: 0.7rem;
+            color: #999;
+            width: 100%;
+            margin-top: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .file-card .delete-btn {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: transparent;
+            border: none;
+            color: var(--neon-pink);
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.2s;
+            line-height: 1;
+            padding: 3px;
+        }
+        .file-card .delete-btn:hover {
+            opacity: 1;
+            text-shadow: 0 0 10px var(--neon-pink);
+        }
+        .file-card .open-btn {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: var(--neon-cyan);
+        }
+        .file-card .open-btn:hover {
+            opacity: 1;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        .file-card.folder {
+            border-color: var(--neon-purple);
+        }
+        .file-card.folder .icon {
+            color: var(--neon-purple);
+        }
+        .file-card.file {
+            border-color: var(--neon-cyan);
+        }
+        .file-card.file .icon {
+            color: var(--neon-cyan);
+        }
+
+        /* ---- Drop zone overlay ---- */
+        .drop-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10,14,23,0.8);
+            border: 2px dashed var(--neon-cyan);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            color: var(--neon-cyan);
+            pointer-events: none;
+        }
+        .drop-overlay.active {
+            display: flex;
+        }
+
+        /* ---- Context Menu ---- */
+        .context-menu {
+            position: fixed;
+            background: var(--bg2);
+            border: 1px solid var(--neon-purple);
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(181,55,242,0.3);
+            padding: 5px 0;
+            min-width: 150px;
+            z-index: 2000;
+            display: none;
+        }
+        .context-menu.active {
+            display: block;
+        }
+        .context-menu .menu-item {
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #ddd;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .context-menu .menu-item:hover {
+            background: rgba(181,55,242,0.2);
+            color: var(--neon-purple);
+        }
+        .context-menu .menu-item.danger {
+            color: var(--neon-pink);
+        }
+        .context-menu .menu-item.danger:hover {
+            background: rgba(255,42,109,0.1);
+            color: var(--neon-pink);
+        }
+
+        /* ---- Editor Modal ---- */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal .editor-container {
+            background: var(--bg2);
+            border: 1px solid var(--neon-cyan);
+            box-shadow: 0 0 30px rgba(5,217,232,0.2);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 900px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border);
+            background: #0d1322;
+        }
+        .editor-header .file-name {
+            color: var(--neon-cyan);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .editor-header .status {
+            font-size: 0.8rem;
+            padding: 3px 10px;
+            border-radius: 15px;
+            border: 1px solid;
+        }
+        .status.saved {
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+        }
+        .status.dirty {
+            color: var(--neon-yellow);
+            border-color: var(--neon-yellow);
+            animation: blink 1s infinite;
+        }
+        .editor-body {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .line-numbers {
+            width: 50px;
+            background: #0a0e17;
+            border-right: 1px solid var(--border);
+            padding: 10px 0;
+            text-align: right;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
+            color: #666;
+            overflow: hidden;
+            user-select: none;
+        }
+        .editor-textarea-wrap {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+        }
+        .editor-textarea, .syntax-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            padding: 10px;
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre;
+            word-wrap: normal;
+            tab-size: 2;
+            overflow: auto;
+            background: transparent;
+        }
+        .syntax-highlight {
+            color: #ccc;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .editor-textarea {
+            background: transparent;
+            color: transparent;
+            caret-color: var(--neon-cyan);
+            z-index: 2;
+            resize: none;
+            border: none;
+            outline: none;
+        }
+        .editor-footer {
+            padding: 8px 15px;
+            background: #0d1322;
+            border-top: 1px solid var(--border);
+            font-size: 0.7rem;
+            color: #aaa;
+            display: flex;
+            justify-content: space-between;
+        }
+        .editor-footer .shortcuts {
+            color: var(--neon-purple);
+        }
+
+        /* ---- Toast notifications ---- */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+        .toast {
+            background: var(--bg2);
+            border-left: 4px solid var(--neon-cyan);
+            padding: 12px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            font-size: 0.85rem;
+            animation: slideIn 0.3s;
+        }
+        .toast.error {
+            border-left-color: var(--neon-pink);
+        }
+        .toast.success {
+            border-left-color: var(--neon-green);
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes blink {
+            50% { opacity: 0.6; }
+        }
+
+        /* ---- Settings Modal ---- */
+        .settings-modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .settings-box {
+            background: var(--bg2);
+            border: 2px solid var(--neon-cyan);
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 30px var(--neon-cyan);
+            text-align: center;
+        }
+        .settings-box h2 {
+            color: var(--neon-pink);
+            margin-bottom: 20px;
+        }
+        .settings-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: #0a0e17;
+            border: 1px solid var(--neon-cyan);
+            color: var(--text);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .settings-box input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+        .settings-box .hint {
+            font-size: 0.75rem;
+            color: #888;
+            margin: 5px 0 15px;
+            text-align: left;
+            direction: ltr;
+        }
+        .settings-box .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1rem; }
+            .file-card { width: 110px; min-height: 110px; }
+            .file-card .icon { font-size: 2rem; }
+            .file-card .name { font-size: 0.7rem; }
+            .toolbar { flex-direction: column; }
+            .breadcrumb { font-size: 0.85rem; justify-content: center; }
+            .info { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <h1>⚡ VIGV File Manager</h1>
+        <div class="actions">
+            <span id="connection-status" class="badge disconnected">⏻ Connected</span>
+            <button id="refresh-btn" class="btn">⟳ Refresh</button>
+            <button id="settings-btn" class="btn pink">⚙ Settings</button>
+        </div>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div id="breadcrumb" class="breadcrumb"></div>
+        <div class="info">
+            <span id="file-count">0 files</span>
+            <span id="total-size">0 B</span>
+        </div>
+    </div>
+
+    <!-- File Grid -->
+    <div id="file-grid" class="grid-container"></div>
+
+    <!-- Right-click context menu -->
+    <div id="context-menu" class="context-menu"></div>
+
+    <!-- Editor Modal -->
+    <div id="editor-modal" class="modal">
+        <div class="editor-container">
+            <div class="editor-header">
+                <span id="editor-file-name" class="file-name">file.txt</span>
+                <span id="editor-status" class="status saved">Saved</span>
+                <button id="editor-close" class="btn pink" style="padding: 5px 10px;">✖</button>
+            </div>
+            <div class="editor-body">
+                <div class="line-numbers" id="line-numbers"></div>
+                <div class="editor-textarea-wrap">
+                    <pre class="syntax-highlight" id="syntax-highlight"></pre>
+                    <textarea id="editor-textarea" class="editor-textarea" spellcheck="false"></textarea>
+                </div>
+            </div>
+            <div class="editor-footer">
+                <span id="editor-path"></span>
+                <span class="shortcuts">Ctrl+S Save | Tab: 2 spaces</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dropzone overlay -->
+    <div id="drop-overlay" class="drop-overlay">
+        <span>📁 Drop files to upload</span>
+    </div>
+
+    <!-- Settings modal -->
+    <div id="settings-modal" class="settings-modal" style="display: none;">
+        <div class="settings-box">
+            <h2>🔐 GitHub Connection</h2>
+            <label for="repo-input">Repository name</label>
+            <input type="text" id="repo-input" placeholder="username.github.io" />
+            <span class="hint">e.g., vahidarmy.github.io</span>
+            <label for="token-input">Personal Access Token (fine-grained, repo scope)</label>
+            <input type="password" id="token-input" placeholder="ghp_..." />
+            <span class="hint">Token stored in localStorage</span>
+            <div class="btn-group">
+                <button id="save-settings" class="btn">Save</button>
+                <button id="close-settings" class="btn pink">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Hidden file input for upload -->
+    <input type="file" id="file-upload" multiple style="display: none;" />
+
+    <script>
+        // ================= CONFIGURATION =================
+        const username = 'vahidarmy';
+        const defaultRepo = `${username}.github.io`;
+        const API_BASE = 'https://api.github.com';
+
+        // ================= STATE =================
+        let state = {
+            token: localStorage.getItem('github_token') || '',
+            repo: localStorage.getItem('github_repo') || defaultRepo,
+            currentPath: '',
+            files: [],
+            connection: false,
+            editor: {
+                path: '',
+                originalContent: '',
+                dirty: false,
+                language: ''
+            }
+        };
+
+        // ================= DOM ELEMENTS =================
+        const $ = (sel) => document.querySelector(sel);
+        const grid = $('#file-grid');
+        const breadcrumb = $('#breadcrumb');
+        const fileCount = $('#file-count');
+        const totalSize = $('#total-size');
+        const connectionStatus = $('#connection-status');
+        const contextMenu = $('#context-menu');
+        const editorModal = $('#editor-modal');
+        const editorTextarea = $('#editor-textarea');
+        const editorLineNumbers = $('#line-numbers');
+        const syntaxHighlight = $('#syntax-highlight');
+        const editorFileName = $('#editor-file-name');
+        const editorStatus = $('#editor-status');
+        const editorPath = $('#editor-path');
+        const settingsModal = $('#settings-modal');
+        const repoInput = $('#repo-input');
+        const tokenInput = $('#token-input');
+        const fileUpload = $('#file-upload');
+
+        // ================= UTILS =================
+        function showToast(message, type = 'success') {
+            const container = $('#toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function humanFileSize(size) {
+            return formatSize(size);
+        }
+
+        function updateConnectionStatus() {
+            if (state.token && state.repo) {
+                connectionStatus.textContent = '⚡ Connected';
+                connectionStatus.className = 'badge connected';
+            } else {
+                connectionStatus.textContent = '⚡ Disconnected';
+                connectionStatus.className = 'badge disconnected';
+            }
+        }
+
+        // ================= GITHUB API =================
+        async function apiRequest(url, options = {}) {
+            const headers = {
+                'Authorization': `Bearer ${state.token}`,
+                'Accept': 'application/vnd.github+json',
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            try {
+                const response = await fetch(url, { ...options, headers });
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    let msg = errorData.message || `Error ${response.status}`;
+                    throw new Error(msg);
+                }
+                return response;
+            } catch (err) {
+                showToast(`Network error: ${err.message}`, 'error');
+                throw err;
+            }
+        }
+
+        // Fetch directory contents
+        async function fetchFiles(path = '') {
+            if (!state.token || !state.repo) {
+                showToast('Please configure settings first', 'error');
+                updateConnectionStatus();
+                return;
+            }
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+                const response = await apiRequest(url);
+                const data = await response.json();
+                // Sort folders first
+                state.files = data.sort((a, b) => {
+                    if (a.type === 'dir' && b.type !== 'dir') return -1;
+                    if (a.type !== 'dir' && b.type === 'dir') return 1;
+                    return a.name.localeCompare(b.name);
+                });
+                renderFiles();
+                updateBreadcrumb();
+                updateInfo();
+                state.connection = true;
+                updateConnectionStatus();
+            } catch (err) {
+                state.connection = false;
+                updateConnectionStatus();
+                grid.innerHTML = `<div style="padding: 30px; color: var(--neon-pink); text-align: center; font-size: 1.2rem;">
+                    ❌ ${err.message}<br><small>Click refresh to retry</small>
+                </div>`;
+            }
+        }
+
+        // Get file content (for editor/download)
+        async function getFileContent(path) {
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+                const response = await apiRequest(url);
+                const data = await response.json();
+                if (data.content) {
+                    return atob(data.content.replace(/\n/g, ''));
+                }
+                return null;
+            } catch (err) {
+                showToast(`Error fetching file: ${err.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Upload file (PUT)
+        async function uploadFile(path, content) {
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+                const msg = `Upload ${path}`;
+                const payload = {
+                    message: msg,
+                    content: btoa(unescape(encodeURIComponent(content)))
+                };
+                // Check if file exists -> need sha
+                try {
+                    const existing = await apiRequest(url);
+                    const existingData = await existing.json();
+                    if (existingData.sha) payload.sha = existingData.sha;
+                } catch (e) {
+                    // File does not exist -> ok
+                }
+                const response = await apiRequest(url, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    showToast(`✅ Uploaded: ${path}`, 'success');
+                    return true;
+                }
+            } catch (err) {
+                showToast(`Upload failed: ${err.message}`, 'error');
+                return false;
+            }
+        }
+
+        // Delete file/folder
+        async function deleteFile(path, isDir = false) {
+            if (!confirm(`Delete ${isDir ? 'folder' : 'file'} "${path}"? This cannot be undone.`)) return;
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+                // Get sha first
+                const response = await apiRequest(url);
+                const data = await response.json();
+                let sha = data.sha;
+                if (isDir) {
+                    // GitHub API doesn't support delete folder directly; we need to delete all contents recursively
+                    // Simplify: For folders, we'll prompt to delete each file inside? We'll just do a recursive API calls.
+                    await deleteFolderRecursive(path);
+                    showToast(`🗑️ Deleted folder: ${path}`, 'success');
+                    fetchFiles(state.currentPath);
+                    return;
+                }
+                await apiRequest(url, {
+                    method: 'DELETE',
+                    body: JSON.stringify({
+                        message: `Delete ${path}`,
+                        sha: sha
+                    })
+                });
+                showToast(`🗑️ Deleted: ${path}`, 'success');
+                fetchFiles(state.currentPath);
+            } catch (err) {
+                showToast(`Delete failed: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteFolderRecursive(folderPath) {
+            const encodedPath = folderPath.split('/').map(encodeURIComponent).join('/');
+            const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+            const response = await apiRequest(url);
+            const items = await response.json();
+            for (const item of items) {
+                if (item.type === 'dir') {
+                    await deleteFolderRecursive(item.path);
+                } else {
+                    const fileUrl = `${API_BASE}/repos/${username}/${state.repo}/contents/${item.path.split('/').map(encodeURIComponent).join('/')}`;
+                    const fileResp = await apiRequest(fileUrl);
+                    const fileData = await fileResp.json();
+                    await apiRequest(fileUrl, {
+                        method: 'DELETE',
+                        body: JSON.stringify({
+                            message: `Delete ${item.path}`,
+                            sha: fileData.sha
+                        })
+                    });
+                }
+            }
+        }
+
+        // Rename file (copy then delete)
+        async function renameFile(oldPath, newName) {
+            try {
+                const content = await getFileContent(oldPath);
+                if (content === null) return;
+                const dir = oldPath.substring(0, oldPath.lastIndexOf('/') + 1);
+                const newPath = dir + newName;
+                // Create new file
+                const success = await uploadFile(newPath, content);
+                if (success) {
+                    // Delete old
+                    await deleteFile(oldPath, false);
+                    showToast(`✏️ Renamed to ${newName}`, 'success');
+                    fetchFiles(state.currentPath);
+                }
+            } catch (err) {
+                showToast(`Rename failed: ${err.message}`, 'error');
+            }
+        }
+
+        // Create folder by adding a .gitkeep file
+        async function createFolder(folderName) {
+            const folderPath = state.currentPath ? `${state.currentPath}/${folderName}` : folderName;
+            const gitkeepPath = folderPath + '/.gitkeep';
+            const success = await uploadFile(gitkeepPath, '');
+            if (success) {
+                showToast(`📁 Created folder: ${folderName}`, 'success');
+                fetchFiles(state.currentPath);
+            }
+        }
+
+        // Update editor status
+        function updateEditorStatus() {
+            if (state.editor.dirty) {
+                editorStatus.textContent = '● Dirty';
+                editorStatus.className = 'status dirty';
+            } else {
+                editorStatus.textContent = '✓ Saved';
+                editorStatus.className = 'status saved';
+            }
+        }
+
+        // ================= RENDER =================
+        function renderFiles() {
+            grid.innerHTML = '';
+            if (state.files.length === 0) {
+                grid.innerHTML = '<div style="padding: 30px; text-align: center; color: #888;">📂 Empty folder</div>';
+                return;
+            }
+            state.files.forEach(file => {
+                const isDir = file.type === 'dir';
+                const card = document.createElement('div');
+                card.className = `file-card ${isDir ? 'folder' : 'file'}`;
+                card.dataset.path = file.path;
+                card.dataset.type = file.type;
+                const icon = isDir ? '📁' : getFileIcon(file.name);
+                const metaSize = isDir ? '—' : (file.size !== undefined ? humanFileSize(file.size) : '?');
+                card.innerHTML = `
+                    <span class="delete-btn" title="Delete">✕</span>
+                    ${!isDir ? '<a class="open-btn" title="Open in browser" target="_blank" href="' + getBrowserURL(file.path) + '">🌐</a>' : ''}
+                    <div class="icon">${icon}</div>
+                    <div class="name" title="${file.name}">${file.name}</div>
+                    <div class="meta">
+                        <span>${metaSize}</span>
+                        <span>${new Date(file.updated_at || '').toLocaleDateString()}</span>
+                    </div>
+                `;
+                // Click events
+                card.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('delete-btn') || e.target.classList.contains('open-btn')) return;
+                    if (isDir) {
+                        // Navigate into folder
+                        state.currentPath = file.path;
+                        fetchFiles(state.currentPath);
+                    } else {
+                        // Open in editor
+                        openEditor(file.path);
+                    }
+                });
+                // Right click
+                card.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    showContextMenu(e.clientX, e.clientY, file);
+                });
+                // Delete button
+                card.querySelector('.delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteFile(file.path, isDir);
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'html': '📄',
+                'htm': '📄',
+                'css': '🎨',
+                'js': '📜',
+                'json': '🔧',
+                'xml': '📋',
+                'txt': '📝',
+                'md': '📘',
+                'png': '🖼️',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'gif': '🖼️',
+                'svg': '🖼️',
+                'ico': '🖼️',
+                'pdf': '📕',
+                'zip': '📦',
+                'rar': '📦',
+                'exe': '⚙️',
+                'sh': '🐚',
+                'py': '🐍',
+                'java': '☕',
+                'cpp': '⚙️',
+                'c': '⚙️',
+                'php': '🐘',
+                'sql': '🗄️'
+            };
+            return icons[ext] || '📄';
+        }
+
+        function getBrowserURL(path) {
+            // https://username.github.io/[repo]/[file-path]
+            return `https://${username}.github.io/${state.repo}/${path}`;
+        }
+
+        function updateBreadcrumb() {
+            const parts = state.currentPath.split('/').filter(p => p);
+            let html = `<span onclick="navigateBreadcrumb('')">🏠 root</span>`;
+            let current = '';
+            parts.forEach((part, index) => {
+                current += (current ? '/' : '') + part;
+                html += `<span class="separator">›</span>`;
+                html += `<span onclick="navigateBreadcrumb('${current}')">${part}</span>`;
+            });
+            breadcrumb.innerHTML = html;
+        }
+
+        function navigateBreadcrumb(path) {
+            state.currentPath = path;
+            fetchFiles(path);
+        }
+
+        function updateInfo() {
+            fileCount.textContent = `${state.files.length} items`;
+            let total = 0;
+            state.files.forEach(f => { if (f.size) total += f.size; });
+            totalSize.textContent = humanFileSize(total);
+        }
+
+        // ================= CONTEXT MENU =================
+        function showContextMenu(x, y, file) {
+            contextMenu.innerHTML = '';
+            const items = [];
+            if (file.type === 'dir') {
+                items.push({ icon: '📂', label: 'Open', action: () => navigateBreadcrumb(file.path) });
+                items.push({ icon: '🗑️', label: 'Delete', action: () => deleteFile(file.path, true), danger: true });
+            } else {
+                items.push({ icon: '📝', label: 'Open', action: () => openEditor(file.path) });
+                items.push({ icon: '⬇️', label: 'Download', action: () => downloadFile(file.path) });
+                items.push({ icon: '✏️', label: 'Rename', action: () => promptRename(file.path) });
+                items.push({ icon: '📋', label: 'Copy Path', action: () => copyPath(file.path) });
+                items.push({ icon: '🗑️', label: 'Delete', action: () => deleteFile(file.path, false), danger: true });
+            }
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = `menu-item ${item.danger ? 'danger' : ''}`;
+                div.innerHTML = `${item.icon} ${item.label}`;
+                div.addEventListener('click', () => {
+                    hideContextMenu();
+                    item.action();
+                });
+                contextMenu.appendChild(div);
+            });
+            // Show at position, with smart placement
+            contextMenu.classList.add('active');
+            const menuWidth = 180;
+            const menuHeight = items.length * 40;
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
+            let left = x;
+            let top = y;
+            if (left + menuWidth > winWidth) left = winWidth - menuWidth - 10;
+            if (top + menuHeight > winHeight) top = winHeight - menuHeight - 10;
+            contextMenu.style.left = left + 'px';
+            contextMenu.style.top = top + 'px';
+        }
+
+        function hideContextMenu() {
+            contextMenu.classList.remove('active');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!contextMenu.contains(e.target)) hideContextMenu();
+        });
+
+        // ================= EDITOR =================
+        async function openEditor(path) {
+            const content = await getFileContent(path);
+            if (content === null) return;
+            state.editor.path = path;
+            state.editor.originalContent = content;
+            state.editor.dirty = false;
+            editorTextarea.value = content;
+            editorFileName.textContent = path.split('/').pop();
+            editorPath.textContent = path;
+            updateEditorStatus();
+            updateLineNumbers();
+            highlightSyntax();
+            editorModal.classList.add('active');
+            editorTextarea.focus();
+        }
+
+        function closeEditor() {
+            if (state.editor.dirty) {
+                if (!confirm('You have unsaved changes. Discard changes?')) return;
+            }
+            editorModal.classList.remove('active');
+            state.editor.path = '';
+            state.editor.dirty = false;
+            editorTextarea.value = '';
+        }
+
+        function updateLineNumbers() {
+            const lines = editorTextarea.value.split('\n').length;
+            let html = '';
+            for (let i = 1; i <= lines; i++) html += i + '\n';
+            editorLineNumbers.textContent = html;
+            // Sync scroll
+            editorLineNumbers.scrollTop = editorTextarea.scrollTop;
+        }
+
+        function highlightSyntax() {
+            const code = editorTextarea.value;
+            const lang = detectLanguage(state.editor.path);
+            const highlighted = highlightCode(code, lang);
+            syntaxHighlight.innerHTML = highlighted;
+            syntaxHighlight.scrollTop = editorTextarea.scrollTop;
+            syntaxHighlight.scrollLeft = editorTextarea.scrollLeft;
+        }
+
+        function detectLanguage(path) {
+            const ext = path.split('.').pop().toLowerCase();
+            if (['html', 'htm'].includes(ext)) return 'html';
+            if (ext === 'css') return 'css';
+            if (ext === 'js') return 'js';
+            if (ext === 'json') return 'json';
+            if (ext === 'xml') return 'xml';
+            if (ext === 'md') return 'markdown';
+            if (ext === 'txt') return 'plain';
+            return 'plain';
+        }
+
+        function highlightCode(code, lang) {
+            // Simple syntax highlighting using regex (no external libs)
+            if (lang === 'plain') {
+                return escapeHtml(code);
+            }
+            let escaped = escapeHtml(code);
+            // Keywords (language-specific)
+            let pattern, color;
+            if (lang === 'html') {
+                // tags
+                escaped = escaped.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)/g, '$1<span style="color:#ff2a6d;">$2</span>');
+                pattern = /(&lt;!DOCTYPE.*?&gt;|&lt;!--.*?--&gt;)/g;
+                escaped = escaped.replace(pattern, '<span style="color:#888;">$1</span>');
+            } else if (lang === 'css') {
+                escaped = escaped.replace(/(\{|\}|\;)/g, '<span style="color:#f7b32b;">$1</span>');
+                escaped = escaped.replace(/([a-zA-Z-]+)(?=\s*:)/g, '<span style="color:#05d9e8;">$1</span>');
+                escaped = escaped.replace(/(:[a-zA-Z#0-9]+)/g, '<span style="color:#b537f2;">$1</span>');
+            } else if (lang === 'js' || lang === 'json') {
+                pattern = /\b(function|var|let|const|if|else|for|while|return|new|import|export|class|extends|super|try|catch|finally|throw|typeof|instanceof|switch|case|default|break|continue|do|in|of|void|delete|this|async|await|yield|get|set)\b/g;
+                escaped = escaped.replace(pattern, '<span style="color:#ff2a6d;">$1</span>');
+                // numbers
+                escaped = escaped.replace(/\b(\d+)\b/g, '<span style="color:#00ff9f;">$1</span>');
+                // strings
+                escaped = escaped.replace(/(&quot;.*?&quot;|&#039;.*?&#039;)/g, '<span style="color:#00ff9f;">$1</span>');
+            } else if (lang === 'xml') {
+                escaped = escaped.replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)/g, '$1<span style="color:#ff2a6d;">$2</span>');
+                escaped = escaped.replace(/\s([a-zA-Z-]+)=/g, ' <span style="color:#05d9e8;">$1</span>=');
+            } else if (lang === 'markdown') {
+                escaped = escaped.replace(/(^#{1,6}\s.*$)/gm, '<span style="color:#ff2a6d;">$1</span>');
+                escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<span style="color:#f7b32b;">**$1**</span>');
+            }
+            return escaped;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Editor events
+        editorTextarea.addEventListener('input', () => {
+            state.editor.dirty = true;
+            updateLineNumbers();
+            highlightSyntax();
+            updateEditorStatus();
+        });
+
+        editorTextarea.addEventListener('scroll', () => {
+            updateLineNumbers();
+            syntaxHighlight.scrollTop = editorTextarea.scrollTop;
+            syntaxHighlight.scrollLeft = editorTextarea.scrollLeft;
+        });
+
+        editorTextarea.addEventListener('keydown', (e) => {
+            // Tab -> 2 spaces
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart;
+                const end = this.selectionEnd;
+                const value = this.value;
+                this.value = value.substring(0, start) + '  ' + value.substring(end);
+                this.selectionStart = this.selectionEnd = start + 2;
+                state.editor.dirty = true;
+                updateLineNumbers();
+                highlightSyntax();
+                updateEditorStatus();
+            }
+            // Ctrl+S / Cmd+S
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveEditor();
+            }
+        });
+
+        async function saveEditor() {
+            const path = state.editor.path;
+            const content = editorTextarea.value;
+            try {
+                const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+                const url = `${API_BASE}/repos/${username}/${state.repo}/contents/${encodedPath}`;
+                // Get sha
+                const resp = await apiRequest(url);
+                const data = await resp.json();
+                const payload = {
+                    message: `Update ${path}`,
+                    content: btoa(unescape(encodeURIComponent(content))),
+                    sha: data.sha
+                };
+                const saveResp = await apiRequest(url, {
+                    method: 'PUT',
+                    body: JSON.stringify(payload)
+                });
+                if (saveResp.ok) {
+                    state.editor.originalContent = content;
+                    state.editor.dirty = false;
+                    updateEditorStatus();
+                    showToast(`💾 Saved: ${path}`, 'success');
+                }
+            } catch (err) {
+                showToast(`Save failed: ${err.message}`, 'error');
+            }
+        }
+
+        // Close editor
+        $('#editor-close').addEventListener('click', closeEditor);
+
+        // ================= DOWNLOAD =================
+        async function downloadFile(path) {
+            try {
+                const content = await getFileContent(path);
+                if (content === null) return;
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = path.split('/').pop();
+                document.body.appendChild(a);
+                a.click();
+                URL.revokeObjectURL(url);
+                a.remove();
+                showToast(`⬇️ Downloaded: ${path}`, 'success');
+            } catch (err) {
+                showToast(`Download failed: ${err.message}`, 'error');
+            }
+        }
+
+        // ================= RENAME =================
+        function promptRename(path) {
+            const oldName = path.split('/').pop();
+            const newName = prompt('New name (without path):', oldName);
+            if (newName && newName !== oldName) {
+                renameFile(path, newName);
+            }
+        }
+
+        // ================= COPY PATH =================
+        function copyPath(path) {
+            navigator.clipboard.writeText(path).then(() => {
+                showToast(`📋 Path copied: ${path}`, 'success');
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = path;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                ta.remove();
+                showToast(`📋 Path copied: ${path}`, 'success');
+            });
+        }
+
+        // ================= UPLOAD =================
+        function handleUpload(files) {
+            for (const file of files) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const relativePath = state.currentPath ? `${state.currentPath}/${file.name}` : file.name;
+                    const success = await uploadFile(relativePath, e.target.result);
+                    if (success) {
+                        fetchFiles(state.currentPath);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        $('#refresh-btn').addEventListener('click', () => fetchFiles(state.currentPath));
+
+        // Upload button (implicit via input)
+        $('#file-upload').addEventListener('change', (e) => {
+            handleUpload(e.target.files);
+            e.target.value = '';
+        });
+
+        // Drag and drop
+        let dragCounter = 0;
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            $('#drop-overlay').classList.add('active');
+        });
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) $('#drop-overlay').classList.remove('active');
+        });
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            $('#drop-overlay').classList.remove('active');
+            handleUpload(e.dataTransfer.files);
+        });
+
+        // ================= SETTINGS =================
+        function openSettings() {
+            repoInput.value = state.repo;
+            tokenInput.value = state.token;
+            settingsModal.style.display = 'flex';
+        }
+
+        $('#settings-btn').addEventListener('click', openSettings);
+
+        $('#save-settings').addEventListener('click', () => {
+            const repo = repoInput.value.trim() || defaultRepo;
+            const token = tokenInput.value.trim();
+            if (!token) {
+                showToast('Token is required', 'error');
+                return;
+            }
+            state.repo = repo;
+            state.token = token;
+            localStorage.setItem('github_repo', repo);
+            localStorage.setItem('github_token', token);
+            settingsModal.style.display = 'none';
+            updateConnectionStatus();
+            fetchFiles('');
+            showToast('✅ Settings saved', 'success');
+        });
+
+        $('#close-settings').addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+
+        // ================= INIT =================
+        window.onload = () => {
+            updateConnectionStatus();
+            if (state.token) {
+                fetchFiles('');
+            } else {
+                openSettings();
+            }
+        };
+    </script>
+</body>
+</html>
