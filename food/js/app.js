@@ -201,64 +201,68 @@ function switchAuthMode(mode) {
 async function handleAuthSubmit(event) {
   event.preventDefault();
 
-  const email = $("#auth-email")?.value.trim();
-  const password = $("#auth-password")?.value;
+  console.log("1) تابع ورود اجرا شد");
+
+  const email = document.querySelector("#auth-email")?.value.trim();
+  const password = document.querySelector("#auth-password")?.value;
+
+  const button = document.querySelector("#auth-submit");
 
   if (!email || !password) {
     showMessage("ایمیل و رمز عبور را وارد کنید.", "error");
     return;
   }
 
-  if ($("#auth-error")) {
-    $("#auth-error").textContent = "";
+  if (button) {
+    button.disabled = true;
+    button.textContent = "در حال ورود...";
   }
 
-  if ($("#auth-info")) {
-    $("#auth-info").textContent = "";
-  }
-
-  const submitButton = $("#auth-submit");
-
-  if (submitButton) {
-    submitButton.disabled = true;
-    submitButton.textContent = "در حال اتصال...";
-  }
-
-  let result;
-
-  if (authMode === "login") {
-    result = await supabaseClient.auth.signInWithPassword({
+  try {
+    const result = await supabaseClient.auth.signInWithPassword({
       email,
       password
     });
-  } else {
-    result = await supabaseClient.auth.signUp({
-      email,
-      password
-    });
-  }
 
-  if (submitButton) {
-    submitButton.disabled = false;
-    submitButton.textContent =
-      authMode === "login"
-        ? "🚀 ورود به سیستم"
-        : "🆕 ایجاد حساب کاربری";
-  }
+    console.log("2) نتیجه ورود:", result);
+    console.log("User:", result.data?.user);
+    console.log("Session:", result.data?.session);
+    console.log("Error:", result.error);
 
-  if (result.error) {
-    console.error(result.error);
-    showMessage(translateAuthError(result.error.message), "error");
-    return;
-  }
+    if (result.error) {
+      showMessage(
+        translateAuthError(result.error.message),
+        "error"
+      );
+      return;
+    }
 
-  if (authMode === "signup" && !result.data.session) {
-    showMessage(
-      "ثبت‌نام انجام شد. ایمیل خود را برای تأیید حساب بررسی کنید."
-    );
+    if (!result.data?.session || !result.data?.user) {
+      console.log("ورود کامل نشده و session وجود ندارد.");
+      showMessage(
+        "ورود انجام نشد؛ session دریافت نشد.",
+        "error"
+      );
+      return;
+    }
+
+    currentUser = result.data.user;
+
+    console.log("3) کاربر با موفقیت وارد شد:", currentUser);
+
+    await showDashboard();
+
+    console.log("4) showDashboard اجرا شد");
+  } catch (error) {
+    console.error("خطای غیرمنتظره هنگام ورود:", error);
+    showMessage("خطایی هنگام ورود رخ داد. Console را بررسی کنید.", "error");
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "🚀 ورود به سیستم";
+    }
   }
 }
-
 async function handleLogout() {
   const { error } = await supabaseClient.auth.signOut();
 
