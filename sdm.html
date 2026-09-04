@@ -1188,8 +1188,15 @@
                 return res.json();
             }
 
+            // FIX: handle empty path correctly - no trailing slash
             async function getContents(path, ref) {
-                const endpoint = `/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}${ref ? '?ref=' + ref : ''}`;
+                let endpoint = `/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
+                if (path && path !== '') {
+                    endpoint += `/${path}`;
+                }
+                if (ref) {
+                    endpoint += `?ref=${ref}`;
+                }
                 return ghFetch(endpoint);
             }
 
@@ -2001,7 +2008,7 @@
                 }
                 CONFIG.token = token;
                 try {
-                    // Test connection
+                    // Test connection by fetching root
                     await getContents('', CONFIG.branch);
                     toast('Connected to GitHub!', 'success');
                     await navigateTo('');
@@ -2059,8 +2066,7 @@
             // ============================================================
             // AUTO-CONNECT if token is already in input
             // ============================================================
-            // Prefill username
-            document.querySelector('.brand span').textContent = 'FileForge';
+            // Prefill username (already in config)
             // If token is stored, auto-connect
             const savedToken = localStorage.getItem('gh_token');
             if (savedToken) {
