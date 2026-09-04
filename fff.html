@@ -1,348 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>vahidarmy File Manager</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub File Manager & IDE</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
 
-<style>
-  * { box-sizing: border-box; }
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
 
-  body {
-    margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #05060a;
-    color: #e9ecf5;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --panel-bg: rgba(30, 41, 59, 0.7);
+      --accent: #38bdf8;
+      --accent-hover: #0284c7;
+      --text-main: #f8fafc;
+      --border-color: rgba(255, 255, 255, 0.1);
+    }
 
-  .top {
-    padding: 10px 12px;
-    background: #0b0d14;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    font-size: 13px;
-  }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
 
-  .top span {
-    display: block;
-    opacity: 0.7;
-    font-size: 11px;
-  }
+    header {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 8px;
-    gap: 8px;
-  }
+    .app-container {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 60px);
+    }
 
-  .panel {
-    background: #0b0d14;
-    border-radius: 10px;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
+    /* Sidebar (File Explorer) */
+    .sidebar {
+      width: 280px;
+      background: var(--panel-bg);
+      backdrop-filter: blur(8px);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
 
-  .panel-header {
-    font-size: 12px;
-    margin-bottom: 6px;
-    opacity: 0.8;
-  }
+    .file-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
 
-  .file-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    overflow-y: auto;
-    max-height: 50vh;
-  }
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s;
+    }
 
-  .file-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 6px 8px;
-    margin-bottom: 4px;
-    border-radius: 6px;
-    font-size: 13px;
-    background: #05060a;
-  }
+    .file-item:hover { background: rgba(255, 255, 255, 0.05); }
 
-  .file-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    overflow: hidden;
-  }
+    /* Main Editor Area */
+    .editor-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #0d1117;
+      position: relative;
+    }
 
-  .file-icon {
-    width: 20px;
-    text-align: center;
-  }
+    .editor-toolbar {
+      background: rgba(15, 23, 42, 0.9);
+      padding: 0.5rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-  .file-name {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    .btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-  .file-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-  }
+    .btn:hover { background: var(--accent-hover); color: #fff; }
 
-  .icon-btn {
-    border: none;
-    background: #15192a;
-    color: #e9ecf5;
-    border-radius: 999px;
-    padding: 4px 8px;
-    font-size: 11px;
-    cursor: pointer;
-  }
+    .CodeMirror { height: 100% !important; font-size: 14px; }
 
-  .icon-btn.danger {
-    background: #ff4f6a;
-    color: #05060a;
-  }
+    /* Python Console */
+    .console-panel {
+      height: 150px;
+      background: #000;
+      border-top: 1px solid var(--border-color);
+      padding: 0.5rem;
+      font-family: monospace;
+      overflow-y: auto;
+      color: #4ade80;
+    }
 
-  .editor-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    margin-top: 8px;
-  }
+    /* Right Click Context Menu */
+    .context-menu {
+      position: absolute;
+      display: none;
+      background: #1e293b;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      border-radius: 6px;
+      z-index: 1000;
+      min-width: 140px;
+    }
 
-  .editor-title {
-    font-size: 12px;
-    margin-bottom: 4px;
-    opacity: 0.8;
-  }
+    .context-menu div {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
 
-  textarea {
-    flex: 1;
-    width: 100%;
-    resize: none;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: #05060a;
-    color: #e9ecf5;
-    padding: 8px;
-    font-family: "JetBrains Mono", monospace;
-    font-size: 12px;
-    outline: none;
-  }
+    .context-menu div:hover { background: var(--accent); color: #000; }
 
-  .bottom-bar {
-    padding: 8px;
-    background: #0b0d14;
-    border-top: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-  }
+    /* Drag & Drop Overlay */
+    .drag-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(56, 189, 248, 0.2);
+      border: 2px dashed var(--accent);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.5rem;
+      z-index: 50;
+    }
 
-  .btn {
-    border: none;
-    background: #15192a;
-    color: #e9ecf5;
-    border-radius: 999px;
-    padding: 6px 12px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-
-  .btn-accent {
-    background: #4f9cff;
-    color: #05060a;
-  }
-</style>
+    @media (max-width: 768px) {
+      .sidebar { position: absolute; z-index: 10; height: 100%; transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+    }
+  </style>
 </head>
 <body>
 
-<div class="top">
-  File Manager – <strong>vahidarmy.github.io</strong>
-  <span>Root only · click icons to open or delete</span>
-</div>
+  <header>
+    <h2><i class="fa-solid fa-folder-tree"></i> Cloud Files</h2>
+    <input type="password" id="patToken" placeholder="Paste GitHub Fine-Grained Token" style="padding: 0.4rem; width: 250px;">
+    <input type="text" id="repoInput" value="vahidarmy/vahidarmy.github.io" style="padding: 0.4rem;">
+    <button class="btn" onclick="fetchFiles()"><i class="fa-solid fa-sync"></i> Load Repo</button>
+  </header>
 
-<div class="main">
-  <div class="panel">
-    <div class="panel-header">Files in /</div>
-    <ul class="file-list" id="file-list"></ul>
+  <div class="app-container" id="dropArea">
+    <div class="drag-overlay" id="dragOverlay"><i class="fa-solid fa-cloud-arrow-up"></i> Drop file to commit</div>
+    
+    <div class="sidebar" id="sidebar">
+      <div class="file-tree" id="fileTree">
+        <p style="padding: 1rem; color: #94a3b8;">Enter token and load repo...</p>
+      </div>
+    </div>
 
-    <div class="editor-area">
-      <div class="editor-title" id="editor-title">No file selected</div>
-      <textarea id="editor-text" spellcheck="false"></textarea>
+    <div class="editor-section">
+      <div class="editor-toolbar">
+        <span id="activeFileName" style="font-weight: bold; margin-right: auto;">No file selected</span>
+        <button class="btn" onclick="saveFile()"><i class="fa-solid fa-floppy-disk"></i> Save</button>
+        <button class="btn" style="background:#22c55e;" onclick="runPython()"><i class="fa-solid fa-play"></i> Run Python</button>
+      </div>
+      
+      <textarea id="codeEditor"></textarea>
+      
+      <div class="console-panel" id="pythonOutput">
+        &gt; Console Output will appear here...
+      </div>
     </div>
   </div>
-</div>
 
-<div class="bottom-bar">
-  <button class="btn" id="btn-set-token">Set PAT</button>
-  <button class="btn" id="btn-refresh">Refresh</button>
-  <button class="btn btn-accent" id="btn-save">Save current file</button>
-</div>
+  <div class="context-menu" id="contextMenu">
+    <div onclick="contextDelete()"><i class="fa-solid fa-trash"></i> Delete File</div>
+  </div>
 
-<script>
-const USERNAME = "vahidarmy";
-const REPO = "vahidarmy.github.io";
-const BASE_URL = "https://vahidarmy.github.io/";
+  <script>
+    const USERNAME = "vahidarmy";
+    let editor;
+    let currentSHA = "";
+    let currentPath = "";
+    let selectedContextPath = "";
+    let pyodideInstance = null;
 
-let currentFile = null;
-
-function getToken() {
-  return localStorage.getItem("github_pat") || "";
-}
-
-function setToken() {
-  const t = prompt("Enter GitHub PAT:", getToken());
-  if (t) localStorage.setItem("github_pat", t.trim());
-}
-
-async function gh(path, options = {}) {
-  const token = getToken();
-  if (!token) {
-    alert("Set PAT first");
-    throw "No PAT";
-  }
-  options.headers = {
-    "Authorization": "Bearer " + token,
-    "Accept": "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28"
-  };
-  const res = await fetch("https://api.github.com" + path, options);
-  if (!res.ok) throw await res.text();
-  return res.json();
-}
-
-async function loadRoot() {
-  const list = document.getElementById("file-list");
-  list.innerHTML = "<li style='padding:6px;font-size:12px;opacity:.7'>Loading...</li>";
-  try {
-    const data = await gh(`/repos/${USERNAME}/${REPO}/contents/`);
-    list.innerHTML = "";
-    data
-      .filter(i => i.type === "file") // root files only
-      .forEach(item => {
-        const li = document.createElement("li");
-        li.className = "file-item";
-
-        const left = document.createElement("div");
-        left.className = "file-left";
-
-        const icon = document.createElement("div");
-        icon.className = "file-icon";
-        icon.textContent = "📄";
-
-        const name = document.createElement("div");
-        name.className = "file-name";
-        name.textContent = item.name;
-
-        left.appendChild(icon);
-        left.appendChild(name);
-
-        const actions = document.createElement("div");
-        actions.className = "file-actions";
-
-        const openBtn = document.createElement("button");
-        openBtn.className = "icon-btn";
-        openBtn.textContent = "Open";
-        openBtn.onclick = () => openInNewTab(item);
-
-        const delBtn = document.createElement("button");
-        delBtn.className = "icon-btn danger";
-        delBtn.textContent = "Del";
-        delBtn.onclick = () => deleteFile(item);
-
-        const editBtn = document.createElement("button");
-        editBtn.className = "icon-btn";
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => openFileInEditor(item);
-
-        actions.appendChild(openBtn);
-        actions.appendChild(editBtn);
-        actions.appendChild(delBtn);
-
-        li.appendChild(left);
-        li.appendChild(actions);
-        list.appendChild(li);
+    // Initialize CodeMirror
+    window.onload = async () => {
+      editor = CodeMirror.fromTextArea(document.getElementById("codeEditor"), {
+        lineNumbers: true,
+        theme: "dracula",
+        mode: "javascript"
       });
-  } catch (e) {
-    list.innerHTML = "<li style='padding:6px;font-size:12px;color:#ff4f6a'>Error loading root</li>";
-    console.error(e);
-  }
-}
+      
+      // Load saved token if available
+      if(localStorage.getItem('gh_pat')) {
+        document.getElementById('patToken').value = localStorage.getItem('gh_pat');
+      }
 
-function openInNewTab(item) {
-  window.open(BASE_URL + item.path, "_blank");
-}
-
-async function deleteFile(item) {
-  if (!confirm("Delete " + item.path + " ?")) return;
-  try {
-    await gh(`/repos/${USERNAME}/${REPO}/contents/${item.path}`, {
-      method: "DELETE",
-      body: JSON.stringify({
-        message: "Delete " + item.path,
-        sha: item.sha
-      })
-    });
-    loadRoot();
-  } catch (e) {
-    alert("Delete failed");
-    console.error(e);
-  }
-}
-
-async function openFileInEditor(item) {
-  try {
-    const data = await gh(`/repos/${USERNAME}/${REPO}/contents/${item.path}`);
-    const content = atob(data.content.replace(/\n/g, ""));
-    currentFile = { path: item.path, sha: item.sha };
-    document.getElementById("editor-title").textContent = item.path;
-    document.getElementById("editor-text").value = content;
-  } catch (e) {
-    alert("Open failed");
-    console.error(e);
-  }
-}
-
-async function saveCurrentFile() {
-  if (!currentFile) {
-    alert("No file selected");
-    return;
-  }
-  const text = document.getElementById("editor-text").value;
-  try {
-    const body = {
-      message: "Update " + currentFile.path,
-      content: btoa(text),
-      sha: currentFile.sha
+      // Pre-load Pyodide engine
+      document.getElementById('pythonOutput').innerText = "> Loading Python Runtime...";
+      pyodideInstance = await loadPyodide();
+      document.getElementById('pythonOutput').innerText = "> Python Engine Ready!";
     };
-    const res = await gh(`/repos/${USERNAME}/${REPO}/contents/${currentFile.path}`, {
-      method: "PUT",
-      body: JSON.stringify(body)
+
+    // GitHub API Helper
+    async function ghRequest(endpoint, method = "GET", body = null) {
+      const token = document.getElementById('patToken').value;
+      localStorage.setItem('gh_pat', token);
+      
+      const options = {
+        method,
+        headers: {
+          "Authorization": `token ${token}`,
+          "Accept": "application/vnd.github.v3+json",
+          "Content-Type": "application/json"
+        }
+      };
+      if (body) options.body = JSON.stringify(body);
+      return fetch(`https://api.github.com/repos/${document.getElementById('repoInput').value}${endpoint}`, options);
+    }
+
+    // Fetch File List
+    async function fetchFiles() {
+      const res = await ghRequest("/contents");
+      const data = await res.json();
+      const tree = document.getElementById("fileTree");
+      tree.innerHTML = "";
+
+      if(Array.isArray(data)) {
+        data.forEach(item => {
+          const div = document.createElement("div");
+          div.className = "file-item";
+          div.innerHTML = `<i class="fa-regular ${item.type === 'dir' ? 'fa-folder' : 'fa-file'}"></i> ${item.name}`;
+          div.onclick = () => item.type === 'file' ? loadFile(item.path) : null;
+          div.oncontextmenu = (e) => showContextMenu(e, item.path);
+          tree.appendChild(div);
+        });
+      } else {
+        alert("Error loading repo: " + (data.message || "Invalid setup"));
+      }
+    }
+
+    // Load File Content into Editor
+    async function loadFile(path) {
+      const res = await ghRequest(`/contents/${path}`);
+      const data = await res.json();
+      currentSHA = data.sha;
+      currentPath = data.path;
+      
+      const content = decodeURIComponent(escape(atob(data.content)));
+      editor.setValue(content);
+      document.getElementById('activeFileName').innerText = data.name;
+
+      // Update Syntax Highlighting Mode dynamically
+      const ext = path.split('.').pop();
+      const modes = { js: 'javascript', py: 'python', html: 'xml', css: 'css' };
+      editor.setOption('mode', modes[ext] || 'javascript');
+    }
+
+    // Save File Back to GitHub
+    async function saveFile() {
+      if (!currentPath) return alert("Select a file to save!");
+      const content = btoa(unescape(encodeURIComponent(editor.getValue())));
+      
+      const res = await ghRequest(`/contents/${currentPath}`, "PUT", {
+        message: `Updated ${currentPath} via Cloud File Manager`,
+        content: content,
+        sha: currentSHA
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        currentSHA = data.content.sha;
+        alert("File Saved & Committed!");
+      }
+    }
+
+    // Execute Python Code via Pyodide
+    async function runPython() {
+      if (!pyodideInstance) return;
+      const code = editor.getValue();
+      const consoleBox = document.getElementById("pythonOutput");
+      
+      try {
+        pyodideInstance.setStdout({ batched: (str) => consoleBox.innerText += "\n" + str });
+        consoleBox.innerText = "> Running script...";
+        await pyodideInstance.runPythonAsync(code);
+      } catch (err) {
+        consoleBox.innerText = "> Error: " + err;
+      }
+    }
+
+    // Drag and Drop Upload Functionality
+    const dropArea = document.getElementById('dropArea');
+    const dragOverlay = document.getElementById('dragOverlay');
+
+    window.addEventListener('dragover', (e) => { e.preventDefault(); dragOverlay.style.display = 'flex'; });
+    dragOverlay.addEventListener('dragleave', () => dragOverlay.style.display = 'none');
+    dragOverlay.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dragOverlay.style.display = 'none';
+      const file = e.dataTransfer.files[0];
+      
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64Content = reader.result.split(',')[1];
+          await ghRequest(`/contents/${file.name}`, "PUT", {
+            message: `Uploaded ${file.name}`,
+            content: base64Content
+          });
+          fetchFiles();
+        };
+        reader.readAsDataURL(file);
+      }
     });
-    currentFile.sha = res.content.sha;
-    alert("Saved");
-    loadRoot();
-  } catch (e) {
-    alert("Save failed");
-    console.error(e);
-  }
-}
 
-document.getElementById("btn-set-token").onclick = setToken;
-document.getElementById("btn-refresh").onclick = loadRoot;
-document.getElementById("btn-save").onclick = saveCurrentFile;
+    // Custom Right Click Context Menu Logic
+    function showContextMenu(e, path) {
+      e.preventDefault();
+      selectedContextPath = path;
+      const menu = document.getElementById('contextMenu');
+      menu.style.display = 'block';
+      menu.style.left = `${e.pageX}px`;
+      menu.style.top = `${e.pageY}px`;
+    }
 
-loadRoot();
-</script>
+    window.addEventListener('click', () => {
+      document.getElementById('contextMenu').style.display = 'none';
+    });
+
+    async function contextDelete() {
+      if (!confirm(`Delete ${selectedContextPath}?`)) return;
+      const fileRes = await ghRequest(`/contents/${selectedContextPath}`);
+      const fileData = await fileRes.json();
+
+      await ghRequest(`/contents/${selectedContextPath}`, "DELETE", {
+        message: `Deleted ${selectedContextPath}`,
+        sha: fileData.sha
+      });
+      fetchFiles();
+    }
+  </script>
 </body>
 </html>
