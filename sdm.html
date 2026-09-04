@@ -1091,18 +1091,18 @@
             'use strict';
 
             // ============================================================
-            // CONFIG
+            // CONFIG — FIXED: use 'master' branch
             // ============================================================
             const CONFIG = {
                 owner: 'vahidarmy',
                 repo: 'vahidarmy.github.io',
                 token: '',
-                branch: 'main',
+                branch: 'master',   // <-- changed from 'main' to 'master'
                 currentPath: '',
                 currentSha: null,
                 editingFile: null,
                 fileTreeData: [],
-                ctxTarget: null, // { type: 'file'|'folder', path, name, sha? }
+                ctxTarget: null,
             };
 
             // ============================================================
@@ -1188,7 +1188,7 @@
                 return res.json();
             }
 
-            // FIX: handle empty path correctly - no trailing slash
+            // Get contents — path can be empty for root
             async function getContents(path, ref) {
                 let endpoint = `/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
                 if (path && path !== '') {
@@ -1222,7 +1222,6 @@
             }
 
             async function createFolder(path) {
-                // Create a .gitkeep file in the folder
                 const filePath = path.endsWith('/') ? path + '.gitkeep' : path + '/.gitkeep';
                 return createOrUpdateFile(filePath, '', `Create folder ${path}`, null);
             }
@@ -1231,7 +1230,6 @@
             // FILE TREE & NAVIGATION
             // ============================================================
             let currentItems = [];
-            let treeState = {};
 
             function getFileIcon(name, isFolder) {
                 if (isFolder) return 'fa-folder';
@@ -1296,7 +1294,7 @@
                 return map[ext] || 'txt';
             }
 
-            function buildTree(items, path) {
+            function buildTree(items) {
                 const tree = [];
                 const folders = [];
                 const files = [];
@@ -1317,7 +1315,7 @@
                     container.innerHTML = '<div class="tree-empty"><i class="fas fa-folder-open"></i><br />Empty folder</div>';
                     return;
                 }
-                const tree = buildTree(items, path);
+                const tree = buildTree(items);
                 for (const item of tree) {
                     const div = document.createElement('div');
                     div.className = 'tree-item';
@@ -1343,7 +1341,6 @@
                         childContainer.className = 'tree-children';
                         div.appendChild(childContainer);
 
-                        // Toggle folder
                         div.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const isOpen = childContainer.classList.contains('open');
@@ -1353,15 +1350,12 @@
                             } else {
                                 childContainer.classList.add('open');
                                 chevron.classList.add('open');
-                                // Lazy load children
                                 if (childContainer.children.length === 0) {
                                     loadFolderChildren(item.path, childContainer);
                                 }
                             }
                         });
 
-                        // Load children on first open (will be triggered by click)
-                        // Preload if it's the current path
                         if (item.path === CONFIG.currentPath) {
                             childContainer.classList.add('open');
                             chevron.classList.add('open');
@@ -1396,7 +1390,7 @@
                     `;
                     return;
                 }
-                const tree = buildTree(items, path);
+                const tree = buildTree(items);
                 for (const item of tree) {
                     const card = document.createElement('div');
                     card.className = 'file-card';
@@ -1421,7 +1415,6 @@
                         card.addEventListener('click', () => openFile(item));
                     }
 
-                    // Right-click
                     card.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1456,9 +1449,7 @@
                     const items = await getContents(path, CONFIG.branch);
                     currentItems = Array.isArray(items) ? items : [];
                     renderFileList(currentItems, path);
-                    // Update tree
-                    rebuildTree();
-                    // Close editor
+                    await rebuildTree();
                     closeEditor();
                 } catch (e) {
                     toast(`Error: ${e.message}`, 'error');
@@ -1515,7 +1506,6 @@
                     currentFileLanguage = detectLanguage(item.name);
                     CONFIG.currentSha = item.sha || null;
 
-                    // Fetch content
                     const data = await getContents(item.path, CONFIG.branch);
                     let content = '';
                     if (data.content) {
@@ -1531,18 +1521,14 @@
                     highlightPreview.classList.remove('visible');
                     pythonOutput.classList.remove('visible');
 
-                    // Set active tab
                     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                     document.querySelector('[data-tab="edit"]').classList.add('active');
                     editorTextarea.style.display = 'block';
 
-                    // Show/hide python tab
                     const isPython = currentFileLanguage === 'python';
                     pythonTabBtn.style.display = isPython ? 'inline-flex' : 'none';
 
-                    // Update preview
                     updatePreview();
-
                     toast(`Opened ${item.name}`, 'info', 2000);
                 } catch (e) {
                     toast(`Error opening file: ${e.message}`, 'error');
@@ -1577,7 +1563,6 @@
                     const result = await createOrUpdateFile(path, content, `Update ${path}`, sha);
                     CONFIG.currentSha = result.content.sha;
                     toast(`Saved ${currentFile.name}`, 'success');
-                    // Refresh
                     await navigateTo(CONFIG.currentPath);
                 } catch (e) {
                     toast(`Save error: ${e.message}`, 'error');
@@ -1595,7 +1580,6 @@
                 pythonOutput.classList.remove('visible');
             }
 
-            // Editor tabs
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const tab = this.dataset.tab;
@@ -1618,7 +1602,6 @@
                 });
             });
 
-            // Real-time preview update
             editorTextarea.addEventListener('input', () => {
                 if (document.querySelector('[data-tab="preview"]').classList.contains('active')) {
                     updatePreview();
@@ -1626,7 +1609,6 @@
                 currentFileContent = editorTextarea.value;
             });
 
-            // Save shortcut
             document.addEventListener('keydown', (e) => {
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                     e.preventDefault();
@@ -1689,7 +1671,6 @@
                 pythonOutput.classList.add('visible');
 
                 try {
-                    // Redirect stdout
                     pyodideInstance.runPython(`
                         import sys
                         from io import StringIO
@@ -1707,9 +1688,7 @@
             // CONTEXT MENU
             // ============================================================
             function showCtxMenu(x, y) {
-                // Clamp to viewport
                 const menu = ctxMenu;
-                const rect = menu.getBoundingClientRect();
                 const w = Math.min(220, window.innerWidth - 20);
                 menu.style.width = w + 'px';
                 let left = Math.min(x, window.innerWidth - w - 10);
@@ -1728,7 +1707,6 @@
 
             document.addEventListener('click', closeCtxMenu);
 
-            // Context menu actions
             ctxMenu.querySelectorAll('.ctx-item').forEach(item => {
                 item.addEventListener('click', async (e) => {
                     e.stopPropagation();
@@ -1765,11 +1743,8 @@
                 });
             });
 
-            // Right-click on file list / tree
             document.addEventListener('contextmenu', (e) => {
-                // If click is inside fileList or tree item, handled by individual elements
                 if (e.target.closest('.file-card') || e.target.closest('.tree-item')) return;
-                // Show context menu on background
                 const target = e.target.closest('.file-list') || e.target.closest('.sidebar-tree');
                 if (target) {
                     e.preventDefault();
@@ -1826,20 +1801,16 @@
                 if (target.isRoot) return toast('Cannot rename root', 'warning');
                 const newName = await promptInput('New name:', target.name);
                 if (!newName || newName === target.name) return;
-                // GitHub doesn't support direct rename; we need to copy and delete
                 const oldPath = target.path;
                 const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
                 const newPath = parentPath ? `${parentPath}/${newName}` : newName;
                 try {
-                    // Get content
                     const data = await getContents(oldPath, CONFIG.branch);
                     let content = '';
                     if (data.content) {
                         content = decodeURIComponent(escape(atob(data.content)));
                     }
-                    // Create new
                     await createOrUpdateFile(newPath, content, `Rename ${target.name} to ${newName}`, null);
-                    // Delete old
                     await deleteFile(oldPath, data.sha, `Delete ${target.name}`);
                     toast(`Renamed to ${newName}`, 'success');
                     await navigateTo(CONFIG.currentPath);
@@ -1857,13 +1828,11 @@
                 if (!confirm(`Delete "${target.name}" permanently?`)) return;
                 try {
                     if (target.isFolder) {
-                        // Need to delete all contents recursively - simplified: delete folder contents
                         const items = await getContents(target.path, CONFIG.branch);
                         const files = Array.isArray(items) ? items : [];
                         for (const item of files) {
                             await deleteFile(item.path, item.sha, `Delete ${item.name}`);
                         }
-                        // Delete the folder itself (by deleting .gitkeep or the folder marker)
                         try {
                             const data = await getContents(`${target.path}/.gitkeep`, CONFIG.branch);
                             if (data && data.sha) {
@@ -1912,7 +1881,6 @@
                     await navigator.clipboard.writeText(target.path);
                     toast('Path copied!', 'success');
                 } catch (e) {
-                    // Fallback
                     const ta = document.createElement('textarea');
                     ta.value = target.path;
                     document.body.appendChild(ta);
@@ -1968,14 +1936,12 @@
                     reader.onload = async (e) => {
                         try {
                             let content = e.target.result;
-                            // For text files, keep as string; for binary, base64
                             const isText = file.type.startsWith('text/') ||
                                 file.name.match(/\.(txt|html|css|js|py|json|md|xml|yml|yaml|sh|bash|svg)$/i);
                             let data;
                             if (isText) {
                                 data = content;
                             } else {
-                                // Binary - convert to base64
                                 const bin = atob(content.split(',')[1] || '');
                                 data = bin;
                             }
@@ -2008,12 +1974,10 @@
                 }
                 CONFIG.token = token;
                 try {
-                    // Test connection by fetching root
                     await getContents('', CONFIG.branch);
                     toast('Connected to GitHub!', 'success');
                     await navigateTo('');
                     await rebuildTree();
-                    // Load Pyodide in background
                     loadPyodide().catch(() => {});
                 } catch (e) {
                     toast(`Connection error: ${e.message}`, 'error');
@@ -2064,18 +2028,14 @@
             });
 
             // ============================================================
-            // AUTO-CONNECT if token is already in input
+            // AUTO-CONNECT
             // ============================================================
-            // Prefill username (already in config)
-            // If token is stored, auto-connect
             const savedToken = localStorage.getItem('gh_token');
             if (savedToken) {
                 tokenInput.value = savedToken;
-                // Auto-connect after a short delay
                 setTimeout(() => connect(), 500);
             }
 
-            // Save token on connect
             const origConnect = connect;
             connect = async function() {
                 const token = tokenInput.value.trim();
@@ -2084,14 +2044,12 @@
             };
             connectBtn.addEventListener('click', connect);
 
-            // Handle window resize for mobile
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 640) {
                     sidebar.classList.remove('open');
                 }
             });
 
-            // Close sidebar on file click (mobile)
             document.addEventListener('click', (e) => {
                 if (window.innerWidth <= 640) {
                     if (e.target.closest('.file-card') || e.target.closest('.tree-item')) {
@@ -2104,11 +2062,8 @@
             // INIT
             // ============================================================
             toast('Welcome to FileForge! Enter your GitHub token and connect.', 'info', 4000);
+            console.log('🚀 FileForge loaded (branch: master)');
 
-            console.log('🚀 FileForge loaded');
-            console.log(`📁 Owner: ${CONFIG.owner}, Repo: ${CONFIG.repo}`);
-
-            // Expose for debugging
             window.__fileforge = {
                 CONFIG,
                 navigateTo,
