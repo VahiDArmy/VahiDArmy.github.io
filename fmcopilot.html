@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GitHub File Manager – vahidarmy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #05060a;
+      --bg-alt: #0b0d14;
+      --accent: #4f9cff;
+      --accent-soft: rgba(79, 156, 255, 0.25);
+      --text: #e9ecf5;
+      --danger: #ff4f6a;
+      --radius: 10px;
+      --shadow-soft: 0 12px 30px rgba(0,0,0,0.45);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #15192a 0, #05060a 55%);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .app {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      gap: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(135deg, #0b0d14, #101426);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .top-bar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .top-bar-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      background: #15192a;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
+      transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+
+    .btn-accent {
+      background: var(--accent);
+      color: #05060a;
+      box-shadow: 0 0 18px var(--accent-soft);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      grid-template-rows: auto auto;
+      gap: 10px;
+      flex: 1;
+    }
+
+    @media (min-width: 768px) {
+      .layout {
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+      }
+    }
+
+    .panel {
+      background: #0b0d14;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .panel-header {
+      padding: 8px 12px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-body {
+      flex: 1;
+      overflow: auto;
+      padding: 6px;
+    }
+
+    /* File list */
+    .file-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      margin-bottom: 2px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    .file-item:hover {
+      background: rgba(255,255,255,0.03);
+      transform: translateY(-0.5px);
+    }
+
+    .file-item[data-type="dir"]::before {
+      content: "📁";
+      margin-right: 6px;
+    }
+
+    .file-item[data-type="file"]::before {
+      content: "📄";
+      margin-right: 6px;
+    }
+
+    .file-name {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-meta {
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    /* Editor */
+    .editor-toolbar {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      align-items: center;
+    }
+
+    .editor-toolbar select {
+      background: #15192a;
+      border-radius: 999px;
+      border: none;
+      color: var(--text);
+      font-size: 11px;
+      padding: 4px 8px;
+      outline: none;
+    }
+
+    .editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .editor textarea {
+      flex: 1;
+      width: 100%;
+      resize: none;
+      border: none;
+      outline: none;
+      background: #05060a;
+      color: var(--text);
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .console {
+      max-height: 120px;
+      overflow: auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 6px 8px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: #05060a;
+    }
+
+    /* Context menu */
+    .context-menu {
+      position: fixed;
+      background: #15192a;
+      border-radius: 8px;
+      box-shadow: var(--shadow-soft);
+      padding: 4px 0;
+      font-size: 12px;
+      z-index: 9999;
+      min-width: 140px;
+      display: none;
+    }
+
+    .context-menu-item {
+      padding: 6px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .context-menu-item:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .context-menu-item.danger {
+      color: var(--danger);
+    }
+
+    /* Drag overlay */
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      border: 1px dashed var(--accent);
+      background: rgba(79,156,255,0.08);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .drop-overlay.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="top-bar">
+      <div class="top-bar-left">
+        <div class="title">GitHub File Manager</div>
+        <div class="subtitle">@vahidarmy · repo: vahidarmy.github.io</div>
+      </div>
+      <div class="top-bar-right">
+        <button class="btn" id="btn-set-token">Set / Change PAT</button>
+        <button class="btn btn-accent" id="btn-refresh">Refresh</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- Left: file browser -->
+      <div class="panel" id="panel-files">
+        <div class="panel-header">
+          <span>Files</span>
+          <span id="current-path">/</span>
+        </div>
+        <div class="panel-body" id="file-body">
+          <ul class="file-list" id="file-list"></ul>
+          <div class="drop-overlay" id="drop-overlay-files">Drop files to upload</div>
+        </div>
+      </div>
+
+      <!-- Right: editor -->
+      <div class="panel" id="panel-editor">
+        <div class="panel-header">
+          <span id="editor-filename">No file selected</span>
+          <span id="editor-status">Idle</span>
+        </div>
+        <div class="editor-toolbar">
+          <select id="language-select">
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+          </select>
+          <button class="btn btn-accent" id="btn-save">Save</button>
+          <button class="btn" id="btn-run-python">Run Python</button>
+        </div>
+        <div class="editor">
+          <textarea id="editor-textarea" spellcheck="false"></textarea>
+          <div class="console" id="console-output">Console output will appear here.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Context menu -->
+  <div class="context-menu" id="context-menu">
+    <div class="context-menu-item" data-action="open">Open</div>
+    <div class="context-menu-item" data-action="rename">Rename</div>
+    <div class="context-menu-item" data-action="new-file">New file</div>
+    <div class="context-menu-item" data-action="new-folder">New folder</div>
+    <div class="context-menu-item danger" data-action="delete">Delete</div>
+  </div>
+
+  <script>
+    const USERNAME = "vahidarmy";
+    const REPO = "vahidarmy.github.io";
+    const API_BASE = "https://api.github.com";
+
+    let currentPath = "";
+    let currentFile = null;
+    let contextTarget = null;
+
+    function getToken() {
+      return localStorage.getItem("github_pat") || "";
+    }
+
+    function setToken() {
+      const t = prompt("Enter your GitHub fine-grained PAT (will be stored locally):", getToken());
+      if (t) {
+        localStorage.setItem("github_pat", t.trim());
+      }
+    }
+
+    document.getElementById("btn-set-token").addEventListener("click", setToken);
+
+    async function githubRequest(path, options = {}) {
+      const token = getToken();
+      if (!token) {
+        alert("Set your PAT first.");
+        throw new Error("No token");
+      }
+      const headers = options.headers || {};
+      headers["Authorization"] = "Bearer " + token;
+      headers["Accept"] = "application/vnd.github+json";
+      headers["X-GitHub-Api-Version"] = "2022-11-28";
+      options.headers = headers;
+
+      const res = await fetch(API_BASE + path, options);
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("GitHub error:", res.status, text);
+        throw new Error("GitHub API error " + res.status);
+      }
+      return res.json();
+    }
+
+    async function loadDirectory(path = "") {
+      currentPath = path;
+      document.getElementById("current-path").textContent = "/" + path;
+      const listEl = document.getElementById("file-list");
+      listEl.innerHTML = "<li style='padding:6px;font-size:11px;opacity:.7'>Loading...</li>";
+
+      try {
+        const data = await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(path)}`);
+        listEl.innerHTML = "";
+        data.sort((a, b) => {
+          if (a.type === b.type) return a.name.localeCompare(b.name);
+          return a.type === "dir" ? -1 : 1;
+        });
+        data.forEach(item => {
+          const li = document.createElement("li");
+          li.className = "file-item";
+          li.dataset.type = item.type;
+          li.dataset.path = item.path;
+          li.dataset.sha = item.sha;
+
+          const nameSpan = document.createElement("span");
+          nameSpan.className = "file-name";
+          nameSpan.textContent = item.name;
+
+          const metaSpan = document.createElement("span");
+          metaSpan.className = "file-meta";
+          metaSpan.textContent = item.type === "dir" ? "folder" : (item.size + " B");
+
+          li.appendChild(nameSpan);
+          li.appendChild(metaSpan);
+
+          li.addEventListener("click", () => {
+            if (item.type === "dir") {
+              loadDirectory(item.path);
+            } else {
+              openFile(item);
+            }
+          });
+
+          li.addEventListener("contextmenu", (e) => {
+            e.preventDefault();
+            showContextMenu(e.clientX, e.clientY, item, li);
+          });
+
+          listEl.appendChild(li);
+        });
+      } catch (e) {
+        listEl.innerHTML = "<li style='padding:6px;font-size:11px;color:#ff4f6a'>Error loading directory.</li>";
+      }
+    }
+
+    async function openFile(item) {
+      document.getElementById("editor-filename").textContent = item.path;
+      document.getElementById("editor-status").textContent = "Loading...";
+      currentFile = item;
+
+      try {
+        const data = await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(item.path)}`);
+        const content = atob(data.content.replace(/\n/g, ""));
+        document.getElementById("editor-textarea").value = content;
+        document.getElementById("editor-status").textContent = "Loaded";
+      } catch (e) {
+        document.getElementById("editor-status").textContent = "Error";
+      }
+    }
+
+    async function saveFile() {
+      if (!currentFile) {
+        alert("No file selected.");
+        return;
+      }
+      const text = document.getElementById("editor-textarea").value;
+      const contentBase64 = btoa(text);
+
+      document.getElementById("editor-status").textContent = "Saving...";
+
+      try {
+        const body = {
+          message: "Update " + currentFile.path,
+          content: contentBase64,
+          sha: currentFile.sha
+        };
+        const res = await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(currentFile.path)}`, {
+          method: "PUT",
+          body: JSON.stringify(body)
+        });
+        currentFile.sha = res.content.sha;
+        document.getElementById("editor-status").textContent = "Saved";
+        loadDirectory(currentPath);
+      } catch (e) {
+        document.getElementById("editor-status").textContent = "Save error";
+      }
+    }
+
+    document.getElementById("btn-save").addEventListener("click", saveFile);
+    document.getElementById("btn-refresh").addEventListener("click", () => loadDirectory(currentPath));
+
+    // Simple Python runner placeholder (you can plug Skulpt/Pyodide here)
+    document.getElementById("btn-run-python").addEventListener("click", () => {
+      const lang = document.getElementById("language-select").value;
+      const code = document.getElementById("editor-textarea").value;
+      const consoleEl = document.getElementById("console-output");
+      if (lang !== "python") {
+        consoleEl.textContent = "Switch language to Python to run.";
+        return;
+      }
+      consoleEl.textContent = "Python execution not wired yet.\nYou can integrate Skulpt or Pyodide here.";
+    });
+
+    // Context menu logic
+    const contextMenu = document.getElementById("context-menu");
+
+    function showContextMenu(x, y, item, element) {
+      contextTarget = { item, element };
+      contextMenu.style.left = x + "px";
+      contextMenu.style.top = y + "px";
+      contextMenu.style.display = "block";
+    }
+
+    function hideContextMenu() {
+      contextMenu.style.display = "none";
+      contextTarget = null;
+    }
+
+    document.addEventListener("click", () => {
+      hideContextMenu();
+    });
+
+    contextMenu.addEventListener("click", async (e) => {
+      const action = e.target.dataset.action;
+      if (!action || !contextTarget) return;
+      const { item } = contextTarget;
+
+      if (action === "open") {
+        if (item.type === "dir") loadDirectory(item.path);
+        else openFile(item);
+      } else if (action === "delete") {
+        if (!confirm("Delete " + item.path + " ?")) return;
+        try {
+          await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(item.path)}`, {
+            method: "DELETE",
+            body: JSON.stringify({
+              message: "Delete " + item.path,
+              sha: item.sha
+            })
+          });
+          loadDirectory(currentPath);
+        } catch (e) {
+          alert("Delete failed.");
+        }
+      } else if (action === "new-file") {
+        const name = prompt("New file name:");
+        if (!name) return;
+        const fullPath = (currentPath ? currentPath + "/" : "") + name;
+        try {
+          await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(fullPath)}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              message: "Create " + fullPath,
+              content: btoa("")
+            })
+          });
+          loadDirectory(currentPath);
+        } catch (e) {
+          alert("Create file failed.");
+        }
+      } else if (action === "new-folder") {
+        const name = prompt("New folder name:");
+        if (!name) return;
+        const fullPath = (currentPath ? currentPath + "/" : "") + name + "/.gitkeep";
+        try {
+          await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(fullPath)}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              message: "Create folder " + fullPath,
+              content: btoa("")
+            })
+          });
+          loadDirectory(currentPath);
+        } catch (e) {
+          alert("Create folder failed.");
+        }
+      } else if (action === "rename") {
+        const newName = prompt("New name:", item.name);
+        if (!newName || newName === item.name) return;
+        const newPath = item.path.replace(/[^/]+$/, newName);
+        try {
+          // GitHub doesn't have direct rename; copy then delete
+          const fileData = await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(item.path)}`);
+          await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(newPath)}`, {
+            method: "PUT",
+            body: JSON.stringify({
+              message: "Rename " + item.path + " -> " + newPath,
+              content: fileData.content,
+            })
+          });
+          await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(item.path)}`, {
+            method: "DELETE",
+            body: JSON.stringify({
+              message: "Remove old " + item.path,
+              sha: item.sha
+            })
+          });
+          loadDirectory(currentPath);
+        } catch (e) {
+          alert("Rename failed.");
+        }
+      }
+
+      hideContextMenu();
+    });
+
+    // Drag & drop upload
+    const fileBody = document.getElementById("file-body");
+    const dropOverlay = document.getElementById("drop-overlay-files");
+
+    fileBody.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropOverlay.classList.add("active");
+    });
+
+    fileBody.addEventListener("dragleave", (e) => {
+      dropOverlay.classList.remove("active");
+    });
+
+    fileBody.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      dropOverlay.classList.remove("active");
+      const files = e.dataTransfer.files;
+      if (!files || !files.length) return;
+
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const contentBase64 = btoa(ev.target.result);
+          const fullPath = (currentPath ? currentPath + "/" : "") + file.name;
+          try {
+            await githubRequest(`/repos/${USERNAME}/${REPO}/contents/${encodeURIComponent(fullPath)}`, {
+              method: "PUT",
+              body: JSON.stringify({
+                message: "Upload " + fullPath,
+                content: contentBase64
+              })
+            });
+            loadDirectory(currentPath);
+          } catch (err) {
+            console.error("Upload failed", err);
+          }
+        };
+        reader.readAsBinaryString(file);
+      }
+    });
+
+    // Initial load
+    loadDirectory("");
+  </script>
+</body>
+</html>
