@@ -1,0 +1,1021 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GitHub File Manager</title>
+
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel2: #21262d;
+  --border: #30363d;
+  --text: #f0f6fc;
+  --muted: #8b949e;
+  --blue: #58a6ff;
+  --green: #238636;
+  --red: #f85149;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px system-ui, sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+input {
+  color: var(--text);
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--blue);
+}
+
+button.primary {
+  background: var(--green);
+  border-color: #2ea043;
+}
+
+button.danger {
+  color: #ff7b72;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+header {
+  min-height: 64px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0 12px 0 0;
+  white-space: nowrap;
+}
+
+#token {
+  width: min(390px, 70vw);
+}
+
+#search {
+  width: 220px;
+  margin-left: auto;
+}
+
+#connection {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+main {
+  max-width: 1250px;
+  margin: auto;
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+#breadcrumb {
+  color: var(--blue);
+  margin: 12px 0;
+  word-break: break-word;
+}
+
+.crumb {
+  cursor: pointer;
+}
+
+#dropzone {
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 25px;
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+#dropzone.over {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: #101b2a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 13px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+tr:last-child td {
+  border-bottom: 0;
+}
+
+tr:hover {
+  background: #1c2128;
+}
+
+.name {
+  color: var(--blue);
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.type {
+  color: var(--muted);
+}
+
+.actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.actions button {
+  margin-left: 5px;
+  padding: 6px 9px;
+}
+
+#message {
+  min-height: 22px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+
+#message.error {
+  color: #ff7b72;
+}
+
+#message.success {
+  color: #7ee787;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  padding: 5vh 5vw;
+  background: rgb(0 0 0 / 70%);
+}
+
+.modal.open {
+  display: block;
+}
+
+.dialog {
+  width: min(1000px, 100%);
+  height: 90vh;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 20px 80px #000;
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dialog-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dialog-header .spacer {
+  flex: 1;
+}
+
+#editor {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  resize: none;
+  padding: 15px;
+  color: var(--text);
+  background: #0d1117;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: 14px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+  tab-size: 2;
+}
+
+#nameDialog {
+  max-width: 440px;
+  height: auto;
+  margin-top: 15vh;
+}
+
+#nameInput {
+  width: 100%;
+  margin: 12px 0;
+}
+
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+#loading {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+  color: white;
+  font-size: 18px;
+}
+
+#loading.show {
+  display: flex;
+}
+
+@media (max-width: 700px) {
+  header {
+    padding: 12px;
+  }
+
+  main {
+    padding: 12px;
+  }
+
+  #search {
+    order: 5;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  th:nth-child(3),
+  td:nth-child(3) {
+    display: none;
+  }
+
+  th,
+  td {
+    padding: 10px 7px;
+  }
+
+  .actions button {
+    margin: 2px;
+  }
+
+  .modal {
+    padding: 10px;
+  }
+
+  .dialog {
+    height: calc(100vh - 20px);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📁 GitHub Files</h1>
+
+  <input
+    id="token"
+    type="password"
+    autocomplete="off"
+    placeholder="Paste GitHub token">
+
+  <button id="connectButton" class="primary">Connect</button>
+  <button id="logoutButton">Forget token</button>
+
+  <span id="connection">Not connected</span>
+
+  <input id="search" type="search" placeholder="Search files">
+</header>
+
+<main>
+  <div class="toolbar">
+    <button id="newFileButton" class="primary">New file</button>
+    <button id="newFolderButton">New folder</button>
+    <button id="uploadButton">Upload files</button>
+    <button id="refreshButton">Refresh</button>
+    <input id="fileInput" type="file" multiple hidden>
+  </div>
+
+  <div id="breadcrumb"></div>
+
+  <div id="dropzone">
+    Drop files here to upload
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th> </th>
+        <th>Name</th>
+        <th>Type</th>
+        <th class="actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="fileList"></tbody>
+  </table>
+
+  <div id="message"></div>
+</main>
+
+<div id="editorModal" class="modal">
+  <div class="dialog">
+    <div class="dialog-header">
+      <strong id="editorTitle" class="dialog-title"></strong>
+      <span class="spacer"></span>
+      <button id="saveButton" class="primary">Save</button>
+      <button id="closeEditorButton">Close</button>
+    </div>
+
+    <textarea id="editor" spellcheck="false"></textarea>
+  </div>
+</div>
+
+<div id="nameModal" class="modal">
+  <div id="nameDialog" class="dialog">
+    <strong id="nameTitle">New file</strong>
+
+    <input id="nameInput" autocomplete="off">
+
+    <div class="dialog-buttons">
+      <button id="cancelNameButton">Cancel</button>
+      <button id="createNameButton" class="primary">Create</button>
+    </div>
+  </div>
+</div>
+
+<div id="loading">Working…</div>
+
+<script>
+"use strict";
+
+const OWNER = "vahidarmy";
+const REPOSITORY = "vahidarmy.github.io";
+const API_ROOT =
+  "https://api.github.com/repos/" + OWNER + "/" + REPOSITORY + "/contents";
+
+const TOKEN_KEY = "vahidarmy_github_token";
+
+let token = localStorage.getItem(TOKEN_KEY) || "";
+let currentPath = "";
+let currentItems = [];
+let editingFile = null;
+let nameMode = "file";
+
+const tokenInput = document.querySelector("#token");
+const connectButton = document.querySelector("#connectButton");
+const logoutButton = document.querySelector("#logoutButton");
+const connection = document.querySelector("#connection");
+const searchInput = document.querySelector("#search");
+const fileList = document.querySelector("#fileList");
+const breadcrumb = document.querySelector("#breadcrumb");
+const message = document.querySelector("#message");
+const loading = document.querySelector("#loading");
+const editorModal = document.querySelector("#editorModal");
+const editorTitle = document.querySelector("#editorTitle");
+const editor = document.querySelector("#editor");
+const nameModal = document.querySelector("#nameModal");
+const nameTitle = document.querySelector("#nameTitle");
+const nameInput = document.querySelector("#nameInput");
+const fileInput = document.querySelector("#fileInput");
+const dropzone = document.querySelector("#dropzone");
+
+tokenInput.value = token;
+
+function showMessage(text, type = "") {
+  message.textContent = text;
+  message.className = type;
+}
+
+function setLoading(value) {
+  loading.classList.toggle("show", value);
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function pathUrl(path = "") {
+  if (!path) return API_ROOT;
+
+  return API_ROOT + "/" + path
+    .split("/")
+    .filter(Boolean)
+    .map(encodeURIComponent)
+    .join("/");
+}
+
+async function github(path, options = {}) {
+  if (!token) {
+    throw new Error("Enter a GitHub token first.");
+  }
+
+  const response = await fetch(pathUrl(path), {
+    ...options,
+    headers: {
+      "Accept": "application/vnd.github+json",
+      "Authorization": "Bearer " + token,
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(options.headers || {})
+    }
+  });
+
+  let data = null;
+
+  try {
+    data = await response.json();
+  } catch {
+    data = null;
+  }
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      throw new Error("GitHub rejected the token.");
+    }
+
+    if (response.status === 403) {
+      throw new Error("GitHub denied access. Check token permissions.");
+    }
+
+    throw new Error(
+      data?.message || "GitHub request failed with HTTP " + response.status
+    );
+  }
+
+  return data;
+}
+
+function utf8ToBase64(text) {
+  const bytes = new TextEncoder().encode(text);
+  return bytesToBase64(bytes);
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(
+      ...bytes.subarray(i, i + chunkSize)
+    );
+  }
+
+  return btoa(binary);
+}
+
+function base64ToUtf8(base64) {
+  const clean = base64.replace(/\s/g, "");
+  const binary = atob(clean);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new TextDecoder().decode(bytes);
+}
+
+function joinPath(a, b) {
+  return [a, b]
+    .filter(Boolean)
+    .join("/")
+    .replace(/^\/+|\/+$/g, "");
+}
+
+async function listDirectory(path = currentPath) {
+  const result = await github(path);
+
+  if (!Array.isArray(result)) {
+    return [result];
+  }
+
+  return result;
+}
+
+async function refresh() {
+  if (!token) {
+    currentItems = [];
+    render();
+    return;
+  }
+
+  setLoading(true);
+  showMessage("");
+
+  try {
+    currentItems = await listDirectory(currentPath);
+
+    connection.textContent = "Connected";
+    connection.style.color = "#7ee787";
+
+    render();
+  } catch (error) {
+    connection.textContent = "Connection failed";
+    connection.style.color = "#ff7b72";
+    showMessage(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderBreadcrumb() {
+  const parts = currentPath.split("/").filter(Boolean);
+  let html = '<span class="crumb" data-path="">root</span>';
+
+  for (let i = 0; i < parts.length; i++) {
+    const path = parts.slice(0, i + 1).join("/");
+
+    html +=
+      ' / <span class="crumb" data-path="' +
+      escapeHtml(path) +
+      '">' +
+      escapeHtml(parts[i]) +
+      "</span>";
+  }
+
+  breadcrumb.innerHTML = html;
+
+  breadcrumb.querySelectorAll(".crumb").forEach(element => {
+    element.addEventListener("click", () => {
+      currentPath = element.dataset.path;
+      refresh();
+    });
+  });
+}
+
+function render() {
+  renderBreadcrumb();
+
+  const query = searchInput.value.trim().toLowerCase();
+
+  const items = currentItems
+    .filter(item => item.name.toLowerCase().includes(query))
+    .sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === "dir" ? -1 : 1;
+      }
+
+      return a.name.localeCompare(b.name);
+    });
+
+  if (!items.length) {
+    fileList.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;color:#8b949e">
+          Empty directory
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  fileList.innerHTML = items.map(item => {
+    const icon = item.type === "dir" ? "📁" : "📄";
+    const path = escapeHtml(item.path);
+    const name = escapeHtml(item.name);
+
+    return `
+      <tr>
+        <td>${icon}</td>
+        <td>
+          <span class="name" data-open="${path}" data-type="${item.type}">
+            ${name}
+          </span>
+        </td>
+        <td class="type">${escapeHtml(item.type)}</td>
+        <td class="actions">
+          ${
+            item.type === "file"
+              ? `<button data-edit="${path}">Edit</button>`
+              : ""
+          }
+          <button class="danger"
+            data-delete="${path}"
+            data-delete-type="${item.type}"
+            data-sha="${escapeHtml(item.sha || "")}">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  fileList.querySelectorAll("[data-open]").forEach(element => {
+    element.addEventListener("click", () => {
+      const path = element.dataset.open;
+
+      if (element.dataset.type === "dir") {
+        currentPath = path;
+        refresh();
+      } else {
+        openFile(path);
+      }
+    });
+  });
+
+  fileList.querySelectorAll("[data-edit]").forEach(element => {
+    element.addEventListener("click", () => {
+      openFile(element.dataset.edit);
+    });
+  });
+
+  fileList.querySelectorAll("[data-delete]").forEach(element => {
+    element.addEventListener("click", () => {
+      deleteItem(
+        element.dataset.delete,
+        element.dataset.deleteType,
+        element.dataset.sha
+      );
+    });
+  });
+}
+
+async function openFile(path) {
+  setLoading(true);
+
+  try {
+    const data = await github(path);
+
+    if (data.type !== "file") {
+      throw new Error("That item is not a file.");
+    }
+
+    editingFile = {
+      path: data.path,
+      sha: data.sha
+    };
+
+    editorTitle.textContent = data.path;
+    editor.value = base64ToUtf8(data.content || "");
+    editorModal.classList.add("open");
+    editor.focus();
+  } catch (error) {
+    showMessage(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function saveFile() {
+  if (!editingFile) return;
+
+  setLoading(true);
+
+  try {
+    const content = utf8ToBase64(editor.value);
+
+    const result = await github(editingFile.path, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: "Update " + editingFile.path,
+        content,
+        sha: editingFile.sha
+      })
+    });
+
+    editingFile.sha = result.content?.sha || editingFile.sha;
+
+    showMessage("Saved successfully.", "success");
+    closeEditor();
+    await refresh();
+  } catch (error) {
+    showMessage(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+function closeEditor() {
+  editorModal.classList.remove("open");
+  editingFile = null;
+}
+
+function openNameDialog(mode) {
+  nameMode = mode;
+
+  nameTitle.textContent =
+    mode === "file" ? "New file" : "New folder";
+
+  nameInput.value = "";
+  nameInput.placeholder =
+    mode === "file" ? "example.html" : "folder-name";
+
+  nameModal.classList.add("open");
+  nameInput.focus();
+}
+
+function closeNameDialog() {
+  nameModal.classList.remove("open");
+}
+
+async function createNamedItem() {
+  const entered = nameInput.value.trim();
+
+  if (!entered) return;
+
+  if (
+    entered.includes("..") ||
+    entered.startsWith("/") ||
+    entered.endsWith("/")
+  ) {
+    showMessage("Use a relative file or folder name.", "error");
+    return;
+  }
+
+  const path = joinPath(
+    currentPath,
+    nameMode === "folder" ? entered + "/.gitkeep" : entered
+  );
+
+  closeNameDialog();
+  setLoading(true);
+
+  try {
+    await github(path, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message:
+          nameMode === "folder"
+            ? "Create folder " + entered
+            : "Create file " + path,
+        content: ""
+      })
+    });
+
+    showMessage("Created successfully.", "success");
+    await refresh();
+  } catch (error) {
+    showMessage(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function uploadFiles(files) {
+  if (!files.length) return;
+
+  setLoading(true);
+
+  try {
+    for (const file of files) {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+
+      const relativeName =
+        file.webkitRelativePath || file.name;
+
+      const path = joinPath(currentPath, relativeName);
+
+      await github(path, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: "Upload " + path,
+          content: bytesToBase64(bytes)
+        })
+      });
+    }
+
+    showMessage("Upload complete.", "success");
+    await refresh();
+  } catch (error) {
+    showMessage(error.message, "error");
+  } finally {
+    fileInput.value = "";
+    setLoading(false);
+  }
+}
+
+async function deleteItem(path, type, sha) {
+  const confirmed = confirm(
+    type === "dir"
+      ? "Delete every file inside " + path + "?"
+      : "Delete " + path + "?"
+  );
+
+  if (!confirmed) return;
+
+  setLoading(true);
+
+  try {
+    if (type === "dir") {
+      await deleteDirectory(path);
+    } else {
+      await deleteFile(path, sha);
+    }
+
+    showMessage("Deleted successfully.", "success");
+    await refresh();
+  } catch (error) {
+    showMessage(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function deleteFile(path, sha) {
+  await github(path, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: "Delete " + path,
+      sha
+    })
+  });
+}
+
+async function deleteDirectory(path) {
+  const children = await listDirectory(path);
+
+  for (const child of children) {
+    if (child.type === "dir") {
+      await deleteDirectory(child.path);
+    } else {
+      await deleteFile(child.path, child.sha);
+    }
+  }
+}
+
+function connect() {
+  const entered = tokenInput.value.trim();
+
+  if (!entered) {
+    showMessage("Enter a GitHub token.", "error");
+    return;
+  }
+
+  token = entered;
+  localStorage.setItem(TOKEN_KEY, token);
+  currentPath = "";
+  refresh();
+}
+
+function forgetToken() {
+  token = "";
+  localStorage.removeItem(TOKEN_KEY);
+  tokenInput.value = "";
+  currentItems = [];
+  connection.textContent = "Not connected";
+  connection.style.color = "";
+  render();
+  showMessage("Token removed from this browser.", "success");
+}
+
+connectButton.addEventListener("click", connect);
+logoutButton.addEventListener("click", forgetToken);
+searchInput.addEventListener("input", render);
+
+document.querySelector("#refreshButton")
+  .addEventListener("click", refresh);
+
+document.querySelector("#newFileButton")
+  .addEventListener("click", () => openNameDialog("file"));
+
+document.querySelector("#newFolderButton")
+  .addEventListener("click", () => openNameDialog("folder"));
+
+document.querySelector("#uploadButton")
+  .addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", () => {
+  uploadFiles(fileInput.files);
+});
+
+document.querySelector("#saveButton")
+  .addEventListener("click", saveFile);
+
+document.querySelector("#closeEditorButton")
+  .addEventListener("click", closeEditor);
+
+document.querySelector("#cancelNameButton")
+  .addEventListener("click", closeNameDialog);
+
+document.querySelector("#createNameButton")
+  .addEventListener("click", createNamedItem);
+
+nameInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") createNamedItem();
+  if (event.key === "Escape") closeNameDialog();
+});
+
+editorModal.addEventListener("click", event => {
+  if (event.target === editorModal) closeEditor();
+});
+
+nameModal.addEventListener("click", event => {
+  if (event.target === nameModal) closeNameDialog();
+});
+
+dropzone.addEventListener("dragover", event => {
+  event.preventDefault();
+  dropzone.classList.add("over");
+});
+
+dropzone.addEventListener("dragleave", () => {
+  dropzone.classList.remove("over");
+});
+
+dropzone.addEventListener("drop", event => {
+  event.preventDefault();
+  dropzone.classList.remove("over");
+  uploadFiles(event.dataTransfer.files);
+});
+
+document.addEventListener("keydown", event => {
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    if (editingFile) {
+      event.preventDefault();
+      saveFile();
+    }
+  }
+
+  if (event.key === "Escape") {
+    closeEditor();
+    closeNameDialog();
+  }
+});
+
+render();
+
+if (token) {
+  refresh();
+}
+</script>
+
+</body>
+</html>
