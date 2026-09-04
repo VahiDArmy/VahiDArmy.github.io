@@ -7,8 +7,8 @@
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
-    <!-- Font Awesome 6 (Free) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <!-- Font Awesome 6 (Free) - updated to stable version -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <!-- Prism.js (lightweight) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js">
@@ -162,6 +162,15 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .topbar .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .topbar .nav-controls .btn {
+            padding: 4px 10px;
+            font-size: 0.8rem;
+        }
         .topbar .path-display {
             font-size: 0.8rem;
             color: var(--text-secondary);
@@ -175,10 +184,17 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .topbar .path-display i {
-            margin-right: 6px;
             color: var(--accent-secondary);
+        }
+        .topbar .path-display .path-text {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .topbar .actions {
             display: flex;
@@ -513,6 +529,12 @@
             background: var(--accent);
             color: #fff;
         }
+        .editor-toolbar .open-browser-btn {
+            display: none;
+        }
+        .editor-toolbar .open-browser-btn.visible {
+            display: inline-flex;
+        }
         .editor-body {
             flex: 1;
             display: flex;
@@ -781,6 +803,9 @@
             .topbar .brand {
                 font-size: 0.95rem;
             }
+            .topbar .nav-controls {
+                order: 2;
+            }
             .topbar .path-display {
                 font-size: 0.65rem;
                 padding: 2px 10px;
@@ -1003,9 +1028,14 @@
                 <i class="fas fa-code-branch"></i>
                 <span>FileForge</span>
             </div>
-            <div class="path-display" id="pathDisplay">
+            <!-- Navigation controls -->
+            <div class="nav-controls">
+                <button class="btn btn-sm" id="homeBtn" title="Home (root)"><i class="fas fa-home"></i></button>
+                <button class="btn btn-sm" id="upBtn" title="Up folder"><i class="fas fa-arrow-up"></i></button>
+            </div>
+            <div class="path-display">
                 <i class="fas fa-folder-open"></i>
-                <span id="currentPath">/</span>
+                <span class="path-text" id="currentPath">/</span>
             </div>
             <div class="actions">
                 <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle sidebar">
@@ -1052,6 +1082,7 @@
                             <button class="tab-btn" data-tab="python" id="pythonTabBtn"><i class="fab fa-python"></i> Run</button>
                         </div>
                         <button class="btn btn-success btn-sm" id="saveFileBtn"><i class="fas fa-save"></i> Save</button>
+                        <button class="btn btn-sm open-browser-btn" id="openBrowserBtn" title="Open in browser"><i class="fas fa-external-link-alt"></i> Open</button>
                         <button class="btn btn-sm" id="closeEditorBtn"><i class="fas fa-times"></i></button>
                     </div>
                     <div class="editor-body">
@@ -1091,13 +1122,13 @@
             'use strict';
 
             // ============================================================
-            // CONFIG — FIXED: use 'master' branch
+            // CONFIG
             // ============================================================
             const CONFIG = {
                 owner: 'vahidarmy',
                 repo: 'vahidarmy.github.io',
                 token: '',
-                branch: 'master',   // <-- changed from 'main' to 'master'
+                branch: 'master',
                 currentPath: '',
                 currentSha: null,
                 editingFile: null,
@@ -1129,6 +1160,9 @@
             const sidebar = $('sidebar');
             const newFolderBtn = $('newFolderBtn');
             const pythonTabBtn = $('pythonTabBtn');
+            const homeBtn = $('homeBtn');
+            const upBtn = $('upBtn');
+            const openBrowserBtn = $('openBrowserBtn');
 
             let pyodideReady = false;
             let pyodideInstance = null;
@@ -1188,7 +1222,6 @@
                 return res.json();
             }
 
-            // Get contents — path can be empty for root
             async function getContents(path, ref) {
                 let endpoint = `/repos/${CONFIG.owner}/${CONFIG.repo}/contents`;
                 if (path && path !== '') {
@@ -1224,6 +1257,16 @@
             async function createFolder(path) {
                 const filePath = path.endsWith('/') ? path + '.gitkeep' : path + '/.gitkeep';
                 return createOrUpdateFile(filePath, '', `Create folder ${path}`, null);
+            }
+
+            // ============================================================
+            // NAVIGATION HELPERS
+            // ============================================================
+            function getParentPath(path) {
+                if (!path || path === '') return '';
+                const parts = path.split('/');
+                parts.pop();
+                return parts.join('/');
             }
 
             // ============================================================
@@ -1528,6 +1571,10 @@
                     const isPython = currentFileLanguage === 'python';
                     pythonTabBtn.style.display = isPython ? 'inline-flex' : 'none';
 
+                    // Show "Open in Browser" only for HTML files
+                    const isHtml = currentFileLanguage === 'html' || currentFile.name.endsWith('.htm');
+                    openBrowserBtn.classList.toggle('visible', isHtml);
+
                     updatePreview();
                     toast(`Opened ${item.name}`, 'info', 2000);
                 } catch (e) {
@@ -1578,6 +1625,7 @@
                 highlightPreview.innerHTML = '';
                 pythonOutputContent.innerHTML = '';
                 pythonOutput.classList.remove('visible');
+                openBrowserBtn.classList.remove('visible');
             }
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1624,6 +1672,16 @@
 
             saveFileBtn.addEventListener('click', saveCurrentFile);
             closeEditorBtn.addEventListener('click', closeEditor);
+
+            // Open in browser
+            openBrowserBtn.addEventListener('click', () => {
+                if (!currentFile) return;
+                const path = currentFile.path;
+                // Build URL: https://vahidarmy.github.io/path/to/file
+                const url = `https://${CONFIG.owner}.github.io/${path}`;
+                window.open(url, '_blank');
+                toast(`Opening ${path}`, 'info', 2000);
+            });
 
             // ============================================================
             // PYTHON EXECUTION (Pyodide)
@@ -1962,6 +2020,18 @@
                     }
                 });
             }
+
+            // ============================================================
+            // NAVIGATION BUTTONS
+            // ============================================================
+            homeBtn.addEventListener('click', () => {
+                navigateTo('');
+            });
+
+            upBtn.addEventListener('click', () => {
+                const parent = getParentPath(CONFIG.currentPath);
+                navigateTo(parent);
+            });
 
             // ============================================================
             // CONNECT & INIT
