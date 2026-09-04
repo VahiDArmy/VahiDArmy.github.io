@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Glass GitHub Editor</title>
+
+<style>
+:root {
+  --neon: #00f7ff;
+  --neon-rgb: 0,247,255;
+  --glow: 28px;
+  --glass: .14;
+  --blur: 18px;
+  --bg: #050711;
+  --panel: rgba(12, 18, 38, var(--glass));
+  --border: rgba(var(--neon-rgb), .35);
+  --text: #e8fbff;
+  --muted: #7e9aaa;
+  --danger: #ff4f91;
+  --green: #55ffbd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: .38;
+}
+
+body::before {
+  width: 420px;
+  height: 420px;
+  top: -150px;
+  left: -120px;
+  background: var(--neon);
+}
+
+body::after {
+  width: 420px;
+  height: 420px;
+  right: -130px;
+  bottom: -170px;
+  background: #8d32ff;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app {
+  display: grid;
+  grid-template-rows: 70px 1fr;
+  width: 100%;
+  height: 100%;
+  padding: 14px;
+  gap: 14px;
+}
+
+.glass {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow:
+    0 0 var(--glow) rgba(var(--neon-rgb), .16),
+    inset 0 1px 0 rgba(255,255,255,.1);
+  backdrop-filter: blur(var(--blur)) saturate(145%);
+  -webkit-backdrop-filter: blur(var(--blur)) saturate(145%);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 18px;
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 210px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--neon);
+  font-size: 22px;
+  font-weight: 900;
+  border: 1px solid var(--neon);
+  border-radius: 12px;
+  box-shadow: 0 0 var(--glow) rgba(var(--neon-rgb), .8);
+  text-shadow: 0 0 12px var(--neon);
+}
+
+.brand strong {
+  display: block;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+.brand small {
+  color: var(--muted);
+}
+
+.connection {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+input,
+select {
+  min-height: 36px;
+  padding: 8px 11px;
+  color: var(--text);
+  background: rgba(0,0,0,.25);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 9px;
+  outline: none;
+}
+
+input:focus,
+select:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 12px rgba(var(--neon-rgb), .3);
+}
+
+.repo-input {
+  width: 210px;
+}
+
+.token-input {
+  width: 220px;
+}
+
+button {
+  min-height: 36px;
+  padding: 8px 14px;
+  color: var(--text);
+  background: rgba(var(--neon-rgb), .09);
+  border: 1px solid rgba(var(--neon-rgb), .55);
+  border-radius: 9px;
+  transition: .2s ease;
+}
+
+button:hover {
+  color: #fff;
+  background: rgba(var(--neon-rgb), .2);
+  box-shadow: 0 0 var(--glow) rgba(var(--neon-rgb), .55);
+  transform: translateY(-1px);
+}
+
+button.primary {
+  color: #001013;
+  background: var(--neon);
+  border-color: var(--neon);
+  font-weight: 800;
+  box-shadow: 0 0 var(--glow) rgba(var(--neon-rgb), .65);
+}
+
+button.danger {
+  color: #fff;
+  border-color: rgba(255,79,145,.7);
+  background: rgba(255,79,145,.15);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 225px;
+  gap: 14px;
+  min-height: 0;
+}
+
+.sidebar,
+.editor-panel,
+.controls {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.sidebar,
+.controls {
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 15px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  color: var(--neon);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.file-list {
+  overflow: auto;
+  padding: 10px;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px;
+  color: var(--muted);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.file:hover,
+.file.active {
+  color: var(--text);
+  background: rgba(var(--neon-rgb), .13);
+  box-shadow: inset 2px 0 var(--neon);
+}
+
+.empty {
+  padding: 20px 12px;
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.editor-panel {
+  display: grid;
+  grid-template-rows: 52px 1fr 34px;
+}
+
+.editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 13px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+
+.file-name {
+  overflow: hidden;
+  color: var(--text);
+  font-family: ui-monospace, monospace;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.editor-actions button {
+  min-height: 30px;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.editor-wrap {
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px minmax(0,1fr);
+  min-height: 0;
+  overflow: hidden;
+  background: rgba(0,0,0,.2);
+}
+
+.lines {
+  overflow: hidden;
+  padding: 16px 13px 16px 0;
+  color: rgba(160,190,205,.42);
+  background: rgba(0,0,0,.16);
+  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: right;
+  user-select: none;
+}
+
+.code-area {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#highlight,
+#code {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  border: 0;
+  outline: 0;
+  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  tab-size: 2;
+  white-space: pre;
+  overflow: auto;
+}
+
+#highlight {
+  pointer-events: none;
+  color: #d9faff;
+}
+
+#code {
+  z-index: 2;
+  resize: none;
+  color: transparent;
+  caret-color: var(--neon);
+  background: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+#code::selection {
+  background: rgba(var(--neon-rgb), .28);
+  -webkit-text-fill-color: transparent;
+}
+
+.editor-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 13px;
+  color: var(--muted);
+  border-top: 1px solid rgba(255,255,255,.1);
+  font-size: 11px;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 9px var(--green);
+}
+
+.control-body {
+  overflow: auto;
+  padding: 15px;
+}
+
+.control-group {
+  margin-bottom: 20px;
+}
+
+.control-group label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.control-group output {
+  color: var(--neon);
+  font-family: ui-monospace, monospace;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 5px;
+  min-height: 5px;
+  padding: 0;
+  accent-color: var(--neon);
+  cursor: pointer;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 38px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+select {
+  width: 100%;
+}
+
+.tip {
+  padding: 11px;
+  color: var(--muted);
+  background: rgba(0,0,0,.2);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--neon-rgb), .28);
+  border-radius: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,.18);
+}
+
+/* Syntax colors */
+.hl-comment { color: #66818d; font-style: italic; }
+.hl-string { color: #a9f39d; }
+.hl-keyword { color: #ff8ee8; }
+.hl-number { color: #ffc46b; }
+.hl-function { color: #7ddcff; }
+.hl-tag { color: #ff7da9; }
+.hl-attr { color: #ffd477; }
+.hl-value { color: #a9f39d; }
+.hl-selector { color: #7ddcff; }
+
+@media (max-width: 1050px) {
+  .workspace {
+    grid-template-columns: 210px minmax(0,1fr);
+  }
+
+  .controls {
+    display: none;
+  }
+
+  .token-input {
+    width: 160px;
+  }
+}
+
+@media (max-width: 720px) {
+  .app {
+    padding: 7px;
+    gap: 7px;
+  }
+
+  .topbar {
+    padding: 9px;
+  }
+
+  .brand {
+    min-width: auto;
+  }
+
+  .brand small,
+  .connection .repo-input {
+    display: none;
+  }
+
+  .connection {
+    gap: 5px;
+  }
+
+  .token-input {
+    width: 120px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <header class="topbar glass">
+    <div class="brand">
+      <div class="logo">✦</div>
+      <div>
+        <strong>Neon Editor</strong>
+        <small>GitHub glass workspace</small>
+      </div>
+    </div>
+
+    <div class="connection">
+      <input id="repo" class="repo-input" value="vahidarmy/vahidarmy.github.io" placeholder="owner/repository">
+      <input id="token" class="token-input" type="password" placeholder="GitHub token">
+      <button id="connectBtn" class="primary">Connect</button>
+      <button id="disconnectBtn" class="danger">Clear</button>
+    </div>
+  </header>
+
+  <main class="workspace">
+
+    <aside class="sidebar glass">
+      <div class="panel-title">
+        <span>Repository files</span>
+        <button id="refreshBtn" title="Refresh files">↻</button>
+      </div>
+      <div id="fileList" class="file-list">
+        <div class="empty">Connect to GitHub to load files.</div>
+      </div>
+    </aside>
+
+    <section class="editor-panel glass">
+      <div class="editor-head">
+        <div id="fileName" class="file-name">No file selected</div>
+        <div class="editor-actions">
+          <select id="language" title="Syntax language">
+            <option value="auto">Auto</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="javascript">JavaScript</option>
+            <option value="python">Python</option>
+          </select>
+          <button id="newBtn">New</button>
+          <button id="saveBtn" class="primary">Save</button>
+        </div>
+      </div>
+
+      <div class="editor-wrap">
+        <div id="lines" class="lines">1</div>
+        <div class="code-area">
+          <pre id="highlight" aria-hidden="true"></pre>
+          <textarea id="code" spellcheck="false" wrap="off" placeholder="Select a file or create a new one..."></textarea>
+        </div>
+      </div>
+
+      <div class="editor-status">
+        <span><i class="status-dot"></i><span id="status">Ready</span></span>
+        <span id="cursor">Ln 1, Col 1</span>
+      </div>
+    </section>
+
+    <aside class="controls glass">
+      <div class="panel-title">Glow controls</div>
+      <div class="control-body">
+
+        <div class="control-group">
+          <label>Neon color <output id="colorValue">#00F7FF</output></label>
+          <input id="color" type="color" value="#00f7ff">
+        </div>
+
+        <div class="control-group">
+          <label>Glow intensity <output id="glowValue">28px</output></label>
+          <input id="glow" type="range" min="0" max="80" value="28">
+        </div>
+
+        <div class="control-group">
+          <label>Glass transparency <output id="glassValue">14%</output></label>
+          <input id="glass" type="range" min="4" max="40" value="14">
+        </div>
+
+        <div class="control-group">
+          <label>Glass blur <output id="blurValue">18px</output></label>
+          <input id="blur" type="range" min="0" max="40" value="18">
+        </div>
+
+        <div class="control-group">
+          <label>Editor font size <output id="fontValue">13px</output></label>
+          <input id="fontSize" type="range" min="11" max="22" value="13">
+        </div>
+
+        <div class="tip">
+          Use a GitHub fine-grained token with repository contents read/write permission.
+          Your token is kept in this browser only.
+        </div>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const state = {
+  token: localStorage.getItem("neonGithubToken") || "",
+  branch: "main",
+  files: [],
+  current: null,
+  original: "",
+  sha: null,
+  dirty: false
+};
+
+const code = $("code");
+const highlight = $("highlight");
+const lines = $("lines");
+
+function setStatus(message, error = false) {
+  $("status").textContent = message;
+  $("status").style.color = error ? "var(--danger)" : "";
+}
+
+function escapeHTML(value) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function span(className, value) {
+  return `<span class="${className}">${escapeHTML(value)}</span>`;
+}
+
+function languageForFile(filename) {
+  const ext = (filename || "").split(".").pop().toLowerCase();
+
+  if (["html", "htm", "xhtml"].includes(ext)) return "html";
+  if (["css", "scss", "less"].includes(ext)) return "css";
+  if (["js", "mjs", "cjs", "jsx", "ts", "tsx"].includes(ext)) return "javascript";
+  if (["py", "pyw"].includes(ext)) return "python";
+
+  return "javascript";
+}
+
+function highlightCode(source, language) {
+  if (!source) return " ";
+
+  if (language === "html") {
+    let output = "";
+    let last = 0;
+    const tagRegex = /<!--[\\s\\S]*?-->|<[^>]*>/g;
+    let match;
+
+    while ((match = tagRegex.exec(source))) {
+      output += genericHighlight(source.slice(last, match.index), "html");
+      const tag = match[0];
+
+      if (tag.startsWith("<!--")) {
+        output += span("hl-comment", tag);
+      } else {
+        let tagHTML = escapeHTML(tag)
+          .replace(
+            /(&lt;\\/?)([\\w:-]+)/g,
+            '$1<span class="hl-tag">$2</span>'
+          )
+          .replace(
+            /([\\w:-]+)(=)/g,
+            '<span class="hl-attr">$1</span>$2'
+          )
+          .replace(
+            /(&quot;[^&]*?&quot;|&#39;[^&]*?&#39;)/g,
+            '<span class="hl-value">$1</span>'
+          );
+
+        output += tagHTML;
+      }
+
+      last = tagRegex.lastIndex;
+    }
+
+    output += genericHighlight(source.slice(last), "html");
+    return output;
+  }
+
+  return genericHighlight(source, language);
+}
+
+function genericHighlight(source, language) {
+  const tokenRegex =
+    /(#[^\\n]*|\\/\\/[^\\n]*|\\/\\*[\\s\\S]*?\\*\\/|'(?:\\\\.|[^'\\\\])*'|"(?:\\\\.|[^"\\\\])*"|`(?:\\\\.|[^`\\\\])*`|\\b\\d+(?:\\.\\d+)?\\b|\\b[A-Za-z_$][\\w$]*\\b)/g;
+
+  const keywords = {
+    css: new Set(["important", "inherit", "initial", "unset", "none", "block", "flex", "grid", "relative", "absolute"]),
+    javascript: new Set(["const", "let", "var", "function", "return", "if", "else", "for", "while", "new", "class", "extends", "import", "from", "export", "default", "async", "await", "try", "catch", "throw", "true", "false", "null", "undefined", "this"]),
+    python: new Set(["def", "return", "if", "elif", "else", "for", "while", "in", "import", "from", "as", "class", "try", "except", "finally", "with", "lambda", "and", "or", "not", "True", "False", "None", "pass", "break", "continue"]),
+    html: new Set([])
+  };
+
+  const set = keywords[language] || keywords.javascript;
+  let result = "";
+  let last = 0;
+  let match;
+
+  while ((match = tokenRegex.exec(source))) {
+    result += escapeHTML(source.slice(last, match.index));
+    const token = match[0];
+
+    if (
+      token.startsWith("#") ||
+      token.startsWith("//") ||
+      token.startsWith("/*")
+    ) {
+      result += span("hl-comment", token);
+    } else if (
+      token.startsWith("'") ||
+      token.startsWith('"') ||
+      token.startsWith("`")
+    ) {
+      result += span("hl-string", token);
+    } else if (/^\\d/.test(token)) {
+      result += span("hl-number", token);
+    } else if (set.has(token)) {
+      result += span("hl-keyword", token);
+    } else if (/^[A-Za-z_$]/.test(token) && /^\\s*\\(/.test(source.slice(match.index + token.length))) {
+      result += span("hl-function", token);
+    } else {
+      result += escapeHTML(token);
+    }
+
+    last = tokenRegex.lastIndex;
+  }
+
+  result += escapeHTML(source.slice(last));
+
+  if (language === "css") {
+    result = result.replace(
+      /([.#]?[a-zA-Z][\\w-]*)(\\s*)(?=\\{)/g,
+      '<span class="hl-selector">$1</span>$2'
+    );
+  }
+
+  return result;
+}
+
+function updateEditor() {
+  const value = code.value;
+  const selectedLanguage =
+    $("language").value === "auto"
+      ? languageForFile(state.current)
+      : $("language").value;
+
+  highlight.innerHTML = highlightCode(value, selectedLanguage) + "\\n";
+  lines.textContent = Array.from(
+    { length: Math.max(1, value.split("\\n").length) },
+    (_, i) => i + 1
+  ).join("\\n");
+
+  state.dirty = value !== state.original;
+  setStatus(state.dirty ? "Unsaved changes" : "Ready");
+}
+
+function syncScroll() {
+  highlight.scrollTop = code.scrollTop;
+  highlight.scrollLeft = code.scrollLeft;
+  lines.scrollTop = code.scrollTop;
+}
+
+function updateCursor() {
+  const before = code.value.slice(0, code.selectionStart);
+  const row = before.split("\\n").length;
+  const col = before.length - before.lastIndexOf("\\n");
+  $("cursor").textContent = `Ln ${row}, Col ${col}`;
+}
+
+code.addEventListener("input", () => {
+  updateEditor();
+  updateCursor();
+});
+
+code.addEventListener("scroll", syncScroll);
+code.addEventListener("click", updateCursor);
+code.addEventListener("keyup", updateCursor);
+
+code.addEventListener("keydown", event => {
+  if (event.key === "Tab") {
+    event.preventDefault();
+
+    const start = code.selectionStart;
+    const end = code.selectionEnd;
+
+    code.value =
+      code.value.substring(0, start) +
+      "  " +
+      code.value.substring(end);
+
+    code.selectionStart = code.selectionEnd = start + 2;
+    updateEditor();
+  }
+
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    saveFile();
+  }
+});
+
+$("language").addEventListener("change", updateEditor);
+
+function renderFiles() {
+  const list = $("fileList");
+  list.innerHTML = "";
+
+  if (!state.files.length) {
+    list.innerHTML = `<div class="empty">No files found.</div>`;
+    return;
+  }
+
+  state.files
+    .filter(file => file.type === "blob")
+    .sort((a, b) => a.path.localeCompare(b.path))
+    .forEach(file => {
+      const item = document.createElement("div");
+      item.className = "file" + (state.current === file.path ? " active" : "");
+      item.innerHTML = `<span>▣</span><span>${file.path}</span>`;
+      item.onclick = () => openFile(file.path);
+      list.appendChild(item);
+    });
+}
+
+function githubHeaders() {
+  return {
+    "Accept": "application/vnd.github+json",
+    "Authorization": `Bearer ${state.token}`,
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+}
+
+function repoName() {
+  return $("repo").value.trim().replace(/^https?:\\/\\/github\\.com\\//, "").replace(/\\/$/, "");
+}
+
+async function githubRequest(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      ...githubHeaders(),
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    let message = response.statusText;
+    try {
+      const data = await response.json();
+      message = data.message || message;
+    } catch {}
+    throw new Error(message);
+  }
+
+  return response.status === 204 ? null : response.json();
+}
+
+async function connect() {
+  const token = $("token").value.trim() || state.token;
+  const repo = repoName();
+
+  if (!token) {
+    setStatus("Enter a GitHub token", true);
+    return;
+  }
+
+  if (!/^[^/]+\\/[^/]+$/.test(repo)) {
+    setStatus("Use owner/repository format", true);
+    return;
+  }
+
+  state.token = token;
+  localStorage.setItem("neonGithubToken", token);
+  $("token").value = token;
+
+  try {
+    setStatus("Connecting...");
+    const repoData = await githubRequest(`https://api.github.com/repos/${repo}`);
+    state.branch = repoData.default_branch || "main";
+
+    const tree = await githubRequest(
+      `https://api.github.com/repos/${repo}/git/trees/${encodeURIComponent(state.branch)}?recursive=1`
+    );
+
+    state.files = tree.tree || [];
+    renderFiles();
+    setStatus(`Connected · ${state.files.filter(x => x.type === "blob").length} files`);
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+async function openFile(path) {
+  if (state.dirty && !confirm("Discard unsaved changes?")) return;
+
+  const repo = repoName();
+
+  try {
+    setStatus("Loading file...");
+    const data = await githubRequest(
+      `https://api.github.com/repos/${repo}/contents/${path}?ref=${encodeURIComponent(state.branch)}`
+    );
+
+    const content = decodeBase64(data.content);
+    state.current = path;
+    state.original = content;
+    state.sha = data.sha;
+
+    code.value = content;
+    $("fileName").textContent = path;
+    $("language").value = "auto";
+    renderFiles();
+    updateEditor();
+    updateCursor();
+    code.scrollTop = 0;
+    code.scrollLeft = 0;
+    syncScroll();
+
+    setStatus("Loaded");
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+function decodeBase64(value) {
+  const clean = value.replace(/\\n/g, "");
+  const bytes = Uint8Array.from(atob(clean), char => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function encodeBase64(value) {
+  const bytes = new TextEncoder().encode(value);
+  let binary = "";
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary);
+}
+
+async function saveFile() {
+  if (!state.current) {
+    setStatus("Select a file first", true);
+    return;
+  }
+
+  if (!state.token) {
+    setStatus("Connect to GitHub first", true);
+    return;
+  }
+
+  const repo = repoName();
+
+  try {
+    setStatus("Saving...");
+
+    const body = {
+      message: `Update ${state.current}`,
+      content: encodeBase64(code.value),
+      branch: state.branch,
+      sha: state.sha
+    };
+
+    const result = await githubRequest(
+      `https://api.github.com/repos/${repo}/contents/${state.current}`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }
+    );
+
+    state.sha = result.content.sha;
+    state.original = code.value;
+    state.dirty = false;
+    updateEditor();
+    setStatus("Saved to GitHub");
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+}
+
+function newFile() {
+  const filename = prompt("New file path:", "new-file.html");
+  if (!filename) return;
+
+  state.current = filename;
+  state.original = "";
+  state.sha = null;
+  code.value = "";
+  $("fileName").textContent = filename;
+  $("language").value = "auto";
+  updateEditor();
+  updateCursor();
+  setStatus("New file · save to create it");
+}
+
+$("connectBtn").onclick = connect;
+$("refreshBtn").onclick = connect;
+$("saveBtn").onclick = saveFile;
+$("newBtn").onclick = newFile;
+
+$("disconnectBtn").onclick = () => {
+  localStorage.removeItem("neonGithubToken");
+  state.token = "";
+  state.files = [];
+  state.current = null;
+  state.sha = null;
+  $("token").value = "";
+  $("fileList").innerHTML = `<div class="empty">Connect to GitHub to load files.</div>`;
+  $("fileName").textContent = "No file selected";
+  code.value = "";
+  updateEditor();
+  setStatus("Disconnected");
+};
+
+$("token").value = state.token;
+
+function hexToRGB(hex) {
+  const value = hex.replace("#", "");
+  const full = value.length === 3
+    ? value.split("").map(x => x + x).join("")
+    : value;
+
+  return [
+    parseInt(full.substring(0, 2), 16),
+    parseInt(full.substring(2, 4), 16),
+    parseInt(full.substring(4, 6), 16)
+  ].join(",");
+}
+
+$("color").addEventListener("input", event => {
+  const color = event.target.value;
+  document.documentElement.style.setProperty("--neon", color);
+  document.documentElement.style.setProperty("--neon-rgb", hexToRGB(color));
+  $("colorValue").textContent = color.toUpperCase();
+});
+
+$("glow").addEventListener("input", event => {
+  const value = event.target.value;
+  document.documentElement.style.setProperty("--glow", `${value}px`);
+  $("glowValue").textContent = `${value}px`;
+});
+
+$("glass").addEventListener("input", event => {
+  const value = event.target.value;
+  document.documentElement.style.setProperty("--glass", value / 100);
+  $("glassValue").textContent = `${value}%`;
+});
+
+$("blur").addEventListener("input", event => {
+  const value = event.target.value;
+  document.documentElement.style.setProperty("--blur", `${value}px`);
+  $("blurValue").textContent = `${value}px`;
+});
+
+$("fontSize").addEventListener("input", event => {
+  const value = event.target.value;
+  document.documentElement.style.setProperty("--editor-font", `${value}px`);
+  document.querySelectorAll("#code, #highlight, .lines").forEach(element => {
+    element.style.fontSize = `${value}px`;
+  });
+  $("fontValue").textContent = `${value}px`;
+});
+
+updateEditor();
+updateCursor();
+
+if (state.token) {
+  connect();
+}
+</script>
+</body>
+</html>
