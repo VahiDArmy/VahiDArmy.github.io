@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🥗 رهگیر کالری سایبرپانک</title>
+
+  <!-- فایل استایل -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- کتابخانه‌های خارجی -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/persian-datepicker/1.2.0/css/persian-datepicker.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jalaali-js@1.2.6/dist/jalaali.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/persian-datepicker/1.2.0/js/persian-datepicker.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- هدر و نویگیشن -->
+  <header class="cyber-header">
+    <div class="logo">⚡ <span>Cal</span>Tracker</div>
+    <div class="nav-links">
+      <button class="nav-item active" id="navDashboard">📊 داشبورد</button>
+      <button class="nav-item" id="navReport">📈 گزارش</button>
+      <span id="authNav"></span>
+      <button class="nav-item" id="navLogout" style="display:none;">🚪 خروج</button>
+    </div>
+  </header>
+
+  <!-- محتوای اصلی -->
+  <div class="container">
+
+    <!-- صفحه داشبورد -->
+    <div id="viewDashboard" class="view active">
+      <!-- انتخاب تاریخ -->
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label>📅 تاریخ (شمسی)</label>
+            <input type="text" id="datePicker" class="form-control" placeholder="روز را انتخاب کنید" readonly />
+          </div>
+        </div>
+        <div class="col" style="display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap;">
+          <button id="todayBtn" class="cyber-btn">📆 امروز</button>
+          <button id="prevDayBtn" class="cyber-btn">◀</button>
+          <button id="nextDayBtn" class="cyber-btn">▶</button>
+        </div>
+      </div>
+
+      <!-- فرم افزودن مصرف -->
+      <div class="row" id="addForm">
+        <div class="col">
+          <div class="form-group">
+            <label>🍽️ غذا</label>
+            <select id="foodSelect" class="form-control"></select>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label>⚖️ مقدار (گرم)</label>
+            <input type="number" id="quantityInput" class="form-control" placeholder="مقدار به گرم" value="100" />
+          </div>
+        </div>
+        <div class="col" style="display: flex; align-items: flex-end;">
+          <button id="addIntakeBtn" class="cyber-btn" style="width:100%;">➕ ثبت مصرف</button>
+        </div>
+      </div>
+
+      <!-- لیست مصرف روز -->
+      <h3 style="color:#0ff; text-shadow:0 0 10px #0ff; margin-top:1.5rem;">📋 مصرف‌های امروز</h3>
+      <div id="statusMsg"></div>
+      <div style="overflow-x:auto;">
+        <table class="intake-table">
+          <thead>
+            <tr><th>غذا</th><th>مقدار (گرم)</th><th>کالری</th><th>عملیات</th></tr>
+          </thead>
+          <tbody id="intakeBody"></tbody>
+        </table>
+      </div>
+
+      <!-- آمار روزانه -->
+      <div class="stats-grid">
+        <div class="stat-card"><div class="number" id="totalCalories">0</div><div class="label">کالری امروز</div></div>
+        <div class="stat-card"><div class="number" id="totalProtein">0</div><div class="label">پروتئین (گرم)</div></div>
+        <div class="stat-card"><div class="number" id="totalCarbs">0</div><div class="label">کربوهیدرات (گرم)</div></div>
+        <div class="stat-card"><div class="number" id="totalFat">0</div><div class="label">چربی (گرم)</div></div>
+      </div>
+    </div>
+
+    <!-- صفحه گزارش -->
+    <div id="viewReport" class="view">
+      <h2 style="color:#0ff; text-shadow:0 0 15px #0ff; text-align:center;">📊 گزارش ماهانه</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="number" id="monthAvg">0</div><div class="label">میانگین روزانه</div></div>
+        <div class="stat-card"><div class="number" id="monthMax">0</div><div class="label">بیشترین روز</div></div>
+        <div class="stat-card"><div class="number" id="monthMin">0</div><div class="label">کمترین روز</div></div>
+        <div class="stat-card"><div class="number" id="monthDays">0</div><div class="label">روزهای ثبت</div></div>
+      </div>
+      <div class="chart-container">
+        <canvas id="monthChart"></canvas>
+      </div>
+    </div>
+
+    <!-- صفحه ورود -->
+    <div id="viewLogin" class="view">
+      <div class="auth-container">
+        <h2>🔐 ورود</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label>ایمیل</label>
+            <input type="email" id="loginEmail" required placeholder="example@mail.com" />
+          </div>
+          <div class="form-group">
+            <label>رمز عبور</label>
+            <input type="password" id="loginPassword" required placeholder="******" />
+          </div>
+          <button type="submit" class="cyber-btn">ورود</button>
+        </form>
+        <div class="auth-switch">
+          حساب ندارید؟ <a id="switchToRegister">ثبت‌نام کنید</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- صفحه ثبت‌نام -->
+    <div id="viewRegister" class="view">
+      <div class="auth-container">
+        <h2>📝 ثبت‌نام</h2>
+        <form id="registerForm">
+          <div class="form-group">
+            <label>نام کامل</label>
+            <input type="text" id="registerName" required placeholder="علی محمدی" />
+          </div>
+          <div class="form-group">
+            <label>ایمیل</label>
+            <input type="email" id="registerEmail" required placeholder="example@mail.com" />
+          </div>
+          <div class="form-group">
+            <label>رمز عبور</label>
+            <input type="password" id="registerPassword" required placeholder="******" />
+          </div>
+          <button type="submit" class="cyber-btn">ثبت‌نام</button>
+        </form>
+        <div class="auth-switch">
+          قبلاً ثبت‌نام کرده‌اید؟ <a id="switchToLogin">ورود</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- اسکریپت‌های اصلی (ماژولار) -->
+  <script type="module" src="js/main.js"></script>
+
+  <!-- برای سوئیچ بین ورود و ثبت‌نام -->
+  <script>
+    document.getElementById('switchToRegister').addEventListener('click', () => {
+      document.getElementById('viewLogin').style.display = 'none';
+      document.getElementById('viewRegister').style.display = 'block';
+    });
+    document.getElementById('switchToLogin').addEventListener('click', () => {
+      document.getElementById('viewRegister').style.display = 'none';
+      document.getElementById('viewLogin').style.display = 'block';
+    });
+    // در main.js مدیریت نمایش صفحات انجام می‌شود، اینجا فقط برای راحتی کاربر است
+  </script>
+</body>
+</html>
