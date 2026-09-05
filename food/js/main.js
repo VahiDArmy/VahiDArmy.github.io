@@ -92,7 +92,7 @@ function initDatepicker() {
       loadDailyIntake();
     }
   };
-  datepickerInstance = new PersianDatepicker(datePicker, options);
+  datepickerInstance = new window.PersianDatepicker(datePicker, options);
 }
 
 function updateDatepickerDisplay() {
