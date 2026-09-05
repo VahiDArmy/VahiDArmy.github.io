@@ -1,17 +1,20 @@
 import { supabase } from './config.js';
 
-export async function getFoods(userId) {
+export async function getFoods() {
   const { data, error } = await supabase
     .from('foods')
-    .select('id, persian_name, calories, protein, carbs, fat')
-    .eq('user_id', userId);
+    .select('id, persian_name, calories, protein, carbs, fat');
   if (error) throw error;
   return data || [];
 }
 
 export async function addIntake(userId, foodId, date, quantity, totalCalories) {
   const { error } = await supabase.from('daily_intake').insert({
-    user_id: userId, food_id: foodId, date, quantity, total_calories: totalCalories
+    user_id: userId,
+    food_id: foodId,
+    date,
+    quantity,
+    total_calories: totalCalories
   });
   if (error) throw error;
 }
@@ -20,7 +23,8 @@ export async function getIntakesByDate(userId, date) {
   const { data, error } = await supabase
     .from('daily_intake')
     .select('*, foods(persian_name, calories, protein, carbs, fat)')
-    .eq('user_id', userId).eq('date', date).order('id');
+    .eq('date', date)
+    .order('id');
   if (error) throw error;
   return data || [];
 }
@@ -36,7 +40,6 @@ export async function getIntakesByMonth(userId, year, month) {
   const { data, error } = await supabase
     .from('daily_intake')
     .select('date, total_calories')
-    .eq('user_id', userId)
     .gte('date', start.toISOString().slice(0,10))
     .lte('date', end.toISOString().slice(0,10))
     .order('date');
