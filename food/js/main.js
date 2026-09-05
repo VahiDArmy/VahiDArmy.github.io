@@ -3,114 +3,110 @@ import { signUp, signIn, signOut, getCurrentUser, onAuthStateChange } from './au
 import { getFoods, addIntake, getIntakesByDate, deleteIntake, getIntakesByMonth } from './food.js';
 import { calculateDailyStats, calculateMonthlyStats } from './report.js';
 
-// ---------- متغیرهای سراسری ----------
+// ---------- STATE ----------
 let currentUser = null;
-let selectedDate = new Date(); // میلادی
+let selectedDate = new Date();
 let allFoods = [];
 let chartInstance = null;
-let currentView = 'dashboard'; // dashboard | report
+let datepickerInstance = null;
 
-// ---------- DOM المان‌ها ----------
-const app = document.getElementById('app');
-const authNav = document.getElementById('authNav');
-const viewDashboard = document.getElementById('viewDashboard');
-const viewReport = document.getElementById('viewReport');
-const viewLogin = document.getElementById('viewLogin');
-const viewRegister = document.getElementById('viewRegister');
+// ---------- DOM REFS ----------
+const $ = id => document.getElementById(id);
+const authNav = $('authNav');
+const viewDashboard = $('viewDashboard');
+const viewReport = $('viewReport');
+const viewLogin = $('viewLogin');
+const viewRegister = $('viewRegister');
+const navDashboard = $('navDashboard');
+const navReport = $('navReport');
+const navLogout = $('navLogout');
+const datePicker = $('datePicker');
+const todayBtn = $('todayBtn');
+const prevDayBtn = $('prevDayBtn');
+const nextDayBtn = $('nextDayBtn');
+const foodSelect = $('foodSelect');
+const quantityInput = $('quantityInput');
+const addIntakeBtn = $('addIntakeBtn');
+const intakeBody = $('intakeBody');
+const statusMsg = $('statusMsg');
+const totalCalories = $('totalCalories');
+const totalProtein = $('totalProtein');
+const totalCarbs = $('totalCarbs');
+const totalFat = $('totalFat');
+const monthAvg = $('monthAvg');
+const monthMax = $('monthMax');
+const monthMin = $('monthMin');
+const monthDays = $('monthDays');
+const monthChartCanvas = $('monthChart');
+const loginForm = $('loginForm');
+const registerForm = $('registerForm');
+const switchToRegister = $('switchToRegister');
+const switchToLogin = $('switchToLogin');
 
-// دکمه‌های نویگیشن
-const navDashboard = document.getElementById('navDashboard');
-const navReport = document.getElementById('navReport');
-const navLogout = document.getElementById('navLogout');
-
-// المان‌های داشبورد
-const datePicker = document.getElementById('datePicker');
-const todayBtn = document.getElementById('todayBtn');
-const prevDayBtn = document.getElementById('prevDayBtn');
-const nextDayBtn = document.getElementById('nextDayBtn');
-const foodSelect = document.getElementById('foodSelect');
-const quantityInput = document.getElementById('quantityInput');
-const addIntakeBtn = document.getElementById('addIntakeBtn');
-const intakeBody = document.getElementById('intakeBody');
-const statusMsg = document.getElementById('statusMsg');
-const totalCalories = document.getElementById('totalCalories');
-const totalProtein = document.getElementById('totalProtein');
-const totalCarbs = document.getElementById('totalCarbs');
-const totalFat = document.getElementById('totalFat');
-
-// المان‌های گزارش
-const monthPicker = document.getElementById('monthPicker');
-const monthAvg = document.getElementById('monthAvg');
-const monthMax = document.getElementById('monthMax');
-const monthMin = document.getElementById('monthMin');
-const monthDays = document.getElementById('monthDays');
-const monthChartCanvas = document.getElementById('monthChart');
-
-// المان‌های ورود و ثبت‌نام
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-
-// ---------- توابع کمکی تاریخ (Jalaali) ----------
+// ---------- DATE HELPERS ----------
 function toJalaali(date) {
-  const g = date.getFullYear(), m = date.getMonth()+1, d = date.getDate();
-  const j = jalaali.toJalaali(g, m, d);
-  return `${j.jy}/${j.jm}/${j.jd}`;
+  const j = jalaali.toJalaali(date.getFullYear(), date.getMonth()+1, date.getDate());
+  return `${j.jy}/${String(j.jm).padStart(2,'0')}/${String(j.jd).padStart(2,'0')}`;
 }
 function fromJalaali(jy, jm, jd) {
   const g = jalaali.toGregorian(jy, jm, jd);
   return new Date(g.gy, g.gm-1, g.gd);
 }
-function toGregorianStr(date) {
-  return date.toISOString().slice(0,10);
-}
+function toGregorianStr(date) { return date.toISOString().slice(0,10); }
 
-// ---------- راه‌اندازی Persian Datepicker ----------
-function initDatepicker() {
-  const options = {
-    format: 'YYYY/MM/DD',
-    autoClose: true,
-    initialValue: false,
-    onSelect: function(unix, text) {
-      const parts = text.split('/');
-      const jy = parseInt(parts[0]), jm = parseInt(parts[1]), jd = parseInt(parts[2]);
-      selectedDate = fromJalaali(jy, jm, jd);
-      loadDailyIntake();
-    }
-  };
-  return new PersianDatepicker(datePicker, options);
-}
-let datepickerInstance = null;
-
-// ---------- نمایش صفحات ----------
-function showView(viewName) {
-  // مخفی کردن همه
+// ---------- VIEWS ----------
+function showView(name) {
   [viewDashboard, viewReport, viewLogin, viewRegister].forEach(el => el.style.display = 'none');
-  // نمایش صفحه مورد نظر
-  if (viewName === 'dashboard') viewDashboard.style.display = 'block';
-  else if (viewName === 'report') viewReport.style.display = 'block';
-  else if (viewName === 'login') viewLogin.style.display = 'block';
-  else if (viewName === 'register') viewRegister.style.display = 'block';
-  currentView = viewName;
+  if (name === 'dashboard') viewDashboard.style.display = 'block';
+  else if (name === 'report') viewReport.style.display = 'block';
+  else if (name === 'login') viewLogin.style.display = 'block';
+  else if (name === 'register') viewRegister.style.display = 'block';
+  // active nav
+  [navDashboard, navReport].forEach(el => el.classList.remove('active'));
+  if (name === 'dashboard') navDashboard.classList.add('active');
+  if (name === 'report') navReport.classList.add('active');
 }
 
-// ---------- به‌روزرسانی نویگیشن ----------
+// ---------- AUTH UI ----------
 function updateNav(user) {
   if (user) {
-    authNav.innerHTML = `
-      <span class="user-greeting">👤 ${user.user_metadata?.full_name || user.email}</span>
-    `;
-    document.querySelectorAll('.nav-item').forEach(el => el.style.display = 'inline-block');
-    navLogout.style.display = 'inline-block';
+    authNav.innerHTML = `<span class="user-greeting">${user.user_metadata?.full_name || user.email}</span>`;
+    navLogout.style.display = 'inline-flex';
     showView('dashboard');
   } else {
-    authNav.innerHTML = ``;
-    document.querySelectorAll('.nav-item').forEach(el => el.style.display = 'none');
+    authNav.innerHTML = '';
     navLogout.style.display = 'none';
     showView('login');
   }
 }
 
-// ---------- بارگذاری لیست غذاها ----------
+// ---------- DATEPICKER ----------
+function initDatepicker() {
+  const options = {
+    format: 'YYYY/MM/DD',
+    autoClose: true,
+    initialValue: false,
+    onSelect: function(_, text) {
+      const parts = text.split('/').map(Number);
+      selectedDate = fromJalaali(parts[0], parts[1], parts[2]);
+      loadDailyIntake();
+    }
+  };
+  datepickerInstance = new PersianDatepicker(datePicker, options);
+}
+
+function updateDatepickerDisplay() {
+  const j = toJalaali(selectedDate);
+  datePicker.value = j;
+  if (datepickerInstance) datepickerInstance.setDate(j);
+  loadDailyIntake();
+}
+
+function goToday() { selectedDate = new Date(); updateDatepickerDisplay(); }
+function goPrevDay() { selectedDate.setDate(selectedDate.getDate()-1); updateDatepickerDisplay(); }
+function goNextDay() { selectedDate.setDate(selectedDate.getDate()+1); updateDatepickerDisplay(); }
+
+// ---------- FOODS ----------
 async function loadFoods() {
   if (!currentUser) return;
   try {
@@ -126,41 +122,37 @@ async function loadFoods() {
       opt.dataset.fat = f.fat || 0;
       foodSelect.appendChild(opt);
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-// ---------- بارگذاری مصرف روزانه ----------
+// ---------- DAILY INTAKE ----------
 async function loadDailyIntake() {
   if (!currentUser) return;
   const dateStr = toGregorianStr(selectedDate);
-  statusMsg.textContent = '⏳ در حال بارگذاری...';
+  statusMsg.textContent = 'در حال بارگذاری...';
+  statusMsg.className = '';
   try {
     const intakes = await getIntakesByDate(currentUser.id, dateStr);
     const stats = calculateDailyStats(intakes);
 
-    // نمایش در جدول
     if (intakes.length === 0) {
-      intakeBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#aaa;">مصرفی ثبت نشده</td></tr>`;
+      intakeBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:2rem;">هیچ مصرفی ثبت نشده</td></tr>`;
     } else {
       let html = '';
       intakes.forEach(item => {
-        const food = item.foods || {};
+        const f = item.foods || {};
         html += `<tr>
-          <td>${food.persian_name || 'نامشخص'}</td>
+          <td>${f.persian_name || 'نامشخص'}</td>
           <td>${item.quantity}</td>
           <td>${item.total_calories.toFixed(0)}</td>
-          <td><button class="delete-btn" data-id="${item.id}">✕</button></td>
+          <td><button class="btn btn-danger btn-sm delete-btn" data-id="${item.id}">✕</button></td>
         </tr>`;
       });
       intakeBody.innerHTML = html;
-      // اتصال رویداد حذف
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
-          const id = btn.dataset.id;
-          if (confirm('آیا از حذف این آیتم مطمئنید؟')) {
-            await deleteIntake(id);
+          if (confirm('حذف شود؟')) {
+            await deleteIntake(btn.dataset.id);
             loadDailyIntake();
             loadMonthlyReport();
           }
@@ -168,69 +160,54 @@ async function loadDailyIntake() {
       });
     }
 
-    // به‌روزرسانی آمار
     totalCalories.textContent = stats.totalCal.toFixed(0);
     totalProtein.textContent = stats.totalProt.toFixed(1);
     totalCarbs.textContent = stats.totalCarb.toFixed(1);
     totalFat.textContent = stats.totalFat.toFixed(1);
-    statusMsg.textContent = `✅ ${intakes.length} مورد برای ${toJalaali(selectedDate)}`;
+    statusMsg.textContent = `${intakes.length} مورد برای ${toJalaali(selectedDate)}`;
+    statusMsg.className = 'success';
   } catch (err) {
-    statusMsg.textContent = '❌ خطا: ' + err.message;
+    statusMsg.textContent = 'خطا: ' + err.message;
+    statusMsg.className = 'error';
   }
 }
 
-// ---------- افزودن مصرف جدید ----------
+// ---------- ADD INTAKE ----------
 async function handleAddIntake() {
   if (!currentUser) return;
   const foodId = parseInt(foodSelect.value);
   const quantity = parseFloat(quantityInput.value) || 0;
-  if (!foodId || quantity <= 0) {
-    alert('لطفاً غذا و مقدار معتبر وارد کنید.');
-    return;
-  }
+  if (!foodId || quantity <= 0) { alert('لطفاً غذا و مقدار معتبر وارد کنید.'); return; }
   const food = allFoods.find(f => f.id === foodId);
   if (!food) return;
   const totalCal = (food.calories || 0) * quantity;
-  const dateStr = toGregorianStr(selectedDate);
-
   try {
-    await addIntake(currentUser.id, foodId, dateStr, quantity, totalCal);
+    await addIntake(currentUser.id, foodId, toGregorianStr(selectedDate), quantity, totalCal);
     loadDailyIntake();
     loadMonthlyReport();
-  } catch (err) {
-    alert('خطا: ' + err.message);
-  }
+  } catch (err) { alert('خطا: ' + err.message); }
 }
 
-// ---------- گزارش ماهانه ----------
+// ---------- MONTHLY REPORT ----------
 async function loadMonthlyReport() {
   if (!currentUser) return;
-  // ماه جاری بر اساس selectedDate
-  const year = selectedDate.getFullYear();
-  const month = selectedDate.getMonth();
-
+  const year = selectedDate.getFullYear(), month = selectedDate.getMonth();
   try {
     const data = await getIntakesByMonth(currentUser.id, year, month);
     const stats = calculateMonthlyStats(data);
 
-    // به‌روزرسانی کارت‌ها
     monthAvg.textContent = stats.avg.toFixed(0);
     monthMax.textContent = stats.max.toFixed(0);
     monthMin.textContent = stats.min.toFixed(0);
     monthDays.textContent = stats.count;
 
-    // رسم نمودار
     const ctx = monthChartCanvas.getContext('2d');
     if (chartInstance) chartInstance.destroy();
     if (stats.days.length === 0) {
-      // نمایش پیام بدون داده
       chartInstance = new Chart(ctx, {
         type: 'bar',
-        data: {
-          labels: ['هیچ داده‌ای'],
-          datasets: [{ label: 'کالری', data: [0], backgroundColor: '#555' }]
-        },
-        options: { responsive: true, plugins: { legend: { labels: { color: '#e0e0ff' } } } }
+        data: { labels: ['داده‌ای وجود ندارد'], datasets: [{ label: 'کالری', data: [0], backgroundColor: '#333' }] },
+        options: { responsive: true, plugins: { legend: { labels: { color: '#a0a0c0' } } } }
       });
       return;
     }
@@ -244,135 +221,79 @@ async function loadMonthlyReport() {
         datasets: [{
           label: 'کالری مصرفی',
           data: stats.values,
-          backgroundColor: 'rgba(0, 255, 255, 0.6)',
-          borderColor: '#00ffff',
+          backgroundColor: 'rgba(212, 168, 67, 0.6)',
+          borderColor: '#d4a843',
           borderWidth: 2,
-          borderRadius: 8
+          borderRadius: 6
         }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { labels: { color: '#e0e0ff' } }
+          legend: { labels: { color: '#a0a0c0' } }
         },
         scales: {
-          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e0e0ff' } },
-          x: { grid: { display: false }, ticks: { color: '#e0e0ff', maxRotation: 45 } }
+          y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0c0' } },
+          x: { grid: { display: false }, ticks: { color: '#a0a0c0', maxRotation: 40 } }
         }
       }
     });
-  } catch (err) {
-    console.error(err);
-  }
+  } catch (err) { console.error(err); }
 }
 
-// ---------- کنترل تاریخ ----------
-function updateDatepickerDisplay() {
-  const j = toJalaali(selectedDate);
-  datePicker.value = j;
-  if (datepickerInstance) {
-    datepickerInstance.setDate(j);
-  }
-  loadDailyIntake();
-  loadMonthlyReport();
-}
-
-function goToday() {
-  selectedDate = new Date();
-  updateDatepickerDisplay();
-}
-function goPrevDay() {
-  const d = new Date(selectedDate);
-  d.setDate(d.getDate() - 1);
-  selectedDate = d;
-  updateDatepickerDisplay();
-}
-function goNextDay() {
-  const d = new Date(selectedDate);
-  d.setDate(d.getDate() + 1);
-  selectedDate = d;
-  updateDatepickerDisplay();
-}
-
-// ---------- مدیریت احراز هویت ----------
+// ---------- AUTH HANDLERS ----------
 async function handleLogin(e) {
   e.preventDefault();
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-  try {
-    await signIn(email, password);
-    // پس از ورود، صفحه به‌روز می‌شود
-  } catch (err) {
-    alert('ورود ناموفق: ' + err.message);
-  }
+  const email = $('loginEmail').value, password = $('loginPassword').value;
+  try { await signIn(email, password); } catch (err) { alert('ورود ناموفق: ' + err.message); }
 }
-
 async function handleRegister(e) {
   e.preventDefault();
-  const email = document.getElementById('registerEmail').value;
-  const password = document.getElementById('registerPassword').value;
-  const fullName = document.getElementById('registerName').value;
+  const email = $('registerEmail').value, password = $('registerPassword').value, name = $('registerName').value;
   try {
-    await signUp(email, password, fullName);
+    await signUp(email, password, name);
     alert('ثبت‌نام موفق! لطفاً وارد شوید.');
     showView('login');
-  } catch (err) {
-    alert('ثبت‌نام ناموفق: ' + err.message);
-  }
+  } catch (err) { alert('ثبت‌نام ناموفق: ' + err.message); }
 }
+async function handleLogout() { await signOut(); }
 
-async function handleLogout() {
-  await signOut();
-  // صفحه به‌روز می‌شود
-}
+// ---------- SWITCH AUTH PAGES ----------
+switchToRegister?.addEventListener('click', () => showView('register'));
+switchToLogin?.addEventListener('click', () => showView('login'));
 
-// ---------- رویدادهای نویگیشن ----------
+// ---------- NAV ----------
 navDashboard.addEventListener('click', () => showView('dashboard'));
-navReport.addEventListener('click', () => {
-  showView('report');
-  loadMonthlyReport();
-});
+navReport.addEventListener('click', () => { showView('report'); loadMonthlyReport(); });
 navLogout.addEventListener('click', handleLogout);
 
-// ---------- مقداردهی اولیه ----------
-async function init() {
-  // اتصال رویدادهای فرم‌ها
+// ---------- DATE CONTROLS ----------
+todayBtn.addEventListener('click', goToday);
+prevDayBtn.addEventListener('click', goPrevDay);
+nextDayBtn.addEventListener('click', goNextDay);
+addIntakeBtn.addEventListener('click', handleAddIntake);
+
+// ---------- AUTH STATE ----------
+onAuthStateChange((event, user) => {
+  currentUser = user;
+  updateNav(user);
+  if (user) { loadFoods(); goToday(); }
+});
+
+// ---------- INIT ----------
+(async function init() {
   loginForm.addEventListener('submit', handleLogin);
   registerForm.addEventListener('submit', handleRegister);
 
-  // دکمه‌های تاریخ
-  todayBtn.addEventListener('click', goToday);
-  prevDayBtn.addEventListener('click', goPrevDay);
-  nextDayBtn.addEventListener('click', goNextDay);
-  addIntakeBtn.addEventListener('click', handleAddIntake);
-
-  // گوش دادن به تغییرات احراز هویت
-  onAuthStateChange((event, user) => {
-    currentUser = user;
-    updateNav(user);
-    if (user) {
-      loadFoods();
-      goToday(); // بارگذاری داده‌های امروز
-    }
-  });
-
-  // بررسی کاربر فعلی در شروع
   try {
     const user = await getCurrentUser();
     currentUser = user;
     updateNav(user);
     if (user) {
+      initDatepicker();
       await loadFoods();
-      datepickerInstance = initDatepicker();
       goToday();
-    } else {
-      showView('login');
+      loadMonthlyReport();
     }
-  } catch (err) {
-    console.error(err);
-    showView('login');
-  }
-}
-
-// اجرا
-init();
+  } catch (err) { console.error(err); showView('login'); }
+})();
