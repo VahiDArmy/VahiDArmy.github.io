@@ -981,7 +981,7 @@
             box-shadow: 0 0 30px rgba(255, 94, 122, 0.35);
         }
 
-        /* ===== GLASS TOASTS ===== */
+        /* ===== GLASS TOASTS with click-to-copy ===== */
         .toast-container {
             position: fixed;
             bottom: 20px;
@@ -1007,10 +1007,17 @@
             animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
             font-size: 0.78rem;
             color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .toast:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(14, 18, 26, 0.82);
         }
         .toast .t-icon {
             font-size: 0.95rem;
             flex-shrink: 0;
+            pointer-events: none;
         }
         .toast .t-icon.success {
             color: var(--success);
@@ -1030,6 +1037,7 @@
         }
         .toast .t-msg {
             flex: 1;
+            pointer-events: none;
         }
         .toast .t-close {
             background: none;
@@ -1039,10 +1047,16 @@
             font-size: 0.85rem;
             padding: 0 4px;
             transition: var(--transition);
+            pointer-events: auto;
         }
         .toast .t-close:hover {
             color: var(--text-primary);
             transform: rotate(90deg);
+        }
+        /* Toast click-to-copy feedback */
+        .toast.copied {
+            border-color: var(--success);
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(76, 217, 160, 0.15);
         }
         @keyframes slideUp {
             from {
@@ -1740,7 +1754,7 @@
             let dragItems = [];
 
             // ============================================================
-            // TOAST (glassmorphism)
+            // TOAST with click-to-copy
             // ============================================================
             function toast(message, type = 'info', duration = 3500) {
                 const container = $('toastContainer');
@@ -1757,7 +1771,48 @@
                     <span class="t-msg">${message}</span>
                     <button class="t-close"><i class="fas fa-times"></i></button>
                 `;
-                el.querySelector('.t-close').addEventListener('click', () => {
+                // Click on toast copies the message to clipboard
+                el.addEventListener('click', (e) => {
+                    // Ignore if close button was clicked
+                    if (e.target.closest('.t-close')) return;
+                    const msg = el.querySelector('.t-msg').textContent;
+                    navigator.clipboard.writeText(msg).then(() => {
+                        el.classList.add('copied');
+                        setTimeout(() => el.classList.remove('copied'), 800);
+                        // Small toast to confirm copy
+                        const copyToast = document.createElement('div');
+                        copyToast.className = 'toast';
+                        copyToast.style.borderColor = 'var(--success)';
+                        copyToast.style.boxShadow = '0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(76,217,160,0.15)';
+                        copyToast.innerHTML = `
+                            <span class="t-icon success"><i class="fas fa-check-circle"></i></span>
+                            <span class="t-msg">Copied!</span>
+                            <button class="t-close"><i class="fas fa-times"></i></button>
+                        `;
+                        copyToast.querySelector('.t-close').addEventListener('click', () => {
+                            copyToast.classList.add('removing');
+                            setTimeout(() => copyToast.remove(), 250);
+                        });
+                        container.appendChild(copyToast);
+                        setTimeout(() => {
+                            if (copyToast.parentNode) {
+                                copyToast.classList.add('removing');
+                                setTimeout(() => copyToast.remove(), 250);
+                            }
+                        }, 1500);
+                    }).catch(() => {
+                        // Fallback
+                        const ta = document.createElement('textarea');
+                        ta.value = msg;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        toast('Copied!', 'success', 1200);
+                    });
+                });
+                el.querySelector('.t-close').addEventListener('click', (e) => {
+                    e.stopPropagation();
                     el.classList.add('removing');
                     setTimeout(() => el.remove(), 250);
                 });
@@ -2085,7 +2140,7 @@
             }
 
             // ============================================================
-            // COPY / MOVE HELPERS – with conflict handling
+            // COPY / MOVE HELPERS – with conflict handling and folder support
             // ============================================================
             async function copyFileTo(item, destDir) {
                 const destPath = destDir ? `${destDir}/${item.name}` : item.name;
@@ -2122,18 +2177,42 @@
                 }
             }
 
+            // ===== FIXED: copyFolderTo with proper error handling =====
             async function copyFolderTo(item, destDir) {
                 const destPath = destDir ? `${destDir}/${item.name}` : item.name;
+                // Create destination folder (ignore if exists)
                 try {
                     await createFolder(destPath);
-                } catch (e) { /* ignore if exists */ }
+                } catch (e) {
+                    // If we can't create the folder, maybe the parent doesn't exist or it's a conflict
+                    console.warn('createFolder warning:', e);
+                    // Continue anyway – maybe the folder already exists
+                }
 
-                const contents = await getContents(item.path);
+                // Get source contents
+                let contents;
+                try {
+                    contents = await getContents(item.path);
+                } catch (e) {
+                    toast(`Failed to read folder ${item.name}: ${e.message}`, 'error');
+                    return;
+                }
+
+                if (!Array.isArray(contents)) {
+                    toast(`Folder ${item.name} appears empty or invalid`, 'warning');
+                    return;
+                }
+
+                // Copy each child
                 for (const child of contents) {
-                    if (child.type === 'dir') {
-                        await copyFolderTo(child, destPath);
-                    } else {
-                        await copyFileTo(child, destPath);
+                    try {
+                        if (child.type === 'dir') {
+                            await copyFolderTo(child, destPath);
+                        } else {
+                            await copyFileTo(child, destPath);
+                        }
+                    } catch (e) {
+                        toast(`Failed to copy ${child.name}: ${e.message}`, 'error');
                     }
                 }
             }
@@ -2162,6 +2241,7 @@
                     }
                 }
 
+                // Copy all
                 for (const item of sourceItems) {
                     try {
                         if (item.isFolder) {
@@ -2174,6 +2254,7 @@
                     }
                 }
 
+                // If cut, delete originals
                 if (op === 'cut') {
                     for (const item of sourceItems) {
                         try {
@@ -2329,7 +2410,6 @@
 
                     card.addEventListener('dragend', () => {
                         isDragging = false;
-                        // Clean up drag-over styles
                         document.querySelectorAll('.file-card.drag-over').forEach(el => el.classList.remove('drag-over'));
                     });
 
@@ -2363,7 +2443,7 @@
                         }
                     });
 
-                    // ===== TOUCH HANDLING for long-press vs drag =====
+                    // ===== TOUCH HANDLING =====
                     card.addEventListener('touchstart', (e) => {
                         const touch = e.touches[0];
                         touchStartX = touch.clientX;
@@ -2371,7 +2451,6 @@
                         isLongPress = false;
                         touchTimer = setTimeout(() => {
                             isLongPress = true;
-                            // Trigger context menu
                             if (!selectedPaths.has(item.path)) {
                                 selectedPaths.clear();
                                 selectedPaths.add(item.path);
@@ -2396,10 +2475,8 @@
                         if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
                             clearTimeout(touchTimer);
                             isLongPress = false;
-                            // Start drag
                             if (!isDragging) {
                                 isDragging = true;
-                                // Simulate drag start
                                 if (selectedPaths.size > 1 && selectedPaths.has(item.path)) {
                                     dragItems = [];
                                     for (const selPath of selectedPaths) {
@@ -2426,13 +2503,11 @@
                             return;
                         }
                         if (isDragging) {
-                            // Check if dropped on a folder
                             const touch = e.changedTouches[0];
                             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                             const folderCard = dropTarget?.closest('.file-card.folder');
                             if (folderCard) {
                                 const destPath = folderCard.dataset.path;
-                                // Trigger drop
                                 const dropEvent = new Event('drop');
                                 dropEvent.dataTransfer = {
                                     getData: () => JSON.stringify(dragItems),
@@ -2448,20 +2523,19 @@
                         // Single tap = copy to clipboard
                         const path = item.path;
                         navigator.clipboard.writeText(path).then(() => {
-                            toast(`Copied: ${item.name}`, 'info', 2000);
+                            toast(`📋 Copied: ${item.name}`, 'info', 2000);
                         }).catch(() => {
-                            // Fallback
                             const ta = document.createElement('textarea');
                             ta.value = path;
                             document.body.appendChild(ta);
                             ta.select();
                             document.execCommand('copy');
                             document.body.removeChild(ta);
-                            toast(`Copied: ${item.name}`, 'info', 2000);
+                            toast(`📋 Copied: ${item.name}`, 'info', 2000);
                         });
                     }, { passive: true });
 
-                    // ===== CLICK HANDLER (desktop) =====
+                    // ===== CLICK HANDLER =====
                     card.addEventListener('click', (e) => {
                         if (e.target.closest('.action-btn')) return;
                         const ctrl = e.ctrlKey || e.metaKey;
@@ -2507,7 +2581,7 @@
                         }
                     });
 
-                    // ===== CONTEXT MENU (desktop right-click) =====
+                    // ===== CONTEXT MENU =====
                     card.addEventListener('contextmenu', (e) => {
                         if (isDragging) {
                             e.preventDefault();
@@ -2587,7 +2661,7 @@
             }
 
             // ============================================================
-            // COPY / MOVE ITEMS (with conflict handling for drag/drop)
+            // COPY / MOVE ITEMS (for drag/drop)
             // ============================================================
             async function copyItemTo(source, destDir) {
                 if (source.isFolder) {
@@ -2702,7 +2776,7 @@
             }
 
             // ============================================================
-            // UPLOAD FILE – FIXED overwrite
+            // UPLOAD FILE
             // ============================================================
             async function uploadFile(file, targetPath) {
                 const cleanTarget = normalizePath(targetPath);
@@ -2717,7 +2791,6 @@
                             let content = e.target.result;
                             let data = isText ? content : atob(content.split(',')[1] || '');
 
-                            // First, check if file exists
                             let existingSha = null;
                             let fileExists = false;
 
@@ -2728,7 +2801,6 @@
                                     fileExists = true;
                                 }
                             } catch (err) {
-                                // 404 = file doesn't exist – that's fine
                                 if (err.message && (err.message.includes('404') || err.message.includes('Not Found'))) {
                                     fileExists = false;
                                 } else {
@@ -2739,7 +2811,6 @@
                             }
 
                             if (fileExists && existingSha) {
-                                // Overwrite – ask user
                                 const overwrite = await showModal(
                                     'File exists',
                                     `"${file.name}" already exists. Overwrite?`,
@@ -2755,7 +2826,6 @@
                                 await createOrUpdateFile(path, data, `Overwrite ${file.name}`, existingSha);
                                 toast(`Overwrote ${file.name}`, 'success');
                             } else {
-                                // Create new file
                                 await createOrUpdateFile(path, data, `Upload ${file.name}`, null);
                                 toast(`Uploaded ${file.name}`, 'success');
                             }
@@ -3215,264 +3285,4 @@
             async function handleNewFile(target) {
                 const name = await promptInput('Enter file name:', 'newfile.txt');
                 if (!name) return;
-                let base = target.isFolder ? target.path : CONFIG.currentPath;
-                const path = base ? `${base}/${name}` : name;
-                try {
-                    await createOrUpdateFile(path, '', `Create ${name}`, null);
-                    toast(`Created ${name}`, 'success');
-                    await navigateTo(CONFIG.currentPath);
-                    await rebuildTree();
-                } catch (e) { toast(`Error: ${e.message}`, 'error'); }
-            }
-
-            async function handleNewFolder(target) {
-                const name = await promptInput('Enter folder name:', 'newfolder');
-                if (!name) return;
-                let base = target.isFolder ? target.path : CONFIG.currentPath;
-                const path = base ? `${base}/${name}` : name;
-                try {
-                    await createFolder(path);
-                    toast(`Created folder ${name}`, 'success');
-                    await navigateTo(CONFIG.currentPath);
-                    await rebuildTree();
-                } catch (e) {
-                    toast(`Error creating folder: ${e.message}`, 'error');
-                }
-            }
-
-            async function handleRename(target) {
-                if (target.isRoot) return toast('Cannot rename root', 'warning');
-                const newName = await promptInput('New name:', target.name);
-                if (!newName || newName === target.name) return;
-                const oldPath = target.path;
-                const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
-                const newPath = parentPath ? `${parentPath}/${newName}` : newName;
-                try {
-                    const data = await getContents(oldPath, CONFIG.branch);
-                    let content = '';
-                    if (data.content) content = decodeURIComponent(escape(atob(data.content)));
-                    await createOrUpdateFile(newPath, content, `Rename ${target.name} to ${newName}`, null);
-                    await deleteFile(oldPath, data.sha, `Delete ${target.name}`);
-                    toast(`Renamed to ${newName}`, 'success');
-                    await navigateTo(CONFIG.currentPath);
-                    await rebuildTree();
-                    if (currentFile && currentFile.path === oldPath) closeEditor();
-                } catch (e) { toast(`Rename error: ${e.message}`, 'error'); }
-            }
-
-            async function handleDelete(target) {
-                if (target.isRoot) return toast('Cannot delete root', 'warning');
-                const confirmed = await showModal(
-                    'Delete?',
-                    `Delete "${target.name}" permanently?`,
-                    'Delete',
-                    'Cancel',
-                    true
-                );
-                if (!confirmed) return;
-                try {
-                    if (target.isFolder) {
-                        const items = await getContents(target.path, CONFIG.branch);
-                        const files = Array.isArray(items) ? items : [];
-                        for (const item of files) {
-                            await deleteFile(item.path, item.sha, `Delete ${item.name}`);
-                        }
-                        try {
-                            const data = await getContents(`${target.path}/.gitkeep`, CONFIG.branch);
-                            if (data && data.sha) await deleteFile(`${target.path}/.gitkeep`, data.sha, 'Delete folder');
-                        } catch (e) { /* ignore */ }
-                        toast(`Deleted folder ${target.name}`, 'success');
-                    } else {
-                        await deleteFile(target.path, target.sha, `Delete ${target.name}`);
-                        toast(`Deleted ${target.name}`, 'success');
-                        if (currentFile && currentFile.path === target.path) closeEditor();
-                    }
-                    if (selectedPaths.has(target.path)) {
-                        selectedPaths.delete(target.path);
-                        updateDownloadButton();
-                    }
-                    await navigateTo(CONFIG.currentPath);
-                    await rebuildTree();
-                } catch (e) { toast(`Delete error: ${e.message}`, 'error'); }
-            }
-
-            async function handleDownload(target) {
-                try {
-                    const data = await getContents(target.path, CONFIG.branch);
-                    let content = '';
-                    if (data.content) content = decodeURIComponent(escape(atob(data.content)));
-                    const blob = new Blob([content], { type: 'text/plain' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = target.name;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    toast(`Downloaded ${target.name}`, 'success');
-                } catch (e) { toast(`Download error: ${e.message}`, 'error'); }
-            }
-
-            async function handleCopyPath(target) {
-                try {
-                    await navigator.clipboard.writeText(target.path);
-                    toast('Path copied!', 'success');
-                } catch (e) {
-                    const ta = document.createElement('textarea');
-                    ta.value = target.path;
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(ta);
-                    toast('Path copied!', 'success');
-                }
-            }
-
-            // ============================================================
-            // KEYBOARD SHORTCUTS
-            // ============================================================
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
-                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-                        e.preventDefault();
-                        handleCopy();
-                    }
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
-                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-                        e.preventDefault();
-                        handleCut();
-                    }
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-                        e.preventDefault();
-                        handlePaste();
-                    }
-                }
-                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                    e.preventDefault();
-                    if (editorWrap.classList.contains('visible')) saveCurrentFile();
-                }
-                if (e.key === 'Escape') {
-                    if (ctxMenu.classList.contains('open')) closeCtxMenu();
-                    if (editorWrap.classList.contains('visible')) closeEditor();
-                    if (selectionMode) {
-                        selectionMode = false;
-                        selectModeBtn.classList.remove('active');
-                    }
-                    if (modalOverlay.classList.contains('active')) {
-                        modalOverlay.classList.remove('active');
-                        if (modalResolve) modalResolve(false);
-                    }
-                }
-            });
-
-            // ============================================================
-            // NAVIGATION BUTTONS
-            // ============================================================
-            homeBtn.addEventListener('click', () => navigateTo(''));
-            upBtn.addEventListener('click', () => navigateTo(getParentPath(CONFIG.currentPath)));
-
-            // ============================================================
-            // CONNECT
-            // ============================================================
-            async function connect() {
-                try {
-                    const token = tokenInput.value.trim();
-                    const owner = ownerInput.value.trim();
-                    const repo = repoInput.value.trim();
-                    const branch = branchInput.value.trim() || 'main';
-                    if (!token) { toast('Enter token', 'warning'); return; }
-                    if (!owner || !repo) { toast('Enter Owner and Repo', 'warning'); return; }
-
-                    CONFIG.token = token;
-                    CONFIG.owner = owner;
-                    CONFIG.repo = repo;
-                    CONFIG.branch = branch;
-
-                    localStorage.setItem('gh_token', token);
-                    localStorage.setItem('gh_owner', owner);
-                    localStorage.setItem('gh_repo', repo);
-                    localStorage.setItem('gh_branch', branch);
-
-                    await getContents('', CONFIG.branch);
-                    toast('Connected!', 'success');
-                    await navigateTo('');
-                    await rebuildTree();
-                } catch (e) {
-                    console.error('Connect error:', e);
-                    toast(`Connection error: ${e.message}`, 'error');
-                }
-            }
-
-            connectBtn.addEventListener('click', connect);
-            tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(); });
-
-            refreshBtn.addEventListener('click', async () => {
-                await navigateTo(CONFIG.currentPath);
-                await rebuildTree();
-                toast('Refreshed', 'success');
-            });
-
-            mobileToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-
-            newFolderBtn.addEventListener('click', async () => {
-                const target = {
-                    isFolder: true,
-                    path: CONFIG.currentPath,
-                };
-                await handleNewFolder(target);
-            });
-
-            // ============================================================
-            // AUTO-LOAD
-            // ============================================================
-            const savedToken = localStorage.getItem('gh_token');
-            const savedOwner = localStorage.getItem('gh_owner');
-            const savedRepo = localStorage.getItem('gh_repo');
-            const savedBranch = localStorage.getItem('gh_branch');
-            if (savedToken) tokenInput.value = savedToken;
-            if (savedOwner) ownerInput.value = savedOwner;
-            if (savedRepo) repoInput.value = savedRepo;
-            if (savedBranch) branchInput.value = savedBranch;
-
-            if (!savedOwner && !savedRepo) {
-                autoSuggestFromUrl();
-            }
-
-            if (savedToken && savedOwner && savedRepo) {
-                setTimeout(() => connect(), 300);
-            }
-
-            // ============================================================
-            // RESIZE
-            // ============================================================
-            window.addEventListener('resize', () => {
-                if (window.innerWidth > 640) sidebar.classList.remove('open');
-                const isMobile = window.innerWidth <= 640;
-                document.querySelectorAll('.card-actions').forEach(el => {
-                    if (isMobile) el.classList.add('always-visible');
-                    else el.classList.remove('always-visible');
-                });
-            });
-
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth <= 640) {
-                    if (e.target.closest('.file-card') || e.target.closest('.tree-item')) {
-                        sidebar.classList.remove('open');
-                    }
-                }
-            });
-
-            // ============================================================
-            // INIT
-            // ============================================================
-            toast('FileForge – connect to GitHub', 'info', 3000);
-            console.log('🚀 FileForge – all fixes applied');
-        })();
-    </script>
-
-</body>
-</html>
+                let base =
