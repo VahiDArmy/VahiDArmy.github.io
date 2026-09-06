@@ -1,8 +1,8 @@
 /* ==========================================================================
-   Components
+   Components — Glassmorphism + Comet Effect
    ========================================================================== */
 
-/* ---- Buttons ---- */
+/* ---- Buttons (شیشه‌ای) ---- */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -10,16 +10,22 @@
   gap: 8px;
   padding: 11px 20px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
-.btn:hover { border-color: var(--neon); color: var(--neon); }
-.btn:active { transform: scale(0.98); }
+.btn:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 24px var(--neon-glow);
+}
+.btn:active { transform: scale(0.97); }
 
 .btn--primary {
   background: var(--neon);
@@ -30,7 +36,7 @@
 }
 .btn--primary:hover {
   color: #06110E;
-  box-shadow: 0 0 24px var(--neon-glow);
+  box-shadow: 0 0 36px var(--neon-glow);
 }
 
 .btn--ghost {
@@ -38,7 +44,7 @@
   border-color: transparent;
   color: var(--text-dim);
 }
-.btn--ghost:hover { background: var(--surface); }
+.btn--ghost:hover { background: var(--glass-bg); }
 
 .btn--icon {
   width: 42px;
@@ -50,30 +56,31 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- Card ---- */
+/* ---- Card (شیشه‌ای با border درخشان) ---- */
 .card {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 20px;
   box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  transition: all 0.3s ease;
 }
 
-/* ---- Round / progress badge ---- */
+/* ---- Progress hero (شیشه‌ای) ---- */
 .progress-hero {
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
 }
 
 .progress-ring {
@@ -87,11 +94,11 @@
   fill: none;
   stroke-width: 5;
 }
-.progress-ring .ring-bg { stroke: var(--border); }
+.progress-ring .ring-bg { stroke: rgba(255,255,255,0.1); }
 .progress-ring .ring-fg {
   stroke: var(--neon);
   stroke-linecap: round;
-  filter: drop-shadow(0 0 6px var(--neon-glow));
+  filter: drop-shadow(0 0 8px var(--neon-glow));
   transition: stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1);
 }
 .progress-ring__label {
@@ -103,20 +110,14 @@
   font-size: 0.56rem;
   font-weight: 700;
   color: var(--neon);
+  text-shadow: 0 0 16px var(--neon-glow);
 }
 
 .progress-hero__text { flex: 1; }
 .progress-hero__title { font-size: 0.85rem; color: var(--text-dim); margin: 0 0 4px; }
 .progress-hero__count { font-size: 1.05rem; font-weight: 700; color: var(--text); }
 
-/* ---- Mobile: maximize width, minimal margins ---- */
-@media (max-width: 560px) {
-  .container { padding-left: 10px; padding-right: 10px; }
-  .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 20px 14px 16px; }
-}
-
-/* ---- Sticky ayah (stays visible while scrolling the work list) ---- */
+/* ---- Sticky ayah (شیشه‌ای) ---- */
 .sticky-ayah {
   position: sticky;
   top: 66px;
@@ -129,17 +130,19 @@
   .sticky-ayah { top: 60px; }
 }
 
-/* ---- Edit mode banner on the form ---- */
+/* ---- Edit banner ---- */
 .edit-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--violet-glow);
+  backdrop-filter: blur(8px);
   color: var(--violet);
-  padding: 8px 12px;
+  padding: 8px 14px;
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
   margin-bottom: 12px;
+  border: 1px solid rgba(139,124,246,0.2);
 }
 .edit-banner button {
   background: none;
@@ -150,41 +153,46 @@
   font-size: 0.78rem;
 }
 
-/* ---- Ayah frame (signature element) ---- */
+/* ================================================================
+   ⭐ AYAH FRAME — با افکت نور دورانی (Comet) + Glass
+   ================================================================ */
 .ayah-frame {
   position: relative;
   border-radius: var(--radius-lg);
   padding: 2px;
-  background: linear-gradient(135deg, var(--border), var(--border));
+  background: linear-gradient(135deg, rgba(139,124,246,0.2), rgba(45,232,200,0.2));
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
+/* -- Comet effect (نور دورانی) -- */
 .ayah-frame::before {
   content: '';
   position: absolute;
-  inset: -2px;
+  inset: -3px;
   border-radius: inherit;
-  padding: 2px;
+  padding: 3px;
   background: conic-gradient(
     from var(--angle, 0deg),
     transparent 0deg,
-    transparent 268deg,
-    var(--neon-glow) 300deg,
-    var(--neon) 338deg,
-    #fff 348deg,
-    var(--neon) 356deg,
+    transparent 240deg,
+    var(--neon-glow) 280deg,
+    var(--violet-glow) 310deg,
+    #fff 330deg,
+    var(--neon-glow) 350deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px var(--neon)) drop-shadow(0 0 14px var(--neon-glow));
+  filter: drop-shadow(0 0 8px var(--neon-glow)) drop-shadow(0 0 20px var(--violet-glow));
   opacity: 0;
-  transition: opacity 0.7s ease, --angle 0.18s linear;
+  transition: opacity 0.6s ease, --angle 0.15s linear;
+  will-change: transform, opacity;
 }
 
 .ayah-frame.is-comet-active::before {
-  opacity: 1;
+  opacity: 0.9;
 }
 
 @property --angle {
@@ -197,11 +205,16 @@
   .ayah-frame::before { display: none; }
 }
 
+/* -- Inner content (شیشه‌ای با پشتیبانی از هر دو تم) -- */
 .ayah-frame__inner {
   position: relative;
-  background: var(--bg-elevated);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 26px 22px 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
 }
 
 .ayah-frame__ref {
@@ -215,6 +228,7 @@
   color: var(--text-faint);
 }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
+
 .copy-ayah-btn {
   display: inline-flex;
   align-items: center;
@@ -232,26 +246,13 @@
 }
 .copy-ayah-btn:hover { color: var(--neon); }
 
-/* ---- Ayah-to-ayah reference link (phosphorescent violet) ---- */
-.ayah-link {
-  color: var(--violet);
-  font-weight: 700;
-  border-bottom: 1px dashed var(--violet);
-  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
-  transition: text-shadow 0.2s ease, color 0.2s ease;
-}
-.ayah-link:hover {
-  color: #C9BFFF;
-  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
-}
-
-/* ---- Mark light: small amber neon toggle in the ayah top bar ---- */
+/* ---- Mark light (کهربایی) ---- */
 .mark-toggle {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  border: 1px solid var(--border);
+  border: 1px solid var(--glass-border);
   background: transparent;
   padding: 0;
   margin-inline-end: 6px;
@@ -264,9 +265,9 @@ span.mark-toggle { cursor: default; }
   background: #FFB020;
   border-color: #FFB020;
   box-shadow:
-    0 0 3px 1px #FFB020,
-    0 0 10px 3px rgba(255, 176, 32, 0.75),
-    0 0 20px 7px rgba(255, 176, 32, 0.4);
+    0 0 6px 2px #FFB020,
+    0 0 18px 4px rgba(255, 176, 32, 0.6),
+    0 0 30px 8px rgba(255, 176, 32, 0.3);
 }
 button.mark-toggle:hover { border-color: #FFB020; }
 
@@ -277,12 +278,13 @@ button.mark-toggle:hover { border-color: #FFB020; }
   text-align: center;
   color: var(--text);
   direction: rtl;
+  text-shadow: 0 0 20px rgba(255,255,255,0.03);
 }
 
 /* ---- Translation collapse bar ---- */
 .translation-bar {
   margin-top: 14px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--glass-border);
   padding-top: 0;
 }
 .translation-toggle {
@@ -314,13 +316,15 @@ button.mark-toggle:hover { border-color: #FFB020; }
   margin: 4px 0 10px;
   padding: 12px 14px;
   background: var(--surface-2);
+  backdrop-filter: blur(8px);
   border-radius: var(--radius-sm);
+  border: 1px solid var(--glass-border);
   color: var(--text-dim);
   font-size: 0.92rem;
   line-height: 1.9;
 }
 
-/* ---- Selects (surah/ayah dropdowns) ---- */
+/* ---- Selects (شیشه‌ای) ---- */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -332,17 +336,21 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap select {
   width: 100%;
   appearance: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
   border-radius: var(--radius-sm);
   font-family: var(--font-ui);
   font-size: 0.88rem;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.select-wrap select:hover { border-color: var(--neon-dim); }
+.select-wrap select:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow);
+}
 .select-wrap::after {
   content: '';
   position: absolute;
@@ -355,12 +363,11 @@ button.mark-toggle:hover { border-color: #FFB020; }
   transform: rotate(-45deg);
   pointer-events: none;
 }
-
 .select-wrap select {
   padding-left: 34px;
 }
 
-/* ---- Nav buttons prev/next ---- */
+/* ---- Nav buttons ---- */
 .ayah-nav {
   display: flex;
   align-items: center;
@@ -369,16 +376,20 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .ayah-nav .btn { flex: 1; }
 
-/* ---- Tafsir card ---- */
+/* ---- Tafsir card (شیشه‌ای) ---- */
 .tafsir-card {
   margin-top: 14px;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 18px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  transition: all 0.3s ease;
+}
+.tafsir-card:hover {
+  border-color: rgba(139,124,246,0.2);
 }
 .tafsir-card__meta {
   display: flex;
@@ -394,6 +405,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
   padding: 2px 9px;
   border-radius: 999px;
   font-weight: 700;
+  backdrop-filter: blur(4px);
 }
 .tafsir-card__body {
   font-size: 0.95rem;
@@ -420,10 +432,10 @@ button.mark-toggle:hover { border-color: #FFB020; }
   gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--glass-border);
 }
 
-/* ---- Tags ---- */
+/* ---- Tags (شیشه‌ای) ---- */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
@@ -436,13 +448,19 @@ button.mark-toggle:hover { border-color: #FFB020; }
   gap: 4px;
   padding: 3px 11px;
   border-radius: 999px;
-  border: 1px solid;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(4px);
   font-size: 0.74rem;
   font-weight: 600;
-  transition: filter 0.2s ease;
+  transition: all 0.25s ease;
 }
-a.tag-pill:hover { filter: brightness(1.25); }
+.tag-pill:hover {
+  filter: brightness(1.2);
+  box-shadow: 0 0 20px rgba(139,124,246,0.2);
+}
 .tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
+
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
@@ -453,11 +471,11 @@ a.tag-pill:hover { filter: brightness(1.25); }
 .tag-mention {
   text-decoration: none;
   font-weight: 600;
-  transition: filter 0.2s ease;
+  transition: all 0.2s ease;
 }
-.tag-mention:hover { filter: brightness(1.3); }
+.tag-mention:hover { filter: brightness(1.3); text-shadow: 0 0 20px currentColor; }
 
-/* ---- Textarea / form ---- */
+/* ---- Form fields (شیشه‌ای) ---- */
 .field { margin-bottom: 14px; }
 .field label {
   display: block;
@@ -467,8 +485,9 @@ a.tag-pill:hover { filter: brightness(1.25); }
 }
 .field textarea, .field input[type="text"] {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
   border-radius: var(--radius-sm);
@@ -476,7 +495,7 @@ a.tag-pill:hover { filter: brightness(1.25); }
   font-size: 0.92rem;
   line-height: 1.8;
   resize: vertical;
-  transition: border-color 0.2s ease, min-height 0.25s ease;
+  transition: all 0.25s ease;
 }
 .field textarea {
   min-height: 110px;
@@ -486,6 +505,7 @@ a.tag-pill:hover { filter: brightness(1.25); }
 }
 .field textarea:focus, .field input[type="text"]:focus {
   border-color: var(--neon);
+  box-shadow: 0 0 24px var(--neon-glow);
   outline: none;
 }
 
@@ -493,25 +513,29 @@ a.tag-pill:hover { filter: brightness(1.25); }
 .name-row input { flex: 1; }
 .name-row input,
 .comment-form input[type="text"] {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  transition: border-color 0.2s ease;
+  transition: all 0.25s ease;
 }
 .name-row input:focus,
 .comment-form input[type="text"]:focus {
   border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow);
   outline: none;
 }
 
-/* ---- Comments ---- */
+/* ---- Comments (شیشه‌ای) ---- */
 .comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
   background: var(--surface-2);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
 }
@@ -536,7 +560,7 @@ a.tag-pill:hover { filter: brightness(1.25); }
 
 /* ---- Skeleton loader ---- */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--glass-border) 37%, var(--surface-2) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: var(--radius-sm);
@@ -549,6 +573,7 @@ a.tag-pill:hover { filter: brightness(1.25); }
   .skeleton { animation: none; }
 }
 
+/* ---- Toast (شیشه‌ای) ---- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -559,29 +584,27 @@ a.tag-pill:hover { filter: brightness(1.25); }
   pointer-events: none;
 }
 .toast__inner {
-  background: var(--surface);
-  border: 1px solid var(--neon);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid var(--glass-border);
   color: var(--text);
-  padding: 10px 20px;
+  padding: 10px 24px;
   border-radius: 999px;
   font-size: 0.85rem;
-  box-shadow: 0 0 20px var(--neon-glow);
+  box-shadow: 0 0 40px var(--neon-glow);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
 }
 .toast.show .toast__inner { opacity: 1; translate: 0; }
 
-/* ---- Count-up number ---- */
-.count-up { font-variant-numeric: tabular-nums; }
-
-/* ---- Modal overlay (ayah link picker) ---- */
+/* ---- Modal overlay (Glass) ---- */
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(4, 6, 10, 0.72);
-  backdrop-filter: blur(3px);
+  background: rgba(4, 6, 10, 0.6);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,8 +617,12 @@ a.tag-pill:hover { filter: brightness(1.25); }
   max-height: 85vh;
   overflow-y: auto;
   background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
 }
 .modal-card__head {
   display: flex;
