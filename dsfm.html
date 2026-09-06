@@ -3285,4 +3285,264 @@
             async function handleNewFile(target) {
                 const name = await promptInput('Enter file name:', 'newfile.txt');
                 if (!name) return;
-                let base =
+                let base = target.isFolder ? target.path : CONFIG.currentPath;
+                const path = base ? `${base}/${name}` : name;
+                try {
+                    await createOrUpdateFile(path, '', `Create ${name}`, null);
+                    toast(`Created ${name}`, 'success');
+                    await navigateTo(CONFIG.currentPath);
+                    await rebuildTree();
+                } catch (e) { toast(`Error: ${e.message}`, 'error'); }
+            }
+
+            async function handleNewFolder(target) {
+                const name = await promptInput('Enter folder name:', 'newfolder');
+                if (!name) return;
+                let base = target.isFolder ? target.path : CONFIG.currentPath;
+                const path = base ? `${base}/${name}` : name;
+                try {
+                    await createFolder(path);
+                    toast(`Created folder ${name}`, 'success');
+                    await navigateTo(CONFIG.currentPath);
+                    await rebuildTree();
+                } catch (e) {
+                    toast(`Error creating folder: ${e.message}`, 'error');
+                }
+            }
+
+            async function handleRename(target) {
+                if (target.isRoot) return toast('Cannot rename root', 'warning');
+                const newName = await promptInput('New name:', target.name);
+                if (!newName || newName === target.name) return;
+                const oldPath = target.path;
+                const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/'));
+                const newPath = parentPath ? `${parentPath}/${newName}` : newName;
+                try {
+                    const data = await getContents(oldPath, CONFIG.branch);
+                    let content = '';
+                    if (data.content) content = decodeURIComponent(escape(atob(data.content)));
+                    await createOrUpdateFile(newPath, content, `Rename ${target.name} to ${newName}`, null);
+                    await deleteFile(oldPath, data.sha, `Delete ${target.name}`);
+                    toast(`Renamed to ${newName}`, 'success');
+                    await navigateTo(CONFIG.currentPath);
+                    await rebuildTree();
+                    if (currentFile && currentFile.path === oldPath) closeEditor();
+                } catch (e) { toast(`Rename error: ${e.message}`, 'error'); }
+            }
+
+            async function handleDelete(target) {
+                if (target.isRoot) return toast('Cannot delete root', 'warning');
+                const confirmed = await showModal(
+                    'Delete?',
+                    `Delete "${target.name}" permanently?`,
+                    'Delete',
+                    'Cancel',
+                    true
+                );
+                if (!confirmed) return;
+                try {
+                    if (target.isFolder) {
+                        const items = await getContents(target.path, CONFIG.branch);
+                        const files = Array.isArray(items) ? items : [];
+                        for (const item of files) {
+                            await deleteFile(item.path, item.sha, `Delete ${item.name}`);
+                        }
+                        try {
+                            const data = await getContents(`${target.path}/.gitkeep`, CONFIG.branch);
+                            if (data && data.sha) await deleteFile(`${target.path}/.gitkeep`, data.sha, 'Delete folder');
+                        } catch (e) { /* ignore */ }
+                        toast(`Deleted folder ${target.name}`, 'success');
+                    } else {
+                        await deleteFile(target.path, target.sha, `Delete ${target.name}`);
+                        toast(`Deleted ${target.name}`, 'success');
+                        if (currentFile && currentFile.path === target.path) closeEditor();
+                    }
+                    if (selectedPaths.has(target.path)) {
+                        selectedPaths.delete(target.path);
+                        updateDownloadButton();
+                    }
+                    await navigateTo(CONFIG.currentPath);
+                    await rebuildTree();
+                } catch (e) { toast(`Delete error: ${e.message}`, 'error'); }
+            }
+
+            async function handleDownload(target) {
+                try {
+                    const data = await getContents(target.path, CONFIG.branch);
+                    let content = '';
+                    if (data.content) content = decodeURIComponent(escape(atob(data.content)));
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = target.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    toast(`Downloaded ${target.name}`, 'success');
+                } catch (e) { toast(`Download error: ${e.message}`, 'error'); }
+            }
+
+            async function handleCopyPath(target) {
+                try {
+                    await navigator.clipboard.writeText(target.path);
+                    toast('Path copied!', 'success');
+                } catch (e) {
+                    const ta = document.createElement('textarea');
+                    ta.value = target.path;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    toast('Path copied!', 'success');
+                }
+            }
+
+            // ============================================================
+            // KEYBOARD SHORTCUTS
+            // ============================================================
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        handleCopy();
+                    }
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
+                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        handleCut();
+                    }
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                    if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        handlePaste();
+                    }
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    if (editorWrap.classList.contains('visible')) saveCurrentFile();
+                }
+                if (e.key === 'Escape') {
+                    if (ctxMenu.classList.contains('open')) closeCtxMenu();
+                    if (editorWrap.classList.contains('visible')) closeEditor();
+                    if (selectionMode) {
+                        selectionMode = false;
+                        selectModeBtn.classList.remove('active');
+                    }
+                    if (modalOverlay.classList.contains('active')) {
+                        modalOverlay.classList.remove('active');
+                        if (modalResolve) modalResolve(false);
+                    }
+                }
+            });
+
+            // ============================================================
+            // NAVIGATION BUTTONS
+            // ============================================================
+            homeBtn.addEventListener('click', () => navigateTo(''));
+            upBtn.addEventListener('click', () => navigateTo(getParentPath(CONFIG.currentPath)));
+
+            // ============================================================
+            // CONNECT
+            // ============================================================
+            async function connect() {
+                try {
+                    const token = tokenInput.value.trim();
+                    const owner = ownerInput.value.trim();
+                    const repo = repoInput.value.trim();
+                    const branch = branchInput.value.trim() || 'main';
+                    if (!token) { toast('Enter token', 'warning'); return; }
+                    if (!owner || !repo) { toast('Enter Owner and Repo', 'warning'); return; }
+
+                    CONFIG.token = token;
+                    CONFIG.owner = owner;
+                    CONFIG.repo = repo;
+                    CONFIG.branch = branch;
+
+                    localStorage.setItem('gh_token', token);
+                    localStorage.setItem('gh_owner', owner);
+                    localStorage.setItem('gh_repo', repo);
+                    localStorage.setItem('gh_branch', branch);
+
+                    await getContents('', CONFIG.branch);
+                    toast('Connected!', 'success');
+                    await navigateTo('');
+                    await rebuildTree();
+                } catch (e) {
+                    console.error('Connect error:', e);
+                    toast(`Connection error: ${e.message}`, 'error');
+                }
+            }
+
+            connectBtn.addEventListener('click', connect);
+            tokenInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(); });
+
+            refreshBtn.addEventListener('click', async () => {
+                await navigateTo(CONFIG.currentPath);
+                await rebuildTree();
+                toast('Refreshed', 'success');
+            });
+
+            mobileToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+            newFolderBtn.addEventListener('click', async () => {
+                const target = {
+                    isFolder: true,
+                    path: CONFIG.currentPath,
+                };
+                await handleNewFolder(target);
+            });
+
+            // ============================================================
+            // AUTO-LOAD
+            // ============================================================
+            const savedToken = localStorage.getItem('gh_token');
+            const savedOwner = localStorage.getItem('gh_owner');
+            const savedRepo = localStorage.getItem('gh_repo');
+            const savedBranch = localStorage.getItem('gh_branch');
+            if (savedToken) tokenInput.value = savedToken;
+            if (savedOwner) ownerInput.value = savedOwner;
+            if (savedRepo) repoInput.value = savedRepo;
+            if (savedBranch) branchInput.value = savedBranch;
+
+            if (!savedOwner && !savedRepo) {
+                autoSuggestFromUrl();
+            }
+
+            if (savedToken && savedOwner && savedRepo) {
+                setTimeout(() => connect(), 300);
+            }
+
+            // ============================================================
+            // RESIZE
+            // ============================================================
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 640) sidebar.classList.remove('open');
+                const isMobile = window.innerWidth <= 640;
+                document.querySelectorAll('.card-actions').forEach(el => {
+                    if (isMobile) el.classList.add('always-visible');
+                    else el.classList.remove('always-visible');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 640) {
+                    if (e.target.closest('.file-card') || e.target.closest('.tree-item')) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+
+            // ============================================================
+            // INIT
+            // ============================================================
+            toast('FileForge – connect to GitHub', 'info', 3000);
+            console.log('🚀 FileForge – toast copy + folder copy fixed');
+        })();
+    </script>
+
+</body>
+</html>
