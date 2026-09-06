@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RaiseMind | ارتقا ذهن</title>
+    <meta name="description" content="نظر و برداشت شخصی، آیه به آیه از قرآن" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ---------- tokens.css ---------- */
+        :root {
+            --font-ui: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+            --font-quran: 'Amiri Quran', 'KFGQPC Uthman Taha Naskh', serif;
+            --font-display: 'Space Grotesk', monospace;
+
+            --bg: #f5f0eb;
+            --surface: #fffcf8;
+            --surface-2: #f0eae4;
+            --text: #1e1a16;
+            --text-dim: #4d443c;
+            --text-faint: #8a7a6e;
+            --border: #ddd3ca;
+            --neon: #7c4dff;
+            --neon-glow: rgba(124, 77, 255, .25);
+            --violet: #7c4dff;
+            --violet-glow: rgba(124, 77, 255, .3);
+            --danger: #d94a4a;
+            --radius: 12px;
+            --radius-lg: 20px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, .06);
+            --transition: .25s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg: #12100e;
+            --surface: #1d1a17;
+            --surface-2: #2a2622;
+            --text: #ede7e0;
+            --text-dim: #b8ada3;
+            --text-faint: #7a6e62;
+            --border: #3a342e;
+            --shadow: 0 8px 30px rgba(0, 0, 0, .4);
+        }
+
+        /* ---------- layout.css ---------- */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: var(--font-ui);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            transition: background var(--transition), color var(--transition);
+            padding-bottom: 80px;
+        }
+
+        a {
+            color: var(--violet);
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* header */
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            backdrop-filter: blur(8px);
+            background: rgba(var(--surface-rgb, 255, 252, 248), .85);
+        }
+        [data-theme="dark"] .site-header {
+            background: rgba(29, 26, 23, .85);
+        }
+        .site-header__inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 16px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            color: var(--text);
+        }
+        .brand__mark {
+            color: var(--violet);
+        }
+        .brand__fa {
+            font-family: var(--font-ui);
+            font-weight: 400;
+            font-size: .7rem;
+            color: var(--text-faint);
+            margin-inline-start: 4px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            font-size: .82rem;
+            font-weight: 500;
+        }
+        .nav-tabs a {
+            padding: 4px 12px;
+            border-radius: 100px;
+            color: var(--text-dim);
+            transition: all var(--transition);
+        }
+        .nav-tabs a:hover {
+            background: var(--surface-2);
+            text-decoration: none;
+        }
+        .nav-tabs a.active {
+            background: var(--violet);
+            color: #fff;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--surface-2);
+            border: none;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .theme-toggle:hover {
+            background: var(--border);
+            color: var(--text);
+        }
+
+        /* mobile tabbar */
+        .mobile-tabbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0 env(safe-area-inset-bottom, 8px);
+            z-index: 60;
+            backdrop-filter: blur(8px);
+        }
+        .mobile-tabbar a {
+            font-size: .7rem;
+            color: var(--text-dim);
+            padding: 4px 12px;
+            border-radius: 100px;
+            transition: all var(--transition);
+            text-align: center;
+        }
+        .mobile-tabbar a.active {
+            background: var(--violet);
+            color: #fff;
+        }
+        .mobile-tabbar a:hover {
+            text-decoration: none;
+        }
+
+        @media (min-width: 640px) {
+            .mobile-tabbar {
+                display: none;
+            }
+            body {
+                padding-bottom: 0;
+            }
+        }
+        @media (max-width: 639px) {
+            .nav-tabs {
+                display: none;
+            }
+        }
+
+        /* sections */
+        .section {
+            margin-top: 20px;
+        }
+        .section__label {
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--text-faint);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* cards */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+
+        /* select */
+        .select-wrap {
+            position: relative;
+            flex: 1;
+        }
+        .select-wrap select {
+            width: 100%;
+            padding: 8px 12px;
+            font-family: var(--font-ui);
+            font-size: .85rem;
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            appearance: none;
+            cursor: pointer;
+            transition: border var(--transition);
+        }
+        .select-wrap select:focus {
+            outline: none;
+            border-color: var(--violet);
+        }
+        .select-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .select-row .select-wrap {
+            min-width: 100px;
+        }
+
+        /* buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 18px;
+            font-family: var(--font-ui);
+            font-size: .82rem;
+            font-weight: 500;
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            background: var(--surface-2);
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+            user-select: none;
+        }
+        .btn:hover {
+            background: var(--border);
+        }
+        .btn--primary {
+            background: var(--violet);
+            color: #fff;
+            border-color: var(--violet);
+        }
+        .btn--primary:hover {
+            background: #6a3ddb;
+            border-color: #6a3ddb;
+        }
+        .btn--sm {
+            padding: 4px 14px;
+            font-size: .72rem;
+        }
+        .btn--ghost {
+            background: transparent;
+            border-color: transparent;
+        }
+        .btn--ghost:hover {
+            background: var(--surface-2);
+        }
+        .btn--icon {
+            padding: 6px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+        }
+
+        /* fields */
+        .field {
+            margin-bottom: 14px;
+        }
+        .field label {
+            display: block;
+            font-size: .78rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+        }
+        .field input,
+        .field textarea {
+            width: 100%;
+            padding: 10px 14px;
+            font-family: var(--font-ui);
+            font-size: .88rem;
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border var(--transition);
+            resize: vertical;
+        }
+        .field input:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: var(--violet);
+        }
+        .field textarea {
+            min-height: 80px;
+        }
+
+        /* ayah display */
+        .ayah-frame {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 18px 20px;
+            box-shadow: var(--shadow);
+            transition: background var(--transition), border var(--transition);
+        }
+        .ayah-frame .quran-text {
+            font-family: var(--font-quran);
+            font-size: 1.45rem;
+            line-height: 2;
+            text-align: center;
+            color: var(--text);
+            word-break: break-word;
+        }
+        .ayah-frame .translation {
+            font-size: .88rem;
+            color: var(--text-dim);
+            margin-top: 10px;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+        }
+        .ayah-frame .ayah-ref {
+            font-size: .72rem;
+            color: var(--text-faint);
+            text-align: center;
+            margin-top: 8px;
+        }
+
+        .ayah-nav {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+
+        /* tafsir list */
+        .tafsir-item {
+            background: var(--surface-2);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-right: 3px solid var(--violet);
+            transition: background var(--transition);
+        }
+        .tafsir-item .meta {
+            font-size: .7rem;
+            color: var(--text-faint);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 4px;
+        }
+        .tafsir-item .content {
+            font-size: .88rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .tafsir-item .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .tafsir-item .tags .tag {
+            font-size: .65rem;
+            background: var(--violet);
+            color: #fff;
+            padding: 1px 10px;
+            border-radius: 100px;
+            opacity: .8;
+        }
+        .tafsir-item .actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 6px 0;
+        }
+        .tag-cloud .tag-pill {
+            padding: 4px 16px;
+            border-radius: 100px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            font-size: .78rem;
+            cursor: pointer;
+            transition: all var(--transition);
+            color: var(--text);
+        }
+        .tag-cloud .tag-pill:hover {
+            background: var(--violet);
+            color: #fff;
+            border-color: var(--violet);
+        }
+        .tag-cloud .tag-pill .count {
+            font-size: .6rem;
+            opacity: .6;
+            margin-inline-start: 4px;
+        }
+
+        .empty-state {
+            color: var(--text-faint);
+            font-size: .85rem;
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .progress-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            box-shadow: var(--shadow);
+        }
+        .progress-ring {
+            position: relative;
+            width: 62px;
+            height: 62px;
+            flex-shrink: 0;
+        }
+        .progress-ring svg {
+            transform: rotate(-90deg);
+            width: 62px;
+            height: 62px;
+        }
+        .progress-ring .ring-bg {
+            fill: none;
+            stroke: var(--surface-2);
+            stroke-width: 4;
+        }
+        .progress-ring .ring-fg {
+            fill: none;
+            stroke: var(--violet);
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 163.36;
+            stroke-dashoffset: 163.36;
+            transition: stroke-dashoffset .6s ease;
+        }
+        .progress-ring__label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .7rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .progress-hero__text {
+            flex: 1;
+        }
+        .progress-hero__title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .progress-hero__count {
+            font-size: .8rem;
+            color: var(--text-dim);
+        }
+
+        .edit-banner {
+            background: var(--violet);
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: var(--radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: .82rem;
+        }
+        .edit-banner button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, .4);
+            border-radius: 100px;
+            color: #fff;
+            padding: 2px 14px;
+            cursor: pointer;
+            font-size: .72rem;
+        }
+        .edit-banner button:hover {
+            background: rgba(255, 255, 255, .15);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .modal-card {
+            max-width: 480px;
+            width: 100%;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .3);
+        }
+        .modal-card__head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        .modal-card__head button {
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            cursor: pointer;
+        }
+
+        .sticky-ayah {
+            position: sticky;
+            top: 70px;
+            z-index: 10;
+        }
+        @media (max-width: 639px) {
+            .sticky-ayah {
+                top: 58px;
+            }
+        }
+
+        .link-preview {
+            font-size: .85rem;
+            padding: 10px 12px;
+            background: var(--surface-2);
+            border-radius: var(--radius);
+            margin: 6px 0 10px;
+            user-select: text;
+            border: 1px solid var(--border);
+        }
+
+        /* ---------- components.css ---------- */
+        .tafsir-item .content a {
+            color: var(--violet);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+        .tafsir-item .content a:hover {
+            opacity: .7;
+        }
+
+        .tag-pill--active {
+            background: var(--violet) !important;
+            color: #fff !important;
+            border-color: var(--violet) !important;
+        }
+
+        .graph-node text {
+            font-size: 8px;
+            fill: var(--text-dim);
+            font-family: var(--font-ui);
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <div class="site-header__inner">
+            <div class="brand">
+                <span class="brand__mark">Raise</span><span>Mind</span>
+                <span class="brand__fa">· ارتقا ذهن</span>
+            </div>
+            <nav class="nav-tabs" aria-label="ناوبری اصلی">
+                <a href="index.html" class="active">کار</a>
+                <a href="browse.html">مرور</a>
+                <a href="tags.html">برچسب‌ها</a>
+                <a href="relations.html">رابطه‌ها</a>
+            </nav>
+            <div class="header-actions">
+                <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+                <button class="theme-toggle" id="logoutBtn" aria-label="خروج" title="خروج">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- پیشرفت دور -->
+        <section class="section" aria-label="پیشرفت">
+            <div class="progress-hero">
+                <div class="progress-ring" id="progressRing">
+                    <svg viewBox="0 0 62 62">
+                        <circle class="ring-bg" cx="31" cy="31" r="26"></circle>
+                        <circle class="ring-fg" cx="31" cy="31" r="26"></circle>
+                    </svg>
+                    <div class="progress-ring__label" id="progressLabel">۰٪</div>
+                </div>
+                <div class="progress-hero__text">
+                    <p class="progress-hero__title">دور <span id="roundNumber">۱</span></p>
+                    <p class="progress-hero__count" id="bookmarkLabel">تا سورهٔ فاتحه، آیهٔ ۱</p>
+                    <p class="progress-hero__count" id="tafsirCountLabel" style="color:var(--text-faint); font-size:0.78rem; font-weight:400;">۰ تفسیر در این دور</p>
+                </div>
+                <button class="btn btn--sm" id="endRoundBtn" title="این دور را پایان بدهید و دور بعدی را شروع کنید">پایان دور</button>
+            </div>
+        </section>
+
+        <!-- آیهٔ در حال کار -->
+        <section class="section" aria-label="آیهٔ در حال کار">
+            <div class="section__label">آیهٔ در حال کار</div>
+
+            <div class="select-row" style="margin-bottom:10px">
+                <div class="select-wrap">
+                    <select id="formSurahSelect" aria-label="انتخاب سوره"></select>
+                </div>
+                <div class="select-wrap">
+                    <select id="formAyahSelect" aria-label="انتخاب آیه"></select>
+                </div>
+            </div>
+
+            <div class="sticky-ayah">
+                <div id="workAyahFrame"></div>
+                <div class="ayah-nav">
+                    <button class="btn" id="workPrevBtn">آیه قبلی ‹</button>
+                    <button class="btn" id="workNextBtn">› آیه بعدی</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- تفسیرهای موجود برای همین آیه -->
+        <section class="section" aria-label="تفسیرهای این آیه">
+            <div class="section__label">تفسیرهای ثبت‌شده برای این آیه</div>
+            <div id="workTafsirsList"></div>
+        </section>
+
+        <!-- فرم افزودن/ویرایش تفسیر -->
+        <section class="section" aria-label="افزودن تفسیر">
+            <div class="section__label">تفسیر تازه</div>
+            <div class="card">
+                <div class="edit-banner" id="editBanner" hidden>
+                    <span>در حال ویرایش یک تفسیر موجود</span>
+                    <button type="button" data-cancel-edit>انصراف</button>
+                </div>
+                <form id="tafsirForm">
+                    <div class="field">
+                        <label for="tafsirContent">نظر و برداشت شما</label>
+                        <textarea id="tafsirContent" rows="4" spellcheck="false" autocorrect="off" autocapitalize="off" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
+                        <button type="button" class="btn btn--sm" id="openLinkToolBtn" style="margin-top:8px;">﹢ لینک به آیهٔ دیگر</button>
+                    </div>
+
+                    <div class="field">
+                        <label for="tafsirTags">برچسب‌ها (اختیاری، با ، یا , جدا کنید)</label>
+                        <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت، اخلاق فردی" />
+                    </div>
+                    <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- پاپ‌آپ انتخاب آیهٔ مقصد برای لینک -->
+    <div class="modal-overlay" id="linkToolModal" hidden>
+        <div class="modal-card card">
+            <div class="modal-card__head">
+                <span>افزودن لینک به آیهٔ دیگر</span>
+                <button type="button" class="btn btn--icon btn--ghost" id="cancelLinkBtn" aria-label="بستن">✕</button>
+            </div>
+            <div class="select-row" style="margin-bottom:10px;">
+                <div class="select-wrap"><select id="linkSurahSelect" aria-label="سورهٔ مقصد"></select></div>
+                <div class="select-wrap"><select id="linkAyahSelect" aria-label="آیهٔ مقصد"></select></div>
+            </div>
+            <div id="linkAyahPreview" class="link-preview"></div>
+            <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 14px;">می‌توانید بخشی از متن بالا را انتخاب (select) کنید تا فقط همان گزیده درج شود؛ وگرنه کل آیه ارجاع داده می‌شود.</p>
+            <button type="button" class="btn btn--primary" id="insertLinkBtn" style="width:100%;">درج لینک</button>
+        </div>
+    </div>
+
+    <footer style="text-align:center; padding:20px; font-size:0.72rem; color:var(--text-faint);">
+        متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
+    </footer>
+
+    <nav class="mobile-tabbar" aria-label="ناوبری موبایل">
+        <a href="index.html" class="active">کار</a>
+        <a href="browse.html">مرور</a>
+        <a href="tags.html">برچسب‌ها</a>
+        <a href="relations.html">رابطه‌ها</a>
+    </nav>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // ============================================================
+        // js/config.js
+        // ============================================================
+        const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';
+
+        // ============================================================
+        // js/supabase-client.js
+        // ============================================================
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const Auth = {
+            async getSession() {
+                const { data } = await supabase.auth.getSession();
+                return data.session;
+            },
+            async requireAuth() {
+                const session = await this.getSession();
+                if (!session) {
+                    const next = encodeURIComponent(location.pathname + location.search);
+                    location.href = 'login.html?next=' + next;
+                    return null;
+                }
+                return session;
+            },
+            async signIn(email, password) {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                return data;
+            },
+            async signOut() {
+                await supabase.auth.signOut();
+            }
+        };
+
+        // ============================================================
+        // js/quran-data.js
+        // ============================================================
+        const SURAH_NAMES_FA = [
+            'فاتحه', 'بقره', 'آل‌عمران', 'نساء', 'مائده', 'انعام', 'اعراف', 'انفال', 'توبه', 'یونس',
+            'هود', 'یوسف', 'رعد', 'ابراهیم', 'حجر', 'نحل', 'اسراء', 'کهف', 'مریم', 'طه',
+            'انبیاء', 'حج', 'مؤمنون', 'نور', 'فرقان', 'شعراء', 'نمل', 'قصص', 'عنکبوت', 'روم',
+            'لقمان', 'سجده', 'احزاب', 'سبأ', 'فاطر', 'یس', 'صافات', 'صاد', 'زمر', 'غافر',
+            'فصلت', 'شوری', 'زخرف', 'دخان', 'جاثیه', 'احقاف', 'محمد', 'فتح', 'حجرات', 'ق',
+            'ذاریات', 'طور', 'نجم', 'قمر', 'رحمن', 'واقعه', 'حدید', 'مجادله', 'حشر', 'ممتحنه',
+            'صف', 'جمعه', 'منافقون', 'تغابن', 'طلاق', 'تحریم', 'ملک', 'قلم', 'حاقه', 'معارج',
+            'نوح', 'جن', 'مزمل', 'مدثر', 'قیامه', 'انسان', 'مرسلات', 'نبأ', 'نازعات', 'عبس',
+            'تکویر', 'انفطار', 'مطففین', 'انشقاق', 'بروج', 'طارق', 'اعلی', 'غاشیه', 'فجر', 'بلد',
+            'شمس', 'لیل', 'ضحی', 'شرح', 'تین', 'علق', 'قدر', 'بینه', 'زلزله', 'عاديات',
+            'قارعه', 'تکاثر', 'عصر', 'همزه', 'فیل', 'قریش', 'ماعون', 'کوثر', 'کافرون', 'نصر',
+            'مسد', 'اخلاص', 'فلق', 'ناس'
+        ];
+
+        const SURAH_VERSES = [
+            7, 286, 200, 176, 120, 165, 206, 75, 129, 109,
+            123, 111, 43, 52, 99, 128, 111, 110, 98, 135,
+            112, 78, 118, 64, 77, 227, 93, 88, 69, 60,
+            34, 30, 73, 54, 45, 83, 182, 88, 75, 85,
+            54, 53, 89, 59, 37, 35, 38, 29, 18, 45,
+            60, 49, 62, 55, 78, 96, 29, 22, 24, 13,
+            14, 11, 11, 18, 12, 12, 30, 52, 52, 44,
+            28, 28, 20, 56, 40, 31, 50, 40, 46, 42,
+            29, 19, 36, 25, 22, 17, 19, 26, 30, 20,
+            15, 21, 11, 8, 8, 19, 5, 8, 8, 11,
+            11, 8, 3, 9, 5, 4, 7, 3, 6, 3,
+            5, 4, 5, 6
+        ];
+
+        const TOTAL_AYAH = SURAH_VERSES.reduce((a, b) => a + b, 0);
+
+        function getSurahName(index) {
+            return SURAH_NAMES_FA[index - 1] || `سورهٔ ${index}`;
+        }
+
+        function getVerseCount(surah) {
+            return SURAH_VERSES[surah - 1] || 0;
+        }
+
+        function getSurahOptions() {
+            return SURAH_NAMES_FA.map((name, i) => ({
+                value: i + 1,
+                label: `${i+1}. ${name} (${SURAH_VERSES[i]} آیه)`
+            }));
+        }
+
+        function getAyahOptions(surah) {
+            const count = getVerseCount(surah);
+            return Array.from({ length: count }, (_, i) => ({
+                value: i + 1,
+                label: `آیهٔ ${i+1}`
+            }));
+        }
+
+        // ============================================================
+        // js/ui-helpers.js
+        // ============================================================
+        function el(id) { return document.getElementById(id); }
+
+        function createElement(tag, cls, html) {
+            const e = document.createElement(tag);
+            if (cls) e.className = cls;
+            if (html !== undefined) e.innerHTML = html;
+            return e;
+        }
+
+        function safeText(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderTags(tags) {
+            if (!tags || !tags.length) return '';
+            return tags.map(t => `<span class="tag">${safeText(t)}</span>`).join('');
+        }
+
+        function formatDate(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        function getSurahAyahFromId(id) {
+            if (!id) return null;
+            const parts = id.split(':');
+            if (parts.length !== 2) return null;
+            return { surah: parseInt(parts[0]), ayah: parseInt(parts[1]) };
+        }
+
+        function makeAyahId(surah, ayah) {
+            return `${surah}:${ayah}`;
+        }
+
+        function parseLinks(text) {
+            const regex = /\[\[(\d+):(\d+)(?:\|([^\]]+))?\]\]/g;
+            const links = [];
+            let m;
+            while ((m = regex.exec(text)) !== null) {
+                links.push({ surah: parseInt(m[1]), ayah: parseInt(m[2]), label: m[3] || null });
+            }
+            return links;
+        }
+
+        function renderLinksInText(text) {
+            return text.replace(/\[\[(\d+):(\d+)(?:\|([^\]]+))?\]\]/g, (match, surah, ayah, label) => {
+                const name = label || `سورهٔ ${surah} آیهٔ ${ayah}`;
+                return `<a href="browse.html?surah=${surah}&ayah=${ayah}" target="_blank">${safeText(name)}</a>`;
+            });
+        }
+
+        function showToast(msg, type) {
+            const old = document.querySelector('.toast-raise');
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.className = 'toast-raise';
+            div.textContent = msg;
+            Object.assign(div.style, {
+                position: 'fixed',
+                bottom: '100px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: type === 'error' ? 'var(--danger)' : 'var(--violet)',
+                color: '#fff',
+                padding: '10px 24px',
+                borderRadius: '100px',
+                fontSize: '.85rem',
+                fontWeight: '500',
+                boxShadow: '0 8px 30px rgba(0,0,0,.25)',
+                zIndex: '200',
+                maxWidth: '90%',
+                textAlign: 'center',
+                transition: 'opacity .3s ease',
+                opacity: '1'
+            });
+            document.body.appendChild(div);
+            setTimeout(() => { div.style.opacity = '0'; setTimeout(() => div.remove(), 400); }, 3000);
+        }
+
+        // ============================================================
+        // js/store.js
+        // ============================================================
+        const Store = {
+            _userId: null,
+
+            async init() {
+                const session = await Auth.getSession();
+                if (session) {
+                    this._userId = session.user.id;
+                }
+                return this._userId;
+            },
+
+            get userId() { return this._userId; },
+
+            async getTafsirs(surah, ayah) {
+                if (!this._userId) return [];
+                const { data, error } = await supabase
+                    .from('tafsirs')
+                    .select('*')
+                    .eq('user_id', this._userId)
+                    .eq('surah', surah)
+                    .eq('ayah', ayah)
+                    .order('created_at', { ascending: false });
+                if (error) {
+                    console.error('getTafsirs error:', error);
+                    return [];
+                }
+                return data || [];
+            },
+
+            async getAllTafsirs() {
+                if (!this._userId) return [];
+                const { data, error } = await supabase
+                    .from('tafsirs')
+                    .select('*')
+                    .eq('user_id', this._userId)
+                    .order('created_at', { ascending: false });
+                if (error) {
+                    console.error('getAllTafsirs error:', error);
+                    return [];
+                }
+                return data || [];
+            },
+
+            async getTafsirById(id) {
+                if (!this._userId) return null;
+                const { data, error } = await supabase
+                    .from('tafsirs')
+                    .select('*')
+                    .eq('id', id)
+                    .eq('user_id', this._userId)
+                    .maybeSingle();
+                if (error) {
+                    console.error('getTafsirById error:', error);
+                    return null;
+                }
+                return data;
+            },
+
+            async saveTafsir(tafsir) {
+                if (!this._userId) throw new Error('نشست فعال نیست');
+                const payload = {
+                    user_id: this._userId,
+                    surah: tafsir.surah,
+                    ayah: tafsir.ayah,
+                    content: tafsir.content,
+                    tags: tafsir.tags || [],
+                    updated_at: new Date().toISOString()
+                };
+                if (tafsir.id) {
+                    const { data, error } = await supabase
+                        .from('tafsirs')
+                        .update(payload)
+                        .eq('id', tafsir.id)
+                        .eq('user_id', this._userId)
+                        .select()
+                        .single();
+                    if (error) throw error;
+                    return data;
+                } else {
+                    payload.created_at = new Date().toISOString();
+                    const { data, error } = await supabase
+                        .from('tafsirs')
+                        .insert(payload)
+                        .select()
+                        .single();
+                    if (error) throw error;
+                    return data;
+                }
+            },
+
+            async deleteTafsir(id) {
+                if (!this._userId) throw new Error('نشست فعال نیست');
+                const { error } = await supabase
+                    .from('tafsirs')
+                    .delete()
+                    .eq('id', id)
+                    .eq('user_id', this._userId);
+                if (error) throw error;
+                return true;
+            },
+
+            // ---- Round ----
+            async getCurrentRound() {
+                if (!this._userId) return null;
+                const { data, error } = await supabase
+                    .from('rounds')
+                    .select('*')
+                    .eq('user_id', this._userId)
+                    .order('started_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+                if (error) {
+                    console.error('getCurrentRound error:', error);
+                    return null;
+                }
+                return data;
+            },
+
+            async createRound(surah, ayah) {
+                if (!this._userId) throw new Error('نشست فعال نیست');
+                const { data, error } = await supabase
+                    .from('rounds')
+                    .insert({
+                        user_id: this._userId,
+                        round_number: 1,
+                        current_surah: surah || 1,
+                        current_ayah: ayah || 1,
+                        started_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                if (error) throw error;
+                return data;
+            },
+
+            async updateRound(id, surah, ayah) {
+                if (!this._userId) throw new Error('نشست فعال نیست');
+                const { data, error } = await supabase
+                    .from('rounds')
+                    .update({ current_surah: surah, current_ayah: ayah })
+                    .eq('id', id)
+                    .eq('user_id', this._userId)
+                    .select()
+                    .single();
+                if (error) throw error;
+                return data;
+            },
+
+            async completeRound(id) {
+                if (!this._userId) throw new Error('نشست فعال نیست');
+                // get current round number
+                const round = await this.getCurrentRound();
+                const nextNum = (round?.round_number || 0) + 1;
+                const { data, error } = await supabase
+                    .from('rounds')
+                    .update({ completed_at: new Date().toISOString() })
+                    .eq('id', id)
+                    .eq('user_id', this._userId)
+                    .select()
+                    .single();
+                if (error) throw error;
+                // create next round
+                const { data: newRound, error: err2 } = await supabase
+                    .from('rounds')
+                    .insert({
+                        user_id: this._userId,
+                        round_number: nextNum,
+                        current_surah: 1,
+                        current_ayah: 1,
+                        started_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                if (err2) throw err2;
+                return newRound;
+            }
+        };
+
+        // ============================================================
+        // js/theme.js
+        // ============================================================
+        (function initTheme() {
+            const toggle = document.querySelector('[data-theme-toggle]');
+            if (!toggle) return;
+            const stored = localStorage.getItem('raisemind-theme');
+            const prefers = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const theme = stored || prefers;
+            document.documentElement.setAttribute('data-theme', theme);
+            toggle.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+
+            toggle.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                const next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('raisemind-theme', next);
+                toggle.setAttribute('aria-pressed', next === 'dark' ? 'true' : 'false');
+            });
+        })();
+
+        // ============================================================
+        // js/ayah-render.js
+        // ============================================================
+        const AyahRender = {
+            _cache: {},
+
+            async fetchAyah(surah, ayah) {
+                const key = `${surah}:${ayah}`;
+                if (this._cache[key]) return this._cache[key];
+                try {
+                    // fetch arabic
+                    const res1 = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/quran-uthmani`);
+                    const data1 = await res1.json();
+                    // fetch translation (fooladvand)
+                    const res2 = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/fa.fooladvand`);
+                    const data2 = await res2.json();
+                    if (data1.code !== 200 || data2.code !== 200) throw new Error('API error');
+                    const result = {
+                        arabic: data1.data.text,
+                        translation: data2.data.text,
+                        surah: data1.data.surah.number,
+                        ayah: data1.data.numberInSurah,
+                        surahName: data1.data.surah.name
+                    };
+                    this._cache[key] = result;
+                    return result;
+                } catch (e) {
+                    console.warn('Ayah fetch fallback for', key, e);
+                    // fallback: show placeholder
+                    const result = {
+                        arabic: `﴿ ${surah}:${ayah} ﴾`,
+                        translation: '— ترجمه در دسترس نیست —',
+                        surah,
+                        ayah,
+                        surahName: getSurahName(surah)
+                    };
+                    this._cache[key] = result;
+                    return result;
+                }
+            },
+
+            renderFrame(surah, ayah, containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = `<div class="ayah-frame"><div class="quran-text" style="text-align:center;padding:10px;">در حال بارگیری…</div></div>`;
+                this.fetchAyah(surah, ayah).then(data => {
+                    const html = `
+                        <div class="ayah-frame">
+                            <div class="quran-text">${data.arabic}</div>
+                            <div class="translation">${data.translation}</div>
+                            <div class="ayah-ref">سورهٔ ${data.surahName} · آیهٔ ${data.ayah}</div>
+                        </div>
+                    `;
+                    container.innerHTML = html;
+                });
+            }
+        };
+
+        // ============================================================
+        // js/ayah-links.js
+        // ============================================================
+        const LinkTool = {
+            _modal: null,
+            _surahSelect: null,
+            _ayahSelect: null,
+            _preview: null,
+            _insertBtn: null,
+            _cancelBtn: null,
+            _targetTextarea: null,
+            _selectedText: '',
+
+            init() {
+                this._modal = document.getElementById('linkToolModal');
+                this._surahSelect = document.getElementById('linkSurahSelect');
+                this._ayahSelect = document.getElementById('linkAyahSelect');
+                this._preview = document.getElementById('linkAyahPreview');
+                this._insertBtn = document.getElementById('insertLinkBtn');
+                this._cancelBtn = document.getElementById('cancelLinkBtn');
+
+                // populate surahs
+                const opts = getSurahOptions();
+                opts.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.label;
+                    this._surahSelect.appendChild(opt);
+                });
+
+                this._surahSelect.addEventListener('change', () => {
+                    this._updateAyahs();
+                    this._previewAyah();
+                });
+                this._ayahSelect.addEventListener('change', () => this._previewAyah());
+
+                this._insertBtn.addEventListener('click', () => this._insertLink());
+                this._cancelBtn.addEventListener('click', () => this.close());
+
+                // close on overlay click
+                this._modal.addEventListener('click', (e) => {
+                    if (e.target === this._modal) this.close();
+                });
+
+                // track selection in preview
+                this._preview.addEventListener('mouseup', () => {
+                    const sel = window.getSelection();
+                    const text = sel.toString().trim();
+                    if (text && this._preview.contains(sel.anchorNode)) {
+                        this._selectedText = text;
+                    }
+                });
+            },
+
+            _updateAyahs() {
+                const surah = parseInt(this._surahSelect.value);
+                this._ayahSelect.innerHTML = '';
+                const opts = getAyahOptions(surah);
+                opts.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.label;
+                    this._ayahSelect.appendChild(opt);
+                });
+            },
+
+            async _previewAyah() {
+                const surah = parseInt(this._surahSelect.value);
+                const ayah = parseInt(this._ayahSelect.value);
+                if (!surah || !ayah) {
+                    this._preview.textContent = 'انتخاب کنید…';
+                    return;
+                }
+                try {
+                    const data = await AyahRender.fetchAyah(surah, ayah);
+                    this._preview.innerHTML = `<div style="font-family:var(--font-quran);font-size:1.1rem;line-height:1.8;">${data.arabic}</div><div style="font-size:.8rem;color:var(--text-dim);margin-top:4px;">${data.translation}</div>`;
+                } catch {
+                    this._preview.textContent = 'خطا در بارگیری';
+                }
+            },
+
+            open(textarea) {
+                this._targetTextarea = textarea;
+                this._selectedText = '';
+                // get current selection from the textarea
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                if (start !== end) {
+                    this._selectedText = textarea.value.substring(start, end);
+                }
+                // set default surah/ayah from the current work ayah
+                const surah = parseInt(document.getElementById('formSurahSelect')?.value || '1');
+                const ayah = parseInt(document.getElementById('formAyahSelect')?.value || '1');
+                this._surahSelect.value = surah;
+                this._updateAyahs();
+                this._ayahSelect.value = ayah;
+                this._previewAyah();
+                this._modal.hidden = false;
+                // reset selection
+                window.getSelection().removeAllRanges();
+            },
+
+            close() {
+                this._modal.hidden = true;
+                this._targetTextarea = null;
+                this._selectedText = '';
+            },
+
+            _insertLink() {
+                if (!this._targetTextarea) return;
+                const surah = parseInt(this._surahSelect.value);
+                const ayah = parseInt(this._ayahSelect.value);
+                if (!surah || !ayah) {
+                    showToast('لطفاً سوره و آیه را انتخاب کنید', 'error');
+                    return;
+                }
+                const label = this._selectedText ? this._selectedText.trim() : null;
+                let link = `[[${surah}:${ayah}`;
+                if (label) link += `|${label}`;
+                link += ']]';
+                const ta = this._targetTextarea;
+                const start = ta.selectionStart;
+                const end = ta.selectionEnd;
+                const before = ta.value.substring(0, start);
+                const after = ta.value.substring(end);
+                // if there's selected text, use it as label and replace it
+                if (this._selectedText && start !== end) {
+                    // already handled, but we insert the link
+                    ta.value = before + link + after;
+                    ta.selectionStart = ta.selectionEnd = start + link.length;
+                } else {
+                    ta.value = before + link + after;
+                    ta.selectionStart = ta.selectionEnd = start + link.length;
+                }
+                ta.focus();
+                this.close();
+                showToast('لینک درج شد');
+            }
+        };
+
+        // ============================================================
+        // js/work.js (main page logic)
+        // ============================================================
+        (async function main() {
+            // 1. require auth
+            const session = await Auth.requireAuth();
+            if (!session) return;
+            await Store.init();
+
+            // 2. logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await Auth.signOut();
+                location.href = 'login.html';
+            });
+
+            // 3. populate surah selects
+            const surahSelects = ['formSurahSelect'];
+            surahSelects.forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                const opts = getSurahOptions();
+                opts.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.label;
+                    sel.appendChild(opt);
+                });
+            });
+
+            // 4. state
+            let currentSurah = 1;
+            let currentAyah = 1;
+            let editingId = null;
+            let roundData = null;
+
+            // 5. load round
+            async function loadRound() {
+                let round = await Store.getCurrentRound();
+                if (!round) {
+                    round = await Store.createRound(1, 1);
+                }
+                roundData = round;
+                currentSurah = round.current_surah;
+                currentAyah = round.current_ayah;
+                document.getElementById('roundNumber').textContent = round.round_number;
+                // update selects
+                document.getElementById('formSurahSelect').value = currentSurah;
+                updateAyahSelect(currentSurah);
+                document.getElementById('formAyahSelect').value = currentAyah;
+                renderWorkAyah();
+                updateProgress();
+                loadTafsirs();
+            }
+
+            function updateAyahSelect(surah) {
+                const sel = document.getElementById('formAyahSelect');
+                sel.innerHTML = '';
+                const opts = getAyahOptions(surah);
+                opts.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.label;
+                    sel.appendChild(opt);
+                });
+            }
+
+            // 6. render ayah
+            function renderWorkAyah() {
+                AyahRender.renderFrame(currentSurah, currentAyah, 'workAyahFrame');
+                // update bookmark label
+                const surahName = getSurahName(currentSurah);
+                document.getElementById('bookmarkLabel').textContent =
+                    `سورهٔ ${surahName}، آیهٔ ${currentAyah}`;
+                // update select values
+                document.getElementById('formSurahSelect').value = currentSurah;
+                updateAyahSelect(currentSurah);
+                document.getElementById('formAyahSelect').value = currentAyah;
+                // update progress
+                updateProgress();
+                // load tafsirs
+                loadTafsirs();
+                // save round progress
+                if (roundData) {
+                    Store.updateRound(roundData.id, currentSurah, currentAyah).catch(console.warn);
+                }
+            }
+
+            // 7. progress
+            function updateProgress() {
+                let total = 0;
+                for (let i = 0; i < currentSurah - 1; i++) {
+                    total += SURAH_VERSES[i];
+                }
+                total += currentAyah;
+                const pct = Math.round((total / TOTAL_AYAH) * 100);
+                const ring = document.querySelector('.ring-fg');
+                if (ring) {
+                    const circumference = 163.36;
+                    const offset = circumference - (pct / 100) * circumference;
+                    ring.style.strokeDashoffset = offset;
+                }
+                document.getElementById('progressLabel').textContent = pct + '%';
+            }
+
+            // 8. load tafsirs
+            async function loadTafsirs() {
+                const container = document.getElementById('workTafsirsList');
+                const tafsirs = await Store.getTafsirs(currentSurah, currentAyah);
+                if (!tafsirs.length) {
+                    container.innerHTML = `<div class="empty-state">هنوز تفسیری برای این آیه ثبت نشده است.</div>`;
+                    return;
+                }
+                let html = '';
+                for (const t of tafsirs) {
+                    const content = renderLinksInText(safeText(t.content));
+                    const tags = t.tags || [];
+                    html += `
+                        <div class="tafsir-item" data-id="${t.id}">
+                            <div class="meta">
+                                <span>${formatDate(t.created_at)}</span>
+                                ${t.updated_at && t.updated_at !== t.created_at ? `<span>ویرایش‌شده</span>` : ''}
+                            </div>
+                            <div class="content">${content}</div>
+                            ${tags.length ? `<div class="tags">${renderTags(tags)}</div>` : ''}
+                            <div class="actions">
+                                <button class="btn btn--sm" data-edit="${t.id}">ویرایش</button>
+                                <button class="btn btn--sm" data-delete="${t.id}">حذف</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+
+                // event listeners
+                container.querySelectorAll('[data-edit]').forEach(btn => {
+                    btn.addEventListener('click', () => editTafsir(btn.dataset.edit));
+                });
+                container.querySelectorAll('[data-delete]').forEach(btn => {
+                    btn.addEventListener('click', () => deleteTafsir(btn.dataset.delete));
+                });
+            }
+
+            // 9. edit / delete
+            async function editTafsir(id) {
+                const t = await Store.getTafsirById(id);
+                if (!t) { showToast('تفسیر یافت نشد', 'error'); return; }
+                editingId = id;
+                document.getElementById('tafsirContent').value = t.content;
+                document.getElementById('tafsirTags').value = (t.tags || []).join('، ');
+                document.getElementById('editBanner').hidden = false;
+                document.getElementById('submitBtn').textContent = 'به‌روزرسانی تفسیر';
+                document.getElementById('tafsirContent').focus();
+            }
+
+            async function deleteTafsir(id) {
+                if (!confirm('آیا از حذف این تفسیر مطمئن هستید؟')) return;
+                try {
+                    await Store.deleteTafsir(id);
+                    showToast('تفسیر حذف شد');
+                    loadTafsirs();
+                } catch (e) {
+                    showToast('خطا در حذف', 'error');
+                    console.error(e);
+                }
+            }
+
+            // 10. form submit
+            document.getElementById('tafsirForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const content = document.getElementById('tafsirContent').value.trim();
+                if (!content) { showToast('لطفاً متن تفسیر را بنویسید', 'error'); return; }
+                const tagsRaw = document.getElementById('tafsirTags').value.trim();
+                const tags = tagsRaw ? tagsRaw.split(/[،,،\s]+/).filter(Boolean).map(s => s.trim()) : [];
+                try {
+                    const payload = {
+                        id: editingId || undefined,
+                        surah: currentSurah,
+                        ayah: currentAyah,
+                        content,
+                        tags
+                    };
+                    await Store.saveTafsir(payload);
+                    showToast(editingId ? 'تفسیر به‌روزرسانی شد' : 'تفسیر ثبت شد');
+                    document.getElementById('tafsirContent').value = '';
+                    document.getElementById('tafsirTags').value = '';
+                    editingId = null;
+                    document.getElementById('editBanner').hidden = true;
+                    document.getElementById('submitBtn').textContent = 'ثبت تفسیر';
+                    loadTafsirs();
+                    updateTafsirCount();
+                } catch (err) {
+                    showToast('خطا در ثبت: ' + err.message, 'error');
+                    console.error(err);
+                }
+            });
+
+            // 11. cancel edit
+            document.querySelector('[data-cancel-edit]')?.addEventListener('click', () => {
+                editingId = null;
+                document.getElementById('editBanner').hidden = true;
+                document.getElementById('submitBtn').textContent = 'ثبت تفسیر';
+                document.getElementById('tafsirContent').value = '';
+                document.getElementById('tafsirTags').value = '';
+            });
+
+            // 12. navigation
+            document.getElementById('workPrevBtn').addEventListener('click', () => {
+                if (currentAyah > 1) {
+                    currentAyah--;
+                } else if (currentSurah > 1) {
+                    currentSurah--;
+                    currentAyah = getVerseCount(currentSurah);
+                } else {
+                    showToast('به ابتدای قرآن رسیدید');
+                    return;
+                }
+                renderWorkAyah();
+            });
+
+            document.getElementById('workNextBtn').addEventListener('click', () => {
+                const max = getVerseCount(currentSurah);
+                if (currentAyah < max) {
+                    currentAyah++;
+                } else if (currentSurah < 114) {
+                    currentSurah++;
+                    currentAyah = 1;
+                } else {
+                    showToast('به انتهای قرآن رسیدید');
+                    return;
+                }
+                renderWorkAyah();
+            });
+
+            // 13. select changes
+            document.getElementById('formSurahSelect').addEventListener('change', (e) => {
+                currentSurah = parseInt(e.target.value);
+                updateAyahSelect(currentSurah);
+                currentAyah = 1;
+                document.getElementById('formAyahSelect').value = 1;
+                renderWorkAyah();
+            });
+
+            document.getElementById('formAyahSelect').addEventListener('change', (e) => {
+                currentAyah = parseInt(e.target.value);
+                renderWorkAyah();
+            });
+
+            // 14. end round
+            document.getElementById('endRoundBtn').addEventListener('click', async () => {
+                if (!roundData) return;
+                if (!confirm('آیا مطمئن هستید که می‌خواهید این دور را پایان دهید؟ دور بعدی از ابتدا شروع می‌شود.')) return;
+                try {
+                    const newRound = await Store.completeRound(roundData.id);
+                    roundData = newRound;
+                    currentSurah = 1;
+                    currentAyah = 1;
+                    document.getElementById('roundNumber').textContent = newRound.round_number;
+                    renderWorkAyah();
+                    showToast(`دور ${newRound.round_number - 1} پایان یافت. دور ${newRound.round_number} شروع شد.`);
+                } catch (e) {
+                    showToast('خطا در پایان دور', 'error');
+                    console.error(e);
+                }
+            });
+
+            // 15. update tafsir count
+            async function updateTafsirCount() {
+                const all = await Store.getAllTafsirs();
+                // count tafsirs in current round? just show total for now
+                const label = document.getElementById('tafsirCountLabel');
+                if (label) {
+                    // show total tafsirs for the current ayah
+                    const tafsirs = await Store.getTafsirs(currentSurah, currentAyah);
+                    label.textContent = `${tafsirs.length} تفسیر برای این آیه`;
+                }
+            }
+
+            // 16. link tool
+            LinkTool.init();
+            document.getElementById('openLinkToolBtn').addEventListener('click', () => {
+                const ta = document.getElementById('tafsirContent');
+                LinkTool.open(ta);
+            });
+
+            // 17. init
+            await loadRound();
+            updateTafsirCount();
+
+            // 18. refresh tafsir count on load
+            setInterval(() => updateTafsirCount(), 30000);
+
+            // 19. extra: handle enter in tags field
+            document.getElementById('tafsirTags').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('tafsirForm').dispatchEvent(new Event('submit'));
+                }
+            });
+
+        })();
+    </script>
+</body>
+</html>
