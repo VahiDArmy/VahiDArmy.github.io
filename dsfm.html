@@ -1053,7 +1053,6 @@
             color: var(--text-primary);
             transform: rotate(90deg);
         }
-        /* Toast click-to-copy feedback */
         .toast.copied {
             border-color: var(--success);
             box-shadow: 0 16px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(76, 217, 160, 0.15);
@@ -1771,19 +1770,17 @@
                     <span class="t-msg">${message}</span>
                     <button class="t-close"><i class="fas fa-times"></i></button>
                 `;
-                // Click on toast copies the message to clipboard
                 el.addEventListener('click', (e) => {
-                    // Ignore if close button was clicked
                     if (e.target.closest('.t-close')) return;
                     const msg = el.querySelector('.t-msg').textContent;
                     navigator.clipboard.writeText(msg).then(() => {
                         el.classList.add('copied');
                         setTimeout(() => el.classList.remove('copied'), 800);
-                        // Small toast to confirm copy
                         const copyToast = document.createElement('div');
                         copyToast.className = 'toast';
                         copyToast.style.borderColor = 'var(--success)';
-                        copyToast.style.boxShadow = '0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(76,217,160,0.15)';
+                        copyToast.style.boxShadow =
+                            '0 16px 50px rgba(0,0,0,0.5), 0 0 30px rgba(76,217,160,0.15)';
                         copyToast.innerHTML = `
                             <span class="t-icon success"><i class="fas fa-check-circle"></i></span>
                             <span class="t-msg">Copied!</span>
@@ -1801,7 +1798,6 @@
                             }
                         }, 1500);
                     }).catch(() => {
-                        // Fallback
                         const ta = document.createElement('textarea');
                         ta.value = msg;
                         document.body.appendChild(ta);
@@ -2140,76 +2136,103 @@
             }
 
             // ============================================================
-            // COPY / MOVE HELPERS – with conflict handling and folder support
+            // COPY / MOVE HELPERS – with source validation
             // ============================================================
             async function copyFileTo(item, destDir) {
                 const destPath = destDir ? `${destDir}/${item.name}` : item.name;
+
+                // --- First, verify the source file exists ---
+                let sourceData;
                 try {
-                    const destExists = await getContents(destPath, CONFIG.branch);
-                    if (destExists && !Array.isArray(destExists) && destExists.sha) {
-                        const overwrite = await showModal(
-                            'File exists',
-                            `"${item.name}" already exists in the destination. Overwrite?`,
-                            'Overwrite',
-                            'Skip',
-                            false
-                        );
-                        if (!overwrite) {
-                            toast(`Skipped ${item.name}`, 'warning');
-                            return;
-                        }
-                        const srcData = await getContents(item.path);
-                        const content = atob(srcData.content);
-                        const decoded = decodeURIComponent(escape(content));
-                        await createOrUpdateFile(destPath, decoded, `Overwrite ${item.name}`, destExists.sha);
-                        toast(`Overwrote ${item.name}`, 'success');
+                    sourceData = await getContents(item.path, CONFIG.branch);
+                    if (!sourceData || Array.isArray(sourceData)) {
+                        toast(`Source file "${item.name}" not found or is a directory`, 'error');
+                        return;
                     }
                 } catch (e) {
-                    if (e.message && e.message.includes('404')) {
-                        const srcData = await getContents(item.path);
-                        const content = atob(srcData.content);
-                        const decoded = decodeURIComponent(escape(content));
-                        await createOrUpdateFile(destPath, decoded, `Copy ${item.name} to ${destDir || 'root'}`, null);
-                        toast(`Copied ${item.name} to ${destDir || 'root'}`, 'success');
-                    } else {
-                        throw e;
+                    console.error('Source check error:', e);
+                    toast(`Source file "${item.name}" not found: ${e.message}`, 'error');
+                    return;
+                }
+
+                // --- Now check if destination exists ---
+                let destExists = null;
+                try {
+                    destExists = await getContents(destPath, CONFIG.branch);
+                } catch (e) {
+                    // 404 means destination doesn't exist – fine
+                    if (!e.message || (!e.message.includes('404') && !e.message.includes('Not Found'))) {
+                        toast(`Error checking destination: ${e.message}`, 'error');
+                        return;
                     }
+                }
+
+                // If destination exists, ask for overwrite
+                if (destExists && !Array.isArray(destExists) && destExists.sha) {
+                    const overwrite = await showModal(
+                        'File exists',
+                        `"${item.name}" already exists in the destination. Overwrite?`,
+                        'Overwrite',
+                        'Skip',
+                        false
+                    );
+                    if (!overwrite) {
+                        toast(`Skipped ${item.name}`, 'warning');
+                        return;
+                    }
+                    // Decode source content
+                    const sourceContent = sourceData.content ? atob(sourceData.content) : '';
+                    const decoded = decodeURIComponent(escape(sourceContent));
+                    await createOrUpdateFile(destPath, decoded, `Overwrite ${item.name}`, destExists.sha);
+                    toast(`Overwrote ${item.name}`, 'success');
+                } else {
+                    // Destination doesn't exist – create new
+                    const sourceContent = sourceData.content ? atob(sourceData.content) : '';
+                    const decoded = decodeURIComponent(escape(sourceContent));
+                    await createOrUpdateFile(destPath, decoded, `Copy ${item.name} to ${destDir || 'root'}`, null);
+                    toast(`Copied ${item.name} to ${destDir || 'root'}`, 'success');
                 }
             }
 
             // ===== FIXED: copyFolderTo with proper error handling =====
             async function copyFolderTo(item, destDir) {
                 const destPath = destDir ? `${destDir}/${item.name}` : item.name;
-                // Create destination folder (ignore if exists)
+
+                // First, verify source folder exists
+                let sourceContents;
+                try {
+                    sourceContents = await getContents(item.path);
+                } catch (e) {
+                    toast(`Source folder "${item.name}" not found: ${e.message}`, 'error');
+                    return;
+                }
+
+                if (!Array.isArray(sourceContents)) {
+                    toast(`Folder "${item.name}" appears empty or invalid`, 'warning');
+                    return;
+                }
+
+                // Create destination folder
                 try {
                     await createFolder(destPath);
                 } catch (e) {
-                    // If we can't create the folder, maybe the parent doesn't exist or it's a conflict
                     console.warn('createFolder warning:', e);
-                    // Continue anyway – maybe the folder already exists
-                }
-
-                // Get source contents
-                let contents;
-                try {
-                    contents = await getContents(item.path);
-                } catch (e) {
-                    toast(`Failed to read folder ${item.name}: ${e.message}`, 'error');
-                    return;
-                }
-
-                if (!Array.isArray(contents)) {
-                    toast(`Folder ${item.name} appears empty or invalid`, 'warning');
-                    return;
                 }
 
                 // Copy each child
-                for (const child of contents) {
+                for (const child of sourceContents) {
                     try {
                         if (child.type === 'dir') {
                             await copyFolderTo(child, destPath);
                         } else {
-                            await copyFileTo(child, destPath);
+                            // For files, use the existing item structure
+                            const fileItem = {
+                                path: child.path,
+                                name: child.name,
+                                isFolder: false,
+                                sha: child.sha || null,
+                            };
+                            await copyFileTo(fileItem, destPath);
                         }
                     } catch (e) {
                         toast(`Failed to copy ${child.name}: ${e.message}`, 'error');
@@ -3540,7 +3563,7 @@
             // INIT
             // ============================================================
             toast('FileForge – connect to GitHub', 'info', 3000);
-            console.log('🚀 FileForge – toast copy + folder copy fixed');
+            console.log('🚀 FileForge – copy source validation fixed');
         })();
     </script>
 
