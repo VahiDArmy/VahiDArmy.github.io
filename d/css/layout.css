@@ -1,28 +1,29 @@
 /* ==========================================================================
-   Layout
+   Layout — با شیشه‌ای‌سازی تمام المان‌ها
    ========================================================================== */
 
 .container {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
   padding: 0 18px 80px;
 }
 
-/* ---- Header ---- */
+/* ---- Header شیشه‌ای ---- */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border-bottom: 1px solid var(--border-soft);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
 }
 
 .site-header__inner {
-  max-width: 720px;
+  max-width: 740px;
   margin: 0 auto;
-  padding: 14px 18px;
+  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,7 +43,7 @@
 
 .brand__mark {
   color: var(--neon);
-  text-shadow: 0 0 14px var(--neon-glow);
+  text-shadow: 0 0 20px var(--neon-glow);
 }
 
 .brand__fa {
@@ -55,8 +56,10 @@
 .nav-tabs {
   display: flex;
   gap: 4px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
   border-radius: 999px;
   padding: 4px;
 }
@@ -66,14 +69,17 @@
   border-radius: 999px;
   font-size: 0.85rem;
   color: var(--text-dim);
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
   white-space: nowrap;
 }
-
+.nav-tabs a:hover {
+  background: rgba(255,255,255,0.05);
+}
 .nav-tabs a.active {
   background: var(--neon);
   color: #06110E;
   font-weight: 600;
+  box-shadow: 0 0 24px var(--neon-glow);
 }
 
 .header-actions {
@@ -86,16 +92,21 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
   color: var(--text-dim);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
-.theme-toggle:hover { border-color: var(--neon); color: var(--neon); }
+.theme-toggle:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow);
+}
 
 /* ---- Section spacing ---- */
 .section {
@@ -113,14 +124,15 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border-soft);
+  background: var(--glass-border);
 }
 
-/* ---- Mobile: maximize width, minimal margins ---- */
+/* ---- Mobile: maximize width ---- */
 @media (max-width: 560px) {
-  .container { padding-inline: 8px; }
-  .site-header__inner { padding-inline: 10px; }
+  .container { padding-inline: 10px; }
+  .site-header__inner { padding-inline: 12px; }
 }
+
 .mobile-tabbar {
   display: none;
 }
@@ -133,9 +145,9 @@
     bottom: 0;
     inset-inline: 0;
     z-index: 40;
-    background: color-mix(in srgb, var(--bg) 92%, transparent);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border-soft);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(var(--glass-saturate));
+    border-top: 1px solid var(--glass-border);
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
     justify-content: space-around;
   }
@@ -148,7 +160,11 @@
     color: var(--text-faint);
     padding: 4px 10px;
     border-radius: 12px;
+    transition: all 0.2s;
   }
-  .mobile-tabbar a.active { color: var(--neon); }
+  .mobile-tabbar a.active {
+    color: var(--neon);
+    text-shadow: 0 0 16px var(--neon-glow);
+  }
   .container { padding-bottom: 96px; }
 }
