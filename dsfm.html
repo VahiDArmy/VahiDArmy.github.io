@@ -1851,23 +1851,16 @@
                 return ghFetch(endpoint, { method: 'DELETE', body: JSON.stringify(body) });
             }
 
-            // ===== FIXED: createFolder handles 422 gracefully =====
             async function createFolder(path) {
                 const cleanPath = normalizePath(path);
-                if (!cleanPath) {
-                    // Root folder – cannot create a .gitkeep at root, so just return
-                    return;
-                }
+                if (!cleanPath) return;
                 const filePath = `${cleanPath}/.gitkeep`;
                 try {
                     await createOrUpdateFile(filePath, '', `Create folder ${cleanPath}`, null);
                 } catch (e) {
-                    // If it's a 422 (conflict) then the .gitkeep already exists, so folder exists – success
                     if (e.message && e.message.includes('422')) {
-                        // folder already exists, treat as success
                         return;
                     }
-                    // Otherwise rethrow
                     throw e;
                 }
             }
@@ -2249,7 +2242,7 @@
             }
 
             // ============================================================
-            // UPLOAD FILE
+            // UPLOAD FILE – FIXED: handles 404 correctly
             // ============================================================
             async function uploadFile(file, targetPath) {
                 const cleanTarget = normalizePath(targetPath);
@@ -2265,6 +2258,7 @@
                             let data = isText ? content : atob(content.split(',')[1] || '');
 
                             let existingSha = null;
+                            let isNotFound = false;
                             try {
                                 const existing = await getContents(path, CONFIG.branch);
                                 if (Array.isArray(existing)) {
@@ -2276,35 +2270,43 @@
                                     existingSha = existing.sha;
                                 }
                             } catch (err) {
-                                if (!err.message || !err.message.includes('404')) {
-                                    toast(`Error: ${err.message}`, 'error');
+                                // Check if the error is a 404 (file not found)
+                                const msg = err.message || '';
+                                if (msg.includes('404') || msg.includes('Not Found')) {
+                                    isNotFound = true;
+                                } else {
+                                    toast(`Error checking ${file.name}: ${err.message}`, 'error');
                                     resolve(false);
                                     return;
                                 }
                             }
 
-                            if (existingSha) {
-                                const overwrite = await showModal(
-                                    'File exists',
-                                    `"${file.name}" already exists. Overwrite?`,
-                                    'Overwrite',
-                                    'Skip',
-                                    true
-                                );
-                                if (!overwrite) {
-                                    toast(`Skipped ${file.name}`, 'warning');
-                                    resolve(false);
-                                    return;
-                                }
-                                await createOrUpdateFile(path, data, `Overwrite ${file.name}`, existingSha);
-                                toast(`Overwrote ${file.name}`, 'success');
-                            } else {
+                            // If not found, create new file
+                            if (isNotFound || !existingSha) {
                                 await createOrUpdateFile(path, data, `Upload ${file.name}`, null);
                                 toast(`Uploaded ${file.name}`, 'success');
+                                resolve(true);
+                                return;
                             }
+
+                            // If exists, ask for overwrite
+                            const overwrite = await showModal(
+                                'File exists',
+                                `"${file.name}" already exists. Overwrite?`,
+                                'Overwrite',
+                                'Skip',
+                                true
+                            );
+                            if (!overwrite) {
+                                toast(`Skipped ${file.name}`, 'warning');
+                                resolve(false);
+                                return;
+                            }
+                            await createOrUpdateFile(path, data, `Overwrite ${file.name}`, existingSha);
+                            toast(`Overwrote ${file.name}`, 'success');
                             resolve(true);
                         } catch (err) {
-                            toast(`Upload error: ${err.message}`, 'error');
+                            toast(`Upload error for ${file.name}: ${err.message}`, 'error');
                             resolve(false);
                         }
                     };
@@ -2759,7 +2761,6 @@
                 } catch (e) { toast(`Error: ${e.message}`, 'error'); }
             }
 
-            // ===== FIXED: newFolder handler with better error handling =====
             async function handleNewFolder(target) {
                 const name = await promptInput('Enter folder name:', 'newfolder');
                 if (!name) return;
@@ -2939,9 +2940,7 @@
 
             mobileToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-            // newFolderBtn uses the new handler
             newFolderBtn.addEventListener('click', async () => {
-                // We'll use the context menu handler logic – create a dummy target for current folder
                 const target = {
                     isFolder: true,
                     path: CONFIG.currentPath,
@@ -3015,7 +3014,7 @@
             // INIT
             // ============================================================
             toast('FileForge – connect to GitHub', 'info', 3000);
-            console.log('🚀 FileForge – fixed folder creation');
+            console.log('🚀 FileForge – upload 404 fixed');
 
             window.__fileforge = {
                 CONFIG,
