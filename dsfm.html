@@ -1107,7 +1107,6 @@
             }
         }
         @media (max-width: 640px) {
-            /* ===== MOBILE – BIGGER, TAPPABLE ===== */
             #app {
                 padding: 6px;
                 gap: 6px;
@@ -1913,20 +1912,24 @@
             // AUTO-SUGGEST
             // ============================================================
             function autoSuggestFromUrl() {
-                const url = window.location.href;
-                const match = url.match(/https?:\/\/([^.]+)\.github\.io\/([^/?#]+)/);
-                if (match) {
-                    const owner = match[1];
-                    const repo = match[2];
-                    if (repo) {
-                        ownerInput.value = owner;
-                        repoInput.value = repo;
-                        branchInput.value = 'main';
-                    } else {
-                        ownerInput.value = owner;
-                        repoInput.value = `${owner}.github.io`;
-                        branchInput.value = 'master';
+                try {
+                    const url = window.location.href;
+                    const match = url.match(/https?:\/\/([^.]+)\.github\.io\/([^/?#]+)/);
+                    if (match) {
+                        const owner = match[1];
+                        const repo = match[2];
+                        if (repo) {
+                            ownerInput.value = owner;
+                            repoInput.value = repo;
+                            branchInput.value = 'main';
+                        } else {
+                            ownerInput.value = owner;
+                            repoInput.value = `${owner}.github.io`;
+                            branchInput.value = 'master';
+                        }
                     }
+                } catch (e) {
+                    // Silently ignore – no auto-suggest if URL parsing fails
                 }
             }
 
@@ -2040,7 +2043,6 @@
             function clearClipboard() {
                 clipboard.items = [];
                 clipboard.operation = null;
-                // Remove cut class from all cards
                 document.querySelectorAll('.file-card.cut').forEach(el => el.classList.remove('cut'));
             }
 
@@ -2052,7 +2054,6 @@
                 }
                 clipboard.items = items;
                 clipboard.operation = 'cut';
-                // Mark cut items visually
                 document.querySelectorAll('.file-card').forEach(card => {
                     const path = card.dataset.path;
                     if (items.some(item => item.path === path)) {
@@ -2072,7 +2073,6 @@
                 }
                 clipboard.items = items;
                 clipboard.operation = 'copy';
-                // Remove cut marks
                 document.querySelectorAll('.file-card.cut').forEach(el => el.classList.remove('cut'));
                 toast(`Copied ${items.length} item(s)`, 'info');
             }
@@ -2087,7 +2087,6 @@
                 const sourceItems = clipboard.items;
                 const op = clipboard.operation;
 
-                // Check if destination is the same as source for cut
                 if (op === 'cut') {
                     const allInSameDir = sourceItems.every(item => {
                         const parent = item.path.substring(0, item.path.lastIndexOf('/'));
@@ -2099,31 +2098,15 @@
                     }
                 }
 
-                // Confirm overwrites
                 let overwriteAll = false;
                 let skipAll = false;
 
                 for (const item of sourceItems) {
                     const destPath = destDir ? `${destDir}/${item.name}` : item.name;
                     try {
-                        // Check if destination exists
                         const existing = await getContents(destPath, CONFIG.branch);
                         if (existing && !Array.isArray(existing)) {
                             if (!overwriteAll && !skipAll) {
-                                const action = await showModal(
-                                    'File exists',
-                                    `"${item.name}" already exists in the destination. Overwrite?`,
-                                    'Overwrite',
-                                    'Skip'
-                                );
-                                // Actually need a custom modal with 3 options. Let's simplify: Overwrite, Skip, Cancel All.
-                                // We'll just use confirm/deny for now.
-                                // Re-implementing with custom modal logic is complex, using confirm for simplicity.
-                                // Wait, we have showModal. Let's just ask Overwrite / Skip.
-                                // But we need to know the result.
-                                // We'll use the modal but it's binary. So we'll do a loop.
-                                // Let's just ask each time or provide Overwrite All / Skip All buttons.
-                                // For now, we'll keep it simple and ask each time.
                                 const overwrite = await showModal(
                                     'File exists',
                                     `"${item.name}" already exists. Overwrite?`,
@@ -2139,16 +2122,13 @@
                                 continue;
                             }
                         }
-                    } catch (e) {
-                        // 404 means it doesn't exist, which is fine.
-                    }
+                    } catch (e) { /* 404 means doesn't exist, fine */ }
 
-                    // Perform the copy
                     try {
                         if (item.isFolder) {
-                            await copyFolder(item, destDir);
+                            await copyFolderTo(item, destDir);
                         } else {
-                            await copyFile(item, destDir);
+                            await copyFileTo(item, destDir);
                         }
                         toast(`Copied ${item.name} to ${destDir || 'root'}`, 'success');
                     } catch (e) {
@@ -2156,7 +2136,6 @@
                     }
                 }
 
-                // If cut, delete originals after successful copy
                 if (op === 'cut') {
                     for (const item of sourceItems) {
                         try {
@@ -2170,28 +2149,24 @@
                             toast(`Failed to remove ${item.name}: ${e.message}`, 'error');
                         }
                     }
-                    // Clear clipboard after cut-paste
                     clearClipboard();
                 }
 
-                // Refresh the view
                 await navigateTo(CONFIG.currentPath);
                 await rebuildTree();
                 toast('Paste operation completed', 'success');
             }
 
-            async function copyFile(item, destDir) {
+            async function copyFileTo(item, destDir) {
                 const data = await getContents(item.path);
                 const content = atob(data.content);
-                const destPath = destDir ? `${destDir}/${item.name}` : item.name;
-                // Decode content
                 const decoded = decodeURIComponent(escape(content));
+                const destPath = destDir ? `${destDir}/${item.name}` : item.name;
                 await createOrUpdateFile(destPath, decoded, `Copy ${item.name} to ${destDir || 'root'}`, null);
             }
 
-            async function copyFolder(item, destDir) {
+            async function copyFolderTo(item, destDir) {
                 const destPath = destDir ? `${destDir}/${item.name}` : item.name;
-                // Create folder (by creating .gitkeep)
                 try {
                     await createFolder(destPath);
                 } catch (e) { /* ignore if exists */ }
@@ -2199,7 +2174,7 @@
                 const contents = await getContents(item.path);
                 for (const child of contents) {
                     if (child.type === 'dir') {
-                        await copyFolder(child, destPath);
+                        await copyFolderTo(child, destPath);
                     } else {
                         const childData = await getContents(child.path);
                         const content = atob(childData.content);
@@ -2219,7 +2194,6 @@
                         await deleteFile(item.path, item.sha, `Delete ${item.name}`);
                     }
                 }
-                // Delete the folder itself (.gitkeep)
                 try {
                     const gitkeep = await getContents(`${path}/.gitkeep`);
                     if (gitkeep && gitkeep.sha) {
@@ -2302,15 +2276,15 @@
 
                     const isSelected = selectedPaths.has(item.path);
                     if (isSelected) card.classList.add('selected');
-                    // Check if cut
                     if (clipboard.operation === 'cut' && clipboard.items.some(c => c.path === item.path)) {
                         card.classList.add('cut');
                     }
 
-                    // ===== DRAG & DROP =====
+                    // Drag & Drop
                     card.draggable = true;
                     card.addEventListener('dragstart', (e) => {
-                        e.dataTransfer.setData('text/plain', JSON.stringify({ path: item.path, name: item.name, isFolder }));
+                        e.dataTransfer.setData('text/plain', JSON.stringify({ path: item.path, name: item.name,
+                            isFolder }));
                         e.dataTransfer.effectAllowed = 'copyMove';
                     });
                     card.addEventListener('dragover', (e) => {
@@ -2340,13 +2314,10 @@
                                 'Copy',
                                 'Move'
                             );
+                            const sourceItem = { ...source, isFolder: source.isFolder === 'true' };
                             if (action) {
-                                // Copy
-                                const sourceItem = { ...source, isFolder: source.isFolder === 'true' };
                                 await copyItemTo(sourceItem, item.path);
                             } else {
-                                // Move
-                                const sourceItem = { ...source, isFolder: source.isFolder === 'true' };
                                 await moveItemTo(sourceItem, item.path);
                             }
                         } catch (err) {
@@ -2428,9 +2399,7 @@
                     card.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // Select this item if not already selected
                         if (!selectedPaths.has(item.path)) {
-                            // Clear selection and select this one
                             selectedPaths.clear();
                             selectedPaths.add(item.path);
                             updateSelectionUI();
@@ -2456,17 +2425,13 @@
             }
 
             // ============================================================
-            // COPY / MOVE HELPERS
+            // COPY / MOVE HELPERS (for drag & drop)
             // ============================================================
             async function copyItemTo(source, destDir) {
-                const destPath = destDir ? `${destDir}/${source.name}` : source.name;
                 if (source.isFolder) {
-                    await copyFolder(source, destDir);
+                    await copyFolderTo(source, destDir);
                 } else {
-                    const data = await getContents(source.path);
-                    const content = atob(data.content);
-                    const decoded = decodeURIComponent(escape(content));
-                    await createOrUpdateFile(destPath, decoded, `Copy ${source.name} to ${destDir || 'root'}`, null);
+                    await copyFileTo(source, destDir);
                 }
                 toast(`Copied ${source.name} to ${destDir || 'root'}`, 'success');
                 await navigateTo(CONFIG.currentPath);
@@ -2474,19 +2439,14 @@
             }
 
             async function moveItemTo(source, destDir) {
-                const destPath = destDir ? `${destDir}/${source.name}` : source.name;
                 if (source.isFolder) {
-                    await copyFolder(source, destDir);
+                    await copyFolderTo(source, destDir);
                     await deleteFolder(source.path);
                 } else {
-                    const data = await getContents(source.path);
-                    const content = atob(data.content);
-                    const decoded = decodeURIComponent(escape(content));
-                    await createOrUpdateFile(destPath, decoded, `Move ${source.name} to ${destDir || 'root'}`, null);
+                    await copyFileTo(source, destDir);
                     await deleteFile(source.path, source.sha, `Move ${source.name}`);
                 }
                 toast(`Moved ${source.name} to ${destDir || 'root'}`, 'success');
-                // Clear clipboard if moved
                 clearClipboard();
                 await navigateTo(CONFIG.currentPath);
                 await rebuildTree();
@@ -2605,7 +2565,8 @@
                                                 true
                                             );
                                             if (overwrite) {
-                                                await createOrUpdateFile(path, data, `Overwrite ${file.name}`, existing.sha);
+                                                await createOrUpdateFile(path, data, `Overwrite ${file.name}`,
+                                                existing.sha);
                                                 toast(`Overwrote ${file.name}`, 'success');
                                                 resolve(true);
                                             } else {
@@ -3197,21 +3158,18 @@
             // KEYBOARD SHORTCUTS
             // ============================================================
             document.addEventListener('keydown', (e) => {
-                // Ctrl+C / Cmd+C
                 if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                     if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
                         e.preventDefault();
                         handleCopy();
                     }
                 }
-                // Ctrl+X / Cmd+X
                 if ((e.ctrlKey || e.metaKey) && e.key === 'x') {
                     if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
                         e.preventDefault();
                         handleCut();
                     }
                 }
-                // Ctrl+V / Cmd+V
                 if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
                     if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
                         e.preventDefault();
@@ -3243,32 +3201,33 @@
             upBtn.addEventListener('click', () => navigateTo(getParentPath(CONFIG.currentPath)));
 
             // ============================================================
-            // CONNECT
+            // CONNECT – FIXED with error logging
             // ============================================================
             async function connect() {
-                const token = tokenInput.value.trim();
-                const owner = ownerInput.value.trim();
-                const repo = repoInput.value.trim();
-                const branch = branchInput.value.trim() || 'main';
-                if (!token) { toast('Enter token', 'warning'); return; }
-                if (!owner || !repo) { toast('Enter Owner and Repo', 'warning'); return; }
-
-                CONFIG.token = token;
-                CONFIG.owner = owner;
-                CONFIG.repo = repo;
-                CONFIG.branch = branch;
-
-                localStorage.setItem('gh_token', token);
-                localStorage.setItem('gh_owner', owner);
-                localStorage.setItem('gh_repo', repo);
-                localStorage.setItem('gh_branch', branch);
-
                 try {
-                    await getContents('', CONFIG.branch);
+                    const token = tokenInput.value.trim();
+                    const owner = ownerInput.value.trim();
+                    const repo = repoInput.value.trim();
+                    const branch = branchInput.value.trim() || 'main';
+                    if (!token) { toast('Enter token', 'warning'); return; }
+                    if (!owner || !repo) { toast('Enter Owner and Repo', 'warning'); return; }
+
+                    CONFIG.token = token;
+                    CONFIG.owner = owner;
+                    CONFIG.repo = repo;
+                    CONFIG.branch = branch;
+
+                    localStorage.setItem('gh_token', token);
+                    localStorage.setItem('gh_owner', owner);
+                    localStorage.setItem('gh_repo', repo);
+                    localStorage.setItem('gh_branch', branch);
+
+                    const test = await getContents('', CONFIG.branch);
                     toast('Connected!', 'success');
                     await navigateTo('');
                     await rebuildTree();
                 } catch (e) {
+                    console.error('Connect error:', e);
                     toast(`Connection error: ${e.message}`, 'error');
                 }
             }
@@ -3299,4 +3258,46 @@
             const savedOwner = localStorage.getItem('gh_owner');
             const savedRepo = localStorage.getItem('gh_repo');
             const savedBranch = localStorage.getItem('gh_branch');
-            if (savedToken) tokenInput.value =
+            if (savedToken) tokenInput.value = savedToken;
+            if (savedOwner) ownerInput.value = savedOwner;
+            if (savedRepo) repoInput.value = savedRepo;
+            if (savedBranch) branchInput.value = savedBranch;
+
+            if (!savedOwner && !savedRepo) {
+                autoSuggestFromUrl();
+            }
+
+            if (savedToken && savedOwner && savedRepo) {
+                setTimeout(() => connect(), 300);
+            }
+
+            // ============================================================
+            // RESIZE
+            // ============================================================
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 640) sidebar.classList.remove('open');
+                const isMobile = window.innerWidth <= 640;
+                document.querySelectorAll('.card-actions').forEach(el => {
+                    if (isMobile) el.classList.add('always-visible');
+                    else el.classList.remove('always-visible');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (window.innerWidth <= 640) {
+                    if (e.target.closest('.file-card') || e.target.closest('.tree-item')) {
+                        sidebar.classList.remove('open');
+                    }
+                }
+            });
+
+            // ============================================================
+            // INIT
+            // ============================================================
+            toast('FileForge – connect to GitHub', 'info', 3000);
+            console.log('🚀 FileForge – fixed connection');
+        })();
+    </script>
+
+</body>
+</html>
