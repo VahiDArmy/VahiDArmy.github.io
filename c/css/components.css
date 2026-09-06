@@ -165,16 +165,26 @@
   inset: -2px;
   border-radius: inherit;
   padding: 2px;
-  background: conic-gradient(from var(--angle, 0deg), transparent 0%, var(--neon) 12%, transparent 24%, transparent 76%, var(--violet) 88%, transparent 100%);
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    transparent 0deg,
+    transparent 268deg,
+    var(--neon-glow) 300deg,
+    var(--neon) 338deg,
+    #fff 348deg,
+    var(--neon) 356deg,
+    transparent 360deg
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: rotate-border 7s linear infinite;
-  opacity: 0.9;
+  filter: drop-shadow(0 0 5px var(--neon)) drop-shadow(0 0 14px var(--neon-glow));
+  opacity: 0;
+  transition: opacity 0.7s ease, --angle 0.18s linear;
 }
 
-@keyframes rotate-border {
-  to { --angle: 360deg; }
+.ayah-frame.is-comet-active::before {
+  opacity: 1;
 }
 
 @property --angle {
@@ -184,7 +194,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ayah-frame::before { animation: none; }
+  .ayah-frame::before { display: none; }
 }
 
 .ayah-frame__inner {
@@ -336,14 +346,18 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap::after {
   content: '';
   position: absolute;
-  inset-inline-start: 12px;
+  left: 14px;
   top: 50%;
   translate: 0 -50%;
   width: 8px; height: 8px;
-  border-inline-start: 2px solid var(--text-faint);
-  border-block-end: 2px solid var(--text-faint);
+  border-left: 2px solid var(--text-faint);
+  border-bottom: 2px solid var(--text-faint);
   transform: rotate(-45deg);
   pointer-events: none;
+}
+
+.select-wrap select {
+  padding-left: 34px;
 }
 
 /* ---- Nav buttons prev/next ---- */
