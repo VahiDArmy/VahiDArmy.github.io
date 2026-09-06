@@ -76,3 +76,39 @@ function ayahSkeleton(container) {
     </div>
   `;
 }
+
+// --- شهاب دنباله‌دار دور قاب آیه، هم‌سو با سرعت اسکرول ---
+// هرچقدر سریع‌تر اسکرول کنید، سریع‌تر دور قاب می‌چرخد؛ با توقف اسکرول محو می‌شود.
+(function initScrollComet() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  let angle = 0;
+  let lastY = window.scrollY;
+  let ticking = false;
+  let fadeTimer = null;
+
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const delta = Math.abs(y - lastY);
+      lastY = y;
+      angle = (angle + Math.min(delta * 1.6, 50)) % 360;
+
+      document.querySelectorAll('.ayah-frame').forEach((el) => {
+        el.style.setProperty('--angle', angle + 'deg');
+        el.classList.add('is-comet-active');
+      });
+
+      clearTimeout(fadeTimer);
+      fadeTimer = setTimeout(() => {
+        document.querySelectorAll('.ayah-frame').forEach((el) => el.classList.remove('is-comet-active'));
+      }, 550);
+
+      ticking = false;
+    });
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+})();
