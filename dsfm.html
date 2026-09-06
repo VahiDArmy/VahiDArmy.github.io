@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover" />
-    <title>FileForge — GitHub File Manager</title>
+    <title>FileForge — Glass GitHub Manager</title>
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
-    <!-- Font Awesome 6 -->
+    <!-- Font Awesome 6 (solid) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <!-- Prism.js -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
@@ -21,7 +21,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js">
     </script>
-    <!-- JSZip for bulk download -->
+    <!-- JSZip -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
     </script>
 
@@ -35,25 +35,23 @@
             box-sizing: border-box;
         }
         :root {
-            --bg-primary: rgba(11, 14, 20, 0.70);
-            --bg-card: rgba(255, 255, 255, 0.04);
-            --bg-glass: rgba(255, 255, 255, 0.03);
-            --border-glass: rgba(255, 255, 255, 0.07);
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.10);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
             --text-primary: #f0f4ff;
-            --text-secondary: #a8b5d9;
-            --text-muted: #5e6f94;
+            --text-secondary: #b0c0e0;
+            --text-muted: #6a7f9f;
             --accent: #7c6df0;
-            --accent-glow: rgba(124, 109, 240, 0.4);
+            --accent-glow: rgba(124, 109, 240, 0.5);
             --accent-secondary: #4fc3ff;
             --accent-secondary-glow: rgba(79, 195, 255, 0.3);
             --danger: #ff5e7a;
             --success: #4cd9a0;
             --warning: #f9c74f;
-            --radius: 14px;
-            --radius-sm: 8px;
-            --shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-            --transition: 0.2s ease;
+            --radius: 16px;
+            --radius-sm: 10px;
             --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
         html,
         body {
@@ -72,38 +70,41 @@
             background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 10px;
         }
 
         /* ===== GLOW BACKGROUND ===== */
         .bg-glow {
             position: fixed;
-            width: 500px;
-            height: 500px;
             border-radius: 50%;
-            filter: blur(120px);
-            opacity: 0.12;
+            filter: blur(140px);
             pointer-events: none;
             z-index: 0;
             animation: floatGlow 20s ease-in-out infinite alternate;
         }
         .bg-glow.g1 {
+            width: 600px;
+            height: 600px;
             top: -200px;
-            right: -100px;
+            right: -150px;
             background: var(--accent);
+            opacity: 0.15;
         }
         .bg-glow.g2 {
+            width: 500px;
+            height: 500px;
             bottom: -200px;
-            left: -100px;
+            left: -150px;
             background: var(--accent-secondary);
+            opacity: 0.12;
             animation-delay: 6s;
         }
         .bg-glow.g3 {
+            width: 400px;
+            height: 400px;
             top: 40%;
             left: 30%;
-            width: 300px;
-            height: 300px;
             background: #f9c74f;
             opacity: 0.06;
             animation-delay: 12s;
@@ -113,7 +114,7 @@
                 transform: translate(0, 0) scale(1);
             }
             100% {
-                transform: translate(40px, -30px) scale(1.15);
+                transform: translate(60px, -40px) scale(1.2);
             }
         }
 
@@ -124,13 +125,23 @@
             display: flex;
             flex-direction: column;
             height: 100dvh;
-            padding: 12px;
-            gap: 12px;
+            padding: 14px;
+            gap: 14px;
             background: transparent;
-            padding-top: env(safe-area-inset-top, 0px);
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            padding-left: env(safe-area-inset-left, 0px);
-            padding-right: env(safe-area-inset-right, 0px);
+        }
+
+        /* ===== GLASS CARD ===== */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: var(--transition);
+        }
+        .glass:hover {
+            border-color: rgba(255, 255, 255, 0.14);
         }
 
         /* ===== TOP BAR ===== */
@@ -138,17 +149,16 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 18px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: var(--radius);
+            padding: 10px 20px;
             flex-shrink: 0;
             gap: 10px;
             flex-wrap: wrap;
-            box-shadow: var(--shadow);
-            margin-top: env(safe-area-inset-top, 0px);
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
         .topbar .brand {
             display: flex;
@@ -160,7 +170,7 @@
         }
         .topbar .brand i {
             color: var(--accent);
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             filter: drop-shadow(0 0 20px var(--accent-glow));
         }
         .topbar .brand span {
@@ -187,8 +197,8 @@
             margin-right: 2px;
         }
         .topbar .repo-config .field-group input {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 30px;
             padding: 4px 12px;
             color: var(--text-primary);
@@ -197,6 +207,7 @@
             transition: var(--transition);
             font-family: inherit;
             width: 110px;
+            backdrop-filter: blur(4px);
         }
         .topbar .repo-config .field-group input:focus {
             border-color: var(--accent);
@@ -221,7 +232,7 @@
             position: absolute;
             top: calc(100% + 8px);
             left: 0;
-            background: rgba(14, 18, 26, 0.95);
+            background: rgba(14, 18, 26, 0.92);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: var(--radius-sm);
@@ -268,7 +279,7 @@
             background: rgba(255, 255, 255, 0.04);
             padding: 4px 14px;
             border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             flex: 1;
             min-width: 100px;
             overflow: hidden;
@@ -278,6 +289,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            backdrop-filter: blur(8px);
         }
         .topbar .path-display i {
             color: var(--accent-secondary);
@@ -304,6 +316,7 @@
             outline: none;
             transition: var(--transition);
             font-family: inherit;
+            backdrop-filter: blur(4px);
         }
         .topbar .actions .token-input:focus {
             border-color: var(--accent);
@@ -325,12 +338,13 @@
             transition: var(--transition);
             background: rgba(255, 255, 255, 0.04);
             color: var(--text-secondary);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             font-family: inherit;
             white-space: nowrap;
+            backdrop-filter: blur(4px);
         }
         .btn:hover {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.10);
             color: var(--text-primary);
             transform: translateY(-1px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -348,7 +362,7 @@
             background: #6a5cd6;
             border-color: #6a5cd6;
             color: #fff;
-            box-shadow: 0 0 40px var(--accent-glow);
+            box-shadow: 0 0 50px var(--accent-glow);
         }
         .btn-success {
             background: var(--success);
@@ -391,14 +405,6 @@
             border-color: rgba(76, 217, 160, 0.4);
             box-shadow: 0 0 30px rgba(76, 217, 160, 0.2);
         }
-        .btn-download .badge {
-            background: var(--success);
-            color: #0b0e14;
-            border-radius: 30px;
-            padding: 0 6px;
-            font-size: 0.6rem;
-            font-weight: 700;
-        }
         .btn-select {
             background: rgba(79, 195, 255, 0.08);
             border-color: rgba(79, 195, 255, 0.15);
@@ -415,33 +421,36 @@
         .main-wrap {
             display: flex;
             flex: 1;
-            gap: 12px;
+            gap: 14px;
             min-height: 0;
         }
 
         /* ===== SIDEBAR ===== */
         .sidebar {
-            width: 250px;
-            min-width: 190px;
-            background: rgba(255, 255, 255, 0.025);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius);
+            width: 260px;
+            min-width: 200px;
             padding: 12px 6px 12px 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
             flex-shrink: 0;
             transition: var(--transition);
-            box-shadow: var(--shadow);
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .sidebar:hover {
+            border-color: rgba(255, 255, 255, 0.12);
         }
         .sidebar-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 6px 10px 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
         }
         .sidebar-header h4 {
@@ -475,11 +484,12 @@
             white-space: nowrap;
         }
         .tree-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.06);
             color: var(--text-primary);
+            transform: translateX(3px);
         }
         .tree-item.active {
-            background: rgba(124, 109, 240, 0.12);
+            background: rgba(124, 109, 240, 0.15);
             color: var(--text-primary);
             border-left: 2px solid var(--accent);
         }
@@ -526,26 +536,31 @@
             text-align: center;
         }
 
-        /* ===== CONTENT AREA ===== */
+        /* ===== CONTENT ===== */
         .content {
             flex: 1;
-            background: rgba(255, 255, 255, 0.025);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--radius);
             display: flex;
             flex-direction: column;
             overflow: hidden;
             min-width: 0;
-            box-shadow: var(--shadow);
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius);
+            box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+        .content:hover {
+            border-color: rgba(255, 255, 255, 0.10);
         }
 
         /* ===== UPLOAD ZONE ===== */
         .upload-zone-top {
             padding: 8px 14px;
             margin: 6px 8px 4px 8px;
-            border: 2px dashed rgba(79, 195, 255, 0.12);
+            border: 2px dashed rgba(79, 195, 255, 0.15);
             border-radius: var(--radius-sm);
-            background: rgba(79, 195, 255, 0.02);
+            background: rgba(79, 195, 255, 0.03);
             cursor: pointer;
             transition: var(--transition);
             color: var(--text-muted);
@@ -555,10 +570,11 @@
             gap: 10px;
             font-size: 0.8rem;
             flex-shrink: 0;
+            backdrop-filter: blur(4px);
         }
         .upload-zone-top:hover {
-            border-color: rgba(79, 195, 255, 0.25);
-            background: rgba(79, 195, 255, 0.05);
+            border-color: rgba(79, 195, 255, 0.3);
+            background: rgba(79, 195, 255, 0.06);
             color: var(--text-secondary);
         }
         .upload-zone-top i {
@@ -569,7 +585,7 @@
             display: none;
         }
 
-        /* File List View */
+        /* ===== FILE LIST ===== */
         .file-list {
             flex: 1;
             overflow-y: auto;
@@ -592,9 +608,10 @@
             transition: var(--transition);
             text-align: center;
             position: relative;
+            backdrop-filter: blur(4px);
         }
         .file-list .file-card:hover {
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.07);
             transform: translateY(-3px);
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
             border-color: rgba(124, 109, 240, 0.2);
@@ -606,6 +623,33 @@
             font-size: 2rem;
             line-height: 1;
             pointer-events: none;
+        }
+        .file-list .file-card .f-icon.html {
+            color: #e44d26;
+        }
+        .file-list .file-card .f-icon.css {
+            color: #264de4;
+        }
+        .file-list .file-card .f-icon.js {
+            color: #f7df1e;
+        }
+        .file-list .file-card .f-icon.py {
+            color: #3776ab;
+        }
+        .file-list .file-card .f-icon.json {
+            color: #f5a623;
+        }
+        .file-list .file-card .f-icon.md {
+            color: #58a6ff;
+        }
+        .file-list .file-card .f-icon.txt {
+            color: var(--text-muted);
+        }
+        .file-list .file-card .f-icon.img {
+            color: #ff6b6b;
+        }
+        .file-list .file-card .f-icon.folder {
+            color: var(--warning);
         }
         .file-list .file-card .f-name {
             font-size: 0.7rem;
@@ -667,23 +711,15 @@
             background: rgba(255, 94, 122, 0.12);
             border-color: var(--danger);
         }
-        .file-list .file-card.folder .f-icon {
-            color: var(--warning);
-        }
-        .file-list .file-card.file .f-icon {
-            color: var(--accent-secondary);
-        }
-
-        /* ===== SELECTION STYLES ===== */
-        .file-card.selected {
+        .file-list .file-card.selected {
             border-color: var(--accent) !important;
             background: rgba(124, 109, 240, 0.12) !important;
             box-shadow: 0 0 20px var(--accent-glow);
         }
-        .file-card.selected .f-name {
+        .file-list .file-card.selected .f-name {
             color: var(--text-primary);
         }
-        .file-card .selection-indicator {
+        .file-list .file-card .selection-indicator {
             position: absolute;
             top: 4px;
             right: 4px;
@@ -699,14 +735,14 @@
             color: transparent;
             transition: var(--transition);
         }
-        .file-card.selected .selection-indicator {
+        .file-list .file-card.selected .selection-indicator {
             background: var(--accent);
             border-color: var(--accent);
             color: #fff;
             box-shadow: 0 0 15px var(--accent-glow);
         }
 
-        /* Editor View */
+        /* ===== EDITOR ===== */
         .editor-wrap {
             flex: 1;
             display: none;
@@ -721,10 +757,11 @@
             align-items: center;
             gap: 5px;
             padding: 6px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
             flex-shrink: 0;
             flex-wrap: wrap;
             background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(8px);
         }
         .editor-toolbar .file-name {
             font-weight: 600;
@@ -875,63 +912,93 @@
             color: var(--success);
         }
 
-        /* ===== CONTEXT MENU ===== */
-        .ctx-menu {
+        /* ===== CUSTOM MODAL ===== */
+        .modal-overlay {
             position: fixed;
-            background: rgba(14, 18, 26, 0.96);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: var(--radius-sm);
-            padding: 4px 0;
-            min-width: 180px;
-            z-index: 9999;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-            opacity: 0;
-            transform: scale(0.95) translateY(-4px);
-            transition: opacity 0.12s ease, transform 0.12s ease;
-            pointer-events: none;
-        }
-        .ctx-menu.open {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-            pointer-events: auto;
-        }
-        .ctx-menu .ctx-item {
-            display: flex;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: none;
             align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: var(--transition);
-            border: none;
-            background: transparent;
+            justify-content: center;
+            z-index: 99999;
+            padding: 20px;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: rgba(18, 24, 34, 0.92);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            padding: 28px 32px 24px;
+            max-width: 440px;
             width: 100%;
-            font-family: inherit;
-            text-align: left;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            animation: modalIn 0.25s ease forwards;
         }
-        .ctx-menu .ctx-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+        @keyframes modalIn {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .modal-box .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
             color: var(--text-primary);
+            margin-bottom: 8px;
         }
-        .ctx-menu .ctx-item i {
-            width: 16px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: var(--text-muted);
+        .modal-box .modal-message {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
         }
-        .ctx-menu .ctx-item.danger {
-            color: var(--danger);
+        .modal-box .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
         }
-        .ctx-menu .ctx-item.danger i {
-            color: var(--danger);
+        .modal-box .modal-actions .btn {
+            min-width: 80px;
+            justify-content: center;
         }
-        .ctx-menu .ctx-divider {
-            height: 1px;
-            background: rgba(255, 255, 255, 0.05);
-            margin: 3px 10px;
+        .modal-box .modal-actions .btn-cancel {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+        .modal-box .modal-actions .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .modal-box .modal-actions .btn-confirm {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+        .modal-box .modal-actions .btn-confirm:hover {
+            background: #6a5cd6;
+            border-color: #6a5cd6;
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+        .modal-box .modal-actions .btn-danger {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+            box-shadow: 0 0 30px rgba(255, 94, 122, 0.3);
+        }
+        .modal-box .modal-actions .btn-danger:hover {
+            background: #e94a66;
+            border-color: #e94a66;
+            box-shadow: 0 0 50px rgba(255, 94, 122, 0.4);
         }
 
         /* ===== TOAST ===== */
@@ -939,7 +1006,7 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            z-index: 99999;
+            z-index: 99998;
             display: flex;
             flex-direction: column;
             gap: 6px;
@@ -948,8 +1015,8 @@
         }
         .toast {
             background: rgba(14, 18, 26, 0.92);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--radius-sm);
             padding: 12px 18px;
@@ -1016,9 +1083,9 @@
         .drag-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(124, 109, 240, 0.04);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(124, 109, 240, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 9998;
             display: none;
             align-items: center;
@@ -1046,8 +1113,8 @@
         /* ===== RESPONSIVE ===== */
         @media (max-width: 820px) {
             .sidebar {
-                width: 190px;
-                min-width: 140px;
+                width: 200px;
+                min-width: 150px;
             }
             .topbar .repo-config .field-group input {
                 width: 80px;
@@ -1061,8 +1128,8 @@
         }
         @media (max-width: 640px) {
             #app {
-                padding: 6px;
-                gap: 6px;
+                padding: 8px;
+                gap: 8px;
             }
             .topbar {
                 padding: 6px 12px;
@@ -1229,6 +1296,10 @@
                 left: -40px;
                 min-width: 200px;
             }
+            .modal-box {
+                padding: 20px 24px 20px;
+                margin: 10px;
+            }
         }
         .mobile-toggle {
             display: none;
@@ -1246,35 +1317,6 @@
         .mobile-toggle:hover {
             background: rgba(255, 255, 255, 0.06);
             color: var(--text-primary);
-        }
-
-        /* ===== MISC ===== */
-        .f-icon.html {
-            color: #e44d26;
-        }
-        .f-icon.css {
-            color: #264de4;
-        }
-        .f-icon.js {
-            color: #f7df1e;
-        }
-        .f-icon.py {
-            color: #3776ab;
-        }
-        .f-icon.json {
-            color: #f5a623;
-        }
-        .f-icon.md {
-            color: #58a6ff;
-        }
-        .f-icon.txt {
-            color: var(--text-muted);
-        }
-        .f-icon.img {
-            color: #ff6b6b;
-        }
-        .f-icon.folder {
-            color: var(--warning);
         }
 
         .empty-state {
@@ -1313,17 +1355,30 @@
         </div>
     </div>
 
+    <!-- ===== CUSTOM MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Confirm</div>
+            <div class="modal-message" id="modalMessage">Are you sure?</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="btn btn-cancel" id="modalCancel">Cancel</button>
+                <button class="btn btn-confirm" id="modalConfirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- ===== APP ===== -->
     <div id="app">
 
         <!-- TOPBAR -->
-        <header class="topbar">
+        <header class="topbar glass">
             <div class="brand">
                 <i class="fas fa-code-branch"></i>
                 <span>FileForge</span>
             </div>
-
-            <!-- Repo Configuration -->
             <div class="repo-config">
                 <div class="field-group">
                     <span class="repo-label">Owner</span>
@@ -1344,9 +1399,6 @@
                                 <strong>Repo:</strong> <code>vahidarmy.github.io</code><br>
                                 <strong>Branch:</strong> <code>master</code> (often)
                             </div>
-                            <div style="margin-top:6px;color:var(--text-muted);font-size:0.6rem;">
-                                <i class="fas fa-lightbulb"></i> We auto-suggest based on current page URL if it's a GitHub Pages site.
-                            </div>
                         </div>
                     </span>
                 </div>
@@ -1359,7 +1411,6 @@
                     <input type="text" id="branchInput" placeholder="main" value="main" />
                 </div>
             </div>
-
             <div class="nav-controls">
                 <button class="btn btn-sm" id="homeBtn" title="Home"><i class="fas fa-home"></i></button>
                 <button class="btn btn-sm" id="upBtn" title="Up"><i class="fas fa-arrow-up"></i></button>
@@ -1451,9 +1502,6 @@
         <button class="ctx-item" data-action="refresh"><i class="fas fa-sync-alt"></i> Refresh</button>
     </div>
 
-    <!-- ===== TOAST CONTAINER ===== -->
-    <div class="toast-container" id="toastContainer"></div>
-
     <!-- ===== JAVASCRIPT ===== -->
     <script>
         (function() {
@@ -1494,6 +1542,13 @@
             const selectedCountSpan = $('selectedCount');
             const selectModeBtn = $('selectModeBtn');
 
+            // Modal
+            const modalOverlay = $('modalOverlay');
+            const modalTitle = $('modalTitle');
+            const modalMessage = $('modalMessage');
+            const modalConfirm = $('modalConfirm');
+            const modalCancel = $('modalCancel');
+
             // ============================================================
             // STATE
             // ============================================================
@@ -1511,6 +1566,7 @@
             let pyodideReady = false;
             let pyodideInstance = null;
             let updateTimeout = null;
+            let modalResolve = null;
 
             // Selection
             const selectedPaths = new Set();
@@ -1550,6 +1606,36 @@
             }
 
             // ============================================================
+            // CUSTOM MODAL
+            // ============================================================
+            function showModal(title, message, confirmText = 'OK', cancelText = 'Cancel', isDanger = false) {
+                return new Promise((resolve) => {
+                    modalTitle.textContent = title;
+                    modalMessage.textContent = message;
+                    modalConfirm.textContent = confirmText;
+                    modalCancel.textContent = cancelText;
+                    modalConfirm.className = 'btn ' + (isDanger ? 'btn-danger' : 'btn-confirm');
+                    modalResolve = resolve;
+                    modalOverlay.classList.add('active');
+                });
+            }
+
+            modalConfirm.addEventListener('click', () => {
+                modalOverlay.classList.remove('active');
+                if (modalResolve) modalResolve(true);
+            });
+            modalCancel.addEventListener('click', () => {
+                modalOverlay.classList.remove('active');
+                if (modalResolve) modalResolve(false);
+            });
+            modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) {
+                    modalOverlay.classList.remove('active');
+                    if (modalResolve) modalResolve(false);
+                }
+            });
+
+            // ============================================================
             // PATH NORMALIZATION
             // ============================================================
             function normalizePath(p) {
@@ -1562,7 +1648,7 @@
             }
 
             // ============================================================
-            // GITHUB API (uses input fields directly)
+            // GITHUB API
             // ============================================================
             function getRepoInfo() {
                 const owner = CONFIG.owner || ownerInput.value.trim();
@@ -1638,7 +1724,7 @@
             }
 
             // ============================================================
-            // BUILD GITHUB PAGES URL
+            // GITHUB PAGES URL
             // ============================================================
             function getGitHubPagesBase() {
                 const owner = CONFIG.owner || ownerInput.value.trim();
@@ -1659,7 +1745,7 @@
             }
 
             // ============================================================
-            // AUTO-SUGGEST from current page URL
+            // AUTO-SUGGEST
             // ============================================================
             function autoSuggestFromUrl() {
                 const url = window.location.href;
@@ -1845,7 +1931,7 @@
             }
 
             // ============================================================
-            // RENDER FILE LIST WITH SELECTION
+            // RENDER FILE LIST
             // ============================================================
             function renderFileList(items, path) {
                 fileList.innerHTML = '';
@@ -2038,7 +2124,7 @@
             }
 
             // ============================================================
-            // SELECTION MODE TOGGLE
+            // SELECTION MODE
             // ============================================================
             selectModeBtn.addEventListener('click', () => {
                 selectionMode = !selectionMode;
@@ -2062,13 +2148,15 @@
                     const files = e.target.files;
                     if (!files || files.length === 0) return;
                     const targetPath = CONFIG.currentPath || '';
+                    let successCount = 0;
                     for (const file of files) {
-                        await uploadFile(file, targetPath);
+                        const ok = await uploadFile(file, targetPath);
+                        if (ok) successCount++;
                     }
                     await navigateTo(CONFIG.currentPath);
                     await rebuildTree();
                     input.value = '';
-                    toast(`Uploaded ${files.length} file(s)`, 'success');
+                    toast(`Uploaded ${successCount} file(s)`, 'success');
                 });
             }
 
@@ -2083,68 +2171,69 @@
             }
 
             // ============================================================
-            // UPLOAD FILE (with overwrite support – fixed)
+            // UPLOAD FILE (with custom modal)
             // ============================================================
             async function uploadFile(file, targetPath) {
                 const path = targetPath ? `${targetPath}/${file.name}` : file.name;
                 const isText = file.type.startsWith('text/') ||
                     file.name.match(/\.(txt|html|css|js|py|json|md|xml|yml|yaml|sh|bash|svg)$/i);
 
-                return new Promise((resolve, reject) => {
+                return new Promise((resolve) => {
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         try {
                             let content = e.target.result;
                             let data = isText ? content : atob(content.split(',')[1] || '');
 
-                            // 1. Check if file already exists
+                            // Check if file exists
                             let existingSha = null;
                             try {
                                 const existing = await getContents(path, CONFIG.branch);
-                                // If it returns an array, it's a directory – treat as not existing (or error)
                                 if (Array.isArray(existing)) {
-                                    // It's a directory, can't upload a file with same name
                                     toast(`Cannot upload: "${file.name}" is a directory`, 'error');
-                                    resolve();
+                                    resolve(false);
                                     return;
                                 }
                                 if (existing && existing.sha) {
                                     existingSha = existing.sha;
                                 }
                             } catch (err) {
-                                // If 404, file doesn't exist – proceed to create
-                                if (err.message && err.message.includes('404')) {
-                                    // Not found – continue
-                                } else {
+                                if (!err.message || !err.message.includes('404')) {
                                     toast(`Error checking ${file.name}: ${err.message}`, 'error');
-                                    resolve();
+                                    resolve(false);
                                     return;
                                 }
                             }
 
-                            // 2. If exists, ask for overwrite
                             if (existingSha) {
-                                const overwrite = confirm(`File "${file.name}" already exists. Overwrite?`);
+                                const overwrite = await showModal(
+                                    'File exists',
+                                    `"${file.name}" already exists. Overwrite?`,
+                                    'Overwrite',
+                                    'Skip',
+                                    true
+                                );
                                 if (!overwrite) {
                                     toast(`Skipped ${file.name}`, 'warning');
-                                    resolve();
+                                    resolve(false);
                                     return;
                                 }
-                                // Overwrite – use existing SHA
                                 await createOrUpdateFile(path, data, `Overwrite ${file.name}`, existingSha);
                                 toast(`Overwrote ${file.name}`, 'success');
                             } else {
-                                // Create new file
                                 await createOrUpdateFile(path, data, `Upload ${file.name}`, null);
                                 toast(`Uploaded ${file.name}`, 'success');
                             }
-                            resolve();
+                            resolve(true);
                         } catch (err) {
                             toast(`Upload error for ${file.name}: ${err.message}`, 'error');
-                            reject(err);
+                            resolve(false);
                         }
                     };
-                    reader.onerror = () => reject(new Error('File read error'));
+                    reader.onerror = () => {
+                        toast(`Failed to read ${file.name}`, 'error');
+                        resolve(false);
+                    };
                     isText ? reader.readAsText(file) : reader.readAsDataURL(file);
                 });
             }
@@ -2570,10 +2659,13 @@
             });
 
             // ============================================================
-            // CONTEXT ACTIONS
+            // CONTEXT ACTIONS (with custom modal)
             // ============================================================
             async function promptInput(msg, defaultVal = '') {
-                return new Promise((resolve) => resolve(prompt(msg, defaultVal)));
+                return new Promise((resolve) => {
+                    const val = prompt(msg, defaultVal);
+                    resolve(val);
+                });
             }
 
             async function handleNewFile(target) {
@@ -2624,7 +2716,14 @@
 
             async function handleDelete(target) {
                 if (target.isRoot) return toast('Cannot delete root', 'warning');
-                if (!confirm(`Delete "${target.name}" permanently?`)) return;
+                const confirmed = await showModal(
+                    'Delete?',
+                    `Delete "${target.name}" permanently?`,
+                    'Delete',
+                    'Cancel',
+                    true
+                );
+                if (!confirmed) return;
                 try {
                     if (target.isFolder) {
                         const items = await getContents(target.path, CONFIG.branch);
@@ -2701,11 +2800,14 @@
                 const files = e.dataTransfer.files;
                 if (!files || files.length === 0) return;
                 const targetPath = CONFIG.currentPath || '';
+                let successCount = 0;
                 for (const file of files) {
-                    await uploadFile(file, targetPath);
+                    const ok = await uploadFile(file, targetPath);
+                    if (ok) successCount++;
                 }
                 await navigateTo(CONFIG.currentPath);
                 await rebuildTree();
+                toast(`Uploaded ${successCount} file(s)`, 'success');
             });
 
             // ============================================================
@@ -2783,11 +2885,15 @@
                         selectionMode = false;
                         selectModeBtn.classList.remove('active');
                     }
+                    if (modalOverlay.classList.contains('active')) {
+                        modalOverlay.classList.remove('active');
+                        if (modalResolve) modalResolve(false);
+                    }
                 }
             });
 
             // ============================================================
-            // AUTO-LOAD SAVED CONFIG & AUTO-SUGGEST
+            // AUTO-LOAD
             // ============================================================
             const savedToken = localStorage.getItem('gh_token');
             const savedOwner = localStorage.getItem('gh_owner');
@@ -2807,7 +2913,7 @@
             }
 
             // ============================================================
-            // RESIZE & MOBILE
+            // RESIZE
             // ============================================================
             window.addEventListener('resize', () => {
                 if (window.innerWidth > 640) sidebar.classList.remove('open');
@@ -2830,7 +2936,7 @@
             // INIT
             // ============================================================
             toast('Welcome to FileForge! Set Owner, Repo, and Token, then Connect.', 'info', 4000);
-            console.log('🚀 FileForge loaded (overwrite fix)');
+            console.log('🚀 FileForge – Glassmorphism + custom modals');
 
             window.__fileforge = {
                 CONFIG,
@@ -2849,6 +2955,7 @@
                 loadPyodide,
                 normalizePath,
                 getFileUrl,
+                showModal,
             };
 
         })();
