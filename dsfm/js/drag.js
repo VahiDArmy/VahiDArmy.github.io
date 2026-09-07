@@ -1,6 +1,6 @@
-import { state, getSelectedItems, setClipboard, clearClipboard } from './state.js';
+import { state } from './state.js';
 import { toast, showModal, updateToolbarPasteButton } from './ui.js';
-import { copyFolderTo, copyFileTo } from './clipboard.js'; // we'll define later
+import { copyItemTo, moveItemTo } from './clipboard.js';
 
 let touchTimer = null;
 let touchStartX = 0, touchStartY = 0;
@@ -10,8 +10,10 @@ let dragItems = [];
 
 export function attachDragEvents(card, item) {
     const isFolder = item.type === 'dir';
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    card.draggable = true;
+    // Disable native drag on touch devices to prevent accidental drop events
+    card.draggable = !isTouchDevice;
 
     card.addEventListener('dragstart', (e) => {
         isDragging = true;
@@ -69,19 +71,19 @@ export function attachDragEvents(card, item) {
         }
     });
 
-    // ===== TOUCH HANDLING (fixed: only long-press triggers context menu, drag after movement) =====
+    // ===== TOUCH HANDLING =====
     card.addEventListener('touchstart', (e) => {
         const touch = e.touches[0];
         touchStartX = touch.clientX;
         touchStartY = touch.clientY;
         isLongPress = false;
+        clearTimeout(touchTimer);
         touchTimer = setTimeout(() => {
             isLongPress = true;
             // Long press -> select and show context menu
             if (!state.selectedPaths.has(item.path)) {
                 state.selectedPaths.clear();
                 state.selectedPaths.add(item.path);
-                // Update UI via event
                 document.dispatchEvent(new CustomEvent('selection-update'));
                 if (!state.selectionMode) {
                     state.selectionMode = true;
@@ -95,7 +97,6 @@ export function attachDragEvents(card, item) {
                 sha: item.sha || null,
                 isFolder: isFolder,
             };
-            // Show context menu at touch position
             document.dispatchEvent(new CustomEvent('ctxmenu-show', { detail: { x: touch.clientX, y: touch.clientY } }));
         }, 600);
     }, { passive: true });
@@ -104,11 +105,14 @@ export function attachDragEvents(card, item) {
         const touch = e.touches[0];
         const dx = touch.clientX - touchStartX;
         const dy = touch.clientY - touchStartY;
-        if (Math.abs(dx) > 20 || Math.abs(dy) > 20) { // threshold increased to avoid accidental drag
+        if (Math.abs(dx) > 20 || Math.abs(dy) > 20) {
+            // Movement threshold exceeded -> start drag
             clearTimeout(touchTimer);
             isLongPress = false;
             if (!isDragging) {
                 isDragging = true;
+                // Prevent default to stop scrolling and native drag
+                e.preventDefault();
                 if (state.selectedPaths.size > 1 && state.selectedPaths.has(item.path)) {
                     dragItems = [];
                     for (const selPath of state.selectedPaths) {
@@ -126,7 +130,7 @@ export function attachDragEvents(card, item) {
                 }
             }
         }
-    }, { passive: true });
+    }, { passive: false });
 
     card.addEventListener('touchend', (e) => {
         clearTimeout(touchTimer);
@@ -173,15 +177,4 @@ async function handleDropItems(sourceItems, destDir) {
     }
     document.dispatchEvent(new CustomEvent('navigate', { detail: { path: state.config.currentPath } }));
     toast(`Operation completed for ${sourceItems.length} item(s)`, 'success');
-}
-
-// These functions need to be imported from clipboard.js (we'll create that)
-// For simplicity, we'll define them here.
-async function copyItemTo(source, destDir) {
-    // Placeholder – we'll import actual functions
-    // We'll move to clipboard.js later
-}
-
-async function moveItemTo(source, destDir) {
-    // Placeholder
 }
