@@ -604,3 +604,12 @@ a.tag-pill:hover { filter: brightness(1.25); }
   font-weight: 700;
   margin-bottom: 14px;
 }
+
+/* ---- Search hit highlight ---- */
+.search-hit {
+  background: var(--neon-glow);
+  color: var(--neon);
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+}
