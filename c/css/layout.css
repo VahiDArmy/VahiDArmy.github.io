@@ -143,11 +143,11 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
-    font-size: 0.7rem;
+    gap: 2px;
+    font-size: 0.62rem;
     color: var(--text-faint);
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 4px 6px;
+    border-radius: 10px;
   }
   .mobile-tabbar a.active { color: var(--neon); }
   .container { padding-bottom: 96px; }
