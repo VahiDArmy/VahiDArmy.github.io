@@ -143,6 +143,17 @@ const Store = (function () {
     }
   }
 
+  async function searchTafsirs(query) {
+    const { data, error } = await sb
+      .from('tafsirs')
+      .select('*')
+      .ilike('content', `%${query}%`)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data;
+  }
+
   async function getCurrentRound() {
     const { data, error } = await sb.from('site_meta').select('current_round').eq('id', 1).single();
     if (error) throw error;
@@ -223,6 +234,7 @@ const Store = (function () {
     toggleMark,
     syncAyahLinks,
     getAllLinks,
+    searchTafsirs,
     getCurrentRound,
     getSiteMeta,
     getProgress,
