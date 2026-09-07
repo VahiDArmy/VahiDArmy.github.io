@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes, viewport-fit=cover" />
+    <title>FileForge — GitHub Manager</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- Font Awesome 6 -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <!-- Prism.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    <!-- JSZip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+    </script>
+
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ===== GLOW ===== -->
+    <div class="bg-glow g1"></div>
+    <div class="bg-glow g2"></div>
+    <div class="bg-glow g3"></div>
+
+    <!-- ===== DRAG OVERLAY ===== -->
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="drop-zone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            Drop files to upload
+        </div>
+    </div>
+
+    <!-- ===== CUSTOM MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-title" id="modalTitle">Confirm</div>
+            <div class="modal-message" id="modalMessage">Are you sure?</div>
+            <div class="modal-actions" id="modalActions">
+                <button class="btn btn-cancel" id="modalCancel">Cancel</button>
+                <button class="btn btn-confirm" id="modalConfirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ===== FLOATING SELECTION TOOLBAR ===== -->
+    <div class="selection-toolbar" id="selectionToolbar">
+        <span class="toolbar-label">⚡</span>
+        <button class="toolbar-btn cut-btn" id="toolbarCut"><i class="fas fa-scissors"></i> Cut</button>
+        <button class="toolbar-btn copy-btn" id="toolbarCopy"><i class="fas fa-copy"></i> Copy</button>
+        <button class="toolbar-btn paste-btn" id="toolbarPaste"><i class="fas fa-paste"></i> Paste</button>
+        <div class="toolbar-divider"></div>
+        <button class="toolbar-btn close-btn" id="toolbarClose"><i class="fas fa-times"></i> Close</button>
+    </div>
+
+    <!-- ===== APP ===== -->
+    <div id="app">
+
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <div class="brand">
+                <i class="fas fa-code-branch"></i>
+                <span>FileForge</span>
+            </div>
+            <div class="repo-config">
+                <div class="field-group">
+                    <span class="repo-label">Owner</span>
+                    <input type="text" id="ownerInput" placeholder="user" value="" />
+                    <span class="helper-icon">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="helper-tooltip">
+                            <strong>From URL:</strong>
+                            <div class="example">
+                                <code>user.github.io/repo/</code><br />
+                                Owner: <code>user</code> · Repo: <code>repo</code>
+                            </div>
+                        </div>
+                    </span>
+                </div>
+                <div class="field-group">
+                    <span class="repo-label">Repo</span>
+                    <input type="text" id="repoInput" placeholder="repo" value="" />
+                </div>
+                <div class="field-group">
+                    <span class="repo-label">Branch</span>
+                    <input type="text" id="branchInput" placeholder="main" value="main" />
+                </div>
+            </div>
+            <div class="nav-controls">
+                <button class="btn btn-sm" id="homeBtn"><i class="fas fa-home"></i></button>
+                <button class="btn btn-sm" id="upBtn"><i class="fas fa-arrow-up"></i></button>
+            </div>
+            <div class="path-display">
+                <i class="fas fa-folder-open"></i>
+                <span class="path-text" id="currentPath">/</span>
+            </div>
+            <div class="actions">
+                <button class="btn btn-sm btn-select" id="selectModeBtn"><i class="fas fa-check-circle"></i> Select</button>
+                <button class="btn btn-sm btn-download" id="downloadSelectedBtn" style="display:none;">
+                    <i class="fas fa-download"></i> <span id="selectedCount">0</span>
+                </button>
+                <button class="mobile-toggle" id="mobileToggle"><i class="fas fa-bars"></i></button>
+                <input type="password" class="token-input" id="tokenInput" placeholder="Token" autocomplete="off" />
+                <button class="btn btn-primary btn-sm" id="connectBtn"><i class="fas fa-link"></i></button>
+                <button class="btn btn-sm" id="refreshBtn"><i class="fas fa-sync-alt"></i></button>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <div class="main-wrap">
+
+            <!-- SIDEBAR -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h4><i class="fas fa-tree"></i> Files</h4>
+                    <button class="btn btn-sm btn-icon" id="newFolderBtn"><i class="fas fa-folder-plus"></i></button>
+                </div>
+                <div class="sidebar-tree" id="fileTree">
+                    <div class="tree-empty"><i class="fas fa-cloud"></i><br />Connect</div>
+                </div>
+            </aside>
+
+            <!-- CONTENT -->
+            <main class="content" id="mainContent">
+
+                <!-- File List -->
+                <div class="file-list" id="fileList">
+                    <div class="empty-state">
+                        <i class="fas fa-folder-open"></i>
+                        <p>Set Owner & Repo, enter token, Connect</p>
+                    </div>
+                </div>
+
+                <!-- Editor -->
+                <div class="editor-wrap" id="editorWrap">
+                    <div class="editor-toolbar">
+                        <span class="file-name" id="editorFileName"><i class="fas fa-file-code"></i> <span id="editorFileNameText">untitled</span></span>
+                        <div class="tabs">
+                            <button class="tab-btn active" data-tab="edit"><i class="fas fa-edit"></i></button>
+                            <button class="tab-btn" data-tab="preview"><i class="fas fa-eye"></i></button>
+                            <button class="tab-btn" data-tab="python" id="pythonTabBtn"><i class="fab fa-python"></i></button>
+                        </div>
+                        <button class="btn btn-success btn-sm" id="saveFileBtn"><i class="fas fa-save"></i></button>
+                        <button class="btn btn-sm open-browser-btn" id="openBrowserBtn"><i class="fas fa-external-link-alt"></i></button>
+                        <button class="btn btn-sm" id="closeEditorBtn"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="editor-body">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                        <div class="editor-textarea-wrap">
+                            <textarea id="editorTextarea" spellcheck="false"></textarea>
+                        </div>
+                        <div class="highlight-preview" id="highlightPreview"></div>
+                        <div class="python-output" id="pythonOutput">
+                            <span class="out-label"><i class="fas fa-terminal"></i> Output</span>
+                            <div id="pythonOutputContent"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ===== CONTEXT MENU ===== -->
+    <div class="ctx-menu" id="ctxMenu">
+        <button class="ctx-item" data-action="newFile"><i class="fas fa-file"></i> New File</button>
+        <button class="ctx-item" data-action="newFolder"><i class="fas fa-folder-plus"></i> New Folder</button>
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" data-action="cut"><i class="fas fa-scissors"></i> Cut</button>
+        <button class="ctx-item" data-action="copy"><i class="fas fa-copy"></i> Copy</button>
+        <button class="ctx-item" data-action="paste"><i class="fas fa-paste"></i> Paste</button>
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" data-action="rename"><i class="fas fa-pen"></i> Rename</button>
+        <button class="ctx-item" data-action="delete"><i class="fas fa-trash"></i> Delete</button>
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" data-action="download"><i class="fas fa-download"></i> Download</button>
+        <button class="ctx-item" data-action="copyPath"><i class="fas fa-copy"></i> Copy Path</button>
+        <div class="ctx-divider"></div>
+        <button class="ctx-item" data-action="refresh"><i class="fas fa-sync-alt"></i> Refresh</button>
+    </div>
+
+    <!-- ===== SCRIPTS ===== -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js">
+    </script>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
