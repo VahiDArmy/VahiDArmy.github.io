@@ -1,5 +1,7 @@
 // =============================================================
-// صفحهٔ کار — یک «آیهٔ در حال کار» واحد
+// صفحهٔ کار — یک «آیهٔ در حال کار» واحد که هم می‌شود بهش تفسیر جدید
+// اضافه کرد، هم تفسیرهای قبلی‌اش را دید/ویرایش/حذف کرد، هم با دکمهٔ
+// بعدی/قبلی جابه‌جا شد. پیش‌فرض: آخرین آیه‌ای که رویش تفسیر ثبت شده.
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
@@ -12,7 +14,6 @@
   const tafsirTags = document.getElementById('tafsirTags');
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
-  const markReadBtn = document.getElementById('markReadBtn');
 
   function parseTags(str) {
     return Array.from(
@@ -27,18 +28,33 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
-  let detectedLink = null;
+  let detectedLink = null; // { surah, ayah, excerpt, start, end }
+  let isBookmarked = false;
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
 
+  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
   } else {
     const meta = await Store.getSiteMeta();
-    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+    // آیهٔ بعد از نشانک را باز کن (یا اگر نشانک در آخرین آیه است، همان را نگه دار)
+    const nextAyah = meta.bookmark_ayah + 1;
+    const surahData = await QuranData.getSurah(meta.bookmark_surah);
+    if (nextAyah <= surahData.ayah_count) {
+      current = { surah: meta.bookmark_surah, ayah: nextAyah };
+    } else if (meta.bookmark_surah < 114) {
+      current = { surah: meta.bookmark_surah + 1, ayah: 1 };
+    } else {
+      current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+    }
   }
+
+  // ============================================================
+  // توابع کمکی
+  // ============================================================
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -62,6 +78,10 @@
     textarea.focus();
   }
 
+  // ============================================================
+  // توابع اصلی
+  // ============================================================
+
   async function refreshProgress() {
     const p = await Store.getProgress();
     const surahMeta = (await QuranData.getIndex()).find((s) => s.number === p.bookmarkSurah);
@@ -74,6 +94,7 @@
     return p;
   }
 
+  // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
   function detectLinkAtCursor(textarea) {
     const text = textarea.value;
     const cursorPos = textarea.selectionStart;
@@ -98,6 +119,7 @@
     return found;
   }
 
+  // --- به‌روزرسانی دکمه‌ی لینک بر اساس موقعیت مکان‌نما ---
   function updateLinkButton() {
     const linkBtn = document.getElementById('openLinkToolBtn');
     const detected = detectLinkAtCursor(tafsirContent);
@@ -114,6 +136,7 @@
     }
   }
 
+  // --- باز کردن پاپ‌آپ با آیه‌ی پیش‌فرض یا آیه‌ی تشخیص‌داده‌شده ---
   function openLinkModal(targetSurah, targetAyah) {
     const s = targetSurah || current.surah;
     const a = targetAyah || current.ayah;
@@ -221,6 +244,15 @@
     });
   }
 
+  // --- تابع ثبت نشانک خواندن ---
+  async function handleBookmark(isBookmarked) {
+    if (isBookmarked) {
+      await Store.updateBookmark(current.surah, current.ayah);
+      isBookmarked = true;
+    }
+    await refreshProgress();
+  }
+
   async function renderCurrentAyah() {
     ayahSkeleton(stickyFrame);
     exitEditMode();
@@ -232,6 +264,10 @@
     selectRow.surah.value = current.surah;
     UI.populateAyahSelect(selectRow.ayah, surahData.ayah_count, current.ayah);
 
+    // بررسی کنید که آیا این آیه نشانک خواندن است
+    const meta = await Store.getSiteMeta();
+    isBookmarked = (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah);
+
     renderAyahFrame(stickyFrame, ayahData, surahData, {
       marked: await Store.isMarked(current.surah, current.ayah),
       onToggleMark: async (btn) => {
@@ -240,42 +276,16 @@
         btn.classList.toggle('is-marked', nowMarked);
         btn.setAttribute('aria-pressed', String(nowMarked));
       },
+      onBookmark: handleBookmark,
+      isBookmarked: isBookmarked
     });
 
     prevBtn.disabled = current.surah === 1 && current.ayah === 1;
     nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
-    await Store.advanceBookmarkIfAhead(current.surah, current.ayah);
     await refreshProgress();
     await renderTafsirsList();
   }
-
-  // ============================================================
-  // دکمه علامت خواندن
-  // ============================================================
-  
-  markReadBtn.addEventListener('click', async () => {
-    const result = await Store.markAsReadAndAdvance(current.surah, current.ayah);
-    
-    if (result.success) {
-      UI.toast(result.message);
-      // حرکت به آیه بعدی
-      current = { surah: result.nextSurah, ayah: result.nextAyah };
-      await renderCurrentAyah();
-    } else {
-      if (result.message.includes('انتهای قرآن')) {
-        // پیشنهاد پایان دور
-        if (confirm('به انتهای قرآن رسیدید. آیا می‌خواهید دور جدید را شروع کنید؟')) {
-          const newRound = await Store.endRound();
-          UI.toast(`دور ${UI.toPersianDigits(newRound)} آغاز شد ✦`);
-          current = { surah: 1, ayah: 1 };
-          await renderCurrentAyah();
-        }
-      } else {
-        UI.toast(result.message);
-      }
-    }
-  });
 
   // ============================================================
   // راه‌اندازی ابزار لینک
@@ -333,6 +343,7 @@
     updateLinkButton();
   });
 
+  // --- رویدادهای تشخیص ارجاع هنگام تایپ و حرکت مکان‌نما ---
   tafsirContent.addEventListener('input', updateLinkButton);
   tafsirContent.addEventListener('click', updateLinkButton);
   tafsirContent.addEventListener('keyup', updateLinkButton);
@@ -408,6 +419,10 @@
     }
     updateLinkButton();
   });
+
+  // ============================================================
+  // اجرای اولیه
+  // ============================================================
 
   await renderCurrentAyah();
 })();
