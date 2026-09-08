@@ -665,3 +665,28 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   padding: 0 2px;
   border-radius: 3px;
 }
+
+/* ---- Link detection indicator (برای نمایش ارجاع تشخیص‌داده‌شده) ---- */
+.link-detection {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--violet);
+  color: var(--violet);
+  font-size: 0.78rem;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+.link-detection.visible {
+  display: flex;
+}
+.link-detection .link-preview {
+  font-weight: 600;
+  font-family: var(--font-quran);
+  font-size: 0.9rem;
+  direction: rtl;
+}
