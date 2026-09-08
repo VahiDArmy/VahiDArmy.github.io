@@ -1,7 +1,5 @@
 // =============================================================
-// صفحهٔ کار — یک «آیهٔ در حال کار» واحد که هم می‌شود بهش تفسیر جدید
-// اضافه کرد، هم تفسیرهای قبلی‌اش را دید/ویرایش/حذف کرد، هم با دکمهٔ
-// بعدی/قبلی جابه‌جا شد. پیش‌فرض: آخرین آیه‌ای که رویش تفسیر ثبت شده.
+// صفحهٔ کار — یک «آیهٔ در حال کار» واحد
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
@@ -14,6 +12,7 @@
   const tafsirTags = document.getElementById('tafsirTags');
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
+  const markReadBtn = document.getElementById('markReadBtn');
 
   function parseTags(str) {
     return Array.from(
@@ -28,12 +27,11 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
-  let detectedLink = null; // { surah, ayah, excerpt, start, end }
+  let detectedLink = null;
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
 
-  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
@@ -41,10 +39,6 @@
     const meta = await Store.getSiteMeta();
     current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
   }
-
-  // ============================================================
-  // توابع کمکی
-  // ============================================================
 
   function escapeHtml(str) {
     const div = document.createElement('div');
@@ -68,10 +62,6 @@
     textarea.focus();
   }
 
-  // ============================================================
-  // توابع اصلی
-  // ============================================================
-
   async function refreshProgress() {
     const p = await Store.getProgress();
     const surahMeta = (await QuranData.getIndex()).find((s) => s.number === p.bookmarkSurah);
@@ -84,7 +74,6 @@
     return p;
   }
 
-  // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
   function detectLinkAtCursor(textarea) {
     const text = textarea.value;
     const cursorPos = textarea.selectionStart;
@@ -109,7 +98,6 @@
     return found;
   }
 
-  // --- به‌روزرسانی دکمه‌ی لینک بر اساس موقعیت مکان‌نما ---
   function updateLinkButton() {
     const linkBtn = document.getElementById('openLinkToolBtn');
     const detected = detectLinkAtCursor(tafsirContent);
@@ -126,7 +114,6 @@
     }
   }
 
-  // --- باز کردن پاپ‌آپ با آیه‌ی پیش‌فرض یا آیه‌ی تشخیص‌داده‌شده ---
   function openLinkModal(targetSurah, targetAyah) {
     const s = targetSurah || current.surah;
     const a = targetAyah || current.ayah;
@@ -264,6 +251,33 @@
   }
 
   // ============================================================
+  // دکمه علامت خواندن
+  // ============================================================
+  
+  markReadBtn.addEventListener('click', async () => {
+    const result = await Store.markAsReadAndAdvance(current.surah, current.ayah);
+    
+    if (result.success) {
+      UI.toast(result.message);
+      // حرکت به آیه بعدی
+      current = { surah: result.nextSurah, ayah: result.nextAyah };
+      await renderCurrentAyah();
+    } else {
+      if (result.message.includes('انتهای قرآن')) {
+        // پیشنهاد پایان دور
+        if (confirm('به انتهای قرآن رسیدید. آیا می‌خواهید دور جدید را شروع کنید؟')) {
+          const newRound = await Store.endRound();
+          UI.toast(`دور ${UI.toPersianDigits(newRound)} آغاز شد ✦`);
+          current = { surah: 1, ayah: 1 };
+          await renderCurrentAyah();
+        }
+      } else {
+        UI.toast(result.message);
+      }
+    }
+  });
+
+  // ============================================================
   // راه‌اندازی ابزار لینک
   // ============================================================
 
@@ -319,7 +333,6 @@
     updateLinkButton();
   });
 
-  // --- رویدادهای تشخیص ارجاع هنگام تایپ و حرکت مکان‌نما ---
   tafsirContent.addEventListener('input', updateLinkButton);
   tafsirContent.addEventListener('click', updateLinkButton);
   tafsirContent.addEventListener('keyup', updateLinkButton);
@@ -395,10 +408,6 @@
     }
     updateLinkButton();
   });
-
-  // ============================================================
-  // اجرای اولیه
-  // ============================================================
 
   await renderCurrentAyah();
 })();
