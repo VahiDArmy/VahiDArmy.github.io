@@ -105,16 +105,12 @@
     await refreshProgress();
   }
 
-  // --- رفتن به آخرین آیه ثبت‌شده (نشانک) ---
-  async function jumpToBookmark() {
-    const meta = await Store.getSiteMeta();
-    if (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah) {
-      UI.toast('همین آیه نشانک شده است');
-      return;
+  // --- رفتن به آیهٔ جاری (اسکرول) ---
+  function goToCurrentAyah() {
+    const frame = document.getElementById('workAyahFrame');
+    if (frame) {
+      frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
-    await renderCurrentAyah();
-    UI.toast(`رفتن به سورهٔ ${index.find(s => s.number === current.surah)?.name_fa}، آیهٔ ${UI.toPersianDigits(current.ayah)}`);
   }
 
   // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
@@ -361,9 +357,14 @@
   // رویدادهای فرم و ناوبری
   // ============================================================
 
-  // دکمه‌های جدید در کارت پیشرفت
+  // دکمه ثبت نشانک (آخرین آیه بررسی‌شده)
   document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
-  document.getElementById('jumpToBookmarkBtn').addEventListener('click', jumpToBookmark);
+
+  // دکمه رفتن به آیه جاری
+  document.getElementById('goToCurrentBtn').addEventListener('click', goToCurrentAyah);
+
+  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
+
   document.getElementById('endRoundBtn').addEventListener('click', async () => {
     const p = await Store.getProgress();
     const ok = confirm(
@@ -375,8 +376,6 @@
     current = { surah: 1, ayah: 1 };
     await renderCurrentAyah();
   });
-
-  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   selectRow.surah.addEventListener('change', async () => {
     current = { surah: Number(selectRow.surah.value), ayah: 1 };
