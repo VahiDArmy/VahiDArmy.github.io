@@ -5,6 +5,7 @@
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
+  const stickyContainer = document.getElementById('stickyAyahContainer');
   const selectRow = { surah: document.getElementById('formSurahSelect'), ayah: document.getElementById('formAyahSelect') };
   const prevBtn = document.getElementById('workPrevBtn');
   const nextBtn = document.getElementById('workNextBtn');
@@ -84,18 +85,6 @@
     return p;
   }
 
-  // --- رفتن به آخرین آیهٔ بررسی‌شده (نشانک) ---
-  async function goToBookmark() {
-    const meta = await Store.getSiteMeta();
-    if (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah) {
-      UI.toast('شما در حال حاضر روی آخرین آیهٔ بررسی‌شده هستید');
-      return;
-    }
-    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
-    await renderCurrentAyah();
-    UI.toast(`رفتن به سورهٔ ${index.find(s => s.number === current.surah)?.name_fa || current.surah}، آیهٔ ${UI.toPersianDigits(current.ayah)}`);
-  }
-
   // --- ثبت آخرین آیه بررسی‌شده ---
   async function setBookmark() {
     const surahName = index.find(s => s.number === current.surah)?.name_fa || current.surah;
@@ -115,6 +104,13 @@
     }
     UI.toast(`نشانک ثبت شد: سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)} ✦`);
     await refreshProgress();
+  }
+
+  // --- رفتن به آیه جاری (اسکرول به sticky-ayah) ---
+  function goToCurrentAyah() {
+    if (stickyContainer) {
+      stickyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 
   // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
@@ -361,9 +357,9 @@
   // رویدادهای فرم و ناوبری
   // ============================================================
 
-  // دکمه رفتن به نشانک
-  document.getElementById('goToBookmarkBtn').addEventListener('click', goToBookmark);
-  
+  // دکمه رفتن به آیه جاری
+  document.getElementById('goToCurrentAyahBtn').addEventListener('click', goToCurrentAyah);
+
   // دکمه ثبت نشانک
   document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
 
