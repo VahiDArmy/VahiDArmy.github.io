@@ -57,7 +57,12 @@
         <p class="progress-hero__count" id="bookmarkLabel">تا سورهٔ فاتحه، آیهٔ ۱</p>
         <p class="progress-hero__count" id="tafsirCountLabel" style="color:var(--text-faint); font-size:0.78rem; font-weight:400;">۰ تفسیر در این دور</p>
       </div>
-      <button class="btn btn--sm" id="endRoundBtn" title="این دور را پایان بدهید و دور بعدی را شروع کنید">پایان دور</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn--sm btn--primary" id="markReadBtn" title="این آیه را به عنوان خوانده شده علامت بزن و به آیه بعدی برو">
+          ✓ علامت خواندن
+        </button>
+        <button class="btn btn--sm" id="endRoundBtn" title="این دور را پایان بدهید و دور بعدی را شروع کنید">پایان دور</button>
+      </div>
     </div>
   </section>
 
@@ -156,7 +161,7 @@
 <script>
   (async function () {
     const session = await Auth.requireAuth();
-    if (!session) return; // در حال هدایت به صفحهٔ ورود
+    if (!session) return;
     document.getElementById('logoutBtn').addEventListener('click', async () => {
       await Auth.signOut();
       location.href = 'login.html';
