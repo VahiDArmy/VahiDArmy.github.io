@@ -201,6 +201,15 @@
   }
 
   function openLinkModal() {
+    // پیش‌فرض: آیهٔ جاری که روی آن کار می‌کنیم
+    const defaultSurah = current.surah;
+    const defaultAyah = current.ayah;
+    UI.populateSurahSelect(linkSurahSelect, index, defaultSurah);
+    // پس از populate، آیه‌ها را با مقدار پیش‌فرض پر می‌کنیم
+    QuranData.getSurah(defaultSurah).then(surahData => {
+      UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, defaultAyah);
+      updateLinkPreview();
+    });
     linkToolModal.hidden = false;
   }
   function closeLinkModal() {
@@ -209,10 +218,6 @@
 
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
-    UI.populateSurahSelect(linkSurahSelect, index, 1);
-    const surahData = await QuranData.getSurah(1);
-    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
-    await updateLinkPreview();
     openLinkModal();
   });
 
@@ -226,6 +231,7 @@
 
   linkSurahSelect.addEventListener('change', async () => {
     const surahData = await QuranData.getSurah(Number(linkSurahSelect.value));
+    // وقتی سوره تغییر می‌کند، آیه را روی ۱ قرار می‌دهیم
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
     await updateLinkPreview();
   });
