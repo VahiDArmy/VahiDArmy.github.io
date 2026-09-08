@@ -28,54 +28,90 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
+  let detectedLink = null; // { surah, ayah, excerpt, start, end }
 
-  ayahSkeleton(stickyFrame);
-  const index = await QuranData.getIndex();
-  UI.populateSurahSelect(selectRow.surah, index, 1);
-
-  // --- تعیین آیهٔ شروع: از URL، وگرنه نشانک خواندن (جایی که آخرین بار متوقف شدید) ---
-  const params = new URLSearchParams(location.search);
-  if (params.has('surah') && params.has('ayah')) {
-    current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
-  } else {
-    const meta = await Store.getSiteMeta();
-    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+  // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
+  function detectLinkAtCursor(textarea) {
+    const text = textarea.value;
+    const cursorPos = textarea.selectionStart;
+    const linkRegex = /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g;
+    let match;
+    let found = null;
+    while ((match = linkRegex.exec(text)) !== null) {
+      const start = match.index;
+      const end = match.index + match[0].length;
+      if (cursorPos >= start && cursorPos <= end) {
+        found = {
+          surah: Number(match[1]),
+          ayah: Number(match[2]),
+          excerpt: match[3] ? match[3].trim() : null,
+          start: start,
+          end: end,
+          fullMatch: match[0]
+        };
+        break;
+      }
+    }
+    return found;
   }
 
-  async function refreshProgress() {
-    const p = await Store.getProgress();
-    const surahMeta = (await QuranData.getIndex()).find((s) => s.number === p.bookmarkSurah);
-    document.getElementById('roundNumber').textContent = UI.toPersianDigits(p.round);
-    document.getElementById('bookmarkLabel').textContent =
-      `تا سورهٔ ${surahMeta.name_fa}، آیهٔ ${UI.toPersianDigits(p.bookmarkAyah)}`;
-    document.getElementById('tafsirCountLabel').textContent =
-      `${UI.toPersianDigits(p.tafsirCount)} تفسیر در این دور`;
-    UI.setProgressRing(document.getElementById('progressRing'), p.percent, document.getElementById('progressLabel'));
-    return p;
+  // --- به‌روزرسانی دکمه‌ی لینک بر اساس موقعیت مکان‌نما ---
+  function updateLinkButton() {
+    const linkBtn = document.getElementById('openLinkToolBtn');
+    const detected = detectLinkAtCursor(tafsirContent);
+    detectedLink = detected;
+    if (detected) {
+      const surahName = index.find(s => s.number === detected.surah)?.name_fa || detected.surah;
+      linkBtn.textContent = `✎ ویرایش ارجاع به سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(detected.ayah)}`;
+      linkBtn.style.color = 'var(--violet)';
+      linkBtn.style.borderColor = 'var(--violet)';
+    } else {
+      linkBtn.textContent = '﹢ لینک به آیهٔ دیگر';
+      linkBtn.style.color = '';
+      linkBtn.style.borderColor = '';
+    }
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+  // --- باز کردن پاپ‌آپ با آیه‌ی پیش‌فرض یا آیه‌ی تشخیص‌داده‌شده ---
+  function openLinkModal(targetSurah, targetAyah) {
+    const s = targetSurah || current.surah;
+    const a = targetAyah || current.ayah;
+    UI.populateSurahSelect(linkSurahSelect, index, s);
+    QuranData.getSurah(s).then(surahData => {
+      UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, a);
+      updateLinkPreview();
+    });
+    linkToolModal.hidden = false;
   }
 
-  function exitEditMode() {
-    editingId = null;
-    editBanner.hidden = true;
-    tafsirContent.value = '';
-    tafsirTags.value = '';
-    submitBtn.textContent = 'ثبت تفسیر';
+  function closeLinkModal() {
+    linkToolModal.hidden = true;
   }
 
-  function enterEditMode(t) {
-    editingId = t.id;
-    editBanner.hidden = false;
-    tafsirContent.value = t.content;
-    tafsirTags.value = (t.tags || []).join(', ');
-    submitBtn.textContent = 'به‌روزرسانی تفسیر';
-    tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    tafsirContent.focus();
+  function insertAtCursor(textarea, text) {
+    const start = textarea.selectionStart ?? textarea.value.length;
+    const end = textarea.selectionEnd ?? textarea.value.length;
+    textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
+    const newPos = start + text.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.focus();
+  }
+
+  function replaceAtCursor(textarea, start, end, text) {
+    textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
+    const newPos = start + text.length;
+    textarea.setSelectionRange(newPos, newPos);
+    textarea.focus();
+  }
+
+  async function updateLinkPreview() {
+    const s = Number(linkSurahSelect.value);
+    const a = Number(linkAyahSelect.value);
+    const surahData = await QuranData.getSurah(s);
+    const ayahObj = surahData.ayahs.find((x) => x.v === a) || surahData.ayahs[0];
+    linkAyahPreview.innerHTML = `
+      <p style="margin:0 0 8px; font-family:var(--font-quran); font-size:1.15rem; line-height:2.2;">${ayahObj.ar}</p>
+      <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
   }
 
   async function renderCurrentAyah() {
@@ -102,10 +138,8 @@
     prevBtn.disabled = current.surah === 1 && current.ayah === 1;
     nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
-    // اگر جلوتر از نشانک خواندن هستیم، نشانک را همراه خودمان جلو می‌بریم
     await Store.advanceBookmarkIfAhead(current.surah, current.ayah);
     await refreshProgress();
-
     await renderTafsirsList();
   }
 
@@ -171,7 +205,25 @@
     });
   }
 
-  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
+  function exitEditMode() {
+    editingId = null;
+    editBanner.hidden = true;
+    tafsirContent.value = '';
+    tafsirTags.value = '';
+    submitBtn.textContent = 'ثبت تفسیر';
+    updateLinkButton();
+  }
+
+  function enterEditMode(t) {
+    editingId = t.id;
+    editBanner.hidden = false;
+    tafsirContent.value = t.content;
+    tafsirTags.value = (t.tags || []).join(', ');
+    submitBtn.textContent = 'به‌روزرسانی تفسیر';
+    tafsirContent.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    tafsirContent.focus();
+    updateLinkButton();
+  }
 
   // --- ابزار افزودن لینک به آیهٔ دیگر (پاپ‌آپ) ---
   const linkToolModal = document.getElementById('linkToolModal');
@@ -182,43 +234,14 @@
   const linkAyahSelect = document.getElementById('linkAyahSelect');
   const linkAyahPreview = document.getElementById('linkAyahPreview');
 
-  function insertAtCursor(textarea, text) {
-    const start = textarea.selectionStart ?? textarea.value.length;
-    const end = textarea.selectionEnd ?? textarea.value.length;
-    textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
-    const newPos = start + text.length;
-    textarea.setSelectionRange(newPos, newPos);
-  }
-
-  async function updateLinkPreview() {
-    const s = Number(linkSurahSelect.value);
-    const a = Number(linkAyahSelect.value);
-    const surahData = await QuranData.getSurah(s);
-    const ayahObj = surahData.ayahs.find((x) => x.v === a) || surahData.ayahs[0];
-    linkAyahPreview.innerHTML = `
-      <p style="margin:0 0 8px; font-family:var(--font-quran); font-size:1.15rem; line-height:2.2;">${ayahObj.ar}</p>
-      <p style="margin:0; color:var(--text-dim);">${ayahObj.fa}</p>`;
-  }
-
-  function openLinkModal() {
-    // پیش‌فرض: آیهٔ جاری که روی آن کار می‌کنیم
-    const defaultSurah = current.surah;
-    const defaultAyah = current.ayah;
-    UI.populateSurahSelect(linkSurahSelect, index, defaultSurah);
-    // پس از populate، آیه‌ها را با مقدار پیش‌فرض پر می‌کنیم
-    QuranData.getSurah(defaultSurah).then(surahData => {
-      UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, defaultAyah);
-      updateLinkPreview();
-    });
-    linkToolModal.hidden = false;
-  }
-  function closeLinkModal() {
-    linkToolModal.hidden = true;
-  }
-
   openLinkToolBtn.addEventListener('click', async () => {
     tafsirContent.blur();
-    openLinkModal();
+    // اگر ارجاعی تشخیص داده شده، آن را برای ویرایش باز کن
+    if (detectedLink) {
+      openLinkModal(detectedLink.surah, detectedLink.ayah);
+    } else {
+      openLinkModal(current.surah, current.ayah);
+    }
   });
 
   cancelLinkBtn.addEventListener('click', closeLinkModal);
@@ -231,7 +254,6 @@
 
   linkSurahSelect.addEventListener('change', async () => {
     const surahData = await QuranData.getSurah(Number(linkSurahSelect.value));
-    // وقتی سوره تغییر می‌کند، آیه را روی ۱ قرار می‌دهیم
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
     await updateLinkPreview();
   });
@@ -244,11 +266,27 @@
     const selectedText = selection ? selection.toString().trim() : '';
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
-    insertAtCursor(tafsirContent, AyahLinks.makeToken(s, a, excerpt));
+    const newLink = AyahLinks.makeToken(s, a, excerpt);
+    
+    // اگر در حالت ویرایش ارجاع هستیم، جایگزین کن
+    if (detectedLink) {
+      replaceAtCursor(tafsirContent, detectedLink.start, detectedLink.end, newLink);
+      detectedLink = null;
+    } else {
+      insertAtCursor(tafsirContent, newLink);
+    }
     closeLinkModal();
     tafsirContent.focus();
+    updateLinkButton();
   });
 
+  // --- رویدادهای تشخیص ارجاع هنگام تایپ و حرکت مکان‌نما ---
+  tafsirContent.addEventListener('input', updateLinkButton);
+  tafsirContent.addEventListener('click', updateLinkButton);
+  tafsirContent.addEventListener('keyup', updateLinkButton);
+  tafsirContent.addEventListener('select', updateLinkButton);
+
+  // --- مقداردهی اولیه ---
   await renderCurrentAyah();
 
   document.getElementById('endRoundBtn').addEventListener('click', async () => {
@@ -315,5 +353,6 @@
       await refreshProgress();
       UI.toast('تفسیر با موفقیت ثبت شد');
     }
+    updateLinkButton();
   });
 })();
