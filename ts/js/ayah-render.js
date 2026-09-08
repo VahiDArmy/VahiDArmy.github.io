@@ -1,7 +1,9 @@
 // رندر قاب آیه (عنصر امضای طراحی) + نوار باریک ترجمه با قابلیت باز/بسته شدن
 // options.marked: آیا این آیه نشان‌گذاری شده؟  options.onToggleMark: اگر داده شود، چراغ کلیک‌پذیر می‌شود
+// options.onBookmark: اگر داده شود، دکمه‌ی نشانک خواندن نمایش داده می‌شود
+// options.isBookmarked: آیا این آیه به‌عنوان آخرین آیه‌ی خوانده‌شده ثبت شده؟
 function renderAyahFrame(container, ayah, surahMeta, options = {}) {
-  const { marked = false, onToggleMark = null } = options;
+  const { marked = false, onToggleMark = null, onBookmark = null, isBookmarked = false } = options;
   container.innerHTML = `
     <div class="ayah-frame">
       <div class="ayah-frame__inner">
@@ -10,11 +12,18 @@ function renderAyahFrame(container, ayah, surahMeta, options = {}) {
             ${onToggleMark ? `<button type="button" class="mark-toggle${marked ? ' is-marked' : ''}" aria-label="نشان‌گذاری این آیه" aria-pressed="${marked}"></button>` : marked ? `<span class="mark-toggle is-marked" aria-hidden="true"></span>` : ''}
             سورهٔ <b>${surahMeta.name_fa}</b> · آیهٔ ${UI.toPersianDigits(ayah.v)}
           </span>
-          <span class="ayah-frame__ref-text">
+          <span class="ayah-frame__ref-text" style="display:flex; align-items:center; gap:6px;">
             ${surahMeta.revelation}
             <button type="button" class="copy-ayah-btn" aria-label="کپی آیه و ترجمه" title="کپی آیه و ترجمه">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             </button>
+            ${onBookmark ? `
+              <button type="button" class="bookmark-btn${isBookmarked ? ' is-bookmarked' : ''}" aria-label="ثبت به‌عنوان آخرین آیهٔ خوانده‌شده" title="ثبت به‌عنوان آخرین آیهٔ خوانده‌شده">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
+            ` : ''}
           </span>
         </div>
         <p class="ayah-frame__arabic">${ayah.ar}</p>
@@ -42,6 +51,19 @@ function renderAyahFrame(container, ayah, surahMeta, options = {}) {
   if (onToggleMark) {
     const markBtn = container.querySelector('button.mark-toggle');
     markBtn.addEventListener('click', () => onToggleMark(markBtn));
+  }
+
+  if (onBookmark) {
+    const bookmarkBtn = container.querySelector('.bookmark-btn');
+    bookmarkBtn.addEventListener('click', async () => {
+      const isBookmarked = bookmarkBtn.classList.toggle('is-bookmarked');
+      const svg = bookmarkBtn.querySelector('svg');
+      svg.setAttribute('fill', isBookmarked ? 'currentColor' : 'none');
+      await onBookmark(isBookmarked);
+      if (isBookmarked) {
+        UI.toast('ثبت شد ✓');
+      }
+    });
   }
 
   container.querySelector('.copy-ayah-btn').addEventListener('click', async () => {
