@@ -28,8 +28,7 @@
 
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
-  let detectedLink = null; // { surah, ayah, excerpt, start, end }
-  let isBookmarked = false;
+  let detectedLink = null;
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
@@ -40,16 +39,7 @@
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
   } else {
     const meta = await Store.getSiteMeta();
-    // آیهٔ بعد از نشانک را باز کن (یا اگر نشانک در آخرین آیه است، همان را نگه دار)
-    const nextAyah = meta.bookmark_ayah + 1;
-    const surahData = await QuranData.getSurah(meta.bookmark_surah);
-    if (nextAyah <= surahData.ayah_count) {
-      current = { surah: meta.bookmark_surah, ayah: nextAyah };
-    } else if (meta.bookmark_surah < 114) {
-      current = { surah: meta.bookmark_surah + 1, ayah: 1 };
-    } else {
-      current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
-    }
+    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
   }
 
   // ============================================================
@@ -92,6 +82,27 @@
       `${UI.toPersianDigits(p.tafsirCount)} تفسیر در این دور`;
     UI.setProgressRing(document.getElementById('progressRing'), p.percent, document.getElementById('progressLabel'));
     return p;
+  }
+
+  // --- ثبت آخرین آیه بررسی‌شده ---
+  async function setBookmark() {
+    const surahName = index.find(s => s.number === current.surah)?.name_fa || current.surah;
+    const confirmed = confirm(
+      `آیهٔ جاری (سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)}) به عنوان آخرین آیهٔ بررسی‌شده ثبت شود؟`
+    );
+    if (!confirmed) return;
+    
+    const { error } = await sb
+      .from('site_meta')
+      .update({ bookmark_surah: current.surah, bookmark_ayah: current.ayah })
+      .eq('id', 1);
+    if (error) {
+      UI.toast('خطا در ثبت نشانک');
+      console.error(error);
+      return;
+    }
+    UI.toast(`نشانک ثبت شد: سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)} ✦`);
+    await refreshProgress();
   }
 
   // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
@@ -244,15 +255,6 @@
     });
   }
 
-  // --- تابع ثبت نشانک خواندن ---
-  async function handleBookmark(isBookmarked) {
-    if (isBookmarked) {
-      await Store.updateBookmark(current.surah, current.ayah);
-      isBookmarked = true;
-    }
-    await refreshProgress();
-  }
-
   async function renderCurrentAyah() {
     ayahSkeleton(stickyFrame);
     exitEditMode();
@@ -264,10 +266,6 @@
     selectRow.surah.value = current.surah;
     UI.populateAyahSelect(selectRow.ayah, surahData.ayah_count, current.ayah);
 
-    // بررسی کنید که آیا این آیه نشانک خواندن است
-    const meta = await Store.getSiteMeta();
-    isBookmarked = (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah);
-
     renderAyahFrame(stickyFrame, ayahData, surahData, {
       marked: await Store.isMarked(current.surah, current.ayah),
       onToggleMark: async (btn) => {
@@ -276,13 +274,12 @@
         btn.classList.toggle('is-marked', nowMarked);
         btn.setAttribute('aria-pressed', String(nowMarked));
       },
-      onBookmark: handleBookmark,
-      isBookmarked: isBookmarked
     });
 
     prevBtn.disabled = current.surah === 1 && current.ayah === 1;
     nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
+    // به‌روزرسانی دکمه‌های پیشرفت
     await refreshProgress();
     await renderTafsirsList();
   }
@@ -352,6 +349,9 @@
   // ============================================================
   // رویدادهای فرم و ناوبری
   // ============================================================
+
+  // دکمه ثبت نشانک (آخرین آیه بررسی‌شده)
+  document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
