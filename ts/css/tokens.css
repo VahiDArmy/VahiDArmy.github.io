@@ -7,12 +7,19 @@
   /* --- Dark space gradient (default) --- */
   --bg: #06080E;
   
-  /* رنگ‌های پایه برای گرادیان متحرک */
+  /* رنگ‌های پایه برای گرادیان متحرک چندلایه */
   --gradient-color-1: #0B0F1A;
   --gradient-color-2: #101624;
   --gradient-color-3: #080B14;
   --gradient-color-4: #0A0F1E;
   --gradient-color-5: #06080E;
+  --gradient-color-6: #0D1320;
+  --gradient-color-7: #070A12;
+  
+  /* رنگ‌های نئونی برای لایه‌های گرادیان */
+  --gradient-neon-1: rgba(45, 232, 200, 0.04);
+  --gradient-neon-2: rgba(139, 124, 246, 0.03);
+  --gradient-neon-3: rgba(45, 232, 200, 0.02);
   
   --surface: rgba(255, 255, 255, 0.04);
   --surface-2: rgba(255, 255, 255, 0.06);
@@ -64,6 +71,12 @@
   --gradient-color-3: #F8F9FC;
   --gradient-color-4: #E8EAF2;
   --gradient-color-5: #F3F4F8;
+  --gradient-color-6: #ECEEF5;
+  --gradient-color-7: #F5F6FA;
+  
+  --gradient-neon-1: rgba(14, 168, 148, 0.04);
+  --gradient-neon-2: rgba(103, 84, 214, 0.03);
+  --gradient-neon-3: rgba(14, 168, 148, 0.02);
   
   --surface: rgba(0, 0, 0, 0.02);
   --surface-2: rgba(0, 0, 0, 0.04);
@@ -106,10 +119,30 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg-gradient);
-  background-attachment: fixed;
-  background-size: 300% 300%;
-  animation: gradientMove 20s ease-in-out infinite alternate;
+  background: 
+    /* لایه‌ی اول: بافت نقطه‌ای متحرک */
+    radial-gradient(circle at 20% 30%, var(--gradient-neon-1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--gradient-neon-2) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, var(--gradient-neon-3) 0%, transparent 60%),
+    /* لایه‌ی دوم: گرادیان اصلی با حرکت آرام */
+    radial-gradient(ellipse at var(--gradient-pos-x, 30%) var(--gradient-pos-y, 20%), 
+      var(--gradient-color-1) 0%, 
+      var(--gradient-color-2) 15%, 
+      var(--gradient-color-3) 30%, 
+      var(--gradient-color-4) 50%, 
+      var(--gradient-color-5) 70%, 
+      var(--gradient-color-6) 85%, 
+      var(--gradient-color-7) 100%
+    ),
+    /* لایه‌ی سوم: بافت نویز SVG */
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-blend-mode: normal, normal, overlay;
+  background-size: 100% 100%, 300% 300%, 256px 256px;
+  background-attachment: fixed, fixed, fixed;
+  animation: 
+    gradientMove 35s ease-in-out infinite alternate,
+    gradientMove2 45s ease-in-out infinite alternate-reverse,
+    noiseMove 60s linear infinite;
   color: var(--text);
   font-family: var(--font-ui);
   direction: rtl;
@@ -118,33 +151,119 @@ body {
 }
 
 /* ============================================================
-   انیمیشن گرادیان متحرک
+   انیمیشن‌های گرادیان متحرک با حرکت تصادفی‌تر و سرعت کمتر
    ============================================================ */
+
+/* انیمیشن اول: حرکت ملایم و گسترده */
 @keyframes gradientMove {
   0% {
-    background-position: 0% 50%;
+    --gradient-pos-x: 10%;
+    --gradient-pos-y: 10%;
+    background-position: 0% 0%, 0% 0%, 0px 0px;
   }
-  25% {
-    background-position: 50% 0%;
+  15% {
+    --gradient-pos-x: 25%;
+    --gradient-pos-y: 40%;
   }
-  50% {
-    background-position: 100% 50%;
+  30% {
+    --gradient-pos-x: 60%;
+    --gradient-pos-y: 15%;
+  }
+  45% {
+    --gradient-pos-x: 40%;
+    --gradient-pos-y: 60%;
+  }
+  60% {
+    --gradient-pos-x: 80%;
+    --gradient-pos-y: 30%;
   }
   75% {
-    background-position: 50% 100%;
+    --gradient-pos-x: 20%;
+    --gradient-pos-y: 70%;
+  }
+  90% {
+    --gradient-pos-x: 70%;
+    --gradient-pos-y: 50%;
   }
   100% {
-    background-position: 0% 50%;
+    --gradient-pos-x: 90%;
+    --gradient-pos-y: 80%;
+    background-position: 100% 100%, 100% 100%, 0px 0px;
   }
 }
 
-/* متغیر گرادیان برای استفاده در body */
-:root {
-  --bg-gradient: radial-gradient(ellipse at 30% 20%, var(--gradient-color-1) 0%, var(--gradient-color-2) 25%, var(--gradient-color-3) 50%, var(--gradient-color-4) 75%, var(--gradient-color-5) 100%);
+/* انیمیشن دوم: حرکت مخالف با سرعت کمتر */
+@keyframes gradientMove2 {
+  0% {
+    background-position: 0% 0%, 100% 100%, 0px 0px;
+  }
+  25% {
+    background-position: 30% 40%, 60% 20%, 0px 0px;
+  }
+  50% {
+    background-position: 70% 20%, 30% 70%, 0px 0px;
+  }
+  75% {
+    background-position: 40% 80%, 80% 40%, 0px 0px;
+  }
+  100% {
+    background-position: 100% 100%, 0% 0%, 0px 0px;
+  }
 }
 
-[data-theme="light"] {
-  --bg-gradient: radial-gradient(ellipse at 30% 20%, var(--gradient-color-1) 0%, var(--gradient-color-2) 30%, var(--gradient-color-3) 55%, var(--gradient-color-4) 80%, var(--gradient-color-5) 100%);
+/* انیمیشن حرکت بافت نویز */
+@keyframes noiseMove {
+  0% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+  25% {
+    background-position: 0px 0px, 0px 0px, 64px 32px;
+  }
+  50% {
+    background-position: 0px 0px, 0px 0px, 128px 64px;
+  }
+  75% {
+    background-position: 0px 0px, 0px 0px, 64px 128px;
+  }
+  100% {
+    background-position: 0px 0px, 0px 0px, 0px 0px;
+  }
+}
+
+/* پشتیبانی از متغیرهای CSS در انیمیشن */
+@property --gradient-pos-x {
+  syntax: '<percentage>';
+  initial-value: 30%;
+  inherits: false;
+}
+
+@property --gradient-pos-y {
+  syntax: '<percentage>';
+  initial-value: 20%;
+  inherits: false;
+}
+
+/* ============================================================
+   نسخه لایت تم با تنظیمات مخصوص
+   ============================================================ */
+[data-theme="light"] body {
+  background: 
+    radial-gradient(circle at 20% 30%, var(--gradient-neon-1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--gradient-neon-2) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, var(--gradient-neon-3) 0%, transparent 60%),
+    radial-gradient(ellipse at var(--gradient-pos-x, 30%) var(--gradient-pos-y, 20%), 
+      var(--gradient-color-1) 0%, 
+      var(--gradient-color-2) 15%, 
+      var(--gradient-color-3) 30%, 
+      var(--gradient-color-4) 50%, 
+      var(--gradient-color-5) 70%, 
+      var(--gradient-color-6) 85%, 
+      var(--gradient-color-7) 100%
+    ),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.4'/%3E%3C/svg%3E");
+  background-blend-mode: normal, normal, overlay, normal, overlay;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 300% 300%, 256px 256px;
+  background-attachment: fixed, fixed, fixed, fixed, fixed;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -157,6 +276,7 @@ body {
   body {
     animation: none !important;
     background-size: 100% 100% !important;
+    background-position: 0 0 !important;
   }
 }
 
