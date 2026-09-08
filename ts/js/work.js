@@ -5,7 +5,6 @@
 // =============================================================
 (async function () {
   const stickyFrame = document.getElementById('workAyahFrame');
-  const stickyContainer = document.getElementById('stickyAyahContainer');
   const selectRow = { surah: document.getElementById('formSurahSelect'), ayah: document.getElementById('formAyahSelect') };
   const prevBtn = document.getElementById('workPrevBtn');
   const nextBtn = document.getElementById('workNextBtn');
@@ -106,11 +105,16 @@
     await refreshProgress();
   }
 
-  // --- رفتن به آیه جاری (اسکرول به sticky-ayah) ---
-  function goToCurrentAyah() {
-    if (stickyContainer) {
-      stickyContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // --- رفتن به آخرین آیه ثبت‌شده (نشانک) ---
+  async function jumpToBookmark() {
+    const meta = await Store.getSiteMeta();
+    if (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah) {
+      UI.toast('همین آیه نشانک شده است');
+      return;
     }
+    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+    await renderCurrentAyah();
+    UI.toast(`رفتن به سورهٔ ${index.find(s => s.number === current.surah)?.name_fa}، آیهٔ ${UI.toPersianDigits(current.ayah)}`);
   }
 
   // --- ابزار تشخیص ارجاع در موقعیت مکان‌نما ---
@@ -357,14 +361,9 @@
   // رویدادهای فرم و ناوبری
   // ============================================================
 
-  // دکمه رفتن به آیه جاری
-  document.getElementById('goToCurrentAyahBtn').addEventListener('click', goToCurrentAyah);
-
-  // دکمه ثبت نشانک
+  // دکمه‌های جدید در کارت پیشرفت
   document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
-
-  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
-
+  document.getElementById('jumpToBookmarkBtn').addEventListener('click', jumpToBookmark);
   document.getElementById('endRoundBtn').addEventListener('click', async () => {
     const p = await Store.getProgress();
     const ok = confirm(
@@ -376,6 +375,8 @@
     current = { surah: 1, ayah: 1 };
     await renderCurrentAyah();
   });
+
+  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
   selectRow.surah.addEventListener('change', async () => {
     current = { surah: Number(selectRow.surah.value), ayah: 1 };
