@@ -161,7 +161,11 @@
 
   // --- ناوبری با دراپ‌داون ---
   surahSelect.addEventListener('change', async () => {
-    setHash(Number(surahSelect.value), 1);
+    const surah = Number(surahSelect.value);
+    // وقتی سوره تغییر می‌کند، آیه را روی ۱ قرار بده
+    const surahData = await QuranData.getSurah(surah);
+    UI.populateAyahSelect(ayahSelect, surahData.ayah_count, 1);
+    setHash(surah, 1);
   });
   ayahSelect.addEventListener('change', () => {
     setHash(Number(surahSelect.value), Number(ayahSelect.value));
