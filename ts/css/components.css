@@ -116,7 +116,7 @@
 @media (max-width: 560px) {
   .container { padding-left: 10px; padding-right: 10px; }
   .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 20px 14px 16px; }
+  .ayah-frame__inner { padding: 18px 12px 14px; }
 }
 
 /* ---- Sticky ayah (glass background) ---- */
@@ -157,38 +157,43 @@
   font-size: 0.78rem;
 }
 
-/* ---- Ayah frame (signature element) ---- */
+/* ============================================================
+   Ayah Frame — بازطراحی کامل برای هماهنگی با شیشه و نور کامل
+   ============================================================ */
 .ayah-frame {
   position: relative;
   border-radius: var(--radius-lg);
   padding: 2px;
-  background: linear-gradient(135deg, var(--border), var(--border));
-  overflow: hidden;
+  background: transparent;
+  overflow: visible;
   box-shadow: var(--shadow-glass);
 }
 
+/* لایه‌ی نورانی دور قاب (کامت) */
 .ayah-frame::before {
   content: '';
   position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  padding: 2px;
+  inset: -3px;
+  border-radius: calc(var(--radius-lg) + 2px);
+  padding: 3px;
   background: conic-gradient(
     from var(--angle, 0deg),
     transparent 0deg,
-    transparent 268deg,
-    var(--neon-glow) 300deg,
-    var(--neon) 338deg,
-    #fff 348deg,
-    var(--neon) 356deg,
+    transparent 220deg,
+    var(--neon-glow) 240deg,
+    var(--neon) 280deg,
+    #ffffff 300deg,
+    var(--neon) 320deg,
+    var(--neon-glow) 340deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  filter: drop-shadow(0 0 5px var(--neon)) drop-shadow(0 0 14px var(--neon-glow));
+  filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 20px var(--neon-glow));
   opacity: 0;
-  transition: opacity 0.7s ease, --angle 0.18s linear;
+  transition: opacity 0.6s ease, --angle 0.15s linear;
+  pointer-events: none;
 }
 
 .ayah-frame.is-comet-active::before {
@@ -205,21 +210,23 @@
   .ayah-frame::before { display: none; }
 }
 
+/* بدنه‌ی شیشه‌ای داخل قاب */
 .ayah-frame__inner {
   position: relative;
   background: var(--glass-bg-strong);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
-  padding: 26px 22px 20px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight);
+  padding: 22px 18px 16px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px var(--glass-border);
+  border: 1px solid transparent;
 }
 
 .ayah-frame__ref {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .ayah-frame__ref-text {
   font-size: 0.78rem;
