@@ -6,7 +6,14 @@
 :root {
   /* --- Dark space gradient (default) --- */
   --bg: #06080E;
-  --bg-gradient: radial-gradient(ellipse at 50% 30%, #101624 0%, #080B14 50%, #03050A 100%);
+  
+  /* رنگ‌های پایه برای گرادیان متحرک */
+  --gradient-color-1: #0B0F1A;
+  --gradient-color-2: #101624;
+  --gradient-color-3: #080B14;
+  --gradient-color-4: #0A0F1E;
+  --gradient-color-5: #06080E;
+  
   --surface: rgba(255, 255, 255, 0.04);
   --surface-2: rgba(255, 255, 255, 0.06);
   --border: rgba(255, 255, 255, 0.08);
@@ -51,7 +58,13 @@
 
 [data-theme="light"] {
   --bg: #F3F4F8;
-  --bg-gradient: radial-gradient(ellipse at 50% 30%, #F0F2F8 0%, #E6E8F0 60%, #D8DBE5 100%);
+  
+  --gradient-color-1: #F0F2F8;
+  --gradient-color-2: #E6E8F0;
+  --gradient-color-3: #F8F9FC;
+  --gradient-color-4: #E8EAF2;
+  --gradient-color-5: #F3F4F8;
+  
   --surface: rgba(0, 0, 0, 0.02);
   --surface-2: rgba(0, 0, 0, 0.04);
   --border: rgba(0, 0, 0, 0.08);
@@ -95,11 +108,43 @@ body {
   min-height: 100vh;
   background: var(--bg-gradient);
   background-attachment: fixed;
+  background-size: 300% 300%;
+  animation: gradientMove 20s ease-in-out infinite alternate;
   color: var(--text);
   font-family: var(--font-ui);
   direction: rtl;
   transition: background 0.4s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   انیمیشن گرادیان متحرک
+   ============================================================ */
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 50% 0%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  75% {
+    background-position: 50% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* متغیر گرادیان برای استفاده در body */
+:root {
+  --bg-gradient: radial-gradient(ellipse at 30% 20%, var(--gradient-color-1) 0%, var(--gradient-color-2) 25%, var(--gradient-color-3) 50%, var(--gradient-color-4) 75%, var(--gradient-color-5) 100%);
+}
+
+[data-theme="light"] {
+  --bg-gradient: radial-gradient(ellipse at 30% 20%, var(--gradient-color-1) 0%, var(--gradient-color-2) 30%, var(--gradient-color-3) 55%, var(--gradient-color-4) 80%, var(--gradient-color-5) 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -108,6 +153,10 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  body {
+    animation: none !important;
+    background-size: 100% 100% !important;
   }
 }
 
