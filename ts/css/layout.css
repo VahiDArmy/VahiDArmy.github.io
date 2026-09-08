@@ -8,7 +8,7 @@
   padding: 0 18px 80px;
 }
 
-/* ---- Header ---- */
+/* ---- Header (glass) ---- */
 .site-header {
   position: sticky;
   top: 0;
@@ -17,6 +17,7 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.3);
 }
 
 .site-header__inner {
@@ -76,6 +77,7 @@
   background: var(--neon);
   color: #06110E;
   font-weight: 600;
+  box-shadow: 0 0 20px var(--neon-glow);
 }
 
 .header-actions {
@@ -99,7 +101,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.theme-toggle:hover { border-color: var(--neon); color: var(--neon); }
+.theme-toggle:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 16px var(--neon-glow); }
 
 /* ---- Section spacing ---- */
 .section {
@@ -143,6 +145,7 @@
     border-top: 1px solid var(--glass-border);
     padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
     justify-content: space-around;
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.3);
   }
   .mobile-tabbar a {
     display: flex;
@@ -154,6 +157,6 @@
     padding: 4px 6px;
     border-radius: 10px;
   }
-  .mobile-tabbar a.active { color: var(--neon); }
+  .mobile-tabbar a.active { color: var(--neon); text-shadow: 0 0 10px var(--neon-glow); }
   .container { padding-bottom: 96px; }
 }
