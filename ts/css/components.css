@@ -53,6 +53,78 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* ---- دکمه نشانک (ثبت آخرین آیه) با درخشش ظریف ---- */
+.bookmark-btn {
+  position: relative;
+  padding: 7px 10px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: var(--neon-dim);
+  color: var(--neon);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.3s ease;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+}
+
+.bookmark-btn svg {
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 2px var(--neon-glow));
+}
+
+.bookmark-btn:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
+  transform: scale(1.05);
+}
+
+.bookmark-btn:hover svg {
+  filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow));
+}
+
+.bookmark-btn:active {
+  transform: scale(0.92);
+}
+
+/* درخشش پس‌زمینه برای تأکید */
+.bookmark-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--angle, 0deg),
+    transparent 0deg,
+    transparent 250deg,
+    var(--neon-glow) 280deg,
+    var(--neon) 320deg,
+    var(--neon-glow) 350deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+.bookmark-btn:hover::after {
+  opacity: 1;
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 /* ---- Card (glass) ---- */
 .card {
   background: var(--glass-bg);
@@ -195,12 +267,6 @@
 
 .ayah-frame.is-comet-active::before {
   opacity: 1;
-}
-
-@property --angle {
-  syntax: '<angle>';
-  initial-value: 0deg;
-  inherits: false;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -392,9 +458,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-color: var(--neon);
 }
 
-/* ============================================================
-   استایل آپشن‌های دراپ‌داون — هماهنگ با تم سایت
-   ============================================================ */
+/* استایل آپشن‌های دراپ‌داون — هماهنگ با تم سایت */
 .select-wrap select option {
   background: var(--bg-elevated);
   color: var(--text);
@@ -403,13 +467,11 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
 }
 
-/* برای مرورگرهایی که از backdrop-filter روی option پشتیبانی نمی‌کنند */
 .select-wrap select optgroup {
   background: var(--bg-elevated);
   color: var(--text-dim);
 }
 
-/* استایل برای مرورگرهای مبتنی بر WebKit (Chrome, Safari, Edge) */
 .select-wrap select::-webkit-listbox {
   background: var(--bg-elevated);
   color: var(--text);
@@ -429,7 +491,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   background: var(--neon-dim);
 }
 
-/* استایل برای Firefox */
 .select-wrap select:-moz-listbox {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
@@ -710,29 +771,4 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-weight: 700;
   padding: 0 2px;
   border-radius: 3px;
-}
-
-/* ---- Link detection indicator (برای نمایش ارجاع تشخیص‌داده‌شده) ---- */
-.link-detection {
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--violet);
-  color: var(--violet);
-  font-size: 0.78rem;
-  display: none;
-  align-items: center;
-  gap: 8px;
-}
-.link-detection.visible {
-  display: flex;
-}
-.link-detection .link-preview {
-  font-weight: 600;
-  font-family: var(--font-quran);
-  font-size: 0.9rem;
-  direction: rtl;
 }
