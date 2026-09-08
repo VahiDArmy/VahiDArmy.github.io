@@ -4,24 +4,24 @@
    ========================================================================== */
 
 :root {
-  /* --- Dark neon (default) --- */
-  --bg: #0B0E14;
+  /* --- Dark neon with glass (default) --- */
+  --bg: #0B0E14; /* fallback, but body will override */
   --bg-elevated: #0F131C;
-  --surface: #131826;
-  --surface-2: #1A2032;
-  --border: #232B40;
-  --border-soft: #1B2233;
+  --surface: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.04);
 
-  --text: #E7E9EE;
-  --text-dim: #9BA3B7;
-  --text-faint: #626B82;
+  --text: #F0F2F8;
+  --text-dim: #A0AABC;
+  --text-faint: #6B748C;
 
   --neon: #2DE8C8;
   --neon-dim: #1B8F7E;
-  --neon-glow: rgba(45, 232, 200, 0.35);
+  --neon-glow: rgba(45, 232, 200, 0.4);
 
   --violet: #8B7CF6;
-  --violet-glow: rgba(139, 124, 246, 0.35);
+  --violet-glow: rgba(139, 124, 246, 0.4);
 
   --gold: #D4AF6A;
   --gold-glow: rgba(212, 175, 106, 0.3);
@@ -33,12 +33,12 @@
   --radius-md: 16px;
   --radius-lg: 22px;
 
-  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.35);
-  --glass-bg: rgba(19, 24, 38, 0.52);
-  --glass-bg-strong: rgba(19, 24, 38, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.09);
-  --glass-highlight: rgba(255, 255, 255, 0.07);
-  --glass-blur: blur(16px) saturate(150%);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-highlight: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(20px) saturate(180%);
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
   --font-brand: 'Space Grotesk', system-ui, sans-serif;
@@ -47,10 +47,10 @@
 [data-theme="light"] {
   --bg: #F7F6F2;
   --bg-elevated: #FFFFFF;
-  --surface: #FFFFFF;
-  --surface-2: #F0EFE9;
-  --border: #E3E1D8;
-  --border-soft: #EAE8E0;
+  --surface: rgba(0, 0, 0, 0.03);
+  --surface-2: rgba(0, 0, 0, 0.06);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-soft: rgba(0, 0, 0, 0.04);
 
   --text: #1C1E24;
   --text-dim: #5B5F6B;
@@ -58,23 +58,23 @@
 
   --neon: #0EA894;
   --neon-dim: #0B7D6E;
-  --neon-glow: rgba(14, 168, 148, 0.18);
+  --neon-glow: rgba(14, 168, 148, 0.25);
 
   --violet: #6754D6;
-  --violet-glow: rgba(103, 84, 214, 0.18);
+  --violet-glow: rgba(103, 84, 214, 0.25);
 
   --gold: #A9793A;
-  --gold-glow: rgba(169, 121, 58, 0.18);
+  --gold-glow: rgba(169, 121, 58, 0.25);
 
   --danger: #D3405A;
   --success: #0EA894;
 
-  --shadow-card: 0 4px 20px rgba(28, 30, 36, 0.08);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.08);
   --glass-bg: rgba(255, 255, 255, 0.5);
-  --glass-bg-strong: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(28, 30, 36, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.55);
-  --glass-blur: blur(16px) saturate(150%);
+  --glass-bg-strong: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.7);
+  --glass-blur: blur(20px) saturate(180%);
 }
 
 * { box-sizing: border-box; }
@@ -85,22 +85,18 @@ html {
 
 body {
   margin: 0;
-  background: var(--bg);
-  background-image:
-    linear-gradient(
-      160deg,
-      color-mix(in srgb, var(--neon) 9%, var(--bg) 91%) 0%,
-      var(--bg) 22%,
-      var(--bg) 60%,
-      color-mix(in srgb, var(--violet) 8%, var(--bg) 92%) 85%,
-      var(--bg) 100%
-    );
-  background-attachment: scroll;
+  min-height: 100dvh;
+  background: radial-gradient(ellipse at 50% 0%, #1a1f33 0%, #0b0e1a 60%, #04060a 100%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-ui);
   direction: rtl;
   transition: background 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
+}
+
+[data-theme="light"] body {
+  background: radial-gradient(ellipse at 50% 0%, #eae8e0 0%, #f7f6f2 70%, #ffffff 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
