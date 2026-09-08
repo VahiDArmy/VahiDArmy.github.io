@@ -50,12 +50,41 @@
   border-radius: 50%;
 }
 
-.btn--sm { padding: 7px 10px; font-size: 0.78rem; min-width: 36px; height: 36px; }
+.btn--sm {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  min-height: 32px;
+  min-width: 32px;
+}
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ---- دکمه‌های عملیاتی در کارت پیشرفت (action buttons) ---- */
+.action-btn {
+  border-color: var(--glass-border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--text-dim);
+  transition: all 0.3s ease;
+}
+.action-btn:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 16px var(--neon-glow);
+}
+.action-btn:active {
+  transform: scale(0.92);
+}
 
 /* ---- دکمه نشانک (ثبت آخرین آیه) با درخشش ظریف ---- */
 .bookmark-btn {
   position: relative;
+  padding: 6px 12px;
+  min-height: 32px;
+  min-width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-color: var(--neon-dim);
   color: var(--neon);
   background: var(--glass-bg-strong);
@@ -63,6 +92,7 @@
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
   box-shadow: 0 0 0 rgba(0,0,0,0);
+  border-radius: var(--radius-sm);
 }
 
 .bookmark-btn svg {
@@ -89,7 +119,7 @@
   content: '';
   position: absolute;
   inset: -2px;
-  border-radius: 50%;
+  border-radius: calc(var(--radius-sm) + 2px);
   padding: 2px;
   background: conic-gradient(
     from var(--angle, 0deg),
@@ -118,28 +148,6 @@
   inherits: false;
 }
 
-/* ---- دکمه رفتن به نشانک ---- */
-.go-to-btn {
-  position: relative;
-  border-color: var(--violet-dim);
-  color: var(--violet);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: all 0.3s ease;
-}
-
-.go-to-btn:hover {
-  border-color: var(--violet);
-  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow);
-  transform: scale(1.05);
-  color: var(--violet);
-}
-
-.go-to-btn:active {
-  transform: scale(0.92);
-}
-
 /* ---- Card (glass) ---- */
 .card {
   background: var(--glass-bg);
@@ -151,10 +159,13 @@
   box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
 }
 
-/* ---- Progress badge (glass) ---- */
+/* ============================================================
+   Progress Hero — بازطراحی با سه دکمه در سمت چپ
+   ============================================================ */
 .progress-hero {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
   background: var(--glass-bg);
@@ -166,10 +177,32 @@
   box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
 }
 
+.progress-hero__left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.progress-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.progress-hero__actions .btn {
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  min-height: 32px;
+  min-width: 32px;
+}
+
 .progress-ring {
   position: relative;
-  width: 62px;
-  height: 62px;
+  width: 54px;
+  height: 54px;
   flex-shrink: 0;
 }
 .progress-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -190,58 +223,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.56rem;
+  font-size: 0.5rem;
   font-weight: 700;
   color: var(--neon);
 }
 
-.progress-hero__text {
+.progress-hero__text { 
   flex: 1;
-  min-width: 120px;
+  min-width: 0;
 }
-
-.progress-hero__title {
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  margin: 0 0 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.progress-hero__title { 
+  font-size: 0.8rem; 
+  color: var(--text-dim); 
+  margin: 0 0 2px; 
 }
-
-.progress-hero__count {
-  font-size: 1.05rem;
-  font-weight: 700;
+.progress-hero__count { 
+  font-size: 0.95rem; 
+  font-weight: 700; 
   color: var(--text);
-}
-
-/* ---- دکمه‌های عملیاتی در کارت پیشرفت ---- */
-.progress-hero__actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  margin-inline-start: auto;
-}
-
-.progress-hero__actions .btn {
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.progress-hero__actions .btn--ghost {
-  border-color: var(--glass-border);
-}
-
-.progress-hero__actions .btn--ghost:hover {
-  border-color: var(--violet);
-  color: var(--violet);
-  box-shadow: 0 0 16px var(--violet-glow);
+  margin: 0;
 }
 
 /* ---- Mobile: maximize width, minimal margins ---- */
@@ -251,21 +251,30 @@
   .ayah-frame__inner { padding: 18px 12px 14px; }
   
   .progress-hero {
-    gap: 12px;
     padding: 12px 14px;
+    gap: 10px;
   }
-  .progress-hero__actions {
-    gap: 2px;
+  .progress-hero__left {
+    gap: 10px;
   }
-  .progress-hero__actions .btn {
-    width: 32px;
-    height: 32px;
-  }
-  .progress-hero__title {
-    font-size: 0.75rem;
+  .progress-ring {
+    width: 44px;
+    height: 44px;
   }
   .progress-hero__count {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
+  }
+  .progress-hero__title {
+    font-size: 0.7rem;
+  }
+  .progress-hero__actions .btn {
+    padding: 4px 8px;
+    min-height: 28px;
+    min-width: 28px;
+    font-size: 0.65rem;
+  }
+  .progress-hero__actions {
+    gap: 4px;
   }
 }
 
@@ -536,7 +545,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-color: var(--neon);
 }
 
-/* استایل آپشن‌های دراپ‌داون — هماهنگ با تم سایت */
 .select-wrap select option {
   background: var(--bg-elevated);
   color: var(--text);
