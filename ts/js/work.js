@@ -105,11 +105,20 @@
     await refreshProgress();
   }
 
-  // --- رفتن به آیهٔ جاری (اسکرول) ---
-  function goToCurrentAyah() {
+  // --- رفتن به آیهٔ نشانگر (آخرین آیه بررسی‌شده) ---
+  async function goToBookmark() {
+    const meta = await Store.getSiteMeta();
+    const surah = meta.bookmark_surah;
+    const ayah = meta.bookmark_ayah;
+    // تنظیم آیه جاری و رندر مجدد
+    current = { surah, ayah };
+    await renderCurrentAyah();
+    // اسکرول به قاب آیه
     const frame = document.getElementById('workAyahFrame');
     if (frame) {
-      frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        frame.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 200);
     }
   }
 
@@ -357,11 +366,11 @@
   // رویدادهای فرم و ناوبری
   // ============================================================
 
+  // دکمه رفتن به آیه نشانگر (آخرین آیه بررسی‌شده)
+  document.getElementById('goToCurrentBtn').addEventListener('click', goToBookmark);
+
   // دکمه ثبت نشانک (آخرین آیه بررسی‌شده)
   document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
-
-  // دکمه رفتن به آیه جاری
-  document.getElementById('goToCurrentBtn').addEventListener('click', goToCurrentAyah);
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
 
