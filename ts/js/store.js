@@ -170,6 +170,15 @@ const Store = (function () {
     return data;
   }
 
+  // --- تابع جدید: به‌روزرسانی نشانک خواندن ---
+  async function updateBookmark(surah, ayah) {
+    const { error } = await sb
+      .from('site_meta')
+      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
+      .eq('id', 1);
+    if (error) throw error;
+  }
+
   // پیشرفت بر اساس «نشانک خواندن» محاسبه می‌شود
   async function getProgress() {
     const meta = await getSiteMeta();
@@ -192,72 +201,9 @@ const Store = (function () {
     };
   }
 
-  // اگر آیهٔ داده‌شده جلوتر از نشانک فعلی باشد، نشانک را جلو می‌برد
-  async function advanceBookmarkIfAhead(surah, ayah) {
-    const meta = await getSiteMeta();
-    const newIndex = await QuranData.cumulativeIndex(surah, ayah);
-    const currentIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
-    if (newIndex <= currentIndex) return false;
-    const { error } = await sb
-      .from('site_meta')
-      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
-      .eq('id', 1);
-    if (error) throw error;
-    return true;
-  }
+  // حذف شده: advanceBookmarkIfAhead دیگر استفاده نمی‌شود
+  // چون نشانک فقط با کلیک کاربر به‌روز می‌شود
 
-  // --- تابع جدید: علامت خواندن آیه و رفتن به آیه بعدی ---
-  async function markAsReadAndAdvance(surah, ayah) {
-    const meta = await getSiteMeta();
-    const currentIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
-    const newIndex = await QuranData.cumulativeIndex(surah, ayah);
-    
-    // اگر آیه فعلی جلوتر از نشانک باشد یا برابر باشد، نشانک را یک آیه جلو می‌بریم
-    if (newIndex >= currentIndex) {
-      // پیدا کردن آیه بعدی
-      const totalAyat = QuranData.TOTAL_AYAHS;
-      let nextIndex = newIndex + 1;
-      
-      // اگر به انتهای قرآن رسیدیم، دور بعدی شروع می‌شود
-      if (nextIndex > totalAyat) {
-        // پایان دور - کاربر باید خودش دور را پایان دهد
-        return { success: false, message: 'به انتهای قرآن رسیدید. لطفاً دور را پایان دهید.' };
-      }
-      
-      // پیدا کردن سوره و آیه متناظر با nextIndex
-      const idx = await QuranData.getIndex();
-      let cumulative = 0;
-      let targetSurah = 1;
-      let targetAyah = 1;
-      
-      for (const s of idx) {
-        if (cumulative + s.ayah_count >= nextIndex) {
-          targetSurah = s.number;
-          targetAyah = nextIndex - cumulative;
-          break;
-        }
-        cumulative += s.ayah_count;
-      }
-      
-      // به‌روزرسانی نشانک
-      const { error } = await sb
-        .from('site_meta')
-        .update({ bookmark_surah: targetSurah, bookmark_ayah: targetAyah })
-        .eq('id', 1);
-      if (error) throw error;
-      
-      return { 
-        success: true, 
-        nextSurah: targetSurah, 
-        nextAyah: targetAyah,
-        message: `به آیه بعدی رفتید: سوره ${targetSurah} آیه ${targetAyah}`
-      };
-    }
-    
-    return { success: false, message: 'این آیه قبلاً خوانده شده است.' };
-  }
-
-  // پایان دور فعلی به‌صورت دستی + بازنشانی نشانک برای دور جدید
   async function endRound() {
     const round = await getCurrentRound();
     const { error } = await sb
@@ -286,9 +232,8 @@ const Store = (function () {
     searchTafsirs,
     getCurrentRound,
     getSiteMeta,
+    updateBookmark,
     getProgress,
-    advanceBookmarkIfAhead,
-    markAsReadAndAdvance,
     endRound,
   };
 })();
