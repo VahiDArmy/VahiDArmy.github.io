@@ -337,7 +337,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
   line-height: 1.9;
 }
 
-/* ---- Selects (surah/ayah dropdowns) — glass ---- */
+/* ============================================================
+   Selects (surah/ayah dropdowns) — شیشه‌ای با استایل سفارشی
+   ============================================================ */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -360,21 +362,41 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-family: var(--font-ui);
   font-size: 0.88rem;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-.select-wrap select:hover { border-color: var(--neon-dim); }
+.select-wrap select:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow);
+}
+.select-wrap select:focus {
+  border-color: var(--neon);
+  outline: none;
+  box-shadow: 0 0 24px var(--neon-glow);
+}
 .select-wrap::after {
   content: '';
   position: absolute;
   left: 14px;
   top: 50%;
   translate: 0 -50%;
-  width: 8px; height: 8px;
+  width: 8px;
+  height: 8px;
   border-left: 2px solid var(--text-faint);
   border-bottom: 2px solid var(--text-faint);
   transform: rotate(-45deg);
   pointer-events: none;
+  transition: border-color 0.2s ease;
+}
+.select-wrap:hover::after {
+  border-color: var(--neon);
+}
+
+/* استایل آپشن‌ها (برای مرورگرهایی که پشتیبانی می‌کنند) */
+.select-wrap select option {
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 8px 12px;
 }
 
 /* ---- Nav buttons prev/next ---- */
