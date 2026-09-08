@@ -162,7 +162,6 @@
   // --- ناوبری با دراپ‌داون ---
   surahSelect.addEventListener('change', async () => {
     const surah = Number(surahSelect.value);
-    // وقتی سوره تغییر می‌کند، آیه را روی ۱ قرار بده
     const surahData = await QuranData.getSurah(surah);
     UI.populateAyahSelect(ayahSelect, surahData.ayah_count, 1);
     setHash(surah, 1);
@@ -194,7 +193,6 @@
   if (params.has('surah') && params.has('ayah')) {
     setHash(Number(params.get('surah')), Number(params.get('ayah')), true);
   } else if (!location.hash) {
-    // پیش‌فرض: آخرین آیه‌ای که تفسیر داشته (نه همیشه آیهٔ ۱)
     const latest = await Store.getLatestTafsir();
     if (latest) setHash(latest.surah, latest.ayah, true);
     else setHash(1, 1, true);
