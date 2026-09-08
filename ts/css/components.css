@@ -10,8 +10,10 @@
   gap: 8px;
   padding: 11px 20px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--text);
   font-size: 0.9rem;
   font-weight: 500;
@@ -53,8 +55,8 @@
 /* ---- Card ---- */
 .card {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -68,8 +70,8 @@
   gap: 16px;
   flex-wrap: wrap;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
@@ -199,7 +201,9 @@
 
 .ayah-frame__inner {
   position: relative;
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+  backdrop-filter: blur(10px) saturate(130%);
+  -webkit-backdrop-filter: blur(10px) saturate(130%);
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 26px 22px 20px;
 }
@@ -332,8 +336,10 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap select {
   width: 100%;
   appearance: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
   border-radius: var(--radius-sm);
@@ -373,8 +379,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .tafsir-card {
   margin-top: 14px;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px) saturate(140%);
-  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 18px;
@@ -467,8 +473,10 @@ a.tag-pill:hover { filter: brightness(1.25); }
 }
 .field textarea, .field input[type="text"] {
   width: 100%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
   border-radius: var(--radius-sm);
@@ -559,7 +567,9 @@ a.tag-pill:hover { filter: brightness(1.25); }
   pointer-events: none;
 }
 .toast__inner {
-  background: var(--surface);
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--neon);
   color: var(--text);
   padding: 10px 20px;
@@ -593,9 +603,9 @@ a.tag-pill:hover { filter: brightness(1.25); }
   max-width: 420px;
   max-height: 85vh;
   overflow-y: auto;
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
 }
 .modal-card__head {
   display: flex;
