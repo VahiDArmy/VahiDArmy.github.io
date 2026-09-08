@@ -198,7 +198,7 @@
   opacity: 1;
 }
 
-/* دکمه رفتن به آیه جاری */
+/* دکمه رفتن به آیه جاری (نشانگر) */
 .go-to-btn {
   border-color: var(--violet);
   color: var(--violet);
