@@ -392,11 +392,57 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-color: var(--neon);
 }
 
-/* استایل آپشن‌ها (برای مرورگرهایی که پشتیبانی می‌کنند) */
+/* ============================================================
+   استایل آپشن‌های دراپ‌داون — هماهنگ با تم سایت
+   ============================================================ */
 .select-wrap select option {
   background: var(--bg-elevated);
   color: var(--text);
   padding: 8px 12px;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+}
+
+/* برای مرورگرهایی که از backdrop-filter روی option پشتیبانی نمی‌کنند */
+.select-wrap select optgroup {
+  background: var(--bg-elevated);
+  color: var(--text-dim);
+}
+
+/* استایل برای مرورگرهای مبتنی بر WebKit (Chrome, Safari, Edge) */
+.select-wrap select::-webkit-listbox {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.select-wrap select::-webkit-scrollbar {
+  width: 8px;
+  background: var(--bg-elevated);
+}
+
+.select-wrap select::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.select-wrap select::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-dim);
+}
+
+/* استایل برای Firefox */
+.select-wrap select:-moz-listbox {
+  background: var(--bg-elevated) !important;
+  color: var(--text) !important;
+}
+
+.select-wrap select option:checked {
+  background: var(--neon-glow);
+  color: var(--neon);
+}
+
+.select-wrap select option:hover {
+  background: var(--neon-glow);
+  color: var(--neon);
 }
 
 /* ---- Nav buttons prev/next ---- */
