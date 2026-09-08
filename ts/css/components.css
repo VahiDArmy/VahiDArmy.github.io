@@ -53,13 +53,29 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- دکمه نشانک (ثبت آخرین آیه) با درخشش ظریف ---- */
+/* ---- دکمه پایان دور در کارت پیشرفت (کوچک‌تر) ---- */
+.end-round-btn {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border);
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+}
+.end-round-btn:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 16px var(--neon-glow);
+}
+
+/* ---- دکمه نشانک (ثبت آخرین آیه) با درخشش ظریف و سایز کوچک ---- */
 .bookmark-btn {
   position: relative;
-  padding: 7px 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 50%;
-  width: 36px;
-  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -70,6 +86,7 @@
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
   box-shadow: 0 0 0 rgba(0,0,0,0);
+  font-size: 0;
 }
 
 .bookmark-btn svg {
@@ -180,15 +197,20 @@
   color: var(--neon);
 }
 
-.progress-hero__text { flex: 1; }
-.progress-hero__title { font-size: 0.85rem; color: var(--text-dim); margin: 0 0 4px; }
-.progress-hero__count { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+.progress-hero__text { flex: 1; min-width: 0; }
+.progress-hero__title { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+.progress-hero__count { font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 0; }
 
 /* ---- Mobile: maximize width, minimal margins ---- */
 @media (max-width: 560px) {
   .container { padding-left: 10px; padding-right: 10px; }
   .card, .tafsir-card { padding: 14px; }
   .ayah-frame__inner { padding: 18px 12px 14px; }
+  .progress-hero { gap: 12px; padding: 12px 14px; }
+  .progress-hero__row { gap: 4px; }
+  .end-round-btn { font-size: 0.6rem; padding: 2px 8px; }
+  .bookmark-btn { width: 24px; height: 24px; }
+  .bookmark-btn svg { width: 10px; height: 10px; }
 }
 
 /* ---- Sticky ayah — شفاف و بدون شیشه (فقط ظرف چسبنده) ---- */
