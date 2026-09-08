@@ -42,51 +42,41 @@
 
 <main class="container">
 
-  <!-- پیشرفت دور + سه دکمه در یک ردیف -->
+  <!-- پیشرفت دور + دکمه‌های جدید -->
   <section class="section" aria-label="پیشرفت">
     <div class="progress-hero">
-      <!-- سمت راست: دور شمار و توضیحات -->
-      <div class="progress-hero__left">
-        <div class="progress-ring" id="progressRing">
-          <svg viewBox="0 0 62 62">
-            <circle class="ring-bg" cx="31" cy="31" r="26"></circle>
-            <circle class="ring-fg" cx="31" cy="31" r="26"></circle>
-          </svg>
-          <div class="progress-ring__label" id="progressLabel">۰٪</div>
-        </div>
-        <div class="progress-hero__text">
-          <p class="progress-hero__title">دور <span id="roundNumber">۱</span></p>
-          <p class="progress-hero__count" id="bookmarkLabel">تا سورهٔ فاتحه، آیهٔ ۱</p>
-          <p class="progress-hero__count" id="tafsirCountLabel" style="color:var(--text-faint); font-size:0.78rem; font-weight:400;">۰ تفسیر در این دور</p>
-        </div>
+      <div class="progress-ring" id="progressRing">
+        <svg viewBox="0 0 62 62">
+          <circle class="ring-bg" cx="31" cy="31" r="26"></circle>
+          <circle class="ring-fg" cx="31" cy="31" r="26"></circle>
+        </svg>
+        <div class="progress-ring__label" id="progressLabel">۰٪</div>
       </div>
-
-      <!-- سمت چپ: سه دکمه با اندازه متناسب -->
-      <div class="progress-hero__actions">
-        <!-- ۱. رفتن به آیه جاری -->
-        <button class="btn btn--sm btn--ghost action-btn" id="goToCurrentAyahBtn" title="رفتن به آیهٔ جاری">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <circle cx="12" cy="12" r="2" fill="currentColor"/>
-            <line x1="12" y1="12" x2="12" y2="22"/>
-            <line x1="12" y1="2" x2="12" y2="12"/>
-          </svg>
-        </button>
-
-        <!-- ۲. نشانگر (بوکمارک) -->
-        <button class="btn btn--sm bookmark-btn" id="setBookmarkBtn" title="ثبت آیهٔ جاری به عنوان آخرین آیهٔ بررسی‌شده">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-          </svg>
-        </button>
-
-        <!-- ۳. پایان دور -->
-        <button class="btn btn--sm btn--ghost action-btn" id="endRoundBtn" title="پایان این دور و شروع دور بعدی">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
-            <polyline points="17 6 23 6 23 12"/>
-          </svg>
-        </button>
+      <div class="progress-hero__text">
+        <div class="progress-hero__title-wrapper">
+          <p class="progress-hero__title" id="roundTitle">
+            دور <span id="roundNumber">۱</span>
+          </p>
+          <div class="progress-hero__actions">
+            <button class="btn btn--sm btn--ghost bookmark-jump-btn" id="jumpToBookmarkBtn" title="رفتن به آخرین آیهٔ ثبت‌شده">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h13M10 18l6-6-6-6"/>
+              </svg>
+            </button>
+            <button class="btn btn--sm bookmark-btn" id="setBookmarkBtn" title="ثبت آیهٔ جاری به عنوان آخرین آیهٔ بررسی‌شده">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </button>
+            <button class="btn btn--sm btn--ghost end-round-btn" id="endRoundBtn" title="پایان این دور">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v4M12 22v-4M4 12H2M22 12h-2M19.07 4.93l-2.83 2.83M6.34 17.66l-2.83 2.83M17.66 6.34l2.83-2.83M4.93 19.07l2.83-2.83"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <p class="progress-hero__count" id="bookmarkLabel">تا سورهٔ فاتحه، آیهٔ ۱</p>
+        <p class="progress-hero__count" id="tafsirCountLabel" style="color:var(--text-faint); font-size:0.78rem; font-weight:400;">۰ تفسیر در این دور</p>
       </div>
     </div>
   </section>
@@ -104,7 +94,7 @@
       </div>
     </div>
 
-    <div class="sticky-ayah" id="stickyAyahContainer">
+    <div class="sticky-ayah">
       <div id="workAyahFrame"></div>
       <div class="ayah-nav">
         <button class="btn" id="workPrevBtn">آیه قبلی ‹</button>
