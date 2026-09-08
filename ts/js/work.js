@@ -84,6 +84,18 @@
     return p;
   }
 
+  // --- رفتن به آخرین آیهٔ بررسی‌شده (نشانک) ---
+  async function goToBookmark() {
+    const meta = await Store.getSiteMeta();
+    if (meta.bookmark_surah === current.surah && meta.bookmark_ayah === current.ayah) {
+      UI.toast('شما در حال حاضر روی آخرین آیهٔ بررسی‌شده هستید');
+      return;
+    }
+    current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+    await renderCurrentAyah();
+    UI.toast(`رفتن به سورهٔ ${index.find(s => s.number === current.surah)?.name_fa || current.surah}، آیهٔ ${UI.toPersianDigits(current.ayah)}`);
+  }
+
   // --- ثبت آخرین آیه بررسی‌شده ---
   async function setBookmark() {
     const surahName = index.find(s => s.number === current.surah)?.name_fa || current.surah;
@@ -279,7 +291,6 @@
     prevBtn.disabled = current.surah === 1 && current.ayah === 1;
     nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
-    // به‌روزرسانی دکمه‌های پیشرفت
     await refreshProgress();
     await renderTafsirsList();
   }
@@ -350,7 +361,10 @@
   // رویدادهای فرم و ناوبری
   // ============================================================
 
-  // دکمه ثبت نشانک (آخرین آیه بررسی‌شده)
+  // دکمه رفتن به نشانک
+  document.getElementById('goToBookmarkBtn').addEventListener('click', goToBookmark);
+  
+  // دکمه ثبت نشانک
   document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
 
   editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
