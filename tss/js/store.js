@@ -170,16 +170,6 @@ const Store = (function () {
     return data;
   }
 
-  // --- تابع جدید: به‌روزرسانی نشانک خواندن ---
-  async function updateBookmark(surah, ayah) {
-    const { error } = await sb
-      .from('site_meta')
-      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
-      .eq('id', 1);
-    if (error) throw error;
-  }
-
-  // پیشرفت بر اساس «نشانک خواندن» محاسبه می‌شود
   async function getProgress() {
     const meta = await getSiteMeta();
     const readIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
@@ -201,8 +191,18 @@ const Store = (function () {
     };
   }
 
-  // حذف شده: advanceBookmarkIfAhead دیگر استفاده نمی‌شود
-  // چون نشانک فقط با کلیک کاربر به‌روز می‌شود
+  async function advanceBookmarkIfAhead(surah, ayah) {
+    const meta = await getSiteMeta();
+    const newIndex = await QuranData.cumulativeIndex(surah, ayah);
+    const currentIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
+    if (newIndex <= currentIndex) return false;
+    const { error } = await sb
+      .from('site_meta')
+      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
+      .eq('id', 1);
+    if (error) throw error;
+    return true;
+  }
 
   async function endRound() {
     const round = await getCurrentRound();
@@ -232,8 +232,8 @@ const Store = (function () {
     searchTafsirs,
     getCurrentRound,
     getSiteMeta,
-    updateBookmark,
     getProgress,
+    advanceBookmarkIfAhead,
     endRound,
   };
 })();
