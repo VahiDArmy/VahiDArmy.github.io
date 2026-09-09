@@ -20,6 +20,7 @@
   const ravanTafsirLoading = document.getElementById('ravanTafsirLoading');
   const ravanTafsirError = document.getElementById('ravanTafsirError');
   const ravanTafsirLoadBtn = document.getElementById('ravanTafsirLoadBtn');
+  const ravanTafsirDeleteBtn = document.getElementById('ravanTafsirDeleteBtn');
   const ravanTafsirManualBtn = document.getElementById('ravanTafsirManualBtn');
   const ravanTafsirManualInput = document.getElementById('ravanTafsirManualInput');
   const ravanTafsirManualSubmit = document.getElementById('ravanTafsirManualSubmit');
@@ -156,6 +157,16 @@
     if (error) throw error;
   }
 
+  // حذف تفسیر از دیتابیس
+  async function deleteRavanTafsirFromDB(surah, ayah) {
+    const { error } = await sb
+      .from('ravan_tafsirs')
+      .delete()
+      .eq('surah', surah)
+      .eq('ayah', ayah);
+    if (error) throw error;
+  }
+
   // دریافت تفسیر از ویکی از طریق corsproxy
   async function fetchRavanTafsirFromWiki(surah, ayah) {
     // پیدا کردن نام سوره به فارسی
@@ -188,32 +199,34 @@
     const text = doc.body.textContent || '';
     console.log('📝 متن استخراج شده، طول:', text.length);
     
-    // روش اول: regex روی textContent
-    const regex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)\s*([\s\S]*?)(?=تفسیر\s+\w+|$)/i;
-    const match = text.match(regex);
+    // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
+    // الگو: تفسیر روان جاوید (ثقفی تهرانى) ... تفسیر [متن اصلی]
+    const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
+    const match = text.match(tafsirRegex);
     
-    if (!match || !match[1]) {
-      // روش دوم: جستجوی ساده‌تر
-      const simpleRegex = /روان جاوید\s*([\s\S]*?)(?=تفسیر\s+\w+|$)/i;
-      const simpleMatch = text.match(simpleRegex);
-      if (simpleMatch && simpleMatch[1]) {
-        let tafsirText = simpleMatch[1].trim();
-        tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-        if (tafsirText.length > 20) {
-          return tafsirText;
-        }
+    if (match && match[2]) {
+      let tafsirText = match[2].trim();
+      // پاکسازی متن
+      tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
+      if (tafsirText.length > 20) {
+        return tafsirText;
       }
-      throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
     }
     
-    let tafsirText = match[1].trim();
-    tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-    
-    if (tafsirText.length < 10) {
-      throw new Error('متن تفسیر بسیار کوتاه است، احتمالاً اشتباه استخراج شده');
+    // روش دوم: اگر روش اول جواب نداد، جستجوی ساده‌تر
+    const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
+    const simpleMatch = text.match(simpleRegex);
+    if (simpleMatch && simpleMatch[1]) {
+      let tafsirText = simpleMatch[1].trim();
+      tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
+      // حذف ترجمه و متن آیه اگر در ابتدا باشند
+      tafsirText = tafsirText.replace(/^[\s\S]*?ترجمه‌[\s\S]*?تفسیر\s*/i, '');
+      if (tafsirText.length > 20) {
+        return tafsirText;
+      }
     }
     
-    return tafsirText;
+    throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
   }
 
   // نمایش حالت‌های مختلف
@@ -225,22 +238,28 @@
     ravanTafsirError.classList.add('hidden');
     ravanTafsirManualBtn.classList.add('hidden');
     ravanTafsirManualInput.classList.add('hidden');
+    ravanTafsirDeleteBtn.classList.add('hidden');
+    ravanTafsirLoadBtn.classList.remove('hidden');
     
     switch (state) {
       case 'empty':
         ravanTafsirEmpty.classList.remove('hidden');
+        ravanTafsirDeleteBtn.classList.add('hidden');
         break;
       case 'loading':
         ravanTafsirLoading.classList.remove('hidden');
+        ravanTafsirDeleteBtn.classList.add('hidden');
         break;
       case 'content':
         ravanTafsirContent.classList.remove('hidden');
         ravanTafsirContent.innerHTML = data;
+        ravanTafsirDeleteBtn.classList.remove('hidden');
         break;
       case 'error':
         ravanTafsirError.classList.remove('hidden');
         ravanTafsirError.innerHTML = data;
         ravanTafsirManualBtn.classList.remove('hidden');
+        ravanTafsirDeleteBtn.classList.add('hidden');
         break;
     }
   }
@@ -286,6 +305,21 @@
     }
   }
 
+  // حذف تفسیر روان جاوید از دیتابیس
+  async function deleteRavanTafsir(surah, ayah) {
+    const confirmed = confirm('آیا تفسیر روان جاوید ذخیره‌شده برای این آیه حذف شود؟');
+    if (!confirmed) return;
+    
+    try {
+      await deleteRavanTafsirFromDB(surah, ayah);
+      UI.toast('تفسیر روان جاوید حذف شد');
+      showRavanTafsirState('empty');
+    } catch (error) {
+      console.error('❌ خطا در حذف تفسیر:', error);
+      UI.toast('خطا در حذف تفسیر');
+    }
+  }
+
   // دریافت دستی از آدرس وارد شده توسط کاربر
   async function fetchRavanTafsirManual(url) {
     try {
@@ -310,35 +344,35 @@
       const text = doc.body.textContent || '';
       console.log('📝 متن استخراج شده دستی، طول:', text.length);
       
-      // روش اول: regex اصلی
-      const regex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)\s*([\s\S]*?)(?=تفسیر\s+\w+|$)/i;
-      const match = text.match(regex);
+      // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
+      const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
+      const match = text.match(tafsirRegex);
       
-      if (!match || !match[1]) {
-        // روش دوم: جستجوی ساده‌تر
-        const simpleRegex = /روان جاوید\s*([\s\S]*?)(?=تفسیر\s+\w+|$)/i;
-        const simpleMatch = text.match(simpleRegex);
-        if (simpleMatch && simpleMatch[1]) {
-          let tafsirText = simpleMatch[1].trim();
-          tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-          if (tafsirText.length > 20) {
-            await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
-            showRavanTafsirState('content', tafsirText);
-            return;
-          }
+      if (match && match[2]) {
+        let tafsirText = match[2].trim();
+        tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
+        if (tafsirText.length > 20) {
+          await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
+          showRavanTafsirState('content', tafsirText);
+          return;
         }
-        throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
       }
       
-      let tafsirText = match[1].trim();
-      tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-      
-      if (tafsirText.length < 10) {
-        throw new Error('متن تفسیر بسیار کوتاه است');
+      // روش دوم: جستجوی ساده‌تر
+      const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
+      const simpleMatch = text.match(simpleRegex);
+      if (simpleMatch && simpleMatch[1]) {
+        let tafsirText = simpleMatch[1].trim();
+        tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
+        tafsirText = tafsirText.replace(/^[\s\S]*?ترجمه‌[\s\S]*?تفسیر\s*/i, '');
+        if (tafsirText.length > 20) {
+          await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
+          showRavanTafsirState('content', tafsirText);
+          return;
+        }
       }
       
-      await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
-      showRavanTafsirState('content', tafsirText);
+      throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
       
     } catch (error) {
       console.error('❌ خطا در دریافت دستی:', error);
@@ -527,8 +561,13 @@
     await refreshProgress();
     await renderTafsirsList();
     
-    // ریست کردن حالت تفسیر روان جاوید به حالت خالی
-    showRavanTafsirState('empty');
+    // بررسی وجود تفسیر در دیتابیس و نمایش مناسب
+    const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
+    if (dbData && dbData.content) {
+      showRavanTafsirState('content', dbData.content);
+    } else {
+      showRavanTafsirState('empty');
+    }
   }
 
   // ============================================================
@@ -600,6 +639,11 @@
   // دکمه بارگذاری
   ravanTafsirLoadBtn.addEventListener('click', () => {
     loadRavanTafsir(current.surah, current.ayah);
+  });
+
+  // دکمه حذف
+  ravanTafsirDeleteBtn.addEventListener('click', () => {
+    deleteRavanTafsir(current.surah, current.ayah);
   });
 
   // دکمه دریافت دستی
