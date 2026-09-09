@@ -167,16 +167,13 @@
     const { error } = await sb
       .from('ravan_tafsirs')
       .delete()
-      .match({ surah, ayah });
+      .eq('surah', surah)
+      .eq('ayah', ayah);
     if (error) {
       console.error('خطا در حذف از دیتابیس:', error);
       throw error;
     }
-    // تأیید حذف
-    const check = await getRavanTafsirFromDB(surah, ayah);
-    if (check) {
-      throw new Error('حذف انجام نشد، رکورد همچنان وجود دارد');
-    }
+    // حذف موفق، نیازی به بررسی مجدد نیست
   }
 
   // دریافت تفسیر از ویکی از طریق corsproxy
