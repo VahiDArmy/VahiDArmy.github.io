@@ -574,4 +574,135 @@
     const selectedText = selection ? selection.toString().trim() : '';
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
-    const newLink = AyahLinks.makeToken
+    const newLink = AyahLinks.makeToken(s, a, excerpt);
+    
+    if (detectedLink) {
+      replaceAtCursor(tafsirContent, detectedLink.start, detectedLink.end, newLink);
+      detectedLink = null;
+    } else {
+      insertAtCursor(tafsirContent, newLink);
+    }
+    closeLinkModal();
+    tafsirContent.focus();
+    updateLinkButton();
+  });
+
+  // --- رویدادهای تشخیص ارجاع ---
+  tafsirContent.addEventListener('input', updateLinkButton);
+  tafsirContent.addEventListener('click', updateLinkButton);
+  tafsirContent.addEventListener('keyup', updateLinkButton);
+  tafsirContent.addEventListener('select', updateLinkButton);
+
+  // ============================================================
+  // رویدادهای تفسیر روان جاوید
+  // ============================================================
+
+  // دکمه بارگذاری
+  ravanTafsirLoadBtn.addEventListener('click', () => {
+    loadRavanTafsir(current.surah, current.ayah);
+  });
+
+  // دکمه دریافت دستی
+  ravanTafsirManualBtn.addEventListener('click', () => {
+    ravanTafsirError.classList.add('hidden');
+    ravanTafsirManualInput.classList.remove('hidden');
+  });
+
+  ravanTafsirManualSubmit.addEventListener('click', () => {
+    const input = ravanTafsirManualInput.querySelector('input');
+    const url = input?.value?.trim();
+    if (url) {
+      fetchRavanTafsirManual(url);
+    }
+  });
+
+  ravanTafsirManualCancel.addEventListener('click', () => {
+    ravanTafsirManualInput.classList.add('hidden');
+    // برگشت به حالت خطا
+    const errorHtml = ravanTafsirError.innerHTML;
+    if (errorHtml) {
+      ravanTafsirError.classList.remove('hidden');
+    } else {
+      showRavanTafsirState('empty');
+    }
+  });
+
+  // ============================================================
+  // رویدادهای فرم و ناوبری
+  // ============================================================
+
+  document.getElementById('goToCurrentBtn').addEventListener('click', goToBookmark);
+  document.getElementById('setBookmarkBtn').addEventListener('click', setBookmark);
+  editBanner.querySelector('[data-cancel-edit]').addEventListener('click', exitEditMode);
+
+  document.getElementById('endRoundBtn').addEventListener('click', async () => {
+    const p = await Store.getProgress();
+    const ok = confirm(
+      `دور ${UI.toPersianDigits(p.round)} با پیشرفت ${UI.toPersianDigits(p.percent.toFixed(2))}٪ خواندن (${UI.toPersianDigits(p.tafsirCount)} تفسیر نوشته‌شده) بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} از آیهٔ اول شروع می‌شود. ادامه می‌دهید؟`
+    );
+    if (!ok) return;
+    const newRound = await Store.endRound();
+    UI.toast(`دور ${UI.toPersianDigits(newRound)} آغاز شد ✦`);
+    current = { surah: 1, ayah: 1 };
+    await renderCurrentAyah();
+  });
+
+  selectRow.surah.addEventListener('change', async () => {
+    current = { surah: Number(selectRow.surah.value), ayah: 1 };
+    await renderCurrentAyah();
+  });
+  selectRow.ayah.addEventListener('change', async () => {
+    current.ayah = Number(selectRow.ayah.value);
+    await renderCurrentAyah();
+  });
+
+  prevBtn.addEventListener('click', async () => {
+    if (current.ayah > 1) {
+      current.ayah -= 1;
+    } else if (current.surah > 1) {
+      const prevSurah = await QuranData.getSurah(current.surah - 1);
+      current = { surah: current.surah - 1, ayah: prevSurah.ayah_count };
+    } else return;
+    await renderCurrentAyah();
+  });
+
+  nextBtn.addEventListener('click', async () => {
+    const surahData = await QuranData.getSurah(current.surah);
+    if (current.ayah < surahData.ayah_count) {
+      current.ayah += 1;
+    } else if (current.surah < 114) {
+      current = { surah: current.surah + 1, ayah: 1 };
+    } else return;
+    await renderCurrentAyah();
+  });
+
+  tafsirForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const content = tafsirContent.value.trim();
+    if (!content) return;
+    const tags = parseTags(tafsirTags.value);
+
+    if (editingId) {
+      await Store.updateTafsir(editingId, content, tags);
+      await Store.syncAyahLinks(editingId, current.surah, current.ayah, AyahLinks.extract(content));
+      UI.toast('تفسیر به‌روزرسانی شد');
+      exitEditMode();
+      await renderTafsirsList();
+    } else {
+      const newTafsir = await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
+      await Store.syncAyahLinks(newTafsir.id, current.surah, current.ayah, AyahLinks.extract(content));
+      tafsirContent.value = '';
+      tafsirTags.value = '';
+      await renderTafsirsList();
+      await refreshProgress();
+      UI.toast('تفسیر با موفقیت ثبت شد');
+    }
+    updateLinkButton();
+  });
+
+  // ============================================================
+  // اجرای اولیه
+  // ============================================================
+
+  await renderCurrentAyah();
+})();
