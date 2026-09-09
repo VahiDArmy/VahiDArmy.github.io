@@ -135,239 +135,114 @@
   // توابع دریافت تفسیر روان جاوید
   // ============================================================
 
-  // دریافت تفسیر از دیتابیس
   async function getRavanTafsirFromDB(surah, ayah) {
-    console.log('🔍 getRavanTafsirFromDB - شروع:', { surah, ayah });
-    
-    // اطمینان از اینکه مقادیر عددی هستند
     const surahNum = Number(surah);
     const ayahNum = Number(ayah);
-    
+
     const { data, error } = await sb
       .from('ravan_tafsirs')
       .select('content')
       .eq('surah', surahNum)
       .eq('ayah', ayahNum)
       .maybeSingle();
-      
-    if (error) {
-      console.error('❌ خطا در دریافت از دیتابیس:', error);
-      throw error;
-    }
-    console.log('✅ getRavanTafsirFromDB - نتیجه:', data ? 'یافت شد' : 'یافت نشد');
+
+    if (error) throw error;
     return data;
   }
 
-  // ذخیره تفسیر در دیتابیس
   async function saveRavanTafsirToDB(surah, ayah, content) {
-    console.log('💾 saveRavanTafsirToDB - شروع:', { surah, ayah, contentLength: content.length });
-    
-    // اطمینان از اینکه مقادیر عددی هستند
     const surahNum = Number(surah);
     const ayahNum = Number(ayah);
-    
-    // ابتدا بررسی کنیم آیا رکورد وجود دارد
+
     const { data: existing } = await sb
       .from('ravan_tafsirs')
       .select('surah, ayah')
       .eq('surah', surahNum)
       .eq('ayah', ayahNum)
       .maybeSingle();
-    
+
     let result;
     if (existing) {
-      // به‌روزرسانی
-      console.log('💾 به‌روزرسانی رکورد موجود');
       result = await sb
         .from('ravan_tafsirs')
         .update({ content, updated_at: new Date().toISOString() })
         .eq('surah', surahNum)
         .eq('ayah', ayahNum);
     } else {
-      // درج جدید
-      console.log('💾 درج رکورد جدید');
       result = await sb
         .from('ravan_tafsirs')
-        .insert({ surah: surahNum, ayah: ayahNum, content, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        .insert({
+          surah: surahNum,
+          ayah: ayahNum,
+          content,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
     }
-    
-    if (result.error) {
-      console.error('❌ خطا در ذخیره در دیتابیس:', result.error);
-      throw result.error;
-    }
-    console.log('✅ saveRavanTafsirToDB - موفق');
+
+    if (result.error) throw result.error;
   }
 
-  // حذف تفسیر از دیتابیس
   async function deleteRavanTafsirFromDB(surah, ayah) {
-    console.log('🗑️ deleteRavanTafsirFromDB - شروع:', { surah, ayah, typeSurah: typeof surah, typeAyah: typeof ayah });
-    
-    // اطمینان از اینکه مقادیر عددی هستند
     const surahNum = Number(surah);
     const ayahNum = Number(ayah);
-    
-    // مرحله 1: بررسی وجود رکورد با کوئری دقیق
-    console.log('🗑️ deleteRavanTafsirFromDB - بررسی با مقادیر عددی:', { surahNum, ayahNum });
-    
-    const { data: existing, error: checkError } = await sb
-      .from('ravan_tafsirs')
-      .select('surah, ayah, content')
-      .eq('surah', surahNum)
-      .eq('ayah', ayahNum)
-      .maybeSingle();
-      
-    if (checkError) {
-      console.error('❌ خطا در بررسی رکورد:', checkError);
-      throw checkError;
-    }
-    
-    console.log('🗑️ deleteRavanTafsirFromDB - رکورد موجود:', existing);
-    
-    if (!existing) {
-      console.log('🗑️ deleteRavanTafsirFromDB - رکورد وجود ندارد، خروج موفق');
-      return;
-    }
-    
-    // مرحله 2: اجرای حذف با مقادیر عددی
-    console.log('🗑️ deleteRavanTafsirFromDB - اجرای حذف با:', { surah: surahNum, ayah: ayahNum });
-    const { error: deleteError } = await sb
+
+    const { data: deleted, error } = await sb
       .from('ravan_tafsirs')
       .delete()
       .eq('surah', surahNum)
-      .eq('ayah', ayahNum);
-    
-    if (deleteError) {
-      console.error('❌ خطا در حذف از دیتابیس:', deleteError);
-      throw deleteError;
-    }
-    console.log('✅ deleteRavanTafsirFromDB - حذف اجرا شد');
-    
-    // مرحله 3: تأیید حذف - با فاصله زمانی کوتاه
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    const { data: check, error: checkAgainError } = await sb
-      .from('ravan_tafsirs')
-      .select('surah, ayah, content')
-      .eq('surah', surahNum)
       .eq('ayah', ayahNum)
-      .maybeSingle();
-    
-    if (checkAgainError) {
-      console.error('❌ خطا در بررسی بعد از حذف:', checkAgainError);
-      // اگر خطا در بررسی بود، فرض می‌کنیم حذف موفق بوده
-      console.log('⚠️ خطا در بررسی بعد از حذف، فرض می‌کنیم حذف موفق بوده');
-      return;
-    }
-    
-    console.log('🗑️ deleteRavanTafsirFromDB - بررسی بعد از حذف:', check);
-    
-    if (check) {
-      console.error('❌ حذف انجام نشد، رکورد همچنان وجود دارد');
-      // تلاش دوباره با حذف مستقیم با استفاده از تمام ستون‌ها
-      console.log('🔄 تلاش مجدد با حذف مستقیم...');
-      
-      // اگر رکورد با این سوره و آیه وجود دارد، همه رکوردهای مشابه را حذف کن
-      const { error: forceDeleteError } = await sb
-        .from('ravan_tafsirs')
-        .delete()
-        .eq('surah', surahNum)
-        .eq('ayah', ayahNum);
-        
-      if (forceDeleteError) {
-        console.error('❌ خطا در حذف مجدد:', forceDeleteError);
-        throw new Error('حذف انجام نشد: ' + forceDeleteError.message);
-      }
-      
-      // بررسی مجدد
-      await new Promise(resolve => setTimeout(resolve, 200));
-      const { data: finalCheck, error: finalCheckError } = await sb
-        .from('ravan_tafsirs')
-        .select('surah, ayah, content')
-        .eq('surah', surahNum)
-        .eq('ayah', ayahNum)
-        .maybeSingle();
-        
-      if (finalCheckError) {
-        console.error('❌ خطا در بررسی نهایی:', finalCheckError);
-        return;
-      }
-      
-      if (finalCheck) {
-        console.error('❌ حذف مجدد نیز ناموفق بود');
-        throw new Error('حذف انجام نشد، رکورد همچنان وجود دارد');
-      }
-      
-      console.log('✅ deleteRavanTafsirFromDB - حذف مجدد موفق');
-    } else {
-      console.log('✅ deleteRavanTafsirFromDB - تأیید حذف موفق');
+      .select();
+
+    if (error) throw error;
+
+    if (!deleted || deleted.length === 0) {
+      throw new Error('هیچ رکوردی حذف نشد (ممکن است مشکل دسترسی RLS باشد)');
     }
   }
 
-  // دریافت تفسیر از ویکی از طریق corsproxy
   async function fetchRavanTafsirFromWiki(surah, ayah) {
-    // پیدا کردن نام سوره به فارسی
     const surahData = index.find(s => s.number === surah);
     const surahName = surahData?.name_fa || surah;
 
-    // ساخت URL صفحه ویکی - دقیقاً به فرمت نمونه کاربر
     const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
     const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}`;
-
-    // ساخت آدرس پروکسی
     const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
 
-    console.log('📡 درخواست به:', proxyUrl);
-
     const response = await fetch(proxyUrl);
-
     if (!response.ok) {
       throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
     }
 
     const html = await response.text();
-    console.log('📄 HTML دریافت شد، طول:', html.length);
-
-    // استخراج بخش تفسیر روان جاوید
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-
-    // روش اول: جستجوی مستقیم در textContent
     const text = doc.body.textContent || '';
-    console.log('📝 متن استخراج شده، طول:', text.length);
 
-    // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
-    // الگو: تفسیر روان جاوید (ثقفی تهرانى) ... تفسیر [متن اصلی]
+    // روش اول
     const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
     const match = text.match(tafsirRegex);
 
     if (match && match[2]) {
       let tafsirText = match[2].trim();
-      // پاکسازی متن
       tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-      if (tafsirText.length > 20) {
-        return tafsirText;
-      }
+      if (tafsirText.length > 20) return tafsirText;
     }
 
-    // روش دوم: اگر روش اول جواب نداد، جستجوی ساده‌تر
+    // روش دوم
     const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
     const simpleMatch = text.match(simpleRegex);
     if (simpleMatch && simpleMatch[1]) {
       let tafsirText = simpleMatch[1].trim();
       tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
-      // حذف ترجمه و متن آیه اگر در ابتدا باشند
       tafsirText = tafsirText.replace(/^[\s\S]*?ترجمه‌[\s\S]*?تفسیر\s*/i, '');
-      if (tafsirText.length > 20) {
-        return tafsirText;
-      }
+      if (tafsirText.length > 20) return tafsirText;
     }
 
     throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
   }
 
-  // نمایش حالت‌های مختلف
   function showRavanTafsirState(state, data) {
-    // مخفی کردن همه
     ravanTafsirEmpty.classList.add('hidden');
     ravanTafsirLoading.classList.add('hidden');
     ravanTafsirContent.classList.add('hidden');
@@ -400,85 +275,61 @@
     }
   }
 
-  // بارگذاری تفسیر روان جاوید برای آیه جاری (با دکمه)
   async function loadRavanTafsir(surah, ayah) {
-    console.log('🔄 loadRavanTafsir - شروع:', { surah, ayah });
-    // نمایش حالت بارگذاری
     showRavanTafsirState('loading');
 
     try {
       // ۱. بررسی دیتابیس
-      console.log('🔄 loadRavanTafsir - مرحله 1: بررسی دیتابیس');
       const dbData = await getRavanTafsirFromDB(surah, ayah);
-      if (dbData && dbData.content) {
-        console.log('✅ loadRavanTafsir - از دیتابیس یافت شد');
+      if (dbData?.content) {
         showRavanTafsirState('content', dbData.content);
         return;
       }
-      console.log('ℹ️ loadRavanTafsir - در دیتابیس یافت نشد');
 
       // ۲. دریافت از ویکی
-      console.log('🔄 loadRavanTafsir - مرحله 2: دریافت از ویکی');
       try {
         const content = await fetchRavanTafsirFromWiki(surah, ayah);
-        console.log('✅ loadRavanTafsir - از ویکی دریافت شد، طول:', content.length);
         await saveRavanTafsirToDB(surah, ayah, content);
         showRavanTafsirState('content', content);
         return;
       } catch (wikiError) {
-        console.warn('⚠️ loadRavanTafsir - دریافت از ویکی失敗:', wikiError);
-        // ادامه برای دریافت دستی
+        // ادامه برای حالت دستی
       }
 
-      // ۳. نمایش خطا و گزینه دریافت دستی
-      console.log('🔄 loadRavanTafsir - مرحله 3: نمایش خطا');
+      // ۳. نمایش خطا + گزینه دستی
       showRavanTafsirState('error', `
         <p>تفسیر روان جاوید برای این آیه یافت نشد.</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید آدرس صفحه ویکی را به صورت دستی وارد کنید.</p>
         <p style="font-size:0.75rem; color:var(--text-faint);">فرمت آدرس: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره</p>
       `);
-
     } catch (error) {
-      console.error('❌ loadRavanTafsir - خطا:', error);
+      console.error(error);
       showRavanTafsirState('error', `
         <p>خطا در بارگذاری تفسیر روان جاوید</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
-        <p style="font-size:0.75rem; color:var(--text-faint); margin-top:8px;">لطفاً کنسول مرورگر را بررسی کنید (F12)</p>
       `);
     }
   }
 
-  // حذف تفسیر روان جاوید از دیتابیس
   async function deleteRavanTafsir(surah, ayah) {
-    console.log('🗑️ deleteRavanTafsir - شروع:', { surah, ayah });
     const confirmed = confirm('آیا تفسیر روان جاوید ذخیره‌شده برای این آیه حذف شود؟');
-    if (!confirmed) {
-      console.log('🗑️ deleteRavanTafsir - کاربر انصراف داد');
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       await deleteRavanTafsirFromDB(surah, ayah);
       UI.toast('تفسیر روان جاوید حذف شد');
-      console.log('✅ deleteRavanTafsir - حذف موفق');
-      // پس از حذف، کارت را به حالت خالی برگردان
       showRavanTafsirState('empty');
     } catch (error) {
-      console.error('❌ deleteRavanTafsir - خطا:', error);
+      console.error(error);
       UI.toast('خطا در حذف تفسیر: ' + error.message);
     }
   }
 
-  // دریافت دستی از آدرس وارد شده توسط کاربر
   async function fetchRavanTafsirManual(url) {
     try {
       showRavanTafsirState('loading');
 
-      // ساخت آدرس پروکسی
       const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(url)}`;
-
-      console.log('📡 درخواست دستی به:', proxyUrl);
-
       const response = await fetch(proxyUrl);
 
       if (!response.ok) {
@@ -486,14 +337,10 @@
       }
 
       const html = await response.text();
-      console.log('📄 HTML دستی دریافت شد، طول:', html.length);
-
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       const text = doc.body.textContent || '';
-      console.log('📝 متن استخراج شده دستی، طول:', text.length);
 
-      // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
       const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
       const match = text.match(tafsirRegex);
 
@@ -507,7 +354,6 @@
         }
       }
 
-      // روش دوم: جستجوی ساده‌تر
       const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
       const simpleMatch = text.match(simpleRegex);
       if (simpleMatch && simpleMatch[1]) {
@@ -522,13 +368,11 @@
       }
 
       throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
-
     } catch (error) {
-      console.error('❌ خطا در دریافت دستی:', error);
+      console.error(error);
       showRavanTafsirState('error', `
         <p>خطا در دریافت از آدرس وارد شده</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
-        <p style="font-size:0.75rem; color:var(--text-faint); margin-top:8px;">لطفاً کنسول مرورگر را بررسی کنید (F12)</p>
       `);
     }
   }
@@ -548,8 +392,8 @@
           surah: Number(match[1]),
           ayah: Number(match[2]),
           excerpt: match[3] ? match[3].trim() : null,
-          start: start,
-          end: end,
+          start,
+          end,
           fullMatch: match[0]
         };
         break;
@@ -558,7 +402,6 @@
     return found;
   }
 
-  // --- به‌روزرسانی دکمه‌ی لینک ---
   function updateLinkButton() {
     const linkBtn = document.getElementById('openLinkToolBtn');
     const detected = detectLinkAtCursor(tafsirContent);
@@ -575,7 +418,6 @@
     }
   }
 
-  // --- باز کردن پاپ‌آپ لینک ---
   function openLinkModal(targetSurah, targetAyah) {
     const s = targetSurah || current.surah;
     const a = targetAyah || current.ayah;
@@ -684,7 +526,6 @@
   }
 
   async function renderCurrentAyah() {
-    console.log('📄 renderCurrentAyah - شروع:', { surah: current.surah, ayah: current.ayah });
     ayahSkeleton(stickyFrame);
     exitEditMode();
 
@@ -711,19 +552,16 @@
     await refreshProgress();
     await renderTafsirsList();
 
-    // بررسی وجود تفسیر در دیتابیس و نمایش مناسب
+    // وضعیت تفسیر روان جاوید
     try {
-      console.log('📄 renderCurrentAyah - بررسی دیتابیس برای روان جاوید');
       const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
-      if (dbData && dbData.content) {
-        console.log('✅ renderCurrentAyah - تفسیر در دیتابیس یافت شد');
+      if (dbData?.content) {
         showRavanTafsirState('content', dbData.content);
       } else {
-        console.log('ℹ️ renderCurrentAyah - تفسیر در دیتابیس یافت نشد');
         showRavanTafsirState('empty');
       }
     } catch (error) {
-      console.error('❌ renderCurrentAyah - خطا در بررسی دیتابیس:', error);
+      console.error(error);
       showRavanTafsirState('empty');
     }
   }
@@ -784,7 +622,6 @@
     updateLinkButton();
   });
 
-  // --- رویدادهای تشخیص ارجاع ---
   tafsirContent.addEventListener('input', updateLinkButton);
   tafsirContent.addEventListener('click', updateLinkButton);
   tafsirContent.addEventListener('keyup', updateLinkButton);
@@ -794,19 +631,14 @@
   // رویدادهای تفسیر روان جاوید
   // ============================================================
 
-  // دکمه بارگذاری
   ravanTafsirLoadBtn.addEventListener('click', () => {
-    console.log('🔄 کاربر دکمه بارگذاری را زد');
     loadRavanTafsir(current.surah, current.ayah);
   });
 
-  // دکمه حذف
   ravanTafsirDeleteBtn.addEventListener('click', () => {
-    console.log('🗑️ کاربر دکمه حذف را زد');
     deleteRavanTafsir(current.surah, current.ayah);
   });
 
-  // دکمه دریافت دستی
   ravanTafsirManualBtn.addEventListener('click', () => {
     ravanTafsirError.classList.add('hidden');
     ravanTafsirManualInput.classList.remove('hidden');
@@ -822,7 +654,6 @@
 
   ravanTafsirManualCancel.addEventListener('click', () => {
     ravanTafsirManualInput.classList.add('hidden');
-    // برگشت به حالت خطا
     const errorHtml = ravanTafsirError.innerHTML;
     if (errorHtml) {
       ravanTafsirError.classList.remove('hidden');
@@ -908,7 +739,5 @@
   // اجرای اولیه
   // ============================================================
 
-  console.log('🚀 اجرای اولیه work.js');
   await renderCurrentAyah();
-  console.log('✅ work.js بارگذاری شد');
 })();
