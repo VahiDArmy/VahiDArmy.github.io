@@ -140,9 +140,14 @@
   <section class="section" aria-label="تفسیر روان جاوید" id="ravanTafsirSection">
     <div class="section__label">
       <span>تفسیر روان جاوید</span>
-      <button class="btn btn--sm btn--primary" id="ravanTafsirLoadBtn" style="font-size:0.75rem;">
-        ↻ بارگذاری تفسیر
-      </button>
+      <div style="display:flex; gap:6px; margin-inline-start:auto;">
+        <button class="btn btn--sm btn--primary" id="ravanTafsirLoadBtn" style="font-size:0.75rem;">
+          ↻ بارگذاری تفسیر
+        </button>
+        <button class="btn btn--sm btn--ghost hidden" id="ravanTafsirDeleteBtn" style="font-size:0.75rem; color:var(--danger); border-color:var(--danger);">
+          ✕ حذف
+        </button>
+      </div>
     </div>
     <div class="card ravan-tafsir-container" id="ravanTafsirContainer">
       <!-- حالت پیش‌فرض: بدون تفسیر -->
