@@ -19,7 +19,10 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.1),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.2),
+    0 4px 12px rgba(0,0,0,0.1);
 }
 .btn:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 20px var(--neon-glow); }
 .btn:active { transform: scale(0.98); }
@@ -53,7 +56,7 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- Card (glass) ---- */
+/* ---- Card (glass with curved edges) ---- */
 .card {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
@@ -61,10 +64,25 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 20px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  box-shadow: 
+    /* لبه‌های بالا و پایین محدب (روشن‌تر) */
+    inset 0 6px 10px -4px rgba(255,255,255,0.12),
+    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
+    /* لبه‌های چپ و راست مقعر (تیره‌تر) */
+    inset 6px 0 10px -4px rgba(0,0,0,0.25),
+    inset -6px 0 10px -4px rgba(0,0,0,0.25),
+    /* سایه اصلی */
+    var(--shadow-card), 
+    0 0 0 1px var(--glass-border);
+  /* بازتاب نور در لبه‌ها */
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.04) 0%, transparent 35%),
+    var(--glass-bg);
+  background-blend-mode: overlay, overlay, normal;
 }
 
-/* ---- Progress hero ---- */
+/* ---- Progress hero (glass with curved edges) ---- */
 .progress-hero {
   display: flex;
   align-items: center;
@@ -76,7 +94,18 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  box-shadow: 
+    inset 0 6px 10px -4px rgba(255,255,255,0.12),
+    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
+    inset 6px 0 10px -4px rgba(0,0,0,0.25),
+    inset -6px 0 10px -4px rgba(0,0,0,0.25),
+    var(--shadow-card), 
+    0 0 0 1px var(--glass-border);
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.04) 0%, transparent 35%),
+    var(--glass-bg);
+  background-blend-mode: overlay, overlay, normal;
 }
 
 .progress-hero__text {
@@ -140,7 +169,7 @@
   margin: 4px 0 0;
 }
 
-/* دکمه نشانک با درخشش مخصوص */
+/* دکمه نشانک با درخشش */
 .bookmark-btn {
   position: relative;
   border-color: var(--neon-dim);
@@ -149,7 +178,9 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
-  box-shadow: 0 0 0 rgba(0,0,0,0);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.1),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.2);
 }
 
 .bookmark-btn svg {
@@ -198,7 +229,7 @@
   opacity: 1;
 }
 
-/* دکمه رفتن به آیه جاری (نشانگر) */
+/* دکمه رفتن به آیه جاری */
 .go-to-btn {
   border-color: var(--violet);
   color: var(--violet);
@@ -206,6 +237,9 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.1),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.2);
 }
 
 .go-to-btn svg {
@@ -381,8 +415,17 @@
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px var(--glass-border);
-  border: 1px solid transparent;
+  box-shadow: 
+    inset 0 6px 10px -4px rgba(255,255,255,0.10),
+    inset 0 -6px 10px -4px rgba(255,255,255,0.10),
+    inset 6px 0 10px -4px rgba(0,0,0,0.20),
+    inset -6px 0 10px -4px rgba(0,0,0,0.20),
+    0 0 0 1px var(--glass-border);
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.05) 0%, transparent 35%),
+    radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.03) 0%, transparent 30%),
+    var(--glass-bg-strong);
+  background-blend-mode: overlay, overlay, normal;
 }
 
 .ayah-frame__ref {
@@ -501,6 +544,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
   color: var(--text-dim);
   font-size: 0.92rem;
   line-height: 1.9;
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.06),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.12);
 }
 
 /* ---- Selects ---- */
@@ -527,7 +573,10 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.08),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    0 4px 12px rgba(0,0,0,0.1);
 }
 .select-wrap select:hover {
   border-color: var(--neon);
@@ -604,7 +653,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .ayah-nav .btn { flex: 1; }
 
-/* ---- Tafsir card ---- */
+/* ---- Tafsir card (glass with curved edges) ---- */
 .tafsir-card {
   margin-top: 14px;
   background: var(--glass-bg);
@@ -613,8 +662,20 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 18px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  box-shadow: 
+    inset 0 6px 10px -4px rgba(255,255,255,0.12),
+    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
+    inset 6px 0 10px -4px rgba(0,0,0,0.25),
+    inset -6px 0 10px -4px rgba(0,0,0,0.25),
+    var(--shadow-card), 
+    0 0 0 1px var(--glass-border);
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.04) 0%, transparent 35%),
+    var(--glass-bg);
+  background-blend-mode: overlay, overlay, normal;
 }
+
 .tafsir-card__meta {
   display: flex;
   align-items: center;
@@ -692,7 +753,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .tag-mention:hover { filter: brightness(1.3); }
 
-/* ---- Textarea / form ---- */
+/* ---- Textarea / form (glass with curved edges) ---- */
 .field { margin-bottom: 14px; }
 .field label {
   display: block;
@@ -714,7 +775,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   line-height: 1.8;
   resize: vertical;
   transition: border-color 0.2s ease, min-height 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.08),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    0 4px 12px rgba(0,0,0,0.1);
 }
 .field textarea {
   min-height: 110px;
@@ -742,14 +806,18 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-family: var(--font-ui);
   font-size: 0.85rem;
   transition: border-color 0.2s ease;
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.06),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.12);
 }
 .name-row input:focus,
 .comment-form input[type="text"]:focus {
   border-color: var(--neon);
   outline: none;
+  box-shadow: 0 0 20px var(--neon-glow);
 }
 
-/* ---- Comments ---- */
+/* ---- Comments (glass with curved edges) ---- */
 .comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
   background: var(--glass-bg);
@@ -758,6 +826,9 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   border: 1px solid var(--glass-border);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.08),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.15);
 }
 .comment__head {
   display: flex;
@@ -793,7 +864,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   .skeleton { animation: none; }
 }
 
-/* ---- Toast ---- */
+/* ---- Toast (glass with curved edges) ---- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -812,7 +883,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   padding: 10px 20px;
   border-radius: 999px;
   font-size: 0.85rem;
-  box-shadow: 0 0 30px var(--neon-glow);
+  box-shadow: 
+    inset 0 2px 4px -2px rgba(255,255,255,0.10),
+    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    0 0 30px var(--neon-glow);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
@@ -822,7 +896,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 /* ---- Count-up number ---- */
 .count-up { font-variant-numeric: tabular-nums; }
 
-/* ---- Modal overlay ---- */
+/* ---- Modal overlay (glass with curved edges) ---- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -844,7 +918,17 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   backdrop-filter: var(--glass-blur) saturate(160%);
   -webkit-backdrop-filter: var(--glass-blur) saturate(160%);
   border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-card);
+  box-shadow: 
+    inset 0 6px 10px -4px rgba(255,255,255,0.10),
+    inset 0 -6px 10px -4px rgba(255,255,255,0.10),
+    inset 6px 0 10px -4px rgba(0,0,0,0.20),
+    inset -6px 0 10px -4px rgba(0,0,0,0.20),
+    var(--shadow-card);
+  background-image: 
+    radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.05) 0%, transparent 35%),
+    radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.03) 0%, transparent 30%),
+    var(--glass-bg-strong);
+  background-blend-mode: overlay, overlay, normal;
 }
 .modal-card__head {
   display: flex;
