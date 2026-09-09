@@ -175,7 +175,6 @@
           surah: surahNum,
           ayah: ayahNum,
           content,
-          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
     }
