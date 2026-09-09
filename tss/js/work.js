@@ -155,7 +155,8 @@
     const { error } = await sb
       .from('ravan_tafsirs')
       .upsert({ surah, ayah, content, updated_at: new Date().toISOString() })
-      .match({ surah, ayah });
+      .eq('surah', surah)
+      .eq('ayah', ayah);
     if (error) {
       console.error('خطا در ذخیره در دیتابیس:', error);
       throw error;
@@ -164,6 +165,13 @@
 
   // حذف تفسیر از دیتابیس
   async function deleteRavanTafsirFromDB(surah, ayah) {
+    // اول بررسی کن که رکورد وجود دارد
+    const existing = await getRavanTafsirFromDB(surah, ayah);
+    if (!existing) {
+      // اگر وجود ندارد، موفق در نظر بگیر
+      return;
+    }
+    
     const { error } = await sb
       .from('ravan_tafsirs')
       .delete()
@@ -173,7 +181,6 @@
       console.error('خطا در حذف از دیتابیس:', error);
       throw error;
     }
-    // حذف موفق، نیازی به بررسی مجدد نیست
   }
 
   // دریافت تفسیر از ویکی از طریق corsproxy
