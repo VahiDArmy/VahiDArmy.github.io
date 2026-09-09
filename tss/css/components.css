@@ -20,8 +20,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.1),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.2),
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15),
     0 4px 12px rgba(0,0,0,0.1);
 }
 .btn:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 20px var(--neon-glow); }
@@ -56,8 +56,9 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- Card (glass with curved edges) ---- */
+/* ---- Card (glass with bulge at edges) ---- */
 .card {
+  position: relative;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -65,16 +66,18 @@
   border-radius: var(--radius-md);
   padding: 20px;
   box-shadow: 
-    /* لبه‌های بالا و پایین محدب (روشن‌تر) */
-    inset 0 6px 10px -4px rgba(255,255,255,0.12),
-    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
-    /* لبه‌های چپ و راست مقعر (تیره‌تر) */
-    inset 6px 0 10px -4px rgba(0,0,0,0.25),
-    inset -6px 0 10px -4px rgba(0,0,0,0.25),
-    /* سایه اصلی */
+    /* برآمدگی در لبه‌ها (ضخیم‌تر) */
+    inset 0 4px 14px 0 rgba(255,255,255,0.14),
+    inset 0 -4px 14px 0 rgba(255,255,255,0.14),
+    inset 4px 0 14px 0 rgba(0,0,0,0.25),
+    inset -4px 0 14px 0 rgba(0,0,0,0.25),
+    /* بازگشت به ضخامت عادی در انتهای لبه */
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    inset 1px 0 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 0 rgba(0,0,0,0.15),
     var(--shadow-card), 
     0 0 0 1px var(--glass-border);
-  /* بازتاب نور در لبه‌ها */
   background-image: 
     radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.06) 0%, transparent 40%),
     radial-gradient(ellipse at 85% 100%, rgba(255,255,255,0.04) 0%, transparent 35%),
@@ -82,7 +85,7 @@
   background-blend-mode: overlay, overlay, normal;
 }
 
-/* ---- Progress hero (glass with curved edges) ---- */
+/* ---- Progress hero (glass with bulge at edges) ---- */
 .progress-hero {
   display: flex;
   align-items: center;
@@ -95,10 +98,14 @@
   border-radius: var(--radius-lg);
   padding: 16px 18px;
   box-shadow: 
-    inset 0 6px 10px -4px rgba(255,255,255,0.12),
-    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
-    inset 6px 0 10px -4px rgba(0,0,0,0.25),
-    inset -6px 0 10px -4px rgba(0,0,0,0.25),
+    inset 0 4px 14px 0 rgba(255,255,255,0.14),
+    inset 0 -4px 14px 0 rgba(255,255,255,0.14),
+    inset 4px 0 14px 0 rgba(0,0,0,0.25),
+    inset -4px 0 14px 0 rgba(0,0,0,0.25),
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    inset 1px 0 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 0 rgba(0,0,0,0.15),
     var(--shadow-card), 
     0 0 0 1px var(--glass-border);
   background-image: 
@@ -169,7 +176,7 @@
   margin: 4px 0 0;
 }
 
-/* دکمه نشانک با درخشش */
+/* دکمه نشانک */
 .bookmark-btn {
   position: relative;
   border-color: var(--neon-dim);
@@ -179,8 +186,8 @@
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.1),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.2);
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15);
 }
 
 .bookmark-btn svg {
@@ -238,8 +245,8 @@
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.1),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.2);
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15);
 }
 
 .go-to-btn svg {
@@ -416,10 +423,14 @@
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
   box-shadow: 
-    inset 0 6px 10px -4px rgba(255,255,255,0.10),
-    inset 0 -6px 10px -4px rgba(255,255,255,0.10),
-    inset 6px 0 10px -4px rgba(0,0,0,0.20),
-    inset -6px 0 10px -4px rgba(0,0,0,0.20),
+    inset 0 4px 14px 0 rgba(255,255,255,0.12),
+    inset 0 -4px 14px 0 rgba(255,255,255,0.12),
+    inset 4px 0 14px 0 rgba(0,0,0,0.20),
+    inset -4px 0 14px 0 rgba(0,0,0,0.20),
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(0,0,0,0.15),
+    inset 1px 0 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 0 rgba(0,0,0,0.12),
     0 0 0 1px var(--glass-border);
   background-image: 
     radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.05) 0%, transparent 35%),
@@ -455,6 +466,77 @@
   transition: color 0.2s ease;
 }
 .copy-ayah-btn:hover { color: var(--neon); }
+
+/* ============================================================
+   شفاف‌سازی ناحیه متن (هایلایت شیشه‌ای)
+   ============================================================ */
+
+/* متن عربی قرآن */
+.ayah-frame__arabic {
+  font-family: var(--font-quran);
+  font-size: 1.7rem;
+  line-height: 2.5;
+  text-align: center;
+  color: var(--text);
+  direction: rtl;
+  position: relative;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  box-shadow: 
+    inset 0 0 20px 0 rgba(255,255,255,0.03),
+    0 0 30px 0 rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+}
+
+.ayah-frame__arabic:hover {
+  background: rgba(255,255,255,0.04);
+  box-shadow: 
+    inset 0 0 30px 0 rgba(255,255,255,0.05),
+    0 0 40px 0 rgba(255,255,255,0.03);
+}
+
+/* متن تفسیر */
+.tafsir-card__body {
+  font-size: 0.95rem;
+  line-height: 2;
+  color: var(--text);
+  white-space: pre-wrap;
+  position: relative;
+  padding: 6px 10px;
+  margin: 0 -10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.015);
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+  box-shadow: 
+    inset 0 0 20px 0 rgba(255,255,255,0.02);
+  transition: all 0.2s ease;
+}
+
+.tafsir-card__body:hover {
+  background: rgba(255,255,255,0.03);
+  box-shadow: 
+    inset 0 0 30px 0 rgba(255,255,255,0.04);
+}
+
+/* متن ترجمه در نوار ترجمه */
+.translation-content p {
+  margin: 4px 0 10px;
+  padding: 12px 14px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.9;
+  box-shadow: 
+    inset 0 2px 6px 0 rgba(255,255,255,0.06),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.12);
+}
 
 /* ---- Ayah-to-ayah reference link ---- */
 .ayah-link {
@@ -494,15 +576,6 @@ span.mark-toggle { cursor: default; }
 }
 button.mark-toggle:hover { border-color: #FFB020; }
 
-.ayah-frame__arabic {
-  font-family: var(--font-quran);
-  font-size: 1.7rem;
-  line-height: 2.5;
-  text-align: center;
-  color: var(--text);
-  direction: rtl;
-}
-
 /* ---- Translation collapse bar ---- */
 .translation-bar {
   margin-top: 14px;
@@ -534,20 +607,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .translation-content.is-open { grid-template-rows: 1fr; }
 .translation-content > div { overflow: hidden; }
-.translation-content p {
-  margin: 4px 0 10px;
-  padding: 12px 14px;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-sm);
-  color: var(--text-dim);
-  font-size: 0.92rem;
-  line-height: 1.9;
-  box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.06),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.12);
-}
 
 /* ---- Selects ---- */
 .select-row {
@@ -574,8 +633,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.08),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15),
     0 4px 12px rgba(0,0,0,0.1);
 }
 .select-wrap select:hover {
@@ -653,7 +712,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .ayah-nav .btn { flex: 1; }
 
-/* ---- Tafsir card (glass with curved edges) ---- */
+/* ---- Tafsir card (glass with bulge at edges) ---- */
 .tafsir-card {
   margin-top: 14px;
   background: var(--glass-bg);
@@ -663,10 +722,14 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-radius: var(--radius-md);
   padding: 18px;
   box-shadow: 
-    inset 0 6px 10px -4px rgba(255,255,255,0.12),
-    inset 0 -6px 10px -4px rgba(255,255,255,0.12),
-    inset 6px 0 10px -4px rgba(0,0,0,0.25),
-    inset -6px 0 10px -4px rgba(0,0,0,0.25),
+    inset 0 4px 14px 0 rgba(255,255,255,0.14),
+    inset 0 -4px 14px 0 rgba(255,255,255,0.14),
+    inset 4px 0 14px 0 rgba(0,0,0,0.25),
+    inset -4px 0 14px 0 rgba(0,0,0,0.25),
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(0,0,0,0.2),
+    inset 1px 0 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 0 rgba(0,0,0,0.15),
     var(--shadow-card), 
     0 0 0 1px var(--glass-border);
   background-image: 
@@ -690,12 +753,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   padding: 2px 9px;
   border-radius: 999px;
   font-weight: 700;
-}
-.tafsir-card__body {
-  font-size: 0.95rem;
-  line-height: 2;
-  color: var(--text);
-  white-space: pre-wrap;
 }
 .tafsir-card__body.is-clamped {
   display: -webkit-box;
@@ -753,7 +810,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .tag-mention:hover { filter: brightness(1.3); }
 
-/* ---- Textarea / form (glass with curved edges) ---- */
+/* ---- Textarea / form (glass with bulge at edges) ---- */
 .field { margin-bottom: 14px; }
 .field label {
   display: block;
@@ -776,8 +833,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   resize: vertical;
   transition: border-color 0.2s ease, min-height 0.25s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.08),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15),
     0 4px 12px rgba(0,0,0,0.1);
 }
 .field textarea {
@@ -807,8 +864,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-size: 0.85rem;
   transition: border-color 0.2s ease;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.06),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.12);
+    inset 0 2px 6px 0 rgba(255,255,255,0.06),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.12);
 }
 .name-row input:focus,
 .comment-form input[type="text"]:focus {
@@ -817,7 +874,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   box-shadow: 0 0 20px var(--neon-glow);
 }
 
-/* ---- Comments (glass with curved edges) ---- */
+/* ---- Comments (glass with bulge at edges) ---- */
 .comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
   background: var(--glass-bg);
@@ -827,8 +884,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   padding: 12px 14px;
   border: 1px solid var(--glass-border);
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.08),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.15);
+    inset 0 2px 6px 0 rgba(255,255,255,0.08),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15);
 }
 .comment__head {
   display: flex;
@@ -838,7 +895,23 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .comment__name { color: var(--neon); font-weight: 600; }
 .comment__date { color: var(--text-faint); }
-.comment__body { font-size: 0.88rem; color: var(--text-dim); line-height: 1.8; white-space: pre-wrap; }
+.comment__body { 
+  font-size: 0.88rem; 
+  color: var(--text-dim); 
+  line-height: 1.8; 
+  white-space: pre-wrap;
+  position: relative;
+  padding: 4px 8px;
+  margin: 0 -8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.01);
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+  transition: all 0.2s ease;
+}
+.comment__body:hover {
+  background: rgba(255,255,255,0.025);
+}
 
 /* ---- Empty state ---- */
 .empty-state {
@@ -864,7 +937,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   .skeleton { animation: none; }
 }
 
-/* ---- Toast (glass with curved edges) ---- */
+/* ---- Toast (glass with bulge at edges) ---- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -884,8 +957,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border-radius: 999px;
   font-size: 0.85rem;
   box-shadow: 
-    inset 0 2px 4px -2px rgba(255,255,255,0.10),
-    inset 0 -2px 4px -2px rgba(0,0,0,0.15),
+    inset 0 2px 6px 0 rgba(255,255,255,0.10),
+    inset 0 -2px 6px 0 rgba(0,0,0,0.15),
     0 0 30px var(--neon-glow);
   opacity: 0;
   translate: 0 10px;
@@ -896,7 +969,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 /* ---- Count-up number ---- */
 .count-up { font-variant-numeric: tabular-nums; }
 
-/* ---- Modal overlay (glass with curved edges) ---- */
+/* ---- Modal overlay (glass with bulge at edges) ---- */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -919,10 +992,14 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   -webkit-backdrop-filter: var(--glass-blur) saturate(160%);
   border: 1px solid var(--glass-border);
   box-shadow: 
-    inset 0 6px 10px -4px rgba(255,255,255,0.10),
-    inset 0 -6px 10px -4px rgba(255,255,255,0.10),
-    inset 6px 0 10px -4px rgba(0,0,0,0.20),
-    inset -6px 0 10px -4px rgba(0,0,0,0.20),
+    inset 0 4px 14px 0 rgba(255,255,255,0.10),
+    inset 0 -4px 14px 0 rgba(255,255,255,0.10),
+    inset 4px 0 14px 0 rgba(0,0,0,0.20),
+    inset -4px 0 14px 0 rgba(0,0,0,0.20),
+    inset 0 1px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(0,0,0,0.15),
+    inset 1px 0 0 0 rgba(255,255,255,0.04),
+    inset -1px 0 0 0 rgba(0,0,0,0.12),
     var(--shadow-card);
   background-image: 
     radial-gradient(ellipse at 15% 0%, rgba(255,255,255,0.05) 0%, transparent 35%),
