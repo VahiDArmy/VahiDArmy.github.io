@@ -1131,6 +1131,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   box-shadow: 0 0 20px var(--neon-glow);
 }
 
+#ravanTafsirDeleteBtn:hover {
+  box-shadow: 0 0 20px var(--danger);
+}
+
 /* ---- Mobile adjustments for ravan tafsir ---- */
 @media (max-width: 560px) {
   .ravan-tafsir-content {
