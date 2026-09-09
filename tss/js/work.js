@@ -15,9 +15,11 @@
 
   // المان‌های تفسیر روان جاوید
   const ravanTafsirContainer = document.getElementById('ravanTafsirContainer');
+  const ravanTafsirEmpty = document.getElementById('ravanTafsirEmpty');
   const ravanTafsirContent = document.getElementById('ravanTafsirContent');
   const ravanTafsirLoading = document.getElementById('ravanTafsirLoading');
   const ravanTafsirError = document.getElementById('ravanTafsirError');
+  const ravanTafsirLoadBtn = document.getElementById('ravanTafsirLoadBtn');
   const ravanTafsirRetryBtn = document.getElementById('ravanTafsirRetryBtn');
   const ravanTafsirManualBtn = document.getElementById('ravanTafsirManualBtn');
   const ravanTafsirManualInput = document.getElementById('ravanTafsirManualInput');
@@ -157,13 +159,25 @@
 
   // دریافت تفسیر از ویکی از طریق corsproxy
   async function fetchRavanTafsirFromWiki(surah, ayah) {
-    const surahName = index.find(s => s.number === surah)?.name_fa || surah;
-    // ساخت URL صفحه ویکی
-    const url = `https://wiki.ahlolbait.com/%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${surahName.replace(/ /g, '_')}`;
-    const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(url)}`;
+    // پیدا کردن نام سوره به فارسی
+    const surahData = index.find(s => s.number === surah);
+    const surahName = surahData?.name_fa || surah;
+    
+    // ساخت URL صفحه ویکی - دقیقاً به فرمت نمونه کاربر
+    // نمونه: https://wiki.ahlolbait.com/%D8%A2%DB%8C%D9%87_61_%D8%B3%D9%88%D8%B1%D9%87_%D8%A8%D9%82%D8%B1%D9%87
+    const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
+    const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}`;
+    
+    // ساخت آدرس پروکسی - فقط url رو encode می‌کنیم، نه کل آدرس
+    const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
+    
+    console.log('دریافت از:', proxyUrl);
     
     const response = await fetch(proxyUrl);
-    if (!response.ok) throw new Error('دریافت صفحه با خطا مواجه شد');
+    if (!response.ok) {
+      throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
+    }
+    
     const html = await response.text();
     
     // استخراج بخش تفسیر روان جاوید
@@ -171,7 +185,6 @@
     const doc = parser.parseFromString(html, 'text/html');
     
     // پیدا کردن بخش تفسیر روان جاوید
-    // الگوی معمول: عنوان "تفسیر روان جاوید (ثقفی تهرانى)" و سپس متن تا عنوان بعدی
     const text = doc.body.textContent || '';
     const regex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)\s*([\s\S]*?)(?=تفسیر\s+\w+|$)/i;
     const match = text.match(regex);
@@ -182,26 +195,50 @@
     
     // پاکسازی متن
     let tafsirText = match[1].trim();
-    // حذف ارجاعات و لینک‌ها
     tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
     
     return tafsirText;
   }
 
-  // بارگذاری تفسیر روان جاوید برای آیه جاری
-  async function loadRavanTafsir(surah, ayah) {
-    // نمایش حالت بارگذاری
-    ravanTafsirContainer.classList.remove('has-content', 'has-error');
-    ravanTafsirLoading.classList.remove('hidden');
+  // نمایش حالت‌های مختلف
+  function showRavanTafsirState(state, data) {
+    // مخفی کردن همه
+    ravanTafsirEmpty.classList.add('hidden');
+    ravanTafsirLoading.classList.add('hidden');
     ravanTafsirContent.classList.add('hidden');
     ravanTafsirError.classList.add('hidden');
+    ravanTafsirManualBtn.classList.add('hidden');
     ravanTafsirManualInput.classList.add('hidden');
+    
+    switch (state) {
+      case 'empty':
+        ravanTafsirEmpty.classList.remove('hidden');
+        break;
+      case 'loading':
+        ravanTafsirLoading.classList.remove('hidden');
+        break;
+      case 'content':
+        ravanTafsirContent.classList.remove('hidden');
+        ravanTafsirContent.innerHTML = data;
+        break;
+      case 'error':
+        ravanTafsirError.classList.remove('hidden');
+        ravanTafsirError.innerHTML = data;
+        ravanTafsirManualBtn.classList.remove('hidden');
+        break;
+    }
+  }
+
+  // بارگذاری تفسیر روان جاوید برای آیه جاری (با دکمه)
+  async function loadRavanTafsir(surah, ayah) {
+    // نمایش حالت بارگذاری
+    showRavanTafsirState('loading');
     
     try {
       // ۱. بررسی دیتابیس
       const dbData = await getRavanTafsirFromDB(surah, ayah);
       if (dbData && dbData.content) {
-        showRavanTafsirContent(dbData.content);
+        showRavanTafsirState('content', dbData.content);
         return;
       }
       
@@ -209,53 +246,42 @@
       try {
         const content = await fetchRavanTafsirFromWiki(surah, ayah);
         await saveRavanTafsirToDB(surah, ayah, content);
-        showRavanTafsirContent(content);
+        showRavanTafsirState('content', content);
         return;
       } catch (wikiError) {
-        console.warn('دریافت از ویکی失败:', wikiError);
+        console.warn('دریافت از ویکی失敗:', wikiError);
         // ادامه برای دریافت دستی
       }
       
       // ۳. نمایش خطا و گزینه دریافت دستی
-      ravanTafsirLoading.classList.add('hidden');
-      ravanTafsirError.classList.remove('hidden');
-      ravanTafsirError.innerHTML = `
+      showRavanTafsirState('error', `
         <p>تفسیر روان جاوید برای این آیه یافت نشد.</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید آدرس صفحه ویکی را به صورت دستی وارد کنید.</p>
-      `;
-      ravanTafsirManualBtn.classList.remove('hidden');
+        <p style="font-size:0.75rem; color:var(--text-faint);">فرمت آدرس: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره</p>
+      `);
       
     } catch (error) {
       console.error('خطا در بارگذاری تفسیر روان جاوید:', error);
-      ravanTafsirLoading.classList.add('hidden');
-      ravanTafsirError.classList.remove('hidden');
-      ravanTafsirError.innerHTML = `
+      showRavanTafsirState('error', `
         <p>خطا در بارگذاری تفسیر روان جاوید</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
-      `;
-      ravanTafsirManualBtn.classList.remove('hidden');
+      `);
     }
-  }
-
-  function showRavanTafsirContent(content) {
-    ravanTafsirLoading.classList.add('hidden');
-    ravanTafsirError.classList.add('hidden');
-    ravanTafsirManualBtn.classList.add('hidden');
-    ravanTafsirManualInput.classList.add('hidden');
-    ravanTafsirContainer.classList.add('has-content');
-    ravanTafsirContent.classList.remove('hidden');
-    ravanTafsirContent.innerHTML = content;
   }
 
   // دریافت دستی از آدرس وارد شده توسط کاربر
   async function fetchRavanTafsirManual(url) {
     try {
-      ravanTafsirManualInput.classList.add('hidden');
-      ravanTafsirLoading.classList.remove('hidden');
+      showRavanTafsirState('loading');
       
+      // ساخت آدرس پروکسی
       const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(url)}`;
+      
       const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error('دریافت صفحه با خطا مواجه شد');
+      if (!response.ok) {
+        throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
+      }
+      
       const html = await response.text();
       
       const parser = new DOMParser();
@@ -272,16 +298,13 @@
       tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
       
       await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
-      showRavanTafsirContent(tafsirText);
+      showRavanTafsirState('content', tafsirText);
       
     } catch (error) {
-      ravanTafsirLoading.classList.add('hidden');
-      ravanTafsirError.classList.remove('hidden');
-      ravanTafsirError.innerHTML = `
+      showRavanTafsirState('error', `
         <p>خطا در دریافت از آدرس وارد شده</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
-      `;
-      ravanTafsirManualBtn.classList.remove('hidden');
+      `);
     }
   }
 
@@ -462,8 +485,8 @@
     await refreshProgress();
     await renderTafsirsList();
     
-    // بارگذاری تفسیر روان جاوید
-    await loadRavanTafsir(current.surah, current.ayah);
+    // ریست کردن حالت تفسیر روان جاوید به حالت خالی
+    showRavanTafsirState('empty');
   }
 
   // ============================================================
@@ -532,17 +555,20 @@
   // رویدادهای تفسیر روان جاوید
   // ============================================================
 
-  ravanTafsirRetryBtn.addEventListener('click', () => {
+  // دکمه بارگذاری
+  ravanTafsirLoadBtn.addEventListener('click', () => {
     loadRavanTafsir(current.surah, current.ayah);
   });
 
+  // دکمه دریافت دستی
   ravanTafsirManualBtn.addEventListener('click', () => {
     ravanTafsirError.classList.add('hidden');
     ravanTafsirManualInput.classList.remove('hidden');
   });
 
   ravanTafsirManualSubmit.addEventListener('click', () => {
-    const url = ravanTafsirManualInput.querySelector('input').value.trim();
+    const input = ravanTafsirManualInput.querySelector('input');
+    const url = input?.value?.trim();
     if (url) {
       fetchRavanTafsirManual(url);
     }
@@ -550,7 +576,13 @@
 
   ravanTafsirManualCancel.addEventListener('click', () => {
     ravanTafsirManualInput.classList.add('hidden');
-    ravanTafsirError.classList.remove('hidden');
+    // برگشت به حالت خطا
+    const errorHtml = ravanTafsirError.innerHTML;
+    if (errorHtml) {
+      ravanTafsirError.classList.remove('hidden');
+    } else {
+      showRavanTafsirState('empty');
+    }
   });
 
   // ============================================================
