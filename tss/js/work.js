@@ -187,67 +187,39 @@
     return text
       .replace(/\[\d+\]/g, '')
       .replace(/\[ویرایش\]/g, '')
-      .replace(/function\s*\(.*?\{[\s\S]*?\}/g, '')
-      .replace(/var\s+\w+\s*=.*?;/g, '')
-      .replace(/window\..*?;/g, '')
-      .replace(/document\..*?;/g, '')
+      .replace(/function\s*\([\s\S]*?\{[\s\S]*?\}/g, '')
+      .replace(/var\s+\w+\s*=[\s\S]*?;/g, '')
+      .replace(/window\.[^;]+;/g, '')
+      .replace(/document\.[^;]+;/g, '')
       .replace(/\s+/g, ' ')
-      .replace(/^[\s\S]*?(?:ترجمه‌|تفسیر)\s*/i, '')
       .trim();
   }
 
-  // استخراج متن تفسیر روان جاوید از HTML
+  // استخراج متن تفسیر روان جاوید
   function extractRavanTafsirText(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-
-    // روش ۱: پیدا کردن هدینگ مربوط به روان جاوید
-    const headings = Array.from(doc.querySelectorAll('h2, h3, h4, .mw-headline, span'));
-    let startNode = null;
-
-    for (const h of headings) {
-      const text = (h.textContent || '').trim();
-      if (/روان\s*جاوید|ثقفی\s*تهران/i.test(text)) {
-        startNode = h;
-        break;
-      }
-    }
-
-    if (startNode) {
-      let text = '';
-      let node = startNode.nextSibling || startNode.parentElement?.nextSibling;
-
-      while (node) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const tag = node.tagName?.toLowerCase();
-          if (['h1', 'h2', 'h3', 'h4'].includes(tag)) break;
-
-          const nodeText = node.textContent || '';
-          if (/جلد\s+\d+\s+صفحه\s+\d+/i.test(nodeText)) {
-            const parts = nodeText.split(/جلد\s+\d+\s+صفحه\s+\d+/i);
-            text += parts[0];
-            break;
-          }
-          text += nodeText + ' ';
-        } else if (node.nodeType === Node.TEXT_NODE) {
-          text += node.textContent;
-        }
-        node = node.nextSibling;
-      }
-
-      text = cleanTafsirText(text);
-      if (text.length > 40) return text;
-    }
-
-    // روش ۲: جستجوی متنی (fallback)
     const fullText = doc.body.textContent || '';
-    const match = fullText.match(
-      /تفسیر\s*روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\S]*?(?:تفسیر\s*)?([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|تفسیر\s+(?:نور|نمونه|اطیب|اثنی|راهنما|المیزان)|$)/i
-    );
 
-    if (match && match[1]) {
-      const text = cleanTafsirText(match[1]);
-      if (text.length > 40) return text;
+    const patterns = [
+      // الگو ۱
+      /تفسیر\s*روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|تفسیر\s+(?:نور|نمونه|اطیب|اثنی|راهنما|المیزان|مجمع)|$)/i,
+
+      // الگو ۲
+      /روان\s*جاوید\s*\(?\s*ثقفی[\s\S]*?\)?[\s\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|تفسیر\s+\S+)/i,
+
+      // الگو ۳
+      /روان\s*جاوید[\s\S]{0,300}?([\s\S]{50,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i
+    ];
+
+    for (const regex of patterns) {
+      const match = fullText.match(regex);
+      if (match && match[1]) {
+        let text = cleanTafsirText(match[1]);
+        if (text.length > 60 && !/function|var |window\.|document\./i.test(text)) {
+          return text;
+        }
+      }
     }
 
     return null;
@@ -270,6 +242,7 @@
     const tafsirText = extractRavanTafsirText(html);
 
     if (!tafsirText) {
+      console.log('طول متن صفحه:', html.length);
       throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
     }
     return tafsirText;
@@ -370,6 +343,7 @@
       const tafsirText = extractRavanTafsirText(html);
 
       if (!tafsirText) {
+        console.log('طول متن صفحه:', html.length);
         throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
       }
 
