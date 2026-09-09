@@ -102,7 +102,7 @@
       `آیهٔ جاری (سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)}) به عنوان آخرین آیهٔ بررسی‌شده ثبت شود؟`
     );
     if (!confirmed) return;
-    
+
     const { error } = await sb
       .from('site_meta')
       .update({ bookmark_surah: current.surah, bookmark_ayah: current.ayah })
@@ -143,7 +143,10 @@
       .eq('surah', surah)
       .eq('ayah', ayah)
       .maybeSingle();
-    if (error) throw error;
+    if (error) {
+      console.error('خطا در دریافت از دیتابیس:', error);
+      throw error;
+    }
     return data;
   }
 
@@ -152,9 +155,11 @@
     const { error } = await sb
       .from('ravan_tafsirs')
       .upsert({ surah, ayah, content, updated_at: new Date().toISOString() })
-      .eq('surah', surah)
-      .eq('ayah', ayah);
-    if (error) throw error;
+      .match({ surah, ayah });
+    if (error) {
+      console.error('خطا در ذخیره در دیتابیس:', error);
+      throw error;
+    }
   }
 
   // حذف تفسیر از دیتابیس
@@ -162,9 +167,16 @@
     const { error } = await sb
       .from('ravan_tafsirs')
       .delete()
-      .eq('surah', surah)
-      .eq('ayah', ayah);
-    if (error) throw error;
+      .match({ surah, ayah });
+    if (error) {
+      console.error('خطا در حذف از دیتابیس:', error);
+      throw error;
+    }
+    // تأیید حذف
+    const check = await getRavanTafsirFromDB(surah, ayah);
+    if (check) {
+      throw new Error('حذف انجام نشد، رکورد همچنان وجود دارد');
+    }
   }
 
   // دریافت تفسیر از ویکی از طریق corsproxy
@@ -172,38 +184,38 @@
     // پیدا کردن نام سوره به فارسی
     const surahData = index.find(s => s.number === surah);
     const surahName = surahData?.name_fa || surah;
-    
+
     // ساخت URL صفحه ویکی - دقیقاً به فرمت نمونه کاربر
     const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
     const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}`;
-    
+
     // ساخت آدرس پروکسی
     const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
-    
+
     console.log('📡 درخواست به:', proxyUrl);
-    
+
     const response = await fetch(proxyUrl);
-    
+
     if (!response.ok) {
       throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
     }
-    
+
     const html = await response.text();
     console.log('📄 HTML دریافت شد، طول:', html.length);
-    
+
     // استخراج بخش تفسیر روان جاوید
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    
+
     // روش اول: جستجوی مستقیم در textContent
     const text = doc.body.textContent || '';
     console.log('📝 متن استخراج شده، طول:', text.length);
-    
+
     // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
     // الگو: تفسیر روان جاوید (ثقفی تهرانى) ... تفسیر [متن اصلی]
     const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
     const match = text.match(tafsirRegex);
-    
+
     if (match && match[2]) {
       let tafsirText = match[2].trim();
       // پاکسازی متن
@@ -212,7 +224,7 @@
         return tafsirText;
       }
     }
-    
+
     // روش دوم: اگر روش اول جواب نداد، جستجوی ساده‌تر
     const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
     const simpleMatch = text.match(simpleRegex);
@@ -225,7 +237,7 @@
         return tafsirText;
       }
     }
-    
+
     throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
   }
 
@@ -240,7 +252,7 @@
     ravanTafsirManualInput.classList.add('hidden');
     ravanTafsirDeleteBtn.classList.add('hidden');
     ravanTafsirLoadBtn.classList.remove('hidden');
-    
+
     switch (state) {
       case 'empty':
         ravanTafsirEmpty.classList.remove('hidden');
@@ -268,7 +280,7 @@
   async function loadRavanTafsir(surah, ayah) {
     // نمایش حالت بارگذاری
     showRavanTafsirState('loading');
-    
+
     try {
       // ۱. بررسی دیتابیس
       const dbData = await getRavanTafsirFromDB(surah, ayah);
@@ -276,7 +288,7 @@
         showRavanTafsirState('content', dbData.content);
         return;
       }
-      
+
       // ۲. دریافت از ویکی
       try {
         const content = await fetchRavanTafsirFromWiki(surah, ayah);
@@ -287,14 +299,14 @@
         console.warn('⚠️ دریافت از ویکی失敗:', wikiError);
         // ادامه برای دریافت دستی
       }
-      
+
       // ۳. نمایش خطا و گزینه دریافت دستی
       showRavanTafsirState('error', `
         <p>تفسیر روان جاوید برای این آیه یافت نشد.</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید آدرس صفحه ویکی را به صورت دستی وارد کنید.</p>
         <p style="font-size:0.75rem; color:var(--text-faint);">فرمت آدرس: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره</p>
       `);
-      
+
     } catch (error) {
       console.error('❌ خطا در بارگذاری تفسیر روان جاوید:', error);
       showRavanTafsirState('error', `
@@ -309,10 +321,11 @@
   async function deleteRavanTafsir(surah, ayah) {
     const confirmed = confirm('آیا تفسیر روان جاوید ذخیره‌شده برای این آیه حذف شود؟');
     if (!confirmed) return;
-    
+
     try {
       await deleteRavanTafsirFromDB(surah, ayah);
       UI.toast('تفسیر روان جاوید حذف شد');
+      // پس از حذف، کارت را به حالت خالی برگردان
       showRavanTafsirState('empty');
     } catch (error) {
       console.error('❌ خطا در حذف تفسیر:', error);
@@ -324,30 +337,30 @@
   async function fetchRavanTafsirManual(url) {
     try {
       showRavanTafsirState('loading');
-      
+
       // ساخت آدرس پروکسی
       const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(url)}`;
-      
+
       console.log('📡 درخواست دستی به:', proxyUrl);
-      
+
       const response = await fetch(proxyUrl);
-      
+
       if (!response.ok) {
         throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
       }
-      
+
       const html = await response.text();
       console.log('📄 HTML دستی دریافت شد، طول:', html.length);
-      
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       const text = doc.body.textContent || '';
       console.log('📝 متن استخراج شده دستی، طول:', text.length);
-      
+
       // جستجوی بخش "تفسیر" بعد از "تفسیر روان جاوید (ثقفی تهرانى)"
       const tafsirRegex = /تفسیر روان جاوید\s*\(ثقفی تهرانى\)[\s\S]*?(تفسیر\s*[\n\r]*)([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
       const match = text.match(tafsirRegex);
-      
+
       if (match && match[2]) {
         let tafsirText = match[2].trim();
         tafsirText = tafsirText.replace(/\[\d+\]/g, '').replace(/\[ویرایش\]/g, '').trim();
@@ -357,7 +370,7 @@
           return;
         }
       }
-      
+
       // روش دوم: جستجوی ساده‌تر
       const simpleRegex = /تفسیر\s*[\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|$)/i;
       const simpleMatch = text.match(simpleRegex);
@@ -371,9 +384,9 @@
           return;
         }
       }
-      
+
       throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
-      
+
     } catch (error) {
       console.error('❌ خطا در دریافت دستی:', error);
       showRavanTafsirState('error', `
@@ -560,12 +573,17 @@
 
     await refreshProgress();
     await renderTafsirsList();
-    
+
     // بررسی وجود تفسیر در دیتابیس و نمایش مناسب
-    const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
-    if (dbData && dbData.content) {
-      showRavanTafsirState('content', dbData.content);
-    } else {
+    try {
+      const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
+      if (dbData && dbData.content) {
+        showRavanTafsirState('content', dbData.content);
+      } else {
+        showRavanTafsirState('empty');
+      }
+    } catch (error) {
+      console.error('خطا در بررسی دیتابیس روان جاوید:', error);
       showRavanTafsirState('empty');
     }
   }
@@ -614,7 +632,7 @@
     const withinPreview = selection && selection.anchorNode && linkAyahPreview.contains(selection.anchorNode);
     const excerpt = withinPreview && selectedText ? selectedText : null;
     const newLink = AyahLinks.makeToken(s, a, excerpt);
-    
+
     if (detectedLink) {
       replaceAtCursor(tafsirContent, detectedLink.start, detectedLink.end, newLink);
       detectedLink = null;
