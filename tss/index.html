@@ -16,6 +16,9 @@
 </head>
 <body>
 
+<!-- کانواس ستاره‌ها -->
+<canvas id="stars-canvas"></canvas>
+
 <header class="site-header">
   <div class="site-header__inner">
     <div class="brand">
@@ -53,7 +56,6 @@
         <div class="progress-ring__label" id="progressLabel">۰٪</div>
       </div>
       <div class="progress-hero__text">
-        <!-- ردیف عنوان + دکمه‌ها -->
         <div class="progress-hero__title-row">
           <p class="progress-hero__title">دور <span id="roundNumber">۱</span></p>
           <div class="progress-hero__actions">
@@ -173,6 +175,7 @@
 <script src="js/theme.js"></script>
 <script src="js/ayah-render.js"></script>
 <script src="js/ayah-links.js"></script>
+<script src="js/stars.js"></script>
 <script>
   (async function () {
     const session = await Auth.requireAuth();
