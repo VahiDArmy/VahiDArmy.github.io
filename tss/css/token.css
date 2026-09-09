@@ -1,0 +1,153 @@
+/* ==========================================================================
+   RaiseMind — Design Tokens
+   دو تم: dark (پیش‌فرض) و light
+   ========================================================================== */
+
+:root {
+  /* --- Dark solid background --- */
+  --bg: #06080E;
+  --bg-solid: #06080E;
+  
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --border: rgba(255, 255, 255, 0.08);
+  --border-soft: rgba(255, 255, 255, 0.04);
+
+  --text: #F0F3F8;
+  --text-dim: #B0B9CF;
+  --text-faint: #6F7B96;
+
+  --neon: #2DE8C8;
+  --neon-dim: #1B8F7E;
+  --neon-glow: rgba(45, 232, 200, 0.35);
+
+  --violet: #8B7CF6;
+  --violet-glow: rgba(139, 124, 246, 0.35);
+
+  --gold: #D4AF6A;
+  --gold-glow: rgba(212, 175, 106, 0.3);
+  --star-gold: #E8C84A;
+
+  --danger: #F2637B;
+  --success: #2DE8C8;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  /* Glassmorphism core */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.07);
+  --glass-blur: blur(8px) saturate(160%);
+
+  /* Shadows */
+  --shadow-card: 0 12px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  --font-ui: 'Vazirmatn', system-ui, sans-serif;
+  --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
+  --font-brand: 'Space Grotesk', system-ui, sans-serif;
+}
+
+[data-theme="light"] {
+  --bg: #F3F4F8;
+  --bg-solid: #F3F4F8;
+  
+  --surface: rgba(0, 0, 0, 0.02);
+  --surface-2: rgba(0, 0, 0, 0.04);
+  --border: rgba(0, 0, 0, 0.08);
+  --border-soft: rgba(0, 0, 0, 0.04);
+
+  --text: #1C1E24;
+  --text-dim: #5B5F6B;
+  --text-faint: #8B8F99;
+
+  --neon: #0EA894;
+  --neon-dim: #0B7D6E;
+  --neon-glow: rgba(14, 168, 148, 0.18);
+
+  --violet: #6754D6;
+  --violet-glow: rgba(103, 84, 214, 0.18);
+
+  --gold: #A9793A;
+  --gold-glow: rgba(169, 121, 58, 0.18);
+  --star-gold: #C99A3A;
+
+  --danger: #D3405A;
+  --success: #0EA894;
+
+  --glass-bg: rgba(255, 255, 255, 0.40);
+  --glass-bg-strong: rgba(255, 255, 255, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.50);
+  --glass-highlight: rgba(255, 255, 255, 0.70);
+  --glass-blur: blur(6px) saturate(160%);
+
+  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.08);
+  --shadow-glass: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-solid);
+  color: var(--text);
+  font-family: var(--font-ui);
+  direction: rtl;
+  transition: background 0.4s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+::selection {
+  background: var(--neon-glow);
+  color: var(--text);
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--neon);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---- Canvas for stars ---- */
+#stars-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+
+/* همه محتوای اصلی باید بالای کانواس باشند */
+.site-header,
+.container,
+.mobile-tabbar,
+footer,
+.modal-overlay,
+.toast {
+  position: relative;
+  z-index: 1;
+}
