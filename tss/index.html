@@ -110,45 +110,6 @@
     <div id="workTafsirsList"></div>
   </section>
 
-  <!-- ============================================================
-       تفسیر روان جاوید
-       ============================================================ -->
-  <section class="section" aria-label="تفسیر روان جاوید">
-    <div class="section__label">
-      <span>تفسیر روان جاوید</span>
-      <button class="btn btn--sm btn--ghost" id="ravanTafsirRetryBtn" style="font-size:0.7rem;" title="بارگذاری مجدد">⟳</button>
-    </div>
-    <div class="card ravan-tafsir-container" id="ravanTafsirContainer">
-      <!-- حالت بارگذاری -->
-      <div id="ravanTafsirLoading" class="ravan-tafsir-loading">
-        <div class="skeleton" style="height:60px; width:100%;"></div>
-        <div class="skeleton" style="height:40px; width:80%; margin-top:8px;"></div>
-      </div>
-      
-      <!-- محتوای تفسیر -->
-      <div id="ravanTafsirContent" class="ravan-tafsir-content hidden">
-        <!-- محتوای تفسیر به صورت داینامیک درج می‌شود -->
-      </div>
-      
-      <!-- حالت خطا -->
-      <div id="ravanTafsirError" class="ravan-tafsir-error hidden">
-        <!-- پیام خطا به صورت داینامیک درج می‌شود -->
-      </div>
-      
-      <!-- دکمه دریافت دستی -->
-      <button id="ravanTafsirManualBtn" class="btn btn--sm hidden" style="margin-top:10px;">
-        وارد کردن آدرس دستی
-      </button>
-      
-      <!-- ورودی آدرس دستی -->
-      <div id="ravanTafsirManualInput" class="ravan-tafsir-manual-input hidden" style="margin-top:10px; display:flex; gap:8px;">
-        <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text);">
-        <button class="btn btn--sm btn--primary" id="ravanTafsirManualSubmit">دریافت</button>
-        <button class="btn btn--sm btn--ghost" id="ravanTafsirManualCancel">انصراف</button>
-      </div>
-    </div>
-  </section>
-
   <!-- فرم افزودن/ویرایش تفسیر -->
   <section class="section" aria-label="افزودن تفسیر">
     <div class="section__label">تفسیر تازه</div>
@@ -170,6 +131,54 @@
         </div>
         <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
       </form>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       تفسیر روان جاوید - آخرین کارت صفحه
+       ============================================================ -->
+  <section class="section" aria-label="تفسیر روان جاوید" id="ravanTafsirSection">
+    <div class="section__label">
+      <span>تفسیر روان جاوید</span>
+      <button class="btn btn--sm btn--primary" id="ravanTafsirLoadBtn" style="font-size:0.75rem;">
+        ↻ بارگذاری تفسیر
+      </button>
+    </div>
+    <div class="card ravan-tafsir-container" id="ravanTafsirContainer">
+      <!-- حالت پیش‌فرض: بدون تفسیر -->
+      <div id="ravanTafsirEmpty" class="ravan-tafsir-empty">
+        <p style="color:var(--text-faint); text-align:center; padding:16px 0;">
+          برای دریافت تفسیر روان جاوید، دکمه «بارگذاری تفسیر» را بزنید.
+        </p>
+      </div>
+      
+      <!-- حالت بارگذاری -->
+      <div id="ravanTafsirLoading" class="ravan-tafsir-loading hidden">
+        <div class="skeleton" style="height:60px; width:100%;"></div>
+        <div class="skeleton" style="height:40px; width:80%; margin-top:8px;"></div>
+      </div>
+      
+      <!-- محتوای تفسیر -->
+      <div id="ravanTafsirContent" class="ravan-tafsir-content hidden">
+        <!-- محتوای تفسیر به صورت داینامیک درج می‌شود -->
+      </div>
+      
+      <!-- حالت خطا -->
+      <div id="ravanTafsirError" class="ravan-tafsir-error hidden">
+        <!-- پیام خطا به صورت داینامیک درج می‌شود -->
+      </div>
+      
+      <!-- دکمه دریافت دستی -->
+      <button id="ravanTafsirManualBtn" class="btn btn--sm hidden" style="margin-top:10px;">
+        ↺ وارد کردن آدرس دستی
+      </button>
+      
+      <!-- ورودی آدرس دستی -->
+      <div id="ravanTafsirManualInput" class="ravan-tafsir-manual-input hidden" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; min-width:200px; background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text);">
+        <button class="btn btn--sm btn--primary" id="ravanTafsirManualSubmit">دریافت</button>
+        <button class="btn btn--sm btn--ghost" id="ravanTafsirManualCancel">انصراف</button>
+      </div>
     </div>
   </section>
 
