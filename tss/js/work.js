@@ -154,9 +154,10 @@
   async function saveRavanTafsirToDB(surah, ayah, content) {
     const { error } = await sb
       .from('ravan_tafsirs')
-      .upsert({ surah, ayah, content, updated_at: new Date().toISOString() })
-      .eq('surah', surah)
-      .eq('ayah', ayah);
+      .upsert(
+        { surah, ayah, content, updated_at: new Date().toISOString() },
+        { onConflict: 'surah, ayah' }
+      );
     if (error) {
       console.error('خطا در ذخیره در دیتابیس:', error);
       throw error;
@@ -165,13 +166,6 @@
 
   // حذف تفسیر از دیتابیس
   async function deleteRavanTafsirFromDB(surah, ayah) {
-    // اول بررسی کن که رکورد وجود دارد
-    const existing = await getRavanTafsirFromDB(surah, ayah);
-    if (!existing) {
-      // اگر وجود ندارد، موفق در نظر بگیر
-      return;
-    }
-    
     const { error } = await sb
       .from('ravan_tafsirs')
       .delete()
