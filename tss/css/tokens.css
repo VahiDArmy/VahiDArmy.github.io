@@ -78,12 +78,12 @@
   --danger: #D3405A;
   --success: #0EA894;
 
-  /* Telegram Liquid Glass - more transparent */
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-bg-strong: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.11);
-  --glass-highlight: rgba(255, 255, 255, 0.18);
-  --glass-blur: blur(24px) saturate(180%);
+  /* Telegram Liquid Glass - Light more transparent */
+  --glass-bg: rgba(255, 255, 255, 0.48);
+  --glass-bg-strong: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-blur: blur(22px) saturate(160%);
 
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
   --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.06);
