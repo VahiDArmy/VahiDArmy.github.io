@@ -199,15 +199,9 @@
     const doc = parser.parseFromString(html, 'text/html');
     const fullText = doc.body.textContent || '';
 
-    // الگوهای قوی‌تر بر اساس نمونه‌های واقعی که فرستادی
     const patterns = [
-      // الگوی اصلی
       /(?:تفسیر\s*)?روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\S]*?(?:تفسیر\s*)?([\s\S]+?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
-
-      // الگوی آزادتر
       /روان\s*جاوید[\s\S]{0,200}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
-
-      // آخرین تلاش
       /ثقفی\s*تهران[ىی][\s\S]{0,100}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i
     ];
 
@@ -228,7 +222,7 @@
     const surahData = index.find(s => s.number === surah);
     const surahName = surahData?.name_fa || surah;
 
-    // ساخت URL با هش تب روان جاوید
+    // همیشه از لینک جدید با هش تب روان جاوید استفاده می‌کند
     const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
     const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}#!tafsir/${encodeURIComponent('روان جاوید')}`;
     const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
