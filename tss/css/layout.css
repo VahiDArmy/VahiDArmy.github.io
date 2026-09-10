@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Layout — Telegram Liquid Glass nav
+   Layout — Telegram Liquid Glass nav (high transparency)
    ========================================================================== */
 
 .container {
@@ -8,15 +8,12 @@
   padding: 0 18px 80px;
 }
 
-/* --------------------------------------------------------------------------
-   Glass Header — gradient glass + specular top hairline
-   -------------------------------------------------------------------------- */
+/* ---- Glass Header ---- */
 .site-header {
   position: sticky;
   top: 0;
   z-index: 40;
 
-  /* Gradient glass: brighter at top (light from above) */
   background: linear-gradient(
     180deg,
     var(--glass-bg-top) 0%,
@@ -32,7 +29,6 @@
   isolation: isolate;
 }
 
-/* Specular top hairline — the "edge of the glass" catching light */
 .site-header::before {
   content: '';
   position: absolute;
@@ -69,7 +65,9 @@
   font-size: 1.05rem;
   letter-spacing: 0.02em;
   color: var(--text);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
+[data-theme="light"] .brand { text-shadow: 0 1px 6px rgba(255,255,255,0.6); }
 
 .brand__mark {
   color: var(--neon);
@@ -83,9 +81,7 @@
   font-weight: 400;
 }
 
-/* --------------------------------------------------------------------------
-   Nav pill — deeper glass with inner shadow for a real "capsule" feel
-   -------------------------------------------------------------------------- */
+/* ---- Nav pill — super transparent, blur carries it ---- */
 .nav-tabs {
   position: relative;
   display: flex;
@@ -98,12 +94,11 @@
   padding: 4px;
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    inset 0 -8px 16px -8px rgba(0, 0, 0, 0.28),
-    0 4px 18px rgba(0, 0, 0, 0.22);
+    inset 0 -8px 16px -8px rgba(0, 0, 0, 0.22),
+    0 4px 18px rgba(0, 0, 0, 0.18);
   isolation: isolate;
 }
 
-/* Specular rim on the pill */
 .nav-tabs::before {
   content: '';
   position: absolute;
@@ -120,7 +115,7 @@
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.7;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
@@ -154,7 +149,6 @@
   gap: 8px;
 }
 
-/* Round glass button — same treatment as the pill */
 .theme-toggle {
   width: 38px;
   height: 38px;
@@ -171,8 +165,8 @@
   transition: all 0.2s ease;
   box-shadow:
     inset 0 1px 0 0 var(--glass-highlight),
-    inset 0 -6px 12px -6px rgba(0, 0, 0, 0.25),
-    0 4px 14px rgba(0, 0, 0, 0.18);
+    inset 0 -6px 12px -6px rgba(0, 0, 0, 0.22),
+    0 4px 14px rgba(0, 0, 0, 0.15);
 }
 .theme-toggle:hover {
   border-color: var(--neon);
@@ -199,9 +193,7 @@
   background: var(--border-soft);
 }
 
-/* --------------------------------------------------------------------------
-   Mobile: maximize width, minimal margins
-   -------------------------------------------------------------------------- */
+/* ---- Mobile ---- */
 @media (max-width: 560px) {
   .container { padding-inline: 8px; }
   .site-header__inner { padding-inline: 10px; }
@@ -219,7 +211,6 @@
     inset-inline: 0;
     z-index: 40;
 
-    /* Gradient glass, brighter at the top edge (which faces content) */
     background: linear-gradient(
       0deg,
       var(--glass-bg-top) 0%,
@@ -237,7 +228,6 @@
     isolation: isolate;
   }
 
-  /* Specular hairline along the top edge */
   .mobile-tabbar::before {
     content: '';
     position: absolute;
