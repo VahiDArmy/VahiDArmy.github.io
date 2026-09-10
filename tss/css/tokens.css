@@ -1,6 +1,6 @@
 /* ==========================================================================
    RaiseMind — Design Tokens
-   دو تم: dark (پیش‌فرض) و light
+   Telegram-inspired Liquid Glass
    ========================================================================== */
 
 :root {
@@ -31,20 +31,20 @@
   --danger: #F2637B;
   --success: #2DE8C8;
 
-  --radius-sm: 10px;
-  --radius-md: 16px;
-  --radius-lg: 22px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
 
-  /* Glassmorphism core — blur کمتر برای شفافیت بیشتر */
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-bg-strong: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --glass-highlight: rgba(255, 255, 255, 0.07);
-  --glass-blur: blur(3px) saturate(160%);
+  /* Telegram Liquid Glass */
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-bg-strong: rgba(255, 255, 255, 0.11);
+  --glass-border: rgba(255, 255, 255, 0.13);
+  --glass-highlight: rgba(255, 255, 255, 0.22);
+  --glass-blur: blur(22px) saturate(180%);
 
   /* Shadows */
-  --shadow-card: 0 12px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.03);
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.25);
 
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
@@ -78,14 +78,15 @@
   --danger: #D3405A;
   --success: #0EA894;
 
-  --glass-bg: rgba(255, 255, 255, 0.40);
-  --glass-bg-strong: rgba(255, 255, 255, 0.60);
-  --glass-border: rgba(255, 255, 255, 0.50);
-  --glass-highlight: rgba(255, 255, 255, 0.70);
-  --glass-blur: blur(2px) saturate(160%);
+  /* Telegram Liquid Glass - Light */
+  --glass-bg: rgba(255, 255, 255, 0.58);
+  --glass-bg-strong: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.65);
+  --glass-highlight: rgba(255, 255, 255, 0.90);
+  --glass-blur: blur(20px) saturate(160%);
 
-  --shadow-card: 0 12px 40px rgba(0, 0, 0, 0.08);
-  --shadow-glass: 0 8px 24px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 * { box-sizing: border-box; }
