@@ -21,14 +21,14 @@
   transition: all 0.2s ease;
   box-shadow:
     0 2px 12px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .btn:hover {
   border-color: var(--neon);
   color: var(--neon);
   box-shadow:
     0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .btn:active { transform: scale(0.98); }
 
@@ -70,7 +70,12 @@
 /* ---- Card (super-transparent shell) ---- */
 .card {
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -78,7 +83,8 @@
   padding: 20px;
   box-shadow:
     var(--shadow-glass),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 .card::before {
@@ -87,12 +93,17 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
@@ -104,7 +115,12 @@
   gap: 16px;
   flex-wrap: wrap;
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -112,7 +128,8 @@
   padding: 16px 18px;
   box-shadow:
     var(--shadow-glass),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 .progress-hero::before {
@@ -121,12 +138,17 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
@@ -203,7 +225,7 @@
   transition: all 0.3s ease;
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .bookmark-btn svg {
@@ -216,7 +238,7 @@
   box-shadow:
     0 0 20px var(--neon-glow),
     0 0 40px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
 
@@ -238,7 +260,7 @@
   transition: all 0.3s ease;
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .go-to-btn svg {
@@ -251,7 +273,7 @@
   box-shadow:
     0 0 20px var(--violet-glow),
     0 0 40px var(--violet-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
 
@@ -413,7 +435,12 @@
 /* Container — super transparent shell */
 .ayah-frame__inner {
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
@@ -421,7 +448,8 @@
   border: 1px solid var(--glass-border);
   box-shadow:
     var(--shadow-glass),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 .ayah-frame__inner::before {
@@ -430,12 +458,17 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
@@ -631,20 +664,20 @@ button.mark-toggle:hover { border-color: #FFB020; }
   transition: all 0.2s ease;
   box-shadow:
     0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap select:hover {
   border-color: var(--neon);
   box-shadow:
     0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
   box-shadow:
     0 0 24px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap::after {
   content: '';
@@ -685,7 +718,12 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .tafsir-card {
   margin-top: 14px;
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -693,7 +731,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
   padding: 18px;
   box-shadow:
     var(--shadow-glass),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 .tafsir-card::before {
@@ -702,12 +741,17 @@ button.mark-toggle:hover { border-color: #FFB020; }
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
   z-index: 1;
 }
@@ -734,7 +778,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  /* keep the same opaque readable bg as the non-clamped body */
   background: var(--read-bg);
   border: 1px solid var(--read-border);
   backdrop-filter: none;
@@ -818,7 +861,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-shadow:
     0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .field textarea { min-height: 110px; }
 .field textarea:focus { min-height: 280px; }
@@ -828,7 +871,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   background: var(--read-bg-strong);
   box-shadow:
     0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .name-row { display: flex; gap: 8px; margin-bottom: 10px; }
@@ -847,7 +890,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .name-row input:focus,
 .comment-form input[type="text"]:focus {
@@ -856,7 +899,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   background: var(--read-bg-strong);
   box-shadow:
     0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 /* ---- Comments — READABLE surface (they are text) ---- */
@@ -871,7 +914,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border: 1px solid var(--glass-border);
   box-shadow:
     0 4px 18px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
   isolation: isolate;
 }
 .comment::before {
@@ -880,12 +923,17 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.35;
+  opacity: 0.4;
   pointer-events: none;
   z-index: 1;
 }
@@ -940,7 +988,12 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .toast__inner {
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur-strong);
   -webkit-backdrop-filter: var(--glass-blur-strong);
   border: 1px solid var(--neon);
@@ -950,7 +1003,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-size: 0.85rem;
   box-shadow:
     0 0 30px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
@@ -981,7 +1034,12 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   max-height: 85vh;
   overflow-y: auto;
   position: relative;
-  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 50%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur-strong);
   -webkit-backdrop-filter: var(--glass-blur-strong);
   border: 1px solid var(--glass-border);
@@ -989,7 +1047,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   padding: 20px;
   box-shadow:
     var(--shadow-glass-lg),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 .modal-card::before {
@@ -998,12 +1057,17 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 40%);
+  background: linear-gradient(
+    175deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.18) 28%,
+    transparent 55%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  opacity: 0.65;
+  opacity: 0.8;
   pointer-events: none;
   z-index: 1;
 }
@@ -1110,7 +1174,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   box-shadow:
     0 2px 10px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .ravan-tafsir-manual-input input:focus {
@@ -1119,7 +1183,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   background: var(--read-bg-strong);
   box-shadow:
     0 0 16px var(--neon-glow),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .hidden {
