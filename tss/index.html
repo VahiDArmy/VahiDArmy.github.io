@@ -179,6 +179,13 @@
       </button>
       
       <!-- ورودی آدرس دستی -->
+<div id="ravanTafsirManualPaste" class="hidden" style="margin-top:12px;">
+  <textarea id="ravanTafsirPasteArea" rows="8" placeholder="متن تفسیر روان جاوید را اینجا پیست کنید..." style="width:100%; min-height:160px;"></textarea>
+  <div style="display:flex; gap:8px; margin-top:10px;">
+    <button id="ravanTafsirPasteSave" class="btn btn--primary btn--sm">ذخیره متن</button>
+    <button id="ravanTafsirPasteCancel" class="btn btn--sm">انصراف</button>
+  </div>
+</div>
       <div id="ravanTafsirManualInput" class="ravan-tafsir-manual-input hidden" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
         <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; min-width:200px; background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text);">
         <button class="btn btn--sm btn--primary" id="ravanTafsirManualSubmit">دریافت</button>
