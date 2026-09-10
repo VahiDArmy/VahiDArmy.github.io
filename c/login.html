@@ -19,6 +19,8 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
+    position: relative;
+    z-index: 1;
   }
   .login-card {
     width: 100%;
@@ -47,6 +49,8 @@
 </head>
 <body>
 
+<canvas id="stars-canvas"></canvas>
+
 <div class="login-wrap">
   <div class="login-card">
     <div class="brand"><span class="brand__mark">Raise</span><span>Mind</span></div>
@@ -72,6 +76,7 @@
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/stars.js"></script>
 <script>
   (async function () {
     const session = await Auth.getSession();
