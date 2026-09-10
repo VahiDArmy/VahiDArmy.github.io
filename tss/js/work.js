@@ -182,66 +182,6 @@
     }
   }
 
-  function cleanTafsirText(text) {
-    return text
-      .replace(/\[\d+\]/g, '')
-      .replace(/\[ویرایش\]/g, '')
-      .replace(/function\s*\([\s\S]*?\{[\s\S]*?\}/g, '')
-      .replace(/var\s+\w+\s*=[\s\S]*?;/g, '')
-      .replace(/window\.[^;]+;/g, '')
-      .replace(/document\.[^;]+;/g, '')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  function extractRavanTafsirText(html) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const fullText = doc.body.textContent || '';
-
-    const patterns = [
-      /(?:تفسیر\s*)?روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\S]*?(?:تفسیر\s*)?([\s\S]+?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
-      /روان\s*جاوید[\s\S]{0,200}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
-      /ثقفی\s*تهران[ىی][\s\S]{0,100}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i
-    ];
-
-    for (const regex of patterns) {
-      const match = fullText.match(regex);
-      if (match && match[1]) {
-        let text = cleanTafsirText(match[1]);
-        if (text.length > 80) {
-          return text;
-        }
-      }
-    }
-
-    return null;
-  }
-
-  async function fetchRavanTafsirFromWiki(surah, ayah) {
-    const surahData = index.find(s => s.number === surah);
-    const surahName = surahData?.name_fa || surah;
-
-    // همیشه از لینک جدید با هش تب روان جاوید استفاده می‌کند
-    const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
-    const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}#!tafsir/${encodeURIComponent('روان جاوید')}`;
-    const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
-
-    const response = await fetch(proxyUrl);
-    if (!response.ok) {
-      throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
-    }
-
-    const html = await response.text();
-    const tafsirText = extractRavanTafsirText(html);
-
-    if (!tafsirText) {
-      console.log('طول متن صفحه:', html.length);
-      throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
-    }
-    return tafsirText;
-  }
-
   function showRavanTafsirState(state, data) {
     ravanTafsirEmpty.classList.add('hidden');
     ravanTafsirLoading.classList.add('hidden');
@@ -251,6 +191,10 @@
     ravanTafsirManualInput.classList.add('hidden');
     ravanTafsirDeleteBtn.classList.add('hidden');
     ravanTafsirLoadBtn.classList.remove('hidden');
+
+    // پنهان کردن بخش پیست
+    const pasteBox = document.getElementById('ravanTafsirManualPaste');
+    if (pasteBox) pasteBox.classList.add('hidden');
 
     switch (state) {
       case 'empty':
@@ -282,24 +226,15 @@
         return;
       }
 
-      try {
-        const content = await fetchRavanTafsirFromWiki(surah, ayah);
-        await saveRavanTafsirToDB(surah, ayah, content);
-        showRavanTafsirState('content', content);
-        return;
-      } catch (wikiError) {
-        // ادامه
-      }
-
+      // چون استخراج خودکار مشکل دارد، مستقیم به حالت دستی می‌رویم
       showRavanTafsirState('error', `
-        <p>تفسیر روان جاوید برای این آیه یافت نشد.</p>
-        <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید آدرس صفحه ویکی را به صورت دستی وارد کنید.</p>
-        <p style="font-size:0.75rem; color:var(--text-faint);">فرمت پیشنهادی: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره#!tafsir/روان+جاوید</p>
+        <p>تفسیر روان جاوید برای این آیه در دیتابیس نیست.</p>
+        <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید متن را مستقیماً پیست کنید یا از لینک ویکی استفاده کنید.</p>
       `);
     } catch (error) {
       console.error(error);
       showRavanTafsirState('error', `
-        <p>خطا در بارگذاری تفسیر روان جاوید</p>
+        <p>خطا در بارگذاری</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
       `);
     }
@@ -316,36 +251,6 @@
     } catch (error) {
       console.error(error);
       UI.toast('خطا در حذف تفسیر: ' + error.message);
-    }
-  }
-
-  async function fetchRavanTafsirManual(url) {
-    try {
-      showRavanTafsirState('loading');
-
-      const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(url)}`;
-      const response = await fetch(proxyUrl);
-
-      if (!response.ok) {
-        throw new Error(`دریافت صفحه با خطا مواجه شد (کد ${response.status})`);
-      }
-
-      const html = await response.text();
-      const tafsirText = extractRavanTafsirText(html);
-
-      if (!tafsirText) {
-        console.log('طول متن صفحه:', html.length);
-        throw new Error('متن تفسیر روان جاوید در صفحه یافت نشد');
-      }
-
-      await saveRavanTafsirToDB(current.surah, current.ayah, tafsirText);
-      showRavanTafsirState('content', tafsirText);
-    } catch (error) {
-      console.error(error);
-      showRavanTafsirState('error', `
-        <p>خطا در دریافت از آدرس وارد شده</p>
-        <p style="font-size:0.8rem; color:var(--text-faint);">${error.message || 'خطای ناشناخته'}</p>
-      `);
     }
   }
 
@@ -613,24 +518,54 @@
     deleteRavanTafsir(current.surah, current.ayah);
   });
 
+  // دکمه نمایش حالت پیست دستی
   ravanTafsirManualBtn.addEventListener('click', () => {
     ravanTafsirError.classList.add('hidden');
-    ravanTafsirManualInput.classList.remove('hidden');
+    ravanTafsirManualInput.classList.add('hidden');
+    const pasteBox = document.getElementById('ravanTafsirManualPaste');
+    if (pasteBox) pasteBox.classList.remove('hidden');
   });
 
-  ravanTafsirManualSubmit.addEventListener('click', () => {
+  // ذخیره متن پیست شده
+  document.getElementById('ravanTafsirPasteSave')?.addEventListener('click', async () => {
+    const text = document.getElementById('ravanTafsirPasteArea')?.value.trim();
+    if (!text || text.length < 30) {
+      UI.toast('متن خیلی کوتاه است');
+      return;
+    }
+
+    try {
+      await saveRavanTafsirToDB(current.surah, current.ayah, text);
+      showRavanTafsirState('content', text);
+      document.getElementById('ravanTafsirManualPaste').classList.add('hidden');
+      document.getElementById('ravanTafsirPasteArea').value = '';
+      UI.toast('تفسیر با موفقیت ذخیره شد');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در ذخیره');
+    }
+  });
+
+  // انصراف از پیست
+  document.getElementById('ravanTafsirPasteCancel')?.addEventListener('click', () => {
+    document.getElementById('ravanTafsirManualPaste')?.classList.add('hidden');
+    document.getElementById('ravanTafsirPasteArea').value = '';
+    showRavanTafsirState('empty');
+  });
+
+  // حالت قدیمی دریافت از لینک (اگر هنوز می‌خواهی نگه داری)
+  ravanTafsirManualSubmit?.addEventListener('click', () => {
     const input = ravanTafsirManualInput.querySelector('input');
     const url = input?.value?.trim();
-    if (url) fetchRavanTafsirManual(url);
+    if (url) {
+      // فعلاً غیرفعال است چون استخراج کار نمی‌کند
+      UI.toast('لطفاً از پیست متن استفاده کنید');
+    }
   });
 
-  ravanTafsirManualCancel.addEventListener('click', () => {
+  ravanTafsirManualCancel?.addEventListener('click', () => {
     ravanTafsirManualInput.classList.add('hidden');
-    if (ravanTafsirError.innerHTML) {
-      ravanTafsirError.classList.remove('hidden');
-    } else {
-      showRavanTafsirState('empty');
-    }
+    showRavanTafsirState('empty');
   });
 
   // ============================================================
