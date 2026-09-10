@@ -1,10 +1,9 @@
 /* ==========================================================================
    RaiseMind — Design Tokens
-   Telegram-inspired Liquid Glass
+   Telegram-inspired Liquid Glass (high transparency)
    ========================================================================== */
 
 :root {
-  /* --- Dark solid background --- */
   --bg: #06080E;
   --bg-solid: #06080E;
 
@@ -36,24 +35,33 @@
   --radius-lg: 24px;
 
   /* ------------------------------------------------------------------
-     Telegram Liquid Glass — dark
+     Glass — SUPER transparent (dark)
+     The blur does the heavy lifting; the color is nearly a whisper.
      ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.055);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.09);
-  --glass-bg-top:       rgba(255, 255, 255, 0.10);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.035);
+  --glass-bg:           rgba(255, 255, 255, 0.020);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.040);
+  --glass-bg-top:       rgba(255, 255, 255, 0.050);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.010);
 
-  --glass-border:       rgba(255, 255, 255, 0.13);
-  --glass-highlight:    rgba(255, 255, 255, 0.28);   /* inner top light */
-  --glass-specular:     rgba(255, 255, 255, 0.55);   /* top edge hairline */
+  --glass-border:       rgba(255, 255, 255, 0.14);
+  --glass-highlight:    rgba(255, 255, 255, 0.30);
+  --glass-specular:     rgba(255, 255, 255, 0.60);
 
-  --glass-blur:         blur(28px) saturate(180%);
-  --glass-blur-strong:  blur(40px) saturate(190%);
+  --glass-blur:         blur(32px) saturate(180%);
+  --glass-blur-strong:  blur(44px) saturate(200%);
 
   --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.35);
   --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.5);
 
   --shadow-card:        var(--shadow-glass);
+
+  /* ------------------------------------------------------------------
+     Readable surfaces — for text-dense content only.
+     Nearly opaque so glyphs stay legible through the glass shell.
+     ------------------------------------------------------------------ */
+  --read-bg:            rgba(10, 12, 20, 0.78);
+  --read-bg-strong:     rgba(10, 12, 20, 0.90);
+  --read-border:        rgba(255, 255, 255, 0.06);
 
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
@@ -87,27 +95,28 @@
   --danger: #D3405A;
   --success: #0EA894;
 
-  /* ------------------------------------------------------------------
-     Telegram Liquid Glass — light
-     NOTE: on a light background glass must be *whiter than the bg*,
-     with a strong white border and near-opaque highlight.
-     ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.55);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.72);
-  --glass-bg-top:       rgba(255, 255, 255, 0.78);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.50);
+  /* Glass — SUPER transparent (light) */
+  --glass-bg:           rgba(255, 255, 255, 0.16);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.26);
+  --glass-bg-top:       rgba(255, 255, 255, 0.30);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.12);
 
-  --glass-border:       rgba(255, 255, 255, 0.9);
-  --glass-highlight:    rgba(255, 255, 255, 0.98);
+  --glass-border:       rgba(255, 255, 255, 0.75);
+  --glass-highlight:    rgba(255, 255, 255, 0.95);
   --glass-specular:     rgba(255, 255, 255, 1);
 
-  --glass-blur:         blur(28px) saturate(180%);
-  --glass-blur-strong:  blur(40px) saturate(190%);
+  --glass-blur:         blur(32px) saturate(180%);
+  --glass-blur-strong:  blur(44px) saturate(200%);
 
   --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.08);
   --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.12);
 
   --shadow-card:        var(--shadow-glass);
+
+  /* Readable surfaces (light) */
+  --read-bg:            rgba(255, 255, 255, 0.88);
+  --read-bg-strong:     rgba(255, 255, 255, 0.96);
+  --read-border:        rgba(0, 0, 0, 0.05);
 }
 
 * { box-sizing: border-box; }
@@ -166,8 +175,6 @@ button { font-family: inherit; }
 }
 .glass--strong { background: var(--glass-bg-strong); }
 
-/* Specular edge — a light-catching hairline drawn on the *top* of the
-   element using mask-composite so it sits precisely on the border. */
 .glass--specular::before {
   content: '';
   position: absolute;
@@ -186,6 +193,15 @@ button { font-family: inherit; }
           mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+}
+
+/* Readable-surface utility (for text blocks on top of glass) */
+.read-surface {
+  background: var(--read-bg);
+  border: 1px solid var(--read-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* ---- Canvas for stars ---- */
