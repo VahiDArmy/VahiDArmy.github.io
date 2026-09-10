@@ -7,7 +7,7 @@
   /* --- Dark solid background --- */
   --bg: #06080E;
   --bg-solid: #06080E;
-  
+
   --surface: rgba(255, 255, 255, 0.04);
   --surface-2: rgba(255, 255, 255, 0.06);
   --border: rgba(255, 255, 255, 0.08);
@@ -35,16 +35,25 @@
   --radius-md: 18px;
   --radius-lg: 24px;
 
-  /* Telegram Liquid Glass - more transparent */
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-bg-strong: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.11);
-  --glass-highlight: rgba(255, 255, 255, 0.18);
-  --glass-blur: blur(24px) saturate(180%);
+  /* ------------------------------------------------------------------
+     Telegram Liquid Glass — dark
+     ------------------------------------------------------------------ */
+  --glass-bg:           rgba(255, 255, 255, 0.055);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.09);
+  --glass-bg-top:       rgba(255, 255, 255, 0.10);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.035);
 
-  /* Shadows */
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.25);
+  --glass-border:       rgba(255, 255, 255, 0.13);
+  --glass-highlight:    rgba(255, 255, 255, 0.28);   /* inner top light */
+  --glass-specular:     rgba(255, 255, 255, 0.55);   /* top edge hairline */
+
+  --glass-blur:         blur(28px) saturate(180%);
+  --glass-blur-strong:  blur(40px) saturate(190%);
+
+  --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.5);
+
+  --shadow-card:        var(--shadow-glass);
 
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
@@ -54,7 +63,7 @@
 [data-theme="light"] {
   --bg: #F3F4F8;
   --bg-solid: #F3F4F8;
-  
+
   --surface: rgba(0, 0, 0, 0.02);
   --surface-2: rgba(0, 0, 0, 0.04);
   --border: rgba(0, 0, 0, 0.08);
@@ -78,15 +87,27 @@
   --danger: #D3405A;
   --success: #0EA894;
 
-  /* Telegram Liquid Glass - more transparent */
-  --glass-bg: rgba(255, 255, 255, 0.045);
-  --glass-bg-strong: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.11);
-  --glass-highlight: rgba(255, 255, 255, 0.18);
-  --glass-blur: blur(24px) saturate(180%);
+  /* ------------------------------------------------------------------
+     Telegram Liquid Glass — light
+     NOTE: on a light background glass must be *whiter than the bg*,
+     with a strong white border and near-opaque highlight.
+     ------------------------------------------------------------------ */
+  --glass-bg:           rgba(255, 255, 255, 0.55);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.72);
+  --glass-bg-top:       rgba(255, 255, 255, 0.78);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.50);
 
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
-  --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --glass-border:       rgba(255, 255, 255, 0.9);
+  --glass-highlight:    rgba(255, 255, 255, 0.98);
+  --glass-specular:     rgba(255, 255, 255, 1);
+
+  --glass-blur:         blur(28px) saturate(180%);
+  --glass-blur-strong:  blur(40px) saturate(190%);
+
+  --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.12);
+
+  --shadow-card:        var(--shadow-glass);
 }
 
 * { box-sizing: border-box; }
@@ -130,6 +151,43 @@ button { font-family: inherit; }
   border-radius: 4px;
 }
 
+/* ==========================================================================
+   Liquid-Glass utility
+   ========================================================================== */
+.glass {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--shadow-glass),
+    inset 0 1px 0 0 var(--glass-highlight);
+}
+.glass--strong { background: var(--glass-bg-strong); }
+
+/* Specular edge — a light-catching hairline drawn on the *top* of the
+   element using mask-composite so it sits precisely on the border. */
+.glass--specular::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    var(--glass-specular) 0%,
+    rgba(255, 255, 255, 0.08) 30%,
+    transparent 55%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* ---- Canvas for stars ---- */
 #stars-canvas {
   position: fixed !important;
@@ -144,7 +202,6 @@ button { font-family: inherit; }
   padding: 0 !important;
 }
 
-/* همه محتوای اصلی باید بالای کانواس باشند */
 .site-header,
 .container,
 .mobile-tabbar,
