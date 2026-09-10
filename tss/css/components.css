@@ -19,14 +19,16 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 
-    0 2px 12px rgba(0,0,0,0.15),
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.18),
     inset 0 1px 0 0 var(--glass-highlight);
 }
-.btn:hover { 
-  border-color: var(--neon); 
-  color: var(--neon); 
-  box-shadow: 0 0 20px var(--neon-glow); 
+.btn:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .btn:active { transform: scale(0.98); }
 
@@ -35,17 +37,23 @@
   border-color: var(--neon);
   color: #06110E;
   font-weight: 700;
-  box-shadow: 0 0 20px var(--neon-glow);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 .btn--primary:hover {
   color: #06110E;
-  box-shadow: 0 0 32px var(--neon-glow), 0 0 60px var(--neon-glow);
+  box-shadow:
+    0 0 32px var(--neon-glow),
+    0 0 60px var(--neon-glow),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 
 .btn--ghost {
   background: transparent;
   border-color: transparent;
   color: var(--text-dim);
+  box-shadow: none;
 }
 .btn--ghost:hover { background: var(--surface); }
 
@@ -62,15 +70,31 @@
 /* ---- Card (Telegram Liquid Glass) ---- */
 .card {
   position: relative;
-  background: var(--glass-bg);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 20px;
-  box-shadow: 
-    var(--shadow-card),
+  box-shadow:
+    var(--shadow-glass),
     inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ---- Progress hero ---- */
@@ -79,15 +103,32 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  background: var(--glass-bg);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 16px 18px;
-  box-shadow: 
-    var(--shadow-card),
+  box-shadow:
+    var(--shadow-glass),
     inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.progress-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .progress-hero__text {
@@ -160,6 +201,9 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 .bookmark-btn svg {
@@ -169,7 +213,10 @@
 
 .bookmark-btn:hover {
   border-color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    0 0 40px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
 
@@ -189,6 +236,9 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 .go-to-btn svg {
@@ -198,7 +248,10 @@
 
 .go-to-btn:hover {
   border-color: var(--violet);
-  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow);
+  box-shadow:
+    0 0 20px var(--violet-glow),
+    0 0 40px var(--violet-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
 
@@ -359,15 +412,31 @@
 
 .ayah-frame__inner {
   position: relative;
-  background: var(--glass-bg-strong);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
   border: 1px solid var(--glass-border);
-  box-shadow: 
-    var(--shadow-card),
+  box-shadow:
+    var(--shadow-glass),
     inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.ayah-frame__inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .ayah-frame__ref {
@@ -532,7 +601,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap select {
   width: 100%;
   appearance: none;
-  background: var(--glass-bg-strong);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -544,16 +613,22 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .select-wrap select:hover {
   border-color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 24px var(--neon-glow);
+  box-shadow:
+    0 0 24px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .select-wrap::after {
   content: '';
@@ -574,7 +649,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 
 .select-wrap select option {
-  background: var(--bg-elevated);
+  background: var(--bg-solid);
   color: var(--text);
   padding: 8px 12px;
   font-family: var(--font-ui);
@@ -593,15 +668,32 @@ button.mark-toggle:hover { border-color: #FFB020; }
 /* ---- Tafsir card ---- */
 .tafsir-card {
   margin-top: 14px;
-  background: var(--glass-bg);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   padding: 18px;
-  box-shadow: 
-    var(--shadow-card),
+  box-shadow:
+    var(--shadow-glass),
     inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.tafsir-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .tafsir-card__meta {
@@ -685,7 +777,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .field textarea, .field input[type="text"] {
   width: 100%;
-  background: var(--glass-bg-strong);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -696,8 +788,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-size: 0.92rem;
   line-height: 1.8;
   resize: vertical;
-  transition: border-color 0.2s ease, min-height 0.25s ease;
-  box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+  transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .field textarea {
   min-height: 110px;
@@ -708,14 +802,16 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .field textarea:focus, .field input[type="text"]:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 20px var(--neon-glow);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 .name-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .name-row input { flex: 1; }
 .name-row input,
 .comment-form input[type="text"] {
-  background: var(--glass-bg-strong);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -724,26 +820,49 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border-radius: var(--radius-sm);
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  transition: border-color 0.2s ease;
-  box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 .name-row input:focus,
 .comment-form input[type="text"]:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 20px var(--neon-glow);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 /* ---- Comments ---- */
 .comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
-  background: var(--glass-bg);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   border: 1px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 0 var(--glass-highlight);
+  box-shadow:
+    0 4px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.comment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 45%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
 }
 .comment__head {
   display: flex;
@@ -753,10 +872,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .comment__name { color: var(--neon); font-weight: 600; }
 .comment__date { color: var(--text-faint); }
-.comment__body { 
-  font-size: 0.88rem; 
-  color: var(--text-dim); 
-  line-height: 1.8; 
+.comment__body {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.8;
   white-space: pre-wrap;
 }
 
@@ -795,18 +914,22 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   pointer-events: none;
 }
 .toast__inner {
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
   border: 1px solid var(--neon);
   color: var(--text);
   padding: 10px 20px;
   border-radius: 999px;
   font-size: 0.85rem;
-  box-shadow: 0 0 30px var(--neon-glow);
+  box-shadow:
+    0 0 30px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
+  isolation: isolate;
 }
 .toast.show .toast__inner { opacity: 1; translate: 0; }
 
@@ -820,6 +943,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   z-index: 200;
   background: rgba(4, 6, 10, 0.72);
   backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -831,13 +955,32 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   max-width: 420px;
   max-height: 85vh;
   overflow-y: auto;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur) saturate(160%);
-  -webkit-backdrop-filter: var(--glass-blur) saturate(160%);
+  position: relative;
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
   border: 1px solid var(--glass-border);
-  box-shadow: 
-    var(--shadow-card),
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow:
+    var(--shadow-glass-lg),
     inset 0 1px 0 0 var(--glass-highlight);
+  isolation: isolate;
+}
+.modal-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, var(--glass-specular) 0%, transparent 40%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 1;
 }
 .modal-card__head {
   display: flex;
@@ -924,7 +1067,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .ravan-tafsir-manual-input input {
   flex: 1;
   min-width: 200px;
-  background: var(--glass-bg-strong);
+  background: linear-gradient(180deg, var(--glass-bg-top), var(--glass-bg-bottom));
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
@@ -933,13 +1076,18 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   color: var(--text);
   font-family: var(--font-ui);
   font-size: 0.85rem;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 .ravan-tafsir-manual-input input:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 16px var(--neon-glow);
+  box-shadow:
+    0 0 16px var(--neon-glow),
+    inset 0 1px 0 0 var(--glass-highlight);
 }
 
 .hidden {
