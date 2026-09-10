@@ -182,7 +182,6 @@
     }
   }
 
-  // پاکسازی متن
   function cleanTafsirText(text) {
     return text
       .replace(/\[\d+\]/g, '')
@@ -195,28 +194,28 @@
       .trim();
   }
 
-  // استخراج متن تفسیر روان جاوید
   function extractRavanTafsirText(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
     const fullText = doc.body.textContent || '';
 
+    // الگوهای قوی‌تر بر اساس نمونه‌های واقعی که فرستادی
     const patterns = [
-      // الگو ۱
-      /تفسیر\s*روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|تفسیر\s+(?:نور|نمونه|اطیب|اثنی|راهنما|المیزان|مجمع)|$)/i,
+      // الگوی اصلی
+      /(?:تفسیر\s*)?روان\s*جاوید\s*\(?\s*ثقفی\s*تهران[ىی]\s*\)?[\s\S]*?(?:تفسیر\s*)?([\s\S]+?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
 
-      // الگو ۲
-      /روان\s*جاوید\s*\(?\s*ثقفی[\s\S]*?\)?[\s\n\r]*([\s\S]*?)(?=جلد\s+\d+\s+صفحه\s+\d+|تفسیر\s+\S+)/i,
+      // الگوی آزادتر
+      /روان\s*جاوید[\s\S]{0,200}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i,
 
-      // الگو ۳
-      /روان\s*جاوید[\s\S]{0,300}?([\s\S]{50,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i
+      // آخرین تلاش
+      /ثقفی\s*تهران[ىی][\s\S]{0,100}?([\s\S]{80,}?)(?=جلد\s+\d+\s+صفحه\s+\d+)/i
     ];
 
     for (const regex of patterns) {
       const match = fullText.match(regex);
       if (match && match[1]) {
         let text = cleanTafsirText(match[1]);
-        if (text.length > 60 && !/function|var |window\.|document\./i.test(text)) {
+        if (text.length > 80) {
           return text;
         }
       }
@@ -229,8 +228,9 @@
     const surahData = index.find(s => s.number === surah);
     const surahName = surahData?.name_fa || surah;
 
+    // ساخت URL با هش تب روان جاوید
     const wikiPath = `%D8%A2%DB%8C%D9%87_${ayah}_%D8%B3%D9%88%D8%B1%D9%87_${encodeURIComponent(surahName)}`;
-    const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}`;
+    const wikiUrl = `https://wiki.ahlolbait.com/${wikiPath}#!tafsir/${encodeURIComponent('روان جاوید')}`;
     const proxyUrl = `https://corsproxy.io/?key=ce9413ae&url=${encodeURIComponent(wikiUrl)}`;
 
     const response = await fetch(proxyUrl);
@@ -282,28 +282,25 @@
     showRavanTafsirState('loading');
 
     try {
-      // ۱. بررسی دیتابیس
       const dbData = await getRavanTafsirFromDB(surah, ayah);
       if (dbData?.content) {
         showRavanTafsirState('content', dbData.content);
         return;
       }
 
-      // ۲. دریافت از ویکی
       try {
         const content = await fetchRavanTafsirFromWiki(surah, ayah);
         await saveRavanTafsirToDB(surah, ayah, content);
         showRavanTafsirState('content', content);
         return;
       } catch (wikiError) {
-        // ادامه برای حالت دستی
+        // ادامه
       }
 
-      // ۳. نمایش خطا + گزینه دستی
       showRavanTafsirState('error', `
         <p>تفسیر روان جاوید برای این آیه یافت نشد.</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید آدرس صفحه ویکی را به صورت دستی وارد کنید.</p>
-        <p style="font-size:0.75rem; color:var(--text-faint);">فرمت آدرس: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره</p>
+        <p style="font-size:0.75rem; color:var(--text-faint);">فرمت پیشنهادی: https://wiki.ahlolbait.com/آیه_XX_سوره_نامسوره#!tafsir/روان+جاوید</p>
       `);
     } catch (error) {
       console.error(error);
@@ -536,7 +533,6 @@
     await refreshProgress();
     await renderTafsirsList();
 
-    // وضعیت تفسیر روان جاوید
     try {
       const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
       if (dbData?.content) {
