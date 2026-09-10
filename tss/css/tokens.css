@@ -35,12 +35,12 @@
   --radius-md: 18px;
   --radius-lg: 24px;
 
-  /* Telegram Liquid Glass */
-  --glass-bg: rgba(255, 255, 255, 0.07);
-  --glass-bg-strong: rgba(255, 255, 255, 0.11);
-  --glass-border: rgba(255, 255, 255, 0.13);
-  --glass-highlight: rgba(255, 255, 255, 0.22);
-  --glass-blur: blur(22px) saturate(180%);
+  /* Telegram Liquid Glass - Light more transparent */
+  --glass-bg: rgba(255, 255, 255, 0.48);
+  --glass-bg-strong: rgba(255, 255, 255, 0.62);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-highlight: rgba(255, 255, 255, 0.85);
+  --glass-blur: blur(22px) saturate(160%);
 
   /* Shadows */
   --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
