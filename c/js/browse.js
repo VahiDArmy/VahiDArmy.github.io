@@ -9,7 +9,6 @@
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(surahSelect, index, 1);
 
-  // آیا بازدیدکنندهٔ فعلی خود شما (مالک) هستید؟ برای نمایش دکمهٔ حذف نظرات/تفسیرها
   let isOwner = false;
   try {
     const session = await Auth.getSession();
@@ -43,6 +42,10 @@
     surahSelect.value = surah;
     UI.populateAyahSelect(ayahSelect, surahData.ayah_count, actualAyah);
 
+    // بررسی اینکه آیا این آیه نشانک خواندن است
+    const meta = await Store.getSiteMeta();
+    const isBookmarked = (meta.bookmark_surah === surah && meta.bookmark_ayah === actualAyah);
+
     const markOptions = isOwner
       ? {
           marked: await Store.isMarked(surah, actualAyah),
@@ -55,7 +58,15 @@
         }
       : { marked: await Store.isMarked(surah, actualAyah) };
 
-    renderAyahFrame(frameEl, ayahData, surahData, markOptions);
+    renderAyahFrame(frameEl, ayahData, surahData, {
+      ...markOptions,
+      onBookmark: async (isBookmarked) => {
+        if (isBookmarked) {
+          await Store.updateBookmark(surah, actualAyah);
+        }
+      },
+      isBookmarked: isBookmarked
+    });
 
     prevBtn.disabled = surah === 1 && actualAyah === 1;
     nextBtn.disabled = surah === 114 && actualAyah === surahData.ayah_count;
@@ -159,15 +170,16 @@
     return div.innerHTML;
   }
 
-  // --- ناوبری با دراپ‌داون ---
   surahSelect.addEventListener('change', async () => {
-    setHash(Number(surahSelect.value), 1);
+    const surah = Number(surahSelect.value);
+    const surahData = await QuranData.getSurah(surah);
+    UI.populateAyahSelect(ayahSelect, surahData.ayah_count, 1);
+    setHash(surah, 1);
   });
   ayahSelect.addEventListener('change', () => {
     setHash(Number(surahSelect.value), Number(ayahSelect.value));
   });
 
-  // --- دکمه بعدی/قبلی ---
   prevBtn.addEventListener('click', async () => {
     const { surah, ayah } = parseHash() || { surah: 1, ayah: 1 };
     if (ayah > 1) return setHash(surah, ayah - 1);
@@ -185,15 +197,13 @@
 
   window.addEventListener('hashchange', render);
 
-  // --- تعیین آیهٔ شروع ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     setHash(Number(params.get('surah')), Number(params.get('ayah')), true);
   } else if (!location.hash) {
-    // پیش‌فرض: آخرین آیه‌ای که تفسیر داشته (نه همیشه آیهٔ ۱)
-    const latest = await Store.getLatestTafsir();
-    if (latest) setHash(latest.surah, latest.ayah, true);
-    else setHash(1, 1, true);
+    // نمایش آخرین نشانک خواندن
+    const meta = await Store.getSiteMeta();
+    setHash(meta.bookmark_surah, meta.bookmark_ayah, true);
   }
 
   render();
