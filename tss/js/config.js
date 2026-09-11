@@ -10,7 +10,7 @@ const CONFIG = {
   // >>> فهرست مدل‌های موجود — برای افزودن مدل جدید فقط یک خط اضافه کن <<<
   AI_FUNCTIONS: [
     { id: 'ai-review',     label: 'Groq-bullshit' },
-    { id: 'clever-worker', label: 'Cerebras' },
+    { id: 'clever-worker', label: 'mistral-small-latest' },
     { id: 'hyper-handler', label: 'openrouter/free' },
     { id: 'super-action',  label: 'nvidia/nemotron' },
   ],
