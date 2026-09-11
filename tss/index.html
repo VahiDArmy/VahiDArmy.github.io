@@ -134,9 +134,7 @@
     </div>
   </section>
 
-  <!-- ============================================================
-       تفسیر روان جاوید - آخرین کارت صفحه
-       ============================================================ -->
+  <!-- تفسیر روان جاوید -->
   <section class="section" aria-label="تفسیر روان جاوید" id="ravanTafsirSection">
     <div class="section__label">
       <span>تفسیر روان جاوید</span>
@@ -150,35 +148,27 @@
       </div>
     </div>
     <div class="card ravan-tafsir-container" id="ravanTafsirContainer">
-      <!-- حالت پیش‌فرض: بدون تفسیر -->
       <div id="ravanTafsirEmpty" class="ravan-tafsir-empty">
         <p style="color:var(--text-faint); text-align:center; padding:16px 0;">
           برای دریافت تفسیر روان جاوید، دکمه «بارگذاری تفسیر» را بزنید.
         </p>
       </div>
       
-      <!-- حالت بارگذاری -->
       <div id="ravanTafsirLoading" class="ravan-tafsir-loading hidden">
         <div class="skeleton" style="height:60px; width:100%;"></div>
         <div class="skeleton" style="height:40px; width:80%; margin-top:8px;"></div>
       </div>
       
-      <!-- محتوای تفسیر -->
       <div id="ravanTafsirContent" class="ravan-tafsir-content hidden">
-        <!-- محتوای تفسیر به صورت داینامیک درج می‌شود -->
       </div>
       
-      <!-- حالت خطا -->
       <div id="ravanTafsirError" class="ravan-tafsir-error hidden">
-        <!-- پیام خطا به صورت داینامیک درج می‌شود -->
       </div>
       
-      <!-- دکمه دریافت دستی -->
       <button id="ravanTafsirManualBtn" class="btn btn--sm hidden" style="margin-top:10px;">
         ↺ وارد کردن آدرس دستی
       </button>
       
-      <!-- ورودی آدرس دستی -->
       <div id="ravanTafsirManualPaste" class="hidden" style="margin-top:12px;">
        <textarea id="ravanTafsirPasteArea" rows="8" placeholder="متن تفسیر روان جاوید را اینجا پیست کنید..." style="width:100%; min-height:160px;"></textarea>
       <div style="display:flex; gap:8px; margin-top:10px;">
@@ -210,6 +200,40 @@
     <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--surface-2); border-radius:10px; margin-bottom:8px; user-select:text;"></div>
     <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 14px;">می‌توانید بخشی از متن بالا را انتخاب (select) کنید تا فقط همان گزیده درج شود؛ وگرنه کل آیه ارجاع داده می‌شود.</p>
     <button type="button" class="btn btn--primary" id="insertLinkBtn" style="width:100%;">درج لینک</button>
+  </div>
+</div>
+
+<!-- پاپ‌آپ بررسی هوشمند -->
+<div class="modal-overlay" id="aiReviewModal" hidden>
+  <div class="modal-card card ai-review-modal">
+    <div class="modal-card__head">
+      <span>بررسی هوشمند</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="aiReviewCloseBtn" aria-label="بستن">✕</button>
+    </div>
+
+    <div id="aiReviewLoading" class="ai-review-loading hidden">
+      <div class="skeleton" style="height:18px; width:90%; margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:18px; width:75%; margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:18px; width:85%; margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:18px; width:60%;"></div>
+      <p style="text-align:center; color:var(--text-faint); font-size:0.85rem; margin-top:16px;">در حال بررسی...</p>
+    </div>
+
+    <div id="aiReviewContent" class="ai-review-content hidden">
+      <div id="aiReviewText" class="ai-review-text"></div>
+    </div>
+
+    <div id="aiReviewEdit" class="ai-review-edit hidden">
+      <textarea id="aiReviewEditArea" rows="8" style="width:100%; min-height:160px;"></textarea>
+    </div>
+
+    <div class="ai-review-actions" id="aiReviewActions" style="display:none;">
+      <button type="button" class="btn btn--sm" id="aiReviewRefreshBtn">رفرش</button>
+      <button type="button" class="btn btn--sm" id="aiReviewEditBtn">ویرایش</button>
+      <button type="button" class="btn btn--sm" id="aiReviewSaveBtn" style="display:none;">ذخیره</button>
+      <button type="button" class="btn btn--sm" id="aiReviewCancelEditBtn" style="display:none;">انصراف</button>
+      <button type="button" class="btn btn--sm" id="aiReviewDeleteBtn" style="color:var(--danger); border-color:var(--danger);">حذف</button>
+    </div>
   </div>
 </div>
 
