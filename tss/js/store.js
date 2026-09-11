@@ -214,6 +214,59 @@ const Store = (function () {
     return round + 1;
   }
 
+  // ---------- توابع مربوط به بررسی هوشمند ----------
+  async function getAiReview(tafsirId) {
+    const { data, error } = await sb
+      .from('ai_reviews')
+      .select('*')
+      .eq('tafsir_id', tafsirId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async function saveAiReview(tafsirId, content) {
+    const existing = await getAiReview(tafsirId);
+    if (existing) {
+      const { data, error } = await sb
+        .from('ai_reviews')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    } else {
+      const { data, error } = await sb
+        .from('ai_reviews')
+        .insert({ tafsir_id: tafsirId, content })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+  }
+
+  async function deleteAiReview(tafsirId) {
+    const { error } = await sb.from('ai_reviews').delete().eq('tafsir_id', tafsirId);
+    if (error) throw error;
+  }
+
+  async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
+    const { data: { session } } = await sb.auth.getSession();
+    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/ai-review`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session?.access_token || CONFIG.SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
+    return json.content;
+  }
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
@@ -235,5 +288,9 @@ const Store = (function () {
     getProgress,
     advanceBookmarkIfAhead,
     endRound,
+    getAiReview,
+    saveAiReview,
+    deleteAiReview,
+    callAiReview,
   };
 })();
