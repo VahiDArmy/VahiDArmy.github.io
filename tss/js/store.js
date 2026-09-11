@@ -284,8 +284,14 @@ async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
 
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
-  return json.content;
+
+  // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
+  return {
+    content: json.content,
+    model: json.model || null,
+  };
 }
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
