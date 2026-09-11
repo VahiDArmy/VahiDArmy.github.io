@@ -222,20 +222,6 @@ button { font-family: inherit; }
   -webkit-backdrop-filter: none;
 }
 
-/* ---- Canvas for stars ---- */
-#stars-canvas {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
 .site-header,
 .container,
 .mobile-tabbar,
