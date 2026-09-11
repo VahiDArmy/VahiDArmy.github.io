@@ -39,6 +39,7 @@
   const aiReviewSaveBtn = document.getElementById('aiReviewSaveBtn');
   const aiReviewCancelEditBtn = document.getElementById('aiReviewCancelEditBtn');
   const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
+  const aiFunctionSelect = document.getElementById('aiFunctionSelect');
 
   // -------------------------------------------------------------
   // رندر Markdown برای پاسخ بررسی هوشمند
@@ -50,7 +51,6 @@
   function renderMarkdown(md) {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) {
-      // اگر کتابخانه‌ها بارگذاری نشدند، متن خام را نشان بده (escape شده)
       const div = document.createElement('div');
       div.textContent = md;
       return div.innerHTML.replace(/\n/g, '<br>');
@@ -69,6 +69,25 @@
       wrap.appendChild(table);
     });
     return tmp.innerHTML;
+  }
+
+  // -------------------------------------------------------------
+  // دراپ‌دان انتخاب تابع هوش مصنوعی
+  // -------------------------------------------------------------
+  function initAiFunctionSelect() {
+    if (!aiFunctionSelect || !CONFIG.AI_FUNCTIONS) return;
+
+    const saved = localStorage.getItem('ai_fn') || CONFIG.AI_FUNCTION_DEFAULT;
+
+    aiFunctionSelect.innerHTML = CONFIG.AI_FUNCTIONS
+      .map(f => '<option value="' + f.id + '"' + (f.id === saved ? ' selected' : '') + '>' + f.label + '</option>')
+      .join('');
+
+    aiFunctionSelect.addEventListener('change', () => {
+      localStorage.setItem('ai_fn', aiFunctionSelect.value);
+      const label = aiFunctionSelect.options[aiFunctionSelect.selectedIndex].text;
+      UI.toast('مدل به «' + label + '» تغییر کرد');
+    });
   }
 
   function parseTags(str) {
@@ -355,7 +374,6 @@
         return;
       }
 
-      // دریافت متن آیه
       const surahData = await QuranData.getSurah(current.surah);
       const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
       const ayahText = ayahObj ? ayahObj.ar : '';
@@ -862,5 +880,6 @@
   // اجرای اولیه
   // ============================================================
 
+  initAiFunctionSelect();
   await renderCurrentAyah();
 })();
