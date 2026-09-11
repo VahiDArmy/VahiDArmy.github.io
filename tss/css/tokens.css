@@ -30,20 +30,21 @@
   --radius-lg: 24px;
 
   /* ------------------------------------------------------------------
-     Glass — transparent; blur carries the effect. (Raised alphas +
-     strong blur so the mesh background actually shows through.)
+     Glass — VERY transparent, LIGHT blur.
+     Let the backdrop texture show through nearly unblurred; glass feel
+     comes from the specular border + inner highlight, not the blur.
      ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.05);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.08);
-  --glass-bg-top:       rgba(255, 255, 255, 0.10);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.03);
+  --glass-bg:           rgba(255, 255, 255, 0.02);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.035);
+  --glass-bg-top:       rgba(255, 255, 255, 0.045);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.012);
 
   --glass-border:       rgba(255, 255, 255, 0.18);
   --glass-highlight:    rgba(255, 255, 255, 0.45);
   --glass-specular:     rgba(255, 255, 255, 0.80);
 
-  --glass-blur:         blur(16px) saturate(160%);
-  --glass-blur-strong:  blur(24px) saturate(180%);
+  --glass-blur:         blur(3px) saturate(140%);
+  --glass-blur-strong:  blur(5px) saturate(150%);
 
   --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
                         0 2px 8px rgba(0, 0, 0, 0.22);
@@ -82,17 +83,17 @@
   --danger: #D3405A;
   --success: #0EA894;
 
-  --glass-bg:           rgba(255, 255, 255, 0.22);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.32);
-  --glass-bg-top:       rgba(255, 255, 255, 0.40);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.16);
+  --glass-bg:           rgba(255, 255, 255, 0.10);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.16);
+  --glass-bg-top:       rgba(255, 255, 255, 0.22);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.06);
 
   --glass-border:       rgba(255, 255, 255, 0.80);
   --glass-highlight:    rgba(255, 255, 255, 0.95);
   --glass-specular:     rgba(255, 255, 255, 1);
 
-  --glass-blur:         blur(16px) saturate(160%);
-  --glass-blur-strong:  blur(24px) saturate(180%);
+  --glass-blur:         blur(3px) saturate(140%);
+  --glass-blur-strong:  blur(5px) saturate(150%);
 
   --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.09),
                         0 2px 8px rgba(0, 0, 0, 0.05);
@@ -114,9 +115,6 @@ html, body {
 
 /* ------------------------------------------------------------------
    Professional mesh-gradient backdrop.
-   A flat color can never render a visible frosted-glass effect —
-   the backdrop needs depth for the blur to pick up. Four soft color
-   orbs + a diagonal base gradient give exactly that.
    ------------------------------------------------------------------ */
 body {
   background-color: var(--bg-solid);
@@ -146,20 +144,10 @@ body {
 }
 
 /* ------------------------------------------------------------------
-   Fabric weave + film grain overlay.
-
-   Painted directly (NO mix-blend-mode) — blend modes collapse to
-   invisible on near-black backdrops, which is why the previous attempt
-   rendered nothing. Instead these are semi-transparent light threads
-   stacked literally on top of the mesh.
-
-   Layer order (topmost first in background-image list):
-     1. Grain  — sparse gray noise, only 15% opaque inside the SVG
-     2. Weave ↘ — 5% white thread at 1px every 4px
-     3. Weave ↗ — 8% white thread at 1px every 4px
-
-   The two crossed weave layers create the fabric feel; the grain
-   sits on top as a light film-grain finish.
+   Fabric weave + film grain overlay. No blend modes (they collapse
+   on near-black backdrops). Semi-transparent light threads painted
+   directly on top of the mesh. Slightly stronger than before so that
+   the reduced blur still lets the texture read through the glass.
    ------------------------------------------------------------------ */
 body::before {
   content: '';
@@ -169,21 +157,21 @@ body::before {
   pointer-events: none;
 
   background-image:
-    /* 1. Grain — turbulence noise, 15% opacity inside the SVG */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/></svg>"),
-    /* 2. Weave ↘ — dimmer */
+    /* 1. Grain */
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>"),
+    /* 2. Weave ↘ */
     repeating-linear-gradient(
       -45deg,
-      rgba(255, 255, 255, 0.05) 0px,
-      rgba(255, 255, 255, 0.05) 1px,
+      rgba(255, 255, 255, 0.06) 0px,
+      rgba(255, 255, 255, 0.06) 1px,
       transparent 1px,
       transparent 4px
     ),
-    /* 3. Weave ↗ — brighter */
+    /* 3. Weave ↗ */
     repeating-linear-gradient(
       45deg,
-      rgba(255, 255, 255, 0.08) 0px,
-      rgba(255, 255, 255, 0.08) 1px,
+      rgba(255, 255, 255, 0.10) 0px,
+      rgba(255, 255, 255, 0.10) 1px,
       transparent 1px,
       transparent 4px
     );
@@ -193,20 +181,19 @@ body::before {
 }
 
 [data-theme="light"] body::before {
-  /* Dark threads on light backdrops — same idea, inverted tone. */
   background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.12'/></svg>"),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/></svg>"),
     repeating-linear-gradient(
       -45deg,
-      rgba(0, 0, 0, 0.035) 0px,
-      rgba(0, 0, 0, 0.035) 1px,
+      rgba(0, 0, 0, 0.045) 0px,
+      rgba(0, 0, 0, 0.045) 1px,
       transparent 1px,
       transparent 4px
     ),
     repeating-linear-gradient(
       45deg,
-      rgba(0, 0, 0, 0.055) 0px,
-      rgba(0, 0, 0, 0.055) 1px,
+      rgba(0, 0, 0, 0.07) 0px,
+      rgba(0, 0, 0, 0.07) 1px,
       transparent 1px,
       transparent 4px
     );
