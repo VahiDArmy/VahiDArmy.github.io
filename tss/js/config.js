@@ -7,4 +7,13 @@
 const CONFIG = {
   SUPABASE_URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6',
+  // >>> فهرست مدل‌های موجود — برای افزودن مدل جدید فقط یک خط اضافه کن <<<
+  AI_FUNCTIONS: [
+    { id: 'ai-review',     label: 'Groq' },
+    { id: 'clever-worker', label: 'OpenRouter' },
+    { id: 'hyper-handler', label: 'DeepSeek' },
+    { id: 'super-action',  label: 'Cerebras' },
+  ],
+
+  AI_FUNCTION_DEFAULT: 'clever-worker',
 };
