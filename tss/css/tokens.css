@@ -30,7 +30,7 @@
   --radius-lg: 24px;
 
   /* ------------------------------------------------------------------
-     Glass — transparent; blur carries the effect. (raاised alphas +
+     Glass — transparent; blur carries the effect. (raised alphas +
      strong blur so the mesh background actually shows through.)
      ------------------------------------------------------------------ */
   --glass-bg:           rgba(255, 255, 255, 0.05);
@@ -148,6 +148,51 @@ body {
 /* iOS/Safari ignores `fixed` attachment badly — fall back gracefully. */
 @media (hover: none) and (pointer: coarse) {
   body { background-attachment: scroll; }
+}
+
+/* ------------------------------------------------------------------
+   Noise + fine fabric weave overlay.
+   Painted at z-index 0, below all glass surfaces (which sit at z-index 1+).
+   Because the glass panels use backdrop-filter, this texture is what
+   gets sampled & blurred behind them — that's what makes the frosted
+   look feel "physical" instead of flat.
+   ------------------------------------------------------------------ */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Layer 1 (top): fine white-noise grain (SVG fractalNoise). */
+  /* Layer 2 + 3: micro crosshatch → the "fabric weave" feel. */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.030) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.030) 0 1px,
+      transparent 1px 3px
+    );
+
+  background-size: 160px 160px, auto, auto;
+  background-repeat: repeat, repeat, repeat;
+
+  /* `overlay` keeps the mesh colors intact while letting the grain bite
+     into both highlights and shadows — that's what reads as fabric. */
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+}
+
+/* Light theme: switch the grain to dark and soften further, otherwise
+   white noise on a bright backdrop looks like dust. */
+[data-theme="light"] body::after {
+  opacity: 0.35;
+  mix-blend-mode: soft-light;
 }
 
 @media (prefers-reduced-motion: reduce) {
