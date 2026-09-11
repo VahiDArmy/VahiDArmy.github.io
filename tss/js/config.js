@@ -11,8 +11,8 @@ const CONFIG = {
   AI_FUNCTIONS: [
     { id: 'ai-review',     label: 'Groq' },
     { id: 'clever-worker', label: 'OpenRouter' },
-    { id: 'hyper-handler', label: 'DeepSeek' },
-    { id: 'super-action',  label: 'Cerebras' },
+    { id: 'hyper-handler', label: 'openrouter/free' },
+    { id: 'super-action',  label: 'nvidia/nemotron' },
   ],
 
   AI_FUNCTION_DEFAULT: 'clever-worker',
