@@ -25,6 +25,87 @@
   const ravanTafsirManualSubmit = document.getElementById('ravanTafsirManualSubmit');
   const ravanTafsirManualCancel = document.getElementById('ravanTafsirManualCancel');
 
+  // المان‌های پاپ‌آپ بررسی هوشمند
+  const aiReviewModal = document.getElementById('aiReviewModal');
+  const aiReviewCloseBtn = document.getElementById('aiReviewCloseBtn');
+  const aiReviewLoading = document.getElementById('aiReviewLoading');
+  const aiReviewEmpty = document.getElementById('aiReviewEmpty');
+  const aiReviewStartBtn = document.getElementById('aiReviewStartBtn');
+  const aiReviewContent = document.getElementById('aiReviewContent');
+  const aiReviewText = document.getElementById('aiReviewText');
+  const aiReviewEdit = document.getElementById('aiReviewEdit');
+  const aiReviewEditArea = document.getElementById('aiReviewEditArea');
+  const aiReviewActions = document.getElementById('aiReviewActions');
+  const aiReviewRefreshBtn = document.getElementById('aiReviewRefreshBtn');
+  const aiReviewEditBtn = document.getElementById('aiReviewEditBtn');
+  const aiReviewSaveBtn = document.getElementById('aiReviewSaveBtn');
+  const aiReviewCancelEditBtn = document.getElementById('aiReviewCancelEditBtn');
+  const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
+  const aiFunctionSelect = document.getElementById('aiFunctionSelect');
+  const aiReviewModelBadge = document.getElementById('aiReviewModelBadge');
+
+  // -------------------------------------------------------------
+  // رندر Markdown
+  // -------------------------------------------------------------
+  if (window.marked) {
+    marked.setOptions({ gfm: true, breaks: true });
+  }
+
+  function renderMarkdown(md) {
+    if (!md) return '';
+    if (!window.marked || !window.DOMPurify) {
+      const div = document.createElement('div');
+      div.textContent = md;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+    const raw = marked.parse(md);
+    const clean = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = clean;
+    tmp.querySelectorAll('table').forEach((table) => {
+      if (table.parentElement?.classList.contains('table-scroll')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+    return tmp.innerHTML;
+  }
+
+  // -------------------------------------------------------------
+  // دراپ‌دان انتخاب تابع
+  // -------------------------------------------------------------
+  function initAiFunctionSelect() {
+    if (!aiFunctionSelect || !CONFIG.AI_FUNCTIONS) return;
+
+    const saved = localStorage.getItem('ai_fn') || CONFIG.AI_FUNCTION_DEFAULT;
+
+    aiFunctionSelect.innerHTML = CONFIG.AI_FUNCTIONS
+      .map(f => '<option value="' + f.id + '"' + (f.id === saved ? ' selected' : '') + '>' + f.label + '</option>')
+      .join('');
+
+    aiFunctionSelect.addEventListener('change', () => {
+      localStorage.setItem('ai_fn', aiFunctionSelect.value);
+      const label = aiFunctionSelect.options[aiFunctionSelect.selectedIndex].text;
+      UI.toast('مدل به «' + label + '» تغییر کرد');
+    });
+  }
+
+  // -------------------------------------------------------------
+  // بج مدل
+  // -------------------------------------------------------------
+  function updateAiModelBadge() {
+    if (!aiReviewModelBadge) return;
+    if (currentAiModel) {
+      aiReviewModelBadge.textContent = 'پاسخ از مدل: ' + currentAiModel;
+      aiReviewModelBadge.classList.remove('hidden');
+    } else {
+      aiReviewModelBadge.textContent = '';
+      aiReviewModelBadge.classList.add('hidden');
+    }
+  }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -39,11 +120,14 @@
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
   let detectedLink = null;
+  let currentAiTafsirId = null;
+  let currentAiTafsirContent = '';
+  let currentAiContent = '';
+  let currentAiModel = '';
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
 
-  // --- تعیین آیهٔ شروع ---
   const params = new URLSearchParams(location.search);
   if (params.has('surah') && params.has('ayah')) {
     current = { surah: Number(params.get('surah')), ayah: Number(params.get('ayah')) };
@@ -121,7 +205,7 @@
   }
 
   // ============================================================
-  // توابع تفسیر روان جاوید
+  // تفسیر روان جاوید
   // ============================================================
 
   async function getRavanTafsirFromDB(surah, ayah) {
@@ -131,7 +215,6 @@
       .eq('surah', Number(surah))
       .eq('ayah', Number(ayah))
       .maybeSingle();
-
     if (error) throw error;
     return data;
   }
@@ -157,14 +240,8 @@
     } else {
       result = await sb
         .from('ravan_tafsirs')
-        .insert({
-          surah: surahNum,
-          ayah: ayahNum,
-          content,
-          updated_at: new Date().toISOString()
-        });
+        .insert({ surah: surahNum, ayah: ayahNum, content, updated_at: new Date().toISOString() });
     }
-
     if (result.error) throw result.error;
   }
 
@@ -175,11 +252,8 @@
       .eq('surah', Number(surah))
       .eq('ayah', Number(ayah))
       .select();
-
     if (error) throw error;
-    if (!deleted || deleted.length === 0) {
-      throw new Error('هیچ رکوردی حذف نشد');
-    }
+    if (!deleted || deleted.length === 0) throw new Error('هیچ رکوردی حذف نشد');
   }
 
   function showRavanTafsirState(state, data) {
@@ -192,7 +266,6 @@
     ravanTafsirDeleteBtn.classList.add('hidden');
     ravanTafsirLoadBtn.classList.remove('hidden');
 
-    // پنهان کردن بخش پیست
     const pasteBox = document.getElementById('ravanTafsirManualPaste');
     if (pasteBox) pasteBox.classList.add('hidden');
 
@@ -218,15 +291,12 @@
 
   async function loadRavanTafsir(surah, ayah) {
     showRavanTafsirState('loading');
-
     try {
       const dbData = await getRavanTafsirFromDB(surah, ayah);
       if (dbData?.content) {
         showRavanTafsirState('content', dbData.content);
         return;
       }
-
-      // چون استخراج خودکار مشکل دارد، مستقیم به حالت دستی می‌رویم
       showRavanTafsirState('error', `
         <p>تفسیر روان جاوید برای این آیه در دیتابیس نیست.</p>
         <p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید متن را مستقیماً پیست کنید یا از لینک ویکی استفاده کنید.</p>
@@ -243,7 +313,6 @@
   async function deleteRavanTafsir(surah, ayah) {
     const confirmed = confirm('آیا تفسیر روان جاوید ذخیره‌شده برای این آیه حذف شود؟');
     if (!confirmed) return;
-
     try {
       await deleteRavanTafsirFromDB(surah, ayah);
       UI.toast('تفسیر روان جاوید حذف شد');
@@ -255,7 +324,170 @@
   }
 
   // ============================================================
-  // ابزار لینک به آیه
+  // بررسی هوشمند (AI Review)
+  // ============================================================
+
+  function showAiState(state) {
+    aiReviewLoading.classList.add('hidden');
+    aiReviewEmpty.classList.add('hidden');
+    aiReviewContent.classList.add('hidden');
+    aiReviewEdit.classList.add('hidden');
+
+    aiReviewActions.style.display = 'none';
+    aiReviewEditBtn.style.display = '';
+    aiReviewSaveBtn.style.display = 'none';
+    aiReviewCancelEditBtn.style.display = 'none';
+    aiReviewRefreshBtn.style.display = '';
+    aiReviewDeleteBtn.style.display = '';
+
+    if (state === 'loading') {
+      aiReviewLoading.classList.remove('hidden');
+    } else if (state === 'empty') {
+      aiReviewEmpty.classList.remove('hidden');
+    } else if (state === 'content') {
+      aiReviewContent.classList.remove('hidden');
+      aiReviewActions.style.display = 'flex';
+    } else if (state === 'edit') {
+      aiReviewEdit.classList.remove('hidden');
+      aiReviewActions.style.display = 'flex';
+      aiReviewEditBtn.style.display = 'none';
+      aiReviewSaveBtn.style.display = '';
+      aiReviewCancelEditBtn.style.display = '';
+      aiReviewRefreshBtn.style.display = 'none';
+      aiReviewDeleteBtn.style.display = 'none';
+    }
+  }
+
+  function openAiModal() {
+    aiReviewModal.hidden = false;
+  }
+
+  function closeAiModal() {
+    aiReviewModal.hidden = true;
+    currentAiTafsirId = null;
+    currentAiTafsirContent = '';
+    currentAiContent = '';
+    currentAiModel = '';
+    if (aiReviewModelBadge) {
+      aiReviewModelBadge.textContent = '';
+      aiReviewModelBadge.classList.add('hidden');
+    }
+  }
+
+  // باز کردن پاپ‌آپ — اگر پاسخ موجود است نمایش بده، وگرنه حالت «خالی»
+  async function openAiReview(tafsir) {
+    currentAiTafsirId = tafsir.id;
+    currentAiTafsirContent = tafsir.content;
+    currentAiContent = '';
+    currentAiModel = '';
+    openAiModal();
+    showAiState('loading');
+
+    try {
+      const existing = await Store.getAiReview(tafsir.id);
+      if (existing && existing.content) {
+        currentAiContent = existing.content;
+        currentAiModel = existing.model || '';
+        aiReviewText.innerHTML = renderMarkdown(existing.content);
+        updateAiModelBadge();
+        showAiState('content');
+      } else {
+        updateAiModelBadge();
+        showAiState('empty');
+      }
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در بارگذاری: ' + (err.message || 'نامشخص'));
+      showAiState('empty');
+    }
+  }
+
+  // تولید پاسخ جدید — هم برای بار اول و هم برای «تولید مجدد»
+  async function generateAiReview() {
+    if (!currentAiTafsirId) return;
+    if (!currentAiTafsirContent) {
+      UI.toast('متن تفسیر پیدا نشد');
+      return;
+    }
+
+    showAiState('loading');
+
+    try {
+      const surahData = await QuranData.getSurah(current.surah);
+      const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
+      const ayahText = ayahObj ? ayahObj.ar : '';
+
+      const result = await Store.callAiReview({
+        surah: current.surah,
+        ayah: current.ayah,
+        ayahText,
+        userOpinion: currentAiTafsirContent,
+      });
+
+      await Store.saveAiReview(currentAiTafsirId, result.content, result.model);
+      currentAiContent = result.content;
+      currentAiModel = result.model || '';
+      aiReviewText.innerHTML = renderMarkdown(result.content);
+      updateAiModelBadge();
+      showAiState('content');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در بررسی هوشمند: ' + (err.message || 'نامشخص'));
+      // اگر پاسخ قبلی وجود دارد، برگرد به آن؛ وگرنه حالت خالی
+      if (currentAiContent) {
+        aiReviewText.innerHTML = renderMarkdown(currentAiContent);
+        updateAiModelBadge();
+        showAiState('content');
+      } else {
+        showAiState('empty');
+      }
+    }
+  }
+
+  function enterAiEditMode() {
+    aiReviewEditArea.value = currentAiContent;
+    showAiState('edit');
+  }
+
+  function cancelAiEdit() {
+    showAiState('content');
+  }
+
+  async function saveAiEdit() {
+    const newContent = aiReviewEditArea.value.trim();
+    if (!newContent) {
+      UI.toast('متن خالی است');
+      return;
+    }
+    try {
+      await Store.saveAiReview(currentAiTafsirId, newContent, currentAiModel);
+      currentAiContent = newContent;
+      aiReviewText.innerHTML = renderMarkdown(newContent);
+      showAiState('content');
+      UI.toast('ذخیره شد');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در ذخیره');
+    }
+  }
+
+  async function deleteAiReview() {
+    if (!confirm('پاسخ بررسی هوشمند حذف شود؟')) return;
+    try {
+      await Store.deleteAiReview(currentAiTafsirId);
+      currentAiContent = '';
+      currentAiModel = '';
+      updateAiModelBadge();
+      showAiState('empty');
+      UI.toast('حذف شد — می‌توانید پاسخ جدید تولید کنید');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در حذف');
+    }
+  }
+
+  // ============================================================
+  // ابزار لینک
   // ============================================================
 
   function detectLinkAtCursor(textarea) {
@@ -369,6 +601,14 @@
               : ''
           }
           <div class="tafsir-card__actions">
+            <button class="ai-review-btn" data-ai="${t.id}" title="بررسی هوشمند" aria-label="بررسی هوشمند">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a4 4 0 0 1 4 4v1a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/>
+                <path d="M18 9a6 6 0 0 1-12 0"/>
+                <path d="M12 15v4"/>
+                <path d="M8 19h8"/>
+              </svg>
+            </button>
             <button class="btn btn--sm" data-edit="${t.id}">ویرایش</button>
             <button class="btn btn--sm" data-delete="${t.id}">حذف</button>
           </div>
@@ -401,6 +641,14 @@
         UI.toast('تفسیر حذف شد');
         await renderTafsirsList();
         await refreshProgress();
+      });
+    });
+
+    tafsirsListEl.querySelectorAll('[data-ai]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-ai');
+        const t = tafsirs.find((x) => x.id === id);
+        if (t) openAiReview(t);
       });
     });
   }
@@ -472,6 +720,7 @@
   });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !linkToolModal.hidden) closeLinkModal();
+    if (e.key === 'Escape' && !aiReviewModal.hidden) closeAiModal();
   });
 
   linkSurahSelect.addEventListener('change', async () => {
@@ -507,6 +756,28 @@
   tafsirContent.addEventListener('select', updateLinkButton);
 
   // ============================================================
+  // رویدادهای بررسی هوشمند
+  // ============================================================
+
+  aiReviewCloseBtn.addEventListener('click', closeAiModal);
+  aiReviewModal.addEventListener('click', (e) => {
+    if (e.target === aiReviewModal) closeAiModal();
+  });
+
+  // شروع بررسی (از حالت خالی)
+  if (aiReviewStartBtn) {
+    aiReviewStartBtn.addEventListener('click', generateAiReview);
+  }
+
+  // تولید مجدد (رفرش) — همیشه پاسخ جدید می‌گیرد
+  aiReviewRefreshBtn.addEventListener('click', generateAiReview);
+
+  aiReviewEditBtn.addEventListener('click', enterAiEditMode);
+  aiReviewCancelEditBtn.addEventListener('click', cancelAiEdit);
+  aiReviewSaveBtn.addEventListener('click', saveAiEdit);
+  aiReviewDeleteBtn.addEventListener('click', deleteAiReview);
+
+  // ============================================================
   // رویدادهای تفسیر روان جاوید
   // ============================================================
 
@@ -518,7 +789,6 @@
     deleteRavanTafsir(current.surah, current.ayah);
   });
 
-  // دکمه نمایش حالت پیست دستی
   ravanTafsirManualBtn.addEventListener('click', () => {
     ravanTafsirError.classList.add('hidden');
     ravanTafsirManualInput.classList.add('hidden');
@@ -526,14 +796,12 @@
     if (pasteBox) pasteBox.classList.remove('hidden');
   });
 
-  // ذخیره متن پیست شده
   document.getElementById('ravanTafsirPasteSave')?.addEventListener('click', async () => {
     const text = document.getElementById('ravanTafsirPasteArea')?.value.trim();
     if (!text || text.length < 30) {
       UI.toast('متن خیلی کوتاه است');
       return;
     }
-
     try {
       await saveRavanTafsirToDB(current.surah, current.ayah, text);
       showRavanTafsirState('content', text);
@@ -546,21 +814,14 @@
     }
   });
 
-  // انصراف از پیست
   document.getElementById('ravanTafsirPasteCancel')?.addEventListener('click', () => {
     document.getElementById('ravanTafsirManualPaste')?.classList.add('hidden');
     document.getElementById('ravanTafsirPasteArea').value = '';
     showRavanTafsirState('empty');
   });
 
-  // حالت قدیمی دریافت از لینک (اگر هنوز می‌خواهی نگه داری)
   ravanTafsirManualSubmit?.addEventListener('click', () => {
-    const input = ravanTafsirManualInput.querySelector('input');
-    const url = input?.value?.trim();
-    if (url) {
-      // فعلاً غیرفعال است چون استخراج کار نمی‌کند
-      UI.toast('لطفاً از پیست متن استفاده کنید');
-    }
+    UI.toast('لطفاً از پیست متن استفاده کنید');
   });
 
   ravanTafsirManualCancel?.addEventListener('click', () => {
@@ -645,5 +906,6 @@
   // اجرای اولیه
   // ============================================================
 
+  initAiFunctionSelect();
   await renderCurrentAyah();
 })();
