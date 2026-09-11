@@ -30,23 +30,6 @@
   isolation: isolate;
 }
 
-.site-header::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--glass-specular) 15%,
-    var(--glass-specular) 85%,
-    transparent 100%
-  );
-  opacity: 0.7;
-  pointer-events: none;
-  z-index: 2;
-}
-
 .site-header__inner {
   max-width: 720px;
   margin: 0 auto;
@@ -68,7 +51,7 @@
   color: var(--text);
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
 }
-[data-theme="light"] .brand { text-shadow: 0 1px 6px rgba(255,255,255,0.6); }
+[data-theme="light"] .brand { text-shadow: 0 1px 6px rgba(255, 255, 255, 0.6); }
 
 .brand__mark {
   color: var(--neon);
@@ -82,7 +65,7 @@
   font-weight: 400;
 }
 
-/* ---- Nav pill — super transparent, blur carries it ---- */
+/* ---- Nav pill ---- */
 .nav-tabs {
   position: relative;
   display: flex;
@@ -131,9 +114,7 @@
   transition: all 0.2s ease;
   white-space: nowrap;
 }
-
 .nav-tabs a:hover { color: var(--text); }
-
 .nav-tabs a.active {
   background: var(--neon);
   color: #06110E;
@@ -196,7 +177,7 @@
 
 /* ---- Mobile ---- */
 @media (max-width: 560px) {
-  .container { padding-inline: 8px; }
+  .container { padding-inline: 8px; padding-bottom: 96px; }
   .site-header__inner { padding-inline: 10px; }
 }
 
@@ -229,23 +210,6 @@
     isolation: isolate;
   }
 
-  .mobile-tabbar::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--glass-specular) 20%,
-      var(--glass-specular) 80%,
-      transparent 100%
-    );
-    opacity: 0.6;
-    pointer-events: none;
-    z-index: 2;
-  }
-
   .mobile-tabbar a {
     position: relative;
     z-index: 1;
@@ -260,6 +224,23 @@
     transition: color 0.2s ease;
   }
   .mobile-tabbar a.active { color: var(--neon); }
+}
 
-  .container { padding-bottom: 96px; }
+/* Top-edge specular line — shared by header and mobile tab bar. */
+.site-header::before,
+.mobile-tabbar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--glass-specular) 18%,
+    var(--glass-specular) 82%,
+    transparent 100%
+  );
+  opacity: 0.65;
+  pointer-events: none;
+  z-index: 2;
 }
