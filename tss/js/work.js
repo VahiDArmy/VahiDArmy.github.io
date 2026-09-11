@@ -56,7 +56,19 @@
       return div.innerHTML.replace(/\n/g, '<br>');
     }
     const raw = marked.parse(md);
-    return DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+    const clean = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+
+    // هر جدول را در یک wrapper قابل‌اسکرول قرار بده (اسلاید افقی)
+    const tmp = document.createElement('div');
+    tmp.innerHTML = clean;
+    tmp.querySelectorAll('table').forEach((table) => {
+      if (table.parentElement?.classList.contains('table-scroll')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+    return tmp.innerHTML;
   }
 
   function parseTags(str) {
