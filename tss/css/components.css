@@ -1268,3 +1268,114 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .ai-review-loading {
   padding: 10px 0 6px;
 }
+/* ============ Markdown در بررسی هوشمند ============ */
+.ai-review-text {
+  line-height: 1.9;
+  font-size: 0.95rem;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+.ai-review-text > *:first-child { margin-top: 0; }
+.ai-review-text > *:last-child  { margin-bottom: 0; }
+
+.ai-review-text h1,
+.ai-review-text h2,
+.ai-review-text h3,
+.ai-review-text h4,
+.ai-review-text h5 {
+  margin: 1.1em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text);
+}
+.ai-review-text h1 { font-size: 1.2rem; }
+.ai-review-text h2 { font-size: 1.12rem; }
+.ai-review-text h3 { font-size: 1.05rem; }
+.ai-review-text h4 { font-size: 1rem; }
+
+.ai-review-text p { margin: 0.6em 0; }
+
+.ai-review-text strong { font-weight: 700; color: var(--text); }
+.ai-review-text em     { font-style: italic; }
+.ai-review-text del    { opacity: 0.6; }
+
+.ai-review-text ul,
+.ai-review-text ol {
+  margin: 0.6em 0;
+  padding-inline-start: 1.6em;
+}
+.ai-review-text li { margin: 0.25em 0; }
+.ai-review-text li > p { margin: 0.2em 0; }
+
+.ai-review-text blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-inline-start: 3px solid var(--violet, #8b5cf6);
+  background: var(--surface-2, rgba(255,255,255,0.04));
+  border-radius: 8px;
+  color: var(--text-dim);
+}
+.ai-review-text blockquote p { margin: 0.3em 0; }
+
+.ai-review-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  border-radius: 4px;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+.ai-review-text pre {
+  margin: 0.8em 0;
+  padding: 12px 14px;
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  border-radius: 10px;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+}
+.ai-review-text pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 0.85rem;
+}
+
+.ai-review-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.88rem;
+  display: block;
+  overflow-x: auto;
+}
+.ai-review-text th,
+.ai-review-text td {
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  padding: 8px 10px;
+  text-align: right;
+  vertical-align: top;
+}
+.ai-review-text th {
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  font-weight: 700;
+}
+
+.ai-review-text hr {
+  border: none;
+  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  margin: 1.2em 0;
+}
+
+.ai-review-text a {
+  color: var(--violet, #8b5cf6);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ai-review-text a:hover { opacity: 0.8; }
+
+.ai-review-text img {
+  max-width: 100%;
+  border-radius: 8px;
+}
