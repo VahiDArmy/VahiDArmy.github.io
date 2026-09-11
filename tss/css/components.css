@@ -2,7 +2,9 @@
    Components — Telegram Liquid Glass (high transparency)
    ========================================================================== */
 
-/* ---- Buttons ---- */
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -67,8 +69,15 @@
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- Card (super-transparent shell) ---- */
-.card {
+/* ==========================================================================
+   Glass shell — shared pattern for card-like surfaces
+   ========================================================================== */
+.card,
+.progress-hero,
+.ayah-frame__inner,
+.tafsir-card,
+.modal-card,
+.toast__inner {
   position: relative;
   background: linear-gradient(
     165deg,
@@ -79,15 +88,27 @@
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 20px;
   box-shadow:
     var(--shadow-glass),
     inset 0 1.5px 0 0 var(--glass-highlight),
     inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
-.card::before {
+
+/* Stronger blur for floating overlays. */
+.modal-card,
+.toast__inner {
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+}
+
+/* Specular top-edge highlight — shared by every glass surface. */
+.card::before,
+.progress-hero::before,
+.ayah-frame__inner::before,
+.tafsir-card::before,
+.modal-card::before,
+.comment::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -107,56 +128,56 @@
   pointer-events: none;
   z-index: 1;
 }
+.comment::before { opacity: 0.4; }
 
-/* ---- Progress hero ---- */
+/* ---- Shape overrides ---- */
+.card {
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.tafsir-card {
+  margin-top: 14px;
+  border-radius: var(--radius-md);
+  padding: 18px;
+}
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow:
+    var(--shadow-glass-lg),
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+.toast__inner {
+  border-color: var(--neon);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  box-shadow:
+    0 0 30px var(--neon-glow),
+    inset 0 1.5px 0 0 var(--glass-highlight);
+  opacity: 0;
+  translate: 0 10px;
+  transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   Progress hero
+   ========================================================================== */
 .progress-hero {
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
-}
-.progress-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 1;
 }
 
-.progress-hero__text {
-  flex: 1;
-  min-width: 0;
-}
+.progress-hero__text { flex: 1; min-width: 0; }
 
 .progress-hero__title-row {
   display: flex;
@@ -214,11 +235,12 @@
   margin: 4px 0 0;
 }
 
-/* دکمه نشانک */
-.bookmark-btn {
+/* ==========================================================================
+   Bookmark & go-to buttons (shared base + accent)
+   ========================================================================== */
+.bookmark-btn,
+.go-to-btn {
   position: relative;
-  border-color: var(--neon-dim);
-  color: var(--neon);
   background: var(--glass-bg-strong);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -227,12 +249,18 @@
     0 2px 10px rgba(0, 0, 0, 0.15),
     inset 0 1.5px 0 0 var(--glass-highlight);
 }
-
-.bookmark-btn svg {
+.bookmark-btn svg,
+.go-to-btn svg {
   transition: all 0.3s ease;
-  filter: drop-shadow(0 0 2px var(--neon-glow));
 }
+.bookmark-btn:active,
+.go-to-btn:active { transform: scale(0.92); }
 
+.bookmark-btn {
+  border-color: var(--neon-dim);
+  color: var(--neon);
+}
+.bookmark-btn svg { filter: drop-shadow(0 0 2px var(--neon-glow)); }
 .bookmark-btn:hover {
   border-color: var(--neon);
   box-shadow:
@@ -241,33 +269,15 @@
     inset 0 1.5px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
-
 .bookmark-btn:hover svg {
   filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow));
 }
 
-.bookmark-btn:active {
-  transform: scale(0.92);
-}
-
-/* دکمه رفتن به آیه جاری */
 .go-to-btn {
   border-color: var(--violet);
   color: var(--violet);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: all 0.3s ease;
-  box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.15),
-    inset 0 1.5px 0 0 var(--glass-highlight);
 }
-
-.go-to-btn svg {
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 0 2px var(--violet-glow));
-}
-
+.go-to-btn svg { filter: drop-shadow(0 0 2px var(--violet-glow)); }
 .go-to-btn:hover {
   border-color: var(--violet);
   box-shadow:
@@ -276,16 +286,13 @@
     inset 0 1.5px 0 0 var(--glass-highlight);
   transform: scale(1.05);
 }
-
 .go-to-btn:hover svg {
   filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow));
 }
 
-.go-to-btn:active {
-  transform: scale(0.92);
-}
-
-/* ---- Progress ring ---- */
+/* ==========================================================================
+   Progress ring
+   ========================================================================== */
 .progress-ring {
   position: relative;
   width: 62px;
@@ -293,10 +300,7 @@
   flex-shrink: 0;
 }
 .progress-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-.progress-ring circle {
-  fill: none;
-  stroke-width: 5;
-}
+.progress-ring circle { fill: none; stroke-width: 5; }
 .progress-ring .ring-bg { stroke: var(--border); }
 .progress-ring .ring-fg {
   stroke: var(--neon);
@@ -315,37 +319,9 @@
   color: var(--neon);
 }
 
-/* ---- Mobile adjustments ---- */
-@media (max-width: 560px) {
-  .container { padding-left: 10px; padding-right: 10px; }
-  .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 18px 12px 14px; }
-  .progress-hero {
-    padding: 12px 14px;
-    gap: 10px;
-  }
-  .progress-hero__title-row {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .progress-hero__actions .btn {
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn,
-  .progress-hero__actions .go-to-btn {
-    width: 24px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn svg,
-  .progress-hero__actions .go-to-btn svg {
-    width: 12px;
-    height: 12px;
-  }
-}
-
-/* ---- Sticky ayah ---- */
+/* ==========================================================================
+   Sticky ayah + edit banner
+   ========================================================================== */
 .sticky-ayah {
   position: sticky;
   top: 66px;
@@ -359,7 +335,6 @@
   .sticky-ayah { top: 60px; }
 }
 
-/* ---- Edit mode banner ---- */
 .edit-banner {
   display: flex;
   align-items: center;
@@ -380,9 +355,9 @@
   font-size: 0.78rem;
 }
 
-/* ============================================================
-   Ayah Frame
-   ============================================================ */
+/* ==========================================================================
+   Ayah frame
+   ========================================================================== */
 .ayah-frame {
   position: relative;
   border-radius: var(--radius-lg);
@@ -410,17 +385,15 @@
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  mask-composite: exclude;
+          mask-composite: exclude;
   filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 20px var(--neon-glow));
   opacity: 0;
   transition: opacity 0.6s ease, --angle 0.15s linear;
   pointer-events: none;
 }
-
-.ayah-frame.is-comet-active::before {
-  opacity: 1;
-}
+.ayah-frame.is-comet-active::before { opacity: 1; }
 
 @property --angle {
   syntax: '<angle>';
@@ -432,45 +405,9 @@
   .ayah-frame::before { display: none; }
 }
 
-/* Container — super transparent shell */
 .ayah-frame__inner {
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
-}
-.ayah-frame__inner::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 1;
 }
 
 .ayah-frame__ref {
@@ -486,6 +423,7 @@
   color: var(--text-faint);
 }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
+
 .copy-ayah-btn {
   display: inline-flex;
   align-items: center;
@@ -503,9 +441,24 @@
 }
 .copy-ayah-btn:hover { color: var(--neon); }
 
-/* ------------------------------------------------------------------
-   متن عربی قرآن — READABLE SURFACE (opaque bg)
-   ------------------------------------------------------------------ */
+/* ==========================================================================
+   Readable text surfaces (opaque, for legibility)
+   ========================================================================== */
+.ayah-frame__arabic,
+.tafsir-card__body,
+.translation-content p,
+.ravan-tafsir-content,
+.ai-review-text {
+  background: var(--read-bg);
+  border: 1px solid var(--read-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: background 0.2s ease;
+}
+.ayah-frame__arabic:hover,
+.tafsir-card__body:hover { background: var(--read-bg-strong); }
+
 .ayah-frame__arabic {
   font-family: var(--font-quran);
   font-size: 1.7rem;
@@ -516,21 +469,8 @@
   position: relative;
   z-index: 2;
   padding: 8px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  transition: background 0.2s ease;
 }
 
-.ayah-frame__arabic:hover {
-  background: var(--read-bg-strong);
-}
-
-/* ------------------------------------------------------------------
-   متن تفسیر — READABLE SURFACE
-   ------------------------------------------------------------------ */
 .tafsir-card__body {
   font-size: 0.95rem;
   line-height: 2;
@@ -540,35 +480,19 @@
   z-index: 2;
   padding: 12px 14px;
   margin: 0;
-  border-radius: var(--radius-sm);
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  transition: background 0.2s ease;
 }
 
-.tafsir-card__body:hover {
-  background: var(--read-bg-strong);
-}
-
-/* ------------------------------------------------------------------
-   متن ترجمه — READABLE SURFACE
-   ------------------------------------------------------------------ */
 .translation-content p {
   margin: 4px 0 10px;
   padding: 12px 14px;
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-size: 0.92rem;
   line-height: 1.9;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 
-/* ---- Ayah-to-ayah reference link ---- */
+/* ==========================================================================
+   Ayah-to-ayah reference link
+   ========================================================================== */
 .ayah-link {
   color: var(--violet);
   font-weight: 700;
@@ -578,10 +502,15 @@
 }
 .ayah-link:hover {
   color: #C9BFFF;
-  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
+  text-shadow:
+    0 0 8px var(--violet-glow),
+    0 0 22px var(--violet-glow),
+    0 0 34px var(--violet-glow);
 }
 
-/* ---- Mark light ---- */
+/* ==========================================================================
+   Mark light
+   ========================================================================== */
 .mark-toggle {
   display: inline-block;
   width: 9px;
@@ -606,7 +535,9 @@ span.mark-toggle { cursor: default; }
 }
 button.mark-toggle:hover { border-color: #FFB020; }
 
-/* ---- Translation collapse bar ---- */
+/* ==========================================================================
+   Translation collapse bar
+   ========================================================================== */
 .translation-bar {
   margin-top: 14px;
   border-top: 1px dashed var(--border);
@@ -638,15 +569,74 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .translation-content.is-open { grid-template-rows: 1fr; }
 .translation-content > div { overflow: hidden; }
 
-/* ---- Selects (readable — they hold text) ---- */
+/* ==========================================================================
+   Form controls — unified readable inputs
+   ========================================================================== */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.field textarea,
+.field input[type="text"],
+.name-row input,
+.comment-form input[type="text"],
+.ravan-tafsir-manual-input input {
+  width: 100%;
+  background: var(--read-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  transition: border-color 0.2s ease, min-height 0.25s ease,
+              box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.15),
+    inset 0 1.5px 0 0 var(--glass-highlight);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.field textarea,
+.field input[type="text"] {
+  padding: 12px 14px;
+  font-size: 0.92rem;
+  line-height: 1.8;
+}
+.name-row input,
+.comment-form input[type="text"],
+.ravan-tafsir-manual-input input {
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.field textarea:focus { min-height: 280px; }
+
+.field textarea:focus,
+.field input[type="text"]:focus,
+.name-row input:focus,
+.comment-form input[type="text"]:focus,
+.ravan-tafsir-manual-input input:focus {
+  border-color: var(--neon);
+  outline: none;
+  background: var(--read-bg-strong);
+  box-shadow:
+    0 0 20px var(--neon-glow),
+    inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+.name-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.name-row input { flex: 1; }
+
+/* ---- Selects ---- */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 10px;
 }
-.select-wrap {
-  position: relative;
-}
+.select-wrap { position: relative; }
 .select-wrap select {
   width: 100%;
   appearance: none;
@@ -666,17 +656,12 @@ button.mark-toggle:hover { border-color: #FFB020; }
     0 2px 12px rgba(0, 0, 0, 0.15),
     inset 0 1.5px 0 0 var(--glass-highlight);
 }
-.select-wrap select:hover {
-  border-color: var(--neon);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
+.select-wrap select:hover,
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
   box-shadow:
-    0 0 24px var(--neon-glow),
+    0 0 20px var(--neon-glow),
     inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap::after {
@@ -693,9 +678,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
   pointer-events: none;
   transition: border-color 0.2s ease;
 }
-.select-wrap:hover::after {
-  border-color: var(--neon);
-}
+.select-wrap:hover::after { border-color: var(--neon); }
 
 .select-wrap select option {
   background: var(--bg-solid);
@@ -705,7 +688,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
 }
 
-/* ---- Nav buttons ---- */
+/* ==========================================================================
+   Ayah navigation
+   ========================================================================== */
 .ayah-nav {
   display: flex;
   align-items: center;
@@ -714,48 +699,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .ayah-nav .btn { flex: 1; }
 
-/* ---- Tafsir card — transparent shell, inner body is opaque ---- */
-.tafsir-card {
-  margin-top: 14px;
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
-}
-.tafsir-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 1;
-}
-
+/* ==========================================================================
+   Tafsir card — shell is glass; body is opaque
+   ========================================================================== */
 .tafsir-card__meta {
   display: flex;
   align-items: center;
@@ -778,10 +724,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 .tafsir-card__more {
   background: none;
@@ -803,7 +745,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
   z-index: 2;
 }
 
-/* ---- Tags ---- */
+/* ==========================================================================
+   Tags
+   ========================================================================== */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
@@ -821,8 +765,12 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-weight: 600;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
-a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glow); }
+a.tag-pill:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 16px var(--neon-glow);
+}
 .tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
+
 .tag-cloud {
   display: flex;
   flex-wrap: wrap;
@@ -837,73 +785,15 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .tag-mention:hover { filter: brightness(1.3); }
 
-/* ---- Textarea / form — READABLE ---- */
-.field { margin-bottom: 14px; }
-.field label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-bottom: 6px;
+/* ==========================================================================
+   Comments — opaque read surface
+   ========================================================================== */
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
 }
-.field textarea, .field input[type="text"] {
-  width: 100%;
-  background: var(--read-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid var(--glass-border);
-  color: var(--text);
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 0.92rem;
-  line-height: 1.8;
-  resize: vertical;
-  transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
-.field textarea { min-height: 110px; }
-.field textarea:focus { min-height: 280px; }
-.field textarea:focus, .field input[type="text"]:focus {
-  border-color: var(--neon);
-  outline: none;
-  background: var(--read-bg-strong);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
-
-.name-row { display: flex; gap: 8px; margin-bottom: 10px; }
-.name-row input { flex: 1; }
-.name-row input,
-.comment-form input[type="text"] {
-  background: var(--read-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid var(--glass-border);
-  color: var(--text);
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
-.name-row input:focus,
-.comment-form input[type="text"]:focus {
-  border-color: var(--neon);
-  outline: none;
-  background: var(--read-bg-strong);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
-
-/* ---- Comments — READABLE surface (they are text) ---- */
-.comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
   position: relative;
   background: var(--read-bg);
@@ -916,26 +806,6 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
     0 4px 18px rgba(0, 0, 0, 0.18),
     inset 0 1.5px 0 0 var(--glass-highlight);
   isolation: isolate;
-}
-.comment::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.4;
-  pointer-events: none;
-  z-index: 1;
 }
 .comment__head {
   display: flex;
@@ -952,7 +822,9 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   white-space: pre-wrap;
 }
 
-/* ---- Empty state ---- */
+/* ==========================================================================
+   Empty state / skeleton / toast / count-up
+   ========================================================================== */
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -961,22 +833,25 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .empty-state__icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.5; }
 .empty-state p { margin: 0 0 16px; font-size: 0.88rem; }
 
-/* ---- Skeleton loader ---- */
 .skeleton {
-  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--border) 37%,
+    var(--surface-2) 63%
+  );
   background-size: 400% 100%;
   animation: shimmer 1.4s ease infinite;
   border-radius: var(--radius-sm);
 }
 @keyframes shimmer {
-  0% { background-position: 100% 50%; }
+  0%   { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
 }
 
-/* ---- Toast ---- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -986,35 +861,13 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   z-index: 100;
   pointer-events: none;
 }
-.toast__inner {
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur-strong);
-  -webkit-backdrop-filter: var(--glass-blur-strong);
-  border: 1px solid var(--neon);
-  color: var(--text);
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  box-shadow:
-    0 0 30px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-  opacity: 0;
-  translate: 0 10px;
-  transition: all 0.3s ease;
-  isolation: isolate;
-}
 .toast.show .toast__inner { opacity: 1; translate: 0; }
 
-/* ---- Count-up number ---- */
 .count-up { font-variant-numeric: tabular-nums; }
 
-/* ---- Modal overlay ---- */
+/* ==========================================================================
+   Modal overlay
+   ========================================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -1028,49 +881,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   padding: 16px;
 }
 .modal-overlay[hidden] { display: none; }
-.modal-card {
-  width: 100%;
-  max-width: 420px;
-  max-height: 85vh;
-  overflow-y: auto;
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur-strong);
-  -webkit-backdrop-filter: var(--glass-blur-strong);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  box-shadow:
-    var(--shadow-glass-lg),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
-}
-.modal-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.8;
-  pointer-events: none;
-  z-index: 1;
-}
+
 .modal-card__head {
   display: flex;
   align-items: center;
@@ -1079,7 +890,9 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   margin-bottom: 14px;
 }
 
-/* ---- Search hit highlight ---- */
+/* ==========================================================================
+   Search hit highlight
+   ========================================================================== */
 .search-hit {
   background: var(--neon-glow);
   color: var(--neon);
@@ -1088,52 +901,30 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border-radius: 3px;
 }
 
-/* ============================================================
+/* ==========================================================================
    تفسیر روان جاوید
-   ============================================================ */
-
+   ========================================================================== */
 .ravan-tafsir-container {
   position: relative;
   min-height: 80px;
 }
+.ravan-tafsir-empty { text-align: center; padding: 16px 0; }
+.ravan-tafsir-loading { padding: 4px 0; }
 
-.ravan-tafsir-empty {
-  text-align: center;
-  padding: 16px 0;
-}
-
-.ravan-tafsir-loading {
-  padding: 4px 0;
-}
-
-/* READABLE — this is text */
 .ravan-tafsir-content {
   font-size: 0.95rem;
   line-height: 2.2;
   color: var(--text);
   white-space: pre-wrap;
   padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
-
-.ravan-tafsir-content p {
-  margin: 0 0 10px 0;
-}
-
+.ravan-tafsir-content p { margin: 0 0 10px 0; }
 .ravan-tafsir-content ul,
 .ravan-tafsir-content ol {
   margin: 8px 0 12px 20px;
   padding-right: 20px;
 }
-
-.ravan-tafsir-content li {
-  margin-bottom: 4px;
-}
-
+.ravan-tafsir-content li { margin-bottom: 4px; }
 .ravan-tafsir-content blockquote {
   border-right: 3px solid var(--violet);
   padding-right: 14px;
@@ -1147,10 +938,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-size: 0.85rem;
   padding: 8px 0;
 }
-
-.ravan-tafsir-error p {
-  margin: 4px 0;
-}
+.ravan-tafsir-error p { margin: 4px 0; }
 
 .ravan-tafsir-manual-input {
   display: flex;
@@ -1158,65 +946,20 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   align-items: center;
   flex-wrap: wrap;
 }
-
 .ravan-tafsir-manual-input input {
   flex: 1;
   min-width: 200px;
-  background: var(--read-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
-  color: var(--text);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.12),
-    inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
-.ravan-tafsir-manual-input input:focus {
-  border-color: var(--neon);
-  outline: none;
-  background: var(--read-bg-strong);
-  box-shadow:
-    0 0 16px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
+.hidden { display: none !important; }
 
-.hidden {
-  display: none !important;
-}
+#ravanTafsirLoadBtn { margin-inline-start: auto; }
+#ravanTafsirLoadBtn:hover { box-shadow: 0 0 20px var(--neon-glow); }
+#ravanTafsirDeleteBtn:hover { box-shadow: 0 0 20px var(--danger); }
 
-#ravanTafsirLoadBtn {
-  margin-inline-start: auto;
-}
-
-#ravanTafsirLoadBtn:hover {
-  box-shadow: 0 0 20px var(--neon-glow);
-}
-
-#ravanTafsirDeleteBtn:hover {
-  box-shadow: 0 0 20px var(--danger);
-}
-
-/* ---- Mobile adjustments for ravan tafsir ---- */
-@media (max-width: 560px) {
-  .ravan-tafsir-content {
-    font-size: 0.88rem;
-    line-height: 2;
-  }
-  .ravan-tafsir-manual-input {
-    flex-direction: column;
-  }
-  .ravan-tafsir-manual-input input {
-    min-width: unset;
-    width: 100%;
-  }
-}
-/* ---- AI Review button & modal ---- */
+/* ==========================================================================
+   AI Review button + modal
+   ========================================================================== */
 .ai-review-btn {
   width: 34px;
   height: 34px;
@@ -1235,27 +978,49 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   box-shadow: 0 0 16px var(--violet-glow);
   transform: scale(1.06);
 }
-.ai-review-btn svg {
-  width: 16px;
-  height: 16px;
-}
+.ai-review-btn svg { width: 16px; height: 16px; }
 
+/* Final intent, no !important needed (later rule wins on equal specificity). */
 .ai-review-modal {
-  max-width: 520px;
-  width: 92%;
-  max-height: 80vh;
+  width: min(96vw, 1100px);
+  max-width: 1100px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px;
+  overflow: hidden;
+}
+.ai-review-modal .modal-card__head {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+}
+#aiReviewContent,
+#aiReviewEdit {
+  flex: 1 1 auto;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-inline-end: 6px;
+}
+.ai-review-modal .ai-review-actions {
+  flex-shrink: 0;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  gap: 8px;
 }
 
-.ai-review-text {
-  font-size: 0.95rem;
-  line-height: 2;
-  white-space: pre-wrap;
-  padding: 14px;
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 16px;
+@media (max-width: 640px) {
+  .ai-review-modal {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 14px;
+  }
 }
 
 .ai-review-actions {
@@ -1264,16 +1029,19 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   gap: 8px;
   margin-top: 4px;
 }
+.ai-review-loading { padding: 10px 0 6px; }
 
-.ai-review-loading {
-  padding: 10px 0 6px;
-}
-/* ============ Markdown در بررسی هوشمند ============ */
+/* ------------------------------------------------------------------
+   Markdown inside AI review — merged from the two duplicate blocks.
+   ------------------------------------------------------------------ */
 .ai-review-text {
-  line-height: 1.9;
   font-size: 0.95rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: anywhere;
+  padding: 14px;
+  margin-bottom: 16px;
 }
 .ai-review-text > *:first-child { margin-top: 0; }
 .ai-review-text > *:last-child  { margin-bottom: 0; }
@@ -1310,8 +1078,8 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .ai-review-text blockquote {
   margin: 0.8em 0;
   padding: 0.5em 1em;
-  border-inline-start: 3px solid var(--violet, #8b5cf6);
-  background: var(--surface-2, rgba(255,255,255,0.04));
+  border-inline-start: 3px solid var(--violet);
+  background: var(--surface-2);
   border-radius: 8px;
   color: var(--text-dim);
 }
@@ -1321,7 +1089,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.85em;
   padding: 0.15em 0.4em;
-  background: var(--surface-2, rgba(255,255,255,0.06));
+  background: var(--surface-2);
   border-radius: 4px;
   direction: ltr;
   unicode-bidi: embed;
@@ -1330,7 +1098,7 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .ai-review-text pre {
   margin: 0.8em 0;
   padding: 12px 14px;
-  background: var(--surface-2, rgba(255,255,255,0.06));
+  background: var(--surface-2);
   border-radius: 10px;
   overflow-x: auto;
   direction: ltr;
@@ -1352,24 +1120,24 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .ai-review-text th,
 .ai-review-text td {
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border: 1px solid var(--glass-border);
   padding: 8px 10px;
   text-align: right;
   vertical-align: top;
 }
 .ai-review-text th {
-  background: var(--surface-2, rgba(255,255,255,0.06));
+  background: var(--surface-2);
   font-weight: 700;
 }
 
 .ai-review-text hr {
   border: none;
-  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-top: 1px solid var(--glass-border);
   margin: 1.2em 0;
 }
 
 .ai-review-text a {
-  color: var(--violet, #8b5cf6);
+  color: var(--violet);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -1379,58 +1147,10 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   max-width: 100%;
   border-radius: 8px;
 }
-/* ============ بزرگ کردن پاپ‌آپ بررسی هوشمند ============ */
-.ai-review-modal {
-  width: min(96vw, 1100px) !important;
-  max-width: 1100px !important;
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 22px;
-  overflow: hidden; /* خود بدنه اسکرول می‌کنه */
-}
 
-/* هدر ثابت بمونه */
-.ai-review-modal .modal-card__head {
-  flex-shrink: 0;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.1));
-}
-
-/* بدنه اصلی اسکرول عمودی داشته باشه */
-#aiReviewContent,
-#aiReviewEdit {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  padding-inline-end: 6px; /* فضای اسکرول‌بار */
-}
-
-/* دکمه‌ها همیشه پایین ثابت */
-.ai-review-modal .ai-review-actions {
-  flex-shrink: 0;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--glass-border, rgba(255,255,255,0.1));
-  gap: 8px;
-}
-
-/* موبایل: تقریباً تمام صفحه */
-@media (max-width: 640px) {
-  .ai-review-modal {
-    width: 100vw !important;
-    max-width: 100vw !important;
-    height: 100dvh;
-    max-height: 100dvh;
-    border-radius: 0;
-    padding: 14px;
-  }
-}
-
-/* ============ جدول‌ها: اسلاید افقی ============ */
-/* هر جدول داخل یک wrapper قابل اسکرول قرار می‌گیرد (با JS) */
+/* ==========================================================================
+   Tables: horizontal scroll wrapper
+   ========================================================================== */
 .ai-review-text .table-scroll {
   width: 100%;
   overflow-x: auto;
@@ -1438,49 +1158,43 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   margin: 1em 0;
   -webkit-overflow-scrolling: touch;
   border-radius: 10px;
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border: 1px solid var(--glass-border);
 }
-
 .ai-review-text .table-scroll table {
   margin: 0;
   border: none;
   width: auto;
   min-width: 100%;
-  display: table; /* override display:block from قبل */
+  display: table;
 }
-
 .ai-review-text .table-scroll th,
 .ai-review-text .table-scroll td {
   white-space: nowrap;
   border-top: none;
-  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-bottom: 1px solid var(--glass-border);
   border-inline-start: none;
-  border-inline-end: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-inline-end: 1px solid var(--glass-border);
 }
+.ai-review-text .table-scroll tr:last-child td { border-bottom: none; }
 
-.ai-review-text .table-scroll tr:last-child td {
-  border-bottom: none;
-}
-
-/* راهنمای بصری اسلاید (نوار نازک پایین جدول) */
-.ai-review-text .table-scroll::-webkit-scrollbar {
-  height: 8px;
-}
-.ai-review-text .table-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
+.ai-review-text .table-scroll::-webkit-scrollbar { height: 8px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-track { background: transparent; }
 .ai-review-text .table-scroll::-webkit-scrollbar-thumb {
-  background: var(--glass-border, rgba(255,255,255,0.18));
+  background: var(--glass-border);
   border-radius: 4px;
 }
 .ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--violet, #8b5cf6);
+  background: var(--violet);
 }
+
+/* ==========================================================================
+   AI review: model select + badge
+   ========================================================================== */
 .ai-fn-select {
   margin-inline-start: auto;
   margin-inline-end: 8px;
-  background: var(--surface-2, rgba(255,255,255,0.06));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
   border-radius: 8px;
   padding: 4px 10px;
   color: var(--text);
@@ -1490,8 +1204,9 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .ai-fn-select:focus {
   outline: none;
-  border-color: var(--violet, #8b5cf6);
+  border-color: var(--violet);
 }
+
 .ai-review-model-badge {
   font-size: 0.72rem;
   color: var(--text-faint);
@@ -1499,6 +1214,37 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   direction: ltr;
   text-align: left;
-  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  border-bottom: 1px solid var(--glass-border);
   margin-bottom: 10px;
+}
+
+/* ==========================================================================
+   Mobile adjustments
+   ========================================================================== */
+@media (max-width: 560px) {
+  .container { padding-left: 10px; padding-right: 10px; }
+  .card, .tafsir-card { padding: 14px; }
+  .ayah-frame__inner { padding: 18px 12px 14px; }
+
+  .progress-hero { padding: 12px 14px; gap: 10px; }
+  .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
+  .progress-hero__actions .btn {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    height: 24px;
+  }
+  .progress-hero__actions .bookmark-btn,
+  .progress-hero__actions .go-to-btn {
+    width: 24px;
+    height: 24px;
+  }
+  .progress-hero__actions .bookmark-btn svg,
+  .progress-hero__actions .go-to-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .ravan-tafsir-content { font-size: 0.88rem; line-height: 2; }
+  .ravan-tafsir-manual-input { flex-direction: column; }
+  .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
 }
