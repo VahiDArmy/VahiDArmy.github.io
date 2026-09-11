@@ -1476,3 +1476,19 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover {
   background: var(--violet, #8b5cf6);
 }
+.ai-fn-select {
+  margin-inline-start: auto;
+  margin-inline-end: 8px;
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.ai-fn-select:focus {
+  outline: none;
+  border-color: var(--violet, #8b5cf6);
+}
