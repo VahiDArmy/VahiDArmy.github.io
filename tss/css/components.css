@@ -1492,3 +1492,13 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   outline: none;
   border-color: var(--violet, #8b5cf6);
 }
+.ai-review-model-badge {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  padding: 4px 0 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  direction: ltr;
+  text-align: left;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  margin-bottom: 10px;
+}
