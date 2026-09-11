@@ -36,22 +36,24 @@
 
   /* ------------------------------------------------------------------
      Glass — SUPER transparent (dark)
-     The blur does the heavy lifting; the color is nearly a whisper.
+     Blur kept as original. Specular + depth enhanced.
      ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.020);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.040);
-  --glass-bg-top:       rgba(255, 255, 255, 0.050);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.010);
+  --glass-bg:           rgba(255, 255, 255, 0.025);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.045);
+  --glass-bg-top:       rgba(255, 255, 255, 0.055);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.015);
 
-  --glass-border:       rgba(255, 255, 255, 0.14);
-  --glass-highlight:    rgba(255, 255, 255, 0.30);
-  --glass-specular:     rgba(255, 255, 255, 0.60);
+  --glass-border:       rgba(255, 255, 255, 0.16);
+  --glass-highlight:    rgba(255, 255, 255, 0.42);
+  --glass-specular:     rgba(255, 255, 255, 0.78);
 
   --glass-blur:         blur(5px) saturate(80%);
   --glass-blur-strong:  blur(8px) saturate(90%);
 
-  --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.5);
+  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
+                        0 2px 8px rgba(0, 0, 0, 0.22);
+  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.48),
+                        0 4px 14px rgba(0, 0, 0, 0.28);
 
   --shadow-card:        var(--shadow-glass);
 
@@ -96,20 +98,22 @@
   --success: #0EA894;
 
   /* Glass — SUPER transparent (light) */
-  --glass-bg:           rgba(255, 255, 255, 0.16);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.26);
-  --glass-bg-top:       rgba(255, 255, 255, 0.30);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.12);
+  --glass-bg:           rgba(255, 255, 255, 0.18);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.28);
+  --glass-bg-top:       rgba(255, 255, 255, 0.32);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.14);
 
-  --glass-border:       rgba(255, 255, 255, 0.75);
+  --glass-border:       rgba(255, 255, 255, 0.78);
   --glass-highlight:    rgba(255, 255, 255, 0.95);
   --glass-specular:     rgba(255, 255, 255, 1);
 
   --glass-blur:         blur(5px) saturate(80%);
   --glass-blur-strong:  blur(8px) saturate(90%);
 
-  --shadow-glass:       0 8px 32px rgba(0, 0, 0, 0.08);
-  --shadow-glass-lg:    0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.09),
+                        0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.13),
+                        0 4px 14px rgba(0, 0, 0, 0.07);
 
   --shadow-card:        var(--shadow-glass);
 
@@ -165,15 +169,28 @@ button { font-family: inherit; }
    ========================================================================== */
 .glass {
   position: relative;
-  background: var(--glass-bg);
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-top) 0%,
+    var(--glass-bg) 45%,
+    var(--glass-bg-bottom) 100%
+  );
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
   box-shadow:
     var(--shadow-glass),
-    inset 0 1px 0 0 var(--glass-highlight);
+    inset 0 1.5px 0 0 var(--glass-highlight),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
 }
-.glass--strong { background: var(--glass-bg-strong); }
+
+.glass--strong {
+  background: linear-gradient(
+    165deg,
+    var(--glass-bg-strong) 0%,
+    var(--glass-bg) 100%
+  );
+}
 
 .glass--specular::before {
   content: '';
@@ -182,10 +199,10 @@ button { font-family: inherit; }
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(
-    180deg,
+    175deg,
     var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.08) 30%,
-    transparent 55%
+    rgba(255, 255, 255, 0.22) 22%,
+    transparent 52%
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -193,6 +210,7 @@ button { font-family: inherit; }
           mask-composite: exclude;
   pointer-events: none;
   z-index: 1;
+  opacity: 0.9;
 }
 
 /* Readable-surface utility (for text blocks on top of glass) */
@@ -202,20 +220,6 @@ button { font-family: inherit; }
   border-radius: var(--radius-sm);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-}
-
-/* ---- Canvas for stars ---- */
-#stars-canvas {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 0 !important;
-  pointer-events: none !important;
-  display: block !important;
-  margin: 0 !important;
-  padding: 0 !important;
 }
 
 .site-header,
