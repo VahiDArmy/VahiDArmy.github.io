@@ -40,6 +40,25 @@
   const aiReviewCancelEditBtn = document.getElementById('aiReviewCancelEditBtn');
   const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
 
+  // -------------------------------------------------------------
+  // رندر Markdown برای پاسخ بررسی هوشمند
+  // -------------------------------------------------------------
+  if (window.marked) {
+    marked.setOptions({ gfm: true, breaks: true });
+  }
+
+  function renderMarkdown(md) {
+    if (!md) return '';
+    if (!window.marked || !window.DOMPurify) {
+      // اگر کتابخانه‌ها بارگذاری نشدند، متن خام را نشان بده (escape شده)
+      const div = document.createElement('div');
+      div.textContent = md;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+    const raw = marked.parse(md);
+    return DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+  }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -319,7 +338,7 @@
       const existing = await Store.getAiReview(tafsir.id);
       if (existing && existing.content) {
         currentAiContent = existing.content;
-        aiReviewText.textContent = existing.content;
+        aiReviewText.innerHTML = renderMarkdown(existing.content);
         showAiState('content');
         return;
       }
@@ -338,7 +357,7 @@
 
       await Store.saveAiReview(tafsir.id, aiContent);
       currentAiContent = aiContent;
-      aiReviewText.textContent = aiContent;
+      aiReviewText.innerHTML = renderMarkdown(aiContent);
       showAiState('content');
     } catch (err) {
       console.error(err);
@@ -369,7 +388,7 @@
 
       await Store.saveAiReview(currentAiTafsirId, aiContent);
       currentAiContent = aiContent;
-      aiReviewText.textContent = aiContent;
+      aiReviewText.innerHTML = renderMarkdown(aiContent);
       showAiState('content');
       UI.toast('بررسی به‌روز شد');
     } catch (err) {
@@ -397,7 +416,7 @@
     try {
       await Store.saveAiReview(currentAiTafsirId, newContent);
       currentAiContent = newContent;
-      aiReviewText.textContent = newContent;
+      aiReviewText.innerHTML = renderMarkdown(newContent);
       showAiState('content');
       UI.toast('ذخیره شد');
     } catch (err) {
