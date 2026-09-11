@@ -214,6 +214,84 @@ const Store = (function () {
     return round + 1;
   }
 
+  // ---------- توابع مربوط به بررسی هوشمند ----------
+  async function getAiReview(tafsirId) {
+    const { data, error } = await sb
+      .from('ai_reviews')
+      .select('*')
+      .eq('tafsir_id', tafsirId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async function saveAiReview(tafsirId, content) {
+    const { data: { session } } = await sb.auth.getSession();
+    console.log('[saveAiReview] session:', session?.user?.id, 'expires_at:', session?.expires_at);
+
+    if (!session?.user?.id) {
+      throw new Error('برای ثبت بررسی هوشمند باید وارد حساب شوید');
+    }
+
+    const existing = await getAiReview(tafsirId);
+    if (existing) {
+      const { data, error } = await sb
+        .from('ai_reviews')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    const { data, error } = await sb
+      .from('ai_reviews')
+      .insert({
+        tafsir_id: tafsirId,
+        content,
+        user_id: session.user.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function deleteAiReview(tafsirId) {
+    const { error } = await sb.from('ai_reviews').delete().eq('tafsir_id', tafsirId);
+    if (error) throw error;
+  }
+
+async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
+  }
+
+  const fn = localStorage.getItem('ai_fn')
+    || CONFIG.AI_FUNCTION_DEFAULT
+    || 'ai-review';
+
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
+
+  // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
+  return {
+    content: json.content,
+    model: json.model || null,
+  };
+}
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
@@ -235,5 +313,9 @@ const Store = (function () {
     getProgress,
     advanceBookmarkIfAhead,
     endRound,
+    getAiReview,
+    saveAiReview,
+    deleteAiReview,
+    callAiReview,
   };
 })();
