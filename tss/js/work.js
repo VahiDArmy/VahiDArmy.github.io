@@ -40,6 +40,7 @@
   const aiReviewCancelEditBtn = document.getElementById('aiReviewCancelEditBtn');
   const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
   const aiFunctionSelect = document.getElementById('aiFunctionSelect');
+  const aiReviewModelBadge = document.getElementById('aiReviewModelBadge');
 
   // -------------------------------------------------------------
   // رندر Markdown برای پاسخ بررسی هوشمند
@@ -90,6 +91,20 @@
     });
   }
 
+  // -------------------------------------------------------------
+  // بج نمایش مدل واقعی (از پاسخ تابع Edge می‌آید)
+  // -------------------------------------------------------------
+  function updateAiModelBadge() {
+    if (!aiReviewModelBadge) return;
+    if (currentAiModel) {
+      aiReviewModelBadge.textContent = 'پاسخ از مدل: ' + currentAiModel;
+      aiReviewModelBadge.classList.remove('hidden');
+    } else {
+      aiReviewModelBadge.textContent = '';
+      aiReviewModelBadge.classList.add('hidden');
+    }
+  }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -106,6 +121,7 @@
   let detectedLink = null;
   let currentAiTafsirId = null;
   let currentAiContent = '';
+  let currentAiModel = '';
 
   const index = await QuranData.getIndex();
   UI.populateSurahSelect(selectRow.surah, index, 1);
@@ -358,6 +374,11 @@
     aiReviewModal.hidden = true;
     currentAiTafsirId = null;
     currentAiContent = '';
+    currentAiModel = '';
+    if (aiReviewModelBadge) {
+      aiReviewModelBadge.textContent = '';
+      aiReviewModelBadge.classList.add('hidden');
+    }
   }
 
   async function openAiReview(tafsir) {
@@ -369,7 +390,9 @@
       const existing = await Store.getAiReview(tafsir.id);
       if (existing && existing.content) {
         currentAiContent = existing.content;
+        currentAiModel = existing.model || '';
         aiReviewText.innerHTML = renderMarkdown(existing.content);
+        updateAiModelBadge();
         showAiState('content');
         return;
       }
@@ -378,16 +401,18 @@
       const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
       const ayahText = ayahObj ? ayahObj.ar : '';
 
-      const aiContent = await Store.callAiReview({
+      const result = await Store.callAiReview({
         surah: current.surah,
         ayah: current.ayah,
         ayahText,
         userOpinion: tafsir.content,
       });
 
-      await Store.saveAiReview(tafsir.id, aiContent);
-      currentAiContent = aiContent;
-      aiReviewText.innerHTML = renderMarkdown(aiContent);
+      await Store.saveAiReview(tafsir.id, result.content, result.model);
+      currentAiContent = result.content;
+      currentAiModel = result.model || '';
+      aiReviewText.innerHTML = renderMarkdown(result.content);
+      updateAiModelBadge();
       showAiState('content');
     } catch (err) {
       console.error(err);
@@ -409,16 +434,18 @@
       const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
       const ayahText = ayahObj ? ayahObj.ar : '';
 
-      const aiContent = await Store.callAiReview({
+      const result = await Store.callAiReview({
         surah: current.surah,
         ayah: current.ayah,
         ayahText,
         userOpinion: tafsir.content,
       });
 
-      await Store.saveAiReview(currentAiTafsirId, aiContent);
-      currentAiContent = aiContent;
-      aiReviewText.innerHTML = renderMarkdown(aiContent);
+      await Store.saveAiReview(currentAiTafsirId, result.content, result.model);
+      currentAiContent = result.content;
+      currentAiModel = result.model || '';
+      aiReviewText.innerHTML = renderMarkdown(result.content);
+      updateAiModelBadge();
       showAiState('content');
       UI.toast('بررسی به‌روز شد');
     } catch (err) {
@@ -444,7 +471,7 @@
       return;
     }
     try {
-      await Store.saveAiReview(currentAiTafsirId, newContent);
+      await Store.saveAiReview(currentAiTafsirId, newContent, currentAiModel);
       currentAiContent = newContent;
       aiReviewText.innerHTML = renderMarkdown(newContent);
       showAiState('content');
