@@ -4,7 +4,6 @@
    ========================================================================== */
 
 :root {
-  --bg: #06080E;
   --bg-solid: #06080E;
 
   --surface: rgba(255, 255, 255, 0.04);
@@ -23,10 +22,6 @@
   --violet: #8B7CF6;
   --violet-glow: rgba(139, 124, 246, 0.35);
 
-  --gold: #D4AF6A;
-  --gold-glow: rgba(212, 175, 106, 0.3);
-  --star-gold: #E8C84A;
-
   --danger: #F2637B;
   --success: #2DE8C8;
 
@@ -35,32 +30,27 @@
   --radius-lg: 24px;
 
   /* ------------------------------------------------------------------
-     Glass — SUPER transparent (dark)
-     Blur kept as original. Specular + depth enhanced.
+     Glass — transparent; blur carries the effect. (raاised alphas +
+     strong blur so the mesh background actually shows through.)
      ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.025);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.045);
-  --glass-bg-top:       rgba(255, 255, 255, 0.055);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.015);
+  --glass-bg:           rgba(255, 255, 255, 0.05);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.08);
+  --glass-bg-top:       rgba(255, 255, 255, 0.10);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.03);
 
-  --glass-border:       rgba(255, 255, 255, 0.16);
-  --glass-highlight:    rgba(255, 255, 255, 0.42);
-  --glass-specular:     rgba(255, 255, 255, 0.78);
+  --glass-border:       rgba(255, 255, 255, 0.18);
+  --glass-highlight:    rgba(255, 255, 255, 0.45);
+  --glass-specular:     rgba(255, 255, 255, 0.80);
 
-  --glass-blur:         blur(5px) saturate(80%);
-  --glass-blur-strong:  blur(8px) saturate(90%);
+  --glass-blur:         blur(16px) saturate(160%);
+  --glass-blur-strong:  blur(24px) saturate(180%);
 
   --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
                         0 2px 8px rgba(0, 0, 0, 0.22);
   --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.48),
                         0 4px 14px rgba(0, 0, 0, 0.28);
 
-  --shadow-card:        var(--shadow-glass);
-
-  /* ------------------------------------------------------------------
-     Readable surfaces — for text-dense content only.
-     Nearly opaque so glyphs stay legible through the glass shell.
-     ------------------------------------------------------------------ */
+  /* Readable surfaces — for text-dense content only. */
   --read-bg:            rgba(10, 12, 20, 0.78);
   --read-bg-strong:     rgba(10, 12, 20, 0.90);
   --read-border:        rgba(255, 255, 255, 0.06);
@@ -71,7 +61,6 @@
 }
 
 [data-theme="light"] {
-  --bg: #F3F4F8;
   --bg-solid: #F3F4F8;
 
   --surface: rgba(0, 0, 0, 0.02);
@@ -90,34 +79,26 @@
   --violet: #6754D6;
   --violet-glow: rgba(103, 84, 214, 0.18);
 
-  --gold: #A9793A;
-  --gold-glow: rgba(169, 121, 58, 0.18);
-  --star-gold: #C99A3A;
-
   --danger: #D3405A;
   --success: #0EA894;
 
-  /* Glass — SUPER transparent (light) */
-  --glass-bg:           rgba(255, 255, 255, 0.18);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.28);
-  --glass-bg-top:       rgba(255, 255, 255, 0.32);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.14);
+  --glass-bg:           rgba(255, 255, 255, 0.22);
+  --glass-bg-strong:    rgba(255, 255, 255, 0.32);
+  --glass-bg-top:       rgba(255, 255, 255, 0.40);
+  --glass-bg-bottom:    rgba(255, 255, 255, 0.16);
 
-  --glass-border:       rgba(255, 255, 255, 0.78);
+  --glass-border:       rgba(255, 255, 255, 0.80);
   --glass-highlight:    rgba(255, 255, 255, 0.95);
   --glass-specular:     rgba(255, 255, 255, 1);
 
-  --glass-blur:         blur(5px) saturate(80%);
-  --glass-blur-strong:  blur(8px) saturate(90%);
+  --glass-blur:         blur(16px) saturate(160%);
+  --glass-blur-strong:  blur(24px) saturate(180%);
 
   --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.09),
                         0 2px 8px rgba(0, 0, 0, 0.05);
   --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.13),
                         0 4px 14px rgba(0, 0, 0, 0.07);
 
-  --shadow-card:        var(--shadow-glass);
-
-  /* Readable surfaces (light) */
   --read-bg:            rgba(255, 255, 255, 0.88);
   --read-bg-strong:     rgba(255, 255, 255, 0.96);
   --read-border:        rgba(0, 0, 0, 0.05);
@@ -131,14 +112,42 @@ html, body {
   min-height: 100vh;
 }
 
+/* ------------------------------------------------------------------
+   Professional mesh-gradient backdrop.
+   A flat color can never render a visible frosted-glass effect —
+   the backdrop needs depth for the blur to pick up. Four soft color
+   orbs + a diagonal base gradient give exactly that.
+   ------------------------------------------------------------------ */
 body {
-  background: var(--bg-solid);
+  background-color: var(--bg-solid);
+  background-image:
+    radial-gradient(circle at 15% 12%, rgba(45, 232, 200, 0.16), transparent 42%),
+    radial-gradient(circle at 85%  8%, rgba(139, 124, 246, 0.20), transparent 42%),
+    radial-gradient(circle at 72% 85%, rgba(212, 175, 106, 0.10), transparent 42%),
+    radial-gradient(circle at  8% 90%, rgba(139, 124, 246, 0.14), transparent 42%),
+    linear-gradient(160deg, #06080E 0%, #0d1224 50%, #06080E 100%);
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text);
   font-family: var(--font-ui);
   direction: rtl;
-  transition: background 0.4s ease, color 0.3s ease;
+  transition: background-color 0.4s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+}
+
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 15% 12%, rgba(14, 168, 148, 0.18), transparent 42%),
+    radial-gradient(circle at 85%  8%, rgba(103, 84, 214, 0.20), transparent 42%),
+    radial-gradient(circle at 72% 85%, rgba(169, 121, 58, 0.12), transparent 42%),
+    radial-gradient(circle at  8% 90%, rgba(103, 84, 214, 0.14), transparent 42%),
+    linear-gradient(160deg, #F3F4F8 0%, #E8EAF2 50%, #F3F4F8 100%);
+}
+
+/* iOS/Safari ignores `fixed` attachment badly — fall back gracefully. */
+@media (hover: none) and (pointer: coarse) {
+  body { background-attachment: scroll; }
 }
 
 @media (prefers-reduced-motion: reduce) {
