@@ -263,26 +263,29 @@ const Store = (function () {
     if (error) throw error;
   }
 
-  async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
-    const { data: { session } } = await sb.auth.getSession();
-
-    if (!session?.access_token) {
-      throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
-    }
-
-    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/ai-review`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
-    });
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
-    return json.content;
+async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
   }
 
+  const fn = localStorage.getItem('ai_fn')
+    || CONFIG.AI_FUNCTION_DEFAULT
+    || 'ai-review';
+
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
+  return json.content;
+}
   return {
     getLatestTafsir,
     getTafsirsForAyah,
