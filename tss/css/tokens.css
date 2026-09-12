@@ -43,8 +43,8 @@
   --glass-highlight:    rgba(255, 255, 255, 0.45);
   --glass-specular:     rgba(255, 255, 255, 0.80);
 
-  --glass-blur:         blur(1.25px) saturate(120%);
-  --glass-blur-strong:  blur(1.25px) saturate(140%);
+  --glass-blur:         blur(1px) saturate(180%);
+  --glass-blur-strong:  blur(1px) saturate(190%);
 
   --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
                         0 2px 8px rgba(0, 0, 0, 0.22);
