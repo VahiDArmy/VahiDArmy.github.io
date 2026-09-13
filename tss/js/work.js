@@ -43,7 +43,8 @@
   const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
   const aiFunctionSelect = document.getElementById('aiFunctionSelect');
   const aiReviewModelBadge = document.getElementById('aiReviewModelBadge');
-const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
+  const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
+
   // -------------------------------------------------------------
   // رندر Markdown
   // -------------------------------------------------------------
@@ -106,6 +107,68 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
     }
   }
 
+  // -------------------------------------------------------------
+  // دکمه‌های باز کردن در سایت‌های هوش مصنوعی خارجی
+  // -------------------------------------------------------------
+  const EXTERNAL_PROVIDERS = {
+    deepseek: {
+      url: function (prompt) {
+        return 'https://chat.deepseek.com/?q=' + encodeURIComponent(prompt) + '&r=true&s=true';
+      },
+    },
+    glm: {
+      url: function (prompt) {
+        return 'https://chatglm.cn/main/alltoolsdetail?q=' + encodeURIComponent(prompt);
+      },
+    },
+    kimi: {
+      url: function (prompt) {
+        return 'https://kimi.moonshot.cn/?q=' + encodeURIComponent(prompt);
+      },
+    },
+  };
+
+  function buildExternalPrompt() {
+    return "آیه " + current.ayah + "، سوره " + current.surah + "\n" +
+      "در مورد این آیه:\n" +
+      (currentAiTafsirContent || "") + "\n\n" +
+      "اول منظور تفسیر ارائه‌شده را به زبان خودت بازگو کن، واضح و صریح، طوری که معلوم شود دقیقاً چه ادعایی مطرح شده.\n" +
+      "بعد بررسی کن و تحلیل خودت را بگو. حاشیه نرو و موارد بی‌ربط را به هیچ عنوان مطرح نکن.";
+  }
+
+  function updateExternalLinks() {
+    if (!aiReviewExternalLinks) return;
+    if (!currentAiTafsirContent) {
+      aiReviewExternalLinks.classList.add('hidden');
+      return;
+    }
+    aiReviewExternalLinks.classList.remove('hidden');
+  }
+
+  async function openExternalProvider(provider) {
+    const cfg = EXTERNAL_PROVIDERS[provider];
+    if (!cfg) return;
+
+    const prompt = buildExternalPrompt();
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      UI.toast('پرامپت کپی شد — در سایت باز شده Paste کنید');
+    } catch (err) {
+      console.warn('Clipboard failed', err);
+    }
+
+    window.open(cfg.url(prompt), '_blank', 'noopener');
+  }
+
+  if (aiReviewExternalLinks) {
+    aiReviewExternalLinks.querySelectorAll('.ai-ext-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        openExternalProvider(btn.getAttribute('data-provider'));
+      });
+    });
+  }
+
   function parseTags(str) {
     return Array.from(
       new Set(
@@ -154,87 +217,6 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
     const newPos = start + text.length;
     textarea.setSelectionRange(newPos, newPos);
     textarea.focus();
-  }
-
-  // ============================================================
-  // استریم پاسخ هوش مصنوعی (جایگزین Store.callAiReview)
-  // ============================================================
-
-  // آدرس و کلید پروژه از کلاینت Supabase خوانده می‌شود
-  const SB_URL = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) ? CONFIG.SUPABASE_URL : sb.supabaseUrl;
-  const SB_KEY = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_ANON_KEY) ? CONFIG.SUPABASE_ANON_KEY : sb.supabaseKey;
-
-  async function streamAiReview({ surah, ayah, userOpinion }, onProgress) {
-    // نام تابع Edge از دراپ‌دان انتخاب مدل گرفته می‌شود
-    const fnId =
-      (aiFunctionSelect && aiFunctionSelect.value) ||
-      localStorage.getItem('ai_fn') ||
-      (typeof CONFIG !== 'undefined' ? CONFIG.AI_FUNCTION_DEFAULT : 'chat');
-
-    const url = SB_URL + '/functions/v1/' + fnId;
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + SB_KEY,
-        'apikey': SB_KEY,
-      },
-      body: JSON.stringify({ surah, ayah, userOpinion }),
-    });
-
-    const ct = res.headers.get('content-type') || '';
-
-    // اگر خطا برگشت یا اصلاً استریم نبود، متن خطا را از JSON بخوان
-    if (!res.ok || !res.body || !ct.includes('text/event-stream')) {
-      const text = await res.text();
-      let msg = 'خطای ' + res.status;
-      try {
-        const j = JSON.parse(text);
-        if (j && j.error) msg = j.error;
-      } catch (_) { /* ignore */ }
-      throw new Error(msg);
-    }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-    let fullText = '';
-    let model = '';
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // پیام‌های SSE با \n\n از هم جدا می‌شوند
-      const events = buffer.split('\n\n');
-      buffer = events.pop() || '';
-
-      for (const evt of events) {
-        const lines = evt.split('\n');
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed.startsWith('data:')) continue;
-
-          const data = trimmed.slice(5).trim();
-          if (data === '[DONE]') continue;
-
-          try {
-            const json = JSON.parse(data);
-            if (json.model) model = json.model;
-            const token = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
-            if (token) {
-              fullText += token;
-              onProgress(fullText, token);
-            }
-          } catch (_) { /* json ناقص — رد کن */ }
-        }
-      }
-    }
-
-    return { content: fullText, model };
   }
 
   // ============================================================
@@ -453,15 +435,16 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
       aiReviewModelBadge.textContent = '';
       aiReviewModelBadge.classList.add('hidden');
     }
+    if (aiReviewExternalLinks) aiReviewExternalLinks.classList.add('hidden');
   }
 
-  // باز کردن پاپ‌آپ — اگر پاسخ موجود است نمایش بده، وگرنه حالت «خالی»
   async function openAiReview(tafsir) {
     currentAiTafsirId = tafsir.id;
     currentAiTafsirContent = tafsir.content;
     currentAiContent = '';
     currentAiModel = '';
     openAiModal();
+    updateExternalLinks();
     showAiState('loading');
 
     try {
@@ -483,7 +466,6 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
     }
   }
 
-  // تولید پاسخ جدید — با استریم (کلمه‌به‌کلمه نمایش داده می‌شود)
   async function generateAiReview() {
     if (!currentAiTafsirId) return;
     if (!currentAiTafsirContent) {
@@ -493,43 +475,18 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
 
     showAiState('loading');
 
-    // برای رندر نرم‌تر در طول استریم (نه هر توکن، بلکه هر فریم)
-    let pendingRender = false;
-    let latestText = '';
-    function scheduleRender(text) {
-      latestText = text;
-      if (pendingRender) return;
-      pendingRender = true;
-      requestAnimationFrame(() => {
-        pendingRender = false;
-        aiReviewText.innerHTML = renderMarkdown(latestText);
-      });
-    }
-
     try {
       const surahData = await QuranData.getSurah(current.surah);
       const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
       const ayahText = ayahObj ? ayahObj.ar : '';
 
-      let streamingStarted = false;
+      const result = await Store.callAiReview({
+        surah: current.surah,
+        ayah: current.ayah,
+        ayahText,
+        userOpinion: currentAiTafsirContent,
+      });
 
-      const result = await streamAiReview(
-        {
-          surah: current.surah,
-          ayah: current.ayah,
-          ayahText,
-          userOpinion: currentAiTafsirContent,
-        },
-        (fullText) => {
-          if (!streamingStarted) {
-            streamingStarted = true;
-            showAiState('content');
-          }
-          scheduleRender(fullText);
-        }
-      );
-
-      // پایان استریم — ذخیره در دیتابیس
       await Store.saveAiReview(currentAiTafsirId, result.content, result.model);
       currentAiContent = result.content;
       currentAiModel = result.model || '';
@@ -874,7 +831,6 @@ const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
   }
 
   aiReviewRefreshBtn.addEventListener('click', generateAiReview);
-
   aiReviewEditBtn.addEventListener('click', enterAiEditMode);
   aiReviewCancelEditBtn.addEventListener('click', cancelAiEdit);
   aiReviewSaveBtn.addEventListener('click', saveAiEdit);
