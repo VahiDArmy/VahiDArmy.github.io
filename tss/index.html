@@ -16,6 +16,7 @@
 </head>
 <body>
 
+<canvas id="stars-canvas"></canvas>
 
 <header class="site-header">
   <div class="site-header__inner">
@@ -210,7 +211,15 @@
       <select id="aiFunctionSelect" class="ai-fn-select" aria-label="انتخاب مدل"></select>
       <button type="button" class="btn btn--icon btn--ghost" id="aiReviewCloseBtn" aria-label="بستن">✕</button>
     </div>
+
     <div id="aiReviewModelBadge" class="ai-review-model-badge hidden"></div>
+
+    <div id="aiReviewExternalLinks" class="ai-ext-links hidden">
+      <span class="ai-ext-links__label">باز کردن در:</span>
+      <button type="button" class="ai-ext-btn" data-provider="deepseek">DeepSeek ↗</button>
+      <button type="button" class="ai-ext-btn" data-provider="glm">GLM ↗</button>
+      <button type="button" class="ai-ext-btn" data-provider="kimi">Kimi ↗</button>
+    </div>
 
     <div id="aiReviewLoading" class="ai-review-loading hidden">
       <div class="skeleton" style="height:18px; width:90%; margin-bottom:10px;"></div>
@@ -220,14 +229,14 @@
       <p style="text-align:center; color:var(--text-faint); font-size:0.85rem; margin-top:16px;">در حال بررسی...</p>
     </div>
 
- <div id="aiReviewEmpty" class="ai-review-empty hidden">
-  <p style="text-align:center; color:var(--text-faint); padding:24px 0; font-size:0.9rem;">
-    هنوز بررسی هوشمندی برای این تفسیر ثبت نشده است.
-  </p>
-  <button type="button" class="btn btn--primary" id="aiReviewStartBtn" style="width:100%;">
-    شروع بررسی هوشمند
-  </button>
-</div>
+    <div id="aiReviewEmpty" class="ai-review-empty hidden">
+      <p style="text-align:center; color:var(--text-faint); padding:24px 0; font-size:0.9rem;">
+        هنوز بررسی هوشمندی برای این تفسیر ثبت نشده است.
+      </p>
+      <button type="button" class="btn btn--primary" id="aiReviewStartBtn" style="width:100%;">
+        شروع بررسی هوشمند
+      </button>
+    </div>
 
     <div id="aiReviewContent" class="ai-review-content hidden">
       <div id="aiReviewText" class="ai-review-text"></div>
@@ -238,7 +247,7 @@
     </div>
 
     <div class="ai-review-actions" id="aiReviewActions" style="display:none;">
-<button type="button" class="btn btn--sm" id="aiReviewRefreshBtn">تولید مجدد</button>
+      <button type="button" class="btn btn--sm" id="aiReviewRefreshBtn">تولید مجدد</button>
       <button type="button" class="btn btn--sm" id="aiReviewEditBtn">ویرایش</button>
       <button type="button" class="btn btn--sm" id="aiReviewSaveBtn" style="display:none;">ذخیره</button>
       <button type="button" class="btn btn--sm" id="aiReviewCancelEditBtn" style="display:none;">انصراف</button>
@@ -260,6 +269,8 @@
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/quran-data.js"></script>
@@ -268,6 +279,7 @@
 <script src="js/theme.js"></script>
 <script src="js/ayah-render.js"></script>
 <script src="js/ayah-links.js"></script>
+<script src="js/stars.js"></script>
 <script>
   (async function () {
     const session = await Auth.requireAuth();
@@ -278,8 +290,6 @@
     });
   })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script src="js/work.js"></script>
 </body>
 </html>
