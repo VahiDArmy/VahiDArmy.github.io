@@ -126,6 +126,101 @@
     submitBtn.textContent = 'ثبت تفسیر';
   }
 
+  // --- توابع کمکی بررسی هوشمند ---
+  function renderMarkdown(md) {
+    if (!md) return '';
+    if (!window.marked || !window.DOMPurify) {
+      const div = document.createElement('div');
+      div.textContent = md;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+    const raw = marked.parse(md);
+    const clean = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+
+    const tmp = document.createElement('div');
+    tmp.innerHTML = clean;
+    tmp.querySelectorAll('table').forEach((table) => {
+      if (table.parentElement?.classList.contains('table-scroll')) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'table-scroll';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    });
+    return tmp.innerHTML;
+  }
+
+  function initAiFunctionSelect() {
+    if (!aiFunctionSelect || typeof CONFIG === 'undefined' || !CONFIG.AI_FUNCTIONS) return;
+    const saved = localStorage.getItem('ai_fn') || CONFIG.AI_FUNCTION_DEFAULT;
+    
+    aiFunctionSelect.innerHTML = CONFIG.AI_FUNCTIONS
+      .map(f => '<option value="' + f.id + '"' + (f.id === saved ? ' selected' : '') + '>' + f.label + '</option>')
+      .join('');
+
+    aiFunctionSelect.addEventListener('change', () => {
+      localStorage.setItem('ai_fn', aiFunctionSelect.value);
+      const label = aiFunctionSelect.options[aiFunctionSelect.selectedIndex].text;
+      UI.toast('مدل به «' + label + '» تغییر کرد');
+    });
+  }
+
+  function updateAiModelBadge() {
+    if (!aiReviewModelBadge) return;
+    if (currentAiModel) {
+      aiReviewModelBadge.textContent = 'پاسخ از مدل: ' + currentAiModel;
+      aiReviewModelBadge.classList.remove('hidden');
+    } else {
+      aiReviewModelBadge.textContent = '';
+      aiReviewModelBadge.classList.add('hidden');
+    }
+  }
+
+  const EXTERNAL_PROVIDERS = {
+    deepseek: { url: (prompt) => 'https://chat.deepseek.com/?q=' + encodeURIComponent(prompt) + '&r=true&s=true' },
+    glm: { url: (prompt) => 'https://chatglm.cn/main/alltoolsdetail?q=' + encodeURIComponent(prompt) },
+    kimi: { url: (prompt) => 'https://kimi.moonshot.cn/?q=' + encodeURIComponent(prompt) }
+  };
+
+  function buildExternalPrompt() {
+    return "آیه " + current.ayah + "، سوره " + current.surah + "\n" +
+      "در مورد این آیه:\n" +
+      (currentAiTafsirContent || "") + "\n\n" +
+      "اول منظور تفسیر ارائه‌شده را به زبان خودت بازگو کن، واضح و صریح، طوری که معلوم شود دقیقاً چه ادعایی مطرح شده.\n" +
+      "بعد بررسی کن و تحلیل خودت را بگو. حاشیه نرو و موارد بی‌ربط را به هیچ عنوان مطرح نکن.";
+  }
+
+  function updateExternalLinks() {
+    if (!aiReviewExternalLinks) return;
+    if (!currentAiTafsirContent) {
+      aiReviewExternalLinks.classList.add('hidden');
+      return;
+    }
+    aiReviewExternalLinks.classList.remove('hidden');
+  }
+
+  async function openExternalProvider(provider) {
+    const cfg = EXTERNAL_PROVIDERS[provider];
+    if (!cfg) return;
+
+    const prompt = buildExternalPrompt();
+
+    try {
+      await navigator.clipboard.writeText(prompt);
+      UI.toast('پرامپت کپی شد — در سایت باز شده Paste کنید');
+    } catch (err) {
+      console.warn('Clipboard failed', err);
+    }
+    window.open(cfg.url(prompt), '_blank', 'noopener');
+  }
+
+  if (aiReviewExternalLinks) {
+    aiReviewExternalLinks.querySelectorAll('.ai-ext-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        openExternalProvider(btn.getAttribute('data-provider'));
+      });
+    });
+  }
+
   // ============================================================
   // Main Render Functions
   // ============================================================
@@ -548,5 +643,6 @@
   });
 
   // Initialize UI
+  initAiFunctionSelect(); // 👈 این خط اضافه شد
   await renderCurrentAyah();
 })();
