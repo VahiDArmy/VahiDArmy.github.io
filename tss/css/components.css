@@ -1,9 +1,9 @@
 /* ==========================================================================
-   Components — Telegram Liquid Glass (high transparency)
+   Components — Telegram Liquid Glass (High Transparency)
    ========================================================================== */
 
 /* ==========================================================================
-   Buttons
+   1. BUTTONS
    ========================================================================== */
 .btn {
   display: inline-flex;
@@ -21,34 +21,26 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.18),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .btn:hover {
   border-color: var(--neon);
   color: var(--neon);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn--primary {
   background: var(--neon);
   border-color: var(--neon);
   color: #06110E;
   font-weight: 700;
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 .btn--primary:hover {
   color: #06110E;
-  box-shadow:
-    0 0 32px var(--neon-glow),
-    0 0 60px var(--neon-glow),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 32px var(--neon-glow), 0 0 60px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 
 .btn--ghost {
@@ -65,12 +57,10 @@
   padding: 0;
   border-radius: 50%;
 }
-
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ==========================================================================
-   Glass shell — shared pattern for card-like surfaces
+   2. GLASS SHELL (Shared Card Pattern)
    ========================================================================== */
 .card,
 .progress-hero,
@@ -79,30 +69,22 @@
 .modal-card,
 .toast__inner {
   position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 50%,
-    var(--glass-bg-bottom) 100%
-  );
+  background: linear-gradient(165deg, var(--glass-bg-top) 0%, var(--glass-bg) 50%, var(--glass-bg-bottom) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-glass), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
   isolation: isolate;
 }
 
-/* Stronger blur for floating overlays. */
+/* Stronger blur for floating overlays */
 .modal-card,
 .toast__inner {
   backdrop-filter: var(--glass-blur-strong);
   -webkit-backdrop-filter: var(--glass-blur-strong);
 }
 
-/* Specular top-edge highlight — shared by every glass surface. */
+/* Specular top-edge highlight */
 .card::before,
 .progress-hero::before,
 .ayah-frame__inner::before,
@@ -114,12 +96,7 @@
   inset: 0;
   border-radius: inherit;
   padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.18) 28%,
-    transparent 55%
-  );
+  background: linear-gradient(175deg, var(--glass-specular) 0%, rgba(255, 255, 255, 0.18) 28%, transparent 55%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -130,7 +107,6 @@
 }
 .comment::before { opacity: 0.4; }
 
-/* ---- Shape overrides ---- */
 .card {
   border-radius: var(--radius-md);
   padding: 20px;
@@ -147,26 +123,11 @@
   overflow-y: auto;
   border-radius: var(--radius-md);
   padding: 20px;
-  box-shadow:
-    var(--shadow-glass-lg),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-}
-.toast__inner {
-  border-color: var(--neon);
-  padding: 10px 20px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  box-shadow:
-    0 0 30px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-  opacity: 0;
-  translate: 0 10px;
-  transition: all 0.3s ease;
+  box-shadow: var(--shadow-glass-lg), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ==========================================================================
-   Progress hero
+   3. PROGRESS HERO
    ========================================================================== */
 .progress-hero {
   border-radius: var(--radius-lg);
@@ -176,9 +137,7 @@
   gap: 16px;
   flex-wrap: wrap;
 }
-
 .progress-hero__text { flex: 1; min-width: 0; }
-
 .progress-hero__title-row {
   display: flex;
   align-items: center;
@@ -186,7 +145,6 @@
   gap: 12px;
   flex-wrap: wrap;
 }
-
 .progress-hero__title {
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -195,14 +153,12 @@
   align-items: center;
   gap: 4px;
 }
-
 .progress-hero__actions {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
-
 .progress-hero__actions .btn {
   padding: 4px 10px;
   font-size: 0.7rem;
@@ -210,7 +166,6 @@
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
-
 .progress-hero__actions .bookmark-btn,
 .progress-hero__actions .go-to-btn {
   width: 28px;
@@ -221,13 +176,8 @@
   align-items: center;
   justify-content: center;
 }
-
 .progress-hero__actions .bookmark-btn svg,
-.progress-hero__actions .go-to-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
+.progress-hero__actions .go-to-btn svg { width: 14px; height: 14px; }
 .progress-hero__count {
   font-size: 1.05rem;
   font-weight: 700;
@@ -235,64 +185,7 @@
   margin: 4px 0 0;
 }
 
-/* ==========================================================================
-   Bookmark & go-to buttons (shared base + accent)
-   ========================================================================== */
-.bookmark-btn,
-.go-to-btn {
-  position: relative;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: all 0.3s ease;
-  box-shadow:
-    0 2px 10px rgba(0, 0, 0, 0.15),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-}
-.bookmark-btn svg,
-.go-to-btn svg {
-  transition: all 0.3s ease;
-}
-.bookmark-btn:active,
-.go-to-btn:active { transform: scale(0.92); }
-
-.bookmark-btn {
-  border-color: var(--neon-dim);
-  color: var(--neon);
-}
-.bookmark-btn svg { filter: drop-shadow(0 0 2px var(--neon-glow)); }
-.bookmark-btn:hover {
-  border-color: var(--neon);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    0 0 40px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-  transform: scale(1.05);
-}
-.bookmark-btn:hover svg {
-  filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow));
-}
-
-.go-to-btn {
-  border-color: var(--violet);
-  color: var(--violet);
-}
-.go-to-btn svg { filter: drop-shadow(0 0 2px var(--violet-glow)); }
-.go-to-btn:hover {
-  border-color: var(--violet);
-  box-shadow:
-    0 0 20px var(--violet-glow),
-    0 0 40px var(--violet-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
-  transform: scale(1.05);
-}
-.go-to-btn:hover svg {
-  filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow));
-}
-
-/* ==========================================================================
-   Progress ring
-   ========================================================================== */
+/* Progress Ring */
 .progress-ring {
   position: relative;
   width: 62px;
@@ -319,8 +212,36 @@
   color: var(--neon);
 }
 
+/* Bookmark & Go-To Buttons */
+.bookmark-btn, .go-to-btn {
+  position: relative;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+.bookmark-btn svg, .go-to-btn svg { transition: all 0.3s ease; }
+.bookmark-btn:active, .go-to-btn:active { transform: scale(0.92); }
+.bookmark-btn { border-color: var(--neon-dim); color: var(--neon); }
+.bookmark-btn svg { filter: drop-shadow(0 0 2px var(--neon-glow)); }
+.bookmark-btn:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  transform: scale(1.05);
+}
+.bookmark-btn:hover svg { filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow)); }
+.go-to-btn { border-color: var(--violet); color: var(--violet); }
+.go-to-btn svg { filter: drop-shadow(0 0 2px var(--violet-glow)); }
+.go-to-btn:hover {
+  border-color: var(--violet);
+  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  transform: scale(1.05);
+}
+.go-to-btn:hover svg { filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow)); }
+
 /* ==========================================================================
-   Sticky ayah + edit banner
+   4. AYAH FRAME & TRANSLATION
    ========================================================================== */
 .sticky-ayah {
   position: sticky;
@@ -331,10 +252,6 @@
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
-@media (max-width: 560px) {
-  .sticky-ayah { top: 60px; }
-}
-
 .edit-banner {
   display: flex;
   align-items: center;
@@ -355,9 +272,6 @@
   font-size: 0.78rem;
 }
 
-/* ==========================================================================
-   Ayah frame
-   ========================================================================== */
 .ayah-frame {
   position: relative;
   border-radius: var(--radius-lg);
@@ -366,7 +280,6 @@
   overflow: visible;
   box-shadow: var(--shadow-glass);
 }
-
 .ayah-frame::before {
   content: '';
   position: absolute;
@@ -374,15 +287,9 @@
   border-radius: calc(var(--radius-lg) + 2px);
   padding: 3px;
   background: conic-gradient(
-    from var(--angle, 0deg),
-    transparent 0deg,
-    transparent 220deg,
-    var(--neon-glow) 240deg,
-    var(--neon) 280deg,
-    #ffffff 300deg,
-    var(--neon) 320deg,
-    var(--neon-glow) 340deg,
-    transparent 360deg
+    from var(--angle, 0deg), transparent 0deg, transparent 220deg,
+    var(--neon-glow) 240deg, var(--neon) 280deg, #ffffff 300deg,
+    var(--neon) 320deg, var(--neon-glow) 340deg, transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
           mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -401,15 +308,10 @@
   inherits: false;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ayah-frame::before { display: none; }
-}
-
 .ayah-frame__inner {
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
 }
-
 .ayah-frame__ref {
   display: flex;
   align-items: center;
@@ -418,10 +320,7 @@
   position: relative;
   z-index: 2;
 }
-.ayah-frame__ref-text {
-  font-size: 0.78rem;
-  color: var(--text-faint);
-}
+.ayah-frame__ref-text { font-size: 0.78rem; color: var(--text-faint); }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
 
 .copy-ayah-btn {
@@ -441,9 +340,7 @@
 }
 .copy-ayah-btn:hover { color: var(--neon); }
 
-/* ==========================================================================
-   Readable text surfaces (opaque, for legibility)
-   ========================================================================== */
+/* Readable text surfaces */
 .ayah-frame__arabic,
 .tafsir-card__body,
 .translation-content p,
@@ -471,73 +368,7 @@
   padding: 8px 12px;
 }
 
-.tafsir-card__body {
-  font-size: 0.95rem;
-  line-height: 2;
-  color: var(--text);
-  white-space: pre-wrap;
-  position: relative;
-  z-index: 2;
-  padding: 12px 14px;
-  margin: 0;
-}
-
-.translation-content p {
-  margin: 4px 0 10px;
-  padding: 12px 14px;
-  color: var(--text-dim);
-  font-size: 0.92rem;
-  line-height: 1.9;
-}
-
-/* ==========================================================================
-   Ayah-to-ayah reference link
-   ========================================================================== */
-.ayah-link {
-  color: var(--violet);
-  font-weight: 700;
-  border-bottom: 1px dashed var(--violet);
-  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
-  transition: text-shadow 0.2s ease, color 0.2s ease;
-}
-.ayah-link:hover {
-  color: #C9BFFF;
-  text-shadow:
-    0 0 8px var(--violet-glow),
-    0 0 22px var(--violet-glow),
-    0 0 34px var(--violet-glow);
-}
-
-/* ==========================================================================
-   Mark light
-   ========================================================================== */
-.mark-toggle {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
-  padding: 0;
-  margin-inline-end: 6px;
-  vertical-align: middle;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-span.mark-toggle { cursor: default; }
-.mark-toggle.is-marked {
-  background: #FFB020;
-  border-color: #FFB020;
-  box-shadow:
-    0 0 3px 1px #FFB020,
-    0 0 10px 3px rgba(255, 176, 32, 0.75),
-    0 0 20px 7px rgba(255, 176, 32, 0.4);
-}
-button.mark-toggle:hover { border-color: #FFB020; }
-
-/* ==========================================================================
-   Translation collapse bar
-   ========================================================================== */
+/* Translation bar */
 .translation-bar {
   margin-top: 14px;
   border-top: 1px dashed var(--border);
@@ -568,9 +399,47 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .translation-content.is-open { grid-template-rows: 1fr; }
 .translation-content > div { overflow: hidden; }
+.translation-content p {
+  margin: 4px 0 10px;
+  padding: 12px 14px;
+  color: var(--text-dim);
+  font-size: 0.92rem;
+  line-height: 1.9;
+}
+
+/* Ayah Navigation */
+.ayah-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.ayah-nav .btn { flex: 1; }
+
+/* Mark Light */
+.mark-toggle {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+span.mark-toggle { cursor: default; }
+.mark-toggle.is-marked {
+  background: #FFB020;
+  border-color: #FFB020;
+  box-shadow: 0 0 3px 1px #FFB020, 0 0 10px 3px rgba(255, 176, 32, 0.75), 0 0 20px 7px rgba(255, 176, 32, 0.4);
+}
+button.mark-toggle:hover { border-color: #FFB020; }
 
 /* ==========================================================================
-   Form controls — unified readable inputs
+   5. FORMS & INPUTS
    ========================================================================== */
 .field { margin-bottom: 14px; }
 .field label {
@@ -591,11 +460,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
   color: var(--text);
   border-radius: var(--radius-sm);
   font-family: var(--font-ui);
-  transition: border-color 0.2s ease, min-height 0.25s ease,
-              box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
@@ -622,15 +488,13 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-color: var(--neon);
   outline: none;
   background: var(--read-bg-strong);
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 
 .name-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .name-row input { flex: 1; }
 
-/* ---- Selects ---- */
+/* Selects */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -641,8 +505,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   width: 100%;
   appearance: none;
   background: var(--read-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
   border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
@@ -652,17 +514,13 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow:
-    0 2px 12px rgba(0, 0, 0, 0.15),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap select:hover,
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap::after {
   content: '';
@@ -679,7 +537,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   transition: border-color 0.2s ease;
 }
 .select-wrap:hover::after { border-color: var(--neon); }
-
 .select-wrap select option {
   background: var(--bg-solid);
   color: var(--text);
@@ -689,18 +546,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 
 /* ==========================================================================
-   Ayah navigation
-   ========================================================================== */
-.ayah-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-.ayah-nav .btn { flex: 1; }
-
-/* ==========================================================================
-   Tafsir card — shell is glass; body is opaque
+   6. TAFSIR CARDS & TAGS
    ========================================================================== */
 .tafsir-card__meta {
   display: flex;
@@ -718,6 +564,16 @@ button.mark-toggle:hover { border-color: #FFB020; }
   padding: 2px 9px;
   border-radius: 999px;
   font-weight: 700;
+}
+.tafsir-card__body {
+  font-size: 0.95rem;
+  line-height: 2;
+  color: var(--text);
+  white-space: pre-wrap;
+  position: relative;
+  z-index: 2;
+  padding: 12px 14px;
+  margin: 0;
 }
 .tafsir-card__body.is-clamped {
   display: -webkit-box;
@@ -745,9 +601,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
   z-index: 2;
 }
 
-/* ==========================================================================
-   Tags
-   ========================================================================== */
+/* Tags */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
@@ -770,23 +624,26 @@ a.tag-pill:hover {
   box-shadow: 0 0 16px var(--neon-glow);
 }
 .tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
-
-.tag-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-cloud .tag-pill { font-size: 0.82rem; padding: 6px 14px; }
-
-.tag-mention {
-  text-decoration: none;
-  font-weight: 600;
-  transition: filter 0.2s ease;
-}
+.tag-mention { text-decoration: none; font-weight: 600; transition: filter 0.2s ease; }
 .tag-mention:hover { filter: brightness(1.3); }
 
+/* Ayah-to-ayah reference link */
+.ayah-link {
+  color: var(--violet);
+  font-weight: 700;
+  border-bottom: 1px dashed var(--violet);
+  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
+  transition: text-shadow 0.2s ease, color 0.2s ease;
+}
+.ayah-link:hover {
+  color: #C9BFFF;
+  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
+}
+
 /* ==========================================================================
-   Comments — opaque read surface
+   7. COMMENTS
    ========================================================================== */
 .comment-list {
   display: flex;
@@ -802,9 +659,7 @@ a.tag-pill:hover {
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   border: 1px solid var(--glass-border);
-  box-shadow:
-    0 4px 18px rgba(0, 0, 0, 0.18),
-    inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
   isolation: isolate;
 }
 .comment__head {
@@ -823,50 +678,7 @@ a.tag-pill:hover {
 }
 
 /* ==========================================================================
-   Empty state / skeleton / toast / count-up
-   ========================================================================== */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-faint);
-}
-.empty-state__icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.5; }
-.empty-state p { margin: 0 0 16px; font-size: 0.88rem; }
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--surface-2) 25%,
-    var(--border) 37%,
-    var(--surface-2) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-  border-radius: var(--radius-sm);
-}
-@keyframes shimmer {
-  0%   { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .skeleton { animation: none; }
-}
-
-.toast {
-  position: fixed;
-  bottom: 24px;
-  inset-inline: 0;
-  display: flex;
-  justify-content: center;
-  z-index: 100;
-  pointer-events: none;
-}
-.toast.show .toast__inner { opacity: 1; translate: 0; }
-
-.count-up { font-variant-numeric: tabular-nums; }
-
-/* ==========================================================================
-   Modal overlay
+   8. MODALS & AI REVIEW
    ========================================================================== */
 .modal-overlay {
   position: fixed;
@@ -881,7 +693,6 @@ a.tag-pill:hover {
   padding: 16px;
 }
 .modal-overlay[hidden] { display: none; }
-
 .modal-card__head {
   display: flex;
   align-items: center;
@@ -890,76 +701,7 @@ a.tag-pill:hover {
   margin-bottom: 14px;
 }
 
-/* ==========================================================================
-   Search hit highlight
-   ========================================================================== */
-.search-hit {
-  background: var(--neon-glow);
-  color: var(--neon);
-  font-weight: 700;
-  padding: 0 2px;
-  border-radius: 3px;
-}
-
-/* ==========================================================================
-   تفسیر روان جاوید
-   ========================================================================== */
-.ravan-tafsir-container {
-  position: relative;
-  min-height: 80px;
-}
-.ravan-tafsir-empty { text-align: center; padding: 16px 0; }
-.ravan-tafsir-loading { padding: 4px 0; }
-
-.ravan-tafsir-content {
-  font-size: 0.95rem;
-  line-height: 2.2;
-  color: var(--text);
-  white-space: pre-wrap;
-  padding: 12px 14px;
-}
-.ravan-tafsir-content p { margin: 0 0 10px 0; }
-.ravan-tafsir-content ul,
-.ravan-tafsir-content ol {
-  margin: 8px 0 12px 20px;
-  padding-right: 20px;
-}
-.ravan-tafsir-content li { margin-bottom: 4px; }
-.ravan-tafsir-content blockquote {
-  border-right: 3px solid var(--violet);
-  padding-right: 14px;
-  margin: 10px 0;
-  color: var(--text-dim);
-  font-style: italic;
-}
-
-.ravan-tafsir-error {
-  color: var(--danger);
-  font-size: 0.85rem;
-  padding: 8px 0;
-}
-.ravan-tafsir-error p { margin: 4px 0; }
-
-.ravan-tafsir-manual-input {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.ravan-tafsir-manual-input input {
-  flex: 1;
-  min-width: 200px;
-}
-
-.hidden { display: none !important; }
-
-#ravanTafsirLoadBtn { margin-inline-start: auto; }
-#ravanTafsirLoadBtn:hover { box-shadow: 0 0 20px var(--neon-glow); }
-#ravanTafsirDeleteBtn:hover { box-shadow: 0 0 20px var(--danger); }
-
-/* ==========================================================================
-   AI Review button + modal
-   ========================================================================== */
+/* AI Review Button */
 .ai-review-btn {
   width: 34px;
   height: 34px;
@@ -974,13 +716,10 @@ a.tag-pill:hover {
   cursor: pointer;
   transition: all 0.25s ease;
 }
-.ai-review-btn:hover {
-  box-shadow: 0 0 16px var(--violet-glow);
-  transform: scale(1.06);
-}
+.ai-review-btn:hover { box-shadow: 0 0 16px var(--violet-glow); transform: scale(1.06); }
 .ai-review-btn svg { width: 16px; height: 16px; }
 
-/* Final intent, no !important needed (later rule wins on equal specificity). */
+/* AI Review Modal Specifics */
 .ai-review-modal {
   width: min(96vw, 1100px);
   max-width: 1100px;
@@ -996,8 +735,7 @@ a.tag-pill:hover {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--glass-border);
 }
-#aiReviewContent,
-#aiReviewEdit {
+#aiReviewContent, #aiReviewEdit {
   flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1011,18 +749,6 @@ a.tag-pill:hover {
   border-top: 1px solid var(--glass-border);
   gap: 8px;
 }
-
-@media (max-width: 640px) {
-  .ai-review-modal {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100dvh;
-    max-height: 100dvh;
-    border-radius: 0;
-    padding: 14px;
-  }
-}
-
 .ai-review-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1031,165 +757,6 @@ a.tag-pill:hover {
 }
 .ai-review-loading { padding: 10px 0 6px; }
 
-/* ------------------------------------------------------------------
-   Markdown inside AI review — merged from the two duplicate blocks.
-   ------------------------------------------------------------------ */
-.ai-review-text {
-  font-size: 0.95rem;
-  line-height: 1.9;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: anywhere;
-  padding: 14px;
-  margin-bottom: 16px;
-}
-.ai-review-text > *:first-child { margin-top: 0; }
-.ai-review-text > *:last-child  { margin-bottom: 0; }
-
-.ai-review-text h1,
-.ai-review-text h2,
-.ai-review-text h3,
-.ai-review-text h4,
-.ai-review-text h5 {
-  margin: 1.1em 0 0.5em;
-  font-weight: 700;
-  line-height: 1.5;
-  color: var(--text);
-}
-.ai-review-text h1 { font-size: 1.2rem; }
-.ai-review-text h2 { font-size: 1.12rem; }
-.ai-review-text h3 { font-size: 1.05rem; }
-.ai-review-text h4 { font-size: 1rem; }
-
-.ai-review-text p { margin: 0.6em 0; }
-
-.ai-review-text strong { font-weight: 700; color: var(--text); }
-.ai-review-text em     { font-style: italic; }
-.ai-review-text del    { opacity: 0.6; }
-
-.ai-review-text ul,
-.ai-review-text ol {
-  margin: 0.6em 0;
-  padding-inline-start: 1.6em;
-}
-.ai-review-text li { margin: 0.25em 0; }
-.ai-review-text li > p { margin: 0.2em 0; }
-
-.ai-review-text blockquote {
-  margin: 0.8em 0;
-  padding: 0.5em 1em;
-  border-inline-start: 3px solid var(--violet);
-  background: var(--surface-2);
-  border-radius: 8px;
-  color: var(--text-dim);
-}
-.ai-review-text blockquote p { margin: 0.3em 0; }
-
-.ai-review-text code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.85em;
-  padding: 0.15em 0.4em;
-  background: var(--surface-2);
-  border-radius: 4px;
-  direction: ltr;
-  unicode-bidi: embed;
-}
-
-.ai-review-text pre {
-  margin: 0.8em 0;
-  padding: 12px 14px;
-  background: var(--surface-2);
-  border-radius: 10px;
-  overflow-x: auto;
-  direction: ltr;
-  text-align: left;
-}
-.ai-review-text pre code {
-  padding: 0;
-  background: transparent;
-  font-size: 0.85rem;
-}
-
-.ai-review-text table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 1em 0;
-  font-size: 0.88rem;
-  display: block;
-  overflow-x: auto;
-}
-.ai-review-text th,
-.ai-review-text td {
-  border: 1px solid var(--glass-border);
-  padding: 8px 10px;
-  text-align: right;
-  vertical-align: top;
-}
-.ai-review-text th {
-  background: var(--surface-2);
-  font-weight: 700;
-}
-
-.ai-review-text hr {
-  border: none;
-  border-top: 1px solid var(--glass-border);
-  margin: 1.2em 0;
-}
-
-.ai-review-text a {
-  color: var(--violet);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.ai-review-text a:hover { opacity: 0.8; }
-
-.ai-review-text img {
-  max-width: 100%;
-  border-radius: 8px;
-}
-
-/* ==========================================================================
-   Tables: horizontal scroll wrapper
-   ========================================================================== */
-.ai-review-text .table-scroll {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  margin: 1em 0;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 10px;
-  border: 1px solid var(--glass-border);
-}
-.ai-review-text .table-scroll table {
-  margin: 0;
-  border: none;
-  width: auto;
-  min-width: 100%;
-  display: table;
-}
-.ai-review-text .table-scroll th,
-.ai-review-text .table-scroll td {
-  white-space: nowrap;
-  border-top: none;
-  border-bottom: 1px solid var(--glass-border);
-  border-inline-start: none;
-  border-inline-end: 1px solid var(--glass-border);
-}
-.ai-review-text .table-scroll tr:last-child td { border-bottom: none; }
-
-.ai-review-text .table-scroll::-webkit-scrollbar { height: 8px; }
-.ai-review-text .table-scroll::-webkit-scrollbar-track { background: transparent; }
-.ai-review-text .table-scroll::-webkit-scrollbar-thumb {
-  background: var(--glass-border);
-  border-radius: 4px;
-}
-.ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--violet);
-}
-
-/* ==========================================================================
-   AI review: model select + badge
-   ========================================================================== */
 .ai-fn-select {
   margin-inline-start: auto;
   margin-inline-end: 8px;
@@ -1202,10 +769,7 @@ a.tag-pill:hover {
   font-family: inherit;
   cursor: pointer;
 }
-.ai-fn-select:focus {
-  outline: none;
-  border-color: var(--violet);
-}
+.ai-fn-select:focus { outline: none; border-color: var(--violet); }
 
 .ai-review-model-badge {
   font-size: 0.72rem;
@@ -1218,36 +782,7 @@ a.tag-pill:hover {
   margin-bottom: 10px;
 }
 
-/* ==========================================================================
-   Mobile adjustments
-   ========================================================================== */
-@media (max-width: 560px) {
-  .container { padding-left: 10px; padding-right: 10px; }
-  .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 18px 12px 14px; }
-
-  .progress-hero { padding: 12px 14px; gap: 10px; }
-  .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
-  .progress-hero__actions .btn {
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn,
-  .progress-hero__actions .go-to-btn {
-    width: 24px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn svg,
-  .progress-hero__actions .go-to-btn svg {
-    width: 12px;
-    height: 12px;
-  }
-
-  .ravan-tafsir-content { font-size: 0.88rem; line-height: 2; }
-  .ravan-tafsir-manual-input { flex-direction: column; }
-  .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
-}
+/* AI External Links */
 .ai-ext-links {
   padding: 10px 0 12px;
   border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
@@ -1274,7 +809,251 @@ a.tag-pill:hover {
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.ai-ext-btn:hover {
-  border-color: var(--violet, #8b5cf6);
-  color: var(--violet, #8b5cf6);
+.ai-ext-btn:hover { border-color: var(--violet, #8b5cf6); color: var(--violet, #8b5cf6); }
+
+/* Markdown Inside AI Review */
+.ai-review-text {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.ai-review-text > *:first-child { margin-top: 0; }
+.ai-review-text > *:last-child { margin-bottom: 0; }
+
+.ai-review-text h1, .ai-review-text h2, .ai-review-text h3, .ai-review-text h4, .ai-review-text h5 {
+  margin: 1.1em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text);
+}
+.ai-review-text h1 { font-size: 1.2rem; }
+.ai-review-text h2 { font-size: 1.12rem; }
+.ai-review-text h3 { font-size: 1.05rem; }
+.ai-review-text h4 { font-size: 1rem; }
+.ai-review-text p { margin: 0.6em 0; }
+.ai-review-text strong { font-weight: 700; color: var(--text); }
+.ai-review-text em { font-style: italic; }
+.ai-review-text del { opacity: 0.6; }
+
+.ai-review-text ul, .ai-review-text ol {
+  margin: 0.6em 0;
+  padding-inline-start: 1.6em;
+}
+.ai-review-text li { margin: 0.25em 0; }
+.ai-review-text li > p { margin: 0.2em 0; }
+
+.ai-review-text blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-inline-start: 3px solid var(--violet);
+  background: var(--surface-2);
+  border-radius: 8px;
+  color: var(--text-dim);
+}
+.ai-review-text blockquote p { margin: 0.3em 0; }
+
+.ai-review-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  background: var(--surface-2);
+  border-radius: 4px;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+.ai-review-text pre {
+  margin: 0.8em 0;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+}
+.ai-review-text pre code { padding: 0; background: transparent; font-size: 0.85rem; }
+
+.ai-review-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.88rem;
+  display: block;
+  overflow-x: auto;
+}
+.ai-review-text th, .ai-review-text td {
+  border: 1px solid var(--glass-border);
+  padding: 8px 10px;
+  text-align: right;
+  vertical-align: top;
+}
+.ai-review-text th { background: var(--surface-2); font-weight: 700; }
+.ai-review-text hr { border: none; border-top: 1px solid var(--glass-border); margin: 1.2em 0; }
+.ai-review-text a { color: var(--violet); text-decoration: underline; text-underline-offset: 3px; }
+.ai-review-text a:hover { opacity: 0.8; }
+.ai-review-text img { max-width: 100%; border-radius: 8px; }
+
+/* Tables scroll wrapper */
+.ai-review-text .table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 1em 0;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+.ai-review-text .table-scroll table {
+  margin: 0;
+  border: none;
+  width: auto;
+  min-width: 100%;
+  display: table;
+}
+.ai-review-text .table-scroll th, .ai-review-text .table-scroll td {
+  white-space: nowrap;
+  border-top: none;
+  border-bottom: 1px solid var(--glass-border);
+  border-inline-start: none;
+  border-inline-end: 1px solid var(--glass-border);
+}
+.ai-review-text .table-scroll tr:last-child td { border-bottom: none; }
+.ai-review-text .table-scroll::-webkit-scrollbar { height: 8px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-track { background: transparent; }
+.ai-review-text .table-scroll::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+
+/* ==========================================================================
+   9. RAVAN TAFSIR
+   ========================================================================== */
+.ravan-tafsir-container {
+  position: relative;
+  min-height: 80px;
+}
+.ravan-tafsir-empty { text-align: center; padding: 16px 0; }
+.ravan-tafsir-loading { padding: 4px 0; }
+.ravan-tafsir-content {
+  font-size: 0.95rem;
+  line-height: 2.2;
+  color: var(--text);
+  white-space: pre-wrap;
+  padding: 12px 14px;
+}
+.ravan-tafsir-content p { margin: 0 0 10px 0; }
+.ravan-tafsir-content ul, .ravan-tafsir-content ol {
+  margin: 8px 0 12px 20px;
+  padding-right: 20px;
+}
+.ravan-tafsir-content li { margin-bottom: 4px; }
+.ravan-tafsir-content blockquote {
+  border-right: 3px solid var(--violet);
+  padding-right: 14px;
+  margin: 10px 0;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.ravan-tafsir-error { color: var(--danger); font-size: 0.85rem; padding: 8px 0; }
+.ravan-tafsir-error p { margin: 4px 0; }
+.ravan-tafsir-manual-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ravan-tafsir-manual-input input { flex: 1; min-width: 200px; }
+#ravanTafsirLoadBtn { margin-inline-start: auto; }
+#ravanTafsirLoadBtn:hover { box-shadow: 0 0 20px var(--neon-glow); }
+#ravanTafsirDeleteBtn:hover { box-shadow: 0 0 20px var(--danger); }
+
+/* ==========================================================================
+   10. UTILITIES, TOASTS & SKELETONS
+   ========================================================================== */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-faint);
+}
+.empty-state__icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.5; }
+.empty-state p { margin: 0 0 16px; font-size: 0.88rem; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  inset-inline: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+.toast__inner {
+  border-color: var(--neon);
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  box-shadow: 0 0 30px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  opacity: 0;
+  translate: 0 10px;
+  transition: all 0.3s ease;
+}
+.toast.show .toast__inner { opacity: 1; translate: 0; }
+
+.search-hit {
+  background: var(--neon-glow);
+  color: var(--neon);
+  font-weight: 700;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+.hidden { display: none !important; }
+
+/* ==========================================================================
+   11. RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 640px) {
+  .ai-review-modal {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .sticky-ayah { top: 60px; }
+  .container { padding-left: 10px; padding-right: 10px; }
+  .card, .tafsir-card { padding: 14px; }
+  .ayah-frame__inner { padding: 18px 12px 14px; }
+  .progress-hero { padding: 12px 14px; gap: 10px; }
+  .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
+  .progress-hero__actions .btn { font-size: 0.65rem; padding: 3px 8px; height: 24px; }
+  .progress-hero__actions .bookmark-btn,
+  .progress-hero__actions .go-to-btn { width: 24px; height: 24px; }
+  .progress-hero__actions .bookmark-btn svg,
+  .progress-hero__actions .go-to-btn svg { width: 12px; height: 12px; }
+  .ravan-tafsir-content { font-size: 0.88rem; line-height: 2; }
+  .ravan-tafsir-manual-input { flex-direction: column; }
+  .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ayah-frame::before { display: none; }
 }
