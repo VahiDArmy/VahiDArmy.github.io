@@ -157,6 +157,87 @@
   }
 
   // ============================================================
+  // استریم پاسخ هوش مصنوعی (جایگزین Store.callAiReview)
+  // ============================================================
+
+  // آدرس و کلید پروژه از کلاینت Supabase خوانده می‌شود
+  const SB_URL = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) ? CONFIG.SUPABASE_URL : sb.supabaseUrl;
+  const SB_KEY = (typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_ANON_KEY) ? CONFIG.SUPABASE_ANON_KEY : sb.supabaseKey;
+
+  async function streamAiReview({ surah, ayah, userOpinion }, onProgress) {
+    // نام تابع Edge از دراپ‌دان انتخاب مدل گرفته می‌شود
+    const fnId =
+      (aiFunctionSelect && aiFunctionSelect.value) ||
+      localStorage.getItem('ai_fn') ||
+      (typeof CONFIG !== 'undefined' ? CONFIG.AI_FUNCTION_DEFAULT : 'chat');
+
+    const url = SB_URL + '/functions/v1/' + fnId;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + SB_KEY,
+        'apikey': SB_KEY,
+      },
+      body: JSON.stringify({ surah, ayah, userOpinion }),
+    });
+
+    const ct = res.headers.get('content-type') || '';
+
+    // اگر خطا برگشت یا اصلاً استریم نبود، متن خطا را از JSON بخوان
+    if (!res.ok || !res.body || !ct.includes('text/event-stream')) {
+      const text = await res.text();
+      let msg = 'خطای ' + res.status;
+      try {
+        const j = JSON.parse(text);
+        if (j && j.error) msg = j.error;
+      } catch (_) { /* ignore */ }
+      throw new Error(msg);
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let fullText = '';
+    let model = '';
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // پیام‌های SSE با \n\n از هم جدا می‌شوند
+      const events = buffer.split('\n\n');
+      buffer = events.pop() || '';
+
+      for (const evt of events) {
+        const lines = evt.split('\n');
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+
+          const data = trimmed.slice(5).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const json = JSON.parse(data);
+            if (json.model) model = json.model;
+            const token = json.choices && json.choices[0] && json.choices[0].delta && json.choices[0].delta.content;
+            if (token) {
+              fullText += token;
+              onProgress(fullText, token);
+            }
+          } catch (_) { /* json ناقص — رد کن */ }
+        }
+      }
+    }
+
+    return { content: fullText, model };
+  }
+
+  // ============================================================
   // توابع اصلی
   // ============================================================
 
@@ -402,7 +483,7 @@
     }
   }
 
-  // تولید پاسخ جدید — هم برای بار اول و هم برای «تولید مجدد»
+  // تولید پاسخ جدید — با استریم (کلمه‌به‌کلمه نمایش داده می‌شود)
   async function generateAiReview() {
     if (!currentAiTafsirId) return;
     if (!currentAiTafsirContent) {
@@ -412,18 +493,43 @@
 
     showAiState('loading');
 
+    // برای رندر نرم‌تر در طول استریم (نه هر توکن، بلکه هر فریم)
+    let pendingRender = false;
+    let latestText = '';
+    function scheduleRender(text) {
+      latestText = text;
+      if (pendingRender) return;
+      pendingRender = true;
+      requestAnimationFrame(() => {
+        pendingRender = false;
+        aiReviewText.innerHTML = renderMarkdown(latestText);
+      });
+    }
+
     try {
       const surahData = await QuranData.getSurah(current.surah);
       const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
       const ayahText = ayahObj ? ayahObj.ar : '';
 
-      const result = await Store.callAiReview({
-        surah: current.surah,
-        ayah: current.ayah,
-        ayahText,
-        userOpinion: currentAiTafsirContent,
-      });
+      let streamingStarted = false;
 
+      const result = await streamAiReview(
+        {
+          surah: current.surah,
+          ayah: current.ayah,
+          ayahText,
+          userOpinion: currentAiTafsirContent,
+        },
+        (fullText) => {
+          if (!streamingStarted) {
+            streamingStarted = true;
+            showAiState('content');
+          }
+          scheduleRender(fullText);
+        }
+      );
+
+      // پایان استریم — ذخیره در دیتابیس
       await Store.saveAiReview(currentAiTafsirId, result.content, result.model);
       currentAiContent = result.content;
       currentAiModel = result.model || '';
@@ -433,7 +539,6 @@
     } catch (err) {
       console.error(err);
       UI.toast('خطا در بررسی هوشمند: ' + (err.message || 'نامشخص'));
-      // اگر پاسخ قبلی وجود دارد، برگرد به آن؛ وگرنه حالت خالی
       if (currentAiContent) {
         aiReviewText.innerHTML = renderMarkdown(currentAiContent);
         updateAiModelBadge();
@@ -764,12 +869,10 @@
     if (e.target === aiReviewModal) closeAiModal();
   });
 
-  // شروع بررسی (از حالت خالی)
   if (aiReviewStartBtn) {
     aiReviewStartBtn.addEventListener('click', generateAiReview);
   }
 
-  // تولید مجدد (رفرش) — همیشه پاسخ جدید می‌گیرد
   aiReviewRefreshBtn.addEventListener('click', generateAiReview);
 
   aiReviewEditBtn.addEventListener('click', enterAiEditMode);
