@@ -109,6 +109,23 @@
     return Array.from(new Set(str.split(/[,،]/).map(t => t.trim()).filter(Boolean)));
   }
 
+  function enterEditMode(t) {
+    editingId = t.id;
+    tafsirContent.value = t.content || '';
+    tafsirTags.value = (t.tags || []).join('، ');
+    editBanner.hidden = false;
+    submitBtn.textContent = 'به‌روزرسانی تفسیر';
+    tafsirContent.focus();
+  }
+
+  function exitEditMode() {
+    editingId = null;
+    tafsirContent.value = '';
+    tafsirTags.value = '';
+    editBanner.hidden = true;
+    submitBtn.textContent = 'ثبت تفسیر';
+  }
+
   // ============================================================
   // Main Render Functions
   // ============================================================
@@ -484,6 +501,9 @@
       UI.toast('خطا در ذخیره تفسیر');
     }
   });
+
+  // Cancel edit button
+  editBanner.querySelector('[data-cancel-edit]')?.addEventListener('click', exitEditMode);
 
   // Ravan Tafsir Listeners
   ravanTafsirLoadBtn.addEventListener('click', () => loadRavanTafsir(current.surah, current.ayah));
