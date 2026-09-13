@@ -43,7 +43,7 @@
   const aiReviewDeleteBtn = document.getElementById('aiReviewDeleteBtn');
   const aiFunctionSelect = document.getElementById('aiFunctionSelect');
   const aiReviewModelBadge = document.getElementById('aiReviewModelBadge');
-
+const aiReviewExternalLinks = document.getElementById('aiReviewExternalLinks');
   // -------------------------------------------------------------
   // رندر Markdown
   // -------------------------------------------------------------
