@@ -2,6 +2,15 @@
 // صفحهٔ کار — یک «آیهٔ در حال کار» واحد
 // =============================================================
 (async function () {
+  // Safe Logout Button Logic
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn && typeof Auth !== 'undefined') {
+    logoutBtn.addEventListener('click', async () => {
+      await Auth.signOut();
+      location.href = 'login.html';
+    });
+  }
+
   // Elements
   const stickyFrame = document.getElementById('workAyahFrame');
   const selectRow = { surah: document.getElementById('formSurahSelect'), ayah: document.getElementById('formAyahSelect') };
@@ -69,7 +78,9 @@
   } else {
     try {
       const meta = await Store.getSiteMeta();
-      current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+      if (meta && meta.bookmark_surah) {
+        current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+      }
     } catch (e) {
       console.warn("Could not load site meta, defaulting to 1:1");
     }
