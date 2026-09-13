@@ -1248,3 +1248,33 @@ a.tag-pill:hover {
   .ravan-tafsir-manual-input { flex-direction: column; }
   .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
 }
+.ai-ext-links {
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ai-ext-links__label {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  margin-inline-end: 4px;
+}
+.ai-ext-btn {
+  display: inline-block;
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ai-ext-btn:hover {
+  border-color: var(--violet, #8b5cf6);
+  color: var(--violet, #8b5cf6);
+}
