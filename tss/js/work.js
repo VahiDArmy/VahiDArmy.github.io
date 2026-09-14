@@ -56,11 +56,19 @@
   // State variables
   let editingId = null;
   let current = { surah: 1, ayah: 1 };
-  let detectedLink = null;
   let currentAiTafsirId = null;
   let currentAiTafsirContent = '';
   let currentAiContent = '';
   let currentAiModel = '';
+
+  // Link tool elements
+  const openLinkToolBtn = document.getElementById('openLinkToolBtn');
+  const linkToolModal = document.getElementById('linkToolModal');
+  const cancelLinkBtn = document.getElementById('cancelLinkBtn');
+  const linkSurahSelect = document.getElementById('linkSurahSelect');
+  const linkAyahSelect = document.getElementById('linkAyahSelect');
+  const linkAyahPreview = document.getElementById('linkAyahPreview');
+  const insertLinkBtn = document.getElementById('insertLinkBtn');
 
   // Initialize Data
   let index = [];
@@ -107,6 +115,70 @@
 
   function parseTags(str) {
     return Array.from(new Set(str.split(/[,،]/).map(t => t.trim()).filter(Boolean)));
+  }
+
+  // ============================================================
+  // Link Tool — افزودن لینک [[سوره:آیه]] یا [[سوره:آیه|گزیده]]
+  // ============================================================
+  async function updateLinkPreview() {
+    if (!linkAyahPreview || !linkSurahSelect || !linkAyahSelect) return;
+    const surah = Number(linkSurahSelect.value);
+    const ayah = Number(linkAyahSelect.value);
+    if (!surah || !ayah) {
+      linkAyahPreview.textContent = '';
+      return;
+    }
+    try {
+      const surahData = await QuranData.getSurah(surah);
+      const ayahObj = surahData.ayahs.find((a) => a.v === ayah);
+      const nameFa = (index.find((s) => s.number === surah) || {}).name_fa || surah;
+      if (ayahObj) {
+        linkAyahPreview.innerHTML =
+          `<div style="font-family:var(--font-quran); font-size:1.15rem; line-height:2; text-align:center; margin-bottom:8px;">${ayahObj.ar}</div>` +
+          `<div style="font-size:0.82rem; color:var(--text-dim); line-height:1.7;">${ayahObj.fa || ''}</div>` +
+          `<div style="font-size:0.72rem; color:var(--text-faint); margin-top:6px;">سورهٔ ${nameFa} · آیهٔ ${UI.toPersianDigits(ayah)}</div>`;
+      } else {
+        linkAyahPreview.textContent = 'آیه یافت نشد.';
+      }
+    } catch (e) {
+      console.error(e);
+      linkAyahPreview.textContent = 'خطا در بارگذاری آیه.';
+    }
+  }
+
+  async function openLinkTool() {
+    if (!linkToolModal || !linkSurahSelect || !linkAyahSelect) return;
+    UI.populateSurahSelect(linkSurahSelect, index, current.surah);
+    const surahData = await QuranData.getSurah(current.surah);
+    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, current.ayah);
+    linkToolModal.hidden = false;
+    await updateLinkPreview();
+  }
+
+  function closeLinkTool() {
+    if (linkToolModal) linkToolModal.hidden = true;
+  }
+
+  function insertLinkFromTool() {
+    if (!linkSurahSelect || !linkAyahSelect || !tafsirContent) return;
+    const surah = Number(linkSurahSelect.value);
+    const ayah = Number(linkAyahSelect.value);
+    if (!surah || !ayah) return;
+
+    // اگر کاربر بخشی از پیش‌نمایش را انتخاب کرده باشد، همان را به عنوان excerpt بگیر
+    let excerpt = null;
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed && linkAyahPreview && linkAyahPreview.contains(sel.anchorNode)) {
+      const selected = sel.toString().trim();
+      if (selected.length > 0 && selected.length <= 120) {
+        excerpt = selected;
+      }
+    }
+
+    const token = AyahLinks.makeToken(surah, ayah, excerpt);
+    insertAtCursor(tafsirContent, token);
+    closeLinkTool();
+    UI.toast(excerpt ? 'لینک با گزیده درج شد' : 'لینک آیه درج شد');
   }
 
   function enterEditMode(t) {
@@ -651,6 +723,43 @@
 
   // Cancel edit button
   editBanner.querySelector('[data-cancel-edit]')?.addEventListener('click', exitEditMode);
+
+  // ---- Link Tool listeners ----
+  if (openLinkToolBtn) {
+    openLinkToolBtn.addEventListener('click', openLinkTool);
+  }
+  if (cancelLinkBtn) {
+    cancelLinkBtn.addEventListener('click', closeLinkTool);
+  }
+  if (linkToolModal) {
+    linkToolModal.addEventListener('click', (e) => {
+      if (e.target === linkToolModal) closeLinkTool();
+    });
+  }
+  if (linkSurahSelect) {
+    linkSurahSelect.addEventListener('change', async () => {
+      const surah = Number(linkSurahSelect.value);
+      try {
+        const surahData = await QuranData.getSurah(surah);
+        UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1);
+        await updateLinkPreview();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
+  if (linkAyahSelect) {
+    linkAyahSelect.addEventListener('change', updateLinkPreview);
+  }
+  if (insertLinkBtn) {
+    insertLinkBtn.addEventListener('click', insertLinkFromTool);
+  }
+  // Escape closes link modal too
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && linkToolModal && !linkToolModal.hidden) {
+      closeLinkTool();
+    }
+  });
 
   // Ravan Tafsir Listeners
   ravanTafsirLoadBtn.addEventListener('click', () => loadRavanTafsir(current.surah, current.ayah));
