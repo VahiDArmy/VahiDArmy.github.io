@@ -126,7 +126,7 @@
     submitBtn.textContent = 'ثبت تفسیر';
   }
 
-  // --- توابع کمکی بررسی هوشمند ---
+  // --- Markdown Rendering ---
   function renderMarkdown(md) {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) {
@@ -152,7 +152,7 @@
   function initAiFunctionSelect() {
     if (!aiFunctionSelect || typeof CONFIG === 'undefined' || !CONFIG.AI_FUNCTIONS) return;
     const saved = localStorage.getItem('ai_fn') || CONFIG.AI_FUNCTION_DEFAULT;
-    
+
     aiFunctionSelect.innerHTML = CONFIG.AI_FUNCTIONS
       .map(f => '<option value="' + f.id + '"' + (f.id === saved ? ' selected' : '') + '>' + f.label + '</option>')
       .join('');
@@ -175,10 +175,13 @@
     }
   }
 
+  // -------------------------------------------------------------
+  // External AI providers
+  // -------------------------------------------------------------
   const EXTERNAL_PROVIDERS = {
-    deepseek: { url: (prompt) => 'https://chat.deepseek.com/?q=' + encodeURIComponent(prompt) + '&r=true&s=true' },
+    deepseek: { url: (prompt) => 'https://chat.deepseek.com/?q=' + encodeURIComponent(prompt) + '&r=true' },
     glm: { url: (prompt) => 'https://chatglm.cn/main/alltoolsdetail?q=' + encodeURIComponent(prompt) },
-    kimi: { url: (prompt) => 'https://kimi.moonshot.cn/?q=' + encodeURIComponent(prompt) }
+    kimi: { url: (prompt) => 'https://www.kimi.ai/?q=' + encodeURIComponent(prompt) },
   };
 
   function buildExternalPrompt() {
@@ -306,7 +309,6 @@
         </div>`;
       }).join('');
 
-      // Attach event listeners for the dynamic content
       tafsirsListEl.querySelectorAll('[data-toggle]').forEach((btn) => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-toggle');
@@ -361,7 +363,7 @@
     const surahNum = Number(surah);
     const ayahNum = Number(ayah);
     const { data: existing } = await sb.from('ravan_tafsirs').select('surah').eq('surah', surahNum).eq('ayah', ayahNum).maybeSingle();
-    
+
     let result;
     if (existing) {
       result = await sb.from('ravan_tafsirs').update({ content, updated_at: new Date().toISOString() }).eq('surah', surahNum).eq('ayah', ayahNum);
@@ -416,41 +418,6 @@
   // ============================================================
   // AI Review Logic
   // ============================================================
-  function openAiReview(tafsir) {
-    currentAiTafsirId = tafsir.id;
-    currentAiTafsirContent = tafsir.content;
-    currentAiContent = '';
-    currentAiModel = '';
-    aiReviewModal.hidden = false;
-    updateExternalLinks();
-    showAiState('loading');
-
-    Store.getAiReview(tafsir.id).then(existing => {
-      if (existing && existing.content) {
-        currentAiContent = existing.content;
-        currentAiModel = existing.model || '';
-        aiReviewText.innerHTML = renderMarkdown(existing.content);
-        updateAiModelBadge();
-        showAiState('content');
-      } else {
-        showAiState('empty');
-      }
-    }).catch(err => {
-      console.error(err);
-      showAiState('empty');
-    });
-  }
-
-  function closeAiModal() {
-    aiReviewModal.hidden = true;
-    currentAiTafsirId = null;
-    currentAiTafsirContent = '';
-    currentAiContent = '';
-    currentAiModel = '';
-    if (aiReviewModelBadge) aiReviewModelBadge.classList.add('hidden');
-    if (aiReviewExternalLinks) aiReviewExternalLinks.classList.add('hidden');
-  }
-
   function showAiState(state) {
     aiReviewLoading.classList.add('hidden');
     aiReviewEmpty.classList.add('hidden');
@@ -477,6 +444,47 @@
       aiReviewRefreshBtn.style.display = 'none';
       aiReviewDeleteBtn.style.display = 'none';
     }
+  }
+
+  function openAiModal() {
+    aiReviewModal.hidden = false;
+  }
+
+  function closeAiModal() {
+    aiReviewModal.hidden = true;
+    currentAiTafsirId = null;
+    currentAiTafsirContent = '';
+    currentAiContent = '';
+    currentAiModel = '';
+    if (aiReviewModelBadge) aiReviewModelBadge.classList.add('hidden');
+    if (aiReviewExternalLinks) aiReviewExternalLinks.classList.add('hidden');
+  }
+
+  function openAiReview(tafsir) {
+    currentAiTafsirId = tafsir.id;
+    currentAiTafsirContent = tafsir.content;
+    currentAiContent = '';
+    currentAiModel = '';
+    openAiModal();
+    updateExternalLinks();
+    showAiState('loading');
+
+    Store.getAiReview(tafsir.id).then(existing => {
+      if (existing && existing.content) {
+        currentAiContent = existing.content;
+        currentAiModel = existing.model || '';
+        aiReviewText.innerHTML = renderMarkdown(existing.content);
+        updateAiModelBadge();
+        showAiState('content');
+      } else {
+        updateAiModelBadge();
+        showAiState('empty');
+      }
+    }).catch(err => {
+      console.error(err);
+      updateAiModelBadge();
+      showAiState('empty');
+    });
   }
 
   async function generateAiReview() {
@@ -506,6 +514,7 @@
       UI.toast('خطا در بررسی هوشمند: ' + (err.message || 'نامشخص'));
       if (currentAiContent) {
         aiReviewText.innerHTML = renderMarkdown(currentAiContent);
+        updateAiModelBadge();
         showAiState('content');
       } else {
         showAiState('empty');
@@ -513,10 +522,53 @@
     }
   }
 
+  function enterAiEditMode() {
+    aiReviewEditArea.value = currentAiContent;
+    showAiState('edit');
+  }
+
+  function cancelAiEdit() {
+    showAiState('content');
+  }
+
+  async function saveAiEdit() {
+    const newContent = aiReviewEditArea.value.trim();
+    if (!newContent) {
+      UI.toast('متن خالی است');
+      return;
+    }
+    try {
+      await Store.saveAiReview(currentAiTafsirId, newContent, currentAiModel);
+      currentAiContent = newContent;
+      aiReviewText.innerHTML = renderMarkdown(newContent);
+      showAiState('content');
+      UI.toast('ذخیره شد');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در ذخیره');
+    }
+  }
+
+  async function deleteAiReview() {
+    if (!currentAiTafsirId) return;
+    if (!confirm('پاسخ بررسی هوشمند حذف شود؟')) return;
+    try {
+      await Store.deleteAiReview(currentAiTafsirId);
+      currentAiContent = '';
+      currentAiModel = '';
+      updateAiModelBadge();
+      showAiState('empty');
+      UI.toast('حذف شد — می‌توانید پاسخ جدید تولید کنید');
+    } catch (err) {
+      console.error(err);
+      UI.toast('خطا در حذف');
+    }
+  }
+
   // ============================================================
   // Event Listeners Initialization
   // ============================================================
-  
+
   // Navigation
   document.getElementById('goToCurrentBtn').addEventListener('click', async () => {
     const meta = await Store.getSiteMeta();
@@ -610,7 +662,7 @@
       UI.toast('حذف شد');
     } catch (e) { UI.toast('خطا در حذف'); }
   });
-  
+
   ravanTafsirManualBtn.addEventListener('click', () => {
     ravanTafsirError.classList.add('hidden');
     document.getElementById('ravanTafsirManualPaste').classList.remove('hidden');
@@ -627,22 +679,33 @@
     } catch (e) { UI.toast('خطا در ذخیره'); }
   });
 
-  // AI Review Listeners
-  aiReviewCloseBtn.addEventListener('click', closeAiModal);
-  if (aiReviewStartBtn) aiReviewStartBtn.addEventListener('click', generateAiReview);
-  aiReviewRefreshBtn.addEventListener('click', generateAiReview);
-  aiReviewEditBtn.addEventListener('click', () => { aiReviewEditArea.value = currentAiContent; showAiState('edit'); });
-  aiReviewCancelEditBtn.addEventListener('click', () => showAiState('content'));
-  aiReviewSaveBtn.addEventListener('click', async () => {
-    const newContent = aiReviewEditArea.value.trim();
-    if (!newContent) return;
-    await Store.saveAiReview(currentAiTafsirId, newContent, currentAiModel);
-    currentAiContent = newContent;
-    aiReviewText.innerHTML = renderMarkdown(newContent);
-    showAiState('content');
+  document.getElementById('ravanTafsirPasteCancel')?.addEventListener('click', () => {
+    document.getElementById('ravanTafsirManualPaste')?.classList.add('hidden');
+    document.getElementById('ravanTafsirPasteArea').value = '';
+    showRavanTafsirState('empty');
   });
 
+  // --- AI Review Listeners ---
+  aiReviewCloseBtn.addEventListener('click', closeAiModal);
+
+  // Click outside the modal card to close
+  aiReviewModal.addEventListener('click', (e) => {
+    if (e.target === aiReviewModal) closeAiModal();
+  });
+
+  // Escape key to close
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !aiReviewModal.hidden) closeAiModal();
+  });
+
+  if (aiReviewStartBtn) aiReviewStartBtn.addEventListener('click', generateAiReview);
+  aiReviewRefreshBtn.addEventListener('click', generateAiReview);
+  aiReviewEditBtn.addEventListener('click', enterAiEditMode);
+  aiReviewCancelEditBtn.addEventListener('click', cancelAiEdit);
+  aiReviewSaveBtn.addEventListener('click', saveAiEdit);
+  aiReviewDeleteBtn.addEventListener('click', deleteAiReview);   // 👈 این خط قبلاً نبود
+
   // Initialize UI
-  initAiFunctionSelect(); // 👈 این خط اضافه شد
+  initAiFunctionSelect();
   await renderCurrentAyah();
 })();
