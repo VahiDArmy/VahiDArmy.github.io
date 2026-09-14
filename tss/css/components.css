@@ -59,6 +59,25 @@
 }
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
 
+/* دکمهٔ لینک وقتی نشانگر روی یک [[سوره:آیه]] است */
+#openLinkToolBtn.is-editing-link {
+  border-color: var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+#openLinkToolBtn.is-editing-link:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 24px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+/* نشانگر روی لینک — کمی تأکید روی textarea */
+#tafsirContent.has-link-under-cursor {
+  border-color: var(--violet);
+  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+
 /* ==========================================================================
    2. GLASS SHELL (Shared Card Pattern)
    ========================================================================== */
@@ -633,7 +652,6 @@ a.tag-pill:hover {
 .ayah-link {
   color: var(--violet);
   font-weight: 700;
-  border-bottom: 1px dashed var(--violet);
   text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
   transition: text-shadow 0.2s ease, color 0.2s ease;
 }
