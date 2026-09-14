@@ -118,8 +118,70 @@
   }
 
   // ============================================================
-  // Link Tool — افزودن لینک [[سوره:آیه]] یا [[سوره:آیه|گزیده]]
+  // Link Tool — افزودن / ویرایش لینک [[سوره:آیه]] یا [[سوره:آیه|گزیده]]
   // ============================================================
+  const LINK_TOKEN_RE = /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g;
+  const LINK_BTN_DEFAULT = '﹢ لینک به آیهٔ دیگر';
+  let detectedLink = null; // { start, end, surah, ayah, excerpt }
+
+  function findLinkAtCursor(text, pos) {
+    LINK_TOKEN_RE.lastIndex = 0;
+    let m;
+    while ((m = LINK_TOKEN_RE.exec(text))) {
+      const start = m.index;
+      const end = start + m[0].length;
+      // نشانگر داخل یا دقیقاً روی مرز توکن
+      if (pos >= start && pos <= end) {
+        return {
+          start,
+          end,
+          surah: Number(m[1]),
+          ayah: Number(m[2]),
+          excerpt: m[3] ? m[3].trim() : null,
+          raw: m[0],
+        };
+      }
+    }
+    return null;
+  }
+
+  function updateLinkButtonState(opts = {}) {
+    if (!openLinkToolBtn || !tafsirContent) return;
+    const pos = tafsirContent.selectionStart ?? 0;
+    const found = findLinkAtCursor(tafsirContent.value, pos);
+
+    if (found) {
+      detectedLink = found;
+      const nameFa = (index.find((s) => s.number === found.surah) || {}).name_fa || found.surah;
+      openLinkToolBtn.textContent =
+        `✎ ویرایش لینک · سورهٔ ${nameFa}، آیهٔ ${UI.toPersianDigits(found.ayah)}`;
+      openLinkToolBtn.classList.add('is-editing-link');
+      tafsirContent.classList.add('has-link-under-cursor');
+
+      // هایلایت بصری: با کلیک روی محدودهٔ توکن، کل آن را سلکت کن (پس‌زمینهٔ selection)
+      if (opts.selectToken && document.activeElement === tafsirContent) {
+        const already =
+          tafsirContent.selectionStart === found.start &&
+          tafsirContent.selectionEnd === found.end;
+        if (!already) {
+          tafsirContent.setSelectionRange(found.start, found.end);
+        }
+      }
+    } else {
+      detectedLink = null;
+      openLinkToolBtn.textContent = LINK_BTN_DEFAULT;
+      openLinkToolBtn.classList.remove('is-editing-link');
+      tafsirContent.classList.remove('has-link-under-cursor');
+    }
+  }
+
+  /** وقتی کاربر روی دکمه کلیک می‌کند و لینک زیر نشانگر است، توکن را سلکت کن */
+  function selectDetectedLink() {
+    if (!detectedLink || !tafsirContent) return;
+    tafsirContent.focus();
+    tafsirContent.setSelectionRange(detectedLink.start, detectedLink.end);
+  }
+
   async function updateLinkPreview() {
     if (!linkAyahPreview || !linkSurahSelect || !linkAyahSelect) return;
     const surah = Number(linkSurahSelect.value);
@@ -148,15 +210,29 @@
 
   async function openLinkTool() {
     if (!linkToolModal || !linkSurahSelect || !linkAyahSelect) return;
-    UI.populateSurahSelect(linkSurahSelect, index, current.surah);
-    const surahData = await QuranData.getSurah(current.surah);
-    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, current.ayah);
+
+    // اگر نشانگر روی لینک موجود است، همان را برای ویرایش باز کن
+    const editing = detectedLink;
+    const initSurah = editing ? editing.surah : current.surah;
+    const initAyah = editing ? editing.ayah : current.ayah;
+
+    if (editing) selectDetectedLink();
+
+    UI.populateSurahSelect(linkSurahSelect, index, initSurah);
+    const surahData = await QuranData.getSurah(initSurah);
+    UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, initAyah);
     linkToolModal.hidden = false;
     await updateLinkPreview();
+
+    // عنوان دکمهٔ درج را متناسب با حالت تنظیم کن
+    if (insertLinkBtn) {
+      insertLinkBtn.textContent = editing ? 'به‌روزرسانی لینک' : 'درج لینک';
+    }
   }
 
   function closeLinkTool() {
     if (linkToolModal) linkToolModal.hidden = true;
+    if (insertLinkBtn) insertLinkBtn.textContent = 'درج لینک';
   }
 
   function insertLinkFromTool() {
@@ -176,9 +252,17 @@
     }
 
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
-    insertAtCursor(tafsirContent, token);
+
+    if (detectedLink) {
+      // ویرایش: جایگزین کردن توکن قبلی
+      replaceAtCursor(tafsirContent, detectedLink.start, detectedLink.end, token);
+      UI.toast('لینک به‌روزرسانی شد');
+    } else {
+      insertAtCursor(tafsirContent, token);
+      UI.toast(excerpt ? 'لینک با گزیده درج شد' : 'لینک آیه درج شد');
+    }
     closeLinkTool();
-    UI.toast(excerpt ? 'لینک با گزیده درج شد' : 'لینک آیه درج شد');
+    updateLinkButtonState();
   }
 
   function enterEditMode(t) {
@@ -727,6 +811,17 @@
   // ---- Link Tool listeners ----
   if (openLinkToolBtn) {
     openLinkToolBtn.addEventListener('click', openLinkTool);
+  }
+  // تشخیص لینک زیر نشانگر تایپ → تغییر متن دکمه + هایلایت
+  if (tafsirContent) {
+    tafsirContent.addEventListener('keyup', () => updateLinkButtonState());
+    tafsirContent.addEventListener('input', () => updateLinkButtonState());
+    tafsirContent.addEventListener('focus', () => updateLinkButtonState());
+    // کلیک روی محدودهٔ لینک → سلکت کل توکن برای هایلایت پس‌زمینه
+    tafsirContent.addEventListener('click', () => {
+      // تأخیر کوتاه تا selectionStart بعد از کلیک به‌روز شود
+      requestAnimationFrame(() => updateLinkButtonState({ selectToken: true }));
+    });
   }
   if (cancelLinkBtn) {
     cancelLinkBtn.addEventListener('click', closeLinkTool);
