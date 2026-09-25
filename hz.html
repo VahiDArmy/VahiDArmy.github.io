@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Particle Swarm — Click to Evolve</title>
-<meta name="description" content="A GPU particle swarm that morphs between an astrolabe, a DNA helix, a beating heart and the Persian word زینب." />
+<title>Particle Swarm — Heart ⇄ زینب</title>
+<meta name="description" content="A GPU particle swarm that morphs between a beating heart and the Persian word زینب, surrounded by small orbiting hearts." />
 
 <style>
   * { box-sizing: border-box; }
@@ -68,12 +68,11 @@
     transform: translateX(-50%) translateY(1px);
   }
 
-  /* Persian label styling: no wide tracking, no forced uppercase */
   #ui.rtl {
     direction: rtl;
     text-transform: none;
     letter-spacing: 2px;
-    font-size: 14px;
+    font-size: 15px;
     font-family: Tahoma, "Segoe UI", "Noto Naskh Arabic", "Noto Sans Arabic", "Geeza Pro", sans-serif;
   }
 
@@ -111,11 +110,11 @@
    * ================================================================== */
 
   const PARTICLE_COUNT = 100000;
-  const TEXT_WORD      = 'زینب';   // <- the Persian word used for shape #3
-  const TOTAL_SHAPES   = 4;
+  const TEXT_WORD      = 'زینب';
+  const TOTAL_SHAPES   = 2;
 
-  const SHAPE_NAMES = ['ASTROLABE', 'DNA HELIX', 'HEART', TEXT_WORD];
-  const RTL_SHAPES  = [3];         // indices that need RTL label styling
+  const SHAPE_NAMES = ['HEART', TEXT_WORD];
+  const RTL_SHAPES  = [1];
 
   /* ================================================================== *
    *  SCENE
@@ -134,7 +133,8 @@
 
   function updateCameraZ() {
     const aspect = window.innerWidth / window.innerHeight;
-    const maxShapeExtent = 38.0;
+    // Word + orbiting hearts need a bit more room than the original shapes
+    const maxShapeExtent = 50.0;
     const fovRad = (camera.fov * Math.PI) / 180;
     let requiredZ = maxShapeExtent / Math.tan(fovRad / 2);
 
@@ -153,9 +153,7 @@
   container.appendChild(renderer.domElement);
 
   /* ================================================================== *
-   *  TEXT  ->  PARTICLE POSITIONS
-   *  Rasterise the word on a 2D canvas, then sample every opaque pixel
-   *  and bake the resulting point cloud into a per-particle attribute.
+   *  TEXT -> POINT CLOUD
    * ================================================================== */
 
   function sampleTextPixels(text) {
@@ -167,14 +165,13 @@
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return null;
 
-    // Black background, white glyphs -> easy thresholding on the red channel
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, size, size);
 
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    try { ctx.direction = 'rtl'; } catch (e) { /* not supported, fine */ }
+    try { ctx.direction = 'rtl'; } catch (e) { /* not supported */ }
 
     const FONT_STACK =
       'Tahoma, "Segoe UI", "Noto Naskh Arabic", "Noto Sans Arabic", "Geeza Pro", "Arial", sans-serif';
@@ -182,7 +179,6 @@
     let fontSize = Math.round(size * 0.62);
     ctx.font = `bold ${fontSize}px ${FONT_STACK}`;
 
-    // Auto-shrink so the word always fits inside the canvas
     const maxWidth = size * 0.88;
     const measured = ctx.measureText(text).width || fontSize;
     if (measured > maxWidth) {
@@ -195,25 +191,20 @@
     const data = ctx.getImageData(0, 0, size, size).data;
     const pts = [];
 
-    // step = 2 keeps the point list small while still tracing the glyphs well
     const step = 2;
     for (let y = 0; y < size; y += step) {
       for (let x = 0; x < size; x += step) {
         const idx = (y * size + x) * 4;
-        if (data[idx] > 128) {
-          pts.push(x, y);
-        }
+        if (data[idx] > 128) pts.push(x, y);
       }
     }
-
-    return pts; // flat [x0, y0, x1, y1, ...] in canvas pixels
+    return pts;
   }
 
   function buildTextAttribute(text, count) {
     const arr = new Float32Array(count * 3);
     const pts = sampleTextPixels(text);
 
-    /* --- fallback: if the font produced nothing, draw a soft ring ------- */
     if (!pts || pts.length < 8) {
       console.warn('[swarm] Could not rasterise the text — using fallback ring.');
       for (let i = 0; i < count; i++) {
@@ -226,7 +217,6 @@
       return arr;
     }
 
-    /* --- bounding box so we can centre + normalise ---------------------- */
     let minX =  Infinity, maxX = -Infinity;
     let minY =  Infinity, maxY = -Infinity;
 
@@ -244,21 +234,19 @@
     const w  = Math.max(maxX - minX, 1);
     const h  = Math.max(maxY - minY, 1);
 
-    // Match the visual scale of the other shapes (they span roughly +/-24)
-    const TARGET_SPAN = 48;
+    const TARGET_SPAN = 46;
     const scale = TARGET_SPAN / Math.max(w, h);
 
     const pointCount = pts.length >> 1;
 
     for (let i = 0; i < count; i++) {
-      // Random source pixel (with repetition) so the strokes stay solid
       const p  = (Math.random() * pointCount) | 0;
       const px = pts[p * 2];
       const py = pts[p * 2 + 1];
 
       arr[i * 3]     = (px - cx) * scale + (Math.random() - 0.5) * 0.7;
       arr[i * 3 + 1] = -(py - cy) * scale + (Math.random() - 0.5) * 0.7;
-      arr[i * 3 + 2] = (Math.random() - 0.5) * 2.6;   // gives the word depth
+      arr[i * 3 + 2] = (Math.random() - 0.5) * 2.6;
     }
 
     return arr;
@@ -309,70 +297,20 @@
 
       attribute float aId;
       attribute vec3 aRandom;
-      attribute vec3 aText;      // baked point cloud of the Persian word
+      attribute vec3 aText;
 
       varying vec3 vColor;
       varying float vAlpha;
 
       #define PI 3.14159265359
 
-      vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d ) {
-          return a + b*cos( 6.28318*(c*t+d) );
+      vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+          return a + b * cos(6.28318 * (c * t + d));
       }
 
-      /* ---------------- shape 0 : astrolabe ---------------- */
-      vec3 getAstrolabe(float id, vec3 rnd) {
-          vec3 pos;
-
-          if (rnd.x > 0.3) {
-              float t = id * PI * 2.0;
-              float u = t * 13.0;
-              float v = t * 8.0;
-
-              float r = 12.0 + 3.0 * cos(v);
-              pos = vec3(r * cos(u), r * sin(u), 4.0 * sin(v));
-
-              float noiseAngle = rnd.y * PI * 2.0;
-              float noiseRadius = rnd.z * 1.5;
-              pos += vec3(cos(noiseAngle), sin(noiseAngle), cos(noiseAngle)) * noiseRadius;
-          } else {
-              float ringIdx = floor(rnd.y * 3.0);
-              float angle = id * PI * 2.0 * 1000.0 + uTime * 0.2 * (ringIdx > 1.0 ? -1.0 : 1.0);
-              float r = 24.0 + ringIdx * 4.0 + (rnd.z * 0.5);
-
-              pos = vec3(r * cos(angle), (rnd.x - 0.15) * 2.0, r * sin(angle));
-
-              float tilt = 0.5 + ringIdx * 0.8;
-              float rotX = cos(tilt); float rotY = sin(tilt);
-              pos.yz = mat2(rotX, -rotY, rotY, rotX) * pos.yz;
-              pos.xy = mat2(rotX, -rotY, rotY, rotX) * pos.xy;
-          }
-          return pos * 0.85;
-      }
-
-      /* ---------------- shape 1 : DNA helix ---------------- */
-      vec3 getDNA(float id, vec3 rnd) {
-          float h = (id - 0.5) * 75.0;
-          float angle = h * 0.5 + uTime * 0.5;
-          float radius = 16.0;
-
-          float strand = step(0.5, rnd.x);
-          angle += strand * PI;
-
-          vec3 pos = vec3(cos(angle) * radius, h, sin(angle) * radius);
-
-          float rungZone = fract(h * 0.5);
-          if (rungZone < 0.15 && rnd.y > 0.4) {
-              float span = (rnd.z * 2.0 - 1.0);
-              pos = vec3(span * cos(angle - strand*PI) * radius, h, span * sin(angle - strand*PI) * radius);
-          } else {
-              pos += (rnd - 0.5) * 1.0;
-          }
-
-          return pos;
-      }
-
-      /* ---------------- shape 2 : beating heart ---------------- */
+      /* ==========================================================
+       *  SHAPE 0 — BEATING HEART
+       * ========================================================== */
       vec3 getHeart(float id, vec3 rnd) {
           float u = rnd.x * PI * 2.0;
           float v = acos(2.0 * rnd.y - 1.0);
@@ -391,51 +329,124 @@
           return pos * scale * beat * 1.5;
       }
 
-      /* ---------------- shape 3 : the word  زینب ---------------- */
-      vec3 getText(float id, vec3 rnd) {
+      /* ==========================================================
+       *  SHAPE 1 — THE WORD  زینب  + SMALL ORBITING HEARTS
+       * ========================================================== */
+
+      // One small heart, floating on an orbit around the word
+      vec3 getSmallHeart(float id, vec3 rnd, float heartIdx) {
+          // Orbit around the word
+          float heartAngle = heartIdx * (PI * 2.0 / 6.0) + uTime * 0.25;
+          float orbitR = 34.0 + sin(heartIdx * 2.3) * 6.0;
+
+          vec3 center = vec3(
+              cos(heartAngle) * orbitR,
+              sin(heartAngle) * orbitR * 0.55
+                  + sin(uTime * 0.9 + heartIdx * 2.1) * 4.0,
+              sin(heartAngle * 0.7 + heartIdx) * 10.0
+          );
+
+          // Parametric heart outline
+          float u  = fract(aId * 11.317 + rnd.z) * PI * 2.0;
+          float hx = 16.0 * pow(sin(u), 3.0);
+          float hy = 13.0 * cos(u) - 5.0 * cos(2.0 * u)
+                     - 2.0 * cos(3.0 * u) - cos(4.0 * u);
+
+          // Fill factor: 0 = centre of heart, 1 = outline
+          float fill = pow(fract(aId * 7.739), 0.6);
+
+          vec2 heartCenter = vec2(0.0, -2.0);
+          vec2 outlinePt   = vec2(hx, hy);
+          vec2 filledPt    = mix(heartCenter, outlinePt, fill);
+
+          // Each heart beats on its own phase
+          float beat  = 1.0 + pow(sin(uTime * 3.5 + heartIdx * 1.7), 8.0) * 0.18;
+          float scale = 0.24 * beat;
+
+          // Depth so the heart has volume
+          float depth = (fract(aId * 3.1) - 0.5) * 3.0 * (1.0 - fill * 0.5);
+
+          vec3 localPos = vec3(filledPt * scale, depth);
+
+          return center + localPos;
+      }
+
+      vec3 getTextShape(float id, vec3 rnd) {
+          // ~22% of the particles form small orbiting hearts
+          if (rnd.y > 0.78) {
+              float heartIdx = floor(fract(rnd.y * 73.1) * 6.0);
+              return getSmallHeart(id, rnd, heartIdx);
+          }
+
+          // Rest form the word, with a gentle wave so the letters breathe
           vec3 p = aText;
-          // gentle wave so the letters feel alive rather than a flat decal
-          p.z += sin(uTime * 1.8 + p.x * 0.22 + p.y * 0.1) * 1.4;
-          // very subtle per-particle shimmer
+          p.z += sin(uTime * 1.8 + p.x * 0.22 + p.y * 0.1) * 1.6;
           p.xy += (rnd.xy - 0.5) * 0.35;
           return p;
       }
 
       vec3 getShapePosition(int shape, float id, vec3 rnd) {
-          if (shape == 0) return getAstrolabe(id, rnd);
-          if (shape == 1) return getDNA(id, rnd);
-          if (shape == 2) return getHeart(id, rnd);
-          if (shape == 3) return getText(id, rnd);
+          if (shape == 0) return getHeart(id, rnd);
+          if (shape == 1) return getTextShape(id, rnd);
           return vec3(0.0);
       }
 
-      vec3 getShapeColor(int shape, float id, vec3 rnd) {
+      /* ==========================================================
+       *  COLOUR WITH FAKE LIGHTING
+       * ========================================================== */
+      vec3 getShapeColor(int shape, float id, vec3 rnd, vec3 pos) {
           if (shape == 0) {
-              return palette(id + uTime*0.05,
-                  vec3(0.5, 0.5, 0.6), vec3(0.3, 0.3, 0.4),
-                  vec3(1.0, 1.0, 1.0), vec3(0.0, 0.33, 0.67));
-          }
-          if (shape == 1) {
-              float h = (id - 0.5) * 60.0;
-              float rungZone = fract(h * 0.5);
-              if (rungZone < 0.15 && rnd.y > 0.4) return vec3(0.0, 0.9, 0.4);
-              return palette(id * 0.1,
-                  vec3(0.2, 0.6, 0.8), vec3(0.1, 0.3, 0.4),
-                  vec3(1.0, 1.0, 1.0), vec3(0.0, 0.2, 0.4));
-          }
-          if (shape == 2) {
               float layer = floor(rnd.z * 3.0);
-              if (layer == 2.0) return vec3(1.0, 0.6, 0.8);
-              return palette(id,
-                  vec3(0.9, 0.1, 0.2), vec3(0.3, 0.0, 0.1),
-                  vec3(1.0, 0.5, 0.5), vec3(0.0, 0.0, 0.0));
+              vec3 base;
+
+              if (layer > 1.5) {
+                  // Innermost core — bright pink glow
+                  base = palette(id * 0.5 + uTime * 0.05,
+                      vec3(1.00, 0.55, 0.72),
+                      vec3(0.18, 0.10, 0.15),
+                      vec3(1.00, 1.00, 1.00),
+                      vec3(0.00, 0.15, 0.40));
+              } else {
+                  // Outer layers — deep red with warm gradient
+                  base = palette(id * 0.6 + uTime * 0.05,
+                      vec3(0.92, 0.16, 0.26),
+                      vec3(0.30, 0.06, 0.10),
+                      vec3(1.00, 0.80, 0.80),
+                      vec3(0.00, 0.10, 0.30));
+              }
+
+              // Depth-based lighting: particles facing the camera glow brighter
+              float zLight = smoothstep(-8.0, 8.0, pos.z);
+              float light  = 0.45 + 0.90 * zLight;
+
+              // Radial edge falloff for a soft rim
+              float r = length(pos) / 25.0;
+              float edgeFalloff = 1.0 - smoothstep(0.6, 1.25, r) * 0.55;
+
+              return base * light * edgeFalloff;
           }
-          if (shape == 3) {
-              // rose-gold shimmer, warm and soft
-              return palette(id * 0.5 + uTime * 0.05,
-                  vec3(0.95, 0.55, 0.62), vec3(0.28, 0.18, 0.22),
-                  vec3(1.0, 1.0, 1.0), vec3(0.0, 0.22, 0.55));
+
+          if (shape == 1) {
+              // Rose-gold gradient that shifts across the word and hearts
+              float dist = length(pos.xy) * 0.018;
+              float t    = id * 0.6 + dist * 0.4 + uTime * 0.06;
+
+              vec3 base = palette(t,
+                  vec3(1.00, 0.60, 0.70),
+                  vec3(0.25, 0.15, 0.20),
+                  vec3(1.00, 1.00, 1.00),
+                  vec3(0.00, 0.22, 0.50));
+
+              // Front-to-back lighting
+              float zLight = smoothstep(-12.0, 12.0, pos.z);
+              float light  = 0.60 + 0.70 * zLight;
+
+              // Soft glow near the centre
+              float glow = 1.0 + 0.35 * exp(-dist * dist * 3.0);
+
+              return base * light * glow;
           }
+
           return vec3(1.0);
       }
 
@@ -443,35 +454,29 @@
           return t < 0.5 ? 4.0 * t * t * t : 1.0 - pow(-2.0 * t + 2.0, 3.0) / 2.0;
       }
 
-      /* Heart and text should stay facing the camera instead of spinning */
-      float autoRotFactor(int s) {
-          if (s == 2) return 0.0;
-          if (s == 3) return 0.0;
-          return 1.0;
-      }
-
       void main() {
           vec3 p1 = getShapePosition(uCurrentShape, aId, aRandom);
           vec3 p2 = getShapePosition(uTargetShape,  aId, aRandom);
 
-          vec3 c1 = getShapeColor(uCurrentShape, aId, aRandom);
-          vec3 c2 = getShapeColor(uTargetShape,  aId, aRandom);
-
           float easedMorph = cubicInOut(uMorphProgress);
 
-          vec3 finalPos = mix(p1, p2, easedMorph);
+          vec3 objPos = mix(p1, p2, easedMorph);
 
-          // "Breathe" bulge that peaks mid-transition
+          // "Breathing" bulge that peaks mid-transition
           float breatheMask = sin(uMorphProgress * PI);
-          float len = length(finalPos);
+          float len = length(objPos);
           if (len > 0.0001) {
-              finalPos += (finalPos / len) * breatheMask * 8.0;
+              objPos += (objPos / len) * breatheMask * 8.0;
           }
 
-          float autoRot1 = uTime * 0.1 * autoRotFactor(uCurrentShape);
-          float autoRot2 = uTime * 0.1 * autoRotFactor(uTargetShape);
-          float rotY = mix(autoRot1, autoRot2, easedMorph) + uMouse.x * 0.5;
-          float rotX = uMouse.y * 0.5;
+          // Colour (computed in object space so the gradient travels with the shape)
+          vec3 c1 = getShapeColor(uCurrentShape, aId, aRandom, objPos);
+          vec3 c2 = getShapeColor(uTargetShape,  aId, aRandom, objPos);
+          vColor  = mix(c1, c2, easedMorph);
+
+          // Rotation — mouse parallax only. Both shapes stay camera-facing.
+          float rotY = uMouse.x * 0.6;
+          float rotX = uMouse.y * 0.6;
 
           mat3 rotMatY = mat3(
               cos(rotY), 0.0, sin(rotY),
@@ -485,9 +490,7 @@
               0.0, sin(rotX), cos(rotX)
           );
 
-          finalPos = rotMatY * rotMatX * finalPos;
-
-          vColor = mix(c1, c2, easedMorph);
+          vec3 finalPos = rotMatY * rotMatX * objPos;
 
           vAlpha = 0.3 + 0.7 * sin(uTime * 5.0 + aId * PI * 20.0);
 
@@ -520,15 +523,16 @@
   });
 
   const particles = new THREE.Points(geometry, material);
+  particles.frustumCulled = false;   // positions are computed entirely in the shader
   scene.add(particles);
 
   /* ================================================================== *
    *  STATE + INTERACTION
    * ================================================================== */
 
-  let morphProgress  = 0;
-  let currentShape   = 0;
-  let targetShape    = 0;
+  let morphProgress   = 0;
+  let currentShape    = 0;
+  let targetShape     = 0;
   let isTransitioning = false;
 
   const mouse       = new THREE.Vector2(0, 0);
@@ -583,7 +587,7 @@
   function animate() {
     requestAnimationFrame(animate);
 
-    const delta = clock.getDelta();
+    const delta       = clock.getDelta();
     const elapsedTime = clock.getElapsedTime();
 
     mouse.x += (targetMouse.x - mouse.x) * delta * 2.0;
@@ -593,17 +597,17 @@
       morphProgress += delta * 0.8;
 
       if (morphProgress >= 1) {
-        morphProgress = 0;
-        currentShape = targetShape;
+        morphProgress   = 0;
+        currentShape    = targetShape;
         isTransitioning = false;
         setLabel('CLICK TO EVOLVE', false);
       }
     }
 
-    material.uniforms.uTime.value = elapsedTime;
+    material.uniforms.uTime.value          = elapsedTime;
     material.uniforms.uMorphProgress.value = morphProgress;
-    material.uniforms.uCurrentShape.value = currentShape;
-    material.uniforms.uTargetShape.value = targetShape;
+    material.uniforms.uCurrentShape.value  = currentShape;
+    material.uniforms.uTargetShape.value   = targetShape;
     material.uniforms.uMouse.value.copy(mouse);
 
     renderer.render(scene, camera);
