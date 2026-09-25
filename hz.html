@@ -133,7 +133,6 @@
 
   function updateCameraZ() {
     const aspect = window.innerWidth / window.innerHeight;
-    // Word + orbiting hearts need a bit more room than the original shapes
     const maxShapeExtent = 50.0;
     const fovRad = (camera.fov * Math.PI) / 180;
     let requiredZ = maxShapeExtent / Math.tan(fovRad / 2);
@@ -333,9 +332,7 @@
        *  SHAPE 1 — THE WORD  زینب  + SMALL ORBITING HEARTS
        * ========================================================== */
 
-      // One small heart, floating on an orbit around the word
       vec3 getSmallHeart(float id, vec3 rnd, float heartIdx) {
-          // Orbit around the word
           float heartAngle = heartIdx * (PI * 2.0 / 6.0) + uTime * 0.25;
           float orbitR = 34.0 + sin(heartIdx * 2.3) * 6.0;
 
@@ -346,24 +343,20 @@
               sin(heartAngle * 0.7 + heartIdx) * 10.0
           );
 
-          // Parametric heart outline
           float u  = fract(aId * 11.317 + rnd.z) * PI * 2.0;
           float hx = 16.0 * pow(sin(u), 3.0);
           float hy = 13.0 * cos(u) - 5.0 * cos(2.0 * u)
                      - 2.0 * cos(3.0 * u) - cos(4.0 * u);
 
-          // Fill factor: 0 = centre of heart, 1 = outline
           float fill = pow(fract(aId * 7.739), 0.6);
 
           vec2 heartCenter = vec2(0.0, -2.0);
           vec2 outlinePt   = vec2(hx, hy);
           vec2 filledPt    = mix(heartCenter, outlinePt, fill);
 
-          // Each heart beats on its own phase
           float beat  = 1.0 + pow(sin(uTime * 3.5 + heartIdx * 1.7), 8.0) * 0.18;
           float scale = 0.24 * beat;
 
-          // Depth so the heart has volume
           float depth = (fract(aId * 3.1) - 0.5) * 3.0 * (1.0 - fill * 0.5);
 
           vec3 localPos = vec3(filledPt * scale, depth);
@@ -372,13 +365,11 @@
       }
 
       vec3 getTextShape(float id, vec3 rnd) {
-          // ~22% of the particles form small orbiting hearts
           if (rnd.y > 0.78) {
               float heartIdx = floor(fract(rnd.y * 73.1) * 6.0);
               return getSmallHeart(id, rnd, heartIdx);
           }
 
-          // Rest form the word, with a gentle wave so the letters breathe
           vec3 p = aText;
           p.z += sin(uTime * 1.8 + p.x * 0.22 + p.y * 0.1) * 1.6;
           p.xy += (rnd.xy - 0.5) * 0.35;
@@ -400,14 +391,12 @@
               vec3 base;
 
               if (layer > 1.5) {
-                  // Innermost core — bright pink glow
                   base = palette(id * 0.5 + uTime * 0.05,
                       vec3(1.00, 0.55, 0.72),
                       vec3(0.18, 0.10, 0.15),
                       vec3(1.00, 1.00, 1.00),
                       vec3(0.00, 0.15, 0.40));
               } else {
-                  // Outer layers — deep red with warm gradient
                   base = palette(id * 0.6 + uTime * 0.05,
                       vec3(0.92, 0.16, 0.26),
                       vec3(0.30, 0.06, 0.10),
@@ -415,11 +404,9 @@
                       vec3(0.00, 0.10, 0.30));
               }
 
-              // Depth-based lighting: particles facing the camera glow brighter
               float zLight = smoothstep(-8.0, 8.0, pos.z);
               float light  = 0.45 + 0.90 * zLight;
 
-              // Radial edge falloff for a soft rim
               float r = length(pos) / 25.0;
               float edgeFalloff = 1.0 - smoothstep(0.6, 1.25, r) * 0.55;
 
@@ -427,22 +414,31 @@
           }
 
           if (shape == 1) {
-              // Rose-gold gradient that shifts across the word and hearts
-              float dist = length(pos.xy) * 0.018;
-              float t    = id * 0.6 + dist * 0.4 + uTime * 0.06;
+              /* ---------- RED & PINK gradient for the name ---------- */
+              // Radial distance drives the gradient across the word,
+              // and time slowly shifts the hue for a living shimmer.
+              float dist = length(pos.xy) * 0.020;
+              float t    = id * 0.35 + dist * 0.65 + uTime * 0.05;
 
+              // Palette tuned to sweep from deep red -> crimson -> hot pink -> soft pink
               vec3 base = palette(t,
-                  vec3(1.00, 0.60, 0.70),
-                  vec3(0.25, 0.15, 0.20),
+                  vec3(0.85, 0.25, 0.40),   // a: centre brightness per channel
+                  vec3(0.35, 0.20, 0.30),   // b: amplitude per channel
                   vec3(1.00, 1.00, 1.00),
-                  vec3(0.00, 0.22, 0.50));
+                  vec3(0.00, 0.15, 0.35)    // d: phase offset -> shifts red/pink
+              );
 
-              // Front-to-back lighting
+              // Clamp so we never go muddy or green — keep it purely red/pink
+              base.r = clamp(base.r, 0.55, 1.00);
+              base.g = clamp(base.g * 0.55, 0.05, 0.55);   // suppress green
+              base.b = clamp(base.b, 0.35, 0.90);          // keep some blue for pink
+
+              // Front-to-back lighting gives the letters depth
               float zLight = smoothstep(-12.0, 12.0, pos.z);
-              float light  = 0.60 + 0.70 * zLight;
+              float light  = 0.60 + 0.75 * zLight;
 
-              // Soft glow near the centre
-              float glow = 1.0 + 0.35 * exp(-dist * dist * 3.0);
+              // Soft inner glow so the name feels luminous
+              float glow = 1.0 + 0.40 * exp(-dist * dist * 3.0);
 
               return base * light * glow;
           }
@@ -462,19 +458,16 @@
 
           vec3 objPos = mix(p1, p2, easedMorph);
 
-          // "Breathing" bulge that peaks mid-transition
           float breatheMask = sin(uMorphProgress * PI);
           float len = length(objPos);
           if (len > 0.0001) {
               objPos += (objPos / len) * breatheMask * 8.0;
           }
 
-          // Colour (computed in object space so the gradient travels with the shape)
           vec3 c1 = getShapeColor(uCurrentShape, aId, aRandom, objPos);
           vec3 c2 = getShapeColor(uTargetShape,  aId, aRandom, objPos);
           vColor  = mix(c1, c2, easedMorph);
 
-          // Rotation — mouse parallax only. Both shapes stay camera-facing.
           float rotY = uMouse.x * 0.6;
           float rotX = uMouse.y * 0.6;
 
@@ -523,7 +516,7 @@
   });
 
   const particles = new THREE.Points(geometry, material);
-  particles.frustumCulled = false;   // positions are computed entirely in the shader
+  particles.frustumCulled = false;
   scene.add(particles);
 
   /* ================================================================== *
