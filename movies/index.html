@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watched</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="backdrop"></div>
+
+<header class="hero">
+  <h1>Watched</h1>
+  <p class="hero-sub">A running log of everything I've watched, and how it landed.</p>
+</header>
+
+<main class="wrap">
+
+  <section class="controls">
+    <input type="search" id="search" class="search" placeholder="Search a title..." autocomplete="off">
+    <div class="pills" id="pills" role="tablist" aria-label="Filter by category">
+      <button class="pill pill-all is-active" data-filter="all" role="tab" aria-selected="true">
+        All <span class="count" id="count-all">0</span>
+      </button>
+      <button class="pill pill-love" data-filter="love" role="tab" aria-selected="false">
+        Love <span class="count" id="count-love">0</span>
+      </button>
+      <button class="pill pill-good" data-filter="good" role="tab" aria-selected="false">
+        Good <span class="count" id="count-good">0</span>
+      </button>
+      <button class="pill pill-hate" data-filter="hate" role="tab" aria-selected="false">
+        Hate <span class="count" id="count-hate">0</span>
+      </button>
+    </div>
+  </section>
+
+  <section id="grid" class="grid" aria-live="polite"></section>
+
+  <p id="empty" class="empty" hidden>Nothing here yet. Add a row to <code>movies.csv</code> to see it show up.</p>
+
+  <div id="loadFallback" class="load-fallback" hidden>
+    <p>Couldn't load <code>movies.csv</code> automatically. That happens when a page is opened straight from disk instead of a server.</p>
+    <label class="file-btn">
+      Choose movies.csv
+      <input type="file" id="fileInput" accept=".csv" hidden>
+    </label>
+    <p class="load-fallback-note">Host this folder on GitHub Pages (free) and this message won't appear again.</p>
+  </div>
+
+</main>
+
+<script src="script.js"></script>
+</body>
+</html>
