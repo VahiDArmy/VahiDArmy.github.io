@@ -192,41 +192,85 @@ body { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area
 }
 @keyframes rotateBorder { to { --angle: 360deg; } }
 
-.table-wrap::after {
-  content: ""; position: absolute; inset: 0 0 auto 0; height: 40%;
-  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.35) 50%, transparent 65%);
-  background-size: 250% 100%;
-  transform: translateX(-120%);
-  animation: sweepLoop 5.5s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes sweepLoop { 0% { transform: translateX(-120%); } 35%, 100% { transform: translateX(120%); } }
-
 table { width: 100%; border-collapse: collapse; font-size: 0.94rem; position: relative; }
 
 thead th {
-  text-align: left; padding: 17px 22px; font-family: 'Sora', sans-serif; font-weight: 600;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 17px 22px; font-family: 'Sora', sans-serif; font-weight: 600;
   font-size: 0.9rem; border-bottom: 1px solid var(--glass-border); color: var(--text-dim);
 }
 .table-all thead th.col-love { color: var(--love); text-shadow: 0 0 16px var(--love-soft); }
 .table-all thead th.col-good { color: var(--good); text-shadow: 0 0 16px var(--good-soft); }
 .table-all thead th.col-hate { color: var(--hate); text-shadow: 0 0 16px var(--hate-soft); }
 
-tbody td { padding: 13px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top; }
+/* per-row cascading sheen, staggered by --row-delay set inline per <tr> */
+tbody td {
+  position: relative; overflow: hidden;
+  padding: 13px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); vertical-align: top;
+  transition: background 0.15s, box-shadow 0.15s;
+}
 tbody tr:last-child td { border-bottom: none; }
-tbody tr { transition: background 0.2s; }
-tbody tr:hover { background: rgba(255,255,255,0.06); }
+
+tbody td::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+  background-size: 250% 100%;
+  transform: translateX(-140%);
+  animation: rowSheen 6.5s ease-in-out infinite;
+  animation-delay: var(--row-delay, 0s);
+  pointer-events: none;
+}
+@keyframes rowSheen { 0% { transform: translateX(-140%); } 30%, 100% { transform: translateX(140%); } }
+
+/* cell-level hover highlight (not the whole row) */
+tbody td:hover { background: rgba(255,255,255,0.1); z-index: 2; }
 
 .table-all td.col-love { border-left: 2px solid var(--love-soft); }
 .table-all td.col-good { border-left: 2px solid var(--good-soft); }
 .table-all td.col-hate { border-left: 2px solid var(--hate-soft); }
+.table-all td.col-love:hover { background: rgba(255, 63, 163, 0.16); box-shadow: inset 0 0 0 1px var(--love-soft), 0 0 22px -4px var(--love-soft); }
+.table-all td.col-good:hover { background: rgba(38, 255, 214, 0.16); box-shadow: inset 0 0 0 1px var(--good-soft), 0 0 22px -4px var(--good-soft); }
+.table-all td.col-hate:hover { background: rgba(255, 92, 77, 0.16); box-shadow: inset 0 0 0 1px var(--hate-soft), 0 0 22px -4px var(--hate-soft); }
 .cell-empty { color: var(--text-faint); }
+.cell-empty:hover { background: rgba(255,255,255,0.05) !important; box-shadow: none !important; }
 
-.table-single td { position: relative; }
-.table-single tr { border-left: 3px solid var(--row-color, transparent); transition: box-shadow 0.2s, background 0.2s; }
-.table-single tr:hover { box-shadow: inset 0 0 34px -14px var(--row-glow, transparent); background: rgba(255,255,255,0.05); }
+.table-single tr { border-left: 3px solid var(--row-color, transparent); }
+.table-single td:hover {
+  box-shadow: inset 0 0 0 1px var(--row-color, rgba(255,255,255,0.3)), 0 0 24px -4px var(--row-glow, transparent);
+}
 .row-index { color: var(--text-faint); width: 44px; font-variant-numeric: tabular-nums; }
 .row-title { font-weight: 500; }
+
+/* ---------- excel-style column filter ---------- */
+.th-label { white-space: nowrap; }
+.filter-btn {
+  flex: none; background: none; border: none; color: var(--text-faint); cursor: pointer;
+  font-size: 0.68rem; padding: 3px 6px; border-radius: 6px; line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.filter-btn:hover { color: var(--text); background: rgba(255,255,255,0.1); }
+.filter-btn.is-filtered { color: var(--violet); text-shadow: 0 0 10px var(--violet-soft); }
+
+.filter-popover {
+  position: fixed; width: 230px; max-height: 300px; z-index: 80;
+  display: flex; flex-direction: column; gap: 8px; padding: 10px;
+  background: rgba(10, 12, 22, 0.92); border: 1px solid var(--glass-border); border-radius: 12px;
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%); -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 20px 50px -20px rgba(0,0,0,0.85), 0 0 40px -14px var(--violet-soft);
+  font-size: 0.85rem;
+}
+.filter-search input {
+  width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.06); color: var(--text); font-family: inherit; font-size: 0.82rem; outline: none;
+}
+.filter-search input:focus { border-color: var(--violet); }
+.filter-row { display: flex; align-items: center; gap: 8px; padding: 4px 2px; color: var(--text-dim); cursor: pointer; }
+.filter-row:hover { color: var(--text); }
+.filter-select-all { border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 2px; color: var(--text); font-weight: 600; }
+.filter-list { overflow-y: auto; max-height: 150px; }
+.filter-clear { align-self: flex-start; background: none; border: none; color: var(--violet); font-size: 0.8rem; cursor: pointer; padding: 4px 2px; }
+.filter-clear:hover { text-decoration: underline; }
+.filter-popover input[type="checkbox"] { accent-color: var(--violet); }
 
 /* ---------- empty / fallback ---------- */
 .empty { text-align: center; color: var(--text-faint); padding: 50px 20px; }
