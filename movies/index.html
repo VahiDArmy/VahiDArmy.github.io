@@ -6,12 +6,13 @@
 <title>Watched</title>
 <link rel="icon" href="data:,">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="backdrop"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
 
 <header class="hero">
   <h1>Watched</h1>
@@ -22,7 +23,7 @@
 
   <section class="controls">
     <input type="search" id="search" class="search" placeholder="Search a title..." autocomplete="off">
-    <div class="pills" id="pills" role="tablist" aria-label="Filter by category">
+    <div class="pills" id="pills" role="tablist" aria-label="Choose a view">
       <button class="pill pill-all is-active" data-filter="all" role="tab" aria-selected="true">
         All <span class="count" id="count-all">0</span>
       </button>
@@ -38,9 +39,9 @@
     </div>
   </section>
 
-  <section id="grid" class="grid" aria-live="polite"></section>
+  <section id="tableWrap" class="table-wrap" aria-live="polite"></section>
 
-  <p id="empty" class="empty" hidden>Nothing here yet. Add a row to <code>movies.csv</code> to see it show up.</p>
+  <p id="empty" class="empty" hidden>Nothing here yet. Add rows to <code>movies.csv</code> to see them show up.</p>
 
   <div id="loadFallback" class="load-fallback" hidden>
     <p>Couldn't load <code>movies.csv</code> automatically. That happens when a page is opened straight from disk instead of a server.</p>
@@ -50,6 +51,15 @@
     </label>
     <p class="load-fallback-note">Host this folder on GitHub Pages (free) and this message won't appear again.</p>
   </div>
+
+  <section class="log-panel">
+    <button class="log-header" id="logToggle" aria-expanded="true">
+      <span class="log-dot"></span>
+      <span>Activity log</span>
+      <span class="log-chevron">&#9662;</span>
+    </button>
+    <div class="log-body" id="logBody"></div>
+  </section>
 
 </main>
 
