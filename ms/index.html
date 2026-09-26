@@ -304,6 +304,88 @@ input[type=range]::-moz-range-thumb{
 }
 input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:transparent}
 
+
+/* ============ SAVE / SHARE BUTTONS ============ */
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;position:relative;z-index:1}
+.sbtn{
+  font-family:inherit;font-size:10.5px;letter-spacing:.1em;font-weight:600;
+  color:#eaf0fa;background:linear-gradient(155deg,rgba(255,255,255,.18),rgba(255,255,255,.06));
+  border:1px solid rgba(255,255,255,.32);
+  padding:6px 13px;border-radius:9px;cursor:pointer;transition:.22s;
+  backdrop-filter:blur(2px) saturate(1.6);-webkit-backdrop-filter:blur(2px) saturate(1.6);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 4px 14px -6px rgba(0,0,0,.6);
+}
+.sbtn:hover{
+  color:#fff;border-color:rgba(124,255,91,.9);
+  background:linear-gradient(155deg,rgba(124,255,91,.28),rgba(124,255,91,.1));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 24px rgba(124,255,91,.45);
+  transform:translateY(-1px);
+}
+.sbtn.link:hover{
+  border-color:rgba(255,214,10,.9);
+  background:linear-gradient(155deg,rgba(255,214,10,.28),rgba(255,214,10,.1));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 24px rgba(255,214,10,.45);
+}
+#toast{
+  position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(16px);
+  font-size:12.5px;font-weight:600;color:#fff;
+  background:linear-gradient(155deg,rgba(20,26,40,.92),rgba(10,14,24,.92));
+  border:1px solid rgba(124,255,91,.6);
+  padding:10px 20px;border-radius:99px;
+  box-shadow:0 0 30px rgba(124,255,91,.35),inset 0 1px 0 rgba(255,255,255,.3);
+  opacity:0;pointer-events:none;transition:.3s;z-index:99;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============ SLIDER POPUP ============ */
+.legend .chip{cursor:pointer}
+.brow{cursor:pointer}
+.popup{
+  --c:#00e5ff; --rgb:0,229,255;
+  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);z-index:6;
+  width:min(330px,calc(100% - 28px));
+  border-radius:18px;padding:16px 16px 18px;
+  border:1px solid rgba(255,255,255,.3);
+  background:
+    linear-gradient(155deg,
+      rgba(16,20,34,.42) 0%,
+      rgba(16,20,34,.18) 45%,
+      rgba(16,20,34,.30) 100%);
+  backdrop-filter:blur(14px) saturate(1.9) brightness(1.06);
+  -webkit-backdrop-filter:blur(14px) saturate(1.9) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.5),
+    inset 0 -1px 0 rgba(255,255,255,.08),
+    0 26px 64px -26px rgba(0,0,0,.95),
+    0 0 34px -6px var(--c);
+  display:none;
+  overflow:hidden;
+}
+.popup::before{
+  content:'';position:absolute;top:0;left:6%;right:6%;height:1.5px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.95) 50%,transparent);
+  pointer-events:none;
+}
+.popup.open{display:block;animation:popin .22s ease}
+@keyframes popin{
+  from{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.96)}
+  to{opacity:1;transform:translateX(-50%)}
+}
+.pclose{
+  font-family:inherit;font-size:12px;line-height:1;color:#dfe7f4;
+  background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.3);
+  width:24px;height:24px;border-radius:8px;cursor:pointer;flex:none;
+  transition:.2s;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4);
+}
+.pclose:hover{
+  color:#fff;border-color:rgba(255,80,120,.85);
+  background:linear-gradient(155deg,rgba(255,80,120,.3),rgba(255,80,120,.1));
+  box-shadow:0 0 18px rgba(255,80,120,.5),inset 0 1px 0 rgba(255,255,255,.5);
+}
+
 /* ============ VIZ ============ */
 .viz-top{
   display:flex;gap:20px;align-items:center;
@@ -377,7 +459,7 @@ input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:tra
 
 /* chart */
 .canvas-wrap{
-  position:relative;height:340px;margin-top:12px;border-radius:16px;
+  position:relative;z-index:3;height:340px;margin-top:12px;border-radius:16px;
   background:
     linear-gradient(155deg,rgba(255,255,255,.06),rgba(255,255,255,.015) 60%,rgba(255,255,255,.04)),
     radial-gradient(ellipse 70% 100% at 50% 118%,rgba(0,229,255,.12),transparent 62%);
@@ -388,7 +470,7 @@ input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:tra
     inset 0 1px 0 rgba(255,255,255,.32),
     inset 0 -30px 60px -30px rgba(0,229,255,.18),
     0 8px 26px -18px rgba(0,0,0,.85);
-  overflow:hidden;
+  overflow:visible;
 }
 @media(max-width:600px){.canvas-wrap{height:250px}}
 canvas{width:100%;height:100%;display:block}
@@ -453,7 +535,11 @@ canvas{width:100%;height:100%;display:block}
     <aside class="panel">
       <div class="panel-title">
         <span>پارامترها</span>
+        <span class="btn-row">
+          <button id="save" class="sbtn">ذخیره 💾</button>
+          <button id="share" class="sbtn link">لینک 🔗</button>
         <button id="reset">ریست ↺</button>
+        </span>
       </div>
       <div id="cards"></div>
     </aside>
@@ -477,7 +563,10 @@ canvas{width:100%;height:100%;display:block}
         <div class="breakdown" id="breakdown"></div>
       </div>
 
-      <div class="canvas-wrap"><canvas id="chart"></canvas></div>
+      <div class="canvas-wrap">
+        <div class="popup" id="popup"></div>
+        <canvas id="chart"></canvas>
+      </div>
 
       <div class="legend" id="legend"></div>
     </section>
@@ -904,6 +993,173 @@ function loop(){
 /* =========================================================
    INIT
    ========================================================= */
+/* =========================================================
+   SLIDER POPUP — glass, floats above the chart
+   ========================================================= */
+const popupEl = document.getElementById('popup');
+let popupKey = null;
+
+function fillPopup(key){
+  const v = VARS.find(x=> x.key === key);
+  if(!v) return;
+  popupEl.style.setProperty('--c', v.color);
+  popupEl.style.setProperty('--rgb', v.rgb);
+  popupEl.innerHTML = `
+    <div class="vhead">
+      <span class="dot"></span>
+      <span class="name">${v.name}</span>
+      <button class="pclose" data-close title="بستن">✕</button>
+    </div>
+    <p class="hint">${v.hint}</p>
+    ${ctrlHTML('مقدار', v.key, 'value', 0, 100, 1, state[v.key].value)}
+    ${ctrlHTML('وزن', v.key, 'weight', 0, 100, 1, state[v.key].weight * 100)}
+    ${ctrlHTML(v.shapeLabel, v.key, 'shape', v.shapeMin, v.shapeMax, 0.1, state[v.key].shape)}
+  `;
+  popupEl.querySelectorAll('input[type=range]').forEach(inp=> updateFill(inp));
+  updateNums();
+}
+function openPopup(key){
+  popupKey = key;
+  fillPopup(key);
+  popupEl.classList.add('open');
+}
+function closePopup(){
+  popupEl.classList.remove('open');
+  popupKey = null;
+}
+
+/* same slider behaviour inside the popup */
+popupEl.addEventListener('input', e=>{
+  const inp = e.target;
+  if(inp.tagName !== 'INPUT') return;
+  const k = inp.dataset.k, f = inp.dataset.f;
+  let val = parseFloat(inp.value);
+  if(f === 'weight') val = val / 100;
+  state[k][f] = val;
+  updateFill(inp);
+  updateNums();
+  startAnim();
+});
+popupEl.addEventListener('click', e=>{
+  if(e.target.closest('[data-close]')) closePopup();
+});
+
+/* open by legend chip / breakdown row */
+VARS.forEach((v,i)=>{
+  const chip = legendEl.querySelectorAll('.chip')[i];
+  if(chip) chip.addEventListener('click', ()=> openPopup(v.key));
+  const brow = breakdownEl.querySelectorAll('.brow')[i];
+  if(brow) brow.addEventListener('click', ()=> openPopup(v.key));
+});
+
+/* open by clicking near a curve on the chart */
+document.getElementById('chart').addEventListener('click', e=>{
+  const cvs = document.getElementById('chart');
+  const r = cvs.getBoundingClientRect();
+  const padL = 44, padR = 16, padT = 16, padB = 30;
+  const x0 = padL, x1 = r.width - padR, y0 = r.height - padB, y1 = padT;
+  const mx = e.clientX - r.left, my = e.clientY - r.top;
+  if(mx < x0 || mx > x1 || my < y1 || my > y0){ closePopup(); return; }
+  const xval = (mx - x0) / (x1 - x0) * 100;
+  let best = null, bd = 26;
+  VARS.forEach(v=>{
+    const py = y0 - (transform(v.key, xval) / 100) * (y0 - y1);
+    const d = Math.abs(py - my);
+    if(d < bd){ bd = d; best = v.key; }
+  });
+  if(best) openPopup(best); else closePopup();
+});
+
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closePopup();
+});
+
+/* keep an open popup in sync after reset / loaded state */
+document.getElementById('reset').addEventListener('click', ()=>{ if(popupKey) fillPopup(popupKey); });
+const _origSyncInputs = syncInputs;
+syncInputs = function(){ _origSyncInputs(); if(popupKey) fillPopup(popupKey); };
+
+/* =========================================================
+   SAVE / SHARE
+   ========================================================= */
+const LS_KEY = 'adhd-engine-v1';
+const toastEl = document.createElement('div');
+toastEl.id = 'toast';
+document.body.appendChild(toastEl);
+let toastTimer = null;
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toastEl.classList.remove('show'), 2200);
+}
+function clampNum(v, min, max, def){
+  v = Number(v);
+  if(!isFinite(v)) return def;
+  return Math.max(min, Math.min(max, v));
+}
+function serializeState(){
+  const o = {};
+  VARS.forEach(v=>{
+    o[v.key] = { value:state[v.key].value, weight:state[v.key].weight, shape:state[v.key].shape };
+  });
+  return o;
+}
+function syncInputs(){
+  document.querySelectorAll('input[type=range]').forEach(inp=>{
+    const k = inp.dataset.k, f = inp.dataset.f;
+    inp.value = (f === 'weight') ? state[k][f] * 100 : state[k][f];
+    updateFill(inp);
+  });
+  updateNums();
+}
+function applyState(o){
+  VARS.forEach(v=>{
+    const s = (o && o[v.key]) || {};
+    state[v.key].value  = clampNum(s.value,  0, 100, v.value);
+    state[v.key].weight = clampNum(s.weight, 0, 1, v.weight);
+    state[v.key].shape  = clampNum(s.shape,  v.shapeMin, v.shapeMax, v.shape);
+  });
+  syncInputs();
+  startAnim();
+}
+document.getElementById('save').addEventListener('click', ()=>{
+  try{
+    localStorage.setItem(LS_KEY, JSON.stringify(serializeState()));
+    showToast('تنظیمات در این مرورگر ذخیره شد ✓');
+  }catch(e){
+    showToast('ذخیره ممکن نشد ✗');
+  }
+});
+document.getElementById('share').addEventListener('click', ()=>{
+  let data = '';
+  try{
+    data = btoa(unescape(encodeURIComponent(JSON.stringify(serializeState()))));
+  }catch(e){ showToast('ساخت لینک ممکن نشد ✗'); return; }
+  const url = location.href.split('#')[0] + '#s=' + data;
+  try{ history.replaceState(null, '', '#s=' + data); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url)
+      .then(()=> showToast('لینک کپی شد — جایی پستش کن ✓'))
+      .catch(()=> window.prompt('این لینک را کپی کن:', url));
+  }else{
+    window.prompt('این لینک را کپی کن:', url);
+  }
+});
+(function loadSaved(){
+  let raw = null;
+  const m = location.hash.match(/[#&]s=([^&]+)/);
+  if(m){
+    try{ raw = JSON.parse(decodeURIComponent(escape(atob(m[1])))); }
+    catch(e){ raw = null; }
+  }
+  if(!raw){
+    try{ raw = JSON.parse(localStorage.getItem(LS_KEY)); }
+    catch(e){ raw = null; }
+  }
+  if(raw && typeof raw === 'object') applyState(raw);
+})();
+
 const ro = new ResizeObserver(()=> render());
 ro.observe(canvas.parentElement);
 
