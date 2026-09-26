@@ -342,7 +342,7 @@ input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:tra
 .legend .chip, .brow{cursor:pointer}
 .popup{
   --c:#00e5ff; --rgb:0,229,255;
-  position:absolute;top:14px;inset-inline-end:14px;z-index:5;
+  position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);z-index:5;
   width:min(330px,calc(100% - 28px));
   border-radius:18px;padding:16px 16px 18px;
   border:1px solid rgba(255,255,255,.3);
@@ -367,7 +367,7 @@ input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:tra
   pointer-events:none;
 }
 .popup.open{display:block;animation:popin .22s ease}
-@keyframes popin{from{opacity:0;transform:translateY(-10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes popin{from{opacity:0;transform:translateX(-50%) translateY(-10px) scale(.96)}to{opacity:1;transform:translateX(-50%)}}
 .pclose{
   font-family:inherit;font-size:12px;line-height:1;color:#dfe7f4;
   background:linear-gradient(155deg,rgba(255,255,255,.16),rgba(255,255,255,.05));
@@ -465,10 +465,10 @@ input[type=range]::-moz-range-track{height:4px;border-radius:99px;background:tra
     inset 0 1px 0 rgba(255,255,255,.32),
     inset 0 -30px 60px -30px rgba(0,229,255,.18),
     0 8px 26px -18px rgba(0,0,0,.85);
-  overflow:hidden;
+  overflow:visible;
 }
 @media(max-width:600px){.canvas-wrap{height:250px}}
-canvas{width:100%;height:100%;display:block}
+canvas{width:100%;height:100%;display:block;border-radius:16px}
 
 .legend{
   display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;
@@ -860,6 +860,7 @@ _origReset.addEventListener('click', ()=>{ if(popupKey) fillPopup(popupKey); });
 const _origSyncInputs = syncInputs;
 syncInputs = function(){ _origSyncInputs(); if(popupKey) fillPopup(popupKey); };
 
+/* =========================================================
    CANVAS CHART
    ========================================================= */
 const canvas = document.getElementById('chart');
