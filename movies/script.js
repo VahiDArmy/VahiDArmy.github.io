@@ -9,6 +9,14 @@ let byCategory = { love: [], good: [], hate: [] };
 let activeFilter = 'all';
 let searchTerm = '';
 
+// Excel-style column filters: values in each set are HIDDEN for that column
+let filterSets = { love: new Set(), good: new Set(), hate: new Set() };
+let openFilterCat = null;
+
+function uniqueValues(cat) {
+  return [...new Set(byCategory[cat])].sort((a, b) => a.localeCompare(b));
+}
+
 /* ---------------- logging ---------------- */
 
 function log(message, level = 'info') {
@@ -107,9 +115,23 @@ function escapeHTML(str) {
   }[c]));
 }
 
+function rowDelay(i) { return `${(i % 8) * 0.15}s`; }
+
+function filterButton(cat) {
+  const active = filterSets[cat].size > 0;
+  return `<button type="button" class="filter-btn${active ? ' is-filtered' : ''}" data-cat="${cat}" aria-label="Filter ${CATEGORY_LABEL[cat]}">&#9662;</button>`;
+}
+
 function renderAllTable() {
   const term = searchTerm;
   const visibleRows = rawRows.filter(cells => {
+    const passesFilters = CATEGORIES.every(cat => {
+      const idx = columnIndex[cat];
+      if (idx === undefined) return true;
+      const val = (cells[idx] || '').trim();
+      return !val || !filterSets[cat].has(val);
+    });
+    if (!passesFilters) return false;
     if (!term) return true;
     return CATEGORIES.some(cat => {
       const idx = columnIndex[cat];
@@ -120,8 +142,11 @@ function renderAllTable() {
 
   if (!visibleRows.length) return '';
 
-  const head = CATEGORIES.map(cat => `<th class="col-${cat}">${CATEGORY_LABEL[cat]}</th>`).join('');
-  const body = visibleRows.map(cells => {
+  const head = CATEGORIES.map(cat =>
+    `<th class="col-${cat}"><span class="th-label">${CATEGORY_LABEL[cat]}</span>${filterButton(cat)}</th>`
+  ).join('');
+
+  const body = visibleRows.map((cells, i) => {
     const tds = CATEGORIES.map(cat => {
       const idx = columnIndex[cat];
       const val = idx !== undefined ? (cells[idx] || '').trim() : '';
@@ -129,7 +154,7 @@ function renderAllTable() {
         ? `<td class="col-${cat}">${escapeHTML(val)}</td>`
         : `<td class="col-${cat} cell-empty">&mdash;</td>`;
     }).join('');
-    return `<tr>${tds}</tr>`;
+    return `<tr style="--row-delay:${rowDelay(i)}">${tds}</tr>`;
   }).join('');
 
   return `<table class="table-all"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
@@ -137,18 +162,21 @@ function renderAllTable() {
 
 function renderCategoryTable(cat) {
   const term = searchTerm;
-  const items = byCategory[cat].filter(title => !term || title.toLowerCase().includes(term));
+  const items = byCategory[cat].filter(title => {
+    if (filterSets[cat].has(title)) return false;
+    return !term || title.toLowerCase().includes(term);
+  });
   if (!items.length) return '';
 
   const colorVar = `var(${CATEGORY_VAR[cat]})`;
   const glowVar = `var(${CATEGORY_GLOW[cat]})`;
   const rows = items.map((title, i) => `
-    <tr style="--row-color:${colorVar}; --row-glow:${glowVar}">
+    <tr style="--row-color:${colorVar}; --row-glow:${glowVar}; --row-delay:${rowDelay(i)}">
       <td class="row-index">${i + 1}</td>
       <td class="row-title">${escapeHTML(title)}</td>
     </tr>`).join('');
 
-  return `<table class="table-single"><thead><tr><th>#</th><th>${CATEGORY_LABEL[cat]}</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="table-single"><thead><tr><th>#</th><th><span class="th-label">${CATEGORY_LABEL[cat]}</span>${filterButton(cat)}</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function render() {
@@ -181,6 +209,8 @@ function applyParsed(parsed, sourceLabel) {
   columnIndex = parsed.colMap;
   rawRows = parsed.rows;
   byCategory = parsed.grouped;
+  filterSets = { love: new Set(), good: new Set(), hate: new Set() };
+  closeFilterPopover();
 
   const total = CATEGORIES.reduce((sum, c) => sum + byCategory[c].length, 0);
   log(`Parsed ${rawRows.length} row(s) from ${sourceLabel}`, 'info');
@@ -198,6 +228,92 @@ function applyParsed(parsed, sourceLabel) {
   render();
 }
 
+/* ---------------- column filter popover ---------------- */
+
+function closeFilterPopover() {
+  const pop = document.getElementById('filterPopover');
+  pop.hidden = true;
+  openFilterCat = null;
+}
+
+function positionFilterPopover(btn, pop) {
+  const r = btn.getBoundingClientRect();
+  pop.style.top = `${Math.min(r.bottom + 6, window.innerHeight - 280)}px`;
+  pop.style.left = `${Math.min(r.left, window.innerWidth - 246)}px`;
+}
+
+function renderFilterList(cat) {
+  const list = document.getElementById('filterList');
+  const values = uniqueValues(cat);
+  list.innerHTML = values.map(v => {
+    const checked = filterSets[cat].has(v) ? '' : 'checked';
+    return `<label class="filter-row"><input type="checkbox" value="${escapeHTML(v)}" ${checked}> ${escapeHTML(v)}</label>`;
+  }).join('');
+  document.getElementById('filterSelectAll').checked = filterSets[cat].size === 0;
+}
+
+function openFilterPopover(cat, btn) {
+  openFilterCat = cat;
+  const pop = document.getElementById('filterPopover');
+  document.getElementById('filterSearchInput').value = '';
+  renderFilterList(cat);
+  pop.hidden = false;
+  positionFilterPopover(btn, pop);
+}
+
+function wireFilterPopover() {
+  document.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.filter-btn');
+    const pop = document.getElementById('filterPopover');
+    if (btn) {
+      ev.stopPropagation();
+      const cat = btn.dataset.cat;
+      if (openFilterCat === cat && !pop.hidden) { closeFilterPopover(); return; }
+      openFilterPopover(cat, btn);
+      return;
+    }
+    if (!pop.hidden && !pop.contains(ev.target)) closeFilterPopover();
+  });
+
+  document.getElementById('filterPopover').addEventListener('click', (ev) => ev.stopPropagation());
+
+  document.getElementById('filterList').addEventListener('change', (ev) => {
+    const cb = ev.target.closest('input[type="checkbox"]');
+    if (!cb || !openFilterCat) return;
+    if (cb.checked) filterSets[openFilterCat].delete(cb.value);
+    else filterSets[openFilterCat].add(cb.value);
+    document.getElementById('filterSelectAll').checked = filterSets[openFilterCat].size === 0;
+    render();
+  });
+
+  document.getElementById('filterSelectAll').addEventListener('change', (ev) => {
+    if (!openFilterCat) return;
+    if (ev.target.checked) filterSets[openFilterCat].clear();
+    else uniqueValues(openFilterCat).forEach(v => filterSets[openFilterCat].add(v));
+    renderFilterList(openFilterCat);
+    render();
+  });
+
+  document.getElementById('filterClear').addEventListener('click', () => {
+    if (!openFilterCat) return;
+    filterSets[openFilterCat].clear();
+    log(`Cleared filter on "${openFilterCat}"`, 'info');
+    renderFilterList(openFilterCat);
+    render();
+  });
+
+  document.getElementById('filterSearchInput').addEventListener('input', (ev) => {
+    const q = ev.target.value.toLowerCase();
+    document.querySelectorAll('#filterList .filter-row').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeFilterPopover(); });
+  window.addEventListener('resize', closeFilterPopover);
+  window.addEventListener('scroll', closeFilterPopover, true);
+}
+
 function wireControls() {
   document.getElementById('pills').addEventListener('click', (ev) => {
     const btn = ev.target.closest('.pill');
@@ -210,6 +326,7 @@ function wireControls() {
     btn.setAttribute('aria-selected', 'true');
     activeFilter = btn.dataset.filter;
     log(`Switched to "${activeFilter}" view`, 'info');
+    closeFilterPopover();
     render();
   });
 
@@ -277,5 +394,6 @@ function wireSpotlight() {
 }
 
 wireControls();
+wireFilterPopover();
 wireSpotlight();
 loadData();
