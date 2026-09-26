@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>رسم توزیع‌های آماری</title>
+<meta name="description" content="ابزار رسم توزیع‌های احتمال (نرمال، استیودنت t، کای‌دو و ...) و برازش آن‌ها روی داده.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="app-header">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M2 30 C 10 30, 12 8, 20 8 C 28 8, 30 30, 38 30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="2" y1="34" x2="38" y2="34" stroke="currentColor" stroke-width="1.4" opacity="0.5"/>
+      </svg>
+      <div class="brand-text">
+        <h1>رسم توزیع‌های آماری</h1>
+        <p>ترسیم PDF و CDF، برازش پارامتر روی داده و پیشنهاد بهترین توزیع</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main">
+
+    <aside class="control-panel">
+
+      <div class="tabs" id="modeTabs" role="tablist">
+        <button class="tab active" data-mode="param" role="tab" aria-selected="true">پارامتری</button>
+        <button class="tab" data-mode="data" role="tab" aria-selected="false">از روی داده</button>
+      </div>
+
+      <section class="panel-section">
+        <label class="field-label" for="distSelect">توزیع احتمال</label>
+        <select id="distSelect" class="select"></select>
+        <p class="formula" id="formulaText"></p>
+        <div class="theory-row">
+          <div class="theory-item">
+            <span class="theory-label">میانگین نظری</span>
+            <span class="theory-value" id="theoryMean" dir="ltr">—</span>
+          </div>
+          <div class="theory-item">
+            <span class="theory-label">واریانس نظری</span>
+            <span class="theory-value" id="theoryVar" dir="ltr">—</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel-section" id="paramSection"></section>
+
+      <section class="panel-section" id="dataSection" hidden>
+        <label class="field-label" for="dataText">چسباندن لیست اعداد</label>
+        <textarea id="dataText" class="textarea" rows="4" placeholder="هر متنی — با کاما، خط جدید، تب یا فاصله جدا شده — کار می‌کند. مثال: 12.3, 14.1, 9.8, 15.0"></textarea>
+
+        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="بارگذاری فایل داده">
+          <input type="file" id="fileInput" accept=".csv,.txt,.tsv,.json,.xlsx,.xls" hidden>
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 19h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="dropzone-text">فایل را بکشید و رها کنید یا کلیک کنید</span>
+          <span class="dropzone-hint">CSV · TXT · JSON · XLSX</span>
+        </div>
+
+        <p class="data-status" id="dataStatus"></p>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" id="applyDataBtn">استخراج و تحلیل داده</button>
+          <button class="btn btn-ghost" id="clearDataBtn" hidden>پاک‌کردن داده</button>
+        </div>
+      </section>
+
+      <section class="panel-section" id="fitSection" hidden>
+        <button class="btn btn-secondary" id="fitBtn">برازش این توزیع با داده</button>
+        <div class="best-fit" id="bestFitBox" hidden>
+          <p class="field-label">پیشنهاد بهترین برازش‌ها</p>
+          <ol class="best-fit-list" id="bestFitList"></ol>
+        </div>
+      </section>
+
+      <section class="panel-section options-row">
+        <div class="segmented" id="curveModeToggle">
+          <button data-value="pdf" class="active" type="button">PDF</button>
+          <button data-value="cdf" type="button">CDF</button>
+        </div>
+        <button class="btn btn-ghost btn-small" id="pinCurveBtn">افزودن به مقایسه</button>
+      </section>
+
+      <section class="panel-section" id="overlayListSection" hidden>
+        <label class="field-label">منحنی‌های مقایسه</label>
+        <ul class="overlay-list" id="overlayList"></ul>
+        <button class="btn btn-ghost btn-small" id="clearOverlayBtn">پاک‌کردن مقایسه</button>
+      </section>
+
+    </aside>
+
+    <section class="visual-panel">
+
+      <div class="chart-card">
+        <div class="chart-toolbar">
+          <h2 class="chart-title" id="chartTitle">توزیع نرمال</h2>
+          <button class="icon-btn" id="exportPngBtn" title="دانلود نمودار (PNG)" aria-label="دانلود نمودار">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="chartCanvas" data-min-height="380"></canvas>
+          <div class="tooltip" id="chartTooltip"></div>
+        </div>
+      </div>
+
+      <div class="stats-card" id="statsCard" hidden>
+        <div class="stats-toolbar">
+          <h2 class="chart-title">آمار توصیفی داده</h2>
+          <button class="icon-btn" id="copyStatsBtn" title="کپی آمار" aria-label="کپی آمار">
+            <svg viewBox="0 0 24 24" width="17" height="17"><rect x="8" y="8" width="12" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M16 8V5.5A1.5 1.5 0 0014.5 4h-9A1.5 1.5 0 004 5.5v9A1.5 1.5 0 005.5 16H8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          </button>
+        </div>
+        <div class="stats-grid" id="statsGrid"></div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <span>محاسبات کاملاً در همین صفحه و در مرورگر شما انجام می‌شود؛ هیچ داده‌ای ارسال نمی‌گردد.</span>
+  </footer>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
+<script src="math-utils.js"></script>
+<script src="distributions.js"></script>
+<script src="data-parser.js"></script>
+<script src="stats-utils.js"></script>
+<script src="chart-renderer.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
