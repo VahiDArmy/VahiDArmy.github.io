@@ -1,6 +1,3 @@
-change this code for:
-
-vahidarmy.github.io and master
 <!DOCTYPE html>
 <html lang="fa" dir="ltr">
 <head>
@@ -777,7 +774,7 @@ vahidarmy.github.io and master
 
     <header>
         <form id="auth" autocomplete="off">
-            <input id="repo" type="text" value="meyrahgozar-cell/meyrahgozar-cell" placeholder="owner/repo" />
+            <input id="repo" type="text" value="vahidarmy/vahidarmy.github.io" placeholder="owner/repo" />
             <input id="token" type="password" placeholder="GitHub Token (repo scope)" autocomplete="new-password" />
             <button type="button" id="connectBtn">Connect</button>
         </form>
@@ -794,7 +791,7 @@ vahidarmy.github.io and master
         <input type="file" id="fileInput" multiple hidden />
         <span class="count" id="fileCount"></span>
         <span class="spacer"></span>
-        <span class="branch" id="branchLabel">main</span>
+        <span class="branch" id="branchLabel">master</span>
     </div>
 
     <div class="upload-area" id="drop">
@@ -881,11 +878,11 @@ vahidarmy.github.io and master
         //  STATE
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         const state = {
-            owner: 'meyrahgozar-cell',
-            repo: 'meyrahgozar-cell',
+            owner: 'vahidarmy',
+            repo: 'vahidarmy.github.io',
             token: '',
             path: '',
-            branch: 'main',
+            branch: 'master',
             connected: false,
         };
 
@@ -1032,7 +1029,7 @@ vahidarmy.github.io and master
 
             try {
                 const info = await api('GET', '');
-                state.branch = info.default_branch || 'main';
+                state.branch = info.default_branch || 'master';
                 state.connected = true;
                 localStorage.setItem('fm_token', token);
                 setStatus(`✓ Connected: ${info.full_name}`, 'ok');
@@ -1134,7 +1131,12 @@ vahidarmy.github.io and master
                 browserBtn.title = 'Open as GitHub Pages (if enabled)';
                 browserBtn.onclick = e => {
                     e.stopPropagation();
-                    const baseUrl = `https://${state.owner}.github.io/${state.repo}/`;
+                    // User/org site (owner.github.io) → https://owner.github.io/
+                    // Project site → https://owner.github.io/repo/
+                    const isUserSite = state.repo === `${state.owner}.github.io`;
+                    const baseUrl = isUserSite
+                        ? `https://${state.owner}.github.io/`
+                        : `https://${state.owner}.github.io/${state.repo}/`;
                     window.open(baseUrl + enc(item.path), '_blank');
                 };
                 card.appendChild(browserBtn);
