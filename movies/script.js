@@ -258,5 +258,24 @@ async function loadData() {
   }
 }
 
+function wireSpotlight() {
+  const root = document.documentElement;
+  let raf = null;
+  const move = (x, y) => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      root.style.setProperty('--mx', `${x}px`);
+      root.style.setProperty('--my', `${y}px`);
+      raf = null;
+    });
+  };
+  window.addEventListener('pointermove', (ev) => move(ev.clientX, ev.clientY));
+  window.addEventListener('touchmove', (ev) => {
+    const t = ev.touches[0];
+    if (t) move(t.clientX, t.clientY);
+  }, { passive: true });
+}
+
 wireControls();
+wireSpotlight();
 loadData();
