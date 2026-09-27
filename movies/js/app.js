@@ -17,12 +17,21 @@
 
       State.set({ theme: savedTheme, view: savedView, category: savedCat });
 
-      /* ---- راه‌اندازی دیتابیس ---- */
-      await DB.init();
+      /* ---- راه‌اندازی دیتابیس (خطا اینجا نباید کل اپ را بترکونه) ---- */
+      try {
+        await DB.init();
+      } catch (dbErr) {
+        console.error('[bootstrap] DB init error:', dbErr);
+        Toast.error('راه‌اندازی دیتابیس با خطا مواجه شد — حالت آفلاین فعال است');
+      }
 
       /* ---- بارگذاری داده ---- */
-      State.loadAll();
-      State.applyFilters();
+      try {
+        State.loadAll();
+        State.applyFilters();
+      } catch (e) {
+        console.error('[bootstrap] load data error:', e);
+      }
 
       /* ---- رندر اولیه ---- */
       Render.renderSidebarCounts();
@@ -32,7 +41,8 @@
       document.querySelectorAll('.view-btn').forEach(b => {
         b.classList.toggle('is-active', b.dataset.view === savedView);
       });
-      document.getElementById('grid').classList.toggle('is-list', savedView === 'list');
+      const gridEl = document.getElementById('grid');
+      if (gridEl) gridEl.classList.toggle('is-list', savedView === 'list');
 
       // دسته‌ی ذخیره‌شده
       document.querySelectorAll('#category-list .side-item').forEach(b => {
@@ -57,7 +67,7 @@
 
       /* ---- ذخیره‌ی خودکار ---- */
       setInterval(() => {
-        DB.persistLocal();
+        try { DB.persistLocal(); } catch {}
       }, 10000);
 
       // ذخیره در هنگام بستن
@@ -65,19 +75,35 @@
         try { DB.persistLocal(); } catch {}
       });
 
-      /* ---- پاک کردن لودر ---- */
+      /* ---- نمایش اپ ---- */
       boot.classList.add('is-hidden');
       setTimeout(() => boot.remove(), 500);
       app.hidden = false;
 
-      /* ---- پیام خوش‌آمد ---- */
+      /* ---- پیام خوش‌آمد + باز کردن خودکار تنظیمات ----
+         اگر GitHub تنظیم نشده باشد، مستقیم مودال تنظیمات را باز می‌کنیم
+         تا کاربر جای وارد کردن توکن را ببیند. */
       setTimeout(() => {
-        const s = DB.getStats();
-        Toast.info(`آرشیو شما آماده است — ${Utils.toFa(s.totals.count)} عنوان در دسته‌بندی‌ها.`, {
-          title: 'خوش آمدی! 👋',
-          duration: 4500
-        });
-      }, 800);
+        let configured = false;
+        try { configured = GitHub.isConfigured(); } catch (e) { configured = false; }
+
+        if (!configured) {
+          Toast.info('برای ذخیره‌سازی روی گیت‌هاب، اطلاعات مخزن و توکن را وارد کن.', {
+            title: '👋 خوش آمدی',
+            duration: 6000
+          });
+          // کمی تاخیر تا کاربر پیام را ببیند
+          setTimeout(() => {
+            try { Events.openSettings(); } catch (e) { console.error(e); }
+          }, 900);
+        } else {
+          const stat = DB.getStats();
+          Toast.info(`آرشیو شما آماده است — ${Utils.toFa(stat.totals.count)} عنوان در دسته‌بندی‌ها.`, {
+            title: 'خوش آمدی! 👋',
+            duration: 4500
+          });
+        }
+      }, 700);
 
       console.log('%c🎬 Cinema App v' + CONFIG.APP_VERSION + ' ready',
         'color:#7c5cff;font-weight:bold;font-size:14px');
@@ -89,7 +115,16 @@
         msg.textContent = 'خطا در راه‌اندازی: ' + (err.message || err);
         msg.style.color = 'var(--danger)';
       }
-      Toast.error('راه‌اندازی با خطا مواجه شد. کنسول را چک کن.');
+      // حتی در صورت خطای فاجعه‌بار، اپ را نشان بده تا کاربر بتواند تنظیمات را باز کند
+      setTimeout(() => {
+        try {
+          boot.classList.add('is-hidden');
+          setTimeout(() => boot.remove(), 400);
+        } catch {}
+        app.hidden = false;
+        try { Events.bind(); Events.refreshSyncStatus(); } catch {}
+        try { Events.openSettings(); } catch {}
+      }, 1200);
     }
   }
 
