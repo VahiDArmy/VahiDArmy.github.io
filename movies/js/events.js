@@ -71,8 +71,7 @@ window.Events = (function () {
     });
   }
 
-  /* ---------- بک‌دراپ سایدبار ----------
-     بک‌دراپ داخل .app قرار می‌گیرد تا در همان Stacking Context سایدبار باشد. */
+  /* ---------- بک‌دراپ سایدبار ---------- */
   function toggleSidebarBackdrop(show) {
     let bd = document.querySelector('.sidebar-backdrop');
     if (show && !bd) {
@@ -192,7 +191,7 @@ window.Events = (function () {
       if (act === 'fav') { State.toggleFavorite(id); renderList(); Render.renderSidebarCounts(); }
       else if (act === 'edit') { openAddEdit(id); }
       else if (act === 'delete') { confirmDelete(id); }
-      else if (act === 'ai') { AIUI.openStandardizeSingle(id); }
+      else if (act === 'ai') { AIUI.openAnalyzeSingle(id); }
       else { openDetail(id); }
     });
     grid?.addEventListener('keydown', (e) => {
@@ -214,17 +213,20 @@ window.Events = (function () {
     });
   }
 
+  /* ---------- شبکه ---------- */
   function bindNetwork() {
     window.addEventListener('online', () => { updateSyncStatus('online'); Toast.success('اتصال برقرار شد'); });
     window.addEventListener('offline', () => { updateSyncStatus('offline'); Toast.warning('اتصال قطع شد'); });
   }
 
+  /* ---------- تغییرات state ---------- */
   function bindState() {
     State.on('title:added', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:updated', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:deleted', () => { renderList(); Render.renderSidebarCounts(); });
   }
 
+  /* ---------- رندر لیست ---------- */
   function renderList() {
     const grid = document.getElementById('grid');
     const s = State.get();
@@ -238,7 +240,7 @@ window.Events = (function () {
     const editing = id != null;
     const data = editing ? DB.getTitle(id) : {
       title: '', category: 'love', type: 'series', genre: '',
-      year: null, rating: 0, favorite: false, notes: '', watched_date: null
+      year: null, rating: 0, favorite: false, notes: '', reason: '', watched_date: null
     };
     if (!data) { Toast.error('عنوان پیدا نشد'); return; }
 
@@ -316,11 +318,25 @@ window.Events = (function () {
       ])
     ]));
 
+    /* ---- فیلد دلیل سلیقه‌ای ---- */
+    form.appendChild(Utils.el('div', { class: 'field' }, [
+      Utils.el('label', { class: 'field-label' }, [
+        'چرا؟ ',
+        Utils.el('span', { class: 'field-hint-inline' }, ['(دلیل عاشقشم/خوب/دری‌وری بودن)'])
+      ]),
+      Utils.el('textarea', {
+        class: 'field-textarea', name: 'reason',
+        placeholder: 'مثلاً: شبکه‌ی منطقی قوی، وفاداری به قوانین، بدون سوراخ داستانی…',
+        maxlength: CONFIG.LIMITS.REASON_MAX,
+        style: { minHeight: '70px' }
+      }, [data.reason || ''])
+    ]));
+
     if (data.summary || data.seasons || data.country) {
       form.appendChild(Utils.el('div', { class: 'alert alert-info' }, [
         Utils.el('span', { class: 'alert-icon' }, ['🪄']),
         Utils.el('div', {}, [
-          'این عنوان با AI استانداردسازی شده. ',
+          'این عنوان با AI تحلیل شده. ',
           data.seasons ? `${Utils.toFa(data.seasons)} فصل` : '',
           data.episodes ? ` · ${Utils.toFa(data.episodes)} قسمت` : '',
           data.country ? ` · ${data.country}` : ''
@@ -393,6 +409,7 @@ window.Events = (function () {
       rating: Number(form.querySelector('[name="rating"]').value) || 0,
       favorite: form.querySelector('[name="favorite"]').checked,
       notes: form.querySelector('[name="notes"]').value.trim(),
+      reason: form.querySelector('[name="reason"]').value.trim(),
       watched_date: original.watched_date || null,
       summary: original.summary || '',
       original_title: original.original_title || '',
@@ -402,6 +419,7 @@ window.Events = (function () {
       country: original.country || '',
       language: original.language || '',
       status: original.status || '',
+      story_analysis: original.story_analysis ? JSON.stringify(original.story_analysis) : '',
       ai_standardized_at: original.ai_standardized_at || null
     };
     if (!data.title) {
@@ -414,6 +432,7 @@ window.Events = (function () {
     return data;
   }
 
+  /* ---------- حذف ---------- */
   function confirmDelete(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -456,15 +475,25 @@ window.Events = (function () {
         t.episodes_per_season ? detailItem('قسمت در فصل', Utils.toFa(t.episodes_per_season)) : null,
         t.country ? detailItem('کشور', t.country) : null,
         t.language ? detailItem('زبان', t.language) : null,
-        t.status ? detailItem('وضعیت', t.status) : null,
-        detailItem('افزوده‌شده', Utils.toJalali(t.created_at)),
-        detailItem('آخرین ویرایش', Utils.relativeTime(t.updated_at))
+        t.status ? detailItem('وضعیت', t.status) : null
       ].filter(Boolean)),
 
       t.summary ? Utils.el('div', { class: 'mb-3' }, [
         Utils.el('h4', { class: 'mb-2' }, ['📖 خلاصه']),
         Utils.el('div', { class: 'detail-notes' }, [t.summary])
       ]) : null,
+
+      /* ---- تحلیل داستانی ---- */
+      (t.reason || t.story_analysis) ? (() => {
+        const box = Utils.el('div', { class: 'story-analysis-box mb-3' });
+        AIUI.renderStoryAnalysis(box, t.story_analysis, t.reason, t.category);
+        setTimeout(() => {
+          box.querySelectorAll('.score-fill').forEach(f => {
+            f.style.width = (f.dataset.pct || '0') + '%';
+          });
+        }, 80);
+        return box;
+      })() : null,
 
       t.notes ? Utils.el('div', { class: 'mb-3' }, [
         Utils.el('h4', { class: 'mb-2' }, ['📝 یادداشت من']),
@@ -474,13 +503,13 @@ window.Events = (function () {
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full flex-wrap' }, [
       Utils.el('button', { class: 'btn btn-danger', onclick: () => { Modal.close(); setTimeout(() => confirmDelete(id), 150); } }, ['حذف']),
-      Utils.el('button', { class: 'btn btn-soft', onclick: () => { Modal.close(); setTimeout(() => AIUI.openStandardizeSingle(id), 150); } }, ['🪄 AI']),
+      Utils.el('button', { class: 'btn btn-soft', onclick: () => { Modal.close(); setTimeout(() => AIUI.openAnalyzeSingle(id), 150); } }, ['🔬 تحلیل AI']),
       Utils.el('div', { class: 'flex-1' }),
       Utils.el('button', { class: 'btn btn-ghost', onclick: () => { Modal.close(); setTimeout(() => openAddEdit(id), 150); } }, ['ویرایش']),
       Utils.el('button', { class: 'btn btn-primary', onclick: () => Modal.close() }, ['بستن'])
     ]);
 
-    Modal.open({ title: 'جزئیات', icon: '🎬', size: 'lg', body, footer });
+    Modal.open({ title: 'جزئیات', icon: '🎬', size: 'xl', body, footer });
   }
 
   function detailItem(k, v) {
@@ -490,49 +519,35 @@ window.Events = (function () {
     ]);
   }
 
-  /* ---------- تنظیمات (بازطراحی‌شده) ---------- */
+  /* ---------- تنظیمات ---------- */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
     const aiKey = AI.getKey();
-
     const ghOK = !!(s.owner && s.repo && token);
     const aiOK = !!aiKey;
 
-    /* ---- ساخت ردیف ---- */
     function row(label, input, hint) {
-      const children = [
-        Utils.el('label', {}, [label]),
-        input
-      ];
+      const children = [Utils.el('label', {}, [label]), input];
       if (hint) children.push(Utils.el('small', {}, [hint]));
       return Utils.el('div', { class: 'settings-row' }, children);
     }
-
     function input(name, value, opts = {}) {
       return Utils.el('input', {
-        class: 'field-input',
-        type: opts.type || 'text',
-        name,
-        value: value || '',
-        placeholder: opts.placeholder || '',
-        autocomplete: opts.autocomplete || 'off',
-        spellcheck: 'false'
+        class: 'field-input', type: opts.type || 'text', name,
+        value: value || '', placeholder: opts.placeholder || '',
+        autocomplete: opts.autocomplete || 'off', spellcheck: 'false'
       });
     }
 
-    /* ---- بخش گیت‌هاب ---- */
     const githubSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🔗']),
         Utils.el('div', { class: 'settings-info' }, [
           Utils.el('h4', {}, ['اتصال گیت‌هاب']),
-          Utils.el('p', {}, ['ذخیره‌ی دیتابیس در مخزن برای همگام‌سازی بین دستگاه‌ها'])
+          Utils.el('p', {}, ['ذخیره‌ی دیتابیس در مخزن'])
         ]),
-        Utils.el('span', {
-          class: 'settings-status',
-          dataset: { status: ghOK ? 'ok' : 'missing' }
-        }, [ghOK ? 'متصل' : 'تنظیم نشده'])
+        Utils.el('span', { class: 'settings-status', dataset: { status: ghOK ? 'ok' : 'missing' } }, [ghOK ? 'متصل' : 'تنظیم نشده'])
       ]),
       Utils.el('div', { class: 'settings-fields' }, [
         row('نام کاربری GitHub', input('owner', s.owner, { placeholder: 'username' })),
@@ -540,167 +555,98 @@ window.Events = (function () {
         row('شاخه', input('branch', s.branch, { placeholder: 'master' })),
         row('مسیر فایل دیتابیس', input('path', s.path, { placeholder: 'movies/data/cinema.sqlite' })),
         row('توکن دسترسی', input('token', token, {
-          type: 'password',
-          placeholder: 'ghp_... یا github_pat_...',
-          autocomplete: 'new-password'
+          type: 'password', placeholder: 'ghp_...', autocomplete: 'new-password'
         }), 'نیاز به دسترسی repo یا contents:write دارد')
       ]),
       Utils.el('div', { class: 'settings-hint' }, [
         Utils.el('span', { class: 'hint-icon' }, ['💡']),
         Utils.el('div', {}, [
           'برای ساخت توکن: GitHub → Settings → Developer settings → Personal access tokens. ',
-          Utils.el('a', {
-            href: 'https://github.com/settings/tokens',
-            target: '_blank',
-            rel: 'noopener'
-          }, ['باز کردن صفحه'])
+          Utils.el('a', { href: 'https://github.com/settings/tokens', target: '_blank', rel: 'noopener' }, ['باز کردن'])
         ])
       ])
     ]);
 
-    /* ---- بخش AI ---- */
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🪄']),
         Utils.el('div', { class: 'settings-info' }, [
           Utils.el('h4', {}, ['هوش مصنوعی OpenRouter']),
-          Utils.el('p', {}, ['استانداردسازی عنوان‌ها و تحلیل سلیقه'])
+          Utils.el('p', {}, ['تحلیل داستانی و استانداردسازی'])
         ]),
-        Utils.el('span', {
-          class: 'settings-status',
-          dataset: { status: aiOK ? 'ok' : 'missing' }
-        }, [aiOK ? 'فعال' : 'تنظیم نشده'])
+        Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'تنظیم نشده'])
       ]),
       Utils.el('div', { class: 'settings-fields' }, [
         row('کلید API', input('ai_key', aiKey, {
-          type: 'password',
-          placeholder: 'sk-or-v1-...',
-          autocomplete: 'new-password'
-        }), `مدل پیش‌فرض: ${CONFIG.AI.MODEL}`)
+          type: 'password', placeholder: 'sk-or-v1-...', autocomplete: 'new-password'
+        }), `مدل: ${CONFIG.AI.MODEL}`)
       ]),
       Utils.el('div', { class: 'settings-hint' }, [
         Utils.el('span', { class: 'hint-icon' }, ['✨']),
         Utils.el('div', {}, [
-          'کلید رایگان OpenRouter از ',
-          Utils.el('a', {
-            href: 'https://openrouter.ai/keys',
-            target: '_blank',
-            rel: 'noopener'
-          }, ['openrouter.ai/keys']),
-          ' قابل دریافت است.'
+          'کلید رایگان از ',
+          Utils.el('a', { href: 'https://openrouter.ai/keys', target: '_blank', rel: 'noopener' }, ['openrouter.ai/keys'])
         ])
       ]),
       Utils.el('div', { class: 'settings-tests' }, [
-        Utils.el('button', {
-          class: 'settings-test-btn',
-          id: 'btn-ai-log',
-          type: 'button'
-        }, ['📋 نمایش لاگ AI']),
-        Utils.el('button', {
-          class: 'settings-test-btn',
-          id: 'btn-test-ai',
-          type: 'button'
-        }, ['✨ تست اتصال AI'])
+        Utils.el('button', { class: 'settings-test-btn', id: 'btn-ai-log', type: 'button' }, ['📋 نمایش لاگ AI']),
+        Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-ai', type: 'button' }, ['✨ تست اتصال AI'])
       ])
     ]);
 
-    /* ---- هشدار امنیتی ---- */
     const warnBox = Utils.el('div', { class: 'alert alert-warn' }, [
       Utils.el('span', { class: 'alert-icon' }, ['🔒']),
-      Utils.el('div', {}, [
-        'اطلاعات در localStorage مرورگر ذخیره می‌شود. ',
-        'روی کامپیوتر عمومی وارد نکنید.'
-      ])
+      Utils.el('div', {}, ['اطلاعات در localStorage مرورگر ذخیره می‌شود.'])
     ]);
 
-    /* ---- بدنه ---- */
-    const body = Utils.el('div', { class: 'settings' }, [
-      githubSection,
-      aiSection,
-      warnBox
-    ]);
+    const body = Utils.el('div', { class: 'settings' }, [githubSection, aiSection, warnBox]);
 
-    /* ---- فوتر ---- */
     const footer = Utils.el('div', { class: 'settings-footer' }, [
-      Utils.el('button', {
-        class: 'settings-test-btn',
-        id: 'btn-test-conn',
-        type: 'button'
-      }, ['🧪 تست اتصال گیت‌هاب']),
+      Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-conn', type: 'button' }, ['🧪 تست اتصال گیت‌هاب']),
       Utils.el('div', { class: 'spacer' }),
-      Utils.el('button', {
-        class: 'btn btn-ghost',
-        onclick: () => Modal.close()
-      }, ['انصراف']),
-      Utils.el('button', {
-        class: 'btn btn-primary',
-        id: 'btn-save-settings'
-      }, ['💾 ذخیره'])
+      Utils.el('button', { class: 'btn btn-ghost', onclick: () => Modal.close() }, ['انصراف']),
+      Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
     ]);
 
-    Modal.open({
-      title: 'تنظیمات',
-      icon: '⚙️',
-      size: 'lg',
-      body,
-      footer
-    });
+    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'lg', body, footer });
 
-    /* ---- رفرش وضعیت ---- */
     function refreshStatus() {
-      const owner = body.querySelector('[name="owner"]').value.trim();
-      const repo = body.querySelector('[name="repo"]').value.trim();
-      const tok = body.querySelector('[name="token"]').value.trim();
-      const key = body.querySelector('[name="ai_key"]').value.trim();
-
       const ghEl = githubSection.querySelector('.settings-status');
-      const ghOk = !!(owner && repo && tok);
+      const ghOk = !!(body.querySelector('[name="owner"]').value.trim() &&
+                     body.querySelector('[name="repo"]').value.trim() &&
+                     body.querySelector('[name="token"]').value.trim());
       ghEl.dataset.status = ghOk ? 'ok' : 'missing';
       ghEl.textContent = ghOk ? 'متصل' : 'تنظیم نشده';
-
       const aiEl = aiSection.querySelector('.settings-status');
-      const aiOk = !!key;
+      const aiOk = !!body.querySelector('[name="ai_key"]').value.trim();
       aiEl.dataset.status = aiOk ? 'ok' : 'missing';
       aiEl.textContent = aiOk ? 'فعال' : 'تنظیم نشده';
     }
+    body.querySelectorAll('.field-input').forEach(inp => inp.addEventListener('input', refreshStatus));
 
-    body.querySelectorAll('.field-input').forEach(inp => {
-      inp.addEventListener('input', refreshStatus);
-    });
-
-    /* ---- ذخیره ---- */
     document.getElementById('btn-save-settings').addEventListener('click', () => {
       const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
-
       GitHub.saveSettings({
-        owner: g('owner'),
-        repo: g('repo'),
+        owner: g('owner'), repo: g('repo'),
         branch: g('branch') || 'master',
         path: g('path') || 'movies/data/cinema.sqlite'
       });
       GitHub.setToken(g('token'));
       AI.setKey(g('ai_key'));
-
       Toast.success('تنظیمات ذخیره شد');
       Modal.close();
       refreshSyncStatus();
-
       if (window.AILog && g('ai_key')) {
         try {
-          AILog.show();
-          AILog.success('✓ کلید AI ذخیره شد');
-          AILog.meta('اکنون می‌توانید از ابزارهای AI استفاده کنید');
+          AILog.show(); AILog.success('✓ کلید AI ذخیره شد');
           AILog.scheduleAutoHide();
         } catch {}
       }
     });
 
-    /* ---- تست گیت‌هاب ---- */
     document.getElementById('btn-test-conn').addEventListener('click', async (e) => {
-      const btn = e.currentTarget;
-      const old = btn.textContent;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> تست…';
+      const btn = e.currentTarget; const old = btn.textContent;
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
         const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
         GitHub.saveSettings({
@@ -711,44 +657,23 @@ window.Events = (function () {
         GitHub.setToken(g('token'));
         await GitHub.testConnection();
         const fi = await GitHub.getFileInfo();
-        if (fi.exists) Toast.success(`اتصال GitHub موفق ✅ (${Utils.toFa(Math.round(fi.size/1024))} KB)`);
-        else Toast.warning('اتصال GitHub موفق، ولی فایل دیتابیس موجود نیست.');
-      } catch (err) {
-        Toast.error(err.message || 'خطا');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = old;
-      }
+        if (fi.exists) Toast.success(`اتصال موفق ✅ (${Utils.toFa(Math.round(fi.size/1024))} KB)`);
+        else Toast.warning('اتصال موفق، ولی فایل دیتابیس موجود نیست.');
+      } catch (err) { Toast.error(err.message || 'خطا'); }
+      finally { btn.disabled = false; btn.textContent = old; }
     });
 
-    /* ---- تست AI ---- */
     document.getElementById('btn-test-ai').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
-
       AI.setKey(key);
-
-      if (window.AILog) {
-        try {
-          AILog.show();
-          AILog.info('▸ شروع تست AI');
-        } catch {}
-      }
-
+      if (window.AILog) { try { AILog.show(); AILog.info('▸ شروع تست AI'); } catch {} }
       if (!key) {
-        if (window.AILog) {
-          try {
-            AILog.error('✗ کلید AI وارد نشده');
-            AILog.scheduleAutoHide();
-          } catch {}
-        }
-        Toast.warning('ابتدا کلید را وارد کنید');
-        return;
+        if (window.AILog) { try { AILog.error('✗ کلید AI وارد نشده'); AILog.scheduleAutoHide(); } catch {} }
+        Toast.warning('ابتدا کلید را وارد کنید'); return;
       }
-
       const old = btn.textContent;
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> تست…';
+      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
         await AI.chatStream({
           messages: [
@@ -759,18 +684,11 @@ window.Events = (function () {
           onToken: () => {}
         });
         Toast.success('اتصال به OpenRouter موفق ✅');
-      } catch (err) {
-        Toast.error(err.message || 'خطا در اتصال AI');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = old;
-      }
+      } catch (err) { Toast.error(err.message || 'خطا'); }
+      finally { btn.disabled = false; btn.textContent = old; }
     });
 
-    /* ---- نمایش لاگ ---- */
-    document.getElementById('btn-ai-log').addEventListener('click', () => {
-      AIUI.showLog();
-    });
+    document.getElementById('btn-ai-log').addEventListener('click', () => { AIUI.showLog(); });
   }
 
   /* ---------- سینک ---------- */
