@@ -1,5 +1,5 @@
 /* =========================================================
-   لایه‌ی دیتابیس با sql.js
+   لایه‌ی دیتابیس با sql.js (با پشتیبانی از فیلدهای AI)
    ========================================================= */
 window.DB = (function () {
   let SQL = null;
@@ -19,6 +19,15 @@ window.DB = (function () {
       favorite INTEGER NOT NULL DEFAULT 0,
       notes TEXT DEFAULT '',
       watched_date TEXT,
+      summary TEXT DEFAULT '',
+      original_title TEXT DEFAULT '',
+      seasons INTEGER,
+      episodes INTEGER,
+      episodes_per_season INTEGER,
+      country TEXT DEFAULT '',
+      language TEXT DEFAULT '',
+      status TEXT DEFAULT '',
+      ai_standardized_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -41,6 +50,34 @@ window.DB = (function () {
       v TEXT
     );
   `;
+
+  /* ---- اطمینان از وجود ستون ---- */
+  function ensureColumn(table, col, type) {
+    try {
+      const info = query(`PRAGMA table_info(${table})`);
+      if (!info.some(c => c.name === col)) {
+        run(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
+        console.log(`[DB] Migrated: added ${table}.${col} ${type}`);
+      }
+    } catch (e) {
+      console.warn(`[DB] ensureColumn failed for ${table}.${col}:`, e);
+    }
+  }
+
+  function runMigrations() {
+    const migrations = [
+      ['titles', 'summary', "TEXT DEFAULT ''"],
+      ['titles', 'original_title', "TEXT DEFAULT ''"],
+      ['titles', 'seasons', 'INTEGER'],
+      ['titles', 'episodes', 'INTEGER'],
+      ['titles', 'episodes_per_season', 'INTEGER'],
+      ['titles', 'country', "TEXT DEFAULT ''"],
+      ['titles', 'language', "TEXT DEFAULT ''"],
+      ['titles', 'status', "TEXT DEFAULT ''"],
+      ['titles', 'ai_standardized_at', 'TEXT']
+    ];
+    migrations.forEach(([t, c, ty]) => ensureColumn(t, c, ty));
+  }
 
   function setMeta(k, v) {
     const stmt = db.prepare('INSERT OR REPLACE INTO meta(k, v) VALUES (?, ?)');
@@ -65,7 +102,6 @@ window.DB = (function () {
     } catch (e) { console.warn('activity log failed', e); }
   }
 
-  /* ---- راه‌اندازی ---- */
   async function init() {
     if (ready) return;
     bootMsg('در حال بارگذاری موتور SQL…');
@@ -74,7 +110,6 @@ window.DB = (function () {
       locateFile: (f) => `https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/${f}`
     });
 
-    /* تلاش برای بارگذاری از گیت‌هاب */
     let loadedFromRemote = false;
     if (GitHub.isConfigured()) {
       bootMsg('در حال دریافت دیتابیس از گیت‌هاب…');
@@ -85,52 +120,41 @@ window.DB = (function () {
           db = new SQL.Database(bytes);
           lastSha = file.sha;
           loadedFromRemote = true;
-          console.log('[DB] Loaded from GitHub. sha:', file.sha);
         }
       } catch (e) {
         console.warn('[DB] GitHub load failed:', e);
-        Toast.warning('دریافت از گیت‌هاب ناموفق بود. از نسخه‌ی محلی استفاده می‌شود.');
       }
     }
 
-    /* اگر از گیت‌هاب نیامد، از حافظه‌ی محلی */
     if (!loadedFromRemote) {
       const local = localStorage.getItem(CONFIG.STORAGE.LOCAL_DB);
       if (local) {
         try {
           const bytes = Utils.base64ToUint8(local);
           db = new SQL.Database(bytes);
-          console.log('[DB] Loaded from localStorage');
         } catch (e) {
           console.warn('[DB] localStorage load failed:', e);
         }
       }
     }
 
-    /* اگر هیچ‌جا نبود، دیتابیس جدید بساز */
-    if (!db) {
-      db = new SQL.Database();
-      console.log('[DB] Fresh database');
-    }
+    if (!db) db = new SQL.Database();
 
-    /* اعمال schema */
     db.exec(SCHEMA);
+    runMigrations();
 
-    /* اگر جدول خالی بود، داده‌ی اولیه را وارد کن */
     const count = query('SELECT COUNT(*) AS c FROM titles')[0]?.c || 0;
     if (count === 0 && window.INITIAL_DATA) {
       bootMsg('در حال وارد کردن داده‌ی اولیه…');
       seedFromInitial();
-      console.log('[DB] Seeded initial data');
     }
 
-    setMeta('schema_version', 1);
+    setMeta('schema_version', 2);
     setMeta('last_boot', new Date().toISOString());
 
     ready = true;
     persistLocal();
 
-    /* اگر از گیت‌هاب نیامد ولی کاربر تنظیم کرده، در پس‌زمینه ارسال کن */
     if (!loadedFromRemote && GitHub.isConfigured()) {
       setTimeout(() => { pushToGitHub().catch(() => {}); }, 1000);
     }
@@ -141,30 +165,20 @@ window.DB = (function () {
     if (el) el.textContent = msg;
   }
 
-  /* ---- بذر اولیه ---- */
   function seedFromInitial() {
     const data = window.INITIAL_DATA;
     if (!data) return;
-    const now = new Date().toISOString();
     Object.entries(data).forEach(([cat, list]) => {
       list.forEach((title) => {
         insertTitle({
-          title,
-          category: cat,
-          type: 'series',
-          genre: '',
-          year: null,
-          rating: 0,
-          favorite: 0,
-          notes: '',
-          watched_date: null
+          title, category: cat, type: 'series', genre: '',
+          year: null, rating: 0, favorite: 0, notes: '', watched_date: null
         }, false);
       });
     });
     logActivity('seed', 'titles', null, 'وارد کردن داده‌ی اولیه');
   }
 
-  /* ---- تبدیل ردیف به آبجکت ---- */
   function rowToObj(row) {
     return {
       id: row.id,
@@ -177,12 +191,20 @@ window.DB = (function () {
       favorite: !!row.favorite,
       notes: row.notes || '',
       watched_date: row.watched_date || null,
+      summary: row.summary || '',
+      original_title: row.original_title || '',
+      seasons: row.seasons ?? null,
+      episodes: row.episodes ?? null,
+      episodes_per_season: row.episodes_per_season ?? null,
+      country: row.country || '',
+      language: row.language || '',
+      status: row.status || '',
+      ai_standardized_at: row.ai_standardized_at || null,
       created_at: row.created_at,
       updated_at: row.updated_at
     };
   }
 
-  /* ---- کوئری عمومی ---- */
   function query(sql, params = []) {
     try {
       const stmt = db.prepare(sql);
@@ -191,10 +213,7 @@ window.DB = (function () {
       while (stmt.step()) out.push(stmt.getAsObject());
       stmt.free();
       return out;
-    } catch (e) {
-      console.error('[DB] query error:', sql, e);
-      throw e;
-    }
+    } catch (e) { console.error('[DB] query error:', sql, e); throw e; }
   }
 
   function run(sql, params = []) {
@@ -202,18 +221,18 @@ window.DB = (function () {
       const stmt = db.prepare(sql);
       stmt.run(params);
       stmt.free();
-    } catch (e) {
-      console.error('[DB] run error:', sql, e);
-      throw e;
-    }
+    } catch (e) { console.error('[DB] run error:', sql, e); throw e; }
   }
 
-  /* ---- CRUD ---- */
+  const ALL_COLS = `title, category, type, genre, year, rating, favorite, notes, watched_date,
+                    summary, original_title, seasons, episodes, episodes_per_season,
+                    country, language, status, ai_standardized_at`;
+
   function insertTitle(data, log = true) {
     const now = new Date().toISOString();
     const sql = `INSERT INTO titles
-      (title, category, type, genre, year, rating, favorite, notes, watched_date, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      (${ALL_COLS}, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [
       String(data.title || '').trim(),
       data.category,
@@ -224,6 +243,15 @@ window.DB = (function () {
       data.favorite ? 1 : 0,
       data.notes || '',
       data.watched_date || null,
+      data.summary || '',
+      data.original_title || '',
+      data.seasons != null ? Number(data.seasons) : null,
+      data.episodes != null ? Number(data.episodes) : null,
+      data.episodes_per_season != null ? Number(data.episodes_per_season) : null,
+      data.country || '',
+      data.language || '',
+      data.status || '',
+      data.ai_standardized_at || null,
       now, now
     ];
     run(sql, params);
@@ -237,7 +265,9 @@ window.DB = (function () {
   function updateTitle(id, data, log = true) {
     const now = new Date().toISOString();
     const sql = `UPDATE titles SET
-      title=?, category=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?, updated_at=?
+      title=?, category=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?,
+      summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?,
+      country=?, language=?, status=?, ai_standardized_at=?, updated_at=?
       WHERE id=?`;
     const params = [
       String(data.title || '').trim(),
@@ -249,8 +279,16 @@ window.DB = (function () {
       data.favorite ? 1 : 0,
       data.notes || '',
       data.watched_date || null,
-      now,
-      id
+      data.summary || '',
+      data.original_title || '',
+      data.seasons != null ? Number(data.seasons) : null,
+      data.episodes != null ? Number(data.episodes) : null,
+      data.episodes_per_season != null ? Number(data.episodes_per_season) : null,
+      data.country || '',
+      data.language || '',
+      data.status || '',
+      data.ai_standardized_at || null,
+      now, id
     ];
     run(sql, params);
     if (log) logActivity('update', 'title', id, data.title);
@@ -268,34 +306,26 @@ window.DB = (function () {
     const rows = query('SELECT * FROM titles WHERE id=?', [id]);
     return rows[0] ? rowToObj(rows[0]) : null;
   }
-
   function getAllTitles() {
     return query('SELECT * FROM titles ORDER BY created_at DESC').map(rowToObj);
   }
-
   function getTitlesByCategory(cat) {
     return query('SELECT * FROM titles WHERE category=? ORDER BY created_at DESC', [cat]).map(rowToObj);
   }
-
   function getActivity(limit = 30) {
     return query('SELECT * FROM activity ORDER BY id DESC LIMIT ?', [limit]);
   }
-
   function getCounts() {
     const rows = query('SELECT category, COUNT(*) AS c FROM titles GROUP BY category');
     const out = { all: 0, love: 0, good: 0, hate: 0 };
     rows.forEach(r => { out[r.category] = r.c; out.all += r.c; });
     return out;
   }
-
   function getStats() {
     const rows = query(`
-      SELECT
-        category,
-        COUNT(*) as count,
+      SELECT category, COUNT(*) as count,
         AVG(NULLIF(rating,0)) as avg_rating,
-        SUM(favorite) as favs,
-        AVG(year) as avg_year
+        SUM(favorite) as favs, AVG(year) as avg_year
       FROM titles GROUP BY category
     `);
     const totals = query('SELECT COUNT(*) as c, AVG(NULLIF(rating,0)) as a, SUM(favorite) as f FROM titles')[0];
@@ -309,91 +339,72 @@ window.DB = (function () {
     };
   }
 
-  /* ---- خروجی/ورودی ---- */
-  function exportBinary() {
-    return db.export();
-  }
-
-  function exportBase64() {
-    return Utils.uint8ToBase64(exportBinary());
-  }
-
+  function exportBinary() { return db.export(); }
+  function exportBase64() { return Utils.uint8ToBase64(exportBinary()); }
   function exportJSON() {
-    const titles = getAllTitles();
-    const activity = getActivity(500);
     return {
       version: CONFIG.APP_VERSION,
       exportedAt: new Date().toISOString(),
-      titles,
-      activity
+      titles: getAllTitles(),
+      activity: getActivity(500)
     };
   }
-
   function importJSON(payload, replace = false) {
     if (!payload || !Array.isArray(payload.titles)) throw new Error('فایل نامعتبر');
-    if (replace) {
-      run('DELETE FROM titles');
-    }
+    if (replace) run('DELETE FROM titles');
     let added = 0;
     payload.titles.forEach(t => {
       try {
         insertTitle({
-          title: t.title,
-          category: t.category,
-          type: t.type || 'series',
-          genre: t.genre || '',
-          year: t.year,
-          rating: t.rating || 0,
-          favorite: t.favorite ? 1 : 0,
-          notes: t.notes || '',
-          watched_date: t.watched_date
+          title: t.title, category: t.category, type: t.type || 'series',
+          genre: t.genre || '', year: t.year, rating: t.rating || 0,
+          favorite: t.favorite ? 1 : 0, notes: t.notes || '',
+          watched_date: t.watched_date,
+          summary: t.summary, original_title: t.original_title,
+          seasons: t.seasons, episodes: t.episodes,
+          episodes_per_season: t.episodes_per_season,
+          country: t.country, language: t.language, status: t.status,
+          ai_standardized_at: t.ai_standardized_at
         }, false);
         added++;
-      } catch (e) { /* skip invalid */ }
+      } catch {}
     });
     logActivity('import', 'titles', null, `${added} عنوان وارد شد`);
     persistLocal();
     return added;
   }
-
   function importBinary(bytes) {
     db = new SQL.Database(bytes);
     db.exec(SCHEMA);
+    runMigrations();
     ready = true;
     persistLocal();
   }
-
-  /* ---- ذخیره محلی ---- */
   function persistLocal() {
     try {
-      const b64 = exportBase64();
-      localStorage.setItem(CONFIG.STORAGE.LOCAL_DB, b64);
-    } catch (e) {
-      console.warn('[DB] localStorage persist failed (probably quota):', e);
-    }
+      localStorage.setItem(CONFIG.STORAGE.LOCAL_DB, exportBase64());
+    } catch (e) { console.warn('[DB] persist failed:', e); }
   }
 
-  /* ---- سینک گیت‌هاب ---- */
   async function pullFromGitHub() {
     const file = await GitHub.readFile();
     if (!file || !file.content) throw new Error('فایل روی گیت‌هاب پیدا نشد.');
     const bytes = Utils.base64ToUint8(file.content);
     db = new SQL.Database(bytes);
     db.exec(SCHEMA);
+    runMigrations();
     lastSha = file.sha;
     ready = true;
     persistLocal();
     return { sha: file.sha, size: file.size };
   }
-
   async function pushToGitHub(message = null) {
     const b64 = exportBase64();
     if (!lastSha) {
-      // برای اطمینان از sha فعلی
       try {
         const info = await GitHub.readFile();
         lastSha = info ? info.sha : null;
-      } catch (e) { lastSha = null; }
+      } catch { lastSha = null; }
     }
     const commitMsg = message || (CONFIG.GITHUB.COMMIT_PREFIX + Utils.toJalaliLong(new Date()));
     const res = await GitHub.writeFile(b64, commitMsg, lastSha);
@@ -402,7 +413,6 @@ window.DB = (function () {
     persistLocal();
     return res;
   }
-
   function getLastSha() { return lastSha; }
 
   return {
@@ -410,11 +420,9 @@ window.DB = (function () {
     query, run,
     insertTitle, updateTitle, deleteTitle,
     getTitle, getAllTitles, getTitlesByCategory,
-    getActivity, getCounts, getStats,
-    logActivity,
+    getActivity, getCounts, getStats, logActivity,
     exportBinary, exportBase64, exportJSON,
-    importJSON, importBinary,
-    persistLocal,
+    importJSON, importBinary, persistLocal,
     pullFromGitHub, pushToGitHub, getLastSha
   };
 })();
