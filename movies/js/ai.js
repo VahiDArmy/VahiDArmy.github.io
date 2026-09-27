@@ -39,16 +39,23 @@ window.AI = (function () {
 
   /* ---- استریم چت ---- */
   async function chatStream({ messages, model, temperature, onToken, onDone, signal }) {
-    if (!isConfigured()) throw new Error('کلید OpenRouter تنظیم نشده است.');
+    aiShow();
+    aiLog('info', '▸ شروع درخواست استریم');
+    aiLog('meta', `مدل هدف: ${model || MODEL}`);
+
+    if (!isConfigured()) {
+      aiLog('error', '✗ کلید OpenRouter تنظیم نشده است');
+      aiLog('meta', 'کلید را از تنظیمات (⚙) → بخش هوش مصنوعی وارد کنید');
+      aiAutoHide();
+      throw new Error('کلید OpenRouter تنظیم نشده است.');
+    }
+
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
-
     const modelName = model || MODEL;
     const t0 = performance.now();
 
-    aiShow();
-    aiLog('request', `▸ درخواست استریم به OpenRouter ارسال شد`);
-    aiLog('meta', `مدل: ${modelName}`);
+    aiLog('request', '▸ ارسال درخواست به OpenRouter');
     aiLog('meta', `پیام‌ها: ${messages.length} · دما: ${temperature ?? 0.5}`);
 
     let res;
@@ -66,7 +73,7 @@ window.AI = (function () {
       });
     } catch (netErr) {
       if (netErr.name === 'AbortError') {
-        aiLog('warn', `⊘ درخواست توسط کاربر لغو شد`);
+        aiLog('warn', '⊘ درخواست توسط کاربر لغو شد');
       } else {
         aiLog('error', `✗ خطای شبکه: ${netErr.message}`);
       }
@@ -91,7 +98,6 @@ window.AI = (function () {
     let firstChunk = true;
     let chunkCount = 0;
     let lastLogLen = 0;
-    let lastLogTime = performance.now();
 
     while (true) {
       const { value, done } = await reader.read();
@@ -115,10 +121,8 @@ window.AI = (function () {
               firstChunk = false;
               aiLog('stream', '◐ شروع دریافت پاسخ…');
             }
-            const now = performance.now();
             if (full.length - lastLogLen >= 400) {
               lastLogLen = full.length;
-              lastLogTime = now;
               aiLog('stream', `↓ ${full.length} کاراکتر دریافت شد`);
             }
             onToken && onToken(delta, full);
@@ -137,15 +141,21 @@ window.AI = (function () {
 
   /* ---- چت بدون استریم (JSON) ---- */
   async function chatJSON({ messages, model, temperature, signal }) {
-    if (!isConfigured()) throw new Error('کلید OpenRouter تنظیم نشده است.');
+    aiShow();
+    aiLog('info', '▸ شروع درخواست JSON');
+
+    if (!isConfigured()) {
+      aiLog('error', '✗ کلید OpenRouter تنظیم نشده است');
+      aiAutoHide();
+      throw new Error('کلید OpenRouter تنظیم نشده است.');
+    }
+
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
-
     const modelName = model || MODEL;
     const t0 = performance.now();
 
-    aiShow();
-    aiLog('request', `▸ درخواست JSON به OpenRouter ارسال شد`);
+    aiLog('request', '▸ ارسال درخواست به OpenRouter');
     aiLog('meta', `مدل: ${modelName} · پیام‌ها: ${messages.length}`);
 
     let res;
@@ -164,7 +174,7 @@ window.AI = (function () {
       });
     } catch (netErr) {
       if (netErr.name === 'AbortError') {
-        aiLog('warn', `⊘ درخواست لغو شد`);
+        aiLog('warn', '⊘ درخواست لغو شد');
       } else {
         aiLog('error', `✗ خطای شبکه: ${netErr.message}`);
       }
@@ -180,7 +190,7 @@ window.AI = (function () {
       throw new Error(`خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`);
     }
 
-    aiLog('success', `✓ اتصال برقرار شد`);
+    aiLog('success', '✓ اتصال برقرار شد');
 
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -203,7 +213,6 @@ window.AI = (function () {
     }
   }
 
-  /* ---- پارس امن JSON از پاسخ مدل ---- */
   function parseJSONResponse(raw) {
     if (!raw) return null;
     let s = String(raw).trim();
