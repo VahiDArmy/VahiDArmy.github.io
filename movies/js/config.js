@@ -8,13 +8,24 @@ window.CONFIG = {
   /* ---- ذخیره‌سازی گیت‌هاب ---- */
   GITHUB: {
     API_BASE: 'https://api.github.com',
-    /* این‌ها از تنظیمات کاربر خوانده می‌شوند ولی مقدار پیش‌فرض هم هست */
-    DEFAULT_OWNER: '',
-    DEFAULT_REPO: 'Username.github.io',
+
+    /* ---- پیش‌فرض‌های ریپوی شما ---- */
+    /* سایت روی vahidarmy.github.io/movies/ سرو می‌شود
+       پس: repo = vahidarmy.github.io  و  path = movies/data/cinema.sqlite */
+    DEFAULT_OWNER: 'vahidarmy',
+    DEFAULT_REPO: 'vahidarmy.github.io',
     DEFAULT_BRANCH: 'master',
-    DEFAULT_PATH: 'data/cinema.sqlite',
+    DEFAULT_PATH: 'movies/data/cinema.sqlite',
+
     DB_FILENAME: 'cinema.sqlite',
-    COMMIT_PREFIX: '🎬 cinema: '
+    COMMIT_PREFIX: '🎬 cinema: ',
+
+    /* ---- بازه‌ی polling برای بررسی تغییرات روی مخزن (ms) ---- */
+    POLL_INTERVAL: 60000,
+
+    /* ---- حداکثر حجم فایل دیتابیس برای push (بایت) ----
+       GitHub Contents API برای فایل‌های بزرگ‌تر از 1MB محدودیت داره */
+    MAX_SIZE_WARN: 900 * 1024
   },
 
   /* ---- ذخیره‌سازی محلی ---- */
@@ -24,7 +35,9 @@ window.CONFIG = {
     LOCAL_DB: 'cinema_local_db',
     THEME: 'cinema_theme',
     VIEW: 'cinema_view',
-    LAST_CATEGORY: 'cinema_last_category'
+    LAST_CATEGORY: 'cinema_last_category',
+    LAST_SYNC: 'cinema_last_sync',
+    LAST_SHA: 'cinema_last_sha'
   },
 
   /* ---- پیش‌فرض‌ها ---- */
