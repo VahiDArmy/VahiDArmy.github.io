@@ -40,18 +40,35 @@ window.Render = (function () {
       ? `<span class="ai-badge" title="استانداردسازی‌شده با AI">🪄</span>`
       : '';
 
+    // نمایش دلیل سلیقه‌ای
+    const reasonBlock = t.reason
+      ? `<div class="card-reason" data-cat="${cat}">
+           <span class="card-reason-icon">${reasonIcon(cat)}</span>
+           <span class="card-reason-text">${Utils.esc(t.reason)}</span>
+         </div>`
+      : '';
+
+    // نشان انسجام (اگر تحلیل داریم)
+    const sa = t.story_analysis;
+    let consistencyBadge = '';
+    if (sa && sa.consistency_score != null) {
+      const s = Number(sa.consistency_score);
+      const cls = s >= 7 ? 'good' : s >= 4 ? 'warn' : 'bad';
+      consistencyBadge = `<span class="consistency-badge" data-color="${cls}" title="انسجام داستانی">◈ ${Utils.toFa(s.toFixed(1))}</span>`;
+    }
+
     return `
     <article class="card ${favCls}" data-id="${t.id}" data-category="${cat}" tabindex="0">
       <header class="card-head">
         <div class="card-title-wrap">
-          <h3 class="card-title">${titleHtml}${aiBadge}</h3>
+          <h3 class="card-title">${titleHtml}${aiBadge}${consistencyBadge}</h3>
           <div class="card-meta">
             <span class="cat-badge" data-cat="${cat}">${CAT_LABEL[cat] || cat}</span>
             ${metaParts.length ? metaParts.join('<span class="dot"></span>') : ''}
           </div>
         </div>
         <div class="card-actions">
-          <button class="card-act" data-act="ai" title="استانداردسازی با AI">
+          <button class="card-act" data-act="ai" title="تحلیل و استانداردسازی با AI">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
           </button>
           <button class="card-act ${t.favorite ? 'is-fav' : ''}" data-act="fav" title="علاقه‌مندی">
@@ -66,8 +83,9 @@ window.Render = (function () {
         </div>
       </header>
       <div class="card-body">
+        ${reasonBlock}
         ${t.notes ? `<p class="card-notes">${Utils.esc(t.notes)}</p>` : ''}
-        ${t.summary && !t.notes ? `<p class="card-notes">${Utils.esc(t.summary)}</p>` : ''}
+        ${!t.notes && t.summary && !t.reason ? `<p class="card-notes">${Utils.esc(t.summary)}</p>` : ''}
       </div>
       <footer class="card-foot">
         <div class="flex items-center gap-2">
@@ -77,6 +95,10 @@ window.Render = (function () {
         <span class="text-4 text-xs">${Utils.relativeTime(t.created_at)}</span>
       </footer>
     </article>`;
+  }
+
+  function reasonIcon(cat) {
+    return { love: '❤️', good: '👍', hate: '👎' }[cat] || '💬';
   }
 
   function renderGrid(container, items, query = '') {
