@@ -1,14 +1,13 @@
 /* =========================================================
-   لاگ زنده‌ی AI — پنل شیشه‌ای
+   لاگ مینیمال AI — فقط ۲ خط آخر پایین صفحه
    ========================================================= */
 window.AILog = (function () {
-  const MAX_LINES = 200;
-  const AUTO_HIDE_DELAY = 10000; // 10s بعد از پایان، بسته می‌شود
+  const MAX_LINES = 2;
+  const AUTO_HIDE_DELAY = 6000; // ۶ ثانیه بعد از آخرین پیام محو می‌شود
 
-  let panel = null;
+  let root = null;
   let bodyEl = null;
   let autohideTimer = null;
-  let userScrolledUp = false;
 
   function nowTime() {
     const d = new Date();
@@ -17,114 +16,59 @@ window.AILog = (function () {
   }
 
   function ensureUI() {
-    if (panel && document.body.contains(panel)) return;
+    if (root && document.body.contains(root)) return;
 
-    panel = Utils.el('div', { class: 'ai-log', id: 'ai-log', dataset: { active: 'false' } });
-
-    const pulse = Utils.el('span', { class: 'ai-log-pulse' });
-
-    const header = Utils.el('div', { class: 'ai-log-header' }, [
-      Utils.el('div', { class: 'ai-log-title' }, [
-        pulse,
-        Utils.el('span', {}, ['AI · LIVE LOG'])
-      ]),
-      Utils.el('div', { class: 'ai-log-controls' }, [
-        Utils.el('button', {
-          class: 'ai-log-btn',
-          title: 'پاک کردن',
-          onclick: (e) => { e.stopPropagation(); clear(); }
-        }, ['🗑']),
-        Utils.el('button', {
-          class: 'ai-log-btn ai-log-toggle',
-          title: 'باز/جمع',
-          onclick: (e) => { e.stopPropagation(); toggleCollapse(); }
-        }, ['▾'])
-      ])
-    ]);
-
-    bodyEl = Utils.el('div', { class: 'ai-log-body' });
-
-    // ردیابی اسکرول کاربر
-    bodyEl.addEventListener('scroll', () => {
-      const atBottom = bodyEl.scrollHeight - bodyEl.scrollTop - bodyEl.clientHeight < 20;
-      userScrolledUp = !atBottom;
-    });
-
-    header.addEventListener('click', (e) => {
-      // فقط اگر روی دکمه‌ها نبود
-      if (!e.target.closest('.ai-log-btn')) toggleCollapse();
-    });
-
-    panel.appendChild(header);
-    panel.appendChild(bodyEl);
-    document.body.appendChild(panel);
-  }
-
-  function toggleCollapse() {
-    if (!panel) return;
-    const collapsed = panel.classList.toggle('is-collapsed');
-    const btn = panel.querySelector('.ai-log-toggle');
-    if (btn) btn.textContent = collapsed ? '▸' : '▾';
+    root = Utils.el('div', { class: 'ai-log-mini', id: 'ai-log-mini' });
+    bodyEl = Utils.el('div', { class: 'ai-log-mini-body' });
+    root.appendChild(bodyEl);
+    document.body.appendChild(root);
   }
 
   function log(message, level = 'info') {
     ensureUI();
-    show();
+    clearTimeout(autohideTimer);
 
     const line = Utils.el('div', {
-      class: 'ai-log-line',
+      class: 'ai-log-mini-line',
       dataset: { level }
     }, [
-      Utils.el('span', { class: 'ai-log-time' }, [nowTime()]),
-      Utils.el('span', { class: 'ai-log-msg' }, [String(message)])
+      Utils.el('span', { class: 'ai-log-mini-time' }, [nowTime()]),
+      Utils.el('span', { class: 'ai-log-mini-msg' }, [String(message)])
     ]);
 
     bodyEl.appendChild(line);
 
+    // فقط آخرین N خط نگه داشته شود
     while (bodyEl.children.length > MAX_LINES) {
       bodyEl.removeChild(bodyEl.firstChild);
     }
 
-    if (!userScrolledUp) {
-      bodyEl.scrollTop = bodyEl.scrollHeight;
-    }
+    root.classList.add('is-visible');
 
-    panel.dataset.active = 'true';
-    panel.classList.remove('is-collapsed');
-    const btn = panel.querySelector('.ai-log-toggle');
-    if (btn) btn.textContent = '▾';
+    // زمان‌بندی محو خودکار
+    autohideTimer = setTimeout(() => {
+      if (root) root.classList.remove('is-visible');
+    }, AUTO_HIDE_DELAY);
   }
 
   function show() {
     ensureUI();
-    panel.classList.add('is-visible');
-    clearTimeout(autohideTimer);
+    root.classList.add('is-visible');
   }
 
   function hide() {
-    if (!panel) return;
-    panel.classList.remove('is-visible');
+    if (root) root.classList.remove('is-visible');
   }
 
   function scheduleAutoHide() {
     clearTimeout(autohideTimer);
-    if (panel) panel.dataset.active = 'false';
     autohideTimer = setTimeout(() => {
-      if (!panel) return;
-      panel.classList.add('is-collapsed');
-      const btn = panel.querySelector('.ai-log-toggle');
-      if (btn) btn.textContent = '▸';
-      setTimeout(() => {
-        if (panel && panel.dataset.active === 'false') {
-          panel.classList.remove('is-visible');
-        }
-      }, 5000);
+      if (root) root.classList.remove('is-visible');
     }, AUTO_HIDE_DELAY);
   }
 
   function clear() {
     if (bodyEl) bodyEl.innerHTML = '';
-    userScrolledUp = false;
   }
 
   /* ---- میان‌برها ---- */
@@ -135,6 +79,9 @@ window.AILog = (function () {
   const request = (m) => log(m, 'request');
   const stream  = (m) => log(m, 'stream');
   const meta    = (m) => log(m, 'meta');
+
+  /* ---- سازگاری با API قبلی ---- */
+  function toggleCollapse() { /* no-op */ }
 
   return {
     log, info, success, warn, error, request, stream, meta,
