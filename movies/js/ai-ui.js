@@ -1,5 +1,5 @@
 /* =========================================================
-   رابط‌های کاربری AI (مودال‌ها)
+   رابط‌های کاربری AI (مودال‌ها) — بدون چشمک، با مارک‌دان زنده
    ========================================================= */
 window.AIUI = (function () {
 
@@ -9,36 +9,75 @@ window.AIUI = (function () {
   function renderMarkdown(text) {
     if (!text) return '';
     let html = Utils.esc(text);
+
+    // code blocks
     html = html.replace(/```([\s\S]*?)```/g, (_, code) =>
-      `<pre class="ai-code">${code}</pre>`);
+      `<pre class="ai-code">${code.trim()}</pre>`);
+
+    // inline code
     html = html.replace(/`([^`]+)`/g, '<code class="ai-inline">$1</code>');
+
+    // headings
+    html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
+    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
-    html = html.replace(/(?:^|\n)((?:- .+(?:\n|$))+)/g, (_, block) => {
-      const items = block.trim().split('\n').map(l => l.replace(/^-\s*/, ''));
+
+    // bold & italic
+    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+    html = html.replace(/(?<![*_\w])\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+    html = html.replace(/(?<![*_\w])_([^_\n]+)_(?!_)/g, '<em>$1</em>');
+
+    // strikethrough
+    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+
+    // links [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    // horizontal rule
+    html = html.replace(/^\s*---+\s*$/gm, '<hr>');
+
+    // blockquote
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // unordered lists
+    html = html.replace(/(?:^|\n)((?:[-*] .+(?:\n|$))+)/g, (_, block) => {
+      const items = block.trim().split('\n').map(l => l.replace(/^[-*]\s*/, ''));
       return '\n<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
     });
+
+    // ordered lists
     html = html.replace(/(?:^|\n)((?:\d+\. .+(?:\n|$))+)/g, (_, block) => {
       const items = block.trim().split('\n').map(l => l.replace(/^\d+\.\s*/, ''));
       return '\n<ol>' + items.map(i => `<li>${i}</li>`).join('') + '</ol>';
     });
+
+    // paragraphs
     html = html.split(/\n{2,}/).map(p => {
-      if (/^<(h\d|ul|ol|pre|div)/.test(p.trim())) return p;
-      return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+      const trimmed = p.trim();
+      if (!trimmed) return '';
+      if (/^<(h\d|ul|ol|pre|hr|blockquote|div)/.test(trimmed)) return trimmed;
+      return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
     }).join('');
+
     return html;
   }
 
-  /* ---- ساخت پنل استریم ---- */
+  /* =========================================================
+     پنل استریم — بدون چشمک با rAF throttle
+     ========================================================= */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
+    const contentEl = Utils.el('div', { class: 'ai-stream-content' });
+    body.appendChild(contentEl);
+
     const status = Utils.el('div', { class: 'ai-stream-status' }, [
       Utils.el('span', { class: 'ai-status-dot' }),
       Utils.el('span', { class: 'ai-status-text' }, ['آماده'])
     ]);
+
     const panel = Utils.el('div', { class: 'ai-stream-panel' }, [
       Utils.el('div', { class: 'ai-stream-head' }, [
         Utils.el('div', { class: 'ai-stream-title' }, [titleText]),
@@ -47,17 +86,43 @@ window.AIUI = (function () {
       body
     ]);
 
+    /* وضعیت رندر */
+    let pendingText = '';
+    let rafScheduled = false;
+    let lastRendered = '';
+
+    function flushRender() {
+      rafScheduled = false;
+      if (pendingText === lastRendered) return;
+
+      // آیا کاربر در پایین است؟ فقط آنگاه auto-scroll
+      const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+
+      contentEl.innerHTML = renderMarkdown(pendingText);
+      lastRendered = pendingText;
+
+      if (atBottom) body.scrollTop = body.scrollHeight;
+    }
+
+    function appendText(acc) {
+      pendingText = acc;
+      if (rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(flushRender);
+    }
+
+    function setContent(html) {
+      pendingText = '';
+      lastRendered = '';
+      contentEl.innerHTML = html;
+      body.scrollTop = 0;
+    }
+
     function setStatus(text, state) {
       status.querySelector('.ai-status-text').textContent = text;
       status.dataset.state = state || 'idle';
     }
-    function setContent(html) {
-      body.innerHTML = html;
-      body.scrollTop = body.scrollHeight;
-    }
-    function appendText(acc) {
-      setContent(renderMarkdown(acc));
-    }
+
     return { panel, body, setStatus, setContent, appendText };
   }
 
@@ -72,7 +137,6 @@ window.AIUI = (function () {
       if (window.AILog) {
         try { AILog.error('✗ کلید OpenRouter تنظیم نشده است'); } catch {}
         try { AILog.meta('کلید را از تنظیمات (⚙) → بخش «هوش مصنوعی» وارد کنید'); } catch {}
-        try { AILog.meta('برای دریافت کلید: https://openrouter.ai/keys'); } catch {}
         try { AILog.scheduleAutoHide(); } catch {}
       }
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
@@ -211,7 +275,7 @@ window.AIUI = (function () {
         Utils.el('span', { class: 'alert-icon' }, ['⏳']),
         Utils.el('div', {}, [
           `این عملیات ${Utils.toFa(Math.ceil(titles.length / 5))} درخواست به AI ارسال می‌کند. `,
-          'ممکن است چند دقیقه طول بکشد و از سهمیه‌ی رایگان مصرف کند.'
+          'ممکن است چند دقیقه طول بکشد.'
         ])
       ]),
       progressWrap,
@@ -410,7 +474,6 @@ window.AIUI = (function () {
     }
   }
 
-  /* ---- نمایش دستی لاگ (برای تست) ---- */
   function showLog() {
     if (!window.AILog) return;
     AILog.show();
