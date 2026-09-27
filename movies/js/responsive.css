@@ -1,0 +1,115 @@
+/* =========================================================
+   واکنش‌گرا
+   ========================================================= */
+@media (max-width: 1100px) {
+  :root { --sidebar-w: 232px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .app-body { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed;
+    top: var(--header-h);
+    right: 0;
+    bottom: var(--footer-h);
+    width: 280px;
+    height: auto;
+    z-index: 45;
+    transform: translateX(100%);
+    transition: transform var(--dur-slow) var(--ease-out);
+    box-shadow: var(--shadow-4);
+    background: var(--bg-1);
+    border-left: 1px solid var(--border-2);
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sidebar.is-open { transform: translateX(0); }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    top: var(--header-h);
+    bottom: var(--footer-h);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 44;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base);
+  }
+  .sidebar-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+  .menu-toggle { display: inline-flex; }
+  .brand-sub { display: none; }
+  .header-search { max-width: none; }
+  .footer-hint { display: none; }
+
+  /* ✅ FIX: قفل اسکرول پس‌زمینه وقتی سایدبار بازه */
+  body.sidebar-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body.sidebar-open .content-area {
+    overflow: hidden !important;
+    touch-action: none;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 720px) {
+  :root { --header-h: 60px; --footer-h: 0px; }
+
+  .app-footer { display: none; }
+  .app-header { grid-template-columns: auto 1fr auto; padding: 0 12px; gap: 10px; }
+  .brand-text { display: none; }
+  .brand-mark { width: 36px; height: 36px; font-size: 19px; }
+  .header-search { max-width: none; }
+  .sync-label { display: none; }
+  .sync-status { padding: 6px; }
+
+  .toolbar { flex-wrap: wrap; padding: 12px 14px; gap: 10px; }
+  .toolbar-left { width: 100%; }
+  .page-title { font-size: var(--fs-lg); }
+  .toolbar-right { width: 100%; justify-content: space-between; }
+
+  .content-area { padding: 14px 14px 40px; }
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+
+  .modal-root { padding: 10px; align-items: flex-end; }
+  .modal { max-height: 92vh; border-radius: var(--radius-lg); }
+  .modal-header, .modal-body, .modal-footer { padding: 14px 16px; }
+
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .cat-picker { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .cat-option-inner { padding: 10px 6px; }
+  .cat-option-inner .emoji { font-size: 20px; }
+  .cat-option-inner .lbl { font-size: var(--fs-xs); }
+
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .bar-row { grid-template-columns: 80px 1fr 36px; }
+  .toast-root { right: 12px; left: 12px; width: auto; }
+
+  /* AI */
+  .ai-stream-body { max-height: 260px; padding: 14px; }
+  .ai-result-row { grid-template-columns: 100px 1fr; font-size: var(--fs-xs); }
+  .ai-progress-text { min-width: 80px; font-size: var(--fs-xs); }
+  .ai-result-item { grid-template-columns: 18px 1fr; }
+  .ai-result-new { grid-column: 2; font-size: var(--fs-xs); }
+}
+
+@media (max-width: 420px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-footer .btn { width: 100%; }
+}
+
+@media print {
+  .app-header, .sidebar, .toolbar, .app-footer, .toast-root, .card-actions { display: none !important; }
+  body { background: #fff; color: #000; }
+  .card { break-inside: avoid; border: 1px solid #ddd; }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
