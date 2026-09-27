@@ -1,5 +1,5 @@
 /* =========================================================
-   لایه‌ی دیتابیس با sql.js (با پشتیبانی از فیلدهای AI)
+   لایه‌ی دیتابیس با sql.js
    ========================================================= */
 window.DB = (function () {
   let SQL = null;
@@ -27,6 +27,8 @@ window.DB = (function () {
       country TEXT DEFAULT '',
       language TEXT DEFAULT '',
       status TEXT DEFAULT '',
+      reason TEXT DEFAULT '',
+      story_analysis TEXT DEFAULT '',
       ai_standardized_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -51,21 +53,18 @@ window.DB = (function () {
     );
   `;
 
-  /* ---- اطمینان از وجود ستون ---- */
   function ensureColumn(table, col, type) {
     try {
       const info = query(`PRAGMA table_info(${table})`);
       if (!info.some(c => c.name === col)) {
         run(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
-        console.log(`[DB] Migrated: added ${table}.${col} ${type}`);
+        console.log(`[DB] Migrated: added ${table}.${col}`);
       }
-    } catch (e) {
-      console.warn(`[DB] ensureColumn failed for ${table}.${col}:`, e);
-    }
+    } catch (e) { console.warn(`[DB] ensureColumn ${table}.${col}:`, e); }
   }
 
   function runMigrations() {
-    const migrations = [
+    [
       ['titles', 'summary', "TEXT DEFAULT ''"],
       ['titles', 'original_title', "TEXT DEFAULT ''"],
       ['titles', 'seasons', 'INTEGER'],
@@ -74,15 +73,15 @@ window.DB = (function () {
       ['titles', 'country', "TEXT DEFAULT ''"],
       ['titles', 'language', "TEXT DEFAULT ''"],
       ['titles', 'status', "TEXT DEFAULT ''"],
+      ['titles', 'reason', "TEXT DEFAULT ''"],
+      ['titles', 'story_analysis', "TEXT DEFAULT ''"],
       ['titles', 'ai_standardized_at', 'TEXT']
-    ];
-    migrations.forEach(([t, c, ty]) => ensureColumn(t, c, ty));
+    ].forEach(([t, c, ty]) => ensureColumn(t, c, ty));
   }
 
   function setMeta(k, v) {
     const stmt = db.prepare('INSERT OR REPLACE INTO meta(k, v) VALUES (?, ?)');
-    stmt.run([k, String(v)]);
-    stmt.free();
+    stmt.run([k, String(v)]); stmt.free();
   }
   function getMeta(k) {
     const stmt = db.prepare('SELECT v FROM meta WHERE k = ?');
@@ -121,9 +120,7 @@ window.DB = (function () {
           lastSha = file.sha;
           loadedFromRemote = true;
         }
-      } catch (e) {
-        console.warn('[DB] GitHub load failed:', e);
-      }
+      } catch (e) { console.warn('[DB] GitHub load failed:', e); }
     }
 
     if (!loadedFromRemote) {
@@ -132,14 +129,11 @@ window.DB = (function () {
         try {
           const bytes = Utils.base64ToUint8(local);
           db = new SQL.Database(bytes);
-        } catch (e) {
-          console.warn('[DB] localStorage load failed:', e);
-        }
+        } catch (e) { console.warn('[DB] localStorage load failed:', e); }
       }
     }
 
     if (!db) db = new SQL.Database();
-
     db.exec(SCHEMA);
     runMigrations();
 
@@ -149,9 +143,8 @@ window.DB = (function () {
       seedFromInitial();
     }
 
-    setMeta('schema_version', 2);
+    setMeta('schema_version', 3);
     setMeta('last_boot', new Date().toISOString());
-
     ready = true;
     persistLocal();
 
@@ -180,6 +173,10 @@ window.DB = (function () {
   }
 
   function rowToObj(row) {
+    let storyAnalysis = null;
+    if (row.story_analysis) {
+      storyAnalysis = Utils.safeParse(row.story_analysis, null);
+    }
     return {
       id: row.id,
       title: row.title,
@@ -199,6 +196,8 @@ window.DB = (function () {
       country: row.country || '',
       language: row.language || '',
       status: row.status || '',
+      reason: row.reason || '',
+      story_analysis: storyAnalysis,
       ai_standardized_at: row.ai_standardized_at || null,
       created_at: row.created_at,
       updated_at: row.updated_at
@@ -219,20 +218,19 @@ window.DB = (function () {
   function run(sql, params = []) {
     try {
       const stmt = db.prepare(sql);
-      stmt.run(params);
-      stmt.free();
+      stmt.run(params); stmt.free();
     } catch (e) { console.error('[DB] run error:', sql, e); throw e; }
   }
 
   const ALL_COLS = `title, category, type, genre, year, rating, favorite, notes, watched_date,
                     summary, original_title, seasons, episodes, episodes_per_season,
-                    country, language, status, ai_standardized_at`;
+                    country, language, status, reason, story_analysis, ai_standardized_at`;
 
   function insertTitle(data, log = true) {
     const now = new Date().toISOString();
     const sql = `INSERT INTO titles
       (${ALL_COLS}, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const params = [
       String(data.title || '').trim(),
       data.category,
@@ -251,12 +249,13 @@ window.DB = (function () {
       data.country || '',
       data.language || '',
       data.status || '',
+      data.reason || '',
+      data.story_analysis || '',
       data.ai_standardized_at || null,
       now, now
     ];
     run(sql, params);
-    const res = query('SELECT last_insert_rowid() AS id')[0];
-    const id = res?.id;
+    const id = query('SELECT last_insert_rowid() AS id')[0]?.id;
     if (log) logActivity('create', 'title', id, data.title);
     persistLocal();
     return id;
@@ -267,7 +266,7 @@ window.DB = (function () {
     const sql = `UPDATE titles SET
       title=?, category=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?,
       summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?,
-      country=?, language=?, status=?, ai_standardized_at=?, updated_at=?
+      country=?, language=?, status=?, reason=?, story_analysis=?, ai_standardized_at=?, updated_at=?
       WHERE id=?`;
     const params = [
       String(data.title || '').trim(),
@@ -287,6 +286,8 @@ window.DB = (function () {
       data.country || '',
       data.language || '',
       data.status || '',
+      data.reason || '',
+      data.story_analysis || '',
       data.ai_standardized_at || null,
       now, id
     ];
@@ -364,6 +365,8 @@ window.DB = (function () {
           seasons: t.seasons, episodes: t.episodes,
           episodes_per_season: t.episodes_per_season,
           country: t.country, language: t.language, status: t.status,
+          reason: t.reason,
+          story_analysis: t.story_analysis ? JSON.stringify(t.story_analysis) : '',
           ai_standardized_at: t.ai_standardized_at
         }, false);
         added++;
