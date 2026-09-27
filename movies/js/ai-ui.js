@@ -9,20 +9,14 @@ window.AIUI = (function () {
   function renderMarkdown(text) {
     if (!text) return '';
     let html = Utils.esc(text);
-    // code blocks
     html = html.replace(/```([\s\S]*?)```/g, (_, code) =>
       `<pre class="ai-code">${code}</pre>`);
-    // inline code
     html = html.replace(/`([^`]+)`/g, '<code class="ai-inline">$1</code>');
-    // headings
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    // bold
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    // italic
     html = html.replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
-    // lists
     html = html.replace(/(?:^|\n)((?:- .+(?:\n|$))+)/g, (_, block) => {
       const items = block.trim().split('\n').map(l => l.replace(/^-\s*/, ''));
       return '\n<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
@@ -31,7 +25,6 @@ window.AIUI = (function () {
       const items = block.trim().split('\n').map(l => l.replace(/^\d+\.\s*/, ''));
       return '\n<ol>' + items.map(i => `<li>${i}</li>`).join('') + '</ol>';
     });
-    // paragraphs
     html = html.split(/\n{2,}/).map(p => {
       if (/^<(h\d|ul|ol|pre|div)/.test(p.trim())) return p;
       return `<p>${p.replace(/\n/g, '<br>')}</p>`;
@@ -58,22 +51,30 @@ window.AIUI = (function () {
       status.querySelector('.ai-status-text').textContent = text;
       status.dataset.state = state || 'idle';
     }
-
     function setContent(html) {
       body.innerHTML = html;
       body.scrollTop = body.scrollHeight;
     }
-
     function appendText(acc) {
       setContent(renderMarkdown(acc));
     }
-
     return { panel, body, setStatus, setContent, appendText };
   }
 
-  /* ---- چک تنظیم بودن AI ---- */
+  /* ---- چک تنظیم بودن AI + لاگ ---- */
   function requireAI() {
+    if (window.AILog) {
+      try { AILog.show(); } catch {}
+      try { AILog.info('▸ بررسی تنظیمات AI…'); } catch {}
+    }
+
     if (!AI.isConfigured()) {
+      if (window.AILog) {
+        try { AILog.error('✗ کلید OpenRouter تنظیم نشده است'); } catch {}
+        try { AILog.meta('کلید را از تنظیمات (⚙) → بخش «هوش مصنوعی» وارد کنید'); } catch {}
+        try { AILog.meta('برای دریافت کلید: https://openrouter.ai/keys'); } catch {}
+        try { AILog.scheduleAutoHide(); } catch {}
+      }
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
         title: 'AI تنظیم نشده',
         action: {
@@ -82,6 +83,10 @@ window.AIUI = (function () {
         }
       });
       return false;
+    }
+
+    if (window.AILog) {
+      try { AILog.success('✓ کلید OpenRouter موجود است'); } catch {}
     }
     return true;
   }
@@ -95,7 +100,6 @@ window.AIUI = (function () {
     if (!t) return;
 
     const panel = createStreamPanel(`استانداردسازی: ${t.title}`);
-
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
     const applyBtn = Utils.el('button', {
       class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true
@@ -124,7 +128,6 @@ window.AIUI = (function () {
     });
 
     let lastResult = null;
-    let wasAborted = false;
 
     applyBtn.addEventListener('click', () => {
       if (!lastResult) return;
@@ -137,21 +140,16 @@ window.AIUI = (function () {
       Modal.close();
     });
 
-    // شروع
     panel.setStatus('در حال دریافت…', 'loading');
     activeAbort = new AbortController();
 
     AIStandardize.standardizeOne(t.title, {
       signal: activeAbort.signal,
-      onToken: (_, acc) => {
-        panel.appendText(acc);
-      }
+      onToken: (_, acc) => { panel.appendText(acc); }
     })
       .then((result) => {
-        if (wasAborted) return;
         lastResult = result;
         panel.setStatus('انجام شد', 'done');
-        // نمایش خلاصه
         resultBox.hidden = false;
         resultBox.innerHTML = '';
         const fields = [
@@ -182,7 +180,6 @@ window.AIUI = (function () {
         applyBtn.disabled = false;
       })
       .catch((err) => {
-        if (wasAborted) return;
         panel.setStatus('خطا', 'error');
         panel.setContent(`<div class="ai-error">${Utils.esc(err.message)}</div>`);
       });
@@ -195,6 +192,7 @@ window.AIUI = (function () {
     if (!requireAI()) return;
     const titles = DB.getAllTitles();
     if (!titles.length) {
+      if (window.AILog) { try { AILog.warn('⚠ هیچ عنوانی برای استانداردسازی وجود ندارد'); AILog.scheduleAutoHide(); } catch {} }
       Toast.warning('هیچ عنوانی برای استانداردسازی وجود ندارد');
       return;
     }
@@ -239,6 +237,7 @@ window.AIUI = (function () {
       startBtn.disabled = true;
       startBtn.innerHTML = '<span class="spinner"></span> در حال اجرا…';
       panel.setStatus('در حال پردازش…', 'loading');
+      if (window.AILog) { try { AILog.request(`▸ شروع پردازش دسته‌ای: ${titles.length} عنوان`); AILog.meta(`اندازه دسته: ۵ عنوان`); } catch {} }
 
       activeAbort = new AbortController();
       try {
@@ -249,8 +248,8 @@ window.AIUI = (function () {
             progressWrap.querySelector('.ai-progress-fill').style.width = pct + '%';
             progressWrap.querySelector('.ai-progress-text').textContent =
               `${Utils.toFa(done)} از ${Utils.toFa(total)}`;
+            if (window.AILog) { try { AILog.stream(`↓ ${done}/${total} عنوان پردازش شد`); } catch {} }
 
-            // رندر نتیجه‌ی جدید
             const last = current[current.length - 1];
             if (last) {
               const row = Utils.el('div', { class: 'ai-result-item' }, [
@@ -258,7 +257,7 @@ window.AIUI = (function () {
                 Utils.el('span', { class: 'ai-result-orig' }, [last.original]),
                 last._error
                   ? Utils.el('span', { class: 'ai-result-err' }, [last._error])
-                  : Utils.el('span', { class: 'ai-result-new' }, [' → ' + (last.standard_title || ''))
+                  : Utils.el('span', { class: 'ai-result-new' }, [' → ' + (last.standard_title || '')])
               ]);
               resultList.prepend(row);
             }
@@ -268,7 +267,6 @@ window.AIUI = (function () {
 
         panel.setStatus('پایان', 'done');
 
-        // اعمال نتایج
         let applied = 0;
         results.forEach(r => {
           if (r && r._id && !r._error) {
@@ -281,6 +279,13 @@ window.AIUI = (function () {
         State.applyFilters();
         Events.renderList();
         Render.renderSidebarCounts();
+
+        if (window.AILog) {
+          try {
+            AILog.success(`✓ پایان — ${applied} از ${titles.length} عنوان استاندارد شد`);
+            AILog.scheduleAutoHide();
+          } catch {}
+        }
 
         Toast.success(`${Utils.toFa(applied)} عنوان استاندارد شد`);
         panel.setContent(renderMarkdown(
@@ -320,18 +325,14 @@ window.AIUI = (function () {
       });
     });
     function chip(kind, label, on) {
-      const c = Utils.el('button', { class: 'chip' + (on ? ' is-on' : ''), dataset: { kind } }, [label]);
-      return c;
+      return Utils.el('button', { class: 'chip' + (on ? ' is-on' : ''), dataset: { kind } }, [label]);
     }
 
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-section' }, [
         Utils.el('div', { class: 'ai-section-title' }, ['۱. تحلیل عمیق سلیقه']),
         Utils.el('div', { class: 'ai-section-actions' }, [
-          Utils.el('button', {
-            class: 'btn btn-soft btn-sm',
-            id: 'ai-analyze-btn'
-          }, ['🔍 تحلیل کن'])
+          Utils.el('button', { class: 'btn btn-soft btn-sm', id: 'ai-analyze-btn' }, ['🔍 تحلیل کن'])
         ])
       ]),
       panel.panel,
@@ -352,13 +353,7 @@ window.AIUI = (function () {
       Utils.el('button', { class: 'btn btn-ghost', onclick: () => { AI.abort(); Modal.close(); } }, ['بستن'])
     ]);
 
-    Modal.open({
-      title: 'تحلیل و پیشنهاد AI',
-      icon: '🧠',
-      size: 'xl',
-      body,
-      footer
-    });
+    Modal.open({ title: 'تحلیل و پیشنهاد AI', icon: '🧠', size: 'xl', body, footer });
 
     const analyzeBtn = body.querySelector('#ai-analyze-btn');
     const recBtn = body.querySelector('#ai-recommend-btn');
@@ -415,11 +410,29 @@ window.AIUI = (function () {
     }
   }
 
+  /* ---- نمایش دستی لاگ (برای تست) ---- */
+  function showLog() {
+    if (!window.AILog) return;
+    AILog.show();
+    AILog.info('▸ نمایش دستی لاگ');
+    AILog.meta(`زمان: ${new Date().toLocaleString('fa-IR')}`);
+    if (AI.isConfigured()) {
+      AILog.success('✓ کلید OpenRouter تنظیم شده است');
+      const k = AI.getKey();
+      AILog.meta(`کلید: ${k.slice(0, 10)}…${k.slice(-4)}`);
+    } else {
+      AILog.warn('⚠ کلید OpenRouter تنظیم نشده است');
+      AILog.meta('کلید را از تنظیمات وارد کنید تا این پنل پر شود');
+    }
+    AILog.scheduleAutoHide();
+  }
+
   return {
     openStandardizeSingle,
     openStandardizeBatch,
     openAnalysis,
     renderMarkdown,
-    cleanup
+    cleanup,
+    showLog
   };
 })();
