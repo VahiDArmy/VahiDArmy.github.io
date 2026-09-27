@@ -13,6 +13,7 @@ window.Events = (function () {
     bindState();
   }
 
+  /* ---------- هدر ---------- */
   function bindHeader() {
     const search = document.getElementById('global-search');
     const clear = document.getElementById('btn-search-clear');
@@ -51,7 +52,6 @@ window.Events = (function () {
       const sb = document.getElementById('sidebar');
       const opening = !sb.classList.contains('is-open');
       sb.classList.toggle('is-open', opening);
-      // ✅ FIX: قفل اسکرول پس‌زمینه
       document.body.classList.toggle('sidebar-open', opening);
       toggleSidebarBackdrop(opening);
     });
@@ -71,17 +71,22 @@ window.Events = (function () {
     });
   }
 
+  /* ---------- بک‌دراپ سایدبار ----------
+     ✅ FIX: بک‌دراپ داخل .app قرار می‌گیرد نه body.
+     دلیل: .app دارای z-index:1 و Stacking Context مستقل است،
+     پس هر المان خارج از آن همیشه بالاتر رندر می‌شود و سایدبار را می‌پوشاند. */
   function toggleSidebarBackdrop(show) {
     let bd = document.querySelector('.sidebar-backdrop');
     if (show && !bd) {
       bd = document.createElement('div');
       bd.className = 'sidebar-backdrop';
       bd.addEventListener('click', () => {
-        document.getElementById('sidebar').classList.remove('is-open');
+        document.getElementById('sidebar')?.classList.remove('is-open');
         document.body.classList.remove('sidebar-open');
         toggleSidebarBackdrop(false);
       });
-      document.body.appendChild(bd);
+      const mount = document.querySelector('.app') || document.body;
+      mount.appendChild(bd);
       requestAnimationFrame(() => bd.classList.add('is-open'));
     } else if (bd && !show) {
       bd.classList.remove('is-open');
@@ -89,6 +94,7 @@ window.Events = (function () {
     }
   }
 
+  /* ---------- سایدبار ---------- */
   function bindSidebar() {
     document.querySelectorAll('#category-list .side-item').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -158,6 +164,7 @@ window.Events = (function () {
     document.getElementById('btn-ai-analyze')?.addEventListener('click', () => AIUI.openAnalysis());
   }
 
+  /* ---------- تولبار ---------- */
   function bindToolbar() {
     document.querySelectorAll('.view-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -176,6 +183,7 @@ window.Events = (function () {
     grid.classList.toggle('is-list', State.get().view === 'list');
   }
 
+  /* ---------- کارت‌ها ---------- */
   function bindContent() {
     const grid = document.getElementById('grid');
     grid?.addEventListener('click', (e) => {
@@ -196,6 +204,7 @@ window.Events = (function () {
     });
   }
 
+  /* ---------- کیبورد ---------- */
   function bindKeyboard() {
     document.addEventListener('keydown', (e) => {
       const inField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
@@ -207,17 +216,20 @@ window.Events = (function () {
     });
   }
 
+  /* ---------- شبکه ---------- */
   function bindNetwork() {
     window.addEventListener('online', () => { updateSyncStatus('online'); Toast.success('اتصال برقرار شد'); });
     window.addEventListener('offline', () => { updateSyncStatus('offline'); Toast.warning('اتصال قطع شد'); });
   }
 
+  /* ---------- تغییرات state ---------- */
   function bindState() {
     State.on('title:added', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:updated', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:deleted', () => { renderList(); Render.renderSidebarCounts(); });
   }
 
+  /* ---------- رندر لیست ---------- */
   function renderList() {
     const grid = document.getElementById('grid');
     const s = State.get();
@@ -226,6 +238,7 @@ window.Events = (function () {
     Render.renderPageTitle();
   }
 
+  /* ---------- افزودن/ویرایش ---------- */
   function openAddEdit(id = null) {
     const editing = id != null;
     const data = editing ? DB.getTitle(id) : {
@@ -308,7 +321,6 @@ window.Events = (function () {
       ])
     ]));
 
-    /* بخش اطلاعات تکمیلی (فقط اگر از AI آمده) */
     if (data.summary || data.seasons || data.country) {
       form.appendChild(Utils.el('div', { class: 'alert alert-info' }, [
         Utils.el('span', { class: 'alert-icon' }, ['🪄']),
@@ -387,7 +399,6 @@ window.Events = (function () {
       favorite: form.querySelector('[name="favorite"]').checked,
       notes: form.querySelector('[name="notes"]').value.trim(),
       watched_date: original.watched_date || null,
-      /* نگه داشتن فیلدهای AI */
       summary: original.summary || '',
       original_title: original.original_title || '',
       seasons: original.seasons ?? null,
@@ -408,6 +419,7 @@ window.Events = (function () {
     return data;
   }
 
+  /* ---------- حذف ---------- */
   function confirmDelete(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -419,6 +431,7 @@ window.Events = (function () {
     });
   }
 
+  /* ---------- جزئیات ---------- */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -483,13 +496,13 @@ window.Events = (function () {
     ]);
   }
 
+  /* ---------- تنظیمات ---------- */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
     const aiKey = AI.getKey();
 
     const body = Utils.el('div', { class: 'form' }, [
-      /* ---- GitHub ---- */
       Utils.el('h4', { class: 'mb-2' }, ['🔗 گیت‌هاب']),
 
       Utils.el('div', { class: 'alert alert-info' }, [
@@ -527,7 +540,6 @@ window.Events = (function () {
 
       Utils.el('div', { class: 'divider' }),
 
-      /* ---- AI ---- */
       Utils.el('h4', { class: 'mb-2' }, ['🪄 هوش مصنوعی (OpenRouter)']),
 
       Utils.el('div', { class: 'alert alert-info' }, [
@@ -599,7 +611,6 @@ window.Events = (function () {
       try {
         const key = body.querySelector('[name="ai_key"]').value.trim();
         AI.setKey(key);
-        // تست با یک درخواست ساده
         await AI.chatStream({
           messages: [
             { role: 'system', content: 'پاسخ فقط کلمه «سلام» باشد.' },
@@ -623,6 +634,7 @@ window.Events = (function () {
     ].filter(Boolean));
   }
 
+  /* ---------- سینک ---------- */
   async function pullFromGitHub() {
     if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
     updateSyncStatus('syncing');
