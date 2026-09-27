@@ -1,0 +1,139 @@
+/* =========================================================
+   چیدمان اصلی
+   ========================================================= */
+.app {
+  display: grid;
+  grid-template-rows: var(--header-h) 1fr var(--footer-h);
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
+.app-body {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 0;
+  position: relative;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--border-1);
+  background: linear-gradient(180deg, var(--bg-1), transparent);
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+}
+
+.toolbar-left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.page-title { font-size: var(--fs-xl); font-weight: 700; }
+.page-sub { font-size: var(--fs-sm); color: var(--text-3); }
+
+.toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.view-switch {
+  display: flex;
+  padding: 3px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.view-btn:hover { color: var(--text-1); }
+.view-btn.is-active {
+  background: var(--bg-4);
+  color: var(--accent-2);
+  box-shadow: var(--shadow-1);
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px 26px 40px;
+  min-height: 0;
+  position: relative;
+}
+
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 22px;
+  height: var(--footer-h);
+  font-size: var(--fs-xs);
+  color: var(--text-4);
+  background: var(--bg-1);
+  border-top: 1px solid var(--border-1);
+  gap: 12px;
+  overflow: hidden;
+}
+.footer-hint { display: flex; align-items: center; gap: 5px; }
+#footer-status { color: var(--text-3); }
+
+/* ---- لایه‌ی بوت ---- */
+.boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-boot);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: var(--bg-0);
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+.boot-loader.is-hidden { opacity: 0; pointer-events: none; }
+.boot-logo { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.boot-logo-icon { font-size: 56px; animation: pulse-soft 1.6s infinite var(--ease-in-out); }
+.boot-logo-text {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, var(--accent-2), var(--love));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.boot-bar {
+  width: 240px;
+  height: 4px;
+  background: var(--bg-3);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.boot-bar-fill {
+  height: 100%;
+  width: 30%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  animation: boot-slide 1.4s infinite var(--ease-in-out);
+}
+.boot-message { font-size: var(--fs-sm); color: var(--text-3); }
