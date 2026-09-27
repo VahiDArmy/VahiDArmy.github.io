@@ -11,6 +11,7 @@
   position: sticky;
   top: var(--header-h);
   z-index: var(--z-sidebar);
+  -webkit-overflow-scrolling: touch;
 }
 
 .side-section { margin-bottom: 22px; }
@@ -44,11 +45,7 @@
   position: relative;
   border: 1px solid transparent;
 }
-.side-item:hover {
-  background: var(--bg-2);
-  color: var(--text-1);
-  border-color: var(--border-1);
-}
+.side-item:hover { background: var(--bg-2); color: var(--text-1); border-color: var(--border-1); }
 .side-item.is-active {
   background: linear-gradient(90deg, var(--accent-soft), transparent);
   color: var(--text-1);
@@ -64,19 +61,12 @@
   width: 3px;
   border-radius: var(--radius-pill);
   background: var(--accent);
-  box-shadow: 0 0 10px var(--accent-glow);
 }
 
-.side-icon {
-  font-size: 15px;
-  display: grid;
-  place-items: center;
-  filter: grayscale(0.2);
-}
+.side-icon { font-size: 15px; display: grid; place-items: center; }
 .side-icon-love { filter: drop-shadow(0 0 6px var(--love-glow)); }
 .side-icon-good { filter: drop-shadow(0 0 6px var(--good-glow)); }
 .side-icon-hate { filter: drop-shadow(0 0 6px var(--hate-glow)); }
-
 .side-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .side-count {
@@ -88,18 +78,15 @@
   border-radius: var(--radius-pill);
   background: var(--bg-3);
   color: var(--text-3);
-  transition: all var(--dur-fast);
 }
 .side-item.is-active .side-count { background: var(--accent); color: #fff; }
 .side-item[data-category="love"] .side-count { background: var(--love-soft); color: var(--love); }
 .side-item[data-category="good"] .side-count { background: var(--good-soft); color: var(--good); }
 .side-item[data-category="hate"] .side-count { background: var(--hate-soft); color: var(--hate); }
-.side-item.is-active .side-count { color: #fff; }
-.side-item.is-active[data-category="love"] .side-count { background: var(--love); }
-.side-item.is-active[data-category="good"] .side-count { background: var(--good); }
-.side-item.is-active[data-category="hate"] .side-count { background: var(--hate); }
+.side-item.is-active[data-category="love"] .side-count { background: var(--love); color: #fff; }
+.side-item.is-active[data-category="good"] .side-count { background: var(--good); color: #fff; }
+.side-item.is-active[data-category="hate"] .side-count { background: var(--hate); color: #fff; }
 
-/* ---- فیلترها ---- */
 .side-filter {
   display: flex;
   flex-direction: column;
@@ -107,11 +94,7 @@
   padding: 8px 10px;
   margin-bottom: 8px;
 }
-.side-filter > span {
-  font-size: var(--fs-xs);
-  color: var(--text-3);
-  font-weight: 500;
-}
+.side-filter > span { font-size: var(--fs-xs); color: var(--text-3); font-weight: 500; }
 
 .side-filter select,
 .side-filter input {
@@ -135,13 +118,9 @@
 .side-filter select:hover,
 .side-filter input:hover { border-color: var(--border-3); }
 .side-filter select:focus,
-.side-filter input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
+.side-filter input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .side-filter select option { background: var(--bg-2); color: var(--text-1); }
 
-/* ---- چک‌باکس ---- */
 .side-checkbox {
   display: flex;
   align-items: center;
@@ -182,7 +161,6 @@
 }
 .side-checkbox input:checked ~ .checkbox-box::after { transform: rotate(-45deg) scale(1); }
 
-/* ---- آمار مینی ---- */
 .side-stats-mini {
   padding: 12px;
   background: var(--bg-2);
@@ -203,7 +181,6 @@
 .mini-stat:last-child { border-bottom: none; }
 .mini-stat strong { color: var(--text-1); font-weight: 700; font-variant-numeric: tabular-nums; }
 
-/* ---- اکشن‌های جانبی ---- */
 .side-action {
   width: 100%;
   display: flex;
@@ -218,10 +195,9 @@
   text-align: right;
   border: 1px solid transparent;
 }
-.side-action:hover {
-  background: var(--bg-2);
-  color: var(--text-1);
-  border-color: var(--border-1);
-}
+.side-action:hover { background: var(--bg-2); color: var(--text-1); border-color: var(--border-1); }
 .side-action svg { color: var(--text-3); transition: color var(--dur-fast); flex-shrink: 0; }
 .side-action:hover svg { color: var(--accent-2); }
+
+/* ✅ FIX: قفل کردن اسکرول پس‌زمینه وقتی سایدبار بازه */
+body.sidebar-open { overflow: hidden; }
