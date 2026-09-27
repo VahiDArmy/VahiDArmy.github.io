@@ -92,25 +92,42 @@
 .ai-stream-status[data-state="done"] .ai-status-text { color: var(--success); }
 .ai-stream-status[data-state="error"] .ai-status-text { color: var(--danger); }
 
+/* ---- بدنه‌ی استریم — بدون چشمک ---- */
 .ai-stream-body {
   padding: 18px 20px;
-  max-height: 380px;
+  max-height: 400px;
   overflow-y: auto;
   font-size: var(--fs-md);
   line-height: 1.9;
   color: var(--text-2);
-  min-height: 80px;
+  min-height: 120px;
   position: relative;
   scroll-behavior: smooth;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
-.ai-stream-body > * { animation: fade-in 200ms var(--ease-out); }
 
+/* ⛔ حذف انیمیشن ورودی که باعث چشمک‌زدن می‌شد */
+.ai-stream-body * {
+  animation: none !important;
+}
+
+.ai-stream-body h1,
 .ai-stream-body h2,
 .ai-stream-body h3,
-.ai-stream-body h4 {
+.ai-stream-body h4,
+.ai-stream-body h5 {
   color: var(--text-1);
   margin: 16px 0 8px;
   font-weight: 700;
+  line-height: 1.35;
+}
+.ai-stream-body h1 {
+  font-size: var(--fs-2xl);
+  background: linear-gradient(120deg, var(--accent-2), var(--neon-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 .ai-stream-body h2 {
   font-size: var(--fs-xl);
@@ -126,17 +143,67 @@
   box-shadow: -2px 0 12px -4px rgba(139, 92, 255, 0.8);
 }
 .ai-stream-body h4 { font-size: var(--fs-md); color: var(--accent-2); }
+.ai-stream-body h5 { font-size: var(--fs-sm); color: var(--text-2); }
 
-.ai-stream-body p { margin: 8px 0; color: var(--text-2); }
+.ai-stream-body p {
+  margin: 8px 0;
+  color: var(--text-2);
+  line-height: 1.9;
+}
+
 .ai-stream-body ul,
-.ai-stream-body ol { margin: 8px 0; padding-right: 22px; }
-.ai-stream-body li { margin: 5px 0; color: var(--text-2); }
+.ai-stream-body ol {
+  margin: 8px 0;
+  padding-right: 22px;
+}
+.ai-stream-body ul { list-style: disc; }
+.ai-stream-body ol { list-style: decimal; }
+.ai-stream-body li {
+  margin: 4px 0;
+  color: var(--text-2);
+  line-height: 1.8;
+}
 .ai-stream-body li::marker { color: var(--neon-accent); }
 
-.ai-stream-body strong { color: var(--text-1); font-weight: 700; }
-.ai-stream-body em { color: var(--accent-2); }
+.ai-stream-body strong {
+  color: var(--text-1);
+  font-weight: 700;
+}
+.ai-stream-body em {
+  color: var(--accent-2);
+  font-style: italic;
+}
+.ai-stream-body del { color: var(--text-4); }
 
-.ai-stream-body .ai-hint { color: var(--text-4); text-align: center; padding: 20px 0; }
+.ai-stream-body a {
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ai-stream-body hr {
+  border: none;
+  height: 1px;
+  margin: 16px 0;
+  background: linear-gradient(90deg, transparent, var(--border-2), transparent);
+}
+
+.ai-stream-body blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-right: 3px solid var(--neon-accent);
+  background: rgba(139, 92, 255, 0.06);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-3);
+  font-style: italic;
+}
+
+.ai-stream-body .ai-hint {
+  color: var(--text-4);
+  text-align: center;
+  padding: 20px 0;
+}
+
 .ai-stream-body .ai-error {
   color: var(--danger);
   padding: 14px;
@@ -155,6 +222,8 @@
   overflow-x: auto;
   margin: 8px 0;
   color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 .ai-inline {
   background: var(--bg-3);
@@ -162,23 +231,23 @@
   border-radius: 4px;
   font-size: 0.88em;
   color: var(--accent-2);
+  font-family: var(--font-mono);
 }
 
 /* ---- نتیجه ---- */
 .ai-result-box {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   padding: 16px;
   background: linear-gradient(180deg, rgba(24,24,36,0.6), rgba(14,14,22,0.4));
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
-  animation: slide-up 300ms var(--ease-out);
 }
 .ai-result-row {
   display: grid;
   grid-template-columns: 130px 1fr;
   gap: 10px;
-  padding: 6px 0;
+  padding: 5px 0;
   border-bottom: 1px dashed var(--border-1);
   font-size: var(--fs-sm);
 }
@@ -219,7 +288,7 @@
 .ai-result-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   max-height: 200px;
   overflow-y: auto;
   padding: 8px;
@@ -235,7 +304,6 @@
   padding: 6px 8px;
   border-radius: var(--radius-sm);
   font-size: var(--fs-sm);
-  animation: slide-right 250ms var(--ease-out);
 }
 .ai-result-item:hover { background: var(--bg-3); }
 .ai-result-icon { font-size: 13px; }
