@@ -13,7 +13,6 @@ window.Events = (function () {
     bindState();
   }
 
-  /* ---------- هدر ---------- */
   function bindHeader() {
     const search = document.getElementById('global-search');
     const clear = document.getElementById('btn-search-clear');
@@ -36,8 +35,7 @@ window.Events = (function () {
     });
 
     document.getElementById('btn-theme')?.addEventListener('click', () => {
-      const cur = State.get().theme;
-      const next = cur === 'dark' ? 'light' : 'dark';
+      const next = State.get().theme === 'dark' ? 'light' : 'dark';
       State.setTheme(next);
       Toast.info(next === 'dark' ? 'تم تاریک فعال شد' : 'تم روشن فعال شد');
     });
@@ -51,8 +49,11 @@ window.Events = (function () {
 
     document.getElementById('btn-menu-toggle')?.addEventListener('click', () => {
       const sb = document.getElementById('sidebar');
-      sb.classList.toggle('is-open');
-      toggleSidebarBackdrop(sb.classList.contains('is-open'));
+      const opening = !sb.classList.contains('is-open');
+      sb.classList.toggle('is-open', opening);
+      // ✅ FIX: قفل اسکرول پس‌زمینه
+      document.body.classList.toggle('sidebar-open', opening);
+      toggleSidebarBackdrop(opening);
     });
   }
 
@@ -60,11 +61,12 @@ window.Events = (function () {
     const root = document.getElementById('modal-root');
     if (!root) return;
     const bars = root.querySelectorAll('.bar-fill');
+    const max = Math.max(...Array.from(root.querySelectorAll('.bar-value'))
+      .map(v => parseInt(Utils.toEn(v.textContent), 10) || 0), 1);
     bars.forEach((b, i) => {
       const row = b.closest('.bar-row');
       const val = row?.querySelector('.bar-value')?.textContent || '0';
       const pct = parseInt(Utils.toEn(val), 10) || 0;
-      const max = Math.max(...Array.from(root.querySelectorAll('.bar-value')).map(v => parseInt(Utils.toEn(v.textContent), 10) || 0), 1);
       setTimeout(() => { b.style.width = Math.min((pct / max) * 100, 100) + '%'; }, i * 40);
     });
   }
@@ -76,17 +78,17 @@ window.Events = (function () {
       bd.className = 'sidebar-backdrop';
       bd.addEventListener('click', () => {
         document.getElementById('sidebar').classList.remove('is-open');
+        document.body.classList.remove('sidebar-open');
         toggleSidebarBackdrop(false);
       });
       document.body.appendChild(bd);
       requestAnimationFrame(() => bd.classList.add('is-open'));
-    } else if (bd) {
+    } else if (bd && !show) {
       bd.classList.remove('is-open');
       setTimeout(() => bd.remove(), 250);
     }
   }
 
-  /* ---------- سایدبار ---------- */
   function bindSidebar() {
     document.querySelectorAll('#category-list .side-item').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -96,9 +98,9 @@ window.Events = (function () {
         State.applyFilters();
         Render.renderPageTitle();
         renderList();
-        // بستن سایدبار موبایل
         if (window.innerWidth <= 900) {
           document.getElementById('sidebar')?.classList.remove('is-open');
+          document.body.classList.remove('sidebar-open');
           toggleSidebarBackdrop(false);
         }
       });
@@ -108,41 +110,34 @@ window.Events = (function () {
       State.set({ filterType: e.target.value });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
-
     document.getElementById('filter-sort')?.addEventListener('change', (e) => {
       State.set({ sort: e.target.value });
       State.applyFilters(); renderList();
     });
-
     document.getElementById('filter-favorite')?.addEventListener('change', (e) => {
       State.set({ onlyFav: e.target.checked });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
-
     document.getElementById('filter-rated')?.addEventListener('change', (e) => {
       State.set({ onlyRated: e.target.checked });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
 
     document.getElementById('btn-export')?.addEventListener('click', () => {
-      const payload = DB.exportJSON();
-      Utils.download(Utils.timestampName('cinema-backup'), JSON.stringify(payload, null, 2));
-      Toast.success('خروجی JSON با موفقیت ساخته شد');
+      Utils.download(Utils.timestampName('cinema-backup'), JSON.stringify(DB.exportJSON(), null, 2));
+      Toast.success('خروجی JSON ساخته شد');
     });
-
     document.getElementById('btn-import')?.addEventListener('click', () => {
       document.getElementById('import-file')?.click();
     });
-
     document.getElementById('import-file')?.addEventListener('change', async (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
       try {
-        const text = await file.text();
-        const payload = JSON.parse(text);
+        const payload = JSON.parse(await file.text());
         Modal.confirm({
           title: 'ورود داده',
-          message: `آیا می‌خواهید ${Utils.toFa(payload.titles?.length || 0)} عنوان را به آرشیو اضافه کنید؟`,
+          message: `آیا ${Utils.toFa(payload.titles?.length || 0)} عنوان اضافه شود؟`,
           confirmText: 'افزودن',
           onConfirm: () => {
             const n = DB.importJSON(payload, false);
@@ -151,17 +146,18 @@ window.Events = (function () {
             Toast.success(`${Utils.toFa(n)} عنوان اضافه شد`);
           }
         });
-      } catch (err) {
-        Toast.error('فایل نامعتبر است');
-      }
+      } catch { Toast.error('فایل نامعتبر است'); }
       e.target.value = '';
     });
 
     document.getElementById('btn-pull')?.addEventListener('click', pullFromGitHub);
     document.getElementById('btn-push')?.addEventListener('click', pushToGitHub);
+
+    /* ---- AI ---- */
+    document.getElementById('btn-ai-batch')?.addEventListener('click', () => AIUI.openStandardizeBatch());
+    document.getElementById('btn-ai-analyze')?.addEventListener('click', () => AIUI.openAnalysis());
   }
 
-  /* ---------- تولبار ---------- */
   function bindToolbar() {
     document.querySelectorAll('.view-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -171,18 +167,15 @@ window.Events = (function () {
         applyViewClass();
       });
     });
-
     document.getElementById('btn-add')?.addEventListener('click', () => openAddEdit());
     document.getElementById('btn-empty-add')?.addEventListener('click', () => openAddEdit());
   }
 
   function applyViewClass() {
     const grid = document.getElementById('grid');
-    const v = State.get().view;
-    grid.classList.toggle('is-list', v === 'list');
+    grid.classList.toggle('is-list', State.get().view === 'list');
   }
 
-  /* ---------- کارت‌ها ---------- */
   function bindContent() {
     const grid = document.getElementById('grid');
     grid?.addEventListener('click', (e) => {
@@ -193,9 +186,9 @@ window.Events = (function () {
       if (act === 'fav') { State.toggleFavorite(id); renderList(); Render.renderSidebarCounts(); }
       else if (act === 'edit') { openAddEdit(id); }
       else if (act === 'delete') { confirmDelete(id); }
+      else if (act === 'ai') { AIUI.openStandardizeSingle(id); }
       else { openDetail(id); }
     });
-
     grid?.addEventListener('keydown', (e) => {
       const card = e.target.closest('.card');
       if (!card) return;
@@ -203,51 +196,28 @@ window.Events = (function () {
     });
   }
 
-  /* ---------- کیبورد ---------- */
   function bindKeyboard() {
     document.addEventListener('keydown', (e) => {
       const inField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
       const mod = e.ctrlKey || e.metaKey;
-
-      if (mod && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        document.getElementById('global-search')?.focus();
-        return;
-      }
-      if (mod && e.key.toLowerCase() === 's') {
-        e.preventDefault();
-        pushToGitHub();
-        return;
-      }
-      if (!inField && e.key.toLowerCase() === 'n') {
-        e.preventDefault(); openAddEdit();
-      }
-      if (!inField && e.key.toLowerCase() === 's' && !mod) {
-        Stats.openDashboard();
-      }
+      if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); document.getElementById('global-search')?.focus(); return; }
+      if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); pushToGitHub(); return; }
+      if (!inField && e.key.toLowerCase() === 'n') { e.preventDefault(); openAddEdit(); }
+      if (!inField && e.key.toLowerCase() === 's' && !mod) Stats.openDashboard();
     });
   }
 
-  /* ---------- شبکه ---------- */
   function bindNetwork() {
-    window.addEventListener('online', () => {
-      updateSyncStatus('online');
-      Toast.success('اتصال اینترنت برقرار شد');
-    });
-    window.addEventListener('offline', () => {
-      updateSyncStatus('offline');
-      Toast.warning('اتصال اینترنت قطع شد');
-    });
+    window.addEventListener('online', () => { updateSyncStatus('online'); Toast.success('اتصال برقرار شد'); });
+    window.addEventListener('offline', () => { updateSyncStatus('offline'); Toast.warning('اتصال قطع شد'); });
   }
 
-  /* ---------- تغییرات state ---------- */
   function bindState() {
     State.on('title:added', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:updated', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:deleted', () => { renderList(); Render.renderSidebarCounts(); });
   }
 
-  /* ---------- رندر لیست ---------- */
   function renderList() {
     const grid = document.getElementById('grid');
     const s = State.get();
@@ -256,7 +226,6 @@ window.Events = (function () {
     Render.renderPageTitle();
   }
 
-  /* ---------- افزودن/ویرایش ---------- */
   function openAddEdit(id = null) {
     const editing = id != null;
     const data = editing ? DB.getTitle(id) : {
@@ -274,22 +243,14 @@ window.Events = (function () {
     Modal.open({
       title: editing ? 'ویرایش عنوان' : 'افزودن عنوان جدید',
       icon: editing ? '✏️' : '➕',
-      body: form,
-      footer,
-      size: 'lg'
+      body: form, footer, size: 'lg'
     });
 
     document.getElementById('form-save').addEventListener('click', () => {
-      const payload = collectForm(form);
+      const payload = collectForm(form, data);
       if (!payload) return;
-
-      if (editing) {
-        State.editTitle(id, payload);
-        Toast.success('تغییرات ذخیره شد');
-      } else {
-        State.addTitle(payload);
-        Toast.success('عنوان اضافه شد');
-      }
+      if (editing) { State.editTitle(id, payload); Toast.success('تغییرات ذخیره شد'); }
+      else { State.addTitle(payload); Toast.success('عنوان اضافه شد'); }
       Modal.close();
     });
   }
@@ -297,7 +258,6 @@ window.Events = (function () {
   function buildItemForm(data) {
     const form = Utils.el('form', { class: 'form' });
 
-    // دسته‌بندی
     const catPicker = Utils.el('div', { class: 'cat-picker' });
     ['love', 'good', 'hate'].forEach(c => {
       const label = Utils.el('label', { class: 'cat-option', dataset: { cat: c } });
@@ -315,21 +275,13 @@ window.Events = (function () {
       catPicker
     ]));
 
-    // عنوان
     form.appendChild(Utils.el('div', { class: 'field' }, [
       Utils.el('label', { class: 'field-label' }, ['عنوان ', Utils.el('span', { class: 'req' }, ['*'])]),
-      Utils.el('input', {
-        class: 'field-input',
-        type: 'text',
-        name: 'title',
-        value: data.title,
-        placeholder: 'مثلاً Breaking Bad',
-        maxlength: CONFIG.LIMITS.TITLE_MAX,
-        required: true
-      })
+      Utils.el('input', { class: 'field-input', type: 'text', name: 'title',
+        value: data.title, placeholder: 'مثلاً Breaking Bad',
+        maxlength: CONFIG.LIMITS.TITLE_MAX, required: true })
     ]));
 
-    // ردیف: نوع، سال، ژانر
     form.appendChild(Utils.el('div', { class: 'form-row form-row-3' }, [
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['نوع']),
@@ -345,29 +297,30 @@ window.Events = (function () {
       ]),
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['سال']),
-        Utils.el('input', {
-          class: 'field-input',
-          type: 'number',
-          name: 'year',
-          value: data.year || '',
-          placeholder: '2020',
-          min: 1900, max: 2100
-        })
+        Utils.el('input', { class: 'field-input', type: 'number', name: 'year',
+          value: data.year || '', placeholder: '2020', min: 1900, max: 2100 })
       ]),
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['ژانر']),
-        Utils.el('input', {
-          class: 'field-input',
-          type: 'text',
-          name: 'genre',
-          value: data.genre || '',
-          placeholder: 'درام، جنایی',
-          maxlength: CONFIG.LIMITS.GENRE_MAX
-        })
+        Utils.el('input', { class: 'field-input', type: 'text', name: 'genre',
+          value: data.genre || '', placeholder: 'درام، جنایی',
+          maxlength: CONFIG.LIMITS.GENRE_MAX })
       ])
     ]));
 
-    // امتیاز
+    /* بخش اطلاعات تکمیلی (فقط اگر از AI آمده) */
+    if (data.summary || data.seasons || data.country) {
+      form.appendChild(Utils.el('div', { class: 'alert alert-info' }, [
+        Utils.el('span', { class: 'alert-icon' }, ['🪄']),
+        Utils.el('div', {}, [
+          'این عنوان با AI استانداردسازی شده. ',
+          data.seasons ? `${Utils.toFa(data.seasons)} فصل` : '',
+          data.episodes ? ` · ${Utils.toFa(data.episodes)} قسمت` : '',
+          data.country ? ` · ${data.country}` : ''
+        ].filter(Boolean))
+      ]));
+    }
+
     const ratingRow = Utils.el('div', { class: 'rating-picker' });
     const starsWrap = Utils.el('div', { class: 'rating-stars' });
     for (let i = 1; i <= 5; i++) {
@@ -375,30 +328,23 @@ window.Events = (function () {
       s.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" width="26" height="26"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>`;
       starsWrap.appendChild(s);
     }
-    const ratingInput = Utils.el('input', {
-      class: 'rating-input', type: 'number', name: 'rating',
-      value: data.rating || 0, min: 0, max: 10, step: 0.5
-    });
+    const ratingInput = Utils.el('input', { class: 'rating-input', type: 'number',
+      name: 'rating', value: data.rating || 0, min: 0, max: 10, step: 0.5 });
     ratingRow.appendChild(starsWrap);
     ratingRow.appendChild(ratingInput);
     ratingRow.appendChild(Utils.el('span', { class: 'text-xs text-3' }, ['از ۱۰']));
 
     form.appendChild(Utils.el('div', { class: 'field' }, [
-      Utils.el('label', { class: 'field-label' }, ['امتیاز']),
-      ratingRow
+      Utils.el('label', { class: 'field-label' }, ['امتیاز']), ratingRow
     ]));
 
-    // یادداشت
     form.appendChild(Utils.el('div', { class: 'field' }, [
       Utils.el('label', { class: 'field-label' }, ['یادداشت']),
-      Utils.el('textarea', {
-        class: 'field-textarea', name: 'notes',
+      Utils.el('textarea', { class: 'field-textarea', name: 'notes',
         placeholder: 'چی دوست داشتی یا نداشتی…',
-        maxlength: CONFIG.LIMITS.NOTES_MAX
-      }, [data.notes || ''])
+        maxlength: CONFIG.LIMITS.NOTES_MAX }, [data.notes || ''])
     ]));
 
-    // علاقه‌مندی
     const favSwitch = Utils.el('label', { class: 'switch' });
     const favInp = Utils.el('input', { type: 'checkbox', name: 'favorite' });
     favInp.checked = !!data.favorite;
@@ -408,20 +354,16 @@ window.Events = (function () {
     form.appendChild(Utils.el('div', { class: 'switch-row' }, [
       Utils.el('div', {}, [
         Utils.el('div', { class: 'switch-label' }, ['افزودن به علاقه‌مندی‌ها ⭐']),
-        Utils.el('div', { class: 'switch-desc' }, ['برای دسترسی سریع در آینده'])
+        Utils.el('div', { class: 'switch-desc' }, ['برای دسترسی سریع'])
       ]),
       favSwitch
     ]));
 
-    // اتصال ستاره‌ها به input
     const updateStars = (v) => {
       const n = Math.round(v / 2);
-      starsWrap.querySelectorAll('.rating-star').forEach((s, i) => {
-        s.classList.toggle('on', i < n);
-      });
+      starsWrap.querySelectorAll('.rating-star').forEach((s, i) => s.classList.toggle('on', i < n));
     };
     updateStars(Number(ratingInput.value) || 0);
-
     starsWrap.addEventListener('click', (e) => {
       const s = e.target.closest('.rating-star');
       if (!s) return;
@@ -434,7 +376,7 @@ window.Events = (function () {
     return form;
   }
 
-  function collectForm(form) {
+  function collectForm(form, original = {}) {
     const data = {
       title: form.querySelector('[name="title"]').value.trim(),
       category: form.querySelector('[name="category"]:checked')?.value || 'love',
@@ -444,7 +386,17 @@ window.Events = (function () {
       rating: Number(form.querySelector('[name="rating"]').value) || 0,
       favorite: form.querySelector('[name="favorite"]').checked,
       notes: form.querySelector('[name="notes"]').value.trim(),
-      watched_date: null
+      watched_date: original.watched_date || null,
+      /* نگه داشتن فیلدهای AI */
+      summary: original.summary || '',
+      original_title: original.original_title || '',
+      seasons: original.seasons ?? null,
+      episodes: original.episodes ?? null,
+      episodes_per_season: original.episodes_per_season ?? null,
+      country: original.country || '',
+      language: original.language || '',
+      status: original.status || '',
+      ai_standardized_at: original.ai_standardized_at || null
     };
     if (!data.title) {
       Toast.error('عنوان الزامی است');
@@ -456,25 +408,17 @@ window.Events = (function () {
     return data;
   }
 
-  /* ---------- حذف ---------- */
   function confirmDelete(id) {
     const t = DB.getTitle(id);
     if (!t) return;
     Modal.confirm({
       title: 'حذف عنوان',
-      message: `آیا از حذف «${t.title}» مطمئن هستی؟ این عمل برگشت‌پذیر نیست.`,
-      confirmText: 'حذف کن',
-      cancelText: 'انصراف',
-      danger: true,
-      icon: '🗑️',
-      onConfirm: () => {
-        State.removeTitle(id);
-        Toast.success('عنوان حذف شد');
-      }
+      message: `آیا از حذف «${t.title}» مطمئنی؟`,
+      confirmText: 'حذف کن', danger: true, icon: '🗑️',
+      onConfirm: () => { State.removeTitle(id); Toast.success('حذف شد'); }
     });
   }
 
-  /* ---------- جزئیات ---------- */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -483,43 +427,53 @@ window.Events = (function () {
     const body = Utils.el('div', {}, [
       Utils.el('div', { class: 'detail-hero', dataset: { cat: t.category } }, [
         Utils.el('h2', { class: 'detail-title' }, [t.title]),
+        t.original_title && t.original_title !== t.title
+          ? Utils.el('div', { class: 'text-sm text-3 mb-2' }, [t.original_title])
+          : null,
         Utils.el('div', { class: 'detail-tags' }, [
           Utils.el('span', { class: 'cat-badge', dataset: { cat: t.category } }, [`${cat.emoji} ${cat.label}`]),
           Utils.el('span', { class: 'badge' }, [CONFIG.TYPES[t.type] || t.type]),
           t.year ? Utils.el('span', { class: 'badge' }, [Utils.toFa(t.year)]) : null,
-          t.favorite ? Utils.el('span', { class: 'badge', style: { color: 'var(--warning)' } }, ['⭐ علاقه‌مندی']) : null
+          t.favorite ? Utils.el('span', { class: 'badge', style: { color: 'var(--warning)' } }, ['⭐ علاقه‌مندی']) : null,
+          t.ai_standardized_at ? Utils.el('span', { class: 'badge ai-badge' }, ['🪄 AI']) : null
         ].filter(Boolean))
       ]),
+
       Utils.el('div', { class: 'detail-grid' }, [
         detailItem('امتیاز', t.rating ? Utils.toFa(t.rating.toFixed(1)) + ' / ۱۰' : '—'),
-        detailItem('ژانر', t.genre || '—'),
         detailItem('نوع', CONFIG.TYPES[t.type] || t.type),
         detailItem('سال', t.year ? Utils.toFa(t.year) : '—'),
+        detailItem('ژانر', t.genre || '—'),
+        t.seasons ? detailItem('فصل‌ها', Utils.toFa(t.seasons)) : null,
+        t.episodes ? detailItem('قسمت‌ها', Utils.toFa(t.episodes)) : null,
+        t.episodes_per_season ? detailItem('قسمت در فصل', Utils.toFa(t.episodes_per_season)) : null,
+        t.country ? detailItem('کشور', t.country) : null,
+        t.language ? detailItem('زبان', t.language) : null,
+        t.status ? detailItem('وضعیت', t.status) : null,
         detailItem('افزوده‌شده', Utils.toJalali(t.created_at)),
         detailItem('آخرین ویرایش', Utils.relativeTime(t.updated_at))
-      ]),
-      t.notes
-        ? Utils.el('div', {}, [
-            Utils.el('h4', { class: 'mb-2' }, ['یادداشت']),
-            Utils.el('div', { class: 'detail-notes' }, [t.notes])
-          ])
-        : null
+      ].filter(Boolean)),
+
+      t.summary ? Utils.el('div', { class: 'mb-3' }, [
+        Utils.el('h4', { class: 'mb-2' }, ['📖 خلاصه']),
+        Utils.el('div', { class: 'detail-notes' }, [t.summary])
+      ]) : null,
+
+      t.notes ? Utils.el('div', { class: 'mb-3' }, [
+        Utils.el('h4', { class: 'mb-2' }, ['📝 یادداشت من']),
+        Utils.el('div', { class: 'detail-notes' }, [t.notes])
+      ]) : null
     ].filter(Boolean));
 
-    const footer = Utils.el('div', { class: 'flex gap-3 w-full' }, [
+    const footer = Utils.el('div', { class: 'flex gap-3 w-full flex-wrap' }, [
       Utils.el('button', { class: 'btn btn-danger', onclick: () => { Modal.close(); setTimeout(() => confirmDelete(id), 150); } }, ['حذف']),
+      Utils.el('button', { class: 'btn btn-soft', onclick: () => { Modal.close(); setTimeout(() => AIUI.openStandardizeSingle(id), 150); } }, ['🪄 AI']),
       Utils.el('div', { class: 'flex-1' }),
       Utils.el('button', { class: 'btn btn-ghost', onclick: () => { Modal.close(); setTimeout(() => openAddEdit(id), 150); } }, ['ویرایش']),
       Utils.el('button', { class: 'btn btn-primary', onclick: () => Modal.close() }, ['بستن'])
     ]);
 
-    Modal.open({
-      title: 'جزئیات',
-      icon: '🎬',
-      size: 'lg',
-      body,
-      footer
-    });
+    Modal.open({ title: 'جزئیات', icon: '🎬', size: 'lg', body, footer });
   }
 
   function detailItem(k, v) {
@@ -529,17 +483,18 @@ window.Events = (function () {
     ]);
   }
 
-  /* ---------- تنظیمات ---------- */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
+    const aiKey = AI.getKey();
 
     const body = Utils.el('div', { class: 'form' }, [
+      /* ---- GitHub ---- */
+      Utils.el('h4', { class: 'mb-2' }, ['🔗 گیت‌هاب']),
+
       Utils.el('div', { class: 'alert alert-info' }, [
         Utils.el('span', { class: 'alert-icon' }, ['ℹ️']),
-        Utils.el('div', {}, [
-          'دیتابیس از طریق GitHub API در مخزن شما ذخیره می‌شود. اگر توکن را وارد نکنی، فقط حالت محلی فعال است.'
-        ])
+        Utils.el('div', {}, ['دیتابیس در مخزن گیت‌هاب ذخیره می‌شود. بدون توکن، فقط حالت محلی فعال است.'])
       ]),
 
       Utils.el('div', { class: 'form-row' }, [
@@ -560,23 +515,44 @@ window.Events = (function () {
         })),
         field('مسیر فایل دیتابیس', Utils.el('input', {
           class: 'field-input', type: 'text', name: 'path',
-          value: s.path, placeholder: 'data/cinema.sqlite'
+          value: s.path, placeholder: 'movies/data/cinema.sqlite'
         }))
       ]),
 
       field('توکن دسترسی (Personal Access Token)', Utils.el('input', {
         class: 'field-input', type: 'password', name: 'token',
-        value: token, placeholder: 'ghp_...'
-      }), 'نیاز به دسترسی repo دارد.'),
+        value: token, placeholder: 'ghp_... یا github_pat_...',
+        autocomplete: 'new-password'
+      }), 'نیاز به دسترسی repo/contents دارد.'),
+
+      Utils.el('div', { class: 'divider' }),
+
+      /* ---- AI ---- */
+      Utils.el('h4', { class: 'mb-2' }, ['🪄 هوش مصنوعی (OpenRouter)']),
+
+      Utils.el('div', { class: 'alert alert-info' }, [
+        Utils.el('span', { class: 'alert-icon' }, ['✨']),
+        Utils.el('div', {}, [
+          'برای استانداردسازی عنوان‌ها و تحلیل سلیقه. ',
+          Utils.el('a', { class: 'link', href: 'https://openrouter.ai/keys', target: '_blank', rel: 'noopener' }, ['دریافت کلید از OpenRouter'])
+        ])
+      ]),
+
+      field('کلید OpenRouter', Utils.el('input', {
+        class: 'field-input', type: 'password', name: 'ai_key',
+        value: aiKey, placeholder: 'sk-or-v1-...',
+        autocomplete: 'new-password'
+      }), `مدل پیش‌فرض: ${CONFIG.AI.MODEL}`),
 
       Utils.el('div', { class: 'alert alert-warn' }, [
         Utils.el('span', { class: 'alert-icon' }, ['⚠️']),
-        Utils.el('div', {}, ['توکن در localStorage مرورگر ذخیره می‌شود. از کامپیوتر عمومی استفاده نکن.'])
+        Utils.el('div', {}, ['اطلاعات در localStorage مرورگر ذخیره می‌شود.'])
       ])
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full' }, [
       Utils.el('button', { class: 'btn btn-ghost', id: 'btn-test-conn' }, ['🧪 تست اتصال']),
+      Utils.el('button', { class: 'btn btn-ghost', id: 'btn-test-ai' }, ['✨ تست AI']),
       Utils.el('div', { class: 'flex-1' }),
       Utils.el('button', { class: 'btn btn-ghost', onclick: () => Modal.close() }, ['انصراف']),
       Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['ذخیره'])
@@ -585,14 +561,14 @@ window.Events = (function () {
     Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'lg', body, footer });
 
     document.getElementById('btn-save-settings').addEventListener('click', () => {
-      const get = (n) => body.querySelector(`[name="${n}"]`).value.trim();
+      const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
       GitHub.saveSettings({
-        owner: get('owner'),
-        repo: get('repo'),
-        branch: get('branch') || 'master',
-        path: get('path') || 'data/cinema.sqlite'
+        owner: g('owner'), repo: g('repo'),
+        branch: g('branch') || 'master',
+        path: g('path') || 'movies/data/cinema.sqlite'
       });
-      GitHub.setToken(get('token'));
+      GitHub.setToken(g('token'));
+      AI.setKey(g('ai_key'));
       Toast.success('تنظیمات ذخیره شد');
       Modal.close();
       refreshSyncStatus();
@@ -602,30 +578,40 @@ window.Events = (function () {
       const btn = e.currentTarget;
       const old = btn.textContent;
       btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> در حال تست…';
+      btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
-        // ذخیره موقت
-        const get = (n) => body.querySelector(`[name="${n}"]`).value.trim();
-        GitHub.saveSettings({
-          owner: get('owner'), repo: get('repo'),
-          branch: get('branch') || 'master',
-          path: get('path') || 'data/cinema.sqlite'
-        });
-        GitHub.setToken(get('token'));
+        const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
+        GitHub.saveSettings({ owner: g('owner'), repo: g('repo'), branch: g('branch'), path: g('path') });
+        GitHub.setToken(g('token'));
+        await GitHub.testConnection();
+        const fi = await GitHub.getFileInfo();
+        if (fi.exists) Toast.success(`اتصال GitHub موفق ✅ (${Utils.toFa(Math.round(fi.size/1024))} KB)`);
+        else Toast.warning('اتصال GitHub موفق، ولی فایل دیتابیس موجود نیست.');
+      } catch (err) { Toast.error(err.message || 'خطا'); }
+      finally { btn.disabled = false; btn.textContent = old; }
+    });
 
-        const info = await GitHub.testConnection();
-        const fileInfo = await GitHub.getFileInfo();
-        if (fileInfo.exists) {
-          Toast.success(`اتصال موفق — فایل دیتابیس موجود است (${Utils.toFa(Math.round(fileInfo.size/1024))} KB)`);
-        } else {
-          Toast.warning('اتصال موفق، اما فایل دیتابیس روی مخزن پیدا نشد (اولین push ایجادش می‌کند).');
-        }
+    document.getElementById('btn-test-ai').addEventListener('click', async (e) => {
+      const btn = e.currentTarget;
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> تست AI…';
+      try {
+        const key = body.querySelector('[name="ai_key"]').value.trim();
+        AI.setKey(key);
+        // تست با یک درخواست ساده
+        await AI.chatStream({
+          messages: [
+            { role: 'system', content: 'پاسخ فقط کلمه «سلام» باشد.' },
+            { role: 'user', content: 'بگو سلام' }
+          ],
+          temperature: 0,
+          onToken: () => {}
+        });
+        Toast.success('اتصال به OpenRouter موفق ✅');
       } catch (err) {
-        Toast.error(err.message || 'تست اتصال ناموفق');
-      } finally {
-        btn.disabled = false;
-        btn.textContent = old;
-      }
+        Toast.error(err.message || 'خطا در اتصال AI');
+      } finally { btn.disabled = false; btn.textContent = old; }
     });
   }
 
@@ -637,58 +623,42 @@ window.Events = (function () {
     ].filter(Boolean));
   }
 
-  /* ---------- سینک ---------- */
   async function pullFromGitHub() {
-    if (!GitHub.isConfigured()) {
-      Toast.warning('ابتدا توکن و اطلاعات مخزن را در تنظیمات وارد کن');
-      return;
-    }
+    if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
     updateSyncStatus('syncing');
-    const t = Toast.loading('در حال دریافت از گیت‌هاب…');
+    const t = Toast.loading('در حال دریافت…');
     try {
-      const res = await DB.pullFromGitHub();
+      await DB.pullFromGitHub();
       State.loadAll(); State.applyFilters();
       Render.renderSidebarCounts(); Render.renderPageTitle(); renderList();
-      Toast.update(t, 'دریافت با موفقیت انجام شد ✅', 'success');
+      Toast.update(t, 'دریافت موفق ✅', 'success');
       updateSyncStatus('online');
-      State.set({ dirty: false, lastSyncAt: new Date() });
     } catch (e) {
-      Toast.update(t, e.message || 'دریافت ناموفق', 'error');
+      Toast.update(t, e.message || 'خطا', 'error');
       updateSyncStatus('error');
     }
   }
 
   async function pushToGitHub() {
-    if (!GitHub.isConfigured()) {
-      Toast.warning('ابتدا توکن و اطلاعات مخزن را در تنظیمات وارد کن');
-      return;
-    }
+    if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
     updateSyncStatus('syncing');
-    const t = Toast.loading('در حال ارسال به گیت‌هاب…');
+    const t = Toast.loading('در حال ارسال…');
     try {
       await DB.pushToGitHub();
-      Toast.update(t, 'ارسال با موفقیت انجام شد ✅', 'success');
+      Toast.update(t, 'ارسال موفق ✅', 'success');
       updateSyncStatus('online');
-      State.set({ dirty: false, lastSyncAt: new Date() });
     } catch (e) {
-      Toast.update(t, e.message || 'ارسال ناموفق', 'error');
+      Toast.update(t, e.message || 'خطا', 'error');
       updateSyncStatus('error');
     }
   }
 
-  /* ---------- وضعیت سینک ---------- */
   function updateSyncStatus(state) {
     const el = document.getElementById('sync-status');
     const lbl = document.getElementById('sync-label');
     if (!el || !lbl) return;
     el.dataset.state = state;
-    const labels = {
-      idle: 'آفلاین',
-      syncing: 'در حال سینک',
-      online: 'متصل',
-      error: 'خطا',
-      offline: 'آفلاین'
-    };
+    const labels = { idle: 'آفلاین', syncing: 'در حال سینک', online: 'متصل', error: 'خطا', offline: 'آفلاین' };
     lbl.textContent = labels[state] || state;
   }
 
@@ -697,5 +667,8 @@ window.Events = (function () {
     else updateSyncStatus('idle');
   }
 
-  return { bind, renderList, openAddEdit, confirmDelete, openDetail, openSettings, updateSyncStatus, refreshSyncStatus, pullFromGitHub, pushToGitHub };
+  return {
+    bind, renderList, openAddEdit, confirmDelete, openDetail, openSettings,
+    updateSyncStatus, refreshSyncStatus, pullFromGitHub, pushToGitHub
+  };
 })();
