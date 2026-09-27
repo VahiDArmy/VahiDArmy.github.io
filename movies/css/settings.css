@@ -1,0 +1,266 @@
+/* =========================================================
+   تنظیمات — طراحی سکشنی تمیز
+   ========================================================= */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-section {
+  position: relative;
+  padding: 16px 18px;
+  background: linear-gradient(180deg,
+    rgba(24, 24, 36, 0.72),
+    rgba(14, 14, 22, 0.5));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.settings-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(circle at top right,
+    rgba(139, 92, 255, 0.18),
+    transparent 70%);
+  pointer-events: none;
+}
+
+.settings-section::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 15%;
+  left: 15%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(139, 92, 255, 0.6),
+    transparent);
+  filter: blur(0.3px);
+}
+
+.settings-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-1);
+  position: relative;
+}
+
+.settings-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg,
+    rgba(139, 92, 255, 0.25),
+    rgba(139, 92, 255, 0.06));
+  border: 1px solid rgba(139, 92, 255, 0.32);
+  font-size: 20px;
+  flex-shrink: 0;
+  box-shadow:
+    0 0 20px -4px rgba(139, 92, 255, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.settings-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-info h4 {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 3px;
+  letter-spacing: -0.2px;
+}
+
+.settings-info p {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.settings-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.settings-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+  flex-shrink: 0;
+}
+
+.settings-status[data-status="ok"] {
+  background: rgba(61, 220, 151, 0.10);
+  color: var(--success);
+  border: 1px solid rgba(61, 220, 151, 0.3);
+}
+
+.settings-status[data-status="missing"] {
+  background: rgba(255, 159, 67, 0.10);
+  color: var(--hate);
+  border: 1px solid rgba(255, 159, 67, 0.3);
+}
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-row > label {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.settings-row .field-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  font-size: var(--fs-sm);
+}
+
+.settings-row small {
+  grid-column: 2;
+  margin-top: -8px;
+  font-size: 10.5px;
+  color: var(--text-4);
+  line-height: 1.5;
+}
+
+/* ---- پیام راهنما داخل بخش ---- */
+.settings-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: rgba(139, 92, 255, 0.06);
+  border: 1px solid rgba(139, 92, 255, 0.18);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+.settings-hint .hint-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.4;
+  filter: drop-shadow(0 0 6px rgba(139, 92, 255, 0.7));
+}
+
+.settings-hint a {
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.settings-hint a:hover {
+  color: var(--accent);
+}
+
+/* ---- دکمه‌های تست ---- */
+.settings-tests {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-test-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--accent-2);
+  background: rgba(139, 92, 255, 0.08);
+  border: 1px solid rgba(139, 92, 255, 0.28);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 140ms ease-out;
+}
+
+.settings-test-btn:hover {
+  background: rgba(139, 92, 255, 0.16);
+  border-color: rgba(139, 92, 255, 0.5);
+  color: #e0d8ff;
+  box-shadow: 0 0 14px -3px rgba(139, 92, 255, 0.8);
+}
+
+.settings-test-btn:active {
+  transform: scale(0.97);
+}
+
+.settings-test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- فوتر مودال تنظیمات ---- */
+.settings-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.settings-footer .spacer { flex: 1; }
+
+/* ---- موبایل ---- */
+@media (max-width: 720px) {
+  .settings-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .settings-row small {
+    grid-column: 1;
+    margin-top: 0;
+  }
+  .settings-section {
+    padding: 14px;
+  }
+  .settings-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
+  }
+  .settings-info h4 { font-size: var(--fs-sm); }
+}
