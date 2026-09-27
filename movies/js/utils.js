@@ -296,9 +296,21 @@ window.Utils = (function () {
     return `${prefix}-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.${ext}`;
   }
 
-  /* ---- محدودسازی نرخ ---- */
+  /* ---- پارس امن JSON ----
+     ✅ FIX: اکنون ورودی‌های null / undefined / '' / 'null' / 'undefined' را
+     به‌درستی به fallback تبدیل می‌کند. */
   function safeParse(json, fallback = null) {
-    try { return JSON.parse(json); } catch { return fallback; }
+    if (json == null) return fallback;
+    if (typeof json === 'string') {
+      const trimmed = json.trim();
+      if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') return fallback;
+    }
+    try {
+      const out = JSON.parse(json);
+      return out == null ? fallback : out;
+    } catch {
+      return fallback;
+    }
   }
 
   return {
