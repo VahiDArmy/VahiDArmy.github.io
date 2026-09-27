@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <meta name="theme-color" content="#0a0a0f" />
-  <meta name="description" content="سینما من — مدیریت شخصی فیلم‌ها و سریال‌ها در سه دسته عاشقانه، خوب و نفرت‌انگیز" />
+  <meta name="theme-color" content="#07070b" />
+  <meta name="description" content="سینما من — مدیریت شخصی فیلم و سریال" />
   <title>سینما من | مدیریت فیلم و سریال</title>
 
-  <!-- فونت فارسی وزیرمتن -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
 
-  <!-- استایل‌ها -->
   <link rel="stylesheet" href="css/variables.css" />
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/base.css" />
@@ -23,26 +21,25 @@
   <link rel="stylesheet" href="css/forms.css" />
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/utilities.css" />
+  <link rel="stylesheet" href="css/neon.css" />
+  <link rel="stylesheet" href="css/ai.css" />
   <link rel="stylesheet" href="css/responsive.css" />
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
 
-<!-- ============ لایه‌ی بارگذاری ============ -->
 <div id="boot-loader" class="boot-loader">
   <div class="boot-logo">
     <span class="boot-logo-icon">🎬</span>
     <span class="boot-logo-text">سینما من</span>
   </div>
   <div class="boot-bar"><div class="boot-bar-fill"></div></div>
-  <p class="boot-message" id="boot-message">در حال راه‌اندازی موتور دیتابیس…</p>
+  <p class="boot-message" id="boot-message">در حال راه‌اندازی…</p>
 </div>
 
-<!-- ============ اپلیکیشن ============ -->
 <div class="app" id="app" hidden>
 
-  <!-- ---------- هدر ---------- -->
   <header class="app-header" id="app-header">
     <div class="header-brand">
       <button class="icon-btn menu-toggle" id="btn-menu-toggle" title="منو" aria-label="منو">
@@ -60,25 +57,25 @@
         <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
         <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      <input type="search" id="global-search" class="search-input" placeholder="جستجو در عنوان‌ها، ژانر، یادداشت… (Ctrl+K)" autocomplete="off" spellcheck="false" />
+      <input type="search" id="global-search" class="search-input" placeholder="جستجو… (Ctrl+K)" autocomplete="off" spellcheck="false" />
       <button class="search-clear icon-btn" id="btn-search-clear" title="پاک کردن" hidden>
         <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
       </button>
     </div>
 
     <div class="header-actions">
-      <div class="sync-status" id="sync-status" data-state="idle" title="وضعیت همگام‌سازی">
+      <div class="sync-status" id="sync-status" data-state="idle">
         <span class="sync-dot"></span>
         <span class="sync-label" id="sync-label">آفلاین</span>
       </div>
 
-      <button class="icon-btn" id="btn-stats" title="آمار و نمودارها">
+      <button class="icon-btn" id="btn-stats" title="آمار">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
         </svg>
       </button>
 
-      <button class="icon-btn" id="btn-theme" title="تغییر تم">
+      <button class="icon-btn" id="btn-theme" title="تم">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
         </svg>
@@ -93,10 +90,7 @@
     </div>
   </header>
 
-  <!-- ---------- بدنه ---------- -->
   <div class="app-body">
-
-    <!-- سایدبار -->
     <aside class="sidebar" id="sidebar">
       <nav class="side-nav" id="side-nav">
         <div class="side-section">
@@ -109,7 +103,7 @@
             </button></li>
             <li><button class="side-item" data-category="love">
               <span class="side-icon side-icon-love">❤️</span>
-              <span class="side-label">عاشقانه</span>
+              <span class="side-label">عاشقشم</span>
               <span class="side-count" data-count="love">0</span>
             </button></li>
             <li><button class="side-item" data-category="good">
@@ -119,7 +113,7 @@
             </button></li>
             <li><button class="side-item" data-category="hate">
               <span class="side-icon side-icon-hate">👎</span>
-              <span class="side-label">نفرت‌انگیز</span>
+              <span class="side-label">دری وری</span>
               <span class="side-count" data-count="hate">0</span>
             </button></li>
           </ul>
@@ -127,7 +121,6 @@
 
         <div class="side-section">
           <h3 class="side-title">فیلترها</h3>
-
           <label class="side-filter">
             <span>نوع</span>
             <select id="filter-type">
@@ -138,7 +131,6 @@
               <option value="documentary">مستند</option>
             </select>
           </label>
-
           <label class="side-filter">
             <span>مرتب‌سازی</span>
             <select id="filter-sort">
@@ -151,13 +143,11 @@
               <option value="year-desc">جدیدترین سال</option>
             </select>
           </label>
-
           <label class="side-checkbox">
             <input type="checkbox" id="filter-favorite" />
             <span class="checkbox-box"></span>
             <span>فقط علاقه‌مندی‌ها ⭐</span>
           </label>
-
           <label class="side-checkbox">
             <input type="checkbox" id="filter-rated" />
             <span class="checkbox-box"></span>
@@ -165,57 +155,56 @@
           </label>
         </div>
 
-        <div class="side-section side-stats-mini" id="side-stats-mini">
+        <div class="side-section side-stats-mini">
           <h3 class="side-title">خلاصه</h3>
-          <div class="mini-stat"><span>کل عنوان‌ها</span><strong id="mini-total">۰</strong></div>
-          <div class="mini-stat"><span>میانگین امتیاز</span><strong id="mini-avg">—</strong></div>
-          <div class="mini-stat"><span>علاقه‌مندی‌ها</span><strong id="mini-fav">۰</strong></div>
+          <div class="mini-stat"><span>کل</span><strong id="mini-total">۰</strong></div>
+          <div class="mini-stat"><span>میانگین</span><strong id="mini-avg">—</strong></div>
+          <div class="mini-stat"><span>علاقه‌مندی</span><strong id="mini-fav">۰</strong></div>
+        </div>
+
+        <!-- ابزارهای AI -->
+        <div class="side-section">
+          <h3 class="side-title">🪄 هوش مصنوعی</h3>
+          <button class="side-action" id="btn-ai-batch">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+            استانداردسازی همه
+          </button>
+          <button class="side-action" id="btn-ai-analyze">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24A2.5 2.5 0 0 1 9.5 2zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24A2.5 2.5 0 0 0 14.5 2z"/></svg>
+            تحلیل و پیشنهاد
+          </button>
         </div>
 
         <div class="side-section">
           <h3 class="side-title">ابزارها</h3>
-          <button class="side-action" id="btn-export">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
-            خروجی JSON
-          </button>
-          <button class="side-action" id="btn-import">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9m0 0-4 4m4-4 4 4M5 3h14"/></svg>
-            ورود از JSON
-          </button>
-          <button class="side-action" id="btn-pull">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
-            دریافت از گیت‌هاب
-          </button>
-          <button class="side-action" id="btn-push">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9m0 0 4 4m-4-4-4 4M5 3h14"/></svg>
-            ارسال به گیت‌هاب
-          </button>
+          <button class="side-action" id="btn-export">خروجی JSON</button>
+          <button class="side-action" id="btn-import">ورود از JSON</button>
+          <button class="side-action" id="btn-pull">دریافت از گیت‌هاب</button>
+          <button class="side-action" id="btn-push">ارسال به گیت‌هاب</button>
         </div>
 
         <input type="file" id="import-file" accept="application/json" hidden />
       </nav>
     </aside>
 
-    <!-- محتوای اصلی -->
     <main class="main-content" id="main-content">
-
       <div class="toolbar" id="toolbar">
         <div class="toolbar-left">
           <h2 class="page-title" id="page-title">همه‌ی عنوان‌ها</h2>
           <span class="page-sub" id="page-sub">۰ مورد</span>
         </div>
         <div class="toolbar-right">
-          <div class="view-switch" role="tablist" aria-label="نمای نمایش">
-            <button class="view-btn is-active" data-view="grid" title="نمای کارتی">
+          <div class="view-switch" role="tablist">
+            <button class="view-btn is-active" data-view="grid" title="کارتی">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             </button>
-            <button class="view-btn" data-view="list" title="نمای لیستی">
+            <button class="view-btn" data-view="list" title="لیستی">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
             </button>
           </div>
           <button class="btn btn-primary" id="btn-add">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            افزودن عنوان
+            افزودن
           </button>
         </div>
       </div>
@@ -229,24 +218,19 @@
           <button class="btn btn-primary" id="btn-empty-add">افزودن اولین عنوان</button>
         </div>
       </div>
-
     </main>
   </div>
 
   <footer class="app-footer">
-    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.0.0</span></span>
-    <span class="footer-hint">کلیدهای میان‌بر: <kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.1.0</span></span>
+    <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
     <span id="footer-status">آماده</span>
   </footer>
 </div>
 
-<!-- ============ ریشه‌ی مودال‌ها ============ -->
 <div class="modal-root" id="modal-root" aria-hidden="true"></div>
-
-<!-- ============ کانتینر نوتیفیکیشن‌ها ============ -->
 <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
-<!-- ============ اسکریپت‌ها ============ -->
 <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 <script src="data/initial-data.js"></script>
 <script src="js/config.js"></script>
@@ -258,6 +242,14 @@
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/stats.js"></script>
+
+<!-- AI -->
+<script src="js/ai.js"></script>
+<script src="js/ai-prompts.js"></script>
+<script src="js/ai-standardize.js"></script>
+<script src="js/ai-analysis.js"></script>
+<script src="js/ai-ui.js"></script>
+
 <script src="js/events.js"></script>
 <script src="js/app.js"></script>
 </body>
