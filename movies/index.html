@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <meta name="description" content="سینما من — مدیریت شخصی فیلم‌ها و سریال‌ها در سه دسته عاشقانه، خوب و نفرت‌انگیز" />
+  <title>سینما من | مدیریت فیلم و سریال</title>
+
+  <!-- فونت فارسی وزیرمتن -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+
+  <!-- استایل‌ها -->
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/header.css" />
+  <link rel="stylesheet" href="css/sidebar.css" />
+  <link rel="stylesheet" href="css/cards.css" />
+  <link rel="stylesheet" href="css/modal.css" />
+  <link rel="stylesheet" href="css/forms.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/utilities.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<!-- ============ لایه‌ی بارگذاری ============ -->
+<div id="boot-loader" class="boot-loader">
+  <div class="boot-logo">
+    <span class="boot-logo-icon">🎬</span>
+    <span class="boot-logo-text">سینما من</span>
+  </div>
+  <div class="boot-bar"><div class="boot-bar-fill"></div></div>
+  <p class="boot-message" id="boot-message">در حال راه‌اندازی موتور دیتابیس…</p>
+</div>
+
+<!-- ============ اپلیکیشن ============ -->
+<div class="app" id="app" hidden>
+
+  <!-- ---------- هدر ---------- -->
+  <header class="app-header" id="app-header">
+    <div class="header-brand">
+      <button class="icon-btn menu-toggle" id="btn-menu-toggle" title="منو" aria-label="منو">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+      <div class="brand-mark">🎬</div>
+      <div class="brand-text">
+        <h1 class="brand-title">سینما من</h1>
+        <span class="brand-sub">آرشیو شخصی فیلم و سریال</span>
+      </div>
+    </div>
+
+    <div class="header-search">
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="search" id="global-search" class="search-input" placeholder="جستجو در عنوان‌ها، ژانر، یادداشت… (Ctrl+K)" autocomplete="off" spellcheck="false" />
+      <button class="search-clear icon-btn" id="btn-search-clear" title="پاک کردن" hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      </button>
+    </div>
+
+    <div class="header-actions">
+      <div class="sync-status" id="sync-status" data-state="idle" title="وضعیت همگام‌سازی">
+        <span class="sync-dot"></span>
+        <span class="sync-label" id="sync-label">آفلاین</span>
+      </div>
+
+      <button class="icon-btn" id="btn-stats" title="آمار و نمودارها">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
+        </svg>
+      </button>
+
+      <button class="icon-btn" id="btn-theme" title="تغییر تم">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+        </svg>
+      </button>
+
+      <button class="icon-btn" id="btn-settings" title="تنظیمات">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ---------- بدنه ---------- -->
+  <div class="app-body">
+
+    <!-- سایدبار -->
+    <aside class="sidebar" id="sidebar">
+      <nav class="side-nav" id="side-nav">
+        <div class="side-section">
+          <h3 class="side-title">دسته‌ها</h3>
+          <ul class="side-list" id="category-list">
+            <li><button class="side-item is-active" data-category="all">
+              <span class="side-icon">📚</span>
+              <span class="side-label">همه</span>
+              <span class="side-count" data-count="all">0</span>
+            </button></li>
+            <li><button class="side-item" data-category="love">
+              <span class="side-icon side-icon-love">❤️</span>
+              <span class="side-label">عاشقانه</span>
+              <span class="side-count" data-count="love">0</span>
+            </button></li>
+            <li><button class="side-item" data-category="good">
+              <span class="side-icon side-icon-good">👍</span>
+              <span class="side-label">خوب</span>
+              <span class="side-count" data-count="good">0</span>
+            </button></li>
+            <li><button class="side-item" data-category="hate">
+              <span class="side-icon side-icon-hate">👎</span>
+              <span class="side-label">نفرت‌انگیز</span>
+              <span class="side-count" data-count="hate">0</span>
+            </button></li>
+          </ul>
+        </div>
+
+        <div class="side-section">
+          <h3 class="side-title">فیلترها</h3>
+
+          <label class="side-filter">
+            <span>نوع</span>
+            <select id="filter-type">
+              <option value="all">همه</option>
+              <option value="series">سریال</option>
+              <option value="movie">فیلم</option>
+              <option value="anime">انیمیشن</option>
+              <option value="documentary">مستند</option>
+            </select>
+          </label>
+
+          <label class="side-filter">
+            <span>مرتب‌سازی</span>
+            <select id="filter-sort">
+              <option value="recent">جدیدترین</option>
+              <option value="oldest">قدیمی‌ترین</option>
+              <option value="title-asc">نام (الف-ی)</option>
+              <option value="title-desc">نام (ی-الف)</option>
+              <option value="rating-desc">بیشترین امتیاز</option>
+              <option value="rating-asc">کمترین امتیاز</option>
+              <option value="year-desc">جدیدترین سال</option>
+            </select>
+          </label>
+
+          <label class="side-checkbox">
+            <input type="checkbox" id="filter-favorite" />
+            <span class="checkbox-box"></span>
+            <span>فقط علاقه‌مندی‌ها ⭐</span>
+          </label>
+
+          <label class="side-checkbox">
+            <input type="checkbox" id="filter-rated" />
+            <span class="checkbox-box"></span>
+            <span>فقط امتیازداده‌شده</span>
+          </label>
+        </div>
+
+        <div class="side-section side-stats-mini" id="side-stats-mini">
+          <h3 class="side-title">خلاصه</h3>
+          <div class="mini-stat"><span>کل عنوان‌ها</span><strong id="mini-total">۰</strong></div>
+          <div class="mini-stat"><span>میانگین امتیاز</span><strong id="mini-avg">—</strong></div>
+          <div class="mini-stat"><span>علاقه‌مندی‌ها</span><strong id="mini-fav">۰</strong></div>
+        </div>
+
+        <div class="side-section">
+          <h3 class="side-title">ابزارها</h3>
+          <button class="side-action" id="btn-export">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg>
+            خروجی JSON
+          </button>
+          <button class="side-action" id="btn-import">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9m0 0-4 4m4-4 4 4M5 3h14"/></svg>
+            ورود از JSON
+          </button>
+          <button class="side-action" id="btn-pull">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+            دریافت از گیت‌هاب
+          </button>
+          <button class="side-action" id="btn-push">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9m0 0 4 4m-4-4-4 4M5 3h14"/></svg>
+            ارسال به گیت‌هاب
+          </button>
+        </div>
+
+        <input type="file" id="import-file" accept="application/json" hidden />
+      </nav>
+    </aside>
+
+    <!-- محتوای اصلی -->
+    <main class="main-content" id="main-content">
+
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-left">
+          <h2 class="page-title" id="page-title">همه‌ی عنوان‌ها</h2>
+          <span class="page-sub" id="page-sub">۰ مورد</span>
+        </div>
+        <div class="toolbar-right">
+          <div class="view-switch" role="tablist" aria-label="نمای نمایش">
+            <button class="view-btn is-active" data-view="grid" title="نمای کارتی">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+            <button class="view-btn" data-view="list" title="نمای لیستی">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-primary" id="btn-add">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            افزودن عنوان
+          </button>
+        </div>
+      </div>
+
+      <div class="content-area" id="content-area">
+        <div class="grid" id="grid"></div>
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="empty-icon">🎞️</div>
+          <h3>چیزی اینجا نیست</h3>
+          <p>هنوز عنوانی اضافه نکردی یا فیلترها چیزی رو نشون نمی‌دن.</p>
+          <button class="btn btn-primary" id="btn-empty-add">افزودن اولین عنوان</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <footer class="app-footer">
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.0.0</span></span>
+    <span class="footer-hint">کلیدهای میان‌بر: <kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
+    <span id="footer-status">آماده</span>
+  </footer>
+</div>
+
+<!-- ============ ریشه‌ی مودال‌ها ============ -->
+<div class="modal-root" id="modal-root" aria-hidden="true"></div>
+
+<!-- ============ کانتینر نوتیفیکیشن‌ها ============ -->
+<div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+<!-- ============ اسکریپت‌ها ============ -->
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+<script src="data/initial-data.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/github.js"></script>
+<script src="js/db.js"></script>
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/events.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
