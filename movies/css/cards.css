@@ -7,10 +7,8 @@
   gap: 16px;
   animation: fade-in var(--dur-base) var(--ease-out);
 }
-
 .grid.is-list { grid-template-columns: 1fr; gap: 8px; }
 
-/* ---- کارت ---- */
 .card {
   position: relative;
   display: flex;
@@ -26,7 +24,6 @@
   isolation: isolate;
   animation: card-enter var(--dur-slow) var(--ease-out) both;
 }
-
 .card::before {
   content: "";
   position: absolute;
@@ -38,49 +35,21 @@
   z-index: -1;
 }
 .card:hover::before { opacity: 1; }
-
-.card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.06), transparent 60%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--dur-base);
-}
-.card:hover::after { opacity: 1; }
-
-.card:hover {
-  transform: translateY(-3px);
-  border-color: var(--border-2);
-  box-shadow: var(--shadow-3);
-}
+.card:hover { transform: translateY(-3px); border-color: var(--border-2); box-shadow: var(--shadow-3); }
 
 .card[data-category="love"] { border-right: 3px solid var(--love); }
 .card[data-category="good"] { border-right: 3px solid var(--good); }
 .card[data-category="hate"] { border-right: 3px solid var(--hate); }
 
-.card[data-category="love"]:hover { box-shadow: 0 12px 32px rgba(255, 59, 107, 0.15), var(--shadow-3); }
-.card[data-category="good"]:hover { box-shadow: 0 12px 32px rgba(77, 171, 247, 0.15), var(--shadow-3); }
-.card[data-category="hate"]:hover { box-shadow: 0 12px 32px rgba(255, 159, 67, 0.15), var(--shadow-3); }
-
 .card.is-fav { background: linear-gradient(180deg, rgba(255,204,77,0.05), var(--bg-1)); }
 
-/* ---- هدر کارت ---- */
 .card-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
-
 .card-title-wrap { min-width: 0; flex: 1; }
-
 .card-title {
   font-size: var(--fs-lg);
   font-weight: 700;
@@ -95,6 +64,13 @@
   transition: color var(--dur-fast);
 }
 .card:hover .card-title { color: var(--accent-2); }
+
+.ai-badge {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 12px;
+  filter: drop-shadow(0 0 4px rgba(139,92,255,0.8));
+}
 
 .card-meta {
   display: flex;
@@ -130,9 +106,7 @@
 .card-act.is-fav svg { fill: var(--warning); }
 .card-act.danger:hover { background: rgba(255,77,94,0.15); color: var(--danger); }
 
-/* ---- بدنه کارت ---- */
 .card-body { display: flex; flex-direction: column; gap: 10px; }
-
 .card-notes {
   font-size: var(--fs-sm);
   color: var(--text-3);
@@ -148,7 +122,6 @@
   border-right: 2px solid var(--border-2);
 }
 
-/* ---- فوتر کارت ---- */
 .card-foot {
   display: flex;
   align-items: center;
@@ -159,16 +132,10 @@
   border-top: 1px solid var(--border-1);
 }
 
-/* ---- ستاره‌ها ---- */
 .stars { display: inline-flex; gap: 2px; align-items: center; }
-.star {
-  width: 14px; height: 14px;
-  color: var(--text-4);
-  transition: color var(--dur-fast);
-}
+.star { width: 14px; height: 14px; color: var(--text-4); transition: color var(--dur-fast); }
 .star.filled { color: var(--warning); fill: var(--warning); }
 .star.half { color: var(--warning); }
-
 .rating-num {
   font-size: var(--fs-xs);
   font-weight: 700;
@@ -177,7 +144,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- بج دسته ---- */
 .cat-badge {
   display: inline-flex;
   align-items: center;
@@ -186,13 +152,12 @@
   font-size: var(--fs-xs);
   font-weight: 700;
   border-radius: var(--radius-pill);
-  letter-spacing: 0.2px;
 }
-.cat-badge[data-cat="love"] { background: var(--love-soft); color: var(--love); box-shadow: inset 0 0 0 1px rgba(255,59,107,0.25); }
-.cat-badge[data-cat="good"] { background: var(--good-soft); color: var(--good); box-shadow: inset 0 0 0 1px rgba(77,171,247,0.25); }
-.cat-badge[data-cat="hate"] { background: var(--hate-soft); color: var(--hate); box-shadow: inset 0 0 0 1px rgba(255,159,67,0.25); }
+.cat-badge[data-cat="love"] { background: var(--love-soft); color: var(--love); }
+.cat-badge[data-cat="good"] { background: var(--good-soft); color: var(--good); }
+.cat-badge[data-cat="hate"] { background: var(--hate-soft); color: var(--hate); }
 
-/* ---- نمای لیستی ---- */
+/* ---- نمای لیستی (دسکتاپ) ---- */
 .grid.is-list .card {
   flex-direction: row;
   align-items: center;
@@ -211,7 +176,38 @@
 .grid.is-list .card-title { -webkit-line-clamp: 1; font-size: var(--fs-md); }
 .grid.is-list .card-actions { opacity: 1; }
 
-/* ---- حالت خالی ---- */
+/* ✅ FIX: نمای لیستی در موبایل */
+@media (max-width: 720px) {
+  .grid.is-list .card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+  .grid.is-list .card-head {
+    flex: initial !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+  .grid.is-list .card-title-wrap { flex: 1 !important; min-width: 0 !important; }
+  .grid.is-list .card-title {
+    -webkit-line-clamp: 2 !important;
+    font-size: var(--fs-md) !important;
+    white-space: normal !important;
+  }
+  .grid.is-list .card-actions { opacity: 1 !important; flex-shrink: 0 !important; }
+  .grid.is-list .card-foot {
+    margin-top: 6px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid var(--border-1) !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -222,11 +218,6 @@
   text-align: center;
   animation: fade-in var(--dur-slow) var(--ease-out);
 }
-.empty-icon {
-  font-size: 64px;
-  filter: grayscale(0.4);
-  opacity: 0.7;
-  animation: float 3.5s infinite var(--ease-in-out);
-}
+.empty-icon { font-size: 64px; filter: grayscale(0.4); opacity: 0.7; animation: float 3.5s infinite var(--ease-in-out); }
 .empty-state h3 { font-size: var(--fs-xl); color: var(--text-1); }
 .empty-state p { max-width: 380px; color: var(--text-3); }
