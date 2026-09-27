@@ -176,7 +176,7 @@
 .grid.is-list .card-title { -webkit-line-clamp: 1; font-size: var(--fs-md); }
 .grid.is-list .card-actions { opacity: 1; }
 
-/* ✅ FIX: نمای لیستی در موبایل */
+/* ---- نمای لیستی در موبایل ---- */
 @media (max-width: 720px) {
   .grid.is-list .card {
     flex-direction: column !important;
@@ -221,3 +221,244 @@
 .empty-icon { font-size: 64px; filter: grayscale(0.4); opacity: 0.7; animation: float 3.5s infinite var(--ease-in-out); }
 .empty-state h3 { font-size: var(--fs-xl); color: var(--text-1); }
 .empty-state p { max-width: 380px; color: var(--text-3); }
+
+/* =========================================================
+   دلیل سلیقه‌ای روی کارت
+   ========================================================= */
+.card-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border-right: 2px solid var(--border-2);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-reason[data-cat="love"] {
+  background: rgba(255, 59, 107, 0.06);
+  border-right-color: var(--love);
+  box-shadow: inset 0 0 14px -8px rgba(255, 59, 107, 0.5);
+}
+.card-reason[data-cat="good"] {
+  background: rgba(77, 171, 247, 0.06);
+  border-right-color: var(--good);
+  box-shadow: inset 0 0 14px -8px rgba(77, 171, 247, 0.5);
+}
+.card-reason[data-cat="hate"] {
+  background: rgba(255, 159, 67, 0.06);
+  border-right-color: var(--hate);
+  box-shadow: inset 0 0 14px -8px rgba(255, 159, 67, 0.5);
+}
+
+.card-reason-icon {
+  font-size: 13px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+.card-reason-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* ---- نشان انسجام ---- */
+.consistency-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-right: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+}
+.consistency-badge[data-color="good"] {
+  background: rgba(61, 220, 151, 0.12);
+  color: var(--success);
+  box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.3);
+  text-shadow: 0 0 6px rgba(61, 220, 151, 0.7);
+}
+.consistency-badge[data-color="warn"] {
+  background: rgba(255, 204, 77, 0.12);
+  color: var(--warning);
+  box-shadow: inset 0 0 0 1px rgba(255, 204, 77, 0.3);
+  text-shadow: 0 0 6px rgba(255, 204, 77, 0.7);
+}
+.consistency-badge[data-color="bad"] {
+  background: rgba(255, 77, 94, 0.12);
+  color: var(--danger);
+  box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.3);
+  text-shadow: 0 0 6px rgba(255, 77, 94, 0.7);
+}
+
+/* =========================================================
+   تحلیل داستانی (مودال + کارت)
+   ========================================================= */
+.story-analysis-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* دلیل اصلی */
+.story-reason {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-right: 3px solid var(--accent);
+  position: relative;
+  overflow: hidden;
+}
+.story-reason[data-cat="love"] { border-right-color: var(--love); background: rgba(255, 59, 107, 0.05); }
+.story-reason[data-cat="good"] { border-right-color: var(--good); background: rgba(77, 171, 247, 0.05); }
+.story-reason[data-cat="hate"] { border-right-color: var(--hate); background: rgba(255, 159, 67, 0.05); }
+
+.story-reason-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-bottom: 6px;
+}
+.story-reason-text {
+  color: var(--text-1);
+  font-size: var(--fs-md);
+  line-height: 1.85;
+}
+
+/* امتیازها */
+.story-scores {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.score-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+}
+.score-label { color: var(--text-3); }
+.score-track {
+  height: 8px;
+  background: var(--bg-3);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 1px solid var(--border-1);
+}
+.score-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 900ms var(--ease-out);
+  box-shadow: 0 0 12px -2px currentColor;
+}
+.score-fill[data-color="good"] { background: linear-gradient(90deg, #3ddc97, #6ee7b7); color: #3ddc97; }
+.score-fill[data-color="warn"] { background: linear-gradient(90deg, #ffcc4d, #ffd87a); color: #ffcc4d; }
+.score-fill[data-color="bad"]  { background: linear-gradient(90deg, #ff4d5e, #ff7a95); color: #ff4d5e; }
+
+.score-num {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+/* حکم */
+.story-verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+}
+.story-verdict[data-verdict="match"] { background: rgba(61, 220, 151, 0.06); border-color: rgba(61, 220, 151, 0.3); }
+.story-verdict[data-verdict="partial"] { background: rgba(255, 204, 77, 0.06); border-color: rgba(255, 204, 77, 0.3); }
+.story-verdict[data-verdict="against"] { background: rgba(255, 77, 94, 0.06); border-color: rgba(255, 77, 94, 0.3); }
+
+.story-verdict-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+.story-verdict-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.story-verdict-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-top: 2px;
+  line-height: 1.6;
+}
+
+/* لیست‌ها */
+.story-list {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  position: relative;
+  overflow: hidden;
+}
+.story-list::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: 3px;
+}
+.story-list[data-kind="pos"]::before { background: var(--success); }
+.story-list[data-kind="neg"]::before { background: var(--warning); }
+.story-list[data-kind="hole"]::before { background: var(--danger); }
+.story-list[data-kind="dumb"]::before { background: var(--hate); }
+.story-list[data-kind="smart"]::before { background: var(--good); }
+
+.story-list-title {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-2);
+  margin-bottom: 8px;
+}
+.story-list ul {
+  padding-right: 18px;
+  list-style: disc;
+}
+.story-list li {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.75;
+  margin: 4px 0;
+  word-break: break-word;
+}
+.story-list[data-kind="hole"] li::marker { color: var(--danger); }
+.story-list[data-kind="dumb"] li::marker { color: var(--hate); }
+.story-list[data-kind="pos"]  li::marker { color: var(--success); }
+.story-list[data-kind="neg"]  li::marker { color: var(--warning); }
+.story-list[data-kind="smart"] li::marker { color: var(--good); }
+
+/* ---- در لیست‌ویو، کارت فشرده باشد ---- */
+.grid.is-list .card-reason { display: none; }
