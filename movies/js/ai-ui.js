@@ -1,73 +1,48 @@
 /* =========================================================
-   رابط‌های کاربری AI (مودال‌ها) — بدون چشمک، با مارک‌دان زنده
+   رابط‌های کاربری AI (مودال‌ها)
    ========================================================= */
 window.AIUI = (function () {
 
   let activeAbort = null;
 
-  /* ---- رندر ساده Markdown ---- */
+  /* ---- رندر Markdown ---- */
   function renderMarkdown(text) {
     if (!text) return '';
     let html = Utils.esc(text);
-
-    // code blocks
     html = html.replace(/```([\s\S]*?)```/g, (_, code) =>
       `<pre class="ai-code">${code.trim()}</pre>`);
-
-    // inline code
     html = html.replace(/`([^`]+)`/g, '<code class="ai-inline">$1</code>');
-
-    // headings
     html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
     html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-
-    // bold & italic
     html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
     html = html.replace(/(?<![*_\w])\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
     html = html.replace(/(?<![*_\w])_([^_\n]+)_(?!_)/g, '<em>$1</em>');
-
-    // strikethrough
     html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-
-    // links [text](url)
     html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-    // horizontal rule
     html = html.replace(/^\s*---+\s*$/gm, '<hr>');
-
-    // blockquote
     html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-
-    // unordered lists
     html = html.replace(/(?:^|\n)((?:[-*] .+(?:\n|$))+)/g, (_, block) => {
       const items = block.trim().split('\n').map(l => l.replace(/^[-*]\s*/, ''));
       return '\n<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>';
     });
-
-    // ordered lists
     html = html.replace(/(?:^|\n)((?:\d+\. .+(?:\n|$))+)/g, (_, block) => {
       const items = block.trim().split('\n').map(l => l.replace(/^\d+\.\s*/, ''));
       return '\n<ol>' + items.map(i => `<li>${i}</li>`).join('') + '</ol>';
     });
-
-    // paragraphs
     html = html.split(/\n{2,}/).map(p => {
       const trimmed = p.trim();
       if (!trimmed) return '';
       if (/^<(h\d|ul|ol|pre|hr|blockquote|div)/.test(trimmed)) return trimmed;
       return `<p>${trimmed.replace(/\n/g, '<br>')}</p>`;
     }).join('');
-
     return html;
   }
 
-  /* =========================================================
-     پنل استریم — بدون چشمک با rAF throttle
-     ========================================================= */
+  /* ---- پنل استریم بدون چشمک ---- */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
@@ -86,7 +61,6 @@ window.AIUI = (function () {
       body
     ]);
 
-    /* وضعیت رندر */
     let pendingText = '';
     let rafScheduled = false;
     let lastRendered = '';
@@ -94,13 +68,9 @@ window.AIUI = (function () {
     function flushRender() {
       rafScheduled = false;
       if (pendingText === lastRendered) return;
-
-      // آیا کاربر در پایین است؟ فقط آنگاه auto-scroll
       const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
-
       contentEl.innerHTML = renderMarkdown(pendingText);
       lastRendered = pendingText;
-
       if (atBottom) body.scrollTop = body.scrollHeight;
     }
 
@@ -126,56 +96,157 @@ window.AIUI = (function () {
     return { panel, body, setStatus, setContent, appendText };
   }
 
-  /* ---- چک تنظیم بودن AI + لاگ ---- */
+  /* ---- چک تنظیم بودن AI ---- */
   function requireAI() {
     if (window.AILog) {
       try { AILog.show(); } catch {}
       try { AILog.info('▸ بررسی تنظیمات AI…'); } catch {}
     }
-
     if (!AI.isConfigured()) {
       if (window.AILog) {
         try { AILog.error('✗ کلید OpenRouter تنظیم نشده است'); } catch {}
-        try { AILog.meta('کلید را از تنظیمات (⚙) → بخش «هوش مصنوعی» وارد کنید'); } catch {}
+        try { AILog.meta('کلید را از تنظیمات (⚙) → «هوش مصنوعی» وارد کنید'); } catch {}
         try { AILog.scheduleAutoHide(); } catch {}
       }
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
         title: 'AI تنظیم نشده',
-        action: {
-          label: 'تنظیمات',
-          onClick: () => Events.openSettings()
-        }
+        action: { label: 'تنظیمات', onClick: () => Events.openSettings() }
       });
       return false;
     }
-
-    if (window.AILog) {
-      try { AILog.success('✓ کلید OpenRouter موجود است'); } catch {}
-    }
+    if (window.AILog) { try { AILog.success('✓ کلید OpenRouter موجود است'); } catch {} }
     return true;
   }
 
+  /* ---- کارت تحلیل داستان (فقط نمایش) ---- */
+  function renderStoryAnalysis(container, sa, reason, category) {
+    if (!sa && !reason) return;
+    container.hidden = false;
+    container.innerHTML = '';
+
+    // دلیل
+    if (reason) {
+      container.appendChild(Utils.el('div', {
+        class: 'story-reason',
+        dataset: { cat: category }
+      }, [
+        Utils.el('div', { class: 'story-reason-label' }, ['چرا؟']),
+        Utils.el('div', { class: 'story-reason-text' }, [reason])
+      ]));
+    }
+
+    if (!sa) return;
+
+    // امتیازها
+    const scores = [];
+    if (sa.consistency_score != null) {
+      scores.push(scoreBar('انسجام داستانی', sa.consistency_score));
+    }
+    if (sa.respects_intelligence != null) {
+      scores.push(scoreBar('احترام به هوش بیننده', sa.respects_intelligence));
+    }
+    if (scores.length) {
+      container.appendChild(Utils.el('div', { class: 'story-scores' }, scores));
+    }
+
+    // حکم
+    if (sa.verdict) {
+      container.appendChild(Utils.el('div', {
+        class: 'story-verdict',
+        dataset: { verdict: verdictKey(sa.verdict) }
+      }, [
+        Utils.el('span', { class: 'story-verdict-icon' }, [verdictIcon(sa.verdict)]),
+        Utils.el('div', {}, [
+          Utils.el('div', { class: 'story-verdict-title' }, [sa.verdict]),
+          sa.verdict_explanation
+            ? Utils.el('div', { class: 'story-verdict-desc' }, [sa.verdict_explanation])
+            : null
+        ].filter(Boolean))
+      ]));
+    }
+
+    // لیست‌ها
+    const lists = [
+      ['✨ نقاط قوت', sa.strengths, 'pos'],
+      ['⚠️ نقاط ضعف', sa.weaknesses, 'neg'],
+      ['🕳️ سوراخ‌های داستانی', sa.plot_holes, 'hole'],
+      ['🤦 لحظاتی که بیننده احمق فرض شد', sa.assumed_stupidity, 'dumb'],
+      ['🧠 لحظاتی که به هوش بیننده احترام گذاشته شد', sa.respects_intelligence_list || sa.respects_intelligence_notes, 'smart']
+    ];
+
+    lists.forEach(([title, arr, kind]) => {
+      if (!Array.isArray(arr) || !arr.length) return;
+      container.appendChild(Utils.el('div', {
+        class: 'story-list',
+        dataset: { kind }
+      }, [
+        Utils.el('div', { class: 'story-list-title' }, [title]),
+        Utils.el('ul', {}, arr.map(item =>
+          Utils.el('li', {}, [String(item)])
+        ))
+      ]));
+    });
+  }
+
+  function scoreBar(label, value) {
+    const pct = Math.max(0, Math.min(100, (Number(value) / 10) * 100));
+    const color = value >= 7 ? 'good' : value >= 4 ? 'warn' : 'bad';
+    return Utils.el('div', { class: 'score-row' }, [
+      Utils.el('div', { class: 'score-label' }, [label]),
+      Utils.el('div', { class: 'score-track' }, [
+        Utils.el('div', {
+          class: 'score-fill',
+          dataset: { color },
+          style: { width: '0%' },
+          'data-pct': pct
+        })
+      ]),
+      Utils.el('div', { class: 'score-num' }, [Utils.toFa(Number(value).toFixed(1))])
+    ]);
+  }
+
+  function verdictKey(v) {
+    if (!v) return 'unknown';
+    if (v.includes('همسو') && !v.includes('نسبتاً') && !v.includes('مغایر')) return 'match';
+    if (v.includes('نسبتاً')) return 'partial';
+    if (v.includes('مغایر')) return 'against';
+    return 'unknown';
+  }
+  function verdictIcon(v) {
+    const k = verdictKey(v);
+    return { match: '✅', partial: '🟡', against: '❌', unknown: '❔' }[k];
+  }
+
   /* ============================================================
-     استانداردسازی یک عنوان
+     تحلیل یک عنوان
      ============================================================ */
-  function openStandardizeSingle(id) {
+  function openAnalyzeSingle(id) {
     if (!requireAI()) return;
     const t = DB.getTitle(id);
     if (!t) return;
 
-    const panel = createStreamPanel(`استانداردسازی: ${t.title}`);
+    const panel = createStreamPanel(`تحلیل: ${t.title}`);
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
+    const storyBox = Utils.el('div', { class: 'story-analysis-box', hidden: true });
     const applyBtn = Utils.el('button', {
       class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true
     }, ['✅ اعمال روی دیتابیس']);
 
+    const catLabel = CONFIG.CATEGORIES[t.category];
+
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-source' }, [
-        Utils.el('span', { class: 'ai-source-label' }, ['عنوان فعلی:']),
-        Utils.el('span', { class: 'ai-source-value' }, [t.title])
+        Utils.el('span', { class: 'ai-source-label' }, ['عنوان:']),
+        Utils.el('span', { class: 'ai-source-value' }, [t.title]),
+        Utils.el('span', {
+          class: 'cat-badge',
+          dataset: { cat: t.category },
+          style: { marginRight: '8px' }
+        }, [`${catLabel.emoji} ${catLabel.label}`])
       ]),
       panel.panel,
-      resultBox
+      resultBox,
+      storyBox
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
@@ -184,11 +255,10 @@ window.AIUI = (function () {
     ]);
 
     Modal.open({
-      title: 'استانداردسازی با AI',
-      icon: '🪄',
-      size: 'lg',
-      body,
-      footer
+      title: 'استانداردسازی و تحلیل داستانی',
+      icon: '🔬',
+      size: 'xl',
+      body, footer
     });
 
     let lastResult = null;
@@ -196,27 +266,25 @@ window.AIUI = (function () {
     applyBtn.addEventListener('click', () => {
       if (!lastResult) return;
       AIStandardize.applyToDb(id, lastResult);
-      State.loadAll();
-      State.applyFilters();
-      Events.renderList();
-      Render.renderSidebarCounts();
-      Toast.success('اطلاعات عنوان به‌روزرسانی شد ✅');
+      State.loadAll(); State.applyFilters();
+      Events.renderList(); Render.renderSidebarCounts();
+      Toast.success('اطلاعات و تحلیل ذخیره شد ✅');
       Modal.close();
     });
 
-    panel.setStatus('در حال دریافت…', 'loading');
+    panel.setStatus('در حال تحلیل…', 'loading');
     activeAbort = new AbortController();
 
-    AIStandardize.standardizeOne(t.title, {
+    AIStandardize.analyzeOne(t.title, t.category, {
       signal: activeAbort.signal,
-      onToken: (_, acc) => { panel.appendText(acc); }
+      onToken: (_, acc) => panel.appendText(acc)
     })
       .then((result) => {
         lastResult = result;
         panel.setStatus('انجام شد', 'done');
         resultBox.hidden = false;
         resultBox.innerHTML = '';
-        const fields = [
+        [
           ['عنوان استاندارد', result.standard_title],
           ['عنوان فارسی', result.title_fa],
           ['نوع', CONFIG.TYPES[result.type] || result.type],
@@ -232,14 +300,22 @@ window.AIUI = (function () {
           ['سازنده', result.creators],
           ['بازیگران', result.main_cast],
           ['خلاصه', result.summary]
-        ].filter(([, v]) => v != null && v !== '');
-
-        fields.forEach(([k, v]) => {
+        ].filter(([, v]) => v != null && v !== '').forEach(([k, v]) => {
           resultBox.appendChild(Utils.el('div', { class: 'ai-result-row' }, [
             Utils.el('span', { class: 'ai-result-key' }, [k + ':']),
             Utils.el('span', { class: 'ai-result-val' }, [String(v)])
           ]));
         });
+
+        // تحلیل داستان
+        storyBox.hidden = false;
+        renderStoryAnalysis(storyBox, result.story_analysis, result.reason, t.category);
+        // انیمیشن نوارها
+        setTimeout(() => {
+          storyBox.querySelectorAll('.score-fill').forEach(f => {
+            f.style.width = f.dataset.pct + '%';
+          });
+        }, 60);
 
         applyBtn.disabled = false;
       })
@@ -250,14 +326,14 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     استانداردسازی همه
+     استانداردسازی همه (فقط داده، سریع)
      ============================================================ */
   function openStandardizeBatch() {
     if (!requireAI()) return;
     const titles = DB.getAllTitles();
     if (!titles.length) {
-      if (window.AILog) { try { AILog.warn('⚠ هیچ عنوانی برای استانداردسازی وجود ندارد'); AILog.scheduleAutoHide(); } catch {} }
-      Toast.warning('هیچ عنوانی برای استانداردسازی وجود ندارد');
+      if (window.AILog) { try { AILog.warn('⚠ هیچ عنوانی وجود ندارد'); AILog.scheduleAutoHide(); } catch {} }
+      Toast.warning('هیچ عنوانی وجود ندارد');
       return;
     }
 
@@ -272,10 +348,11 @@ window.AIUI = (function () {
 
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'alert alert-warn' }, [
-        Utils.el('span', { class: 'alert-icon' }, ['⏳']),
+        Utils.el('span', { class: 'alert-icon' }, ['⚡']),
         Utils.el('div', {}, [
-          `این عملیات ${Utils.toFa(Math.ceil(titles.length / 5))} درخواست به AI ارسال می‌کند. `,
-          'ممکن است چند دقیقه طول بکشد.'
+          `این عملیات ${Utils.toFa(Math.ceil(titles.length / 5))} درخواست سریع ارسال می‌کند. `,
+          'فقط اطلاعات پایه (سال، فصل، خلاصه) را پر می‌کند — بدون تحلیل داستانی.',
+          ' برای تحلیل عمیق هر عنوان، از دکمه 🪄 روی کارت استفاده کن.'
         ])
       ]),
       progressWrap,
@@ -290,18 +367,15 @@ window.AIUI = (function () {
     ]);
 
     Modal.open({
-      title: 'استانداردسازی دسته‌جمعی',
-      icon: '⚡',
-      size: 'xl',
-      body,
-      footer
+      title: 'استانداردسازی سریع',
+      icon: '⚡', size: 'xl', body, footer
     });
 
     startBtn.addEventListener('click', async () => {
       startBtn.disabled = true;
       startBtn.innerHTML = '<span class="spinner"></span> در حال اجرا…';
       panel.setStatus('در حال پردازش…', 'loading');
-      if (window.AILog) { try { AILog.request(`▸ شروع پردازش دسته‌ای: ${titles.length} عنوان`); AILog.meta(`اندازه دسته: ۵ عنوان`); } catch {} }
+      if (window.AILog) { try { AILog.request(`▸ شروع استانداردسازی سریع: ${titles.length} عنوان`); } catch {} }
 
       activeAbort = new AbortController();
       try {
@@ -312,20 +386,19 @@ window.AIUI = (function () {
             progressWrap.querySelector('.ai-progress-fill').style.width = pct + '%';
             progressWrap.querySelector('.ai-progress-text').textContent =
               `${Utils.toFa(done)} از ${Utils.toFa(total)}`;
-            if (window.AILog) { try { AILog.stream(`↓ ${done}/${total} عنوان پردازش شد`); } catch {} }
+            if (window.AILog) { try { AILog.stream(`↓ ${done}/${total}`); } catch {} }
 
             const last = current[current.length - 1];
             if (last) {
-              const row = Utils.el('div', { class: 'ai-result-item' }, [
+              resultList.prepend(Utils.el('div', { class: 'ai-result-item' }, [
                 Utils.el('span', { class: 'ai-result-icon' }, [last._error ? '⚠️' : '✅']),
                 Utils.el('span', { class: 'ai-result-orig' }, [last.original]),
                 last._error
                   ? Utils.el('span', { class: 'ai-result-err' }, [last._error])
                   : Utils.el('span', { class: 'ai-result-new' }, [' → ' + (last.standard_title || '')])
-              ]);
-              resultList.prepend(row);
+              ]));
             }
-            panel.setContent(renderMarkdown(`**پیشرفت:** ${Utils.toFa(done)} از ${Utils.toFa(total)} عنوان پردازش شد.`));
+            panel.setContent(renderMarkdown(`**پیشرفت:** ${Utils.toFa(done)} از ${Utils.toFa(total)}`));
           }
         });
 
@@ -339,21 +412,15 @@ window.AIUI = (function () {
           }
         });
 
-        State.loadAll();
-        State.applyFilters();
-        Events.renderList();
-        Render.renderSidebarCounts();
+        State.loadAll(); State.applyFilters();
+        Events.renderList(); Render.renderSidebarCounts();
 
         if (window.AILog) {
-          try {
-            AILog.success(`✓ پایان — ${applied} از ${titles.length} عنوان استاندارد شد`);
-            AILog.scheduleAutoHide();
-          } catch {}
+          try { AILog.success(`✓ ${applied} از ${titles.length} استاندارد شد`); AILog.scheduleAutoHide(); } catch {}
         }
-
         Toast.success(`${Utils.toFa(applied)} عنوان استاندارد شد`);
         panel.setContent(renderMarkdown(
-          `## ✅ پایان\n\n- مجموع: **${Utils.toFa(titles.length)}**\n- موفق: **${Utils.toFa(applied)}**\n- خطا: **${Utils.toFa(titles.length - applied)}**`
+          `## ✅ پایان\n\n- مجموع: **${Utils.toFa(titles.length)}**\n- موفق: **${Utils.toFa(applied)}**`
         ));
         startBtn.innerHTML = '✅ پایان یافت';
       } catch (err) {
@@ -366,7 +433,7 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     تحلیل سلیقه
+     تحلیل سلیقه + پیشنهاد
      ============================================================ */
   function openAnalysis() {
     if (!requireAI()) return;
@@ -379,7 +446,6 @@ window.AIUI = (function () {
       chip('movie', '🎥 فقط فیلم'),
       chip('series', '📺 فقط سریال')
     ]);
-
     let selectedKind = 'both';
     kindPicker.querySelectorAll('.chip').forEach(c => {
       c.addEventListener('click', () => {
@@ -403,11 +469,10 @@ window.AIUI = (function () {
       Utils.el('div', { class: 'divider' }),
       Utils.el('div', { class: 'ai-section' }, [
         Utils.el('div', { class: 'ai-section-title' }, ['۲. پیشنهاد هوشمند']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['بر اساس تحلیل بالا، پیشنهاد شخصی‌سازی‌شده دریافت کن.']),
+        Utils.el('div', { class: 'ai-section-desc' }, ['بر اساس سلیقه‌ی شما، پیشنهاد دقیق دریافت کن.']),
         kindPicker,
         Utils.el('button', {
-          class: 'btn btn-soft btn-sm',
-          id: 'ai-recommend-btn',
+          class: 'btn btn-soft btn-sm', id: 'ai-recommend-btn',
           style: { marginTop: '10px' }
         }, ['✨ پیشنهاد بده'])
       ])
@@ -423,12 +488,10 @@ window.AIUI = (function () {
     const recBtn = body.querySelector('#ai-recommend-btn');
 
     analyzeBtn.addEventListener('click', async () => {
-      analyzeBtn.disabled = true;
-      recBtn.disabled = true;
+      analyzeBtn.disabled = true; recBtn.disabled = true;
       panel.setStatus('در حال تحلیل…', 'loading');
       panel.setContent('');
       activeAbort = new AbortController();
-
       try {
         await AIAnalysis.analyze({
           signal: activeAbort.signal,
@@ -439,18 +502,15 @@ window.AIUI = (function () {
         panel.setStatus('خطا', 'error');
         panel.setContent(`<div class="ai-error">${Utils.esc(err.message)}</div>`);
       } finally {
-        analyzeBtn.disabled = false;
-        recBtn.disabled = false;
+        analyzeBtn.disabled = false; recBtn.disabled = false;
       }
     });
 
     recBtn.addEventListener('click', async () => {
-      analyzeBtn.disabled = true;
-      recBtn.disabled = true;
+      analyzeBtn.disabled = true; recBtn.disabled = true;
       panel.setStatus('در حال پیشنهاد…', 'loading');
       panel.setContent('');
       activeAbort = new AbortController();
-
       try {
         await AIAnalysis.recommend(selectedKind, {
           signal: activeAbort.signal,
@@ -461,8 +521,7 @@ window.AIUI = (function () {
         panel.setStatus('خطا', 'error');
         panel.setContent(`<div class="ai-error">${Utils.esc(err.message)}</div>`);
       } finally {
-        analyzeBtn.disabled = false;
-        recBtn.disabled = false;
+        analyzeBtn.disabled = false; recBtn.disabled = false;
       }
     });
   }
@@ -485,16 +544,16 @@ window.AIUI = (function () {
       AILog.meta(`کلید: ${k.slice(0, 10)}…${k.slice(-4)}`);
     } else {
       AILog.warn('⚠ کلید OpenRouter تنظیم نشده است');
-      AILog.meta('کلید را از تنظیمات وارد کنید تا این پنل پر شود');
     }
     AILog.scheduleAutoHide();
   }
 
   return {
-    openStandardizeSingle,
+    openAnalyzeSingle,
     openStandardizeBatch,
     openAnalysis,
     renderMarkdown,
+    renderStoryAnalysis,
     cleanup,
     showLog
   };
