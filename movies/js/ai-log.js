@@ -1,13 +1,14 @@
 /* =========================================================
-   لاگ مینیمال AI — فقط ۲ خط آخر پایین صفحه
+   لاگ مینیمال AI — ۲ خط آخر پایین صفحه
    ========================================================= */
 window.AILog = (function () {
   const MAX_LINES = 2;
-  const AUTO_HIDE_DELAY = 6000; // ۶ ثانیه بعد از آخرین پیام محو می‌شود
+  const AUTO_HIDE_DELAY = 7000;
 
   let root = null;
   let bodyEl = null;
   let autohideTimer = null;
+  let firstShowDone = false;
 
   function nowTime() {
     const d = new Date();
@@ -22,6 +23,10 @@ window.AILog = (function () {
     bodyEl = Utils.el('div', { class: 'ai-log-mini-body' });
     root.appendChild(bodyEl);
     document.body.appendChild(root);
+
+    // رفع اجبار به reflow برای فعال شدن transition
+    void root.offsetWidth;
+    firstShowDone = false;
   }
 
   function log(message, level = 'info') {
@@ -38,14 +43,19 @@ window.AILog = (function () {
 
     bodyEl.appendChild(line);
 
-    // فقط آخرین N خط نگه داشته شود
     while (bodyEl.children.length > MAX_LINES) {
       bodyEl.removeChild(bodyEl.firstChild);
     }
 
-    root.classList.add('is-visible');
+    if (!firstShowDone) {
+      firstShowDone = true;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => root.classList.add('is-visible'));
+      });
+    } else {
+      root.classList.add('is-visible');
+    }
 
-    // زمان‌بندی محو خودکار
     autohideTimer = setTimeout(() => {
       if (root) root.classList.remove('is-visible');
     }, AUTO_HIDE_DELAY);
@@ -53,7 +63,7 @@ window.AILog = (function () {
 
   function show() {
     ensureUI();
-    root.classList.add('is-visible');
+    requestAnimationFrame(() => root.classList.add('is-visible'));
   }
 
   function hide() {
@@ -71,7 +81,6 @@ window.AILog = (function () {
     if (bodyEl) bodyEl.innerHTML = '';
   }
 
-  /* ---- میان‌برها ---- */
   const info    = (m) => log(m, 'info');
   const success = (m) => log(m, 'success');
   const warn    = (m) => log(m, 'warn');
@@ -80,7 +89,6 @@ window.AILog = (function () {
   const stream  = (m) => log(m, 'stream');
   const meta    = (m) => log(m, 'meta');
 
-  /* ---- سازگاری با API قبلی ---- */
   function toggleCollapse() { /* no-op */ }
 
   return {
