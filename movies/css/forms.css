@@ -1,0 +1,248 @@
+/* =========================================================
+   فرم‌ها
+   ========================================================= */
+.form { display: flex; flex-direction: column; gap: 16px; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-row-3 { grid-template-columns: repeat(3, 1fr); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-label .req { color: var(--danger); font-size: 14px; }
+.field-hint { font-size: var(--fs-xs); color: var(--text-4); }
+
+.field-input,
+.field-select,
+.field-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: var(--fs-md);
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.field-input::placeholder,
+.field-textarea::placeholder { color: var(--text-4); }
+
+.field-input:hover,
+.field-select:hover,
+.field-textarea:hover { border-color: var(--border-3); }
+
+.field-input:focus,
+.field-select:focus,
+.field-textarea:focus {
+  border-color: var(--accent);
+  background: var(--bg-3);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field-input.is-error,
+.field-select.is-error,
+.field-textarea.is-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(255,77,94,0.12);
+}
+
+.field-textarea { min-height: 96px; resize: vertical; font-family: inherit; line-height: 1.7; }
+
+.field-select {
+  appearance: none;
+  cursor: pointer;
+  padding-left: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 12px center;
+  background-size: 15px;
+}
+.field-select option { background: var(--bg-2); color: var(--text-1); }
+
+.field-error {
+  font-size: var(--fs-xs);
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
+}
+
+/* ---- گروه دسته‌بندی (رادیو زیبا) ---- */
+.cat-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.cat-option {
+  position: relative;
+  cursor: pointer;
+}
+.cat-option input { position: absolute; opacity: 0; pointer-events: none; }
+.cat-option-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: var(--radius-md);
+  background: var(--bg-2);
+  border: 1.5px solid var(--border-2);
+  transition: all var(--dur-base) var(--ease-out);
+  text-align: center;
+}
+.cat-option-inner .emoji { font-size: 24px; transition: transform var(--dur-base) var(--ease-spring); }
+.cat-option-inner .lbl { font-size: var(--fs-sm); font-weight: 600; color: var(--text-2); }
+
+.cat-option:hover .cat-option-inner { border-color: var(--border-3); transform: translateY(-2px); }
+.cat-option:hover .emoji { transform: scale(1.15); }
+
+.cat-option input:checked + .cat-option-inner {
+  border-color: currentColor;
+  background: var(--bg-3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -8px currentColor;
+}
+
+.cat-option[data-cat="love"] .cat-option-inner { color: var(--love); }
+.cat-option[data-cat="good"] .cat-option-inner { color: var(--good); }
+.cat-option[data-cat="hate"] .cat-option-inner { color: var(--hate); }
+.cat-option input:checked + .cat-option-inner .lbl { color: currentColor; }
+
+/* ---- امتیازدهی ---- */
+.rating-picker {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+}
+.rating-stars { display: flex; gap: 4px; }
+.rating-star {
+  width: 26px; height: 26px;
+  color: var(--text-4);
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-spring);
+  padding: 0;
+}
+.rating-star:hover { transform: scale(1.2); }
+.rating-star.on { color: var(--warning); fill: var(--warning); filter: drop-shadow(0 2px 6px rgba(255,204,77,0.4)); }
+
+.rating-input {
+  width: 72px;
+  height: 34px;
+  padding: 0 10px;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  text-align: center;
+  color: var(--warning);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+.rating-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+/* ---- ردیف سوییچ ---- */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.switch-label { font-size: var(--fs-md); color: var(--text-1); font-weight: 500; }
+.switch-desc { font-size: var(--fs-xs); color: var(--text-3); margin-top: 2px; }
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+}
+.switch input { position: absolute; opacity: 0; pointer-events: none; }
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  transition: all var(--dur-base) var(--ease-out);
+  cursor: pointer;
+}
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  transform: translateY(-50%);
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--text-2);
+  transition: all var(--dur-base) var(--ease-spring);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.switch input:checked + .switch-track {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.switch input:checked + .switch-track::after {
+  right: calc(100% - 19px);
+  background: #fff;
+}
+
+/* ---- ردیف دکمه‌های چک‌باکس گروهی ---- */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 6px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+}
+.chip:hover { border-color: var(--border-3); color: var(--text-1); }
+.chip.is-on {
+  background: var(--accent-soft);
+  color: var(--accent-2);
+  border-color: rgba(124,92,255,0.35);
+  font-weight: 600;
+}
+
+/* ---- جعبه‌ی هشدار ---- */
+.alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  border: 1px solid transparent;
+}
+.alert-icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+.alert-info { background: rgba(77,171,247,0.08); border-color: rgba(77,171,247,0.22); color: var(--text-2); }
+.alert-warn { background: rgba(255,204,77,0.08); border-color: rgba(255,204,77,0.22); color: var(--text-2); }
+.alert-danger { background: rgba(255,77,94,0.08); border-color: rgba(255,77,94,0.22); color: var(--text-2); }
+
+/* ---- کپی‌فیلد ---- */
+.copy-field {
+  display: flex;
+  gap: 8px;
+}
+.copy-field .field-input { flex: 1; font-family: var(--font-mono); font-size: var(--fs-sm); }
