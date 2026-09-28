@@ -159,13 +159,36 @@ window.AIStandardize = (function () {
     return results;
   }
 
+  /* ---- گرفتن info مدل فعلی برای ذخیره ---- */
+  function currentModelInfo() {
+    try {
+      if (typeof AI.getLastUsedModel !== 'function') return null;
+      const info = AI.getLastUsedModel();
+      if (!info) return null;
+      return {
+        id: info.id,
+        label: info.label,
+        vendor: info.vendor || '',
+        meta: info.meta ? {
+          size: info.meta.size || null,
+          context: info.meta.context || null,
+          speed: info.meta.speed || null
+        } : null,
+        at: info.at || new Date().toISOString()
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
   /* ---- اعمال روی دیتابیس ---- */
   function applyToDb(id, ai) {
     if (!id || !ai) return;
     const current = DB.getTitle(id);
     if (!current) return;
 
-    let existing = current.story_analysis || null;
+    const existing = current.story_analysis || null;
+    const modelInfo = currentModelInfo();
 
     const newStoryData = {
       strengths: ai.strengths || existing?.strengths || [],
@@ -173,7 +196,9 @@ window.AIStandardize = (function () {
       plot_holes: ai.plot_holes || existing?.plot_holes || [],
       assumed_stupidity: ai.assumed_stupidity || existing?.assumed_stupidity || [],
       earned_outcomes: ai.earned_outcomes || existing?.earned_outcomes || [],
-      forced_outcomes: ai.forced_outcomes || existing?.forced_outcomes || []
+      forced_outcomes: ai.forced_outcomes || existing?.forced_outcomes || [],
+      ai_model: modelInfo || existing?.ai_model || null,
+      analyzed_at: new Date().toISOString()
     };
 
     let storyJson = '';
@@ -217,10 +242,13 @@ window.AIStandardize = (function () {
     if (!current) return;
 
     const existing = current.story_analysis || {};
+    const modelInfo = currentModelInfo();
+
     const merged = {
       ...existing,
       plot_holes: deepResult.plot_holes || existing.plot_holes || [],
       assumed_stupidity: deepResult.assumed_stupidity || existing.assumed_stupidity || [],
+      ai_model: modelInfo || existing.ai_model || null,
       deep_analyzed_at: new Date().toISOString()
     };
 
