@@ -3,7 +3,7 @@
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '1.5.0',
+  APP_VERSION: '1.5.2',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
@@ -16,22 +16,17 @@ window.CONFIG = {
   },
 
   /* =========================================================
-     AI — همه‌ی مدل‌های رایگان OpenRouter
+     AI — لیست استاتیک مدل‌های رایگان OpenRouter
+     =========================================================
+     فقط مدل‌هایی که به‌عنوان chat model شناخته شده‌اند.
+     مدل‌های safety / moderation در لیست نیستند.
      ========================================================= */
   AI: {
     API_URL: 'https://openrouter.ai/api/v1/chat/completions',
     STORAGE_KEY: 'cinema_openrouter_key',
     MODEL_STORAGE_KEY: 'cinema_openrouter_model',
-    FAVORITES_KEY: 'cinema_openrouter_favorites',
 
     DEFAULT_MODEL: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-
-    /* دسته‌بندی پیشنهادی برای هر کاربرد */
-    USE_CASE_HINTS: {
-      analysis: 'برای تحلیل داستانی عمیق و تحلیل سلیقه',
-      batch: 'برای استانداردسازی سریع دسته‌ای',
-      long: 'برای متن‌های طولانی (کانتکست بزرگ)'
-    },
 
     MODELS: [
       /* ---------- قدرتمندها (مناسب تحلیل عمیق) ---------- */
@@ -44,8 +39,7 @@ window.CONFIG = {
         speed: '44',
         note: 'قدرتمندترین گزینه — پیشنهاد برای تحلیل داستانی عمیق',
         tags: ['تحلیل عمیق', 'کانتکست بزرگ'],
-        recommended: true,
-        bestFor: 'analysis'
+        recommended: true
       },
       {
         id: 'inclusionai/ling-3.0-flash-fin:free',
@@ -56,8 +50,7 @@ window.CONFIG = {
         speed: '147',
         note: 'سریع و متعادل — عالی برای استانداردسازی دسته‌ای',
         tags: ['سریع', 'تحلیل'],
-        recommended: true,
-        bestFor: 'batch'
+        recommended: true
       },
       {
         id: 'poolside/laguna-s-2.1:free',
@@ -77,8 +70,7 @@ window.CONFIG = {
         context: '512K',
         speed: '58',
         note: 'کانتکست ۵۱۲K — مناسب عنوان‌های با توضیح طولانی',
-        tags: ['کانتکست بزرگ', 'تحلیل'],
-        bestFor: 'long'
+        tags: ['کانتکست بزرگ', 'تحلیل']
       },
       {
         id: 'nvidia/nemotron-3.5-lightning:free',
@@ -88,8 +80,7 @@ window.CONFIG = {
         context: '1M',
         speed: '35',
         note: 'کانتکست ۱M — سبک‌تر از Ultra',
-        tags: ['کانتکست بزرگ'],
-        bestFor: 'long'
+        tags: ['کانتکست بزرگ']
       },
       {
         id: 'nvidia/nemotron-3-super:free',
@@ -119,8 +110,7 @@ window.CONFIG = {
         context: '1.05M',
         speed: '51',
         note: 'کانتکست ۱M — مناسب تحلیل خیلی طولانی',
-        tags: ['کانتکست بزرگ', 'تحلیل'],
-        bestFor: 'long'
+        tags: ['کانتکست بزرگ', 'تحلیل']
       },
       {
         id: 'cohere/north-mini-code:free',
@@ -162,15 +152,16 @@ window.CONFIG = {
         note: 'چندزبانه با پشتیبانی خوب فارسی',
         tags: ['چندزبانه', 'سبک']
       },
+      /* ✅ FIX: ID کامل — همان چیزی که OpenRouter دارد */
       {
-        id: 'nvidia/nemotron-3-nano-omni:free',
+        id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
         label: 'Nemotron 3 Nano Omni',
         vendor: 'NVIDIA',
         size: '26.2B',
         context: '256K',
         speed: '41',
-        note: 'چندوجهی — سبک و مقرون‌به‌صرفه',
-        tags: ['سبک']
+        note: 'چندوجهی و سبک — مناسب کارهای روزمره',
+        tags: ['سبک', 'چندوجهی']
       },
       {
         id: 'liquidai/lfm2.5-2.6b:free',
@@ -181,16 +172,6 @@ window.CONFIG = {
         speed: '167',
         note: 'سریع‌ترین — مناسب تست و کارهای ساده',
         tags: ['سریع‌ترین', 'سبک']
-      },
-      {
-        id: 'nvidia/nemotron-3.5-content-safety:free',
-        label: 'Nemotron 3.5 Content Safety',
-        vendor: 'NVIDIA',
-        size: '2.21B',
-        context: '128K',
-        speed: '60',
-        note: 'بهینه برای بررسی محتوا — عمومی نیست',
-        tags: ['اختصاصی']
       },
       {
         id: 'google/gemma-4-26b-a4b:free',
@@ -212,6 +193,10 @@ window.CONFIG = {
         note: 'سبک‌ترین Gemma',
         tags: ['سبک']
       }
+
+      /* ❌ حذف شد: nvidia/nemotron-3.5-content-safety:free
+         دلیل: این مدل یک classifier ایمنی محتواست، نه chat model.
+         هر درخواست چت به آن خطای API می‌داد. */
     ],
 
     BATCH_SIZE: 5
