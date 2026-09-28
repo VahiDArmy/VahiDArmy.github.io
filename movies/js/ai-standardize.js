@@ -49,15 +49,12 @@ window.AIStandardize = (function () {
     return parsed;
   }
 
-  /* ---- تحلیل عمیق فصل‌به‌فصل (چندین تماس AI) ----
-     استراتژی: تقسیم فصل‌ها به گروه‌های ۲-۳ تایی
-     و تحلیل هر گروه به‌صورت جداگانه. */
+  /* ---- تحلیل عمیق فصل‌به‌فصل ---- */
   async function analyzeSeasonalDeep(title, seasonsCount, { onProgress, signal } = {}) {
     if (!seasonsCount || seasonsCount < 1) {
       throw new Error('تعداد فصل‌ها مشخص نیست.');
     }
 
-    /* چانک‌بندی: هر گروه حداکثر ۳ فصل */
     const CHUNK_SIZE = 3;
     const chunks = [];
     for (let start = 1; start <= seasonsCount; start += CHUNK_SIZE) {
@@ -67,8 +64,6 @@ window.AIStandardize = (function () {
 
     const allPlotHoles = [];
     const allAssumedStupidity = [];
-    const allApparentIssues = [];
-    const coverageNotes = [];
 
     for (let i = 0; i < chunks.length; i++) {
       if (signal?.aborted) break;
@@ -90,12 +85,6 @@ window.AIStandardize = (function () {
         }
         if (Array.isArray(res.assumed_stupidity)) {
           allAssumedStupidity.push(...res.assumed_stupidity.map(x => ({ ...x, _seasons: `${c.from}-${c.to}` })));
-        }
-        if (Array.isArray(res.apparent_issues)) {
-          allApparentIssues.push(...res.apparent_issues.map(x => ({ ...x, _seasons: `${c.from}-${c.to}` })));
-        }
-        if (res.coverage_note) {
-          coverageNotes.push(`فصل ${c.from}-${c.to}: ${res.coverage_note}`);
         }
 
         onProgress && onProgress({
@@ -121,7 +110,6 @@ window.AIStandardize = (function () {
       }
     }
 
-    /* مرتب‌سازی بر اساس شدت */
     const severityOrder = { 'بحرانی': 0, 'جدی': 1, 'متوسط': 2, 'کم': 3 };
     const sortBySeverity = (arr) => arr.slice().sort((a, b) =>
       (severityOrder[a.severity] ?? 99) - (severityOrder[b.severity] ?? 99)
@@ -130,8 +118,6 @@ window.AIStandardize = (function () {
     return {
       plot_holes: sortBySeverity(allPlotHoles),
       assumed_stupidity: sortBySeverity(allAssumedStupidity),
-      apparent_issues: allApparentIssues,
-      coverage_note: coverageNotes.join('\n'),
       totalChunks: chunks.length
     };
   }
@@ -179,39 +165,15 @@ window.AIStandardize = (function () {
     const current = DB.getTitle(id);
     if (!current) return;
 
-    /* اگر در حالت deep هستیم، story_analysis را ادغام کن */
     let existing = current.story_analysis || null;
 
     const newStoryData = {
-      neutral_premise: ai.neutral_premise ?? existing?.neutral_premise ?? null,
-      neutral_structure: ai.neutral_structure ?? existing?.neutral_structure ?? null,
-      consistency_score: ai.consistency_score ?? existing?.consistency_score ?? null,
-      respects_intelligence_score: ai.respects_intelligence_score ?? existing?.respects_intelligence_score ?? null,
-      earns_ending_score: ai.earns_ending_score ?? existing?.earns_ending_score ?? null,
-      gossip_score: ai.gossip_score ?? existing?.gossip_score ?? null,
-      gossip_quality: ai.gossip_quality ?? existing?.gossip_quality ?? null,
-      confidence: ai.confidence ?? existing?.confidence ?? null,
-
       strengths: ai.strengths || existing?.strengths || [],
       weaknesses: ai.weaknesses || existing?.weaknesses || [],
-
       plot_holes: ai.plot_holes || existing?.plot_holes || [],
       assumed_stupidity: ai.assumed_stupidity || existing?.assumed_stupidity || [],
-      apparent_issues: ai.apparent_issues || existing?.apparent_issues || [],
-
-      respects_intelligence: ai.respects_intelligence || existing?.respects_intelligence || [],
       earned_outcomes: ai.earned_outcomes || existing?.earned_outcomes || [],
-      forced_outcomes: ai.forced_outcomes || existing?.forced_outcomes || [],
-      gossip_evidence: ai.gossip_evidence || existing?.gossip_evidence || [],
-
-      coverage_note: ai.coverage_note ?? existing?.coverage_note ?? null,
-      coverage_recommendation: ai.coverage_recommendation ?? existing?.coverage_recommendation ?? null,
-
-      counter_perspective: ai.counter_perspective ?? existing?.counter_perspective ?? null,
-      disagreement: ai.disagreement ?? existing?.disagreement ?? null,
-
-      verdict: ai.verdict ?? existing?.verdict ?? null,
-      verdict_explanation: ai.verdict_explanation ?? existing?.verdict_explanation ?? null
+      forced_outcomes: ai.forced_outcomes || existing?.forced_outcomes || []
     };
 
     let storyJson = '';
@@ -259,8 +221,6 @@ window.AIStandardize = (function () {
       ...existing,
       plot_holes: deepResult.plot_holes || existing.plot_holes || [],
       assumed_stupidity: deepResult.assumed_stupidity || existing.assumed_stupidity || [],
-      apparent_issues: deepResult.apparent_issues || existing.apparent_issues || [],
-      coverage_note: deepResult.coverage_note || existing.coverage_note || null,
       deep_analyzed_at: new Date().toISOString()
     };
 
