@@ -5,7 +5,6 @@ window.AIUI = (function () {
 
   let activeAbort = null;
 
-  /* ---- Markdown renderer ---- */
   function renderMarkdown(text) {
     if (!text) return '';
     let html = Utils.esc(text);
@@ -41,7 +40,6 @@ window.AIUI = (function () {
     return html;
   }
 
-  /* ---- badge مدل ---- */
   function buildModelBadge(info) {
     if (!info) return null;
     const children = [
@@ -65,7 +63,6 @@ window.AIUI = (function () {
     if (badge) container.appendChild(badge);
   }
 
-  /* ---- stream panel ---- */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
@@ -141,9 +138,6 @@ window.AIUI = (function () {
     return true;
   }
 
-  /* =========================================================
-     رندر تحلیل داستانی
-     ========================================================= */
   function renderStoryAnalysis(container, sa, reason, rating) {
     if (!sa && !reason) return;
     container.hidden = false;
@@ -214,7 +208,7 @@ window.AIUI = (function () {
       itemEl.appendChild(Utils.el('div', { class: 'story-structured-head' }, headChildren));
 
       if (item.scene) itemEl.appendChild(row('صحنه:', item.scene));
-      if (item.rule_broken) itemEl.appendChild(row('قاعده‌ی شکسته:', item.rule_broken));
+      if (item.rule_broken) itemEl.appendChild(row('قاعده شکسته:', item.rule_broken));
       if (item.technique) itemEl.appendChild(row('تکنیک نویسنده:', item.technique));
       const mainIssue = item.issue || item.what_happened;
       if (mainIssue) itemEl.appendChild(row(item.issue ? 'مشکل:' : 'اتفاق:', mainIssue));
@@ -245,9 +239,6 @@ window.AIUI = (function () {
     return 'unknown';
   }
 
-  /* =========================================================
-     تحلیل یک عنوان
-     ========================================================= */
   function openAnalyzeSingle(id) {
     if (!requireAI()) return;
     const t = DB.getTitle(id);
@@ -352,7 +343,7 @@ window.AIUI = (function () {
             Utils.el('div', { class: 'ai-deep-icon' }, ['🔬']),
             Utils.el('div', { class: 'ai-deep-info' }, [
               Utils.el('div', { class: 'ai-deep-title' }, ['این سریال ' + Utils.toFa(seasons) + ' فصل دارد']),
-              Utils.el('div', { class: 'ai-deep-desc' }, ['تحلیل فصل به فصل برای شکار کامل سوراخ‌ها اجرا کن.'])
+              Utils.el('div', { class: 'ai-deep-desc' }, ['تحلیل فصل به فصل برای شکار کامل سوراخ‌ها.'])
             ]),
             Utils.el('button', {
               class: 'btn btn-primary', id: 'btn-deep-analyze',
@@ -369,9 +360,6 @@ window.AIUI = (function () {
       });
   }
 
-  /* =========================================================
-     تحلیل عمیق فصل به فصل
-     ========================================================= */
   function openSeasonalDeep(id, title, seasonsCount, type, year) {
     const chunkCount = Math.ceil(seasonsCount / 3);
     const progressBox = Utils.el('div', { class: 'ai-deep-progress' });
@@ -469,9 +457,6 @@ window.AIUI = (function () {
     });
   }
 
-  /* =========================================================
-     استانداردسازی سریع
-     ========================================================= */
   function openStandardizeBatch() {
     if (!requireAI()) return;
     const titles = DB.getAllTitles();
@@ -489,7 +474,7 @@ window.AIUI = (function () {
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'alert alert-warn' }, [
         Utils.el('span', { class: 'alert-icon' }, ['⚡']),
-        Utils.el('div', {}, ['این عملیات ' + Utils.toFa(Math.ceil(titles.length / 5)) + ' درخواست سریع می‌فرستد. فقط داده‌های پایه را پر می‌کند.'])
+        Utils.el('div', {}, ['این عملیات ' + Utils.toFa(Math.ceil(titles.length / 5)) + ' درخواست سریع می‌فرستد.'])
       ]),
       progressWrap, panel.panel, resultList
     ]);
@@ -550,12 +535,9 @@ window.AIUI = (function () {
     });
   }
 
-  /* =========================================================
-     تحلیل سلیقه + پیشنهاد
-     ========================================================= */
   function openAnalysis() {
     if (!requireAI()) return;
-    const panel = createStreamPanel('تحلیل سلیقه‌ی شما');
+    const panel = createStreamPanel('تحلیل سلیقه');
     panel.setContent('<p class="ai-hint">برای شروع دکمه را بزن.</p>');
 
     const kindPicker = Utils.el('div', { class: 'ai-kind-picker' }, [
@@ -638,6 +620,133 @@ window.AIUI = (function () {
     });
   }
 
+  /* =========================================================
+     جستجوی هوشمند عنوان
+     ========================================================= */
+  function openTitleLookup(form, titleInput) {
+    if (!requireAI()) return;
+    const rawTitle = titleInput.value.trim();
+    if (!rawTitle) {
+      Toast.warning('اول عنوان را وارد کن');
+      titleInput.focus();
+      return;
+    }
+
+    const streamBox = Utils.el('div', { class: 'lookup-status' }, [
+      Utils.el('span', { class: 'spinner' }),
+      Utils.el('span', {}, ['در حال جستجو…'])
+    ]);
+    const resultBox = Utils.el('div', { class: 'lookup-results' });
+
+    const body = Utils.el('div', { class: 'lookup-body' }, [
+      Utils.el('div', { class: 'lookup-query' }, [
+        Utils.el('span', { class: 'lookup-query-label' }, ['جستجو برای:']),
+        Utils.el('span', { class: 'lookup-query-value' }, [rawTitle])
+      ]),
+      streamBox,
+      resultBox
+    ]);
+
+    Modal.open({
+      title: 'جستجوی هوشمند عنوان',
+      icon: '🔍',
+      size: 'lg',
+      body: body,
+      footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+        Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
+      ])
+    });
+
+    activeAbort = new AbortController();
+
+    AITitleLookup.lookup(rawTitle, { signal: activeAbort.signal })
+      .then(function (result) {
+        streamBox.remove();
+
+        if (result.corrected_query && result.corrected_query !== rawTitle) {
+          resultBox.appendChild(Utils.el('div', { class: 'lookup-corrected' }, [
+            Utils.el('span', {}, ['دیکته تصحیح‌شده: ']),
+            Utils.el('strong', {}, [result.corrected_query])
+          ]));
+        }
+
+        if (!result.candidates || !result.candidates.length) {
+          resultBox.appendChild(Utils.el('div', { class: 'lookup-empty' }, [
+            Utils.el('div', { class: 'lookup-empty-icon' }, ['😕']),
+            Utils.el('div', { class: 'lookup-empty-text' }, [
+              'هیچ نسخه‌ای برای این عنوان پیدا نشد. ',
+              'می‌توانی عنوان را دستی وارد کنی یا دیکته‌اش را اصلاح کنی.'
+            ])
+          ]));
+          return;
+        }
+
+        const list = Utils.el('div', { class: 'lookup-list' });
+
+        result.candidates.forEach(function (c) {
+          const card = buildCandidateCard(c, function () {
+            AITitleLookup.fillForm(form, c);
+            Modal.close();
+            Toast.success('اطلاعات عنوان پر شد — بررسی و ذخیره کن');
+            titleInput.focus();
+          });
+          list.appendChild(card);
+        });
+
+        resultBox.appendChild(Utils.el('div', { class: 'lookup-result-title' }, [
+          Utils.toFa(result.candidates.length) + ' نسخه پیدا شد — یکی را انتخاب کن:'
+        ]));
+        resultBox.appendChild(list);
+      })
+      .catch(function (err) {
+        streamBox.remove();
+        resultBox.appendChild(Utils.el('div', { class: 'lookup-error' }, [
+          'خطا: ' + Utils.esc(err.message)
+        ]));
+      });
+  }
+
+  function buildCandidateCard(c, onPick) {
+    const conf = Number(c.confidence) || 0;
+    const confClass = conf >= 8 ? 'high' : conf >= 5 ? 'mid' : 'low';
+
+    const card = Utils.el('button', {
+      type: 'button',
+      class: 'lookup-card',
+      onclick: onPick
+    }, [
+      Utils.el('div', { class: 'lookup-card-head' }, [
+        Utils.el('div', { class: 'lookup-card-title' }, [
+          Utils.el('span', { class: 'lookup-card-standard' }, [c.standard_title || '—']),
+          c.version_label
+            ? Utils.el('span', { class: 'lookup-card-version' }, [c.version_label])
+            : null
+        ].filter(Boolean)),
+        Utils.el('div', { class: 'lookup-card-meta' }, [
+          c.type ? Utils.el('span', { class: 'lookup-meta-item' }, [CONFIG.TYPES[c.type] || c.type]) : null,
+          c.year_start ? Utils.el('span', { class: 'lookup-meta-item' }, [Utils.toFa(c.year_start)]) : null,
+          c.country ? Utils.el('span', { class: 'lookup-meta-item' }, [c.country]) : null
+        ].filter(Boolean))
+      ]),
+
+      c.title_fa ? Utils.el('div', { class: 'lookup-card-fa' }, [c.title_fa]) : null,
+      c.summary ? Utils.el('div', { class: 'lookup-card-summary' }, [c.summary]) : null,
+
+      Utils.el('div', { class: 'lookup-card-foot' }, [
+        c.creators
+          ? Utils.el('span', { class: 'lookup-card-creators' }, ['سازنده: ' + c.creators])
+          : Utils.el('span', {}, ['']),
+        Utils.el('span', {
+          class: 'lookup-card-conf',
+          dataset: { level: confClass },
+          title: 'اطمینان: ' + conf + ' از ۱۰'
+        }, ['● ' + Utils.toFa(conf) + '/۱۰'])
+      ])
+    ].filter(Boolean));
+
+    return card;
+  }
+
   function cleanup() {
     if (activeAbort) { try { activeAbort.abort(); } catch (e) {} activeAbort = null; }
   }
@@ -654,6 +763,7 @@ window.AIUI = (function () {
     openSeasonalDeep: openSeasonalDeep,
     openStandardizeBatch: openStandardizeBatch,
     openAnalysis: openAnalysis,
+    openTitleLookup: openTitleLookup,
     renderMarkdown: renderMarkdown,
     renderStoryAnalysis: renderStoryAnalysis,
     cleanup: cleanup,
