@@ -77,6 +77,27 @@ window.Events = (function () {
         toggleSidebarBackdrop(opening);
       });
     }
+
+    /* ---- کلیک روی وضعیت گیت‌هاب = ارسال ---- */
+    const syncEl = document.getElementById('sync-status');
+    if (syncEl) {
+      const trigger = function () {
+        const cur = syncEl.dataset.state;
+        if (cur === 'syncing') {
+          Toast.info('در حال ارسال است — کمی صبر کن');
+          return;
+        }
+        pushToGitHub();
+      };
+
+      syncEl.addEventListener('click', trigger);
+      syncEl.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          trigger();
+        }
+      });
+    }
   }
 
   function animateDashboardBars() {
@@ -332,7 +353,6 @@ window.Events = (function () {
       const payload = collectForm(form, data);
       if (!payload) return;
 
-      /* ---- اگر جدید است: تشخیص تکراری ---- */
       if (!editing) {
         const similar = DB.findSimilar(payload.title);
         if (similar.length > 0) {
@@ -357,23 +377,19 @@ window.Events = (function () {
   }
 
   /* =========================================================
-     هشدار عنوان مشابه — با مخفی‌کردن فرم پشت صحنه
+     هشدار عنوان مشابه
      ========================================================= */
   function showDuplicateWarning(similar, newTitle, onConfirm) {
-    /* ---- پیدا کردن مودالِ فرم که الان باز است ---- */
     const root = document.getElementById('modal-root');
     const wrappers = root ? Array.from(root.querySelectorAll('.modal-wrapper')) : [];
     const previousWrapper = wrappers.length > 0 ? wrappers[wrappers.length - 1] : null;
 
-    /* ---- مخفی کردن موقت ---- */
     if (previousWrapper) {
       previousWrapper.classList.add('is-suspended');
     }
 
-    /* ---- بازگردانی وقتی مودال هشدار بسته می‌شود ---- */
     function restorePrevious() {
       if (!previousWrapper || !document.body.contains(previousWrapper)) return;
-      /* اگر مودال فرم در حال بسته شدن است، برنگردان */
       const m = previousWrapper.querySelector('.modal');
       if (m && m.classList.contains('is-closing')) return;
       previousWrapper.classList.remove('is-suspended');
@@ -1107,7 +1123,13 @@ window.Events = (function () {
     const lbl = document.getElementById('sync-label');
     if (!el || !lbl) return;
     el.dataset.state = state;
-    const labels = { idle: 'آفلاین', syncing: 'در حال سینک', online: 'متصل', error: 'خطا', offline: 'آفلاین' };
+    const labels = {
+      idle: 'آفلاین',
+      syncing: 'در حال سینک',
+      online: 'متصل — برای ارسال بزن',
+      error: 'خطا — برای تلاش دوباره بزن',
+      offline: 'آفلاین'
+    };
     lbl.textContent = labels[state] || state;
   }
 
