@@ -7,66 +7,97 @@ window.DB = (function () {
   let lastSha = null;
   let ready = false;
 
+  /* =========================================================
+     SCHEMA — هر دستور یک رشته‌ی کامل جدا
+     ========================================================= */
+  const SQL_TITLES =
+    'CREATE TABLE IF NOT EXISTS titles (' +
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+    '  title TEXT NOT NULL,' +
+    '  category TEXT DEFAULT "",' +
+    '  type TEXT NOT NULL DEFAULT "series",' +
+    '  genre TEXT DEFAULT "",' +
+    '  year INTEGER,' +
+    '  rating REAL DEFAULT 0,' +
+    '  favorite INTEGER NOT NULL DEFAULT 0,' +
+    '  notes TEXT DEFAULT "",' +
+    '  watched_date TEXT,' +
+    '  summary TEXT DEFAULT "",' +
+    '  original_title TEXT DEFAULT "",' +
+    '  seasons INTEGER,' +
+    '  episodes INTEGER,' +
+    '  episodes_per_season INTEGER,' +
+    '  country TEXT DEFAULT "",' +
+    '  language TEXT DEFAULT "",' +
+    '  status TEXT DEFAULT "",' +
+    '  reason TEXT DEFAULT "",' +
+    '  story_analysis TEXT DEFAULT "",' +
+    '  ai_standardized_at TEXT,' +
+    '  created_at TEXT NOT NULL,' +
+    '  updated_at TEXT NOT NULL' +
+    ')';
+
+  const SQL_TITLES_IDX_RATING = 'CREATE INDEX IF NOT EXISTS idx_titles_rating ON titles(rating)';
+  const SQL_TITLES_IDX_CREATED = 'CREATE INDEX IF NOT EXISTS idx_titles_created ON titles(created_at)';
+
+  const SQL_CONVERSATIONS =
+    'CREATE TABLE IF NOT EXISTS conversations (' +
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+    '  title_id INTEGER,' +
+    '  title_context TEXT DEFAULT "",' +
+    '  prompt TEXT NOT NULL,' +
+    '  response TEXT DEFAULT "",' +
+    '  ai_model TEXT DEFAULT "",' +
+    '  tags TEXT DEFAULT "",' +
+    '  created_at TEXT NOT NULL,' +
+    '  updated_at TEXT NOT NULL' +
+    ')';
+
+  const SQL_CONV_IDX_TITLE = 'CREATE INDEX IF NOT EXISTS idx_conv_title ON conversations(title_id)';
+  const SQL_CONV_IDX_CREATED = 'CREATE INDEX IF NOT EXISTS idx_conv_created ON conversations(created_at)';
+
+  const SQL_ACTIVITY =
+    'CREATE TABLE IF NOT EXISTS activity (' +
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
+    '  action TEXT NOT NULL,' +
+    '  entity TEXT,' +
+    '  entity_id INTEGER,' +
+    '  detail TEXT,' +
+    '  created_at TEXT NOT NULL' +
+    ')';
+
+  const SQL_META = 'CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)';
+
   const SCHEMA = [
-    'CREATE TABLE IF NOT EXISTS titles (',
-    '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
-    '  title TEXT NOT NULL,',
-    '  category TEXT DEFAULT "",',
-    '  type TEXT NOT NULL DEFAULT "series",',
-    '  genre TEXT DEFAULT "",',
-    '  year INTEGER,',
-    '  rating REAL DEFAULT 0,',
-    '  favorite INTEGER NOT NULL DEFAULT 0,',
-    '  notes TEXT DEFAULT "",',
-    '  watched_date TEXT,',
-    '  summary TEXT DEFAULT "",',
-    '  original_title TEXT DEFAULT "",',
-    '  seasons INTEGER,',
-    '  episodes INTEGER,',
-    '  episodes_per_season INTEGER,',
-    '  country TEXT DEFAULT "",',
-    '  language TEXT DEFAULT "",',
-    '  status TEXT DEFAULT "",',
-    '  reason TEXT DEFAULT "",',
-    '  story_analysis TEXT DEFAULT "",',
-    '  ai_standardized_at TEXT,',
-    '  created_at TEXT NOT NULL,',
-    '  updated_at TEXT NOT NULL',
-    ')',
-    'CREATE INDEX IF NOT EXISTS idx_titles_rating ON titles(rating)',
-    'CREATE INDEX IF NOT EXISTS idx_titles_created ON titles(created_at)',
-
-    'CREATE TABLE IF NOT EXISTS conversations (',
-    '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
-    '  title_id INTEGER,',
-    '  title_context TEXT DEFAULT "",',
-    '  prompt TEXT NOT NULL,',
-    '  response TEXT DEFAULT "",',
-    '  ai_model TEXT DEFAULT "",',
-    '  tags TEXT DEFAULT "",',
-    '  created_at TEXT NOT NULL,',
-    '  updated_at TEXT NOT NULL',
-    ')',
-    'CREATE INDEX IF NOT EXISTS idx_conv_title ON conversations(title_id)',
-    'CREATE INDEX IF NOT EXISTS idx_conv_created ON conversations(created_at)',
-
-    'CREATE TABLE IF NOT EXISTS activity (',
-    '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
-    '  action TEXT NOT NULL,',
-    '  entity TEXT,',
-    '  entity_id INTEGER,',
-    '  detail TEXT,',
-    '  created_at TEXT NOT NULL',
-    ')',
-
-    'CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)'
+    SQL_TITLES,
+    SQL_TITLES_IDX_RATING,
+    SQL_TITLES_IDX_CREATED,
+    SQL_CONVERSATIONS,
+    SQL_CONV_IDX_TITLE,
+    SQL_CONV_IDX_CREATED,
+    SQL_ACTIVITY,
+    SQL_META
   ];
+
+  function ensureTable(table, createSql) {
+    try {
+      const rows = query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", [table]);
+      if (!rows.length) {
+        db.exec(createSql);
+        console.log('[DB] Created table: ' + table);
+      }
+    } catch (e) {
+      console.warn('[DB] ensureTable ' + table + ':', e);
+    }
+  }
 
   function ensureColumn(table, col, type) {
     try {
       const info = query('PRAGMA table_info(' + table + ')');
       let has = false;
-      for (let i = 0; i < info.length; i++) { if (info[i].name === col) { has = true; break; } }
+      for (let i = 0; i < info.length; i++) {
+        if (info[i].name === col) { has = true; break; }
+      }
       if (!has) {
         run('ALTER TABLE ' + table + ' ADD COLUMN ' + col + ' ' + type);
         console.log('[DB] Migrated: added ' + table + '.' + col);
@@ -75,23 +106,26 @@ window.DB = (function () {
   }
 
   function runMigrations() {
-    const cols = [
-      ['titles', 'summary', 'TEXT DEFAULT ""'],
-      ['titles', 'original_title', 'TEXT DEFAULT ""'],
-      ['titles', 'seasons', 'INTEGER'],
-      ['titles', 'episodes', 'INTEGER'],
-      ['titles', 'episodes_per_season', 'INTEGER'],
-      ['titles', 'country', 'TEXT DEFAULT ""'],
-      ['titles', 'language', 'TEXT DEFAULT ""'],
-      ['titles', 'status', 'TEXT DEFAULT ""'],
-      ['titles', 'reason', 'TEXT DEFAULT ""'],
-      ['titles', 'story_analysis', 'TEXT DEFAULT ""'],
-      ['titles', 'ai_standardized_at', 'TEXT']
+    /* ---- titles ---- */
+    const titleCols = [
+      ['summary', 'TEXT DEFAULT ""'],
+      ['original_title', 'TEXT DEFAULT ""'],
+      ['seasons', 'INTEGER'],
+      ['episodes', 'INTEGER'],
+      ['episodes_per_season', 'INTEGER'],
+      ['country', 'TEXT DEFAULT ""'],
+      ['language', 'TEXT DEFAULT ""'],
+      ['status', 'TEXT DEFAULT ""'],
+      ['reason', 'TEXT DEFAULT ""'],
+      ['story_analysis', 'TEXT DEFAULT ""'],
+      ['ai_standardized_at', 'TEXT']
     ];
-    cols.forEach(function (c) { ensureColumn(c[0], c[1], c[2]); });
+    titleCols.forEach(function (c) { ensureColumn('titles', c[0], c[1]); });
 
-    /* conversations ممکن است با نسخه‌ی قدیمی ساخته شده باشد */
+    /* ---- conversations ---- */
     ensureColumn('conversations', 'tags', 'TEXT DEFAULT ""');
+    ensureColumn('conversations', 'ai_model', 'TEXT DEFAULT ""');
+    ensureColumn('conversations', 'title_context', 'TEXT DEFAULT ""');
   }
 
   function migrateCategoryToStars() {
@@ -143,6 +177,32 @@ window.DB = (function () {
     }
   }
 
+  /* =========================================================
+     ساخت کامل تمام جداول
+     ========================================================= */
+  function buildSchema() {
+    /* روش مطمئن: هر جدول را جداگانه چک و ایجاد کن */
+    try {
+      db.exec(SQL_META);
+    } catch (e) { console.warn('[DB] meta:', e); }
+
+    ensureTable('titles', SQL_TITLES);
+    ensureTable('conversations', SQL_CONVERSATIONS);
+    ensureTable('activity', SQL_ACTIVITY);
+
+    /* ایندکس‌ها */
+    try { db.exec(SQL_TITLES_IDX_RATING); } catch (e) {}
+    try { db.exec(SQL_TITLES_IDX_CREATED); } catch (e) {}
+    try { db.exec(SQL_CONV_IDX_TITLE); } catch (e) {}
+    try { db.exec(SQL_CONV_IDX_CREATED); } catch (e) {}
+
+    /* migration */
+    runMigrations();
+  }
+
+  /* =========================================================
+     Init
+     ========================================================= */
   async function init() {
     if (ready) return;
 
@@ -182,12 +242,11 @@ window.DB = (function () {
 
     if (!db) db = new SQL.Database();
 
-    SCHEMA.forEach(function (sql) {
-      try { db.exec(sql); } catch (e) {}
-    });
+    /* ساخت تمام جداول */
+    bootMsg('آماده‌سازی جداول دیتابیس…');
+    buildSchema();
 
-    runMigrations();
-
+    /* seed */
     const countRow = query('SELECT COUNT(*) AS c FROM titles')[0];
     const count = countRow ? countRow.c : 0;
     if (!count && window.INITIAL_DATA) {
@@ -421,7 +480,11 @@ window.DB = (function () {
     const rows = query('SELECT CAST(rating AS INTEGER) AS stars, COUNT(*) AS count FROM titles GROUP BY CAST(rating AS INTEGER)');
     const totals = query('SELECT COUNT(*) AS c, AVG(NULLIF(rating,0)) AS a, SUM(favorite) AS f FROM titles')[0];
     const rated = query('SELECT COUNT(*) AS c FROM titles WHERE rating > 0')[0];
-    const convCount = query('SELECT COUNT(*) AS c FROM conversations')[0];
+    let convCount = 0;
+    try {
+      const cr = query('SELECT COUNT(*) AS c FROM conversations')[0];
+      convCount = cr ? cr.c : 0;
+    } catch (e) {}
     return {
       byStars: rows,
       totals: {
@@ -429,7 +492,7 @@ window.DB = (function () {
         avgRating: totals ? totals.a : 0,
         favorites: totals ? totals.f : 0,
         rated: rated ? rated.c : 0,
-        conversations: convCount ? convCount.c : 0
+        conversations: convCount
       }
     };
   }
@@ -455,10 +518,14 @@ window.DB = (function () {
   }
 
   function getAllConversations() {
-    return query('SELECT * FROM conversations ORDER BY created_at DESC').map(rowToConversation);
+    try {
+      return query('SELECT * FROM conversations ORDER BY created_at DESC').map(rowToConversation);
+    } catch (e) { return []; }
   }
   function getConversationsByTitle(titleId) {
-    return query('SELECT * FROM conversations WHERE title_id = ? ORDER BY created_at DESC', [titleId]).map(rowToConversation);
+    try {
+      return query('SELECT * FROM conversations WHERE title_id = ? ORDER BY created_at DESC', [titleId]).map(rowToConversation);
+    } catch (e) { return []; }
   }
   function getConversation(id) {
     const rows = query('SELECT * FROM conversations WHERE id = ?', [id]);
@@ -473,12 +540,8 @@ window.DB = (function () {
     const now = new Date().toISOString();
     const modelJson = data.ai_model ? JSON.stringify(data.ai_model) : '';
     run('UPDATE conversations SET prompt=?, response=?, ai_model=?, title_id=?, title_context=?, tags=?, updated_at=? WHERE id=?', [
-      data.prompt || '',
-      data.response || '',
-      modelJson,
-      data.title_id || null,
-      data.title_context || '',
-      data.tags || '',
+      data.prompt || '', data.response || '', modelJson,
+      data.title_id || null, data.title_context || '', data.tags || '',
       now, id
     ]);
     persistLocal();
@@ -552,7 +615,7 @@ window.DB = (function () {
   }
   function importJSON(payload, replace) {
     if (!payload || !Array.isArray(payload.titles)) throw new Error('فایل نامعتبر');
-    if (replace) { run('DELETE FROM titles'); run('DELETE FROM conversations'); }
+    if (replace) { run('DELETE FROM titles'); try { run('DELETE FROM conversations'); } catch (e) {} }
     let added = 0;
     payload.titles.forEach(function (t) {
       try {
@@ -590,8 +653,7 @@ window.DB = (function () {
   }
   function importBinary(bytes) {
     db = new SQL.Database(bytes);
-    SCHEMA.forEach(function (sql) { try { db.exec(sql); } catch (e) {} });
-    runMigrations();
+    buildSchema();
     ready = true;
     persistLocal();
   }
@@ -606,8 +668,7 @@ window.DB = (function () {
     if (!file || !file.content) throw new Error('فایل روی گیت‌هاب پیدا نشد.');
     const bytes = Utils.base64ToUint8(file.content);
     db = new SQL.Database(bytes);
-    SCHEMA.forEach(function (sql) { try { db.exec(sql); } catch (e) {} });
-    runMigrations();
+    buildSchema();
     migrateCategoryToStars();
     lastSha = file.sha;
     ready = true;
