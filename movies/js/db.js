@@ -11,7 +11,7 @@ window.DB = (function () {
     'CREATE TABLE IF NOT EXISTS titles (',
     '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
     '  title TEXT NOT NULL,',
-    '  category TEXT DEFAULT "",',             /* legacy — نادیده گرفته می‌شود */
+    '  category TEXT DEFAULT "",',
     '  type TEXT NOT NULL DEFAULT "series",',
     '  genre TEXT DEFAULT "",',
     '  year INTEGER,',
@@ -35,6 +35,21 @@ window.DB = (function () {
     ')',
     'CREATE INDEX IF NOT EXISTS idx_titles_rating ON titles(rating)',
     'CREATE INDEX IF NOT EXISTS idx_titles_created ON titles(created_at)',
+
+    'CREATE TABLE IF NOT EXISTS conversations (',
+    '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
+    '  title_id INTEGER,',
+    '  title_context TEXT DEFAULT "",',
+    '  prompt TEXT NOT NULL,',
+    '  response TEXT DEFAULT "",',
+    '  ai_model TEXT DEFAULT "",',
+    '  tags TEXT DEFAULT "",',
+    '  created_at TEXT NOT NULL,',
+    '  updated_at TEXT NOT NULL',
+    ')',
+    'CREATE INDEX IF NOT EXISTS idx_conv_title ON conversations(title_id)',
+    'CREATE INDEX IF NOT EXISTS idx_conv_created ON conversations(created_at)',
+
     'CREATE TABLE IF NOT EXISTS activity (',
     '  id INTEGER PRIMARY KEY AUTOINCREMENT,',
     '  action TEXT NOT NULL,',
@@ -43,6 +58,7 @@ window.DB = (function () {
     '  detail TEXT,',
     '  created_at TEXT NOT NULL',
     ')',
+
     'CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)'
   ];
 
@@ -73,40 +89,29 @@ window.DB = (function () {
       ['titles', 'ai_standardized_at', 'TEXT']
     ];
     cols.forEach(function (c) { ensureColumn(c[0], c[1], c[2]); });
+
+    /* conversations ممکن است با نسخه‌ی قدیمی ساخته شده باشد */
+    ensureColumn('conversations', 'tags', 'TEXT DEFAULT ""');
   }
 
-  /* ---- مهاجرت از دسته‌بندی سه‌گانه به ستاره ---- */
   function migrateCategoryToStars() {
     try {
       const flag = getMeta('stars_migrated');
       if (flag === '1') return;
-
-      /* بررسی وجود رکوردهای با category */
       const rows = query('SELECT id, category, rating FROM titles WHERE category IS NOT NULL AND category != ""');
-      if (!rows.length) {
-        setMeta('stars_migrated', '1');
-        return;
-      }
-
+      if (!rows.length) { setMeta('stars_migrated', '1'); return; }
       let count = 0;
       rows.forEach(function (r) {
-        /* اگر کاربر قبلاً ستاره داده، دست نزن */
         if (Number(r.rating) > 0) return;
-
         let stars = 3;
         if (r.category === 'love') stars = 5;
         else if (r.category === 'hate') stars = 1;
-
         run('UPDATE titles SET rating = ? WHERE id = ?', [stars, r.id]);
         count++;
       });
-
       setMeta('stars_migrated', '1');
-      logActivity('migrate', 'titles', null, count + ' عنوان از دسته‌بندی به ستاره منتقل شد');
-      console.log('[DB] Migrated ' + count + ' titles from category to stars');
-    } catch (e) {
-      console.warn('[DB] migration failed:', e);
-    }
+      logActivity('migrate', 'titles', null, count + ' عنوان از دسته‌بندی به ستاره');
+    } catch (e) { console.warn('[DB] migration:', e); }
   }
 
   function setMeta(k, v) {
@@ -129,7 +134,7 @@ window.DB = (function () {
       );
       stmt.run([action, entity || null, entityId || null, detail || '', new Date().toISOString()]);
       stmt.free();
-    } catch (e) { console.warn('activity log failed', e); }
+    } catch (e) {}
   }
 
   function bootMsg(msg) {
@@ -160,28 +165,25 @@ window.DB = (function () {
         }
       } catch (e) {
         console.warn('[DB] GitHub load failed:', e);
-        bootMsg('دریافت از گیت‌هاب ناموفق — استفاده از نسخه‌ی محلی');
+        bootMsg('دریافت از گیت‌هاب ناموفق — نسخه محلی');
       }
     }
 
     if (!loadedFromRemote) {
-      bootMsg('بارگذاری از حافظه‌ی محلی…');
+      bootMsg('بارگذاری از حافظه محلی…');
       const local = localStorage.getItem(CONFIG.STORAGE.LOCAL_DB);
       if (local) {
         try {
           const bytes = Utils.base64ToUint8(local);
           db = new SQL.Database(bytes);
-        } catch (e) {
-          console.warn('[DB] localStorage load failed:', e);
-        }
+        } catch (e) {}
       }
     }
 
     if (!db) db = new SQL.Database();
 
-    /* اعمال schema */
     SCHEMA.forEach(function (sql) {
-      try { db.exec(sql); } catch (e) { /* ممکنه جدول قبلاً باشه */ }
+      try { db.exec(sql); } catch (e) {}
     });
 
     runMigrations();
@@ -189,14 +191,13 @@ window.DB = (function () {
     const countRow = query('SELECT COUNT(*) AS c FROM titles')[0];
     const count = countRow ? countRow.c : 0;
     if (!count && window.INITIAL_DATA) {
-      bootMsg('وارد کردن داده‌ی اولیه…');
+      bootMsg('وارد کردن داده اولیه…');
       seedFromInitial();
     }
 
-    /* مهاجرت از category به rating */
     migrateCategoryToStars();
 
-    setMeta('schema_version', 4);
+    setMeta('schema_version', 5);
     setMeta('last_boot', new Date().toISOString());
     ready = true;
     persistLocal();
@@ -211,28 +212,19 @@ window.DB = (function () {
     if (!Array.isArray(data)) return;
     data.forEach(function (item) {
       insertTitle({
-        title: item.title,
-        rating: item.rating || 0,
-        type: 'series',
-        genre: '',
-        year: null,
-        favorite: 0,
-        notes: '',
-        watched_date: null
+        title: item.title, rating: item.rating || 0, type: 'series',
+        genre: '', year: null, favorite: 0, notes: '', watched_date: null
       }, false);
     });
-    logActivity('seed', 'titles', null, 'وارد کردن داده‌ی اولیه');
+    logActivity('seed', 'titles', null, 'وارد کردن داده اولیه');
   }
 
   function rowToObj(row) {
     let storyAnalysis = null;
-    if (row.story_analysis) {
-      storyAnalysis = Utils.safeParse(row.story_analysis, null);
-    }
+    if (row.story_analysis) storyAnalysis = Utils.safeParse(row.story_analysis, null);
     return {
       id: row.id,
       title: row.title,
-      /* category نگه داشته می‌شود برای backward compat ولی استفاده نمی‌شود */
       type: row.type || 'series',
       genre: row.genre || '',
       year: row.year || null,
@@ -251,6 +243,22 @@ window.DB = (function () {
       reason: row.reason || '',
       story_analysis: storyAnalysis,
       ai_standardized_at: row.ai_standardized_at || null,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    };
+  }
+
+  function rowToConversation(row) {
+    let model = null;
+    if (row.ai_model) model = Utils.safeParse(row.ai_model, null);
+    return {
+      id: row.id,
+      title_id: row.title_id || null,
+      title_context: row.title_context || '',
+      prompt: row.prompt || '',
+      response: row.response || '',
+      ai_model: model,
+      tags: row.tags || '',
       created_at: row.created_at,
       updated_at: row.updated_at
     };
@@ -283,7 +291,7 @@ window.DB = (function () {
     }
   }
 
-  /* ---- ستون‌ها بدون category ---- */
+  /* ---- Titles ---- */
   const INSERT_COLS = 'title, category, type, genre, year, rating, favorite, notes, watched_date, ' +
     'summary, original_title, seasons, episodes, episodes_per_season, ' +
     'country, language, status, reason, story_analysis, ai_standardized_at';
@@ -291,11 +299,10 @@ window.DB = (function () {
   function insertTitle(data, log) {
     if (log == null) log = true;
     const now = new Date().toISOString();
-    const sql = 'INSERT INTO titles (' + INSERT_COLS + ', created_at, updated_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO titles (' + INSERT_COLS + ', created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const params = [
       String(data.title || '').trim(),
-      data.category || 'love',   /* legacy placeholder */
+      data.category || 'love',
       data.type || 'series',
       data.genre || '',
       data.year ? Number(data.year) : null,
@@ -326,11 +333,7 @@ window.DB = (function () {
   function updateTitle(id, data, log) {
     if (log == null) log = true;
     const now = new Date().toISOString();
-    const sql = 'UPDATE titles SET ' +
-      'title=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?, ' +
-      'summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?, ' +
-      'country=?, language=?, status=?, reason=?, story_analysis=?, ai_standardized_at=?, updated_at=? ' +
-      'WHERE id=?';
+    const sql = 'UPDATE titles SET title=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?, summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?, country=?, language=?, status=?, reason=?, story_analysis=?, ai_standardized_at=?, updated_at=? WHERE id=?';
     const params = [
       String(data.title || '').trim(),
       data.type || 'series',
@@ -367,35 +370,22 @@ window.DB = (function () {
     return row;
   }
 
-  /* ---- بازگردانی یک رکورد حذف‌شده ---- */
   function restoreTitle(row) {
     if (!row) return null;
     const now = new Date().toISOString();
-    const sql = 'INSERT INTO titles (' + INSERT_COLS + ', created_at, updated_at) ' +
-      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    const sql = 'INSERT INTO titles (' + INSERT_COLS + ', created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const params = [
-      row.title,
-      'love',
-      row.type || 'series',
-      row.genre || '',
-      row.year || null,
-      Number(row.rating) || 0,
-      row.favorite ? 1 : 0,
-      row.notes || '',
-      row.watched_date || null,
-      row.summary || '',
+      row.title, 'love', row.type || 'series', row.genre || '',
+      row.year || null, Number(row.rating) || 0, row.favorite ? 1 : 0,
+      row.notes || '', row.watched_date || null, row.summary || '',
       row.original_title || '',
       row.seasons != null ? row.seasons : null,
       row.episodes != null ? row.episodes : null,
       row.episodes_per_season != null ? row.episodes_per_season : null,
-      row.country || '',
-      row.language || '',
-      row.status || '',
-      row.reason || '',
+      row.country || '', row.language || '', row.status || '', row.reason || '',
       row.story_analysis ? JSON.stringify(row.story_analysis) : '',
       row.ai_standardized_at || null,
-      row.created_at || now,
-      now
+      row.created_at || now, now
     ];
     run(sql, params);
     const newId = query('SELECT last_insert_rowid() AS id')[0].id;
@@ -416,7 +406,6 @@ window.DB = (function () {
     return query('SELECT * FROM activity ORDER BY id DESC LIMIT ?', [limit]);
   }
 
-  /* ---- آمار بر اساس ستاره ---- */
   function getStarCounts() {
     const rows = query('SELECT CAST(rating AS INTEGER) AS r, COUNT(*) AS c FROM titles GROUP BY CAST(rating AS INTEGER)');
     const out = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, all: 0 };
@@ -429,23 +418,73 @@ window.DB = (function () {
   }
 
   function getStats() {
-    const rows = query(
-      'SELECT CAST(rating AS INTEGER) AS stars, COUNT(*) AS count ' +
-      'FROM titles GROUP BY CAST(rating AS INTEGER)'
-    );
+    const rows = query('SELECT CAST(rating AS INTEGER) AS stars, COUNT(*) AS count FROM titles GROUP BY CAST(rating AS INTEGER)');
     const totals = query('SELECT COUNT(*) AS c, AVG(NULLIF(rating,0)) AS a, SUM(favorite) AS f FROM titles')[0];
     const rated = query('SELECT COUNT(*) AS c FROM titles WHERE rating > 0')[0];
+    const convCount = query('SELECT COUNT(*) AS c FROM conversations')[0];
     return {
       byStars: rows,
       totals: {
         count: totals ? totals.c : 0,
         avgRating: totals ? totals.a : 0,
         favorites: totals ? totals.f : 0,
-        rated: rated ? rated.c : 0
+        rated: rated ? rated.c : 0,
+        conversations: convCount ? convCount.c : 0
       }
     };
   }
 
+  /* ---- Conversations ---- */
+  function saveConversation(data) {
+    const now = new Date().toISOString();
+    const modelJson = data.ai_model ? JSON.stringify(data.ai_model) : '';
+    const sql = 'INSERT INTO conversations (title_id, title_context, prompt, response, ai_model, tags, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)';
+    run(sql, [
+      data.title_id || null,
+      data.title_context || '',
+      data.prompt || '',
+      data.response || '',
+      modelJson,
+      data.tags || '',
+      now, now
+    ]);
+    const id = query('SELECT last_insert_rowid() AS id')[0].id;
+    logActivity('prompt_save', 'conversation', id, (data.prompt || '').slice(0, 80));
+    persistLocal();
+    return id;
+  }
+
+  function getAllConversations() {
+    return query('SELECT * FROM conversations ORDER BY created_at DESC').map(rowToConversation);
+  }
+  function getConversationsByTitle(titleId) {
+    return query('SELECT * FROM conversations WHERE title_id = ? ORDER BY created_at DESC', [titleId]).map(rowToConversation);
+  }
+  function getConversation(id) {
+    const rows = query('SELECT * FROM conversations WHERE id = ?', [id]);
+    return rows[0] ? rowToConversation(rows[0]) : null;
+  }
+  function deleteConversation(id) {
+    run('DELETE FROM conversations WHERE id=?', [id]);
+    logActivity('prompt_delete', 'conversation', id, '');
+    persistLocal();
+  }
+  function updateConversation(id, data) {
+    const now = new Date().toISOString();
+    const modelJson = data.ai_model ? JSON.stringify(data.ai_model) : '';
+    run('UPDATE conversations SET prompt=?, response=?, ai_model=?, title_id=?, title_context=?, tags=?, updated_at=? WHERE id=?', [
+      data.prompt || '',
+      data.response || '',
+      modelJson,
+      data.title_id || null,
+      data.title_context || '',
+      data.tags || '',
+      now, id
+    ]);
+    persistLocal();
+  }
+
+  /* ---- Similar ---- */
   function normalizeForCompare(s) {
     if (!s) return '';
     let n = String(s).toLowerCase();
@@ -460,16 +499,16 @@ window.DB = (function () {
   function similarityRatio(a, b) {
     if (!a || !b) return 0;
     if (a === b) return 1;
-    const aWords = a.split(' ').filter(function (w) { return w.length > 1; });
-    const bWords = b.split(' ').filter(function (w) { return w.length > 1; });
-    if (!aWords.length || !bWords.length) return 0;
+    const aW = a.split(' ').filter(function (w) { return w.length > 1; });
+    const bW = b.split(' ').filter(function (w) { return w.length > 1; });
+    if (!aW.length || !bW.length) return 0;
     let matches = 0;
-    aWords.forEach(function (aw) {
-      if (bWords.some(function (bw) {
+    aW.forEach(function (aw) {
+      if (bW.some(function (bw) {
         return bw === aw || (aw.length > 3 && bw.length > 3 && (bw.indexOf(aw) > -1 || aw.indexOf(bw) > -1));
       })) matches++;
     });
-    return matches / Math.max(aWords.length, bWords.length);
+    return matches / Math.max(aW.length, bW.length);
   }
 
   function findSimilar(title, excludeId) {
@@ -499,6 +538,7 @@ window.DB = (function () {
     return results;
   }
 
+  /* ---- Export / Import ---- */
   function exportBinary() { return db.export(); }
   function exportBase64() { return Utils.uint8ToBase64(exportBinary()); }
   function exportJSON() {
@@ -506,32 +546,24 @@ window.DB = (function () {
       version: CONFIG.APP_VERSION,
       exportedAt: new Date().toISOString(),
       titles: getAllTitles(),
+      conversations: getAllConversations(),
       activity: getActivity(500)
     };
   }
   function importJSON(payload, replace) {
     if (!payload || !Array.isArray(payload.titles)) throw new Error('فایل نامعتبر');
-    if (replace) run('DELETE FROM titles');
+    if (replace) { run('DELETE FROM titles'); run('DELETE FROM conversations'); }
     let added = 0;
     payload.titles.forEach(function (t) {
       try {
         insertTitle({
-          title: t.title,
-          type: t.type || 'series',
-          genre: t.genre || '',
-          year: t.year,
-          rating: t.rating || 0,
-          favorite: t.favorite ? 1 : 0,
-          notes: t.notes || '',
-          watched_date: t.watched_date,
-          summary: t.summary,
-          original_title: t.original_title,
-          seasons: t.seasons,
-          episodes: t.episodes,
+          title: t.title, type: t.type || 'series', genre: t.genre || '',
+          year: t.year, rating: t.rating || 0, favorite: t.favorite ? 1 : 0,
+          notes: t.notes || '', watched_date: t.watched_date,
+          summary: t.summary, original_title: t.original_title,
+          seasons: t.seasons, episodes: t.episodes,
           episodes_per_season: t.episodes_per_season,
-          country: t.country,
-          language: t.language,
-          status: t.status,
+          country: t.country, language: t.language, status: t.status,
           reason: t.reason,
           story_analysis: t.story_analysis ? JSON.stringify(t.story_analysis) : '',
           ai_standardized_at: t.ai_standardized_at
@@ -539,7 +571,20 @@ window.DB = (function () {
         added++;
       } catch (e) {}
     });
-    logActivity('import', 'titles', null, added + ' عنوان وارد شد');
+    let convAdded = 0;
+    if (Array.isArray(payload.conversations)) {
+      payload.conversations.forEach(function (c) {
+        try {
+          saveConversation({
+            title_id: c.title_id, title_context: c.title_context,
+            prompt: c.prompt, response: c.response,
+            ai_model: c.ai_model, tags: c.tags
+          });
+          convAdded++;
+        } catch (e) {}
+      });
+    }
+    logActivity('import', 'titles', null, added + ' عنوان، ' + convAdded + ' پرامپت');
     persistLocal();
     return added;
   }
@@ -553,7 +598,7 @@ window.DB = (function () {
   function persistLocal() {
     try {
       localStorage.setItem(CONFIG.STORAGE.LOCAL_DB, exportBase64());
-    } catch (e) { console.warn('[DB] persist failed:', e); }
+    } catch (e) { console.warn('[DB] persist:', e); }
   }
 
   async function pullFromGitHub() {
@@ -589,27 +634,19 @@ window.DB = (function () {
   return {
     init: init,
     ready: function () { return ready; },
-    query: query,
-    run: run,
-    insertTitle: insertTitle,
-    updateTitle: updateTitle,
-    deleteTitle: deleteTitle,
-    restoreTitle: restoreTitle,
-    getTitle: getTitle,
-    getAllTitles: getAllTitles,
-    getActivity: getActivity,
-    getStarCounts: getStarCounts,
-    getStats: getStats,
-    logActivity: logActivity,
-    findSimilar: findSimilar,
-    exportBinary: exportBinary,
-    exportBase64: exportBase64,
-    exportJSON: exportJSON,
-    importJSON: importJSON,
-    importBinary: importBinary,
-    persistLocal: persistLocal,
-    pullFromGitHub: pullFromGitHub,
-    pushToGitHub: pushToGitHub,
-    getLastSha: getLastSha
+    query: query, run: run,
+    insertTitle: insertTitle, updateTitle: updateTitle, deleteTitle: deleteTitle, restoreTitle: restoreTitle,
+    getTitle: getTitle, getAllTitles: getAllTitles,
+    getActivity: getActivity, getStarCounts: getStarCounts, getStats: getStats,
+    logActivity: logActivity, findSimilar: findSimilar,
+    saveConversation: saveConversation,
+    getAllConversations: getAllConversations,
+    getConversationsByTitle: getConversationsByTitle,
+    getConversation: getConversation,
+    deleteConversation: deleteConversation,
+    updateConversation: updateConversation,
+    exportBinary: exportBinary, exportBase64: exportBase64, exportJSON: exportJSON,
+    importJSON: importJSON, importBinary: importBinary, persistLocal: persistLocal,
+    pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub, getLastSha: getLastSha
   };
 })();
