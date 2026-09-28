@@ -1,13 +1,14 @@
 /* =========================================================
-   کلاینت OpenRouter با پشتیبانی از Streaming + لاگ زنده
+   کلاینت OpenRouter — با انتخاب مدل + Streaming + لاگ
    ========================================================= */
 window.AI = (function () {
-  const STORAGE_KEY = 'cinema_openrouter_key';
-  const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-  const MODEL = 'nvidia/nemotron-3-ultra-550b-a55b:free';
+  const STORAGE_KEY = CONFIG.AI.STORAGE_KEY;
+  const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
+  const API_URL = CONFIG.AI.API_URL;
 
   let abortController = null;
 
+  /* ---------- توکن ---------- */
   function getKey() {
     return localStorage.getItem(STORAGE_KEY) || '';
   }
@@ -19,6 +20,38 @@ window.AI = (function () {
     return !!getKey();
   }
 
+  /* ---------- مدل ---------- */
+  function getModel() {
+    try {
+      const stored = localStorage.getItem(MODEL_KEY);
+      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+      if (stored && models.some(m => m.id === stored)) return stored;
+      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
+    } catch {
+      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
+    }
+  }
+  function setModel(id) {
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    if (id && models.some(m => m.id === id)) {
+      localStorage.setItem(MODEL_KEY, id);
+    } else {
+      localStorage.removeItem(MODEL_KEY);
+    }
+  }
+  function getModelMeta() {
+    const id = getModel();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    return models.find(m => m.id === id) || { id, label: id, note: '', tags: [] };
+  }
+  function isDefaultModel() {
+    return getModel() === (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL);
+  }
+  function resetModel() {
+    localStorage.removeItem(MODEL_KEY);
+  }
+
+  /* ---------- هدرها ---------- */
   function headers() {
     return {
       'Authorization': `Bearer ${getKey()}`,
@@ -28,7 +61,7 @@ window.AI = (function () {
     };
   }
 
-  /* ---- لاگ ایمن ---- */
+  /* ---------- لاگ ایمن ---------- */
   function aiLog(level, msg) {
     if (window.AILog && typeof AILog[level] === 'function') {
       try { AILog[level](msg); } catch {}
@@ -37,25 +70,30 @@ window.AI = (function () {
   function aiShow() { if (window.AILog) try { AILog.show(); } catch {} }
   function aiAutoHide() { if (window.AILog) try { AILog.scheduleAutoHide(); } catch {} }
 
-  /* ---- استریم چت ---- */
+  /* ---------- استریم ---------- */
   async function chatStream({ messages, model, temperature, onToken, onDone, signal }) {
     aiShow();
     aiLog('info', '▸ شروع درخواست استریم');
-    aiLog('meta', `مدل هدف: ${model || MODEL}`);
 
     if (!isConfigured()) {
       aiLog('error', '✗ کلید OpenRouter تنظیم نشده است');
-      aiLog('meta', 'کلید را از تنظیمات (⚙) → بخش هوش مصنوعی وارد کنید');
+      aiLog('meta', 'کلید را از تنظیمات (⚙) → «هوش مصنوعی» وارد کنید');
       aiAutoHide();
       throw new Error('کلید OpenRouter تنظیم نشده است.');
     }
 
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
-    const modelName = model || MODEL;
+
+    const modelName = model || getModel();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const meta = models.find(m => m.id === modelName);
+    const modelLabel = meta ? meta.label : modelName;
+
     const t0 = performance.now();
 
     aiLog('request', '▸ ارسال درخواست به OpenRouter');
+    aiLog('meta', `مدل: ${modelLabel}`);
     aiLog('meta', `پیام‌ها: ${messages.length} · دما: ${temperature ?? 0.5}`);
 
     let res;
@@ -139,7 +177,7 @@ window.AI = (function () {
     return full;
   }
 
-  /* ---- چت بدون استریم (JSON) ---- */
+  /* ---------- JSON (بدون استریم) ---------- */
   async function chatJSON({ messages, model, temperature, signal }) {
     aiShow();
     aiLog('info', '▸ شروع درخواست JSON');
@@ -152,11 +190,17 @@ window.AI = (function () {
 
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
-    const modelName = model || MODEL;
+
+    const modelName = model || getModel();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const meta = models.find(m => m.id === modelName);
+    const modelLabel = meta ? meta.label : modelName;
+
     const t0 = performance.now();
 
     aiLog('request', '▸ ارسال درخواست به OpenRouter');
-    aiLog('meta', `مدل: ${modelName} · پیام‌ها: ${messages.length}`);
+    aiLog('meta', `مدل: ${modelLabel}`);
+    aiLog('meta', `پیام‌ها: ${messages.length}`);
 
     let res;
     try {
@@ -224,5 +268,9 @@ window.AI = (function () {
     try { return JSON.parse(s); } catch { return null; }
   }
 
-  return { getKey, setKey, isConfigured, chatStream, chatJSON, abort, parseJSONResponse };
+  return {
+    getKey, setKey, isConfigured,
+    getModel, setModel, getModelMeta, isDefaultModel, resetModel,
+    chatStream, chatJSON, abort, parseJSONResponse
+  };
 })();
