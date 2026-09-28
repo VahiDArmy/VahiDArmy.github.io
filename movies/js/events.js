@@ -336,7 +336,7 @@ window.Events = (function () {
       if (!editing) {
         const similar = DB.findSimilar(payload.title);
         if (similar.length > 0) {
-          showDuplicateWarning(similar, payload.title, payload.type, function () {
+          showDuplicateWarning(similar, payload.title, function () {
             State.addTitle(payload);
             Toast.success('عنوان اضافه شد');
             Modal.close();
@@ -357,9 +357,28 @@ window.Events = (function () {
   }
 
   /* =========================================================
-     هشدار عنوان مشابه
+     هشدار عنوان مشابه — با مخفی‌کردن فرم پشت صحنه
      ========================================================= */
-  function showDuplicateWarning(similar, newTitle, newType, onConfirm) {
+  function showDuplicateWarning(similar, newTitle, onConfirm) {
+    /* ---- پیدا کردن مودالِ فرم که الان باز است ---- */
+    const root = document.getElementById('modal-root');
+    const wrappers = root ? Array.from(root.querySelectorAll('.modal-wrapper')) : [];
+    const previousWrapper = wrappers.length > 0 ? wrappers[wrappers.length - 1] : null;
+
+    /* ---- مخفی کردن موقت ---- */
+    if (previousWrapper) {
+      previousWrapper.classList.add('is-suspended');
+    }
+
+    /* ---- بازگردانی وقتی مودال هشدار بسته می‌شود ---- */
+    function restorePrevious() {
+      if (!previousWrapper || !document.body.contains(previousWrapper)) return;
+      /* اگر مودال فرم در حال بسته شدن است، برنگردان */
+      const m = previousWrapper.querySelector('.modal');
+      if (m && m.classList.contains('is-closing')) return;
+      previousWrapper.classList.remove('is-suspended');
+    }
+
     const matchLabels = {
       exact: 'دقیقاً یکسان',
       contains: 'شامل می‌شود',
@@ -420,9 +439,10 @@ window.Events = (function () {
     Modal.open({
       title: 'عنوان مشابه پیدا شد',
       icon: '⚠️',
-      size: 'md',
+      size: 'sm',
       body: body,
-      footer: footer
+      footer: footer,
+      onClose: restorePrevious
     });
   }
 
@@ -692,7 +712,7 @@ window.Events = (function () {
   }
 
   /* =========================================================
-     تنظیمات — انتخاب‌گر مدل
+     انتخاب‌گر کارتی مدل
      ========================================================= */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
