@@ -1,5 +1,5 @@
 /* =========================================================
-   کلاینت OpenRouter — لیست استاتیک مدل + Streaming + لاگ
+   کلاینت OpenRouter — با انتخاب مدل + Streaming + لاگ
    ========================================================= */
 window.AI = (function () {
   const STORAGE_KEY = CONFIG.AI.STORAGE_KEY;
@@ -7,6 +7,7 @@ window.AI = (function () {
   const API_URL = CONFIG.AI.API_URL;
 
   let abortController = null;
+  let lastUsedModel = null;
 
   /* ---------- توکن ---------- */
   function getKey() {
@@ -20,33 +21,19 @@ window.AI = (function () {
     return !!getKey();
   }
 
-  /* =========================================================
-     مدل‌ها — از CONFIG.AI.MODELS (استاتیک)
-     ========================================================= */
-  function getModels() {
-    return (CONFIG.AI && CONFIG.AI.MODELS) || [];
-  }
-
-  function isValidModel(id) {
-    if (!id) return false;
-    return getModels().some(m => m.id === id);
-  }
-
-  /* ---------- مدل انتخاب‌شده ---------- */
+  /* ---------- مدل ---------- */
   function getModel() {
     try {
       const stored = localStorage.getItem(MODEL_KEY);
-      const models = getModels();
+      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
       if (stored && models.some(m => m.id === stored)) return stored;
-      const def = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
-      if (def && models.some(m => m.id === def)) return def;
-      return models[0]?.id || def;
+      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
     } catch {
       return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
     }
   }
   function setModel(id) {
-    const models = getModels();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
     if (id && models.some(m => m.id === id)) {
       localStorage.setItem(MODEL_KEY, id);
     } else {
@@ -55,7 +42,7 @@ window.AI = (function () {
   }
   function getModelMeta() {
     const id = getModel();
-    const models = getModels();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
     return models.find(m => m.id === id) || { id, label: id, note: '', tags: [] };
   }
   function isDefaultModel() {
@@ -63,6 +50,14 @@ window.AI = (function () {
   }
   function resetModel() {
     localStorage.removeItem(MODEL_KEY);
+  }
+
+  /* ---------- آخرین مدلِ استفاده‌شده ---------- */
+  function getLastUsedModel() {
+    return lastUsedModel;
+  }
+  function clearLastUsedModel() {
+    lastUsedModel = null;
   }
 
   /* ---------- هدرها ---------- */
@@ -100,8 +95,10 @@ window.AI = (function () {
     const combinedSignal = signal || abortController.signal;
 
     const modelName = model || getModel();
-    const meta = getModels().find(m => m.id === modelName);
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const meta = models.find(m => m.id === modelName);
     const modelLabel = meta ? meta.label : modelName;
+    const vendor = meta ? (meta.vendor || '') : '';
 
     const t0 = performance.now();
 
@@ -135,20 +132,14 @@ window.AI = (function () {
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
       aiLog('error', `✗ پاسخ ناموفق: HTTP ${res.status}`);
-
       let userMsg = `خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`;
       try {
         const j = JSON.parse(txt);
-        const m = j?.error?.message || '';
-        if (/not a valid model/i.test(m)) {
-          userMsg = `مدل «${modelName}» در OpenRouter معتبر نیست. لطفاً مدل دیگری از تنظیمات انتخاب کن.`;
-          aiLog('error', `✗ مدل نامعتبر: ${modelName}`);
-          aiLog('meta', 'راهنمایی: از تنظیمات، یک مدل دیگر انتخاب کن');
-        } else {
-          aiLog('meta', txt.slice(0, 180));
+        if (/not a valid model/i.test(j?.error?.message || '')) {
+          userMsg = `مدل «${modelName}» معتبر نیست. مدل دیگری از تنظیمات انتخاب کن.`;
         }
-      } catch { aiLog('meta', txt.slice(0, 180)); }
-
+      } catch {}
+      aiLog('meta', txt.slice(0, 180));
       aiAutoHide();
       throw new Error(userMsg);
     }
@@ -199,6 +190,15 @@ window.AI = (function () {
     aiLog('success', `✓ پاسخ کامل شد · ${full.length} کاراکتر · ${chunkCount} chunk · ${dt}s`);
     aiAutoHide();
 
+    /* ثبت مدلِ استفاده‌شده برای نمایش در نتایج */
+    lastUsedModel = {
+      id: modelName,
+      label: modelLabel,
+      vendor: vendor,
+      meta: meta || null,
+      at: new Date().toISOString()
+    };
+
     onDone && onDone(full);
     return full;
   }
@@ -218,13 +218,16 @@ window.AI = (function () {
     const combinedSignal = signal || abortController.signal;
 
     const modelName = model || getModel();
-    const meta = getModels().find(m => m.id === modelName);
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const meta = models.find(m => m.id === modelName);
     const modelLabel = meta ? meta.label : modelName;
+    const vendor = meta ? (meta.vendor || '') : '';
 
     const t0 = performance.now();
 
     aiLog('request', '▸ ارسال درخواست به OpenRouter');
     aiLog('meta', `مدل: ${modelLabel}`);
+    aiLog('meta', `پیام‌ها: ${messages.length}`);
 
     let res;
     try {
@@ -257,12 +260,14 @@ window.AI = (function () {
       try {
         const j = JSON.parse(txt);
         if (/not a valid model/i.test(j?.error?.message || '')) {
-          userMsg = `مدل «${modelName}» معتبر نیست. از تنظیمات مدل دیگری انتخاب کن.`;
+          userMsg = `مدل «${modelName}» معتبر نیست.`;
         }
       } catch {}
       aiAutoHide();
       throw new Error(userMsg);
     }
+
+    aiLog('success', '✓ اتصال برقرار شد');
 
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -274,6 +279,15 @@ window.AI = (function () {
       aiLog('meta', `tokens: ${usage.prompt_tokens || 0} → ${usage.completion_tokens || 0}`);
     }
     aiAutoHide();
+
+    /* ثبت مدلِ استفاده‌شده */
+    lastUsedModel = {
+      id: modelName,
+      label: modelLabel,
+      vendor: vendor,
+      meta: meta || null,
+      at: new Date().toISOString()
+    };
 
     return content;
   }
@@ -299,7 +313,7 @@ window.AI = (function () {
   return {
     getKey, setKey, isConfigured,
     getModel, setModel, getModelMeta, isDefaultModel, resetModel,
-    getModels, isValidModel,
+    getLastUsedModel, clearLastUsedModel,
     chatStream, chatJSON, abort, parseJSONResponse
   };
 })();
