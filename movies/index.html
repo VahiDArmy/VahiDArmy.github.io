@@ -21,6 +21,7 @@
   <link rel="stylesheet" href="css/forms.css" />
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/utilities.css" />
+  <link rel="stylesheet" href="css/neon.css" />
   <link rel="stylesheet" href="css/ai.css" />
   <link rel="stylesheet" href="css/ai-log.css" />
   <link rel="stylesheet" href="css/settings.css" />
@@ -30,15 +31,27 @@
 </head>
 <body>
 
+<!-- ============ لایه‌ی بارگذاری ============ -->
 <div id="boot-loader" class="boot-loader">
-  <div class="boot-logo">
-    <span class="boot-logo-icon">🎬</span>
-    <span class="boot-logo-text">سینما من</span>
+  <div class="boot-reel">
+    <div class="boot-reel-ring"></div>
+    <div class="boot-reel-holes">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <div class="boot-reel-center"></div>
   </div>
-  <div class="boot-bar"><div class="boot-bar-fill"></div></div>
-  <p class="boot-message" id="boot-message">در حال راه‌اندازی…</p>
+
+  <div class="boot-logo-text">سینما من</div>
+
+  <div class="boot-progress">
+    <div class="boot-progress-fill"></div>
+  </div>
+
+  <div class="boot-log" id="boot-log"></div>
 </div>
 
+<!-- ============ اپلیکیشن ============ -->
 <div class="app" id="app" hidden>
 
   <header class="app-header" id="app-header">
@@ -222,7 +235,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.2.0</span></span>
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.7.0</span></span>
     <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
     <span id="footer-status">آماده</span>
   </footer>
@@ -243,7 +256,6 @@
 <script src="js/render.js"></script>
 <script src="js/stats.js"></script>
 
-<!-- AI -->
 <script src="js/ai-log.js"></script>
 <script src="js/ai.js"></script>
 <script src="js/ai-prompts.js"></script>
