@@ -3,7 +3,7 @@
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '1.5.2',
+  APP_VERSION: '1.6.0',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
@@ -16,187 +16,265 @@ window.CONFIG = {
   },
 
   /* =========================================================
-     AI — لیست استاتیک مدل‌های رایگان OpenRouter
-     =========================================================
-     فقط مدل‌هایی که به‌عنوان chat model شناخته شده‌اند.
-     مدل‌های safety / moderation در لیست نیستند.
+     AI — مدل‌های رایگان OpenRouter (IDهای معتبر)
      ========================================================= */
   AI: {
     API_URL: 'https://openrouter.ai/api/v1/chat/completions',
     STORAGE_KEY: 'cinema_openrouter_key',
     MODEL_STORAGE_KEY: 'cinema_openrouter_model',
 
-    DEFAULT_MODEL: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    /* پیش‌فرض: DeepSeek R1 — مدل استدلالی قوی برای تحلیل داستانی */
+    DEFAULT_MODEL: 'deepseek/deepseek-r1:free',
 
     MODELS: [
-      /* ---------- قدرتمندها (مناسب تحلیل عمیق) ---------- */
+      /* ---------- مدل‌های استدلالی (بهترین برای تحلیل داستانی) ---------- */
       {
-        id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
-        label: 'Nemotron 3 Ultra',
-        vendor: 'NVIDIA',
-        size: '5.86T',
+        id: 'deepseek/deepseek-r1:free',
+        label: 'DeepSeek R1',
+        vendor: 'DeepSeek',
+        size: '671B (37B active)',
+        context: '64K',
+        speed: '—',
+        note: 'مدل استدلالی قوی — پیشنهاد اول برای تحلیل داستانی عمیق',
+        tags: ['استدلالی', 'تحلیل عمیق'],
+        recommended: true,
+        bestFor: 'analysis'
+      },
+      {
+        id: 'deepseek/deepseek-r1-distill-llama-70b:free',
+        label: 'DeepSeek R1 Distill 70B',
+        vendor: 'DeepSeek',
+        size: '70B',
+        context: '128K',
+        speed: '—',
+        note: 'نسخه‌ی سبک‌تر R1 — سریع‌تر از R1 اصلی',
+        tags: ['استدلالی', 'سبک‌تر'],
+        recommended: true,
+        bestFor: 'analysis'
+      },
+      {
+        id: 'qwen/qwq-32b:free',
+        label: 'QwQ 32B',
+        vendor: 'Qwen',
+        size: '32B',
+        context: '32K',
+        speed: '—',
+        note: 'مدل استدلالی سبک از Qwen',
+        tags: ['استدلالی']
+      },
+
+      /* ---------- مدل‌های عمومی (خوب برای استانداردسازی) ---------- */
+      {
+        id: 'meta-llama/llama-3.3-70b-instruct:free',
+        label: 'Llama 3.3 70B Instruct',
+        vendor: 'Meta',
+        size: '70B',
+        context: '128K',
+        speed: '—',
+        note: 'مدل عمومی قدرتمند — عالی برای استانداردسازی دسته‌ای',
+        tags: ['عمومی', 'متعادل'],
+        recommended: true,
+        bestFor: 'batch'
+      },
+      {
+        id: 'meta-llama/llama-3.1-8b-instruct:free',
+        label: 'Llama 3.1 8B Instruct',
+        vendor: 'Meta',
+        size: '8B',
+        context: '128K',
+        speed: '—',
+        note: 'سبک و سریع — مناسب کارهای ساده',
+        tags: ['سبک', 'سریع'],
+        bestFor: 'batch'
+      },
+      {
+        id: 'meta-llama/llama-3.2-3b-instruct:free',
+        label: 'Llama 3.2 3B Instruct',
+        vendor: 'Meta',
+        size: '3B',
+        context: '128K',
+        speed: '—',
+        note: 'سبک‌ترین Llama',
+        tags: ['سبک']
+      },
+
+      /* ---------- Google ---------- */
+      {
+        id: 'google/gemini-2.0-flash-exp:free',
+        label: 'Gemini 2.0 Flash Exp',
+        vendor: 'Google',
+        size: '—',
         context: '1M',
-        speed: '44',
-        note: 'قدرتمندترین گزینه — پیشنهاد برای تحلیل داستانی عمیق',
-        tags: ['تحلیل عمیق', 'کانتکست بزرگ'],
-        recommended: true
+        speed: '—',
+        note: 'کانتکست ۱M — سریع و باکیفیت',
+        tags: ['کانتکست بزرگ', 'سریع'],
+        recommended: true,
+        bestFor: 'long'
       },
       {
-        id: 'inclusionai/ling-3.0-flash-fin:free',
-        label: 'Ling 3.0 Flash Fin',
-        vendor: 'inclusionAI',
-        size: '1.23T',
-        context: '262K',
-        speed: '147',
-        note: 'سریع و متعادل — عالی برای استانداردسازی دسته‌ای',
-        tags: ['سریع', 'تحلیل'],
-        recommended: true
+        id: 'google/gemma-2-9b-it:free',
+        label: 'Gemma 2 9B',
+        vendor: 'Google',
+        size: '9B',
+        context: '8K',
+        speed: '—',
+        note: 'سبک از گوگل',
+        tags: ['سبک']
+      },
+
+      /* ---------- Qwen ---------- */
+      {
+        id: 'qwen/qwen-2.5-72b-instruct:free',
+        label: 'Qwen 2.5 72B Instruct',
+        vendor: 'Qwen',
+        size: '72B',
+        context: '32K',
+        speed: '—',
+        note: 'چندزبانه با پشتیبانی خوب فارسی',
+        tags: ['چندزبانه', 'قدرتمند']
       },
       {
-        id: 'poolside/laguna-s-2.1:free',
-        label: 'Laguna S 2.1',
-        vendor: 'Poolside',
-        size: '1.15T',
-        context: '262K',
-        speed: '37',
-        note: 'قدرتمند با تمرکز روی منطق و کد',
-        tags: ['منطق', 'کد']
+        id: 'qwen/qwen-2.5-7b-instruct:free',
+        label: 'Qwen 2.5 7B Instruct',
+        vendor: 'Qwen',
+        size: '7B',
+        context: '32K',
+        speed: '—',
+        note: 'سبک از Qwen',
+        tags: ['سبک', 'چندزبانه']
+      },
+
+      /* ---------- DeepSeek Chat ---------- */
+      {
+        id: 'deepseek/deepseek-chat:free',
+        label: 'DeepSeek V3',
+        vendor: 'DeepSeek',
+        size: '671B',
+        context: '64K',
+        speed: '—',
+        note: 'مدل عمومی قوی — جایگزین خوب برای R1',
+        tags: ['عمومی', 'قدرتمند']
       },
       {
-        id: 'dots-studio/dots3-note-preview:free',
-        label: 'Dots3 Note',
-        vendor: 'Dots Studio',
-        size: '605B',
-        context: '512K',
-        speed: '58',
-        note: 'کانتکست ۵۱۲K — مناسب عنوان‌های با توضیح طولانی',
-        tags: ['کانتکست بزرگ', 'تحلیل']
+        id: 'deepseek/deepseek-chat-v3-0324:free',
+        label: 'DeepSeek V3 0324',
+        vendor: 'DeepSeek',
+        size: '671B',
+        context: '160K',
+        speed: '—',
+        note: 'نسخه‌ی جدیدتر V3',
+        tags: ['عمومی', 'قدرتمند']
+      },
+
+      /* ---------- Mistral ---------- */
+      {
+        id: 'mistralai/mistral-nemo:free',
+        label: 'Mistral Nemo',
+        vendor: 'Mistral',
+        size: '12B',
+        context: '128K',
+        speed: '—',
+        note: 'متعادل و پایدار',
+        tags: ['متعادل']
       },
       {
-        id: 'nvidia/nemotron-3.5-lightning:free',
-        label: 'Nemotron 3.5 Lightning',
+        id: 'mistralai/mistral-7b-instruct:free',
+        label: 'Mistral 7B Instruct',
+        vendor: 'Mistral',
+        size: '7B',
+        context: '32K',
+        speed: '—',
+        note: 'سبک و شناخته‌شده',
+        tags: ['سبک']
+      },
+
+      /* ---------- NVIDIA ---------- */
+      {
+        id: 'nvidia/llama-3.1-nemotron-70b-instruct:free',
+        label: 'Nemotron 70B',
         vendor: 'NVIDIA',
-        size: '472B',
-        context: '1M',
-        speed: '35',
-        note: 'کانتکست ۱M — سبک‌تر از Ultra',
-        tags: ['کانتکست بزرگ']
-      },
-      {
-        id: 'nvidia/nemotron-3-super:free',
-        label: 'Nemotron 3 Super',
-        vendor: 'NVIDIA',
-        size: '332B',
-        context: '262K',
-        speed: '71',
-        note: 'متعادل بین کیفیت و سرعت',
+        size: '70B',
+        context: '128K',
+        speed: '—',
+        note: 'بهینه‌شده توسط NVIDIA روی Llama 3.1',
         tags: ['تحلیل', 'متعادل']
       },
+
+      /* ---------- Nous Research ---------- */
       {
-        id: 'inclusionai/ling-3.0-flash-sante:free',
-        label: 'Ling 3.0 Flash Sante',
-        vendor: 'inclusionAI',
-        size: '329B',
-        context: '262K',
-        speed: '147',
-        note: 'سرعت بالا با تحلیل قابل قبول',
-        tags: ['سریع', 'متعادل']
+        id: 'nousresearch/hermes-3-llama-3.1-405b:free',
+        label: 'Hermes 3 405B',
+        vendor: 'Nous Research',
+        size: '405B',
+        context: '128K',
+        speed: '—',
+        note: 'بزرگ‌ترین مدل رایگان — کیفیت بالا',
+        tags: ['قدرتمند', 'بزرگ']
       },
+
+      /* ---------- Microsoft ---------- */
       {
-        id: 'thinking-machines/inkling:free',
-        label: 'Inkling',
-        vendor: 'Thinking Machines',
-        size: '301B',
-        context: '1.05M',
-        speed: '51',
-        note: 'کانتکست ۱M — مناسب تحلیل خیلی طولانی',
-        tags: ['کانتکست بزرگ', 'تحلیل']
-      },
-      {
-        id: 'cohere/north-mini-code:free',
-        label: 'North Mini Code',
-        vendor: 'Cohere',
-        size: '127B',
-        context: '256K',
-        speed: '72',
-        note: 'بهینه‌شده برای کد و ساختار JSON',
-        tags: ['کد', 'JSON']
-      },
-      {
-        id: 'thinking-machines/inkling-small:free',
-        label: 'Inkling Small',
-        vendor: 'Thinking Machines',
-        size: '118B',
-        context: '1.05M',
-        speed: '110',
+        id: 'microsoft/phi-3-medium-128k-instruct:free',
+        label: 'Phi-3 Medium 128K',
+        vendor: 'Microsoft',
+        size: '14B',
+        context: '128K',
+        speed: '—',
         note: 'سبک با کانتکست بزرگ',
-        tags: ['سریع', 'کانتکست بزرگ']
+        tags: ['سبک', 'کانتکست بزرگ']
+      },
+
+      /* ---------- دیگران ---------- */
+      {
+        id: 'sao10k/l3.1-euryale-70b:free',
+        label: 'Euryale 70B',
+        vendor: 'Sao10K',
+        size: '70B',
+        context: '8K',
+        speed: '—',
+        note: 'بهینه برای روایت خلاقانه',
+        tags: ['خلاقیت', 'روایت']
       },
       {
-        id: 'poolside/laguna-xs-2.1:free',
-        label: 'Laguna XS 2.1',
-        vendor: 'Poolside',
-        size: '83.5B',
-        context: '262K',
-        speed: '53',
+        id: 'undi95/toppy-m-7b:free',
+        label: 'Toppy M 7B',
+        vendor: 'Undi95',
+        size: '7B',
+        context: '4K',
+        speed: '—',
+        note: 'سبک — مناسب تست سریع',
+        tags: ['سبک', 'سریع']
+      },
+      {
+        id: 'huggingfaceh4/zephyr-7b-beta:free',
+        label: 'Zephyr 7B Beta',
+        vendor: 'HuggingFace',
+        size: '7B',
+        context: '32K',
+        speed: '—',
         note: 'سبک و پایدار',
         tags: ['سبک']
       },
       {
-        id: 'qwen/qwen3.8-27b:free',
-        label: 'Qwen3.8 27B',
-        vendor: 'Qwen',
-        size: '32.9B',
-        context: '262K',
-        speed: '35',
-        note: 'چندزبانه با پشتیبانی خوب فارسی',
-        tags: ['چندزبانه', 'سبک']
-      },
-      /* ✅ FIX: ID کامل — همان چیزی که OpenRouter دارد */
-      {
-        id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-        label: 'Nemotron 3 Nano Omni',
-        vendor: 'NVIDIA',
-        size: '26.2B',
-        context: '256K',
-        speed: '41',
-        note: 'چندوجهی و سبک — مناسب کارهای روزمره',
-        tags: ['سبک', 'چندوجهی']
+        id: 'cognitivecomputations/dolphin3.0-mistral-24b:free',
+        label: 'Dolphin 3.0 Mistral 24B',
+        vendor: 'Cognitive Computations',
+        size: '24B',
+        context: '32K',
+        speed: '—',
+        note: 'متعادل و بدون سانسور',
+        tags: ['متعادل']
       },
       {
-        id: 'liquidai/lfm2.5-2.6b:free',
-        label: 'LFM2.5 2.6B',
-        vendor: 'LiquidAI',
-        size: '18.7B',
-        context: '66K',
-        speed: '167',
-        note: 'سریع‌ترین — مناسب تست و کارهای ساده',
-        tags: ['سریع‌ترین', 'سبک']
-      },
-      {
-        id: 'google/gemma-4-26b-a4b:free',
-        label: 'Gemma 4 26B A4B',
-        vendor: 'Google',
-        size: '1.37B',
-        context: '262K',
-        speed: '34',
-        note: 'MoE سبک از گوگل',
-        tags: ['سبک', 'MoE']
-      },
-      {
-        id: 'google/gemma-4-31b:free',
-        label: 'Gemma 4 31B',
-        vendor: 'Google',
-        size: '469M',
-        context: '262K',
-        speed: '13',
-        note: 'سبک‌ترین Gemma',
-        tags: ['سبک']
+        id: 'liquid/lfm-40b:free',
+        label: 'LFM 40B',
+        vendor: 'Liquid',
+        size: '40B',
+        context: '32K',
+        speed: '—',
+        note: 'مدل Liquid',
+        tags: ['متعادل']
       }
-
-      /* ❌ حذف شد: nvidia/nemotron-3.5-content-safety:free
-         دلیل: این مدل یک classifier ایمنی محتواست، نه chat model.
-         هر درخواست چت به آن خطای API می‌داد. */
     ],
 
     BATCH_SIZE: 5
@@ -210,7 +288,7 @@ window.CONFIG = {
 
 برای من مهم نیست شخصیت‌ها خوب باشند یا بد، داستان شاد باشد یا تاریک، واقع‌گرا باشد یا کاملاً فانتزی. مهم این است که داستان نتیجه‌اش را «به دست آورده باشد».
 
-دوست ندارم نویسنده به من القا کند چه کسی را دوست داشته باشم، برای چه کسی دلسوزی کنم، یا از چه چیزی متأثر شوم. ترجیح می‌دهم خودش موقعیت را بسازد و اجازه بدهد من نتیجه را بفهمم.
+دوست ندارم نویسنده به من القا کند چه کسی را دوست داشته باشم، برای کسی دلسوزی کنم، یا از چه چیزی متأثر شوم. ترجیح می‌دهم خودش موقعیت را بسازد و اجازه بدهد من نتیجه را بفهمم.
 
 در یک جمله: من بیشتر از «واقع‌گرایی»، دنبال «صداقت و انسجامِ روایی» هستم و از «احساسات و نتایجِ تحمیلی یا بی‌پشتوانه» بیزارم.`,
 
