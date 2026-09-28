@@ -1,13 +1,9 @@
 /* =========================================================
    سایدبار
-   =========================================================
-   ساختار:
-     ۱. دسکتاپ (پایه)
-     ۲. موبایل (داخل همین فایل — برای اطمینان)
    ========================================================= */
 
 /* =========================================================
-   ۱. دسکتاپ — پایه
+   ۱. دسکتاپ
    ========================================================= */
 .sidebar {
   background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
@@ -37,10 +33,12 @@
 
 .side-list { display: flex; flex-direction: column; gap: 3px; }
 
+/* =========================================================
+   آیتم سایدبار
+   ========================================================= */
 .side-item {
   width: 100%;
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
+  display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
@@ -52,6 +50,8 @@
   text-align: right;
   position: relative;
   border: 1px solid transparent;
+  cursor: pointer;
+  min-height: 38px;
 }
 .side-item:hover {
   background: var(--bg-2);
@@ -67,29 +67,97 @@
 .side-item.is-active::before {
   content: "";
   position: absolute;
-  right: 0;
-  top: 20%;
-  bottom: 20%;
-  width: 3px;
-  border-radius: var(--radius-pill);
+  right: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: var(--radius-pill);
   background: var(--accent);
   box-shadow: 0 0 10px var(--accent-glow);
 }
 
+/* =========================================================
+   آیکن — در ستاره‌ها از متن ★ استفاده می‌کنیم نه emoji
+   =========================================================
+   دلیل: emoji ستاره (⭐) با font-size کوچک نمی‌شود و
+   از عرض خودش بیرون می‌زند. کاراکتر ★ تابع font-size است.
+   ========================================================= */
 .side-icon {
-  font-size: 13px;
-  display: grid;
-  place-items: center;
+  font-size: 14px;
   line-height: 1;
-}
-
-.side-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  min-width: 22px;
   white-space: nowrap;
 }
 
+/* ---- پنهان‌کردن emoji های موجود در HTML و جایگزینی با ★ ---- */
+.side-item[data-star] .side-icon {
+  font-size: 0;
+  min-width: 58px;
+  max-width: 58px;
+  overflow: hidden;
+  letter-spacing: 0;
+  justify-content: flex-start;
+}
+.side-item[data-star] .side-icon::before {
+  font-size: 11px;
+  letter-spacing: -1px;
+  font-family: var(--font-fa), system-ui, sans-serif;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* ---- هر سطح، تعداد ستاره‌های متفاوت ---- */
+.side-item[data-star="1"] .side-icon::before { content: "★"; font-size: 14px; }
+.side-item[data-star="2"] .side-icon::before { content: "★★"; font-size: 12px; }
+.side-item[data-star="3"] .side-icon::before { content: "★★★"; font-size: 11px; }
+.side-item[data-star="4"] .side-icon::before { content: "★★★★"; font-size: 10px; }
+.side-item[data-star="5"] .side-icon::before { content: "★★★★★"; font-size: 10px; }
+
+/* ---- رنگ و درخشش هر سطح ---- */
+.side-item[data-star="5"] .side-icon::before {
+  color: var(--star-5);
+  text-shadow: 0 0 6px var(--star-5-glow), 0 0 12px var(--star-5-glow);
+}
+.side-item[data-star="4"] .side-icon::before {
+  color: var(--star-4);
+  text-shadow: 0 0 6px var(--star-4-glow);
+}
+.side-item[data-star="3"] .side-icon::before {
+  color: var(--star-3);
+  text-shadow: 0 0 5px var(--star-3-glow);
+}
+.side-item[data-star="2"] .side-icon::before {
+  color: var(--star-2);
+  text-shadow: 0 0 6px var(--star-2-glow);
+}
+.side-item[data-star="1"] .side-icon::before {
+  color: var(--star-1);
+  text-shadow: 0 0 6px var(--star-1-glow);
+}
+
+/* ---- ردیف بدون امتیاز — از emoji ○ استفاده می‌کند ---- */
+.side-item[data-star="0"] .side-icon {
+  color: var(--star-0);
+  font-size: 14px;
+  min-width: 58px;
+  max-width: 58px;
+  justify-content: center;
+}
+
+/* ---- برچسب ---- */
+.side-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 2px;
+}
+
+/* ---- شمارش ---- */
 .side-count {
+  flex-shrink: 0;
   min-width: 26px;
   padding: 2px 8px;
   font-size: var(--fs-xs);
@@ -100,19 +168,14 @@
   color: var(--text-3);
 }
 
-/* ---- رنگ آیتم‌های ستاره ---- */
-.side-item[data-star="5"] .side-icon { filter: drop-shadow(0 0 4px var(--star-5-glow)); }
-.side-item[data-star="4"] .side-icon { filter: drop-shadow(0 0 4px var(--star-4-glow)); }
-.side-item[data-star="3"] .side-icon { filter: drop-shadow(0 0 4px var(--star-3-glow)); }
-.side-item[data-star="2"] .side-icon { filter: drop-shadow(0 0 4px var(--star-2-glow)); }
-.side-item[data-star="1"] .side-icon { filter: drop-shadow(0 0 4px var(--star-1-glow)); }
-
+/* ---- رنگ شمارش ---- */
 .side-item[data-star="5"] .side-count { color: var(--star-5); background: rgba(255, 215, 0, 0.10); }
 .side-item[data-star="4"] .side-count { color: var(--star-4); background: rgba(61, 220, 151, 0.10); }
 .side-item[data-star="3"] .side-count { color: var(--star-3); background: rgba(154, 154, 176, 0.10); }
 .side-item[data-star="2"] .side-count { color: var(--star-2); background: rgba(255, 159, 67, 0.10); }
 .side-item[data-star="1"] .side-count { color: var(--star-1); background: rgba(255, 77, 94, 0.10); }
 
+/* ---- آیتم فعال ---- */
 .side-item[data-star="5"].is-active { border-color: rgba(255, 215, 0, 0.35); }
 .side-item[data-star="5"].is-active::before { background: var(--star-5); box-shadow: 0 0 10px var(--star-5-glow); }
 .side-item[data-star="5"].is-active .side-count { background: var(--star-5); color: #000; }
@@ -121,7 +184,9 @@
 .side-item[data-star="2"].is-active .side-count { background: var(--star-2); color: #000; }
 .side-item[data-star="1"].is-active .side-count { background: var(--star-1); color: #fff; }
 
-/* ---- فیلترها ---- */
+/* =========================================================
+   فیلترها
+   ========================================================= */
 .side-filter {
   display: flex;
   flex-direction: column;
@@ -166,7 +231,9 @@
   color: var(--text-1);
 }
 
-/* ---- چک‌باکس ---- */
+/* =========================================================
+   چک‌باکس
+   ========================================================= */
 .side-checkbox {
   display: flex;
   align-items: center;
@@ -214,7 +281,9 @@
   transform: rotate(-45deg) scale(1);
 }
 
-/* ---- خلاصه ---- */
+/* =========================================================
+   خلاصه
+   ========================================================= */
 .side-stats-mini {
   padding: 12px;
   background: var(--bg-2);
@@ -241,7 +310,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- اکشن‌ها ---- */
+/* =========================================================
+   اکشن‌ها
+   ========================================================= */
 .side-action {
   width: 100%;
   display: flex;
@@ -255,6 +326,7 @@
   transition: all var(--dur-fast);
   text-align: right;
   border: 1px solid transparent;
+  cursor: pointer;
 }
 .side-action:hover {
   background: var(--bg-2);
@@ -269,10 +341,7 @@
 .side-action:hover svg { color: var(--accent-2); }
 
 /* =========================================================
-   ۲. موبایل — داخل همین فایل برای اطمینان
-   =========================================================
-   این قواعد عیناً در responsive.css هم هستند.
-   اگر یکی از دو فایل گم شود، دیگری کار را انجام می‌دهد.
+   ۲. موبایل
    ========================================================= */
 @media (max-width: 900px) {
   .sidebar {
