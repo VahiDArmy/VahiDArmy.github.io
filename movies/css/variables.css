@@ -1,93 +1,137 @@
 /* =========================================================
-   متغیرهای طراحی — دارک ساده
+   متغیرهای سراسری
    ========================================================= */
 :root {
   /* ---- پس‌زمینه ---- */
-  --bg-0: #0a0a0a;
-  --bg-1: #121212;
-  --bg-2: #1a1a1a;
-  --bg-3: #222222;
-  --bg-4: #2a2a2a;
-  --bg-elev: #1e1e1e;
+  --bg-0: #07070b;
+  --bg-1: #0c0c14;
+  --bg-2: #12121c;
+  --bg-3: #181824;
+  --bg-4: #1f1f2e;
+  --bg-elev: #16161f;
+
+  /* ---- شیشه‌ای ---- */
+  --glass-bg: rgba(22, 22, 32, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: 18px;
 
   /* ---- مرزها ---- */
-  --border-1: #262626;
-  --border-2: #333333;
-  --border-3: #404040;
+  --border-1: rgba(255, 255, 255, 0.06);
+  --border-2: rgba(255, 255, 255, 0.10);
+  --border-3: rgba(255, 255, 255, 0.16);
 
   /* ---- متن ---- */
-  --text-1: #f5f5f5;
-  --text-2: #d4d4d4;
-  --text-3: #a3a3a3;
-  --text-4: #737373;
-  --text-inv: #0a0a0a;
+  --text-1: #f0f0f8;
+  --text-2: #c4c4d4;
+  --text-3: #8888a0;
+  --text-4: #5a5a72;
+  --text-inv: #0a0a12;
 
-  /* ---- رنگ تأکیدی ---- */
-  --accent: #6366f1;
-  --accent-hover: #7c7ff5;
-  --accent-soft: rgba(99, 102, 241, 0.12);
-  --accent-2: #a5b4fc;
+  /* ---- برند ---- */
+  --accent: #7c5cff;
+  --accent-hover: #8f72ff;
+  --accent-soft: rgba(124, 92, 255, 0.15);
+  --accent-glow: rgba(124, 92, 255, 0.4);
+  --accent-2: #a78bfa;
+  --neon-accent: #8b5cff;
+  --neon-pink: #ec4899;
 
-  /* ---- رنگ دسته‌بندی‌ها ---- */
-  --love: #ef4444;
-  --love-soft: rgba(239, 68, 68, 0.10);
-  --good: #3b82f6;
-  --good-soft: rgba(59, 130, 246, 0.10);
-  --hate: #f59e0b;
-  --hate-soft: rgba(245, 158, 11, 0.10);
+  /* =========================================================
+     رنگ‌های ستاره — سیستم اصلی برنامه
+     ========================================================= */
+  --star-0: #5a5a72;
+  --star-1: #ff4d5e;
+  --star-2: #ff9f43;
+  --star-3: #9a9ab0;
+  --star-4: #3ddc97;
+  --star-5: #ffd700;
+
+  --star-0-glow: rgba(90, 90, 114, 0.3);
+  --star-1-glow: rgba(255, 77, 94, 0.7);
+  --star-2-glow: rgba(255, 159, 67, 0.7);
+  --star-3-glow: rgba(154, 154, 176, 0.5);
+  --star-4-glow: rgba(61, 220, 151, 0.7);
+  --star-5-glow: rgba(255, 215, 0, 0.8);
 
   /* ---- وضعیت ---- */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  --success: #3ddc97;
+  --warning: #ffcc4d;
+  --danger: #ff4d5e;
+  --info: #4dabf7;
 
-  /* ---- شعاع گوشه ---- */
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ---- ابعاد ---- */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
   --radius-pill: 999px;
 
-  /* ---- ابعاد اصلی ---- */
-  --header-h: 60px;
-  --footer-h: 34px;
-  --sidebar-w: 256px;
+  --header-h: 66px;
+  --footer-h: 38px;
+  --sidebar-w: 264px;
 
-  /* ---- سایه‌های ملایم (بدون رنگ) ---- */
+  /* ---- سایه ---- */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-3: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-4: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-2: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-4: 0 24px 60px rgba(0, 0, 0, 0.55);
 
-  /* ---- حرکت ---- */
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --dur-fast: 120ms;
-  --dur-base: 200ms;
-  --dur-slow: 320ms;
+  /* ---- انیمیشن ---- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 130ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
 
   /* ---- z-index ---- */
   --z-sidebar: 40;
   --z-header: 50;
+  --z-dropdown: 70;
+  --z-modal-backdrop: 90;
   --z-modal: 100;
   --z-toast: 120;
   --z-boot: 200;
 
   /* ---- تایپوگرافی ---- */
   --font-fa: "Vazirmatn", "Segoe UI", Tahoma, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   --fs-xs: 11px;
   --fs-sm: 12px;
-  --fs-md: 13px;
-  --fs-base: 14px;
+  --fs-md: 13.5px;
+  --fs-base: 14.5px;
   --fs-lg: 16px;
-  --fs-xl: 18px;
-  --fs-2xl: 22px;
-  --fs-3xl: 28px;
+  --fs-xl: 19px;
+  --fs-2xl: 24px;
+  --fs-3xl: 30px;
 
-  --lh-tight: 1.3;
-  --lh-base: 1.6;
-  --lh-loose: 1.85;
+  --sb-track: transparent;
+  --sb-thumb: rgba(255, 255, 255, 0.10);
+  --sb-thumb-hover: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="light"] {
+  --bg-0: #f4f4f8;
+  --bg-1: #ffffff;
+  --bg-2: #f7f7fb;
+  --bg-3: #efeff5;
+  --bg-4: #e6e6ef;
+  --bg-elev: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --border-1: rgba(0, 0, 0, 0.07);
+  --border-2: rgba(0, 0, 0, 0.11);
+  --border-3: rgba(0, 0, 0, 0.18);
+  --text-1: #15151f;
+  --text-2: #3a3a4a;
+  --text-3: #6b6b80;
+  --text-4: #9a9ab0;
+  --shadow-1: 0 1px 2px rgba(20, 20, 40, 0.06);
+  --shadow-2: 0 4px 14px rgba(20, 20, 40, 0.08);
+  --shadow-3: 0 12px 32px rgba(20, 20, 40, 0.10);
+  --shadow-4: 0 24px 60px rgba(20, 20, 40, 0.14);
+  --sb-thumb: rgba(0, 0, 0, 0.15);
+  --sb-thumb-hover: rgba(0, 0, 0, 0.28);
 }
