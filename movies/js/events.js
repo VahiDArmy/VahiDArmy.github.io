@@ -18,62 +18,82 @@ window.Events = (function () {
     const search = document.getElementById('global-search');
     const clear = document.getElementById('btn-search-clear');
 
-    search?.addEventListener('input', Utils.debounce((e) => {
-      State.set({ search: e.target.value });
-      State.applyFilters();
-      Render.renderPageTitle();
-      renderList();
-      clear.hidden = !e.target.value;
-    }, CONFIG.DEBOUNCE.SEARCH));
+    if (search) {
+      search.addEventListener('input', Utils.debounce(function (e) {
+        State.set({ search: e.target.value });
+        State.applyFilters();
+        Render.renderPageTitle();
+        renderList();
+        clear.hidden = !e.target.value;
+      }, CONFIG.DEBOUNCE.SEARCH));
+    }
 
-    clear?.addEventListener('click', () => {
-      search.value = '';
-      clear.hidden = true;
-      State.set({ search: '' });
-      State.applyFilters();
-      renderList();
-      search.focus();
-    });
+    if (clear) {
+      clear.addEventListener('click', function () {
+        search.value = '';
+        clear.hidden = true;
+        State.set({ search: '' });
+        State.applyFilters();
+        renderList();
+        search.focus();
+      });
+    }
 
-    document.getElementById('btn-theme')?.addEventListener('click', () => {
-      const next = State.get().theme === 'dark' ? 'light' : 'dark';
-      State.setTheme(next);
-      Toast.info(next === 'dark' ? 'تم تاریک فعال شد' : 'تم روشن فعال شد');
-    });
+    const btnTheme = document.getElementById('btn-theme');
+    if (btnTheme) {
+      btnTheme.addEventListener('click', function () {
+        const next = State.get().theme === 'dark' ? 'light' : 'dark';
+        State.setTheme(next);
+        Toast.info(next === 'dark' ? 'تم تاریک فعال شد' : 'تم روشن فعال شد');
+      });
+    }
 
-    document.getElementById('btn-stats')?.addEventListener('click', () => {
-      Stats.openDashboard();
-      setTimeout(animateDashboardBars, 60);
-    });
+    const btnStats = document.getElementById('btn-stats');
+    if (btnStats) {
+      btnStats.addEventListener('click', function () {
+        Stats.openDashboard();
+        setTimeout(animateDashboardBars, 60);
+      });
+    }
 
-    document.getElementById('btn-settings')?.addEventListener('click', () => {
-      try { openSettings(); }
-      catch (err) {
-        console.error('[settings]', err);
-        Toast.error('باز کردن تنظیمات با خطا مواجه شد — کنسول را چک کن');
-      }
-    });
+    const btnSettings = document.getElementById('btn-settings');
+    if (btnSettings) {
+      btnSettings.addEventListener('click', function () {
+        try { openSettings(); }
+        catch (err) {
+          console.error('[settings]', err);
+          Toast.error('باز کردن تنظیمات با خطا مواجه شد — کنسول را چک کن');
+        }
+      });
+    }
 
-    document.getElementById('btn-menu-toggle')?.addEventListener('click', () => {
-      const sb = document.getElementById('sidebar');
-      const opening = !sb.classList.contains('is-open');
-      sb.classList.toggle('is-open', opening);
-      document.body.classList.toggle('sidebar-open', opening);
-      toggleSidebarBackdrop(opening);
-    });
+    const btnMenu = document.getElementById('btn-menu-toggle');
+    if (btnMenu) {
+      btnMenu.addEventListener('click', function () {
+        const sb = document.getElementById('sidebar');
+        const opening = !sb.classList.contains('is-open');
+        sb.classList.toggle('is-open', opening);
+        document.body.classList.toggle('sidebar-open', opening);
+        toggleSidebarBackdrop(opening);
+      });
+    }
   }
 
   function animateDashboardBars() {
     const root = document.getElementById('modal-root');
     if (!root) return;
     const bars = root.querySelectorAll('.bar-fill');
-    const max = Math.max(...Array.from(root.querySelectorAll('.bar-value'))
-      .map(v => parseInt(Utils.toEn(v.textContent), 10) || 0), 1);
-    bars.forEach((b, i) => {
+    const vals = Array.from(root.querySelectorAll('.bar-value')).map(function (v) {
+      return parseInt(Utils.toEn(v.textContent), 10) || 0;
+    });
+    const max = Math.max.apply(null, vals.concat([1]));
+    bars.forEach(function (b, i) {
       const row = b.closest('.bar-row');
-      const val = row?.querySelector('.bar-value')?.textContent || '0';
+      const val = row && row.querySelector('.bar-value') ? row.querySelector('.bar-value').textContent : '0';
       const pct = parseInt(Utils.toEn(val), 10) || 0;
-      setTimeout(() => { b.style.width = Math.min((pct / max) * 100, 100) + '%'; }, i * 40);
+      setTimeout(function () {
+        b.style.width = Math.min((pct / max) * 100, 100) + '%';
+      }, i * 40);
     });
   }
 
@@ -82,101 +102,118 @@ window.Events = (function () {
     if (show && !bd) {
       bd = document.createElement('div');
       bd.className = 'sidebar-backdrop';
-      bd.addEventListener('click', () => {
-        document.getElementById('sidebar')?.classList.remove('is-open');
+      bd.addEventListener('click', function () {
+        const sb = document.getElementById('sidebar');
+        if (sb) sb.classList.remove('is-open');
         document.body.classList.remove('sidebar-open');
         toggleSidebarBackdrop(false);
       });
       const mount = document.querySelector('.app') || document.body;
       mount.appendChild(bd);
-      requestAnimationFrame(() => bd.classList.add('is-open'));
+      requestAnimationFrame(function () { bd.classList.add('is-open'); });
     } else if (bd && !show) {
       bd.classList.remove('is-open');
-      setTimeout(() => bd.remove(), 250);
+      setTimeout(function () { bd.remove(); }, 250);
     }
   }
 
   /* ---------- سایدبار ---------- */
   function bindSidebar() {
-    document.querySelectorAll('#category-list .side-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('#category-list .side-item').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('#category-list .side-item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('#category-list .side-item').forEach(function (b) { b.classList.remove('is-active'); });
         btn.classList.add('is-active');
         State.setCategory(btn.dataset.category);
         State.applyFilters();
         Render.renderPageTitle();
         renderList();
         if (window.innerWidth <= 900) {
-          document.getElementById('sidebar')?.classList.remove('is-open');
+          const sb = document.getElementById('sidebar');
+          if (sb) sb.classList.remove('is-open');
           document.body.classList.remove('sidebar-open');
           toggleSidebarBackdrop(false);
         }
       });
     });
 
-    document.getElementById('filter-type')?.addEventListener('change', (e) => {
+    const ft = document.getElementById('filter-type');
+    if (ft) ft.addEventListener('change', function (e) {
       State.set({ filterType: e.target.value });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
-    document.getElementById('filter-sort')?.addEventListener('change', (e) => {
+    const fs = document.getElementById('filter-sort');
+    if (fs) fs.addEventListener('change', function (e) {
       State.set({ sort: e.target.value });
       State.applyFilters(); renderList();
     });
-    document.getElementById('filter-favorite')?.addEventListener('change', (e) => {
+    const ff = document.getElementById('filter-favorite');
+    if (ff) ff.addEventListener('change', function (e) {
       State.set({ onlyFav: e.target.checked });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
-    document.getElementById('filter-rated')?.addEventListener('change', (e) => {
+    const fr = document.getElementById('filter-rated');
+    if (fr) fr.addEventListener('change', function (e) {
       State.set({ onlyRated: e.target.checked });
       State.applyFilters(); Render.renderPageTitle(); renderList();
     });
 
-    document.getElementById('btn-export')?.addEventListener('click', () => {
+    const btnExport = document.getElementById('btn-export');
+    if (btnExport) btnExport.addEventListener('click', function () {
       Utils.download(Utils.timestampName('cinema-backup'), JSON.stringify(DB.exportJSON(), null, 2));
       Toast.success('خروجی JSON ساخته شد');
     });
-    document.getElementById('btn-import')?.addEventListener('click', () => {
-      document.getElementById('import-file')?.click();
+
+    const btnImport = document.getElementById('btn-import');
+    if (btnImport) btnImport.addEventListener('click', function () {
+      document.getElementById('import-file').click();
     });
-    document.getElementById('import-file')?.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0];
+
+    const impFile = document.getElementById('import-file');
+    if (impFile) impFile.addEventListener('change', async function (e) {
+      const file = e.target.files && e.target.files[0];
       if (!file) return;
       try {
         const payload = JSON.parse(await file.text());
         Modal.confirm({
           title: 'ورود داده',
-          message: `آیا ${Utils.toFa(payload.titles?.length || 0)} عنوان اضافه شود؟`,
+          message: 'آیا ' + Utils.toFa(payload.titles ? payload.titles.length : 0) + ' عنوان اضافه شود؟',
           confirmText: 'افزودن',
-          onConfirm: () => {
+          onConfirm: function () {
             const n = DB.importJSON(payload, false);
             State.loadAll(); State.applyFilters();
             Render.renderSidebarCounts(); Render.renderPageTitle(); renderList();
-            Toast.success(`${Utils.toFa(n)} عنوان اضافه شد`);
+            Toast.success(Utils.toFa(n) + ' عنوان اضافه شد');
           }
         });
-      } catch { Toast.error('فایل نامعتبر است'); }
+      } catch (err) { Toast.error('فایل نامعتبر است'); }
       e.target.value = '';
     });
 
-    document.getElementById('btn-pull')?.addEventListener('click', pullFromGitHub);
-    document.getElementById('btn-push')?.addEventListener('click', pushToGitHub);
+    const btnPull = document.getElementById('btn-pull');
+    if (btnPull) btnPull.addEventListener('click', pullFromGitHub);
+    const btnPush = document.getElementById('btn-push');
+    if (btnPush) btnPush.addEventListener('click', pushToGitHub);
 
-    document.getElementById('btn-ai-batch')?.addEventListener('click', () => AIUI.openStandardizeBatch());
-    document.getElementById('btn-ai-analyze')?.addEventListener('click', () => AIUI.openAnalysis());
+    const btnBatch = document.getElementById('btn-ai-batch');
+    if (btnBatch) btnBatch.addEventListener('click', function () { AIUI.openStandardizeBatch(); });
+    const btnAnalyze = document.getElementById('btn-ai-analyze');
+    if (btnAnalyze) btnAnalyze.addEventListener('click', function () { AIUI.openAnalysis(); });
   }
 
   /* ---------- تولبار ---------- */
   function bindToolbar() {
-    document.querySelectorAll('.view-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('.view-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        document.querySelectorAll('.view-btn').forEach(function (b) { b.classList.remove('is-active'); });
         btn.classList.add('is-active');
         State.setView(btn.dataset.view);
         applyViewClass();
       });
     });
-    document.getElementById('btn-add')?.addEventListener('click', () => openAddEdit());
-    document.getElementById('btn-empty-add')?.addEventListener('click', () => openAddEdit());
+    const bAdd = document.getElementById('btn-add');
+    if (bAdd) bAdd.addEventListener('click', function () { openAddEdit(); });
+    const bEmpty = document.getElementById('btn-empty-add');
+    if (bEmpty) bEmpty.addEventListener('click', function () { openAddEdit(); });
   }
 
   function applyViewClass() {
@@ -187,18 +224,31 @@ window.Events = (function () {
   /* ---------- کارت‌ها ---------- */
   function bindContent() {
     const grid = document.getElementById('grid');
-    grid?.addEventListener('click', (e) => {
+    if (!grid) return;
+
+    grid.addEventListener('click', function (e) {
       const card = e.target.closest('.card');
       if (!card) return;
       const id = Number(card.dataset.id);
-      const act = e.target.closest('[data-act]')?.dataset.act;
-      if (act === 'fav') { State.toggleFavorite(id); renderList(); Render.renderSidebarCounts(); }
-      else if (act === 'edit') { openAddEdit(id); }
-      else if (act === 'delete') { confirmDelete(id); }
-      else if (act === 'ai') { AIUI.openAnalyzeSingle(id); }
-      else { openDetail(id); }
+      const actEl = e.target.closest('[data-act]');
+      const act = actEl ? actEl.dataset.act : null;
+
+      if (act === 'fav') {
+        State.toggleFavorite(id);
+        renderList();
+        Render.renderSidebarCounts();
+      } else if (act === 'edit') {
+        openAddEdit(id);
+      } else if (act === 'delete') {
+        confirmDelete(id);
+      } else if (act === 'ai') {
+        AIUI.openAnalyzeSingle(id);
+      } else {
+        openDetail(id);
+      }
     });
-    grid?.addEventListener('keydown', (e) => {
+
+    grid.addEventListener('keydown', function (e) {
       const card = e.target.closest('.card');
       if (!card) return;
       if (e.key === 'Enter') openDetail(Number(card.dataset.id));
@@ -207,25 +257,44 @@ window.Events = (function () {
 
   /* ---------- کیبورد ---------- */
   function bindKeyboard() {
-    document.addEventListener('keydown', (e) => {
-      const inField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+    document.addEventListener('keydown', function (e) {
+      const active = document.activeElement;
+      const inField = active && ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(active.tagName) > -1;
       const mod = e.ctrlKey || e.metaKey;
-      if (mod && e.key.toLowerCase() === 'k') { e.preventDefault(); document.getElementById('global-search')?.focus(); return; }
-      if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); pushToGitHub(); return; }
-      if (!inField && e.key.toLowerCase() === 'n') { e.preventDefault(); openAddEdit(); }
+      if (mod && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const s = document.getElementById('global-search');
+        if (s) s.focus();
+        return;
+      }
+      if (mod && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        pushToGitHub();
+        return;
+      }
+      if (!inField && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        openAddEdit();
+      }
       if (!inField && e.key.toLowerCase() === 's' && !mod) Stats.openDashboard();
     });
   }
 
   function bindNetwork() {
-    window.addEventListener('online', () => { updateSyncStatus('online'); Toast.success('اتصال برقرار شد'); });
-    window.addEventListener('offline', () => { updateSyncStatus('offline'); Toast.warning('اتصال قطع شد'); });
+    window.addEventListener('online', function () {
+      updateSyncStatus('online');
+      Toast.success('اتصال برقرار شد');
+    });
+    window.addEventListener('offline', function () {
+      updateSyncStatus('offline');
+      Toast.warning('اتصال قطع شد');
+    });
   }
 
   function bindState() {
-    State.on('title:added', () => { renderList(); Render.renderSidebarCounts(); });
-    State.on('title:updated', () => { renderList(); Render.renderSidebarCounts(); });
-    State.on('title:deleted', () => { renderList(); Render.renderSidebarCounts(); });
+    State.on('title:added', function () { renderList(); Render.renderSidebarCounts(); });
+    State.on('title:updated', function () { renderList(); Render.renderSidebarCounts(); });
+    State.on('title:deleted', function () { renderList(); Render.renderSidebarCounts(); });
   }
 
   function renderList() {
@@ -236,8 +305,10 @@ window.Events = (function () {
     Render.renderPageTitle();
   }
 
-  /* ---------- افزودن/ویرایش ---------- */
-  function openAddEdit(id = null) {
+  /* =========================================================
+     افزودن/ویرایش — با تشخیص تکراری
+     ========================================================= */
+  function openAddEdit(id) {
     const editing = id != null;
     const data = editing ? DB.getTitle(id) : {
       title: '', category: 'love', type: 'series', genre: '',
@@ -247,22 +318,111 @@ window.Events = (function () {
 
     const form = buildItemForm(data);
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
-      Utils.el('button', { class: 'btn btn-ghost', onclick: () => Modal.close() }, ['انصراف']),
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
       Utils.el('button', { class: 'btn btn-primary', id: 'form-save' }, [editing ? 'ذخیره تغییرات' : 'افزودن'])
     ]);
 
     Modal.open({
       title: editing ? 'ویرایش عنوان' : 'افزودن عنوان جدید',
       icon: editing ? '✏️' : '➕',
-      body: form, footer, size: 'lg'
+      body: form, footer: footer, size: 'lg'
     });
 
-    document.getElementById('form-save').addEventListener('click', () => {
+    document.getElementById('form-save').addEventListener('click', function () {
       const payload = collectForm(form, data);
       if (!payload) return;
-      if (editing) { State.editTitle(id, payload); Toast.success('تغییرات ذخیره شد'); }
-      else { State.addTitle(payload); Toast.success('عنوان اضافه شد'); }
+
+      /* ---- اگر جدید است: تشخیص تکراری ---- */
+      if (!editing) {
+        const similar = DB.findSimilar(payload.title);
+        if (similar.length > 0) {
+          showDuplicateWarning(similar, payload.title, payload.type, function () {
+            State.addTitle(payload);
+            Toast.success('عنوان اضافه شد');
+            Modal.close();
+          });
+          return;
+        }
+      }
+
+      if (editing) {
+        State.editTitle(id, payload);
+        Toast.success('تغییرات ذخیره شد');
+      } else {
+        State.addTitle(payload);
+        Toast.success('عنوان اضافه شد');
+      }
       Modal.close();
+    });
+  }
+
+  /* =========================================================
+     هشدار عنوان مشابه
+     ========================================================= */
+  function showDuplicateWarning(similar, newTitle, newType, onConfirm) {
+    const matchLabels = {
+      exact: 'دقیقاً یکسان',
+      contains: 'شامل می‌شود',
+      similar: 'شبیه'
+    };
+    const matchIcons = {
+      exact: '⚠️',
+      contains: '🔶',
+      similar: '🔸'
+    };
+
+    const list = similar.map(function (s) {
+      const meta = [];
+      if (s.year) meta.push(Utils.toFa(s.year));
+      const typeLabel = CONFIG.TYPES[s.type] || s.type;
+      if (typeLabel) meta.push(typeLabel);
+
+      return Utils.el('div', {
+        class: 'dup-item',
+        dataset: { match: s._matchType }
+      }, [
+        Utils.el('span', { class: 'dup-icon' }, [matchIcons[s._matchType] || '🔸']),
+        Utils.el('div', { class: 'dup-info' }, [
+          Utils.el('div', { class: 'dup-title' }, [s.title]),
+          meta.length ? Utils.el('div', { class: 'dup-meta' }, [meta.join(' · ')]) : null
+        ].filter(Boolean)),
+        Utils.el('span', { class: 'dup-tag' }, [matchLabels[s._matchType] || 'شبیه'])
+      ]);
+    });
+
+    const body = Utils.el('div', { class: 'dup-warning' }, [
+      Utils.el('p', { class: 'dup-intro' }, [
+        'عنوانی که می‌خواهی اضافه کنی — ',
+        Utils.el('strong', {}, ['«' + newTitle + '»']),
+        ' — شبیه این عنوان‌های موجود در آرشیو است:'
+      ]),
+      Utils.el('div', { class: 'dup-list' }, list),
+      Utils.el('p', { class: 'dup-question' }, [
+        'اگر یکی از این‌ها همان است که می‌خواستی، انصراف بزن و به‌جایش آن کارت را ویرایش کن. ',
+        'در غیر این صورت می‌توانی اضافه کنی.'
+      ])
+    ]);
+
+    const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+      Utils.el('button', {
+        class: 'btn btn-ghost',
+        onclick: function () { Modal.close(); }
+      }, ['انصراف']),
+      Utils.el('button', {
+        class: 'btn btn-danger',
+        onclick: function () {
+          Modal.close();
+          onConfirm();
+        }
+      }, ['بله، اضافه کن'])
+    ]);
+
+    Modal.open({
+      title: 'عنوان مشابه پیدا شد',
+      icon: '⚠️',
+      size: 'md',
+      body: body,
+      footer: footer
     });
   }
 
@@ -270,7 +430,7 @@ window.Events = (function () {
     const form = Utils.el('form', { class: 'form' });
 
     const catPicker = Utils.el('div', { class: 'cat-picker' });
-    ['love', 'good', 'hate'].forEach(c => {
+    ['love', 'good', 'hate'].forEach(function (c) {
       const label = Utils.el('label', { class: 'cat-option', dataset: { cat: c } });
       const inp = Utils.el('input', { type: 'radio', name: 'category', value: c });
       inp.checked = data.category === c;
@@ -288,18 +448,20 @@ window.Events = (function () {
 
     form.appendChild(Utils.el('div', { class: 'field' }, [
       Utils.el('label', { class: 'field-label' }, ['عنوان ', Utils.el('span', { class: 'req' }, ['*'])]),
-      Utils.el('input', { class: 'field-input', type: 'text', name: 'title',
+      Utils.el('input', {
+        class: 'field-input', type: 'text', name: 'title',
         value: data.title, placeholder: 'مثلاً Breaking Bad',
-        maxlength: CONFIG.LIMITS.TITLE_MAX, required: true })
+        maxlength: CONFIG.LIMITS.TITLE_MAX, required: true
+      })
     ]));
 
     form.appendChild(Utils.el('div', { class: 'form-row form-row-3' }, [
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['نوع']),
-        (() => {
+        (function () {
           const s = Utils.el('select', { class: 'field-select', name: 'type' });
-          Object.entries(CONFIG.TYPES).forEach(([k, v]) => {
-            const o = Utils.el('option', { value: k }, [v]);
+          Object.keys(CONFIG.TYPES).forEach(function (k) {
+            const o = Utils.el('option', { value: k }, [CONFIG.TYPES[k]]);
             if (data.type === k) o.selected = true;
             s.appendChild(o);
           });
@@ -308,14 +470,18 @@ window.Events = (function () {
       ]),
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['سال']),
-        Utils.el('input', { class: 'field-input', type: 'number', name: 'year',
-          value: data.year || '', placeholder: '2020', min: 1900, max: 2100 })
+        Utils.el('input', {
+          class: 'field-input', type: 'number', name: 'year',
+          value: data.year || '', placeholder: '2020', min: 1900, max: 2100
+        })
       ]),
       Utils.el('div', { class: 'field' }, [
         Utils.el('label', { class: 'field-label' }, ['ژانر']),
-        Utils.el('input', { class: 'field-input', type: 'text', name: 'genre',
+        Utils.el('input', {
+          class: 'field-input', type: 'text', name: 'genre',
           value: data.genre || '', placeholder: 'درام، جنایی',
-          maxlength: CONFIG.LIMITS.GENRE_MAX })
+          maxlength: CONFIG.LIMITS.GENRE_MAX
+        })
       ])
     ]));
 
@@ -337,9 +503,9 @@ window.Events = (function () {
         Utils.el('span', { class: 'alert-icon' }, ['🪄']),
         Utils.el('div', {}, [
           'این عنوان با AI تحلیل شده. ',
-          data.seasons ? `${Utils.toFa(data.seasons)} فصل` : '',
-          data.episodes ? ` · ${Utils.toFa(data.episodes)} قسمت` : '',
-          data.country ? ` · ${data.country}` : ''
+          data.seasons ? Utils.toFa(data.seasons) + ' فصل' : '',
+          data.episodes ? ' · ' + Utils.toFa(data.episodes) + ' قسمت' : '',
+          data.country ? ' · ' + data.country : ''
         ].filter(Boolean))
       ]));
     }
@@ -348,11 +514,13 @@ window.Events = (function () {
     const starsWrap = Utils.el('div', { class: 'rating-stars' });
     for (let i = 1; i <= 5; i++) {
       const s = Utils.el('button', { type: 'button', class: 'rating-star', dataset: { star: i } });
-      s.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" width="26" height="26"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>`;
+      s.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" width="26" height="26"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
       starsWrap.appendChild(s);
     }
-    const ratingInput = Utils.el('input', { class: 'rating-input', type: 'number',
-      name: 'rating', value: data.rating || 0, min: 0, max: 10, step: 0.5 });
+    const ratingInput = Utils.el('input', {
+      class: 'rating-input', type: 'number',
+      name: 'rating', value: data.rating || 0, min: 0, max: 10, step: 0.5
+    });
     ratingRow.appendChild(starsWrap);
     ratingRow.appendChild(ratingInput);
     ratingRow.appendChild(Utils.el('span', { class: 'text-xs text-3' }, ['از ۱۰']));
@@ -363,9 +531,11 @@ window.Events = (function () {
 
     form.appendChild(Utils.el('div', { class: 'field' }, [
       Utils.el('label', { class: 'field-label' }, ['یادداشت']),
-      Utils.el('textarea', { class: 'field-textarea', name: 'notes',
+      Utils.el('textarea', {
+        class: 'field-textarea', name: 'notes',
         placeholder: 'چی دوست داشتی یا نداشتی…',
-        maxlength: CONFIG.LIMITS.NOTES_MAX }, [data.notes || ''])
+        maxlength: CONFIG.LIMITS.NOTES_MAX
+      }, [data.notes || ''])
     ]));
 
     const favSwitch = Utils.el('label', { class: 'switch' });
@@ -382,27 +552,32 @@ window.Events = (function () {
       favSwitch
     ]));
 
-    const updateStars = (v) => {
+    const updateStars = function (v) {
       const n = Math.round(v / 2);
-      starsWrap.querySelectorAll('.rating-star').forEach((s, i) => s.classList.toggle('on', i < n));
+      starsWrap.querySelectorAll('.rating-star').forEach(function (s, i) {
+        s.classList.toggle('on', i < n);
+      });
     };
     updateStars(Number(ratingInput.value) || 0);
-    starsWrap.addEventListener('click', (e) => {
+    starsWrap.addEventListener('click', function (e) {
       const s = e.target.closest('.rating-star');
       if (!s) return;
       const val = Number(s.dataset.star) * 2;
       ratingInput.value = val;
       updateStars(val);
     });
-    ratingInput.addEventListener('input', () => updateStars(Number(ratingInput.value) || 0));
+    ratingInput.addEventListener('input', function () {
+      updateStars(Number(ratingInput.value) || 0);
+    });
 
     return form;
   }
 
-  function collectForm(form, original = {}) {
+  function collectForm(form, original) {
+    original = original || {};
     const data = {
       title: form.querySelector('[name="title"]').value.trim(),
-      category: form.querySelector('[name="category"]:checked')?.value || 'love',
+      category: (form.querySelector('[name="category"]:checked') || {}).value || 'love',
       type: form.querySelector('[name="type"]').value,
       genre: form.querySelector('[name="genre"]').value.trim(),
       year: form.querySelector('[name="year"]').value ? Number(form.querySelector('[name="year"]').value) : null,
@@ -413,9 +588,9 @@ window.Events = (function () {
       watched_date: original.watched_date || null,
       summary: original.summary || '',
       original_title: original.original_title || '',
-      seasons: original.seasons ?? null,
-      episodes: original.episodes ?? null,
-      episodes_per_season: original.episodes_per_season ?? null,
+      seasons: original.seasons != null ? original.seasons : null,
+      episodes: original.episodes != null ? original.episodes : null,
+      episodes_per_season: original.episodes_per_season != null ? original.episodes_per_season : null,
       country: original.country || '',
       language: original.language || '',
       status: original.status || '',
@@ -426,7 +601,7 @@ window.Events = (function () {
       Toast.error('عنوان الزامی است');
       form.querySelector('[name="title"]').focus();
       form.classList.add('anim-shake');
-      setTimeout(() => form.classList.remove('anim-shake'), 500);
+      setTimeout(function () { form.classList.remove('anim-shake'); }, 500);
       return null;
     }
     return data;
@@ -437,9 +612,9 @@ window.Events = (function () {
     if (!t) return;
     Modal.confirm({
       title: 'حذف عنوان',
-      message: `آیا از حذف «${t.title}» مطمئنی؟`,
+      message: 'آیا از حذف «' + t.title + '» مطمئنی؟',
       confirmText: 'حذف کن', danger: true, icon: '🗑️',
-      onConfirm: () => { State.removeTitle(id); Toast.success('حذف شد'); }
+      onConfirm: function () { State.removeTitle(id); Toast.success('حذف شد'); }
     });
   }
 
@@ -455,7 +630,7 @@ window.Events = (function () {
           ? Utils.el('div', { class: 'text-sm text-3 mb-2' }, [t.original_title])
           : null,
         Utils.el('div', { class: 'detail-tags' }, [
-          Utils.el('span', { class: 'cat-badge', dataset: { cat: t.category } }, [`${cat.emoji} ${cat.label}`]),
+          Utils.el('span', { class: 'cat-badge', dataset: { cat: t.category } }, [cat.emoji + ' ' + cat.label]),
           Utils.el('span', { class: 'badge' }, [CONFIG.TYPES[t.type] || t.type]),
           t.year ? Utils.el('span', { class: 'badge' }, [Utils.toFa(t.year)]) : null,
           t.favorite ? Utils.el('span', { class: 'badge', style: { color: 'var(--warning)' } }, ['⭐ علاقه‌مندی']) : null,
@@ -481,11 +656,11 @@ window.Events = (function () {
         Utils.el('div', { class: 'detail-notes' }, [t.summary])
       ]) : null,
 
-      (t.reason || t.story_analysis) ? (() => {
+      (t.reason || t.story_analysis) ? (function () {
         const box = Utils.el('div', { class: 'story-analysis-box mb-3' });
         AIUI.renderStoryAnalysis(box, t.story_analysis, t.reason, t.category);
-        setTimeout(() => {
-          box.querySelectorAll('.score-fill').forEach(f => {
+        setTimeout(function () {
+          box.querySelectorAll('.score-fill').forEach(function (f) {
             f.style.width = (f.dataset.pct || '0') + '%';
           });
         }, 80);
@@ -499,14 +674,14 @@ window.Events = (function () {
     ].filter(Boolean));
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full flex-wrap' }, [
-      Utils.el('button', { class: 'btn btn-danger', onclick: () => { Modal.close(); setTimeout(() => confirmDelete(id), 150); } }, ['حذف']),
-      Utils.el('button', { class: 'btn btn-soft', onclick: () => { Modal.close(); setTimeout(() => AIUI.openAnalyzeSingle(id), 150); } }, ['🔬 تحلیل AI']),
+      Utils.el('button', { class: 'btn btn-danger', onclick: function () { Modal.close(); setTimeout(function () { confirmDelete(id); }, 150); } }, ['حذف']),
+      Utils.el('button', { class: 'btn btn-soft', onclick: function () { Modal.close(); setTimeout(function () { AIUI.openAnalyzeSingle(id); }, 150); } }, ['🔬 تحلیل AI']),
       Utils.el('div', { class: 'flex-1' }),
-      Utils.el('button', { class: 'btn btn-ghost', onclick: () => { Modal.close(); setTimeout(() => openAddEdit(id), 150); } }, ['ویرایش']),
-      Utils.el('button', { class: 'btn btn-primary', onclick: () => Modal.close() }, ['بستن'])
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); setTimeout(function () { openAddEdit(id); }, 150); } }, ['ویرایش']),
+      Utils.el('button', { class: 'btn btn-primary', onclick: function () { Modal.close(); } }, ['بستن'])
     ]);
 
-    Modal.open({ title: 'جزئیات', icon: '🎬', size: 'xl', body, footer });
+    Modal.open({ title: 'جزئیات', icon: '🎬', size: 'xl', body: body, footer: footer });
   }
 
   function detailItem(k, v) {
@@ -516,9 +691,9 @@ window.Events = (function () {
     ]);
   }
 
-  /* ============================================================
-     انتخاب‌گر کارتی مدل — با CONFIG.AI.MODELS مستقیم
-     ============================================================ */
+  /* =========================================================
+     تنظیمات — انتخاب‌گر مدل
+     ========================================================= */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
     const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
@@ -538,12 +713,12 @@ window.Events = (function () {
       listWrap.innerHTML = '';
       const q = Utils.normalizeFa(query || '').toLowerCase();
 
-      const filtered = models.filter(m => {
+      const filtered = models.filter(function (m) {
         if (!q) return true;
         const hay = Utils.normalizeFa(
-          `${m.label} ${m.vendor} ${m.id} ${(m.tags || []).join(' ')} ${m.note || ''}`
+          m.label + ' ' + m.vendor + ' ' + m.id + ' ' + (m.tags || []).join(' ') + ' ' + (m.note || '')
         ).toLowerCase();
-        return hay.includes(q);
+        return hay.indexOf(q) > -1;
       });
 
       if (!filtered.length) {
@@ -553,7 +728,7 @@ window.Events = (function () {
         return;
       }
 
-      filtered.forEach(m => {
+      filtered.forEach(function (m) {
         const isActive = m.id === selected;
         const isDefault = m.id === defaultModel;
 
@@ -596,7 +771,7 @@ window.Events = (function () {
           m.note ? Utils.el('div', { class: 'model-card-note' }, [m.note]) : null,
 
           (m.tags && m.tags.length) ? Utils.el('div', { class: 'model-card-tags' },
-            m.tags.map(t => Utils.el('span', { class: 'model-tag' }, [t]))
+            m.tags.map(function (t) { return Utils.el('span', { class: 'model-tag' }, [t]); })
           ) : null,
 
           Utils.el('div', { class: 'model-card-id' }, [m.id])
@@ -604,13 +779,13 @@ window.Events = (function () {
 
         function select() {
           selected = m.id;
-          onSelect && onSelect(m.id);
+          if (onSelect) onSelect(m.id);
           renderList(searchInput.value);
           updateStats();
         }
 
         card.addEventListener('click', select);
-        card.addEventListener('keydown', (e) => {
+        card.addEventListener('keydown', function (e) {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             select();
@@ -622,11 +797,10 @@ window.Events = (function () {
     }
 
     function updateStats() {
-      const total = models.length;
-      const meta = models.find(m => m.id === selected);
+      const meta = models.filter(function (m) { return m.id === selected; })[0];
       statsBar.innerHTML = '';
       statsBar.appendChild(Utils.el('span', { class: 'model-stats-count' }, [
-        Utils.toFa(total) + ' مدل'
+        Utils.toFa(models.length) + ' مدل'
       ]));
       if (meta) {
         statsBar.appendChild(Utils.el('span', { class: 'model-stats-sep' }, ['·']));
@@ -636,7 +810,7 @@ window.Events = (function () {
       }
     }
 
-    searchInput.addEventListener('input', Utils.debounce((e) => {
+    searchInput.addEventListener('input', Utils.debounce(function (e) {
       renderList(e.target.value);
     }, 120));
 
@@ -651,13 +825,10 @@ window.Events = (function () {
 
     return {
       el: wrap,
-      getSelected: () => selected
+      getSelected: function () { return selected; }
     };
   }
 
-  /* ============================================================
-     تنظیمات
-     ============================================================ */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
@@ -671,15 +842,15 @@ window.Events = (function () {
       if (hint) children.push(Utils.el('small', {}, [hint]));
       return Utils.el('div', { class: 'settings-row' }, children);
     }
-    function input(name, value, opts = {}) {
+    function input(name, value, opts) {
+      opts = opts || {};
       return Utils.el('input', {
-        class: 'field-input', type: opts.type || 'text', name,
+        class: 'field-input', type: opts.type || 'text', name: name,
         value: value || '', placeholder: opts.placeholder || '',
         autocomplete: opts.autocomplete || 'off', spellcheck: 'false'
       });
     }
 
-    /* ---- گیت‌هاب ---- */
     const githubSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🔗']),
@@ -707,8 +878,7 @@ window.Events = (function () {
       ])
     ]);
 
-    /* ---- AI ---- */
-    const picker = buildModelPicker(currentModel, () => {});
+    const picker = buildModelPicker(currentModel, function () {});
 
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
@@ -752,11 +922,11 @@ window.Events = (function () {
     const footer = Utils.el('div', { class: 'settings-footer' }, [
       Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-conn', type: 'button' }, ['🧪 تست اتصال گیت‌هاب']),
       Utils.el('div', { class: 'spacer' }),
-      Utils.el('button', { class: 'btn btn-ghost', onclick: () => Modal.close() }, ['انصراف']),
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
       Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
     ]);
 
-    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'xl', body, footer });
+    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'xl', body: body, footer: footer });
 
     function refreshStatus() {
       const ghEl = githubSection.querySelector('.settings-status');
@@ -770,13 +940,12 @@ window.Events = (function () {
       aiEl.dataset.status = aiOk ? 'ok' : 'missing';
       aiEl.textContent = aiOk ? 'فعال' : 'تنظیم نشده';
     }
-    body.querySelectorAll('.field-input').forEach(inp => {
+    body.querySelectorAll('.field-input').forEach(function (inp) {
       inp.addEventListener('input', refreshStatus);
     });
 
-    /* ---- ذخیره ---- */
-    document.getElementById('btn-save-settings').addEventListener('click', () => {
-      const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
+    document.getElementById('btn-save-settings').addEventListener('click', function () {
+      const g = function (n) { return body.querySelector('[name="' + n + '"]').value.trim(); };
 
       GitHub.saveSettings({
         owner: g('owner'), repo: g('repo'),
@@ -793,7 +962,7 @@ window.Events = (function () {
         ? AI.getModelMeta()
         : { label: picker.getSelected() };
 
-      Toast.success(`تنظیمات ذخیره شد — مدل: ${meta.label}`);
+      Toast.success('تنظیمات ذخیره شد — مدل: ' + meta.label);
       Modal.close();
       refreshSyncStatus();
 
@@ -801,18 +970,19 @@ window.Events = (function () {
         try {
           AILog.show();
           AILog.success('✓ کلید AI و مدل ذخیره شد');
-          AILog.meta(`مدل فعال: ${meta.label}`);
+          AILog.meta('مدل فعال: ' + meta.label);
           AILog.scheduleAutoHide();
-        } catch {}
+        } catch (e) {}
       }
     });
 
-    /* ---- تست گیت‌هاب ---- */
-    document.getElementById('btn-test-conn').addEventListener('click', async (e) => {
-      const btn = e.currentTarget; const old = btn.textContent;
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
+    document.getElementById('btn-test-conn').addEventListener('click', async function (e) {
+      const btn = e.currentTarget;
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
-        const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
+        const g = function (n) { return body.querySelector('[name="' + n + '"]').value.trim(); };
         GitHub.saveSettings({
           owner: g('owner'), repo: g('repo'),
           branch: g('branch') || 'master',
@@ -821,32 +991,43 @@ window.Events = (function () {
         GitHub.setToken(g('token'));
         await GitHub.testConnection();
         const fi = await GitHub.getFileInfo();
-        if (fi.exists) Toast.success(`اتصال موفق ✅ (${Utils.toFa(Math.round(fi.size/1024))} KB)`);
+        if (fi.exists) Toast.success('اتصال موفق ✅ (' + Utils.toFa(Math.round(fi.size / 1024)) + ' KB)');
         else Toast.warning('اتصال موفق، ولی فایل دیتابیس موجود نیست.');
-      } catch (err) { Toast.error(err.message || 'خطا'); }
-      finally { btn.disabled = false; btn.textContent = old; }
+      } catch (err) {
+        Toast.error(err.message || 'خطا');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
     });
 
-    /* ---- تست AI ---- */
-    document.getElementById('btn-test-ai').addEventListener('click', async (e) => {
+    document.getElementById('btn-test-ai').addEventListener('click', async function (e) {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
       const modelId = picker.getSelected();
       const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-      const meta = models.find(m => m.id === modelId) || { label: modelId };
+      const meta = models.filter(function (m) { return m.id === modelId; })[0] || { label: modelId };
 
       AI.setKey(key);
 
       if (window.AILog) {
-        try { AILog.show(); AILog.info('▸ شروع تست AI'); AILog.meta(`مدل: ${meta.label}`); } catch {}
+        try {
+          AILog.show();
+          AILog.info('▸ شروع تست AI');
+          AILog.meta('مدل: ' + meta.label);
+        } catch (err) {}
       }
       if (!key) {
-        if (window.AILog) { try { AILog.error('✗ کلید AI وارد نشده'); AILog.scheduleAutoHide(); } catch {} }
-        Toast.warning('ابتدا کلید را وارد کنید'); return;
+        if (window.AILog) {
+          try { AILog.error('✗ کلید AI وارد نشده'); AILog.scheduleAutoHide(); } catch (err) {}
+        }
+        Toast.warning('ابتدا کلید را وارد کنید');
+        return;
       }
 
       const old = btn.textContent;
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
         await AI.chatStream({
           model: modelId,
@@ -855,17 +1036,22 @@ window.Events = (function () {
             { role: 'user', content: 'بگو سلام' }
           ],
           temperature: 0,
-          onToken: () => {}
+          onToken: function () {}
         });
-        Toast.success(`اتصال به ${meta.label} موفق ✅`);
-      } catch (err) { Toast.error(err.message || 'خطا'); }
-      finally { btn.disabled = false; btn.textContent = old; }
+        Toast.success('اتصال به ' + meta.label + ' موفق ✅');
+      } catch (err) {
+        Toast.error(err.message || 'خطا');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = old;
+      }
     });
 
-    document.getElementById('btn-ai-log').addEventListener('click', () => { AIUI.showLog(); });
+    document.getElementById('btn-ai-log').addEventListener('click', function () {
+      AIUI.showLog();
+    });
   }
 
-  /* ---------- سینک ---------- */
   async function pullFromGitHub() {
     if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
     updateSyncStatus('syncing');
@@ -911,7 +1097,15 @@ window.Events = (function () {
   }
 
   return {
-    bind, renderList, openAddEdit, confirmDelete, openDetail, openSettings,
-    updateSyncStatus, refreshSyncStatus, pullFromGitHub, pushToGitHub
+    bind: bind,
+    renderList: renderList,
+    openAddEdit: openAddEdit,
+    confirmDelete: confirmDelete,
+    openDetail: openDetail,
+    openSettings: openSettings,
+    updateSyncStatus: updateSyncStatus,
+    refreshSyncStatus: refreshSyncStatus,
+    pullFromGitHub: pullFromGitHub,
+    pushToGitHub: pushToGitHub
   };
 })();
