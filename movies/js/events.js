@@ -46,7 +46,13 @@ window.Events = (function () {
       setTimeout(animateDashboardBars, 60);
     });
 
-    document.getElementById('btn-settings')?.addEventListener('click', openSettings);
+    document.getElementById('btn-settings')?.addEventListener('click', () => {
+      try { openSettings(); }
+      catch (err) {
+        console.error('[settings]', err);
+        Toast.error('باز کردن تنظیمات با خطا مواجه شد — کنسول را چک کن');
+      }
+    });
 
     document.getElementById('btn-menu-toggle')?.addEventListener('click', () => {
       const sb = document.getElementById('sidebar');
@@ -437,7 +443,6 @@ window.Events = (function () {
     });
   }
 
-  /* ---------- جزئیات ---------- */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -516,6 +521,8 @@ window.Events = (function () {
      ============================================================ */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const defaultModel = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
 
     const searchInput = Utils.el('input', {
       class: 'field-input model-search',
@@ -531,10 +538,10 @@ window.Events = (function () {
       listWrap.innerHTML = '';
       const q = Utils.normalizeFa(query).toLowerCase();
 
-      const filtered = CONFIG.AI.MODELS.filter(m => {
+      const filtered = models.filter(m => {
         if (!q) return true;
         const hay = Utils.normalizeFa(
-          `${m.label} ${m.vendor} ${m.id} ${(m.tags || []).join(' ')} ${m.note}`
+          `${m.label} ${m.vendor} ${m.id} ${(m.tags || []).join(' ')} ${m.note || ''}`
         ).toLowerCase();
         return hay.includes(q);
       });
@@ -546,7 +553,7 @@ window.Events = (function () {
 
       filtered.forEach(m => {
         const isActive = m.id === selected;
-        const isDefault = m.id === CONFIG.AI.DEFAULT_MODEL;
+        const isDefault = m.id === defaultModel;
 
         const card = Utils.el('button', {
           type: 'button',
@@ -603,8 +610,8 @@ window.Events = (function () {
     }
 
     function updateStats() {
-      const total = CONFIG.AI.MODELS.length;
-      const meta = CONFIG.AI.MODELS.find(m => m.id === selected);
+      const total = models.length;
+      const meta = models.find(m => m.id === selected);
       statsBar.innerHTML = '';
       statsBar.appendChild(Utils.el('span', { class: 'model-stats-count' }, [
         Utils.toFa(total) + ' مدل'
@@ -636,12 +643,14 @@ window.Events = (function () {
     };
   }
 
-  /* ---------- تنظیمات ---------- */
+  /* ============================================================
+     تنظیمات
+     ============================================================ */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
     const aiKey = AI.getKey();
-    const currentModel = AI.getModel();
+    const currentModel = (typeof AI.getModel === 'function') ? AI.getModel() : '';
     const ghOK = !!(s.owner && s.repo && token);
     const aiOK = !!aiKey;
 
@@ -765,9 +774,12 @@ window.Events = (function () {
       GitHub.setToken(g('token'));
 
       AI.setKey(g('ai_key'));
-      const modelId = picker.getSelected();
-      AI.setModel(modelId);
-      const meta = AI.getModelMeta();
+      if (typeof AI.setModel === 'function') {
+        AI.setModel(picker.getSelected());
+      }
+      const meta = (typeof AI.getModelMeta === 'function')
+        ? AI.getModelMeta()
+        : { label: picker.getSelected() };
 
       Toast.success(`تنظیمات ذخیره شد — مدل: ${meta.label}`);
       Modal.close();
@@ -808,7 +820,8 @@ window.Events = (function () {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
       const modelId = picker.getSelected();
-      const meta = CONFIG.AI.MODELS.find(m => m.id === modelId) || { label: modelId };
+      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+      const meta = models.find(m => m.id === modelId) || { label: modelId };
 
       AI.setKey(key);
 
