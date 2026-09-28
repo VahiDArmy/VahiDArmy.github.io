@@ -32,9 +32,8 @@ window.AIFreePrompt = (function () {
       class: 'btn btn-primary', id: 'fp-send'
     }, ['ارسال']);
     const saveBtn = Utils.el('button', {
-      class: 'btn btn-soft', id: 'fp-save'
+      class: 'btn btn-soft', id: 'fp-save', disabled: true
     }, ['💾 ذخیره سؤال و جواب']);
-    saveBtn.hidden = true;
 
     const panel = buildPanel();
     const panelWrap = Utils.el('div', { class: 'freeprompt-response', hidden: true }, [panel.el]);
@@ -42,6 +41,15 @@ window.AIFreePrompt = (function () {
     let lastResponse = '';
     let lastPrompt = '';
     let lastModel = null;
+    let savedAlready = false;
+
+    /* ---- reset وضعیت ذخیره ---- */
+    function resetSaveState() {
+      savedAlready = false;
+      saveBtn.disabled = true;
+      saveBtn.classList.remove('is-saved');
+      saveBtn.innerHTML = '💾 ذخیره سؤال و جواب';
+    }
 
     /* ---- ارسال ---- */
     sendBtn.addEventListener('click', async function () {
@@ -69,7 +77,7 @@ window.AIFreePrompt = (function () {
       panelWrap.hidden = false;
       panel.setContent('');
       panel.setStatus('loading', 'در حال دریافت…');
-      saveBtn.hidden = true;
+      resetSaveState();
       lastResponse = '';
       lastPrompt = prompt;
 
@@ -92,9 +100,17 @@ window.AIFreePrompt = (function () {
         });
         panel.setStatus('done', 'انجام شد ✓');
         lastModel = (AI.getLastUsedModel && AI.getLastUsedModel()) || null;
-        saveBtn.hidden = false;
-        Toast.success('پاسخ آماده شد');
+
+        console.log('[FreePrompt] response received, length:', lastResponse.length);
+
+        if (lastResponse && lastResponse.trim()) {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '💾 ذخیره سؤال و جواب';
+        } else {
+          Toast.warning('پاسخ خالی بود');
+        }
       } catch (err) {
+        console.error('[FreePrompt] stream error:', err);
         panel.setStatus('error', 'خطا');
         panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
       } finally {
@@ -105,24 +121,56 @@ window.AIFreePrompt = (function () {
 
     /* ---- ذخیره ---- */
     saveBtn.addEventListener('click', function () {
-      if (!lastResponse) {
+      if (savedAlready) return;
+      if (!lastResponse || !lastResponse.trim()) {
         Toast.warning('هنوز پاسخی نیست');
         return;
       }
+      if (!lastPrompt || !lastPrompt.trim()) {
+        Toast.warning('پرامپت خالی است');
+        return;
+      }
+
       const titleId = titleSelect.value ? Number(titleSelect.value) : null;
       const titleContext = titleId ? ((DB.getTitle(titleId) || {}).title || '') : '';
+
+      console.log('[FreePrompt] saving conversation:', {
+        titleId: titleId,
+        titleContext: titleContext,
+        promptLen: lastPrompt.length,
+        responseLen: lastResponse.length,
+        hasModel: !!lastModel
+      });
+
       try {
-        DB.saveConversation({
+        const id = DB.saveConversation({
           title_id: titleId,
           title_context: titleContext,
           prompt: lastPrompt,
           response: lastResponse,
           ai_model: lastModel
         });
-        Toast.success('سؤال و جواب ذخیره شد ✅');
-        saveBtn.hidden = true;
+
+        console.log('[FreePrompt] saved with id:', id);
+
+        savedAlready = true;
+        saveBtn.disabled = true;
+        saveBtn.classList.add('is-saved');
+        saveBtn.innerHTML = '✅ ذخیره شد';
+
+        Toast.success('سؤال و جواب ذخیره شد', {
+          title: '✅ ذخیره',
+          duration: 5000,
+          action: {
+            label: '📚 نمایش در تاریخچه',
+            onClick: function () {
+              try { openHistory(); } catch (e) { console.error(e); }
+            }
+          }
+        });
       } catch (e) {
-        Toast.error('ذخیره ناموفق: ' + e.message);
+        console.error('[FreePrompt] save error:', e);
+        Toast.error('ذخیره ناموفق: ' + (e.message || 'خطای نامشخص'));
       }
     });
 
@@ -130,7 +178,7 @@ window.AIFreePrompt = (function () {
     promptArea.addEventListener('keydown', function (e) {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         e.preventDefault();
-        sendBtn.click();
+        if (!sendBtn.disabled) sendBtn.click();
       }
     });
 
@@ -251,7 +299,10 @@ window.AIFreePrompt = (function () {
      مودال تاریخچه
      ========================================================= */
   function openHistory() {
-    const all = DB.getAllConversations();
+    /* ---- همیشه از دیتابیس می‌خوانیم — نه از cache ---- */
+    let all = DB.getAllConversations();
+
+    console.log('[FreePrompt] history loaded:', all.length, 'items');
 
     const searchInput = Utils.el('input', {
       class: 'field-input',
@@ -261,6 +312,15 @@ window.AIFreePrompt = (function () {
     });
 
     const listWrap = Utils.el('div', { class: 'conversations-list' });
+    const countEl = Utils.el('div', { class: 'conversations-count' }, [
+      Utils.toFa(all.length) + ' پرامپت ذخیره‌شده'
+    ]);
+
+    function reload() {
+      all = DB.getAllConversations();
+      countEl.textContent = Utils.toFa(all.length) + ' پرامپت ذخیره‌شده';
+      renderList(searchInput.value);
+    }
 
     function renderList(query) {
       listWrap.innerHTML = '';
@@ -284,10 +344,7 @@ window.AIFreePrompt = (function () {
       filtered.forEach(function (c) {
         listWrap.appendChild(buildConvItem(c, function () {
           viewConversation(c, function () {
-            /* در صورت حذف، لیست رفرش شود */
-            all.length = 0;
-            DB.getAllConversations().forEach(function (x) { all.push(x); });
-            renderList(searchInput.value);
+            reload();
           });
         }));
       });
@@ -301,8 +358,18 @@ window.AIFreePrompt = (function () {
 
     const body = Utils.el('div', { class: 'conversations-body' }, [
       searchInput,
-      Utils.el('div', { class: 'conversations-count' }, [Utils.toFa(all.length) + ' پرامپت ذخیره‌شده']),
+      countEl,
       listWrap
+    ]);
+
+    const footer = Utils.el('div', { class: 'flex gap-3 w-full items-center' }, [
+      Utils.el('button', {
+        class: 'btn btn-ghost',
+        id: 'conv-refresh',
+        onclick: function () { reload(); Toast.info('تاریخچه بروزرسانی شد'); }
+      }, ['🔄 بروزرسانی']),
+      Utils.el('div', { class: 'flex-1' }),
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
     ]);
 
     Modal.open({
@@ -310,9 +377,7 @@ window.AIFreePrompt = (function () {
       icon: '📚',
       size: 'lg',
       body: body,
-      footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
-        Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
-      ])
+      footer: footer
     });
   }
 
@@ -379,8 +444,12 @@ window.AIFreePrompt = (function () {
             danger: true,
             icon: '🗑️',
             onConfirm: function () {
-              DB.deleteConversation(c.id);
-              Toast.success('حذف شد');
+              try {
+                DB.deleteConversation(c.id);
+                Toast.success('حذف شد');
+              } catch (e) {
+                Toast.error('حذف ناموفق: ' + e.message);
+              }
               Modal.close();
               setTimeout(function () {
                 if (typeof onDelete === 'function') onDelete();
@@ -428,31 +497,15 @@ window.AIFreePrompt = (function () {
 })();
 
 /* =========================================================
-   اتصال خودکار دکمه‌های مربوطه
+   اتصال دکمه‌های سایدبار
    ========================================================= */
 (function () {
   function bind() {
-    /* دکمه سایدبار */
     const sidebarBtn = document.getElementById('btn-free-prompt');
     if (sidebarBtn && !sidebarBtn.__fpBound) {
       sidebarBtn.__fpBound = true;
       sidebarBtn.addEventListener('click', function () {
         AIFreePrompt.open();
-      });
-    }
-
-    /* دکمه داخل جزئیات عنوان — با event delegation */
-    if (!document.__fpDelegated) {
-      document.__fpDelegated = true;
-      document.addEventListener('click', function (e) {
-        const btn = e.target.closest('[data-action="free-prompt-for-title"]');
-        if (!btn) return;
-        e.preventDefault();
-        e.stopPropagation();
-        const id = Number(btn.dataset.id);
-        const name = btn.dataset.title || '';
-        /* مودال جزئیات را نبند — فقط مودال پرامپت را روی آن باز کن */
-        AIFreePrompt.open({ titleId: id, titleName: name });
       });
     }
   }
@@ -462,7 +515,4 @@ window.AIFreePrompt = (function () {
   } else {
     bind();
   }
-
-  /* در صورت باز شدن مجدد مودال‌ها، دکمه‌ی سایدبار ممکن است از نو رندر شود */
-  window.addEventListener('load', bind);
 })();
