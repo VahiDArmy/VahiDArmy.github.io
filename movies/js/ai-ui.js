@@ -1,5 +1,5 @@
 /* =========================================================
-   رابط‌های کاربری AI (مودال‌ها)
+   رابط‌های کاربری AI
    ========================================================= */
 window.AIUI = (function () {
 
@@ -42,7 +42,7 @@ window.AIUI = (function () {
     return html;
   }
 
-  /* ---- پنل استریم بدون چشمک ---- */
+  /* ---- پنل استریم ---- */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
@@ -93,7 +93,6 @@ window.AIUI = (function () {
     return { panel, body, setStatus, setContent, appendText };
   }
 
-  /* ---- چک تنظیم بودن AI ---- */
   function requireAI() {
     if (window.AILog) {
       try { AILog.show(); } catch {}
@@ -102,7 +101,7 @@ window.AIUI = (function () {
     if (!AI.isConfigured()) {
       if (window.AILog) {
         try { AILog.error('✗ کلید OpenRouter تنظیم نشده است'); } catch {}
-        try { AILog.meta('کلید را از تنظیمات (⚙) → «هوش مصنوعی» وارد کنید'); } catch {}
+        try { AILog.meta('کلید را از تنظیمات (⚙) وارد کنید'); } catch {}
         try { AILog.scheduleAutoHide(); } catch {}
       }
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
@@ -116,19 +115,19 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     کارت تحلیل داستان — سازگار با ساختار قدیم و جدید
+     رندر تحلیل — با پشتیبانی از فرمت جدید (شیء) و قدیم (رشته)
      ============================================================ */
   function renderStoryAnalysis(container, sa, reason, category) {
     if (!sa && !reason) return;
     container.hidden = false;
     container.innerHTML = '';
 
-    /* --- سازگاری با فیلدهای قدیم --- */
     const respectScore = sa?.respects_intelligence_score
       ?? (typeof sa?.respects_intelligence === 'number' ? sa.respects_intelligence : null);
-    const respectEvidence = Array.isArray(sa?.respects_intelligence) ? sa.respects_intelligence : [];
+    const respectEvidence = Array.isArray(sa?.respects_intelligence)
+      && typeof sa.respects_intelligence[0] === 'string' ? sa.respects_intelligence : [];
 
-    /* --- دلیل اصلی --- */
+    /* ---- دلیل ---- */
     if (reason) {
       container.appendChild(Utils.el('div', {
         class: 'story-reason',
@@ -141,7 +140,7 @@ window.AIUI = (function () {
 
     if (!sa) return;
 
-    /* --- پیش‌درآمد توصیفی (فاز ۱) --- */
+    /* ---- توصیف بی‌طرف ---- */
     if (sa.neutral_premise || sa.neutral_structure) {
       const box = Utils.el('div', { class: 'story-neutral' }, [
         Utils.el('div', { class: 'story-neutral-label' }, ['توصیف بی‌طرف']),
@@ -157,31 +156,20 @@ window.AIUI = (function () {
       container.appendChild(box);
     }
 
-    /* --- امتیازها --- */
+    /* ---- امتیازها ---- */
     const scores = [];
-    if (sa.consistency_score != null) {
-      scores.push(scoreBar('انسجام داستانی', sa.consistency_score, 'consistency'));
-    }
-    if (respectScore != null) {
-      scores.push(scoreBar('احترام به هوش بیننده', respectScore, 'respect'));
-    }
-    if (sa.earns_ending_score != null) {
-      scores.push(scoreBar('پایانِ به‌دست‌آمده', sa.earns_ending_score, 'earn'));
-    }
-    if (sa.gossip_score != null) {
-      /* خاله‌زنکی: هرچه کمتر، بهتر — پس رنگ را معکوس می‌کنیم */
-      scores.push(scoreBar('خاله‌زنکی', sa.gossip_score, 'gossip', true));
-    }
-    if (scores.length) {
-      container.appendChild(Utils.el('div', { class: 'story-scores' }, scores));
-    }
+    if (sa.consistency_score != null) scores.push(scoreBar('انسجام داستانی', sa.consistency_score, 'consistency'));
+    if (respectScore != null) scores.push(scoreBar('احترام به هوش بیننده', respectScore, 'respect'));
+    if (sa.earns_ending_score != null) scores.push(scoreBar('پایانِ به‌دست‌آمده', sa.earns_ending_score, 'earn'));
+    if (sa.gossip_score != null) scores.push(scoreBar('خاله‌زنکی', sa.gossip_score, 'gossip', true));
+    if (scores.length) container.appendChild(Utils.el('div', { class: 'story-scores' }, scores));
 
-    /* --- کیفیت خاله‌زنکی --- */
+    /* ---- نوع خاله‌زنکی ---- */
     if (sa.gossip_quality && sa.gossip_quality !== 'absent') {
       const labels = {
         'used-well': '🟢 آگاهانه و ماهرانه به کار رفته',
-        'used-lazily': '🔴 تنبلانه — به‌عنوان عصا برای پیشبرد پیرنگ',
-        'mixed': '🟡 ترکیبی — هم استفاده‌ی خوب، هم ضعف'
+        'used-lazily': '🔴 تنبلانه — عصا برای پیشبرد پیرنگ',
+        'mixed': '🟡 ترکیبی — هم خوب، هم ضعیف'
       };
       if (labels[sa.gossip_quality]) {
         container.appendChild(Utils.el('div', {
@@ -194,12 +182,11 @@ window.AIUI = (function () {
       }
     }
 
-    /* --- حکم --- */
+    /* ---- حکم ---- */
     if (sa.verdict) {
-      const vk = verdictKey(sa.verdict);
       container.appendChild(Utils.el('div', {
         class: 'story-verdict',
-        dataset: { verdict: vk }
+        dataset: { verdict: verdictKey(sa.verdict) }
       }, [
         Utils.el('span', { class: 'story-verdict-icon' }, [verdictIcon(sa.verdict)]),
         Utils.el('div', {}, [
@@ -211,20 +198,55 @@ window.AIUI = (function () {
       ]));
     }
 
-    /* --- لیست‌ها --- */
-    const lists = [
+    /* ============================================================
+       🕳️ سوراخ‌های داستانی — فرمت جدید
+       ============================================================ */
+    if (Array.isArray(sa.plot_holes) && sa.plot_holes.length) {
+      container.appendChild(renderStructuredList({
+        title: '🕳️ سوراخ‌های داستانی',
+        kind: 'hole',
+        items: sa.plot_holes,
+        typeLabel: 'نوع'
+      }));
+    }
+
+    /* ============================================================
+       🤦 احمق فرض کردن بیننده — فرمت جدید
+       ============================================================ */
+    if (Array.isArray(sa.assumed_stupidity) && sa.assumed_stupidity.length) {
+      container.appendChild(renderStructuredList({
+        title: '🤦 لحظاتی که بیننده احمق فرض شد',
+        kind: 'dumb',
+        items: sa.assumed_stupidity,
+        typeLabel: 'نوع'
+      }));
+    }
+
+    /* ============================================================
+       🔍 تفکیک: شبه‌سوراخ‌ها
+       ============================================================ */
+    if (Array.isArray(sa.apparent_issues) && sa.apparent_issues.length) {
+      container.appendChild(renderStructuredList({
+        title: '🔍 چیزهایی که شبیه سوراخ‌اند ولی نیستند',
+        kind: 'apparent',
+        items: sa.apparent_issues,
+        typeLabel: 'دسته'
+      }));
+    }
+
+    /* ---- لیست‌های ساده‌ی دیگر ---- */
+    const simpleLists = [
       ['✨ نقاط قوت', sa.strengths, 'pos'],
       ['⚠️ نقاط ضعف', sa.weaknesses, 'neg'],
-      ['🕳️ سوراخ‌های داستانی', sa.plot_holes, 'hole'],
-      ['🤦 لحظاتی که بیننده احمق فرض شد', sa.assumed_stupidity, 'dumb'],
       ['🧠 لحظاتی که به هوش بیننده احترام گذاشته شد', respectEvidence, 'smart'],
       ['🎯 نتیجه‌هایی که به دست آمده', sa.earned_outcomes, 'earned'],
       ['💥 نتیجه‌هایی که تحمیل شده', sa.forced_outcomes, 'forced'],
       ['☕ شواهدِ خاله‌زنکی', sa.gossip_evidence, 'gossip']
     ];
 
-    lists.forEach(([title, arr, kind]) => {
+    simpleLists.forEach(([title, arr, kind]) => {
       if (!Array.isArray(arr) || !arr.length) return;
+      if (typeof arr[0] !== 'string') return;
       container.appendChild(Utils.el('div', {
         class: 'story-list',
         dataset: { kind }
@@ -236,7 +258,20 @@ window.AIUI = (function () {
       ]));
     });
 
-    /* --- نگاه مقابل (ضدتعصب) --- */
+    /* ---- پوشش سریال بلند ---- */
+    if (sa.coverage_note) {
+      container.appendChild(Utils.el('div', { class: 'story-coverage' }, [
+        Utils.el('div', { class: 'story-coverage-label' }, ['📺 پوشش تحلیل']),
+        Utils.el('div', { class: 'story-coverage-text' }, [sa.coverage_note]),
+        sa.coverage_recommendation
+          ? Utils.el('div', { class: 'story-coverage-rec' }, [
+              '💡 ' + sa.coverage_recommendation
+            ])
+          : null
+      ].filter(Boolean)));
+    }
+
+    /* ---- نگاه مقابل ---- */
     if (sa.counter_perspective && !/قابل توجهی وجود ندارد|وجود ندارد/i.test(sa.counter_perspective)) {
       container.appendChild(Utils.el('div', { class: 'story-counter' }, [
         Utils.el('div', { class: 'story-counter-label' }, ['⚖️ نگاه مقابل']),
@@ -244,7 +279,7 @@ window.AIUI = (function () {
       ]));
     }
 
-    /* --- تناقض با دسته‌بندی کاربر --- */
+    /* ---- ناهم‌خوانی ---- */
     if (sa.disagreement && !/همسو است|موافق/i.test(sa.disagreement)) {
       container.appendChild(Utils.el('div', { class: 'story-disagreement' }, [
         Utils.el('div', { class: 'story-disagreement-label' }, ['🤔 ناهم‌خوانی با دسته‌بندی']),
@@ -252,7 +287,7 @@ window.AIUI = (function () {
       ]));
     }
 
-    /* --- اطمینان --- */
+    /* ---- اطمینان ---- */
     if (sa.confidence != null) {
       container.appendChild(Utils.el('div', { class: 'story-confidence' }, [
         Utils.el('span', { class: 'story-confidence-label' }, ['اطمینانِ تحلیل:']),
@@ -263,16 +298,121 @@ window.AIUI = (function () {
     }
   }
 
+  /* ============================================================
+     رندر لیست ساختاریافته (برای plot_holes، assumed_stupidity، apparent_issues)
+     ============================================================ */
+  function renderStructuredList({ title, kind, items, typeLabel }) {
+    const wrap = Utils.el('div', {
+      class: 'story-list story-list-structured',
+      dataset: { kind }
+    });
+
+    wrap.appendChild(Utils.el('div', { class: 'story-list-title' }, [title]));
+
+    const list = Utils.el('div', { class: 'story-structured-list' });
+
+    items.forEach((item, idx) => {
+      /* اگر آیتم رشته بود (سازگاری با فرمت قدیم) */
+      if (typeof item === 'string') {
+        list.appendChild(Utils.el('div', { class: 'story-structured-item story-structured-item-plain' }, [
+          Utils.el('span', { class: 'story-structured-num' }, [Utils.toFa(idx + 1)]),
+          Utils.el('span', {}, [item])
+        ]));
+        return;
+      }
+
+      const sev = item.severity || '';
+      const sevClass = severityClass(sev);
+
+      const itemEl = Utils.el('div', {
+        class: 'story-structured-item',
+        dataset: { severity: sevClass }
+      });
+
+      /* سر آیتم: شماره + مکان + شدت */
+      const head = Utils.el('div', { class: 'story-structured-head' }, [
+        Utils.el('span', { class: 'story-structured-num' }, [Utils.toFa(idx + 1)]),
+        item.location
+          ? Utils.el('span', { class: 'story-structured-loc' }, [item.location])
+          : null,
+        sev
+          ? Utils.el('span', { class: 'story-structured-sev', dataset: { level: sevClass } }, [sev])
+          : null,
+        item.type
+          ? Utils.el('span', { class: 'story-structured-type' }, [item.type])
+          : null
+      ].filter(Boolean));
+      itemEl.appendChild(head);
+
+      /* صحنه */
+      if (item.scene) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['صحنه:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.scene])
+        ]));
+      }
+
+      /* چه اتفاقی افتاد / مشکل */
+      const mainIssue = item.issue || item.what_happened;
+      if (mainIssue) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, [
+            item.issue ? 'مشکل:' : 'اتفاق:'
+          ]),
+          Utils.el('span', { class: 'story-structured-v' }, [mainIssue])
+        ]));
+      }
+
+      /* چرا */
+      const why = item.why || item.why_assumes_stupidity || item.why_not_hole;
+      if (why) {
+        const k = item.why ? 'چرا سوراخ است:'
+          : item.why_assumes_stupidity ? 'چرا احمق‌فرض‌گیری است:'
+          : 'چرا سوراخ نیست:';
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, [k]),
+          Utils.el('span', { class: 'story-structured-v' }, [why])
+        ]));
+      }
+
+      /* دسته (برای apparent_issues) */
+      if (item.category) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['دسته:']),
+          Utils.el('span', { class: 'story-structured-v story-structured-tag' }, [item.category])
+        ]));
+      }
+
+      /* راه‌حل */
+      if (item.could_be_fixed) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row story-structured-fix' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['راه‌حل:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.could_be_fixed])
+        ]));
+      }
+
+      list.appendChild(itemEl);
+    });
+
+    wrap.appendChild(list);
+    return wrap;
+  }
+
+  function severityClass(sev) {
+    if (!sev) return 'unknown';
+    if (sev.includes('بحرانی')) return 'critical';
+    if (sev.includes('جدی')) return 'serious';
+    if (sev.includes('متوسط')) return 'medium';
+    if (sev.includes('کم')) return 'low';
+    return 'unknown';
+  }
+
   function scoreBar(label, value, kind, invert = false) {
     const v = Number(value);
     const pct = Math.max(0, Math.min(100, (v / 10) * 100));
     let color;
-    if (invert) {
-      /* خاله‌زنکی: کمتر = بهتر */
-      color = v <= 3 ? 'good' : v <= 6 ? 'warn' : 'bad';
-    } else {
-      color = v >= 7 ? 'good' : v >= 4 ? 'warn' : 'bad';
-    }
+    if (invert) color = v <= 3 ? 'good' : v <= 6 ? 'warn' : 'bad';
+    else color = v >= 7 ? 'good' : v >= 4 ? 'warn' : 'bad';
     return Utils.el('div', { class: 'score-row', dataset: { kind } }, [
       Utils.el('div', { class: 'score-label' }, [label]),
       Utils.el('div', { class: 'score-track' }, [
@@ -310,6 +450,7 @@ window.AIUI = (function () {
     const panel = createStreamPanel(`تحلیل: ${t.title}`);
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
     const storyBox = Utils.el('div', { class: 'story-analysis-box', hidden: true });
+    const deepBtnWrap = Utils.el('div', { class: 'ai-deep-wrap', hidden: true });
     const applyBtn = Utils.el('button', {
       class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true
     }, ['✅ اعمال روی دیتابیس']);
@@ -328,7 +469,8 @@ window.AIUI = (function () {
       ]),
       panel.panel,
       resultBox,
-      storyBox
+      storyBox,
+      deepBtnWrap
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
@@ -337,7 +479,7 @@ window.AIUI = (function () {
     ]);
 
     Modal.open({
-      title: 'استانداردسازی و تحلیل سه‌فازی',
+      title: 'تحلیل داستانی و شکار سوراخ‌ها',
       icon: '🔬',
       size: 'xl',
       body, footer
@@ -364,6 +506,8 @@ window.AIUI = (function () {
       .then((result) => {
         lastResult = result;
         panel.setStatus('انجام شد', 'done');
+
+        /* --- نتیجه --- */
         resultBox.hidden = false;
         resultBox.innerHTML = '';
         [
@@ -389,7 +533,7 @@ window.AIUI = (function () {
           ]));
         });
 
-        /* --- ساخت ساختار story_analysis از پاسخ AI --- */
+        /* --- ساخت story_analysis --- */
         const storyData = {
           neutral_premise: result.neutral_premise,
           neutral_structure: result.neutral_structure,
@@ -401,18 +545,20 @@ window.AIUI = (function () {
           confidence: result.confidence,
           strengths: result.strengths,
           weaknesses: result.weaknesses,
-          plot_holes: result.plot_holes,
-          assumed_stupidity: result.assumed_stupidity,
+          plot_holes: result.plot_holes || [],
+          assumed_stupidity: result.assumed_stupidity || [],
+          apparent_issues: result.apparent_issues || [],
           respects_intelligence: result.respects_intelligence,
           earned_outcomes: result.earned_outcomes,
           forced_outcomes: result.forced_outcomes,
           gossip_evidence: result.gossip_evidence,
+          coverage_note: result.coverage_note,
+          coverage_recommendation: result.coverage_recommendation,
           counter_perspective: result.counter_perspective,
           disagreement: result.disagreement,
           verdict: result.verdict,
           verdict_explanation: result.verdict_explanation
         };
-        /* نگه‌داشتن برای applyToDb */
         lastResult.story_analysis = storyData;
 
         storyBox.hidden = false;
@@ -423,12 +569,177 @@ window.AIUI = (function () {
           });
         }, 60);
 
+        /* --- دکمه‌ی تحلیل عمیق --- */
+        const seasons = Number(result.seasons) || 0;
+        if (seasons > 3) {
+          deepBtnWrap.hidden = false;
+          deepBtnWrap.innerHTML = '';
+          deepBtnWrap.appendChild(Utils.el('div', { class: 'ai-deep-card' }, [
+            Utils.el('div', { class: 'ai-deep-icon' }, ['🔬']),
+            Utils.el('div', { class: 'ai-deep-info' }, [
+              Utils.el('div', { class: 'ai-deep-title' }, [
+                `این سریال ${Utils.toFa(seasons)} فصل دارد`
+              ]),
+              Utils.el('div', { class: 'ai-deep-desc' }, [
+                'تحلیل فعلی ممکن است همه‌ی قسمت‌ها را عمیق پوشش نداده باشد. ',
+                'برای شکار کامل سوراخ‌ها و لحظات احمق‌فرض‌گیری، تحلیل فصل به فصل اجرا کن.'
+              ])
+            ]),
+            Utils.el('button', {
+              class: 'btn btn-primary',
+              id: 'btn-deep-analyze',
+              onclick: () => openSeasonalDeep(id, t.title, seasons, storyData)
+            }, ['🔬 شروع تحلیل عمیق فصل به فصل'])
+          ]));
+        }
+
         applyBtn.disabled = false;
       })
       .catch((err) => {
         panel.setStatus('خطا', 'error');
         panel.setContent(`<div class="ai-error">${Utils.esc(err.message)}</div>`);
       });
+  }
+
+  /* ============================================================
+     تحلیل عمیق فصل به فصل
+     ============================================================ */
+  function openSeasonalDeep(id, title, seasonsCount, existingStory) {
+    const chunkCount = Math.ceil(seasonsCount / 3);
+    const progressBox = Utils.el('div', { class: 'ai-deep-progress' });
+    const logBox = Utils.el('div', { class: 'ai-deep-log' });
+    const resultBox = Utils.el('div', { class: 'ai-deep-result', hidden: true });
+    const startBtn = Utils.el('button', { class: 'btn btn-primary', id: 'btn-start-deep' }, ['▶ شروع']);
+
+    const body = Utils.el('div', { class: 'ai-layout' }, [
+      Utils.el('div', { class: 'ai-deep-info-box' }, [
+        Utils.el('div', {}, [
+          `سریال «${title}» به ${Utils.toFa(chunkCount)} گروه تقسیم می‌شود:`
+        ]),
+        Utils.el('ul', { class: 'ai-deep-chunks' },
+          Array.from({ length: chunkCount }, (_, i) => {
+            const from = i * 3 + 1;
+            const to = Math.min(from + 2, seasonsCount);
+            return Utils.el('li', {}, [`فصل ${Utils.toFa(from)} تا ${Utils.toFa(to)}`]);
+          })
+        )
+      ]),
+      progressBox,
+      logBox,
+      resultBox
+    ]);
+
+    const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+      Utils.el('button', { class: 'btn btn-ghost', onclick: () => { AI.abort(); Modal.close(); } }, ['بستن']),
+      startBtn
+    ]);
+
+    Modal.open({
+      title: 'تحلیل عمیق فصل به فصل',
+      icon: '🔬',
+      size: 'xl',
+      body, footer
+    });
+
+    startBtn.addEventListener('click', async () => {
+      startBtn.disabled = true;
+      startBtn.innerHTML = '<span class="spinner"></span> در حال اجرا…';
+
+      if (window.AILog) {
+        try {
+          AILog.show();
+          AILog.request(`▸ شروع تحلیل عمیق: ${title}`);
+          AILog.meta(`${chunkCount} گروه فصل`);
+        } catch {}
+      }
+
+      const progressBar = Utils.el('div', { class: 'ai-deep-bar' }, [
+        Utils.el('div', { class: 'ai-deep-bar-fill', style: { width: '0%' } })
+      ]);
+      const progressText = Utils.el('div', { class: 'ai-deep-bar-text' }, [`۰ از ${Utils.toFa(chunkCount)}`]);
+      progressBox.innerHTML = '';
+      progressBox.appendChild(progressBar);
+      progressBox.appendChild(progressText);
+      logBox.innerHTML = '';
+
+      activeAbort = new AbortController();
+
+      try {
+        const result = await AIStandardize.analyzeSeasonalDeep(
+          title,
+          seasonsCount,
+          {
+            signal: activeAbort.signal,
+            onProgress: ({ current, total, fromSeason, toSeason, phase, partial, error }) => {
+              if (phase === 'start') {
+                logBox.prepend(Utils.el('div', { class: 'ai-deep-log-line', dataset: { state: 'start' } }, [
+                  `⏳ فصل ${Utils.toFa(fromSeason)}-${Utils.toFa(toSeason)} — شروع`
+                ]));
+              } else if (phase === 'done') {
+                const ph = partial?.plot_holes?.length || 0;
+                const as = partial?.assumed_stupidity?.length || 0;
+                logBox.prepend(Utils.el('div', { class: 'ai-deep-log-line', dataset: { state: 'done' } }, [
+                  `✅ فصل ${Utils.toFa(fromSeason)}-${Utils.toFa(toSeason)} — ${Utils.toFa(ph)} سوراخ، ${Utils.toFa(as)} احمق‌فرض`
+                ]));
+              } else if (phase === 'error') {
+                logBox.prepend(Utils.el('div', { class: 'ai-deep-log-line', dataset: { state: 'error' } }, [
+                  `✗ فصل ${Utils.toFa(fromSeason)}-${Utils.toFa(toSeason)} — ${error}`
+                ]));
+              }
+              const pct = (current / total) * 100;
+              progressBar.querySelector('.ai-deep-bar-fill').style.width = pct + '%';
+              progressText.textContent = `${Utils.toFa(current)} از ${Utils.toFa(total)}`;
+            }
+          }
+        );
+
+        /* ذخیره در دیتابیس */
+        AIStandardize.applyDeepToDb(id, result);
+
+        /* نمایش نتیجه */
+        resultBox.hidden = false;
+        resultBox.innerHTML = '';
+        resultBox.appendChild(Utils.el('div', { class: 'ai-deep-summary' }, [
+          Utils.el('div', { class: 'ai-deep-summary-title' }, ['✅ تحلیل عمیق کامل شد']),
+          Utils.el('div', { class: 'ai-deep-summary-stats' }, [
+            Utils.el('span', {}, [`🕳️ ${Utils.toFa(result.plot_holes.length)} سوراخ داستانی`]),
+            Utils.el('span', {}, [`🤦 ${Utils.toFa(result.assumed_stupidity.length)} احمق‌فرض‌گیری`]),
+            Utils.el('span', {}, [`🔍 ${Utils.toFa(result.apparent_issues.length)} شبه‌سوراخ`])
+          ])
+        ]));
+
+        const storyBox = Utils.el('div', { class: 'story-analysis-box' });
+        renderStoryAnalysis(storyBox, {
+          plot_holes: result.plot_holes,
+          assumed_stupidity: result.assumed_stupidity,
+          apparent_issues: result.apparent_issues,
+          coverage_note: result.coverage_note
+        }, null, DB.getTitle(id)?.category);
+        resultBox.appendChild(storyBox);
+
+        State.loadAll(); State.applyFilters();
+        Events.renderList(); Render.renderSidebarCounts();
+
+        if (window.AILog) {
+          try {
+            AILog.success(`✓ تحلیل عمیق کامل — ${result.plot_holes.length} سوراخ، ${result.assumed_stupidity.length} احمق‌فرض`);
+            AILog.scheduleAutoHide();
+          } catch {}
+        }
+
+        Toast.success('تحلیل عمیق ذخیره شد ✅');
+        startBtn.innerHTML = '✅ پایان یافت';
+      } catch (err) {
+        logBox.prepend(Utils.el('div', { class: 'ai-deep-log-line', dataset: { state: 'error' } }, [
+          `✗ خطا: ${err.message}`
+        ]));
+        startBtn.disabled = false;
+        startBtn.textContent = '🔄 تلاش مجدد';
+        if (window.AILog) {
+          try { AILog.error(`✗ ${err.message}`); AILog.scheduleAutoHide(); } catch {}
+        }
+      }
+    });
   }
 
   /* ============================================================
@@ -478,7 +789,6 @@ window.AIUI = (function () {
       startBtn.disabled = true;
       startBtn.innerHTML = '<span class="spinner"></span> در حال اجرا…';
       panel.setStatus('در حال پردازش…', 'loading');
-      if (window.AILog) { try { AILog.request(`▸ استانداردسازی سریع: ${titles.length} عنوان`); } catch {} }
 
       activeAbort = new AbortController();
       try {
@@ -489,7 +799,6 @@ window.AIUI = (function () {
             progressWrap.querySelector('.ai-progress-fill').style.width = pct + '%';
             progressWrap.querySelector('.ai-progress-text').textContent =
               `${Utils.toFa(done)} از ${Utils.toFa(total)}`;
-            if (window.AILog) { try { AILog.stream(`↓ ${done}/${total}`); } catch {} }
 
             const last = current[current.length - 1];
             if (last) {
@@ -515,9 +824,6 @@ window.AIUI = (function () {
         State.loadAll(); State.applyFilters();
         Events.renderList(); Render.renderSidebarCounts();
 
-        if (window.AILog) {
-          try { AILog.success(`✓ ${applied} از ${titles.length} استاندارد شد`); AILog.scheduleAutoHide(); } catch {}
-        }
         Toast.success(`${Utils.toFa(applied)} عنوان استاندارد شد`);
         panel.setContent(renderMarkdown(
           `## ✅ پایان\n\n- مجموع: **${Utils.toFa(titles.length)}**\n- موفق: **${Utils.toFa(applied)}**`
@@ -647,6 +953,7 @@ window.AIUI = (function () {
 
   return {
     openAnalyzeSingle,
+    openSeasonalDeep,
     openStandardizeBatch,
     openAnalysis,
     renderMarkdown,
