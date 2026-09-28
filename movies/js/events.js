@@ -50,7 +50,7 @@ window.Events = (function () {
       try { openSettings(); }
       catch (err) {
         console.error('[settings]', err);
-        Toast.error('باز کردن تنظیمات با خطا مواجه شد — کنسول را چک کن');
+        Toast.error('باز کردن تنظیمات با خطا مواجه شد');
       }
     });
 
@@ -517,7 +517,7 @@ window.Events = (function () {
   }
 
   /* ============================================================
-     انتخاب‌گر کارتی مدل
+     انتخاب‌گر کارتی مدل — با div برای سازگاری با موبایل
      ============================================================ */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
@@ -555,10 +555,13 @@ window.Events = (function () {
         const isActive = m.id === selected;
         const isDefault = m.id === defaultModel;
 
-        const card = Utils.el('button', {
-          type: 'button',
+        /* ✅ FIX: div به‌جای button — سازگار با flex-column در موبایل */
+        const card = Utils.el('div', {
           class: 'model-card' + (isActive ? ' is-active' : ''),
-          dataset: { model: m.id }
+          dataset: { model: m.id },
+          role: 'button',
+          tabindex: '0',
+          'aria-pressed': isActive ? 'true' : 'false'
         }, [
           Utils.el('div', { class: 'model-card-head' }, [
             Utils.el('div', { class: 'model-card-title' }, [
@@ -598,11 +601,19 @@ window.Events = (function () {
           Utils.el('div', { class: 'model-card-id' }, [m.id])
         ]);
 
-        card.addEventListener('click', () => {
+        function select() {
           selected = m.id;
           onSelect && onSelect(m.id);
           renderList(searchInput.value);
           updateStats();
+        }
+
+        card.addEventListener('click', select);
+        card.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            select();
+          }
         });
 
         listWrap.appendChild(card);
@@ -643,9 +654,7 @@ window.Events = (function () {
     };
   }
 
-  /* ============================================================
-     تنظیمات
-     ============================================================ */
+  /* ---------- تنظیمات ---------- */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
