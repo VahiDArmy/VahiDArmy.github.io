@@ -6,14 +6,15 @@
      ۲.  سر کارت، عنوان، متا، اکشن‌ها
      ۳.  بدنه و فوتر کارت
      ۴.  ستاره‌ها
-     ۵.  بج‌ها (دسته‌بندی، AI، انسجام)
+     ۵.  بج‌ها
      ۶.  دلیل سلیقه‌ای روی کارت
      ۷.  نمای لیستی
      ۸.  حالت خالی
-     ۹.  تحلیل داستانی (مودال + کارت)
-     ۱۰. لیست ساختاریافته (سوراخ، احمق‌فرض، شبه‌سوراخ)
-     ۱۱. تحلیل عمیق فصل‌به‌فصل
-     ۱۲. واکنش‌گرا
+     ۹.  تحلیل داستانی — دلیل
+     ۱۰. لیست ساده (رشته‌ای)
+     ۱۱. لیست ساختاریافته (سوراخ، احمق‌فرض)
+     ۱۲. تحلیل عمیق فصل‌به‌فصل
+     ۱۳. واکنش‌گرا
    ========================================================= */
 
 /* =========================================================
@@ -231,38 +232,6 @@
   filter: drop-shadow(0 0 4px rgba(139, 92, 255, 0.8));
 }
 
-.consistency-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-right: 6px;
-  padding: 1px 6px;
-  font-size: 10px;
-  font-weight: 700;
-  border-radius: var(--radius-pill);
-  font-family: var(--font-mono);
-  vertical-align: middle;
-  letter-spacing: 0.2px;
-}
-.consistency-badge[data-color="good"] {
-  background: rgba(61, 220, 151, 0.12);
-  color: var(--success);
-  box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.3);
-  text-shadow: 0 0 6px rgba(61, 220, 151, 0.7);
-}
-.consistency-badge[data-color="warn"] {
-  background: rgba(255, 204, 77, 0.12);
-  color: var(--warning);
-  box-shadow: inset 0 0 0 1px rgba(255, 204, 77, 0.3);
-  text-shadow: 0 0 6px rgba(255, 204, 77, 0.7);
-}
-.consistency-badge[data-color="bad"] {
-  background: rgba(255, 77, 94, 0.12);
-  color: var(--danger);
-  box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.3);
-  text-shadow: 0 0 6px rgba(255, 77, 94, 0.7);
-}
-
 /* =========================================================
    ۶. دلیل سلیقه‌ای روی کارت
    ========================================================= */
@@ -409,7 +378,7 @@
 }
 
 /* =========================================================
-   ۹. تحلیل داستانی (مودال + کارت)
+   ۹. تحلیل داستانی — دلیل
    ========================================================= */
 .story-analysis-box {
   display: flex;
@@ -417,38 +386,6 @@
   gap: 14px;
 }
 
-/* ---- توصیف بی‌طرف (فاز ۱) ---- */
-.story-neutral {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-1);
-  border-right: 3px solid var(--text-4);
-}
-.story-neutral-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--text-4);
-  margin-bottom: 8px;
-}
-.story-neutral-row {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0;
-  font-size: var(--fs-sm);
-  line-height: 1.7;
-}
-.story-neutral-k {
-  color: var(--text-4);
-  flex-shrink: 0;
-  min-width: 60px;
-  font-weight: 600;
-}
-.story-neutral-v { color: var(--text-2); }
-
-/* ---- دلیل اصلی ---- */
 .story-reason {
   padding: 14px 16px;
   border-radius: var(--radius-md);
@@ -484,125 +421,9 @@
   line-height: 1.85;
 }
 
-/* ---- امتیازها ---- */
-.story-scores {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 14px 16px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-1);
-  border-radius: var(--radius-md);
-}
-.score-row {
-  display: grid;
-  grid-template-columns: 130px 1fr 44px;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--fs-sm);
-}
-.score-label { color: var(--text-3); }
-.score-track {
-  height: 8px;
-  background: var(--bg-3);
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-  border: 1px solid var(--border-1);
-}
-.score-fill {
-  height: 100%;
-  border-radius: inherit;
-  transition: width 900ms var(--ease-out);
-  box-shadow: 0 0 12px -2px currentColor;
-}
-.score-fill[data-color="good"] {
-  background: linear-gradient(90deg, #3ddc97, #6ee7b7);
-  color: #3ddc97;
-}
-.score-fill[data-color="warn"] {
-  background: linear-gradient(90deg, #ffcc4d, #ffd87a);
-  color: #ffcc4d;
-}
-.score-fill[data-color="bad"] {
-  background: linear-gradient(90deg, #ff4d5e, #ff7a95);
-  color: #ff4d5e;
-}
-.score-num {
-  text-align: left;
-  font-weight: 700;
-  color: var(--text-1);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- نوع خاله‌زنکی ---- */
-.story-gossip-note {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-2);
-  font-size: var(--fs-sm);
-  background: var(--bg-2);
-}
-.story-gossip-note[data-kind="used-well"] {
-  background: rgba(61, 220, 151, 0.06);
-  border-color: rgba(61, 220, 151, 0.3);
-}
-.story-gossip-note[data-kind="used-lazily"] {
-  background: rgba(255, 77, 94, 0.06);
-  border-color: rgba(255, 77, 94, 0.3);
-}
-.story-gossip-note[data-kind="mixed"] {
-  background: rgba(255, 204, 77, 0.06);
-  border-color: rgba(255, 204, 77, 0.3);
-}
-.story-gossip-label {
-  font-weight: 700;
-  color: var(--text-3);
-  flex-shrink: 0;
-}
-
-/* ---- حکم ---- */
-.story-verdict {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-2);
-  background: var(--bg-2);
-}
-.story-verdict[data-verdict="match"] {
-  background: rgba(61, 220, 151, 0.06);
-  border-color: rgba(61, 220, 151, 0.3);
-}
-.story-verdict[data-verdict="partial"] {
-  background: rgba(255, 204, 77, 0.06);
-  border-color: rgba(255, 204, 77, 0.3);
-}
-.story-verdict[data-verdict="against"] {
-  background: rgba(255, 77, 94, 0.06);
-  border-color: rgba(255, 77, 94, 0.3);
-}
-.story-verdict-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 6px currentColor);
-}
-.story-verdict-title {
-  font-size: var(--fs-md);
-  font-weight: 700;
-  color: var(--text-1);
-}
-.story-verdict-desc {
-  font-size: var(--fs-xs);
-  color: var(--text-3);
-  margin-top: 2px;
-  line-height: 1.6;
-}
-
-/* ---- لیست ساده (رشته‌ای) ---- */
+/* =========================================================
+   ۱۰. لیست ساده (رشته‌ای)
+   ========================================================= */
 .story-list {
   padding: 12px 16px;
   border-radius: var(--radius-md);
@@ -621,11 +442,8 @@
 .story-list[data-kind="neg"]::before { background: var(--warning); }
 .story-list[data-kind="hole"]::before { background: var(--danger); }
 .story-list[data-kind="dumb"]::before { background: var(--hate); }
-.story-list[data-kind="smart"]::before { background: var(--good); }
 .story-list[data-kind="earned"]::before { background: #3ddc97; }
 .story-list[data-kind="forced"]::before { background: #ff7a95; }
-.story-list[data-kind="gossip"]::before { background: #c084fc; }
-.story-list[data-kind="apparent"]::before { background: #a78bfa; }
 
 .story-list-title {
   font-size: var(--fs-xs);
@@ -649,105 +467,11 @@
 .story-list[data-kind="dumb"] li::marker { color: var(--hate); }
 .story-list[data-kind="pos"] li::marker { color: var(--success); }
 .story-list[data-kind="neg"] li::marker { color: var(--warning); }
-.story-list[data-kind="smart"] li::marker { color: var(--good); }
 .story-list[data-kind="earned"] li::marker { color: #3ddc97; }
 .story-list[data-kind="forced"] li::marker { color: #ff7a95; }
-.story-list[data-kind="gossip"] li::marker { color: #c084fc; }
-.story-list[data-kind="apparent"] li::marker { color: #a78bfa; }
-
-/* ---- نگاه مقابل (ضدتعصب) ---- */
-.story-counter {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(77, 171, 247, 0.05);
-  border: 1px solid rgba(77, 171, 247, 0.25);
-  border-right: 3px solid var(--good);
-}
-.story-counter-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--good);
-  margin-bottom: 6px;
-  text-shadow: 0 0 8px rgba(77, 171, 247, 0.6);
-}
-.story-counter-text {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.8;
-}
-
-/* ---- ناهم‌خوانی با دسته‌بندی ---- */
-.story-disagreement {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 159, 67, 0.05);
-  border: 1px solid rgba(255, 159, 67, 0.28);
-  border-right: 3px solid var(--hate);
-}
-.story-disagreement-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--hate);
-  margin-bottom: 6px;
-  text-shadow: 0 0 8px rgba(255, 159, 67, 0.6);
-}
-.story-disagreement-text {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.8;
-}
-
-/* ---- اطمینان ---- */
-.story-confidence {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: var(--fs-xs);
-  color: var(--text-4);
-}
-.story-confidence-label { font-weight: 600; }
-.story-confidence-value {
-  color: var(--text-2);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---- پوشش سریال بلند ---- */
-.story-coverage {
-  padding: 12px 16px;
-  background: rgba(139, 92, 255, 0.05);
-  border: 1px solid rgba(139, 92, 255, 0.2);
-  border-right: 3px solid var(--accent);
-  border-radius: var(--radius-md);
-}
-.story-coverage-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--accent-2);
-  margin-bottom: 6px;
-}
-.story-coverage-text {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.8;
-  white-space: pre-wrap;
-}
-.story-coverage-rec {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border-1);
-  font-size: var(--fs-xs);
-  color: var(--text-3);
-  font-style: italic;
-}
 
 /* =========================================================
-   ۱۰. لیست ساختاریافته — سوراخ، احمق‌فرض، شبه‌سوراخ
+   ۱۱. لیست ساختاریافته
    ========================================================= */
 .story-list-structured {
   padding: 14px 16px;
@@ -878,23 +602,6 @@
   color: var(--text-2);
 }
 
-.story-structured-fix {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed var(--border-1);
-}
-.story-structured-fix .story-structured-k { color: var(--success); }
-.story-structured-fix .story-structured-v {
-  color: var(--text-1);
-  font-style: italic;
-}
-
-.story-structured-tag {
-  color: var(--accent-2);
-  font-weight: 600;
-}
-
-/* آیتم‌های رشته‌ای (سازگاری با فرمت قدیم) */
 .story-structured-item-plain {
   display: grid;
   grid-template-columns: 24px 1fr;
@@ -903,10 +610,8 @@
 }
 
 /* =========================================================
-   ۱۱. تحلیل عمیق فصل‌به‌فصل
+   ۱۲. تحلیل عمیق فصل‌به‌فصل
    ========================================================= */
-
-/* ---- کارت دکمه‌ی شروع ---- */
 .ai-deep-wrap { padding: 4px 0; }
 
 .ai-deep-card {
@@ -943,7 +648,6 @@
   line-height: 1.6;
 }
 
-/* ---- اطلاعات چانک‌ها ---- */
 .ai-deep-info-box {
   padding: 14px 16px;
   background: var(--bg-2);
@@ -961,7 +665,6 @@
 }
 .ai-deep-chunks li { margin: 3px 0; }
 
-/* ---- نوار پیشرفت ---- */
 .ai-deep-progress { margin: 12px 0; }
 .ai-deep-bar {
   height: 8px;
@@ -985,7 +688,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- لاگ زنده ---- */
 .ai-deep-log {
   display: flex;
   flex-direction: column;
@@ -1015,7 +717,6 @@
   color: var(--accent-2);
 }
 
-/* ---- نتیجه ---- */
 .ai-deep-result { margin-top: 14px; }
 .ai-deep-summary {
   padding: 14px 16px;
@@ -1040,7 +741,7 @@
 }
 
 /* =========================================================
-   ۱۲. واکنش‌گرا
+   ۱۳. واکنش‌گرا
    ========================================================= */
 @media (max-width: 720px) {
   .story-structured-row {
