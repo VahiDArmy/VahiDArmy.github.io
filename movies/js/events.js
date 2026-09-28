@@ -71,7 +71,6 @@ window.Events = (function () {
     });
   }
 
-  /* ---------- بک‌دراپ سایدبار ---------- */
   function toggleSidebarBackdrop(show) {
     let bd = document.querySelector('.sidebar-backdrop');
     if (show && !bd) {
@@ -156,7 +155,6 @@ window.Events = (function () {
     document.getElementById('btn-pull')?.addEventListener('click', pullFromGitHub);
     document.getElementById('btn-push')?.addEventListener('click', pushToGitHub);
 
-    /* ---- AI ---- */
     document.getElementById('btn-ai-batch')?.addEventListener('click', () => AIUI.openStandardizeBatch());
     document.getElementById('btn-ai-analyze')?.addEventListener('click', () => AIUI.openAnalysis());
   }
@@ -213,20 +211,17 @@ window.Events = (function () {
     });
   }
 
-  /* ---------- شبکه ---------- */
   function bindNetwork() {
     window.addEventListener('online', () => { updateSyncStatus('online'); Toast.success('اتصال برقرار شد'); });
     window.addEventListener('offline', () => { updateSyncStatus('offline'); Toast.warning('اتصال قطع شد'); });
   }
 
-  /* ---------- تغییرات state ---------- */
   function bindState() {
     State.on('title:added', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:updated', () => { renderList(); Render.renderSidebarCounts(); });
     State.on('title:deleted', () => { renderList(); Render.renderSidebarCounts(); });
   }
 
-  /* ---------- رندر لیست ---------- */
   function renderList() {
     const grid = document.getElementById('grid');
     const s = State.get();
@@ -318,7 +313,6 @@ window.Events = (function () {
       ])
     ]));
 
-    /* ---- فیلد دلیل سلیقه‌ای ---- */
     form.appendChild(Utils.el('div', { class: 'field' }, [
       Utils.el('label', { class: 'field-label' }, [
         'چرا؟ ',
@@ -432,7 +426,6 @@ window.Events = (function () {
     return data;
   }
 
-  /* ---------- حذف ---------- */
   function confirmDelete(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -483,7 +476,6 @@ window.Events = (function () {
         Utils.el('div', { class: 'detail-notes' }, [t.summary])
       ]) : null,
 
-      /* ---- تحلیل داستانی ---- */
       (t.reason || t.story_analysis) ? (() => {
         const box = Utils.el('div', { class: 'story-analysis-box mb-3' });
         AIUI.renderStoryAnalysis(box, t.story_analysis, t.reason, t.category);
@@ -519,11 +511,137 @@ window.Events = (function () {
     ]);
   }
 
+  /* ============================================================
+     انتخاب‌گر کارتی مدل
+     ============================================================ */
+  function buildModelPicker(currentModelId, onSelect) {
+    let selected = currentModelId;
+
+    const searchInput = Utils.el('input', {
+      class: 'field-input model-search',
+      type: 'text',
+      placeholder: 'جستجو در مدل‌ها…',
+      autocomplete: 'off'
+    });
+
+    const listWrap = Utils.el('div', { class: 'model-list' });
+    const statsBar = Utils.el('div', { class: 'model-stats' });
+
+    function renderList(query = '') {
+      listWrap.innerHTML = '';
+      const q = Utils.normalizeFa(query).toLowerCase();
+
+      const filtered = CONFIG.AI.MODELS.filter(m => {
+        if (!q) return true;
+        const hay = Utils.normalizeFa(
+          `${m.label} ${m.vendor} ${m.id} ${(m.tags || []).join(' ')} ${m.note}`
+        ).toLowerCase();
+        return hay.includes(q);
+      });
+
+      if (!filtered.length) {
+        listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, ['مدلی با این جستجو پیدا نشد']));
+        return;
+      }
+
+      filtered.forEach(m => {
+        const isActive = m.id === selected;
+        const isDefault = m.id === CONFIG.AI.DEFAULT_MODEL;
+
+        const card = Utils.el('button', {
+          type: 'button',
+          class: 'model-card' + (isActive ? ' is-active' : ''),
+          dataset: { model: m.id }
+        }, [
+          Utils.el('div', { class: 'model-card-head' }, [
+            Utils.el('div', { class: 'model-card-title' }, [
+              Utils.el('span', { class: 'model-card-label' }, [m.label]),
+              Utils.el('span', { class: 'model-card-vendor' }, [m.vendor])
+            ]),
+            Utils.el('div', { class: 'model-card-badges' }, [
+              isDefault ? Utils.el('span', { class: 'model-badge model-badge-default' }, ['پیش‌فرض']) : null,
+              m.recommended ? Utils.el('span', { class: 'model-badge model-badge-rec' }, ['★ پیشنهادی']) : null,
+              isActive ? Utils.el('span', { class: 'model-badge model-badge-active' }, ['✓ انتخاب‌شده']) : null
+            ].filter(Boolean))
+          ]),
+
+          Utils.el('div', { class: 'model-card-meta' }, [
+            Utils.el('span', { class: 'model-meta-item' }, [
+              Utils.el('span', { class: 'model-meta-icon' }, ['⚙']),
+              m.size
+            ]),
+            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
+            Utils.el('span', { class: 'model-meta-item' }, [
+              Utils.el('span', { class: 'model-meta-icon' }, ['📐']),
+              m.context + ' ctx'
+            ]),
+            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
+            Utils.el('span', { class: 'model-meta-item' }, [
+              Utils.el('span', { class: 'model-meta-icon' }, ['⚡']),
+              m.speed + ' t/s'
+            ])
+          ]),
+
+          m.note ? Utils.el('div', { class: 'model-card-note' }, [m.note]) : null,
+
+          (m.tags && m.tags.length) ? Utils.el('div', { class: 'model-card-tags' },
+            m.tags.map(t => Utils.el('span', { class: 'model-tag' }, [t]))
+          ) : null,
+
+          Utils.el('div', { class: 'model-card-id' }, [m.id])
+        ]);
+
+        card.addEventListener('click', () => {
+          selected = m.id;
+          onSelect && onSelect(m.id);
+          renderList(searchInput.value);
+          updateStats();
+        });
+
+        listWrap.appendChild(card);
+      });
+    }
+
+    function updateStats() {
+      const total = CONFIG.AI.MODELS.length;
+      const meta = CONFIG.AI.MODELS.find(m => m.id === selected);
+      statsBar.innerHTML = '';
+      statsBar.appendChild(Utils.el('span', { class: 'model-stats-count' }, [
+        Utils.toFa(total) + ' مدل'
+      ]));
+      if (meta) {
+        statsBar.appendChild(Utils.el('span', { class: 'model-stats-sep' }, ['·']));
+        statsBar.appendChild(Utils.el('span', { class: 'model-stats-current' }, [
+          'فعال: ' + meta.label
+        ]));
+      }
+    }
+
+    searchInput.addEventListener('input', Utils.debounce((e) => {
+      renderList(e.target.value);
+    }, 120));
+
+    renderList();
+    updateStats();
+
+    const wrap = Utils.el('div', { class: 'model-picker' }, [
+      searchInput,
+      statsBar,
+      listWrap
+    ]);
+
+    return {
+      el: wrap,
+      getSelected: () => selected
+    };
+  }
+
   /* ---------- تنظیمات ---------- */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
     const aiKey = AI.getKey();
+    const currentModel = AI.getModel();
     const ghOK = !!(s.owner && s.repo && token);
     const aiOK = !!aiKey;
 
@@ -540,6 +658,7 @@ window.Events = (function () {
       });
     }
 
+    /* ---- گیت‌هاب ---- */
     const githubSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🔗']),
@@ -567,25 +686,33 @@ window.Events = (function () {
       ])
     ]);
 
+    /* ---- AI ---- */
+    const picker = buildModelPicker(currentModel, () => {});
+
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🪄']),
         Utils.el('div', { class: 'settings-info' }, [
           Utils.el('h4', {}, ['هوش مصنوعی OpenRouter']),
-          Utils.el('p', {}, ['تحلیل داستانی و استانداردسازی'])
+          Utils.el('p', {}, ['انتخاب مدل + کلید API'])
         ]),
         Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'تنظیم نشده'])
       ]),
       Utils.el('div', { class: 'settings-fields' }, [
         row('کلید API', input('ai_key', aiKey, {
           type: 'password', placeholder: 'sk-or-v1-...', autocomplete: 'new-password'
-        }), `مدل: ${CONFIG.AI.MODEL}`)
+        }), 'همان توکن OpenRouter — مشترک بین همه‌ی مدل‌ها')
+      ]),
+      Utils.el('div', { class: 'settings-fieldset' }, [
+        Utils.el('div', { class: 'settings-fieldset-label' }, ['مدل فعال']),
+        picker.el
       ]),
       Utils.el('div', { class: 'settings-hint' }, [
         Utils.el('span', { class: 'hint-icon' }, ['✨']),
         Utils.el('div', {}, [
           'کلید رایگان از ',
-          Utils.el('a', { href: 'https://openrouter.ai/keys', target: '_blank', rel: 'noopener' }, ['openrouter.ai/keys'])
+          Utils.el('a', { href: 'https://openrouter.ai/keys', target: '_blank', rel: 'noopener' }, ['openrouter.ai/keys']),
+          ' — همه‌ی مدل‌ها با همین کلید کار می‌کنند.'
         ])
       ]),
       Utils.el('div', { class: 'settings-tests' }, [
@@ -608,7 +735,7 @@ window.Events = (function () {
       Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
     ]);
 
-    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'lg', body, footer });
+    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'xl', body, footer });
 
     function refreshStatus() {
       const ghEl = githubSection.querySelector('.settings-status');
@@ -622,28 +749,41 @@ window.Events = (function () {
       aiEl.dataset.status = aiOk ? 'ok' : 'missing';
       aiEl.textContent = aiOk ? 'فعال' : 'تنظیم نشده';
     }
-    body.querySelectorAll('.field-input').forEach(inp => inp.addEventListener('input', refreshStatus));
+    body.querySelectorAll('.field-input').forEach(inp => {
+      inp.addEventListener('input', refreshStatus);
+    });
 
+    /* ---- ذخیره ---- */
     document.getElementById('btn-save-settings').addEventListener('click', () => {
       const g = (n) => body.querySelector(`[name="${n}"]`).value.trim();
+
       GitHub.saveSettings({
         owner: g('owner'), repo: g('repo'),
         branch: g('branch') || 'master',
         path: g('path') || 'movies/data/cinema.sqlite'
       });
       GitHub.setToken(g('token'));
+
       AI.setKey(g('ai_key'));
-      Toast.success('تنظیمات ذخیره شد');
+      const modelId = picker.getSelected();
+      AI.setModel(modelId);
+      const meta = AI.getModelMeta();
+
+      Toast.success(`تنظیمات ذخیره شد — مدل: ${meta.label}`);
       Modal.close();
       refreshSyncStatus();
+
       if (window.AILog && g('ai_key')) {
         try {
-          AILog.show(); AILog.success('✓ کلید AI ذخیره شد');
+          AILog.show();
+          AILog.success('✓ کلید AI و مدل ذخیره شد');
+          AILog.meta(`مدل فعال: ${meta.label}`);
           AILog.scheduleAutoHide();
         } catch {}
       }
     });
 
+    /* ---- تست گیت‌هاب ---- */
     document.getElementById('btn-test-conn').addEventListener('click', async (e) => {
       const btn = e.currentTarget; const old = btn.textContent;
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
@@ -663,19 +803,28 @@ window.Events = (function () {
       finally { btn.disabled = false; btn.textContent = old; }
     });
 
+    /* ---- تست AI ---- */
     document.getElementById('btn-test-ai').addEventListener('click', async (e) => {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
+      const modelId = picker.getSelected();
+      const meta = CONFIG.AI.MODELS.find(m => m.id === modelId) || { label: modelId };
+
       AI.setKey(key);
-      if (window.AILog) { try { AILog.show(); AILog.info('▸ شروع تست AI'); } catch {} }
+
+      if (window.AILog) {
+        try { AILog.show(); AILog.info('▸ شروع تست AI'); AILog.meta(`مدل: ${meta.label}`); } catch {}
+      }
       if (!key) {
         if (window.AILog) { try { AILog.error('✗ کلید AI وارد نشده'); AILog.scheduleAutoHide(); } catch {} }
         Toast.warning('ابتدا کلید را وارد کنید'); return;
       }
+
       const old = btn.textContent;
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
         await AI.chatStream({
+          model: modelId,
           messages: [
             { role: 'system', content: 'پاسخ فقط کلمه «سلام» باشد.' },
             { role: 'user', content: 'بگو سلام' }
@@ -683,7 +832,7 @@ window.Events = (function () {
           temperature: 0,
           onToken: () => {}
         });
-        Toast.success('اتصال به OpenRouter موفق ✅');
+        Toast.success(`اتصال به ${meta.label} موفق ✅`);
       } catch (err) { Toast.error(err.message || 'خطا'); }
       finally { btn.disabled = false; btn.textContent = old; }
     });
