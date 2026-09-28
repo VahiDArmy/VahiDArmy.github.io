@@ -43,11 +43,11 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     badge مدل — تابع مشترک
+     badge مدل
      ============================================================ */
   function buildModelBadge(info) {
     if (!info) return null;
-    const wrap = Utils.el('div', { class: 'ai-model-badge' }, [
+    return Utils.el('div', { class: 'ai-model-badge' }, [
       Utils.el('span', { class: 'ai-model-badge-icon' }, ['🪄']),
       Utils.el('span', { class: 'ai-model-badge-label' }, ['تولید شده با:']),
       Utils.el('span', { class: 'ai-model-badge-value' }, [info.label]),
@@ -55,19 +55,15 @@ window.AIUI = (function () {
         ? Utils.el('span', { class: 'ai-model-badge-vendor' }, [info.vendor])
         : null,
       info.meta && info.meta.speed && info.meta.speed !== '—'
-        ? Utils.el('span', { class: 'ai-model-badge-meta' }, [
-            '⚡ ' + info.meta.speed + ' t/s'
-          ])
+        ? Utils.el('span', { class: 'ai-model-badge-meta' }, ['⚡ ' + info.meta.speed + ' t/s'])
         : null
     ].filter(Boolean));
-    return wrap;
   }
 
   function appendModelBadge(container) {
     if (!container) return;
     const info = AI.getLastUsedModel && AI.getLastUsedModel();
     if (!info) return;
-    /* حذف badge قدیمی اگر هست */
     const old = container.querySelector(':scope > .ai-model-badge');
     if (old) old.remove();
     const badge = buildModelBadge(info);
@@ -158,18 +154,14 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     رندر تحلیل داستانی
+     رندر تحلیل داستانی — فقط فیلدهای اصلی
      ============================================================ */
   function renderStoryAnalysis(container, sa, reason, category) {
     if (!sa && !reason) return;
     container.hidden = false;
     container.innerHTML = '';
 
-    const respectScore = sa?.respects_intelligence_score
-      ?? (typeof sa?.respects_intelligence === 'number' ? sa.respects_intelligence : null);
-    const respectEvidence = Array.isArray(sa?.respects_intelligence)
-      && typeof sa.respects_intelligence[0] === 'string' ? sa.respects_intelligence : [];
-
+    /* ---- چرا؟ ---- */
     if (reason) {
       container.appendChild(Utils.el('div', {
         class: 'story-reason',
@@ -182,60 +174,7 @@ window.AIUI = (function () {
 
     if (!sa) return;
 
-    if (sa.neutral_premise || sa.neutral_structure) {
-      const box = Utils.el('div', { class: 'story-neutral' }, [
-        Utils.el('div', { class: 'story-neutral-label' }, ['توصیف بی‌طرف']),
-        sa.neutral_premise ? Utils.el('div', { class: 'story-neutral-row' }, [
-          Utils.el('span', { class: 'story-neutral-k' }, ['داستان:']),
-          Utils.el('span', { class: 'story-neutral-v' }, [sa.neutral_premise])
-        ]) : null,
-        sa.neutral_structure ? Utils.el('div', { class: 'story-neutral-row' }, [
-          Utils.el('span', { class: 'story-neutral-k' }, ['ساختار:']),
-          Utils.el('span', { class: 'story-neutral-v' }, [sa.neutral_structure])
-        ]) : null
-      ].filter(Boolean));
-      container.appendChild(box);
-    }
-
-    const scores = [];
-    if (sa.consistency_score != null) scores.push(scoreBar('انسجام داستانی', sa.consistency_score, 'consistency'));
-    if (respectScore != null) scores.push(scoreBar('احترام به هوش بیننده', respectScore, 'respect'));
-    if (sa.earns_ending_score != null) scores.push(scoreBar('پایانِ به‌دست‌آمده', sa.earns_ending_score, 'earn'));
-    if (sa.gossip_score != null) scores.push(scoreBar('خاله‌زنکی', sa.gossip_score, 'gossip', true));
-    if (scores.length) container.appendChild(Utils.el('div', { class: 'story-scores' }, scores));
-
-    if (sa.gossip_quality && sa.gossip_quality !== 'absent') {
-      const labels = {
-        'used-well': '🟢 آگاهانه و ماهرانه به کار رفته',
-        'used-lazily': '🔴 تنبلانه — عصا برای پیشبرد پیرنگ',
-        'mixed': '🟡 ترکیبی — هم خوب، هم ضعیف'
-      };
-      if (labels[sa.gossip_quality]) {
-        container.appendChild(Utils.el('div', {
-          class: 'story-gossip-note',
-          dataset: { kind: sa.gossip_quality }
-        }, [
-          Utils.el('span', { class: 'story-gossip-label' }, ['نوعِ خاله‌زنکی:']),
-          Utils.el('span', {}, [labels[sa.gossip_quality]])
-        ]));
-      }
-    }
-
-    if (sa.verdict) {
-      container.appendChild(Utils.el('div', {
-        class: 'story-verdict',
-        dataset: { verdict: verdictKey(sa.verdict) }
-      }, [
-        Utils.el('span', { class: 'story-verdict-icon' }, [verdictIcon(sa.verdict)]),
-        Utils.el('div', {}, [
-          Utils.el('div', { class: 'story-verdict-title' }, [sa.verdict]),
-          sa.verdict_explanation
-            ? Utils.el('div', { class: 'story-verdict-desc' }, [sa.verdict_explanation])
-            : null
-        ].filter(Boolean))
-      ]));
-    }
-
+    /* ---- سوراخ‌های داستانی ---- */
     if (Array.isArray(sa.plot_holes) && sa.plot_holes.length) {
       container.appendChild(renderStructuredList({
         title: '🕳️ سوراخ‌های داستانی',
@@ -244,6 +183,7 @@ window.AIUI = (function () {
       }));
     }
 
+    /* ---- احمق فرض کردن بیننده ---- */
     if (Array.isArray(sa.assumed_stupidity) && sa.assumed_stupidity.length) {
       container.appendChild(renderStructuredList({
         title: '🤦 لحظاتی که بیننده احمق فرض شد',
@@ -252,21 +192,12 @@ window.AIUI = (function () {
       }));
     }
 
-    if (Array.isArray(sa.apparent_issues) && sa.apparent_issues.length) {
-      container.appendChild(renderStructuredList({
-        title: '🔍 چیزهایی که شبیه سوراخ‌اند ولی نیستند',
-        kind: 'apparent',
-        items: sa.apparent_issues
-      }));
-    }
-
+    /* ---- لیست‌های ساده ---- */
     const simpleLists = [
       ['✨ نقاط قوت', sa.strengths, 'pos'],
       ['⚠️ نقاط ضعف', sa.weaknesses, 'neg'],
-      ['🧠 لحظاتی که به هوش بیننده احترام گذاشته شد', respectEvidence, 'smart'],
       ['🎯 نتیجه‌هایی که به دست آمده', sa.earned_outcomes, 'earned'],
-      ['💥 نتیجه‌هایی که تحمیل شده', sa.forced_outcomes, 'forced'],
-      ['☕ شواهدِ خاله‌زنکی', sa.gossip_evidence, 'gossip']
+      ['💥 نتیجه‌هایی که تحمیل شده', sa.forced_outcomes, 'forced']
     ];
 
     simpleLists.forEach(([title, arr, kind]) => {
@@ -280,43 +211,10 @@ window.AIUI = (function () {
         Utils.el('ul', {}, arr.map(item => Utils.el('li', {}, [String(item)])))
       ]));
     });
-
-    if (sa.coverage_note) {
-      container.appendChild(Utils.el('div', { class: 'story-coverage' }, [
-        Utils.el('div', { class: 'story-coverage-label' }, ['📺 پوشش تحلیل']),
-        Utils.el('div', { class: 'story-coverage-text' }, [sa.coverage_note]),
-        sa.coverage_recommendation
-          ? Utils.el('div', { class: 'story-coverage-rec' }, ['💡 ' + sa.coverage_recommendation])
-          : null
-      ].filter(Boolean)));
-    }
-
-    if (sa.counter_perspective && !/قابل توجهی وجود ندارد|وجود ندارد/i.test(sa.counter_perspective)) {
-      container.appendChild(Utils.el('div', { class: 'story-counter' }, [
-        Utils.el('div', { class: 'story-counter-label' }, ['⚖️ نگاه مقابل']),
-        Utils.el('div', { class: 'story-counter-text' }, [sa.counter_perspective])
-      ]));
-    }
-
-    if (sa.disagreement && !/همسو است|موافق/i.test(sa.disagreement)) {
-      container.appendChild(Utils.el('div', { class: 'story-disagreement' }, [
-        Utils.el('div', { class: 'story-disagreement-label' }, ['🤔 ناهم‌خوانی با دسته‌بندی']),
-        Utils.el('div', { class: 'story-disagreement-text' }, [sa.disagreement])
-      ]));
-    }
-
-    if (sa.confidence != null) {
-      container.appendChild(Utils.el('div', { class: 'story-confidence' }, [
-        Utils.el('span', { class: 'story-confidence-label' }, ['اطمینانِ تحلیل:']),
-        Utils.el('span', { class: 'story-confidence-value' }, [
-          Utils.toFa(Number(sa.confidence).toFixed(0)) + ' از ۱۰'
-        ])
-      ]));
-    }
   }
 
   /* ============================================================
-     لیست ساختاریافته
+     لیست ساختاریافته — سوراخ‌ها و احمق‌فرض‌ها
      ============================================================ */
   function renderStructuredList({ title, kind, items }) {
     const wrap = Utils.el('div', {
@@ -376,28 +274,13 @@ window.AIUI = (function () {
         ]));
       }
 
-      const why = item.why || item.why_assumes_stupidity || item.why_not_hole;
+      const why = item.why || item.why_assumes_stupidity;
       if (why) {
-        const k = item.why ? 'چرا سوراخ است:'
-          : item.why_assumes_stupidity ? 'چرا احمق‌فرض‌گیری است:'
-          : 'چرا سوراخ نیست:';
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
-          Utils.el('span', { class: 'story-structured-k' }, [k]),
+          Utils.el('span', { class: 'story-structured-k' }, [
+            item.why ? 'چرا سوراخ است:' : 'چرا احمق‌فرض‌گیری است:'
+          ]),
           Utils.el('span', { class: 'story-structured-v' }, [why])
-        ]));
-      }
-
-      if (item.category) {
-        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
-          Utils.el('span', { class: 'story-structured-k' }, ['دسته:']),
-          Utils.el('span', { class: 'story-structured-v story-structured-tag' }, [item.category])
-        ]));
-      }
-
-      if (item.could_be_fixed) {
-        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row story-structured-fix' }, [
-          Utils.el('span', { class: 'story-structured-k' }, ['راه‌حل:']),
-          Utils.el('span', { class: 'story-structured-v' }, [item.could_be_fixed])
         ]));
       }
 
@@ -415,38 +298,6 @@ window.AIUI = (function () {
     if (sev.includes('متوسط')) return 'medium';
     if (sev.includes('کم')) return 'low';
     return 'unknown';
-  }
-
-  function scoreBar(label, value, kind, invert = false) {
-    const v = Number(value);
-    const pct = Math.max(0, Math.min(100, (v / 10) * 100));
-    let color;
-    if (invert) color = v <= 3 ? 'good' : v <= 6 ? 'warn' : 'bad';
-    else color = v >= 7 ? 'good' : v >= 4 ? 'warn' : 'bad';
-    return Utils.el('div', { class: 'score-row', dataset: { kind } }, [
-      Utils.el('div', { class: 'score-label' }, [label]),
-      Utils.el('div', { class: 'score-track' }, [
-        Utils.el('div', {
-          class: 'score-fill',
-          dataset: { color },
-          style: { width: '0%' },
-          'data-pct': pct
-        })
-      ]),
-      Utils.el('div', { class: 'score-num' }, [Utils.toFa(v.toFixed(1))])
-    ]);
-  }
-
-  function verdictKey(v) {
-    if (!v) return 'unknown';
-    if (v.includes('همسو') && !v.includes('نسبتاً') && !v.includes('مغایر')) return 'match';
-    if (v.includes('نسبتاً')) return 'partial';
-    if (v.includes('مغایر')) return 'against';
-    return 'unknown';
-  }
-  function verdictIcon(v) {
-    const k = verdictKey(v);
-    return { match: '✅', partial: '🟡', against: '❌', unknown: '❔' }[k];
   }
 
   /* ============================================================
@@ -546,39 +397,17 @@ window.AIUI = (function () {
         });
 
         const storyData = {
-          neutral_premise: result.neutral_premise,
-          neutral_structure: result.neutral_structure,
-          consistency_score: result.consistency_score,
-          respects_intelligence_score: result.respects_intelligence_score,
-          earns_ending_score: result.earns_ending_score,
-          gossip_score: result.gossip_score,
-          gossip_quality: result.gossip_quality,
-          confidence: result.confidence,
           strengths: result.strengths,
           weaknesses: result.weaknesses,
           plot_holes: result.plot_holes || [],
           assumed_stupidity: result.assumed_stupidity || [],
-          apparent_issues: result.apparent_issues || [],
-          respects_intelligence: result.respects_intelligence,
           earned_outcomes: result.earned_outcomes,
-          forced_outcomes: result.forced_outcomes,
-          gossip_evidence: result.gossip_evidence,
-          coverage_note: result.coverage_note,
-          coverage_recommendation: result.coverage_recommendation,
-          counter_perspective: result.counter_perspective,
-          disagreement: result.disagreement,
-          verdict: result.verdict,
-          verdict_explanation: result.verdict_explanation
+          forced_outcomes: result.forced_outcomes
         };
         lastResult.story_analysis = storyData;
 
         storyBox.hidden = false;
         renderStoryAnalysis(storyBox, storyData, result.reason, t.category);
-        setTimeout(() => {
-          storyBox.querySelectorAll('.score-fill').forEach(f => {
-            f.style.width = (f.dataset.pct || '0') + '%';
-          });
-        }, 60);
 
         /* ---- badge مدل ---- */
         badgeBox.hidden = false;
@@ -717,21 +546,17 @@ window.AIUI = (function () {
           Utils.el('div', { class: 'ai-deep-summary-title' }, ['✅ تحلیل عمیق کامل شد']),
           Utils.el('div', { class: 'ai-deep-summary-stats' }, [
             Utils.el('span', {}, [`🕳️ ${Utils.toFa(result.plot_holes.length)} سوراخ داستانی`]),
-            Utils.el('span', {}, [`🤦 ${Utils.toFa(result.assumed_stupidity.length)} احمق‌فرض‌گیری`]),
-            Utils.el('span', {}, [`🔍 ${Utils.toFa(result.apparent_issues.length)} شبه‌سوراخ`])
+            Utils.el('span', {}, [`🤦 ${Utils.toFa(result.assumed_stupidity.length)} احمق‌فرض‌گیری`])
           ])
         ]));
 
         const storyBox = Utils.el('div', { class: 'story-analysis-box' });
         renderStoryAnalysis(storyBox, {
           plot_holes: result.plot_holes,
-          assumed_stupidity: result.assumed_stupidity,
-          apparent_issues: result.apparent_issues,
-          coverage_note: result.coverage_note
+          assumed_stupidity: result.assumed_stupidity
         }, null, DB.getTitle(id)?.category);
         resultBox.appendChild(storyBox);
 
-        /* ---- badge مدل ---- */
         const deepBadge = Utils.el('div', { class: 'ai-result-badge-wrap' });
         appendModelBadge(deepBadge);
         resultBox.appendChild(deepBadge);
@@ -846,7 +671,6 @@ window.AIUI = (function () {
         State.loadAll(); State.applyFilters();
         Events.renderList(); Render.renderSidebarCounts();
 
-        /* ---- badge مدل ---- */
         badgeBox.hidden = false;
         badgeBox.innerHTML = '';
         appendModelBadge(badgeBox);
@@ -902,7 +726,7 @@ window.AIUI = (function () {
       Utils.el('div', { class: 'divider' }),
       Utils.el('div', { class: 'ai-section' }, [
         Utils.el('div', { class: 'ai-section-title' }, ['۲. پیشنهاد هوشمند']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['بر اساس منشور سلیقه، پیشنهاد دقیق دریافت کن.']),
+        Utils.el('div', { class: 'ai-section-desc' }, ['بر اساس معیارهای سلیقه، پیشنهاد دقیق دریافت کن.']),
         kindPicker,
         Utils.el('button', {
           class: 'btn btn-soft btn-sm', id: 'ai-recommend-btn',
