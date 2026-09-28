@@ -47,26 +47,34 @@ window.AIUI = (function () {
      ============================================================ */
   function buildModelBadge(info) {
     if (!info) return null;
-    return Utils.el('div', { class: 'ai-model-badge' }, [
+
+    const children = [
       Utils.el('span', { class: 'ai-model-badge-icon' }, ['🪄']),
       Utils.el('span', { class: 'ai-model-badge-label' }, ['تولید شده با:']),
-      Utils.el('span', { class: 'ai-model-badge-value' }, [info.label]),
-      info.vendor
-        ? Utils.el('span', { class: 'ai-model-badge-vendor' }, [info.vendor])
-        : null,
-      info.meta && info.meta.speed && info.meta.speed !== '—'
-        ? Utils.el('span', { class: 'ai-model-badge-meta' }, ['⚡ ' + info.meta.speed + ' t/s'])
-        : null
-    ].filter(Boolean));
+      Utils.el('span', { class: 'ai-model-badge-value' }, [info.label || info.id])
+    ];
+
+    if (info.vendor) {
+      children.push(Utils.el('span', { class: 'ai-model-badge-vendor' }, [info.vendor]));
+    }
+
+    const speed = info.meta && info.meta.speed;
+    if (speed && speed !== '—') {
+      children.push(Utils.el('span', { class: 'ai-model-badge-meta' }, ['⚡ ' + speed + ' t/s']));
+    }
+
+    return Utils.el('div', { class: 'ai-model-badge' }, children);
   }
 
-  function appendModelBadge(container) {
+  function appendModelBadge(container, info) {
     if (!container) return;
-    const info = AI.getLastUsedModel && AI.getLastUsedModel();
-    if (!info) return;
+    const data = info || (AI.getLastUsedModel && AI.getLastUsedModel());
+    if (!data) return;
+
     const old = container.querySelector(':scope > .ai-model-badge');
     if (old) old.remove();
-    const badge = buildModelBadge(info);
+
+    const badge = buildModelBadge(data);
     if (badge) container.appendChild(badge);
   }
 
@@ -154,7 +162,7 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     رندر تحلیل داستانی — فقط فیلدهای اصلی
+     رندر تحلیل داستانی — با badge مدل در انتها
      ============================================================ */
   function renderStoryAnalysis(container, sa, reason, category) {
     if (!sa && !reason) return;
@@ -211,10 +219,18 @@ window.AIUI = (function () {
         Utils.el('ul', {}, arr.map(item => Utils.el('li', {}, [String(item)])))
       ]));
     });
+
+    /* ---- badge مدل در انتها ---- */
+    const modelInfo = sa.ai_model || null;
+    if (modelInfo) {
+      const badgeWrap = Utils.el('div', { class: 'story-model-wrap' });
+      appendModelBadge(badgeWrap, modelInfo);
+      container.appendChild(badgeWrap);
+    }
   }
 
   /* ============================================================
-     لیست ساختاریافته — سوراخ‌ها و احمق‌فرض‌ها
+     لیست ساختاریافته — با فیلدهای جدید عمیق
      ============================================================ */
   function renderStructuredList({ title, kind, items }) {
     const wrap = Utils.el('div', {
@@ -243,6 +259,7 @@ window.AIUI = (function () {
         dataset: { severity: sevClass }
       });
 
+      /* سر آیتم: شماره + مکان + شدت + نوع */
       const head = Utils.el('div', { class: 'story-structured-head' }, [
         Utils.el('span', { class: 'story-structured-num' }, [Utils.toFa(idx + 1)]),
         item.location
@@ -257,6 +274,7 @@ window.AIUI = (function () {
       ].filter(Boolean));
       itemEl.appendChild(head);
 
+      /* ---- صحنه ---- */
       if (item.scene) {
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
           Utils.el('span', { class: 'story-structured-k' }, ['صحنه:']),
@@ -264,6 +282,23 @@ window.AIUI = (function () {
         ]));
       }
 
+      /* ---- قاعده‌ی شکسته (فقط برای plot_hole) ---- */
+      if (item.rule_broken) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['قاعده‌ی شکسته:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.rule_broken])
+        ]));
+      }
+
+      /* ---- تکنیک نویسنده (فقط برای assumed_stupidity) ---- */
+      if (item.technique) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['تکنیک نویسنده:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.technique])
+        ]));
+      }
+
+      /* ---- مشکل / اتفاق ---- */
       const mainIssue = item.issue || item.what_happened;
       if (mainIssue) {
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
@@ -274,6 +309,7 @@ window.AIUI = (function () {
         ]));
       }
 
+      /* ---- چرا ---- */
       const why = item.why || item.why_assumes_stupidity;
       if (why) {
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
@@ -281,6 +317,14 @@ window.AIUI = (function () {
             item.why ? 'چرا سوراخ است:' : 'چرا احمق‌فرض‌گیری است:'
           ]),
           Utils.el('span', { class: 'story-structured-v' }, [why])
+        ]));
+      }
+
+      /* ---- زنجیره‌ی اثر ---- */
+      if (item.cascade) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['اثر زنجیره‌ای:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.cascade])
         ]));
       }
 
@@ -402,19 +446,19 @@ window.AIUI = (function () {
           plot_holes: result.plot_holes || [],
           assumed_stupidity: result.assumed_stupidity || [],
           earned_outcomes: result.earned_outcomes,
-          forced_outcomes: result.forced_outcomes
+          forced_outcomes: result.forced_outcomes,
+          ai_model: AI.getLastUsedModel ? AI.getLastUsedModel() : null,
+          analyzed_at: new Date().toISOString()
         };
         lastResult.story_analysis = storyData;
 
         storyBox.hidden = false;
         renderStoryAnalysis(storyBox, storyData, result.reason, t.category);
 
-        /* ---- badge مدل ---- */
         badgeBox.hidden = false;
         badgeBox.innerHTML = '';
         appendModelBadge(badgeBox);
 
-        /* ---- دکمه تحلیل عمیق ---- */
         const seasons = Number(result.seasons) || 0;
         if (seasons > 3) {
           deepBtnWrap.hidden = false;
@@ -553,13 +597,10 @@ window.AIUI = (function () {
         const storyBox = Utils.el('div', { class: 'story-analysis-box' });
         renderStoryAnalysis(storyBox, {
           plot_holes: result.plot_holes,
-          assumed_stupidity: result.assumed_stupidity
+          assumed_stupidity: result.assumed_stupidity,
+          ai_model: AI.getLastUsedModel ? AI.getLastUsedModel() : null
         }, null, DB.getTitle(id)?.category);
         resultBox.appendChild(storyBox);
-
-        const deepBadge = Utils.el('div', { class: 'ai-result-badge-wrap' });
-        appendModelBadge(deepBadge);
-        resultBox.appendChild(deepBadge);
 
         State.loadAll(); State.applyFilters();
         Events.renderList(); Render.renderSidebarCounts();
