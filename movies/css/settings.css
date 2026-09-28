@@ -574,3 +574,43 @@
     font-size: 8px;
   }
 }
+/* ---- اطلاعات کش مدل ---- */
+.model-picker-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px dashed var(--border-1);
+  flex-wrap: wrap;
+}
+
+.model-cache-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-4);
+  line-height: 1.4;
+}
+.cache-info-text {
+  font-style: italic;
+}
+
+.model-picker-footer .settings-test-btn {
+  font-size: 10.5px;
+  padding: 6px 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .model-picker-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .model-picker-footer .settings-test-btn {
+    justify-content: center;
+    width: 100%;
+  }
+}
