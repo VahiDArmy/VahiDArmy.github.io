@@ -1,9 +1,11 @@
 /* =========================================================
-   کلاینت OpenRouter — با انتخاب مدل + Streaming + لاگ
+   کلاینت OpenRouter — با لیست داینامیک مدل + Streaming + لاگ
    ========================================================= */
 window.AI = (function () {
   const STORAGE_KEY = CONFIG.AI.STORAGE_KEY;
   const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
+  const MODELS_CACHE_KEY = 'cinema_openrouter_models_cache';
+  const MODELS_CACHE_TIME = 'cinema_openrouter_models_cache_time';
   const API_URL = CONFIG.AI.API_URL;
 
   let abortController = null;
@@ -20,19 +22,132 @@ window.AI = (function () {
     return !!getKey();
   }
 
-  /* ---------- مدل ---------- */
+  /* =========================================================
+     لیست مدل‌ها — داینامیک از OpenRouter + کش در localStorage
+     ========================================================= */
+
+  /* ---- دریافت لیست مدل‌های رایگان از OpenRouter ---- */
+  async function fetchFreeModels() {
+    const res = await fetch('https://openrouter.ai/api/v1/models', {
+      headers: getKey() ? { 'Authorization': `Bearer ${getKey()}` } : {}
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`خطای دریافت لیست مدل‌ها (${res.status}): ${txt.slice(0, 200)}`);
+    }
+    const json = await res.json();
+    const all = Array.isArray(json.data) ? json.data : [];
+    const free = all.filter(m => typeof m.id === 'string' && m.id.endsWith(':free'));
+
+    const known = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+
+    /* ادغام با metadata استاتیک */
+    const merged = free.map(m => {
+      const k = known.find(x => x.id === m.id);
+      const vendor = (m.id.split('/')[0] || '').replace(/[-_]/g, ' ');
+      const label = k?.label
+        || (m.name || '')
+            .replace(/\s*\(free\)\s*/i, '')
+            .replace(/\s*:\s*free\s*/i, '')
+            .trim()
+        || m.id.split('/')[1];
+      const ctx = m.context_length
+        ? (m.context_length >= 1000000
+            ? (m.context_length / 1000000).toFixed(m.context_length % 1000000 === 0 ? 0 : 1) + 'M'
+            : Math.round(m.context_length / 1000) + 'K')
+        : (k?.context || '—');
+
+      return {
+        id: m.id,
+        label: label || m.id,
+        vendor: k?.vendor || (vendor.charAt(0).toUpperCase() + vendor.slice(1)),
+        size: k?.size || (m.top_provider?.max_completion_tokens
+          ? '—'
+          : '—'),
+        context: ctx,
+        speed: k?.speed || '—',
+        note: k?.note || (m.description
+          ? String(m.description).replace(/\s+/g, ' ').slice(0, 130)
+          : ''),
+        tags: k?.tags || [],
+        recommended: !!k?.recommended,
+        bestFor: k?.bestFor || null,
+        pricing: m.pricing || null,
+        created: m.created || 0,
+        isFree: true
+      };
+    });
+
+    /* مرتب‌سازی: توصیه‌شده‌ها اول، بعد بقیه */
+    merged.sort((a, b) => {
+      if (a.recommended && !b.recommended) return -1;
+      if (!a.recommended && b.recommended) return 1;
+      if (a.bestFor === 'analysis' && b.bestFor !== 'analysis') return -1;
+      if (a.bestFor !== 'analysis' && b.bestFor === 'analysis') return 1;
+      return (b.created || 0) - (a.created || 0);
+    });
+
+    /* کش */
+    try {
+      localStorage.setItem(MODELS_CACHE_KEY, JSON.stringify(merged));
+      localStorage.setItem(MODELS_CACHE_TIME, String(Date.now()));
+    } catch (e) {
+      console.warn('[AI] cache save failed:', e);
+    }
+
+    return merged;
+  }
+
+  /* ---- خواندن از کش ---- */
+  function getCachedModels() {
+    try {
+      const raw = localStorage.getItem(MODELS_CACHE_KEY);
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return null;
+      return arr;
+    } catch { return null; }
+  }
+
+  function getCacheAge() {
+    const t = Number(localStorage.getItem(MODELS_CACHE_TIME) || 0);
+    return t ? Date.now() - t : Infinity;
+  }
+
+  function clearModelsCache() {
+    localStorage.removeItem(MODELS_CACHE_KEY);
+    localStorage.removeItem(MODELS_CACHE_TIME);
+  }
+
+  /* ---- لیست فعلی (کش یا استاتیک) ---- */
+  function getModels() {
+    const cached = getCachedModels();
+    if (cached && cached.length) return cached;
+    return (CONFIG.AI && CONFIG.AI.MODELS) || [];
+  }
+
+  /* ---- وجود یک مدل در لیست فعلی ---- */
+  function isValidModel(id) {
+    if (!id) return false;
+    return getModels().some(m => m.id === id);
+  }
+
+  /* ---------- مدل انتخاب‌شده ---------- */
   function getModel() {
     try {
       const stored = localStorage.getItem(MODEL_KEY);
-      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+      const models = getModels();
       if (stored && models.some(m => m.id === stored)) return stored;
-      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
+      /* اگر مدل ذخیره‌شده معتبر نیست، به پیش‌فرض یا اولین مدل برگرد */
+      const def = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
+      if (def && models.some(m => m.id === def)) return def;
+      return models[0]?.id || def;
     } catch {
       return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
     }
   }
   function setModel(id) {
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const models = getModels();
     if (id && models.some(m => m.id === id)) {
       localStorage.setItem(MODEL_KEY, id);
     } else {
@@ -41,7 +156,7 @@ window.AI = (function () {
   }
   function getModelMeta() {
     const id = getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+    const models = getModels();
     return models.find(m => m.id === id) || { id, label: id, note: '', tags: [] };
   }
   function isDefaultModel() {
@@ -86,8 +201,7 @@ window.AI = (function () {
     const combinedSignal = signal || abortController.signal;
 
     const modelName = model || getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    const meta = models.find(m => m.id === modelName);
+    const meta = getModels().find(m => m.id === modelName);
     const modelLabel = meta ? meta.label : modelName;
 
     const t0 = performance.now();
@@ -122,9 +236,23 @@ window.AI = (function () {
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
       aiLog('error', `✗ پاسخ ناموفق: HTTP ${res.status}`);
-      aiLog('meta', txt.slice(0, 180));
+
+      /* تشخیص خطای مدل نامعتبر */
+      let userMsg = `خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`;
+      try {
+        const j = JSON.parse(txt);
+        const m = j?.error?.message || '';
+        if (/not a valid model/i.test(m)) {
+          userMsg = `مدل «${modelName}» در OpenRouter معتبر نیست. لطفاً مدل دیگری انتخاب کن یا لیست مدل‌ها را از تنظیمات بروزرسانی کن.`;
+          aiLog('error', `✗ مدل نامعتبر: ${modelName}`);
+          aiLog('meta', 'راهنمایی: از تنظیمات، «بروزرسانی لیست مدل‌ها» را بزن');
+        } else {
+          aiLog('meta', txt.slice(0, 180));
+        }
+      } catch { aiLog('meta', txt.slice(0, 180)); }
+
       aiAutoHide();
-      throw new Error(`خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`);
+      throw new Error(userMsg);
     }
 
     aiLog('success', `✓ اتصال برقرار شد (HTTP ${res.status})`);
@@ -192,15 +320,13 @@ window.AI = (function () {
     const combinedSignal = signal || abortController.signal;
 
     const modelName = model || getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    const meta = models.find(m => m.id === modelName);
+    const meta = getModels().find(m => m.id === modelName);
     const modelLabel = meta ? meta.label : modelName;
 
     const t0 = performance.now();
 
     aiLog('request', '▸ ارسال درخواست به OpenRouter');
     aiLog('meta', `مدل: ${modelLabel}`);
-    aiLog('meta', `پیام‌ها: ${messages.length}`);
 
     let res;
     try {
@@ -229,12 +355,16 @@ window.AI = (function () {
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
       aiLog('error', `✗ پاسخ ناموفق: HTTP ${res.status}`);
-      aiLog('meta', txt.slice(0, 180));
+      let userMsg = `خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`;
+      try {
+        const j = JSON.parse(txt);
+        if (/not a valid model/i.test(j?.error?.message || '')) {
+          userMsg = `مدل «${modelName}» معتبر نیست. لیست مدل‌ها را بروزرسانی کن.`;
+        }
+      } catch {}
       aiAutoHide();
-      throw new Error(`خطای OpenRouter (${res.status}): ${txt.slice(0, 400)}`);
+      throw new Error(userMsg);
     }
-
-    aiLog('success', '✓ اتصال برقرار شد');
 
     const json = await res.json();
     const content = json.choices?.[0]?.message?.content || '';
@@ -270,7 +400,11 @@ window.AI = (function () {
 
   return {
     getKey, setKey, isConfigured,
+
     getModel, setModel, getModelMeta, isDefaultModel, resetModel,
+    getModels, isValidModel,
+    fetchFreeModels, getCachedModels, getCacheAge, clearModelsCache,
+
     chatStream, chatJSON, abort, parseJSONResponse
   };
 })();
