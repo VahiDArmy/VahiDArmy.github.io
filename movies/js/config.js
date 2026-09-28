@@ -3,7 +3,7 @@
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '1.7.0',
+  APP_VERSION: '1.7.1',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
@@ -16,14 +16,13 @@ window.CONFIG = {
   },
 
   /* =========================================================
-     AI — مدل‌های رایگان OpenRouter (slugهای دقیق)
+     AI — مدل‌های رایگان OpenRouter (slugهای دقیق و تست‌شده)
      ========================================================= */
   AI: {
     API_URL: 'https://openrouter.ai/api/v1/chat/completions',
     STORAGE_KEY: 'cinema_openrouter_key',
     MODEL_STORAGE_KEY: 'cinema_openrouter_model',
 
-    /* پیش‌فرض */
     DEFAULT_MODEL: 'nvidia/nemotron-3-ultra-550b-a55b:free',
 
     MODELS: [
@@ -103,17 +102,8 @@ window.CONFIG = {
         note: 'سرعت بالا با تحلیل قابل قبول',
         tags: ['سریع', 'متعادل']
       },
-      {
-        id: 'thinkingmachines/inkling:free',
-        label: 'Inkling',
-        vendor: 'Thinking Machines',
-        size: '301B',
-        context: '1.05M',
-        speed: '51',
-        note: 'کانتکست ۱M — مناسب تحلیل خیلی طولانی',
-        tags: ['کانتکست بزرگ', 'تحلیل'],
-        bestFor: 'long'
-      },
+      /* --- thinkingmachines/inkling و inkling-small حذف شدند
+         چون فقط روی ابزارهای agentic (Cursor و ...) کار می‌کنند --- */
       {
         id: 'cohere/north-mini-code:free',
         label: 'North Mini Code',
@@ -123,17 +113,6 @@ window.CONFIG = {
         speed: '72',
         note: 'بهینه برای کد و ساختار JSON',
         tags: ['کد', 'JSON']
-      },
-      {
-        id: 'thinkingmachines/inkling-small:free',
-        label: 'Inkling Small',
-        vendor: 'Thinking Machines',
-        size: '118B',
-        context: '1.05M',
-        speed: '110',
-        note: 'سبک با کانتکست بزرگ',
-        tags: ['سریع', 'کانتکست بزرگ'],
-        bestFor: 'long'
       },
       {
         id: 'poolside/laguna-xs-2.1:free',
@@ -192,7 +171,7 @@ window.CONFIG = {
         size: '1.37B',
         context: '262K',
         speed: '34',
-        note: 'MoE سبک از گوگل',
+        note: 'MoE سبک از گوگل — ممکن است گاهی rate-limited شود',
         tags: ['سبک', 'MoE']
       },
       {
