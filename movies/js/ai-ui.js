@@ -5,41 +5,157 @@ window.AIUI = (function () {
 
   let activeAbort = null;
 
+  /* =========================================================
+     Markdown renderer — با پشتیبانی کامل از جدول
+     ========================================================= */
   function renderMarkdown(text) {
     if (!text) return '';
-    let html = Utils.esc(text);
-    html = html.replace(/```([\s\S]*?)```/g, function (_, code) {
-      return '<pre class="ai-code">' + code.trim() + '</pre>';
+    let s = String(text);
+
+    /* ۱. استخراج کد بلاک‌ها (قبل از هر پردازش) */
+    const codeBlocks = [];
+    s = s.replace(/```([\w+-]*)\n?([\s\S]*?)```/g, function (_, lang, code) {
+      const idx = codeBlocks.length;
+      codeBlocks.push('<pre class="ai-code"><code>' + Utils.esc(code.replace(/\n$/, '')) + '</code></pre>');
+      return '\u0001CB' + idx + '\u0001';
     });
-    html = html.replace(/`([^`]+)`/g, '<code class="ai-inline">$1</code>');
-    html = html.replace(/^##### (.+)$/gm, '<h5>$1</h5>');
-    html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
-    html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
-    html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/(?<![*_\w])\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
-    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-    html = html.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    html = html.replace(/^\s*---+\s*$/gm, '<hr>');
-    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
-    html = html.replace(/(?:^|\n)((?:[-*] .+(?:\n|$))+)/g, function (_, block) {
-      const items = block.trim().split('\n').map(function (l) { return l.replace(/^[-*]\s*/, ''); });
-      return '\n<ul>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>';
+
+    /* ۲. escape */
+    s = Utils.esc(s);
+
+    /* ۳. جدول‌ها — قبل از هر چیز دیگر */
+    s = s.replace(
+      /(?:^|\n)([ \t]*\|[^\n]*\|[ \t]*\n[ \t]*\|[ \t\-:|]+\|[ \t]*\n(?:[ \t]*\|[^\n]*\|[ \t]*(?:\n|$))*)/g,
+      function (_, block) { return '\n\n' + parseMarkdownTable(block) + '\n\n'; }
+    );
+
+    /* ۴. هدینگ‌ها */
+    s = s.replace(/^######[ \t]+(.+?)[ \t]*$/gm, '<h6>$1</h6>');
+    s = s.replace(/^#####[ \t]+(.+?)[ \t]*$/gm, '<h5>$1</h5>');
+    s = s.replace(/^####[ \t]+(.+?)[ \t]*$/gm, '<h4>$1</h4>');
+    s = s.replace(/^###[ \t]+(.+?)[ \t]*$/gm, '<h3>$1</h3>');
+    s = s.replace(/^##[ \t]+(.+?)[ \t]*$/gm, '<h2>$1</h2>');
+    s = s.replace(/^#[ \t]+(.+?)[ \t]*$/gm, '<h1>$1</h1>');
+
+    /* ۵. خط افقی */
+    s = s.replace(/^[ \t]*(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '<hr>');
+
+    /* ۶. بلاک‌کوت */
+    s = s.replace(/(?:^|\n)((?:&gt;[ \t]?[^\n]*(?:\n|$))+)/g, function (_, block) {
+      const lines = block.trim().split('\n').map(function (l) {
+        return l.replace(/^&gt;[ \t]?/, '');
+      });
+      return '\n<blockquote>' + lines.join('<br>') + '</blockquote>\n';
     });
-    html = html.replace(/(?:^|\n)((?:\d+\. .+(?:\n|$))+)/g, function (_, block) {
-      const items = block.trim().split('\n').map(function (l) { return l.replace(/^\d+\.\s*/, ''); });
-      return '\n<ol>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ol>';
+
+    /* ۷. لیست‌های نامرتب */
+    s = s.replace(/(?:^|\n)((?:[ \t]*[-*+][ \t]+[^\n]+(?:\n|$))+)/g, function (_, block) {
+      const items = block.trim().split('\n').map(function (l) {
+        return l.replace(/^[ \t]*[-*+][ \t]+/, '');
+      });
+      return '\n<ul>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>\n';
     });
-    html = html.split(/\n{2,}/).map(function (p) {
+
+    /* ۸. لیست‌های مرتب */
+    s = s.replace(/(?:^|\n)((?:[ \t]*\d+\.[ \t]+[^\n]+(?:\n|$))+)/g, function (_, block) {
+      const items = block.trim().split('\n').map(function (l) {
+        return l.replace(/^[ \t]*\d+\.[ \t]+/, '');
+      });
+      return '\n<ol>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ol>\n';
+    });
+
+    /* ۹. بولد */
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+
+    /* ۱۰. ایتالیک */
+    s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\*)/g, '<em>$1</em>');
+    s = s.replace(/(?<![*_\w])_([^_\n]+)_(?!_)/g, '<em>$1</em>');
+
+    /* ۱۱. خط‌خورده */
+    s = s.replace(/~~([^~\n]+)~~/g, '<del>$1</del>');
+
+    /* ۱۲. کد اینلاین */
+    s = s.replace(/`([^`\n]+)`/g, '<code class="ai-inline">$1</code>');
+
+    /* ۱۳. لینک */
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    /* ۱۴. بازگردانی کد بلاک‌ها */
+    s = s.replace(/\u0001CB(\d+)\u0001/g, function (_, idx) {
+      return codeBlocks[Number(idx)] || '';
+    });
+
+    /* ۱۵. پاراگراف‌ها */
+    s = s.split(/\n{2,}/).map(function (p) {
       const trimmed = p.trim();
       if (!trimmed) return '';
-      if (/^<(h\d|ul|ol|pre|hr|blockquote|div)/.test(trimmed)) return trimmed;
+      if (/^<(h\d|ul|ol|pre|hr|blockquote|div|table|thead|tbody|tr|td|th|p)/i.test(trimmed)) {
+        return trimmed;
+      }
       return '<p>' + trimmed.replace(/\n/g, '<br>') + '</p>';
     }).join('');
+
+    return s;
+  }
+
+  /* =========================================================
+     پارسر جدول Markdown
+     ========================================================= */
+  function parseMarkdownTable(block) {
+    const lines = block.trim().split('\n').filter(function (l) { return l.trim(); });
+    if (lines.length < 2) return Utils.esc(block);
+
+    function splitRow(line) {
+      let l = line.trim();
+      if (l.charAt(0) === '|') l = l.slice(1);
+      if (l.charAt(l.length - 1) === '|') l = l.slice(0, -1);
+      return l.split('|').map(function (c) { return c.trim(); });
+    }
+
+    function alignOf(sep) {
+      const t = sep.trim();
+      const left = t.charAt(0) === ':';
+      const right = t.charAt(t.length - 1) === ':';
+      if (left && right) return 'center';
+      if (right) return 'left';   /* در RTL: تراز چپ یعنی انتهای خط */
+      if (left) return 'right';
+      return '';
+    }
+
+    const headerCells = splitRow(lines[0]);
+    const sepCells = splitRow(lines[1]);
+    const aligns = sepCells.map(alignOf);
+    const bodyRows = lines.slice(2).map(splitRow);
+
+    let html = '<table class="ai-table">';
+    html += '<thead><tr>';
+    headerCells.forEach(function (c, i) {
+      const align = aligns[i] ? ' style="text-align:' + aligns[i] + '"' : '';
+      html += '<th' + align + '>' + c + '</th>';
+    });
+    html += '</tr></thead>';
+
+    if (bodyRows.length) {
+      html += '<tbody>';
+      bodyRows.forEach(function (row) {
+        html += '<tr>';
+        for (let i = 0; i < headerCells.length; i++) {
+          const align = aligns[i] ? ' style="text-align:' + aligns[i] + '"' : '';
+          html += '<td' + align + '>' + (row[i] != null ? row[i] : '') + '</td>';
+        }
+        html += '</tr>';
+      });
+      html += '</tbody>';
+    }
+
+    html += '</table>';
     return html;
   }
 
+  /* =========================================================
+     badge مدل
+     ========================================================= */
   function buildModelBadge(info) {
     if (!info) return null;
     const children = [
@@ -63,6 +179,9 @@ window.AIUI = (function () {
     if (badge) container.appendChild(badge);
   }
 
+  /* =========================================================
+     پنل استریم
+     ========================================================= */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
@@ -138,6 +257,9 @@ window.AIUI = (function () {
     return true;
   }
 
+  /* =========================================================
+     رندر تحلیل داستانی
+     ========================================================= */
   function renderStoryAnalysis(container, sa, reason, rating) {
     if (!sa && !reason) return;
     container.hidden = false;
@@ -239,6 +361,9 @@ window.AIUI = (function () {
     return 'unknown';
   }
 
+  /* =========================================================
+     تحلیل یک عنوان
+     ========================================================= */
   function openAnalyzeSingle(id) {
     if (!requireAI()) return;
     const t = DB.getTitle(id);
@@ -620,9 +745,6 @@ window.AIUI = (function () {
     });
   }
 
-  /* =========================================================
-     جستجوی هوشمند عنوان
-     ========================================================= */
   function openTitleLookup(form, titleInput) {
     if (!requireAI()) return;
     const rawTitle = titleInput.value.trim();
@@ -643,15 +765,12 @@ window.AIUI = (function () {
         Utils.el('span', { class: 'lookup-query-label' }, ['جستجو برای:']),
         Utils.el('span', { class: 'lookup-query-value' }, [rawTitle])
       ]),
-      streamBox,
-      resultBox
+      streamBox, resultBox
     ]);
 
     Modal.open({
       title: 'جستجوی هوشمند عنوان',
-      icon: '🔍',
-      size: 'lg',
-      body: body,
+      icon: '🔍', size: 'lg', body: body,
       footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
         Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
       ])
@@ -673,21 +792,17 @@ window.AIUI = (function () {
         if (!result.candidates || !result.candidates.length) {
           resultBox.appendChild(Utils.el('div', { class: 'lookup-empty' }, [
             Utils.el('div', { class: 'lookup-empty-icon' }, ['😕']),
-            Utils.el('div', { class: 'lookup-empty-text' }, [
-              'هیچ نسخه‌ای برای این عنوان پیدا نشد. ',
-              'می‌توانی عنوان را دستی وارد کنی یا دیکته‌اش را اصلاح کنی.'
-            ])
+            Utils.el('div', { class: 'lookup-empty-text' }, ['هیچ نسخه‌ای پیدا نشد.'])
           ]));
           return;
         }
 
         const list = Utils.el('div', { class: 'lookup-list' });
-
         result.candidates.forEach(function (c) {
           const card = buildCandidateCard(c, function () {
             AITitleLookup.fillForm(form, c);
             Modal.close();
-            Toast.success('اطلاعات عنوان پر شد — بررسی و ذخیره کن');
+            Toast.success('اطلاعات عنوان پر شد');
             titleInput.focus();
           });
           list.appendChild(card);
@@ -700,9 +815,7 @@ window.AIUI = (function () {
       })
       .catch(function (err) {
         streamBox.remove();
-        resultBox.appendChild(Utils.el('div', { class: 'lookup-error' }, [
-          'خطا: ' + Utils.esc(err.message)
-        ]));
+        resultBox.appendChild(Utils.el('div', { class: 'lookup-error' }, ['خطا: ' + Utils.esc(err.message)]));
       });
   }
 
@@ -710,17 +823,13 @@ window.AIUI = (function () {
     const conf = Number(c.confidence) || 0;
     const confClass = conf >= 8 ? 'high' : conf >= 5 ? 'mid' : 'low';
 
-    const card = Utils.el('button', {
-      type: 'button',
-      class: 'lookup-card',
-      onclick: onPick
+    return Utils.el('button', {
+      type: 'button', class: 'lookup-card', onclick: onPick
     }, [
       Utils.el('div', { class: 'lookup-card-head' }, [
         Utils.el('div', { class: 'lookup-card-title' }, [
           Utils.el('span', { class: 'lookup-card-standard' }, [c.standard_title || '—']),
-          c.version_label
-            ? Utils.el('span', { class: 'lookup-card-version' }, [c.version_label])
-            : null
+          c.version_label ? Utils.el('span', { class: 'lookup-card-version' }, [c.version_label]) : null
         ].filter(Boolean)),
         Utils.el('div', { class: 'lookup-card-meta' }, [
           c.type ? Utils.el('span', { class: 'lookup-meta-item' }, [CONFIG.TYPES[c.type] || c.type]) : null,
@@ -728,23 +837,13 @@ window.AIUI = (function () {
           c.country ? Utils.el('span', { class: 'lookup-meta-item' }, [c.country]) : null
         ].filter(Boolean))
       ]),
-
       c.title_fa ? Utils.el('div', { class: 'lookup-card-fa' }, [c.title_fa]) : null,
       c.summary ? Utils.el('div', { class: 'lookup-card-summary' }, [c.summary]) : null,
-
       Utils.el('div', { class: 'lookup-card-foot' }, [
-        c.creators
-          ? Utils.el('span', { class: 'lookup-card-creators' }, ['سازنده: ' + c.creators])
-          : Utils.el('span', {}, ['']),
-        Utils.el('span', {
-          class: 'lookup-card-conf',
-          dataset: { level: confClass },
-          title: 'اطمینان: ' + conf + ' از ۱۰'
-        }, ['● ' + Utils.toFa(conf) + '/۱۰'])
+        c.creators ? Utils.el('span', { class: 'lookup-card-creators' }, ['سازنده: ' + c.creators]) : Utils.el('span', {}, ['']),
+        Utils.el('span', { class: 'lookup-card-conf', dataset: { level: confClass } }, ['● ' + Utils.toFa(conf) + '/۱۰'])
       ])
     ].filter(Boolean));
-
-    return card;
   }
 
   function cleanup() {
