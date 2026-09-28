@@ -3,9 +3,8 @@
    ========================================================= */
 .flex { display: flex; }
 .inline-flex { display: inline-flex; }
-.grid-u { display: grid; }
-.hidden { display: none !important; }
 .block { display: block; }
+.hidden { display: none !important; }
 
 .items-center { align-items: center; }
 .items-start { align-items: flex-start; }
@@ -15,13 +14,13 @@
 .justify-end { justify-content: flex-end; }
 .flex-col { flex-direction: column; }
 .flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+
 .gap-1 { gap: 4px; }
 .gap-2 { gap: 8px; }
 .gap-3 { gap: 12px; }
 .gap-4 { gap: 16px; }
-.gap-5 { gap: 20px; }
 
-.flex-1 { flex: 1; }
 .min-w-0 { min-width: 0; }
 .w-full { width: 100%; }
 
@@ -30,7 +29,6 @@
 .text-md { font-size: var(--fs-md); }
 .text-lg { font-size: var(--fs-lg); }
 .text-xl { font-size: var(--fs-xl); }
-.text-2xl { font-size: var(--fs-2xl); }
 
 .text-1 { color: var(--text-1); }
 .text-2 { color: var(--text-2); }
@@ -71,29 +69,17 @@
 }
 
 .nowrap { white-space: nowrap; }
-.break { word-break: break-word; }
-
 .pointer { cursor: pointer; }
 .select-none { user-select: none; }
-.opacity-0 { opacity: 0; }
-.opacity-50 { opacity: 0.5; }
-
 .relative { position: relative; }
-.absolute { position: absolute; }
-
-.border-t { border-top: 1px solid var(--border-1); }
-.border-b { border-bottom: 1px solid var(--border-1); }
-
 .tabular { font-variant-numeric: tabular-nums; }
-
-.divider { height: 1px; background: var(--border-1); margin: 14px 0; }
 
 .sr-only {
   position: absolute;
   width: 1px; height: 1px;
   padding: 0; margin: -1px;
   overflow: hidden;
-  clip: rect(0,0,0,0);
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
 }
