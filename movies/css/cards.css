@@ -1,569 +1,329 @@
 /* =========================================================
-   کارت‌ها و گرید
+   لیست ساختاریافته — سوراخ‌های داستانی و احمق‌فرض‌گیری
    ========================================================= */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-  animation: fade-in var(--dur-base) var(--ease-out);
+.story-list-structured {
+  padding: 14px 16px;
 }
-.grid.is-list { grid-template-columns: 1fr; gap: 8px; }
 
-.card {
-  position: relative;
+.story-structured-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
-  border: 1px solid var(--border-1);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--dur-base) var(--ease-out);
-  overflow: hidden;
-  isolation: isolate;
-  animation: card-enter var(--dur-slow) var(--ease-out) both;
-}
-.card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(600px 100px at var(--mx, 50%) var(--my, 0%), rgba(124,92,255,0.10), transparent 60%);
-  opacity: 0;
-  transition: opacity var(--dur-base);
-  pointer-events: none;
-  z-index: -1;
-}
-.card:hover::before { opacity: 1; }
-.card:hover { transform: translateY(-3px); border-color: var(--border-2); box-shadow: var(--shadow-3); }
-
-.card[data-category="love"] { border-right: 3px solid var(--love); }
-.card[data-category="good"] { border-right: 3px solid var(--good); }
-.card[data-category="hate"] { border-right: 3px solid var(--hate); }
-
-.card.is-fav { background: linear-gradient(180deg, rgba(255,204,77,0.05), var(--bg-1)); }
-
-.card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
   gap: 10px;
+  margin-top: 8px;
 }
-.card-title-wrap { min-width: 0; flex: 1; }
-.card-title {
-  font-size: var(--fs-lg);
-  font-weight: 700;
-  color: var(--text-1);
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+
+.story-structured-item {
+  position: relative;
+  padding: 12px 14px 12px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  overflow-wrap: anywhere;
   word-break: break-word;
-  transition: color var(--dur-fast);
-}
-.card:hover .card-title { color: var(--accent-2); }
-
-.ai-badge {
-  display: inline-block;
-  margin-right: 4px;
-  font-size: 12px;
-  filter: drop-shadow(0 0 4px rgba(139,92,255,0.8));
 }
 
-.card-meta {
+.story-structured-item[data-severity="critical"] {
+  background: rgba(255, 77, 94, 0.06);
+  border-color: rgba(255, 77, 94, 0.3);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+.story-structured-item[data-severity="serious"] {
+  background: rgba(255, 159, 67, 0.05);
+  border-color: rgba(255, 159, 67, 0.25);
+  box-shadow: inset 3px 0 0 var(--hate);
+}
+.story-structured-item[data-severity="medium"] {
+  background: rgba(255, 204, 77, 0.04);
+  border-color: rgba(255, 204, 77, 0.22);
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+.story-structured-item[data-severity="low"] {
+  background: rgba(77, 171, 247, 0.03);
+  border-color: rgba(77, 171, 247, 0.18);
+  box-shadow: inset 3px 0 0 var(--good);
+}
+
+.story-structured-head {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
-  font-size: var(--fs-xs);
-  color: var(--text-3);
   flex-wrap: wrap;
-}
-.card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-4); }
-
-.card-actions {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity var(--dur-fast);
-}
-.card:hover .card-actions,
-.card:focus-within .card-actions { opacity: 1; }
-
-.card-act {
-  width: 30px; height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: var(--radius-sm);
-  color: var(--text-3);
-  transition: all var(--dur-fast);
-}
-.card-act:hover { background: var(--bg-4); color: var(--text-1); }
-.card-act.is-fav { color: var(--warning); }
-.card-act.is-fav svg { fill: var(--warning); }
-.card-act.danger:hover { background: rgba(255,77,94,0.15); color: var(--danger); }
-
-.card-body { display: flex; flex-direction: column; gap: 10px; }
-.card-notes {
-  font-size: var(--fs-sm);
-  color: var(--text-3);
-  line-height: 1.6;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  padding: 8px 10px;
-  background: var(--bg-3);
-  border-radius: var(--radius-sm);
-  border-right: 2px solid var(--border-2);
+  margin-bottom: 8px;
 }
 
-.card-foot {
-  display: flex;
+.story-structured-num {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-1);
-}
-
-.stars { display: inline-flex; gap: 2px; align-items: center; }
-.star { width: 14px; height: 14px; color: var(--text-4); transition: color var(--dur-fast); }
-.star.filled { color: var(--warning); fill: var(--warning); }
-.star.half { color: var(--warning); }
-.rating-num {
-  font-size: var(--fs-xs);
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  color: var(--text-2);
+  font-size: 11px;
   font-weight: 700;
-  color: var(--warning);
-  margin-right: 4px;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
-.cat-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+.story-structured-loc {
   font-size: var(--fs-xs);
-  font-weight: 700;
+  font-weight: 600;
+  color: var(--accent-2);
+  padding: 2px 8px;
+  background: rgba(139, 92, 255, 0.10);
+  border: 1px solid rgba(139, 92, 255, 0.25);
   border-radius: var(--radius-pill);
 }
-.cat-badge[data-cat="love"] { background: var(--love-soft); color: var(--love); }
-.cat-badge[data-cat="good"] { background: var(--good-soft); color: var(--good); }
-.cat-badge[data-cat="hate"] { background: var(--hate-soft); color: var(--hate); }
 
-/* ---- نمای لیستی (دسکتاپ) ---- */
-.grid.is-list .card {
-  flex-direction: row;
-  align-items: center;
-  padding: 12px 16px;
-  gap: 16px;
-}
-.grid.is-list .card-head { flex: 1; min-width: 0; align-items: center; }
-.grid.is-list .card-body { display: none; }
-.grid.is-list .card-foot {
-  margin: 0;
-  padding: 0;
-  border: none;
-  flex-shrink: 0;
-  width: auto;
-}
-.grid.is-list .card-title { -webkit-line-clamp: 1; font-size: var(--fs-md); }
-.grid.is-list .card-actions { opacity: 1; }
-.grid.is-list .card-reason { display: none; }
-
-/* ---- نمای لیستی در موبایل ---- */
-@media (max-width: 720px) {
-  .grid.is-list .card {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 10px !important;
-    padding: 12px 14px !important;
-  }
-  .grid.is-list .card-head {
-    flex: initial !important;
-    align-items: flex-start !important;
-    justify-content: space-between !important;
-    width: 100% !important;
-  }
-  .grid.is-list .card-title-wrap { flex: 1 !important; min-width: 0 !important; }
-  .grid.is-list .card-title {
-    -webkit-line-clamp: 2 !important;
-    font-size: var(--fs-md) !important;
-    white-space: normal !important;
-  }
-  .grid.is-list .card-actions { opacity: 1 !important; flex-shrink: 0 !important; }
-  .grid.is-list .card-foot {
-    margin-top: 6px !important;
-    padding-top: 10px !important;
-    border-top: 1px solid var(--border-1) !important;
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-  }
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 80px 24px;
-  text-align: center;
-  animation: fade-in var(--dur-slow) var(--ease-out);
-}
-.empty-icon { font-size: 64px; filter: grayscale(0.4); opacity: 0.7; animation: float 3.5s infinite var(--ease-in-out); }
-.empty-state h3 { font-size: var(--fs-xl); color: var(--text-1); }
-.empty-state p { max-width: 380px; color: var(--text-3); }
-
-/* =========================================================
-   دلیل سلیقه‌ای روی کارت
-   ========================================================= */
-.card-reason {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-  color: var(--text-2);
-  background: var(--bg-3);
-  border-right: 2px solid var(--border-2);
-  position: relative;
-  overflow: hidden;
-}
-.card-reason[data-cat="love"] {
-  background: rgba(255, 59, 107, 0.06);
-  border-right-color: var(--love);
-  box-shadow: inset 0 0 14px -8px rgba(255, 59, 107, 0.5);
-}
-.card-reason[data-cat="good"] {
-  background: rgba(77, 171, 247, 0.06);
-  border-right-color: var(--good);
-  box-shadow: inset 0 0 14px -8px rgba(77, 171, 247, 0.5);
-}
-.card-reason[data-cat="hate"] {
-  background: rgba(255, 159, 67, 0.06);
-  border-right-color: var(--hate);
-  box-shadow: inset 0 0 14px -8px rgba(255, 159, 67, 0.5);
-}
-.card-reason-icon {
-  font-size: 13px;
-  line-height: 1.4;
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 4px currentColor);
-}
-.card-reason-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  word-break: break-word;
-}
-
-/* ---- نشان انسجام ---- */
-.consistency-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-right: 6px;
-  padding: 1px 6px;
+.story-structured-sev {
   font-size: 10px;
   font-weight: 700;
+  padding: 2px 8px;
   border-radius: var(--radius-pill);
-  font-family: var(--font-mono);
-  vertical-align: middle;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.3px;
 }
-.consistency-badge[data-color="good"] {
-  background: rgba(61, 220, 151, 0.12);
-  color: var(--success);
-  box-shadow: inset 0 0 0 1px rgba(61, 220, 151, 0.3);
-  text-shadow: 0 0 6px rgba(61, 220, 151, 0.7);
-}
-.consistency-badge[data-color="warn"] {
-  background: rgba(255, 204, 77, 0.12);
-  color: var(--warning);
-  box-shadow: inset 0 0 0 1px rgba(255, 204, 77, 0.3);
-  text-shadow: 0 0 6px rgba(255, 204, 77, 0.7);
-}
-.consistency-badge[data-color="bad"] {
-  background: rgba(255, 77, 94, 0.12);
+.story-structured-sev[data-level="critical"] {
+  background: rgba(255, 77, 94, 0.15);
   color: var(--danger);
-  box-shadow: inset 0 0 0 1px rgba(255, 77, 94, 0.3);
-  text-shadow: 0 0 6px rgba(255, 77, 94, 0.7);
+  box-shadow: 0 0 10px -2px rgba(255, 77, 94, 0.8);
+}
+.story-structured-sev[data-level="serious"] {
+  background: rgba(255, 159, 67, 0.15);
+  color: var(--hate);
+  box-shadow: 0 0 10px -2px rgba(255, 159, 67, 0.8);
+}
+.story-structured-sev[data-level="medium"] {
+  background: rgba(255, 204, 77, 0.15);
+  color: var(--warning);
+}
+.story-structured-sev[data-level="low"] {
+  background: rgba(77, 171, 247, 0.15);
+  color: var(--good);
 }
 
-/* =========================================================
-   تحلیل داستانی (مودال + کارت)
-   ========================================================= */
-.story-analysis-box {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-/* ---- پیش‌درآمد توصیفی (فاز ۱) ---- */
-.story-neutral {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid var(--border-1);
-  border-right: 3px solid var(--text-4);
-}
-.story-neutral-label {
+.story-structured-type {
   font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
   color: var(--text-4);
-  margin-bottom: 8px;
+  padding: 2px 8px;
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-pill);
+  margin-right: auto;
 }
-.story-neutral-row {
-  display: flex;
+
+.story-structured-row {
+  display: grid;
+  grid-template-columns: 90px 1fr;
   gap: 8px;
-  margin: 4px 0;
+  margin: 6px 0;
   font-size: var(--fs-sm);
   line-height: 1.7;
 }
-.story-neutral-k { color: var(--text-4); flex-shrink: 0; min-width: 60px; font-weight: 600; }
-.story-neutral-v { color: var(--text-2); }
-
-/* ---- دلیل اصلی ---- */
-.story-reason {
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  background: var(--bg-2);
-  border: 1px solid var(--border-2);
-  border-right: 3px solid var(--accent);
-  position: relative;
-  overflow: hidden;
-}
-.story-reason[data-cat="love"] { border-right-color: var(--love); background: rgba(255, 59, 107, 0.05); }
-.story-reason[data-cat="good"] { border-right-color: var(--good); background: rgba(77, 171, 247, 0.05); }
-.story-reason[data-cat="hate"] { border-right-color: var(--hate); background: rgba(255, 159, 67, 0.05); }
-.story-reason-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+.story-structured-k {
   color: var(--text-4);
-  margin-bottom: 6px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
-.story-reason-text {
-  color: var(--text-1);
-  font-size: var(--fs-md);
-  line-height: 1.85;
+.story-structured-v {
+  color: var(--text-2);
 }
 
-/* ---- امتیازها ---- */
-.story-scores {
-  display: flex;
-  flex-direction: column;
+.story-structured-fix {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-1);
+}
+.story-structured-fix .story-structured-k { color: var(--success); }
+.story-structured-fix .story-structured-v {
+  color: var(--text-1);
+  font-style: italic;
+}
+
+.story-structured-tag {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.story-structured-item-plain {
+  display: grid;
+  grid-template-columns: 24px 1fr;
   gap: 8px;
+  align-items: start;
+}
+
+.story-list[data-kind="apparent"]::before { background: #a78bfa; }
+.story-list[data-kind="apparent"] .story-structured-item { box-shadow: inset 3px 0 0 #a78bfa; }
+
+/* =========================================================
+   کارت تحلیل عمیق (دکمه‌ی شروع)
+   ========================================================= */
+.ai-deep-wrap { padding: 4px 0; }
+
+.ai-deep-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(139, 92, 255, 0.10), rgba(139, 92, 255, 0.02));
+  border: 1px solid rgba(139, 92, 255, 0.3);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 30px -10px rgba(139, 92, 255, 0.6);
+  animation: slide-up 320ms var(--ease-out);
+}
+
+.ai-deep-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(139, 92, 255, 0.9));
+  animation: pulse-soft 2.5s ease-in-out infinite;
+}
+
+.ai-deep-info { flex: 1; min-width: 0; }
+.ai-deep-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text-1);
+  margin-bottom: 4px;
+}
+.ai-deep-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.6;
+}
+
+/* =========================================================
+   تحلیل عمیق فصل‌به‌فصل
+   ========================================================= */
+.ai-deep-info-box {
   padding: 14px 16px;
   background: var(--bg-2);
   border: 1px solid var(--border-1);
   border-radius: var(--radius-md);
-}
-.score-row {
-  display: grid;
-  grid-template-columns: 130px 1fr 44px;
-  align-items: center;
-  gap: 10px;
   font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.7;
 }
-.score-label { color: var(--text-3); }
-.score-track {
+.ai-deep-chunks {
+  list-style: disc;
+  padding-right: 20px;
+  margin-top: 8px;
+  color: var(--text-3);
+}
+.ai-deep-chunks li { margin: 3px 0; }
+
+.ai-deep-progress { margin: 12px 0; }
+.ai-deep-bar {
   height: 8px;
   background: var(--bg-3);
   border-radius: var(--radius-pill);
   overflow: hidden;
   border: 1px solid var(--border-1);
 }
-.score-fill {
+.ai-deep-bar-fill {
   height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--neon-pink));
   border-radius: inherit;
-  transition: width 900ms var(--ease-out);
-  box-shadow: 0 0 12px -2px currentColor;
+  transition: width 500ms var(--ease-out);
+  box-shadow: 0 0 14px rgba(139, 92, 255, 0.9);
 }
-.score-fill[data-color="good"] { background: linear-gradient(90deg, #3ddc97, #6ee7b7); color: #3ddc97; }
-.score-fill[data-color="warn"] { background: linear-gradient(90deg, #ffcc4d, #ffd87a); color: #ffcc4d; }
-.score-fill[data-color="bad"]  { background: linear-gradient(90deg, #ff4d5e, #ff7a95); color: #ff4d5e; }
-.score-num {
+.ai-deep-bar-text {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
   text-align: left;
-  font-weight: 700;
-  color: var(--text-1);
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- نوع خاله‌زنکی ---- */
-.story-gossip-note {
+.ai-deep-log {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-1);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-2);
-  font-size: var(--fs-sm);
-  background: var(--bg-2);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
 }
-.story-gossip-note[data-kind="used-well"] { background: rgba(61, 220, 151, 0.06); border-color: rgba(61, 220, 151, 0.3); }
-.story-gossip-note[data-kind="used-lazily"] { background: rgba(255, 77, 94, 0.06); border-color: rgba(255, 77, 94, 0.3); }
-.story-gossip-note[data-kind="mixed"] { background: rgba(255, 204, 77, 0.06); border-color: rgba(255, 204, 77, 0.3); }
-.story-gossip-label {
-  font-weight: 700;
+.ai-deep-log-line {
   color: var(--text-3);
-  flex-shrink: 0;
+  padding: 2px 0;
 }
+.ai-deep-log-line[data-state="done"] { color: var(--success); text-shadow: 0 0 6px rgba(61,220,151,0.6); }
+.ai-deep-log-line[data-state="error"] { color: var(--danger); text-shadow: 0 0 6px rgba(255,77,94,0.6); }
+.ai-deep-log-line[data-state="start"] { color: var(--accent-2); }
 
-/* ---- حکم ---- */
-.story-verdict {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+.ai-deep-result { margin-top: 14px; }
+.ai-deep-summary {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(61, 220, 151, 0.08), transparent);
+  border: 1px solid rgba(61, 220, 151, 0.3);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-2);
-  background: var(--bg-2);
+  margin-bottom: 12px;
 }
-.story-verdict[data-verdict="match"] { background: rgba(61, 220, 151, 0.06); border-color: rgba(61, 220, 151, 0.3); }
-.story-verdict[data-verdict="partial"] { background: rgba(255, 204, 77, 0.06); border-color: rgba(255, 204, 77, 0.3); }
-.story-verdict[data-verdict="against"] { background: rgba(255, 77, 94, 0.06); border-color: rgba(255, 77, 94, 0.3); }
-.story-verdict-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 0 6px currentColor);
-}
-.story-verdict-title {
+.ai-deep-summary-title {
   font-size: var(--fs-md);
   font-weight: 700;
-  color: var(--text-1);
+  color: var(--success);
+  margin-bottom: 8px;
+  text-shadow: 0 0 10px rgba(61, 220, 151, 0.5);
 }
-.story-verdict-desc {
+.ai-deep-summary-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+/* ---- پوشش ---- */
+.story-coverage {
+  padding: 12px 16px;
+  background: rgba(139, 92, 255, 0.05);
+  border: 1px solid rgba(139, 92, 255, 0.2);
+  border-right: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+}
+.story-coverage-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--accent-2);
+  margin-bottom: 6px;
+}
+.story-coverage-text {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
+.story-coverage-rec {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-1);
   font-size: var(--fs-xs);
   color: var(--text-3);
-  margin-top: 2px;
-  line-height: 1.6;
+  font-style: italic;
 }
 
-/* ---- لیست‌ها ---- */
-.story-list {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-1);
-  background: var(--bg-2);
-  position: relative;
-  overflow: hidden;
-}
-.story-list::before {
-  content: "";
-  position: absolute;
-  top: 0; bottom: 0; right: 0;
-  width: 3px;
-}
-.story-list[data-kind="pos"]::before { background: var(--success); }
-.story-list[data-kind="neg"]::before { background: var(--warning); }
-.story-list[data-kind="hole"]::before { background: var(--danger); }
-.story-list[data-kind="dumb"]::before { background: var(--hate); }
-.story-list[data-kind="smart"]::before { background: var(--good); }
-.story-list[data-kind="earned"]::before { background: #3ddc97; }
-.story-list[data-kind="forced"]::before { background: #ff7a95; }
-.story-list[data-kind="gossip"]::before { background: #c084fc; }
-
-.story-list-title {
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  color: var(--text-2);
-  margin-bottom: 8px;
-}
-.story-list ul {
-  padding-right: 18px;
-  list-style: disc;
-}
-.story-list li {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.75;
-  margin: 4px 0;
-  word-break: break-word;
-}
-.story-list[data-kind="hole"] li::marker { color: var(--danger); }
-.story-list[data-kind="dumb"] li::marker { color: var(--hate); }
-.story-list[data-kind="pos"]  li::marker { color: var(--success); }
-.story-list[data-kind="neg"]  li::marker { color: var(--warning); }
-.story-list[data-kind="smart"] li::marker { color: var(--good); }
-.story-list[data-kind="earned"] li::marker { color: #3ddc97; }
-.story-list[data-kind="forced"] li::marker { color: #ff7a95; }
-.story-list[data-kind="gossip"] li::marker { color: #c084fc; }
-
-/* ---- نگاه مقابل (ضدتعصب) ---- */
-.story-counter {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(77, 171, 247, 0.05);
-  border: 1px solid rgba(77, 171, 247, 0.25);
-  border-right: 3px solid var(--good);
-}
-.story-counter-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--good);
-  margin-bottom: 6px;
-  text-shadow: 0 0 8px rgba(77, 171, 247, 0.6);
-}
-.story-counter-text {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.8;
-}
-
-/* ---- ناهم‌خوانی با دسته‌بندی ---- */
-.story-disagreement {
-  padding: 12px 16px;
-  border-radius: var(--radius-md);
-  background: rgba(255, 159, 67, 0.05);
-  border: 1px solid rgba(255, 159, 67, 0.28);
-  border-right: 3px solid var(--hate);
-}
-.story-disagreement-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--hate);
-  margin-bottom: 6px;
-  text-shadow: 0 0 8px rgba(255, 159, 67, 0.6);
-}
-.story-disagreement-text {
-  font-size: var(--fs-sm);
-  color: var(--text-2);
-  line-height: 1.8;
-}
-
-/* ---- اطمینان ---- */
-.story-confidence {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 8px 12px;
-  font-size: var(--fs-xs);
-  color: var(--text-4);
-}
-.story-confidence-label { font-weight: 600; }
-.story-confidence-value {
-  color: var(--text-2);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+@media (max-width: 720px) {
+  .story-structured-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .story-structured-k { font-size: 10.5px; }
+  .story-structured-type { margin-right: 0; }
+  .ai-deep-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .ai-deep-icon { align-self: flex-start; }
+  .ai-deep-summary-stats { flex-direction: column; gap: 4px; }
 }
