@@ -4,9 +4,9 @@
 window.State = (function () {
   const listeners = new Map();
   const state = {
-    titles: [],           // همه‌ی عنوان‌ها
-    filtered: [],         // بعد از فیلتر
-    category: 'all',
+    titles: [],
+    filtered: [],
+    starFilter: 'all',    /* all | 5 | 4 | 3 | 2 | 1 | 0 */
     search: '',
     filterType: 'all',
     sort: 'recent',
@@ -14,21 +14,21 @@ window.State = (function () {
     onlyRated: false,
     view: 'grid',
     theme: 'dark',
-    dirty: false,         // تغییرات محلی که push نشده
+    dirty: false,
     loading: false,
     lastSyncAt: null
   };
 
   function get() { return state; }
-
   function set(patch) {
     Object.assign(state, patch);
     emit('change', state);
   }
-
   function on(event, cb) {
-    (listeners.get(event) || listeners.set(event, []).get(event)).push(cb);
-    return () => off(event, cb);
+    let arr = listeners.get(event);
+    if (!arr) { arr = []; listeners.set(event, arr); }
+    arr.push(cb);
+    return function () { off(event, cb); };
   }
   function off(event, cb) {
     const arr = listeners.get(event) || [];
@@ -36,38 +36,45 @@ window.State = (function () {
     if (i > -1) arr.splice(i, 1);
   }
   function emit(event, payload) {
-    (listeners.get(event) || []).forEach(cb => {
+    (listeners.get(event) || []).forEach(function (cb) {
       try { cb(payload); } catch (e) { console.error(e); }
     });
   }
 
-  /* ---- بارگذاری همه ---- */
   function loadAll() {
     state.titles = DB.getAllTitles();
     emit('titles:loaded', state.titles);
     return state.titles;
   }
 
-  /* ---- اعمال فیلترها ---- */
   function applyFilters() {
     const q = Utils.normalizeFa(state.search);
     let list = state.titles.slice();
 
-    if (state.category !== 'all') {
-      list = list.filter(t => t.category === state.category);
+    /* فیلتر ستاره */
+    if (state.starFilter !== 'all') {
+      const s = Number(state.starFilter);
+      if (s === 0) {
+        /* بدون امتیاز */
+        list = list.filter(function (t) { return !t.rating || t.rating === 0; });
+      } else {
+        list = list.filter(function (t) {
+          /* اگر rating 4.5 بود، در گروه 4 می‌آید (round down) */
+          return Math.floor(Number(t.rating) || 0) === s;
+        });
+      }
     }
-    if (state.filterType !== 'all') {
-      list = list.filter(t => t.type === state.filterType);
-    }
-    if (state.onlyFav) list = list.filter(t => t.favorite);
-    if (state.onlyRated) list = list.filter(t => t.rating > 0);
+
+    if (state.filterType !== 'all') list = list.filter(function (t) { return t.type === state.filterType; });
+    if (state.onlyFav) list = list.filter(function (t) { return t.favorite; });
+    if (state.onlyRated) list = list.filter(function (t) { return t.rating > 0; });
 
     if (q) {
-      list = list.filter(t => {
+      list = list.filter(function (t) {
         const hay = Utils.normalizeFa(
-          `${t.title} ${t.genre || ''} ${t.notes || ''} ${t.year || ''}`
+          t.title + ' ' + (t.genre || '') + ' ' + (t.notes || '') + ' ' + (t.year || '')
         );
-        return q.split(' ').every(w => hay.includes(w));
+        return q.split(' ').every(function (w) { return hay.indexOf(w) > -1; });
       });
     }
 
@@ -78,53 +85,64 @@ window.State = (function () {
   }
 
   function sortList(list, mode) {
-    const arr = [...list];
+    const arr = list.slice();
     switch (mode) {
-      case 'oldest':   return arr.sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
-      case 'title-asc':return arr.sort((a,b) => a.title.localeCompare(b.title, 'fa'));
-      case 'title-desc':return arr.sort((a,b) => b.title.localeCompare(a.title, 'fa'));
-      case 'rating-desc': return arr.sort((a,b) => (b.rating || 0) - (a.rating || 0));
-      case 'rating-asc': return arr.sort((a,b) => (a.rating || 0) - (b.rating || 0));
-      case 'year-desc': return arr.sort((a,b) => (b.year || 0) - (a.year || 0));
+      case 'oldest':    return arr.sort(function (a, b) { return new Date(a.created_at) - new Date(b.created_at); });
+      case 'title-asc': return arr.sort(function (a, b) { return a.title.localeCompare(b.title, 'fa'); });
+      case 'title-desc':return arr.sort(function (a, b) { return b.title.localeCompare(a.title, 'fa'); });
+      case 'rating-desc': return arr.sort(function (a, b) { return (b.rating || 0) - (a.rating || 0); });
+      case 'rating-asc':  return arr.sort(function (a, b) { return (a.rating || 0) - (b.rating || 0); });
+      case 'year-desc': return arr.sort(function (a, b) { return (b.year || 0) - (a.year || 0); });
       case 'recent':
-      default: return arr.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+      default: return arr.sort(function (a, b) { return new Date(b.created_at) - new Date(a.created_at); });
     }
   }
 
-  /* ---- CRUD wrappers ---- */
   function addTitle(data) {
     const id = DB.insertTitle(data, true);
     state.dirty = true;
-    loadAll();
-    applyFilters();
+    loadAll(); applyFilters();
     emit('title:added', id);
     return id;
   }
   function editTitle(id, data) {
     DB.updateTitle(id, data, true);
     state.dirty = true;
-    loadAll();
-    applyFilters();
+    loadAll(); applyFilters();
     emit('title:updated', id);
   }
   function removeTitle(id) {
-    DB.deleteTitle(id, true);
+    const row = DB.deleteTitle(id, true);
     state.dirty = true;
-    loadAll();
-    applyFilters();
+    loadAll(); applyFilters();
     emit('title:deleted', id);
+    return row;
+  }
+  function restoreTitle(row) {
+    const newId = DB.restoreTitle(row);
+    state.dirty = true;
+    loadAll(); applyFilters();
+    emit('title:restored', newId);
+    return newId;
   }
   function toggleFavorite(id) {
     const t = DB.getTitle(id);
     if (!t) return;
-    DB.updateTitle(id, { ...t, favorite: !t.favorite }, true);
+    DB.updateTitle(id, Object.assign({}, t, { favorite: !t.favorite }), true);
     state.dirty = true;
-    loadAll();
-    applyFilters();
+    loadAll(); applyFilters();
+    emit('title:updated', id);
+  }
+  function setRating(id, stars) {
+    const t = DB.getTitle(id);
+    if (!t) return;
+    const num = Math.max(0, Math.min(5, Number(stars) || 0));
+    DB.updateTitle(id, Object.assign({}, t, { rating: num }), true);
+    state.dirty = true;
+    loadAll(); applyFilters();
     emit('title:updated', id);
   }
 
-  /* ---- تنظیمات ظاهری ---- */
   function setTheme(t) {
     state.theme = t;
     document.documentElement.setAttribute('data-theme', t);
@@ -135,16 +153,17 @@ window.State = (function () {
     localStorage.setItem(CONFIG.STORAGE.VIEW, v);
     emit('view:changed', v);
   }
-  function setCategory(c) {
-    state.category = c;
-    localStorage.setItem(CONFIG.STORAGE.LAST_CATEGORY, c);
-    emit('category:changed', c);
+  function setStarFilter(f) {
+    state.starFilter = f;
+    localStorage.setItem(CONFIG.STORAGE.LAST_STAR_FILTER, String(f));
+    emit('starFilter:changed', f);
   }
 
   return {
-    get, set, on, off, emit,
-    loadAll, applyFilters, sortList,
-    addTitle, editTitle, removeTitle, toggleFavorite,
-    setTheme, setView, setCategory
+    get: get, set: set, on: on, off: off, emit: emit,
+    loadAll: loadAll, applyFilters: applyFilters, sortList: sortList,
+    addTitle: addTitle, editTitle: editTitle, removeTitle: removeTitle,
+    restoreTitle: restoreTitle, toggleFavorite: toggleFavorite, setRating: setRating,
+    setTheme: setTheme, setView: setView, setStarFilter: setStarFilter
   };
 })();
