@@ -517,11 +517,11 @@ window.Events = (function () {
   }
 
   /* ============================================================
-     انتخاب‌گر کارتی مدل — با لیست داینامیک
+     انتخاب‌گر کارتی مدل — لیست استاتیک از CONFIG
      ============================================================ */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
-    let models = AI.getModels();
+    const models = AI.getModels();
     const defaultModel = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
 
     const searchInput = Utils.el('input', {
@@ -533,68 +533,6 @@ window.Events = (function () {
 
     const listWrap = Utils.el('div', { class: 'model-list' });
     const statsBar = Utils.el('div', { class: 'model-stats' });
-
-    /* ---- اطلاعات کش ---- */
-    const cacheInfo = Utils.el('div', { class: 'model-cache-info' });
-
-    function renderCacheInfo() {
-      const age = AI.getCacheAge();
-      cacheInfo.innerHTML = '';
-      if (age === Infinity) {
-        cacheInfo.appendChild(Utils.el('span', { class: 'cache-info-text' }, [
-          'لیست پیش‌فرض (هنوز از OpenRouter دریافت نشده)'
-        ]));
-      } else {
-        const mins = Math.floor(age / 60000);
-        const ageStr = mins < 1 ? 'چند لحظه پیش'
-          : mins < 60 ? `${Utils.toFa(mins)} دقیقه پیش`
-          : `${Utils.toFa(Math.floor(mins / 60))} ساعت پیش`;
-        cacheInfo.appendChild(Utils.el('span', { class: 'cache-info-text' }, [
-          `آخرین بروزرسانی: ${ageStr}`
-        ]));
-      }
-    }
-
-    /* ---- دکمه بروزرسانی ---- */
-    const refreshBtn = Utils.el('button', {
-      type: 'button',
-      class: 'settings-test-btn',
-      id: 'btn-refresh-models'
-    }, ['🔄 بروزرسانی لیست مدل‌ها']);
-
-    refreshBtn.addEventListener('click', async () => {
-      const old = refreshBtn.textContent;
-      refreshBtn.disabled = true;
-      refreshBtn.innerHTML = '<span class="spinner"></span> در حال دریافت…';
-      if (window.AILog) {
-        try { AILog.show(); AILog.info('▸ دریافت لیست مدل‌های رایگان از OpenRouter'); } catch {}
-      }
-      try {
-        const fresh = await AI.fetchFreeModels();
-        models = fresh;
-        /* اگر مدل انتخابی در لیست جدید نیست، پیش‌فرض را انتخاب کن */
-        if (!models.some(m => m.id === selected)) {
-          selected = (models.find(m => m.id === defaultModel) || models[0])?.id || '';
-          onSelect && onSelect(selected);
-        }
-        renderList(searchInput.value);
-        updateStats();
-        renderCacheInfo();
-        Toast.success(`${Utils.toFa(models.length)} مدل رایگان دریافت شد ✅`);
-        if (window.AILog) {
-          try { AILog.success(`✓ ${models.length} مدل از OpenRouter دریافت شد`); AILog.scheduleAutoHide(); } catch {}
-        }
-      } catch (err) {
-        console.error('[models refresh]', err);
-        Toast.error(err.message || 'خطا در دریافت لیست مدل‌ها');
-        if (window.AILog) {
-          try { AILog.error(`✗ ${err.message}`); AILog.scheduleAutoHide(); } catch {}
-        }
-      } finally {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = old;
-      }
-    });
 
     function renderList(query = '') {
       listWrap.innerHTML = '';
@@ -609,11 +547,7 @@ window.Events = (function () {
       });
 
       if (!filtered.length) {
-        listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, [
-          models.length
-            ? 'مدلی با این جستجو پیدا نشد'
-            : 'لیست خالی است — «بروزرسانی لیست مدل‌ها» را بزن'
-        ]));
+        listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, ['مدلی با این جستجو پیدا نشد']));
         return;
       }
 
@@ -641,21 +575,21 @@ window.Events = (function () {
           ]),
 
           Utils.el('div', { class: 'model-card-meta' }, [
-            m.size && m.size !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [
+            Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['⚙']),
               m.size
-            ]) : null,
-            m.size && m.size !== '—' ? Utils.el('span', { class: 'model-meta-sep' }, ['·']) : null,
+            ]),
+            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
             Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['📐']),
               m.context + ' ctx'
             ]),
-            m.speed && m.speed !== '—' ? Utils.el('span', { class: 'model-meta-sep' }, ['·']) : null,
-            m.speed && m.speed !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [
+            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
+            Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['⚡']),
               m.speed + ' t/s'
-            ]) : null
-          ].filter(Boolean)),
+            ])
+          ]),
 
           m.note ? Utils.el('div', { class: 'model-card-note' }, [m.note]) : null,
 
@@ -706,27 +640,16 @@ window.Events = (function () {
 
     renderList();
     updateStats();
-    renderCacheInfo();
 
     const wrap = Utils.el('div', { class: 'model-picker' }, [
       searchInput,
       statsBar,
-      listWrap,
-      Utils.el('div', { class: 'model-picker-footer' }, [
-        cacheInfo,
-        refreshBtn
-      ])
+      listWrap
     ]);
 
     return {
       el: wrap,
-      getSelected: () => selected,
-      refreshList: () => {
-        models = AI.getModels();
-        renderList(searchInput.value);
-        updateStats();
-        renderCacheInfo();
-      }
+      getSelected: () => selected
     };
   }
 
@@ -806,7 +729,7 @@ window.Events = (function () {
         Utils.el('div', {}, [
           'کلید رایگان از ',
           Utils.el('a', { href: 'https://openrouter.ai/keys', target: '_blank', rel: 'noopener' }, ['openrouter.ai/keys']),
-          ' — لیست مدل‌ها به‌صورت داینامیک از OpenRouter دریافت می‌شود.'
+          ' — همه‌ی مدل‌ها با همین کلید کار می‌کنند.'
         ])
       ]),
       Utils.el('div', { class: 'settings-tests' }, [
@@ -830,33 +753,6 @@ window.Events = (function () {
     ]);
 
     Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'xl', body, footer });
-
-    /* ---- اگر کش نداریم، خودکار fetch کن ---- */
-    if (!AI.getCachedModels()) {
-      if (window.AILog) {
-        try { AILog.show(); AILog.info('▸ لیست مدل‌ها در کش نیست — دریافت خودکار'); } catch {}
-      }
-      AI.fetchFreeModels()
-        .then(list => {
-          picker.refreshList();
-          if (window.AILog) {
-            try {
-              AILog.success(`✓ ${list.length} مدل رایگان دریافت شد`);
-              AILog.scheduleAutoHide();
-            } catch {}
-          }
-        })
-        .catch(err => {
-          console.warn('[models auto-fetch]', err);
-          if (window.AILog) {
-            try {
-              AILog.warn('⚠ دریافت خودکار لیست مدل‌ها ناموفق — با لیست پیش‌فرض ادامه بده');
-              AILog.meta(err.message);
-              AILog.scheduleAutoHide();
-            } catch {}
-          }
-        });
-    }
 
     function refreshStatus() {
       const ghEl = githubSection.querySelector('.settings-status');
