@@ -1,24 +1,13 @@
 /* =========================================================
    فرم‌ها
    ========================================================= */
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
+.form { display: flex; flex-direction: column; gap: 16px; }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-row-3 { grid-template-columns: repeat(3, 1fr); }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.field { display: flex; flex-direction: column; gap: 6px; }
+
 .field-label {
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -28,165 +17,128 @@
   gap: 6px;
 }
 .field-label .req { color: var(--danger); font-size: 14px; }
-.field-hint { font-size: var(--fs-xs); color: var(--text-4); }
-.field-hint-inline {
-  font-size: var(--fs-xs);
-  color: var(--text-4);
-  font-weight: 400;
-}
+.field-hint, .field-hint-inline { font-size: var(--fs-xs); color: var(--text-4); }
+.field-hint-inline { font-weight: 400; }
 
 .field-input,
 .field-select,
 .field-textarea {
   width: 100%;
-  padding: 9px 12px;
+  padding: 10px 14px;
   font-size: var(--fs-md);
   color: var(--text-1);
   background: var(--bg-2);
-  border: 1px solid var(--border-1);
+  border: 1px solid var(--border-2);
   border-radius: var(--radius-md);
-  transition: all var(--dur-fast) var(--ease);
+  transition: all var(--dur-fast) var(--ease-out);
 }
 .field-input::placeholder,
 .field-textarea::placeholder { color: var(--text-4); }
-
 .field-input:hover,
 .field-select:hover,
-.field-textarea:hover { border-color: var(--border-2); }
-
+.field-textarea:hover { border-color: var(--border-3); }
 .field-input:focus,
 .field-select:focus,
 .field-textarea:focus {
   border-color: var(--accent);
   background: var(--bg-3);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.field-input.is-error,
-.field-select.is-error,
-.field-textarea.is-error { border-color: var(--danger); }
-
-.field-textarea {
-  min-height: 90px;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.7;
-}
+.field-textarea { min-height: 96px; resize: vertical; font-family: inherit; line-height: 1.7; }
 
 .field-select {
   appearance: none;
   cursor: pointer;
-  padding-left: 32px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  padding-left: 34px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: left 10px center;
-  background-size: 14px;
+  background-position: left 12px center;
+  background-size: 15px;
 }
 .field-select option { background: var(--bg-2); color: var(--text-1); }
 
-.field-error {
-  font-size: var(--fs-xs);
-  color: var(--danger);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-height: 14px;
-}
-
 /* =========================================================
-   انتخاب دسته‌بندی
+   انتخاب‌گر ستاره
    ========================================================= */
-.cat-picker {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-.cat-option {
-  position: relative;
-  cursor: pointer;
-}
-.cat-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-.cat-option-inner {
+.star-picker-wrap {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  padding: 12px 8px;
-  border-radius: var(--radius-md);
+  gap: 8px;
+  padding: 16px 18px;
   background: var(--bg-2);
-  border: 1.5px solid var(--border-1);
-  transition: all var(--dur-base) var(--ease);
-  text-align: center;
-}
-.cat-option-inner .emoji { font-size: 22px; }
-.cat-option-inner .lbl {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text-2);
-}
-
-.cat-option:hover .cat-option-inner { border-color: var(--border-3); }
-
-.cat-option[data-cat="love"] input:checked + .cat-option-inner {
-  background: var(--love-soft);
-  border-color: var(--love);
-}
-.cat-option[data-cat="good"] input:checked + .cat-option-inner {
-  background: var(--good-soft);
-  border-color: var(--good);
-}
-.cat-option[data-cat="hate"] input:checked + .cat-option-inner {
-  background: var(--hate-soft);
-  border-color: var(--hate);
-}
-.cat-option[data-cat="love"] input:checked + .cat-option-inner .lbl { color: var(--love); }
-.cat-option[data-cat="good"] input:checked + .cat-option-inner .lbl { color: var(--good); }
-.cat-option[data-cat="hate"] input:checked + .cat-option-inner .lbl { color: var(--hate); }
-
-/* =========================================================
-   امتیازدهی
-   ========================================================= */
-.rating-picker {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 10px 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-1);
+  border: 1px solid var(--border-2);
   border-radius: var(--radius-md);
+  transition: all var(--dur-base) var(--ease-out);
+  --star-current-color: var(--star-3);
+  --star-current-glow: var(--star-3-glow);
 }
-.rating-stars {
+.star-picker-wrap[data-color="1"] { border-color: rgba(255, 77, 94, 0.35); background: linear-gradient(180deg, rgba(255,77,94,0.05), var(--bg-2)); }
+.star-picker-wrap[data-color="2"] { border-color: rgba(255, 159, 67, 0.35); background: linear-gradient(180deg, rgba(255,159,67,0.05), var(--bg-2)); }
+.star-picker-wrap[data-color="3"] { border-color: rgba(154, 154, 176, 0.30); background: linear-gradient(180deg, rgba(154,154,176,0.05), var(--bg-2)); }
+.star-picker-wrap[data-color="4"] { border-color: rgba(61, 220, 151, 0.35); background: linear-gradient(180deg, rgba(61,220,151,0.05), var(--bg-2)); }
+.star-picker-wrap[data-color="5"] { border-color: rgba(255, 215, 0, 0.45); background: linear-gradient(180deg, rgba(255,215,0,0.08), var(--bg-2)); box-shadow: 0 0 24px -10px var(--star-5-glow); }
+
+.star-picker-row {
   display: flex;
   gap: 4px;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row-reverse;
 }
-.rating-star {
-  width: 24px;
-  height: 24px;
-  color: var(--text-4);
-  cursor: pointer;
-  transition: color var(--dur-fast) var(--ease);
-  padding: 0;
-}
-.rating-star:hover { color: var(--warning); }
-.rating-star.on { color: var(--warning); fill: var(--warning); }
 
-.rating-input {
-  width: 64px;
+.star-picker-star {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--text-4);
+  transition: all var(--dur-fast) var(--ease-spring);
+  cursor: pointer;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+.star-picker-star:hover { transform: scale(1.15); }
+.star-picker-star.is-on {
+  color: var(--star-current-color);
+  filter: drop-shadow(0 0 8px var(--star-current-glow));
+}
+.star-picker-star.is-on svg { fill: var(--star-current-color); }
+
+.star-picker-clear {
+  width: 32px;
   height: 32px;
-  padding: 0 10px;
-  font-size: var(--fs-md);
-  font-weight: 700;
-  text-align: center;
-  color: var(--warning);
+  display: grid;
+  place-items: center;
+  align-self: center;
+  color: var(--text-3);
+  border-radius: 50%;
   background: var(--bg-3);
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  font-variant-numeric: tabular-nums;
+  transition: all var(--dur-fast);
+  font-size: 16px;
+  font-weight: 700;
 }
-.rating-input:focus { border-color: var(--accent); }
+.star-picker-clear:hover {
+  color: var(--text-1);
+  background: var(--bg-4);
+  border-color: var(--border-3);
+}
+
+.star-picker-label {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--star-current-color, var(--text-1));
+  text-align: center;
+  transition: color var(--dur-fast);
+}
+.star-picker-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  text-align: center;
+  font-style: italic;
+}
 
 /* =========================================================
    سوییچ
@@ -196,7 +148,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   background: var(--bg-2);
   border: 1px solid var(--border-1);
   border-radius: var(--radius-md);
@@ -207,8 +159,8 @@
 .switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 42px;
+  height: 24px;
   flex-shrink: 0;
 }
 .switch input { position: absolute; opacity: 0; pointer-events: none; }
@@ -218,70 +170,68 @@
   border-radius: var(--radius-pill);
   background: var(--bg-4);
   border: 1px solid var(--border-2);
-  transition: all var(--dur-base) var(--ease);
+  transition: all var(--dur-base) var(--ease-out);
   cursor: pointer;
 }
 .switch-track::after {
   content: "";
   position: absolute;
-  top: 50%;
-  right: 3px;
+  top: 50%; right: 3px;
   transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
+  width: 16px; height: 16px;
   border-radius: 50%;
-  background: var(--text-3);
-  transition: all var(--dur-base) var(--ease);
+  background: var(--text-2);
+  transition: all var(--dur-base) var(--ease-spring);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 .switch input:checked + .switch-track {
   background: var(--accent);
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .switch input:checked + .switch-track::after {
-  right: calc(100% - 17px);
+  right: calc(100% - 19px);
   background: #fff;
 }
 
 /* =========================================================
-   چیپ‌ها
+   چیپ و هشدار
    ========================================================= */
-.chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .chip {
-  padding: 5px 12px;
+  padding: 6px 12px;
   font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-2);
   background: var(--bg-2);
-  border: 1px solid var(--border-1);
+  border: 1px solid var(--border-2);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: all var(--dur-fast) var(--ease);
+  transition: all var(--dur-fast);
 }
 .chip:hover { border-color: var(--border-3); color: var(--text-1); }
 .chip.is-on {
   background: var(--accent-soft);
   color: var(--accent-2);
-  border-color: var(--accent);
+  border-color: rgba(124,92,255,0.35);
   font-weight: 600;
 }
 
-/* =========================================================
-   جعبه‌ی هشدار
-   ========================================================= */
 .alert {
   display: flex;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 12px;
+  padding: 12px 14px;
   border-radius: var(--radius-md);
   font-size: var(--fs-sm);
   line-height: 1.7;
   border: 1px solid transparent;
 }
-.alert-icon { font-size: 16px; flex-shrink: 0; line-height: 1.5; }
-.alert-info { background: rgba(59, 130, 246, 0.08); border-color: rgba(59, 130, 246, 0.25); color: var(--text-2); }
-.alert-warn { background: rgba(245, 158, 11, 0.08); border-color: rgba(245, 158, 11, 0.25); color: var(--text-2); }
-.alert-danger { background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.25); color: var(--text-2); }
+.alert-icon { font-size: 18px; flex-shrink: 0; line-height: 1.4; }
+.alert-info { background: rgba(77,171,247,0.08); border-color: rgba(77,171,247,0.22); color: var(--text-2); }
+.alert-warn { background: rgba(255,204,77,0.08); border-color: rgba(255,204,77,0.22); color: var(--text-2); }
+.alert-danger { background: rgba(255,77,94,0.08); border-color: rgba(255,77,94,0.22); color: var(--text-2); }
+
+@media (max-width: 720px) {
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+  .star-picker-star { width: 36px; height: 36px; }
+}
