@@ -1,25 +1,52 @@
 /* =========================================================
-   سیستم مودال
+   سیستم مودال — با قفل اسکرول پس‌زمینه
    ========================================================= */
 window.Modal = (function () {
-  const root = () => document.getElementById('modal-root');
+  const root = function () { return document.getElementById('modal-root'); };
   const stack = [];
   let current = null;
+  let scrollLocked = false;
 
+  /* =========================================================
+     قفل/بازکردن اسکرول پس‌زمینه
+     ========================================================= */
+  function lockScroll() {
+    if (scrollLocked) return;
+
+    /* محاسبه‌ی عرض اسکرول‌بار */
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    if (scrollbarWidth > 0) {
+      /* در RTL، اسکرول‌بار سمت چپ است. paddingInlineEnd = padding-left */
+      document.body.style.paddingInlineEnd = scrollbarWidth + 'px';
+    }
+
+    document.body.classList.add('modal-open');
+    scrollLocked = true;
+  }
+
+  function unlockScroll() {
+    if (!scrollLocked) return;
+    document.body.style.paddingInlineEnd = '';
+    document.body.classList.remove('modal-open');
+    scrollLocked = false;
+  }
+
+  /* =========================================================
+     باز کردن مودال
+     ========================================================= */
   function open(opts) {
-    const {
-      title = '',
-      icon = '',
-      body = null,            // HTMLElement | string
-      footer = null,          // HTMLElement | string | null
-      size = 'md',            // sm | md | lg | xl
-      closable = true,
-      onClose = null,
-      className = ''
-    } = opts;
+    const title = opts.title || '';
+    const icon = opts.icon || '';
+    const body = opts.body || null;
+    const footer = opts.footer || null;
+    const size = opts.size || 'md';
+    const closable = opts.closable !== false;
+    const onClose = opts.onClose || null;
+    const className = opts.className || '';
 
     const modal = Utils.el('div', {
-      class: `modal modal-${size} ${className}`.trim(),
+      class: ('modal modal-' + size + ' ' + className).trim(),
       role: 'dialog',
       'aria-modal': 'true',
       'aria-label': title
@@ -33,7 +60,7 @@ window.Modal = (function () {
       closable ? Utils.el('button', {
         class: 'modal-close',
         'aria-label': 'بستن',
-        onclick: () => close()
+        onclick: function () { close(); }
       }, ['✕']) : null
     ].filter(Boolean));
 
@@ -53,7 +80,7 @@ window.Modal = (function () {
 
     const backdrop = Utils.el('div', {
       class: 'modal-backdrop',
-      onclick: () => { if (closable) close(); }
+      onclick: function () { if (closable) close(); }
     });
 
     const wrapper = Utils.el('div', { class: 'modal-wrapper' });
@@ -64,20 +91,33 @@ window.Modal = (function () {
     root().classList.add('is-open');
     root().setAttribute('aria-hidden', 'false');
 
-    stack.push({ wrapper, modal, onClose, previousFocus: document.activeElement });
+    stack.push({
+      wrapper: wrapper,
+      modal: modal,
+      onClose: onClose,
+      previousFocus: document.activeElement
+    });
 
-    // focus trap
-    setTimeout(() => {
-      const focusable = modal.querySelector('input:not([type="hidden"]), textarea, select, button:not([disabled])');
+    /* ---- قفل اسکرول پس‌زمینه ---- */
+    lockScroll();
+
+    /* ---- فوکوس اولیه ---- */
+    setTimeout(function () {
+      const focusable = modal.querySelector(
+        'input:not([type="hidden"]), textarea, select, button:not([disabled])'
+      );
       if (focusable) focusable.focus();
     }, 40);
 
     current = modal;
 
     document.addEventListener('keydown', onKeyDown);
-    return { modal, bodyEl, close };
+    return { modal: modal, bodyEl: bodyEl, close: close };
   }
 
+  /* =========================================================
+     بستن مودال
+     ========================================================= */
   function onKeyDown(e) {
     if (e.key === 'Escape' && stack.length) {
       const top = stack[stack.length - 1];
@@ -91,37 +131,50 @@ window.Modal = (function () {
 
   function trapFocus(e, modal) {
     const focusables = modal.querySelectorAll(
-      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      'a[href], button:not([disabled]), textarea:not([disabled]), ' +
+      'input:not([disabled]):not([type="hidden"]), select:not([disabled]), ' +
+      '[tabindex]:not([tabindex="-1"])'
     );
     if (!focusables.length) return;
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
     if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault(); last.focus();
+      e.preventDefault();
+      last.focus();
     } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault(); first.focus();
+      e.preventDefault();
+      first.focus();
     }
   }
 
   function close() {
     if (!stack.length) return;
     const item = stack.pop();
-    const { wrapper, modal, onClose, previousFocus } = item;
+    const wrapper = item.wrapper;
+    const modal = item.modal;
+    const onClose = item.onClose;
+    const previousFocus = item.previousFocus;
 
     modal.classList.add('is-closing');
     wrapper.style.transition = 'opacity 220ms';
     wrapper.style.opacity = '0';
 
-    setTimeout(() => {
+    setTimeout(function () {
       wrapper.remove();
+
       if (!stack.length) {
         root().classList.remove('is-open');
         root().setAttribute('aria-hidden', 'true');
         document.removeEventListener('keydown', onKeyDown);
+
+        /* ---- بازکردن اسکرول پس‌زمینه ---- */
+        unlockScroll();
       }
+
       if (typeof onClose === 'function') onClose();
+
       if (previousFocus && previousFocus.focus) {
-        try { previousFocus.focus(); } catch {}
+        try { previousFocus.focus(); } catch (e) {}
       }
     }, 200);
 
@@ -132,18 +185,19 @@ window.Modal = (function () {
     while (stack.length) close();
   }
 
-  /* ---- مودال تایید ---- */
-  function confirm(opts = {}) {
-    const {
-      title = 'آیا مطمئن هستید؟',
-      message = '',
-      confirmText = 'تایید',
-      cancelText = 'انصراف',
-      danger = false,
-      icon = '⚠️',
-      onConfirm = null,
-      onCancel = null
-    } = opts;
+  /* =========================================================
+     مودال تایید
+     ========================================================= */
+  function confirm(opts) {
+    opts = opts || {};
+    const title = opts.title || 'آیا مطمئن هستید؟';
+    const message = opts.message || '';
+    const confirmText = opts.confirmText || 'تایید';
+    const cancelText = opts.cancelText || 'انصراف';
+    const danger = !!opts.danger;
+    const icon = opts.icon || '⚠️';
+    const onConfirm = opts.onConfirm || null;
+    const onCancel = opts.onCancel || null;
 
     const body = Utils.el('div', { class: 'confirm-text' }, [
       Utils.el('div', { class: 'confirm-icon' }, [icon]),
@@ -154,29 +208,58 @@ window.Modal = (function () {
     const footer = Utils.el('div', { class: 'flex gap-3' }, [
       Utils.el('button', {
         class: 'btn btn-ghost',
-        onclick: () => { close(); onCancel && onCancel(); }
+        onclick: function () {
+          close();
+          if (onCancel) onCancel();
+        }
       }, [cancelText]),
       Utils.el('button', {
-        class: `btn ${danger ? 'btn-danger' : 'btn-primary'}`,
-        onclick: () => { close(); onConfirm && onConfirm(); }
+        class: 'btn ' + (danger ? 'btn-danger' : 'btn-primary'),
+        onclick: function () {
+          close();
+          if (onConfirm) onConfirm();
+        }
       }, [confirmText])
     ]);
 
-    return open({ title: 'تایید', body, footer, size: 'sm', icon: '🔔' });
+    return open({
+      title: 'تایید',
+      body: body,
+      footer: footer,
+      size: 'sm',
+      icon: '🔔'
+    });
   }
 
-  /* ---- مودال هشدار ساده ---- */
-  function alert(opts = {}) {
-    const { title = 'توجه', message = '', okText = 'فهمیدم' } = opts;
+  /* =========================================================
+     مودال هشدار
+     ========================================================= */
+  function alert(opts) {
+    opts = opts || {};
+    const title = opts.title || 'توجه';
+    const message = opts.message || '';
+    const okText = opts.okText || 'فهمیدم';
+
     const body = Utils.el('div', { class: 'confirm-text' }, [
       Utils.el('h3', {}, [title]),
       message ? Utils.el('p', {}, [message]) : null
     ].filter(Boolean));
+
     const footer = Utils.el('div', {}, [
-      Utils.el('button', { class: 'btn btn-primary', onclick: () => close() }, [okText])
+      Utils.el('button', {
+        class: 'btn btn-primary',
+        onclick: function () { close(); }
+      }, [okText])
     ]);
-    return open({ title: '', body, footer, size: 'sm', icon: '' });
+
+    return open({ title: '', body: body, footer: footer, size: 'sm', icon: '' });
   }
 
-  return { open, close, closeAll, confirm, alert };
+  return {
+    open: open,
+    close: close,
+    closeAll: closeAll,
+    confirm: confirm,
+    alert: alert
+  };
 })();
