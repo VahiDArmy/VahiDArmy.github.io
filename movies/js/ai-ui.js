@@ -162,7 +162,7 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     رندر تحلیل داستانی
+     رندر تحلیل داستانی — با badge مدل در انتها
      ============================================================ */
   function renderStoryAnalysis(container, sa, reason, category) {
     if (!sa && !reason) return;
@@ -185,7 +185,7 @@ window.AIUI = (function () {
     /* ---- سوراخ‌های داستانی ---- */
     if (Array.isArray(sa.plot_holes) && sa.plot_holes.length) {
       container.appendChild(renderStructuredList({
-        title: '🕳️ سوراخ‌های داستانی — ' + Utils.toFa(sa.plot_holes.length) + ' مورد',
+        title: '🕳️ سوراخ‌های داستانی',
         kind: 'hole',
         items: sa.plot_holes
       }));
@@ -194,7 +194,7 @@ window.AIUI = (function () {
     /* ---- احمق فرض کردن بیننده ---- */
     if (Array.isArray(sa.assumed_stupidity) && sa.assumed_stupidity.length) {
       container.appendChild(renderStructuredList({
-        title: '🤦 لحظاتی که بیننده احمق فرض شد — ' + Utils.toFa(sa.assumed_stupidity.length) + ' مورد',
+        title: '🤦 لحظاتی که بیننده احمق فرض شد',
         kind: 'dumb',
         items: sa.assumed_stupidity
       }));
@@ -220,7 +220,7 @@ window.AIUI = (function () {
       ]));
     });
 
-    /* ---- badge مدل ---- */
+    /* ---- badge مدل در انتها (فقط یک‌بار) ---- */
     const modelInfo = sa.ai_model || null;
     if (modelInfo) {
       const badgeWrap = Utils.el('div', { class: 'story-model-wrap' });
@@ -230,7 +230,7 @@ window.AIUI = (function () {
   }
 
   /* ============================================================
-     لیست ساختاریافته — فیلدهای کوتاه و متمرکز
+     لیست ساختاریافته — با فیلدهای جدید عمیق
      ============================================================ */
   function renderStructuredList({ title, kind, items }) {
     const wrap = Utils.el('div', {
@@ -274,7 +274,7 @@ window.AIUI = (function () {
       ].filter(Boolean));
       itemEl.appendChild(head);
 
-      /* صحنه */
+      /* ---- صحنه ---- */
       if (item.scene) {
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
           Utils.el('span', { class: 'story-structured-k' }, ['صحنه:']),
@@ -282,7 +282,23 @@ window.AIUI = (function () {
         ]));
       }
 
-      /* مشکل یا اتفاق */
+      /* ---- قاعده‌ی شکسته (فقط برای plot_hole) ---- */
+      if (item.rule_broken) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['قاعده‌ی شکسته:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.rule_broken])
+        ]));
+      }
+
+      /* ---- تکنیک نویسنده (فقط برای assumed_stupidity) ---- */
+      if (item.technique) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['تکنیک نویسنده:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.technique])
+        ]));
+      }
+
+      /* ---- مشکل / اتفاق ---- */
       const mainIssue = item.issue || item.what_happened;
       if (mainIssue) {
         itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
@@ -290,6 +306,25 @@ window.AIUI = (function () {
             item.issue ? 'مشکل:' : 'اتفاق:'
           ]),
           Utils.el('span', { class: 'story-structured-v' }, [mainIssue])
+        ]));
+      }
+
+      /* ---- چرا ---- */
+      const why = item.why || item.why_assumes_stupidity;
+      if (why) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, [
+            item.why ? 'چرا سوراخ است:' : 'چرا احمق‌فرض‌گیری است:'
+          ]),
+          Utils.el('span', { class: 'story-structured-v' }, [why])
+        ]));
+      }
+
+      /* ---- زنجیره‌ی اثر ---- */
+      if (item.cascade) {
+        itemEl.appendChild(Utils.el('div', { class: 'story-structured-row' }, [
+          Utils.el('span', { class: 'story-structured-k' }, ['اثر زنجیره‌ای:']),
+          Utils.el('span', { class: 'story-structured-v' }, [item.cascade])
         ]));
       }
 
@@ -320,7 +355,6 @@ window.AIUI = (function () {
     const panel = createStreamPanel(`تحلیل: ${t.title}`);
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
     const storyBox = Utils.el('div', { class: 'story-analysis-box', hidden: true });
-    const badgeBox = Utils.el('div', { class: 'ai-result-badge-wrap', hidden: true });
     const deepBtnWrap = Utils.el('div', { class: 'ai-deep-wrap', hidden: true });
     const applyBtn = Utils.el('button', {
       class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true
@@ -341,7 +375,6 @@ window.AIUI = (function () {
       panel.panel,
       resultBox,
       storyBox,
-      badgeBox,
       deepBtnWrap
     ]);
 
@@ -351,7 +384,7 @@ window.AIUI = (function () {
     ]);
 
     Modal.open({
-      title: 'تحلیل داستانی',
+      title: 'تحلیل داستانی و شکار سوراخ‌ها',
       icon: '🔬',
       size: 'xl',
       body, footer
@@ -420,10 +453,6 @@ window.AIUI = (function () {
         storyBox.hidden = false;
         renderStoryAnalysis(storyBox, storyData, result.reason, t.category);
 
-        badgeBox.hidden = false;
-        badgeBox.innerHTML = '';
-        appendModelBadge(badgeBox);
-
         const seasons = Number(result.seasons) || 0;
         if (seasons > 3) {
           deepBtnWrap.hidden = false;
@@ -435,6 +464,7 @@ window.AIUI = (function () {
                 `این سریال ${Utils.toFa(seasons)} فصل دارد`
               ]),
               Utils.el('div', { class: 'ai-deep-desc' }, [
+                'تحلیل فعلی ممکن است همه‌ی قسمت‌ها را عمیق پوشش نداده باشد. ',
                 'برای شکار کامل سوراخ‌ها و لحظات احمق‌فرض‌گیری، تحلیل فصل به فصل اجرا کن.'
               ])
             ]),
@@ -442,7 +472,7 @@ window.AIUI = (function () {
               class: 'btn btn-primary',
               id: 'btn-deep-analyze',
               onclick: () => openSeasonalDeep(id, t.title, seasons, storyData)
-            }, ['🔬 تحلیل عمیق فصل به فصل'])
+            }, ['🔬 شروع تحلیل عمیق فصل به فصل'])
           ]));
         }
 
