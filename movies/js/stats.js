@@ -1,84 +1,92 @@
 /* =========================================================
-   داشبورد آماری
+   داشبورد آماری — بر اساس ستاره
    ========================================================= */
 window.Stats = (function () {
 
   function build() {
     const titles = DB.getAllTitles();
     const total = titles.length;
-    const byCat = { love: [], good: [], hate: [] };
-    titles.forEach(t => byCat[t.category]?.push(t));
-
-    const rated = titles.filter(t => t.rating > 0);
-    const avgAll = rated.length ? (rated.reduce((a, b) => a + b.rating, 0) / rated.length) : 0;
-
-    const favs = titles.filter(t => t.favorite).length;
-    const types = {};
-    titles.forEach(t => { types[t.type] = (types[t.type] || 0) + 1; });
-
-    const genres = {};
-    titles.forEach(t => {
-      (t.genre || '').split(/[,،]/).map(g => g.trim()).filter(Boolean).forEach(g => {
-        genres[g] = (genres[g] || 0) + 1;
-      });
+    const byStars = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [] };
+    titles.forEach(function (t) {
+      const s = Math.floor(Number(t.rating) || 0);
+      if (byStars[s]) byStars[s].push(t);
     });
-
-    return { titles, total, byCat, rated, avgAll, favs, types, genres };
+    const rated = titles.filter(function (t) { return t.rating > 0; });
+    const avgAll = rated.length ? rated.reduce(function (a, b) { return a + (b.rating || 0); }, 0) / rated.length : 0;
+    const favs = titles.filter(function (t) { return t.favorite; }).length;
+    const types = {};
+    titles.forEach(function (t) { types[t.type] = (types[t.type] || 0) + 1; });
+    return { titles: titles, total: total, byStars: byStars, rated: rated, avgAll: avgAll, favs: favs, types: types };
   }
 
   function openDashboard() {
     const s = build();
 
+    const statBoxes = [
+      statBox('کل عنوان‌ها', Utils.toFa(s.total), 'در آرشیو'),
+      statBox('میانگین ستاره', s.avgAll ? Utils.toFa(s.avgAll.toFixed(1)) + ' / ۵' : '—', Utils.toFa(s.rated.length) + ' عنوان امتیازدار'),
+      statBox('علاقه‌مندی‌ها', Utils.toFa(s.favs), Utils.toFa(Math.round(s.favs / Math.max(s.total, 1) * 100)) + '٪ از کل'),
+      statBox('انواع', String(Object.keys(s.types).length), 'نوع محتوا')
+    ];
+
+    const distBars = [];
+    const maxCount = Math.max.apply(null, [1].concat(Object.keys(s.byStars).map(function (k) { return s.byStars[k].length; })));
+
+    [5, 4, 3, 2, 1].forEach(function (n) {
+      const meta = CONFIG.STARS[n];
+      const count = s.byStars[n].length;
+      const pct = (count / maxCount) * 100;
+      distBars.push(Utils.el('div', { class: 'bar-row' }, [
+        Utils.el('span', { class: 'bar-label', style: { color: meta.color } }, [
+          meta.emoji + ' ' + meta.label
+        ]),
+        Utils.el('div', { class: 'bar-track' }, [
+          Utils.el('div', {
+            class: 'bar-fill',
+            style: { width: '0%', background: meta.color, boxShadow: '0 0 12px ' + (meta.glow || 'transparent') },
+            'data-pct': pct
+          })
+        ]),
+        Utils.el('span', { class: 'bar-value' }, [Utils.toFa(count)])
+      ]));
+    });
+    /* بدون امتیاز */
+    const unrated = s.byStars[0].length;
+    if (unrated > 0) {
+      distBars.push(Utils.el('div', { class: 'bar-row' }, [
+        Utils.el('span', { class: 'bar-label' }, ['○ بدون امتیاز']),
+        Utils.el('div', { class: 'bar-track' }, [
+          Utils.el('div', {
+            class: 'bar-fill',
+            style: { width: '0%', background: '#5a5a72' },
+            'data-pct': (unrated / maxCount) * 100
+          })
+        ]),
+        Utils.el('span', { class: 'bar-value' }, [Utils.toFa(unrated)])
+      ]));
+    }
+
+    const typesBars = Object.keys(s.types).map(function (k) {
+      const count = s.types[k];
+      const pct = (count / Math.max(s.total, 1)) * 100;
+      return Utils.el('div', { class: 'bar-row' }, [
+        Utils.el('span', { class: 'bar-label' }, [CONFIG.TYPES[k] || k]),
+        Utils.el('div', { class: 'bar-track' }, [
+          Utils.el('div', { class: 'bar-fill', style: { width: '0%' }, 'data-pct': pct })
+        ]),
+        Utils.el('span', { class: 'bar-value' }, [Utils.toFa(count)])
+      ]);
+    });
+
     const body = Utils.el('div', {}, [
-      // ردیف اول آمار
-      Utils.el('div', { class: 'stats-grid' }, [
-        statBox('کل عنوان‌ها', Utils.toFa(s.total), 'در ۳ دسته'),
-        statBox('میانگین امتیاز', s.avgAll ? Utils.toFa(s.avgAll.toFixed(1)) : '—', `${Utils.toFa(s.rated.length)} عنوان امتیازدار`),
-        statBox('علاقه‌مندی‌ها', Utils.toFa(s.favs), `${Utils.toFa(Math.round(s.favs / Math.max(s.total, 1) * 100))}٪ از کل`),
-        statBox('انواع', `${Object.keys(s.types).length}`, 'نوع محتوا'),
-      ]),
-
-      // توزیع دسته‌ها
-      Utils.el('h4', { class: 'mb-3 mt-4' }, ['توزیع در دسته‌ها']),
-      Utils.el('div', { class: 'bar-list' }, [
-        barRow('عاشقانه', s.byCat.love.length, s.total, 'love'),
-        barRow('خوب', s.byCat.good.length, s.total, 'good'),
-        barRow('نفرت‌انگیز', s.byCat.hate.length, s.total, 'hate')
-      ]),
-
-      // میانگین امتیاز هر دسته
-      Utils.el('h4', { class: 'mb-3 mt-4' }, ['میانگین امتیاز به تفکیک دسته']),
-      Utils.el('div', { class: 'bar-list' }, [
-        barRowRating('عاشقانه', avg(s.byCat.love), 'love'),
-        barRowRating('خوب', avg(s.byCat.good), 'good'),
-        barRowRating('نفرت‌انگیز', avg(s.byCat.hate), 'hate')
-      ]),
-
-      // نوع
-      Utils.el('h4', { class: 'mb-3 mt-4' }, ['انواع محتوا']),
-      Utils.el('div', { class: 'bar-list' },
-        Object.entries(s.types).map(([k, v]) =>
-          barRow(CONFIG.TYPES[k] || k, v, s.total)
-        )
-      ),
-
-      // ژانرهای برتر
-      s.genres && Object.keys(s.genres).length
-        ? Utils.el('div', {}, [
-            Utils.el('h4', { class: 'mb-3 mt-4' }, ['ژانرهای برتر']),
-            Utils.el('div', { class: 'bar-list' },
-              Object.entries(s.genres)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 8)
-                .map(([g, c]) => barRow(g, c, Math.max(...Object.values(s.genres))))
-            )
-          ])
-        : null,
-
-      // فعالیت اخیر
+      Utils.el('div', { class: 'stats-grid' }, statBoxes),
+      Utils.el('h4', { class: 'mb-3 mt-4' }, ['توزیع ستاره‌ها']),
+      Utils.el('div', { class: 'bar-list' }, distBars),
+      typesBars.length ? Utils.el('h4', { class: 'mb-3 mt-4' }, ['انواع محتوا']) : null,
+      typesBars.length ? Utils.el('div', { class: 'bar-list' }, typesBars) : null,
       Utils.el('h4', { class: 'mb-3 mt-4' }, ['فعالیت اخیر']),
-      Utils.el('div', { class: 'bar-list' }, DB.getActivity(10).map(a =>
-        Utils.el('div', {
+      Utils.el('div', { class: 'bar-list' }, DB.getActivity(10).map(function (a) {
+        return Utils.el('div', {
           class: 'flex justify-between items-center p-3 rounded',
           style: { background: 'var(--bg-2)', border: '1px solid var(--border-1)' }
         }, [
@@ -90,78 +98,42 @@ window.Stats = (function () {
             ].filter(Boolean))
           ]),
           Utils.el('span', { class: 'text-xs text-4' }, [Utils.relativeTime(a.created_at)])
-        ])
-      ))
-    ]);
+        ]);
+      }))
+    ].filter(Boolean));
 
     Modal.open({
       title: 'داشبورد آماری',
       icon: '📊',
       size: 'lg',
-      body,
-      footer: Utils.el('button', { class: 'btn btn-ghost', onclick: () => Modal.close() }, ['بستن'])
+      body: body,
+      footer: Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
     });
+
+    /* انیمیشن نوارها */
+    setTimeout(function () {
+      const root = document.getElementById('modal-root');
+      if (!root) return;
+      root.querySelectorAll('.bar-fill').forEach(function (f) {
+        f.style.width = (f.dataset.pct || 0) + '%';
+      });
+    }, 80);
   }
 
-  function statBox(label, value, sub, cat) {
-    return Utils.el('div', {
-      class: 'stat-box',
-      dataset: cat ? { cat } : {}
-    }, [
+  function statBox(label, value, sub) {
+    return Utils.el('div', { class: 'stat-box' }, [
       Utils.el('div', { class: 'stat-label' }, [label]),
       Utils.el('div', { class: 'stat-value' }, [value]),
       Utils.el('div', { class: 'stat-sub' }, [sub])
     ]);
   }
 
-  function barRow(label, value, total, cat) {
-    const pct = total ? Math.round(value / total * 100) : 0;
-    return Utils.el('div', { class: 'bar-row' }, [
-      Utils.el('span', { class: 'bar-label' }, [label]),
-      Utils.el('div', { class: 'bar-track' }, [
-        Utils.el('div', {
-          class: 'bar-fill',
-          dataset: cat ? { cat } : {},
-          style: { width: '0%' }
-        })
-      ]),
-      Utils.el('span', { class: 'bar-value' }, [Utils.toFa(value)])
-    ]);
-  }
-
-  function barRowRating(label, value, cat) {
-    const pct = Math.round(value / 10 * 100);
-    return Utils.el('div', { class: 'bar-row' }, [
-      Utils.el('span', { class: 'bar-label' }, [label]),
-      Utils.el('div', { class: 'bar-track' }, [
-        Utils.el('div', {
-          class: 'bar-fill',
-          dataset: { cat },
-          style: { width: '0%' }
-        })
-      ]),
-      Utils.el('span', { class: 'bar-value' }, [value ? Utils.toFa(value.toFixed(1)) : '—'])
-    ]);
-  }
-
-  function avg(arr) {
-    const rated = arr.filter(t => t.rating > 0);
-    return rated.length ? rated.reduce((a, b) => a + b.rating, 0) / rated.length : 0;
-  }
-
   function activityIcon(a) {
-    return { create: '➕', update: '✏️', delete: '🗑️', seed: '🌱', import: '📥', sync: '🔄' }[a] || '•';
+    return { create: '➕', update: '✏️', delete: '🗑️', restore: '↩️', seed: '🌱', import: '📥', sync: '🔄', migrate: '🔀' }[a] || '•';
   }
   function activityLabel(a) {
-    return { create: 'افزودن', update: 'ویرایش', delete: 'حذف', seed: 'راه‌اندازی', import: 'ورود داده', sync: 'همگام‌سازی' }[a] || a;
+    return { create: 'افزودن', update: 'ویرایش', delete: 'حذف', restore: 'بازگردانی', seed: 'راه‌اندازی', import: 'ورود داده', sync: 'همگام‌سازی', migrate: 'مهاجرت' }[a] || a;
   }
 
-  /* ---- انیمیشن بارها بعد از نمایش ---- */
-  function animateBars(container) {
-    container.querySelectorAll('.bar-fill').forEach(f => {
-      const pct = f.parentElement.dataset.pct || null;
-    });
-  }
-
-  return { openDashboard, build };
+  return { openDashboard: openDashboard, build: build };
 })();
