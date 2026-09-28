@@ -50,7 +50,7 @@ window.Events = (function () {
       try { openSettings(); }
       catch (err) {
         console.error('[settings]', err);
-        Toast.error('باز کردن تنظیمات با خطا مواجه شد');
+        Toast.error('باز کردن تنظیمات با خطا مواجه شد — کنسول را چک کن');
       }
     });
 
@@ -517,11 +517,11 @@ window.Events = (function () {
   }
 
   /* ============================================================
-     انتخاب‌گر کارتی مدل — لیست استاتیک از CONFIG
+     انتخاب‌گر کارتی مدل — با CONFIG.AI.MODELS مستقیم
      ============================================================ */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
-    const models = AI.getModels();
+    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
     const defaultModel = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
 
     const searchInput = Utils.el('input', {
@@ -534,9 +534,9 @@ window.Events = (function () {
     const listWrap = Utils.el('div', { class: 'model-list' });
     const statsBar = Utils.el('div', { class: 'model-stats' });
 
-    function renderList(query = '') {
+    function renderList(query) {
       listWrap.innerHTML = '';
-      const q = Utils.normalizeFa(query).toLowerCase();
+      const q = Utils.normalizeFa(query || '').toLowerCase();
 
       const filtered = models.filter(m => {
         if (!q) return true;
@@ -547,7 +547,9 @@ window.Events = (function () {
       });
 
       if (!filtered.length) {
-        listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, ['مدلی با این جستجو پیدا نشد']));
+        listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, [
+          models.length ? 'مدلی با این جستجو پیدا نشد' : 'لیست مدل‌ها خالی است'
+        ]));
         return;
       }
 
@@ -575,21 +577,21 @@ window.Events = (function () {
           ]),
 
           Utils.el('div', { class: 'model-card-meta' }, [
-            Utils.el('span', { class: 'model-meta-item' }, [
+            m.size && m.size !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['⚙']),
               m.size
-            ]),
-            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
+            ]) : null,
+            m.size && m.size !== '—' ? Utils.el('span', { class: 'model-meta-sep' }, ['·']) : null,
             Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['📐']),
               m.context + ' ctx'
             ]),
-            Utils.el('span', { class: 'model-meta-sep' }, ['·']),
-            Utils.el('span', { class: 'model-meta-item' }, [
+            m.speed && m.speed !== '—' ? Utils.el('span', { class: 'model-meta-sep' }, ['·']) : null,
+            m.speed && m.speed !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [
               Utils.el('span', { class: 'model-meta-icon' }, ['⚡']),
               m.speed + ' t/s'
-            ])
-          ]),
+            ]) : null
+          ].filter(Boolean)),
 
           m.note ? Utils.el('div', { class: 'model-card-note' }, [m.note]) : null,
 
@@ -638,7 +640,7 @@ window.Events = (function () {
       renderList(e.target.value);
     }, 120));
 
-    renderList();
+    renderList('');
     updateStats();
 
     const wrap = Utils.el('div', { class: 'model-picker' }, [
@@ -653,7 +655,9 @@ window.Events = (function () {
     };
   }
 
-  /* ---------- تنظیمات ---------- */
+  /* ============================================================
+     تنظیمات
+     ============================================================ */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
@@ -828,7 +832,8 @@ window.Events = (function () {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
       const modelId = picker.getSelected();
-      const meta = AI.getModels().find(m => m.id === modelId) || { label: modelId };
+      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
+      const meta = models.find(m => m.id === modelId) || { label: modelId };
 
       AI.setKey(key);
 
