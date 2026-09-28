@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="theme-color" content="#07070b" />
-  <meta name="description" content="سینما من — مدیریت شخصی فیلم و سریال" />
-  <title>سینما من | مدیریت فیلم و سریال</title>
+  <meta name="description" content="سینما من — مدیریت شخصی فیلم و سریال با سیستم ستاره" />
+  <title>سینما من | آرشیو شخصی</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
@@ -31,7 +31,6 @@
 </head>
 <body>
 
-<!-- ============ لایه‌ی بارگذاری ============ -->
 <div id="boot-loader" class="boot-loader">
   <div class="boot-reel">
     <div class="boot-reel-ring"></div>
@@ -41,17 +40,11 @@
     </div>
     <div class="boot-reel-center"></div>
   </div>
-
   <div class="boot-logo-text">سینما من</div>
-
-  <div class="boot-progress">
-    <div class="boot-progress-fill"></div>
-  </div>
-
+  <div class="boot-progress"><div class="boot-progress-fill"></div></div>
   <div class="boot-log" id="boot-log"></div>
 </div>
 
-<!-- ============ اپلیکیشن ============ -->
 <div class="app" id="app" hidden>
 
   <header class="app-header" id="app-header">
@@ -62,7 +55,7 @@
       <div class="brand-mark">🎬</div>
       <div class="brand-text">
         <h1 class="brand-title">سینما من</h1>
-        <span class="brand-sub">آرشیو شخصی فیلم و سریال</span>
+        <span class="brand-sub">آرشیو شخصی</span>
       </div>
     </div>
 
@@ -78,28 +71,18 @@
     </div>
 
     <div class="header-actions">
-      <div class="sync-status" id="sync-status" data-state="idle">
+      <div class="sync-status" id="sync-status" data-state="idle" role="button" tabindex="0" title="برای ارسال به گیت‌هاب بزن">
         <span class="sync-dot"></span>
         <span class="sync-label" id="sync-label">آفلاین</span>
       </div>
-
       <button class="icon-btn" id="btn-stats" title="آمار">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>
-        </svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       </button>
-
       <button class="icon-btn" id="btn-theme" title="تم">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
-        </svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
-
       <button class="icon-btn" id="btn-settings" title="تنظیمات">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/>
-        </svg>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
   </header>
@@ -107,28 +90,44 @@
   <div class="app-body">
     <aside class="sidebar" id="sidebar">
       <nav class="side-nav" id="side-nav">
+
         <div class="side-section">
-          <h3 class="side-title">دسته‌ها</h3>
-          <ul class="side-list" id="category-list">
-            <li><button class="side-item is-active" data-category="all">
-              <span class="side-icon">📚</span>
+          <h3 class="side-title">ستاره‌ها</h3>
+          <ul class="side-list" id="star-list">
+            <li><button class="side-item is-active" data-star="all">
+              <span class="side-icon">📽️</span>
               <span class="side-label">همه</span>
-              <span class="side-count" data-count="all">0</span>
+              <span class="side-count" data-star-count="all">0</span>
             </button></li>
-            <li><button class="side-item" data-category="love">
-              <span class="side-icon side-icon-love">❤️</span>
-              <span class="side-label">عاشقشم</span>
-              <span class="side-count" data-count="love">0</span>
+            <li><button class="side-item star-5" data-star="5">
+              <span class="side-icon">⭐⭐⭐⭐⭐</span>
+              <span class="side-label">شاهکار</span>
+              <span class="side-count" data-star-count="5">0</span>
             </button></li>
-            <li><button class="side-item" data-category="good">
-              <span class="side-icon side-icon-good">👍</span>
+            <li><button class="side-item star-4" data-star="4">
+              <span class="side-icon">⭐⭐⭐⭐</span>
               <span class="side-label">خوب</span>
-              <span class="side-count" data-count="good">0</span>
+              <span class="side-count" data-star-count="4">0</span>
             </button></li>
-            <li><button class="side-item" data-category="hate">
-              <span class="side-icon side-icon-hate">👎</span>
-              <span class="side-label">دری وری</span>
-              <span class="side-count" data-count="hate">0</span>
+            <li><button class="side-item star-3" data-star="3">
+              <span class="side-icon">⭐⭐⭐</span>
+              <span class="side-label">خنثی</span>
+              <span class="side-count" data-star-count="3">0</span>
+            </button></li>
+            <li><button class="side-item star-2" data-star="2">
+              <span class="side-icon">⭐⭐</span>
+              <span class="side-label">ضعیف</span>
+              <span class="side-count" data-star-count="2">0</span>
+            </button></li>
+            <li><button class="side-item star-1" data-star="1">
+              <span class="side-icon">⭐</span>
+              <span class="side-label">متنفرم</span>
+              <span class="side-count" data-star-count="1">0</span>
+            </button></li>
+            <li><button class="side-item" data-star="0">
+              <span class="side-icon">○</span>
+              <span class="side-label">بدون امتیاز</span>
+              <span class="side-count" data-star-count="0">0</span>
             </button></li>
           </ul>
         </div>
@@ -150,10 +149,10 @@
             <select id="filter-sort">
               <option value="recent">جدیدترین</option>
               <option value="oldest">قدیمی‌ترین</option>
+              <option value="rating-desc">بیشترین ستاره</option>
+              <option value="rating-asc">کمترین ستاره</option>
               <option value="title-asc">نام (الف-ی)</option>
               <option value="title-desc">نام (ی-الف)</option>
-              <option value="rating-desc">بیشترین امتیاز</option>
-              <option value="rating-asc">کمترین امتیاز</option>
               <option value="year-desc">جدیدترین سال</option>
             </select>
           </label>
@@ -172,7 +171,7 @@
         <div class="side-section side-stats-mini">
           <h3 class="side-title">خلاصه</h3>
           <div class="mini-stat"><span>کل</span><strong id="mini-total">۰</strong></div>
-          <div class="mini-stat"><span>میانگین</span><strong id="mini-avg">—</strong></div>
+          <div class="mini-stat"><span>میانگین ستاره</span><strong id="mini-avg">—</strong></div>
           <div class="mini-stat"><span>علاقه‌مندی</span><strong id="mini-fav">۰</strong></div>
         </div>
 
@@ -180,7 +179,7 @@
           <h3 class="side-title">🪄 هوش مصنوعی</h3>
           <button class="side-action" id="btn-ai-batch">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
-            استانداردسازی سریع همه
+            استانداردسازی سریع
           </button>
           <button class="side-action" id="btn-ai-analyze">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24A2.5 2.5 0 0 1 9.5 2zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24A2.5 2.5 0 0 0 14.5 2z"/></svg>
@@ -203,7 +202,7 @@
     <main class="main-content" id="main-content">
       <div class="toolbar" id="toolbar">
         <div class="toolbar-left">
-          <h2 class="page-title" id="page-title">همه‌ی عنوان‌ها</h2>
+          <h2 class="page-title" id="page-title">📽️ همه‌ی عنوان‌ها</h2>
           <span class="page-sub" id="page-sub">۰ مورد</span>
         </div>
         <div class="toolbar-right">
@@ -235,7 +234,7 @@
   </div>
 
   <footer class="app-footer">
-    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">1.7.0</span></span>
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">2.0.0</span></span>
     <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
     <span id="footer-status">آماده</span>
   </footer>
