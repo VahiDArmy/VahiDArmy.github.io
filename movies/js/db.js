@@ -55,16 +55,18 @@ window.DB = (function () {
 
   function ensureColumn(table, col, type) {
     try {
-      const info = query(`PRAGMA table_info(${table})`);
-      if (!info.some(c => c.name === col)) {
-        run(`ALTER TABLE ${table} ADD COLUMN ${col} ${type}`);
-        console.log(`[DB] Migrated: added ${table}.${col}`);
+      const info = query('PRAGMA table_info(' + table + ')');
+      if (!info.some(function (c) { return c.name === col; })) {
+        run('ALTER TABLE ' + table + ' ADD COLUMN ' + col + ' ' + type);
+        console.log('[DB] Migrated: added ' + table + '.' + col);
       }
-    } catch (e) { console.warn(`[DB] ensureColumn ${table}.${col}:`, e); }
+    } catch (e) {
+      console.warn('[DB] ensureColumn ' + table + '.' + col + ':', e);
+    }
   }
 
   function runMigrations() {
-    [
+    const cols = [
       ['titles', 'summary', "TEXT DEFAULT ''"],
       ['titles', 'original_title', "TEXT DEFAULT ''"],
       ['titles', 'seasons', 'INTEGER'],
@@ -76,12 +78,14 @@ window.DB = (function () {
       ['titles', 'reason', "TEXT DEFAULT ''"],
       ['titles', 'story_analysis', "TEXT DEFAULT ''"],
       ['titles', 'ai_standardized_at', 'TEXT']
-    ].forEach(([t, c, ty]) => ensureColumn(t, c, ty));
+    ];
+    cols.forEach(function (c) { ensureColumn(c[0], c[1], c[2]); });
   }
 
   function setMeta(k, v) {
     const stmt = db.prepare('INSERT OR REPLACE INTO meta(k, v) VALUES (?, ?)');
-    stmt.run([k, String(v)]); stmt.free();
+    stmt.run([k, String(v)]);
+    stmt.free();
   }
   function getMeta(k) {
     const stmt = db.prepare('SELECT v FROM meta WHERE k = ?');
@@ -91,27 +95,34 @@ window.DB = (function () {
     return out;
   }
 
-  function logActivity(action, entity = null, entityId = null, detail = '') {
+  function logActivity(action, entity, entityId, detail) {
     try {
       const stmt = db.prepare(
         'INSERT INTO activity(action, entity, entity_id, detail, created_at) VALUES (?,?,?,?,?)'
       );
-      stmt.run([action, entity, entityId, detail, new Date().toISOString()]);
+      stmt.run([action, entity || null, entityId || null, detail || '', new Date().toISOString()]);
       stmt.free();
     } catch (e) { console.warn('activity log failed', e); }
   }
 
+  function bootMsg(msg) {
+    if (window.BootLog && typeof window.BootLog.info === 'function') {
+      try { window.BootLog.info(msg); } catch (e) {}
+    }
+  }
+
   async function init() {
     if (ready) return;
-    bootMsg('در حال بارگذاری موتور SQL…');
 
     SQL = await initSqlJs({
-      locateFile: (f) => `https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/${f}`
+      locateFile: function (f) {
+        return 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/' + f;
+      }
     });
 
     let loadedFromRemote = false;
     if (GitHub.isConfigured()) {
-      bootMsg('در حال دریافت دیتابیس از گیت‌هاب…');
+      bootMsg('دریافت دیتابیس از گیت‌هاب…');
       try {
         const file = await GitHub.readFile();
         if (file && file.content) {
@@ -120,16 +131,22 @@ window.DB = (function () {
           lastSha = file.sha;
           loadedFromRemote = true;
         }
-      } catch (e) { console.warn('[DB] GitHub load failed:', e); }
+      } catch (e) {
+        console.warn('[DB] GitHub load failed:', e);
+        bootMsg('دریافت از گیت‌هاب ناموفق — استفاده از نسخه‌ی محلی');
+      }
     }
 
     if (!loadedFromRemote) {
+      bootMsg('بارگذاری از حافظه‌ی محلی…');
       const local = localStorage.getItem(CONFIG.STORAGE.LOCAL_DB);
       if (local) {
         try {
           const bytes = Utils.base64ToUint8(local);
           db = new SQL.Database(bytes);
-        } catch (e) { console.warn('[DB] localStorage load failed:', e); }
+        } catch (e) {
+          console.warn('[DB] localStorage load failed:', e);
+        }
       }
     }
 
@@ -137,9 +154,9 @@ window.DB = (function () {
     db.exec(SCHEMA);
     runMigrations();
 
-    const count = query('SELECT COUNT(*) AS c FROM titles')[0]?.c || 0;
-    if (count === 0 && window.INITIAL_DATA) {
-      bootMsg('در حال وارد کردن داده‌ی اولیه…');
+    const count = query('SELECT COUNT(*) AS c FROM titles')[0] && query('SELECT COUNT(*) AS c FROM titles')[0].c;
+    if (!count && window.INITIAL_DATA) {
+      bootMsg('وارد کردن داده‌ی اولیه…');
       seedFromInitial();
     }
 
@@ -149,22 +166,18 @@ window.DB = (function () {
     persistLocal();
 
     if (!loadedFromRemote && GitHub.isConfigured()) {
-      setTimeout(() => { pushToGitHub().catch(() => {}); }, 1000);
+      setTimeout(function () { pushToGitHub().catch(function () {}); }, 1000);
     }
-  }
-
-  function bootMsg(msg) {
-    const el = document.getElementById('boot-message');
-    if (el) el.textContent = msg;
   }
 
   function seedFromInitial() {
     const data = window.INITIAL_DATA;
     if (!data) return;
-    Object.entries(data).forEach(([cat, list]) => {
-      list.forEach((title) => {
+    Object.keys(data).forEach(function (cat) {
+      const list = data[cat] || [];
+      list.forEach(function (title) {
         insertTitle({
-          title, category: cat, type: 'series', genre: '',
+          title: title, category: cat, type: 'series', genre: '',
           year: null, rating: 0, favorite: 0, notes: '', watched_date: null
         }, false);
       });
@@ -190,9 +203,9 @@ window.DB = (function () {
       watched_date: row.watched_date || null,
       summary: row.summary || '',
       original_title: row.original_title || '',
-      seasons: row.seasons ?? null,
-      episodes: row.episodes ?? null,
-      episodes_per_season: row.episodes_per_season ?? null,
+      seasons: row.seasons != null ? row.seasons : null,
+      episodes: row.episodes != null ? row.episodes : null,
+      episodes_per_season: row.episodes_per_season != null ? row.episodes_per_season : null,
       country: row.country || '',
       language: row.language || '',
       status: row.status || '',
@@ -204,7 +217,8 @@ window.DB = (function () {
     };
   }
 
-  function query(sql, params = []) {
+  function query(sql, params) {
+    params = params || [];
     try {
       const stmt = db.prepare(sql);
       if (params.length) stmt.bind(params);
@@ -212,25 +226,33 @@ window.DB = (function () {
       while (stmt.step()) out.push(stmt.getAsObject());
       stmt.free();
       return out;
-    } catch (e) { console.error('[DB] query error:', sql, e); throw e; }
+    } catch (e) {
+      console.error('[DB] query error:', sql, e);
+      throw e;
+    }
   }
 
-  function run(sql, params = []) {
+  function run(sql, params) {
+    params = params || [];
     try {
       const stmt = db.prepare(sql);
-      stmt.run(params); stmt.free();
-    } catch (e) { console.error('[DB] run error:', sql, e); throw e; }
+      stmt.run(params);
+      stmt.free();
+    } catch (e) {
+      console.error('[DB] run error:', sql, e);
+      throw e;
+    }
   }
 
-  const ALL_COLS = `title, category, type, genre, year, rating, favorite, notes, watched_date,
-                    summary, original_title, seasons, episodes, episodes_per_season,
-                    country, language, status, reason, story_analysis, ai_standardized_at`;
+  const ALL_COLS = 'title, category, type, genre, year, rating, favorite, notes, watched_date, ' +
+    'summary, original_title, seasons, episodes, episodes_per_season, ' +
+    'country, language, status, reason, story_analysis, ai_standardized_at';
 
-  function insertTitle(data, log = true) {
+  function insertTitle(data, log) {
+    if (log == null) log = true;
     const now = new Date().toISOString();
-    const sql = `INSERT INTO titles
-      (${ALL_COLS}, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    const sql = 'INSERT INTO titles (' + ALL_COLS + ', created_at, updated_at) ' +
+      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
     const params = [
       String(data.title || '').trim(),
       data.category,
@@ -255,19 +277,20 @@ window.DB = (function () {
       now, now
     ];
     run(sql, params);
-    const id = query('SELECT last_insert_rowid() AS id')[0]?.id;
+    const id = query('SELECT last_insert_rowid() AS id')[0].id;
     if (log) logActivity('create', 'title', id, data.title);
     persistLocal();
     return id;
   }
 
-  function updateTitle(id, data, log = true) {
+  function updateTitle(id, data, log) {
+    if (log == null) log = true;
     const now = new Date().toISOString();
-    const sql = `UPDATE titles SET
-      title=?, category=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?,
-      summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?,
-      country=?, language=?, status=?, reason=?, story_analysis=?, ai_standardized_at=?, updated_at=?
-      WHERE id=?`;
+    const sql = 'UPDATE titles SET ' +
+      'title=?, category=?, type=?, genre=?, year=?, rating=?, favorite=?, notes=?, watched_date=?, ' +
+      'summary=?, original_title=?, seasons=?, episodes=?, episodes_per_season=?, ' +
+      'country=?, language=?, status=?, reason=?, story_analysis=?, ai_standardized_at=?, updated_at=? ' +
+      'WHERE id=?';
     const params = [
       String(data.title || '').trim(),
       data.category,
@@ -296,7 +319,8 @@ window.DB = (function () {
     persistLocal();
   }
 
-  function deleteTitle(id, log = true) {
+  function deleteTitle(id, log) {
+    if (log == null) log = true;
     const row = getTitle(id);
     run('DELETE FROM titles WHERE id=?', [id]);
     if (log && row) logActivity('delete', 'title', id, row.title);
@@ -313,33 +337,138 @@ window.DB = (function () {
   function getTitlesByCategory(cat) {
     return query('SELECT * FROM titles WHERE category=? ORDER BY created_at DESC', [cat]).map(rowToObj);
   }
-  function getActivity(limit = 30) {
+  function getActivity(limit) {
+    limit = limit || 30;
     return query('SELECT * FROM activity ORDER BY id DESC LIMIT ?', [limit]);
   }
   function getCounts() {
     const rows = query('SELECT category, COUNT(*) AS c FROM titles GROUP BY category');
     const out = { all: 0, love: 0, good: 0, hate: 0 };
-    rows.forEach(r => { out[r.category] = r.c; out.all += r.c; });
+    rows.forEach(function (r) { out[r.category] = r.c; out.all += r.c; });
     return out;
   }
   function getStats() {
-    const rows = query(`
-      SELECT category, COUNT(*) as count,
-        AVG(NULLIF(rating,0)) as avg_rating,
-        SUM(favorite) as favs, AVG(year) as avg_year
-      FROM titles GROUP BY category
-    `);
+    const rows = query(
+      'SELECT category, COUNT(*) as count, ' +
+      'AVG(NULLIF(rating,0)) as avg_rating, ' +
+      'SUM(favorite) as favs, AVG(year) as avg_year ' +
+      'FROM titles GROUP BY category'
+    );
     const totals = query('SELECT COUNT(*) as c, AVG(NULLIF(rating,0)) as a, SUM(favorite) as f FROM titles')[0];
     return {
       byCategory: rows,
       totals: {
-        count: totals?.c || 0,
-        avgRating: totals?.a || 0,
-        favorites: totals?.f || 0
+        count: totals ? totals.c : 0,
+        avgRating: totals ? totals.a : 0,
+        favorites: totals ? totals.f : 0
       }
     };
   }
 
+  /* =========================================================
+     تشخیص عنوان مشابه
+     ========================================================= */
+  function normalizeForCompare(s) {
+    if (!s) return '';
+    let n = String(s).toLowerCase();
+    /* فارسی → یکسان‌سازی */
+    n = n.replace(/ي/g, 'ی').replace(/ك/g, 'ک');
+    /* حذف محتوای پرانتز و براکت (مثل "(US)"، "[2020]") */
+    n = n.replace(/\([^)]*\)/g, '');
+    n = n.replace(/\[[^\]]*\]/g, '');
+    /* حذف علائم، فقط حروف و اعداد */
+    n = n.replace(/[^\p{L}\p{N}\s]/gu, ' ');
+    /* یکسان‌سازی فاصله */
+    n = n.replace(/\s+/g, ' ').trim();
+    return n;
+  }
+
+  /* شباهت بین دو رشته بر اساس همپوشانی کلمات */
+  function similarityRatio(a, b) {
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+
+    const aWords = a.split(' ').filter(function (w) { return w.length > 1; });
+    const bWords = b.split(' ').filter(function (w) { return w.length > 1; });
+
+    if (!aWords.length || !bWords.length) return 0;
+
+    let matches = 0;
+    aWords.forEach(function (aw) {
+      if (bWords.some(function (bw) {
+        return bw === aw ||
+          (aw.length > 3 && bw.length > 3 && (bw.indexOf(aw) > -1 || aw.indexOf(bw) > -1));
+      })) {
+        matches++;
+      }
+    });
+
+    return matches / Math.max(aWords.length, bWords.length);
+  }
+
+  function findSimilar(title, excludeId) {
+    if (!title) return [];
+    const norm = normalizeForCompare(title);
+    if (!norm) return [];
+
+    const all = getAllTitles();
+    const results = [];
+
+    all.forEach(function (t) {
+      if (excludeId && t.id === excludeId) return;
+
+      const tNorm = normalizeForCompare(t.title);
+      if (!tNorm) return;
+
+      /* تطابق کامل بعد از نرمال‌سازی */
+      if (tNorm === norm) {
+        results.push({
+          id: t.id,
+          title: t.title,
+          year: t.year,
+          type: t.type,
+          _matchType: 'exact',
+          _ratio: 1
+        });
+        return;
+      }
+
+      /* یکی شامل دیگری */
+      if (tNorm.indexOf(norm) > -1 || norm.indexOf(tNorm) > -1) {
+        results.push({
+          id: t.id,
+          title: t.title,
+          year: t.year,
+          type: t.type,
+          _matchType: 'contains',
+          _ratio: 0.9
+        });
+        return;
+      }
+
+      /* شباهت کلمه‌ای */
+      const ratio = similarityRatio(norm, tNorm);
+      if (ratio >= 0.5) {
+        results.push({
+          id: t.id,
+          title: t.title,
+          year: t.year,
+          type: t.type,
+          _matchType: 'similar',
+          _ratio: ratio
+        });
+      }
+    });
+
+    /* مرتب‌سازی: دقیق‌تر اول */
+    results.sort(function (a, b) { return b._ratio - a._ratio; });
+
+    return results;
+  }
+
+  /* =========================================================
+     خروجی/ورودی
+     ========================================================= */
   function exportBinary() { return db.export(); }
   function exportBase64() { return Utils.uint8ToBase64(exportBinary()); }
   function exportJSON() {
@@ -350,11 +479,11 @@ window.DB = (function () {
       activity: getActivity(500)
     };
   }
-  function importJSON(payload, replace = false) {
+  function importJSON(payload, replace) {
     if (!payload || !Array.isArray(payload.titles)) throw new Error('فایل نامعتبر');
     if (replace) run('DELETE FROM titles');
     let added = 0;
-    payload.titles.forEach(t => {
+    payload.titles.forEach(function (t) {
       try {
         insertTitle({
           title: t.title, category: t.category, type: t.type || 'series',
@@ -370,9 +499,9 @@ window.DB = (function () {
           ai_standardized_at: t.ai_standardized_at
         }, false);
         added++;
-      } catch {}
+      } catch (e) {}
     });
-    logActivity('import', 'titles', null, `${added} عنوان وارد شد`);
+    logActivity('import', 'titles', null, added + ' عنوان وارد شد');
     persistLocal();
     return added;
   }
@@ -386,7 +515,9 @@ window.DB = (function () {
   function persistLocal() {
     try {
       localStorage.setItem(CONFIG.STORAGE.LOCAL_DB, exportBase64());
-    } catch (e) { console.warn('[DB] persist failed:', e); }
+    } catch (e) {
+      console.warn('[DB] persist failed:', e);
+    }
   }
 
   async function pullFromGitHub() {
@@ -401,17 +532,17 @@ window.DB = (function () {
     persistLocal();
     return { sha: file.sha, size: file.size };
   }
-  async function pushToGitHub(message = null) {
+  async function pushToGitHub(message) {
     const b64 = exportBase64();
     if (!lastSha) {
       try {
         const info = await GitHub.readFile();
         lastSha = info ? info.sha : null;
-      } catch { lastSha = null; }
+      } catch (e) { lastSha = null; }
     }
     const commitMsg = message || (CONFIG.GITHUB.COMMIT_PREFIX + Utils.toJalaliLong(new Date()));
     const res = await GitHub.writeFile(b64, commitMsg, lastSha);
-    lastSha = res.content?.sha || null;
+    lastSha = (res.content && res.content.sha) || null;
     setMeta('last_push', new Date().toISOString());
     persistLocal();
     return res;
@@ -419,13 +550,29 @@ window.DB = (function () {
   function getLastSha() { return lastSha; }
 
   return {
-    init, ready: () => ready,
-    query, run,
-    insertTitle, updateTitle, deleteTitle,
-    getTitle, getAllTitles, getTitlesByCategory,
-    getActivity, getCounts, getStats, logActivity,
-    exportBinary, exportBase64, exportJSON,
-    importJSON, importBinary, persistLocal,
-    pullFromGitHub, pushToGitHub, getLastSha
+    init: init,
+    ready: function () { return ready; },
+    query: query,
+    run: run,
+    insertTitle: insertTitle,
+    updateTitle: updateTitle,
+    deleteTitle: deleteTitle,
+    getTitle: getTitle,
+    getAllTitles: getAllTitles,
+    getTitlesByCategory: getTitlesByCategory,
+    getActivity: getActivity,
+    getCounts: getCounts,
+    getStats: getStats,
+    logActivity: logActivity,
+    findSimilar: findSimilar,
+    exportBinary: exportBinary,
+    exportBase64: exportBase64,
+    exportJSON: exportJSON,
+    importJSON: importJSON,
+    importBinary: importBinary,
+    persistLocal: persistLocal,
+    pullFromGitHub: pullFromGitHub,
+    pushToGitHub: pushToGitHub,
+    getLastSha: getLastSha
   };
 })();
