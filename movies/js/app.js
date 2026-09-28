@@ -4,7 +4,7 @@
 (function bootstrap() {
 
   const BOOT_START = performance.now();
-  const MIN_BOOT_MS = 1200; /* حداقل زمان نمایش صفحه‌ی بارگذاری */
+  const MIN_BOOT_MS = 1400;
 
   const boot = document.getElementById('boot-loader');
   const app = document.getElementById('app');
@@ -13,15 +13,101 @@
     return new Promise(function (resolve) { setTimeout(resolve, ms); });
   }
 
-  function bootMsg(msg) {
-    const el = document.getElementById('boot-message');
-    if (el) el.textContent = msg;
-  }
+  /* =========================================================
+     سیستم لاگ زنده‌ی صفحه‌ی بارگذاری
+     ========================================================= */
+  const BootLog = (function () {
+    let logEl = null;
+    let activeLine = null;
 
+    function ensure() {
+      if (!logEl) logEl = document.getElementById('boot-log');
+      return logEl;
+    }
+
+    function markPreviousAsDone() {
+      const log = ensure();
+      if (!log) return;
+      const actives = log.querySelectorAll('.boot-log-line[data-state="active"]');
+      actives.forEach(function (line) {
+        line.dataset.state = 'done';
+        const mark = line.querySelector('.boot-log-mark');
+        if (mark) mark.textContent = '✓';
+      });
+    }
+
+    function push(message, state) {
+      state = state || 'info';
+      const log = ensure();
+      if (!log) return null;
+
+      if (state === 'active') markPreviousAsDone();
+
+      const line = document.createElement('div');
+      line.className = 'boot-log-line';
+      line.dataset.state = state;
+
+      const mark = document.createElement('span');
+      mark.className = 'boot-log-mark';
+      mark.textContent = state === 'done' ? '✓'
+        : state === 'error' ? '✗'
+        : state === 'active' ? '▸'
+        : '·';
+
+      const text = document.createElement('span');
+      text.className = 'boot-log-text';
+      text.textContent = message;
+
+      line.appendChild(mark);
+      line.appendChild(text);
+      log.appendChild(line);
+
+      /* فقط آخرین ۸ خط نگه داشته شود */
+      while (log.children.length > 8) {
+        log.removeChild(log.firstChild);
+      }
+
+      log.scrollTop = log.scrollHeight;
+      return line;
+    }
+
+    function active(message) {
+      return push(message, 'active');
+    }
+
+    function done(message) {
+      markPreviousAsDone();
+      return push(message, 'done');
+    }
+
+    function error(message) {
+      markPreviousAsDone();
+      return push(message, 'error');
+    }
+
+    function info(message) {
+      return push(message, 'info');
+    }
+
+    return {
+      push: push,
+      active: active,
+      done: done,
+      error: error,
+      info: info
+    };
+  })();
+
+  /* اکسپوز برای استفاده در db.js */
+  window.BootLog = BootLog;
+
+  /* =========================================================
+     شروع
+     ========================================================= */
   async function start() {
     try {
-      /* ---- تم و نمایش اولیه ---- */
-      bootMsg('در حال آماده‌سازی…');
+      /* ---- مرحله ۱: تم ---- */
+      BootLog.active('آماده‌سازی محیط…');
       const savedTheme = localStorage.getItem(CONFIG.STORAGE.THEME) || CONFIG.DEFAULTS.THEME;
       document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -29,25 +115,33 @@
       const savedCat = localStorage.getItem(CONFIG.STORAGE.LAST_CATEGORY) || CONFIG.DEFAULTS.CATEGORY;
 
       State.set({ theme: savedTheme, view: savedView, category: savedCat });
+      BootLog.done('محیط آماده شد');
 
-      /* ---- راه‌اندازی دیتابیس ---- */
+      /* ---- مرحله ۲: دیتابیس ---- */
+      BootLog.active('راه‌اندازی موتور دیتابیس…');
       try {
         await DB.init();
+        BootLog.done('دیتابیس آماده است');
       } catch (dbErr) {
         console.error('[bootstrap] DB init error:', dbErr);
-        Toast.error('راه‌اندازی دیتابیس با خطا مواجه شد — حالت آفلاین فعال است');
+        BootLog.error('راه‌اندازی دیتابیس با خطا مواجه شد — حالت آفلاین فعال است');
+        Toast.error('راه‌اندازی دیتابیس با خطا مواجه شد');
       }
 
-      /* ---- بارگذاری داده ---- */
-      bootMsg('در حال بارگذاری داده…');
+      /* ---- مرحله ۳: بارگذاری داده ---- */
+      BootLog.active('بارگذاری داده‌ها…');
       try {
         State.loadAll();
         State.applyFilters();
+        const count = State.get().titles.length;
+        BootLog.done('بارگذاری شد — ' + Utils.toFa(count) + ' عنوان');
       } catch (e) {
         console.error('[bootstrap] load data error:', e);
+        BootLog.error('بارگذاری داده‌ها ناموفق بود');
       }
 
-      /* ---- رندر اولیه ---- */
+      /* ---- مرحله ۴: رندر اولیه ---- */
+      BootLog.active('رندر رابط کاربری…');
       Render.renderSidebarCounts();
       Render.renderPageTitle();
 
@@ -66,12 +160,14 @@
       const sortSel = document.getElementById('filter-sort');
       if (typeSel) typeSel.value = s.filterType;
       if (sortSel) sortSel.value = s.sort;
+      BootLog.done('رابط آماده شد');
 
-      /* ---- اتصال رویدادها ---- */
-      bootMsg('در حال آماده‌سازی رابط…');
+      /* ---- مرحله ۵: رویدادها ---- */
+      BootLog.active('اتصال رویدادها…');
       Events.bind();
       Events.renderList();
       Events.refreshSyncStatus();
+      BootLog.done('رویدادها فعال شدند');
 
       /* ---- نسخه ---- */
       const verEl = document.getElementById('app-version');
@@ -86,18 +182,18 @@
         try { DB.persistLocal(); } catch (e) {}
       });
 
-      /* ---- حداقل زمان نمایش صفحه‌ی بارگذاری ---- */
+      /* ---- اتمام ---- */
+      BootLog.done('همه‌چیز آماده است ✓');
+
       const elapsed = performance.now() - BOOT_START;
       if (elapsed < MIN_BOOT_MS) {
-        bootMsg('آماده!');
         await sleep(MIN_BOOT_MS - elapsed);
       }
 
-      /* ---- نمایش اپ ---- */
       boot.classList.add('is-hidden');
       setTimeout(function () {
         try { boot.remove(); } catch (e) {}
-      }, 500);
+      }, 700);
       app.hidden = false;
 
       /* ---- پیام خوش‌آمد ---- */
@@ -129,11 +225,8 @@
 
     } catch (err) {
       console.error('[bootstrap] fatal error:', err);
-      const msg = document.getElementById('boot-message');
-      if (msg) {
-        msg.textContent = 'خطا در راه‌اندازی: ' + (err.message || err);
-        msg.style.color = 'var(--danger)';
-      }
+      BootLog.error('خطا در راه‌اندازی: ' + (err.message || err));
+
       setTimeout(function () {
         try {
           boot.classList.add('is-hidden');
@@ -144,7 +237,7 @@
         app.hidden = false;
         try { Events.bind(); Events.refreshSyncStatus(); } catch (e) {}
         try { Events.openSettings(); } catch (e) {}
-      }, 1200);
+      }, 1400);
     }
   }
 
