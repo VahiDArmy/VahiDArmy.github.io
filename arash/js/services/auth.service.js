@@ -1,19 +1,18 @@
 /* ============================================
    سرویس احراز هویت - شادباش ازدواج
-   استفاده از Email/Password به جای Phone
+   استفاده از Email/Password
    موبایل = یوزرنیم (تبدیل به ایمیل مصنوعی)
+   نسخه ۳.۰ - رفع خطاهای 409 و null profile
    ============================================ */
 
 const AuthService = {
     /**
-     * دامنه ایمیل مصنوعی برای تبدیل موبایل
+     * دامنه ایمیل مصنوعی
      */
     EMAIL_DOMAIN: '@shadbash.local',
     
     /**
-     * تبدیل شماره موبایل به ایمیل مصنوعی
-     * @param {string} phone - شماره موبایل (مثل 09123456789)
-     * @returns {string} ایمیل مصنوعی
+     * تبدیل موبایل به ایمیل مصنوعی
      */
     phoneToEmail(phone) {
         const normalized = Helpers.normalizePhone(phone);
@@ -21,7 +20,7 @@ const AuthService = {
     },
     
     /**
-     * استخراج موبایل از ایمیل مصنوعی
+     * استخراج موبایل از ایمیل
      */
     emailToPhone(email) {
         if (!email) return '';
@@ -29,8 +28,7 @@ const AuthService = {
     },
     
     /**
-     * ورود یا ثبت‌نام با نام و موبایل
-     * (رمز = موبایل)
+     * ورود یا ثبت‌نام
      */
     async loginOrSignup(name, phone) {
         try {
@@ -44,98 +42,101 @@ const AuthService = {
             const phoneCheck = Validate.phone(normalizedPhone);
             if (!phoneCheck.valid) throw new Error(phoneCheck.message);
             
+            let authData = null;
+            let isNewUser = false;
+            
             // ۱. تلاش برای ورود
-            let { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+            const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: normalizedPhone
             });
             
-            // ۲. اگر کاربر وجود نداشت، ثبت‌نام کن
-            if (authError) {
-                const isNotFoundError = 
-                    authError.message.includes('Invalid login credentials') ||
-                    authError.message.includes('User not found') ||
-                    authError.status === 400;
+            if (signInError) {
+                // تشخیص نبود کاربر
+                const isNotFound = 
+                    signInError.message.includes('Invalid login credentials') ||
+                    signInError.message.includes('User not found') ||
+                    signInError.status === 400;
                 
-                if (isNotFoundError) {
-                    // ثبت‌نام جدید
-                    const { data: signupData, error: signupError } = await supabaseClient.auth.signUp({
-                        email: email,
-                        password: normalizedPhone,
-                        options: {
-                            data: {
-                                name: name.trim(),
-                                phone: normalizedPhone
-                            },
-                            emailRedirectTo: undefined // بدون تایید ایمیل
+                if (!isNotFound) {
+                    throw signInError;
+                }
+                
+                // ۲. ثبت‌نام جدید
+                isNewUser = true;
+                
+                const { data: signupData, error: signupError } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: normalizedPhone,
+                    options: {
+                        data: {
+                            name: name.trim(),
+                            phone: normalizedPhone
                         }
+                    }
+                });
+                
+                if (signupError) throw signupError;
+                
+                // اگر session نداریم (یعنی ایمیل نیاز به تایید دارد)
+                if (!signupData.session) {
+                    // تلاش مجدد برای ورود
+                    const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({
+                        email: email,
+                        password: normalizedPhone
                     });
                     
-                    if (signupError) throw signupError;
-                    
-                    // اگر نیاز به تایید ایمیل باشد
-                    if (!signupData.session) {
-                        // تلاش مجدد برای ورود (در حالت auto-confirm)
-                        const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({
-                            email: email,
-                            password: normalizedPhone
-                        });
-                        
-                        if (retryError) {
-                            throw new Error('ثبت‌نام انجام شد اما ورود خودکار ممکن نیست. لطفاً با پشتیبانی تماس بگیرید.');
-                        }
-                        
-                        authData = retryData;
-                    } else {
-                        authData = signupData;
+                    if (retryError) {
+                        throw new Error('ثبت‌نام انجام شد اما ورود خودکار ممکن نیست. لطفاً با پشتیبانی تماس بگیرید.');
                     }
                     
-                    // انتظار کوتاه برای ایجاد پروفایل توسط trigger
-                    await Helpers.delay(800);
-                    
-                    // اطمینان از وجود پروفایل
-                    if (authData.user) {
-                        await this.ensureProfile(
-                            authData.user.id, 
-                            name.trim(), 
-                            normalizedPhone
-                        );
-                    }
+                    authData = retryData;
                 } else {
-                    // خطای دیگر
-                    throw authError;
+                    authData = signupData;
                 }
+            } else {
+                authData = signInData;
             }
             
-            // ۳. دریافت پروفایل
-            const userId = authData?.user?.id;
-            if (!userId) {
+            // بررسی وجود کاربر
+            if (!authData?.user?.id) {
                 throw new Error('خطا در دریافت اطلاعات کاربر');
             }
             
-            const profile = await this.getProfile(userId);
+            const userId = authData.user.id;
+            
+            // ۳. اطمینان از وجود پروفایل (با retry)
+            let profile = await this.ensureProfileWithRetry(
+                userId, 
+                name.trim(), 
+                normalizedPhone
+            );
+            
+            if (!profile) {
+                throw new Error('خطا در ساخت پروفایل کاربر. لطفاً مجدداً تلاش کنید.');
+            }
             
             // ۴. ذخیره اطلاعات
             if (authData.session) {
                 Storage.setToken(authData.session.access_token);
             }
-            if (profile) {
-                Storage.setUser(profile);
-            }
+            Storage.setUser(profile);
             
-            // ۵. بروزرسانی آخرین ورود
-            await this.updateLastLogin(userId);
+            // ۵. بروزرسانی آخرین ورود (بی‌صدا)
+            this.updateLastLogin(userId).catch(() => {});
             
-            // ۶. لاگ فعالیت
-            await this.logActivity(userId, 'login', {
-                phone: normalizedPhone
-            });
+            // ۶. لاگ فعالیت (فقط اگر پروفایل ساخته شده)
+            this.logActivity(userId, 'login', {
+                phone: normalizedPhone,
+                is_new_user: isNewUser
+            }).catch(() => {});
             
             return {
                 success: true,
                 user: authData.user,
                 profile,
-                session: authData.session
+                session: authData.session,
+                isNewUser
             };
             
         } catch (error) {
@@ -148,20 +149,32 @@ const AuthService = {
     },
     
     /**
-     * اطمینان از وجود پروفایل
+     * اطمینان از وجود پروفایل با تلاش‌های مکرر
      */
-    async ensureProfile(userId, name, phone) {
-        try {
-            // بررسی وجود
-            const { data: existing } = await supabaseClient
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle();
+    async ensureProfileWithRetry(userId, name, phone) {
+        // تلاش اول: بررسی وجود (trigger ممکن است ساخته باشد)
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            const profile = await this.getProfile(userId);
+            if (profile) return profile;
             
+            // تاخیر کوتاه برای بار بعدی
+            await Helpers.delay(attempt * 500);
+        }
+        
+        // اگر trigger کار نکرده، دستی بسازیم
+        console.log('Trigger کار نکرد، ساخت دستی پروفایل...');
+        return await this.createProfileManually(userId, name, phone);
+    },
+    
+    /**
+     * ساخت دستی پروفایل
+     */
+    async createProfileManually(userId, name, phone) {
+        try {
+            // چک نهایی اگر پروفایل ساخته شده
+            const existing = await this.getProfile(userId);
             if (existing) return existing;
             
-            // ایجاد پروفایل جدید
             const { data, error } = await supabaseClient
                 .from('profiles')
                 .insert({
@@ -175,31 +188,27 @@ const AuthService = {
                 .select()
                 .single();
             
-            if (error) throw error;
+            if (error) {
+                // اگر تکراری بود، فقط fetch کن
+                if (error.code === '23505') {
+                    return await this.getProfile(userId);
+                }
+                throw error;
+            }
+            
             return data;
             
         } catch (error) {
-            console.error('خطا در ایجاد پروفایل:', error);
+            console.error('خطا در ساخت دستی پروفایل:', error);
             
-            // تلاش مجدد پس از تاخیر
+            // آخرین تلاش برای خواندن
             await Helpers.delay(500);
-            
-            try {
-                const { data } = await supabaseClient
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', userId)
-                    .maybeSingle();
-                
-                return data;
-            } catch (retryError) {
-                throw error;
-            }
+            return await this.getProfile(userId);
         }
     },
     
     /**
-     * دریافت پروفایل کاربر
+     * دریافت پروفایل
      */
     async getProfile(userId) {
         try {
@@ -209,17 +218,20 @@ const AuthService = {
                 .eq('id', userId)
                 .maybeSingle();
             
-            if (error) throw error;
-            return data;
+            if (error) {
+                console.error('خطا در getProfile:', error);
+                return null;
+            }
             
+            return data;
         } catch (error) {
-            console.error('خطا در دریافت پروفایل:', error);
+            console.error('خطا در getProfile:', error);
             return null;
         }
     },
     
     /**
-     * به‌روزرسانی آخرین ورود
+     * بروزرسانی آخرین ورود
      */
     async updateLastLogin(userId) {
         try {
@@ -228,7 +240,7 @@ const AuthService = {
                 .update({ last_login: new Date().toISOString() })
                 .eq('id', userId);
         } catch (error) {
-            console.error('خطا در به‌روزرسانی ورود:', error);
+            // خطا را بی‌صدا نادیده بگیر
         }
     },
     
@@ -237,10 +249,9 @@ const AuthService = {
      */
     async logout() {
         try {
-            // لاگ فعالیت
             const user = Storage.getUser();
-            if (user) {
-                await this.logActivity(user.id, 'logout', {});
+            if (user?.id) {
+                this.logActivity(user.id, 'logout', {}).catch(() => {});
             }
             
             await supabaseClient.auth.signOut();
@@ -250,7 +261,6 @@ const AuthService = {
             
             return { success: true };
         } catch (error) {
-            console.error('خطا در خروج:', error);
             Storage.removeToken();
             Storage.removeUser();
             return { success: false, error: error.message };
@@ -265,14 +275,22 @@ const AuthService = {
             const { data: { user }, error } = await supabaseClient.auth.getUser();
             if (error || !user) return null;
             
-            const profile = await this.getProfile(user.id);
+            let profile = await this.getProfile(user.id);
+            
+            // اگر پروفایل نبود، سعی کن بسازی
+            if (!profile) {
+                const name = user.user_metadata?.name || 'کاربر';
+                const phone = user.user_metadata?.phone || this.emailToPhone(user.email);
+                profile = await this.createProfileManually(user.id, name, phone);
+            }
+            
             if (profile) {
                 Storage.setUser(profile);
             }
             return profile;
             
         } catch (error) {
-            console.error('خطا در دریافت کاربر:', error);
+            console.error('خطا در getCurrentUser:', error);
             return null;
         }
     },
@@ -286,45 +304,52 @@ const AuthService = {
     },
     
     /**
-     * بررسی ادمین بودن
+     * بررسی ادمین
      */
     async isAdmin() {
         const user = Storage.getUser();
         if (!user) return false;
-        return user.role === APP_CONFIG.ROLES.ADMIN;
+        return user.role === 'admin';
     },
     
     /**
-     * گوش دادن به تغییرات احراز هویت
+     * گوش دادن به تغییرات
      */
     onAuthStateChange(callback) {
         return supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
                 const profile = await this.getProfile(session.user.id);
-                Storage.setUser(profile);
-                callback('signed_in', profile);
+                if (profile) {
+                    Storage.setUser(profile);
+                    callback('signed_in', profile);
+                }
             } else if (event === 'SIGNED_OUT') {
                 Storage.removeUser();
                 Storage.removeToken();
                 callback('signed_out', null);
             } else if (event === 'TOKEN_REFRESHED' && session?.user) {
                 const profile = await this.getProfile(session.user.id);
-                Storage.setUser(profile);
-                callback('token_refreshed', profile);
-            } else if (event === 'USER_UPDATED' && session?.user) {
-                const profile = await this.getProfile(session.user.id);
-                Storage.setUser(profile);
-                callback('user_updated', profile);
+                if (profile) {
+                    Storage.setUser(profile);
+                    callback('token_refreshed', profile);
+                }
             }
         });
     },
     
     /**
-     * لاگ فعالیت
+     * لاگ فعالیت (بی‌صدا - خطا ندهد)
      */
     async logActivity(userId, action, details = {}) {
         try {
-            await supabaseClient
+            // بررسی وجود پروفایل قبل از لاگ
+            const profile = await this.getProfile(userId);
+            if (!profile) {
+                console.warn('پروفایل وجود ندارد، لاگ ثبت نشد');
+                return { success: false };
+            }
+            
+            const { error } = await supabaseClient
                 .from('activity_logs')
                 .insert({
                     user_id: userId,
@@ -332,13 +357,22 @@ const AuthService = {
                     details,
                     user_agent: navigator.userAgent
                 });
+            
+            if (error) {
+                console.warn('خطا در لاگ:', error.message);
+                return { success: false };
+            }
+            
+            return { success: true };
         } catch (error) {
-            console.error('خطا در لاگ:', error);
+            // بی‌صدا
+            console.warn('خطا در logActivity:', error.message);
+            return { success: false };
         }
     },
     
     /**
-     * ترجمه خطاها به فارسی
+     * ترجمه خطاها
      */
     translateError(message) {
         const translations = {
@@ -352,7 +386,8 @@ const AuthService = {
             'Password should be': 'رمز عبور نامعتبر است',
             'User not found': 'کاربر یافت نشد',
             'Token has expired': 'نشست شما منقضی شده است',
-            'For security purposes': 'به دلایل امنیتی، لطفاً کمی صبر کنید'
+            'For security purposes': 'به دلایل امنیتی، لطفاً کمی صبر کنید',
+            'خطا در ساخت پروفایل': 'خطا در ساخت پروفایل. لطفاً مجدداً تلاش کنید'
         };
         
         for (const [key, value] of Object.entries(translations)) {
@@ -382,52 +417,13 @@ const AuthService = {
             
             if (error) throw error;
             
-            // بروزرسانی metadata در Auth
             await supabaseClient.auth.updateUser({
                 data: { name: newName.trim() }
-            });
+            }).catch(() => {});
             
             Storage.setUser(data);
             return { success: true, profile: data };
             
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    },
-    
-    /**
-     * تغییر رمز عبور
-     * (اختیاری - پیش‌فرض: همان موبایل)
-     */
-    async changePassword(currentPassword, newPassword) {
-        try {
-            const { error } = await supabaseClient.auth.updateUser({
-                password: newPassword
-            });
-            
-            if (error) throw error;
-            
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
-    },
-    
-    /**
-     * بازنشانی رمز به موبایل
-     */
-    async resetPasswordToPhone() {
-        try {
-            const user = Storage.getUser();
-            if (!user) throw new Error('کاربر یافت نشد');
-            
-            const { error } = await supabaseClient.auth.updateUser({
-                password: user.phone
-            });
-            
-            if (error) throw error;
-            
-            return { success: true };
         } catch (error) {
             return { success: false, error: error.message };
         }
