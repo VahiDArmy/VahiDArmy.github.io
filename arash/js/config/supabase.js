@@ -1,26 +1,33 @@
 /* ============================================
    تنظیمات Supabase - شادباش ازدواج
-   نسخه ۲.۰ - رفع مشکل خروج خودکار
+   ⚠️ مهم: کلید anon را از داشبورد سوپابیس کپی کنید
    ============================================ */
 
 const SUPABASE_URL = 'https://ijzmojnzcimqroatalhw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_ah1I0208EMm9KNO0sAhw6w_sWJ682d5';
 
-// بررسی وجود Supabase
-if (typeof supabase === 'undefined') {
-    console.error('Supabase SDK بارگذاری نشده است');
+
+
+// بررسی وجود کلید
+if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
+    console.error('❌ خطا: کلید anon سوپابیس تنظیم نشده است!');
 }
 
-// ✅ ایجاد کلاینت با تنظیمات صحیح برای persistence
+if (typeof supabase === 'undefined') {
+    console.error('❌ Supabase SDK بارگذاری نشده است');
+}
+
+// ═══════════════════════════════════════════
+// ایجاد کلاینت
+// ═══════════════════════════════════════════
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        // ✅ فعال‌سازی ذخیره‌سازی خودکار Session در localStorage
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: false,  // ← برای email/password نیازی نیست
-        storageKey: 'shadbash-auth',  // ← کلید اختصاصی برای ذخیره
-        storage: window.localStorage,  // ← صریحاً localStorage
-        flowType: 'implicit'           // ← implicit نه pkce
+        detectSessionInUrl: false,
+        storageKey: 'shadbash-auth',
+        storage: window.localStorage,
+        flowType: 'implicit'
     },
     global: {
         headers: {
@@ -29,9 +36,9 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     }
 });
 
-// ============================================
+// ═══════════════════════════════════════════
 // تنظیمات اپلیکیشن
-// ============================================
+// ═══════════════════════════════════════════
 const APP_CONFIG = {
     COIN_PRICE: 100000,
     
@@ -46,9 +53,11 @@ const APP_CONFIG = {
     CARD_NUMBER: '6037998243161691',
     CARD_IMAGE: 'assets/images/card.png',
     
+    // ✅ اطلاعات موقعیت (به‌روزرسانی شده)
     MAP_IMAGE: 'assets/images/map.png',
-    MAP_LINK: 'https://maps.google.com/?q=35.6892,51.3890',
-    MAP_COORDINATES: '35.6892, 51.3890',
+    MAP_LINK: 'https://maps.google.com/?q=35.7651724,51.0029578',
+    MAP_COORDINATES: '35.7651724, 51.0029578',
+    MAP_ADDRESS: 'جاده ملارد به سمت جنوب، بعد از پل دهن کجی، تالار آرش',
     
     STATUS: {
         PENDING: 'pending',
@@ -76,9 +85,9 @@ const APP_CONFIG = {
     }
 };
 
-// ============================================
+// ═══════════════════════════════════════════
 // بررسی اتصال
-// ============================================
+// ═══════════════════════════════════════════
 async function testSupabaseConnection() {
     try {
         const { data, error } = await supabaseClient
@@ -95,9 +104,9 @@ async function testSupabaseConnection() {
     }
 }
 
-// ============================================
-// 🐛 دیباگ - نمایش وضعیت Session
-// ============================================
+// ═══════════════════════════════════════════
+// دیباگ
+// ═══════════════════════════════════════════
 async function debugSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     const storedUser = Storage.getUser();
