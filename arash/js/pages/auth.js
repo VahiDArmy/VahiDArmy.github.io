@@ -1,6 +1,6 @@
 /* ============================================
    صفحه ورود / ثبت‌نام - شادباش ازدواج
-   نسخه ۳.۰ - پایدار
+   نسخه ۴.۰ - بدون توضیحات اضافه
    ============================================ */
 
 const AuthPage = {
@@ -14,17 +14,6 @@ const AuthPage = {
                                 <i class="ri-heart-2-fill"></i>
                             </div>
                             <h1 class="auth-title">ورود / ثبت‌نام</h1>
-                            <p class="auth-subtitle">
-                                با وارد کردن نام و شماره موبایل، هم حساب ساخته می‌شود و هم وارد می‌شوید
-                            </p>
-                        </div>
-                        
-                        <div class="auth-notice">
-                            <i class="ri-shield-keyhole-line"></i>
-                            <div>
-                                <strong>شماره موبایل شما هم یوزرنیم و هم رمز عبور است</strong>
-                                <span>برای ورود مجدد کافیست همین شماره را وارد کنید</span>
-                            </div>
                         </div>
                         
                         <form class="auth-form" id="auth-form" novalidate>
@@ -61,7 +50,6 @@ const AuthPage = {
                                     >
                                 </div>
                                 <div class="form-error" id="error-phone" style="display: none;"></div>
-                                <div class="form-hint">شماره موبایل شما به‌عنوان نام کاربری و رمز عبور استفاده می‌شود</div>
                             </div>
                             
                             <div class="form-checkbox" style="margin-bottom: var(--space-6);">
