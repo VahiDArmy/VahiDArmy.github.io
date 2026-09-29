@@ -802,7 +802,7 @@
     <div class="upload-area" id="drop">
         <span class="icon">📂</span>
         Drop files here or click to upload
-        <div class="sub">Supports multiple files · Binary &amp; text</div>
+        <div class="sub">Supports multiple files · Binary &amp; text · Zip auto-extract</div>
     </div>
 
     <div class="files" id="files"></div>
@@ -1943,6 +1943,10 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  UPLOAD  (queued one at a time — GitHub rejects parallel commits
         //           to the same branch — with real byte-level progress)
+        //
+        //  Zip handling: when a .zip is dropped, the user is asked whether to
+        //  extract its contents into a real folder structure (one commit for
+        //  the whole tree via the Git Data API), optionally keeping the .zip too.
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         const MAX_UPLOAD = 100 * 1024 * 1024; // GitHub's hard per-file limit
         const SETTLED = ['done', 'error', 'cancelled'];
@@ -1958,6 +1962,37 @@
                 r.onerror = () => reject(new Error('Could not read the file'));
                 r.readAsDataURL(file);
             });
+        }
+
+        function isZipFile(file) {
+            return /\.zip$/i.test(file.name);
+        }
+
+        // Ask the user (via two confirms) what to do with a zip.
+        //  'keep'         → upload as a single .zip file (old behaviour)
+        //  'extract'      → extract contents, discard the .zip
+        //  'extract-keep' → extract contents AND keep the .zip alongside
+        function askZipMode(file) {
+            const ok = confirm(
+                `"${file.name}" (${formatSize(file.size)}) is a zip file.\n\n` +
+                `Extract its contents and upload them as a folder structure?\n\n` +
+                `OK     — Extract into a folder\n` +
+                `Cancel — Upload the .zip file as-is`
+            );
+            if (!ok) return 'keep';
+            const keepZip = confirm(
+                `Extract "…". Also keep the original "${file.name}" in the folder?\n\n` +
+                `OK     — Extract + keep the .zip too\n` +
+                `Cancel — Extract only (no .zip kept)`
+            );
+            return keepZip ? 'extract-keep' : 'extract';
+        }
+
+        // Reject entries trying to escape the target dir with ../ or absolute paths
+        function safeZipPath(p) {
+            const parts = String(p).replace(/\\/g, '/').split('/').filter(x => x && x !== '.');
+            if (parts.some(x => x === '..')) return null;
+            return parts.join('/');
         }
 
         // fetch() can't report upload progress, XHR can
@@ -1995,18 +2030,27 @@
             });
         }
 
-        function uploadFiles(files) {
+        async function uploadFiles(files) {
             if (!files.length) return;
+
+            // 1) Ask about zips FIRST, before touching the visible queue
+            const decisions = [];
+            for (const file of files) {
+                decisions.push(isZipFile(file) ? askZipMode(file) : 'keep');
+            }
+
+            // 2) Now update the queue
             clearTimeout(hideTimer);
             if (!pumping) {               // fresh batch: forget the previous one
                 uploads.length = 0;
                 upList.innerHTML = '';
             }
-            files.forEach(file => {
+            files.forEach((file, i) => {
                 const u = {
                     id: ++uploadId, file, dir: state.path,
                     status: 'queued', fraction: 0, speed: 0, error: '',
                     cancelled: false, xhr: null, el: null,
+                    zipMode: decisions[i],
                 };
                 u.el = buildUploadRow(u);
                 uploads.push(u);
@@ -2033,6 +2077,11 @@
         }
 
         async function uploadOne(u) {
+            // Zip extract goes down its own path — one commit for the whole tree
+            if (u.zipMode === 'extract' || u.zipMode === 'extract-keep') {
+                return uploadZipExtract(u);
+            }
+
             const { file } = u;
             const cancelledErr = () => Object.assign(new Error('Cancelled'), { cancelled: true });
             try {
@@ -2083,12 +2132,135 @@
             }
         }
 
+        // ── Zip extraction upload ─ one commit for the entire extracted tree.
+        //    1. Load zip in browser with JSZip
+        //    2. Create one blob per file via POST /git/blobs
+        //    3. Assemble all blobs (plus optional .zip) into a single tree
+        //    4. Commit & update the branch ref
+        async function uploadZipExtract(u) {
+            const keepZip = u.zipMode === 'extract-keep';
+            const cancelledErr = () => Object.assign(new Error('Cancelled'), { cancelled: true });
+
+            try {
+                if (typeof JSZip === 'undefined') throw new Error('Zip library failed to load');
+
+                setUpload(u, 'preparing');
+                u.custom = { msg: 'Reading zip…', pct: '', size: formatSize(u.file.size) };
+                renderUploadRow(u);
+
+                let zip;
+                try {
+                    zip = await JSZip.loadAsync(u.file);
+                } catch (e) {
+                    throw new Error('Not a valid zip file');
+                }
+                if (u.cancelled) throw cancelledErr();
+
+                // Collect usable entries (skip macOS cruft and any path escaping)
+                const entries = [];
+                zip.forEach((relPath, entry) => {
+                    if (entry.dir) return;
+                    const safe = safeZipPath(relPath);
+                    if (!safe) return;
+                    if (safe.startsWith('__MACOSX/')) return;
+                    if (/(^|\/)\.DS_Store$/.test(safe)) return;
+                    if (/(^|\/)\._/.test(safe)) return;   // AppleDouble
+                    entries.push({ relPath: safe, entry });
+                });
+
+                if (!entries.length && !keepZip) throw new Error('Zip contains no files');
+
+                // Snapshot the current tip so we can build a new tree from it
+                const ref = await api('GET', `/git/ref/heads/${state.branch}`);
+                const headSha = ref.object.sha;
+                const headCommit = await api('GET', `/git/commits/${headSha}`);
+                const baseTreeSha = headCommit.tree.sha;
+
+                const total = entries.length + (keepZip ? 1 : 0);
+                const treeEntries = [];
+                let done = 0;
+
+                setUpload(u, 'uploading');
+
+                for (const { relPath, entry } of entries) {
+                    if (u.cancelled) throw cancelledErr();
+                    const b64 = await entry.async('base64');
+                    const created = await api('POST', '/git/blobs', {
+                        content: b64,
+                        encoding: 'base64',
+                    });
+                    const fullPath = u.dir ? `${u.dir}/${relPath}` : relPath;
+                    treeEntries.push({
+                        path: fullPath,
+                        mode: '100644',
+                        type: 'blob',
+                        sha: created.sha,
+                    });
+                    done++;
+                    u.fraction = done / total;
+                    u.custom = {
+                        msg: `Extracted ${done}/${entries.length} file${entries.length !== 1 ? 's' : ''}`,
+                        pct: Math.floor((done / total) * 100) + '%',
+                        size: formatSize(u.file.size),
+                    };
+                    renderUploadRow(u);
+                    renderUploadSummary();
+                }
+
+                if (keepZip) {
+                    if (u.cancelled) throw cancelledErr();
+                    const b64 = await fileToBase64(u.file);
+                    const created = await api('POST', '/git/blobs', {
+                        content: b64,
+                        encoding: 'base64',
+                    });
+                    const zipPath = u.dir ? `${u.dir}/${u.file.name}` : u.file.name;
+                    treeEntries.push({
+                        path: zipPath,
+                        mode: '100644',
+                        type: 'blob',
+                        sha: created.sha,
+                    });
+                    done++;
+                    u.fraction = done / total;
+                }
+
+                u.custom = { msg: 'Committing to GitHub…', pct: '100%', size: formatSize(u.file.size) };
+                setUpload(u, 'committing');
+
+                const newTree = await api('POST', '/git/trees', {
+                    base_tree: baseTreeSha,
+                    tree: treeEntries,
+                });
+                const commit = await api('POST', '/git/commits', {
+                    message: `Upload ${u.file.name}${keepZip ? '' : ' (extracted)'}`,
+                    tree: newTree.sha,
+                    parents: [headSha],
+                });
+                await api('PATCH', `/git/refs/heads/${state.branch}`, { sha: commit.sha });
+
+                u.fraction = 1;
+                delete u.custom;
+                setUpload(u, 'done');
+            } catch (err) {
+                delete u.custom;
+                if (err.cancelled || u.cancelled) {
+                    setUpload(u, 'cancelled');
+                } else {
+                    console.error('Zip extract error:', err);
+                    u.error = err.message;
+                    setUpload(u, 'error');
+                }
+            }
+        }
+
         function cancelUpload(u) {
             if (SETTLED.includes(u.status) || u.status === 'committing') return;
             u.cancelled = true;
             if (u.status === 'queued') setUpload(u, 'cancelled');
             else if (u.status === 'uploading' && u.xhr) u.xhr.abort();
-            // 'preparing' notices the flag as soon as the file has been read
+            // 'preparing' notices the flag as soon as the file has been read;
+            // zip extract also polls u.cancelled between each extracted file.
         }
 
         function setUpload(u, status) {
@@ -2128,6 +2300,16 @@
             const p = u.status === 'done' ? 1 : u.fraction;
             r.row.dataset.status = u.status;
             r.bar.style.width = (p * 100).toFixed(1) + '%';
+
+            // Custom label path (zip extraction progress, etc.)
+            if (u.custom) {
+                r.pct.textContent = u.custom.pct || '';
+                r.st.textContent = u.custom.msg || '';
+                r.st.title = r.st.textContent;
+                r.sz.textContent = u.custom.size || formatSize(u.file.size);
+                return;
+            }
+
             r.sz.textContent = u.status === 'uploading'
                 ? `${formatSize(u.file.size * p)} / ${formatSize(u.file.size)}`
                 : formatSize(u.file.size);
@@ -2138,7 +2320,7 @@
                 case 'preparing':  st = 'Preparing…'; break;
                 case 'uploading':  pct = Math.floor(p * 100) + '%'; st = u.speed ? formatSize(u.speed) + '/s' : 'Uploading…'; break;
                 case 'committing': pct = '100%'; st = 'Committing to GitHub…'; break;
-                case 'done':       pct = '✓'; st = 'Uploaded'; break;
+                case 'done':       pct = '✓'; st = u.zipMode === 'extract' || u.zipMode === 'extract-keep' ? 'Extracted & uploaded' : 'Uploaded'; break;
                 case 'error':      pct = '✕'; st = u.error || 'Failed'; break;
                 case 'cancelled':  st = 'Cancelled'; break;
             }
