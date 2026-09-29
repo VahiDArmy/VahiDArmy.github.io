@@ -1,10 +1,13 @@
 /* ============================================
    کامپوننت سایدبار (پنل ادمین)
+   نسخه ۲.۰ - با بسته شدن با کلیک بیرون
    ============================================ */
 
 const Sidebar = {
     el: null,
+    overlay: null,
     isOpen: false,
+    outsideClickHandler: null,
     
     /**
      * رندر
@@ -17,15 +20,15 @@ const Sidebar = {
         const isAdmin = user?.role === 'admin';
         const currentRoute = Router.currentRoute;
         
-        // سایدبار فقط برای ادمین
         if (!isAdmin || !currentRoute?.startsWith('admin')) {
             this.el.style.display = 'none';
-            document.getElementById('app').classList.remove('has-sidebar');
+            document.getElementById('app')?.classList.remove('has-sidebar');
+            this.close();
             return;
         }
         
         this.el.style.display = 'flex';
-        document.getElementById('app').classList.add('has-sidebar');
+        document.getElementById('app')?.classList.add('has-sidebar');
         
         const menuItems = [
             { route: 'admin-dashboard', icon: 'ri-dashboard-line', label: 'داشبورد', badge: null },
@@ -44,7 +47,7 @@ const Sidebar = {
                         <span>شادباش ازدواج</span>
                         <small>پنل مدیریت</small>
                     </div>
-                    <button class="sidebar-close" id="sidebar-close">
+                    <button class="sidebar-close" id="sidebar-close" aria-label="بستن">
                         <i class="ri-close-line"></i>
                     </button>
                 </div>
@@ -88,7 +91,6 @@ const Sidebar = {
                     </div>
                 </div>
             </div>
-            <div class="sidebar-overlay" id="sidebar-overlay"></div>
         `;
         
         this.attachEvents();
@@ -120,11 +122,9 @@ const Sidebar = {
      */
     attachEvents() {
         const closeBtn = this.el.querySelector('#sidebar-close');
-        const overlay = this.el.querySelector('#sidebar-overlay');
         const logoutBtn = this.el.querySelector('#sidebar-logout');
         
         if (closeBtn) closeBtn.addEventListener('click', () => this.close());
-        if (overlay) overlay.addEventListener('click', () => this.close());
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', async () => {
@@ -142,26 +142,67 @@ const Sidebar = {
                 }
             });
         }
+        
+        // بستن با کلیک روی لینک‌ها در موبایل
+        this.el.querySelectorAll('[data-nav]').forEach(link => {
+            link.addEventListener('click', () => {
+                if (Helpers.isMobile()) {
+                    this.close();
+                }
+            });
+        });
     },
     
     /**
      * باز کردن
      */
     open() {
-        if (this.el) {
-            this.el.classList.add('open');
-            this.isOpen = true;
-        }
+        if (!this.el) return;
+        
+        this.el.classList.add('open');
+        document.body.classList.add('sidebar-open');
+        this.isOpen = true;
+        
+        // ساخت overlay
+        this.createOverlay();
+        
+        // اضافه کردن listener برای بستن با کلیک بیرون (بعد از تاخیر)
+        setTimeout(() => {
+            this.outsideClickHandler = (e) => {
+                if (!this.el.contains(e.target) && !e.target.closest('.navbar-toggle')) {
+                    this.close();
+                }
+            };
+            document.addEventListener('click', this.outsideClickHandler, true);
+            document.addEventListener('touchstart', this.outsideClickHandler, true);
+        }, 50);
+        
+        // جلوگیری از اسکرول بادی
+        document.body.style.overflow = 'hidden';
     },
     
     /**
      * بستن
      */
     close() {
-        if (this.el) {
-            this.el.classList.remove('open');
-            this.isOpen = false;
+        if (!this.el) return;
+        
+        this.el.classList.remove('open');
+        document.body.classList.remove('sidebar-open');
+        this.isOpen = false;
+        
+        // حذف overlay
+        this.removeOverlay();
+        
+        // حذف listener
+        if (this.outsideClickHandler) {
+            document.removeEventListener('click', this.outsideClickHandler, true);
+            document.removeEventListener('touchstart', this.outsideClickHandler, true);
+            this.outsideClickHandler = null;
         }
+        
+        // برگرداندن اسکرول
+        document.body.style.overflow = '';
     },
     
     /**
@@ -173,5 +214,43 @@ const Sidebar = {
         } else {
             this.open();
         }
+    },
+    
+    /**
+     * ساخت overlay
+     */
+    createOverlay() {
+        this.removeOverlay();
+        
+        this.overlay = document.createElement('div');
+        this.overlay.className = 'sidebar-overlay-global';
+        this.overlay.setAttribute('aria-hidden', 'true');
+        
+        // کلیک روی overlay = بستن
+        this.overlay.addEventListener('click', () => this.close());
+        this.overlay.addEventListener('touchstart', () => this.close(), { passive: true });
+        
+        document.body.appendChild(this.overlay);
+        
+        // انیمیشن ورود
+        requestAnimationFrame(() => {
+            this.overlay.classList.add('show');
+        });
+    },
+    
+    /**
+     * حذف overlay
+     */
+    removeOverlay() {
+        if (this.overlay && this.overlay.parentElement) {
+            this.overlay.classList.remove('show');
+            const overlay = this.overlay;
+            setTimeout(() => {
+                if (overlay.parentElement) {
+                    overlay.parentElement.removeChild(overlay);
+                }
+            }, 250);
+        }
+        this.overlay = null;
     }
 };
