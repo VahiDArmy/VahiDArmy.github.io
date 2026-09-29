@@ -1,6 +1,6 @@
 /* ============================================
    صفحه انتخاب و خرید سکه
-   نسخه ۳.۰ - حداکثر ۲۰ سکه
+   نسخه ۴.۰ - کارت‌های اطلاعاتی در پایین
    ============================================ */
 
 const CoinsPage = {
@@ -32,123 +32,146 @@ const CoinsPage = {
                     </p>
                 </div>
                 
-                <div class="coins-layout">
-                    <div class="coins-main">
-                        <!-- اسلایدر سکه (باکس اول) -->
-                        <div id="coin-slider-container"></div>
-                        
-                        <!-- خلاصه سفارش -->
-                        <div class="order-summary-card" id="order-summary">
-                            <div class="order-summary-header">
-                                <i class="ri-shopping-bag-3-line"></i>
-                                <span>خلاصه سفارش</span>
-                            </div>
-                            <div class="order-summary-body">
-                                <div class="summary-row">
-                                    <span>تعداد سکه انتخابی:</span>
-                                    <strong id="summary-coins">${Format.number(initialValue)} سکه</strong>
-                                </div>
-                                <div class="summary-row">
-                                    <span>قیمت هر سکه:</span>
-                                    <strong>${Format.price(APP_CONFIG.COIN_PRICE)}</strong>
-                                </div>
-                                <div class="summary-row total">
-                                    <span>مبلغ قابل پرداخت:</span>
-                                    <strong id="summary-total">${Format.price(initialValue * APP_CONFIG.COIN_PRICE)}</strong>
-                                </div>
-                            </div>
+                <!-- محتوای اصلی (تک ستون، وسط‌چین) -->
+                <div class="coins-main-wrap">
+                    
+                    <!-- اسلایدر سکه -->
+                    <div id="coin-slider-container"></div>
+                    
+                    <!-- خلاصه سفارش -->
+                    <div class="order-summary-card" id="order-summary">
+                        <div class="order-summary-header">
+                            <i class="ri-shopping-bag-3-line"></i>
+                            <span>خلاصه سفارش</span>
                         </div>
-                        
-                        <!-- نوار اقدام -->
-                        <div class="action-bar" id="action-bar">
-                            <a href="#welcome" class="btn btn-ghost" data-nav>
-                                <i class="ri-arrow-right-line"></i>
-                                <span>انصراف</span>
-                            </a>
-                            <button class="btn btn-gold btn-lg" id="continue-btn">
-                                <span>ادامه و پرداخت</span>
-                                <i class="ri-arrow-left-line"></i>
-                            </button>
-                        </div>
-                        
-                        <!-- اطلاعات کاربر -->
-                        <div class="user-info-card">
-                            <div class="user-info-header">
-                                <i class="ri-user-line"></i>
-                                <span>اطلاعات شما</span>
-                                <span class="badge badge-success">
-                                    <i class="ri-check-line"></i>
-                                    تایید شده
-                                </span>
+                        <div class="order-summary-body">
+                            <div class="summary-row">
+                                <span>تعداد سکه انتخابی:</span>
+                                <strong id="summary-coins">${Format.number(initialValue)} سکه</strong>
                             </div>
-                            <div class="user-info-body">
-                                <div class="info-item">
-                                    <div class="info-label">نام</div>
-                                    <div class="info-value">${Helpers.escapeHtml(user?.name || '')}</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label">شماره موبایل</div>
-                                    <div class="info-value" style="direction: ltr; text-align: right;">${Format.phone(user?.phone || '')}</div>
-                                </div>
+                            <div class="summary-row">
+                                <span>قیمت هر سکه:</span>
+                                <strong>${Format.price(APP_CONFIG.COIN_PRICE)}</strong>
+                            </div>
+                            <div class="summary-row total">
+                                <span>مبلغ قابل پرداخت:</span>
+                                <strong id="summary-total">${Format.price(initialValue * APP_CONFIG.COIN_PRICE)}</strong>
                             </div>
                         </div>
                     </div>
                     
-                    <aside class="coins-sidebar">
-                        <div class="sidebar-card tips-card">
-                            <div class="sidebar-card-header">
-                                <i class="ri-lightbulb-line"></i>
-                                <span>نکات مهم</span>
+                    <!-- نوار اقدام -->
+                    <div class="action-bar" id="action-bar">
+                        <a href="#welcome" class="btn btn-ghost" data-nav>
+                            <i class="ri-arrow-right-line"></i>
+                            <span>انصراف</span>
+                        </a>
+                        <button class="btn btn-gold btn-lg" id="continue-btn">
+                            <span>ادامه و پرداخت</span>
+                            <i class="ri-arrow-left-line"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- اطلاعات کاربر -->
+                    <div class="user-info-card">
+                        <div class="user-info-header">
+                            <i class="ri-user-line"></i>
+                            <span>اطلاعات شما</span>
+                            <span class="badge badge-success">
+                                <i class="ri-check-line"></i>
+                                تایید شده
+                            </span>
+                        </div>
+                        <div class="user-info-body">
+                            <div class="info-item">
+                                <div class="info-label">نام</div>
+                                <div class="info-value">${Helpers.escapeHtml(user?.name || '')}</div>
                             </div>
-                            <ul class="tips-list">
+                            <div class="info-item">
+                                <div class="info-label">شماره موبایل</div>
+                                <div class="info-value" style="direction: ltr; text-align: right;">${Format.phone(user?.phone || '')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ============================================
+                     کارت‌های اطلاعاتی (پایین صفحه)
+                     ============================================ -->
+                <div class="coins-info-section">
+                    
+                    <div class="info-cards-grid">
+                        
+                        <!-- نکات مهم -->
+                        <div class="info-card info-card-tips">
+                            <div class="info-card-header">
+                                <div class="info-card-icon info-icon-gold">
+                                    <i class="ri-lightbulb-line"></i>
+                                </div>
+                                <h3>نکات مهم</h3>
+                            </div>
+                            <ul class="info-card-list">
                                 <li>
-                                    <i class="ri-checkbox-circle-line"></i>
-                                    <span>هر سکه معادل ${Format.price(APP_CONFIG.COIN_PRICE)} است</span>
+                                    <i class="ri-checkbox-circle-fill"></i>
+                                    <span>هر سکه معادل <strong>${Format.price(APP_CONFIG.COIN_PRICE)}</strong> است</span>
                                 </li>
                                 <li>
-                                    <i class="ri-checkbox-circle-line"></i>
-                                    <span>حداکثر ${Format.number(this.MAX_COINS)} سکه (${Format.price(this.MAX_COINS * APP_CONFIG.COIN_PRICE)})</span>
+                                    <i class="ri-checkbox-circle-fill"></i>
+                                    <span>حداکثر <strong>${Format.number(this.MAX_COINS)} سکه</strong> (${Format.price(this.MAX_COINS * APP_CONFIG.COIN_PRICE)})</span>
                                 </li>
                                 <li>
-                                    <i class="ri-checkbox-circle-line"></i>
+                                    <i class="ri-checkbox-circle-fill"></i>
                                     <span>بلافاصله پس از تایید فیش، سکه‌ها به حساب شما اضافه می‌شود</span>
                                 </li>
                                 <li>
-                                    <i class="ri-checkbox-circle-line"></i>
+                                    <i class="ri-checkbox-circle-fill"></i>
                                     <span>پشتیبانی ۲۴ ساعته آماده پاسخگویی است</span>
                                 </li>
                             </ul>
                         </div>
                         
-                        <div class="sidebar-card support-card">
-                            <div class="sidebar-card-header">
-                                <i class="ri-customer-service-2-line"></i>
-                                <span>نیاز به کمک دارید؟</span>
+                        <!-- نیاز به کمک -->
+                        <div class="info-card info-card-support">
+                            <div class="info-card-header">
+                                <div class="info-card-icon info-icon-primary">
+                                    <i class="ri-customer-service-2-line"></i>
+                                </div>
+                                <h3>نیاز به کمک دارید؟</h3>
                             </div>
-                            <p>در هر مرحله از فرایند، تیم پشتیبانی ما در کنار شماست</p>
-                            <button class="btn btn-outline btn-sm btn-block" id="support-btn">
+                            <p class="info-card-text">
+                                در هر مرحله از فرایند، تیم پشتیبانی ما در کنار شماست
+                            </p>
+                            <button class="btn btn-outline btn-block" id="support-btn">
                                 <i class="ri-phone-line"></i>
                                 <span>تماس با پشتیبانی</span>
                             </button>
                         </div>
                         
-                        <div class="sidebar-card security-card">
-                            <div class="security-badges">
-                                <div class="security-badge">
+                        <!-- امنیت -->
+                        <div class="info-card info-card-security">
+                            <div class="info-card-header">
+                                <div class="info-card-icon info-icon-success">
+                                    <i class="ri-shield-check-line"></i>
+                                </div>
+                                <h3>پرداخت امن</h3>
+                            </div>
+                            <div class="security-list">
+                                <div class="security-item">
                                     <i class="ri-shield-check-fill"></i>
                                     <span>پرداخت امن</span>
                                 </div>
-                                <div class="security-badge">
+                                <div class="security-item">
                                     <i class="ri-lock-2-fill"></i>
                                     <span>رمزنگاری SSL</span>
                                 </div>
-                                <div class="security-badge">
+                                <div class="security-item">
                                     <i class="ri-verified-badge-fill"></i>
                                     <span>تایید شده</span>
                                 </div>
                             </div>
                         </div>
-                    </aside>
+                        
+                    </div>
                 </div>
             </div>
         `;
