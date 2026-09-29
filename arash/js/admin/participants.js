@@ -1,5 +1,6 @@
 /* ============================================
    مدیریت مشارکت‌کنندگان
+   نسخه ۲.۰ - حذف هوشمند با هشدار
    ============================================ */
 
 const AdminParticipants = {
@@ -7,7 +8,6 @@ const AdminParticipants = {
     filtered: [],
     currentFilter: 'all',
     searchQuery: '',
-    selectedParticipant: null,
     
     render() {
         return `
@@ -22,7 +22,6 @@ const AdminParticipants = {
                     </div>
                 </div>
                 
-                <!-- نوار ابزار -->
                 <div class="participants-toolbar">
                     <div class="toolbar-search">
                         <i class="ri-search-line"></i>
@@ -59,10 +58,8 @@ const AdminParticipants = {
                     </div>
                 </div>
                 
-                <!-- خلاصه فیلترها -->
                 <div class="filter-summary" id="filter-summary"></div>
                 
-                <!-- لیست -->
                 <div id="participants-list">
                     <div class="loading-state">
                         <div class="loader-coin"><i class="ri-coin-line"></i></div>
@@ -85,9 +82,6 @@ const AdminParticipants = {
         this.attachEvents();
     },
     
-    /**
-     * بارگذاری
-     */
     async loadParticipants() {
         const result = await AdminService.getParticipants();
         
@@ -100,18 +94,13 @@ const AdminParticipants = {
         this.applyFilters();
     },
     
-    /**
-     * اعمال فیلترها
-     */
     applyFilters() {
         let filtered = [...this.participants];
         
-        // فیلتر وضعیت
         if (this.currentFilter !== 'all') {
             filtered = filtered.filter(p => p.status === this.currentFilter);
         }
         
-        // جستجو
         if (this.searchQuery.trim()) {
             const q = this.searchQuery.toLowerCase().trim();
             filtered = filtered.filter(p => 
@@ -126,9 +115,6 @@ const AdminParticipants = {
         this.renderSummary();
     },
     
-    /**
-     * خلاصه فیلتر
-     */
     renderSummary() {
         const summary = document.getElementById('filter-summary');
         if (!summary) return;
@@ -163,9 +149,6 @@ const AdminParticipants = {
         `;
     },
     
-    /**
-     * رندر لیست
-     */
     renderList() {
         const container = document.getElementById('participants-list');
         
@@ -207,12 +190,8 @@ const AdminParticipants = {
         this.attachRowEvents();
     },
     
-    /**
-     * رندر یک ردیف
-     */
     renderRow(p) {
         const status = Format.status(p.status);
-        const hasReceipt = p.receipt_url || p.receipt_text;
         
         return `
             <tr data-id="${p.id}">
@@ -271,9 +250,6 @@ const AdminParticipants = {
         `;
     },
     
-    /**
-     * رویدادهای ردیف
-     */
     attachRowEvents() {
         document.querySelectorAll('.row-actions .action-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
@@ -298,25 +274,19 @@ const AdminParticipants = {
             });
         });
         
-        // کلیک روی ردیف
         document.querySelectorAll('.participants-table tbody tr').forEach(tr => {
-            tr.addEventListener('click', () => {
+            tr.addEventListener('click', (e) => {
+                if (e.target.closest('.action-btn')) return;
                 const id = tr.dataset.id;
                 this.viewParticipant(id);
             });
         });
     },
     
-    /**
-     * مشاهده جزئیات
-     */
     async viewParticipant(id) {
         const p = this.participants.find(x => x.id === id);
         if (!p) return;
         
-        this.selectedParticipant = p;
-        
-        // دریافت URL فیش
         let receiptHtml = '<p class="text-muted">فیشی آپلود نشده است</p>';
         
         if (p.receipt_url) {
@@ -417,10 +387,6 @@ const AdminParticipants = {
                                     <span>تاریخ بررسی</span>
                                     <strong>${Format.dateTime(p.reviewed_at)}</strong>
                                 </div>
-                                <div class="detail-info-item">
-                                    <span>بررسی کننده</span>
-                                    <strong>${p.reviewer?.name || 'سیستم'}</strong>
-                                </div>
                             </div>
                         </div>
                     ` : ''}
@@ -472,13 +438,9 @@ const AdminParticipants = {
             size: 'lg'
         });
         
-        // رویدادهای مودال
         this.attachModalEvents(modal, p);
     },
     
-    /**
-     * رویدادهای مودال
-     */
     attachModalEvents(modal, p) {
         const coinInput = modal.querySelector('#edit-coin-count');
         const amountDisplay = modal.querySelector('#edit-amount');
@@ -487,12 +449,13 @@ const AdminParticipants = {
             coinInput.addEventListener('input', () => {
                 const val = parseInt(coinInput.value) || 0;
                 const amount = val * APP_CONFIG.COIN_PRICE;
-                amountDisplay.textContent = Format.price(amount);
+                if (amountDisplay) amountDisplay.textContent = Format.price(amount);
             });
         }
         
         modal.querySelectorAll('[data-counter]').forEach(btn => {
             btn.addEventListener('click', () => {
+                if (!coinInput) return;
                 const current = parseInt(coinInput.value) || 1;
                 const action = btn.dataset.counter;
                 const newVal = action === 'plus' ? current + 1 : Math.max(1, current - 1);
@@ -518,15 +481,11 @@ const AdminParticipants = {
         });
     },
     
-    /**
-     * تایید
-     */
     async approve(id, newCount = null, note = '') {
         const admin = Storage.getUser();
         const p = this.participants.find(x => x.id === id);
         
-        // اگر تعداد تغییر کرده، ابتدا بروزرسانی
-        if (newCount && newCount !== p.coin_count) {
+        if (newCount && p && newCount !== p.coin_count) {
             await AdminService.updateTransaction(id, { coin_count: newCount }, admin.id);
         }
         
@@ -540,23 +499,8 @@ const AdminParticipants = {
         }
     },
     
-    /**
-     * رد
-     */
     async reject(id, note = '') {
         const admin = Storage.getUser();
-        
-        if (!note) {
-            const confirmed = await Modal.confirm({
-                title: 'رد تراکنش',
-                message: 'آیا مطمئن هستید؟ می‌توانید یادداشتی برای کاربر بنویسید.',
-                confirmText: 'رد کن',
-                cancelText: 'انصراف',
-                type: 'danger'
-            });
-            
-            if (!confirmed) return;
-        }
         
         const result = await AdminService.rejectTransaction(id, admin.id, note);
         
@@ -569,35 +513,70 @@ const AdminParticipants = {
     },
     
     /**
-     * حذف
+     * ✅ حذف هوشمند - با هشدار مخصوص هر وضعیت
      */
     async delete(id) {
+        const p = this.participants.find(x => x.id === id);
+        if (!p) return;
+        
+        // ساخت پیام بر اساس وضعیت
+        let message = '';
+        let warningType = 'danger';
+        
+        if (p.status === 'approved') {
+            message = `
+                این تراکنش <strong style="color: var(--color-success-600);">تایید شده</strong> است و
+                <strong style="color: var(--color-danger-600);">${Format.coin(p.coin_count)}</strong>
+                از سکه‌های کاربر کم خواهد شد.
+                <br><br>
+                آیا مطمئن هستید؟
+            `;
+        } else if (p.status === 'pending') {
+            message = `
+                این تراکنش در وضعیت <strong style="color: var(--color-warning-600);">در انتظار</strong> است.
+                با حذف، این درخواست کاملاً پاک می‌شود.
+                <br><br>
+                آیا مطمئن هستید؟
+            `;
+        } else if (p.status === 'rejected') {
+            message = `
+                این تراکنش <strong style="color: var(--color-danger-600);">رد شده</strong> است.
+                با حذف، این رکورد کاملاً پاک می‌شود.
+                <br><br>
+                آیا مطمئن هستید؟
+            `;
+        }
+        
         const confirmed = await Modal.confirm({
             title: 'حذف تراکنش',
-            message: 'آیا از حذف این تراکنش مطمئن هستید؟ این عمل قابل بازگشت نیست.',
-            confirmText: 'حذف',
+            message,
+            confirmText: 'بله، حذف کن',
             cancelText: 'انصراف',
-            type: 'danger'
+            type: warningType
         });
         
         if (!confirmed) return;
         
         const admin = Storage.getUser();
+        const loadingToast = Toast.loading('در حال حذف...', 'لطفاً صبر کنید');
+        
         const result = await AdminService.deleteTransaction(id, admin.id);
         
+        Toast.dismiss(loadingToast);
+        
         if (result.success) {
-            Toast.success('حذف شد', 'تراکنش با موفقیت حذف شد');
+            if (p.status === 'approved') {
+                Toast.success('حذف شد', `${Format.coin(p.coin_count)} از کاربر کم و تراکنش حذف شد`);
+            } else {
+                Toast.success('حذف شد', 'تراکنش با موفقیت حذف شد');
+            }
             await this.loadParticipants();
         } else {
-            Toast.error('خطا', result.error);
+            Toast.error('خطا در حذف', result.error);
         }
     },
     
-    /**
-     * رویدادها
-     */
     attachEvents() {
-        // جستجو
         const searchInput = document.getElementById('search-input');
         const clearBtn = document.getElementById('search-clear');
         
@@ -614,7 +593,6 @@ const AdminParticipants = {
             this.applyFilters();
         });
         
-        // فیلترها
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -624,15 +602,11 @@ const AdminParticipants = {
             });
         });
         
-        // خروجی
         document.getElementById('export-participants')?.addEventListener('click', () => {
             this.exportCSV();
         });
     },
     
-    /**
-     * خروجی CSV
-     */
     exportCSV() {
         if (this.filtered.length === 0) {
             Toast.warning('خروجی', 'داده‌ای برای خروجی وجود ندارد');
