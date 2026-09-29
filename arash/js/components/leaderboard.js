@@ -156,12 +156,11 @@ const Leaderboard = {
         btn.innerHTML = `<i class="ri-loader-4-line"></i><span>...</span>`;
         
         try {
-            // بارگذاری html2canvas اگر لازم است
             await this.ensureHtml2Canvas();
             
             const wrapper = document.getElementById('lb-wrapper');
             
-            // ✅ آماده‌سازی برای عکس: حذف دکمه دانلود
+            // مخفی کردن دکمه دانلود در هنگام عکس‌برداری
             const downloadBtnEl = wrapper.querySelector('.lb-download-btn');
             if (downloadBtnEl) downloadBtnEl.style.visibility = 'hidden';
             
@@ -222,7 +221,6 @@ const Leaderboard = {
             rowsContainer.innerHTML = this.renderRows();
         }
         
-        // به‌روزرسانی فوتر
         const statEls = document.querySelectorAll('.lb-stat strong');
         if (statEls[0]) statEls[0].textContent = Format.number(this.data.length);
         if (statEls[1]) statEls[1].textContent = Format.price(this.getTotal());
