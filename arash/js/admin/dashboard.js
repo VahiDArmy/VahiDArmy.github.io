@@ -1,5 +1,6 @@
 /* ============================================
    داشبورد ادمین - شادباش ازدواج
+   نسخه ۲.۰ - با جدول برترین‌ها
    ============================================ */
 
 const AdminDashboard = {
@@ -57,10 +58,11 @@ const AdminDashboard = {
     async loadDashboard() {
         const container = document.getElementById('dashboard-content');
         
-        const [statsResult, participantsResult, logsResult] = await Promise.all([
+        const [statsResult, participantsResult, logsResult, leaderboardData] = await Promise.all([
             AdminService.getDashboardStats(),
             AdminService.getParticipants({ limit: 5 }),
-            AdminService.getActivityLogs({ limit: 8 })
+            AdminService.getActivityLogs({ limit: 8 }),
+            this.loadLeaderboardData()
         ]);
         
         if (!statsResult.success) {
@@ -73,16 +75,79 @@ const AdminDashboard = {
         container.innerHTML = this.renderDashboard(
             statsResult.stats,
             participantsResult.participants || [],
-            logsResult.logs || []
+            logsResult.logs || [],
+            leaderboardData
         );
         
         this.animateNumbers();
+        this.renderLeaderboard(leaderboardData);
+    },
+    
+    /**
+     * دریافت داده‌های leaderboard از دیتابیس
+     */
+    async loadLeaderboardData() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('coin_transactions')
+                .select(`
+                    coin_count,
+                    user:user_id (name)
+                `)
+                .eq('status', 'approved')
+                .order('coin_count', { ascending: false })
+                .limit(10);
+            
+            if (error) throw error;
+            
+            return (data || []).map(t => ({
+                name: t.user?.name || 'کاربر',
+                amount: t.coin_count * APP_CONFIG.COIN_PRICE
+            }));
+        } catch (error) {
+            console.error('خطا در دریافت leaderboard:', error);
+            return [];
+        }
+    },
+    
+    /**
+     * رندر leaderboard
+     */
+    renderLeaderboard(data) {
+        const container = document.getElementById('leaderboard-container');
+        if (!container) return;
+        
+        if (data.length === 0) {
+            container.innerHTML = `
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <div class="card-header-title">
+                            <i class="ri-trophy-line"></i>
+                            <span>برترین‌های مشارکت</span>
+                        </div>
+                    </div>
+                    <div class="dashboard-card-body">
+                        <div class="empty-small">
+                            <i class="ri-inbox-line"></i>
+                            <p>هنوز مشارکت تایید شده‌ای وجود ندارد</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            return;
+        }
+        
+        Leaderboard.render('leaderboard-container', {
+            title: 'برترین‌های مشارکت',
+            subtitle: '۱۰ مشارکت‌کننده برتر بر اساس مبلغ',
+            data: data
+        });
     },
     
     /**
      * رندر داشبورد
      */
-    renderDashboard(stats, participants, logs) {
+    renderDashboard(stats, participants, logs, leaderboardData) {
         return `
             <!-- کارت‌های آماری اصلی -->
             <div class="stats-cards">
@@ -157,6 +222,11 @@ const AdminDashboard = {
                         <span>${Format.number(stats.approvedTransactions)} تراکنش موفق</span>
                     </div>
                 </div>
+            </div>
+            
+            <!-- ✅ جدول برترین‌ها (فقط ادمین) -->
+            <div class="dashboard-row-single" id="leaderboard-container">
+                <!-- توسط renderLeaderboard پر می‌شود -->
             </div>
             
             <!-- ردیف دوم -->
@@ -382,7 +452,8 @@ const AdminDashboard = {
             'transaction_updated': { icon: 'ri-edit-line', color: 'warning', text: 'ویرایش تراکنش' },
             'transaction_deleted': { icon: 'ri-delete-bin-line', color: 'danger', text: 'حذف تراکنش' },
             'user_status_changed': { icon: 'ri-user-settings-line', color: 'warning', text: 'تغییر وضعیت کاربر' },
-            'setting_updated': { icon: 'ri-settings-line', color: 'info', text: 'بروزرسانی تنظیمات' }
+            'setting_updated': { icon: 'ri-settings-line', color: 'info', text: 'بروزرسانی تنظیمات' },
+            'physical_coin_request': { icon: 'ri-hand-coin-line', color: 'primary', text: 'درخواست سکه فیزیکی' }
         };
         
         return `
