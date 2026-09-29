@@ -1,16 +1,16 @@
 /* ============================================
    کامپوننت اسلایدر انتخاب سکه
-   نسخه ۲.۰ - اسلایدر بازه‌ای + ورودی دقیق
+   نسخه ۳.۰ - حرفه‌ای، ساده، دقیق
    ============================================ */
 
 const CoinSlider = {
     container: null,
     value: 5,
     min: 1,
-    max: 200,
-    step: 1,
+    max: 20,
     onChange: null,
-    quickValues: [1, 5, 10, 25, 50, 100],
+    quickValues: [1, 2, 5, 10, 15, 20],
+    pricePerCoin: 100000,
     
     /**
      * رندر
@@ -19,94 +19,95 @@ const CoinSlider = {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
         
-        this.min = options.min || APP_CONFIG.MIN_COINS || 1;
-        this.max = options.max || APP_CONFIG.MAX_COINS || 200;
-        this.step = options.step || 1;
-        this.value = options.defaultValue || 5;
+        this.min = options.min ?? 1;
+        this.max = options.max ?? 20;
+        this.value = Helpers.clamp(options.defaultValue ?? 5, this.min, this.max);
         this.onChange = options.onChange || null;
-        this.quickValues = options.quickValues || [1, 5, 10, 25, 50, 100];
-        
-        // اطمینان از محدوده
-        this.value = Helpers.clamp(this.value, this.min, this.max);
+        this.quickValues = options.quickValues || [1, 2, 5, 10, 15, 20];
+        this.pricePerCoin = options.pricePerCoin || APP_CONFIG.COIN_PRICE;
         
         this.container.innerHTML = `
-            <div class="coin-slider-v2">
-                <div class="coin-slider-v2-header">
-                    <div class="coin-slider-v2-title">
+            <div class="coin-slider-pro">
+                
+                <!-- باکس اول: عنوان -->
+                <div class="coin-slider-pro-title">
+                    <div class="csp-title-icon">
                         <i class="ri-coins-line"></i>
-                        <span>تعداد سکه‌های مشارکت خود را انتخاب کنید</span>
                     </div>
-                    <div class="coin-slider-v2-hint">هر سکه معادل ۱۰۰,۰۰۰ تومان</div>
-                </div>
-                
-                <!-- نمایش بزرگ عدد انتخابی -->
-                <div class="coin-slider-v2-display">
-                    <div class="coin-slider-v2-count">
-                        <span class="coin-count-number" id="coin-display-number">${Format.number(this.value)}</span>
-                        <span class="coin-count-label">سکه</span>
-                    </div>
-                    <div class="coin-slider-v2-price" id="coin-display-price">
-                        ${Format.price(this.value * APP_CONFIG.COIN_PRICE)}
+                    <div class="csp-title-text">
+                        <h3>تعداد سکه‌های مشارکت خود را انتخاب کنید</h3>
+                        <p>هر سکه معادل ${Format.price(this.pricePerCoin)} • حداکثر ${Format.number(this.max)} سکه</p>
                     </div>
                 </div>
                 
-                <!-- اسلایدر بازه‌ای -->
-                <div class="coin-slider-v2-range">
-                    <div class="range-labels-top">
-                        <span class="range-label-min">${Format.number(this.min)}</span>
-                        <span class="range-label-max">${Format.number(this.max)}+</span>
+                <!-- نمایش بزرگ عدد -->
+                <div class="coin-slider-pro-display">
+                    <div class="csp-display-inner">
+                        <div class="csp-display-count">
+                            <span class="csp-num" id="csp-number">${Format.number(this.value)}</span>
+                            <span class="csp-unit">سکه</span>
+                        </div>
+                        <div class="csp-display-price" id="csp-price">
+                            ${Format.price(this.value * this.pricePerCoin)}
+                        </div>
                     </div>
-                    <div class="range-wrapper">
+                </div>
+                
+                <!-- اسلایدر حرفه‌ای -->
+                <div class="coin-slider-pro-track">
+                    <div class="csp-track-labels">
+                        <span class="csp-label-min">${Format.number(this.min)}</span>
+                        <span class="csp-label-mid">${Format.number(Math.round(this.max / 2))}</span>
+                        <span class="csp-label-max">${Format.number(this.max)}</span>
+                    </div>
+                    
+                    <div class="csp-track-wrapper">
+                        <div class="csp-track-bg"></div>
+                        <div class="csp-track-fill" id="csp-fill"></div>
+                        <div class="csp-track-ticks" id="csp-ticks"></div>
                         <input 
                             type="range" 
-                            id="coin-range" 
-                            class="coin-range-input"
+                            id="csp-range" 
+                            class="csp-range"
                             min="${this.min}" 
                             max="${this.max}" 
-                            step="${this.step}" 
+                            step="1" 
                             value="${this.value}"
+                            aria-label="تعداد سکه"
                         >
-                        <div class="range-progress" id="range-progress"></div>
-                    </div>
-                    <div class="range-marks" id="range-marks"></div>
-                </div>
-                
-                <!-- ورودی عدد دقیق -->
-                <div class="coin-slider-v2-input">
-                    <label class="coin-input-label">
-                        <i class="ri-edit-line"></i>
-                        <span>یا عدد دقیق وارد کنید:</span>
-                    </label>
-                    <div class="coin-input-group">
-                        <button class="coin-input-btn" id="coin-btn-minus" type="button" aria-label="کاهش">
-                            <i class="ri-subtract-line"></i>
-                        </button>
-                        <input 
-                            type="number" 
-                            id="coin-number-input" 
-                            class="coin-number-input"
-                            value="${this.value}"
-                            min="${this.min}"
-                            max="10000"
-                            step="1"
-                            inputmode="numeric"
-                        >
-                        <button class="coin-input-btn" id="coin-btn-plus" type="button" aria-label="افزایش">
-                            <i class="ri-add-line"></i>
-                        </button>
-                    </div>
-                    <div class="coin-input-hint">
-                        می‌توانید هر عدد دلخواهی وارد کنید
                     </div>
                 </div>
                 
-                <!-- انتخاب‌های سریع -->
-                <div class="coin-slider-v2-quick">
-                    <div class="quick-label">پیشنهاد سریع:</div>
-                    <div class="quick-buttons" id="quick-buttons">
+                <!-- کنترل +/- (یک سکه) -->
+                <div class="coin-slider-pro-control">
+                    <button class="csp-ctrl-btn csp-ctrl-minus" id="csp-minus" type="button" aria-label="کاهش یک سکه">
+                        <i class="ri-subtract-line"></i>
+                        <span class="csp-ctrl-label">یک سکه کمتر</span>
+                    </button>
+                    
+                    <div class="csp-ctrl-value">
+                        <span id="csp-ctrl-num">${Format.number(this.value)}</span>
+                    </div>
+                    
+                    <button class="csp-ctrl-btn csp-ctrl-plus" id="csp-plus" type="button" aria-label="افزایش یک سکه">
+                        <span class="csp-ctrl-label">یک سکه بیشتر</span>
+                        <i class="ri-add-line"></i>
+                    </button>
+                </div>
+                
+                <!-- انتخاب سریع -->
+                <div class="coin-slider-pro-quick">
+                    <div class="csp-quick-label">
+                        <i class="ri-flashlight-line"></i>
+                        <span>انتخاب سریع</span>
+                    </div>
+                    <div class="csp-quick-grid" id="csp-quick">
                         ${this.quickValues.map(v => `
-                            <button class="quick-btn ${v === this.value ? 'active' : ''}" data-value="${v}" type="button">
-                                ${Format.number(v)}
+                            <button class="csp-quick-btn ${v === this.value ? 'active' : ''}" 
+                                    data-value="${v}" 
+                                    type="button">
+                                <span class="csp-quick-num">${Format.number(v)}</span>
+                                <span class="csp-quick-unit">سکه</span>
                             </button>
                         `).join('')}
                     </div>
@@ -114,106 +115,109 @@ const CoinSlider = {
             </div>
         `;
         
+        this.renderTicks();
         this.attachEvents();
         this.updateUI();
+    },
+    
+    /**
+     * رندر تیک‌های روی اسلایدر
+     */
+    renderTicks() {
+        const ticksContainer = this.container.querySelector('#csp-ticks');
+        if (!ticksContainer) return;
+        
+        // تیک در هر سکه
+        const ticks = [];
+        const total = this.max - this.min;
+        
+        // اگر بازه کوچک است، هر سکه یک تیک
+        // اگر بزرگ است، پله‌ای
+        if (total <= 20) {
+            for (let i = this.min; i <= this.max; i++) {
+                ticks.push(i);
+            }
+        } else {
+            const step = Math.ceil(total / 15);
+            for (let i = this.min; i <= this.max; i += step) {
+                ticks.push(i);
+            }
+            if (ticks[ticks.length - 1] !== this.max) ticks.push(this.max);
+        }
+        
+        ticksContainer.innerHTML = ticks.map(t => {
+            const pos = ((t - this.min) / total) * 100;
+            const isMajor = t === this.min || t === this.max || t === Math.round(this.max / 2);
+            return `<span class="csp-tick ${isMajor ? 'csp-tick-major' : ''}" style="right: ${pos}%"></span>`;
+        }).join('');
     },
     
     /**
      * اتصال رویدادها
      */
     attachEvents() {
-        const rangeInput = this.container.querySelector('#coin-range');
-        const numberInput = this.container.querySelector('#coin-number-input');
-        const minusBtn = this.container.querySelector('#coin-btn-minus');
-        const plusBtn = this.container.querySelector('#coin-btn-plus');
+        const rangeInput = this.container.querySelector('#csp-range');
+        const minusBtn = this.container.querySelector('#csp-minus');
+        const plusBtn = this.container.querySelector('#csp-plus');
         
         // اسلایدر
         rangeInput.addEventListener('input', (e) => {
-            const val = parseInt(e.target.value);
-            this.setValue(val, 'slider');
+            this.setValue(parseInt(e.target.value));
         });
         
-        // ورودی عدد
-        numberInput.addEventListener('input', (e) => {
-            // فقط اعداد
-            let val = e.target.value.replace(/[^0-9]/g, '');
-            if (val === '') {
-                return; // اجازه به کاربر برای تایپ
-            }
-            const num = parseInt(val);
-            if (!isNaN(num)) {
-                // اگر کمتر از min، اجباری نکن (تا کاربر بتواند تایپ کند)
-                if (num >= this.min) {
-                    this.setValue(num, 'input');
-                }
-            }
-        });
-        
-        numberInput.addEventListener('blur', (e) => {
-            // در خروج از فیلد، اگر مقدار نامعتبر بود اصلاح کن
-            let val = parseInt(e.target.value) || this.min;
-            val = Helpers.clamp(val, this.min, 10000);
-            this.setValue(val, 'input');
-        });
-        
-        numberInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                numberInput.blur();
-            }
-        });
-        
-        // دکمه‌های +/- (پله‌ای)
+        // دکمه‌های +/- (یک سکه)
         minusBtn.addEventListener('click', () => {
-            const newVal = Math.max(this.min, this.value - this.getStepForCurrentValue());
-            this.setValue(newVal, 'button');
+            if (this.value > this.min) {
+                this.setValue(this.value - 1);
+            }
         });
         
         plusBtn.addEventListener('click', () => {
-            const newVal = Math.min(10000, this.value + this.getStepForCurrentValue());
-            this.setValue(newVal, 'button');
+            if (this.value < this.max) {
+                this.setValue(this.value + 1);
+            }
         });
         
         // دکمه‌های سریع
-        this.container.querySelectorAll('.quick-btn').forEach(btn => {
+        this.container.querySelectorAll('.csp-quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const val = parseInt(btn.dataset.value);
-                this.setValue(val, 'quick');
+                this.setValue(parseInt(btn.dataset.value));
             });
         });
-    },
-    
-    /**
-     * دریافت گام مناسب بر اساس مقدار فعلی
-     */
-    getStepForCurrentValue() {
-        if (this.value < 10) return 1;
-        if (this.value < 50) return 5;
-        if (this.value < 100) return 10;
-        if (this.value < 500) return 25;
-        return 50;
+        
+        // کیبورد
+        rangeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (this.value > this.min) this.setValue(this.value - 1);
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (this.value < this.max) this.setValue(this.value + 1);
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                this.setValue(this.min);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                this.setValue(this.max);
+            }
+        });
     },
     
     /**
      * تنظیم مقدار
      */
-    setValue(val, source = 'manual') {
-        val = parseInt(val) || this.min;
+    setValue(val) {
+        const newVal = Helpers.clamp(parseInt(val), this.min, this.max);
+        if (newVal === this.value) return;
         
-        // اگر از سمت ورودی آمده، محدودیت اسلایدر را اعمال نکن
-        if (source === 'input' && val > this.max) {
-            this.value = val;
-        } else {
-            this.value = Helpers.clamp(val, this.min, Math.max(this.max, val));
-        }
-        
+        this.value = newVal;
         this.updateUI();
+        this.animateNumber();
         
-        // فراخوانی callback
         if (this.onChange) {
             this.onChange({
                 count: this.value,
-                price: this.value * APP_CONFIG.COIN_PRICE
+                price: this.value * this.pricePerCoin
             });
         }
     },
@@ -223,51 +227,53 @@ const CoinSlider = {
      */
     updateUI() {
         const val = this.value;
+        const percent = ((val - this.min) / (this.max - this.min)) * 100;
         
-        // نمایش عدد
-        const displayNumber = this.container.querySelector('#coin-display-number');
-        const displayPrice = this.container.querySelector('#coin-display-price');
+        // عدد بزرگ
+        const numEl = this.container.querySelector('#csp-number');
+        const priceEl = this.container.querySelector('#csp-price');
+        const ctrlNum = this.container.querySelector('#csp-ctrl-num');
+        const rangeInput = this.container.querySelector('#csp-range');
+        const fill = this.container.querySelector('#csp-fill');
         
-        if (displayNumber) {
-            displayNumber.textContent = Format.number(val);
-            displayNumber.classList.add('pulse-anim');
-            setTimeout(() => displayNumber.classList.remove('pulse-anim'), 300);
-        }
-        if (displayPrice) displayPrice.textContent = Format.price(val * APP_CONFIG.COIN_PRICE);
+        if (numEl) numEl.textContent = Format.number(val);
+        if (priceEl) priceEl.textContent = Format.price(val * this.pricePerCoin);
+        if (ctrlNum) ctrlNum.textContent = Format.number(val);
         
         // اسلایدر
-        const rangeInput = this.container.querySelector('#coin-range');
-        if (rangeInput) {
-            // اگر مقدار بیش از max باشد، اسلایدر را در max نگهدار
-            rangeInput.value = Math.min(val, this.max);
-            
-            // نوار پیشرفت
-            const progress = this.container.querySelector('#range-progress');
-            if (progress) {
-                const percent = ((Math.min(val, this.max) - this.min) / (this.max - this.min)) * 100;
-                progress.style.width = percent + '%';
-            }
-        }
-        
-        // ورودی عدد
-        const numberInput = this.container.querySelector('#coin-number-input');
-        if (numberInput && document.activeElement !== numberInput) {
-            numberInput.value = val;
-        }
+        if (rangeInput) rangeInput.value = val;
+        if (fill) fill.style.width = percent + '%';
         
         // دکمه‌های سریع
-        this.container.querySelectorAll('.quick-btn').forEach(btn => {
+        this.container.querySelectorAll('.csp-quick-btn').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.value) === val);
         });
+        
+        // غیرفعال کردن دکمه‌های +/- در مرزها
+        const minusBtn = this.container.querySelector('#csp-minus');
+        const plusBtn = this.container.querySelector('#csp-plus');
+        if (minusBtn) minusBtn.disabled = val <= this.min;
+        if (plusBtn) plusBtn.disabled = val >= this.max;
     },
     
     /**
-     * دریافت مقدار فعلی
+     * انیمیشن عدد
+     */
+    animateNumber() {
+        const numEl = this.container.querySelector('#csp-number');
+        if (!numEl) return;
+        numEl.classList.remove('csp-num-pulse');
+        void numEl.offsetWidth; // reflow
+        numEl.classList.add('csp-num-pulse');
+    },
+    
+    /**
+     * دریافت مقدار
      */
     getValue() {
         return {
             count: this.value,
-            price: this.value * APP_CONFIG.COIN_PRICE
+            price: this.value * this.pricePerCoin
         };
     }
 };
