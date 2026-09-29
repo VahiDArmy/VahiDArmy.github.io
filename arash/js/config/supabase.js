@@ -4,7 +4,7 @@
    ============================================ */
 
 const SUPABASE_URL = 'https://ijzmojnzcimqroatalhw.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
+const SUPABASE_ANON_KEY = 'sb_publishable_ah1I0208EMm9KNO0sAhw6w_sWJ682d5';
 
 // بررسی وجود Supabase
 if (typeof supabase === 'undefined') {
