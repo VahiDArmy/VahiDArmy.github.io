@@ -1,384 +1,404 @@
 /* ============================================
-   اسلایدر انتخاب سکه
+   اسلایدر انتخاب سکه - نسخه ۲
    ============================================ */
 
-.coin-slider {
+.coin-slider-v2 {
     background: var(--bg-elevated);
-    border-radius: var(--radius-3xl);
-    padding: var(--space-8);
-    box-shadow: var(--shadow-xl);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-light);
     position: relative;
     overflow: hidden;
 }
 
-.coin-slider::before {
+.coin-slider-v2::before {
     content: '';
     position: absolute;
     top: 0;
     right: 0;
     left: 0;
     height: 4px;
-    background: linear-gradient(90deg, #EC4899, #F59E0B, #10B981, #8B5CF6, #EF4444, #6366F1);
+    background: linear-gradient(90deg, #EC4899, #F59E0B, #8B5CF6, #10B981);
+    background-size: 200% 100%;
+    animation: gradient-shift 4s linear infinite;
 }
 
-.coin-slider-header {
+/* هدر */
+.coin-slider-v2-header {
     text-align: center;
-    margin-bottom: var(--space-6);
+    margin-bottom: var(--space-5);
 }
 
-.coin-slider-title {
+.coin-slider-v2-title {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: var(--font-size-xl);
+    font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
     color: var(--text-primary);
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-1);
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
-.coin-slider-title i {
+.coin-slider-v2-title i {
     color: var(--color-gold-500);
-    font-size: var(--font-size-2xl);
+    font-size: var(--font-size-xl);
 }
 
-.coin-slider-hint {
-    font-size: var(--font-size-sm);
+.coin-slider-v2-hint {
+    font-size: var(--font-size-xs);
     color: var(--text-tertiary);
 }
 
-.coin-slider-track {
-    display: flex;
-    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    position: relative;
-}
-
-.coin-slide {
-    flex: 0 0 100%;
-    padding: var(--space-4);
-    transition: opacity var(--transition-normal);
-    opacity: 0.4;
-    cursor: pointer;
-}
-
-.coin-slide.active {
-    opacity: 1;
-    cursor: default;
-}
-
-.coin-slide-inner {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-    border: 2px solid transparent;
-    border-radius: var(--radius-2xl);
-    padding: var(--space-8);
+/* نمایش بزرگ */
+.coin-slider-v2-display {
     text-align: center;
+    padding: var(--space-6) var(--space-4);
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 50%, #FDE68A 100%);
+    border: 2px dashed var(--color-gold-400);
+    border-radius: var(--radius-2xl);
+    margin-bottom: var(--space-5);
     position: relative;
     overflow: hidden;
-    transition: all var(--transition-normal);
 }
 
-.coin-slide.active .coin-slide-inner {
-    border-color: var(--coin-color);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.5);
-}
-
-.coin-slide-inner::before {
+.coin-slider-v2-display::before {
     content: '';
     position: absolute;
     top: -50%;
     right: -50%;
     width: 200%;
     height: 200%;
-    background: var(--coin-gradient);
-    opacity: 0.05;
-    transform: rotate(45deg);
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 60%);
+    animation: pulse 4s ease-in-out infinite;
     pointer-events: none;
 }
 
-.coin-slide-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: var(--radius-full);
-    background: var(--coin-gradient);
+.coin-slider-v2-count {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+}
+
+.coin-count-number {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+    font-weight: var(--font-weight-black);
+    color: var(--color-gold-700);
+    line-height: 1;
+    transition: transform var(--transition-fast);
+    display: inline-block;
+}
+
+.coin-count-number.pulse-anim {
+    animation: count-pulse 0.3s ease;
+}
+
+@keyframes count-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); color: var(--color-gold-500); }
+    100% { transform: scale(1); }
+}
+
+.coin-count-label {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-gold-600);
+}
+
+.coin-slider-v2-price {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-weight: var(--font-weight-bold);
+    color: var(--color-gold-800);
+    position: relative;
+    z-index: 1;
+}
+
+/* اسلایدر */
+.coin-slider-v2-range {
+    margin-bottom: var(--space-5);
+}
+
+.range-labels-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-medium);
+}
+
+.range-wrapper {
+    position: relative;
+    height: 40px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto var(--space-5);
-    color: white;
-    font-size: 2.5rem;
-    box-shadow: 0 10px 30px -10px var(--coin-color);
-    position: relative;
-    animation: float-slow 3s ease-in-out infinite;
 }
 
-.coin-slide-icon::after {
-    content: '';
-    position: absolute;
-    inset: -8px;
-    border-radius: inherit;
-    border: 2px solid var(--coin-color);
-    opacity: 0.3;
-    animation: pulse-ring 2s ease-out infinite;
-}
-
-.coin-slide-count {
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--space-2);
-    margin-bottom: var(--space-3);
-    position: relative;
-}
-
-.coin-num {
-    font-size: var(--font-size-6xl);
-    font-weight: var(--font-weight-black);
-    background: var(--coin-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    line-height: 1;
-}
-
-.coin-label {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-tertiary);
-}
-
-.coin-slide-title {
-    font-size: var(--font-size-2xl);
-    font-weight: var(--font-weight-extrabold);
-    color: var(--text-primary);
-    margin-bottom: var(--space-2);
-}
-
-.coin-slide-subtitle {
-    font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-5);
-    line-height: var(--line-height-relaxed);
-}
-
-.coin-slide-price {
-    display: inline-block;
-    padding: var(--space-2) var(--space-5);
+.coin-range-input {
+    width: 100%;
+    height: 8px;
     background: var(--bg-tertiary);
-    color: var(--text-primary);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-bold);
     border-radius: var(--radius-full);
-    margin-bottom: var(--space-6);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    margin: 0;
 }
 
-.coin-slide-features {
+.coin-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4), 0 0 0 1px var(--color-gold-300);
+    cursor: grab;
+    transition: all var(--transition-fast);
+    margin-top: -10px;
+}
+
+.coin-range-input::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.5), 0 0 0 2px var(--color-gold-300);
+}
+
+.coin-range-input::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.15);
+}
+
+.coin-range-input::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    border: 3px solid white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+    cursor: grab;
+    transition: all var(--transition-fast);
+}
+
+.coin-range-input::-moz-range-track {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-full);
+}
+
+.range-progress {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    height: 8px;
+    background: linear-gradient(90deg, #FBBF24 0%, #F59E0B 100%);
+    border-radius: var(--radius-full);
+    pointer-events: none;
+    z-index: 1;
+    transition: width 0.15s ease;
+    max-width: 100%;
+}
+
+/* ورودی عدد دقیق */
+.coin-slider-v2-input {
+    margin-bottom: var(--space-5);
+}
+
+.coin-input-label {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: var(--space-2);
-    text-align: right;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-3);
+    justify-content: center;
+}
+
+.coin-input-label i {
+    color: var(--color-primary-500);
+    font-size: var(--font-size-base);
+}
+
+.coin-input-group {
+    display: flex;
+    align-items: stretch;
+    gap: var(--space-2);
+    justify-content: center;
     max-width: 320px;
     margin: 0 auto;
 }
 
-.coin-slide-features li {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-}
-
-.coin-slide-features i {
-    color: var(--color-success-500);
-    font-size: var(--font-size-base);
-    flex-shrink: 0;
-}
-
-/* ناوبری */
-.coin-slider-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-4);
-    margin-top: var(--space-6);
-}
-
-.coin-nav-btn {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-full);
+.coin-input-btn {
+    width: 48px;
+    height: 52px;
+    border-radius: var(--radius-lg);
     background: var(--bg-secondary);
-    border: 1px solid var(--border-default);
+    border: 2px solid var(--border-default);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-secondary);
     font-size: var(--font-size-xl);
+    cursor: pointer;
     transition: all var(--transition-fast);
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.coin-nav-btn:hover {
+.coin-input-btn:hover {
     background: var(--color-primary-600);
-    color: white;
     border-color: var(--color-primary-600);
-    transform: scale(1.1);
+    color: white;
 }
 
-.coin-slider-dots {
-    display: flex;
-    gap: var(--space-2);
+.coin-input-btn:active {
+    transform: scale(0.95);
 }
 
-.coin-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: var(--radius-full);
-    background: var(--border-dark);
+.coin-number-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 52px;
+    padding: 0 var(--space-3);
+    text-align: center;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 2px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-family-primary);
+    outline: none;
     transition: all var(--transition-fast);
+    -moz-appearance: textfield;
 }
 
-.coin-dot:hover {
-    background: var(--color-primary-400);
-    transform: scale(1.2);
+.coin-number-input::-webkit-outer-spin-button,
+.coin-number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
-.coin-dot.active {
-    width: 32px;
-    background: var(--gradient-primary);
+.coin-number-input:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 4px var(--color-primary-100);
 }
 
-/* پیش‌نمایش */
-.coin-slider-preview {
-    margin-top: var(--space-6);
-    padding-top: var(--space-6);
+.coin-input-hint {
+    text-align: center;
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-top: var(--space-2);
+}
+
+/* انتخاب‌های سریع */
+.coin-slider-v2-quick {
+    padding-top: var(--space-4);
     border-top: 1px dashed var(--border-default);
 }
 
-.preview-box {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-4);
-}
-
-.preview-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-4);
-    background: var(--bg-secondary);
-    border-radius: var(--radius-xl);
-}
-
-.preview-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-lg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: var(--font-size-lg);
-    flex-shrink: 0;
-}
-
-.preview-label {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-1);
-}
-
-.preview-value {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-}
-
-/* دکمه‌های سریع */
-.coin-slider-quick {
-    margin-top: var(--space-6);
-    padding-top: var(--space-4);
-    border-top: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-}
-
 .quick-label {
-    font-size: var(--font-size-sm);
+    text-align: center;
+    font-size: var(--font-size-xs);
     font-weight: var(--font-weight-medium);
     color: var(--text-tertiary);
+    margin-bottom: var(--space-3);
 }
 
 .quick-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
     gap: var(--space-2);
-    flex-wrap: wrap;
-    flex: 1;
 }
 
 .quick-btn {
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-3) var(--space-2);
     font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-semibold);
+    font-weight: var(--font-weight-bold);
     color: var(--text-secondary);
     background: var(--bg-secondary);
-    border: 1px solid var(--border-default);
+    border: 2px solid var(--border-default);
     border-radius: var(--radius-lg);
     transition: all var(--transition-fast);
-    min-width: 50px;
+    cursor: pointer;
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-family-primary);
 }
 
 .quick-btn:hover {
-    border-color: var(--color-primary-400);
-    color: var(--color-primary-600);
-    background: var(--color-primary-50);
+    border-color: var(--color-gold-400);
+    color: var(--color-gold-700);
+    background: var(--color-gold-50);
 }
 
 .quick-btn.active {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
     color: white;
     border-color: transparent;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    transform: scale(1.05);
 }
 
 /* ریسپانسیو */
-@media (max-width: 768px) {
-    .coin-slider {
-        padding: var(--space-5);
+@media (max-width: 600px) {
+    .coin-slider-v2 {
+        padding: var(--space-4);
+        border-radius: var(--radius-xl);
     }
     
-    .coin-slide-inner {
-        padding: var(--space-5);
+    .coin-slider-v2-display {
+        padding: var(--space-5) var(--space-3);
     }
     
-    .coin-slide-icon {
-        width: 64px;
-        height: 64px;
-        font-size: 2rem;
+    .coin-count-number {
+        font-size: clamp(2rem, 12vw, 3rem);
     }
     
-    .coin-num {
-        font-size: var(--font-size-5xl);
-    }
-    
-    .coin-slide-title {
-        font-size: var(--font-size-xl);
-    }
-    
-    .preview-box {
-        grid-template-columns: 1fr;
-    }
-    
-    .coin-slider-quick {
-        flex-direction: column;
-        align-items: flex-start;
+    .coin-count-label {
+        font-size: var(--font-size-base);
     }
     
     .quick-buttons {
-        width: 100%;
+        grid-template-columns: repeat(3, 1fr);
     }
     
-    .quick-btn {
-        flex: 1;
-        min-width: 40px;
+    .coin-input-group {
+        max-width: 100%;
+    }
+    
+    .coin-input-btn {
+        width: 44px;
+        height: 48px;
+    }
+    
+    .coin-number-input {
+        height: 48px;
+        font-size: var(--font-size-lg);
+    }
+    
+    .coin-range-input::-webkit-slider-thumb {
+        width: 32px;
+        height: 32px;
+        margin-top: -12px;
+    }
+}
+
+@media (max-width: 380px) {
+    .quick-buttons {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
