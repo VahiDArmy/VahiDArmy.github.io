@@ -1,6 +1,6 @@
 /* ============================================
    صفحه انتخاب و خرید سکه
-   نسخه ۵.۰ - با گزینه دریافت سکه فیزیکی
+   نسخه ۶.۰ - با گزینه تحویل فیزیکی سکه
    ============================================ */
 
 const CoinsPage = {
@@ -60,25 +60,19 @@ const CoinsPage = {
                         </div>
                     </div>
                     
-                    <!-- گزینه دریافت سکه فیزیکی -->
-                    <div class="physical-coin-option" id="physical-coin-option">
+                    <!-- گزینه تحویل فیزیکی -->
+                    <button class="physical-coin-option" id="physical-coin-btn" type="button">
                         <div class="physical-coin-icon">
                             <i class="ri-hand-coin-line"></i>
                         </div>
                         <div class="physical-coin-content">
                             <div class="physical-coin-title">
-                                <span>ترجیح می‌دهید سکه فیزیکی دریافت کنید؟</span>
-                                <span class="physical-coin-badge">جدید</span>
+                                <i class="ri-coins-fill"></i>
+                                <span>تحویل فیزیکی سکه</span>
                             </div>
-                            <p class="physical-coin-desc">
-                                اگر به هر دلیلی امکان مشارکت آنلاین را ندارید، می‌توانید سکه فیزیکی دریافت کنید.
-                            </p>
                         </div>
-                        <button class="physical-coin-btn" id="physical-coin-btn" type="button">
-                            <i class="ri-arrow-left-s-line"></i>
-                            <span>مشاهده</span>
-                        </button>
-                    </div>
+                        <i class="ri-arrow-left-s-line physical-coin-arrow"></i>
+                    </button>
                     
                     <!-- نوار اقدام -->
                     <div class="action-bar" id="action-bar">
@@ -192,7 +186,6 @@ const CoinsPage = {
     },
     
     init() {
-        // اسلایدر سکه
         CoinSlider.render('coin-slider-container', {
             min: 1,
             max: this.MAX_COINS,
@@ -205,21 +198,18 @@ const CoinsPage = {
             }
         });
         
-        // دکمه ادامه
         document.getElementById('continue-btn')?.addEventListener('click', () => {
             this.handleContinue();
         });
         
-        // گزینه سکه فیزیکی
         document.getElementById('physical-coin-btn')?.addEventListener('click', () => {
             this.showPhysicalCoinModal();
         });
         
-        // پشتیبانی
         document.getElementById('support-btn')?.addEventListener('click', () => {
             Modal.alert({
                 title: 'پشتیبانی',
-                message: 'برای ارتباط با پشتیبانی می‌توانید با شماره ۰۲۱-۱۲۳۴۵۶۷۸ تماس بگیرید یا از طریق چت آنلاین در خدمت شما هستیم.',
+                message: 'برای ارتباط با پشتیبانی می‌توانید با شماره ۰۲۱-۱۲۳۴۵۶۷۸ تماس بگیرید.',
                 buttonText: 'متوجه شدم',
                 type: 'info'
             });
@@ -240,58 +230,25 @@ const CoinsPage = {
     },
     
     /**
-     * نمایش مودال سکه فیزیکی
+     * مودال تحویل فیزیکی - ساده و بدون توضیح اضافه
      */
     showPhysicalCoinModal() {
         const user = Storage.getUser();
         
         const content = `
-            <div class="physical-modal-content">
-                <div class="physical-modal-hero">
-                    <div class="physical-modal-icon">
-                        <i class="ri-hand-coin-line"></i>
-                    </div>
-                    <h3>دریافت سکه فیزیکی</h3>
-                    <p>اگر تمایل دارید به جای مشارکت آنلاین، سکه فیزیکی تهیه کنید، این گزینه را انتخاب نمایید</p>
+            <div class="physical-modal-simple">
+                <div class="physical-modal-icon-simple">
+                    <i class="ri-hand-coin-line"></i>
                 </div>
                 
-                <div class="physical-modal-info">
-                    <div class="physical-info-item">
-                        <div class="physical-info-icon physical-info-icon-pink">
-                            <i class="ri-map-pin-2-line"></i>
-                        </div>
-                        <div class="physical-info-text">
-                            <strong>تحویل حضوری</strong>
-                            <span>سکه در محل مشخص شده به شما تحویل داده می‌شود</span>
-                        </div>
+                <div class="physical-modal-info-simple">
+                    <div class="pmi-row">
+                        <i class="ri-user-line"></i>
+                        <span>${Helpers.escapeHtml(user?.name || '')}</span>
                     </div>
-                    
-                    <div class="physical-info-item">
-                        <div class="physical-info-icon physical-info-icon-gold">
-                            <i class="ri-money-dollar-circle-line"></i>
-                        </div>
-                        <div class="physical-info-text">
-                            <strong>پرداخت در محل</strong>
-                            <span>مبلغ را هنگام تحویل، حضوری پرداخت می‌کنید</span>
-                        </div>
-                    </div>
-                    
-                    <div class="physical-info-item">
-                        <div class="physical-info-icon physical-info-icon-green">
-                            <i class="ri-phone-line"></i>
-                        </div>
-                        <div class="physical-info-text">
-                            <strong>هماهنگی تلفنی</strong>
-                            <span>برای هماهنگی زمان و مکان با شما تماس گرفته می‌شود</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="physical-modal-warning">
-                    <i class="ri-information-line"></i>
-                    <div>
-                        <strong>توجه:</strong>
-                        <span>با کلیک روی «تایید درخواست»، درخواست شما ثبت می‌شود و کارشناسان ما در اسرع وقت با شماره <strong style="direction: ltr; display: inline-block;">${Format.phone(user?.phone || '')}</strong> تماس خواهند گرفت.</span>
+                    <div class="pmi-row">
+                        <i class="ri-smartphone-line"></i>
+                        <span style="direction: ltr; display: inline-block;">${Format.phone(user?.phone || '')}</span>
                     </div>
                 </div>
             </div>
@@ -299,7 +256,6 @@ const CoinsPage = {
         
         const footer = `
             <button class="btn btn-secondary" data-cancel>
-                <i class="ri-close-line"></i>
                 <span>انصراف</span>
             </button>
             <button class="btn btn-gold" data-confirm>
@@ -309,15 +265,13 @@ const CoinsPage = {
         `;
         
         const modal = Modal.show({
-            title: 'درخواست دریافت سکه فیزیکی',
+            title: 'تحویل فیزیکی سکه',
             content,
             footer,
-            size: 'md'
+            size: 'sm'
         });
         
-        modal.querySelector('[data-cancel]').addEventListener('click', () => {
-            Modal.close();
-        });
+        modal.querySelector('[data-cancel]').addEventListener('click', () => Modal.close());
         
         modal.querySelector('[data-confirm]').addEventListener('click', async () => {
             await this.submitPhysicalCoinRequest(modal);
@@ -325,7 +279,7 @@ const CoinsPage = {
     },
     
     /**
-     * ثبت درخواست سکه فیزیکی
+     * ثبت درخواست
      */
     async submitPhysicalCoinRequest(modal) {
         const user = Storage.getUser();
@@ -339,15 +293,12 @@ const CoinsPage = {
         confirmBtn.disabled = true;
         
         try {
-            // ثبت در activity_logs
             await supabaseClient
                 .from('activity_logs')
                 .insert({
                     user_id: user.id,
                     action: 'physical_coin_request',
                     details: {
-                        coin_count: this.selectedCoin?.count || 0,
-                        amount: this.selectedCoin?.price || 0,
                         phone: user.phone,
                         name: user.name,
                         requested_at: new Date().toISOString()
@@ -356,65 +307,45 @@ const CoinsPage = {
                 });
             
             Modal.close();
-            
-            // نمایش مودال موفقیت
-            await this.showPhysicalSuccessModal();
+            this.showPhysicalSuccess();
             
         } catch (error) {
             console.error('خطا در ثبت درخواست:', error);
-            Toast.error('خطا', 'خطا در ثبت درخواست. لطفاً مجدداً تلاش کنید.');
+            Toast.error('خطا', 'خطا در ثبت درخواست');
             confirmBtn.classList.remove('loading');
             confirmBtn.disabled = false;
         }
     },
     
     /**
-     * مودال موفقیت درخواست سکه فیزیکی
+     * پیام موفقیت - ساده
      */
-    showPhysicalSuccessModal() {
-        return new Promise((resolve) => {
-            const user = Storage.getUser();
-            
-            const content = `
-                <div class="physical-success-content">
-                    <div class="physical-success-icon">
+    showPhysicalSuccess() {
+        const user = Storage.getUser();
+        
+        Modal.show({
+            title: '',
+            content: `
+                <div class="physical-success-simple">
+                    <div class="pss-icon">
                         <i class="ri-check-line"></i>
                     </div>
-                    <h3 class="physical-success-title">درخواست شما ثبت شد!</h3>
-                    <p class="physical-success-text">
-                        کارشناسان ما به زودی با شماره زیر با شما تماس خواهند گرفت تا زمان و مکان تحویل سکه فیزیکی را هماهنگ کنند.
-                    </p>
-                    <div class="physical-success-phone">
+                    <div class="pss-phone">
                         <i class="ri-smartphone-line"></i>
                         <span style="direction: ltr; display: inline-block;">${Format.phone(user?.phone || '')}</span>
                     </div>
-                    <div class="physical-success-info">
-                        <i class="ri-time-line"></i>
-                        <span>زمان تقریبی تماس: کمتر از ۲۴ ساعت</span>
-                    </div>
                 </div>
-            `;
-            
-            const footer = `
-                <button class="btn btn-primary btn-block" id="physical-ok">
-                    <i class="ri-check-line"></i>
+            `,
+            footer: `
+                <button class="btn btn-primary btn-block" id="pss-ok">
                     <span>متوجه شدم</span>
                 </button>
-            `;
-            
-            const modal = Modal.show({
-                title: '',
-                content,
-                footer,
-                size: 'sm',
-                closable: false,
-                onClose: () => resolve()
-            });
-            
-            modal.querySelector('#physical-ok').addEventListener('click', () => {
-                Modal.close();
-            });
+            `,
+            size: 'sm',
+            closable: false
         });
+        
+        document.getElementById('pss-ok')?.addEventListener('click', () => Modal.close());
     },
     
     async handleContinue() {
