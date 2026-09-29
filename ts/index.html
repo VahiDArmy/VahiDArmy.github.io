@@ -8,7 +8,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Lalezar&family=Chewy&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
@@ -144,7 +144,7 @@
         </div>
       </div>
       <div id="ravanTafsirManualInput" class="ravan-tafsir-manual-input hidden" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; min-width:200px; background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text);">
+        <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; min-width:200px; background:var(--read-bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:8px 12px; color:var(--text);">
         <button class="btn btn--sm btn--primary" id="ravanTafsirManualSubmit">دریافت</button>
         <button class="btn btn--sm btn--ghost" id="ravanTafsirManualCancel">انصراف</button>
       </div>
@@ -164,7 +164,7 @@
       <div class="select-wrap"><select id="linkSurahSelect" aria-label="سورهٔ مقصد"></select></div>
       <div class="select-wrap"><select id="linkAyahSelect" aria-label="آیهٔ مقصد"></select></div>
     </div>
-    <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--surface-2); border-radius:10px; margin-bottom:8px; user-select:text;"></div>
+    <div id="linkAyahPreview" style="font-size:0.85rem; padding:12px; background:var(--read-bg); border-radius:12px; margin-bottom:8px; user-select:text;"></div>
     <p style="font-size:0.72rem; color:var(--text-faint); margin:0 0 14px;">می‌توانید بخشی از متن بالا را انتخاب کنید تا فقط همان گزیده درج شود.</p>
     <button type="button" class="btn btn--primary" id="insertLinkBtn" style="width:100%;">درج لینک</button>
   </div>
