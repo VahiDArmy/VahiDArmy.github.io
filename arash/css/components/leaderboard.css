@@ -13,7 +13,6 @@
     margin: 0 auto;
 }
 
-/* نوار بالای کارت */
 .leaderboard-wrapper::before {
     content: '';
     position: absolute;
@@ -84,7 +83,6 @@
     line-height: 1.4;
 }
 
-/* دکمه دانلود */
 .lb-download-btn {
     display: inline-flex;
     align-items: center;
@@ -134,7 +132,6 @@
     transition: all var(--transition-fast);
 }
 
-/* سرستون‌ها */
 .lb-row-head {
     background: var(--bg-secondary);
     border-bottom: 2px solid var(--border-light);
@@ -150,7 +147,6 @@
     letter-spacing: 0.08em;
 }
 
-/* ردیف‌های داده */
 .lb-rows .lb-row {
     border-bottom: 1px solid var(--border-light);
     position: relative;
@@ -162,10 +158,8 @@
 
 .lb-rows .lb-row:hover:not(.lb-row-top) {
     background: #FEF9F3;
-    transform: scale(1.005);
 }
 
-/* ردیف‌های برتر */
 .lb-row-top {
     background: linear-gradient(90deg, #FFFBEB 0%, #FEF9F3 100%);
     position: relative;
@@ -181,7 +175,6 @@
     background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 100%);
 }
 
-/* سلول‌ها */
 .lb-cell {
     padding: var(--space-4) var(--space-5);
     font-size: var(--font-size-sm);
@@ -225,7 +218,6 @@
     transition: all var(--transition-fast);
 }
 
-/* رتبه ۱ - طلا */
 .lb-rank-1 {
     background: linear-gradient(135deg, #FDE68A 0%, #FBBF24 50%, #F59E0B 100%);
     color: white;
@@ -237,7 +229,6 @@
     transform: scale(1.1);
 }
 
-/* رتبه ۲ - نقره */
 .lb-rank-2 {
     background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 50%, #9CA3AF 100%);
     color: white;
@@ -248,7 +239,6 @@
         inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
 
-/* رتبه ۳ - برنز */
 .lb-rank-3 {
     background: linear-gradient(135deg, #FDBA74 0%, #FB923C 50%, #EA580C 100%);
     color: white;
@@ -259,7 +249,6 @@
         inset 0 2px 4px rgba(255, 255, 255, 0.4);
 }
 
-/* نام */
 .lb-name {
     color: var(--text-primary);
     display: block;
@@ -273,7 +262,6 @@
     color: #78350F;
 }
 
-/* مبلغ */
 .lb-amount {
     display: inline-flex;
     align-items: center;
@@ -293,7 +281,6 @@
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
-/* حالت خالی */
 .lb-empty {
     padding: var(--space-12) var(--space-6);
     text-align: center;
