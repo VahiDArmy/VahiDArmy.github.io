@@ -1,5 +1,6 @@
 /* ============================================
    جدول حرفه‌ای مشارکت‌کنندگان
+   نسخه ۲.۰ - بهینه‌شده برای PNG
    ============================================ */
 
 .leaderboard-wrapper {
@@ -11,6 +12,10 @@
     position: relative;
     max-width: 640px;
     margin: 0 auto;
+    
+    /* ✅ مهم برای PNG: صریح کردن فونت و جهت */
+    font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+    direction: rtl;
 }
 
 .leaderboard-wrapper::before {
@@ -143,7 +148,6 @@
     font-size: var(--font-size-xs);
     font-weight: var(--font-weight-bold);
     color: var(--text-tertiary);
-    text-transform: uppercase;
     letter-spacing: 0.08em;
 }
 
@@ -349,14 +353,6 @@
 .lb-footer-brand i {
     color: #EC4899;
     font-size: var(--font-size-base);
-    animation: heartbeat 1.5s ease-in-out infinite;
-}
-
-@keyframes heartbeat {
-    0%, 100% { transform: scale(1); }
-    25% { transform: scale(1.15); }
-    50% { transform: scale(1); }
-    75% { transform: scale(1.08); }
 }
 
 /* ============================================
