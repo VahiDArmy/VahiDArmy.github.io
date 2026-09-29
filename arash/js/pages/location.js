@@ -1,5 +1,6 @@
 /* ============================================
    صفحه موقعیت روی نقشه
+   نسخه ۲.۰ - با آدرس جدید
    ============================================ */
 
 const LocationPage = {
@@ -52,7 +53,7 @@ const LocationPage = {
                             </div>
                             <div class="info-content">
                                 <span class="info-label">آدرس</span>
-                                <span class="info-value">تهران، خیابان ولیعصر، پلاک ۱۲۳</span>
+                                <span class="info-value">${APP_CONFIG.MAP_ADDRESS}</span>
                             </div>
                         </div>
                         
