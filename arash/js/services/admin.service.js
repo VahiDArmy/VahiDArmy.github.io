@@ -1,5 +1,6 @@
 /* ============================================
-   سرویس ادمین
+   سرویس ادمین - شادباش ازدواج
+   نسخه ۲.۰ - حذف در هر وضعیتی + به‌روزرسانی سکه‌ها
    ============================================ */
 
 const AdminService = {
@@ -8,24 +9,20 @@ const AdminService = {
      */
     async getDashboardStats() {
         try {
-            // تعداد کل کاربران
             const { count: totalUsers } = await supabaseClient
                 .from('profiles')
                 .select('*', { count: 'exact', head: true })
                 .eq('role', 'user');
             
-            // تعداد تراکنش‌ها
             const { count: totalTransactions } = await supabaseClient
                 .from('coin_transactions')
                 .select('*', { count: 'exact', head: true });
             
-            // تراکنش‌های در انتظار
             const { count: pendingTransactions } = await supabaseClient
                 .from('coin_transactions')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending');
             
-            // تراکنش‌های تایید شده
             const { data: approvedData } = await supabaseClient
                 .from('coin_transactions')
                 .select('coin_count, amount')
@@ -81,7 +78,6 @@ const AdminService = {
             const { data, error } = await query;
             if (error) throw error;
             
-            // فیلتر جستجو در سمت کلاینت
             let results = data || [];
             if (filters.search) {
                 const s = filters.search.toLowerCase().trim();
@@ -130,7 +126,6 @@ const AdminService = {
                 .update({ total_coins: (profile?.total_coins || 0) + data.coin_count })
                 .eq('id', data.user_id);
             
-            // لاگ
             await AuthService.logActivity(adminId, 'transaction_approved', {
                 transaction_id: transactionId,
                 user_id: data.user_id,
@@ -177,7 +172,7 @@ const AdminService = {
     },
     
     /**
-     * ویرایش تراکنش (تغییر تعداد سکه)
+     * ویرایش تراکنش
      */
     async updateTransaction(transactionId, updates, adminId) {
         try {
@@ -214,24 +209,69 @@ const AdminService = {
     },
     
     /**
-     * حذف تراکنش
+     * ✅ حذف تراکنش در هر وضعیتی
+     * اگر تایید شده بود، سکه‌های کاربر کم می‌شود
      */
     async deleteTransaction(transactionId, adminId) {
         try {
-            const { error } = await supabaseClient
+            // ۱. دریافت اطلاعات تراکنش قبل از حذف
+            const { data: transaction, error: fetchError } = await supabaseClient
+                .from('coin_transactions')
+                .select('*')
+                .eq('id', transactionId)
+                .single();
+            
+            if (fetchError) throw fetchError;
+            
+            if (!transaction) {
+                throw new Error('تراکنش یافت نشد');
+            }
+            
+            // ۲. اگر تایید شده بود، سکه‌ها را از کاربر کم کن
+            if (transaction.status === 'approved') {
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('total_coins')
+                    .eq('id', transaction.user_id)
+                    .single();
+                
+                if (profile) {
+                    const newTotal = Math.max(0, (profile.total_coins || 0) - transaction.coin_count);
+                    
+                    await supabaseClient
+                        .from('profiles')
+                        .update({ total_coins: newTotal })
+                        .eq('id', transaction.user_id);
+                }
+            }
+            
+            // ۳. حذف تراکنش (RLS اجازه می‌دهد چون ادمین هستیم)
+            const { error: deleteError } = await supabaseClient
                 .from('coin_transactions')
                 .delete()
                 .eq('id', transactionId);
             
-            if (error) throw error;
+            if (deleteError) throw deleteError;
             
+            // ۴. لاگ فعالیت
             await AuthService.logActivity(adminId, 'transaction_deleted', {
-                transaction_id: transactionId
+                transaction_id: transactionId,
+                user_id: transaction.user_id,
+                coin_count: transaction.coin_count,
+                previous_status: transaction.status
             });
             
-            return { success: true };
+            return { 
+                success: true,
+                deleted: {
+                    id: transactionId,
+                    status: transaction.status,
+                    coin_count: transaction.coin_count
+                }
+            };
             
         } catch (error) {
+            console.error('خطا در حذف:', error);
             return { success: false, error: error.message };
         }
     },
@@ -315,7 +355,7 @@ const AdminService = {
     },
     
     /**
-     * گزارش‌گیری با بازه تاریخ
+     * گزارش‌گیری
      */
     async getReport(startDate, endDate) {
         try {
