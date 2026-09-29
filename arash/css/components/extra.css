@@ -1,0 +1,125 @@
+/* ============================================
+   استایل‌های تکمیلی
+   ============================================ */
+
+/* لینک‌های ناوبری */
+a[data-nav] {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* بهبود اسکرول */
+html {
+    scrollbar-gutter: stable;
+}
+
+/* حالت چاپ */
+@media print {
+    .navbar,
+    .sidebar,
+    .footer,
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* حالت کاهش حرکت */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* حالت تاریک (اختیاری) */
+@media (prefers-color-scheme: dark) {
+    /* در صورت نیاز فعال شود */
+}
+
+/* اعداد فارسی */
+.num-fa {
+    font-variant-numeric: persian;
+}
+
+/* بهبود فوکوس */
+:focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+}
+
+/* اسکرول افقی در موبایل */
+.scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.scroll-x::-webkit-scrollbar {
+    height: 6px;
+}
+
+/* چسبنده */
+.sticky-top {
+    position: sticky;
+    top: var(--navbar-height);
+    z-index: var(--z-sticky);
+}
+
+/* نسبت ابعاد */
+.aspect-square {
+    aspect-ratio: 1;
+}
+
+.aspect-video {
+    aspect-ratio: 16 / 9;
+}
+
+/* مخفی برای مخاطب */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ترانزیشن نرم برای تغییرات رنگ */
+.theme-transition * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* وقتی محتوا خالی است */
+:empty:not(input):not(textarea)::after {
+    content: attr(data-empty);
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+/* حذف فلش‌های input number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+/* حذف استایل خودکار autofill */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--bg-primary) inset;
+    -webkit-text-fill-color: var(--text-primary);
+    transition: background-color 5000s ease-in-out 0s;
+}

@@ -1,0 +1,180 @@
+/* ============================================
+   گزارش‌ها
+   ============================================ */
+
+.admin-reports {
+    padding: var(--space-6);
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+}
+
+.reports-header {
+    margin-bottom: var(--space-6);
+}
+
+.reports-filters {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-5);
+    margin-bottom: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.date-range {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.date-input-wrap label {
+    display: block;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-2);
+}
+
+.quick-ranges {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.quick-range-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-full);
+    transition: all var(--transition-fast);
+}
+
+.quick-range-btn:hover {
+    border-color: var(--color-primary-400);
+    color: var(--color-primary-600);
+}
+
+.quick-range-btn.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.reports-actions {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    padding-top: var(--space-3);
+    border-top: 1px dashed var(--border-light);
+}
+
+/* گزارش */
+.report-info {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-info-50);
+    border: 1px solid var(--color-info-200);
+    border-radius: var(--radius-xl);
+    font-size: var(--font-size-sm);
+    color: var(--color-info-800);
+    margin-bottom: var(--space-4);
+}
+
+.report-info i {
+    color: var(--color-info-600);
+    font-size: var(--font-size-lg);
+}
+
+.report-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-3);
+    margin-bottom: var(--space-5);
+}
+
+.report-stat {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--space-4);
+    text-align: center;
+}
+
+.report-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-lg);
+    color: white;
+    margin: 0 auto var(--space-3);
+}
+
+.report-stat-icon.primary { background: var(--gradient-primary); }
+.report-stat-icon.success { background: var(--gradient-success); }
+.report-stat-icon.warning { background: linear-gradient(135deg, #FBBF24, #F59E0B); }
+.report-stat-icon.danger { background: var(--gradient-danger); }
+.report-stat-icon.gold { background: var(--gradient-gold); }
+
+.report-stat-value {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-black);
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: var(--space-1);
+}
+
+.report-stat-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.report-table-wrap {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+}
+
+.report-table-header {
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-secondary);
+}
+
+.report-table-header h3 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+@media (max-width: 600px) {
+    .admin-reports {
+        padding: var(--space-4) var(--space-3);
+    }
+    
+    .date-range {
+        grid-template-columns: 1fr;
+    }
+    
+    .reports-actions {
+        flex-direction: column;
+    }
+    
+    .reports-actions .btn {
+        width: 100%;
+    }
+}

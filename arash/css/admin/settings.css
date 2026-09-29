@@ -1,0 +1,107 @@
+/* ============================================
+   تنظیمات
+   ============================================ */
+
+.admin-settings {
+    padding: var(--space-6);
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+}
+
+.settings-header {
+    margin-bottom: var(--space-6);
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+}
+
+.settings-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.settings-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.settings-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: white;
+    flex-shrink: 0;
+}
+
+.settings-icon-gold { background: var(--gradient-gold); }
+.settings-icon-primary { background: var(--gradient-primary); }
+.settings-icon-success { background: var(--gradient-success); }
+.settings-icon-info { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+
+.settings-card-header h3 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.settings-card-header p {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+}
+
+.settings-card-body {
+    padding: var(--space-5);
+}
+
+/* منطقه خطر */
+.settings-danger-zone {
+    padding: var(--space-6);
+    background: var(--color-danger-50);
+    border: 2px dashed var(--color-danger-300);
+    border-radius: var(--radius-2xl);
+    text-align: center;
+}
+
+.danger-zone-header {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-danger-700);
+    margin-bottom: var(--space-3);
+}
+
+.danger-zone-header i {
+    font-size: var(--font-size-2xl);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.danger-zone-header h3 {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-bold);
+}
+
+.settings-danger-zone p {
+    font-size: var(--font-size-sm);
+    color: var(--color-danger-700);
+    margin-bottom: var(--space-4);
+}

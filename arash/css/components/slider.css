@@ -1,0 +1,384 @@
+/* ============================================
+   اسلایدر انتخاب سکه
+   ============================================ */
+
+.coin-slider {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-3xl);
+    padding: var(--space-8);
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.coin-slider::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #EC4899, #F59E0B, #10B981, #8B5CF6, #EF4444, #6366F1);
+}
+
+.coin-slider-header {
+    text-align: center;
+    margin-bottom: var(--space-6);
+}
+
+.coin-slider-title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.coin-slider-title i {
+    color: var(--color-gold-500);
+    font-size: var(--font-size-2xl);
+}
+
+.coin-slider-hint {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.coin-slider-track {
+    display: flex;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+}
+
+.coin-slide {
+    flex: 0 0 100%;
+    padding: var(--space-4);
+    transition: opacity var(--transition-normal);
+    opacity: 0.4;
+    cursor: pointer;
+}
+
+.coin-slide.active {
+    opacity: 1;
+    cursor: default;
+}
+
+.coin-slide-inner {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+    border: 2px solid transparent;
+    border-radius: var(--radius-2xl);
+    padding: var(--space-8);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+.coin-slide.active .coin-slide-inner {
+    border-color: var(--coin-color);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+.coin-slide-inner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: var(--coin-gradient);
+    opacity: 0.05;
+    transform: rotate(45deg);
+    pointer-events: none;
+}
+
+.coin-slide-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-full);
+    background: var(--coin-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-5);
+    color: white;
+    font-size: 2.5rem;
+    box-shadow: 0 10px 30px -10px var(--coin-color);
+    position: relative;
+    animation: float-slow 3s ease-in-out infinite;
+}
+
+.coin-slide-icon::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: inherit;
+    border: 2px solid var(--coin-color);
+    opacity: 0.3;
+    animation: pulse-ring 2s ease-out infinite;
+}
+
+.coin-slide-count {
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+    position: relative;
+}
+
+.coin-num {
+    font-size: var(--font-size-6xl);
+    font-weight: var(--font-weight-black);
+    background: var(--coin-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+}
+
+.coin-label {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-tertiary);
+}
+
+.coin-slide-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-extrabold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.coin-slide-subtitle {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-5);
+    line-height: var(--line-height-relaxed);
+}
+
+.coin-slide-price {
+    display: inline-block;
+    padding: var(--space-2) var(--space-5);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-6);
+}
+
+.coin-slide-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    text-align: right;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.coin-slide-features li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.coin-slide-features i {
+    color: var(--color-success-500);
+    font-size: var(--font-size-base);
+    flex-shrink: 0;
+}
+
+/* ناوبری */
+.coin-slider-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+}
+
+.coin-nav-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-full);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xl);
+    transition: all var(--transition-fast);
+}
+
+.coin-nav-btn:hover {
+    background: var(--color-primary-600);
+    color: white;
+    border-color: var(--color-primary-600);
+    transform: scale(1.1);
+}
+
+.coin-slider-dots {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.coin-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: var(--radius-full);
+    background: var(--border-dark);
+    transition: all var(--transition-fast);
+}
+
+.coin-dot:hover {
+    background: var(--color-primary-400);
+    transform: scale(1.2);
+}
+
+.coin-dot.active {
+    width: 32px;
+    background: var(--gradient-primary);
+}
+
+/* پیش‌نمایش */
+.coin-slider-preview {
+    margin-top: var(--space-6);
+    padding-top: var(--space-6);
+    border-top: 1px dashed var(--border-default);
+}
+
+.preview-box {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+.preview-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+}
+
+.preview-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: var(--font-size-lg);
+    flex-shrink: 0;
+}
+
+.preview-label {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-1);
+}
+
+.preview-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+}
+
+/* دکمه‌های سریع */
+.coin-slider-quick {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.quick-label {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-tertiary);
+}
+
+.quick-buttons {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.quick-btn {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+    min-width: 50px;
+}
+
+.quick-btn:hover {
+    border-color: var(--color-primary-400);
+    color: var(--color-primary-600);
+    background: var(--color-primary-50);
+}
+
+.quick-btn.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ریسپانسیو */
+@media (max-width: 768px) {
+    .coin-slider {
+        padding: var(--space-5);
+    }
+    
+    .coin-slide-inner {
+        padding: var(--space-5);
+    }
+    
+    .coin-slide-icon {
+        width: 64px;
+        height: 64px;
+        font-size: 2rem;
+    }
+    
+    .coin-num {
+        font-size: var(--font-size-5xl);
+    }
+    
+    .coin-slide-title {
+        font-size: var(--font-size-xl);
+    }
+    
+    .preview-box {
+        grid-template-columns: 1fr;
+    }
+    
+    .coin-slider-quick {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .quick-buttons {
+        width: 100%;
+    }
+    
+    .quick-btn {
+        flex: 1;
+        min-width: 40px;
+    }
+}

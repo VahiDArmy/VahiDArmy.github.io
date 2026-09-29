@@ -1,0 +1,298 @@
+/* ============================================
+   صفحه انتخاب سکه
+   ============================================ */
+
+.coins-page {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: var(--space-6);
+}
+
+.page-header {
+    margin-bottom: var(--space-8);
+    text-align: center;
+}
+
+.page-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--color-gold-100);
+    color: var(--color-gold-700);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--space-3);
+}
+
+.page-title {
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: var(--font-weight-extrabold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #EC4899 0%, #F59E0B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.page-subtitle {
+    font-size: var(--font-size-base);
+    color: var(--text-tertiary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* چیدمان */
+.coins-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--space-6);
+    align-items: start;
+}
+
+.coins-main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.coins-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: calc(var(--navbar-height) + var(--space-4));
+}
+
+/* کارت اطلاعات کاربر */
+.user-info-card,
+.order-summary-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    overflow: hidden;
+}
+
+.user-info-header,
+.order-summary-header {
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.user-info-header i,
+.order-summary-header i {
+    color: var(--color-primary-500);
+    font-size: var(--font-size-lg);
+}
+
+.user-info-header .badge {
+    margin-right: auto;
+}
+
+.user-info-body,
+.order-summary-body {
+    padding: var(--space-5);
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    border-bottom: 1px dashed var(--border-light);
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+.info-value {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-primary);
+}
+
+.user-info-hint {
+    padding: var(--space-3) var(--space-5);
+    background: var(--color-info-50);
+    border-top: 1px solid var(--color-info-100);
+    font-size: var(--font-size-xs);
+    color: var(--color-info-700);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+/* خلاصه سفارش */
+.summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) 0;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    border-bottom: 1px dashed var(--border-light);
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row strong {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.summary-row.total {
+    margin-top: var(--space-3);
+    padding-top: var(--space-4);
+    border-top: 2px solid var(--border-default);
+    border-bottom: none;
+    font-size: var(--font-size-base);
+}
+
+.summary-row.total strong {
+    font-size: var(--font-size-xl);
+    color: var(--color-gold-600);
+}
+
+/* نوار اقدام */
+.action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-sm);
+}
+
+/* کارت‌های کناری */
+.sidebar-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-5);
+}
+
+.sidebar-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+}
+
+.sidebar-card-header i {
+    color: var(--color-primary-500);
+    font-size: var(--font-size-xl);
+}
+
+.tips-card .sidebar-card-header i {
+    color: var(--color-gold-500);
+}
+
+.tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.tips-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+.tips-list i {
+    color: var(--color-success-500);
+    font-size: var(--font-size-lg);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.support-card p {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-4);
+    line-height: var(--line-height-relaxed);
+}
+
+.security-card {
+    padding: var(--space-4);
+}
+
+.security-badges {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.security-badge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    color: var(--text-secondary);
+}
+
+.security-badge i {
+    color: var(--color-success-500);
+    font-size: var(--font-size-base);
+}
+
+/* ریسپانسیو */
+@media (max-width: 1024px) {
+    .coins-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .coins-sidebar {
+        position: static;
+        order: -1;
+    }
+}
+
+@media (max-width: 600px) {
+    .coins-page {
+        padding: var(--space-4) var(--space-3);
+    }
+    
+    .action-bar {
+        flex-direction: column;
+    }
+    
+    .action-bar .btn {
+        width: 100%;
+    }
+}
