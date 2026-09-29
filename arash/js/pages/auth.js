@@ -1,5 +1,5 @@
 /* ============================================
-   صفحه ورود / ثبت‌نام
+   صفحه ورود / ثبت‌نام (به‌روزرسانی شده)
    ============================================ */
 
 const AuthPage = {
@@ -19,10 +19,10 @@ const AuthPage = {
                         </div>
                         
                         <div class="auth-notice">
-                            <i class="ri-information-line"></i>
+                            <i class="ri-shield-keyhole-line"></i>
                             <div>
-                                <strong>رمز عبور شما همان شماره موبایل است</strong>
-                                <span>در صورت لزوم، رمزتان شماره موبایل شما می‌باشد</span>
+                                <strong>شماره موبایل شما هم یوزرنیم و هم رمز عبور است</strong>
+                                <span>برای ورود مجدد کافیست همین شماره را وارد کنید</span>
                             </div>
                         </div>
                         
@@ -60,7 +60,7 @@ const AuthPage = {
                                     >
                                 </div>
                                 <div class="form-error" id="error-phone" style="display: none;"></div>
-                                <div class="form-hint">شماره موبایل شما به‌عنوان رمز عبور نیز استفاده می‌شود</div>
+                                <div class="form-hint">شماره موبایل شما به‌عنوان نام کاربری و رمز عبور استفاده می‌شود</div>
                             </div>
                             
                             <div class="form-checkbox" style="margin-bottom: var(--space-6);">
@@ -84,7 +84,6 @@ const AuthPage = {
                         </div>
                     </div>
                     
-                    <!-- دکوراسیون -->
                     <div class="auth-decoration auth-decoration-1"></div>
                     <div class="auth-decoration auth-decoration-2"></div>
                     <div class="auth-decoration auth-decoration-3"></div>
@@ -120,7 +119,6 @@ const AuthPage = {
             }
         });
         
-        // اعتبارسنجی نام
         nameInput.addEventListener('blur', () => {
             const value = nameInput.value.trim();
             if (value) {
@@ -141,13 +139,11 @@ const AuthPage = {
             }
         });
         
-        // ارسال فرم
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             await this.handleSubmit(nameInput, phoneInput, submitBtn, termsCheckbox);
         });
         
-        // لینک شرایط
         document.getElementById('terms-link')?.addEventListener('click', (e) => {
             e.preventDefault();
             Modal.alert({
@@ -158,18 +154,13 @@ const AuthPage = {
             });
         });
         
-        // اعتبارسنجی مجدد
         nameInput.focus();
     },
     
-    /**
-     * ارسال فرم
-     */
     async handleSubmit(nameInput, phoneInput, submitBtn, termsCheckbox) {
         const name = nameInput.value.trim();
         const phone = phoneInput.value.trim();
         
-        // اعتبارسنجی
         let hasError = false;
         
         const nameCheck = Validate.name(name);
@@ -190,29 +181,28 @@ const AuthPage = {
         }
         
         if (hasError) {
-            // لرزش فرم
             const form = document.getElementById('auth-form');
             form.classList.add('animate-shake');
             setTimeout(() => form.classList.remove('animate-shake'), 500);
             return;
         }
         
-        // لودینگ
         submitBtn.classList.add('loading');
         submitBtn.disabled = true;
         
-        // ورود/ثبت‌نام
+        const loadingToast = Toast.loading('در حال ورود...', 'لطفاً کمی صبر کنید');
+        
         const result = await AuthService.loginOrSignup(name, phone);
         
+        Toast.dismiss(loadingToast);
+        
         if (result.success) {
-            Toast.success('خوش آمدید!', `سلام ${result.profile.name} جان، خوش آمدید`);
+            Toast.success('خوش آمدید!', `سلام ${result.profile?.name || name} جان، خوش آمدید`);
             
-            // بررسی ادمین بودن
-            if (result.profile.role === 'admin') {
+            if (result.profile?.role === 'admin') {
                 await Helpers.delay(500);
                 Router.navigate('admin-dashboard');
             } else {
-                // بررسی اینکه آیا تراکنش دارد
                 const latestTx = await PaymentService.getLatestTransaction(result.profile.id);
                 await Helpers.delay(500);
                 
