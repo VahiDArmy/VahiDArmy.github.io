@@ -1,5 +1,6 @@
 /* ============================================
    صفحه انتخاب و خرید سکه
+   نسخه ۲.۰ - ریسپانسیو + دکمه چسبیده در موبایل
    ============================================ */
 
 const CoinsPage = {
@@ -7,23 +8,26 @@ const CoinsPage = {
     
     render() {
         const user = Storage.getUser();
+        const initialValue = 5;
+        this.selectedCoin = {
+            count: initialValue,
+            price: initialValue * APP_CONFIG.COIN_PRICE
+        };
         
         return `
             <div class="coins-page">
                 <div class="page-header">
-                    <div class="page-header-content">
-                        <div class="page-badge">
-                            <i class="ri-sparkling-2-fill"></i>
-                            <span>گام ۱ از ۳</span>
-                        </div>
-                        <h1 class="page-title">
-                            <span>سلام</span>
-                            <span class="text-gradient">${Helpers.escapeHtml(user?.name || 'کاربر عزیز')}</span>
-                        </h1>
-                        <p class="page-subtitle">
-                            تعداد سکه‌های مشارکت خود را انتخاب کنید و در این شادی سهیم شوید
-                        </p>
+                    <div class="page-badge">
+                        <i class="ri-sparkling-2-fill"></i>
+                        <span>گام ۱ از ۳</span>
                     </div>
+                    <h1 class="page-title">
+                        <span>سلام</span>
+                        <span class="text-gradient">${Helpers.escapeHtml(user?.name || 'کاربر عزیز')}</span>
+                    </h1>
+                    <p class="page-subtitle">
+                        تعداد سکه‌های مشارکت خود را انتخاب کنید و در این شادی سهیم شوید
+                    </p>
                 </div>
                 
                 <div class="coins-layout">
@@ -31,7 +35,41 @@ const CoinsPage = {
                         <!-- اسلایدر سکه -->
                         <div id="coin-slider-container"></div>
                         
-                        <!-- اطلاعات کاربر -->
+                        <!-- کارت خلاصه سفارش (در موبایل همیشه نمایش) -->
+                        <div class="order-summary-card" id="order-summary">
+                            <div class="order-summary-header">
+                                <i class="ri-shopping-bag-3-line"></i>
+                                <span>خلاصه سفارش</span>
+                            </div>
+                            <div class="order-summary-body">
+                                <div class="summary-row">
+                                    <span>تعداد سکه انتخابی:</span>
+                                    <strong id="summary-coins">${Format.number(initialValue)} سکه</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>قیمت هر سکه:</span>
+                                    <strong>${Format.price(APP_CONFIG.COIN_PRICE)}</strong>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>مبلغ قابل پرداخت:</span>
+                                    <strong id="summary-total">${Format.price(initialValue * APP_CONFIG.COIN_PRICE)}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- دکمه ادامه (چسبیده در پایین در موبایل) -->
+                        <div class="action-bar" id="action-bar">
+                            <a href="#welcome" class="btn btn-ghost" data-nav>
+                                <i class="ri-arrow-right-line"></i>
+                                <span>انصراف</span>
+                            </a>
+                            <button class="btn btn-gold btn-lg" id="continue-btn">
+                                <span>ادامه و پرداخت</span>
+                                <i class="ri-arrow-left-line"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- اطلاعات کاربر (پایین‌تر) -->
                         <div class="user-info-card">
                             <div class="user-info-header">
                                 <i class="ri-user-line"></i>
@@ -51,44 +89,6 @@ const CoinsPage = {
                                     <div class="info-value" style="direction: ltr; text-align: right;">${Format.phone(user?.phone || '')}</div>
                                 </div>
                             </div>
-                            <div class="user-info-hint">
-                                <i class="ri-information-line"></i>
-                                <span>اطلاعات شما از قبل ثبت شده است</span>
-                            </div>
-                        </div>
-                        
-                        <!-- خلاصه سفارش -->
-                        <div class="order-summary-card" id="order-summary">
-                            <div class="order-summary-header">
-                                <i class="ri-shopping-bag-3-line"></i>
-                                <span>خلاصه سفارش</span>
-                            </div>
-                            <div class="order-summary-body">
-                                <div class="summary-row">
-                                    <span>تعداد سکه انتخابی:</span>
-                                    <strong id="summary-coins">—</strong>
-                                </div>
-                                <div class="summary-row">
-                                    <span>قیمت هر سکه:</span>
-                                    <strong>${Format.price(APP_CONFIG.COIN_PRICE)}</strong>
-                                </div>
-                                <div class="summary-row total">
-                                    <span>مبلغ قابل پرداخت:</span>
-                                    <strong id="summary-total">—</strong>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- دکمه ادامه -->
-                        <div class="action-bar">
-                            <a href="#welcome" class="btn btn-ghost" data-nav>
-                                <i class="ri-arrow-right-line"></i>
-                                <span>انصراف</span>
-                            </a>
-                            <button class="btn btn-gold btn-lg" id="continue-btn" disabled>
-                                <span>ادامه و پرداخت</span>
-                                <i class="ri-arrow-left-line"></i>
-                            </button>
                         </div>
                     </div>
                     
@@ -109,7 +109,7 @@ const CoinsPage = {
                                 </li>
                                 <li>
                                     <i class="ri-checkbox-circle-line"></i>
-                                    <span>می‌توانید فیش واریزی خود را به دو صورت آپلود یا وارد کنید</span>
+                                    <span>می‌توانید هر تعداد سکه دلخواه انتخاب کنید</span>
                                 </li>
                                 <li>
                                     <i class="ri-checkbox-circle-line"></i>
@@ -153,17 +153,21 @@ const CoinsPage = {
     },
     
     init() {
-        // رندر اسلایدر
+        // رندر اسلایدر جدید
         CoinSlider.render('coin-slider-container', {
-            defaultIndex: 2,
-            onChange: (coin) => {
-                this.selectedCoin = coin;
-                this.updateSummary(coin);
+            min: 1,
+            max: 200,
+            step: 1,
+            defaultValue: 5,
+            quickValues: [1, 5, 10, 25, 50, 100],
+            onChange: (data) => {
+                this.selectedCoin = data;
+                this.updateSummary(data);
             }
         });
         
         // دکمه ادامه
-        document.getElementById('continue-btn').addEventListener('click', () => {
+        document.getElementById('continue-btn')?.addEventListener('click', () => {
             this.handleContinue();
         });
         
@@ -176,21 +180,24 @@ const CoinsPage = {
                 type: 'info'
             });
         });
+        
+        // به‌روزرسانی اولیه
+        this.updateSummary(this.selectedCoin);
     },
     
     /**
      * به‌روزرسانی خلاصه سفارش
      */
-    updateSummary(coin) {
+    updateSummary(data) {
         const summaryCoins = document.getElementById('summary-coins');
         const summaryTotal = document.getElementById('summary-total');
-        const continueBtn = document.getElementById('continue-btn');
         
-        if (coin) {
-            summaryCoins.textContent = Format.coin(coin.count);
-            summaryTotal.textContent = Format.price(coin.price);
+        if (summaryCoins) {
+            summaryCoins.textContent = Format.coin(data.count);
+        }
+        if (summaryTotal) {
+            summaryTotal.textContent = Format.price(data.price);
             summaryTotal.style.color = 'var(--color-gold-600)';
-            continueBtn.disabled = false;
         }
     },
     
@@ -198,15 +205,37 @@ const CoinsPage = {
      * ادامه
      */
     async handleContinue() {
-        if (!this.selectedCoin) {
+        if (!this.selectedCoin || !this.selectedCoin.count) {
             Toast.warning('خطا', 'لطفاً تعداد سکه‌های خود را انتخاب کنید');
             return;
         }
         
-        // ذخیره انتخاب در session
-        Storage.setTemp('selected_coin', this.selectedCoin);
+        // ساختار کامل داده
+        const coinData = {
+            id: 'custom',
+            count: this.selectedCoin.count,
+            price: this.selectedCoin.price,
+            title: this.getTitleForCount(this.selectedCoin.count),
+            subtitle: 'پکیج سفارشی',
+            icon: 'ri-coins-line',
+            color: '#F59E0B',
+            gradient: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+            features: ['ثبت نام در طرح', 'دعوت به صبحانه', 'یادگاری از ازدواج']
+        };
         
-        // رفتن به صفحه پرداخت
+        Storage.setTemp('selected_coin', coinData);
         Router.navigate('payment');
+    },
+    
+    /**
+     * دریافت عنوان مناسب
+     */
+    getTitleForCount(count) {
+        if (count === 1) return 'هدیه کوچک';
+        if (count <= 5) return 'هدیه صمیمانه';
+        if (count <= 15) return 'هدیه درخشان';
+        if (count <= 40) return 'هدیه نفیس';
+        if (count <= 80) return 'هدیه استثنایی';
+        return 'هدیه افسانه‌ای';
     }
 };
