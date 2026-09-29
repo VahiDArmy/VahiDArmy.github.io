@@ -1,15 +1,16 @@
 /* ============================================
-   صفحه انتخاب سکه - نسخه ۲ (ریسپانسیو)
+   صفحه انتخاب سکه - نسخه ۴
+   چیدمان: محتوای اصلی وسط + کارت‌های اطلاعاتی پایین
    ============================================ */
 
 .coins-page {
-    max-width: var(--container-max-width);
+    max-width: 900px;
     margin: 0 auto;
     padding: var(--space-6);
-    padding-bottom: calc(var(--space-6) + 100px); /* فضای دکمه چسبیده در موبایل */
+    padding-bottom: calc(var(--space-6) + 110px);
 }
 
-/* هدر صفحه */
+/* هدر */
 .page-header {
     margin-bottom: var(--space-6);
     text-align: center;
@@ -29,7 +30,7 @@
 }
 
 .page-title {
-    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
     font-weight: var(--font-weight-extrabold);
     color: var(--text-primary);
     margin-bottom: var(--space-2);
@@ -55,27 +56,15 @@
     line-height: var(--line-height-relaxed);
 }
 
-/* چیدمان */
-.coins-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: var(--space-5);
-    align-items: start;
-}
-
-.coins-main {
+/* ============================================
+   محتوای اصلی (تک ستون، وسط)
+   ============================================ */
+.coins-main-wrap {
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
-    min-width: 0;
-}
-
-.coins-sidebar {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    position: sticky;
-    top: calc(var(--navbar-height) + var(--space-4));
+    max-width: 700px;
+    margin: 0 auto;
 }
 
 /* کارت اطلاعات کاربر */
@@ -177,7 +166,7 @@
     color: var(--color-gold-600);
 }
 
-/* نوار اقدام - در دسکتاپ */
+/* نوار اقدام - دسکتاپ */
 .action-bar {
     display: flex;
     align-items: center;
@@ -190,40 +179,93 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* کارت‌های کناری */
-.sidebar-card {
+/* ============================================
+   بخش کارت‌های اطلاعاتی (پایین صفحه)
+   ============================================ */
+.coins-info-section {
+    margin-top: var(--space-8);
+    padding-top: var(--space-8);
+    border-top: 1px dashed var(--border-default);
+}
+
+.info-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--space-4);
+}
+
+.info-card {
     background: var(--bg-elevated);
     border: 1px solid var(--border-light);
     border-radius: var(--radius-2xl);
     padding: var(--space-5);
-}
-
-.sidebar-card-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    font-size: var(--font-size-base);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-    margin-bottom: var(--space-4);
-}
-
-.sidebar-card-header i {
-    color: var(--color-primary-500);
-    font-size: var(--font-size-xl);
-}
-
-.tips-card .sidebar-card-header i {
-    color: var(--color-gold-500);
-}
-
-.tips-list {
     display: flex;
     flex-direction: column;
+    gap: var(--space-4);
+    transition: all var(--transition-normal);
+}
+
+.info-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+}
+
+.info-card-header {
+    display: flex;
+    align-items: center;
     gap: var(--space-3);
 }
 
-.tips-list li {
+.info-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    color: white;
+    flex-shrink: 0;
+}
+
+.info-icon-gold {
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25);
+}
+
+.info-icon-primary {
+    background: linear-gradient(135deg, #818CF8 0%, #6366F1 100%);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
+}
+
+.info-icon-success {
+    background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+}
+
+.info-card-header h3 {
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* نکات مهم */
+.info-card-tips {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border-color: var(--color-gold-200);
+}
+
+.info-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-card-list li {
     display: flex;
     align-items: flex-start;
     gap: var(--space-2);
@@ -232,55 +274,72 @@
     line-height: var(--line-height-relaxed);
 }
 
-.tips-list i {
+.info-card-list i {
     color: var(--color-success-500);
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-base);
     flex-shrink: 0;
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
-.support-card p {
+.info-card-list strong {
+    color: var(--color-gold-700);
+    font-weight: var(--font-weight-bold);
+}
+
+/* پشتیبانی */
+.info-card-support {
+    background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+    border-color: var(--color-primary-200);
+}
+
+.info-card-text {
     font-size: var(--font-size-sm);
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-4);
+    color: var(--text-secondary);
     line-height: var(--line-height-relaxed);
+    flex: 1;
+    margin: 0;
 }
 
-.security-card {
-    padding: var(--space-4);
+/* امنیت */
+.info-card-security {
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border-color: var(--color-success-200);
 }
 
-.security-badges {
+.security-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
 }
 
-.security-badge {
+.security-item {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    font-size: var(--font-size-xs);
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: var(--radius-lg);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
     color: var(--text-secondary);
 }
 
-.security-badge i {
-    color: var(--color-success-500);
-    font-size: var(--font-size-base);
+.security-item i {
+    color: var(--color-success-600);
+    font-size: var(--font-size-lg);
+    flex-shrink: 0;
 }
 
 /* ============================================
    ریسپانسیو - تبلت
    ============================================ */
-@media (max-width: 1024px) {
-    .coins-layout {
-        grid-template-columns: 1fr;
+@media (max-width: 900px) {
+    .coins-page {
+        max-width: 100%;
     }
     
-    .coins-sidebar {
-        position: static;
-        order: -1;
+    .info-cards-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -290,7 +349,7 @@
 @media (max-width: 768px) {
     .coins-page {
         padding: var(--space-4) var(--space-3);
-        padding-bottom: 110px; /* فضای دکمه چسبیده */
+        padding-bottom: 110px;
     }
     
     .page-header {
@@ -305,7 +364,7 @@
         font-size: var(--font-size-sm);
     }
     
-    /* دکمه در موبایل چسبیده به پایین صفحه */
+    /* دکمه چسبیده در پایین */
     .action-bar {
         position: fixed;
         bottom: 0;
@@ -341,13 +400,8 @@
         display: none;
     }
     
-    /* مرتب کردن مجدد ترتیب: اسلایدر → خلاصه → اطلاعات کاربر */
-    .coins-main {
-        gap: var(--space-3);
-    }
-    
-    /* استایل خلاصه سفارش در موبایل */
-    .order-summary-body {
+    .order-summary-body,
+    .user-info-body {
         padding: var(--space-4);
     }
     
@@ -360,26 +414,34 @@
         font-size: var(--font-size-lg);
     }
     
-    /* اطلاعات کاربر */
-    .user-info-body {
-        padding: var(--space-4);
-    }
-    
     .info-item {
         padding: var(--space-2) 0;
     }
     
-    /* سایدبار */
-    .sidebar-card {
+    /* کارت‌های اطلاعاتی */
+    .coins-info-section {
+        margin-top: var(--space-5);
+        padding-top: var(--space-5);
+    }
+    
+    .info-card {
         padding: var(--space-4);
+        gap: var(--space-3);
     }
     
-    .sidebar-card-header {
+    .info-card-icon {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-size-lg);
+    }
+    
+    .info-card-header h3 {
         font-size: var(--font-size-sm);
-        margin-bottom: var(--space-3);
     }
     
-    .tips-list li {
+    .info-card-list li,
+    .info-card-text,
+    .security-item {
         font-size: var(--font-size-xs);
     }
 }
@@ -388,15 +450,6 @@
     .coins-page {
         padding: var(--space-3) var(--space-2);
         padding-bottom: 110px;
-    }
-    
-    .page-header {
-        margin-bottom: var(--space-3);
-    }
-    
-    .page-badge {
-        font-size: 10px;
-        padding: var(--space-1) var(--space-3);
     }
     
     .page-title {
@@ -413,8 +466,7 @@
         font-size: var(--font-size-xs);
     }
     
-    .order-summary-body,
-    .user-info-body {
+    .info-card {
         padding: var(--space-3);
     }
 }
