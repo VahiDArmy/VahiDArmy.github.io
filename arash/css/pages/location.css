@@ -194,6 +194,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
+    min-width: 0;
 }
 
 .info-label {
@@ -205,6 +206,7 @@
     font-size: var(--font-size-sm);
     font-weight: var(--font-weight-semibold);
     color: var(--text-primary);
+    line-height: var(--line-height-relaxed);
 }
 
 .location-actions {
@@ -258,5 +260,9 @@
         bottom: var(--space-2);
         left: var(--space-2);
         font-size: 10px;
+    }
+    
+    .info-value {
+        word-break: break-word;
     }
 }
