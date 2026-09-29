@@ -1,5 +1,6 @@
 /* ============================================
    صفحه وضعیت تراکنش‌ها
+   نسخه ۲.۰ - با جدول leaderboard
    ============================================ */
 
 const StatusPage = {
@@ -45,20 +46,48 @@ const StatusPage = {
     async loadTransactions(userId) {
         const container = document.getElementById('status-content');
         
-        const [stats, transactionsResult] = await Promise.all([
+        const [stats, transactionsResult, leaderboardData] = await Promise.all([
             CoinService.getUserStats(userId),
-            PaymentService.getUserTransactions(userId)
+            PaymentService.getUserTransactions(userId),
+            this.loadLeaderboardData()
         ]);
         
         this.transactions = transactionsResult.transactions || [];
         
-        this.renderContent(container, stats, this.transactions);
+        this.renderContent(container, stats, this.transactions, leaderboardData);
+    },
+    
+    /**
+     * دریافت داده‌های leaderboard از دیتابیس
+     */
+    async loadLeaderboardData() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('coin_transactions')
+                .select(`
+                    coin_count,
+                    user:user_id (name)
+                `)
+                .eq('status', 'approved')
+                .order('coin_count', { ascending: false })
+                .limit(10);
+            
+            if (error) throw error;
+            
+            return (data || []).map(t => ({
+                name: t.user?.name || 'کاربر',
+                amount: t.coin_count * APP_CONFIG.COIN_PRICE
+            }));
+        } catch (error) {
+            console.error('خطا در دریافت leaderboard:', error);
+            return [];
+        }
     },
     
     /**
      * رندر محتوا
      */
-    renderContent(container, stats, transactions) {
+    renderContent(container, stats, transactions, leaderboardData) {
         const user = Storage.getUser();
         
         container.innerHTML = `
@@ -132,9 +161,21 @@ const StatusPage = {
                 </div>
             </div>
             
+            <!-- جدول برترین‌ها -->
+            <div class="status-section-leaderboard">
+                <div id="leaderboard-container"></div>
+            </div>
+            
             <!-- اگر تایید شده داریم، کارت نقشه -->
             ${stats.approvedCount > 0 ? this.renderMapCard() : ''}
         `;
+        
+        // رندر leaderboard
+        Leaderboard.render('leaderboard-container', {
+            title: 'برترین‌های این جشن',
+            subtitle: 'پرشورترین مشارکت‌کنندگان شادباش',
+            data: leaderboardData
+        });
         
         this.attachEvents();
     },
