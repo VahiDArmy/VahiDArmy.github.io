@@ -1,6 +1,7 @@
 /* ============================================
    جدول حرفه‌ای مشارکت‌کنندگان
-   نسخه ۱.۰ - با خروجی PNG
+   نسخه ۲.۰ - با خروجی PNG بهینه برای فارسی
+   استفاده از html-to-image (بهتر برای RTL)
    ============================================ */
 
 const Leaderboard = {
@@ -11,8 +12,6 @@ const Leaderboard = {
     
     /**
      * رندر جدول
-     * @param {string} containerId
-     * @param {object} options - { title, subtitle, data: [{name, amount}] }
      */
     render(containerId, options = {}) {
         this.container = document.getElementById(containerId);
@@ -156,33 +155,64 @@ const Leaderboard = {
         btn.innerHTML = `<i class="ri-loader-4-line"></i><span>...</span>`;
         
         try {
-            await this.ensureHtml2Canvas();
+            // ✅ ۱. اطمینان از بارگذاری کامل فونت وزیرمتن
+            await this.waitForFonts();
+            
+            // ✅ ۲. اطمینان از بارگذاری html-to-image
+            await this.ensureHtmlToImage();
             
             const wrapper = document.getElementById('lb-wrapper');
             
-            // مخفی کردن دکمه دانلود در هنگام عکس‌برداری
+            // ✅ ۳. مخفی کردن دکمه دانلود به صورت موقت
             const downloadBtnEl = wrapper.querySelector('.lb-download-btn');
-            if (downloadBtnEl) downloadBtnEl.style.visibility = 'hidden';
+            const originalVisibility = downloadBtnEl?.style.visibility;
+            if (downloadBtnEl) {
+                downloadBtnEl.style.visibility = 'hidden';
+            }
             
-            const canvas = await html2canvas(wrapper, {
-                scale: 3,
+            // ✅ ۴. صبر کوتاه برای اعمال تغییرات
+            await Helpers.delay(150);
+            
+            // ✅ ۵. تبدیل به PNG با html-to-image
+            const dataUrl = await htmlToImage.toPng(wrapper, {
+                quality: 1.0,
+                pixelRatio: 3,
                 backgroundColor: '#FFFFFF',
-                logging: false,
-                useCORS: true,
-                allowTaint: true,
-                windowWidth: wrapper.scrollWidth,
-                windowHeight: wrapper.scrollHeight
+                cacheBust: true,
+                skipFonts: false,
+                
+                // ✅ مخفی کردن دکمه دانلود در کلون نهایی
+                filter: (node) => {
+                    if (node.classList && node.classList.contains('lb-download-btn')) {
+                        return false;
+                    }
+                    return true;
+                },
+                
+                // ✅ استایل‌های اضافی برای کلون
+                style: {
+                    direction: 'rtl',
+                    fontFamily: "'Vazirmatn', -apple-system, sans-serif"
+                },
+                
+                // ✅ کیفیت و اندازه
+                width: wrapper.offsetWidth,
+                height: wrapper.offsetHeight
             });
             
-            // بازگرداندن دکمه
-            if (downloadBtnEl) downloadBtnEl.style.visibility = 'visible';
+            // ✅ ۶. بازگرداندن دکمه
+            if (downloadBtnEl) {
+                downloadBtnEl.style.visibility = originalVisibility || '';
+            }
             
-            // دانلود
+            // ✅ ۷. دانلود فایل
             const link = document.createElement('a');
             const timestamp = new Date().toISOString().slice(0, 10);
-            link.download = `shadbash-participants-${timestamp}.png`;
-            link.href = canvas.toDataURL('image/png');
+            link.download = `shadbash-leaderboard-${timestamp}.png`;
+            link.href = dataUrl;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             
             Toast.success('دانلود شد', 'تصویر جدول با موفقیت ذخیره شد');
             
@@ -197,16 +227,45 @@ const Leaderboard = {
     },
     
     /**
-     * اطمینان از بارگذاری html2canvas
+     * ✅ انتظار برای بارگذاری کامل فونت‌ها
      */
-    async ensureHtml2Canvas() {
-        if (typeof html2canvas !== 'undefined') return;
+    async waitForFonts() {
+        // بارگذاری صریح فونت وزیرمتن در سایزهای مختلف
+        if (document.fonts && document.fonts.load) {
+            try {
+                await Promise.all([
+                    document.fonts.load('700 16px Vazirmatn'),
+                    document.fonts.load('900 24px Vazirmatn'),
+                    document.fonts.load('400 14px Vazirmatn'),
+                    document.fonts.load('500 16px Vazirmatn'),
+                    document.fonts.load('bold 16px Vazirmatn'),
+                    document.fonts.load('normal 14px Vazirmatn')
+                ]);
+            } catch (e) {
+                console.warn('خطا در بارگذاری فونت:', e);
+            }
+        }
+        
+        // انتظار برای همه فونت‌ها
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready;
+        }
+        
+        // صبر کوتاه اضافی برای اطمینان
+        await Helpers.delay(200);
+    },
+    
+    /**
+     * ✅ اطمینان از بارگذاری html-to-image
+     */
+    async ensureHtmlToImage() {
+        if (typeof htmlToImage !== 'undefined') return;
         
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            script.src = 'https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js';
             script.onload = resolve;
-            script.onerror = reject;
+            script.onerror = () => reject(new Error('خطا در بارگذاری html-to-image'));
             document.head.appendChild(script);
         });
     },
