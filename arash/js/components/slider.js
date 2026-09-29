@@ -1,6 +1,6 @@
 /* ============================================
    کامپوننت اسلایدر انتخاب سکه
-   نسخه ۳.۰ - حرفه‌ای، ساده، دقیق
+   نسخه ۳.۱ - با دایره حرفه‌ای و رنگ پویا
    ============================================ */
 
 const CoinSlider = {
@@ -11,6 +11,43 @@ const CoinSlider = {
     onChange: null,
     quickValues: [1, 2, 5, 10, 15, 20],
     pricePerCoin: 100000,
+    
+    /**
+     * رنگ‌های پویا بر اساس مقدار
+     */
+    colorStages: [
+        { 
+            max: 5, 
+            name: 'rose',
+            gradient: 'linear-gradient(135deg, #FB7185 0%, #EC4899 100%)',
+            glow: 'rgba(236, 72, 153, 0.4)',
+            fill: 'linear-gradient(90deg, #FBCFE8 0%, #F472B6 50%, #EC4899 100%)',
+            text: '#BE185D'
+        },
+        { 
+            max: 12, 
+            name: 'gold',
+            gradient: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
+            glow: 'rgba(245, 158, 11, 0.4)',
+            fill: 'linear-gradient(90deg, #FDE68A 0%, #FBBF24 50%, #F59E0B 100%)',
+            text: '#B45309'
+        },
+        { 
+            max: 999, 
+            name: 'amber',
+            gradient: 'linear-gradient(135deg, #F97316 0%, #DC2626 100%)',
+            glow: 'rgba(220, 38, 38, 0.35)',
+            fill: 'linear-gradient(90deg, #FED7AA 0%, #F97316 50%, #EA580C 100%)',
+            text: '#9A3412'
+        }
+    ],
+    
+    /**
+     * دریافت رنگ برای مقدار فعلی
+     */
+    getColorStage(value) {
+        return this.colorStages.find(s => value <= s.max) || this.colorStages[this.colorStages.length - 1];
+    },
     
     /**
      * رندر
@@ -27,7 +64,7 @@ const CoinSlider = {
         this.pricePerCoin = options.pricePerCoin || APP_CONFIG.COIN_PRICE;
         
         this.container.innerHTML = `
-            <div class="coin-slider-pro">
+            <div class="coin-slider-pro" id="csp-root">
                 
                 <!-- باکس اول: عنوان -->
                 <div class="coin-slider-pro-title">
@@ -78,14 +115,14 @@ const CoinSlider = {
                     </div>
                 </div>
                 
-                <!-- کنترل +/- (یک سکه) -->
+                <!-- کنترل +/- -->
                 <div class="coin-slider-pro-control">
                     <button class="csp-ctrl-btn csp-ctrl-minus" id="csp-minus" type="button" aria-label="کاهش یک سکه">
                         <i class="ri-subtract-line"></i>
                         <span class="csp-ctrl-label">یک سکه کمتر</span>
                     </button>
                     
-                    <div class="csp-ctrl-value">
+                    <div class="csp-ctrl-value" id="csp-ctrl-value">
                         <span id="csp-ctrl-num">${Format.number(this.value)}</span>
                     </div>
                     
@@ -121,27 +158,20 @@ const CoinSlider = {
     },
     
     /**
-     * رندر تیک‌های روی اسلایدر
+     * رندر تیک‌ها
      */
     renderTicks() {
         const ticksContainer = this.container.querySelector('#csp-ticks');
         if (!ticksContainer) return;
         
-        // تیک در هر سکه
         const ticks = [];
         const total = this.max - this.min;
         
-        // اگر بازه کوچک است، هر سکه یک تیک
-        // اگر بزرگ است، پله‌ای
         if (total <= 20) {
-            for (let i = this.min; i <= this.max; i++) {
-                ticks.push(i);
-            }
+            for (let i = this.min; i <= this.max; i++) ticks.push(i);
         } else {
             const step = Math.ceil(total / 15);
-            for (let i = this.min; i <= this.max; i += step) {
-                ticks.push(i);
-            }
+            for (let i = this.min; i <= this.max; i += step) ticks.push(i);
             if (ticks[ticks.length - 1] !== this.max) ticks.push(this.max);
         }
         
@@ -160,32 +190,24 @@ const CoinSlider = {
         const minusBtn = this.container.querySelector('#csp-minus');
         const plusBtn = this.container.querySelector('#csp-plus');
         
-        // اسلایدر
         rangeInput.addEventListener('input', (e) => {
             this.setValue(parseInt(e.target.value));
         });
         
-        // دکمه‌های +/- (یک سکه)
         minusBtn.addEventListener('click', () => {
-            if (this.value > this.min) {
-                this.setValue(this.value - 1);
-            }
+            if (this.value > this.min) this.setValue(this.value - 1);
         });
         
         plusBtn.addEventListener('click', () => {
-            if (this.value < this.max) {
-                this.setValue(this.value + 1);
-            }
+            if (this.value < this.max) this.setValue(this.value + 1);
         });
         
-        // دکمه‌های سریع
         this.container.querySelectorAll('.csp-quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.setValue(parseInt(btn.dataset.value));
             });
         });
         
-        // کیبورد
         rangeInput.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 e.preventDefault();
@@ -223,37 +245,82 @@ const CoinSlider = {
     },
     
     /**
-     * به‌روزرسانی UI
+     * به‌روزرسانی UI + تغییر رنگ پویا
      */
     updateUI() {
         const val = this.value;
         const percent = ((val - this.min) / (this.max - this.min)) * 100;
+        const stage = this.getColorStage(val);
         
-        // عدد بزرگ
+        const root = this.container.querySelector('#csp-root');
         const numEl = this.container.querySelector('#csp-number');
         const priceEl = this.container.querySelector('#csp-price');
         const ctrlNum = this.container.querySelector('#csp-ctrl-num');
+        const ctrlValue = this.container.querySelector('#csp-ctrl-value');
         const rangeInput = this.container.querySelector('#csp-range');
         const fill = this.container.querySelector('#csp-fill');
+        const display = this.container.querySelector('.coin-slider-pro-display');
+        const plusBtn = this.container.querySelector('#csp-plus');
         
-        if (numEl) numEl.textContent = Format.number(val);
+        // به‌روزرسانی CSS Variables برای رنگ پویا
+        if (root) {
+            root.style.setProperty('--csp-thumb-gradient', stage.gradient);
+            root.style.setProperty('--csp-thumb-glow', stage.glow);
+            root.style.setProperty('--csp-fill-gradient', stage.fill);
+            root.style.setProperty('--csp-text-color', stage.text);
+            root.setAttribute('data-stage', stage.name);
+        }
+        
+        // نمایش عدد و قیمت
+        if (numEl) {
+            numEl.textContent = Format.number(val);
+            numEl.style.color = stage.text;
+        }
         if (priceEl) priceEl.textContent = Format.price(val * this.pricePerCoin);
         if (ctrlNum) ctrlNum.textContent = Format.number(val);
         
-        // اسلایدر
+        // نوار پیشرفت
         if (rangeInput) rangeInput.value = val;
-        if (fill) fill.style.width = percent + '%';
+        if (fill) {
+            fill.style.width = percent + '%';
+            fill.style.background = stage.fill;
+            fill.style.boxShadow = `0 0 12px ${stage.glow}`;
+        }
+        
+        // دکمه + رنگ پویا
+        if (plusBtn) {
+            plusBtn.style.background = stage.gradient;
+            plusBtn.style.boxShadow = `0 4px 12px ${stage.glow}`;
+        }
+        
+        // پس‌زمینه نمایش بزرگ
+        if (display) {
+            display.style.background = `linear-gradient(135deg, ${this.hexToRgba(stage.text, 0.05)} 0%, ${this.hexToRgba(stage.text, 0.12)} 50%, ${this.hexToRgba(stage.text, 0.18)} 100%)`;
+        }
         
         // دکمه‌های سریع
         this.container.querySelectorAll('.csp-quick-btn').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.value) === val);
         });
         
-        // غیرفعال کردن دکمه‌های +/- در مرزها
+        // غیرفعال کردن دکمه‌ها
         const minusBtn = this.container.querySelector('#csp-minus');
-        const plusBtn = this.container.querySelector('#csp-plus');
         if (minusBtn) minusBtn.disabled = val <= this.min;
         if (plusBtn) plusBtn.disabled = val >= this.max;
+    },
+    
+    /**
+     * تبدیل HEX به RGBA
+     */
+    hexToRgba(hex, alpha = 1) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(c => c + c).join('');
+        }
+        const r = parseInt(hex.substring(0, 2), 16);
+        const g = parseInt(hex.substring(2, 4), 16);
+        const b = parseInt(hex.substring(4, 6), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     },
     
     /**
@@ -263,13 +330,10 @@ const CoinSlider = {
         const numEl = this.container.querySelector('#csp-number');
         if (!numEl) return;
         numEl.classList.remove('csp-num-pulse');
-        void numEl.offsetWidth; // reflow
+        void numEl.offsetWidth;
         numEl.classList.add('csp-num-pulse');
     },
     
-    /**
-     * دریافت مقدار
-     */
     getValue() {
         return {
             count: this.value,
