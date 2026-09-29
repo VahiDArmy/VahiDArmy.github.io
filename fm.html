@@ -812,7 +812,7 @@
     <div class="context-menu" id="contextMenu" role="menu" tabindex="-1">
         <div class="ctx-title" id="ctxTitle"></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item><span class="ico">📂</span><span id="ctxOpenLabel">Open / Edit</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-file-only data-needs-item><span class="ico">⬇️</span><span>Download</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-needs-item><span class="ico">⬇️</span><span>Download</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="rename" data-file-only data-needs-item><span class="ico">✏️</span><span>Rename</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copy" data-needs-item><span class="ico">📄</span><span>Copy</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="cut" data-needs-item><span class="ico">✂️</span><span>Cut</span></div>
@@ -881,6 +881,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/jump-to-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1388,7 +1389,7 @@
                     if (isDir) navigate(item.path); else openFile(item);
                     break;
                 case 'download':
-                    if (item && !isDir) await downloadItem(item);
+                    if (item) await (isDir ? downloadFolder(item) : downloadItem(item));
                     break;
                 case 'rename': {
                     if (!item || isDir) return;
@@ -1589,6 +1590,57 @@
             } catch (err) {
                 flashStatus('✗ Download failed', 'err', 4000);
                 throw new Error('Download failed: ' + err.message);
+            }
+        }
+
+        // ── Folder download: walk the git tree, pull every blob raw, zip it in the browser
+        async function downloadFolder(item) {
+            if (typeof JSZip === 'undefined') {
+                alert('Zip library failed to load. Check your connection and try again.');
+                return;
+            }
+            setStatus(`Preparing “${item.name}”…`, 'loading');
+            try {
+                const ref = await api('GET', `/git/ref/heads/${state.branch}`);
+                const head = await api('GET', `/git/commits/${ref.object.sha}`);
+                const tree = await api('GET', `/git/trees/${head.tree.sha}?recursive=1`);
+                if (tree.truncated) throw new Error('Repository is too large to zip this folder');
+
+                const prefix = item.path + '/';
+                const blobs = tree.tree.filter(t => t.type === 'blob' && t.path.startsWith(prefix));
+                if (!blobs.length) throw new Error('This folder contains no files');
+
+                const zip = new JSZip();
+                let done = 0;
+                for (const t of blobs) {
+                    const rel = t.path.slice(prefix.length);
+                    const res = await fetch(apiUrl(`/git/blobs/${t.sha}`), {
+                        headers: {
+                            Accept: 'application/vnd.github.v3.raw',
+                            Authorization: `token ${state.token}`,
+                        },
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status} while fetching ${rel}`);
+                    zip.file(`${item.name}/${rel}`, await res.blob());
+                    done++;
+                    setStatus(`Zipping ${done}/${blobs.length}…`, 'loading');
+                }
+
+                const out = await zip.generateAsync({ type: 'blob' }, meta => {
+                    setStatus(`Compressing ${Math.round(meta.percent)}%…`, 'loading');
+                });
+                const url = URL.createObjectURL(out);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = item.name + '.zip';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+                flashStatus(`Downloaded ${item.name}.zip (${blobs.length} file${blobs.length !== 1 ? 's' : ''})`, 'ok');
+            } catch (err) {
+                flashStatus('✗ Folder download failed', 'err', 4000);
+                alert('Folder download failed: ' + err.message);
             }
         }
 
