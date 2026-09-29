@@ -1,6 +1,5 @@
 /* ============================================
-   صفحه انتخاب سکه - نسخه ۵
-   با گزینه دریافت سکه فیزیکی
+   صفحه انتخاب سکه - نسخه ۶
    ============================================ */
 
 .coins-page {
@@ -10,7 +9,6 @@
     padding-bottom: calc(var(--space-6) + 110px);
 }
 
-/* هدر */
 .page-header {
     margin-bottom: var(--space-6);
     text-align: center;
@@ -56,7 +54,6 @@
     line-height: var(--line-height-relaxed);
 }
 
-/* محتوای اصلی */
 .coins-main-wrap {
     display: flex;
     flex-direction: column;
@@ -65,7 +62,6 @@
     margin: 0 auto;
 }
 
-/* کارت اطلاعات کاربر + خلاصه */
 .user-info-card,
 .order-summary-card {
     background: var(--bg-elevated);
@@ -129,7 +125,6 @@
     word-break: break-all;
 }
 
-/* خلاصه سفارش */
 .summary-row {
     display: flex;
     align-items: center;
@@ -165,125 +160,80 @@
 }
 
 /* ============================================
-   گزینه دریافت سکه فیزیکی
+   گزینه تحویل فیزیکی - ساده و مینیمال
    ============================================ */
 .physical-coin-option {
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    padding: var(--space-5);
-    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-    border: 2px dashed #A78BFA;
+    padding: var(--space-4) var(--space-5);
+    background: var(--bg-elevated);
+    border: 2px solid var(--border-default);
     border-radius: var(--radius-2xl);
-    position: relative;
-    overflow: hidden;
-    transition: all var(--transition-normal);
     cursor: pointer;
-}
-
-.physical-coin-option::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-    pointer-events: none;
+    transition: all var(--transition-normal);
+    font-family: inherit;
+    width: 100%;
+    text-align: right;
+    color: inherit;
 }
 
 .physical-coin-option:hover {
-    border-color: #8B5CF6;
+    border-color: var(--color-gold-400);
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF9E7 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+}
+
+.physical-coin-option:hover .physical-coin-arrow {
+    transform: translateX(-4px);
+    color: var(--color-gold-600);
+}
+
+.physical-coin-option:hover .physical-coin-icon {
+    transform: scale(1.08);
 }
 
 .physical-coin-icon {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     border-radius: var(--radius-xl);
-    background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-2xl);
     flex-shrink: 0;
-    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.3);
-    position: relative;
-    z-index: 1;
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+    transition: transform var(--transition-fast);
 }
 
 .physical-coin-content {
     flex: 1;
     min-width: 0;
-    position: relative;
-    z-index: 1;
+    text-align: right;
 }
 
 .physical-coin-title {
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    margin-bottom: var(--space-1);
-    flex-wrap: wrap;
-}
-
-.physical-coin-title > span:first-child {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
-    color: #5B21B6;
+    color: var(--text-primary);
 }
 
-.physical-coin-badge {
-    display: inline-block;
-    padding: 2px var(--space-2);
-    background: linear-gradient(135deg, #EC4899 0%, #F59E0B 100%);
-    color: white;
-    font-size: 10px;
-    font-weight: var(--font-weight-bold);
-    border-radius: var(--radius-full);
-    animation: pulse 2s ease-in-out infinite;
+.physical-coin-title i {
+    color: var(--color-gold-500);
+    font-size: var(--font-size-lg);
 }
 
-.physical-coin-desc {
-    font-size: var(--font-size-xs);
-    color: #7C3AED;
-    line-height: var(--line-height-relaxed);
-    margin: 0;
-}
-
-.physical-coin-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--space-1);
-    padding: var(--space-2) var(--space-4);
-    background: #8B5CF6;
-    color: white;
-    border: none;
-    border-radius: var(--radius-lg);
-    font-size: var(--font-size-xs);
-    font-weight: var(--font-weight-semibold);
-    cursor: pointer;
+.physical-coin-arrow {
+    font-size: var(--font-size-2xl);
+    color: var(--text-tertiary);
     transition: all var(--transition-fast);
     flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-    font-family: inherit;
-}
-
-.physical-coin-btn:hover {
-    background: #7C3AED;
-    transform: translateX(-4px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
-.physical-coin-btn i {
-    transition: transform var(--transition-fast);
-}
-
-.physical-coin-btn:hover i {
-    transform: translateX(-4px);
 }
 
 /* نوار اقدام */
@@ -299,9 +249,7 @@
     box-shadow: var(--shadow-sm);
 }
 
-/* ============================================
-   بخش کارت‌های اطلاعاتی
-   ============================================ */
+/* کارت‌های اطلاعاتی */
 .coins-info-section {
     margin-top: var(--space-8);
     padding-top: var(--space-8);
@@ -448,170 +396,61 @@
 }
 
 /* ============================================
-   مودال سکه فیزیکی
+   مودال تحویل فیزیکی - ساده
    ============================================ */
-.physical-modal-content {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-5);
-}
-
-.physical-modal-hero {
+.physical-modal-simple {
     text-align: center;
-    padding: var(--space-5) var(--space-4);
-    background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
-    border: 1px solid #DDD6FE;
-    border-radius: var(--radius-2xl);
-    position: relative;
-    overflow: hidden;
+    padding: var(--space-3) 0;
 }
 
-.physical-modal-hero::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 200px;
-    height: 200px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
-    pointer-events: none;
-}
-
-.physical-modal-icon {
+.physical-modal-icon-simple {
     width: 72px;
     height: 72px;
     border-radius: var(--radius-full);
-    background: linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
-    margin: 0 auto var(--space-3);
-    box-shadow: 0 12px 28px rgba(139, 92, 246, 0.35);
+    font-size: 2.25rem;
+    margin: 0 auto var(--space-5);
+    box-shadow: 0 12px 28px rgba(245, 158, 11, 0.35);
     animation: float-slow 3s ease-in-out infinite;
-    position: relative;
-    z-index: 1;
 }
 
-.physical-modal-hero h3 {
-    font-size: var(--font-size-lg);
-    font-weight: var(--font-weight-extrabold);
-    color: #5B21B6;
-    margin-bottom: var(--space-2);
-    position: relative;
-    z-index: 1;
-}
-
-.physical-modal-hero p {
-    font-size: var(--font-size-sm);
-    color: #7C3AED;
-    line-height: var(--line-height-relaxed);
-    max-width: 400px;
-    margin: 0 auto;
-    position: relative;
-    z-index: 1;
-}
-
-.physical-modal-info {
+.physical-modal-info-simple {
     display: flex;
     flex-direction: column;
-    gap: var(--space-3);
-}
-
-.physical-info-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3);
+    gap: var(--space-2);
+    padding: var(--space-4);
     background: var(--bg-secondary);
     border-radius: var(--radius-xl);
-    transition: all var(--transition-fast);
+    max-width: 320px;
+    margin: 0 auto;
 }
 
-.physical-info-item:hover {
-    background: var(--bg-tertiary);
-    transform: translateX(-4px);
-}
-
-.physical-info-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-lg);
+.pmi-row {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-xl);
-    color: white;
-    flex-shrink: 0;
-}
-
-.physical-info-icon-pink {
-    background: linear-gradient(135deg, #F472B6 0%, #EC4899 100%);
-}
-
-.physical-info-icon-gold {
-    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
-}
-
-.physical-info-icon-green {
-    background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
-}
-
-.physical-info-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.physical-info-text strong {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-bold);
-    color: var(--text-primary);
-}
-
-.physical-info-text span {
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-    line-height: var(--line-height-relaxed);
-}
-
-.physical-modal-warning {
-    display: flex;
     gap: var(--space-3);
-    padding: var(--space-4);
-    background: linear-gradient(135deg, #FEF3C7 0%, #FEF9E7 100%);
-    border: 1px solid var(--color-warning-200);
-    border-radius: var(--radius-xl);
     font-size: var(--font-size-sm);
-    line-height: var(--line-height-relaxed);
+    color: var(--text-primary);
+    font-weight: var(--font-weight-medium);
 }
 
-.physical-modal-warning i {
-    color: var(--color-warning-600);
-    font-size: var(--font-size-xl);
-    flex-shrink: 0;
-    margin-top: 2px;
+.pmi-row i {
+    color: var(--color-gold-500);
+    font-size: var(--font-size-lg);
 }
 
-.physical-modal-warning strong {
-    display: block;
-    color: var(--color-warning-800);
-    margin-bottom: 2px;
-}
-
-.physical-modal-warning span {
-    color: var(--color-warning-700);
-}
-
-/* مودال موفقیت */
-.physical-success-content {
+/* موفقیت */
+.physical-success-simple {
     text-align: center;
     padding: var(--space-4) 0;
 }
 
-.physical-success-icon {
+.pss-icon {
     width: 80px;
     height: 80px;
     border-radius: var(--radius-full);
@@ -621,63 +460,29 @@
     align-items: center;
     justify-content: center;
     font-size: 2.5rem;
-    margin: 0 auto var(--space-4);
+    margin: 0 auto var(--space-5);
     box-shadow: 0 12px 28px rgba(16, 185, 129, 0.35);
     animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-.physical-success-title {
-    font-size: var(--font-size-xl);
-    font-weight: var(--font-weight-extrabold);
-    color: var(--text-primary);
-    margin-bottom: var(--space-3);
-}
-
-.physical-success-text {
-    font-size: var(--font-size-sm);
-    color: var(--text-secondary);
-    line-height: var(--line-height-relaxed);
-    margin-bottom: var(--space-5);
-    max-width: 340px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.physical-success-phone {
+.pss-phone {
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-5);
-    background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%);
-    border: 1px solid #C4B5FD;
+    background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+    border: 1px solid #A7F3D0;
     border-radius: var(--radius-full);
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-bold);
-    color: #5B21B6;
-    margin-bottom: var(--space-4);
+    color: #047857;
 }
 
-.physical-success-phone i {
-    color: #8B5CF6;
+.pss-phone i {
+    color: var(--color-success-600);
 }
 
-.physical-success-info {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    font-size: var(--font-size-xs);
-    color: var(--text-tertiary);
-}
-
-.physical-success-info i {
-    color: var(--color-primary-500);
-    font-size: var(--font-size-base);
-}
-
-/* ============================================
-   ریسپانسیو
-   ============================================ */
+/* ریسپانسیو */
 @media (max-width: 900px) {
     .coins-page {
         max-width: 100%;
@@ -706,7 +511,6 @@
         font-size: var(--font-size-sm);
     }
     
-    /* نوار اقدام چسبیده */
     .action-bar {
         position: fixed;
         bottom: 0;
@@ -760,35 +564,21 @@
         padding: var(--space-2) 0;
     }
     
-    /* گزینه سکه فیزیکی در موبایل */
     .physical-coin-option {
         padding: var(--space-4);
         gap: var(--space-3);
-        flex-wrap: wrap;
     }
     
     .physical-coin-icon {
-        width: 48px;
-        height: 48px;
+        width: 46px;
+        height: 46px;
         font-size: var(--font-size-xl);
     }
     
-    .physical-coin-title > span:first-child {
-        font-size: var(--font-size-xs);
+    .physical-coin-title {
+        font-size: var(--font-size-sm);
     }
     
-    .physical-coin-desc {
-        font-size: 11px;
-    }
-    
-    .physical-coin-btn {
-        width: 100%;
-        justify-content: center;
-        padding: var(--space-3);
-        font-size: var(--font-size-xs);
-    }
-    
-    /* کارت‌های اطلاعاتی */
     .coins-info-section {
         margin-top: var(--space-5);
         padding-top: var(--space-5);
@@ -812,21 +602,6 @@
     .info-card-list li,
     .info-card-text,
     .security-item {
-        font-size: var(--font-size-xs);
-    }
-    
-    /* مودال در موبایل */
-    .physical-modal-icon {
-        width: 60px;
-        height: 60px;
-        font-size: 2rem;
-    }
-    
-    .physical-modal-hero h3 {
-        font-size: var(--font-size-base);
-    }
-    
-    .physical-modal-hero p {
         font-size: var(--font-size-xs);
     }
 }
