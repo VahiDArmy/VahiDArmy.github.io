@@ -2,7 +2,7 @@
    سرویس احراز هویت - شادباش ازدواج
    استفاده از Email/Password
    موبایل = یوزرنیم (تبدیل به ایمیل مصنوعی)
-   نسخه ۳.۰ - رفع خطاهای 409 و null profile
+   نسخه ۴.۰ - با رفع مشکل خروج خودکار
    ============================================ */
 
 const AuthService = {
@@ -80,7 +80,6 @@ const AuthService = {
                 
                 // اگر session نداریم (یعنی ایمیل نیاز به تایید دارد)
                 if (!signupData.session) {
-                    // تلاش مجدد برای ورود
                     const { data: retryData, error: retryError } = await supabaseClient.auth.signInWithPassword({
                         email: email,
                         password: normalizedPhone
@@ -105,7 +104,7 @@ const AuthService = {
             
             const userId = authData.user.id;
             
-            // ۳. اطمینان از وجود پروفایل (با retry)
+            // ۳. اطمینان از وجود پروفایل
             let profile = await this.ensureProfileWithRetry(
                 userId, 
                 name.trim(), 
@@ -116,7 +115,7 @@ const AuthService = {
                 throw new Error('خطا در ساخت پروفایل کاربر. لطفاً مجدداً تلاش کنید.');
             }
             
-            // ۴. ذخیره اطلاعات
+            // ۴. ذخیره اطلاعات در LocalStorage
             if (authData.session) {
                 Storage.setToken(authData.session.access_token);
             }
@@ -125,7 +124,7 @@ const AuthService = {
             // ۵. بروزرسانی آخرین ورود (بی‌صدا)
             this.updateLastLogin(userId).catch(() => {});
             
-            // ۶. لاگ فعالیت (فقط اگر پروفایل ساخته شده)
+            // ۶. لاگ فعالیت (بی‌صدا)
             this.logActivity(userId, 'login', {
                 phone: normalizedPhone,
                 is_new_user: isNewUser
@@ -152,16 +151,12 @@ const AuthService = {
      * اطمینان از وجود پروفایل با تلاش‌های مکرر
      */
     async ensureProfileWithRetry(userId, name, phone) {
-        // تلاش اول: بررسی وجود (trigger ممکن است ساخته باشد)
         for (let attempt = 1; attempt <= 3; attempt++) {
             const profile = await this.getProfile(userId);
             if (profile) return profile;
-            
-            // تاخیر کوتاه برای بار بعدی
             await Helpers.delay(attempt * 500);
         }
         
-        // اگر trigger کار نکرده، دستی بسازیم
         console.log('Trigger کار نکرد، ساخت دستی پروفایل...');
         return await this.createProfileManually(userId, name, phone);
     },
@@ -171,7 +166,6 @@ const AuthService = {
      */
     async createProfileManually(userId, name, phone) {
         try {
-            // چک نهایی اگر پروفایل ساخته شده
             const existing = await this.getProfile(userId);
             if (existing) return existing;
             
@@ -189,7 +183,6 @@ const AuthService = {
                 .single();
             
             if (error) {
-                // اگر تکراری بود، فقط fetch کن
                 if (error.code === '23505') {
                     return await this.getProfile(userId);
                 }
@@ -200,8 +193,6 @@ const AuthService = {
             
         } catch (error) {
             console.error('خطا در ساخت دستی پروفایل:', error);
-            
-            // آخرین تلاش برای خواندن
             await Helpers.delay(500);
             return await this.getProfile(userId);
         }
@@ -240,7 +231,7 @@ const AuthService = {
                 .update({ last_login: new Date().toISOString() })
                 .eq('id', userId);
         } catch (error) {
-            // خطا را بی‌صدا نادیده بگیر
+            // بی‌صدا
         }
     },
     
@@ -268,30 +259,44 @@ const AuthService = {
     },
     
     /**
-     * دریافت کاربر جاری
+     * دریافت کاربر جاری - با تایید Session
      */
     async getCurrentUser() {
         try {
-            const { data: { user }, error } = await supabaseClient.auth.getUser();
-            if (error || !user) return null;
+            const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
             
-            let profile = await this.getProfile(user.id);
+            if (sessionError) {
+                console.warn('خطا در getSession:', sessionError.message);
+            }
             
-            // اگر پروفایل نبود، سعی کن بسازی
+            if (!session?.user) {
+                return null;
+            }
+            
+            // بررسی cache
+            const cachedUser = Storage.getUser();
+            if (cachedUser && cachedUser.id === session.user.id) {
+                return cachedUser;
+            }
+            
+            // دریافت از دیتابیس
+            let profile = await this.getProfile(session.user.id);
+            
             if (!profile) {
-                const name = user.user_metadata?.name || 'کاربر';
-                const phone = user.user_metadata?.phone || this.emailToPhone(user.email);
-                profile = await this.createProfileManually(user.id, name, phone);
+                const name = session.user.user_metadata?.name || 'کاربر';
+                const phone = session.user.user_metadata?.phone || this.emailToPhone(session.user.email);
+                profile = await this.createProfileManually(session.user.id, name, phone);
             }
             
             if (profile) {
                 Storage.setUser(profile);
+                Storage.setToken(session.access_token);
             }
             return profile;
             
         } catch (error) {
             console.error('خطا در getCurrentUser:', error);
-            return null;
+            return Storage.getUser();
         }
     },
     
@@ -299,8 +304,12 @@ const AuthService = {
      * بررسی ورود
      */
     async isAuthenticated() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        return !!session;
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            return !!session;
+        } catch (error) {
+            return false;
+        }
     },
     
     /**
@@ -313,14 +322,18 @@ const AuthService = {
     },
     
     /**
-     * گوش دادن به تغییرات
+     * گوش دادن به تغییرات احراز هویت
+     * نسخه اصلاح‌شده - بدون logout تصادفی
      */
     onAuthStateChange(callback) {
         return supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔔 Auth event:', event);
+            
             if (event === 'SIGNED_IN' && session?.user) {
                 const profile = await this.getProfile(session.user.id);
                 if (profile) {
                     Storage.setUser(profile);
+                    Storage.setToken(session.access_token);
                     callback('signed_in', profile);
                 }
             } else if (event === 'SIGNED_OUT') {
@@ -328,24 +341,42 @@ const AuthService = {
                 Storage.removeToken();
                 callback('signed_out', null);
             } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+                // فقط توکن را ذخیره کن، کاربر را دوباره از دیتابیس نگیر
+                Storage.setToken(session.access_token);
+                callback('token_refreshed', Storage.getUser());
+            } else if (event === 'USER_UPDATED' && session?.user) {
                 const profile = await this.getProfile(session.user.id);
                 if (profile) {
                     Storage.setUser(profile);
-                    callback('token_refreshed', profile);
+                    callback('user_updated', profile);
+                }
+            } else if (event === 'INITIAL_SESSION') {
+                // رویداد مهم: Session اولیه
+                if (session?.user) {
+                    const cachedProfile = Storage.getUser();
+                    if (cachedProfile && cachedProfile.id === session.user.id) {
+                        callback('initial_session', cachedProfile);
+                    } else {
+                        const profile = await this.getProfile(session.user.id);
+                        if (profile) {
+                            Storage.setUser(profile);
+                            callback('initial_session', profile);
+                        }
+                    }
+                } else {
+                    callback('initial_session', null);
                 }
             }
         });
     },
     
     /**
-     * لاگ فعالیت (بی‌صدا - خطا ندهد)
+     * لاگ فعالیت (بی‌صدا)
      */
     async logActivity(userId, action, details = {}) {
         try {
-            // بررسی وجود پروفایل قبل از لاگ
             const profile = await this.getProfile(userId);
             if (!profile) {
-                console.warn('پروفایل وجود ندارد، لاگ ثبت نشد');
                 return { success: false };
             }
             
@@ -365,7 +396,6 @@ const AuthService = {
             
             return { success: true };
         } catch (error) {
-            // بی‌صدا
             console.warn('خطا در logActivity:', error.message);
             return { success: false };
         }
