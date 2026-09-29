@@ -141,28 +141,40 @@
 .progress-hero__actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
 }
 .progress-hero__actions .btn {
-  padding: 4px 12px;
-  font-size: 0.7rem;
-  height: 28px;
+  padding: 5px 14px;
+  font-size: 0.72rem;
+  height: 32px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 .progress-hero__actions .bookmark-btn,
 .progress-hero__actions .go-to-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 .progress-hero__actions .bookmark-btn svg,
-.progress-hero__actions .go-to-btn svg { width: 14px; height: 14px; }
+.progress-hero__actions .go-to-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.progress-hero__actions .bookmark-btn svg *,
+.progress-hero__actions .go-to-btn svg * {
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
 .progress-hero__count {
   font-size: 1.05rem;
   font-weight: 700;
@@ -197,23 +209,35 @@
   color: var(--neon);
 }
 
-/* Bookmark & Go-To Buttons */
+/* Bookmark & Go-To Buttons — with icon glow so they read clearly */
 .bookmark-btn, .go-to-btn {
   transition: all 0.3s ease;
 }
 .bookmark-btn svg, .go-to-btn svg { transition: all 0.3s ease; }
 .bookmark-btn:active, .go-to-btn:active { transform: scale(0.92); }
+
 .bookmark-btn { border-color: var(--neon-dim); color: var(--neon); }
+.bookmark-btn svg { filter: drop-shadow(0 0 3px var(--neon-glow)); }
 .bookmark-btn:hover {
   border-color: var(--neon);
   box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
   transform: scale(1.05);
 }
+.bookmark-btn:hover svg {
+  filter: drop-shadow(0 0 8px var(--neon))
+          drop-shadow(0 0 16px var(--neon-glow));
+}
+
 .go-to-btn { border-color: var(--violet); color: var(--violet); }
+.go-to-btn svg { filter: drop-shadow(0 0 3px var(--violet-glow)); }
 .go-to-btn:hover {
   border-color: var(--violet);
   box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow);
   transform: scale(1.05);
+}
+.go-to-btn:hover svg {
+  filter: drop-shadow(0 0 8px var(--violet))
+          drop-shadow(0 0 16px var(--violet-glow));
 }
 
 /* -------------------------------------------------------------------------
@@ -1003,11 +1027,11 @@ a.tag-pill:hover {
   .ayah-frame__inner { padding: 18px 14px 14px; }
   .progress-hero { padding: 14px 16px; gap: 10px; }
   .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
-  .progress-hero__actions .btn { font-size: 0.65rem; padding: 3px 10px; height: 24px; }
+  .progress-hero__actions .btn { font-size: 0.68rem; padding: 4px 12px; height: 28px; }
   .progress-hero__actions .bookmark-btn,
-  .progress-hero__actions .go-to-btn { width: 24px; height: 24px; }
+  .progress-hero__actions .go-to-btn { width: 28px; height: 28px; }
   .progress-hero__actions .bookmark-btn svg,
-  .progress-hero__actions .go-to-btn svg { width: 12px; height: 12px; }
+  .progress-hero__actions .go-to-btn svg { width: 16px; height: 16px; }
   .ravan-tafsir-content { font-size: 0.88rem; line-height: 2; }
   .ravan-tafsir-manual-input { flex-direction: column; }
   .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
