@@ -1,0 +1,466 @@
+/* ============================================
+   جدول حرفه‌ای مشارکت‌کنندگان
+   ============================================ */
+
+.leaderboard-wrapper {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFF 100%);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-3xl);
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+    position: relative;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+/* نوار بالای کارت */
+.leaderboard-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 5px;
+    background: linear-gradient(90deg, #EC4899 0%, #F59E0B 50%, #8B5CF6 100%);
+    background-size: 200% 100%;
+    animation: gradient-slide 4s linear infinite;
+}
+
+@keyframes gradient-slide {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+/* ============================================
+   هدر
+   ============================================ */
+.leaderboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-5) var(--space-6);
+    border-bottom: 1px solid var(--border-light);
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+}
+
+.lb-header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    min-width: 0;
+}
+
+.lb-header-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-xl);
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+}
+
+.lb-header-text {
+    min-width: 0;
+}
+
+.lb-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-extrabold);
+    color: var(--text-primary);
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+.lb-subtitle {
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* دکمه دانلود */
+.lb-download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: white;
+    color: var(--color-gold-700);
+    border: 2px solid var(--color-gold-300);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.lb-download-btn:hover {
+    background: var(--color-gold-500);
+    color: white;
+    border-color: var(--color-gold-500);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.3);
+}
+
+.lb-download-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.lb-download-btn.loading i {
+    animation: spin 0.8s linear infinite;
+}
+
+/* ============================================
+   جدول
+   ============================================ */
+.leaderboard-table {
+    padding: 0;
+}
+
+.lb-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 180px;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+/* سرستون‌ها */
+.lb-row-head {
+    background: var(--bg-secondary);
+    border-bottom: 2px solid var(--border-light);
+    position: relative;
+}
+
+.lb-row-head .lb-cell {
+    padding: var(--space-3) var(--space-5);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* ردیف‌های داده */
+.lb-rows .lb-row {
+    border-bottom: 1px solid var(--border-light);
+    position: relative;
+}
+
+.lb-rows .lb-row:last-child {
+    border-bottom: none;
+}
+
+.lb-rows .lb-row:hover:not(.lb-row-top) {
+    background: #FEF9F3;
+    transform: scale(1.005);
+}
+
+/* ردیف‌های برتر */
+.lb-row-top {
+    background: linear-gradient(90deg, #FFFBEB 0%, #FEF9F3 100%);
+    position: relative;
+}
+
+.lb-row-top::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #FBBF24 0%, #F59E0B 100%);
+}
+
+/* سلول‌ها */
+.lb-cell {
+    padding: var(--space-4) var(--space-5);
+    font-size: var(--font-size-sm);
+    color: var(--text-primary);
+    min-width: 0;
+}
+
+.lb-cell-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3);
+}
+
+.lb-cell-name {
+    font-weight: var(--font-weight-semibold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-cell-amount {
+    text-align: left;
+    direction: rtl;
+}
+
+/* رتبه */
+.lb-rank {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-base);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    position: relative;
+    transition: all var(--transition-fast);
+}
+
+/* رتبه ۱ - طلا */
+.lb-rank-1 {
+    background: linear-gradient(135deg, #FDE68A 0%, #FBBF24 50%, #F59E0B 100%);
+    color: white;
+    font-size: var(--font-size-xl);
+    box-shadow: 
+        0 4px 12px rgba(245, 158, 11, 0.4),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    transform: scale(1.1);
+}
+
+/* رتبه ۲ - نقره */
+.lb-rank-2 {
+    background: linear-gradient(135deg, #E5E7EB 0%, #D1D5DB 50%, #9CA3AF 100%);
+    color: white;
+    font-size: var(--font-size-lg);
+    box-shadow: 
+        0 4px 12px rgba(156, 163, 175, 0.4),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+/* رتبه ۳ - برنز */
+.lb-rank-3 {
+    background: linear-gradient(135deg, #FDBA74 0%, #FB923C 50%, #EA580C 100%);
+    color: white;
+    font-size: var(--font-size-lg);
+    box-shadow: 
+        0 4px 12px rgba(234, 88, 12, 0.4),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+        inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+/* نام */
+.lb-name {
+    color: var(--text-primary);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lb-row-top .lb-name {
+    font-weight: var(--font-weight-bold);
+    color: #78350F;
+}
+
+/* مبلغ */
+.lb-amount {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--space-1) var(--space-3);
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    color: #78350F;
+    font-weight: var(--font-weight-bold);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.lb-row-top .lb-amount {
+    background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* حالت خالی */
+.lb-empty {
+    padding: var(--space-12) var(--space-6);
+    text-align: center;
+    color: var(--text-tertiary);
+}
+
+.lb-empty i {
+    font-size: 3rem;
+    color: var(--color-gray-300);
+    display: block;
+    margin-bottom: var(--space-3);
+}
+
+.lb-empty p {
+    font-size: var(--font-size-sm);
+    color: var(--text-tertiary);
+}
+
+/* ============================================
+   فوتر
+   ============================================ */
+.leaderboard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-6);
+    background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+    border-top: 1px solid var(--border-light);
+}
+
+.lb-footer-stats {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.lb-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    font-weight: var(--font-weight-medium);
+}
+
+.lb-stat i {
+    color: var(--color-primary-500);
+    font-size: var(--font-size-base);
+}
+
+.lb-stat strong {
+    color: var(--text-primary);
+    font-weight: var(--font-weight-bold);
+}
+
+.lb-footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.lb-footer-brand i {
+    color: #EC4899;
+    font-size: var(--font-size-base);
+    animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+    0%, 100% { transform: scale(1); }
+    25% { transform: scale(1.15); }
+    50% { transform: scale(1); }
+    75% { transform: scale(1.08); }
+}
+
+/* ============================================
+   ریسپانسیو
+   ============================================ */
+@media (max-width: 600px) {
+    .leaderboard-wrapper {
+        border-radius: var(--radius-2xl);
+    }
+    
+    .leaderboard-header {
+        padding: var(--space-4);
+    }
+    
+    .lb-header-icon {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-size-base);
+    }
+    
+    .lb-title {
+        font-size: var(--font-size-base);
+    }
+    
+    .lb-subtitle {
+        font-size: 10px;
+    }
+    
+    .lb-download-btn span {
+        display: none;
+    }
+    
+    .lb-download-btn {
+        padding: var(--space-2);
+        min-width: 40px;
+        justify-content: center;
+    }
+    
+    .lb-row {
+        grid-template-columns: 60px 1fr 130px;
+    }
+    
+    .lb-cell {
+        padding: var(--space-3) var(--space-3);
+        font-size: var(--font-size-xs);
+    }
+    
+    .lb-row-head .lb-cell {
+        padding: var(--space-2) var(--space-3);
+        font-size: 10px;
+    }
+    
+    .lb-rank {
+        width: 32px;
+        height: 32px;
+        font-size: var(--font-size-sm);
+    }
+    
+    .lb-rank-1,
+    .lb-rank-2,
+    .lb-rank-3 {
+        font-size: var(--font-size-base);
+    }
+    
+    .lb-amount {
+        font-size: 11px;
+        padding: 2px var(--space-2);
+    }
+    
+    .leaderboard-footer {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+    }
+    
+    .lb-footer-stats {
+        justify-content: center;
+    }
+    
+    .lb-footer-brand {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 380px) {
+    .lb-row {
+        grid-template-columns: 50px 1fr 110px;
+    }
+    
+    .lb-cell {
+        padding: var(--space-2) var(--space-2);
+    }
+}
