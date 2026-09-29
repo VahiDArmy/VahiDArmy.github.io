@@ -37,6 +37,7 @@
     align-items: center;
     justify-content: center;
     font-size: var(--font-size-xl);
+    flex-shrink: 0;
 }
 
 .dashboard-subtitle {
@@ -168,6 +169,15 @@
     grid-template-columns: 1fr 1fr;
     gap: var(--space-4);
     margin-bottom: var(--space-4);
+}
+
+/* ✅ ردیف تک‌ستونه برای leaderboard */
+.dashboard-row-single {
+    margin-bottom: var(--space-6);
+}
+
+.dashboard-row-single .leaderboard-wrapper {
+    max-width: 100%;
 }
 
 .dashboard-card {
