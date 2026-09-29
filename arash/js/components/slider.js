@@ -1,12 +1,16 @@
 /* ============================================
    کامپوننت اسلایدر انتخاب سکه
+   نسخه ۲.۰ - اسلایدر بازه‌ای + ورودی دقیق
    ============================================ */
 
 const CoinSlider = {
     container: null,
-    currentIndex: 0,
-    coins: [],
+    value: 5,
+    min: 1,
+    max: 200,
+    step: 1,
     onChange: null,
+    quickValues: [1, 5, 10, 25, 50, 100],
     
     /**
      * رندر
@@ -15,267 +19,255 @@ const CoinSlider = {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
         
-        this.coins = CoinService.getCoinTiers();
-        this.currentIndex = options.defaultIndex || 2; // پیش‌فرض: سکه طلایی
+        this.min = options.min || APP_CONFIG.MIN_COINS || 1;
+        this.max = options.max || APP_CONFIG.MAX_COINS || 200;
+        this.step = options.step || 1;
+        this.value = options.defaultValue || 5;
         this.onChange = options.onChange || null;
+        this.quickValues = options.quickValues || [1, 5, 10, 25, 50, 100];
+        
+        // اطمینان از محدوده
+        this.value = Helpers.clamp(this.value, this.min, this.max);
         
         this.container.innerHTML = `
-            <div class="coin-slider">
-                <div class="coin-slider-header">
-                    <div class="coin-slider-title">
+            <div class="coin-slider-v2">
+                <div class="coin-slider-v2-header">
+                    <div class="coin-slider-v2-title">
                         <i class="ri-coins-line"></i>
                         <span>تعداد سکه‌های مشارکت خود را انتخاب کنید</span>
                     </div>
-                    <div class="coin-slider-hint">هر سکه معادل ۱۰۰,۰۰۰ تومان</div>
+                    <div class="coin-slider-v2-hint">هر سکه معادل ۱۰۰,۰۰۰ تومان</div>
                 </div>
                 
-                <div class="coin-slider-track" id="coin-slider-track"></div>
-                
-                <div class="coin-slider-nav">
-                    <button class="coin-nav-btn" id="coin-prev" aria-label="قبلی">
-                        <i class="ri-arrow-right-s-line"></i>
-                    </button>
-                    <div class="coin-slider-dots" id="coin-dots"></div>
-                    <button class="coin-nav-btn" id="coin-next" aria-label="بعدی">
-                        <i class="ri-arrow-left-s-line"></i>
-                    </button>
+                <!-- نمایش بزرگ عدد انتخابی -->
+                <div class="coin-slider-v2-display">
+                    <div class="coin-slider-v2-count">
+                        <span class="coin-count-number" id="coin-display-number">${Format.number(this.value)}</span>
+                        <span class="coin-count-label">سکه</span>
+                    </div>
+                    <div class="coin-slider-v2-price" id="coin-display-price">
+                        ${Format.price(this.value * APP_CONFIG.COIN_PRICE)}
+                    </div>
                 </div>
                 
-                <div class="coin-slider-preview" id="coin-preview"></div>
+                <!-- اسلایدر بازه‌ای -->
+                <div class="coin-slider-v2-range">
+                    <div class="range-labels-top">
+                        <span class="range-label-min">${Format.number(this.min)}</span>
+                        <span class="range-label-max">${Format.number(this.max)}+</span>
+                    </div>
+                    <div class="range-wrapper">
+                        <input 
+                            type="range" 
+                            id="coin-range" 
+                            class="coin-range-input"
+                            min="${this.min}" 
+                            max="${this.max}" 
+                            step="${this.step}" 
+                            value="${this.value}"
+                        >
+                        <div class="range-progress" id="range-progress"></div>
+                    </div>
+                    <div class="range-marks" id="range-marks"></div>
+                </div>
                 
-                <div class="coin-slider-quick">
-                    <div class="quick-label">انتخاب سریع:</div>
-                    <div class="quick-buttons" id="quick-buttons"></div>
+                <!-- ورودی عدد دقیق -->
+                <div class="coin-slider-v2-input">
+                    <label class="coin-input-label">
+                        <i class="ri-edit-line"></i>
+                        <span>یا عدد دقیق وارد کنید:</span>
+                    </label>
+                    <div class="coin-input-group">
+                        <button class="coin-input-btn" id="coin-btn-minus" type="button" aria-label="کاهش">
+                            <i class="ri-subtract-line"></i>
+                        </button>
+                        <input 
+                            type="number" 
+                            id="coin-number-input" 
+                            class="coin-number-input"
+                            value="${this.value}"
+                            min="${this.min}"
+                            max="10000"
+                            step="1"
+                            inputmode="numeric"
+                        >
+                        <button class="coin-input-btn" id="coin-btn-plus" type="button" aria-label="افزایش">
+                            <i class="ri-add-line"></i>
+                        </button>
+                    </div>
+                    <div class="coin-input-hint">
+                        می‌توانید هر عدد دلخواهی وارد کنید
+                    </div>
+                </div>
+                
+                <!-- انتخاب‌های سریع -->
+                <div class="coin-slider-v2-quick">
+                    <div class="quick-label">پیشنهاد سریع:</div>
+                    <div class="quick-buttons" id="quick-buttons">
+                        ${this.quickValues.map(v => `
+                            <button class="quick-btn ${v === this.value ? 'active' : ''}" data-value="${v}" type="button">
+                                ${Format.number(v)}
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
         
-        this.renderSlides();
-        this.renderDots();
-        this.renderQuickButtons();
-        this.updatePreview();
         this.attachEvents();
-        this.goTo(this.currentIndex, false);
-    },
-    
-    /**
-     * رندر اسلایدها
-     */
-    renderSlides() {
-        const track = this.container.querySelector('#coin-slider-track');
-        track.innerHTML = this.coins.map((coin, idx) => `
-            <div class="coin-slide ${idx === this.currentIndex ? 'active' : ''}" data-index="${idx}">
-                <div class="coin-slide-inner" style="--coin-color: ${coin.color}; --coin-gradient: ${coin.gradient}">
-                    <div class="coin-slide-icon">
-                        <i class="${coin.icon}"></i>
-                    </div>
-                    <div class="coin-slide-count">
-                        <span class="coin-num">${Format.number(coin.count)}</span>
-                        <span class="coin-label">سکه</span>
-                    </div>
-                    <h3 class="coin-slide-title">${coin.title}</h3>
-                    <p class="coin-slide-subtitle">${coin.subtitle}</p>
-                    <div class="coin-slide-price">${Format.price(coin.price)}</div>
-                    <ul class="coin-slide-features">
-                        ${coin.features.map(f => `
-                            <li><i class="ri-check-line"></i> ${f}</li>
-                        `).join('')}
-                    </ul>
-                </div>
-            </div>
-        `).join('');
-    },
-    
-    /**
-     * رندر نقاط
-     */
-    renderDots() {
-        const dots = this.container.querySelector('#coin-dots');
-        dots.innerHTML = this.coins.map((_, idx) => `
-            <button class="coin-dot ${idx === this.currentIndex ? 'active' : ''}" data-index="${idx}" aria-label="اسلاید ${idx + 1}"></button>
-        `).join('');
-    },
-    
-    /**
-     * رندر دکمه‌های سریع
-     */
-    renderQuickButtons() {
-        const quick = this.container.querySelector('#quick-buttons');
-        const commonCounts = [1, 3, 5, 10, 20, 50];
-        
-        quick.innerHTML = commonCounts.map(count => {
-            const coin = this.coins.find(c => c.count === count);
-            if (!coin) return '';
-            const idx = this.coins.indexOf(coin);
-            return `<button class="quick-btn" data-index="${idx}">${Format.number(count)}</button>`;
-        }).join('');
+        this.updateUI();
     },
     
     /**
      * اتصال رویدادها
      */
     attachEvents() {
-        // دکمه‌های ناوبری
-        this.container.querySelector('#coin-prev').addEventListener('click', () => this.prev());
-        this.container.querySelector('#coin-next').addEventListener('click', () => this.next());
+        const rangeInput = this.container.querySelector('#coin-range');
+        const numberInput = this.container.querySelector('#coin-number-input');
+        const minusBtn = this.container.querySelector('#coin-btn-minus');
+        const plusBtn = this.container.querySelector('#coin-btn-plus');
         
-        // نقاط
-        this.container.querySelectorAll('.coin-dot').forEach(dot => {
-            dot.addEventListener('click', () => {
-                this.goTo(parseInt(dot.dataset.index));
-            });
+        // اسلایدر
+        rangeInput.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            this.setValue(val, 'slider');
+        });
+        
+        // ورودی عدد
+        numberInput.addEventListener('input', (e) => {
+            // فقط اعداد
+            let val = e.target.value.replace(/[^0-9]/g, '');
+            if (val === '') {
+                return; // اجازه به کاربر برای تایپ
+            }
+            const num = parseInt(val);
+            if (!isNaN(num)) {
+                // اگر کمتر از min، اجباری نکن (تا کاربر بتواند تایپ کند)
+                if (num >= this.min) {
+                    this.setValue(num, 'input');
+                }
+            }
+        });
+        
+        numberInput.addEventListener('blur', (e) => {
+            // در خروج از فیلد، اگر مقدار نامعتبر بود اصلاح کن
+            let val = parseInt(e.target.value) || this.min;
+            val = Helpers.clamp(val, this.min, 10000);
+            this.setValue(val, 'input');
+        });
+        
+        numberInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                numberInput.blur();
+            }
+        });
+        
+        // دکمه‌های +/- (پله‌ای)
+        minusBtn.addEventListener('click', () => {
+            const newVal = Math.max(this.min, this.value - this.getStepForCurrentValue());
+            this.setValue(newVal, 'button');
+        });
+        
+        plusBtn.addEventListener('click', () => {
+            const newVal = Math.min(10000, this.value + this.getStepForCurrentValue());
+            this.setValue(newVal, 'button');
         });
         
         // دکمه‌های سریع
         this.container.querySelectorAll('.quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                this.goTo(parseInt(btn.dataset.index));
+                const val = parseInt(btn.dataset.value);
+                this.setValue(val, 'quick');
             });
         });
-        
-        // اسلایدها
-        this.container.querySelectorAll('.coin-slide').forEach(slide => {
-            slide.addEventListener('click', () => {
-                const idx = parseInt(slide.dataset.index);
-                if (idx !== this.currentIndex) this.goTo(idx);
-            });
-        });
-        
-        // کیبورد
-        document.addEventListener('keydown', (e) => {
-            if (!this.container || !document.body.contains(this.container)) return;
-            const activeEl = document.activeElement;
-            if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) return;
-            
-            if (e.key === 'ArrowRight') this.prev();
-            if (e.key === 'ArrowLeft') this.next();
-        });
-        
-        // Swipe
-        this.attachSwipe();
     },
     
     /**
-     * پشتیبانی از Swipe
+     * دریافت گام مناسب بر اساس مقدار فعلی
      */
-    attachSwipe() {
-        const track = this.container.querySelector('#coin-slider-track');
-        let startX = 0;
-        let isDragging = false;
-        
-        track.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            isDragging = true;
-        }, { passive: true });
-        
-        track.addEventListener('touchend', (e) => {
-            if (!isDragging) return;
-            const endX = e.changedTouches[0].clientX;
-            const diff = endX - startX;
-            
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) this.prev();
-                else this.next();
-            }
-            isDragging = false;
-        }, { passive: true });
+    getStepForCurrentValue() {
+        if (this.value < 10) return 1;
+        if (this.value < 50) return 5;
+        if (this.value < 100) return 10;
+        if (this.value < 500) return 25;
+        return 50;
     },
     
     /**
-     * رفتن به اسلاید
+     * تنظیم مقدار
      */
-    goTo(index, animate = true) {
-        if (index < 0 || index >= this.coins.length) return;
+    setValue(val, source = 'manual') {
+        val = parseInt(val) || this.min;
         
-        this.currentIndex = index;
-        const track = this.container.querySelector('#coin-slider-track');
+        // اگر از سمت ورودی آمده، محدودیت اسلایدر را اعمال نکن
+        if (source === 'input' && val > this.max) {
+            this.value = val;
+        } else {
+            this.value = Helpers.clamp(val, this.min, Math.max(this.max, val));
+        }
         
-        // موقعیت
-        const trackWidth = track.offsetWidth;
-        track.style.transform = `translateX(${index * 100}%)`;
+        this.updateUI();
         
-        // به‌روزرسانی کلاس‌ها
-        this.container.querySelectorAll('.coin-slide').forEach((slide, i) => {
-            slide.classList.toggle('active', i === index);
-        });
-        
-        this.container.querySelectorAll('.coin-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === index);
-        });
-        
-        this.container.querySelectorAll('.quick-btn').forEach(btn => {
-            btn.classList.toggle('active', parseInt(btn.dataset.index) === index);
-        });
-        
-        this.updatePreview();
-        
+        // فراخوانی callback
         if (this.onChange) {
-            this.onChange(this.coins[index]);
+            this.onChange({
+                count: this.value,
+                price: this.value * APP_CONFIG.COIN_PRICE
+            });
         }
     },
     
     /**
-     * بعدی
+     * به‌روزرسانی UI
      */
-    next() {
-        if (this.currentIndex < this.coins.length - 1) {
-            this.goTo(this.currentIndex + 1);
-        }
-    },
-    
-    /**
-     * قبلی
-     */
-    prev() {
-        if (this.currentIndex > 0) {
-            this.goTo(this.currentIndex - 1);
-        }
-    },
-    
-    /**
-     * به‌روزرسانی پیش‌نمایش
-     */
-    updatePreview() {
-        const coin = this.coins[this.currentIndex];
-        const preview = this.container.querySelector('#coin-preview');
+    updateUI() {
+        const val = this.value;
         
-        preview.innerHTML = `
-            <div class="preview-box">
-                <div class="preview-item">
-                    <div class="preview-icon" style="background: ${coin.gradient}">
-                        <i class="ri-coins-line"></i>
-                    </div>
-                    <div>
-                        <div class="preview-label">تعداد سکه</div>
-                        <div class="preview-value">${Format.coin(coin.count)}</div>
-                    </div>
-                </div>
-                <div class="preview-item">
-                    <div class="preview-icon" style="background: linear-gradient(135deg, #10B981, #059669)">
-                        <i class="ri-money-dollar-circle-line"></i>
-                    </div>
-                    <div>
-                        <div class="preview-label">مبلغ قابل پرداخت</div>
-                        <div class="preview-value">${Format.price(coin.price)}</div>
-                    </div>
-                </div>
-                <div class="preview-item">
-                    <div class="preview-icon" style="background: linear-gradient(135deg, #8B5CF6, #7C3AED)">
-                        <i class="ri-gift-line"></i>
-                    </div>
-                    <div>
-                        <div class="preview-label">پکیج انتخاب شده</div>
-                        <div class="preview-value">${coin.title}</div>
-                    </div>
-                </div>
-            </div>
-        `;
+        // نمایش عدد
+        const displayNumber = this.container.querySelector('#coin-display-number');
+        const displayPrice = this.container.querySelector('#coin-display-price');
+        
+        if (displayNumber) {
+            displayNumber.textContent = Format.number(val);
+            displayNumber.classList.add('pulse-anim');
+            setTimeout(() => displayNumber.classList.remove('pulse-anim'), 300);
+        }
+        if (displayPrice) displayPrice.textContent = Format.price(val * APP_CONFIG.COIN_PRICE);
+        
+        // اسلایدر
+        const rangeInput = this.container.querySelector('#coin-range');
+        if (rangeInput) {
+            // اگر مقدار بیش از max باشد، اسلایدر را در max نگهدار
+            rangeInput.value = Math.min(val, this.max);
+            
+            // نوار پیشرفت
+            const progress = this.container.querySelector('#range-progress');
+            if (progress) {
+                const percent = ((Math.min(val, this.max) - this.min) / (this.max - this.min)) * 100;
+                progress.style.width = percent + '%';
+            }
+        }
+        
+        // ورودی عدد
+        const numberInput = this.container.querySelector('#coin-number-input');
+        if (numberInput && document.activeElement !== numberInput) {
+            numberInput.value = val;
+        }
+        
+        // دکمه‌های سریع
+        this.container.querySelectorAll('.quick-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.value) === val);
+        });
     },
     
     /**
-     * دریافت انتخاب فعلی
+     * دریافت مقدار فعلی
      */
     getValue() {
-        return this.coins[this.currentIndex];
+        return {
+            count: this.value,
+            price: this.value * APP_CONFIG.COIN_PRICE
+        };
     }
 };
