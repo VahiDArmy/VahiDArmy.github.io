@@ -1,5 +1,6 @@
 /* ============================================
    استایل‌های پایه
+   نسخه ۲.۰ - با پشتیبانی از Safe Area
    ============================================ */
 
 *,
@@ -27,6 +28,7 @@ body {
     direction: rtl;
     text-align: right;
     min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -44,7 +46,7 @@ body {
     color: var(--color-primary-900);
 }
 
-/* ---------- اسکرول‌بار سفارشی ---------- */
+/* ---------- اسکرول‌بار ---------- */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -65,7 +67,7 @@ body {
     background: var(--color-gray-400);
 }
 
-/* ---------- لینک‌ها ---------- */
+/* ---------- عناصر ---------- */
 a {
     color: var(--text-link);
     text-decoration: none;
@@ -76,7 +78,6 @@ a:hover {
     color: var(--color-primary-700);
 }
 
-/* ---------- دکمه‌ها ---------- */
 button {
     font-family: inherit;
     font-size: inherit;
@@ -92,7 +93,6 @@ button:disabled {
     opacity: 0.6;
 }
 
-/* ---------- ورودی‌ها ---------- */
 input,
 textarea,
 select {
@@ -109,26 +109,22 @@ textarea::placeholder {
     color: var(--text-tertiary);
 }
 
-/* ---------- تصاویر ---------- */
 img {
     max-width: 100%;
     height: auto;
     display: block;
 }
 
-/* ---------- لیست‌ها ---------- */
 ul,
 ol {
     list-style: none;
 }
 
-/* ---------- جدول‌ها ---------- */
 table {
     border-collapse: collapse;
     width: 100%;
 }
 
-/* ---------- عناوین ---------- */
 h1, h2, h3, h4, h5, h6 {
     font-weight: var(--font-weight-bold);
     line-height: var(--line-height-tight);
@@ -142,16 +138,13 @@ h4 { font-size: var(--font-size-xl); }
 h5 { font-size: var(--font-size-lg); }
 h6 { font-size: var(--font-size-base); }
 
-/* ---------- پاراگراف ---------- */
 p {
     color: var(--text-secondary);
     line-height: var(--line-height-relaxed);
 }
 
-/* ---------- مخفی کردن ---------- */
-.hidden {
-    display: none !important;
-}
+/* ---------- کلاس‌های کمکی ---------- */
+.hidden { display: none !important; }
 
 .visually-hidden {
     position: absolute;
@@ -165,7 +158,6 @@ p {
     border: 0;
 }
 
-/* ---------- کلاس‌های کمکی ---------- */
 .text-center { text-align: center; }
 .text-right { text-align: right; }
 .text-left { text-align: left; }
@@ -179,19 +171,10 @@ p {
 .text-info { color: var(--color-info-600); }
 .text-gold { color: var(--color-gold-600); }
 
-.font-thin { font-weight: var(--font-weight-thin); }
-.font-light { font-weight: var(--font-weight-light); }
-.font-normal { font-weight: var(--font-weight-normal); }
-.font-medium { font-weight: var(--font-weight-medium); }
-.font-semibold { font-weight: var(--font-weight-semibold); }
-.font-bold { font-weight: var(--font-weight-bold); }
-.font-extrabold { font-weight: var(--font-weight-extrabold); }
-
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .flex-row { flex-direction: row; }
 .flex-wrap { flex-wrap: wrap; }
-.flex-nowrap { flex-wrap: nowrap; }
 .items-center { align-items: center; }
 .items-start { align-items: flex-start; }
 .items-end { align-items: flex-end; }
@@ -214,7 +197,7 @@ p {
 
 .w-full { width: 100%; }
 .h-full { height: 100%; }
-.min-h-screen { min-height: 100vh; }
+.min-h-screen { min-height: 100vh; min-height: 100dvh; }
 
 .relative { position: relative; }
 .absolute { position: absolute; }
@@ -316,6 +299,7 @@ p {
 /* ---------- کانتینر اصلی ---------- */
 .app-container {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
@@ -323,13 +307,15 @@ p {
 .main-content {
     flex: 1;
     padding: var(--space-6);
+    padding-right: max(var(--space-6), env(safe-area-inset-right, 0px));
+    padding-left: max(var(--space-6), env(safe-area-inset-left, 0px));
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 0px));
     max-width: var(--container-max-width);
     margin: 0 auto;
     width: 100%;
     transition: margin-right var(--transition-normal);
 }
 
-/* وقتی سایدبار باز است */
 .app-container.has-sidebar .main-content {
     margin-right: var(--sidebar-width);
     max-width: calc(var(--container-max-width) - var(--sidebar-width));
@@ -355,12 +341,10 @@ p {
         font-size: 15px;
     }
     
-    :root {
-        --navbar-height: 3.5rem;
-    }
-    
     .main-content {
         padding: var(--space-3);
+        padding-right: max(var(--space-3), env(safe-area-inset-right, 0px));
+        padding-left: max(var(--space-3), env(safe-area-inset-left, 0px));
     }
     
     .app-container.has-sidebar .main-content {
