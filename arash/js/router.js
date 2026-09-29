@@ -1,10 +1,27 @@
 /* ============================================
-   روتر SPA
+   روتر SPA - نسخه ۲.۰
+   با ریدایرکت خودکار کاربران احراز شده
    ============================================ */
 
 const Router = {
     currentRoute: null,
     currentPage: null,
+    
+    // مسیرهای عمومی (بدون نیاز به ورود)
+    publicRoutes: ['welcome', 'auth'],
+    
+    // مسیرهای محافظت‌شده
+    protectedRoutes: [
+        'coins', 'payment', 'status', 'location', 'profile',
+        'admin-dashboard', 'admin-participants', 
+        'admin-settings', 'admin-reports'
+    ],
+    
+    // مسیرهای ادمین
+    adminRoutes: [
+        'admin-dashboard', 'admin-participants', 
+        'admin-settings', 'admin-reports'
+    ],
     
     /**
      * نقشه مسیرها
@@ -37,20 +54,50 @@ const Router = {
     async handleRoute() {
         let hash = window.location.hash.replace('#', '') || 'welcome';
         
-        // اگر کاربر وارد نشده و مسیر محافظت شده
-        const publicRoutes = ['welcome', 'auth'];
+        // بررسی احراز هویت
         const user = Storage.getUser();
+        const isAuthenticated = !!user;
+        const isAdmin = user?.role === 'admin';
         
-        if (!publicRoutes.includes(hash) && !user) {
-            this.navigate('auth');
+        // ═══════════════════════════════════════════
+        // قانون ۱: کاربر احراز شده نباید welcome یا auth ببیند
+        // ═══════════════════════════════════════════
+        if (isAuthenticated && (hash === 'welcome' || hash === 'auth')) {
+            // ادمین → داشبورد
+            if (isAdmin) {
+                this.navigate('admin-dashboard');
+                return;
+            }
+            
+            // کاربر عادی → بررسی تراکنش‌ها
+            // اگر تراکنشی دارد → status، وگرنه → coins
+            try {
+                const latestTx = await PaymentService.getLatestTransaction(user.id);
+                if (latestTx) {
+                    this.navigate('status');
+                } else {
+                    this.navigate('coins');
+                }
+            } catch (error) {
+                this.navigate('coins');
+            }
             return;
         }
         
-        // بررسی دسترسی ادمین
-        const adminRoutes = ['admin-dashboard', 'admin-participants', 'admin-settings', 'admin-reports'];
-        if (adminRoutes.includes(hash) && user?.role !== 'admin') {
+        // ═══════════════════════════════════════════
+        // قانون ۲: کاربر احراز نشده نباید به صفحات محافظت‌شده برود
+        // ═══════════════════════════════════════════
+        if (!isAuthenticated && this.protectedRoutes.includes(hash)) {
+            this.navigate('welcome');
+            return;
+        }
+        
+        // ═══════════════════════════════════════════
+        // قانون ۳: بررسی دسترسی ادمین
+        // ═══════════════════════════════════════════
+        if (this.adminRoutes.includes(hash) && !isAdmin) {
             Toast.error('دسترسی', 'شما دسترسی به این بخش ندارید');
-            this.navigate(user ? 'profile' : 'welcome');
+            this.navigate(isAuthenticated ? 'profile' : 'welcome');
             return;
         }
         
@@ -76,37 +123,31 @@ const Router = {
      */
     async renderPage(page) {
         const main = document.getElementById('main-content');
-        const app = document.getElementById('app');
         
-        // نمایش لودینگ ملایم
         if (main) {
             main.style.opacity = '0.5';
             main.style.transition = 'opacity 0.2s ease';
         }
         
-        // رندر نوار بالا
         Navbar.render();
         Sidebar.render();
         
-        // رندر محتوا
         try {
             const content = page.render();
             if (content) {
                 main.innerHTML = content;
             }
             
-            // مقداردهی
             if (page.init) {
                 await page.init();
             }
             
-            // اسکرول بالا
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
         } catch (error) {
             console.error('خطا در رندر صفحه:', error);
             main.innerHTML = `
-                <div class="empty-state">
+                <div class="empty-state" style="min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                     <div class="empty-state-icon"><i class="ri-error-warning-line"></i></div>
                     <h3 class="empty-state-title">خطا در بارگذاری صفحه</h3>
                     <p class="empty-state-text">متأسفانه خطایی رخ داد. لطفاً مجدداً تلاش کنید.</p>
@@ -127,7 +168,12 @@ const Router = {
      * ناوبری
      */
     navigate(route) {
-        window.location.hash = route;
+        if (window.location.hash === `#${route}`) {
+            // اگر همان مسیر است، دوباره رندر کن
+            this.handleRoute();
+        } else {
+            window.location.hash = route;
+        }
     },
     
     /**
