@@ -2292,6 +2292,49 @@
         if (savedToken) {
             setTimeout(connect, 400);
         }
+      async function downloadFolder(folderPath) {
+    const folderName = folderPath.split('/').filter(Boolean).pop() || 'folder';
+    const zip = new JSZip();
+
+    try {
+        // Fetch recursive repository tree
+        const res = await fetch(`https://api.github.com/repos/${state.owner}/${state.repo}/git/trees/${state.branch}?recursive=1`, {
+            headers: { 'Authorization': `token ${state.token}` }
+        });
+        if (!res.ok) throw new Error('Failed to fetch tree structure');
+        const data = await res.json();
+
+        const prefix = folderPath ? (folderPath.endsWith('/') ? folderPath : folderPath + '/') : '';
+        const files = data.tree.filter(item => item.type === 'blob' && (prefix === '' || item.path.startsWith(prefix)));
+
+        if (files.length === 0) {
+            alert('Folder is empty or contains no files.');
+            return;
+        }
+
+        for (const file of files) {
+            const relativePath = prefix ? file.path.slice(prefix.length) : file.path;
+            const blobRes = await fetch(`https://api.github.com/repos/${state.owner}/${state.repo}/git/blobs/${file.sha}`, {
+                headers: {
+                    'Authorization': `token ${state.token}`,
+                    'Accept': 'application/vnd.github.raw'
+                }
+            });
+            const blobData = await blobRes.arrayBuffer();
+            zip.file(relativePath, blobData);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(zipBlob);
+        link.download = `${folderName}.zip`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    } catch (err) {
+        console.error('Failed to download folder:', err);
+        alert('Error downloading folder: ' + err.message);
+    }
+}
     </script>
 </body>
 </html>
