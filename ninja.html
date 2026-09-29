@@ -528,6 +528,15 @@
             opacity: .5;
             cursor: not-allowed;
         }
+        /* Clipboard status pill inside the selection bar */
+        .selection-bar .clip-actions {
+            display: none;
+            gap: 6px;
+            padding-left: 8px;
+            margin-left: 4px;
+            border-left: 1px solid rgba(255,255,255,.14);
+        }
+        .selection-bar .clip-actions.show { display: inline-flex; }
 
         /* ══════════════════════════════════════════════════════════════
            CONTEXT MENU
@@ -539,7 +548,7 @@
             z-index: 9999;
             display: none;
             min-width: 212px;
-            max-width: 300px;
+            max-width: 320px;
             padding: 6px;
             border-radius: 14px;
             background: var(--menu);
@@ -580,6 +589,7 @@
         }
         .context-menu .item[hidden] { display: none; }
         .context-menu .item .ico { width: 18px; text-align: center; flex-shrink: 0; }
+        .context-menu .item .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .context-menu .item:hover,
         .context-menu .item:focus-visible {
             background: rgba(var(--accent-rgb), .17);
@@ -1152,24 +1162,26 @@
     <div class="selection-bar" id="selectionBar" role="toolbar" aria-label="Selection actions">
         <span class="sel-count" id="selCount"></span>
         <button type="button" class="primary" id="selDownload">⬇️ Download ZIP</button>
+        <button type="button" id="selCopy">📄 Copy</button>
+        <button type="button" id="selCut">✂️ Cut</button>
         <button type="button" id="selClear">✕ Clear</button>
     </div>
 
     <!-- Context menu -->
     <div class="context-menu" id="contextMenu" role="menu" tabindex="-1">
         <div class="ctx-title" id="ctxTitle"></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item><span class="ico">📂</span><span id="ctxOpenLabel">Open / Edit</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-needs-item><span class="ico">⬇️</span><span>Download</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="rename" data-file-only data-needs-item><span class="ico">✏️</span><span>Rename</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="copy" data-needs-item><span class="ico">📄</span><span>Copy</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="cut" data-needs-item><span class="ico">✂️</span><span>Cut</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="paste" data-clipboard-only><span class="ico">📋</span><span id="ctxPasteLabel">Paste</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="cancelClipboard" data-clipboard-only><span class="ico">🚫</span><span>Cancel</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="copyPath" data-needs-item><span class="ico">📋</span><span>Copy Path</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="copyRaw" data-file-only data-needs-item><span class="ico">🔗</span><span>Copy Raw URL</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="select" data-needs-item><span class="ico">☑️</span><span>Select</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item data-single-only><span class="ico">📂</span><span class="lbl" id="ctxOpenLabel">Open / Edit</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-needs-item data-single-only><span class="ico">⬇️</span><span class="lbl">Download</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="rename" data-file-only data-needs-item data-single-only><span class="ico">✏️</span><span class="lbl">Rename</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="copy" data-needs-item><span class="ico">📄</span><span class="lbl" id="ctxCopyLabel">Copy</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="cut" data-needs-item><span class="ico">✂️</span><span class="lbl" id="ctxCutLabel">Cut</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="paste" data-clipboard-only><span class="ico">📋</span><span class="lbl" id="ctxPasteLabel">Paste</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="cancelClipboard" data-clipboard-only><span class="ico">🚫</span><span class="lbl">Cancel</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="copyPath" data-needs-item data-single-only><span class="ico">📋</span><span class="lbl">Copy Path</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="copyRaw" data-file-only data-needs-item data-single-only><span class="ico">🔗</span><span class="lbl">Copy Raw URL</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="select" data-needs-item data-single-only><span class="ico">☑️</span><span class="lbl">Select</span></div>
         <div class="sep" data-needs-item></div>
-        <div class="item danger" role="menuitem" tabindex="-1" data-action="delete" data-needs-item><span class="ico">🗑️</span><span>Delete</span></div>
+        <div class="item danger" role="menuitem" tabindex="-1" data-action="delete" data-needs-item><span class="ico">🗑️</span><span class="lbl" id="ctxDeleteLabel">Delete</span></div>
     </div>
 
     <!-- Upload progress -->
@@ -1277,7 +1289,8 @@
         let cm = null;         // CodeMirror instance
         let ctx = null;        // open context menu: { item, card } — item/card null for background
         let loadSeq = 0;       // guards against out-of-order directory loads
-        // clipboard for copy/cut/paste: { item, mode: 'copy'|'cut' }
+
+        // Clipboard for copy/cut/paste: { items: [{...}], mode: 'copy'|'cut' }
         let clipboard = null;
 
         // ── Multi-select
@@ -1319,6 +1332,9 @@
         const contextMenu  = $('contextMenu');
         const ctxTitle     = $('ctxTitle');
         const ctxOpenLabel = $('ctxOpenLabel');
+        const ctxCopyLabel = $('ctxCopyLabel');
+        const ctxCutLabel  = $('ctxCutLabel');
+        const ctxDeleteLabel = $('ctxDeleteLabel');
 
         const upPanel   = $('uploadPanel');
         const upList    = $('upList');
@@ -1339,6 +1355,8 @@
         const selectionBar = $('selectionBar');
         const selCount     = $('selCount');
         const selDownload  = $('selDownload');
+        const selCopy      = $('selCopy');
+        const selCut       = $('selCut');
         const selClear     = $('selClear');
 
         const savedToken = localStorage.getItem('fm_token');
@@ -1528,7 +1546,8 @@
             );
             card.title = item.name;
             card.dataset.path = item.path;
-            if (clipboard && clipboard.mode === 'cut' && clipboard.item.path === item.path) {
+            if (clipboard && clipboard.mode === 'cut' &&
+                clipboard.items.some(i => i.path === item.path)) {
                 card.classList.add('cut');
             }
             const ext = item.name.includes('.') ? item.name.split('.').pop().toLowerCase() : '';
@@ -1695,6 +1714,16 @@
             }
         }
 
+        // Return the items a context action should apply to:
+        //   - if a selection is active → all selected items in the current grid
+        //   - otherwise → just the single clicked item
+        function getActionItems(item) {
+            if (selection.size > 0) {
+                return displayedItems.filter(i => selection.has(i.path));
+            }
+            return item ? [item] : [];
+        }
+
         // ── Download every selected item as a single .zip
         async function downloadSelection() {
             if (!selection.size) return;
@@ -1790,6 +1819,14 @@
 
         selDownload.onclick = downloadSelection;
         selClear.onclick = clearSelection;
+        selCopy.onclick = () => {
+            const items = getActionItems(null);
+            if (items.length) setClipboard(items, 'copy');
+        };
+        selCut.onclick = () => {
+            const items = getActionItems(null);
+            if (items.length) setClipboard(items, 'cut');
+        };
 
         selectBtn.onclick = () => setSelectMode(!selectMode);
 
@@ -1858,10 +1895,16 @@
             const hasItem = !!item;
             const isDir = hasItem && item.type === 'dir';
             const hasClip = !!clipboard;
+            // Multi-selection is active AND the clicked card is part of it
+            const isMulti = hasItem && selection.size > 1 && selection.has(item.path);
+            const selN = isMulti ? selection.size : 0;
 
             contextMenu.querySelectorAll('[data-needs-item]').forEach(el => { el.hidden = !hasItem; });
             contextMenu.querySelectorAll('[data-file-only]').forEach(el => {
-                el.hidden = !hasItem || isDir;
+                el.hidden = !hasItem || isDir || isMulti;
+            });
+            contextMenu.querySelectorAll('[data-single-only]').forEach(el => {
+                el.hidden = !hasItem || isMulti;
             });
             contextMenu.querySelectorAll('[data-clipboard-only]').forEach(el => { el.hidden = !hasClip; });
 
@@ -1871,20 +1914,37 @@
 
             if (hasItem) {
                 ctxOpenLabel.textContent = isDir ? 'Open' : 'Open / Edit';
-                ctxTitle.textContent = item.name;
-                ctxTitle.title = item.path;
+                if (isMulti) {
+                    ctxTitle.textContent = `${selN} items`;
+                    ctxTitle.title = `${selN} items selected`;
+                    ctxCopyLabel.textContent = `Copy ${selN} items`;
+                    ctxCutLabel.textContent  = `Cut ${selN} items`;
+                    ctxDeleteLabel.textContent = `Delete ${selN} items`;
+                } else {
+                    ctxTitle.textContent = item.name;
+                    ctxTitle.title = item.path;
+                    ctxCopyLabel.textContent = 'Copy';
+                    ctxCutLabel.textContent  = 'Cut';
+                    ctxDeleteLabel.textContent = 'Delete';
+                }
             } else {
                 ctxTitle.textContent = hasClip
-                    ? (clipboard.mode === 'cut' ? 'Cut · ' : 'Copied · ') + clipboard.item.name
+                    ? (clipboard.mode === 'cut' ? 'Cut · ' : 'Copied · ') + clipboardSummary()
                     : 'Folder';
                 ctxTitle.title = state.path || 'root';
             }
 
             const pasteLabel = $('ctxPasteLabel');
-            if (pasteLabel && clipboard) {
-                pasteLabel.textContent = clipboard.mode === 'cut'
-                    ? `Paste “${clipboard.item.name}” (move)`
-                    : `Paste “${clipboard.item.name}”`;
+            if (pasteLabel) {
+                if (clipboard) {
+                    const n = clipboard.items.length;
+                    const name = n === 1 ? `“${clipboard.items[0].name}”` : `${n} items`;
+                    pasteLabel.textContent = clipboard.mode === 'cut'
+                        ? `Paste ${name} (move)`
+                        : `Paste ${name}`;
+                } else {
+                    pasteLabel.textContent = 'Paste';
+                }
             }
 
             // measure at 0,0 so the width isn't squeezed by the viewport edge
@@ -1903,6 +1963,12 @@
             contextMenu.focus({ preventScroll: true });
         }
 
+        function clipboardSummary() {
+            if (!clipboard) return '';
+            const n = clipboard.items.length;
+            return n === 1 ? clipboard.items[0].name : `${n} items`;
+        }
+
         function hideContextMenu() {
             if (!ctx) return;
             contextMenu.classList.remove('open');
@@ -1910,22 +1976,37 @@
             ctx = null;
         }
 
-        function setClipboard(item, mode) {
-            clipboard = item ? { item, mode } : null;
+        function setClipboard(items, mode) {
+            if (!items || !items.length) {
+                clipboard = null;
+            } else {
+                // Store lightweight copies — we only need name/path/type/sha
+                clipboard = {
+                    items: items.map(i => ({
+                        name: i.name, path: i.path, type: i.type, sha: i.sha,
+                    })),
+                    mode,
+                };
+            }
             // refresh cut styling on visible cards
             document.querySelectorAll('.card.cut').forEach(c => c.classList.remove('cut'));
             if (clipboard && clipboard.mode === 'cut') {
+                const paths = new Set(clipboard.items.map(i => i.path));
                 document.querySelectorAll('.card[data-path]').forEach(el => {
-                    if (el.dataset.path === clipboard.item.path) el.classList.add('cut');
+                    if (paths.has(el.dataset.path)) el.classList.add('cut');
                 });
             }
-            flashStatus(
-                clipboard
-                    ? (mode === 'cut' ? `Cut “${item.name}”` : `Copied “${item.name}”`)
-                    : 'Clipboard cleared',
-                'ok',
-                1500
-            );
+            if (clipboard) {
+                const n = clipboard.items.length;
+                const label = n === 1 ? `“${clipboard.items[0].name}”` : `${n} items`;
+                flashStatus(
+                    mode === 'cut' ? `Cut ${label}` : `Copied ${label}`,
+                    'ok',
+                    1800
+                );
+            } else {
+                flashStatus('Clipboard cleared', 'ok', 1500);
+            }
         }
 
         contextMenu.addEventListener('click', e => {
@@ -2000,12 +2081,16 @@
                     }
                     break;
                 }
-                case 'copy':
-                    if (item) setClipboard(item, 'copy');
+                case 'copy': {
+                    const items = getActionItems(item);
+                    if (items.length) setClipboard(items, 'copy');
                     break;
-                case 'cut':
-                    if (item) setClipboard(item, 'cut');
+                }
+                case 'cut': {
+                    const items = getActionItems(item);
+                    if (items.length) setClipboard(items, 'cut');
                     break;
+                }
                 case 'paste':
                     await pasteClipboard();
                     break;
@@ -2032,48 +2117,74 @@
             }
         }
 
-        // ── Paste: copy or move (cut) into the current folder
+        // ── Paste: copy or move (cut) every clipboard item into the current folder
         async function pasteClipboard() {
             if (!clipboard) return;
-            const src = clipboard.item;
+            const srcItems = clipboard.items;
             const mode = clipboard.mode;
-            const destDir = state.path; // paste into current directory
-            const destPath = destDir ? `${destDir}/${src.name}` : src.name;
+            const destDir = state.path;
 
-            // same path → nothing to do
-            if (src.path === destPath) {
+            // Skip items that would collide with themselves
+            const toPaste = srcItems.filter(src => {
+                const destPath = destDir ? `${destDir}/${src.name}` : src.name;
+                if (src.path === destPath) return false;
+                if (src.type === 'dir' && (destPath === src.path || destPath.startsWith(src.path + '/'))) {
+                    return false;
+                }
+                return true;
+            });
+
+            if (!toPaste.length) {
                 flashStatus('Already here', 'ok', 1500);
                 if (mode === 'cut') setClipboard(null);
                 return;
             }
-            // can't move a folder into itself
-            if (src.type === 'dir' && (destPath === src.path || destPath.startsWith(src.path + '/'))) {
-                alert('Cannot paste a folder into itself.');
-                return;
-            }
 
             setStatus(mode === 'cut' ? 'Moving…' : 'Copying…', 'loading');
+
             try {
-                // conflict?
-                let taken = true;
-                try {
-                    await api('GET', `/contents/${enc(destPath)}${refQ()}`);
-                } catch (err) {
-                    if (err.status === 404) taken = false; else throw err;
+                // Check conflicts across all items up-front, ask once
+                const conflicts = [];
+                for (const src of toPaste) {
+                    const destPath = destDir ? `${destDir}/${src.name}` : src.name;
+                    try {
+                        await api('GET', `/contents/${enc(destPath)}${refQ()}`);
+                        conflicts.push(src);
+                    } catch (err) {
+                        if (err.status !== 404) throw err;
+                    }
                 }
-                if (taken) {
-                    const ok = confirm(`“${src.name}” already exists here. Overwrite?`);
-                    if (!ok) return;
+                if (conflicts.length) {
+                    const what = conflicts.length === 1
+                        ? `“${conflicts[0].name}”`
+                        : `${conflicts.length} of ${toPaste.length} items`;
+                    if (!confirm(`${what} already exist${conflicts.length === 1 ? 's' : ''} here. Overwrite?`)) {
+                        flashStatus('Paste cancelled', 'err', 1800);
+                        return;
+                    }
                 }
 
-                if (src.type === 'dir') {
-                    await pasteFolder(src, destPath, mode);
-                } else {
-                    await pasteFile(src, destPath, mode);
+                let done = 0;
+                const total = toPaste.length;
+                for (const src of toPaste) {
+                    const destPath = destDir ? `${destDir}/${src.name}` : src.name;
+                    setStatus(`${mode === 'cut' ? 'Moving' : 'Copying'} ${done + 1}/${total}: ${src.name}…`, 'loading');
+                    if (src.type === 'dir') {
+                        await pasteFolder(src, destPath, mode);
+                    } else {
+                        await pasteFile(src, destPath, mode);
+                    }
+                    done++;
                 }
 
                 if (mode === 'cut') setClipboard(null);
-                flashStatus(mode === 'cut' ? `Moved “${src.name}”` : `Pasted “${src.name}”`, 'ok');
+                flashStatus(
+                    mode === 'cut'
+                        ? `Moved ${done} item${done !== 1 ? 's' : ''}`
+                        : `Pasted ${done} item${done !== 1 ? 's' : ''}`,
+                    'ok',
+                    2200
+                );
             } catch (err) {
                 flashStatus('✗ Paste failed', 'err', 4000);
                 alert('Paste failed: ' + err.message);
@@ -2313,9 +2424,27 @@
                     });
                     flashStatus(`Deleted ${item.name}`, 'ok');
                 }
-                if (clipboard && (clipboard.item.path === item.path ||
-                    (item.type === 'dir' && clipboard.item.path.startsWith(item.path + '/')))) {
-                    clipboard = null;
+                // Drop the deleted item (and any of its children) from the clipboard
+                if (clipboard) {
+                    const filtered = clipboard.items.filter(i =>
+                        i.path !== item.path &&
+                        !(item.type === 'dir' && i.path.startsWith(item.path + '/'))
+                    );
+                    if (filtered.length !== clipboard.items.length) {
+                        if (!filtered.length) {
+                            clipboard = null;
+                        } else {
+                            clipboard = { items: filtered, mode: clipboard.mode };
+                        }
+                        // Refresh cut styling
+                        document.querySelectorAll('.card.cut').forEach(c => c.classList.remove('cut'));
+                        if (clipboard && clipboard.mode === 'cut') {
+                            const paths = new Set(clipboard.items.map(i => i.path));
+                            document.querySelectorAll('.card[data-path]').forEach(el => {
+                                if (paths.has(el.dataset.path)) el.classList.add('cut');
+                            });
+                        }
+                    }
                 }
                 if (selection.has(item.path)) {
                     selection.delete(item.path);
