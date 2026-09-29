@@ -1,0 +1,58 @@
+/* =========================================================
+   Mini AI log — terminal status lines
+   ========================================================= */
+.ai-log-mini {
+  position: fixed;
+  bottom: calc(var(--footer-h) + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  z-index: 130;
+  pointer-events: none;
+  user-select: none;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  max-width: min(480px, calc(100vw - 24px));
+  padding: 6px 12px 7px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-2);
+
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out), transform 0.35s var(--ease-out);
+  font-family: var(--font-mono);
+}
+
+.ai-log-mini.is-visible {
+  opacity: 0.92;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ai-log-mini-line {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--text-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-log-mini-time {
+  font-size: 9px;
+  color: var(--text-4);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+.ai-log-mini-line[data-state="done"] { color: var(--success); }
+.ai-log-mini-line[data-state="error"] { color: var(--danger); }
+.ai-log-mini-line[data-state="start"],
+.ai-log-mini-line[data-state="active"] { color: var(--cyan); }
+.ai-log-mini-line[data-state="info"] { color: var(--text-3); }
