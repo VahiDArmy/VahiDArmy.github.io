@@ -1,5 +1,6 @@
 /* ============================================
-   سرویس سکه
+   سرویس سکه - شادباش ازدواج
+   نسخه ۲.۰ - با پیام‌های اصلاح شده
    ============================================ */
 
 const CoinService = {
@@ -8,7 +9,6 @@ const CoinService = {
      */
     async getStats() {
         try {
-            // دریافت تراکنش‌های تایید شده
             const { data: transactions, error } = await supabaseClient
                 .from('coin_transactions')
                 .select('coin_count')
@@ -20,7 +20,6 @@ const CoinService = {
             const realCount = realCoins.length;
             const realSum = realCoins.reduce((a, b) => a + b, 0);
             
-            // افزودن آمار فیک
             const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;
             const fakeSum = APP_CONFIG.FAKE_AVERAGE * fakeCount;
             
@@ -42,7 +41,6 @@ const CoinService = {
             
         } catch (error) {
             console.error('خطا در دریافت آمار:', error);
-            // بازگشت به آمار فیک در صورت خطا
             return {
                 participantsCount: APP_CONFIG.FAKE_PARTICIPANTS,
                 totalCoins: APP_CONFIG.FAKE_AVERAGE * APP_CONFIG.FAKE_PARTICIPANTS,
@@ -55,7 +53,7 @@ const CoinService = {
     },
     
     /**
-     * دریافت لیست سکه‌ها (برای اسلایدر)
+     * دریافت پکیج‌های پیشنهادی (برای نمایش سریع)
      */
     getCoinTiers() {
         return [
@@ -69,15 +67,15 @@ const CoinService = {
                 icon: 'ri-heart-line',
                 color: '#EC4899',
                 gradient: 'linear-gradient(135deg, #F472B6 0%, #EC4899 100%)',
-                features: ['ثبت نام در طرح', 'دعوت به صبحانه', 'یادگاری از ازدواج']
+                features: ['ثبت‌نام در طرح', 'دعوت به صبحانه', 'یادگاری از ازدواج']
             },
             {
                 id: 2,
-                count: 3,
+                count: 5,
                 title: 'هدیه صمیمانه',
-                subtitle: 'سه گام به سوی شادی',
-                description: 'سه سکه برای سه آرزوی خوب',
-                price: APP_CONFIG.COIN_PRICE * 3,
+                subtitle: 'پنج ستاره برای این جشن',
+                description: 'پنج سکه برای پنج آرزوی خوب',
+                price: APP_CONFIG.COIN_PRICE * 5,
                 icon: 'ri-gift-line',
                 color: '#8B5CF6',
                 gradient: 'linear-gradient(135deg, #A78BFA 0%, #8B5CF6 100%)',
@@ -85,11 +83,11 @@ const CoinService = {
             },
             {
                 id: 3,
-                count: 5,
-                title: 'هدیه طلایی',
-                subtitle: 'پنج ستاره برای عروس و داماد',
-                description: 'پنج سکه، پنج آرزوی طلایی',
-                price: APP_CONFIG.COIN_PRICE * 5,
+                count: 10,
+                title: 'هدیه درخشان',
+                subtitle: 'ده سکه برای یادگاری ماندگار',
+                description: 'ده سکه، یک هدیه باشکوه',
+                price: APP_CONFIG.COIN_PRICE * 10,
                 icon: 'ri-vip-crown-line',
                 color: '#F59E0B',
                 gradient: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)',
@@ -97,11 +95,11 @@ const CoinService = {
             },
             {
                 id: 4,
-                count: 10,
-                title: 'هدیه ویژه',
-                subtitle: 'ده سکه برای ده سال خوشبختی',
-                description: 'ده سکه، ده آرزوی درخشان',
-                price: APP_CONFIG.COIN_PRICE * 10,
+                count: 25,
+                title: 'هدیه نفیس',
+                subtitle: 'بیست و پنج سکه برای یک جشن بی‌نظیر',
+                description: 'یک هدیه خاص و ارزشمند',
+                price: APP_CONFIG.COIN_PRICE * 25,
                 icon: 'ri-medal-2-line',
                 color: '#10B981',
                 gradient: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
@@ -109,11 +107,11 @@ const CoinService = {
             },
             {
                 id: 5,
-                count: 20,
+                count: 50,
                 title: 'هدیه استثنایی',
-                subtitle: 'بیست سکه برای بیست سال عشق',
+                subtitle: 'پنجاه سکه برای شادی بزرگ',
                 description: 'یک هدیه به یادماندنی',
-                price: APP_CONFIG.COIN_PRICE * 20,
+                price: APP_CONFIG.COIN_PRICE * 50,
                 icon: 'ri-trophy-line',
                 color: '#EF4444',
                 gradient: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
@@ -121,11 +119,11 @@ const CoinService = {
             },
             {
                 id: 6,
-                count: 50,
+                count: 100,
                 title: 'هدیه افسانه‌ای',
-                subtitle: 'پنجاه سکه، پنجاه آرزوی بزرگ',
+                subtitle: 'صد سکه، صد آرزوی بزرگ',
                 description: 'بزرگ‌ترین هدیه ممکن',
-                price: APP_CONFIG.COIN_PRICE * 50,
+                price: APP_CONFIG.COIN_PRICE * 100,
                 icon: 'ri-fire-line',
                 color: '#6366F1',
                 gradient: 'linear-gradient(135deg, #818CF8 0%, #6366F1 100%)',
