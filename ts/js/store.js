@@ -170,16 +170,6 @@ const Store = (function () {
     return data;
   }
 
-  // --- تابع جدید: به‌روزرسانی نشانک خواندن ---
-  async function updateBookmark(surah, ayah) {
-    const { error } = await sb
-      .from('site_meta')
-      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
-      .eq('id', 1);
-    if (error) throw error;
-  }
-
-  // پیشرفت بر اساس «نشانک خواندن» محاسبه می‌شود
   async function getProgress() {
     const meta = await getSiteMeta();
     const readIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
@@ -201,8 +191,18 @@ const Store = (function () {
     };
   }
 
-  // حذف شده: advanceBookmarkIfAhead دیگر استفاده نمی‌شود
-  // چون نشانک فقط با کلیک کاربر به‌روز می‌شود
+  async function advanceBookmarkIfAhead(surah, ayah) {
+    const meta = await getSiteMeta();
+    const newIndex = await QuranData.cumulativeIndex(surah, ayah);
+    const currentIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
+    if (newIndex <= currentIndex) return false;
+    const { error } = await sb
+      .from('site_meta')
+      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
+      .eq('id', 1);
+    if (error) throw error;
+    return true;
+  }
 
   async function endRound() {
     const round = await getCurrentRound();
@@ -213,6 +213,84 @@ const Store = (function () {
     if (error) throw error;
     return round + 1;
   }
+
+  // ---------- توابع مربوط به بررسی هوشمند ----------
+  async function getAiReview(tafsirId) {
+    const { data, error } = await sb
+      .from('ai_reviews')
+      .select('*')
+      .eq('tafsir_id', tafsirId)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async function saveAiReview(tafsirId, content) {
+    const { data: { session } } = await sb.auth.getSession();
+    console.log('[saveAiReview] session:', session?.user?.id, 'expires_at:', session?.expires_at);
+
+    if (!session?.user?.id) {
+      throw new Error('برای ثبت بررسی هوشمند باید وارد حساب شوید');
+    }
+
+    const existing = await getAiReview(tafsirId);
+    if (existing) {
+      const { data, error } = await sb
+        .from('ai_reviews')
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    }
+
+    const { data, error } = await sb
+      .from('ai_reviews')
+      .insert({
+        tafsir_id: tafsirId,
+        content,
+        user_id: session.user.id,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function deleteAiReview(tafsirId) {
+    const { error } = await sb.from('ai_reviews').delete().eq('tafsir_id', tafsirId);
+    if (error) throw error;
+  }
+
+async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
+  }
+
+  const fn = localStorage.getItem('ai_fn')
+    || CONFIG.AI_FUNCTION_DEFAULT
+    || 'ai-review';
+
+  const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
+
+  // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
+  return {
+    content: json.content,
+    model: json.model || null,
+  };
+}
 
   return {
     getLatestTafsir,
@@ -232,8 +310,12 @@ const Store = (function () {
     searchTafsirs,
     getCurrentRound,
     getSiteMeta,
-    updateBookmark,
     getProgress,
+    advanceBookmarkIfAhead,
     endRound,
+    getAiReview,
+    saveAiReview,
+    deleteAiReview,
+    callAiReview,
   };
 })();

@@ -1,8 +1,10 @@
 /* ==========================================================================
-   Components
+   Components — Telegram Liquid Glass (High Transparency)
    ========================================================================== */
 
-/* ---- Buttons ---- */
+/* ==========================================================================
+   1. BUTTONS
+   ========================================================================== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -19,27 +21,33 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
 }
-.btn:hover { border-color: var(--neon); color: var(--neon); box-shadow: 0 0 20px var(--neon-glow); }
+.btn:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
 .btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn--primary {
   background: var(--neon);
   border-color: var(--neon);
   color: #06110E;
   font-weight: 700;
-  box-shadow: 0 0 0 rgba(0,0,0,0), 0 0 20px var(--neon-glow);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 .btn--primary:hover {
   color: #06110E;
-  box-shadow: 0 0 32px var(--neon-glow), 0 0 60px var(--neon-glow);
+  box-shadow: 0 0 32px var(--neon-glow), 0 0 60px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
 }
 
 .btn--ghost {
   background: transparent;
   border-color: transparent;
   color: var(--text-dim);
+  box-shadow: none;
 }
 .btn--ghost:hover { background: var(--surface); }
 
@@ -49,41 +57,106 @@
   padding: 0;
   border-radius: 50%;
 }
-
 .btn--sm { padding: 7px 14px; font-size: 0.8rem; }
-.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* ---- Card (glass) ---- */
-.card {
-  background: var(--glass-bg);
+/* دکمهٔ لینک وقتی نشانگر روی یک [[سوره:آیه]] است */
+#openLinkToolBtn.is-editing-link {
+  border-color: var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+#openLinkToolBtn.is-editing-link:hover {
+  border-color: var(--violet);
+  color: var(--violet);
+  box-shadow: 0 0 24px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+/* نشانگر روی لینک — کمی تأکید روی textarea */
+#tafsirContent.has-link-under-cursor {
+  border-color: var(--violet);
+  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+
+/* ==========================================================================
+   2. GLASS SHELL (Shared Card Pattern)
+   ========================================================================== */
+.card,
+.progress-hero,
+.ayah-frame__inner,
+.tafsir-card,
+.modal-card,
+.toast__inner {
+  position: relative;
+  background: linear-gradient(165deg, var(--glass-bg-top) 0%, var(--glass-bg) 50%, var(--glass-bg-bottom) 100%);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
   border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
+  box-shadow: var(--shadow-glass), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+  isolation: isolate;
 }
 
-/* ---- Progress hero ---- */
+/* Stronger blur for floating overlays */
+.modal-card,
+.toast__inner {
+  backdrop-filter: var(--glass-blur-strong);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+}
+
+/* Specular top-edge highlight */
+.card::before,
+.progress-hero::before,
+.ayah-frame__inner::before,
+.tafsir-card::before,
+.modal-card::before,
+.comment::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(175deg, var(--glass-specular) 0%, rgba(255, 255, 255, 0.18) 28%, transparent 55%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 1;
+}
+.comment::before { opacity: 0.4; }
+
+.card {
+  border-radius: var(--radius-md);
+  padding: 20px;
+}
+.tafsir-card {
+  margin-top: 14px;
+  border-radius: var(--radius-md);
+  padding: 18px;
+}
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-glass-lg), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+   3. PROGRESS HERO
+   ========================================================================== */
 .progress-hero {
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 16px 18px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
 }
-
-.progress-hero__text {
-  flex: 1;
-  min-width: 0;
-}
-
+.progress-hero__text { flex: 1; min-width: 0; }
 .progress-hero__title-row {
   display: flex;
   align-items: center;
@@ -91,7 +164,6 @@
   gap: 12px;
   flex-wrap: wrap;
 }
-
 .progress-hero__title {
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -100,14 +172,12 @@
   align-items: center;
   gap: 4px;
 }
-
 .progress-hero__actions {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
 }
-
 .progress-hero__actions .btn {
   padding: 4px 10px;
   font-size: 0.7rem;
@@ -115,7 +185,6 @@
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
-
 .progress-hero__actions .bookmark-btn,
 .progress-hero__actions .go-to-btn {
   width: 28px;
@@ -126,13 +195,8 @@
   align-items: center;
   justify-content: center;
 }
-
 .progress-hero__actions .bookmark-btn svg,
-.progress-hero__actions .go-to-btn svg {
-  width: 14px;
-  height: 14px;
-}
-
+.progress-hero__actions .go-to-btn svg { width: 14px; height: 14px; }
 .progress-hero__count {
   font-size: 1.05rem;
   font-weight: 700;
@@ -140,94 +204,7 @@
   margin: 4px 0 0;
 }
 
-/* دکمه نشانک با درخشش مخصوص */
-.bookmark-btn {
-  position: relative;
-  border-color: var(--neon-dim);
-  color: var(--neon);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: all 0.3s ease;
-  box-shadow: 0 0 0 rgba(0,0,0,0);
-}
-
-.bookmark-btn svg {
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 0 2px var(--neon-glow));
-}
-
-.bookmark-btn:hover {
-  border-color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
-  transform: scale(1.05);
-}
-
-.bookmark-btn:hover svg {
-  filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow));
-}
-
-.bookmark-btn:active {
-  transform: scale(0.92);
-}
-
-.bookmark-btn::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  padding: 2px;
-  background: conic-gradient(
-    from var(--angle, 0deg),
-    transparent 0deg,
-    transparent 250deg,
-    var(--neon-glow) 280deg,
-    var(--neon) 320deg,
-    var(--neon-glow) 350deg,
-    transparent 360deg
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-}
-
-.bookmark-btn:hover::after {
-  opacity: 1;
-}
-
-/* دکمه رفتن به آیه جاری (نشانگر) */
-.go-to-btn {
-  border-color: var(--violet);
-  color: var(--violet);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  transition: all 0.3s ease;
-}
-
-.go-to-btn svg {
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 0 2px var(--violet-glow));
-}
-
-.go-to-btn:hover {
-  border-color: var(--violet);
-  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow);
-  transform: scale(1.05);
-}
-
-.go-to-btn:hover svg {
-  filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow));
-}
-
-.go-to-btn:active {
-  transform: scale(0.92);
-}
-
-/* ---- Progress ring ---- */
+/* Progress Ring */
 .progress-ring {
   position: relative;
   width: 62px;
@@ -235,10 +212,7 @@
   flex-shrink: 0;
 }
 .progress-ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-.progress-ring circle {
-  fill: none;
-  stroke-width: 5;
-}
+.progress-ring circle { fill: none; stroke-width: 5; }
 .progress-ring .ring-bg { stroke: var(--border); }
 .progress-ring .ring-fg {
   stroke: var(--neon);
@@ -257,37 +231,37 @@
   color: var(--neon);
 }
 
-/* ---- Mobile: maximize width, minimal margins ---- */
-@media (max-width: 560px) {
-  .container { padding-left: 10px; padding-right: 10px; }
-  .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 18px 12px 14px; }
-  .progress-hero {
-    padding: 12px 14px;
-    gap: 10px;
-  }
-  .progress-hero__title-row {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .progress-hero__actions .btn {
-    font-size: 0.65rem;
-    padding: 3px 8px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn,
-  .progress-hero__actions .go-to-btn {
-    width: 24px;
-    height: 24px;
-  }
-  .progress-hero__actions .bookmark-btn svg,
-  .progress-hero__actions .go-to-btn svg {
-    width: 12px;
-    height: 12px;
-  }
+/* Bookmark & Go-To Buttons */
+.bookmark-btn, .go-to-btn {
+  position: relative;
+  background: var(--glass-bg-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
 }
+.bookmark-btn svg, .go-to-btn svg { transition: all 0.3s ease; }
+.bookmark-btn:active, .go-to-btn:active { transform: scale(0.92); }
+.bookmark-btn { border-color: var(--neon-dim); color: var(--neon); }
+.bookmark-btn svg { filter: drop-shadow(0 0 2px var(--neon-glow)); }
+.bookmark-btn:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  transform: scale(1.05);
+}
+.bookmark-btn:hover svg { filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow)); }
+.go-to-btn { border-color: var(--violet); color: var(--violet); }
+.go-to-btn svg { filter: drop-shadow(0 0 2px var(--violet-glow)); }
+.go-to-btn:hover {
+  border-color: var(--violet);
+  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  transform: scale(1.05);
+}
+.go-to-btn:hover svg { filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow)); }
 
-/* ---- Sticky ayah ---- */
+/* ==========================================================================
+   4. AYAH FRAME & TRANSLATION
+   ========================================================================== */
 .sticky-ayah {
   position: sticky;
   top: 66px;
@@ -297,11 +271,6 @@
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
-@media (max-width: 560px) {
-  .sticky-ayah { top: 60px; }
-}
-
-/* ---- Edit mode banner on the form ---- */
 .edit-banner {
   display: flex;
   align-items: center;
@@ -322,9 +291,6 @@
   font-size: 0.78rem;
 }
 
-/* ============================================================
-   Ayah Frame
-   ============================================================ */
 .ayah-frame {
   position: relative;
   border-radius: var(--radius-lg);
@@ -333,7 +299,6 @@
   overflow: visible;
   box-shadow: var(--shadow-glass);
 }
-
 .ayah-frame::before {
   content: '';
   position: absolute;
@@ -341,28 +306,20 @@
   border-radius: calc(var(--radius-lg) + 2px);
   padding: 3px;
   background: conic-gradient(
-    from var(--angle, 0deg),
-    transparent 0deg,
-    transparent 220deg,
-    var(--neon-glow) 240deg,
-    var(--neon) 280deg,
-    #ffffff 300deg,
-    var(--neon) 320deg,
-    var(--neon-glow) 340deg,
-    transparent 360deg
+    from var(--angle, 0deg), transparent 0deg, transparent 220deg,
+    var(--neon-glow) 240deg, var(--neon) 280deg, #ffffff 300deg,
+    var(--neon) 320deg, var(--neon-glow) 340deg, transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  mask-composite: exclude;
+          mask-composite: exclude;
   filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 20px var(--neon-glow));
   opacity: 0;
   transition: opacity 0.6s ease, --angle 0.15s linear;
   pointer-events: none;
 }
-
-.ayah-frame.is-comet-active::before {
-  opacity: 1;
-}
+.ayah-frame.is-comet-active::before { opacity: 1; }
 
 @property --angle {
   syntax: '<angle>';
@@ -370,32 +327,21 @@
   inherits: false;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ayah-frame::before { display: none; }
-}
-
 .ayah-frame__inner {
-  position: relative;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   border-radius: calc(var(--radius-lg) - 2px);
   padding: 22px 18px 16px;
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 1px var(--glass-border);
-  border: 1px solid transparent;
 }
-
 .ayah-frame__ref {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+  position: relative;
+  z-index: 2;
 }
-.ayah-frame__ref-text {
-  font-size: 0.78rem;
-  color: var(--text-faint);
-}
+.ayah-frame__ref-text { font-size: 0.78rem; color: var(--text-faint); }
 .ayah-frame__ref-text b { color: var(--neon); font-weight: 700; }
+
 .copy-ayah-btn {
   display: inline-flex;
   align-items: center;
@@ -413,43 +359,21 @@
 }
 .copy-ayah-btn:hover { color: var(--neon); }
 
-/* ---- Ayah-to-ayah reference link ---- */
-.ayah-link {
-  color: var(--violet);
-  font-weight: 700;
-  border-bottom: 1px dashed var(--violet);
-  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
-  transition: text-shadow 0.2s ease, color 0.2s ease;
+/* Readable text surfaces */
+.ayah-frame__arabic,
+.tafsir-card__body,
+.translation-content p,
+.ravan-tafsir-content,
+.ai-review-text {
+  background: var(--read-bg);
+  border: 1px solid var(--read-border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  transition: background 0.2s ease;
 }
-.ayah-link:hover {
-  color: #C9BFFF;
-  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
-}
-
-/* ---- Mark light ---- */
-.mark-toggle {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: transparent;
-  padding: 0;
-  margin-inline-end: 6px;
-  vertical-align: middle;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-span.mark-toggle { cursor: default; }
-.mark-toggle.is-marked {
-  background: #FFB020;
-  border-color: #FFB020;
-  box-shadow:
-    0 0 3px 1px #FFB020,
-    0 0 10px 3px rgba(255, 176, 32, 0.75),
-    0 0 20px 7px rgba(255, 176, 32, 0.4);
-}
-button.mark-toggle:hover { border-color: #FFB020; }
+.ayah-frame__arabic:hover,
+.tafsir-card__body:hover { background: var(--read-bg-strong); }
 
 .ayah-frame__arabic {
   font-family: var(--font-quran);
@@ -458,9 +382,12 @@ button.mark-toggle:hover { border-color: #FFB020; }
   text-align: center;
   color: var(--text);
   direction: rtl;
+  position: relative;
+  z-index: 2;
+  padding: 8px 12px;
 }
 
-/* ---- Translation collapse bar ---- */
+/* Translation bar */
 .translation-bar {
   margin-top: 14px;
   border-top: 1px dashed var(--border);
@@ -494,30 +421,109 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .translation-content p {
   margin: 4px 0 10px;
   padding: 12px 14px;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-radius: var(--radius-sm);
   color: var(--text-dim);
   font-size: 0.92rem;
   line-height: 1.9;
 }
 
-/* ---- Selects ---- */
+/* Ayah Navigation */
+.ayah-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.ayah-nav .btn { flex: 1; }
+
+/* Mark Light */
+.mark-toggle {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  padding: 0;
+  margin-inline-end: 6px;
+  vertical-align: middle;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+span.mark-toggle { cursor: default; }
+.mark-toggle.is-marked {
+  background: #FFB020;
+  border-color: #FFB020;
+  box-shadow: 0 0 3px 1px #FFB020, 0 0 10px 3px rgba(255, 176, 32, 0.75), 0 0 20px 7px rgba(255, 176, 32, 0.4);
+}
+button.mark-toggle:hover { border-color: #FFB020; }
+
+/* ==========================================================================
+   5. FORMS & INPUTS
+   ========================================================================== */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.field textarea,
+.field input[type="text"],
+.name-row input,
+.comment-form input[type="text"],
+.ravan-tafsir-manual-input input {
+  width: 100%;
+  background: var(--read-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.field textarea,
+.field input[type="text"] {
+  padding: 12px 14px;
+  font-size: 0.92rem;
+  line-height: 1.8;
+}
+.name-row input,
+.comment-form input[type="text"],
+.ravan-tafsir-manual-input input {
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+.field textarea { min-height: 110px; resize: vertical; }
+.field textarea:focus { min-height: 280px; }
+
+.field textarea:focus,
+.field input[type="text"]:focus,
+.name-row input:focus,
+.comment-form input[type="text"]:focus,
+.ravan-tafsir-manual-input input:focus {
+  border-color: var(--neon);
+  outline: none;
+  background: var(--read-bg-strong);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+}
+
+.name-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.name-row input { flex: 1; }
+
+/* Selects */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 10px;
 }
-.select-wrap {
-  position: relative;
-}
+.select-wrap { position: relative; }
 .select-wrap select {
   width: 100%;
   appearance: none;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  background: var(--read-bg);
   border: 1px solid var(--glass-border);
   color: var(--text);
   padding: 12px 14px;
@@ -527,16 +533,13 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
 }
-.select-wrap select:hover {
-  border-color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow);
-}
+.select-wrap select:hover,
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 24px var(--neon-glow);
+  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap::after {
   content: '';
@@ -552,69 +555,18 @@ button.mark-toggle:hover { border-color: #FFB020; }
   pointer-events: none;
   transition: border-color 0.2s ease;
 }
-.select-wrap:hover::after {
-  border-color: var(--neon);
-}
-
+.select-wrap:hover::after { border-color: var(--neon); }
 .select-wrap select option {
-  background: var(--bg-elevated);
+  background: var(--bg-solid);
   color: var(--text);
   padding: 8px 12px;
   font-family: var(--font-ui);
   font-size: 0.88rem;
 }
-.select-wrap select optgroup {
-  background: var(--bg-elevated);
-  color: var(--text-dim);
-}
-.select-wrap select::-webkit-listbox {
-  background: var(--bg-elevated);
-  color: var(--text);
-}
-.select-wrap select::-webkit-scrollbar {
-  width: 8px;
-  background: var(--bg-elevated);
-}
-.select-wrap select::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-.select-wrap select::-webkit-scrollbar-thumb:hover {
-  background: var(--neon-dim);
-}
-.select-wrap select:-moz-listbox {
-  background: var(--bg-elevated) !important;
-  color: var(--text) !important;
-}
-.select-wrap select option:checked {
-  background: var(--neon-glow);
-  color: var(--neon);
-}
-.select-wrap select option:hover {
-  background: var(--neon-glow);
-  color: var(--neon);
-}
 
-/* ---- Nav buttons ---- */
-.ayah-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 16px;
-}
-.ayah-nav .btn { flex: 1; }
-
-/* ---- Tafsir card ---- */
-.tafsir-card {
-  margin-top: 14px;
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  box-shadow: var(--shadow-card), inset 0 1px 0 var(--glass-highlight);
-}
+/* ==========================================================================
+   6. TAFSIR CARDS & TAGS
+   ========================================================================== */
 .tafsir-card__meta {
   display: flex;
   align-items: center;
@@ -622,6 +574,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
   margin-bottom: 10px;
   font-size: 0.75rem;
   color: var(--text-faint);
+  position: relative;
+  z-index: 2;
 }
 .tafsir-card__round {
   background: var(--violet-glow);
@@ -635,6 +589,10 @@ button.mark-toggle:hover { border-color: #FFB020; }
   line-height: 2;
   color: var(--text);
   white-space: pre-wrap;
+  position: relative;
+  z-index: 2;
+  padding: 12px 14px;
+  margin: 0;
 }
 .tafsir-card__body.is-clamped {
   display: -webkit-box;
@@ -649,6 +607,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: 0.8rem;
   cursor: pointer;
   padding: 6px 0 0;
+  position: relative;
+  z-index: 2;
 }
 .tafsir-card__actions {
   display: flex;
@@ -656,9 +616,11 @@ button.mark-toggle:hover { border-color: #FFB020; }
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border-soft);
+  position: relative;
+  z-index: 2;
 }
 
-/* ---- Tags ---- */
+/* Tags */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
@@ -676,88 +638,47 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-weight: 600;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
-a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glow); }
+a.tag-pill:hover {
+  filter: brightness(1.25);
+  box-shadow: 0 0 16px var(--neon-glow);
+}
 .tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
-.tag-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
+.tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-cloud .tag-pill { font-size: 0.82rem; padding: 6px 14px; }
-
-.tag-mention {
-  text-decoration: none;
-  font-weight: 600;
-  transition: filter 0.2s ease;
-}
+.tag-mention { text-decoration: none; font-weight: 600; transition: filter 0.2s ease; }
 .tag-mention:hover { filter: brightness(1.3); }
 
-/* ---- Textarea / form ---- */
-.field { margin-bottom: 14px; }
-.field label {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  margin-bottom: 6px;
+/* Ayah-to-ayah reference link */
+.ayah-link {
+  color: var(--violet);
+  font-weight: 700;
+  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
+  transition: text-shadow 0.2s ease, color 0.2s ease;
 }
-.field textarea, .field input[type="text"] {
-  width: 100%;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  color: var(--text);
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 0.92rem;
-  line-height: 1.8;
-  resize: vertical;
-  transition: border-color 0.2s ease, min-height 0.25s ease;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-.field textarea {
-  min-height: 110px;
-}
-.field textarea:focus {
-  min-height: 280px;
-}
-.field textarea:focus, .field input[type="text"]:focus {
-  border-color: var(--neon);
-  outline: none;
-  box-shadow: 0 0 20px var(--neon-glow);
+.ayah-link:hover {
+  color: #C9BFFF;
+  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
 }
 
-.name-row { display: flex; gap: 8px; margin-bottom: 10px; }
-.name-row input { flex: 1; }
-.name-row input,
-.comment-form input[type="text"] {
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  color: var(--text);
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  transition: border-color 0.2s ease;
+/* ==========================================================================
+   7. COMMENTS
+   ========================================================================== */
+.comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
 }
-.name-row input:focus,
-.comment-form input[type="text"]:focus {
-  border-color: var(--neon);
-  outline: none;
-}
-
-/* ---- Comments ---- */
-.comment-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
 .comment {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  position: relative;
+  background: var(--read-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
+  isolation: isolate;
 }
 .comment__head {
   display: flex;
@@ -767,9 +688,307 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 }
 .comment__name { color: var(--neon); font-weight: 600; }
 .comment__date { color: var(--text-faint); }
-.comment__body { font-size: 0.88rem; color: var(--text-dim); line-height: 1.8; white-space: pre-wrap; }
+.comment__body {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+  white-space: pre-wrap;
+}
 
-/* ---- Empty state ---- */
+/* ==========================================================================
+   8. MODALS & AI REVIEW
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(4, 6, 10, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+/* AI Review Button */
+.ai-review-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--violet);
+  color: var(--violet);
+  background: var(--glass-bg-strong);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.ai-review-btn:hover { box-shadow: 0 0 16px var(--violet-glow); transform: scale(1.06); }
+.ai-review-btn svg { width: 16px; height: 16px; }
+
+/* AI Review Modal Specifics */
+.ai-review-modal {
+  width: min(96vw, 1100px);
+  max-width: 1100px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 22px;
+  overflow: hidden;
+}
+.ai-review-modal .modal-card__head {
+  flex-shrink: 0;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--glass-border);
+}
+#aiReviewContent, #aiReviewEdit {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  padding-inline-end: 6px;
+}
+.ai-review-modal .ai-review-actions {
+  flex-shrink: 0;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border);
+  gap: 8px;
+}
+.ai-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.ai-review-loading { padding: 10px 0 6px; }
+
+.ai-fn-select {
+  margin-inline-start: auto;
+  margin-inline-end: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.ai-fn-select:focus { outline: none; border-color: var(--violet); }
+
+.ai-review-model-badge {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+  padding: 4px 0 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  direction: ltr;
+  text-align: left;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 10px;
+}
+
+/* AI External Links */
+.ai-ext-links {
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ai-ext-links__label {
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  margin-inline-end: 4px;
+}
+.ai-ext-btn {
+  display: inline-block;
+  background: var(--surface-2, rgba(255,255,255,0.06));
+  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  padding: 5px 10px;
+  color: var(--text);
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.ai-ext-btn:hover { border-color: var(--violet, #8b5cf6); color: var(--violet, #8b5cf6); }
+
+/* Markdown Inside AI Review */
+.ai-review-text {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.ai-review-text > *:first-child { margin-top: 0; }
+.ai-review-text > *:last-child { margin-bottom: 0; }
+
+.ai-review-text h1, .ai-review-text h2, .ai-review-text h3, .ai-review-text h4, .ai-review-text h5 {
+  margin: 1.1em 0 0.5em;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text);
+}
+.ai-review-text h1 { font-size: 1.2rem; }
+.ai-review-text h2 { font-size: 1.12rem; }
+.ai-review-text h3 { font-size: 1.05rem; }
+.ai-review-text h4 { font-size: 1rem; }
+.ai-review-text p { margin: 0.6em 0; }
+.ai-review-text strong { font-weight: 700; color: var(--text); }
+.ai-review-text em { font-style: italic; }
+.ai-review-text del { opacity: 0.6; }
+
+.ai-review-text ul, .ai-review-text ol {
+  margin: 0.6em 0;
+  padding-inline-start: 1.6em;
+}
+.ai-review-text li { margin: 0.25em 0; }
+.ai-review-text li > p { margin: 0.2em 0; }
+
+.ai-review-text blockquote {
+  margin: 0.8em 0;
+  padding: 0.5em 1em;
+  border-inline-start: 3px solid var(--violet);
+  background: var(--surface-2);
+  border-radius: 8px;
+  color: var(--text-dim);
+}
+.ai-review-text blockquote p { margin: 0.3em 0; }
+
+.ai-review-text code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  background: var(--surface-2);
+  border-radius: 4px;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+.ai-review-text pre {
+  margin: 0.8em 0;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+}
+.ai-review-text pre code { padding: 0; background: transparent; font-size: 0.85rem; }
+
+.ai-review-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+  font-size: 0.88rem;
+  display: block;
+  overflow-x: auto;
+}
+.ai-review-text th, .ai-review-text td {
+  border: 1px solid var(--glass-border);
+  padding: 8px 10px;
+  text-align: right;
+  vertical-align: top;
+}
+.ai-review-text th { background: var(--surface-2); font-weight: 700; }
+.ai-review-text hr { border: none; border-top: 1px solid var(--glass-border); margin: 1.2em 0; }
+.ai-review-text a { color: var(--violet); text-decoration: underline; text-underline-offset: 3px; }
+.ai-review-text a:hover { opacity: 0.8; }
+.ai-review-text img { max-width: 100%; border-radius: 8px; }
+
+/* Tables scroll wrapper */
+.ai-review-text .table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 1em 0;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+}
+.ai-review-text .table-scroll table {
+  margin: 0;
+  border: none;
+  width: auto;
+  min-width: 100%;
+  display: table;
+}
+.ai-review-text .table-scroll th, .ai-review-text .table-scroll td {
+  white-space: nowrap;
+  border-top: none;
+  border-bottom: 1px solid var(--glass-border);
+  border-inline-start: none;
+  border-inline-end: 1px solid var(--glass-border);
+}
+.ai-review-text .table-scroll tr:last-child td { border-bottom: none; }
+.ai-review-text .table-scroll::-webkit-scrollbar { height: 8px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-track { background: transparent; }
+.ai-review-text .table-scroll::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+
+/* ==========================================================================
+   9. RAVAN TAFSIR
+   ========================================================================== */
+.ravan-tafsir-container {
+  position: relative;
+  min-height: 80px;
+}
+.ravan-tafsir-empty { text-align: center; padding: 16px 0; }
+.ravan-tafsir-loading { padding: 4px 0; }
+.ravan-tafsir-content {
+  font-size: 0.95rem;
+  line-height: 2.2;
+  color: var(--text);
+  white-space: pre-wrap;
+  padding: 12px 14px;
+}
+.ravan-tafsir-content p { margin: 0 0 10px 0; }
+.ravan-tafsir-content ul, .ravan-tafsir-content ol {
+  margin: 8px 0 12px 20px;
+  padding-right: 20px;
+}
+.ravan-tafsir-content li { margin-bottom: 4px; }
+.ravan-tafsir-content blockquote {
+  border-right: 3px solid var(--violet);
+  padding-right: 14px;
+  margin: 10px 0;
+  color: var(--text-dim);
+  font-style: italic;
+}
+.ravan-tafsir-error { color: var(--danger); font-size: 0.85rem; padding: 8px 0; }
+.ravan-tafsir-error p { margin: 4px 0; }
+.ravan-tafsir-manual-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ravan-tafsir-manual-input input { flex: 1; min-width: 200px; }
+#ravanTafsirLoadBtn { margin-inline-start: auto; }
+#ravanTafsirLoadBtn:hover { box-shadow: 0 0 20px var(--neon-glow); }
+#ravanTafsirDeleteBtn:hover { box-shadow: 0 0 20px var(--danger); }
+
+/* ==========================================================================
+   10. UTILITIES, TOASTS & SKELETONS
+   ========================================================================== */
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -778,7 +997,6 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
 .empty-state__icon { font-size: 2rem; margin-bottom: 10px; opacity: 0.5; }
 .empty-state p { margin: 0 0 16px; font-size: 0.88rem; }
 
-/* ---- Skeleton loader ---- */
 .skeleton {
   background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
   background-size: 400% 100%;
@@ -786,14 +1004,13 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   border-radius: var(--radius-sm);
 }
 @keyframes shimmer {
-  0% { background-position: 100% 50%; }
+  0%   { background-position: 100% 50%; }
   100% { background-position: 0 50%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
 }
 
-/* ---- Toast ---- */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -804,61 +1021,57 @@ a.tag-pill:hover { filter: brightness(1.25); box-shadow: 0 0 16px var(--neon-glo
   pointer-events: none;
 }
 .toast__inner {
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--neon);
-  color: var(--text);
+  border-color: var(--neon);
   padding: 10px 20px;
   border-radius: 999px;
   font-size: 0.85rem;
-  box-shadow: 0 0 30px var(--neon-glow);
+  box-shadow: 0 0 30px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
 }
 .toast.show .toast__inner { opacity: 1; translate: 0; }
 
-/* ---- Count-up number ---- */
-.count-up { font-variant-numeric: tabular-nums; }
-
-/* ---- Modal overlay ---- */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(4, 6, 10, 0.72);
-  backdrop-filter: blur(3px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-.modal-overlay[hidden] { display: none; }
-.modal-card {
-  width: 100%;
-  max-width: 420px;
-  max-height: 85vh;
-  overflow-y: auto;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur) saturate(160%);
-  -webkit-backdrop-filter: var(--glass-blur) saturate(160%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-card);
-}
-.modal-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 700;
-  margin-bottom: 14px;
-}
-
-/* ---- Search hit highlight ---- */
 .search-hit {
   background: var(--neon-glow);
   color: var(--neon);
   font-weight: 700;
   padding: 0 2px;
   border-radius: 3px;
+}
+.hidden { display: none !important; }
+
+/* ==========================================================================
+   11. RESPONSIVE ADJUSTMENTS
+   ========================================================================== */
+@media (max-width: 640px) {
+  .ai-review-modal {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .sticky-ayah { top: 60px; }
+  .container { padding-left: 10px; padding-right: 10px; }
+  .card, .tafsir-card { padding: 14px; }
+  .ayah-frame__inner { padding: 18px 12px 14px; }
+  .progress-hero { padding: 12px 14px; gap: 10px; }
+  .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
+  .progress-hero__actions .btn { font-size: 0.65rem; padding: 3px 8px; height: 24px; }
+  .progress-hero__actions .bookmark-btn,
+  .progress-hero__actions .go-to-btn { width: 24px; height: 24px; }
+  .progress-hero__actions .bookmark-btn svg,
+  .progress-hero__actions .go-to-btn svg { width: 12px; height: 12px; }
+  .ravan-tafsir-content { font-size: 0.88rem; line-height: 2; }
+  .ravan-tafsir-manual-input { flex-direction: column; }
+  .ravan-tafsir-manual-input input { min-width: unset; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ayah-frame::before { display: none; }
 }

@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>جستجو | RaiseMind</title>
-<meta name="description" content="جستجو در متن تفسیرها" />
+<title>مرور آیات | RaiseMind</title>
+<meta name="description" content="مرور آیات قرآن همراه با ترجمه و تفسیرهای شخصی" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
@@ -25,10 +25,10 @@
     </div>
     <nav class="nav-tabs" aria-label="ناوبری اصلی">
       <a href="index.html">کار</a>
-      <a href="browse.html">مرور</a>
+      <a href="browse.html" class="active">مرور</a>
       <a href="tags.html">برچسب‌ها</a>
       <a href="relations.html">رابطه‌ها</a>
-      <a href="search.html" class="active">جستجو</a>
+      <a href="search.html">جستجو</a>
     </nav>
     <div class="header-actions">
       <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
@@ -40,15 +40,28 @@
 
 <main class="container">
 
-  <section class="section" aria-label="جستجو در تفسیرها">
-    <div class="section__label">جستجو در تفسیرها</div>
-    <div class="field" style="margin-bottom:0;">
-      <input type="text" id="searchInput" placeholder="عبارتی را برای جستجو در متن تفسیرها بنویسید…" autocomplete="off" />
+  <section class="section" aria-label="انتخاب آیه">
+    <div class="select-row">
+      <div class="select-wrap">
+        <select id="browseSurahSelect" aria-label="انتخاب سوره"></select>
+      </div>
+      <div class="select-wrap">
+        <select id="browseAyahSelect" aria-label="انتخاب آیه"></select>
+      </div>
     </div>
   </section>
 
-  <section class="section" aria-label="نتایج">
-    <div id="searchResults"></div>
+  <section class="section" aria-label="آیه">
+    <div id="browseAyahFrame"></div>
+    <div class="ayah-nav">
+      <button class="btn" id="prevBtn">آیه قبلی ‹</button>
+      <button class="btn" id="nextBtn">› آیه بعدی</button>
+    </div>
+  </section>
+
+  <section class="section" aria-label="تفسیرها">
+    <div class="section__label">تفسیرهای این آیه</div>
+    <div id="tafsirsList"></div>
   </section>
 
 </main>
@@ -59,10 +72,10 @@
 
 <nav class="mobile-tabbar" aria-label="ناوبری موبایل">
   <a href="index.html">کار</a>
-  <a href="browse.html">مرور</a>
+  <a href="browse.html" class="active">مرور</a>
   <a href="tags.html">برچسب‌ها</a>
   <a href="relations.html">رابطه‌ها</a>
-  <a href="search.html" class="active">جستجو</a>
+  <a href="search.html">جستجو</a>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -72,6 +85,8 @@
 <script src="js/ui-helpers.js"></script>
 <script src="js/store.js"></script>
 <script src="js/theme.js"></script>
-<script src="js/search.js"></script>
+<script src="js/ayah-render.js"></script>
+<script src="js/ayah-links.js"></script>
+<script src="js/browse.js"></script>
 </body>
 </html>
