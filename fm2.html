@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/matchesonscrollbar.min.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <style>
         /* ══════════════════════════════════════════════════════════════
@@ -813,7 +812,7 @@
     <div class="context-menu" id="contextMenu" role="menu" tabindex="-1">
         <div class="ctx-title" id="ctxTitle"></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item><span class="ico">📂</span><span id="ctxOpenLabel">Open / Edit</span></div>
-        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-file-only data-needs-item><span class="ico">⬇️</span><span>Download</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="download" data-needs-item><span class="ico">⬇️</span><span>Download</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="rename" data-file-only data-needs-item><span class="ico">✏️</span><span>Rename</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copy" data-needs-item><span class="ico">📄</span><span>Copy</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="cut" data-needs-item><span class="ico">✂️</span><span>Cut</span></div>
@@ -882,6 +881,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/jump-to-line.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
     <script>
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1389,7 +1389,7 @@
                     if (isDir) navigate(item.path); else openFile(item);
                     break;
                 case 'download':
-                    if (item && !isDir) await downloadItem(item);
+                    if (item) await (isDir ? downloadFolder(item) : downloadItem(item));
                     break;
                 case 'rename': {
                     if (!item || isDir) return;
@@ -1590,6 +1590,57 @@
             } catch (err) {
                 flashStatus('✗ Download failed', 'err', 4000);
                 throw new Error('Download failed: ' + err.message);
+            }
+        }
+
+        // ── Folder download: walk the git tree, pull every blob raw, zip it in the browser
+        async function downloadFolder(item) {
+            if (typeof JSZip === 'undefined') {
+                alert('Zip library failed to load. Check your connection and try again.');
+                return;
+            }
+            setStatus(`Preparing “${item.name}”…`, 'loading');
+            try {
+                const ref = await api('GET', `/git/ref/heads/${state.branch}`);
+                const head = await api('GET', `/git/commits/${ref.object.sha}`);
+                const tree = await api('GET', `/git/trees/${head.tree.sha}?recursive=1`);
+                if (tree.truncated) throw new Error('Repository is too large to zip this folder');
+
+                const prefix = item.path + '/';
+                const blobs = tree.tree.filter(t => t.type === 'blob' && t.path.startsWith(prefix));
+                if (!blobs.length) throw new Error('This folder contains no files');
+
+                const zip = new JSZip();
+                let done = 0;
+                for (const t of blobs) {
+                    const rel = t.path.slice(prefix.length);
+                    const res = await fetch(apiUrl(`/git/blobs/${t.sha}`), {
+                        headers: {
+                            Accept: 'application/vnd.github.v3.raw',
+                            Authorization: `token ${state.token}`,
+                        },
+                    });
+                    if (!res.ok) throw new Error(`HTTP ${res.status} while fetching ${rel}`);
+                    zip.file(`${item.name}/${rel}`, await res.blob());
+                    done++;
+                    setStatus(`Zipping ${done}/${blobs.length}…`, 'loading');
+                }
+
+                const out = await zip.generateAsync({ type: 'blob' }, meta => {
+                    setStatus(`Compressing ${Math.round(meta.percent)}%…`, 'loading');
+                });
+                const url = URL.createObjectURL(out);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = item.name + '.zip';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 10000);
+                flashStatus(`Downloaded ${item.name}.zip (${blobs.length} file${blobs.length !== 1 ? 's' : ''})`, 'ok');
+            } catch (err) {
+                flashStatus('✗ Folder download failed', 'err', 4000);
+                alert('Folder download failed: ' + err.message);
             }
         }
 
@@ -2292,49 +2343,6 @@
         if (savedToken) {
             setTimeout(connect, 400);
         }
-      async function downloadFolder(folderPath) {
-    const folderName = folderPath.split('/').filter(Boolean).pop() || 'folder';
-    const zip = new JSZip();
-
-    try {
-        // Fetch recursive repository tree
-        const res = await fetch(`https://api.github.com/repos/${state.owner}/${state.repo}/git/trees/${state.branch}?recursive=1`, {
-            headers: { 'Authorization': `token ${state.token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch tree structure');
-        const data = await res.json();
-
-        const prefix = folderPath ? (folderPath.endsWith('/') ? folderPath : folderPath + '/') : '';
-        const files = data.tree.filter(item => item.type === 'blob' && (prefix === '' || item.path.startsWith(prefix)));
-
-        if (files.length === 0) {
-            alert('Folder is empty or contains no files.');
-            return;
-        }
-
-        for (const file of files) {
-            const relativePath = prefix ? file.path.slice(prefix.length) : file.path;
-            const blobRes = await fetch(`https://api.github.com/repos/${state.owner}/${state.repo}/git/blobs/${file.sha}`, {
-                headers: {
-                    'Authorization': `token ${state.token}`,
-                    'Accept': 'application/vnd.github.raw'
-                }
-            });
-            const blobData = await blobRes.arrayBuffer();
-            zip.file(relativePath, blobData);
-        }
-
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(zipBlob);
-        link.download = `${folderName}.zip`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    } catch (err) {
-        console.error('Failed to download folder:', err);
-        alert('Error downloading folder: ' + err.message);
-    }
-}
     </script>
 </body>
 </html>
