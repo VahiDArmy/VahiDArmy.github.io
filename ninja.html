@@ -65,6 +65,7 @@
             color: var(--text);
             min-height: 100vh;
             -webkit-font-smoothing: antialiased;
+            -webkit-tap-highlight-color: transparent;
         }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -216,6 +217,17 @@
         }
         .editor-footer button.primary:disabled { opacity: .4; cursor: not-allowed; }
 
+        /* Toolbar Select-toggle active state */
+        .toolbar button.active {
+            background: rgba(var(--accent-rgb), .22);
+            border-color: rgba(var(--accent-rgb), .8);
+            color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .12), inset 0 1px 0 rgba(255,255,255,.14);
+        }
+        .toolbar button.active:hover {
+            background: rgba(var(--accent-rgb), .3);
+        }
+
         .status {
             font-size: 13px;
             color: var(--muted);
@@ -313,6 +325,8 @@
             box-shadow: var(--glass-shadow);
             transition: transform .22s, border-color .22s, background .22s, box-shadow .22s;
             user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
         .card.folder { background: linear-gradient(135deg, rgba(var(--accent-rgb), .08), rgba(255,255,255,.03)); }
         .card:hover,
@@ -353,6 +367,26 @@
             justify-content: center;
             box-shadow: 0 3px 12px rgba(var(--accent-rgb), .5);
             z-index: 3;
+        }
+
+        /* Empty checkbox shown on every card while in Select mode */
+        body.select-mode .card[data-path]:not(.selected)::before {
+            content: "";
+            position: absolute;
+            top: 7px;
+            left: 7px;
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            border: 1.5px solid rgba(255,255,255,.45);
+            background: rgba(0,0,0,.4);
+            z-index: 3;
+            transition: background .15s, border-color .15s;
+        }
+        /* Hide the per-card hover action buttons while picking */
+        body.select-mode .card .del,
+        body.select-mode .card .open-browser {
+            display: none !important;
         }
 
         .card .icon-big { font-size: 32px; line-height: 1.2; }
@@ -424,7 +458,7 @@
             position: fixed;
             left: 50%;
             bottom: 22px;
-            z-index: 900;
+            z-index: 1200;   /* above the upload panel so it's never hidden */
             display: flex;
             align-items: center;
             gap: 8px;
@@ -1056,19 +1090,16 @@
             .zip-footer { justify-content: stretch; }
             .zip-footer button { flex: 1; min-width: 0; }
 
+            /* keep the pill centered on small screens too */
             .selection-bar {
-                left: 12px;
-                right: 12px;
-                bottom: 12px;
-                transform: translateY(20px);
-                justify-content: space-between;
-                border-radius: 16px;
-                padding: 10px 12px;
+                bottom: 14px;
+                padding: 7px 10px 7px 14px;
+                gap: 6px;
+                max-width: calc(100vw - 24px);
                 overflow-x: auto;
             }
-            .selection-bar.show { transform: translateY(0); }
-            .selection-bar .sel-count { font-size: 12px; padding-right: 0; }
-            .selection-bar button { padding: 7px 12px; font-size: 12px; }
+            .selection-bar .sel-count { font-size: 12px; padding-right: 2px; }
+            .selection-bar button { padding: 6px 11px; font-size: 12px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1101,6 +1132,7 @@
         <button type="button" id="newFileBtn">📄 New File</button>
         <button type="button" id="newFolder">📁 New Folder</button>
         <button type="button" id="refreshBtn">⟳ Refresh</button>
+        <button type="button" id="selectBtn">☑️ Select</button>
         <input type="file" id="fileInput" multiple hidden />
         <span class="count" id="fileCount"></span>
         <span class="spacer"></span>
@@ -1110,7 +1142,7 @@
     <div class="upload-area" id="drop">
         <span class="icon">📂</span>
         Drop files here or click to upload
-        <div class="sub">Supports multiple files · Binary &amp; text · .zip extracts to a folder · Ctrl/Shift-click to multi-select</div>
+        <div class="sub">Supports multiple files · Binary &amp; text · .zip extracts to a folder · Tap Select for multi-select</div>
     </div>
 
     <div class="files" id="files"></div>
@@ -1135,6 +1167,7 @@
         <div class="item" role="menuitem" tabindex="-1" data-action="cancelClipboard" data-clipboard-only><span class="ico">🚫</span><span>Cancel</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copyPath" data-needs-item><span class="ico">📋</span><span>Copy Path</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copyRaw" data-file-only data-needs-item><span class="ico">🔗</span><span>Copy Raw URL</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="select" data-needs-item><span class="ico">☑️</span><span>Select</span></div>
         <div class="sep" data-needs-item></div>
         <div class="item danger" role="menuitem" tabindex="-1" data-action="delete" data-needs-item><span class="ico">🗑️</span><span>Delete</span></div>
     </div>
@@ -1251,6 +1284,7 @@
         const selection = new Set();  // selected item paths
         let selectionAnchor = null;   // anchor path for Shift-range
         let displayedItems = [];      // items currently in the grid (for range math)
+        let selectMode = false;       // touch-friendly "tap to toggle" mode
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  DOM REFS
@@ -1268,6 +1302,7 @@
         const fileCount   = $('fileCount');
         const branchLabel = $('branchLabel');
         const connectBtn  = $('connectBtn');
+        const selectBtn   = $('selectBtn');
 
         const edOverlay = $('editorOverlay');
         const edIcon    = $('edIcon');
@@ -1429,6 +1464,7 @@
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function navigate(path) {
             if (selection.size > 0) clearSelection();
+            if (selectMode) setSelectMode(false);
             state.path = path;
             load();
         }
@@ -1536,19 +1572,28 @@
 
             // Multi-select-aware click handler
             card.onclick = (e) => {
+                // Ctrl/Cmd+click toggles (desktop)
                 if (e.ctrlKey || e.metaKey) {
                     e.preventDefault();
                     e.stopPropagation();
                     toggleSelect(item);
                     return;
                 }
+                // Shift+click selects a range (desktop)
                 if (e.shiftKey && selectionAnchor) {
                     e.preventDefault();
                     e.stopPropagation();
                     rangeSelect(item);
                     return;
                 }
-                // Plain click: drop any selection, then navigate/open as usual
+                // Select mode: plain tap = toggle (phones + tablet)
+                if (selectMode) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleSelect(item);
+                    return;
+                }
+                // Plain click/tap: drop any selection, then navigate/open as usual
                 if (selection.size > 0) clearSelection();
                 if (isDir) navigate(item.path); else openFile(item);
             };
@@ -1587,7 +1632,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  MULTI-SELECT
+        //  MULTI-SELECT  (works with mouse and touch)
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function toggleSelect(item) {
             if (selection.has(item.path)) {
@@ -1616,6 +1661,15 @@
             selection.clear();
             selectionAnchor = null;
             refreshSelectionUI();
+        }
+
+        function setSelectMode(on) {
+            selectMode = !!on;
+            document.body.classList.toggle('select-mode', selectMode);
+            selectBtn.classList.toggle('active', selectMode);
+            selectBtn.textContent = selectMode ? '✕ Select' : '☑️ Select';
+            selectBtn.title = selectMode ? 'Exit select mode' : 'Tap cards to select';
+            if (!selectMode) clearSelection();
         }
 
         function refreshSelectionUI() {
@@ -1736,6 +1790,8 @@
 
         selDownload.onclick = downloadSelection;
         selClear.onclick = clearSelection;
+
+        selectBtn.onclick = () => setSelectMode(!selectMode);
 
         // Click on empty grid background clears the selection
         filesEl.addEventListener('click', e => {
@@ -1964,6 +2020,11 @@
                         if (item.download_url) copyToClipboard(item.download_url);
                         else alert('Raw URL not available.');
                     }
+                    break;
+                case 'select':
+                    // Enter select mode with this item pre-selected
+                    if (!selectMode) setSelectMode(true);
+                    if (item && !selection.has(item.path)) toggleSelect(item);
                     break;
                 case 'delete':
                     if (item) await deleteItem(item);
@@ -3112,11 +3173,12 @@
             if (e.target === edOverlay) closeEditor();
         });
 
-        // Escape: close editor if open, otherwise clear the multi-selection
+        // Escape: close editor if open, else clear selection, else exit select mode
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
             if (editorFile) { closeEditor(); return; }
-            if (selection.size > 0) clearSelection();
+            if (selection.size > 0) { clearSelection(); return; }
+            if (selectMode) setSelectMode(false);
         });
 
         window.addEventListener('resize', () => {
