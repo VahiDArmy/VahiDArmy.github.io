@@ -1,14 +1,16 @@
 /* ============================================
    صفحه انتخاب و خرید سکه
-   نسخه ۲.۰ - ریسپانسیو + دکمه چسبیده در موبایل
+   نسخه ۳.۰ - حداکثر ۲۰ سکه
    ============================================ */
 
 const CoinsPage = {
     selectedCoin: null,
+    MAX_COINS: 20,
     
     render() {
         const user = Storage.getUser();
         const initialValue = 5;
+        
         this.selectedCoin = {
             count: initialValue,
             price: initialValue * APP_CONFIG.COIN_PRICE
@@ -26,16 +28,16 @@ const CoinsPage = {
                         <span class="text-gradient">${Helpers.escapeHtml(user?.name || 'کاربر عزیز')}</span>
                     </h1>
                     <p class="page-subtitle">
-                        تعداد سکه‌های مشارکت خود را انتخاب کنید و در این شادی سهیم شوید
+                        تعداد سکه‌های مشارکت خود را انتخاب کنید
                     </p>
                 </div>
                 
                 <div class="coins-layout">
                     <div class="coins-main">
-                        <!-- اسلایدر سکه -->
+                        <!-- اسلایدر سکه (باکس اول) -->
                         <div id="coin-slider-container"></div>
                         
-                        <!-- کارت خلاصه سفارش (در موبایل همیشه نمایش) -->
+                        <!-- خلاصه سفارش -->
                         <div class="order-summary-card" id="order-summary">
                             <div class="order-summary-header">
                                 <i class="ri-shopping-bag-3-line"></i>
@@ -57,7 +59,7 @@ const CoinsPage = {
                             </div>
                         </div>
                         
-                        <!-- دکمه ادامه (چسبیده در پایین در موبایل) -->
+                        <!-- نوار اقدام -->
                         <div class="action-bar" id="action-bar">
                             <a href="#welcome" class="btn btn-ghost" data-nav>
                                 <i class="ri-arrow-right-line"></i>
@@ -69,7 +71,7 @@ const CoinsPage = {
                             </button>
                         </div>
                         
-                        <!-- اطلاعات کاربر (پایین‌تر) -->
+                        <!-- اطلاعات کاربر -->
                         <div class="user-info-card">
                             <div class="user-info-header">
                                 <i class="ri-user-line"></i>
@@ -101,15 +103,15 @@ const CoinsPage = {
                             <ul class="tips-list">
                                 <li>
                                     <i class="ri-checkbox-circle-line"></i>
-                                    <span>هر سکه معادل ۱۰۰,۰۰۰ تومان است</span>
+                                    <span>هر سکه معادل ${Format.price(APP_CONFIG.COIN_PRICE)} است</span>
+                                </li>
+                                <li>
+                                    <i class="ri-checkbox-circle-line"></i>
+                                    <span>حداکثر ${Format.number(this.MAX_COINS)} سکه (${Format.price(this.MAX_COINS * APP_CONFIG.COIN_PRICE)})</span>
                                 </li>
                                 <li>
                                     <i class="ri-checkbox-circle-line"></i>
                                     <span>بلافاصله پس از تایید فیش، سکه‌ها به حساب شما اضافه می‌شود</span>
-                                </li>
-                                <li>
-                                    <i class="ri-checkbox-circle-line"></i>
-                                    <span>می‌توانید هر تعداد سکه دلخواه انتخاب کنید</span>
                                 </li>
                                 <li>
                                     <i class="ri-checkbox-circle-line"></i>
@@ -153,13 +155,13 @@ const CoinsPage = {
     },
     
     init() {
-        // رندر اسلایدر جدید
+        // رندر اسلایدر - حداکثر ۲۰ سکه
         CoinSlider.render('coin-slider-container', {
             min: 1,
-            max: 200,
-            step: 1,
+            max: this.MAX_COINS,
             defaultValue: 5,
-            quickValues: [1, 5, 10, 25, 50, 100],
+            quickValues: [1, 2, 5, 10, 15, 20],
+            pricePerCoin: APP_CONFIG.COIN_PRICE,
             onChange: (data) => {
                 this.selectedCoin = data;
                 this.updateSummary(data);
@@ -175,42 +177,32 @@ const CoinsPage = {
         document.getElementById('support-btn')?.addEventListener('click', () => {
             Modal.alert({
                 title: 'پشتیبانی',
-                message: 'برای ارتباط با پشتیبانی می‌توانید با شماره ۰۲۱-۱۲۳۴۵۶۷۸ تماس بگیرید یا در ساعات کاری از طریق چت آنلاین در خدمت شما هستیم.',
+                message: 'برای ارتباط با پشتیبانی می‌توانید با شماره ۰۲۱-۱۲۳۴۵۶۷۸ تماس بگیرید یا از طریق چت آنلاین در خدمت شما هستیم.',
                 buttonText: 'متوجه شدم',
                 type: 'info'
             });
         });
         
-        // به‌روزرسانی اولیه
         this.updateSummary(this.selectedCoin);
     },
     
-    /**
-     * به‌روزرسانی خلاصه سفارش
-     */
     updateSummary(data) {
         const summaryCoins = document.getElementById('summary-coins');
         const summaryTotal = document.getElementById('summary-total');
         
-        if (summaryCoins) {
-            summaryCoins.textContent = Format.coin(data.count);
-        }
+        if (summaryCoins) summaryCoins.textContent = Format.coin(data.count);
         if (summaryTotal) {
             summaryTotal.textContent = Format.price(data.price);
             summaryTotal.style.color = 'var(--color-gold-600)';
         }
     },
     
-    /**
-     * ادامه
-     */
     async handleContinue() {
         if (!this.selectedCoin || !this.selectedCoin.count) {
             Toast.warning('خطا', 'لطفاً تعداد سکه‌های خود را انتخاب کنید');
             return;
         }
         
-        // ساختار کامل داده
         const coinData = {
             id: 'custom',
             count: this.selectedCoin.count,
@@ -227,15 +219,12 @@ const CoinsPage = {
         Router.navigate('payment');
     },
     
-    /**
-     * دریافت عنوان مناسب
-     */
     getTitleForCount(count) {
         if (count === 1) return 'هدیه کوچک';
-        if (count <= 5) return 'هدیه صمیمانه';
-        if (count <= 15) return 'هدیه درخشان';
-        if (count <= 40) return 'هدیه نفیس';
-        if (count <= 80) return 'هدیه استثنایی';
+        if (count <= 3) return 'هدیه صمیمانه';
+        if (count <= 7) return 'هدیه درخشان';
+        if (count <= 12) return 'هدیه نفیس';
+        if (count <= 18) return 'هدیه استثنایی';
         return 'هدیه افسانه‌ای';
     }
 };
