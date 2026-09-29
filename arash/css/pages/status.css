@@ -141,6 +141,11 @@
     color: var(--text-primary);
 }
 
+/* بخش leaderboard */
+.status-section-leaderboard {
+    margin-bottom: var(--space-6);
+}
+
 /* آیتم تراکنش */
 .transaction-item {
     display: flex;
