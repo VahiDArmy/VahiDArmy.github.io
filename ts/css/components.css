@@ -1,46 +1,47 @@
 /* ==========================================================================
-   Components — Telegram Liquid Glass (High Transparency)
+   Components — Wave theme
    ========================================================================== */
 
-/* ==========================================================================
-   1. BUTTONS
-   ========================================================================== */
+/* -------------------------------------------------------------------------
+   1. BUTTONS — pill shaped, playful
+   ------------------------------------------------------------------------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 20px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 11px 22px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
   color: var(--text);
   font-size: 0.9rem;
-  font-weight: 500;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .btn:hover {
   border-color: var(--neon);
   color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  background: var(--surface);
 }
-.btn:active { transform: scale(0.98); }
+.btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn--primary {
   background: var(--neon);
   border-color: var(--neon);
-  color: #06110E;
+  color: var(--text-on-accent);
   font-weight: 700;
-  box-shadow: 0 0 20px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  box-shadow: 0 6px 20px var(--neon-glow);
 }
 .btn--primary:hover {
-  color: #06110E;
-  box-shadow: 0 0 32px var(--neon-glow), 0 0 60px var(--neon-glow), inset 0 1px 0 0 rgba(255, 255, 255, 0.5);
+  color: var(--text-on-accent);
+  background: var(--neon);
+  border-color: var(--neon);
+  box-shadow: 0 8px 28px var(--neon-glow), 0 0 44px var(--neon-glow);
+  transform: translateY(-1px);
 }
 
 .btn--ghost {
@@ -49,7 +50,7 @@
   color: var(--text-dim);
   box-shadow: none;
 }
-.btn--ghost:hover { background: var(--surface); }
+.btn--ghost:hover { background: var(--surface-2); }
 
 .btn--icon {
   width: 42px;
@@ -57,100 +58,62 @@
   padding: 0;
   border-radius: 50%;
 }
-.btn--sm { padding: 7px 14px; font-size: 0.8rem; }
+.btn--sm { padding: 7px 16px; font-size: 0.8rem; }
 
-/* دکمهٔ لینک وقتی نشانگر روی یک [[سوره:آیه]] است */
 #openLinkToolBtn.is-editing-link {
   border-color: var(--violet);
   color: var(--violet);
-  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 16px var(--violet-glow);
 }
 #openLinkToolBtn.is-editing-link:hover {
-  border-color: var(--violet);
-  color: var(--violet);
-  box-shadow: 0 0 24px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 24px var(--violet-glow);
 }
-
-/* نشانگر روی لینک — کمی تأکید روی textarea */
 #tafsirContent.has-link-under-cursor {
   border-color: var(--violet);
-  box-shadow: 0 0 16px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 16px var(--violet-glow);
 }
 
-
-/* ==========================================================================
-   2. GLASS SHELL (Shared Card Pattern)
-   ========================================================================== */
+/* -------------------------------------------------------------------------
+   2. CARDS
+   ------------------------------------------------------------------------- */
 .card,
 .progress-hero,
 .ayah-frame__inner,
 .tafsir-card,
 .modal-card,
 .toast__inner {
-  position: relative;
-  background: linear-gradient(165deg, var(--glass-bg-top) 0%, var(--glass-bg) 50%, var(--glass-bg-bottom) 100%);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-glass), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
 }
-
-/* Stronger blur for floating overlays */
-.modal-card,
-.toast__inner {
-  backdrop-filter: var(--glass-blur-strong);
-  -webkit-backdrop-filter: var(--glass-blur-strong);
-}
-
-/* Specular top-edge highlight */
-.card::before,
-.progress-hero::before,
-.ayah-frame__inner::before,
-.tafsir-card::before,
-.modal-card::before,
-.comment::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(175deg, var(--glass-specular) 0%, rgba(255, 255, 255, 0.18) 28%, transparent 55%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 1;
-}
-.comment::before { opacity: 0.4; }
 
 .card {
-  border-radius: var(--radius-md);
-  padding: 20px;
-}
-.tafsir-card {
-  margin-top: 14px;
-  border-radius: var(--radius-md);
-  padding: 18px;
-}
-.modal-card {
-  width: 100%;
-  max-width: 420px;
-  max-height: 85vh;
-  overflow-y: auto;
-  border-radius: var(--radius-md);
-  padding: 20px;
-  box-shadow: var(--shadow-glass-lg), inset 0 1.5px 0 0 var(--glass-highlight), inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-lg);
+  padding: 22px;
 }
 
-/* ==========================================================================
+.tafsir-card {
+  margin-top: 14px;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* -------------------------------------------------------------------------
    3. PROGRESS HERO
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .progress-hero {
   border-radius: var(--radius-lg);
-  padding: 16px 18px;
+  padding: 18px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -165,12 +128,15 @@
   flex-wrap: wrap;
 }
 .progress-hero__title {
-  font-size: 0.85rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 400;
   color: var(--text-dim);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  letter-spacing: 0.01em;
 }
 .progress-hero__actions {
   display: flex;
@@ -179,10 +145,10 @@
   flex-shrink: 0;
 }
 .progress-hero__actions .btn {
-  padding: 4px 10px;
+  padding: 4px 12px;
   font-size: 0.7rem;
   height: 28px;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 .progress-hero__actions .bookmark-btn,
@@ -226,59 +192,50 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   font-weight: 700;
   color: var(--neon);
 }
 
 /* Bookmark & Go-To Buttons */
 .bookmark-btn, .go-to-btn {
-  position: relative;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .bookmark-btn svg, .go-to-btn svg { transition: all 0.3s ease; }
 .bookmark-btn:active, .go-to-btn:active { transform: scale(0.92); }
 .bookmark-btn { border-color: var(--neon-dim); color: var(--neon); }
-.bookmark-btn svg { filter: drop-shadow(0 0 2px var(--neon-glow)); }
 .bookmark-btn:hover {
   border-color: var(--neon);
-  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 20px var(--neon-glow), 0 0 40px var(--neon-glow);
   transform: scale(1.05);
 }
-.bookmark-btn:hover svg { filter: drop-shadow(0 0 8px var(--neon)) drop-shadow(0 0 16px var(--neon-glow)); }
 .go-to-btn { border-color: var(--violet); color: var(--violet); }
-.go-to-btn svg { filter: drop-shadow(0 0 2px var(--violet-glow)); }
 .go-to-btn:hover {
   border-color: var(--violet);
-  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 20px var(--violet-glow), 0 0 40px var(--violet-glow);
   transform: scale(1.05);
 }
-.go-to-btn:hover svg { filter: drop-shadow(0 0 8px var(--violet)) drop-shadow(0 0 16px var(--violet-glow)); }
 
-/* ==========================================================================
-   4. AYAH FRAME & TRANSLATION
-   ========================================================================== */
+/* -------------------------------------------------------------------------
+   4. AYAH FRAME
+   ------------------------------------------------------------------------- */
 .sticky-ayah {
   position: sticky;
-  top: 66px;
+  top: 16px;
   z-index: 20;
-  background: transparent;
   padding-top: 4px;
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
+
 .edit-banner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: var(--violet-glow);
   color: var(--violet);
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
   font-size: 0.8rem;
   margin-bottom: 12px;
 }
@@ -297,7 +254,6 @@
   padding: 2px;
   background: transparent;
   overflow: visible;
-  box-shadow: var(--shadow-glass);
 }
 .ayah-frame::before {
   content: '';
@@ -346,20 +302,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   margin-inline-start: 4px;
   border: none;
   background: none;
   color: var(--text-faint);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
   vertical-align: middle;
-  transition: color 0.2s ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
-.copy-ayah-btn:hover { color: var(--neon); }
+.copy-ayah-btn:hover { color: var(--neon); background: var(--surface-2); }
 
-/* Readable text surfaces */
 .ayah-frame__arabic,
 .tafsir-card__body,
 .translation-content p,
@@ -367,9 +322,7 @@
 .ai-review-text {
   background: var(--read-bg);
   border: 1px solid var(--read-border);
-  border-radius: var(--radius-sm);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border-radius: var(--radius-md);
   transition: background 0.2s ease;
 }
 .ayah-frame__arabic:hover,
@@ -384,14 +337,12 @@
   direction: rtl;
   position: relative;
   z-index: 2;
-  padding: 8px 12px;
+  padding: 10px 14px;
 }
 
-/* Translation bar */
 .translation-bar {
   margin-top: 14px;
   border-top: 1px dashed var(--border);
-  padding-top: 0;
 }
 .translation-toggle {
   width: 100%;
@@ -399,11 +350,12 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px;
+  padding: 10px;
   background: none;
   border: none;
   color: var(--text-faint);
   font-size: 0.75rem;
+  font-weight: 600;
   cursor: pointer;
   transition: color 0.2s ease;
 }
@@ -420,13 +372,12 @@
 .translation-content > div { overflow: hidden; }
 .translation-content p {
   margin: 4px 0 10px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   color: var(--text-dim);
   font-size: 0.92rem;
   line-height: 1.9;
 }
 
-/* Ayah Navigation */
 .ayah-nav {
   display: flex;
   align-items: center;
@@ -435,7 +386,6 @@
 }
 .ayah-nav .btn { flex: 1; }
 
-/* Mark Light */
 .mark-toggle {
   display: inline-block;
   width: 9px;
@@ -457,13 +407,14 @@ span.mark-toggle { cursor: default; }
 }
 button.mark-toggle:hover { border-color: #FFB020; }
 
-/* ==========================================================================
-   5. FORMS & INPUTS
-   ========================================================================== */
+/* -------------------------------------------------------------------------
+   5. FORMS
+   ------------------------------------------------------------------------- */
 .field { margin-bottom: 14px; }
 .field label {
   display: block;
   font-size: 0.8rem;
+  font-weight: 600;
   color: var(--text-dim);
   margin-bottom: 6px;
 }
@@ -475,25 +426,22 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .ravan-tafsir-manual-input input {
   width: 100%;
   background: var(--read-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   color: var(--text);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-family: var(--font-ui);
   transition: border-color 0.2s ease, min-height 0.25s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
 }
 .field textarea,
 .field input[type="text"] {
-  padding: 12px 14px;
+  padding: 12px 16px;
   font-size: 0.92rem;
   line-height: 1.8;
 }
 .name-row input,
 .comment-form input[type="text"],
 .ravan-tafsir-manual-input input {
-  padding: 9px 12px;
+  padding: 10px 14px;
   font-size: 0.85rem;
 }
 .field textarea { min-height: 110px; resize: vertical; }
@@ -507,13 +455,12 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border-color: var(--neon);
   outline: none;
   background: var(--read-bg-strong);
-  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 0 3px var(--neon-glow);
 }
 
 .name-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .name-row input { flex: 1; }
 
-/* Selects */
 .select-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -524,27 +471,26 @@ button.mark-toggle:hover { border-color: #FFB020; }
   width: 100%;
   appearance: none;
   background: var(--read-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   color: var(--text);
   padding: 12px 14px;
-  padding-left: 34px;
-  border-radius: var(--radius-sm);
+  padding-left: 36px;
+  border-radius: var(--radius-md);
   font-family: var(--font-ui);
   font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15), inset 0 1.5px 0 0 var(--glass-highlight);
 }
 .select-wrap select:hover,
 .select-wrap select:focus {
   border-color: var(--neon);
   outline: none;
-  box-shadow: 0 0 20px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  box-shadow: 0 0 0 3px var(--neon-glow);
 }
 .select-wrap::after {
   content: '';
   position: absolute;
-  left: 14px;
+  left: 16px;
   top: 50%;
   translate: 0 -50%;
   width: 8px;
@@ -557,16 +503,16 @@ button.mark-toggle:hover { border-color: #FFB020; }
 }
 .select-wrap:hover::after { border-color: var(--neon); }
 .select-wrap select option {
-  background: var(--bg-solid);
+  background: var(--bg-elevated);
   color: var(--text);
   padding: 8px 12px;
   font-family: var(--font-ui);
   font-size: 0.88rem;
 }
 
-/* ==========================================================================
+/* -------------------------------------------------------------------------
    6. TAFSIR CARDS & TAGS
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .tafsir-card__meta {
   display: flex;
   align-items: center;
@@ -580,8 +526,8 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .tafsir-card__round {
   background: var(--violet-glow);
   color: var(--violet);
-  padding: 2px 9px;
-  border-radius: 999px;
+  padding: 3px 11px;
+  border-radius: var(--radius-pill);
   font-weight: 700;
 }
 .tafsir-card__body {
@@ -591,7 +537,7 @@ button.mark-toggle:hover { border-color: #FFB020; }
   white-space: pre-wrap;
   position: relative;
   z-index: 2;
-  padding: 12px 14px;
+  padding: 14px 16px;
   margin: 0;
 }
 .tafsir-card__body.is-clamped {
@@ -605,8 +551,9 @@ button.mark-toggle:hover { border-color: #FFB020; }
   border: none;
   color: var(--neon);
   font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 6px 0 0;
+  padding: 8px 0 0;
   position: relative;
   z-index: 2;
 }
@@ -620,7 +567,6 @@ button.mark-toggle:hover { border-color: #FFB020; }
   z-index: 2;
 }
 
-/* Tags */
 .tag-pills {
   display: flex;
   flex-wrap: wrap;
@@ -631,38 +577,37 @@ button.mark-toggle:hover { border-color: #FFB020; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 11px;
-  border-radius: 999px;
+  padding: 3px 12px;
+  border-radius: var(--radius-pill);
   border: 1px solid;
   font-size: 0.74rem;
   font-weight: 600;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
 a.tag-pill:hover {
-  filter: brightness(1.25);
+  filter: brightness(1.2);
   box-shadow: 0 0 16px var(--neon-glow);
 }
 .tag-pill__count { opacity: 0.75; font-size: 0.7rem; }
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
-.tag-cloud .tag-pill { font-size: 0.82rem; padding: 6px 14px; }
+.tag-cloud .tag-pill { font-size: 0.82rem; padding: 6px 16px; }
 .tag-mention { text-decoration: none; font-weight: 600; transition: filter 0.2s ease; }
-.tag-mention:hover { filter: brightness(1.3); }
+.tag-mention:hover { filter: brightness(1.25); }
 
-/* Ayah-to-ayah reference link */
 .ayah-link {
   color: var(--violet);
   font-weight: 700;
-  text-shadow: 0 0 6px var(--violet-glow), 0 0 16px var(--violet-glow);
+  text-shadow: 0 0 8px var(--violet-glow);
   transition: text-shadow 0.2s ease, color 0.2s ease;
 }
 .ayah-link:hover {
-  color: #C9BFFF;
-  text-shadow: 0 0 8px var(--violet-glow), 0 0 22px var(--violet-glow), 0 0 34px var(--violet-glow);
+  color: color-mix(in oklab, var(--violet) 70%, white);
+  text-shadow: 0 0 10px var(--violet-glow), 0 0 24px var(--violet-glow);
 }
 
-/* ==========================================================================
+/* -------------------------------------------------------------------------
    7. COMMENTS
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .comment-list {
   display: flex;
   flex-direction: column;
@@ -672,13 +617,9 @@ a.tag-pill:hover {
 .comment {
   position: relative;
   background: var(--read-bg);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18), inset 0 1.5px 0 0 var(--glass-highlight);
-  isolation: isolate;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  border: 1px solid var(--border);
 }
 .comment__head {
   display: flex;
@@ -686,7 +627,7 @@ a.tag-pill:hover {
   font-size: 0.78rem;
   margin-bottom: 6px;
 }
-.comment__name { color: var(--neon); font-weight: 600; }
+.comment__name { color: var(--neon); font-weight: 700; }
 .comment__date { color: var(--text-faint); }
 .comment__body {
   font-size: 0.88rem;
@@ -695,16 +636,16 @@ a.tag-pill:hover {
   white-space: pre-wrap;
 }
 
-/* ==========================================================================
+/* -------------------------------------------------------------------------
    8. MODALS & AI REVIEW
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(4, 6, 10, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: rgba(4, 6, 10, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -719,10 +660,9 @@ a.tag-pill:hover {
   margin-bottom: 14px;
 }
 
-/* AI Review Button */
 .ai-review-btn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   padding: 0;
   border-radius: 50%;
   display: inline-flex;
@@ -730,28 +670,31 @@ a.tag-pill:hover {
   justify-content: center;
   border: 1px solid var(--violet);
   color: var(--violet);
-  background: var(--glass-bg-strong);
+  background: transparent;
   cursor: pointer;
   transition: all 0.25s ease;
 }
-.ai-review-btn:hover { box-shadow: 0 0 16px var(--violet-glow); transform: scale(1.06); }
+.ai-review-btn:hover {
+  box-shadow: 0 0 18px var(--violet-glow);
+  transform: scale(1.06);
+  background: var(--violet-glow);
+}
 .ai-review-btn svg { width: 16px; height: 16px; }
 
-/* AI Review Modal Specifics */
 .ai-review-modal {
   width: min(96vw, 1100px);
   max-width: 1100px;
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  padding: 20px 22px;
+  padding: 22px 24px;
   overflow: hidden;
 }
 .ai-review-modal .modal-card__head {
   flex-shrink: 0;
   margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
 }
 #aiReviewContent, #aiReviewEdit {
   flex: 1 1 auto;
@@ -764,7 +707,7 @@ a.tag-pill:hover {
   flex-shrink: 0;
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid var(--glass-border);
+  border-top: 1px solid var(--border);
   gap: 8px;
 }
 .ai-review-actions {
@@ -779,9 +722,9 @@ a.tag-pill:hover {
   margin-inline-start: auto;
   margin-inline-end: 8px;
   background: var(--surface-2);
-  border: 1px solid var(--glass-border);
-  border-radius: 8px;
-  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
   color: var(--text);
   font-size: 0.8rem;
   font-family: inherit;
@@ -796,14 +739,13 @@ a.tag-pill:hover {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   direction: ltr;
   text-align: left;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 10px;
 }
 
-/* AI External Links */
 .ai-ext-links {
   padding: 10px 0 12px;
-  border-bottom: 1px solid var(--glass-border, rgba(255,255,255,0.08));
+  border-bottom: 1px solid var(--border);
   margin-bottom: 10px;
   display: flex;
   flex-wrap: wrap;
@@ -817,32 +759,32 @@ a.tag-pill:hover {
 }
 .ai-ext-btn {
   display: inline-block;
-  background: var(--surface-2, rgba(255,255,255,0.06));
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.12));
-  border-radius: 8px;
-  padding: 5px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 5px 14px;
   color: var(--text);
   font-size: 0.78rem;
   font-family: inherit;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
-.ai-ext-btn:hover { border-color: var(--violet, #8b5cf6); color: var(--violet, #8b5cf6); }
+.ai-ext-btn:hover { border-color: var(--violet); color: var(--violet); }
 
-/* Markdown Inside AI Review */
 .ai-review-text {
   font-size: 0.95rem;
   line-height: 1.9;
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: anywhere;
-  padding: 14px;
+  padding: 16px;
   margin-bottom: 16px;
 }
 .ai-review-text > *:first-child { margin-top: 0; }
 .ai-review-text > *:last-child { margin-bottom: 0; }
 
-.ai-review-text h1, .ai-review-text h2, .ai-review-text h3, .ai-review-text h4, .ai-review-text h5 {
+.ai-review-text h1, .ai-review-text h2, .ai-review-text h3,
+.ai-review-text h4, .ai-review-text h5 {
   margin: 1.1em 0 0.5em;
   font-weight: 700;
   line-height: 1.5;
@@ -869,7 +811,7 @@ a.tag-pill:hover {
   padding: 0.5em 1em;
   border-inline-start: 3px solid var(--violet);
   background: var(--surface-2);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--text-dim);
 }
 .ai-review-text blockquote p { margin: 0.3em 0; }
@@ -885,9 +827,9 @@ a.tag-pill:hover {
 }
 .ai-review-text pre {
   margin: 0.8em 0;
-  padding: 12px 14px;
+  padding: 14px 16px;
   background: var(--surface-2);
-  border-radius: 10px;
+  border-radius: 12px;
   overflow-x: auto;
   direction: ltr;
   text-align: left;
@@ -903,26 +845,25 @@ a.tag-pill:hover {
   overflow-x: auto;
 }
 .ai-review-text th, .ai-review-text td {
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--border);
   padding: 8px 10px;
   text-align: right;
   vertical-align: top;
 }
 .ai-review-text th { background: var(--surface-2); font-weight: 700; }
-.ai-review-text hr { border: none; border-top: 1px solid var(--glass-border); margin: 1.2em 0; }
+.ai-review-text hr { border: none; border-top: 1px solid var(--border); margin: 1.2em 0; }
 .ai-review-text a { color: var(--violet); text-decoration: underline; text-underline-offset: 3px; }
 .ai-review-text a:hover { opacity: 0.8; }
 .ai-review-text img { max-width: 100%; border-radius: 8px; }
 
-/* Tables scroll wrapper */
 .ai-review-text .table-scroll {
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
   margin: 1em 0;
   -webkit-overflow-scrolling: touch;
-  border-radius: 10px;
-  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  border: 1px solid var(--border);
 }
 .ai-review-text .table-scroll table {
   margin: 0;
@@ -934,19 +875,19 @@ a.tag-pill:hover {
 .ai-review-text .table-scroll th, .ai-review-text .table-scroll td {
   white-space: nowrap;
   border-top: none;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border);
   border-inline-start: none;
-  border-inline-end: 1px solid var(--glass-border);
+  border-inline-end: 1px solid var(--border);
 }
 .ai-review-text .table-scroll tr:last-child td { border-bottom: none; }
 .ai-review-text .table-scroll::-webkit-scrollbar { height: 8px; }
 .ai-review-text .table-scroll::-webkit-scrollbar-track { background: transparent; }
-.ai-review-text .table-scroll::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 4px; }
+.ai-review-text .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 .ai-review-text .table-scroll::-webkit-scrollbar-thumb:hover { background: var(--violet); }
 
-/* ==========================================================================
+/* -------------------------------------------------------------------------
    9. RAVAN TAFSIR
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .ravan-tafsir-container {
   position: relative;
   min-height: 80px;
@@ -958,7 +899,7 @@ a.tag-pill:hover {
   line-height: 2.2;
   color: var(--text);
   white-space: pre-wrap;
-  padding: 12px 14px;
+  padding: 14px 16px;
 }
 .ravan-tafsir-content p { margin: 0 0 10px 0; }
 .ravan-tafsir-content ul, .ravan-tafsir-content ol {
@@ -986,9 +927,9 @@ a.tag-pill:hover {
 #ravanTafsirLoadBtn:hover { box-shadow: 0 0 20px var(--neon-glow); }
 #ravanTafsirDeleteBtn:hover { box-shadow: 0 0 20px var(--danger); }
 
-/* ==========================================================================
+/* -------------------------------------------------------------------------
    10. UTILITIES, TOASTS & SKELETONS
-   ========================================================================== */
+   ------------------------------------------------------------------------- */
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -1021,11 +962,12 @@ a.tag-pill:hover {
   pointer-events: none;
 }
 .toast__inner {
-  border-color: var(--neon);
-  padding: 10px 20px;
-  border-radius: 999px;
+  border: 1px solid var(--neon);
+  padding: 10px 22px;
+  border-radius: var(--radius-pill);
   font-size: 0.85rem;
-  box-shadow: 0 0 30px var(--neon-glow), inset 0 1.5px 0 0 var(--glass-highlight);
+  font-weight: 600;
+  box-shadow: 0 0 30px var(--neon-glow), 0 8px 24px rgba(0, 0, 0, 0.4);
   opacity: 0;
   translate: 0 10px;
   transition: all 0.3s ease;
@@ -1036,14 +978,14 @@ a.tag-pill:hover {
   background: var(--neon-glow);
   color: var(--neon);
   font-weight: 700;
-  padding: 0 2px;
-  border-radius: 3px;
+  padding: 0 3px;
+  border-radius: 4px;
 }
 .hidden { display: none !important; }
 
-/* ==========================================================================
-   11. RESPONSIVE ADJUSTMENTS
-   ========================================================================== */
+/* -------------------------------------------------------------------------
+   11. RESPONSIVE
+   ------------------------------------------------------------------------- */
 @media (max-width: 640px) {
   .ai-review-modal {
     width: 100vw;
@@ -1051,18 +993,17 @@ a.tag-pill:hover {
     height: 100dvh;
     max-height: 100dvh;
     border-radius: 0;
-    padding: 14px;
+    padding: 16px;
   }
 }
 
 @media (max-width: 560px) {
-  .sticky-ayah { top: 60px; }
   .container { padding-left: 10px; padding-right: 10px; }
-  .card, .tafsir-card { padding: 14px; }
-  .ayah-frame__inner { padding: 18px 12px 14px; }
-  .progress-hero { padding: 12px 14px; gap: 10px; }
+  .card, .tafsir-card { padding: 16px; }
+  .ayah-frame__inner { padding: 18px 14px 14px; }
+  .progress-hero { padding: 14px 16px; gap: 10px; }
   .progress-hero__title-row { flex-wrap: wrap; gap: 8px; }
-  .progress-hero__actions .btn { font-size: 0.65rem; padding: 3px 8px; height: 24px; }
+  .progress-hero__actions .btn { font-size: 0.65rem; padding: 3px 10px; height: 24px; }
   .progress-hero__actions .bookmark-btn,
   .progress-hero__actions .go-to-btn { width: 24px; height: 24px; }
   .progress-hero__actions .bookmark-btn svg,
