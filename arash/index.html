@@ -2,10 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    
-    <!-- ✅ این خط برای پشتیبانی از safe-area (نوچ گوشی) ضروری است -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    
     <meta name="description" content="شادباش ازدواج - سامانه مشارکت سکه‌ای برای هدیه عروسی">
     <meta name="theme-color" content="#EC4899">
     <meta name="mobile-web-app-capable" content="yes">
@@ -23,13 +20,17 @@
     <!-- آیکون‌ها -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     
-    <!-- CSS پایه -->
+    <!-- ============================================
+         CSS پایه
+         ============================================ -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
     
-    <!-- CSS کامپوننت‌ها -->
+    <!-- ============================================
+         CSS کامپوننت‌ها
+         ============================================ -->
     <link rel="stylesheet" href="css/components/navbar.css">
     <link rel="stylesheet" href="css/components/sidebar.css">
     <link rel="stylesheet" href="css/components/modal.css">
@@ -37,9 +38,12 @@
     <link rel="stylesheet" href="css/components/stats.css">
     <link rel="stylesheet" href="css/components/uploader.css">
     <link rel="stylesheet" href="css/components/table.css">
+    <link rel="stylesheet" href="css/components/leaderboard.css">
     <link rel="stylesheet" href="css/components/extra.css">
     
-    <!-- CSS صفحات کاربر -->
+    <!-- ============================================
+         CSS صفحات کاربر
+         ============================================ -->
     <link rel="stylesheet" href="css/pages/welcome.css">
     <link rel="stylesheet" href="css/pages/auth.css">
     <link rel="stylesheet" href="css/pages/coins.css">
@@ -48,13 +52,16 @@
     <link rel="stylesheet" href="css/pages/location.css">
     <link rel="stylesheet" href="css/pages/profile.css">
     
-    <!-- CSS پنل ادمین -->
+    <!-- ============================================
+         CSS پنل ادمین
+         ============================================ -->
     <link rel="stylesheet" href="css/admin/dashboard.css">
     <link rel="stylesheet" href="css/admin/participants.css">
     <link rel="stylesheet" href="css/admin/settings.css">
     <link rel="stylesheet" href="css/admin/reports.css">
 </head>
 <body>
+    <!-- لودینگ اولیه -->
     <div id="initial-loader" class="initial-loader">
         <div class="loader-content">
             <div class="loader-coin">
@@ -67,6 +74,7 @@
         </div>
     </div>
 
+    <!-- اپلیکیشن اصلی -->
     <div id="app" class="app-container" style="display: none;">
         <header id="navbar" class="navbar"></header>
         <aside id="sidebar" class="sidebar"></aside>
@@ -74,24 +82,46 @@
         <footer id="footer" class="footer"></footer>
     </div>
 
+    <!-- مودال عمومی -->
     <div id="modal-container"></div>
+
+    <!-- اعلان‌ها -->
     <div id="toast-container" class="toast-container"></div>
 
+    <!-- ============================================
+         Supabase SDK
+         ============================================ -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- html2canvas برای خروجی PNG از جدول -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
+    <!-- ============================================
+         Config
+         ============================================ -->
     <script src="js/config/supabase.js"></script>
     
+    <!-- ============================================
+         Utils
+         ============================================ -->
     <script src="js/utils/helpers.js"></script>
     <script src="js/utils/format.js"></script>
     <script src="js/utils/validate.js"></script>
     <script src="js/utils/toast.js"></script>
     <script src="js/utils/storage.js"></script>
     
+    <!-- ============================================
+         Services
+         ============================================ -->
     <script src="js/services/auth.service.js"></script>
     <script src="js/services/coin.service.js"></script>
     <script src="js/services/payment.service.js"></script>
     <script src="js/services/user.service.js"></script>
     <script src="js/services/admin.service.js"></script>
     
+    <!-- ============================================
+         Components
+         ============================================ -->
     <script src="js/components/navbar.js"></script>
     <script src="js/components/sidebar.js"></script>
     <script src="js/components/modal.js"></script>
@@ -99,7 +129,11 @@
     <script src="js/components/stats.js"></script>
     <script src="js/components/uploader.js"></script>
     <script src="js/components/table.js"></script>
+    <script src="js/components/leaderboard.js"></script>
     
+    <!-- ============================================
+         Pages
+         ============================================ -->
     <script src="js/pages/welcome.js"></script>
     <script src="js/pages/auth.js"></script>
     <script src="js/pages/coins.js"></script>
@@ -108,11 +142,17 @@
     <script src="js/pages/location.js"></script>
     <script src="js/pages/profile.js"></script>
     
+    <!-- ============================================
+         Admin Pages
+         ============================================ -->
     <script src="js/admin/dashboard.js"></script>
     <script src="js/admin/participants.js"></script>
     <script src="js/admin/settings.js"></script>
     <script src="js/admin/reports.js"></script>
     
+    <!-- ============================================
+         Router & App
+         ============================================ -->
     <script src="js/router.js"></script>
     <script src="js/app.js"></script>
 </body>
