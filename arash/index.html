@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <meta name="description" content="سامانه مشارکت سکه‌ای - خرید و مشارکت در طرح هدیه">
-    <meta name="theme-color" content="#4F46E5">
+    <meta name="description" content="شادباش ازدواج - سامانه مشارکت سکه‌ای برای هدیه عروسی">
+    <meta name="theme-color" content="#EC4899">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     
-    <title>سامانه مشارکت سکه‌ای | هدیه ارزشمند</title>
+    <title>شادباش ازدواج | هدیه‌ای برای آغاز زیبا</title>
     
     <!-- فونت وزیرمتن -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,11 +18,29 @@
     <!-- آیکون‌ها -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css">
     
-    <!-- CSS -->
+    <!-- ============================================
+         CSS پایه
+         ============================================ -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
+    
+    <!-- ============================================
+         CSS کامپوننت‌ها
+         ============================================ -->
+    <link rel="stylesheet" href="css/components/navbar.css">
+    <link rel="stylesheet" href="css/components/sidebar.css">
+    <link rel="stylesheet" href="css/components/modal.css">
+    <link rel="stylesheet" href="css/components/slider.css">
+    <link rel="stylesheet" href="css/components/stats.css">
+    <link rel="stylesheet" href="css/components/uploader.css">
+    <link rel="stylesheet" href="css/components/table.css">
+    <link rel="stylesheet" href="css/components/extra.css">
+    
+    <!-- ============================================
+         CSS صفحات کاربر
+         ============================================ -->
     <link rel="stylesheet" href="css/pages/welcome.css">
     <link rel="stylesheet" href="css/pages/auth.css">
     <link rel="stylesheet" href="css/pages/coins.css">
@@ -30,6 +48,10 @@
     <link rel="stylesheet" href="css/pages/status.css">
     <link rel="stylesheet" href="css/pages/location.css">
     <link rel="stylesheet" href="css/pages/profile.css">
+    
+    <!-- ============================================
+         CSS پنل ادمین
+         ============================================ -->
     <link rel="stylesheet" href="css/admin/dashboard.css">
     <link rel="stylesheet" href="css/admin/participants.css">
     <link rel="stylesheet" href="css/admin/settings.css">
@@ -40,7 +62,7 @@
     <div id="initial-loader" class="initial-loader">
         <div class="loader-content">
             <div class="loader-coin">
-                <i class="ri-coin-line"></i>
+                <i class="ri-heart-2-fill"></i>
             </div>
             <div class="loader-text">در حال بارگذاری...</div>
             <div class="loader-progress">
@@ -70,7 +92,11 @@
     <!-- اعلان‌ها (Toast) -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- اسکریپت‌ها -->
+    <!-- ============================================
+         اسکریپت‌ها
+         ============================================ -->
+    
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- Config -->
