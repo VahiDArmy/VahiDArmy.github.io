@@ -1,68 +1,66 @@
 /* ============================================
-   تنظیمات Supabase
+   تنظیمات Supabase - شادباش ازدواج
+   نسخه ۲.۰ - رفع مشکل خروج خودکار
    ============================================ */
 
 const SUPABASE_URL = 'https://ijzmojnzcimqroatalhw.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_ah1I0208EMm9KNO0sAhw6w_sWJ682d5';
+const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE';
 
 // بررسی وجود Supabase
 if (typeof supabase === 'undefined') {
-    console.error('Supabase SDK بارگذاری نشده است. لطفاً CDN را بررسی کنید.');
+    console.error('Supabase SDK بارگذاری نشده است');
 }
 
-// ایجاد کلاینت Supabase
+// ✅ ایجاد کلاینت با تنظیمات صحیح برای persistence
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
-        autoRefreshToken: true,
+        // ✅ فعال‌سازی ذخیره‌سازی خودکار Session در localStorage
         persistSession: true,
-        detectSessionInUrl: true,
-        flowType: 'pkce'
+        autoRefreshToken: true,
+        detectSessionInUrl: false,  // ← برای email/password نیازی نیست
+        storageKey: 'shadbash-auth',  // ← کلید اختصاصی برای ذخیره
+        storage: window.localStorage,  // ← صریحاً localStorage
+        flowType: 'implicit'           // ← implicit نه pkce
     },
     global: {
         headers: {
-            'x-application-name': 'coin-participation-system'
+            'x-application-name': 'shadbash-ezdevaj'
         }
     }
 });
 
+// ============================================
 // تنظیمات اپلیکیشن
+// ============================================
 const APP_CONFIG = {
-    // قیمت هر سکه به تومان
     COIN_PRICE: 100000,
     
-    // آمار فیک اولیه
     FAKE_PARTICIPANTS: 3,
     FAKE_AVERAGE: 12,
     FAKE_MIN_AVERAGE: 12,
     
-    // محدودیت‌ها
     MIN_COINS: 1,
-    MAX_COINS: 50,
-    MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+    MAX_COINS: 20,
+    MAX_FILE_SIZE: 5 * 1024 * 1024,
     
-    // شماره کارت
     CARD_NUMBER: '6037998243161691',
     CARD_IMAGE: 'assets/images/card.png',
     
-    // نقشه
     MAP_IMAGE: 'assets/images/map.png',
     MAP_LINK: 'https://maps.google.com/?q=35.6892,51.3890',
     MAP_COORDINATES: '35.6892, 51.3890',
     
-    // وضعیت‌ها
     STATUS: {
         PENDING: 'pending',
         APPROVED: 'approved',
         REJECTED: 'rejected'
     },
     
-    // نقش‌ها
     ROLES: {
         USER: 'user',
         ADMIN: 'admin'
     },
     
-    // مسیرها
     ROUTES: {
         WELCOME: 'welcome',
         AUTH: 'auth',
@@ -78,7 +76,9 @@ const APP_CONFIG = {
     }
 };
 
+// ============================================
 // بررسی اتصال
+// ============================================
 async function testSupabaseConnection() {
     try {
         const { data, error } = await supabaseClient
@@ -94,3 +94,22 @@ async function testSupabaseConnection() {
         return false;
     }
 }
+
+// ============================================
+// 🐛 دیباگ - نمایش وضعیت Session
+// ============================================
+async function debugSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const storedUser = Storage.getUser();
+    
+    console.log('🔍 وضعیت Session:');
+    console.log('  - Session فعال:', !!session);
+    console.log('  - کاربر ذخیره‌شده:', !!storedUser);
+    if (session) {
+        console.log('  - ایمیل:', session.user.email);
+        console.log('  - انقضا در:', new Date(session.expires_at * 1000).toLocaleString('fa-IR'));
+    }
+    return { session, storedUser };
+}
+
+window.debugSession = debugSession;
