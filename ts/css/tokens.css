@@ -1,108 +1,102 @@
 /* ==========================================================================
    RaiseMind — Design Tokens
-   Telegram-inspired Liquid Glass (high transparency)
+   Wave-inspired theme (integrated from theme.html)
    ========================================================================== */
 
 :root {
-  --bg-solid: #06080E;
+  /* ---- Base ---- */
+  --bg-solid: #0A0F1C;
+  --bg-elevated: #131A2A;
 
+  /* ---- Surfaces ---- */
   --surface: rgba(255, 255, 255, 0.04);
-  --surface-2: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-soft: rgba(255, 255, 255, 0.04);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-soft: rgba(255, 255, 255, 0.05);
 
-  --text: #F0F3F8;
-  --text-dim: #B0B9CF;
-  --text-faint: #6F7B96;
+  /* ---- Text ---- */
+  --text: #F1F5F9;
+  --text-dim: #94A3B8;
+  --text-faint: #64748B;
+  --text-on-accent: #06231F;
 
-  --neon: #2DE8C8;
-  --neon-dim: #1B8F7E;
-  --neon-glow: rgba(45, 232, 200, 0.35);
+  /* ---- Accents (same variable *logic*, new hues) ---- */
+  --neon: #2DD4BF;                /* primary accent — was teal, still teal */
+  --neon-dim: #14B8A6;
+  --neon-glow: rgba(45, 212, 191, 0.35);
 
-  --violet: #8B7CF6;
-  --violet-glow: rgba(139, 124, 246, 0.35);
+  --violet: #FB7185;              /* secondary accent — was violet, now coral */
+  --violet-glow: rgba(251, 113, 133, 0.35);
 
-  --danger: #F2637B;
-  --success: #2DE8C8;
+  --danger: #F87171;
+  --success: #2DD4BF;
 
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
+  /* ---- Wave header ---- */
+  --wave-c0: #0D9488;
+  --wave-c1: #E11D48;
+  --wave-back: radial-gradient(140px at 83% 33%, #334155 0%, #1E293B 50%, #0F172A 100%);
+  --wave-text: #F1F5F9;
+  --wave-text-dim: rgba(241, 245, 249, 0.78);
+  --wave-text-faint: rgba(241, 245, 249, 0.55);
+  --wave-nav-bg: rgba(0, 0, 0, 0.20);
+  --wave-nav-border: rgba(255, 255, 255, 0.16);
+  --wave-nav-hover: rgba(255, 255, 255, 0.10);
 
-  /* ------------------------------------------------------------------
-     Glass — VERY transparent, LIGHT blur.
-     Let the backdrop texture show through nearly unblurred; glass feel
-     comes from the specular border + inner highlight, not the blur.
-     ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.02);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.035);
-  --glass-bg-top:       rgba(255, 255, 255, 0.045);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.012);
+  /* ---- Readable surfaces (text-dense blocks) ---- */
+  --read-bg: rgba(15, 23, 42, 0.72);
+  --read-bg-strong: rgba(15, 23, 42, 0.90);
+  --read-border: rgba(255, 255, 255, 0.06);
 
-  --glass-border:       rgba(255, 255, 255, 0.18);
-  --glass-highlight:    rgba(255, 255, 255, 0.45);
-  --glass-specular:     rgba(255, 255, 255, 0.80);
+  /* ---- Radius ---- */
+  --radius-sm: 14px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
 
-  --glass-blur:         blur(1px) saturate(180%);
-  --glass-blur-strong:  blur(1px) saturate(190%);
-
-  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
-                        0 2px 8px rgba(0, 0, 0, 0.22);
-  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.48),
-                        0 4px 14px rgba(0, 0, 0, 0.28);
-
-  /* Readable surfaces — for text-dense content only. */
-  --read-bg:            rgba(10, 12, 20, 0.78);
-  --read-bg-strong:     rgba(10, 12, 20, 0.90);
-  --read-border:        rgba(255, 255, 255, 0.06);
-
+  /* ---- Fonts ---- */
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
+  --font-display: 'Lalezar', 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
-  --font-brand: 'Space Grotesk', system-ui, sans-serif;
+  --font-brand: 'Chewy', 'Space Grotesk', system-ui, sans-serif;
 }
 
 [data-theme="light"] {
-  --bg-solid: #F3F4F8;
+  --bg-solid: #F8FAFC;
+  --bg-elevated: #FFFFFF;
 
-  --surface: rgba(0, 0, 0, 0.02);
-  --surface-2: rgba(0, 0, 0, 0.04);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-soft: rgba(0, 0, 0, 0.04);
+  --surface: rgba(15, 23, 42, 0.03);
+  --surface-2: rgba(15, 23, 42, 0.06);
+  --border: rgba(15, 23, 42, 0.10);
+  --border-soft: rgba(15, 23, 42, 0.05);
 
-  --text: #1C1E24;
-  --text-dim: #5B5F6B;
-  --text-faint: #8B8F99;
+  --text: #0F172A;
+  --text-dim: #475569;
+  --text-faint: #94A3B8;
+  --text-on-accent: #FFFFFF;
 
-  --neon: #0EA894;
-  --neon-dim: #0B7D6E;
-  --neon-glow: rgba(14, 168, 148, 0.18);
+  --neon: #0D9488;
+  --neon-dim: #0F766E;
+  --neon-glow: rgba(13, 148, 136, 0.22);
 
-  --violet: #6754D6;
-  --violet-glow: rgba(103, 84, 214, 0.18);
+  --violet: #E11D48;
+  --violet-glow: rgba(225, 29, 72, 0.20);
 
-  --danger: #D3405A;
-  --success: #0EA894;
+  --danger: #DC2626;
+  --success: #0D9488;
 
-  --glass-bg:           rgba(255, 255, 255, 0.10);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.16);
-  --glass-bg-top:       rgba(255, 255, 255, 0.22);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.06);
+  --wave-c0: #0F766E;
+  --wave-c1: #BE123C;
+  --wave-back: radial-gradient(140px at 83% 33%, #475569 0%, #1E293B 100%);
+  --wave-text: #F8FAFC;
+  --wave-text-dim: rgba(248, 250, 252, 0.80);
+  --wave-text-faint: rgba(248, 250, 252, 0.55);
+  --wave-nav-bg: rgba(0, 0, 0, 0.22);
+  --wave-nav-border: rgba(255, 255, 255, 0.18);
+  --wave-nav-hover: rgba(255, 255, 255, 0.12);
 
-  --glass-border:       rgba(255, 255, 255, 0.80);
-  --glass-highlight:    rgba(255, 255, 255, 0.95);
-  --glass-specular:     rgba(255, 255, 255, 1);
-
-  --glass-blur:         blur(3px) saturate(140%);
-  --glass-blur-strong:  blur(5px) saturate(150%);
-
-  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.09),
-                        0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.13),
-                        0 4px 14px rgba(0, 0, 0, 0.07);
-
-  --read-bg:            rgba(255, 255, 255, 0.88);
-  --read-bg-strong:     rgba(255, 255, 255, 0.96);
-  --read-border:        rgba(0, 0, 0, 0.05);
+  --read-bg: rgba(255, 255, 255, 0.90);
+  --read-bg-strong: rgba(255, 255, 255, 0.98);
+  --read-border: rgba(15, 23, 42, 0.06);
 }
 
 * { box-sizing: border-box; }
@@ -113,17 +107,13 @@ html, body {
   min-height: 100vh;
 }
 
-/* ------------------------------------------------------------------
-   Professional mesh-gradient backdrop.
-   ------------------------------------------------------------------ */
 body {
   background-color: var(--bg-solid);
   background-image:
-    radial-gradient(circle at 15% 12%, rgba(45, 232, 200, 0.16), transparent 42%),
-    radial-gradient(circle at 85%  8%, rgba(139, 124, 246, 0.20), transparent 42%),
-    radial-gradient(circle at 72% 85%, rgba(212, 175, 106, 0.10), transparent 42%),
-    radial-gradient(circle at  8% 90%, rgba(139, 124, 246, 0.14), transparent 42%),
-    linear-gradient(160deg, #06080E 0%, #0d1224 50%, #06080E 100%);
+    radial-gradient(circle at 12% 10%, var(--neon-glow), transparent 38%),
+    radial-gradient(circle at 88% 14%, var(--violet-glow), transparent 38%),
+    radial-gradient(circle at 78% 88%, rgba(99, 102, 241, 0.12), transparent 42%),
+    linear-gradient(180deg, var(--bg-solid) 0%, #0d1424 50%, var(--bg-solid) 100%);
   background-attachment: fixed;
   background-size: cover;
   color: var(--text);
@@ -136,72 +126,23 @@ body {
 
 [data-theme="light"] body {
   background-image:
-    radial-gradient(circle at 15% 12%, rgba(14, 168, 148, 0.18), transparent 42%),
-    radial-gradient(circle at 85%  8%, rgba(103, 84, 214, 0.20), transparent 42%),
-    radial-gradient(circle at 72% 85%, rgba(169, 121, 58, 0.12), transparent 42%),
-    radial-gradient(circle at  8% 90%, rgba(103, 84, 214, 0.14), transparent 42%),
-    linear-gradient(160deg, #F3F4F8 0%, #E8EAF2 50%, #F3F4F8 100%);
+    radial-gradient(circle at 12% 10%, var(--neon-glow), transparent 38%),
+    radial-gradient(circle at 88% 14%, var(--violet-glow), transparent 38%),
+    radial-gradient(circle at 78% 88%, rgba(99, 102, 241, 0.08), transparent 42%),
+    linear-gradient(180deg, var(--bg-solid) 0%, #EEF2F7 50%, var(--bg-solid) 100%);
 }
 
-/* ------------------------------------------------------------------
-   Fabric weave + film grain overlay. No blend modes (they collapse
-   on near-black backdrops). Semi-transparent light threads painted
-   directly on top of the mesh. Slightly stronger than before so that
-   the reduced blur still lets the texture read through the glass.
-   ------------------------------------------------------------------ */
+/* subtle grain overlay */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-
-  background-image:
-    /* 1. Grain */
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.18'/></svg>"),
-    /* 2. Weave ↘ */
-    repeating-linear-gradient(
-      -45deg,
-      rgba(255, 255, 255, 0.06) 0px,
-      rgba(255, 255, 255, 0.06) 1px,
-      transparent 1px,
-      transparent 4px
-    ),
-    /* 3. Weave ↗ */
-    repeating-linear-gradient(
-      45deg,
-      rgba(255, 255, 255, 0.10) 0px,
-      rgba(255, 255, 255, 0.10) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-
-  background-size: 180px 180px, 4px 4px, 4px 4px;
-  background-repeat: repeat, repeat, repeat;
-}
-
-[data-theme="light"] body::before {
-  background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/></svg>"),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(0, 0, 0, 0.045) 0px,
-      rgba(0, 0, 0, 0.045) 1px,
-      transparent 1px,
-      transparent 4px
-    ),
-    repeating-linear-gradient(
-      45deg,
-      rgba(0, 0, 0, 0.07) 0px,
-      rgba(0, 0, 0, 0.07) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-}
-
-/* iOS/Safari ignores `fixed` attachment badly — fall back gracefully. */
-@media (hover: none) and (pointer: coarse) {
-  body { background-attachment: scroll; }
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.14'/></svg>");
+  background-size: 160px 160px;
+  background-repeat: repeat;
+  opacity: 0.55;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -224,65 +165,7 @@ button { font-family: inherit; }
 :focus-visible {
   outline: 2px solid var(--neon);
   outline-offset: 3px;
-  border-radius: 4px;
-}
-
-/* ==========================================================================
-   Liquid-Glass utility
-   ========================================================================== */
-.glass {
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 45%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
-}
-
-.glass--strong {
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-strong) 0%,
-    var(--glass-bg) 100%
-  );
-}
-
-.glass--specular::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.22) 22%,
-    transparent 52%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.9;
-}
-
-/* Readable-surface utility (for text blocks on top of glass) */
-.read-surface {
-  background: var(--read-bg);
-  border: 1px solid var(--read-border);
-  border-radius: var(--radius-sm);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  border-radius: 6px;
 }
 
 .site-header,
