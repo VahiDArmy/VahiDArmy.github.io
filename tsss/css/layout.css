@@ -201,3 +201,6 @@
 .site-footer a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; }
 .site-footer a:hover { color: var(--neon); }
 @media (max-width: 560px) { .site-footer { padding-bottom: 104px; } }
+
+/* Header without a title block (home page) */
+.wave--slim { min-height: calc(2.1 * var(--hw)); padding-bottom: calc(1.25 * var(--hw)); }
