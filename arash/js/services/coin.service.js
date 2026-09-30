@@ -1,85 +1,88 @@
 /* ============================================
    سرویس سکه - شادباش ازدواج
-   نسخه ۳.۰ - منطق صحیح آمار ساختگی
+   نسخه ۴.۰ - استفاده از RPC برای آمار عمومی
    ============================================ */
 
 const CoinService = {
     /**
      * دریافت آمار کلی (شامل آمار ساختگی)
      * ─────────────────────────────────────
-     * فرمول:
-     *   مجموع کل = (مجموع فیک) + (مجموع واقعی تایید شده)
-     *   تعداد کل = (تعداد فیک) + (تعداد واقعی تایید شده)
-     *   میانگین = مجموع کل ÷ تعداد کل
+     * از تابع RPC استفاده می‌کند چون RLS اجازه
+     * خواندن تراکنش‌های دیگران را نمی‌دهد
      */
     async getStats() {
         try {
-            // ۱. دریافت داده‌های واقعی از دیتابیس
-            const { data: transactions, error } = await supabaseClient
-                .from('coin_transactions')
-                .select('coin_count')
-                .eq('status', 'approved');
+            // ۱. دریافت آمار واقعی از طریق RPC (SECURITY DEFINER)
+            const { data: rpcData, error: rpcError } = await supabaseClient
+                .rpc('get_public_stats');
             
-            if (error) throw error;
+            if (rpcError) {
+                console.warn('خطا در RPC، استفاده از مقادیر پیش‌فرض:', rpcError.message);
+                return this.getFakeStatsOnly();
+            }
             
-            const realCoins = transactions?.map(t => t.coin_count) || [];
-            const realCount = realCoins.length;
-            const realSum = realCoins.reduce((a, b) => a + b, 0);
+            const realCount = parseInt(rpcData?.real_count) || 0;
+            const realSum = parseInt(rpcData?.real_sum) || 0;
             
             // ۲. داده‌های فیک اولیه
-            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;      // 3
-            const fakeAverage = APP_CONFIG.FAKE_AVERAGE;         // 12
-            const fakeSum = fakeCount * fakeAverage;             // 36
+            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;    // 3
+            const fakeAverage = APP_CONFIG.FAKE_AVERAGE;       // 12
+            const fakeSum = fakeCount * fakeAverage;           // 36
             
             // ۳. ترکیب داده‌ها
             const totalCount = realCount + fakeCount;
             const totalSum = realSum + fakeSum;
             
-            // ۴. محاسبه میانگین (بدون حداقل کاذب)
+            // ۴. محاسبه میانگین
             const averageCoins = totalCount > 0
                 ? totalSum / totalCount
                 : 0;
             
-            // ۵. گرد کردن به یک رقم اعشار برای نمایش بهتر
+            // ۵. گرد کردن به یک رقم اعشار
             const roundedAverage = Math.round(averageCoins * 10) / 10;
             
             return {
-                // آمار نمایشی
+                // آمار نمایشی (فیک + واقعی)
                 participantsCount: totalCount,
                 totalCoins: totalSum,
                 averageCoins: roundedAverage,
                 averageAmount: Math.round(roundedAverage * APP_CONFIG.COIN_PRICE),
                 
-                // آمار واقعی (برای ادمین)
+                // آمار واقعی
                 realCount,
                 realSum,
-                realAverage: realCount > 0 ? realSum / realCount : 0,
+                realAverage: realCount > 0 ? Math.round((realSum / realCount) * 10) / 10 : 0,
                 
-                // آمار فیک (برای شفافیت)
+                // آمار فیک
                 fakeCount,
                 fakeSum
             };
             
         } catch (error) {
             console.error('خطا در دریافت آمار:', error);
-            
-            // در صورت خطا، فقط آمار فیک را برگردان
-            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;
-            const fakeAverage = APP_CONFIG.FAKE_AVERAGE;
-            const fakeSum = fakeCount * fakeAverage;
-            
-            return {
-                participantsCount: fakeCount,
-                totalCoins: fakeSum,
-                averageCoins: fakeAverage,
-                averageAmount: fakeAverage * APP_CONFIG.COIN_PRICE,
-                realCount: 0,
-                realSum: 0,
-                realAverage: 0,
-                fakeCount,
-                fakeSum
-            };
+            return this.getFakeStatsOnly();
         }
+    },
+    
+    /**
+     * فقط آمار فیک (در صورت خطا)
+     */
+    getFakeStatsOnly() {
+        const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;
+        const fakeAverage = APP_CONFIG.FAKE_AVERAGE;
+        const fakeSum = fakeCount * fakeAverage;
+        
+        return {
+            participantsCount: fakeCount,
+            totalCoins: fakeSum,
+            averageCoins: fakeAverage,
+            averageAmount: fakeAverage * APP_CONFIG.COIN_PRICE,
+            realCount: 0,
+            realSum: 0,
+            realAverage: 0,
+            fakeCount,
+            fakeSum
+        };
     },
     
     /**
