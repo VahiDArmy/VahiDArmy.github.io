@@ -1,18 +1,24 @@
 /* ============================================
    سرویس سکه - شادباش ازدواج
-   نسخه ۲.۰ - با پیام‌های اصلاح شده
+   نسخه ۳.۰ - منطق صحیح آمار ساختگی
    ============================================ */
 
 const CoinService = {
     /**
-     * دریافت آمار کلی (شامل فیک)
+     * دریافت آمار کلی (شامل آمار ساختگی)
+     * ─────────────────────────────────────
+     * فرمول:
+     *   مجموع کل = (مجموع فیک) + (مجموع واقعی تایید شده)
+     *   تعداد کل = (تعداد فیک) + (تعداد واقعی تایید شده)
+     *   میانگین = مجموع کل ÷ تعداد کل
      */
     async getStats() {
         try {
+            // ۱. دریافت داده‌های واقعی از دیتابیس
             const { data: transactions, error } = await supabaseClient
                 .from('coin_transactions')
                 .select('coin_count')
-                .eq('status', APP_CONFIG.STATUS.APPROVED);
+                .eq('status', 'approved');
             
             if (error) throw error;
             
@@ -20,40 +26,64 @@ const CoinService = {
             const realCount = realCoins.length;
             const realSum = realCoins.reduce((a, b) => a + b, 0);
             
-            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;
-            const fakeSum = APP_CONFIG.FAKE_AVERAGE * fakeCount;
+            // ۲. داده‌های فیک اولیه
+            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;      // 3
+            const fakeAverage = APP_CONFIG.FAKE_AVERAGE;         // 12
+            const fakeSum = fakeCount * fakeAverage;             // 36
             
+            // ۳. ترکیب داده‌ها
             const totalCount = realCount + fakeCount;
             const totalSum = realSum + fakeSum;
-            const average = Math.max(
-                Math.round(totalSum / totalCount),
-                APP_CONFIG.FAKE_MIN_AVERAGE
-            );
+            
+            // ۴. محاسبه میانگین (بدون حداقل کاذب)
+            const averageCoins = totalCount > 0
+                ? totalSum / totalCount
+                : 0;
+            
+            // ۵. گرد کردن به یک رقم اعشار برای نمایش بهتر
+            const roundedAverage = Math.round(averageCoins * 10) / 10;
             
             return {
+                // آمار نمایشی
                 participantsCount: totalCount,
                 totalCoins: totalSum,
-                averageCoins: average,
-                averageAmount: average * APP_CONFIG.COIN_PRICE,
+                averageCoins: roundedAverage,
+                averageAmount: Math.round(roundedAverage * APP_CONFIG.COIN_PRICE),
+                
+                // آمار واقعی (برای ادمین)
                 realCount,
-                realSum
+                realSum,
+                realAverage: realCount > 0 ? realSum / realCount : 0,
+                
+                // آمار فیک (برای شفافیت)
+                fakeCount,
+                fakeSum
             };
             
         } catch (error) {
             console.error('خطا در دریافت آمار:', error);
+            
+            // در صورت خطا، فقط آمار فیک را برگردان
+            const fakeCount = APP_CONFIG.FAKE_PARTICIPANTS;
+            const fakeAverage = APP_CONFIG.FAKE_AVERAGE;
+            const fakeSum = fakeCount * fakeAverage;
+            
             return {
-                participantsCount: APP_CONFIG.FAKE_PARTICIPANTS,
-                totalCoins: APP_CONFIG.FAKE_AVERAGE * APP_CONFIG.FAKE_PARTICIPANTS,
-                averageCoins: APP_CONFIG.FAKE_AVERAGE,
-                averageAmount: APP_CONFIG.FAKE_AVERAGE * APP_CONFIG.COIN_PRICE,
+                participantsCount: fakeCount,
+                totalCoins: fakeSum,
+                averageCoins: fakeAverage,
+                averageAmount: fakeAverage * APP_CONFIG.COIN_PRICE,
                 realCount: 0,
-                realSum: 0
+                realSum: 0,
+                realAverage: 0,
+                fakeCount,
+                fakeSum
             };
         }
     },
     
     /**
-     * دریافت پکیج‌های پیشنهادی (برای نمایش سریع)
+     * دریافت پکیج‌های پیشنهادی
      */
     getCoinTiers() {
         return [
@@ -95,11 +125,11 @@ const CoinService = {
             },
             {
                 id: 4,
-                count: 25,
+                count: 15,
                 title: 'هدیه نفیس',
-                subtitle: 'بیست و پنج سکه برای یک جشن بی‌نظیر',
+                subtitle: 'پانزده سکه برای یک جشن بی‌نظیر',
                 description: 'یک هدیه خاص و ارزشمند',
-                price: APP_CONFIG.COIN_PRICE * 25,
+                price: APP_CONFIG.COIN_PRICE * 15,
                 icon: 'ri-medal-2-line',
                 color: '#10B981',
                 gradient: 'linear-gradient(135deg, #34D399 0%, #10B981 100%)',
@@ -107,27 +137,15 @@ const CoinService = {
             },
             {
                 id: 5,
-                count: 50,
+                count: 20,
                 title: 'هدیه استثنایی',
-                subtitle: 'پنجاه سکه برای شادی بزرگ',
+                subtitle: 'بیست سکه برای شادی بزرگ',
                 description: 'یک هدیه به یادماندنی',
-                price: APP_CONFIG.COIN_PRICE * 50,
+                price: APP_CONFIG.COIN_PRICE * 20,
                 icon: 'ri-trophy-line',
                 color: '#EF4444',
                 gradient: 'linear-gradient(135deg, #F87171 0%, #EF4444 100%)',
                 features: ['همه ویژگی‌های قبلی', 'یادگاری ویژه', 'تقدیرنامه']
-            },
-            {
-                id: 6,
-                count: 100,
-                title: 'هدیه افسانه‌ای',
-                subtitle: 'صد سکه، صد آرزوی بزرگ',
-                description: 'بزرگ‌ترین هدیه ممکن',
-                price: APP_CONFIG.COIN_PRICE * 100,
-                icon: 'ri-fire-line',
-                color: '#6366F1',
-                gradient: 'linear-gradient(135deg, #818CF8 0%, #6366F1 100%)',
-                features: ['همه ویژگی‌های قبلی', 'یادگاری افسانه‌ای', 'دعوت VIP']
             }
         ];
     },
