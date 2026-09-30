@@ -19,3 +19,4 @@ thnk a lot about out put
 the data
 the table
 the visualization
+the basics of method with strong refer to refrences
