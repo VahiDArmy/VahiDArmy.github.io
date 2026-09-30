@@ -6,9 +6,6 @@
 const SUPABASE_URL = 'https://ijzmojnzcimqroatalhw.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_ah1I0208EMm9KNO0sAhw6w_sWJ682d5';
 
-
-
-// بررسی وجود کلید
 if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes('YOUR_ANON_KEY')) {
     console.error('❌ خطا: کلید anon سوپابیس تنظیم نشده است!');
 }
@@ -40,11 +37,17 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // تنظیمات اپلیکیشن
 // ═══════════════════════════════════════════
 const APP_CONFIG = {
+    // قیمت هر سکه (تومان)
     COIN_PRICE: 100000,
     
+    // ═══════════════════════════════════════════
+    // آمار ساختگی اولیه
+    // ───────────────────────────────────────────
+    // ۳ نفر فیک با میانگین ۱۲ سکه (۱,۲۰۰,۰۰۰ تومان)
+    // مجموع فیک = ۳ × ۱۲ = ۳۶ سکه
+    // ═══════════════════════════════════════════
     FAKE_PARTICIPANTS: 3,
     FAKE_AVERAGE: 12,
-    FAKE_MIN_AVERAGE: 12,
     
     MIN_COINS: 1,
     MAX_COINS: 20,
@@ -53,7 +56,6 @@ const APP_CONFIG = {
     CARD_NUMBER: '6037998243161691',
     CARD_IMAGE: 'assets/images/card.png',
     
-    // ✅ اطلاعات موقعیت (به‌روزرسانی شده)
     MAP_IMAGE: 'assets/images/map.png',
     MAP_LINK: 'https://maps.google.com/?q=35.7651724,51.0029578',
     MAP_COORDINATES: '35.7651724, 51.0029578',
