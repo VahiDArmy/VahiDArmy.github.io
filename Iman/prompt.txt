@@ -1,0 +1,21 @@
+OK let us implement this:
+
+🥇 Best Method: Two-Dimensional Aerodynamic Trajectory Model (ATSB / FAA)
+
+the engine is JT8D LPT 3 and 4 blade
+
+gather as much as info you can
+
+make a table of inputs
+
+as you say we can do it in excel i conclude that as we know JS is much powerful code, we can do the calculations with JS
+we will make a HTML/Css/JS app that takes that input (prefilled with you with as uch as data gathered for JT8D-219 4 and 4 LPT)
+
+about the app:
+make a highly detaled highly professional UI
+use theme of attached file.
+
+thnk a lot about out put
+the data
+the table
+the visualization
