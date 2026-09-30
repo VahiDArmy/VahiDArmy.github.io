@@ -1,10 +1,11 @@
 /* ============================================
-   کامپوننت آمار زنده
+   کامپوننت آمار زنده - شادباش ازدواج
+   نسخه ۲.۰ - با نمایش صحیح میانگین
    ============================================ */
 
 const Stats = {
     container: null,
-    animated: false,
+    lastStats: null,
     
     /**
      * رندر آمار
@@ -13,11 +14,11 @@ const Stats = {
         this.container = document.getElementById(containerId);
         if (!this.container) return;
         
-        // نمایش لودینگ
+        // لودینگ
         this.container.innerHTML = `
             <div class="stats-grid">
                 ${[1,2,3,4].map(() => `
-                    <div class="stat-card skeleton-card">
+                    <div class="stat-card">
                         <div class="skeleton skeleton-avatar"></div>
                         <div style="flex: 1;">
                             <div class="skeleton skeleton-text" style="width: 60%;"></div>
@@ -30,6 +31,7 @@ const Stats = {
         
         // دریافت آمار
         const stats = await CoinService.getStats();
+        this.lastStats = stats;
         this.renderStats(stats);
     },
     
@@ -97,12 +99,12 @@ const Stats = {
             </div>
         `;
         
-        // انیمیشن شماره‌ها
+        // انیمیشن اعداد
         this.animateStats(stats);
     },
     
     /**
-     * انیمیشن شماره‌ها
+     * انیمیشن اعداد
      */
     animateStats(stats) {
         const avgEl = document.getElementById('stat-avg');
@@ -121,6 +123,8 @@ const Stats = {
      */
     async refresh() {
         const stats = await CoinService.getStats();
+        this.lastStats = stats;
+        
         const avgEl = document.getElementById('stat-avg');
         const countEl = document.getElementById('stat-count');
         const amountEl = document.getElementById('stat-amount');
