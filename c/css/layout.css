@@ -1,265 +1,160 @@
 /* ==========================================================================
-   Layout — Telegram Liquid Glass nav (high transparency)
+   Layout — Wave header, navigation, sections
    ========================================================================== */
+.container { max-width: 720px; margin: 0 auto; padding: 0 18px 24px; }
 
-.container {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0 18px 80px;
+/* ---- Wave header: three stacked wave layers (shape from theme.html) ---- */
+.wave {
+  --c0y: calc(.42 * var(--hw));
+  --c1ex: 15%; --c1ey: calc(-.01 * var(--hw)); --c1c0x: 10%; --c1c1x: 12%;
+  --c2ex: 40%; --c2ey: calc(.56 * var(--hw)); --c2c0x: 19%; --c2c1x: 36%;
+  --c3cx: calc(1.1 * var(--hw)); --c3cy: calc(.375 * var(--hw));
+  position: relative;
+  display: grid;
+  grid: auto 1fr / 1fr;
+  min-height: calc(2.9 * var(--hw));
+  padding: .9rem 1rem var(--hw);
+  background: var(--wave-a);
+  color: #fff;
 }
-
-/* ---- Glass Header ---- */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-
-  background: linear-gradient(
-    180deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg-bottom) 100%
+.wave, .wave::before, .wave::after {
+  clip-path: shape(
+    from 100% var(--o, 0),
+    hline to 0,
+    vline to calc(100% - var(--hw)),
+    curve by 21.5% var(--c0y) with 13% var(--c0y),
+    curve by var(--c1ex) var(--c1ey) with var(--c1c0x) 0 / var(--c1c1x) var(--c1ey),
+    curve by var(--c2ex) var(--c2ey) with var(--c2c0x) 0 / 18% var(--c2ey),
+    curve to 100% calc(100% - var(--c3cy)) with var(--c3cx) 0 from start
   );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-
-  border-bottom: 1px solid var(--glass-border);
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.05);
-  isolation: isolate;
 }
-
-.site-header::before {
+.wave::before, .wave::after {
   content: '';
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--glass-specular) 15%,
-    var(--glass-specular) 85%,
-    transparent 100%
-  );
-  opacity: 0.7;
+  inset: 0;
+  z-index: 0;
   pointer-events: none;
+}
+.wave::before {
+  --c1ex: 23%; --c1ey: calc(-.26 * var(--hw)); --c1c0x: 12%; --c1c1x: 12%;
+  --c2ex: 32%; --c2ey: calc(.3 * var(--hw)); --c2c0x: 12%; --c2c1x: 18%;
+  --c3cx: calc(1.2 * var(--hw)); --c3cy: calc(1.05 * var(--hw));
+  background: var(--wave-back);
+}
+.wave::after {
+  --o: 100%;
+  --c1ex: 21%; --c1ey: calc(-.13 * var(--hw)); --c1c1x: 13%;
+  --c2ex: 34%; --c2c0x: 8%; --c2c1x: 19%; --c2ey: calc(.5 * var(--hw));
+  --c3cx: calc(1.05 * var(--hw)); --c3cy: calc(.625 * var(--hw));
   z-index: 2;
+  background: var(--wave-b);
+}
+.wave > * { position: relative; z-index: 1; }
+.wave :focus-visible { outline-color: #fff; }
+
+/* Browsers without CSS shape(): soft rounded edge instead of waves */
+@supports not (clip-path: shape(from 0 0, hline to 0)) {
+  .wave, .wave::before { clip-path: none; border-radius: 0 0 50% 50% / 0 0 var(--hw) var(--hw); }
+  .wave::after { display: none; }
+  .wave { border-bottom: 6px solid var(--wave-b); }
 }
 
+.site-header__inner,
+.main-head { width: 100%; max-width: 720px; margin-inline: auto; }
+
 .site-header__inner {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 12px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 }
 
+.main-head {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: .35rem;
+  padding-block: .6rem .2rem;
+  text-align: center;
+}
+.main-head h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 6vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.35;
+}
+.main-head p { margin: 0; max-width: 46ch; font-size: .88rem; line-height: 1.8; color: #f0f5f5; }
+
 .brand {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   font-family: var(--font-brand);
-  font-weight: 600;
-  font-size: 1.05rem;
-  letter-spacing: 0.02em;
-  color: var(--text);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: #fff;
 }
-[data-theme="light"] .brand { text-shadow: 0 1px 6px rgba(255,255,255,0.6); }
+.brand__mark { color: var(--wave-c2); }
+.brand__fa { font-family: var(--font-ui); font-size: .78rem; font-weight: 500; color: #e9efef; }
 
-.brand__mark {
-  color: var(--neon);
-  text-shadow: 0 0 14px var(--neon-glow);
-}
-
-.brand__fa {
-  font-family: var(--font-ui);
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  font-weight: 400;
-}
-
-/* ---- Nav pill — super transparent, blur carries it ---- */
-.nav-tabs {
-  position: relative;
-  display: flex;
-  gap: 4px;
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  padding: 4px;
-  box-shadow:
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -8px 18px -8px rgba(0, 0, 0, 0.25),
-    0 6px 22px rgba(0, 0, 0, 0.2);
-  isolation: isolate;
-}
-
-.nav-tabs::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    180deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.12) 35%,
-    transparent 60%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  opacity: 0.85;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.nav-tabs a {
-  position: relative;
-  z-index: 2;
-  padding: 7px 16px;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  color: var(--text-dim);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-
-.nav-tabs a:hover { color: var(--text); }
-
-.nav-tabs a.active {
-  background: var(--neon);
-  color: #06110E;
-  font-weight: 600;
-  box-shadow:
-    0 0 20px var(--neon-glow),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 0 0 rgba(0, 0, 0, 0.18);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
+/* ---- Header actions (navigation lives in glass-nav.css) ---- */
+.header-actions { display: flex; align-items: center; gap: 8px; }
 .theme-toggle {
   width: 38px;
   height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--glass-border);
-  background: var(--glass-bg-strong);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  color: var(--text-dim);
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--wave-a);
+  color: #fff;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow:
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -6px 12px -6px rgba(0, 0, 0, 0.22),
-    0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: background .2s ease, transform .15s ease;
 }
-.theme-toggle:hover {
-  border-color: var(--neon);
-  color: var(--neon);
-  box-shadow:
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    0 0 20px var(--neon-glow);
-}
+.theme-toggle:hover { background: var(--wave-b-ink); }
+.theme-toggle:active { transform: scale(.94); }
 
-/* ---- Section spacing ---- */
+/* ---- Sections ---- */
 .section { margin-top: 28px; }
 .section__label {
-  font-size: 0.78rem;
-  color: var(--text-faint);
-  margin-bottom: 10px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: .86rem;
+  font-weight: 700;
+  color: var(--text-dim);
 }
 .section__label::after {
   content: '';
   flex: 1;
-  height: 1px;
-  background: var(--border-soft);
+  height: 8px;
+  background: var(--wave-line) repeat-x center;
+  opacity: .7;
 }
 
-/* ---- Mobile ---- */
+.site-footer::before {
+  content: '';
+  display: block;
+  max-width: 720px;
+  height: 8px;
+  margin: 0 auto 16px;
+  background: var(--wave-line) repeat-x center;
+  opacity: .6;
+}
+
+
 @media (max-width: 560px) {
-  .container { padding-inline: 8px; }
-  .site-header__inner { padding-inline: 10px; }
+  .container { padding-inline: 12px; padding-bottom: 24px; }
+  .wave { padding-inline: .75rem; }
+
 }
 
-.mobile-tabbar { display: none; }
+.site-footer { padding: 20px 20px 28px; text-align: center; font-size: .75rem; color: var(--text-faint); }
+.site-footer a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 3px; }
+.site-footer a:hover { color: var(--neon); }
+@media (max-width: 560px) { .site-footer { padding-bottom: 104px; } }
 
-@media (max-width: 560px) {
-  .nav-tabs { display: none; }
-
-  .mobile-tabbar {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    inset-inline: 0;
-    z-index: 40;
-
-    background: linear-gradient(
-      0deg,
-      var(--glass-bg-top) 0%,
-      var(--glass-bg-bottom) 100%
-    );
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-
-    border-top: 1px solid var(--glass-border);
-    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-    justify-content: space-around;
-    box-shadow:
-      0 -10px 36px rgba(0, 0, 0, 0.32),
-      inset 0 1.5px 0 0 var(--glass-highlight);
-    isolation: isolate;
-  }
-
-  .mobile-tabbar::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 1px;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      var(--glass-specular) 20%,
-      var(--glass-specular) 80%,
-      transparent 100%
-    );
-    opacity: 0.6;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  .mobile-tabbar a {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 0.62rem;
-    color: var(--text-faint);
-    padding: 4px 6px;
-    border-radius: 10px;
-    transition: color 0.2s ease;
-  }
-  .mobile-tabbar a.active { color: var(--neon); }
-
-  .container { padding-bottom: 96px; }
-}
+/* Header without a title block (home page) */
+.wave--slim { min-height: calc(2.1 * var(--hw)); padding-bottom: calc(1.25 * var(--hw)); }

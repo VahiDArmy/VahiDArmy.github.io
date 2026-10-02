@@ -1,142 +1,108 @@
 /* ==========================================================================
-   RaiseMind — Design Tokens
-   Telegram-inspired Liquid Glass (high transparency)
+   RaiseMind — Design Tokens · Wave theme
+   Variable NAMES are unchanged (JS reads --violet etc.); only values are new.
+   --neon = primary accent (teal)  --violet = secondary accent (rose)
    ========================================================================== */
-
 :root {
-  --bg: #06080E;
-  --bg-solid: #06080E;
+  --hw: clamp(46px, 8vw, 92px);            /* wave height, drives the header */
 
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-2: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-soft: rgba(255, 255, 255, 0.04);
+  --bg-solid: #2b3339;
+  --card: #333c43;
+  --card-2: #3c474f;
+  --surface: rgba(222, 222, 222, 0.05);
+  --surface-2: rgba(222, 222, 222, 0.09);
+  --border: rgba(222, 222, 222, 0.16);
+  --border-soft: rgba(222, 222, 222, 0.08);
 
-  --text: #F0F3F8;
-  --text-dim: #B0B9CF;
-  --text-faint: #6F7B96;
+  --text: #eeebe8;
+  --text-dim: #bcc1c4;
+  --text-faint: #8e989e;
 
-  --neon: #2DE8C8;
-  --neon-dim: #1B8F7E;
-  --neon-glow: rgba(45, 232, 200, 0.35);
+  --neon: #6fc0c4;
+  --neon-dim: #3f7a7f;
+  --neon-glow: rgba(111, 192, 196, 0.22);
+  --violet: #e58aa8;
+  --violet-glow: rgba(229, 138, 168, 0.2);
+  --danger: #f0787f;
+  --success: #6fc0c4;
+  --on-accent: #0f2427;
 
-  --violet: #8B7CF6;
-  --violet-glow: rgba(139, 124, 246, 0.35);
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 26px;
 
-  --gold: #D4AF6A;
-  --gold-glow: rgba(212, 175, 106, 0.3);
-  --star-gold: #E8C84A;
+  /* Header waves (from theme.html) */
+  --wave-a: #3f7a7f;
+  --wave-b: #b95e7b;
+  --wave-b-ink: #a3506c;
+  --wave-c2: #a9dfe2;
+  --wave-back: radial-gradient(var(--hw) at 17% 38%, #807484 45%, #4a545c);
+  --wave-line: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'%3E%3Cpath d='M0 4Q6 0 12 4T24 4' fill='none' stroke='%23b95e7b' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+  --wave-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 0H100V11C86 21 74 5 58 11S30 20 0 10Z'/%3E%3C/svg%3E");
 
-  --danger: #F2637B;
-  --success: #2DE8C8;
+  /* Legacy "glass" names, kept so existing rules resolve — now flat surfaces */
+  --glass-bg: var(--card);
+  --glass-bg-strong: var(--card-2);
+  --glass-bg-top: var(--card);
+  --glass-bg-bottom: var(--card);
+  --glass-border: var(--border);
+  --glass-highlight: transparent;
+  --glass-specular: transparent;
+  --glass-blur: none;
+  --glass-blur-strong: none;
+  --shadow-glass: 0 6px 18px rgba(8, 12, 15, 0.28);
+  --shadow-glass-lg: 0 18px 44px rgba(8, 12, 15, 0.45);
+  --shadow-card: var(--shadow-glass);
 
-  --radius-sm: 12px;
-  --radius-md: 18px;
-  --radius-lg: 24px;
-
-  /* ------------------------------------------------------------------
-     Glass — SUPER transparent (dark)
-     Blur kept as original. Specular + depth enhanced.
-     ------------------------------------------------------------------ */
-  --glass-bg:           rgba(255, 255, 255, 0.025);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.045);
-  --glass-bg-top:       rgba(255, 255, 255, 0.055);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.015);
-
-  --glass-border:       rgba(255, 255, 255, 0.16);
-  --glass-highlight:    rgba(255, 255, 255, 0.42);
-  --glass-specular:     rgba(255, 255, 255, 0.78);
-
-  --glass-blur:         blur(5px) saturate(80%);
-  --glass-blur-strong:  blur(8px) saturate(90%);
-
-  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.38),
-                        0 2px 8px rgba(0, 0, 0, 0.22);
-  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.48),
-                        0 4px 14px rgba(0, 0, 0, 0.28);
-
-  --shadow-card:        var(--shadow-glass);
-
-  /* ------------------------------------------------------------------
-     Readable surfaces — for text-dense content only.
-     Nearly opaque so glyphs stay legible through the glass shell.
-     ------------------------------------------------------------------ */
-  --read-bg:            rgba(10, 12, 20, 0.78);
-  --read-bg-strong:     rgba(10, 12, 20, 0.90);
-  --read-border:        rgba(255, 255, 255, 0.06);
+  /* Text-dense surfaces */
+  --read-bg: #293137;
+  --read-bg-strong: #242b31;
+  --read-border: var(--border-soft);
 
   --font-ui: 'Vazirmatn', system-ui, sans-serif;
   --font-quran: 'Amiri Quran', 'Scheherazade New', serif;
-  --font-brand: 'Space Grotesk', system-ui, sans-serif;
+  --font-brand: 'Nunito', 'Vazirmatn', system-ui, sans-serif;
 }
 
 [data-theme="light"] {
-  --bg: #F3F4F8;
-  --bg-solid: #F3F4F8;
+  --bg-solid: #efe9e4;
+  --card: #fbf8f5;
+  --card-2: #f3ece6;
+  --surface: rgba(38, 48, 52, 0.04);
+  --surface-2: rgba(38, 48, 52, 0.07);
+  --border: rgba(38, 48, 52, 0.16);
+  --border-soft: rgba(38, 48, 52, 0.08);
 
-  --surface: rgba(0, 0, 0, 0.02);
-  --surface-2: rgba(0, 0, 0, 0.04);
-  --border: rgba(0, 0, 0, 0.08);
-  --border-soft: rgba(0, 0, 0, 0.04);
+  --text: #232c30;
+  --text-dim: #4d585d;
+  --text-faint: #66717a;
 
-  --text: #1C1E24;
-  --text-dim: #5B5F6B;
-  --text-faint: #8B8F99;
+  --neon: #2b6a70;
+  --neon-dim: #1f4f54;
+  --neon-glow: rgba(43, 106, 112, 0.16);
+  --violet: #a2405f;
+  --violet-glow: rgba(162, 64, 95, 0.14);
+  --danger: #c2384c;
+  --success: #2b6a70;
+  --on-accent: #ffffff;
 
-  --neon: #0EA894;
-  --neon-dim: #0B7D6E;
-  --neon-glow: rgba(14, 168, 148, 0.18);
+  --shadow-glass: 0 6px 18px rgba(70, 55, 45, 0.12);
+  --shadow-glass-lg: 0 18px 44px rgba(70, 55, 45, 0.2);
 
-  --violet: #6754D6;
-  --violet-glow: rgba(103, 84, 214, 0.18);
-
-  --gold: #A9793A;
-  --gold-glow: rgba(169, 121, 58, 0.18);
-  --star-gold: #C99A3A;
-
-  --danger: #D3405A;
-  --success: #0EA894;
-
-  /* Glass — SUPER transparent (light) */
-  --glass-bg:           rgba(255, 255, 255, 0.18);
-  --glass-bg-strong:    rgba(255, 255, 255, 0.28);
-  --glass-bg-top:       rgba(255, 255, 255, 0.32);
-  --glass-bg-bottom:    rgba(255, 255, 255, 0.14);
-
-  --glass-border:       rgba(255, 255, 255, 0.78);
-  --glass-highlight:    rgba(255, 255, 255, 0.95);
-  --glass-specular:     rgba(255, 255, 255, 1);
-
-  --glass-blur:         blur(5px) saturate(80%);
-  --glass-blur-strong:  blur(8px) saturate(90%);
-
-  --shadow-glass:       0 10px 36px rgba(0, 0, 0, 0.09),
-                        0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-glass-lg:    0 20px 56px rgba(0, 0, 0, 0.13),
-                        0 4px 14px rgba(0, 0, 0, 0.07);
-
-  --shadow-card:        var(--shadow-glass);
-
-  /* Readable surfaces (light) */
-  --read-bg:            rgba(255, 255, 255, 0.88);
-  --read-bg-strong:     rgba(255, 255, 255, 0.96);
-  --read-border:        rgba(0, 0, 0, 0.05);
+  --read-bg: #f6f1ec;
+  --read-bg-strong: #ffffff;
 }
 
 * { box-sizing: border-box; }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
+html, body { margin: 0; padding: 0; min-height: 100vh; }
 
 body {
   background: var(--bg-solid);
   color: var(--text);
   font-family: var(--font-ui);
   direction: rtl;
-  transition: background 0.4s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -150,85 +116,13 @@ body {
   }
 }
 
-::selection {
-  background: var(--neon-glow);
-  color: var(--text);
-}
-
+::selection { background: var(--neon-glow); color: var(--text); }
 a { color: inherit; text-decoration: none; }
 button { font-family: inherit; }
+:focus-visible { outline: 2px solid var(--neon); outline-offset: 3px; border-radius: 4px; }
 
-:focus-visible {
-  outline: 2px solid var(--neon);
-  outline-offset: 3px;
-  border-radius: 4px;
-}
-
-/* ==========================================================================
-   Liquid-Glass utility
-   ========================================================================== */
-.glass {
-  position: relative;
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-top) 0%,
-    var(--glass-bg) 45%,
-    var(--glass-bg-bottom) 100%
-  );
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--glass-border);
-  box-shadow:
-    var(--shadow-glass),
-    inset 0 1.5px 0 0 var(--glass-highlight),
-    inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
-}
-
-.glass--strong {
-  background: linear-gradient(
-    165deg,
-    var(--glass-bg-strong) 0%,
-    var(--glass-bg) 100%
-  );
-}
-
-.glass--specular::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    175deg,
-    var(--glass-specular) 0%,
-    rgba(255, 255, 255, 0.22) 22%,
-    transparent 52%
-  );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-          mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  opacity: 0.9;
-}
-
-/* Readable-surface utility (for text blocks on top of glass) */
 .read-surface {
   background: var(--read-bg);
   border: 1px solid var(--read-border);
   border-radius: var(--radius-sm);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-.site-header,
-.container,
-.mobile-tabbar,
-footer,
-.modal-overlay,
-.toast,
-.login-wrap {
-  position: relative;
-  z-index: 1;
 }

@@ -7,52 +7,41 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
 <style>
-  .login-wrap {
-    min-height: 100dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    position: relative;
-    z-index: 1;
-  }
-  .login-card {
-    width: 100%;
-    max-width: 360px;
-  }
-  .login-card .brand {
-    justify-content: center;
-    margin-bottom: 24px;
-    font-size: 1.3rem;
-  }
-  .login-back {
-    display: block;
-    text-align: center;
-    margin-top: 16px;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-  }
+  .login-wrap { display: flex; justify-content: center; padding: 6px 18px 40px; }
+  .login-card { width: 100%; max-width: 380px; }
+  .login-back { display: block; margin-top: 16px; text-align: center; font-size: .85rem; color: var(--text-dim); }
   .login-back:hover { color: var(--neon); }
-  .login-error {
-    color: var(--danger);
-    font-size: 0.82rem;
-    margin-top: 10px;
-    display: none;
-  }
+  .login-error { display: none; margin-top: 10px; font-size: .82rem; color: var(--danger); }
 </style>
 </head>
 <body>
 
 
+<header class="site-header wave">
+  <div class="site-header__inner">
+    <div class="brand">
+      <span class="brand__mark">Raise</span><span>Mind</span>
+      <span class="brand__fa">· ارتقا ذهن</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="main-head">
+    <h1>ورود</h1>
+  </div>
+</header>
+
 <div class="login-wrap">
   <div class="login-card">
-    <div class="brand"><span class="brand__mark">Raise</span><span>Mind</span></div>
     <div class="card">
       <form id="loginForm">
         <div class="field">
