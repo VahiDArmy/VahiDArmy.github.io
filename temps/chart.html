@@ -1,32 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Annual operations report 2025 — Kessler & Voss Feinmechanik</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annual operations report 2025 — Kessler &amp; Voss Feinmechanik</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap");
+
 /* ---------- Tokens ---------- */
 :root {
   --desk: #d6dbd0;
   --paper: #f3f6ee;
   --grid-minor: rgba(96, 158, 116, 0.16);
   --grid-major: rgba(80, 142, 100, 0.3);
-  --ink: #1f3a93;       /* plotter pen, blue */
-  --red: #c8102e;       /* plotter pen, red */
+  --ink: #1f3a93;
+  --red: #c8102e;
   --graphite: #2b2f33;
   --pencil: #6b7278;
-  --marker: #f2c230;    /* highlighter */
+  --marker: #f2c230;
   --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --font-body: "Barlow", "Segoe UI", Arial, sans-serif;
   --zone: 22px;
 }
 
-*,
-*::before,
-*::after { box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   margin: 0;
@@ -56,7 +53,6 @@ body {
   box-shadow: 0 22px 40px -24px rgba(35, 45, 35, 0.55);
 }
 
-/* Zone references along the frame, like on a technical drawing */
 .zones {
   position: absolute;
   display: flex;
@@ -149,7 +145,6 @@ body {
 }
 .legend li[hidden] { display: none; }
 
-/* Toggle, styled like a stamp on the sheet */
 .toggle { display: inline-flex; margin-bottom: 10px; border: 1.5px solid var(--graphite); }
 .toggle button {
   padding: 5px 12px;
@@ -163,7 +158,7 @@ body {
 .toggle button[aria-pressed="true"] { background: var(--graphite); color: var(--paper); }
 .toggle button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* ---------- Swatches (legend + readout) ---------- */
+/* ---------- Swatches ---------- */
 .sw {
   display: inline-block;
   width: 18px;
@@ -280,7 +275,6 @@ body {
 .hit { fill: transparent; cursor: crosshair; outline: none; }
 .hit:focus-visible { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 4 3; }
 
-/* Plotter pen head */
 .pen { transition: opacity 0.35s ease; }
 .pen.is-lifted { opacity: 0; }
 .pen-ring { fill: none; stroke: var(--graphite); stroke-width: 1.5; }
@@ -290,7 +284,7 @@ body {
 .fade-in { animation: fade 0.4s ease both; animation-delay: var(--d, 0ms); }
 @keyframes fade { from { opacity: 0; } }
 
-/* ---------- Readout (tooltip) ---------- */
+/* ---------- Readout ---------- */
 .readout {
   position: fixed;
   z-index: 20;
@@ -342,9 +336,10 @@ body {
   .readout,
   .pen { transition: none; }
 }
-  </style>
+</style>
 </head>
 <body>
+
 <main class="sheet">
   <div class="zones zones--top" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
   <div class="zones zones--bottom" aria-hidden="true"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span></div>
@@ -357,7 +352,6 @@ body {
       <p>Output, revenue, vacation and machine load at Kessler &amp; Voss Feinmechanik for the 2025 fiscal year. Hover a month, or move through the charts with the Tab key, to read exact values.</p>
     </header>
 
-    <!-- View A: line chart -->
     <section class="view view--production" id="view-a" aria-labelledby="h-a">
       <div class="view-caption">
         <span class="view-mark" aria-hidden="true">A</span>
@@ -372,7 +366,6 @@ body {
       </ul>
     </section>
 
-    <!-- View B: bars + line -->
     <section class="view view--revenue" id="view-b" aria-labelledby="h-b">
       <div class="view-caption">
         <span class="view-mark" aria-hidden="true">B</span>
@@ -386,7 +379,6 @@ body {
       </ul>
     </section>
 
-    <!-- View C: bars with toggle -->
     <section class="view view--vacation" id="view-c" aria-labelledby="h-c">
       <div class="view-caption">
         <span class="view-mark" aria-hidden="true">C</span>
@@ -405,7 +397,6 @@ body {
       </ul>
     </section>
 
-    <!-- View D: horizontal bars -->
     <section class="view view--machines" id="view-d" aria-labelledby="h-d">
       <div class="view-caption">
         <span class="view-mark" aria-hidden="true">D</span>
@@ -421,7 +412,6 @@ body {
       </ul>
     </section>
 
-    <!-- Parts list + title block -->
     <aside class="view view--records" aria-labelledby="h-e">
       <div class="view-caption">
         <h2 id="h-e">Key figures</h2>
@@ -459,8 +449,8 @@ const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "Ju
 const DATA = {
   production2025: [2400, 5000, 4000, 1500, 1200, 1000, 3000, 3500, 4700, 6000, 4500, 3700],
   production2024: [2100, 3900, 4200, 2300, 1800, 1400, 2600, 3100, 3900, 4800, 4600, 3300],
-  revenue: [96, 188, 152, 63, 51, 44, 118, 137, 181, 226, 172, 143], // k€
-  scrap: [2.8, 2.1, 2.4, 3.6, 3.9, 4.2, 3.1, 2.7, 2.2, 1.9, 2.3, 2.6], // %
+  revenue: [96, 188, 152, 63, 51, 44, 118, 137, 181, 226, 172, 143],
+  scrap: [2.8, 2.1, 2.4, 3.6, 3.9, 4.2, 3.1, 2.7, 2.2, 1.9, 2.3, 2.6],
   vacationMonthly: [40, 10, 2, 23, 10, 12, 50, 55, 10, 3, 12, 23],
   vacationTarget: 250,
   targetBand: [75, 90],
@@ -558,7 +548,6 @@ function hideReadout() {
   document.querySelectorAll(".highlight.is-on").forEach((h) => h.classList.remove("is-on"));
 }
 
-// Readout content: title + rows of [swatch, label, value]
 const rows = (title, items) =>
   `<strong>${title}</strong>` +
   items
@@ -576,6 +565,10 @@ function bindReadout(target, html, on = () => {}) {
   });
   target.addEventListener("blur", hideReadout);
 }
+
+document.addEventListener("pointerdown", (e) => {
+  if (!e.target.closest || !e.target.closest(".hit")) hideReadout();
+});
 
 /* =========================================================
    Chart building blocks
@@ -601,7 +594,6 @@ function defs(svg) {
   return d;
 }
 
-// Section hatching, like a cut surface on a technical drawing
 function addHatch(svg, id, cls, gap = 5) {
   const p = svgEl("pattern", {
     id, width: gap, height: gap,
@@ -654,7 +646,6 @@ function drawMonthAxis(f, bands) {
   });
 }
 
-// Invisible, focusable month columns + highlighter band
 function addMonthHits(f, bands, hlLayer, { label, html }) {
   const hl = svgEl("rect", {
     class: "highlight",
@@ -669,14 +660,14 @@ function addMonthHits(f, bands, hlLayer, { label, html }) {
       class: "hit", tabindex: 0, "aria-label": label(i),
     }, hits);
     bindReadout(r, () => html(i), () => {
-      hl.setAttribute("x", f.x0 + bands.bw * (i + 0.07));
+      hl.setAttribute("x", bands.xAt(i) - bands.bw * 0.43);
       hl.classList.add("is-on");
     });
   });
 }
 
 /* =========================================================
-   Motion: plotter pen + growing bars
+   Motion
    ========================================================= */
 function plotterReveal(svg, clipRect, xStart, xEnd, pts, { duration = 2000, delay = 0, pen = "" } = {}) {
   if (reduceMotion) return;
@@ -763,7 +754,6 @@ function renderProduction(animate = false) {
   }, data);
   svgEl("path", { d: toPath(pa), class: "line line--current" }, data);
 
-  // Average as a dash-dot center line
   const mean = avg(a);
   const ym = y(mean);
   svgEl("line", { x1: f.x0, y1: ym, x2: f.x1, y2: ym, class: "centerline" }, data);
@@ -777,7 +767,7 @@ function renderProduction(animate = false) {
   }, data);
   lbl.textContent = `Ø ${fmt(mean)}`;
 
-  pa.forEach(([cx, cy]) => svgEl("circle", { cx, cy, r: 3.3, class: "dot" }, data);
+  pa.forEach(([cx, cy]) => svgEl("circle", { cx, cy, r: 3.3, class: "dot" }, data));
 
   addMonthHits(f, bands, hl, {
     label: (i) => `${MONTHS_LONG[i]}: ${fmt(a[i])} parts in 2025, ${fmt(b[i])} in 2024`,
@@ -793,7 +783,7 @@ function renderProduction(animate = false) {
 }
 
 /* =========================================================
-   View B: revenue bars + scrap rate line (dual axis)
+   View B: revenue bars + scrap rate line
    ========================================================= */
 function renderRevenue(animate = false) {
   const host = document.getElementById("chart-revenue");
@@ -851,7 +841,7 @@ function renderRevenue(animate = false) {
 }
 
 /* =========================================================
-   View C: vacation bars (running total / per month)
+   View C: vacation bars
    ========================================================= */
 let vacationMode = "total";
 let vacationHeights = null;
@@ -892,7 +882,6 @@ function renderVacation({ animate = false, morph = false } = {}) {
   );
 
   if (isTotal) {
-    // Even pace: straight line from zero to the full entitlement
     svgEl("line", { x1: f.x0, y1: f.y0, x2: f.x1, y2: y(target), class: "centerline centerline--pencil" }, f.svg);
     svgEl("line", { x1: f.x0, y1: y(target), x2: f.x1, y2: y(target), class: "limit" }, f.svg);
     const t = svgEl("text", { x: f.x0 + 6, y: y(target) - 7, class: "label label--red" }, f.svg);
@@ -934,7 +923,7 @@ document.querySelectorAll(".toggle button").forEach((btn) => {
 });
 
 /* =========================================================
-   View D: machine utilization, horizontal bars
+   View D: machine utilization
    ========================================================= */
 function renderMachines(animate = false) {
   const host = document.getElementById("chart-machines");
@@ -952,13 +941,11 @@ function renderMachines(animate = false) {
   const hatchInk = addHatch(f.svg, "hatch-machines-ink", "hatch-ink");
   const hatchRed = addHatch(f.svg, "hatch-machines-red", "hatch-red");
 
-  // Target band (tolerance zone)
   svgEl("rect", { x: x(lo), y: f.y1 - 8, width: x(hi) - x(lo), height: f.y0 - f.y1 + 8, class: "band" }, f.svg);
   [lo, hi].forEach((v) => svgEl("line", { x1: x(v), y1: f.y1 - 8, x2: x(v), y2: f.y0, class: "band-edge" }, f.svg));
   const bandLbl = svgEl("text", { x: (x(lo) + x(hi)) / 2, y: f.y1 - 13, "text-anchor": "middle", class: "label" }, f.svg);
   bandLbl.textContent = "target band";
 
-  // Axis
   const ax = svgEl("g", { class: "axis" }, f.svg);
   svgEl("line", { x1: f.x0, y1: f.y0, x2: f.x1, y2: f.y0, class: "axis-line" }, ax);
   svgEl("line", { x1: f.x0, y1: f.y1 - 8, x2: f.x0, y2: f.y0, class: "axis-line" }, ax);
@@ -1075,5 +1062,6 @@ function renderAll(animate = false) {
   }).observe(drawing);
 });
 </script>
+
 </body>
 </html>
