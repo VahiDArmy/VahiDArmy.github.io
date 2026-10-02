@@ -1,62 +1,72 @@
 /* ==========================================================================
-   Liquid-glass navigation (from liquid-glass.html)
-   Desktop: floating pill at the top  ·  ≤760px: floating dock at the bottom
-   Layers (pseudo-elements): ::before = blur + SVG refraction (#lg-distort)
-                             ::after  = tint + inner shine
+   Liquid-glass navigation — values copied 1:1 from liquid-glass.html
+   blur(3px) · tint rgba(255,255,255,.25) · inner shine · SVG refraction
+   (#glass-distortion, scale 150) · spring easing. Only sizes/placement differ.
    ========================================================================== */
-:root {
-  --lg-tint: rgba(38, 50, 56, .48);
-  --lg-shine: inset 2px 2px 1px 0 rgba(255,255,255,.3), inset -1px -1px 1px 1px rgba(255,255,255,.2);
-  --lg-ink: #eef3f3;
-  --lg-hover: rgba(255,255,255,.14);
-  --lg-active: rgba(111,192,196,.26);
-  --lg-active-ink: #c4ecee;
+.liquidGlass-wrapper {
+  position: relative;
+  display: flex;
+  font-weight: 600;
+  overflow: hidden;
+  color: black;
+  cursor: pointer;
+  box-shadow: 0 6px 6px rgba(0, 0, 0, 0.2), 0 0 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 2.2);
 }
-[data-theme="light"] {
-  --lg-tint: rgba(255,255,255,.52);
-  --lg-shine: inset 2px 2px 1px 0 rgba(255,255,255,.9), inset -1px -1px 1px 1px rgba(255,255,255,.7);
-  --lg-ink: #232c30;
-  --lg-hover: rgba(38,48,52,.08);
-  --lg-active: rgba(43,106,112,.18);
-  --lg-active-ink: #1f5258;
+.liquidGlass-effect {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  filter: url(#glass-distortion);
+  overflow: hidden;
+  isolation: isolate;
 }
+.liquidGlass-tint {
+  z-index: 1;
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+}
+.liquidGlass-shine {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.5),
+    inset -1px -1px 1px 1px rgba(255, 255, 255, 0.5);
+}
+.liquidGlass-text { z-index: 3; color: black; }
 
-.nav-tabs, .mobile-tabbar {
-  position: fixed; z-index: 50; align-items: center; gap: 2px; padding: 5px;
-  border-radius: 999px; overflow: hidden; isolation: isolate;
-  box-shadow: var(--shadow-glass-lg);
-  transition: scale .4s cubic-bezier(.175, .885, .32, 2.2), box-shadow .3s ease;
-}
-.nav-tabs::before, .mobile-tabbar::before {
-  content: ''; position: absolute; inset: 0; z-index: -2;
-  -webkit-backdrop-filter: blur(9px) saturate(1.6); backdrop-filter: blur(9px) saturate(1.6);
-  filter: url(#lg-distort);
-}
-.nav-tabs::after, .mobile-tabbar::after {
-  content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none;
-  background: var(--lg-tint); box-shadow: var(--lg-shine);
-}
+/* ---- Placement (desktop: floating top pill · ≤760px: floating bottom dock) ---- */
+.nav-tabs, .mobile-tabbar { position: fixed; z-index: 50; padding: 0.4rem; border-radius: 1.8rem; }
+.nav-tabs > div, .mobile-tabbar > div { border-radius: inherit; }
+.nav-tabs { top: 10px; inset-inline: 0; width: max-content; margin-inline: auto; }
+.mobile-tabbar { display: none; inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px)); max-width: 460px; margin-inline: auto; border-radius: 2rem; }
+.liquidGlass-text { display: flex; align-items: center; gap: 2px; }
+.mobile-tabbar .liquidGlass-text { flex: 1; }
 
-.nav-tabs { display: flex; top: 11px; inset-inline: 0; width: max-content; margin-inline: auto; }
-.mobile-tabbar { display: none; inset: auto 12px calc(12px + env(safe-area-inset-bottom, 0px)); max-width: 460px; margin-inline: auto; border-radius: 28px; }
-
+/* ---- Items: white on dark theme, black on light (both are the template's text colors) ---- */
 .nav-tabs a, .mobile-tabbar a {
-  position: relative; display: flex; align-items: center; justify-content: center;
-  border-radius: 999px; color: var(--lg-ink); font-weight: 600; white-space: nowrap;
-  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
-  -webkit-tap-highlight-color: transparent;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0.4rem 0.9rem; border-radius: 0.8rem;
+  color: white; font-size: 0.9rem; white-space: nowrap;
+  transition: all 0.1s ease-in; -webkit-tap-highlight-color: transparent;
 }
-.nav-tabs a { padding: 7px 16px; font-size: .88rem; }
-.mobile-tabbar a { flex: 1; min-height: 44px; padding: 6px 2px; font-size: .76rem; border-radius: 22px; }
-.nav-tabs a.active, .mobile-tabbar a.active {
-  background: var(--lg-active); color: var(--lg-active-ink);
-  box-shadow: inset 1px 1px 1px rgba(255,255,255,.35), inset -1px -1px 2px rgba(0,0,0,.12);
+.mobile-tabbar a { flex: 1; min-height: 44px; padding: 0.5rem 0.2rem; font-size: 0.78rem; }
+[data-theme="light"] .nav-tabs a, [data-theme="light"] .mobile-tabbar a { color: black; }
+
+/* Template's menu-item hover, reused for hover + current page */
+.nav-tabs a:hover, .mobile-tabbar a:hover, .nav-tabs a.active, .mobile-tabbar a.active {
+  background-color: rgba(255, 255, 255, 0.5);
+  box-shadow: inset -2px -2px 2px rgba(0, 0, 0, 0.1);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  color: black;
 }
-.nav-tabs a:focus-visible, .mobile-tabbar a:focus-visible { outline: 2px solid var(--neon); outline-offset: -2px; border-radius: 999px; }
-@media (hover: hover) {
-  .nav-tabs a:not(.active):hover, .mobile-tabbar a:not(.active):hover { background: var(--lg-hover); }
-  .nav-tabs:hover { scale: 1.03; }
-}
+.nav-tabs a:focus-visible, .mobile-tabbar a:focus-visible { outline: 2px solid currentColor; outline-offset: -2px; border-radius: 0.8rem; }
+@media (hover: hover) { .nav-tabs:hover, .mobile-tabbar:hover { padding: 0.6rem; } }
 
 @media (min-width: 761px) { .sticky-ayah { top: 68px; } }
 @media (max-width: 760px) {
@@ -68,11 +78,10 @@
 
 /* No backdrop-filter / reduced transparency: solid surface instead of glass */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .nav-tabs::before, .mobile-tabbar::before { display: none; }
-  .nav-tabs::after, .mobile-tabbar::after { background: var(--card-2); }
+  .liquidGlass-effect { display: none; }
+  .liquidGlass-tint { background: var(--card-2); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .nav-tabs::before, .mobile-tabbar::before { display: none; }
-  .nav-tabs::after, .mobile-tabbar::after { background: var(--card-2); }
+  .liquidGlass-effect { display: none; }
+  .liquidGlass-tint { background: var(--card-2); }
 }
-@media (prefers-reduced-motion: reduce) { .nav-tabs, .mobile-tabbar { transition: none; } .nav-tabs:hover { scale: 1; } }

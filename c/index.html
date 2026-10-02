@@ -17,12 +17,17 @@
 </head>
 <body>
 
-<nav class="nav-tabs" aria-label="ناوبری اصلی">
-  <a href="index.html" class="active">کار</a>
-  <a href="browse.html">مرور</a>
-  <a href="tags.html">برچسب‌ها</a>
-  <a href="relations.html">رابطه‌ها</a>
-  <a href="search.html">جستجو</a>
+<nav class="nav-tabs liquidGlass-wrapper" aria-label="ناوبری اصلی">
+  <div class="liquidGlass-effect" aria-hidden="true"></div>
+  <div class="liquidGlass-tint" aria-hidden="true"></div>
+  <div class="liquidGlass-shine" aria-hidden="true"></div>
+  <div class="liquidGlass-text">
+    <a href="index.html" class="active">کار</a>
+    <a href="browse.html">مرور</a>
+    <a href="tags.html">برچسب‌ها</a>
+    <a href="relations.html">رابطه‌ها</a>
+    <a href="search.html">جستجو</a>
+  </div>
 </nav>
 
 <header class="site-header wave wave--slim">
@@ -214,12 +219,17 @@
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
 </footer>
 
-<nav class="mobile-tabbar" aria-label="ناوبری موبایل">
-  <a href="index.html" class="active">کار</a>
-  <a href="browse.html">مرور</a>
-  <a href="tags.html">برچسب‌ها</a>
-  <a href="relations.html">رابطه‌ها</a>
-  <a href="search.html">جستجو</a>
+<nav class="mobile-tabbar liquidGlass-wrapper" aria-label="ناوبری موبایل">
+  <div class="liquidGlass-effect" aria-hidden="true"></div>
+  <div class="liquidGlass-tint" aria-hidden="true"></div>
+  <div class="liquidGlass-shine" aria-hidden="true"></div>
+  <div class="liquidGlass-text">
+    <a href="index.html" class="active">کار</a>
+    <a href="browse.html">مرور</a>
+    <a href="tags.html">برچسب‌ها</a>
+    <a href="relations.html">رابطه‌ها</a>
+    <a href="search.html">جستجو</a>
+  </div>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -235,10 +245,19 @@
 <script src="js/ayah-links.js"></script>
 <script src="js/work.js"></script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <filter id="lg-distort" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
-    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="1" seed="5" result="noise"/>
-    <feGaussianBlur in="noise" stdDeviation="3" result="softMap"/>
-    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="34" xChannelSelector="R" yChannelSelector="G"/>
+  <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="turbulence" />
+    <feComponentTransfer in="turbulence" result="mapped">
+      <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5" />
+      <feFuncG type="gamma" amplitude="0" exponent="1" offset="0" />
+      <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5" />
+    </feComponentTransfer>
+    <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap" />
+    <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+      <fePointLight x="-200" y="-200" z="300" />
+    </feSpecularLighting>
+    <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage" />
+    <feDisplacementMap in="SourceGraphic" in2="softMap" scale="150" xChannelSelector="R" yChannelSelector="G" />
   </filter>
 </svg>
 </body>
