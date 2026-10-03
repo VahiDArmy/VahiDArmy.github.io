@@ -1,0 +1,122 @@
+/* =========================================================
+   فیدبک هوش مصنوعی — نوار پایین کارت پاسخ
+   ========================================================= */
+
+.ai-feedback-bar {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ai-feedback-bar__model {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .74rem;
+  color: var(--text-faint);
+}
+
+.ai-feedback-bar__model code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .7rem;
+  direction: ltr;
+  unicode-bidi: embed;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+.ai-feedback-bar__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .74rem;
+  font-weight: 700;
+  padding: 3px 11px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border-soft);
+}
+.ai-feedback-bar__score[data-sign="pos"] {
+  color: hsl(150 65% 62%);
+  border-color: hsl(150 60% 55% / .35);
+  text-shadow: 0 0 8px hsl(150 70% 55% / .35);
+}
+.ai-feedback-bar__score[data-sign="neg"] {
+  color: hsl(0 75% 70%);
+  border-color: hsl(0 70% 55% / .35);
+  text-shadow: 0 0 8px hsl(0 75% 55% / .35);
+}
+[data-theme="light"] .ai-feedback-bar__score[data-sign="pos"] { color: hsl(150 55% 32%); text-shadow: none; }
+[data-theme="light"] .ai-feedback-bar__score[data-sign="neg"] { color: hsl(0 60% 42%); text-shadow: none; }
+
+.ai-vote-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
+.ai-vote {
+  all: unset;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card-2);
+  color: var(--text-faint);
+  font-size: 1rem;
+  transition: color .2s ease, border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .15s ease;
+}
+.ai-vote:hover { transform: translateY(-1px); }
+.ai-vote[data-vote="1"]:hover  { color: hsl(150 70% 60%); border-color: hsl(150 65% 55%); box-shadow: 0 0 0 4px hsl(150 70% 55% / .18); }
+.ai-vote[data-vote="-1"]:hover { color: hsl(0 80% 65%); border-color: hsl(0 75% 60%); box-shadow: 0 0 0 4px hsl(0 75% 60% / .18); }
+
+.ai-vote.is-active[data-vote="1"] {
+  color: hsl(150 75% 68%);
+  border-color: hsl(150 65% 55%);
+  background: hsl(150 65% 55% / .12);
+  box-shadow: 0 0 8px hsl(150 75% 55% / .45), 0 0 20px hsl(150 75% 55% / .25);
+}
+.ai-vote.is-active[data-vote="-1"] {
+  color: hsl(0 82% 72%);
+  border-color: hsl(0 78% 60%);
+  background: hsl(0 78% 60% / .12);
+  box-shadow: 0 0 8px hsl(0 80% 60% / .45), 0 0 20px hsl(0 80% 60% / .25);
+}
+
+.ai-vote:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+[data-theme="light"] .ai-vote[data-vote="1"]:hover  { color: hsl(150 60% 32%); }
+[data-theme="light"] .ai-vote[data-vote="-1"]:hover { color: hsl(0 62% 42%); }
+[data-theme="light"] .ai-vote.is-active[data-vote="1"] { color: hsl(150 60% 28%); }
+[data-theme="light"] .ai-vote.is-active[data-vote="-1"] { color: hsl(0 62% 38%); }
+
+/* نمایش امتیاز مدل در پاپ‌آپ انتخاب مدل */
+.ai-model-card__score {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .7rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text-faint);
+  border: 1px solid var(--border-soft);
+  margin-inline-start: 6px;
+}
+.ai-model-card__score[data-sign="pos"] { color: hsl(150 65% 62%); }
+.ai-model-card__score[data-sign="neg"] { color: hsl(0 75% 70%); }
+[data-theme="light"] .ai-model-card__score[data-sign="pos"] { color: hsl(150 55% 32%); }
+[data-theme="light"] .ai-model-card__score[data-sign="neg"] { color: hsl(0 60% 42%); }
