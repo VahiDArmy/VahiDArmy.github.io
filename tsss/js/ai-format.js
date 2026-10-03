@@ -75,7 +75,6 @@ const AiFormat = (function () {
     const trimmed = String(raw).trim();
     if (!trimmed) return { ok: false, raw: '' };
 
-    // پاک کردن نشانه‌های بیرونی
     let inner = trimmed;
     const openIdx = inner.indexOf(OPEN);
     if (openIdx !== -1) inner = inner.slice(openIdx + OPEN.length);
@@ -83,13 +82,10 @@ const AiFormat = (function () {
     if (closeIdx !== -1) inner = inner.slice(0, closeIdx);
     inner = inner.trim();
 
-    // --- استخراج هر بخش ---
     const pick = (name) => {
-      // ۱) تگ کامل
       let re = new RegExp(`<${name}>([\\s\\S]*?)<\\/${name}>`, 'i');
       let m = inner.match(re);
       if (m) return m[1].trim();
-      // ۲) تگ باز تا تگ شناخته‌شدهٔ بعدی
       const known = SECTION_NAMES.filter((n) => n !== name).join('|');
       re = new RegExp(`<${name}>([\\s\\S]*?)(?=<(?:${known})>|$)`, 'i');
       m = inner.match(re);
@@ -102,7 +98,6 @@ const AiFormat = (function () {
     const draft   = pick('draft');
     const caution = pick('caution');
 
-    // --- refs ---
     const refsRaw = pick('refs') || '';
     const refs = [];
     const refRe = /<ref\b([^>]*?)(?:\/>|>([\s\S]*?)<\/ref>)/gi;
@@ -115,7 +110,6 @@ const AiFormat = (function () {
       if (s && a) refs.push({ surah: Number(s), ayah: Number(a), label });
     }
 
-    // --- tags ---
     const tagsRaw = pick('tags') || '';
     const tags = [];
     const tagRe = /<tag>([\s\S]*?)<\/tag>/gi;
@@ -123,7 +117,6 @@ const AiFormat = (function () {
       const t = mm[1].trim();
       if (t) tags.push(t);
     }
-    // اگر هیچ <tag> نبود ولی متن داخل <tags> بود، با کاما/خط جدید جدا کن
     if (!tags.length && tagsRaw.trim()) {
       tagsRaw
         .split(/[,،\n]/)
@@ -132,7 +125,6 @@ const AiFormat = (function () {
         .forEach((t) => tags.push(t));
     }
 
-    // --- محاسبهٔ leftover: حذف فقط بخش‌هایی که واقعاً استخراج شدند ---
     let leftover = inner;
     const removeIf = (name, parsedOk) => {
       if (!parsedOk) return;
@@ -150,7 +142,6 @@ const AiFormat = (function () {
     removeIf('refs',    refs.length > 0);
     removeIf('tags',    tags.length > 0);
 
-    // پاک کردن تگ‌های سرگردان (فقط شکل تگ، نه متن)
     leftover = leftover.replace(/<\/?[a-zA-Z][^>]*>/g, '');
     leftover = leftover.replace(/\n{3,}/g, '\n\n').trim();
 
@@ -158,17 +149,14 @@ const AiFormat = (function () {
       !!(title || answer || insight || draft || caution) ||
       refs.length > 0 || tags.length > 0;
 
-    // اگر هیچ بخش شناخته‌شده‌ای نبود → کل متن به‌عنوان پاسخ خام
     if (!hasAny) {
       const cleaned = inner.replace(/<\/?[a-zA-Z][^>]*>/g, '').trim();
       return { ok: false, raw: cleaned || inner || trimmed };
     }
 
-    // --- تصمیم دربارهٔ پاسخ و leftover ---
     let finalAnswer = answer;
     let extra = leftover || null;
 
-    // اگر تگ <answer> نبود ولی متن آزاد داشتیم، آن متن پاسخ است
     if (!finalAnswer && extra) {
       finalAnswer = extra;
       extra = null;
@@ -249,13 +237,17 @@ const AiFormat = (function () {
     return html;
   }
 
-  function sectionHtml({ hue, label, body, extra = '', variant = '' }) {
+  function sectionHtml({ hue, label, body, extra = '', sectionKey = '', canClose = false, variant = '' }) {
+    const closeBtn = (sectionKey && canClose)
+      ? `<button type="button" class="ai-section__close" data-ai-section-close="${sectionKey}" aria-label="حذف این بخش" title="حذف این بخش">✕</button>`
+      : '';
     const styleAttr = (typeof hue === 'number') ? ` style="--hue:${hue}"` : '';
     const cls = 'ai-section' + (variant ? ` ai-section--${variant}` : '');
     return `
-      <div class="${cls}"${styleAttr}>
+      <div class="${cls}"${styleAttr} data-section="${sectionKey}">
         <div class="ai-section__label">
           <span class="ai-section__dot"></span>${escapeHtml(label)}
+          ${closeBtn}
         </div>
         <div class="ai-section__body">${body}</div>
         ${extra}
@@ -299,10 +291,10 @@ const AiFormat = (function () {
     const { model, question, surahIndex } = opts || {};
     const showFeedback = opts && opts.generationId != null;
     const canDelete = !!(opts && opts.refId);
+    const canClose = !!(opts && opts.refId);
 
     const qHtml = questionBarHtml({ question, canDelete });
 
-    // ---- بدون قالب: کل متن یکجا به‌عنوان پاسخ ----
     if (!parsed.ok) {
       container.innerHTML = `
         <div class="ai-answer-card card">
@@ -326,13 +318,13 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340, label: 'پاسخ',
+        hue: 340, label: 'پاسخ', sectionKey: 'answer', canClose,
         body: renderRich(parsed.answer, surahIndex, inlineTags),
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210, label: 'نکته',
+        hue: 210, label: 'نکته', sectionKey: 'insight', canClose,
         body: renderRich(parsed.insight, surahIndex, inlineTags),
       }));
     }
@@ -345,7 +337,7 @@ const AiFormat = (function () {
         return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270, label: 'ارجاع‌ها',
+        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs', canClose,
         body: `<div class="ai-refs">${pills}</div>`,
       }));
     }
@@ -359,13 +351,13 @@ const AiFormat = (function () {
         </button>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150, label: 'برچسب‌های پیشنهادی',
+        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags', canClose,
         body: `<div class="ai-tags">${tagPills}</div>`,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40, label: 'پیش‌نویس تفسیر',
+        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft', canClose,
         body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
@@ -374,12 +366,12 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0, label: 'احتیاط',
+        hue: 0, label: 'احتیاط', sectionKey: 'caution', canClose,
         body: renderRich(parsed.caution, surahIndex, inlineTags),
       }));
     }
 
-    // ★ بخشهای دیگر: هر متنی که در قالب نگنجیده. هرگز حذف نمی‌شود.
+    // بخش‌های دیگر — بدون دکمهٔ ✕ (بخشی از قالب نیست، اما هرگز دور ریخته نمی‌شود)
     if (parsed.extra) {
       blocks.push(sectionHtml({
         label: 'بخش‌های دیگر',
@@ -419,9 +411,9 @@ const AiFormat = (function () {
   }
 
   // opts: { generationId, refId, model, question, surahIndex, modelScore,
-  //        onAfterVote, onAfterDelete }
+  //        onAfterVote, onAfterDelete, onAfterSectionChange }
   function wireCard(rootEl, parsed, opts) {
-    const { generationId, refId, onAfterVote, onAfterDelete } = opts || {};
+    const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
 
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed && parsed.draft) {
@@ -450,7 +442,52 @@ const AiFormat = (function () {
       });
     });
 
-    // فقط حذف کل پرسش
+    // حذف بخش
+    if (refId && parsed && parsed.ok) {
+      rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const key = btn.getAttribute('data-ai-section-close');
+          if (!key) return;
+          const ok = await confirmDialog({
+            title: 'حذف بخش',
+            message: 'این بخش از پاسخ حذف شود؟',
+            confirmText: 'حذف',
+          });
+          if (!ok) return;
+
+          const next = { ...parsed };
+          if (key === 'refs') next.refs = [];
+          else if (key === 'tags') next.tags = [];
+          else next[key] = null;
+
+          const newRaw = serialize(next);
+          try {
+            await Store.updateAskAiRaw(refId, newRaw);
+            const reparsed = parse(newRaw);
+            const sc = typeof opts.modelScoreAfter === 'function'
+              ? await opts.modelScoreAfter()
+              : (opts.modelScore || 0);
+            render(rootEl, reparsed, {
+              model: opts.model,
+              question: opts.question,
+              surahIndex: opts.surahIndex,
+              generationId,
+              refId,
+              myVote: opts.myVote || 0,
+              modelScore: sc,
+            });
+            wireCard(rootEl, reparsed, { ...opts, modelScore: sc });
+            if (typeof onAfterSectionChange === 'function') onAfterSectionChange();
+            UI.toast('بخش حذف شد');
+          } catch (e) {
+            console.error('[ai-format] updateAskAiRaw failed:', e);
+            UI.toast('خطا در حذف بخش: ' + (e?.message || 'نامشخص'));
+          }
+        });
+      });
+    }
+
+    // حذف کل پرسش
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
