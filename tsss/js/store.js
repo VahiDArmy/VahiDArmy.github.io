@@ -1,5 +1,5 @@
 // =============================================================
-// لایهٔ ذخیره‌سازی تفسیرها و نظرات — نسخهٔ متصل به Supabase
+// لایهٔ ذخیره‌سازی تفسیرها، نظرات، نسل‌های AI و فیدبک
 // =============================================================
 const Store = (function () {
   async function getLatestTafsir() {
@@ -214,7 +214,7 @@ const Store = (function () {
     return round + 1;
   }
 
-  // ---------- بررسی هوشمند ----------
+  // ---------- AI Review (بدون تغییر منطق قبلی) ----------
   async function getAiReview(tafsirId) {
     const { data, error } = await sb
       .from('ai_reviews')
@@ -227,8 +227,6 @@ const Store = (function () {
 
   async function saveAiReview(tafsirId, content) {
     const { data: { session } } = await sb.auth.getSession();
-    console.log('[saveAiReview] session:', session?.user?.id, 'expires_at:', session?.expires_at);
-
     if (!session?.user?.id) {
       throw new Error('برای ثبت بررسی هوشمند باید وارد حساب شوید');
     }
@@ -291,7 +289,7 @@ const Store = (function () {
     };
   }
 
-  // ---------- بپرس از هوش مصنوعی ----------
+  // ---------- Ask AI ----------
   async function saveAskAi({ surah, ayah, model, question, answerRaw }) {
     const { data, error } = await sb
       .from('ask_ai')
@@ -300,22 +298,6 @@ const Store = (function () {
       .single();
     if (error) throw error;
     return data;
-  }
-
-  async function updateAskAi(id, answerRaw) {
-    const { data, error } = await sb
-      .from('ask_ai')
-      .update({ answer_raw: answerRaw })
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
-  }
-
-  async function deleteAskAi(id) {
-    const { error } = await sb.from('ask_ai').delete().eq('id', id);
-    if (error) throw error;
   }
 
   async function getAskAiHistory(surah, ayah, limit = 20) {
@@ -328,6 +310,92 @@ const Store = (function () {
       .limit(limit);
     if (error) throw error;
     return data || [];
+  }
+
+  // ---------- AI generations & feedback ----------
+  async function createGeneration({ source, refId, model }) {
+    const { data, error } = await sb
+      .from('ai_generations')
+      .insert({ source, ref_id: refId, model })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function getLatestGeneration(source, refId) {
+    const { data, error } = await sb
+      .from('ai_generations')
+      .select('id, model, created_at')
+      .eq('source', source)
+      .eq('ref_id', refId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
+  async function getGenerationFeedback(generationId) {
+    const { data, error } = await sb
+      .from('ai_feedback')
+      .select('vote')
+      .eq('generation_id', generationId);
+    if (error) throw error;
+    const votes = data || [];
+    const up = votes.filter((v) => v.vote === 1).length;
+    const down = votes.filter((v) => v.vote === -1).length;
+    return { up, down, score: up - down, total: up + down };
+  }
+
+  async function getMyFeedback(generationId) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) return 0;
+    const { data, error } = await sb
+      .from('ai_feedback')
+      .select('vote')
+      .eq('generation_id', generationId)
+      .eq('user_id', session.user.id)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? data.vote : 0;
+  }
+
+  async function setFeedback(generationId, vote) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) throw new Error('برای ثبت رأی باید وارد حساب شوید');
+    const userId = session.user.id;
+
+    if (vote === 0) {
+      const { error } = await sb
+        .from('ai_feedback')
+        .delete()
+        .eq('generation_id', generationId)
+        .eq('user_id', userId);
+      if (error) throw error;
+      return;
+    }
+
+    const { error } = await sb
+      .from('ai_feedback')
+      .upsert(
+        {
+          generation_id: generationId,
+          user_id: userId,
+          vote,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,generation_id' }
+      );
+    if (error) throw error;
+  }
+
+  async function getModelScores() {
+    const { data, error } = await sb.from('model_scores').select('*');
+    if (error) throw error;
+    const map = new Map();
+    for (const row of data || []) map.set(row.model, row);
+    return map;
   }
 
   return {
@@ -356,8 +424,12 @@ const Store = (function () {
     deleteAiReview,
     callAiReview,
     saveAskAi,
-    updateAskAi,
-    deleteAskAi,
     getAskAiHistory,
+    createGeneration,
+    getLatestGeneration,
+    getGenerationFeedback,
+    getMyFeedback,
+    setFeedback,
+    getModelScores,
   };
 })();
