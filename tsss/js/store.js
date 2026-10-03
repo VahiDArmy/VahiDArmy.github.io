@@ -312,6 +312,31 @@ const Store = (function () {
     return data || [];
   }
 
+  async function deleteAskAi(id) {
+    // حذف نسل‌ها و فیدبک‌های مربوط به این پاسخ
+    const { data: gens, error: gErr } = await sb
+      .from('ai_generations')
+      .select('id')
+      .eq('source', 'ask_ai')
+      .eq('ref_id', id);
+    if (gErr) throw gErr;
+    const ids = (gens || []).map((g) => g.id);
+    if (ids.length) {
+      await sb.from('ai_feedback').delete().in('generation_id', ids);
+      await sb.from('ai_generations').delete().in('id', ids);
+    }
+    const { error } = await sb.from('ask_ai').delete().eq('id', id);
+    if (error) throw error;
+  }
+
+  async function updateAskAiRaw(id, answerRaw) {
+    const { error } = await sb
+      .from('ask_ai')
+      .update({ answer_raw: answerRaw })
+      .eq('id', id);
+    if (error) throw error;
+  }
+
   // ---------- AI generations & feedback ----------
   async function createGeneration({ source, refId, model }) {
     const { data, error } = await sb
@@ -425,6 +450,8 @@ const Store = (function () {
     callAiReview,
     saveAskAi,
     getAskAiHistory,
+    deleteAskAi,
+    updateAskAiRaw,
     createGeneration,
     getLatestGeneration,
     getGenerationFeedback,
