@@ -11,6 +11,73 @@ const AiFormat = (function () {
     return div.innerHTML;
   }
 
+  // ============================================================
+  // مودال تأیید سفارشی (بدون confirm مرورگر)
+  // ============================================================
+  let confirmEl = null;
+  let confirmResolve = null;
+
+  function ensureConfirmEl() {
+    if (confirmEl) return confirmEl;
+    const el = document.createElement('div');
+    el.className = 'modal-overlay ai-confirm-overlay';
+    el.hidden = true;
+    el.innerHTML = `
+      <div class="modal-card card ai-confirm-modal" role="dialog" aria-modal="true">
+        <div class="ai-confirm-modal__title" data-confirm-title>تأیید</div>
+        <p class="ai-confirm-modal__message" data-confirm-message></p>
+        <div class="ai-confirm-modal__actions">
+          <button type="button" class="btn btn--sm" data-confirm-cancel>انصراف</button>
+          <button type="button" class="btn btn--sm ai-confirm-modal__danger" data-confirm-ok>حذف</button>
+        </div>
+      </div>`;
+    document.body.appendChild(el);
+
+    el.addEventListener('click', (e) => {
+      if (e.target === el) closeConfirm(false);
+    });
+    el.querySelector('[data-confirm-cancel]').addEventListener('click', () => closeConfirm(false));
+    el.querySelector('[data-confirm-ok]').addEventListener('click', () => closeConfirm(true));
+
+    document.addEventListener('keydown', (e) => {
+      if (!el.hidden && e.key === 'Escape') closeConfirm(false);
+    });
+
+    confirmEl = el;
+    return el;
+  }
+
+  function closeConfirm(result) {
+    if (!confirmEl || confirmEl.hidden) return;
+    confirmEl.hidden = true;
+    if (confirmResolve) {
+      const r = confirmResolve;
+      confirmResolve = null;
+      r(result);
+    }
+  }
+
+  // confirmDialog({ title, message, confirmText, cancelText }) → Promise<boolean>
+  function confirmDialog(opts) {
+    const o = typeof opts === 'string' ? { message: opts } : (opts || {});
+    const el = ensureConfirmEl();
+    el.querySelector('[data-confirm-title]').textContent = o.title || 'تأیید';
+    el.querySelector('[data-confirm-message]').textContent = o.message || '';
+    el.querySelector('[data-confirm-ok]').textContent = o.confirmText || 'حذف';
+    el.querySelector('[data-confirm-cancel]').textContent = o.cancelText || 'انصراف';
+    el.hidden = false;
+
+    setTimeout(() => {
+      const c = el.querySelector('[data-confirm-cancel]');
+      if (c) c.focus();
+    }, 30);
+
+    return new Promise((resolve) => { confirmResolve = resolve; });
+  }
+
+  // ============================================================
+  // تجزیه
+  // ============================================================
   function parse(raw) {
     if (!raw) return { ok: false, raw: '' };
     const trimmed = raw.trim();
@@ -57,7 +124,6 @@ const AiFormat = (function () {
     return { ok: true, title, answer, insight, refs, tags, draft, caution };
   }
 
-  // بازگرداندن ساختار parse‌شده به متن قالب [[AI]]
   function serialize(p) {
     if (!p || !p.ok) return p.raw || '';
     const cleanAttr = (s) => String(s || '').replace(/[<>&]/g, '');
@@ -134,15 +200,11 @@ const AiFormat = (function () {
       </div>`;
   }
 
-  function feedbackBarHtml({ model, score, myVote, canDelete }) {
+  function feedbackBarHtml({ model, score, myVote }) {
     const sign = score > 0 ? 'pos' : score < 0 ? 'neg' : 'zero';
     const scoreText = (score > 0 ? '+' : '') + UI.toPersianDigits(score);
     const upActive = myVote === 1 ? ' is-active' : '';
     const downActive = myVote === -1 ? ' is-active' : '';
-    const delBtn = `<button type="button" class="ai-delete-answer" data-ai-delete-answer
-      aria-label="حذف کل پاسخ"
-      title="${canDelete ? 'حذف کل پاسخ از دیتابیس' : 'پاسخ ذخیره نشده — قابل حذف نیست'}"
-      ${canDelete ? '' : 'disabled'}>🗑</button>`;
     return `
       <div class="ai-feedback-bar">
         <span class="ai-feedback-bar__model">
@@ -152,7 +214,6 @@ const AiFormat = (function () {
           ⭐ ${scoreText}
         </span>
         <div class="ai-vote-group">
-          ${delBtn}
           <button type="button" class="ai-vote${upActive}" data-vote="1" aria-label="پسندیدم">👍</button>
           <button type="button" class="ai-vote${downActive}" data-vote="-1" aria-label="نپسندیدم">👎</button>
         </div>
@@ -164,10 +225,15 @@ const AiFormat = (function () {
     const { model, question, surahIndex } = opts || {};
     const showFeedback = opts && opts.generationId != null;
     const canClose = !!(opts && opts.refId);
+    const canDelete = !!(opts && opts.refId);
 
     const qHtml = `
       <div class="ai-answer-card__question">
-        <span class="ai-answer-card__q-label">پرسش شما</span>${escapeHtml(question || '')}
+        <div class="ai-answer-card__question-head">
+          <span class="ai-answer-card__q-label">پرسش شما</span>
+          ${canDelete ? `<button type="button" class="ai-delete-question" data-ai-delete-question aria-label="حذف این پرسش" title="حذف این پرسش">🗑</button>` : ''}
+        </div>
+        <div class="ai-answer-card__q-text">${escapeHtml(question || '')}</div>
       </div>`;
 
     if (!parsed.ok) {
@@ -183,7 +249,6 @@ const AiFormat = (function () {
             model,
             score: opts.modelScore || 0,
             myVote: opts.myVote || 0,
-            canDelete: canClose,
           }) : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`}
         </div>`;
       return;
@@ -252,7 +317,6 @@ const AiFormat = (function () {
           model,
           score: opts.modelScore || 0,
           myVote: opts.myVote || 0,
-          canDelete: canClose,
         })
       : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`;
 
@@ -269,7 +333,10 @@ const AiFormat = (function () {
     container.innerHTML = `
       <div class="ai-answer-card card">
         <div class="ai-answer-card__question">
-          <span class="ai-answer-card__q-label">پرسش شما</span>${escapeHtml(question || '')}
+          <div class="ai-answer-card__question-head">
+            <span class="ai-answer-card__q-label">پرسش شما</span>
+          </div>
+          <div class="ai-answer-card__q-text">${escapeHtml(question || '')}</div>
         </div>
         <div class="ai-answer-card__stream" id="aiStreamBox">${escapeHtml(text || '')}</div>
         <div class="ai-answer-card__footer">
@@ -320,7 +387,12 @@ const AiFormat = (function () {
         btn.addEventListener('click', async () => {
           const key = btn.getAttribute('data-ai-section-close');
           if (!key) return;
-          if (!confirm('این بخش از پاسخ حذف شود؟')) return;
+          const ok = await confirmDialog({
+            title: 'حذف بخش',
+            message: 'این بخش از پاسخ حذف شود؟',
+            confirmText: 'حذف',
+          });
+          if (!ok) return;
 
           const next = { ...parsed };
           if (key === 'refs') next.refs = [];
@@ -354,20 +426,25 @@ const AiFormat = (function () {
       });
     }
 
-    // حذف کل پاسخ
+    // حذف کل پاسخ (دکمهٔ روی پرسش)
     if (refId) {
-      const delBtn = rootEl.querySelector('[data-ai-delete-answer]');
+      const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
         delBtn.addEventListener('click', async () => {
-          if (!confirm('کل این پاسخ از دیتابیس حذف شود؟')) return;
+          const ok = await confirmDialog({
+            title: 'حذف این پرسش',
+            message: 'کل این پرسش و پاسخ آن برای همیشه حذف می‌شود. ادامه؟',
+            confirmText: 'حذف',
+          });
+          if (!ok) return;
           try {
             delBtn.disabled = true;
             await Store.deleteAskAi(refId);
             if (typeof onAfterDelete === 'function') onAfterDelete();
-            UI.toast('پاسخ حذف شد');
+            UI.toast('پرسش حذف شد');
           } catch (e) {
             console.error('[ai-format] deleteAskAi failed:', e);
-            UI.toast('خطا در حذف پاسخ: ' + (e?.message || 'نامشخص'));
+            UI.toast('خطا در حذف پرسش: ' + (e?.message || 'نامشخص'));
             delBtn.disabled = false;
           }
         });
@@ -427,7 +504,7 @@ const AiFormat = (function () {
   }
 
   return {
-    parse, serialize, render, renderStreaming, wireCard,
+    parse, serialize, render, renderStreaming, wireCard, confirm: confirmDialog,
     renderMarkdown, renderRich, escapeHtml,
   };
 })();
