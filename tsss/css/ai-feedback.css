@@ -102,7 +102,7 @@
 [data-theme="light"] .ai-vote.is-active[data-vote="1"] { color: hsl(150 60% 28%); }
 [data-theme="light"] .ai-vote.is-active[data-vote="-1"] { color: hsl(0 62% 38%); }
 
-/* نمایش امتیاز مدل در پاپ‌آپ انتخاب مدل */
+/* امتیاز مدل در پاپ‌آپ انتخاب مدل */
 .ai-model-card__score {
   display: inline-flex;
   align-items: center;
@@ -122,12 +122,48 @@
 [data-theme="light"] .ai-model-card__score[data-sign="neg"] { color: hsl(0 60% 42%); }
 
 /* =========================================================
-   دکمه‌های حذف بخش و حذف کل پرسش
+   کارت پرسش — جمع‌وجور، تک‌خطی
+   ========================================================= */
+.ai-answer-card__question {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 5px 8px 5px 6px;
+  border-radius: 8px;
+  background: var(--surface);
+  border-inline-start: 2px solid var(--neon);
+  font-size: .84rem;
+  line-height: 1.7;
+}
+.ai-answer-card__q-label {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--neon-glow);
+  color: var(--neon);
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.ai-answer-card__q-text {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   دکمه‌های حذف — همه با ✕
    ========================================================= */
 
-.ai-section__label {
-  width: 100%;
-}
+/* روی برچسب بخش‌ها */
+.ai-section__label { width: 100%; }
 
 .ai-section__close {
   all: unset;
@@ -141,6 +177,7 @@
   border-radius: 50%;
   color: color-mix(in srgb, hsl(var(--hue) 78% 78%) 55%, transparent);
   font-size: .7rem;
+  line-height: 1;
   transition: color .2s ease, background .2s ease;
 }
 .ai-section__close:hover {
@@ -148,19 +185,20 @@
   background: hsl(0 70% 55% / .14);
 }
 
-/* دکمهٔ حذف روی پرسش (بالای کارت و در سر لیست تاریخچه) */
+/* روی کارت پرسش و سر آیتم تاریخچه */
 .ai-delete-question {
   all: unset;
   cursor: pointer;
-  margin-inline-start: auto;
-  width: 26px;
-  height: 26px;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   color: var(--text-faint);
-  font-size: .82rem;
+  font-size: .7rem;
+  line-height: 1;
   transition: color .2s ease, background .2s ease;
 }
 .ai-delete-question:hover {
@@ -172,36 +210,22 @@
   cursor: not-allowed;
 }
 
-/* ساختار تازهٔ بلوک پرسش در کارت پاسخ */
-.ai-answer-card__question-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.ai-answer-card__q-text {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 /* =========================================================
    مودال تأیید سفارشی — جایگزین confirm() مرورگر
    ========================================================= */
-.ai-confirm-overlay {
-  z-index: 400;
-}
+.ai-confirm-overlay { z-index: 400; }
 
 .ai-confirm-modal {
   width: 100%;
-  max-width: 380px;
-  padding: 20px 20px 16px;
+  max-width: 360px;
+  padding: 18px 18px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .ai-confirm-modal__title {
-  font-size: 1rem;
+  font-size: .96rem;
   font-weight: 800;
   color: var(--text);
   text-align: start;
@@ -209,8 +233,8 @@
 
 .ai-confirm-modal__message {
   margin: 0;
-  font-size: .88rem;
-  line-height: 1.9;
+  font-size: .84rem;
+  line-height: 1.85;
   color: var(--text-dim);
   text-align: start;
 }
@@ -219,7 +243,7 @@
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .ai-confirm-modal__danger {
