@@ -1,5 +1,5 @@
 // =============================================================
-// تجزیه و رندر قالب پاسخ هوش مصنوعی
+// تجزیه، رندر، ویرایش و سریال‌سازی قالب پاسخ هوش مصنوعی
 // قالب:
 //   [[AI]]
 //   <title>…</title>
@@ -21,7 +21,16 @@ const AiFormat = (function () {
     return div.innerHTML;
   }
 
-  // --- پارسر اصلی ---
+  // برای مقادیر داخل data-* (کوتیشن هم باید فرار کند)
+  function attrEsc(str) {
+    return String(str == null ? '' : str)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // ---------- پارسر ----------
   function parse(raw) {
     if (!raw) return { ok: false, raw: '' };
     const trimmed = raw.trim();
@@ -44,7 +53,6 @@ const AiFormat = (function () {
     const draft   = pick('draft');
     const caution = pick('caution');
 
-    // refs
     const refsRaw = pick('refs') || '';
     const refs = [];
     const refRe = /<ref\b([^>]*?)(?:\/>|>([\s\S]*?)<\/ref>)/gi;
@@ -57,7 +65,6 @@ const AiFormat = (function () {
       if (s && a) refs.push({ surah: Number(s), ayah: Number(a), label });
     }
 
-    // tags
     const tagsRaw = pick('tags') || '';
     const tags = [];
     const tagRe = /<tag>([\s\S]*?)<\/tag>/gi;
@@ -66,13 +73,11 @@ const AiFormat = (function () {
       if (t) tags.push(t);
     }
 
-    if (!answer) {
-      return { ok: false, raw: trimmed };
-    }
+    if (!answer) return { ok: false, raw: trimmed };
     return { ok: true, title, answer, insight, refs, tags, draft, caution };
   }
 
-  // --- رندر مارک‌داون امن ---
+  // ---------- رندر مارک‌داون امن ----------
   function renderMarkdown(md) {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) {
@@ -92,7 +97,6 @@ const AiFormat = (function () {
     return tmp.innerHTML;
   }
 
-  // --- رندر غنی: مارک‌داون + توکن‌های [[سوره:آیه]] + برچسب‌های درون‌متنی ---
   function renderRich(text, surahIndex, inlineTags) {
     let html = renderMarkdown(text);
     html = html.replace(
@@ -112,21 +116,79 @@ const AiFormat = (function () {
     return html;
   }
 
-  // --- بلوک یک بخش رنگی ---
-  function sectionHtml({ hue, label, body, extra = '' }) {
+  // ---------- ساخت یک بخش ----------
+  // editable: آیا دکمهٔ ویرایش داشته باشد (refs/tags ندارند)
+  function sectionHtml({ hue, label, body, extra = '', type, raw = '', editable = true }) {
+    const editBtn = editable
+      ? `<button type="button" class="ai-section__btn" data-section-action="edit" title="ویرایش">✎</button>`
+      : '';
     return `
-      <div class="ai-section" style="--hue:${hue}">
-        <div class="ai-section__label">
-          <span class="ai-section__dot"></span>${escapeHtml(label)}
+      <div class="ai-section" style="--hue:${hue}" data-section-type="${type}" data-raw="${attrEsc(raw)}">
+        <div class="ai-section__header">
+          <div class="ai-section__label">
+            <span class="ai-section__dot"></span>${escapeHtml(label)}
+          </div>
+          <div class="ai-section__actions">
+            ${editBtn}
+            <button type="button" class="ai-section__btn" data-section-action="delete" title="حذف">✕</button>
+          </div>
         </div>
         <div class="ai-section__body">${body}</div>
         ${extra}
       </div>`;
   }
 
-  // --- رندر کل کارت پاسخ ---
+  // ---------- سریال‌سازی از DOM ----------
+  function serializeFromDom(card) {
+    const titleEl = card.querySelector('.ai-answer-card__title');
+    const title = titleEl ? titleEl.textContent.trim() : null;
+
+    const getRaw = (type) => {
+      const el = card.querySelector(`[data-section-type="${type}"]`);
+      return el ? (el.getAttribute('data-raw') || '') : null;
+    };
+    const answer  = getRaw('answer');
+    const insight = getRaw('insight');
+    const draft   = getRaw('draft');
+    const caution = getRaw('caution');
+
+    const refs = Array.from(card.querySelectorAll('[data-section-type="refs"] .ai-ref')).map((el) => ({
+      s: el.dataset.s,
+      a: el.dataset.a,
+      label: el.dataset.label || '',
+    }));
+
+    const tags = Array.from(card.querySelectorAll('[data-section-type="tags"] .ai-tag-pill')).map(
+      (el) => el.dataset.aiTag
+    );
+
+    let out = '[[AI]]\n';
+    if (title) out += `<title>${title}</title>\n`;
+    if (answer  && answer.trim())  out += `<answer>\n${answer}\n</answer>\n`;
+    if (insight && insight.trim()) out += `<insight>\n${insight}\n</insight>\n`;
+    if (refs.length) {
+      out += '<refs>\n';
+      refs.forEach((r) => {
+        if (r.label) out += `<ref s="${r.s}" a="${r.a}">${r.label}</ref>\n`;
+        else out += `<ref s="${r.s}" a="${r.a}" />\n`;
+      });
+      out += '</refs>\n';
+    }
+    if (tags.length) {
+      out += '<tags>\n' + tags.map((t) => `<tag>${t}</tag>`).join('\n') + '\n</tags>\n';
+    }
+    if (draft   && draft.trim())   out += `<draft>\n${draft}\n</draft>\n`;
+    if (caution && caution.trim()) out += `<caution>\n${caution}\n</caution>\n`;
+    out += '[[/AI]]';
+    return out;
+  }
+
+  // ---------- رندر کل کارت ----------
+  // opts: { model, question, surahIndex, onChange }
+  //   onChange(newRawText) در صورت ویرایش/حذف هر بخش صدا زده می‌شود.
   function render(container, parsed, opts) {
-    const { model, question, surahIndex } = opts || {};
+    opts = opts || {};
+    const { model, question, surahIndex } = opts;
 
     const qHtml = `
       <div class="ai-answer-card__question">
@@ -144,8 +206,11 @@ const AiFormat = (function () {
           ${qHtml}
           ${sectionHtml({
             hue: 20,
+            type: 'raw',
             label: 'پاسخ خام (قالب مورد انتظار رعایت نشد)',
             body: renderRich(parsed.raw, surahIndex),
+            raw: parsed.raw,
+            editable: false,
           })}
           ${footerHtml}
         </div>`;
@@ -157,16 +222,16 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340,
-        label: 'پاسخ',
+        hue: 340, type: 'answer', label: 'پاسخ',
         body: renderRich(parsed.answer, surahIndex, inlineTags),
+        raw: parsed.answer,
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210,
-        label: 'نکته',
+        hue: 210, type: 'insight', label: 'نکته',
         body: renderRich(parsed.insight, surahIndex, inlineTags),
+        raw: parsed.insight,
       }));
     }
     if (parsed.refs && parsed.refs.length) {
@@ -175,34 +240,40 @@ const AiFormat = (function () {
         const lbl = r.label
           ? escapeHtml(r.label)
           : `سورهٔ ${nameFa}، آیهٔ ${UI.toPersianDigits(r.ayah)}`;
-        return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
+        return `<span class="ai-ref" data-s="${r.surah}" data-a="${r.ayah}" data-label="${attrEsc(r.label || '')}">
+          <a href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>
+          <button type="button" class="ai-ref__remove" data-remove-ref title="حذف این ارجاع" aria-label="حذف">✕</button>
+        </span>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270,
-        label: 'ارجاع‌ها',
+        hue: 270, type: 'refs', label: 'ارجاع‌ها',
         body: `<div class="ai-refs">${pills}</div>`,
+        editable: false,
       }));
     }
     if (inlineTags.length) {
       const tagPills = inlineTags.map((t) => {
         const c = UI.tagColor(t);
-        return `<button type="button" class="ai-tag-pill"
-          data-ai-tag="${escapeHtml(t)}"
-          style="color:${c.color};border-color:${c.border};text-shadow:0 0 6px ${c.glow};">
-          <span class="ai-tag-pill__add">＋</span>${escapeHtml(t)}
-        </button>`;
+        return `<span class="ai-tag-pill"
+          data-ai-tag="${attrEsc(t)}"
+          style="color:${c.color};border-color:${c.border};">
+          <button type="button" class="ai-tag-pill__add" data-ai-add-tag="${attrEsc(t)}" title="افزودن به فرم">
+            <span class="ai-tag-pill__plus">＋</span>${escapeHtml(t)}
+          </button>
+          <button type="button" class="ai-tag-pill__remove" data-remove-tag title="حذف این برچسب" aria-label="حذف">✕</button>
+        </span>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150,
-        label: 'برچسب‌های پیشنهادی',
+        hue: 150, type: 'tags', label: 'برچسب‌های پیشنهادی',
         body: `<div class="ai-tags">${tagPills}</div>`,
+        editable: false,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40,
-        label: 'پیش‌نویس تفسیر',
-        body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
+        hue: 40, type: 'draft', label: 'پیش‌نویس تفسیر',
+        body: renderRich(parsed.draft, surahIndex, inlineTags),
+        raw: parsed.draft,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
         </div>`,
@@ -210,9 +281,9 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0,
-        label: 'احتیاط',
+        hue: 0, type: 'caution', label: 'احتیاط',
         body: renderRich(parsed.caution, surahIndex, inlineTags),
+        raw: parsed.caution,
       }));
     }
 
@@ -223,9 +294,113 @@ const AiFormat = (function () {
         ${blocks.join('')}
         ${footerHtml}
       </div>`;
+
+    wireCard(container.querySelector('.ai-answer-card'), opts);
   }
 
-  // --- نمایش خام حین استریم ---
+  // ---------- سیم‌کشی ویرایش/حذف ----------
+  function wireCard(card, opts) {
+    if (!card) return;
+
+    async function persist() {
+      if (typeof opts.onChange !== 'function') return;
+      try {
+        await opts.onChange(serializeFromDom(card));
+      } catch (e) {
+        console.error('[AiFormat] persist failed', e);
+        UI.toast('ذخیرهٔ تغییرات ناموفق بود');
+      }
+    }
+
+    // دکمه‌های هدر هر بخش (ویرایش/حذف)
+    card.querySelectorAll('[data-section-action]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const action = btn.getAttribute('data-section-action');
+        const section = btn.closest('.ai-section');
+        if (!section) return;
+
+        if (action === 'delete') {
+          section.remove();
+          await persist();
+        } else if (action === 'edit') {
+          enterEdit(section, card, opts, persist);
+        }
+      });
+    });
+
+    // حذف تک‌ارجاع‌ها
+    card.querySelectorAll('[data-remove-ref]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const refEl = btn.closest('.ai-ref');
+        const section = btn.closest('.ai-section');
+        if (!refEl) return;
+        refEl.remove();
+        if (section && !section.querySelector('.ai-ref')) section.remove();
+        await persist();
+      });
+    });
+
+    // حذف تک‌برچسب‌ها
+    card.querySelectorAll('[data-remove-tag]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const pill = btn.closest('.ai-tag-pill');
+        const section = btn.closest('.ai-section');
+        if (!pill) return;
+        pill.remove();
+        if (section && !section.querySelector('.ai-tag-pill')) section.remove();
+        await persist();
+      });
+    });
+  }
+
+  function enterEdit(section, card, opts, persist) {
+    const raw = section.getAttribute('data-raw') || '';
+    const bodyEl = section.querySelector('.ai-section__body');
+    if (!bodyEl) return;
+
+    const originalHTML = bodyEl.innerHTML;
+
+    bodyEl.innerHTML = `
+      <textarea class="ai-section__edit" rows="6">${escapeHtml(raw)}</textarea>
+      <div class="ai-section__edit-actions">
+        <button type="button" class="btn btn--sm btn--primary" data-edit-action="save">ذخیره</button>
+        <button type="button" class="btn btn--sm" data-edit-action="cancel">انصراف</button>
+      </div>`;
+
+    section.setAttribute('data-editing', 'true');
+    const ta = bodyEl.querySelector('.ai-section__edit');
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+
+    const saveBtn = bodyEl.querySelector('[data-edit-action="save"]');
+    const cancelBtn = bodyEl.querySelector('[data-edit-action="cancel"]');
+
+    saveBtn.addEventListener('click', async () => {
+      const newRaw = ta.value;
+      section.setAttribute('data-raw', newRaw);
+      const inlineTags = Array.from(card.querySelectorAll('[data-ai-tag]'))
+        .map((el) => el.getAttribute('data-ai-tag'))
+        .filter(Boolean);
+      bodyEl.innerHTML = renderRich(newRaw, opts.surahIndex, inlineTags);
+      section.removeAttribute('data-editing');
+      await persist();
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      bodyEl.innerHTML = originalHTML;
+      section.removeAttribute('data-editing');
+    });
+
+    ta.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); cancelBtn.click(); }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
+    });
+  }
+
+  // ---------- نمایش خام حین استریم ----------
   function renderStreaming(container, question, text, model) {
     container.innerHTML = `
       <div class="ai-answer-card card">
@@ -241,5 +416,9 @@ const AiFormat = (function () {
     if (box) box.scrollTop = box.scrollHeight;
   }
 
-  return { parse, render, renderStreaming, renderMarkdown, renderRich, escapeHtml };
+  return {
+    parse, render, renderStreaming,
+    renderMarkdown, renderRich, escapeHtml,
+    serializeFromDom,
+  };
 })();
