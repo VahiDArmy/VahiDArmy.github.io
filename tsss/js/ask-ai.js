@@ -1,16 +1,14 @@
 // =============================================================
-// بخش «بپرس از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه
+// بخش «بپرس از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه، فیدبک
 // =============================================================
 (async function () {
   const section = document.getElementById('askAiSection');
   if (!section) return;
 
-  // اگر کاربر لاگین نیست، بخش را پنهان کن (login-only)
   const session = await Auth.getSession().catch(() => null);
   if (!session) { section.hidden = true; return; }
   section.hidden = false;
 
-  // --- Elements ---
   const composerModel = document.getElementById('askAiCurrentModel');
   const modelLabel    = document.getElementById('askAiModelLabel');
   const inputEl       = document.getElementById('askAiInput');
@@ -26,15 +24,12 @@
 
   const index = await QuranData.getIndex();
 
-  // --- State ---
   let currentAyah = readCurrentAyah();
   let streamAbort = null;
   let pendingModelId = getStoredModelId();
   let renderedModelId = pendingModelId;
+  let modelScoresCache = new Map();
 
-  // ============================================================
-  // Current ayah — از سلكتورهاي work.js می‌خوانیم و با MutationObserver رصد می‌کنیم
-  // ============================================================
   function readCurrentAyah() {
     const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
     const a = Number(document.getElementById('formAyahSelect')?.value) || 1;
@@ -65,9 +60,7 @@
     await renderHistory();
   }
 
-  // ============================================================
-  // Model picker
-  // ============================================================
+  // ---------- Model picker ----------
   function getStoredModelId() {
     try {
       const v = localStorage.getItem('askAiModel');
@@ -87,6 +80,22 @@
     if (modelLabel) modelLabel.textContent = m.provider + ' · ' + m.name;
   }
 
+  async function loadModelScores() {
+    try {
+      modelScoresCache = await Store.getModelScores();
+    } catch (e) {
+      modelScoresCache = new Map();
+    }
+  }
+
+  function scoreChipHtml(modelId) {
+    const s = modelScoresCache.get(modelId);
+    if (!s || (!s.voters && !s.score)) return '';
+    const sign = s.score > 0 ? 'pos' : s.score < 0 ? 'neg' : 'zero';
+    const txt = (s.score > 0 ? '+' : '') + UI.toPersianDigits(s.score);
+    return `<span class="ai-model-card__score" data-sign="${sign}">⭐ ${txt}</span>`;
+  }
+
   function paintModelsList() {
     modelsListEl.innerHTML = CONFIG.OPENROUTER_MODELS.map((m) => {
       const selected = m.id === pendingModelId ? 'true' : 'false';
@@ -98,6 +107,7 @@
           <div class="ai-model-card__head">
             <span class="ai-model-card__provider">${AiFormat.escapeHtml(m.provider)}</span>
             <span class="ai-model-card__name">${AiFormat.escapeHtml(m.name)}</span>
+            ${scoreChipHtml(m.id)}
             ${badge}
           </div>
           <p class="ai-model-card__desc">${AiFormat.escapeHtml(m.desc)}</p>
@@ -118,8 +128,9 @@
     });
   }
 
-  function openModels() {
+  async function openModels() {
     pendingModelId = renderedModelId;
+    await loadModelScores();
     paintModelsList();
     modelsModal.hidden = false;
   }
@@ -141,14 +152,16 @@
 
   paintComposerModel();
 
-  // ============================================================
-  // Status light
-  // ============================================================
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
 
-  // ============================================================
-  // Streaming
-  // ============================================================
+  // ---------- Helpers to fetch scores for a given generation ----------
+  async function generationScore(modelId) {
+    if (!modelScoresCache.has(modelId)) await loadModelScores();
+    const s = modelScoresCache.get(modelId);
+    return s ? s.score : 0;
+  }
+
+  // ---------- Ask ----------
   async function askAi(question) {
     const modelId = renderedModelId;
     const model = modelById(modelId);
@@ -160,9 +173,8 @@
       const surahData = await QuranData.getSurah(currentAyah.surah);
       const ay = surahData.ayahs.find((x) => x.v === currentAyah.ayah);
       if (ay) { ayahText = ay.ar; ayahTranslation = ay.fa; }
-    } catch (e) { /* keep empty */ }
+    } catch (e) {}
 
-    // reset UI
     streamAbort = new AbortController();
     submitBtn.disabled = true;
     setStatus('streaming');
@@ -181,11 +193,8 @@
         body: JSON.stringify({
           surah: currentAyah.surah,
           ayah: currentAyah.ayah,
-          surahName,
-          ayahText,
-          ayahTranslation,
-          question,
-          model: modelId,
+          surahName, ayahText, ayahTranslation,
+          question, model: modelId,
         }),
         signal: streamAbort.signal,
       });
@@ -235,7 +244,7 @@
               AiFormat.renderStreaming(answerEl, question, acc, model.name);
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
-          } catch (e) { /* ignore */ }
+          } catch (e) {}
         }
       }
     } catch (err) {
@@ -244,21 +253,13 @@
       return;
     }
 
-    // finalize
+    // ---- finalize ----
     const parsed = AiFormat.parse(acc);
-    AiFormat.render(answerEl, parsed, {
-      model: modelId,
-      question,
-      surahIndex: index,
-    });
-    wireAnswerActions(answerEl, parsed);
-    setStatus('done');
-    submitBtn.disabled = false;
-    streamAbort = null;
 
-    // persist
+    // ذخیرهٔ پاسخ
+    let askRow = null;
     try {
-      await Store.saveAskAi({
+      askRow = await Store.saveAskAi({
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
         model: modelId,
@@ -266,6 +267,38 @@
         answerRaw: acc,
       });
     } catch (e) { console.warn('ask_ai save failed', e); }
+
+    // ثبت نسل
+    let generationId = null;
+    if (askRow) {
+      try {
+        const gen = await Store.createGeneration({
+          source: 'ask_ai',
+          refId: askRow.id,
+          model: modelId,
+        });
+        generationId = gen.id;
+      } catch (e) { console.warn('generation save failed', e); }
+    }
+
+    const sc = await generationScore(modelId);
+
+    AiFormat.render(answerEl, parsed, {
+      model: modelId,
+      question,
+      surahIndex: index,
+      generationId,
+      myVote: 0,
+      modelScore: sc,
+    });
+    AiFormat.wireCard(answerEl, parsed, {
+      generationId,
+      onAfterVote: async () => { await loadModelScores(); },
+    });
+
+    setStatus('done');
+    submitBtn.disabled = false;
+    streamAbort = null;
 
     await renderHistory();
   }
@@ -278,52 +311,26 @@
     UI.toast('خطا: ' + (err.message || 'نامشخص'));
   }
 
-  // ============================================================
-  // Draft / tag actions after render
-  // ============================================================
-  function wireAnswerActions(rootEl, parsed) {
-    const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
-    if (insertBtn && parsed.draft) {
-      insertBtn.addEventListener('click', () => {
-        const ta = document.getElementById('tafsirContent');
-        if (!ta) return;
-        const cur = ta.value.trim();
-        const draft = parsed.draft.trim();
-        ta.value = cur ? (cur + '\n\n' + draft) : draft;
-        ta.focus();
-        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        UI.toast('پیش‌نویس در فرم درج شد');
-      });
-    }
-    rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const tag = btn.getAttribute('data-ai-tag');
-        const inp = document.getElementById('tafsirTags');
-        if (!inp) return;
-        const parts = Array.from(new Set(
-          (inp.value || '').split(/[,،]/).map((x) => x.trim()).filter(Boolean).concat([tag])
-        ));
-        inp.value = parts.join('، ');
-        UI.toast('برچسب «' + tag + '» افزوده شد');
-      });
-    });
-  }
-
-  // ============================================================
-  // History
-  // ============================================================
+  // ---------- History ----------
   async function renderHistory() {
     let rows = [];
     try {
       rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20);
-    } catch (e) { console.warn('history fetch failed', e); }
+    } catch (e) {}
 
     if (!rows || !rows.length) { historyEl.innerHTML = ''; return; }
+
+    // برای هر ردیف، آخرین نسل و امتیاز مدل را بگیر
+    const enriched = await Promise.all(rows.map(async (r) => {
+      let gen = null;
+      try { gen = await Store.getLatestGeneration('ask_ai', r.id); } catch (e) {}
+      return { ...r, gen };
+    }));
 
     historyEl.innerHTML = `
       <div class="ai-history">
         <div class="ai-history__head">پرسش‌های پیشین برای این آیه</div>
-        ${rows.map((r, i) => {
+        ${enriched.map((r, i) => {
           const date = new Date(r.created_at).toLocaleDateString('fa-IR');
           return `
             <div class="ai-history-item" data-open="${i === 0 ? 'true' : 'false'}" data-id="${r.id}">
@@ -338,36 +345,40 @@
 
     historyEl.querySelectorAll('.ai-history-item').forEach((item) => {
       const id = item.getAttribute('data-id');
-      const row = rows.find((r) => r.id === id);
+      const row = enriched.find((r) => r.id === id);
       const bodyEl = item.querySelector('.ai-history-item__body');
       const head = item.querySelector('.ai-history-item__head');
       let rendered = false;
 
-      const openIt = () => {
-        if (!rendered) {
-          const parsed = AiFormat.parse(row.answer_raw || '');
-          AiFormat.render(bodyEl, parsed, {
-            model: row.model,
-            question: row.question,
-            surahIndex: index,
-          });
-          wireAnswerActions(bodyEl, parsed);
-          rendered = true;
-        }
+      const openIt = async () => {
+        if (rendered) return;
+        const parsed = AiFormat.parse(row.answer_raw || '');
+        const genId = row.gen ? row.gen.id : null;
+        const sc = row.gen ? await generationScore(row.gen.model) : 0;
+        AiFormat.render(bodyEl, parsed, {
+          model: row.model,
+          question: row.question,
+          surahIndex: index,
+          generationId: genId,
+          myVote: 0,
+          modelScore: sc,
+        });
+        AiFormat.wireCard(bodyEl, parsed, {
+          generationId: genId,
+          onAfterVote: async () => { await loadModelScores(); },
+        });
+        rendered = true;
       };
       if (item.getAttribute('data-open') === 'true') openIt();
 
-      head.addEventListener('click', () => {
+      head.addEventListener('click', async () => {
         const isOpen = item.getAttribute('data-open') === 'true';
         item.setAttribute('data-open', isOpen ? 'false' : 'true');
-        if (!isOpen) openIt();
+        if (!isOpen) await openIt();
       });
     });
   }
 
-  // ============================================================
-  // Submit
-  // ============================================================
   function submit() {
     const q = inputEl.value.trim();
     if (!q) { UI.toast('پرسشی بنویسید'); return; }
@@ -379,9 +390,7 @@
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); }
   });
 
-  // ============================================================
-  // Initial load
-  // ============================================================
   setStatus('idle');
+  await loadModelScores();
   await renderHistory();
 })();
