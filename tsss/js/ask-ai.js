@@ -1,6 +1,13 @@
 // =============================================================
 // بخش «بپرس از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه
 // =============================================================
+
+// مدل ثابت — بدون انتخابگر.
+const ASK_AI_MODEL = {
+  id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  name: 'Nemotron 3 Ultra',
+};
+
 (async function () {
   const section = document.getElementById('askAiSection');
   if (!section) return;
@@ -9,26 +16,16 @@
   if (!session) { section.hidden = true; return; }
   section.hidden = false;
 
-  const composerModel = document.getElementById('askAiCurrentModel');
-  const modelLabel    = document.getElementById('askAiModelLabel');
-  const inputEl       = document.getElementById('askAiInput');
-  const submitBtn     = document.getElementById('askAiSubmit');
-  const statusEl      = document.getElementById('aiStatus');
-  const answerEl      = document.getElementById('askAiAnswer');
-  const historyEl     = document.getElementById('askAiHistory');
-
-  const modelsModal   = document.getElementById('aiModelsModal');
-  const modelsListEl  = document.getElementById('aiModelsList');
-  const closeModelsBtn= document.getElementById('closeModelsBtn');
-  const saveModelBtn  = document.getElementById('saveModelBtn');
-  const openModelsBtn = document.getElementById('openModelsBtn');
+  const inputEl   = document.getElementById('askAiInput');
+  const submitBtn = document.getElementById('askAiSubmit');
+  const statusEl  = document.getElementById('aiStatus');
+  const answerEl  = document.getElementById('askAiAnswer');
+  const historyEl = document.getElementById('askAiHistory');
 
   const index = await QuranData.getIndex();
 
   let currentAyah = readCurrentAyah();
   let streamAbort = null;
-  let pendingModelId = getStoredModelId();
-  let renderedModelId = pendingModelId;
 
   // ---------- Current ayah ----------
   function readCurrentAyah() {
@@ -61,88 +58,11 @@
     await renderHistory();
   }
 
-  // ---------- Model picker ----------
-  function getStoredModelId() {
-    try {
-      const v = localStorage.getItem('askAiModel');
-      if (v && CONFIG.OPENROUTER_MODELS.some((m) => m.id === v)) return v;
-    } catch (e) {}
-    return CONFIG.OPENROUTER_DEFAULT_MODEL;
-  }
-  function setStoredModelId(id) {
-    try { localStorage.setItem('askAiModel', id); } catch (e) {}
-  }
-  function modelById(id) {
-    return CONFIG.OPENROUTER_MODELS.find((m) => m.id === id) || CONFIG.OPENROUTER_MODELS[0];
-  }
-
-  function paintComposerModel() {
-    const m = modelById(renderedModelId);
-    if (modelLabel) modelLabel.textContent = `${m.provider} · ${m.name}`;
-  }
-
-  function paintModelsList() {
-    modelsListEl.innerHTML = CONFIG.OPENROUTER_MODELS.map((m) => {
-      const selected = m.id === pendingModelId ? 'true' : 'false';
-      const badge = m.default
-        ? `<span class="ai-model-card__badge">پیش‌فرض</span>`
-        : (m.star ? `<span class="ai-model-card__badge" style="background:var(--surface-2);color:var(--text-faint);">★</span>` : '');
-      return `
-        <button type="button" class="ai-model-card" data-id="${m.id}" data-selected="${selected}">
-          <div class="ai-model-card__head">
-            <span class="ai-model-card__provider">${AiFormat.escapeHtml(m.provider)}</span>
-            <span class="ai-model-card__name">${AiFormat.escapeHtml(m.name)}</span>
-            ${badge}
-          </div>
-          <p class="ai-model-card__desc">${AiFormat.escapeHtml(m.desc)}</p>
-          <div class="ai-model-card__stats">
-            <span><b>${m.tps}</b> t/s</span>
-            <span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span>
-            <span><b>${AiFormat.escapeHtml(m.size)}</b></span>
-          </div>
-          <code class="ai-model-card__id">${AiFormat.escapeHtml(m.id)}</code>
-        </button>`;
-    }).join('');
-
-    modelsListEl.querySelectorAll('.ai-model-card').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        pendingModelId = btn.getAttribute('data-id');
-        paintModelsList();
-      });
-    });
-  }
-
-  function openModels() {
-    pendingModelId = renderedModelId;
-    paintModelsList();
-    modelsModal.hidden = false;
-  }
-  function closeModels() { modelsModal.hidden = true; }
-
-  if (openModelsBtn) openModelsBtn.addEventListener('click', openModels);
-  if (composerModel) composerModel.addEventListener('click', openModels);
-  if (closeModelsBtn) closeModelsBtn.addEventListener('click', closeModels);
-  modelsModal.addEventListener('click', (e) => { if (e.target === modelsModal) closeModels(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modelsModal.hidden) closeModels();
-  });
-  if (saveModelBtn) saveModelBtn.addEventListener('click', () => {
-    renderedModelId = pendingModelId;
-    setStoredModelId(renderedModelId);
-    paintComposerModel();
-    closeModels();
-    UI.toast('مدل ذخیره شد');
-  });
-
-  paintComposerModel();
-
   // ---------- Status light ----------
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
 
   // ---------- Streaming ----------
   async function askAi(question) {
-    const modelId = renderedModelId;
-    const model = modelById(modelId);
     const surahMeta = index.find((s) => s.number === currentAyah.surah);
     const surahName = surahMeta ? surahMeta.name_fa : String(currentAyah.surah);
 
@@ -157,7 +77,7 @@
     submitBtn.disabled = true;
     setStatus('streaming');
     let acc = '';
-    AiFormat.renderStreaming(answerEl, question, '', model.name);
+    AiFormat.renderStreaming(answerEl, question, '', ASK_AI_MODEL.name);
 
     const url = `${CONFIG.SUPABASE_URL}/functions/v1/bright-api`;
     let res;
@@ -175,7 +95,7 @@
           ayahText,
           ayahTranslation,
           question,
-          model: modelId,
+          model: ASK_AI_MODEL.id,
         }),
         signal: streamAbort.signal,
       });
@@ -222,7 +142,7 @@
             const j = JSON.parse(data);
             if (j.delta) {
               acc += j.delta;
-              AiFormat.renderStreaming(answerEl, question, acc, model.name);
+              AiFormat.renderStreaming(answerEl, question, acc, ASK_AI_MODEL.name);
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
           } catch (e) { /* ignore */ }
@@ -240,7 +160,7 @@
       savedRow = await Store.saveAskAi({
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
-        model: modelId,
+        model: ASK_AI_MODEL.id,
         question,
         answerRaw: acc,
       });
@@ -248,7 +168,7 @@
 
     const parsed = AiFormat.parse(acc);
     AiFormat.render(answerEl, parsed, {
-      model: modelId,
+      model: ASK_AI_MODEL.id,
       question,
       surahIndex: index,
       onChange: savedRow
