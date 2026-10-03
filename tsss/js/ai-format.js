@@ -12,6 +12,24 @@ const AiFormat = (function () {
     return div.innerHTML;
   }
 
+  // پاک‌سازی برچسب: هر چیزی که شکل HTML یا «tag» لخت دارد رد می‌شود
+  function cleanTag(s) {
+    if (s == null) return null;
+    let t = String(s).trim();
+    // حذف کوتیشن/گیومه/براکت‌های دور
+    t = t.replace(/^["'«‹\[\]]+|["'»›\[\]]+$/g, '').trim();
+    if (!t) return null;
+    // هر علامت <> یعنی محتوای HTML-مانند → رد
+    if (/[<>]/.test(t)) return null;
+    // خودِ کلمهٔ tag یا /tag یا tag/ یا /tag/ → رد
+    if (/^\/?\s*tag\s*\/?$/i.test(t)) return null;
+    // خیلی بلند → رد
+    if (t.length > 40) return null;
+    // شامل خط جدید یا چند کلمهٔ به‌هم‌چسبیده → رد
+    if (/\n/.test(t)) return null;
+    return t;
+  }
+
   // ============================================================
   // مودال تأیید سفارشی
   // ============================================================
@@ -68,7 +86,7 @@ const AiFormat = (function () {
   }
 
   // ============================================================
-  // تجزیه — هیچ متنی دور ریخته نمی‌شود
+  // تجزیه — هیچ متنی دور ریخته نمی‌شود، برچسب‌های خراب فیلتر می‌شوند
   // ============================================================
   function parse(raw) {
     if (raw == null) return { ok: false, raw: '' };
@@ -98,33 +116,46 @@ const AiFormat = (function () {
     const draft   = pick('draft');
     const caution = pick('caution');
 
-    const refsRaw = pick('refs') || '';
+    // ---- refs ----
+    const refsRaw = pick('refs');
     const refs = [];
-    const refRe = /<ref\b([^>]*?)(?:\/>|>([\s\S]*?)<\/ref>)/gi;
-    let mm;
-    while ((mm = refRe.exec(refsRaw))) {
-      const attrs = mm[1] || '';
-      const label = (mm[2] || '').trim();
-      const s = (attrs.match(/\bs\s*=\s*"(\d{1,3})"/i) || [])[1];
-      const a = (attrs.match(/\ba\s*=\s*"(\d{1,3})"/i) || [])[1];
-      if (s && a) refs.push({ surah: Number(s), ayah: Number(a), label });
+    if (refsRaw) {
+      const refRe = /<ref\b([^>]*?)(?:\/>|>([\s\S]*?)<\/ref>)/gi;
+      let mm;
+      while ((mm = refRe.exec(refsRaw))) {
+        const attrs = mm[1] || '';
+        const label = (mm[2] || '').trim();
+        const s = (attrs.match(/\bs\s*=\s*"(\d{1,3})"/i) || [])[1];
+        const a = (attrs.match(/\ba\s*=\s*"(\d{1,3})"/i) || [])[1];
+        if (s && a) refs.push({ surah: Number(s), ayah: Number(a), label });
+      }
     }
 
-    const tagsRaw = pick('tags') || '';
+    // ---- tags (با فیلتر) ----
+    const tagsRaw = pick('tags');
     const tags = [];
-    const tagRe = /<tag>([\s\S]*?)<\/tag>/gi;
-    while ((mm = tagRe.exec(tagsRaw))) {
-      const t = mm[1].trim();
-      if (t) tags.push(t);
-    }
-    if (!tags.length && tagsRaw.trim()) {
-      tagsRaw
-        .split(/[,،\n]/)
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .forEach((t) => tags.push(t));
+    if (tagsRaw) {
+      // ۱) تگ‌های بستهٔ معتبر
+      const tagRe = /<tag>([\s\S]*?)<\/tag>/gi;
+      let mm;
+      while ((mm = tagRe.exec(tagsRaw))) {
+        const c = cleanTag(mm[1]);
+        if (c) tags.push(c);
+      }
+      // ۲) اگر هیچ تگ معتبری پیدا نشد، با جداکننده بشکن و پاک‌سازی کن
+      if (!tags.length) {
+        const stripped = tagsRaw
+          .replace(/<\/?tags?>/gi, ' ')
+          .replace(/<\/?tag\b[^>]*>/gi, ' ');
+        stripped
+          .split(/[,،\n•·|]/)
+          .map(cleanTag)
+          .filter(Boolean)
+          .forEach((t) => tags.push(t));
+      }
     }
 
+    // ---- leftover ----
     let leftover = inner;
     const removeIf = (name, parsedOk) => {
       if (!parsedOk) return;
@@ -139,8 +170,8 @@ const AiFormat = (function () {
     removeIf('insight', !!insight);
     removeIf('draft',   !!draft);
     removeIf('caution', !!caution);
-    removeIf('refs',    refs.length > 0);
-    removeIf('tags',    tags.length > 0);
+    removeIf('refs',    refsRaw !== null);
+    removeIf('tags',    tagsRaw !== null);
 
     leftover = leftover.replace(/<\/?[a-zA-Z][^>]*>/g, '');
     leftover = leftover.replace(/\n{3,}/g, '\n\n').trim();
@@ -371,7 +402,6 @@ const AiFormat = (function () {
       }));
     }
 
-    // بخش‌های دیگر — بدون دکمهٔ ✕ (بخشی از قالب نیست، اما هرگز دور ریخته نمی‌شود)
     if (parsed.extra) {
       blocks.push(sectionHtml({
         label: 'بخش‌های دیگر',
