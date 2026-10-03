@@ -20,3 +20,10 @@ google/gemma-4-26b-a4b-it:free
 google/gemma-4-31b-it:free
 
 you get items from screenshot. but generate actual data on each yourself. i want you to be clear on this. items themselves are felexible. ( my goal is pick up list wont be a dry bare list)
+
+1. dont touch existing functions. crate a new function that takes model name also as we discussed
+2.  hardcoded in config
+3. first of all respose coud start with [[AI response]], so it goes to other function from beginig (or what ever flag, i dont care) then it will be like latex, that your code is some thing and out put is something else (dont actually do latex, its just an example) like \t fo tab.... XML-ish sounds awsome
+and at the end generated response is used by whick ai
+5. no per session. save
+Stream tokens (SSE) for a nicer UX. and a blinking glow light, red failure, amber dooing, green finished
