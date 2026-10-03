@@ -387,7 +387,8 @@
         body.select-mode .card .del,
         body.select-mode .card .open-browser,
         body.select-mode .card .download-btn,
-        body.select-mode .card .copy-content {
+        body.select-mode .card .copy-content,
+        body.select-mode .card .replace-btn {
             display: none !important;
         }
 
@@ -401,13 +402,13 @@
         }
         .card .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-        /* Shared style for the four per-card action buttons (2 left, 2 right) */
+        /* Shared style for the per-card action buttons */
         .card .del,
         .card .open-browser,
         .card .download-btn,
-        .card .copy-content {
+        .card .copy-content,
+        .card .replace-btn {
             position: absolute;
-            top: 7px;
             background: rgba(10,10,22,.55);
             border: 1px solid var(--glass-border);
             color: var(--text);
@@ -423,26 +424,32 @@
             z-index: 2;
         }
 
-        /* Right side (existing) */
-        .card .del { right: 7px; border-color: rgba(255,77,109,.6); color: var(--danger); }
+        /* Top-right */
+        .card .del { top: 7px; right: 7px; border-color: rgba(255,77,109,.6); color: var(--danger); }
         .card .del:hover { background: rgba(255,77,109,.22); }
-        .card .open-browser { right: 39px; border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
+        .card .open-browser { top: 7px; right: 39px; border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
         .card .open-browser:hover { background: rgba(var(--accent-rgb), .22); }
 
-        /* Left side (new) */
-        .card .download-btn { left: 7px; border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
+        /* Top-left */
+        .card .download-btn { top: 7px; left: 7px; border-color: rgba(var(--accent-rgb), .6); color: var(--accent); }
         .card .download-btn:hover { background: rgba(var(--accent-rgb), .22); }
-        .card .copy-content { left: 39px; border-color: rgba(255,217,61,.6); color: var(--warn); }
+        .card .copy-content { top: 7px; left: 39px; border-color: rgba(255,217,61,.6); color: var(--warn); }
         .card .copy-content:hover { background: rgba(255,217,61,.22); }
+
+        /* Bottom-left — the new Replace button */
+        .card .replace-btn { bottom: 7px; left: 7px; border-color: rgba(139,92,246,.75); color: #b794ff; }
+        .card .replace-btn:hover { background: rgba(139,92,246,.28); color: #d7c1ff; }
 
         .card:hover .del,
         .card:hover .open-browser,
         .card:hover .download-btn,
         .card:hover .copy-content,
+        .card:hover .replace-btn,
         .card:focus-within .del,
         .card:focus-within .open-browser,
         .card:focus-within .download-btn,
-        .card:focus-within .copy-content { display: flex; }
+        .card:focus-within .copy-content,
+        .card:focus-within .replace-btn { display: flex; }
 
         .card .ext-badge {
             position: absolute;
@@ -1106,20 +1113,22 @@
             .editor-overlay { padding: 0; }
             .editor-header .file-path { max-width: 80px; }
 
-            /* Per-card buttons: 22px, 4 of them fit within ~106px of horizontal span */
+            /* Per-card buttons: 22px, fit within the narrow cards */
             .card .del,
             .card .open-browser,
             .card .download-btn,
-            .card .copy-content {
+            .card .copy-content,
+            .card .replace-btn {
                 width: 22px;
                 height: 22px;
                 font-size: 11px;
                 display: flex;
             }
-            .card .del { right: 5px; }
-            .card .open-browser { right: 31px; }
-            .card .download-btn { left: 5px; }
-            .card .copy-content { left: 31px; }
+            .card .del { top: 5px; right: 5px; }
+            .card .open-browser { top: 5px; right: 31px; }
+            .card .download-btn { top: 5px; left: 5px; }
+            .card .copy-content { top: 5px; left: 31px; }
+            .card .replace-btn { bottom: 5px; left: 5px; }
 
             .upload-panel { right: 12px; bottom: 12px; }
             .zip-footer { justify-content: stretch; }
@@ -1177,7 +1186,7 @@
     <div class="upload-area" id="drop">
         <span class="icon">📂</span>
         Drop files here or click to upload
-        <div class="sub">Supports multiple files · Binary &amp; text · .zip extracts to a folder · Tap Select for multi-select</div>
+        <div class="sub">Supports multiple files · Binary &amp; text · .zip extracts to a folder · Tap Select for multi-select · Hover a card for Replace</div>
     </div>
 
     <div class="files" id="files"></div>
@@ -1197,6 +1206,7 @@
         <div class="ctx-title" id="ctxTitle"></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item data-single-only><span class="ico">📂</span><span class="lbl" id="ctxOpenLabel">Open / Edit</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="download" data-needs-item data-single-only><span class="ico">⬇️</span><span class="lbl">Download</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="replace" data-needs-item data-single-only><span class="ico">🔄</span><span class="lbl" id="ctxReplaceLabel">Replace…</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="rename" data-file-only data-needs-item data-single-only><span class="ico">✏️</span><span class="lbl">Rename</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copy" data-needs-item><span class="ico">📄</span><span class="lbl" id="ctxCopyLabel">Copy</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="cut" data-needs-item><span class="ico">✂️</span><span class="lbl" id="ctxCutLabel">Cut</span></div>
@@ -1277,6 +1287,9 @@
         </div>
     </div>
 
+    <!-- Hidden input used by Replace -->
+    <input type="file" id="replaceInput" multiple hidden />
+
     <!-- CodeMirror core + modes + search -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
@@ -1324,6 +1337,9 @@
         let displayedItems = [];      // items currently in the grid (for range math)
         let selectMode = false;       // touch-friendly "tap to toggle" mode
 
+        // ── Replace
+        let replaceTarget = null;     // pending item waiting for a file pick
+
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  DOM REFS
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1341,6 +1357,7 @@
         const branchLabel = $('branchLabel');
         const connectBtn  = $('connectBtn');
         const selectBtn   = $('selectBtn');
+        const replaceInput = $('replaceInput');
 
         const edOverlay = $('editorOverlay');
         const edIcon    = $('edIcon');
@@ -1360,6 +1377,7 @@
         const ctxCopyLabel = $('ctxCopyLabel');
         const ctxCutLabel  = $('ctxCutLabel');
         const ctxDeleteLabel = $('ctxDeleteLabel');
+        const ctxReplaceLabel = $('ctxReplaceLabel');
 
         const upPanel   = $('uploadPanel');
         const upList    = $('upList');
@@ -1577,8 +1595,7 @@
             }
             const ext = item.name.includes('.') ? item.name.split('.').pop().toLowerCase() : '';
 
-            // ── Top-right actions (existing) ─────────────────────────────
-            // Delete button
+            // ── Top-right actions ────────────────────────────────────────
             const delBtn = document.createElement('button');
             delBtn.className = 'del';
             delBtn.textContent = '✕';
@@ -1589,7 +1606,6 @@
             };
             card.appendChild(delBtn);
 
-            // Open in browser (files only)
             if (!isDir) {
                 const browserBtn = document.createElement('button');
                 browserBtn.className = 'open-browser';
@@ -1606,8 +1622,7 @@
                 card.appendChild(browserBtn);
             }
 
-            // ── Top-left actions (new) ───────────────────────────────────
-            // Download — files save directly, folders download as .zip
+            // ── Top-left actions ─────────────────────────────────────────
             const dlBtn = document.createElement('button');
             dlBtn.className = 'download-btn';
             dlBtn.textContent = '⬇️';
@@ -1622,7 +1637,6 @@
             };
             card.appendChild(dlBtn);
 
-            // Copy content — only for text files
             if (!isDir && isTextFile(item.name)) {
                 const ccBtn = document.createElement('button');
                 ccBtn.className = 'copy-content';
@@ -1635,6 +1649,19 @@
                 card.appendChild(ccBtn);
             }
 
+            // ── Bottom-left: Replace ─────────────────────────────────────
+            const repBtn = document.createElement('button');
+            repBtn.className = 'replace-btn';
+            repBtn.textContent = '🔄';
+            repBtn.title = isDir
+                ? 'Replace folder contents (merge)'
+                : 'Replace file content (keeps name)';
+            repBtn.onclick = e => {
+                e.stopPropagation();
+                startReplace(item);
+            };
+            card.appendChild(repBtn);
+
             if (!isDir && ext) {
                 const badge = document.createElement('span');
                 badge.className = 'ext-badge';
@@ -1644,28 +1671,24 @@
 
             // Multi-select-aware click handler
             card.onclick = (e) => {
-                // Ctrl/Cmd+click toggles (desktop)
                 if (e.ctrlKey || e.metaKey) {
                     e.preventDefault();
                     e.stopPropagation();
                     toggleSelect(item);
                     return;
                 }
-                // Shift+click selects a range (desktop)
                 if (e.shiftKey && selectionAnchor) {
                     e.preventDefault();
                     e.stopPropagation();
                     rangeSelect(item);
                     return;
                 }
-                // Select mode: plain tap = toggle (phones + tablet)
                 if (selectMode) {
                     e.preventDefault();
                     e.stopPropagation();
                     toggleSelect(item);
                     return;
                 }
-                // Plain click/tap: drop any selection, then navigate/open as usual
                 if (selection.size > 0) clearSelection();
                 if (isDir) navigate(item.path); else openFile(item);
             };
@@ -1673,7 +1696,6 @@
             card.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 e.stopPropagation();
-                // Right-clicking an unselected card while a selection exists cancels it
                 if (selection.size > 0 && !selection.has(item.path)) clearSelection();
                 showContextMenu(e.clientX, e.clientY, item, card);
             });
@@ -1704,7 +1726,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  MULTI-SELECT  (works with mouse and touch)
+        //  MULTI-SELECT
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function toggleSelect(item) {
             if (selection.has(item.path)) {
@@ -1751,7 +1773,6 @@
                 if (selection.has(card.dataset.path)) card.classList.add('selected');
                 else card.classList.remove('selected');
             });
-            // Drop any selected paths that no longer exist in this folder
             let pruned = false;
             [...selection].forEach(p => {
                 if (!pathsInGrid.has(p)) { selection.delete(p); pruned = true; }
@@ -1767,9 +1788,6 @@
             }
         }
 
-        // Return the items a context action should apply to:
-        //   - if a selection is active → all selected items in the current grid
-        //   - otherwise → just the single clicked item
         function getActionItems(item) {
             if (selection.size > 0) {
                 return displayedItems.filter(i => selection.has(i.path));
@@ -1796,7 +1814,6 @@
             const zip = new JSZip();
             let added = 0;
             try {
-                // If any folder is selected, walk the tree once and reuse the result
                 let treeCache = null;
                 const getTree = async () => {
                     if (treeCache) return treeCache;
@@ -1883,10 +1900,168 @@
 
         selectBtn.onclick = () => setSelectMode(!selectMode);
 
-        // Click on empty grid background clears the selection
         filesEl.addEventListener('click', e => {
             if (!e.target.closest('.card')) clearSelection();
         });
+
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  REPLACE  — file keeps its name; folder gets merged contents
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        function startReplace(item) {
+            if (!item) return;
+            replaceTarget = item;
+            replaceInput.value = '';
+            replaceInput.click();
+        }
+
+        replaceInput.addEventListener('change', async (e) => {
+            const files = [...e.target.files];
+            if (!files.length || !replaceTarget) { replaceTarget = null; return; }
+            const target = replaceTarget;
+            replaceTarget = null;
+
+            try {
+                if (target.type === 'file') {
+                    // For files: use the FIRST picked file. Target name is preserved.
+                    await replaceFileWith(target, files[0]);
+                } else {
+                    // For folders:
+                    //  - single .zip   → extract & merge into the folder
+                    //  - anything else → upload each picked file by basename, merge
+                    if (files.length === 1 && isZipFile(files[0])) {
+                        await replaceFolderWithZip(target, files[0]);
+                    } else {
+                        await replaceFolderWithFiles(target, files);
+                    }
+                }
+            } finally {
+                load();
+            }
+        });
+
+        // Replace a file's content in place (its name is untouched — you can pick
+        // any file, of any name; only its bytes are used)
+        async function replaceFileWith(item, file) {
+            if (file.size > MAX_UPLOAD) {
+                alert('Larger than GitHub’s 100 MB file limit');
+                return;
+            }
+            setStatus(`Replacing ${item.name}…`, 'loading');
+            try {
+                const b64 = await fileToBase64(file);
+                await api('PUT', `/contents/${enc(item.path)}`, {
+                    message: `Replace ${item.name}`,
+                    content: b64,
+                    sha: item.sha,
+                    branch: state.branch,
+                });
+                flashStatus(`Replaced ${item.name} ← “${file.name}”`, 'ok', 2200);
+            } catch (err) {
+                console.error('Replace file error:', err);
+                flashStatus('✗ Replace failed', 'err', 4000);
+                alert('Replace failed: ' + err.message);
+            }
+        }
+
+        // Merge a set of "sources" into a folder. Matching paths are overwritten,
+        // new paths are added, everything else in the folder stays put.
+        // sources: [{ relPath, getBase64: async () => string }]
+        async function mergeIntoFolder(folderItem, sources) {
+            if (!sources.length) return 0;
+
+            const ref = await api('GET', `/git/ref/heads/${state.branch}`);
+            const headSha = ref.object.sha;
+            const headCommit = await api('GET', `/git/commits/${headSha}`);
+            const baseTreeSha = headCommit.tree.sha;
+
+            const prefix = folderItem.path;
+            const treeEntries = [];
+            const total = sources.length;
+            let done = 0;
+
+            for (const src of sources) {
+                const b64 = await src.getBase64();
+                const created = await api('POST', '/git/blobs', {
+                    content: b64,
+                    encoding: 'base64',
+                });
+                treeEntries.push({
+                    path: `${prefix}/${src.relPath}`,
+                    mode: '100644',
+                    type: 'blob',
+                    sha: created.sha,
+                });
+                done++;
+                setStatus(`Replacing ${done}/${total}: ${src.relPath}…`, 'loading');
+            }
+
+            const newTree = await api('POST', '/git/trees', {
+                base_tree: baseTreeSha,
+                tree: treeEntries,
+            });
+            const commit = await api('POST', '/git/commits', {
+                message: `Replace contents of ${folderItem.name}`,
+                tree: newTree.sha,
+                parents: [headSha],
+            });
+            await api('PATCH', `/git/refs/heads/${state.branch}`, { sha: commit.sha });
+            return total;
+        }
+
+        async function replaceFolderWithZip(folderItem, zipFile) {
+            if (typeof JSZip === 'undefined') {
+                alert('Zip library failed to load.');
+                return;
+            }
+            setStatus(`Reading ${zipFile.name}…`, 'loading');
+            try {
+                let zip;
+                try { zip = await JSZip.loadAsync(zipFile); }
+                catch (e) { throw new Error('Not a valid zip file'); }
+
+                const sources = [];
+                zip.forEach((relPath, entry) => {
+                    if (entry.dir) return;
+                    const safe = safeZipPath(relPath);
+                    if (!safe) return;
+                    if (safe.startsWith('__MACOSX/')) return;
+                    if (/(^|\/)\.DS_Store$/.test(safe)) return;
+                    if (/(^|\/)\._/.test(safe)) return;
+                    sources.push({
+                        relPath: safe,
+                        getBase64: () => entry.async('base64'),
+                    });
+                });
+
+                if (!sources.length) {
+                    flashStatus('Zip contains no files', 'err', 2000);
+                    return;
+                }
+
+                const n = await mergeIntoFolder(folderItem, sources);
+                flashStatus(`Replaced contents of “${folderItem.name}” (${n} file${n !== 1 ? 's' : ''})`, 'ok', 2500);
+            } catch (err) {
+                console.error('Replace folder error:', err);
+                flashStatus('✗ Replace failed', 'err', 4000);
+                alert('Replace failed: ' + err.message);
+            }
+        }
+
+        async function replaceFolderWithFiles(folderItem, files) {
+            const sources = files.map(f => ({
+                relPath: f.name,
+                getBase64: () => fileToBase64(f),
+            }));
+            setStatus(`Replacing contents of “${folderItem.name}”…`, 'loading');
+            try {
+                const n = await mergeIntoFolder(folderItem, sources);
+                flashStatus(`Replaced contents of “${folderItem.name}” (${n} file${n !== 1 ? 's' : ''})`, 'ok', 2500);
+            } catch (err) {
+                console.error('Replace folder error:', err);
+                flashStatus('✗ Replace failed', 'err', 4000);
+                alert('Replace failed: ' + err.message);
+            }
+        }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         //  FILE ICONS & HELPERS
@@ -1937,7 +2112,6 @@
                 .replace(/"/g, '&quot;');
         }
 
-        // ── Copy file content: fetch raw text and put it on the clipboard
         async function copyFileContent(item) {
             setStatus(`Loading ${item.name}…`, 'loading');
             try {
@@ -1957,7 +2131,7 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  CONTEXT MENU  (+ copy / cut / paste / cancel)
+        //  CONTEXT MENU
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         function showContextMenu(x, y, item, card) {
             hideContextMenu();
@@ -1967,7 +2141,6 @@
             const hasItem = !!item;
             const isDir = hasItem && item.type === 'dir';
             const hasClip = !!clipboard;
-            // Multi-selection is active AND the clicked card is part of it
             const isMulti = hasItem && selection.size > 1 && selection.has(item.path);
             const selN = isMulti ? selection.size : 0;
 
@@ -1980,12 +2153,12 @@
             });
             contextMenu.querySelectorAll('[data-clipboard-only]').forEach(el => { el.hidden = !hasClip; });
 
-            // hide the danger separator when there's nothing below it (no item)
             const sep = contextMenu.querySelector('.sep');
             if (sep) sep.hidden = !hasItem;
 
             if (hasItem) {
                 ctxOpenLabel.textContent = isDir ? 'Open' : 'Open / Edit';
+                ctxReplaceLabel.textContent = isDir ? 'Replace contents…' : 'Replace…';
                 if (isMulti) {
                     ctxTitle.textContent = `${selN} items`;
                     ctxTitle.title = `${selN} items selected`;
@@ -2019,7 +2192,6 @@
                 }
             }
 
-            // measure at 0,0 so the width isn't squeezed by the viewport edge
             contextMenu.style.left = '0px';
             contextMenu.style.top = '0px';
             contextMenu.classList.add('open');
@@ -2052,7 +2224,6 @@
             if (!items || !items.length) {
                 clipboard = null;
             } else {
-                // Store lightweight copies — we only need name/path/type/sha
                 clipboard = {
                     items: items.map(i => ({
                         name: i.name, path: i.path, type: i.type, sha: i.sha,
@@ -2060,7 +2231,6 @@
                     mode,
                 };
             }
-            // refresh cut styling on visible cards
             document.querySelectorAll('.card.cut').forEach(c => c.classList.remove('cut'));
             if (clipboard && clipboard.mode === 'cut') {
                 const paths = new Set(clipboard.items.map(i => i.path));
@@ -2084,7 +2254,7 @@
         contextMenu.addEventListener('click', e => {
             const el = e.target.closest('.item');
             if (!el || !ctx) return;
-            const { item } = ctx;             // capture BEFORE hiding
+            const { item } = ctx;
             const action = el.dataset.action;
             hideContextMenu();
             runAction(action, item).catch(err => {
@@ -2094,11 +2264,9 @@
         });
         contextMenu.addEventListener('contextmenu', e => e.preventDefault());
 
-        // dismiss on outside press, scroll, resize, focus loss
         document.addEventListener('pointerdown', e => {
             if (ctx && !contextMenu.contains(e.target)) hideContextMenu();
         }, true);
-        // right-click empty area → paste menu when clipboard is set
         document.addEventListener('contextmenu', e => {
             if (e.target.closest('.context-menu')) return;
             if (e.target.closest('.card')) return;
@@ -2108,7 +2276,6 @@
                 hideContextMenu();
                 return;
             }
-            // files grid / drop zone / empty area — only useful when clipboard is active
             if (clipboard && state.connected && (e.target.closest('.files') || e.target.closest('.upload-area') || e.target === document.body || e.target.classList.contains('bg'))) {
                 e.preventDefault();
                 showContextMenu(e.clientX, e.clientY, null, null);
@@ -2119,7 +2286,6 @@
         window.addEventListener('scroll', hideContextMenu, true);
         window.addEventListener('blur', hideContextMenu);
 
-        // keyboard: Esc closes, arrows move, Enter activates (capture so Esc doesn't also close the editor)
         document.addEventListener('keydown', e => {
             if (!ctx) return;
             const items = [...contextMenu.querySelectorAll('.item:not([hidden])')];
@@ -2144,6 +2310,9 @@
                     break;
                 case 'download':
                     if (item) await (isDir ? downloadFolder(item) : downloadItem(item));
+                    break;
+                case 'replace':
+                    if (item) startReplace(item);
                     break;
                 case 'rename': {
                     if (!item || isDir) return;
@@ -2179,7 +2348,6 @@
                     }
                     break;
                 case 'select':
-                    // Enter select mode with this item pre-selected
                     if (!selectMode) setSelectMode(true);
                     if (item && !selection.has(item.path)) toggleSelect(item);
                     break;
@@ -2189,14 +2357,13 @@
             }
         }
 
-        // ── Paste: copy or move (cut) every clipboard item into the current folder
+        // ── Paste
         async function pasteClipboard() {
             if (!clipboard) return;
             const srcItems = clipboard.items;
             const mode = clipboard.mode;
             const destDir = state.path;
 
-            // Skip items that would collide with themselves
             const toPaste = srcItems.filter(src => {
                 const destPath = destDir ? `${destDir}/${src.name}` : src.name;
                 if (src.path === destPath) return false;
@@ -2215,7 +2382,6 @@
             setStatus(mode === 'cut' ? 'Moving…' : 'Copying…', 'loading');
 
             try {
-                // Check conflicts across all items up-front, ask once
                 const conflicts = [];
                 for (const src of toPaste) {
                     const destPath = destDir ? `${destDir}/${src.name}` : src.name;
@@ -2265,7 +2431,6 @@
         }
 
         async function pasteFile(src, destPath, mode) {
-            // reuse blob so large files work
             const blob = await api('GET', `/git/blobs/${src.sha}`);
             const content = (blob.content || '').replace(/\n/g, '');
             let sha;
@@ -2290,7 +2455,6 @@
             }
         }
 
-        // Folder paste via Git Data API (one commit for copy or move)
         async function pasteFolder(src, destPath, mode) {
             const ref = await api('GET', `/git/ref/heads/${state.branch}`);
             const headSha = ref.object.sha;
@@ -2301,7 +2465,6 @@
             const prefix = src.path + '/';
             const blobs = tree.tree.filter(t => t.type === 'blob' && t.path.startsWith(prefix));
             if (!blobs.length) {
-                // empty folder — create a .gitkeep at dest
                 await api('PUT', `/contents/${enc(destPath + '/.gitkeep')}`, {
                     message: `${mode === 'cut' ? 'Move' : 'Copy'} folder ${src.name}`,
                     content: encodeBase64UTF8(''),
@@ -2312,12 +2475,10 @@
             }
 
             const changes = [];
-            // add copies at new paths
             for (const t of blobs) {
                 const rel = t.path.slice(prefix.length);
                 changes.push({ path: destPath + '/' + rel, mode: t.mode, type: 'blob', sha: t.sha });
             }
-            // if cut, remove originals
             if (mode === 'cut') {
                 for (const t of blobs) {
                     changes.push({ path: t.path, mode: t.mode, type: 'blob', sha: null });
@@ -2354,8 +2515,6 @@
             input.remove();
         }
 
-        // ── Download: fetched with the token so private repos and >1 MB files work,
-        //    then saved via a blob (cross-origin <a download> is ignored by browsers)
         async function downloadItem(item) {
             setStatus(`Downloading ${item.name}…`, 'loading');
             try {
@@ -2382,7 +2541,6 @@
             }
         }
 
-        // ── Folder download: walk the git tree, pull every blob raw, zip it in the browser
         async function downloadFolder(item) {
             if (typeof JSZip === 'undefined') {
                 alert('Zip library failed to load. Check your connection and try again.');
@@ -2433,7 +2591,6 @@
             }
         }
 
-        // ── Rename: copy via the blob API (works for any size), then remove the old path
         async function renameItem(item, newName) {
             if (/[\\/]/.test(newName)) {
                 alert('A name can’t contain “/” or “\\”.');
@@ -2475,7 +2632,6 @@
             load();
         }
 
-        // ── Delete: files via Contents API, folders in ONE commit via the Git Data API
         async function deleteItem(item) {
             const isDir = item.type === 'dir';
             const ok = confirm(isDir
@@ -2496,7 +2652,6 @@
                     });
                     flashStatus(`Deleted ${item.name}`, 'ok');
                 }
-                // Drop the deleted item (and any of its children) from the clipboard
                 if (clipboard) {
                     const filtered = clipboard.items.filter(i =>
                         i.path !== item.path &&
@@ -2508,7 +2663,6 @@
                         } else {
                             clipboard = { items: filtered, mode: clipboard.mode };
                         }
-                        // Refresh cut styling
                         document.querySelectorAll('.card.cut').forEach(c => c.classList.remove('cut'));
                         if (clipboard && clipboard.mode === 'cut') {
                             const paths = new Set(clipboard.items.map(i => i.path));
@@ -2566,7 +2720,7 @@
 
         function isTextFile(name) {
             const lower = name.toLowerCase();
-            if (TEXT_EXTS.has(lower)) return true; // files without extension like Dockerfile
+            if (TEXT_EXTS.has(lower)) return true;
             const ext = lower.includes('.') ? lower.split('.').pop() : '';
             return TEXT_EXTS.has(ext);
         }
@@ -2606,8 +2760,6 @@
             try {
                 const data = await api('GET', `/contents/${enc(item.path)}${refQ()}`);
 
-                // The Contents API returns an empty body for files over 1 MB.
-                // Without this fallback the editor opened blank and Save wiped the file.
                 let b64 = data.content || '';
                 if (!b64 && data.size > 0) {
                     const blob = await api('GET', `/git/blobs/${data.sha}`);
@@ -2660,8 +2812,6 @@
                 extraKeys: {
                     'Ctrl-S': function () { saveFile(); },
                     'Cmd-S': function () { saveFile(); },
-                    // Esc is handled once by the document listener below
-                    // (binding it here too made the "discard changes?" prompt appear twice)
                     'Ctrl-F': 'findPersistent',
                     'Cmd-F': 'findPersistent',
                 }
@@ -2741,7 +2891,7 @@
                     editorFile.sha = data.sha;
                 }
                 setEditorStatus('● saved ✓', 'saved');
-                load(); // refresh list (size may change)
+                load();
             } catch (e) {
                 console.error('Save error:', e);
                 setEditorStatus('✕ save failed', 'error');
@@ -2752,15 +2902,11 @@
         }
 
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        //  UPLOAD  (queued one at a time — GitHub rejects parallel commits
-        //           to the same branch — with real byte-level progress)
-        //
-        //  Zip handling: a custom modal asks what to do — extract into a
-        //  folder (with optional folder name), keep the .zip as-is, or skip.
+        //  UPLOAD
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         const MAX_UPLOAD = 100 * 1024 * 1024; // GitHub's hard per-file limit
         const SETTLED = ['done', 'error', 'cancelled'];
-        const uploads = [];   // entries in the current batch
+        const uploads = [];
         let uploadId = 0;
         let pumping = false;
         let hideTimer = null;
@@ -2778,17 +2924,12 @@
             return /\.zip$/i.test(file.name);
         }
 
-        // Reject entries trying to escape the target dir with ../ or absolute paths
         function safeZipPath(p) {
             const parts = String(p).replace(/\\/g, '/').split('/').filter(x => x && x !== '.');
             if (parts.some(x => x === '..')) return null;
             return parts.join('/');
         }
 
-        // Show the custom zip modal and resolve with the user's decision:
-        //   null                                → skip this file entirely
-        //   { mode:'keep' }                     → upload the .zip as-is
-        //   { mode:'extract', folderName, keepZip } → extract; folderName may be ''
         function askZipDecision(file) {
             return new Promise(resolve => {
                 zipTitle.textContent = file.name;
@@ -2828,7 +2969,6 @@
                 };
                 zipOverlay.onclick = (e) => { if (e.target === zipOverlay) finish(null); };
 
-                // Esc = skip, Enter (from the text input or the modal body) = extract
                 const onKey = (e) => {
                     const t = e.target;
                     const isButton = t && t.tagName === 'BUTTON';
@@ -2837,7 +2977,7 @@
                         e.preventDefault(); e.stopPropagation();
                         finish(null);
                     } else if (e.key === 'Enter') {
-                        if (isButton || isCheckbox) return; // let default button/checkbox behavior happen
+                        if (isButton || isCheckbox) return;
                         e.preventDefault();
                         zipExtractBtn.click();
                     }
@@ -2846,7 +2986,6 @@
             });
         }
 
-        // fetch() can't report upload progress, XHR can
         function xhrPut(path, body, u, onProgress) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
@@ -2862,7 +3001,7 @@
                     lastLoaded = e.loaded;
                     onProgress(e.loaded / e.total, e.loaded);
                 };
-                xhr.upload.onload = () => onProgress(1, lastLoaded); // body fully sent, server is committing
+                xhr.upload.onload = () => onProgress(1, lastLoaded);
                 xhr.onload = () => {
                     let data = {};
                     try { data = JSON.parse(xhr.responseText || '{}'); } catch (_) {}
@@ -2883,24 +3022,22 @@
 
         async function uploadFiles(files) {
             if (!files.length) return;
-            // Ignore new drops while a decision modal is already up
             if (zipOverlay.classList.contains('open')) return;
 
-            // Ask about every zip up front (one modal at a time), keep non-zip files as-is
             const kept = [];
             for (const file of files) {
                 if (isZipFile(file)) {
                     const decision = await askZipDecision(file);
-                    if (decision === null) continue; // user skipped this zip
+                    if (decision === null) continue;
                     kept.push({ file, decision });
                 } else {
                     kept.push({ file, decision: { mode: 'keep' } });
                 }
             }
-            if (!kept.length) return; // everything was skipped
+            if (!kept.length) return;
 
             clearTimeout(hideTimer);
-            if (!pumping) {               // fresh batch: forget the previous one
+            if (!pumping) {
                 uploads.length = 0;
                 upList.innerHTML = '';
             }
@@ -2936,7 +3073,6 @@
         }
 
         async function uploadOne(u) {
-            // Zip extract goes down its own path — one commit for the whole tree
             if (u.zipDecision && u.zipDecision.mode === 'extract') {
                 return uploadZipExtract(u);
             }
@@ -2954,9 +3090,9 @@
                 let sha;
                 try {
                     const exist = await api('GET', `/contents/${enc(path)}${refQ()}`);
-                    if (!Array.isArray(exist)) sha = exist.sha;   // overwrite an existing file
+                    if (!Array.isArray(exist)) sha = exist.sha;
                 } catch (err) {
-                    if (err.status !== 404) throw err;             // 404 = new file, anything else is real
+                    if (err.status !== 404) throw err;
                 }
                 if (u.cancelled) throw cancelledErr();
 
@@ -2991,14 +3127,8 @@
             }
         }
 
-        // ── Zip extraction upload ─ one commit for the entire extracted tree.
-        //    1. Load zip in browser with JSZip
-        //    2. Create one blob per file via POST /git/blobs
-        //    3. Assemble all blobs (plus optional .zip) into a single tree
-        //    4. Commit & update the branch ref
         async function uploadZipExtract(u) {
             const keepZip = !!u.zipDecision.keepZip;
-            // Optional folder name from the modal (sanitized) — empty means "extract here"
             const sub = (u.zipDecision.folderName || '').replace(/[\\/]+/g, '-');
             const effectiveDir = sub
                 ? (u.dir ? `${u.dir}/${sub}` : sub)
@@ -3020,7 +3150,6 @@
                 }
                 if (u.cancelled) throw cancelledErr();
 
-                // Collect usable entries (skip macOS cruft and any path escaping)
                 const entries = [];
                 zip.forEach((relPath, entry) => {
                     if (entry.dir) return;
@@ -3028,13 +3157,12 @@
                     if (!safe) return;
                     if (safe.startsWith('__MACOSX/')) return;
                     if (/(^|\/)\.DS_Store$/.test(safe)) return;
-                    if (/(^|\/)\._/.test(safe)) return;   // AppleDouble
+                    if (/(^|\/)\._/.test(safe)) return;
                     entries.push({ relPath: safe, entry });
                 });
 
                 if (!entries.length && !keepZip) throw new Error('Zip contains no files');
 
-                // Snapshot the current tip so we can build a new tree from it
                 const ref = await api('GET', `/git/ref/heads/${state.branch}`);
                 const headSha = ref.object.sha;
                 const headCommit = await api('GET', `/git/commits/${headSha}`);
@@ -3123,8 +3251,6 @@
             u.cancelled = true;
             if (u.status === 'queued') setUpload(u, 'cancelled');
             else if (u.status === 'uploading' && u.xhr) u.xhr.abort();
-            // 'preparing' notices the flag as soon as the file has been read;
-            // zip extract also polls u.cancelled between each extracted file.
         }
 
         function setUpload(u, status) {
@@ -3165,7 +3291,6 @@
             r.row.dataset.status = u.status;
             r.bar.style.width = (p * 100).toFixed(1) + '%';
 
-            // Custom label path (zip extraction progress, etc.)
             if (u.custom) {
                 r.pct.textContent = u.custom.pct || '';
                 r.st.textContent = u.custom.msg || '';
@@ -3201,7 +3326,6 @@
             const settled = done + failed + cancelled;
             const active = settled < total;
 
-            // weight by file size so one big file doesn't count the same as a tiny one
             const w = u => Math.max(u.file.size, 1);
             const totalW = uploads.reduce((s, u) => s + w(u), 0);
             const doneW = uploads.reduce((s, u) => s + w(u) * (SETTLED.includes(u.status) ? 1 : u.fraction), 0);
@@ -3238,7 +3362,6 @@
                        : 'Upload complete',
                 failed ? 'err' : 'ok'
             );
-            // tidy up after a clean run; keep the panel if something failed so the reason stays readable
             if (!failed) {
                 hideTimer = setTimeout(() => { if (!pumping) upPanel.classList.remove('show'); }, cancelled ? 2500 : 4500);
             }
@@ -3281,7 +3404,6 @@
 
             const path = state.path ? `${state.path}/${clean}` : clean;
 
-            // Already there? Offer to open it instead.
             let existing = null;
             try {
                 existing = await api('GET', `/contents/${enc(path)}${refQ()}`);
@@ -3374,7 +3496,6 @@
             if (e.target === edOverlay) closeEditor();
         });
 
-        // Escape: close editor if open, else clear selection, else exit select mode
         document.addEventListener('keydown', e => {
             if (e.key !== 'Escape') return;
             if (editorFile) { closeEditor(); return; }
