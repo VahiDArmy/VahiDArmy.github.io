@@ -211,7 +211,7 @@ window.AIFreePrompt = (function () {
 
     Modal.open({
       title: 'پرامپت آزاد',
-      icon: '🪄',
+      icon: '✨',
       size: 'xl',
       body: body,
       footer: footer
@@ -422,7 +422,7 @@ window.AIFreePrompt = (function () {
     const metaBox = Utils.el('div', { class: 'conv-view-meta' }, [
       Utils.el('span', {}, ['📅 ' + date]),
       c.title_context ? Utils.el('span', {}, ['🎬 ' + c.title_context]) : null,
-      c.ai_model && c.ai_model.label ? Utils.el('span', {}, ['🪄 ' + c.ai_model.label]) : null
+      c.ai_model && c.ai_model.label ? Utils.el('span', {}, ['✨ ' + c.ai_model.label]) : null
     ].filter(Boolean));
 
     const body = Utils.el('div', { class: 'conv-view' }, [

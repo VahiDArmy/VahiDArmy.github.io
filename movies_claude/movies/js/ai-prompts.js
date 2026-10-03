@@ -185,12 +185,26 @@ window.AIPrompts = (function () {
       'year_start و year_end را null بگذار.',
       '',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'شناسایی و تصحیح عنوان — قبل از هر تحلیل',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      'عنوانی که کاربر تایپ کرده ممکن است غلط املایی، حروف بزرگ/کوچک نادرست، فاصله یا نیم‌فاصلهٔ اشتباه، مخفف، یا فقط «نزدیک» به عنوان واقعی باشد.',
+      '۱. با کمک نوع، سال، کشور و زبان اعلام‌شده تشخیص بده کاربر منظورش کدام اثر واقعی است.',
+      '۲. corrected_title = عنوان درست و رسمی همان اثر، با همان زبان و خطی که کاربر نوشته (انگلیسی ← انگلیسی با املا و حروف درست؛ فارسی ← فارسی با املای درست). ترجمه نکن.',
+      '۳. title_match: «exact» اگر عنوان واردشده درست است؛ «corrected» اگر اثر را با اطمینان بالا شناختی و عنوان فقط غلط یا نزدیک بوده؛ «uncertain» اگر چند اثر محتمل است یا مطمئن نیستی (حدس نزن).',
+      '۴. اگر uncertain: corrected_title را همان عنوان واردشده بگذار و حداکثر ۳ گزینهٔ محتمل را به‌صورت «عنوان (سال)» در title_candidates بنویس.',
+      '۵. standard_title همیشه عنوان رسمی انگلیسیِ اثری است که شناسایی کردی.',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       'خروجی',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       '',
       'فقط یک آبجکت JSON برگردان. هیچ متنی بیرون از JSON ننویس.',
       '',
       '{',
+      '  "title_match": "exact" یا "corrected" یا "uncertain",',
+      '  "corrected_title": "عنوان درست‌شدهٔ همان اثر، به همان زبان و خط ورودی",',
+      '  "title_candidates": [ "عنوان (سال)" ] یا [],',
       '  "standard_title": "عنوان انگلیسی استاندارد",',
       '  "title_fa": "عنوان فارسی رایج یا null",',
       '  "type": "series" یا "movie" یا "anime" یا "documentary",',
@@ -241,16 +255,20 @@ window.AIPrompts = (function () {
     return cleanTitle(meta && meta.original_title, year) || cleanTitle(title, year);
   }
 
-  function standardLine(title, type, year, meta) { // مثال: Inception (2010) — فیلم
+  function standardLine(title, type, year) {      // آنچه برای AI فرستاده می‌شود: عنوان واردشدهٔ تمیز + سال + نوع
     const y = String(year || '').replace(/\D/g, '');
-    return standardTitle(title, y, meta) + (y ? ' (' + y + ')' : '') + ' — ' + (TYPE_FA[type] || type || 'نامشخص');
+    return cleanTitle(title, y) + (y ? ' (' + y + ')' : '') + ' — ' + (TYPE_FA[type] || type || 'نامشخص');
   }
 
-  function titleBlock(title, type, year, meta) {
-    const t = cleanTitle(title, year), lines = ['عنوان استاندارد: ' + standardLine(title, type, year, meta)];
-    if (standardTitle(title, year, meta) !== t) lines.push('عنوان ثبت‌شده کاربر: ' + t);
-    if (meta && meta.country) lines.push('کشور: ' + cleanTitle(meta.country));
-    if (meta && meta.language) lines.push('زبان اصلی: ' + cleanTitle(meta.language));
+  function titleBlock(title, type, year, meta, deep) {
+    const typed = cleanTitle(title, year), known = cleanTitle(meta && meta.original_title, year);
+    const lines = deep ? ['عنوان: «' + typed + '»'] : [
+      'عنوان واردشده توسط کاربر: «' + typed + '»',
+      '⚠️ این عنوان را خود کاربر تایپ کرده؛ ممکن است غلط املایی، حروف بزرگ/کوچک نادرست یا فقط «نزدیک» به عنوان واقعی باشد. آن را تصحیح کن.'
+    ];
+    if (known && known.toLowerCase() !== typed.toLowerCase()) lines.push('عنوان استاندارد ثبت‌شده از تحلیل قبلی (راهنما): ' + known);
+    if (meta && meta.country) lines.push('کشور (راهنما): ' + cleanTitle(meta.country));
+    if (meta && meta.language) lines.push('زبان اصلی (راهنما): ' + cleanTitle(meta.language));
     return lines;
   }
 
@@ -283,7 +301,7 @@ window.AIPrompts = (function () {
     lines.push('وظیفه');
     lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     lines.push('');
-    lines.push('۱. این عنوان را استاندارد کن.');
+    lines.push('۱. ابتدا عنوان واردشده را شناسایی و تصحیح کن (title_match و corrected_title)، سپس استانداردش کن (standard_title).');
     lines.push('۲. حداقل ۳ سوراخ داستانی با جزئیات صحنه، قاعده شکسته و زنجیره علّی بنویس.');
     lines.push('   یکی از دسته‌ها حتماً «داستان آبکی و کش‌دار» باشد اگر وجود دارد.');
     lines.push('۳. حداقل ۳ لحظه احمق‌فرض‌گیری با جزئیات صحنه، تکنیک و استدلال بنویس.');
@@ -296,7 +314,7 @@ window.AIPrompts = (function () {
 
   function analyzeDeepUser(title, fromSeason, toSeason, type, year, meta) {
     const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
-    const lines = titleBlock(title, type, year, meta).concat(['نوع اعلام‌شده: ' + typeLabel, 'بازه: فصل ' + fromSeason + ' تا ' + toSeason]);
+    const lines = titleBlock(title, type, year, meta, true).concat(['نوع اعلام‌شده: ' + typeLabel, 'بازه: فصل ' + fromSeason + ' تا ' + toSeason]);
     if (year) lines.push('سال اعلام‌شده: ' + year);
     else {
       lines.push('سال اعلام‌شده: وارد نشده');

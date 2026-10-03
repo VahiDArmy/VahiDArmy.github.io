@@ -41,7 +41,7 @@ window.Render = (function () {
     if (t.genre) metaParts.push('<span>' + Utils.esc(t.genre) + '</span>');
 
     const aiBadge = t.ai_standardized_at
-      ? '<span class="ai-badge" title="استانداردسازی‌شده با AI">🪄</span>'
+      ? '<span class="ai-badge" title="استانداردسازی‌شده با AI">✨</span>'
       : '';
 
     const rating = Math.floor(Number(t.rating) || 0);

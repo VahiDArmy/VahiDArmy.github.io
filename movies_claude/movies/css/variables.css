@@ -42,6 +42,10 @@
   --fs-xl: 17px; --fs-2xl: 21px; --fs-3xl: 26px;
 
   --sb-track: transparent; --sb-thumb: #34343d; --sb-thumb-hover: #56565d;
+  /* توکن‌هایی که CSSهای اصلی استفاده می‌کردند ولی هیچ‌جا تعریف نشده بودند (معنا: love=امتیاز بالا، good=خوب، hate=ضعیف) */
+  --lh-base: 1.7; --lh-tight: 1.35; --ease: var(--ease-out);
+  --love: var(--star-5); --good: var(--star-4); --hate: var(--star-1);
+  --love-soft: color-mix(in srgb, var(--love) 16%, transparent); --good-soft: color-mix(in srgb, var(--good) 16%, transparent); --hate-soft: color-mix(in srgb, var(--hate) 16%, transparent);
 }
 
 :root[data-theme="light"] {

@@ -159,7 +159,7 @@ window.AIUI = (function () {
   function buildModelBadge(info) {
     if (!info) return null;
     const children = [
-      Utils.el('span', { class: 'ai-model-badge-icon' }, ['🪄']),
+      Utils.el('span', { class: 'ai-model-badge-icon' }, ['✨']),
       Utils.el('span', { class: 'ai-model-badge-label' }, ['تولید شده با:']),
       Utils.el('span', { class: 'ai-model-badge-value' }, [info.label || info.id])
     ];
@@ -423,6 +423,14 @@ window.AIUI = (function () {
 
         resultBox.hidden = false;
         resultBox.innerHTML = '';
+        const fix = AIStandardize.titleFix(t, result);
+        if (fix.kind !== 'ok') {
+          resultBox.appendChild(Utils.el('div', { class: 'ai-title-fix is-' + fix.kind }, [
+            fix.kind === 'fixed'
+              ? '✏️ تصحیح عنوان: «' + fix.from + '» ← «' + fix.to + '» (هنگام ذخیرهٔ تحلیل اعمال می‌شود)'
+              : '⚠️ عنوان دقیقاً شناسایی نشد و تغییر نمی‌کند' + (fix.candidates.length ? ' — گزینه‌های محتمل: ' + fix.candidates.join(' · ') : '') + '. عنوان را اصلاح و دوباره تحلیل کنید.'
+          ]));
+        }
         [
           ['عنوان استاندارد', result.standard_title],
           ['عنوان فارسی', result.title_fa],

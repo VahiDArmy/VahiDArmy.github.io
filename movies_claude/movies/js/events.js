@@ -340,10 +340,10 @@ window.Events = (function () {
             const input = f.querySelector('[name="title"]');
             AIUI.openTitleLookup(f, input);
           }
-        }, ['🪄'])
+        }, [])
       ]),
       Utils.el('div', { class: 'field-hint' }, [
-        'با دکمه 🪄 عنوان را هوشمندانه جستجو کن — AI دیکته را اصلاح و نسخه‌های مختلف را پیدا می‌کند.'
+        'با دکمه ✨ عنوان را هوشمندانه جستجو کن — AI دیکته را اصلاح و نسخه‌های مختلف را پیدا می‌کند.'
       ])
     ]));
 
@@ -388,7 +388,7 @@ window.Events = (function () {
 
     if (data.summary || data.seasons || data.country) {
       form.appendChild(Utils.el('div', { class: 'alert alert-info' }, [
-        Utils.el('span', { class: 'alert-icon' }, ['🪄']),
+        Utils.el('span', { class: 'alert-icon' }, ['✨']),
         Utils.el('div', {}, [
           'این عنوان با AI تحلیل شده. ',
           data.seasons ? Utils.toFa(data.seasons) + ' فصل' : '',
@@ -597,7 +597,7 @@ window.Events = (function () {
           Utils.el('span', { class: 'badge' }, [CONFIG.TYPES[t.type] || t.type]),
           t.year ? Utils.el('span', { class: 'badge' }, [Utils.toFa(t.year)]) : null,
           t.favorite ? Utils.el('span', { class: 'badge', style: { color: 'var(--warning)' } }, ['⭐ علاقه‌مندی']) : null,
-          t.ai_standardized_at ? Utils.el('span', { class: 'badge ai-badge' }, ['🪄 AI']) : null
+          t.ai_standardized_at ? Utils.el('span', { class: 'badge ai-badge' }, ['✨ AI']) : null
         ].filter(Boolean))
       ]),
 
@@ -808,7 +808,7 @@ window.Events = (function () {
 
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
-        Utils.el('div', { class: 'settings-icon' }, ['🪄']),
+        Utils.el('div', { class: 'settings-icon' }, ['✨']),
         Utils.el('div', { class: 'settings-info' }, [
           Utils.el('h4', {}, ['هوش مصنوعی OpenRouter']),
           Utils.el('p', {}, ['انتخاب مدل + کلید API'])

@@ -7,7 +7,8 @@
   'use strict';
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const NS = 'http://www.w3.org/2000/svg';
-  const HOVER = '.side-item, .side-action, #btn-add, .brand-title';
+  const HOVER = '.side-item, .side-action, .btn-primary, .title-lookup-btn, .brand-title';
+  const AUTO = '#btn-add, #btn-empty-add, .title-lookup-btn';        // روی موبایل خودکار پالس می‌زنند
   const defs = document.createElementNS(NS, 'svg');
   defs.setAttribute('width', '0'); defs.setAttribute('height', '0'); defs.setAttribute('aria-hidden', 'true');
   defs.style.cssText = 'position:absolute;pointer-events:none';
@@ -50,6 +51,30 @@
     const a = document.querySelector('.side-item.is-active');
     if (a && !document.hidden && !document.body.classList.contains('modal-open')) glitch(a, 180, 0.008, 0.035);
   }, 2600);
+
+  /* موبایل (بدون هاور): لمس ← پالس ۱ ثانیه‌ای؛ دکمه‌های کلیدی هر ۴ ثانیه خودکار ۲ ثانیه پالس می‌زنند */
+  function pulse(el, ms) {
+    if (el.classList.contains('is-pulse')) return;
+    el.classList.add('is-pulse'); glitch(el, 380, 0.03, 0.1);
+    setTimeout(() => glitch(el, 300, 0.02, 0.07), ms / 2);
+    setTimeout(() => el.classList.remove('is-pulse'), ms);
+  }
+  if (matchMedia('(hover: none)').matches) {
+    document.addEventListener('pointerdown', (e) => {
+      const el = e.pointerType === 'touch' && e.target.closest && e.target.closest(HOVER);
+      if (el) pulse(el, 1000);
+    });
+    setInterval(() => {
+      if (document.hidden) return;
+      const modal = document.body.classList.contains('modal-open');
+      Array.from(document.querySelectorAll(AUTO)).forEach((el, i) => {
+        const r = el.getBoundingClientRect();
+        if (!el.getClientRects().length || r.bottom < 0 || r.top > innerHeight) return;
+        if (modal && !el.closest('#modal-root')) return;
+        setTimeout(() => pulse(el, 2000), i * 500);
+      });
+    }, 4000);
+  }
 
   const logo = document.querySelector('.boot-logo-text'), boot = document.getElementById('boot-loader');
   if (logo && boot) {                           // لوگوی صفحهٔ بوت تا وقتی نمایان است

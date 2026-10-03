@@ -168,13 +168,14 @@ kbd { font-family: inherit; background: var(--bg-2); border: 1px solid var(--bor
 @media (max-width: 560px) { .hd-clock { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tk-inner { animation: none; padding-left: 0; } }
 
-/* ═════════ v3 — glitch nav (از پن «Retro glitchy navigation»: اسکن‌لاین · RGB-split · جابه‌جایی نواری · بلوک فعال)
-   فقط روی المان‌های ناوبری‌مانند: ردیف‌ها و دکمه‌های سایدبار، «افزودن»، لوگو. رنگ‌ها از توکن‌های خود تم می‌آیند:
-   کانال اول = رنگ معنایی ردیف (--sc از منطق ستاره‌ها)، کانال دوم = --info ═════════ */
+/* ═════════ glitch nav (از پن «Retro glitchy navigation»: اسکن‌لاین · RGB-split · جابه‌جایی نواری · بلوک فعال)
+   دسکتاپ: با هاور — موبایل: با لمس و پالس خودکار (کلاس is-pulse از js/glitch.js).
+   رنگ‌ها از توکن‌های تم: کانال اول = رنگ معنایی ردیف (--sc از منطق ستاره‌ها)، کانال دوم = --info ═════════ */
 .brand-title { --sc: var(--neon-pink); }
-#btn-add { --gl-tint: rgba(0, 0, 0, 0.22); }
-.side-item, .side-action, #btn-add { position: relative; isolation: isolate; overflow: hidden; }
-.side-item::after, .side-action::after, #btn-add::after {
+.btn-primary { --gl-tint: rgba(0, 0, 0, 0.22); }
+.side-item, .side-action, .btn-primary { position: relative; }
+.side-item, .side-action, .btn-primary, .title-lookup-btn { isolation: isolate; overflow: hidden; }
+.side-item::after, .side-action::after, .btn-primary::after, .title-lookup-btn::after {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity var(--dur-base);
   background: linear-gradient(transparent 4px, var(--gl-tint, color-mix(in srgb, var(--sc, var(--accent)) 24%, transparent)) 4px) 0 0 / 100% 5px,
               radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--bg-0) 80%, transparent) 100%);
@@ -187,10 +188,14 @@ kbd { font-family: inherit; background: var(--bg-2); border: 1px solid var(--bor
   box-shadow: 0 0 12px -2px var(--sc);
 }
 @media (hover: hover) {
-  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after, .side-item:focus-visible::after, .side-action:focus-visible::after { opacity: 1; animation: gl-scan 0.65s linear infinite; }
+  .side-item:hover::after, .side-action:hover::after, .btn-primary:hover::after, .title-lookup-btn:hover::after,
+  .side-item:focus-visible::after, .side-action:focus-visible::after { opacity: 1; animation: gl-scan 0.65s linear infinite; }
   .side-item:hover .side-label, .brand-title:hover { animation: gl-rgb 0.3s steps(6) both; }
-  .side-action:hover, #btn-add:hover { animation: gl-rgb-lite 0.3s steps(6) both; }
+  .side-action:hover, .btn-primary:hover, .title-lookup-btn:hover { animation: gl-rgb-lite 0.3s steps(6) both; }
 }
+.is-pulse::after { opacity: 1; animation: gl-scan 0.65s linear infinite; }
+.side-item.is-pulse .side-label, .brand-title.is-pulse { animation: gl-rgb 0.3s steps(6) both; }
+.side-action.is-pulse, .btn-primary.is-pulse, .title-lookup-btn.is-pulse { animation: gl-rgb-lite 0.3s steps(6) both; }
 @keyframes gl-scan { to { background-position: 0 5px, 0 0; } }
 @keyframes gl-rgb {
   0% { text-shadow: -4px 0 var(--info), 4px 0 var(--sc, var(--accent)); transform: translateX(3px); }
@@ -200,9 +205,43 @@ kbd { font-family: inherit; background: var(--bg-2); border: 1px solid var(--bor
 @keyframes gl-rgb-lite { 0% { text-shadow: -3px 0 var(--info), 3px 0 var(--neon-pink); } 60% { text-shadow: 1.5px 0 var(--info), -1.5px 0 var(--neon-pink); } 100% { text-shadow: none; } }
 @media (prefers-reduced-motion: reduce) {
   .side-item::before { transition: none; }
-  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after,
-  .side-item:hover .side-label, .brand-title:hover, .side-action:hover, #btn-add:hover { animation: none; }
+  .side-item:hover::after, .side-action:hover::after, .btn-primary:hover::after, .title-lookup-btn:hover::after, .is-pulse::after,
+  .side-item:hover .side-label, .brand-title:hover, .side-action:hover, .btn-primary:hover, .title-lookup-btn:hover,
+  .is-pulse, .side-item.is-pulse .side-label { animation: none; }
 }
 
 /* نمایش عنوان استانداردی که به AI فرستاده می‌شود */
 .ai-source-std { margin: -2px 0 10px; font-size: 11px; letter-spacing: 0.04em; color: var(--text-3); }
+
+/* نتیجهٔ شناسایی/تصحیح عنوان در دیالوگ تحلیل */
+.ai-title-fix { margin: 0 0 10px; padding: 8px 12px; font-size: 12px; line-height: 1.8; background: var(--bg-2); border: 1px solid var(--border-2); border-inline-start-width: 3px; }
+.ai-title-fix.is-fixed { border-color: var(--success); color: var(--success); }
+.ai-title-fix.is-uncertain { border-color: var(--warning); color: var(--warning); }
+
+/* دکمهٔ جادویی جستجوی عنوان با AI: آیکون برداری (ایموجی عصای جادویی روی بعضی سیستم‌ها نمایش داده نمی‌شد) و هم‌رنگ تم */
+.title-lookup-btn { --wand: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72'/%3E%3Cpath d='m14 7 3 3M5 6v4M19 14v4M10 2v2M7 8H3M21 16h-4M11 3H9'/%3E%3C/svg%3E");
+  color: var(--info); border-radius: 0; border: 1px solid color-mix(in srgb, var(--info) 45%, transparent); background: color-mix(in srgb, var(--info) 12%, var(--bg-1)); }
+.title-lookup-btn::before { content: ""; width: 18px; height: 18px; background: currentColor; -webkit-mask: var(--wand) center / contain no-repeat; mask: var(--wand) center / contain no-repeat; }
+.title-lookup-btn:hover { background: color-mix(in srgb, var(--info) 22%, var(--bg-1)); border-color: var(--info); box-shadow: 0 0 18px -4px var(--info); }
+
+/* میله‌های آمار (love/good/hate): رنگ دوم گرادیان هم از همان توکن‌ها */
+.bar-fill[data-cat="love"] { background: linear-gradient(90deg, var(--love), color-mix(in srgb, var(--love) 55%, #fff)); }
+.bar-fill[data-cat="good"] { background: linear-gradient(90deg, var(--good), color-mix(in srgb, var(--good) 55%, #fff)); }
+.bar-fill[data-cat="hate"] { background: linear-gradient(90deg, var(--hate), color-mix(in srgb, var(--hate) 55%, #fff)); }
+
+/* توست‌ها: در پروژه هیچ استایلی نداشتند */
+.toast-root { position: fixed; z-index: var(--z-toast); left: 16px; bottom: calc(var(--footer-h) + 12px); width: min(380px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { --tc: var(--info); display: flex; align-items: center; gap: 10px; padding: 10px 12px; pointer-events: auto; font-size: 12px; color: var(--text-1);
+  background: var(--bg-1); border: 1px solid var(--border-2); border-inline-start: 3px solid var(--tc); box-shadow: var(--shadow-3), 0 0 18px -8px var(--tc);
+  opacity: 0; transform: translateX(-18px); transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-slow) var(--ease-out); }
+.toast.is-visible { opacity: 1; transform: none; }
+.toast.is-leaving { opacity: 0; transform: translateX(-18px); }
+.toast-success { --tc: var(--success); } .toast-error { --tc: var(--danger); } .toast-warning { --tc: var(--warning); } .toast-loading { --tc: var(--neon-pink); }
+.toast-icon { flex: none; font-size: 14px; }
+.toast-content { flex: 1; min-width: 0; }
+.toast-title { font-weight: 700; color: var(--tc); letter-spacing: 0.04em; }
+.toast-msg { color: var(--text-2); line-height: 1.6; overflow-wrap: anywhere; }
+.toast-action { flex: none; padding: 3px 10px; font: inherit; font-size: 11px; font-weight: 700; color: var(--tc); background: transparent; border: 1px solid var(--tc); cursor: pointer; }
+.toast-action:hover { background: color-mix(in srgb, var(--tc) 16%, transparent); }
+.toast-close { flex: none; width: 22px; height: 22px; font: inherit; line-height: 1; color: var(--text-3); background: transparent; border: 0; cursor: pointer; }
+.toast-close:hover { color: var(--text-1); }

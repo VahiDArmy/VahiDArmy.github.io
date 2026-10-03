@@ -160,7 +160,7 @@ kbd {
 .skeleton {
   background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
   background-size: 200% 100%;
-  animation: skeleton 1.4s infinite;
+  animation: skeleton-shimmer 1.4s infinite;
   border-radius: var(--radius-sm);
 }
 

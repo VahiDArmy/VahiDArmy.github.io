@@ -65,7 +65,7 @@
   gap: 8px;
 }
 .ai-stream-title::before {
-  content: "🪄";
+  content: "✨";
   font-size: 14px;
   filter: drop-shadow(0 0 6px rgba(139, 92, 255, 0.9));
 }
