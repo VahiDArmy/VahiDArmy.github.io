@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/ask-ai.css" />
 </head>
 <body>
 
@@ -116,6 +117,29 @@
     </div>
   </section>
 
+  <!-- بپرس از هوش مصنوعی -->
+  <section class="section" aria-label="بپرس از هوش مصنوعی" id="askAiSection" hidden>
+    <div class="section__label">
+      <span>بپرس از هوش مصنوعی</span>
+      <button type="button" class="btn btn--sm" id="openModelsBtn" style="font-size:.74rem; padding:4px 12px;">✦ مدل‌ها</button>
+    </div>
+
+    <div class="ask-ai-composer card">
+      <button type="button" class="ask-ai-composer__model" id="askAiCurrentModel" title="تغییر مدل">
+        <span class="ask-ai-composer__model-dot"></span>
+        <span id="askAiModelLabel">—</span>
+      </button>
+      <textarea id="askAiInput" rows="2" placeholder="دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)"></textarea>
+      <div class="ask-ai-composer__actions">
+        <span class="ai-status" id="aiStatus" data-state="idle" aria-live="polite" aria-label="وضعیت"></span>
+        <button type="button" class="btn btn--primary btn--sm" id="askAiSubmit">بپرس</button>
+      </div>
+    </div>
+
+    <div id="askAiAnswer"></div>
+    <div id="askAiHistory"></div>
+  </section>
+
   <!-- تفسیر روان جاوید -->
   <section class="section" aria-label="تفسیر روان جاوید" id="ravanTafsirSection">
     <div class="section__label">
@@ -208,6 +232,20 @@
   </div>
 </div>
 
+<!-- پاپ‌آپ انتخاب مدل (Ask AI) -->
+<div class="modal-overlay" id="aiModelsModal" hidden>
+  <div class="modal-card card ai-models-modal">
+    <div class="modal-card__head">
+      <span>انتخاب مدل هوش مصنوعی</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="closeModelsBtn" aria-label="بستن">✕</button>
+    </div>
+    <div class="ai-models-list" id="aiModelsList"></div>
+    <div class="ai-models-modal__footer">
+      <button type="button" class="btn btn--primary" id="saveModelBtn" style="width:100%">ذخیره</button>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
 </footer>
@@ -232,5 +270,8 @@
 <script src="js/ayah-render.js"></script>
 <script src="js/ayah-links.js"></script>
 <script src="js/work.js"></script>
+<script src="js/ai-models.js"></script>
+<script src="js/ai-format.js"></script>
+<script src="js/ask-ai.js"></script>
 </body>
 </html>
