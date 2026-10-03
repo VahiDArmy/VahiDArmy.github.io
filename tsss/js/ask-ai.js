@@ -99,24 +99,34 @@
   function paintModelsList() {
     modelsListEl.innerHTML = CONFIG.OPENROUTER_MODELS.map((m) => {
       const selected = m.id === pendingModelId ? 'true' : 'false';
+      const isAuto = !!m.auto;
+
       const badge = m.default
         ? '<span class="ai-model-card__badge">پیش‌فرض</span>'
         : (m.star ? '<span class="ai-model-card__badge" style="background:var(--surface-2);color:var(--text-faint);">★</span>' : '');
+
+      const scoreHtml = isAuto ? '' : scoreChipHtml(m.id);
+
+      const statsHtml = isAuto ? '' : `
+        <div class="ai-model-card__stats">
+          <span><b>${m.tps}</b> t/s</span>
+          <span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span>
+          <span><b>${AiFormat.escapeHtml(m.size)}</b></span>
+        </div>`;
+
+      const idHtml = isAuto ? '' : `<code class="ai-model-card__id">${AiFormat.escapeHtml(m.id)}</code>`;
+
       return `
         <button type="button" class="ai-model-card" data-id="${m.id}" data-selected="${selected}">
           <div class="ai-model-card__head">
             <span class="ai-model-card__provider">${AiFormat.escapeHtml(m.provider)}</span>
             <span class="ai-model-card__name">${AiFormat.escapeHtml(m.name)}</span>
-            ${scoreChipHtml(m.id)}
+            ${scoreHtml}
             ${badge}
           </div>
           <p class="ai-model-card__desc">${AiFormat.escapeHtml(m.desc)}</p>
-          <div class="ai-model-card__stats">
-            <span><b>${m.tps}</b> t/s</span>
-            <span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span>
-            <span><b>${AiFormat.escapeHtml(m.size)}</b></span>
-          </div>
-          <code class="ai-model-card__id">${AiFormat.escapeHtml(m.id)}</code>
+          ${statsHtml}
+          ${idHtml}
         </button>`;
     }).join('');
 
@@ -154,7 +164,6 @@
 
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
 
-  // ---------- Helpers to fetch scores for a given generation ----------
   async function generationScore(modelId) {
     if (!modelScoresCache.has(modelId)) await loadModelScores();
     const s = modelScoresCache.get(modelId);
@@ -165,6 +174,7 @@
   async function askAi(question) {
     const modelId = renderedModelId;
     const model = modelById(modelId);
+    const isAuto = !!model.auto;
     const surahMeta = index.find((s) => s.number === currentAyah.surah);
     const surahName = surahMeta ? surahMeta.name_fa : String(currentAyah.surah);
 
@@ -179,7 +189,8 @@
     submitBtn.disabled = true;
     setStatus('streaming');
     let acc = '';
-    AiFormat.renderStreaming(answerEl, question, '', model.name);
+    let realModel = ''; // ← مدل واقعی که OpenRouter برمی‌گرداند
+    AiFormat.renderStreaming(answerEl, question, '', isAuto ? model.name : model.name);
 
     const url = CONFIG.SUPABASE_URL + '/functions/v1/bright-api';
     let res;
@@ -239,9 +250,13 @@
           }
           try {
             const j = JSON.parse(data);
+            if (j.model) realModel = j.model;
             if (j.delta) {
               acc += j.delta;
-              AiFormat.renderStreaming(answerEl, question, acc, model.name);
+              AiFormat.renderStreaming(
+                answerEl, question, acc,
+                realModel || model.name
+              );
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
           } catch (e) {}
@@ -253,38 +268,39 @@
       return;
     }
 
+    // اگر هیچ‌وقت مدل واقعی نیامد (نباید بشود)، برگرد به انتخاب کاربر
+    if (!realModel) realModel = modelId;
+
     // ---- finalize ----
     const parsed = AiFormat.parse(acc);
 
-    // ذخیرهٔ پاسخ
     let askRow = null;
     try {
       askRow = await Store.saveAskAi({
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
-        model: modelId,
+        model: realModel,           // ← مدل واقعی ذخیره می‌شود
         question,
         answerRaw: acc,
       });
     } catch (e) { console.warn('ask_ai save failed', e); }
 
-    // ثبت نسل
     let generationId = null;
     if (askRow) {
       try {
         const gen = await Store.createGeneration({
           source: 'ask_ai',
           refId: askRow.id,
-          model: modelId,
+          model: realModel,         // ← امتیاز به مدل واقعی می‌رود
         });
         generationId = gen.id;
       } catch (e) { console.warn('generation save failed', e); }
     }
 
-    const sc = await generationScore(modelId);
+    const sc = await generationScore(realModel);
 
     AiFormat.render(answerEl, parsed, {
-      model: modelId,
+      model: realModel,             // ← در footer هم مدل واقعی
       question,
       surahIndex: index,
       generationId,
@@ -320,7 +336,6 @@
 
     if (!rows || !rows.length) { historyEl.innerHTML = ''; return; }
 
-    // برای هر ردیف، آخرین نسل و امتیاز مدل را بگیر
     const enriched = await Promise.all(rows.map(async (r) => {
       let gen = null;
       try { gen = await Store.getLatestGeneration('ask_ai', r.id); } catch (e) {}
@@ -354,7 +369,7 @@
         if (rendered) return;
         const parsed = AiFormat.parse(row.answer_raw || '');
         const genId = row.gen ? row.gen.id : null;
-        const sc = row.gen ? await generationScore(row.gen.model) : 0;
+        const sc = row.model ? await generationScore(row.model) : 0;
         AiFormat.render(bodyEl, parsed, {
           model: row.model,
           question: row.question,
