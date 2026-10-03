@@ -372,11 +372,41 @@
               <div class="ai-history-item__head">
                 <span class="ai-history-item__q">${AiFormat.escapeHtml(r.question)}</span>
                 <span class="ai-history-item__date">${date}</span>
+                <button type="button" class="ai-delete-question" data-ai-delete-history="${r.id}" aria-label="حذف این پرسش" title="حذف این پرسش">🗑</button>
               </div>
               <div class="ai-history-item__body"></div>
             </div>`;
         }).join('')}
       </div>`;
+
+    // حذف از سر لیست تاریخچه
+    historyEl.querySelectorAll('[data-ai-delete-history]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-ai-delete-history');
+        const ok = await AiFormat.confirm({
+          title: 'حذف این پرسش',
+          message: 'کل این پرسش و پاسخ آن برای همیشه حذف می‌شود. ادامه؟',
+          confirmText: 'حذف',
+        });
+        if (!ok) return;
+        try {
+          btn.disabled = true;
+          await Store.deleteAskAi(id);
+          UI.toast('پرسش حذف شد');
+          // اگر همین رکورد در کارت اصلی باز بود، آن را هم پاک کن
+          const openInCard = answerEl.querySelector(`[data-ai-delete-question]`);
+          // بازخوانی تاریخچه کافی است — کارت اصلی را دست نمی‌زنیم مگر رکوردش همان باشد
+          await renderHistory();
+          // اگر آیتم حذف‌شده قبلاً باز پیش‌فرض بود، کارت اصلی را نگه می‌داریم.
+          // (اگر بخواهی کارت اصلی هم پاک شود، بگو.)
+        } catch (err) {
+          console.error('[ask-ai] deleteAskAi failed:', err);
+          UI.toast('خطا در حذف پرسش: ' + (err?.message || 'نامشخص'));
+          btn.disabled = false;
+        }
+      });
+    });
 
     historyEl.querySelectorAll('.ai-history-item').forEach((item) => {
       const id = item.getAttribute('data-id');
