@@ -167,3 +167,47 @@ kbd { font-family: inherit; background: var(--bg-2); border: 1px solid var(--bor
 @media (max-width: 900px) { :root { --tick-h: 0px; } .ticker { height: 0; border: 0; } .footer-hint, .app-footer > span:first-of-type { display: none; } }
 @media (max-width: 560px) { .hd-clock { display: none; } }
 @media (prefers-reduced-motion: reduce) { .tk-inner { animation: none; padding-left: 0; } }
+
+/* ═════════ v3 — glitch nav (از پن «Retro glitchy navigation»: اسکن‌لاین · RGB-split · جابه‌جایی نواری · بلوک فعال)
+   فقط روی المان‌های ناوبری‌مانند: ردیف‌ها و دکمه‌های سایدبار، «افزودن»، لوگو. رنگ‌ها از توکن‌های خود تم می‌آیند:
+   کانال اول = رنگ معنایی ردیف (--sc از منطق ستاره‌ها)، کانال دوم = --info ═════════ */
+.brand-title { --sc: var(--neon-pink); }
+#btn-add { --gl-tint: rgba(0, 0, 0, 0.22); }
+.side-item, .side-action, #btn-add { position: relative; isolation: isolate; overflow: hidden; }
+.side-item::after, .side-action::after, #btn-add::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity var(--dur-base);
+  background: linear-gradient(transparent 4px, var(--gl-tint, color-mix(in srgb, var(--sc, var(--accent)) 24%, transparent)) 4px) 0 0 / 100% 5px,
+              radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--bg-0) 80%, transparent) 100%);
+}
+/* بلوک فعال: دو رنگ، با ایزینگ پله‌ای شبیه RoughEase */
+.side-item::before { content: ""; position: absolute; z-index: 1; inset-block: 0 auto; inset-inline-start: 0; width: 6px; height: 0; margin: 0; transform: none; pointer-events: none; transition: height 0.32s steps(8, end); }
+.side-item.is-active::before, .side-item[data-star].is-active::before {
+  height: 100%; width: 6px; transform: none;
+  background: linear-gradient(var(--sc), var(--sc)) left / 50% 100% no-repeat, linear-gradient(var(--info), var(--info)) right / 50% 100% no-repeat;
+  box-shadow: 0 0 12px -2px var(--sc);
+}
+@media (hover: hover) {
+  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after, .side-item:focus-visible::after, .side-action:focus-visible::after { opacity: 1; animation: gl-scan 0.65s linear infinite; }
+  .side-item:hover .side-label, .brand-title:hover { animation: gl-rgb 0.3s steps(6) both; }
+  .side-action:hover, #btn-add:hover { animation: gl-rgb-lite 0.3s steps(6) both; }
+}
+@keyframes gl-scan { to { background-position: 0 5px, 0 0; } }
+@keyframes gl-rgb {
+  0% { text-shadow: -4px 0 var(--info), 4px 0 var(--sc, var(--accent)); transform: translateX(3px); }
+  60% { text-shadow: 2px 0 var(--info), -2px 0 var(--sc, var(--accent)); transform: translateX(-1px); }
+  100% { text-shadow: none; transform: none; }
+}
+@keyframes gl-rgb-lite { 0% { text-shadow: -3px 0 var(--info), 3px 0 var(--neon-pink); } 60% { text-shadow: 1.5px 0 var(--info), -1.5px 0 var(--neon-pink); } 100% { text-shadow: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .side-item::before { transition: none; }
+  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after,
+  .side-item:hover .side-label, .brand-title:hover, .side-action:hover, #btn-add:hover { animation: none; }
+}
+
+/* نمایش عنوان استانداردی که به AI فرستاده می‌شود */
+.ai-source-std { margin: -2px 0 10px; font-size: 11px; letter-spacing: 0.04em; color: var(--text-3); }
+
+/* نتیجهٔ شناسایی/تصحیح عنوان در دیالوگ تحلیل */
+.ai-title-fix { margin: 0 0 10px; padding: 8px 12px; font-size: 12px; line-height: 1.8; background: var(--bg-2); border: 1px solid var(--border-2); border-inline-start-width: 3px; }
+.ai-title-fix.is-fixed { border-color: var(--success); color: var(--success); }
+.ai-title-fix.is-uncertain { border-color: var(--warning); color: var(--warning); }

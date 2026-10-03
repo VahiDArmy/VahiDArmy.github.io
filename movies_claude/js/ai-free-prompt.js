@@ -67,9 +67,7 @@ window.AIFreePrompt = (function () {
       system += ' پاسخ‌ها با Markdown استاندارد بنویس (## برای تیتر، **bold**، - برای لیست).';
       if (t) {
         system += '\n\nاطلاعات زمینه‌ای:\n';
-        system += 'عنوان: ' + t.title + '\n';
-        system += 'نوع: ' + (CONFIG.TYPES[t.type] || t.type) + '\n';
-        if (t.year) system += 'سال: ' + t.year + '\n';
+        system += 'عنوان استاندارد: ' + AIPrompts.standardLine(t.title, t.type, t.year, t) + '\n';
         if (t.genre) system += 'ژانر: ' + t.genre + '\n';
         if (t.summary) system += 'خلاصه: ' + t.summary + '\n';
       }

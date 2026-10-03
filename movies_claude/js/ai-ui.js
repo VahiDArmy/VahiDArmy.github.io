@@ -386,6 +386,7 @@ window.AIUI = (function () {
           ? Utils.el('span', { class: 'badge', style: { marginRight: '8px', color: starMeta.color } }, [starMeta.emoji + ' ' + starMeta.label])
           : Utils.el('span', { class: 'badge', style: { marginRight: '8px' } }, ['○ بدون امتیاز'])
       ]),
+      Utils.el('div', { class: 'ai-source-std' }, ['ارسال به AI: ' + AIPrompts.standardLine(t.title, t.type, t.year, t)]),
       panel.panel, resultBox, storyBox, deepBtnWrap
     ]);
 
@@ -411,6 +412,7 @@ window.AIUI = (function () {
     activeAbort = new AbortController();
 
     AIStandardize.analyzeOne(t.title, t.type, t.year, {
+      meta: t,
       signal: activeAbort.signal,
       onToken: function (_, acc) { panel.appendText(acc); }
     })
@@ -421,6 +423,14 @@ window.AIUI = (function () {
 
         resultBox.hidden = false;
         resultBox.innerHTML = '';
+        const fix = AIStandardize.titleFix(t, result);
+        if (fix.kind !== 'ok') {
+          resultBox.appendChild(Utils.el('div', { class: 'ai-title-fix is-' + fix.kind }, [
+            fix.kind === 'fixed'
+              ? '✏️ تصحیح عنوان: «' + fix.from + '» ← «' + fix.to + '» (هنگام ذخیرهٔ تحلیل اعمال می‌شود)'
+              : '⚠️ عنوان دقیقاً شناسایی نشد و تغییر نمی‌کند' + (fix.candidates.length ? ' — گزینه‌های محتمل: ' + fix.candidates.join(' · ') : '') + '. عنوان را اصلاح و دوباره تحلیل کنید.'
+          ]));
+        }
         [
           ['عنوان استاندارد', result.standard_title],
           ['عنوان فارسی', result.title_fa],
@@ -530,7 +540,7 @@ window.AIUI = (function () {
 
       try {
         const result = await AIStandardize.analyzeSeasonalDeep(title, seasonsCount, {
-          type: type, year: year,
+          type: type, year: year, meta: DB.getTitle(id),
           signal: activeAbort.signal,
           onProgress: function (info) {
             if (info.phase === 'start') {

@@ -185,12 +185,26 @@ window.AIPrompts = (function () {
       'year_start و year_end را null بگذار.',
       '',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'شناسایی و تصحیح عنوان — قبل از هر تحلیل',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '',
+      'عنوانی که کاربر تایپ کرده ممکن است غلط املایی، حروف بزرگ/کوچک نادرست، فاصله یا نیم‌فاصلهٔ اشتباه، مخفف، یا فقط «نزدیک» به عنوان واقعی باشد.',
+      '۱. با کمک نوع، سال، کشور و زبان اعلام‌شده تشخیص بده کاربر منظورش کدام اثر واقعی است.',
+      '۲. corrected_title = عنوان درست و رسمی همان اثر، با همان زبان و خطی که کاربر نوشته (انگلیسی ← انگلیسی با املا و حروف درست؛ فارسی ← فارسی با املای درست). ترجمه نکن.',
+      '۳. title_match: «exact» اگر عنوان واردشده درست است؛ «corrected» اگر اثر را با اطمینان بالا شناختی و عنوان فقط غلط یا نزدیک بوده؛ «uncertain» اگر چند اثر محتمل است یا مطمئن نیستی (حدس نزن).',
+      '۴. اگر uncertain: corrected_title را همان عنوان واردشده بگذار و حداکثر ۳ گزینهٔ محتمل را به‌صورت «عنوان (سال)» در title_candidates بنویس.',
+      '۵. standard_title همیشه عنوان رسمی انگلیسیِ اثری است که شناسایی کردی.',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       'خروجی',
       '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
       '',
       'فقط یک آبجکت JSON برگردان. هیچ متنی بیرون از JSON ننویس.',
       '',
       '{',
+      '  "title_match": "exact" یا "corrected" یا "uncertain",',
+      '  "corrected_title": "عنوان درست‌شدهٔ همان اثر، به همان زبان و خط ورودی",',
+      '  "title_candidates": [ "عنوان (سال)" ] یا [],',
       '  "standard_title": "عنوان انگلیسی استاندارد",',
       '  "title_fa": "عنوان فارسی رایج یا null",',
       '  "type": "series" یا "movie" یا "anime" یا "documentary",',
@@ -217,12 +231,50 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
-  function analyzeUser(title, type, year) {
-    const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
-    const lines = [
-      'عنوان: ' + title,
-      'نوع اعلام‌شده: ' + typeLabel
+  /* ── عنوان استاندارد برای ارسال به AI: تمیز، بدون نویز، همراه با مشخصات هویتی (نوع/سال/عنوان اصلی) ── */
+  const TYPE_FA = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' };
+
+  function cleanTitle(raw, year) {
+    let s = String(raw == null ? '' : raw).normalize('NFC')
+      .replace(/[\u200b\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')   // علائم نامرئی/جهت‌دهی (ZWNJ حفظ می‌شود)
+      .replace(/\u064a/g, '\u06cc').replace(/\u0643/g, '\u06a9')                    // ي ك عربی ← ی ک فارسی
+      .replace(/[\u064b-\u065f\u0670]/g, '')                                        // اعراب
+      .replace(/[\u06f0-\u06f9]/g, (d) => d.charCodeAt(0) - 0x06f0)                 // ارقام فارسی/عربی ← لاتین
+      .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x0660)
+      .replace(/_+/g, ' ')
+      .replace(/[\[(][^\])]*\b(?:2160p|1080p|720p|480p|4k|blu-?ray|web-?dl|web-?rip|hd-?rip|hdtv|dvd-?rip|x26[45]|hevc|dual|dubbed|subbed)\b[^\])]*[\])]/gi, ' ')
+      .replace(/\b(?:2160p|1080p|720p|480p|blu-?ray|web-?dl|web-?rip|hd-?rip|x26[45]|hevc)\b/gi, ' ')
+      .replace(/\s+/g, ' ').trim()
+      .replace(/^["'\u201c\u201d\u00ab\u00bb]+|["'\u201c\u201d\u00ab\u00bb]+$/g, '').trim();
+    const y = String(year || '').replace(/\D/g, '');
+    if (y) s = s.replace(new RegExp('\\s*[(\\[]\\s*' + y + '\\s*[)\\]]\\s*$'), '').trim();   // سال تکراری انتهای عنوان
+    return s;
+  }
+
+  function standardTitle(title, year, meta) {      // عنوان اصلی/استاندارد ذخیره‌شده اولویت دارد
+    return cleanTitle(meta && meta.original_title, year) || cleanTitle(title, year);
+  }
+
+  function standardLine(title, type, year) {      // آنچه برای AI فرستاده می‌شود: عنوان واردشدهٔ تمیز + سال + نوع
+    const y = String(year || '').replace(/\D/g, '');
+    return cleanTitle(title, y) + (y ? ' (' + y + ')' : '') + ' — ' + (TYPE_FA[type] || type || 'نامشخص');
+  }
+
+  function titleBlock(title, type, year, meta, deep) {
+    const typed = cleanTitle(title, year), known = cleanTitle(meta && meta.original_title, year);
+    const lines = deep ? ['عنوان: «' + typed + '»'] : [
+      'عنوان واردشده توسط کاربر: «' + typed + '»',
+      '⚠️ این عنوان را خود کاربر تایپ کرده؛ ممکن است غلط املایی، حروف بزرگ/کوچک نادرست یا فقط «نزدیک» به عنوان واقعی باشد. آن را تصحیح کن.'
     ];
+    if (known && known.toLowerCase() !== typed.toLowerCase()) lines.push('عنوان استاندارد ثبت‌شده از تحلیل قبلی (راهنما): ' + known);
+    if (meta && meta.country) lines.push('کشور (راهنما): ' + cleanTitle(meta.country));
+    if (meta && meta.language) lines.push('زبان اصلی (راهنما): ' + cleanTitle(meta.language));
+    return lines;
+  }
+
+  function analyzeUser(title, type, year, meta) {
+    const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
+    const lines = titleBlock(title, type, year, meta).concat(['نوع اعلام‌شده: ' + typeLabel]);
     if (year) lines.push('سال اعلام‌شده: ' + year);
     else lines.push('سال اعلام‌شده: وارد نشده');
 
@@ -249,7 +301,7 @@ window.AIPrompts = (function () {
     lines.push('وظیفه');
     lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     lines.push('');
-    lines.push('۱. این عنوان را استاندارد کن.');
+    lines.push('۱. ابتدا عنوان واردشده را شناسایی و تصحیح کن (title_match و corrected_title)، سپس استانداردش کن (standard_title).');
     lines.push('۲. حداقل ۳ سوراخ داستانی با جزئیات صحنه، قاعده شکسته و زنجیره علّی بنویس.');
     lines.push('   یکی از دسته‌ها حتماً «داستان آبکی و کش‌دار» باشد اگر وجود دارد.');
     lines.push('۳. حداقل ۳ لحظه احمق‌فرض‌گیری با جزئیات صحنه، تکنیک و استدلال بنویس.');
@@ -260,13 +312,9 @@ window.AIPrompts = (function () {
     return lines.join('\n');
   }
 
-  function analyzeDeepUser(title, fromSeason, toSeason, type, year) {
+  function analyzeDeepUser(title, fromSeason, toSeason, type, year, meta) {
     const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
-    const lines = [
-      'عنوان: ' + title,
-      'نوع اعلام‌شده: ' + typeLabel,
-      'بازه: فصل ' + fromSeason + ' تا ' + toSeason
-    ];
+    const lines = titleBlock(title, type, year, meta, true).concat(['نوع اعلام‌شده: ' + typeLabel, 'بازه: فصل ' + fromSeason + ' تا ' + toSeason]);
     if (year) lines.push('سال اعلام‌شده: ' + year);
     else {
       lines.push('سال اعلام‌شده: وارد نشده');
@@ -473,6 +521,8 @@ window.AIPrompts = (function () {
 
   return {
     analyzeSystem: buildAnalyzeSystem(),
+    standardTitle: standardTitle,
+    standardLine: standardLine,
     analyzeUser: analyzeUser,
     analyzeDeepUser: analyzeDeepUser,
     standardizeBatchSystem: buildStandardizeBatchSystem(),

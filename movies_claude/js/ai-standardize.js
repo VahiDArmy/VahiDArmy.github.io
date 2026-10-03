@@ -8,7 +8,7 @@ window.AIStandardize = (function () {
     options = options || {};
     const messages = [
       { role: 'system', content: AIPrompts.analyzeSystem },
-      { role: 'user', content: AIPrompts.analyzeUser(title, type, year) }
+      { role: 'user', content: AIPrompts.analyzeUser(title, type, year, options.meta) }
     ];
     let full = '';
     await AI.chatStream({
@@ -30,7 +30,7 @@ window.AIStandardize = (function () {
     options = options || {};
     const messages = [
       { role: 'system', content: AIPrompts.analyzeSystem },
-      { role: 'user', content: AIPrompts.analyzeDeepUser(title, fromSeason, toSeason, options.type, options.year) }
+      { role: 'user', content: AIPrompts.analyzeDeepUser(title, fromSeason, toSeason, options.type, options.year, options.meta) }
     ];
     let full = '';
     await AI.chatStream({
@@ -73,7 +73,7 @@ window.AIStandardize = (function () {
 
       try {
         const res = await analyzeSeasonRange(title, c.from, c.to, {
-          type: options.type, year: options.year, signal: options.signal
+          type: options.type, year: options.year, meta: options.meta, signal: options.signal
         });
 
         if (Array.isArray(res.plot_holes)) {
@@ -166,12 +166,23 @@ window.AIStandardize = (function () {
     } catch (e) { return null; }
   }
 
+  /* تصحیح عنوان واردشده: فقط وقتی AI با اطمینان «corrected» گفته؛ در حالت «uncertain» چیزی عوض نمی‌شود */
+  function titleFix(current, ai) {
+    const norm = function (s) { return String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); };
+    const from = norm(current && current.title), to = norm(ai && ai.corrected_title);
+    const cands = Array.isArray(ai && ai.title_candidates) ? ai.title_candidates.map(norm).filter(Boolean).slice(0, 3) : [];
+    if (ai && ai.title_match === 'uncertain') return { kind: 'uncertain', from: from, to: from, candidates: cands };
+    if (ai && ai.title_match === 'corrected' && to && to !== from) return { kind: 'fixed', from: from, to: to, candidates: [] };
+    return { kind: 'ok', from: from, to: from, candidates: [] };
+  }
+
   function applyToDb(id, ai) {
     if (!id || !ai) return;
     const current = DB.getTitle(id);
     if (!current) return;
 
     const existing = current.story_analysis || null;
+    const fix = titleFix(current, ai);
     const modelInfo = currentModelInfo();
 
     const newStoryData = {
@@ -189,7 +200,7 @@ window.AIStandardize = (function () {
     try { storyJson = JSON.stringify(newStoryData); } catch (e) {}
 
     const patch = {
-      title: current.title,
+      title: fix.kind === 'fixed' ? fix.to : current.title,
       type: normalizeType(ai.type) || current.type,
       genre: ai.genre || current.genre,
       year: current.year,  /* year فقط از کاربر */
@@ -245,6 +256,7 @@ window.AIStandardize = (function () {
     analyzeSeasonRange: analyzeSeasonRange,
     analyzeSeasonalDeep: analyzeSeasonalDeep,
     standardizeBatch: standardizeBatch,
+    titleFix: titleFix,
     applyToDb: applyToDb,
     applyDeepToDb: applyDeepToDb
   };
