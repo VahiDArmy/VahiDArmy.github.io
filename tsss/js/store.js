@@ -313,6 +313,11 @@ const Store = (function () {
     return data;
   }
 
+  async function deleteAskAi(id) {
+    const { error } = await sb.from('ask_ai').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   async function getAskAiHistory(surah, ayah, limit = 20) {
     const { data, error } = await sb
       .from('ask_ai')
@@ -352,6 +357,7 @@ const Store = (function () {
     callAiReview,
     saveAskAi,
     updateAskAi,
+    deleteAskAi,
     getAskAiHistory,
   };
 })();
