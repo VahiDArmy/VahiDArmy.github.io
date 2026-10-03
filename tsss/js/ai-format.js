@@ -1,5 +1,5 @@
 // =============================================================
-// تجزیه، رندر، ویرایش و سریال‌سازی قالب پاسخ هوش مصنوعی
+// تجزیه و رندر قالب پاسخ هوش مصنوعی + نوار فیدبک
 // =============================================================
 const AiFormat = (function () {
   const OPEN = '[[AI]]';
@@ -11,15 +11,6 @@ const AiFormat = (function () {
     return div.innerHTML;
   }
 
-  function attrEsc(str) {
-    return String(str == null ? '' : str)
-      .replace(/&/g, '&amp;')
-      .replace(/"/g, '&quot;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-  }
-
-  // ---------- پارسر ----------
   function parse(raw) {
     if (!raw) return { ok: false, raw: '' };
     const trimmed = raw.trim();
@@ -66,7 +57,6 @@ const AiFormat = (function () {
     return { ok: true, title, answer, insight, refs, tags, draft, caution };
   }
 
-  // ---------- رندر مارک‌داون امن ----------
   function renderMarkdown(md) {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) {
@@ -86,10 +76,7 @@ const AiFormat = (function () {
     return tmp.innerHTML;
   }
 
-  // ---------- رندر غنی ----------
-  // فقط مارک‌داون + ارجاع‌های [[سوره:آیه]].
-  // تشخیص برچسب در متن انجام نمی‌شود.
-  function renderRich(text, surahIndex) {
+  function renderRich(text, surahIndex, inlineTags) {
     let html = renderMarkdown(text);
     html = html.replace(
       /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g,
@@ -102,93 +89,49 @@ const AiFormat = (function () {
         return `<a class="ayah-link" href="browse.html?surah=${s}&ayah=${a}" title="سورهٔ ${nameFa}، آیهٔ ${UI.toPersianDigits(a)}">${lbl}</a>`;
       }
     );
+    if (inlineTags && inlineTags.length) html = UI.highlightTags(html, inlineTags);
     return html;
   }
 
-  // ---------- ساخت یک بخش ----------
-  function sectionHtml({ hue, label, body, extra = '', type, raw = '', editable = true }) {
-    const editBtn = editable
-      ? `<button type="button" class="ai-section__btn" data-section-action="edit" title="ویرایش">✎</button>`
-      : '';
+  function sectionHtml({ hue, label, body, extra = '' }) {
     return `
-      <div class="ai-section" style="--hue:${hue}" data-section-type="${type}" data-raw="${attrEsc(raw)}">
-        <div class="ai-section__header">
-          <div class="ai-section__label">
-            <span class="ai-section__dot"></span>${escapeHtml(label)}
-          </div>
-          <div class="ai-section__actions">
-            ${editBtn}
-            <button type="button" class="ai-section__btn" data-section-action="delete" title="حذف">✕</button>
-          </div>
+      <div class="ai-section" style="--hue:${hue}">
+        <div class="ai-section__label">
+          <span class="ai-section__dot"></span>${escapeHtml(label)}
         </div>
         <div class="ai-section__body">${body}</div>
         ${extra}
       </div>`;
   }
 
-  // ---------- سریال‌سازی از DOM ----------
-  function serializeFromDom(card) {
-    const titleEl = card.querySelector('.ai-answer-card__title');
-    const title = titleEl ? titleEl.textContent.trim() : null;
-
-    const getRaw = (type) => {
-      const el = card.querySelector(`[data-section-type="${type}"]`);
-      return el ? (el.getAttribute('data-raw') || '') : null;
-    };
-    const answer  = getRaw('answer');
-    const insight = getRaw('insight');
-    const draft   = getRaw('draft');
-    const caution = getRaw('caution');
-
-    const refs = Array.from(card.querySelectorAll('[data-section-type="refs"] .ai-ref')).map((el) => ({
-      s: el.dataset.s,
-      a: el.dataset.a,
-      label: el.dataset.label || '',
-    }));
-
-    const tags = Array.from(card.querySelectorAll('[data-section-type="tags"] .ai-tag-pill')).map(
-      (el) => el.dataset.aiTag
-    );
-
-    let out = '[[AI]]\n';
-    if (title) out += `<title>${title}</title>\n`;
-    if (answer  && answer.trim())  out += `<answer>\n${answer}\n</answer>\n`;
-    if (insight && insight.trim()) out += `<insight>\n${insight}\n</insight>\n`;
-    if (refs.length) {
-      out += '<refs>\n';
-      refs.forEach((r) => {
-        if (r.label) out += `<ref s="${r.s}" a="${r.a}">${r.label}</ref>\n`;
-        else out += `<ref s="${r.s}" a="${r.a}" />\n`;
-      });
-      out += '</refs>\n';
-    }
-    if (tags.length) {
-      out += '<tags>\n' + tags.map((t) => `<tag>${t}</tag>`).join('\n') + '\n</tags>\n';
-    }
-    if (draft   && draft.trim())   out += `<draft>\n${draft}\n</draft>\n`;
-    if (caution && caution.trim()) out += `<caution>\n${caution}\n</caution>\n`;
-    out += '[[/AI]]';
-    return out;
+  function feedbackBarHtml({ model, score, myVote }) {
+    const sign = score > 0 ? 'pos' : score < 0 ? 'neg' : 'zero';
+    const scoreText = (score > 0 ? '+' : '') + UI.toPersianDigits(score);
+    const upActive = myVote === 1 ? ' is-active' : '';
+    const downActive = myVote === -1 ? ' is-active' : '';
+    return `
+      <div class="ai-feedback-bar">
+        <span class="ai-feedback-bar__model">
+          پاسخ از: <code>${escapeHtml(model || '—')}</code>
+        </span>
+        <span class="ai-feedback-bar__score" data-sign="${sign}">
+          ⭐ ${scoreText}
+        </span>
+        <div class="ai-vote-group">
+          <button type="button" class="ai-vote${upActive}" data-vote="1" aria-label="پسندیدم">👍</button>
+          <button type="button" class="ai-vote${downActive}" data-vote="-1" aria-label="نپسندیدم">👎</button>
+        </div>
+      </div>`;
   }
 
-  // ---------- رندر کل کارت ----------
+  // opts: { model, question, surahIndex, generationId, myVote, modelScore }
   function render(container, parsed, opts) {
-    opts = opts || {};
-    const { model, question, surahIndex } = opts;
-
-    const deleteBtn = typeof opts.onDelete === 'function'
-      ? `<button type="button" class="ai-answer-card__delete" data-delete-response>✕ حذف پاسخ</button>`
-      : '';
+    const { model, question, surahIndex } = opts || {};
+    const showFeedback = opts && opts.generationId != null;
 
     const qHtml = `
       <div class="ai-answer-card__question">
         <span class="ai-answer-card__q-label">پرسش شما</span>${escapeHtml(question || '')}
-      </div>`;
-
-    const footerHtml = `
-      <div class="ai-answer-card__footer">
-        <span>پاسخ از: <code>${escapeHtml(model || '—')}</code></span>
-        ${deleteBtn}
       </div>`;
 
     if (!parsed.ok) {
@@ -197,15 +140,15 @@ const AiFormat = (function () {
           ${qHtml}
           ${sectionHtml({
             hue: 20,
-            type: 'raw',
             label: 'پاسخ خام (قالب مورد انتظار رعایت نشد)',
             body: renderRich(parsed.raw, surahIndex),
-            raw: parsed.raw,
-            editable: false,
           })}
-          ${footerHtml}
+          ${showFeedback ? feedbackBarHtml({
+            model,
+            score: opts.modelScore || 0,
+            myVote: opts.myVote || 0,
+          }) : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`}
         </div>`;
-      wireCard(container.querySelector('.ai-answer-card'), opts);
       return;
     }
 
@@ -214,16 +157,14 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340, type: 'answer', label: 'پاسخ',
-        body: renderRich(parsed.answer, surahIndex),
-        raw: parsed.answer,
+        hue: 340, label: 'پاسخ',
+        body: renderRich(parsed.answer, surahIndex, inlineTags),
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210, type: 'insight', label: 'نکته',
-        body: renderRich(parsed.insight, surahIndex),
-        raw: parsed.insight,
+        hue: 210, label: 'نکته',
+        body: renderRich(parsed.insight, surahIndex, inlineTags),
       }));
     }
     if (parsed.refs && parsed.refs.length) {
@@ -232,40 +173,31 @@ const AiFormat = (function () {
         const lbl = r.label
           ? escapeHtml(r.label)
           : `سورهٔ ${nameFa}، آیهٔ ${UI.toPersianDigits(r.ayah)}`;
-        return `<span class="ai-ref" data-s="${r.surah}" data-a="${r.ayah}" data-label="${attrEsc(r.label || '')}">
-          <a href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>
-          <button type="button" class="ai-ref__remove" data-remove-ref title="حذف این ارجاع" aria-label="حذف">✕</button>
-        </span>`;
+        return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270, type: 'refs', label: 'ارجاع‌ها',
+        hue: 270, label: 'ارجاع‌ها',
         body: `<div class="ai-refs">${pills}</div>`,
-        editable: false,
       }));
     }
     if (inlineTags.length) {
       const tagPills = inlineTags.map((t) => {
         const c = UI.tagColor(t);
-        return `<span class="ai-tag-pill"
-          data-ai-tag="${attrEsc(t)}"
-          style="color:${c.color};border-color:${c.border};">
-          <button type="button" class="ai-tag-pill__add" data-ai-add-tag="${attrEsc(t)}" title="افزودن به فرم">
-            <span class="ai-tag-pill__plus">＋</span>${escapeHtml(t)}
-          </button>
-          <button type="button" class="ai-tag-pill__remove" data-remove-tag title="حذف این برچسب" aria-label="حذف">✕</button>
-        </span>`;
+        return `<button type="button" class="ai-tag-pill"
+          data-ai-tag="${escapeHtml(t)}"
+          style="color:${c.color};border-color:${c.border};text-shadow:0 0 6px ${c.glow};">
+          <span class="ai-tag-pill__add">＋</span>${escapeHtml(t)}
+        </button>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150, type: 'tags', label: 'برچسب‌های پیشنهادی',
+        hue: 150, label: 'برچسب‌های پیشنهادی',
         body: `<div class="ai-tags">${tagPills}</div>`,
-        editable: false,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40, type: 'draft', label: 'پیش‌نویس تفسیر',
-        body: renderRich(parsed.draft, surahIndex),
-        raw: parsed.draft,
+        hue: 40, label: 'پیش‌نویس تفسیر',
+        body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
         </div>`,
@@ -273,11 +205,14 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0, type: 'caution', label: 'احتیاط',
-        body: renderRich(parsed.caution, surahIndex),
-        raw: parsed.caution,
+        hue: 0, label: 'احتیاط',
+        body: renderRich(parsed.caution, surahIndex, inlineTags),
       }));
     }
+
+    const footerHtml = showFeedback
+      ? feedbackBarHtml({ model, score: opts.modelScore || 0, myVote: opts.myVote || 0 })
+      : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`;
 
     container.innerHTML = `
       <div class="ai-answer-card card">
@@ -286,125 +221,8 @@ const AiFormat = (function () {
         ${blocks.join('')}
         ${footerHtml}
       </div>`;
-
-    wireCard(container.querySelector('.ai-answer-card'), opts);
   }
 
-  // ---------- سیم‌کشی ویرایش/حذف ----------
-  function wireCard(card, opts) {
-    if (!card) return;
-
-    async function persist() {
-      if (typeof opts.onChange !== 'function') return;
-      try {
-        await opts.onChange(serializeFromDom(card));
-      } catch (e) {
-        console.error('[AiFormat] persist failed', e);
-        UI.toast('ذخیره تغییرات ناموفق بود');
-      }
-    }
-
-    // دکمه‌های هدر هر بخش
-    card.querySelectorAll('[data-section-action]').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const action = btn.getAttribute('data-section-action');
-        const section = btn.closest('.ai-section');
-        if (!section) return;
-
-        if (action === 'delete') {
-          section.remove();
-          await persist();
-        } else if (action === 'edit') {
-          enterEdit(section, card, opts, persist);
-        }
-      });
-    });
-
-    // حذف تک‌ارجاع‌ها
-    card.querySelectorAll('[data-remove-ref]').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const refEl = btn.closest('.ai-ref');
-        const section = btn.closest('.ai-section');
-        if (!refEl) return;
-        refEl.remove();
-        if (section && !section.querySelector('.ai-ref')) section.remove();
-        await persist();
-      });
-    });
-
-    // حذف تک‌برچسب‌ها
-    card.querySelectorAll('[data-remove-tag]').forEach((btn) => {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const pill = btn.closest('.ai-tag-pill');
-        const section = btn.closest('.ai-section');
-        if (!pill) return;
-        pill.remove();
-        if (section && !section.querySelector('.ai-tag-pill')) section.remove();
-        await persist();
-      });
-    });
-
-    // حذف کل پاسخ
-    const delBtn = card.querySelector('[data-delete-response]');
-    if (delBtn && typeof opts.onDelete === 'function') {
-      delBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        if (!confirm('کل این پاسخ حذف شود؟')) return;
-        try {
-          await opts.onDelete();
-        } catch (err) {
-          console.error(err);
-          UI.toast('حذف ناموفق بود');
-        }
-      });
-    }
-  }
-
-  function enterEdit(section, card, opts, persist) {
-    const raw = section.getAttribute('data-raw') || '';
-    const bodyEl = section.querySelector('.ai-section__body');
-    if (!bodyEl) return;
-
-    const originalHTML = bodyEl.innerHTML;
-
-    bodyEl.innerHTML = `
-      <textarea class="ai-section__edit" rows="6">${escapeHtml(raw)}</textarea>
-      <div class="ai-section__edit-actions">
-        <button type="button" class="btn btn--sm btn--primary" data-edit-action="save">ذخیره</button>
-        <button type="button" class="btn btn--sm" data-edit-action="cancel">انصراف</button>
-      </div>`;
-
-    section.setAttribute('data-editing', 'true');
-    const ta = bodyEl.querySelector('.ai-section__edit');
-    ta.focus();
-    ta.setSelectionRange(ta.value.length, ta.value.length);
-
-    const saveBtn = bodyEl.querySelector('[data-edit-action="save"]');
-    const cancelBtn = bodyEl.querySelector('[data-edit-action="cancel"]');
-
-    saveBtn.addEventListener('click', async () => {
-      const newRaw = ta.value;
-      section.setAttribute('data-raw', newRaw);
-      bodyEl.innerHTML = renderRich(newRaw, opts.surahIndex);
-      section.removeAttribute('data-editing');
-      await persist();
-    });
-
-    cancelBtn.addEventListener('click', () => {
-      bodyEl.innerHTML = originalHTML;
-      section.removeAttribute('data-editing');
-    });
-
-    ta.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); cancelBtn.click(); }
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveBtn.click(); }
-    });
-  }
-
-  // ---------- نمایش خام حین استریم ----------
   function renderStreaming(container, question, text, model) {
     container.innerHTML = `
       <div class="ai-answer-card card">
@@ -413,16 +231,98 @@ const AiFormat = (function () {
         </div>
         <div class="ai-answer-card__stream" id="aiStreamBox">${escapeHtml(text || '')}</div>
         <div class="ai-answer-card__footer">
-          <span>پاسخ از: <code>${escapeHtml(model || '—')}</code></span>
+          پاسخ از: <code>${escapeHtml(model || '—')}</code>
         </div>
       </div>`;
     const box = container.querySelector('#aiStreamBox');
     if (box) box.scrollTop = box.scrollHeight;
   }
 
+  // اتصال دکمه‌های رأی و برچسب/پیش‌نویس در یک کارت رندرشده.
+  // opts: { generationId, onAfterVote }
+  function wireCard(rootEl, parsed, opts) {
+    const { generationId, onAfterVote } = opts || {};
+
+    const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
+    if (insertBtn && parsed && parsed.draft) {
+      insertBtn.addEventListener('click', () => {
+        const ta = document.getElementById('tafsirContent');
+        if (!ta) return;
+        const cur = ta.value.trim();
+        const draft = parsed.draft.trim();
+        ta.value = cur ? (cur + '\n\n' + draft) : draft;
+        ta.focus();
+        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        UI.toast('پیش‌نویس در فرم درج شد');
+      });
+    }
+
+    rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-ai-tag');
+        const inp = document.getElementById('tafsirTags');
+        if (!inp) return;
+        const parts = Array.from(new Set(
+          (inp.value || '').split(/[,،]/).map((x) => x.trim()).filter(Boolean).concat([tag])
+        ));
+        inp.value = parts.join('، ');
+        UI.toast('برچسب «' + tag + '» افزوده شد');
+      });
+    });
+
+    if (generationId != null) {
+      wireVotes(rootEl, generationId, onAfterVote);
+    }
+  }
+
+  function wireVotes(rootEl, generationId, onAfterVote) {
+    const bar = rootEl.querySelector('.ai-feedback-bar');
+    if (!bar) return;
+    const scoreEl = bar.querySelector('.ai-feedback-bar__score');
+    const buttons = bar.querySelectorAll('.ai-vote');
+
+    async function refresh() {
+      const [agg, mine] = await Promise.all([
+        Store.getGenerationFeedback(generationId).catch(() => ({ score: 0 })),
+        Store.getMyFeedback(generationId).catch(() => 0),
+      ]);
+      const sign = agg.score > 0 ? 'pos' : agg.score < 0 ? 'neg' : 'zero';
+      const txt = (agg.score > 0 ? '+' : '') + UI.toPersianDigits(agg.score);
+      if (scoreEl) {
+        scoreEl.setAttribute('data-sign', sign);
+        scoreEl.textContent = '⭐ ' + txt;
+      }
+      buttons.forEach((b) => {
+        const v = Number(b.getAttribute('data-vote'));
+        b.classList.toggle('is-active', v === mine);
+      });
+      if (typeof onAfterVote === 'function') onAfterVote(mine, agg.score);
+      return agg.score;
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const want = Number(btn.getAttribute('data-vote'));
+        const mine = await Store.getMyFeedback(generationId).catch(() => 0);
+        const next = (mine === want) ? 0 : want; // رأی مجدد = برداشتن رأی
+        try {
+          buttons.forEach((b) => (b.disabled = true));
+          await Store.setFeedback(generationId, next);
+          await refresh();
+        } catch (e) {
+          console.error(e);
+          UI.toast('خطا در ثبت رأی');
+        } finally {
+          buttons.forEach((b) => (b.disabled = false));
+        }
+      });
+    });
+
+    refresh();
+  }
+
   return {
-    parse, render, renderStreaming,
+    parse, render, renderStreaming, wireCard,
     renderMarkdown, renderRich, escapeHtml,
-    serializeFromDom,
   };
 })();
