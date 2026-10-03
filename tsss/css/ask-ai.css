@@ -1,387 +1,432 @@
-/* =========================================================
-   Ask AI — composer, streaming status, sectioned answer
-   نسخهٔ جمع‌وجورتر و کم‌رنگ‌تر
-   ========================================================= */
+// =============================================================
+// بخش «بپرس از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه، فیدبک
+// =============================================================
+(async function () {
+  const section = document.getElementById('askAiSection');
+  if (!section) return;
 
-/* --- Composer --- */
-.ask-ai-composer { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
-.ask-ai-composer__model {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: .72rem; font-weight: 600; color: var(--text-faint);
-  padding: 2px 10px; border-radius: 999px;
-  background: var(--surface-2); border: 1px solid var(--border-soft);
-  align-self: flex-start; cursor: pointer;
-  transition: border-color .2s ease, color .2s ease;
-}
-.ask-ai-composer__model:hover { border-color: var(--violet); color: var(--violet); }
-.ask-ai-composer__model-dot {
-  width: 5px; height: 5px; border-radius: 50%;
-  background: var(--violet);
-}
-.ask-ai-composer textarea {
-  width: 100%; min-height: 56px; resize: vertical;
-  padding: 10px 12px; border-radius: var(--radius-sm);
-  background: var(--read-bg); border: 1px solid var(--border);
-  color: var(--text); font-family: var(--font-ui); font-size: .9rem; line-height: 1.8;
-  transition: border-color .2s ease, box-shadow .2s ease;
-}
-.ask-ai-composer textarea:focus {
-  outline: none; border-color: var(--violet); background: var(--read-bg-strong);
-  box-shadow: 0 0 0 3px var(--violet-glow);
-}
-.ask-ai-composer__actions {
-  display: flex; align-items: center; gap: 10px; justify-content: flex-end;
-}
+  const session = await Auth.getSession().catch(() => null);
+  if (!session) { section.hidden = true; return; }
+  section.hidden = false;
 
-/* --- Status light --- */
-.ai-status {
-  width: 9px; height: 9px; border-radius: 50%;
-  background: hsl(0 0% 50% / .35);
-  transition: background .3s ease, box-shadow .3s ease;
-}
-.ai-status[data-state="idle"]      { background: hsl(0 0% 50% / .35); }
-.ai-status[data-state="streaming"] { background: hsl(40 88% 55%);
-  animation: aiPulse 1.4s ease-in-out infinite; }
-.ai-status[data-state="done"]      { background: hsl(150 55% 50%); }
-.ai-status[data-state="error"]     { background: hsl(0 72% 55%); }
+  const composerModel = document.getElementById('askAiCurrentModel');
+  const modelLabel    = document.getElementById('askAiModelLabel');
+  const inputEl       = document.getElementById('askAiInput');
+  const submitBtn     = document.getElementById('askAiSubmit');
+  const statusEl      = document.getElementById('aiStatus');
+  const answerEl      = document.getElementById('askAiAnswer');
+  const historyEl     = document.getElementById('askAiHistory');
 
-@keyframes aiPulse {
-  0%, 100% { box-shadow: 0 0 0 0 hsl(40 88% 55% / .7); }
-  50%      { box-shadow: 0 0 0 9px hsl(40 88% 55% / 0); }
-}
+  const modelsModal   = document.getElementById('aiModelsModal');
+  const modelsListEl  = document.getElementById('aiModelsList');
+  const closeModelsBtn= document.getElementById('closeModelsBtn');
+  const saveModelBtn  = document.getElementById('saveModelBtn');
 
-/* --- Streaming raw trace --- */
-.ai-answer-card__stream {
-  margin-top: 6px; padding: 12px;
-  border-radius: 10px;
-  background: var(--read-bg); border: 1px dashed var(--border);
-  color: var(--text-dim);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: .78rem; line-height: 1.8;
-  white-space: pre-wrap; direction: rtl; text-align: right;
-  overflow-wrap: anywhere;
-  max-height: 300px; overflow-y: auto;
-}
-.ai-answer-card__stream::after {
-  content: '▍'; color: var(--text-faint); margin-inline-start: 2px;
-  animation: aiBlink .9s steps(1) infinite;
-}
-@keyframes aiBlink { 50% { opacity: 0; } }
+  const index = await QuranData.getIndex();
 
-/* --- Answer card --- */
-.ai-answer-card { padding: 14px; margin-top: 10px; }
+  let currentAyah = readCurrentAyah();
+  let streamAbort = null;
+  let pendingModelId = getStoredModelId();
+  let renderedModelId = pendingModelId;
+  let modelScoresCache = new Map();
 
-.ai-answer-card__question {
-  padding: 8px 12px; margin-bottom: 10px;
-  border-radius: 8px;
-  background: var(--surface); border: 1px dashed var(--border-soft);
-  font-size: .82rem; line-height: 1.7; color: var(--text-dim);
-  white-space: pre-wrap;
-}
-.ai-answer-card__q-label {
-  display: inline-block; margin-inline-end: 8px;
-  font-size: .68rem; font-weight: 700; letter-spacing: .03em;
-  color: var(--text-faint);
-}
+  function readCurrentAyah() {
+    const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
+    const a = Number(document.getElementById('formAyahSelect')?.value) || 1;
+    return { surah: s, ayah: a };
+  }
 
-.ai-answer-card__title {
-  margin: 2px 0 10px;
-  font-size: 1.02rem; font-weight: 700; line-height: 1.6;
-  color: var(--text);
-  text-align: right;
-}
+  let refreshTimer = null;
+  function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => {
+      const next = readCurrentAyah();
+      if (next.surah === currentAyah.surah && next.ayah === currentAyah.ayah) return;
+      currentAyah = next;
+      onAyahChanged();
+    }, 140);
+  }
 
-/* --- Sectioned blocks (compact, muted) --- */
-.ai-section {
-  --hue: 200;
-  position: relative;
-  margin-top: 6px;
-  padding: 9px 12px 10px;
-  border-radius: 10px;
-  background: color-mix(in srgb, hsl(var(--hue) 40% 55%) 4%, var(--card));
-  border: 1px solid var(--border-soft);
-  overflow: hidden;
-  transition: border-color .2s ease;
-}
-.ai-section[data-editing="true"] {
-  border-color: var(--border);
-}
-.ai-section::before {
-  content: '';
-  position: absolute; inset-inline-start: 0;
-  top: 12%; bottom: 12%; width: 2px;
-  border-radius: 2px;
-  background: hsl(var(--hue) 45% 60% / .65);
-}
+  const frameEl = document.getElementById('workAyahFrame');
+  if (frameEl) {
+    new MutationObserver(scheduleRefresh).observe(frameEl, { childList: true, subtree: true });
+  }
 
-.ai-section__header {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; margin-bottom: 6px;
-}
-.ai-section__label {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 1px 9px 1px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, hsl(var(--hue) 45% 55%) 10%, transparent);
-  color: hsl(var(--hue) 45% 72%);
-  font-size: .68rem; font-weight: 700;
-}
-.ai-section__dot {
-  width: 4px; height: 4px; border-radius: 50%;
-  background: hsl(var(--hue) 55% 62%);
-}
-.ai-section__actions {
-  display: flex; gap: 2px;
-  opacity: 0; transition: opacity .2s ease;
-}
-.ai-section:hover .ai-section__actions,
-.ai-section[data-editing="true"] .ai-section__actions { opacity: 1; }
-.ai-section__btn {
-  all: unset;
-  width: 22px; height: 22px;
-  display: inline-flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: .76rem; line-height: 1;
-  color: var(--text-faint);
-  transition: background .2s ease, color .2s ease;
-}
-.ai-section__btn:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-.ai-section__btn[data-section-action="delete"]:hover {
-  background: color-mix(in srgb, var(--danger) 15%, transparent);
-  color: var(--danger);
-}
+  async function onAyahChanged() {
+    if (streamAbort) { streamAbort.abort(); streamAbort = null; }
+    setStatus('idle');
+    answerEl.innerHTML = '';
+    inputEl.value = '';
+    await renderHistory();
+  }
 
-.ai-section__body {
-  font-size: .9rem; line-height: 1.95; color: var(--text);
-  overflow-wrap: anywhere;
-}
-.ai-section__body p:first-child { margin-top: 0; }
-.ai-section__body p:last-child  { margin-bottom: 0; }
-.ai-section__body :is(ul, ol)   { padding-inline-start: 1.5em; margin: .4em 0; }
-.ai-section__body :is(h1,h2,h3,h4) {
-  font-size: .96rem; font-weight: 700; margin: .8em 0 .35em;
-}
-.ai-section__body blockquote {
-  margin: .6em 0; padding: .4em .9em;
-  border-inline-start: 2px solid var(--border);
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--text-dim);
-}
-.ai-section__body code {
-  padding: .12em .35em; border-radius: 4px;
-  background: var(--surface-2);
-  font: .85em ui-monospace, SFMono-Regular, Menlo, monospace;
-  direction: ltr; unicode-bidi: embed;
-}
-.ai-section__body pre {
-  margin: .6em 0; padding: 10px 12px; border-radius: 8px;
-  background: var(--surface-2);
-  overflow-x: auto; direction: ltr; text-align: left;
-}
+  // ---------- Model picker ----------
+  function getStoredModelId() {
+    try {
+      const v = localStorage.getItem('askAiModel');
+      if (v && CONFIG.OPENROUTER_MODELS.some((m) => m.id === v)) return v;
+    } catch (e) {}
+    return CONFIG.OPENROUTER_DEFAULT_MODEL;
+  }
+  function setStoredModelId(id) {
+    try { localStorage.setItem('askAiModel', id); } catch (e) {}
+  }
+  function modelById(id) {
+    return CONFIG.OPENROUTER_MODELS.find((m) => m.id === id) || CONFIG.OPENROUTER_MODELS[0];
+  }
 
-/* --- Section edit mode --- */
-.ai-section__edit {
-  width: 100%; min-height: 100px; resize: vertical;
-  padding: 9px 11px; border-radius: 8px;
-  background: var(--read-bg-strong);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--font-ui); font-size: .88rem; line-height: 1.9;
-}
-.ai-section__edit:focus {
-  outline: none; border-color: var(--violet);
-  box-shadow: 0 0 0 3px var(--violet-glow);
-}
-.ai-section__edit-actions {
-  display: flex; gap: 6px; margin-top: 8px;
-}
+  function paintComposerModel() {
+    const m = modelById(renderedModelId);
+    if (modelLabel) modelLabel.textContent = m.provider + ' · ' + m.name;
+  }
 
-/* --- draft "insert" button --- */
-.ai-draft-actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+  async function loadModelScores() {
+    try {
+      modelScoresCache = await Store.getModelScores();
+    } catch (e) {
+      modelScoresCache = new Map();
+    }
+  }
 
-/* --- Refs (with remove button) --- */
-.ai-refs { display: flex; flex-wrap: wrap; gap: 6px; }
-.ai-ref {
-  display: inline-flex; align-items: center; gap: 3px;
-  padding: 3px 3px 3px 10px; border-radius: 999px;
-  background: color-mix(in srgb, hsl(var(--hue) 45% 55%) 10%, transparent);
-  border: 1px solid var(--border-soft);
-  color: hsl(var(--hue) 45% 75%);
-  font-size: .76rem; font-weight: 600;
-  transition: filter .2s ease;
-}
-.ai-ref:hover { filter: brightness(1.15); }
-.ai-ref > a { color: inherit; text-decoration: none; }
-.ai-ref__remove {
-  all: unset;
-  width: 17px; height: 17px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: .7rem; line-height: 1;
-  opacity: .5; transition: opacity .15s ease, background .15s ease;
-}
-.ai-ref__remove:hover {
-  opacity: 1;
-  background: rgba(255,255,255,.1);
-}
+  function scoreChipHtml(modelId) {
+    const s = modelScoresCache.get(modelId);
+    if (!s || (!s.voters && !s.score)) return '';
+    const sign = s.score > 0 ? 'pos' : s.score < 0 ? 'neg' : 'zero';
+    const txt = (s.score > 0 ? '+' : '') + UI.toPersianDigits(s.score);
+    return `<span class="ai-model-card__score" data-sign="${sign}">⭐ ${txt}</span>`;
+  }
 
-/* --- Tag pills (with remove button) --- */
-.ai-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-.ai-tag-pill {
-  display: inline-flex; align-items: center; gap: 1px;
-  padding: 1px 3px 1px 1px; border: 1px solid; border-radius: 999px;
-  background: var(--surface-2);
-  font-size: .74rem; font-weight: 600;
-}
-.ai-tag-pill__add {
-  all: unset;
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 2px 7px 2px 5px; border-radius: 999px;
-  cursor: pointer;
-  transition: filter .2s ease;
-}
-.ai-tag-pill__add:hover { filter: brightness(1.15); }
-.ai-tag-pill__plus {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 14px; height: 14px; border-radius: 50%;
-  background: rgba(255,255,255,.1);
-  font-size: .72rem; line-height: 1;
-}
-.ai-tag-pill__remove {
-  all: unset;
-  width: 17px; height: 17px; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: .7rem; line-height: 1;
-  opacity: .5; transition: opacity .15s ease, background .15s ease;
-}
-.ai-tag-pill__remove:hover {
-  opacity: 1;
-  background: rgba(255,255,255,.1);
-}
+  function paintModelsList() {
+    modelsListEl.innerHTML = CONFIG.OPENROUTER_MODELS.map((m) => {
+      const selected = m.id === pendingModelId ? 'true' : 'false';
+      const isAuto = !!m.auto;
 
-/* --- Footer --- */
-.ai-answer-card__footer {
-  margin-top: 10px; padding-top: 8px;
-  border-top: 1px dashed var(--border-soft);
-  font-size: .7rem; color: var(--text-faint);
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-}
-.ai-answer-card__footer code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: .68rem; direction: ltr; unicode-bidi: embed;
-  padding: 1px 7px; border-radius: 999px;
-  background: var(--surface-2); color: var(--text-dim);
-}
-.ai-answer-card__delete {
-  all: unset;
-  margin-inline-start: auto;
-  cursor: pointer;
-  padding: 2px 8px; border-radius: 999px;
-  font-size: .7rem; color: var(--text-faint);
-  transition: color .15s ease, background .15s ease;
-}
-.ai-answer-card__delete:hover {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 12%, transparent);
-}
+      const badge = m.default
+        ? '<span class="ai-model-card__badge">پیش‌فرض</span>'
+        : (m.star ? '<span class="ai-model-card__badge" style="background:var(--surface-2);color:var(--text-faint);">★</span>' : '');
 
-/* --- History list --- */
-.ai-history { margin-top: 14px; display: flex; flex-direction: column; gap: 6px; }
-.ai-history__head {
-  font-size: .72rem; font-weight: 700; color: var(--text-faint);
-  margin-bottom: 2px;
-}
-.ai-history-item {
-  border-radius: 12px; padding: 0;
-  background: var(--card); border: 1px solid var(--border-soft);
-  overflow: hidden;
-}
-.ai-history-item__head {
-  padding: 8px 12px; cursor: pointer;
-  display: flex; align-items: center; gap: 10px; justify-content: space-between;
-  font-size: .8rem; color: var(--text-dim);
-}
-.ai-history-item__q {
-  flex: 1; min-width: 0;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.ai-history-item__date { font-size: .68rem; color: var(--text-faint); flex-shrink: 0; }
-.ai-history-item__body { padding: 0 12px 12px; }
-.ai-history-item[data-open="false"] .ai-history-item__body { display: none; }
+      const scoreHtml = isAuto ? '' : scoreChipHtml(m.id);
 
-/* --- Light theme --- */
-[data-theme="light"] .ai-section__label { color: hsl(var(--hue) 45% 34%); }
-[data-theme="light"] .ai-ref { color: hsl(var(--hue) 45% 34%); }
-[data-theme="light"] .ai-status[data-state="done"]      { background: hsl(150 50% 38%); }
-[data-theme="light"] .ai-status[data-state="streaming"] { background: hsl(40 80% 45%); }
-[data-theme="light"] .ai-status[data-state="error"]     { background: hsl(0 65% 48%); }
+      const statsHtml = isAuto ? '' : `
+        <div class="ai-model-card__stats">
+          <span><b>${m.tps}</b> t/s</span>
+          <span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span>
+          <span><b>${AiFormat.escapeHtml(m.size)}</b></span>
+        </div>`;
 
-/* --- Model picker modal --- */
-.ai-models-modal { display: flex; flex-direction: column; max-height: 88vh; padding: 18px 16px 16px; }
-.ai-models-list {
-  flex: 1 1 auto; min-height: 0; overflow-y: auto;
-  display: flex; flex-direction: column; gap: 10px;
-  padding-inline-end: 4px; margin-bottom: 12px;
-}
-.ai-models-list::-webkit-scrollbar { width: 8px; }
-.ai-models-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.ai-models-list::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+      const idHtml = isAuto ? '' : `<code class="ai-model-card__id">${AiFormat.escapeHtml(m.id)}</code>`;
 
-.ai-model-card {
-  all: unset; cursor: pointer;
-  display: block; padding: 14px 16px;
-  border-radius: 14px;
-  background: var(--card-2); border: 1px solid var(--border);
-  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-}
-.ai-model-card:hover { border-color: var(--violet); }
-.ai-model-card[data-selected="true"] {
-  border-color: var(--violet);
-  background: color-mix(in srgb, var(--violet) 10%, var(--card-2));
-  box-shadow: 0 0 0 3px var(--violet-glow);
-}
-.ai-model-card__head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
-.ai-model-card__provider {
-  font-size: .68rem; font-weight: 800; letter-spacing: .08em;
-  color: var(--text-faint); text-transform: uppercase;
-}
-.ai-model-card__name {
-  font-size: .96rem; font-weight: 800; color: var(--text);
-}
-.ai-model-card__badge {
-  margin-inline-start: auto;
-  font-size: .68rem; font-weight: 700;
-  padding: 2px 10px; border-radius: 999px;
-  background: var(--violet-glow); color: var(--violet);
-}
-.ai-model-card__desc { margin: 4px 0 10px; font-size: .82rem; line-height: 1.8; color: var(--text-dim); }
-.ai-model-card__stats {
-  display: flex; gap: 14px; flex-wrap: wrap;
-  font-size: .72rem; color: var(--text-faint);
-  margin-bottom: 8px;
-}
-.ai-model-card__stats b { color: var(--text-dim); font-weight: 700; }
-.ai-model-card__id {
-  display: block;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: .68rem; color: var(--text-faint);
-  direction: ltr; text-align: left;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.ai-models-modal__footer { flex-shrink: 0; display: flex; gap: 8px; }
+      return `
+        <button type="button" class="ai-model-card" data-id="${m.id}" data-selected="${selected}">
+          <div class="ai-model-card__head">
+            <span class="ai-model-card__provider">${AiFormat.escapeHtml(m.provider)}</span>
+            <span class="ai-model-card__name">${AiFormat.escapeHtml(m.name)}</span>
+            ${scoreHtml}
+            ${badge}
+          </div>
+          <p class="ai-model-card__desc">${AiFormat.escapeHtml(m.desc)}</p>
+          ${statsHtml}
+          ${idHtml}
+        </button>`;
+    }).join('');
 
-/* --- Responsive --- */
-@media (max-width: 640px) {
-  .ai-section__actions { opacity: 1; }
-}
-@media (max-width: 560px) {
-  .ai-answer-card { padding: 12px; }
-  .ai-section { padding: 8px 10px 10px; }
-  .ai-section__body { font-size: .86rem; }
-  .ai-answer-card__title { font-size: .98rem; }
-  .ai-models-modal { padding: 14px 12px; max-height: 92vh; }
-}
+    modelsListEl.querySelectorAll('.ai-model-card').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        pendingModelId = btn.getAttribute('data-id');
+        paintModelsList();
+      });
+    });
+  }
+
+  async function openModels() {
+    pendingModelId = renderedModelId;
+    await loadModelScores();
+    paintModelsList();
+    modelsModal.hidden = false;
+  }
+  function closeModels() { modelsModal.hidden = true; }
+
+  if (composerModel) composerModel.addEventListener('click', openModels);
+  if (closeModelsBtn) closeModelsBtn.addEventListener('click', closeModels);
+  modelsModal.addEventListener('click', (e) => { if (e.target === modelsModal) closeModels(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modelsModal.hidden) closeModels();
+  });
+  if (saveModelBtn) saveModelBtn.addEventListener('click', () => {
+    renderedModelId = pendingModelId;
+    setStoredModelId(renderedModelId);
+    paintComposerModel();
+    closeModels();
+    UI.toast('مدل ذخیره شد');
+  });
+
+  paintComposerModel();
+
+  function setStatus(state) { statusEl.setAttribute('data-state', state); }
+
+  async function generationScore(modelId) {
+    if (!modelScoresCache.has(modelId)) await loadModelScores();
+    const s = modelScoresCache.get(modelId);
+    return s ? s.score : 0;
+  }
+
+  // ---------- Ask ----------
+  async function askAi(question) {
+    const modelId = renderedModelId;
+    const model = modelById(modelId);
+    const isAuto = !!model.auto;
+    const surahMeta = index.find((s) => s.number === currentAyah.surah);
+    const surahName = surahMeta ? surahMeta.name_fa : String(currentAyah.surah);
+
+    let ayahText = '', ayahTranslation = '';
+    try {
+      const surahData = await QuranData.getSurah(currentAyah.surah);
+      const ay = surahData.ayahs.find((x) => x.v === currentAyah.ayah);
+      if (ay) { ayahText = ay.ar; ayahTranslation = ay.fa; }
+    } catch (e) {}
+
+    streamAbort = new AbortController();
+    submitBtn.disabled = true;
+    setStatus('streaming');
+    let acc = '';
+    let realModel = ''; // ← مدل واقعی که OpenRouter برمی‌گرداند
+    AiFormat.renderStreaming(answerEl, question, '', model.name);
+
+    const url = CONFIG.SUPABASE_URL + '/functions/v1/bright-api';
+    let res;
+    try {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({
+          surah: currentAyah.surah,
+          ayah: currentAyah.ayah,
+          surahName, ayahText, ayahTranslation,
+          question, model: modelId,
+        }),
+        signal: streamAbort.signal,
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      finishWithError(err);
+      return;
+    }
+
+    if (!res.ok || !res.body) {
+      const errTxt = await res.text().catch(() => '');
+      finishWithError(new Error(errTxt || ('HTTP ' + res.status)));
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split('\n\n');
+        buf = parts.pop() || '';
+        for (const part of parts) {
+          const lines = part.split('\n');
+          let event = 'message';
+          let data = '';
+          for (const line of lines) {
+            if (line.startsWith('event: ')) event = line.slice(7).trim();
+            else if (line.startsWith('data: ')) data += line.slice(6);
+          }
+          if (!data && event !== 'done') continue;
+          if (event === 'done') continue;
+          if (event === 'error') {
+            let msg = 'خطای استریم';
+            try { msg = JSON.parse(data).error || msg; } catch (e) {}
+            finishWithError(new Error(msg));
+            return;
+          }
+          try {
+            const j = JSON.parse(data);
+            if (j.model) realModel = j.model;
+            if (j.delta) {
+              acc += j.delta;
+              AiFormat.renderStreaming(
+                answerEl, question, acc,
+                realModel || model.name
+              );
+            }
+            if (j.error) { finishWithError(new Error(j.error)); return; }
+          } catch (e) {}
+        }
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      finishWithError(err);
+      return;
+    }
+
+    // اگر هیچ‌وقت مدل واقعی نیامد، برگرد به انتخاب کاربر
+    if (!realModel) realModel = modelId;
+
+    // ---- finalize ----
+    const parsed = AiFormat.parse(acc);
+
+    let askRow = null;
+    try {
+      askRow = await Store.saveAskAi({
+        surah: currentAyah.surah,
+        ayah: currentAyah.ayah,
+        model: realModel,
+        question,
+        answerRaw: acc,
+      });
+    } catch (e) { console.warn('ask_ai save failed', e); }
+
+    let generationId = null;
+    if (askRow) {
+      try {
+        const gen = await Store.createGeneration({
+          source: 'ask_ai',
+          refId: askRow.id,
+          model: realModel,
+        });
+        generationId = gen.id;
+      } catch (e) { console.warn('generation save failed', e); }
+    }
+
+    const sc = await generationScore(realModel);
+
+    AiFormat.render(answerEl, parsed, {
+      model: realModel,
+      question,
+      surahIndex: index,
+      generationId,
+      refId: askRow ? askRow.id : null,
+      myVote: 0,
+      modelScore: sc,
+    });
+    AiFormat.wireCard(answerEl, parsed, {
+      generationId,
+      refId: askRow ? askRow.id : null,
+      model: realModel,
+      question,
+      surahIndex: index,
+      modelScore: sc,
+      modelScoreAfter: async () => await generationScore(realModel),
+      onAfterVote: async () => { await loadModelScores(); },
+      onAfterSectionChange: async () => { await renderHistory(); },
+      onAfterDelete: async () => {
+        answerEl.innerHTML = '';
+        await renderHistory();
+      },
+    });
+
+    setStatus('done');
+    submitBtn.disabled = false;
+    streamAbort = null;
+
+    await renderHistory();
+  }
+
+  function finishWithError(err) {
+    console.error('[ask-ai]', err);
+    setStatus('error');
+    submitBtn.disabled = false;
+    streamAbort = null;
+    UI.toast('خطا: ' + (err.message || 'نامشخص'));
+  }
+
+  // ---------- History ----------
+  async function renderHistory() {
+    let rows = [];
+    try {
+      rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20);
+    } catch (e) {}
+
+    if (!rows || !rows.length) { historyEl.innerHTML = ''; return; }
+
+    const enriched = await Promise.all(rows.map(async (r) => {
+      let gen = null;
+      try { gen = await Store.getLatestGeneration('ask_ai', r.id); } catch (e) {}
+      return { ...r, gen };
+    }));
+
+    historyEl.innerHTML = `
+      <div class="ai-history">
+        <div class="ai-history__head">پرسش‌های پیشین برای این آیه</div>
+        ${enriched.map((r, i) => {
+          const date = new Date(r.created_at).toLocaleDateString('fa-IR');
+          return `
+            <div class="ai-history-item" data-open="${i === 0 ? 'true' : 'false'}" data-id="${r.id}">
+              <div class="ai-history-item__head">
+                <span class="ai-history-item__q">${AiFormat.escapeHtml(r.question)}</span>
+                <span class="ai-history-item__date">${date}</span>
+              </div>
+              <div class="ai-history-item__body"></div>
+            </div>`;
+        }).join('')}
+      </div>`;
+
+    historyEl.querySelectorAll('.ai-history-item').forEach((item) => {
+      const id = item.getAttribute('data-id');
+      const row = enriched.find((r) => r.id === id);
+      const bodyEl = item.querySelector('.ai-history-item__body');
+      const head = item.querySelector('.ai-history-item__head');
+      let rendered = false;
+
+      const openIt = async () => {
+        if (rendered) return;
+        const parsed = AiFormat.parse(row.answer_raw || '');
+        const genId = row.gen ? row.gen.id : null;
+        const sc = row.model ? await generationScore(row.model) : 0;
+        AiFormat.render(bodyEl, parsed, {
+          model: row.model,
+          question: row.question,
+          surahIndex: index,
+          generationId: genId,
+          refId: row.id,
+          myVote: 0,
+          modelScore: sc,
+        });
+        AiFormat.wireCard(bodyEl, parsed, {
+          generationId: genId,
+          refId: row.id,
+          model: row.model,
+          question: row.question,
+          surahIndex: index,
+          modelScore: sc,
+          modelScoreAfter: async () => row.model ? await generationScore(row.model) : 0,
+          onAfterVote: async () => { await loadModelScores(); },
+          onAfterSectionChange: async () => { await renderHistory(); },
+          onAfterDelete: async () => { await renderHistory(); },
+        });
+        rendered = true;
+      };
+      if (item.getAttribute('data-open') === 'true') openIt();
+
+      head.addEventListener('click', async () => {
+        const isOpen = item.getAttribute('data-open') === 'true';
+        item.setAttribute('data-open', isOpen ? 'false' : 'true');
+        if (!isOpen) await openIt();
+      });
+    });
+  }
+
+  function submit() {
+    const q = inputEl.value.trim();
+    if (!q) { UI.toast('پرسشی بنویسید'); return; }
+    inputEl.value = '';
+    askAi(q);
+  }
+  submitBtn.addEventListener('click', submit);
+  inputEl.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); }
+  });
+
+  setStatus('idle');
+  await loadModelScores();
+  await renderHistory();
+})();
