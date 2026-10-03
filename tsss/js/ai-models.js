@@ -1,15 +1,21 @@
-// =============================================================
-// کاتالوگ مدل‌های رایگان OpenRouter — به CONFIG اضافه می‌شود.
+// کاتالوگ مدل‌های آزاد OpenRouter — به CONFIG اضافه می‌شود.
 // این فایل باید بعد از js/config.js بارگذاری شود.
-// =============================================================
 (function () {
   const MODELS = [
+    {
+      id: 'openrouter/free',
+      provider: 'OpenRouter',
+      name: 'انتخاب خودکار',
+      auto: true,
+      default: true,
+      desc: 'اوپن‌روتر خودش از میان مدل‌های آزاد مناسب‌ترین را برای این پرسش برمی‌گزیند. مدل واقعی پس از پاسخ، در پایین کارت نمایش داده می‌شود و همان امتیاز می‌گیرد.',
+    },
     {
       id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
       provider: 'NVIDIA', name: 'Nemotron 3 Ultra',
       ctx: '1M', size: '550B', tps: 44,
       desc: 'پرقدرت‌ترین گزینه — پیشنهاد اول برای تحلیل چندلایه و پاسخ‌های عمیق.',
-      default: true, star: true,
+      star: true,
     },
     {
       id: 'inclusionai/ling-3.0-flash-fin:free',
