@@ -33,9 +33,7 @@ const AiFormat = (function () {
       </div>`;
     document.body.appendChild(el);
 
-    el.addEventListener('click', (e) => {
-      if (e.target === el) closeConfirm(false);
-    });
+    el.addEventListener('click', (e) => { if (e.target === el) closeConfirm(false); });
     el.querySelector('[data-confirm-cancel]').addEventListener('click', () => closeConfirm(false));
     el.querySelector('[data-confirm-ok]').addEventListener('click', () => closeConfirm(true));
 
@@ -50,14 +48,9 @@ const AiFormat = (function () {
   function closeConfirm(result) {
     if (!confirmEl || confirmEl.hidden) return;
     confirmEl.hidden = true;
-    if (confirmResolve) {
-      const r = confirmResolve;
-      confirmResolve = null;
-      r(result);
-    }
+    if (confirmResolve) { const r = confirmResolve; confirmResolve = null; r(result); }
   }
 
-  // confirmDialog({ title, message, confirmText, cancelText }) → Promise<boolean>
   function confirmDialog(opts) {
     const o = typeof opts === 'string' ? { message: opts } : (opts || {});
     const el = ensureConfirmEl();
@@ -66,12 +59,10 @@ const AiFormat = (function () {
     el.querySelector('[data-confirm-ok]').textContent = o.confirmText || 'حذف';
     el.querySelector('[data-confirm-cancel]').textContent = o.cancelText || 'انصراف';
     el.hidden = false;
-
     setTimeout(() => {
       const c = el.querySelector('[data-confirm-cancel]');
       if (c) c.focus();
     }, 30);
-
     return new Promise((resolve) => { confirmResolve = resolve; });
   }
 
@@ -200,6 +191,19 @@ const AiFormat = (function () {
       </div>`;
   }
 
+  // ---- کارت پرسش جمع‌وجور ----
+  function questionBarHtml({ question, canDelete }) {
+    const del = canDelete
+      ? `<button type="button" class="ai-delete-question" data-ai-delete-question aria-label="حذف این پرسش" title="حذف این پرسش">✕</button>`
+      : '';
+    return `
+      <div class="ai-answer-card__question">
+        <span class="ai-answer-card__q-label">پرسش</span>
+        <span class="ai-answer-card__q-text">${escapeHtml(question || '')}</span>
+        ${del}
+      </div>`;
+  }
+
   function feedbackBarHtml({ model, score, myVote }) {
     const sign = score > 0 ? 'pos' : score < 0 ? 'neg' : 'zero';
     const scoreText = (score > 0 ? '+' : '') + UI.toPersianDigits(score);
@@ -227,14 +231,7 @@ const AiFormat = (function () {
     const canClose = !!(opts && opts.refId);
     const canDelete = !!(opts && opts.refId);
 
-    const qHtml = `
-      <div class="ai-answer-card__question">
-        <div class="ai-answer-card__question-head">
-          <span class="ai-answer-card__q-label">پرسش شما</span>
-          ${canDelete ? `<button type="button" class="ai-delete-question" data-ai-delete-question aria-label="حذف این پرسش" title="حذف این پرسش">🗑</button>` : ''}
-        </div>
-        <div class="ai-answer-card__q-text">${escapeHtml(question || '')}</div>
-      </div>`;
+    const qHtml = questionBarHtml({ question, canDelete });
 
     if (!parsed.ok) {
       container.innerHTML = `
@@ -332,12 +329,7 @@ const AiFormat = (function () {
   function renderStreaming(container, question, text, model) {
     container.innerHTML = `
       <div class="ai-answer-card card">
-        <div class="ai-answer-card__question">
-          <div class="ai-answer-card__question-head">
-            <span class="ai-answer-card__q-label">پرسش شما</span>
-          </div>
-          <div class="ai-answer-card__q-text">${escapeHtml(question || '')}</div>
-        </div>
+        ${questionBarHtml({ question, canDelete: false })}
         <div class="ai-answer-card__stream" id="aiStreamBox">${escapeHtml(text || '')}</div>
         <div class="ai-answer-card__footer">
           پاسخ از: <code>${escapeHtml(model || '—')}</code>
@@ -352,7 +344,6 @@ const AiFormat = (function () {
   function wireCard(rootEl, parsed, opts) {
     const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
 
-    // درج پیش‌نویس
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed && parsed.draft) {
       insertBtn.addEventListener('click', () => {
@@ -367,7 +358,6 @@ const AiFormat = (function () {
       });
     }
 
-    // برچسب‌های پیشنهادی
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -381,7 +371,6 @@ const AiFormat = (function () {
       });
     });
 
-    // حذف بخش
     if (refId && parsed && parsed.ok) {
       rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
         btn.addEventListener('click', async () => {
@@ -426,14 +415,13 @@ const AiFormat = (function () {
       });
     }
 
-    // حذف کل پاسخ (دکمهٔ روی پرسش)
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
         delBtn.addEventListener('click', async () => {
           const ok = await confirmDialog({
-            title: 'حذف این پرسش',
-            message: 'کل این پرسش و پاسخ آن برای همیشه حذف می‌شود. ادامه؟',
+            title: 'حذف پرسش',
+            message: 'کل این پرسش و پاسخش برای همیشه حذف می‌شود.',
             confirmText: 'حذف',
           });
           if (!ok) return;
@@ -451,10 +439,7 @@ const AiFormat = (function () {
       }
     }
 
-    // رأی‌ها
-    if (generationId != null) {
-      wireVotes(rootEl, generationId, onAfterVote);
-    }
+    if (generationId != null) wireVotes(rootEl, generationId, onAfterVote);
   }
 
   function wireVotes(rootEl, generationId, onAfterVote) {
