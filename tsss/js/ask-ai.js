@@ -174,7 +174,6 @@
   async function askAi(question) {
     const modelId = renderedModelId;
     const model = modelById(modelId);
-    const isAuto = !!model.auto;
     const surahMeta = index.find((s) => s.number === currentAyah.surah);
     const surahName = surahMeta ? surahMeta.name_fa : String(currentAyah.surah);
 
@@ -189,8 +188,8 @@
     submitBtn.disabled = true;
     setStatus('streaming');
     let acc = '';
-    let realModel = ''; // ← مدل واقعی که OpenRouter برمی‌گرداند
-    AiFormat.renderStreaming(answerEl, question, '', isAuto ? model.name : model.name);
+    let realModel = '';
+    AiFormat.renderStreaming(answerEl, question, '', model.name);
 
     const url = CONFIG.SUPABASE_URL + '/functions/v1/bright-api';
     let res;
@@ -253,10 +252,7 @@
             if (j.model) realModel = j.model;
             if (j.delta) {
               acc += j.delta;
-              AiFormat.renderStreaming(
-                answerEl, question, acc,
-                realModel || model.name
-              );
+              AiFormat.renderStreaming(answerEl, question, acc, realModel || model.name);
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
           } catch (e) {}
@@ -268,22 +264,28 @@
       return;
     }
 
-    // اگر هیچ‌وقت مدل واقعی نیامد (نباید بشود)، برگرد به انتخاب کاربر
     if (!realModel) realModel = modelId;
 
-    // ---- finalize ----
+    console.log('[ask-ai] stream finished. realModel =', realModel, 'acc.length =', acc.length);
+
     const parsed = AiFormat.parse(acc);
 
+    // ---------- ذخیره‌سازی ----------
+    console.log('[ask-ai] calling saveAskAi...');
     let askRow = null;
     try {
       askRow = await Store.saveAskAi({
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
-        model: realModel,           // ← مدل واقعی ذخیره می‌شود
+        model: realModel,
         question,
         answerRaw: acc,
       });
-    } catch (e) { console.warn('ask_ai save failed', e); }
+      console.log('[ask-ai] saveAskAi OK, id =', askRow && askRow.id);
+    } catch (e) {
+      console.error('[ask-ai] saveAskAi FAILED:', e);
+      UI.toast('ذخیرهٔ پاسخ ناموفق بود: ' + (e?.message || e?.details || e?.hint || 'خطای نامشخص'));
+    }
 
     let generationId = null;
     if (askRow) {
@@ -291,25 +293,40 @@
         const gen = await Store.createGeneration({
           source: 'ask_ai',
           refId: askRow.id,
-          model: realModel,         // ← امتیاز به مدل واقعی می‌رود
+          model: realModel,
         });
         generationId = gen.id;
-      } catch (e) { console.warn('generation save failed', e); }
+        console.log('[ask-ai] createGeneration OK, id =', generationId);
+      } catch (e) {
+        console.error('[ask-ai] createGeneration FAILED:', e);
+      }
     }
 
     const sc = await generationScore(realModel);
 
     AiFormat.render(answerEl, parsed, {
-      model: realModel,             // ← در footer هم مدل واقعی
+      model: realModel,
       question,
       surahIndex: index,
       generationId,
+      refId: askRow ? askRow.id : null,
       myVote: 0,
       modelScore: sc,
     });
     AiFormat.wireCard(answerEl, parsed, {
       generationId,
+      refId: askRow ? askRow.id : null,
+      model: realModel,
+      question,
+      surahIndex: index,
+      modelScore: sc,
+      modelScoreAfter: async () => await generationScore(realModel),
       onAfterVote: async () => { await loadModelScores(); },
+      onAfterSectionChange: async () => { await renderHistory(); },
+      onAfterDelete: async () => {
+        answerEl.innerHTML = '';
+        await renderHistory();
+      },
     });
 
     setStatus('done');
@@ -332,13 +349,16 @@
     let rows = [];
     try {
       rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20);
-    } catch (e) {}
+    } catch (e) {
+      console.error('[ask-ai] getAskAiHistory failed:', e);
+    }
 
     if (!rows || !rows.length) { historyEl.innerHTML = ''; return; }
 
     const enriched = await Promise.all(rows.map(async (r) => {
       let gen = null;
-      try { gen = await Store.getLatestGeneration('ask_ai', r.id); } catch (e) {}
+      try { gen = await Store.getLatestGeneration('ask_ai', r.id); }
+      catch (e) { console.error('[ask-ai] getLatestGeneration failed:', e, r.id); }
       return { ...r, gen };
     }));
 
@@ -375,12 +395,21 @@
           question: row.question,
           surahIndex: index,
           generationId: genId,
+          refId: row.id,
           myVote: 0,
           modelScore: sc,
         });
         AiFormat.wireCard(bodyEl, parsed, {
           generationId: genId,
+          refId: row.id,
+          model: row.model,
+          question: row.question,
+          surahIndex: index,
+          modelScore: sc,
+          modelScoreAfter: async () => row.model ? await generationScore(row.model) : 0,
           onAfterVote: async () => { await loadModelScores(); },
+          onAfterSectionChange: async () => { await renderHistory(); },
+          onAfterDelete: async () => { await renderHistory(); },
         });
         rendered = true;
       };
