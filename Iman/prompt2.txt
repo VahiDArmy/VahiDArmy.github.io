@@ -1,5 +1,22 @@
-The two-dimensional aerodynamic trajectory model is defined in Appendix A, Section A.1.1 of FAA Report DOT/FAA/AR-99/11, Large Engine Uncontained Debris Analysis (May 1999), specifically on pages A-1 and A-2. Figure A-1 in that appendix presents the selected coordinate system for the debris trajectory model. The equations for relative wind, drag, drag components, accelerations, and the explicit Euler integration scheme are given on page A-1 and continue onto page A-2. The drag coefficient of 1.17 for a tumbling rectangular plate, with an average tumbling orientation of 45° for frontal area, is also specified on page A-2. The same appendix is reproduced in ATSB Investigation AO-2010-089 (Qantas A380, Batam Island), where it is also labeled Appendix A and describes the model identically.
+Actually it is from my other project.
+yes edge function. my key as edge secret is: "OPENROUTER_API_KEY"
+rest is totally un related to other code (we may change other code, but for now lets focous on this)
+my other project got a list of free open router models. as attache image.
+here is the list, from this list you only get the list (links like nvidia/nemotron-3-ultra-550b-a55b:free)
+nvidia/nemotron-3-ultra-550b-a55b:free
+inclusionai/ling-3.0-flash-fin:free
+poolside/laguna-s-2.1:free
+dots-studio/dots-3-note-preview:free
+nvidia/nemotron-3.5-lightning:free
+nvidia/nemotron-3-super-120b-a12b:free
+inclusionai/ling-3.0-flash-sante:free
+cohere/north-mini-code:free
+poolside/laguna-xs-2.1:free
+qwen/qwen3.8-27b:free
+nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free
+liquid/lfm-2.5-2.6b:free
+nvidia/nemotron-3.5-content-safety:free
+google/gemma-4-26b-a4b-it:free
+google/gemma-4-31b-it:free
 
-Write minimal Python code that implements this model for a JT8D-219 LPT Stage 3 blade. The blade is released from the top of the LPT casing (at several clocks and most severe one). Plot the engine outline and the trajectory in a 20 m × 20 m area. Include the key parameters as comments.
-
-i attached scaled views of MD-80. use them as plot base in python (x axis through engine center line)
+you get items from screenshot. but generate actual data on each yourself. i want you to be clear on this. items themselves are felexible. ( my goal is pick up list wont be a dry bare list)
