@@ -34,7 +34,7 @@
   let renderedModelId = pendingModelId;
 
   // ============================================================
-  // Current ayah — از سلكتورهاي work.js می‌خوانیم و با MutationObserver رصد می‌کنیم
+  // Current ayah — با MutationObserver از work.js می‌خوانیم
   // ============================================================
   function readCurrentAyah() {
     const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
@@ -73,11 +73,11 @@
     try {
       const v = localStorage.getItem('askAiModel');
       if (v && CONFIG.OPENROUTER_MODELS.some((m) => m.id === v)) return v;
-    } catch {}
+    } catch (e) {}
     return CONFIG.OPENROUTER_DEFAULT_MODEL;
   }
   function setStoredModelId(id) {
-    try { localStorage.setItem('askAiModel', id); } catch {}
+    try { localStorage.setItem('askAiModel', id); } catch (e) {}
   }
   function modelById(id) {
     return CONFIG.OPENROUTER_MODELS.find((m) => m.id === id) || CONFIG.OPENROUTER_MODELS[0];
@@ -164,7 +164,6 @@
       if (ay) { ayahText = ay.ar; ayahTranslation = ay.fa; }
     } catch (e) { /* keep empty */ }
 
-    // reset UI
     streamAbort = new AbortController();
     submitBtn.disabled = true;
     setStatus('streaming');
@@ -206,7 +205,6 @@
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = '';
-    let gotDone = false;
 
     try {
       while (true) {
@@ -224,10 +222,10 @@
             else if (line.startsWith('data: ')) data += line.slice(6);
           }
           if (!data && event !== 'done') continue;
-          if (event === 'done') { gotDone = true; continue; }
+          if (event === 'done') continue;
           if (event === 'error') {
             let msg = 'خطای استریم';
-            try { msg = JSON.parse(data).error || msg; } catch {}
+            try { msg = JSON.parse(data).error || msg; } catch (e) {}
             finishWithError(new Error(msg));
             return;
           }
@@ -238,7 +236,7 @@
               AiFormat.renderStreaming(answerEl, question, acc, model.name);
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
-          } catch { /* ignore */ }
+          } catch (e) { /* ignore */ }
         }
       }
     } catch (err) {
@@ -247,7 +245,6 @@
       return;
     }
 
-    // finalize
     const parsed = AiFormat.parse(acc);
     AiFormat.render(answerEl, parsed, {
       model: modelId,
@@ -259,7 +256,6 @@
     submitBtn.disabled = false;
     streamAbort = null;
 
-    // persist
     try {
       await Store.saveAskAi({
         surah: currentAyah.surah,
@@ -282,10 +278,9 @@
   }
 
   // ============================================================
-  // Draft / tag actions after render
+  // Draft / tag actions
   // ============================================================
   function wireAnswerActions(rootEl, parsed) {
-    // درج پیش‌نویس در فرم تفسیر
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed.draft) {
       insertBtn.addEventListener('click', () => {
@@ -299,7 +294,6 @@
         UI.toast('پیش‌نویس در فرم درج شد');
       });
     }
-    // افزودن برچسب به فرم
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -330,7 +324,6 @@
         <div class="ai-history__head">پرسش‌های پیشین برای این آیه</div>
         ${rows.map((r, i) => {
           const date = new Date(r.created_at).toLocaleDateString('fa-IR');
-          const parsed = AiFormat.parse(r.answer_raw || '');
           return `
             <div class="ai-history-item" data-open="${i === 0 ? 'true' : 'false'}" data-id="${r.id}">
               <div class="ai-history-item__head">
@@ -342,7 +335,6 @@
         }).join('')}
       </div>`;
 
-    // رندر بدنهٔ هر مورد (به‌صورت تنبل - فقط هنگام باز شدن)
     historyEl.querySelectorAll('.ai-history-item').forEach((item) => {
       const id = item.getAttribute('data-id');
       const row = rows.find((r) => r.id === id);
@@ -362,7 +354,6 @@
           rendered = true;
         }
       };
-      // آیتم باز پیش‌فرض
       if (item.getAttribute('data-open') === 'true') openIt();
 
       head.addEventListener('click', () => {
