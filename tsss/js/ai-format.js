@@ -57,6 +57,32 @@ const AiFormat = (function () {
     return { ok: true, title, answer, insight, refs, tags, draft, caution };
   }
 
+  // بازگرداندن ساختار parse‌شده به متن قالب [[AI]]
+  function serialize(p) {
+    if (!p || !p.ok) return p.raw || '';
+    const cleanAttr = (s) => String(s || '').replace(/[<>&]/g, '');
+    const lines = ['[[AI]]'];
+    if (p.title) lines.push(`<title>${p.title}</title>`);
+    if (p.answer) lines.push(`<answer>\n${p.answer}\n</answer>`);
+    if (p.insight) lines.push(`<insight>\n${p.insight}\n</insight>`);
+    if (p.refs && p.refs.length) {
+      lines.push('<refs>');
+      for (const r of p.refs) {
+        lines.push(`<ref s="${r.surah}" a="${r.ayah}">${cleanAttr(r.label)}</ref>`);
+      }
+      lines.push('</refs>');
+    }
+    if (p.tags && p.tags.length) {
+      lines.push('<tags>');
+      for (const t of p.tags) lines.push(`<tag>${t}</tag>`);
+      lines.push('</tags>');
+    }
+    if (p.draft) lines.push(`<draft>\n${p.draft}\n</draft>`);
+    if (p.caution) lines.push(`<caution>\n${p.caution}\n</caution>`);
+    lines.push('[[/AI]]');
+    return lines.join('\n');
+  }
+
   function renderMarkdown(md) {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) {
@@ -93,22 +119,29 @@ const AiFormat = (function () {
     return html;
   }
 
-  function sectionHtml({ hue, label, body, extra = '' }) {
+  function sectionHtml({ hue, label, body, extra = '', sectionKey = '' }) {
+    const closeBtn = sectionKey
+      ? `<button type="button" class="ai-section__close" data-ai-section-close="${sectionKey}" aria-label="حذف این بخش" title="حذف این بخش">✕</button>`
+      : '';
     return `
-      <div class="ai-section" style="--hue:${hue}">
+      <div class="ai-section" style="--hue:${hue}" data-section="${sectionKey}">
         <div class="ai-section__label">
           <span class="ai-section__dot"></span>${escapeHtml(label)}
+          ${closeBtn}
         </div>
         <div class="ai-section__body">${body}</div>
         ${extra}
       </div>`;
   }
 
-  function feedbackBarHtml({ model, score, myVote }) {
+  function feedbackBarHtml({ model, score, myVote, canDelete }) {
     const sign = score > 0 ? 'pos' : score < 0 ? 'neg' : 'zero';
     const scoreText = (score > 0 ? '+' : '') + UI.toPersianDigits(score);
     const upActive = myVote === 1 ? ' is-active' : '';
     const downActive = myVote === -1 ? ' is-active' : '';
+    const delBtn = canDelete
+      ? `<button type="button" class="ai-delete-answer" data-ai-delete-answer aria-label="حذف کل پاسخ" title="حذف کل پاسخ">🗑</button>`
+      : '';
     return `
       <div class="ai-feedback-bar">
         <span class="ai-feedback-bar__model">
@@ -118,13 +151,14 @@ const AiFormat = (function () {
           ⭐ ${scoreText}
         </span>
         <div class="ai-vote-group">
+          ${delBtn}
           <button type="button" class="ai-vote${upActive}" data-vote="1" aria-label="پسندیدم">👍</button>
           <button type="button" class="ai-vote${downActive}" data-vote="-1" aria-label="نپسندیدم">👎</button>
         </div>
       </div>`;
   }
 
-  // opts: { model, question, surahIndex, generationId, myVote, modelScore }
+  // opts: { model, question, surahIndex, generationId, refId, myVote, modelScore }
   function render(container, parsed, opts) {
     const { model, question, surahIndex } = opts || {};
     const showFeedback = opts && opts.generationId != null;
@@ -147,6 +181,7 @@ const AiFormat = (function () {
             model,
             score: opts.modelScore || 0,
             myVote: opts.myVote || 0,
+            canDelete: !!opts.refId,
           }) : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`}
         </div>`;
       return;
@@ -157,13 +192,13 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340, label: 'پاسخ',
+        hue: 340, label: 'پاسخ', sectionKey: 'answer',
         body: renderRich(parsed.answer, surahIndex, inlineTags),
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210, label: 'نکته',
+        hue: 210, label: 'نکته', sectionKey: 'insight',
         body: renderRich(parsed.insight, surahIndex, inlineTags),
       }));
     }
@@ -176,7 +211,7 @@ const AiFormat = (function () {
         return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270, label: 'ارجاع‌ها',
+        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs',
         body: `<div class="ai-refs">${pills}</div>`,
       }));
     }
@@ -190,13 +225,13 @@ const AiFormat = (function () {
         </button>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150, label: 'برچسب‌های پیشنهادی',
+        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags',
         body: `<div class="ai-tags">${tagPills}</div>`,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40, label: 'پیش‌نویس تفسیر',
+        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft',
         body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
@@ -205,13 +240,18 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0, label: 'احتیاط',
+        hue: 0, label: 'احتیاط', sectionKey: 'caution',
         body: renderRich(parsed.caution, surahIndex, inlineTags),
       }));
     }
 
     const footerHtml = showFeedback
-      ? feedbackBarHtml({ model, score: opts.modelScore || 0, myVote: opts.myVote || 0 })
+      ? feedbackBarHtml({
+          model,
+          score: opts.modelScore || 0,
+          myVote: opts.myVote || 0,
+          canDelete: !!opts.refId,
+        })
       : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`;
 
     container.innerHTML = `
@@ -238,11 +278,12 @@ const AiFormat = (function () {
     if (box) box.scrollTop = box.scrollHeight;
   }
 
-  // اتصال دکمه‌های رأی و برچسب/پیش‌نویس در یک کارت رندرشده.
-  // opts: { generationId, onAfterVote }
+  // opts: { generationId, refId, model, question, surahIndex, modelScore,
+  //        onAfterVote, onAfterDelete, onAfterSectionChange }
   function wireCard(rootEl, parsed, opts) {
-    const { generationId, onAfterVote } = opts || {};
+    const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
 
+    // درج پیش‌نویس
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed && parsed.draft) {
       insertBtn.addEventListener('click', () => {
@@ -257,6 +298,7 @@ const AiFormat = (function () {
       });
     }
 
+    // برچسب‌های پیشنهادی
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -270,6 +312,67 @@ const AiFormat = (function () {
       });
     });
 
+    // حذف بخش
+    if (refId && parsed && parsed.ok) {
+      rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const key = btn.getAttribute('data-ai-section-close');
+          if (!key) return;
+          if (!confirm('این بخش از پاسخ حذف شود؟')) return;
+
+          const next = { ...parsed };
+          if (key === 'refs') next.refs = [];
+          else if (key === 'tags') next.tags = [];
+          else next[key] = null;
+
+          const newRaw = serialize(next);
+          try {
+            await Store.updateAskAiRaw(refId, newRaw);
+            const reparsed = parse(newRaw);
+            const sc = typeof opts.modelScoreAfter === 'function'
+              ? await opts.modelScoreAfter()
+              : (opts.modelScore || 0);
+            render(rootEl, reparsed, {
+              model: opts.model,
+              question: opts.question,
+              surahIndex: opts.surahIndex,
+              generationId,
+              refId,
+              myVote: opts.myVote || 0,
+              modelScore: sc,
+            });
+            wireCard(rootEl, reparsed, { ...opts, modelScore: sc });
+            if (typeof onAfterSectionChange === 'function') onAfterSectionChange();
+            UI.toast('بخش حذف شد');
+          } catch (e) {
+            console.error(e);
+            UI.toast('خطا در حذف بخش');
+          }
+        });
+      });
+    }
+
+    // حذف کل پاسخ
+    if (refId) {
+      const delBtn = rootEl.querySelector('[data-ai-delete-answer]');
+      if (delBtn) {
+        delBtn.addEventListener('click', async () => {
+          if (!confirm('کل این پاسخ از دیتابیس حذف شود؟')) return;
+          try {
+            delBtn.disabled = true;
+            await Store.deleteAskAi(refId);
+            if (typeof onAfterDelete === 'function') onAfterDelete();
+            UI.toast('پاسخ حذف شد');
+          } catch (e) {
+            console.error(e);
+            UI.toast('خطا در حذف پاسخ');
+            delBtn.disabled = false;
+          }
+        });
+      }
+    }
+
+    // رأی‌ها
     if (generationId != null) {
       wireVotes(rootEl, generationId, onAfterVote);
     }
@@ -322,7 +425,7 @@ const AiFormat = (function () {
   }
 
   return {
-    parse, render, renderStreaming, wireCard,
+    parse, serialize, render, renderStreaming, wireCard,
     renderMarkdown, renderRich, escapeHtml,
   };
 })();
