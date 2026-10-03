@@ -159,6 +159,33 @@
 }
 
 /* =========================================================
+   دکمهٔ ✕ روی برچسب بخش‌ها
+   ========================================================= */
+.ai-section__label {
+  width: 100%;
+}
+
+.ai-section__close {
+  all: unset;
+  cursor: pointer;
+  margin-inline-start: auto;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: color-mix(in srgb, hsl(var(--hue) 78% 78%) 55%, transparent);
+  font-size: .7rem;
+  line-height: 1;
+  transition: color .2s ease, background .2s ease;
+}
+.ai-section__close:hover {
+  color: hsl(0 78% 68%);
+  background: hsl(0 70% 55% / .14);
+}
+
+/* =========================================================
    بخش «بخش‌های دیگر» — متنی که در قالب نگنجیده
    ========================================================= */
 .ai-section--muted {
@@ -178,7 +205,7 @@
 .ai-section--muted .ai-section__body { color: var(--text-dim); }
 
 /* =========================================================
-   دکمهٔ حذف روی پرسش
+   دکمهٔ ✕ روی پرسش
    ========================================================= */
 .ai-delete-question {
   all: unset;
