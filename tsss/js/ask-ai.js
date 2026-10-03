@@ -5,12 +5,10 @@
   const section = document.getElementById('askAiSection');
   if (!section) return;
 
-  // اگر کاربر لاگین نیست، بخش را پنهان کن (login-only)
   const session = await Auth.getSession().catch(() => null);
   if (!session) { section.hidden = true; return; }
   section.hidden = false;
 
-  // --- Elements ---
   const composerModel = document.getElementById('askAiCurrentModel');
   const modelLabel    = document.getElementById('askAiModelLabel');
   const inputEl       = document.getElementById('askAiInput');
@@ -27,15 +25,12 @@
 
   const index = await QuranData.getIndex();
 
-  // --- State ---
   let currentAyah = readCurrentAyah();
   let streamAbort = null;
   let pendingModelId = getStoredModelId();
   let renderedModelId = pendingModelId;
 
-  // ============================================================
-  // Current ayah — با MutationObserver از work.js می‌خوانیم
-  // ============================================================
+  // ---------- Current ayah ----------
   function readCurrentAyah() {
     const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
     const a = Number(document.getElementById('formAyahSelect')?.value) || 1;
@@ -66,9 +61,7 @@
     await renderHistory();
   }
 
-  // ============================================================
-  // Model picker
-  // ============================================================
+  // ---------- Model picker ----------
   function getStoredModelId() {
     try {
       const v = localStorage.getItem('askAiModel');
@@ -143,14 +136,10 @@
 
   paintComposerModel();
 
-  // ============================================================
-  // Status light
-  // ============================================================
+  // ---------- Status light ----------
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
 
-  // ============================================================
-  // Streaming
-  // ============================================================
+  // ---------- Streaming ----------
   async function askAi(question) {
     const modelId = renderedModelId;
     const model = modelById(modelId);
@@ -245,19 +234,10 @@
       return;
     }
 
-    const parsed = AiFormat.parse(acc);
-    AiFormat.render(answerEl, parsed, {
-      model: modelId,
-      question,
-      surahIndex: index,
-    });
-    wireAnswerActions(answerEl, parsed);
-    setStatus('done');
-    submitBtn.disabled = false;
-    streamAbort = null;
-
+    // ذخیرهٔ اولیه — قبل از رندر، تا onChange بتواند با id کار کند
+    let savedRow = null;
     try {
-      await Store.saveAskAi({
+      savedRow = await Store.saveAskAi({
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
         model: modelId,
@@ -265,6 +245,20 @@
         answerRaw: acc,
       });
     } catch (e) { console.warn('ask_ai save failed', e); }
+
+    const parsed = AiFormat.parse(acc);
+    AiFormat.render(answerEl, parsed, {
+      model: modelId,
+      question,
+      surahIndex: index,
+      onChange: savedRow
+        ? async (newRaw) => { await Store.updateAskAi(savedRow.id, newRaw); }
+        : null,
+    });
+    wireAnswerActions(answerEl, parsed);
+    setStatus('done');
+    submitBtn.disabled = false;
+    streamAbort = null;
 
     await renderHistory();
   }
@@ -277,9 +271,7 @@
     UI.toast('خطا: ' + (err.message || 'نامشخص'));
   }
 
-  // ============================================================
-  // Draft / tag actions
-  // ============================================================
+  // ---------- Draft / tag actions ----------
   function wireAnswerActions(rootEl, parsed) {
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed.draft) {
@@ -294,9 +286,9 @@
         UI.toast('پیش‌نویس در فرم درج شد');
       });
     }
-    rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
+    rootEl.querySelectorAll('[data-ai-add-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const tag = btn.getAttribute('data-ai-tag');
+        const tag = btn.getAttribute('data-ai-add-tag');
         const inp = document.getElementById('tafsirTags');
         if (!inp) return;
         const parts = Array.from(new Set(
@@ -308,9 +300,7 @@
     });
   }
 
-  // ============================================================
-  // History
-  // ============================================================
+  // ---------- History ----------
   async function renderHistory() {
     let rows = [];
     try {
@@ -343,16 +333,16 @@
       let rendered = false;
 
       const openIt = () => {
-        if (!rendered) {
-          const parsed = AiFormat.parse(row.answer_raw || '');
-          AiFormat.render(bodyEl, parsed, {
-            model: row.model,
-            question: row.question,
-            surahIndex: index,
-          });
-          wireAnswerActions(bodyEl, parsed);
-          rendered = true;
-        }
+        if (rendered) return;
+        const parsed = AiFormat.parse(row.answer_raw || '');
+        AiFormat.render(bodyEl, parsed, {
+          model: row.model,
+          question: row.question,
+          surahIndex: index,
+          onChange: async (newRaw) => { await Store.updateAskAi(row.id, newRaw); },
+        });
+        wireAnswerActions(bodyEl, parsed);
+        rendered = true;
       };
       if (item.getAttribute('data-open') === 'true') openIt();
 
@@ -364,9 +354,7 @@
     });
   }
 
-  // ============================================================
-  // Submit
-  // ============================================================
+  // ---------- Submit ----------
   function submit() {
     const q = inputEl.value.trim();
     if (!q) { UI.toast('پرسشی بنویسید'); return; }
@@ -378,9 +366,6 @@
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); }
   });
 
-  // ============================================================
-  // Initial load
-  // ============================================================
   setStatus('idle');
   await renderHistory();
 })();
