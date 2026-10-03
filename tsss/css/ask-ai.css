@@ -192,7 +192,7 @@
 .ai-ref:hover { filter: brightness(1.15);
   box-shadow: 0 0 0 3px hsl(var(--hue) 85% 60% / .2); }
 
-/* tag pills (reuse UI.tagPill colors but with an "add" affordance) */
+/* tag pills */
 .ai-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .ai-tag-pill {
   display: inline-flex; align-items: center; gap: 6px;
