@@ -119,8 +119,8 @@ const AiFormat = (function () {
     return html;
   }
 
-  function sectionHtml({ hue, label, body, extra = '', sectionKey = '' }) {
-    const closeBtn = sectionKey
+  function sectionHtml({ hue, label, body, extra = '', sectionKey = '', canClose = false }) {
+    const closeBtn = (sectionKey && canClose)
       ? `<button type="button" class="ai-section__close" data-ai-section-close="${sectionKey}" aria-label="حذف این بخش" title="حذف این بخش">✕</button>`
       : '';
     return `
@@ -139,9 +139,10 @@ const AiFormat = (function () {
     const scoreText = (score > 0 ? '+' : '') + UI.toPersianDigits(score);
     const upActive = myVote === 1 ? ' is-active' : '';
     const downActive = myVote === -1 ? ' is-active' : '';
-    const delBtn = canDelete
-      ? `<button type="button" class="ai-delete-answer" data-ai-delete-answer aria-label="حذف کل پاسخ" title="حذف کل پاسخ">🗑</button>`
-      : '';
+    const delBtn = `<button type="button" class="ai-delete-answer" data-ai-delete-answer
+      aria-label="حذف کل پاسخ"
+      title="${canDelete ? 'حذف کل پاسخ از دیتابیس' : 'پاسخ ذخیره نشده — قابل حذف نیست'}"
+      ${canDelete ? '' : 'disabled'}>🗑</button>`;
     return `
       <div class="ai-feedback-bar">
         <span class="ai-feedback-bar__model">
@@ -162,6 +163,7 @@ const AiFormat = (function () {
   function render(container, parsed, opts) {
     const { model, question, surahIndex } = opts || {};
     const showFeedback = opts && opts.generationId != null;
+    const canClose = !!(opts && opts.refId);
 
     const qHtml = `
       <div class="ai-answer-card__question">
@@ -181,7 +183,7 @@ const AiFormat = (function () {
             model,
             score: opts.modelScore || 0,
             myVote: opts.myVote || 0,
-            canDelete: !!opts.refId,
+            canDelete: canClose,
           }) : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`}
         </div>`;
       return;
@@ -192,13 +194,13 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340, label: 'پاسخ', sectionKey: 'answer',
+        hue: 340, label: 'پاسخ', sectionKey: 'answer', canClose,
         body: renderRich(parsed.answer, surahIndex, inlineTags),
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210, label: 'نکته', sectionKey: 'insight',
+        hue: 210, label: 'نکته', sectionKey: 'insight', canClose,
         body: renderRich(parsed.insight, surahIndex, inlineTags),
       }));
     }
@@ -211,7 +213,7 @@ const AiFormat = (function () {
         return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs',
+        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs', canClose,
         body: `<div class="ai-refs">${pills}</div>`,
       }));
     }
@@ -225,13 +227,13 @@ const AiFormat = (function () {
         </button>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags',
+        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags', canClose,
         body: `<div class="ai-tags">${tagPills}</div>`,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft',
+        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft', canClose,
         body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
@@ -240,7 +242,7 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0, label: 'احتیاط', sectionKey: 'caution',
+        hue: 0, label: 'احتیاط', sectionKey: 'caution', canClose,
         body: renderRich(parsed.caution, surahIndex, inlineTags),
       }));
     }
@@ -250,7 +252,7 @@ const AiFormat = (function () {
           model,
           score: opts.modelScore || 0,
           myVote: opts.myVote || 0,
-          canDelete: !!opts.refId,
+          canDelete: canClose,
         })
       : `<div class="ai-answer-card__footer">پاسخ از: <code>${escapeHtml(model || '—')}</code></div>`;
 
@@ -345,8 +347,8 @@ const AiFormat = (function () {
             if (typeof onAfterSectionChange === 'function') onAfterSectionChange();
             UI.toast('بخش حذف شد');
           } catch (e) {
-            console.error(e);
-            UI.toast('خطا در حذف بخش');
+            console.error('[ai-format] updateAskAiRaw failed:', e);
+            UI.toast('خطا در حذف بخش: ' + (e?.message || 'نامشخص'));
           }
         });
       });
@@ -364,8 +366,8 @@ const AiFormat = (function () {
             if (typeof onAfterDelete === 'function') onAfterDelete();
             UI.toast('پاسخ حذف شد');
           } catch (e) {
-            console.error(e);
-            UI.toast('خطا در حذف پاسخ');
+            console.error('[ai-format] deleteAskAi failed:', e);
+            UI.toast('خطا در حذف پاسخ: ' + (e?.message || 'نامشخص'));
             delBtn.disabled = false;
           }
         });
@@ -407,13 +409,13 @@ const AiFormat = (function () {
       btn.addEventListener('click', async () => {
         const want = Number(btn.getAttribute('data-vote'));
         const mine = await Store.getMyFeedback(generationId).catch(() => 0);
-        const next = (mine === want) ? 0 : want; // رأی مجدد = برداشتن رأی
+        const next = (mine === want) ? 0 : want;
         try {
           buttons.forEach((b) => (b.disabled = true));
           await Store.setFeedback(generationId, next);
           await refresh();
         } catch (e) {
-          console.error(e);
+          console.error('[ai-format] setFeedback failed:', e);
           UI.toast('خطا در ثبت رأی');
         } finally {
           buttons.forEach((b) => (b.disabled = false));
