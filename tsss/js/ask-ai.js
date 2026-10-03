@@ -234,7 +234,7 @@
       return;
     }
 
-    // ذخیرهٔ اولیه — قبل از رندر، تا onChange بتواند با id کار کند
+    // ذخیرهٔ اولیه
     let savedRow = null;
     try {
       savedRow = await Store.saveAskAi({
@@ -253,6 +253,14 @@
       surahIndex: index,
       onChange: savedRow
         ? async (newRaw) => { await Store.updateAskAi(savedRow.id, newRaw); }
+        : null,
+      onDelete: savedRow
+        ? async () => {
+            await Store.deleteAskAi(savedRow.id);
+            answerEl.innerHTML = '';
+            await renderHistory();
+            UI.toast('پاسخ حذف شد');
+          }
         : null,
     });
     wireAnswerActions(answerEl, parsed);
@@ -340,6 +348,11 @@
           question: row.question,
           surahIndex: index,
           onChange: async (newRaw) => { await Store.updateAskAi(row.id, newRaw); },
+          onDelete: async () => {
+            await Store.deleteAskAi(row.id);
+            item.remove();
+            UI.toast('پاسخ حذف شد');
+          },
         });
         wireAnswerActions(bodyEl, parsed);
         rendered = true;
