@@ -214,7 +214,7 @@ const Store = (function () {
     return round + 1;
   }
 
-  // ---------- توابع مربوط به بررسی هوشمند ----------
+  // ---------- بررسی هوشمند ----------
   async function getAiReview(tafsirId) {
     const { data, error } = await sb
       .from('ai_reviews')
@@ -285,24 +285,28 @@ const Store = (function () {
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
 
-    // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
     return {
       content: json.content,
       model: json.model || null,
     };
   }
 
-  // ---------- توابع مربوط به «بپرس از هوش مصنوعی» ----------
+  // ---------- بپرس از هوش مصنوعی ----------
   async function saveAskAi({ surah, ayah, model, question, answerRaw }) {
     const { data, error } = await sb
       .from('ask_ai')
-      .insert({
-        surah,
-        ayah,
-        model,
-        question,
-        answer_raw: answerRaw,
-      })
+      .insert({ surah, ayah, model, question, answer_raw: answerRaw })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function updateAskAi(id, answerRaw) {
+    const { data, error } = await sb
+      .from('ask_ai')
+      .update({ answer_raw: answerRaw })
+      .eq('id', id)
       .select()
       .single();
     if (error) throw error;
@@ -347,6 +351,7 @@ const Store = (function () {
     deleteAiReview,
     callAiReview,
     saveAskAi,
+    updateAskAi,
     getAskAiHistory,
   };
 })();
