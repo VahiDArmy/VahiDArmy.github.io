@@ -170,7 +170,7 @@
     let acc = '';
     AiFormat.renderStreaming(answerEl, question, '', model.name);
 
-    const url = `${CONFIG.SUPABASE_URL}/functions/v1/ask-ai`;
+    const url = `${CONFIG.SUPABASE_URL}/functions/v1/bright-api`;
     let res;
     try {
       res = await fetch(url, {
