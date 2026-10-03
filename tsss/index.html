@@ -119,11 +119,13 @@
 
   <!-- بپرس از هوش مصنوعی -->
   <section class="section" aria-label="بپرس از هوش مصنوعی" id="askAiSection" hidden>
-    <div class="section__label">
-      <span>بپرس از هوش مصنوعی</span>
-    </div>
+    <div class="section__label">بپرس از هوش مصنوعی</div>
 
     <div class="ask-ai-composer card">
+      <button type="button" class="ask-ai-composer__model" id="askAiCurrentModel" title="تغییر مدل">
+        <span class="ask-ai-composer__model-dot"></span>
+        <span id="askAiModelLabel">—</span>
+      </button>
       <textarea id="askAiInput" rows="2" placeholder="دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)"></textarea>
       <div class="ask-ai-composer__actions">
         <span class="ai-status" id="aiStatus" data-state="idle" aria-live="polite" aria-label="وضعیت"></span>
@@ -227,6 +229,20 @@
   </div>
 </div>
 
+<!-- پاپ‌آپ انتخاب مدل هوش مصنوعی -->
+<div class="modal-overlay" id="aiModelsModal" hidden>
+  <div class="modal-card card ai-models-modal">
+    <div class="modal-card__head">
+      <span>انتخاب مدل هوش مصنوعی</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="closeModelsBtn" aria-label="بستن">✕</button>
+    </div>
+    <div class="ai-models-list" id="aiModelsList"></div>
+    <div class="ai-models-modal__footer">
+      <button type="button" class="btn btn--primary" id="saveModelBtn" style="width:100%">ذخیره</button>
+    </div>
+  </div>
+</div>
+
 <footer class="site-footer">
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
 </footer>
@@ -243,6 +259,7 @@
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/ai-models.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/quran-data.js"></script>
 <script src="js/ui-helpers.js"></script>
@@ -250,8 +267,8 @@
 <script src="js/theme.js"></script>
 <script src="js/ayah-render.js"></script>
 <script src="js/ayah-links.js"></script>
-<script src="js/work.js"></script>
 <script src="js/ai-format.js"></script>
+<script src="js/work.js"></script>
 <script src="js/ask-ai.js"></script>
 </body>
 </html>
