@@ -263,34 +263,63 @@ const Store = (function () {
     if (error) throw error;
   }
 
-async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session?.access_token) {
-    throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
+  async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) {
+      throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
+    }
+
+    const fn = localStorage.getItem('ai_fn')
+      || CONFIG.AI_FUNCTION_DEFAULT
+      || 'ai-review';
+
+    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
+
+    // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
+    return {
+      content: json.content,
+      model: json.model || null,
+    };
   }
 
-  const fn = localStorage.getItem('ai_fn')
-    || CONFIG.AI_FUNCTION_DEFAULT
-    || 'ai-review';
+  // ---------- توابع مربوط به «بپرس از هوش مصنوعی» ----------
+  async function saveAskAi({ surah, ayah, model, question, answerRaw }) {
+    const { data, error } = await sb
+      .from('ask_ai')
+      .insert({
+        surah,
+        ayah,
+        model,
+        question,
+        answer_raw: answerRaw,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
 
-  const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
-  });
-
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
-
-  // ← model از خود تابع Edge می‌آید، نه از فرانت‌اند
-  return {
-    content: json.content,
-    model: json.model || null,
-  };
-}
+  async function getAskAiHistory(surah, ayah, limit = 20) {
+    const { data, error } = await sb
+      .from('ask_ai')
+      .select('*')
+      .eq('surah', surah)
+      .eq('ayah', ayah)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) throw error;
+    return data || [];
+  }
 
   return {
     getLatestTafsir,
@@ -317,5 +346,7 @@ async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
     saveAiReview,
     deleteAiReview,
     callAiReview,
+    saveAskAi,
+    getAskAiHistory,
   };
 })();
