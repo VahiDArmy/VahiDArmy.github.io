@@ -67,7 +67,6 @@ const AiFormat = (function () {
     }
 
     if (!answer) {
-      // title-only یا ناقص → تلقی به‌عنوان fallback
       return { ok: false, raw: trimmed };
     }
     return { ok: true, title, answer, insight, refs, tags, draft, caution };
@@ -96,7 +95,6 @@ const AiFormat = (function () {
   // --- رندر غنی: مارک‌داون + توکن‌های [[سوره:آیه]] + برچسب‌های درون‌متنی ---
   function renderRich(text, surahIndex, inlineTags) {
     let html = renderMarkdown(text);
-    // جایگزینی توکن‌های ارجاع
     html = html.replace(
       /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g,
       (_, s, a, label) => {
@@ -108,7 +106,6 @@ const AiFormat = (function () {
         return `<a class="ayah-link" href="browse.html?surah=${s}&ayah=${a}" title="سورهٔ ${nameFa}، آیهٔ ${UI.toPersianDigits(a)}">${lbl}</a>`;
       }
     );
-    // هایلایت برچسب‌های درون‌متنی
     if (inlineTags && inlineTags.length) {
       html = UI.highlightTags(html, inlineTags);
     }
@@ -128,7 +125,6 @@ const AiFormat = (function () {
   }
 
   // --- رندر کل کارت پاسخ ---
-  // opts: { model, question, surahIndex }
   function render(container, parsed, opts) {
     const { model, question, surahIndex } = opts || {};
 
@@ -143,7 +139,6 @@ const AiFormat = (function () {
       </div>`;
 
     if (!parsed.ok) {
-      // fallback: قالب رعایت نشده
       container.innerHTML = `
         <div class="ai-answer-card card">
           ${qHtml}
@@ -158,7 +153,6 @@ const AiFormat = (function () {
     }
 
     const inlineTags = parsed.tags || [];
-
     const blocks = [];
 
     if (parsed.answer) {
