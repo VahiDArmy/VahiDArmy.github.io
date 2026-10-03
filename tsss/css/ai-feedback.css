@@ -122,7 +122,7 @@
 [data-theme="light"] .ai-model-card__score[data-sign="neg"] { color: hsl(0 60% 42%); }
 
 /* =========================================================
-   دکمه‌های حذف بخش و حذف کل پاسخ
+   دکمه‌های حذف بخش و حذف کل پرسش
    ========================================================= */
 
 .ai-section__label {
@@ -148,27 +148,89 @@
   background: hsl(0 70% 55% / .14);
 }
 
-.ai-delete-answer {
+/* دکمهٔ حذف روی پرسش (بالای کارت و در سر لیست تاریخچه) */
+.ai-delete-question {
   all: unset;
   cursor: pointer;
-  width: 34px;
-  height: 34px;
+  margin-inline-start: auto;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card-2);
   color: var(--text-faint);
-  font-size: .95rem;
-  transition: color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  font-size: .82rem;
+  transition: color .2s ease, background .2s ease;
 }
-.ai-delete-answer:hover {
+.ai-delete-question:hover {
   color: hsl(0 82% 68%);
-  border-color: hsl(0 75% 60%);
-  box-shadow: 0 0 0 4px hsl(0 75% 60% / .18);
+  background: hsl(0 75% 55% / .14);
 }
-.ai-delete-answer:disabled {
+.ai-delete-question:disabled {
   opacity: .5;
   cursor: not-allowed;
+}
+
+/* ساختار تازهٔ بلوک پرسش در کارت پاسخ */
+.ai-answer-card__question-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ai-answer-card__q-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================
+   مودال تأیید سفارشی — جایگزین confirm() مرورگر
+   ========================================================= */
+.ai-confirm-overlay {
+  z-index: 400;
+}
+
+.ai-confirm-modal {
+  width: 100%;
+  max-width: 380px;
+  padding: 20px 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-confirm-modal__title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+  text-align: start;
+}
+
+.ai-confirm-modal__message {
+  margin: 0;
+  font-size: .88rem;
+  line-height: 1.9;
+  color: var(--text-dim);
+  text-align: start;
+}
+
+.ai-confirm-modal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.ai-confirm-modal__danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+  font-weight: 700;
+}
+.ai-confirm-modal__danger:hover {
+  filter: brightness(1.08);
+  color: #fff;
+  border-color: var(--danger);
+  box-shadow: 0 0 0 4px hsl(0 75% 55% / .18);
 }
