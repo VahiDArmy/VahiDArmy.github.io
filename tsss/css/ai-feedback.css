@@ -159,33 +159,27 @@
 }
 
 /* =========================================================
-   دکمه‌های حذف — همه با ✕
+   بخش «بخش‌های دیگر» — متنی که در قالب نگنجیده
    ========================================================= */
-
-/* روی برچسب بخش‌ها */
-.ai-section__label { width: 100%; }
-
-.ai-section__close {
-  all: unset;
-  cursor: pointer;
-  margin-inline-start: auto;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: color-mix(in srgb, hsl(var(--hue) 78% 78%) 55%, transparent);
-  font-size: .7rem;
-  line-height: 1;
-  transition: color .2s ease, background .2s ease;
+.ai-section--muted {
+  background: var(--surface-2);
+  border-color: var(--border-soft);
 }
-.ai-section__close:hover {
-  color: hsl(0 78% 68%);
-  background: hsl(0 70% 55% / .14);
+.ai-section--muted::before { display: none; }
+.ai-section--muted .ai-section__label {
+  background: var(--surface);
+  color: var(--text-faint);
+  text-shadow: none;
 }
+.ai-section--muted .ai-section__dot {
+  background: var(--text-faint);
+  box-shadow: none;
+}
+.ai-section--muted .ai-section__body { color: var(--text-dim); }
 
-/* روی کارت پرسش و سر آیتم تاریخچه */
+/* =========================================================
+   دکمهٔ حذف روی پرسش
+   ========================================================= */
 .ai-delete-question {
   all: unset;
   cursor: pointer;
@@ -211,7 +205,7 @@
 }
 
 /* =========================================================
-   مودال تأیید سفارشی — جایگزین confirm() مرورگر
+   مودال تأیید سفارشی
    ========================================================= */
 .ai-confirm-overlay { z-index: 400; }
 
