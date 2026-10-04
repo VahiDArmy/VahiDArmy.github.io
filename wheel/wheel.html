@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="چرخ فلک - چرخش حرفه‌ای گردونه">
     <title>چرخ فلک | گردونه</title>
 
@@ -70,18 +70,68 @@
                     <h2 class="page-title">🎡 گردونه</h2>
                 </div>
 
-                <div id="spin-type-indicator" class="spin-type-indicator"></div>
+                <!-- ═══ Setup Panel ═══ -->
+                <div class="wheel-setup">
+                    <div class="setup-header">
+                        <h3 class="setup-title">⚙️ تنظیمات این چرخش</h3>
+                        <button id="reset-setup-btn" class="btn btn-ghost btn-sm" title="بازنشانی">↺ بازنشانی</button>
+                    </div>
 
+                    <div class="setup-row">
+                        <div class="setup-field">
+                            <label class="setup-label">📝 موضوع</label>
+                            <div class="topic-input-wrap">
+                                <input
+                                    type="text"
+                                    id="setup-topic"
+                                    class="input"
+                                    placeholder="موضوع داستان..."
+                                    autocomplete="off"
+                                >
+                                <button id="save-topic-btn" class="btn btn-ghost btn-sm" title="ذخیره">💾</button>
+                                <div id="topics-dropdown" class="topic-suggestions"></div>
+                            </div>
+                        </div>
+
+                        <div class="setup-field">
+                            <label class="setup-label">🎯 برنده چه می‌کند؟</label>
+                            <div class="type-selector" id="type-selector">
+                                <button class="type-btn active" data-type="provide" type="button">
+                                    تهیه می‌کند
+                                </button>
+                                <button class="type-btn" data-type="receive" type="button">
+                                    دریافت می‌کند
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setup-items-section">
+                        <div class="setup-items-header">
+                            <label class="setup-label">🎁 آیتم‌ها (با تعداد)</label>
+                            <button id="add-setup-item-btn" class="btn btn-ghost btn-sm" type="button">+ افزودن</button>
+                        </div>
+                        <div id="setup-items-list" class="setup-items-list"></div>
+                        <div id="setup-items-empty" class="setup-items-empty">
+                            هنوز آیتمی اضافه نشده - دکمه «+ افزودن» را بزنید
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══ Mode Selector ═══ -->
                 <div class="mode-selector">
-                    <button class="mode-btn active" data-mode="single">
+                    <button class="mode-btn active" data-mode="single" type="button">
                         <span class="mode-icon">🎯</span>
                         <span class="mode-label">انتخاب تک‌نفره</span>
                     </button>
-                    <button class="mode-btn" data-mode="elimination">
+                    <button class="mode-btn" data-mode="elimination" type="button">
                         <span class="mode-icon">🔥</span>
                         <span class="mode-label">حالت حذفی</span>
                     </button>
                 </div>
+
+                <!-- ═══ Wheel ═══ -->
+                <div id="spin-type-indicator" class="spin-type-indicator"></div>
 
                 <div class="wheel-container">
                     <canvas id="wheel-canvas" class="wheel-canvas"></canvas>
@@ -94,8 +144,8 @@
                 </div>
 
                 <div class="wheel-controls">
-                    <button id="clear-wheel-btn" class="btn btn-danger btn-sm">
-                        🗑 پاک کردن لیست
+                    <button id="clear-wheel-btn" class="btn btn-danger btn-sm" type="button">
+                        🗑 خالی کردن گردونه
                     </button>
                 </div>
 
@@ -105,23 +155,21 @@
             <aside class="wheel-sidebar">
                 <div class="sidebar-header">
                     <h3 class="sidebar-title">
-                        لیست افراد
+                        افراد در گردونه
                         <span id="people-count" class="badge">۰</span>
                     </h3>
-                    <button id="add-person-btn" class="btn btn-primary btn-sm">
-                        + افزودن
-                    </button>
+                    <button id="add-person-btn" class="btn btn-primary btn-sm" type="button">+ افزودن</button>
                 </div>
 
                 <div class="people-search">
-                    <input type="text" class="input" placeholder="جستجو در افراد..." id="people-search-input">
+                    <input type="text" class="input" placeholder="جستجو..." id="people-search-input">
                 </div>
 
                 <div id="wheel-people-list" class="wheel-people-list"></div>
 
                 <div class="sidebar-footer">
                     <a href="description.html" class="btn btn-secondary btn-sm btn-block">
-                        📝 مدیریت توصیف‌ها
+                        📝 مدیریت جعبه ابزار
                     </a>
                 </div>
             </aside>
@@ -166,6 +214,9 @@
     <script src="js/ui/confetti.js"></script>
 
     <script src="js/wheel/wheel-core.js"></script>
+    <script src="js/ai/openrouter.js"></script>
+    <script src="js/ai/prompt-builder.js"></script>
+    <script src="js/ai/story-manager.js"></script>
     <script src="js/pages/wheel-page.js"></script>
 
     <script src="js/core/app.js"></script>
