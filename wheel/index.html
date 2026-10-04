@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="گردونه شانس حرفه‌ای با هوش مصنوعی">
+    <title>گردونه شانس | صفحه اصلی</title>
+    
+    <!-- فونت وزیرمتن -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+    
+    <!-- استایل‌ها -->
+    <link rel="stylesheet" href="css/base/reset.css">
+    <link rel="stylesheet" href="css/base/variables.css">
+    <link rel="stylesheet" href="css/base/typography.css">
+    <link rel="stylesheet" href="css/base/rtl.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/inputs.css">
+    <link rel="stylesheet" href="css/components/modals.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/tooltips.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/tabs.css">
+    <link rel="stylesheet" href="css/components/dropdown.css">
+    <link rel="stylesheet" href="css/components/switch.css">
+    <link rel="stylesheet" href="css/components/badges.css">
+    <link rel="stylesheet" href="css/components/loader.css">
+    <link rel="stylesheet" href="css/layout/header.css">
+    <link rel="stylesheet" href="css/layout/sidebar.css">
+    <link rel="stylesheet" href="css/layout/footer.css">
+    <link rel="stylesheet" href="css/layout/grid.css">
+    <link rel="stylesheet" href="css/pages/home.css">
+    <link rel="stylesheet" href="css/animations/keyframes.css">
+    <link rel="stylesheet" href="css/animations/transitions.css">
+</head>
+<body class="dark-theme">
+    <!-- پس‌زمینه ذرات -->
+    <canvas id="particles-canvas" class="particles-canvas"></canvas>
+    
+    <!-- هدر -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="header-right">
+                <img src="assets/images/logo.svg" alt="لوگو" class="logo">
+                <h1 class="site-title">گردونه شانس</h1>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link active">خانه</a>
+                <a href="wheel.html" class="nav-link">گردونه</a>
+                <a href="description.html" class="nav-link">توصیف‌ها</a>
+                <a href="ai.html" class="nav-link">هوش مصنوعی</a>
+                <a href="history.html" class="nav-link">تاریخچه</a>
+                <a href="settings.html" class="nav-link">تنظیمات</a>
+            </nav>
+            <div class="header-left">
+                <button id="theme-toggle" class="icon-btn" title="تغییر تم">
+                    <span class="icon">🌙</span>
+                </button>
+                <button id="sync-btn" class="icon-btn" title="همگام‌سازی با GitHub">
+                    <span class="icon">☁️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- محتوای اصلی -->
+    <main class="main-content">
+        <!-- بخش قهرمان -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h2 class="hero-title">گردونه شانس هوشمند</h2>
+                <p class="hero-subtitle">
+                    با الگوریتم‌های تصادفی پیشرفته، حقه‌های مخفی و هوش مصنوعی داستان‌ساز
+                </p>
+                <div class="hero-actions">
+                    <a href="wheel.html" class="btn btn-primary btn-lg">
+                        شروع چرخش
+                    </a>
+                    <a href="description.html" class="btn btn-secondary btn-lg">
+                        مدیریت توصیف‌ها
+                    </a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="wheel-preview">
+                    <canvas id="preview-wheel"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <!-- آمار -->
+        <section class="stats-section">
+            <h3 class="section-title">آمار کلی</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-value" id="stat-people">۰</div>
+                    <div class="stat-label">افراد</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value" id="stat-starred">۰</div>
+                    <div class="stat-label">ستاره‌دار</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎡</div>
+                    <div class="stat-value" id="stat-spins">۰</div>
+                    <div class="stat-label">چرخش‌ها</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-value" id="stat-stories">۰</div>
+                    <div class="stat-label">داستان‌ها</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- ویژگی‌ها -->
+        <section class="features-section">
+            <h3 class="section-title">ویژگی‌های کلیدی</h3>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h4 class="feature-title">حقه مخفی</h4>
+                    <p class="feature-desc">
+                        اهرم را فشار دهید تا تصادفی انتخاب شود. آن را بکشید تا فقط از بین ستاره‌دارها انتخاب شود.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h4 class="feature-title">داستان‌ساز AI</h4>
+                    <p class="feature-desc">
+                        هوش مصنوعی بر اساس ورودی‌های شما داستان کوتاه خنده‌دار می‌سازد.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💾</div>
+                    <h4 class="feature-title">ذخیره‌سازی GitHub</h4>
+                    <p class="feature-desc">
+                        داده‌ها در مخزن GitHub شما ذخیره می‌شوند و بین دستگاه‌ها همگام می‌شوند.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌙</div>
+                    <h4 class="feature-title">تم دارک حرفه‌ای</h4>
+                    <p class="feature-desc">
+                        رابط کاربری تاریک با جزییات بالا، انیمیشن‌های نرم و فونت فارسی وزیرمتن.
+                    </p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- آخرین برندگان -->
+        <section class="recent-winners-section">
+            <h3 class="section-title">آخرین برندگان</h3>
+            <div id="recent-winners-list" class="winners-list">
+                <!-- توسط JS پر می‌شود -->
+            </div>
+        </section>
+    </main>
+    
+    <!-- فوتر -->
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p class="footer-text">
+                ساخته شده با ❤️ برای سرگرمی | 
+                <a href="https://github.com" target="_blank">مشاهده در گیت‌هاب</a>
+            </p>
+        </div>
+    </footer>
+    
+    <!-- مودال‌ها -->
+    <div id="modal-container" class="modal-container"></div>
+    
+    <!-- نوتیفیکیشن‌ها -->
+    <div id="notification-container" class="notification-container"></div>
+    
+    <!-- ============================================ -->
+    <!-- کتابخانه‌های خارجی (CDN)                     -->
+    <!-- ============================================ -->
+    
+    <!-- SQL.js - دیتابیس SQLite در مرورگر -->
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+    
+    <!-- Canvas Confetti - افکت جشن -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- هسته برنامه                                  -->
+    <!-- ============================================ -->
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/router.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- لایه ذخیره‌سازی (ترتیب مهم است!)             -->
+    <!-- ============================================ -->
+    <script src="js/storage/local-storage.js"></script>
+    <script src="js/storage/github-storage.js"></script>
+    <script src="js/storage/sql-storage.js"></script>
+    <script src="js/storage/sync.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- مدیریت داده‌ها                                -->
+    <!-- ============================================ -->
+    <script src="js/data/people.js"></script>
+    <script src="js/data/items.js"></script>
+    <script src="js/data/descriptions.js"></script>
+    <script src="js/data/history.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- رابط کاربری                                  -->
+    <!-- ============================================ -->
+    <script src="js/ui/particles.js"></script>
+    <script src="js/ui/notification.js"></script>
+    <script src="js/ui/modal.js"></script>
+    <script src="js/ui/dropdown.js"></script>
+    <script src="js/ui/theme.js"></script>
+    <script src="js/ui/confetti.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- صفحات                                        -->
+    <!-- ============================================ -->
+    <script src="js/pages/home-page.js"></script>
+    
+    <!-- ============================================ -->
+    <!-- راه‌انداز اصلی (باید آخرین باشد)             -->
+    <!-- ============================================ -->
+    <script src="js/core/app.js"></script>
+</body>
+</html>
