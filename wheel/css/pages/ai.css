@@ -18,10 +18,7 @@
     margin-bottom: var(--spacing-lg);
 }
 
-.warning-icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-}
+.warning-icon { font-size: 1.5rem; flex-shrink: 0; }
 
 .warning-text strong {
     display: block;
@@ -40,6 +37,10 @@
     text-decoration: underline;
     font-weight: var(--font-weight-medium);
 }
+
+/* ═══════════════════════════════════════════
+   چیدمان اصلی
+   ═══════════════════════════════════════════ */
 
 .ai-layout {
     display: grid;
@@ -68,14 +69,9 @@
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
     margin-bottom: var(--spacing-md);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
 }
 
-.winner-selector {
-    margin-bottom: var(--spacing-md);
-}
+.winner-selector { margin-bottom: var(--spacing-md); }
 
 .winner-display-ai {
     padding: var(--spacing-md);
@@ -110,13 +106,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background var(--transition-fast);
     padding: 0;
 }
 
-.winner-chip-close:hover {
-    background: rgba(255, 255, 255, 0.4);
-}
+.winner-chip-close:hover { background: rgba(255, 255, 255, 0.4); }
 
 .winner-desc {
     margin-top: var(--spacing-sm);
@@ -158,10 +151,7 @@
     color: var(--color-text-secondary);
 }
 
-.empty-icon-big {
-    font-size: 4rem;
-    opacity: 0.4;
-}
+.empty-icon-big { font-size: 4rem; opacity: 0.4; }
 
 .story-card {
     display: flex;
@@ -234,12 +224,7 @@
     flex-wrap: wrap;
 }
 
-.story-footer-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
+.story-footer-item { display: flex; align-items: center; gap: var(--spacing-xs); }
 .story-footer-icon { font-size: 0.9rem; }
 .story-footer-label { color: var(--color-text-tertiary); }
 
@@ -266,16 +251,11 @@
     color: var(--color-text-secondary);
 }
 
-.story-loading .spinner {
-    width: 32px;
-    height: 32px;
-    border-width: 3px;
-}
-
+.story-loading .spinner { width: 32px; height: 32px; border-width: 3px; }
 .story-loading p { animation: pulse 1.5s ease-in-out infinite; }
 
 /* ═══════════════════════════════════════════
-   لیست داستان‌ها
+   کارت لیست داستان‌ها
    ═══════════════════════════════════════════ */
 
 .stories-history-card {
@@ -285,114 +265,222 @@
     overflow: hidden;
 }
 
+/* ─── هدر لیست ─── */
+.stories-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--color-bg-tertiary);
+}
+
+.stories-header-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.stories-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 8px;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--color-accent-primary);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+/* ─── دکمه حذف همه ─── */
+.btn-icon-danger {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.btn-icon-danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: var(--color-accent-danger);
+    color: var(--color-accent-danger);
+    transform: scale(1.08);
+}
+
+.btn-icon-danger:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.btn-icon-danger:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════
+   لیست داستان‌ها
+   ═══════════════════════════════════════════ */
+
 .stories-list {
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
     max-height: 500px;
     overflow-y: auto;
 }
+
+.stories-list::-webkit-scrollbar { width: 6px; }
 
 .empty-stories {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-sm);
-    padding: var(--spacing-xl) var(--spacing-md);
+    padding: var(--spacing-2xl) var(--spacing-md);
     text-align: center;
 }
 
 .empty-stories-icon {
-    font-size: 2.5rem;
-    opacity: 0.4;
+    font-size: 3rem;
+    opacity: 0.3;
 }
 
-.story-list-item {
+/* ─── آیتم داستان ─── */
+.story-item {
     display: flex;
     align-items: stretch;
-    gap: 0;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
-    transition: all var(--transition-fast);
     overflow: hidden;
+    transition: all var(--transition-fast);
     position: relative;
+    min-height: 68px;
 }
 
-.story-list-item:hover {
-    border-color: var(--border-color-accent);
+.story-item:hover {
+    border-color: var(--color-accent-primary);
     background: var(--color-bg-hover);
 }
 
-.story-list-body {
+.story-item-body {
     flex: 1;
     min-width: 0;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-family: inherit;
+    text-align: right;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: padding-left var(--transition-fast);
 }
 
-.story-list-body:hover {
-    padding-right: var(--spacing-lg);
+.story-item:hover .story-item-body {
+    padding-left: calc(var(--spacing-md) + 4px);
 }
 
-.story-list-meta {
+.story-item-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--spacing-sm);
     font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-    margin-bottom: var(--spacing-xs);
+    line-height: 1;
 }
 
-.story-list-model {
+.story-item-model {
     color: var(--color-accent-primary);
     font-weight: var(--font-weight-medium);
+    font-family: monospace;
+    direction: ltr;
+    padding: 2px 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.7rem;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
 }
 
-.story-list-excerpt {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-secondary);
-    line-height: var(--line-height-relaxed);
-}
-
-.story-list-actions {
-    display: flex;
-    align-items: center;
-    padding: 0 var(--spacing-sm);
-    flex-shrink: 0;
-    background: var(--color-bg-secondary);
-    border-right: 1px solid var(--border-color);
-}
-
-.story-list-delete {
-    width: 36px;
-    height: 36px;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--border-radius-md);
+.story-item-time {
     color: var(--color-text-muted);
-    cursor: pointer;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.story-item-preview {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    text-align: right;
+}
+
+/* ─── دکمه حذف ─── */
+.story-item-delete {
+    width: 44px;
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border-color);
+    color: var(--color-text-muted);
     font-size: 1rem;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
     padding: 0;
+    opacity: 0;
     line-height: 1;
 }
 
-.story-list-delete:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: var(--color-accent-danger);
-    color: var(--color-accent-danger);
-    transform: scale(1.05);
+.story-item:hover .story-item-delete {
+    opacity: 1;
 }
 
-.story-list-delete:active {
-    transform: scale(0.95);
+.story-item-delete:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-accent-danger);
+}
+
+.story-item-delete:active {
+    background: rgba(239, 68, 68, 0.25);
+}
+
+/* در موبایل، دکمه همیشه نمایش داده شود */
+@media (max-width: 900px) {
+    .story-item-delete { opacity: 1; }
 }
 
 /* ═══════════════════════════════════════════
@@ -436,21 +524,10 @@
 }
 
 @media (max-width: 600px) {
-    .stories-list {
-        max-height: 400px;
-    }
-
-    .story-list-body {
-        padding: var(--spacing-sm);
-    }
-
-    .story-list-actions {
-        padding: 0 4px;
-    }
-
-    .story-list-delete {
-        width: 32px;
-        height: 32px;
-        font-size: 0.9rem;
-    }
+    .stories-list { max-height: 400px; }
+    .stories-header { padding: var(--spacing-sm) var(--spacing-md); }
+    .stories-header-title { font-size: var(--font-size-sm); }
+    .story-item-body { padding: var(--spacing-sm); }
+    .story-item-delete { width: 40px; }
+    .story-item-preview { -webkit-line-clamp: 3; }
 }
