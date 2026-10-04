@@ -97,10 +97,6 @@
     font-weight: var(--font-weight-medium);
 }
 
-.winner-chip-star {
-    font-size: 0.9rem;
-}
-
 .winner-chip-close {
     width: 20px;
     height: 20px;
@@ -165,26 +161,6 @@
     animation: fadeInUp 0.5s ease;
 }
 
-.story-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--spacing-md);
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--border-color);
-    font-size: var(--font-size-xs);
-    color: var(--color-text-muted);
-}
-
-.story-model {
-    padding: 3px 10px;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-accent-primary);
-    border-radius: var(--border-radius-full);
-    color: var(--color-accent-primary);
-    font-weight: var(--font-weight-medium);
-}
-
 .story-content {
     font-size: var(--font-size-md);
     line-height: var(--line-height-loose);
@@ -237,6 +213,49 @@
     flex-wrap: wrap;
 }
 
+/* ============================================
+   فوتر داستان - مدل و تاریخ
+   ============================================ */
+
+.story-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    flex-wrap: wrap;
+}
+
+.story-footer-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.story-footer-icon {
+    font-size: 0.9rem;
+}
+
+.story-footer-label {
+    color: var(--color-text-tertiary);
+}
+
+.story-footer-value {
+    color: var(--color-accent-primary);
+    font-weight: var(--font-weight-medium);
+    font-family: monospace;
+    direction: ltr;
+    padding: 2px 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
 /* لیست داستان‌ها */
 .stories-history-card {
     background: var(--color-bg-secondary);
@@ -285,7 +304,6 @@
     line-height: var(--line-height-relaxed);
 }
 
-/* انیمیشن */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -297,7 +315,6 @@
     }
 }
 
-/* ریسپانسیو */
 @media (max-width: 900px) {
     .ai-layout {
         grid-template-columns: 1fr;
@@ -310,5 +327,11 @@
     .story-content {
         padding: var(--spacing-sm);
         font-size: var(--font-size-sm);
+    }
+
+    .story-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
     }
 }
