@@ -1,8 +1,8 @@
 /**
  * دیتابیس SQL.js
- * - رمزها (توکن و API Key) هرگز در SQLite ذخیره نمی‌شوند
- * - فقط در LocalStorage نگهداری می‌شوند
- * - در نتیجه فایل .sqlite همیشه امن برای push به GitHub است
+ * - people = جعبه ابزار (toolbox)
+ * - ستون in_wheel مشخص می‌کند چه کسی در گردونه (کارگاه) هست
+ * - رمزها هرگز در SQLite ذخیره نمی‌شوند
  * @module SQLStorage
  */
 
@@ -15,13 +15,7 @@ const SQLStorage = {
     idbKey: 'main_db',
     _idb: null,
     _saveTimer: null,
-
-    // 🔑 کلیدهایی که هرگز نباید در SQLite ذخیره شوند
     SECRET_KEYS: ['githubToken', 'openrouterApiKey'],
-
-    // ============================================
-    // راه‌اندازی
-    // ============================================
 
     async init() {
         if (this.isReady) return;
@@ -38,7 +32,6 @@ const SQLStorage = {
             if (existing) {
                 this.db = new this.SQL.Database(existing);
                 console.log('✅ دیتابیس از IndexedDB بارگذاری شد');
-                // پاکسازی رمزهای قدیمی (اگر وجود دارند) و انتقال به LocalStorage
                 this._migrateSecretsToLocalStorage();
             } else {
                 this.db = new this.SQL.Database();
@@ -46,10 +39,12 @@ const SQLStorage = {
                 console.log('✅ دیتابیس جدید ساخته شد');
             }
 
+            this._migrateSchema();
+
             this.isReady = true;
             return true;
         } catch (error) {
-            console.error('❌ خطا در راه‌اندازی SQLStorage:', error);
+            console.error('❌ خطا در SQLStorage:', error);
             throw error;
         }
     },
@@ -77,6 +72,7 @@ const SQLStorage = {
                 starred INTEGER DEFAULT 0,
                 color TEXT DEFAULT '#8b5cf6',
                 weight REAL DEFAULT 1,
+                in_wheel INTEGER DEFAULT 1,
                 created_at INTEGER,
                 updated_at INTEGER
             );
@@ -86,6 +82,7 @@ const SQLStorage = {
             CREATE TABLE IF NOT EXISTS items (
                 id TEXT PRIMARY KEY,
                 label TEXT NOT NULL UNIQUE,
+                in_wheel INTEGER DEFAULT 1,
                 created_at INTEGER
             );
         `);
@@ -119,7 +116,6 @@ const SQLStorage = {
             );
         `);
 
-        // جدول settings - اما رمزها در آن ذخیره نمی‌شوند
         this.db.run(`
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -128,6 +124,7 @@ const SQLStorage = {
         `);
 
         this.db.run(`CREATE INDEX IF NOT EXISTS idx_people_starred ON people(starred);`);
+        this.db.run(`CREATE INDEX IF NOT EXISTS idx_people_in_wheel ON people(in_wheel);`);
         this.db.run(`CREATE INDEX IF NOT EXISTS idx_history_timestamp ON history(timestamp DESC);`);
         this.db.run(`CREATE INDEX IF NOT EXISTS idx_stories_timestamp ON stories(timestamp DESC);`);
 
@@ -135,9 +132,36 @@ const SQLStorage = {
     },
 
     /**
-     * انتقال رمزهای موجود در SQLite (نسخه‌های قدیمی) به LocalStorage
-     * و حذف آن‌ها از دیتابیس
+     * مهاجرت schema - افزودن ستون‌های جدید به جداول موجود
      */
+    _migrateSchema() {
+        // people.in_wheel
+        try {
+            const cols = this.query(`PRAGMA table_info(people)`);
+            const hasInWheel = cols.some((c) => c.name === 'in_wheel');
+            if (!hasInWheel) {
+                this.db.run(`ALTER TABLE people ADD COLUMN in_wheel INTEGER DEFAULT 1`);
+                console.log('✅ ستون in_wheel به people اضافه شد');
+                this._scheduleSave();
+            }
+        } catch (e) {
+            console.error('خطا در مهاجرت people:', e);
+        }
+
+        // items.in_wheel
+        try {
+            const cols = this.query(`PRAGMA table_info(items)`);
+            const hasInWheel = cols.some((c) => c.name === 'in_wheel');
+            if (!hasInWheel) {
+                this.db.run(`ALTER TABLE items ADD COLUMN in_wheel INTEGER DEFAULT 1`);
+                console.log('✅ ستون in_wheel به items اضافه شد');
+                this._scheduleSave();
+            }
+        } catch (e) {
+            console.error('خطا در مهاجرت items:', e);
+        }
+    },
+
     _migrateSecretsToLocalStorage() {
         let changed = false;
         this.SECRET_KEYS.forEach((key) => {
@@ -146,33 +170,20 @@ const SQLStorage = {
                 if (rows.length > 0) {
                     let val = rows[0].value;
                     try { val = JSON.parse(val); } catch (e) {}
-
-                    if (val) {
-                        LocalStorage.set('secret_' + key, val);
-                        console.log(`🔐 ${key} منتقل شد به LocalStorage`);
-                    }
-
+                    if (val) LocalStorage.set('secret_' + key, val);
                     this.db.run(`DELETE FROM settings WHERE key = ?`, [key]);
                     changed = true;
                 }
-            } catch (e) {
-                // نادیده بگیر
-            }
+            } catch (e) {}
         });
         if (changed) this._scheduleSave();
     },
-
-    // ============================================
-    // عملیات CRUD
-    // ============================================
 
     query(sql, params = []) {
         const stmt = this.db.prepare(sql);
         stmt.bind(params);
         const results = [];
-        while (stmt.step()) {
-            results.push(stmt.getAsObject());
-        }
+        while (stmt.step()) results.push(stmt.getAsObject());
         stmt.free();
         return results;
     },
@@ -182,24 +193,34 @@ const SQLStorage = {
         this._scheduleSave();
     },
 
-    // ============================================
-    // افراد
-    // ============================================
+    // ═══════════════════════════════════════════
+    // افراد (جعبه ابزار + کارگاه)
+    // ═══════════════════════════════════════════
 
+    /** همه افراد (جعبه ابزار) */
     getAllPeople() {
         return this.query('SELECT * FROM people ORDER BY created_at DESC');
     },
 
-    getStarredPeople() {
-        return this.query('SELECT * FROM people WHERE starred = 1 ORDER BY created_at DESC');
+    /** فقط افرادی که در گردونه (کارگاه) هستند */
+    getWheelPeople() {
+        return this.query('SELECT * FROM people WHERE in_wheel = 1 ORDER BY created_at DESC');
+    },
+
+    /** افراد ستاره‌دار که در گردونه هستند */
+    getStarredWheelPeople() {
+        return this.query(
+            'SELECT * FROM people WHERE starred = 1 AND in_wheel = 1 ORDER BY created_at DESC'
+        );
     },
 
     addPerson(person) {
         const id = person.id || Utils.generateId('person');
         const now = Date.now();
+        const inWheel = person.in_wheel !== undefined ? (person.in_wheel ? 1 : 0) : 1;
         this.run(
-            `INSERT INTO people (id, name, description, starred, color, weight, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO people (id, name, description, starred, color, weight, in_wheel, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 id,
                 person.name || 'بدون نام',
@@ -207,6 +228,7 @@ const SQLStorage = {
                 person.starred ? 1 : 0,
                 person.color || Utils.randomColor(),
                 person.weight || 1,
+                inWheel,
                 now,
                 now,
             ]
@@ -220,7 +242,11 @@ const SQLStorage = {
         Object.entries(updates).forEach(([key, value]) => {
             const column = this._camelToSnake(key);
             fields.push(`${column} = ?`);
-            values.push(key === 'starred' ? (value ? 1 : 0) : value);
+            if (key === 'starred' || key === 'inWheel') {
+                values.push(value ? 1 : 0);
+            } else {
+                values.push(value);
+            }
         });
         fields.push('updated_at = ?');
         values.push(Date.now());
@@ -230,13 +256,24 @@ const SQLStorage = {
         return this.query('SELECT * FROM people WHERE id = ?', [id])[0];
     },
 
+    /** حذف واقعی از دیتابیس (جعبه ابزار) */
     removePerson(id) {
         this.run('DELETE FROM people WHERE id = ?', [id]);
     },
 
-    // ============================================
+    /** افزودن به گردونه (فقط علامت‌گذاری) */
+    addPersonToWheel(id) {
+        this.run('UPDATE people SET in_wheel = 1, updated_at = ? WHERE id = ?', [Date.now(), id]);
+    },
+
+    /** حذف از گردونه (فقط علامت‌برداری) */
+    removePersonFromWheel(id) {
+        this.run('UPDATE people SET in_wheel = 0, updated_at = ? WHERE id = ?', [Date.now(), id]);
+    },
+
+    // ═══════════════════════════════════════════
     // آیتم‌ها
-    // ============================================
+    // ═══════════════════════════════════════════
 
     getAllItems() {
         return this.query('SELECT * FROM items ORDER BY created_at DESC');
@@ -246,7 +283,7 @@ const SQLStorage = {
         const id = Utils.generateId('item');
         const now = Date.now();
         try {
-            this.run('INSERT INTO items (id, label, created_at) VALUES (?, ?, ?)', [id, label, now]);
+            this.run('INSERT INTO items (id, label, in_wheel, created_at) VALUES (?, ?, 1, ?)', [id, label, now]);
             return this.query('SELECT * FROM items WHERE id = ?', [id])[0];
         } catch (e) {
             if (e.message.includes('UNIQUE')) {
@@ -261,9 +298,9 @@ const SQLStorage = {
         this.run('DELETE FROM items WHERE id = ?', [id]);
     },
 
-    // ============================================
+    // ═══════════════════════════════════════════
     // توصیفات
-    // ============================================
+    // ═══════════════════════════════════════════
 
     getAllDescriptions() {
         return this.query('SELECT * FROM descriptions');
@@ -280,9 +317,9 @@ const SQLStorage = {
         this.run('DELETE FROM descriptions WHERE key = ?', [key]);
     },
 
-    // ============================================
+    // ═══════════════════════════════════════════
     // تاریخچه
-    // ============================================
+    // ═══════════════════════════════════════════
 
     addHistory(record) {
         const id = Utils.generateId('hist');
@@ -308,21 +345,14 @@ const SQLStorage = {
         this.run('DELETE FROM history');
     },
 
-    // ============================================
+    // ═══════════════════════════════════════════
     // داستان‌ها
-    // ============================================
+    // ═══════════════════════════════════════════
 
     addStory(story) {
         this.run(
-            `INSERT INTO stories (id, content, model, context, timestamp)
-             VALUES (?, ?, ?, ?, ?)`,
-            [
-                story.id,
-                story.content,
-                story.model,
-                story.context || '',
-                story.timestamp || Date.now(),
-            ]
+            `INSERT INTO stories (id, content, model, context, timestamp) VALUES (?, ?, ?, ?, ?)`,
+            [story.id, story.content, story.model, story.context || '', story.timestamp || Date.now()]
         );
     },
 
@@ -338,12 +368,11 @@ const SQLStorage = {
         this.run('DELETE FROM stories');
     },
 
-    // ============================================
-    // تنظیمات - با فیلتر رمزها
-    // ============================================
+    // ═══════════════════════════════════════════
+    // تنظیمات
+    // ═══════════════════════════════════════════
 
     setSetting(key, value) {
-        // 🔑 رمزها هرگز در SQLite ذخیره نمی‌شوند
         if (this.SECRET_KEYS.includes(key)) {
             LocalStorage.set('secret_' + key, value);
             return;
@@ -355,28 +384,21 @@ const SQLStorage = {
     },
 
     getSetting(key) {
-        // 🔑 رمزها از LocalStorage خوانده می‌شوند
         if (this.SECRET_KEYS.includes(key)) {
             return LocalStorage.get('secret_' + key, null);
         }
         const rows = this.query('SELECT value FROM settings WHERE key = ?', [key]);
         if (rows.length === 0) return null;
-        try {
-            return JSON.parse(rows[0].value);
-        } catch {
-            return rows[0].value;
-        }
+        try { return JSON.parse(rows[0].value); } catch { return rows[0].value; }
     },
 
-    // ============================================
-    // ذخیره‌سازی محلی (IndexedDB)
-    // ============================================
+    // ═══════════════════════════════════════════
+    // IndexedDB
+    // ═══════════════════════════════════════════
 
     async _saveToIndexedDB() {
         if (!this.db || !this._idb) return;
-
         const binaryArray = this.db.export();
-
         return new Promise((resolve, reject) => {
             const tx = this._idb.transaction(this.idbStoreName, 'readwrite');
             const store = tx.objectStore(this.idbStoreName);
@@ -400,9 +422,7 @@ const SQLStorage = {
     _scheduleSave() {
         if (this._saveTimer) clearTimeout(this._saveTimer);
         this._saveTimer = setTimeout(() => {
-            this._saveToIndexedDB().catch((e) =>
-                console.error('خطا در ذخیره‌سازی SQL:', e)
-            );
+            this._saveToIndexedDB().catch((e) => console.error('خطا در ذخیره:', e));
         }, 500);
     },
 
@@ -411,9 +431,9 @@ const SQLStorage = {
         await this._saveToIndexedDB();
     },
 
-    // ============================================
-    // همگام‌سازی با GitHub
-    // ============================================
+    // ═══════════════════════════════════════════
+    // GitHub Sync
+    // ═══════════════════════════════════════════
 
     _uint8ToBase64(uint8) {
         let binary = '';
@@ -427,54 +447,29 @@ const SQLStorage = {
     _base64ToUint8(base64) {
         const binary = atob(base64);
         const bytes = new Uint8Array(binary.length);
-        for (let i = 0; i < binary.length; i++) {
-            bytes[i] = binary.charCodeAt(i);
-        }
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
         return bytes;
     },
 
-    /**
-     * ارسال به GitHub - امن (بدون رمزها)
-     */
-    async pushToGitHub(message = 'به‌روزرسانی دیتابیس SQLite') {
-        if (!GitHubStorage.isConfigured()) {
-            throw new Error('تنظیمات GitHub کامل نیست');
-        }
+    async pushToGitHub(message = 'به‌روزرسانی دیتابیس') {
+        if (!GitHubStorage.isConfigured()) throw new Error('تنظیمات GitHub کامل نیست');
 
-        // 🛡️ پاکسازی احتیاطی: اطمینان از اینکه رمزی در DB نیست
         this.SECRET_KEYS.forEach((k) => {
-            try {
-                this.db.run(`DELETE FROM settings WHERE key = ?`, [k]);
-            } catch (e) {}
+            try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
         });
 
-        // گرفتن snapshot از دیتابیس (که حالا امن است)
         const binaryArray = this.db.export();
         const base64Content = this._uint8ToBase64(binaryArray);
-        const path = 'data/wheel_db.sqlite';
-
-        await GitHubStorage.saveBinaryFile(
-            path,
-            base64Content,
-            message
-        );
-
-        Notification.success('دیتابیس با موفقیت به GitHub ارسال شد');
-        return { path, size: binaryArray.length };
+        await GitHubStorage.saveBinaryFile('data/wheel_db.sqlite', base64Content, message);
+        Notification.success('دیتابیس به GitHub ارسال شد');
+        return { size: binaryArray.length };
     },
 
-    /**
-     * دریافت از GitHub
-     */
     async pullFromGitHub() {
-        if (!GitHubStorage.isConfigured()) {
-            throw new Error('تنظیمات GitHub کامل نیست');
-        }
-
+        if (!GitHubStorage.isConfigured()) throw new Error('تنظیمات GitHub کامل نیست');
         const config = GitHubStorage.getConfig();
-        const path = 'data/wheel_db.sqlite';
+        const branch = await GitHubStorage.resolveBranch();
 
-        // 🔑 پشتیبان از رمزهای فعلی (در LocalStorage هستند)
         const secretsBackup = {};
         this.SECRET_KEYS.forEach((k) => {
             secretsBackup[k] = LocalStorage.get('secret_' + k, null);
@@ -482,37 +477,27 @@ const SQLStorage = {
 
         try {
             const data = await GitHubStorage.request(
-                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${config.branch}`
+                `/repos/${config.owner}/${config.repo}/contents/data/wheel_db.sqlite?ref=${branch}`
             );
-
-            const binaryArray = this._base64ToUint8(
-                data.content.replace(/\n/g, '')
-            );
+            const binaryArray = this._base64ToUint8(data.content.replace(/\n/g, ''));
 
             if (this.db) this.db.close();
             this.db = new this.SQL.Database(binaryArray);
 
-            // مطمئن شو که رمزها در DB نیستند (پاکسازی احتیاطی)
             this.SECRET_KEYS.forEach((k) => {
-                try {
-                    this.db.run(`DELETE FROM settings WHERE key = ?`, [k]);
-                } catch (e) {}
+                try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
+            });
+            this.SECRET_KEYS.forEach((k) => {
+                if (secretsBackup[k]) LocalStorage.set('secret_' + k, secretsBackup[k]);
             });
 
-            // رمزها را در LocalStorage نگه‌دار (که هستند)
-            this.SECRET_KEYS.forEach((k) => {
-                if (secretsBackup[k]) {
-                    LocalStorage.set('secret_' + k, secretsBackup[k]);
-                }
-            });
-
+            this._migrateSchema();
             await this.saveNow();
-
             Notification.success('دیتابیس از GitHub بارگذاری شد');
             return true;
         } catch (error) {
             if (error.message.includes('۴۰۴') || error.message.includes('404')) {
-                Notification.warning('فایل دیتابیس در GitHub یافت نشد');
+                Notification.warning('فایل دیتابیس در GitHub نیست');
                 return false;
             }
             throw error;
@@ -520,11 +505,9 @@ const SQLStorage = {
     },
 
     downloadDatabase() {
-        // 🛡️ برای امنیت، قبل از دانلود هم رمزها را حذف کن
         this.SECRET_KEYS.forEach((k) => {
             try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
         });
-
         const binaryArray = this.db.export();
         const blob = new Blob([binaryArray], { type: 'application/x-sqlite3' });
         const url = URL.createObjectURL(blob);
@@ -538,22 +521,15 @@ const SQLStorage = {
     async loadFromFile(file) {
         const buffer = await file.arrayBuffer();
         const uint8 = new Uint8Array(buffer);
-
         if (this.db) this.db.close();
         this.db = new this.SQL.Database(uint8);
-
-        // پاکسازی رمزها (در صورت وجود در فایل بارگذاری‌شده)
         this.SECRET_KEYS.forEach((k) => {
             try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
         });
-
+        this._migrateSchema();
         await this.saveNow();
         Notification.success('دیتابیس بارگذاری شد');
     },
-
-    // ============================================
-    // ابزارهای کمکی
-    // ============================================
 
     _camelToSnake(str) {
         return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
@@ -563,6 +539,7 @@ const SQLStorage = {
         if (!this.db) return null;
         const size = this.db.export().length;
         const peopleCount = this.query('SELECT COUNT(*) as c FROM people')[0].c;
+        const wheelCount = this.query('SELECT COUNT(*) as c FROM people WHERE in_wheel = 1')[0].c;
         const itemsCount = this.query('SELECT COUNT(*) as c FROM items')[0].c;
         const historyCount = this.query('SELECT COUNT(*) as c FROM history')[0].c;
         const storiesCount = this.query('SELECT COUNT(*) as c FROM stories')[0].c;
@@ -571,6 +548,7 @@ const SQLStorage = {
             size,
             sizeFormatted: Utils.formatBytes(size),
             peopleCount,
+            wheelCount,
             itemsCount,
             historyCount,
             storiesCount,
