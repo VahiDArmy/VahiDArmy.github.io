@@ -11,6 +11,7 @@ const SettingsPage = {
         this._loadSettings();
         this._initGitHubSection();
         this._initOpenRouterSection();
+        this._initTemperatureSlider();
         this._initDatabaseSection();
         this._initGeneralSection();
         this._initDangerSection();
@@ -26,9 +27,17 @@ const SettingsPage = {
         this._setValue('input-github-username', s.githubUsername);
         this._setValue('input-github-repo', s.githubRepo);
         this._setValue('input-openrouter-key', s.openrouterApiKey);
-        this._setValue('input-ai-model', s.aiModel);
-        this._setValue('input-ai-temp', s.aiTemperature);
+        this._setValue('input-ai-model', s.aiModel || 'meta-llama/llama-3.3-70b-instruct:free');
         this._setValue('input-system-prompt', s.aiSystemPrompt);
+
+        // اسلایدر دما - با مقدار پیش‌فرض درست
+        const tempSlider = document.getElementById('input-ai-temp');
+        if (tempSlider) {
+            const tempVal = typeof s.aiTemperature === 'number' ? s.aiTemperature : 0.8;
+            tempSlider.value = tempVal;
+            this._updateTempDisplay(tempVal);
+        }
+
         this._setChecked('toggle-particles', s.particlesEnabled);
         this._setChecked('toggle-confetti', s.confettiEnabled);
         this._setChecked('toggle-auto-sync', s.autoSync);
@@ -57,7 +66,9 @@ const SettingsPage = {
 
                 Object.entries(settings).forEach(([k, v]) => {
                     AppState.set(`settings.${k}`, v);
-                    SQLStorage.setSetting(k, v);
+                    try {
+                        if (SQLStorage.isReady) SQLStorage.setSetting(k, v);
+                    } catch (e) {}
                 });
 
                 Notification.success('تنظیمات GitHub ذخیره شد');
@@ -67,22 +78,26 @@ const SettingsPage = {
         if (testBtn) {
             testBtn.addEventListener('click', async () => {
                 testBtn.disabled = true;
+                const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                // ذخیره موقت
                 AppState.set('settings.githubToken', this._getValue('input-github-token'));
                 AppState.set('settings.githubUsername', this._getValue('input-github-username'));
                 AppState.set('settings.githubRepo', this._getValue('input-github-repo'));
 
-                const result = await Sync.testGitHubConnection();
-                if (result.success) {
-                    Notification.success(result.message);
-                } else {
-                    Notification.error(result.message);
+                try {
+                    const result = await Sync.testGitHubConnection();
+                    if (result.success) {
+                        Notification.success(result.message);
+                    } else {
+                        Notification.error(result.message, 8000);
+                    }
+                } catch (e) {
+                    Notification.error('خطا: ' + e.message, 8000);
                 }
 
                 testBtn.disabled = false;
-                testBtn.textContent = 'تست اتصال';
+                testBtn.textContent = originalText;
             });
         }
     },
@@ -96,16 +111,26 @@ const SettingsPage = {
 
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
+                let modelValue = this._getValue('input-ai-model');
+                
+                // اگر خالی یا اشتباه بود، پیش‌فرض بگذار
+                if (!modelValue || modelValue === 'openrouter/free') {
+                    modelValue = OpenRouter.DEFAULT_MODEL;
+                    this._setValue('input-ai-model', modelValue);
+                }
+
                 const settings = {
                     openrouterApiKey: this._getValue('input-openrouter-key'),
-                    aiModel: this._getValue('input-ai-model') || 'openrouter/free',
+                    aiModel: modelValue,
                     aiTemperature: parseFloat(this._getValue('input-ai-temp')) || 0.8,
                     aiSystemPrompt: this._getValue('input-system-prompt'),
                 };
 
                 Object.entries(settings).forEach(([k, v]) => {
                     AppState.set(`settings.${k}`, v);
-                    SQLStorage.setSetting(k, v);
+                    try {
+                        if (SQLStorage.isReady) SQLStorage.setSetting(k, v);
+                    } catch (e) {}
                 });
 
                 Notification.success('تنظیمات هوش مصنوعی ذخیره شد');
@@ -115,21 +140,79 @@ const SettingsPage = {
         if (testBtn) {
             testBtn.addEventListener('click', async () => {
                 testBtn.disabled = true;
+                const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                AppState.set('settings.openrouterApiKey', this._getValue('input-openrouter-key'));
+                // ذخیره‌ی موقت مقادیر در State
+                let modelValue = this._getValue('input-ai-model');
+                if (!modelValue || modelValue === 'openrouter/free') {
+                    modelValue = OpenRouter.DEFAULT_MODEL;
+                    this._setValue('input-ai-model', modelValue);
+                }
 
-                const ok = await OpenRouter.testConnection();
-                if (ok) {
-                    Notification.success('اتصال به OpenRouter برقرار است');
-                } else {
-                    Notification.error('خطا در اتصال - کلید را بررسی کنید');
+                AppState.set('settings.openrouterApiKey', this._getValue('input-openrouter-key'));
+                AppState.set('settings.aiModel', modelValue);
+                AppState.set('settings.aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
+
+                try {
+                    const result = await OpenRouter.testConnection();
+                    
+                    if (result.success) {
+                        Notification.success(result.message, 6000);
+                    } else {
+                        // نمایش خطای واقعی
+                        Notification.error(result.message, 10000);
+                        
+                        // لاگ کامل در کنسول برای دیباگ
+                        console.error('جزئیات خطا:', result.error);
+                    }
+                } catch (e) {
+                    Notification.error('خطای غیرمنتظره: ' + e.message, 10000);
+                    console.error(e);
                 }
 
                 testBtn.disabled = false;
-                testBtn.textContent = 'تست اتصال';
+                testBtn.textContent = originalText;
             });
         }
+    },
+
+    /**
+     * اسلایدر دما - جداگانه و کامل
+     */
+    _initTemperatureSlider() {
+        const tempSlider = document.getElementById('input-ai-temp');
+        if (!tempSlider) return;
+
+        // به‌روزرسانی نمایش مقدار هنگام کشیدن
+        tempSlider.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value) || 0.8;
+            this._updateTempDisplay(val);
+        });
+
+        // ذخیره هنگام رها کردن
+        tempSlider.addEventListener('change', (e) => {
+            const val = parseFloat(e.target.value) || 0.8;
+            
+            AppState.set('settings.aiTemperature', val);
+            
+            try {
+                if (SQLStorage.isReady) {
+                    SQLStorage.setSetting('aiTemperature', val);
+                }
+            } catch (err) {
+                console.error('خطا در ذخیره دما:', err);
+            }
+        });
+    },
+
+    /**
+     * به‌روزرسانی نمایش عدد دما
+     */
+    _updateTempDisplay(val) {
+        const el = document.getElementById('temp-value');
+        if (!el) return;
+        el.textContent = Utils.toPersianNumbers(val.toFixed(1));
     },
 
     /**
@@ -180,8 +263,7 @@ const SettingsPage = {
 
                 try {
                     await SQLStorage.pullFromGitHub();
-                    // رفرش state
-                    App._loadDataFromSQL();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
                     Notification.success('داده‌ها بازنشانی شدند');
                 } catch (e) {
@@ -207,15 +289,23 @@ const SettingsPage = {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                const ok = await Modal.confirm('دیتابیس فعلی با فایل انتخابی جایگزین شود؟', { danger: true });
-                if (!ok) return;
+                const ok = await Modal.confirm(
+                    'دیتابیس فعلی با فایل انتخابی جایگزین شود؟',
+                    { danger: true }
+                );
+                if (!ok) {
+                    uploadInput.value = '';
+                    return;
+                }
 
                 try {
                     await SQLStorage.loadFromFile(file);
-                    App._loadDataFromSQL();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
                 } catch (err) {
                     Notification.error('خطا در بارگذاری: ' + err.message);
+                } finally {
+                    uploadInput.value = '';
                 }
             });
         }
@@ -229,7 +319,7 @@ const SettingsPage = {
                 );
                 if (ok) {
                     await SQLStorage.reset();
-                    App._loadDataFromSQL();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
                 }
             });
@@ -243,36 +333,41 @@ const SettingsPage = {
         const container = document.getElementById('db-info');
         if (!container) return;
 
-        const info = SQLStorage.getInfo();
-        if (!info) {
-            container.innerHTML = '<p class="text-muted">دیتابیس بارگذاری نشده</p>';
-            return;
-        }
+        try {
+            const info = SQLStorage.getInfo();
+            if (!info) {
+                container.innerHTML = '<p class="text-muted">دیتابیس در حال بارگذاری است...</p>';
+                setTimeout(() => this._renderDbInfo(), 1000);
+                return;
+            }
 
-        container.innerHTML = `
-            <div class="db-info-grid">
-                <div class="db-info-item">
-                    <div class="db-info-label">حجم فایل</div>
-                    <div class="db-info-value">${info.sizeFormatted}</div>
+            container.innerHTML = `
+                <div class="db-info-grid">
+                    <div class="db-info-item">
+                        <div class="db-info-label">حجم فایل</div>
+                        <div class="db-info-value">${info.sizeFormatted}</div>
+                    </div>
+                    <div class="db-info-item">
+                        <div class="db-info-label">افراد</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.peopleCount)}</div>
+                    </div>
+                    <div class="db-info-item">
+                        <div class="db-info-label">آیتم‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.itemsCount)}</div>
+                    </div>
+                    <div class="db-info-item">
+                        <div class="db-info-label">چرخش‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.historyCount)}</div>
+                    </div>
+                    <div class="db-info-item">
+                        <div class="db-info-label">داستان‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.storiesCount)}</div>
+                    </div>
                 </div>
-                <div class="db-info-item">
-                    <div class="db-info-label">افراد</div>
-                    <div class="db-info-value">${Utils.toPersianNumbers(info.peopleCount)}</div>
-                </div>
-                <div class="db-info-item">
-                    <div class="db-info-label">آیتم‌ها</div>
-                    <div class="db-info-value">${Utils.toPersianNumbers(info.itemsCount)}</div>
-                </div>
-                <div class="db-info-item">
-                    <div class="db-info-label">چرخش‌ها</div>
-                    <div class="db-info-value">${Utils.toPersianNumbers(info.historyCount)}</div>
-                </div>
-                <div class="db-info-item">
-                    <div class="db-info-label">داستان‌ها</div>
-                    <div class="db-info-value">${Utils.toPersianNumbers(info.storiesCount)}</div>
-                </div>
-            </div>
-        `;
+            `;
+        } catch (e) {
+            container.innerHTML = '<p class="text-muted">دیتابیس در دسترس نیست</p>';
+        }
     },
 
     /**
@@ -284,7 +379,9 @@ const SettingsPage = {
             particlesToggle.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
                 AppState.set('settings.particlesEnabled', enabled);
-                SQLStorage.setSetting('particlesEnabled', enabled);
+                try {
+                    if (SQLStorage.isReady) SQLStorage.setSetting('particlesEnabled', enabled);
+                } catch (err) {}
                 if (enabled) Particles.init('particles-canvas');
                 else Particles.stop();
             });
@@ -295,7 +392,9 @@ const SettingsPage = {
             confettiToggle.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
                 AppState.set('settings.confettiEnabled', enabled);
-                SQLStorage.setSetting('confettiEnabled', enabled);
+                try {
+                    if (SQLStorage.isReady) SQLStorage.setSetting('confettiEnabled', enabled);
+                } catch (err) {}
             });
         }
 
@@ -304,7 +403,9 @@ const SettingsPage = {
             autoSyncToggle.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
                 AppState.set('settings.autoSync', enabled);
-                SQLStorage.setSetting('autoSync', enabled);
+                try {
+                    if (SQLStorage.isReady) SQLStorage.setSetting('autoSync', enabled);
+                } catch (err) {}
                 if (enabled) Sync.startAutoSync();
                 else Sync.stopAutoSync();
             });
@@ -316,7 +417,9 @@ const SettingsPage = {
                 const seconds = parseInt(e.target.value) || 60;
                 const ms = seconds * 1000;
                 AppState.set('settings.syncInterval', ms);
-                SQLStorage.setSetting('syncInterval', ms);
+                try {
+                    if (SQLStorage.isReady) SQLStorage.setSetting('syncInterval', ms);
+                } catch (err) {}
                 if (AppState.get('settings.autoSync')) {
                     Sync.stopAutoSync();
                     Sync.startAutoSync();
@@ -338,7 +441,7 @@ const SettingsPage = {
                 );
                 if (ok) {
                     await SQLStorage.reset();
-                    App._loadDataFromSQL();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
                     Notification.success('همه داده‌ها پاک شدند');
                 }
@@ -351,7 +454,7 @@ const SettingsPage = {
      */
     _setValue(id, value) {
         const el = document.getElementById(id);
-        if (el) el.value = value || '';
+        if (el) el.value = value == null ? '' : value;
     },
 
     _getValue(id) {
