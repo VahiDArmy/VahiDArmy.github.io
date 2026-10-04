@@ -1,0 +1,198 @@
+/* ============================================
+   انتقال‌ها و انیمیشن‌های کاربردی
+   ============================================ */
+
+/* کلاس‌های انیمیشن */
+.fade-in {
+    animation: fadeIn 0.4s ease;
+}
+
+.fade-in-slow {
+    animation: fadeIn 0.8s ease;
+}
+
+.fade-out {
+    animation: fadeOut 0.4s ease;
+}
+
+.slide-in-right {
+    animation: slideInRight 0.4s ease;
+}
+
+.slide-in-left {
+    animation: slideInLeft 0.4s ease;
+}
+
+.slide-in-up {
+    animation: slideInUp 0.4s ease;
+}
+
+.slide-in-down {
+    animation: slideInDown 0.4s ease;
+}
+
+.scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.pulse-anim {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.glow-anim {
+    animation: glow 2s ease-in-out infinite;
+}
+
+.float-anim {
+    animation: float 4s ease-in-out infinite;
+}
+
+.shake-anim {
+    animation: shake 0.5s ease;
+}
+
+.spin-anim {
+    animation: spin 1s linear infinite;
+}
+
+/* تأخیرها */
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-700 { animation-delay: 700ms; }
+.delay-1000 { animation-delay: 1000ms; }
+
+/* تعامل hover */
+.hover-lift {
+    transition: transform var(--transition-normal);
+}
+
+.hover-lift:hover {
+    transform: translateY(-4px);
+}
+
+.hover-scale {
+    transition: transform var(--transition-normal);
+}
+
+.hover-scale:hover {
+    transform: scale(1.05);
+}
+
+.hover-glow {
+    transition: box-shadow var(--transition-normal);
+}
+
+.hover-glow:hover {
+    box-shadow: var(--shadow-glow-primary);
+}
+
+.hover-brightness {
+    transition: filter var(--transition-normal);
+}
+
+.hover-brightness:hover {
+    filter: brightness(1.15);
+}
+
+/* انیمیشن Bounce In */
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.95);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* انتقال‌های کلی */
+.smooth-transition {
+    transition: all var(--transition-normal);
+}
+
+.color-transition {
+    transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.transform-transition {
+    transition: transform var(--transition-normal);
+}
+
+/* انیمیشن جریان گرادیان */
+.gradient-anim {
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+/* انیمیشن تایپ */
+.typing {
+    overflow: hidden;
+    white-space: nowrap;
+    border-left: 2px solid var(--color-accent-primary);
+    animation: typing 2s steps(40) 1s forwards, blink 0.75s step-end infinite;
+}
+
+/* نوار پیشرفت */
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-full);
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--border-radius-full);
+    transition: width var(--transition-slow);
+}
+
+/* Ripple effect */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* احترام به prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
