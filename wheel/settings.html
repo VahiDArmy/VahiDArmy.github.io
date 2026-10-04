@@ -108,24 +108,47 @@
                             type="text"
                             id="input-github-username"
                             class="input"
-                            placeholder="username"
+                            placeholder="VahiDArmy"
                             autocomplete="off"
                         >
+                        <p class="form-hint">
+                            فقط نام کاربری، بدون اسلش. مثال: <code>VahiDArmy</code>
+                        </p>
                     </div>
 
                     <div class="form-row">
                         <label class="form-label">
-                            نام مخزن
+                            نام مخزن (Repository)
                             <span class="required">*</span>
                         </label>
                         <input
                             type="text"
                             id="input-github-repo"
                             class="input"
-                            placeholder="my-wheel"
+                            placeholder="VahiDArmy.github.io"
                             autocomplete="off"
                         >
-                        <p class="form-hint">مخزنی که GitHub Pages روی آن فعال است</p>
+                        <p class="form-hint">
+                            نام دقیق مخزن. مثال: <code>VahiDArmy.github.io</code> یا <code>wheel</code>
+                        </p>
+                    </div>
+
+                    <div class="form-row">
+                        <label class="form-label">
+                            شاخه (Branch)
+                            <span class="required">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            id="input-github-branch"
+                            class="input"
+                            placeholder="main"
+                            value="main"
+                            autocomplete="off"
+                        >
+                        <p class="form-hint">
+                            نام شاخه‌ی اصلی مخزن: معمولاً <code>main</code> یا <code>master</code>
+                        </p>
                     </div>
 
                     <div class="settings-actions">
