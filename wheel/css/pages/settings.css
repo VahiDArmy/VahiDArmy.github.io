@@ -1,6 +1,6 @@
-/* ============================================
+/* ═══════════════════════════════════════════
    صفحه تنظیمات
-   ============================================ */
+   ═══════════════════════════════════════════ */
 
 .settings-page {
     padding-top: var(--spacing-lg);
@@ -38,6 +38,10 @@
     gap: var(--spacing-sm);
 }
 
+/* ═══════════════════════════════════════════
+   DB Info Cards
+   ═══════════════════════════════════════════ */
+
 .db-info {
     padding: var(--spacing-md);
     background: var(--color-bg-tertiary);
@@ -48,7 +52,7 @@
 
 .db-info-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: var(--spacing-md);
 }
 
@@ -57,15 +61,61 @@
     flex-direction: column;
     gap: 4px;
     text-align: center;
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-sm);
     background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     transition: all var(--transition-fast);
+    font-family: inherit;
+    color: inherit;
+    width: 100%;
 }
 
-.db-info-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.db-info-item.static {
+    cursor: default;
+}
+
+.db-info-item.static:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.db-info-item.clickable {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.db-info-item.clickable::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    z-index: 0;
+}
+
+.db-info-item.clickable:hover {
+    transform: translateY(-3px);
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+}
+
+.db-info-item.clickable:hover::before {
+    opacity: 0.06;
+}
+
+.db-info-item.clickable:active {
+    transform: translateY(-1px);
+}
+
+.db-info-item.clickable > * {
+    position: relative;
+    z-index: 1;
 }
 
 .db-info-label {
@@ -75,18 +125,341 @@
 }
 
 .db-info-value {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
+    color: var(--color-accent-primary);
+    line-height: 1.2;
+}
+
+.db-info-hint {
+    font-size: 0.65rem;
+    color: var(--color-text-muted);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    margin-top: 2px;
+    letter-spacing: 0.3px;
+}
+
+.db-info-item.clickable:hover .db-info-hint {
+    opacity: 1;
     color: var(--color-accent-primary);
 }
 
-.danger-actions {
+/* ═══════════════════════════════════════════
+   Data Table Modal
+   ═══════════════════════════════════════════ */
+
+.data-table-wrapper {
     display: flex;
+    flex-direction: column;
     gap: var(--spacing-md);
-    flex-wrap: wrap;
 }
 
-/* ریسپانسیو */
+.data-table-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+}
+
+.data-table-controls .input {
+    flex: 1;
+    min-width: 0;
+}
+
+.data-table-controls .btn {
+    flex-shrink: 0;
+}
+
+.data-table {
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    max-height: 60vh;
+}
+
+/* ─── Header ─── */
+.data-table-header {
+    display: grid;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-elevated);
+    border-bottom: 2px solid var(--border-color);
+    gap: var(--spacing-sm);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table-col {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.data-table-col.actions-col {
+    text-align: center;
+}
+
+/* ─── Body ─── */
+.data-table-body {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.data-table-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.data-table-body::-webkit-scrollbar-track {
+    background: var(--color-bg-secondary);
+}
+
+.data-table-body::-webkit-scrollbar-thumb {
+    background: var(--color-bg-elevated);
+    border-radius: var(--border-radius-full);
+}
+
+/* ─── Row ─── */
+.data-table-row {
+    display: grid;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+    transition: background var(--transition-fast);
+    min-height: 52px;
+    font-size: var(--font-size-sm);
+}
+
+.data-table-row:last-child {
+    border-bottom: none;
+}
+
+.data-table-row:hover {
+    background: var(--color-bg-hover);
+}
+
+.data-table-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+}
+
+.data-table-cell.text-muted {
+    color: var(--color-text-secondary);
+}
+
+.data-table-cell.actions-col {
+    justify-content: center;
+    gap: 0;
+}
+
+/* ─── Row items ─── */
+.row-color-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: var(--border-radius-full);
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.row-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.row-model {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--color-accent-primary);
+    border-radius: var(--border-radius-sm);
+    font-family: monospace;
+    font-size: 0.7rem;
+    direction: ltr;
+    font-weight: var(--font-weight-medium);
+}
+
+.row-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    padding: 2px 8px;
+    background: rgba(6, 182, 212, 0.12);
+    color: var(--color-accent-secondary);
+    border-radius: var(--border-radius-full);
+    font-size: 0.7rem;
+    font-weight: var(--font-weight-bold);
+}
+
+.row-flags {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.row-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: var(--color-bg-elevated);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+}
+
+/* ─── Delete button ─── */
+.row-delete-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+    line-height: 1;
+}
+
+.row-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--color-accent-danger);
+    color: var(--color-accent-danger);
+    transform: scale(1.08);
+}
+
+.row-delete-btn:active {
+    transform: scale(0.95);
+}
+
+/* ─── Empty state ─── */
+.data-table-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+    color: var(--color-text-muted);
+}
+
+.data-table-empty-icon {
+    font-size: 3rem;
+    opacity: 0.4;
+}
+
+/* ═══════════════════════════════════════════
+   Models Fetch Modal
+   ═══════════════════════════════════════════ */
+
+.models-fetch-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.models-fetch-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+}
+
+.models-fetch-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+}
+
+.models-fetch-item:hover {
+    border-color: var(--color-accent-primary);
+    background: var(--color-bg-hover);
+}
+
+.models-fetch-item.is-google {
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.models-fetch-item.is-google:hover {
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+}
+
+.models-fetch-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.models-fetch-name {
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.models-fetch-id {
+    font-size: var(--font-size-xs);
+}
+
+.models-fetch-id code {
+    color: var(--color-accent-primary);
+    background: rgba(139, 92, 246, 0.1);
+    padding: 2px 6px;
+    border-radius: var(--border-radius-sm);
+    font-family: monospace;
+    direction: ltr;
+    display: inline-block;
+}
+
+.models-fetch-meta {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+/* ═══════════════════════════════════════════
+   Responsive
+   ═══════════════════════════════════════════ */
+
 @media (max-width: 640px) {
     .settings-actions {
         flex-direction: column;
@@ -100,11 +473,53 @@
         grid-template-columns: 1fr;
     }
 
-    .danger-actions {
-        flex-direction: column;
+    /* در موبایل، جدول به کارت تبدیل می‌شود */
+    .data-table-header {
+        display: none;
     }
 
-    .danger-actions .btn {
-        width: 100%;
+    .data-table-row {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-md);
+        background: var(--color-bg-secondary);
+        margin: var(--spacing-xs);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-color);
+        position: relative;
+    }
+
+    .data-table-cell {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .data-table-cell::before {
+        content: attr(data-label);
+        font-size: 0.65rem;
+        color: var(--color-text-muted);
+        display: block;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .data-table-cell.actions-col {
+        justify-content: flex-start;
+        margin-top: var(--spacing-xs);
+    }
+
+    .data-table-cell.actions-col::before {
+        display: none;
+    }
+
+    .data-table {
+        max-height: 55vh;
+        background: transparent;
+        border: none;
+    }
+
+    .data-table-body {
+        padding: var(--spacing-xs);
     }
 }
