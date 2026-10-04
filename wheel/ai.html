@@ -114,9 +114,7 @@
                     </div>
 
                     <div class="form-row">
-                        <label class="form-label">
-                            توضیحات اضافی (اختیاری)
-                        </label>
+                        <label class="form-label">توضیحات اضافی (اختیاری)</label>
                         <textarea
                             id="story-extras"
                             class="input"
@@ -126,7 +124,7 @@
                     </div>
                 </div>
 
-                <button id="generate-story-btn" class="btn btn-primary btn-xl btn-block">
+                <button id="generate-story-btn" class="btn btn-primary btn-xl btn-block" type="button">
                     ✨ ساخت داستان
                 </button>
             </section>
@@ -143,6 +141,9 @@
                 <div class="stories-history-card">
                     <div class="editor-header">
                         <h3 class="editor-title">📚 داستان‌های قبلی</h3>
+                        <button id="clear-stories-btn" class="btn btn-danger btn-sm" type="button">
+                            🗑 پاک کردن همه
+                        </button>
                     </div>
                     <div id="stories-list" class="stories-list">
                         <p class="text-muted text-center">هنوز داستانی ساخته نشده است</p>
@@ -167,6 +168,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 
     <script src="js/core/utils.js"></script>
+    <script src="js/core/logger.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/router.js"></script>
