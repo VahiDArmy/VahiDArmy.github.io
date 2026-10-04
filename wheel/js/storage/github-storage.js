@@ -5,6 +5,7 @@
 
 const GitHubStorage = {
     baseUrl: 'https://api.github.com',
+    _defaultBranchCache: null,
 
     getConfig() {
         let username = (AppState.get('settings.githubUsername') || '').trim();
@@ -22,7 +23,6 @@ const GitHubStorage = {
         }
 
         repo = repo.replace(/^\/+|\/+$/g, '');
-        if (!branch) branch = 'main';
 
         return {
             token: (AppState.get('settings.githubToken') || '').trim(),
@@ -37,7 +37,30 @@ const GitHubStorage = {
         return !!(config.token && config.owner && config.repo);
     },
 
-    async request(endpoint, options = {}) {
+    /**
+     * تشخیص خودکار شاخه اصلی مخزن
+     */
+    async detectDefaultBranch() {
+        const config = this.getConfig();
+        if (!config.token || !config.owner || !config.repo) return null;
+        if (this._defaultBranchCache) return this._defaultBranchCache;
+
+        try {
+            const data = await this.request(
+                `/repos/${config.owner}/${config.repo}`,
+                {},
+                true // skipBranchCheck
+            );
+            const branch = data.default_branch || 'main';
+            this._defaultBranchCache = branch;
+            console.log('🔍 شاخه پیش‌فرض مخزن:', branch);
+            return branch;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    async request(endpoint, options = {}, skipBranchCheck = false) {
         const config = this.getConfig();
         const url = `${this.baseUrl}${endpoint}`;
 
@@ -54,10 +77,8 @@ const GitHubStorage = {
         } catch (networkError) {
             console.error('❌ خطای شبکه:', networkError);
             throw new Error(
-                `اتصال به GitHub برقرار نشد. بررسی کنید:\n` +
-                `• اتصال اینترنت\n` +
-                `• VPN (ممکن است GitHub را بلاک کند)\n` +
-                `• نام کاربری/مخزن: ${config.owner}/${config.repo}`
+                `اتصال به GitHub برقرار نشد.\n` +
+                `بررسی کنید: اینترنت، VPN، نام مخزن`
             );
         }
 
@@ -65,7 +86,7 @@ const GitHubStorage = {
         try {
             data = await response.json();
         } catch (e) {
-            throw new Error(`پاسخ نامعتبر از GitHub (کد ${response.status})`);
+            throw new Error(`پاسخ نامعتبر از GitHub (${response.status})`);
         }
 
         if (!response.ok) {
@@ -74,9 +95,9 @@ const GitHubStorage = {
 
             if (isSecretError) {
                 throw new Error(
-                    `GitHub اجازه ذخیره را نداد (کد ${response.status}):\n` +
+                    `GitHub اجازه ذخیره را نداد (${response.status}):\n` +
                     `دلیل: شناسایی اطلاعات حساس (Secret)\n` +
-                    `این خطا از سیاست امنیتی مخزن است.`
+                    `از سیاست امنیتی مخزن است.`
                 );
             }
 
@@ -102,11 +123,55 @@ const GitHubStorage = {
         return data;
     },
 
+    /**
+     * شاخه‌ی واقعی برای استفاده
+     */
+    async resolveBranch() {
+        const config = this.getConfig();
+
+        // اگر کاربر تعیین کرده، از همان استفاده کن
+        if (config.branch) {
+            // تست کن که شاخه وجود دارد
+            try {
+                await this.request(
+                    `/repos/${config.owner}/${config.repo}/branches/${config.branch}`
+                );
+                return config.branch;
+            } catch (e) {
+                console.warn(`شاخه «${config.branch}» پیدا نشد، تشخیص خودکار...`);
+            }
+        }
+
+        // تشخیص خودکار
+        const detected = await this.detectDefaultBranch();
+        if (detected) {
+            // ذخیره برای استفاده بعدی
+            AppState.set('settings.githubBranch', detected);
+            try {
+                if (SQLStorage.isReady) SQLStorage.setSetting('githubBranch', detected);
+            } catch (e) {}
+            return detected;
+        }
+
+        // آخرین تلاش
+        for (const b of ['main', 'master']) {
+            try {
+                await this.request(
+                    `/repos/${config.owner}/${config.repo}/branches/${b}`
+                );
+                return b;
+            } catch (e) {}
+        }
+
+        return config.branch || 'main';
+    },
+
     async getFileSha(path) {
         const config = this.getConfig();
+        const branch = await this.resolveBranch();
         try {
             const data = await this.request(
-                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${config.branch}`
+                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${branch}`
             );
             return data.sha || null;
         } catch (e) {
@@ -116,9 +181,10 @@ const GitHubStorage = {
 
     async getFile(path) {
         const config = this.getConfig();
+        const branch = await this.resolveBranch();
         try {
             const data = await this.request(
-                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${config.branch}`
+                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${branch}`
             );
             const raw = decodeURIComponent(
                 escape(atob((data.content || '').replace(/\n/g, '')))
@@ -133,6 +199,7 @@ const GitHubStorage = {
 
     async saveFile(path, content, message = 'به‌روزرسانی خودکار', attempt = 1) {
         const config = this.getConfig();
+        const branch = await this.resolveBranch();
         const encodedContent = btoa(
             unescape(encodeURIComponent(JSON.stringify(content, null, 2)))
         );
@@ -142,7 +209,7 @@ const GitHubStorage = {
         const body = {
             message,
             content: encodedContent,
-            branch: config.branch,
+            branch: branch,
         };
         if (sha) body.sha = sha;
 
@@ -158,9 +225,8 @@ const GitHubStorage = {
             const is409 = error.message.includes('۴۰۹') || error.message.includes('409');
             const isSecretError = /secret|scanning|repository rule/i.test(error.message);
 
-            // ⚠️ روی خطای Secret هرگز retry نکن
             if (is409 && !isSecretError && attempt <= 2) {
-                console.log(`⚠️ تداخل نسخه - تلاش مجدد (${attempt}/2)...`);
+                console.log(`⚠️ تداخل - تلاش مجدد (${attempt}/2)`);
                 await Utils.delay(800 * attempt);
                 return await this.saveFile(path, content, message, attempt + 1);
             }
@@ -171,12 +237,13 @@ const GitHubStorage = {
 
     async saveBinaryFile(path, base64Content, message = 'به‌روزرسانی فایل باینری', attempt = 1) {
         const config = this.getConfig();
+        const branch = await this.resolveBranch();
         let sha = await this.getFileSha(path);
 
         const body = {
             message,
             content: base64Content,
-            branch: config.branch,
+            branch: branch,
         };
         if (sha) body.sha = sha;
 
@@ -192,9 +259,8 @@ const GitHubStorage = {
             const is409 = error.message.includes('۴۰۹') || error.message.includes('409');
             const isSecretError = /secret|scanning|repository rule/i.test(error.message);
 
-            // ⚠️ روی خطای Secret هرگز retry نکن
             if (is409 && !isSecretError && attempt <= 2) {
-                console.log(`⚠️ تداخل فایل باینری - تلاش مجدد (${attempt}/2)...`);
+                console.log(`⚠️ تداخل فایل باینری - تلاش مجدد (${attempt}/2)`);
                 await Utils.delay(800 * attempt);
                 return await this.saveBinaryFile(path, base64Content, message, attempt + 1);
             }
@@ -204,7 +270,7 @@ const GitHubStorage = {
     },
 
     async savePeople(people) {
-        return await this.saveFile('data/people.json', people, 'به‌روزرسانی لیست افراد');
+        return await this.saveFile('data/people.json', people, 'به‌روزرسانی افراد');
     },
 
     async saveItems(items) {
@@ -241,7 +307,7 @@ const GitHubStorage = {
         const config = this.getConfig();
 
         if (!config.token) {
-            return { success: false, message: 'توکن GitHub وارد نشده است' };
+            return { success: false, message: 'توکن وارد نشده است' };
         }
 
         try {
@@ -259,20 +325,33 @@ const GitHubStorage = {
                 `/repos/${config.owner}/${config.repo}`
             );
 
-            try {
-                await this.request(
-                    `/repos/${config.owner}/${config.repo}/branches/${config.branch}`
-                );
-            } catch (e) {
-                return {
-                    success: false,
-                    message: `شاخه «${config.branch}» پیدا نشد. main یا master`,
-                };
+            const defaultBranch = repoInfo.default_branch || 'main';
+
+            // اگر شاخه کاربر پیدا نشد، شاخه پیش‌فرض را ذخیره کن
+            const userBranch = config.branch;
+            if (userBranch && userBranch !== defaultBranch) {
+                try {
+                    await this.request(
+                        `/repos/${config.owner}/${config.repo}/branches/${userBranch}`
+                    );
+                } catch (e) {
+                    // شاخه کاربر وجود ندارد، شاخه پیش‌فرض را ذخیره کن
+                    AppState.set('settings.githubBranch', defaultBranch);
+                    try {
+                        if (SQLStorage.isReady) {
+                            SQLStorage.setSetting('githubBranch', defaultBranch);
+                        }
+                    } catch (err) {}
+                    return {
+                        success: true,
+                        message: `اتصال موفق. شاخه «${userBranch}» نبود، شاخه «${defaultBranch}» تنظیم شد.`,
+                    };
+                }
             }
 
             return {
                 success: true,
-                message: `اتصال کامل: ${repoInfo.full_name} (شاخه: ${config.branch})`,
+                message: `اتصال کامل: ${repoInfo.full_name} (شاخه: ${defaultBranch})`,
             };
         } catch (e) {
             return { success: false, message: e.message };
