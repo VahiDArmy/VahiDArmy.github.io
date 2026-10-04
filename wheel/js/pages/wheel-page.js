@@ -1,5 +1,5 @@
 /**
- * منطق صفحه گردونه - با حقه مخفی فشار/کشیدن
+ * منطق صفحه گردونه - با حقه مخفی فشار/کشیدن + داستان خودکار
  * @module wheelPage
  */
 
@@ -12,6 +12,8 @@ const WheelPage = {
     timeThreshold: 400,
     lastPointerY: 0,
     dragDistance: 0,
+    _currentStory: null,
+    _isGeneratingStory: false,
 
     init() {
         this._initWheel();
@@ -78,7 +80,7 @@ const WheelPage = {
         this.lever.classList.remove('lever-dragging');
         this.lever.style.transform = '';
 
-        // 🎯 تصمیم‌گیری حقه اصلی (کاملاً مخفی)
+        // 🎯 حقه مخفی
         const isDrag = totalDrag >= this.dragThreshold || duration > this.timeThreshold;
 
         if (isDrag) {
@@ -145,16 +147,12 @@ const WheelPage = {
         });
     },
 
-    /**
-     * رندر لیست افراد - بدون دکمه ستاره
-     */
     _renderPeopleList() {
         const container = document.getElementById('wheel-people-list');
         if (!container) return;
 
         const people = AppState.get('people') || [];
 
-        // به‌روزرسانی شمارنده
         const countEl = document.getElementById('people-count');
         if (countEl) countEl.textContent = Utils.toPersianNumbers(people.length);
 
@@ -213,7 +211,6 @@ const WheelPage = {
             addBtn.addEventListener('click', () => this._quickAdd());
         }
 
-        // جستجو
         const searchInput = document.getElementById('people-search-input');
         if (searchInput) {
             searchInput.addEventListener('input', Utils.debounce((e) => {
@@ -231,6 +228,9 @@ const WheelPage = {
         });
     },
 
+    /**
+     * بعد از اتمام چرخش - نمایش برنده + شروع خودکار داستان
+     */
     onSpinComplete(winner) {
         if (!winner) return;
 
@@ -243,8 +243,10 @@ const WheelPage = {
             spinType,
         });
 
-        this._showWinner(winner);
+        // نمایش پاپ‌آپ برنده با بخش داستان
+        this._showWinnerWithStory(winner);
 
+        // حالت حذفی
         if (mode === 'elimination') {
             setTimeout(() => {
                 const winnerId = winner.id;
@@ -257,20 +259,32 @@ const WheelPage = {
         }
     },
 
-    _showWinner(winner) {
+    /**
+     * نمایش پاپ‌آپ برنده + داستان خودکار
+     */
+    _showWinnerWithStory(winner) {
         const container = document.getElementById('winner-display');
         if (!container) return;
 
         const name = winner.name || winner.label || 'نامشخص';
+        this._currentStory = null;
+
         container.innerHTML = `
-            <div class="winner-popup">
-                <div class="winner-popup-icon">🏆</div>
-                <div class="winner-popup-label">برنده</div>
-                <div class="winner-popup-name">${this._escape(name)}</div>
+            <div class="winner-popup winner-popup-with-story">
+                <div class="winner-popup-header">
+                    <div class="winner-popup-icon">🏆</div>
+                    <div class="winner-popup-label">برنده</div>
+                    <div class="winner-popup-name">${this._escape(name)}</div>
+                </div>
+
+                <div class="winner-popup-story" id="winner-story-section">
+                    <div class="story-loading">
+                        <div class="spinner"></div>
+                        <p>در حال نوشتن داستان...</p>
+                    </div>
+                </div>
+
                 <div class="winner-popup-actions">
-                    <button class="btn btn-primary btn-sm" id="make-story-btn">
-                        🤖 ساخت داستان
-                    </button>
                     <button class="btn btn-secondary btn-sm" id="close-winner-btn">
                         بستن
                     </button>
@@ -281,9 +295,9 @@ const WheelPage = {
         container.classList.add('show');
         AppState.set('wheel.lastResult', winner);
 
-        const storyBtn = document.getElementById('make-story-btn');
-        if (storyBtn) {
-            storyBtn.addEventListener('click', () => {
+        // ذخیره برای صفحه هوش مصنوعی (در صورت نیاز)
+        try {
+            if (SQLStorage.isReady) {
                 SQLStorage.setSetting('last_winner_for_story', {
                     id: winner.id,
                     name: winner.name || winner.label,
@@ -291,9 +305,8 @@ const WheelPage = {
                     starred: winner.starred,
                     timestamp: Date.now(),
                 });
-                window.location.href = 'ai.html?winner=' + winner.id;
-            });
-        }
+            }
+        } catch (e) {}
 
         const closeBtn = document.getElementById('close-winner-btn');
         if (closeBtn) {
@@ -302,14 +315,157 @@ const WheelPage = {
             });
         }
 
-        setTimeout(() => {
-            container.classList.remove('show');
-        }, 10000);
+        // 🎯 شروع فوری ساخت داستان
+        this._generateAutoStory(winner);
+    },
+
+    /**
+     * جمع‌آوری توصیفات
+     */
+    _collectDescriptions() {
+        const all = Descriptions.getAll();
+        const filtered = {};
+
+        // توصیف افراد
+        (AppState.get('people') || []).forEach((p) => {
+            if (all[p.id]) filtered[p.name] = all[p.id];
+        });
+
+        // توصیف آیتم‌ها
+        (AppState.get('items') || []).forEach((i) => {
+            if (all[i.id]) filtered[i.label] = all[i.id];
+        });
+
+        return filtered;
+    },
+
+    /**
+     * ساخت خودکار داستان
+     */
+    async _generateAutoStory(winner) {
+        if (this._isGeneratingStory) return;
+        this._isGeneratingStory = true;
+
+        const section = document.getElementById('winner-story-section');
+        if (!section) {
+            this._isGeneratingStory = false;
+            return;
+        }
+
+        // بررسی کلید API
+        if (!OpenRouter.getApiKey()) {
+            section.innerHTML = `
+                <div class="story-error">
+                    <p>⚠️ برای ساخت خودکار داستان، ابتدا کلید OpenRouter را در
+                    <a href="settings.html">تنظیمات</a> وارد کنید</p>
+                </div>
+            `;
+            this._isGeneratingStory = false;
+            return;
+        }
+
+        // ساخت context
+        const context = {
+            winner: {
+                id: winner.id,
+                name: winner.name || winner.label,
+                description: Descriptions.get(winner.id) || '',
+                starred: winner.starred || false,
+            },
+            allPeople: AppState.get('people') || [],
+            descriptions: this._collectDescriptions(),
+            items: AppState.get('items') || [],
+            mode: AppState.get('wheel.currentMode') || 'single',
+            tone: 'funny',
+            length: 'medium',
+            extras: '',
+        };
+
+        try {
+            const story = await StoryManager.generate(context);
+
+            if (story) {
+                this._currentStory = story;
+                this._renderStoryInPopup(story);
+            } else {
+                section.innerHTML = `
+                    <div class="story-error">
+                        <p>خطا در ساخت داستان. دوباره تلاش کنید.</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('خطا در ساخت داستان:', error);
+            section.innerHTML = `
+                <div class="story-error">
+                    <p>خطا: ${this._escape(error.message || 'مشکل در ساخت داستان')}</p>
+                </div>
+            `;
+        } finally {
+            this._isGeneratingStory = false;
+        }
+    },
+
+    /**
+     * نمایش داستان داخل پاپ‌آپ
+     */
+    _renderStoryInPopup(story) {
+        const section = document.getElementById('winner-story-section');
+        if (!section) return;
+
+        const html = StoryManager.renderToHTML(story.content);
+
+        section.innerHTML = `
+            <div class="story-in-popup">
+                <div class="story-in-popup-content">${html}</div>
+                <div class="story-in-popup-footer">
+                    <div class="story-footer-item">
+                        <span class="story-footer-icon">🤖</span>
+                        <span class="story-footer-label">مدل:</span>
+                        <span class="story-footer-value">${this._escape(story.model || 'نامشخص')}</span>
+                    </div>
+                    <div class="story-footer-item">
+                        <span class="story-footer-icon">🕐</span>
+                        <span class="story-footer-value">${Utils.formatDate(story.timestamp)}</span>
+                    </div>
+                </div>
+                <div class="story-in-popup-actions">
+                    <button class="btn btn-sm btn-secondary" id="copy-popup-story">📋 کپی</button>
+                    <button class="btn btn-sm btn-secondary" id="download-popup-story">💾 دانلود</button>
+                    <button class="btn btn-sm btn-secondary" id="regen-popup-story">🔄 دوباره</button>
+                    <a href="ai.html?winner=${story.context ? JSON.parse(story.context).winner : ''}" class="btn btn-sm btn-primary">
+                        صفحه هوش مصنوعی →
+                    </a>
+                </div>
+            </div>
+        `;
+
+        const copyBtn = document.getElementById('copy-popup-story');
+        if (copyBtn) copyBtn.addEventListener('click', () => StoryManager.copy(story));
+
+        const downloadBtn = document.getElementById('download-popup-story');
+        if (downloadBtn) downloadBtn.addEventListener('click', () => StoryManager.download(story));
+
+        const regenBtn = document.getElementById('regen-popup-story');
+        if (regenBtn) {
+            regenBtn.addEventListener('click', () => {
+                const winner = AppState.get('wheel.lastResult');
+                if (winner) {
+                    section.innerHTML = `
+                        <div class="story-loading">
+                            <div class="spinner"></div>
+                            <p>در حال نوشتن داستان...</p>
+                        </div>
+                    `;
+                    this._generateAutoStory(winner);
+                }
+            });
+        }
     },
 
     _escape(str) {
         const div = document.createElement('div');
-        div.textContent = str;
+        div.textContent = str || '';
         return div.innerHTML;
     },
 };
