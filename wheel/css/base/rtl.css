@@ -1,0 +1,48 @@
+/* ============================================
+   تنظیمات راست‌به‌چپ
+   ============================================ */
+
+[dir="rtl"] {
+    direction: rtl;
+    text-align: right;
+}
+
+[dir="rtl"] .ltr {
+    direction: ltr;
+    text-align: left;
+}
+
+/* آیکون‌های جهت‌دار */
+[dir="rtl"] .icon-arrow-right::before {
+    content: "←";
+}
+
+[dir="rtl"] .icon-arrow-left::before {
+    content: "→";
+}
+
+/* فاصله‌گذاری */
+[dir="rtl"] .mr-auto {
+    margin-right: 0;
+    margin-left: auto;
+}
+
+[dir="rtl"] .ml-auto {
+    margin-left: 0;
+    margin-right: auto;
+}
+
+/* پدینگ و مارجین */
+[dir="rtl"] .pl-2 { padding-right: var(--spacing-sm); padding-left: 0; }
+[dir="rtl"] .pr-2 { padding-left: var(--spacing-sm); padding-right: 0; }
+[dir="rtl"] .ml-2 { margin-right: var(--spacing-sm); margin-left: 0; }
+[dir="rtl"] .mr-2 { margin-left: var(--spacing-sm); margin-right: 0; }
+
+/* فلکس */
+[dir="rtl"] .flex-row-reverse {
+    flex-direction: row-reverse;
+}
+
+/* شبکه */
+[dir="rtl"] .col-start-1 { grid-column-start: 1; }
+[dir="rtl"] .col-end-1 { grid-column-end: 1; }
