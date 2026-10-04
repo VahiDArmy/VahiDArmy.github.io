@@ -1,19 +1,18 @@
 /**
- * ساخت پرامپت برای هوش مصنوعی
+ * ساخت پرامپت هوش مصنوعی
+ * - برنده = شخصیت اصلی
+ * - سایر افراد گردونه = شخصیت‌های فرعی
+ * - آیتم‌ها = عناصر داستان
  * @module promptBuilder
  */
 
 const PromptBuilder = {
-    /**
-     * ساخت پرامپت داستان از بافت
-     */
     buildStoryPrompt(context = {}) {
         const {
             winner = null,
-            allPeople = [],
-            descriptions = {},
+            supportingCharacters = [],
             items = [],
-            mode = 'single',
+            descriptions = {},
             tone = 'funny',
             length = 'medium',
             extras = '',
@@ -21,131 +20,118 @@ const PromptBuilder = {
 
         const parts = [];
 
-        // ۱. دستور اصلی
-        parts.push(this._getMainInstruction(tone, length));
+        parts.push(this._getMainInstruction(tone));
 
-        // ۲. شخصیت اصلی
+        // شخصیت اصلی
         if (winner) {
-            parts.push(this._buildWinnerSection(winner));
+            parts.push(this._buildMainCharacterSection(winner));
         }
 
-        // ۳. سایر شخصیت‌ها
-        if (allPeople && allPeople.length > 1) {
-            parts.push(this._buildOtherPeopleSection(allPeople, winner));
+        // شخصیت‌های فرعی
+        if (supportingCharacters.length > 0) {
+            parts.push(this._buildSupportingSection(supportingCharacters));
         }
 
-        // ۴. توصیفات
-        const descSection = this._buildDescriptionsSection(descriptions);
-        if (descSection) parts.push(descSection);
-
-        // ۵. آیتم‌ها
-        if (items && items.length > 0) {
+        // آیتم‌ها
+        if (items.length > 0) {
             parts.push(this._buildItemsSection(items));
         }
 
-        // ۶. حالت بازی
-        parts.push(this._buildModeSection(mode));
+        // توصیفات اضافی
+        const descSection = this._buildDescriptionsSection(descriptions);
+        if (descSection) parts.push(descSection);
 
-        // ۷. توضیحات اضافه کاربر
+        // توضیحات کاربر
         if (extras && extras.trim()) {
-            parts.push(`توضیحات اضافی از کاربر: ${extras.trim()}`);
+            parts.push(`**درخواست ویژه از کاربر:** ${extras.trim()}`);
         }
 
-        // ۸. الزامات پایانی
-        parts.push(this._buildFinalRequirements(length));
+        // قوانین نهایی
+        parts.push(this._buildFinalRules(length));
 
         return parts.join('\n\n');
     },
 
-    /**
-     * دستور اصلی
-     */
-    _getMainInstruction(tone, length) {
+    _getMainInstruction(tone) {
         const toneMap = {
-            funny: 'طنزآمیز و خنده‌دار',
-            epic: 'حماسی و پرتنش',
-            romantic: 'عاشقانه و احساسی',
-            mystery: 'معمایی و پر از رمز و راز',
+            funny: 'طنزآمیز، بامزه و سرگرم‌کننده',
+            epic: 'حماسی، پرتنش و پرهیجان',
+            romantic: 'عاشقانه، احساسی و لطیف',
+            mystery: 'معمایی، پر از رمز و راز',
             sarcastic: 'طعنه‌آمیز و کنایه‌دار',
-            absurd: 'پوچ‌گرایانه و سورئال',
+            absurd: 'پوچ‌گرا و سورئال',
         };
-
         const toneText = toneMap[tone] || toneMap.funny;
 
-        return `تو یک داستان‌نویس خلاق فارسی‌زبان هستی که داستان‌های کوتاه ${toneText} می‌نویسد.
-داستانی که می‌نویسی باید **کاملاً به زبان فارسی** باشد، روان، جذاب و با پایان‌بندی غیرمنتظره.`;
+        return `تو یک داستان‌نویس خلاق و فارسی‌زبان هستی.
+وظیفه‌ی تو: نوشتن یک داستان کوتاه ${toneText} به زبان فارسی.
+
+**قوانین کلی:**
+- داستان باید یک **تیتر خلاقانه** داشته باشد (با ## در ابتدا)
+- داستان باید **شخصیت‌محور** باشد؛ یعنی حول شخصیت اصلی بچرخد
+- **شخصیت اصلی** داستان، فردی است که در بخش «شخصیت اصلی» معرفی می‌شود
+- **شخصیت‌های فرعی** حتماً باید در داستان نقش داشته باشند (نه فقط اسمشان بیاید)
+- **آیتم‌های داده‌شده** باید در جریان داستان استفاده شوند (نه فقط اسم برده شوند)
+- لحن، حالت و رفتار شخصیت‌ها باید با توصیفاتشان هماهنگ باشد
+- پایان‌بندی باید **غافلگیرکننده** باشد
+- از کلیشه و تکرار پرهیز کن`;
     },
 
-    /**
-     * بخش برنده
-     */
-    _buildWinnerSection(winner) {
+    _buildMainCharacterSection(winner) {
         const name = winner.name || winner.label || 'شخصیت ناشناس';
-        let text = `**شخصیت اصلی داستان:** «${name}»`;
+        let text = `## 🎭 شخصیت اصلی داستان: «${name}»\n`;
 
         if (winner.description && winner.description.trim()) {
-            text += `\nتوصیف این شخصیت: ${winner.description}`;
-        }
-
-        if (winner.starred) {
-            text += `\nنکته: این شخصیت «ستاره‌دار» انتخاب شده است.`;
+            text += `**توصیف شخصیت:**\n${winner.description}`;
+        } else {
+            text += `**توصیف شخصیت:** (توصیفی ارائه نشده - آزاد باش تا شخصیتی جذاب برای او بسازی)`;
         }
 
         return text;
     },
 
-    /**
-     * بخش سایر افراد
-     */
-    _buildOtherPeopleSection(allPeople, winner) {
-        const others = allPeople
-            .filter((p) => p.id !== winner?.id)
-            .map((p) => p.name)
-            .filter(Boolean);
+    _buildSupportingSection(characters) {
+        const lines = characters.map((c, i) => {
+            let line = `${i + 1}. **${c.name}**`;
+            if (c.description && c.description.trim()) {
+                line += ` — ${c.description}`;
+            } else {
+                line += ` — (بدون توصیف خاص)`;
+            }
+            return line;
+        });
 
-        if (others.length === 0) return '';
+        return `## 👥 شخصیت‌های فرعی (باید در داستان نقش داشته باشند):
+${lines.join('\n')}
 
-        return `**سایر شخصیت‌های حاضر:** ${others.join('، ')}`;
+این شخصیت‌ها را در جریان داستان وارد کن و به هرکدام نقشی بده.`;
     },
 
-    /**
-     * بخش توصیفات
-     */
+    _buildItemsSection(items) {
+        const lines = items.map((it) => {
+            const label = typeof it === 'string' ? it : it.label;
+            const desc = typeof it === 'object' && it.description ? ` — ${it.description}` : '';
+            return `- ${label}${desc}`;
+        });
+
+        return `## 🎁 آیتم‌های قابل استفاده در داستان:
+${lines.join('\n')}
+
+این آیتم‌ها را در جریان داستان به کار بگیر (نه فقط اسمشان را ببر).`;
+    },
+
     _buildDescriptionsSection(descriptions) {
-        const entries = Object.entries(descriptions).filter(
-            ([, v]) => v && v.trim()
-        );
+        // فقط توصیفاتی که به افراد داده نشده را می‌گیریم تا دوباره تکرار نشود
+        const entries = Object.entries(descriptions)
+            .filter(([, v]) => v && v.trim());
         if (entries.length === 0) return '';
 
-        const lines = entries.map(([key, value]) => `- ${key}: ${value}`);
-        return `**توصیفات موجود در بافت داستان:**\n${lines.join('\n')}`;
+        // اگر قبلاً در بخش‌های قبل آمده، اینجا تکرار نکن
+        // اینجا فقط به عنوان مرجع کلی هست
+        return ''; // دیگر نیازی نیست - قبلاً در بخش‌های اصلی آمده
     },
 
-    /**
-     * بخش آیتم‌ها
-     */
-    _buildItemsSection(items) {
-        const labels = items
-            .map((i) => (typeof i === 'string' ? i : i.label))
-            .filter(Boolean);
-        if (labels.length === 0) return '';
-        return `**آیتم‌های حاضر در داستان:** ${labels.join('، ')}`;
-    },
-
-    /**
-     * بخش حالت بازی
-     */
-    _buildModeSection(mode) {
-        if (mode === 'elimination') {
-            return `**حالت بازی:** این داستان در یک بازی حذفی روایت می‌شود. شخصیت‌ها یکی‌یکی از دور خارج می‌شوند و پایان باید حس پایان یک رقابت را داشته باشد.`;
-        }
-        return `**حالت بازی:** این داستان در یک بازی انتخابی روایت می‌شود که در آن یک برنده انتخاب شده است.`;
-    },
-
-    /**
-     * الزامات پایانی
-     */
-    _buildFinalRequirements(length) {
+    _buildFinalRules(length) {
         const lengthMap = {
             short: 'حدود ۸۰ تا ۱۲۰ کلمه',
             medium: 'حدود ۱۵۰ تا ۲۵۰ کلمه',
@@ -153,28 +139,24 @@ const PromptBuilder = {
         };
         const lengthText = lengthMap[length] || lengthMap.medium;
 
-        return `**الزامات نهایی:**
-- طول داستان: ${lengthText}
-- داستان باید یک **تیتر خلاقانه** در ابتدا داشته باشد (با ## علامت‌گذاری کن)
-- از تمام شخصیت‌ها و آیتم‌های ذکرشده استفاده کن
-- پایان‌بندی باید **غافلگیرکننده** باشد
-- از تکرار و کلیشه پرهیز کن
-- داستان را با علامت‌های نگارشی مناسب و پاراگراف‌بندی درست بنویس`;
+        return `## ✅ الزامات نهایی:
+- **طول:** ${lengthText}
+- **تیتر:** با ## شروع کن
+- **پاراگراف‌بندی:** هر پاراگراف با یک خط خالی جدا شود
+- **شخصیت اصلی:** حتماً در تمام داستان حاضر باشد
+- **شخصیت‌های فرعی:** همه‌شان حداقل یک بار در داستان ظاهر شوند و نقشی داشته باشند
+- **آیتم‌ها:** همه‌شان در جریان داستان استفاده شوند
+- **پایان:** غیرمنتظره و لذت‌بخش
+- **زبان:** روان، طبیعی و مناسب داستان`;
     },
 
-    /**
-     * ساخت پرامپت سیستم
-     */
     getSystemPrompt() {
         return AppState.get('settings.aiSystemPrompt') ||
-            'تو یک داستان‌نویس خلاق، بامزه و فارسی‌زبان هستی که داستان‌های کوتاه و خنده‌دار می‌نویسد. همیشه به زبان فارسی پاسخ می‌دهی.';
+            'تو یک داستان‌نویس خلاق، بامزه و فارسی‌زبان هستی که داستان‌های کوتاه و خنده‌دار می‌نویسد.';
     },
 
-    /**
-     * تخمین تعداد کلمات
-     */
     estimateWords(text) {
-        return text.trim().split(/\s+/).length;
+        return (text || '').trim().split(/\s+/).length;
     },
 };
 
