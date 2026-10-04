@@ -1,5 +1,5 @@
 /**
- * منطق صفحه گردونه - شامل حقه فشار/کشیدن
+ * منطق صفحه گردونه - با حقه مخفی فشار/کشیدن
  * @module wheelPage
  */
 
@@ -8,14 +8,11 @@ const WheelPage = {
     pointerDownTime: 0,
     pointerDownY: 0,
     isDragging: false,
-    dragThreshold: 40,        // پیکسل برای تشخیص کشیدن
-    timeThreshold: 400,        // میلی‌ثانیه - کمتر از این = فشار
+    dragThreshold: 40,
+    timeThreshold: 400,
     lastPointerY: 0,
     dragDistance: 0,
 
-    /**
-     * راه‌اندازی
-     */
     init() {
         this._initWheel();
         this._initLever();
@@ -25,32 +22,22 @@ const WheelPage = {
         this._bindEvents();
     },
 
-    /**
-     * راه‌اندازی گردونه
-     */
     _initWheel() {
         WheelCore.init('wheel-canvas');
         const people = AppState.get('people') || [];
         WheelCore.setItems(people);
     },
 
-    /**
-     * راه‌اندازی اهرم
-     */
     _initLever() {
         this.lever = document.getElementById('lever');
         if (!this.lever) return;
 
-        // Pointer Events برای پشتیبانی از موس و لمس
         this.lever.addEventListener('pointerdown', (e) => this._onPointerDown(e));
         document.addEventListener('pointermove', (e) => this._onPointerMove(e));
         document.addEventListener('pointerup', (e) => this._onPointerUp(e));
         document.addEventListener('pointercancel', (e) => this._onPointerUp(e));
     },
 
-    /**
-     * شروع لمس/کلیک
-     */
     _onPointerDown(e) {
         if (WheelCore.isSpinning) return;
         if (!this.lever.contains(e.target) && e.target !== this.lever) return;
@@ -65,9 +52,6 @@ const WheelPage = {
         this.lever.classList.add('lever-active');
     },
 
-    /**
-     * حرکت
-     */
     _onPointerMove(e) {
         if (!this.isDragging) return;
 
@@ -75,20 +59,14 @@ const WheelPage = {
         this.dragDistance += Math.abs(deltaY);
         this.lastPointerY = e.clientY;
 
-        // اگر کاربر شروع به کشیدن کرد
         if (this.dragDistance > 10) {
             this.lever.classList.add('lever-dragging');
-
-            // انیمیشن کشیدن - حرکت اهرم به سمت پایین
             const totalDrag = Math.max(0, e.clientY - this.pointerDownY);
             const visualDrag = Math.min(totalDrag, 80);
             this.lever.style.transform = `translateY(${visualDrag}px)`;
         }
     },
 
-    /**
-     * رها کردن - اینجا تصمیم نهایی گرفته می‌شود
-     */
     _onPointerUp(e) {
         if (!this.isDragging) return;
 
@@ -100,9 +78,7 @@ const WheelPage = {
         this.lever.classList.remove('lever-dragging');
         this.lever.style.transform = '';
 
-        // 🎯 **تصمیم‌گیری حقه اصلی**
-        // اگر کشیده شده (فاصله زیاد یا زمان طولانی) → ستاره‌دارها
-        // اگر فقط فشار داده شده (سریع، بدون حرکت) → تصادفی کامل
+        // 🎯 تصمیم‌گیری حقه اصلی (کاملاً مخفی)
         const isDrag = totalDrag >= this.dragThreshold || duration > this.timeThreshold;
 
         if (isDrag) {
@@ -112,9 +88,6 @@ const WheelPage = {
         }
     },
 
-    /**
-     * چرخش تصادفی (فشار)
-     */
     _spinRandom() {
         const people = AppState.get('people') || [];
         if (people.length === 0) {
@@ -122,54 +95,31 @@ const WheelPage = {
             return;
         }
 
-        this._showSpinTypeIndicator('🎲 چرخش تصادفی');
+        this._showSpinTypeIndicator('🎲');
         WheelCore.spinRandom();
     },
 
-    /**
-     * چرخش از ستاره‌دارها (کشیدن - حقه)
-     */
     _spinStarred() {
         const starred = (AppState.get('people') || []).filter((p) => p.starred);
         if (starred.length === 0) {
-            Notification.warning('هیچ فرد ستاره‌داری وجود ندارد - به صورت تصادفی چرخیده می‌شود');
             this._spinRandom();
             return;
         }
 
-        this._showSpinTypeIndicator('⭐ چرخش از ستاره‌دارها');
+        this._showSpinTypeIndicator('🎲');
         WheelCore.spinStarred();
     },
 
-    /**
-     * نمایش نشانگر نوع چرخش
-     */
     _showSpinTypeIndicator(text) {
         const indicator = document.getElementById('spin-type-indicator');
         if (!indicator) return;
 
         indicator.textContent = text;
         indicator.classList.add('show');
-        setTimeout(() => indicator.classList.remove('show'), 2000);
+        setTimeout(() => indicator.classList.remove('show'), 1500);
     },
 
-    /**
-     * دکمه‌ها و کنترل‌ها
-     */
     _initControls() {
-        // دکمه چرخش سریع
-        const spinBtn = document.getElementById('spin-btn');
-        if (spinBtn) {
-            spinBtn.addEventListener('click', () => this._spinRandom());
-        }
-
-        // دکمه چرخش ستاره‌دارها (فقط برای تست و شفافیت - معمولاً مخفی)
-        const starredBtn = document.getElementById('starred-spin-btn');
-        if (starredBtn) {
-            starredBtn.addEventListener('click', () => this._spinStarred());
-        }
-
-        // پاک کردن گردونه
         const clearBtn = document.getElementById('clear-wheel-btn');
         if (clearBtn) {
             clearBtn.addEventListener('click', async () => {
@@ -183,9 +133,6 @@ const WheelPage = {
         }
     },
 
-    /**
-     * انتخاب حالت (تک‌نفره / حذفی)
-     */
     _initModeSelector() {
         document.querySelectorAll('[data-mode]').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -199,13 +146,17 @@ const WheelPage = {
     },
 
     /**
-     * رندر لیست افراد
+     * رندر لیست افراد - بدون دکمه ستاره
      */
     _renderPeopleList() {
         const container = document.getElementById('wheel-people-list');
         if (!container) return;
 
         const people = AppState.get('people') || [];
+
+        // به‌روزرسانی شمارنده
+        const countEl = document.getElementById('people-count');
+        if (countEl) countEl.textContent = Utils.toPersianNumbers(people.length);
 
         if (people.length === 0) {
             container.innerHTML = `
@@ -224,10 +175,7 @@ const WheelPage = {
         container.innerHTML = people
             .map(
                 (p) => `
-                <div class="wheel-person-item ${p.starred ? 'starred' : ''}" data-id="${p.id}">
-                    <button class="star-btn" data-action="star" data-id="${p.id}" title="ستاره‌دار">
-                        ${p.starred ? '⭐' : '☆'}
-                    </button>
+                <div class="wheel-person-item" data-id="${p.id}">
                     <span class="person-color" style="background: ${p.color}"></span>
                     <span class="person-name">${this._escape(p.name)}</span>
                     <button class="remove-btn" data-action="remove" data-id="${p.id}" title="حذف">×</button>
@@ -235,15 +183,6 @@ const WheelPage = {
             `
             )
             .join('');
-
-        // رویدادها
-        container.querySelectorAll('[data-action="star"]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                People.toggleStar(btn.dataset.id);
-                this._renderPeopleList();
-                WheelCore.setItems(AppState.get('people'));
-            });
-        });
 
         container.querySelectorAll('[data-action="remove"]').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -254,9 +193,6 @@ const WheelPage = {
         });
     },
 
-    /**
-     * افزودن سریع
-     */
     async _quickAdd() {
         const name = await Modal.prompt('نام فرد جدید:');
         if (name && name.trim()) {
@@ -266,43 +202,49 @@ const WheelPage = {
         }
     },
 
-    /**
-     * رویدادهای صفحه
-     */
     _bindEvents() {
-        // به‌روزرسانی لیست وقتی افراد تغییر کنند
         Events.on('people-changed', () => {
             this._renderPeopleList();
             WheelCore.setItems(AppState.get('people'));
         });
 
-        // دکمه افزودن فرد
         const addBtn = document.getElementById('add-person-btn');
         if (addBtn) {
             addBtn.addEventListener('click', () => this._quickAdd());
         }
+
+        // جستجو
+        const searchInput = document.getElementById('people-search-input');
+        if (searchInput) {
+            searchInput.addEventListener('input', Utils.debounce((e) => {
+                this._filterPeople(e.target.value);
+            }, 200));
+        }
     },
 
-    /**
-     * پس از اتمام چرخش
-     */
+    _filterPeople(query) {
+        const items = document.querySelectorAll('.wheel-person-item');
+        const q = (query || '').toLowerCase();
+        items.forEach((item) => {
+            const name = item.querySelector('.person-name')?.textContent.toLowerCase() || '';
+            item.style.display = name.includes(q) ? '' : 'none';
+        });
+    },
+
     onSpinComplete(winner) {
         if (!winner) return;
 
         const mode = AppState.get('wheel.currentMode') || 'single';
-        const spinType = this._lastSpinType || 'random';
+        const spinType = 'random';
 
-        // ثبت در تاریخچه
         History.add({
             winner,
             mode,
             spinType,
         });
 
-        // نمایش برنده
         this._showWinner(winner);
 
-        // حالت حذفی: حذف برنده
         if (mode === 'elimination') {
             setTimeout(() => {
                 const winnerId = winner.id;
@@ -315,9 +257,6 @@ const WheelPage = {
         }
     },
 
-    /**
-     * نمایش برنده
-     */
     _showWinner(winner) {
         const container = document.getElementById('winner-display');
         if (!container) return;
@@ -340,15 +279,11 @@ const WheelPage = {
         `;
 
         container.classList.add('show');
-
-        // ذخیره برنده در state
         AppState.set('wheel.lastResult', winner);
 
-        // دکمه ساخت داستان
         const storyBtn = document.getElementById('make-story-btn');
         if (storyBtn) {
             storyBtn.addEventListener('click', () => {
-                // ذخیره در localStorage برای انتقال به صفحه AI
                 SQLStorage.setSetting('last_winner_for_story', {
                     id: winner.id,
                     name: winner.name || winner.label,
@@ -360,7 +295,6 @@ const WheelPage = {
             });
         }
 
-        // دکمه بستن
         const closeBtn = document.getElementById('close-winner-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -368,15 +302,11 @@ const WheelPage = {
             });
         }
 
-        // بستن خودکار بعد از ۱۰ ثانیه
         setTimeout(() => {
             container.classList.remove('show');
         }, 10000);
     },
 
-    /**
-     * escape HTML
-     */
     _escape(str) {
         const div = document.createElement('div');
         div.textContent = str;
@@ -384,20 +314,8 @@ const WheelPage = {
     },
 };
 
-// ذخیره نوع آخرین چرخش
-Object.defineProperty(WheelPage, '_lastSpinType', {
-    get() {
-        return AppState.get('wheel.lastSpinType') || 'random';
-    },
-    set(value) {
-        AppState.set('wheel.lastSpinType', value);
-    },
-});
-
-// راه‌اندازی در صفحه گردونه
 if (document.getElementById('wheel-canvas')) {
     document.addEventListener('DOMContentLoaded', () => {
-        // پس از آماده شدن SQL
         setTimeout(() => WheelPage.init(), 500);
     });
 }
