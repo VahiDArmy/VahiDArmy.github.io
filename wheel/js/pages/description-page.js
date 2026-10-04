@@ -1,14 +1,11 @@
 /**
- * منطق صفحه توصیف‌ها
+ * منطق صفحه توصیف‌ها - با کلید ستاره مخفی
  * @module descriptionPage
  */
 
 const DescriptionPage = {
     currentObjectKey: null,
 
-    /**
-     * راه‌اندازی
-     */
     init() {
         this._renderObjectsList();
         this._initTextArea();
@@ -16,9 +13,6 @@ const DescriptionPage = {
         this._bindEvents();
     },
 
-    /**
-     * رندر لیست آبجکت‌ها (افراد + آیتم‌ها)
-     */
     _renderObjectsList() {
         const container = document.getElementById('objects-list');
         if (!container) return;
@@ -29,7 +23,6 @@ const DescriptionPage = {
 
         let html = '';
 
-        // بخش افراد
         html += `<div class="objects-section">
             <h4 class="objects-section-title">👥 افراد (${Utils.toPersianNumbers(people.length)})</h4>
             <div class="objects-grid">
@@ -38,7 +31,6 @@ const DescriptionPage = {
             </div>
         </div>`;
 
-        // بخش آیتم‌ها
         html += `<div class="objects-section">
             <h4 class="objects-section-title">🎁 آیتم‌ها (${Utils.toPersianNumbers(items.length)})</h4>
             <div class="objects-grid">
@@ -49,7 +41,6 @@ const DescriptionPage = {
 
         container.innerHTML = html;
 
-        // رویداد کلیک روی کارت‌ها
         container.querySelectorAll('[data-object-key]').forEach((card) => {
             card.addEventListener('click', () => {
                 this._selectObject(card.dataset.objectKey);
@@ -57,9 +48,6 @@ const DescriptionPage = {
         });
     },
 
-    /**
-     * رندر کارت آبجکت
-     */
     _renderObjectCard(type, id, name, color, description) {
         const hasDesc = description && description.trim();
         return `
@@ -76,18 +64,13 @@ const DescriptionPage = {
         `;
     },
 
-    /**
-     * انتخاب آبجکت برای توصیف
-     */
     _selectObject(key) {
         this.currentObjectKey = key;
 
-        // هایلایت
         document.querySelectorAll('.object-card').forEach((c) => c.classList.remove('active'));
         const card = document.querySelector(`[data-object-key="${key}"]`);
         if (card) card.classList.add('active');
 
-        // بارگذاری توصیف
         const description = Descriptions.get(key) || '';
         const textarea = document.getElementById('description-textarea');
         if (textarea) {
@@ -95,23 +78,56 @@ const DescriptionPage = {
             textarea.disabled = false;
         }
 
-        // نمایش نام آبجکت
         const nameEl = document.getElementById('current-object-name');
         if (nameEl) {
             const people = AppState.get('people') || [];
             const items = AppState.get('items') || [];
             const obj = [...people, ...items].find((o) => o.id === key);
             nameEl.textContent = obj ? (obj.name || obj.label) : 'نامشخص';
+
+            // کلید ستاره مخفی - فقط برای افراد
+            const isPerson = people.some((p) => p.id === key);
+            this._renderStarToggle(key, isPerson);
         }
 
-        // دکمه ذخیره را فعال کن
         const saveBtn = document.getElementById('save-description-btn');
         if (saveBtn) saveBtn.disabled = false;
     },
 
     /**
-     * راه‌اندازی textarea
+     * رندر کلید ستاره (مخفی)
      */
+    _renderStarToggle(key, isPerson) {
+        const container = document.getElementById('star-toggle-container');
+        if (!container) return;
+
+        if (!isPerson) {
+            container.style.display = 'none';
+            return;
+        }
+
+        const person = People.getById(key);
+        const isStarred = person?.starred || false;
+
+        container.style.display = 'block';
+        container.innerHTML = `
+            <label class="star-toggle">
+                <input type="checkbox" ${isStarred ? 'checked' : ''} id="star-checkbox">
+                <span>⭐ اولویت در انتخاب</span>
+            </label>
+        `;
+
+        const checkbox = document.getElementById('star-checkbox');
+        if (checkbox) {
+            checkbox.addEventListener('change', (e) => {
+                const updated = People.toggleStar(key);
+                if (updated) {
+                    Notification.success(e.target.checked ? 'فرد اولویت‌دار شد' : 'اولویت برداشته شد');
+                }
+            });
+        }
+    },
+
     _initTextArea() {
         const textarea = document.getElementById('description-textarea');
         const saveBtn = document.getElementById('save-description-btn');
@@ -119,7 +135,6 @@ const DescriptionPage = {
         if (!textarea) return;
         textarea.disabled = true;
 
-        // ذخیره خودکار با debounce
         const autoSave = Utils.debounce(() => {
             if (this.currentObjectKey) {
                 Descriptions.set(this.currentObjectKey, textarea.value);
@@ -139,9 +154,6 @@ const DescriptionPage = {
         }
     },
 
-    /**
-     * راه‌اندازی دراپ‌دان آیتم‌ها
-     */
     _initItemDropdown() {
         const dropdownContainer = document.getElementById('item-dropdown');
         const addBtn = document.getElementById('add-item-btn');
@@ -167,7 +179,6 @@ const DescriptionPage = {
 
         renderDropdown();
 
-        // افزودن آیتم جدید
         if (addBtn && newInput) {
             addBtn.addEventListener('click', () => {
                 const label = newInput.value.trim();
@@ -186,9 +197,6 @@ const DescriptionPage = {
         }
     },
 
-    /**
-     * رویدادها
-     */
     _bindEvents() {
         Events.on('items-changed', () => {
             this._renderObjectsList();
@@ -205,7 +213,6 @@ const DescriptionPage = {
     },
 };
 
-// راه‌اندازی
 if (document.getElementById('objects-list')) {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => DescriptionPage.init(), 500);
