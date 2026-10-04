@@ -73,7 +73,35 @@ table {
     width: 100%;
 }
 
-/* اسکرول‌بار سفارشی */
+/* ============================================
+   پس‌زمینه ذرات (رفع باگ)
+   ============================================ */
+
+.particles-canvas {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+/* اطمینان از اینکه محتوای اصلی روی ذرات قرار می‌گیرد */
+.main-header,
+.main-content,
+.main-footer {
+    position: relative;
+    z-index: 2;
+}
+
+/* ============================================
+   اسکرول‌بار سفارشی
+   ============================================ */
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
