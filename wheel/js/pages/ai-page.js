@@ -6,9 +6,6 @@
 const AIPage = {
     selectedWinner: null,
 
-    /**
-     * راه‌اندازی
-     */
     init() {
         this._checkApiKey();
         this._initWinnerSelector();
@@ -17,9 +14,6 @@ const AIPage = {
         this._loadWinnerFromQuery();
     },
 
-    /**
-     * بررسی کلید API
-     */
     _checkApiKey() {
         const hasKey = !!OpenRouter.getApiKey();
         const warning = document.getElementById('api-warning');
@@ -28,9 +22,6 @@ const AIPage = {
         }
     },
 
-    /**
-     * بارگذاری برنده از query string
-     */
     _loadWinnerFromQuery() {
         const params = new URLSearchParams(window.location.search);
         const winnerId = params.get('winner');
@@ -48,18 +39,18 @@ const AIPage = {
                 this._updateWinnerDisplay();
             }
         } else {
-            // بررسی آخرین برنده در تنظیمات
-            const lastWinner = SQLStorage.getSetting('last_winner_for_story');
-            if (lastWinner && Date.now() - lastWinner.timestamp < 300000) {
-                this.selectedWinner = lastWinner;
-                this._updateWinnerDisplay();
-            }
+            try {
+                if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                    const lastWinner = SQLStorage.getSetting('last_winner_for_story');
+                    if (lastWinner && Date.now() - lastWinner.timestamp < 300000) {
+                        this.selectedWinner = lastWinner;
+                        this._updateWinnerDisplay();
+                    }
+                }
+            } catch (e) {}
         }
     },
 
-    /**
-     * انتخاب‌گر برنده
-     */
     _initWinnerSelector() {
         const container = document.getElementById('winner-selector');
         if (!container) return;
@@ -69,7 +60,7 @@ const AIPage = {
             'winner-selector',
             people.map((p) => ({
                 value: p.id,
-                label: p.name + (p.starred ? ' ⭐' : ''),
+                label: p.name,
                 icon: '👤',
             })),
             (value, label) => {
@@ -88,9 +79,6 @@ const AIPage = {
         );
     },
 
-    /**
-     * نمایش برنده انتخاب‌شده
-     */
     _updateWinnerDisplay() {
         const container = document.getElementById('winner-display');
         if (!container) return;
@@ -105,7 +93,6 @@ const AIPage = {
             <div class="winner-chip">
                 <span class="winner-chip-icon">🏆</span>
                 <span class="winner-chip-name">${this._escape(w.name)}</span>
-                ${w.starred ? '<span class="winner-chip-star">⭐</span>' : ''}
                 <button class="winner-chip-close" id="clear-winner">×</button>
             </div>
             ${w.description ? `<div class="winner-desc">${this._escape(w.description)}</div>` : ''}
@@ -120,9 +107,6 @@ const AIPage = {
         }
     },
 
-    /**
-     * فرم تولید داستان
-     */
     _initForm() {
         const generateBtn = document.getElementById('generate-story-btn');
         if (!generateBtn) return;
@@ -160,18 +144,14 @@ const AIPage = {
                 }
             } finally {
                 generateBtn.disabled = false;
-                generateBtn.textContent = 'ساخت داستان';
+                generateBtn.textContent = '✨ ساخت داستان';
             }
         });
     },
 
-    /**
-     * جمع‌آوری توصیفات
-     */
     _collectDescriptions() {
         const all = Descriptions.getAll();
         const filtered = {};
-        // فقط توصیفات مربوط به افراد انتخاب‌شده
         (AppState.get('people') || []).forEach((p) => {
             if (all[p.id]) filtered[p.name] = all[p.id];
         });
@@ -179,24 +159,32 @@ const AIPage = {
     },
 
     /**
-     * رندر داستان
+     * رندر داستان - مدل در انتهای داستان
      */
     _renderStory(story) {
         const container = document.getElementById('story-output');
         if (!container) return;
 
         const html = StoryManager.renderToHTML(story.content);
+
         container.innerHTML = `
             <div class="story-card">
-                <div class="story-meta">
-                    <span class="story-model">🤖 ${this._escape(story.model)}</span>
-                    <span class="story-time">${Utils.formatDate(story.timestamp)}</span>
-                </div>
                 <div class="story-content">${html}</div>
                 <div class="story-actions">
                     <button class="btn btn-sm btn-secondary" id="copy-story">📋 کپی</button>
                     <button class="btn btn-sm btn-secondary" id="download-story">💾 دانلود</button>
                     <button class="btn btn-sm btn-secondary" id="regenerate-story">🔄 دوباره</button>
+                </div>
+                <div class="story-footer">
+                    <div class="story-footer-item">
+                        <span class="story-footer-icon">🤖</span>
+                        <span class="story-footer-label">مدل:</span>
+                        <span class="story-footer-value">${this._escape(story.model || 'نامشخص')}</span>
+                    </div>
+                    <div class="story-footer-item">
+                        <span class="story-footer-icon">🕐</span>
+                        <span class="story-footer-value">${Utils.formatDate(story.timestamp)}</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -207,13 +195,9 @@ const AIPage = {
             document.getElementById('generate-story-btn').click();
         });
 
-        // اسکرول به داستان
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
 
-    /**
-     * رندر لیست داستان‌های قبلی
-     */
     _initStoryList() {
         const container = document.getElementById('stories-list');
         if (!container) return;
@@ -230,7 +214,6 @@ const AIPage = {
                 (s) => `
                 <div class="story-list-item" data-story-id="${s.id}">
                     <div class="story-list-meta">
-                        <span>🤖 ${this._escape(s.model)}</span>
                         <span class="text-muted">${Utils.formatDate(s.timestamp)}</span>
                     </div>
                     <div class="story-list-excerpt">${this._escape(Utils.truncate(s.content, 120))}</div>
@@ -254,7 +237,6 @@ const AIPage = {
     },
 };
 
-// راه‌اندازی
 if (document.getElementById('story-output')) {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => AIPage.init(), 500);
