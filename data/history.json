@@ -1,25 +1,33 @@
 [
   {
-    "id": "hist_1791138544902_8bahaeyil",
+    "id": "hist_1791138585950_rq5fpyky1",
     "winner": {
-      "id": "person_1791110776956_jogppxrb6",
-      "name": "سعید",
+      "id": "person_1791110785869_3k5yg5e9y",
+      "name": "وحید",
       "description": "",
       "starred": false,
-      "color": "#10b981",
+      "color": "#ef4444",
       "weight": 1,
-      "created_at": 1791110776956,
-      "updated_at": 1791130749159,
+      "created_at": 1791110785869,
+      "updated_at": 1791130749157,
       "in_wheel": 1,
       "inWheel": true,
-      "createdAt": 1791110776956,
-      "updatedAt": 1791130749159,
-      "index": 2
+      "createdAt": 1791110785869,
+      "updatedAt": 1791130749157,
+      "index": 1
     },
-    "winner_name": "سعید",
+    "winner_name": "وحید",
     "mode": "single",
     "spinType": "random",
-    "timestamp": 1791138544902
+    "timestamp": 1791138585950
+  },
+  {
+    "id": "hist_1791138544898_497ytsijm",
+    "winner_id": "person_1791110776956_jogppxrb6",
+    "winner_name": "سعید",
+    "mode": "single",
+    "spin_type": "random",
+    "timestamp": 1791138544898
   },
   {
     "id": "hist_1791138488625_phhnmxhvx",
