@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "person_1791111592803_cxkcfmfe3",
+    "name": "سعید",
+    "description": "",
+    "starred": false,
+    "color": "#eab308",
+    "weight": 1,
+    "created_at": 1791111592803,
+    "updated_at": 1791111592803,
+    "createdAt": 1791111592803,
+    "updatedAt": 1791111592803
+  },
+  {
+    "id": "person_1791111586161_p20dnada6",
+    "name": "وحید",
+    "description": "",
+    "starred": false,
+    "color": "#8b5cf6",
+    "weight": 1,
+    "created_at": 1791111586161,
+    "updated_at": 1791111586161,
+    "createdAt": 1791111586161,
+    "updatedAt": 1791111586161
+  },
+  {
+    "id": "person_1791111582062_tb94oaq7y",
+    "name": "میثم",
+    "description": "",
+    "starred": false,
+    "color": "#8b5cf6",
+    "weight": 1,
+    "created_at": 1791111582062,
+    "updated_at": 1791111582062,
+    "createdAt": 1791111582062,
+    "updatedAt": 1791111582062
+  }
+]
