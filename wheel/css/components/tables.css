@@ -1,0 +1,88 @@
+/* ============================================
+   جداول
+   ============================================ */
+
+.table-container {
+    width: 100%;
+    overflow-x: auto;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--color-bg-secondary);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.table thead {
+    background: var(--color-bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+    padding: var(--spacing-md);
+    text-align: right;
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: var(--spacing-md);
+    color: var(--color-text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table tbody tr {
+    transition: background var(--transition-fast);
+}
+
+.table tbody tr:hover {
+    background: var(--color-bg-hover);
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table-striped tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.table-compact th,
+.table-compact td {
+    padding: var(--spacing-sm);
+}
+
+/* جدول بدون حاشیه */
+.table-borderless {
+    border: none;
+}
+
+.table-borderless td {
+    border-bottom: none;
+}
+
+/* جدول داده */
+.data-table-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    align-items: center;
+    transition: background var(--transition-fast);
+}
+
+.data-table-row:hover {
+    background: var(--color-bg-hover);
+}
+
+.data-table-row:last-child {
+    border-bottom: none;
+}
