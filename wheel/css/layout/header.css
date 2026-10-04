@@ -31,6 +31,7 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
+    flex-shrink: 0;
 }
 
 .logo {
@@ -99,10 +100,47 @@
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    flex-shrink: 0;
 }
 
-/* منوی موبایل */
+/* ============================================
+   دکمه منوی موبایل (همبرگری)
+   ============================================ */
+
+.nav-toggle {
+    display: none;
+    position: relative;
+}
+
+.nav-toggle .icon {
+    display: block;
+    transition: transform var(--transition-normal);
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.nav-toggle.active .icon {
+    transform: rotate(90deg);
+}
+
+.nav-toggle.active {
+    background: var(--color-bg-hover);
+    color: var(--color-accent-primary);
+}
+
+/* ============================================
+   منوی موبایل
+   ============================================ */
+
 @media (max-width: 900px) {
+    .nav-toggle {
+        display: inline-flex;
+    }
+
+    .header-container {
+        padding: 0 var(--spacing-md);
+    }
+
     .header-nav {
         position: fixed;
         top: var(--header-height);
@@ -119,10 +157,13 @@
         justify-content: flex-start;
         max-height: calc(100vh - var(--header-height));
         overflow-y: auto;
+        z-index: var(--z-sticky);
+        visibility: hidden;
     }
 
     .header-nav.open {
         transform: translateY(0);
+        visibility: visible;
     }
 
     .nav-link {
@@ -130,6 +171,7 @@
         text-align: right;
         padding: var(--spacing-md);
         border-radius: var(--border-radius-md);
+        font-size: var(--font-size-md);
     }
 
     .nav-link::after {
@@ -147,16 +189,29 @@
     }
 
     .header-container {
-        padding: 0 var(--spacing-md);
+        padding: 0 var(--spacing-sm);
+        gap: var(--spacing-sm);
     }
 
     .logo {
         width: 32px;
         height: 32px;
     }
+
+    .header-left {
+        gap: var(--spacing-xs);
+    }
+
+    .icon-btn {
+        width: 36px;
+        height: 36px;
+    }
 }
 
-/* بعد از هدر */
+/* ============================================
+   محتوای اصلی
+   ============================================ */
+
 .main-content {
     margin-top: var(--header-height);
     min-height: calc(100vh - var(--header-height));
