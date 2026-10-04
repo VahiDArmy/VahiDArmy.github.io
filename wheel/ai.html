@@ -139,14 +139,21 @@
                 </div>
 
                 <div class="stories-history-card">
-                    <div class="editor-header">
-                        <h3 class="editor-title">📚 داستان‌های قبلی</h3>
-                        <button id="clear-stories-btn" class="btn btn-danger btn-sm" type="button">
-                            🗑 پاک کردن همه
+                    <div class="stories-header">
+                        <h3 class="stories-header-title">
+                            <span>📚</span>
+                            <span>داستان‌های قبلی</span>
+                            <span class="stories-count" id="stories-count">۰</span>
+                        </h3>
+                        <button id="clear-stories-btn" class="btn-icon-danger" type="button" title="پاک کردن همه داستان‌ها">
+                            <span>🗑</span>
                         </button>
                     </div>
                     <div id="stories-list" class="stories-list">
-                        <p class="text-muted text-center">هنوز داستانی ساخته نشده است</p>
+                        <div class="empty-stories">
+                            <div class="empty-stories-icon">📚</div>
+                            <p class="text-muted">هنوز داستانی ساخته نشده است</p>
+                        </div>
                     </div>
                 </div>
             </section>
