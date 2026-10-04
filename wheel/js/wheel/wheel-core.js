@@ -1,5 +1,5 @@
 /**
- * هسته گردونه
+ * هسته گردونه - با resize پایدار و redraw امن
  * @module wheelCore
  */
 
@@ -13,43 +13,116 @@ const WheelCore = {
     friction: 0.985,
     minVelocity: 0.001,
     spinDuration: 5000,
-    pointerAngle: -Math.PI / 2, // بالا
+    pointerAngle: -Math.PI / 2,
 
-    /**
-     * راه‌اندازی
-     */
+    _lastSize: 0,
+    _lastDpr: 0,
+    _resizeObserver: null,
+    _resizeTimer: null,
+
     init(canvasId) {
         this.canvas = document.getElementById(canvasId);
         if (!this.canvas) return;
-        this.ctx = this.canvas.getContext('2d');
+
+        this.ctx = this.canvas.getContext('2d', { alpha: true });
+
         this.resize();
-        window.addEventListener('resize', () => this.resize());
+
+        // ResizeObserver روی wrapper - بهتر از window.resize
+        const wrap = this.canvas.parentElement;
+        if (wrap && 'ResizeObserver' in window) {
+            this._resizeObserver = new ResizeObserver(
+                Utils.debounce(() => this.resize(), 150)
+            );
+            this._resizeObserver.observe(wrap);
+        }
+
+        // fallback برای مرورگرهای قدیمی
+        window.addEventListener('resize', Utils.debounce(() => this.resize(), 200));
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.resize(), 300);
+        });
+
+        // ✅ Redraw وقتی صفحه دوباره visible می‌شود
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                setTimeout(() => this.render(), 100);
+            }
+        });
+
+        // ✅ Redraw بعد از اسکرول (debounced - فقط یکبار)
+        window.addEventListener('scroll', Utils.debounce(() => {
+            this.render();
+        }, 250), { passive: true });
+
+        // ✅ Redraw وقتی وارد viewport می‌شود
+        if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        this.render();
+                    }
+                });
+            }, { threshold: 0.1 });
+            io.observe(this.canvas);
+        }
+
         this.render();
     },
 
     /**
-     * تنظیم اندازه
+     * تنظیم اندازه - با cache و بدون redraw غیرضروری
      */
     resize() {
-        if (!this.canvas) return;
-        const size = Utils.isMobile() ? 320 : 500;
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = size * dpr;
-        this.canvas.height = size * dpr;
+        if (!this.canvas || !this.ctx) return;
+
+        // اندازه‌ی هدف بر اساس والد
+        const wrap = this.canvas.parentElement;
+        let available = window.innerWidth - 60;
+        if (wrap && wrap.parentElement) {
+            const parentWidth = wrap.parentElement.clientWidth;
+            if (parentWidth > 0) available = parentWidth - 40;
+        }
+
+        const maxSize = Utils.isMobile() ? 320 : 500;
+        const size = Math.max(200, Math.min(maxSize, available));
+
+        // cap DPR روی 2 برای صرفه‌جویی حافظه
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        // اگر تغییری نداشته، فقط render کن
+        if (this._lastSize === size && this._lastDpr === dpr) {
+            this.render();
+            return;
+        }
+
+        this._lastSize = size;
+        this._lastDpr = dpr;
+
+        // ست کردن اندازه بافر
+        this.canvas.width = Math.floor(size * dpr);
+        this.canvas.height = Math.floor(size * dpr);
         this.canvas.style.width = size + 'px';
         this.canvas.style.height = size + 'px';
+
+        // reset transform (ست کردن width خودش reset می‌کند اما محکم کاری)
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.scale(dpr, dpr);
+
+        // مقادیر هندسی
         this.size = size;
         this.centerX = size / 2;
         this.centerY = size / 2;
-        this.radius = size / 2 - 20;
+        this.radius = size / 2 - 15;
+
+        this.render();
     },
 
     /**
      * تنظیم آیتم‌ها
      */
     setItems(items) {
-        this.items = items.map((item, index) => ({
+        this.items = (items || []).map((item, index) => ({
             ...item,
             color: item.color || Utils.randomColor(),
             weight: item.weight || 1,
@@ -59,16 +132,21 @@ const WheelCore = {
     },
 
     /**
-     * رندر گردونه
+     * رندر
      */
     render() {
-        if (!this.ctx) return;
+        if (!this.ctx || !this.canvas) return;
+
         const { ctx, centerX, centerY, radius, items, rotation } = this;
-        
-        ctx.clearRect(0, 0, this.size, this.size);
+        const size = this.size;
+
+        // پاک کردن
+        ctx.clearRect(0, 0, size, size);
 
         if (items.length === 0) {
             this._drawEmptyWheel(ctx, centerX, centerY, radius);
+            this._drawCenterHub(ctx, centerX, centerY);
+            this._drawPointer(ctx, centerX, centerY, radius);
             return;
         }
 
@@ -78,24 +156,18 @@ const WheelCore = {
             const startAngle = rotation + i * anglePerItem;
             const endAngle = startAngle + anglePerItem;
 
-            // رسم قطاع
+            // قطاع
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
 
-            // گرادیان
-            const gradient = ctx.createRadialGradient(
-                centerX, centerY, 0,
-                centerX, centerY, radius
-            );
-            gradient.addColorStop(0, this._lighten(item.color, 20));
-            gradient.addColorStop(1, item.color);
-            ctx.fillStyle = gradient;
+            // گرادیان سبک (بدون گرادیان شعاعی سنگین)
+            ctx.fillStyle = item.color;
             ctx.fill();
 
             // حاشیه
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.lineWidth = 2;
             ctx.stroke();
 
@@ -104,91 +176,79 @@ const WheelCore = {
             ctx.translate(centerX, centerY);
             ctx.rotate(startAngle + anglePerItem / 2);
             ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
             ctx.fillStyle = Utils.getContrastColor(item.color);
-            ctx.font = 'bold 16px Vazirmatn, sans-serif';
-            ctx.fillText(item.label || item.name, radius - 20, 6);
-            
-            // ستاره
-            if (item.starred) {
-                ctx.fillStyle = '#fbbf24';
-                ctx.font = '14px sans-serif';
-                ctx.fillText('⭐', radius - 45, -10);
-            }
+            ctx.font = 'bold 15px Vazirmatn, sans-serif';
+
+            const label = item.label || item.name || '';
+            const maxWidth = radius - 40;
+            const displayLabel = label.length > 12 ? label.substring(0, 11) + '…' : label;
+            ctx.fillText(displayLabel, radius - 20, 0);
+
             ctx.restore();
         });
 
-        // مرکز
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
-        const centerGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
-        centerGradient.addColorStop(0, '#333');
-        centerGradient.addColorStop(1, '#111');
-        ctx.fillStyle = centerGradient;
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-
-        // لوگوی مرکز
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 20px Vazirmatn, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('🎡', centerX, centerY);
-
-        // اشاره‌گر
+        this._drawCenterHub(ctx, centerX, centerY);
         this._drawPointer(ctx, centerX, centerY, radius);
     },
 
-    /**
-     * رسم اشاره‌گر
-     */
+    _drawCenterHub(ctx, cx, cy) {
+        // مرکز
+        ctx.beginPath();
+        ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
+        ctx.fillStyle = '#111118';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🎡', cx, cy);
+    },
+
     _drawPointer(ctx, cx, cy, radius) {
         const angle = this.pointerAngle;
-        const pointerLength = 30;
-        const pointerWidth = 20;
+        const pointerLength = 26;
+        const pointerWidth = 18;
 
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(angle);
-        
+
         ctx.beginPath();
         ctx.moveTo(radius - 5, 0);
         ctx.lineTo(radius + pointerLength - 5, -pointerWidth / 2);
         ctx.lineTo(radius + pointerLength - 5, pointerWidth / 2);
         ctx.closePath();
-        
+
         ctx.fillStyle = '#ef4444';
         ctx.fill();
         ctx.strokeStyle = '#fff';
         ctx.lineWidth = 2;
         ctx.stroke();
-        
+
         ctx.restore();
     },
 
-    /**
-     * رسم گردونه خالی
-     */
     _drawEmptyWheel(ctx, cx, cy, radius) {
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, 2 * Math.PI);
-        ctx.fillStyle = 'rgba(255,255,255,0.03)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.font = '18px Vazirmatn, sans-serif';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = '16px Vazirmatn, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('لیست خالی است', cx, cy);
+        ctx.fillText('لیست خالی است', cx, cy + radius / 2 + 20);
     },
 
-    /**
-     * روشن‌تر کردن رنگ
-     */
     _lighten(hex, percent) {
         const rgb = Utils.hexToRgb(hex);
         if (!rgb) return hex;
@@ -199,13 +259,14 @@ const WheelCore = {
         return `rgb(${newR}, ${newG}, ${newB})`;
     },
 
-    /**
-     * چرخش عادی (تصادفی کامل)
-     */
+    // ═══════════════════════════════════════════
+    // Spin
+    // ═══════════════════════════════════════════
+
     spinRandom() {
         if (this.isSpinning || this.items.length === 0) return;
         this.isSpinning = true;
-        
+
         const targetRotation = this.rotation + (Math.random() * 10 + 5) * Math.PI * 2;
         const duration = this.spinDuration;
         const startRotation = this.rotation;
@@ -214,9 +275,8 @@ const WheelCore = {
         const animate = (currentTime) => {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
-            
-            // easing
             const eased = this._easeOutCubic(progress);
+
             this.rotation = startRotation + (targetRotation - startRotation) * eased;
             this.render();
 
@@ -231,23 +291,19 @@ const WheelCore = {
         requestAnimationFrame(animate);
     },
 
-    /**
-     * چرخش به سمت آیتم خاص
-     */
     spinToItem(itemIndex, duration = 5000) {
         if (this.isSpinning || this.items.length === 0) return;
         if (itemIndex < 0 || itemIndex >= this.items.length) return;
-        
+
         this.isSpinning = true;
         const anglePerItem = (2 * Math.PI) / this.items.length;
         const targetAngle = -itemIndex * anglePerItem - anglePerItem / 2;
         const currentRotation = this.rotation % (2 * Math.PI);
         let diff = targetAngle - currentRotation;
-        
-        // اطمینان از چرخش کامل
+
         while (diff < 0) diff += 2 * Math.PI;
         const targetRotation = this.rotation + diff + (Math.random() * 5 + 5) * Math.PI * 2;
-        
+
         const startRotation = this.rotation;
         const startTime = performance.now();
 
@@ -255,6 +311,7 @@ const WheelCore = {
             const elapsed = currentTime - startTime;
             const progress = Math.min(elapsed / duration, 1);
             const eased = this._easeOutQuint(progress);
+
             this.rotation = startRotation + (targetRotation - startRotation) * eased;
             this.render();
 
@@ -269,28 +326,19 @@ const WheelCore = {
         requestAnimationFrame(animate);
     },
 
-    /**
-     * چرخش از بین ستاره‌دارها
-     */
     spinStarred() {
         const starred = this.items.filter((item) => item.starred);
-        if (starred.length === 0) {
-            console.warn('هیچ آیتم ستاره‌داری وجود ندارد');
-            return;
-        }
+        if (starred.length === 0) return;
         const randomStarred = Utils.randomPick(starred);
         const index = this.items.findIndex((item) => item.id === randomStarred.id);
         this.spinToItem(index);
     },
 
-    /**
-     * تکمیل چرخش
-     */
     _onSpinComplete() {
         const winner = this.getCurrentItem();
         if (winner) {
             AppState.set('wheel.lastResult', winner);
-            if (AppState.get('settings.confettiEnabled')) {
+            if (AppState.get('settings.confettiEnabled') && typeof Confetti !== 'undefined') {
                 Confetti.celebrate();
             }
             if (window.WheelPage) {
@@ -299,9 +347,6 @@ const WheelCore = {
         }
     },
 
-    /**
-     * دریافت آیتم فعلی
-     */
     getCurrentItem() {
         if (this.items.length === 0) return null;
         const anglePerItem = (2 * Math.PI) / this.items.length;
@@ -312,16 +357,8 @@ const WheelCore = {
         return this.items[index];
     },
 
-    /**
-     * Easing
-     */
-    _easeOutCubic(t) {
-        return 1 - Math.pow(1 - t, 3);
-    },
-
-    _easeOutQuint(t) {
-        return 1 - Math.pow(1 - t, 5);
-    },
+    _easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); },
+    _easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); },
 };
 
 window.WheelCore = WheelCore;
