@@ -1,5 +1,5 @@
 /**
- * مدیریت داستان‌ها - با fallback خودکار
+ * مدیریت داستان‌ها - با فیلتر کردن خروجی
  * @module storyManager
  */
 
@@ -11,7 +11,6 @@ const StoryManager = {
 
         if (this.isGenerating) {
             const err = new Error('در حال تولید داستان قبلی هستید');
-            Logger.warn('StoryManager', err.message);
             if (onError) onError(err);
             return null;
         }
@@ -26,15 +25,10 @@ const StoryManager = {
         this.isGenerating = true;
 
         try {
-            Logger.info('StoryManager', '🎬 شروع تولید داستان', {
-                model: OpenRouter.getModel(),
-                temperature: AppState.get('settings.aiTemperature'),
-            });
-
             const systemPrompt = PromptBuilder.getSystemPrompt();
             const userPrompt = PromptBuilder.buildStoryPrompt(context);
 
-            Logger.debug('StoryManager', '📝 پرامپت‌ها آماده شدند', {
+            Logger.debug('StoryManager', '📝 پرامپت آماده', {
                 systemLength: systemPrompt.length,
                 userLength: userPrompt.length,
             });
@@ -44,82 +38,70 @@ const StoryManager = {
                 { role: 'user', content: userPrompt },
             ];
 
-            // ─── تلاش ۱: استریم ───
+            // تلاش با استریم
             let result = null;
-            let usedStream = true;
-
             try {
-                result = await this._tryStream(messages, onChunk);
-            } catch (streamErr) {
-                Logger.warn(
-                    'StoryManager',
-                    '⚠️ استریم شکست خورد، تلاش با حالت غیراستریم',
-                    { error: streamErr.message }
+                result = await OpenRouter.chatStream(
+                    messages,
+                    {
+                        temperature: AppState.get('settings.aiTemperature') || 0.8,
+                        maxTokens: 2500,
+                    },
+                    onChunk
                 );
-                usedStream = false;
+            } catch (streamErr) {
+                Logger.warn('StoryManager', 'استریم شکست خورد - fallback به غیراستریم', {
+                    error: streamErr.message,
+                });
 
-                // ─── تلاش ۲: غیراستریم ───
-                try {
-                    result = await this._tryNonStream(messages);
-                    // محتوا را به صورت یکجا به onChunk بده
-                    if (onChunk && result) {
-                        onChunk(result.content, result.model, result.content);
-                    }
-                } catch (nonStreamErr) {
-                    Logger.error('StoryManager.bothFailed', nonStreamErr, {
-                        streamError: streamErr.message,
-                        nonStreamError: nonStreamErr.message,
-                    });
-                    throw nonStreamErr;
+                // fallback به غیراستریم
+                result = await OpenRouter.chat(messages, {
+                    temperature: AppState.get('settings.aiTemperature') || 0.8,
+                    maxTokens: 2500,
+                });
+
+                if (onChunk && result) {
+                    onChunk(result.content, result.model, result.content);
                 }
             }
 
-            if (!result || !result.content || !result.content.trim()) {
-                const err = new Error('پاسخ خالی از هر دو حالت دریافت شد');
-                Logger.error('StoryManager.emptyResult', err);
-                throw err;
+            if (!result || !result.content) {
+                throw new Error('پاسخ خالی از سرور');
             }
 
-            const finalContent = result.content;
+            // ─── پاکسازی محتوا ───
+            const cleanedContent = this._cleanStoryContent(result.content);
+
+            if (!cleanedContent.trim()) {
+                throw new Error('پس از پاکسازی، محتوا خالی شد');
+            }
 
             const story = {
                 id: Utils.generateId('story'),
-                content: finalContent,
+                content: cleanedContent,
                 model: result.model || OpenRouter.getModel(),
                 context: JSON.stringify({
                     winner: context.winner?.name,
                     mode: context.mode,
-                    tone: context.tone,
                 }),
                 timestamp: Date.now(),
-                wordCount: finalContent.trim().split(/\s+/).length,
-                usedStream,
+                wordCount: cleanedContent.trim().split(/\s+/).length,
             };
 
-            try {
-                SQLStorage.addStory(story);
-            } catch (e) {
-                Logger.warn('StoryManager.saveStory', 'ذخیره داستان ناموفق', {
-                    error: e.message,
-                });
-            }
+            try { SQLStorage.addStory(story); } catch (e) {}
 
             const stories = [story, ...(AppState.get('stories') || [])].slice(0, 100);
             AppState.set('stories', stories);
 
             Logger.info('StoryManager', '✅ داستان ساخته شد', {
-                length: finalContent.length,
+                length: cleanedContent.length,
                 model: result.model,
-                usedStream,
             });
 
             if (onComplete) onComplete(story);
             return story;
         } catch (error) {
-            Logger.error('StoryManager.generateStream', error, {
-                model: OpenRouter.getModel(),
-                hasApiKey: !!OpenRouter.getApiKey(),
-            });
+            Logger.error('StoryManager.generateStream', error);
             if (onError) onError(error);
             return null;
         } finally {
@@ -128,27 +110,68 @@ const StoryManager = {
     },
 
     /**
-     * تلاش با استریم
+     * پاکسازی محتوای داستان
      */
-    async _tryStream(messages, onChunk) {
-        return await OpenRouter.chatStream(
-            messages,
-            {
-                temperature: AppState.get('settings.aiTemperature') || 0.8,
-                maxTokens: 2000,
-            },
-            onChunk
-        );
-    },
+    _cleanStoryContent(content) {
+        if (!content) return '';
 
-    /**
-     * تلاش غیراستریم
-     */
-    async _tryNonStream(messages) {
-        return await OpenRouter.chat(messages, {
-            temperature: AppState.get('settings.aiTemperature') || 0.8,
-            maxTokens: 2000,
+        let cleaned = content;
+
+        // ۱. حذف بلوک‌های thinking / reasoning
+        cleaned = cleaned.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '');
+        cleaned = cleaned.replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '');
+        cleaned = cleaned.replace(/\[thinking\][\s\S]*?\[\/thinking\]/gi, '');
+
+        // ۲. حذف خطوطی که با "Thinking:" یا "Reasoning:" شروع می‌شوند
+        cleaned = cleaned.replace(/^(thinking|reasoning|analysis|let me think)[:：].*/gim, '');
+
+        // ۳. حذف پرانتزهای انگلیسی توضیحی در ابتدای خط
+        cleaned = cleaned.replace(/^\s*\([^)]*[a-zA-Z]{5,}[^)]*\)\s*$/gm, '');
+
+        // ۴. حذف خطوطی که بیش از ۵۰٪ انگلیسی هستند
+        const lines = cleaned.split('\n');
+        const filtered = lines.filter((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return true;
+
+            // اگر خط فقط فارسی/عدد/علامت است، نگه‌دار
+            const persianChars = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
+            const englishChars = (trimmed.match(/[a-zA-Z]/g) || []).length;
+            const totalLetters = persianChars + englishChars;
+
+            if (totalLetters === 0) return true; // خط خالی یا فقط علامت
+
+            // اگر بیشتر از ۶۰٪ انگلیسی است، حذف کن
+            const englishRatio = englishChars / totalLetters;
+            if (englishRatio > 0.6) {
+                Logger.debug('StoryManager.cleanContent', 'خط انگلیسی حذف شد', {
+                    line: trimmed.substring(0, 80),
+                    englishRatio: englishRatio.toFixed(2),
+                });
+                return false;
+            }
+
+            return true;
         });
+
+        cleaned = filtered.join('\n');
+
+        // ۵. حذف خطوط اضافه
+        cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
+        cleaned = cleaned.trim();
+
+        // ۶. اگر بعد از پاکسازی، بیشتر از ۷۰٪ متن انگلیسی بود، خطا بده
+        const totalPersian = (cleaned.match(/[\u0600-\u06FF]/g) || []).length;
+        const totalEnglish = (cleaned.match(/[a-zA-Z]/g) || []).length;
+
+        if (totalEnglish > totalPersian * 2 && totalEnglish > 100) {
+            Logger.warn('StoryManager.cleanContent', '⚠️ متن عمدتاً انگلیسی است', {
+                persianChars: totalPersian,
+                englishChars: totalEnglish,
+            });
+        }
+
+        return cleaned;
     },
 
     async generate(context, options = {}) {
@@ -173,7 +196,6 @@ const StoryManager = {
                 timestamp: s.timestamp,
             }));
         } catch (e) {
-            Logger.error('StoryManager.getAll', e);
             return [];
         }
     },
@@ -198,11 +220,13 @@ const StoryManager = {
 
         let html = content;
 
+        // امن‌سازی
         html = html
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
+        // Markdown
         html = html.replace(/^##\s+(.+)$/gm, '<h2 class="story-title">$1</h2>');
         html = html.replace(/^###\s+(.+)$/gm, '<h3 class="story-subtitle">$1</h3>');
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -219,7 +243,7 @@ const StoryManager = {
     },
 
     download(story) {
-        const text = `# داستان تولیدشده\n\n` +
+        const text = `# داستان\n\n` +
             `مدل: ${story.model}\n` +
             `تاریخ: ${Utils.formatDate(story.timestamp)}\n\n` +
             `---\n\n${story.content}`;
