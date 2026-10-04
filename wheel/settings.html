@@ -108,29 +108,24 @@
                             type="text"
                             id="input-github-username"
                             class="input"
-                            placeholder="VahiDArmy"
+                            placeholder="username"
                             autocomplete="off"
                         >
-                        <p class="form-hint">
-                            فقط نام کاربری، بدون اسلش. مثال: <code>VahiDArmy</code>
-                        </p>
                     </div>
 
                     <div class="form-row">
                         <label class="form-label">
-                            نام مخزن (Repository)
+                            نام مخزن
                             <span class="required">*</span>
                         </label>
                         <input
                             type="text"
                             id="input-github-repo"
                             class="input"
-                            placeholder="VahiDArmy.github.io"
+                            placeholder="my-wheel"
                             autocomplete="off"
                         >
-                        <p class="form-hint">
-                            نام دقیق مخزن. مثال: <code>VahiDArmy.github.io</code> یا <code>wheel</code>
-                        </p>
+                        <p class="form-hint">مخزنی که GitHub Pages روی آن فعال است</p>
                     </div>
 
                     <div class="form-row">
@@ -146,16 +141,14 @@
                             value="main"
                             autocomplete="off"
                         >
-                        <p class="form-hint">
-                            نام شاخه‌ی اصلی مخزن: معمولاً <code>main</code> یا <code>master</code>
-                        </p>
+                        <p class="form-hint">نام شاخه‌ی اصلی مخزن: معمولاً <code>main</code> یا <code>master</code></p>
                     </div>
 
                     <div class="settings-actions">
-                        <button id="save-github-btn" class="btn btn-primary">
+                        <button id="save-github-btn" class="btn btn-primary" type="button">
                             💾 ذخیره
                         </button>
-                        <button id="test-github-btn" class="btn btn-secondary">
+                        <button id="test-github-btn" class="btn btn-secondary" type="button">
                             🔌 تست اتصال
                         </button>
                     </div>
@@ -195,14 +188,83 @@
 
                     <div class="form-row">
                         <label class="form-label">مدل</label>
+                        <select id="input-ai-model" class="input">
+                            <optgroup label="🌟 پیشنهادی (Google - رایگان)">
+                                <option value="google/gemini-2.0-flash-exp:free" selected>
+                                    Google Gemini 2.0 Flash (رایگان - پیشنهادی)
+                                </option>
+                                <option value="google/gemini-2.5-flash-preview:free">
+                                    Google Gemini 2.5 Flash Preview (رایگان)
+                                </option>
+                                <option value="google/gemini-2.0-flash-lite-preview-02-05:free">
+                                    Google Gemini 2.0 Flash Lite (رایگان - سریع)
+                                </option>
+                                <option value="google/gemini-flash-1.5-8b:free">
+                                    Google Gemini Flash 1.5 8B (رایگان - سبک)
+                                </option>
+                            </optgroup>
+                            <optgroup label="🎯 هوشمند (OpenRouter)">
+                                <option value="openrouter/free">
+                                    OpenRouter Free (خودکار)
+                                </option>
+                                <option value="openrouter/auto">
+                                    OpenRouter Auto (هوشمند)
+                                </option>
+                            </optgroup>
+                            <optgroup label="🦙 Meta Llama (رایگان)">
+                                <option value="meta-llama/llama-3.3-70b-instruct:free">
+                                    Meta Llama 3.3 70B (رایگان - قدرتمند)
+                                </option>
+                                <option value="meta-llama/llama-3.2-3b-instruct:free">
+                                    Meta Llama 3.2 3B (رایگان - سریع)
+                                </option>
+                                <option value="meta-llama/llama-3.1-8b-instruct:free">
+                                    Meta Llama 3.1 8B (رایگان - سبک)
+                                </option>
+                            </optgroup>
+                            <optgroup label="🧠 DeepSeek (رایگان)">
+                                <option value="deepseek/deepseek-r1:free">
+                                    DeepSeek R1 (رایگان - استدلال)
+                                </option>
+                                <option value="deepseek/deepseek-chat:free">
+                                    DeepSeek Chat (رایگان)
+                                </option>
+                            </optgroup>
+                            <optgroup label="💬 Mistral (رایگان)">
+                                <option value="mistralai/mistral-nemo:free">
+                                    Mistral Nemo (رایگان)
+                                </option>
+                                <option value="mistralai/mistral-7b-instruct:free">
+                                    Mistral 7B (رایگان - سبک)
+                                </option>
+                            </optgroup>
+                            <optgroup label="🔮 Qwen (رایگان)">
+                                <option value="qwen/qwen-2.5-72b-instruct:free">
+                                    Qwen 2.5 72B (رایگان - قدرتمند)
+                                </option>
+                            </optgroup>
+                            <optgroup label="✏️ سفارشی">
+                                <option value="custom">سفارشی (خودم وارد می‌کنم)</option>
+                            </optgroup>
+                        </select>
+                        <p class="form-hint">
+                            پیشنهاد: <code>Google Gemini 2.0 Flash</code> — سریع، با کیفیت و رایگان
+                        </p>
+                    </div>
+
+                    <div class="form-row" id="custom-model-row" style="display: none;">
+                        <label class="form-label">
+                            شناسه مدل سفارشی
+                            <span class="required">*</span>
+                        </label>
                         <input
                             type="text"
-                            id="input-ai-model"
+                            id="input-custom-model"
                             class="input"
-                            placeholder="openrouter/free"
-                            value="openrouter/free"
+                            placeholder="مثلاً: google/gemini-2.0-flash-exp:free"
+                            autocomplete="off"
                         >
-                        <p class="form-hint">پیش‌فرض: <code>openrouter/free</code></p>
+                        <p class="form-hint">شناسه دقیق مدل از openrouter.ai/models</p>
                     </div>
 
                     <div class="form-row">
@@ -232,10 +294,10 @@
                     </div>
 
                     <div class="settings-actions">
-                        <button id="save-openrouter-btn" class="btn btn-primary">
+                        <button id="save-openrouter-btn" class="btn btn-primary" type="button">
                             💾 ذخیره
                         </button>
-                        <button id="test-openrouter-btn" class="btn btn-secondary">
+                        <button id="test-openrouter-btn" class="btn btn-secondary" type="button">
                             🔌 تست اتصال
                         </button>
                     </div>
@@ -259,13 +321,13 @@
                     </div>
 
                     <div class="settings-actions settings-actions-grid">
-                        <button id="db-push-github" class="btn btn-primary">
+                        <button id="db-push-github" class="btn btn-primary" type="button">
                             ☁️ ارسال به GitHub
                         </button>
-                        <button id="db-pull-github" class="btn btn-secondary">
+                        <button id="db-pull-github" class="btn btn-secondary" type="button">
                             ⬇️ دریافت از GitHub
                         </button>
-                        <button id="db-download" class="btn btn-secondary">
+                        <button id="db-download" class="btn btn-secondary" type="button">
                             💾 دانلود فایل دیتابیس
                         </button>
                         <label class="btn btn-secondary upload-label">
@@ -350,10 +412,10 @@
 
                 <div class="settings-card-body">
                     <div class="danger-actions">
-                        <button id="db-reset" class="btn btn-danger">
+                        <button id="db-reset" class="btn btn-danger" type="button">
                             🗑 بازنشانی دیتابیس
                         </button>
-                        <button id="clear-all-data" class="btn btn-danger">
+                        <button id="clear-all-data" class="btn btn-danger" type="button">
                             ⚠️ پاک کردن همه داده‌ها
                         </button>
                     </div>
@@ -377,6 +439,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 
     <script src="js/core/utils.js"></script>
+    <script src="js/core/logger.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/router.js"></script>
