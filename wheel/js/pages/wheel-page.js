@@ -1,7 +1,5 @@
 /**
- * منطق صفحه گردونه (کارگاه)
- * - فقط از جعبه ابزار استفاده می‌کند
- * - افزودن/حذف از گردونه = فقط علامت‌گذاری
+ * صفحه گردونه - با Setup Panel
  * @module wheelPage
  */
 
@@ -19,11 +17,322 @@ const WheelPage = {
     init() {
         this._initWheel();
         this._initLever();
+        this._initSetupPanel();
         this._initControls();
         this._initModeSelector();
         this._renderPeopleList();
         this._bindEvents();
     },
+
+    // ═══════════════════════════════════════════
+    // Setup Panel
+    // ═══════════════════════════════════════════
+
+    _initSetupPanel() {
+        const setup = this._getSetup();
+
+        // بارگذاری مقادیر
+        const topicInput = document.getElementById('setup-topic');
+        if (topicInput) {
+            topicInput.value = setup.topic || '';
+            topicInput.addEventListener('input', Utils.debounce(() => {
+                this._updateSetup({ topic: topicInput.value.trim() });
+            }, 400));
+            topicInput.addEventListener('focus', () => this._showTopicSuggestions());
+            topicInput.addEventListener('blur', () => {
+                setTimeout(() => this._hideTopicSuggestions(), 200);
+            });
+        }
+
+        // Type
+        document.querySelectorAll('#type-selector .type-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.type === (setup.type || 'provide'));
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#type-selector .type-btn').forEach((b) => b.classList.remove('active'));
+                btn.classList.add('active');
+                this._updateSetup({ type: btn.dataset.type });
+            });
+        });
+
+        // ذخیره موضوع
+        const saveTopicBtn = document.getElementById('save-topic-btn');
+        if (saveTopicBtn) {
+            saveTopicBtn.addEventListener('click', () => this._saveTopicToLibrary());
+        }
+
+        // افزودن آیتم
+        const addItemBtn = document.getElementById('add-setup-item-btn');
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', () => this._openItemPicker());
+        }
+
+        // بازنشانی
+        const resetBtn = document.getElementById('reset-setup-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                const ok = await Modal.confirm('تنظیمات این چرخش بازنشانی شود؟');
+                if (ok) {
+                    this._updateSetup({ topic: '', type: 'provide', items: [] });
+                    this._renderSetupPanel();
+                }
+            });
+        }
+
+        this._renderSetupItems();
+    },
+
+    _getSetup() {
+        const stored = AppState.get('wheel.setup');
+        if (stored && typeof stored === 'object') return stored;
+        return { topic: '', type: 'provide', items: [] };
+    },
+
+    _updateSetup(partial) {
+        const current = this._getSetup();
+        const next = { ...current, ...partial };
+        AppState.set('wheel.setup', next);
+
+        try {
+            if (SQLStorage.isReady) SQLStorage.setSetting('wheel_setup', next);
+        } catch (e) {}
+
+        if ('items' in partial) this._renderSetupItems();
+    },
+
+    _renderSetupPanel() {
+        const setup = this._getSetup();
+        const topicInput = document.getElementById('setup-topic');
+        if (topicInput) topicInput.value = setup.topic || '';
+
+        document.querySelectorAll('#type-selector .type-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.type === (setup.type || 'provide'));
+        });
+
+        this._renderSetupItems();
+    },
+
+    _renderSetupItems() {
+        const list = document.getElementById('setup-items-list');
+        const empty = document.getElementById('setup-items-empty');
+        if (!list) return;
+
+        const setup = this._getSetup();
+        const items = setup.items || [];
+
+        if (items.length === 0) {
+            list.innerHTML = '';
+            if (empty) empty.style.display = 'block';
+            return;
+        }
+
+        if (empty) empty.style.display = 'none';
+
+        list.innerHTML = items.map((it) => `
+            <div class="setup-item-row" data-setup-item-id="${it.id}">
+                <span style="font-size: 1.1rem;">🎁</span>
+                <span class="setup-item-label">${this._escape(it.label)}</span>
+                <div class="setup-item-qty">
+                    <button class="qty-btn" data-qty-action="dec" data-id="${it.id}" type="button" ${it.quantity <= 1 ? 'disabled' : ''}>−</button>
+                    <span class="qty-value">${Utils.toPersianNumbers(it.quantity)}</span>
+                    <button class="qty-btn" data-qty-action="inc" data-id="${it.id}" type="button" ${it.quantity >= 99 ? 'disabled' : ''}>+</button>
+                </div>
+                <button class="setup-item-remove" data-qty-action="remove" data-id="${it.id}" type="button" title="حذف">×</button>
+            </div>
+        `).join('');
+
+        list.querySelectorAll('[data-qty-action]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const id = btn.dataset.id;
+                const action = btn.dataset.qtyAction;
+                this._handleQtyAction(id, action);
+            });
+        });
+    },
+
+    _handleQtyAction(id, action) {
+        const setup = this._getSetup();
+        const items = [...(setup.items || [])];
+        const idx = items.findIndex((i) => i.id === id);
+        if (idx === -1) return;
+
+        if (action === 'inc') {
+            items[idx] = { ...items[idx], quantity: Math.min(99, items[idx].quantity + 1) };
+        } else if (action === 'dec') {
+            items[idx] = { ...items[idx], quantity: Math.max(1, items[idx].quantity - 1) };
+        } else if (action === 'remove') {
+            items.splice(idx, 1);
+        }
+
+        this._updateSetup({ items });
+    },
+
+    _openItemPicker() {
+        const allItems = Items.getAll();
+        const setup = this._getSetup();
+        const usedIds = new Set((setup.items || []).map((i) => i.id));
+
+        const listHtml = allItems.length === 0
+            ? `<div class="items-picker-empty">جعبه ابزار آیتم خالی است - از فیلد پایین آیتم جدید بسازید</div>`
+            : allItems.map((it) => {
+                const isUsed = usedIds.has(it.id);
+                return `
+                    <div class="items-picker-item ${isUsed ? 'added' : ''}" data-item-id="${it.id}" data-label="${this._escape(it.label)}">
+                        <span class="items-picker-icon">🎁</span>
+                        <span class="items-picker-label">${this._escape(it.label)}</span>
+                        ${isUsed ? '<span class="badge badge-sm">افزوده شد</span>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+        const content = `
+            <div>
+                <div class="items-picker-list">${listHtml}</div>
+                <div class="items-picker-new">
+                    <input type="text" id="new-item-in-picker" class="input" placeholder="آیتم جدید (اضافه به جعبه ابزار)">
+                    <button id="add-new-item-in-picker" class="btn btn-primary">+ افزودن</button>
+                </div>
+            </div>
+        `;
+
+        Modal.open({
+            title: '🎁 افزودن آیتم به این چرخش',
+            content,
+            size: 'md',
+            buttons: [{ label: 'تمام', class: 'btn-secondary' }],
+        });
+
+        setTimeout(() => {
+            // انتخاب آیتم موجود
+            document.querySelectorAll('.items-picker-item').forEach((el) => {
+                el.addEventListener('click', () => {
+                    if (el.classList.contains('added')) return;
+                    const id = el.dataset.itemId;
+                    const label = el.dataset.label;
+                    this._addItemToSetup(id, label);
+                    el.classList.add('added');
+                    el.insertAdjacentHTML('beforeend', '<span class="badge badge-sm">افزوده شد</span>');
+                });
+            });
+
+            // آیتم جدید
+            const newInput = document.getElementById('new-item-in-picker');
+            const addBtn = document.getElementById('add-new-item-in-picker');
+            if (addBtn && newInput) {
+                const addNew = () => {
+                    const label = newInput.value.trim();
+                    if (!label) return;
+                    const created = Items.add(label);
+                    if (created) {
+                        newInput.value = '';
+                        this._addItemToSetup(created.id, created.label);
+                        // اضافه به لیست نمایش
+                        const list = document.querySelector('.items-picker-list');
+                        if (list) {
+                            const emptyEl = list.querySelector('.items-picker-empty');
+                            if (emptyEl) emptyEl.remove();
+                            const newEl = document.createElement('div');
+                            newEl.className = 'items-picker-item added';
+                            newEl.dataset.itemId = created.id;
+                            newEl.dataset.label = created.label;
+                            newEl.innerHTML = `
+                                <span class="items-picker-icon">🎁</span>
+                                <span class="items-picker-label">${this._escape(created.label)}</span>
+                                <span class="badge badge-sm">افزوده شد</span>
+                            `;
+                            list.appendChild(newEl);
+                        }
+                    }
+                };
+                addBtn.addEventListener('click', addNew);
+                newInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') addNew();
+                });
+            }
+        }, 100);
+    },
+
+    _addItemToSetup(id, label) {
+        const setup = this._getSetup();
+        const items = [...(setup.items || [])];
+        if (items.find((i) => i.id === id)) return;
+        items.push({ id, label, quantity: 1 });
+        this._updateSetup({ items });
+        Notification.success(`«${label}» افزوده شد`);
+    },
+
+    // ═══════════════════════════════════════════
+    // Topics
+    // ═══════════════════════════════════════════
+
+    _getTopics() {
+        try {
+            if (SQLStorage.isReady) {
+                const stored = SQLStorage.getSetting('topics_list');
+                if (Array.isArray(stored)) return stored;
+            }
+        } catch (e) {}
+        return [];
+    },
+
+    _saveTopicToLibrary() {
+        const input = document.getElementById('setup-topic');
+        if (!input) return;
+        const topic = input.value.trim();
+        if (!topic) {
+            Notification.warning('موضوع خالی است');
+            return;
+        }
+
+        const topics = this._getTopics();
+        if (topics.includes(topic)) {
+            Notification.info('این موضوع قبلاً ذخیره شده');
+            return;
+        }
+
+        topics.push(topic);
+        try {
+            if (SQLStorage.isReady) SQLStorage.setSetting('topics_list', topics);
+        } catch (e) {}
+
+        Notification.success(`موضوع «${topic}» ذخیره شد`);
+    },
+
+    _showTopicSuggestions() {
+        const dropdown = document.getElementById('topics-dropdown');
+        if (!dropdown) return;
+
+        const topics = this._getTopics();
+        if (topics.length === 0) {
+            dropdown.innerHTML = '<div class="topic-suggestion-empty">هنوز موضوعی ذخیره نشده</div>';
+            dropdown.classList.add('show');
+            return;
+        }
+
+        dropdown.innerHTML = topics.map((t) => `
+            <div class="topic-suggestion-item" data-topic="${this._escape(t)}">${this._escape(t)}</div>
+        `).join('');
+        dropdown.classList.add('show');
+
+        dropdown.querySelectorAll('.topic-suggestion-item').forEach((el) => {
+            el.addEventListener('click', () => {
+                const topic = el.dataset.topic;
+                const input = document.getElementById('setup-topic');
+                if (input) input.value = topic;
+                this._updateSetup({ topic });
+                this._hideTopicSuggestions();
+            });
+        });
+    },
+
+    _hideTopicSuggestions() {
+        const dropdown = document.getElementById('topics-dropdown');
+        if (dropdown) dropdown.classList.remove('show');
+    },
+
+    // ═══════════════════════════════════════════
+    // Wheel
+    // ═══════════════════════════════════════════
 
     _initWheel() {
         WheelCore.init('wheel-canvas');
@@ -63,7 +372,7 @@ const WheelPage = {
         if (this.dragDistance > 10) {
             this.lever.classList.add('lever-dragging');
             const totalDrag = Math.max(0, e.clientY - this.pointerDownY);
-            this.lever.style.transform = `translateY(${Math.min(totalDrag, 80)}px)`;
+            this.lever.style.transform = `translateX(-50%) translateY(${Math.min(totalDrag, 80)}px)`;
         }
     },
 
@@ -74,7 +383,7 @@ const WheelPage = {
 
         this.lever.classList.remove('lever-active');
         this.lever.classList.remove('lever-dragging');
-        this.lever.style.transform = '';
+        this.lever.style.transform = 'translateX(-50%)';
 
         const isDrag = this.dragDistance >= this.dragThreshold || duration > this.timeThreshold;
         if (isDrag) this._spinStarred();
@@ -112,6 +421,10 @@ const WheelPage = {
         setTimeout(() => indicator.classList.remove('show'), 1500);
     },
 
+    // ═══════════════════════════════════════════
+    // Controls / Mode
+    // ═══════════════════════════════════════════
+
     _initControls() {
         const clearBtn = document.getElementById('clear-wheel-btn');
         if (clearBtn) {
@@ -138,16 +451,15 @@ const WheelPage = {
                 if (WheelCore.isSpinning) return;
                 document.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
-                const mode = btn.dataset.mode;
-                AppState.set('wheel.currentMode', mode);
-                Notification.info(`حالت: ${mode === 'single' ? 'انتخاب تک‌نفره' : 'حذفی'}`);
+                AppState.set('wheel.currentMode', btn.dataset.mode);
             });
         });
     },
 
-    /**
-     * رندر لیست افراد در گردونه
-     */
+    // ═══════════════════════════════════════════
+    // People List
+    // ═══════════════════════════════════════════
+
     _renderPeopleList() {
         const container = document.getElementById('wheel-people-list');
         if (!container) return;
@@ -160,7 +472,7 @@ const WheelPage = {
             container.innerHTML = `
                 <div class="empty-state-sm">
                     <p>گردونه خالی است</p>
-                    <button class="btn btn-primary btn-sm" id="open-toolbox">📦 افزودن از جعبه ابزار</button>
+                    <button class="btn btn-primary btn-sm" id="open-toolbox" type="button">📦 افزودن از جعبه ابزار</button>
                 </div>
             `;
             const btn = document.getElementById('open-toolbox');
@@ -172,7 +484,7 @@ const WheelPage = {
             <div class="wheel-person-item" data-id="${p.id}">
                 <span class="person-color" style="background: ${p.color}"></span>
                 <span class="person-name">${this._escape(p.name)}</span>
-                <button class="remove-btn" data-action="remove" data-id="${p.id}" title="حذف از گردونه">×</button>
+                <button class="remove-btn" data-action="remove" data-id="${p.id}" title="حذف از گردونه" type="button">×</button>
             </div>
         `).join('');
 
@@ -185,16 +497,11 @@ const WheelPage = {
         });
     },
 
-    /**
-     * پاپ‌آپ انتخاب از جعبه ابزار
-     */
     _openToolboxPicker() {
         const allPeople = People.getAll();
 
         if (allPeople.length === 0) {
-            Modal.alert(
-                'جعبه ابزار خالی است.\nابتدا از صفحه «توصیف‌ها» افراد را اضافه کنید.'
-            );
+            Modal.alert('جعبه ابزار خالی است. ابتدا از صفحه «توصیف‌ها» افراد را اضافه کنید.');
             return;
         }
 
@@ -232,7 +539,7 @@ const WheelPage = {
                     class: 'btn-outline',
                     closeOnClick: false,
                     onClick: async (modal) => {
-                        Modal.close(modal.dataset.modalId);
+                        Modal.closeAll();
                         setTimeout(() => this._createNewPerson(), 200);
                     },
                 },
@@ -257,7 +564,6 @@ const WheelPage = {
             ],
         });
 
-        // جستجو
         setTimeout(() => {
             const searchInput = document.getElementById('picker-search');
             if (searchInput) {
@@ -272,9 +578,6 @@ const WheelPage = {
         }, 100);
     },
 
-    /**
-     * ایجاد فرد جدید - هم در جعبه ابزار، هم در گردونه
-     */
     async _createNewPerson() {
         const name = await Modal.prompt('نام فرد جدید:');
         if (!name || !name.trim()) return;
@@ -289,6 +592,11 @@ const WheelPage = {
         Events.on('people-changed', () => {
             this._renderPeopleList();
             WheelCore.setItems(People.getInWheel());
+        });
+
+        Events.on('items-changed', () => {
+            // آیتم‌های setup ممکن است تغییر کرده باشند - دوباره رندر
+            this._renderSetupItems();
         });
 
         const addBtn = document.getElementById('add-person-btn');
@@ -311,6 +619,10 @@ const WheelPage = {
         });
     },
 
+    // ═══════════════════════════════════════════
+    // Spin Complete
+    // ═══════════════════════════════════════════
+
     onSpinComplete(winner) {
         if (!winner) return;
 
@@ -329,7 +641,6 @@ const WheelPage = {
 
         History.add({ winner, mode: 'elimination', spinType: 'random' });
 
-        // فقط از گردونه حذف (نه از جعبه ابزار)
         if (winner.id) {
             People.removeFromWheel(winner.id);
             WheelCore.setItems(People.getInWheel());
@@ -342,7 +653,6 @@ const WheelPage = {
             const finalWinner = remaining[0];
             History.add({ winner: finalWinner, mode: 'elimination', spinType: 'final' });
             Notification.success(`🏆 برنده نهایی: ${finalWinner.name}`, 3000);
-
             setTimeout(() => this._showWinnerWithStory(finalWinner), 1200);
         } else if (remaining.length > 1) {
             Notification.info(
@@ -373,7 +683,7 @@ const WheelPage = {
                     </div>
                 </div>
                 <div class="winner-popup-actions">
-                    <button class="btn btn-secondary btn-sm" id="close-winner-btn">بستن</button>
+                    <button class="btn btn-secondary btn-sm" id="close-winner-btn" type="button">بستن</button>
                 </div>
             </div>
         `;
@@ -391,12 +701,10 @@ const WheelPage = {
         const all = Descriptions.getAll();
         const filtered = {};
 
-        // توصیفات افراد حاضر در گردونه
         People.getInWheel().forEach((p) => {
             if (all[p.id]) filtered[p.name] = all[p.id];
         });
 
-        // توصیفات آیتم‌ها
         (AppState.get('items') || []).forEach((i) => {
             if (all[i.id]) filtered[i.label] = all[i.id];
         });
@@ -422,7 +730,7 @@ const WheelPage = {
             return;
         }
 
-        // برنده + سایر افراد گردونه + آیتم‌ها + توصیفات
+        const setup = this._getSetup();
         const otherWheelPeople = People.getInWheel().filter((p) => p.id !== winner.id);
 
         const context = {
@@ -436,10 +744,13 @@ const WheelPage = {
                 name: p.name,
                 description: Descriptions.get(p.id) || '',
             })),
-            items: (AppState.get('items') || []).map((i) => ({
-                label: i.label,
-                description: Descriptions.get(i.id) || '',
+            topic: setup.topic || '',
+            items: (setup.items || []).map((it) => ({
+                label: it.label,
+                quantity: it.quantity,
+                description: Descriptions.get(it.id) || '',
             })),
+            type: setup.type || 'provide', // 'provide' یا 'receive'
             descriptions: this._collectDescriptions(),
             mode: AppState.get('wheel.currentMode') || 'single',
             tone: 'funny',
@@ -449,7 +760,7 @@ const WheelPage = {
         section.innerHTML = `
             <div class="story-streaming">
                 <div class="story-streaming-content" id="streaming-content"></div>
-                <span class="story-streaming-cursor" id="streaming-cursor">▊</span>
+                <span class="story-streaming-cursor">▊</span>
             </div>
         `;
 
@@ -502,9 +813,9 @@ const WheelPage = {
                     </div>
                 </div>
                 <div class="story-in-popup-actions">
-                    <button class="btn btn-sm btn-secondary" id="copy-popup-story">📋 کپی</button>
-                    <button class="btn btn-sm btn-secondary" id="download-popup-story">💾 دانلود</button>
-                    <button class="btn btn-sm btn-secondary" id="regen-popup-story">🔄 دوباره</button>
+                    <button class="btn btn-sm btn-secondary" id="copy-popup-story" type="button">📋 کپی</button>
+                    <button class="btn btn-sm btn-secondary" id="download-popup-story" type="button">💾 دانلود</button>
+                    <button class="btn btn-sm btn-secondary" id="regen-popup-story" type="button">🔄 دوباره</button>
                 </div>
             </div>
         `;
