@@ -1,10 +1,11 @@
 /**
- * منطق صفحه تنظیمات
+ * منطق صفحه تنظیمات - با نمایش و مدیریت جداول
  * @module settingsPage
  */
 
 const SettingsPage = {
     DEFAULT_MODEL: 'google/gemini-2.0-flash-exp:free',
+    _currentTableType: null,
 
     init() {
         this._loadSettings();
@@ -51,6 +52,504 @@ const SettingsPage = {
         this._setChecked('toggle-auto-sync', s.autoSync);
         this._setValue('input-sync-interval', Math.round((s.syncInterval || 60000) / 1000));
     },
+
+    // ═══════════════════════════════════════════
+    // DB INFO + Data Tables
+    // ═══════════════════════════════════════════
+
+    _initDatabaseSection() {
+        this._renderDbInfo();
+
+        const pushBtn = document.getElementById('db-push-github');
+        if (pushBtn) {
+            pushBtn.addEventListener('click', async () => {
+                if (!GitHubStorage.isConfigured()) {
+                    Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
+                    return;
+                }
+
+                pushBtn.disabled = true;
+                pushBtn.textContent = 'در حال ارسال...';
+
+                try {
+                    await SQLStorage.pushToGitHub('ارسال دستی');
+                    this._renderDbInfo();
+                } catch (e) {
+                    Notification.error(e.message, 12000);
+                } finally {
+                    pushBtn.disabled = false;
+                    pushBtn.textContent = '☁️ ارسال به GitHub';
+                }
+            });
+        }
+
+        const pullBtn = document.getElementById('db-pull-github');
+        if (pullBtn) {
+            pullBtn.addEventListener('click', async () => {
+                if (!GitHubStorage.isConfigured()) {
+                    Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
+                    return;
+                }
+
+                const ok = await Modal.confirm('دیتابیس محلی با نسخه GitHub جایگزین شود؟', { danger: true });
+                if (!ok) return;
+
+                pullBtn.disabled = true;
+                pullBtn.textContent = 'در حال دریافت...';
+
+                try {
+                    await SQLStorage.pullFromGitHub();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
+                    this._renderDbInfo();
+                    Notification.success('داده‌ها بازنشانی شدند');
+                } catch (e) {
+                    Notification.error(e.message, 12000);
+                } finally {
+                    pullBtn.disabled = false;
+                    pullBtn.textContent = '⬇️ دریافت از GitHub';
+                }
+            });
+        }
+
+        const downloadBtn = document.getElementById('db-download');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                SQLStorage.downloadDatabase();
+                Notification.success('فایل دیتابیس دانلود شد');
+            });
+        }
+
+        const uploadInput = document.getElementById('db-upload');
+        if (uploadInput) {
+            uploadInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const ok = await Modal.confirm('دیتابیس فعلی جایگزین شود؟', { danger: true });
+                if (!ok) { uploadInput.value = ''; return; }
+
+                try {
+                    await SQLStorage.loadFromFile(file);
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
+                    this._renderDbInfo();
+                } catch (err) {
+                    Notification.error('خطا: ' + err.message);
+                } finally {
+                    uploadInput.value = '';
+                }
+            });
+        }
+
+        const resetBtn = document.getElementById('db-reset');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                const ok = await Modal.confirm('کل دیتابیس پاک شود؟', { danger: true });
+                if (ok) {
+                    await SQLStorage.reset();
+                    if (App._loadDataFromSQL) App._loadDataFromSQL();
+                    this._renderDbInfo();
+                }
+            });
+        }
+    },
+
+    _renderDbInfo() {
+        const container = document.getElementById('db-info');
+        if (!container) return;
+
+        try {
+            const info = SQLStorage.getInfo();
+            if (!info) {
+                container.innerHTML = '<p class="text-muted">در حال بارگذاری...</p>';
+                setTimeout(() => this._renderDbInfo(), 1000);
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="db-info-grid">
+                    <div class="db-info-item static">
+                        <div class="db-info-label">حجم فایل</div>
+                        <div class="db-info-value">${info.sizeFormatted}</div>
+                    </div>
+                    <button class="db-info-item clickable" data-table-type="people" type="button">
+                        <div class="db-info-label">افراد</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.peopleCount)}</div>
+                        <div class="db-info-hint">👁 مدیریت</div>
+                    </button>
+                    <button class="db-info-item clickable" data-table-type="items" type="button">
+                        <div class="db-info-label">آیتم‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.itemsCount)}</div>
+                        <div class="db-info-hint">👁 مدیریت</div>
+                    </button>
+                    <button class="db-info-item clickable" data-table-type="history" type="button">
+                        <div class="db-info-label">چرخش‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.historyCount)}</div>
+                        <div class="db-info-hint">👁 مدیریت</div>
+                    </button>
+                    <button class="db-info-item clickable" data-table-type="stories" type="button">
+                        <div class="db-info-label">داستان‌ها</div>
+                        <div class="db-info-value">${Utils.toPersianNumbers(info.storiesCount)}</div>
+                        <div class="db-info-hint">👁 مدیریت</div>
+                    </button>
+                </div>
+            `;
+
+            // اتصال رویداد کلیک
+            container.querySelectorAll('[data-table-type]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    this._openDataTable(btn.dataset.tableType);
+                });
+            });
+        } catch (e) {
+            container.innerHTML = '<p class="text-muted">دیتابیس در دسترس نیست</p>';
+        }
+    },
+
+    // ═══════════════════════════════════════════
+    // نمایش جدول
+    // ═══════════════════════════════════════════
+
+    _openDataTable(type) {
+        this._currentTableType = type;
+
+        const config = {
+            people: {
+                title: '👥 افراد',
+                columns: [
+                    { key: 'name', label: 'نام', width: '1.5fr' },
+                    { key: 'description', label: 'توصیف', width: '2fr' },
+                    { key: 'flags', label: 'وضعیت', width: '100px' },
+                    { key: 'createdAt', label: 'تاریخ', width: '120px' },
+                ],
+            },
+            items: {
+                title: '🎁 آیتم‌ها',
+                columns: [
+                    { key: 'label', label: 'نام', width: '1.5fr' },
+                    { key: 'description', label: 'توصیف', width: '2fr' },
+                    { key: 'createdAt', label: 'تاریخ', width: '120px' },
+                ],
+            },
+            history: {
+                title: '🎯 چرخش‌ها',
+                columns: [
+                    { key: 'winner', label: 'برنده', width: '1fr' },
+                    { key: 'mode', label: 'حالت', width: '100px' },
+                    { key: 'spinType', label: 'نوع', width: '100px' },
+                    { key: 'timestamp', label: 'تاریخ', width: '130px' },
+                ],
+            },
+            stories: {
+                title: '📚 داستان‌ها',
+                columns: [
+                    { key: 'model', label: 'مدل', width: '1.2fr' },
+                    { key: 'preview', label: 'پیش‌نمایش', width: '2.5fr' },
+                    { key: 'words', label: 'کلمات', width: '80px' },
+                    { key: 'timestamp', label: 'تاریخ', width: '130px' },
+                ],
+            },
+        }[type];
+
+        if (!config) return;
+
+        const rows = this._getTableData(type);
+
+        const columnsHtml = config.columns
+            .map((col) => `<div class="data-table-col" style="grid-column: span 1;">${col.label}</div>`)
+            .join('') + '<div class="data-table-col actions-col">عملیات</div>';
+
+        const gridTemplate = config.columns.map((c) => c.width).join(' ') + ' 60px';
+
+        const rowsHtml = rows.length === 0
+            ? `<div class="data-table-empty">
+                   <div class="data-table-empty-icon">📭</div>
+                   <p>هیچ داده‌ای وجود ندارد</p>
+               </div>`
+            : rows.map((row) => this._renderRow(type, row, config, gridTemplate)).join('');
+
+        const content = `
+            <div class="data-table-wrapper">
+                <div class="data-table-controls">
+                    <input
+                        type="text"
+                        id="data-table-search"
+                        class="input"
+                        placeholder="🔍 جستجو..."
+                        style="flex: 1;"
+                    >
+                    <button id="delete-all-rows-btn" class="btn btn-danger btn-sm" type="button" ${rows.length === 0 ? 'disabled' : ''}>
+                        🗑 حذف همه
+                    </button>
+                </div>
+
+                <div class="data-table" id="data-table-scroll">
+                    <div class="data-table-header" style="grid-template-columns: ${gridTemplate};">
+                        ${columnsHtml}
+                    </div>
+                    <div class="data-table-body" id="data-table-body">
+                        ${rowsHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        Modal.open({
+            title: `${config.title} — ${Utils.toPersianNumbers(rows.length)} مورد`,
+            content,
+            size: 'xl',
+            buttons: [
+                { label: 'بستن', class: 'btn-secondary' },
+            ],
+        });
+
+        setTimeout(() => {
+            this._attachTableEvents(type, rows);
+        }, 100);
+    },
+
+    /**
+     * دریافت داده‌های هر جدول
+     */
+    _getTableData(type) {
+        try {
+            if (type === 'people') {
+                const descriptions = {};
+                SQLStorage.getAllDescriptions().forEach((d) => {
+                    descriptions[d.key] = d.value;
+                });
+
+                return SQLStorage.getAllPeople().map((p) => ({
+                    id: p.id,
+                    name: p.name || '—',
+                    description: descriptions[p.id] || p.description || '—',
+                    starred: p.starred === 1,
+                    inWheel: p.in_wheel === 1,
+                    color: p.color || '#8b5cf6',
+                    createdAt: p.created_at,
+                }));
+            }
+
+            if (type === 'items') {
+                const descriptions = {};
+                SQLStorage.getAllDescriptions().forEach((d) => {
+                    descriptions[d.key] = d.value;
+                });
+
+                return SQLStorage.getAllItems().map((i) => ({
+                    id: i.id,
+                    label: i.label || '—',
+                    description: descriptions[i.id] || '—',
+                    inWheel: i.in_wheel === 1,
+                    createdAt: i.created_at,
+                }));
+            }
+
+            if (type === 'history') {
+                return SQLStorage.getHistory(1000).map((h) => ({
+                    id: h.id,
+                    winner: h.winner_name || '—',
+                    mode: h.mode === 'elimination' ? '🔥 حذفی' : '🎯 تک‌نفره',
+                    spinType: h.spin_type === 'starred' ? '⭐ ستاره‌دار' : '🎲 تصادفی',
+                    timestamp: h.timestamp,
+                }));
+            }
+
+            if (type === 'stories') {
+                return SQLStorage.getAllStories(1000).map((s) => {
+                    const plain = (s.content || '')
+                        .replace(/^#+\s+/gm, '')
+                        .replace(/\*\*(.+?)\*\*/g, '$1')
+                        .replace(/\*(.+?)\*/g, '$1')
+                        .replace(/\n+/g, ' ')
+                        .trim();
+                    return {
+                        id: s.id,
+                        model: this._shortenModel(s.model),
+                        preview: plain.substring(0, 120),
+                        words: (plain.match(/\S+/g) || []).length,
+                        timestamp: s.timestamp,
+                    };
+                });
+            }
+        } catch (e) {
+            Logger.error('SettingsPage._getTableData', e, { type });
+            return [];
+        }
+
+        return [];
+    },
+
+    _renderRow(type, row, config, gridTemplate) {
+        let cells = '';
+
+        if (type === 'people') {
+            const colorDot = `<span class="row-color-dot" style="background: ${row.color};"></span>`;
+            const flags = `
+                <div class="row-flags">
+                    ${row.starred ? '<span class="row-flag" title="ستاره‌دار">⭐</span>' : ''}
+                    ${row.inWheel ? '<span class="row-flag" title="در گردونه">🎡</span>' : ''}
+                </div>
+            `;
+
+            cells = `
+                <div class="data-table-cell">${colorDot}<span>${this._escape(row.name)}</span></div>
+                <div class="data-table-cell text-muted">${this._escape(Utils.truncate(row.description, 60))}</div>
+                <div class="data-table-cell">${flags}</div>
+                <div class="data-table-cell text-muted">${Utils.formatDate(row.createdAt).split('،')[0] || '—'}</div>
+            `;
+        } else if (type === 'items') {
+            cells = `
+                <div class="data-table-cell">
+                    <span class="row-icon">🎁</span>
+                    <span>${this._escape(row.label)}</span>
+                </div>
+                <div class="data-table-cell text-muted">${this._escape(Utils.truncate(row.description, 60))}</div>
+                <div class="data-table-cell text-muted">${Utils.formatDate(row.createdAt).split('،')[0] || '—'}</div>
+            `;
+        } else if (type === 'history') {
+            cells = `
+                <div class="data-table-cell"><strong>${this._escape(row.winner)}</strong></div>
+                <div class="data-table-cell">${row.mode}</div>
+                <div class="data-table-cell">${row.spinType}</div>
+                <div class="data-table-cell text-muted">${Utils.formatDate(row.timestamp).split('،')[0] || '—'}</div>
+            `;
+        } else if (type === 'stories') {
+            cells = `
+                <div class="data-table-cell">
+                    <span class="row-model">${this._escape(row.model)}</span>
+                </div>
+                <div class="data-table-cell text-muted">${this._escape(row.preview)}${row.preview.length >= 120 ? '…' : ''}</div>
+                <div class="data-table-cell"><span class="row-badge">${Utils.toPersianNumbers(row.words)}</span></div>
+                <div class="data-table-cell text-muted">${Utils.formatDate(row.timestamp).split('،')[0] || '—'}</div>
+            `;
+        }
+
+        return `
+            <div class="data-table-row" data-row-id="${row.id}" data-row-text="${this._escapeAttr((row.name || row.label || row.winner || row.model || '').toLowerCase())}" style="grid-template-columns: ${gridTemplate};">
+                ${cells}
+                <div class="data-table-cell actions-col">
+                    <button class="row-delete-btn" data-action="delete" data-id="${row.id}" type="button" title="حذف" aria-label="حذف">
+                        🗑
+                    </button>
+                </div>
+            </div>
+        `;
+    },
+
+    _attachTableEvents(type, rows) {
+        const searchInput = document.getElementById('data-table-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                const q = e.target.value.toLowerCase().trim();
+                document.querySelectorAll('.data-table-row').forEach((row) => {
+                    const text = row.dataset.rowText || '';
+                    row.style.display = (!q || text.includes(q)) ? '' : 'none';
+                });
+            });
+            searchInput.focus();
+        }
+
+        // حذف تکی
+        document.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                await this._deleteRow(type, btn.dataset.id);
+            });
+        });
+
+        // حذف همه
+        const deleteAllBtn = document.getElementById('delete-all-rows-btn');
+        if (deleteAllBtn) {
+            deleteAllBtn.addEventListener('click', async () => {
+                await this._deleteAllRows(type);
+            });
+        }
+    },
+
+    async _deleteRow(type, id) {
+        const names = {
+            people: 'این فرد',
+            items: 'این آیتم',
+            history: 'این رکورد',
+            stories: 'این داستان',
+        };
+        const name = names[type] || 'این مورد';
+
+        const ok = await Modal.confirm(
+            `${name} حذف شود؟\n(این عمل غیرقابل بازگشت است)`,
+            { danger: true, confirmLabel: 'حذف کن', title: 'تأیید حذف' }
+        );
+
+        if (!ok) return;
+
+        try {
+            if (type === 'people') People.remove(id);
+            else if (type === 'items') Items.remove(id);
+            else if (type === 'history') History.remove(id);
+            else if (type === 'stories') StoryManager.remove(id);
+
+            Notification.success('با موفقیت حذف شد');
+
+            // به‌روزرسانی مجدد
+            this._refreshCurrentTable();
+            this._renderDbInfo();
+        } catch (e) {
+            Logger.error('SettingsPage._deleteRow', e, { type, id });
+            Notification.error('خطا در حذف: ' + e.message);
+        }
+    },
+
+    async _deleteAllRows(type) {
+        const all = this._getTableData(type);
+        if (all.length === 0) return;
+
+        const labels = {
+            people: 'همه‌ی افراد',
+            items: 'همه‌ی آیتم‌ها',
+            history: 'همه‌ی چرخش‌ها',
+            stories: 'همه‌ی داستان‌ها',
+        };
+
+        const ok = await Modal.confirm(
+            `آیا از حذف ${labels[type]} (${Utils.toPersianNumbers(all.length)} مورد) مطمئن هستید؟\n(این عمل غیرقابل بازگشت است)`,
+            { danger: true, confirmLabel: 'بله، همه را حذف کن', title: 'تأیید حذف همه' }
+        );
+
+        if (!ok) return;
+
+        try {
+            if (type === 'people') People.clear();
+            else if (type === 'items') Items.clear();
+            else if (type === 'history') History.clear();
+            else if (type === 'stories') StoryManager.clear();
+
+            Notification.success('همه حذف شدند');
+            this._refreshCurrentTable();
+            this._renderDbInfo();
+        } catch (e) {
+            Logger.error('SettingsPage._deleteAllRows', e, { type });
+            Notification.error('خطا در حذف: ' + e.message);
+        }
+    },
+
+    _refreshCurrentTable() {
+        if (!this._currentTableType) return;
+        Modal.closeAll();
+        setTimeout(() => {
+            this._openDataTable(this._currentTableType);
+        }, 250);
+    },
+
+    _shortenModel(model) {
+        if (!model) return 'نامشخص';
+        let m = model.replace(':free', '');
+        if (m.includes('/')) m = m.split('/').pop();
+        if (m.length > 22) m = m.substring(0, 22) + '…';
+        return m;
+    },
+
+    // ═══════════════════════════════════════════
+    // Model / OpenRouter
+    // ═══════════════════════════════════════════
 
     _selectModel(modelId) {
         const select = document.getElementById('input-ai-model');
@@ -140,7 +639,6 @@ const SettingsPage = {
     },
 
     _showModelsModal(freeModels) {
-        // مرتب‌سازی: اول Google، بعد بقیه
         const sorted = [...freeModels].sort((a, b) => {
             const aGoogle = a.id && a.id.startsWith('google/') ? 0 : 1;
             const bGoogle = b.id && b.id.startsWith('google/') ? 0 : 1;
@@ -175,7 +673,7 @@ const SettingsPage = {
         `;
 
         Modal.open({
-            title: '🌟 مدل‌های رایگان OpenRouter (لیست زنده)',
+            title: '🌟 مدل‌های رایگان OpenRouter',
             content,
             size: 'lg',
             buttons: [{ label: 'بستن', class: 'btn-secondary' }],
@@ -375,143 +873,6 @@ const SettingsPage = {
         const el = document.getElementById('temp-value');
         if (!el) return;
         el.textContent = Utils.toPersianNumbers(val.toFixed(1));
-    },
-
-    _initDatabaseSection() {
-        this._renderDbInfo();
-
-        const pushBtn = document.getElementById('db-push-github');
-        if (pushBtn) {
-            pushBtn.addEventListener('click', async () => {
-                if (!GitHubStorage.isConfigured()) {
-                    Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
-                    return;
-                }
-
-                pushBtn.disabled = true;
-                pushBtn.textContent = 'در حال ارسال...';
-
-                try {
-                    await SQLStorage.pushToGitHub('ارسال دستی');
-                    this._renderDbInfo();
-                } catch (e) {
-                    Notification.error(e.message, 12000);
-                } finally {
-                    pushBtn.disabled = false;
-                    pushBtn.textContent = '☁️ ارسال به GitHub';
-                }
-            });
-        }
-
-        const pullBtn = document.getElementById('db-pull-github');
-        if (pullBtn) {
-            pullBtn.addEventListener('click', async () => {
-                if (!GitHubStorage.isConfigured()) {
-                    Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
-                    return;
-                }
-
-                const ok = await Modal.confirm('دیتابیس محلی با نسخه GitHub جایگزین شود؟', { danger: true });
-                if (!ok) return;
-
-                pullBtn.disabled = true;
-                pullBtn.textContent = 'در حال دریافت...';
-
-                try {
-                    await SQLStorage.pullFromGitHub();
-                    if (App._loadDataFromSQL) App._loadDataFromSQL();
-                    this._renderDbInfo();
-                    Notification.success('داده‌ها بازنشانی شدند');
-                } catch (e) {
-                    Notification.error(e.message, 12000);
-                } finally {
-                    pullBtn.disabled = false;
-                    pullBtn.textContent = '⬇️ دریافت از GitHub';
-                }
-            });
-        }
-
-        const downloadBtn = document.getElementById('db-download');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                SQLStorage.downloadDatabase();
-                Notification.success('فایل دیتابیس دانلود شد');
-            });
-        }
-
-        const uploadInput = document.getElementById('db-upload');
-        if (uploadInput) {
-            uploadInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                const ok = await Modal.confirm('دیتابیس فعلی جایگزین شود؟', { danger: true });
-                if (!ok) { uploadInput.value = ''; return; }
-
-                try {
-                    await SQLStorage.loadFromFile(file);
-                    if (App._loadDataFromSQL) App._loadDataFromSQL();
-                    this._renderDbInfo();
-                } catch (err) {
-                    Notification.error('خطا: ' + err.message);
-                } finally {
-                    uploadInput.value = '';
-                }
-            });
-        }
-
-        const resetBtn = document.getElementById('db-reset');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', async () => {
-                const ok = await Modal.confirm('کل دیتابیس پاک شود؟', { danger: true });
-                if (ok) {
-                    await SQLStorage.reset();
-                    if (App._loadDataFromSQL) App._loadDataFromSQL();
-                    this._renderDbInfo();
-                }
-            });
-        }
-    },
-
-    _renderDbInfo() {
-        const container = document.getElementById('db-info');
-        if (!container) return;
-
-        try {
-            const info = SQLStorage.getInfo();
-            if (!info) {
-                container.innerHTML = '<p class="text-muted">در حال بارگذاری...</p>';
-                setTimeout(() => this._renderDbInfo(), 1000);
-                return;
-            }
-
-            container.innerHTML = `
-                <div class="db-info-grid">
-                    <div class="db-info-item">
-                        <div class="db-info-label">حجم فایل</div>
-                        <div class="db-info-value">${info.sizeFormatted}</div>
-                    </div>
-                    <div class="db-info-item">
-                        <div class="db-info-label">افراد</div>
-                        <div class="db-info-value">${Utils.toPersianNumbers(info.peopleCount)}</div>
-                    </div>
-                    <div class="db-info-item">
-                        <div class="db-info-label">آیتم‌ها</div>
-                        <div class="db-info-value">${Utils.toPersianNumbers(info.itemsCount)}</div>
-                    </div>
-                    <div class="db-info-item">
-                        <div class="db-info-label">چرخش‌ها</div>
-                        <div class="db-info-value">${Utils.toPersianNumbers(info.historyCount)}</div>
-                    </div>
-                    <div class="db-info-item">
-                        <div class="db-info-label">داستان‌ها</div>
-                        <div class="db-info-value">${Utils.toPersianNumbers(info.storiesCount)}</div>
-                    </div>
-                </div>
-            `;
-        } catch (e) {
-            container.innerHTML = '<p class="text-muted">دیتابیس در دسترس نیست</p>';
-        }
     },
 
     _initGeneralSection() {
