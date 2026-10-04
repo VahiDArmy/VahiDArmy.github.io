@@ -1,0 +1,188 @@
+/* ============================================
+   تب‌ها
+   ============================================ */
+
+.tabs {
+    display: flex;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.tab {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    position: relative;
+    font-family: inherit;
+}
+
+.tab:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-hover);
+}
+
+.tab.active {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+/* تب‌های خط‌دار */
+.tabs-line {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    padding: 0;
+    gap: var(--spacing-lg);
+}
+
+.tabs-line .tab {
+    padding: var(--spacing-sm) 0;
+    background: transparent !important;
+    color: var(--color-text-secondary);
+    border-radius: 0;
+    position: relative;
+    box-shadow: none;
+}
+
+.tabs-line .tab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    right: 0;
+    left: 0;
+    height: 2px;
+    background: transparent;
+    transition: background var(--transition-normal);
+}
+
+.tabs-line .tab:hover {
+    color: var(--color-text-primary);
+    background: transparent;
+}
+
+.tabs-line .tab.active {
+    color: var(--color-accent-primary);
+    background: transparent;
+}
+
+.tabs-line .tab.active::after {
+    background: var(--gradient-primary);
+}
+
+/* محتوای تب */
+.tab-content {
+    display: none;
+    animation: fadeIn var(--transition-normal);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* فیلتر باتن‌ها */
+.filter-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.filter-btn:hover {
+    border-color: var(--color-accent-primary);
+    color: var(--color-accent-primary);
+}
+
+.filter-btn.active {
+    background: var(--gradient-primary);
+    color: white;
+    border-color: transparent;
+    box-shadow: var(--shadow-glow-primary);
+}
+
+/* Mode Selector */
+.mode-selector {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.mode-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+}
+
+.mode-btn:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+}
+
+.mode-btn.active {
+    background: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    border-color: var(--border-color-accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.mode-icon {
+    font-size: 1.25rem;
+}
+
+.mode-label {
+    white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+    .mode-label {
+        display: none;
+    }
+
+    .mode-btn {
+        padding: var(--spacing-sm);
+    }
+
+    .mode-icon {
+        font-size: 1.5rem;
+    }
+}
