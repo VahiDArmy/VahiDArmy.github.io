@@ -1,5 +1,5 @@
 /**
- * منطق صفحه هوش مصنوعی - با قابلیت حذف داستان
+ * منطق صفحه هوش مصنوعی
  * @module aiPage
  */
 
@@ -97,13 +97,10 @@ const AIPage = {
             ${w.description ? `<div class="winner-desc">${this._escape(w.description)}</div>` : ''}
         `;
 
-        const clearBtn = document.getElementById('clear-winner');
-        if (clearBtn) {
-            clearBtn.addEventListener('click', () => {
-                this.selectedWinner = null;
-                this._updateWinnerDisplay();
-            });
-        }
+        document.getElementById('clear-winner')?.addEventListener('click', () => {
+            this.selectedWinner = null;
+            this._updateWinnerDisplay();
+        });
     },
 
     _initForm() {
@@ -124,7 +121,6 @@ const AIPage = {
             generateBtn.disabled = true;
             generateBtn.textContent = 'در حال تولید...';
 
-            // نمایش حالت لودینگ
             const output = document.getElementById('story-output');
             if (output) {
                 output.innerHTML = `
@@ -164,7 +160,6 @@ const AIPage = {
                     this._renderStory(story);
                     this._initStoryList();
                 } else {
-                    // اگر خطا داد
                     if (output) {
                         output.innerHTML = `
                             <div class="empty-output">
@@ -232,13 +227,17 @@ const AIPage = {
     },
 
     /**
-     * رندر لیست داستان‌ها با دکمه حذف
+     * رندر لیست داستان‌ها
      */
     _initStoryList() {
         const container = document.getElementById('stories-list');
         if (!container) return;
 
-        const stories = StoryManager.getAll(50);
+        const stories = StoryManager.getAll(100);
+
+        // به‌روزرسانی شمارنده
+        const countEl = document.getElementById('stories-count');
+        if (countEl) countEl.textContent = Utils.toPersianNumbers(stories.length);
 
         if (stories.length === 0) {
             container.innerHTML = `
@@ -252,30 +251,36 @@ const AIPage = {
         }
 
         container.innerHTML = stories.map((s) => {
-            const preview = this._escape(Utils.truncate(s.content, 120));
+            // پیش‌نمایش: حذف markdown و کوتاه کردن
+            const plainText = (s.content || '')
+                .replace(/^#+\s+/gm, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/\n+/g, ' ')
+                .trim();
+            const preview = this._escape(Utils.truncate(plainText, 90));
             const modelShort = this._shortenModel(s.model);
+
             return `
-                <div class="story-list-item" data-story-id="${s.id}">
-                    <div class="story-list-body" data-action="open" data-story-id="${s.id}">
-                        <div class="story-list-meta">
-                            <span class="story-list-model">🤖 ${this._escape(modelShort)}</span>
-                            <span class="text-muted">${Utils.formatDate(s.timestamp)}</span>
+                <div class="story-item" data-story-id="${s.id}">
+                    <button class="story-item-body" data-action="open" data-story-id="${s.id}" type="button">
+                        <div class="story-item-header">
+                            <span class="story-item-model">🤖 ${this._escape(modelShort)}</span>
+                            <span class="story-item-time">${Utils.formatDate(s.timestamp)}</span>
                         </div>
-                        <div class="story-list-excerpt">${preview}</div>
-                    </div>
-                    <div class="story-list-actions">
-                        <button class="story-list-delete" data-action="delete" data-story-id="${s.id}" type="button" title="حذف داستان">
-                            🗑
-                        </button>
-                    </div>
+                        <div class="story-item-preview">${preview}</div>
+                    </button>
+                    <button class="story-item-delete" data-action="delete" data-story-id="${s.id}" type="button" title="حذف داستان" aria-label="حذف">
+                        🗑
+                    </button>
                 </div>
             `;
         }).join('');
 
         // رویداد باز کردن
-        container.querySelectorAll('[data-action="open"]').forEach((el) => {
-            el.addEventListener('click', () => {
-                const story = StoryManager.getById(el.dataset.storyId);
+        container.querySelectorAll('[data-action="open"]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const story = StoryManager.getById(btn.dataset.storyId);
                 if (story) this._renderStory(story);
             });
         });
@@ -284,17 +289,13 @@ const AIPage = {
         container.querySelectorAll('[data-action="delete"]').forEach((btn) => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const storyId = btn.dataset.storyId;
-                await this._deleteStory(storyId);
+                await this._deleteStory(btn.dataset.storyId);
             });
         });
 
         this._updateClearButtonState();
     },
 
-    /**
-     * حذف تکی داستان با تأییدیه
-     */
     async _deleteStory(storyId) {
         const story = StoryManager.getById(storyId);
         if (!story) {
@@ -325,9 +326,6 @@ const AIPage = {
         }
     },
 
-    /**
-     * دکمه پاک کردن همه داستان‌ها
-     */
     _initClearStoriesButton() {
         const btn = document.getElementById('clear-stories-btn');
         if (!btn) return;
@@ -356,7 +354,6 @@ const AIPage = {
                 Notification.success('همه داستان‌ها حذف شدند');
                 this._initStoryList();
 
-                // پاک کردن خروجی فعلی
                 const output = document.getElementById('story-output');
                 if (output) {
                     output.innerHTML = `
@@ -374,23 +371,20 @@ const AIPage = {
         });
     },
 
-    /**
-     * فعال/غیرفعال کردن دکمه پاک کردن همه بر اساس وجود داستان
-     */
     _updateClearButtonState() {
         const btn = document.getElementById('clear-stories-btn');
         if (!btn) return;
         const count = StoryManager.getAll(1000).length;
         btn.disabled = count === 0;
-        btn.style.opacity = count === 0 ? '0.4' : '1';
     },
 
-    /**
-     * کوتاه کردن نام مدل برای نمایش
-     */
     _shortenModel(model) {
         if (!model) return 'نامشخص';
-        return model.split('/').pop().replace(':free', '').substring(0, 30);
+        let m = model;
+        m = m.replace(':free', '');
+        if (m.includes('/')) m = m.split('/').pop();
+        if (m.length > 22) m = m.substring(0, 22) + '…';
+        return m;
     },
 
     _escape(str) {
