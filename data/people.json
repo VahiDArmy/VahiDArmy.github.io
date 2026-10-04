@@ -10,7 +10,8 @@
     "updated_at": 1791117539814,
     "in_wheel": 1,
     "createdAt": 1791113984803,
-    "updatedAt": 1791117539814
+    "updatedAt": 1791117539814,
+    "inWheel": true
   },
   {
     "id": "person_1791110785869_3k5yg5e9y",
@@ -23,7 +24,8 @@
     "updated_at": 1791117539820,
     "in_wheel": 1,
     "createdAt": 1791110785869,
-    "updatedAt": 1791117539820
+    "updatedAt": 1791117539820,
+    "inWheel": true
   },
   {
     "id": "person_1791110776956_jogppxrb6",
@@ -36,7 +38,8 @@
     "updated_at": 1791117539821,
     "in_wheel": 1,
     "createdAt": 1791110776956,
-    "updatedAt": 1791117539821
+    "updatedAt": 1791117539821,
+    "inWheel": true
   },
   {
     "id": "person_1791110766125_vttlzgjs8",
@@ -49,6 +52,7 @@
     "updated_at": 1791117551605,
     "in_wheel": 0,
     "createdAt": 1791110766125,
-    "updatedAt": 1791117551605
+    "updatedAt": 1791117551605,
+    "inWheel": true
   }
 ]
