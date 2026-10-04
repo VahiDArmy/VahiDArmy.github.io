@@ -1,0 +1,314 @@
+/* ============================================
+   صفحه هوش مصنوعی
+   ============================================ */
+
+.ai-page {
+    padding-top: var(--spacing-lg);
+}
+
+.warning-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-right: 4px solid var(--color-accent-warning);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.warning-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.warning-text strong {
+    display: block;
+    color: var(--color-accent-warning);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: 4px;
+}
+
+.warning-text p {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+}
+
+.warning-text a {
+    color: var(--color-accent-primary);
+    text-decoration: underline;
+    font-weight: var(--font-weight-medium);
+}
+
+.ai-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: var(--spacing-xl);
+    align-items: start;
+}
+
+.ai-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    position: sticky;
+    top: calc(var(--header-height) + var(--spacing-lg));
+}
+
+.form-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+}
+
+.form-card-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.winner-selector {
+    margin-bottom: var(--spacing-md);
+}
+
+.winner-display-ai {
+    padding: var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--border-radius-md);
+    min-height: 60px;
+}
+
+.winner-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--gradient-primary);
+    color: white;
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.winner-chip-star {
+    font-size: 0.9rem;
+}
+
+.winner-chip-close {
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: var(--border-radius-full);
+    color: white;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition-fast);
+}
+
+.winner-chip-close:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.winner-desc {
+    margin-top: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    background: var(--color-bg-secondary);
+    border-radius: var(--border-radius-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+/* بخش خروجی */
+.ai-output-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    min-width: 0;
+}
+
+.story-output {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    min-height: 300px;
+}
+
+.empty-output {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.story-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    animation: fadeInUp 0.5s ease;
+}
+
+.story-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+}
+
+.story-model {
+    padding: 3px 10px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-accent-primary);
+    border-radius: var(--border-radius-full);
+    color: var(--color-accent-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.story-content {
+    font-size: var(--font-size-md);
+    line-height: var(--line-height-loose);
+    color: var(--color-text-primary);
+    padding: var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border-right: 4px solid var(--color-accent-primary);
+}
+
+.story-content h2.story-title {
+    font-size: var(--font-size-xl);
+    color: var(--color-accent-primary);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.story-content h3.story-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--color-accent-secondary);
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+}
+
+.story-content p {
+    margin-bottom: var(--spacing-md);
+    text-indent: 1.5em;
+}
+
+.story-content p:last-child {
+    margin-bottom: 0;
+}
+
+.story-content strong {
+    color: var(--color-accent-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.story-content em {
+    color: var(--color-accent-secondary);
+    font-style: italic;
+}
+
+.story-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    justify-content: flex-end;
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+/* لیست داستان‌ها */
+.stories-history-card {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.stories-list {
+    padding: var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.story-list-item {
+    padding: var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.story-list-item:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--border-color-accent);
+    transform: translateX(-4px);
+}
+
+.story-list-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-xs);
+}
+
+.story-list-excerpt {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+}
+
+/* انیمیشن */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ریسپانسیو */
+@media (max-width: 900px) {
+    .ai-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .ai-form-section {
+        position: static;
+    }
+
+    .story-content {
+        padding: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+    }
+}
