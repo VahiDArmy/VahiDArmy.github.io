@@ -8,6 +8,7 @@ const SettingsPage = {
         this._loadSettings();
         this._initGitHubSection();
         this._initOpenRouterSection();
+        this._initModelDropdown();
         this._initTemperatureSlider();
         this._initDatabaseSection();
         this._initGeneralSection();
@@ -21,18 +22,20 @@ const SettingsPage = {
         this._setValue('input-github-username', s.githubUsername);
         this._setValue('input-github-repo', s.githubRepo);
 
-        // ⚠️ فیلد branch - از مقدار ذخیره‌شده بخوان
         let branch = s.githubBranch;
         if (!branch) {
             branch = LocalStorage.get('secret_githubBranch', null) ||
                      LocalStorage.get('githubBranch', null) ||
-                     'master';
+                     'main';
         }
         this._setValue('input-github-branch', branch);
 
         this._setValue('input-openrouter-key', s.openrouterApiKey);
-        this._setValue('input-ai-model', s.aiModel || 'openrouter/free');
         this._setValue('input-system-prompt', s.aiSystemPrompt);
+
+        // مدل - انتخاب از dropdown
+        const savedModel = s.aiModel || 'google/gemini-2.0-flash-exp:free';
+        this._selectModel(savedModel);
 
         const tempSlider = document.getElementById('input-ai-temp');
         if (tempSlider) {
@@ -48,8 +51,62 @@ const SettingsPage = {
     },
 
     /**
-     * ذخیره‌ی فوریِ یک فیلد خاص (برای auto-save)
+     * انتخاب مدل در dropdown
      */
+    _selectModel(modelId) {
+        const select = document.getElementById('input-ai-model');
+        const customRow = document.getElementById('custom-model-row');
+        const customInput = document.getElementById('input-custom-model');
+
+        if (!select) return;
+
+        // بررسی وجود گزینه در لیست
+        const optionExists = Array.from(select.options).some((opt) => opt.value === modelId);
+
+        if (optionExists && modelId !== 'custom') {
+            select.value = modelId;
+            if (customRow) customRow.style.display = 'none';
+        } else {
+            select.value = 'custom';
+            if (customRow) customRow.style.display = 'block';
+            if (customInput) customInput.value = modelId || '';
+        }
+    },
+
+    /**
+     * دریافت مدل انتخاب‌شده
+     */
+    _getSelectedModel() {
+        const select = document.getElementById('input-ai-model');
+        if (!select) return '';
+
+        if (select.value === 'custom') {
+            const customInput = document.getElementById('input-custom-model');
+            return customInput ? customInput.value.trim() : '';
+        }
+        return select.value;
+    },
+
+    /**
+     * مقداردهی dropdown مدل
+     */
+    _initModelDropdown() {
+        const select = document.getElementById('input-ai-model');
+        const customRow = document.getElementById('custom-model-row');
+
+        if (!select) return;
+
+        select.addEventListener('change', () => {
+            if (select.value === 'custom') {
+                if (customRow) customRow.style.display = 'block';
+                const customInput = document.getElementById('input-custom-model');
+                if (customInput) customInput.focus();
+            } else {
+                if (customRow) customRow.style.display = 'none';
+            }
+        });
+    },
+
     _saveField(key, value) {
         AppState.set(`settings.${key}`, value);
         try {
@@ -62,7 +119,6 @@ const SettingsPage = {
         const testBtn = document.getElementById('test-github-btn');
         const branchInput = document.getElementById('input-github-branch');
 
-        // ⚡ ذخیره خودکار هنگام خروج از فیلد شاخه
         if (branchInput) {
             branchInput.addEventListener('blur', () => {
                 const v = branchInput.value.trim();
@@ -74,7 +130,7 @@ const SettingsPage = {
             saveBtn.addEventListener('click', async () => {
                 let username = this._getValue('input-github-username');
                 let repo = this._getValue('input-github-repo');
-                let branch = this._getValue('input-github-branch') || 'master';
+                let branch = this._getValue('input-github-branch') || 'main';
 
                 if (username.includes('/') && !repo) {
                     const parts = username.split('/').filter(Boolean);
@@ -110,7 +166,7 @@ const SettingsPage = {
 
                 let username = this._getValue('input-github-username');
                 let repo = this._getValue('input-github-repo');
-                let branch = this._getValue('input-github-branch') || 'master';
+                let branch = this._getValue('input-github-branch') || 'main';
 
                 if (username.includes('/') && !repo) {
                     const parts = username.split('/').filter(Boolean);
@@ -122,7 +178,6 @@ const SettingsPage = {
                     }
                 }
 
-                // ذخیره قبل از تست
                 this._saveField('githubToken', this._getValue('input-github-token'));
                 this._saveField('githubUsername', username);
                 this._saveField('githubRepo', repo);
@@ -132,7 +187,6 @@ const SettingsPage = {
                     const result = await GitHubStorage.testConnection();
                     if (result.success) {
                         Notification.success(result.message, 8000);
-                        // شاید شاخه عوض شده باشد، فرم را دوباره بخوان
                         const newBranch = AppState.get('settings.githubBranch');
                         if (newBranch) this._setValue('input-github-branch', newBranch);
                     } else {
@@ -154,14 +208,19 @@ const SettingsPage = {
 
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
-                let modelValue = this._getValue('input-ai-model') || 'openrouter/free';
+                const modelValue = this._getSelectedModel();
+
+                if (!modelValue) {
+                    Notification.warning('یک مدل انتخاب کنید');
+                    return;
+                }
 
                 this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
                 this._saveField('aiModel', modelValue);
                 this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
                 this._saveField('aiSystemPrompt', this._getValue('input-system-prompt'));
 
-                Notification.success('تنظیمات هوش مصنوعی ذخیره شد');
+                Notification.success(`تنظیمات ذخیره شد - مدل: ${modelValue}`);
             });
         }
 
@@ -171,7 +230,13 @@ const SettingsPage = {
                 const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                let modelValue = this._getValue('input-ai-model') || 'openrouter/free';
+                const modelValue = this._getSelectedModel();
+                if (!modelValue) {
+                    Notification.warning('یک مدل انتخاب کنید');
+                    testBtn.disabled = false;
+                    testBtn.textContent = originalText;
+                    return;
+                }
 
                 this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
                 this._saveField('aiModel', modelValue);
