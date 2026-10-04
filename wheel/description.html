@@ -65,16 +65,19 @@
 
     <main class="main-content description-page">
         <div class="page-header">
-            <h2 class="page-title">📝 توصیف افراد و آیتم‌ها</h2>
+            <h2 class="page-title">📝 جعبه ابزار</h2>
             <p class="page-subtitle">
-                برای هر فرد یا آیتم یک توصیف بنویسید تا هوش مصنوعی از آن‌ها در ساخت داستان استفاده کند
+                افراد و آیتم‌ها را بسازید، توصیف بنویسید، و مشخص کنید کدام‌ها در گردونه باشند
             </p>
         </div>
 
         <div class="description-layout">
             <aside class="objects-sidebar">
                 <div class="sidebar-header">
-                    <h3>آبجکت‌ها</h3>
+                    <h3 class="sidebar-header-title">آبجکت‌ها</h3>
+                    <button id="create-person-btn" class="btn btn-primary btn-sm" type="button">
+                        + فرد جدید
+                    </button>
                 </div>
                 <div id="objects-list" class="objects-list"></div>
             </aside>
@@ -86,7 +89,7 @@
                             ویرایش توصیف
                             <span id="current-object-name" class="object-name-badge">—</span>
                         </h3>
-                        <button id="save-description-btn" class="btn btn-primary btn-sm" disabled>
+                        <button id="save-description-btn" class="btn btn-primary btn-sm" disabled type="button">
                             💾 ذخیره
                         </button>
                     </div>
@@ -94,7 +97,7 @@
                         <textarea
                             id="description-textarea"
                             class="description-textarea"
-                            placeholder="توصیف خود را اینجا بنویسید... (ذخیره خودکار بعد از ۱ ثانیه)"
+                            placeholder="ابتدا از لیست کنار یک آبجکت انتخاب کنید..."
                             disabled
                         ></textarea>
 
@@ -112,7 +115,7 @@
                     </div>
                     <div class="editor-body">
                         <p class="section-desc">
-                            آیتم‌ها در دراپ‌دان زیر قابل انتخاب هستند و به مرور زمان به آن اضافه می‌شوند
+                            آیتم‌ها در گردونه قابل انتخاب هستند و به مرور زمان به آن اضافه می‌شوند
                         </p>
 
                         <div class="item-dropdown-wrapper">
@@ -126,7 +129,7 @@
                                 class="input"
                                 placeholder="مثلاً: پفک، چیپس، نوشابه..."
                             >
-                            <button id="add-item-btn" class="btn btn-primary">
+                            <button id="add-item-btn" class="btn btn-primary" type="button">
                                 + افزودن آیتم
                             </button>
                         </div>
@@ -140,10 +143,10 @@
                 <div class="help-card">
                     <h4>🎯 راهنما</h4>
                     <ul class="help-list">
+                        <li>با دکمه «+ فرد جدید» افراد را به جعبه ابزار اضافه کنید</li>
                         <li>روی هر آبجکت در لیست کنار کلیک کنید تا توصیف آن باز شود</li>
                         <li>توصیف‌ها به‌طور خودکار ذخیره می‌شوند</li>
-                        <li>می‌توانید بین توصیف افراد و آیتم‌ها جابجا شوید</li>
-                        <li>این توصیف‌ها در صفحه هوش مصنوعی استفاده می‌شوند</li>
+                        <li>با دکمه 🎡 مشخص کنید هر فرد در گردونه باشد یا نه</li>
                     </ul>
                 </div>
             </section>
@@ -165,6 +168,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 
     <script src="js/core/utils.js"></script>
+    <script src="js/core/logger.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/router.js"></script>
