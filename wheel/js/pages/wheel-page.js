@@ -1,6 +1,9 @@
 /**
- * منطق صفحه گردونه - با حقه مخفی فشار/کشیدن + داستان خودکار
- * @module wheelPage
+ * منطق صفحه گردونه
+ * - حالت عادی: هر چرخش = یک برنده + داستان
+ * - حالت حذفی: هر چرخش = یک نفر حذف (کاربر دستی هر بار می‌کشد)
+ *              وقتی ۱ نفر ماند → آن یک نفر برنده + داستان
+ * - استریم داستان در پاپ‌آپ
  */
 
 const WheelPage = {
@@ -12,7 +15,6 @@ const WheelPage = {
     timeThreshold: 400,
     lastPointerY: 0,
     dragDistance: 0,
-    _currentStory: null,
     _isGeneratingStory: false,
 
     init() {
@@ -26,8 +28,7 @@ const WheelPage = {
 
     _initWheel() {
         WheelCore.init('wheel-canvas');
-        const people = AppState.get('people') || [];
-        WheelCore.setItems(people);
+        WheelCore.setItems(AppState.get('people') || []);
     },
 
     _initLever() {
@@ -64,8 +65,7 @@ const WheelPage = {
         if (this.dragDistance > 10) {
             this.lever.classList.add('lever-dragging');
             const totalDrag = Math.max(0, e.clientY - this.pointerDownY);
-            const visualDrag = Math.min(totalDrag, 80);
-            this.lever.style.transform = `translateY(${visualDrag}px)`;
+            this.lever.style.transform = `translateY(${Math.min(totalDrag, 80)}px)`;
         }
     },
 
@@ -74,20 +74,15 @@ const WheelPage = {
 
         this.isDragging = false;
         const duration = Date.now() - this.pointerDownTime;
-        const totalDrag = this.dragDistance;
 
         this.lever.classList.remove('lever-active');
         this.lever.classList.remove('lever-dragging');
         this.lever.style.transform = '';
 
-        // 🎯 حقه مخفی
-        const isDrag = totalDrag >= this.dragThreshold || duration > this.timeThreshold;
+        const isDrag = this.dragDistance >= this.dragThreshold || duration > this.timeThreshold;
 
-        if (isDrag) {
-            this._spinStarred();
-        } else {
-            this._spinRandom();
-        }
+        if (isDrag) this._spinStarred();
+        else this._spinRandom();
     },
 
     _spinRandom() {
@@ -96,7 +91,11 @@ const WheelPage = {
             Notification.warning('ابتدا افراد را اضافه کنید');
             return;
         }
-
+        if (people.length === 1) {
+            // اگر فقط یک نفر مانده، اهرم دیگر نمی‌چرخد
+            Notification.info('فقط یک نفر باقی مانده - بازی تمام شد');
+            return;
+        }
         this._showSpinTypeIndicator('🎲');
         WheelCore.spinRandom();
     },
@@ -107,7 +106,10 @@ const WheelPage = {
             this._spinRandom();
             return;
         }
-
+        if (starred.length === 1 && (AppState.get('people') || []).length === 1) {
+            Notification.info('فقط یک نفر باقی مانده - بازی تمام شد');
+            return;
+        }
         this._showSpinTypeIndicator('🎲');
         WheelCore.spinStarred();
     },
@@ -115,7 +117,6 @@ const WheelPage = {
     _showSpinTypeIndicator(text) {
         const indicator = document.getElementById('spin-type-indicator');
         if (!indicator) return;
-
         indicator.textContent = text;
         indicator.classList.add('show');
         setTimeout(() => indicator.classList.remove('show'), 1500);
@@ -136,8 +137,11 @@ const WheelPage = {
     },
 
     _initModeSelector() {
+        const currentMode = AppState.get('wheel.currentMode') || 'single';
         document.querySelectorAll('[data-mode]').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.mode === currentMode);
             btn.addEventListener('click', () => {
+                if (WheelCore.isSpinning) return;
                 document.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
                 const mode = btn.dataset.mode;
@@ -152,7 +156,6 @@ const WheelPage = {
         if (!container) return;
 
         const people = AppState.get('people') || [];
-
         const countEl = document.getElementById('people-count');
         if (countEl) countEl.textContent = Utils.toPersianNumbers(people.length);
 
@@ -164,23 +167,17 @@ const WheelPage = {
                 </div>
             `;
             const addBtn = document.getElementById('quick-add-person');
-            if (addBtn) {
-                addBtn.addEventListener('click', () => this._quickAdd());
-            }
+            if (addBtn) addBtn.addEventListener('click', () => this._quickAdd());
             return;
         }
 
-        container.innerHTML = people
-            .map(
-                (p) => `
-                <div class="wheel-person-item" data-id="${p.id}">
-                    <span class="person-color" style="background: ${p.color}"></span>
-                    <span class="person-name">${this._escape(p.name)}</span>
-                    <button class="remove-btn" data-action="remove" data-id="${p.id}" title="حذف">×</button>
-                </div>
-            `
-            )
-            .join('');
+        container.innerHTML = people.map((p) => `
+            <div class="wheel-person-item" data-id="${p.id}">
+                <span class="person-color" style="background: ${p.color}"></span>
+                <span class="person-name">${this._escape(p.name)}</span>
+                <button class="remove-btn" data-action="remove" data-id="${p.id}" title="حذف">×</button>
+            </div>
+        `).join('');
 
         container.querySelectorAll('[data-action="remove"]').forEach((btn) => {
             btn.addEventListener('click', () => {
@@ -207,9 +204,7 @@ const WheelPage = {
         });
 
         const addBtn = document.getElementById('add-person-btn');
-        if (addBtn) {
-            addBtn.addEventListener('click', () => this._quickAdd());
-        }
+        if (addBtn) addBtn.addEventListener('click', () => this._quickAdd());
 
         const searchInput = document.getElementById('people-search-input');
         if (searchInput) {
@@ -229,45 +224,79 @@ const WheelPage = {
     },
 
     /**
-     * بعد از اتمام چرخش - نمایش برنده + شروع خودکار داستان
+     * ═══════════════════════════════════════════
+     * بعد از اتمام چرخش
+     * ═══════════════════════════════════════════
      */
     onSpinComplete(winner) {
         if (!winner) return;
 
         const mode = AppState.get('wheel.currentMode') || 'single';
-        const spinType = 'random';
 
-        History.add({
-            winner,
-            mode,
-            spinType,
-        });
-
-        // نمایش پاپ‌آپ برنده با بخش داستان
-        this._showWinnerWithStory(winner);
-
-        // حالت حذفی
         if (mode === 'elimination') {
-            setTimeout(() => {
-                const winnerId = winner.id;
-                if (winnerId) {
-                    People.remove(winnerId);
-                    WheelCore.setItems(AppState.get('people'));
-                    this._renderPeopleList();
-                }
-            }, 3000);
+            this._handleElimination(winner);
+        } else {
+            History.add({ winner, mode: 'single', spinType: 'random' });
+            this._showWinnerWithStory(winner);
         }
     },
 
     /**
-     * نمایش پاپ‌آپ برنده + داستان خودکار
+     * حالت حذفی: هر بار کاربر اهرم می‌کشد = یک نفر حذف
+     * وقتی ۱ نفر ماند → برنده + داستان
+     */
+    _handleElimination(winner) {
+        const eliminatedName = winner.name || winner.label;
+
+        History.add({
+            winner,
+            mode: 'elimination',
+            spinType: 'random',
+        });
+
+        // حذف برنده از لیست
+        if (winner.id) {
+            People.remove(winner.id);
+            WheelCore.setItems(AppState.get('people'));
+            this._renderPeopleList();
+        }
+
+        const remaining = AppState.get('people') || [];
+
+        if (remaining.length === 1) {
+            // نفر آخر برنده است
+            const finalWinner = remaining[0];
+
+            History.add({
+                winner: finalWinner,
+                mode: 'elimination',
+                spinType: 'final',
+            });
+
+            Notification.success(`🏆 برنده نهایی: ${finalWinner.name}`, 3000);
+
+            // با تاخیر کوچک تا کاربر ببیند چه شد، پاپ‌آپ را نشان بده
+            setTimeout(() => {
+                this._showWinnerWithStory(finalWinner);
+            }, 1200);
+        } else if (remaining.length > 1) {
+            // فقط نوتیفیکیشن که یک نفر حذف شد
+            Notification.info(`❌ حذف شد: ${eliminatedName} - ${Utils.toPersianNumbers(remaining.length)} نفر باقی مانده`, 2500);
+            // ⚠️ خودکار ادامه نمی‌دهد - کاربر باید دستی اهرم را بکشد
+        } else {
+            Notification.warning('همه حذف شدند');
+        }
+    },
+
+    /**
+     * نمایش پاپ‌آپ برنده + استریم داستان
      */
     _showWinnerWithStory(winner) {
         const container = document.getElementById('winner-display');
         if (!container) return;
 
         const name = winner.name || winner.label || 'نامشخص';
-        this._currentStory = null;
+        this._isGeneratingStory = false;
 
         container.innerHTML = `
             <div class="winner-popup winner-popup-with-story">
@@ -295,14 +324,12 @@ const WheelPage = {
         container.classList.add('show');
         AppState.set('wheel.lastResult', winner);
 
-        // ذخیره برای صفحه هوش مصنوعی (در صورت نیاز)
         try {
             if (SQLStorage.isReady) {
                 SQLStorage.setSetting('last_winner_for_story', {
                     id: winner.id,
                     name: winner.name || winner.label,
                     description: winner.description || '',
-                    starred: winner.starred,
                     timestamp: Date.now(),
                 });
             }
@@ -315,23 +342,17 @@ const WheelPage = {
             });
         }
 
-        // 🎯 شروع فوری ساخت داستان
         this._generateAutoStory(winner);
     },
 
-    /**
-     * جمع‌آوری توصیفات
-     */
     _collectDescriptions() {
         const all = Descriptions.getAll();
         const filtered = {};
 
-        // توصیف افراد
         (AppState.get('people') || []).forEach((p) => {
             if (all[p.id]) filtered[p.name] = all[p.id];
         });
 
-        // توصیف آیتم‌ها
         (AppState.get('items') || []).forEach((i) => {
             if (all[i.id]) filtered[i.label] = all[i.id];
         });
@@ -340,7 +361,7 @@ const WheelPage = {
     },
 
     /**
-     * ساخت خودکار داستان
+     * ساخت خودکار داستان با استریم
      */
     async _generateAutoStory(winner) {
         if (this._isGeneratingStory) return;
@@ -352,7 +373,6 @@ const WheelPage = {
             return;
         }
 
-        // بررسی کلید API
         if (!OpenRouter.getApiKey()) {
             section.innerHTML = `
                 <div class="story-error">
@@ -364,7 +384,6 @@ const WheelPage = {
             return;
         }
 
-        // ساخت context
         const context = {
             winner: {
                 id: winner.id,
@@ -381,19 +400,42 @@ const WheelPage = {
             extras: '',
         };
 
-        try {
-            const story = await StoryManager.generate(context);
+        section.innerHTML = `
+            <div class="story-streaming">
+                <div class="story-streaming-content" id="streaming-content"></div>
+                <span class="story-streaming-cursor" id="streaming-cursor">▊</span>
+            </div>
+        `;
 
-            if (story) {
-                this._currentStory = story;
-                this._renderStoryInPopup(story);
-            } else {
-                section.innerHTML = `
-                    <div class="story-error">
-                        <p>خطا در ساخت داستان. دوباره تلاش کنید.</p>
-                    </div>
-                `;
-            }
+        let fullContent = '';
+        let lastRenderTime = 0;
+
+        try {
+            await StoryManager.generateStream(context, {
+                onChunk: (chunk, model, accumulated) => {
+                    fullContent = accumulated;
+
+                    const now = Date.now();
+                    if (now - lastRenderTime < 60) return;
+                    lastRenderTime = now;
+
+                    const contentEl = document.getElementById('streaming-content');
+                    if (contentEl) {
+                        contentEl.innerHTML = StoryManager.renderToHTML(fullContent);
+                        section.scrollTop = section.scrollHeight;
+                    }
+                },
+                onComplete: (finalStory) => {
+                    this._renderStoryInPopup(finalStory);
+                },
+                onError: (err) => {
+                    section.innerHTML = `
+                        <div class="story-error">
+                            <p>خطا: ${this._escape(err.message || 'مشکل در ساخت داستان')}</p>
+                        </div>
+                    `;
+                },
+            });
         } catch (error) {
             console.error('خطا در ساخت داستان:', error);
             section.innerHTML = `
@@ -407,7 +449,7 @@ const WheelPage = {
     },
 
     /**
-     * نمایش داستان داخل پاپ‌آپ
+     * نمایش داستان نهایی
      */
     _renderStoryInPopup(story) {
         const section = document.getElementById('winner-story-section');
@@ -433,9 +475,6 @@ const WheelPage = {
                     <button class="btn btn-sm btn-secondary" id="copy-popup-story">📋 کپی</button>
                     <button class="btn btn-sm btn-secondary" id="download-popup-story">💾 دانلود</button>
                     <button class="btn btn-sm btn-secondary" id="regen-popup-story">🔄 دوباره</button>
-                    <a href="ai.html?winner=${story.context ? JSON.parse(story.context).winner : ''}" class="btn btn-sm btn-primary">
-                        صفحه هوش مصنوعی →
-                    </a>
                 </div>
             </div>
         `;
@@ -457,6 +496,7 @@ const WheelPage = {
                             <p>در حال نوشتن داستان...</p>
                         </div>
                     `;
+                    this._isGeneratingStory = false;
                     this._generateAutoStory(winner);
                 }
             });
