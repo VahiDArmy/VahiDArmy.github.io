@@ -1,6 +1,6 @@
 [
   {
-    "id": "hist_1791140986130_0zasvbdtn",
+    "id": "hist_1791141036907_73z2oj97o",
     "winner": {
       "id": "person_1791110776956_jogppxrb6",
       "name": "سعید",
@@ -19,29 +19,23 @@
     "winner_name": "سعید",
     "mode": "single",
     "spinType": "random",
-    "timestamp": 1791140986130
+    "timestamp": 1791141036908
   },
   {
-    "id": "hist_1791139914408_3ub8mxx4x",
-    "winner": {
-      "id": "person_1791113984803_qgh3aolfy",
-      "name": "مانی",
-      "description": "",
-      "starred": false,
-      "color": "#a855f7",
-      "weight": 1,
-      "created_at": 1791113984803,
-      "updated_at": 1791130749146,
-      "in_wheel": 1,
-      "inWheel": true,
-      "createdAt": 1791113984803,
-      "updatedAt": 1791130749146,
-      "index": 0
-    },
+    "id": "hist_1791140986121_cib4in5zl",
+    "winner_id": "person_1791110776956_jogppxrb6",
+    "winner_name": "سعید",
+    "mode": "single",
+    "spin_type": "random",
+    "timestamp": 1791140986121
+  },
+  {
+    "id": "hist_1791139914404_e13v02mte",
+    "winner_id": "person_1791113984803_qgh3aolfy",
     "winner_name": "مانی",
     "mode": "single",
-    "spinType": "random",
-    "timestamp": 1791139914408
+    "spin_type": "random",
+    "timestamp": 1791139914404
   },
   {
     "id": "hist_1791139413624_v09x93349",
