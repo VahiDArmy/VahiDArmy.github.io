@@ -34,5 +34,17 @@
     "updated_at": 1791110766125,
     "createdAt": 1791110766125,
     "updatedAt": 1791110766125
+  },
+  {
+    "id": "person_1791113984803_qgh3aolfy",
+    "name": "مانی",
+    "description": "",
+    "starred": false,
+    "color": "#a855f7",
+    "weight": 1,
+    "created_at": 1791113984803,
+    "updated_at": 1791113984803,
+    "createdAt": 1791113984803,
+    "updatedAt": 1791113984803
   }
 ]
