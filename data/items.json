@@ -4,6 +4,7 @@
     "label": "خرما",
     "created_at": 1791126131860,
     "in_wheel": 1,
+    "inWheel": true,
     "createdAt": 1791126131860
   },
   {
@@ -11,6 +12,7 @@
     "label": "ماست موسیر",
     "created_at": 1791116133836,
     "in_wheel": 1,
+    "inWheel": true,
     "createdAt": 1791116133836
   },
   {
@@ -18,6 +20,7 @@
     "label": "پفک نمکی بزرگ",
     "created_at": 1791116122740,
     "in_wheel": 1,
+    "inWheel": true,
     "createdAt": 1791116122740
   },
   {
@@ -25,6 +28,7 @@
     "label": "کتل چیپس بزرگ",
     "created_at": 1791116112654,
     "in_wheel": 1,
+    "inWheel": true,
     "createdAt": 1791116112654
   }
 ]
