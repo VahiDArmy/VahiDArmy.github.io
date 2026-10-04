@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="گردونه شانس - چرخش حرفه‌ای با حقه مخفی">
-    <title>گردونه شانس | چرخش</title>
+    <meta name="description" content="چرخ فلک - چرخش حرفه‌ای گردونه">
+    <title>چرخ فلک | گردونه</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
 
@@ -35,12 +35,11 @@
 <body class="dark-theme">
     <canvas id="particles-canvas" class="particles-canvas"></canvas>
 
-    <!-- هدر -->
     <header class="main-header">
         <div class="header-container">
             <div class="header-right">
                 <img src="assets/images/logo.svg" alt="لوگو" class="logo">
-                <h1 class="site-title">گردونه شانس</h1>
+                <h1 class="site-title">چرخ فلک</h1>
             </div>
             <nav class="header-nav">
                 <a href="index.html" class="nav-link">خانه</a>
@@ -61,23 +60,16 @@
         </div>
     </header>
 
-    <!-- محتوای اصلی -->
     <main class="main-content wheel-page">
         <div class="wheel-layout">
 
-            <!-- ستون راست: گردونه و اهرم -->
             <section class="wheel-main-section">
                 <div class="wheel-header">
-                    <h2 class="page-title">🎡 چرخش گردونه</h2>
-                    <p class="page-subtitle">
-                        اهرم را <strong>فشار دهید</strong> تا تصادفی انتخاب شود، یا آن را <strong>بکشید پایین</strong>...
-                    </p>
+                    <h2 class="page-title">🎡 گردونه</h2>
                 </div>
 
-                <!-- نشانگر نوع چرخش -->
                 <div id="spin-type-indicator" class="spin-type-indicator"></div>
 
-                <!-- حالت انتخاب -->
                 <div class="mode-selector">
                     <button class="mode-btn active" data-mode="single">
                         <span class="mode-icon">🎯</span>
@@ -89,7 +81,6 @@
                     </button>
                 </div>
 
-                <!-- گردونه -->
                 <div class="wheel-container">
                     <canvas id="wheel-canvas" class="wheel-canvas"></canvas>
                     <div id="lever" class="lever" title="اهرم چرخش">
@@ -97,46 +88,18 @@
                             <div class="lever-grip"></div>
                         </div>
                         <div class="lever-base"></div>
-                        <div class="lever-label">اهرم</div>
                     </div>
                 </div>
 
-                <!-- دکمه‌های کنترلی -->
                 <div class="wheel-controls">
-                    <button id="spin-btn" class="btn btn-primary btn-lg">
-                        🎲 چرخش سریع
-                    </button>
-                    <button id="starred-spin-btn" class="btn btn-secondary">
-                        ⭐ چرخش از ستاره‌دارها
-                    </button>
                     <button id="clear-wheel-btn" class="btn btn-danger btn-sm">
                         🗑 پاک کردن لیست
                     </button>
                 </div>
 
-                <!-- راهنمای اهرم -->
-                <div class="lever-hint">
-                    <div class="hint-item">
-                        <div class="hint-icon">👆</div>
-                        <div class="hint-text">
-                            <strong>فشار دادن</strong>
-                            <span>انتخاب تصادفی از همه</span>
-                        </div>
-                    </div>
-                    <div class="hint-item">
-                        <div class="hint-icon">👇</div>
-                        <div class="hint-text">
-                            <strong>کشیدن</strong>
-                            <span>انتخاب هوشمند</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- نمایش برنده -->
                 <div id="winner-display" class="winner-display"></div>
             </section>
 
-            <!-- ستون چپ: لیست افراد -->
             <aside class="wheel-sidebar">
                 <div class="sidebar-header">
                     <h3 class="sidebar-title">
@@ -152,9 +115,7 @@
                     <input type="text" class="input" placeholder="جستجو در افراد..." id="people-search-input">
                 </div>
 
-                <div id="wheel-people-list" class="wheel-people-list">
-                    <!-- توسط JS پر می‌شود -->
-                </div>
+                <div id="wheel-people-list" class="wheel-people-list"></div>
 
                 <div class="sidebar-footer">
                     <a href="description.html" class="btn btn-secondary btn-sm btn-block">
@@ -165,7 +126,6 @@
         </div>
     </main>
 
-    <!-- فوتر -->
     <footer class="main-footer">
         <div class="footer-container">
             <p class="footer-text">
@@ -178,29 +138,24 @@
     <div id="modal-container" class="modal-container"></div>
     <div id="notification-container" class="notification-container"></div>
 
-    <!-- کتابخانه‌های خارجی -->
     <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 
-    <!-- هسته -->
     <script src="js/core/utils.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/router.js"></script>
 
-    <!-- ذخیره‌سازی -->
     <script src="js/storage/local-storage.js"></script>
     <script src="js/storage/github-storage.js"></script>
     <script src="js/storage/sql-storage.js"></script>
     <script src="js/storage/sync.js"></script>
 
-    <!-- داده‌ها -->
     <script src="js/data/people.js"></script>
     <script src="js/data/items.js"></script>
     <script src="js/data/descriptions.js"></script>
     <script src="js/data/history.js"></script>
 
-    <!-- UI -->
     <script src="js/ui/particles.js"></script>
     <script src="js/ui/notification.js"></script>
     <script src="js/ui/modal.js"></script>
@@ -208,13 +163,10 @@
     <script src="js/ui/theme.js"></script>
     <script src="js/ui/confetti.js"></script>
 
-    <!-- گردونه -->
     <script src="js/wheel/wheel-core.js"></script>
 
-    <!-- صفحات -->
     <script src="js/pages/wheel-page.js"></script>
 
-    <!-- راه‌انداز -->
     <script src="js/core/app.js"></script>
 </body>
 </html>
