@@ -20,7 +20,16 @@ const SettingsPage = {
         this._setValue('input-github-token', s.githubToken);
         this._setValue('input-github-username', s.githubUsername);
         this._setValue('input-github-repo', s.githubRepo);
-        this._setValue('input-github-branch', s.githubBranch || 'main');
+
+        // ⚠️ فیلد branch - از مقدار ذخیره‌شده بخوان
+        let branch = s.githubBranch;
+        if (!branch) {
+            branch = LocalStorage.get('secret_githubBranch', null) ||
+                     LocalStorage.get('githubBranch', null) ||
+                     'master';
+        }
+        this._setValue('input-github-branch', branch);
+
         this._setValue('input-openrouter-key', s.openrouterApiKey);
         this._setValue('input-ai-model', s.aiModel || 'openrouter/free');
         this._setValue('input-system-prompt', s.aiSystemPrompt);
@@ -38,17 +47,35 @@ const SettingsPage = {
         this._setValue('input-sync-interval', Math.round((s.syncInterval || 60000) / 1000));
     },
 
+    /**
+     * ذخیره‌ی فوریِ یک فیلد خاص (برای auto-save)
+     */
+    _saveField(key, value) {
+        AppState.set(`settings.${key}`, value);
+        try {
+            if (SQLStorage.isReady) SQLStorage.setSetting(key, value);
+        } catch (e) {}
+    },
+
     _initGitHubSection() {
         const saveBtn = document.getElementById('save-github-btn');
         const testBtn = document.getElementById('test-github-btn');
+        const branchInput = document.getElementById('input-github-branch');
+
+        // ⚡ ذخیره خودکار هنگام خروج از فیلد شاخه
+        if (branchInput) {
+            branchInput.addEventListener('blur', () => {
+                const v = branchInput.value.trim();
+                if (v) this._saveField('githubBranch', v);
+            });
+        }
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 let username = this._getValue('input-github-username');
                 let repo = this._getValue('input-github-repo');
-                let branch = this._getValue('input-github-branch') || 'main';
+                let branch = this._getValue('input-github-branch') || 'master';
 
-                // اصلاح خودکار: اگر کاربر username/repo وارد کرد
                 if (username.includes('/') && !repo) {
                     const parts = username.split('/').filter(Boolean);
                     if (parts.length >= 2) {
@@ -59,24 +86,17 @@ const SettingsPage = {
                     }
                 }
 
-                const settings = {
-                    githubToken: this._getValue('input-github-token'),
-                    githubUsername: username,
-                    githubRepo: repo,
-                    githubBranch: branch,
-                };
+                const token = this._getValue('input-github-token');
 
-                if (!settings.githubToken || !settings.githubUsername || !settings.githubRepo) {
+                if (!token || !username || !repo) {
                     Notification.warning('فیلدهای ستاره‌دار الزامی هستند');
                     return;
                 }
 
-                Object.entries(settings).forEach(([k, v]) => {
-                    AppState.set(`settings.${k}`, v);
-                    try {
-                        if (SQLStorage.isReady) SQLStorage.setSetting(k, v);
-                    } catch (e) {}
-                });
+                this._saveField('githubToken', token);
+                this._saveField('githubUsername', username);
+                this._saveField('githubRepo', repo);
+                this._saveField('githubBranch', branch);
 
                 Notification.success('تنظیمات GitHub ذخیره شد');
             });
@@ -88,10 +108,9 @@ const SettingsPage = {
                 const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                // اصلاح خودکار
                 let username = this._getValue('input-github-username');
                 let repo = this._getValue('input-github-repo');
-                let branch = this._getValue('input-github-branch') || 'main';
+                let branch = this._getValue('input-github-branch') || 'master';
 
                 if (username.includes('/') && !repo) {
                     const parts = username.split('/').filter(Boolean);
@@ -103,15 +122,19 @@ const SettingsPage = {
                     }
                 }
 
-                AppState.set('settings.githubToken', this._getValue('input-github-token'));
-                AppState.set('settings.githubUsername', username);
-                AppState.set('settings.githubRepo', repo);
-                AppState.set('settings.githubBranch', branch);
+                // ذخیره قبل از تست
+                this._saveField('githubToken', this._getValue('input-github-token'));
+                this._saveField('githubUsername', username);
+                this._saveField('githubRepo', repo);
+                this._saveField('githubBranch', branch);
 
                 try {
                     const result = await GitHubStorage.testConnection();
                     if (result.success) {
                         Notification.success(result.message, 8000);
+                        // شاید شاخه عوض شده باشد، فرم را دوباره بخوان
+                        const newBranch = AppState.get('settings.githubBranch');
+                        if (newBranch) this._setValue('input-github-branch', newBranch);
                     } else {
                         Notification.error(result.message, 12000);
                     }
@@ -131,22 +154,12 @@ const SettingsPage = {
 
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
-                let modelValue = this._getValue('input-ai-model');
-                if (!modelValue) modelValue = 'openrouter/free';
+                let modelValue = this._getValue('input-ai-model') || 'openrouter/free';
 
-                const settings = {
-                    openrouterApiKey: this._getValue('input-openrouter-key'),
-                    aiModel: modelValue,
-                    aiTemperature: parseFloat(this._getValue('input-ai-temp')) || 0.8,
-                    aiSystemPrompt: this._getValue('input-system-prompt'),
-                };
-
-                Object.entries(settings).forEach(([k, v]) => {
-                    AppState.set(`settings.${k}`, v);
-                    try {
-                        if (SQLStorage.isReady) SQLStorage.setSetting(k, v);
-                    } catch (e) {}
-                });
+                this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
+                this._saveField('aiModel', modelValue);
+                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
+                this._saveField('aiSystemPrompt', this._getValue('input-system-prompt'));
 
                 Notification.success('تنظیمات هوش مصنوعی ذخیره شد');
             });
@@ -158,12 +171,11 @@ const SettingsPage = {
                 const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                let modelValue = this._getValue('input-ai-model');
-                if (!modelValue) modelValue = 'openrouter/free';
+                let modelValue = this._getValue('input-ai-model') || 'openrouter/free';
 
-                AppState.set('settings.openrouterApiKey', this._getValue('input-openrouter-key'));
-                AppState.set('settings.aiModel', modelValue);
-                AppState.set('settings.aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
+                this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
+                this._saveField('aiModel', modelValue);
+                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
 
                 try {
                     const result = await OpenRouter.testConnection();
@@ -193,10 +205,7 @@ const SettingsPage = {
 
         tempSlider.addEventListener('change', (e) => {
             const val = parseFloat(e.target.value) || 0.8;
-            AppState.set('settings.aiTemperature', val);
-            try {
-                if (SQLStorage.isReady) SQLStorage.setSetting('aiTemperature', val);
-            } catch (err) {}
+            this._saveField('aiTemperature', val);
         });
     },
 
@@ -221,7 +230,7 @@ const SettingsPage = {
                 pushBtn.textContent = 'در حال ارسال...';
 
                 try {
-                    await SQLStorage.pushToGitHub('ارسال دستی از تنظیمات');
+                    await SQLStorage.pushToGitHub('ارسال دستی');
                     this._renderDbInfo();
                 } catch (e) {
                     Notification.error(e.message, 12000);
@@ -240,10 +249,7 @@ const SettingsPage = {
                     return;
                 }
 
-                const ok = await Modal.confirm(
-                    'دیتابیس محلی با نسخه GitHub جایگزین شود؟',
-                    { danger: true }
-                );
+                const ok = await Modal.confirm('دیتابیس محلی با نسخه GitHub جایگزین شود؟', { danger: true });
                 if (!ok) return;
 
                 pullBtn.disabled = true;
@@ -277,21 +283,15 @@ const SettingsPage = {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                const ok = await Modal.confirm(
-                    'دیتابیس فعلی با فایل انتخابی جایگزین شود؟',
-                    { danger: true }
-                );
-                if (!ok) {
-                    uploadInput.value = '';
-                    return;
-                }
+                const ok = await Modal.confirm('دیتابیس فعلی جایگزین شود؟', { danger: true });
+                if (!ok) { uploadInput.value = ''; return; }
 
                 try {
                     await SQLStorage.loadFromFile(file);
                     if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
                 } catch (err) {
-                    Notification.error('خطا در بارگذاری: ' + err.message);
+                    Notification.error('خطا: ' + err.message);
                 } finally {
                     uploadInput.value = '';
                 }
@@ -301,10 +301,7 @@ const SettingsPage = {
         const resetBtn = document.getElementById('db-reset');
         if (resetBtn) {
             resetBtn.addEventListener('click', async () => {
-                const ok = await Modal.confirm(
-                    '⚠️ کل دیتابیس پاک شود؟ این عمل غیرقابل بازگشت است!',
-                    { danger: true, confirmLabel: 'بله، پاک کن' }
-                );
+                const ok = await Modal.confirm('کل دیتابیس پاک شود؟', { danger: true });
                 if (ok) {
                     await SQLStorage.reset();
                     if (App._loadDataFromSQL) App._loadDataFromSQL();
@@ -321,7 +318,7 @@ const SettingsPage = {
         try {
             const info = SQLStorage.getInfo();
             if (!info) {
-                container.innerHTML = '<p class="text-muted">دیتابیس در حال بارگذاری است...</p>';
+                container.innerHTML = '<p class="text-muted">در حال بارگذاری...</p>';
                 setTimeout(() => this._renderDbInfo(), 1000);
                 return;
             }
@@ -360,10 +357,7 @@ const SettingsPage = {
         if (particlesToggle) {
             particlesToggle.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
-                AppState.set('settings.particlesEnabled', enabled);
-                try {
-                    if (SQLStorage.isReady) SQLStorage.setSetting('particlesEnabled', enabled);
-                } catch (err) {}
+                this._saveField('particlesEnabled', enabled);
                 if (enabled) Particles.init('particles-canvas');
                 else Particles.stop();
             });
@@ -372,11 +366,7 @@ const SettingsPage = {
         const confettiToggle = document.getElementById('toggle-confetti');
         if (confettiToggle) {
             confettiToggle.addEventListener('change', (e) => {
-                const enabled = e.target.checked;
-                AppState.set('settings.confettiEnabled', enabled);
-                try {
-                    if (SQLStorage.isReady) SQLStorage.setSetting('confettiEnabled', enabled);
-                } catch (err) {}
+                this._saveField('confettiEnabled', e.target.checked);
             });
         }
 
@@ -384,10 +374,7 @@ const SettingsPage = {
         if (autoSyncToggle) {
             autoSyncToggle.addEventListener('change', (e) => {
                 const enabled = e.target.checked;
-                AppState.set('settings.autoSync', enabled);
-                try {
-                    if (SQLStorage.isReady) SQLStorage.setSetting('autoSync', enabled);
-                } catch (err) {}
+                this._saveField('autoSync', enabled);
                 if (enabled) Sync.startAutoSync();
                 else Sync.stopAutoSync();
             });
@@ -398,10 +385,7 @@ const SettingsPage = {
             syncInterval.addEventListener('change', (e) => {
                 const seconds = parseInt(e.target.value) || 60;
                 const ms = seconds * 1000;
-                AppState.set('settings.syncInterval', ms);
-                try {
-                    if (SQLStorage.isReady) SQLStorage.setSetting('syncInterval', ms);
-                } catch (err) {}
+                this._saveField('syncInterval', ms);
                 if (AppState.get('settings.autoSync')) {
                     Sync.stopAutoSync();
                     Sync.startAutoSync();
@@ -415,8 +399,8 @@ const SettingsPage = {
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', async () => {
                 const ok = await Modal.confirm(
-                    '⚠️ تمام داده‌ها (افراد، آیتم‌ها، تاریخچه، داستان‌ها) پاک شود؟',
-                    { danger: true, confirmLabel: 'بله، همه را پاک کن' }
+                    '⚠️ تمام داده‌ها پاک شود؟',
+                    { danger: true, confirmLabel: 'بله، پاک کن' }
                 );
                 if (ok) {
                     await SQLStorage.reset();
