@@ -4,9 +4,6 @@
  */
 
 const HomePage = {
-    /**
-     * راه‌اندازی
-     */
     init() {
         this._renderStats();
         this._renderRecentWinners();
@@ -14,24 +11,16 @@ const HomePage = {
         this._initKeyboard();
     },
 
-    /**
-     * نمایش آمار
-     */
     _renderStats() {
         const people = AppState.get('people') || [];
-        const starred = people.filter((p) => p.starred).length;
         const history = AppState.get('history') || [];
         const stories = AppState.get('stories') || [];
 
         this._setText('stat-people', Utils.toPersianNumbers(people.length));
-        this._setText('stat-starred', Utils.toPersianNumbers(starred));
         this._setText('stat-spins', Utils.toPersianNumbers(history.length));
         this._setText('stat-stories', Utils.toPersianNumbers(stories.length));
     },
 
-    /**
-     * نمایش آخرین برندگان
-     */
     _renderRecentWinners() {
         const container = document.getElementById('recent-winners-list');
         if (!container) return;
@@ -52,16 +41,12 @@ const HomePage = {
         container.innerHTML = history
             .map((h) => {
                 const winnerName = h.winner_name || h.winner?.name || h.winner?.label || 'نامشخص';
-                const typeIcon = h.spinType === 'starred' ? '⭐' : '🎲';
-                const typeText = h.spinType === 'starred' ? 'از ستاره‌دارها' : 'تصادفی';
                 return `
                     <div class="winner-card">
-                        <div class="winner-icon">${typeIcon}</div>
+                        <div class="winner-icon">🏆</div>
                         <div class="winner-info">
                             <div class="winner-name">${this._escape(winnerName)}</div>
                             <div class="winner-meta">
-                                <span>${typeText}</span>
-                                <span class="dot-sep">•</span>
                                 <span>${Utils.formatDate(h.timestamp)}</span>
                             </div>
                         </div>
@@ -71,9 +56,6 @@ const HomePage = {
             .join('');
     },
 
-    /**
-     * گردونه پیش‌نمایش
-     */
     _initPreviewWheel() {
         const canvas = document.getElementById('preview-wheel');
         if (!canvas) return;
@@ -115,7 +97,6 @@ const HomePage = {
                 ctx.stroke();
             }
 
-            // مرکز
             ctx.beginPath();
             ctx.arc(cx, cy, 24, 0, 2 * Math.PI);
             ctx.fillStyle = '#111';
@@ -135,9 +116,6 @@ const HomePage = {
         animate();
     },
 
-    /**
-     * میانبرهای کیبورد
-     */
     _initKeyboard() {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.target.matches('input, textarea')) {
@@ -146,9 +124,6 @@ const HomePage = {
         });
     },
 
-    /**
-     * کمک‌کننده
-     */
     _setText(id, text) {
         const el = document.getElementById(id);
         if (el) el.textContent = text;
@@ -161,7 +136,6 @@ const HomePage = {
     },
 };
 
-// راه‌اندازی در صفحه خانه
 if (document.getElementById('recent-winners-list')) {
     document.addEventListener('DOMContentLoaded', () => HomePage.init());
 }
