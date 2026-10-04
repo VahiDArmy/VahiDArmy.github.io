@@ -1,6 +1,6 @@
-/* ============================================
+/* ═══════════════════════════════════════════
    صفحه گردونه
-   ============================================ */
+   ═══════════════════════════════════════════ */
 
 .wheel-page { padding-top: var(--spacing-lg); }
 
@@ -35,8 +35,6 @@
 
 .spin-type-indicator {
     display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-lg);
     background: var(--color-bg-elevated);
     border: 1px solid var(--color-accent-primary);
@@ -80,7 +78,6 @@
     filter: drop-shadow(0 20px 80px rgba(139, 92, 246, 0.6));
 }
 
-/* اهرم */
 .lever {
     position: absolute;
     bottom: -30px;
@@ -104,10 +101,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 
-        0 6px 20px rgba(139, 92, 246, 0.5),
-        inset 0 -3px 10px rgba(0, 0, 0, 0.2),
-        inset 0 3px 10px rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
     transition: all var(--transition-fast);
     position: relative;
 }
@@ -140,7 +134,6 @@
 }
 
 .lever-active .lever-handle { transform: scale(0.9); }
-
 .lever-dragging .lever-handle { background: var(--gradient-danger); }
 .lever-dragging .lever-handle::before { background: var(--gradient-danger); }
 
@@ -150,6 +143,114 @@
     flex-wrap: wrap;
     justify-content: center;
     margin-top: var(--spacing-lg);
+}
+
+/* ═══════════════════════════════════════════
+   Toolbox Picker
+   ═══════════════════════════════════════════ */
+
+.toolbox-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.picker-list {
+    max-height: 350px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--border-color);
+}
+
+.picker-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    user-select: none;
+}
+
+.picker-item:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--border-color-hover);
+}
+
+.picker-item.in-wheel {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.picker-item input[type="checkbox"] {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    position: relative;
+    transition: all var(--transition-fast);
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.picker-item input[type="checkbox"]:checked {
+    background: var(--gradient-primary);
+    border-color: transparent;
+}
+
+.picker-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.picker-item input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+}
+
+.picker-name {
+    flex: 1;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-medium);
+}
+
+.picker-badge {
+    font-size: var(--font-size-xs);
+    padding: 2px 8px;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--color-accent-primary);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: var(--border-radius-full);
+    white-space: nowrap;
+}
+
+.picker-footer-note {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(59, 130, 246, 0.08);
+    border-right: 3px solid var(--color-accent-info);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
 }
 
 /* ═══════════════════════════════════════════
@@ -164,7 +265,6 @@
     justify-content: center;
     background: rgba(0, 0, 0, 0.75);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     z-index: 500;
     padding: var(--spacing-lg);
 }
@@ -178,11 +278,8 @@
     max-width: 480px;
     width: 100%;
     max-height: 90vh;
-    box-shadow: 
-        0 0 60px rgba(139, 92, 246, 0.5),
-        0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 60px rgba(139, 92, 246, 0.5), 0 20px 60px rgba(0, 0, 0, 0.5);
     animation: scaleIn var(--transition-bounce);
-    position: relative;
 }
 
 .winner-popup-with-story {
@@ -211,7 +308,6 @@
 .winner-popup-label {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
-    text-transform: uppercase;
     letter-spacing: 2px;
     margin-bottom: var(--spacing-xs);
 }
@@ -247,12 +343,7 @@
     color: var(--color-text-secondary);
 }
 
-.story-loading .spinner {
-    width: 32px;
-    height: 32px;
-    border-width: 3px;
-}
-
+.story-loading .spinner { width: 32px; height: 32px; border-width: 3px; }
 .story-loading p { animation: pulse 1.5s ease-in-out infinite; }
 
 .story-error {
@@ -266,15 +357,7 @@
     line-height: var(--line-height-relaxed);
 }
 
-.story-error a {
-    color: var(--color-accent-primary);
-    font-weight: var(--font-weight-medium);
-    text-decoration: underline;
-}
-
-/* ═══════════════════════════════════════════
-   استریم داستان (در حال تایپ)
-   ═══════════════════════════════════════════ */
+.story-error a { color: var(--color-accent-primary); text-decoration: underline; }
 
 .story-streaming {
     display: flex;
@@ -284,7 +367,6 @@
     background: var(--color-bg-tertiary);
     border-radius: var(--border-radius-md);
     border-right: 3px solid var(--color-accent-primary);
-    text-align: right;
 }
 
 .story-streaming-content {
@@ -314,29 +396,17 @@
     text-indent: 1.5em;
 }
 
-.story-streaming-content strong {
-    color: var(--color-accent-primary);
-    font-weight: var(--font-weight-semibold);
-}
-
-.story-streaming-content em {
-    color: var(--color-accent-secondary);
-    font-style: italic;
-}
+.story-streaming-content strong { color: var(--color-accent-primary); font-weight: 600; }
+.story-streaming-content em { color: var(--color-accent-secondary); font-style: italic; }
 
 .story-streaming-cursor {
     color: var(--color-accent-primary);
     font-weight: bold;
     animation: blink 1s step-end infinite;
     font-size: var(--font-size-md);
-    line-height: 1;
     flex-shrink: 0;
     margin-top: 4px;
 }
-
-/* ═══════════════════════════════════════════
-   داستان نهایی داخل پاپ‌آپ
-   ═══════════════════════════════════════════ */
 
 .story-in-popup {
     display: flex;
@@ -353,7 +423,6 @@
     background: var(--color-bg-tertiary);
     border-radius: var(--border-radius-md);
     border-right: 3px solid var(--color-accent-primary);
-    text-align: right;
 }
 
 .story-in-popup-content h2.story-title {
@@ -362,32 +431,18 @@
     margin-bottom: var(--spacing-sm);
     padding-bottom: var(--spacing-xs);
     border-bottom: 1px solid var(--border-color);
-    font-weight: var(--font-weight-bold);
 }
 
 .story-in-popup-content h3.story-subtitle {
     font-size: var(--font-size-md);
     color: var(--color-accent-secondary);
     margin: var(--spacing-sm) 0;
-    font-weight: var(--font-weight-semibold);
 }
 
-.story-in-popup-content p {
-    margin-bottom: var(--spacing-sm);
-    text-indent: 1.5em;
-}
-
+.story-in-popup-content p { margin-bottom: var(--spacing-sm); text-indent: 1.5em; }
 .story-in-popup-content p:last-child { margin-bottom: 0; }
-
-.story-in-popup-content strong {
-    color: var(--color-accent-primary);
-    font-weight: var(--font-weight-semibold);
-}
-
-.story-in-popup-content em {
-    color: var(--color-accent-secondary);
-    font-style: italic;
-}
+.story-in-popup-content strong { color: var(--color-accent-primary); font-weight: 600; }
+.story-in-popup-content em { color: var(--color-accent-secondary); font-style: italic; }
 
 .story-in-popup-footer {
     display: flex;
@@ -403,12 +458,7 @@
     flex-wrap: wrap;
 }
 
-.story-footer-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-}
-
+.story-footer-item { display: flex; align-items: center; gap: var(--spacing-xs); }
 .story-footer-icon { font-size: 0.9rem; }
 .story-footer-label { color: var(--color-text-tertiary); }
 
@@ -446,7 +496,7 @@
 }
 
 /* ═══════════════════════════════════════════
-   لیست افراد
+   لیست افراد در گردونه
    ═══════════════════════════════════════════ */
 
 .wheel-person-item {
