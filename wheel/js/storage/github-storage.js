@@ -1,5 +1,5 @@
 /**
- * ذخیره‌سازی در GitHub - با Retry خودکار برای 409
+ * ذخیره‌سازی در GitHub
  * @module githubStorage
  */
 
@@ -70,7 +70,16 @@ const GitHubStorage = {
 
         if (!response.ok) {
             const msg = data?.message || `خطای ${response.status}`;
-            
+            const isSecretError = /secret|scanning|repository rule/i.test(msg);
+
+            if (isSecretError) {
+                throw new Error(
+                    `GitHub اجازه ذخیره را نداد (کد ${response.status}):\n` +
+                    `دلیل: شناسایی اطلاعات حساس (Secret)\n` +
+                    `این خطا از سیاست امنیتی مخزن است.`
+                );
+            }
+
             if (response.status === 401) {
                 throw new Error('توکن نامعتبر است (۴۰۱)');
             }
@@ -93,9 +102,6 @@ const GitHubStorage = {
         return data;
     },
 
-    /**
-     * دریافت SHA فایل (یا null اگر وجود نداشته باشد)
-     */
     async getFileSha(path) {
         const config = this.getConfig();
         try {
@@ -125,16 +131,12 @@ const GitHubStorage = {
         }
     },
 
-    /**
-     * ذخیره فایل - با Retry خودکار برای ۴۰۹
-     */
     async saveFile(path, content, message = 'به‌روزرسانی خودکار', attempt = 1) {
         const config = this.getConfig();
         const encodedContent = btoa(
             unescape(encodeURIComponent(JSON.stringify(content, null, 2)))
         );
 
-        // دریافت SHA
         let sha = await this.getFileSha(path);
 
         const body = {
@@ -154,8 +156,10 @@ const GitHubStorage = {
             );
         } catch (error) {
             const is409 = error.message.includes('۴۰۹') || error.message.includes('409');
-            
-            if (is409 && attempt <= 2) {
+            const isSecretError = /secret|scanning|repository rule/i.test(error.message);
+
+            // ⚠️ روی خطای Secret هرگز retry نکن
+            if (is409 && !isSecretError && attempt <= 2) {
                 console.log(`⚠️ تداخل نسخه - تلاش مجدد (${attempt}/2)...`);
                 await Utils.delay(800 * attempt);
                 return await this.saveFile(path, content, message, attempt + 1);
@@ -165,9 +169,6 @@ const GitHubStorage = {
         }
     },
 
-    /**
-     * ذخیره فایل باینری (Base64) - برای SQLite
-     */
     async saveBinaryFile(path, base64Content, message = 'به‌روزرسانی فایل باینری', attempt = 1) {
         const config = this.getConfig();
         let sha = await this.getFileSha(path);
@@ -189,8 +190,10 @@ const GitHubStorage = {
             );
         } catch (error) {
             const is409 = error.message.includes('۴۰۹') || error.message.includes('409');
-            
-            if (is409 && attempt <= 2) {
+            const isSecretError = /secret|scanning|repository rule/i.test(error.message);
+
+            // ⚠️ روی خطای Secret هرگز retry نکن
+            if (is409 && !isSecretError && attempt <= 2) {
                 console.log(`⚠️ تداخل فایل باینری - تلاش مجدد (${attempt}/2)...`);
                 await Utils.delay(800 * attempt);
                 return await this.saveBinaryFile(path, base64Content, message, attempt + 1);
@@ -234,9 +237,6 @@ const GitHubStorage = {
         };
     },
 
-    /**
-     * تست کامل اتصال
-     */
     async testConnection() {
         const config = this.getConfig();
 
@@ -244,7 +244,6 @@ const GitHubStorage = {
             return { success: false, message: 'توکن GitHub وارد نشده است' };
         }
 
-        // چک ۱: توکن
         try {
             await this.request('/user');
         } catch (e) {
@@ -255,13 +254,11 @@ const GitHubStorage = {
             return { success: false, message: 'نام کاربری یا مخزن وارد نشده' };
         }
 
-        // چک ۲: مخزن
         try {
             const repoInfo = await this.request(
                 `/repos/${config.owner}/${config.repo}`
             );
 
-            // چک ۳: شاخه
             try {
                 await this.request(
                     `/repos/${config.owner}/${config.repo}/branches/${config.branch}`
@@ -269,7 +266,7 @@ const GitHubStorage = {
             } catch (e) {
                 return {
                     success: false,
-                    message: `شاخه «${config.branch}» پیدا نشد. شاخه‌های موجود: main یا master`,
+                    message: `شاخه «${config.branch}» پیدا نشد. main یا master`,
                 };
             }
 
