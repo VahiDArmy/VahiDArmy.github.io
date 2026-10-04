@@ -1,25 +1,24 @@
 /**
- * مدیریت داستان‌ها - با پشتیبانی Streaming
+ * مدیریت داستان‌ها - با لاگ‌گیری کامل
  * @module storyManager
  */
 
 const StoryManager = {
     isGenerating: false,
 
-    /**
-     * تولید استریم - نتیجه تدریجی برمی‌گردد
-     */
     async generateStream(context, callbacks = {}) {
         const { onChunk, onComplete, onError } = callbacks;
 
         if (this.isGenerating) {
             const err = new Error('در حال تولید داستان قبلی هستید');
+            Logger.warn('StoryManager', err.message);
             if (onError) onError(err);
             return null;
         }
 
         if (!OpenRouter.getApiKey()) {
             const err = new Error('کلید API OpenRouter تنظیم نشده است');
+            Logger.error('StoryManager.noApiKey', err);
             if (onError) onError(err);
             return null;
         }
@@ -27,6 +26,11 @@ const StoryManager = {
         this.isGenerating = true;
 
         try {
+            Logger.info('StoryManager', 'شروع تولید داستان', {
+                model: OpenRouter.getModel(),
+                temperature: AppState.get('settings.aiTemperature'),
+            });
+
             const systemPrompt = PromptBuilder.getSystemPrompt();
             const userPrompt = PromptBuilder.buildStoryPrompt(context);
 
@@ -42,7 +46,7 @@ const StoryManager = {
                 messages,
                 {
                     temperature: AppState.get('settings.aiTemperature') || 0.8,
-                    maxTokens: 1500,
+                    maxTokens: 2000,
                 },
                 (chunk, model) => {
                     fullContent += chunk;
@@ -51,9 +55,21 @@ const StoryManager = {
                 }
             );
 
+            const finalContent = result.content || fullContent;
+
+            if (!finalContent || !finalContent.trim()) {
+                const err = new Error('پاسخ خالی از مدل دریافت شد');
+                Logger.error('StoryManager.emptyResponse', err, {
+                    model: result.model,
+                    rawLength: finalContent.length,
+                });
+                if (onError) onError(err);
+                return null;
+            }
+
             const story = {
                 id: Utils.generateId('story'),
-                content: result.content || fullContent,
+                content: finalContent,
                 model: result.model || modelUsed,
                 context: JSON.stringify({
                     winner: context.winner?.name,
@@ -61,20 +77,30 @@ const StoryManager = {
                     tone: context.tone,
                 }),
                 timestamp: Date.now(),
-                wordCount: (result.content || fullContent).trim().split(/\s+/).length,
+                wordCount: finalContent.trim().split(/\s+/).length,
             };
 
-            // ذخیره در دیتابیس
-            try { SQLStorage.addStory(story); } catch (e) {}
+            try {
+                SQLStorage.addStory(story);
+            } catch (e) {
+                Logger.warn('StoryManager.saveStory', 'ذخیره داستان ناموفق', { error: e.message });
+            }
 
             const stories = [story, ...(AppState.get('stories') || [])].slice(0, 100);
             AppState.set('stories', stories);
 
-            if (onComplete) onComplete(story);
+            Logger.info('StoryManager', 'داستان ساخته شد', {
+                length: finalContent.length,
+                model: result.model,
+            });
 
+            if (onComplete) onComplete(story);
             return story;
         } catch (error) {
-            console.error('خطای StoryManager:', error);
+            Logger.error('StoryManager.generateStream', error, {
+                model: OpenRouter.getModel(),
+                hasApiKey: !!OpenRouter.getApiKey(),
+            });
             if (onError) onError(error);
             return null;
         } finally {
@@ -82,9 +108,6 @@ const StoryManager = {
         }
     },
 
-    /**
-     * تولید معمولی (بدون استریم) - برای سازگاری
-     */
     async generate(context, options = {}) {
         return new Promise((resolve) => {
             this.generateStream(context, {
@@ -107,6 +130,7 @@ const StoryManager = {
                 timestamp: s.timestamp,
             }));
         } catch (e) {
+            Logger.error('StoryManager.getAll', e);
             return [];
         }
     },
@@ -131,6 +155,13 @@ const StoryManager = {
 
         let html = content;
 
+        // امن‌سازی HTML اول
+        html = html
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        // Markdown
         html = html.replace(/^##\s+(.+)$/gm, '<h2 class="story-title">$1</h2>');
         html = html.replace(/^###\s+(.+)$/gm, '<h3 class="story-subtitle">$1</h3>');
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
