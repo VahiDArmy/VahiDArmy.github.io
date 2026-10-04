@@ -1,6 +1,6 @@
 [
   {
-    "id": "hist_1791138585950_rq5fpyky1",
+    "id": "hist_1791138943950_y20ixt4yt",
     "winner": {
       "id": "person_1791110785869_3k5yg5e9y",
       "name": "وحید",
@@ -19,7 +19,15 @@
     "winner_name": "وحید",
     "mode": "single",
     "spinType": "random",
-    "timestamp": 1791138585950
+    "timestamp": 1791138943950
+  },
+  {
+    "id": "hist_1791138585948_n4vatsltv",
+    "winner_id": "person_1791110785869_3k5yg5e9y",
+    "winner_name": "وحید",
+    "mode": "single",
+    "spin_type": "random",
+    "timestamp": 1791138585948
   },
   {
     "id": "hist_1791138544898_497ytsijm",
