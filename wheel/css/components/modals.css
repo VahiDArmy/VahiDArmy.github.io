@@ -1,0 +1,180 @@
+/* ============================================
+   مودال‌ها
+   ============================================ */
+
+.modal-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--z-modal);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+    pointer-events: auto;
+    z-index: var(--z-modal);
+}
+
+.modal-overlay.modal-show {
+    opacity: 1;
+}
+
+.modal-overlay.modal-hide {
+    opacity: 0;
+}
+
+.modal {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-xl);
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+    transition: all var(--transition-bounce);
+    overflow: hidden;
+    position: relative;
+}
+
+.modal-show .modal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+
+.modal-hide .modal {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+}
+
+/* اندازه‌ها */
+.modal-sm {
+    max-width: 380px;
+}
+
+.modal-md {
+    max-width: 500px;
+}
+
+.modal-lg {
+    max-width: 720px;
+}
+
+.modal-xl {
+    max-width: 960px;
+}
+
+/* هدر مودال */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-color);
+    background: var(--color-bg-tertiary);
+}
+
+.modal-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--color-text-tertiary);
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+    transform: rotate(90deg);
+}
+
+/* بدنه مودال */
+.modal-body {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-message {
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    margin-bottom: var(--spacing-md);
+}
+
+.modal-message:last-child {
+    margin-bottom: 0;
+}
+
+/* فوتر مودال */
+.modal-footer {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--spacing-sm);
+    background: var(--color-bg-tertiary);
+}
+
+/* انیمیشن ورود */
+@keyframes modalIn {
+    from {
+        transform: scale(0.9) translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ریسپانسیو */
+@media (max-width: 640px) {
+    .modal {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        align-self: flex-end;
+    }
+
+    .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding: var(--spacing-md);
+    }
+}
