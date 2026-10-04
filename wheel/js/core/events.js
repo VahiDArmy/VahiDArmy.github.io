@@ -6,9 +6,6 @@
 const Events = {
     _handlers: {},
 
-    /**
-     * راه‌اندازی رویدادهای عمومی
-     */
     init() {
         this._initHeaderEvents();
         this._initKeyboardEvents();
@@ -17,9 +14,6 @@ const Events = {
         console.log('✅ رویدادها راه‌اندازی شد');
     },
 
-    /**
-     * ثبت شنونده رویداد سفارشی
-     */
     on(eventName, callback) {
         if (!this._handlers[eventName]) {
             this._handlers[eventName] = [];
@@ -28,9 +22,6 @@ const Events = {
         return () => this.off(eventName, callback);
     },
 
-    /**
-     * حذف شنونده
-     */
     off(eventName, callback) {
         if (!this._handlers[eventName]) return;
         this._handlers[eventName] = this._handlers[eventName].filter(
@@ -38,9 +29,6 @@ const Events = {
         );
     },
 
-    /**
-     * انتشار رویداد سفارشی
-     */
     emit(eventName, data) {
         if (!this._handlers[eventName]) return;
         this._handlers[eventName].forEach((cb) => {
@@ -56,24 +44,53 @@ const Events = {
      * رویدادهای هدر
      */
     _initHeaderEvents() {
-        // دکمه تغییر تم
-        const themeBtn = document.getElementById('theme-toggle');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => Theme.toggle());
-        }
-
-        // دکمه همگام‌سازی
-        const syncBtn = document.getElementById('sync-btn');
-        if (syncBtn) {
-            syncBtn.addEventListener('click', () => this._handleManualSync());
-        }
-
-        // منوی موبایل
+        // ─── دکمه منوی موبایل (همبرگری) ───
         const navToggle = document.getElementById('nav-toggle');
         const nav = document.querySelector('.header-nav');
+        
         if (navToggle && nav) {
-            navToggle.addEventListener('click', () => {
-                nav.classList.toggle('open');
+            navToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = nav.classList.toggle('open');
+                navToggle.classList.toggle('active', isOpen);
+            });
+        }
+
+        // ─── بستن منو هنگام کلیک روی لینک ───
+        document.querySelectorAll('.nav-link').forEach((link) => {
+            link.addEventListener('click', () => {
+                if (nav) nav.classList.remove('open');
+                if (navToggle) navToggle.classList.remove('active');
+            });
+        });
+
+        // ─── بستن منو هنگام کلیک بیرون ───
+        document.addEventListener('click', (e) => {
+            if (!nav || !nav.classList.contains('open')) return;
+            if (nav.contains(e.target) || (navToggle && navToggle.contains(e.target))) return;
+            nav.classList.remove('open');
+            if (navToggle) navToggle.classList.remove('active');
+        });
+
+        // ─── دکمه تغییر تم ───
+        const themeBtn = document.getElementById('theme-toggle');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                try {
+                    Theme.toggle();
+                } catch (err) {
+                    console.error('خطا در تغییر تم:', err);
+                }
+            });
+        }
+
+        // ─── دکمه همگام‌سازی ───
+        const syncBtn = document.getElementById('sync-btn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this._handleManualSync();
             });
         }
     },
@@ -82,21 +99,25 @@ const Events = {
      * همگام‌سازی دستی
      */
     async _handleManualSync() {
-        if (!GitHubStorage.isConfigured()) {
-            Notification.warning('ابتدا تنظیمات GitHub را در صفحه تنظیمات وارد کنید');
-            return;
-        }
-
-        const btn = document.getElementById('sync-btn');
-        if (btn) btn.disabled = true;
-
         try {
-            await Sync.fullSync();
-            Notification.success('همگام‌سازی با موفقیت انجام شد');
-        } catch (error) {
-            Notification.error('خطا در همگام‌سازی: ' + error.message);
-        } finally {
-            if (btn) btn.disabled = false;
+            if (typeof GitHubStorage === 'undefined' || !GitHubStorage.isConfigured()) {
+                Notification.warning('ابتدا تنظیمات GitHub را در صفحه تنظیمات وارد کنید');
+                return;
+            }
+
+            const btn = document.getElementById('sync-btn');
+            if (btn) btn.disabled = true;
+
+            try {
+                await Sync.fullSync();
+                Notification.success('همگام‌سازی با موفقیت انجام شد');
+            } catch (error) {
+                Notification.error('خطا در همگام‌سازی: ' + error.message);
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        } catch (e) {
+            console.error('خطا در همگام‌سازی دستی:', e);
         }
     },
 
@@ -107,7 +128,9 @@ const Events = {
         document.addEventListener('keydown', (e) => {
             // Escape برای بستن مودال
             if (e.key === 'Escape') {
-                Modal.closeAll();
+                try {
+                    if (typeof Modal !== 'undefined') Modal.closeAll();
+                } catch (err) {}
             }
 
             // Ctrl+S برای ذخیره
@@ -116,31 +139,26 @@ const Events = {
                 this._handleManualSave();
             }
 
-            // Space برای چرخش گردونه (اگر در صفحه گردونه باشیم)
+            // Space برای چرخش گردونه
             if (e.code === 'Space' && AppState.get('ui.currentPage') === 'wheel') {
                 const activeElement = document.activeElement;
-                if (activeElement && activeElement.tagName === 'INPUT') return;
-                e.preventDefault();
-                if (window.WheelPage && !WheelCore.isSpinning) {
-                    WheelPage.handleSpin('press');
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    return;
                 }
-            }
-
-            // Ctrl+K برای جستجو
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                this.emit('open-search');
+                if (window.WheelPage && typeof WheelCore !== 'undefined' && !WheelCore.isSpinning) {
+                    if (WheelPage._spinRandom) WheelPage._spinRandom();
+                }
             }
         });
     },
 
-    /**
-     * ذخیره دستی
-     */
     async _handleManualSave() {
         try {
-            await SQLStorage.saveNow();
-            Notification.success('داده‌ها ذخیره شد');
+            if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                await SQLStorage.saveNow();
+                Notification.success('داده‌ها ذخیره شد');
+            }
         } catch (error) {
             Notification.error('خطا در ذخیره‌سازی: ' + error.message);
         }
@@ -150,25 +168,30 @@ const Events = {
      * رویدادهای پنجره
      */
     _initWindowEvents() {
-        // ذخیره قبل از بستن
         window.addEventListener('beforeunload', () => {
-            SQLStorage.saveNow();
+            try {
+                if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                    SQLStorage.saveNow();
+                }
+            } catch (e) {}
         });
 
-        // ذخیره در حالت مخفی
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) {
-                SQLStorage.saveNow();
+                try {
+                    if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                        SQLStorage.saveNow();
+                    }
+                } catch (e) {}
             }
         });
 
-        // آنلاین/آفلاین
         window.addEventListener('online', () => {
-            Notification.info('اتصال اینترنت برقرار شد');
+            try { Notification.info('اتصال اینترنت برقرار شد'); } catch (e) {}
         });
 
         window.addEventListener('offline', () => {
-            Notification.warning('اتصال اینترنت قطع شد - حالت آفلاین');
+            try { Notification.warning('اتصال اینترنت قطع شد - حالت آفلاین'); } catch (e) {}
         });
     },
 
@@ -176,7 +199,6 @@ const Events = {
      * رویدادهای ذخیره‌سازی
      */
     _initStorageEvents() {
-        // تغییرات در State
         AppState.subscribe('people', () => this.emit('people-changed'));
         AppState.subscribe('items', () => this.emit('items-changed'));
         AppState.subscribe('history', () => this.emit('history-changed'));
