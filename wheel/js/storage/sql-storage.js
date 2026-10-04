@@ -1,5 +1,8 @@
 /**
- * دیتابیس SQL.js با ذخیره‌سازی در IndexedDB و همگام‌سازی با GitHub
+ * دیتابیس SQL.js
+ * - رمزها (توکن و API Key) هرگز در SQLite ذخیره نمی‌شوند
+ * - فقط در LocalStorage نگهداری می‌شوند
+ * - در نتیجه فایل .sqlite همیشه امن برای push به GitHub است
  * @module SQLStorage
  */
 
@@ -12,6 +15,9 @@ const SQLStorage = {
     idbKey: 'main_db',
     _idb: null,
     _saveTimer: null,
+
+    // 🔑 کلیدهایی که هرگز نباید در SQLite ذخیره شوند
+    SECRET_KEYS: ['githubToken', 'openrouterApiKey'],
 
     // ============================================
     // راه‌اندازی
@@ -32,6 +38,8 @@ const SQLStorage = {
             if (existing) {
                 this.db = new this.SQL.Database(existing);
                 console.log('✅ دیتابیس از IndexedDB بارگذاری شد');
+                // پاکسازی رمزهای قدیمی (اگر وجود دارند) و انتقال به LocalStorage
+                this._migrateSecretsToLocalStorage();
             } else {
                 this.db = new this.SQL.Database();
                 this._createSchema();
@@ -111,6 +119,7 @@ const SQLStorage = {
             );
         `);
 
+        // جدول settings - اما رمزها در آن ذخیره نمی‌شوند
         this.db.run(`
             CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
@@ -123,6 +132,34 @@ const SQLStorage = {
         this.db.run(`CREATE INDEX IF NOT EXISTS idx_stories_timestamp ON stories(timestamp DESC);`);
 
         this._scheduleSave();
+    },
+
+    /**
+     * انتقال رمزهای موجود در SQLite (نسخه‌های قدیمی) به LocalStorage
+     * و حذف آن‌ها از دیتابیس
+     */
+    _migrateSecretsToLocalStorage() {
+        let changed = false;
+        this.SECRET_KEYS.forEach((key) => {
+            try {
+                const rows = this.query('SELECT value FROM settings WHERE key = ?', [key]);
+                if (rows.length > 0) {
+                    let val = rows[0].value;
+                    try { val = JSON.parse(val); } catch (e) {}
+
+                    if (val) {
+                        LocalStorage.set('secret_' + key, val);
+                        console.log(`🔐 ${key} منتقل شد به LocalStorage`);
+                    }
+
+                    this.db.run(`DELETE FROM settings WHERE key = ?`, [key]);
+                    changed = true;
+                }
+            } catch (e) {
+                // نادیده بگیر
+            }
+        });
+        if (changed) this._scheduleSave();
     },
 
     // ============================================
@@ -302,10 +339,15 @@ const SQLStorage = {
     },
 
     // ============================================
-    // تنظیمات
+    // تنظیمات - با فیلتر رمزها
     // ============================================
 
     setSetting(key, value) {
+        // 🔑 رمزها هرگز در SQLite ذخیره نمی‌شوند
+        if (this.SECRET_KEYS.includes(key)) {
+            LocalStorage.set('secret_' + key, value);
+            return;
+        }
         this.run(
             `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
             [key, JSON.stringify(value)]
@@ -313,6 +355,10 @@ const SQLStorage = {
     },
 
     getSetting(key) {
+        // 🔑 رمزها از LocalStorage خوانده می‌شوند
+        if (this.SECRET_KEYS.includes(key)) {
+            return LocalStorage.get('secret_' + key, null);
+        }
         const rows = this.query('SELECT value FROM settings WHERE key = ?', [key]);
         if (rows.length === 0) return null;
         try {
@@ -387,45 +433,39 @@ const SQLStorage = {
         return bytes;
     },
 
+    /**
+     * ارسال به GitHub - امن (بدون رمزها)
+     */
     async pushToGitHub(message = 'به‌روزرسانی دیتابیس SQLite') {
         if (!GitHubStorage.isConfigured()) {
             throw new Error('تنظیمات GitHub کامل نیست');
         }
 
-        const config = GitHubStorage.getConfig();
+        // 🛡️ پاکسازی احتیاطی: اطمینان از اینکه رمزی در DB نیست
+        this.SECRET_KEYS.forEach((k) => {
+            try {
+                this.db.run(`DELETE FROM settings WHERE key = ?`, [k]);
+            } catch (e) {}
+        });
+
+        // گرفتن snapshot از دیتابیس (که حالا امن است)
         const binaryArray = this.db.export();
         const base64Content = this._uint8ToBase64(binaryArray);
         const path = 'data/wheel_db.sqlite';
 
-        let sha = null;
-        try {
-            const existing = await GitHubStorage.request(
-                `/repos/${config.owner}/${config.repo}/contents/${path}?ref=${config.branch}`
-            );
-            sha = existing.sha;
-        } catch (e) {
-            // فایل جدید است
-        }
-
-        const body = {
-            message,
-            content: base64Content,
-            branch: config.branch,
-        };
-        if (sha) body.sha = sha;
-
-        await GitHubStorage.request(
-            `/repos/${config.owner}/${config.repo}/contents/${path}`,
-            {
-                method: 'PUT',
-                body: JSON.stringify(body),
-            }
+        await GitHubStorage.saveBinaryFile(
+            path,
+            base64Content,
+            message
         );
 
         Notification.success('دیتابیس با موفقیت به GitHub ارسال شد');
-        return { path, size: binaryArray.length, sha };
+        return { path, size: binaryArray.length };
     },
 
+    /**
+     * دریافت از GitHub
+     */
     async pullFromGitHub() {
         if (!GitHubStorage.isConfigured()) {
             throw new Error('تنظیمات GitHub کامل نیست');
@@ -433,6 +473,12 @@ const SQLStorage = {
 
         const config = GitHubStorage.getConfig();
         const path = 'data/wheel_db.sqlite';
+
+        // 🔑 پشتیبان از رمزهای فعلی (در LocalStorage هستند)
+        const secretsBackup = {};
+        this.SECRET_KEYS.forEach((k) => {
+            secretsBackup[k] = LocalStorage.get('secret_' + k, null);
+        });
 
         try {
             const data = await GitHubStorage.request(
@@ -446,12 +492,26 @@ const SQLStorage = {
             if (this.db) this.db.close();
             this.db = new this.SQL.Database(binaryArray);
 
+            // مطمئن شو که رمزها در DB نیستند (پاکسازی احتیاطی)
+            this.SECRET_KEYS.forEach((k) => {
+                try {
+                    this.db.run(`DELETE FROM settings WHERE key = ?`, [k]);
+                } catch (e) {}
+            });
+
+            // رمزها را در LocalStorage نگه‌دار (که هستند)
+            this.SECRET_KEYS.forEach((k) => {
+                if (secretsBackup[k]) {
+                    LocalStorage.set('secret_' + k, secretsBackup[k]);
+                }
+            });
+
             await this.saveNow();
 
             Notification.success('دیتابیس از GitHub بارگذاری شد');
             return true;
         } catch (error) {
-            if (error.message.includes('404')) {
+            if (error.message.includes('۴۰۴') || error.message.includes('404')) {
                 Notification.warning('فایل دیتابیس در GitHub یافت نشد');
                 return false;
             }
@@ -460,6 +520,11 @@ const SQLStorage = {
     },
 
     downloadDatabase() {
+        // 🛡️ برای امنیت، قبل از دانلود هم رمزها را حذف کن
+        this.SECRET_KEYS.forEach((k) => {
+            try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
+        });
+
         const binaryArray = this.db.export();
         const blob = new Blob([binaryArray], { type: 'application/x-sqlite3' });
         const url = URL.createObjectURL(blob);
@@ -476,8 +541,13 @@ const SQLStorage = {
 
         if (this.db) this.db.close();
         this.db = new this.SQL.Database(uint8);
-        await this.saveNow();
 
+        // پاکسازی رمزها (در صورت وجود در فایل بارگذاری‌شده)
+        this.SECRET_KEYS.forEach((k) => {
+            try { this.db.run(`DELETE FROM settings WHERE key = ?`, [k]); } catch (e) {}
+        });
+
+        await this.saveNow();
         Notification.success('دیتابیس بارگذاری شد');
     },
 
