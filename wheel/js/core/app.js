@@ -4,15 +4,9 @@
  */
 
 const App = {
-    /**
-     * راه‌اندازی
-     */
     async init() {
         console.log('🚀 راه‌اندازی چرخ فلک...');
 
-        // ═══════════════════════════════════════
-        // فاز ۱: UI پایه (بدون هیچ وابستگی)
-        // ═══════════════════════════════════════
         try {
             Notification.init();
             Confetti.init();
@@ -21,39 +15,15 @@ const App = {
             console.error('خطا در راه‌اندازی UI پایه:', e);
         }
 
-        // ═══════════════════════════════════════
-        // فاز ۲: تم (قبل از Events)
-        // ═══════════════════════════════════════
-        try {
-            Theme.init();
-        } catch (e) {
-            console.error('خطا در راه‌اندازی تم:', e);
-        }
+        try { Theme.init(); } catch (e) { console.error('خطا در تم:', e); }
+        try { Events.init(); } catch (e) { console.error('خطا در رویدادها:', e); }
 
-        // ═══════════════════════════════════════
-        // فاز ۳: رویدادها (دکمه‌ها اینجا وصل می‌شوند!)
-        // این باید قبل از SQL اجرا شود تا دکمه‌ها همیشه کار کنند
-        // ═══════════════════════════════════════
-        try {
-            Events.init();
-        } catch (e) {
-            console.error('خطا در راه‌اندازی رویدادها:', e);
-        }
-
-        // ═══════════════════════════════════════
-        // فاز ۴: ذرات پس‌زمینه
-        // ═══════════════════════════════════════
         try {
             if (AppState.get('settings.particlesEnabled') !== false) {
                 Particles.init('particles-canvas');
             }
-        } catch (e) {
-            console.error('خطا در راه‌اندازی ذرات:', e);
-        }
+        } catch (e) { console.error('خطا در ذرات:', e); }
 
-        // ═══════════════════════════════════════
-        // فاز ۵: دیتابیس SQLite (ممکن است خطا بدهد)
-        // ═══════════════════════════════════════
         try {
             console.log('📦 در حال راه‌اندازی دیتابیس SQLite...');
             await SQLStorage.init();
@@ -62,50 +32,29 @@ const App = {
         } catch (e) {
             console.error('❌ خطا در راه‌اندازی دیتابیس:', e);
             Notification.warning(
-                'دیتابیس در دسترس نیست. ممکن است برخی امکانات کار نکنند. صفحه را رفرش کنید.',
+                'دیتابیس در دسترس نیست. صفحه را رفرش کنید.',
                 8000
             );
         }
 
-        // ═══════════════════════════════════════
-        // فاز ۶: مسیریابی
-        // ═══════════════════════════════════════
-        try {
-            Router.init();
-        } catch (e) {
-            console.error('خطا در مسیریابی:', e);
-        }
+        try { Router.init(); } catch (e) { console.error('خطا در روتر:', e); }
 
-        // ═══════════════════════════════════════
-        // فاز ۷: گردونه (فقط در صفحه گردونه)
-        // ═══════════════════════════════════════
         try {
             if (document.getElementById('wheel-canvas')) {
                 WheelCore.init('wheel-canvas');
-                const people = AppState.get('people') || [];
-                WheelCore.setItems(people);
+                WheelCore.setItems(AppState.get('people') || []);
             }
-        } catch (e) {
-            console.error('خطا در راه‌اندازی گردونه:', e);
-        }
+        } catch (e) { console.error('خطا در گردونه:', e); }
 
-        // ═══════════════════════════════════════
-        // فاز ۸: همگام‌سازی خودکار
-        // ═══════════════════════════════════════
         try {
             if (AppState.get('settings.autoSync') && GitHubStorage.isConfigured()) {
                 Sync.startAutoSync();
             }
-        } catch (e) {
-            console.error('خطا در همگام‌سازی خودکار:', e);
-        }
+        } catch (e) { console.error('خطا در همگام‌سازی خودکار:', e); }
 
         console.log('✅ چرخ فلک آماده است');
     },
 
-    /**
-     * بارگذاری داده‌ها از SQLite به AppState
-     */
     _loadDataFromSQL() {
         try {
             const people = SQLStorage.getAllPeople().map((p) => ({
@@ -142,34 +91,54 @@ const App = {
 
     /**
      * بارگذاری تنظیمات از SQLite
+     * ⚠️ نکته: githubBranch اینجا اضافه شده
      */
     _loadSettingsFromSQL() {
         const keys = [
-            'theme', 'wheelSize', 'spinDuration', 'soundEnabled',
-            'confettiEnabled', 'particlesEnabled', 'githubToken',
-            'githubRepo', 'githubUsername', 'openrouterApiKey',
-            'aiModel', 'aiTemperature', 'aiSystemPrompt',
-            'autoSync', 'syncInterval', 'language', 'rtlEnabled',
+            'theme',
+            'wheelSize',
+            'spinDuration',
+            'soundEnabled',
+            'confettiEnabled',
+            'particlesEnabled',
+            'githubToken',
+            'githubRepo',
+            'githubUsername',
+            'githubBranch',      // ✅ اضافه شد
+            'openrouterApiKey',
+            'aiModel',
+            'aiTemperature',
+            'aiSystemPrompt',
+            'autoSync',
+            'syncInterval',
+            'language',
+            'rtlEnabled',
         ];
 
         const settings = {};
         keys.forEach((key) => {
             try {
                 const value = SQLStorage.getSetting(key);
-                if (value !== null) settings[key] = value;
-            } catch (e) {
-                // نادیده بگیر
-            }
+                if (value !== null && value !== undefined && value !== '') {
+                    settings[key] = value;
+                }
+            } catch (e) {}
         });
 
+        // اگر branch خالی بود، از LocalStorage بخوان
+        if (!settings.githubBranch) {
+            const localBranch = LocalStorage.get('secret_githubBranch', null) ||
+                               LocalStorage.get('githubBranch', null);
+            if (localBranch) settings.githubBranch = localBranch;
+        }
+
         if (Object.keys(settings).length > 0) {
-            AppState.set('settings', Utils.deepMerge(AppState.get('settings'), settings));
+            const merged = Utils.deepMerge(AppState.get('settings'), settings);
+            AppState.set('settings', merged);
+            console.log('📥 تنظیمات بارگذاری شد:', Object.keys(settings).join(', '));
         }
     },
 
-    /**
-     * ذخیره تنظیمات در SQLite
-     */
     saveSettingsToSQL() {
         try {
             const settings = AppState.get('settings');
