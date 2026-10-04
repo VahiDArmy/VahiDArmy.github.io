@@ -1,6 +1,6 @@
-/* ============================================
+/* ═══════════════════════════════════════════
    صفحه هوش مصنوعی
-   ============================================ */
+   ═══════════════════════════════════════════ */
 
 .ai-page {
     padding-top: var(--spacing-lg);
@@ -111,6 +111,7 @@
     align-items: center;
     justify-content: center;
     transition: background var(--transition-fast);
+    padding: 0;
 }
 
 .winner-chip-close:hover {
@@ -127,7 +128,10 @@
     line-height: var(--line-height-relaxed);
 }
 
-/* بخش خروجی */
+/* ═══════════════════════════════════════════
+   بخش خروجی
+   ═══════════════════════════════════════════ */
+
 .ai-output-section {
     display: flex;
     flex-direction: column;
@@ -152,6 +156,11 @@
     padding: var(--spacing-2xl) var(--spacing-lg);
     text-align: center;
     color: var(--color-text-secondary);
+}
+
+.empty-icon-big {
+    font-size: 4rem;
+    opacity: 0.4;
 }
 
 .story-card {
@@ -190,9 +199,7 @@
     text-indent: 1.5em;
 }
 
-.story-content p:last-child {
-    margin-bottom: 0;
-}
+.story-content p:last-child { margin-bottom: 0; }
 
 .story-content strong {
     color: var(--color-accent-primary);
@@ -212,10 +219,6 @@
     border-top: 1px solid var(--border-color);
     flex-wrap: wrap;
 }
-
-/* ============================================
-   فوتر داستان - مدل و تاریخ
-   ============================================ */
 
 .story-footer {
     display: flex;
@@ -237,13 +240,8 @@
     gap: var(--spacing-xs);
 }
 
-.story-footer-icon {
-    font-size: 0.9rem;
-}
-
-.story-footer-label {
-    color: var(--color-text-tertiary);
-}
+.story-footer-icon { font-size: 0.9rem; }
+.story-footer-label { color: var(--color-text-tertiary); }
 
 .story-footer-value {
     color: var(--color-accent-primary);
@@ -254,9 +252,32 @@
     background: rgba(139, 92, 246, 0.1);
     border-radius: var(--border-radius-sm);
     border: 1px solid rgba(139, 92, 246, 0.2);
+    font-size: 0.7rem;
 }
 
-/* لیست داستان‌ها */
+.story-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-2xl) var(--spacing-lg);
+    text-align: center;
+    color: var(--color-text-secondary);
+}
+
+.story-loading .spinner {
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+}
+
+.story-loading p { animation: pulse 1.5s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════
+   لیست داستان‌ها
+   ═══════════════════════════════════════════ */
+
 .stories-history-card {
     background: var(--color-bg-secondary);
     border: 1px solid var(--border-color);
@@ -269,23 +290,51 @@
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
 }
 
+.empty-stories {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xl) var(--spacing-md);
+    text-align: center;
+}
+
+.empty-stories-icon {
+    font-size: 2.5rem;
+    opacity: 0.4;
+}
+
 .story-list-item {
-    padding: var(--spacing-md);
+    display: flex;
+    align-items: stretch;
+    gap: 0;
     background: var(--color-bg-tertiary);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+    overflow: hidden;
+    position: relative;
+}
+
+.story-list-item:hover {
+    border-color: var(--border-color-accent);
+    background: var(--color-bg-hover);
+}
+
+.story-list-body {
+    flex: 1;
+    min-width: 0;
+    padding: var(--spacing-md);
     cursor: pointer;
     transition: all var(--transition-fast);
 }
 
-.story-list-item:hover {
-    background: var(--color-bg-hover);
-    border-color: var(--border-color-accent);
-    transform: translateX(-4px);
+.story-list-body:hover {
+    padding-right: var(--spacing-lg);
 }
 
 .story-list-meta {
@@ -298,11 +347,57 @@
     margin-bottom: var(--spacing-xs);
 }
 
+.story-list-model {
+    color: var(--color-accent-primary);
+    font-weight: var(--font-weight-medium);
+}
+
 .story-list-excerpt {
     font-size: var(--font-size-sm);
     color: var(--color-text-secondary);
     line-height: var(--line-height-relaxed);
 }
+
+.story-list-actions {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--spacing-sm);
+    flex-shrink: 0;
+    background: var(--color-bg-secondary);
+    border-right: 1px solid var(--border-color);
+}
+
+.story-list-delete {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    padding: 0;
+    line-height: 1;
+}
+
+.story-list-delete:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: var(--color-accent-danger);
+    color: var(--color-accent-danger);
+    transform: scale(1.05);
+}
+
+.story-list-delete:active {
+    transform: scale(0.95);
+}
+
+/* ═══════════════════════════════════════════
+   انیمیشن
+   ═══════════════════════════════════════════ */
 
 @keyframes fadeInUp {
     from {
@@ -314,6 +409,10 @@
         transform: translateY(0);
     }
 }
+
+/* ═══════════════════════════════════════════
+   ریسپانسیو
+   ═══════════════════════════════════════════ */
 
 @media (max-width: 900px) {
     .ai-layout {
@@ -333,5 +432,25 @@
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-xs);
+    }
+}
+
+@media (max-width: 600px) {
+    .stories-list {
+        max-height: 400px;
+    }
+
+    .story-list-body {
+        padding: var(--spacing-sm);
+    }
+
+    .story-list-actions {
+        padding: 0 4px;
+    }
+
+    .story-list-delete {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
     }
 }
