@@ -72,6 +72,7 @@
         </div>
 
         <div class="settings-layout">
+            <!-- GitHub -->
             <section class="settings-card">
                 <div class="settings-card-header">
                     <span class="settings-card-icon">🐙</span>
@@ -89,13 +90,7 @@
                             Personal Access Token
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="password"
-                            id="input-github-token"
-                            class="input"
-                            placeholder="ghp_..."
-                            autocomplete="off"
-                        >
+                        <input type="password" id="input-github-token" class="input" placeholder="ghp_..." autocomplete="off">
                         <p class="form-hint">توکن با دسترسی <code>repo</code> بسازید</p>
                     </div>
 
@@ -104,13 +99,7 @@
                             نام کاربری GitHub
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="input-github-username"
-                            class="input"
-                            placeholder="username"
-                            autocomplete="off"
-                        >
+                        <input type="text" id="input-github-username" class="input" placeholder="username" autocomplete="off">
                     </div>
 
                     <div class="form-row">
@@ -118,13 +107,7 @@
                             نام مخزن
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="input-github-repo"
-                            class="input"
-                            placeholder="my-wheel"
-                            autocomplete="off"
-                        >
+                        <input type="text" id="input-github-repo" class="input" placeholder="my-wheel" autocomplete="off">
                         <p class="form-hint">مخزنی که GitHub Pages روی آن فعال است</p>
                     </div>
 
@@ -133,28 +116,18 @@
                             شاخه (Branch)
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="input-github-branch"
-                            class="input"
-                            placeholder="main"
-                            value="main"
-                            autocomplete="off"
-                        >
-                        <p class="form-hint">نام شاخه‌ی اصلی مخزن: معمولاً <code>main</code> یا <code>master</code></p>
+                        <input type="text" id="input-github-branch" class="input" placeholder="main" value="main" autocomplete="off">
+                        <p class="form-hint">معمولاً <code>main</code> یا <code>master</code></p>
                     </div>
 
                     <div class="settings-actions">
-                        <button id="save-github-btn" class="btn btn-primary" type="button">
-                            💾 ذخیره
-                        </button>
-                        <button id="test-github-btn" class="btn btn-secondary" type="button">
-                            🔌 تست اتصال
-                        </button>
+                        <button id="save-github-btn" class="btn btn-primary" type="button">💾 ذخیره</button>
+                        <button id="test-github-btn" class="btn btn-secondary" type="button">🔌 تست اتصال</button>
                     </div>
                 </div>
             </section>
 
+            <!-- OpenRouter -->
             <section class="settings-card">
                 <div class="settings-card-header">
                     <span class="settings-card-icon">🤖</span>
@@ -172,13 +145,7 @@
                             کلید API OpenRouter
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="password"
-                            id="input-openrouter-key"
-                            class="input"
-                            placeholder="sk-or-v1-..."
-                            autocomplete="off"
-                        >
+                        <input type="password" id="input-openrouter-key" class="input" placeholder="sk-or-v1-..." autocomplete="off">
                         <p class="form-hint">
                             کلید از
                             <a href="https://openrouter.ai/keys" target="_blank">openrouter.ai</a>
@@ -189,77 +156,67 @@
                     <div class="form-row">
                         <label class="form-label">
                             مدل
-                            <span class="badge badge-success badge-sm">توصیه‌شده</span>
+                            <span class="badge badge-success badge-sm">پیشنهاد شده</span>
                         </label>
                         <select id="input-ai-model" class="input">
-                            <optgroup label="⭐ خودکار (قطعاً کار می‌کند)">
-                                <option value="openrouter/free" selected>
+                            <optgroup label="🌟 Google Gemini (پیشنهاد اول - رایگان و قدرتمند)">
+                                <option value="google/gemini-2.0-flash-exp:free" selected>
+                                    🥇 Google Gemini 2.0 Flash — سریع و باکیفیت
+                                </option>
+                                <option value="google/gemini-2.5-flash-preview:free">
+                                    🥈 Google Gemini 2.5 Flash Preview — جدیدتر
+                                </option>
+                                <option value="google/gemini-2.0-flash-thinking-exp:free">
+                                    🧠 Google Gemini 2.0 Flash Thinking — تحلیلی
+                                </option>
+                                <option value="google/gemma-3-27b-it:free">
+                                    🥉 Google Gemma 3 27B — سبک و سریع
+                                </option>
+                                <option value="google/gemma-3-12b-it:free">
+                                    Google Gemma 3 12B — سبک‌ترین
+                                </option>
+                            </optgroup>
+
+                            <optgroup label="⭐ خودکار (اگر مطمئن نیستید)">
+                                <option value="openrouter/free">
                                     🎯 خودکار - بهترین مدل رایگان موجود
                                 </option>
                                 <option value="openrouter/auto">
-                                    🤖 خودکار هوشمند - انتخاب بر اساس درخواست
+                                    🤖 خودکار هوشمند
                                 </option>
                             </optgroup>
 
-                            <optgroup label="🚀 قدرتمند (Qwen)">
-                                <option value="qwen/qwen3.6-plus:free">
-                                    Qwen 3.6 Plus — پنجره ۱M، قدرتمندترین
-                                </option>
-                                <option value="qwen/qwen3-coder:free">
-                                    Qwen 3 Coder — مخصوص کدنویسی
-                                </option>
-                                <option value="qwen/qwen3-next-80b-a3b-instruct:free">
-                                    Qwen 3 Next 80B — متعادل
-                                </option>
+                            <optgroup label="🚀 Qwen (قدرتمند)">
+                                <option value="qwen/qwen3.6-plus:free">Qwen 3.6 Plus — پنجره ۱M</option>
+                                <option value="qwen/qwen3-coder:free">Qwen 3 Coder</option>
+                                <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen 3 Next 80B</option>
                             </optgroup>
 
                             <optgroup label="🎨 OpenAI (Open Source)">
-                                <option value="openai/gpt-oss-120b:free">
-                                    GPT-OSS 120B — اوپن‌سورس OpenAI
-                                </option>
+                                <option value="openai/gpt-oss-120b:free">GPT-OSS 120B</option>
                             </optgroup>
 
                             <optgroup label="🦙 Meta Llama">
-                                <option value="meta-llama/llama-3.3-70b-instruct:free">
-                                    Llama 3.3 70B — محبوب و قدرتمند
-                                </option>
+                                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B</option>
                             </optgroup>
 
                             <optgroup label="⚡ سریع و سبک">
-                                <option value="stepfun/step-3.5-flash:free">
-                                    Step 3.5 Flash — سرعت بالا
-                                </option>
-                                <option value="z-ai/glm-4.5-air:free">
-                                    GLM 4.5 Air — عمومی
-                                </option>
-                                <option value="minimax/minimax-m2.5:free">
-                                    MiniMax M2.5 — پنجره ۲۰۴K
-                                </option>
+                                <option value="stepfun/step-3.5-flash:free">Step 3.5 Flash</option>
+                                <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air</option>
+                                <option value="minimax/minimax-m2.5:free">MiniMax M2.5</option>
                             </optgroup>
 
                             <optgroup label="🧠 NVIDIA">
-                                <option value="nvidia/nemotron-3-super-120b-a12b:free">
-                                    Nemotron 3 Super — پنجره ۱M
-                                </option>
-                                <option value="nvidia/nemotron-3-nano-30b-a3b:free">
-                                    Nemotron Nano 30B — سبک
-                                </option>
-                            </optgroup>
-
-                            <optgroup label="🌟 پیش‌نمایش">
-                                <option value="arcee-ai/trinity-large-preview:free">
-                                    Arcee Trinity Large
-                                </option>
+                                <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super</option>
+                                <option value="nvidia/nemotron-3-nano-30b-a3b:free">Nemotron Nano 30B</option>
                             </optgroup>
 
                             <optgroup label="✏️ سفارشی">
-                                <option value="custom">
-                                    وارد کردن شناسه مدل به صورت دستی
-                                </option>
+                                <option value="custom">وارد کردن شناسه مدل به صورت دستی</option>
                             </optgroup>
                         </select>
                         <p class="form-hint">
-                            💡 گزینه <code>🎯 خودکار</code> توصیه می‌شود — به‌طور خودکار بهترین مدل رایگان موجود را انتخاب می‌کند
+                            💡 پیشنهاد: <code>Google Gemini 2.0 Flash</code> — رایگان، سریع، و داستان‌پرداز خوب
                         </p>
                     </div>
 
@@ -268,15 +225,9 @@
                             شناسه مدل سفارشی
                             <span class="required">*</span>
                         </label>
-                        <input
-                            type="text"
-                            id="input-custom-model"
-                            class="input"
-                            placeholder="مثلاً: qwen/qwen3.6-plus:free"
-                            autocomplete="off"
-                        >
+                        <input type="text" id="input-custom-model" class="input" placeholder="مثلاً: google/gemini-2.0-flash-exp:free" autocomplete="off">
                         <p class="form-hint">
-                            شناسه دقیق مدل از
+                            از
                             <a href="https://openrouter.ai/models?max_price=0" target="_blank">openrouter.ai/models</a>
                             کپی کنید
                         </p>
@@ -285,51 +236,32 @@
                     <div class="form-row">
                         <label class="form-label">
                             دمای مدل (خلاقیت)
-                            <span class="form-value" id="temp-value">۰.۸</span>
+                            <span class="form-value" id="temp-value">۰.۹</span>
                         </label>
-                        <input
-                            type="range"
-                            id="input-ai-temp"
-                            class="range-input"
-                            min="0"
-                            max="2"
-                            step="0.1"
-                            value="0.8"
-                        >
-                        <p class="form-hint">۰ = دقیق و قابل پیش‌بینی، ۲ = بسیار خلاق</p>
+                        <input type="range" id="input-ai-temp" class="range-input" min="0" max="2" step="0.1" value="0.9">
+                        <p class="form-hint">۰ = دقیق، ۲ = بسیار خلاق. برای داستان: ۰.۸ تا ۱.۰</p>
                     </div>
 
                     <div class="form-row">
                         <label class="form-label">پرامپت سیستم</label>
-                        <textarea
-                            id="input-system-prompt"
-                            class="input"
-                            rows="3"
-                        >تو یک داستان‌نویس خلاق، بامزه و فارسی‌زبان هستی که داستان‌های کوتاه و خنده‌دار می‌نویسد.</textarea>
+                        <textarea id="input-system-prompt" class="input" rows="3">تو یک داستان‌نویس حرفه‌ای، خلاق و فارسی‌زبان هستی که داستان‌های زنده، باورپذیر و جذاب می‌نویسد. تمام خروجی تو باید ۱۰۰٪ به زبان فارسی باشد.</textarea>
                     </div>
 
                     <div class="settings-actions">
-                        <button id="save-openrouter-btn" class="btn btn-primary" type="button">
-                            💾 ذخیره
-                        </button>
-                        <button id="test-openrouter-btn" class="btn btn-secondary" type="button">
-                            🔌 تست اتصال
-                        </button>
-                        <button id="fetch-models-btn" class="btn btn-outline" type="button">
-                            🔄 دریافت لیست زنده از OpenRouter
-                        </button>
+                        <button id="save-openrouter-btn" class="btn btn-primary" type="button">💾 ذخیره</button>
+                        <button id="test-openrouter-btn" class="btn btn-secondary" type="button">🔌 تست اتصال</button>
+                        <button id="fetch-models-btn" class="btn btn-outline" type="button">🔄 دریافت لیست زنده</button>
                     </div>
                 </div>
             </section>
 
+            <!-- DB -->
             <section class="settings-card">
                 <div class="settings-card-header">
                     <span class="settings-card-icon">💾</span>
                     <div>
                         <h3 class="settings-card-title">مدیریت دیتابیس SQLite</h3>
-                        <p class="settings-card-desc">
-                            دیتابیس محلی ذخیره‌شده در IndexedDB مرورگر
-                        </p>
+                        <p class="settings-card-desc">دیتابیس محلی ذخیره‌شده در IndexedDB مرورگر</p>
                     </div>
                 </div>
 
@@ -339,15 +271,9 @@
                     </div>
 
                     <div class="settings-actions settings-actions-grid">
-                        <button id="db-push-github" class="btn btn-primary" type="button">
-                            ☁️ ارسال به GitHub
-                        </button>
-                        <button id="db-pull-github" class="btn btn-secondary" type="button">
-                            ⬇️ دریافت از GitHub
-                        </button>
-                        <button id="db-download" class="btn btn-secondary" type="button">
-                            💾 دانلود فایل دیتابیس
-                        </button>
+                        <button id="db-push-github" class="btn btn-primary" type="button">☁️ ارسال به GitHub</button>
+                        <button id="db-pull-github" class="btn btn-secondary" type="button">⬇️ دریافت از GitHub</button>
+                        <button id="db-download" class="btn btn-secondary" type="button">💾 دانلود فایل دیتابیس</button>
                         <label class="btn btn-secondary upload-label">
                             📂 بارگذاری فایل دیتابیس
                             <input type="file" id="db-upload" accept=".sqlite,.db" hidden>
@@ -356,14 +282,13 @@
                 </div>
             </section>
 
+            <!-- General -->
             <section class="settings-card">
                 <div class="settings-card-header">
                     <span class="settings-card-icon">🎨</span>
                     <div>
                         <h3 class="settings-card-title">تنظیمات عمومی</h3>
-                        <p class="settings-card-desc">
-                            ظاهر و رفتار برنامه
-                        </p>
+                        <p class="settings-card-desc">ظاهر و رفتار برنامه</p>
                     </div>
                 </div>
 
@@ -402,40 +327,26 @@
                     </div>
 
                     <div class="form-row">
-                        <label class="form-label">
-                            فاصله همگام‌سازی (ثانیه)
-                        </label>
-                        <input
-                            type="number"
-                            id="input-sync-interval"
-                            class="input"
-                            min="10"
-                            max="3600"
-                            value="60"
-                        >
+                        <label class="form-label">فاصله همگام‌سازی (ثانیه)</label>
+                        <input type="number" id="input-sync-interval" class="input" min="10" max="3600" value="60">
                     </div>
                 </div>
             </section>
 
+            <!-- Danger -->
             <section class="settings-card settings-card-danger">
                 <div class="settings-card-header">
                     <span class="settings-card-icon">⚠️</span>
                     <div>
                         <h3 class="settings-card-title">منطقه خطر</h3>
-                        <p class="settings-card-desc">
-                            عملیات غیرقابل بازگشت
-                        </p>
+                        <p class="settings-card-desc">عملیات غیرقابل بازگشت</p>
                     </div>
                 </div>
 
                 <div class="settings-card-body">
                     <div class="danger-actions">
-                        <button id="db-reset" class="btn btn-danger" type="button">
-                            🗑 بازنشانی دیتابیس
-                        </button>
-                        <button id="clear-all-data" class="btn btn-danger" type="button">
-                            ⚠️ پاک کردن همه داده‌ها
-                        </button>
+                        <button id="db-reset" class="btn btn-danger" type="button">🗑 بازنشانی دیتابیس</button>
+                        <button id="clear-all-data" class="btn btn-danger" type="button">⚠️ پاک کردن همه داده‌ها</button>
                     </div>
                 </div>
             </section>
