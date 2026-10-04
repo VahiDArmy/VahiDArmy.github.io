@@ -1,10 +1,9 @@
 /* ═══════════════════════════════════════════
-   صفحه گردونه + رفع مشکل اسکرول
+   صفحه گردونه - رفع کامل مشکل ناپدید شدن
    ═══════════════════════════════════════════ */
 
 .wheel-page {
     padding-top: var(--spacing-lg);
-    /* رفع مشکل اسکرول */
     overscroll-behavior-y: auto;
 }
 
@@ -25,15 +24,9 @@
     border-radius: var(--border-radius-xl);
     padding: var(--spacing-lg);
     position: relative;
-    /* ✅ رفع مشکل اسکرول */
-    overflow: visible;
-    isolation: isolate;
 }
 
-.wheel-header {
-    text-align: center;
-    margin-bottom: var(--spacing-sm);
-}
+.wheel-header { text-align: center; margin-bottom: var(--spacing-sm); }
 
 .page-title {
     font-size: var(--font-size-2xl);
@@ -100,10 +93,7 @@
     align-items: stretch;
 }
 
-.topic-input-wrap .input {
-    flex: 1;
-    min-width: 0;
-}
+.topic-input-wrap .input { flex: 1; min-width: 0; }
 
 .topic-suggestions {
     position: absolute;
@@ -121,9 +111,7 @@
     display: none;
 }
 
-.topic-suggestions.show {
-    display: block;
-}
+.topic-suggestions.show { display: block; }
 
 .topic-suggestion-item {
     padding: var(--spacing-sm) var(--spacing-md);
@@ -134,9 +122,7 @@
     border-bottom: 1px solid var(--border-color);
 }
 
-.topic-suggestion-item:last-child {
-    border-bottom: none;
-}
+.topic-suggestion-item:last-child { border-bottom: none; }
 
 .topic-suggestion-item:hover {
     background: var(--color-bg-hover);
@@ -150,7 +136,6 @@
     text-align: center;
 }
 
-/* Type Selector */
 .type-selector {
     display: flex;
     gap: var(--spacing-xs);
@@ -186,7 +171,6 @@
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
 }
 
-/* Items Section */
 .setup-items-section {
     display: flex;
     flex-direction: column;
@@ -229,9 +213,7 @@
     transition: all var(--transition-fast);
 }
 
-.setup-item-row:hover {
-    border-color: var(--border-color-hover);
-}
+.setup-item-row:hover { border-color: var(--border-color-hover); }
 
 .setup-item-label {
     flex: 1;
@@ -277,10 +259,7 @@
     color: var(--color-accent-primary);
 }
 
-.qty-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-}
+.qty-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .qty-value {
     min-width: 32px;
@@ -362,7 +341,7 @@
 .mode-label { white-space: nowrap; }
 
 /* ═══════════════════════════════════════════
-   Wheel + Lever
+   Wheel + Lever - با wrapper امن
    ═══════════════════════════════════════════ */
 
 .spin-type-indicator {
@@ -396,27 +375,37 @@
     justify-content: center;
     padding: var(--spacing-xl) 0 var(--spacing-2xl);
     user-select: none;
-    /* ✅ اجازه اسکرول عمودی روی canvas */
     touch-action: pan-y;
-    /* ✅ فاصله از کنترل‌های پایین */
     margin-bottom: var(--spacing-md);
 }
 
-.wheel-canvas {
-    display: block;
+/* ✅ Wrapper با سایه، نه فیلتر روی canvas */
+.wheel-canvas-wrap {
+    position: relative;
+    border-radius: 50%;
+    box-shadow:
+        0 10px 30px rgba(139, 92, 246, 0.35),
+        0 0 40px rgba(139, 92, 246, 0.15);
+    transition: box-shadow var(--transition-normal);
+    line-height: 0;
     max-width: 100%;
-    height: auto;
-    border-radius: var(--border-radius-full);
-    transition: filter var(--transition-normal);
-    /* ✅ استفاده از GPU برای اسکرول نرم‌تر */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-    will-change: auto;
-    filter: drop-shadow(0 10px 30px rgba(139, 92, 246, 0.35));
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.wheel-canvas:hover {
-    filter: drop-shadow(0 15px 40px rgba(139, 92, 246, 0.55));
+.wheel-canvas-wrap:hover {
+    box-shadow:
+        0 15px 40px rgba(139, 92, 246, 0.55),
+        0 0 60px rgba(139, 92, 246, 0.25);
+}
+
+/* ✅ Canvas ساده و امن - بدون filter, transform, will-change */
+.wheel-canvas {
+    display: block;
+    border-radius: 50%;
+    background: transparent;
+    /* مهم: هیچ فیلتری روی خود canvas نگذارید */
 }
 
 .lever {
@@ -501,14 +490,10 @@
     backdrop-filter: blur(10px);
     z-index: 500;
     padding: var(--spacing-lg);
-    /* ✅ جلوگیری از اسکرول پس‌زمینه */
     overscroll-behavior: contain;
 }
 
-.winner-display.show {
-    display: flex;
-    animation: fadeIn var(--transition-normal);
-}
+.winner-display.show { display: flex; animation: fadeIn var(--transition-normal); }
 
 .winner-popup {
     background: var(--color-bg-secondary);
@@ -796,11 +781,7 @@
    Toolbox Picker
    ═══════════════════════════════════════════ */
 
-.toolbox-picker {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-md);
-}
+.toolbox-picker { display: flex; flex-direction: column; gap: var(--spacing-md); }
 
 .picker-list {
     max-height: 350px;
@@ -899,7 +880,7 @@
 }
 
 /* ═══════════════════════════════════════════
-   Items Picker Modal (برای setup)
+   Items Picker Modal
    ═══════════════════════════════════════════ */
 
 .items-picker-list {
@@ -931,10 +912,7 @@
     border-color: var(--color-accent-primary);
 }
 
-.items-picker-item.added {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+.items-picker-item.added { opacity: 0.5; cursor: not-allowed; }
 
 .items-picker-icon { font-size: 1.2rem; }
 
@@ -966,37 +944,21 @@
    ═══════════════════════════════════════════ */
 
 @media (max-width: 900px) {
-    .wheel-layout {
-        grid-template-columns: 1fr;
-    }
-
+    .wheel-layout { grid-template-columns: 1fr; }
     .wheel-main-section { padding: var(--spacing-md); }
-
-    .setup-row {
-        grid-template-columns: 1fr;
-    }
-
+    .setup-row { grid-template-columns: 1fr; }
     .winner-popup-with-story { max-width: 100%; }
     .winner-popup-story { max-height: 45vh; }
 }
 
 @media (max-width: 600px) {
     .wheel-main-section { padding: var(--spacing-sm); }
-
     .page-title { font-size: var(--font-size-xl); }
-
     .setup-title { font-size: var(--font-size-sm); }
-
-    .type-btn {
-        font-size: var(--font-size-xs);
-        padding: var(--spacing-xs) var(--spacing-sm);
-    }
-
+    .type-btn { font-size: var(--font-size-xs); padding: var(--spacing-xs) var(--spacing-sm); }
     .wheel-controls { gap: var(--spacing-sm); }
-
     .lever-handle { width: 52px; height: 52px; }
     .lever-base { width: 70px; }
-
     .winner-display { padding: var(--spacing-sm); }
     .winner-popup { max-height: 95vh; }
     .winner-popup-header { padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm); }
