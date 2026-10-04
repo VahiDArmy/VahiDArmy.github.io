@@ -1,0 +1,176 @@
+/* ============================================
+   نشان‌ها (Badges)
+   ============================================ */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 4px 10px;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+    white-space: nowrap;
+    line-height: 1.4;
+    transition: all var(--transition-fast);
+}
+
+.badge-primary {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--color-accent-primary);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.badge-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-accent-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--color-accent-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-accent-danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--color-accent-info);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Badge های خاص */
+.badge-random {
+    background: rgba(6, 182, 212, 0.15);
+    color: var(--color-accent-secondary);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-starred {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-single {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--color-accent-primary);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.badge-elimination {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-accent-danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.badge-sm {
+    padding: 2px 8px;
+    font-size: 10px;
+}
+
+.badge-lg {
+    padding: 6px 14px;
+    font-size: var(--font-size-sm);
+}
+
+/* Badge شماره‌ای (دایره) */
+.badge-dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    background: var(--gradient-primary);
+    color: white;
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+    line-height: 1;
+}
+
+/* Badge نقطه‌ای */
+.badge-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--border-radius-full);
+    background: var(--color-accent-success);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: pulse-badge 2s infinite;
+}
+
+@keyframes pulse-badge {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+/* Chip */
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 6px 12px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-full);
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    transition: all var(--transition-fast);
+}
+
+.chip:hover {
+    border-color: var(--color-accent-primary);
+    background: var(--color-bg-hover);
+}
+
+.chip-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: var(--border-radius-full);
+    background: transparent;
+    color: var(--color-text-tertiary);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    padding: 0;
+    line-height: 1;
+}
+
+.chip-close:hover {
+    background: var(--color-accent-danger);
+    color: white;
+}
+
+/* Star */
+.star {
+    color: #fbbf24;
+    font-size: 1.2em;
+    line-height: 1;
+    animation: star-pop 0.3s ease;
+}
+
+@keyframes star-pop {
+    0% { transform: scale(0) rotate(0); }
+    50% { transform: scale(1.3) rotate(180deg); }
+    100% { transform: scale(1) rotate(360deg); }
+}
