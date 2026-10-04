@@ -1,5 +1,5 @@
 /**
- * صفحه گردونه - با Setup Panel
+ * صفحه گردونه - با مدیریت خطا و دکمه تلاش مجدد
  * @module wheelPage
  */
 
@@ -13,6 +13,9 @@ const WheelPage = {
     lastPointerY: 0,
     dragDistance: 0,
     _isGeneratingStory: false,
+    _lastWinnerForRetry: null,
+    _retryCount: 0,
+    _maxRetries: 2,
 
     init() {
         this._initWheel();
@@ -31,7 +34,6 @@ const WheelPage = {
     _initSetupPanel() {
         const setup = this._getSetup();
 
-        // بارگذاری مقادیر
         const topicInput = document.getElementById('setup-topic');
         if (topicInput) {
             topicInput.value = setup.topic || '';
@@ -44,7 +46,6 @@ const WheelPage = {
             });
         }
 
-        // Type
         document.querySelectorAll('#type-selector .type-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.type === (setup.type || 'provide'));
             btn.addEventListener('click', () => {
@@ -54,19 +55,16 @@ const WheelPage = {
             });
         });
 
-        // ذخیره موضوع
         const saveTopicBtn = document.getElementById('save-topic-btn');
         if (saveTopicBtn) {
             saveTopicBtn.addEventListener('click', () => this._saveTopicToLibrary());
         }
 
-        // افزودن آیتم
         const addItemBtn = document.getElementById('add-setup-item-btn');
         if (addItemBtn) {
             addItemBtn.addEventListener('click', () => this._openItemPicker());
         }
 
-        // بازنشانی
         const resetBtn = document.getElementById('reset-setup-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', async () => {
@@ -91,11 +89,9 @@ const WheelPage = {
         const current = this._getSetup();
         const next = { ...current, ...partial };
         AppState.set('wheel.setup', next);
-
         try {
             if (SQLStorage.isReady) SQLStorage.setSetting('wheel_setup', next);
         } catch (e) {}
-
         if ('items' in partial) this._renderSetupItems();
     },
 
@@ -143,9 +139,7 @@ const WheelPage = {
         list.querySelectorAll('[data-qty-action]').forEach((btn) => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const id = btn.dataset.id;
-                const action = btn.dataset.qtyAction;
-                this._handleQtyAction(id, action);
+                this._handleQtyAction(btn.dataset.id, btn.dataset.qtyAction);
             });
         });
     },
@@ -163,7 +157,6 @@ const WheelPage = {
         } else if (action === 'remove') {
             items.splice(idx, 1);
         }
-
         this._updateSetup({ items });
     },
 
@@ -190,7 +183,7 @@ const WheelPage = {
                 <div class="items-picker-list">${listHtml}</div>
                 <div class="items-picker-new">
                     <input type="text" id="new-item-in-picker" class="input" placeholder="آیتم جدید (اضافه به جعبه ابزار)">
-                    <button id="add-new-item-in-picker" class="btn btn-primary">+ افزودن</button>
+                    <button id="add-new-item-in-picker" class="btn btn-primary" type="button">+ افزودن</button>
                 </div>
             </div>
         `;
@@ -203,19 +196,15 @@ const WheelPage = {
         });
 
         setTimeout(() => {
-            // انتخاب آیتم موجود
             document.querySelectorAll('.items-picker-item').forEach((el) => {
                 el.addEventListener('click', () => {
                     if (el.classList.contains('added')) return;
-                    const id = el.dataset.itemId;
-                    const label = el.dataset.label;
-                    this._addItemToSetup(id, label);
+                    this._addItemToSetup(el.dataset.itemId, el.dataset.label);
                     el.classList.add('added');
                     el.insertAdjacentHTML('beforeend', '<span class="badge badge-sm">افزوده شد</span>');
                 });
             });
 
-            // آیتم جدید
             const newInput = document.getElementById('new-item-in-picker');
             const addBtn = document.getElementById('add-new-item-in-picker');
             if (addBtn && newInput) {
@@ -226,7 +215,6 @@ const WheelPage = {
                     if (created) {
                         newInput.value = '';
                         this._addItemToSetup(created.id, created.label);
-                        // اضافه به لیست نمایش
                         const list = document.querySelector('.items-picker-list');
                         if (list) {
                             const emptyEl = list.querySelector('.items-picker-empty');
@@ -261,10 +249,6 @@ const WheelPage = {
         Notification.success(`«${label}» افزوده شد`);
     },
 
-    // ═══════════════════════════════════════════
-    // Topics
-    // ═══════════════════════════════════════════
-
     _getTopics() {
         try {
             if (SQLStorage.isReady) {
@@ -283,18 +267,15 @@ const WheelPage = {
             Notification.warning('موضوع خالی است');
             return;
         }
-
         const topics = this._getTopics();
         if (topics.includes(topic)) {
             Notification.info('این موضوع قبلاً ذخیره شده');
             return;
         }
-
         topics.push(topic);
         try {
             if (SQLStorage.isReady) SQLStorage.setSetting('topics_list', topics);
         } catch (e) {}
-
         Notification.success(`موضوع «${topic}» ذخیره شد`);
     },
 
@@ -308,7 +289,6 @@ const WheelPage = {
             dropdown.classList.add('show');
             return;
         }
-
         dropdown.innerHTML = topics.map((t) => `
             <div class="topic-suggestion-item" data-topic="${this._escape(t)}">${this._escape(t)}</div>
         `).join('');
@@ -421,10 +401,6 @@ const WheelPage = {
         setTimeout(() => indicator.classList.remove('show'), 1500);
     },
 
-    // ═══════════════════════════════════════════
-    // Controls / Mode
-    // ═══════════════════════════════════════════
-
     _initControls() {
         const clearBtn = document.getElementById('clear-wheel-btn');
         if (clearBtn) {
@@ -455,10 +431,6 @@ const WheelPage = {
             });
         });
     },
-
-    // ═══════════════════════════════════════════
-    // People List
-    // ═══════════════════════════════════════════
 
     _renderPeopleList() {
         const container = document.getElementById('wheel-people-list');
@@ -499,7 +471,6 @@ const WheelPage = {
 
     _openToolboxPicker() {
         const allPeople = People.getAll();
-
         if (allPeople.length === 0) {
             Modal.alert('جعبه ابزار خالی است. ابتدا از صفحه «توصیف‌ها» افراد را اضافه کنید.');
             return;
@@ -538,7 +509,7 @@ const WheelPage = {
                     label: 'ایجاد فرد جدید',
                     class: 'btn-outline',
                     closeOnClick: false,
-                    onClick: async (modal) => {
+                    onClick: () => {
                         Modal.closeAll();
                         setTimeout(() => this._createNewPerson(), 200);
                     },
@@ -549,12 +520,10 @@ const WheelPage = {
                     onClick: (modal) => {
                         const ids = [...modal.querySelectorAll('input[type="checkbox"]:checked:not(:disabled)')]
                             .map((cb) => cb.dataset.id);
-
                         if (ids.length === 0) {
                             Notification.warning('هیچ فردی انتخاب نشده');
                             return false;
                         }
-
                         People.addManyToWheel(ids);
                         this._renderPeopleList();
                         WheelCore.setItems(People.getInWheel());
@@ -593,11 +562,7 @@ const WheelPage = {
             this._renderPeopleList();
             WheelCore.setItems(People.getInWheel());
         });
-
-        Events.on('items-changed', () => {
-            // آیتم‌های setup ممکن است تغییر کرده باشند - دوباره رندر
-            this._renderSetupItems();
-        });
+        Events.on('items-changed', () => this._renderSetupItems());
 
         const addBtn = document.getElementById('add-person-btn');
         if (addBtn) addBtn.addEventListener('click', () => this._openToolboxPicker());
@@ -625,9 +590,7 @@ const WheelPage = {
 
     onSpinComplete(winner) {
         if (!winner) return;
-
         const mode = AppState.get('wheel.currentMode') || 'single';
-
         if (mode === 'elimination') {
             this._handleElimination(winner);
         } else {
@@ -638,7 +601,6 @@ const WheelPage = {
 
     _handleElimination(winner) {
         const eliminatedName = winner.name || winner.label;
-
         History.add({ winner, mode: 'elimination', spinType: 'random' });
 
         if (winner.id) {
@@ -668,6 +630,8 @@ const WheelPage = {
 
         const name = winner.name || winner.label || 'نامشخص';
         this._isGeneratingStory = false;
+        this._lastWinnerForRetry = winner;
+        this._retryCount = 0;
 
         container.innerHTML = `
             <div class="winner-popup winner-popup-with-story">
@@ -700,18 +664,18 @@ const WheelPage = {
     _collectDescriptions() {
         const all = Descriptions.getAll();
         const filtered = {};
-
         People.getInWheel().forEach((p) => {
             if (all[p.id]) filtered[p.name] = all[p.id];
         });
-
         (AppState.get('items') || []).forEach((i) => {
             if (all[i.id]) filtered[i.label] = all[i.id];
         });
-
         return filtered;
     },
 
+    /**
+     * ساخت خودکار داستان با استریم + مدیریت خطا + تلاش مجدد
+     */
     async _generateAutoStory(winner) {
         if (this._isGeneratingStory) return;
         this._isGeneratingStory = true;
@@ -719,17 +683,20 @@ const WheelPage = {
         const section = document.getElementById('winner-story-section');
         if (!section) { this._isGeneratingStory = false; return; }
 
-        if (!OpenRouter.getApiKey()) {
-            section.innerHTML = `
-                <div class="story-error">
-                    <p>⚠️ برای ساخت خودکار داستان، ابتدا کلید OpenRouter را در
-                    <a href="settings.html">تنظیمات</a> وارد کنید</p>
-                </div>
-            `;
+        // ─── اعتبارسنجی تنظیمات ───
+        const validation = Logger.validateOpenRouter();
+        if (!validation.ok) {
+            this._showErrorState(section, {
+                title: '⚙️ تنظیمات هوش مصنوعی',
+                message: validation.errors.join('\n'),
+                canRetry: false,
+                showSettings: true,
+            });
             this._isGeneratingStory = false;
             return;
         }
 
+        // ─── آماده‌سازی context ───
         const setup = this._getSetup();
         const otherWheelPeople = People.getInWheel().filter((p) => p.id !== winner.id);
 
@@ -750,13 +717,13 @@ const WheelPage = {
                 quantity: it.quantity,
                 description: Descriptions.get(it.id) || '',
             })),
-            type: setup.type || 'provide', // 'provide' یا 'receive'
+            type: setup.type || 'provide',
             descriptions: this._collectDescriptions(),
             mode: AppState.get('wheel.currentMode') || 'single',
             tone: 'funny',
-            length: 'medium',
         };
 
+        // ─── نمایش حالت استریم ───
         section.innerHTML = `
             <div class="story-streaming">
                 <div class="story-streaming-content" id="streaming-content"></div>
@@ -780,15 +747,123 @@ const WheelPage = {
                         section.scrollTop = section.scrollHeight;
                     }
                 },
-                onComplete: (s) => this._renderStoryInPopup(s),
+                onComplete: (s) => {
+                    this._retryCount = 0;
+                    this._renderStoryInPopup(s);
+                },
                 onError: (err) => {
-                    section.innerHTML = `<div class="story-error"><p>خطا: ${this._escape(err.message)}</p></div>`;
+                    Logger.error('WheelPage.generateStory', err, {
+                        winnerName: winner.name,
+                        retryCount: this._retryCount,
+                        hasTopic: !!(setup.topic && setup.topic.trim()),
+                        itemsCount: (setup.items || []).length,
+                    });
+                    this._showErrorState(section, {
+                        title: '❌ خطا در ساخت داستان',
+                        message: err.message || 'خطای ناشناخته',
+                        canRetry: this._retryCount < this._maxRetries,
+                    });
                 },
             });
         } catch (error) {
-            section.innerHTML = `<div class="story-error"><p>خطا: ${this._escape(error.message)}</p></div>`;
+            Logger.error('WheelPage.generateStory.catch', error, {
+                winnerName: winner.name,
+                retryCount: this._retryCount,
+            });
+            this._showErrorState(section, {
+                title: '❌ خطا در ساخت داستان',
+                message: error.message || 'خطای ناشناخته',
+                canRetry: this._retryCount < this._maxRetries,
+            });
         } finally {
             this._isGeneratingStory = false;
+        }
+    },
+
+    /**
+     * نمایش حالت خطا با دکمه تلاش مجدد
+     */
+    _showErrorState(section, options = {}) {
+        const {
+            title = '❌ خطا',
+            message = 'خطای ناشناخته',
+            canRetry = true,
+            showSettings = false,
+        } = options;
+
+        const lastLog = Logger.getLast();
+        const logInfo = lastLog
+            ? `<div class="error-log-meta">
+                 <span>🕐 ${Utils.formatDate(lastLog.timestamp)}</span>
+                 <span>📍 ${this._escape(lastLog.context)}</span>
+               </div>`
+            : '';
+
+        section.innerHTML = `
+            <div class="story-error-state">
+                <div class="story-error-icon">⚠️</div>
+                <div class="story-error-title">${this._escape(title)}</div>
+                <div class="story-error-message">${this._escape(message)}</div>
+                ${logInfo}
+                <div class="story-error-actions">
+                    ${canRetry ? `
+                        <button class="btn btn-primary btn-sm" id="story-retry-btn" type="button">
+                            🔄 تلاش مجدد
+                            ${this._retryCount > 0 ? `(${Utils.toPersianNumbers(this._retryCount)}/${Utils.toPersianNumbers(this._maxRetries)})` : ''}
+                        </button>
+                    ` : `
+                        <button class="btn btn-secondary btn-sm" disabled type="button">
+                            محدودیت تلاش
+                        </button>
+                    `}
+                    ${showSettings ? `
+                        <a href="settings.html" class="btn btn-secondary btn-sm">⚙️ تنظیمات</a>
+                    ` : ''}
+                    <button class="btn btn-ghost btn-sm" id="story-error-copy-btn" type="button">
+                        📋 کپی خطا
+                    </button>
+                </div>
+                ${!canRetry ? `
+                    <div class="story-error-hint">
+                        💡 پیشنهاد: تنظیمات GitHub و OpenRouter را بررسی کنید، یا صفحه را رفرش کنید.
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        // دکمه تلاش مجدد
+        const retryBtn = document.getElementById('story-retry-btn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                this._retryCount++;
+                const winner = this._lastWinnerForRetry || AppState.get('wheel.lastResult');
+                if (!winner) {
+                    Notification.error('برنده‌ای برای تلاش مجدد یافت نشد');
+                    return;
+                }
+                section.innerHTML = `
+                    <div class="story-loading">
+                        <div class="spinner"></div>
+                        <p>در حال تلاش مجدد (${Utils.toPersianNumbers(this._retryCount)}/${Utils.toPersianNumbers(this._maxRetries)})...</p>
+                    </div>
+                `;
+                this._isGeneratingStory = false;
+                this._generateAutoStory(winner);
+            });
+        }
+
+        // کپی خطا
+        const copyBtn = document.getElementById('story-error-copy-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', async () => {
+                const text = `❌ ${title}\n\n` +
+                    `پیام: ${message}\n` +
+                    `برنده: ${this._lastWinnerForRetry?.name || 'نامشخص'}\n` +
+                    `تاریخ: ${Utils.formatDate(Date.now())}\n` +
+                    (lastLog ? `Context: ${lastLog.context}\n` : '');
+                const ok = await Utils.copyToClipboard(text);
+                if (ok) Notification.success('متن خطا کپی شد');
+            });
         }
     },
 
@@ -825,6 +900,7 @@ const WheelPage = {
         document.getElementById('regen-popup-story')?.addEventListener('click', () => {
             const w = AppState.get('wheel.lastResult');
             if (w) {
+                this._retryCount = 0;
                 section.innerHTML = `<div class="story-loading"><div class="spinner"></div><p>در حال نوشتن داستان...</p></div>`;
                 this._isGeneratingStory = false;
                 this._generateAutoStory(w);
