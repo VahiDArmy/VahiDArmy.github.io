@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "hist_1791109400172_cfrx1cclz",
+    "winner_id": "person_1791106693026_nz0ufn0yx",
+    "winner_name": "اکبر",
+    "mode": "elimination",
+    "spin_type": "random",
+    "timestamp": 1791109400172
+  },
+  {
+    "id": "hist_1791108185805_galxhp25f",
+    "winner_id": "person_1791106693026_nz0ufn0yx",
+    "winner_name": "اکبر",
+    "mode": "single",
+    "spin_type": "random",
+    "timestamp": 1791108185805
+  },
+  {
+    "id": "hist_1791106724332_7c9hi2ux7",
+    "winner_id": "person_1791106706798_ss26ojzmr",
+    "winner_name": "اصغر",
+    "mode": "single",
+    "spin_type": "random",
+    "timestamp": 1791106724332
+  }
+]
