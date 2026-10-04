@@ -1,5 +1,5 @@
 /**
- * مدیریت داستان‌های تولیدشده
+ * مدیریت داستان‌ها - با پشتیبانی Streaming
  * @module storyManager
  */
 
@@ -7,27 +7,24 @@ const StoryManager = {
     isGenerating: false,
 
     /**
-     * تولید داستان بر اساس context
+     * تولید استریم - نتیجه تدریجی برمی‌گردد
      */
-    async generate(context = {}, options = {}) {
+    async generateStream(context, callbacks = {}) {
+        const { onChunk, onComplete, onError } = callbacks;
+
         if (this.isGenerating) {
-            Notification.warning('در حال تولید داستان قبلی هستید، کمی صبر کنید');
+            const err = new Error('در حال تولید داستان قبلی هستید');
+            if (onError) onError(err);
             return null;
         }
 
         if (!OpenRouter.getApiKey()) {
-            Notification.error('کلید API OpenRouter را در تنظیمات وارد کنید');
+            const err = new Error('کلید API OpenRouter تنظیم نشده است');
+            if (onError) onError(err);
             return null;
         }
 
         this.isGenerating = true;
-
-        // نمایش لودینگ
-        const loadingId = Notification.show(
-            '🤖 در حال نوشتن داستان...',
-            'info',
-            0
-        );
 
         try {
             const systemPrompt = PromptBuilder.getSystemPrompt();
@@ -38,46 +35,47 @@ const StoryManager = {
                 { role: 'user', content: userPrompt },
             ];
 
-            const result = await OpenRouter.chat(messages, {
-                temperature: AppState.get('settings.aiTemperature') || 0.8,
-                maxTokens: options.maxTokens || 1000,
-                model: options.model || AppState.get('settings.aiModel') || 'openrouter/free',
-            });
+            let fullContent = '';
+            let modelUsed = OpenRouter.getModel();
 
-            // ذخیره در دیتابیس
+            const result = await OpenRouter.chatStream(
+                messages,
+                {
+                    temperature: AppState.get('settings.aiTemperature') || 0.8,
+                    maxTokens: 1500,
+                },
+                (chunk, model) => {
+                    fullContent += chunk;
+                    if (model) modelUsed = model;
+                    if (onChunk) onChunk(chunk, model, fullContent);
+                }
+            );
+
             const story = {
                 id: Utils.generateId('story'),
-                content: result.content || '',
-                model: result.model || 'unknown',
+                content: result.content || fullContent,
+                model: result.model || modelUsed,
                 context: JSON.stringify({
                     winner: context.winner?.name,
                     mode: context.mode,
                     tone: context.tone,
                 }),
                 timestamp: Date.now(),
-                usage: result.usage || {},
-                wordCount: PromptBuilder.estimateWords(result.content || ''),
+                wordCount: (result.content || fullContent).trim().split(/\s+/).length,
             };
 
-            SQLStorage.addStory(story);
+            // ذخیره در دیتابیس
+            try { SQLStorage.addStory(story); } catch (e) {}
 
-            // به‌روزرسانی State
             const stories = [story, ...(AppState.get('stories') || [])].slice(0, 100);
             AppState.set('stories', stories);
 
-            // حذف لودینگ
-            if (loadingId && loadingId.parentNode) {
-                loadingId.parentNode.removeChild(loadingId);
-            }
+            if (onComplete) onComplete(story);
 
-            Notification.success(`داستان با مدل «${this._shortenModelName(story.model)}» ساخته شد`);
             return story;
         } catch (error) {
-            if (loadingId && loadingId.parentNode) {
-                loadingId.parentNode.removeChild(loadingId);
-            }
-            Notification.error('خطا در تولید داستان: ' + error.message);
             console.error('خطای StoryManager:', error);
+            if (onError) onError(error);
             return null;
         } finally {
             this.isGenerating = false;
@@ -85,63 +83,59 @@ const StoryManager = {
     },
 
     /**
-     * دریافت همه داستان‌ها
+     * تولید معمولی (بدون استریم) - برای سازگاری
      */
+    async generate(context, options = {}) {
+        return new Promise((resolve) => {
+            this.generateStream(context, {
+                onComplete: (story) => resolve(story),
+                onError: (err) => {
+                    Notification.error('خطا در تولید داستان: ' + err.message);
+                    resolve(null);
+                },
+            });
+        });
+    },
+
     getAll(limit = 50) {
-        return SQLStorage.getAllStories(limit).map((s) => ({
-            id: s.id,
-            content: s.content,
-            model: s.model,
-            context: s.context,
-            timestamp: s.timestamp,
-        }));
+        try {
+            return SQLStorage.getAllStories(limit).map((s) => ({
+                id: s.id,
+                content: s.content,
+                model: s.model,
+                context: s.context,
+                timestamp: s.timestamp,
+            }));
+        } catch (e) {
+            return [];
+        }
     },
 
-    /**
-     * دریافت داستان با شناسه
-     */
     getById(id) {
-        return this.getAll().find((s) => s.id === id);
+        return this.getAll(500).find((s) => s.id === id);
     },
 
-    /**
-     * حذف داستان
-     */
     remove(id) {
-        SQLStorage.removeStory(id);
+        try { SQLStorage.removeStory(id); } catch (e) {}
         const stories = (AppState.get('stories') || []).filter((s) => s.id !== id);
         AppState.set('stories', stories);
-        Notification.info('داستان حذف شد');
     },
 
-    /**
-     * پاک کردن همه داستان‌ها
-     */
     clear() {
-        SQLStorage.clearStories();
+        try { SQLStorage.clearStories(); } catch (e) {}
         AppState.set('stories', []);
-        Notification.info('همه داستان‌ها پاک شدند');
     },
 
-    /**
-     * رندر داستان به HTML (تبدیل markdown ساده)
-     */
     renderToHTML(content) {
         if (!content) return '<p class="text-muted">داستانی تولید نشده است.</p>';
 
         let html = content;
 
-        // تیتر h2
         html = html.replace(/^##\s+(.+)$/gm, '<h2 class="story-title">$1</h2>');
         html = html.replace(/^###\s+(.+)$/gm, '<h3 class="story-subtitle">$1</h3>');
-
-        // بولد
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-        // ایتالیک
         html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
 
-        // پاراگراف‌ها
         html = html.split(/\n\n+/).map((p) => {
             p = p.trim();
             if (!p) return '';
@@ -152,11 +146,8 @@ const StoryManager = {
         return html;
     },
 
-    /**
-     * دانلود داستان
-     */
     download(story) {
-        const text = `# داستان تولیدشده توسط هوش مصنوعی\n\n` +
+        const text = `# داستان تولیدشده\n\n` +
             `مدل: ${story.model}\n` +
             `تاریخ: ${Utils.formatDate(story.timestamp)}\n\n` +
             `---\n\n${story.content}`;
@@ -164,26 +155,12 @@ const StoryManager = {
         Utils.downloadFile(text, `story-${story.id}.txt`, 'text/plain;charset=utf-8');
     },
 
-    /**
-     * کپی به کلیپ‌بورد
-     */
     async copy(story) {
         const ok = await Utils.copyToClipboard(story.content);
         if (ok) Notification.success('داستان کپی شد');
         else Notification.error('خطا در کپی');
     },
 
-    /**
-     * کوتاه کردن نام مدل
-     */
-    _shortenModelName(model) {
-        if (!model) return 'نامشخص';
-        return model.split('/').pop().split(':')[0];
-    },
-
-    /**
-     * آمار
-     */
     getStats() {
         const all = this.getAll(1000);
         const models = {};
@@ -195,12 +172,7 @@ const StoryManager = {
             totalWords += (s.content || '').trim().split(/\s+/).length;
         });
 
-        return {
-            total: all.length,
-            models,
-            totalWords,
-            avgWords: all.length > 0 ? Math.round(totalWords / all.length) : 0,
-        };
+        return { total: all.length, models, totalWords };
     },
 };
 
