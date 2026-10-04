@@ -10,11 +10,32 @@ const GitHubStorage = {
      * تنظیمات
      */
     getConfig() {
+        let username = (AppState.get('settings.githubUsername') || '').trim();
+        let repo = (AppState.get('settings.githubRepo') || '').trim();
+        let branch = (AppState.get('settings.githubBranch') || '').trim();
+
+        // اگر کاربر اشتباهاً username/repo وارد کرده باشد، جدا کن
+        if (username.includes('/')) {
+            const parts = username.split('/').filter(Boolean);
+            if (parts.length >= 2 && !repo) {
+                username = parts[0];
+                repo = parts[1];
+            } else {
+                username = parts[0];
+            }
+        }
+
+        // پاکسازی اسلش اضافی
+        repo = repo.replace(/^\/+|\/+$/g, '');
+
+        // اگر شاخه خالی بود، پیش‌فرض main
+        if (!branch) branch = 'main';
+
         return {
-            token: AppState.get('settings.githubToken'),
-            owner: AppState.get('settings.githubUsername'),
-            repo: AppState.get('settings.githubRepo'),
-            branch: 'main',
+            token: (AppState.get('settings.githubToken') || '').trim(),
+            owner: username,
+            repo: repo,
+            branch: branch,
         };
     },
 
@@ -32,6 +53,7 @@ const GitHubStorage = {
     async request(endpoint, options = {}) {
         const config = this.getConfig();
         const url = `${this.baseUrl}${endpoint}`;
+
         const headers = {
             'Accept': 'application/vnd.github.v3+json',
             'Authorization': `Bearer ${config.token}`,
@@ -39,17 +61,58 @@ const GitHubStorage = {
             ...options.headers,
         };
 
+        let response;
         try {
-            const response = await fetch(url, { ...options, headers });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || `خطای GitHub: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error('خطای GitHub API:', error);
-            throw error;
+            response = await fetch(url, { ...options, headers });
+        } catch (networkError) {
+            console.error('❌ خطای شبکه در GitHub API:', networkError);
+            console.error('URL:', url);
+            throw new Error(
+                `اتصال به GitHub برقرار نشد. بررسی کنید:\n` +
+                `۱. اتصال اینترنت\n` +
+                `۲. VPN (ممکن است GitHub API را بلاک کند)\n` +
+                `۳. نام کاربری و مخزن: ${config.owner}/${config.repo}`
+            );
         }
+
+        let data;
+        try {
+            data = await response.json();
+        } catch (parseError) {
+            throw new Error(`پاسخ نامعتبر از GitHub (کد ${response.status})`);
+        }
+
+        if (!response.ok) {
+            const msg = data?.message || `خطای ${response.status}`;
+            
+            // ترجمه خطاهای رایج
+            if (response.status === 401) {
+                throw new Error('توکن نامعتبر است (۴۰۱). توکن را در تنظیمات بررسی کنید.');
+            }
+            if (response.status === 403) {
+                throw new Error(
+                    'دسترسی رد شد (۴۰۳). احتمالاً توکن دسترسی repo ندارد یا rate limit پر شده.'
+                );
+            }
+            if (response.status === 404) {
+                throw new Error(
+                    `مخزن پیدا نشد (۴۰۴). بررسی کنید:\n` +
+                    `نام کاربری: ${config.owner}\n` +
+                    `نام مخزن: ${config.repo}\n` +
+                    `شاخه: ${config.branch}`
+                );
+            }
+            if (response.status === 409) {
+                throw new Error('تداخل نسخه (۴۰۹). دوباره تلاش کنید.');
+            }
+            if (response.status === 422) {
+                throw new Error('داده نامعتبر (۴۲۲): ' + msg);
+            }
+
+            throw new Error(msg);
+        }
+
+        return data;
     },
 
     /**
@@ -67,7 +130,7 @@ const GitHubStorage = {
                 sha: data.sha,
             };
         } catch (error) {
-            if (error.message.includes('404')) {
+            if (error.message.includes('۴۰۴') || error.message.includes('404')) {
                 return null;
             }
             throw error;
@@ -79,8 +142,10 @@ const GitHubStorage = {
      */
     async saveFile(path, content, message = 'به‌روزرسانی خودکار') {
         const config = this.getConfig();
-        const encodedContent = btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
-        
+        const encodedContent = btoa(
+            unescape(encodeURIComponent(JSON.stringify(content, null, 2)))
+        );
+
         let sha = null;
         try {
             const existing = await this.getFile(path);
@@ -144,7 +209,7 @@ const GitHubStorage = {
      * بارگذاری همه داده‌ها
      */
     async loadAll() {
-        const [people, items, descriptions, history, settings] = await Promise.all([
+        const [people, items, descriptions, history, settings] = await Promise.allSettled([
             this.getFile('data/people.json'),
             this.getFile('data/items.json'),
             this.getFile('data/descriptions.json'),
@@ -152,23 +217,83 @@ const GitHubStorage = {
             this.getFile('data/settings.json'),
         ]);
 
+        const unwrap = (r) => (r.status === 'fulfilled' && r.value ? r.value.content : null);
+
         return {
-            people: people?.content || [],
-            items: items?.content || [],
-            descriptions: descriptions?.content || {},
-            history: history?.content || [],
-            settings: settings?.content || null,
+            people: unwrap(people) || [],
+            items: unwrap(items) || [],
+            descriptions: unwrap(descriptions) || {},
+            history: unwrap(history) || [],
+            settings: unwrap(settings),
         };
     },
 
     /**
-     * بررسی اتصال
+     * تست اتصال - کامل
      */
     async testConnection() {
+        const config = this.getConfig();
+
+        // چک ۱: وجود توکن
+        if (!config.token) {
+            return { success: false, message: 'توکن GitHub وارد نشده است' };
+        }
+
+        // چک ۲: کاربر جاری
         try {
             await this.request('/user');
+        } catch (e) {
+            return { success: false, message: 'توکن نامعتبر: ' + e.message };
+        }
+
+        // چک ۳: وجود مخزن
+        if (!config.owner || !config.repo) {
+            return {
+                success: false,
+                message: 'نام کاربری یا نام مخزن وارد نشده است',
+            };
+        }
+
+        try {
+            const repoInfo = await this.request(
+                `/repos/${config.owner}/${config.repo}`
+            );
+
+            // چک ۴: وجود شاخه
+            try {
+                await this.request(
+                    `/repos/${config.owner}/${config.repo}/branches/${config.branch}`
+                );
+            } catch (e) {
+                return {
+                    success: false,
+                    message: `شاخه «${config.branch}» در مخزن «${config.repo}» پیدا نشد. ` +
+                             `شاخه‌های موجود: main, master یا...`,
+                };
+            }
+
+            return {
+                success: true,
+                message: `اتصال کامل: ${repoInfo.full_name} (شاخه: ${config.branch})`,
+            };
+        } catch (e) {
+            return { success: false, message: e.message };
+        }
+    },
+
+    /**
+     * بررسی وجود شاخه
+     */
+    async checkBranch() {
+        const config = this.getConfig();
+        if (!config.owner || !config.repo) return null;
+
+        try {
+            await this.request(
+                `/repos/${config.owner}/${config.repo}/branches/${config.branch}`
+            );
             return true;
-        } catch (error) {
+        } catch (e) {
             return false;
         }
     },
