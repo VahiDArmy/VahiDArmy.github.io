@@ -1,14 +1,12 @@
 /**
  * ارتباط با OpenRouter
- * - پشتیبانی از SSE + JSON (تشخیص خودکار)
- * - Fallback خودکار از استریم به معمولی
- * - لاگ کامل درخواست و پاسخ
+ * - فقط content را برمی‌گرداند (نه reasoning)
+ * - Fallback خودکار از استریم به JSON
  * @module openRouter
  */
 
 const OpenRouter = {
-    baseUrl: 'https://openrouter.ai/api/v1',
-    DEFAULT_MODEL: 'openrouter/free',
+    baseUrl: 'https://api.openrouter.ai/api/v1',
 
     getApiKey() {
         return (AppState.get('settings.openrouterApiKey') || '').trim();
@@ -16,12 +14,9 @@ const OpenRouter = {
 
     getModel() {
         const model = (AppState.get('settings.aiModel') || '').trim();
-        return model || this.DEFAULT_MODEL;
+        return model || 'openrouter/free';
     },
 
-    /**
-     * هدرها
-     */
     _getHeaders(apiKey) {
         return {
             'Authorization': `Bearer ${apiKey}`,
@@ -31,15 +26,12 @@ const OpenRouter = {
         };
     },
 
-    /**
-     * ساخت body
-     */
     _buildBody(messages, options, stream) {
         return {
             model: options.model || this.getModel(),
             messages,
             temperature: options.temperature ?? AppState.get('settings.aiTemperature') ?? 0.8,
-            max_tokens: options.maxTokens || 2000,
+            max_tokens: options.maxTokens || 2500,
             stream,
         };
     },
@@ -60,12 +52,7 @@ const OpenRouter = {
         const url = `${this.baseUrl}/chat/completions`;
 
         Logger.debug('OpenRouter.chat', '📤 ارسال درخواست', {
-            url,
-            model: body.model,
-            temperature: body.temperature,
-            max_tokens: body.max_tokens,
-            messagesCount: messages.length,
-            stream: false,
+            url, model: body.model, temperature: body.temperature,
         });
 
         let response;
@@ -79,74 +66,63 @@ const OpenRouter = {
             });
         } catch (networkError) {
             Logger.error('OpenRouter.chat.network', networkError, { url });
-            throw new Error(
-                'خطای شبکه: به اینترنت متصل نیستید یا OpenRouter در دسترس نیست.'
-            );
+            throw new Error('خطای شبکه: به اینترنت متصل نیستید یا OpenRouter در دسترس نیست.');
         }
 
         const duration = Date.now() - startTime;
-        const contentType = response.headers.get('content-type') || '';
-
-        Logger.debug('OpenRouter.chat', '📥 پاسخ دریافت شد', {
-            status: response.status,
-            contentType,
-            duration: duration + 'ms',
-        });
-
-        let data;
         const rawText = await response.text();
 
-        Logger.debug('OpenRouter.chat', '📄 متن خام پاسخ (200 کاراکتر اول)', {
-            rawPreview: rawText.substring(0, 200),
+        Logger.debug('OpenRouter.chat', '📥 پاسخ', {
+            status: response.status, duration: duration + 'ms',
             rawLength: rawText.length,
         });
 
+        let data;
         try {
             data = JSON.parse(rawText);
         } catch (e) {
-            Logger.error('OpenRouter.chat.parse', new Error('پاسخ JSON نامعتبر'), {
-                rawText: rawText.substring(0, 500),
-                status: response.status,
+            Logger.error('OpenRouter.chat.parse', e, {
+                rawText: rawText.substring(0, 500), status: response.status,
             });
             throw new Error(`پاسخ نامعتبر از سرور (کد ${response.status})`);
         }
 
         if (!response.ok) {
             Logger.error('OpenRouter.chat.http', new Error('خطای HTTP'), {
-                status: response.status,
-                errorData: data,
+                status: response.status, errorData: data,
             });
             throw new Error(this._parseError(response.status, data, body.model));
         }
 
-        // استخراج محتوا
-        let content = '';
-        let modelUsed = data.model || body.model;
+        // ⚠️ فقط content را استفاده کن - نه reasoning
+        const choice = data.choices?.[0];
+        const message = choice?.message || {};
+        const content = (message.content || '').trim();
+        const modelUsed = data.model || body.model;
 
-        if (data.choices?.[0]?.message?.content) {
-            content = data.choices[0].message.content;
-        } else if (data.choices?.[0]?.message?.reasoning) {
-            content = data.choices[0].message.reasoning;
-            Logger.warn('OpenRouter.chat', 'استفاده از reasoning به جای content');
-        } else if (data.choices?.[0]?.text) {
-            content = data.choices[0].text;
-            Logger.warn('OpenRouter.chat', 'استفاده از text به جای content');
-        }
-
-        Logger.debug('OpenRouter.chat', '✅ محتوا استخراج شد', {
+        Logger.debug('OpenRouter.chat', '📊 استخراج محتوا', {
+            hasContent: !!content,
             contentLength: content.length,
+            hasReasoning: !!message.reasoning,
+            reasoningLength: (message.reasoning || '').length,
+            finishReason: choice?.finish_reason,
             model: modelUsed,
-            finishReason: data.choices?.[0]?.finish_reason,
-            usage: data.usage,
         });
 
-        if (!content || !content.trim()) {
+        // اگر content خالی ولی reasoning دارد
+        if (!content && message.reasoning) {
             const err = new Error(
-                `پاسخ خالی از مدل «${modelUsed}» دریافت شد`
+                `مدل «${modelUsed}» فقط reasoning برگرداند و content خالی است. ` +
+                `یک مدل دیگر انتخاب کنید.`
             );
+            Logger.error('OpenRouter.chat.reasoningOnly', err);
+            throw err;
+        }
+
+        if (!content) {
+            const err = new Error(`پاسخ خالی از مدل «${modelUsed}» دریافت شد`);
             Logger.error('OpenRouter.chat.empty', err, {
-                fullData: JSON.stringify(data).substring(0, 500),
-                finishReason: data.choices?.[0]?.finish_reason,
+                finishReason: choice?.finish_reason,
             });
             throw err;
         }
@@ -155,7 +131,7 @@ const OpenRouter = {
     },
 
     // ═══════════════════════════════════════════
-    // درخواست استریم (با تشخیص خودکار)
+    // درخواست استریم
     // ═══════════════════════════════════════════
 
     async chatStream(messages, options = {}, onChunk) {
@@ -170,16 +146,10 @@ const OpenRouter = {
         const url = `${this.baseUrl}/chat/completions`;
 
         Logger.debug('OpenRouter.stream', '📤 ارسال درخواست استریم', {
-            url,
-            model: body.model,
-            temperature: body.temperature,
-            max_tokens: body.max_tokens,
-            messagesCount: messages.length,
+            url, model: body.model,
         });
 
         let response;
-        const startTime = Date.now();
-
         try {
             response = await fetch(url, {
                 method: 'POST',
@@ -191,72 +161,51 @@ const OpenRouter = {
             throw new Error('خطای شبکه: ' + networkError.message);
         }
 
-        const duration = Date.now() - startTime;
         const contentType = response.headers.get('content-type') || '';
 
-        Logger.debug('OpenRouter.stream', '📥 پاسخ استریم دریافت شد', {
-            status: response.status,
-            contentType,
-            duration: duration + 'ms',
-        });
-
-        // خطای HTTP
         if (!response.ok) {
             let errData = {};
             try {
                 const txt = await response.text();
                 errData = JSON.parse(txt);
             } catch (e) {}
-
             Logger.error('OpenRouter.stream.http', new Error('خطای HTTP'), {
-                status: response.status,
-                errorData: errData,
+                status: response.status, errorData: errData,
             });
             throw new Error(this._parseError(response.status, errData, body.model));
         }
 
-        // ─── حالت ۱: پاسخ SSE ───
+        // SSE
         if (contentType.includes('text/event-stream')) {
-            Logger.debug('OpenRouter.stream', '🎬 نوع: SSE');
             return await this._parseSSE(response, body.model, onChunk);
         }
 
-        // ─── حالت ۲: پاسخ JSON معمولی (سرور استریم را نادیده گرفته) ───
-        Logger.warn(
-            'OpenRouter.stream',
-            '⚠️ سرور SSE نداد - به JSON معمولی برمی‌گردیم',
-            { contentType }
-        );
-
+        // JSON معمولی
+        Logger.warn('OpenRouter.stream', '⚠️ سرور SSE نداد - JSON');
         const rawText = await response.text();
-        Logger.debug('OpenRouter.stream', '📄 متن خام JSON', {
-            rawLength: rawText.length,
-            rawPreview: rawText.substring(0, 300),
-        });
 
         let data;
         try {
             data = JSON.parse(rawText);
         } catch (e) {
-            Logger.error('OpenRouter.stream.parseJSON', e, {
-                rawText: rawText.substring(0, 500),
-            });
-            throw new Error('پاسخ نامعتبر از سرور (نه SSE نه JSON)');
+            Logger.error('OpenRouter.stream.parseJSON', e);
+            throw new Error('پاسخ نامعتبر از سرور');
         }
 
-        const content = data.choices?.[0]?.message?.content || '';
+        const choice = data.choices?.[0];
+        const message = choice?.message || {};
+        const content = (message.content || '').trim();
         const modelUsed = data.model || body.model;
 
-        Logger.debug('OpenRouter.stream', '✅ محتوا از JSON استخراج شد', {
-            contentLength: content.length,
-            model: modelUsed,
-        });
+        // اگر فقط reasoning داشت
+        if (!content && message.reasoning) {
+            throw new Error(
+                `مدل «${modelUsed}» فقط reasoning برگرداند. مدل دیگری انتخاب کنید.`
+            );
+        }
 
-        if (!content.trim()) {
-            Logger.error('OpenRouter.stream.emptyJSON', new Error('JSON خالی'), {
-                fullData: JSON.stringify(data).substring(0, 500),
-            });
-            throw new Error(`پاسخ خالی از مدل «${modelUsed}» دریافت شد`);
+        if (!content) {
+            throw new Error(`پاسخ خالی از مدل «${modelUsed}»`);
         }
 
         if (typeof onChunk === 'function') {
@@ -267,16 +216,17 @@ const OpenRouter = {
     },
 
     /**
-     * پارس SSE
+     * پارس SSE - ⚠️ فقط content، نه reasoning
      */
     async _parseSSE(response, fallbackModel, onChunk) {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
         let fullContent = '';
+        let reasoningContent = '';
         let modelUsed = fallbackModel;
         let chunkCount = 0;
-        let emptyChunkCount = 0;
+        let contentChunks = 0;
 
         try {
             while (true) {
@@ -284,55 +234,37 @@ const OpenRouter = {
                 if (done) break;
 
                 buffer += decoder.decode(value, { stream: true });
-
-                // پردازش خط به خط
                 const lines = buffer.split('\n');
                 buffer = lines.pop() || '';
 
                 for (const line of lines) {
                     const trimmed = line.trim();
-                    if (!trimmed) continue;
-
-                    // فقط data: را پردازش کن
-                    if (!trimmed.startsWith('data:')) {
-                        // خطوط event: و id: و... را نادیده بگیر
-                        continue;
-                    }
+                    if (!trimmed || !trimmed.startsWith('data:')) continue;
 
                     const data = trimmed.slice(5).trim();
-                    if (data === '[DONE]') {
-                        Logger.debug('OpenRouter.stream', '🏁 [DONE] دریافت شد');
-                        continue;
-                    }
+                    if (data === '[DONE]') continue;
                     if (!data) continue;
 
                     let parsed;
-                    try {
-                        parsed = JSON.parse(data);
-                    } catch (e) {
-                        emptyChunkCount++;
-                        if (emptyChunkCount <= 3) {
-                            Logger.debug('OpenRouter.stream', 'خطای پارس chunk', {
-                                preview: data.substring(0, 100),
-                            });
-                        }
-                        continue;
-                    }
+                    try { parsed = JSON.parse(data); } catch (e) { continue; }
 
                     if (parsed.model) modelUsed = parsed.model;
                     chunkCount++;
 
-                    // استخراج chunk از delta
                     const delta = parsed.choices?.[0]?.delta || {};
-                    let chunk = '';
-                    if (delta.content) chunk = delta.content;
-                    else if (delta.reasoning) chunk = delta.reasoning;
 
-                    if (chunk) {
-                        fullContent += chunk;
+                    // ⚠️ فقط content را اضافه کن
+                    if (delta.content) {
+                        fullContent += delta.content;
+                        contentChunks++;
                         if (typeof onChunk === 'function') {
-                            onChunk(chunk, modelUsed, fullContent);
+                            onChunk(delta.content, modelUsed, fullContent);
                         }
+                    }
+
+                    // reasoning را فقط برای لاگ نگه‌دار (نمایش نده)
+                    if (delta.reasoning) {
+                        reasoningContent += delta.reasoning;
                     }
                 }
             }
@@ -346,43 +278,38 @@ const OpenRouter = {
             try { reader.releaseLock(); } catch (e) {}
         }
 
-        Logger.debug('OpenRouter.stream', '✅ استریم تمام شد', {
-            chunkCount,
-            emptyChunkCount,
+        Logger.debug('OpenRouter.stream', '🏁 استریم تمام شد', {
+            totalChunks: chunkCount,
+            contentChunks,
             contentLength: fullContent.length,
+            reasoningLength: reasoningContent.length,
             model: modelUsed,
         });
 
-        // ─── Fallback: اگر خالی بود، به حالت غیراستریم برو ───
-        if (!fullContent.trim()) {
-            Logger.warn(
-                'OpenRouter.stream',
-                '⚠️ استریم خالی بود - تلاش با حالت غیراستریم',
-                { chunkCount, emptyChunkCount }
+        // اگر content نداشت ولی reasoning داشت
+        if (!fullContent.trim() && reasoningContent.trim()) {
+            const err = new Error(
+                `مدل «${modelUsed}» فقط reasoning برگرداند و داستان تولید نکرد. ` +
+                `لطفاً یک مدل دیگر انتخاب کنید.`
             );
+            Logger.error('OpenRouter.stream.reasoningOnly', err, {
+                reasoningPreview: reasoningContent.substring(0, 300),
+            });
+            throw err;
+        }
 
-            // دوباره از chat استفاده کن (با همان پیام‌ها)
-            // نکته: اینجا باید پیام‌ها را داشته باشیم
-            // اما در این متد به آن‌ها دسترسی نداریم. پس خطا می‌دهیم
-            // که بالاتر fallback کند
-            throw new Error(
-                `استریم از مدل «${modelUsed}» خالی بود. ` +
-                `دوباره تلاش کنید.`
-            );
+        if (!fullContent.trim()) {
+            throw new Error(`استریم از مدل «${modelUsed}» خالی بود`);
         }
 
         return { content: fullContent, model: modelUsed };
     },
 
-    /**
-     * تست اتصال - هم SSE هم غیراستریم
-     */
     async testConnection() {
         const result = {
             apiKey: !!this.getApiKey(),
             model: this.getModel(),
             nonStream: null,
-            stream: null,
             timestamp: Date.now(),
         };
 
@@ -391,69 +318,57 @@ const OpenRouter = {
             return { success: false, message: 'کلید API خالی است', details: result };
         }
 
-        // تست ۱: غیراستریم
         try {
             const r = await this.chat(
-                [{ role: 'user', content: 'سلام' }],
-                { maxTokens: 20 }
+                [{ role: 'user', content: 'یک جمله فارسی بگو' }],
+                { maxTokens: 50 }
             );
             result.nonStream = {
                 ok: true,
                 contentLength: r.content.length,
                 model: r.model,
+                preview: r.content.substring(0, 100),
             };
         } catch (e) {
             result.nonStream = { ok: false, error: e.message };
         }
 
-        // تست ۲: استریم
-        try {
-            let totalLen = 0;
-            await this.chatStream(
-                [{ role: 'user', content: 'سلام' }],
-                { maxTokens: 20 },
-                (chunk) => { totalLen += chunk.length; }
-            );
-            result.stream = { ok: true, contentLength: totalLen };
-        } catch (e) {
-            result.stream = { ok: false, error: e.message };
+        if (result.nonStream.ok) {
+            return {
+                success: true,
+                message: `اتصال برقرار - مدل: ${result.nonStream.model}`,
+                details: result,
+            };
         }
 
-        // نتیجه‌گیری
-        if (result.nonStream.ok && result.stream.ok) {
-            return {
-                success: true,
-                message: `اتصال برقرار است - مدل: ${result.nonStream.model}`,
-                details: result,
-            };
-        } else if (result.nonStream.ok) {
-            return {
-                success: true,
-                message: `غیراستریم کار می‌کند، استریم ممکن است کند باشد`,
-                details: result,
-            };
-        } else {
-            return {
-                success: false,
-                message: result.nonStream.error || 'خطای ناشناخته',
-                details: result,
-            };
+        return {
+            success: false,
+            message: result.nonStream.error,
+            details: result,
+        };
+    },
+
+    async getModels() {
+        try {
+            const response = await fetch(`${this.baseUrl}/models`);
+            if (!response.ok) throw new Error('خطا در دریافت مدل‌ها');
+            const data = await response.json();
+            return data.data || [];
+        } catch (error) {
+            Logger.error('OpenRouter.getModels', error);
+            return [];
         }
     },
 
-    /**
-     * ترجمه خطاها
-     */
     _parseError(status, data, model) {
         const msg = data?.error?.message || data?.message || '';
-
         if (status === 401) return 'کلید API نامعتبر است (۴۰۱)';
         if (status === 402) return 'اعتبار کافی نیست (۴۰۲): ' + msg;
         if (status === 403) return 'دسترسی ممنوع (۴۰۳): ' + msg;
         if (status === 404) return `مدل «${model}» پیدا نشد`;
         if (status === 408) return 'زمان درخواست تمام شد (۴۰۸)';
-        if (status === 429) return 'درخواست‌ها زیاد است (۴۲۹) - کمی صبر کنید';
-        if (status === 502) return 'خطای دروازه (۵۰۲) - مدل در دسترس نیست';
+        if (status === 429) return 'درخواست‌ها زیاد است (۴۲۹)';
+        if (status === 502) return 'خطای دروازه (۵۰۲)';
         if (status === 503) return 'سرویس در دسترس نیست (۵۰۳)';
         if (status >= 500) return 'خطای سرور OpenRouter (۵xx)';
         return msg || `خطای ${status}`;
