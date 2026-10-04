@@ -1,0 +1,119 @@
+/* ============================================
+   نوتیفیکیشن‌ها
+   ============================================ */
+
+.notification-container {
+    position: fixed;
+    top: calc(var(--header-height) + var(--spacing-md));
+    left: var(--spacing-md);
+    z-index: var(--z-notification);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-width: 380px;
+    width: 100%;
+    pointer-events: none;
+}
+
+.notification {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-120%);
+    opacity: 0;
+    transition: all var(--transition-slow);
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.notification-show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-hide {
+    transform: translateX(-120%);
+    opacity: 0;
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-message {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+}
+
+.notification-close {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-full);
+    color: var(--color-text-tertiary);
+    font-size: 1.25rem;
+    transition: all var(--transition-fast);
+}
+
+.notification-close:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+}
+
+/* انواع */
+.notification-success::before {
+    background: var(--color-accent-success);
+}
+
+.notification-error::before {
+    background: var(--color-accent-danger);
+}
+
+.notification-warning::before {
+    background: var(--color-accent-warning);
+}
+
+.notification-info::before {
+    background: var(--color-accent-info);
+}
+
+.notification-success {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.notification-error {
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.notification-warning {
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+.notification-info {
+    border-color: rgba(59, 130, 246, 0.3);
+}
