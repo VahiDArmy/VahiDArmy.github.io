@@ -74,7 +74,7 @@
                 <div class="wheel-setup">
                     <div class="setup-header">
                         <h3 class="setup-title">⚙️ تنظیمات این چرخش</h3>
-                        <button id="reset-setup-btn" class="btn btn-ghost btn-sm" title="بازنشانی">↺ بازنشانی</button>
+                        <button id="reset-setup-btn" class="btn btn-ghost btn-sm" title="بازنشانی" type="button">↺ بازنشانی</button>
                     </div>
 
                     <div class="setup-row">
@@ -88,7 +88,7 @@
                                     placeholder="موضوع داستان..."
                                     autocomplete="off"
                                 >
-                                <button id="save-topic-btn" class="btn btn-ghost btn-sm" title="ذخیره">💾</button>
+                                <button id="save-topic-btn" class="btn btn-ghost btn-sm" title="ذخیره" type="button">💾</button>
                                 <div id="topics-dropdown" class="topic-suggestions"></div>
                             </div>
                         </div>
@@ -134,7 +134,10 @@
                 <div id="spin-type-indicator" class="spin-type-indicator"></div>
 
                 <div class="wheel-container">
-                    <canvas id="wheel-canvas" class="wheel-canvas"></canvas>
+                    <!-- ✅ Canvas داخل wrapper - بدون فیلتر مستقیم -->
+                    <div class="wheel-canvas-wrap">
+                        <canvas id="wheel-canvas" class="wheel-canvas"></canvas>
+                    </div>
                     <div id="lever" class="lever" title="اهرم چرخش">
                         <div class="lever-handle">
                             <div class="lever-grip"></div>
