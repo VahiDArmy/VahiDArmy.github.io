@@ -187,68 +187,79 @@
                     </div>
 
                     <div class="form-row">
-                        <label class="form-label">مدل</label>
+                        <label class="form-label">
+                            مدل
+                            <span class="badge badge-success badge-sm">توصیه‌شده</span>
+                        </label>
                         <select id="input-ai-model" class="input">
-                            <optgroup label="🌟 پیشنهادی (Google - رایگان)">
-                                <option value="google/gemini-2.0-flash-exp:free" selected>
-                                    Google Gemini 2.0 Flash (رایگان - پیشنهادی)
-                                </option>
-                                <option value="google/gemini-2.5-flash-preview:free">
-                                    Google Gemini 2.5 Flash Preview (رایگان)
-                                </option>
-                                <option value="google/gemini-2.0-flash-lite-preview-02-05:free">
-                                    Google Gemini 2.0 Flash Lite (رایگان - سریع)
-                                </option>
-                                <option value="google/gemini-flash-1.5-8b:free">
-                                    Google Gemini Flash 1.5 8B (رایگان - سبک)
-                                </option>
-                            </optgroup>
-                            <optgroup label="🎯 هوشمند (OpenRouter)">
-                                <option value="openrouter/free">
-                                    OpenRouter Free (خودکار)
+                            <optgroup label="⭐ خودکار (قطعاً کار می‌کند)">
+                                <option value="openrouter/free" selected>
+                                    🎯 خودکار - بهترین مدل رایگان موجود
                                 </option>
                                 <option value="openrouter/auto">
-                                    OpenRouter Auto (هوشمند)
+                                    🤖 خودکار هوشمند - انتخاب بر اساس درخواست
                                 </option>
                             </optgroup>
-                            <optgroup label="🦙 Meta Llama (رایگان)">
+
+                            <optgroup label="🚀 قدرتمند (Qwen)">
+                                <option value="qwen/qwen3.6-plus:free">
+                                    Qwen 3.6 Plus — پنجره ۱M، قدرتمندترین
+                                </option>
+                                <option value="qwen/qwen3-coder:free">
+                                    Qwen 3 Coder — مخصوص کدنویسی
+                                </option>
+                                <option value="qwen/qwen3-next-80b-a3b-instruct:free">
+                                    Qwen 3 Next 80B — متعادل
+                                </option>
+                            </optgroup>
+
+                            <optgroup label="🎨 OpenAI (Open Source)">
+                                <option value="openai/gpt-oss-120b:free">
+                                    GPT-OSS 120B — اوپن‌سورس OpenAI
+                                </option>
+                            </optgroup>
+
+                            <optgroup label="🦙 Meta Llama">
                                 <option value="meta-llama/llama-3.3-70b-instruct:free">
-                                    Meta Llama 3.3 70B (رایگان - قدرتمند)
-                                </option>
-                                <option value="meta-llama/llama-3.2-3b-instruct:free">
-                                    Meta Llama 3.2 3B (رایگان - سریع)
-                                </option>
-                                <option value="meta-llama/llama-3.1-8b-instruct:free">
-                                    Meta Llama 3.1 8B (رایگان - سبک)
+                                    Llama 3.3 70B — محبوب و قدرتمند
                                 </option>
                             </optgroup>
-                            <optgroup label="🧠 DeepSeek (رایگان)">
-                                <option value="deepseek/deepseek-r1:free">
-                                    DeepSeek R1 (رایگان - استدلال)
+
+                            <optgroup label="⚡ سریع و سبک">
+                                <option value="stepfun/step-3.5-flash:free">
+                                    Step 3.5 Flash — سرعت بالا
                                 </option>
-                                <option value="deepseek/deepseek-chat:free">
-                                    DeepSeek Chat (رایگان)
+                                <option value="z-ai/glm-4.5-air:free">
+                                    GLM 4.5 Air — عمومی
                                 </option>
-                            </optgroup>
-                            <optgroup label="💬 Mistral (رایگان)">
-                                <option value="mistralai/mistral-nemo:free">
-                                    Mistral Nemo (رایگان)
-                                </option>
-                                <option value="mistralai/mistral-7b-instruct:free">
-                                    Mistral 7B (رایگان - سبک)
+                                <option value="minimax/minimax-m2.5:free">
+                                    MiniMax M2.5 — پنجره ۲۰۴K
                                 </option>
                             </optgroup>
-                            <optgroup label="🔮 Qwen (رایگان)">
-                                <option value="qwen/qwen-2.5-72b-instruct:free">
-                                    Qwen 2.5 72B (رایگان - قدرتمند)
+
+                            <optgroup label="🧠 NVIDIA">
+                                <option value="nvidia/nemotron-3-super-120b-a12b:free">
+                                    Nemotron 3 Super — پنجره ۱M
+                                </option>
+                                <option value="nvidia/nemotron-3-nano-30b-a3b:free">
+                                    Nemotron Nano 30B — سبک
                                 </option>
                             </optgroup>
+
+                            <optgroup label="🌟 پیش‌نمایش">
+                                <option value="arcee-ai/trinity-large-preview:free">
+                                    Arcee Trinity Large
+                                </option>
+                            </optgroup>
+
                             <optgroup label="✏️ سفارشی">
-                                <option value="custom">سفارشی (خودم وارد می‌کنم)</option>
+                                <option value="custom">
+                                    وارد کردن شناسه مدل به صورت دستی
+                                </option>
                             </optgroup>
                         </select>
                         <p class="form-hint">
-                            پیشنهاد: <code>Google Gemini 2.0 Flash</code> — سریع، با کیفیت و رایگان
+                            💡 گزینه <code>🎯 خودکار</code> توصیه می‌شود — به‌طور خودکار بهترین مدل رایگان موجود را انتخاب می‌کند
                         </p>
                     </div>
 
@@ -261,10 +272,14 @@
                             type="text"
                             id="input-custom-model"
                             class="input"
-                            placeholder="مثلاً: google/gemini-2.0-flash-exp:free"
+                            placeholder="مثلاً: qwen/qwen3.6-plus:free"
                             autocomplete="off"
                         >
-                        <p class="form-hint">شناسه دقیق مدل از openrouter.ai/models</p>
+                        <p class="form-hint">
+                            شناسه دقیق مدل از
+                            <a href="https://openrouter.ai/models?max_price=0" target="_blank">openrouter.ai/models</a>
+                            کپی کنید
+                        </p>
                     </div>
 
                     <div class="form-row">
@@ -299,6 +314,9 @@
                         </button>
                         <button id="test-openrouter-btn" class="btn btn-secondary" type="button">
                             🔌 تست اتصال
+                        </button>
+                        <button id="fetch-models-btn" class="btn btn-outline" type="button">
+                            🔄 دریافت لیست زنده از OpenRouter
                         </button>
                     </div>
                 </div>
