@@ -20,6 +20,7 @@ const SettingsPage = {
         this._setValue('input-github-token', s.githubToken);
         this._setValue('input-github-username', s.githubUsername);
         this._setValue('input-github-repo', s.githubRepo);
+        this._setValue('input-github-branch', s.githubBranch || 'main');
         this._setValue('input-openrouter-key', s.openrouterApiKey);
         this._setValue('input-ai-model', s.aiModel || 'openrouter/free');
         this._setValue('input-system-prompt', s.aiSystemPrompt);
@@ -43,14 +44,30 @@ const SettingsPage = {
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
+                let username = this._getValue('input-github-username');
+                let repo = this._getValue('input-github-repo');
+                let branch = this._getValue('input-github-branch') || 'main';
+
+                // اصلاح خودکار: اگر کاربر username/repo وارد کرد
+                if (username.includes('/') && !repo) {
+                    const parts = username.split('/').filter(Boolean);
+                    if (parts.length >= 2) {
+                        username = parts[0];
+                        repo = parts[1];
+                        this._setValue('input-github-username', username);
+                        this._setValue('input-github-repo', repo);
+                    }
+                }
+
                 const settings = {
                     githubToken: this._getValue('input-github-token'),
-                    githubUsername: this._getValue('input-github-username'),
-                    githubRepo: this._getValue('input-github-repo'),
+                    githubUsername: username,
+                    githubRepo: repo,
+                    githubBranch: branch,
                 };
 
                 if (!settings.githubToken || !settings.githubUsername || !settings.githubRepo) {
-                    Notification.warning('همه فیلدها الزامی است');
+                    Notification.warning('فیلدهای ستاره‌دار الزامی هستند');
                     return;
                 }
 
@@ -71,19 +88,35 @@ const SettingsPage = {
                 const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
+                // اصلاح خودکار
+                let username = this._getValue('input-github-username');
+                let repo = this._getValue('input-github-repo');
+                let branch = this._getValue('input-github-branch') || 'main';
+
+                if (username.includes('/') && !repo) {
+                    const parts = username.split('/').filter(Boolean);
+                    if (parts.length >= 2) {
+                        username = parts[0];
+                        repo = parts[1];
+                        this._setValue('input-github-username', username);
+                        this._setValue('input-github-repo', repo);
+                    }
+                }
+
                 AppState.set('settings.githubToken', this._getValue('input-github-token'));
-                AppState.set('settings.githubUsername', this._getValue('input-github-username'));
-                AppState.set('settings.githubRepo', this._getValue('input-github-repo'));
+                AppState.set('settings.githubUsername', username);
+                AppState.set('settings.githubRepo', repo);
+                AppState.set('settings.githubBranch', branch);
 
                 try {
-                    const result = await Sync.testGitHubConnection();
+                    const result = await GitHubStorage.testConnection();
                     if (result.success) {
-                        Notification.success(result.message);
+                        Notification.success(result.message, 8000);
                     } else {
-                        Notification.error(result.message, 8000);
+                        Notification.error(result.message, 12000);
                     }
                 } catch (e) {
-                    Notification.error('خطا: ' + e.message, 8000);
+                    Notification.error('خطا: ' + e.message, 10000);
                 }
 
                 testBtn.disabled = false;
@@ -134,16 +167,13 @@ const SettingsPage = {
 
                 try {
                     const result = await OpenRouter.testConnection();
-
                     if (result.success) {
                         Notification.success(result.message, 6000);
                     } else {
                         Notification.error(result.message, 10000);
-                        console.error('جزئیات خطا:', result.error);
                     }
                 } catch (e) {
                     Notification.error('خطای غیرمنتظره: ' + e.message, 10000);
-                    console.error(e);
                 }
 
                 testBtn.disabled = false;
@@ -163,16 +193,10 @@ const SettingsPage = {
 
         tempSlider.addEventListener('change', (e) => {
             const val = parseFloat(e.target.value) || 0.8;
-
             AppState.set('settings.aiTemperature', val);
-
             try {
-                if (SQLStorage.isReady) {
-                    SQLStorage.setSetting('aiTemperature', val);
-                }
-            } catch (err) {
-                console.error('خطا در ذخیره دما:', err);
-            }
+                if (SQLStorage.isReady) SQLStorage.setSetting('aiTemperature', val);
+            } catch (err) {}
         });
     },
 
@@ -200,7 +224,7 @@ const SettingsPage = {
                     await SQLStorage.pushToGitHub('ارسال دستی از تنظیمات');
                     this._renderDbInfo();
                 } catch (e) {
-                    Notification.error('خطا: ' + e.message);
+                    Notification.error(e.message, 12000);
                 } finally {
                     pushBtn.disabled = false;
                     pushBtn.textContent = '☁️ ارسال به GitHub';
@@ -231,7 +255,7 @@ const SettingsPage = {
                     this._renderDbInfo();
                     Notification.success('داده‌ها بازنشانی شدند');
                 } catch (e) {
-                    Notification.error('خطا: ' + e.message);
+                    Notification.error(e.message, 12000);
                 } finally {
                     pullBtn.disabled = false;
                     pullBtn.textContent = '⬇️ دریافت از GitHub';
