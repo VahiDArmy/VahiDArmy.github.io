@@ -4,9 +4,6 @@
  */
 
 const SettingsPage = {
-    /**
-     * راه‌اندازی
-     */
     init() {
         this._loadSettings();
         this._initGitHubSection();
@@ -17,9 +14,6 @@ const SettingsPage = {
         this._initDangerSection();
     },
 
-    /**
-     * بارگذاری تنظیمات فعلی
-     */
     _loadSettings() {
         const s = AppState.get('settings');
 
@@ -27,10 +21,9 @@ const SettingsPage = {
         this._setValue('input-github-username', s.githubUsername);
         this._setValue('input-github-repo', s.githubRepo);
         this._setValue('input-openrouter-key', s.openrouterApiKey);
-        this._setValue('input-ai-model', s.aiModel || 'meta-llama/llama-3.3-70b-instruct:free');
+        this._setValue('input-ai-model', s.aiModel || 'openrouter/free');
         this._setValue('input-system-prompt', s.aiSystemPrompt);
 
-        // اسلایدر دما - با مقدار پیش‌فرض درست
         const tempSlider = document.getElementById('input-ai-temp');
         if (tempSlider) {
             const tempVal = typeof s.aiTemperature === 'number' ? s.aiTemperature : 0.8;
@@ -44,9 +37,6 @@ const SettingsPage = {
         this._setValue('input-sync-interval', Math.round((s.syncInterval || 60000) / 1000));
     },
 
-    /**
-     * بخش GitHub
-     */
     _initGitHubSection() {
         const saveBtn = document.getElementById('save-github-btn');
         const testBtn = document.getElementById('test-github-btn');
@@ -102,9 +92,6 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * بخش OpenRouter
-     */
     _initOpenRouterSection() {
         const saveBtn = document.getElementById('save-openrouter-btn');
         const testBtn = document.getElementById('test-openrouter-btn');
@@ -112,12 +99,7 @@ const SettingsPage = {
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 let modelValue = this._getValue('input-ai-model');
-                
-                // اگر خالی یا اشتباه بود، پیش‌فرض بگذار
-                if (!modelValue || modelValue === 'openrouter/free') {
-                    modelValue = OpenRouter.DEFAULT_MODEL;
-                    this._setValue('input-ai-model', modelValue);
-                }
+                if (!modelValue) modelValue = 'openrouter/free';
 
                 const settings = {
                     openrouterApiKey: this._getValue('input-openrouter-key'),
@@ -143,12 +125,8 @@ const SettingsPage = {
                 const originalText = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
-                // ذخیره‌ی موقت مقادیر در State
                 let modelValue = this._getValue('input-ai-model');
-                if (!modelValue || modelValue === 'openrouter/free') {
-                    modelValue = OpenRouter.DEFAULT_MODEL;
-                    this._setValue('input-ai-model', modelValue);
-                }
+                if (!modelValue) modelValue = 'openrouter/free';
 
                 AppState.set('settings.openrouterApiKey', this._getValue('input-openrouter-key'));
                 AppState.set('settings.aiModel', modelValue);
@@ -156,14 +134,11 @@ const SettingsPage = {
 
                 try {
                     const result = await OpenRouter.testConnection();
-                    
+
                     if (result.success) {
                         Notification.success(result.message, 6000);
                     } else {
-                        // نمایش خطای واقعی
                         Notification.error(result.message, 10000);
-                        
-                        // لاگ کامل در کنسول برای دیباگ
                         console.error('جزئیات خطا:', result.error);
                     }
                 } catch (e) {
@@ -177,25 +152,20 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * اسلایدر دما - جداگانه و کامل
-     */
     _initTemperatureSlider() {
         const tempSlider = document.getElementById('input-ai-temp');
         if (!tempSlider) return;
 
-        // به‌روزرسانی نمایش مقدار هنگام کشیدن
         tempSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value) || 0.8;
             this._updateTempDisplay(val);
         });
 
-        // ذخیره هنگام رها کردن
         tempSlider.addEventListener('change', (e) => {
             const val = parseFloat(e.target.value) || 0.8;
-            
+
             AppState.set('settings.aiTemperature', val);
-            
+
             try {
                 if (SQLStorage.isReady) {
                     SQLStorage.setSetting('aiTemperature', val);
@@ -206,18 +176,12 @@ const SettingsPage = {
         });
     },
 
-    /**
-     * به‌روزرسانی نمایش عدد دما
-     */
     _updateTempDisplay(val) {
         const el = document.getElementById('temp-value');
         if (!el) return;
         el.textContent = Utils.toPersianNumbers(val.toFixed(1));
     },
 
-    /**
-     * بخش دیتابیس
-     */
     _initDatabaseSection() {
         this._renderDbInfo();
 
@@ -326,9 +290,6 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * نمایش اطلاعات دیتابیس
-     */
     _renderDbInfo() {
         const container = document.getElementById('db-info');
         if (!container) return;
@@ -370,9 +331,6 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * بخش تنظیمات عمومی
-     */
     _initGeneralSection() {
         const particlesToggle = document.getElementById('toggle-particles');
         if (particlesToggle) {
@@ -428,9 +386,6 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * بخش خطرناک
-     */
     _initDangerSection() {
         const clearAllBtn = document.getElementById('clear-all-data');
         if (clearAllBtn) {
@@ -449,9 +404,6 @@ const SettingsPage = {
         }
     },
 
-    /**
-     * کمک‌کننده‌ها
-     */
     _setValue(id, value) {
         const el = document.getElementById(id);
         if (el) el.value = value == null ? '' : value;
