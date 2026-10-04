@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   صفحه گردونه - رفع کامل مشکل ناپدید شدن
+   صفحه گردونه - کامل
    ═══════════════════════════════════════════ */
 
 .wheel-page {
@@ -341,7 +341,7 @@
 .mode-label { white-space: nowrap; }
 
 /* ═══════════════════════════════════════════
-   Wheel + Lever - با wrapper امن
+   Wheel + Lever
    ═══════════════════════════════════════════ */
 
 .spin-type-indicator {
@@ -379,7 +379,6 @@
     margin-bottom: var(--spacing-md);
 }
 
-/* ✅ Wrapper با سایه، نه فیلتر روی canvas */
 .wheel-canvas-wrap {
     position: relative;
     border-radius: 50%;
@@ -400,12 +399,10 @@
         0 0 60px rgba(139, 92, 246, 0.25);
 }
 
-/* ✅ Canvas ساده و امن - بدون filter, transform, will-change */
 .wheel-canvas {
     display: block;
     border-radius: 50%;
     background: transparent;
-    /* مهم: هیچ فیلتری روی خود canvas نگذارید */
 }
 
 .lever {
@@ -572,6 +569,7 @@
 .story-loading .spinner { width: 32px; height: 32px; border-width: 3px; }
 .story-loading p { animation: pulse 1.5s ease-in-out infinite; }
 
+/* حالت خطای عمومی */
 .story-error {
     padding: var(--spacing-md);
     background: rgba(245, 158, 11, 0.08);
@@ -584,6 +582,83 @@
 }
 
 .story-error a { color: var(--color-accent-primary); text-decoration: underline; }
+
+/* ═══════════════════════════════════════════
+   حالت خطا با تلاش مجدد
+   ═══════════════════════════════════════════ */
+
+.story-error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg) var(--spacing-md);
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--border-radius-lg);
+}
+
+.story-error-icon {
+    font-size: 2.5rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.story-error-title {
+    font-size: var(--font-size-md);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+}
+
+.story-error-message {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    max-width: 400px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-bg-tertiary);
+    border-radius: var(--border-radius-md);
+    border-right: 3px solid var(--color-accent-danger);
+    text-align: right;
+    width: 100%;
+}
+
+.error-log-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.story-error-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: var(--spacing-sm);
+}
+
+.story-error-hint {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: rgba(59, 130, 246, 0.08);
+    border-right: 3px solid var(--color-accent-info);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-relaxed);
+    text-align: right;
+    margin-top: var(--spacing-xs);
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════
+   Story Streaming
+   ═══════════════════════════════════════════ */
 
 .story-streaming {
     display: flex;
@@ -629,6 +704,10 @@
     flex-shrink: 0;
     margin-top: 4px;
 }
+
+/* ═══════════════════════════════════════════
+   Story In Popup
+   ═══════════════════════════════════════════ */
 
 .story-in-popup {
     display: flex;
@@ -971,4 +1050,6 @@
     .setup-item-row { padding: var(--spacing-xs) var(--spacing-sm); }
     .qty-value { min-width: 24px; font-size: var(--font-size-xs); }
     .qty-btn { width: 22px; height: 22px; font-size: 0.9rem; }
+    .story-error-actions { flex-direction: column; width: 100%; }
+    .story-error-actions .btn { width: 100%; }
 }
