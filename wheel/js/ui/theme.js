@@ -7,18 +7,23 @@ const Theme = {
     themes: ['dark', 'darker', 'purple', 'ocean'],
     current: 'dark',
 
-    /**
-     * راه‌اندازی
-     */
     init() {
-        const saved = SQLStorage.getSetting('theme') || AppState.get('settings.theme') || 'dark';
-        this.apply(saved);
+        let saved = 'dark';
+        
+        try {
+            if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                saved = SQLStorage.getSetting('theme') || AppState.get('settings.theme') || 'dark';
+            } else {
+                saved = AppState.get('settings.theme') || 'dark';
+            }
+        } catch (e) {
+            saved = 'dark';
+        }
+        
+        this.apply(saved, false);
     },
 
-    /**
-     * اعمال تم
-     */
-    apply(themeName) {
+    apply(themeName, saveToDb = true) {
         if (!this.themes.includes(themeName)) {
             themeName = 'dark';
         }
@@ -29,31 +34,38 @@ const Theme = {
 
         this.current = themeName;
         AppState.set('settings.theme', themeName);
-        SQLStorage.setSetting('theme', themeName);
+
+        if (saveToDb) {
+            try {
+                if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
+                    SQLStorage.setSetting('theme', themeName);
+                }
+            } catch (e) {
+                // نادیده بگیر
+            }
+        }
 
         this._updateIcon();
     },
 
-    /**
-     * تغییر تم
-     */
     toggle() {
         const currentIndex = this.themes.indexOf(this.current);
         const nextIndex = (currentIndex + 1) % this.themes.length;
-        this.apply(this.themes[nextIndex]);
-        Notification.info(`تم: ${this._getThemeName(this.themes[nextIndex])}`);
+        const nextTheme = this.themes[nextIndex];
+        
+        this.apply(nextTheme);
+        
+        try {
+            if (typeof Notification !== 'undefined') {
+                Notification.info(`تم: ${this._getThemeName(nextTheme)}`);
+            }
+        } catch (e) {}
     },
 
-    /**
-     * تغییر به تم خاص
-     */
     set(themeName) {
         this.apply(themeName);
     },
 
-    /**
-     * به‌روزرسانی آیکون
-     */
     _updateIcon() {
         const btn = document.getElementById('theme-toggle');
         if (!btn) return;
@@ -64,9 +76,6 @@ const Theme = {
         }
     },
 
-    /**
-     * نام فارسی تم
-     */
     _getThemeName(theme) {
         const names = {
             dark: 'تاریک',
