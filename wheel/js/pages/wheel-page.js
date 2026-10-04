@@ -1,5 +1,5 @@
 /**
- * صفحه گردونه - با مدیریت خطا و دکمه تلاش مجدد
+ * صفحه گردونه - با ذخیره‌ی کامل session
  * @module wheelPage
  */
 
@@ -16,6 +16,7 @@ const WheelPage = {
     _lastWinnerForRetry: null,
     _retryCount: 0,
     _maxRetries: 2,
+    _saveTimer: null,
 
     init() {
         this._initWheel();
@@ -25,6 +26,54 @@ const WheelPage = {
         this._initModeSelector();
         this._renderPeopleList();
         this._bindEvents();
+
+        // ⚡ نشان دادن برنده‌ی قبلی (اختیاری)
+        const lastResult = AppState.get('wheel.lastResult');
+        if (lastResult) {
+            console.log('🏆 برنده‌ی قبلی:', lastResult.name || lastResult.label);
+        }
+    },
+
+    // ═══════════════════════════════════════════
+    // ذخیره‌ی وضعیت (session)
+    // ═══════════════════════════════════════════
+
+    /**
+     * ذخیره‌ی کل وضعیت گردونه در SQLite
+     * (با debounce برای کاهش نوشتن)
+     */
+    _saveWheelState(immediate = false) {
+        const doSave = () => {
+            try {
+                if (!SQLStorage.isReady) return;
+
+                const state = {
+                    currentMode: AppState.get('wheel.currentMode') || 'single',
+                    lastResult: AppState.get('wheel.lastResult') || null,
+                    setup: AppState.get('wheel.setup') || { topic: '', type: 'provide', items: [] },
+                    rotation: WheelCore.rotation || 0,
+                    savedAt: Date.now(),
+                };
+
+                SQLStorage.setSetting('wheel_state', state);
+                console.log('💾 وضعیت گردونه ذخیره شد:', {
+                    mode: state.currentMode,
+                    hasLastResult: !!state.lastResult,
+                    hasSetup: !!state.setup,
+                    rotation: state.rotation,
+                });
+            } catch (e) {
+                console.error('خطا در ذخیره وضعیت گردونه:', e);
+            }
+        };
+
+        if (immediate) {
+            if (this._saveTimer) clearTimeout(this._saveTimer);
+            doSave();
+        } else {
+            if (this._saveTimer) clearTimeout(this._saveTimer);
+            this._saveTimer = setTimeout(doSave, 500);
+        }
     },
 
     // ═══════════════════════════════════════════
@@ -89,9 +138,15 @@ const WheelPage = {
         const current = this._getSetup();
         const next = { ...current, ...partial };
         AppState.set('wheel.setup', next);
+
+        // ذخیره در SQLite (session)
         try {
             if (SQLStorage.isReady) SQLStorage.setSetting('wheel_setup', next);
         } catch (e) {}
+
+        // ذخیره‌ی کامل state
+        this._saveWheelState();
+
         if ('items' in partial) this._renderSetupItems();
     },
 
@@ -317,6 +372,13 @@ const WheelPage = {
     _initWheel() {
         WheelCore.init('wheel-canvas');
         WheelCore.setItems(People.getInWheel());
+
+        // ⚡ بازیابی زاویه چرخش
+        const savedRotation = AppState.get('wheel.rotation');
+        if (typeof savedRotation === 'number' && savedRotation !== 0) {
+            WheelCore.rotation = savedRotation;
+            WheelCore.render();
+        }
     },
 
     _initLever() {
@@ -413,6 +475,7 @@ const WheelPage = {
                     People.getInWheel().forEach((p) => People.removeFromWheel(p.id));
                     WheelCore.setItems([]);
                     this._renderPeopleList();
+                    this._saveWheelState(true);
                     Notification.info('گردونه خالی شد');
                 }
             });
@@ -420,16 +483,23 @@ const WheelPage = {
     },
 
     _initModeSelector() {
+        // ⚡ حالت ذخیره‌شده را از AppState بازیابی کن
         const currentMode = AppState.get('wheel.currentMode') || 'single';
+
         document.querySelectorAll('[data-mode]').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.mode === currentMode);
             btn.addEventListener('click', () => {
                 if (WheelCore.isSpinning) return;
                 document.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
-                AppState.set('wheel.currentMode', btn.dataset.mode);
+                const mode = btn.dataset.mode;
+                AppState.set('wheel.currentMode', mode);
+                // ⚡ ذخیره در session
+                this._saveWheelState(true);
             });
         });
+
+        console.log('⚙️ حالت انتخاب‌شده:', currentMode);
     },
 
     _renderPeopleList() {
@@ -465,35 +535,39 @@ const WheelPage = {
                 People.removeFromWheel(btn.dataset.id);
                 this._renderPeopleList();
                 WheelCore.setItems(People.getInWheel());
+                this._saveWheelState();
             });
         });
     },
 
     _openToolboxPicker() {
         const allPeople = People.getAll();
-        if (allPeople.length === 0) {
-            Modal.alert('جعبه ابزار خالی است. ابتدا از صفحه «توصیف‌ها» افراد را اضافه کنید.');
-            return;
-        }
-
         const inWheelIds = new Set(People.getInWheel().map((p) => p.id));
+
+        const listHtml = allPeople.length === 0
+            ? `<div class="picker-empty">
+                   <div class="picker-empty-icon">📦</div>
+                   <p>جعبه ابزار خالی است</p>
+                   <p class="text-muted">از دکمه «ایجاد فرد جدید» در پایین استفاده کنید</p>
+               </div>`
+            : allPeople.map((p) => {
+                const isIn = inWheelIds.has(p.id);
+                return `
+                    <label class="picker-item ${isIn ? 'in-wheel' : ''}" data-name="${this._escape(p.name.toLowerCase())}">
+                        <input type="checkbox" data-id="${p.id}" ${isIn ? 'disabled' : ''}>
+                        <span class="person-color" style="background: ${p.color}"></span>
+                        <span class="picker-name">${this._escape(p.name)}</span>
+                        ${isIn ? '<span class="picker-badge">در گردونه</span>' : ''}
+                    </label>
+                `;
+            }).join('');
 
         const content = `
             <div class="toolbox-picker">
-                <input type="text" id="picker-search" class="input" placeholder="🔍 جستجو در جعبه ابزار...">
-                <div class="picker-list" id="picker-list">
-                    ${allPeople.map((p) => {
-                        const isIn = inWheelIds.has(p.id);
-                        return `
-                            <label class="picker-item ${isIn ? 'in-wheel' : ''}" data-name="${this._escape(p.name.toLowerCase())}">
-                                <input type="checkbox" data-id="${p.id}" ${isIn ? 'disabled' : ''}>
-                                <span class="person-color" style="background: ${p.color}"></span>
-                                <span class="picker-name">${this._escape(p.name)}</span>
-                                ${isIn ? '<span class="picker-badge">در گردونه</span>' : ''}
-                            </label>
-                        `;
-                    }).join('')}
-                </div>
+                ${allPeople.length > 0 ? `
+                    <input type="text" id="picker-search" class="input" placeholder="🔍 جستجو در جعبه ابزار...">
+                ` : ''}
+                <div class="picker-list" id="picker-list">${listHtml}</div>
                 <div class="picker-footer-note">
                     💡 این افراد در جعبه ابزار باقی می‌مانند - فقط در گردونه استفاده می‌شوند
                 </div>
@@ -501,7 +575,7 @@ const WheelPage = {
         `;
 
         Modal.open({
-            title: '📦 افزودن از جعبه ابزار',
+            title: '📦 جعبه ابزار',
             content,
             size: 'md',
             buttons: [
@@ -527,6 +601,7 @@ const WheelPage = {
                         People.addManyToWheel(ids);
                         this._renderPeopleList();
                         WheelCore.setItems(People.getInWheel());
+                        this._saveWheelState(true);
                         Notification.success(`${Utils.toPersianNumbers(ids.length)} نفر افزوده شد`);
                     },
                 },
@@ -554,6 +629,7 @@ const WheelPage = {
         People.add({ name: name.trim() }, true);
         this._renderPeopleList();
         WheelCore.setItems(People.getInWheel());
+        this._saveWheelState(true);
         Notification.success(`«${name}» ساخته شد و به گردونه اضافه شد`);
     },
 
@@ -595,6 +671,8 @@ const WheelPage = {
             this._handleElimination(winner);
         } else {
             History.add({ winner, mode: 'single', spinType: 'random' });
+            AppState.set('wheel.lastResult', winner);
+            this._saveWheelState(true);
             this._showWinnerWithStory(winner);
         }
     },
@@ -614,9 +692,12 @@ const WheelPage = {
         if (remaining.length === 1) {
             const finalWinner = remaining[0];
             History.add({ winner: finalWinner, mode: 'elimination', spinType: 'final' });
+            AppState.set('wheel.lastResult', finalWinner);
+            this._saveWheelState(true);
             Notification.success(`🏆 برنده نهایی: ${finalWinner.name}`, 3000);
             setTimeout(() => this._showWinnerWithStory(finalWinner), 1200);
         } else if (remaining.length > 1) {
+            this._saveWheelState();
             Notification.info(
                 `❌ حذف شد: ${eliminatedName} - ${Utils.toPersianNumbers(remaining.length)} نفر باقی مانده`,
                 2500
@@ -673,9 +754,6 @@ const WheelPage = {
         return filtered;
     },
 
-    /**
-     * ساخت خودکار داستان با استریم + مدیریت خطا + تلاش مجدد
-     */
     async _generateAutoStory(winner) {
         if (this._isGeneratingStory) return;
         this._isGeneratingStory = true;
@@ -683,7 +761,6 @@ const WheelPage = {
         const section = document.getElementById('winner-story-section');
         if (!section) { this._isGeneratingStory = false; return; }
 
-        // ─── اعتبارسنجی تنظیمات ───
         const validation = Logger.validateOpenRouter();
         if (!validation.ok) {
             this._showErrorState(section, {
@@ -696,7 +773,6 @@ const WheelPage = {
             return;
         }
 
-        // ─── آماده‌سازی context ───
         const setup = this._getSetup();
         const otherWheelPeople = People.getInWheel().filter((p) => p.id !== winner.id);
 
@@ -723,7 +799,6 @@ const WheelPage = {
             tone: 'funny',
         };
 
-        // ─── نمایش حالت استریم ───
         section.innerHTML = `
             <div class="story-streaming">
                 <div class="story-streaming-content" id="streaming-content"></div>
@@ -780,9 +855,6 @@ const WheelPage = {
         }
     },
 
-    /**
-     * نمایش حالت خطا با دکمه تلاش مجدد
-     */
     _showErrorState(section, options = {}) {
         const {
             title = '❌ خطا',
@@ -831,7 +903,6 @@ const WheelPage = {
             </div>
         `;
 
-        // دکمه تلاش مجدد
         const retryBtn = document.getElementById('story-retry-btn');
         if (retryBtn) {
             retryBtn.addEventListener('click', () => {
@@ -852,7 +923,6 @@ const WheelPage = {
             });
         }
 
-        // کپی خطا
         const copyBtn = document.getElementById('story-error-copy-btn');
         if (copyBtn) {
             copyBtn.addEventListener('click', async () => {
