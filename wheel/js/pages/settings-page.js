@@ -4,23 +4,7 @@
  */
 
 const SettingsPage = {
-    // لیست معتبر مدل‌های رایگان OpenRouter
-    // اگر خواستید مدلی اضافه کنید، اینجا اضافه کنید و در HTML هم option بسازید
-    VALID_FREE_MODELS: [
-        'openrouter/free',
-        'openrouter/auto',
-        'qwen/qwen3.6-plus:free',
-        'qwen/qwen3-coder:free',
-        'qwen/qwen3-next-80b-a3b-instruct:free',
-        'openai/gpt-oss-120b:free',
-        'meta-llama/llama-3.3-70b-instruct:free',
-        'stepfun/step-3.5-flash:free',
-        'z-ai/glm-4.5-air:free',
-        'minimax/minimax-m2.5:free',
-        'nvidia/nemotron-3-super-120b-a12b:free',
-        'nvidia/nemotron-3-nano-30b-a3b:free',
-        'arcee-ai/trinity-large-preview:free',
-    ],
+    DEFAULT_MODEL: 'google/gemini-2.0-flash-exp:free',
 
     init() {
         this._loadSettings();
@@ -52,13 +36,12 @@ const SettingsPage = {
         this._setValue('input-openrouter-key', s.openrouterApiKey);
         this._setValue('input-system-prompt', s.aiSystemPrompt);
 
-        // انتخاب مدل
-        const savedModel = s.aiModel || 'openrouter/free';
+        const savedModel = s.aiModel || this.DEFAULT_MODEL;
         this._selectModel(savedModel);
 
         const tempSlider = document.getElementById('input-ai-temp');
         if (tempSlider) {
-            const tempVal = typeof s.aiTemperature === 'number' ? s.aiTemperature : 0.8;
+            const tempVal = typeof s.aiTemperature === 'number' ? s.aiTemperature : 0.9;
             tempSlider.value = tempVal;
             this._updateTempDisplay(tempVal);
         }
@@ -69,9 +52,6 @@ const SettingsPage = {
         this._setValue('input-sync-interval', Math.round((s.syncInterval || 60000) / 1000));
     },
 
-    /**
-     * انتخاب مدل در dropdown
-     */
     _selectModel(modelId) {
         const select = document.getElementById('input-ai-model');
         const customRow = document.getElementById('custom-model-row');
@@ -119,9 +99,6 @@ const SettingsPage = {
         });
     },
 
-    /**
-     * دکمه دریافت لیست زنده مدل‌های رایگان از OpenRouter
-     */
     _initFetchModelsButton() {
         const btn = document.getElementById('fetch-models-btn');
         if (!btn) return;
@@ -139,10 +116,8 @@ const SettingsPage = {
                     return;
                 }
 
-                // فیلتر مدل‌های رایگان
                 const freeModels = allModels.filter((m) => {
                     if (!m || !m.id) return false;
-                    // قیمت ورودی و خروجی صفر باشد
                     const promptPrice = parseFloat(m.pricing?.prompt || '0');
                     const completionPrice = parseFloat(m.pricing?.completion || '0');
                     return promptPrice === 0 && completionPrice === 0;
@@ -153,7 +128,6 @@ const SettingsPage = {
                     return;
                 }
 
-                // نمایش در مودال
                 this._showModelsModal(freeModels);
             } catch (error) {
                 Logger.error('SettingsPage.fetchModels', error);
@@ -166,36 +140,36 @@ const SettingsPage = {
     },
 
     _showModelsModal(freeModels) {
-        // مرتب‌سازی بر اساس نام
-        const sorted = [...freeModels].sort((a, b) =>
-            (a.name || a.id).localeCompare(b.name || b.id)
-        );
+        // مرتب‌سازی: اول Google، بعد بقیه
+        const sorted = [...freeModels].sort((a, b) => {
+            const aGoogle = a.id && a.id.startsWith('google/') ? 0 : 1;
+            const bGoogle = b.id && b.id.startsWith('google/') ? 0 : 1;
+            if (aGoogle !== bGoogle) return aGoogle - bGoogle;
+            return (a.name || a.id).localeCompare(b.name || b.id);
+        });
 
         const content = `
             <div class="models-fetch-list">
                 <p class="text-muted" style="margin-bottom: 12px;">
                     ${Utils.toPersianNumbers(sorted.length)} مدل رایگان در OpenRouter یافت شد
                 </p>
-                <input
-                    type="text"
-                    id="models-modal-search"
-                    class="input"
-                    placeholder="🔍 جستجو..."
-                    style="margin-bottom: 12px;"
-                >
+                <input type="text" id="models-modal-search" class="input" placeholder="🔍 جستجو..." style="margin-bottom: 12px;">
                 <div class="models-fetch-scroll" id="models-fetch-scroll">
-                    ${sorted.map((m) => `
-                        <div class="models-fetch-item" data-model-id="${this._escapeAttr(m.id)}" data-name="${this._escapeAttr((m.name || '').toLowerCase())}">
-                            <div class="models-fetch-info">
-                                <div class="models-fetch-name">${this._escape(m.name || m.id)}</div>
-                                <div class="models-fetch-id"><code>${this._escape(m.id)}</code></div>
-                                ${m.context_length ? `<div class="models-fetch-meta">📏 ${Utils.toPersianNumbers(m.context_length)} توکن</div>` : ''}
+                    ${sorted.map((m) => {
+                        const isGoogle = m.id && m.id.startsWith('google/');
+                        return `
+                            <div class="models-fetch-item ${isGoogle ? 'is-google' : ''}" data-model-id="${this._escapeAttr(m.id)}" data-name="${this._escapeAttr((m.name || '').toLowerCase())}">
+                                <div class="models-fetch-info">
+                                    <div class="models-fetch-name">
+                                        ${isGoogle ? '🌟 ' : ''}${this._escape(m.name || m.id)}
+                                    </div>
+                                    <div class="models-fetch-id"><code>${this._escape(m.id)}</code></div>
+                                    ${m.context_length ? `<div class="models-fetch-meta">📏 ${Utils.toPersianNumbers(m.context_length)} توکن</div>` : ''}
+                                </div>
+                                <button class="btn btn-primary btn-sm" data-action="use" data-id="${this._escapeAttr(m.id)}" type="button">استفاده</button>
                             </div>
-                            <button class="btn btn-primary btn-sm" data-action="use" data-id="${this._escapeAttr(m.id)}" type="button">
-                                استفاده
-                            </button>
-                        </div>
-                    `).join('')}
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
@@ -208,7 +182,6 @@ const SettingsPage = {
         });
 
         setTimeout(() => {
-            // جستجو
             const searchInput = document.getElementById('models-modal-search');
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
@@ -221,7 +194,6 @@ const SettingsPage = {
                 });
             }
 
-            // دکمه استفاده
             document.querySelectorAll('[data-action="use"]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const modelId = btn.dataset.id;
@@ -254,7 +226,7 @@ const SettingsPage = {
         }
 
         if (saveBtn) {
-            saveBtn.addEventListener('click', async () => {
+            saveBtn.addEventListener('click', () => {
                 let username = this._getValue('input-github-username');
                 let repo = this._getValue('input-github-repo');
                 let branch = this._getValue('input-github-branch') || 'main';
@@ -270,7 +242,6 @@ const SettingsPage = {
                 }
 
                 const token = this._getValue('input-github-token');
-
                 if (!token || !username || !repo) {
                     Notification.warning('فیلدهای ستاره‌دار الزامی هستند');
                     return;
@@ -336,7 +307,6 @@ const SettingsPage = {
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 const modelValue = this._getSelectedModel();
-
                 if (!modelValue) {
                     Notification.warning('یک مدل انتخاب کنید');
                     return;
@@ -344,7 +314,7 @@ const SettingsPage = {
 
                 this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
                 this._saveField('aiModel', modelValue);
-                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
+                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.9);
                 this._saveField('aiSystemPrompt', this._getValue('input-system-prompt'));
 
                 Notification.success(`تنظیمات ذخیره شد - مدل: ${modelValue}`);
@@ -367,7 +337,7 @@ const SettingsPage = {
 
                 this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
                 this._saveField('aiModel', modelValue);
-                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.8);
+                this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.9);
 
                 try {
                     const result = await OpenRouter.testConnection();
@@ -391,12 +361,12 @@ const SettingsPage = {
         if (!tempSlider) return;
 
         tempSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value) || 0.8;
+            const val = parseFloat(e.target.value) || 0.9;
             this._updateTempDisplay(val);
         });
 
         tempSlider.addEventListener('change', (e) => {
-            const val = parseFloat(e.target.value) || 0.8;
+            const val = parseFloat(e.target.value) || 0.9;
             this._saveField('aiTemperature', val);
         });
     },
