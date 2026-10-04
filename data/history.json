@@ -1,5 +1,27 @@
 [
   {
+    "id": "hist_1791140986130_0zasvbdtn",
+    "winner": {
+      "id": "person_1791110776956_jogppxrb6",
+      "name": "سعید",
+      "description": "",
+      "starred": false,
+      "color": "#10b981",
+      "weight": 1,
+      "created_at": 1791110776956,
+      "updated_at": 1791130749159,
+      "in_wheel": 1,
+      "inWheel": true,
+      "createdAt": 1791110776956,
+      "updatedAt": 1791130749159,
+      "index": 2
+    },
+    "winner_name": "سعید",
+    "mode": "single",
+    "spinType": "random",
+    "timestamp": 1791140986130
+  },
+  {
     "id": "hist_1791139914408_3ub8mxx4x",
     "winner": {
       "id": "person_1791113984803_qgh3aolfy",
