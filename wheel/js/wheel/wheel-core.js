@@ -1,5 +1,5 @@
 /**
- * هسته گردونه - با resize پایدار و redraw امن
+ * هسته گردونه - با محاسبه‌ی صحیح موقعیت اشاره‌گر
  * @module wheelCore
  */
 
@@ -13,12 +13,17 @@ const WheelCore = {
     friction: 0.985,
     minVelocity: 0.001,
     spinDuration: 5000,
+
+    /**
+     * ⚠️ اشاره‌گر در بالا (ساعت ۱۲) قرار دارد
+     * در canvas، زاویه ۰ = راست (ساعت ۳)
+     * پس بالا = -π/2
+     */
     pointerAngle: -Math.PI / 2,
 
     _lastSize: 0,
     _lastDpr: 0,
     _resizeObserver: null,
-    _resizeTimer: null,
 
     init(canvasId) {
         this.canvas = document.getElementById(canvasId);
@@ -28,7 +33,6 @@ const WheelCore = {
 
         this.resize();
 
-        // ResizeObserver روی wrapper - بهتر از window.resize
         const wrap = this.canvas.parentElement;
         if (wrap && 'ResizeObserver' in window) {
             this._resizeObserver = new ResizeObserver(
@@ -37,31 +41,21 @@ const WheelCore = {
             this._resizeObserver.observe(wrap);
         }
 
-        // fallback برای مرورگرهای قدیمی
         window.addEventListener('resize', Utils.debounce(() => this.resize(), 200));
         window.addEventListener('orientationchange', () => {
             setTimeout(() => this.resize(), 300);
         });
 
-        // ✅ Redraw وقتی صفحه دوباره visible می‌شود
         document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                setTimeout(() => this.render(), 100);
-            }
+            if (!document.hidden) setTimeout(() => this.render(), 100);
         });
 
-        // ✅ Redraw بعد از اسکرول (debounced - فقط یکبار)
-        window.addEventListener('scroll', Utils.debounce(() => {
-            this.render();
-        }, 250), { passive: true });
+        window.addEventListener('scroll', Utils.debounce(() => this.render(), 250), { passive: true });
 
-        // ✅ Redraw وقتی وارد viewport می‌شود
         if ('IntersectionObserver' in window) {
             const io = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        this.render();
-                    }
+                    if (entry.isIntersecting) this.render();
                 });
             }, { threshold: 0.1 });
             io.observe(this.canvas);
@@ -70,13 +64,9 @@ const WheelCore = {
         this.render();
     },
 
-    /**
-     * تنظیم اندازه - با cache و بدون redraw غیرضروری
-     */
     resize() {
         if (!this.canvas || !this.ctx) return;
 
-        // اندازه‌ی هدف بر اساس والد
         const wrap = this.canvas.parentElement;
         let available = window.innerWidth - 60;
         if (wrap && wrap.parentElement) {
@@ -86,11 +76,8 @@ const WheelCore = {
 
         const maxSize = Utils.isMobile() ? 320 : 500;
         const size = Math.max(200, Math.min(maxSize, available));
-
-        // cap DPR روی 2 برای صرفه‌جویی حافظه
         const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-        // اگر تغییری نداشته، فقط render کن
         if (this._lastSize === size && this._lastDpr === dpr) {
             this.render();
             return;
@@ -99,17 +86,14 @@ const WheelCore = {
         this._lastSize = size;
         this._lastDpr = dpr;
 
-        // ست کردن اندازه بافر
         this.canvas.width = Math.floor(size * dpr);
         this.canvas.height = Math.floor(size * dpr);
         this.canvas.style.width = size + 'px';
         this.canvas.style.height = size + 'px';
 
-        // reset transform (ست کردن width خودش reset می‌کند اما محکم کاری)
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.scale(dpr, dpr);
 
-        // مقادیر هندسی
         this.size = size;
         this.centerX = size / 2;
         this.centerY = size / 2;
@@ -118,9 +102,6 @@ const WheelCore = {
         this.render();
     },
 
-    /**
-     * تنظیم آیتم‌ها
-     */
     setItems(items) {
         this.items = (items || []).map((item, index) => ({
             ...item,
@@ -131,16 +112,12 @@ const WheelCore = {
         this.render();
     },
 
-    /**
-     * رندر
-     */
     render() {
         if (!this.ctx || !this.canvas) return;
 
         const { ctx, centerX, centerY, radius, items, rotation } = this;
         const size = this.size;
 
-        // پاک کردن
         ctx.clearRect(0, 0, size, size);
 
         if (items.length === 0) {
@@ -153,25 +130,23 @@ const WheelCore = {
         const anglePerItem = (2 * Math.PI) / items.length;
 
         items.forEach((item, i) => {
+            // ⚠️ آیتم i از rotation + i*anglePerItem شروع می‌شود
             const startAngle = rotation + i * anglePerItem;
             const endAngle = startAngle + anglePerItem;
 
-            // قطاع
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.arc(centerX, centerY, radius, startAngle, endAngle);
             ctx.closePath();
 
-            // گرادیان سبک (بدون گرادیان شعاعی سنگین)
             ctx.fillStyle = item.color;
             ctx.fill();
 
-            // حاشیه
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
             ctx.lineWidth = 2;
             ctx.stroke();
 
-            // متن
+            // متن - در جهت شعاع
             ctx.save();
             ctx.translate(centerX, centerY);
             ctx.rotate(startAngle + anglePerItem / 2);
@@ -181,7 +156,6 @@ const WheelCore = {
             ctx.font = 'bold 15px Vazirmatn, sans-serif';
 
             const label = item.label || item.name || '';
-            const maxWidth = radius - 40;
             const displayLabel = label.length > 12 ? label.substring(0, 11) + '…' : label;
             ctx.fillText(displayLabel, radius - 20, 0);
 
@@ -193,7 +167,6 @@ const WheelCore = {
     },
 
     _drawCenterHub(ctx, cx, cy) {
-        // مرکز
         ctx.beginPath();
         ctx.arc(cx, cy, 26, 0, 2 * Math.PI);
         ctx.fillStyle = '#111118';
@@ -210,13 +183,13 @@ const WheelCore = {
     },
 
     _drawPointer(ctx, cx, cy, radius) {
-        const angle = this.pointerAngle;
-        const pointerLength = 26;
-        const pointerWidth = 18;
-
+        // اشاره‌گر در بالا (pointerAngle = -π/2)
         ctx.save();
         ctx.translate(cx, cy);
-        ctx.rotate(angle);
+        ctx.rotate(this.pointerAngle);
+
+        const pointerLength = 26;
+        const pointerWidth = 18;
 
         ctx.beginPath();
         ctx.moveTo(radius - 5, 0);
@@ -260,7 +233,7 @@ const WheelCore = {
     },
 
     // ═══════════════════════════════════════════
-    // Spin
+    // چرخش
     // ═══════════════════════════════════════════
 
     spinRandom() {
@@ -291,18 +264,39 @@ const WheelCore = {
         requestAnimationFrame(animate);
     },
 
+    /**
+     * چرخش به سمت آیتم خاص
+     * ⚠️ اصلاح: با در نظر گرفتن انحراف -π/2 اشاره‌گر
+     */
     spinToItem(itemIndex, duration = 5000) {
         if (this.isSpinning || this.items.length === 0) return;
         if (itemIndex < 0 || itemIndex >= this.items.length) return;
 
         this.isSpinning = true;
-        const anglePerItem = (2 * Math.PI) / this.items.length;
-        const targetAngle = -itemIndex * anglePerItem - anglePerItem / 2;
-        const currentRotation = this.rotation % (2 * Math.PI);
-        let diff = targetAngle - currentRotation;
+        const n = this.items.length;
+        const anglePerItem = (2 * Math.PI) / n;
 
-        while (diff < 0) diff += 2 * Math.PI;
-        const targetRotation = this.rotation + diff + (Math.random() * 5 + 5) * Math.PI * 2;
+        // ─── محاسبه‌ی زاویه‌ی هدف ───
+        // می‌خواهیم مرکز آیتم itemIndex زیر اشاره‌گر (بالا) قرار بگیرد.
+        // مرکز آیتم i در زاویه‌ی: rotation_final + i * anglePerItem + anglePerItem/2
+        // می‌خواهیم این مساوی pointerAngle + 2πk باشد.
+        // پس:
+        //   rotation_final = pointerAngle - i * anglePerItem - anglePerItem/2 (mod 2π)
+
+        const targetRotationBase =
+            this.pointerAngle - itemIndex * anglePerItem - anglePerItem / 2;
+
+        // نرمال‌سازی به بازه [0, 2π)
+        const currentNorm = ((this.rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const targetNorm = ((targetRotationBase % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
+        // اختلاف زاویه‌ای (همیشه مثبت برای چرخش رو به جلو)
+        let diff = targetNorm - currentNorm;
+        if (diff < 0) diff += 2 * Math.PI;
+
+        // چرخش‌های اضافی برای طبیعی به نظر رسیدن
+        const extraSpins = (Math.random() * 5 + 5) * 2 * Math.PI;
+        const targetRotation = this.rotation + diff + extraSpins;
 
         const startRotation = this.rotation;
         const startTime = performance.now();
@@ -347,13 +341,27 @@ const WheelCore = {
         }
     },
 
+    /**
+     * آیتم فعلی زیر اشاره‌گر
+     * ⚠️ اصلاح: با در نظر گرفتن انحراف -π/2 اشاره‌گر
+     */
     getCurrentItem() {
         if (this.items.length === 0) return null;
-        const anglePerItem = (2 * Math.PI) / this.items.length;
-        const normalizedRotation = ((-this.rotation % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-        const pointerFromTop = (this.pointerAngle + Math.PI / 2 + 2 * Math.PI) % (2 * Math.PI);
-        const adjustedAngle = (pointerFromTop + normalizedRotation) % (2 * Math.PI);
-        const index = Math.floor(adjustedAngle / anglePerItem) % this.items.length;
+
+        const n = this.items.length;
+        const anglePerItem = (2 * Math.PI) / n;
+
+        // ─── محاسبه‌ی آیتم زیر اشاره‌گر ───
+        // آیتم i از rotation + i*anglePerItem تا rotation + (i+1)*anglePerItem رسم می‌شود.
+        // می‌خواهیم i را پیدا کنیم که:
+        //   rotation + i*anglePerItem ≤ pointerAngle + 2πk < rotation + (i+1)*anglePerItem
+        // یعنی:
+        //   i = floor(((pointerAngle - rotation) mod 2π) / anglePerItem)
+
+        const diff = this.pointerAngle - this.rotation;
+        const normalized = ((diff % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const index = Math.floor(normalized / anglePerItem) % n;
+
         return this.items[index];
     },
 
