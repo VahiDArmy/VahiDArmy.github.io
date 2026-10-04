@@ -1,5 +1,5 @@
 /**
- * مدیریت داستان‌ها - با لاگ‌گیری کامل
+ * مدیریت داستان‌ها - با fallback خودکار
  * @module storyManager
  */
 
@@ -26,7 +26,7 @@ const StoryManager = {
         this.isGenerating = true;
 
         try {
-            Logger.info('StoryManager', 'شروع تولید داستان', {
+            Logger.info('StoryManager', '🎬 شروع تولید داستان', {
                 model: OpenRouter.getModel(),
                 temperature: AppState.get('settings.aiTemperature'),
             });
@@ -34,43 +34,58 @@ const StoryManager = {
             const systemPrompt = PromptBuilder.getSystemPrompt();
             const userPrompt = PromptBuilder.buildStoryPrompt(context);
 
+            Logger.debug('StoryManager', '📝 پرامپت‌ها آماده شدند', {
+                systemLength: systemPrompt.length,
+                userLength: userPrompt.length,
+            });
+
             const messages = [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userPrompt },
             ];
 
-            let fullContent = '';
-            let modelUsed = OpenRouter.getModel();
+            // ─── تلاش ۱: استریم ───
+            let result = null;
+            let usedStream = true;
 
-            const result = await OpenRouter.chatStream(
-                messages,
-                {
-                    temperature: AppState.get('settings.aiTemperature') || 0.8,
-                    maxTokens: 2000,
-                },
-                (chunk, model) => {
-                    fullContent += chunk;
-                    if (model) modelUsed = model;
-                    if (onChunk) onChunk(chunk, model, fullContent);
+            try {
+                result = await this._tryStream(messages, onChunk);
+            } catch (streamErr) {
+                Logger.warn(
+                    'StoryManager',
+                    '⚠️ استریم شکست خورد، تلاش با حالت غیراستریم',
+                    { error: streamErr.message }
+                );
+                usedStream = false;
+
+                // ─── تلاش ۲: غیراستریم ───
+                try {
+                    result = await this._tryNonStream(messages);
+                    // محتوا را به صورت یکجا به onChunk بده
+                    if (onChunk && result) {
+                        onChunk(result.content, result.model, result.content);
+                    }
+                } catch (nonStreamErr) {
+                    Logger.error('StoryManager.bothFailed', nonStreamErr, {
+                        streamError: streamErr.message,
+                        nonStreamError: nonStreamErr.message,
+                    });
+                    throw nonStreamErr;
                 }
-            );
-
-            const finalContent = result.content || fullContent;
-
-            if (!finalContent || !finalContent.trim()) {
-                const err = new Error('پاسخ خالی از مدل دریافت شد');
-                Logger.error('StoryManager.emptyResponse', err, {
-                    model: result.model,
-                    rawLength: finalContent.length,
-                });
-                if (onError) onError(err);
-                return null;
             }
+
+            if (!result || !result.content || !result.content.trim()) {
+                const err = new Error('پاسخ خالی از هر دو حالت دریافت شد');
+                Logger.error('StoryManager.emptyResult', err);
+                throw err;
+            }
+
+            const finalContent = result.content;
 
             const story = {
                 id: Utils.generateId('story'),
                 content: finalContent,
-                model: result.model || modelUsed,
+                model: result.model || OpenRouter.getModel(),
                 context: JSON.stringify({
                     winner: context.winner?.name,
                     mode: context.mode,
@@ -78,20 +93,24 @@ const StoryManager = {
                 }),
                 timestamp: Date.now(),
                 wordCount: finalContent.trim().split(/\s+/).length,
+                usedStream,
             };
 
             try {
                 SQLStorage.addStory(story);
             } catch (e) {
-                Logger.warn('StoryManager.saveStory', 'ذخیره داستان ناموفق', { error: e.message });
+                Logger.warn('StoryManager.saveStory', 'ذخیره داستان ناموفق', {
+                    error: e.message,
+                });
             }
 
             const stories = [story, ...(AppState.get('stories') || [])].slice(0, 100);
             AppState.set('stories', stories);
 
-            Logger.info('StoryManager', 'داستان ساخته شد', {
+            Logger.info('StoryManager', '✅ داستان ساخته شد', {
                 length: finalContent.length,
                 model: result.model,
+                usedStream,
             });
 
             if (onComplete) onComplete(story);
@@ -106,6 +125,30 @@ const StoryManager = {
         } finally {
             this.isGenerating = false;
         }
+    },
+
+    /**
+     * تلاش با استریم
+     */
+    async _tryStream(messages, onChunk) {
+        return await OpenRouter.chatStream(
+            messages,
+            {
+                temperature: AppState.get('settings.aiTemperature') || 0.8,
+                maxTokens: 2000,
+            },
+            onChunk
+        );
+    },
+
+    /**
+     * تلاش غیراستریم
+     */
+    async _tryNonStream(messages) {
+        return await OpenRouter.chat(messages, {
+            temperature: AppState.get('settings.aiTemperature') || 0.8,
+            maxTokens: 2000,
+        });
     },
 
     async generate(context, options = {}) {
@@ -155,13 +198,11 @@ const StoryManager = {
 
         let html = content;
 
-        // امن‌سازی HTML اول
         html = html
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-        // Markdown
         html = html.replace(/^##\s+(.+)$/gm, '<h2 class="story-title">$1</h2>');
         html = html.replace(/^###\s+(.+)$/gm, '<h3 class="story-subtitle">$1</h3>');
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
