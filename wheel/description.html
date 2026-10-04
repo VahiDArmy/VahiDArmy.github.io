@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="مدیریت توصیف افراد و آیتم‌ها">
+    <title>گردونه شانس | توصیف‌ها</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+
+    <link rel="stylesheet" href="css/base/reset.css">
+    <link rel="stylesheet" href="css/base/variables.css">
+    <link rel="stylesheet" href="css/base/typography.css">
+    <link rel="stylesheet" href="css/base/rtl.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/inputs.css">
+    <link rel="stylesheet" href="css/components/modals.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/tooltips.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/tabs.css">
+    <link rel="stylesheet" href="css/components/dropdown.css">
+    <link rel="stylesheet" href="css/components/switch.css">
+    <link rel="stylesheet" href="css/components/badges.css">
+    <link rel="stylesheet" href="css/components/loader.css">
+    <link rel="stylesheet" href="css/layout/header.css">
+    <link rel="stylesheet" href="css/layout/sidebar.css">
+    <link rel="stylesheet" href="css/layout/footer.css">
+    <link rel="stylesheet" href="css/layout/grid.css">
+    <link rel="stylesheet" href="css/pages/description.css">
+    <link rel="stylesheet" href="css/animations/keyframes.css">
+    <link rel="stylesheet" href="css/animations/transitions.css">
+</head>
+<body class="dark-theme">
+    <canvas id="particles-canvas" class="particles-canvas"></canvas>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="header-right">
+                <img src="assets/images/logo.svg" alt="لوگو" class="logo">
+                <h1 class="site-title">گردونه شانس</h1>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">خانه</a>
+                <a href="wheel.html" class="nav-link">گردونه</a>
+                <a href="description.html" class="nav-link active">توصیف‌ها</a>
+                <a href="ai.html" class="nav-link">هوش مصنوعی</a>
+                <a href="history.html" class="nav-link">تاریخچه</a>
+                <a href="settings.html" class="nav-link">تنظیمات</a>
+            </nav>
+            <div class="header-left">
+                <button id="theme-toggle" class="icon-btn" title="تغییر تم">
+                    <span class="icon">🌙</span>
+                </button>
+                <button id="sync-btn" class="icon-btn" title="همگام‌سازی با GitHub">
+                    <span class="icon">☁️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content description-page">
+        <div class="page-header">
+            <h2 class="page-title">📝 توصیف افراد و آیتم‌ها</h2>
+            <p class="page-subtitle">
+                برای هر فرد یا آیتم یک توصیف بنویسید تا هوش مصنوعی از آن‌ها در ساخت داستان استفاده کند
+            </p>
+        </div>
+
+        <div class="description-layout">
+            <!-- ستون راست: لیست آبجکت‌ها -->
+            <aside class="objects-sidebar">
+                <div class="sidebar-header">
+                    <h3>آبجکت‌ها</h3>
+                </div>
+                <div id="objects-list" class="objects-list">
+                    <!-- توسط JS پر می‌شود -->
+                </div>
+            </aside>
+
+            <!-- ستون چپ: ویرایشگر -->
+            <section class="editor-section">
+                <!-- ویرایشگر توصیف -->
+                <div class="editor-card">
+                    <div class="editor-header">
+                        <h3 class="editor-title">
+                            ویرایش توصیف
+                            <span id="current-object-name" class="object-name-badge">—</span>
+                        </h3>
+                        <button id="save-description-btn" class="btn btn-primary btn-sm" disabled>
+                            💾 ذخیره
+                        </button>
+                    </div>
+                    <div class="editor-body">
+                        <textarea
+                            id="description-textarea"
+                            class="description-textarea"
+                            placeholder="توصیف خود را اینجا بنویسید... (ذخیره خودکار بعد از ۱ ثانیه)"
+                            disabled
+                        ></textarea>
+                        <div class="editor-hint">
+                            💡 هر چه توصیف دقیق‌تر و جزئی‌تر باشد، داستان هوش مصنوعی جذاب‌تر می‌شود
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بخش آیتم‌ها -->
+                <div class="items-manager-card">
+                    <div class="editor-header">
+                        <h3 class="editor-title">🎁 مدیریت آیتم‌ها</h3>
+                    </div>
+                    <div class="editor-body">
+                        <p class="section-desc">
+                            آیتم‌ها در دراپ‌دان زیر قابل انتخاب هستند و به مرور زمان به آن اضافه می‌شوند
+                        </p>
+
+                        <div class="item-dropdown-wrapper">
+                            <div id="item-dropdown"></div>
+                        </div>
+
+                        <div class="add-item-row">
+                            <input
+                                type="text"
+                                id="new-item-input"
+                                class="input"
+                                placeholder="مثلاً: پفک، چیپس، نوشابه..."
+                            >
+                            <button id="add-item-btn" class="btn btn-primary">
+                                + افزودن آیتم
+                            </button>
+                        </div>
+
+                        <div class="items-hint">
+                            این آیتم‌ها به لیست دراپ‌دان بالا اضافه می‌شوند و در تولید داستان استفاده خواهند شد
+                        </div>
+                    </div>
+                </div>
+
+                <!-- راهنما -->
+                <div class="help-card">
+                    <h4>🎯 راهنما</h4>
+                    <ul class="help-list">
+                        <li>روی هر آبجکت در لیست کنار کلیک کنید تا توصیف آن باز شود</li>
+                        <li>توصیف‌ها به‌طور خودکار ذخیره می‌شوند</li>
+                        <li>می‌توانید بین توصیف افراد و آیتم‌ها جابجا شوید</li>
+                        <li>این توصیف‌ها در صفحه هوش مصنوعی استفاده می‌شوند</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p class="footer-text">
+                ساخته شده با ❤️ برای سرگرمی |
+                <a href="https://github.com" target="_blank">مشاهده در گیت‌هاب</a>
+            </p>
+        </div>
+    </footer>
+
+    <div id="modal-container" class="modal-container"></div>
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- کتابخانه‌های خارجی -->
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+
+    <!-- هسته -->
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/router.js"></script>
+
+    <!-- ذخیره‌سازی -->
+    <script src="js/storage/local-storage.js"></script>
+    <script src="js/storage/github-storage.js"></script>
+    <script src="js/storage/sql-storage.js"></script>
+    <script src="js/storage/sync.js"></script>
+
+    <!-- داده‌ها -->
+    <script src="js/data/people.js"></script>
+    <script src="js/data/items.js"></script>
+    <script src="js/data/descriptions.js"></script>
+    <script src="js/data/history.js"></script>
+
+    <!-- UI -->
+    <script src="js/ui/particles.js"></script>
+    <script src="js/ui/notification.js"></script>
+    <script src="js/ui/modal.js"></script>
+    <script src="js/ui/dropdown.js"></script>
+    <script src="js/ui/theme.js"></script>
+    <script src="js/ui/confetti.js"></script>
+
+    <!-- صفحات -->
+    <script src="js/pages/description-page.js"></script>
+
+    <!-- راه‌انداز -->
+    <script src="js/core/app.js"></script>
+</body>
+</html>
