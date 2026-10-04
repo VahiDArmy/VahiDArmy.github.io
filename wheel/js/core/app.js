@@ -31,10 +31,7 @@ const App = {
             console.log('✅ دیتابیس آماده است');
         } catch (e) {
             console.error('❌ خطا در راه‌اندازی دیتابیس:', e);
-            Notification.warning(
-                'دیتابیس در دسترس نیست. صفحه را رفرش کنید.',
-                8000
-            );
+            Notification.warning('دیتابیس در دسترس نیست. صفحه را رفرش کنید.', 8000);
         }
 
         try { Router.init(); } catch (e) { console.error('خطا در روتر:', e); }
@@ -42,7 +39,15 @@ const App = {
         try {
             if (document.getElementById('wheel-canvas')) {
                 WheelCore.init('wheel-canvas');
-                WheelCore.setItems(AppState.get('people') || []);
+                WheelCore.setItems(People.getInWheel());
+
+                // ⚡ بازیابی زاویه چرخش
+                const savedRotation = AppState.get('wheel.rotation');
+                if (typeof savedRotation === 'number' && savedRotation !== 0) {
+                    WheelCore.rotation = savedRotation;
+                    WheelCore.render();
+                    console.log('🔄 زاویه گردونه بازیابی شد:', savedRotation);
+                }
             }
         } catch (e) { console.error('خطا در گردونه:', e); }
 
@@ -60,6 +65,7 @@ const App = {
             const people = SQLStorage.getAllPeople().map((p) => ({
                 ...p,
                 starred: p.starred === 1,
+                inWheel: p.in_wheel === 1,
                 createdAt: p.created_at,
                 updatedAt: p.updated_at,
             }));
@@ -67,6 +73,7 @@ const App = {
 
             const items = SQLStorage.getAllItems().map((i) => ({
                 ...i,
+                inWheel: i.in_wheel === 1,
                 createdAt: i.created_at,
             }));
             AppState.set('items', items);
@@ -89,10 +96,6 @@ const App = {
         }
     },
 
-    /**
-     * بارگذاری تنظیمات از SQLite
-     * ⚠️ نکته: githubBranch اینجا اضافه شده
-     */
     _loadSettingsFromSQL() {
         const keys = [
             'theme',
@@ -104,7 +107,7 @@ const App = {
             'githubToken',
             'githubRepo',
             'githubUsername',
-            'githubBranch',      // ✅ اضافه شد
+            'githubBranch',
             'openrouterApiKey',
             'aiModel',
             'aiTemperature',
@@ -125,7 +128,6 @@ const App = {
             } catch (e) {}
         });
 
-        // اگر branch خالی بود، از LocalStorage بخوان
         if (!settings.githubBranch) {
             const localBranch = LocalStorage.get('secret_githubBranch', null) ||
                                LocalStorage.get('githubBranch', null);
@@ -136,6 +138,38 @@ const App = {
             const merged = Utils.deepMerge(AppState.get('settings'), settings);
             AppState.set('settings', merged);
             console.log('📥 تنظیمات بارگذاری شد:', Object.keys(settings).join(', '));
+        }
+
+        // ═══════════════════════════════════════
+        // ⚡ بازیابی وضعیت گردونه (session)
+        // ═══════════════════════════════════════
+        try {
+            const wheelState = SQLStorage.getSetting('wheel_state');
+
+            if (wheelState && typeof wheelState === 'object') {
+                if (wheelState.currentMode) {
+                    AppState.set('wheel.currentMode', wheelState.currentMode);
+                }
+                if (wheelState.lastResult) {
+                    AppState.set('wheel.lastResult', wheelState.lastResult);
+                }
+                if (wheelState.setup && typeof wheelState.setup === 'object') {
+                    AppState.set('wheel.setup', wheelState.setup);
+                }
+                if (typeof wheelState.rotation === 'number') {
+                    AppState.set('wheel.rotation', wheelState.rotation);
+                }
+
+                console.log('🔄 وضعیت گردونه بازیابی شد:', {
+                    mode: wheelState.currentMode,
+                    hasLastResult: !!wheelState.lastResult,
+                    hasSetup: !!wheelState.setup,
+                    hasItems: !!(wheelState.setup && wheelState.setup.items && wheelState.setup.items.length),
+                    rotation: wheelState.rotation,
+                });
+            }
+        } catch (e) {
+            console.error('خطا در بازیابی وضعیت گردونه:', e);
         }
     },
 
