@@ -1,5 +1,5 @@
 /**
- * مدیریت داستان‌ها - با فیلتر کردن خروجی
+ * مدیریت داستان‌ها - با فیلتر قوی برای متن غیرفارسی
  * @module storyManager
  */
 
@@ -31,6 +31,7 @@ const StoryManager = {
             Logger.debug('StoryManager', '📝 پرامپت آماده', {
                 systemLength: systemPrompt.length,
                 userLength: userPrompt.length,
+                model: OpenRouter.getModel(),
             });
 
             const messages = [
@@ -38,26 +39,24 @@ const StoryManager = {
                 { role: 'user', content: userPrompt },
             ];
 
-            // تلاش با استریم
             let result = null;
             try {
                 result = await OpenRouter.chatStream(
                     messages,
                     {
-                        temperature: AppState.get('settings.aiTemperature') || 0.8,
-                        maxTokens: 2500,
+                        temperature: AppState.get('settings.aiTemperature') || 0.9,
+                        maxTokens: 3000,
                     },
                     onChunk
                 );
             } catch (streamErr) {
-                Logger.warn('StoryManager', 'استریم شکست خورد - fallback به غیراستریم', {
+                Logger.warn('StoryManager', 'استریم شکست خورد - fallback', {
                     error: streamErr.message,
                 });
 
-                // fallback به غیراستریم
                 result = await OpenRouter.chat(messages, {
-                    temperature: AppState.get('settings.aiTemperature') || 0.8,
-                    maxTokens: 2500,
+                    temperature: AppState.get('settings.aiTemperature') || 0.9,
+                    maxTokens: 3000,
                 });
 
                 if (onChunk && result) {
@@ -69,11 +68,18 @@ const StoryManager = {
                 throw new Error('پاسخ خالی از سرور');
             }
 
-            // ─── پاکسازی محتوا ───
             const cleanedContent = this._cleanStoryContent(result.content);
 
             if (!cleanedContent.trim()) {
                 throw new Error('پس از پاکسازی، محتوا خالی شد');
+            }
+
+            // بررسی: آیا خروجی عمدتاً فارسی است؟
+            const persianCheck = this._checkPersianRatio(cleanedContent);
+            Logger.debug('StoryManager', '📊 بررسی فارسی', persianCheck);
+
+            if (!persianCheck.ok && persianCheck.reason) {
+                Logger.warn('StoryManager', '⚠️ خروجی فارسی نیست', persianCheck);
             }
 
             const story = {
@@ -96,6 +102,7 @@ const StoryManager = {
             Logger.info('StoryManager', '✅ داستان ساخته شد', {
                 length: cleanedContent.length,
                 model: result.model,
+                persianRatio: persianCheck.ratio,
             });
 
             if (onComplete) onComplete(story);
@@ -110,7 +117,34 @@ const StoryManager = {
     },
 
     /**
-     * پاکسازی محتوای داستان
+     * بررسی نسبت فارسی
+     */
+    _checkPersianRatio(text) {
+        const persianChars = (text.match(/[\u0600-\u06FF]/g) || []).length;
+        const englishChars = (text.match(/[a-zA-Z]/g) || []).length;
+        const total = persianChars + englishChars;
+
+        if (total === 0) {
+            return { ok: false, reason: 'no letters', ratio: 0, persianChars, englishChars };
+        }
+
+        const ratio = persianChars / total;
+
+        if (ratio < 0.7) {
+            return {
+                ok: false,
+                reason: 'mostly non-persian',
+                ratio,
+                persianChars,
+                englishChars,
+            };
+        }
+
+        return { ok: true, ratio, persianChars, englishChars };
+    },
+
+    /**
+     * پاکسازی محتوا از متن غیرفارسی
      */
     _cleanStoryContent(content) {
         if (!content) return '';
@@ -121,32 +155,33 @@ const StoryManager = {
         cleaned = cleaned.replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '');
         cleaned = cleaned.replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '');
         cleaned = cleaned.replace(/\[thinking\][\s\S]*?\[\/thinking\]/gi, '');
+        cleaned = cleaned.replace(/<reasoning[^>]*>[\s\S]*?<\/reasoning>/gi, '');
 
-        // ۲. حذف خطوطی که با "Thinking:" یا "Reasoning:" شروع می‌شوند
-        cleaned = cleaned.replace(/^(thinking|reasoning|analysis|let me think)[:：].*/gim, '');
+        // ۲. حذف خطوطی که با کلمات انگلیسی شروع می‌شوند
+        cleaned = cleaned.replace(/^(thinking|reasoning|analysis|let me think|okay|well|sure|here|title|story|chapter|draft|outline)[:：].*/gim, '');
 
-        // ۳. حذف پرانتزهای انگلیسی توضیحی در ابتدای خط
+        // ۳. حذف خطوط توضیحی در پرانتز که عمدتاً انگلیسی هستند
         cleaned = cleaned.replace(/^\s*\([^)]*[a-zA-Z]{5,}[^)]*\)\s*$/gm, '');
 
-        // ۴. حذف خطوطی که بیش از ۵۰٪ انگلیسی هستند
+        // ۴. حذف خطوطی که بیشتر از ۵۰٪ انگلیسی هستند
         const lines = cleaned.split('\n');
         const filtered = lines.filter((line) => {
             const trimmed = line.trim();
             if (!trimmed) return true;
 
-            // اگر خط فقط فارسی/عدد/علامت است، نگه‌دار
             const persianChars = (trimmed.match(/[\u0600-\u06FF]/g) || []).length;
             const englishChars = (trimmed.match(/[a-zA-Z]/g) || []).length;
-            const totalLetters = persianChars + englishChars;
+            const total = persianChars + englishChars;
 
-            if (totalLetters === 0) return true; // خط خالی یا فقط علامت
+            if (total === 0) return true;
 
-            // اگر بیشتر از ۶۰٪ انگلیسی است، حذف کن
-            const englishRatio = englishChars / totalLetters;
-            if (englishRatio > 0.6) {
-                Logger.debug('StoryManager.cleanContent', 'خط انگلیسی حذف شد', {
-                    line: trimmed.substring(0, 80),
-                    englishRatio: englishRatio.toFixed(2),
+            const englishRatio = englishChars / total;
+
+            // اگر خط بیش از ۵۰٪ انگلیسی است، حذف کن
+            if (englishRatio > 0.5) {
+                Logger.debug('StoryManager.clean', 'خط انگلیسی حذف شد', {
+                    preview: trimmed.substring(0, 80),
+                    ratio: englishRatio.toFixed(2),
                 });
                 return false;
             }
@@ -156,20 +191,12 @@ const StoryManager = {
 
         cleaned = filtered.join('\n');
 
-        // ۵. حذف خطوط اضافه
+        // ۵. حذف کلمات انگلیسی تک‌افتاده در متن فارسی (کلمات بیش از ۸ حرف)
+        cleaned = cleaned.replace(/\b[a-zA-Z]{9,}\b/g, '');
+
+        // ۶. حذف خطوط خالی اضافه
         cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
         cleaned = cleaned.trim();
-
-        // ۶. اگر بعد از پاکسازی، بیشتر از ۷۰٪ متن انگلیسی بود، خطا بده
-        const totalPersian = (cleaned.match(/[\u0600-\u06FF]/g) || []).length;
-        const totalEnglish = (cleaned.match(/[a-zA-Z]/g) || []).length;
-
-        if (totalEnglish > totalPersian * 2 && totalEnglish > 100) {
-            Logger.warn('StoryManager.cleanContent', '⚠️ متن عمدتاً انگلیسی است', {
-                persianChars: totalPersian,
-                englishChars: totalEnglish,
-            });
-        }
 
         return cleaned;
     },
@@ -220,13 +247,11 @@ const StoryManager = {
 
         let html = content;
 
-        // امن‌سازی
         html = html
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;');
 
-        // Markdown
         html = html.replace(/^##\s+(.+)$/gm, '<h2 class="story-title">$1</h2>');
         html = html.replace(/^###\s+(.+)$/gm, '<h3 class="story-subtitle">$1</h3>');
         html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -253,7 +278,7 @@ const StoryManager = {
 
     async copy(story) {
         const ok = await Utils.copyToClipboard(story.content);
-        if (ok) Notification.success('داستان کپی شد');
+        if (ok) Notification.success('کپی شد');
         else Notification.error('خطا در کپی');
     },
 
