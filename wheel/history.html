@@ -47,6 +47,7 @@
                 <a href="description.html" class="nav-link">توصیف‌ها</a>
                 <a href="ai.html" class="nav-link">هوش مصنوعی</a>
                 <a href="history.html" class="nav-link active">تاریخچه</a>
+                <a href="database.html" class="nav-link">دیتابیس</a>
                 <a href="settings.html" class="nav-link">تنظیمات</a>
             </nav>
             <div class="header-left">
@@ -90,14 +91,14 @@
 
         <section class="history-controls">
             <div class="history-filters">
-                <button class="filter-btn active" data-filter="all">همه</button>
-                <button class="filter-btn" data-filter="elimination">🔥 حذفی</button>
+                <button class="filter-btn active" data-filter="all" type="button">همه</button>
+                <button class="filter-btn" data-filter="elimination" type="button">🔥 حذفی</button>
             </div>
             <div class="history-actions">
-                <button id="export-history-btn" class="btn btn-secondary btn-sm">
+                <button id="export-history-btn" class="btn btn-secondary btn-sm" type="button">
                     📥 خروجی JSON
                 </button>
-                <button id="clear-history-btn" class="btn btn-danger btn-sm">
+                <button id="clear-history-btn" class="btn btn-danger btn-sm" type="button">
                     🗑 پاک کردن
                 </button>
             </div>
@@ -123,6 +124,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 
     <script src="js/core/utils.js"></script>
+    <script src="js/core/logger.js"></script>
     <script src="js/core/state.js"></script>
     <script src="js/core/events.js"></script>
     <script src="js/core/router.js"></script>
