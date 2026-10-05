@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="چرخ فلک - مدیریت دیتابیس">
+    <title>چرخ فلک | دیتابیس</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+
+    <link rel="stylesheet" href="css/base/reset.css">
+    <link rel="stylesheet" href="css/base/variables.css">
+    <link rel="stylesheet" href="css/base/typography.css">
+    <link rel="stylesheet" href="css/base/rtl.css">
+    <link rel="stylesheet" href="css/components/buttons.css">
+    <link rel="stylesheet" href="css/components/inputs.css">
+    <link rel="stylesheet" href="css/components/modals.css">
+    <link rel="stylesheet" href="css/components/cards.css">
+    <link rel="stylesheet" href="css/components/tables.css">
+    <link rel="stylesheet" href="css/components/tooltips.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/tabs.css">
+    <link rel="stylesheet" href="css/components/dropdown.css">
+    <link rel="stylesheet" href="css/components/switch.css">
+    <link rel="stylesheet" href="css/components/badges.css">
+    <link rel="stylesheet" href="css/components/loader.css">
+    <link rel="stylesheet" href="css/layout/header.css">
+    <link rel="stylesheet" href="css/layout/sidebar.css">
+    <link rel="stylesheet" href="css/layout/footer.css">
+    <link rel="stylesheet" href="css/layout/grid.css">
+    <link rel="stylesheet" href="css/pages/database.css">
+    <link rel="stylesheet" href="css/animations/keyframes.css">
+    <link rel="stylesheet" href="css/animations/transitions.css">
+</head>
+<body class="dark-theme">
+    <canvas id="particles-canvas" class="particles-canvas"></canvas>
+
+    <header class="main-header">
+        <div class="header-container">
+            <div class="header-right">
+                <img src="assets/images/logo.svg" alt="لوگو" class="logo">
+                <h1 class="site-title">چرخ فلک</h1>
+            </div>
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">خانه</a>
+                <a href="wheel.html" class="nav-link">گردونه</a>
+                <a href="description.html" class="nav-link">توصیف‌ها</a>
+                <a href="ai.html" class="nav-link">هوش مصنوعی</a>
+                <a href="history.html" class="nav-link">تاریخچه</a>
+                <a href="database.html" class="nav-link active">دیتابیس</a>
+                <a href="settings.html" class="nav-link">تنظیمات</a>
+            </nav>
+            <div class="header-left">
+                <button id="nav-toggle" class="icon-btn nav-toggle" title="منو" aria-label="منو">
+                    <span class="icon">☰</span>
+                </button>
+                <button id="theme-toggle" class="icon-btn" title="تغییر تم">
+                    <span class="icon">🌙</span>
+                </button>
+                <button id="sync-btn" class="icon-btn" title="همگام‌سازی با GitHub">
+                    <span class="icon">☁️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content database-page">
+        <div class="page-header">
+            <h2 class="page-title">🗄️ مدیریت دیتابیس</h2>
+            <p class="page-subtitle">
+                مشاهده، جستجو، و مدیریت تمام جداول دیتابیس SQLite
+            </p>
+        </div>
+
+        <section class="db-overview">
+            <div class="overview-card">
+                <div class="overview-icon">💾</div>
+                <div class="overview-content">
+                    <div class="overview-label">حجم دیتابیس</div>
+                    <div class="overview-value" id="ov-size">—</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">📊</div>
+                <div class="overview-content">
+                    <div class="overview-label">کل رکوردها</div>
+                    <div class="overview-value" id="ov-total">—</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">👥</div>
+                <div class="overview-content">
+                    <div class="overview-label">افراد</div>
+                    <div class="overview-value" id="ov-people">—</div>
+                </div>
+            </div>
+            <div class="overview-card">
+                <div class="overview-icon">📚</div>
+                <div class="overview-content">
+                    <div class="overview-label">داستان‌ها</div>
+                    <div class="overview-value" id="ov-stories">—</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="db-actions-bar">
+            <div class="db-actions-group">
+                <button id="db-push" class="btn btn-primary btn-sm" type="button">☁️ ارسال به GitHub</button>
+                <button id="db-pull" class="btn btn-secondary btn-sm" type="button">⬇️ دریافت از GitHub</button>
+                <button id="db-download" class="btn btn-secondary btn-sm" type="button">💾 دانلود فایل</button>
+                <label class="btn btn-secondary btn-sm upload-label">
+                    📂 بارگذاری
+                    <input type="file" id="db-upload" accept=".sqlite,.db" hidden>
+                </label>
+            </div>
+            <div class="db-actions-group">
+                <button id="db-refresh" class="btn btn-ghost btn-sm" type="button">🔄 به‌روزرسانی</button>
+                <button id="db-danger-btn" class="btn btn-danger btn-sm" type="button">⚠️ منطقه خطر</button>
+            </div>
+        </section>
+
+        <section class="db-tables-section">
+            <div class="db-tabs" id="db-tabs">
+                <button class="db-tab active" data-table="people" type="button">
+                    <span class="db-tab-icon">👥</span>
+                    <span class="db-tab-label">افراد</span>
+                    <span class="db-tab-count" id="tab-count-people">۰</span>
+                </button>
+                <button class="db-tab" data-table="items" type="button">
+                    <span class="db-tab-icon">🎁</span>
+                    <span class="db-tab-label">آیتم‌ها</span>
+                    <span class="db-tab-count" id="tab-count-items">۰</span>
+                </button>
+                <button class="db-tab" data-table="descriptions" type="button">
+                    <span class="db-tab-icon">📝</span>
+                    <span class="db-tab-label">توصیفات</span>
+                    <span class="db-tab-count" id="tab-count-descriptions">۰</span>
+                </button>
+                <button class="db-tab" data-table="history" type="button">
+                    <span class="db-tab-icon">🎯</span>
+                    <span class="db-tab-label">چرخش‌ها</span>
+                    <span class="db-tab-count" id="tab-count-history">۰</span>
+                </button>
+                <button class="db-tab" data-table="stories" type="button">
+                    <span class="db-tab-icon">📚</span>
+                    <span class="db-tab-label">داستان‌ها</span>
+                    <span class="db-tab-count" id="tab-count-stories">۰</span>
+                </button>
+                <button class="db-tab" data-table="settings" type="button">
+                    <span class="db-tab-icon">⚙️</span>
+                    <span class="db-tab-label">تنظیمات</span>
+                    <span class="db-tab-count" id="tab-count-settings">۰</span>
+                </button>
+            </div>
+
+            <div class="db-toolbar">
+                <div class="db-search-wrap">
+                    <input type="text" id="db-search" class="input" placeholder="🔍 جستجو در جدول...">
+                </div>
+                <div class="db-toolbar-actions">
+                    <select id="db-sort" class="input input-sm">
+                        <option value="newest">جدیدترین اول</option>
+                        <option value="oldest">قدیمی‌ترین اول</option>
+                        <option value="name-asc">نام (الف-ی)</option>
+                        <option value="name-desc">نام (ی-الف)</option>
+                    </select>
+                    <button id="db-delete-filtered" class="btn btn-danger btn-sm" type="button">
+                        🗑 حذف نتایج فیلتر
+                    </button>
+                </div>
+            </div>
+
+            <div class="db-table-container">
+                <div id="db-table-content" class="db-table-content">
+                    <div class="db-empty">
+                        <div class="spinner"></div>
+                        <p>در حال بارگذاری...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="db-pagination" id="db-pagination"></div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <p class="footer-text">
+                ساخته شده با ❤️ برای سرگرمی |
+                <a href="https://github.com" target="_blank">مشاهده در گیت‌هاب</a>
+            </p>
+        </div>
+    </footer>
+
+    <div id="modal-container" class="modal-container"></div>
+    <div id="notification-container" class="notification-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+
+    <script src="js/core/utils.js"></script>
+    <script src="js/core/logger.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/events.js"></script>
+    <script src="js/core/router.js"></script>
+
+    <script src="js/storage/local-storage.js"></script>
+    <script src="js/storage/github-storage.js"></script>
+    <script src="js/storage/sql-storage.js"></script>
+    <script src="js/storage/sync.js"></script>
+
+    <script src="js/data/people.js"></script>
+    <script src="js/data/items.js"></script>
+    <script src="js/data/descriptions.js"></script>
+    <script src="js/data/history.js"></script>
+
+    <script src="js/ui/particles.js"></script>
+    <script src="js/ui/notification.js"></script>
+    <script src="js/ui/modal.js"></script>
+    <script src="js/ui/dropdown.js"></script>
+    <script src="js/ui/theme.js"></script>
+    <script src="js/ui/confetti.js"></script>
+
+    <script src="js/ai/openrouter.js"></script>
+    <script src="js/ai/story-manager.js"></script>
+
+    <script src="js/pages/database-page.js"></script>
+
+    <script src="js/core/app.js"></script>
+</body>
+</html>
