@@ -159,56 +159,53 @@
                             <span class="badge badge-success badge-sm">پیشنهاد شده</span>
                         </label>
                         <select id="input-ai-model" class="input">
-                            <optgroup label="🌟 Google Gemini (پیشنهاد اول - رایگان و قدرتمند)">
-                                <option value="google/gemini-2.0-flash-exp:free" selected>
-                                    🥇 Google Gemini 2.0 Flash — سریع و باکیفیت
-                                </option>
-                                <option value="google/gemini-2.5-flash-preview:free">
-                                    🥈 Google Gemini 2.5 Flash Preview — جدیدتر
+                            <optgroup label="🌟 Google Gemini (رایگان - پیشنهاد اول برای فارسی)">
+                                <option value="google/gemini-2.5-flash:free" selected>
+                                    🥇 Google Gemini 2.5 Flash — جدیدترین و قوی‌ترین
                                 </option>
                                 <option value="google/gemini-2.0-flash-thinking-exp:free">
                                     🧠 Google Gemini 2.0 Flash Thinking — تحلیلی
                                 </option>
+                                <option value="google/gemini-2.0-flash-lite-preview-02-05:free">
+                                    ⚡ Google Gemini 2.0 Flash Lite — سریع و سبک
+                                </option>
+                                <option value="google/gemini-exp-1121:free">
+                                    🔬 Google Gemini Experimental 1121
+                                </option>
                                 <option value="google/gemma-3-27b-it:free">
-                                    🥉 Google Gemma 3 27B — سبک و سریع
+                                    💎 Google Gemma 3 27B — اوپن‌سورس گوگل
                                 </option>
                                 <option value="google/gemma-3-12b-it:free">
-                                    Google Gemma 3 12B — سبک‌ترین
+                                    🌱 Google Gemma 3 12B — سبک‌ترین
                                 </option>
                             </optgroup>
 
-                            <optgroup label="⭐ خودکار (اگر مطمئن نیستید)">
+                            <optgroup label="🎯 خودکار (اگر مطمئن نیستید)">
                                 <option value="openrouter/free">
-                                    🎯 خودکار - بهترین مدل رایگان موجود
+                                    🎯 بهترین مدل رایگان موجود (خودکار)
                                 </option>
                                 <option value="openrouter/auto">
                                     🤖 خودکار هوشمند
                                 </option>
                             </optgroup>
 
-                            <optgroup label="🚀 Qwen (قدرتمند)">
-                                <option value="qwen/qwen3.6-plus:free">Qwen 3.6 Plus — پنجره ۱M</option>
-                                <option value="qwen/qwen3-coder:free">Qwen 3 Coder</option>
+                            <optgroup label="🚀 قدرتمند (Qwen - رایگان)">
+                                <option value="qwen/qwen3.6-plus:free">Qwen 3.6 Plus</option>
                                 <option value="qwen/qwen3-next-80b-a3b-instruct:free">Qwen 3 Next 80B</option>
+                                <option value="qwen/qwen3-coder:free">Qwen 3 Coder</option>
                             </optgroup>
 
-                            <optgroup label="🎨 OpenAI (Open Source)">
+                            <optgroup label="🦙 Meta Llama (رایگان)">
+                                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B</option>
+                                <option value="meta-llama/llama-3.2-3b-instruct:free">Llama 3.2 3B</option>
+                            </optgroup>
+
+                            <optgroup label="🎨 OpenAI (اوپن‌سورس)">
                                 <option value="openai/gpt-oss-120b:free">GPT-OSS 120B</option>
                             </optgroup>
 
-                            <optgroup label="🦙 Meta Llama">
-                                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B</option>
-                            </optgroup>
-
-                            <optgroup label="⚡ سریع و سبک">
-                                <option value="stepfun/step-3.5-flash:free">Step 3.5 Flash</option>
-                                <option value="z-ai/glm-4.5-air:free">GLM 4.5 Air</option>
-                                <option value="minimax/minimax-m2.5:free">MiniMax M2.5</option>
-                            </optgroup>
-
-                            <optgroup label="🧠 NVIDIA">
-                                <option value="nvidia/nemotron-3-super-120b-a12b:free">Nemotron 3 Super</option>
-                                <option value="nvidia/nemotron-3-nano-30b-a3b:free">Nemotron Nano 30B</option>
+                            <optgroup label="🧠 DeepSeek (رایگان)">
+                                <option value="deepseek/deepseek-chat:free">DeepSeek Chat</option>
                             </optgroup>
 
                             <optgroup label="✏️ سفارشی">
@@ -216,7 +213,7 @@
                             </optgroup>
                         </select>
                         <p class="form-hint">
-                            💡 پیشنهاد: <code>Google Gemini 2.0 Flash</code> — رایگان، سریع، و داستان‌پرداز خوب
+                            💡 پیشنهاد اول: <code>Google Gemini 2.5 Flash</code> — بهترین کیفیت فارسی در بین مدل‌های رایگان
                         </p>
                     </div>
 
@@ -225,7 +222,7 @@
                             شناسه مدل سفارشی
                             <span class="required">*</span>
                         </label>
-                        <input type="text" id="input-custom-model" class="input" placeholder="مثلاً: google/gemini-2.0-flash-exp:free" autocomplete="off">
+                        <input type="text" id="input-custom-model" class="input" placeholder="مثلاً: google/gemini-2.5-flash:free" autocomplete="off">
                         <p class="form-hint">
                             از
                             <a href="https://openrouter.ai/models?max_price=0" target="_blank">openrouter.ai/models</a>
@@ -244,7 +241,7 @@
 
                     <div class="form-row">
                         <label class="form-label">پرامپت سیستم</label>
-                        <textarea id="input-system-prompt" class="input" rows="3">تو یک داستان‌نویس حرفه‌ای، خلاق و فارسی‌زبان هستی که داستان‌های زنده، باورپذیر و جذاب می‌نویسد. تمام خروجی تو باید ۱۰۰٪ به زبان فارسی باشد.</textarea>
+                        <textarea id="input-system-prompt" class="input" rows="3">تو یک داستان‌نویس حرفه‌ای، خلاق و فارسی‌زبان هستی. تمام خروجی تو باید ۱۰۰٪ به زبان فارسی باشد و فقط داستان بنویسی.</textarea>
                     </div>
 
                     <div class="settings-actions">
