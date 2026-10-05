@@ -47,6 +47,7 @@
                 <a href="description.html" class="nav-link">توصیف‌ها</a>
                 <a href="ai.html" class="nav-link">هوش مصنوعی</a>
                 <a href="history.html" class="nav-link">تاریخچه</a>
+                <a href="database.html" class="nav-link">دیتابیس</a>
                 <a href="settings.html" class="nav-link">تنظیمات</a>
             </nav>
             <div class="header-left">
@@ -70,7 +71,6 @@
                     <h2 class="page-title">🎡 گردونه</h2>
                 </div>
 
-                <!-- ═══ Setup Panel ═══ -->
                 <div class="wheel-setup">
                     <div class="setup-header">
                         <h3 class="setup-title">⚙️ تنظیمات این چرخش</h3>
@@ -81,13 +81,7 @@
                         <div class="setup-field">
                             <label class="setup-label">📝 موضوع</label>
                             <div class="topic-input-wrap">
-                                <input
-                                    type="text"
-                                    id="setup-topic"
-                                    class="input"
-                                    placeholder="موضوع داستان..."
-                                    autocomplete="off"
-                                >
+                                <input type="text" id="setup-topic" class="input" placeholder="موضوع داستان..." autocomplete="off">
                                 <button id="save-topic-btn" class="btn btn-ghost btn-sm" title="ذخیره" type="button">💾</button>
                                 <div id="topics-dropdown" class="topic-suggestions"></div>
                             </div>
@@ -96,12 +90,8 @@
                         <div class="setup-field">
                             <label class="setup-label">🎯 برنده چه می‌کند؟</label>
                             <div class="type-selector" id="type-selector">
-                                <button class="type-btn active" data-type="provide" type="button">
-                                    تهیه می‌کند
-                                </button>
-                                <button class="type-btn" data-type="receive" type="button">
-                                    دریافت می‌کند
-                                </button>
+                                <button class="type-btn active" data-type="provide" type="button">تهیه می‌کند</button>
+                                <button class="type-btn" data-type="receive" type="button">دریافت می‌کند</button>
                             </div>
                         </div>
                     </div>
@@ -118,7 +108,6 @@
                     </div>
                 </div>
 
-                <!-- ═══ Mode Selector ═══ -->
                 <div class="mode-selector">
                     <button class="mode-btn active" data-mode="single" type="button">
                         <span class="mode-icon">🎯</span>
@@ -130,7 +119,6 @@
                     </button>
                 </div>
 
-                <!-- ═══ Wheel ═══ -->
                 <div id="spin-type-indicator" class="spin-type-indicator"></div>
 
                 <div class="wheel-container">
