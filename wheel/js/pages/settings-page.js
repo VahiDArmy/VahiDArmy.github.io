@@ -1,10 +1,11 @@
 /**
- * منطق صفحه تنظیمات - با نمایش و مدیریت جداول
+ * منطق صفحه تنظیمات
  * @module settingsPage
  */
 
 const SettingsPage = {
-    DEFAULT_MODEL: 'google/gemini-2.0-flash-exp:free',
+    // پیش‌فرض: Gemini 2.5 Flash
+    DEFAULT_MODEL: 'google/gemini-2.5-flash:free',
     _currentTableType: null,
 
     init() {
@@ -54,7 +55,7 @@ const SettingsPage = {
     },
 
     // ═══════════════════════════════════════════
-    // DB INFO + Data Tables
+    // Data Tables
     // ═══════════════════════════════════════════
 
     _initDatabaseSection() {
@@ -67,10 +68,8 @@ const SettingsPage = {
                     Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
                     return;
                 }
-
                 pushBtn.disabled = true;
                 pushBtn.textContent = 'در حال ارسال...';
-
                 try {
                     await SQLStorage.pushToGitHub('ارسال دستی');
                     this._renderDbInfo();
@@ -90,13 +89,10 @@ const SettingsPage = {
                     Notification.warning('ابتدا تنظیمات GitHub را وارد کنید');
                     return;
                 }
-
                 const ok = await Modal.confirm('دیتابیس محلی با نسخه GitHub جایگزین شود؟', { danger: true });
                 if (!ok) return;
-
                 pullBtn.disabled = true;
                 pullBtn.textContent = 'در حال دریافت...';
-
                 try {
                     await SQLStorage.pullFromGitHub();
                     if (App._loadDataFromSQL) App._loadDataFromSQL();
@@ -124,10 +120,8 @@ const SettingsPage = {
             uploadInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-
                 const ok = await Modal.confirm('دیتابیس فعلی جایگزین شود؟', { danger: true });
                 if (!ok) { uploadInput.value = ''; return; }
-
                 try {
                     await SQLStorage.loadFromFile(file);
                     if (App._loadDataFromSQL) App._loadDataFromSQL();
@@ -194,7 +188,6 @@ const SettingsPage = {
                 </div>
             `;
 
-            // اتصال رویداد کلیک
             container.querySelectorAll('[data-table-type]').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     this._openDataTable(btn.dataset.tableType);
@@ -204,10 +197,6 @@ const SettingsPage = {
             container.innerHTML = '<p class="text-muted">دیتابیس در دسترس نیست</p>';
         }
     },
-
-    // ═══════════════════════════════════════════
-    // نمایش جدول
-    // ═══════════════════════════════════════════
 
     _openDataTable(type) {
         this._currentTableType = type;
@@ -255,7 +244,7 @@ const SettingsPage = {
         const rows = this._getTableData(type);
 
         const columnsHtml = config.columns
-            .map((col) => `<div class="data-table-col" style="grid-column: span 1;">${col.label}</div>`)
+            .map((col) => `<div class="data-table-col">${col.label}</div>`)
             .join('') + '<div class="data-table-col actions-col">عملیات</div>';
 
         const gridTemplate = config.columns.map((c) => c.width).join(' ') + ' 60px';
@@ -270,13 +259,7 @@ const SettingsPage = {
         const content = `
             <div class="data-table-wrapper">
                 <div class="data-table-controls">
-                    <input
-                        type="text"
-                        id="data-table-search"
-                        class="input"
-                        placeholder="🔍 جستجو..."
-                        style="flex: 1;"
-                    >
+                    <input type="text" id="data-table-search" class="input" placeholder="🔍 جستجو..." style="flex: 1;">
                     <button id="delete-all-rows-btn" class="btn btn-danger btn-sm" type="button" ${rows.length === 0 ? 'disabled' : ''}>
                         🗑 حذف همه
                     </button>
@@ -297,9 +280,7 @@ const SettingsPage = {
             title: `${config.title} — ${Utils.toPersianNumbers(rows.length)} مورد`,
             content,
             size: 'xl',
-            buttons: [
-                { label: 'بستن', class: 'btn-secondary' },
-            ],
+            buttons: [{ label: 'بستن', class: 'btn-secondary' }],
         });
 
         setTimeout(() => {
@@ -307,9 +288,6 @@ const SettingsPage = {
         }, 100);
     },
 
-    /**
-     * دریافت داده‌های هر جدول
-     */
     _getTableData(type) {
         try {
             if (type === 'people') {
@@ -375,7 +353,6 @@ const SettingsPage = {
             Logger.error('SettingsPage._getTableData', e, { type });
             return [];
         }
-
         return [];
     },
 
@@ -390,7 +367,6 @@ const SettingsPage = {
                     ${row.inWheel ? '<span class="row-flag" title="در گردونه">🎡</span>' : ''}
                 </div>
             `;
-
             cells = `
                 <div class="data-table-cell">${colorDot}<span>${this._escape(row.name)}</span></div>
                 <div class="data-table-cell text-muted">${this._escape(Utils.truncate(row.description, 60))}</div>
@@ -415,9 +391,7 @@ const SettingsPage = {
             `;
         } else if (type === 'stories') {
             cells = `
-                <div class="data-table-cell">
-                    <span class="row-model">${this._escape(row.model)}</span>
-                </div>
+                <div class="data-table-cell"><span class="row-model">${this._escape(row.model)}</span></div>
                 <div class="data-table-cell text-muted">${this._escape(row.preview)}${row.preview.length >= 120 ? '…' : ''}</div>
                 <div class="data-table-cell"><span class="row-badge">${Utils.toPersianNumbers(row.words)}</span></div>
                 <div class="data-table-cell text-muted">${Utils.formatDate(row.timestamp).split('،')[0] || '—'}</div>
@@ -428,9 +402,7 @@ const SettingsPage = {
             <div class="data-table-row" data-row-id="${row.id}" data-row-text="${this._escapeAttr((row.name || row.label || row.winner || row.model || '').toLowerCase())}" style="grid-template-columns: ${gridTemplate};">
                 ${cells}
                 <div class="data-table-cell actions-col">
-                    <button class="row-delete-btn" data-action="delete" data-id="${row.id}" type="button" title="حذف" aria-label="حذف">
-                        🗑
-                    </button>
+                    <button class="row-delete-btn" data-action="delete" data-id="${row.id}" type="button" title="حذف" aria-label="حذف">🗑</button>
                 </div>
             </div>
         `;
@@ -449,14 +421,12 @@ const SettingsPage = {
             searchInput.focus();
         }
 
-        // حذف تکی
         document.querySelectorAll('[data-action="delete"]').forEach((btn) => {
             btn.addEventListener('click', async () => {
                 await this._deleteRow(type, btn.dataset.id);
             });
         });
 
-        // حذف همه
         const deleteAllBtn = document.getElementById('delete-all-rows-btn');
         if (deleteAllBtn) {
             deleteAllBtn.addEventListener('click', async () => {
@@ -472,13 +442,10 @@ const SettingsPage = {
             history: 'این رکورد',
             stories: 'این داستان',
         };
-        const name = names[type] || 'این مورد';
-
         const ok = await Modal.confirm(
-            `${name} حذف شود؟\n(این عمل غیرقابل بازگشت است)`,
+            `${names[type]} حذف شود؟`,
             { danger: true, confirmLabel: 'حذف کن', title: 'تأیید حذف' }
         );
-
         if (!ok) return;
 
         try {
@@ -487,14 +454,12 @@ const SettingsPage = {
             else if (type === 'history') History.remove(id);
             else if (type === 'stories') StoryManager.remove(id);
 
-            Notification.success('با موفقیت حذف شد');
-
-            // به‌روزرسانی مجدد
+            Notification.success('حذف شد');
             this._refreshCurrentTable();
             this._renderDbInfo();
         } catch (e) {
             Logger.error('SettingsPage._deleteRow', e, { type, id });
-            Notification.error('خطا در حذف: ' + e.message);
+            Notification.error('خطا: ' + e.message);
         }
     },
 
@@ -510,10 +475,9 @@ const SettingsPage = {
         };
 
         const ok = await Modal.confirm(
-            `آیا از حذف ${labels[type]} (${Utils.toPersianNumbers(all.length)} مورد) مطمئن هستید؟\n(این عمل غیرقابل بازگشت است)`,
+            `آیا از حذف ${labels[type]} (${Utils.toPersianNumbers(all.length)} مورد) مطمئن هستید؟`,
             { danger: true, confirmLabel: 'بله، همه را حذف کن', title: 'تأیید حذف همه' }
         );
-
         if (!ok) return;
 
         try {
@@ -527,7 +491,7 @@ const SettingsPage = {
             this._renderDbInfo();
         } catch (e) {
             Logger.error('SettingsPage._deleteAllRows', e, { type });
-            Notification.error('خطا در حذف: ' + e.message);
+            Notification.error('خطا: ' + e.message);
         }
     },
 
@@ -548,7 +512,7 @@ const SettingsPage = {
     },
 
     // ═══════════════════════════════════════════
-    // Model / OpenRouter
+    // Model selection
     // ═══════════════════════════════════════════
 
     _selectModel(modelId) {
@@ -573,7 +537,6 @@ const SettingsPage = {
     _getSelectedModel() {
         const select = document.getElementById('input-ai-model');
         if (!select) return '';
-
         if (select.value === 'custom') {
             const customInput = document.getElementById('input-custom-model');
             return customInput ? customInput.value.trim() : '';
@@ -584,7 +547,6 @@ const SettingsPage = {
     _initModelDropdown() {
         const select = document.getElementById('input-ai-model');
         const customRow = document.getElementById('custom-model-row');
-
         if (!select) return;
 
         select.addEventListener('change', () => {
@@ -609,17 +571,16 @@ const SettingsPage = {
 
             try {
                 const allModels = await OpenRouter.getModels();
-
                 if (!allModels || allModels.length === 0) {
-                    Notification.warning('لیست خالی دریافت شد');
+                    Notification.warning('لیست خالی');
                     return;
                 }
 
                 const freeModels = allModels.filter((m) => {
                     if (!m || !m.id) return false;
-                    const promptPrice = parseFloat(m.pricing?.prompt || '0');
-                    const completionPrice = parseFloat(m.pricing?.completion || '0');
-                    return promptPrice === 0 && completionPrice === 0;
+                    const p = parseFloat(m.pricing?.prompt || '0');
+                    const c = parseFloat(m.pricing?.completion || '0');
+                    return p === 0 && c === 0;
                 });
 
                 if (freeModels.length === 0) {
@@ -630,7 +591,7 @@ const SettingsPage = {
                 this._showModelsModal(freeModels);
             } catch (error) {
                 Logger.error('SettingsPage.fetchModels', error);
-                Notification.error('خطا در دریافت لیست: ' + error.message);
+                Notification.error('خطا: ' + error.message);
             } finally {
                 btn.disabled = false;
                 btn.textContent = originalText;
@@ -640,29 +601,26 @@ const SettingsPage = {
 
     _showModelsModal(freeModels) {
         const sorted = [...freeModels].sort((a, b) => {
-            const aGoogle = a.id && a.id.startsWith('google/') ? 0 : 1;
-            const bGoogle = b.id && b.id.startsWith('google/') ? 0 : 1;
-            if (aGoogle !== bGoogle) return aGoogle - bGoogle;
+            const aG = a.id && a.id.startsWith('google/') ? 0 : 1;
+            const bG = b.id && b.id.startsWith('google/') ? 0 : 1;
+            if (aG !== bG) return aG - bG;
             return (a.name || a.id).localeCompare(b.name || b.id);
         });
 
         const content = `
             <div class="models-fetch-list">
                 <p class="text-muted" style="margin-bottom: 12px;">
-                    ${Utils.toPersianNumbers(sorted.length)} مدل رایگان در OpenRouter یافت شد
+                    ${Utils.toPersianNumbers(sorted.length)} مدل رایگان
                 </p>
                 <input type="text" id="models-modal-search" class="input" placeholder="🔍 جستجو..." style="margin-bottom: 12px;">
-                <div class="models-fetch-scroll" id="models-fetch-scroll">
+                <div class="models-fetch-scroll">
                     ${sorted.map((m) => {
                         const isGoogle = m.id && m.id.startsWith('google/');
                         return `
                             <div class="models-fetch-item ${isGoogle ? 'is-google' : ''}" data-model-id="${this._escapeAttr(m.id)}" data-name="${this._escapeAttr((m.name || '').toLowerCase())}">
                                 <div class="models-fetch-info">
-                                    <div class="models-fetch-name">
-                                        ${isGoogle ? '🌟 ' : ''}${this._escape(m.name || m.id)}
-                                    </div>
+                                    <div class="models-fetch-name">${isGoogle ? '🌟 ' : ''}${this._escape(m.name || m.id)}</div>
                                     <div class="models-fetch-id"><code>${this._escape(m.id)}</code></div>
-                                    ${m.context_length ? `<div class="models-fetch-meta">📏 ${Utils.toPersianNumbers(m.context_length)} توکن</div>` : ''}
                                 </div>
                                 <button class="btn btn-primary btn-sm" data-action="use" data-id="${this._escapeAttr(m.id)}" type="button">استفاده</button>
                             </div>
@@ -685,19 +643,18 @@ const SettingsPage = {
                 searchInput.addEventListener('input', (e) => {
                     const q = e.target.value.toLowerCase().trim();
                     document.querySelectorAll('.models-fetch-item').forEach((item) => {
-                        const name = item.dataset.name || '';
+                        const n = item.dataset.name || '';
                         const id = (item.dataset.modelId || '').toLowerCase();
-                        item.style.display = (name.includes(q) || id.includes(q)) ? '' : 'none';
+                        item.style.display = (n.includes(q) || id.includes(q)) ? '' : 'none';
                     });
                 });
             }
-
-            document.querySelectorAll('[data-action="use"]').forEach((btn) => {
-                btn.addEventListener('click', () => {
-                    const modelId = btn.dataset.id;
-                    this._selectModel(modelId);
-                    this._saveField('aiModel', modelId);
-                    Notification.success(`مدل انتخاب شد: ${modelId}`);
+            document.querySelectorAll('[data-action="use"]').forEach((b) => {
+                b.addEventListener('click', () => {
+                    const id = b.dataset.id;
+                    this._selectModel(id);
+                    this._saveField('aiModel', id);
+                    Notification.success(`انتخاب شد: ${id}`);
                     Modal.closeAll();
                 });
             });
@@ -710,6 +667,10 @@ const SettingsPage = {
             if (SQLStorage.isReady) SQLStorage.setSetting(key, value);
         } catch (e) {}
     },
+
+    // ═══════════════════════════════════════════
+    // Sections
+    // ═══════════════════════════════════════════
 
     _initGitHubSection() {
         const saveBtn = document.getElementById('save-github-btn');
@@ -749,7 +710,6 @@ const SettingsPage = {
                 this._saveField('githubUsername', username);
                 this._saveField('githubRepo', repo);
                 this._saveField('githubBranch', branch);
-
                 Notification.success('تنظیمات GitHub ذخیره شد');
             });
         }
@@ -757,7 +717,7 @@ const SettingsPage = {
         if (testBtn) {
             testBtn.addEventListener('click', async () => {
                 testBtn.disabled = true;
-                const originalText = testBtn.textContent;
+                const t = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
                 let username = this._getValue('input-github-username');
@@ -783,17 +743,16 @@ const SettingsPage = {
                     const result = await GitHubStorage.testConnection();
                     if (result.success) {
                         Notification.success(result.message, 8000);
-                        const newBranch = AppState.get('settings.githubBranch');
-                        if (newBranch) this._setValue('input-github-branch', newBranch);
+                        const nb = AppState.get('settings.githubBranch');
+                        if (nb) this._setValue('input-github-branch', nb);
                     } else {
                         Notification.error(result.message, 12000);
                     }
                 } catch (e) {
                     Notification.error('خطا: ' + e.message, 10000);
                 }
-
                 testBtn.disabled = false;
-                testBtn.textContent = originalText;
+                testBtn.textContent = t;
             });
         }
     },
@@ -809,27 +768,25 @@ const SettingsPage = {
                     Notification.warning('یک مدل انتخاب کنید');
                     return;
                 }
-
                 this._saveField('openrouterApiKey', this._getValue('input-openrouter-key'));
                 this._saveField('aiModel', modelValue);
                 this._saveField('aiTemperature', parseFloat(this._getValue('input-ai-temp')) || 0.9);
                 this._saveField('aiSystemPrompt', this._getValue('input-system-prompt'));
-
-                Notification.success(`تنظیمات ذخیره شد - مدل: ${modelValue}`);
+                Notification.success(`ذخیره شد - مدل: ${modelValue}`);
             });
         }
 
         if (testBtn) {
             testBtn.addEventListener('click', async () => {
                 testBtn.disabled = true;
-                const originalText = testBtn.textContent;
+                const t = testBtn.textContent;
                 testBtn.textContent = 'در حال تست...';
 
                 const modelValue = this._getSelectedModel();
                 if (!modelValue) {
                     Notification.warning('یک مدل انتخاب کنید');
                     testBtn.disabled = false;
-                    testBtn.textContent = originalText;
+                    testBtn.textContent = t;
                     return;
                 }
 
@@ -845,69 +802,63 @@ const SettingsPage = {
                         Notification.error(result.message, 12000);
                     }
                 } catch (e) {
-                    Notification.error('خطای غیرمنتظره: ' + e.message, 10000);
+                    Notification.error('خطا: ' + e.message, 10000);
                 }
-
                 testBtn.disabled = false;
-                testBtn.textContent = originalText;
+                testBtn.textContent = t;
             });
         }
     },
 
     _initTemperatureSlider() {
-        const tempSlider = document.getElementById('input-ai-temp');
-        if (!tempSlider) return;
-
-        tempSlider.addEventListener('input', (e) => {
-            const val = parseFloat(e.target.value) || 0.9;
-            this._updateTempDisplay(val);
+        const s = document.getElementById('input-ai-temp');
+        if (!s) return;
+        s.addEventListener('input', (e) => {
+            this._updateTempDisplay(parseFloat(e.target.value) || 0.9);
         });
-
-        tempSlider.addEventListener('change', (e) => {
-            const val = parseFloat(e.target.value) || 0.9;
-            this._saveField('aiTemperature', val);
+        s.addEventListener('change', (e) => {
+            this._saveField('aiTemperature', parseFloat(e.target.value) || 0.9);
         });
     },
 
     _updateTempDisplay(val) {
         const el = document.getElementById('temp-value');
-        if (!el) return;
-        el.textContent = Utils.toPersianNumbers(val.toFixed(1));
+        if (el) el.textContent = Utils.toPersianNumbers(val.toFixed(1));
     },
 
     _initGeneralSection() {
-        const particlesToggle = document.getElementById('toggle-particles');
-        if (particlesToggle) {
-            particlesToggle.addEventListener('change', (e) => {
-                const enabled = e.target.checked;
-                this._saveField('particlesEnabled', enabled);
-                if (enabled) Particles.init('particles-canvas');
+        const pt = document.getElementById('toggle-particles');
+        if (pt) {
+            pt.addEventListener('change', (e) => {
+                const en = e.target.checked;
+                this._saveField('particlesEnabled', en);
+                if (en) Particles.init('particles-canvas');
                 else Particles.stop();
             });
         }
 
-        const confettiToggle = document.getElementById('toggle-confetti');
-        if (confettiToggle) {
-            confettiToggle.addEventListener('change', (e) => {
+        const ct = document.getElementById('toggle-confetti');
+        if (ct) {
+            ct.addEventListener('change', (e) => {
                 this._saveField('confettiEnabled', e.target.checked);
             });
         }
 
-        const autoSyncToggle = document.getElementById('toggle-auto-sync');
-        if (autoSyncToggle) {
-            autoSyncToggle.addEventListener('change', (e) => {
-                const enabled = e.target.checked;
-                this._saveField('autoSync', enabled);
-                if (enabled) Sync.startAutoSync();
+        const ast = document.getElementById('toggle-auto-sync');
+        if (ast) {
+            ast.addEventListener('change', (e) => {
+                const en = e.target.checked;
+                this._saveField('autoSync', en);
+                if (en) Sync.startAutoSync();
                 else Sync.stopAutoSync();
             });
         }
 
-        const syncInterval = document.getElementById('input-sync-interval');
-        if (syncInterval) {
-            syncInterval.addEventListener('change', (e) => {
-                const seconds = parseInt(e.target.value) || 60;
-                const ms = seconds * 1000;
+        const si = document.getElementById('input-sync-interval');
+        if (si) {
+            si.addEventListener('change', (e) => {
+                const s = parseInt(e.target.value) || 60;
+                const ms = s * 1000;
                 this._saveField('syncInterval', ms);
                 if (AppState.get('settings.autoSync')) {
                     Sync.stopAutoSync();
@@ -918,9 +869,9 @@ const SettingsPage = {
     },
 
     _initDangerSection() {
-        const clearAllBtn = document.getElementById('clear-all-data');
-        if (clearAllBtn) {
-            clearAllBtn.addEventListener('click', async () => {
+        const btn = document.getElementById('clear-all-data');
+        if (btn) {
+            btn.addEventListener('click', async () => {
                 const ok = await Modal.confirm(
                     '⚠️ تمام داده‌ها پاک شود؟',
                     { danger: true, confirmLabel: 'بله، پاک کن' }
@@ -929,7 +880,7 @@ const SettingsPage = {
                     await SQLStorage.reset();
                     if (App._loadDataFromSQL) App._loadDataFromSQL();
                     this._renderDbInfo();
-                    Notification.success('همه داده‌ها پاک شدند');
+                    Notification.success('همه پاک شد');
                 }
             });
         }
