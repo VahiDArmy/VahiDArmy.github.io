@@ -4,8 +4,6 @@
 
 .database-page {
     padding-top: var(--spacing-lg);
-    max-width: 1400px;
-    margin: 0 auto;
 }
 
 /* ═══════════════════════════════════════════
@@ -93,7 +91,7 @@
 
 .db-actions-bar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
     gap: var(--spacing-md);
     padding: var(--spacing-md);
@@ -108,6 +106,13 @@
     display: flex;
     gap: var(--spacing-sm);
     flex-wrap: wrap;
+    align-items: stretch;
+}
+
+.db-actions-group .btn,
+.db-actions-group .upload-label {
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .upload-label {
@@ -136,16 +141,12 @@
     overflow-x: auto;
     background: var(--color-bg-tertiary);
     border-bottom: 1px solid var(--border-color);
-    scrollbar-width: thin;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 .db-tabs::-webkit-scrollbar {
-    height: 4px;
-}
-
-.db-tabs::-webkit-scrollbar-thumb {
-    background: var(--color-bg-elevated);
-    border-radius: var(--border-radius-full);
+    display: none;
 }
 
 .db-tab {
@@ -251,7 +252,6 @@
     width: 100%;
 }
 
-/* ─── Header ─── */
 .db-table-header {
     display: grid;
     align-items: center;
@@ -280,7 +280,6 @@
     text-align: center;
 }
 
-/* ─── Row ─── */
 .db-table-body {
     max-height: 60vh;
     overflow-y: auto;
@@ -357,7 +356,6 @@
     overflow: visible;
 }
 
-/* ─── Row items ─── */
 .db-dot {
     display: inline-block;
     width: 10px;
@@ -442,7 +440,6 @@
     color: var(--color-text-secondary);
 }
 
-/* ─── Row Buttons ─── */
 .db-row-btn {
     width: 32px;
     height: 32px;
@@ -478,7 +475,6 @@
     transform: scale(0.95);
 }
 
-/* ─── Empty State ─── */
 .db-empty {
     display: flex;
     flex-direction: column;
@@ -727,7 +723,7 @@
 }
 
 /* ═══════════════════════════════════════════
-   Responsive
+   Responsive — Tablet
    ═══════════════════════════════════════════ */
 
 @media (max-width: 900px) {
@@ -742,6 +738,7 @@
 
     .db-toolbar-actions .input-sm {
         flex: 1;
+        min-width: 0;
     }
 
     .db-pagination-info {
@@ -753,10 +750,132 @@
     }
 }
 
-@media (max-width: 700px) {
-    /* تبدیل جدول به کارت */
+/* ═══════════════════════════════════════════
+   Responsive — Mobile
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+
+    /* ─── Overview: 2x2 ─── */
+    .db-overview {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+
+    .overview-card {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+
+    .overview-card::before {
+        width: 60px;
+        height: 60px;
+    }
+
+    .overview-icon {
+        font-size: 1.4rem;
+    }
+
+    .overview-label {
+        font-size: 0.65rem;
+    }
+
+    .overview-value {
+        font-size: var(--font-size-md);
+    }
+
+    /* ─── Actions: 2-column grid ─── */
+    .db-actions-bar {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+    }
+
+    .db-actions-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xs);
+        width: 100%;
+    }
+
+    .db-actions-group .btn,
+    .db-actions-group .upload-label {
+        width: 100%;
+        justify-content: center;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-sm) var(--spacing-xs);
+        white-space: nowrap;
+        min-height: 42px;
+        line-height: 1.2;
+    }
+
+    /* ─── Tabs: show short labels ─── */
+    .db-tab {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-xs);
+        gap: 4px;
+    }
+
+    .db-tab-icon {
+        font-size: 1rem;
+    }
+
+    .db-tab-label {
+        display: inline;
+        font-size: 0.7rem;
+        font-weight: var(--font-weight-medium);
+    }
+
+    .db-tab-count {
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        font-size: 0.6rem;
+    }
+
+    /* ─── Toolbar ─── */
+    .db-toolbar {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-sm);
+    }
+
+    .db-search-wrap {
+        min-width: 100%;
+    }
+
+    .db-toolbar-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xs);
+        width: 100%;
+    }
+
+    .db-toolbar-actions .input-sm {
+        grid-column: 1 / -1;
+        width: 100%;
+        min-width: 0;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        min-height: 42px;
+    }
+
+    .db-toolbar-actions .btn {
+        width: 100%;
+        justify-content: center;
+        font-size: var(--font-size-xs);
+        padding: var(--spacing-sm) var(--spacing-xs);
+        min-height: 42px;
+    }
+
+    /* ─── Table → Cards ─── */
     .db-table-header {
         display: none;
+    }
+
+    .db-table-body {
+        max-height: none;
+        padding: var(--spacing-xs);
     }
 
     .db-row {
@@ -764,7 +883,7 @@
         gap: var(--spacing-xs);
         padding: var(--spacing-md);
         background: var(--color-bg-tertiary);
-        margin: var(--spacing-xs);
+        margin-bottom: var(--spacing-xs);
         border-radius: var(--border-radius-md);
         border: 1px solid var(--border-color);
         min-height: auto;
@@ -785,59 +904,57 @@
         border-top: 1px solid var(--border-color);
     }
 
-    .db-table-body {
-        max-height: none;
+    .db-row-btn {
+        width: 36px;
+        height: 36px;
     }
 
-    .db-tab {
-        padding: var(--spacing-sm) var(--spacing-md);
+    /* ─── Pagination ─── */
+    .db-pagination {
+        padding: var(--spacing-sm);
+        gap: var(--spacing-xs);
+    }
+
+    .db-page-btn {
+        min-width: 32px;
+        height: 32px;
         font-size: var(--font-size-xs);
+    }
+
+    .db-page-nav {
+        padding: 0 var(--spacing-sm);
+    }
+
+    /* ─── Danger Modal ─── */
+    .danger-option {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .danger-option:hover {
+        transform: none;
+    }
+
+    .danger-option-icon {
+        font-size: 1.2rem;
+    }
+}
+
+/* ═══════════════════════════════════════════
+   Responsive — Very small
+   ═══════════════════════════════════════════ */
+
+@media (max-width: 400px) {
+    .db-actions-group .btn,
+    .db-actions-group .upload-label {
+        font-size: 0.65rem;
+        padding: var(--spacing-sm) 4px;
     }
 
     .db-tab-label {
         display: none;
     }
 
-    .db-tab-icon {
-        font-size: 1.3rem;
-    }
-}
-
-@media (max-width: 600px) {
-    .db-overview {
-        grid-template-columns: 1fr 1fr;
-        gap: var(--spacing-sm);
-    }
-
-    .overview-card {
-        padding: var(--spacing-sm) var(--spacing-md);
-        gap: var(--spacing-sm);
-    }
-
-    .overview-icon {
-        font-size: 1.5rem;
-    }
-
-    .overview-value {
-        font-size: var(--font-size-md);
-    }
-
-    .db-actions-bar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .db-actions-group {
-        justify-content: stretch;
-    }
-
-    .db-actions-group .btn,
-    .db-actions-group .upload-label {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .danger-option:hover {
-        transform: none;
+    .db-tab {
+        padding: var(--spacing-sm);
     }
 }
