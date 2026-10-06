@@ -82,5 +82,19 @@
     "inWheel": true,
     "createdAt": 1791110766125,
     "updatedAt": 1791204532463
+  },
+  {
+    "id": "person_1791261325579_iu919ad7a",
+    "name": "جوجه",
+    "description": "",
+    "starred": false,
+    "color": "#14b8a6",
+    "weight": 1,
+    "created_at": 1791261325579,
+    "updated_at": 1791261325579,
+    "in_wheel": 1,
+    "inWheel": true,
+    "createdAt": 1791261325579,
+    "updatedAt": 1791261325579
   }
 ]
