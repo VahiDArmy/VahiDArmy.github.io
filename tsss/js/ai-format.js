@@ -16,16 +16,11 @@ const AiFormat = (function () {
   function cleanTag(s) {
     if (s == null) return null;
     let t = String(s).trim();
-    // حذف کوتیشن/گیومه/براکت‌های دور
     t = t.replace(/^["'«‹\[\]]+|["'»›\[\]]+$/g, '').trim();
     if (!t) return null;
-    // هر علامت <> یعنی محتوای HTML-مانند → رد
     if (/[<>]/.test(t)) return null;
-    // خودِ کلمهٔ tag یا /tag یا tag/ یا /tag/ → رد
     if (/^\/?\s*tag\s*\/?$/i.test(t)) return null;
-    // خیلی بلند → رد
     if (t.length > 40) return null;
-    // شامل خط جدید یا چند کلمهٔ به‌هم‌چسبیده → رد
     if (/\n/.test(t)) return null;
     return t;
   }
@@ -86,7 +81,7 @@ const AiFormat = (function () {
   }
 
   // ============================================================
-  // تجزیه — هیچ متنی دور ریخته نمی‌شود، برچسب‌های خراب فیلتر می‌شوند
+  // تجزیه — هیچ متنی دور ریخته نمی‌شود
   // ============================================================
   function parse(raw) {
     if (raw == null) return { ok: false, raw: '' };
@@ -116,7 +111,6 @@ const AiFormat = (function () {
     const draft   = pick('draft');
     const caution = pick('caution');
 
-    // ---- refs ----
     const refsRaw = pick('refs');
     const refs = [];
     if (refsRaw) {
@@ -131,18 +125,15 @@ const AiFormat = (function () {
       }
     }
 
-    // ---- tags (با فیلتر) ----
     const tagsRaw = pick('tags');
     const tags = [];
     if (tagsRaw) {
-      // ۱) تگ‌های بستهٔ معتبر
       const tagRe = /<tag>([\s\S]*?)<\/tag>/gi;
       let mm;
       while ((mm = tagRe.exec(tagsRaw))) {
         const c = cleanTag(mm[1]);
         if (c) tags.push(c);
       }
-      // ۲) اگر هیچ تگ معتبری پیدا نشد، با جداکننده بشکن و پاک‌سازی کن
       if (!tags.length) {
         const stripped = tagsRaw
           .replace(/<\/?tags?>/gi, ' ')
@@ -155,7 +146,6 @@ const AiFormat = (function () {
       }
     }
 
-    // ---- leftover ----
     let leftover = inner;
     const removeIf = (name, parsedOk) => {
       if (!parsedOk) return;
@@ -317,7 +307,6 @@ const AiFormat = (function () {
       </div>`;
   }
 
-  // opts: { model, question, surahIndex, generationId, refId, myVote, modelScore }
   function render(container, parsed, opts) {
     const { model, question, surahIndex } = opts || {};
     const showFeedback = opts && opts.generationId != null;
@@ -440,8 +429,6 @@ const AiFormat = (function () {
     if (box) box.scrollTop = box.scrollHeight;
   }
 
-  // opts: { generationId, refId, model, question, surahIndex, modelScore,
-  //        onAfterVote, onAfterDelete, onAfterSectionChange }
   function wireCard(rootEl, parsed, opts) {
     const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
 
@@ -472,7 +459,6 @@ const AiFormat = (function () {
       });
     });
 
-    // حذف بخش
     if (refId && parsed && parsed.ok) {
       rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
         btn.addEventListener('click', async () => {
@@ -517,7 +503,6 @@ const AiFormat = (function () {
       });
     }
 
-    // حذف کل پرسش
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
