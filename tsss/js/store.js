@@ -214,7 +214,7 @@ const Store = (function () {
     return round + 1;
   }
 
-  // ---------- AI Review (بدون تغییر منطق قبلی) ----------
+  // ---------- AI Review ----------
   async function getAiReview(tafsirId) {
     const { data, error } = await sb
       .from('ai_reviews')
@@ -313,7 +313,6 @@ const Store = (function () {
   }
 
   async function deleteAskAi(id) {
-    // حذف نسل‌ها و فیدبک‌های مربوط به این پاسخ
     const { data: gens, error: gErr } = await sb
       .from('ai_generations')
       .select('id')
