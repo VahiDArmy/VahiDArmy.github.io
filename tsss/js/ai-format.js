@@ -12,7 +12,6 @@ const AiFormat = (function () {
     return div.innerHTML;
   }
 
-  // پاک‌سازی برچسب: هر چیزی که شکل HTML یا «tag» لخت دارد رد می‌شود
   function cleanTag(s) {
     if (s == null) return null;
     let t = String(s).trim();
@@ -23,6 +22,30 @@ const AiFormat = (function () {
     if (t.length > 40) return null;
     if (/\n/.test(t)) return null;
     return t;
+  }
+
+  // کپی متن در کلیپ‌بورد
+  async function copyText(text) {
+    const t = String(text || '');
+    if (!t) return;
+    try {
+      await navigator.clipboard.writeText(t);
+      if (window.UI && UI.toast) UI.toast('پرسش کپی شد');
+      return;
+    } catch (e) { /* fallthrough */ }
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (window.UI && UI.toast) UI.toast('پرسش کپی شد');
+    } catch (e2) {
+      if (window.UI && UI.toast) UI.toast('کپی ناموفق بود');
+    }
   }
 
   // ============================================================
@@ -282,7 +305,7 @@ const AiFormat = (function () {
     return `
       <div class="ai-answer-card__question">
         <span class="ai-answer-card__q-label">پرسش</span>
-        <span class="ai-answer-card__q-text">${escapeHtml(question || '')}</span>
+        <span class="ai-answer-card__q-text" data-ai-copy-question title="برای کپی کلیک کنید">${escapeHtml(question || '')}</span>
         ${del}
       </div>`;
   }
@@ -446,6 +469,14 @@ const AiFormat = (function () {
       });
     }
 
+    // کلیک روی متن پرسش → کپی
+    rootEl.querySelectorAll('[data-ai-copy-question]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        copyText(el.textContent || '');
+      });
+    });
+
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -506,7 +537,8 @@ const AiFormat = (function () {
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
-        delBtn.addEventListener('click', async () => {
+        delBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
           const ok = await confirmDialog({
             title: 'حذف پرسش',
             message: 'کل این پرسش و پاسخش برای همیشه حذف می‌شود.',
@@ -518,9 +550,9 @@ const AiFormat = (function () {
             await Store.deleteAskAi(refId);
             if (typeof onAfterDelete === 'function') onAfterDelete();
             UI.toast('پرسش حذف شد');
-          } catch (e) {
-            console.error('[ai-format] deleteAskAi failed:', e);
-            UI.toast('خطا در حذف پرسش: ' + (e?.message || 'نامشخص'));
+          } catch (e2) {
+            console.error('[ai-format] deleteAskAi failed:', e2);
+            UI.toast('خطا در حذف پرسش: ' + (e2?.message || 'نامشخص'));
             delBtn.disabled = false;
           }
         });
