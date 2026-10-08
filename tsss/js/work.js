@@ -107,6 +107,75 @@
   const LINK_BTN_DEFAULT = '﹢ لینک به آیهٔ دیگر';
   let detectedLink = null;
 
+  // ★ وضعیت انتخاب متن در پیش‌نمایش (برای حفظ انتخاب قبل از کلیک روی دکمه)
+  let savedExcerpt = null;
+  let lastPreviewKey = null;
+
+  function ensureExcerptBar() {
+    let bar = document.getElementById('linkExcerptBar');
+    if (bar) return bar;
+    if (!linkAyahPreview || !linkAyahPreview.parentNode) return null;
+    bar = document.createElement('div');
+    bar.id = 'linkExcerptBar';
+    bar.style.cssText =
+      'display:none; font-size:0.78rem; padding:8px 12px; margin:0 0 10px; ' +
+      'background:var(--violet-glow); color:var(--violet); border-radius:10px; line-height:1.8;';
+    linkAyahPreview.parentNode.insertBefore(bar, linkAyahPreview.nextSibling);
+    return bar;
+  }
+
+  function paintExcerptBar() {
+    const bar = ensureExcerptBar();
+    if (!bar) return;
+    if (!savedExcerpt) {
+      bar.style.display = 'none';
+      bar.innerHTML = '';
+      return;
+    }
+    bar.style.display = 'block';
+    bar.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = 'گزیدهٔ انتخابی: «';
+    const b = document.createElement('b');
+    b.textContent = savedExcerpt;
+    const span2 = document.createElement('span');
+    span2.textContent = '»';
+    const clr = document.createElement('button');
+    clr.type = 'button';
+    clr.textContent = 'پاک کردن';
+    clr.style.cssText = 'all:unset; cursor:pointer; margin-inline-start:8px; text-decoration:underline; font-size:0.72rem;';
+    clr.addEventListener('click', () => {
+      savedExcerpt = null;
+      paintExcerptBar();
+    });
+    bar.appendChild(span);
+    bar.appendChild(b);
+    bar.appendChild(span2);
+    bar.appendChild(clr);
+  }
+
+  function captureSelection() {
+    if (!linkAyahPreview) return;
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const anchor = sel.anchorNode;
+    if (!anchor) return;
+    if (!linkAyahPreview.contains(anchor)) return;
+    const text = sel.toString().replace(/\s+/g, ' ').trim();
+    if (!text) return;
+    savedExcerpt = text.length > 120 ? text.slice(0, 120) : text;
+    paintExcerptBar();
+  }
+
+  // گوش دادن به تغییر انتخاب تا وقتی پاپ‌آپ باز است
+  document.addEventListener('selectionchange', () => {
+    if (linkToolModal && !linkToolModal.hidden) captureSelection();
+  });
+  if (linkAyahPreview) {
+    linkAyahPreview.addEventListener('mouseup', captureSelection);
+    linkAyahPreview.addEventListener('keyup', captureSelection);
+  }
+
   function findLinkAtCursor(text, pos) {
     LINK_TOKEN_RE.lastIndex = 0;
     let m;
@@ -159,6 +228,15 @@
     const surah = Number(linkSurahSelect.value);
     const ayah = Number(linkAyahSelect.value);
     if (!surah || !ayah) { linkAyahPreview.textContent = ''; return; }
+
+    // اگر آیه عوض شد، گزیدهٔ قبلی معنی ندارد
+    const key = surah + ':' + ayah;
+    if (key !== lastPreviewKey) {
+      savedExcerpt = null;
+      lastPreviewKey = key;
+      paintExcerptBar();
+    }
+
     try {
       const surahData = await QuranData.getSurah(surah);
       const ayahObj = surahData.ayahs.find((a) => a.v === ayah);
@@ -180,6 +258,12 @@
     const initSurah = editing ? editing.surah : current.surah;
     const initAyah = editing ? editing.ayah : current.ayah;
     if (editing) selectDetectedLink();
+
+    // ریست وضعیت انتخاب
+    savedExcerpt = null;
+    lastPreviewKey = null;
+    paintExcerptBar();
+
     UI.populateSurahSelect(linkSurahSelect, index, initSurah);
     const surahData = await QuranData.getSurah(initSurah);
     UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, initAyah);
@@ -191,6 +275,9 @@
   function closeLinkTool() {
     if (linkToolModal) linkToolModal.hidden = true;
     if (insertLinkBtn) insertLinkBtn.textContent = 'درج لینک';
+    savedExcerpt = null;
+    lastPreviewKey = null;
+    paintExcerptBar();
   }
 
   function insertLinkFromTool() {
@@ -198,13 +285,15 @@
     const surah = Number(linkSurahSelect.value);
     const ayah = Number(linkAyahSelect.value);
     if (!surah || !ayah) return;
+
+    // ★ از گزیدهٔ ذخیره‌شده استفاده کن (نه انتخاب لحظه‌ای که با کلیک از دست رفته)
     let excerpt = null;
-    const sel = window.getSelection();
-    if (sel && !sel.isCollapsed && linkAyahPreview && linkAyahPreview.contains(sel.anchorNode)) {
-      const selected = sel.toString().trim();
-      if (selected.length > 0 && selected.length <= 120) excerpt = selected;
+    if (savedExcerpt && savedExcerpt.length > 0 && savedExcerpt.length <= 120) {
+      excerpt = savedExcerpt;
     }
+
     const token = AyahLinks.makeToken(surah, ayah, excerpt);
+
     if (detectedLink) {
       replaceAtCursor(tafsirContent, detectedLink.start, detectedLink.end, token);
       UI.toast('لینک به‌روزرسانی شد');
@@ -278,7 +367,6 @@
     }
   }
 
-  // ---- External AI providers (فقط DeepSeek) ----
   const EXTERNAL_PROVIDERS = {
     deepseek: { url: (prompt) => 'https://chat.deepseek.com/?q=' + encodeURIComponent(prompt) + '&r=true' },
   };
@@ -316,7 +404,6 @@
     });
   }
 
-  // ---- Progress ----
   async function refreshProgress() {
     try {
       const p = await Store.getProgress();
@@ -433,7 +520,6 @@
     }
   }
 
-  // ---- Ravan Tafsir ----
   async function getRavanTafsirFromDB(surah, ayah) {
     const { data, error } = await sb.from('ravan_tafsirs').select('content').eq('surah', Number(surah)).eq('ayah', Number(ayah)).maybeSingle();
     if (error) throw error;
@@ -491,7 +577,6 @@
     }
   }
 
-  // ---- AI Review ----
   function showAiState(state) {
     aiReviewLoading.classList.add('hidden');
     aiReviewEmpty.classList.add('hidden');
@@ -549,7 +634,6 @@
       if (existing && existing.content) {
         currentAiContent = existing.content;
         aiReviewText.innerHTML = renderMarkdown(existing.content);
-        // آخرین نسل ثبت‌شده برای این tafsir
         const gen = await Store.getLatestGeneration('ai_review', tafsir.id);
         currentAiGenerationId = gen ? gen.id : null;
         currentAiModel = gen ? gen.model : '';
@@ -636,7 +720,6 @@
       aiReviewText.innerHTML = renderMarkdown(result.content);
       updateAiModelBadge();
 
-      // ثبت نسل جدید
       if (currentAiModel) {
         try {
           const gen = await Store.createGeneration({
@@ -698,7 +781,6 @@
     } catch (err) { UI.toast('خطا در حذف'); }
   }
 
-  // ---- Events ----
   document.getElementById('goToCurrentBtn').addEventListener('click', async () => {
     const meta = await Store.getSiteMeta();
     current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
