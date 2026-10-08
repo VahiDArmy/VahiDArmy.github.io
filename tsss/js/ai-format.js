@@ -24,25 +24,32 @@ const AiFormat = (function () {
     return t;
   }
 
-  // کپی متن در کلیپ‌بورد
+  // ---------- کپی متن در کلیپ‌بورد ----------
   async function copyText(text) {
     const t = String(text || '');
     if (!t) return;
-    try {
-      await navigator.clipboard.writeText(t);
-      if (window.UI && UI.toast) UI.toast('پرسش کپی شد');
-      return;
-    } catch (e) { /* fallthrough */ }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(t);
+        if (window.UI && UI.toast) UI.toast('پرسش کپی شد');
+        return;
+      } catch (e) { /* fallthrough */ }
+    }
     try {
       const ta = document.createElement('textarea');
       ta.value = t;
+      ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
       ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
-      document.execCommand('copy');
+      ta.setSelectionRange(0, t.length);
+      const ok = document.execCommand('copy');
       document.body.removeChild(ta);
-      if (window.UI && UI.toast) UI.toast('پرسش کپی شد');
+      if (window.UI && UI.toast) {
+        UI.toast(ok ? 'پرسش کپی شد' : 'کپی ناموفق بود');
+      }
     } catch (e2) {
       if (window.UI && UI.toast) UI.toast('کپی ناموفق بود');
     }
@@ -452,9 +459,21 @@ const AiFormat = (function () {
     if (box) box.scrollTop = box.scrollHeight;
   }
 
+  // opts: { generationId, refId, model, question, surahIndex, modelScore,
+  //        onAfterVote, onAfterDelete, onAfterSectionChange }
   function wireCard(rootEl, parsed, opts) {
     const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
 
+    // ---- کپی با کلیک روی پرسش ----
+    rootEl.querySelectorAll('[data-ai-copy-question]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        copyText(el.textContent || '');
+      });
+    });
+
+    // ---- درج پیش‌نویس در فرم تفسیر ----
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed && parsed.draft) {
       insertBtn.addEventListener('click', () => {
@@ -469,14 +488,7 @@ const AiFormat = (function () {
       });
     }
 
-    // کلیک روی متن پرسش → کپی
-    rootEl.querySelectorAll('[data-ai-copy-question]').forEach((el) => {
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        copyText(el.textContent || '');
-      });
-    });
-
+    // ---- افزودن برچسب‌های پیشنهادی به فرم ----
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -490,9 +502,11 @@ const AiFormat = (function () {
       });
     });
 
+    // ---- حذف بخش ----
     if (refId && parsed && parsed.ok) {
       rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation();
           const key = btn.getAttribute('data-ai-section-close');
           if (!key) return;
           const ok = await confirmDialog({
@@ -526,14 +540,15 @@ const AiFormat = (function () {
             wireCard(rootEl, reparsed, { ...opts, modelScore: sc });
             if (typeof onAfterSectionChange === 'function') onAfterSectionChange();
             UI.toast('بخش حذف شد');
-          } catch (e) {
-            console.error('[ai-format] updateAskAiRaw failed:', e);
-            UI.toast('خطا در حذف بخش: ' + (e?.message || 'نامشخص'));
+          } catch (e2) {
+            console.error('[ai-format] updateAskAiRaw failed:', e2);
+            UI.toast('خطا در حذف بخش: ' + (e2?.message || 'نامشخص'));
           }
         });
       });
     }
 
+    // ---- حذف کل پرسش ----
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
@@ -559,6 +574,7 @@ const AiFormat = (function () {
       }
     }
 
+    // ---- رأی‌ها ----
     if (generationId != null) wireVotes(rootEl, generationId, onAfterVote);
   }
 
