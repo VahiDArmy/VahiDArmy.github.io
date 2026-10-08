@@ -9,6 +9,15 @@
   flex-direction: column;
   gap: 10px;
 }
+
+.ask-ai-composer__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
 .ask-ai-composer__model {
   display: inline-flex;
   align-items: center;
@@ -20,7 +29,6 @@
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--border-soft);
-  align-self: flex-start;
   cursor: pointer;
   transition: border-color .2s ease, color .2s ease;
 }
@@ -32,6 +40,52 @@
   background: var(--violet);
   box-shadow: 0 0 6px var(--violet), 0 0 14px var(--violet-glow);
 }
+
+/* --- Format mode toggle (on/off) --- */
+.ask-ai-composer__format-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 12px 3px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: border-color .2s ease, color .2s ease, box-shadow .2s ease;
+}
+.ask-ai-composer__format-toggle:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+}
+.ask-ai-composer__format-toggle .format-toggle__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: background .25s ease, box-shadow .25s ease;
+}
+.ask-ai-composer__format-toggle.is-on {
+  color: var(--neon);
+  border-color: color-mix(in srgb, var(--neon) 55%, var(--border-soft));
+}
+.ask-ai-composer__format-toggle.is-on .format-toggle__dot {
+  background: var(--neon);
+  box-shadow:
+    0 0 6px var(--neon),
+    0 0 14px var(--neon-glow);
+}
+[data-theme="light"] .ask-ai-composer__format-toggle.is-on {
+  color: hsl(185 60% 28%);
+  border-color: hsl(185 60% 40% / .5);
+}
+[data-theme="light"] .ask-ai-composer__format-toggle.is-on .format-toggle__dot {
+  background: hsl(185 65% 42%);
+  box-shadow: none;
+}
+
 .ask-ai-composer textarea {
   width: 100%;
   min-height: 62px;
