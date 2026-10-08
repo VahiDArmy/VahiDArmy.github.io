@@ -11,6 +11,8 @@
 
   const composerModel = document.getElementById('askAiCurrentModel');
   const modelLabel    = document.getElementById('askAiModelLabel');
+  const formatToggle  = document.getElementById('askAiFormatToggle');
+  const formatLabel   = document.getElementById('askAiFormatLabel');
   const inputEl       = document.getElementById('askAiInput');
   const submitBtn     = document.getElementById('askAiSubmit');
   const statusEl      = document.getElementById('aiStatus');
@@ -29,6 +31,8 @@
   let pendingModelId = getStoredModelId();
   let renderedModelId = pendingModelId;
   let modelScoresCache = new Map();
+  // حالت قالب: 'strict' (اجباری، پیش‌فرض) یا 'natural' (آزاد)
+  let formatMode = getStoredFormatMode();
 
   function readCurrentAyah() {
     const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
@@ -58,6 +62,41 @@
     answerEl.innerHTML = '';
     inputEl.value = '';
     await renderHistory();
+  }
+
+  // ---------- Format mode toggle ----------
+  function getStoredFormatMode() {
+    try {
+      const v = localStorage.getItem('askAiMode');
+      if (v === 'natural' || v === 'strict') return v;
+    } catch (e) {}
+    return 'strict'; // پیش‌فرض: قالب اجباری (رفتار فعلی سایت)
+  }
+  function setStoredFormatMode(v) {
+    try { localStorage.setItem('askAiMode', v); } catch (e) {}
+  }
+  function paintFormatToggle() {
+    if (!formatToggle) return;
+    const isOn = formatMode === 'strict';
+    formatToggle.classList.toggle('is-on', isOn);
+    formatToggle.setAttribute('aria-pressed', String(isOn));
+    formatToggle.setAttribute(
+      'title',
+      isOn ? 'قالب اجباری — برای آزادسازی قالب کلیک کنید'
+           : 'قالب آزاد — برای بازگرداندن قالب اجباری کلیک کنید'
+    );
+    if (formatLabel) formatLabel.textContent = isOn ? 'قالب اجباری' : 'قالب آزاد';
+  }
+  if (formatToggle) {
+    formatToggle.addEventListener('click', () => {
+      formatMode = (formatMode === 'strict') ? 'natural' : 'strict';
+      setStoredFormatMode(formatMode);
+      paintFormatToggle();
+      UI.toast(formatMode === 'natural'
+        ? 'قالب آزاد — مدل خودش تصمیم می‌گیرد'
+        : 'قالب اجباری — پاسخ در قالب ثابت');
+    });
+    paintFormatToggle();
   }
 
   // ---------- Model picker ----------
@@ -191,7 +230,11 @@
     let realModel = '';
     AiFormat.renderStreaming(answerEl, question, '', model.name);
 
-    const url = CONFIG.SUPABASE_URL + '/functions/v1/bright-api';
+    // انتخاب فانکشن بر اساس حالت قالب (پیش‌فرض: strict → bright-api)
+    const fnName = (formatMode === 'natural') ? 'bright-api-natural' : 'bright-api';
+    const url = CONFIG.SUPABASE_URL + '/functions/v1/' + fnName;
+    console.log('[ask-ai] mode =', formatMode, '→ fn =', fnName);
+
     let res;
     try {
       res = await fetch(url, {
