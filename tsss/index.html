@@ -118,10 +118,17 @@
     <div class="section__label">بپرس از هوش مصنوعی</div>
 
     <div class="ask-ai-composer card">
-      <button type="button" class="ask-ai-composer__model" id="askAiCurrentModel" title="تغییر مدل">
-        <span class="ask-ai-composer__model-dot"></span>
-        <span id="askAiModelLabel">—</span>
-      </button>
+      <div class="ask-ai-composer__head">
+        <button type="button" class="ask-ai-composer__model" id="askAiCurrentModel" title="تغییر مدل">
+          <span class="ask-ai-composer__model-dot"></span>
+          <span id="askAiModelLabel">—</span>
+        </button>
+        <button type="button" class="ask-ai-composer__format-toggle is-on" id="askAiFormatToggle"
+                aria-pressed="true" title="قالب اجباری — برای آزادسازی قالب کلیک کنید">
+          <span class="format-toggle__dot"></span>
+          <span class="format-toggle__label" id="askAiFormatLabel">قالب اجباری</span>
+        </button>
+      </div>
       <textarea id="askAiInput" rows="2" placeholder="دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)"></textarea>
       <div class="ask-ai-composer__actions">
         <span class="ai-status" id="aiStatus" data-state="idle" aria-live="polite" aria-label="وضعیت"></span>
