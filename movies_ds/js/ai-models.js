@@ -63,7 +63,7 @@ window.AIModelsUI = (function () {
   }
 
   /* =========================================================
-     انتخاب‌گر مدل — با دکمه حذف + دکمه‌ی جستجوی OpenRouter
+     انتخاب‌گر مدل
      ========================================================= */
   function buildModelPicker(currentModelId, onSelect) {
     let selected = currentModelId;
@@ -302,10 +302,9 @@ window.AIModelsUI = (function () {
         listWrap.appendChild(buildOrItem(m, inDb[m.id], function () {
           openAddModelForm(m, function () {
             onChanged();
-            /* لیست را دوباره رندر کن تا مدل اضافه‌شده علامت بخورد */
+            /* لیست را با inDb به‌روز دوباره رندر کن */
+            inDb[m.id] = true;
             renderList(sorted);
-            /* شمارش را بروز کن */
-            const stillFree = sorted.filter(function (x) { return !inDb[x.id]; });
             statusBar.textContent = Utils.toFa(sorted.length) + ' مدل رایگان';
           });
         }));
@@ -337,7 +336,7 @@ window.AIModelsUI = (function () {
   }
 
   /* =========================================================
-     فرم افزودن مدل
+     فرم افزودن مدل — با استخراج خودکار مشخصات از AI
      ========================================================= */
   function openAddModelForm(prefill, onSaved) {
     const restoreParent = suspendParentWrapper();
@@ -373,7 +372,7 @@ window.AIModelsUI = (function () {
     });
     const noteArea = Utils.el('textarea', {
       class: 'field-textarea',
-      placeholder: prefill.description ? String(prefill.description).slice(0, 240) : 'توضیح کوتاه فارسی…',
+      placeholder: 'توضیح کوتاه فارسی…',
       maxlength: 400
     });
     const recCheck = Utils.el('input', { type: 'checkbox' });
@@ -381,6 +380,36 @@ window.AIModelsUI = (function () {
     [['', 'عمومی'], ['analysis', 'تحلیل عمیق'], ['batch', 'استانداردسازی دسته‌ای'], ['long', 'کانتکست طولانی']].forEach(function (pair) {
       bestForSel.appendChild(Utils.el('option', { value: pair[0] }, [pair[1]]));
     });
+
+    /* ---- نوار استخراج با AI ---- */
+    const enrichStatus = Utils.el('div', { class: 'orm-enrich-status' });
+    const enrichBtn = Utils.el('button', {
+      class: 'orm-enrich-btn',
+      type: 'button',
+      onclick: function () { enrichFromAI(); }
+    }, ['🪄 پرکردن با AI']);
+
+    const enrichBar = Utils.el('div', { class: 'orm-enrich-bar' }, [
+      enrichBtn,
+      enrichStatus
+    ]);
+
+    /* ---- وضعیت ---- */
+    const aiReady = AI.isConfigured() && AI.getModels().length > 0;
+
+    if (!aiReady) {
+      if (!AI.isConfigured()) {
+        enrichStatus.textContent = 'AI تنظیم نشده — مشخصات را دستی پر کن';
+        enrichStatus.dataset.state = 'warn';
+      } else {
+        enrichStatus.textContent = 'هیچ مدلی برای صدا زدن AI موجود نیست';
+        enrichStatus.dataset.state = 'warn';
+      }
+      enrichBtn.disabled = true;
+    } else {
+      enrichStatus.textContent = 'آماده استخراج…';
+      enrichStatus.dataset.state = 'idle';
+    }
 
     function field(labelText, inputEl, hint) {
       return Utils.el('div', { class: 'field' }, [
@@ -419,10 +448,11 @@ window.AIModelsUI = (function () {
       Utils.el('div', { class: 'alert alert-info' }, [
         Utils.el('span', { class: 'alert-icon' }, ['💡']),
         Utils.el('div', {}, [
-          'اندازه و سرعت از OpenRouter نمی‌آید — دستی پر کن یا خالی بگذار. ',
-          'بعداً از دیتابیس قابل ویرایش است.'
+          'AI بر اساس شناسه، نام و توضیح مدل، اندازه و سرعت را تخمین می‌زند. ',
+          'هر فیلدی را می‌توانی دستی اصلاح کنی.'
         ])
       ]),
+      enrichBar,
       form
     ]);
 
@@ -440,6 +470,71 @@ window.AIModelsUI = (function () {
       onClose: restoreParent
     });
 
+    /* ---- AI enrichment ---- */
+    let enriching = false;
+
+    async function enrichFromAI() {
+      if (enriching) return;
+      if (!AI.isConfigured()) {
+        Toast.warning('کلید OpenRouter تنظیم نشده — از تنظیمات وارد کن');
+        return;
+      }
+      if (!AI.getModels().length) {
+        Toast.warning('هیچ مدلی در دیتابیس نیست — AI قابل صدا زدن نیست');
+        return;
+      }
+
+      enriching = true;
+      enrichBtn.disabled = true;
+      enrichBtn.innerHTML = '<span class="spinner"></span> در حال استخراج…';
+      enrichStatus.textContent = 'در حال استخراج…';
+      enrichStatus.dataset.state = 'loading';
+
+      try {
+        const raw = await AI.chatJSON({
+          messages: [
+            { role: 'system', content: AIPrompts.modelEnrichSystem },
+            { role: 'user', content: AIPrompts.modelEnrichUser(prefill) }
+          ],
+          temperature: 0.2
+        });
+
+        const parsed = AI.parseJSONResponse(raw);
+        if (!parsed) throw new Error('پاسخ قابل تفسیر نبود');
+
+        let filled = 0;
+        if (parsed.size && !sizeInp.value.trim()) { sizeInp.value = String(parsed.size); filled++; }
+        if (parsed.speed && !speedInp.value.trim()) { speedInp.value = String(parsed.speed); filled++; }
+        if (parsed.note && !noteArea.value.trim()) { noteArea.value = String(parsed.note); filled++; }
+        if (Array.isArray(parsed.tags) && parsed.tags.length && !tagsInp.value.trim()) {
+          tagsInp.value = parsed.tags.map(function (t) { return String(t).trim(); }).filter(Boolean).join('، ');
+          filled++;
+        }
+        if (parsed.bestFor && !bestForSel.value) { bestForSel.value = String(parsed.bestFor); filled++; }
+
+        /* اگر سازنده خالی بود و AI حدس زد */
+        if (!vendorInp.value.trim() && prefill.vendor) {
+          vendorInp.value = prefill.vendor;
+        }
+
+        if (filled > 0) {
+          enrichStatus.textContent = '✓ ' + Utils.toFa(filled) + ' فیلد پر شد';
+          enrichStatus.dataset.state = 'done';
+        } else {
+          enrichStatus.textContent = 'پاسخ AI فیلد جدیدی نداشت';
+          enrichStatus.dataset.state = 'warn';
+        }
+      } catch (e) {
+        enrichStatus.textContent = '✗ ' + (e.message || 'خطا در استخراج');
+        enrichStatus.dataset.state = 'error';
+      } finally {
+        enriching = false;
+        enrichBtn.disabled = false;
+        enrichBtn.textContent = '🪄 پرکردن مجدد';
+      }
+    }
+
+    /* ---- ذخیره ---- */
     document.getElementById('orm-save').addEventListener('click', function () {
       const label = labelInp.value.trim();
       if (!label) {
@@ -447,7 +542,7 @@ window.AIModelsUI = (function () {
         labelInp.focus();
         return;
       }
-      const tags = tagsInp.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+      const tags = tagsInp.value.split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean);
 
       try {
         DB.upsertAiModel({
@@ -474,6 +569,11 @@ window.AIModelsUI = (function () {
     });
 
     setTimeout(function () { labelInp.focus(); }, 80);
+
+    /* ---- خودکار: استخراج با AI هنگام باز شدن فرم ---- */
+    if (aiReady) {
+      setTimeout(function () { enrichFromAI(); }, 220);
+    }
   }
 
   return {
