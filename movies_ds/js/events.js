@@ -582,7 +582,6 @@ window.Events = (function () {
     if (!t) return;
     const rating = Math.floor(Number(t.rating) || 0);
     const meta = CONFIG.STARS[rating];
-    const convs = DB.getConversationsByTitle(id);
 
     const body = Utils.el('div', {}, [
       Utils.el('div', { class: 'detail-hero', dataset: { stars: String(rating) } }, [
@@ -630,39 +629,18 @@ window.Events = (function () {
       t.notes ? Utils.el('div', { class: 'mb-3' }, [
         Utils.el('h4', { class: 'mb-2' }, ['📝 یادداشت من']),
         Utils.el('div', { class: 'detail-notes' }, [t.notes])
-      ]) : null,
-
-      convs.length ? Utils.el('div', { class: 'mb-3' }, [
-        Utils.el('h4', { class: 'mb-2' }, ['💬 پرامپت‌های مرتبط (' + Utils.toFa(convs.length) + ')']),
-        Utils.el('div', { class: 'conversations-list', style: { maxHeight: '200px' } },
-          convs.slice(0, 3).map(function (c) {
-            return Utils.el('div', { class: 'conv-item', onclick: function () {
-              Modal.close();
-              setTimeout(function () { AIFreePrompt.openHistory(); }, 200);
-            } }, [
-              Utils.el('div', { class: 'conv-prompt' }, [(c.prompt || '').slice(0, 90) + '…']),
-              Utils.el('div', { class: 'conv-date' }, [Utils.toJalali(c.created_at)])
-            ]);
-          })
-        )
       ]) : null
     ].filter(Boolean));
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full flex-wrap' }, [
       Utils.el('button', {
-        class: 'btn btn-soft',
-        'data-action': 'free-prompt-for-title',
-        dataset: { id: String(id), title: t.title },
-        onclick: function (e) { e.preventDefault(); AIFreePrompt.open({ titleId: id, titleName: t.title }); }
-      }, ['💬 سؤال بپرس']),
+        class: 'btn btn-danger',
+        onclick: function () { Modal.close(); setTimeout(function () { deleteWithUndo(id); }, 150); }
+      }, ['حذف']),
       Utils.el('button', {
         class: 'btn btn-soft',
         onclick: function () { Modal.close(); setTimeout(function () { AIUI.openAnalyzeSingle(id); }, 150); }
       }, ['🔬 تحلیل AI']),
-      Utils.el('button', {
-        class: 'btn btn-danger',
-        onclick: function () { Modal.close(); setTimeout(function () { deleteWithUndo(id); }, 150); }
-      }, ['حذف']),
       Utils.el('div', { class: 'flex-1' }),
       Utils.el('button', {
         class: 'btn btn-ghost',
@@ -837,6 +815,7 @@ window.Events = (function () {
 
     const footer = Utils.el('div', { class: 'settings-footer' }, [
       Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-conn', type: 'button' }, ['🧪 تست اتصال گیت‌هاب']),
+      Utils.el('button', { class: 'settings-test-btn', id: 'btn-db-admin', type: 'button' }, ['🗄️ مدیریت دیتابیس']),
       Utils.el('div', { class: 'spacer' }),
       Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
       Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
@@ -903,6 +882,10 @@ window.Events = (function () {
     });
 
     document.getElementById('btn-ai-log').addEventListener('click', function () { AIUI.showLog(); });
+
+    document.getElementById('btn-db-admin').addEventListener('click', function () {
+      if (window.DBAdmin) DBAdmin.open();
+    });
   }
 
   async function pullFromGitHub() {
