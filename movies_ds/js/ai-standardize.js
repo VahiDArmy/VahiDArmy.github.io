@@ -20,8 +20,35 @@ window.AIStandardize = (function () {
         if (options.onToken) options.onToken(delta, acc);
       }
     });
-    const parsed = AI.parseJSONResponse(full);
-    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+
+    const extracted = AI.extractJsonAndText(full);
+
+    /* متن آزاد بدون JSON — همه چیز نگه داشته می‌شود */
+    if (!extracted.parsed) {
+      return {
+        __text_only: true,
+        __raw: full,
+        __before: full,
+        __after: ''
+      };
+    }
+
+    const parsed = extracted.parsed;
+
+    /* آرایه برگشته باشد — به‌عنوان متن آزاد در نظر بگیر */
+    if (Array.isArray(parsed)) {
+      return {
+        __text_only: true,
+        __raw: full,
+        __before: full,
+        __after: ''
+      };
+    }
+
+    /* متن‌های اطراف JSON را روی شیء برگشتی نگه دار */
+    parsed.__raw = full;
+    parsed.__before = extracted.before;
+    parsed.__after = extracted.after;
     return parsed;
   }
 
@@ -42,8 +69,22 @@ window.AIStandardize = (function () {
         if (options.onToken) options.onToken(delta, acc);
       }
     });
-    const parsed = AI.parseJSONResponse(full);
-    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+
+    const extracted = AI.extractJsonAndText(full);
+    if (!extracted.parsed || Array.isArray(extracted.parsed)) {
+      return {
+        __text_only: true,
+        __raw: full,
+        __before: full,
+        __after: '',
+        plot_holes: [],
+        assumed_stupidity: []
+      };
+    }
+    const parsed = extracted.parsed;
+    parsed.__raw = full;
+    parsed.__before = extracted.before;
+    parsed.__after = extracted.after;
     return parsed;
   }
 
@@ -192,7 +233,7 @@ window.AIStandardize = (function () {
       title: current.title,
       type: normalizeType(ai.type) || current.type,
       genre: ai.genre || current.genre,
-      year: current.year,  /* year فقط از کاربر */
+      year: current.year,
       rating: current.rating,
       favorite: current.favorite,
       notes: current.notes,
