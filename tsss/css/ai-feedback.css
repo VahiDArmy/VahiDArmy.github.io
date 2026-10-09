@@ -121,14 +121,14 @@
 [data-theme="light"] .ai-model-card__score[data-sign="neg"] { color: hsl(0 60% 42%); }
 
 /* =========================================================
-   کارت پرسش — جمع‌وجور، تک‌خطی
+   کارت پرسش — padding کم، ولی خودش نمایان است (نوار آبی)
    ========================================================= */
 .ai-answer-card__question {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 10px;
-  padding: 5px 8px 5px 6px;
+  margin: 4px 4px 6px;
+  padding: 4px 8px 4px 6px;
   border-radius: 8px;
   background: var(--surface);
   border-inline-start: 2px solid var(--neon);
@@ -170,9 +170,7 @@
 /* =========================================================
    دکمهٔ ✕ روی برچسب بخش‌ها
    ========================================================= */
-.ai-section__label {
-  width: 100%;
-}
+.ai-section__label { width: 100%; }
 
 .ai-section__close {
   all: unset;
