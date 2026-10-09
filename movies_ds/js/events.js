@@ -287,15 +287,13 @@ window.Events = (function () {
   }
 
   function openDbAdmin() {
-    console.log('[db-admin] click handler fired');
     if (!window.DBAdmin) {
-      console.error('[db-admin] window.DBAdmin is not defined — js/db-admin.js not loaded or failed to parse');
-      Toast.error('مدیریت دیتابیس بارگذاری نشده — js/db-admin.js را بررسی کن');
+      console.error('[db-admin] window.DBAdmin is not defined — js/db-admin.js not loaded');
+      Toast.error('مدیریت دیتابیس بارگذاری نشده');
       return;
     }
     try {
       DBAdmin.open();
-      console.log('[db-admin] DBAdmin.open() returned; db-mode =', document.body.classList.contains('db-mode'));
     } catch (err) {
       console.error('[db-admin] open failed:', err);
       Toast.error('باز کردن مدیریت دیتابیس ناموفق: ' + (err && err.message || err));
@@ -691,79 +689,6 @@ window.Events = (function () {
   /* =========================================================
      تنظیمات
      ========================================================= */
-  function buildModelPicker(currentModelId, onSelect) {
-    let selected = currentModelId;
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    const defaultModel = (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
-    const searchInput = Utils.el('input', { class: 'field-input model-search', type: 'text', placeholder: 'جستجو در مدل‌ها…', autocomplete: 'off' });
-    const listWrap = Utils.el('div', { class: 'model-list' });
-    const statsBar = Utils.el('div', { class: 'model-stats' });
-
-    function renderList(query) {
-      listWrap.innerHTML = '';
-      const q = Utils.normalizeFa(query || '').toLowerCase();
-      const filtered = models.filter(function (m) {
-        if (!q) return true;
-        const hay = Utils.normalizeFa(m.label + ' ' + m.vendor + ' ' + m.id + ' ' + (m.tags || []).join(' ') + ' ' + (m.note || '')).toLowerCase();
-        return hay.indexOf(q) > -1;
-      });
-      if (!filtered.length) { listWrap.appendChild(Utils.el('div', { class: 'model-empty' }, ['مدلی پیدا نشد'])); return; }
-      filtered.forEach(function (m) {
-        const isActive = m.id === selected;
-        const isDefault = m.id === defaultModel;
-        const card = Utils.el('div', { class: 'model-card' + (isActive ? ' is-active' : ''), dataset: { model: m.id }, role: 'button', tabindex: '0' }, [
-          Utils.el('div', { class: 'model-card-head' }, [
-            Utils.el('div', { class: 'model-card-title' }, [
-              Utils.el('span', { class: 'model-card-label' }, [m.label]),
-              Utils.el('span', { class: 'model-card-vendor' }, [m.vendor])
-            ]),
-            Utils.el('div', { class: 'model-card-badges' }, [
-              isDefault ? Utils.el('span', { class: 'model-badge model-badge-default' }, ['پیش‌فرض']) : null,
-              m.recommended ? Utils.el('span', { class: 'model-badge model-badge-rec' }, ['★']) : null,
-              isActive ? Utils.el('span', { class: 'model-badge model-badge-active' }, ['✓']) : null
-            ].filter(Boolean))
-          ]),
-          Utils.el('div', { class: 'model-card-meta' }, [
-            m.size && m.size !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [m.size]) : null,
-            Utils.el('span', { class: 'model-meta-item' }, [m.context + ' ctx']),
-            m.speed && m.speed !== '—' ? Utils.el('span', { class: 'model-meta-item' }, [m.speed + ' t/s']) : null
-          ].filter(Boolean)),
-          m.note ? Utils.el('div', { class: 'model-card-note' }, [m.note]) : null,
-          Utils.el('div', { class: 'model-card-id' }, [m.id])
-        ]);
-        function select() {
-          selected = m.id;
-          if (onSelect) onSelect(m.id);
-          renderList(searchInput.value);
-          updateStats();
-        }
-        card.addEventListener('click', select);
-        card.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); }
-        });
-        listWrap.appendChild(card);
-      });
-    }
-
-    function updateStats() {
-      const meta = models.filter(function (m) { return m.id === selected; })[0];
-      statsBar.innerHTML = '';
-      statsBar.appendChild(Utils.el('span', { class: 'model-stats-count' }, [Utils.toFa(models.length) + ' مدل']));
-      if (meta) {
-        statsBar.appendChild(Utils.el('span', { class: 'model-stats-sep' }, ['·']));
-        statsBar.appendChild(Utils.el('span', { class: 'model-stats-current' }, ['فعال: ' + meta.label]));
-      }
-    }
-
-    searchInput.addEventListener('input', Utils.debounce(function (e) { renderList(e.target.value); }, 120));
-    renderList(''); updateStats();
-
-    return {
-      el: Utils.el('div', { class: 'model-picker' }, [searchInput, statsBar, listWrap]),
-      getSelected: function () { return selected; }
-    };
-  }
-
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
@@ -811,7 +736,7 @@ window.Events = (function () {
       ])
     ]);
 
-    const picker = buildModelPicker(currentModel, function () {});
+    const picker = AIModelsUI.buildModelPicker(currentModel, function () {});
 
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
@@ -878,7 +803,7 @@ window.Events = (function () {
       AI.setKey(g('ai_key'));
       if (typeof AI.setModel === 'function') AI.setModel(picker.getSelected());
       const meta = (typeof AI.getModelMeta === 'function') ? AI.getModelMeta() : { label: picker.getSelected() };
-      Toast.success('تنظیمات ذخیره شد — مدل: ' + meta.label);
+      Toast.success('تنظیمات ذخیره شد — مدل: ' + (meta.label || '—'));
       Modal.close();
       refreshSyncStatus();
     });
@@ -902,15 +827,15 @@ window.Events = (function () {
       const btn = e.currentTarget;
       const key = body.querySelector('[name="ai_key"]').value.trim();
       const modelId = picker.getSelected();
-      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-      const meta = models.filter(function (m) { return m.id === modelId; })[0] || { label: modelId };
+      const modelMeta = DB.getAiModel(modelId) || { label: modelId || '—' };
       AI.setKey(key);
       if (!key) { Toast.warning('ابتدا کلید را وارد کنید'); return; }
+      if (!modelId) { Toast.warning('یک مدل انتخاب کن'); return; }
       const old = btn.textContent;
       btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
       try {
         await AI.chatStream({ model: modelId, messages: [{ role: 'system', content: 'پاسخ فقط کلمه سلام باشد.' }, { role: 'user', content: 'بگو سلام' }], temperature: 0, onToken: function () {} });
-        Toast.success('اتصال به ' + meta.label + ' موفق ✅');
+        Toast.success('اتصال به ' + (modelMeta.label || modelId) + ' موفق ✅');
       } catch (err) { Toast.error(err.message || 'خطا'); }
       finally { btn.disabled = false; btn.textContent = old; }
     });
