@@ -1,5 +1,5 @@
 // =============================================================
-// بخش «بپرس از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه، فیدبک
+// بخش «پرسش از هوش مصنوعی» — composer، استریم، ذخیره، تاریخچه، فیدبک، پیگیری
 // =============================================================
 (async function () {
   const section = document.getElementById('askAiSection');
@@ -9,20 +9,24 @@
   if (!session) { section.hidden = true; return; }
   section.hidden = false;
 
-  const composerModel = document.getElementById('askAiCurrentModel');
-  const modelLabel    = document.getElementById('askAiModelLabel');
-  const formatToggle  = document.getElementById('askAiFormatToggle');
-  const formatLabel   = document.getElementById('askAiFormatLabel');
-  const inputEl       = document.getElementById('askAiInput');
-  const submitBtn     = document.getElementById('askAiSubmit');
-  const statusEl      = document.getElementById('aiStatus');
-  const answerEl      = document.getElementById('askAiAnswer');
-  const historyEl     = document.getElementById('askAiHistory');
+  const composerModel  = document.getElementById('askAiCurrentModel');
+  const modelLabel     = document.getElementById('askAiModelLabel');
+  const formatToggle   = document.getElementById('askAiFormatToggle');
+  const formatLabel    = document.getElementById('askAiFormatLabel');
+  const followUpChip   = document.getElementById('askAiFollowUpChip');
+  const followUpLabel  = document.getElementById('askAiFollowUpLabel');
+  const followUpExcerpt= document.getElementById('askAiFollowUpExcerpt');
+  const followUpClear  = document.getElementById('askAiFollowUpClear');
+  const inputEl        = document.getElementById('askAiInput');
+  const submitBtn      = document.getElementById('askAiSubmit');
+  const statusEl       = document.getElementById('aiStatus');
+  const answerEl       = document.getElementById('askAiAnswer');
+  const historyEl      = document.getElementById('askAiHistory');
 
-  const modelsModal   = document.getElementById('aiModelsModal');
-  const modelsListEl  = document.getElementById('aiModelsList');
-  const closeModelsBtn= document.getElementById('closeModelsBtn');
-  const saveModelBtn  = document.getElementById('saveModelBtn');
+  const modelsModal    = document.getElementById('aiModelsModal');
+  const modelsListEl   = document.getElementById('aiModelsList');
+  const closeModelsBtn = document.getElementById('closeModelsBtn');
+  const saveModelBtn   = document.getElementById('saveModelBtn');
 
   const index = await QuranData.getIndex();
 
@@ -31,8 +35,9 @@
   let pendingModelId = getStoredModelId();
   let renderedModelId = pendingModelId;
   let modelScoresCache = new Map();
-  // حالت قالب: 'strict' (اجباری، پیش‌فرض) یا 'natural' (آزاد)
   let formatMode = getStoredFormatMode();
+  // وضعیت پیگیری: null یا { sectionKey, sectionLabel, sectionText, fromQuestion }
+  let followUpCtx = null;
 
   function readCurrentAyah() {
     const s = Number(document.getElementById('formSurahSelect')?.value) || 1;
@@ -61,7 +66,69 @@
     setStatus('idle');
     answerEl.innerHTML = '';
     inputEl.value = '';
+    clearFollowUp(); // پیگیری متعلق به آیهٔ قبلی است
     await renderHistory();
+  }
+
+  // ---------- Follow-up (chain) ----------
+  function clearFollowUp() {
+    followUpCtx = null;
+    if (followUpChip) followUpChip.hidden = true;
+    if (followUpLabel) followUpLabel.textContent = '—';
+    if (followUpExcerpt) followUpExcerpt.textContent = '';
+    updatePlaceholder();
+  }
+
+  function updatePlaceholder() {
+    if (!inputEl) return;
+    inputEl.placeholder = followUpCtx
+      ? 'پرسش پیگیری خود را بنویسید… (Ctrl+Enter برای ارسال)'
+      : 'دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)';
+  }
+
+  function handleFollowUp(ctx) {
+    if (!ctx || !ctx.sectionText) return;
+    followUpCtx = {
+      sectionKey: ctx.sectionKey || 'answer',
+      sectionLabel: ctx.sectionLabel || 'پاسخ',
+      sectionText: ctx.sectionText || '',
+      fromQuestion: ctx.fromQuestion || '',
+    };
+    if (followUpLabel) followUpLabel.textContent = followUpCtx.sectionLabel;
+    if (followUpExcerpt) {
+      const t = followUpCtx.sectionText.replace(/\s+/g, ' ').trim();
+      const snippet = t.length > 60 ? t.slice(0, 60) + '…' : t;
+      followUpExcerpt.textContent = '— «' + snippet + '»';
+    }
+    if (followUpChip) followUpChip.hidden = false;
+    updatePlaceholder();
+    if (inputEl) {
+      inputEl.focus();
+      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    if (window.UI && UI.toast) UI.toast('حالت پیگیری فعال شد — پرسش خود را بنویسید');
+  }
+
+  if (followUpClear) followUpClear.addEventListener('click', () => {
+    clearFollowUp();
+    if (window.UI && UI.toast) UI.toast('پیگیری لغو شد');
+  });
+
+  // ساخت متن نهایی پرسش که به API می‌رود
+  function buildChainedQuestion(newQuestion) {
+    if (!followUpCtx) return newQuestion;
+    const raw = (followUpCtx.sectionText || '').trim();
+    const excerpt = raw.length > 1200 ? raw.slice(0, 1200) + '…' : raw;
+    return (
+      '[پیگیری از پاسخ پیشین]\n\n' +
+      'پرسش نخستین من:\n' +
+      '«' + (followUpCtx.fromQuestion || '—') + '»\n\n' +
+      'گزیده‌ای که از پاسخ پیشین انتخاب کردم — از بخش «' + followUpCtx.sectionLabel + '»:\n' +
+      '«' + excerpt + '»\n\n' +
+      'پرسش پیگیری من:\n' +
+      newQuestion + '\n\n' +
+      'لطفاً پاسخت را با توجه به گزیدهٔ بالا و در ادامهٔ گفت‌وگوی پیشین بده. همان قالب و لحن قبلی را نگه دار.'
+    );
   }
 
   // ---------- Format mode toggle ----------
@@ -70,7 +137,7 @@
       const v = localStorage.getItem('askAiMode');
       if (v === 'natural' || v === 'strict') return v;
     } catch (e) {}
-    return 'strict'; // پیش‌فرض: قالب اجباری (رفتار فعلی سایت)
+    return 'strict';
   }
   function setStoredFormatMode(v) {
     try { localStorage.setItem('askAiMode', v); } catch (e) {}
@@ -200,6 +267,7 @@
   });
 
   paintComposerModel();
+  updatePlaceholder();
 
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
 
@@ -223,17 +291,21 @@
       if (ay) { ayahText = ay.ar; ayahTranslation = ay.fa; }
     } catch (e) {}
 
+    // ★ ساخت پرسش نهایی (اگر در حالت پیگیری هستیم)
+    const isFollowUp = !!followUpCtx;
+    const apiQuestion = buildChainedQuestion(question);
+    const displayQuestion = isFollowUp ? ('↩ ' + question) : question;
+
     streamAbort = new AbortController();
     submitBtn.disabled = true;
     setStatus('streaming');
     let acc = '';
     let realModel = '';
-    AiFormat.renderStreaming(answerEl, question, '', model.name);
+    AiFormat.renderStreaming(answerEl, displayQuestion, '', model.name);
 
-    // انتخاب فانکشن بر اساس حالت قالب (پیش‌فرض: strict → bright-api)
     const fnName = (formatMode === 'natural') ? 'bright-api-natural' : 'bright-api';
     const url = CONFIG.SUPABASE_URL + '/functions/v1/' + fnName;
-    console.log('[ask-ai] mode =', formatMode, '→ fn =', fnName);
+    console.log('[ask-ai] mode =', formatMode, '| follow-up =', isFollowUp, '→ fn =', fnName);
 
     let res;
     try {
@@ -247,7 +319,8 @@
           surah: currentAyah.surah,
           ayah: currentAyah.ayah,
           surahName, ayahText, ayahTranslation,
-          question, model: modelId,
+          question: apiQuestion,
+          model: modelId,
         }),
         signal: streamAbort.signal,
       });
@@ -256,6 +329,9 @@
       finishWithError(err);
       return;
     }
+
+    // ★ پیگیری بعد از ارسال پاک می‌شود (حتی اگر پاسخ شکست بخورد)
+    clearFollowUp();
 
     if (!res.ok || !res.body) {
       const errTxt = await res.text().catch(() => '');
@@ -295,7 +371,7 @@
             if (j.model) realModel = j.model;
             if (j.delta) {
               acc += j.delta;
-              AiFormat.renderStreaming(answerEl, question, acc, realModel || model.name);
+              AiFormat.renderStreaming(answerEl, displayQuestion, acc, realModel || model.name);
             }
             if (j.error) { finishWithError(new Error(j.error)); return; }
           } catch (e) {}
@@ -320,7 +396,7 @@
         surah: currentAyah.surah,
         ayah: currentAyah.ayah,
         model: realModel,
-        question,
+        question: displayQuestion,
         answerRaw: acc,
       });
       console.log('[ask-ai] saveAskAi OK, id =', askRow && askRow.id);
@@ -348,7 +424,7 @@
 
     AiFormat.render(answerEl, parsed, {
       model: realModel,
-      question,
+      question: displayQuestion,
       surahIndex: index,
       generationId,
       refId: askRow ? askRow.id : null,
@@ -359,7 +435,7 @@
       generationId,
       refId: askRow ? askRow.id : null,
       model: realModel,
-      question,
+      question: displayQuestion,
       surahIndex: index,
       modelScore: sc,
       modelScoreAfter: async () => await generationScore(realModel),
@@ -369,6 +445,7 @@
         answerEl.innerHTML = '';
         await renderHistory();
       },
+      onFollowUp: handleFollowUp,
     });
 
     setStatus('done');
@@ -476,6 +553,7 @@
           onAfterVote: async () => { await loadModelScores(); },
           onAfterSectionChange: async () => { await renderHistory(); },
           onAfterDelete: async () => { await renderHistory(); },
+          onFollowUp: handleFollowUp,
         });
         rendered = true;
       };
