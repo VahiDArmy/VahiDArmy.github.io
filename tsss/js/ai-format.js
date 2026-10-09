@@ -24,7 +24,6 @@ const AiFormat = (function () {
     return t;
   }
 
-  // ---------- کپی متن در کلیپ‌بورد ----------
   async function copyText(text) {
     const t = String(text || '');
     if (!t) return;
@@ -53,6 +52,36 @@ const AiFormat = (function () {
     } catch (e2) {
       if (window.UI && UI.toast) UI.toast('کپی ناموفق بود');
     }
+  }
+
+  // ---------- نگاشت کلید بخش به متن و برچسب ----------
+  function sectionLabelOf(key) {
+    return {
+      answer: 'پاسخ',
+      insight: 'نکته',
+      draft: 'پیش‌نویس تفسیر',
+      caution: 'احتیاط',
+      refs: 'ارجاع‌ها',
+      tags: 'برچسب‌های پیشنهادی',
+      raw: 'پاسخ',
+    }[key] || key;
+  }
+  function sectionContentOf(parsed, key) {
+    if (!parsed) return '';
+    if (key === 'raw') return parsed.raw || '';
+    if (!parsed.ok) return '';
+    if (key === 'answer') return parsed.answer || '';
+    if (key === 'insight') return parsed.insight || '';
+    if (key === 'draft') return parsed.draft || '';
+    if (key === 'caution') return parsed.caution || '';
+    if (key === 'refs') {
+      return (parsed.refs || []).map((r) => {
+        const label = r.label ? ` (${r.label})` : '';
+        return `سورهٔ ${r.surah}، آیهٔ ${r.ayah}${label}`;
+      }).join('، ');
+    }
+    if (key === 'tags') return (parsed.tags || []).join('، ');
+    return '';
   }
 
   // ============================================================
@@ -288,9 +317,16 @@ const AiFormat = (function () {
     return html;
   }
 
-  function sectionHtml({ hue, label, body, extra = '', sectionKey = '', canClose = false, variant = '' }) {
-    const closeBtn = (sectionKey && canClose)
-      ? `<button type="button" class="ai-section__close" data-ai-section-close="${sectionKey}" aria-label="حذف این بخش" title="حذف این بخش">✕</button>`
+  function sectionHtml({ hue, label, body, extra = '', sectionKey = '', canClose = false, canFollowUp = false, variant = '' }) {
+    const actions = [];
+    if (sectionKey && canFollowUp) {
+      actions.push(`<button type="button" class="ai-section__followup" data-ai-followup="${sectionKey}" aria-label="پیگیری از این بخش" title="پرسش پیگیری از این بخش">↩</button>`);
+    }
+    if (sectionKey && canClose) {
+      actions.push(`<button type="button" class="ai-section__close" data-ai-section-close="${sectionKey}" aria-label="حذف این بخش" title="حذف این بخش">✕</button>`);
+    }
+    const actionsHtml = actions.length
+      ? `<span class="ai-section__actions">${actions.join('')}</span>`
       : '';
     const styleAttr = (typeof hue === 'number') ? ` style="--hue:${hue}"` : '';
     const cls = 'ai-section' + (variant ? ` ai-section--${variant}` : '');
@@ -298,7 +334,7 @@ const AiFormat = (function () {
       <div class="${cls}"${styleAttr} data-section="${sectionKey}">
         <div class="ai-section__label">
           <span class="ai-section__dot"></span>${escapeHtml(label)}
-          ${closeBtn}
+          ${actionsHtml}
         </div>
         <div class="ai-section__body">${body}</div>
         ${extra}
@@ -342,6 +378,7 @@ const AiFormat = (function () {
     const showFeedback = opts && opts.generationId != null;
     const canDelete = !!(opts && opts.refId);
     const canClose = !!(opts && opts.refId);
+    const canFollowUp = true; // پیگیری همیشه ممکن است
 
     const qHtml = questionBarHtml({ question, canDelete });
 
@@ -352,6 +389,8 @@ const AiFormat = (function () {
           ${sectionHtml({
             hue: 200,
             label: 'پاسخ',
+            sectionKey: 'raw',
+            canFollowUp,
             body: renderRich(parsed.raw || '', surahIndex),
           })}
           ${showFeedback ? feedbackBarHtml({
@@ -368,13 +407,13 @@ const AiFormat = (function () {
 
     if (parsed.answer) {
       blocks.push(sectionHtml({
-        hue: 340, label: 'پاسخ', sectionKey: 'answer', canClose,
+        hue: 340, label: 'پاسخ', sectionKey: 'answer', canClose, canFollowUp,
         body: renderRich(parsed.answer, surahIndex, inlineTags),
       }));
     }
     if (parsed.insight) {
       blocks.push(sectionHtml({
-        hue: 210, label: 'نکته', sectionKey: 'insight', canClose,
+        hue: 210, label: 'نکته', sectionKey: 'insight', canClose, canFollowUp,
         body: renderRich(parsed.insight, surahIndex, inlineTags),
       }));
     }
@@ -387,7 +426,7 @@ const AiFormat = (function () {
         return `<a class="ai-ref" href="browse.html?surah=${r.surah}&ayah=${r.ayah}">↗ ${lbl}</a>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs', canClose,
+        hue: 270, label: 'ارجاع‌ها', sectionKey: 'refs', canClose, canFollowUp,
         body: `<div class="ai-refs">${pills}</div>`,
       }));
     }
@@ -401,13 +440,13 @@ const AiFormat = (function () {
         </button>`;
       }).join('');
       blocks.push(sectionHtml({
-        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags', canClose,
+        hue: 150, label: 'برچسب‌های پیشنهادی', sectionKey: 'tags', canClose, canFollowUp,
         body: `<div class="ai-tags">${tagPills}</div>`,
       }));
     }
     if (parsed.draft) {
       blocks.push(sectionHtml({
-        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft', canClose,
+        hue: 40, label: 'پیش‌نویس تفسیر', sectionKey: 'draft', canClose, canFollowUp,
         body: `<div class="ai-draft-body">${renderRich(parsed.draft, surahIndex, inlineTags)}</div>`,
         extra: `<div class="ai-draft-actions">
           <button type="button" class="btn btn--sm" data-ai-insert-draft>درج در فرم تفسیر</button>
@@ -416,7 +455,7 @@ const AiFormat = (function () {
     }
     if (parsed.caution) {
       blocks.push(sectionHtml({
-        hue: 0, label: 'احتیاط', sectionKey: 'caution', canClose,
+        hue: 0, label: 'احتیاط', sectionKey: 'caution', canClose, canFollowUp,
         body: renderRich(parsed.caution, surahIndex, inlineTags),
       }));
     }
@@ -460,11 +499,11 @@ const AiFormat = (function () {
   }
 
   // opts: { generationId, refId, model, question, surahIndex, modelScore,
-  //        onAfterVote, onAfterDelete, onAfterSectionChange }
+  //        onAfterVote, onAfterDelete, onAfterSectionChange, onFollowUp }
   function wireCard(rootEl, parsed, opts) {
-    const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange } = opts || {};
+    const { generationId, refId, onAfterVote, onAfterDelete, onAfterSectionChange, onFollowUp } = opts || {};
 
-    // ---- کپی با کلیک روی پرسش ----
+    // کپی با کلیک روی پرسش
     rootEl.querySelectorAll('[data-ai-copy-question]').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -473,7 +512,29 @@ const AiFormat = (function () {
       });
     });
 
-    // ---- درج پیش‌نویس در فرم تفسیر ----
+    // پیگیری از یک بخش
+    rootEl.querySelectorAll('[data-ai-followup]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const key = btn.getAttribute('data-ai-followup');
+        if (!key) return;
+        const text = sectionContentOf(parsed, key);
+        if (!text || !text.trim()) {
+          if (window.UI && UI.toast) UI.toast('این بخش خالی است');
+          return;
+        }
+        if (typeof onFollowUp === 'function') {
+          onFollowUp({
+            sectionKey: key,
+            sectionLabel: sectionLabelOf(key),
+            sectionText: text,
+            fromQuestion: (opts && opts.question) || '',
+          });
+        }
+      });
+    });
+
+    // درج پیش‌نویس
     const insertBtn = rootEl.querySelector('[data-ai-insert-draft]');
     if (insertBtn && parsed && parsed.draft) {
       insertBtn.addEventListener('click', () => {
@@ -488,7 +549,6 @@ const AiFormat = (function () {
       });
     }
 
-    // ---- افزودن برچسب‌های پیشنهادی به فرم ----
     rootEl.querySelectorAll('[data-ai-tag]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const tag = btn.getAttribute('data-ai-tag');
@@ -502,7 +562,6 @@ const AiFormat = (function () {
       });
     });
 
-    // ---- حذف بخش ----
     if (refId && parsed && parsed.ok) {
       rootEl.querySelectorAll('[data-ai-section-close]').forEach((btn) => {
         btn.addEventListener('click', async (e) => {
@@ -548,7 +607,6 @@ const AiFormat = (function () {
       });
     }
 
-    // ---- حذف کل پرسش ----
     if (refId) {
       const delBtn = rootEl.querySelector('[data-ai-delete-question]');
       if (delBtn) {
@@ -574,7 +632,6 @@ const AiFormat = (function () {
       }
     }
 
-    // ---- رأی‌ها ----
     if (generationId != null) wireVotes(rootEl, generationId, onAfterVote);
   }
 
