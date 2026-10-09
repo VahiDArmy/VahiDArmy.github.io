@@ -604,6 +604,59 @@
 }
 .orm-check input { accent-color: var(--accent); }
 
+/* ---- نوار استخراج با AI ---- */
+.orm-enrich-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent), transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.orm-enrich-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.orm-enrich-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  border-color: var(--accent);
+}
+.orm-enrich-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.orm-enrich-status {
+  font-size: 10.5px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.orm-enrich-status[data-state="loading"] { color: var(--accent-2); }
+.orm-enrich-status[data-state="done"] { color: var(--success); font-weight: 600; }
+.orm-enrich-status[data-state="warn"] { color: var(--warning); }
+.orm-enrich-status[data-state="error"] { color: var(--danger); font-weight: 600; }
+
 /* ---- واکنش‌گرا ---- */
 @media (max-width: 720px) {
   .settings-row {
@@ -637,4 +690,12 @@
     align-self: flex-start;
   }
   .orm-list { max-height: 380px; }
+
+  .orm-enrich-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  .orm-enrich-btn { justify-content: center; }
+  .orm-enrich-status { text-align: center; }
 }
