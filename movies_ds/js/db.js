@@ -692,6 +692,188 @@ window.DB = (function () {
   }
   function getLastSha() { return lastSha; }
 
+  /* =========================================================
+     Admin / low-level helpers — برای پنل مدیریت دیتابیس
+     ========================================================= */
+  function escapeIdent(name) {
+    return '"' + String(name).replace(/"/g, '""') + '"';
+  }
+
+  function listTables() {
+    return query("SELECT name, type, sql FROM sqlite_master WHERE type IN ('table','view') AND name NOT LIKE 'sqlite_%' ORDER BY name");
+  }
+
+  function getTableColumns(table) {
+    return query('PRAGMA table_info(' + escapeIdent(table) + ')');
+  }
+
+  function getTableIndices(table) {
+    let list;
+    try { list = query('PRAGMA index_list(' + escapeIdent(table) + ')'); }
+    catch (e) { return []; }
+    return list.map(function (ix) {
+      let cols = [];
+      try { cols = query('PRAGMA index_info(' + escapeIdent(ix.name) + ')'); } catch (e) {}
+      return {
+        name: ix.name,
+        unique: !!ix.unique,
+        origin: ix.origin || '',
+        partial: !!ix.partial,
+        columns: cols.map(function (c) { return c.name; })
+      };
+    });
+  }
+
+  function getForeignKeys(table) {
+    try { return query('PRAGMA foreign_key_list(' + escapeIdent(table) + ')'); }
+    catch (e) { return []; }
+  }
+
+  function getTableRowCount(table) {
+    const r = query('SELECT COUNT(*) AS c FROM ' + escapeIdent(table));
+    return r[0] ? Number(r[0].c) : 0;
+  }
+
+  function getTableRowCountFiltered(table, filterColumn, filterValue) {
+    const v = String(filterValue == null ? '' : filterValue).trim();
+    if (!v) return getTableRowCount(table);
+    const cols = getTableColumns(table).map(function (c) { return c.name; });
+    if (!cols.length) return 0;
+    const search = '%' + v + '%';
+    let sql, params;
+    if (filterColumn && filterColumn !== '__all__' && cols.indexOf(filterColumn) > -1) {
+      sql = 'SELECT COUNT(*) AS c FROM ' + escapeIdent(table) + ' WHERE CAST(' + escapeIdent(filterColumn) + ' AS TEXT) LIKE ?';
+      params = [search];
+    } else {
+      sql = 'SELECT COUNT(*) AS c FROM ' + escapeIdent(table) + ' WHERE (' +
+        cols.map(function (c) { return 'CAST(' + escapeIdent(c) + ' AS TEXT) LIKE ?'; }).join(' OR ') + ')';
+      params = cols.map(function () { return search; });
+    }
+    const r = query(sql, params);
+    return r[0] ? Number(r[0].c) : 0;
+  }
+
+  function getTableRows(table, opts) {
+    opts = opts || {};
+    const cols = getTableColumns(table).map(function (c) { return c.name; });
+    const params = [];
+    let where = '';
+    const v = String(opts.filterValue == null ? '' : opts.filterValue).trim();
+    if (v) {
+      const search = '%' + v + '%';
+      if (opts.filterColumn && opts.filterColumn !== '__all__' && cols.indexOf(opts.filterColumn) > -1) {
+        where = ' WHERE CAST(' + escapeIdent(opts.filterColumn) + ' AS TEXT) LIKE ?';
+        params.push(search);
+      } else {
+        where = ' WHERE (' + cols.map(function (c) { return 'CAST(' + escapeIdent(c) + ' AS TEXT) LIKE ?'; }).join(' OR ') + ')';
+        cols.forEach(function () { params.push(search); });
+      }
+    }
+    let order = '';
+    if (opts.orderBy && cols.indexOf(opts.orderBy) > -1) {
+      order = ' ORDER BY ' + escapeIdent(opts.orderBy) + (opts.orderDir === 'desc' ? ' DESC' : ' ASC');
+    }
+    const limit = Math.max(1, Math.min(500, Number(opts.limit) || 40));
+    const offset = Math.max(0, Number(opts.offset) || 0);
+    const sql = 'SELECT * FROM ' + escapeIdent(table) + where + order + ' LIMIT ' + limit + ' OFFSET ' + offset;
+    return query(sql, params);
+  }
+
+  function getDbInfo() {
+    function one(sql, key) {
+      try { const r = query(sql); return r[0] ? r[0][key] : null; } catch (e) { return null; }
+    }
+    const pageCount = Number(one('PRAGMA page_count', 'page_count')) || 0;
+    const pageSize = Number(one('PRAGMA page_size', 'page_size')) || 0;
+    return {
+      pageCount: pageCount,
+      pageSize: pageSize,
+      sizeBytes: pageCount * pageSize,
+      encoding: one('PRAGMA encoding', 'encoding') || '',
+      userVersion: Number(one('PRAGMA user_version', 'user_version')) || 0,
+      foreignKeysOn: !!Number(one('PRAGMA foreign_keys', 'foreign_keys')),
+      journalMode: one('PRAGMA journal_mode', 'journal_mode') || '',
+      schemaVersion: getMeta('schema_version')
+    };
+  }
+
+  function integrityCheck() {
+    try {
+      return query('PRAGMA integrity_check').map(function (r) { return Object.values(r)[0]; });
+    } catch (e) { return ['خطا: ' + e.message]; }
+  }
+
+  function vacuum() {
+    db.exec('VACUUM');
+    persistLocal();
+  }
+
+  function runRaw(sql, params) {
+    const trimmed = String(sql == null ? '' : sql).trim();
+    if (!trimmed) return { kind: 'empty', rows: [], columns: [], changes: 0 };
+    const isRead = /^(SELECT|PRAGMA|EXPLAIN|WITH)\b/i.test(trimmed);
+    if (isRead) {
+      const stmt = db.prepare(trimmed);
+      try {
+        if (params && params.length) stmt.bind(params);
+        const rows = [];
+        while (stmt.step()) rows.push(stmt.getAsObject());
+        const columns = stmt.getColumnNames();
+        return { kind: 'read', rows: rows, columns: columns, changes: 0 };
+      } finally { stmt.free(); }
+    }
+    db.run(trimmed, params || []);
+    const changes = db.getRowsModified();
+    const idRow = query('SELECT last_insert_rowid() AS id')[0];
+    persistLocal();
+    return {
+      kind: 'write',
+      rows: [], columns: [],
+      changes: changes,
+      lastInsertRowid: idRow ? idRow.id : null
+    };
+  }
+
+  function insertRow(table, data) {
+    const keys = Object.keys(data);
+    if (!keys.length) {
+      run('INSERT INTO ' + escapeIdent(table) + ' DEFAULT VALUES');
+    } else {
+      const sql = 'INSERT INTO ' + escapeIdent(table) +
+        ' (' + keys.map(escapeIdent).join(',') + ') VALUES (' +
+        keys.map(function () { return '?'; }).join(',') + ')';
+      run(sql, keys.map(function (k) { return data[k]; }));
+    }
+    const idRow = query('SELECT last_insert_rowid() AS id')[0];
+    persistLocal();
+    return idRow ? idRow.id : null;
+  }
+
+  function updateRow(table, pkMap, data) {
+    const setKeys = Object.keys(data).filter(function (k) { return !(k in pkMap); });
+    if (!setKeys.length) return 0;
+    const whereKeys = Object.keys(pkMap);
+    const sql = 'UPDATE ' + escapeIdent(table) +
+      ' SET ' + setKeys.map(function (k) { return escapeIdent(k) + '=?'; }).join(', ') +
+      ' WHERE ' + whereKeys.map(function (k) { return escapeIdent(k) + '=?'; }).join(' AND ');
+    const params = setKeys.map(function (k) { return data[k]; })
+      .concat(whereKeys.map(function (k) { return pkMap[k]; }));
+    run(sql, params);
+    const changes = db.getRowsModified();
+    persistLocal();
+    return changes;
+  }
+
+  function deleteRow(table, pkMap) {
+    const whereKeys = Object.keys(pkMap);
+    const sql = 'DELETE FROM ' + escapeIdent(table) +
+      ' WHERE ' + whereKeys.map(function (k) { return escapeIdent(k) + '=?'; }).join(' AND ');
+    run(sql, whereKeys.map(function (k) { return pkMap[k]; }));
+    const changes = db.getRowsModified();
+    persistLocal();
+    return changes;
+  }
+
   return {
     init: init,
     ready: function () { return ready; },
@@ -708,6 +890,23 @@ window.DB = (function () {
     updateConversation: updateConversation,
     exportBinary: exportBinary, exportBase64: exportBase64, exportJSON: exportJSON,
     importJSON: importJSON, importBinary: importBinary, persistLocal: persistLocal,
-    pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub, getLastSha: getLastSha
+    pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub, getLastSha: getLastSha,
+
+    /* ---- Admin / low-level ---- */
+    escapeIdent: escapeIdent,
+    listTables: listTables,
+    getTableColumns: getTableColumns,
+    getTableIndices: getTableIndices,
+    getForeignKeys: getForeignKeys,
+    getTableRowCount: getTableRowCount,
+    getTableRowCountFiltered: getTableRowCountFiltered,
+    getTableRows: getTableRows,
+    getDbInfo: getDbInfo,
+    integrityCheck: integrityCheck,
+    vacuum: vacuum,
+    runRaw: runRaw,
+    insertRow: insertRow,
+    updateRow: updateRow,
+    deleteRow: deleteRow
   };
 })();
