@@ -45,6 +45,7 @@
     settings: () => click('#btn-settings') && 'settings', export: () => click('#btn-export') && 'export json', import: () => click('#btn-import') && 'import json',
     pull: () => click('#btn-pull') && 'pull from github', push: () => click('#btn-push') && 'push to github',
     ai: () => click('#btn-ai-analyze') && 'ai analyze', prompt: () => click('#btn-free-prompt') && 'free prompt',
+    db: () => { if (!window.DBAdmin) return false; DBAdmin.open(); return 'db admin'; },
     help: () => { help.hidden = false; return 'help'; }
   };
   function run(line) {
@@ -59,9 +60,10 @@
   help.innerHTML = '<div class="ch-h"><span>COMMANDS</span><kbd>Esc</kbd></div><div class="ch-g">' + [
     ['star 5 · 4 · 3 · 2 · 1 · 0 · all', 'فیلتر ستاره'], ['type movie · series · anime · documentary', 'فیلتر نوع'],
     ['sort rating · recent · old · name · year · low', 'مرتب‌سازی'], ['fav · rated · view list · reset', 'علاقه‌مندی، امتیازدار، نما، پاک‌کردن'],
-    ['add · stats · theme · settings', 'میان‌بر دکمه‌ها'], ['export · import · pull · push · ai · prompt', 'ابزارها و هوش مصنوعی'], ['هر متن دیگر', 'جستجو']
+    ['add · stats · theme · settings', 'میان‌بر دکمه‌ها'], ['export · import · pull · push · ai · prompt', 'ابزارها و هوش مصنوعی'],
+    ['db', 'مدیریت دیتابیس'], ['هر متن دیگر', 'جستجو']
   ].map((r) => '<code>' + r[0] + '</code><span>' + r[1] + '</span>').join('') + '</div><div class="ch-k">' + [
-    ['J K', 'حرکت'], ['O', 'باز کردن'], ['F', 'علاقه‌مندی'], ['E', 'ویرایش'], ['A', 'تحلیل AI'], ['0-5', 'ستاره'], ['R', 'ریست'], ['V', 'نما'], ['T', 'تم'], ['/', 'جستجو'], [':', 'دستور'], ['N', 'جدید'], ['S', 'آمار']
+    ['J K', 'حرکت'], ['O', 'باز کردن'], ['F', 'علاقه‌مندی'], ['E', 'ویرایش'], ['A', 'تحلیل AI'], ['0-5', 'ستاره'], ['R', 'ریست'], ['V', 'نما'], ['T', 'تم'], ['/', 'جستجو'], [':', 'دستور'], ['N', 'جدید'], ['S', 'آمار'], ['D', 'دیتابیس']
   ].map((k) => '<span><kbd>' + k[0] + '</kbd> ' + k[1] + '</span>').join('') + '</div>';
   document.body.appendChild(help);
 
@@ -89,6 +91,7 @@
   const KEYS = {
     j: () => move(1), k: () => move(-1), o: () => onCard((c) => c.click()), f: () => act('fav'), e: () => act('edit'), a: () => act('ai'),
     r: () => run('reset'), v: () => run('view ' + (isList() ? 'grid' : 'list')), t: () => run('theme'),
+    d: () => run('db'),
     '/': () => focusEl('#global-search'), ':': () => focusEl('#cmd'), '?': () => { help.hidden = !help.hidden; }
   };
   document.addEventListener('keydown', (e) => {
