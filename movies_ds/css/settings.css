@@ -287,7 +287,6 @@
   border-color: var(--accent);
 }
 
-/* ---- دکمه حذف مدل ---- */
 .model-card-del {
   position: absolute;
   top: 4px;
@@ -441,6 +440,7 @@
   background: var(--bg-2);
   border: 1px solid var(--border-1);
   border-radius: var(--radius-sm);
+  flex-wrap: wrap;
 }
 
 .orm-status {
@@ -450,7 +450,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.orm-refresh-btn {
+.orm-refresh-btn,
+.orm-clear-btn {
   padding: 4px 10px;
   font: inherit;
   font-size: 10.5px;
@@ -461,12 +462,67 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--dur-fast);
+  white-space: nowrap;
 }
-.orm-refresh-btn:hover {
+.orm-refresh-btn:hover,
+.orm-clear-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
 }
 .orm-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.orm-clear-btn[hidden] { display: none; }
+
+/* ---- توگل «نمایش حذف‌شده‌ها» ---- */
+.orm-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  user-select: none;
+  white-space: nowrap;
+}
+.orm-toggle:hover { color: var(--text-1); border-color: var(--border-3); }
+.orm-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.orm-toggle-box {
+  width: 12px;
+  height: 12px;
+  display: inline-grid;
+  place-items: center;
+  border: 1.5px solid var(--border-3);
+  border-radius: 2px;
+  transition: all var(--dur-fast);
+  flex-shrink: 0;
+}
+.orm-toggle-box::after {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform var(--dur-fast) var(--ease-spring);
+  margin-top: -2px;
+}
+.orm-toggle input:checked ~ .orm-toggle-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.orm-toggle input:checked ~ .orm-toggle-box::after {
+  transform: rotate(-45deg) scale(1);
+}
+.orm-toggle-text { color: inherit; }
 
 .orm-list {
   display: flex;
@@ -489,6 +545,17 @@
 }
 .orm-item:hover { border-color: var(--border-2); background: var(--bg-3); }
 .orm-item.is-added { opacity: 0.65; }
+.orm-item.is-deleted {
+  opacity: 0.55;
+  background: var(--bg-1);
+  border-style: dashed;
+}
+.orm-item.is-deleted .orm-item-name {
+  color: var(--text-3);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-4);
+}
+.orm-item.is-deleted .orm-item-id { color: var(--text-4); }
 
 .orm-item-info {
   flex: 1;
@@ -535,6 +602,18 @@
   flex-shrink: 0;
 }
 
+.orm-badge-deleted {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  color: var(--text-4);
+  background: color-mix(in srgb, var(--text-4) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-4) 30%, transparent);
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .orm-add-btn {
   padding: 5px 12px;
   font: inherit;
@@ -551,6 +630,27 @@
 }
 .orm-add-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .orm-add-btn:active { transform: scale(0.98); }
+
+.orm-restore-btn {
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--dur-fast);
+}
+.orm-restore-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.orm-restore-btn:active { transform: scale(0.98); }
 
 .orm-loading,
 .orm-empty {
@@ -680,13 +780,20 @@
   .model-card-badges { justify-content: flex-start; }
   .model-card-label { font-size: var(--fs-md); }
 
+  .orm-toolbar {
+    gap: 6px;
+  }
+  .orm-status { width: 100%; order: -1; }
+
   .orm-item {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
   .orm-add-btn,
-  .orm-badge-added {
+  .orm-badge-added,
+  .orm-badge-deleted,
+  .orm-restore-btn {
     align-self: flex-start;
   }
   .orm-list { max-height: 380px; }
