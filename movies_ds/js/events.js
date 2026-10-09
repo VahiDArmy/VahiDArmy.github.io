@@ -11,6 +11,7 @@ window.Events = (function () {
     bindKeyboard();
     bindNetwork();
     bindState();
+    bindDbAdmin();
   }
 
   function bindHeader() {
@@ -271,6 +272,34 @@ window.Events = (function () {
     State.on('title:updated', function () { renderList(); Render.renderSidebarCounts(); });
     State.on('title:deleted', function () { renderList(); Render.renderSidebarCounts(); });
     State.on('title:restored', function () { renderList(); Render.renderSidebarCounts(); });
+  }
+
+  /* =========================================================
+     مدیریت دیتابیس — با Event Delegation
+     ========================================================= */
+  function bindDbAdmin() {
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest && e.target.closest('#btn-db-admin, [data-action="db-admin"]');
+      if (!btn) return;
+      e.preventDefault();
+      openDbAdmin();
+    });
+  }
+
+  function openDbAdmin() {
+    console.log('[db-admin] click handler fired');
+    if (!window.DBAdmin) {
+      console.error('[db-admin] window.DBAdmin is not defined — js/db-admin.js not loaded or failed to parse');
+      Toast.error('مدیریت دیتابیس بارگذاری نشده — js/db-admin.js را بررسی کن');
+      return;
+    }
+    try {
+      DBAdmin.open();
+      console.log('[db-admin] DBAdmin.open() returned; db-mode =', document.body.classList.contains('db-mode'));
+    } catch (err) {
+      console.error('[db-admin] open failed:', err);
+      Toast.error('باز کردن مدیریت دیتابیس ناموفق: ' + (err && err.message || err));
+    }
   }
 
   function renderList() {
@@ -815,7 +844,12 @@ window.Events = (function () {
 
     const footer = Utils.el('div', { class: 'settings-footer' }, [
       Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-conn', type: 'button' }, ['🧪 تست اتصال گیت‌هاب']),
-      Utils.el('button', { class: 'settings-test-btn', id: 'btn-db-admin', type: 'button' }, ['🗄️ مدیریت دیتابیس']),
+      Utils.el('button', {
+        class: 'settings-test-btn',
+        id: 'btn-db-admin',
+        'data-action': 'db-admin',
+        type: 'button'
+      }, ['🗄️ مدیریت دیتابیس']),
       Utils.el('div', { class: 'spacer' }),
       Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
       Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
@@ -882,10 +916,6 @@ window.Events = (function () {
     });
 
     document.getElementById('btn-ai-log').addEventListener('click', function () { AIUI.showLog(); });
-
-    document.getElementById('btn-db-admin').addEventListener('click', function () {
-      if (window.DBAdmin) DBAdmin.open();
-    });
   }
 
   async function pullFromGitHub() {
@@ -931,6 +961,7 @@ window.Events = (function () {
     openAddEdit: openAddEdit, openDetail: openDetail, openSettings: openSettings,
     deleteWithUndo: deleteWithUndo,
     updateSyncStatus: updateSyncStatus, refreshSyncStatus: refreshSyncStatus,
-    pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub
+    pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub,
+    openDbAdmin: openDbAdmin
   };
 })();
