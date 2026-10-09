@@ -24,15 +24,46 @@ window.DBAdmin = (function () {
   const SQL_SCHEMA = /^\s*(CREATE|ALTER|DROP|VACUUM|REINDEX|ATTACH|DETACH|ANALYZE)\b/i;
 
   let S = null;
+  let escBound = false;
 
   /* =========================================================
-     Entry
+     Entry — صفحه‌ی مستقل (نه مودال)
      ========================================================= */
-  function open(opts) {
-    opts = opts || {};
+  function open() {
+    if (document.body.classList.contains('db-mode')) return;
+    document.body.classList.add('db-mode');
+    bindEsc();
+    initState();
+    render();
+  }
 
+  function close() {
+    try { Modal.closeAll(); } catch (e) {}
+    document.body.classList.remove('db-mode');
+    S = null;
+  }
+
+  function toggle() {
+    if (document.body.classList.contains('db-mode')) close();
+    else open();
+  }
+
+  function bindEsc() {
+    if (escBound) return;
+    escBound = true;
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      if (!document.body.classList.contains('db-mode')) return;
+      /* اگر مودالی باز است (ویرایش ردیف، تأیید حذف…) اول آن بسته شود */
+      const root = document.getElementById('modal-root');
+      if (root && root.classList.contains('is-open')) return;
+      close();
+    });
+  }
+
+  function initState() {
     S = {
-      table: opts.table || null,
+      table: null,
       tab: 'data',
       page: 1,
       sort: { column: null, dir: 'asc' },
@@ -53,31 +84,41 @@ window.DBAdmin = (function () {
       status: 'آماده',
       sideEl: null, mainEl: null, contentEl: null, footEl: null
     };
+  }
 
+  function render() {
+    const page = document.getElementById('db-page');
+    if (!page) return;
+    page.innerHTML = '';
+
+    /* ---- نوار بالا ---- */
+    page.appendChild(Utils.el('div', { class: 'db-page-head' }, [
+      Utils.el('button', {
+        class: 'db-page-back',
+        type: 'button',
+        onclick: close
+      }, ['← بازگشت به کتابخانه']),
+      Utils.el('h2', { class: 'db-page-title' }, ['🗄️ مدیریت دیتابیس']),
+      Utils.el('span', { class: 'db-page-hint' }, ['Esc = خروج'])
+    ]));
+
+    /* ---- چیدمان ---- */
     const root = Utils.el('div', { class: 'dba' });
     S.sideEl = Utils.el('aside', { class: 'dba-side' });
     S.mainEl = Utils.el('main', { class: 'dba-main' });
     root.appendChild(S.sideEl);
     root.appendChild(S.mainEl);
+    page.appendChild(root);
 
+    /* ---- فوتر ---- */
     S.footEl = Utils.el('div', { class: 'dba-foot' });
-
-    Modal.open({
-      title: 'مدیریت دیتابیس',
-      icon: '🗄️',
-      size: 'full',
-      className: 'dba-modal',
-      body: root,
-      footer: S.footEl,
-      onClose: function () { S = null; }
-    });
+    page.appendChild(S.footEl);
 
     loadTables();
     renderSide();
     renderFooter();
 
-    if (S.table) selectTable(S.table);
-    else if (S.tables.length) selectTable(S.tables[0].name);
+    if (S.tables.length) selectTable(S.tables[0].name);
     else renderMain();
   }
 
@@ -229,7 +270,7 @@ window.DBAdmin = (function () {
       Utils.el('button', { class: 'dba-btn', type: 'button', onclick: runIntegrity }, ['🧪 بررسی سلامت']),
       Utils.el('button', { class: 'dba-btn', type: 'button', onclick: runVacuum }, ['🧹 فشرده‌سازی']),
       Utils.el('button', { class: 'dba-btn', type: 'button', onclick: exportSqlite }, ['⬇ فایل SQLite']),
-      Utils.el('button', { class: 'dba-btn dba-btn-primary', type: 'button', onclick: function () { Modal.close(); } }, ['بستن'])
+      Utils.el('button', { class: 'dba-btn dba-btn-primary', type: 'button', onclick: close }, ['بازگشت'])
     ]));
   }
 
@@ -565,7 +606,7 @@ window.DBAdmin = (function () {
     const autoInc = /AUTOINCREMENT/i.test(tableSql);
     const pkNames = S.pkColumns.map(function (c) { return c.name; });
 
-    const fields = [];   // { col, input, nullCheck, disabled }
+    const fields = [];
 
     const form = Utils.el('div', { class: 'dba-form' });
 
@@ -655,12 +696,10 @@ window.DBAdmin = (function () {
 
       try {
         if (isEdit) {
-          delete data.__dummy;
           const changes = DB.updateRow(S.table, pkMap, data);
           setStatus(changes + ' ردیف ویرایش شد');
           Toast.success('ذخیره شد');
         } else {
-          /* حذف ستون PK خودافزا از داده‌ی درج */
           if (autoInc && pkNames.length === 1 && pkNames[0] in data && (data[pkNames[0]] == null || data[pkNames[0]] === '')) {
             delete data[pkNames[0]];
           }
@@ -746,7 +785,7 @@ window.DBAdmin = (function () {
       if (fk) {
         refCell = Utils.el('span', {
           class: 'dba-ref',
-          onclick: function () { if (fk.table && TABLE_META[fk.table] || fk.table) selectTable(fk.table); }
+          onclick: function () { if (fk.table) selectTable(fk.table); }
         }, [fk.table + '.' + fk.to]);
       } else if (rel) {
         refCell = Utils.el('span', {
@@ -839,7 +878,6 @@ window.DBAdmin = (function () {
      تب کلیدها
      ========================================================= */
   function renderKeysTab(host) {
-    /* ---- کلید اصلی ---- */
     const pkBody = S.pkColumns.length
       ? S.pkColumns.map(function (c, i) {
           return Utils.el('div', { class: 'dba-kv-table' }, [
@@ -858,7 +896,6 @@ window.DBAdmin = (function () {
       Utils.el('div', { class: 'dba-block-body' }, pkBody)
     ]));
 
-    /* ---- FOREIGN KEY ها (واقعی) ---- */
     const fkReal = S.fks.map(function (fk) {
       return Utils.el('tr', {}, [
         Utils.el('td', { class: 'ltr' }, [fk.from]),
@@ -890,7 +927,6 @@ window.DBAdmin = (function () {
       )
     ]));
 
-    /* ---- روابط منطقی ---- */
     const rel = S.declaredRels.map(function (r) {
       return Utils.el('tr', {}, [
         Utils.el('td', { class: 'ltr' }, [S.table + '.' + r.column]),
@@ -920,7 +956,6 @@ window.DBAdmin = (function () {
       )
     ]));
 
-    /* ---- نمودار ---- */
     const arrows = [];
     S.tables.forEach(function (t) {
       const rels = RELATIONS[t.name] || [];
@@ -1131,5 +1166,5 @@ window.DBAdmin = (function () {
     }
   }
 
-  return { open: open };
+  return { open: open, close: close, toggle: toggle };
 })();
