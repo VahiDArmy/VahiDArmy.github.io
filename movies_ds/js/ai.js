@@ -21,33 +21,52 @@ window.AI = (function () {
     return !!getKey();
   }
 
-  /* ---------- مدل ---------- */
+  /* ---------- مدل — از دیتابیس ---------- */
+  function getModels() {
+    try { return DB.getAiModels(); }
+    catch (e) { return []; }
+  }
+
   function getModel() {
     try {
       const stored = localStorage.getItem(MODEL_KEY);
-      const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-      if (stored && models.some(m => m.id === stored)) return stored;
-      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
-    } catch {
-      return (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL) || '';
+      const models = getModels();
+      if (stored && models.some(function (m) { return m.id === stored; })) return stored;
+      const rec = models.filter(function (m) { return m.recommended; })[0];
+      if (rec) return rec.id;
+      if (models.length) return models[0].id;
+      return '';
+    } catch (e) {
+      return '';
     }
   }
+
   function setModel(id) {
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    if (id && models.some(m => m.id === id)) {
-      localStorage.setItem(MODEL_KEY, id);
-    } else {
+    try {
+      const models = getModels();
+      if (id && models.some(function (m) { return m.id === id; })) {
+        localStorage.setItem(MODEL_KEY, id);
+      } else {
+        localStorage.removeItem(MODEL_KEY);
+      }
+    } catch (e) {
       localStorage.removeItem(MODEL_KEY);
     }
   }
+
   function getModelMeta() {
     const id = getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    return models.find(m => m.id === id) || { id, label: id, note: '', tags: [] };
+    if (!id) return { id: '', label: '—', note: '', tags: [] };
+    const models = getModels();
+    return models.filter(function (m) { return m.id === id; })[0] || { id: id, label: id, note: '', tags: [] };
   }
+
   function isDefaultModel() {
-    return getModel() === (CONFIG.AI && CONFIG.AI.DEFAULT_MODEL);
+    const models = getModels();
+    const rec = models.filter(function (m) { return m.recommended; })[0];
+    return rec ? getModel() === rec.id : false;
   }
+
   function resetModel() {
     localStorage.removeItem(MODEL_KEY);
   }
@@ -79,6 +98,16 @@ window.AI = (function () {
   function aiShow() { if (window.AILog) try { AILog.show(); } catch {} }
   function aiAutoHide() { if (window.AILog) try { AILog.scheduleAutoHide(); } catch {} }
 
+  /* ---------- بررسی مدل خالی ---------- */
+  function assertModel(modelName) {
+    if (!modelName) {
+      aiLog('error', '✗ هیچ مدلی در دیتابیس تعریف نشده');
+      aiLog('meta', 'از تنظیمات (⚙) → هوش مصنوعی → 🔍 OpenRouter یک مدل اضافه کن');
+      aiAutoHide();
+      throw new Error('هیچ مدل AI تعریف نشده. از تنظیمات یک مدل اضافه کن.');
+    }
+  }
+
   /* ---------- استریم ---------- */
   async function chatStream({ messages, model, temperature, onToken, onDone, signal }) {
     aiShow();
@@ -91,12 +120,14 @@ window.AI = (function () {
       throw new Error('کلید OpenRouter تنظیم نشده است.');
     }
 
+    const modelName = model || getModel();
+    assertModel(modelName);
+
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
 
-    const modelName = model || getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    const meta = models.find(m => m.id === modelName);
+    const models = getModels();
+    const meta = models.filter(function (m) { return m.id === modelName; })[0];
     const modelLabel = meta ? meta.label : modelName;
     const vendor = meta ? (meta.vendor || '') : '';
 
@@ -190,7 +221,6 @@ window.AI = (function () {
     aiLog('success', `✓ پاسخ کامل شد · ${full.length} کاراکتر · ${chunkCount} chunk · ${dt}s`);
     aiAutoHide();
 
-    /* ثبت مدلِ استفاده‌شده برای نمایش در نتایج */
     lastUsedModel = {
       id: modelName,
       label: modelLabel,
@@ -214,12 +244,14 @@ window.AI = (function () {
       throw new Error('کلید OpenRouter تنظیم نشده است.');
     }
 
+    const modelName = model || getModel();
+    assertModel(modelName);
+
     abortController = new AbortController();
     const combinedSignal = signal || abortController.signal;
 
-    const modelName = model || getModel();
-    const models = (CONFIG.AI && CONFIG.AI.MODELS) || [];
-    const meta = models.find(m => m.id === modelName);
+    const models = getModels();
+    const meta = models.filter(function (m) { return m.id === modelName; })[0];
     const modelLabel = meta ? meta.label : modelName;
     const vendor = meta ? (meta.vendor || '') : '';
 
@@ -280,7 +312,6 @@ window.AI = (function () {
     }
     aiAutoHide();
 
-    /* ثبت مدلِ استفاده‌شده */
     lastUsedModel = {
       id: modelName,
       label: modelLabel,
@@ -313,6 +344,7 @@ window.AI = (function () {
   return {
     getKey, setKey, isConfigured,
     getModel, setModel, getModelMeta, isDefaultModel, resetModel,
+    getModels,
     getLastUsedModel, clearLastUsedModel,
     chatStream, chatJSON, abort, parseJSONResponse
   };
