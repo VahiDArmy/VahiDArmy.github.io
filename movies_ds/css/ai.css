@@ -21,6 +21,8 @@
 .ai-source-label { font-size: var(--fs-xs); color: var(--text-4); }
 .ai-source-value { color: var(--text-1); font-weight: 600; }
 
+.ai-source-std { margin: -2px 0 10px; font-size: 11px; letter-spacing: 0.04em; color: var(--text-3); }
+
 /* =========================================================
    پنل استریم
    ========================================================= */
@@ -34,6 +36,7 @@
     inset 0 1px 0 rgba(255,255,255,0.04),
     0 0 30px -10px rgba(139, 92, 255, 0.4);
 }
+.ai-stream-panel[hidden] { display: none; }
 .ai-stream-panel::before {
   content: "";
   position: absolute;
@@ -309,6 +312,7 @@
   border: 1px solid var(--border-2);
   border-radius: var(--radius-lg);
 }
+.ai-result-box[hidden] { display: none; }
 .ai-result-row {
   display: grid;
   grid-template-columns: 130px 1fr;
@@ -319,7 +323,7 @@
 }
 .ai-result-row:last-child { border-bottom: none; }
 .ai-result-key { color: var(--text-4); font-weight: 500; }
-.ai-result-val { color: var(--text-1); }
+.ai-result-val { color: var(--text-1); white-space: pre-wrap; overflow-wrap: anywhere; }
 
 /* =========================================================
    نوار پیشرفت
@@ -429,14 +433,6 @@
 }
 .ai-stream-foot[hidden] { display: none; }
 
-.ai-result-badge-wrap {
-  display: flex;
-  justify-content: flex-start;
-  padding-top: 4px;
-  animation: slide-up 320ms var(--ease-out);
-}
-.ai-result-badge-wrap[hidden] { display: none; }
-
 .ai-model-badge {
   display: inline-flex;
   align-items: center;
@@ -501,6 +497,7 @@
   animation: slide-up 320ms var(--ease-out);
   overflow-wrap: break-word;
 }
+.ai-prose-box[hidden] { display: none; }
 .ai-prose-box h1, .ai-prose-box h2, .ai-prose-box h3,
 .ai-prose-box h4, .ai-prose-box h5, .ai-prose-box h6 {
   color: var(--text-1);
@@ -638,6 +635,133 @@
 }
 
 /* =========================================================
+   بخش تاشوی «پاسخ کامل AI»
+   ========================================================= */
+.ai-raw-section {
+  display: flex;
+  flex-direction: column;
+}
+.ai-raw-section[hidden] { display: none; }
+
+.ai-raw-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--text-3);
+  background: var(--bg-2);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--dur-fast);
+  text-align: right;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.ai-raw-toggle:hover {
+  color: var(--text-1);
+  border-color: var(--border-3);
+  background: var(--bg-3);
+}
+.ai-raw-arrow {
+  font-size: 10px;
+  color: var(--accent-2);
+  flex-shrink: 0;
+  width: 10px;
+  text-align: center;
+}
+.ai-raw-label { color: inherit; flex: 0 0 auto; }
+.ai-raw-hint {
+  color: var(--text-4);
+  font-size: 10px;
+  font-weight: 400;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-raw-body {
+  margin-top: 8px;
+  padding: 14px 18px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  line-height: 1.85;
+  color: var(--text-2);
+  max-height: 520px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  animation: slide-up 200ms var(--ease-out);
+}
+.ai-raw-body[hidden] { display: none; }
+
+.ai-raw-body h1, .ai-raw-body h2, .ai-raw-body h3,
+.ai-raw-body h4, .ai-raw-body h5, .ai-raw-body h6 {
+  color: var(--text-1);
+  margin: 12px 0 8px;
+  line-height: 1.35;
+}
+.ai-raw-body h1 { font-size: var(--fs-xl); }
+.ai-raw-body h2 { font-size: var(--fs-lg); }
+.ai-raw-body h3 { font-size: var(--fs-md); color: var(--accent-2); }
+.ai-raw-body h4 { font-size: var(--fs-sm); color: var(--accent-2); }
+.ai-raw-body p { margin: 8px 0; line-height: 1.85; }
+.ai-raw-body strong { color: var(--text-1); font-weight: 700; }
+.ai-raw-body em { color: var(--accent-2); font-style: italic; }
+.ai-raw-body ul, .ai-raw-body ol { padding-right: 22px; margin: 8px 0; }
+.ai-raw-body ul { list-style: disc; }
+.ai-raw-body ol { list-style: decimal; }
+.ai-raw-body li { margin: 4px 0; line-height: 1.85; }
+.ai-raw-body li::marker { color: var(--neon-accent); }
+.ai-raw-body a {
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-raw-body code {
+  background: var(--bg-3);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--accent-2);
+}
+.ai-raw-body pre {
+  background: var(--bg-0);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  margin: 10px 0;
+  color: var(--text-2);
+}
+.ai-raw-body blockquote {
+  margin: 10px 0;
+  padding: 8px 14px;
+  border-right: 3px solid var(--neon-accent);
+  background: rgba(139, 92, 255, 0.06);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text-3);
+  font-style: italic;
+}
+.ai-raw-body hr {
+  border: none;
+  height: 1px;
+  margin: 16px 0;
+  background: linear-gradient(90deg, transparent, var(--border-2), transparent);
+}
+
+/* =========================================================
    واکنش‌گرا
    ========================================================= */
 @media (max-width: 720px) {
@@ -673,4 +797,6 @@
     font-size: var(--fs-sm);
   }
   .ai-extras-box { padding: 12px 14px; }
+  .ai-raw-body { padding: 12px 14px; max-height: 380px; }
+  .ai-raw-hint { display: none; }
 }
