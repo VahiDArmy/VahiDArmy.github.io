@@ -98,7 +98,6 @@ window.AI = (function () {
   function aiShow() { if (window.AILog) try { AILog.show(); } catch {} }
   function aiAutoHide() { if (window.AILog) try { AILog.scheduleAutoHide(); } catch {} }
 
-  /* ---------- بررسی مدل خالی ---------- */
   function assertModel(modelName) {
     if (!modelName) {
       aiLog('error', '✗ هیچ مدلی در دیتابیس تعریف نشده');
@@ -330,15 +329,55 @@ window.AI = (function () {
     }
   }
 
+  /* =========================================================
+     استخراج JSON — بدون حذف متن اطراف
+     =========================================================
+     پاسخ قبلی هر متنی که بیرون از {} بود را دور می‌ریخت.
+     این نسخه متن پیش و پس از JSON را هم برمی‌گرداند.
+     ========================================================= */
+  function extractJsonAndText(raw) {
+    if (!raw) return { parsed: null, before: '', after: '', raw: '' };
+    const original = String(raw);
+    const s = original;
+
+    /* ۱. اگر داخل ```json ... ``` باشد */
+    const fenced = s.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
+    if (fenced && /[\{\[]/.test(fenced[1])) {
+      const inner = fenced[1].trim();
+      const before = s.slice(0, fenced.index).trim();
+      const after = s.slice(fenced.index + fenced[0].length).trim();
+
+      let parsed = null;
+      try { parsed = JSON.parse(inner); } catch (e) {}
+      if (!parsed) {
+        const fb = inner.search(/[\{\[]/);
+        const lb = Math.max(inner.lastIndexOf('}'), inner.lastIndexOf(']'));
+        if (fb >= 0 && lb > fb) {
+          try { parsed = JSON.parse(inner.slice(fb, lb + 1)); } catch (e) {}
+        }
+      }
+      return { parsed, before, after, raw: original };
+    }
+
+    /* ۲. بدون fence — از اولین { یا [ تا آخرین } یا ] */
+    const trimmed = s.trim();
+    const fb = trimmed.search(/[\{\[]/);
+    if (fb < 0) return { parsed: null, before: original, after: '', raw: original };
+
+    const lb = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
+    if (lb < 0 || lb < fb) return { parsed: null, before: original, after: '', raw: original };
+
+    const before = trimmed.slice(0, fb).trim();
+    const after  = trimmed.slice(lb + 1).trim();
+    let parsed = null;
+    try { parsed = JSON.parse(trimmed.slice(fb, lb + 1)); } catch (e) {}
+
+    return { parsed, before, after, raw: original };
+  }
+
+  /* نگه‌داشته شد برای سازگاری — فقط JSON را برمی‌گرداند */
   function parseJSONResponse(raw) {
-    if (!raw) return null;
-    let s = String(raw).trim();
-    s = s.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-    const firstBrace = s.search(/[\{\[]/);
-    if (firstBrace > 0) s = s.slice(firstBrace);
-    const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
-    if (lastBrace > 0) s = s.slice(0, lastBrace + 1);
-    try { return JSON.parse(s); } catch { return null; }
+    return extractJsonAndText(raw).parsed;
   }
 
   return {
@@ -346,6 +385,8 @@ window.AI = (function () {
     getModel, setModel, getModelMeta, isDefaultModel, resetModel,
     getModels,
     getLastUsedModel, clearLastUsedModel,
-    chatStream, chatJSON, abort, parseJSONResponse
+    chatStream, chatJSON, abort,
+    extractJsonAndText,
+    parseJSONResponse
   };
 })();
