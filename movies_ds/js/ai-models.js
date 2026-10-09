@@ -174,7 +174,7 @@ window.AIModelsUI = (function () {
     function confirmDeleteModel(m) {
       Modal.confirm({
         title: 'حذف مدل',
-        message: '«' + (m.label || m.id) + '» از لیست مدل‌های ذخیره‌شده حذف شود؟',
+        message: '«' + (m.label || m.id) + '» از لیست مدل‌ها حذف شود؟ در جستجوی OpenRouter هم دیگر پیشنهاد نمی‌شود.',
         icon: '🗑️',
         danger: true,
         confirmText: 'حذف کن',
@@ -220,8 +220,51 @@ window.AIModelsUI = (function () {
     const onChanged = opts.onChanged || function () {};
     const restoreParent = suspendParentWrapper();
 
+    /* ---- وضعیت محلی ---- */
+    let allModels = [];             /* همه‌ی مدل‌های رایگان از OpenRouter */
+    let inDb = {};                  /* id → true برای مدل‌های موجود در دیتابیس */
+    let deleted = {};               /* id → true برای سنگ‌قبرها */
+    let showDeleted = false;        /* نمایش حذف‌شده‌ها */
+
+    /* ---- عناصر ---- */
     const listWrap = Utils.el('div', { class: 'orm-list' });
     const statusBar = Utils.el('div', { class: 'orm-status' }, ['در حال بارگذاری…']);
+
+    const toggleLabel = Utils.el('label', { class: 'orm-toggle' });
+    const toggleCheck = Utils.el('input', { type: 'checkbox' });
+    toggleLabel.appendChild(toggleCheck);
+    toggleLabel.appendChild(Utils.el('span', { class: 'orm-toggle-box' }));
+    const toggleText = Utils.el('span', { class: 'orm-toggle-text' }, ['نمایش حذف‌شده‌ها']);
+    toggleLabel.appendChild(toggleText);
+    toggleCheck.addEventListener('change', function () {
+      showDeleted = toggleCheck.checked;
+      renderList();
+    });
+
+    const clearBtn = Utils.el('button', {
+      class: 'orm-clear-btn',
+      type: 'button',
+      title: 'پاک کردن لیست حذف‌شده‌ها',
+      onclick: function () {
+        const n = DB.countDeletedAiModels();
+        if (!n) return;
+        Modal.confirm({
+          title: 'پاک کردن لیست حذف‌شده‌ها',
+          message: Utils.toFa(n) + ' مدلِ حذف‌شده از لیست سیاه پاک شود؟ دوباره در جستجو ظاهر می‌شوند.',
+          icon: '↺',
+          confirmText: 'پاک کن',
+          onConfirm: function () {
+            DB.clearDeletedAiModelIds();
+            deleted = {};
+            refreshState();
+            renderList();
+            updateToggleLabel();
+            Toast.success('لیست حذف‌شده‌ها پاک شد');
+          }
+        });
+      }
+    }, ['↺ پاک کردن حذف‌شده‌ها']);
+
     const refreshBtn = Utils.el('button', {
       class: 'orm-refresh-btn',
       type: 'button',
@@ -232,6 +275,8 @@ window.AIModelsUI = (function () {
       Utils.el('div', { class: 'orm-toolbar' }, [
         statusBar,
         Utils.el('div', { class: 'flex-1' }),
+        clearBtn,
+        toggleLabel,
         refreshBtn
       ]),
       listWrap
@@ -255,6 +300,22 @@ window.AIModelsUI = (function () {
 
     load();
 
+    /* ---- وضعیت را از دیتابیس تازه کن ---- */
+    function refreshState() {
+      inDb = {};
+      DB.getAiModels().forEach(function (m) { inDb[m.id] = true; });
+      deleted = {};
+      DB.getDeletedAiModelIds().forEach(function (id) { deleted[id] = true; });
+    }
+
+    function updateToggleLabel() {
+      const n = Object.keys(deleted).length;
+      toggleText.textContent = n
+        ? 'نمایش حذف‌شده‌ها (' + Utils.toFa(n) + ')'
+        : 'نمایش حذف‌شده‌ها';
+      clearBtn.hidden = n === 0;
+    }
+
     async function load() {
       listWrap.innerHTML = '';
       listWrap.appendChild(Utils.el('div', { class: 'orm-loading' }, [
@@ -265,9 +326,13 @@ window.AIModelsUI = (function () {
       refreshBtn.disabled = true;
 
       try {
-        const models = await fetchOpenRouterFreeModels();
-        statusBar.textContent = Utils.toFa(models.length) + ' مدل رایگان';
-        renderList(models);
+        allModels = await fetchOpenRouterFreeModels();
+        refreshState();
+        updateToggleLabel();
+
+        const visibleCount = allModels.filter(function (m) { return !deleted[m.id]; }).length;
+        statusBar.textContent = Utils.toFa(visibleCount) + ' مدل قابل افزودن';
+        renderList();
       } catch (e) {
         listWrap.innerHTML = '';
         listWrap.appendChild(Utils.el('div', { class: 'orm-error' }, [
@@ -281,39 +346,59 @@ window.AIModelsUI = (function () {
       }
     }
 
-    function renderList(models) {
+    function renderList() {
       listWrap.innerHTML = '';
-      if (!models.length) {
+
+      if (!allModels.length) {
         listWrap.appendChild(Utils.el('div', { class: 'orm-empty' }, ['مدل رایگانی پیدا نشد.']));
         return;
       }
 
-      const inDb = {};
-      DB.getAiModels().forEach(function (m) { inDb[m.id] = true; });
+      /* دسته‌بندی: در دیتابیس / قابل افزودن / حذف‌شده */
+      const added = [];
+      const available = [];
+      const hidden = [];
 
-      const sorted = models.slice().sort(function (a, b) {
-        const aIn = inDb[a.id] ? 1 : 0;
-        const bIn = inDb[b.id] ? 1 : 0;
-        if (aIn !== bIn) return aIn - bIn;
-        return String(a.name).localeCompare(String(b.name));
+      allModels.forEach(function (m) {
+        if (inDb[m.id]) added.push(m);
+        else if (deleted[m.id]) hidden.push(m);
+        else available.push(m);
       });
 
-      sorted.forEach(function (m) {
-        listWrap.appendChild(buildOrItem(m, inDb[m.id], function () {
-          openAddModelForm(m, function () {
-            onChanged();
-            /* لیست را با inDb به‌روز دوباره رندر کن */
-            inDb[m.id] = true;
-            renderList(sorted);
-            statusBar.textContent = Utils.toFa(sorted.length) + ' مدل رایگان';
-          });
-        }));
+      const sortByName = function (a, b) { return String(a.name).localeCompare(String(b.name)); };
+      added.sort(sortByName);
+      available.sort(sortByName);
+      hidden.sort(sortByName);
+
+      /* در حالت پیش‌فرض، حذف‌شده‌ها نمایش داده نمی‌شوند */
+      const hiddenToShow = showDeleted ? hidden : [];
+
+      if (!added.length && !available.length && !hiddenToShow.length) {
+        listWrap.appendChild(Utils.el('div', { class: 'orm-empty' }, [
+          'همه‌ی مدل‌های رایگان یا اضافه شده‌اند یا حذف.'
+        ]));
+        return;
+      }
+
+      available.forEach(function (m) {
+        listWrap.appendChild(buildOrItem(m, 'available'));
+      });
+      added.forEach(function (m) {
+        listWrap.appendChild(buildOrItem(m, 'added'));
+      });
+      hiddenToShow.forEach(function (m) {
+        listWrap.appendChild(buildOrItem(m, 'hidden'));
       });
     }
 
-    function buildOrItem(m, alreadyIn, onAdd) {
+    function buildOrItem(m, state) {
       const ctx = formatContextLength(m.context_length);
-      const item = Utils.el('div', { class: 'orm-item' + (alreadyIn ? ' is-added' : '') });
+      const item = Utils.el('div', {
+        class: 'orm-item' +
+          (state === 'added' ? ' is-added' : '') +
+          (state === 'hidden' ? ' is-deleted' : '')
+      });
+
       item.appendChild(Utils.el('div', { class: 'orm-item-info' }, [
         Utils.el('div', { class: 'orm-item-name' }, [m.name]),
         Utils.el('div', { class: 'orm-item-id' }, [m.id]),
@@ -322,15 +407,47 @@ window.AIModelsUI = (function () {
           m.vendor ? Utils.el('span', {}, [m.vendor]) : null
         ].filter(Boolean))
       ]));
-      if (alreadyIn) {
+
+      if (state === 'added') {
         item.appendChild(Utils.el('span', { class: 'orm-badge-added' }, ['✓ افزوده شده']));
+      } else if (state === 'hidden') {
+        item.appendChild(Utils.el('span', { class: 'orm-badge-deleted' }, ['🗑 حذف‌شده']));
+        item.appendChild(Utils.el('button', {
+          class: 'orm-restore-btn',
+          type: 'button',
+          title: 'خارج کردن از لیست حذف‌شده‌ها',
+          onclick: function () {
+            try {
+              DB.unmarkAiModelDeleted(m.id);
+              delete deleted[m.id];
+              updateToggleLabel();
+              renderList();
+              statusBar.textContent = Utils.toFa(
+                allModels.filter(function (x) { return !deleted[x.id]; }).length
+              ) + ' مدل قابل افزودن';
+              Toast.success('«' + m.name + '» از لیست حذف خارج شد');
+            } catch (e) {
+              Toast.error('بازگردانی: ' + e.message);
+            }
+          }
+        }, ['↺ بازگردانی']));
       } else {
         item.appendChild(Utils.el('button', {
           class: 'orm-add-btn',
           type: 'button',
-          onclick: onAdd
+          onclick: function () {
+            openAddModelForm(m, function () {
+              onChanged();
+              inDb[m.id] = true;   /* حالا در دیتابیس است */
+              renderList();
+              statusBar.textContent = Utils.toFa(
+                allModels.filter(function (x) { return !deleted[x.id]; }).length
+              ) + ' مدل قابل افزودن';
+            });
+          }
         }, ['+ افزودن']));
       }
+
       return item;
     }
   }
@@ -381,7 +498,6 @@ window.AIModelsUI = (function () {
       bestForSel.appendChild(Utils.el('option', { value: pair[0] }, [pair[1]]));
     });
 
-    /* ---- نوار استخراج با AI ---- */
     const enrichStatus = Utils.el('div', { class: 'orm-enrich-status' });
     const enrichBtn = Utils.el('button', {
       class: 'orm-enrich-btn',
@@ -389,12 +505,8 @@ window.AIModelsUI = (function () {
       onclick: function () { enrichFromAI(); }
     }, ['🪄 پرکردن با AI']);
 
-    const enrichBar = Utils.el('div', { class: 'orm-enrich-bar' }, [
-      enrichBtn,
-      enrichStatus
-    ]);
+    const enrichBar = Utils.el('div', { class: 'orm-enrich-bar' }, [enrichBtn, enrichStatus]);
 
-    /* ---- وضعیت ---- */
     const aiReady = AI.isConfigured() && AI.getModels().length > 0;
 
     if (!aiReady) {
@@ -470,7 +582,6 @@ window.AIModelsUI = (function () {
       onClose: restoreParent
     });
 
-    /* ---- AI enrichment ---- */
     let enriching = false;
 
     async function enrichFromAI() {
@@ -512,7 +623,6 @@ window.AIModelsUI = (function () {
         }
         if (parsed.bestFor && !bestForSel.value) { bestForSel.value = String(parsed.bestFor); filled++; }
 
-        /* اگر سازنده خالی بود و AI حدس زد */
         if (!vendorInp.value.trim() && prefill.vendor) {
           vendorInp.value = prefill.vendor;
         }
@@ -534,7 +644,6 @@ window.AIModelsUI = (function () {
       }
     }
 
-    /* ---- ذخیره ---- */
     document.getElementById('orm-save').addEventListener('click', function () {
       const label = labelInp.value.trim();
       if (!label) {
@@ -570,7 +679,6 @@ window.AIModelsUI = (function () {
 
     setTimeout(function () { labelInp.focus(); }, 80);
 
-    /* ---- خودکار: استخراج با AI هنگام باز شدن فرم ---- */
     if (aiReady) {
       setTimeout(function () { enrichFromAI(); }, 220);
     }
