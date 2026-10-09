@@ -68,7 +68,7 @@ window.DB = (function () {
 
   const SQL_META = 'CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT)';
 
-  /* ---- مدل‌های AI — منبع حقیقت به‌جای CONFIG.AI.MODELS ---- */
+  /* ---- مدل‌های AI ---- */
   const SQL_AI_MODELS =
     'CREATE TABLE IF NOT EXISTS ai_models (' +
     '  id TEXT PRIMARY KEY,' +
@@ -89,6 +89,13 @@ window.DB = (function () {
     ')';
 
   const SQL_AI_MODELS_IDX_REC = 'CREATE INDEX IF NOT EXISTS idx_ai_models_rec ON ai_models(recommended)';
+
+  /* ---- سنگ‌قبر مدل‌ها — حذف‌شده‌ها که نباید دوباره پیشنهاد شوند ---- */
+  const SQL_AI_MODELS_DELETED =
+    'CREATE TABLE IF NOT EXISTS ai_models_deleted (' +
+    '  id TEXT PRIMARY KEY,' +
+    '  deleted_at TEXT NOT NULL' +
+    ')';
 
   function ensureTable(table, createSql) {
     try {
@@ -117,7 +124,6 @@ window.DB = (function () {
   }
 
   function runMigrations() {
-    /* ---- titles ---- */
     const titleCols = [
       ['summary', 'TEXT DEFAULT ""'],
       ['original_title', 'TEXT DEFAULT ""'],
@@ -133,7 +139,6 @@ window.DB = (function () {
     ];
     titleCols.forEach(function (c) { ensureColumn('titles', c[0], c[1]); });
 
-    /* ---- conversations ---- */
     ensureColumn('conversations', 'tags', 'TEXT DEFAULT ""');
     ensureColumn('conversations', 'ai_model', 'TEXT DEFAULT ""');
     ensureColumn('conversations', 'title_context', 'TEXT DEFAULT ""');
@@ -198,6 +203,7 @@ window.DB = (function () {
     ensureTable('conversations', SQL_CONVERSATIONS);
     ensureTable('activity', SQL_ACTIVITY);
     ensureTable('ai_models', SQL_AI_MODELS);
+    ensureTable('ai_models_deleted', SQL_AI_MODELS_DELETED);
 
     try { db.exec(SQL_TITLES_IDX_RATING); } catch (e) {}
     try { db.exec(SQL_TITLES_IDX_CREATED); } catch (e) {}
@@ -262,7 +268,6 @@ window.DB = (function () {
 
     migrateCategoryToStars();
 
-    /* ---- seed مدل‌های AI — یک بار ---- */
     const aiSeeded = getMeta('ai_models_seeded');
     if (aiSeeded !== '1') {
       if (countAiModels() === 0 && window.CONFIG && window.CONFIG.AI && Array.isArray(CONFIG.AI.MODELS)) {
@@ -660,6 +665,10 @@ window.DB = (function () {
         ]
       );
     }
+
+    /* اگر قبلاً حذف شده بود، حالا که برگشت، از لیست سنگ‌قبر بیرون بیاید */
+    try { unmarkAiModelDeleted(m.id, true); } catch (e) {}
+
     if (!silent) persistLocal();
     return m.id;
   }
@@ -667,15 +676,55 @@ window.DB = (function () {
   function deleteAiModel(id) {
     if (!id) return 0;
     run('DELETE FROM ai_models WHERE id=?', [id]);
+    /* سنگ‌قبر: دفعه‌ی بعد در جستجوی OpenRouter پیشنهاد نشود */
+    try { markAiModelDeleted(id, true); } catch (e) {}
     persistLocal();
     return 1;
   }
 
+  /* ---- سنگ‌قبر مدل‌های حذف‌شده ---- */
+  function getDeletedAiModelIds() {
+    try {
+      const rows = query('SELECT id FROM ai_models_deleted ORDER BY deleted_at DESC');
+      return rows.map(function (r) { return r.id; });
+    } catch (e) { return []; }
+  }
+
+  function markAiModelDeleted(id, silent) {
+    if (!id) return;
+    const now = new Date().toISOString();
+    run('INSERT OR REPLACE INTO ai_models_deleted (id, deleted_at) VALUES (?, ?)', [id, now]);
+    if (!silent) persistLocal();
+  }
+
+  function unmarkAiModelDeleted(id, silent) {
+    if (!id) return;
+    run('DELETE FROM ai_models_deleted WHERE id=?', [id]);
+    if (!silent) persistLocal();
+  }
+
+  function clearDeletedAiModelIds() {
+    const before = getDeletedAiModelIds().length;
+    run('DELETE FROM ai_models_deleted');
+    persistLocal();
+    return before;
+  }
+
+  function countDeletedAiModels() {
+    try {
+      const r = query('SELECT COUNT(*) AS c FROM ai_models_deleted')[0];
+      return r ? Number(r.c) : 0;
+    } catch (e) { return 0; }
+  }
+
   function seedAiModels(list) {
     if (!Array.isArray(list)) return 0;
+    const deleted = {};
+    getDeletedAiModelIds().forEach(function (id) { deleted[id] = true; });
     let added = 0;
     list.forEach(function (m) {
       if (!m || !m.id) return;
+      if (deleted[m.id]) return;   /* اگر کاربر قبلاً حذف کرده، دیگر وارد نشود */
       try {
         upsertAiModel({
           id: m.id,
@@ -762,6 +811,7 @@ window.DB = (function () {
       titles: getAllTitles(),
       conversations: getAllConversations(),
       aiModels: getAiModels(),
+      aiModelsDeleted: getDeletedAiModelIds(),
       activity: getActivity(500)
     };
   }
@@ -771,6 +821,7 @@ window.DB = (function () {
       run('DELETE FROM titles');
       try { run('DELETE FROM conversations'); } catch (e) {}
       try { run('DELETE FROM ai_models'); } catch (e) {}
+      try { run('DELETE FROM ai_models_deleted'); } catch (e) {}
     }
     let added = 0;
     payload.titles.forEach(function (t) {
@@ -819,6 +870,11 @@ window.DB = (function () {
         } catch (e) {}
       });
     }
+    if (Array.isArray(payload.aiModelsDeleted)) {
+      payload.aiModelsDeleted.forEach(function (id) {
+        try { markAiModelDeleted(id, true); } catch (e) {}
+      });
+    }
     logActivity('import', 'titles', null, added + ' عنوان، ' + convAdded + ' پرامپت، ' + modelsAdded + ' مدل');
     persistLocal();
     return added;
@@ -842,7 +898,6 @@ window.DB = (function () {
     db = new SQL.Database(bytes);
     buildSchema();
     migrateCategoryToStars();
-    /* seed مدل‌ها اگر جدول خالی است و هنوز seed نشده */
     const aiSeeded = getMeta('ai_models_seeded');
     if (aiSeeded !== '1' && countAiModels() === 0 && window.CONFIG && window.CONFIG.AI && Array.isArray(CONFIG.AI.MODELS)) {
       seedAiModels(CONFIG.AI.MODELS);
@@ -1077,6 +1132,13 @@ window.DB = (function () {
     upsertAiModel: upsertAiModel,
     deleteAiModel: deleteAiModel,
     seedAiModels: seedAiModels,
+
+    /* ---- AI Models — Deleted (tombstones) ---- */
+    getDeletedAiModelIds: getDeletedAiModelIds,
+    markAiModelDeleted: markAiModelDeleted,
+    unmarkAiModelDeleted: unmarkAiModelDeleted,
+    clearDeletedAiModelIds: clearDeletedAiModelIds,
+    countDeletedAiModels: countDeletedAiModels,
 
     /* ---- Admin / low-level ---- */
     escapeIdent: escapeIdent,
