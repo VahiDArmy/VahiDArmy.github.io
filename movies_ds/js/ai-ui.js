@@ -12,7 +12,7 @@ window.AIUI = (function () {
     if (!text) return '';
     let s = String(text);
 
-    /* ۱. استخراج کد بلاک‌ها (قبل از هر پردازش) */
+    /* ۱. استخراج کد بلاک‌ها */
     const codeBlocks = [];
     s = s.replace(/```([\w+-]*)\n?([\s\S]*?)```/g, function (_, lang, code) {
       const idx = codeBlocks.length;
@@ -23,7 +23,7 @@ window.AIUI = (function () {
     /* ۲. escape */
     s = Utils.esc(s);
 
-    /* ۳. جدول‌ها — قبل از هر چیز دیگر */
+    /* ۳. جدول‌ها */
     s = s.replace(
       /(?:^|\n)([ \t]*\|[^\n]*\|[ \t]*\n[ \t]*\|[ \t\-:|]+\|[ \t]*\n(?:[ \t]*\|[^\n]*\|[ \t]*(?:\n|$))*)/g,
       function (_, block) { return '\n\n' + parseMarkdownTable(block) + '\n\n'; }
@@ -99,9 +99,6 @@ window.AIUI = (function () {
     return s;
   }
 
-  /* =========================================================
-     پارسر جدول Markdown
-     ========================================================= */
   function parseMarkdownTable(block) {
     const lines = block.trim().split('\n').filter(function (l) { return l.trim(); });
     if (lines.length < 2) return Utils.esc(block);
@@ -118,7 +115,7 @@ window.AIUI = (function () {
       const left = t.charAt(0) === ':';
       const right = t.charAt(t.length - 1) === ':';
       if (left && right) return 'center';
-      if (right) return 'left';   /* در RTL: تراز چپ یعنی انتهای خط */
+      if (right) return 'left';
       if (left) return 'right';
       return '';
     }
@@ -362,6 +359,64 @@ window.AIUI = (function () {
   }
 
   /* =========================================================
+     رندر فیلدهای اضافی از JSON
+     ========================================================= */
+  const KNOWN_KEYS = {
+    standard_title: 1, title_fa: 1, type: 1,
+    year_start: 1, year_end: 1, seasons: 1, episodes: 1, episodes_per_season: 1,
+    country: 1, language: 1, genre: 1, status: 1,
+    creators: 1, main_cast: 1, summary: 1, reason: 1,
+    strengths: 1, weaknesses: 1,
+    plot_holes: 1, assumed_stupidity: 1,
+    earned_outcomes: 1, forced_outcomes: 1
+  };
+
+  function buildExtrasBox(parsed) {
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const extras = [];
+    Object.keys(parsed).forEach(function (k) {
+      if (k.indexOf('__') === 0) return;
+      if (KNOWN_KEYS[k]) return;
+      const v = parsed[k];
+      if (v == null) return;
+      if (typeof v === 'string' && !v.trim()) return;
+      if (Array.isArray(v) && !v.length) return;
+      extras.push({ key: k, value: v });
+    });
+
+    if (!extras.length) return null;
+
+    const box = Utils.el('div', { class: 'ai-extras-box' });
+    box.appendChild(Utils.el('div', { class: 'ai-extras-title' }, ['بخش‌های اضافی پاسخ AI']));
+
+    extras.forEach(function (item) {
+      const row = Utils.el('div', { class: 'ai-extras-row' });
+      row.appendChild(Utils.el('div', { class: 'ai-extras-key' }, [item.key]));
+
+      const v = item.value;
+      const valEl = Utils.el('div', { class: 'ai-extras-val' });
+
+      if (typeof v === 'string') {
+        valEl.innerHTML = renderMarkdown(v);
+      } else if (Array.isArray(v) && v.every(function (x) { return typeof x === 'string'; })) {
+        valEl.innerHTML = '<ul>' + v.map(function (x) { return '<li>' + Utils.esc(x) + '</li>'; }).join('') + '</ul>';
+      } else {
+        try {
+          valEl.appendChild(Utils.el('pre', {}, [JSON.stringify(v, null, 2)]));
+        } catch (e) {
+          valEl.textContent = String(v);
+        }
+      }
+
+      row.appendChild(valEl);
+      box.appendChild(row);
+    });
+
+    return box;
+  }
+
+  /* =========================================================
      تحلیل یک عنوان
      ========================================================= */
   function openAnalyzeSingle(id) {
@@ -370,8 +425,10 @@ window.AIUI = (function () {
     if (!t) return;
 
     const panel = createStreamPanel('تحلیل: ' + t.title);
+    const proseBox = Utils.el('div', { class: 'ai-prose-box', hidden: true });
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
     const storyBox = Utils.el('div', { class: 'story-analysis-box', hidden: true });
+    const extrasBox = Utils.el('div', { hidden: true });
     const deepBtnWrap = Utils.el('div', { class: 'ai-deep-wrap', hidden: true });
     const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true }, ['✅ اعمال روی دیتابیس']);
 
@@ -387,7 +444,12 @@ window.AIUI = (function () {
           : Utils.el('span', { class: 'badge', style: { marginRight: '8px' } }, ['○ بدون امتیاز'])
       ]),
       Utils.el('div', { class: 'ai-source-std' }, ['ارسال به AI: ' + AIPrompts.standardLine(t.title, t.type, t.year, t)]),
-      panel.panel, resultBox, storyBox, deepBtnWrap
+      panel.panel,
+      proseBox,
+      resultBox,
+      storyBox,
+      extrasBox,
+      deepBtnWrap
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
@@ -401,6 +463,10 @@ window.AIUI = (function () {
 
     applyBtn.addEventListener('click', function () {
       if (!lastResult) return;
+      if (lastResult.__text_only) {
+        Toast.warning('پاسخ AI فرمت ساختاری نداشت — چیزی برای اعمال نیست');
+        return;
+      }
       AIStandardize.applyToDb(id, lastResult);
       State.loadAll(); State.applyFilters();
       Events.renderList(); Render.renderSidebarCounts();
@@ -421,6 +487,33 @@ window.AIUI = (function () {
         panel.setStatus('انجام شد', 'done');
         panel.setModelBadge();
 
+        /* ---------- حالت ۱: پاسخ کاملاً متن آزاد (بدون JSON) ---------- */
+        if (result.__text_only) {
+          proseBox.hidden = false;
+          proseBox.innerHTML = renderMarkdown(result.__raw || '');
+          resultBox.hidden = true;
+          storyBox.hidden = true;
+          extrasBox.hidden = true;
+
+          applyBtn.disabled = true;
+          applyBtn.textContent = '⚠️ بدون ساختار — قابل اعمال نیست';
+          applyBtn.title = 'AI پاسخ فرمت‌دار برنگرداند؛ فقط متن آزاد بود.';
+          return;
+        }
+
+        /* ---------- حالت ۲: JSON به‌همراه متن آزاد (پیش/پس) ---------- */
+        const before = (result.__before || '').trim();
+        const after = (result.__after || '').trim();
+        if (before || after) {
+          proseBox.hidden = false;
+          const parts = [];
+          if (before) parts.push(renderMarkdown(before));
+          if (before && after) parts.push('<hr class="ai-prose-hr">');
+          if (after) parts.push(renderMarkdown(after));
+          proseBox.innerHTML = parts.join('');
+        }
+
+        /* فیلدهای استاندارد */
         resultBox.hidden = false;
         resultBox.innerHTML = '';
         [
@@ -462,6 +555,17 @@ window.AIUI = (function () {
         storyBox.hidden = false;
         renderStoryAnalysis(storyBox, storyData, result.reason, rating);
 
+        /* ---------- فیلدهای اضافی از JSON ---------- */
+        const extras = buildExtrasBox(result);
+        if (extras) {
+          extrasBox.hidden = false;
+          extrasBox.innerHTML = '';
+          extrasBox.appendChild(extras);
+        } else {
+          extrasBox.hidden = true;
+        }
+
+        /* تحلیل عمیق فصل به فصل */
         const seasons = Number(result.seasons) || 0;
         if (seasons > 3) {
           deepBtnWrap.hidden = false;
