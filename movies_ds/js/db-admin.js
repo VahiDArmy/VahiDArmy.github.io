@@ -33,6 +33,10 @@ window.DBAdmin = (function () {
      ========================================================= */
   function open() {
     console.log('[db-admin] open() called');
+
+    /* هر مودالی که باز است — تنظیمات، تأیید، ... — بسته شود */
+    try { Modal.closeAll(); } catch (e) {}
+
     if (document.body.classList.contains('db-mode')) {
       console.log('[db-admin] already in db-mode, ignoring');
       return;
