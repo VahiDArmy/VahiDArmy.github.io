@@ -499,6 +499,16 @@ class SqlEditor {
 
   /**
    * توکن‌سازی
+   *
+   * نکته مهم: ترتیب اجرای regexها باید حفظ شود
+   * - escapeHtml ابتدا انجام می‌شود
+   * - Operators بلافاصله بعد از escapeHtml انجام می‌شود
+   *   (قبل از اینکه هرگونه HTML واقعی به result اضافه شود)
+   * - سپس سایر توکن‌ها به ترتیب
+   *
+   * اگر Operators در انتها اجرا شود، regex آن کاراکترهای
+   * < > = را داخل خود تگ‌های HTML که در مراحل قبل اضافه شده‌اند
+   * پیدا می‌کند و HTML را تخریب می‌کند
    */
   _tokenize(sql) {
     const keywords = [
@@ -514,24 +524,32 @@ class SqlEditor {
       'END', 'CAST', 'COALESCE', 'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'GROUP_CONCAT',
       'ABS', 'ROUND', 'LENGTH', 'UPPER', 'LOWER', 'SUBSTR', 'REPLACE', 'TRIM',
       'DATE', 'TIME', 'DATETIME', 'STRFTIME', 'JULIANDAY', 'INTEGER', 'TEXT',
-      'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'VARCHAR', 'CHAR', 'DATE'
+      'REAL', 'BLOB', 'NUMERIC', 'BOOLEAN', 'VARCHAR', 'CHAR'
     ];
 
+    // مرحله 1: فرار دادن HTML در متن اصلی
     let result = StringUtils.escapeHtml(sql);
 
-    // Strings
+    // مرحله 2: ⭐ Operators بلافاصله بعد از escape
+    // در این مرحله result هیچ HTML واقعی ندارد، فقط متن فرار داده شده است
+    // پس regex فقط روی متن کاربر اعمال می‌شود، نه روی تگ‌های HTML
+    result = result.replace(/([=<>!+\-*/%])/g, '<span class="sql-operator">$1</span>');
+
+    // مرحله 3: Strings (تک‌کوت)
+    // این regex فقط روی متن اعمال می‌شود چون operator spans از قبل ساخته شده‌اند
+    // و این regex با ' شروع می‌شود که در HTML tag نیست
     result = result.replace(/('(?:[^'\\]|\\.)*')/g, '<span class="sql-string">$1</span>');
 
-    // Comments (line)
+    // مرحله 4: Comments (line)
     result = result.replace(/(--[^\n]*)/g, '<span class="sql-comment">$1</span>');
 
-    // Comments (block)
+    // مرحله 5: Comments (block)
     result = result.replace(/(\/\*[\s\S]*?\*\/)/g, '<span class="sql-comment">$1</span>');
 
-    // Numbers
+    // مرحله 6: Numbers
     result = result.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="sql-number">$1</span>');
 
-    // Keywords (case insensitive)
+    // مرحله 7: Keywords (case insensitive)
     keywords.forEach(kw => {
       const regex = new RegExp(`\\b(${kw.replace(/\s+/g, '\\s+')})\\b`, 'gi');
       result = result.replace(regex, (match) => {
@@ -540,11 +558,8 @@ class SqlEditor {
       });
     });
 
-    // Functions
+    // مرحله 8: Functions
     result = result.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, '<span class="sql-function">$1</span>(');
-
-    // Operators
-    result = result.replace(/([=<>!+\-*/%])/g, '<span class="sql-operator">$1</span>');
 
     return result;
   }
