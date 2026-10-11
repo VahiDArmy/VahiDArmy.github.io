@@ -1,0 +1,264 @@
+/**
+ * کامپوننت تب‌ها
+ */
+
+.tabs-component {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.tabs-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 0 var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tabs-list {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabs-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs-scroll-left,
+.tabs-scroll-right {
+  flex-shrink: 0;
+}
+
+.tabs-scroll-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all var(--transition-fast);
+}
+
+.tabs-scroll-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tabs-empty {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   Tab
+   ============================================ */
+
+.tabs-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 10px 14px;
+  background-color: transparent;
+  color: var(--text-tertiary);
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+  min-height: 40px;
+  margin-bottom: -1px;
+}
+
+.tabs-tab:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tabs-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  background-color: var(--bg-secondary);
+}
+
+.tabs-tab.dragging {
+  opacity: 0.5;
+}
+
+.tabs-tab.drag-over-left {
+  border-right: 2px solid var(--color-primary);
+}
+
+.tabs-tab.drag-over-right {
+  border-left: 2px solid var(--color-primary);
+}
+
+.tabs-tab-icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.tabs-tab-label {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabs-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+}
+
+.tabs-tab.active .tabs-tab-badge {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.tabs-tab-dirty {
+  color: var(--color-warning);
+  font-size: 10px;
+  margin-inline-start: -4px;
+}
+
+.tabs-tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 4px;
+  background-color: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all var(--transition-fast);
+}
+
+.tabs-tab:hover .tabs-tab-close,
+.tabs-tab.active .tabs-tab-close {
+  opacity: 1;
+}
+
+.tabs-tab-close:hover {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+/* ============================================
+   Add Button
+   ============================================ */
+
+.tabs-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: transparent;
+  border: 1px dashed var(--border-primary);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  margin-inline-start: var(--spacing-xs);
+}
+
+.tabs-add-btn:hover {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  border-style: solid;
+}
+
+/* ============================================
+   Content
+   ============================================ */
+
+.tabs-content {
+  flex: 1;
+  overflow: auto;
+  background-color: var(--bg-secondary);
+}
+
+/* ============================================
+   View Detail Tabs (داخل نمای جزئیات)
+   ============================================ */
+
+.table-detail-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  overflow-x: auto;
+}
+
+.table-detail-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 12px var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.table-detail-tab:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-hover);
+}
+
+.table-detail-tab.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.table-detail-tab .icon {
+  font-size: 14px;
+}
