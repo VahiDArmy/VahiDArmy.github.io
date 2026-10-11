@@ -1,0 +1,356 @@
+/**
+ * کامپوننت سایدبار
+ */
+
+.sidebar-component {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background-color: var(--bg-secondary);
+}
+
+.sidebar-inner {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-md) 0;
+}
+
+.sidebar-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-inner::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+.sidebar-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ============================================
+   بخش
+   ============================================ */
+
+.sidebar-section {
+  padding: 0 var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.sidebar-section:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-section-header {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.sidebar-section-title {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ============================================
+   ناوبری
+   ============================================ */
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 8px var(--spacing-sm);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: right;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  overflow: hidden;
+  position: relative;
+}
+
+.sidebar-nav-item:hover:not(.disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.sidebar-nav-item.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar-nav-item.active::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.sidebar-nav-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sidebar-nav-item-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.sidebar-nav-item-text {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav-item-badge {
+  padding: 2px 6px;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  flex-shrink: 0;
+}
+
+/* ============================================
+   اطلاعات پایگاه داده
+   ============================================ */
+
+.sidebar-db-info {
+  padding: var(--spacing-sm) var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+}
+
+.sidebar-db-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--spacing-xs);
+}
+
+.sidebar-db-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.sidebar-db-status.loaded .sidebar-db-status-dot {
+  background-color: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-light);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.sidebar-db-status.not-loaded .sidebar-db-status-dot {
+  background-color: var(--text-disabled);
+}
+
+.sidebar-db-status.loaded .sidebar-db-status-text {
+  color: var(--color-success);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sidebar-db-status.not-loaded .sidebar-db-status-text {
+  color: var(--text-tertiary);
+}
+
+.sidebar-db-name {
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  font-weight: var(--font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.85);
+  }
+}
+
+/* ============================================
+   آمار
+   ============================================ */
+
+.sidebar-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
+}
+
+.sidebar-stat {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+}
+
+.sidebar-stat-label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.sidebar-stat-value {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+}
+
+/* ============================================
+   فوتر سایدبار
+   ============================================ */
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border-primary);
+  background-color: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+.sidebar-footer-info {
+  flex: 1;
+}
+
+.sidebar-footer-version {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.sidebar-collapse-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-collapse-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ============================================
+   حالت جمع شده
+   ============================================ */
+
+.sidebar-component.collapsed .sidebar-section-title,
+.sidebar-component.collapsed .sidebar-nav-item-text,
+.sidebar-component.collapsed .sidebar-nav-item-badge,
+.sidebar-component.collapsed .sidebar-db-info,
+.sidebar-component.collapsed .sidebar-stats,
+.sidebar-component.collapsed .sidebar-footer-info {
+  display: none;
+}
+
+.sidebar-component.collapsed .sidebar-section {
+  padding: 0 var(--spacing-xs);
+}
+
+.sidebar-component.collapsed .sidebar-section-header {
+  padding: 0;
+  margin: 0;
+  height: 0;
+}
+
+.sidebar-component.collapsed .sidebar-nav-item {
+  justify-content: center;
+  padding: var(--spacing-sm);
+}
+
+.sidebar-component.collapsed .sidebar-nav-item-icon {
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+}
+
+.sidebar-component.collapsed .sidebar-footer {
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-xs);
+}
+
+/* ============================================
+   Tooltip در حالت جمع‌شده
+   ============================================ */
+
+.sidebar-component.collapsed .sidebar-nav-item {
+  position: relative;
+}
+
+.sidebar-component.collapsed .sidebar-nav-item:hover::after {
+  content: attr(title);
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+  z-index: var(--z-tooltip);
+  box-shadow: var(--shadow-md);
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
