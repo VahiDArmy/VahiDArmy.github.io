@@ -176,7 +176,9 @@
 /* جدول ساختار */
 .table-structure-table {
   width: 100%;
+  min-width: 600px; /* اجبار به اسکرول افقی در موبایل */
   border-collapse: collapse;
+  table-layout: auto;
 }
 
 .table-structure-table th,
@@ -185,6 +187,7 @@
   border-bottom: 1px solid var(--border-primary);
   text-align: right;
   font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
 .table-structure-table th {
@@ -193,11 +196,13 @@
   font-weight: var(--font-weight-semibold);
   position: sticky;
   top: 0;
+  z-index: 1;
 }
 
 .table-structure-table td.col-name {
   color: var(--color-primary);
   font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-mono);
 }
 
 .table-structure-table td.col-type {
@@ -237,6 +242,7 @@
 /* جدول محدودیت‌ها */
 .table-constraints-table {
   width: 100%;
+  min-width: 500px; /* اجبار به اسکرول افقی در موبایل */
   border-collapse: collapse;
   margin: var(--spacing-md) 0;
 }
@@ -247,6 +253,7 @@
   border-bottom: 1px solid var(--border-primary);
   text-align: right;
   font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
 .table-constraints-table th {
@@ -483,6 +490,19 @@
   }
 
   .table-responsive {
+    font-size: var(--font-size-xs);
+  }
+
+  /* جدول ساختار: کاهش پدینگ سلول‌ها در موبایل */
+  .table-structure-table th,
+  .table-structure-table td {
+    padding: 6px 10px;
+    font-size: var(--font-size-xs);
+  }
+
+  .table-constraints-table th,
+  .table-constraints-table td {
+    padding: 6px 10px;
     font-size: var(--font-size-xs);
   }
 }
