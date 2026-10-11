@@ -1,0 +1,60 @@
+/**
+ * تم روشن
+ */
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .app-header {
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+[data-theme="light"] .app-sidebar {
+  background-color: var(--bg-secondary);
+  border-left-color: var(--border-primary);
+}
+
+[data-theme="light"] .navbar-brand-icon {
+  color: white;
+}
+
+[data-theme="light"] .notification {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .modal {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .context-menu {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border: 2px solid var(--bg-tertiary);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+[data-theme="light"] .data-table-row.odd {
+  background-color: var(--table-row-odd);
+}
+
+[data-theme="light"] .data-table-header-cell.frozen {
+  box-shadow: -1px 0 0 var(--border-primary), 2px 0 8px rgba(0, 0, 0, 0.04);
+}
