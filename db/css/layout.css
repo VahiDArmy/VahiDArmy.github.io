@@ -1,8 +1,99 @@
 /**
- * استایل‌های چیدمان
+ * استایل‌های چیدمان اصلی
  */
 
-/* نوار ناوبری */
+/* ============================================
+   ساختار اصلی برنامه
+   ============================================ */
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+}
+
+/* ============================================
+   هدر
+   ============================================ */
+
+.app-header {
+  flex-shrink: 0;
+  height: var(--navbar-height);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  z-index: var(--z-sticky);
+}
+
+/* ============================================
+   بدنه - شامل سایدبار و محتوا
+   ============================================ */
+
+.app-body {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ============================================
+   سایدبار
+   ============================================ */
+
+.app-sidebar {
+  flex-shrink: 0;
+  width: var(--sidebar-width);
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width var(--transition-normal);
+}
+
+.app-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+/* ============================================
+   محتوای اصلی
+   ============================================ */
+
+.app-content {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-lg);
+  background-color: var(--bg-primary);
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   فوتر
+   ============================================ */
+
+.app-footer {
+  flex-shrink: 0;
+  height: var(--footer-height);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+   نوار ناوبری داخلی
+   ============================================ */
+
 .navbar {
   display: flex;
   align-items: center;
@@ -22,23 +113,6 @@
   text-decoration: none;
 }
 
-.navbar-brand:hover {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.navbar-brand-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: var(--font-size-lg);
-}
-
 .navbar-nav {
   display: flex;
   align-items: center;
@@ -51,93 +125,16 @@
   gap: var(--spacing-sm);
 }
 
-/* سایدبار */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: var(--spacing-md) 0;
-}
+/* ============================================
+   ظرف صفحه اصلی
+   ============================================ */
 
-.sidebar-section {
-  padding: 0 var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-}
-
-.sidebar-section-title {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: var(--spacing-sm) var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
-}
-
-.sidebar-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sidebar-nav-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-sm);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.sidebar-nav-item:hover {
-  background-color: var(--bg-hover);
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.sidebar-nav-item.active {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.sidebar-nav-item-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-nav-item-text {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-nav-item-badge {
-  font-size: var(--font-size-xs);
-  padding: 2px 6px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-/* محتوای اصلی */
 .main-content {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
   height: 100%;
+  min-height: 0;
 }
 
 .page-header {
@@ -146,6 +143,7 @@
   justify-content: space-between;
   gap: var(--spacing-md);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .page-title {
@@ -155,6 +153,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  margin: 0;
 }
 
 .page-subtitle {
@@ -170,7 +169,10 @@
   flex-wrap: wrap;
 }
 
-/* کارت‌های آماری */
+/* ============================================
+   Grid آمار
+   ============================================ */
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -248,19 +250,18 @@
   gap: var(--spacing-xs);
 }
 
-.stat-card-change.positive {
-  color: var(--color-success);
-}
+.stat-card-change.positive { color: var(--color-success); }
+.stat-card-change.negative { color: var(--color-danger); }
 
-.stat-card-change.negative {
-  color: var(--color-danger);
-}
+/* ============================================
+   بخش‌ها
+   ============================================ */
 
-/* بخش‌ها */
 .section {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  min-height: 0;
 }
 
 .section-header {
@@ -268,6 +269,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .section-title {
@@ -277,13 +279,18 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  margin: 0;
 }
 
 .section-body {
   flex: 1;
+  min-height: 0;
 }
 
-/* کارت */
+/* ============================================
+   کارت
+   ============================================ */
+
 .card {
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-primary);
@@ -313,6 +320,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  margin: 0;
 }
 
 .card-body {
@@ -328,7 +336,10 @@
   gap: var(--spacing-sm);
 }
 
-/* خالی */
+/* ============================================
+   حالت خالی
+   ============================================ */
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -359,7 +370,10 @@
   margin-bottom: var(--spacing-lg);
 }
 
-/* بارگذاری */
+/* ============================================
+   حالت بارگذاری
+   ============================================ */
+
 .loading-overlay {
   position: absolute;
   inset: 0;
@@ -386,4 +400,44 @@
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   font-weight: var(--font-weight-medium);
+}
+
+/* ============================================
+   Mobile: تبدیل سایدبار به overlay
+   ============================================ */
+
+@media (max-width: 768px) {
+  .app-body {
+    position: relative;
+  }
+
+  .app-sidebar {
+    position: fixed;
+    top: var(--navbar-height);
+    right: 0;
+    bottom: var(--footer-height);
+    width: 280px;
+    z-index: var(--z-modal);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .app-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .app-sidebar.collapsed {
+    width: 280px;
+  }
+
+  .app-content {
+    padding: var(--spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-content {
+    padding: var(--spacing-sm);
+  }
 }
