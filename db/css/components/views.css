@@ -13,6 +13,8 @@
   min-height: 100%;
   padding: var(--spacing-lg);
   animation: fadeIn 0.3s ease;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 /* ============================================
@@ -682,13 +684,17 @@
 
 .table-detail-content {
   flex: 1;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden; /* جلوگیری از اسکرول افقی سطح بالا */
   min-height: 400px;
+  max-width: 100%;
 }
 
 .table-detail-panel {
   height: 100%;
   padding: var(--spacing-md);
+  overflow: hidden; /* اسکرول در سطح جدول مدیریت می‌شود */
+  max-width: 100%;
 }
 
 .table-detail-data-container {
@@ -704,6 +710,26 @@
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
+  /* اسکرول افقی محدود به این کارت - نه کل صفحه */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+}
+
+.table-structure::-webkit-scrollbar,
+.table-indexes::-webkit-scrollbar,
+.table-constraints::-webkit-scrollbar,
+.table-sql::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-structure::-webkit-scrollbar-thumb,
+.table-indexes::-webkit-scrollbar-thumb,
+.table-constraints::-webkit-scrollbar-thumb,
+.table-sql::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
 }
 
 .table-structure-header,
@@ -1415,5 +1441,18 @@
 
   .about-tech-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* جدول ساختار: کاهش پدینگ در موبایل */
+  .table-structure,
+  .table-indexes,
+  .table-constraints,
+  .table-sql {
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+  }
+
+  .table-detail-panel {
+    padding: var(--spacing-sm);
   }
 }
