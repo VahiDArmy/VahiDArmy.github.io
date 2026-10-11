@@ -37,9 +37,24 @@ class ModalService {
   }
 
   /**
+   * پاک‌سازی backdrop های یتیم (safety net)
+   */
+  _cleanupOrphans() {
+    document.querySelectorAll('.modal-backdrop').forEach(el => {
+      const rawId = el.id.replace(/-backdrop$/, '');
+      if (!this.modals.has(rawId)) {
+        el.remove();
+      }
+    });
+  }
+
+  /**
    * باز کردن مودال
    */
   open(content, options = {}) {
+    // پاک‌سازی backdrop های باقی‌مانده از قبل
+    this._cleanupOrphans();
+
     const opts = { ...this.defaultOptions, ...options };
     const id = options.id || `modal-${++this._counter}`;
 
@@ -70,30 +85,47 @@ class ModalService {
 
   /**
    * بستن مودال
+   * نکته مهم: هم wrapper و هم backdrop باید حذف شوند
    */
   close(id, result = undefined) {
     const modal = this.modals.get(id);
     if (!modal) return false;
 
-    const el = document.getElementById(id);
+    const backdrop = document.getElementById(`${id}-backdrop`);
+    const wrapper = document.getElementById(id);
 
-    if (el) {
-      el.classList.add('modal-closing');
-
-      setTimeout(() => {
-        el.remove();
-      }, 250);
+    // اضافه کردن کلاس بستن به backdrop تا انیمیشن اجرا شود
+    if (backdrop) {
+      backdrop.classList.add('modal-closing');
+      backdrop.classList.remove('modal-visible');
     }
 
+    if (wrapper) {
+      wrapper.classList.add('modal-closing');
+    }
+
+    // حذف هر دو عنصر بعد از انیمیشن
+    setTimeout(() => {
+      if (backdrop && backdrop.parentNode) {
+        backdrop.remove();
+      }
+      if (wrapper && wrapper.parentNode) {
+        wrapper.remove();
+      }
+    }, 250);
+
+    // حذف از state
     this.modals.delete(id);
 
     const idx = this.stack.findIndex(m => m.id === id);
     if (idx >= 0) this.stack.splice(idx, 1);
 
+    // بازگرداندن اسکرول بدنه
     if (this.stack.length === 0) {
       document.body.style.overflow = '';
     }
 
+    // حل promise
     if (modal.resolve) {
       modal.resolve(result);
     }
@@ -108,6 +140,12 @@ class ModalService {
   closeAll() {
     const ids = Array.from(this.modals.keys());
     ids.forEach(id => this.close(id));
+
+    // پاک‌سازی نهایی
+    setTimeout(() => {
+      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+      document.body.style.overflow = '';
+    }, 300);
   }
 
   /**
@@ -165,12 +203,13 @@ class ModalService {
       backdrop.classList.add('modal-visible');
     });
 
-    // رویدادها
+    // دکمه بستن
     const closeBtn = wrapper.querySelector('.modal-close');
     if (closeBtn) {
       closeBtn.addEventListener('click', () => this.close(id));
     }
 
+    // بستن با کلیک روی backdrop
     if (options.closeOnBackdrop) {
       backdrop.addEventListener('click', (e) => {
         if (e.target === backdrop) {
@@ -179,10 +218,10 @@ class ModalService {
       });
     }
 
-    // trap focus
+    // به‌دام انداختن فوکوس
     this._trapFocus(wrapper);
 
-    // focus اولیه
+    // فوکوس اولیه
     const focusable = wrapper.querySelector('input, textarea, select, button:not(.modal-close)');
     if (focusable) {
       setTimeout(() => focusable.focus(), 100);
@@ -234,13 +273,21 @@ class ModalService {
           <button class="btn btn-secondary" data-action="cancel">${options.cancelText || 'انصراف'}</button>
           <button class="btn btn-${options.danger ? 'danger' : 'primary'}" data-action="confirm">${options.confirmText || 'تأیید'}</button>
         `,
-        onOpen: (modal) => {
-          modal.querySelector('[data-action="confirm"]').addEventListener('click', () => {
-            this.close(modal.id, true);
-          });
-          modal.querySelector('[data-action="cancel"]').addEventListener('click', () => {
-            this.close(modal.id, false);
-          });
+        onOpen: (wrapper, modal) => {
+          const confirmBtn = wrapper.querySelector('[data-action="confirm"]');
+          const cancelBtn = wrapper.querySelector('[data-action="cancel"]');
+
+          if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+              this.close(modal.id, true);
+            });
+          }
+
+          if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+              this.close(modal.id, false);
+            });
+          }
         }
       }
     );
@@ -256,10 +303,13 @@ class ModalService {
         title: options.title || 'اطلاع',
         size: 'sm',
         footer: `<button class="btn btn-primary" data-action="ok">تأیید</button>`,
-        onOpen: (modal) => {
-          modal.querySelector('[data-action="ok"]').addEventListener('click', () => {
-            this.close(modal.id);
-          });
+        onOpen: (wrapper, modal) => {
+          const okBtn = wrapper.querySelector('[data-action="ok"]');
+          if (okBtn) {
+            okBtn.addEventListener('click', () => {
+              this.close(modal.id);
+            });
+          }
         }
       }
     );
@@ -291,8 +341,8 @@ class ModalService {
           <button class="btn btn-secondary" data-action="cancel">انصراف</button>
           <button class="btn btn-primary" data-action="confirm">${options.confirmText || 'تأیید'}</button>
         `,
-        onOpen: (modal) => {
-          const input = modal.querySelector(`#${inputId}`);
+        onOpen: (wrapper, modal) => {
+          const input = wrapper.querySelector(`#${inputId}`);
 
           const confirm = () => {
             const value = input.value;
@@ -303,10 +353,15 @@ class ModalService {
             this.close(modal.id, value);
           };
 
-          modal.querySelector('[data-action="confirm"]').addEventListener('click', confirm);
-          modal.querySelector('[data-action="cancel"]').addEventListener('click', () => {
-            this.close(modal.id, null);
-          });
+          const confirmBtn = wrapper.querySelector('[data-action="confirm"]');
+          const cancelBtn = wrapper.querySelector('[data-action="cancel"]');
+
+          if (confirmBtn) confirmBtn.addEventListener('click', confirm);
+          if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => {
+              this.close(modal.id, null);
+            });
+          }
 
           input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') confirm();
