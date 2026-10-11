@@ -168,6 +168,14 @@ const FileUtils = {
   },
 
   /**
+   * دانلود Blob (alias برای download)
+   * برخی ماژول‌ها این نام را استفاده می‌کنند
+   */
+  downloadBlob(blob, filename) {
+    return this.download(blob, filename);
+  },
+
+  /**
    * دانلود متن
    */
   downloadText(text, filename, mimeType = 'text/plain;charset=utf-8') {
@@ -279,9 +287,6 @@ const FileUtils = {
 
       if (accept) {
         const validFiles = files.filter(f => this.isType(f, accept));
-        if (validFiles.length !== files.length) {
-          // برخی فایل‌ها نامعتبر
-        }
         onDrop(validFiles, e);
       } else {
         onDrop(files, e);
