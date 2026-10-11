@@ -14,25 +14,13 @@ class StateManager {
     this._isUpdating = false;
   }
 
-  /**
-   * دریافت وضعیت
-   * @param {string} key - کلید وضعیت (اختیاری)
-   * @returns {*} مقدار وضعیت
-   */
   get(key) {
     if (!key) return { ...this.state };
-
     return key.split('.').reduce((obj, part) => {
       return obj && obj[part] !== undefined ? obj[part] : undefined;
     }, this.state);
   }
 
-  /**
-   * تنظیم وضعیت
-   * @param {string|Object} key - کلید یا شیء وضعیت
-   * @param {*} value - مقدار جدید
-   * @param {Object} options - تنظیمات
-   */
   set(key, value, options = {}) {
     if (this._isUpdating) {
       console.warn('به‌روزرسانی تودرتو در StateManager');
@@ -45,26 +33,20 @@ class StateManager {
       let newState;
 
       if (typeof key === 'object') {
-        // تنظیم چندین کلید
         oldState = { ...this.state };
         newState = { ...this.state, ...key };
         this.state = newState;
       } else {
-        // تنظیم یک کلید
         const parts = key.split('.');
         oldState = this.get(key);
         newState = this._setNested(key, value);
       }
 
-      // اجرای میان‌افزارها
       for (const middleware of this.middlewares) {
         middleware(key, this.state, oldState);
       }
 
-      // ثبت در تاریخچه
       this._addToHistory(key, oldState, this.get(key));
-
-      // اطلاع‌رسانی به مشترکین
       this._notify(key, this.get(key), oldState);
 
       if (this.debug) {
@@ -78,9 +60,6 @@ class StateManager {
     }
   }
 
-  /**
-   * تنظیم تودرتوی کلید
-   */
   _setNested(key, value) {
     const parts = key.split('.');
     const newState = { ...this.state };
@@ -100,29 +79,17 @@ class StateManager {
     return newState;
   }
 
-  /**
-   * به‌روزرسانی وضعیت با تابع
-   */
   update(key, updater) {
     const currentValue = this.get(key);
-    const newValue = typeof updater === 'function'
-      ? updater(currentValue)
-      : updater;
-
+    const newValue = typeof updater === 'function' ? updater(currentValue) : updater;
     this.set(key, newValue);
   }
 
-  /**
-   * ادغام وضعیت
-   */
   merge(key, value) {
     const current = this.get(key) || {};
     this.set(key, { ...current, ...value });
   }
 
-  /**
-   * حذف کلید
-   */
   remove(key) {
     const parts = key.split('.');
     const newState = { ...this.state };
@@ -139,17 +106,10 @@ class StateManager {
     this._notify(key, undefined);
   }
 
-  /**
-   * اشتراک در تغییرات
-   * @param {string} key - کلید وضعیت
-   * @param {Function} callback - تابع callback
-   * @returns {Function} تابع لغو اشتراک
-   */
   subscribe(key, callback) {
     if (!this.subscribers.has(key)) {
       this.subscribers.set(key, new Set());
     }
-
     this.subscribers.get(key).add(callback);
 
     return () => {
@@ -163,19 +123,12 @@ class StateManager {
     };
   }
 
-  /**
-   * اشتراک سراسری
-   */
   subscribeAll(callback) {
     this.globalSubscribers.add(callback);
     return () => this.globalSubscribers.delete(callback);
   }
 
-  /**
-   * اطلاع‌رسانی به مشترکین
-   */
   _notify(key, newValue, oldValue) {
-    // مشترکین کلید خاص
     if (this.subscribers.has(key)) {
       this.subscribers.get(key).forEach(callback => {
         try {
@@ -186,7 +139,6 @@ class StateManager {
       });
     }
 
-    // مشترکین کلیدهای والد
     const parts = key.split('.');
     for (let i = parts.length - 1; i > 0; i--) {
       const parentKey = parts.slice(0, i).join('.');
@@ -201,7 +153,6 @@ class StateManager {
       }
     }
 
-    // مشترکین سراسری
     this.globalSubscribers.forEach(callback => {
       try {
         callback(this.state, key, newValue, oldValue);
@@ -211,9 +162,6 @@ class StateManager {
     });
   }
 
-  /**
-   * افزودن میان‌افزار
-   */
   use(middleware) {
     if (typeof middleware === 'function') {
       this.middlewares.push(middleware);
@@ -221,9 +169,6 @@ class StateManager {
     return this;
   }
 
-  /**
-   * ثبت در تاریخچه
-   */
   _addToHistory(key, oldValue, newValue) {
     this.history.push({
       key,
@@ -237,9 +182,6 @@ class StateManager {
     }
   }
 
-  /**
-   * بازگشت به حالت قبل
-   */
   undo() {
     const lastChange = this.history.pop();
     if (!lastChange) return false;
@@ -253,31 +195,19 @@ class StateManager {
     return true;
   }
 
-  /**
-   * دریافت تاریخچه
-   */
   getHistory() {
     return [...this.history];
   }
 
-  /**
-   * بازنشانی وضعیت
-   */
   reset(initialState = {}) {
     this.state = { ...initialState };
     this._notify('*', this.state);
   }
 
-  /**
-   * دریافت وضعیت به صورت سریال
-   */
   serialize() {
     return JSON.stringify(this.state);
   }
 
-  /**
-   * بارگذاری وضعیت از سریال
-   */
   deserialize(serialized) {
     try {
       this.state = JSON.parse(serialized);
@@ -289,8 +219,8 @@ class StateManager {
 }
 
 // ایجاد نمونه Singleton
+// ⚠️ توجه: اینجا Object.freeze وجود ندارد تا متد set() بتواند _isUpdating را تغییر دهد
 const stateManager = new StateManager({
-  // وضعیت اولیه برنامه
   app: {
     initialized: false,
     loading: false,
@@ -345,5 +275,3 @@ const stateManager = new StateManager({
     }
   }
 });
-
-Object.freeze(stateManager);
