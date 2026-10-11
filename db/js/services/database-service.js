@@ -15,6 +15,7 @@ class DatabaseService {
 
   /**
    * راه‌اندازی اولیه sql.js
+   * از jsdelivr CDN برای فایل WASM استفاده می‌کند (سازگار با GitHub Pages)
    */
   async initialize() {
     if (this.initPromise) {
@@ -25,15 +26,16 @@ class DatabaseService {
       try {
         this.emit('initializing');
 
-        // بارگذاری sql.js از CDN یا فایل محلی
-        const SQL = await initSqlJs({
-          locateFile: file => {
-            // اولویت: فایل محلی، سپس CDN
-            const localPath = `./libs/${file}`;
-            const cdnPath = `https://sql.js.org/dist/${file}`;
+        // بررسی بارگذاری شدن کتابخانه
+        if (typeof initSqlJs !== 'function') {
+          throw new Error('کتابخانه sql.js بارگذاری نشده است. اتصال اینترنت را بررسی کنید.');
+        }
 
-            // تلاش برای بارگذاری از مسیر محلی
-            return localPath;
+        // استفاده از jsdelivr CDN برای فایل WASM
+        // این CDN با GitHub Pages سازگار است
+        const SQL = await initSqlJs({
+          locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/${file}`;
           }
         });
 
@@ -41,25 +43,13 @@ class DatabaseService {
         this.initialized = true;
         this.emit('initialized');
 
-        console.log('sql.js با موفقیت راه‌اندازی شد');
+        console.log('✅ sql.js با موفقیت راه‌اندازی شد');
         return true;
       } catch (error) {
-        console.error('خطا در راه‌اندازی sql.js:', error);
+        console.error('❌ خطا در راه‌اندازی sql.js:', error);
         this.emit('error', error);
-
-        // تلاش مجدد با CDN
-        try {
-          const SQL = await initSqlJs({
-            locateFile: file => `https://sql.js.org/dist/${file}`
-          });
-          this.SQL = SQL;
-          this.initialized = true;
-          this.emit('initialized');
-          return true;
-        } catch (cdnError) {
-          console.error('خطا در راه‌اندازی sql.js از CDN:', cdnError);
-          throw new Error('راه‌اندازی sql.js با شکست مواجه شد');
-        }
+        this.initPromise = null; // اجازه تلاش مجدد
+        throw new Error('راه‌اندازی sql.js با شکست مواجه شد');
       }
     })();
 
