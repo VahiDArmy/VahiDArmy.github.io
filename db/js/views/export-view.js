@@ -1,5 +1,6 @@
 /**
  * نمای صادرات
+ * پشتیبانی از صادرات معمولی + صادرات پیشرفته
  */
 class ExportView {
   constructor() {
@@ -36,6 +37,12 @@ class ExportView {
             <span>صادرات پایگاه داده</span>
           </h1>
           <p class="view-subtitle">تبدیل پایگاه داده به فرمت‌های مختلف</p>
+        </div>
+        <div class="view-header-actions">
+          <button class="btn btn-secondary btn-sm export-advanced-btn">
+            <span class="icon">⚡</span>
+            <span>صادرات پیشرفته</span>
+          </button>
         </div>
       </div>
 
@@ -123,6 +130,7 @@ class ExportView {
     const q = (sel) => this.element.querySelector(sel);
 
     this.elements = {
+      advancedBtn: q('.export-advanced-btn'),
       tables: q('.export-tables'),
       formats: q('.export-formats'),
       options: q('.export-options'),
@@ -142,6 +150,11 @@ class ExportView {
    * ثبت رویدادها
    */
   _bindEvents() {
+    // دکمه صادرات پیشرفته
+    this.elements.advancedBtn?.addEventListener('click', () => {
+      this._openAdvancedExport();
+    });
+
     this.elements.selectAll?.addEventListener('click', () => {
       const tables = stateManager.get('database.tables') || [];
       tables.forEach(t => this.selectedTables.add(t.name));
@@ -158,6 +171,16 @@ class ExportView {
     this.elements.previewBtn?.addEventListener('click', () => this._preview());
     this.elements.downloadBtn?.addEventListener('click', () => this._download());
     this.elements.copyBtn?.addEventListener('click', () => this._copy());
+  }
+
+  /**
+   * باز کردن دیالوگ صادرات پیشرفته
+   */
+  _openAdvancedExport() {
+    const dialog = new AdvancedExportDialog({
+      preselectedTables: Array.from(this.selectedTables)
+    });
+    dialog.open();
   }
 
   /**
