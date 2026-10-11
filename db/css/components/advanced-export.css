@@ -1,0 +1,549 @@
+/**
+ * استایل‌های دیالوگ صادرات پیشرفته
+ */
+
+.advanced-export {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* ============================================
+   بخش‌ها
+   ============================================ */
+
+.advanced-export-section {
+  padding: var(--spacing-md);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+}
+
+.advanced-export-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-primary);
+  flex-wrap: wrap;
+}
+
+.advanced-export-section-header h4 {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.advanced-export-section-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.advanced-export-hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+}
+
+.advanced-export-optional {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--font-weight-normal);
+  margin-inline-start: 4px;
+}
+
+.advanced-export-empty {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   لیست جداول
+   ============================================ */
+
+.advanced-export-tables {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--spacing-xs);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.advanced-export-table-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.advanced-export-table-item:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-hover);
+}
+
+.advanced-export-table-item.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.advanced-export-table-item input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.advanced-export-table-icon {
+  font-size: 14px;
+}
+
+.advanced-export-table-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+/* ============================================
+   حالت خروجی
+   ============================================ */
+
+.advanced-export-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.advanced-export-mode-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.advanced-export-mode-item:hover {
+  border-color: var(--border-hover);
+}
+
+.advanced-export-mode-item:has(input:checked) {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.advanced-export-mode-item input {
+  margin-top: 2px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.advanced-export-mode-content strong {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.advanced-export-mode-content small {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+   ستون‌های گروه‌بندی
+   ============================================ */
+
+.advanced-export-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--spacing-xs);
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.advanced-export-column-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.advanced-export-column-item:hover {
+  border-color: var(--border-hover);
+}
+
+.advanced-export-column-item.selected {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.advanced-export-column-item input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.advanced-export-column-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-family-mono);
+}
+
+.advanced-export-column-type {
+  padding: 1px 5px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 9px;
+  font-family: var(--font-family-mono);
+}
+
+/* ============================================
+   قوانین ادغام
+   ============================================ */
+
+.advanced-export-merge-rules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.advanced-export-merge-rule {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+}
+
+.advanced-export-merge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.advanced-export-merge-num {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary);
+}
+
+.advanced-export-merge-remove {
+  color: var(--color-danger);
+}
+
+.advanced-export-merge-remove:hover {
+  background-color: var(--color-danger-light);
+}
+
+.advanced-export-merge-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.advanced-export-merge-body .form-group {
+  margin: 0;
+}
+
+.advanced-export-merge-body .form-group label {
+  font-size: var(--font-size-xs);
+  margin-bottom: 4px;
+}
+
+.advanced-export-merge-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+.advanced-export-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 4px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.advanced-export-sources .checkbox {
+  font-size: var(--font-size-xs);
+  padding: 2px 0;
+}
+
+/* ============================================
+   فرمت‌ها
+   ============================================ */
+
+.advanced-export-formats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: var(--spacing-xs);
+}
+
+.advanced-export-format {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.advanced-export-format:hover {
+  border-color: var(--border-hover);
+}
+
+.advanced-export-format.active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.advanced-export-format input {
+  display: none;
+}
+
+.advanced-export-format-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.advanced-export-format-ext {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+/* ============================================
+   پیش‌نمایش
+   ============================================ */
+
+.advanced-export-preview {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  min-height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.advanced-export-preview-empty,
+.advanced-export-preview-error {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.advanced-export-preview-error {
+  color: var(--color-danger);
+}
+
+.advanced-export-preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.advanced-export-preview-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.advanced-export-stat {
+  text-align: center;
+  padding: var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.advanced-export-stat-value {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+  margin-bottom: 2px;
+}
+
+.advanced-export-stat-label {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.advanced-export-preview-table {
+  margin-bottom: var(--spacing-md);
+}
+
+.advanced-export-preview-table:last-child {
+  margin-bottom: 0;
+}
+
+.advanced-export-preview-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.advanced-export-preview-table-name {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+}
+
+.advanced-export-preview-table-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.advanced-export-preview-files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+}
+
+.advanced-export-preview-file {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 4px 8px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.advanced-export-preview-file-icon {
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.advanced-export-preview-file-name {
+  flex: 1;
+  font-family: var(--font-family-mono);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.advanced-export-preview-file-rows {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.advanced-export-preview-more {
+  padding: var(--spacing-xs);
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ============================================
+   هشدار JSZip
+   ============================================ */
+
+.advanced-export-zip-warning {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+/* ============================================
+   واکنش‌گرا
+   ============================================ */
+
+@media (max-width: 768px) {
+  .advanced-export-mode {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-export-merge-row {
+    grid-template-columns: 1fr;
+  }
+
+  .advanced-export-preview-summary {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+
+  .advanced-export-tables {
+    grid-template-columns: 1fr;
+    max-height: 160px;
+  }
+
+  .advanced-export-columns {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .advanced-export-formats {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
+}
