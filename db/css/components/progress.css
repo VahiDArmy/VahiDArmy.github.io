@@ -1,0 +1,261 @@
+/**
+ * کامپوننت نوار پیشرفت
+ */
+
+/* ============================================
+   Progress Bar خطی
+   ============================================ */
+
+.progress-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.progress-bar-track {
+  position: relative;
+  width: 100%;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+/* اندازه‌ها */
+.progress-bar-xs .progress-bar-track { height: 4px; }
+.progress-bar-sm .progress-bar-track { height: 6px; }
+.progress-bar-md .progress-bar-track { height: 8px; }
+.progress-bar-lg .progress-bar-track { height: 12px; }
+.progress-bar-xl .progress-bar-track { height: 16px; }
+
+.progress-bar-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
+  min-width: 0;
+  color: white;
+  font-size: 10px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Variants */
+.progress-bar-primary .progress-bar-fill { background-color: var(--color-primary); }
+.progress-bar-success .progress-bar-fill { background-color: var(--color-success); }
+.progress-bar-warning .progress-bar-fill { background-color: var(--color-warning); }
+.progress-bar-danger .progress-bar-fill { background-color: var(--color-danger); }
+.progress-bar-info .progress-bar-fill { background-color: var(--color-info); }
+
+/* Striped */
+.progress-bar-striped .progress-bar-fill {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.15) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.15) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+}
+
+.progress-bar-animated .progress-bar-fill {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+  from { background-position: 0 0; }
+  to { background-position: 1rem 0; }
+}
+
+/* Indeterminate */
+.progress-bar-indeterminate .progress-bar-fill {
+  width: 30% !important;
+  animation: progress-indeterminate 1.5s ease-in-out infinite;
+  position: relative;
+}
+
+@keyframes progress-indeterminate {
+  0% { left: -30%; }
+  100% { left: 100%; }
+}
+
+/* Label */
+.progress-bar-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.progress-bar-label > span {
+  white-space: nowrap;
+}
+
+/* ============================================
+   Circular Progress
+   ============================================ */
+
+.circular-progress {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-progress svg {
+  display: block;
+}
+
+.circular-progress-track {
+  transition: stroke 0.3s ease;
+}
+
+.circular-progress-fill {
+  transition: stroke-dashoffset 0.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s ease;
+}
+
+.circular-progress-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  pointer-events: none;
+}
+
+.circular-progress-value {
+  font-weight: var(--font-weight-bold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-family);
+}
+
+.circular-progress-text {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ============================================
+   Spinner
+   ============================================ */
+
+.spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner-sm {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+}
+
+.spinner-lg {
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+}
+
+.spinner-xl {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+/* ============================================
+   Skeleton loading
+   ============================================ */
+
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: var(--spacing-md);
+}
+
+.skeleton-line {
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-line-lg { height: 20px; }
+.skeleton-line-sm { height: 8px; }
+.skeleton-line-60 { width: 60%; }
+.skeleton-line-80 { width: 80%; }
+.skeleton-line-40 { width: 40%; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================================
+   Progress Bar with steps
+   ============================================ */
+
+.progress-steps {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.progress-step {
+  flex: 1;
+  height: 4px;
+  background-color: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-step.completed {
+  background-color: var(--color-success);
+}
+
+.progress-step.active {
+  background-color: var(--color-primary);
+}
+
+.progress-step.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: progress-shimmer 1.5s infinite;
+}
+
+@keyframes progress-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
