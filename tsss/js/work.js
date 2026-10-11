@@ -21,14 +21,11 @@
   const editBanner = document.getElementById('editBanner');
   const submitBtn = document.getElementById('submitBtn');
 
-  const ravanTafsirEmpty = document.getElementById('ravanTafsirEmpty');
-  const ravanTafsirContent = document.getElementById('ravanTafsirContent');
-  const ravanTafsirLoading = document.getElementById('ravanTafsirLoading');
-  const ravanTafsirError = document.getElementById('ravanTafsirError');
-  const ravanTafsirLoadBtn = document.getElementById('ravanTafsirLoadBtn');
-  const ravanTafsirDeleteBtn = document.getElementById('ravanTafsirDeleteBtn');
-  const ravanTafsirManualBtn = document.getElementById('ravanTafsirManualBtn');
-  const ravanTafsirManualInput = document.getElementById('ravanTafsirManualInput');
+  const mizanEmpty   = document.getElementById('mizanEmpty');
+  const mizanContent = document.getElementById('mizanContent');
+  const mizanLoading = document.getElementById('mizanLoading');
+  const mizanError   = document.getElementById('mizanError');
+  const mizanRange   = document.getElementById('mizanRange');
 
   const aiReviewModal = document.getElementById('aiReviewModal');
   const aiReviewCloseBtn = document.getElementById('aiReviewCloseBtn');
@@ -102,12 +99,9 @@
     return Array.from(new Set(str.split(/[,،]/).map(t => t.trim()).filter(Boolean)));
   }
 
-  // ---- Link tool ----
   const LINK_TOKEN_RE = /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g;
   const LINK_BTN_DEFAULT = '﹢ لینک به آیهٔ دیگر';
   let detectedLink = null;
-
-  // ★ وضعیت انتخاب متن در پیش‌نمایش (برای حفظ انتخاب قبل از کلیک روی دکمه)
   let savedExcerpt = null;
   let lastPreviewKey = null;
 
@@ -127,11 +121,7 @@
   function paintExcerptBar() {
     const bar = ensureExcerptBar();
     if (!bar) return;
-    if (!savedExcerpt) {
-      bar.style.display = 'none';
-      bar.innerHTML = '';
-      return;
-    }
+    if (!savedExcerpt) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
     bar.style.display = 'block';
     bar.innerHTML = '';
     const span = document.createElement('span');
@@ -144,14 +134,8 @@
     clr.type = 'button';
     clr.textContent = 'پاک کردن';
     clr.style.cssText = 'all:unset; cursor:pointer; margin-inline-start:8px; text-decoration:underline; font-size:0.72rem;';
-    clr.addEventListener('click', () => {
-      savedExcerpt = null;
-      paintExcerptBar();
-    });
-    bar.appendChild(span);
-    bar.appendChild(b);
-    bar.appendChild(span2);
-    bar.appendChild(clr);
+    clr.addEventListener('click', () => { savedExcerpt = null; paintExcerptBar(); });
+    bar.appendChild(span); bar.appendChild(b); bar.appendChild(span2); bar.appendChild(clr);
   }
 
   function captureSelection() {
@@ -167,7 +151,6 @@
     paintExcerptBar();
   }
 
-  // گوش دادن به تغییر انتخاب تا وقتی پاپ‌آپ باز است
   document.addEventListener('selectionchange', () => {
     if (linkToolModal && !linkToolModal.hidden) captureSelection();
   });
@@ -229,7 +212,6 @@
     const ayah = Number(linkAyahSelect.value);
     if (!surah || !ayah) { linkAyahPreview.textContent = ''; return; }
 
-    // اگر آیه عوض شد، گزیدهٔ قبلی معنی ندارد
     const key = surah + ':' + ayah;
     if (key !== lastPreviewKey) {
       savedExcerpt = null;
@@ -259,7 +241,6 @@
     const initAyah = editing ? editing.ayah : current.ayah;
     if (editing) selectDetectedLink();
 
-    // ریست وضعیت انتخاب
     savedExcerpt = null;
     lastPreviewKey = null;
     paintExcerptBar();
@@ -286,7 +267,6 @@
     const ayah = Number(linkAyahSelect.value);
     if (!surah || !ayah) return;
 
-    // ★ از گزیدهٔ ذخیره‌شده استفاده کن (نه انتخاب لحظه‌ای که با کلیک از دست رفته)
     let excerpt = null;
     if (savedExcerpt && savedExcerpt.length > 0 && savedExcerpt.length <= 120) {
       excerpt = savedExcerpt;
@@ -330,7 +310,10 @@
       return div.innerHTML.replace(/\n/g, '<br>');
     }
     const raw = marked.parse(md);
-    const clean = DOMPurify.sanitize(raw, { ADD_ATTR: ['target', 'rel'] });
+    const clean = DOMPurify.sanitize(raw, {
+      ADD_ATTR: ['target', 'rel', 'id'],
+      ADD_TAGS: ['span'],
+    });
     const tmp = document.createElement('div');
     tmp.innerHTML = clean;
     tmp.querySelectorAll('table').forEach((table) => {
@@ -415,6 +398,89 @@
     } catch (e) {}
   }
 
+  // ---- Mizan ----
+  function showMizanState(state, payload) {
+    mizanEmpty.classList.add('hidden');
+    mizanLoading.classList.add('hidden');
+    mizanContent.classList.add('hidden');
+    mizanError.classList.add('hidden');
+    if (mizanRange) mizanRange.textContent = '';
+
+    if (state === 'empty') mizanEmpty.classList.remove('hidden');
+    else if (state === 'loading') mizanLoading.classList.remove('hidden');
+    else if (state === 'content') {
+      mizanContent.classList.remove('hidden');
+      mizanContent.innerHTML = payload.html || '';
+      if (mizanRange && payload.range) {
+        const { from, to } = payload.range;
+        mizanRange.textContent = (from === to)
+          ? `آیهٔ ${UI.toPersianDigits(from)}`
+          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
+      }
+    } else if (state === 'error') {
+      mizanError.classList.remove('hidden');
+      mizanError.textContent = payload.message || 'خطا در بارگذاری تفسیر المیزان';
+    }
+  }
+
+  function cleanMizanText(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/^\s*\*{4,}\s*\n+/, '')
+      .replace(/\n+\s*\*{4,}\s*$/, '')
+      .trim();
+  }
+
+  function highlightCurrentAyah(rootEl, surah, ayah) {
+    if (!rootEl) return;
+    const anchor = rootEl.querySelector(`#surah-${surah}-ayah-${ayah}`);
+    if (!anchor) return;
+    let node = anchor;
+    while (
+      node.parentElement &&
+      node.parentElement.tagName === 'P' &&
+      node.parentElement.textContent.trim() === ''
+    ) {
+      node = node.parentElement;
+    }
+    const sib = node.nextElementSibling;
+    if (sib && sib.tagName === 'PRE' && sib.querySelector('code.language-arabic')) {
+      sib.classList.add('is-current-ayah');
+    }
+  }
+
+  async function renderMizan(surah, ayah) {
+    showMizanState('loading');
+    try {
+      const contents = await Mizan.getForAyah(surah, ayah);
+      if (!contents || !contents.length) {
+        showMizanState('empty');
+        return;
+      }
+
+      const combinedText = contents
+        .map((c) => cleanMizanText(c.text))
+        .filter(Boolean)
+        .join('\n\n<hr>\n\n');
+
+      const html = renderMarkdown(combinedText);
+
+      let range = null;
+      const firstContent = contents[0]?.text || '';
+      const m = firstContent.match(/\[سوره\s+.+?:\s*آیات?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\]/);
+      if (m) {
+        const faToEn = (s) => s.replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
+        range = { from: Number(faToEn(m[1])), to: Number(faToEn(m[2])) };
+      }
+
+      showMizanState('content', { html, range });
+      highlightCurrentAyah(mizanContent, surah, ayah);
+    } catch (e) {
+      console.warn('[mizan] load failed:', e);
+      showMizanState('error', { message: 'تفسیر المیزان برای این آیه در دسترس نیست.' });
+    }
+  }
+
   async function renderCurrentAyah() {
     ayahSkeleton(stickyFrame);
     exitEditMode();
@@ -440,10 +506,7 @@
 
       await refreshProgress();
       await renderTafsirsList();
-
-      const dbData = await getRavanTafsirFromDB(current.surah, current.ayah);
-      if (dbData?.content) showRavanTafsirState('content', dbData.content);
-      else showRavanTafsirState('empty');
+      await renderMizan(current.surah, current.ayah);
     } catch (error) {
       console.error(error);
       stickyFrame.innerHTML = `<p style="color:var(--danger); text-align:center;">خطا در بارگذاری آیه.</p>`;
@@ -517,63 +580,6 @@
     } catch (e) {
       console.error(e);
       tafsirsListEl.innerHTML = `<p style="color:var(--danger); text-align:center;">خطا در بارگذاری تفسیرها.</p>`;
-    }
-  }
-
-  async function getRavanTafsirFromDB(surah, ayah) {
-    const { data, error } = await sb.from('ravan_tafsirs').select('content').eq('surah', Number(surah)).eq('ayah', Number(ayah)).maybeSingle();
-    if (error) throw error;
-    return data;
-  }
-
-  async function saveRavanTafsirToDB(surah, ayah, content) {
-    const surahNum = Number(surah);
-    const ayahNum = Number(ayah);
-    const { data: existing } = await sb.from('ravan_tafsirs').select('surah').eq('surah', surahNum).eq('ayah', ayahNum).maybeSingle();
-    let result;
-    if (existing) {
-      result = await sb.from('ravan_tafsirs').update({ content, updated_at: new Date().toISOString() }).eq('surah', surahNum).eq('ayah', ayahNum);
-    } else {
-      result = await sb.from('ravan_tafsirs').insert({ surah: surahNum, ayah: ayahNum, content, updated_at: new Date().toISOString() });
-    }
-    if (result.error) throw result.error;
-  }
-
-  function showRavanTafsirState(state, data) {
-    ravanTafsirEmpty.classList.add('hidden');
-    ravanTafsirLoading.classList.add('hidden');
-    ravanTafsirContent.classList.add('hidden');
-    ravanTafsirError.classList.add('hidden');
-    ravanTafsirManualBtn.classList.add('hidden');
-    ravanTafsirManualInput.classList.add('hidden');
-    ravanTafsirDeleteBtn.classList.add('hidden');
-    ravanTafsirLoadBtn.classList.remove('hidden');
-
-    const pasteBox = document.getElementById('ravanTafsirManualPaste');
-    if (pasteBox) pasteBox.classList.add('hidden');
-
-    if (state === 'empty') ravanTafsirEmpty.classList.remove('hidden');
-    else if (state === 'loading') ravanTafsirLoading.classList.remove('hidden');
-    else if (state === 'content') {
-      ravanTafsirContent.classList.remove('hidden');
-      ravanTafsirContent.innerHTML = data;
-      ravanTafsirDeleteBtn.classList.remove('hidden');
-    }
-    else if (state === 'error') {
-      ravanTafsirError.classList.remove('hidden');
-      ravanTafsirError.innerHTML = data;
-      ravanTafsirManualBtn.classList.remove('hidden');
-    }
-  }
-
-  async function loadRavanTafsir(surah, ayah) {
-    showRavanTafsirState('loading');
-    try {
-      const dbData = await getRavanTafsirFromDB(surah, ayah);
-      if (dbData?.content) { showRavanTafsirState('content', dbData.content); return; }
-      showRavanTafsirState('error', `<p>تفسیر روان جاوید برای این آیه در دیتابیس نیست.</p><p style="font-size:0.8rem; color:var(--text-faint);">می‌توانید متن را مستقیماً پیست کنید.</p>`);
-    } catch (error) {
-      showRavanTafsirState('error', `<p>خطا در بارگذاری</p>`);
     }
   }
 
@@ -884,38 +890,6 @@
   if (insertLinkBtn) insertLinkBtn.addEventListener('click', insertLinkFromTool);
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && linkToolModal && !linkToolModal.hidden) closeLinkTool();
-  });
-
-  ravanTafsirLoadBtn.addEventListener('click', () => loadRavanTafsir(current.surah, current.ayah));
-  ravanTafsirDeleteBtn.addEventListener('click', async () => {
-    if (!confirm('تفسیر روان جاوید ذخیره‌شده حذف شود؟')) return;
-    try {
-      await sb.from('ravan_tafsirs').delete().eq('surah', current.surah).eq('ayah', current.ayah);
-      showRavanTafsirState('empty');
-      UI.toast('حذف شد');
-    } catch (e) { UI.toast('خطا در حذف'); }
-  });
-
-  ravanTafsirManualBtn.addEventListener('click', () => {
-    ravanTafsirError.classList.add('hidden');
-    document.getElementById('ravanTafsirManualPaste').classList.remove('hidden');
-  });
-
-  document.getElementById('ravanTafsirPasteSave').addEventListener('click', async () => {
-    const text = document.getElementById('ravanTafsirPasteArea')?.value.trim();
-    if (!text) return;
-    try {
-      await saveRavanTafsirToDB(current.surah, current.ayah, text);
-      showRavanTafsirState('content', text);
-      document.getElementById('ravanTafsirManualPaste').classList.add('hidden');
-      UI.toast('ذخیره شد');
-    } catch (e) { UI.toast('خطا در ذخیره'); }
-  });
-
-  document.getElementById('ravanTafsirPasteCancel')?.addEventListener('click', () => {
-    document.getElementById('ravanTafsirManualPaste')?.classList.add('hidden');
-    document.getElementById('ravanTafsirPasteArea').value = '';
-    showRavanTafsirState('empty');
   });
 
   aiReviewCloseBtn.addEventListener('click', closeAiModal);
