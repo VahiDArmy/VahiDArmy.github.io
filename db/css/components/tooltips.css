@@ -1,0 +1,172 @@
+/**
+ * کامپوننت راهنمای شناور (Tooltip)
+ */
+
+.tooltip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  max-width: var(--tooltip-max-width);
+  padding: 8px 12px;
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: 1.5;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  word-wrap: break-word;
+  text-align: right;
+  direction: rtl;
+}
+
+.tooltip.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tooltip-content {
+  white-space: pre-wrap;
+}
+
+/* ============================================
+   Arrow
+   ============================================ */
+
+.tooltip-arrow {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+}
+
+.tooltip[data-placement="top"] .tooltip-arrow {
+  bottom: -12px;
+  right: 50%;
+  transform: translateX(50%);
+  border-top-color: var(--bg-elevated);
+  border-bottom-width: 0;
+}
+
+.tooltip[data-placement="bottom"] .tooltip-arrow {
+  top: -12px;
+  right: 50%;
+  transform: translateX(50%);
+  border-bottom-color: var(--bg-elevated);
+  border-top-width: 0;
+}
+
+.tooltip[data-placement="left"] .tooltip-arrow {
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--bg-elevated);
+  border-right-width: 0;
+}
+
+.tooltip[data-placement="right"] .tooltip-arrow {
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--bg-elevated);
+  border-left-width: 0;
+}
+
+/* ============================================
+   Themes
+   ============================================ */
+
+.tooltip-dark {
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.tooltip-light {
+  background-color: white;
+  color: #0f172a;
+  border-color: #e2e8f0;
+}
+
+.tooltip-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.tooltip-primary .tooltip-arrow {
+  border-top-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+}
+
+/* ============================================
+   Interactive (for hover content)
+   ============================================ */
+
+.tooltip-interactive {
+  pointer-events: auto;
+}
+
+/* ============================================
+   Tooltip Root
+   ============================================ */
+
+.tooltip-root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-tooltip);
+  pointer-events: none;
+}
+
+.tooltip-root > * {
+  pointer-events: auto;
+}
+
+/* ============================================
+   RTL adjustments
+   ============================================ */
+
+[dir="rtl"] .tooltip {
+  text-align: right;
+}
+
+/* ============================================
+   Mobile
+   ============================================ */
+
+@media (max-width: 480px) {
+  .tooltip {
+    max-width: calc(100vw - 32px);
+    font-size: 12px;
+  }
+
+  /* موبایل: tooltip زیر عنصر به جای بالا */
+  .tooltip[data-placement="top"] {
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+@keyframes tooltipIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.tooltip.visible {
+  animation: tooltipIn 0.15s ease-out;
+}
