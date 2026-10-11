@@ -1,0 +1,115 @@
+/**
+ * تنظیمات راست‌به‌چپ (RTL)
+ */
+
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="rtl"] .text-left,
+[dir="rtl"] .text-left * {
+  text-align: left !important;
+}
+
+[dir="rtl"] .text-right {
+  text-align: right !important;
+}
+
+/* آیکون‌های جهت‌دار */
+[dir="rtl"] .icon-arrow-right::before {
+  content: '←';
+}
+
+[dir="rtl"] .icon-arrow-left::before {
+  content: '→';
+}
+
+/* فاصله‌ها */
+[dir="rtl"] .ml-auto { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .mr-auto { margin-right: 0; margin-left: auto; }
+
+[dir="rtl"] .pl-1 { padding-left: 0; padding-right: 4px; }
+[dir="rtl"] .pl-2 { padding-left: 0; padding-right: 8px; }
+[dir="rtl"] .pl-3 { padding-left: 0; padding-right: 16px; }
+[dir="rtl"] .pr-1 { padding-right: 0; padding-left: 4px; }
+[dir="rtl"] .pr-2 { padding-right: 0; padding-left: 8px; }
+[dir="rtl"] .pr-3 { padding-right: 0; padding-left: 16px; }
+
+/* border-radius */
+[dir="rtl"] .rounded-l { border-radius: 0; border-top-right-radius: var(--radius-md); border-bottom-right-radius: var(--radius-md); }
+[dir="rtl"] .rounded-r { border-radius: 0; border-top-left-radius: var(--radius-md); border-bottom-left-radius: var(--radius-md); }
+
+/* اعداد و کدها */
+[dir="rtl"] .ltr {
+  direction: ltr;
+  text-align: left;
+}
+
+[dir="rtl"] code,
+[dir="rtl"] pre,
+[dir="rtl"] kbd,
+[dir="rtl"] .font-mono {
+  direction: ltr;
+  text-align: left;
+  unicode-bidi: embed;
+}
+
+/* ورودی‌های اعداد و ایمیل */
+[dir="rtl"] input[type="number"],
+[dir="rtl"] input[type="email"],
+[dir="rtl"] input[type="tel"],
+[dir="rtl"] input[type="url"],
+[dir="rtl"] input[type="password"] {
+  direction: ltr;
+  text-align: right;
+}
+
+/* SQL Editor */
+[dir="rtl"] .sql-editor-textarea,
+[dir="rtl"] .sql-editor-highlight,
+[dir="rtl"] .sql-editor-line-numbers {
+  direction: ltr;
+  text-align: left;
+}
+
+/* جدول: چک‌باکس‌ها */
+[dir="rtl"] .table input[type="checkbox"],
+[dir="rtl"] .data-table-row-checkbox {
+  transform: scaleX(1);
+}
+
+/* منوی راست‌کلیک */
+[dir="rtl"] .context-menu-arrow {
+  transform: scaleX(-1);
+}
+
+/* Progress */
+[dir="rtl"] .progress-bar-fill {
+  transform-origin: right;
+}
+
+/* جایگزینی جهت اعداد فارسی */
+[dir="rtl"] .persian-number {
+  font-family: var(--font-family);
+}
+
+/* Tooltip */
+[dir="rtl"] .tooltip-arrow {
+  transform: translateX(50%);
+}
+
+/* Modal close button */
+[dir="rtl"] .modal-close {
+  order: -1;
+}
+
+/* Breadcrumb */
+[dir="rtl"] .view-breadcrumb-separator {
+  transform: scaleX(-1);
+  display: inline-block;
+}
+
+/* Sidebar collapse */
+[dir="rtl"] .sidebar-collapse-btn .icon {
+  transform: scaleX(-1);
+}
