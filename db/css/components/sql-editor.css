@@ -1,47 +1,72 @@
 /**
  * کامپوننت ویرایشگر SQL
+ * بازنویسی‌شده با CSS Grid برای پایداری کامل تولبار
  */
 
 .sql-editor-component {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 200px;
   background-color: var(--bg-secondary);
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
 /* ============================================
-   Toolbar
+   Toolbar - استفاده از CSS Grid
+   ضمانت نمایش هر سه بخش: left, center, right
    ============================================ */
 
 .sql-editor-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "left center right";
   gap: var(--spacing-sm);
+  align-items: center;
   padding: var(--spacing-xs) var(--spacing-sm);
   background-color: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
   flex-shrink: 0;
-  flex-wrap: wrap;
+  min-height: 44px;
 }
 
-.sql-editor-toolbar-left,
-.sql-editor-toolbar-center,
-.sql-editor-toolbar-right {
+.sql-editor-toolbar-left {
+  grid-area: left;
   display: flex;
   align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+.sql-editor-toolbar-center {
+  grid-area: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--spacing-xs);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.sql-editor-toolbar-right {
+  grid-area: right;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .sql-editor-status {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
   font-size: var(--font-size-xs);
   color: var(--text-tertiary);
   font-family: var(--font-family-mono);
+  white-space: nowrap;
 }
 
 .sql-editor-status-info {
@@ -49,6 +74,13 @@
   background-color: var(--bg-secondary);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-primary);
+}
+
+/* دکمه‌های تولبار - اجبار به نمایش */
+.sql-editor-toolbar-left .btn,
+.sql-editor-toolbar-right .btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* ============================================
@@ -61,7 +93,7 @@
   display: flex;
   overflow: hidden;
   background-color: var(--code-bg);
-  min-height: 200px;
+  min-height: 0;
 }
 
 /* ============================================
@@ -107,6 +139,8 @@
   position: relative;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 .sql-editor-highlight,
@@ -270,6 +304,7 @@
   flex-shrink: 0;
   font-family: var(--font-family-mono);
   flex-wrap: wrap;
+  min-height: 32px;
 }
 
 .sql-editor-footer-left,
@@ -288,13 +323,54 @@
 }
 
 /* ============================================
-   Responsive
+   Responsive - Tablet
    ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
+  .sql-editor-toolbar {
+    gap: var(--spacing-xs);
+    padding: 4px 6px;
+  }
+
+  .sql-editor-toolbar-center {
+    display: none;
+  }
+
+  .sql-editor-toolbar {
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "left right";
+    justify-content: space-between;
+  }
+}
+
+/* ============================================
+   Responsive - Mobile
+   ============================================ */
+
+@media (max-width: 600px) {
+  .sql-editor-toolbar {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "left right";
+    gap: 4px;
+    padding: 4px;
+    min-height: 40px;
+  }
+
+  /* پنهان کردن متن دکمه‌ها در موبایل - فقط آیکون */
+  .sql-editor-toolbar-left .btn > span:not(.icon):not(.loading-spinner-small),
+  .sql-editor-toolbar-right .btn > span:not(.icon):not(.loading-spinner-small) {
+    display: none;
+  }
+
+  .sql-editor-toolbar-left .btn,
+  .sql-editor-toolbar-right .btn {
+    padding: 6px 8px;
+    min-width: 32px;
+    justify-content: center;
+  }
+
   .sql-editor-line-numbers {
     width: 36px;
-    font-size: 11px;
   }
 
   .sql-editor-line-number {
@@ -305,13 +381,35 @@
   .sql-editor-highlight,
   .sql-editor-textarea {
     font-size: 12px;
+    padding: 6px 8px;
   }
 
-  .sql-editor-toolbar {
-    padding: 4px;
+  .sql-editor-footer {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
   }
 
-  .sql-editor-toolbar-center {
-    display: none;
+  .sql-editor-footer-left,
+  .sql-editor-footer-right {
+    gap: 4px;
+  }
+}
+
+/* ============================================
+   Mobile کوچک
+   ============================================ */
+
+@media (max-width: 380px) {
+  .sql-editor-toolbar-left .btn,
+  .sql-editor-toolbar-right .btn {
+    padding: 4px 6px;
+    min-width: 28px;
+    font-size: 11px;
+  }
+
+  .sql-editor-toolbar-left,
+  .sql-editor-toolbar-right {
+    gap: 2px;
   }
 }
