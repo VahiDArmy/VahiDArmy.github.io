@@ -1,0 +1,488 @@
+/**
+ * کامپوننت جداول
+ */
+
+/* ============================================
+   جدول پایه
+   ============================================ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.table thead th {
+  background-color: var(--table-header-bg);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+  padding: var(--spacing-md);
+  border-bottom: 2px solid var(--table-border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.table tbody td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--table-border);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: var(--table-row-even);
+}
+
+.table tbody tr:nth-child(odd) {
+  background-color: var(--table-row-odd);
+}
+
+.table tbody tr:hover {
+  background-color: var(--table-row-hover);
+}
+
+.table tbody tr.selected {
+  background-color: var(--table-row-selected);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ============================================
+   انواع ستون
+   ============================================ */
+
+.table .col-numeric {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-family-mono);
+}
+
+.table .col-actions {
+  width: 100px;
+  text-align: center;
+}
+
+.table .col-rownum {
+  width: 60px;
+  text-align: center;
+  color: var(--text-tertiary);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-xs);
+}
+
+.table .col-checkbox {
+  width: 40px;
+  text-align: center;
+}
+
+/* ============================================
+   عرض ثابت
+   ============================================ */
+
+.table-fixed {
+  table-layout: fixed;
+}
+
+.table-fixed td,
+.table-fixed th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================
+   جدول فشرده
+   ============================================ */
+
+.table-compact thead th {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.table-compact tbody td {
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+/* ============================================
+   جدول خط‌دار
+   ============================================ */
+
+.table-bordered {
+  border: 1px solid var(--border-primary);
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid var(--border-primary);
+}
+
+/* ============================================
+   جدول بدون حاشیه
+   ============================================ */
+
+.table-borderless th,
+.table-borderless td {
+  border: none;
+}
+
+/* ============================================
+   سرصفحه ثابت
+   ============================================ */
+
+.table-sticky-header {
+  position: relative;
+  overflow-y: auto;
+  max-height: 70vh;
+}
+
+.table-sticky-header thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: var(--table-header-bg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   اسکرول افقی
+   ============================================ */
+
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+/* ============================================
+   جداول ویژه
+   ============================================ */
+
+/* جدول ساختار */
+.table-structure-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-structure-table th,
+.table-structure-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-primary);
+  text-align: right;
+  font-size: var(--font-size-sm);
+}
+
+.table-structure-table th {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  position: sticky;
+  top: 0;
+}
+
+.table-structure-table td.col-name {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.table-structure-table td.col-type {
+  font-family: var(--font-family-mono);
+  color: var(--color-info);
+  font-size: var(--font-size-xs);
+}
+
+.table-structure-table tr:hover {
+  background-color: var(--bg-hover);
+}
+
+/* جدول پیش‌نمایش */
+.import-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+}
+
+.import-preview-table th,
+.import-preview-table td {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-primary);
+  text-align: right;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-preview-table th {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* جدول محدودیت‌ها */
+.table-constraints-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+}
+
+.table-constraints-table th,
+.table-constraints-table td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border-primary);
+  text-align: right;
+  font-size: var(--font-size-sm);
+}
+
+.table-constraints-table th {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.constraint-type {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-mono);
+}
+
+/* ============================================
+   دکمه‌های ستون
+   ============================================ */
+
+.table-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  font-size: 12px;
+  transition: all var(--transition-fast);
+  margin-inline-start: 4px;
+}
+
+.table-sort-btn:hover {
+  color: var(--color-primary);
+  background-color: var(--bg-hover);
+}
+
+.table-sort-btn.active {
+  color: var(--color-primary);
+}
+
+/* ============================================
+   حاشیه تغییر اندازه
+   ============================================ */
+
+.table-resize-handle {
+  position: absolute;
+  top: 0;
+  left: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 2;
+  user-select: none;
+}
+
+.table-resize-handle:hover {
+  background-color: var(--color-primary);
+}
+
+/* ============================================
+   Group Rows
+   ============================================ */
+
+.table-group-row {
+  background-color: var(--bg-tertiary) !important;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.table-group-row td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 2px solid var(--border-primary);
+}
+
+/* ============================================
+   Row Expansion
+   ============================================ */
+
+.table-row-expand-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  transition: all var(--transition-fast);
+}
+
+.table-row-expand-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.table-row-expand-btn.expanded {
+  transform: rotate(90deg);
+}
+
+.table-row-detail td {
+  background-color: var(--bg-tertiary) !important;
+  padding: var(--spacing-lg);
+  color: var(--text-secondary);
+}
+
+.table-row-detail-inner {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.table-row-detail-item {
+  padding: var(--spacing-sm);
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-primary);
+}
+
+.table-row-detail-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.table-row-detail-value {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  font-family: var(--font-family-mono);
+  word-break: break-all;
+}
+
+/* ============================================
+   Cell Rendering
+   ============================================ */
+
+.cell-null {
+  color: var(--text-disabled);
+  font-style: italic;
+  font-family: var(--font-family-mono);
+}
+
+.cell-boolean {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cell-boolean.true {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.cell-boolean.false {
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+}
+
+.cell-blob {
+  display: inline-block;
+  padding: 2px 8px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-family-mono);
+}
+
+.cell-truncated {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.cell-url {
+  color: var(--color-info);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.cell-email {
+  color: var(--color-primary);
+}
+
+/* ============================================
+   Editing Cell
+   ============================================ */
+
+.table td.editing,
+.data-table-cell.editing {
+  padding: 0;
+  position: relative;
+}
+
+.table-cell-editor,
+.data-table-cell-editor {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+  box-shadow: var(--shadow-glow);
+}
+
+/* ============================================
+   واکنش‌گرا
+   ============================================ */
+
+@media (max-width: 768px) {
+  .table thead th,
+  .table tbody td {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-xs);
+  }
+
+  .table-responsive {
+    font-size: var(--font-size-xs);
+  }
+}
