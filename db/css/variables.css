@@ -1,0 +1,85 @@
+/**
+ * متغیرهای CSS
+ * شامل تمام متغیرهای سراسری برنامه
+ */
+
+:root {
+  /* ابعاد */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* شعاع گوشه‌ها */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* فونت */
+  --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+  --font-family-mono: 'Vazirmatn Code', 'Courier New', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+  --z-toast: 1080;
+  --z-context-menu: 1090;
+
+  /* انتقال‌ها */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+  --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* انیمیشن */
+  --animation-duration: 300ms;
+  --animation-timing: ease-in-out;
+
+  /* ابعاد اجزا */
+  --navbar-height: 64px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed-width: 72px;
+  --footer-height: 48px;
+  --modal-max-width: 800px;
+  --modal-max-width-lg: 1200px;
+  --modal-max-width-sm: 500px;
+  --tooltip-max-width: 300px;
+  --notification-width: 380px;
+  --context-menu-width: 220px;
+
+  /* سایر */
+  --backdrop-blur: blur(8px);
+  --backdrop-blur-sm: blur(4px);
+  --backdrop-blur-lg: blur(16px);
+}
