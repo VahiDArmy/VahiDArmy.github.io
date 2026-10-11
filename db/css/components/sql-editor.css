@@ -1,0 +1,317 @@
+/**
+ * کامپوننت ویرایشگر SQL
+ */
+
+.sql-editor-component {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+/* ============================================
+   Toolbar
+   ============================================ */
+
+.sql-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.sql-editor-toolbar-left,
+.sql-editor-toolbar-center,
+.sql-editor-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.sql-editor-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-family: var(--font-family-mono);
+}
+
+.sql-editor-status-info {
+  padding: 2px 8px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+}
+
+/* ============================================
+   Wrapper
+   ============================================ */
+
+.sql-editor-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  background-color: var(--code-bg);
+  min-height: 200px;
+}
+
+/* ============================================
+   Line Numbers
+   ============================================ */
+
+.sql-editor-line-numbers {
+  flex-shrink: 0;
+  width: 50px;
+  padding: 8px 0;
+  background-color: var(--bg-tertiary);
+  border-left: 1px solid var(--border-primary);
+  overflow: hidden;
+  font-family: var(--font-family-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+  user-select: none;
+  direction: ltr;
+}
+
+.sql-editor-line-number {
+  height: 21px;
+  padding: 0 8px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sql-editor-line-number.active {
+  color: var(--color-primary);
+  background-color: var(--color-primary-light);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ============================================
+   Container
+   ============================================ */
+
+.sql-editor-container {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sql-editor-highlight,
+.sql-editor-textarea {
+  position: absolute;
+  inset: 0;
+  padding: 8px 12px;
+  margin: 0;
+  border: none;
+  outline: none;
+  font-family: var(--font-family-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre;
+  word-wrap: normal;
+  overflow: auto;
+  tab-size: 2;
+  direction: ltr;
+  text-align: left;
+  letter-spacing: 0;
+}
+
+.sql-editor-highlight {
+  color: var(--code-text);
+  background-color: var(--code-bg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sql-editor-textarea {
+  background-color: transparent;
+  color: transparent;
+  caret-color: var(--color-primary);
+  resize: none;
+  z-index: 2;
+  overflow: auto;
+}
+
+.sql-editor-textarea::selection {
+  background-color: rgba(99, 102, 241, 0.4);
+  color: transparent;
+}
+
+.sql-editor-textarea::placeholder {
+  color: var(--text-disabled);
+}
+
+/* ============================================
+   Syntax Highlight
+   ============================================ */
+
+.sql-keyword {
+  color: var(--code-keyword);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+}
+
+.sql-string {
+  color: var(--code-string);
+}
+
+.sql-number {
+  color: var(--code-number);
+}
+
+.sql-comment {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.sql-function {
+  color: var(--code-function);
+}
+
+.sql-operator {
+  color: var(--code-operator);
+}
+
+/* ============================================
+   Autocomplete
+   ============================================ */
+
+.sql-editor-autocomplete {
+  position: absolute;
+  min-width: 240px;
+  max-width: 400px;
+  max-height: 300px;
+  overflow-y: auto;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  z-index: var(--z-dropdown);
+  padding: var(--spacing-xs);
+  animation: fadeIn 0.1s ease;
+}
+
+.sql-editor-autocomplete::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sql-editor-autocomplete::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: var(--radius-full);
+}
+
+.sql-editor-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-fast);
+}
+
+.sql-editor-autocomplete-item:hover,
+.sql-editor-autocomplete-item.active {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.sql-editor-autocomplete-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sql-editor-autocomplete-label {
+  flex: 1;
+  font-family: var(--font-family-mono);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sql-editor-autocomplete-desc {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  margin-inline-start: var(--spacing-xs);
+}
+
+/* ============================================
+   Footer
+   ============================================ */
+
+.sql-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background-color: var(--bg-tertiary);
+  border-top: 1px solid var(--border-primary);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  font-family: var(--font-family-mono);
+  flex-wrap: wrap;
+}
+
+.sql-editor-footer-left,
+.sql-editor-footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sql-editor-info {
+  padding: 2px 8px;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-primary);
+  white-space: nowrap;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+  .sql-editor-line-numbers {
+    width: 36px;
+    font-size: 11px;
+  }
+
+  .sql-editor-line-number {
+    height: 19px;
+    font-size: 10px;
+  }
+
+  .sql-editor-highlight,
+  .sql-editor-textarea {
+    font-size: 12px;
+  }
+
+  .sql-editor-toolbar {
+    padding: 4px;
+  }
+
+  .sql-editor-toolbar-center {
+    display: none;
+  }
+}
