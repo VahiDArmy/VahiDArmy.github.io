@@ -74,6 +74,18 @@ class DataTable {
   }
 
   /**
+   * محاسبه تعداد دقیق ستون‌ها
+   * برای colspan در spacer و colspan در حالت‌های خالی
+   */
+  _getTotalColumns() {
+    let total = 0;
+    if (this.options.showRowNumbers) total += 1;
+    total += this.visibleColumns.size;
+    total += 1; // ستون اکشن‌ها
+    return total;
+  }
+
+  /**
    * اتصال هندلرها
    */
   _bindHandlers() {
@@ -705,6 +717,7 @@ class DataTable {
       return;
     }
 
+    // حالت معمولی: هم ردیف‌های واقعی و هم spacer برای هم‌ارتفاع ماندن
     this.elements.body.innerHTML = this.options.data.map((row, i) =>
       this._renderRow(row, i)
     ).join('');
@@ -714,6 +727,8 @@ class DataTable {
 
   /**
    * رندر مجازی
+   * نکته: colspan در spacer باید دقیقاً برابر تعداد ستون‌های واقعی باشد
+   * وگرنه table-layout:fixed همه ستون‌ها را به عرض‌های نادرست تقسیم می‌کند
    */
   _renderVirtualBody() {
     const buffer = this.options.virtualBuffer;
@@ -721,7 +736,7 @@ class DataTable {
     const scrollTop = this.virtualScrollTop;
 
     const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - buffer);
-    const visibleCount = Math.ceil(this.elements.bodyWrapper.clientHeight / rowHeight) + buffer * 2;
+    const visibleCount = Math.ceil((this.elements.bodyWrapper?.clientHeight || 400) / rowHeight) + buffer * 2;
     const endIndex = Math.min(this.options.data.length, startIndex + visibleCount);
 
     const visibleRows = this.options.data.slice(startIndex, endIndex);
@@ -729,15 +744,18 @@ class DataTable {
     const topPadding = startIndex * rowHeight;
     const bottomPadding = Math.max(0, (this.options.data.length - endIndex) * rowHeight);
 
+    // ⭐ تعداد دقیق ستون‌ها برای colspan
+    const totalColumns = this._getTotalColumns();
+
     let html = '';
     if (topPadding > 0) {
-      html += `<tr class="data-table-spacer" style="height: ${topPadding}px;"><td colspan="100"></td></tr>`;
+      html += `<tr class="data-table-spacer" style="height: ${topPadding}px;"><td colspan="${totalColumns}"></td></tr>`;
     }
 
     html += visibleRows.map((row, i) => this._renderRow(row, startIndex + i)).join('');
 
     if (bottomPadding > 0) {
-      html += `<tr class="data-table-spacer" style="height: ${bottomPadding}px;"><td colspan="100"></td></tr>`;
+      html += `<tr class="data-table-spacer" style="height: ${bottomPadding}px;"><td colspan="${totalColumns}"></td></tr>`;
     }
 
     this.elements.body.innerHTML = html;
@@ -1383,6 +1401,10 @@ class DataTable {
     if (page === this.currentPage) return;
     this.currentPage = page;
     this.selectedRows.clear();
+    this.virtualScrollTop = 0;
+    if (this.elements.bodyWrapper) {
+      this.elements.bodyWrapper.scrollTop = 0;
+    }
     this._emitPageChange();
   }
 
@@ -1440,6 +1462,13 @@ class DataTable {
     if (options.pageSize !== undefined) this.currentPageSize = options.pageSize;
 
     this.selectedRows.clear();
+
+    // ⭐ بازنشانی موقعیت اسکرول هنگام بارگذاری داده جدید
+    this.virtualScrollTop = 0;
+    if (this.elements.bodyWrapper) {
+      this.elements.bodyWrapper.scrollTop = 0;
+    }
+
     this._renderTable();
   }
 
