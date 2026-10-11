@@ -1,0 +1,235 @@
+/**
+ * استایل‌های پایه
+ */
+
+/* کانتینر اصلی */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+}
+
+/* هدر */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: var(--navbar-height);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+}
+
+/* بدنه اصلی */
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* سایدبار */
+.app-sidebar {
+  width: var(--sidebar-width);
+  background-color: var(--bg-secondary);
+  border-left: 1px solid var(--border-primary);
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: width var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.app-sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+/* محتوای اصلی */
+.app-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--spacing-lg);
+  background-color: var(--bg-primary);
+  scroll-behavior: smooth;
+}
+
+/* فوتر */
+.app-footer {
+  height: var(--footer-height);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-lg);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+}
+
+/* کانتینر */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+.container-fluid {
+  width: 100%;
+  padding: 0 var(--spacing-lg);
+}
+
+/* فلکس */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.items-stretch { align-items: stretch; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-around { justify-content: space-around; }
+.justify-start { justify-content: flex-start; }
+.justify-end { justify-content: flex-end; }
+.flex-1 { flex: 1; }
+.flex-none { flex: none; }
+.gap-xs { gap: var(--spacing-xs); }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+.gap-xl { gap: var(--spacing-xl); }
+
+/* گرید */
+.grid {
+  display: grid;
+  gap: var(--spacing-lg);
+}
+
+.grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+.grid-cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+/* متن */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-md { font-size: var(--font-size-md); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+.text-3xl { font-size: var(--font-size-3xl); }
+.text-4xl { font-size: var(--font-size-4xl); }
+
+.text-light { font-weight: var(--font-weight-light); }
+.text-normal { font-weight: var(--font-weight-normal); }
+.text-medium { font-weight: var(--font-weight-medium); }
+.text-semibold { font-weight: var(--font-weight-semibold); }
+.text-bold { font-weight: var(--font-weight-bold); }
+
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-danger { color: var(--color-danger); }
+.text-info { color: var(--color-info); }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* فاصله‌ها */
+.m-0 { margin: 0; }
+.m-xs { margin: var(--spacing-xs); }
+.m-sm { margin: var(--spacing-sm); }
+.m-md { margin: var(--spacing-md); }
+.m-lg { margin: var(--spacing-lg); }
+.m-xl { margin: var(--spacing-xl); }
+
+.mt-0 { margin-top: 0; }
+.mt-xs { margin-top: var(--spacing-xs); }
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mt-xl { margin-top: var(--spacing-xl); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-xs { margin-bottom: var(--spacing-xs); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+.mb-xl { margin-bottom: var(--spacing-xl); }
+
+.p-0 { padding: 0; }
+.p-xs { padding: var(--spacing-xs); }
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+.p-xl { padding: var(--spacing-xl); }
+
+/* حاشیه */
+.border { border: 1px solid var(--border-primary); }
+.border-t { border-top: 1px solid var(--border-primary); }
+.border-b { border-bottom: 1px solid var(--border-primary); }
+.border-r { border-right: 1px solid var(--border-primary); }
+.border-l { border-left: 1px solid var(--border-primary); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-md { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* سایه */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-glow { box-shadow: var(--shadow-glow); }
+
+/* نمایش */
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+.inline { display: inline; }
+
+/* موقعیت */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed { position: fixed; }
+.sticky { position: sticky; }
+
+/* سرریز */
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-y-auto { overflow-y: auto; }
+.overflow-x-auto { overflow-x: auto; }
+
+/* نشانگر */
+.cursor-pointer { cursor: pointer; }
+.cursor-default { cursor: default; }
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-grab { cursor: grab; }
+.cursor-grabbing { cursor: grabbing; }
+
+/* شفافیت */
+.opacity-0 { opacity: 0; }
+.opacity-25 { opacity: 0.25; }
+.opacity-50 { opacity: 0.5; }
+.opacity-75 { opacity: 0.75; }
+.opacity-100 { opacity: 1; }
+
+/* انتخاب */
+.select-none { user-select: none; }
+.select-text { user-select: text; }
+.select-all { user-select: all; }
