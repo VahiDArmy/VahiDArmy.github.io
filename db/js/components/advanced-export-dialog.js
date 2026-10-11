@@ -1,6 +1,9 @@
 /**
  * دیالوگ صادرات پیشرفته
- * تمام گزینه‌ها با UI کامل و پیش‌نمایش زنده
+ * حالت‌ها:
+ *   - single:         تک فایل
+ *   - per-group:      چند فایل بر اساس گروه‌بندی
+ *   - quran-tafsir:   صادرات ساختار تفسیر قرآن (ZIP با پوشه‌های surah/ و content/)
  */
 class AdvancedExportDialog {
   constructor(options = {}) {
@@ -20,7 +23,21 @@ class AdvancedExportDialog {
       format: 'json',
       prettyPrint: true,
       packAsZip: true,
-      zipName: ''
+      zipName: '',
+
+      // تنظیمات حالت quran-tafsir
+      quranConfig: {
+        contentTable: 'content',
+        mappingTable: 'ayah_mapping',
+        contentIdColumn: 'content_id',
+        contentTextColumn: 'content',
+        mappingSurahColumn: 'surah_number',
+        mappingAyahColumn: 'ayah_number',
+        mappingContentIdColumn: 'content_id',
+        zipFileName: 'quran_tafsir_json.zip',
+        surahFolder: 'surah',
+        contentFolder: 'content'
+      }
     };
 
     this.element = null;
@@ -45,7 +62,6 @@ class AdvancedExportDialog {
       this.state.selectedTables.add(this.state.tables[0].name);
     }
 
-    // بسته‌بندی ZIP به صورت پیش‌فرض اگر JSZip موجود است
     this.state.packAsZip = typeof JSZip !== 'undefined';
 
     const content = this._renderContent();
@@ -70,6 +86,8 @@ class AdvancedExportDialog {
         this._renderMergeRules();
         this._renderFormats();
         this._syncZipUI();
+        this._renderQuranConfig();
+        this._updateSectionsVisibility();
         this._refreshPreview();
       }
     });
@@ -82,7 +100,7 @@ class AdvancedExportDialog {
     return `
       <div class="advanced-export">
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="tables">
           <div class="advanced-export-section-header">
             <h4>۱. انتخاب جداول</h4>
             <div class="advanced-export-section-actions">
@@ -93,7 +111,7 @@ class AdvancedExportDialog {
           <div class="advanced-export-tables" data-role="tables-list"></div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="mode">
           <div class="advanced-export-section-header">
             <h4>۲. حالت خروجی</h4>
           </div>
@@ -112,10 +130,17 @@ class AdvancedExportDialog {
                 <small>هر گروه یک فایل جداگانه</small>
               </div>
             </label>
+            <label class="advanced-export-mode-item advanced-export-mode-item--special">
+              <input type="radio" name="adv-output-mode" value="quran-tafsir" />
+              <div class="advanced-export-mode-content">
+                <strong>صادرات تفسیر قرآن</strong>
+                <small>ساختار ZIP با پوشه‌های surah/ و content/</small>
+              </div>
+            </label>
           </div>
         </div>
 
-        <div class="advanced-export-section" data-role="group-by-section">
+        <div class="advanced-export-section" data-section="group-by" data-role="group-by-section">
           <div class="advanced-export-section-header">
             <h4>۳. گروه‌بندی</h4>
             <small class="advanced-export-hint">
@@ -125,7 +150,7 @@ class AdvancedExportDialog {
           <div class="advanced-export-columns" data-role="group-by-columns"></div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="merge">
           <div class="advanced-export-section-header">
             <h4>۴. ادغام ستون‌ها <span class="advanced-export-optional">(اختیاری)</span></h4>
             <button type="button" class="btn btn-xs btn-secondary" data-role="add-merge-rule">
@@ -136,7 +161,7 @@ class AdvancedExportDialog {
           <div class="advanced-export-merge-rules" data-role="merge-rules"></div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="filename">
           <div class="advanced-export-section-header">
             <h4>۵. قالب نام فایل</h4>
           </div>
@@ -156,14 +181,14 @@ class AdvancedExportDialog {
           </div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="format">
           <div class="advanced-export-section-header">
             <h4>۶. فرمت فایل‌ها</h4>
           </div>
           <div class="advanced-export-formats" data-role="formats"></div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section" data-section="zip">
           <div class="advanced-export-section-header">
             <h4>۷. بسته‌بندی</h4>
           </div>
@@ -183,7 +208,71 @@ class AdvancedExportDialog {
           </div>
         </div>
 
-        <div class="advanced-export-section">
+        <div class="advanced-export-section advanced-export-section--quran" data-section="quran" hidden>
+          <div class="advanced-export-section-header">
+            <h4>تنظیمات صادرات تفسیر قرآن</h4>
+          </div>
+
+          <div class="advanced-export-quran-config">
+            <div class="advanced-export-quran-row">
+              <div class="form-group">
+                <label>جدول محتوا</label>
+                <input type="text" class="form-control" data-quran="contentTable" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>ستون شناسه محتوا</label>
+                <input type="text" class="form-control" data-quran="contentIdColumn" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>ستون متن محتوا</label>
+                <input type="text" class="form-control" data-quran="contentTextColumn" dir="ltr" />
+              </div>
+            </div>
+
+            <div class="advanced-export-quran-row">
+              <div class="form-group">
+                <label>جدول نگاشت آیات</label>
+                <input type="text" class="form-control" data-quran="mappingTable" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>ستون شماره سوره</label>
+                <input type="text" class="form-control" data-quran="mappingSurahColumn" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>ستون شماره آیه</label>
+                <input type="text" class="form-control" data-quran="mappingAyahColumn" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>ستون محتوا در نگاشت</label>
+                <input type="text" class="form-control" data-quran="mappingContentIdColumn" dir="ltr" />
+              </div>
+            </div>
+
+            <div class="advanced-export-quran-row">
+              <div class="form-group">
+                <label>نام فایل ZIP</label>
+                <input type="text" class="form-control" data-quran="zipFileName" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>نام پوشه سوره‌ها</label>
+                <input type="text" class="form-control" data-quran="surahFolder" dir="ltr" />
+              </div>
+              <div class="form-group">
+                <label>نام پوشه محتوا</label>
+                <input type="text" class="form-control" data-quran="contentFolder" dir="ltr" />
+              </div>
+            </div>
+          </div>
+
+          <div class="advanced-export-quran-info">
+            ساختار خروجی:
+            <code dir="ltr">${'{'}"surah": N, "ayah_to_content": ${'{'}"A": [ids]${'}'}${'}'}</code>
+            و
+            <code dir="ltr">${'{'}"content_id": N, "text": "..."${'}'}</code>
+          </div>
+        </div>
+
+        <div class="advanced-export-section" data-section="preview">
           <div class="advanced-export-section-header">
             <h4>۸. پیش‌نمایش</h4>
             <button type="button" class="btn btn-xs btn-ghost" data-role="refresh-preview">
@@ -221,7 +310,8 @@ class AdvancedExportDialog {
       zipNameGroup: q('[data-role="zip-name-group"]'),
       zipName: q('[data-role="zip-name"]'),
       preview: q('[data-role="preview"]'),
-      refreshPreview: q('[data-role="refresh-preview"]')
+      refreshPreview: q('[data-role="refresh-preview"]'),
+      quranSection: q('[data-section="quran"]')
     };
   }
 
@@ -229,7 +319,6 @@ class AdvancedExportDialog {
    * ثبت رویدادها
    */
   _bindEvents(wrapper, modal) {
-    // جداول: انتخاب همه / لغو همه
     this.elements.selectAllTables?.addEventListener('click', () => {
       this.state.selectedTables.clear();
       this.state.tables.forEach(t => this.state.selectedTables.add(t.name));
@@ -245,40 +334,43 @@ class AdvancedExportDialog {
       this._refreshPreview();
     });
 
-    // حالت خروجی
     this.elements.outputModeRadios.forEach(radio => {
       radio.addEventListener('change', (e) => {
         this.state.outputMode = e.target.value;
-        this._updateGroupByVisibility();
+        this._updateSectionsVisibility();
         this._refreshPreview();
       });
     });
 
-    // افزودن قانون ادغام
     this.elements.addMergeRuleBtn?.addEventListener('click', () => {
       this._addMergeRule();
     });
 
-    // قالب نام فایل
     this.elements.filenameTemplate?.addEventListener('input', (e) => {
       this.state.filenameTemplate = e.target.value;
       this._refreshPreviewDebounced();
     });
 
-    // بسته‌بندی ZIP
     this.elements.packAsZip?.addEventListener('change', (e) => {
       this.state.packAsZip = e.target.checked;
       this._syncZipUI();
     });
 
-    // نام ZIP
     this.elements.zipName?.addEventListener('input', (e) => {
       this.state.zipName = e.target.value;
     });
 
-    // به‌روزرسانی دستی پیش‌نمایش
     this.elements.refreshPreview?.addEventListener('click', () => {
       this._refreshPreview();
+    });
+
+    // فیلدهای حالت quran
+    wrapper.querySelectorAll('[data-quran]').forEach(input => {
+      input.addEventListener('input', (e) => {
+        const key = e.target.dataset.quran;
+        this.state.quranConfig[key] = e.target.value;
+        this._refreshPreviewDebounced();
+      });
     });
 
     // دکمه‌های فوتر
@@ -289,6 +381,37 @@ class AdvancedExportDialog {
     wrapper.querySelector('[data-action="export"]')?.addEventListener('click', () => {
       this._performExport(modal);
     });
+  }
+
+  /**
+   * بررسی حالت quran
+   */
+  _isQuranMode() {
+    return this.state.outputMode === 'quran-tafsir';
+  }
+
+  /**
+   * به‌روزرسانی نمایش بخش‌ها بر اساس حالت
+   */
+  _updateSectionsVisibility() {
+    const isQuran = this._isQuranMode();
+
+    const showWhenNormal = ['group-by', 'merge', 'filename', 'format', 'zip'];
+    const showWhenQuran = ['quran'];
+
+    showWhenNormal.forEach(name => {
+      const el = this.element?.querySelector(`[data-section="${name}"]`);
+      if (el) el.hidden = isQuran || (name === 'group-by' && this.state.outputMode !== 'per-group');
+    });
+
+    showWhenQuran.forEach(name => {
+      const el = this.element?.querySelector(`[data-section="${name}"]`);
+      if (el) el.hidden = !isQuran;
+    });
+
+    // در حالت quran، جدول‌های انتخاب‌شده استفاده نمی‌شوند
+    // اما نمایش می‌دهیم که کاربر بداند کدام جداول در DB هستند
+    // (فیلدهای quran_config تعیین‌کننده نهایی هستند)
   }
 
   /**
@@ -305,7 +428,6 @@ class AdvancedExportDialog {
         (this.state.packAsZip && advancedExportService.isZipAvailable()) ? '' : 'none';
     }
 
-    // اگر JSZip نیست، پیام دهیم
     if (!advancedExportService.isZipAvailable()) {
       const warning = this.element.querySelector('.advanced-export-zip-warning');
       if (!warning) {
@@ -365,16 +487,7 @@ class AdvancedExportDialog {
     this.elements.outputModeRadios.forEach(radio => {
       radio.checked = radio.value === this.state.outputMode;
     });
-    this._updateGroupByVisibility();
-  }
-
-  /**
-   * مخفی/نمایش گروه‌بندی بر اساس حالت
-   */
-  _updateGroupByVisibility() {
-    if (!this.elements.groupBySection) return;
-    this.elements.groupBySection.style.display =
-      this.state.outputMode === 'per-group' ? '' : 'none';
+    this._updateSectionsVisibility();
   }
 
   /**
@@ -675,10 +788,28 @@ class AdvancedExportDialog {
   }
 
   /**
+   * رندر پیکربندی quran با مقادیر ذخیره‌شده
+   */
+  _renderQuranConfig() {
+    if (!this.elements.quranSection) return;
+
+    const cfg = this.state.quranConfig;
+
+    this.elements.quranSection.querySelectorAll('[data-quran]').forEach(input => {
+      const key = input.dataset.quran;
+      input.value = cfg[key] ?? '';
+    });
+  }
+
+  /**
    * به‌روزرسانی پیش‌نمایش
    */
   async _refreshPreview() {
     if (!this.elements.preview) return;
+
+    if (this._isQuranMode()) {
+      return this._refreshQuranPreview();
+    }
 
     if (this.state.selectedTables.size === 0) {
       this.elements.preview.innerHTML =
@@ -716,7 +847,56 @@ class AdvancedExportDialog {
   }
 
   /**
-   * رندر پیش‌نمایش
+   * پیش‌نمایش حالت quran
+   */
+  async _refreshQuranPreview() {
+    this.elements.preview.innerHTML =
+      `<div class="advanced-export-preview-loading"><div class="loading-spinner"></div></div>`;
+
+    try {
+      const stats = await quranExportService.estimate(this.state.quranConfig);
+
+      const estimatedSize = stats.contentCount * 300 + stats.surahCount * 4000; // تخمین خام
+
+      this.elements.preview.innerHTML = `
+        <div class="advanced-export-preview-summary">
+          <div class="advanced-export-stat">
+            <span class="advanced-export-stat-value">${StringUtils.englishToPersianDigits(stats.surahCount)}</span>
+            <span class="advanced-export-stat-label">سوره</span>
+          </div>
+          <div class="advanced-export-stat">
+            <span class="advanced-export-stat-value">${StringUtils.englishToPersianDigits(stats.contentCount)}</span>
+            <span class="advanced-export-stat-label">محتوا</span>
+          </div>
+          <div class="advanced-export-stat">
+            <span class="advanced-export-stat-value">${StringUtils.englishToPersianDigits(stats.mappingCount)}</span>
+            <span class="advanced-export-stat-label">نگاشت</span>
+          </div>
+        </div>
+
+        <div class="advanced-export-quran-preview-structure">
+          <div class="advanced-export-quran-preview-title">ساختار فایل‌های ZIP:</div>
+          <div class="advanced-export-quran-preview-tree">
+            <div class="tree-item"><span class="tree-icon">📦</span><span dir="ltr">${StringUtils.escapeHtml(this.state.quranConfig.zipFileName)}</span></div>
+            <div class="tree-item tree-item--child"><span class="tree-icon">📁</span><span dir="ltr">${StringUtils.escapeHtml(this.state.quranConfig.surahFolder)}/</span></div>
+            <div class="tree-item tree-item--grandchild"><span class="tree-icon">📄</span><span dir="ltr">1.json, 2.json, ... (${StringUtils.englishToPersianDigits(stats.surahCount)} فایل)</span></div>
+            <div class="tree-item tree-item--child"><span class="tree-icon">📁</span><span dir="ltr">${StringUtils.escapeHtml(this.state.quranConfig.contentFolder)}/</span></div>
+            <div class="tree-item tree-item--grandchild"><span class="tree-icon">📄</span><span dir="ltr">1.json, 2.json, ... (${StringUtils.englishToPersianDigits(stats.contentCount)} فایل)</span></div>
+          </div>
+
+          <div class="advanced-export-quran-preview-estimate">
+            حجم تقریبی ZIP: <strong>${NumberUtils.formatBytes(estimatedSize)}</strong>
+          </div>
+        </div>
+      `;
+    } catch (error) {
+      this.elements.preview.innerHTML =
+        `<div class="advanced-export-preview-error">خطا در تخمین: ${StringUtils.escapeHtml(error.message)}</div>`;
+    }
+  }
+
+  /**
+   * رندر پیش‌نمایش عادی
    */
   _renderPreview(preview) {
     const totalFiles = preview.reduce((sum, p) => sum + (p.files?.length || 0), 0);
@@ -787,6 +967,10 @@ class AdvancedExportDialog {
    * انجام صادرات
    */
   async _performExport(modal) {
+    if (this._isQuranMode()) {
+      return this._performQuranExport(modal);
+    }
+
     if (this.state.selectedTables.size === 0) {
       notificationService.warning('حداقل یک جدول انتخاب کنید');
       return;
@@ -848,6 +1032,55 @@ class AdvancedExportDialog {
     } catch (error) {
       progress.dismiss();
       console.error('خطا در صادرات پیشرفته:', error);
+      notificationService.error(`خطا: ${error.message}`);
+
+      if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalHtml;
+      }
+    }
+  }
+
+  /**
+   * انجام صادرات حالت quran
+   */
+  async _performQuranExport(modal) {
+    const exportBtn = this.element.querySelector('[data-action="export"]');
+    const originalHtml = exportBtn ? exportBtn.innerHTML : null;
+
+    if (exportBtn) {
+      exportBtn.disabled = true;
+      exportBtn.innerHTML = '<div class="loading-spinner-small"></div> در حال صادرات...';
+    }
+
+    const progress = notificationService.progress('در حال ساخت ZIP تفسیر قرآن...', { duration: 0 });
+
+    try {
+      const result = await quranExportService.export(
+        this.state.quranConfig,
+        (percent, message) => {
+          progress.update(percent, message);
+        }
+      );
+
+      const orphanNote = (result.orphanContent > 0 || result.orphanMapping > 0)
+        ? ` (${StringUtils.englishToPersianDigits(result.orphanContent)} محتوای بدون نگاشت، ${StringUtils.englishToPersianDigits(result.orphanMapping)} نگاشت بدون محتوا)`
+        : '';
+
+      progress.complete(
+        `${StringUtils.englishToPersianDigits(result.totalFiles)} فایل ذخیره شد${orphanNote}`
+      );
+
+      modalService.close(modal.id, {
+        success: true,
+        files: result.totalFiles,
+        packed: true,
+        zipName: result.zipFileName,
+        stats: result
+      });
+    } catch (error) {
+      progress.dismiss();
+      console.error('خطا در صادرات تفسیر قرآن:', error);
       notificationService.error(`خطا: ${error.message}`);
 
       if (exportBtn) {
