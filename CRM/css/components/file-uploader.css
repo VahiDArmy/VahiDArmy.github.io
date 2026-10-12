@@ -1,0 +1,188 @@
+/* ============================================================================
+   FILE UPLOADER
+   ============================================================================ */
+
+.uploader {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.uploader__drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-5);
+  text-align: center;
+  background: var(--bg-surface-2);
+  border: 2px dashed var(--border-default);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: var(--tr-colors), border-color var(--t-base) var(--ease-out);
+}
+
+.uploader__drop:hover {
+  border-color: var(--brand-400);
+  background: var(--bg-surface-3);
+}
+
+.uploader__drop.is-dragover {
+  border-color: var(--brand-400);
+  background: rgba(89,142,255,.08);
+  box-shadow: inset 0 0 0 1px rgba(89,142,255,.30);
+}
+
+.uploader__drop.is-dragover .uploader__drop-icon {
+  transform: scale(1.1) translateY(-4px);
+  color: var(--brand-400);
+}
+
+.uploader__drop-icon {
+  font-size: 42px;
+  color: var(--text-quaternary);
+  transition: var(--tr-colors), var(--tr-transform);
+}
+
+.uploader__drop-title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.uploader__drop-text {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
+
+.uploader__drop-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  margin-top: 4px;
+}
+
+.uploader__browse {
+  color: var(--brand-400);
+  font-weight: var(--fw-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.uploader__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ---------- File list ---------- */
+.uploader__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  animation: slide-up var(--t-base) var(--ease-out) both;
+}
+
+.file-item__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+  font-size: 20px;
+}
+
+.file-item__icon--image { color: var(--violet-400); background: rgba(139,92,246,.12); }
+.file-item__icon--pdf   { color: var(--danger-txt); background: var(--danger-bg); }
+.file-item__icon--doc   { color: var(--info-txt);   background: var(--info-bg); }
+.file-item__icon--excel { color: var(--success-txt); background: var(--success-bg); }
+.file-item__icon--zip   { color: var(--warning-txt); background: var(--warning-bg); }
+
+.file-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-item__name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.file-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.file-item__progress {
+  width: 100%;
+  height: 4px;
+  margin-top: 6px;
+  background: var(--bg-surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.file-item__progress span {
+  display: block;
+  height: 100%;
+  background: var(--grad-brand);
+  border-radius: var(--r-full);
+  transition: width var(--t-base) var(--ease-out);
+}
+
+.file-item.is-error {
+  border-color: var(--border-danger);
+  background: var(--danger-bg);
+}
+
+.file-item.is-complete .file-item__progress span {
+  background: var(--grad-success);
+}
+
+/* ---------- Image preview ---------- */
+.file-item__preview {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface-3);
+}
+
+/* ---------- Compact ---------- */
+.uploader--compact .uploader__drop {
+  padding: var(--sp-5);
+}
+
+.uploader--compact .uploader__drop-icon {
+  font-size: 30px;
+}
