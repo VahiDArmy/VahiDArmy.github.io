@@ -1,5 +1,5 @@
 /* ============================================================================
-   TOPBAR COMPONENT
+   TOPBAR COMPONENT — FIXED (breadcrumb + logout path)
    ============================================================================ */
 
 (function (window) {
@@ -23,13 +23,23 @@
     { id: "t3", title: "تماس با تأمین‌کننده الکترونیک", done: true },
   ];
 
+  /* ✅ FIX: robust relative URL builder for GitHub Pages & any base path */
+  function resolveLoginUrl() {
+    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+    return base + "login.html";
+  }
+
+  function resolveIndexUrl() {
+    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
+    return base + "index.html";
+  }
+
   const Topbar = {
     init() {
       this.bindThemeToggle();
       this.bindNotifications();
       this.bindTasks();
       this.bindUserMenu();
-      this.bindBreadcrumb();
       this.bindSearchShortcut();
       this.renderUserInfo();
     },
@@ -43,7 +53,12 @@
 
     renderUserInfo() {
       const user = AuthService.getUser();
-      if (!user) return;
+      if (!user) {
+        Dom.qa("[data-user='name']").forEach((el) => (el.textContent = "مهمان"));
+        Dom.qa("[data-user='initial']").forEach((el) => (el.textContent = "؟"));
+        Dom.qa("[data-user='role']").forEach((el) => (el.textContent = "—"));
+        return;
+      }
       const name = user.full_name || user.email?.split("@")[0] || "کاربر";
       const initials = window.Formatters.initials(name);
       Dom.qa("[data-user='name']").forEach((el) => (el.textContent = name));
@@ -57,24 +72,21 @@
 
       const unread = NOTIFICATIONS.filter((n) => !n.read).length;
       const dot = btn.querySelector("[data-badge='notifications']");
-      if (dot && unread > 0) dot.hidden = false;
+      if (dot) dot.hidden = unread === 0;
 
       btn.addEventListener("click", () => {
         const panel = this.buildNotificationsPanel();
-        Dropdown.open(btn, {
-          placement: "bottom-end",
-          items: [],
-        });
-        // Replace empty menu with custom panel
+        Dropdown.open(btn, { placement: "bottom-end", items: [] });
         const menu = document.querySelector(".dropdown__menu");
         if (menu) {
           Dom.empty(menu);
           menu.appendChild(panel);
           menu.style.padding = "0";
-          menu.style.minWidth = "360px";
+          menu.style.minWidth = "0";
           menu.style.background = "transparent";
           menu.style.border = "0";
           menu.style.boxShadow = "none";
+          menu.style.maxHeight = "none";
         }
       });
     },
@@ -95,16 +107,13 @@
 
       const list = Dom.el("div", { class: "notif-panel__list" });
       if (!NOTIFICATIONS.length) {
-        list.appendChild(Dom.el("div", { class: "empty-state", style: "padding:32px" }, [
-          Dom.el("i", { class: "ri-notification-off-line empty-state__icon" }),
-          Dom.el("p", null, "اعلان جدیدی وجود ندارد"),
-        ]));
+        list.appendChild(Dom.el("div", { style: "padding:32px;text-align:center;color:var(--text-tertiary);font-size:13px" }, "اعلان جدیدی وجود ندارد"));
       } else {
         NOTIFICATIONS.forEach((n) => {
-          const row = Dom.el("div", { class: `notif-row mini-list__item ${!n.read ? "is-unread" : ""}`.trim() });
+          const row = Dom.el("div", { class: "mini-list__item notif-row" });
           const icons = { warning: "ri-alert-line", success: "ri-check-line", info: "ri-information-line", danger: "ri-error-warning-line" };
-          const tone = { warning: "warn", success: "success", info: "info", danger: "danger" };
-          row.appendChild(Dom.el("div", { class: `mini-list__icon mini-list__icon--${tone[n.type] || "info"}` }, [
+          const tones = { warning: "warn", success: "success", info: "info", danger: "danger" };
+          row.appendChild(Dom.el("div", { class: `mini-list__icon mini-list__icon--${tones[n.type] || "info"}` }, [
             Dom.el("i", { class: icons[n.type] || "ri-information-line" }),
           ]));
           const body = Dom.el("div", { class: "mini-list__body" });
@@ -135,7 +144,7 @@
         panel.appendChild(header);
         const list = Dom.el("div", { class: "notif-panel__list" });
         TASKS.forEach((t) => {
-          const row = Dom.el("label", { class: "checkbox", style: "display:flex;padding:12px 16px;border-bottom:1px solid var(--border-subtle)" });
+          const row = Dom.el("label", { class: "checkbox", style: "display:flex;padding:12px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer" });
           const input = Dom.el("input", { type: "checkbox" });
           input.checked = t.done;
           const box = Dom.el("span", { class: "checkbox__box" }, [Dom.el("i", { class: "ri-check-line" })]);
@@ -161,6 +170,7 @@
           menu.style.background = "transparent";
           menu.style.border = "0";
           menu.style.boxShadow = "none";
+          menu.style.minWidth = "0";
         }
       });
     },
@@ -168,6 +178,7 @@
     bindUserMenu() {
       const btn = Dom.id("topbar-user");
       const sidebarUser = Dom.id("user-menu-btn");
+
       const show = (anchor) => {
         const user = AuthService.getUser();
         const items = [
@@ -178,18 +189,18 @@
           { label: "تغییر تم", icon: "ri-moon-line", onClick: () => window.ThemeSwitcher.toggle() },
           { type: "divider" },
           { label: "خروج از حساب", icon: "ri-logout-box-r-line", danger: true, onClick: async () => {
-            await AuthService.logout();
-            location.href = "login.html";
-          }},
+              try {
+                await AuthService.logout();
+              } catch (e) { /* ignore */ }
+              // ✅ FIX: absolute path resolution for any deployment base
+              window.location.href = resolveLoginUrl();
+            } },
         ];
         Dropdown.open(anchor, { items, placement: "bottom-end" });
       };
+
       if (btn) btn.addEventListener("click", () => show(btn));
       if (sidebarUser) sidebarUser.addEventListener("click", () => show(sidebarUser));
-    },
-
-    bindBreadcrumb() {
-      // Handled by router
     },
 
     bindSearchShortcut() {
@@ -201,25 +212,40 @@
       }
     },
 
+    /* ✅ FIX: breadcrumb now includes home icon + text pages separated by slash */
     setBreadcrumb(items = []) {
       const container = Dom.id("breadcrumb");
       if (!container) return;
+
       const list = Dom.el("ol", { class: "breadcrumb__list" });
-      const home = Dom.el("li", { class: "breadcrumb__item" });
-      home.appendChild(Dom.el("a", { href: "#/dashboard" }, [Dom.el("i", { class: "ri-home-4-line" })]));
-      list.appendChild(home);
-      items.forEach((item, i) => {
+
+      // Home icon always first
+      const homeLi = Dom.el("li", { class: "breadcrumb__item" });
+      homeLi.appendChild(
+        Dom.el("a", { href: "#/dashboard", title: "داشبورد", "aria-label": "داشبورد" }, [
+          Dom.el("i", { class: "ri-home-4-line" }),
+        ])
+      );
+      list.appendChild(homeLi);
+
+      // Additional breadcrumb items
+      items.forEach((item) => {
         const li = Dom.el("li", { class: "breadcrumb__item" });
-        if (i === items.length - 1 || !item.href) {
-          li.appendChild(Dom.el("span", null, item.label));
-        } else {
+        if (item.href && items.indexOf(item) !== items.length - 1) {
           li.appendChild(Dom.el("a", { href: item.href }, item.label));
+        } else {
+          li.appendChild(Dom.el("span", null, item.label));
         }
         list.appendChild(li);
       });
+
       Dom.empty(container);
       container.appendChild(list);
     },
+
+    /* Public helper for external use */
+    resolveLoginUrl,
+    resolveIndexUrl,
   };
 
   window.Topbar = Topbar;
