@@ -1,0 +1,376 @@
+/* ============================================================================
+   DESIGN TOKENS — DARK THEME
+   تمام متغیرهای طراحی در این فایل تعریف می‌شوند
+   ============================================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* ==========================================================
+     BRAND PALETTE
+     ========================================================== */
+  --brand-50:  #eef4ff;
+  --brand-100: #d9e6ff;
+  --brand-200: #bcd3ff;
+  --brand-300: #8eb6ff;
+  --brand-400: #598eff;
+  --brand-500: #3366ff;
+  --brand-600: #1f4ce0;
+  --brand-700: #193cb4;
+  --brand-800: #17358f;
+  --brand-900: #173071;
+  --brand-950: #0f1e48;
+
+  /* Accent — Cyan */
+  --accent-300: #67e8f9;
+  --accent-400: #22d3ee;
+  --accent-500: #06b6d4;
+  --accent-600: #0891b2;
+
+  /* Violet Accent */
+  --violet-400: #a78bfa;
+  --violet-500: #8b5cf6;
+
+  /* ==========================================================
+     SEMANTIC COLORS
+     ========================================================== */
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-bg:   rgba(34, 197, 94, 0.10);
+  --success-brd:  rgba(34, 197, 94, 0.28);
+  --success-txt:  #6ee7a4;
+
+  --warning-300: #fde68a;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-bg:   rgba(245, 158, 11, 0.10);
+  --warning-brd:  rgba(245, 158, 11, 0.28);
+  --warning-txt:  #fcd34d;
+
+  --danger-300: #fca5a5;
+  --danger-400: #f87171;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-bg:   rgba(239, 68, 68, 0.10);
+  --danger-brd:  rgba(239, 68, 68, 0.28);
+  --danger-txt:  #fca5a5;
+
+  --info-300: #93c5fd;
+  --info-400: #60a5fa;
+  --info-500: #3b82f6;
+  --info-600: #2563eb;
+  --info-bg:   rgba(59, 130, 246, 0.10);
+  --info-brd:  rgba(59, 130, 246, 0.28);
+  --info-txt:  #93c5fd;
+
+  /* ==========================================================
+     BACKGROUNDS / SURFACES
+     ========================================================== */
+  --bg-app:        #080b12;
+  --bg-base:       #0a0d14;
+  --bg-surface:    #0f1420;
+  --bg-surface-2:  #141a28;
+  --bg-surface-3:  #1a2130;
+  --bg-elevated:   #171e2e;
+  --bg-overlay:    rgba(6, 9, 16, 0.72);
+
+  --bg-hover:      rgba(255, 255, 255, 0.040);
+  --bg-hover-2:    rgba(255, 255, 255, 0.065);
+  --bg-active:     rgba(255, 255, 255, 0.085);
+  --bg-selected:   rgba(51, 102, 255, 0.14);
+  --bg-disabled:   rgba(255, 255, 255, 0.025);
+  --bg-skeleton:   rgba(255, 255, 255, 0.055);
+  --bg-code:       #0d1219;
+
+  /* ==========================================================
+     TEXT
+     ========================================================== */
+  --text-primary:   #e9edf5;
+  --text-secondary: #a4aec2;
+  --text-tertiary:  #6d7788;
+  --text-quaternary:#4d5666;
+  --text-disabled:  #3e4655;
+  --text-inverse:   #0a0d14;
+  --text-link:      #79a3ff;
+  --text-link-hover:#a8c3ff;
+  --text-on-brand:  #ffffff;
+
+  /* ==========================================================
+     BORDERS
+     ========================================================== */
+  --border-subtle:  rgba(255, 255, 255, 0.055);
+  --border-default: rgba(255, 255, 255, 0.095);
+  --border-strong:  rgba(255, 255, 255, 0.16);
+  --border-focus:   rgba(89, 142, 255, 0.55);
+  --border-brand:   rgba(89, 142, 255, 0.35);
+  --border-danger:  rgba(239, 68, 68, 0.40);
+
+  /* ==========================================================
+     GRADIENTS
+     ========================================================== */
+  --grad-brand:    linear-gradient(135deg, #598eff 0%, #06b6d4 100%);
+  --grad-brand-2:  linear-gradient(135deg, #3366ff 0%, #8b5cf6 100%);
+  --grad-success:  linear-gradient(135deg, #22c55e 0%, #06b6d4 100%);
+  --grad-danger:   linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+  --grad-surface:  linear-gradient(180deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0) 100%);
+  --grad-glow:     radial-gradient(60% 60% at 50% 0%, rgba(89,142,255,0.20) 0%, transparent 70%);
+
+  /* ==========================================================
+     SHADOWS
+     ========================================================== */
+  --shadow-xs:   0 1px 2px rgba(0,0,0,.32);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,.38), 0 1px 2px rgba(0,0,0,.24);
+  --shadow-md:   0 4px 12px rgba(0,0,0,.42), 0 2px 4px rgba(0,0,0,.28);
+  --shadow-lg:   0 12px 28px rgba(0,0,0,.50), 0 4px 10px rgba(0,0,0,.32);
+  --shadow-xl:   0 24px 56px rgba(0,0,0,.60), 0 8px 20px rgba(0,0,0,.40);
+  --shadow-2xl:  0 40px 80px rgba(0,0,0,.70);
+  --shadow-inner:inset 0 1px 0 rgba(255,255,255,.045);
+  --shadow-glow: 0 0 0 1px rgba(89,142,255,.30), 0 8px 32px rgba(51,102,255,.28);
+  --shadow-focus:0 0 0 3px rgba(89,142,255,.24);
+
+  /* ==========================================================
+     RADII
+     ========================================================== */
+  --r-xs:   4px;
+  --r-sm:   6px;
+  --r-md:   10px;
+  --r-lg:   14px;
+  --r-xl:   18px;
+  --r-2xl:  24px;
+  --r-3xl:  32px;
+  --r-full: 9999px;
+
+  /* ==========================================================
+     SPACING SCALE
+     ========================================================== */
+  --sp-0:  0;
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-7:  28px;
+  --sp-8:  32px;
+  --sp-9:  36px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-14: 56px;
+  --sp-16: 64px;
+  --sp-20: 80px;
+  --sp-24: 96px;
+
+  /* ==========================================================
+     TYPOGRAPHY
+     ========================================================== */
+  --font-sans: "Vazirmatn", "Segoe UI", Tahoma, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, Menlo, monospace;
+  --font-num:  "Vazirmatn", system-ui, sans-serif;
+
+  --fs-2xs: 10px;
+  --fs-xs:  11px;
+  --fs-sm:  12px;
+  --fs-md:  13px;
+  --fs-base:14px;
+  --fs-lg:  16px;
+  --fs-xl:  18px;
+  --fs-2xl: 20px;
+  --fs-3xl: 24px;
+  --fs-4xl: 30px;
+  --fs-5xl: 38px;
+  --fs-6xl: 48px;
+
+  --fw-thin:       200;
+  --fw-light:      300;
+  --fw-regular:    400;
+  --fw-medium:     500;
+  --fw-semibold:   600;
+  --fw-bold:       700;
+  --fw-extrabold:  800;
+  --fw-black:      900;
+
+  --lh-tight:  1.25;
+  --lh-snug:   1.4;
+  --lh-normal: 1.65;
+  --lh-relaxed:1.85;
+  --lh-loose:  2.1;
+
+  --ls-tight: -0.02em;
+  --ls-normal: 0;
+  --ls-wide:   0.02em;
+
+  /* ==========================================================
+     TRANSITIONS
+     ========================================================== */
+  --t-fast:    100ms;
+  --t-base:    180ms;
+  --t-medium:  260ms;
+  --t-slow:    380ms;
+  --t-slower:  620ms;
+
+  --ease-out:    cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --ease-in:     cubic-bezier(.55, .06, .68, .19);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-bounce: cubic-bezier(.68, -.55, .27, 1.55);
+
+  --tr-colors:  color var(--t-base) var(--ease-out),
+                background-color var(--t-base) var(--ease-out),
+                border-color var(--t-base) var(--ease-out);
+  --tr-shadow:  box-shadow var(--t-base) var(--ease-out);
+  --tr-transform: transform var(--t-base) var(--ease-out);
+  --tr-all:     all var(--t-base) var(--ease-out);
+
+  /* ==========================================================
+     Z-INDEX SCALE
+     ========================================================== */
+  --z-below:      -1;
+  --z-base:       1;
+  --z-dropdown:   100;
+  --z-sticky:     200;
+  --z-sidebar:    300;
+  --z-topbar:     400;
+  --z-drawer:     500;
+  --z-modal:      600;
+  --z-popover:    700;
+  --z-context:    800;
+  --z-tooltip:    900;
+  --z-toast:      1000;
+  --z-command:    1100;
+  --z-preloader:  1200;
+
+  /* ==========================================================
+     LAYOUT DIMENSIONS
+     ========================================================== */
+  --sidebar-w:            260px;
+  --sidebar-w-collapsed:  76px;
+  --topbar-h:             62px;
+  --footer-h:             44px;
+  --content-max:          1640px;
+  --content-pad-x:        var(--sp-6);
+  --content-pad-y:        var(--sp-6);
+
+  /* ==========================================================
+     COMPONENT-SPECIFIC
+     ========================================================== */
+  --btn-h-xs: 28px;
+  --btn-h-sm: 34px;
+  --btn-h-md: 40px;
+  --btn-h-lg: 46px;
+  --btn-h-xl: 54px;
+
+  --input-h-sm: 34px;
+  --input-h-md: 42px;
+  --input-h-lg: 48px;
+
+  --table-row-h:     52px;
+  --table-head-h:    46px;
+  --table-cell-px:   var(--sp-4);
+
+  --modal-w-sm:  400px;
+  --modal-w-md:  560px;
+  --modal-w-lg:  760px;
+  --modal-w-xl:  980px;
+  --modal-w-2xl: 1220px;
+
+  /* Scrollbar */
+  --sb-size: 10px;
+  --sb-thumb:       rgba(255,255,255,.09);
+  --sb-thumb-hover: rgba(255,255,255,.18);
+  --sb-track:       transparent;
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 3px rgba(89, 142, 255, .28);
+
+  /* Charts */
+  --chart-1: #598eff;
+  --chart-2: #06b6d4;
+  --chart-3: #8b5cf6;
+  --chart-4: #22c55e;
+  --chart-5: #f59e0b;
+  --chart-6: #ef4444;
+  --chart-7: #ec4899;
+  --chart-8: #14b8a6;
+  --chart-grid: rgba(255,255,255,.055);
+}
+
+/* ============================================================================
+   LIGHT THEME OVERRIDES (اختیاری — برای حالت روشن)
+   ============================================================================ */
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-app:        #f4f6fb;
+  --bg-base:       #eef1f8;
+  --bg-surface:    #ffffff;
+  --bg-surface-2:  #f7f9fd;
+  --bg-surface-3:  #eef2f9;
+  --bg-elevated:   #ffffff;
+  --bg-overlay:    rgba(15, 23, 42, 0.42);
+
+  --bg-hover:      rgba(15, 23, 42, 0.035);
+  --bg-hover-2:    rgba(15, 23, 42, 0.06);
+  --bg-active:     rgba(15, 23, 42, 0.08);
+  --bg-selected:   rgba(51, 102, 255, 0.10);
+  --bg-disabled:   rgba(15, 23, 42, 0.03);
+  --bg-skeleton:   rgba(15, 23, 42, 0.07);
+
+  --text-primary:   #101828;
+  --text-secondary: #475467;
+  --text-tertiary:  #667085;
+  --text-quaternary:#98a2b3;
+  --text-disabled:  #cbd2dc;
+  --text-inverse:   #ffffff;
+
+  --border-subtle:  rgba(15, 23, 42, 0.06);
+  --border-default: rgba(15, 23, 42, 0.10);
+  --border-strong:  rgba(15, 23, 42, 0.18);
+
+  --shadow-xs:   0 1px 2px rgba(16,24,40,.06);
+  --shadow-sm:   0 1px 3px rgba(16,24,40,.10), 0 1px 2px rgba(16,24,40,.06);
+  --shadow-md:   0 4px 12px rgba(16,24,40,.10), 0 2px 4px rgba(16,24,40,.06);
+  --shadow-lg:   0 12px 28px rgba(16,24,40,.12), 0 4px 10px rgba(16,24,40,.08);
+  --shadow-xl:   0 24px 56px rgba(16,24,40,.16), 0 8px 20px rgba(16,24,40,.10);
+
+  --sb-thumb:       rgba(15,23,42,.14);
+  --sb-thumb-hover: rgba(15,23,42,.26);
+
+  --chart-grid: rgba(15,23,42,.07);
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODE
+   ============================================================================ */
+[data-contrast="high"] {
+  --text-primary:   #ffffff;
+  --text-secondary: #d6dbe6;
+  --border-default: rgba(255, 255, 255, 0.22);
+  --border-strong:  rgba(255, 255, 255, 0.34);
+}
+
+/* ============================================================================
+   COMPACT DENSITY
+   ============================================================================ */
+[data-density="compact"] {
+  --table-row-h: 42px;
+  --table-head-h: 40px;
+  --sp-4: 12px;
+  --sp-6: 18px;
+}
+
+/* ============================================================================
+   MOTION PREFERENCES
+   ============================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
