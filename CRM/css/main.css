@@ -1,0 +1,251 @@
+/* ============================================================================
+   MAIN CSS ENTRY — Global composite styles & overrides
+   ============================================================================ */
+
+/* ---------- Selection highlight on drag ---------- */
+body.is-selecting,
+body.is-selecting * {
+  user-select: none !important;
+  cursor: crosshair !important;
+}
+
+/* ---------- Scroll lock ---------- */
+body.is-locked {
+  overflow: hidden !important;
+  padding-inline-end: var(--sb-size, 0);
+}
+
+body.is-locked .topbar,
+body.is-locked .sidebar {
+  padding-inline-end: var(--sb-size, 0);
+}
+
+/* ---------- Dragging ghost ---------- */
+.drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: .85;
+  transform: rotate(2deg) translate(-50%, -50%);
+  box-shadow: var(--shadow-2xl);
+  border-radius: var(--r-md);
+  max-width: 320px;
+}
+
+/* ---------- Drop indicator ---------- */
+.drop-indicator {
+  height: 2px;
+  background: var(--brand-500);
+  border-radius: var(--r-full);
+  box-shadow: 0 0 8px rgba(89,142,255,.65);
+  margin-block: 2px;
+  animation: pulse 1s var(--ease-in-out) infinite;
+}
+
+/* ---------- Focus ring reset for touch ---------- */
+@media (hover: none) {
+  .btn:hover:not(:disabled),
+  .icon-btn:hover {
+    background: inherit;
+  }
+}
+
+/* ---------- Print styles ---------- */
+@media print {
+  .sidebar,
+  .topbar,
+  .app-footer,
+  .toast-root,
+  .modal-root,
+  .drawer-root,
+  .command-palette,
+  .fab,
+  .page__actions,
+  .btn,
+  .icon-btn,
+  .table__cell-actions {
+    display: none !important;
+  }
+
+  .main {
+    margin: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .card,
+  .table-wrap,
+  .report-chart,
+  .report-table-wrap {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+  }
+
+  .page__title {
+    color: #000 !important;
+  }
+}
+
+/* ---------- Responsive tweaks ---------- */
+@media (max-width: 767px) {
+  :root {
+    --content-pad-x: var(--sp-4);
+    --content-pad-y: var(--sp-4);
+  }
+
+  .page__header {
+    margin-bottom: var(--sp-4);
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: var(--sp-3);
+  }
+
+  .stat-card {
+    padding: var(--sp-4);
+  }
+
+  .stat-card__value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --content-pad-x: var(--sp-3);
+    --content-pad-y: var(--sp-3);
+  }
+
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .card__header {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .card__body {
+    padding: var(--sp-4);
+  }
+}
+
+/* ---------- Custom selection zone (rubber band) ---------- */
+.selection-box {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  background: rgba(89,142,255,.14);
+  border: 1px solid rgba(89,142,255,.45);
+  border-radius: 2px;
+}
+
+/* ---------- Long text handling ---------- */
+.break-all { word-break: break-all; }
+.break-word { word-break: break-word; overflow-wrap: anywhere; }
+
+/* ---------- Focus trap helper ---------- */
+.focus-trap {
+  outline: none;
+}
+
+/* ---------- Accessibility: on-focus only focus ring ---------- */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ---------- Sticky helpers ---------- */
+.sticky-top {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--sp-4));
+  z-index: 5;
+}
+
+.sticky-bottom {
+  position: sticky;
+  bottom: var(--sp-4);
+  z-index: 5;
+}
+
+/* ---------- Container queries fallback ---------- */
+@supports (container-type: inline-size) {
+  .container-responsive {
+    container-type: inline-size;
+  }
+}
+
+/* ---------- prefers-color-scheme auto (respect only if not set) ---------- */
+@media (prefers-color-scheme: light) {
+  html:not([data-theme-forced]) {
+    /* theme follows app setting, not system — this rule exists
+       so devs can opt-in by removing data-theme attribute */
+  }
+}
+
+/* ---------- Reduce motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in,
+  .anim-slide-up,
+  .anim-slide-down,
+  .anim-slide-in-right,
+  .anim-slide-in-left,
+  .anim-scale-in,
+  .anim-pop-in,
+  .anim-bounce-in,
+  .anim-float,
+  .anim-glow,
+  .anim-gradient {
+    animation: none !important;
+  }
+}
+
+/* ---------- High contrast ---------- */
+@media (prefers-contrast: more) {
+  :root {
+    --border-default: rgba(255, 255, 255, 0.28);
+    --border-strong:  rgba(255, 255, 255, 0.42);
+    --text-secondary: #d4d9e3;
+  }
+}
+
+/* ---------- Safe area insets for mobile notch ---------- */
+@supports (padding: max(0px)) {
+  .topbar {
+    padding-inline-start: max(var(--sp-4), env(safe-area-inset-left));
+    padding-inline-end:   max(var(--sp-4), env(safe-area-inset-right));
+  }
+
+  .fab {
+    bottom: max(var(--sp-6), env(safe-area-inset-bottom));
+    inset-inline-end: max(var(--sp-6), env(safe-area-inset-right));
+  }
+
+  .toast-root {
+    bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- Custom checkbox column alignment ---------- */
+.table td.table__check-col,
+.table th.table__check-col {
+  vertical-align: middle;
+}
+
+/* ---------- Placeholder theme loading ---------- */
+body:not(.app-ready) .main {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.app-ready .main {
+  opacity: 1;
+  transition: opacity var(--t-slow) var(--ease-out);
+}
+
+/* ---------- End of main.css ---------- */
