@@ -1,5 +1,9 @@
 /* ============================================================================
-   TOPBAR COMPONENT — FIXED (breadcrumb + logout path)
+   TOPBAR COMPONENT — FIXED
+   - user menu button now works (was hidden under sidebar due to z-index)
+   - parent .sidebar__user is also clickable
+   - dropdown opens ABOVE the button (top-end placement)
+   - user role/full_name normalized for Supabase
    ============================================================================ */
 
 (function (window) {
@@ -10,11 +14,12 @@
   const Persian = window.Persian;
   const AuthService = window.AuthService;
 
+  /* ---------- Demo notifications (in-memory) ---------- */
   const NOTIFICATIONS = [
     { id: 1, type: "warning", title: "موجودی «ماوس گیمینگ» بحرانی است", time: new Date(Date.now() - 1000 * 60 * 12).toISOString(), read: false },
     { id: 2, type: "success", title: "سفارش ORD-2410 تحویل داده شد", time: new Date(Date.now() - 1000 * 60 * 90).toISOString(), read: false },
-    { id: 3, type: "info", title: "محصول جدید «کتاب جاوااسکریپت» اضافه شد", time: new Date(Date.now() - 1000 * 60 * 240).toISOString(), read: true },
-    { id: 4, type: "danger", title: "سفارش ORD-2405 لغو شد", time: new Date(Date.now() - 1000 * 60 * 720).toISOString(), read: true },
+    { id: 3, type: "info",    title: "محصول جدید «کتاب جاوااسکریپت» اضافه شد", time: new Date(Date.now() - 1000 * 60 * 240).toISOString(), read: true },
+    { id: 4, type: "danger",  title: "سفارش ORD-2405 لغو شد", time: new Date(Date.now() - 1000 * 60 * 720).toISOString(), read: true },
   ];
 
   const TASKS = [
@@ -23,16 +28,12 @@
     { id: "t3", title: "تماس با تأمین‌کننده الکترونیک", done: true },
   ];
 
-  /* ✅ FIX: robust relative URL builder for GitHub Pages & any base path */
-  function resolveLoginUrl() {
-    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
-    return base + "login.html";
+  /* ---------- Robust URL resolution (works on GitHub Pages subpaths) ---------- */
+  function basePath() {
+    return window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
   }
-
-  function resolveIndexUrl() {
-    const base = window.location.origin + window.location.pathname.replace(/[^/]*$/, "");
-    return base + "index.html";
-  }
+  function resolveLoginUrl() { return basePath() + "login.html"; }
+  function resolveIndexUrl() { return basePath() + "index.html"; }
 
   const Topbar = {
     init() {
@@ -42,15 +43,19 @@
       this.bindUserMenu();
       this.bindSearchShortcut();
       this.renderUserInfo();
+
+      // Re-render user info whenever auth state changes
+      if (AuthService && typeof AuthService.onChange === "function") {
+        AuthService.onChange(() => this.renderUserInfo());
+      }
     },
 
     bindThemeToggle() {
       const btn = Dom.id("theme-toggle");
-      if (btn) {
-        btn.addEventListener("click", () => window.ThemeSwitcher.toggle());
-      }
+      if (btn) btn.addEventListener("click", () => window.ThemeSwitcher.toggle());
     },
 
+    /* ---------- User info rendering ---------- */
     renderUserInfo() {
       const user = AuthService.getUser();
       if (!user) {
@@ -61,11 +66,14 @@
       }
       const name = user.full_name || user.email?.split("@")[0] || "کاربر";
       const initials = window.Formatters.initials(name);
+      const roleLabel = window.Formatters.roleLabel(user.role) || "کاربر";
+
       Dom.qa("[data-user='name']").forEach((el) => (el.textContent = name));
       Dom.qa("[data-user='initial']").forEach((el) => (el.textContent = initials));
-      Dom.qa("[data-user='role']").forEach((el) => (el.textContent = window.Formatters.roleLabel(user.role || "admin")));
+      Dom.qa("[data-user='role']").forEach((el) => (el.textContent = roleLabel));
     },
 
+    /* ---------- Notifications ---------- */
     bindNotifications() {
       const btn = Dom.id("notifications-btn");
       if (!btn) return;
@@ -76,18 +84,11 @@
 
       btn.addEventListener("click", () => {
         const panel = this.buildNotificationsPanel();
-        Dropdown.open(btn, { placement: "bottom-end", items: [] });
-        const menu = document.querySelector(".dropdown__menu");
-        if (menu) {
-          Dom.empty(menu);
-          menu.appendChild(panel);
-          menu.style.padding = "0";
-          menu.style.minWidth = "0";
-          menu.style.background = "transparent";
-          menu.style.border = "0";
-          menu.style.boxShadow = "none";
-          menu.style.maxHeight = "none";
-        }
+        const inst = Dropdown.open(btn, {
+          placement: "bottom-end",
+          items: [],
+        });
+        this.swapMenuContent(inst, panel);
       });
     },
 
@@ -95,6 +96,7 @@
       const panel = Dom.el("div", { class: "notif-panel" });
       const header = Dom.el("div", { class: "notif-panel__header" });
       header.appendChild(Dom.el("h4", null, "اعلان‌ها"));
+
       const markAll = Dom.el("button", { class: "btn btn--text btn--xs", type: "button" }, "همه خوانده شد");
       markAll.addEventListener("click", () => {
         NOTIFICATIONS.forEach((n) => (n.read = true));
@@ -107,15 +109,19 @@
 
       const list = Dom.el("div", { class: "notif-panel__list" });
       if (!NOTIFICATIONS.length) {
-        list.appendChild(Dom.el("div", { style: "padding:32px;text-align:center;color:var(--text-tertiary);font-size:13px" }, "اعلان جدیدی وجود ندارد"));
+        list.appendChild(
+          Dom.el("div", { style: "padding:32px;text-align:center;color:var(--text-tertiary);font-size:13px" }, "اعلان جدیدی وجود ندارد")
+        );
       } else {
         NOTIFICATIONS.forEach((n) => {
           const row = Dom.el("div", { class: "mini-list__item notif-row" });
           const icons = { warning: "ri-alert-line", success: "ri-check-line", info: "ri-information-line", danger: "ri-error-warning-line" };
           const tones = { warning: "warn", success: "success", info: "info", danger: "danger" };
-          row.appendChild(Dom.el("div", { class: `mini-list__icon mini-list__icon--${tones[n.type] || "info"}` }, [
-            Dom.el("i", { class: icons[n.type] || "ri-information-line" }),
-          ]));
+          row.appendChild(
+            Dom.el("div", { class: `mini-list__icon mini-list__icon--${tones[n.type] || "info"}` }, [
+              Dom.el("i", { class: icons[n.type] || "ri-information-line" }),
+            ])
+          );
           const body = Dom.el("div", { class: "mini-list__body" });
           body.appendChild(Dom.el("div", { class: "mini-list__title" }, n.title));
           body.appendChild(Dom.el("div", { class: "mini-list__meta" }, Persian.timeAgoShort(n.time)));
@@ -134,17 +140,23 @@
       return panel;
     },
 
+    /* ---------- Tasks ---------- */
     bindTasks() {
       const btn = Dom.id("tasks-btn");
       if (!btn) return;
+
       btn.addEventListener("click", () => {
         const panel = Dom.el("div", { class: "task-panel" });
         const header = Dom.el("div", { class: "notif-panel__header" });
         header.appendChild(Dom.el("h4", null, "کارهای من"));
         panel.appendChild(header);
+
         const list = Dom.el("div", { class: "notif-panel__list" });
         TASKS.forEach((t) => {
-          const row = Dom.el("label", { class: "checkbox", style: "display:flex;padding:12px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer" });
+          const row = Dom.el("label", {
+            class: "checkbox",
+            style: "display:flex;padding:12px 16px;border-bottom:1px solid var(--border-subtle);cursor:pointer;width:100%",
+          });
           const input = Dom.el("input", { type: "checkbox" });
           input.checked = t.done;
           const box = Dom.el("span", { class: "checkbox__box" }, [Dom.el("i", { class: "ri-check-line" })]);
@@ -161,48 +173,99 @@
         });
         panel.appendChild(list);
 
-        Dropdown.open(btn, { placement: "bottom-end", items: [] });
-        const menu = document.querySelector(".dropdown__menu");
-        if (menu) {
-          Dom.empty(menu);
-          menu.appendChild(panel);
-          menu.style.padding = "0";
-          menu.style.background = "transparent";
-          menu.style.border = "0";
-          menu.style.boxShadow = "none";
-          menu.style.minWidth = "0";
-        }
+        const inst = Dropdown.open(btn, { placement: "bottom-end", items: [] });
+        this.swapMenuContent(inst, panel);
       });
     },
 
+    /* ---------- Helper: replace dropdown menu content with custom panel ---------- */
+    swapMenuContent(instance, panel) {
+      if (!instance || !instance.menu) return;
+      const menu = instance.menu;
+      Dom.empty(menu);
+      menu.appendChild(panel);
+      Object.assign(menu.style, {
+        padding: "0",
+        background: "transparent",
+        border: "0",
+        boxShadow: "none",
+        minWidth: "0",
+        maxWidth: "none",
+        maxHeight: "none",
+        overflow: "visible",
+      });
+    },
+
+    /* ---------- User menu (✅ FIXED) ---------- */
     bindUserMenu() {
       const btn = Dom.id("topbar-user");
-      const sidebarUser = Dom.id("user-menu-btn");
+      const sidebarUserBtn = Dom.id("user-menu-btn");
+      const sidebarUserWrap = Dom.id("sidebar-user");
 
-      const show = (anchor) => {
+      const openMenu = (anchor) => {
         const user = AuthService.getUser();
+
+        // Determine menu placement: for sidebar, open ABOVE (top-end).
+        const isSidebar = sidebarUserWrap && sidebarUserWrap.contains(anchor);
+        const placement = isSidebar ? "top-end" : "bottom-end";
+
+        const name = user?.full_name || user?.email?.split("@")[0] || "کاربر";
+        const email = user?.email || "—";
+
         const items = [
-          { label: user?.full_name || "پروفایل", icon: "ri-user-line", onClick: () => (location.hash = "#/settings") },
+          // Header: user info (non-clickable, styled)
+          { type: "section", label: name },
+          { type: "section", label: email },
+          { type: "divider" },
+          { label: "پروفایل کاربری", icon: "ri-user-line", onClick: () => (location.hash = "#/settings") },
           { label: "تنظیمات حساب", icon: "ri-settings-3-line", onClick: () => (location.hash = "#/settings") },
           { label: "تاریخچه فعالیت‌ها", icon: "ri-history-line", onClick: () => (location.hash = "#/activity-log") },
           { type: "divider" },
-          { label: "تغییر تم", icon: "ri-moon-line", onClick: () => window.ThemeSwitcher.toggle() },
+          { label: "تغییر تم روشن/تیره", icon: "ri-contrast-2-line", onClick: () => window.ThemeSwitcher.toggle() },
+          {
+            label: "دستورات سریع",
+            icon: "ri-command-line",
+            shortcut: "Ctrl+K",
+            onClick: () => window.CommandPalette?.open(),
+          },
           { type: "divider" },
-          { label: "خروج از حساب", icon: "ri-logout-box-r-line", danger: true, onClick: async () => {
-              try {
-                await AuthService.logout();
-              } catch (e) { /* ignore */ }
-              // ✅ FIX: absolute path resolution for any deployment base
+          {
+            label: "خروج از حساب",
+            icon: "ri-logout-box-r-line",
+            danger: true,
+            onClick: async () => {
+              try { await AuthService.logout(); } catch (e) { /* ignore */ }
               window.location.href = resolveLoginUrl();
-            } },
+            },
+          },
         ];
-        Dropdown.open(anchor, { items, placement: "bottom-end" });
+
+        Dropdown.open(anchor, { items, placement });
       };
 
-      if (btn) btn.addEventListener("click", () => show(btn));
-      if (sidebarUser) sidebarUser.addEventListener("click", () => show(sidebarUser));
+      // ✅ FIX: attach to the icon button AND its parent wrapper
+      if (btn) {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openMenu(btn);
+        });
+      }
+      if (sidebarUserBtn) {
+        sidebarUserBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openMenu(sidebarUserBtn);
+        });
+      }
+      if (sidebarUserWrap) {
+        sidebarUserWrap.addEventListener("click", (e) => {
+          // Only trigger if the click was on the wrapper itself, not on a child that already handles it
+          if (e.target.closest("#user-menu-btn")) return;
+          openMenu(sidebarUserWrap);
+        });
+      }
     },
 
+    /* ---------- Sidebar search trigger ---------- */
     bindSearchShortcut() {
       const trigger = Dom.id("sidebar-search-trigger");
       if (trigger) {
@@ -212,7 +275,7 @@
       }
     },
 
-    /* ✅ FIX: breadcrumb now includes home icon + text pages separated by slash */
+    /* ---------- Breadcrumb ---------- */
     setBreadcrumb(items = []) {
       const container = Dom.id("breadcrumb");
       if (!container) return;
@@ -228,10 +291,10 @@
       );
       list.appendChild(homeLi);
 
-      // Additional breadcrumb items
-      items.forEach((item) => {
+      items.forEach((item, idx) => {
         const li = Dom.el("li", { class: "breadcrumb__item" });
-        if (item.href && items.indexOf(item) !== items.length - 1) {
+        const isLast = idx === items.length - 1;
+        if (item.href && !isLast) {
           li.appendChild(Dom.el("a", { href: item.href }, item.label));
         } else {
           li.appendChild(Dom.el("span", null, item.label));
@@ -243,7 +306,6 @@
       container.appendChild(list);
     },
 
-    /* Public helper for external use */
     resolveLoginUrl,
     resolveIndexUrl,
   };
