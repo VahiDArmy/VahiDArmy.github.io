@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#0a0d14" />
+  <meta name="description" content="سیستم مدیریت ارتباط با مشتریان و کنترل موجودی انبار" />
+  <meta name="author" content="CRM Inventory Suite" />
+
+  <title>سامانه CRM | مدیریت انبار و گزارشات</title>
+
+  <!-- ==================== FONTS ==================== -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
+  />
+
+  <!-- ==================== ICONS ==================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+  />
+
+  <!-- ==================== CSS: BASE ==================== -->
+  <link rel="stylesheet" href="css/base/variables.css" />
+  <link rel="stylesheet" href="css/base/reset.css" />
+  <link rel="stylesheet" href="css/base/typography.css" />
+  <link rel="stylesheet" href="css/base/rtl.css" />
+  <link rel="stylesheet" href="css/base/utilities.css" />
+  <link rel="stylesheet" href="css/base/animations.css" />
+
+  <!-- ==================== CSS: LAYOUT ==================== -->
+  <link rel="stylesheet" href="css/layout/sidebar.css" />
+  <link rel="stylesheet" href="css/layout/topbar.css" />
+  <link rel="stylesheet" href="css/layout/main.css" />
+
+  <!-- ==================== CSS: COMPONENTS ==================== -->
+  <link rel="stylesheet" href="css/components/buttons.css" />
+  <link rel="stylesheet" href="css/components/forms.css" />
+  <link rel="stylesheet" href="css/components/tables.css" />
+  <link rel="stylesheet" href="css/components/cards.css" />
+  <link rel="stylesheet" href="css/components/modal.css" />
+  <link rel="stylesheet" href="css/components/overlays.css" />
+  <link rel="stylesheet" href="css/components/feedback.css" />
+  <link rel="stylesheet" href="css/components/navigation.css" />
+  <link rel="stylesheet" href="css/components/data-display.css" />
+  <link rel="stylesheet" href="css/components/date-picker.css" />
+  <link rel="stylesheet" href="css/components/file-uploader.css" />
+
+  <!-- ==================== CSS: PAGES ==================== -->
+  <link rel="stylesheet" href="css/pages/dashboard.css" />
+  <link rel="stylesheet" href="css/pages/inventory.css" />
+  <link rel="stylesheet" href="css/pages/list-pages.css" />
+  <link rel="stylesheet" href="css/pages/reports.css" />
+  <link rel="stylesheet" href="css/pages/settings.css" />
+
+  <!-- ==================== CSS: MAIN ==================== -->
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+
+<body class="app-body">
+
+  <!-- ============================================================
+       PRELOADER
+  ============================================================ -->
+  <div id="app-preloader" class="preloader">
+    <div class="preloader__inner">
+      <div class="preloader__logo">
+        <svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true">
+          <defs>
+            <linearGradient id="plg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#598eff" />
+              <stop offset="100%" stop-color="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <rect x="4" y="4" width="40" height="40" rx="12"
+                fill="none" stroke="url(#plg)" stroke-width="3" />
+          <path d="M14 18h20M14 24h20M14 30h13"
+                stroke="url(#plg)" stroke-width="3" stroke-linecap="round" />
+        </svg>
+      </div>
+      <div class="preloader__bar"><span></span></div>
+      <p class="preloader__text">در حال آماده‌سازی سامانه…</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       APP SHELL
+  ============================================================ -->
+  <div id="app" class="app-shell" hidden>
+
+    <!-- ---------- SIDEBAR ---------- -->
+    <aside id="sidebar" class="sidebar" data-state="expanded" aria-label="نوار کناری">
+      <div class="sidebar__brand">
+        <div class="sidebar__brand-logo">
+          <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+            <defs>
+              <linearGradient id="sbg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#598eff" />
+                <stop offset="100%" stop-color="#06b6d4" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="40" height="40" rx="12"
+                  fill="none" stroke="url(#sbg)" stroke-width="3" />
+            <path d="M14 18h20M14 24h20M14 30h13"
+                  stroke="url(#sbg)" stroke-width="3" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="sidebar__brand-text">
+          <strong>سامانه انبار</strong>
+          <span>CRM &amp; Inventory</span>
+        </div>
+        <button class="sidebar__collapse-btn" id="sidebar-collapse"
+                type="button" title="جمع/باز کردن نوار کناری"
+                aria-label="جمع/باز کردن نوار کناری">
+          <i class="ri-sidebar-fold-line"></i>
+        </button>
+      </div>
+
+      <div class="sidebar__search">
+        <button class="sidebar__search-trigger" id="sidebar-search-trigger" type="button">
+          <i class="ri-search-line"></i>
+          <span>جستجوی سریع…</span>
+          <kbd>Ctrl K</kbd>
+        </button>
+      </div>
+
+      <nav class="sidebar__nav" aria-label="منوی اصلی">
+        <div class="sidebar__section">
+          <p class="sidebar__section-title">داشبورد</p>
+          <ul class="sidebar__list">
+            <li>
+              <a class="sidebar__link" href="#/dashboard" data-route="dashboard">
+                <i class="ri-dashboard-3-line"></i>
+                <span>نمای کلی</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar__section">
+          <p class="sidebar__section-title">عملیات</p>
+          <ul class="sidebar__list">
+            <li>
+              <a class="sidebar__link" href="#/products" data-route="products">
+                <i class="ri-archive-2-line"></i>
+                <span>محصولات</span>
+                <span class="sidebar__badge" data-count="products"></span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/inventory" data-route="inventory">
+                <i class="ri-stack-line"></i>
+                <span>موجودی انبار</span>
+                <span class="sidebar__badge sidebar__badge--warn" data-count="low-stock"></span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/orders" data-route="orders">
+                <i class="ri-shopping-bag-3-line"></i>
+                <span>سفارشات</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/customers" data-route="customers">
+                <i class="ri-group-line"></i>
+                <span>مشتریان</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/suppliers" data-route="suppliers">
+                <i class="ri-truck-line"></i>
+                <span>تأمین‌کنندگان</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/warehouses" data-route="warehouses">
+                <i class="ri-building-4-line"></i>
+                <span>انبارها</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar__section">
+          <p class="sidebar__section-title">تحلیل و مدیریت</p>
+          <ul class="sidebar__list">
+            <li>
+              <a class="sidebar__link" href="#/reports" data-route="reports">
+                <i class="ri-bar-chart-2-line"></i>
+                <span>گزارشات</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/activity-log" data-route="activity-log">
+                <i class="ri-history-line"></i>
+                <span>تاریخچه فعالیت‌ها</span>
+              </a>
+            </li>
+            <li>
+              <a class="sidebar__link" href="#/settings" data-route="settings">
+                <i class="ri-settings-3-line"></i>
+                <span>تنظیمات</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="sidebar__user" id="sidebar-user">
+          <div class="sidebar__user-avatar">
+            <span data-user="initial">؟</span>
+          </div>
+          <div class="sidebar__user-info">
+            <strong data-user="name">کاربر مهمان</strong>
+            <span data-user="role">—</span>
+          </div>
+          <button class="icon-btn" id="user-menu-btn" type="button"
+                  aria-label="منوی کاربر">
+            <i class="ri-more-2-fill"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <div class="sidebar__backdrop" id="sidebar-backdrop" hidden></div>
+
+    <!-- ---------- TOPBAR ---------- -->
+    <header class="topbar" id="topbar">
+      <button class="icon-btn topbar__mobile-toggle" id="sidebar-toggle"
+              type="button" aria-label="منو">
+        <i class="ri-menu-2-line"></i>
+      </button>
+
+      <nav class="breadcrumb" aria-label="مسیر ناوبری" id="breadcrumb">
+        <ol class="breadcrumb__list">
+          <li class="breadcrumb__item">
+            <a href="#/dashboard"><i class="ri-home-4-line"></i></a>
+          </li>
+        </ol>
+      </nav>
+
+      <div class="topbar__spacer"></div>
+
+      <div class="topbar__actions">
+        <button class="icon-btn" id="theme-toggle" type="button" title="تغییر تم">
+          <i class="ri-moon-line"></i>
+        </button>
+
+        <button class="icon-btn" id="notifications-btn" type="button" title="اعلان‌ها">
+          <i class="ri-notification-3-line"></i>
+          <span class="icon-btn__dot" data-badge="notifications"></span>
+        </button>
+
+        <button class="icon-btn" id="tasks-btn" type="button" title="کارها">
+          <i class="ri-checkbox-multiple-line"></i>
+        </button>
+
+        <div class="topbar__divider"></div>
+
+        <button class="topbar__user" id="topbar-user" type="button">
+          <span class="topbar__user-avatar" data-user="initial">؟</span>
+          <span class="topbar__user-name" data-user="name">کاربر</span>
+          <i class="ri-arrow-down-s-line"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ---------- MAIN ---------- -->
+    <main class="main" id="main">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="page" data-page="dashboard" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">نمای کلی</h1>
+            <p class="page__subtitle">خلاصه وضعیت انبار، فروش و مشتریان</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--ghost" data-action="refresh-dashboard">
+              <i class="ri-refresh-line"></i> بروزرسانی
+            </button>
+            <button class="btn btn--primary" data-action="export-dashboard">
+              <i class="ri-download-2-line"></i> خروجی گزارش
+            </button>
+          </div>
+        </div>
+
+        <div class="stat-grid" id="dashboard-stats"></div>
+
+        <div class="dash-grid">
+          <div class="card card--chart">
+            <div class="card__header">
+              <h3 class="card__title">روند فروش و خرید</h3>
+              <div class="card__tools">
+                <select class="select select--sm" id="chart-range">
+                  <option value="7">۷ روز اخیر</option>
+                  <option value="30" selected>۳۰ روز اخیر</option>
+                  <option value="90">۹۰ روز اخیر</option>
+                </select>
+              </div>
+            </div>
+            <div class="card__body">
+              <canvas id="chart-sales" height="110"></canvas>
+            </div>
+          </div>
+
+          <div class="card card--chart">
+            <div class="card__header">
+              <h3 class="card__title">توزیع دسته‌بندی‌ها</h3>
+            </div>
+            <div class="card__body">
+              <canvas id="chart-categories" height="110"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h3 class="card__title">کالاهای رو به اتمام</h3>
+              <a href="#/inventory" class="card__link">مشاهده همه <i class="ri-arrow-left-s-line"></i></a>
+            </div>
+            <div class="card__body card__body--flush">
+              <div id="dashboard-low-stock" class="mini-list"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__header">
+              <h3 class="card__title">آخرین فعالیت‌ها</h3>
+              <a href="#/activity-log" class="card__link">همه <i class="ri-arrow-left-s-line"></i></a>
+            </div>
+            <div class="card__body card__body--flush">
+              <div id="dashboard-activity" class="timeline timeline--compact"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PRODUCTS ============ -->
+      <section class="page" data-page="products" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">محصولات</h1>
+            <p class="page__subtitle">مدیریت کاتالوگ کالا و خدمات</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--primary" data-action="new-product">
+              <i class="ri-add-line"></i> محصول جدید
+            </button>
+          </div>
+        </div>
+        <div class="card" id="products-panel"></div>
+      </section>
+
+      <!-- ============ INVENTORY ============ -->
+      <section class="page" data-page="inventory" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">موجودی انبار</h1>
+            <p class="page__subtitle">کنترل و رهگیری موجودی در انبارها</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--ghost" data-action="inventory-transfer">
+              <i class="ri-swap-box-line"></i> انتقال بین انبار
+            </button>
+            <button class="btn btn--primary" data-action="inventory-adjust">
+              <i class="ri-equalizer-line"></i> تعدیل موجودی
+            </button>
+          </div>
+        </div>
+        <div id="inventory-stats" class="stat-grid"></div>
+        <div class="card" id="inventory-panel"></div>
+      </section>
+
+      <!-- ============ ORDERS ============ -->
+      <section class="page" data-page="orders" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">سفارشات</h1>
+            <p class="page__subtitle">سفارشات خرید و فروش</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--primary" data-action="new-order">
+              <i class="ri-add-line"></i> سفارش جدید
+            </button>
+          </div>
+        </div>
+        <div class="card" id="orders-panel"></div>
+      </section>
+
+      <!-- ============ CUSTOMERS ============ -->
+      <section class="page" data-page="customers" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">مشتریان</h1>
+            <p class="page__subtitle">پایگاه مشتریان و سابقه تعاملات</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--primary" data-action="new-customer">
+              <i class="ri-user-add-line"></i> مشتری جدید
+            </button>
+          </div>
+        </div>
+        <div class="card" id="customers-panel"></div>
+      </section>
+
+      <!-- ============ SUPPLIERS ============ -->
+      <section class="page" data-page="suppliers" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">تأمین‌کنندگان</h1>
+            <p class="page__subtitle">مدیریت زنجیره تأمین</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--primary" data-action="new-supplier">
+              <i class="ri-add-line"></i> تأمین‌کننده جدید
+            </button>
+          </div>
+        </div>
+        <div class="card" id="suppliers-panel"></div>
+      </section>
+
+      <!-- ============ WAREHOUSES ============ -->
+      <section class="page" data-page="warehouses" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">انبارها</h1>
+            <p class="page__subtitle">مدیریت مکان‌های نگهداری کالا</p>
+          </div>
+          <div class="page__actions">
+            <button class="btn btn--primary" data-action="new-warehouse">
+              <i class="ri-add-line"></i> انبار جدید
+            </button>
+          </div>
+        </div>
+        <div class="card" id="warehouses-panel"></div>
+      </section>
+
+      <!-- ============ REPORTS ============ -->
+      <section class="page" data-page="reports" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">گزارشات</h1>
+            <p class="page__subtitle">تحلیل‌های پیشرفته و خروجی‌های سفارشی</p>
+          </div>
+        </div>
+        <div class="tabs" data-tabs="reports">
+          <button class="tab is-active" data-tab="sales">فروش</button>
+          <button class="tab" data-tab="inventory">موجودی</button>
+          <button class="tab" data-tab="customers">مشتریان</button>
+          <button class="tab" data-tab="suppliers">تأمین‌کنندگان</button>
+          <button class="tab" data-tab="profit">سود و زیان</button>
+        </div>
+        <div class="tab-panels" id="reports-panels"></div>
+      </section>
+
+      <!-- ============ ACTIVITY LOG ============ -->
+      <section class="page" data-page="activity-log" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">تاریخچه فعالیت‌ها</h1>
+            <p class="page__subtitle">ردیابی تمام رخدادهای سیستم</p>
+          </div>
+        </div>
+        <div class="card" id="activity-log-panel"></div>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section class="page" data-page="settings" hidden>
+        <div class="page__header">
+          <div>
+            <h1 class="page__title">تنظیمات</h1>
+            <p class="page__subtitle">پیکربندی سامانه و حساب کاربری</p>
+          </div>
+        </div>
+        <div class="tabs" data-tabs="settings">
+          <button class="tab is-active" data-tab="profile">پروفایل</button>
+          <button class="tab" data-tab="general">عمومی</button>
+          <button class="tab" data-tab="notifications">اعلان‌ها</button>
+          <button class="tab" data-tab="team">تیم</button>
+          <button class="tab" data-tab="integrations">یکپارچه‌سازی</button>
+        </div>
+        <div class="tab-panels" id="settings-panels"></div>
+      </section>
+
+      <!-- ============ 404 ============ -->
+      <section class="page" data-page="not-found" hidden>
+        <div class="empty-state">
+          <i class="ri-error-warning-line empty-state__icon"></i>
+          <h2>صفحه یافت نشد</h2>
+          <p>آدرس مورد نظر در سامانه وجود ندارد.</p>
+          <a href="#/dashboard" class="btn btn--primary">بازگشت به داشبورد</a>
+        </div>
+      </section>
+    </main>
+
+    <!-- ---------- FOOTER ---------- -->
+    <footer class="app-footer">
+      <span>© <span id="footer-year"></span> سامانه CRM انبار — تمامی حقوق محفوظ است.</span>
+      <span class="app-footer__meta">نسخه <b id="footer-version">1.0.0</b></span>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       OVERLAY ROOTS
+  ============================================================ -->
+  <div id="modal-root" class="modal-root" aria-live="polite"></div>
+  <div id="drawer-root" class="drawer-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="assertive" aria-atomic="true"></div>
+  <div id="context-menu-root" class="context-menu-root"></div>
+  <div id="tooltip-root" class="tooltip-root"></div>
+  <div id="dropdown-root" class="dropdown-root"></div>
+
+  <!-- Command Palette -->
+  <div id="command-palette" class="command-palette" hidden>
+    <div class="command-palette__backdrop" data-cp-close></div>
+    <div class="command-palette__panel" role="dialog" aria-modal="true">
+      <div class="command-palette__input-wrap">
+        <i class="ri-search-line"></i>
+        <input type="text" id="cp-input" placeholder="جستجو یا اجرای دستور…"
+               autocomplete="off" spellcheck="false" />
+        <kbd>Esc</kbd>
+      </div>
+      <ul class="command-palette__list" id="cp-list"></ul>
+      <div class="command-palette__footer">
+        <span><kbd>↑</kbd><kbd>↓</kbd> پیمایش</span>
+        <span><kbd>Enter</kbd> انتخاب</span>
+        <span><kbd>Esc</kbd> بستن</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       SCRIPTS — CDN
+  ============================================================ -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/relativeTime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/calendar.min.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — CONFIG
+  ============================================================ -->
+  <script src="js/config/env.js"></script>
+  <script src="js/config/constants.js"></script>
+  <script src="js/config/supabase.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — UTILS
+  ============================================================ -->
+  <script src="js/utils/dom.js"></script>
+  <script src="js/utils/formatters.js"></script>
+  <script src="js/utils/date.js"></script>
+  <script src="js/utils/persian.js"></script>
+  <script src="js/utils/storage.js"></script>
+  <script src="js/utils/validators.js"></script>
+  <script src="js/utils/helpers.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — SERVICES
+  ============================================================ -->
+  <script src="js/services/auth.service.js"></script>
+  <script src="js/services/products.service.js"></script>
+  <script src="js/services/inventory.service.js"></script>
+  <script src="js/services/customers.service.js"></script>
+  <script src="js/services/orders.service.js"></script>
+  <script src="js/services/suppliers.service.js"></script>
+  <script src="js/services/categories.service.js"></script>
+  <script src="js/services/warehouses.service.js"></script>
+  <script src="js/services/reports.service.js"></script>
+  <script src="js/services/activity-log.service.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — COMPONENTS
+  ============================================================ -->
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/dropdown.js"></script>
+  <script src="js/components/context-menu.js"></script>
+  <script src="js/components/tooltip.js"></script>
+  <script src="js/components/tabs.js"></script>
+  <script src="js/components/pagination.js"></script>
+  <script src="js/components/table.js"></script>
+  <script src="js/components/form.js"></script>
+  <script src="js/components/charts.js"></script>
+  <script src="js/components/file-uploader.js"></script>
+  <script src="js/components/date-picker.js"></script>
+  <script src="js/components/sidebar.js"></script>
+  <script src="js/components/topbar.js"></script>
+  <script src="js/components/theme-switcher.js"></script>
+  <script src="js/components/command-palette.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — PAGES
+  ============================================================ -->
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/products.js"></script>
+  <script src="js/pages/inventory.js"></script>
+  <script src="js/pages/customers.js"></script>
+  <script src="js/pages/orders.js"></script>
+  <script src="js/pages/suppliers.js"></script>
+  <script src="js/pages/warehouses.js"></script>
+  <script src="js/pages/reports.js"></script>
+  <script src="js/pages/settings.js"></script>
+  <script src="js/pages/activity-log.js"></script>
+
+  <!-- ============================================================
+       SCRIPTS — CORE
+  ============================================================ -->
+  <script src="js/store.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
