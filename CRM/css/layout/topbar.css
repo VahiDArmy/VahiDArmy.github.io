@@ -1,5 +1,5 @@
 /* ============================================================================
-   TOPBAR
+   TOPBAR — FIXED (breadcrumb separator)
    ============================================================================ */
 
 .topbar {
@@ -37,6 +37,7 @@
   .topbar {
     inset-inline-start: 0;
     padding-inline: var(--sp-4);
+    gap: var(--sp-2);
   }
 
   .topbar__mobile-toggle {
@@ -44,27 +45,32 @@
   }
 }
 
-/* ---------- Breadcrumb ---------- */
+/* ============================================================================
+   BREADCRUMB
+   ============================================================================ */
 .breadcrumb {
   min-width: 0;
   overflow: hidden;
+  flex-shrink: 1;
 }
 
 .breadcrumb__list {
   display: flex;
   align-items: center;
-  gap: 0;
   font-size: var(--fs-sm);
   color: var(--text-tertiary);
   white-space: nowrap;
   overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .breadcrumb__item {
   display: inline-flex;
   align-items: center;
   min-width: 0;
-  max-width: 220px;
+  max-width: 200px;
 }
 
 .breadcrumb__item a,
@@ -74,11 +80,12 @@
   gap: var(--sp-1);
   color: var(--text-tertiary);
   font-size: var(--fs-sm);
-  padding: 3px 6px;
+  padding: 4px 6px;
   border-radius: var(--r-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   transition: var(--tr-colors);
+  text-decoration: none;
 }
 
 .breadcrumb__item a:hover {
@@ -93,16 +100,38 @@
 }
 
 .breadcrumb__item i {
-  font-size: 15px;
+  font-size: 16px;
+  line-height: 1;
 }
 
+/* ✅ FIX: Separator between items only (not before first item).
+   Uses plain slash character — reliable across all fonts. */
 .breadcrumb__item + .breadcrumb__item::before {
-  content: "\ea6e";
-  font-family: "remixicon";
-  font-size: 15px;
-  margin: 0 var(--sp-1);
+  content: "/";
+  display: inline-block;
+  margin: 0 var(--sp-2);
   color: var(--text-quaternary);
-  opacity: .7;
+  font-size: 13px;
+  font-weight: var(--fw-regular);
+  opacity: 0.5;
+  line-height: 1;
+  font-family: var(--font-sans);
+}
+
+/* ---------- Hide home text on tiny screens ---------- */
+@media (max-width: 639px) {
+  .breadcrumb__item {
+    max-width: 130px;
+  }
+
+  .breadcrumb__item a,
+  .breadcrumb__item span {
+    font-size: var(--fs-xs);
+  }
+
+  .breadcrumb__item + .breadcrumb__item::before {
+    margin: 0 var(--sp-1);
+  }
 }
 
 /* ---------- Spacer ---------- */
@@ -239,7 +268,8 @@
   transform: rotate(180deg);
 }
 
-@media (max-width: 767px) {
+/* ---------- Responsive: hide non-critical icons on small screens ---------- */
+@media (max-width: 639px) {
   .topbar__user-name {
     display: none;
   }
@@ -247,11 +277,39 @@
   .topbar__user {
     padding-inline: var(--sp-1);
   }
+
+  .topbar__quick,
+  .topbar__divider,
+  #tasks-btn {
+    display: none;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+
+  .breadcrumb {
+    max-width: 40%;
+  }
 }
 
-/* ---------- Notifications dropdown ---------- */
+@media (max-width: 400px) {
+  .breadcrumb__item:not(:first-child):not(:last-child) {
+    display: none;
+  }
+
+  .breadcrumb__item:last-child a,
+  .breadcrumb__item:last-child span {
+    max-width: 100px;
+  }
+}
+
+/* ---------- Notifications dropdown panel ---------- */
 .notif-panel {
-  width: 360px;
+  width: 340px;
+  max-width: calc(100vw - 24px);
   max-height: 480px;
   display: flex;
   flex-direction: column;
@@ -268,6 +326,7 @@
   justify-content: space-between;
   padding: var(--sp-3) var(--sp-4);
   border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .notif-panel__header h4 {
@@ -285,6 +344,7 @@
   padding: var(--sp-2);
   border-top: 1px solid var(--border-subtle);
   text-align: center;
+  flex-shrink: 0;
 }
 
 .notif-panel__footer a {
@@ -295,14 +355,15 @@
 
 @media (max-width: 480px) {
   .notif-panel {
-    width: calc(100vw - 24px);
-    max-width: 360px;
+    width: calc(100vw - 32px);
+    max-width: 340px;
   }
 }
 
 /* ---------- Task panel ---------- */
 .task-panel {
-  width: 340px;
+  width: 320px;
+  max-width: calc(100vw - 24px);
   background: var(--bg-elevated);
   border: 1px solid var(--border-default);
   border-radius: var(--r-lg);
@@ -315,15 +376,4 @@
   display: flex;
   align-items: center;
   gap: var(--sp-1);
-}
-
-@media (max-width: 639px) {
-  .topbar__quick,
-  .topbar__divider {
-    display: none;
-  }
-
-  .breadcrumb__item:not(:last-child):not(:first-child) {
-    display: none;
-  }
 }
