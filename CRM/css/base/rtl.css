@@ -1,5 +1,5 @@
 /* ============================================================================
-   RTL SPECIFIC ADJUSTMENTS
+   RTL SPECIFIC ADJUSTMENTS — FIXED
    ============================================================================ */
 
 [dir="rtl"] {
@@ -45,19 +45,13 @@
   padding-inline-end: var(--sp-10);
 }
 
-/* ---------- Checkbox / Radio ---------- */
-[dir="rtl"] .checkbox,
-[dir="rtl"] .radio {
-  padding-inline-start: 0;
-  padding-inline-end: 0;
-}
-
-/* ---------- Breadcrumb separator ---------- */
-[dir="rtl"] .breadcrumb__item + .breadcrumb__item::before {
-  content: "\ea6e"; /* ri-arrow-left-s-line */
-  font-family: "remixicon";
-  margin: 0 var(--sp-2);
-  color: var(--text-quaternary);
+/* ---------- Breadcrumb ----------
+   ✅ FIX: در RTL با flex-direction: row پیش‌فرض، آیتم‌ها به‌صورت
+   طبیعی از راست به چپ می‌چینند — دیگر نیازی به row-reverse نیست.
+   ---------- */
+[dir="rtl"] .breadcrumb__list {
+  flex-direction: row;
+  justify-content: flex-start;
 }
 
 /* ---------- Timeline ---------- */
@@ -74,11 +68,6 @@
 [dir="rtl"] .timeline__item::before {
   inset-inline-start: auto;
   inset-inline-end: -22px;
-}
-
-/* ---------- Tooltip ---------- */
-[dir="rtl"] .tooltip__arrow {
-  transform: translateX(50%) rotate(45deg);
 }
 
 /* ---------- Sidebar ---------- */
@@ -103,11 +92,6 @@
   text-align: left;
 }
 
-/* ---------- Toast ---------- */
-[dir="rtl"] .toast {
-  animation-name: toast-in-rtl;
-}
-
 /* ---------- Number direction ---------- */
 .num-ltr,
 input[type="tel"],
@@ -123,11 +107,6 @@ input[type="number"],
 [dir="rtl"] .ltr--center {
   direction: ltr;
   text-align: center;
-}
-
-/* ---------- Persian digits helper ---------- */
-.fa-num {
-  font-feature-settings: "ss02";
 }
 
 /* ---------- Progress bar ---------- */
@@ -192,26 +171,10 @@ input[type="number"],
   flex-direction: row;
 }
 
-/* ---------- Scroll padding for RTL ---------- */
-[dir="rtl"] {
-  scroll-padding-inline-start: var(--sp-6);
-}
-
 /* ---------- File uploader ---------- */
 [dir="rtl"] .file-item__actions {
   margin-inline-start: auto;
   margin-inline-end: 0;
-}
-
-/* ---------- Sidebar collapse ---------- */
-[dir="rtl"] .sidebar[data-state="collapsed"] .sidebar__link {
-  justify-content: center;
-}
-
-/* ---------- Breadcrumb home ---------- */
-[dir="rtl"] .breadcrumb__list {
-  flex-direction: row-reverse;
-  justify-content: flex-end;
 }
 
 /* ---------- Stepper ---------- */
@@ -237,11 +200,6 @@ input[type="number"],
 /* ---------- Chart legend ---------- */
 [dir="rtl"] .chart-legend {
   flex-direction: row-reverse;
-}
-
-/* ---------- Empty state ---------- */
-[dir="rtl"] .empty-state {
-  text-align: center;
 }
 
 /* ---------- Avatar group ---------- */
