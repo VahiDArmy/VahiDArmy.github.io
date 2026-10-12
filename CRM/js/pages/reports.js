@@ -1,5 +1,8 @@
 /* ============================================================================
-   REPORTS PAGE — REDESIGNED (with icons in KPI cards)
+   REPORTS PAGE — REDESIGNED
+   - KPI cards with icons
+   - Databars with percentage labels
+   - Proper spacing between rows
    ============================================================================ */
 
 (function (window) {
@@ -24,7 +27,6 @@
       Dom.empty(panels);
       panels.classList.add("tab-panels");
 
-      // Create panel containers with loading state
       TABS.forEach((key, i) => {
         const panel = Dom.el("div", {
           class: "tab-panel",
@@ -37,13 +39,11 @@
         panels.appendChild(panel);
       });
 
-      // Bind tabs
       const group = document.querySelector('[data-tabs="reports"]');
       if (group) {
         setTimeout(() => window.Tabs?.initGroup?.(group), 0);
       }
 
-      // Load all panels in parallel
       this.renderSales();
       this.renderInventory();
       this.renderCustomers();
@@ -59,12 +59,11 @@
     },
 
     /* ==========================================================
-       KPI CARD BUILDER — redesigned
+       KPI card builder
        ========================================================== */
     kpi({ icon, tone = "brand", label, value, delta = null, deltaTone = "up" }) {
       const card = Dom.el("div", { class: "report-summary-card" });
 
-      // Head row: icon + label
       const head = Dom.el("div", { class: "report-summary-card__head" });
       if (icon) {
         head.appendChild(
@@ -76,10 +75,8 @@
       head.appendChild(Dom.el("div", { class: "report-summary-card__label" }, label));
       card.appendChild(head);
 
-      // Value
       card.appendChild(Dom.el("div", { class: "report-summary-card__value" }, value));
 
-      // Delta (optional)
       if (delta != null) {
         const toneCls = deltaTone === "up" ? "text-success" : deltaTone === "down" ? "text-danger" : "text-tertiary";
         const arrowIcon = deltaTone === "up" ? "ri-arrow-up-line" : deltaTone === "down" ? "ri-arrow-down-line" : "ri-subtract-line";
@@ -98,6 +95,34 @@
       wrap.appendChild(Dom.el("h3", null, "خطا در بارگذاری"));
       wrap.appendChild(Dom.el("p", null, err?.message || ""));
       return wrap;
+    },
+
+    /* ==========================================================
+       Databar builder — cleaner API
+       ========================================================== */
+    databar({ label, value, percentage, color }) {
+      const bar = Dom.el("div", { class: "databar" });
+
+      const head = Dom.el("div", { class: "databar__head" });
+      head.appendChild(Dom.el("span", { class: "databar__label" }, label));
+
+      const valueWrap = Dom.el("span", { class: "databar__value" });
+      valueWrap.appendChild(Dom.el("span", null, value));
+      valueWrap.appendChild(
+        Dom.el("span", { class: "databar__value-pct" }, percentage)
+      );
+      head.appendChild(valueWrap);
+      bar.appendChild(head);
+
+      const track = Dom.el("div", { class: "databar__track" });
+      const fill = Dom.el("div", {
+        class: "databar__fill",
+        style: `width:${Math.max(2, percentage_value(percentage))}%;background:${color}`,
+      });
+      track.appendChild(fill);
+      bar.appendChild(track);
+
+      return bar;
     },
 
     /* ==========================================================
@@ -164,20 +189,12 @@
 
         Object.entries(data.byStatus).forEach(([status, count]) => {
           const pct = (count / total) * 100;
-          const bar = Dom.el("div", { class: "databar" });
-          const h = Dom.el("div", { class: "databar__head" });
-          h.appendChild(Dom.el("span", { class: "databar__label" }, map[status] || status));
-          h.appendChild(Dom.el("span", { class: "databar__value" },
-            `${Persian.toPersianDigits(count)} سفارش`));
-          bar.appendChild(h);
-          const track = Dom.el("div", { class: "databar__track" });
-          const fill = Dom.el("div", {
-            class: "databar__fill",
-            style: `width:${pct}%;background:${colors[status] || "#598eff"}`,
-          });
-          track.appendChild(fill);
-          bar.appendChild(track);
-          bars.appendChild(bar);
+          bars.appendChild(this.databar({
+            label: map[status] || status,
+            value: `${Persian.toPersianDigits(count)} سفارش`,
+            percentage: Formatters.percent(pct, 0),
+            color: colors[status] || "#598eff",
+          }));
         });
         statusCard.appendChild(bars);
         panel.appendChild(statusCard);
@@ -228,7 +245,6 @@
         }));
         panel.appendChild(summary);
 
-        // Low stock table
         const card = Dom.el("div", { class: "report-table-wrap" });
         const head = Dom.el("div", { class: "report-table-head" });
         head.appendChild(Dom.el("h3", null, "کالاهای نیازمند تأمین"));
@@ -309,7 +325,6 @@
         }));
         panel.appendChild(summary);
 
-        // Top customers table
         const card = Dom.el("div", { class: "report-table-wrap" });
         const head = Dom.el("div", { class: "report-table-head" });
         head.appendChild(Dom.el("h3", null, "مشتریان برتر"));
@@ -319,8 +334,7 @@
         const thead = Dom.el("thead");
         const hr = Dom.el("tr");
         ["نام", "نوع", "شهر", "سفارش‌ها", "مبلغ کل"].forEach((t, idx) => {
-          const th = Dom.el("th", { class: idx >= 3 ? "text-end" : "" }, t);
-          hr.appendChild(th);
+          hr.appendChild(Dom.el("th", { class: idx >= 3 ? "text-end" : "" }, t));
         });
         thead.appendChild(hr);
         table.appendChild(thead);
@@ -443,7 +457,7 @@
         }));
         panel.appendChild(summary);
 
-        // Revenue breakdown visual
+        // Revenue breakdown with clean databars
         const visual = Dom.el("div", { class: "report-chart" });
         const head = Dom.el("div", { class: "report-chart__head" });
         head.appendChild(Dom.el("h3", { class: "report-chart__title" }, "تجزیه درآمد و هزینه"));
@@ -451,25 +465,19 @@
 
         const bars = Dom.el("div", { class: "databars" });
         const max = Math.max(data.revenue, data.cost, data.profit, 1);
-        [
-          { label: "درآمد", value: data.revenue, color: "#22c55e" },
-          { label: "هزینه", value: data.cost, color: "#ef4444" },
-          { label: "سود", value: data.profit, color: "#598eff" },
-        ].forEach((b) => {
+        const items = [
+          { label: "درآمد کل", value: data.revenue, color: "#22c55e" },
+          { label: "هزینه تخمینی", value: data.cost, color: "#ef4444" },
+          { label: "سود خالص", value: data.profit, color: "#598eff" },
+        ];
+        items.forEach((b) => {
           const pct = (Math.abs(b.value) / max) * 100;
-          const bar = Dom.el("div", { class: "databar" });
-          const h = Dom.el("div", { class: "databar__head" });
-          h.appendChild(Dom.el("span", { class: "databar__label" }, b.label));
-          h.appendChild(Dom.el("span", { class: "databar__value" }, Formatters.money(b.value)));
-          bar.appendChild(h);
-          const track = Dom.el("div", { class: "databar__track" });
-          const fill = Dom.el("div", {
-            class: "databar__fill",
-            style: `width:${pct}%;background:${b.color}`,
-          });
-          track.appendChild(fill);
-          bar.appendChild(track);
-          bars.appendChild(bar);
+          bars.appendChild(this.databar({
+            label: b.label,
+            value: Formatters.money(b.value),
+            percentage: Formatters.percent(pct, 0),
+            color: b.color,
+          }));
         });
         visual.appendChild(bars);
         panel.appendChild(visual);
@@ -480,6 +488,14 @@
       }
     },
   };
+
+  /* Helper: parse percentage string ("45%") into numeric value */
+  function percentage_value(pctStr) {
+    if (typeof pctStr === "number") return pctStr;
+    const cleaned = String(pctStr).replace(/[^\d.]/g, "");
+    const n = parseFloat(cleaned);
+    return isNaN(n) ? 0 : n;
+  }
 
   window.ReportsPage = ReportsPage;
 })(window);
