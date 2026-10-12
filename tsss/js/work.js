@@ -431,8 +431,9 @@
       .trim();
   }
 
-  // قبل از هر بلوک عربی، برچسب «آیهٔ X» را اضافه می‌کند.
-  // از span[id="surah-X-ayah-Y"] که در داده هست استفاده می‌کند.
+  // برچسب «آیهٔ X» را قبل از هر بلوک عربی می‌گذارد.
+  // هم حالت با ```arabic (pre > code.language-arabic) و
+  // هم حالت بدون فریم (فقط <p> خام) را پشتیبانی می‌کند.
   function labelMizanAyahs(rootEl) {
     if (!rootEl) return;
     const spans = rootEl.querySelectorAll('span[id^="surah-"]');
@@ -441,40 +442,59 @@
       if (!m) return;
       const ayahNum = Number(m[2]);
 
-      // از span رو به جلو حرکت کن تا اولین pre با code.language-arabic را پیدا کنی
-      let foundPre = null;
-      let node = span;
-      let guard = 0;
-      outer: while (node && node !== rootEl && guard < 3000) {
-        guard++;
-        let sib = node.nextSibling;
-        while (sib) {
-          if (sib.nodeType === 1) {
-            if (sib.tagName === 'PRE') {
-              const code = sib.querySelector('code.language-arabic');
-              if (code) { foundPre = sib; break outer; }
-            }
-            if (sib.querySelector) {
-              const innerCode = sib.querySelector('pre > code.language-arabic');
-              if (innerCode) { foundPre = innerCode.closest('pre'); break outer; }
-            }
-            if (/^(H[1-6]|HR)$/.test(sib.tagName)) break outer;
-          }
-          sib = sib.nextSibling;
-        }
-        node = node.parentNode;
-        if (!node) break;
-      }
-      if (!foundPre) return;
-      if (foundPre.dataset.ayah) return;
+      let target = null;
 
-      foundPre.dataset.ayah = String(ayahNum);
+      // حالت A: span داخل <p> است که متن آیه هم داخل همان <p> هست
+      const parentP = (span.parentElement && span.parentElement.tagName === 'P')
+        ? span.parentElement
+        : null;
+      if (parentP) {
+        // متن بدون span؛ اگر خالی نبود یعنی آیه همین‌جاست
+        const withoutSpan = Array.from(parentP.childNodes)
+          .filter((n) => n !== span)
+          .map((n) => n.textContent || '')
+          .join('')
+          .trim();
+        if (withoutSpan.length > 0) target = parentP;
+      }
+
+      // حالت B: span تنها در یک <p> خالی است، محتوا در بلوک بعدی می‌آید
+      if (!target) {
+        let node = span;
+        let guard = 0;
+        outer: while (node && node !== rootEl && guard < 3000) {
+          guard++;
+          let sib = node.nextSibling;
+          while (sib) {
+            if (sib.nodeType === 1) {
+              if (sib.tagName === 'PRE') {
+                if (sib.querySelector('code.language-arabic')) { target = sib; break outer; }
+              } else if (sib.tagName === 'P') {
+                if (sib.contains(span)) { sib = sib.nextSibling; continue; }
+                if (sib.textContent.trim() === '') { sib = sib.nextSibling; continue; }
+                target = sib; break outer;
+              } else if (/^(H[1-6]|HR)$/.test(sib.tagName)) {
+                break outer;
+              } else if (/^(BLOCKQUOTE|UL|OL|DIV|TABLE)$/.test(sib.tagName)) {
+                target = sib; break outer;
+              }
+            }
+            sib = sib.nextSibling;
+          }
+          node = node.parentNode;
+          if (!node) break;
+        }
+      }
+
+      if (!target) return;
+      if (target.dataset.ayah) return;
+      target.dataset.ayah = String(ayahNum);
 
       const label = document.createElement('div');
       label.className = 'mizan-ayah-label';
       label.dataset.ayah = String(ayahNum);
       label.textContent = `آیهٔ ${UI.toPersianDigits(ayahNum)}`;
-      foundPre.parentNode.insertBefore(label, foundPre);
+      target.parentNode.insertBefore(label, target);
     });
   }
 
@@ -482,11 +502,10 @@
     if (!rootEl) return;
     rootEl.querySelectorAll('.is-current-ayah').forEach((el) => el.classList.remove('is-current-ayah'));
 
-    const pre = rootEl.querySelector(`pre[data-ayah="${ayah}"]`);
-    if (pre) pre.classList.add('is-current-ayah');
-
-    const label = rootEl.querySelector(`.mizan-ayah-label[data-ayah="${ayah}"]`);
-    if (label) label.classList.add('is-current-ayah');
+    // همهٔ عناصری که data-ayah برابر آیهٔ جاری دارند: هم برچسب، هم بلوک
+    rootEl.querySelectorAll(`[data-ayah="${ayah}"]`).forEach((el) => {
+      el.classList.add('is-current-ayah');
+    });
   }
 
   async function renderMizan(surah, ayah) {
