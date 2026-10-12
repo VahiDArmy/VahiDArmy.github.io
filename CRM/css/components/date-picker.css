@@ -1,0 +1,296 @@
+/* ============================================================================
+   DATE PICKER
+   ============================================================================ */
+
+.dp {
+  position: relative;
+}
+
+.dp__input {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 100%;
+  height: var(--input-h-md);
+  padding-inline: var(--sp-3);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--tr-colors), var(--tr-shadow);
+}
+
+.dp__input:hover { border-color: var(--border-strong); }
+
+.dp.is-open .dp__input {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.dp__input i {
+  font-size: 17px;
+  color: var(--text-quaternary);
+  flex-shrink: 0;
+}
+
+.dp__input-text {
+  flex: 1;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.dp__input-text.is-placeholder {
+  color: var(--text-quaternary);
+}
+
+.dp__clear {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--r-full);
+  color: var(--text-quaternary);
+  font-size: 14px;
+  transition: var(--tr-colors);
+}
+
+.dp__clear:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ---------- Panel ---------- */
+.dp__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  z-index: var(--z-popover);
+  width: 300px;
+  padding: var(--sp-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xl);
+  animation: scale-in var(--t-base) var(--ease-out) both;
+  transform-origin: top right;
+}
+
+.dp__panel[hidden] { display: none; }
+
+.dp__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: var(--sp-3);
+  margin-bottom: var(--sp-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.dp__nav {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  font-size: 17px;
+  transition: var(--tr-colors);
+}
+
+.dp__nav:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dp__title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  transition: var(--tr-colors);
+}
+
+.dp__title:hover {
+  background: var(--bg-hover);
+  color: var(--brand-400);
+}
+
+.dp__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.dp__weekday {
+  text-align: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-quaternary);
+  padding-block: 6px;
+}
+
+.dp__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dp__day {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--tr-colors);
+}
+
+.dp__day:hover:not(.is-disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dp__day.is-other-month { color: var(--text-quaternary); }
+
+.dp__day.is-today {
+  color: var(--brand-300);
+  font-weight: var(--fw-bold);
+  background: rgba(89,142,255,.08);
+}
+
+.dp__day.is-selected {
+  color: var(--text-on-brand);
+  background: var(--grad-brand);
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 2px 8px rgba(51,102,255,.35);
+}
+
+.dp__day.is-in-range {
+  background: rgba(89,142,255,.12);
+  color: var(--text-primary);
+  border-radius: 0;
+}
+
+.dp__day.is-range-start {
+  border-start-start-radius: var(--r-sm);
+  border-end-start-radius: var(--r-sm);
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.dp__day.is-range-end {
+  border-start-end-radius: var(--r-sm);
+  border-end-end-radius: var(--r-sm);
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+}
+
+.dp__day.is-disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+  opacity: .4;
+}
+
+/* Month/year grid */
+.dp__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.dp__grid-cell {
+  padding: var(--sp-3) var(--sp-2);
+  text-align: center;
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--tr-colors);
+}
+
+.dp__grid-cell:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.dp__grid-cell.is-selected {
+  background: var(--grad-brand);
+  color: #fff;
+  font-weight: var(--fw-semibold);
+}
+
+/* ---------- Footer ---------- */
+.dp__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  margin-top: var(--sp-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.dp__shortcut {
+  font-size: var(--fs-xs);
+  color: var(--brand-400);
+  padding: 4px 8px;
+  border-radius: var(--r-sm);
+  transition: var(--tr-colors);
+}
+
+.dp__shortcut:hover {
+  background: rgba(89,142,255,.12);
+}
+
+/* ---------- Time picker ---------- */
+.dp__time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+  margin-top: var(--sp-3);
+}
+
+.dp__time-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.dp__time-field label {
+  font-size: var(--fs-2xs);
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.dp__time-field input {
+  width: 100%;
+  height: 34px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.dp__time-sep {
+  color: var(--text-quaternary);
+  font-weight: var(--fw-bold);
+  padding-top: 16px;
+}
