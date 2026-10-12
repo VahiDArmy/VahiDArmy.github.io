@@ -1,7 +1,5 @@
 /* ============================================================================
-   MAIN APPLICATION
-   ----------------------------------------------------------------------------
-   Bootstraps the whole app: auth, router, components, pages.
+   MAIN APPLICATION — with Tabs auto-init and new page registration
    ============================================================================ */
 
 (function (window) {
@@ -18,8 +16,8 @@
 
   const App = {
     pages: {},
+    _tabsObserver: null,
 
-    /* ---------- Bootstrap ---------- */
     async init() {
       try {
         // 1. Theme
@@ -28,7 +26,6 @@
         // 2. Auth check
         await AuthService.init();
         if (!AuthService.isAuthenticated()) {
-          // Allow rendering for demo purposes with a warning
           Toast?.info("حالت نمایشی — برای دسترسی به همه امکانات وارد شوید", "توجه", { duration: 6000 });
         }
 
@@ -50,13 +47,17 @@
         // 7. Global events
         this.bindGlobalEvents();
 
-        // 8. Hide preloader
+        // 8. Auto-init tabs (initial + observer)
+        this.setupTabsAutoInit();
+
+        // 9. Hide preloader
         this.hidePreloader();
         document.body.classList.add("app-ready");
 
-        // 9. Cleanup on unload
+        // 10. Cleanup on unload
         window.addEventListener("beforeunload", () => {
           window.Charts?.destroyAll();
+          if (this._tabsObserver) this._tabsObserver.disconnect();
         });
       } catch (err) {
         console.error("app.init failed:", err);
@@ -64,7 +65,6 @@
       }
     },
 
-    /* ---------- Register pages ---------- */
     registerPages() {
       this.pages = {
         dashboard: window.DashboardPage,
@@ -80,7 +80,6 @@
       };
     },
 
-    /* ---------- Register routes ---------- */
     registerRoutes() {
       const C = window.C.ROUTES;
       const make = (key, label) => async ({ page, params }) => {
@@ -90,6 +89,8 @@
         const mod = this.pages[key];
         if (mod && typeof mod.mount === "function") {
           await mod.mount(params || {});
+          // بعد از mount، تبها را دوباره بررسی کن
+          setTimeout(() => this.reinitTabs(), 30);
         }
       };
 
@@ -111,9 +112,40 @@
       });
     },
 
-    /* ---------- Global events ---------- */
+    /* ==========================================================
+       TABS AUTO-INIT
+       ========================================================== */
+    setupTabsAutoInit() {
+      const main = Dom.id("main");
+      if (!main || !window.Tabs) return;
+
+      // Initial pass
+      this.reinitTabs();
+
+      // Watch for DOM changes in main and re-init tabs
+      const debounced = Dom.debounce(() => this.reinitTabs(), 120);
+      try {
+        this._tabsObserver = new MutationObserver(debounced);
+        this._tabsObserver.observe(main, { childList: true, subtree: true });
+      } catch (e) {
+        console.warn("tabs observer init failed:", e);
+      }
+    },
+
+    reinitTabs() {
+      if (!window.Tabs) return;
+      try {
+        window.Tabs.autoInit(document);
+      } catch (e) {
+        console.warn("tabs autoInit failed:", e);
+      }
+    },
+
+    /* ==========================================================
+       GLOBAL EVENTS
+       ========================================================== */
     bindGlobalEvents() {
-      // Global action dispatcher (from buttons with data-action)
+      // Global action dispatcher
       document.addEventListener("click", (e) => {
         const trigger = e.target.closest("[data-action]");
         if (!trigger) return;
@@ -121,7 +153,7 @@
         this.dispatch(action, trigger, e);
       });
 
-      // Mobile menu on left edge swipe — simple
+      // Swipe-to-open on mobile
       let touchStartX = 0;
       document.addEventListener("touchstart", (e) => {
         touchStartX = e.touches[0].clientX;
@@ -135,7 +167,7 @@
         }
       });
 
-      // Realtime subscriptions
+      // Realtime
       if (window.ENV?.FEATURES?.REALTIME && window.Supabase?.isReady()) {
         try {
           window.ProductsService.subscribe?.(() => {
@@ -143,26 +175,21 @@
               window.ProductsPage?.mount?.();
             }
           });
-        } catch (e) { /* ignore */ }
+        } catch (_) { /* ignore */ }
       }
 
-      // Footer year
+      // Footer info
       const year = Dom.id("footer-year");
-      if (year) year.textContent = window.Persian.toPersianDigits(new Date().getFullYear());
+      if (year) year.textContent = Persian.toPersianDigits(new Date().getFullYear());
       const version = Dom.id("footer-version");
       if (version) version.textContent = window.ENV.APP_VERSION || "1.0.0";
 
       // Auth state change
       AuthService.onChange((user) => {
-        if (!user) {
-          // Could redirect to login
-        } else {
-          Topbar.renderUserInfo();
-        }
+        if (user) Topbar.renderUserInfo();
       });
     },
 
-    /* ---------- Action dispatcher ---------- */
     dispatch(action, trigger, event) {
       const route = Router.getCurrent()?.path || "dashboard";
       const handlerMap = {
@@ -184,7 +211,6 @@
           Toast?.error(e.message || "خطا در انجام عملیات");
         }
       } else {
-        // Page-level: try `handle${Action}` in current page module
         const page = this.pages[route];
         const method = `handleAction_${action}`;
         if (page && typeof page[method] === "function") {
@@ -193,7 +219,6 @@
       }
     },
 
-    /* ---------- Global refresh ---------- */
     refresh() {
       const route = Router.getCurrent()?.path;
       const page = this.pages[route];
@@ -203,7 +228,6 @@
       }
     },
 
-    /* ---------- Preloader ---------- */
     hidePreloader() {
       const preloader = Dom.id("app-preloader");
       const app = Dom.id("app");
@@ -214,7 +238,6 @@
       if (app) app.hidden = false;
     },
 
-    /* ---------- Fatal error ---------- */
     showFatalError(err) {
       const preloader = Dom.id("app-preloader");
       if (preloader) preloader.hidden = true;
@@ -236,6 +259,5 @@
 
   window.App = App;
 
-  /* ---------- Boot ---------- */
   Dom.ready(() => App.init());
 })(window);
