@@ -5,22 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0d14" />
   <meta name="description" content="سیستم مدیریت ارتباط با مشتریان و کنترل موجودی انبار" />
-  <meta name="author" content="CRM Inventory Suite" />
 
   <title>سامانه CRM | مدیریت انبار و گزارشات</title>
 
   <!-- ==================== FONTS ==================== -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
 
   <!-- ==================== ICONS ==================== -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
-  />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" />
 
   <!-- ==================== CSS: BASE ==================== -->
   <link rel="stylesheet" href="css/base/variables.css" />
@@ -74,10 +67,8 @@
               <stop offset="100%" stop-color="#06b6d4" />
             </linearGradient>
           </defs>
-          <rect x="4" y="4" width="40" height="40" rx="12"
-                fill="none" stroke="url(#plg)" stroke-width="3" />
-          <path d="M14 18h20M14 24h20M14 30h13"
-                stroke="url(#plg)" stroke-width="3" stroke-linecap="round" />
+          <rect x="4" y="4" width="40" height="40" rx="12" fill="none" stroke="url(#plg)" stroke-width="3" />
+          <path d="M14 18h20M14 24h20M14 30h13" stroke="url(#plg)" stroke-width="3" stroke-linecap="round" />
         </svg>
       </div>
       <div class="preloader__bar"><span></span></div>
@@ -101,19 +92,15 @@
                 <stop offset="100%" stop-color="#06b6d4" />
               </linearGradient>
             </defs>
-            <rect x="4" y="4" width="40" height="40" rx="12"
-                  fill="none" stroke="url(#sbg)" stroke-width="3" />
-            <path d="M14 18h20M14 24h20M14 30h13"
-                  stroke="url(#sbg)" stroke-width="3" stroke-linecap="round" />
+            <rect x="4" y="4" width="40" height="40" rx="12" fill="none" stroke="url(#sbg)" stroke-width="3" />
+            <path d="M14 18h20M14 24h20M14 30h13" stroke="url(#sbg)" stroke-width="3" stroke-linecap="round" />
           </svg>
         </div>
         <div class="sidebar__brand-text">
           <strong>سامانه انبار</strong>
           <span>CRM &amp; Inventory</span>
         </div>
-        <button class="sidebar__collapse-btn" id="sidebar-collapse"
-                type="button" title="جمع/باز کردن نوار کناری"
-                aria-label="جمع/باز کردن نوار کناری">
+        <button class="sidebar__collapse-btn" id="sidebar-collapse" type="button" title="جمع/باز کردن نوار کناری" aria-label="جمع/باز کردن">
           <i class="ri-sidebar-fold-line"></i>
         </button>
       </div>
@@ -130,95 +117,62 @@
         <div class="sidebar__section">
           <p class="sidebar__section-title">داشبورد</p>
           <ul class="sidebar__list">
-            <li>
-              <a class="sidebar__link" href="#/dashboard" data-route="dashboard">
-                <i class="ri-dashboard-3-line"></i>
-                <span>نمای کلی</span>
-              </a>
-            </li>
+            <li><a class="sidebar__link" href="#/dashboard" data-route="dashboard">
+              <i class="ri-dashboard-3-line"></i><span>نمای کلی</span>
+            </a></li>
           </ul>
         </div>
 
         <div class="sidebar__section">
           <p class="sidebar__section-title">عملیات</p>
           <ul class="sidebar__list">
-            <li>
-              <a class="sidebar__link" href="#/products" data-route="products">
-                <i class="ri-archive-2-line"></i>
-                <span>محصولات</span>
-                <span class="sidebar__badge" data-count="products"></span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/inventory" data-route="inventory">
-                <i class="ri-stack-line"></i>
-                <span>موجودی انبار</span>
-                <span class="sidebar__badge sidebar__badge--warn" data-count="low-stock"></span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/orders" data-route="orders">
-                <i class="ri-shopping-bag-3-line"></i>
-                <span>سفارشات</span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/customers" data-route="customers">
-                <i class="ri-group-line"></i>
-                <span>مشتریان</span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/suppliers" data-route="suppliers">
-                <i class="ri-truck-line"></i>
-                <span>تأمین‌کنندگان</span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/warehouses" data-route="warehouses">
-                <i class="ri-building-4-line"></i>
-                <span>انبارها</span>
-              </a>
-            </li>
+            <li><a class="sidebar__link" href="#/products" data-route="products">
+              <i class="ri-archive-2-line"></i><span>محصولات</span>
+              <span class="sidebar__badge" data-count="products"></span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/inventory" data-route="inventory">
+              <i class="ri-stack-line"></i><span>موجودی انبار</span>
+              <span class="sidebar__badge sidebar__badge--warn" data-count="low-stock"></span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/orders" data-route="orders">
+              <i class="ri-shopping-bag-3-line"></i><span>سفارشات</span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/customers" data-route="customers">
+              <i class="ri-group-line"></i><span>مشتریان</span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/suppliers" data-route="suppliers">
+              <i class="ri-truck-line"></i><span>تأمین‌کنندگان</span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/warehouses" data-route="warehouses">
+              <i class="ri-building-4-line"></i><span>انبارها</span>
+            </a></li>
           </ul>
         </div>
 
         <div class="sidebar__section">
           <p class="sidebar__section-title">تحلیل و مدیریت</p>
           <ul class="sidebar__list">
-            <li>
-              <a class="sidebar__link" href="#/reports" data-route="reports">
-                <i class="ri-bar-chart-2-line"></i>
-                <span>گزارشات</span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/activity-log" data-route="activity-log">
-                <i class="ri-history-line"></i>
-                <span>تاریخچه فعالیت‌ها</span>
-              </a>
-            </li>
-            <li>
-              <a class="sidebar__link" href="#/settings" data-route="settings">
-                <i class="ri-settings-3-line"></i>
-                <span>تنظیمات</span>
-              </a>
-            </li>
+            <li><a class="sidebar__link" href="#/reports" data-route="reports">
+              <i class="ri-bar-chart-2-line"></i><span>گزارشات</span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/activity-log" data-route="activity-log">
+              <i class="ri-history-line"></i><span>تاریخچه فعالیت‌ها</span>
+            </a></li>
+            <li><a class="sidebar__link" href="#/settings" data-route="settings">
+              <i class="ri-settings-3-line"></i><span>تنظیمات</span>
+            </a></li>
           </ul>
         </div>
       </nav>
 
       <div class="sidebar__footer">
         <div class="sidebar__user" id="sidebar-user">
-          <div class="sidebar__user-avatar">
-            <span data-user="initial">؟</span>
-          </div>
+          <div class="sidebar__user-avatar"><span data-user="initial">؟</span></div>
           <div class="sidebar__user-info">
             <strong data-user="name">کاربر مهمان</strong>
             <span data-user="role">—</span>
           </div>
-          <button class="icon-btn" id="user-menu-btn" type="button"
-                  aria-label="منوی کاربر">
+          <button class="icon-btn" id="user-menu-btn" type="button" aria-label="منوی کاربر">
             <i class="ri-more-2-fill"></i>
           </button>
         </div>
@@ -229,17 +183,14 @@
 
     <!-- ---------- TOPBAR ---------- -->
     <header class="topbar" id="topbar">
-      <button class="icon-btn topbar__mobile-toggle" id="sidebar-toggle"
-              type="button" aria-label="منو">
+      <button class="icon-btn topbar__mobile-toggle" id="sidebar-toggle" type="button" aria-label="منو">
         <i class="ri-menu-2-line"></i>
       </button>
 
       <nav class="breadcrumb" aria-label="مسیر ناوبری" id="breadcrumb">
         <ol class="breadcrumb__list">
           <li class="breadcrumb__item">
-            <a href="#/dashboard" title="داشبورد" aria-label="داشبورد">
-              <i class="ri-home-4-line"></i>
-            </a>
+            <a href="#/dashboard" title="داشبورد" aria-label="داشبورد"><i class="ri-home-4-line"></i></a>
           </li>
         </ol>
       </nav>
@@ -250,18 +201,14 @@
         <button class="icon-btn" id="theme-toggle" type="button" title="تغییر تم" aria-label="تغییر تم">
           <i class="ri-moon-line"></i>
         </button>
-
         <button class="icon-btn" id="notifications-btn" type="button" title="اعلان‌ها" aria-label="اعلان‌ها">
           <i class="ri-notification-3-line"></i>
           <span class="icon-btn__dot" data-badge="notifications"></span>
         </button>
-
         <button class="icon-btn" id="tasks-btn" type="button" title="کارها" aria-label="کارها">
           <i class="ri-checkbox-multiple-line"></i>
         </button>
-
         <div class="topbar__divider"></div>
-
         <button class="topbar__user" id="topbar-user" type="button" aria-label="منوی کاربر">
           <span class="topbar__user-avatar" data-user="initial">؟</span>
           <span class="topbar__user-name" data-user="name">کاربر</span>
@@ -273,7 +220,7 @@
     <!-- ---------- MAIN ---------- -->
     <main class="main" id="main">
 
-      <!-- ============ DASHBOARD ============ -->
+      <!-- DASHBOARD -->
       <section class="page" data-page="dashboard" hidden>
         <div class="page__header">
           <div>
@@ -289,9 +236,7 @@
             </button>
           </div>
         </div>
-
         <div class="stat-grid" id="dashboard-stats"></div>
-
         <div class="dash-grid">
           <div class="card card--chart">
             <div class="card__header">
@@ -304,20 +249,12 @@
                 </select>
               </div>
             </div>
-            <div class="card__body">
-              <canvas id="chart-sales" height="110"></canvas>
-            </div>
+            <div class="card__body"><canvas id="chart-sales" height="110"></canvas></div>
           </div>
-
           <div class="card card--chart">
-            <div class="card__header">
-              <h3 class="card__title">توزیع دسته‌بندی‌ها</h3>
-            </div>
-            <div class="card__body">
-              <canvas id="chart-categories" height="110"></canvas>
-            </div>
+            <div class="card__header"><h3 class="card__title">توزیع دسته‌بندی‌ها</h3></div>
+            <div class="card__body"><canvas id="chart-categories" height="110"></canvas></div>
           </div>
-
           <div class="card">
             <div class="card__header">
               <h3 class="card__title">کالاهای رو به اتمام</h3>
@@ -327,7 +264,6 @@
               <div id="dashboard-low-stock" class="mini-list"></div>
             </div>
           </div>
-
           <div class="card">
             <div class="card__header">
               <h3 class="card__title">آخرین فعالیت‌ها</h3>
@@ -340,7 +276,7 @@
         </div>
       </section>
 
-      <!-- ============ PRODUCTS ============ -->
+      <!-- PRODUCTS -->
       <section class="page" data-page="products" hidden>
         <div class="page__header">
           <div>
@@ -356,7 +292,7 @@
         <div class="card" id="products-panel"></div>
       </section>
 
-      <!-- ============ INVENTORY ============ -->
+      <!-- INVENTORY -->
       <section class="page" data-page="inventory" hidden>
         <div class="page__header">
           <div>
@@ -376,7 +312,7 @@
         <div class="card" id="inventory-panel"></div>
       </section>
 
-      <!-- ============ ORDERS ============ -->
+      <!-- ORDERS -->
       <section class="page" data-page="orders" hidden>
         <div class="page__header">
           <div>
@@ -392,7 +328,7 @@
         <div class="card" id="orders-panel"></div>
       </section>
 
-      <!-- ============ CUSTOMERS ============ -->
+      <!-- CUSTOMERS -->
       <section class="page" data-page="customers" hidden>
         <div class="page__header">
           <div>
@@ -408,7 +344,7 @@
         <div class="card" id="customers-panel"></div>
       </section>
 
-      <!-- ============ SUPPLIERS ============ -->
+      <!-- SUPPLIERS -->
       <section class="page" data-page="suppliers" hidden>
         <div class="page__header">
           <div>
@@ -424,7 +360,7 @@
         <div class="card" id="suppliers-panel"></div>
       </section>
 
-      <!-- ============ WAREHOUSES ============ -->
+      <!-- WAREHOUSES -->
       <section class="page" data-page="warehouses" hidden>
         <div class="page__header">
           <div>
@@ -440,7 +376,7 @@
         <div class="card" id="warehouses-panel"></div>
       </section>
 
-      <!-- ============ REPORTS ============ -->
+      <!-- REPORTS -->
       <section class="page" data-page="reports" hidden>
         <div class="page__header">
           <div>
@@ -458,7 +394,7 @@
         <div class="tab-panels" id="reports-panels"></div>
       </section>
 
-      <!-- ============ ACTIVITY LOG ============ -->
+      <!-- ACTIVITY LOG -->
       <section class="page" data-page="activity-log" hidden>
         <div class="page__header">
           <div>
@@ -469,7 +405,7 @@
         <div class="card" id="activity-log-panel"></div>
       </section>
 
-      <!-- ============ SETTINGS ============ -->
+      <!-- SETTINGS -->
       <section class="page" data-page="settings" hidden>
         <div class="page__header">
           <div>
@@ -487,7 +423,7 @@
         <div class="tab-panels" id="settings-panels"></div>
       </section>
 
-      <!-- ============ 404 ============ -->
+      <!-- 404 -->
       <section class="page" data-page="not-found" hidden>
         <div class="empty-state">
           <i class="ri-error-warning-line empty-state__icon"></i>
@@ -515,16 +451,13 @@
   <div id="tooltip-root" class="tooltip-root"></div>
   <div id="dropdown-root" class="dropdown-root"></div>
 
-  <!-- ============================================================
-       COMMAND PALETTE
-  ============================================================ -->
+  <!-- COMMAND PALETTE -->
   <div id="command-palette" class="command-palette" hidden>
     <div class="command-palette__backdrop" data-cp-close></div>
     <div class="command-palette__panel" role="dialog" aria-modal="true" aria-label="پالت دستورات">
       <div class="command-palette__input-wrap">
         <i class="ri-search-line"></i>
-        <input type="text" id="cp-input" placeholder="جستجو یا اجرای دستور…"
-               autocomplete="off" spellcheck="false" />
+        <input type="text" id="cp-input" placeholder="جستجو یا اجرای دستور…" autocomplete="off" spellcheck="false" />
         <kbd>Esc</kbd>
       </div>
       <ul class="command-palette__list" id="cp-list"></ul>
@@ -545,16 +478,12 @@
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/relativeTime.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/calendar.min.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — CONFIG
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — CONFIG ==================== -->
   <script src="js/config/env.js"></script>
   <script src="js/config/constants.js"></script>
   <script src="js/config/supabase.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — UTILS
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — UTILS ==================== -->
   <script src="js/utils/dom.js"></script>
   <script src="js/utils/formatters.js"></script>
   <script src="js/utils/date.js"></script>
@@ -563,9 +492,7 @@
   <script src="js/utils/validators.js"></script>
   <script src="js/utils/helpers.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — SERVICES
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — SERVICES ==================== -->
   <script src="js/services/auth.service.js"></script>
   <script src="js/services/products.service.js"></script>
   <script src="js/services/inventory.service.js"></script>
@@ -577,9 +504,7 @@
   <script src="js/services/reports.service.js"></script>
   <script src="js/services/activity-log.service.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — COMPONENTS
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — COMPONENTS ==================== -->
   <script src="js/components/toast.js"></script>
   <script src="js/components/modal.js"></script>
   <script src="js/components/dropdown.js"></script>
@@ -597,16 +522,14 @@
   <script src="js/components/theme-switcher.js"></script>
   <script src="js/components/command-palette.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — PAGES
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — PAGES ==================== -->
   <script src="js/pages/dashboard.js"></script>
   <script src="js/pages/products.js"></script>
+  <script src="js/pages/settings.js"></script>
+  <script src="js/pages/reports.js"></script>
   <script src="js/pages/placeholder-pages.js"></script>
 
-  <!-- ============================================================
-       SCRIPTS — CORE
-  ============================================================ -->
+  <!-- ==================== SCRIPTS — CORE ==================== -->
   <script src="js/store.js"></script>
   <script src="js/router.js"></script>
   <script src="js/app.js"></script>
