@@ -1,0 +1,409 @@
+/* ============================================================================
+   SHARED LIST PAGES (Products, Customers, Orders, Suppliers, Warehouses, Logs)
+   ============================================================================ */
+
+.list-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.list-page__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.list-page__search {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 380px;
+  min-width: 200px;
+}
+
+.list-page__search i {
+  position: absolute;
+  inset-inline-start: var(--sp-3);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-quaternary);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.list-page__search input {
+  width: 100%;
+  height: var(--input-h-md);
+  padding-inline-start: var(--sp-10);
+  padding-inline-end: var(--sp-10);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  transition: var(--tr-colors), var(--tr-shadow);
+}
+
+.list-page__search input:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.list-page__search kbd {
+  position: absolute;
+  inset-inline-end: var(--sp-2);
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.list-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-inline-start: auto;
+}
+
+/* ---------- Filter chips row ---------- */
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+/* ---------- Grid view (products) ---------- */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+/* ---------- Kanban view (orders) ---------- */
+.orders-kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sp-4);
+  padding: var(--sp-4);
+}
+
+.kanban-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  min-height: 300px;
+  transition: var(--tr-colors);
+}
+
+.kanban-col.is-dragover {
+  background: rgba(89,142,255,.06);
+  border-color: var(--border-brand);
+}
+
+.kanban-col__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: 4px 6px;
+}
+
+.kanban-col__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.kanban-col__count {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--fw-bold);
+  border-radius: var(--r-full);
+  background: var(--bg-surface-3);
+  color: var(--text-tertiary);
+}
+
+.kanban-col__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  flex: 1;
+}
+
+.kanban-card {
+  padding: var(--sp-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  cursor: grab;
+  transition: var(--tr-colors), var(--tr-transform), var(--tr-shadow);
+}
+
+.kanban-card:hover {
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.kanban-card:active { cursor: grabbing; }
+
+.kanban-card.is-dragging {
+  opacity: .4;
+  transform: rotate(-2deg);
+}
+
+.kanban-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.kanban-card__id {
+  font-size: var(--fs-xs);
+  font-family: var(--font-mono);
+  color: var(--text-quaternary);
+}
+
+.kanban-card__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.35;
+}
+
+.kanban-card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  flex-wrap: wrap;
+}
+
+.kanban-card__meta i { font-size: 13px; }
+
+.kanban-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.kanban-card__amount {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--brand-300);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Customer cell ---------- */
+.customer-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.customer-cell__avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.customer-cell__body { min-width: 0; }
+
+.customer-cell__name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customer-cell__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Supplier cell ---------- */
+.supplier-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.supplier-cell__logo {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: var(--bg-surface-3);
+  color: var(--brand-400);
+  font-size: 16px;
+  font-weight: var(--fw-bold);
+  border: 1px solid var(--border-subtle);
+}
+
+.supplier-cell__body { min-width: 0; }
+
+.supplier-cell__name {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supplier-cell__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  margin-top: 2px;
+}
+
+/* ---------- Order ID chip ---------- */
+.order-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--brand-300);
+  background: rgba(89,142,255,.10);
+  border: 1px solid rgba(89,142,255,.20);
+  padding: 3px 8px;
+  border-radius: var(--r-sm);
+}
+
+/* ---------- Quantity stepper (inline) ---------- */
+.qty-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--bg-surface-2);
+  height: 30px;
+}
+
+.qty-stepper button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 100%;
+  color: var(--text-tertiary);
+  font-size: 15px;
+  transition: var(--tr-colors);
+}
+
+.qty-stepper button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.qty-stepper input {
+  width: 54px;
+  height: 100%;
+  text-align: center;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  background: transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Activity log page ---------- */
+.log-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: var(--tr-colors);
+}
+
+.log-row:last-child { border-bottom: 0; }
+.log-row:hover { background: var(--bg-hover); }
+
+.log-row__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  font-size: 17px;
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.log-row__icon--create { background: var(--success-bg); color: var(--success-txt); border-color: var(--success-brd); }
+.log-row__icon--update { background: var(--info-bg);    color: var(--info-txt);    border-color: var(--info-brd); }
+.log-row__icon--delete { background: var(--danger-bg);  color: var(--danger-txt);  border-color: var(--danger-brd); }
+.log-row__icon--login  { background: rgba(139,92,246,.12); color: var(--violet-400); border-color: rgba(139,92,246,.24); }
+
+.log-row__body { flex: 1; min-width: 0; }
+
+.log-row__title {
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.log-row__title b { font-weight: var(--fw-semibold); color: var(--brand-300); }
+
+.log-row__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+}
+
+.log-row__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.log-row__time {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
