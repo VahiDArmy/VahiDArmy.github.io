@@ -269,41 +269,19 @@ a.tag-pill:hover { filter: brightness(1.2); }
   color: var(--text-dim);
 }
 
-/* برچسب «آیهٔ X» قبل از هر بلوک عربی */
-.mizan-ayah-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin: 1em 0 .25em;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  color: var(--text-faint);
-  font-size: .7rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  transition: color .2s ease, background .2s ease, border-color .2s ease, box-shadow .2s ease;
-}
-.mizan-ayah-label.is-current-ayah {
-  color: var(--neon);
-  background: var(--neon-glow);
-  border-color: color-mix(in srgb, var(--neon) 55%, var(--border-soft));
-  box-shadow: 0 0 0 3px var(--neon-glow);
-  text-shadow: 0 0 6px var(--neon-glow);
-}
-
-.mizan-tafsir-content pre {
-  margin: .25em 0 1em;
+/* بلوک عربی (fenced یا raw) — ظاهر یکسان */
+.mizan-tafsir-content pre,
+.mizan-tafsir-content p.mizan-arabic-raw {
+  margin: .5em 0 1em;
   padding: 12px 14px;
   border-radius: 10px;
   background: var(--read-bg-strong);
   border: 1px solid var(--read-border);
   overflow-x: auto;
-  direction: rtl;
-  text-align: right;
   transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
+.mizan-tafsir-content pre { direction: rtl; text-align: right; }
+
 .mizan-tafsir-content pre code {
   background: transparent;
   padding: 0;
@@ -327,22 +305,23 @@ a.tag-pill:hover { filter: brightness(1.2); }
   color: var(--text-dim);
 }
 
-/* برجسته‌سازی آیهٔ جاری — هم pre و هم p */
-.mizan-tafsir-content pre.is-current-ayah,
-.mizan-tafsir-content p.is-current-ayah {
-  border: 1px solid var(--neon);
-  background: color-mix(in srgb, var(--neon) 8%, var(--read-bg-strong));
-  box-shadow: 0 0 0 3px var(--neon-glow);
-  border-radius: 10px;
-}
-.mizan-tafsir-content p.is-current-ayah {
-  padding: 10px 14px;
-  margin: .5em 0;
+/* بلوک لخت عربی (بدون fence) */
+.mizan-tafsir-content p.mizan-arabic-raw {
   font-family: var(--font-quran);
   font-size: 1.35rem;
   line-height: 2.6;
   text-align: center;
   direction: rtl;
+  color: var(--text);
+  white-space: normal;
+}
+
+/* برجسته‌سازی آیهٔ جاری */
+.mizan-tafsir-content pre.is-current-ayah,
+.mizan-tafsir-content p.is-current-ayah {
+  border-color: var(--neon);
+  background: color-mix(in srgb, var(--neon) 8%, var(--read-bg-strong));
+  box-shadow: 0 0 0 3px var(--neon-glow);
 }
 
 .mizan-tafsir-content hr {
@@ -388,8 +367,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .progress-hero { padding: 12px 14px; gap: 10px; }
   .mizan-tafsir-content { font-size: .88rem; line-height: 2; padding: 12px 12px; }
   .mizan-tafsir-content pre code.language-arabic,
-  .mizan-tafsir-content p.is-current-ayah { font-size: 1.15rem; line-height: 2.4; }
-  .mizan-ayah-label { font-size: .66rem; padding: 2px 8px; }
+  .mizan-tafsir-content p.mizan-arabic-raw { font-size: 1.15rem; line-height: 2.4; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
