@@ -1,5 +1,5 @@
 /* ============================================================================
-   FEEDBACK — Toast, Alert, Banner, Badge, Chip, Progress, Skeleton
+   FEEDBACK — Toast / Alert / Badge — FIXED (mobile positioning)
    ============================================================================ */
 
 /* ----------------------------------------------------------------------------
@@ -18,13 +18,16 @@
   pointer-events: none;
 }
 
+/* ✅ FIX: mobile positioning with safe-area support */
 @media (max-width: 639px) {
   .toast-root {
     top: auto;
-    bottom: var(--sp-4);
-    inset-inline-end: var(--sp-3);
-    inset-inline-start: var(--sp-3);
+    bottom: max(16px, env(safe-area-inset-bottom, 0px) + 16px);
+    inset-inline-end: 12px;
+    inset-inline-start: 12px;
     max-width: none;
+    width: auto;
+    padding: 0;
   }
 }
 
@@ -41,6 +44,28 @@
   pointer-events: auto;
   overflow: hidden;
   animation: toast-in-rtl var(--t-medium) var(--ease-out) both;
+  max-width: 100%;
+}
+
+@media (max-width: 639px) {
+  .toast {
+    padding: var(--sp-3) var(--sp-3);
+    gap: var(--sp-2);
+  }
+
+  .toast__icon {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+
+  .toast__title {
+    font-size: var(--fs-sm);
+  }
+
+  .toast__message {
+    font-size: var(--fs-xs);
+  }
 }
 
 .toast.is-leaving {
@@ -114,6 +139,7 @@
   align-items: center;
   gap: var(--sp-2);
   margin-top: var(--sp-3);
+  flex-wrap: wrap;
 }
 
 .toast__close {
@@ -179,36 +205,17 @@
   color: var(--text-primary);
 }
 
-.alert--success {
-  background: var(--success-bg);
-  border-color: var(--success-brd);
-  color: var(--success-txt);
-}
+.alert--success { background: var(--success-bg); border-color: var(--success-brd); color: var(--success-txt); }
 .alert--success .alert__title { color: var(--success-txt); }
-
-.alert--warning {
-  background: var(--warning-bg);
-  border-color: var(--warning-brd);
-  color: var(--warning-txt);
-}
+.alert--warning { background: var(--warning-bg); border-color: var(--warning-brd); color: var(--warning-txt); }
 .alert--warning .alert__title { color: var(--warning-txt); }
-
-.alert--danger {
-  background: var(--danger-bg);
-  border-color: var(--danger-brd);
-  color: var(--danger-txt);
-}
-.alert--danger .alert__title { color: var(--danger-txt); }
-
-.alert--info {
-  background: var(--info-bg);
-  border-color: var(--info-brd);
-  color: var(--info-txt);
-}
-.alert--info .alert__title { color: var(--info-txt); }
+.alert--danger  { background: var(--danger-bg);  border-color: var(--danger-brd);  color: var(--danger-txt); }
+.alert--danger  .alert__title { color: var(--danger-txt); }
+.alert--info    { background: var(--info-bg);    border-color: var(--info-brd);    color: var(--info-txt); }
+.alert--info    .alert__title { color: var(--info-txt); }
 
 /* ----------------------------------------------------------------------------
-   BANNER (top of page)
+   BANNER
    ---------------------------------------------------------------------------- */
 .banner {
   display: flex;
@@ -265,8 +272,6 @@
   height: 6px;
   border-radius: var(--r-full);
   background: currentColor;
-  box-shadow: 0 0 0 2px currentColor;
-  opacity: .7;
   flex-shrink: 0;
 }
 
@@ -320,7 +325,7 @@
 }
 
 /* ----------------------------------------------------------------------------
-   LOADING / SPINNERS
+   SPINNERS
    ---------------------------------------------------------------------------- */
 .spinner {
   display: inline-block;
@@ -336,11 +341,6 @@
 .spinner--lg { width: 32px; height: 32px; border-width: 3px; }
 .spinner--xl { width: 48px; height: 48px; border-width: 3px; }
 
-.spinner--success { border-top-color: var(--success-400); }
-.spinner--warning { border-top-color: var(--warning-400); }
-.spinner--danger  { border-top-color: var(--danger-400); }
-
-/* Dots loader */
 .dots-loader {
   display: inline-flex;
   align-items: center;
@@ -363,7 +363,6 @@
   40%           { opacity: 1;   transform: scale(1); }
 }
 
-/* Overlay loader */
 .loading-overlay {
   position: absolute;
   inset: 0;
@@ -387,18 +386,6 @@
 }
 
 /* ----------------------------------------------------------------------------
-   PROGRESS
-   ---------------------------------------------------------------------------- */
-.progress-ring {
-  transform: rotate(-90deg);
-}
-
-.progress-ring__circle {
-  transition: stroke-dashoffset var(--t-slow) var(--ease-out);
-  stroke-linecap: round;
-}
-
-/* ----------------------------------------------------------------------------
    STATUS DOT
    ---------------------------------------------------------------------------- */
 .status-dot {
@@ -410,34 +397,7 @@
   flex-shrink: 0;
 }
 
-.status-dot--online {
-  background: var(--success-500);
-  box-shadow: 0 0 0 3px rgba(34,197,94,.20);
-}
-
-.status-dot--offline {
-  background: var(--text-quaternary);
-}
-
-.status-dot--busy {
-  background: var(--warning-500);
-  box-shadow: 0 0 0 3px rgba(245,158,11,.20);
-}
-
-.status-dot--danger {
-  background: var(--danger-500);
-  box-shadow: 0 0 0 3px rgba(239,68,68,.20);
-}
-
-.status-dot--pulse {
-  position: relative;
-}
-
-.status-dot--pulse::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: inherit;
-  animation: pulse-ring 1.8s var(--ease-out) infinite;
-}
+.status-dot--online  { background: var(--success-500); box-shadow: 0 0 0 3px rgba(34,197,94,.20); }
+.status-dot--offline { background: var(--text-quaternary); }
+.status-dot--busy    { background: var(--warning-500); box-shadow: 0 0 0 3px rgba(245,158,11,.20); }
+.status-dot--danger  { background: var(--danger-500);  box-shadow: 0 0 0 3px rgba(239,68,68,.20); }
