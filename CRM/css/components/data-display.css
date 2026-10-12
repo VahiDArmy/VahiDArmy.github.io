@@ -1,0 +1,408 @@
+/* ============================================================================
+   DATA DISPLAY — Avatar, Chip, KPI, Spark, Timeline, Tree, List
+   ============================================================================ */
+
+/* ----------------------------------------------------------------------------
+   AVATAR
+   ---------------------------------------------------------------------------- */
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--r-full);
+  background: var(--grad-brand);
+  color: #fff;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  overflow: hidden;
+  position: relative;
+  user-select: none;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar--xs { width: 22px; height: 22px; font-size: 9px; }
+.avatar--sm { width: 28px; height: 28px; font-size: var(--fs-2xs); }
+.avatar--md { width: 36px; height: 36px; font-size: var(--fs-sm); }
+.avatar--lg { width: 48px; height: 48px; font-size: var(--fs-lg); }
+.avatar--xl { width: 64px; height: 64px; font-size: var(--fs-2xl); }
+.avatar--2xl { width: 88px; height: 88px; font-size: var(--fs-4xl); }
+
+.avatar--square { border-radius: var(--r-md); }
+
+.avatar--ring {
+  box-shadow: 0 0 0 2px var(--bg-surface), 0 0 0 4px rgba(89,142,255,.35);
+}
+
+.avatar--status::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  inset-inline-end: 0;
+  width: 30%;
+  height: 30%;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: var(--r-full);
+  background: var(--success-500);
+  border: 2px solid var(--bg-surface);
+}
+
+.avatar--offline::after { background: var(--text-quaternary); }
+.avatar--busy::after    { background: var(--warning-500); }
+.avatar--danger::after  { background: var(--danger-500); }
+
+.avatar--placeholder {
+  background: var(--bg-surface-3);
+  color: var(--text-tertiary);
+  border: 1px dashed var(--border-default);
+}
+
+.avatar-group {
+  display: inline-flex;
+  align-items: center;
+}
+
+.avatar-group .avatar {
+  border: 2px solid var(--bg-surface);
+  margin-inline-start: -8px;
+}
+
+.avatar-group .avatar:first-child {
+  margin-inline-start: 0;
+}
+
+.avatar-group__more {
+  background: var(--bg-surface-3);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-semibold);
+  border: 2px solid var(--bg-surface);
+  margin-inline-start: -8px;
+}
+
+/* ----------------------------------------------------------------------------
+   KPI / HIGHLIGHT BLOCK
+   ---------------------------------------------------------------------------- */
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-4) var(--sp-4);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+
+.kpi__label {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.kpi__value {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.kpi__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+.kpi__delta--up   { color: var(--success-txt); }
+.kpi__delta--down { color: var(--danger-txt);  }
+.kpi__delta--flat { color: var(--text-tertiary); }
+
+/* ----------------------------------------------------------------------------
+   SPARKLINE
+   ---------------------------------------------------------------------------- */
+.spark {
+  display: inline-block;
+  width: 80px;
+  height: 26px;
+  vertical-align: middle;
+}
+
+/* ----------------------------------------------------------------------------
+   LIST (data list with icon, primary & secondary)
+   ---------------------------------------------------------------------------- */
+.dlist {
+  display: flex;
+  flex-direction: column;
+}
+
+.dlist__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
+  transition: var(--tr-colors);
+  cursor: pointer;
+}
+
+.dlist__item:last-child { border-bottom: 0; }
+
+.dlist__item:hover {
+  background: var(--bg-hover);
+}
+
+.dlist__avatar { flex-shrink: 0; }
+
+.dlist__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.dlist__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dlist__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dlist__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dlist__action {
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------------------------
+   DEFINITION LIST
+   ---------------------------------------------------------------------------- */
+.deflist {
+  display: grid;
+  grid-template-columns: minmax(120px, max-content) 1fr;
+  gap: var(--sp-3) var(--sp-4);
+  align-items: start;
+}
+
+.deflist dt {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+  padding-top: 2px;
+}
+
+.deflist dd {
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+/* ----------------------------------------------------------------------------
+   TREE
+   ---------------------------------------------------------------------------- */
+.tree {
+  font-size: var(--fs-md);
+}
+
+.tree__node {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 5px var(--sp-2);
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--tr-colors);
+  user-select: none;
+}
+
+.tree__node:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.tree__toggle {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-quaternary);
+  transition: transform var(--t-base) var(--ease-out);
+}
+
+.tree__node.is-open > .tree__toggle {
+  transform: rotate(90deg);
+}
+
+.tree__icon {
+  font-size: 16px;
+  color: var(--brand-400);
+  flex-shrink: 0;
+}
+
+.tree__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tree__count {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+}
+
+.tree__children {
+  padding-inline-start: var(--sp-5);
+  animation: slide-down var(--t-base) var(--ease-out) both;
+}
+
+.tree__children[hidden] { display: none; }
+
+/* ----------------------------------------------------------------------------
+   STATUS PILL (big, pastel background)
+   ---------------------------------------------------------------------------- */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding-inline: 10px;
+  border-radius: var(--r-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-full);
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.status-pill--pending   { color: var(--warning-txt); background: var(--warning-bg); border: 1px solid var(--warning-brd); }
+.status-pill--completed { color: var(--success-txt); background: var(--success-bg); border: 1px solid var(--success-brd); }
+.status-pill--cancelled { color: var(--danger-txt);  background: var(--danger-bg);  border: 1px solid var(--danger-brd); }
+.status-pill--shipped   { color: var(--info-txt);    background: var(--info-bg);    border: 1px solid var(--info-brd); }
+.status-pill--draft     { color: var(--text-tertiary); background: var(--bg-surface-3); border: 1px solid var(--border-default); }
+
+/* ----------------------------------------------------------------------------
+   METER (mini horizontal bar with label + value)
+   ---------------------------------------------------------------------------- */
+.meter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meter__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.meter__value {
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.meter__track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.meter__fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  background: var(--grad-brand);
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+.meter--success .meter__fill { background: var(--grad-success); }
+.meter--warning .meter__fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.meter--danger  .meter__fill { background: var(--grad-danger); }
+
+/* ----------------------------------------------------------------------------
+   COMPARE VALUE (old vs new)
+   ---------------------------------------------------------------------------- */
+.compare {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.compare__old {
+  font-size: var(--fs-sm);
+  color: var(--text-quaternary);
+  text-decoration: line-through;
+}
+
+.compare__new {
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+
+/* ----------------------------------------------------------------------------
+   COPYABLE
+   ---------------------------------------------------------------------------- */
+.copyable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: var(--tr-colors);
+}
+
+.copyable:hover {
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.copyable i {
+  font-size: 14px;
+  color: var(--text-quaternary);
+}
+
+.copyable.is-copied i {
+  color: var(--success-txt);
+}
