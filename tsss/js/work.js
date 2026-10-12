@@ -431,22 +431,62 @@
       .trim();
   }
 
+  // قبل از هر بلوک عربی، برچسب «آیهٔ X» را اضافه می‌کند.
+  // از span[id="surah-X-ayah-Y"] که در داده هست استفاده می‌کند.
+  function labelMizanAyahs(rootEl) {
+    if (!rootEl) return;
+    const spans = rootEl.querySelectorAll('span[id^="surah-"]');
+    spans.forEach((span) => {
+      const m = span.id.match(/^surah-(\d+)-ayah-(\d+)$/);
+      if (!m) return;
+      const ayahNum = Number(m[2]);
+
+      // از span رو به جلو حرکت کن تا اولین pre با code.language-arabic را پیدا کنی
+      let foundPre = null;
+      let node = span;
+      let guard = 0;
+      outer: while (node && node !== rootEl && guard < 3000) {
+        guard++;
+        let sib = node.nextSibling;
+        while (sib) {
+          if (sib.nodeType === 1) {
+            if (sib.tagName === 'PRE') {
+              const code = sib.querySelector('code.language-arabic');
+              if (code) { foundPre = sib; break outer; }
+            }
+            if (sib.querySelector) {
+              const innerCode = sib.querySelector('pre > code.language-arabic');
+              if (innerCode) { foundPre = innerCode.closest('pre'); break outer; }
+            }
+            if (/^(H[1-6]|HR)$/.test(sib.tagName)) break outer;
+          }
+          sib = sib.nextSibling;
+        }
+        node = node.parentNode;
+        if (!node) break;
+      }
+      if (!foundPre) return;
+      if (foundPre.dataset.ayah) return;
+
+      foundPre.dataset.ayah = String(ayahNum);
+
+      const label = document.createElement('div');
+      label.className = 'mizan-ayah-label';
+      label.dataset.ayah = String(ayahNum);
+      label.textContent = `آیهٔ ${UI.toPersianDigits(ayahNum)}`;
+      foundPre.parentNode.insertBefore(label, foundPre);
+    });
+  }
+
   function highlightCurrentAyah(rootEl, surah, ayah) {
     if (!rootEl) return;
-    const anchor = rootEl.querySelector(`#surah-${surah}-ayah-${ayah}`);
-    if (!anchor) return;
-    let node = anchor;
-    while (
-      node.parentElement &&
-      node.parentElement.tagName === 'P' &&
-      node.parentElement.textContent.trim() === ''
-    ) {
-      node = node.parentElement;
-    }
-    const sib = node.nextElementSibling;
-    if (sib && sib.tagName === 'PRE' && sib.querySelector('code.language-arabic')) {
-      sib.classList.add('is-current-ayah');
-    }
+    rootEl.querySelectorAll('.is-current-ayah').forEach((el) => el.classList.remove('is-current-ayah'));
+
+    const pre = rootEl.querySelector(`pre[data-ayah="${ayah}"]`);
+    if (pre) pre.classList.add('is-current-ayah');
+
+    const label = rootEl.querySelector(`.mizan-ayah-label[data-ayah="${ayah}"]`);
+    if (label) label.classList.add('is-current-ayah');
   }
 
   async function renderMizan(surah, ayah) {
@@ -474,6 +514,7 @@
       }
 
       showMizanState('content', { html, range });
+      labelMizanAyahs(mizanContent);
       highlightCurrentAyah(mizanContent, surah, ayah);
     } catch (e) {
       console.warn('[mizan] load failed:', e);
