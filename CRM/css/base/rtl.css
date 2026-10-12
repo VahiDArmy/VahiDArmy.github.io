@@ -1,5 +1,5 @@
 /* ============================================================================
-   RTL SPECIFIC ADJUSTMENTS — FIXED
+   RTL SPECIFIC ADJUSTMENTS — FIXED (switch knob)
    ============================================================================ */
 
 [dir="rtl"] {
@@ -45,10 +45,7 @@
   padding-inline-end: var(--sp-10);
 }
 
-/* ---------- Breadcrumb ----------
-   ✅ FIX: در RTL با flex-direction: row پیش‌فرض، آیتم‌ها به‌صورت
-   طبیعی از راست به چپ می‌چینند — دیگر نیازی به row-reverse نیست.
-   ---------- */
+/* ---------- Breadcrumb ---------- */
 [dir="rtl"] .breadcrumb__list {
   flex-direction: row;
   justify-content: flex-start;
@@ -156,14 +153,33 @@ input[type="number"],
   margin-inline-end: 0;
 }
 
-/* ---------- Switch ---------- */
-[dir="rtl"] .switch__slider::before {
-  inset-inline-start: auto;
-  inset-inline-end: 3px;
+/* ============================================================================
+   ✅ SWITCH — FIXED
+   ----------------------------------------------------------------------------
+   باگ قبلی: override اشتباه روی ::before باعث می‌شد knob همیشه سمت چپ بماند
+   و در حالت ON بیرون از track بیفتد.
+
+   راه‌حل درست:
+   - قانون پایه `inset-inline-start: 2px` در RTL معنی `right: 2px` می‌دهد → knob
+     در حالت OFF روی سمت راست قرار می‌گیرد (آینه LTR).
+   - در حالت ON، فقط با transform جابه‌جا می‌شود (در RTL به سمت چپ/`-18px`).
+   - هیچ override روی position لازم نیست.
+   ============================================================================ */
+
+/* حذف شد (باعث باگ بود):
+   [dir="rtl"] .switch__slider::before {
+     inset-inline-start: auto;
+     inset-inline-end: 3px;
+   }
+*/
+
+/* فقط جهت transform را در RTL معکوس می‌کنیم */
+[dir="rtl"] .switch input:checked + .switch__slider::before {
+  transform: translateX(-18px);
 }
 
-[dir="rtl"] .switch input:checked + .switch__slider::before {
-  transform: translateX(-20px);
+[dir="rtl"] .switch--sm input:checked + .switch__slider::before {
+  transform: translateX(-14px);
 }
 
 /* ---------- Tabs ---------- */
