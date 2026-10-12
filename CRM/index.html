@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0d14" />
   <meta name="description" content="سیستم مدیریت ارتباط با مشتریان و کنترل موجودی انبار" />
   <meta name="author" content="CRM Inventory Suite" />
@@ -237,7 +237,9 @@
       <nav class="breadcrumb" aria-label="مسیر ناوبری" id="breadcrumb">
         <ol class="breadcrumb__list">
           <li class="breadcrumb__item">
-            <a href="#/dashboard"><i class="ri-home-4-line"></i></a>
+            <a href="#/dashboard" title="داشبورد" aria-label="داشبورد">
+              <i class="ri-home-4-line"></i>
+            </a>
           </li>
         </ol>
       </nav>
@@ -245,22 +247,22 @@
       <div class="topbar__spacer"></div>
 
       <div class="topbar__actions">
-        <button class="icon-btn" id="theme-toggle" type="button" title="تغییر تم">
+        <button class="icon-btn" id="theme-toggle" type="button" title="تغییر تم" aria-label="تغییر تم">
           <i class="ri-moon-line"></i>
         </button>
 
-        <button class="icon-btn" id="notifications-btn" type="button" title="اعلان‌ها">
+        <button class="icon-btn" id="notifications-btn" type="button" title="اعلان‌ها" aria-label="اعلان‌ها">
           <i class="ri-notification-3-line"></i>
           <span class="icon-btn__dot" data-badge="notifications"></span>
         </button>
 
-        <button class="icon-btn" id="tasks-btn" type="button" title="کارها">
+        <button class="icon-btn" id="tasks-btn" type="button" title="کارها" aria-label="کارها">
           <i class="ri-checkbox-multiple-line"></i>
         </button>
 
         <div class="topbar__divider"></div>
 
-        <button class="topbar__user" id="topbar-user" type="button">
+        <button class="topbar__user" id="topbar-user" type="button" aria-label="منوی کاربر">
           <span class="topbar__user-avatar" data-user="initial">؟</span>
           <span class="topbar__user-name" data-user="name">کاربر</span>
           <i class="ri-arrow-down-s-line"></i>
@@ -279,10 +281,10 @@
             <p class="page__subtitle">خلاصه وضعیت انبار، فروش و مشتریان</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--ghost" data-action="refresh-dashboard">
+            <button class="btn btn--ghost" data-action="refresh-dashboard" type="button">
               <i class="ri-refresh-line"></i> بروزرسانی
             </button>
-            <button class="btn btn--primary" data-action="export-dashboard">
+            <button class="btn btn--primary" data-action="export-dashboard" type="button">
               <i class="ri-download-2-line"></i> خروجی گزارش
             </button>
           </div>
@@ -346,7 +348,7 @@
             <p class="page__subtitle">مدیریت کاتالوگ کالا و خدمات</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--primary" data-action="new-product">
+            <button class="btn btn--primary" data-action="new-product" type="button">
               <i class="ri-add-line"></i> محصول جدید
             </button>
           </div>
@@ -362,10 +364,10 @@
             <p class="page__subtitle">کنترل و رهگیری موجودی در انبارها</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--ghost" data-action="inventory-transfer">
+            <button class="btn btn--ghost" data-action="inventory-transfer" type="button">
               <i class="ri-swap-box-line"></i> انتقال بین انبار
             </button>
-            <button class="btn btn--primary" data-action="inventory-adjust">
+            <button class="btn btn--primary" data-action="inventory-adjust" type="button">
               <i class="ri-equalizer-line"></i> تعدیل موجودی
             </button>
           </div>
@@ -382,7 +384,7 @@
             <p class="page__subtitle">سفارشات خرید و فروش</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--primary" data-action="new-order">
+            <button class="btn btn--primary" data-action="new-order" type="button">
               <i class="ri-add-line"></i> سفارش جدید
             </button>
           </div>
@@ -398,7 +400,7 @@
             <p class="page__subtitle">پایگاه مشتریان و سابقه تعاملات</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--primary" data-action="new-customer">
+            <button class="btn btn--primary" data-action="new-customer" type="button">
               <i class="ri-user-add-line"></i> مشتری جدید
             </button>
           </div>
@@ -414,7 +416,7 @@
             <p class="page__subtitle">مدیریت زنجیره تأمین</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--primary" data-action="new-supplier">
+            <button class="btn btn--primary" data-action="new-supplier" type="button">
               <i class="ri-add-line"></i> تأمین‌کننده جدید
             </button>
           </div>
@@ -430,7 +432,7 @@
             <p class="page__subtitle">مدیریت مکان‌های نگهداری کالا</p>
           </div>
           <div class="page__actions">
-            <button class="btn btn--primary" data-action="new-warehouse">
+            <button class="btn btn--primary" data-action="new-warehouse" type="button">
               <i class="ri-add-line"></i> انبار جدید
             </button>
           </div>
@@ -447,11 +449,11 @@
           </div>
         </div>
         <div class="tabs" data-tabs="reports">
-          <button class="tab is-active" data-tab="sales">فروش</button>
-          <button class="tab" data-tab="inventory">موجودی</button>
-          <button class="tab" data-tab="customers">مشتریان</button>
-          <button class="tab" data-tab="suppliers">تأمین‌کنندگان</button>
-          <button class="tab" data-tab="profit">سود و زیان</button>
+          <button class="tab is-active" data-tab="sales" type="button">فروش</button>
+          <button class="tab" data-tab="inventory" type="button">موجودی</button>
+          <button class="tab" data-tab="customers" type="button">مشتریان</button>
+          <button class="tab" data-tab="suppliers" type="button">تأمین‌کنندگان</button>
+          <button class="tab" data-tab="profit" type="button">سود و زیان</button>
         </div>
         <div class="tab-panels" id="reports-panels"></div>
       </section>
@@ -476,11 +478,11 @@
           </div>
         </div>
         <div class="tabs" data-tabs="settings">
-          <button class="tab is-active" data-tab="profile">پروفایل</button>
-          <button class="tab" data-tab="general">عمومی</button>
-          <button class="tab" data-tab="notifications">اعلان‌ها</button>
-          <button class="tab" data-tab="team">تیم</button>
-          <button class="tab" data-tab="integrations">یکپارچه‌سازی</button>
+          <button class="tab is-active" data-tab="profile" type="button">پروفایل</button>
+          <button class="tab" data-tab="general" type="button">عمومی</button>
+          <button class="tab" data-tab="notifications" type="button">اعلان‌ها</button>
+          <button class="tab" data-tab="team" type="button">تیم</button>
+          <button class="tab" data-tab="integrations" type="button">یکپارچه‌سازی</button>
         </div>
         <div class="tab-panels" id="settings-panels"></div>
       </section>
@@ -513,10 +515,12 @@
   <div id="tooltip-root" class="tooltip-root"></div>
   <div id="dropdown-root" class="dropdown-root"></div>
 
-  <!-- Command Palette -->
+  <!-- ============================================================
+       COMMAND PALETTE
+  ============================================================ -->
   <div id="command-palette" class="command-palette" hidden>
     <div class="command-palette__backdrop" data-cp-close></div>
-    <div class="command-palette__panel" role="dialog" aria-modal="true">
+    <div class="command-palette__panel" role="dialog" aria-modal="true" aria-label="پالت دستورات">
       <div class="command-palette__input-wrap">
         <i class="ri-search-line"></i>
         <input type="text" id="cp-input" placeholder="جستجو یا اجرای دستور…"
@@ -598,14 +602,7 @@
   ============================================================ -->
   <script src="js/pages/dashboard.js"></script>
   <script src="js/pages/products.js"></script>
-  <script src="js/pages/inventory.js"></script>
-  <script src="js/pages/customers.js"></script>
-  <script src="js/pages/orders.js"></script>
-  <script src="js/pages/suppliers.js"></script>
-  <script src="js/pages/warehouses.js"></script>
-  <script src="js/pages/reports.js"></script>
-  <script src="js/pages/settings.js"></script>
-  <script src="js/pages/activity-log.js"></script>
+  <script src="js/pages/placeholder-pages.js"></script>
 
   <!-- ============================================================
        SCRIPTS — CORE
