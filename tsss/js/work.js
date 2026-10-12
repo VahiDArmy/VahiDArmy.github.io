@@ -431,10 +431,9 @@
       .trim();
   }
 
-  // برچسب «آیهٔ X» را قبل از هر بلوک عربی می‌گذارد.
-  // هم حالت با ```arabic (pre > code.language-arabic) و
-  // هم حالت بدون فریم (فقط <p> خام) را پشتیبانی می‌کند.
-  function labelMizanAyahs(rootEl) {
+  // هر بلوک آیه را با data-ayah برچسب می‌زند و اگر متن عربی در یک <p> لخت
+  // آمده باشد (بدون ```arabic)، آن را با کلاس mizan-arabic-raw هم‌شکل pre می‌کند.
+  function styleMizanAyahs(rootEl) {
     if (!rootEl) return;
     const spans = rootEl.querySelectorAll('span[id^="surah-"]');
     spans.forEach((span) => {
@@ -444,21 +443,23 @@
 
       let target = null;
 
-      // حالت A: span داخل <p> است که متن آیه هم داخل همان <p> هست
+      // حالت A: خود <p> حاوی span، متن آیه را هم درون دارد
       const parentP = (span.parentElement && span.parentElement.tagName === 'P')
         ? span.parentElement
         : null;
       if (parentP) {
-        // متن بدون span؛ اگر خالی نبود یعنی آیه همین‌جاست
-        const withoutSpan = Array.from(parentP.childNodes)
+        const others = Array.from(parentP.childNodes)
           .filter((n) => n !== span)
           .map((n) => n.textContent || '')
           .join('')
           .trim();
-        if (withoutSpan.length > 0) target = parentP;
+        if (others.length > 0) {
+          parentP.classList.add('mizan-arabic-raw');
+          target = parentP;
+        }
       }
 
-      // حالت B: span تنها در یک <p> خالی است، محتوا در بلوک بعدی می‌آید
+      // حالت B: span تنها در <p> خالی است، محتوا در بلوک بعدی می‌آید
       if (!target) {
         let node = span;
         let guard = 0;
@@ -472,6 +473,7 @@
               } else if (sib.tagName === 'P') {
                 if (sib.contains(span)) { sib = sib.nextSibling; continue; }
                 if (sib.textContent.trim() === '') { sib = sib.nextSibling; continue; }
+                sib.classList.add('mizan-arabic-raw');
                 target = sib; break outer;
               } else if (/^(H[1-6]|HR)$/.test(sib.tagName)) {
                 break outer;
@@ -486,23 +488,13 @@
         }
       }
 
-      if (!target) return;
-      if (target.dataset.ayah) return;
-      target.dataset.ayah = String(ayahNum);
-
-      const label = document.createElement('div');
-      label.className = 'mizan-ayah-label';
-      label.dataset.ayah = String(ayahNum);
-      label.textContent = `آیهٔ ${UI.toPersianDigits(ayahNum)}`;
-      target.parentNode.insertBefore(label, target);
+      if (target) target.dataset.ayah = String(ayahNum);
     });
   }
 
   function highlightCurrentAyah(rootEl, surah, ayah) {
     if (!rootEl) return;
     rootEl.querySelectorAll('.is-current-ayah').forEach((el) => el.classList.remove('is-current-ayah'));
-
-    // همهٔ عناصری که data-ayah برابر آیهٔ جاری دارند: هم برچسب، هم بلوک
     rootEl.querySelectorAll(`[data-ayah="${ayah}"]`).forEach((el) => {
       el.classList.add('is-current-ayah');
     });
@@ -533,7 +525,7 @@
       }
 
       showMizanState('content', { html, range });
-      labelMizanAyahs(mizanContent);
+      styleMizanAyahs(mizanContent);
       highlightCurrentAyah(mizanContent, surah, ayah);
     } catch (e) {
       console.warn('[mizan] load failed:', e);
