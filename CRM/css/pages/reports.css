@@ -1,0 +1,383 @@
+/* ============================================================================
+   REPORTS PAGE
+   ============================================================================ */
+
+.report-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: var(--sp-5);
+  align-items: flex-start;
+}
+
+@media (max-width: 1000px) {
+  .report-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Sidebar filters ---------- */
+.report-filters {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--sp-4));
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  max-height: calc(100vh - var(--topbar-h) - var(--sp-8));
+  overflow-y: auto;
+}
+
+.report-filters__group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.report-filters__title {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 4px;
+}
+
+.report-filters__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--tr-colors);
+}
+
+.report-filters__row:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.report-filters__row.is-active {
+  color: var(--brand-300);
+  background: rgba(89,142,255,.10);
+  font-weight: var(--fw-medium);
+}
+
+.report-filters__row i { font-size: 15px; }
+
+.report-filters__count {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-filters__actions {
+  display: flex;
+  gap: var(--sp-2);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.report-filters__actions .btn {
+  flex: 1;
+}
+
+/* ---------- Report content ---------- */
+.report-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--sp-4);
+}
+
+.report-summary-card {
+  padding: var(--sp-4) var(--sp-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.report-summary-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(89,142,255,.04), transparent 60%);
+  pointer-events: none;
+}
+
+.report-summary-card__label {
+  font-size: var(--fs-xs);
+  color: var(--text-quaternary);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.report-summary-card__value {
+  font-size: 22px;
+  font-weight: var(--fw-extrabold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  letter-spacing: -.01em;
+}
+
+.report-summary-card__delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+}
+
+/* ---------- Report chart area ---------- */
+.report-chart {
+  padding: var(--sp-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+}
+
+.report-chart__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+
+.report-chart__title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+
+.report-chart__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.report-chart__body {
+  position: relative;
+  height: 340px;
+}
+
+/* ---------- Report table ---------- */
+.report-table-wrap {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.report-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.report-table-head h3 {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+}
+
+/* ---------- Data bars (horizontal) ---------- */
+.databars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+}
+
+.databar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.databar__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+}
+
+.databar__label {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.databar__value {
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.databar__track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.databar__fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+/* ---------- Heatmap ---------- */
+.heatmap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14px, 1fr));
+  gap: 3px;
+  padding: var(--sp-4);
+}
+
+.heatmap__cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--bg-surface-3);
+  transition: var(--tr-transform);
+  cursor: pointer;
+}
+
+.heatmap__cell:hover {
+  transform: scale(1.2);
+}
+
+.heatmap__cell[data-level="1"] { background: rgba(89,142,255,.22); }
+.heatmap__cell[data-level="2"] { background: rgba(89,142,255,.42); }
+.heatmap__cell[data-level="3"] { background: rgba(89,142,255,.62); }
+.heatmap__cell[data-level="4"] { background: rgba(89,142,255,.86); }
+
+/* ---------- Report card grid ---------- */
+.report-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--sp-4);
+}
+
+.report-card {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+  padding: var(--sp-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: var(--tr-colors), var(--tr-transform), var(--tr-shadow);
+}
+
+.report-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+
+.report-card__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: var(--r-md);
+  background: rgba(89,142,255,.12);
+  color: var(--brand-400);
+  font-size: 20px;
+  border: 1px solid rgba(89,142,255,.20);
+}
+
+.report-card__body { flex: 1; min-width: 0; }
+
+.report-card__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.report-card__desc {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  line-height: 1.55;
+}
+
+.report-card__arrow {
+  color: var(--text-quaternary);
+  font-size: 18px;
+  flex-shrink: 0;
+  transition: transform var(--t-base) var(--ease-out), color var(--t-base) var(--ease-out);
+}
+
+.report-card:hover .report-card__arrow {
+  color: var(--brand-400);
+  transform: translateX(-4px);
+}
+
+[dir="rtl"] .report-card:hover .report-card__arrow {
+  transform: translateX(4px);
+}
+
+/* ---------- Export menu ---------- */
+.export-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xl);
+  min-width: 180px;
+}
+
+.export-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--tr-colors);
+}
+
+.export-menu__item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.export-menu__item i {
+  font-size: 16px;
+  color: var(--text-quaternary);
+}
