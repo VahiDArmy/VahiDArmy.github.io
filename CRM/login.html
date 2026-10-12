@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0d14" />
+  <meta name="description" content="ورود به سامانه CRM مدیریت انبار" />
+  <meta name="author" content="CRM Inventory Suite" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <title>ورود | سامانه CRM انبار</title>
+
+  <!-- ==================== FONTS ==================== -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
+  />
+
+  <!-- ==================== ICONS ==================== -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css"
+  />
+
+  <!-- ==================== CSS: BASE ==================== -->
+  <link rel="stylesheet" href="css/base/variables.css" />
+  <link rel="stylesheet" href="css/base/reset.css" />
+  <link rel="stylesheet" href="css/base/typography.css" />
+  <link rel="stylesheet" href="css/base/rtl.css" />
+  <link rel="stylesheet" href="css/base/utilities.css" />
+  <link rel="stylesheet" href="css/base/animations.css" />
+
+  <!-- ==================== CSS: COMPONENTS ==================== -->
+  <link rel="stylesheet" href="css/components/buttons.css" />
+  <link rel="stylesheet" href="css/components/forms.css" />
+  <link rel="stylesheet" href="css/components/feedback.css" />
+
+  <!-- ==================== CSS: PAGE ==================== -->
+  <link rel="stylesheet" href="css/pages/login.css" />
+</head>
+
+<body class="auth-body">
+
+  <!-- ==================== BACKGROUND DECORATION ==================== -->
+  <div class="auth-bg" aria-hidden="true">
+    <span class="auth-bg__blob auth-bg__blob--1"></span>
+    <span class="auth-bg__blob auth-bg__blob--2"></span>
+    <span class="auth-bg__blob auth-bg__blob--3"></span>
+    <span class="auth-bg__grid"></span>
+  </div>
+
+  <!-- ==================== AUTH CONTAINER ==================== -->
+  <main class="auth">
+    <div class="auth__card">
+
+      <!-- ============ SIDE PANEL (Brand & Features) ============ -->
+      <aside class="auth__aside">
+        <div class="auth__aside-inner">
+          <div class="auth__logo">
+            <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
+              <defs>
+                <linearGradient id="alg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#598eff" />
+                  <stop offset="100%" stop-color="#06b6d4" />
+                </linearGradient>
+              </defs>
+              <rect x="4" y="4" width="40" height="40" rx="12"
+                    fill="none" stroke="url(#alg)" stroke-width="3" />
+              <path d="M14 18h20M14 24h20M14 30h13"
+                    stroke="url(#alg)" stroke-width="3" stroke-linecap="round" />
+            </svg>
+            <div>
+              <strong>سامانه انبار</strong>
+              <span>CRM &amp; Inventory Suite</span>
+            </div>
+          </div>
+
+          <h2 class="auth__aside-title">مدیریت هوشمند انبار و ارتباط با مشتریان</h2>
+          <p class="auth__aside-text">
+            کنترل کامل موجودی، سفارشات، مشتریان و تحلیل‌های پیشرفته — همه در یک پلتفرم یکپارچه.
+          </p>
+
+          <ul class="auth__features">
+            <li><i class="ri-check-line"></i> داشبورد تحلیلی زنده</li>
+            <li><i class="ri-check-line"></i> هشدارهای هوشمند کمبود موجودی</li>
+            <li><i class="ri-check-line"></i> گزارشات قابل سفارشی‌سازی</li>
+            <li><i class="ri-check-line"></i> مدیریت چند انباره</li>
+            <li><i class="ri-check-line"></i> کنترل دسترسی نقش‌محور</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- ============ FORM PANEL ============ -->
+      <section class="auth__form-wrap">
+
+        <!-- Tabs -->
+        <div class="auth__tabs" role="tablist">
+          <button class="auth__tab is-active" data-auth-tab="login" type="button" role="tab" aria-selected="true">ورود</button>
+          <button class="auth__tab" data-auth-tab="signup" type="button" role="tab" aria-selected="false">ثبت‌نام</button>
+        </div>
+
+        <!-- ==================== LOGIN FORM ==================== -->
+        <form class="auth__form is-active" id="login-form" data-auth-panel="login" novalidate autocomplete="on">
+          <h1 class="auth__title">خوش آمدید 👋</h1>
+          <p class="auth__subtitle">برای ادامه، وارد حساب کاربری خود شوید.</p>
+
+          <div class="field">
+            <label class="field__label" for="login-email">ایمیل</label>
+            <div class="field__control field__control--icon">
+              <i class="ri-mail-line"></i>
+              <input
+                type="email"
+                id="login-email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+                dir="ltr"
+              />
+            </div>
+            <p class="field__error" data-error-for="login-email"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="login-password">رمز عبور</label>
+            <div class="field__control field__control--icon field__control--action">
+              <i class="ri-lock-2-line"></i>
+              <input
+                type="password"
+                id="login-password"
+                name="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                required
+                dir="ltr"
+              />
+              <button
+                type="button"
+                class="field__action"
+                data-toggle-password="login-password"
+                aria-label="نمایش/پنهان‌سازی رمز"
+              >
+                <i class="ri-eye-line"></i>
+              </button>
+            </div>
+            <p class="field__error" data-error-for="login-password"></p>
+          </div>
+
+          <div class="auth__row">
+            <label class="checkbox">
+              <input type="checkbox" id="login-remember" checked />
+              <span class="checkbox__box"><i class="ri-check-line"></i></span>
+              <span>مرا به خاطر بسپار</span>
+            </label>
+            <a href="#forgot" class="auth__link" id="forgot-link">فراموشی رمز؟</a>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
+            <span class="btn__label">ورود به سامانه</span>
+            <span class="btn__spinner" hidden><i class="ri-loader-4-line"></i></span>
+          </button>
+
+          <div class="auth__divider"><span>یا</span></div>
+
+          <div class="auth__demo">
+            <button type="button" class="btn btn--ghost btn--block" data-demo-login>
+              <i class="ri-flashlight-line"></i>
+              <span>ورود سریع (حالت نمایشی)</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- ==================== SIGNUP FORM ==================== -->
+        <form class="auth__form" id="signup-form" data-auth-panel="signup" novalidate autocomplete="on">
+          <h1 class="auth__title">ایجاد حساب</h1>
+          <p class="auth__subtitle">چند ثانیه تا شروع کار با سامانه فاصله دارید.</p>
+
+          <div class="field">
+            <label class="field__label" for="signup-name">نام و نام خانوادگی</label>
+            <div class="field__control field__control--icon">
+              <i class="ri-user-line"></i>
+              <input
+                type="text"
+                id="signup-name"
+                name="full_name"
+                placeholder="مثلاً: علی رضایی"
+                autocomplete="name"
+                required
+              />
+            </div>
+            <p class="field__error" data-error-for="signup-name"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="signup-email">ایمیل</label>
+            <div class="field__control field__control--icon">
+              <i class="ri-mail-line"></i>
+              <input
+                type="email"
+                id="signup-email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+                dir="ltr"
+              />
+            </div>
+            <p class="field__error" data-error-for="signup-email"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="signup-password">رمز عبور</label>
+            <div class="field__control field__control--icon field__control--action">
+              <i class="ri-lock-2-line"></i>
+              <input
+                type="password"
+                id="signup-password"
+                name="password"
+                placeholder="حداقل ۸ کاراکتر"
+                autocomplete="new-password"
+                required
+                dir="ltr"
+              />
+              <button
+                type="button"
+                class="field__action"
+                data-toggle-password="signup-password"
+                aria-label="نمایش/پنهان‌سازی رمز"
+              >
+                <i class="ri-eye-line"></i>
+              </button>
+            </div>
+            <div class="password-strength" id="password-strength" data-level="0">
+              <span></span><span></span><span></span><span></span>
+            </div>
+            <p class="field__hint" id="password-hint">قدرت رمز عبور</p>
+            <p class="field__error" data-error-for="signup-password"></p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="signup-confirm">تکرار رمز عبور</label>
+            <div class="field__control field__control--icon">
+              <i class="ri-lock-2-line"></i>
+              <input
+                type="password"
+                id="signup-confirm"
+                name="confirm"
+                placeholder="••••••••"
+                autocomplete="new-password"
+                required
+                dir="ltr"
+              />
+            </div>
+            <p class="field__error" data-error-for="signup-confirm"></p>
+          </div>
+
+          <label class="checkbox">
+            <input type="checkbox" id="signup-terms" required />
+            <span class="checkbox__box"><i class="ri-check-line"></i></span>
+            <span>قوانین و شرایط استفاده را می‌پذیرم.</span>
+          </label>
+
+          <button type="submit" class="btn btn--primary btn--block btn--lg" id="signup-submit">
+            <span class="btn__label">ایجاد حساب کاربری</span>
+            <span class="btn__spinner" hidden><i class="ri-loader-4-line"></i></span>
+          </button>
+        </form>
+
+        <!-- ==================== FORGOT PASSWORD FORM ==================== -->
+        <form class="auth__form" id="forgot-form" data-auth-panel="forgot" novalidate>
+          <h1 class="auth__title">بازیابی رمز عبور</h1>
+          <p class="auth__subtitle">ایمیل خود را وارد کنید تا لینک بازیابی ارسال شود.</p>
+
+          <div class="field">
+            <label class="field__label" for="forgot-email">ایمیل</label>
+            <div class="field__control field__control--icon">
+              <i class="ri-mail-line"></i>
+              <input
+                type="email"
+                id="forgot-email"
+                name="email"
+                placeholder="you@example.com"
+                autocomplete="email"
+                required
+                dir="ltr"
+              />
+            </div>
+            <p class="field__error" data-error-for="forgot-email"></p>
+          </div>
+
+          <button type="submit" class="btn btn--primary btn--block btn--lg" id="forgot-submit">
+            <span class="btn__label">ارسال لینک بازیابی</span>
+            <span class="btn__spinner" hidden><i class="ri-loader-4-line"></i></span>
+          </button>
+
+          <button type="button" class="btn btn--ghost btn--block mt-3" data-auth-back>
+            <i class="ri-arrow-right-line"></i>
+            <span>بازگشت به ورود</span>
+          </button>
+        </form>
+
+        <p class="auth__footer">
+          با ورود، شما با <a href="#terms">شرایط استفاده</a> و <a href="#privacy">سیاست حفظ حریم خصوصی</a> موافقت می‌کنید.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== TOAST ROOT ==================== -->
+  <div id="toast-root" class="toast-root" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- ==================== SCRIPTS: CDN ==================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/relativeTime.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.11/plugin/calendar.min.js"></script>
+
+  <!-- ==================== SCRIPTS: CONFIG ==================== -->
+  <script src="js/config/env.js"></script>
+  <script src="js/config/constants.js"></script>
+  <script src="js/config/supabase.js"></script>
+
+  <!-- ==================== SCRIPTS: UTILS ==================== -->
+  <script src="js/utils/dom.js"></script>
+  <script src="js/utils/formatters.js"></script>
+  <script src="js/utils/date.js"></script>
+  <script src="js/utils/persian.js"></script>
+  <script src="js/utils/storage.js"></script>
+  <script src="js/utils/validators.js"></script>
+  <script src="js/utils/helpers.js"></script>
+
+  <!-- ==================== SCRIPTS: SERVICES ==================== -->
+  <script src="js/services/auth.service.js"></script>
+
+  <!-- ==================== SCRIPTS: COMPONENTS ==================== -->
+  <script src="js/components/toast.js"></script>
+
+  <!-- ==================== SCRIPTS: PAGE ==================== -->
+  <script src="js/pages/login.js"></script>
+</body>
+</html>
