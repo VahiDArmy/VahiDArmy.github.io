@@ -227,8 +227,8 @@ a.tag-pill:hover { filter: brightness(1.2); }
 .mizan-tafsir-empty { padding: 16px 0; text-align: center; }
 .mizan-tafsir-loading { padding: 4px 0; }
 
+/* حذف padding داخلی — padding اصلی از .card می‌آید */
 .mizan-tafsir-content {
-  padding: 14px 16px;
   font-size: .95rem;
   line-height: 2.2;
   color: var(--text);
@@ -365,7 +365,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .ayah-frame__inner { padding: 16px 12px 12px; }
   .ayah-frame__arabic { font-size: 1.5rem; }
   .progress-hero { padding: 12px 14px; gap: 10px; }
-  .mizan-tafsir-content { font-size: .88rem; line-height: 2; padding: 12px 12px; }
+  .mizan-tafsir-content { font-size: .88rem; line-height: 2; }
   .mizan-tafsir-content pre code.language-arabic,
   .mizan-tafsir-content p.mizan-arabic-raw { font-size: 1.15rem; line-height: 2.4; }
 }
