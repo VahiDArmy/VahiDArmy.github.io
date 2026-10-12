@@ -1,19 +1,26 @@
 /* ============================================================================
-   RTL SPECIFIC ADJUSTMENTS — FIXED (switch knob)
+   RTL SPECIFIC ADJUSTMENTS — FIXED (arrows + switch)
    ============================================================================ */
 
 [dir="rtl"] {
   text-align: right;
 }
 
-/* ---------- Icons that need flipping ---------- */
-[dir="rtl"] .icon-flip,
-[dir="rtl"] .ri-arrow-right-line,
-[dir="rtl"] .ri-arrow-left-line,
-[dir="rtl"] .ri-arrow-right-s-line,
-[dir="rtl"] .ri-arrow-left-s-line,
-[dir="rtl"] .ri-arrow-right-double-line,
-[dir="rtl"] .ri-arrow-left-double-line {
+/* ============================================================================
+   ✅ ARROWS — FIXED
+   ----------------------------------------------------------------------------
+   قوانین قبلی آیکون‌های فلش را در RTL برمی‌گرداندند که باعث می‌شد:
+   - `ri-arrow-left-s-line` (لینک‌های «مشاهده همه») به `→` تبدیل شود ❌
+   - pagination هم دوباره flip شود → دوبرابر flip = ظاهر اشتباه ❌
+
+   راه‌حل: حذف کامل قوانین flip.
+   دلیل: طراحی icons در HTML عمداً برای RTL انتخاب شده‌اند:
+   - «بعدی/بیشتر» → `ri-arrow-left-s-line` که خودش در RTL درست است
+   - «بازگشت» → `ri-arrow-right-line` که خودش در RTL درست است
+   ============================================================================ */
+
+/* فقط آیکون‌هایی که به‌صورت دستی خواسته شود فلپ شوند */
+[dir="rtl"] .icon-flip {
   display: inline-block;
   transform: scaleX(-1);
 }
@@ -122,11 +129,16 @@ input[type="number"],
   inset-inline-start: var(--sp-4);
 }
 
-/* ---------- Pagination ---------- */
-[dir="rtl"] .pagination__arrow--prev i,
-[dir="rtl"] .pagination__arrow--next i {
-  transform: scaleX(-1);
-}
+/* ============================================================================
+   ✅ PAGINATION — FIXED
+   ----------------------------------------------------------------------------
+   قبلاً transform: scaleX(-1) روی هر دو دکمه بود که باعث دوبرابر flip می‌شد.
+   حالا بدون flip، آیکون‌ها به‌صورت طبیعی نمایش داده می‌شوند:
+   - Prev (صفحه قبل →): `ri-arrow-right-s-line` = `→` ✓
+   - Next (صفحه بعد ←): `ri-arrow-left-s-line` = `←` ✓
+   ============================================================================ */
+
+/* (قانون flip حذف شد) */
 
 /* ---------- Dropdown ---------- */
 [dir="rtl"] .dropdown__menu {
@@ -154,26 +166,9 @@ input[type="number"],
 }
 
 /* ============================================================================
-   ✅ SWITCH — FIXED
-   ----------------------------------------------------------------------------
-   باگ قبلی: override اشتباه روی ::before باعث می‌شد knob همیشه سمت چپ بماند
-   و در حالت ON بیرون از track بیفتد.
-
-   راه‌حل درست:
-   - قانون پایه `inset-inline-start: 2px` در RTL معنی `right: 2px` می‌دهد → knob
-     در حالت OFF روی سمت راست قرار می‌گیرد (آینه LTR).
-   - در حالت ON، فقط با transform جابه‌جا می‌شود (در RTL به سمت چپ/`-18px`).
-   - هیچ override روی position لازم نیست.
+   ✅ SWITCH — FIXED (from previous fix, kept here for completeness)
    ============================================================================ */
 
-/* حذف شد (باعث باگ بود):
-   [dir="rtl"] .switch__slider::before {
-     inset-inline-start: auto;
-     inset-inline-end: 3px;
-   }
-*/
-
-/* فقط جهت transform را در RTL معکوس می‌کنیم */
 [dir="rtl"] .switch input:checked + .switch__slider::before {
   transform: translateX(-18px);
 }
