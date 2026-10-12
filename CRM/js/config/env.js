@@ -1,8 +1,5 @@
 /* ============================================================================
-   ENV CONFIGURATION
-   ----------------------------------------------------------------------------
-   این فایل را با مقادیر واقعی Supabase خود جایگزین کنید.
-   برای امنیت بیشتر در محیط تولید، از متغیرهای محیطی یا یک پراکسی استفاده کنید.
+   ENV CONFIGURATION — Updated with real Supabase credentials
    ============================================================================ */
 
 (function (window) {
@@ -10,8 +7,8 @@
 
   window.ENV = {
     /* ---------- Supabase ---------- */
-    SUPABASE_URL: "https://YOUR-PROJECT.supabase.co",
-    SUPABASE_ANON_KEY: "YOUR-PUBLIC-ANON-KEY",
+    SUPABASE_URL: "https://kuydfadyrlfldqmydowk.supabase.co",
+    SUPABASE_ANON_KEY: "sb_publishable_3jTjgE5xhFZ5lP0uAaSMAQ_iLOjj8NL",
 
     /* ---------- App metadata ---------- */
     APP_NAME: "سامانه CRM انبار",
@@ -20,16 +17,17 @@
     APP_LOCALE: "fa-IR",
     APP_CALENDAR: "persian",
     APP_DIRECTION: "rtl",
+    APP_ENV: "development", // development | production
 
     /* ---------- Feature flags ---------- */
     FEATURES: {
-      DEMO_MODE: true,
-      REALTIME: true,
-      ACTIVITY_LOG: true,
-      MULTI_WAREHOUSE: true,
-      LOW_STOCK_ALERTS: true,
-      COMMAND_PALETTE: true,
-      DARK_MODE_ONLY: false,
+      DEMO_MODE: true,             // اگر Supabase در دسترس نبود، به حالت نمایشی می‌رود
+      REALTIME: true,              // فعال‌سازی Realtime Supabase
+      ACTIVITY_LOG: true,          // ثبت خودکار فعالیت‌ها
+      MULTI_WAREHOUSE: true,       // پشتیبانی چند انباره
+      LOW_STOCK_ALERTS: true,      // هشدارهای کمبود موجودی
+      COMMAND_PALETTE: true,       // Ctrl+K
+      DARK_MODE_ONLY: false,       // فقط تم تیره؟
       EXPORT_PDF: true,
       EXPORT_EXCEL: true,
       EXPORT_CSV: true,
@@ -38,7 +36,7 @@
       NOTIFICATIONS: true,
     },
 
-    /* ---------- Pagination defaults ---------- */
+    /* ---------- Pagination ---------- */
     DEFAULT_PAGE_SIZE: 20,
     PAGE_SIZE_OPTIONS: [10, 20, 50, 100],
 
@@ -58,7 +56,7 @@
       decimals: 0,
     },
 
-    /* ---------- File upload limits ---------- */
+    /* ---------- File upload ---------- */
     UPLOAD_MAX_SIZE_MB: 8,
     UPLOAD_ALLOWED_TYPES: [
       "image/jpeg",
@@ -70,7 +68,7 @@
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     ],
 
-    /* ---------- Chart defaults ---------- */
+    /* ---------- Chart palette ---------- */
     CHART_COLORS: [
       "#598eff",
       "#06b6d4",
@@ -82,7 +80,7 @@
       "#14b8a6",
     ],
 
-    /* ---------- Demo credentials ---------- */
+    /* ---------- Demo user (fallback) ---------- */
     DEMO_USER: {
       email: "demo@crm.local",
       password: "demo1234",
