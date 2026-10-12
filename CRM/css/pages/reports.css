@@ -1,7 +1,8 @@
 /* ============================================================================
-   REPORTS PAGE — REDESIGNED (compact KPI cards)
+   REPORTS PAGE — REDESIGNED (KPI + databars spacing fix)
    ============================================================================ */
 
+/* ---------- Layout ---------- */
 .report-layout {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -10,9 +11,7 @@
 }
 
 @media (max-width: 1000px) {
-  .report-layout {
-    grid-template-columns: 1fr;
-  }
+  .report-layout { grid-template-columns: 1fr; }
 }
 
 /* ---------- Sidebar filters ---------- */
@@ -30,11 +29,7 @@
   overflow-y: auto;
 }
 
-.report-filters__group {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-2);
-}
+.report-filters__group { display: flex; flex-direction: column; gap: var(--sp-2); }
 
 .report-filters__title {
   font-size: var(--fs-xs);
@@ -50,7 +45,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-2);
+  padding: var(--sp-2);
   border-radius: var(--r-sm);
   font-size: var(--fs-sm);
   color: var(--text-secondary);
@@ -58,16 +53,8 @@
   transition: var(--tr-colors);
 }
 
-.report-filters__row:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.report-filters__row.is-active {
-  color: var(--brand-300);
-  background: rgba(89,142,255,.10);
-  font-weight: var(--fw-medium);
-}
+.report-filters__row:hover { background: var(--bg-hover); color: var(--text-primary); }
+.report-filters__row.is-active { color: var(--brand-300); background: rgba(89,142,255,.10); font-weight: var(--fw-medium); }
 
 .report-filters__actions {
   display: flex;
@@ -79,12 +66,7 @@
 .report-filters__actions .btn { flex: 1; }
 
 /* ============================================================================
-   ✅ KPI / SUMMARY CARDS — REDESIGNED
-   ----------------------------------------------------------------------------
-   - 2-column grid on mobile, 4-column on desktop
-   - Compact card: icon + label on top row, value below
-   - Explicit flex column with tight gap → no stretched cards
-   - min-height: 0 prevents inherited stretching
+   ✅ KPI SUMMARY CARDS
    ============================================================================ */
 .report-summary {
   display: grid;
@@ -131,7 +113,6 @@
 
 .report-summary-card > * { position: relative; z-index: 1; }
 
-/* Head row: icon + label */
 .report-summary-card__head {
   display: flex;
   align-items: center;
@@ -152,35 +133,11 @@
   border: 1px solid rgba(89,142,255,.20);
 }
 
-.report-summary-card__icon--success {
-  background: var(--success-bg);
-  color: var(--success-txt);
-  border-color: var(--success-brd);
-}
-
-.report-summary-card__icon--warning {
-  background: var(--warning-bg);
-  color: var(--warning-txt);
-  border-color: var(--warning-brd);
-}
-
-.report-summary-card__icon--danger {
-  background: var(--danger-bg);
-  color: var(--danger-txt);
-  border-color: var(--danger-brd);
-}
-
-.report-summary-card__icon--info {
-  background: var(--info-bg);
-  color: var(--info-txt);
-  border-color: var(--info-brd);
-}
-
-.report-summary-card__icon--violet {
-  background: rgba(139,92,246,.12);
-  color: var(--violet-400);
-  border-color: rgba(139,92,246,.22);
-}
+.report-summary-card__icon--success { background: var(--success-bg); color: var(--success-txt); border-color: var(--success-brd); }
+.report-summary-card__icon--warning { background: var(--warning-bg); color: var(--warning-txt); border-color: var(--warning-brd); }
+.report-summary-card__icon--danger  { background: var(--danger-bg);  color: var(--danger-txt);  border-color: var(--danger-brd); }
+.report-summary-card__icon--info    { background: var(--info-bg);    color: var(--info-txt);    border-color: var(--info-brd); }
+.report-summary-card__icon--violet  { background: rgba(139,92,246,.12); color: var(--violet-400); border-color: rgba(139,92,246,.22); }
 
 .report-summary-card__label {
   font-size: var(--fs-xs);
@@ -193,7 +150,6 @@
   white-space: nowrap;
 }
 
-/* Value — compact and prominent */
 .report-summary-card__value {
   font-size: clamp(17px, 4.5vw, 22px);
   font-weight: var(--fw-extrabold);
@@ -202,7 +158,6 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: -.01em;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .report-summary-card__value small {
@@ -222,7 +177,7 @@
 }
 
 /* ============================================================================
-   REPORT CHART CARDS
+   ✅ REPORT CHART CARD
    ============================================================================ */
 .report-chart {
   padding: var(--sp-4);
@@ -243,6 +198,8 @@
   gap: var(--sp-3);
   flex-wrap: wrap;
   margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .report-chart__title {
@@ -252,15 +209,94 @@
   line-height: 1.3;
 }
 
-.report-chart__tools {
+.report-chart__tools { display: flex; align-items: center; gap: var(--sp-2); }
+.report-chart__body { position: relative; height: 340px; }
+
+/* ============================================================================
+   ✅ DATABARS — REDESIGNED
+   ----------------------------------------------------------------------------
+   باگ قبلی: هر databar فقط با gap 16px از هم جدا می‌شد بدون خط جداکننده،
+   و padding اضافی روی .report-chart فضای داخلی را فشرده می‌کرد.
+
+   راه‌حل:
+   - هر ردیف، padding عمودی + border-bottom نقطه‌چین
+   - آخرین ردیف بدون border
+   - درصد (percent) در سمت راستِ head به‌عنوان متن ثانویه
+   - track ضخیم‌تر + انیمیشن نرم
+   - حذف padding دوتایی
+   ============================================================================ */
+.databars {
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  margin: 0;
 }
 
-.report-chart__body {
-  position: relative;
-  height: 340px;
+.databar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-block: var(--sp-4);
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.databar:first-child { padding-top: 0; }
+.databar:last-child  { padding-bottom: 0; border-bottom: 0; }
+
+.databar__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--fs-sm);
+  line-height: 1.4;
+}
+
+.databar__label {
+  color: var(--text-secondary);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.databar__value {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.databar__value-pct {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-quaternary);
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  padding: 2px 8px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.databar__track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+}
+
+.databar__fill {
+  height: 100%;
+  border-radius: var(--r-full);
+  transition: width var(--t-slow) var(--ease-out);
+  min-width: 2px;
 }
 
 /* ============================================================================
@@ -289,68 +325,7 @@
   color: var(--text-primary);
 }
 
-/* ============================================================================
-   ✅ DATA BARS — COMPACT
-   ============================================================================ */
-.databars {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-4);
-  padding: var(--sp-4);
-}
-
-@media (min-width: 640px) {
-  .databars { padding: var(--sp-5); }
-}
-
-.databar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.databar__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  font-size: var(--fs-sm);
-  line-height: 1.4;
-}
-
-.databar__label {
-  color: var(--text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
-}
-
-.databar__value {
-  font-weight: var(--fw-semibold);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.databar__track {
-  width: 100%;
-  height: 6px;
-  background: var(--bg-surface-3);
-  border-radius: var(--r-full);
-  overflow: hidden;
-}
-
-.databar__fill {
-  height: 100%;
-  border-radius: var(--r-full);
-  transition: width var(--t-slow) var(--ease-out);
-  min-width: 2px;
-}
-
-/* ============================================================================
-   HEATMAP
-   ============================================================================ */
+/* ---------- Heatmap ---------- */
 .heatmap {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14px, 1fr));
@@ -367,15 +342,12 @@
 }
 
 .heatmap__cell:hover { transform: scale(1.2); }
-
 .heatmap__cell[data-level="1"] { background: rgba(89,142,255,.22); }
 .heatmap__cell[data-level="2"] { background: rgba(89,142,255,.42); }
 .heatmap__cell[data-level="3"] { background: rgba(89,142,255,.62); }
 .heatmap__cell[data-level="4"] { background: rgba(89,142,255,.86); }
 
-/* ============================================================================
-   REPORT CARD GRID
-   ============================================================================ */
+/* ---------- Report card grid ---------- */
 .report-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -414,23 +386,10 @@
 }
 
 .report-card__body { flex: 1; min-width: 0; }
+.report-card__title { font-size: var(--fs-md); font-weight: var(--fw-semibold); color: var(--text-primary); margin-bottom: 4px; }
+.report-card__desc { font-size: var(--fs-xs); color: var(--text-tertiary); line-height: 1.55; }
 
-.report-card__title {
-  font-size: var(--fs-md);
-  font-weight: var(--fw-semibold);
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.report-card__desc {
-  font-size: var(--fs-xs);
-  color: var(--text-tertiary);
-  line-height: 1.55;
-}
-
-/* ============================================================================
-   EXPORT MENU
-   ============================================================================ */
+/* ---------- Export menu ---------- */
 .export-menu {
   display: flex;
   flex-direction: column;
@@ -455,21 +414,22 @@
   transition: var(--tr-colors);
 }
 
-.export-menu__item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
+.export-menu__item:hover { background: var(--bg-hover); color: var(--text-primary); }
+.export-menu__item i { font-size: 16px; color: var(--text-quaternary); }
 
-.export-menu__item i {
-  font-size: 16px;
-  color: var(--text-quaternary);
-}
-
-/* ============================================================================
-   TAB PANELS (making sure they don't stretch)
-   ============================================================================ */
+/* ---------- Tab panels ---------- */
 .tab-panel {
   display: block;
   min-height: 0;
   height: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   Mobile-specific tweaks: databars in mobile are too tight because
+   padding-block was 16px; reduce to 12px on mobile for balance.
+   ---------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .databar { padding-block: var(--sp-3); gap: 8px; }
+  .databar__value { gap: 6px; }
+  .databar__value-pct { padding: 2px 6px; font-size: 10px; }
 }
