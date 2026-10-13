@@ -1,0 +1,237 @@
+/* =============================================================
+   Health (Insulin / Glucose / BP / Weight)
+   ============================================================= */
+.health-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.health-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+}
+.health-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--gradient-glass);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.health-card > * { position: relative; }
+
+.health-card--insulin::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  inset-inline-end: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.16);
+  filter: blur(30px);
+  pointer-events: none;
+}
+.health-card--glucose::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  inset-inline-end: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.16);
+  filter: blur(30px);
+  pointer-events: none;
+}
+.health-card--bp::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  inset-inline-end: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.16);
+  filter: blur(30px);
+  pointer-events: none;
+}
+.health-card--weight::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  inset-inline-end: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(34, 211, 238, 0.16);
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.health-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.health-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.health-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-300);
+  flex-shrink: 0;
+}
+.health-card--insulin .health-card__icon { background: var(--color-primary-soft); color: var(--color-primary-300); }
+.health-card--glucose .health-card__icon { background: var(--color-danger-soft); color: var(--color-danger); }
+.health-card--bp .health-card__icon      { background: var(--color-success-soft); color: var(--color-success); }
+.health-card--weight .health-card__icon  { background: var(--color-accent-soft); color: var(--color-accent); }
+.health-card__icon svg {
+  width: 18px; height: 18px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.health-card__latest {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: var(--space-1);
+}
+.health-card__value {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.health-card__unit {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  font-weight: var(--fw-medium);
+}
+.health-card__time {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  margin-top: 2px;
+}
+
+/* Entry list */
+.health-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+.health-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--color-divider);
+  font-size: var(--fs-xs);
+  transition: background var(--dur-xxs);
+}
+.health-entry:hover { background: rgba(255,255,255,0.04); }
+.health-entry__value {
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.health-entry__time {
+  color: var(--color-text-4);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-2xs);
+}
+.health-entry__note {
+  color: var(--color-text-3);
+  font-size: var(--fs-2xs);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-inline-start: 6px;
+}
+
+/* Inline add form */
+.health-add {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+}
+.health-add input {
+  flex: 1;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  font-size: var(--fs-sm);
+  color: var(--color-text-1);
+  outline: none;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+.health-add input:focus { border-color: var(--input-border-focus); background: var(--input-bg-focus); }
+.health-add input::placeholder { color: var(--color-text-4); }
+.health-add .btn { height: 36px; padding: 0 12px; flex-shrink: 0; }
+
+/* BP dual input */
+.bp-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  flex: 1;
+}
+
+/* Insulin extra fields */
+.insulin-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+}
+.insulin-fields .form-row { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.insulin-fields .form-input,
+.insulin-fields .form-select { height: 36px; font-size: var(--fs-xs); padding: 0 10px; }
+
+/* Weight change indicator */
+.weight-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.weight-delta--down { background: var(--color-success-soft); color: var(--color-success); }
+.weight-delta--up { background: var(--color-danger-soft); color: var(--color-danger); }
+.weight-delta--flat { background: rgba(255,255,255,0.05); color: var(--color-text-3); }
