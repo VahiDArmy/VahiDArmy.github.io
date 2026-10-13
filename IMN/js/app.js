@@ -1,13 +1,10 @@
 /**
  * Application entry point.
  *
- * Responsibilities:
- *  1. Install global error handlers FIRST so any crash is visible.
- *  2. Init theme.
- *  3. Init auth — subscribes to auth changes.
- *  4. If signed in → bootstrap data, mount shell, start router.
- *  5. If signed out → show auth screen.
- *  6. If anything fails hard, show a boot-error card instead of a blank page.
+ * Inline HTML boot screen (index.html) already displays before this file
+ * runs. Our job is to:
+ *   1. Hide the boot screen once we know what to show.
+ *   2. Never leave the user stuck — every failure path renders something.
  */
 
 import { theme } from "./config/theme.js";
@@ -26,140 +23,105 @@ import { STORAGE_KEYS, ROUTES } from "./config/constants.js";
 import { storage } from "./core/storage.js";
 import { withTimeout } from "./utils/async.js";
 
-/* =====================================================================
-   1. Global error surfaces — installed before anything else runs so
-      even the earliest failures are visible instead of a blank page.
-   ===================================================================== */
-
-let bootFinished = false;
-
-function showBootError(err, extra = "") {
-  const authScreen = document.getElementById("auth-screen");
-  const appShell = document.getElementById("app-shell");
-  if (appShell) appShell.hidden = true;
-  if (!authScreen) return;
-  authScreen.hidden = false;
-  authScreen.innerHTML = `
-    <div class="auth-card anim-fade-in-up" style="max-width:620px">
-      <div class="auth-brand">
-        <div class="auth-brand__logo" style="background:var(--gradient-danger)">✕</div>
-        <div class="auth-brand__title">خطا در راه‌اندازی برنامه</div>
-        <div class="auth-brand__sub">اطلاعات زیر به شناسایی مشکل کمک می‌کند</div>
-      </div>
-      <div class="auth-message is-error" style="display:block;margin-bottom:14px;white-space:pre-wrap;word-break:break-word">${escapeHtml(err?.message || String(err || "خطای نامشخص"))}</div>
-      ${extra ? `<div class="text-xs text-muted" style="margin-bottom:12px;line-height:1.8">${extra}</div>` : ""}
-      <div class="text-xs text-muted" style="line-height:1.9;margin-bottom:14px">
-        بررسی کنید:
-        <br>• فایل <code>supabase-config.js</code> در ریشه پروژه وجود دارد و در <code>index.html</code> قبل از <code>app.js</code> بارگذاری شده است.
-        <br>• آدرس Supabase و کلید قابل انتشار صحیح هستند.
-        <br>• فایل <code>supabase-schema.sql</code> در SQL Editor اجرا شده است.
-        <br>• صفحه از طریق HTTP (نه <code>file://</code>) باز شده است.
-      </div>
-      <button class="btn btn--secondary btn--block" onclick="location.reload()">تلاش مجدد</button>
-    </div>
-  `;
+/* ---------- Boot screen helpers (delegated to inline HTML) ------------ */
+function bootProgress(msg) {
+  try { window.__appBootProgress?.(msg); } catch {}
+}
+function bootDone() {
+  try { window.__appBooted?.(); } catch {}
+}
+function bootFail(err, hint) {
+  try {
+    if (hint) {
+      const status = document.getElementById("boot-status");
+      if (status) status.dataset.hint = hint;
+    }
+    window.__appBootError?.(err);
+  } catch {}
 }
 
-window.addEventListener("error", (e) => {
-  if (bootFinished) return;
-  showBootError(e.error || e.message || new Error("خطای بارگذاری"));
-});
-window.addEventListener("unhandledrejection", (e) => {
-  if (bootFinished) return;
-  showBootError(e.reason || new Error("خطای بارگذاری نامشخص"));
-});
-
-function escapeHtml(s) {
-  return String(s ?? "").replace(/[&<>"]/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;",
-  }[c]));
-}
-
-/* =====================================================================
-   2. Boot sequence
-   ===================================================================== */
-
+/* ---------- Main boot ------------------------------------------------ */
 async function main() {
-  // Theme FIRST — no flash, no dependency on remote resources
+  bootProgress("آماده‌سازی رابط کاربری…");
+
+  // 1. Theme
   theme.init();
 
-  // Footer year
+  // 2. Footer year
   const yearEl = document.getElementById("footer-year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  // Top progress bar
+  // 3. Top progress bar
   mountTopProgress();
 
-  // If Supabase is missing entirely, show setup instructions
+  // 4. Guard: not configured
   if (!isConfigured) {
-    showSetupWarning();
-    bootFinished = true;
-    return;
-  }
-
-  // If the client failed to construct (bad key / bad URL / network),
-  // surface it visibly instead of a blank page
-  if (!clientReady) {
-    showBootError(
-      new Error(clientErrorMessage || "اتصال به Supabase برقرار نشد"),
-      "بررسی کنید که آدرس و کلید به‌درستی در <code>supabase-config.js</code> وارد شده‌اند."
+    bootFail(
+      new Error("Supabase پیکربندی نشده است"),
+      "فایل supabase-config.js را بسازید و url/anonKey را وارد کنید."
     );
-    bootFinished = true;
     return;
   }
 
-  // Subscribe to auth changes BEFORE calling auth.init() so we never
-  // miss an event.
+  // 5. Guard: client failed (bad key / CDN blocked / network)
+  if (!clientReady) {
+    bootFail(
+      new Error(clientErrorMessage || "اتصال به Supabase برقرار نشد"),
+      "اتصال اینترنت و دسترسی به CDN ها را بررسی کنید."
+    );
+    return;
+  }
+
+  // 6. Subscribe to auth BEFORE init so we don't miss the first event
   bus.on("auth:changed", onAuthChanged);
 
-  // Init auth with a hard timeout so we never hang on a bad network.
+  // 7. Auth init with hard timeout
+  bootProgress("بررسی نشست کاربر…");
   let session = null;
   try {
     session = await withTimeout(auth.init(), 8000, "AUTH_INIT_TIMEOUT");
   } catch (err) {
     console.error("[app] auth.init failed", err);
-    if (err?.message === "AUTH_INIT_TIMEOUT") {
-      toast.warning("اتصال کند است — لطفاً وضعیت خود را بررسی کنید");
-    }
-    // Fall through — show auth screen so the user isn't stuck
     session = null;
   }
 
+  // 8. Show whatever screen is appropriate
   if (!session) {
+    bootProgress("نمایش صفحه ورود…");
     showAuth();
   }
-  // If session exists, onAuthChanged has already fired and mounted the shell.
+  // If a session exists, onAuthChanged already fired.
 
-  // Close mobile sidebar on route change
+  // 9. Global hooks
   bus.on("route:changed", () => {
     if (window.innerWidth <= 980) closeMobile();
   });
-
-  // Online / offline warnings
   bus.on("state:online", (online) => {
     if (online) toast.success("اتصال بازگشت", { duration: 2000 });
     else toast.warning("اتصال اینترنت قطع شد", { duration: 3000 });
   });
-
-  // Auto-wire any declarative tooltips
   tooltip.initAll();
 
-  bootFinished = true;
+  // 10. All good — hide the boot screen
+  bootDone();
 }
 
-/* =====================================================================
-   3. Auth transitions
-   ===================================================================== */
-
+/* ---------- Auth transitions ----------------------------------------- */
 let shellMounted = false;
 let shellCleanup = null;
 
 async function onAuthChanged({ user }) {
-  if (user) {
-    if (!shellMounted) await showApp();
-  } else {
-    if (shellMounted) unmountApp();
-    showAuth();
+  try {
+    if (user) {
+      if (!shellMounted) await showApp();
+    } else {
+      if (shellMounted) unmountApp();
+      showAuth();
+    }
+    bootDone();
+  } catch (err) {
+    console.error("[app] onAuthChanged failed", err);
+    bootFail(err);
   }
 }
 
@@ -171,10 +133,7 @@ function showAuth() {
   mountAuth();
 }
 
-/* =====================================================================
-   4. App shell
-   ===================================================================== */
-
+/* ---------- App shell ------------------------------------------------ */
 async function showApp() {
   unmountAuth();
 
@@ -183,12 +142,11 @@ async function showApp() {
   if (authScreen) authScreen.hidden = true;
   if (appShell) appShell.hidden = false;
 
+  bootProgress("بارگذاری داده‌های اولیه…");
   try {
-    await withTimeout(bootstrap(), 15000, "BOOTSTRAP_TIMEOUT").catch((err) => {
-      console.warn("[app] bootstrap warning", err);
-    });
+    await withTimeout(bootstrap(), 15000, "BOOTSTRAP_TIMEOUT");
   } catch (err) {
-    console.error("[app] bootstrap failed", err);
+    console.warn("[app] bootstrap warning (continuing)", err);
   }
 
   const sidebarCleanup = mountSidebar();
@@ -219,10 +177,7 @@ function unmountApp() {
   store.reset();
 }
 
-/* =====================================================================
-   5. Top progress bar
-   ===================================================================== */
-
+/* ---------- Top progress bar ----------------------------------------- */
 function mountTopProgress() {
   const el = document.createElement("div");
   el.className = "top-progress";
@@ -247,40 +202,8 @@ function mountTopProgress() {
   });
 }
 
-/* =====================================================================
-   6. Setup warning (Supabase not configured)
-   ===================================================================== */
-
-function showSetupWarning() {
-  const authScreen = document.getElementById("auth-screen");
-  const appShell = document.getElementById("app-shell");
-  if (appShell) appShell.hidden = true;
-  if (!authScreen) return;
-  authScreen.hidden = false;
-  authScreen.innerHTML = `
-    <div class="auth-card anim-fade-in-up" style="max-width:560px">
-      <div class="auth-brand">
-        <div class="auth-brand__logo" style="background:var(--gradient-danger)">⚠</div>
-        <div class="auth-brand__title">تنظیمات لازم است</div>
-        <div class="auth-brand__sub">اتصال به Supabase پیکربندی نشده است</div>
-      </div>
-      <p class="text-sm text-muted" style="line-height:1.9;margin-bottom:16px">
-        فایل <code>supabase-config.js</code> را در ریشه پروژه بسازید و مقادیر واقعی را وارد کنید:
-      </p>
-      <pre style="background:rgba(0,0,0,0.35);padding:14px;border-radius:10px;font-size:12px;overflow-x:auto;direction:ltr;text-align:left;border:1px solid var(--color-border-2)">window.SUPABASE_CONFIG = {
-  url: "https://YOUR-PROJECT.supabase.co",
-  anonKey: "sb_publishable_..."
-};</pre>
-    </div>
-  `;
-}
-
-/* =====================================================================
-   7. Go
-   ===================================================================== */
-
+/* ---------- Go ------------------------------------------------------- */
 main().catch((err) => {
   console.error("[app] fatal", err);
-  showBootError(err);
-  bootFinished = true;
+  bootFail(err);
 });
