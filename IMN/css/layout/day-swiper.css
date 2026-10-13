@@ -1,0 +1,164 @@
+/* =============================================================
+   Day Swiper — horizontal scroll strip of dates under the topbar
+   ============================================================= */
+.day-swiper-slot {
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: calc(var(--z-header) - 1);
+  background: linear-gradient(180deg, var(--topbar-bg-1) 0%, var(--topbar-bg-2) 100%);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  border-bottom: 1px solid var(--color-border-1);
+}
+
+.day-swiper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 8px var(--space-4) 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: relative;
+}
+.day-swiper::-webkit-scrollbar { display: none; }
+
+/* Edge fade hints */
+.day-swiper::before,
+.day-swiper::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 32px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.9;
+}
+.day-swiper::before {
+  inset-inline-end: 0;
+  background: linear-gradient(to left, var(--topbar-bg-1), transparent);
+}
+.day-swiper::after {
+  inset-inline-start: 0;
+  background: linear-gradient(to right, var(--topbar-bg-1), transparent);
+}
+
+/* Each day chip */
+.day-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 60px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-1);
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+  transition:
+    background-color var(--dur-xs) var(--ease-out),
+    border-color var(--dur-xs) var(--ease-out),
+    transform var(--dur-xs) var(--ease-out),
+    box-shadow var(--dur-xs) var(--ease-out);
+}
+.day-chip:hover {
+  background: var(--color-bg-3);
+  border-color: var(--color-border-2);
+  transform: translateY(-1px);
+}
+
+.day-chip__weekday {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-4);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.day-chip__day {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.day-chip__month {
+  font-size: 9px;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-4);
+  line-height: 1;
+  opacity: 0.85;
+}
+
+/* Today */
+.day-chip.is-today {
+  border-color: var(--color-primary);
+}
+.day-chip.is-today .day-chip__day {
+  color: var(--color-primary);
+}
+.day-chip.is-today::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+/* Selected day — full gradient pill */
+.day-chip.is-selected {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-primary);
+  transform: translateY(-2px);
+}
+.day-chip.is-selected .day-chip__weekday,
+.day-chip.is-selected .day-chip__month {
+  color: rgba(255, 255, 255, 0.85);
+}
+.day-chip.is-selected .day-chip__day {
+  color: #fff;
+}
+.day-chip.is-selected::after { background: rgba(255,255,255,0.9); }
+
+/* Days with data (small dot indicator) */
+.day-chip.has-data:not(.is-selected)::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 0 2px var(--color-surface-1);
+}
+
+/* Future days are dimmed */
+.day-chip.is-future {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.day-chip.is-future:hover {
+  transform: none;
+  background: var(--color-surface-1);
+  border-color: var(--color-border-1);
+}
+
+@media (max-width: 640px) {
+  .day-chip { min-width: 54px; padding: 5px 8px; }
+  .day-chip__day { font-size: var(--fs-md); }
+  .day-swiper { padding: 6px var(--space-3) 8px; }
+}
