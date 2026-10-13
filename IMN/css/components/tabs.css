@@ -1,0 +1,124 @@
+/* =============================================================
+   Tabs
+   ============================================================= */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.tabs__nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border-1);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tabs__nav::-webkit-scrollbar { display: none; }
+
+.tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: calc(var(--radius-md) - 4px);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-3);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition:
+    background var(--dur-xs) var(--ease-out),
+    color var(--dur-xs) var(--ease-out),
+    transform var(--dur-xs) var(--ease-out);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.tabs__tab:hover {
+  color: var(--color-text-1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tabs__tab.is-active {
+  color: #fff;
+  background: var(--gradient-primary);
+  box-shadow: var(--shadow-primary);
+}
+
+.tabs__tab svg {
+  width: 16px; height: 16px;
+  stroke: currentColor;
+  fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.tabs__tab__badge {
+  font-size: var(--fs-2xs);
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+  color: inherit;
+  font-weight: var(--fw-bold);
+  line-height: 1.4;
+}
+.tabs__tab.is-active .tabs__tab__badge {
+  background: rgba(255,255,255,0.22);
+}
+
+.tabs__panel {
+  display: none;
+  animation: fadeInUp var(--dur-md) var(--ease-out) both;
+}
+.tabs__panel.is-active { display: block; }
+
+/* Underline variant */
+.tabs--underline .tabs__nav {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-divider);
+  border-radius: 0;
+  padding: 0;
+  gap: var(--space-5);
+}
+.tabs--underline .tabs__tab {
+  padding: 12px 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.tabs--underline .tabs__tab.is-active {
+  color: var(--color-text-1);
+  background: transparent;
+}
+.tabs--underline .tabs__tab.is-active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--gradient-primary);
+  border-radius: 2px;
+}
+
+/* Pills variant */
+.tabs--pills .tabs__nav {
+  background: transparent;
+  border: none;
+  padding: 0;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.tabs--pills .tabs__tab {
+  border: 1px solid var(--color-border-2);
+  background: rgba(255,255,255,0.02);
+}
+.tabs--pills .tabs__tab.is-active {
+  border-color: transparent;
+}
