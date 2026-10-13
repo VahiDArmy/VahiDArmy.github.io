@@ -4,18 +4,37 @@
  *   const dd = dropdown({
  *     trigger: buttonEl,
  *     content: [ { label: "ویرایش", icon: "edit", onClick } ],
- *     align: "end", // start|end (RTL-aware)
+ *     align: "end",   // "start" | "end" — direction-aware (RTL/LTR)
  *   });
  *   dd.close();
  *
+ * Positioning
+ * -----------
+ * In RTL:
+ *   align: "start" → panel's RIGHT edge aligns with the trigger's RIGHT edge
+ *                    (panel extends leftward, toward the page content)
+ *   align: "end"   → panel's LEFT edge aligns with the trigger's LEFT edge
+ *                    (panel extends rightward, into the viewport)
+ * In LTR, the two are mirrored.
+ *
+ * In every case the final `left` is clamped so the panel never overflows
+ * the viewport, and the panel flips vertically if it would cross the
+ * bottom edge.
+ *
  * Closes on outside click, Escape, scroll, resize, or when another
- * dropdown opens. Only one open at a time by default.
+ * dropdown opens. Only one open at a time.
  */
 
 import { createElement } from "../utils/dom.js";
 import { icon } from "./icons.js";
 
 let currentOpen = null;
+
+function isRTL() {
+  return (
+    (document.documentElement.getAttribute("dir") || "").toLowerCase() === "rtl"
+  );
+}
 
 export function dropdown(opts = {}) {
   const {
@@ -68,33 +87,56 @@ export function dropdown(opts = {}) {
   function position() {
     if (!panel) return;
     const r = trigger.getBoundingClientRect();
-    panel.style.position = "fixed";
-    panel.style.top = `${r.bottom + offset}px`;
+    // Measure the panel AFTER it is in the DOM (see open()).
+    const pr = panel.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 8;
 
-    if (align === "end") {
-      // RTL: "end" means flush with the right edge of the trigger
-      panel.style.right = `${window.innerWidth - r.right}px`;
-      panel.style.left = "auto";
+    // ---- Horizontal --------------------------------------------------
+    // Decide which side of the trigger the panel is anchored to.
+    const rtl = isRTL();
+    const alignToEnd = align === "end";
+    // In RTL the trigger's "end" is on its LEFT side; in LTR it's on its RIGHT.
+    const anchorRightEdge =
+      (rtl && !alignToEnd) || (!rtl && alignToEnd);
+
+    let left;
+    if (anchorRightEdge) {
+      // Panel's right edge sits on the trigger's right edge
+      left = r.right - pr.width;
     } else {
-      panel.style.left = `${r.left}px`;
-      panel.style.right = "auto";
+      // Panel's left edge sits on the trigger's left edge
+      left = r.left;
     }
 
-    // Flip vertically if not enough space below
-    requestAnimationFrame(() => {
-      const pr = panel.getBoundingClientRect();
-      if (pr.bottom > window.innerHeight - 8) {
-        panel.style.top = `${Math.max(8, r.top - pr.height - offset)}px`;
-      }
-    });
+    // Clamp within the viewport so nothing spills off-screen
+    if (left + pr.width > vw - margin) left = vw - margin - pr.width;
+    if (left < margin) left = margin;
+
+    panel.style.position = "fixed";
+    panel.style.left = `${left}px`;
+    panel.style.right = "auto";
+    panel.style.top = `${r.bottom + offset}px`;
+
+    // ---- Vertical flip -----------------------------------------------
+    if (r.bottom + pr.height + margin > vh) {
+      const flipped = r.top - pr.height - offset;
+      if (flipped >= margin) panel.style.top = `${flipped}px`;
+    }
   }
 
   function open() {
     if (panel) return;
     if (currentOpen && currentOpen !== handle) currentOpen.close();
+
     panel = buildPanel();
     document.body.appendChild(panel);
+
+    // Force layout so the panel is measurable, then position it.
+    panel.getBoundingClientRect();
     position();
+
     currentOpen = handle;
     document.addEventListener("mousedown", onDocDown, true);
     document.addEventListener("keydown", onKey, true);
@@ -134,7 +176,12 @@ export function dropdown(opts = {}) {
     panel ? close() : open();
   }
 
-  const handle = { open, close, toggle, get isOpen() { return !!panel; } };
+  const handle = {
+    open,
+    close,
+    toggle,
+    get isOpen() { return !!panel; },
+  };
 
   trigger.addEventListener("click", (e) => {
     e.preventDefault();
