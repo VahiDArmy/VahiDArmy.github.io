@@ -1,0 +1,168 @@
+/* ============================================================
+   dropdown.css — منوی کشویی و context-menu
+   ============================================================ */
+
+.dropdown {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  max-width: 320px;
+  padding: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: dropdownIn 180ms var(--ease-out);
+  transform-origin: top;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.dropdown.is-closing { animation: dropdownOut 140ms var(--ease-out) forwards; }
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes dropdownOut {
+  to { opacity: 0; transform: translateY(-4px) scale(0.98); }
+}
+
+.dropdown__section {
+  padding: 8px 10px 6px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-fa);
+  font-size: var(--fs-sm);
+  text-align: right;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  position: relative;
+}
+.dropdown__item:hover,
+.dropdown__item:focus-visible {
+  background: var(--bg-hover);
+  outline: none;
+}
+.dropdown__item.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.dropdown__item.is-active .dropdown__icon { color: var(--accent); }
+.dropdown__item[disabled],
+.dropdown__item.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.dropdown__item--danger { color: var(--danger-fg); }
+.dropdown__item--danger:hover { background: var(--danger-bg); }
+.dropdown__item--danger .dropdown__icon { color: var(--danger-fg); }
+
+.dropdown__icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  transition: color var(--t-fast);
+}
+
+.dropdown__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdown__shortcut {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-tertiary);
+  background: var(--bg-surface-3);
+  padding: 2px 6px;
+  border-radius: var(--radius-xs);
+  font-family: var(--font-mono);
+  direction: ltr;
+}
+
+.dropdown__divider {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--border-subtle);
+  border: none;
+}
+
+/* ---------- Submenu arrow ---------- */
+.dropdown__item--has-sub::after {
+  content: "";
+  width: 6px; height: 6px;
+  border-inline-start: 1.5px solid currentColor;
+  border-top: 1.5px solid currentColor;
+  transform: rotate(-135deg);
+  opacity: 0.5;
+  margin-inline-start: 4px;
+}
+
+/* ---------- Page-subject menu (main nav dropdown) ---------- */
+.subject-menu {
+  min-width: 300px;
+}
+.subject-menu .dropdown__item {
+  padding: 11px 12px;
+  font-size: var(--fs-sm);
+  border-radius: var(--radius-md);
+}
+.subject-menu .dropdown__item .dropdown__label { font-weight: var(--fw-semibold); }
+.subject-menu .dropdown__item small {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-regular);
+  margin-top: 2px;
+}
+.subject-menu .dropdown__item .dropdown__icon {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-3);
+  font-size: 18px;
+}
+.subject-menu .dropdown__item:hover .dropdown__icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Context menu (right-click) ---------- */
+.context-menu {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  min-width: 200px;
+  padding: 6px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  animation: dropdownIn 160ms var(--ease-out);
+}
+.context-menu .dropdown__item { font-size: var(--fs-xs); padding: 8px 10px; }
