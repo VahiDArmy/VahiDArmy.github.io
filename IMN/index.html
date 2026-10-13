@@ -7,51 +7,225 @@
   <meta name="description" content="ردیاب فعالیت روزانه - ثبت غذا، سلامت، خواب و ورزش" />
   <title>ردیاب فعالیت روزانه</title>
 
-  <!-- Persian Font: Vazirmatn -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
   />
 
-  <!-- Core stylesheet (imports all sub-styles) -->
   <link rel="stylesheet" href="css/main.css" />
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0d14'/%3E%3Cpath d='M18 44 L32 18 L46 44 M24 36 H40' stroke='%236366f1' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
-  <!-- Supabase config (must load before app.js) -->
-  <script src="supabase-config.js"></script>
+  <!-- =========================================================
+       Inline boot screen + error trapping.
+       This is OUTSIDE any ES module, so it runs even if every
+       module script fails to load. It guarantees the user never
+       sees a blank page.
+       ========================================================= -->
+  <style>
+    .boot-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(1200px 700px at 100% -10%, rgba(99,102,241,0.10), transparent 60%), #0a0d14;
+      z-index: 999999;
+      gap: 16px;
+      padding: 24px;
+      color: #e8edf5;
+      font-family: "Vazirmatn", Tahoma, sans-serif;
+      text-align: center;
+      transition: opacity .25s ease;
+    }
+    .boot-screen.is-hidden { opacity: 0; pointer-events: none; }
+    .boot-screen__logo {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6, #22d3ee);
+      display: grid; place-items: center;
+      color: white; font-size: 30px; font-weight: 800;
+      box-shadow: 0 8px 26px rgba(99,102,241,0.4);
+      flex-shrink: 0;
+    }
+    .boot-screen__title { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; }
+    .boot-screen__spinner {
+      width: 34px; height: 34px;
+      border: 3px solid rgba(255,255,255,0.08);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: boot-spin .9s linear infinite;
+    }
+    @keyframes boot-spin { to { transform: rotate(360deg); } }
+    .boot-screen__status {
+      font-size: 13px;
+      color: #b6c0d3;
+      text-align: center;
+      max-width: 620px;
+      line-height: 1.8;
+    }
+    .boot-screen.is-error .boot-screen__spinner { display: none; }
+    .boot-screen__error {
+      width: 100%;
+      max-width: 620px;
+      text-align: right;
+    }
+    .boot-screen__error pre {
+      background: rgba(0,0,0,0.45);
+      padding: 14px;
+      border-radius: 10px;
+      direction: ltr;
+      text-align: left;
+      font-size: 12px;
+      overflow: auto;
+      max-height: 220px;
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fecaca;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .boot-screen__hint {
+      font-size: 12px;
+      color: #8792a9;
+      line-height: 1.9;
+      text-align: right;
+      margin-top: 12px;
+    }
+    .boot-screen__hint code {
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 4px;
+      direction: ltr;
+      display: inline-block;
+    }
+    .boot-screen__retry {
+      margin-top: 12px;
+      padding: 10px 22px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .boot-screen__retry:hover { filter: brightness(1.08); }
+  </style>
+
+  <script>
+    /* ---- 1. Boot screen (visible immediately) ---- */
+    (function () {
+      var screenEl = document.createElement("div");
+      screenEl.className = "boot-screen";
+      screenEl.id = "boot-screen";
+      screenEl.innerHTML =
+        '<div class="boot-screen__logo">♥</div>' +
+        '<div class="boot-screen__title">ردیاب فعالیت روزانه</div>' +
+        '<div class="boot-screen__spinner"></div>' +
+        '<div class="boot-screen__status" id="boot-status">در حال راه‌اندازی…</div>';
+      document.documentElement.appendChild(screenEl);
+      // Wait for body to attach if it isn't there yet
+      if (document.body) {
+        document.body.appendChild(screenEl);
+      } else {
+        document.addEventListener("DOMContentLoaded", function () {
+          document.body.appendChild(screenEl);
+        });
+      }
+    })();
+
+    /* ---- 2. Global error traps (before any module runs) ---- */
+    (function () {
+      var booted = false;
+
+      function escapeHtml(s) {
+        return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+        });
+      }
+
+      function renderError(err) {
+        if (booted) return;
+        var el = document.getElementById("boot-screen");
+        var status = document.getElementById("boot-status");
+        if (!el || !status) return;
+
+        var stack = "";
+        if (err && typeof err === "object") {
+          stack = err.stack || err.message || String(err);
+        } else {
+          stack = String(err || "خطای نامشخص");
+        }
+
+        el.classList.add("is-error");
+        status.innerHTML =
+          '<div class="boot-screen__error">' +
+          '<div style="color:#ef4444;font-weight:700;margin-bottom:8px;text-align:right">خطا در بارگذاری برنامه</div>' +
+          "<pre>" + escapeHtml(stack) + "</pre>" +
+          '<div class="boot-screen__hint">' +
+          "موارد زیر را بررسی کنید:<br>" +
+          "• فایل <code>supabase-config.js</code> در ریشه پروژه و بارگذاری‌شده در <code>index.html</code><br>" +
+          "• اتصال اینترنت و دسترسی به CDN ها (<code>cdn.jsdelivr.net</code>، <code>esm.sh</code>، <code>unpkg.com</code>)<br>" +
+          "• اجرای فایل <code>supabase-schema.sql</code> در SQL Editor سوپابیس<br>" +
+          "• باز کردن صفحه از طریق HTTP (نه <code>file://</code>)<br>" +
+          "• لاگ کامل در DevTools → Console" +
+          "</div>" +
+          '<button class="boot-screen__retry" onclick="location.reload()">تلاش مجدد</button>' +
+          "</div>";
+      }
+
+      window.__appBootError = renderError;
+      window.__appBooted = function () {
+        booted = true;
+        var el = document.getElementById("boot-screen");
+        if (el) {
+          el.classList.add("is-hidden");
+          setTimeout(function () { el.remove && el.remove(); }, 300);
+        }
+      };
+      window.__appBootProgress = function (msg) {
+        if (booted) return;
+        var status = document.getElementById("boot-status");
+        if (status) status.textContent = msg;
+      };
+
+      window.addEventListener("error", function (e) {
+        renderError(e.error || e.message || "خطای بارگذاری");
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        renderError(e.reason || "خطای بارگذاری نامشخص");
+      });
+
+      // Watchdog: if nothing has booted after 8 s, show diagnostics
+      setTimeout(function () {
+        if (!booted) {
+          renderError(
+            "برنامه در ۸ ثانیه بارگذاری نشد. یکی از ماژول‌ها یا CDN ها پاسخ نداده است."
+          );
+        }
+      }, 8000);
+    })();
+  </script>
 </head>
 
 <body>
   <!-- ============ AUTH SCREEN ============ -->
-  <div id="auth-screen" class="auth-screen" hidden>
-    <!-- Rendered by js/pages/auth.page.js -->
-  </div>
+  <div id="auth-screen" class="auth-screen" hidden></div>
 
   <!-- ============ APP SHELL ============ -->
   <div id="app-shell" class="app-shell" hidden>
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar" aria-label="ناوبری اصلی">
-      <!-- Rendered by js/components/sidebar.js -->
-    </aside>
-
-    <!-- Mobile overlay for sidebar -->
+    <aside id="sidebar" class="sidebar" aria-label="ناوبری اصلی"></aside>
     <div id="sidebar-overlay" class="sidebar-overlay" hidden></div>
 
-    <!-- Main column -->
     <div class="app-main">
-      <!-- Topbar / Header -->
-      <header id="topbar" class="topbar" aria-label="نوار بالا">
-        <!-- Rendered by js/components/header.js -->
-      </header>
+      <header id="topbar" class="topbar" aria-label="نوار بالا"></header>
 
-      <!-- Page container -->
-      <main id="page-container" class="page-container" role="main">
-        <!-- Rendered by js/router.js -->
-      </main>
+      <main id="page-container" class="page-container" role="main"></main>
 
-      <!-- Footer -->
       <footer class="app-footer">
         <span>© <span id="footer-year"></span> ردیاب فعالیت روزانه</span>
         <span class="footer-sep">•</span>
@@ -67,6 +241,9 @@
   <div id="context-menu-root" class="context-menu-root"></div>
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="tooltip-root" class="tooltip-root"></div>
+
+  <!-- Supabase config -->
+  <script src="supabase-config.js"></script>
 
   <!-- App entry -->
   <script type="module" src="js/app.js"></script>
