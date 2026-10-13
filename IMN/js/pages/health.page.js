@@ -1,8 +1,12 @@
 /**
- * Health page — entry first, report block below.
+ * Health page — entry first, report block below, plus a top metrics card
+ * (BMI / BMR / TDEE) sourced from the user's profile.
+ *
+ * When the user adds a weight entry, we sync it to the profile so BMI
+ * and BMR stay current without re-entering the value in Settings.
  */
 
-import { $, createElement, delegate } from "../utils/dom.js";
+import { $, delegate } from "../utils/dom.js";
 import { icon } from "../components/icons.js";
 import { toast } from "../components/toast.js";
 import { confirm } from "../components/confirm.js";
@@ -11,6 +15,8 @@ import { chart } from "../components/chart.js";
 import { store } from "../core/state.js";
 import { bus } from "../core/event-bus.js";
 import { insulin, glucose, bp, weight, healthSnapshot } from "../services/health.service.js";
+import { metrics } from "../services/metrics.service.js";
+import { navigate } from "../router.js";
 import { todayISO, addDays, nowTimeStr, formatShort } from "../utils/date.js";
 import {
   formatInteger, formatNumber, escapeHTML, toLatinDigits,
@@ -28,6 +34,7 @@ export default {
 
     container.innerHTML = `
       <section id="health-entry-form" class="section">
+        <div data-metrics-card style="margin-bottom:20px"></div>
         <div class="health-grid" data-health-grid></div>
       </section>
 
@@ -68,6 +75,9 @@ export default {
           const w = Number(toLatinDigits($('[data-input="w-value"]', container).value));
           if (!w) return toast.warning("وزن را وارد کنید");
           await weight.add({ log_date: iso, log_time: time, weight: w });
+          // Keep BMI/BMR fresh — sync the new weight to the profile.
+          await metrics.syncWeight(w);
+          $('[data-input="w-value"]', container).value = "";
         }
         toast.success("ثبت شد");
       } catch (err) {
@@ -91,11 +101,17 @@ export default {
       }
     });
 
+    delegate(container, "click", "[data-goto-settings]", () => navigate("settings"));
+
     /* ---------- Load ------------------------------------------------ */
     async function load() {
       const iso = currentDate();
       try {
-        const snap = await healthSnapshot(iso);
+        const [snap, metricsResult] = await Promise.all([
+          healthSnapshot(iso),
+          metrics.compute(),
+        ]);
+        renderMetricsCard(metricsResult);
         renderGrid(snap);
         reportBlock?.setDate(iso);
       } catch (err) {
@@ -104,6 +120,99 @@ export default {
       }
     }
 
+    /* ---------- Metrics card (BMI / BMR / TDEE) -------------------- */
+    function renderMetricsCard(result) {
+      const slot = $("[data-metrics-card]", container);
+
+      if (!result.ready) {
+        const missing = result.missing.join("، ");
+        slot.innerHTML = `
+          <div class="health-metrics health-metrics--incomplete">
+            <div class="health-metrics__head">
+              <div class="health-metrics__title">
+                ${icon("activity", { size: 20 })}
+                <span>شاخص‌های بدنی</span>
+              </div>
+            </div>
+            <div class="health-metrics__incomplete">
+              <div class="health-metrics__incomplete-icon">${icon("info", { size: 22 })}</div>
+              <div>
+                <div class="health-metrics__incomplete-title">برای محاسبه BMI و BMR اطلاعات پروفایل خود را کامل کنید</div>
+                <div class="health-metrics__incomplete-desc">${escapeHTML(missing)} وارد نشده است</div>
+              </div>
+              <button class="btn btn--primary btn--sm" data-goto-settings type="button">
+                ${icon("settings", { size: 14 })}<span>تکمیل پروفایل</span>
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const { bmi, bmr, tdee, age, gender, healthy } = result;
+      const cat = bmi.category;
+
+      // Where does the user's BMI sit on the 15–40 scale? (for the bar)
+      const scaleMin = 15, scaleMax = 40;
+      const pct = Math.max(0, Math.min(100, ((bmi.value - scaleMin) / (scaleMax - scaleMin)) * 100));
+
+      slot.innerHTML = `
+        <div class="health-metrics">
+          <div class="health-metrics__head">
+            <div class="health-metrics__title">
+              ${icon("activity", { size: 20 })}
+              <span>شاخص‌های بدنی</span>
+            </div>
+            <div class="health-metrics__meta">
+              ${age ? `<span>${age} ساله</span>` : ""}
+              ${gender ? `<span>${genderLabel(gender)}</span>` : ""}
+            </div>
+          </div>
+
+          <div class="health-metrics__grid">
+            <div class="health-metrics__cell">
+              <div class="health-metrics__label">شاخص توده بدنی (BMI)</div>
+              <div class="health-metrics__value health-metrics__value--${cat.tone}">
+                ${formatNumber(bmi.value, { decimals: 1 })}
+              </div>
+              <div class="health-metrics__badge health-metrics__badge--${cat.tone}">${cat.label}</div>
+
+              <div class="health-metrics__bmi-bar">
+                <div class="health-metrics__bmi-track"></div>
+                <div class="health-metrics__bmi-marker" style="inset-inline-start:${pct}%"></div>
+              </div>
+              <div class="health-metrics__bmi-scale">
+                <span>۱۵</span><span>۱۸٫۵</span><span>۲۵</span><span>۳۰</span><span>۴۰</span>
+              </div>
+            </div>
+
+            <div class="health-metrics__cell">
+              <div class="health-metrics__label">سوخت‌وساز پایه (BMR)</div>
+              <div class="health-metrics__value">
+                ${formatInteger(bmr)}<small>kcal</small>
+              </div>
+              <div class="health-metrics__hint">کالری مورد نیاز در حالت استراحت</div>
+            </div>
+
+            <div class="health-metrics__cell">
+              <div class="health-metrics__label">کالری روزانه (TDEE)</div>
+              <div class="health-metrics__value health-metrics__value--primary">
+                ${formatInteger(tdee)}<small>kcal</small>
+              </div>
+              <div class="health-metrics__hint">با احتساب سطح فعالیت شما</div>
+            </div>
+          </div>
+
+          ${healthy ? `
+            <div class="health-metrics__foot">
+              محدوده وزن نرمال برای قد شما: <strong>${formatNumber(healthy.min, { decimals: 1 })}</strong> تا <strong>${formatNumber(healthy.max, { decimals: 1 })}</strong> کیلوگرم
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }
+
+    /* ---------- Health cards ---------------------------------------- */
     function renderGrid(snap) {
       const grid = $("[data-health-grid]", container);
       grid.innerHTML = `
@@ -291,14 +400,13 @@ export default {
         { label: "تغییر وزن", value: weightChange ? (weightChange > 0 ? "+" + formatNumber(weightChange, { decimals: 1 }) : formatNumber(weightChange, { decimals: 1 })) : "—", unit: "kg", tone: weightChange > 0 ? "danger" : "success" },
       ];
 
-      // Chart: glucose trend
       let chartHtml = "";
       if (glu.length) {
-        const glucosePoints = glu.map((r) => ({
+        const points = glu.map((r) => ({
           label: formatShort(r.log_date).split("/")[2] || "",
           y: Number(r.value),
         }));
-        chartHtml = chart.lineChart({ data: glucosePoints, width: 720, height: 180 });
+        chartHtml = chart.lineChart({ data: points, width: 720, height: 180 });
       }
 
       return { kpis, chart: chartHtml, subtitle: label };
@@ -325,6 +433,7 @@ export default {
     /* ---------- Events --------------------------------------------- */
     unsubscribers.push(bus.on("health:changed", () => load()));
     unsubscribers.push(bus.on("date:changed", () => load()));
+    unsubscribers.push(bus.on("profile:changed", () => load()));
 
     await load();
 
@@ -334,3 +443,7 @@ export default {
     };
   },
 };
+
+function genderLabel(g) {
+  return { male: "مرد", female: "زن", other: "سایر" }[g] || "";
+}
