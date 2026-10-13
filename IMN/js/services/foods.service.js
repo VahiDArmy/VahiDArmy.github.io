@@ -14,7 +14,8 @@
  */
 
 import { bus } from "../core/event-bus.js";
-import { normalizeText, toLatinDigits } from "../utils/format.js";
+import { toLatinDigits } from "../utils/format.js";
+import { normalizeText } from "../utils/validation.js";
 
 const FOODS_URL = "data/foods.json";
 const CACHE_VERSION = "v1";
@@ -30,8 +31,8 @@ function normalizePersian(str) {
   return String(str || "")
     .replace(/ي/g, "ی")
     .replace(/ك/g, "ک")
-    .replace(/\u064B-\u0652/g, "") // harakat
-    .replace(/\u200c/g, " ")       // ZWNJ → space
+    .replace(/[\u064B-\u0652]/g, "") // harakat
+    .replace(/\u200c/g, " ")         // ZWNJ → space
     .replace(/[أإآ]/g, "ا")
     .replace(/[ۀهٔ]/g, "ه")
     .replace(/\s+/g, " ")
