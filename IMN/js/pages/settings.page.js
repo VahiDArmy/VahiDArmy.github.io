@@ -1,10 +1,10 @@
 /**
  * Settings page — profile, goals, appearance, data, security, danger.
  *
- * Simplified layout: no settings nav column; a horizontal tab strip at the
- * top. Uses `escapeHTML` (capital HTML) from utils/format.js everywhere —
- * the previous version had three places calling `escapeHtml` (lowercase)
- * which was undefined and crashed the page.
+ * The Profile panel now collects the anthropometric data BMI/BMR need
+ * (weight, height, birth year, gender, activity level) and shows a live
+ * preview of BMI, BMR, and TDEE as the user types. No save is required
+ * to see the numbers change — but Save is required to persist.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
@@ -16,10 +16,12 @@ import { store } from "../core/state.js";
 import { auth } from "../services/auth.service.js";
 import { profile } from "../services/profile.service.js";
 import { goals } from "../services/goals.service.js";
+import { metrics } from "../services/metrics.service.js";
 import { theme } from "../config/theme.js";
 import { DEFAULT_GOALS } from "../config/constants.js";
-import { escapeHTML, toLatinDigits } from "../utils/format.js";
+import { escapeHTML, toLatinDigits, formatNumber } from "../utils/format.js";
 import { validators, validate } from "../utils/validation.js";
+import { ACTIVITY_LEVELS, getActivityLevel } from "../utils/health-formulas.js";
 
 const TABS = [
   { id: "profile", label: "پروفایل", icon: "user" },
@@ -71,14 +73,16 @@ export default {
       else if (activePanel === "danger") renderDanger(wrap);
     }
 
-    /* ---------- Profile -------------------------------------------- */
+    /* =============================================================
+       PROFILE — with live BMI/BMR/TDEE preview
+       ============================================================= */
     function renderProfile(wrap) {
       wrap.innerHTML = `
         <div class="settings-section">
           <div class="settings-section__head">
             <div>
               <div class="settings-section__title">${icon("user", { size: 18 })}<span>اطلاعات پروفایل</span></div>
-              <div class="settings-section__desc">این اطلاعات در داشبورد نمایش داده می‌شود</div>
+              <div class="settings-section__desc">وزن، قد، سال تولد و سطح فعالیت برای محاسبه BMI، BMR و TDEE استفاده می‌شوند</div>
             </div>
           </div>
 
@@ -94,6 +98,7 @@ export default {
             </div>
           </div>
 
+          <!-- Identity -->
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">نام نمایشی</label>
@@ -104,24 +109,66 @@ export default {
               <input class="form-input" value="${escapeHTML(user?.email || "")}" disabled dir="ltr" />
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label">قد (سانتی‌متر)</label>
-              <input class="form-input" type="number" data-field="height_cm" value="${profileData.height_cm || ""}" />
+
+          <!-- Anthropometrics — highlighted because they drive the metrics -->
+          <div class="metrics-form">
+            <div class="metrics-form__title">${icon("activity", { size: 16 })}<span>اطلاعات بدنی</span></div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">وزن <span class="form-label__hint">(کیلوگرم)</span></label>
+                <input class="form-input" type="number" step="0.1" min="20" max="400"
+                       data-field="weight_kg" data-metric="weightKg"
+                       value="${profileData.weight_kg ?? ""}" placeholder="مثلاً 72.5" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">قد <span class="form-label__hint">(سانتی‌متر)</span></label>
+                <input class="form-input" type="number" step="0.5" min="80" max="250"
+                       data-field="height_cm" data-metric="heightCm"
+                       value="${profileData.height_cm ?? ""}" placeholder="مثلاً 175" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">سال تولد <span class="form-label__hint">(میلادی)</span></label>
+                <input class="form-input" type="number" min="1900" max="2100"
+                       data-field="birth_year" data-metric="birthYear"
+                       value="${profileData.birth_year ?? ""}" placeholder="مثلاً 1990" dir="ltr" />
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">سال تولد</label>
-              <input class="form-input" type="number" data-field="birth_year" value="${profileData.birth_year || ""}" />
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">جنسیت</label>
+                <select class="form-select" data-field="gender" data-metric="gender">
+                  <option value="">انتخاب…</option>
+                  <option value="male" ${profileData.gender === "male" ? "selected" : ""}>مرد</option>
+                  <option value="female" ${profileData.gender === "female" ? "selected" : ""}>زن</option>
+                  <option value="other" ${profileData.gender === "other" ? "selected" : ""}>سایر</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">سطح فعالیت</label>
+                <select class="form-select" data-field="activity_level" data-metric="activity">
+                  <option value="">انتخاب…</option>
+                  ${ACTIVITY_LEVELS.map((l) => `
+                    <option value="${l.id}" ${profileData.activity_level === l.id ? "selected" : ""}>
+                      ${l.label} — ${l.desc}
+                    </option>
+                  `).join("")}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">نوع دیابت</label>
+                <select class="form-select" data-field="diabetes_type">
+                  <option value="">انتخاب…</option>
+                  <option value="type1" ${profileData.diabetes_type === "type1" ? "selected" : ""}>نوع ۱</option>
+                  <option value="type2" ${profileData.diabetes_type === "type2" ? "selected" : ""}>نوع ۲</option>
+                  <option value="gestational" ${profileData.diabetes_type === "gestational" ? "selected" : ""}>بارداری</option>
+                  <option value="prediabetes" ${profileData.diabetes_type === "prediabetes" ? "selected" : ""}>پیش‌دیابت</option>
+                </select>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">جنسیت</label>
-              <select class="form-select" data-field="gender">
-                <option value="">انتخاب…</option>
-                <option value="male" ${profileData.gender === "male" ? "selected" : ""}>مرد</option>
-                <option value="female" ${profileData.gender === "female" ? "selected" : ""}>زن</option>
-                <option value="other" ${profileData.gender === "other" ? "selected" : ""}>سایر</option>
-              </select>
-            </div>
+
+            <div class="settings-metrics-preview" data-metrics-preview></div>
           </div>
 
           <div class="flex justify-end gap-2">
@@ -130,6 +177,45 @@ export default {
         </div>
       `;
 
+      // -------- Live preview ----------------------------------------
+      const previewEl = wrap.querySelector("[data-metrics-preview]");
+
+      function readForm() {
+        const num = (name, decimals = null) => {
+          const el = wrap.querySelector(`[data-field="${name}"]`);
+          if (!el || el.value === "") return null;
+          const v = Number(toLatinDigits(el.value));
+          if (!Number.isFinite(v)) return null;
+          return decimals == null ? v : Number(v.toFixed(decimals));
+        };
+        const sel = (name) => {
+          const el = wrap.querySelector(`[data-field="${name}"]`);
+          return el?.value || null;
+        };
+        return {
+          weightKg: num("weight_kg", 2),
+          heightCm: num("height_cm", 2),
+          birthYear: num("birth_year"),
+          gender: sel("gender"),
+          activity: sel("activity_level"),
+        };
+      }
+
+      function updatePreview() {
+        const input = readForm();
+        const result = metrics.preview(input);
+        previewEl.innerHTML = renderMetricsPreview(result);
+      }
+
+      // Attach input/change listeners so the preview updates live.
+      wrap.querySelectorAll("[data-metric]").forEach((el) => {
+        el.addEventListener("input", updatePreview);
+        el.addEventListener("change", updatePreview);
+      });
+
+      updatePreview();
+
+      // -------- Avatar upload ---------------------------------------
       wrap.querySelector("[data-upload-avatar]").addEventListener("click", () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -147,19 +233,33 @@ export default {
         input.click();
       });
 
+      // -------- Save ------------------------------------------------
       wrap.querySelector("[data-save='profile']").addEventListener("click", async () => {
-        const patch = {};
-        ["display_name", "height_cm", "birth_year", "gender"].forEach((f) => {
-          const el = wrap.querySelector(`[data-field="${f}"]`);
-          if (!el) return;
-          let v = el.value;
-          if (["height_cm", "birth_year"].includes(f)) v = v ? Number(toLatinDigits(v)) : null;
-          patch[f] = v || null;
-        });
+        const input = readForm();
+
+        // Range checks — same thresholds as the input `min`/`max` hints.
+        const rangeErrors = [];
+        if (input.weightKg != null && (input.weightKg < 20 || input.weightKg > 400)) rangeErrors.push("وزن باید بین ۲۰ تا ۴۰۰ کیلوگرم باشد");
+        if (input.heightCm != null && (input.heightCm < 80 || input.heightCm > 250)) rangeErrors.push("قد باید بین ۸۰ تا ۲۵۰ سانتی‌متر باشد");
+        const thisYear = new Date().getFullYear();
+        if (input.birthYear != null && (input.birthYear < 1900 || input.birthYear > thisYear)) rangeErrors.push("سال تولد معتبر نیست");
+        if (rangeErrors.length) return toast.error(rangeErrors[0]);
+
+        const patch = {
+          display_name: wrap.querySelector('[data-field="display_name"]').value?.trim() || null,
+          weight_kg: input.weightKg,
+          height_cm: input.heightCm,
+          birth_year: input.birthYear,
+          gender: input.gender,
+          activity_level: input.activity,
+          diabetes_type: wrap.querySelector('[data-field="diabetes_type"]').value || null,
+        };
         try {
           await profile.save(patch);
           toast.success("ذخیره شد");
-        } catch { toast.error("ذخیره ناموفق بود"); }
+        } catch (err) {
+          toast.error(err?.message || "ذخیره ناموفق بود");
+        }
       });
     }
 
@@ -445,3 +545,57 @@ export default {
     return function cleanup() {};
   },
 };
+
+/* =============================================================
+   Metrics preview renderer — shared visual language with the Health
+   page card so users see the same numbers represented the same way.
+   ============================================================= */
+function renderMetricsPreview(result) {
+  if (!result.ready) {
+    const missing = result.missing.join("، ");
+    return `
+      <div class="metrics-preview metrics-preview--incomplete">
+        <div class="metrics-preview__icon">${icon("info", { size: 18 })}</div>
+        <div class="metrics-preview__body">
+          <div class="metrics-preview__title">برای محاسبه به اطلاعات بیشتری نیاز است</div>
+          <div class="metrics-preview__desc">لطفاً ${missing} را وارد کنید</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const { bmi, bmr, tdee, healthy } = result;
+  const cat = bmi?.category;
+
+  return `
+    <div class="metrics-preview">
+      <div class="metrics-preview__grid">
+        <div class="metrics-preview__item">
+          <div class="metrics-preview__label">شاخص توده بدنی (BMI)</div>
+          <div class="metrics-preview__value metrics-preview__value--${cat?.tone || "flat"}">
+            ${formatNumber(bmi.value, { decimals: 1 })}
+          </div>
+          ${cat ? `<div class="metrics-preview__badge metrics-preview__badge--${cat.tone}">${cat.label}</div>` : ""}
+        </div>
+
+        <div class="metrics-preview__item">
+          <div class="metrics-preview__label">سوخت‌وساز پایه (BMR)</div>
+          <div class="metrics-preview__value">${formatNumber(bmr)}<small>kcal</small></div>
+          <div class="metrics-preview__hint">در حالت استراحت</div>
+        </div>
+
+        <div class="metrics-preview__item">
+          <div class="metrics-preview__label">کالری روزانه (TDEE)</div>
+          <div class="metrics-preview__value">${formatNumber(tdee)}<small>kcal</small></div>
+          <div class="metrics-preview__hint">با احتساب فعالیت</div>
+        </div>
+      </div>
+
+      ${healthy ? `
+        <div class="metrics-preview__foot">
+          محدوده وزن نرمال برای قد شما: <strong>${formatNumber(healthy.min, { decimals: 1 })}</strong> تا <strong>${formatNumber(healthy.max, { decimals: 1 })}</strong> کیلوگرم
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
