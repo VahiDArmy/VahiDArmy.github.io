@@ -1,5 +1,10 @@
 /**
  * Sidebar navigation.
+ *
+ * Behaviour:
+ *  • Desktop (>980px): fixed sidebar, optionally collapsed.
+ *  • Mobile (<=980px): hidden by default; opens with `is-open` class;
+ *    closes on: link tap, overlay tap, route change, Escape key.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
@@ -29,10 +34,18 @@ const BOTTOM_ITEMS = [
 
 let unsubscribeRoute = null;
 let unsubscribeProfile = null;
+let overlayHandler = null;
+let keyHandler = null;
 
 export function mountSidebar() {
   const sidebar = document.getElementById("sidebar");
   if (!sidebar) return;
+
+  /* Defensive: never start in an open state on mobile, and never start
+     with a stale collapsed state on desktop. */
+  sidebar.classList.remove("is-open");
+  sidebar.classList.remove("is-collapsed");
+  document.body.classList.remove("sidebar-collapsed");
 
   sidebar.innerHTML = `
     <div class="sidebar__brand">
@@ -62,15 +75,14 @@ export function mountSidebar() {
     </div>
   `;
 
-  // Click on nav
+  /* ---- Nav link taps ---- */
   delegate(sidebar, "click", "[data-route]", (e, el) => {
     e.preventDefault();
     navigate(el.dataset.route);
-    // close mobile sidebar
     closeMobile();
   });
 
-  // User dropdown
+  /* ---- User dropdown ---- */
   const userTrigger = sidebar.querySelector("[data-user-trigger]");
   dropdown({
     trigger: userTrigger,
@@ -96,40 +108,56 @@ export function mountSidebar() {
     ],
   });
 
-  // Toggle collapse (desktop)
-  // (invoked by header button)
+  /* ---- Overlay tap closes sidebar (mobile) ---- */
+  const overlay = document.getElementById("sidebar-overlay");
+  if (overlay) {
+    overlayHandler = () => closeMobile();
+    overlay.addEventListener("click", overlayHandler);
+  }
 
-  // Handle current route highlight
+  /* ---- Escape closes on mobile ---- */
+  keyHandler = (e) => {
+    if (e.key === "Escape" && window.innerWidth <= 980) closeMobile();
+  };
+  document.addEventListener("keydown", keyHandler);
+
+  /* ---- Route highlight ---- */
   updateActive(getCurrentRoute());
   unsubscribeRoute = bus.on("route:changed", ({ route }) => updateActive(route));
 
-  // Profile updates
+  /* ---- Profile updates ---- */
   renderUser();
   unsubscribeProfile = bus.on("profile:changed", renderUser);
   bus.on("state:user", renderUser);
 
-  // Restore collapsed state
-  const collapsed = storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED);
-  if (collapsed) {
-    document.body.classList.add("sidebar-collapsed");
-    sidebar.classList.add("is-collapsed");
+  /* ---- Restore collapsed state (desktop only) ---- */
+  if (window.innerWidth > 980) {
+    const collapsed = storage.get(STORAGE_KEYS.SIDEBAR_COLLAPSED);
+    if (collapsed) {
+      document.body.classList.add("sidebar-collapsed");
+      sidebar.classList.add("is-collapsed");
+    }
   }
 
   return function cleanup() {
     unsubscribeRoute?.();
     unsubscribeProfile?.();
+    if (overlay && overlayHandler) overlay.removeEventListener("click", overlayHandler);
+    if (keyHandler) document.removeEventListener("keydown", keyHandler);
+    overlayHandler = null;
+    keyHandler = null;
   };
 }
 
 export function toggleSidebar() {
   const sidebar = document.getElementById("sidebar");
   if (!sidebar) return;
+
   if (window.innerWidth <= 980) {
-    sidebar.classList.toggle("is-open");
+    const willOpen = !sidebar.classList.contains("is-open");
+    sidebar.classList.toggle("is-open", willOpen);
     const overlay = document.getElementById("sidebar-overlay");
-    if (overlay) {
-      overlay.hidden = !sidebar.classList.contains("is-open");
-    }
+    if (overlay) overlay.hidden = !willOpen;
   } else {
     sidebar.classList.toggle("is-collapsed");
     document.body.classList.toggle("sidebar-collapsed");
