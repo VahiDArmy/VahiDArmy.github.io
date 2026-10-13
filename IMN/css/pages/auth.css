@@ -1,6 +1,18 @@
 /* =============================================================
-   Auth Page (Login / Signup / Reset)
+   Auth Page — Login / Signup / Reset
+   -------------------------------------------------------------
+   Fixes vs. previous version
+     • Autofill override so the browser never paints a light
+       overlay (that was causing the "two overlapping texts" bug).
+     • Email/password inputs are re-styled with a slightly lighter
+       surface than the card so they read as fields, not as blank
+       zones.
+     • Tabs use `grid-template-columns: 1fr 1fr` so both tabs have
+       exactly the same width regardless of text length.
+     • Icons and eye toggle get consistent 44px touch targets.
+     • Compact vertical rhythm — the card is not stretched anymore.
    ============================================================= */
+
 .auth-screen {
   position: fixed;
   inset: 0;
@@ -15,16 +27,19 @@
   overflow-y: auto;
 }
 
+/* -----------------------------------------------------------
+   Card
+   ----------------------------------------------------------- */
 .auth-card {
   width: 100%;
-  max-width: 440px;
-  background: rgba(17, 22, 35, 0.72);
-  backdrop-filter: blur(22px) saturate(1.25);
-  -webkit-backdrop-filter: blur(22px) saturate(1.25);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  max-width: 420px;
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border-1);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-xl);
-  padding: var(--space-7) var(--space-6);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    var(--shadow-xl);
+  padding: 28px 24px 24px;
   position: relative;
   overflow: hidden;
   animation: fadeInUp var(--dur-lg) var(--ease-out) both;
@@ -33,26 +48,29 @@
 .auth-card::before {
   content: "";
   position: absolute;
-  top: -1px;
-  inset-inline: 20%;
+  top: 0;
+  inset-inline: 30%;
   height: 2px;
   background: var(--gradient-primary);
-  border-radius: 2px;
+  border-radius: 0 0 3px 3px;
   box-shadow: 0 0 22px var(--color-primary-glow);
 }
 
+/* -----------------------------------------------------------
+   Brand
+   ----------------------------------------------------------- */
 .auth-brand {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
+  gap: 10px;
+  margin-bottom: 22px;
   text-align: center;
 }
 
 .auth-brand__logo {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 18px;
   background: var(--gradient-primary);
   display: grid;
@@ -61,103 +79,272 @@
   box-shadow: var(--shadow-primary);
 }
 .auth-brand__logo svg {
-  width: 34px; height: 34px;
+  width: 32px; height: 32px;
   stroke: #fff; fill: none; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
 }
 
 .auth-brand__title {
-  font-size: var(--fs-2xl);
+  font-size: var(--fs-xl);
   font-weight: var(--fw-black);
+  color: var(--color-text-1);
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, #fff, #b6c0d3);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  line-height: 1.2;
 }
 .auth-brand__sub {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   color: var(--color-text-3);
+  max-width: 300px;
+  line-height: 1.65;
 }
 
+/* -----------------------------------------------------------
+   Tabs — equal width, clean hit area
+   ----------------------------------------------------------- */
 .auth-tabs {
-  display: flex;
-  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* always equal halves */
+  background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
   padding: 4px;
   border-radius: var(--radius-md);
-  margin-bottom: var(--space-5);
+  margin-bottom: 20px;
   gap: 4px;
 }
 .auth-tabs__btn {
-  flex: 1;
-  height: 36px;
+  height: 38px;
   border-radius: calc(var(--radius-md) - 4px);
   font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
+  font-weight: var(--fw-bold);
   color: var(--color-text-3);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: all var(--dur-xs) var(--ease-out);
+  transition:
+    background var(--dur-xs) var(--ease-out),
+    color var(--dur-xs) var(--ease-out),
+    box-shadow var(--dur-xs) var(--ease-out);
+  user-select: none;
+}
+.auth-tabs__btn:hover:not(.is-active) {
+  color: var(--color-text-1);
+  background: rgba(255, 255, 255, 0.035);
 }
 .auth-tabs__btn.is-active {
   background: var(--gradient-primary);
   color: #fff;
-  box-shadow: var(--shadow-primary);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.30);
 }
 
-.auth-form { display: none; flex-direction: column; gap: var(--space-3); }
-.auth-form.is-active { display: flex; animation: fadeInUp var(--dur-md) var(--ease-out) both; }
+/* -----------------------------------------------------------
+   Forms
+   ----------------------------------------------------------- */
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+.auth-form.is-active {
+  display: flex;
+  animation: fadeInUp var(--dur-md) var(--ease-out) both;
+}
 
-.auth-form .btn--primary { height: 46px; font-size: var(--fs-md); margin-top: var(--space-2); }
+.auth-form .form-group { margin-bottom: 0; }
 
+.auth-form .form-label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-2);
+  margin-bottom: 6px;
+}
+
+/* Slightly lighter than the card, so inputs read as fields */
+.auth-form .form-input {
+  width: 100%;
+  height: 46px;
+  padding-inline: 44px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-2);
+  font-size: var(--fs-md);
+  color: var(--color-text-1);
+  transition:
+    background var(--dur-xs) var(--ease-out),
+    border-color var(--dur-xs) var(--ease-out),
+    box-shadow var(--dur-xs) var(--ease-out);
+}
+.auth-form .form-input:hover { border-color: var(--color-border-3); }
+.auth-form .form-input:focus {
+  background: var(--color-bg-2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+  outline: none;
+}
+
+/* LTR email inputs get left-aligned text */
+.auth-form .form-input[dir="ltr"] { text-align: left; }
+
+.auth-form .form-input::placeholder {
+  color: var(--color-text-4);
+  opacity: 0.7;
+}
+
+/* -----------------------------------------------------------
+   Autofill — kill the browser's yellow/blue flash AND the
+   overlapping "ghost text" the user was seeing.
+   ----------------------------------------------------------- */
+.auth-form .form-input:-webkit-autofill,
+.auth-form .form-input:-webkit-autofill:hover {
+  -webkit-text-fill-color: var(--color-text-1);
+  -webkit-box-shadow: 0 0 0 1000px var(--color-bg-3) inset;
+  box-shadow: 0 0 0 1000px var(--color-bg-3) inset;
+  border-color: var(--color-border-2);
+  transition: background-color 9999s ease-in-out 0s;
+  caret-color: var(--color-text-1);
+}
+.auth-form .form-input:-webkit-autofill:focus {
+  -webkit-box-shadow:
+    0 0 0 1000px var(--color-bg-2) inset,
+    0 0 0 3px rgba(99, 102, 241, 0.18);
+  box-shadow:
+    0 0 0 1000px var(--color-bg-2) inset,
+    0 0 0 3px rgba(99, 102, 241, 0.18);
+  border-color: var(--color-primary);
+}
+
+/* -----------------------------------------------------------
+   Input group icons
+   ----------------------------------------------------------- */
+.auth-form .input-group {
+  position: relative;
+}
+.auth-form .input-group__icon--start {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-end: 14px;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-3);
+  pointer-events: none;
+  transition: color var(--dur-xs);
+}
+.auth-form .input-group__icon--start svg {
+  width: 100%; height: 100%;
+  stroke: currentColor; fill: none; stroke-width: 1.9;
+}
+.auth-form .input-group:focus-within .input-group__icon--start {
+  color: var(--color-primary);
+}
+
+.auth-form .input-group__action {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: 5px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--color-text-3);
+  cursor: pointer;
+  transition: background var(--dur-xxs), color var(--dur-xxs);
+}
+.auth-form .input-group__action:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-1);
+}
+.auth-form .input-group__action svg {
+  width: 16px; height: 16px;
+  stroke: currentColor; fill: none; stroke-width: 2;
+}
+
+/* -----------------------------------------------------------
+   Password strength
+   ----------------------------------------------------------- */
+.pwd-strength {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+.pwd-strength__bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background var(--dur-sm);
+}
+.pwd-strength__bar.is-weak   { background: var(--color-danger); }
+.pwd-strength__bar.is-medium { background: var(--color-warning); }
+.pwd-strength__bar.is-strong { background: var(--color-success); }
+.pwd-strength__label {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* -----------------------------------------------------------
+   Bottom row (remember + forgot)
+   ----------------------------------------------------------- */
 .auth-alt {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   font-size: var(--fs-xs);
-  color: var(--color-text-3);
-  margin-top: -4px;
+  margin-top: 2px;
+  flex-wrap: wrap;
 }
 .auth-alt a {
-  color: var(--color-primary-300);
+  color: var(--color-primary);
   font-weight: var(--fw-semibold);
   cursor: pointer;
+  transition: color var(--dur-xs);
+  user-select: none;
 }
-.auth-alt a:hover { color: var(--color-primary); text-decoration: underline; }
+.auth-alt a:hover {
+  color: var(--color-primary-300);
+  text-decoration: underline;
+}
 
-.auth-divider {
-  display: flex;
+.auth-form .form-check {
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
-  margin: var(--space-4) 0;
-  color: var(--color-text-4);
-  font-size: var(--fs-2xs);
-}
-.auth-divider::before,
-.auth-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--color-divider);
-}
-
-.auth-footer {
-  text-align: center;
+  gap: 8px;
   font-size: var(--fs-xs);
-  color: var(--color-text-3);
-  margin-top: var(--space-5);
-}
-.auth-footer a {
-  color: var(--color-primary-300);
-  font-weight: var(--fw-semibold);
+  color: var(--color-text-2);
   cursor: pointer;
+  user-select: none;
+}
+.auth-form .form-check input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
 }
 
+/* -----------------------------------------------------------
+   Submit button
+   ----------------------------------------------------------- */
+.auth-form .btn--primary {
+  height: 48px;
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  border-radius: var(--radius-md);
+  margin-top: 4px;
+}
+
+/* -----------------------------------------------------------
+   Feedback messages
+   ----------------------------------------------------------- */
 .auth-message {
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
   font-size: var(--fs-xs);
+  line-height: 1.7;
   display: none;
+  margin-bottom: 14px;
 }
 .auth-message.is-error {
   display: block;
@@ -178,25 +365,42 @@
   border: 1px solid rgba(59, 130, 246, 0.28);
 }
 
-/* Password strength */
-.pwd-strength {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
+/* -----------------------------------------------------------
+   Reset password hint + footer link
+   ----------------------------------------------------------- */
+.auth-form__hint {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  line-height: 1.85;
+  margin-bottom: 12px;
+  text-align: center;
 }
-.pwd-strength__bar {
-  height: 4px;
-  flex: 1;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
-  transition: background var(--dur-sm);
+
+.auth-footer {
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  margin-top: 16px;
 }
-.pwd-strength__bar.is-weak { background: var(--color-danger); }
-.pwd-strength__bar.is-medium { background: var(--color-warning); }
-.pwd-strength__bar.is-strong { background: var(--color-success); }
-.pwd-strength__label {
-  font-size: var(--fs-2xs);
-  color: var(--color-text-4);
-  margin-top: 2px;
-  text-align: right;
+.auth-footer a {
+  color: var(--color-primary);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  user-select: none;
+}
+.auth-footer a:hover { text-decoration: underline; }
+
+/* -----------------------------------------------------------
+   Responsive
+   ----------------------------------------------------------- */
+@media (max-width: 640px) {
+  .auth-card {
+    padding: 24px 20px 20px;
+    border-radius: var(--radius-lg);
+  }
+  .auth-brand__logo { width: 52px; height: 52px; border-radius: 16px; }
+  .auth-brand__logo svg { width: 28px; height: 28px; }
+  .auth-brand__title { font-size: var(--fs-lg); }
+  .auth-brand { margin-bottom: 18px; }
+  .auth-form { gap: 12px; }
 }
