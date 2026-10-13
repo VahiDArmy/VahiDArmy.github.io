@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Under Construction Crane – Original + Phone</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+path { stroke: #000000; fill: #000000; }
+html, body {
+  height: 100%; width: 100%; overflow: hidden;
+  font-family: system-ui, sans-serif;
+}
+
+/* ===== TOGGLE ===== */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: #231F20; color: #fff; padding: 10px 16px;
+  display: flex; gap: 10px; align-items: center; justify-content: center;
+}
+.topbar button {
+  background: #C5752D; color: #fff; border: none; padding: 8px 18px;
+  border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 14px;
+}
+.topbar button.active { background: #fff; color: #231F20; }
+
+.stage {
+  position: absolute; top: 48px; left: 0; right: 0; bottom: 0;
+  display: none; overflow: auto; -webkit-overflow-scrolling: touch;
+}
+.stage.active { display: block; }
+
+/* ===== ORIGINAL CSS (flattened) ===== */
+.page-wrapper { overflow: hidden; height: 100%; }
+
+.sky {
+  background: linear-gradient(to bottom, #000508 0%, #163C52 25%, #4F4F47 40%, #C5752D 53%, #B7490F 85%, #2F1107 100%);
+  width: 100%; height: 75vh; position: relative;
+}
+.sky .component-wrapper { position: relative; height: 100%; }
+
+.sky .sun {
+  position: absolute; width: 200px; height: 200px;
+  top: 45%; left: 20%; border-radius: 50%;
+  background: radial-gradient(circle, #ffe483 0%, #ffc700 10%, #ff8117 11%, #f5740300 35%, #f5740300 100%);
+  z-index: 1;
+}
+
+.sky .svg-image {
+  position: absolute; bottom: -7px; left: 0; right: 0;
+  margin: auto; width: 80%; max-height: 75vh; z-index: 3;
+}
+
+.sky .background-grid {
+  display: flex; width: 100%; box-sizing: border-box;
+  position: absolute; left: 0; right: 0; bottom: -5px; top: 0;
+  align-items: flex-end; z-index: 2;
+}
+.sky .background-grid .background {
+  flex: 1; min-width: 0; display: flex; align-items: flex-end;
+}
+.sky .background-grid .background svg {
+  width: 100%; height: auto; display: block;
+}
+
+.sky .limit {
+  max-height: 75vh; max-width: 100vh;
+  width: calc((768/1024) * 107%); bottom: 0;
+}
+.sky .light-wrapper, .sky .weld-wrapper, .sky .spark-wrapper {
+  position: relative; padding-bottom: calc((768/1024) * 100%); height: 0;
+}
+
+.ground { background: black; width: 100%; height: 25vh; }
+
+.svg-components {
+  position: relative; height: 0; width: 100%;
+  padding: 0; padding-bottom: 75vh; margin: auto; margin-left: -10%;
+  z-index: 4;
+}
+.svg-components svg {
+  position: absolute; height: 100%; width: 80%;
+  left: 0; bottom: -7px; right: 0; margin: auto;
+  max-height: calc(80vw / 1.33); margin-right: 0;
+}
+
+.light-bar {
+  transform: rotate(4deg) translateX(15px);
+  display: flex; justify-content: space-between;
+  width: 85%; position: absolute; height: 100%; bottom: -18%;
+}
+.light.red {
+  visibility: visible; opacity: 1; width: 1px; height: 1px;
+  box-shadow: 0 0 5px 5px #ff1818; background-color: #ff1818;
+  animation: strobe 3s steps(2, start) infinite; animation-direction: alternate;
+}
+.light.top { position: absolute; top: 9%; right: 29%; }
+
+.material.hidden { visibility: hidden; }
+.material path {
+  animation: move-trolly-components 45s infinite;
+  animation-timing-function: ease-in-out; animation-direction: alternate;
+}
+.hook {
+  animation: move-trolly-components 45s infinite;
+  animation-timing-function: ease-in-out; animation-direction: alternate;
+}
+.cable {
+  stroke-width: 1; stroke: black; stroke-dasharray: 485; stroke-dashoffset: 485;
+  animation: move-cable 45s infinite, move-trolly-components 45s infinite;
+  animation-timing-function: ease-in-out; animation-direction: alternate;
+}
+.material, .trolly-movement, .cable, .hook {
+  --transX1: -55%; --transX2: -50%; --transX3: -5%; --transX4: -5%;
+  --transY1: -6.5%; --transY2: -6.5%; --transY3: 0%; --transY4: 0%;
+  --scale1: 1.1; --scale2: 1;
+}
+.hook, .material {
+  --transY1: 55%; --transY2: -6.5%; --transY3: 0%; --transY4: 55%;
+}
+.trolly-movement {
+  animation: move-trolly-components 45s infinite;
+  animation-timing-function: ease-in-out; animation-direction: alternate;
+}
+
+.spark {
+  position: relative; width: 10%; margin-top: -20px;
+  animation-timing-function: linear;
+}
+.weld-container, .spark-container {
+  width: 10px; height: 10px; position: absolute;
+}
+.weld-container:first-child, .spark-container:first-child {
+  left: 81.2%; top: 50.2%;
+}
+.weld-container:last-child, .spark-container:last-child {
+  left: 52%; top: 71.9%;
+}
+.weld {
+  opacity: 0; width: 10px; height: 10px; border-radius: 50%;
+  animation: welding 8s infinite;
+  background: radial-gradient(circle, #ffffff 0%, #DDEDFF 25%, #e1ecf9 35%, #cee4ff 40%, rgb(186,218,255) 50%, rgba(186,218,255,.4) 80%, rgba(186,218,255,.1) 100%);
+}
+.particle {
+  opacity: 0; position: absolute; background-color: rgba(255,251,209,1);
+}
+.particle.negative-X {
+  animation: sparks-neg-X .7s infinite, welding 8s infinite;
+}
+.particle.positive-X {
+  animation: sparks-pos-X .7s infinite, welding 8s infinite;
+}
+
+@keyframes welding {
+  0%{opacity:0} 1%{opacity:1} 2%{opacity:0} 3%{opacity:1} 4%{opacity:0}
+  5%{opacity:1} 11%{opacity:1} 12%{opacity:0} 13%{opacity:1}
+  59%{opacity:1} 60%{opacity:0} 100%{opacity:0}
+}
+@keyframes sparks-neg-X {
+  0%{opacity:1;transform:translateY(0%)} 95%{opacity:1}
+  100%{opacity:0;transform:translateY(1500%) translateX(-5px)}
+}
+@keyframes sparks-pos-X {
+  0%{opacity:1;transform:translateY(0%) rotate(0deg)} 93%{opacity:1}
+  100%{opacity:0;transform:translateY(1500%) translateX(5px)}
+}
+@keyframes strobe { to { visibility:hidden; opacity:0; } }
+@keyframes move-trolly-components {
+  0%   { transform: translateX(var(--transX1)) translateY(var(--transY1)) scale(var(--scale1)); }
+  25%  { transform: translateX(var(--transX2)) translateY(var(--transY2)) scale(var(--scale1)); }
+  75%  { transform: translateX(var(--transX3)) translateY(var(--transY3)) scale(var(--scale2)); }
+  100% { transform: translateX(var(--transX4)) translateY(var(--transY4)) scale(var(--scale2)); }
+}
+@keyframes move-cable {
+  0% { stroke-dashoffset: 970; } 25% { stroke-dashoffset: 543; }
+  75% { stroke-dashoffset: 543; } 100% { stroke-dashoffset: 970; }
+}
+
+/* ===== PHONE MODE ===== */
+.stage.phone .sky { height: 80vh; }
+.stage.phone .ground { height: 20vh; }
+.stage.phone .sky .sun { width: 120px; height: 120px; top: 30%; left: 15%; }
+.stage.phone .sky .svg-image { width: 95%; }
+.stage.phone .svg-components { margin-left: -5%; padding-bottom: 80vh; }
+.stage.phone .svg-components svg { width: 95%; max-height: none; }
+.stage.phone .sky .background-grid { bottom: 0; }
+.stage.phone .sky .limit { width: 100%; max-width: none; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button id="btn-orig" class="active" onclick="setMode('original')">Original</button>
+  <button id="btn-phone" onclick="setMode('phone')">Phone (office view)</button>
+</div>
+
+<!-- ORIGINAL -->
+<div class="stage original active" id="stage-original">
+<div class="page-wrapper">
+  <div class="sky">
+    <div class="component-wrapper">
+      <div class="sun"></div>
+
+      <!-- BACKGROUND SILHOUETTES (inline SVG replacements for the 4 missing images) -->
+      <div class="background-grid">
+        <div class="background one">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,120 L15,120 L15,90 L30,90 L30,70 L40,70 L40,100 L55,100 L55,60 L70,60 L70,40 L85,40 L85,80 L100,80 L100,50 L120,50 L120,90 L140,90 L140,30 L155,30 L155,70 L170,70 L170,110 L185,110 L185,140 L200,140 L200,180 Z"/>
+            <rect x="20" y="100" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="45" y="110" width="5" height="7" fill="#1a1a1a"/>
+            <rect x="75" y="90" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="110" y="100" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="145" y="80" width="6" height="8" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background two">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,100 L20,100 L20,50 L35,50 L35,20 L50,20 L50,60 L70,60 L70,35 L90,35 L90,80 L110,80 L110,45 L130,45 L130,10 L150,10 L150,55 L170,55 L170,90 L190,90 L190,130 L200,130 L200,180 Z"/>
+            <rect x="25" y="70" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="55" y="80" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="95" y="100" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="135" y="60" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="160" y="100" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background three">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,110 L25,110 L25,70 L45,70 L45,40 L65,40 L65,15 L80,15 L80,50 L100,50 L100,30 L120,30 L120,65 L145,65 L145,25 L165,25 L165,80 L185,80 L185,120 L200,120 L200,180 Z"/>
+            <rect x="30" y="90" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="70" y="70" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="105" y="80" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="150" y="70" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background four">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,130 L18,130 L18,85 L35,85 L35,55 L55,55 L55,25 L75,25 L75,5 L95,5 L95,40 L115,40 L115,70 L140,70 L140,35 L160,35 L160,90 L180,90 L180,125 L200,125 L200,180 Z"/>
+            <rect x="22" y="105" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="60" y="70" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="100" y="90" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="145" y="80" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="170" y="110" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- WELD positions -->
+      <div class="svg-image limit">
+        <div class="weld-wrapper">
+          <div class="weld-container"></div>
+          <div class="weld-container"></div>
+        </div>
+      </div>
+
+      <!-- MAIN CRANE + BUILDING SKELETON (inline SVG) -->
+      <svg class="svg-image" viewBox="0 0 1024 768" xmlns="http://www.w3.org/2000/svg" style="z-index:3;">
+        <rect x="0" y="700" width="1024" height="68" fill="#111"/>
+        <!-- Building skeleton / scaffolding -->
+        <g fill="none" stroke="#222" stroke-width="3">
+          <line x1="180" y1="700" x2="180" y2="280"/>
+          <line x1="260" y1="700" x2="260" y2="280"/>
+          <line x1="340" y1="700" x2="340" y2="320"/>
+          <line x1="420" y1="700" x2="420" y2="360"/>
+          <line x1="160" y1="700" x2="440" y2="700"/>
+          <line x1="160" y1="620" x2="440" y2="620"/>
+          <line x1="160" y1="540" x2="440" y2="540"/>
+          <line x1="160" y1="460" x2="420" y2="460"/>
+          <line x1="160" y1="380" x2="360" y2="380"/>
+          <line x1="160" y1="300" x2="280" y2="300"/>
+          <line x1="180" y1="700" x2="260" y2="620"/>
+          <line x1="260" y1="700" x2="180" y2="620"/>
+          <line x1="180" y1="620" x2="260" y2="540"/>
+          <line x1="260" y1="620" x2="180" y2="540"/>
+          <line x1="260" y1="540" x2="340" y2="460"/>
+          <line x1="340" y1="540" x2="260" y2="460"/>
+          <line x1="340" y1="460" x2="420" y2="380"/>
+          <line x1="420" y1="460" x2="340" y2="380"/>
+        </g>
+        <rect x="160" y="615" width="280" height="8" fill="#333"/>
+        <rect x="160" y="535" width="260" height="8" fill="#333"/>
+        <rect x="160" y="455" width="260" height="8" fill="#333"/>
+        <rect x="160" y="375" width="200" height="8" fill="#333"/>
+        <rect x="160" y="295" width="120" height="8" fill="#333"/>
+        <rect x="185" y="625" width="70" height="70" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+        <rect x="265" y="625" width="70" height="70" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+        <rect x="185" y="545" width="70" height="70" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="265" y="545" width="70" height="70" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="185" y="465" width="70" height="70" fill="#3a3a3a" stroke="#555" stroke-width="1"/>
+        <!-- Tower crane -->
+        <rect x="620" y="680" width="80" height="20" fill="#1a1a1a"/>
+        <rect x="640" y="400" width="40" height="280" fill="#222"/>
+        <g stroke="#333" stroke-width="2" fill="none">
+          <line x1="640" y1="400" x2="680" y2="400"/>
+          <line x1="640" y1="450" x2="680" y2="450"/>
+          <line x1="640" y1="500" x2="680" y2="500"/>
+          <line x1="640" y1="550" x2="680" y2="550"/>
+          <line x1="640" y1="600" x2="680" y2="600"/>
+          <line x1="640" y1="650" x2="680" y2="650"/>
+          <line x1="640" y1="400" x2="680" y2="450"/>
+          <line x1="680" y1="400" x2="640" y2="450"/>
+          <line x1="640" y1="500" x2="680" y2="550"/>
+          <line x1="680" y1="500" x2="640" y2="550"/>
+          <line x1="640" y1="600" x2="680" y2="650"/>
+          <line x1="680" y1="600" x2="640" y2="650"/>
+        </g>
+        <rect x="400" y="390" width="420" height="14" fill="#2a2a2a"/>
+        <rect x="400" y="404" width="420" height="6" fill="#1a1a1a"/>
+        <g stroke="#444" stroke-width="1.5" fill="none">
+          <line x1="420" y1="390" x2="450" y2="370"/>
+          <line x1="450" y1="370" x2="480" y2="390"/>
+          <line x1="500" y1="390" x2="530" y2="370"/>
+          <line x1="530" y1="370" x2="560" y2="390"/>
+          <line x1="580" y1="390" x2="610" y2="370"/>
+          <line x1="610" y1="370" x2="640" y2="390"/>
+          <line x1="680" y1="390" x2="710" y2="370"/>
+          <line x1="710" y1="370" x2="740" y2="390"/>
+          <line x1="760" y1="390" x2="790" y2="370"/>
+          <line x1="790" y1="370" x2="820" y2="390"/>
+        </g>
+        <rect x="780" y="380" width="50" height="30" fill="#1a1a1a"/>
+        <rect x="650" y="370" width="30" height="22" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="655" y="375" width="10" height="8" fill="#4a90a4"/>
+        <rect x="635" y="370" width="50" height="20" fill="#222"/>
+      </svg>
+
+      <!-- Trolley / cable / hook / material -->
+      <div class="svg-components">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path id="trolly" class="trolly-movement" d="M661.25,155.5l-6.632-0.507l-0.533,0.694l-1.461,1.697l-4.377-0.313l-2.711-0.194l-1.037,0.437l-1.51-0.078l0.26-0.486
+            v-1.835l-5.513-0.638l-0.237,0.509v1.363H632L631.75,151l1.875-0.931l-1.723-2.517l-2.777,0.143l-1-1.57l-3.375,2.819L624,148.25
+            l-2.301,0.641l-0.048,0.569l-0.013,0.247l-0.061,1.159l-0.078,1.509l0.034,1.355l0.017,0.684l0.042,1.686l0.025,1.003l0.007,0.28
+            l-1.744,1.234l-1.108,1.246l-0.085,0.997l12.838,0.769l0.1,0.995l1.25,0.125l0.25,3.625l1.5,0.25l0.75-1l2.957-0.71l0.513,0.298
+            c2.117,1.904,4.03-0.338,4.03-0.338h0.224h0.501h6.15l0.069,0.191l-0.026,1.12l0.499,0.063h0.833v1.889l1.375-0.014v-1.25
+            l4.875-2.75l2.75-0.25L661.25,155.5z M642.468,158.21l2.032,0.106v1.011l-2.25-0.709L642.468,158.21z M649.625,163h-6.875v-0.789
+            l7.114,0.335L649.625,163"/>
+        </svg>
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path class="cable" d="m654.344,650 V 165" />
+          <path class="cable" d="m648.344,650 V 165" />
+          <path class="cable" d="m644.344,650 V 165" />
+          <path class="cable" d="m640.344,650 V 165" />
+          <path class="hook" d="m654.344,220.156c-0.101,-0.106 -0.208,-0.19 -0.318,-0.266l-0.498,-0.247c-1.189,-0.395 -2.701,0.225 -3.881,-0.415c-0.154,-1.684 0.632,-4.128 -0.424,-5.575c-0.012,-0.016 -0.03,-0.026 -0.043,-0.042l-0.491,-0.437c-1.197,-0.764 -3.249,-0.454 -3.871,0.761l-0.385,4.652c-0.125,0.326 -0.408,0.527 -1.059,0.565c-0.696,0.041 -1.667,-0.156 -2.475,-0.024l-0.496,0.142c-0.186,0.08 -0.361,0.179 -0.504,0.332c-0.678,0.726 -0.501,2.745 -0.401,3.648c0.12,1.083 0.376,1.301 1.219,2.03c0.876,0.758 1.799,1.431 2.754,2.083c1.098,0.75 1.737,0.723 3.009,1.03c0.116,1.27 -2.036,0.756 -1.731,2.731c0.142,0.918 0.971,2.103 1.94,2.33l0,0c0.998,0.155 1.81,-0.965 1.81,-0.965c0.441,-0.584 0.663,-1.285 0.225,-1.714c-0.583,-0.572 -1.747,2.034 -2.739,0.225c1.036,-0.754 0.907,-1.087 1.39,-2.124c1.099,-2.364 5.335,-2.137 7.027,-4.099c0.792,-0.916 0.794,-3.727 -0.058,-4.621z"/>
+        </svg>
+        <svg class="material" id="material-group" version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path fill-opacity="null" stroke-width="0.4" d="m648.984268,232.200277l23.640917,19.5284"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.586944,232.497402l32.580756,19.5284"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.586944,232.93624l-31.586942,19.089562"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.806102,232.716821l-24.137061,19.089562"/>
+          <path stroke="null" fill="null" d="m647.792297,233.254576c0,-0.727359 0.533432,-1.316526 1.191982,-1.316526c0.658551,0 1.191982,0.589167 1.191982,1.316526c0,0.727359 -0.533432,1.316526 -1.191982,1.316526c-0.658551,0 -1.191982,-0.589167 -1.191982,-1.316526z"/>
+          <path stroke="null" fill="null" d="m648.586955,232.607105c0,-0.181843 0.044449,-0.329135 0.099337,-0.329135c0.054876,0 0.099337,0.147292 0.099337,0.329135c0,0.181843 -0.044449,0.329135 -0.099337,0.329135c-0.054876,0 -0.099337,-0.147292 -0.099337,-0.329135z"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m617.198193,252.025815l63.969496,0l0,21.283765l-63.969496,0l0,-21.283765z"/>
+        </svg>
+      </div>
+
+      <div class="svg-image limit">
+        <div class="light-wrapper">
+          <div class="light-bar">
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+          </div>
+          <div class="light red top"></div>
+        </div>
+      </div>
+      <div class="svg-image limit">
+        <div class="spark-wrapper">
+          <div class="spark-container"><div class="spark first"></div></div>
+          <div class="spark-container"><div class="spark second"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ground"></div>
+</div>
+</div>
+
+<!-- PHONE -->
+<div class="stage phone" id="stage-phone">
+<div class="page-wrapper">
+  <div class="sky">
+    <div class="component-wrapper">
+      <div class="sun"></div>
+      <div class="background-grid">
+        <div class="background one">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,120 L15,120 L15,90 L30,90 L30,70 L40,70 L40,100 L55,100 L55,60 L70,60 L70,40 L85,40 L85,80 L100,80 L100,50 L120,50 L120,90 L140,90 L140,30 L155,30 L155,70 L170,70 L170,110 L185,110 L185,140 L200,140 L200,180 Z"/>
+            <rect x="20" y="100" width="6" height="8" fill="#1a1a1a"/><rect x="45" y="110" width="5" height="7" fill="#1a1a1a"/>
+            <rect x="75" y="90" width="6" height="8" fill="#1a1a1a"/><rect x="110" y="100" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="145" y="80" width="6" height="8" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background two">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,100 L20,100 L20,50 L35,50 L35,20 L50,20 L50,60 L70,60 L70,35 L90,35 L90,80 L110,80 L110,45 L130,45 L130,10 L150,10 L150,55 L170,55 L170,90 L190,90 L190,130 L200,130 L200,180 Z"/>
+            <rect x="25" y="70" width="5" height="6" fill="#1a1a1a"/><rect x="55" y="80" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="95" y="100" width="5" height="6" fill="#1a1a1a"/><rect x="135" y="60" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="160" y="100" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background three">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,110 L25,110 L25,70 L45,70 L45,40 L65,40 L65,15 L80,15 L80,50 L100,50 L100,30 L120,30 L120,65 L145,65 L145,25 L165,25 L165,80 L185,80 L185,120 L200,120 L200,180 Z"/>
+            <rect x="30" y="90" width="6" height="7" fill="#1a1a1a"/><rect x="70" y="70" width="5" height="6" fill="#1a1a1a"/>
+            <rect x="105" y="80" width="6" height="7" fill="#1a1a1a"/><rect x="150" y="70" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="background four">
+          <svg viewBox="0 0 200 180" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+            <path fill="#0a0a0a" d="M0,180 L0,130 L18,130 L18,85 L35,85 L35,55 L55,55 L55,25 L75,25 L75,5 L95,5 L95,40 L115,40 L115,70 L140,70 L140,35 L160,35 L160,90 L180,90 L180,125 L200,125 L200,180 Z"/>
+            <rect x="22" y="105" width="5" height="6" fill="#1a1a1a"/><rect x="60" y="70" width="6" height="8" fill="#1a1a1a"/>
+            <rect x="100" y="90" width="5" height="6" fill="#1a1a1a"/><rect x="145" y="80" width="6" height="7" fill="#1a1a1a"/>
+            <rect x="170" y="110" width="5" height="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+      </div>
+      <div class="svg-image limit">
+        <div class="weld-wrapper">
+          <div class="weld-container"></div>
+          <div class="weld-container"></div>
+        </div>
+      </div>
+      <svg class="svg-image" viewBox="0 0 1024 768" xmlns="http://www.w3.org/2000/svg" style="z-index:3;">
+        <rect x="0" y="700" width="1024" height="68" fill="#111"/>
+        <g fill="none" stroke="#222" stroke-width="3">
+          <line x1="180" y1="700" x2="180" y2="280"/><line x1="260" y1="700" x2="260" y2="280"/>
+          <line x1="340" y1="700" x2="340" y2="320"/><line x1="420" y1="700" x2="420" y2="360"/>
+          <line x1="160" y1="700" x2="440" y2="700"/><line x1="160" y1="620" x2="440" y2="620"/>
+          <line x1="160" y1="540" x2="440" y2="540"/><line x1="160" y1="460" x2="420" y2="460"/>
+          <line x1="160" y1="380" x2="360" y2="380"/><line x1="160" y1="300" x2="280" y2="300"/>
+          <line x1="180" y1="700" x2="260" y2="620"/><line x1="260" y1="700" x2="180" y2="620"/>
+          <line x1="180" y1="620" x2="260" y2="540"/><line x1="260" y1="620" x2="180" y2="540"/>
+          <line x1="260" y1="540" x2="340" y2="460"/><line x1="340" y1="540" x2="260" y2="460"/>
+          <line x1="340" y1="460" x2="420" y2="380"/><line x1="420" y1="460" x2="340" y2="380"/>
+        </g>
+        <rect x="160" y="615" width="280" height="8" fill="#333"/><rect x="160" y="535" width="260" height="8" fill="#333"/>
+        <rect x="160" y="455" width="260" height="8" fill="#333"/><rect x="160" y="375" width="200" height="8" fill="#333"/>
+        <rect x="160" y="295" width="120" height="8" fill="#333"/>
+        <rect x="185" y="625" width="70" height="70" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+        <rect x="265" y="625" width="70" height="70" fill="#2a2a2a" stroke="#444" stroke-width="1"/>
+        <rect x="185" y="545" width="70" height="70" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="265" y="545" width="70" height="70" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="185" y="465" width="70" height="70" fill="#3a3a3a" stroke="#555" stroke-width="1"/>
+        <rect x="620" y="680" width="80" height="20" fill="#1a1a1a"/>
+        <rect x="640" y="400" width="40" height="280" fill="#222"/>
+        <g stroke="#333" stroke-width="2" fill="none">
+          <line x1="640" y1="400" x2="680" y2="400"/><line x1="640" y1="450" x2="680" y2="450"/>
+          <line x1="640" y1="500" x2="680" y2="500"/><line x1="640" y1="550" x2="680" y2="550"/>
+          <line x1="640" y1="600" x2="680" y2="600"/><line x1="640" y1="650" x2="680" y2="650"/>
+          <line x1="640" y1="400" x2="680" y2="450"/><line x1="680" y1="400" x2="640" y2="450"/>
+          <line x1="640" y1="500" x2="680" y2="550"/><line x1="680" y1="500" x2="640" y2="550"/>
+          <line x1="640" y1="600" x2="680" y2="650"/><line x1="680" y1="600" x2="640" y2="650"/>
+        </g>
+        <rect x="400" y="390" width="420" height="14" fill="#2a2a2a"/>
+        <rect x="400" y="404" width="420" height="6" fill="#1a1a1a"/>
+        <g stroke="#444" stroke-width="1.5" fill="none">
+          <line x1="420" y1="390" x2="450" y2="370"/><line x1="450" y1="370" x2="480" y2="390"/>
+          <line x1="500" y1="390" x2="530" y2="370"/><line x1="530" y1="370" x2="560" y2="390"/>
+          <line x1="580" y1="390" x2="610" y2="370"/><line x1="610" y1="370" x2="640" y2="390"/>
+          <line x1="680" y1="390" x2="710" y2="370"/><line x1="710" y1="370" x2="740" y2="390"/>
+          <line x1="760" y1="390" x2="790" y2="370"/><line x1="790" y1="370" x2="820" y2="390"/>
+        </g>
+        <rect x="780" y="380" width="50" height="30" fill="#1a1a1a"/>
+        <rect x="650" y="370" width="30" height="22" fill="#333" stroke="#555" stroke-width="1"/>
+        <rect x="655" y="375" width="10" height="8" fill="#4a90a4"/>
+        <rect x="635" y="370" width="50" height="20" fill="#222"/>
+      </svg>
+      <div class="svg-components">
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path id="trolly" class="trolly-movement" d="M661.25,155.5l-6.632-0.507l-0.533,0.694l-1.461,1.697l-4.377-0.313l-2.711-0.194l-1.037,0.437l-1.51-0.078l0.26-0.486
+            v-1.835l-5.513-0.638l-0.237,0.509v1.363H632L631.75,151l1.875-0.931l-1.723-2.517l-2.777,0.143l-1-1.57l-3.375,2.819L624,148.25
+            l-2.301,0.641l-0.048,0.569l-0.013,0.247l-0.061,1.159l-0.078,1.509l0.034,1.355l0.017,0.684l0.042,1.686l0.025,1.003l0.007,0.28
+            l-1.744,1.234l-1.108,1.246l-0.085,0.997l12.838,0.769l0.1,0.995l1.25,0.125l0.25,3.625l1.5,0.25l0.75-1l2.957-0.71l0.513,0.298
+            c2.117,1.904,4.03-0.338,4.03-0.338h0.224h0.501h6.15l0.069,0.191l-0.026,1.12l0.499,0.063h0.833v1.889l1.375-0.014v-1.25
+            l4.875-2.75l2.75-0.25L661.25,155.5z M642.468,158.21l2.032,0.106v1.011l-2.25-0.709L642.468,158.21z M649.625,163h-6.875v-0.789
+            l7.114,0.335L649.625,163"/>
+        </svg>
+        <svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path class="cable" d="m654.344,650 V 165" /><path class="cable" d="m648.344,650 V 165" />
+          <path class="cable" d="m644.344,650 V 165" /><path class="cable" d="m640.344,650 V 165" />
+          <path class="hook" d="m654.344,220.156c-0.101,-0.106 -0.208,-0.19 -0.318,-0.266l-0.498,-0.247c-1.189,-0.395 -2.701,0.225 -3.881,-0.415c-0.154,-1.684 0.632,-4.128 -0.424,-5.575c-0.012,-0.016 -0.03,-0.026 -0.043,-0.042l-0.491,-0.437c-1.197,-0.764 -3.249,-0.454 -3.871,0.761l-0.385,4.652c-0.125,0.326 -0.408,0.527 -1.059,0.565c-0.696,0.041 -1.667,-0.156 -2.475,-0.024l-0.496,0.142c-0.186,0.08 -0.361,0.179 -0.504,0.332c-0.678,0.726 -0.501,2.745 -0.401,3.648c0.12,1.083 0.376,1.301 1.219,2.03c0.876,0.758 1.799,1.431 2.754,2.083c1.098,0.75 1.737,0.723 3.009,1.03c0.116,1.27 -2.036,0.756 -1.731,2.731c0.142,0.918 0.971,2.103 1.94,2.33l0,0c0.998,0.155 1.81,-0.965 1.81,-0.965c0.441,-0.584 0.663,-1.285 0.225,-1.714c-0.583,-0.572 -1.747,2.034 -2.739,0.225c1.036,-0.754 0.907,-1.087 1.39,-2.124c1.099,-2.364 5.335,-2.137 7.027,-4.099c0.792,-0.916 0.794,-3.727 -0.058,-4.621z"/>
+        </svg>
+        <svg class="material" id="material-group" version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="1024px" height="768px" viewBox="0 0 1024 768">
+          <path fill-opacity="null" stroke-width="0.4" d="m648.984268,232.200277l23.640917,19.5284"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.586944,232.497402l32.580756,19.5284"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.586944,232.93624l-31.586942,19.089562"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m648.806102,232.716821l-24.137061,19.089562"/>
+          <path stroke="null" fill="null" d="m647.792297,233.254576c0,-0.727359 0.533432,-1.316526 1.191982,-1.316526c0.658551,0 1.191982,0.589167 1.191982,1.316526c0,0.727359 -0.533432,1.316526 -1.191982,1.316526c-0.658551,0 -1.191982,-0.589167 -1.191982,-1.316526z"/>
+          <path stroke="null" fill="null" d="m648.586955,232.607105c0,-0.181843 0.044449,-0.329135 0.099337,-0.329135c0.054876,0 0.099337,0.147292 0.099337,0.329135c0,0.181843 -0.044449,0.329135 -0.099337,0.329135c-0.054876,0 -0.099337,-0.147292 -0.099337,-0.329135z"/>
+          <path fill-opacity="null" stroke-width="0.4" d="m617.198193,252.025815l63.969496,0l0,21.283765l-63.969496,0l0,-21.283765z"/>
+        </svg>
+      </div>
+      <div class="svg-image limit">
+        <div class="light-wrapper">
+          <div class="light-bar">
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+            <div class="light red"></div><div class="light red"></div>
+          </div>
+          <div class="light red top"></div>
+        </div>
+      </div>
+      <div class="svg-image limit">
+        <div class="spark-wrapper">
+          <div class="spark-container"><div class="spark first"></div></div>
+          <div class="spark-container"><div class="spark second"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ground"></div>
+</div>
+</div>
+
+<script>
+const animationManager = {
+    init: function() {
+        this.buildElements()
+        this.startIntervalCounter()
+    },
+    getRandomInt: function(min, max, string = true) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      if(string){
+        return String(Math.floor(Math.random() * (max - min)) + min)
+      }
+      return Math.floor(Math.random() * (max - min)) + min
+    },
+    buildElements: function() {
+       const sparkElements = document.querySelectorAll('.spark')
+       const weldElements = document.querySelectorAll('.weld-container')
+       sparkElements.forEach((spark, index) => {
+        let sibling = weldElements[index]
+        if (!sibling) return
+        let baseAnimationDelay = animationManager.getRandomInt(1,15)
+        let weld = document.createElement('div')
+        weld.classList = "weld"
+        weld.style.animationDelay = String(baseAnimationDelay) + "s"
+        sibling.appendChild(weld)
+        let sparkCount = 25
+        for( var i = 0; i <=sparkCount; i++){
+            let sparkDiv = animationManager.generateSpark(baseAnimationDelay)
+            spark.appendChild(sparkDiv)
+        }
+       })
+    },
+    generateSpark: function(delay) {
+        let sparkDiv = document.createElement('div')
+        sparkDiv.classList = 'particle'
+        sparkDiv.style.top = animationManager.getRandomInt(25,35) + "px"
+        sparkDiv.style.left =  animationManager.getRandomInt(0,5) + "px"
+        sparkDiv.style.width = animationManager.getRandomInt(1,2) + "px"
+        sparkDiv.style.height = animationManager.getRandomInt(4,7) + "px"
+        if(animationManager.getRandomInt(1,3) == 2){
+          sparkDiv.classList = sparkDiv.classList + " negative-X"
+        } else {
+          sparkDiv.classList = sparkDiv.classList + " positive-X"
+        }
+        let combinedDelay = (animationManager.getRandomInt(0,9)/10) + parseFloat(delay)
+        sparkDiv.style.animationDelay = String(combinedDelay) + "s"
+        return sparkDiv
+    },
+    startIntervalCounter: function() {
+      setInterval( () => {
+        document.querySelectorAll('#material-group').forEach(el => {
+          el.classList.toggle('hidden')
+        })
+      }, 45000)
+    }
+}
+document.addEventListener("DOMContentLoaded", evt => {
+	animationManager.init()
+})
+
+function setMode(mode) {
+  const orig = document.getElementById('stage-original');
+  const phone = document.getElementById('stage-phone');
+  const bO = document.getElementById('btn-orig');
+  const bP = document.getElementById('btn-phone');
+  if (mode === 'original') {
+    orig.classList.add('active');
+    phone.classList.remove('active');
+    bO.classList.add('active');
+    bP.classList.remove('active');
+  } else {
+    orig.classList.remove('active');
+    phone.classList.add('active');
+    bO.classList.remove('active');
+    bP.classList.add('active');
+  }
+}
+</script>
+</body>
+</html>
