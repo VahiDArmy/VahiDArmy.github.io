@@ -2,7 +2,9 @@
  * Settings page — profile, goals, appearance, data, security, danger.
  *
  * Simplified layout: no settings nav column; a horizontal tab strip at the
- * top. Removed references to the deleted sidebar.
+ * top. Uses `escapeHTML` (capital HTML) from utils/format.js everywhere —
+ * the previous version had three places calling `escapeHtml` (lowercase)
+ * which was undefined and crashed the page.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
@@ -14,9 +16,9 @@ import { store } from "../core/state.js";
 import { auth } from "../services/auth.service.js";
 import { profile } from "../services/profile.service.js";
 import { goals } from "../services/goals.service.js";
-import { theme, THEMES } from "../config/theme.js";
+import { theme } from "../config/theme.js";
 import { DEFAULT_GOALS } from "../config/constants.js";
-import { formatNumber, escapeHTML, toLatinDigits } from "../utils/format.js";
+import { escapeHTML, toLatinDigits } from "../utils/format.js";
 import { validators, validate } from "../utils/validation.js";
 
 const TABS = [
@@ -51,8 +53,8 @@ export default {
 
     function switchPanel(name) {
       activePanel = name;
-      container.querySelectorAll("[data-panel]").forEach((el) =>
-        el.classList.toggle("is-active", el.dataset.panel === name && el.matches(".report-tab"))
+      container.querySelectorAll("[data-settings-tabs] [data-panel]").forEach((el) =>
+        el.classList.toggle("is-active", el.dataset.panel === name)
       );
       renderPanel();
     }
@@ -83,8 +85,8 @@ export default {
           <div class="avatar-upload">
             <div class="avatar-upload__preview" data-avatar>
               ${profileData.avatar_url
-                ? `<img src="${escapeHtml(profileData.avatar_url)}" alt="" />`
-                : (profileData.display_name?.[0] || user?.email?.[0] || "؟").toUpperCase()}
+                ? `<img src="${escapeHTML(profileData.avatar_url)}" alt="" />`
+                : escapeHTML((profileData.display_name?.[0] || user?.email?.[0] || "؟").toUpperCase())}
             </div>
             <div class="avatar-upload__body">
               <button class="btn btn--secondary btn--sm" data-upload-avatar type="button">${icon("upload", { size: 14 })}<span>تغییر تصویر</span></button>
@@ -95,11 +97,11 @@ export default {
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">نام نمایشی</label>
-              <input class="form-input" data-field="display_name" value="${escapeHtml(profileData.display_name || "")}" />
+              <input class="form-input" data-field="display_name" value="${escapeHTML(profileData.display_name || "")}" />
             </div>
             <div class="form-group">
               <label class="form-label">ایمیل</label>
-              <input class="form-input" value="${escapeHtml(user?.email || "")}" disabled dir="ltr" />
+              <input class="form-input" value="${escapeHTML(user?.email || "")}" disabled dir="ltr" />
             </div>
           </div>
           <div class="form-row">
