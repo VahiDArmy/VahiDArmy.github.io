@@ -1,28 +1,30 @@
 /**
- * Activity service — steps, km walked/run, general exercise logs.
+ * Activity service — steps, km walked/run, exercise logs.
  *
- * Table: activity_logs
- *   id, user_id, log_date, log_time,
- *   type (walk|run|bike|gym|swim|yoga|other),
- *   distance_km numeric nullable,
- *   duration_min int nullable,
- *   steps int nullable,
- *   calories_burned numeric nullable,
- *   notes text,
- *   created_at
- *
- * Daily steps/km/calories-burned are also summed via a helper that
- * reads ranges — no separate summary table needed.
+ * Day-by-day aggregation uses `addDays` (local-time safe) and never
+ * `toISOString()`, so it behaves identically in every timezone.
  */
 
 import { db } from "./db.service.js";
 import { bus } from "../core/event-bus.js";
+import { addDays } from "../utils/date.js";
 
 const TABLE = "activity_logs";
 
 function emitChange(action, payload) {
   bus.emit("activity:changed", { action, ...payload });
   bus.emit("data:changed", { domain: "activity" });
+}
+
+function expandRange(startISO, endISO) {
+  const days = [];
+  let cur = startISO;
+  let guard = 0;
+  while (cur <= endISO && guard++ < 1900) {
+    days.push(cur);
+    cur = addDays(cur, 1);
+  }
+  return days;
 }
 
 export const activity = {
@@ -65,7 +67,6 @@ export const activity = {
     return true;
   },
 
-  /** Sum per day for a range: steps, km, minutes, kcal burned. */
   async dailyTotals(startISO, endISO) {
     const rows = await this.listByRange(startISO, endISO);
     const map = new Map();
@@ -82,31 +83,22 @@ export const activity = {
       t.kcal += Number(r.calories_burned) || 0;
       t.entries += 1;
     }
-    const out = [];
-    let cur = startISO;
-    while (cur <= endISO) {
-      const t = map.get(cur) || { date: cur, steps: 0, km: 0, minutes: 0, kcal: 0, entries: 0 };
+    return expandRange(startISO, endISO).map((date) => {
+      const t = map.get(date) || { date, steps: 0, km: 0, minutes: 0, kcal: 0, entries: 0 };
       ["steps", "km", "minutes", "kcal"].forEach((k) => {
         t[k] = Number(t[k].toFixed(2));
       });
-      out.push(t);
-      const d = new Date(cur + "T00:00:00");
-      d.setDate(d.getDate() + 1);
-      cur = d.toISOString().slice(0, 10);
-    }
-    return out;
+      return t;
+    });
   },
 
-  /** Simple kcal estimate for common types, given minutes + optional km. */
   estimateCaloriesBurned(type, minutes, km = 0, weightKg = 75) {
-    // MET values (moderate effort)
     const MET = {
       walk: 3.5, run: 9.8, bike: 7.5, swim: 8.0,
       gym: 5.0, yoga: 3.0, other: 4.0,
     };
     const met = MET[type] ?? 4.0;
     const hours = (Number(minutes) || 0) / 60;
-    const kcalPerKg = met * hours * 1.05;
-    return Math.round(kcalPerKg * weightKg);
+    return Math.round(met * hours * 1.05 * weightKg);
   },
 };
