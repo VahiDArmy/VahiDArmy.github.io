@@ -1,0 +1,168 @@
+/* =============================================================
+   Charts (pure SVG/CSS, no external lib)
+   ============================================================= */
+.chart {
+  position: relative;
+  width: 100%;
+}
+.chart__svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  display: block;
+}
+
+/* Line chart elements */
+.chart__grid-line {
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 1;
+  stroke-dasharray: 3 4;
+}
+.chart__axis-label {
+  fill: var(--color-text-4);
+  font-size: 10px;
+  font-family: var(--font-family);
+}
+.chart__area {
+  fill: url(#areaGradient);
+  opacity: 0.6;
+}
+.chart__line {
+  fill: none;
+  stroke: url(#lineGradient);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 3px 10px rgba(99, 102, 241, 0.4));
+}
+.chart__dot {
+  fill: var(--color-bg-1);
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  transition: r var(--dur-xs) var(--ease-spring);
+  cursor: pointer;
+}
+.chart__dot:hover { r: 6; }
+
+/* Bar chart */
+.chart__bar {
+  fill: url(#barGradient);
+  transition: opacity var(--dur-xs);
+  rx: 4;
+}
+.chart__bar:hover { opacity: 0.85; }
+.chart__bar--muted { fill: rgba(99, 102, 241, 0.35); }
+
+/* Donut */
+.chart__donut-segment {
+  transition: transform var(--dur-sm) var(--ease-spring), opacity var(--dur-sm);
+  transform-origin: center;
+  cursor: pointer;
+}
+.chart__donut-segment:hover {
+  transform: scale(1.03);
+}
+
+/* Legend */
+.chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: center;
+  margin-top: var(--space-3);
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+}
+.chart__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* Heatmap */
+.heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: var(--space-2);
+}
+.heatmap__cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: transform var(--dur-xxs), box-shadow var(--dur-xxs);
+}
+.heatmap__cell:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1px var(--color-primary);
+  z-index: 1;
+}
+.heatmap__cell[data-level="1"] { background: rgba(99, 102, 241, 0.22); }
+.heatmap__cell[data-level="2"] { background: rgba(99, 102, 241, 0.42); }
+.heatmap__cell[data-level="3"] { background: rgba(99, 102, 241, 0.66); }
+.heatmap__cell[data-level="4"] { background: rgba(99, 102, 241, 0.9); }
+
+/* Radial progress */
+.radial {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: inline-grid;
+  place-items: center;
+}
+.radial svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.radial__track { fill: none; stroke: rgba(255, 255, 255, 0.06); stroke-width: 10; }
+.radial__bar {
+  fill: none;
+  stroke: url(#radialGradient);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--dur-lg) var(--ease-out);
+}
+.radial__label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+}
+.radial__label small {
+  display: block;
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  font-weight: var(--fw-medium);
+  margin-top: -2px;
+}
+
+/* Sparkline */
+.sparkline {
+  width: 100%;
+  height: 40px;
+  display: block;
+  overflow: visible;
+}
+.sparkline__line {
+  fill: none;
+  stroke: var(--color-primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sparkline__area {
+  fill: var(--color-primary-soft);
+  opacity: 0.5;
+}
