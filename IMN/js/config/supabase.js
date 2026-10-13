@@ -1,44 +1,40 @@
 /**
  * Supabase client bootstrap.
  *
- * SECURITY NOTES
- * --------------
- * 1. Only the ANON key is used on the client. The anon key is safe to ship
- *    in the browser bundle ONLY IF every table is protected by Row Level
- *    Security (RLS) policies that require an authenticated user.
- * 2. Never put the service_role key here — it would defeat RLS entirely.
- * 3. Do NOT enable public signup without e-mail confirmation, otherwise
- *    anyone can create an anonymous account and read their (empty) data.
- * 4. All queries rely on `auth.uid() = user_id` policies; the client never
- *    sends `user_id` filters manually — RLS handles it.
+ * IMPORTANT — why we use `esm.sh` and `@2` (no pin):
+ *  - The older `jsdelivr/@supabase/supabase-js@2.45.4/+esm` build predates
+ *    support for the new "publishable" key format (sb_publishable_…).
+ *    Passing such a key to that build throws at createClient() time, which
+ *    kills the whole ES module graph and leaves the page blank.
+ *  - `esm.sh/@supabase/supabase-js@2` resolves to the latest v2, which
+ *    supports both legacy `anon` JWT keys and the new publishable keys.
  *
- * HOW TO CONFIGURE
- * ----------------
- * Because this project is served as a static site (GitHub Pages), the URL
- * and anon key must be visible in the bundle. Provide them via:
- *   a) a global `window.__SUPABASE__` object set from a small inline script, or
- *   b) a `supabase-config.js` file placed next to `index.html`, or
- *   c) hard-coding them here as a last resort (still safe thanks to RLS).
- * The loader below tries (a), then (b), then falls back to placeholders.
+ * SECURITY
+ * --------
+ *  - Only the anon / publishable key belongs here. It is designed to be
+ *    public. It grants nothing beyond what RLS policies allow.
+ *  - Never put the service_role key in the browser.
+ *  - All tables in supabase-schema.sql have RLS with `auth.uid() = user_id`.
  */
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PLACEHOLDER_URL = "https://YOUR-PROJECT.supabase.co";
 const PLACEHOLDER_KEY = "YOUR-ANON-KEY";
 
 function resolveCredentials() {
-  // (a) global injected config
   if (typeof window !== "undefined" && window.__SUPABASE__) {
     const g = window.__SUPABASE__;
-    if (g.url && g.anonKey) return { url: g.url, anonKey: g.anonKey };
+    if (g.url && (g.anonKey || g.key)) {
+      return { url: g.url, anonKey: g.anonKey || g.key };
+    }
   }
-  // (b) file-based config (loaded by index.html as a plain <script>)
   if (typeof window !== "undefined" && window.SUPABASE_CONFIG) {
     const c = window.SUPABASE_CONFIG;
-    if (c.url && c.anonKey) return { url: c.url, anonKey: c.anonKey };
+    if (c.url && (c.anonKey || c.key)) {
+      return { url: c.url, anonKey: c.anonKey || c.key };
+    }
   }
-  // (c) placeholder — app will warn and stay on the auth screen
   return { url: PLACEHOLDER_URL, anonKey: PLACEHOLDER_KEY };
 }
 
@@ -47,20 +43,88 @@ const { url, anonKey } = resolveCredentials();
 export const isConfigured =
   url !== PLACEHOLDER_URL && anonKey !== PLACEHOLDER_KEY;
 
-export const supabase = createClient(url, anonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    storageKey: "activity-tracker.auth",
-    flowType: "pkce",
-  },
-  global: {
-    headers: {
-      "x-application-name": "activity-tracker",
+/* Build the client with defensive error handling — if the construction
+ * itself fails (bad URL format, wrong key type, no fetch, etc.) we still
+ * export a stub so importing modules don't crash. The app layer checks
+ * `isConfigured` and `clientReady` before doing anything auth-related. */
+
+let supabaseClient = null;
+let clientError = null;
+
+if (isConfigured) {
+  try {
+    supabaseClient = createClient(url, anonKey, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storageKey: "activity-tracker.auth",
+        flowType: "pkce",
+      },
+      global: {
+        headers: { "x-application-name": "activity-tracker" },
+      },
+    });
+  } catch (err) {
+    clientError = err;
+    // eslint-disable-next-line no-console
+    console.error("[supabase] createClient failed:", err);
+  }
+} else {
+  // eslint-disable-next-line no-console
+  console.warn("[supabase] not configured — provide window.SUPABASE_CONFIG");
+}
+
+export const clientReady = !!supabaseClient;
+export const clientErrorMessage = clientError?.message || null;
+
+/* A no-op stub so callers can safely reference the API even if the
+ * client failed to construct. All methods reject with a clear message
+ * that the UI surfaces via the boot diagnostics overlay. */
+const stub = new Proxy(
+  {},
+  {
+    get() {
+      const fail = () =>
+        Promise.reject(
+          clientError ||
+            new Error(
+              !isConfigured
+                ? "Supabase تنظیم نشده است"
+                : "اتصال به Supabase برقرار نشد"
+            )
+        );
+      return fail;
     },
+  }
+);
+
+export const supabase = supabaseClient || {
+  auth: {
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }),
+    signInWithPassword: () =>
+      Promise.reject(
+        clientError ||
+          new Error("اتصال به سرور احراز هویت برقرار نشد")
+      ),
+    signUp: () =>
+      Promise.reject(
+        clientError || new Error("اتصال به سرور احراز هویت برقرار نشد")
+      ),
+    signOut: () => Promise.resolve({ error: null }),
+    resetPasswordForEmail: () =>
+      Promise.reject(clientError || new Error("اتصال برقرار نشد")),
+    updateUser: () =>
+      Promise.reject(clientError || new Error("اتصال برقرار نشد")),
+    refreshSession: () =>
+      Promise.resolve({ data: { session: null }, error: null }),
   },
-});
+  from: () => stub,
+  storage: { from: () => stub },
+  rpc: () => Promise.reject(clientError || new Error("اتصال برقرار نشد")),
+  channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+};
 
 /* Convenience accessors ------------------------------------------------ */
 
