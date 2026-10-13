@@ -1,60 +1,57 @@
 /**
- * Food page — daily meal tracking with food catalog.
+ * Food page — entry first, report block below.
+ *
+ * Layout:
+ *   1. Totals strip (today's macros + progress)
+ *   2. Meals grid (entry forms)
+ *   3. Report block (daily / weekly / monthly)
+ *
+ * The day swiper in the topbar drives the date — this page reacts to
+ * `date:changed` events instead of owning its own date navigation.
  */
 
-import { $, $$, createElement, delegate } from "../utils/dom.js";
+import { $, createElement, delegate } from "../utils/dom.js";
 import { icon } from "../components/icons.js";
 import { toast } from "../components/toast.js";
 import { modal } from "../components/modal.js";
 import { confirm } from "../components/confirm.js";
 import { contextMenu } from "../components/context-menu.js";
 import { searchField } from "../components/search.js";
+import { mountReportBlock } from "../components/report-block.js";
+import { chart } from "../components/chart.js";
 import { store } from "../core/state.js";
 import { bus } from "../core/event-bus.js";
 import { foods } from "../services/foods.service.js";
 import { foodLog } from "../services/food-log.service.js";
 import { MEALS } from "../config/constants.js";
-import {
-  todayISO, formatLong, addDays, nowTimeStr, formatRelative,
-} from "../utils/date.js";
-import { formatInteger, formatNumber, formatGrams, escapeHTML, toLatinDigits } from "../utils/format.js";
+import { todayISO, addDays, nowTimeStr, formatWeekdayShort, formatShort } from "../utils/date.js";
+import { formatInteger, formatNumber, escapeHTML, toLatinDigits } from "../utils/format.js";
 
 export default {
-  title: "غذا و وعده‌ها",
-  subtitle: "ثبت غذا و کالری روزانه",
+  title: "غذا",
+  subtitle: "ثبت غذا و کالری",
   icon: "utensils",
 
   async render(container) {
-    let unsubscribers = [];
+    const unsubscribers = [];
     let currentData = null;
+    let reportBlock = null;
 
     await foods.load().catch(() => toast.warning("کتابخانه غذا بارگذاری نشد"));
 
     container.innerHTML = `
-      <div class="page-header">
-        <div class="page-header__info">
-          <div class="page-header__title">غذا و وعده‌ها</div>
-          <div class="page-header__subtitle" data-date-sub></div>
-        </div>
-        <div class="page-header__actions">
-          <div class="dash-hero__date-nav">
-            <button class="btn btn--ghost btn--icon" data-nav="prev" type="button">${icon("chevronRight", { size: 16 })}</button>
-            <span class="dash-hero__date-label" data-date-label></span>
-            <button class="btn btn--ghost btn--icon" data-nav="next" type="button">${icon("chevronLeft", { size: 16 })}</button>
-          </div>
-          <button class="btn btn--secondary btn--sm" data-action="duplicate" type="button" title="کپی روز قبل به امروز">
-            ${icon("copy", { size: 14 })}<span>کپی روز قبل</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="card card--compact" style="margin-bottom:20px">
+      <div class="food-totals card card--compact" data-food-totals>
         <div class="flex items-center justify-between flex-wrap gap-3">
           <div class="flex items-center gap-4 flex-wrap">
             <div class="flex items-center gap-2"><span class="kpi__icon kpi__icon--warning">${icon("flame", { size: 16 })}</span><div><div class="text-2xs text-muted">کالری امروز</div><strong class="num" data-total="calories">0</strong></div></div>
             <div class="flex items-center gap-2"><span class="kpi__icon kpi__icon--success">${icon("zap", { size: 16 })}</span><div><div class="text-2xs text-muted">پروتئین</div><strong class="num" data-total="protein">0</strong></div></div>
             <div class="flex items-center gap-2"><span class="kpi__icon kpi__icon--info">${icon("apple", { size: 16 })}</span><div><div class="text-2xs text-muted">کربوهیدرات</div><strong class="num" data-total="carbs">0</strong></div></div>
             <div class="flex items-center gap-2"><span class="kpi__icon kpi__icon--danger">${icon("droplet", { size: 16 })}</span><div><div class="text-2xs text-muted">چربی</div><strong class="num" data-total="fat">0</strong></div></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn--secondary btn--sm" data-action="duplicate" type="button" title="کپی روز قبل">
+              ${icon("copy", { size: 14 })}<span>کپی روز قبل</span>
+            </button>
           </div>
           <div style="min-width:240px;flex:1;max-width:360px">
             <div class="progress-row">
@@ -68,32 +65,27 @@ export default {
         </div>
       </div>
 
-      <div class="meals-grid" data-meals></div>
+      <section id="food-entry-form" class="section" style="margin-top:20px">
+        <div class="section__head">
+          <div class="section__title">${icon("utensils", { size: 20 })}<span>وعده‌های امروز</span></div>
+        </div>
+        <div class="meals-grid" data-meals></div>
+      </section>
+
+      <div data-report-slot></div>
     `;
 
-    const dateLabel = $("[data-date-label]", container);
-    const dateSub = $("[data-date-sub]", container);
     const mealsWrap = $("[data-meals]", container);
 
     function currentDate() {
       return store.get("selectedDate") || todayISO();
     }
 
-    function updateDate(iso) {
-      store.setSelectedDate(iso);
-      load();
-    }
-
-    delegate(container, "click", "[data-nav]", (e, btn) => {
-      const dir = btn.dataset.nav === "next" ? 1 : -1;
-      updateDate(addDays(currentDate(), dir));
-    });
-
     delegate(container, "click", "[data-action='duplicate']", async () => {
       const prev = addDays(currentDate(), -1);
       const ok = await confirm({
         title: "کپی وعده‌ها",
-        message: `همه وعده‌های ${formatRelative(prev)} به ${formatRelative(currentDate())} کپی شوند؟`,
+        message: `همه وعده‌های روز قبل به امروز کپی شوند؟`,
         confirmLabel: "کپی کن",
         variant: "primary",
       });
@@ -101,21 +93,19 @@ export default {
       try {
         const rows = await foodLog.duplicateDay(prev, currentDate());
         toast.success(`${rows.length} آیتم کپی شد`);
-      } catch (err) {
+      } catch {
         toast.error("کپی ناموفق بود");
       }
     });
 
     async function load() {
       const iso = currentDate();
-      dateLabel.textContent = formatRelative(iso);
-      dateSub.textContent = formatLong(iso);
-
       try {
         const { rows, grouped } = await foodLog.listByDate(iso);
         currentData = { rows, grouped, date: iso };
         renderMeals(grouped, iso);
         renderTotals(rows);
+        reportBlock?.setDate(iso);
       } catch (err) {
         console.error("[food] load error", err);
         toast.error("خطا در بارگذاری وعده‌ها");
@@ -138,15 +128,15 @@ export default {
       $("[data-total='carbs']", container).textContent = formatNumber(totals.carbs, { decimals: 1 }) + " گرم";
       $("[data-total='fat']", container).textContent = formatNumber(totals.fat, { decimals: 1 }) + " گرم";
       $("[data-total='pct']", container).textContent = pct;
-      $("[data-total='progress']", container).style.width = Math.min(100, pct) + "%";
-      $("[data-total='progress']", container).classList.toggle("progress__bar--warning", pct > 100);
+      const bar = $("[data-total='progress']", container);
+      bar.style.width = Math.min(100, pct) + "%";
+      bar.classList.toggle("progress__bar--warning", pct > 100);
     }
 
-    function renderMeals(grouped, dateISO) {
+    function renderMeals(grouped) {
       mealsWrap.innerHTML = MEALS.map((meal) => {
         const rows = grouped[meal.id] || [];
         const totalKcal = rows.reduce((s, r) => s + (Number(r.calories) || 0), 0);
-
         return `
           <div class="meal-card meal-card--${mealColor(meal.id)}" data-meal="${meal.id}">
             <div class="meal-card__head">
@@ -159,13 +149,11 @@ export default {
                 <small>kcal</small>
               </div>
             </div>
-
             <div class="food-list" data-meal-list="${meal.id}">
               ${rows.length
                 ? rows.map((r) => renderFoodItem(r)).join("")
                 : '<div class="text-xs text-muted text-center" style="padding:16px 0">موردی ثبت نشده</div>'}
             </div>
-
             <button class="meal-card__add" data-add="${meal.id}" type="button">
               ${icon("plus", { size: 14 })}<span>افزودن غذا</span>
             </button>
@@ -173,7 +161,6 @@ export default {
         `;
       }).join("");
 
-      // Wire per-item right-click
       mealsWrap.querySelectorAll(".food-item").forEach((el) => {
         el.addEventListener("contextmenu", (e) => {
           e.preventDefault();
@@ -182,29 +169,26 @@ export default {
           if (!row) return;
           contextMenu.show(e, [
             { label: "ویرایش مقدار", icon: "edit", onClick: () => openEditItem(row) },
-            { label: "افزودن به وعده دیگر", icon: "plus", onClick: () => openMoveItem(row) },
+            { label: "انتقال به وعده دیگر", icon: "plus", onClick: () => openMoveItem(row) },
             { divider: true },
             { label: "حذف", icon: "trash", variant: "danger", onClick: () => deleteItem(row) },
           ]);
         });
         el.addEventListener("click", (e) => {
           if (e.target.closest("input")) return;
-          const id = el.dataset.id;
-          const row = currentData.rows.find((r) => r.id === id);
+          const row = currentData.rows.find((r) => r.id === el.dataset.id);
           if (row) openEditItem(row);
         });
       });
 
-      // Wire inputs
       mealsWrap.querySelectorAll(".food-item__amount input").forEach((input) => {
-        input.addEventListener("change", async (e) => {
-          const id = input.dataset.id;
-          const row = currentData.rows.find((r) => r.id === id);
+        input.addEventListener("click", (e) => e.stopPropagation());
+        input.addEventListener("change", async () => {
+          const row = currentData.rows.find((r) => r.id === input.dataset.id);
           if (!row) return;
           const grams = Math.max(1, Number(toLatinDigits(input.value)) || 100);
           await updateGrams(row, grams);
         });
-        input.addEventListener("click", (e) => e.stopPropagation());
       });
     }
 
@@ -231,17 +215,15 @@ export default {
     async function updateGrams(row, grams) {
       try {
         const food = foods.getById(row.food_id) || {
-          Persian_Name: row.food_name,
-          Name_En: row.food_en,
+          Persian_Name: row.food_name, Name_En: row.food_en,
           Calories: (row.calories / row.grams) * 100,
           Protein: (row.protein / row.grams) * 100,
           Carbs: (row.carbs / row.grams) * 100,
           Fat: (row.fat / row.grams) * 100,
-          Fiber: (row.fiber / row.grams) * 100,
-          Sugar: null,
+          Fiber: (row.fiber / row.grams) * 100, Sugar: null,
         };
         await foodLog.update(row.id, { grams, food_macros: food });
-      } catch (err) {
+      } catch {
         toast.error("به‌روزرسانی ناموفق بود");
       }
     }
@@ -257,20 +239,17 @@ export default {
       try {
         await foodLog.remove(row.id);
         toast.success("حذف شد");
-      } catch (err) {
+      } catch {
         toast.error("حذف ناموفق بود");
       }
     }
 
-    /* ---------- Open "add food" modal -------------------------------- */
-    delegate(container, "click", "[data-add]", (e, btn) => {
-      const meal = btn.dataset.add;
-      openAddModal(meal);
-    });
+    delegate(container, "click", "[data-add]", (e, btn) => openAddModal(btn.dataset.add));
 
+    /* ---------- Add food modal --------------------------------------- */
     function openAddModal(mealId) {
       const meal = MEALS.find((m) => m.id === mealId);
-      const selected = new Map(); // id -> { food, grams }
+      const selected = new Map();
 
       const wrapper = createElement("div");
       wrapper.innerHTML = `
@@ -304,17 +283,16 @@ export default {
                 toast.warning("حداقل یک غذا انتخاب کنید");
                 return false;
               }
-              const time = nowTimeStr();
               const items = [...selected.values()].map(({ food, grams }) => ({ food, grams }));
               try {
                 await foodLog.addMany({
                   date: currentDate(),
                   meal: mealId,
-                  mealTime: time,
+                  mealTime: nowTimeStr(),
                   items,
                 });
                 toast.success(`${items.length} آیتم اضافه شد`);
-              } catch (err) {
+              } catch {
                 toast.error("افزودن ناموفق بود");
                 return false;
               }
@@ -327,7 +305,6 @@ export default {
       const summaryEl = wrapper.querySelector("[data-summary]");
       let defaultGrams = 100;
 
-      // Serving size selector
       wrapper.querySelectorAll("[data-serving] .serving-size__opt").forEach((btn) => {
         btn.addEventListener("click", () => {
           wrapper.querySelectorAll("[data-serving] .serving-size__opt").forEach((b) => b.classList.remove("is-active"));
@@ -336,7 +313,6 @@ export default {
         });
       });
 
-      // Search field
       const search = searchField({
         placeholder: "جستجوی غذا (فارسی یا انگلیسی)…",
         minChars: 1,
@@ -354,78 +330,48 @@ export default {
       search.focus();
 
       function addSelection(food) {
-        if (selected.has(food._id || food.Persian_Name)) {
+        const key = food._id || food.Persian_Name;
+        if (selected.has(key)) {
           toast.info("این غذا قبلاً اضافه شده است");
           return;
         }
-        selected.set(food._id || food.Persian_Name, { food, grams: defaultGrams });
+        selected.set(key, { food, grams: defaultGrams });
         search.clear();
         renderSelection();
       }
 
       function renderSelection() {
-        if (!selected.size) {
-          summaryEl.innerHTML = "";
-          return;
-        }
+        if (!selected.size) { summaryEl.innerHTML = ""; return; }
         const items = [...selected.values()];
         const totals = foods.sumMacros(items);
         summaryEl.innerHTML = `
           <div class="food-selection-summary">
             <div class="food-selection-summary__info">
-              <strong>${items.length}</strong> آیتم انتخاب شده —
-              <strong>${formatInteger(totals.calories)}</strong> kcal
+              <strong>${items.length}</strong> آیتم — <strong>${formatInteger(totals.calories)}</strong> kcal
             </div>
             <button class="btn btn--ghost btn--sm" data-clear-selection type="button">${icon("trash", { size: 14 })}<span>پاک کردن</span></button>
           </div>
-          <div class="food-list" style="margin-top:12px;max-height:200px;overflow-y:auto">
-            ${items.map(({ food, grams }) => {
-              const m = foods.macrosFor(food, grams);
-              return `
-                <div class="food-list-item">
-                  <div class="food-list-item__info">
-                    <div class="food-list-item__name">${escapeHTML(food.Persian_Name)}</div>
-                    <div class="food-list-item__en">${escapeHTML(food.Name_En)} • ${grams} گرم</div>
-                  </div>
-                  <div class="food-list-item__kcal num">${formatInteger(m.calories)}</div>
-                  <button class="icon-btn" data-remove-food="${escapeHTML(food._id || food.Persian_Name)}" type="button" title="حذف">${icon("close", { size: 14 })}</button>
-                </div>
-              `;
-            }).join("")}
-          </div>
         `;
-
-        summaryEl.querySelectorAll("[data-remove-food]").forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            selected.delete(btn.dataset.removeFood);
-            renderSelection();
-          });
-        });
         summaryEl.querySelector("[data-clear-selection]")?.addEventListener("click", () => {
           selected.clear();
           renderSelection();
         });
       }
 
-      // Initial hot list
+      // Hot suggestions
       (async () => {
-        const frequent = await foodLog.frequentForMeal(mealId, 8).catch(() => []);
+        const frequent = await foodLog.frequentForMeal(mealId, 6).catch(() => []);
         if (frequent.length && !search.input.value) {
           resultsEl.innerHTML = `
             <div class="text-2xs text-muted" style="padding:6px 8px">پیشنهاد بر اساس سابقه شما:</div>
-            ${frequent.map((f) => {
-              const found = foods.search(f.name, { limit: 1 })[0];
-              return `
-                <div class="food-list-item" data-suggest='${JSON.stringify({ name: f.name, en: f.en })}' style="cursor:pointer">
-                  <div class="food-list-item__info">
-                    <div class="food-list-item__name">${escapeHTML(f.name)}</div>
-                    <div class="food-list-item__en">${escapeHTML(f.en || "")} • ${f.count} بار</div>
-                  </div>
-                  <div class="food-list-item__kcal num">${found ? formatInteger(found.Calories) + " kcal" : ""}</div>
+            ${frequent.map((f) => `
+              <div class="food-list-item" data-suggest='${JSON.stringify({ name: f.name })}' style="cursor:pointer">
+                <div class="food-list-item__info">
+                  <div class="food-list-item__name">${escapeHTML(f.name)}</div>
+                  <div class="food-list-item__en">${f.count} بار</div>
                 </div>
-              `;
-            }).join("")}
+              </div>
+            `).join("")}
           `;
           resultsEl.querySelectorAll("[data-suggest]").forEach((el) => {
             el.addEventListener("click", () => {
@@ -437,20 +383,12 @@ export default {
         }
       })();
 
-      // Hook service change to re-render page when modal confirms
-      const off = bus.on("food-log:changed", () => {
-        // page's own listener reloads data
-      });
-      m.onClose = off;
-
-      // Expose selection renderer to a modal close override
-      const originalFooterAdd = wrapper.querySelector(".modal__footer .btn--primary");
-      // Footer already wired via modal.open
+      return m;
     }
 
-    /* ---------- Edit item modal ------------------------------------- */
+    /* ---------- Edit item -------------------------------------------- */
     function openEditItem(row) {
-      const wrapper = document.createElement("div");
+      const wrapper = createElement("div");
       wrapper.innerHTML = `
         <div class="form-group">
           <label class="form-label">نام غذا</label>
@@ -469,7 +407,7 @@ export default {
           </div>
           <div class="form-group">
             <label class="form-label">ساعت</label>
-            <input type="time" class="form-input" data-edit="meal_time" value="${row.meal_time || ""}" />
+            <input type="time" class="form-input" data-edit="meal_time" value="${(row.meal_time || "").slice(0,5)}" />
           </div>
         </div>
         <div class="form-group">
@@ -477,7 +415,7 @@ export default {
           <textarea class="form-textarea" data-edit="notes" rows="2">${escapeHTML(row.notes || "")}</textarea>
         </div>
       `;
-      const m = modal.open({
+      modal.open({
         title: "ویرایش آیتم",
         iconName: "edit",
         size: "md",
@@ -506,7 +444,7 @@ export default {
               try {
                 await foodLog.update(row.id, patch);
                 toast.success("ذخیره شد");
-              } catch (err) {
+              } catch {
                 toast.error("ذخیره ناموفق بود");
                 return false;
               }
@@ -517,12 +455,12 @@ export default {
     }
 
     function openMoveItem(row) {
-      const wrapper = document.createElement("div");
+      const wrapper = createElement("div");
       wrapper.innerHTML = `
         <p class="text-sm text-muted" style="margin-bottom:12px">
           «${escapeHTML(row.food_name)}» به کدام وعده منتقل شود؟
         </p>
-        <div class="flex flex-wrap gap-2" data-targets>
+        <div class="flex flex-wrap gap-2">
           ${MEALS.filter((m) => m.id !== row.meal).map((m) => `
             <button class="filter-chip" data-target="${m.id}" type="button">${icon(m.icon, { size: 14 })}<span>${m.label}</span></button>
           `).join("")}
@@ -535,22 +473,76 @@ export default {
             await foodLog.update(row.id, { meal: btn.dataset.target });
             toast.success("منتقل شد");
             m.close();
-          } catch {
-            toast.error("انتقال ناموفق بود");
-          }
+          } catch { toast.error("انتقال ناموفق بود"); }
         });
       });
     }
 
-    /* ---------- Subscribe to changes -------------------------------- */
-    const offFoods = bus.on("food-log:changed", () => load());
-    unsubscribers.push(offFoods);
+    /* ---------- Report block ---------------------------------------- */
+    async function foodSummary(range, dateISO) {
+      const { start, end, label } = rangeWindow(range, dateISO);
+      const rows = await foodLog.totalsByRange(start, end);
+      const totals = rows.reduce((acc, d) => {
+        acc.calories += d.calories;
+        acc.protein += d.protein;
+        acc.carbs += d.carbs;
+        acc.fat += d.fat;
+        return acc;
+      }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+      const activeDays = rows.filter((d) => d.entries > 0).length;
+      const avgCalories = activeDays ? Math.round(totals.calories / activeDays) : 0;
+      const goals = store.get("goals");
+
+      const kpis = range === "daily"
+        ? [
+            { label: "کالری", value: formatInteger(totals.calories), unit: "kcal", tone: totals.calories > goals.calories ? "danger" : "warning" },
+            { label: "پروتئین", value: formatNumber(totals.protein, { decimals: 1 }), unit: "گرم", tone: "success" },
+            { label: "کربوهیدرات", value: formatNumber(totals.carbs, { decimals: 1 }), unit: "گرم", tone: "primary" },
+            { label: "چربی", value: formatNumber(totals.fat, { decimals: 1 }), unit: "گرم", tone: "danger" },
+          ]
+        : [
+            { label: "کالری کل", value: formatInteger(totals.calories), unit: "kcal", tone: "warning" },
+            { label: "میانگین روزانه", value: formatInteger(avgCalories), unit: "kcal", tone: "primary" },
+            { label: "روزهای فعال", value: activeDays, unit: `از ${rows.length}`, tone: "success" },
+            { label: "پروتئین کل", value: formatNumber(totals.protein, { decimals: 0 }), unit: "گرم", tone: "success" },
+          ];
+
+      const chartData = rows.map((d) => ({
+        label: formatWeekdayShort(d.date).slice(0, 2),
+        value: d.calories,
+      }));
+      const chartHtml = chart.barChart({ data: chartData, width: 720, height: 180 });
+
+      return { kpis, chart: chartHtml, subtitle: label };
+    }
+
+    function rangeWindow(range, dateISO) {
+      if (range === "daily") return { start: dateISO, end: dateISO, label: formatShort(dateISO) };
+      if (range === "weekly") {
+        const start = addDays(dateISO, -6);
+        return { start, end: dateISO, label: `${formatShort(start)} — ${formatShort(dateISO)}` };
+      }
+      const start = addDays(dateISO, -29);
+      return { start, end: dateISO, label: `${formatShort(start)} — ${formatShort(dateISO)}` };
+    }
+
+    reportBlock = mountReportBlock($("[data-report-slot]", container), {
+      subject: "food",
+      date: currentDate(),
+      summaryFn: foodSummary,
+      title: "گزارش غذا",
+      scrollTarget: "#food-entry-form",
+    });
+
+    /* ---------- Events --------------------------------------------- */
+    unsubscribers.push(bus.on("food-log:changed", () => load()));
+    unsubscribers.push(bus.on("date:changed", () => load()));
 
     await load();
 
     return function cleanup() {
       unsubscribers.forEach((off) => off());
-      unsubscribers = [];
+      reportBlock?.destroy?.();
     };
   },
 };
