@@ -1,10 +1,8 @@
 /**
  * Application entry point.
  *
- * Inline HTML boot screen (index.html) already displays before this file
- * runs. Our job is to:
- *   1. Hide the boot screen once we know what to show.
- *   2. Never leave the user stuck — every failure path renders something.
+ * Layout: full-width page with a topbar and a day-swiper strip.
+ * No sidebar.
  */
 
 import { theme } from "./config/theme.js";
@@ -14,22 +12,19 @@ import { bus } from "./core/event-bus.js";
 import { auth } from "./services/auth.service.js";
 import { bootstrap } from "./bootstrap.js";
 import { initRouter, navigate } from "./router.js";
-import { mountSidebar, closeMobile } from "./components/sidebar.js";
-import { mountHeader } from "./components/header.js";
+import { mountHeader, updateHeaderForRoute } from "./components/header.js";
+import { mountDaySwiper } from "./components/day-swiper.js";
 import { tooltip } from "./components/tooltip.js";
 import { toast } from "./components/toast.js";
 import { mountAuth, unmountAuth } from "./pages/auth.page.js";
 import { STORAGE_KEYS, ROUTES } from "./config/constants.js";
 import { storage } from "./core/storage.js";
 import { withTimeout } from "./utils/async.js";
+import { todayISO, addDays } from "./utils/date.js";
 
-/* ---------- Boot screen helpers (delegated to inline HTML) ------------ */
-function bootProgress(msg) {
-  try { window.__appBootProgress?.(msg); } catch {}
-}
-function bootDone() {
-  try { window.__appBooted?.(); } catch {}
-}
+/* ---------- Boot progress helpers (inline HTML) ---------- */
+function bootProgress(msg) { try { window.__appBootProgress?.(msg); } catch {} }
+function bootDone() { try { window.__appBooted?.(); } catch {} }
 function bootFail(err, hint) {
   try {
     if (hint) {
@@ -40,42 +35,36 @@ function bootFail(err, hint) {
   } catch {}
 }
 
-/* ---------- Main boot ------------------------------------------------ */
+/* ---------- Routes that show the day swiper ---------- */
+const SWIPER_ROUTES = new Set([
+  ROUTES.DASHBOARD,
+  ROUTES.FOOD,
+  ROUTES.HEALTH,
+  ROUTES.SLEEP,
+  ROUTES.ACTIVITY,
+]);
+
+/* ---------- Main boot ---------- */
 async function main() {
   bootProgress("آماده‌سازی رابط کاربری…");
-
-  // 1. Theme
   theme.init();
 
-  // 2. Footer year
   const yearEl = document.getElementById("footer-year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-  // 3. Top progress bar
   mountTopProgress();
 
-  // 4. Guard: not configured
   if (!isConfigured) {
-    bootFail(
-      new Error("Supabase پیکربندی نشده است"),
-      "فایل supabase-config.js را بسازید و url/anonKey را وارد کنید."
-    );
+    bootFail(new Error("Supabase پیکربندی نشده است"));
     return;
   }
-
-  // 5. Guard: client failed (bad key / CDN blocked / network)
   if (!clientReady) {
-    bootFail(
-      new Error(clientErrorMessage || "اتصال به Supabase برقرار نشد"),
-      "اتصال اینترنت و دسترسی به CDN ها را بررسی کنید."
-    );
+    bootFail(new Error(clientErrorMessage || "اتصال به Supabase برقرار نشد"));
     return;
   }
 
-  // 6. Subscribe to auth BEFORE init so we don't miss the first event
   bus.on("auth:changed", onAuthChanged);
 
-  // 7. Auth init with hard timeout
   bootProgress("بررسی نشست کاربر…");
   let session = null;
   try {
@@ -85,28 +74,21 @@ async function main() {
     session = null;
   }
 
-  // 8. Show whatever screen is appropriate
   if (!session) {
     bootProgress("نمایش صفحه ورود…");
     showAuth();
   }
-  // If a session exists, onAuthChanged already fired.
 
-  // 9. Global hooks
-  bus.on("route:changed", () => {
-    if (window.innerWidth <= 980) closeMobile();
-  });
   bus.on("state:online", (online) => {
     if (online) toast.success("اتصال بازگشت", { duration: 2000 });
     else toast.warning("اتصال اینترنت قطع شد", { duration: 3000 });
   });
-  tooltip.initAll();
 
-  // 10. All good — hide the boot screen
+  tooltip.initAll();
   bootDone();
 }
 
-/* ---------- Auth transitions ----------------------------------------- */
+/* ---------- Auth transitions ---------- */
 let shellMounted = false;
 let shellCleanup = null;
 
@@ -133,7 +115,10 @@ function showAuth() {
   mountAuth();
 }
 
-/* ---------- App shell ------------------------------------------------ */
+/* ---------- App shell ---------- */
+let daySwiperRef = null;
+const shellUnsubscribers = [];
+
 async function showApp() {
   unmountAuth();
 
@@ -149,11 +134,40 @@ async function showApp() {
     console.warn("[app] bootstrap warning (continuing)", err);
   }
 
-  const sidebarCleanup = mountSidebar();
+  // Mount topbar
   const headerCleanup = mountHeader();
 
+  // Mount day swiper
+  const swiperSlot = document.getElementById("day-swiper-slot");
+  if (swiperSlot) {
+    daySwiperRef = mountDaySwiper(swiperSlot, {
+      date: store.get("selectedDate") || todayISO(),
+      onChange: (iso) => {
+        store.setSelectedDate(iso);
+        bus.emit("date:changed", iso);
+      },
+    });
+  }
+
+  // Router
   const container = document.getElementById("page-container");
   initRouter(container);
+
+  // Route → update header subject button + swiper visibility
+  shellUnsubscribers.push(
+    bus.on("route:changed", ({ route }) => {
+      updateHeaderForRoute(route);
+      const showSwiper = SWIPER_ROUTES.has(route);
+      if (swiperSlot) swiperSlot.style.display = showSwiper ? "" : "none";
+    })
+  );
+
+  // Date changes (from anywhere) → update the swiper selection
+  shellUnsubscribers.push(
+    bus.on("state:selectedDate", (iso) => {
+      daySwiperRef?.setDate(iso);
+    })
+  );
 
   const last = storage.get(STORAGE_KEYS.LAST_PAGE);
   const validRoute = Object.values(ROUTES).includes(last) ? last : ROUTES.DASHBOARD;
@@ -163,8 +177,11 @@ async function showApp() {
 
   shellMounted = true;
   shellCleanup = () => {
-    sidebarCleanup?.();
     headerCleanup?.();
+    daySwiperRef?.destroy?.();
+    daySwiperRef = null;
+    shellUnsubscribers.forEach((off) => off());
+    shellUnsubscribers.length = 0;
   };
 }
 
@@ -177,7 +194,7 @@ function unmountApp() {
   store.reset();
 }
 
-/* ---------- Top progress bar ----------------------------------------- */
+/* ---------- Top progress bar ---------- */
 function mountTopProgress() {
   const el = document.createElement("div");
   el.className = "top-progress";
@@ -202,7 +219,7 @@ function mountTopProgress() {
   });
 }
 
-/* ---------- Go ------------------------------------------------------- */
+/* ---------- Go ---------- */
 main().catch((err) => {
   console.error("[app] fatal", err);
   bootFail(err);
