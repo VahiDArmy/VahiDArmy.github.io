@@ -1,44 +1,41 @@
 /**
- * Supabase client bootstrap with multi-CDN fallback.
+ * Supabase client bootstrap with parallel multi-CDN fallback.
  *
- * CREDENTIALS
- * -----------
- * The URL and publishable key below are SAFE to ship to the browser.
- * The publishable key (sb_publishable_…) is designed to be public and
- * grants nothing beyond what Row Level Security (RLS) policies allow.
- * Never replace this with the service_role key.
+ * NETWORK NOTES (why this file changed)
+ * -------------------------------------
+ * In Iran (and behind some corporate networks) jsdelivr / esm.sh can
+ * resolve DNS but never answer TCP, so `await import()` hangs *forever*
+ * instead of throwing. That's what caused the 8-second watchdog: we were
+ * waiting for a request that would never come back.
  *
- * All tables in supabase-schema.sql have RLS enabled with
- * `auth.uid() = user_id` policies — anonymous requests are rejected and
- * authenticated users can only see/change their own rows.
+ * Fix:
+ *   • Import from ALL CDNs in parallel using `Promise.any()`.
+ *   • Race against a hard 6-second timeout so the module graph always
+ *     resolves (either with a working client or with a captured error).
+ *   • Never throw out of this module — always export a usable `supabase`
+ *     object (real client or a safe stub) so consumers keep working and
+ *     the app can display a proper diagnostic.
  *
- * WHY THE MULTI-CDN LOADER
- * ------------------------
- * Static `import` of a CDN in an ES module fails the whole module graph
- * if the CDN is blocked/slow, which produces a blank page. We use
- * `await import()` inside a try/catch, trying several CDNs in order, so
- * a single CDN being unreachable does not break the app.
+ * SECURITY
+ * --------
+ * The publishable key below is SAFE to ship to the browser. It grants
+ * nothing beyond what Row Level Security (RLS) policies allow. Never put
+ * the service_role key in the browser.
  */
 
 /* ---------- 1. Credentials ------------------------------------------- */
 const SUPABASE_URL = "https://zzwctmqfxxnsxkumddvi.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_qzd7iXR5WYwIL-q1a9Gcfg_ZjYTlttz";
 
-/* Allow overriding from window.__SUPABASE__ or window.SUPABASE_CONFIG
- * (useful if you later want a different env per-deploy) — otherwise use
- * the constants above. */
+/* Allow override from window.__SUPABASE__ / window.SUPABASE_CONFIG */
 function resolveCredentials() {
   if (typeof window !== "undefined" && window.__SUPABASE__) {
     const g = window.__SUPABASE__;
-    if (g.url && (g.anonKey || g.key)) {
-      return { url: g.url, anonKey: g.anonKey || g.key };
-    }
+    if (g.url && (g.anonKey || g.key)) return { url: g.url, anonKey: g.anonKey || g.key };
   }
   if (typeof window !== "undefined" && window.SUPABASE_CONFIG) {
     const c = window.SUPABASE_CONFIG;
-    if (c.url && (c.anonKey || c.key)) {
-      return { url: c.url, anonKey: c.anonKey || c.key };
-    }
+    if (c.url && (c.anonKey || c.key)) return { url: c.url, anonKey: c.anonKey || c.key };
   }
   return { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY };
 }
@@ -51,7 +48,27 @@ export const isConfigured =
   !url.includes("YOUR-PROJECT") &&
   !String(anonKey).includes("YOUR-ANON-KEY");
 
-/* ---------- 2. Load the SDK from a list of CDNs ---------------------- */
+/* ---------- 2. Progress reporting ------------------------------------ */
+function report(msg) {
+  try { window.__appBootProgress?.(msg); } catch {}
+  // eslint-disable-next-line no-console
+  console.info("[supabase]", msg);
+}
+
+/* ---------- 3. Hard-timeout helper ----------------------------------- */
+function withTimeout(promise, ms, message) {
+  let to;
+  const timeout = new Promise((_, reject) => {
+    to = setTimeout(() => {
+      const e = new Error(message);
+      e.code = "TIMEOUT";
+      reject(e);
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(to));
+}
+
+/* ---------- 4. Parallel multi-CDN SDK loader ------------------------- */
 const CDN_URLS = [
   "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm",
   "https://esm.sh/@supabase/supabase-js@2",
@@ -61,40 +78,51 @@ const CDN_URLS = [
 async function loadSdkFromCDNs() {
   // Prefer a UMD/global build if one happens to be present
   if (typeof window !== "undefined" && window.supabase?.createClient) {
+    report("استفاده از کتابخانه Supabase موجود در صفحه");
     return window.supabase.createClient;
   }
 
-  const errors = [];
-  for (const cdnUrl of CDN_URLS) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const mod = await import(/* @vite-ignore */ cdnUrl);
-      const fn = mod?.createClient || mod?.default?.createClient;
-      if (typeof fn === "function") return fn;
-      errors.push(`${cdnUrl}: createClient export missing`);
-    } catch (err) {
-      errors.push(`${cdnUrl}: ${err?.message || err}`);
-      // eslint-disable-next-line no-console
-      console.warn("[supabase] CDN failed:", cdnUrl, err?.message);
+  report("در حال دریافت کتابخانه Supabase از CDN…");
+
+  // Kick off every CDN at once. First successful one wins.
+  const attempts = CDN_URLS.map(async (cdnUrl) => {
+    const started = Date.now();
+    const mod = await import(/* @vite-ignore */ cdnUrl);
+    const fn = mod?.createClient || mod?.default?.createClient;
+    if (typeof fn !== "function") {
+      throw new Error(`createClient export یافت نشد در ${cdnUrl}`);
     }
+    // eslint-disable-next-line no-console
+    console.info("[supabase] loaded from", cdnUrl, "in", Date.now() - started, "ms");
+    return fn;
+  });
+
+  try {
+    return await withTimeout(
+      Promise.any(attempts),
+      8000,
+      "هیچ‌کدام از CDN ها در ۸ ثانیه پاسخ ندادند"
+    );
+  } catch (err) {
+    // Promise.any throws AggregateError with .errors array
+    const details =
+      err?.errors && Array.isArray(err.errors)
+        ? err.errors.map((e) => `• ${e.message || e}`).join("\n")
+        : err?.message || String(err);
+    const e = new Error("بارگذاری کتابخانه Supabase ناموفق بود:\n" + details);
+    e.code = "SDK_LOAD_FAILED";
+    throw e;
   }
-  const e = new Error(
-    "بارگذاری کتابخانه Supabase از همه CDN ها ناموفق بود.\n" + errors.join("\n")
-  );
-  e.code = "SDK_LOAD_FAILED";
-  throw e;
 }
 
-/* ---------- 3. Build the client (never throw) ------------------------- */
+/* ---------- 5. Build the client (never throw) ------------------------- */
 let supabaseClient = null;
 let clientError = null;
 
 if (isConfigured) {
   try {
-    if (typeof window !== "undefined" && window.__appBootProgress) {
-      window.__appBootProgress("در حال اتصال به Supabase…");
-    }
     const createClient = await loadSdkFromCDNs();
+    report("در حال ساخت کلاینت Supabase…");
     supabaseClient = createClient(url, anonKey, {
       auth: {
         persistSession: true,
@@ -107,6 +135,7 @@ if (isConfigured) {
         headers: { "x-application-name": "activity-tracker" },
       },
     });
+    report("اتصال Supabase آماده است");
   } catch (err) {
     clientError = err;
     // eslint-disable-next-line no-console
@@ -120,7 +149,7 @@ if (isConfigured) {
 export const clientReady = !!supabaseClient;
 export const clientErrorMessage = clientError?.message || null;
 
-/* ---------- 4. Safe stub so consumers never crash -------------------- */
+/* ---------- 6. Safe stub so consumers never crash -------------------- */
 const rejectingStub = () =>
   Promise.reject(
     clientError ||
@@ -160,7 +189,7 @@ export const supabase = supabaseClient || {
   channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
 };
 
-/* ---------- 5. Convenience accessors --------------------------------- */
+/* ---------- 7. Convenience accessors --------------------------------- */
 export async function getSession() {
   try {
     const { data, error } = await supabase.auth.getSession();
