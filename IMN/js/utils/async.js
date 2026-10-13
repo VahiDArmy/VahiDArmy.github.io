@@ -1,6 +1,6 @@
 /**
- * Async + timing utilities: debounce, throttle, sleep, retry, and a small
- * promise pool so we can limit concurrent Supabase calls.
+ * Async + timing utilities: debounce, throttle, sleep, retry, timeout,
+ * and a small promise pool so we can limit concurrent Supabase calls.
  */
 
 export function debounce(fn, wait = 250, { leading = false, trailing = true } = {}) {
@@ -109,11 +109,34 @@ export async function settle(promise) {
   }
 }
 
-/** Race a promise against a timeout. */
+/**
+ * Race a promise against a timeout. Rejects with a recognizable error
+ * so callers can branch on it (e.g. `err.message === "AUTH_INIT_TIMEOUT"`).
+ *
+ * The underlying promise is NOT cancelled — it keeps running and its
+ * eventual result/rejection is swallowed to avoid "unhandled rejection"
+ * noise in the console.
+ */
 export function withTimeout(promise, ms, message = "TIMEOUT") {
   let t;
   const timeout = new Promise((_, reject) => {
-    t = setTimeout(() => reject(new Error(message)), ms);
+    t = setTimeout(() => {
+      const err = new Error(message);
+      err.code = message;
+      reject(err);
+    }, ms);
   });
-  return Promise.race([promise, timeout]).finally(() => clearTimeout(t));
+  return Promise.race([
+    promise.then(
+      (v) => {
+        clearTimeout(t);
+        return v;
+      },
+      (e) => {
+        clearTimeout(t);
+        throw e;
+      }
+    ),
+    timeout,
+  ]);
 }
