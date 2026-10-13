@@ -1,9 +1,11 @@
 /**
  * Reactive-ish global app state.
  *
- * Not a full framework — just a single mutable object plus a change event
- * on the bus so views can re-render pieces. Kept intentionally simple so
- * anyone maintaining the app can reason about it in one read.
+ * Change event contract:
+ *   • `store.set(key, value)`         → updates state[key], emits state:changed + state:<key>
+ *   • `store.setSelectedDate(iso)`    → updates state.selectedDate AND persists
+ *   • `store.setGoals(patch)`         → merges into state.goals AND persists
+ *   • `store.setPrefs(patch)`         → merges into state.prefs AND persists
  */
 
 import { bus } from "./event-bus.js";
@@ -21,21 +23,18 @@ const todayISO = () => {
 const initial = {
   user: null,
   session: null,
-  ready: false,             // true once auth + bootstrap finished
+  profile: null,
+  ready: false,
   selectedDate: storage.get(STORAGE_KEYS.SELECTED_DATE) || todayISO(),
   route: "dashboard",
   goals: { ...DEFAULT_GOALS, ...(storage.get(STORAGE_KEYS.GOALS) || {}) },
   prefs: storage.get(STORAGE_KEYS.USER_PREFS) || {
-    weekStartsOn: 6, // Saturday in Iran
+    weekStartsOn: 6,
     notifications: true,
     compactMode: false,
   },
-  // Cached today snapshot — populated by services, not persisted.
   todaySnapshot: null,
-  loading: {
-    global: false,
-    route: false,
-  },
+  loading: { global: false, route: false },
   online: typeof navigator !== "undefined" ? navigator.onLine : true,
   error: null,
 };
@@ -67,13 +66,15 @@ export const store = {
     });
   },
 
-  /* Domain helpers ------------------------------------------------------ */
+  /* ---------- Domain helpers ---------------------------------------- */
 
   setUser(user, session = null) {
     this.update({ user, session });
   },
 
   setSelectedDate(iso) {
+    if (!iso || state.selectedDate === iso) return;
+    state.selectedDate = iso;
     storage.set(STORAGE_KEYS.SELECTED_DATE, iso);
     notify("selectedDate", iso);
   },
@@ -87,12 +88,14 @@ export const store = {
 
   setGoals(patch) {
     const goals = { ...state.goals, ...patch };
+    state.goals = goals;
     storage.set(STORAGE_KEYS.GOALS, goals);
     notify("goals", goals);
   },
 
   setPrefs(patch) {
     const prefs = { ...state.prefs, ...patch };
+    state.prefs = prefs;
     storage.set(STORAGE_KEYS.USER_PREFS, prefs);
     notify("prefs", prefs);
   },
@@ -105,12 +108,17 @@ export const store = {
   },
 
   reset() {
-    Object.assign(state, initial);
+    Object.assign(state, {
+      ...initial,
+      // Re-read persisted values so we don't reset the user's preferences
+      goals: { ...DEFAULT_GOALS, ...(storage.get(STORAGE_KEYS.GOALS) || {}) },
+      prefs: storage.get(STORAGE_KEYS.USER_PREFS) || initial.prefs,
+      selectedDate: storage.get(STORAGE_KEYS.SELECTED_DATE) || todayISO(),
+    });
     bus.emit("state:reset");
   },
 };
 
-/* Track connectivity so UI can show an offline banner. */
 if (typeof window !== "undefined") {
   window.addEventListener("online", () => store.set("online", true));
   window.addEventListener("offline", () => store.set("online", false));
