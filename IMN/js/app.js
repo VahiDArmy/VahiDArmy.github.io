@@ -3,6 +3,10 @@
  *
  * Layout: full-width page with a topbar and a day-swiper strip.
  * No sidebar.
+ *
+ * Date policy: the app always boots to TODAY. Reloading on a later day
+ * won't drop you back on a stale "yesterday" selection. Within a
+ * session, picking a past day works normally.
  */
 
 import { theme } from "./config/theme.js";
@@ -20,7 +24,7 @@ import { mountAuth, unmountAuth } from "./pages/auth.page.js";
 import { STORAGE_KEYS, ROUTES } from "./config/constants.js";
 import { storage } from "./core/storage.js";
 import { withTimeout } from "./utils/async.js";
-import { todayISO, addDays } from "./utils/date.js";
+import { todayISO } from "./utils/date.js";
 
 /* ---------- Boot progress helpers (inline HTML) ---------- */
 function bootProgress(msg) { try { window.__appBootProgress?.(msg); } catch {} }
@@ -48,6 +52,11 @@ const SWIPER_ROUTES = new Set([
 async function main() {
   bootProgress("آماده‌سازی رابط کاربری…");
   theme.init();
+
+  // Force the app to start on today — even if localStorage has a stale
+  // date from a previous session. This is done before anything else
+  // reads `selectedDate`.
+  store.resetToToday();
 
   const yearEl = document.getElementById("footer-year");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
@@ -134,14 +143,16 @@ async function showApp() {
     console.warn("[app] bootstrap warning (continuing)", err);
   }
 
-  // Mount topbar
+  // Refresh selectedDate once more — if the user signed in after midnight
+  // we still want today.
+  store.resetToToday();
+
   const headerCleanup = mountHeader();
 
-  // Mount day swiper
   const swiperSlot = document.getElementById("day-swiper-slot");
   if (swiperSlot) {
     daySwiperRef = mountDaySwiper(swiperSlot, {
-      date: store.get("selectedDate") || todayISO(),
+      date: todayISO(), // explicitly today, never the persisted value
       onChange: (iso) => {
         store.setSelectedDate(iso);
         bus.emit("date:changed", iso);
@@ -149,23 +160,34 @@ async function showApp() {
     });
   }
 
-  // Router
   const container = document.getElementById("page-container");
   initRouter(container);
 
-  // Route → update header subject button + swiper visibility
   shellUnsubscribers.push(
     bus.on("route:changed", ({ route }) => {
       updateHeaderForRoute(route);
       const showSwiper = SWIPER_ROUTES.has(route);
       if (swiperSlot) swiperSlot.style.display = showSwiper ? "" : "none";
+      // Whenever we land on a page that shows the strip, make sure the
+      // strip is centered on the current selection. This covers the case
+      // where the swiper was hidden on /settings and comes back.
+      if (showSwiper) daySwiperRef?.setDate(store.get("selectedDate") || todayISO(), { silent: true });
     })
   );
 
-  // Date changes (from anywhere) → update the swiper selection
   shellUnsubscribers.push(
     bus.on("state:selectedDate", (iso) => {
-      daySwiperRef?.setDate(iso);
+      daySwiperRef?.setDate(iso, { silent: true });
+    })
+  );
+
+  // Explicit "go to today" event — fired by the topbar date chip or any
+  // future shortcut.
+  shellUnsubscribers.push(
+    bus.on("date:today", () => {
+      const today = store.resetToToday();
+      daySwiperRef?.scrollToToday({ silent: true });
+      daySwiperRef?.setDate(today, { silent: true });
     })
   );
 
