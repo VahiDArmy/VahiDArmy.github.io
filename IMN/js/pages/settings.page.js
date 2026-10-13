@@ -1,10 +1,9 @@
 /**
  * Settings page — profile, goals, appearance, data, security, danger.
  *
- * The Profile panel now collects the anthropometric data BMI/BMR need
- * (weight, height, birth year, gender, activity level) and shows a live
- * preview of BMI, BMR, and TDEE as the user types. No save is required
- * to see the numbers change — but Save is required to persist.
+ * The tab strip is a horizontal slider (`.settings-tabs`) that never
+ * wraps onto multiple lines. It auto-scrolls the active tab into view
+ * when the panel switches.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
@@ -21,7 +20,7 @@ import { theme } from "../config/theme.js";
 import { DEFAULT_GOALS } from "../config/constants.js";
 import { escapeHTML, toLatinDigits, formatNumber } from "../utils/format.js";
 import { validators, validate } from "../utils/validation.js";
-import { ACTIVITY_LEVELS, getActivityLevel } from "../utils/health-formulas.js";
+import { ACTIVITY_LEVELS } from "../utils/health-formulas.js";
 
 const TABS = [
   { id: "profile", label: "پروفایل", icon: "user" },
@@ -43,10 +42,12 @@ export default {
     const profileData = store.get("profile") || {};
 
     container.innerHTML = `
-      <div class="report-tabs" data-settings-tabs style="margin-bottom:20px;flex-wrap:wrap">
+      <div class="settings-tabs" data-settings-tabs role="tablist" aria-label="بخش‌های تنظیمات">
         ${TABS.map((t) => `
-          <button class="report-tab ${t.id === activePanel ? "is-active" : ""}" data-panel="${t.id}" type="button">
-            ${icon(t.icon, { size: 13 })} <span>${t.label}</span>
+          <button class="settings-tab ${t.id === activePanel ? "is-active" : ""}"
+                  data-panel="${t.id}" type="button" role="tab"
+                  aria-selected="${t.id === activePanel}">
+            ${icon(t.icon, { size: 14 })} <span>${t.label}</span>
           </button>
         `).join("")}
       </div>
@@ -55,9 +56,12 @@ export default {
 
     function switchPanel(name) {
       activePanel = name;
-      container.querySelectorAll("[data-settings-tabs] [data-panel]").forEach((el) =>
-        el.classList.toggle("is-active", el.dataset.panel === name)
-      );
+      container.querySelectorAll("[data-settings-tabs] [data-panel]").forEach((el) => {
+        const on = el.dataset.panel === name;
+        el.classList.toggle("is-active", on);
+        el.setAttribute("aria-selected", on ? "true" : "false");
+        if (on) el.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+      });
       renderPanel();
     }
 
@@ -98,7 +102,6 @@ export default {
             </div>
           </div>
 
-          <!-- Identity -->
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">نام نمایشی</label>
@@ -110,7 +113,6 @@ export default {
             </div>
           </div>
 
-          <!-- Anthropometrics — highlighted because they drive the metrics -->
           <div class="metrics-form">
             <div class="metrics-form__title">${icon("activity", { size: 16 })}<span>اطلاعات بدنی</span></div>
 
@@ -177,7 +179,6 @@ export default {
         </div>
       `;
 
-      // -------- Live preview ----------------------------------------
       const previewEl = wrap.querySelector("[data-metrics-preview]");
 
       function readForm() {
@@ -207,7 +208,6 @@ export default {
         previewEl.innerHTML = renderMetricsPreview(result);
       }
 
-      // Attach input/change listeners so the preview updates live.
       wrap.querySelectorAll("[data-metric]").forEach((el) => {
         el.addEventListener("input", updatePreview);
         el.addEventListener("change", updatePreview);
@@ -215,7 +215,6 @@ export default {
 
       updatePreview();
 
-      // -------- Avatar upload ---------------------------------------
       wrap.querySelector("[data-upload-avatar]").addEventListener("click", () => {
         const input = document.createElement("input");
         input.type = "file";
@@ -233,11 +232,9 @@ export default {
         input.click();
       });
 
-      // -------- Save ------------------------------------------------
       wrap.querySelector("[data-save='profile']").addEventListener("click", async () => {
         const input = readForm();
 
-        // Range checks — same thresholds as the input `min`/`max` hints.
         const rangeErrors = [];
         if (input.weightKg != null && (input.weightKg < 20 || input.weightKg > 400)) rangeErrors.push("وزن باید بین ۲۰ تا ۴۰۰ کیلوگرم باشد");
         if (input.heightCm != null && (input.heightCm < 80 || input.heightCm > 250)) rangeErrors.push("قد باید بین ۸۰ تا ۲۵۰ سانتی‌متر باشد");
@@ -547,8 +544,7 @@ export default {
 };
 
 /* =============================================================
-   Metrics preview renderer — shared visual language with the Health
-   page card so users see the same numbers represented the same way.
+   Metrics preview renderer
    ============================================================= */
 function renderMetricsPreview(result) {
   if (!result.ready) {
