@@ -4,46 +4,53 @@
 
 /* -------------------------------------------------------------
    Settings tabs — horizontal slider (no wrapping)
-   Tabs stay on a single line and scroll horizontally with a hidden
-   scrollbar. Edge fades hint at more content on either side.
+
+   Fixes the "blue artifact" that appeared on the right edge:
+     • Removed the layered ::before/::after fades (they were being
+       mis-rendered as a rectangular glow in some browsers).
+     • Use `mask-image` instead — it fades the actual tab content
+       without any overlaid element that could leak.
+     • Added a solid `background` and `isolation: isolate` so no
+       shadow from the active tab can bleed outside the strip.
+     • Replaced the active tab's large outer shadow with a tighter,
+       clipped one.
    ------------------------------------------------------------- */
 .settings-tabs {
   position: relative;
+  isolation: isolate;                 /* new stacking context */
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 4px 14px;
+  padding: 6px 20px 14px;
   margin-bottom: var(--space-4);
+  background: var(--color-bg-1);      /* solid — nothing bleeds through */
   border-bottom: 1px solid var(--color-divider);
   overflow-x: auto;
   overflow-y: hidden;
-  flex-wrap: nowrap;            /* ← never break to a second line */
+  flex-wrap: nowrap;
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
-  scrollbar-width: none;        /* Firefox */
-  -ms-overflow-style: none;     /* IE/Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  /* Fade both edges so partially-visible tabs hint at more content.
+     mask-image fades the strip itself — no overlay element. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 20px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
 }
 .settings-tabs::-webkit-scrollbar { display: none; }
-
-/* Edge fade hints — one on each side */
-.settings-tabs::before,
-.settings-tabs::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 1px;
-  width: 28px;
-  pointer-events: none;
-  z-index: 2;
-}
-.settings-tabs::before {
-  inset-inline-end: 0;
-  background: linear-gradient(to left, var(--color-bg-1), transparent);
-}
-.settings-tabs::after {
-  inset-inline-start: 0;
-  background: linear-gradient(to right, var(--color-bg-1), transparent);
-}
 
 .settings-tab {
   display: inline-flex;
@@ -58,7 +65,7 @@
   border: 1px solid var(--color-border-1);
   cursor: pointer;
   white-space: nowrap;
-  flex-shrink: 0;               /* ← keep each tab at its natural width */
+  flex-shrink: 0;                     /* never break to a second line */
   transition:
     background-color var(--dur-xs) var(--ease-out),
     color var(--dur-xs) var(--ease-out),
@@ -69,15 +76,20 @@
   background: var(--color-bg-3);
   color: var(--color-text-1);
   border-color: var(--color-border-2);
-  transform: translateY(-1px);
 }
-.settings-tab:active { transform: translateY(0); }
+.settings-tab:active { transform: scale(0.97); }
+
+.settings-tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 
 .settings-tab.is-active {
   background: var(--gradient-primary);
   color: #fff;
   border-color: transparent;
-  box-shadow: var(--shadow-primary);
+  /* Tight, clipped glow — avoids the big bleed the old shadow caused */
+  box-shadow: 0 3px 10px rgba(99, 102, 241, 0.28);
 }
 .settings-tab svg {
   width: 14px; height: 14px;
