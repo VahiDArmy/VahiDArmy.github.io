@@ -1,21 +1,36 @@
 /**
  * Day Swiper — a horizontal strip of day chips under the topbar.
  *
+ * Fixes
+ * -----
+ *   • `today` is now resolved on every render (previously it was captured
+ *     once at mount time, so a tab left open across midnight would keep
+ *     showing yesterday as "today").
+ *   • The selected chip is centered using `scrollLeft` instead of
+ *     `scrollIntoView`. `scrollIntoView({ inline: "center" })` also
+ *     scrolls the *page* vertically in some browsers, which is why the
+ *     strip would sometimes appear to jump or miss the target.
+ *   • Added `scrollToToday()` so app.js can force the strip back to
+ *     today whenever the app boots or the user picks "امروز" elsewhere.
+ *   • Layout is measured with a small `requestAnimationFrame` chain so
+ *     centering happens after the chips have real dimensions.
+ *
  * Public API:
  *   const swiper = mountDaySwiper(container, {
  *     date: "2025-01-15",
- *     onChange: (iso) => { ... },     // called with the picked ISO date
- *     hasDataFor: (iso) => boolean,   // optional, marks days with data
+ *     onChange: (iso) => { ... },
+ *     hasDataFor: (iso) => boolean,  // optional
  *   });
  *   swiper.setDate("2025-01-20");
+ *   swiper.scrollToToday();
  *   swiper.destroy();
  */
 
 import { delegate } from "../utils/dom.js";
 import {
-  todayISO, addDays, fromISO, formatWeekdayShort, toJalali, isToday,
+  todayISO, addDays, formatWeekdayShort, toJalali, isToday,
+  JALALI_MONTHS,
 } from "../utils/date.js";
-import { JALALI_MONTHS } from "../utils/date.js";
 
 const DAYS_BEFORE = 14;
 const DAYS_AFTER = 7;
@@ -30,16 +45,20 @@ function buildChips(centerISO) {
 
 export function mountDaySwiper(container, opts = {}) {
   const { date: initialDate, onChange, hasDataFor } = opts;
-  const today = todayISO();
 
-  let selected = initialDate || today;
+  // Always start on today if no explicit date was passed.
+  let selected = initialDate || todayISO();
   let dataSet = new Set();
 
   container.innerHTML = `<div class="day-swiper" role="tablist" aria-label="انتخاب روز"></div>`;
   const strip = container.querySelector(".day-swiper");
 
-  function render() {
+  /* ---------- Rendering ------------------------------------------------ */
+
+  function render({ scroll = true } = {}) {
+    const today = todayISO(); // recomputed on every render — midnight-safe
     const chips = buildChips(selected);
+
     strip.innerHTML = chips.map((iso) => {
       const jal = toJalali(iso);
       const isSel = iso === selected;
@@ -69,19 +88,35 @@ export function mountDaySwiper(container, opts = {}) {
       `;
     }).join("");
 
-    // Scroll the selected chip into view (center)
+    if (scroll) centerSelected();
+  }
+
+  /**
+   * Center the currently-selected chip inside the strip WITHOUT touching
+   * the page's vertical scroll. Uses scrollLeft math so nothing above or
+   * below the strip moves.
+   */
+  function centerSelected() {
+    // Wait two RAFs so layout is fully settled on first paint / route change.
     requestAnimationFrame(() => {
-      const sel = strip.querySelector(".day-chip.is-selected");
-      if (sel) {
-        sel.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-      }
+      requestAnimationFrame(() => {
+        const sel = strip.querySelector(".day-chip.is-selected");
+        if (!sel) return;
+        const target =
+          sel.offsetLeft - (strip.clientWidth - sel.clientWidth) / 2;
+        const maxLeft = strip.scrollWidth - strip.clientWidth;
+        const left = Math.max(0, Math.min(target, maxLeft));
+        strip.scrollTo({ left, behavior: "smooth" });
+      });
     });
   }
+
+  /* ---------- Interaction --------------------------------------------- */
 
   function selectDate(iso) {
     if (!iso || iso === selected) return;
     selected = iso;
-    render();
+    render({ scroll: true });
     onChange?.(iso);
   }
 
@@ -90,7 +125,8 @@ export function mountDaySwiper(container, opts = {}) {
     selectDate(chip.dataset.iso);
   });
 
-  // Swipe gesture: horizontal drag shifts the window
+  /* ---------- Swipe gesture ------------------------------------------- */
+
   let pointerDown = false;
   let startX = 0;
   strip.addEventListener("pointerdown", (e) => {
@@ -107,21 +143,62 @@ export function mountDaySwiper(container, opts = {}) {
   });
   strip.addEventListener("pointercancel", () => (pointerDown = false));
 
+  /* ---------- Midnight watcher ---------------------------------------- */
+  /**
+   * If the app is left open across midnight, re-render at 00:01 so the
+   * "today" chip is correct. We schedule based on the actual time until
+   * the next midnight + 1 minute.
+   */
+  let midnightTimer = null;
+  function scheduleMidnightRefresh() {
+    if (midnightTimer) clearTimeout(midnightTimer);
+    const now = new Date();
+    const next = new Date(now);
+    next.setHours(24, 1, 0, 0); // 00:01 of the next day
+    const delay = Math.max(30 * 1000, next - now); // at least 30s
+    midnightTimer = setTimeout(() => {
+      // Re-render so "today" is correct. Selection is preserved.
+      render({ scroll: true });
+      scheduleMidnightRefresh();
+    }, delay);
+  }
+  scheduleMidnightRefresh();
+
   render();
+
+  /* ---------- Public API ---------------------------------------------- */
 
   return {
     setDate(iso, { silent = true } = {}) {
       if (!iso || iso === selected) return;
       selected = iso;
-      render();
+      render({ scroll: true });
       if (!silent) onChange?.(iso);
     },
+
+    /**
+     * Jump the strip back to today — both visually (center the chip) and
+     * as the selected date. Emits `onChange` so subscribers (state, pages)
+     * stay in sync.
+     */
+    scrollToToday({ silent = false } = {}) {
+      const today = todayISO();
+      const changed = selected !== today;
+      selected = today;
+      render({ scroll: true });
+      if (changed && !silent) onChange?.(today);
+    },
+
     refreshData(datesArray) {
       dataSet = new Set(datesArray || []);
-      render();
+      render({ scroll: false });
     },
+
     get date() { return selected; },
+
     destroy() {
+      if (midnightTimer) clearTimeout(midnightTimer);
+      midnightTimer = null;
       container.innerHTML = "";
     },
   };
