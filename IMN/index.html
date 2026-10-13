@@ -18,9 +18,8 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0d14'/%3E%3Cpath d='M18 44 L32 18 L46 44 M24 36 H40' stroke='%236366f1' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
   <!-- =========================================================
-       Inline boot screen + error trapping + diagnostic log.
-       Runs OUTSIDE any ES module, so it works even when modules
-       fail to load.
+       Inline boot screen + error trapping. Runs OUTSIDE any ES
+       module so the user never sees a blank page.
        ========================================================= -->
   <style>
     .boot-screen {
@@ -75,15 +74,22 @@
       padding: 2px 6px; border-radius: 4px;
       direction: ltr; display: inline-block;
     }
+    .boot-screen__actions {
+      display: flex; gap: 10px; justify-content: center;
+      flex-wrap: wrap; margin-top: 12px;
+    }
     .boot-screen__retry {
-      margin-top: 12px; padding: 10px 22px;
-      border-radius: 10px;
+      padding: 10px 22px; border-radius: 10px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white; border: none;
       font-family: inherit; font-size: 14px; font-weight: 600;
       cursor: pointer;
     }
     .boot-screen__retry:hover { filter: brightness(1.08); }
+    .boot-screen__retry--ghost {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
     .boot-screen__log {
       margin-top: 10px; padding: 8px 12px;
       background: rgba(0,0,0,0.35);
@@ -93,11 +99,11 @@
       font-family: monospace;
       max-height: 100px; overflow-y: auto;
       border: 1px solid rgba(255,255,255,0.06);
+      white-space: pre-wrap;
     }
   </style>
 
   <script>
-    /* ---- Boot screen ---- */
     (function () {
       var screenEl = document.createElement("div");
       screenEl.className = "boot-screen";
@@ -113,7 +119,6 @@
       });
     })();
 
-    /* ---- Error + progress plumbing ---- */
     (function () {
       var booted = false;
       var logLines = [];
@@ -131,8 +136,9 @@
         if (l) l.textContent = logLines.join("\n");
       }
 
-      function renderError(err) {
+      function renderError(err, opts) {
         if (booted) return;
+        opts = opts || {};
         var el = document.getElementById("boot-screen");
         var status = document.getElementById("boot-status");
         if (!el || !status) return;
@@ -142,18 +148,42 @@
         el.classList.add("is-error");
         status.innerHTML =
           '<div class="boot-screen__error">' +
-          '<div style="color:#ef4444;font-weight:700;margin-bottom:8px;text-align:right">خطا در بارگذاری برنامه</div>' +
+          '<div style="color:#ef4444;font-weight:700;margin-bottom:8px;text-align:right">' +
+            esc(opts.title || "خطا در بارگذاری برنامه") +
+          "</div>" +
           "<pre>" + esc(stack) + "</pre>" +
           '<div class="boot-screen__hint">' +
-          "موارد زیر را بررسی کنید:<br>" +
-          "• اتصال اینترنت و دسترسی به CDN ها:<br>" +
-          "&nbsp;&nbsp;<code>cdn.jsdelivr.net</code> &nbsp; <code>esm.sh</code> &nbsp; <code>unpkg.com</code><br>" +
-          "• اگر در ایران هستید، این دامنه‌ها ممکن است بدون VPN در دسترس نباشند.<br>" +
-          "• DevTools → Console را باز کنید و خطاها را ارسال کنید.<br>" +
+            (opts.hint ||
+              "اگر این خطا ادامه داشت، DevTools → Console را باز کنید و متن خطا را ارسال کنید.") +
           "</div>" +
           '<div class="boot-screen__log" id="boot-log">' + esc(logLines.join("\n")) + "</div>" +
-          '<button class="boot-screen__retry" onclick="location.reload()">تلاش مجدد</button>' +
+          '<div class="boot-screen__actions">' +
+            '<button class="boot-screen__retry" onclick="location.reload()">تلاش مجدد</button>' +
+            (opts.showKeepWaiting
+              ? '<button class="boot-screen__retry boot-screen__retry--ghost" id="boot-keep-waiting">ادامه انتظار</button>'
+              : "") +
+          "</div>" +
           "</div>";
+
+        var keepBtn = document.getElementById("boot-keep-waiting");
+        if (keepBtn) {
+          keepBtn.addEventListener("click", function () {
+            // Hide the error UI; keep the boot screen with a spinner and
+            // a longer watchdog.
+            var screen2 = document.getElementById("boot-screen");
+            if (screen2) screen2.classList.remove("is-error");
+            var st2 = document.getElementById("boot-status");
+            if (st2) st2.textContent = "در حال انتظار برای پاسخ سرورها…";
+            setTimeout(function () {
+              if (!booted) {
+                renderError(new Error("برنامه همچنان پاسخ نمی‌دهد"), {
+                  title: "بازه انتظار تمام شد",
+                  hint: "اتصال اینترنت، دسترسی به CDN و پیکربندی Supabase را بررسی کنید.",
+                });
+              }
+            }, 20000);
+          });
+        }
       }
 
       window.__appBootLog = pushLog;
@@ -186,14 +216,22 @@
         renderError(r || new Error(m));
       });
 
-      // Watchdog — a bit longer to allow the CDN timeout logic to finish
+      // Watchdog: only after a *long* delay, and it offers "keep waiting"
+      // so a slow network is not mistaken for a failure.
       setTimeout(function () {
         if (!booted) {
           renderError(
-            "برنامه در ۱۵ ثانیه بارگذاری نشد. آخرین مرحله‌ای که اجرا شد در لاگ زیر مشخص است."
+            new Error("بارگذاری برنامه بیشتر از حد معمول طول کشید"),
+            {
+              title: "بارگذاری کند",
+              hint:
+                "اگر در شبکه‌ای هستید که دسترسی به CDN ها محدود است، بارگذاری ممکن است طول بکشد. " +
+                "می‌توانید منتظر بمانید یا صفحه را مجدداً بارگذاری کنید.",
+              showKeepWaiting: true,
+            }
           );
         }
-      }, 15000);
+      }, 20000);
 
       pushLog("HTML بارگذاری شد — در انتظار اجرای ماژول‌های JS…");
     })();
@@ -227,7 +265,6 @@
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="tooltip-root" class="tooltip-root"></div>
 
-  <!-- App entry -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
