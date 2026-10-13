@@ -1,24 +1,17 @@
 /**
- * Health page — insulin, glucose, blood pressure, weight.
- *
- * Fixes vs. previous version:
- *   • Delegation is bound ONCE at container level, not per-render.
- *     Previously each `renderGrid` re-bound listeners to the same grid
- *     element, so actions fired N times after N renders.
- *   • Each handler reads the current date via `currentDate()` so it stays
- *     correct after date changes.
+ * Health page — entry first, report block below.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
 import { icon } from "../components/icons.js";
 import { toast } from "../components/toast.js";
 import { confirm } from "../components/confirm.js";
+import { mountReportBlock } from "../components/report-block.js";
+import { chart } from "../components/chart.js";
 import { store } from "../core/state.js";
 import { bus } from "../core/event-bus.js";
 import { insulin, glucose, bp, weight, healthSnapshot } from "../services/health.service.js";
-import {
-  todayISO, addDays, formatLong, formatRelative, nowTimeStr,
-} from "../utils/date.js";
+import { todayISO, addDays, nowTimeStr, formatShort } from "../utils/date.js";
 import {
   formatInteger, formatNumber, escapeHTML, toLatinDigits,
 } from "../utils/format.js";
@@ -31,43 +24,21 @@ export default {
 
   async render(container) {
     const unsubscribers = [];
+    let reportBlock = null;
 
     container.innerHTML = `
-      <div class="page-header">
-        <div class="page-header__info">
-          <div class="page-header__title">سلامت</div>
-          <div class="page-header__subtitle" data-date-sub></div>
-        </div>
-        <div class="page-header__actions">
-          <div class="dash-hero__date-nav">
-            <button class="btn btn--ghost btn--icon" data-nav="prev" type="button">${icon("chevronRight", { size: 16 })}</button>
-            <span class="dash-hero__date-label" data-date-label></span>
-            <button class="btn btn--ghost btn--icon" data-nav="next" type="button">${icon("chevronLeft", { size: 16 })}</button>
-          </div>
-        </div>
-      </div>
+      <section id="health-entry-form" class="section">
+        <div class="health-grid" data-health-grid></div>
+      </section>
 
-      <div class="health-grid" data-health-grid></div>
-
-      <div class="card" style="margin-top:20px" data-history>
-        <div class="card__header">
-          <div class="card__title">${icon("clock", { size: 20 })}<span>تاریخچه اخیر</span></div>
-        </div>
-        <div data-history-content></div>
-      </div>
+      <div data-report-slot></div>
     `;
 
     function currentDate() {
       return store.get("selectedDate") || todayISO();
     }
 
-    /* ---------- Delegated listeners — attached ONCE ----------------- */
-    delegate(container, "click", "[data-nav]", (e, btn) => {
-      const dir = btn.dataset.nav === "next" ? 1 : -1;
-      store.setSelectedDate(addDays(currentDate(), dir));
-      load();
-    });
-
+    /* ---------- Delegated listeners --------------------------------- */
     delegate(container, "click", "[data-add]", async (e, btn) => {
       const kind = btn.dataset.add;
       const iso = currentDate();
@@ -115,21 +86,18 @@ export default {
         const svc = { insulin, glucose, bp, weight }[kind];
         await svc.remove(id);
         toast.success("حذف شد");
-      } catch (err) {
-        toast.error(err?.message || "حذف ناموفق بود");
+      } catch {
+        toast.error("حذف ناموفق بود");
       }
     });
 
     /* ---------- Load ------------------------------------------------ */
     async function load() {
       const iso = currentDate();
-      $("[data-date-label]", container).textContent = formatRelative(iso);
-      $("[data-date-sub]", container).textContent = formatLong(iso);
-
       try {
         const snap = await healthSnapshot(iso);
-        renderGrid(snap, iso);
-        renderHistory();
+        renderGrid(snap);
+        reportBlock?.setDate(iso);
       } catch (err) {
         console.error("[health] load error", err);
         toast.error(err?.message || "خطا در بارگذاری اطلاعات");
@@ -161,12 +129,12 @@ export default {
             <span class="health-card__unit">تزریق امروز</span>
           </div>
           <div class="health-entries">
-            ${rows.length ? rows.slice(0, 5).map((r) => `
+            ${rows.length ? rows.slice(0, 4).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${formatNumber(r.units, { decimals: 1 })}U</span>
                 <span class="health-entry__note">${escapeHTML(r.type || "—")}${r.site ? " • " + escapeHTML(r.site) : ""}</span>
                 <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
-                <button class="icon-btn" data-del="${r.id}" data-kind="insulin" type="button" title="حذف">${icon("trash", { size: 12 })}</button>
+                <button class="icon-btn" data-del="${r.id}" data-kind="insulin" type="button">${icon("trash", { size: 12 })}</button>
               </div>
             `).join("") : '<div class="text-2xs text-muted text-center" style="padding:12px 0">موردی ثبت نشده</div>'}
           </div>
@@ -205,7 +173,7 @@ export default {
           </div>
           <div class="health-card__time">${rows.length ? `آخرین: ${(rows[0].log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
-            ${rows.slice(0, 5).map((r) => `
+            ${rows.slice(0, 4).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${formatInteger(r.value)}</span>
                 <span class="health-entry__note">${escapeHTML(r.context || "")}</span>
@@ -246,7 +214,7 @@ export default {
           </div>
           <div class="health-card__time">${latest ? `آخرین: ${(latest.log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
-            ${rows.slice(0, 5).map((r) => `
+            ${rows.slice(0, 4).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${r.systolic}/${r.diastolic}</span>
                 <span class="health-entry__note">${r.pulse ? "نبض " + r.pulse : ""}</span>
@@ -281,7 +249,7 @@ export default {
           </div>
           <div class="health-card__time">${latest ? `آخرین: ${(latest.log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
-            ${rows.slice(0, 5).map((r) => `
+            ${rows.slice(0, 4).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${formatNumber(r.weight, { decimals: 1 })}</span>
                 <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
@@ -297,61 +265,72 @@ export default {
       `;
     }
 
-    /* ---------- History -------------------------------------------- */
-    async function renderHistory() {
-      const end = currentDate();
-      const start = addDays(end, -6);
-      try {
-        const [ins, glu, b, w] = await Promise.all([
-          insulin.listByRange(start, end),
-          glucose.listByRange(start, end),
-          bp.listByRange(start, end),
-          weight.listByRange(start, end),
-        ]);
-        const el = $("[data-history-content]", container);
-        const rows = [];
+    /* ---------- Report block --------------------------------------- */
+    async function healthSummary(range, dateISO) {
+      const { start, end, label } = rangeWindow(range, dateISO);
+      const [ins, glu, b, w] = await Promise.all([
+        insulin.listByRange(start, end),
+        glucose.listByRange(start, end),
+        bp.listByRange(start, end),
+        weight.listByRange(start, end),
+      ]);
 
-        ins.forEach((r) => rows.push({ date: r.log_date, kind: "انسولین", value: `${formatNumber(r.units, { decimals: 1 })} واحد`, time: r.log_time }));
-        glu.forEach((r) => rows.push({ date: r.log_date, kind: "قند خون", value: `${formatInteger(r.value)} mg/dL`, time: r.log_time }));
-        b.forEach((r) => rows.push({ date: r.log_date, kind: "فشار خون", value: `${r.systolic}/${r.diastolic}`, time: r.log_time }));
-        w.forEach((r) => rows.push({ date: r.log_date, kind: "وزن", value: `${formatNumber(r.weight, { decimals: 1 })} kg`, time: r.log_time }));
+      const insulinTotal = ins.reduce((s, r) => s + (Number(r.units) || 0), 0);
+      const glucoseAvg = glu.length
+        ? glu.reduce((s, r) => s + (Number(r.value) || 0), 0) / glu.length
+        : null;
+      const latestBP = b[0] || null;
+      const weightChange = w.length >= 2
+        ? Number(w[w.length - 1].weight) - Number(w[0].weight)
+        : 0;
 
-        rows.sort((a, b2) => (b2.date + (b2.time || "")).localeCompare(a.date + (a.time || "")));
+      const kpis = [
+        { label: "انسولین", value: formatNumber(insulinTotal, { decimals: 1 }), unit: "واحد", tone: "primary" },
+        { label: "میانگین قند", value: glucoseAvg ? formatInteger(glucoseAvg) : "—", unit: "mg/dL", tone: glucoseAvg > 140 ? "danger" : "success" },
+        { label: "فشار آخر", value: latestBP ? `${latestBP.systolic}/${latestBP.diastolic}` : "—", unit: "mmHg", tone: "success" },
+        { label: "تغییر وزن", value: weightChange ? (weightChange > 0 ? "+" + formatNumber(weightChange, { decimals: 1 }) : formatNumber(weightChange, { decimals: 1 })) : "—", unit: "kg", tone: weightChange > 0 ? "danger" : "success" },
+      ];
 
-        if (!rows.length) {
-          el.innerHTML = '<div class="text-sm text-muted text-center" style="padding:32px 0">موردی در ۷ روز اخیر ثبت نشده است</div>';
-          return;
-        }
-
-        el.innerHTML = `
-          <div class="table-wrap">
-            <table class="table table--compact">
-              <thead><tr><th>تاریخ</th><th>نوع</th><th>مقدار</th><th>ساعت</th></tr></thead>
-              <tbody>
-                ${rows.slice(0, 20).map((r) => `
-                  <tr>
-                    <td>${formatRelative(r.date)}</td>
-                    <td>${r.kind}</td>
-                    <td class="num">${r.value}</td>
-                    <td class="num">${(r.time || "").slice(0, 5) || "—"}</td>
-                  </tr>
-                `).join("")}
-              </tbody>
-            </table>
-          </div>
-        `;
-      } catch (err) {
-        console.error("[health] history error", err);
+      // Chart: glucose trend
+      let chartHtml = "";
+      if (glu.length) {
+        const glucosePoints = glu.map((r) => ({
+          label: formatShort(r.log_date).split("/")[2] || "",
+          y: Number(r.value),
+        }));
+        chartHtml = chart.lineChart({ data: glucosePoints, width: 720, height: 180 });
       }
+
+      return { kpis, chart: chartHtml, subtitle: label };
     }
 
-    /* ---------- Subscribe ----------------------------------------- */
+    function rangeWindow(range, dateISO) {
+      if (range === "daily") return { start: dateISO, end: dateISO, label: formatShort(dateISO) };
+      if (range === "weekly") {
+        const start = addDays(dateISO, -6);
+        return { start, end: dateISO, label: `${formatShort(start)} — ${formatShort(dateISO)}` };
+      }
+      const start = addDays(dateISO, -29);
+      return { start, end: dateISO, label: `${formatShort(start)} — ${formatShort(dateISO)}` };
+    }
+
+    reportBlock = mountReportBlock($("[data-report-slot]", container), {
+      subject: "health",
+      date: currentDate(),
+      summaryFn: healthSummary,
+      title: "گزارش سلامت",
+      scrollTarget: "#health-entry-form",
+    });
+
+    /* ---------- Events --------------------------------------------- */
     unsubscribers.push(bus.on("health:changed", () => load()));
+    unsubscribers.push(bus.on("date:changed", () => load()));
 
     await load();
 
     return function cleanup() {
       unsubscribers.forEach((off) => off());
+      reportBlock?.destroy?.();
     };
   },
 };
