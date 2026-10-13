@@ -1,211 +1,98 @@
 /**
- * Toast notifications.
- *
- * Usage:
- *   toast.success("ذخیره شد");
- *   toast.error("خطا در ذخیره", { title: "خطا" });
- *   const t = toast.info("در حال بارگذاری...", { duration: 0 });
- *   t.dismiss();
- *
- * Features: queued limit, auto dismiss, manual close, hover-to-pause,
- * progress bar, action button, RTL-aware animation, ARIA live region.
- *
- * IMPORTANT — dismissal mechanics
- * -------------------------------
- * Auto-dismiss and manual close both funnel through `dismiss()`. It:
- *   • is idempotent (safe to call twice)
- *   • clears the timer
- *   • removes the toast from `active` immediately
- *   • removes the DOM node on the earlier of:
- *       - the leave animation's `animationend`, or
- *       - a hard 700 ms timeout (covers reduced-motion, failed animation, etc.)
+ * toast.js — سیستم اعلان‌های شناور
+ * API: toast.show / toast.success / toast.error / toast.warning / toast.info
  */
 
-import { $, createElement } from "../utils/dom.js";
-import { icon } from "./icons.js";
-import { TOAST_DEFAULTS } from "../config/constants.js";
+import { $, el, clear } from '../utils/dom.js';
 
-const ROOT_ID = "toast-root";
+const DEFAULT_DURATION = 4200;
+
 let root = null;
-const active = new Set();
 
-function getRoot() {
-  if (root && document.body.contains(root)) return root;
-  root = document.getElementById(ROOT_ID) || (() => {
-    const r = createElement("div", {
-      id: ROOT_ID,
-      class: "toast-root",
-      "aria-live": "polite",
-      "aria-atomic": "true",
-    });
-    document.body.appendChild(r);
-    return r;
-  })();
+function ensureRoot() {
+  if (root) return root;
+  root = $('#toast-root');
+  if (!root) {
+    root = el('div', { id: 'toast-root', class: 'toast-root' });
+    document.body.appendChild(root);
+  }
   return root;
 }
 
-const ICON_BY_TYPE = {
-  success: "check",
-  error: "alert",
-  warning: "alert",
-  info: "info",
-  default: "bell",
-};
+/* ---------- پایه ---------- */
 
-const TITLE_BY_TYPE = {
-  success: "موفق",
-  error: "خطا",
-  warning: "هشدار",
-  info: "اطلاع",
-};
+function show({ type = 'info', title, message, duration = DEFAULT_DURATION, actions = null } = {}) {
+  const container = ensureRoot();
 
-function escapeHtml(s) {
-  return String(s ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
-
-/**
- * Show a toast.
- * opts: { type, title, duration, action, onAction, dismissible, iconName }
- */
-export function show(message, opts = {}) {
-  const {
-    type = "default",
-    title,
-    duration = TOAST_DEFAULTS.duration,
-    action,
-    onAction,
-    dismissible = true,
-    iconName,
-  } = opts;
-
-  const container = getRoot();
-
-  // Enforce max
-  if (active.size >= TOAST_DEFAULTS.max) {
-    const oldest = active.values().next().value;
-    try { oldest?.dismiss?.(); } catch { /* ignore */ }
-  }
-
-  const el = createElement("div", {
-    class: `toast toast--${type}`,
-    role: type === "error" ? "alert" : "status",
-  });
-
-  el.innerHTML = `
-    <div class="toast__icon">${icon(iconName || ICON_BY_TYPE[type] || ICON_BY_TYPE.default, { size: 18 })}</div>
-    <div class="toast__body">
-      ${title !== false ? `<div class="toast__title">${escapeHtml(title || TITLE_BY_TYPE[type] || "")}</div>` : ""}
-      <div class="toast__message">${escapeHtml(message)}</div>
-    </div>
-    ${dismissible ? `<div class="toast__close" role="button" tabindex="0" aria-label="بستن">${icon("close", { size: 14 })}</div>` : ""}
-    ${duration > 0 ? `<div class="toast__progress" style="animation-duration:${duration}ms"></div>` : ""}
-  `;
-
-  /* ---------------- State ---------------------------------------------- */
-  let timer = null;
-  let remaining = duration;
-  let startedAt = 0;
-  let isDismissed = false;
-
-  /* ---------------- Handle (defined AFTER dismiss is declared) ---------
-     `dismiss` is a function declaration so it is hoisted within this
-     function scope — we can safely reference it here. But we must define
-     `handle` itself BEFORE `active.add(handle)`. */
-  const handle = {
-    el,
-    dismiss: null, // assigned below
+  const icons = {
+    success: '✓', error: '✕', warning: '!', info: 'i',
   };
 
-  /* ---------------- Timer helpers -------------------------------------- */
-  function startTimer() {
-    if (!duration || duration <= 0) return;
-    startedAt = Date.now();
-    timer = setTimeout(dismiss, remaining);
-  }
-
-  function pauseTimer() {
-    if (!timer) return;
-    clearTimeout(timer);
-    timer = null;
-    remaining -= Date.now() - startedAt;
-  }
-
-  function resumeTimer() {
-    if (remaining > 0 && !isDismissed) startTimer();
-  }
-
-  /* ---------------- Dismiss -------------------------------------------- */
-  function dismiss() {
-    if (isDismissed) return;
-    isDismissed = true;
-
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-    active.delete(handle);
-
-    // Trigger the leave animation
-    el.classList.add("is-leaving");
-
-    const removeIt = () => {
-      if (el.isConnected) el.remove();
-    };
-    // Whichever fires first wins; both are idempotent thanks to isConnected.
-    el.addEventListener("animationend", removeIt, { once: true });
-    setTimeout(removeIt, 700);
-  }
-
-  handle.dismiss = dismiss;
-
-  /* ---------------- Register ------------------------------------------- */
-  active.add(handle);
-
-  /* ---------------- Wire close button ---------------------------------- */
-  el.querySelector(".toast__close")?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    dismiss();
+  const toast = el('div', {
+    class: `toast toast--${type}`,
+    role: 'status',
+    'aria-live': type === 'error' ? 'assertive' : 'polite',
   });
 
-  /* ---------------- Optional action button ----------------------------- */
-  if (action && typeof action === "object") {
-    const btn = createElement(
-      "button",
-      { class: "btn btn--ghost btn--xs", type: "button", style: "margin-top:6px" },
-      action.label || "انجام"
-    );
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      try { onAction?.(); } finally { dismiss(); }
-    });
-    el.querySelector(".toast__body")?.appendChild(btn);
+  toast.appendChild(el('div', { class: 'toast__icon' }, [icons[type] || 'i']));
+
+  const content = el('div', { class: 'toast__content' });
+  if (title) content.appendChild(el('div', { class: 'toast__title' }, [title]));
+  if (message) content.appendChild(el('div', { class: 'toast__message' }, [message]));
+
+  if (actions?.length) {
+    for (const a of actions) {
+      const btn = el('button', { class: 'toast__action', type: 'button' }, [a.label]);
+      btn.addEventListener('click', () => { a.onClick?.(); close(); });
+      content.appendChild(btn);
+    }
+  }
+  toast.appendChild(content);
+
+  const closeBtn = el('button', { class: 'toast__close', type: 'button', 'aria-label': 'بستن' }, ['✕']);
+  closeBtn.addEventListener('click', () => close());
+  toast.appendChild(closeBtn);
+
+  const progress = el('span', { class: 'toast__progress' });
+  if (duration > 0) {
+    progress.style.animationDuration = `${duration}ms`;
+    toast.appendChild(progress);
   }
 
-  /* ---------------- Mount ---------------------------------------------- */
-  container.appendChild(el);
+  container.appendChild(toast);
 
-  // Pause on hover / focus so users can read
-  el.addEventListener("mouseenter", pauseTimer);
-  el.addEventListener("mouseleave", resumeTimer);
-  el.addEventListener("focusin", pauseTimer);
-  el.addEventListener("focusout", resumeTimer);
+  let timer = null;
+  let closed = false;
+  function close() {
+    if (closed) return;
+    closed = true;
+    clearTimeout(timer);
+    toast.classList.add('is-closing');
+    setTimeout(() => toast.remove(), 240);
+  }
 
-  startTimer();
-  return handle;
+  if (duration > 0) timer = setTimeout(close, duration);
+
+  // pause on hover
+  toast.addEventListener('mouseenter', () => {
+    clearTimeout(timer);
+    progress.style.animationPlayState = 'paused';
+  });
+  toast.addEventListener('mouseleave', () => {
+    if (duration > 0) {
+      progress.style.animationPlayState = 'running';
+      timer = setTimeout(close, 1200);
+    }
+  });
+
+  return { close, el: toast };
 }
 
 export const toast = {
   show,
-  success: (msg, opts = {}) => show(msg, { ...opts, type: "success" }),
-  error:   (msg, opts = {}) => show(msg, { ...opts, type: "error" }),
-  warning: (msg, opts = {}) => show(msg, { ...opts, type: "warning" }),
-  info:    (msg, opts = {}) => show(msg, { ...opts, type: "info" }),
-  dismissAll() {
-    active.forEach((h) => {
-      try { h.dismiss(); } catch { /* ignore */ }
-    });
-  },
+  success: (title, message, opts) => show({ type: 'success', title, message, ...opts }),
+  error:   (title, message, opts) => show({ type: 'error',   title, message, duration: 6000, ...opts }),
+  warning: (title, message, opts) => show({ type: 'warning', title, message, ...opts }),
+  info:    (title, message, opts) => show({ type: 'info',    title, message, ...opts }),
+  clear() { if (root) clear(root); },
 };
