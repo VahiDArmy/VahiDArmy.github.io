@@ -1,22 +1,16 @@
 /**
  * Jalali calendar / date-picker.
  *
- *   const cal = calendar({
- *     value: "2025-01-15", // ISO (Gregorian)
- *     onSelect: (iso) => pick(iso),
- *     markedDates: new Set(["2025-01-01", "2025-01-12"]),
- *   });
- *   parent.appendChild(cal.el);
- *
- * Displays the Persian calendar (Jalali) but always speaks ISO Gregorian
- * to the rest of the app so storage stays simple.
+ * Displays the Persian calendar but always speaks ISO Gregorian to the
+ * rest of the app. All conversions live in `utils/date.js` (jalaali-js,
+ * well-tested) to avoid divergence from other date formatting code.
  */
 
 import { createElement } from "../utils/dom.js";
 import { icon } from "./icons.js";
 import {
   todayISO, fromISO, toISO,
-  toJalali, jalaliMonthLength,
+  toJalali, jalaliToISO, jalaliMonthLength,
   JALALI_MONTHS, JALALI_WEEKDAYS,
 } from "../utils/date.js";
 
@@ -41,15 +35,13 @@ export function calendar(opts = {}) {
     const firstIso = jalaliToISO(jy, jm, 1);
     const daysInMonth = jalaliMonthLength(jy, jm);
 
-    // Gregorian weekday of the 1st (0=Sun … 6=Sat)
+    // Gregorian weekday of the 1st of the Jalali month (0=Sun … 6=Sat)
     const firstDow = fromISO(firstIso).getDay();
-    // We display columns starting Saturday (Sat, Sun, Mon, ...)
-    // Sat=6 → column 0, Sun=0 → column 1 … Fri=5 → column 6
+    // Display columns starting Saturday
     const startCol = (firstDow + 1) % 7;
 
     const cells = [];
     for (let i = 0; i < startCol; i++) cells.push({ muted: true });
-
     for (let d = 1; d <= daysInMonth; d++) {
       const iso = jalaliToISO(jy, jm, d);
       cells.push({
@@ -61,8 +53,6 @@ export function calendar(opts = {}) {
         muted: false,
       });
     }
-
-    // Fill remaining cells for a 6-row grid so height is stable
     while (cells.length < 42) cells.push({ muted: true });
 
     el.innerHTML = `
@@ -73,7 +63,7 @@ export function calendar(opts = {}) {
       </div>
       <div class="calendar__grid">
         ${JALALI_WEEKDAYS.map((w) => `<div class="calendar__dow">${w.slice(0, 1)}</div>`).join("")}
-        ${cells.map((c, i) => {
+        ${cells.map((c) => {
           if (c.muted) return `<div class="calendar__day is-muted"></div>`;
           const cls = [
             "calendar__day",
@@ -145,98 +135,55 @@ export function calendar(opts = {}) {
   };
 }
 
-/* ---------- Jalali → ISO ----------------------------------------------- */
-/* Uses the same jalaali-js algorithm implemented in utils/date.js.
-   We inline the conversion here to keep the calendar module self-contained
-   and avoid round-tripping through format functions. */
-function jalaliToISO(jy, jm, jd) {
-  const g = jalaliToGregorian(jy, jm, jd);
-  return toISO(new Date(g.gy, g.gm - 1, g.gd));
-}
-
-function jalaliToGregorian(jy, jm, jd) {
-  let gy = jy + 621;
-  let leapJ = -14;
-  const breaks = [
-    -61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210,
-    1635, 2060, 2097, 2192, 2262, 2324, 2394, 2456, 3178,
-  ];
-  let jp = breaks[0];
-  let jump = 0;
-  for (let i = 1; i < breaks.length; i++) {
-    const jm2 = breaks[i];
-    jump = jm2 - jp;
-    if (jy < jm2) break;
-    leapJ = leapJ + Math.floor(jump / 33) * 8 + Math.floor((jump % 33) / 4);
-    jp = jm2;
-  }
-  let n = jy - jp;
-  leapJ = leapJ + Math.floor(n / 33) * 8 + Math.floor(((n % 33) + 3) / 4);
-  if (jump % 33 === 4 && jump - n === 4) leapJ += 1;
-
-  const leapG = Math.floor(gy / 4) - Math.floor((Math.floor(gy / 100) + 1) * 3 / 4) - 150;
-  const march = 20 + leapJ - leapG;
-
-  if (jump - n < 6) n = n - jump + Math.floor((jump + 4) / 33) * 33;
-  let leap = ((n + 1) % 33 - 1) % 4;
-  if (leap === -1) leap = 4;
-
-  let days = 0;
-  if (jm <= 7) {
-    days = (jm - 1) * 31;
-  } else {
-    days = (jm - 7) * 30 + 186;
-  }
-  days += jd;
-
-  let gDayNo = days + march - 1;
-  const gDaysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-  const gy2 = gy + 1;
-  if (gDayNo >= 365 + (isGLeap(gy) ? 1 : 0)) {
-    gDayNo -= 365 + (isGLeap(gy) ? 1 : 0);
-    gy += 1;
-  }
-  let gm = 1;
-  while (gm <= 12) {
-    const dim = gDaysInMonth[gm - 1] + (gm === 2 && isGLeap(gy) ? 1 : 0);
-    if (gDayNo < dim) break;
-    gDayNo -= dim;
-    gm += 1;
-  }
-  const gd = gDayNo + 1;
-  return { gy, gm, gd };
-}
-
-function isGLeap(gy) {
-  return gy % 4 === 0 && (gy % 100 !== 0 || gy % 400 === 0);
-}
-
 /**
- * Attach a calendar to an input-like trigger.
- *   attachPicker(triggerEl, { onSelect });
+ * Attach a calendar popover to a trigger element.
+ * Returns a detach function.
  */
 export function attachPicker(trigger, opts = {}) {
   let cal = null;
+  let detachOutside = null;
+
+  function close() {
+    if (!cal) return;
+    cal.el.remove();
+    cal = null;
+    if (detachOutside) {
+      document.removeEventListener("mousedown", detachOutside, true);
+      detachOutside = null;
+    }
+  }
+
   function toggle(e) {
     e?.stopPropagation();
-    if (cal) { cal.el.remove(); cal = null; return; }
-    cal = calendar(opts);
+    if (cal) return close();
+
+    cal = calendar({
+      ...opts,
+      onSelect: (iso) => {
+        opts.onSelect?.(iso);
+        close();
+      },
+    });
     document.body.appendChild(cal.el);
+
     const r = trigger.getBoundingClientRect();
     cal.el.style.position = "fixed";
     cal.el.style.top = `${r.bottom + 6}px`;
     cal.el.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 320))}px`;
     cal.el.style.zIndex = "500";
-    const off = (ev) => {
+
+    detachOutside = (ev) => {
       if (!cal) return;
-      if (!cal.el.contains(ev.target) && !trigger.contains(ev.target)) {
-        cal.el.remove();
-        cal = null;
-        document.removeEventListener("mousedown", off);
-      }
+      if (!cal.el.contains(ev.target) && !trigger.contains(ev.target)) close();
     };
-    setTimeout(() => document.addEventListener("mousedown", off));
+    // Defer so the click that opened the popover doesn't also close it
+    setTimeout(() => document.addEventListener("mousedown", detachOutside, true), 0);
   }
+
   trigger.addEventListener("click", toggle);
-  return () => trigger.removeEventListener("click", toggle);
+
+  return function detach() {
+    trigger.removeEventListener("click", toggle);
+    close();
+  };
 }
