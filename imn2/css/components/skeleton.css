@@ -1,0 +1,56 @@
+/* ============================================================
+   skeleton.css — حالت بارگذاری
+   ============================================================ */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--skel-base);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--skel-shine) 45%,
+    var(--skel-shine) 55%,
+    transparent 100%
+  );
+  background-size: 600px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+.skeleton--text {
+  height: 12px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-xs);
+}
+.skeleton--text:last-child { margin-bottom: 0; width: 65%; }
+.skeleton--title { height: 20px; width: 45%; margin-bottom: 12px; }
+.skeleton--avatar { width: 40px; height: 40px; border-radius: 50%; }
+.skeleton--thumb  { width: 40px; height: 40px; border-radius: var(--radius-md); }
+.skeleton--btn    { width: 96px; height: 36px; border-radius: var(--radius-md); }
+.skeleton--card   { height: 140px; border-radius: var(--radius-lg); }
+.skeleton--chart  { height: 220px; border-radius: var(--radius-md); }
+
+/* Skeleton page container */
+.skeleton-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  animation: fadeIn 180ms var(--ease-out);
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.skeleton-row__body { flex: 1; min-width: 0; }
