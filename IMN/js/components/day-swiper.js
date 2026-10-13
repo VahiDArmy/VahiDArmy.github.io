@@ -1,25 +1,27 @@
 /**
  * Day Swiper — horizontal strip of day chips under the topbar.
  *
- * Design choices that make this version reliable
- * ----------------------------------------------
- *   • NO auto-scroll on mount when the whole strip already fits. The
- *     chips are rendered in DOM order and, in RTL, the browser places
- *     the first chip on the right. As long as the container is wider
- *     than the content, everything is visible without scroll math.
+ * Centering — how this works and why it's reliable
+ * ------------------------------------------------
+ * We use `Element.scrollIntoView({ block: "nearest", inline: "center" })`.
  *
- *   • When the content is wider than the container, we center the
- *     selected chip using `getBoundingClientRect()` deltas — no
- *     `offsetLeft`, no `scrollWidth`, no RTL scrollLeft conventions.
- *     The math is simply: "how far is the chip from the visual center
- *     of the strip?" and then scroll in the opposite direction.
+ *   • `inline: "center"` centers the chip horizontally inside its
+ *     nearest scroll container (the strip). Browsers handle RTL natively,
+ *     so we don't have to compute scrollLeft math ourselves.
  *
- *   • The sign of the scroll correction is flipped for RTL because in
- *     RTL `scrollLeft` increases as you scroll toward the LEFT edge of
- *     the content (the "end" in RTL is on the left).
+ *   • `block: "nearest"` means "don't scroll vertically unless the
+ *     element is off-screen vertically". Since the chip is inside a
+ *     sticky bar at the top of the viewport, no vertical scroll happens.
+ *     This is the correct option to avoid the page jumping.
  *
- *   • Swipe detection uses a short time window so a fast tap is never
- *     mistaken for a swipe.
+ * Range
+ * -----
+ * The strip is built ±30 days around the currently selected date — 61
+ * chips total. That guarantees there's always enough content for the
+ * strip to scroll, so centering always works, on any viewport size.
+ *
+ * On first mount the selected date is today, so today's chip is centered
+ * and highlighted with the gradient pill.
  *
  * Public API:
  *   const swiper = mountDaySwiper(container, { date, onChange });
@@ -34,10 +36,8 @@ import {
   JALALI_MONTHS,
 } from "../utils/date.js";
 
-const DAYS_BEFORE = 14;
-const DAYS_AFTER = 7;
-const SWIPE_THRESHOLD_PX = 60;
-const SWIPE_MAX_MS = 400; // if the pointer is held longer, it's a "hold", not a swipe
+const DAYS_BEFORE = 30;
+const DAYS_AFTER  = 30;
 
 function buildChips(centerISO) {
   const chips = [];
@@ -48,18 +48,17 @@ function buildChips(centerISO) {
 }
 
 export function mountDaySwiper(container, opts = {}) {
-  const { date: initialDate, onChange, hasDataFor } = opts;
+  const { date: initialDate, onChange } = opts;
 
   let selected = initialDate || todayISO();
   let dataSet = new Set();
-  let visible = true;
 
   container.innerHTML = `<div class="day-swiper" role="tablist" aria-label="انتخاب روز"></div>`;
   const strip = container.querySelector(".day-swiper");
 
-  /* ---------- Rendering ------------------------------------------------ */
+  /* ---------- Render -------------------------------------------------- */
 
-  function render({ scroll = true } = {}) {
+  function render() {
     const today = todayISO();
     const chips = buildChips(selected);
 
@@ -92,117 +91,43 @@ export function mountDaySwiper(container, opts = {}) {
       `;
     }).join("");
 
-    if (scroll) centerSelected();
-  }
-
-  /**
-   * Center the selected chip using only visual measurements. No
-   * assumptions about RTL scrollLeft semantics — we just look at where
-   * the chip currently appears on screen and correct the difference.
-   */
-  function centerSelected() {
-    // Give the browser time to complete layout. Three rAFs are enough
-    // on every browser we care about.
+    // Center the selected chip after the browser lays out the new chips.
+    // Two rAFs are enough for the DOM + fonts to settle.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          if (!visible) return;
-          const sel = strip.querySelector(".day-chip.is-selected");
-          if (!sel) return;
-
-          const stripRect = strip.getBoundingClientRect();
-          if (stripRect.width === 0) return;
-
-          // If the entire content fits, there's nothing to scroll.
-          if (strip.scrollWidth <= strip.clientWidth + 2) return;
-
-          const chipRect = sel.getBoundingClientRect();
-
-          // Visual horizontal distance between chip center and strip center.
-          // Positive → chip is currently RIGHT of the strip's center.
-          const delta =
-            (chipRect.left + chipRect.width / 2) -
-            (stripRect.left + stripRect.width / 2);
-
-          if (Math.abs(delta) < 4) return; // already centered
-
-          // Direction-aware correction:
-          //   LTR: positive delta → scroll right   → scrollLeft + delta
-          //   RTL: positive delta → scroll left    → scrollLeft - delta
-          const isRTL = getComputedStyle(strip).direction === "rtl";
-          const correction = isRTL ? -delta : delta;
-
-          const target = strip.scrollLeft + correction;
-          const max = strip.scrollWidth - strip.clientWidth;
-          const clamped = Math.max(0, Math.min(target, max));
-
-          // Use direct assignment (no smooth) for instant, deterministic
-          // positioning. Smooth scroll can be interrupted by layout
-          // recalcs and leave the strip half-centered.
-          strip.scrollLeft = clamped;
-        });
+        const sel = strip.querySelector(".day-chip.is-selected");
+        if (!sel) return;
+        try {
+          sel.scrollIntoView({
+            block: "nearest",
+            inline: "center",
+            behavior: "auto",   // instant — no smooth animation to interrupt
+          });
+        } catch {
+          // Older browsers that don't support the options object —
+          // fall back to the default behaviour which still scrolls it
+          // into view.
+          sel.scrollIntoView();
+        }
       });
     });
   }
 
-  /* ---------- Interaction --------------------------------------------- */
+  /* ---------- Interaction -------------------------------------------- */
 
   function selectDate(iso) {
     if (!iso || iso === selected) return;
     selected = iso;
-    render({ scroll: true });
+    render();
     onChange?.(iso);
   }
 
   delegate(strip, "click", ".day-chip", (e, chip) => {
     if (chip.classList.contains("is-future")) return;
-    if (swipeJustHappened) return; // suppress click right after a swipe
     selectDate(chip.dataset.iso);
   });
 
-  /* ---------- Swipe gesture -------------------------------------------- */
-  /* Track both distance and duration to avoid misclassifying taps. */
-
-  let pointerDown = false;
-  let startX = 0;
-  let startTime = 0;
-  let swipeJustHappened = false;
-
-  strip.addEventListener("pointerdown", (e) => {
-    pointerDown = true;
-    startX = e.clientX;
-    startTime = Date.now();
-  });
-
-  strip.addEventListener("pointerup", (e) => {
-    if (!pointerDown) return;
-    pointerDown = false;
-    const dx = e.clientX - startX;
-    const dt = Date.now() - startTime;
-    const isFastSwipe = Math.abs(dx) >= SWIPE_THRESHOLD_PX && dt <= SWIPE_MAX_MS;
-
-    if (!isFastSwipe) return;
-
-    // Block the subsequent `click` event that browsers fire after touch.
-    swipeJustHappened = true;
-    setTimeout(() => (swipeJustHappened = false), 350);
-
-    if (dx > 0) selectDate(addDays(selected, -1)); // swipe right → previous day
-    else selectDate(addDays(selected, 1));         // swipe left  → next day
-  });
-
-  strip.addEventListener("pointercancel", () => (pointerDown = false));
-
-  /* ---------- Visibility observer -------------------------------------- */
-
-  const io = new IntersectionObserver(([entry]) => {
-    const wasVisible = visible;
-    visible = entry.isIntersecting || entry.intersectionRatio > 0;
-    if (!wasVisible && visible) centerSelected();
-  }, { threshold: 0 });
-  io.observe(strip);
-
-  /* ---------- Midnight watcher ----------------------------------------- */
+  /* ---------- Midnight watcher ---------------------------------------- */
 
   let midnightTimer = null;
   function scheduleMidnightRefresh() {
@@ -212,29 +137,34 @@ export function mountDaySwiper(container, opts = {}) {
     next.setHours(24, 1, 0, 0);
     const delay = Math.max(30 * 1000, next - now);
     midnightTimer = setTimeout(() => {
-      render({ scroll: true });
+      render();
       scheduleMidnightRefresh();
     }, delay);
   }
   scheduleMidnightRefresh();
 
-  // Re-center on viewport resize / orientation change.
-  window.addEventListener("resize", centerSelected);
-
   render();
 
-  /* ---------- Public API ----------------------------------------------- */
+  /* ---------- Public API ---------------------------------------------- */
 
   return {
     setDate(iso, { silent = true } = {}) {
       if (!iso) return;
       if (iso === selected) {
-        // Same date — make sure it's visible.
-        centerSelected();
+        // Same date — but strip may have been scrolled by the user;
+        // re-center it.
+        const sel = strip.querySelector(".day-chip.is-selected");
+        if (sel) {
+          try {
+            sel.scrollIntoView({ block: "nearest", inline: "center", behavior: "auto" });
+          } catch {
+            sel.scrollIntoView();
+          }
+        }
         return;
       }
       selected = iso;
-      render({ scroll: true });
+      render();
       if (!silent) onChange?.(iso);
     },
 
@@ -242,24 +172,22 @@ export function mountDaySwiper(container, opts = {}) {
       const today = todayISO();
       const changed = selected !== today;
       selected = today;
-      render({ scroll: true });
-      setTimeout(centerSelected, 250); // second pass after layout settles
+      render();
       if (changed && !silent) onChange?.(today);
     },
 
     refreshData(datesArray) {
       dataSet = new Set(datesArray || []);
-      render({ scroll: false });
+      // Just update classes — no need to re-render the whole strip.
+      strip.querySelectorAll(".day-chip").forEach((el) => {
+        el.classList.toggle("has-data", dataSet.has(el.dataset.iso));
+      });
     },
-
-    recenter: centerSelected,
 
     get date() { return selected; },
 
     destroy() {
       if (midnightTimer) clearTimeout(midnightTimer);
-      io.disconnect();
-      window.removeEventListener("resize", centerSelected);
       container.innerHTML = "";
     },
   };
