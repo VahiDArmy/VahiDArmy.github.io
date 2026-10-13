@@ -1,0 +1,183 @@
+/* ============================================================
+   utilities.css — کلاس‌های کمکی عمومی (layout, flex, spacing)
+   ============================================================ */
+
+/* ---------- Container ---------- */
+.container {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding-inline: var(--content-pad);
+}
+
+.container--narrow { max-width: 760px; }
+.container--wide   { max-width: 1440px; }
+
+/* ---------- Flex helpers ---------- */
+.flex      { display: flex; }
+.flex-col  { display: flex; flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1    { flex: 1 1 0; }
+.flex-none { flex: none; }
+
+.items-start    { align-items: flex-start; }
+.items-center   { align-items: center; }
+.items-end      { align-items: flex-end; }
+.items-stretch  { align-items: stretch; }
+
+.justify-start   { justify-content: flex-start; }
+.justify-center  { justify-content: center; }
+.justify-end     { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around  { justify-content: space-around; }
+
+.gap-1 { gap: var(--sp-1); }
+.gap-2 { gap: var(--sp-2); }
+.gap-3 { gap: var(--sp-3); }
+.gap-4 { gap: var(--sp-4); }
+.gap-5 { gap: var(--sp-5); }
+.gap-6 { gap: var(--sp-6); }
+.gap-8 { gap: var(--sp-8); }
+
+/* ---------- Grid ---------- */
+.grid { display: grid; }
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--sp-4);
+}
+.grid-auto-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sp-4);
+}
+
+/* ---------- Spacing helpers ---------- */
+.m-0  { margin: 0; }
+.mt-1 { margin-top: var(--sp-1); }
+.mt-2 { margin-top: var(--sp-2); }
+.mt-3 { margin-top: var(--sp-3); }
+.mt-4 { margin-top: var(--sp-4); }
+.mt-6 { margin-top: var(--sp-6); }
+.mt-8 { margin-top: var(--sp-8); }
+.mb-1 { margin-bottom: var(--sp-1); }
+.mb-2 { margin-bottom: var(--sp-2); }
+.mb-3 { margin-bottom: var(--sp-3); }
+.mb-4 { margin-bottom: var(--sp-4); }
+.mb-6 { margin-bottom: var(--sp-6); }
+.mb-8 { margin-bottom: var(--sp-8); }
+.mx-auto { margin-inline: auto; }
+
+.p-0 { padding: 0; }
+.p-2 { padding: var(--sp-2); }
+.p-3 { padding: var(--sp-3); }
+.p-4 { padding: var(--sp-4); }
+.p-5 { padding: var(--sp-5); }
+.p-6 { padding: var(--sp-6); }
+.py-2 { padding-block: var(--sp-2); }
+.py-3 { padding-block: var(--sp-3); }
+.py-4 { padding-block: var(--sp-4); }
+.px-3 { padding-inline: var(--sp-3); }
+.px-4 { padding-inline: var(--sp-4); }
+
+/* ---------- Sizing ---------- */
+.w-full  { width: 100%; }
+.h-full  { height: 100%; }
+.min-w-0 { min-width: 0; }
+.max-w-full { max-width: 100%; }
+
+/* ---------- Visibility ---------- */
+.hidden      { display: none !important; }
+.invisible   { visibility: hidden; }
+.opacity-0   { opacity: 0; }
+.opacity-50  { opacity: 0.5; }
+.opacity-100 { opacity: 1; }
+
+/* Responsive visibility */
+@media (max-width: 900px) { .hide-md { display: none !important; } }
+@media (max-width: 640px) { .hide-sm { display: none !important; } }
+@media (min-width: 641px) { .show-sm { display: none !important; } }
+
+/* ---------- Position ---------- */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.fixed    { position: fixed; }
+.sticky   { position: sticky; }
+
+/* ---------- Cursor & Interaction ---------- */
+.pointer { cursor: pointer; }
+.select-none { user-select: none; }
+.no-scroll { overflow: hidden; }
+
+/* ---------- Borders ---------- */
+.border-t { border-top: 1px solid var(--border-subtle); }
+.border-b { border-bottom: 1px solid var(--border-subtle); }
+.border   { border: 1px solid var(--border-subtle); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded    { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* ---------- Divider ---------- */
+.divider {
+  height: 1px;
+  background: var(--border-subtle);
+  border: none;
+  margin-block: var(--sp-4);
+}
+.divider--vertical {
+  width: 1px;
+  height: auto;
+  align-self: stretch;
+  margin-inline: var(--sp-3);
+}
+
+/* ---------- Backgrounds ---------- */
+.bg-surface-1 { background: var(--bg-surface-1); }
+.bg-surface-2 { background: var(--bg-surface-2); }
+.bg-elevated  { background: var(--bg-elevated); }
+.bg-glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+/* ---------- Scroll helpers ---------- */
+.scroll-y {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.scroll-x::-webkit-scrollbar { height: 6px; }
+.scroll-y::-webkit-scrollbar { width: 6px; }
+
+/* ---------- Gradients ---------- */
+.grad-text {
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Aspect ratio ---------- */
+.aspect-square { aspect-ratio: 1 / 1; }
+.aspect-video  { aspect-ratio: 16 / 9; }
+
+/* ---------- Screen reader only ---------- */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
