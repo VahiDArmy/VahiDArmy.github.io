@@ -1,0 +1,159 @@
+/* ============================================================
+   buttons.css — تمام دکمه‌ها با حالت‌های مختلف
+   ============================================================ */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-fa);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  color: var(--text-primary);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background var(--t-fast),
+    border-color var(--t-fast),
+    color var(--t-fast),
+    transform var(--t-fast),
+    box-shadow var(--t-base);
+}
+.btn:hover { background: var(--bg-surface-3); border-color: var(--border-default); }
+.btn:active { transform: translateY(1px) scale(0.99); }
+.btn:disabled { opacity: 0.5; pointer-events: none; }
+
+.btn svg { flex-shrink: 0; }
+
+/* ---------- Variants ---------- */
+
+.btn--primary {
+  background: var(--grad-accent);
+  color: var(--accent-contrast);
+  border: none;
+  box-shadow: 0 4px 14px rgba(34,211,238,0.22);
+}
+.btn--primary:hover {
+  background: var(--grad-accent);
+  box-shadow: 0 6px 22px rgba(34,211,238,0.36);
+  filter: brightness(1.06);
+}
+.btn--primary:active { filter: brightness(0.98); }
+
+.btn--secondary {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+}
+.btn--secondary:hover {
+  background: var(--accent-soft);
+  filter: brightness(1.15);
+  border-color: var(--accent);
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+.btn--ghost:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn--outline {
+  background: transparent;
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+.btn--outline:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+.btn--danger {
+  background: var(--danger-bg);
+  color: var(--danger-fg);
+  border-color: transparent;
+}
+.btn--danger:hover { background: rgba(239,68,68,0.22); }
+
+.btn--success {
+  background: var(--success-bg);
+  color: var(--success-fg);
+  border-color: transparent;
+}
+.btn--success:hover { background: rgba(16,185,129,0.22); }
+
+/* ---------- Sizes ---------- */
+.btn--xs { padding: 5px 10px; font-size: var(--fs-xs); border-radius: var(--radius-sm); }
+.btn--sm { padding: 7px 14px; font-size: var(--fs-xs); }
+.btn--lg { padding: 13px 24px; font-size: var(--fs-md); border-radius: var(--radius-lg); }
+.btn--xl { padding: 16px 32px; font-size: var(--fs-lg); border-radius: var(--radius-lg); }
+
+.btn--block { width: 100%; }
+.btn--pill { border-radius: var(--radius-full); }
+.btn--square { padding: 10px; aspect-ratio: 1; }
+.btn--icon-only { padding: 8px; }
+.btn--icon-only.btn--sm { padding: 6px; }
+.btn--icon-only.btn--lg { padding: 12px; }
+
+/* ---------- With spinner state ---------- */
+.btn.is-loading { color: transparent !important; pointer-events: none; }
+.btn.is-loading .btn__spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  color: inherit;
+  filter: invert(0);
+}
+.btn--primary.is-loading .btn__spinner { color: var(--accent-contrast); }
+.btn--primary.is-loading .btn__spinner {
+  border-color: var(--accent-contrast);
+  border-top-color: transparent;
+}
+
+/* ---------- Ripple effect ---------- */
+.btn .ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  background: rgba(255,255,255,0.35);
+  pointer-events: none;
+  animation: ripple 600ms var(--ease-out);
+}
+
+/* ---------- Groups ---------- */
+.btn-group {
+  display: inline-flex;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+.btn-group > .btn {
+  border-radius: 0;
+  border: none;
+  border-inline-start: 1px solid var(--border-subtle);
+}
+.btn-group > .btn:first-child { border-inline-start: none; }
+
+/* ---------- Floating action (used by FAB) ---------- */
+.btn-round {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-full);
+  padding: 0;
+}
