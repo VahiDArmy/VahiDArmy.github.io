@@ -1,11 +1,25 @@
 /**
  * Number / unit formatting helpers, RTL-friendly.
  *
- * Persian app → we deliberately keep Latin digits (12, 3.5) because they
- * read better in dashboards, but the API allows switching to Persian digits.
+ * Notes on units & digits
+ * -----------------------
+ * • Digits are rendered as Latin (0-9) everywhere for legibility, but
+ *   PERSIAN and ARABIC-INDIC digits are converted on input.
+ * • Units are consistent:
+ *      kcal  → "kcal"
+ *      grams → "گرم"
+ *      kg    → "کیلوگرم"
+ *      km    → "کیلومتر"
+ *      bp    → "mmHg"
+ *      glucose → "mg/dL"
+ *      insulin → "واحد"
+ * • Durations: `formatDuration` (verbose, e.g. "۳ ساعت و ۲۵ دقیقه")
+ *   and `formatHoursBrief` (compact, e.g. "8س 12د"). Both are provided
+ *   on purpose; pick by available space.
  */
 
 const FA_DIGITS = ["۰", "۱", "۲", "۳", "۴", "۵", "۶", "۷", "۸", "۹"];
+const AR_DIGITS = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
 
 export function toPersianDigits(input) {
   if (input == null) return "";
@@ -14,15 +28,33 @@ export function toPersianDigits(input) {
 
 export function toLatinDigits(input) {
   if (input == null) return "";
-  return String(input).replace(/[۰-۹]/g, (d) =>
-    String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))
-  );
+  return String(input)
+    .replace(/[۰-۹]/g, (d) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)))
+    .replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
 }
 
-/** Format a number with thousand separators, e.g. 12,345.6 */
+/**
+ * Normalize a user-entered number string:
+ *   • Persian/Arabic digits → Latin
+ *   • Persian decimal separator (٫) → "."
+ *   • Thousands separators ("," and "٬") removed
+ *   • anything else non-numeric stripped (keeps leading "-")
+ * Returns "" for empty/whitespace-only input.
+ */
+export function normalizeNumber(input) {
+  if (input == null || input === "") return "";
+  let s = toLatinDigits(String(input));
+  s = s.replace(/٫/g, ".").replace(/٬/g, "").replace(/,/g, "");
+  s = s.replace(/[^\d.\-]/g, "");
+  return s;
+}
+
+/* ---------- Numbers --------------------------------------------------- */
+
 export function formatNumber(n, { decimals = 0, fallback = "—" } = {}) {
-  if (n == null || Number.isNaN(Number(n))) return fallback;
+  if (n == null || n === "" || Number.isNaN(Number(n))) return fallback;
   const value = Number(n);
+  if (!Number.isFinite(value)) return fallback;
   return value.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -37,49 +69,43 @@ export function formatDecimal(n, decimals = 1, fallback = "—") {
   return formatNumber(n, { decimals, fallback });
 }
 
-/** Calories — always integer, e.g. "2,145 kcal" */
 export function formatCalories(kcal, { withUnit = true } = {}) {
   const v = formatInteger(kcal);
   return withUnit ? `${v} kcal` : v;
 }
 
-/** Grams */
 export function formatGrams(g, decimals = 1) {
   return `${formatNumber(g, { decimals })} گرم`;
 }
 
-/** Kilograms */
 export function formatKg(kg, decimals = 2) {
-  return `${formatNumber(kg, { decimals })} کیلو`;
+  return `${formatNumber(kg, { decimals })} کیلوگرم`;
 }
 
-/** Kilometers */
 export function formatKm(km, decimals = 2) {
   return `${formatNumber(km, { decimals })} کیلومتر`;
 }
 
-/** Blood glucose mg/dL */
 export function formatGlucose(mg) {
   return `${formatInteger(mg)} mg/dL`;
 }
 
-/** Blood pressure systolic/diastolic */
 export function formatBP(sys, dia) {
   if (sys == null || dia == null) return "—";
   return `${formatInteger(sys)}/${formatInteger(dia)} mmHg`;
 }
 
-/** Insulin units */
 export function formatInsulin(units, decimals = 1) {
   return `${formatNumber(units, { decimals })} واحد`;
 }
 
-/** Percentage */
 export function formatPercent(n, decimals = 0) {
   return `${formatNumber(n, { decimals })}٪`;
 }
 
-/** Duration in minutes → "۳ ساعت و ۲۵ دقیقه" (Latin digits) */
+/* ---------- Durations ------------------------------------------------- */
+
+/** Verbose: "3 ساعت و 25 دقیقه". */
 export function formatDuration(minutes) {
   if (minutes == null || Number.isNaN(minutes)) return "—";
   const total = Math.max(0, Math.round(minutes));
@@ -90,31 +116,40 @@ export function formatDuration(minutes) {
   return `${m} دقیقه`;
 }
 
-/** Hours as decimal → "8h 12m" compact */
-export function formatHoursCompact(hours) {
+/**
+ * Compact: "8س 12د" / "8س" / "12د".
+ * Rounds to the nearest minute so 7.999 h → "8س" (never "7س 60د").
+ */
+export function formatHoursBrief(hours) {
   if (hours == null || Number.isNaN(hours)) return "—";
-  const total = Math.max(0, hours);
-  const h = Math.floor(total);
-  const m = Math.round((total - h) * 60);
+  const totalMinutes = Math.round(Number(hours) * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
   if (h && m) return `${h}س ${m}د`;
   if (h) return `${h}س`;
   return `${m}د`;
 }
 
-/** Difference with sign + arrow */
+/* Backwards-compatible alias */
+export const formatHoursCompact = formatHoursBrief;
+
+/* ---------- Deltas ---------------------------------------------------- */
+
 export function formatDelta(delta, { unit = "", decimals = 0 } = {}) {
   if (delta == null || Number.isNaN(delta)) return { text: "—", direction: "flat" };
   const v = Number(delta);
   const dir = v > 0 ? "up" : v < 0 ? "down" : "flat";
   const arrow = dir === "up" ? "▲" : dir === "down" ? "▼" : "—";
   const abs = formatNumber(Math.abs(v), { decimals });
-  return {
-    text: `${arrow} ${abs}${unit ? " " + unit : ""}`,
-    direction: dir,
-  };
+  return { text: `${arrow} ${abs}${unit ? " " + unit : ""}`, direction: dir };
 }
 
-/** Escape HTML (used before injecting user text into innerHTML) */
+/* ---------- Escape ---------------------------------------------------- */
+/**
+ * Escape a string for safe insertion into innerHTML. Prefer this over
+ * `sanitizeText` — escaping preserves user-visible content ("a<b" stays
+ * "a<b") while neutralizing dangerous markup.
+ */
 export function escapeHTML(str) {
   if (str == null) return "";
   return String(str)
