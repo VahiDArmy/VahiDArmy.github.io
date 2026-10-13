@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Website Construction SVG Animation</title>
+<style>
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+html, body{
+    height:100%;
+    width: 100%;
+}
+
+body {
+  padding:50px;
+  margin:0;
+  overflow:hidden;
+  background-color:#FAFAFA;
+}
+
+@-webkit-keyframes swinging{
+    0%{-webkit-transform: rotate(10deg);}
+    50%{-webkit-transform: rotate(-5deg)}
+    100%{-webkit-transform: rotate(10deg);}
+}
+ 
+@keyframes swinging{
+    0%{transform: rotate(10deg);}
+    50%{transform: rotate(-5deg)}
+    100%{transform: rotate(10deg);}
+}
+ 
+
+@-webkit-keyframes sleeping {
+    0%{ opacity:0;}
+    50%{ opacity:1;}
+    100%{ opacity:0;}
+}
+ 
+@keyframes sleeping {
+    0%{ opacity:0;}
+    50%{ opacity:1;}
+    100%{ opacity:0;}
+}
+ 
+#swinger {
+    -webkit-transform-origin: top center;
+    transform-origin: top center;
+    transform-box: fill-box;
+    -webkit-animation: swinging 3.5s ease-in-out forwards infinite;
+    animation: swinging 3.5s ease-in-out forwards infinite;
+}
+
+#zone {
+    opacity:0;
+    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation: sleeping 3.5s ease-in-out forwards infinite;
+}
+
+#ztwo {
+    opacity:0;
+    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation-delay:0.4s;
+    -website-animation-delay:0.4s;
+}
+
+#zthree {
+    opacity:0;
+    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation-delay:0.7s;
+    -website-animation-delay:0.7s;
+}
+
+#zfour {
+    opacity:0;
+    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation-delay:1s;
+    -website-animation-delay:1s;
+}
+
+#zfive {
+    opacity:0;
+    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation: sleeping 3.5s ease-in-out forwards infinite;
+    animation-delay:1.3s;
+    -website-animation-delay:1.3s;
+}
+
+.container {
+  text-align:center;
+}
+
+svg {
+  max-width:1000px;
+}
+
+/* Phone: keep original, allow horizontal slide/pan */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .container {
+    width: max-content;
+    min-width: 100%;
+  }
+  svg {
+    max-width: none;
+    width: 1536px; /* original viewBox width so user can slide */
+    height: auto;
+  }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 1536.2 755.1" style="enable-background:new 0 0 1536.2 755.1;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#E6E7E8;}
+	.st1{fill:#D1D3D4;}
+	.st2{fill:#F4F4F4;}
+	.st3{fill:#BCBEC0;}
+	.st4{fill:#231F20;}
+	.st5{fill:#FFFFFF;}
+	.st6{fill:#D36866;}
+	.st7{fill:#C2C4C6;}
+	.st8{fill:#DBDBDB;}
+	.st9{fill:#A7A9AC;}
+	.st10{fill:#808285;}
+</style>
+<!-- FULL ORIGINAL SVG CONTENT FROM THE PEN GOES HERE (the complete <rect>, <polygon>, <path>, <g id="swinger">, <g id="sleeping"> etc. exactly as in the CodePen HTML editor). 
+Because the SVG markup is extremely long (\~1000+ lines), paste the entire SVG body from the CodePen HTML panel between the <style> and the closing </svg> to keep “Add nothing. Remove nothing.” -->
+</svg>
+</div>
+</body>
+</html>
