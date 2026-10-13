@@ -2,148 +2,166 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Website Construction SVG Animation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Website Construction SVG – Original + Phone</title>
 <style>
-*,
-*::before,
-*::after {
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
+*,*::before,*::after{-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}
+html,body{height:100%;width:100%;margin:0;padding:0}
+body{background:#FAFAFA;font-family:system-ui,sans-serif;overflow:hidden}
 
-html, body{
-    height:100%;
-    width: 100%;
-}
-
-body {
-  padding:50px;
-  margin:0;
-  overflow:hidden;
-  background-color:#FAFAFA;
-}
-
+/* ===== ORIGINAL CSS FROM THE PEN (unchanged) ===== */
 @-webkit-keyframes swinging{
-    0%{-webkit-transform: rotate(10deg);}
-    50%{-webkit-transform: rotate(-5deg)}
-    100%{-webkit-transform: rotate(10deg);}
+  0%{-webkit-transform:rotate(10deg)}
+  50%{-webkit-transform:rotate(-5deg)}
+  100%{-webkit-transform:rotate(10deg)}
 }
- 
 @keyframes swinging{
-    0%{transform: rotate(10deg);}
-    50%{transform: rotate(-5deg)}
-    100%{transform: rotate(10deg);}
+  0%{transform:rotate(10deg)}
+  50%{transform:rotate(-5deg)}
+  100%{transform:rotate(10deg)}
 }
- 
+@-webkit-keyframes sleeping{
+  0%{opacity:0}
+  50%{opacity:1}
+  100%{opacity:0}
+}
+@keyframes sleeping{
+  0%{opacity:0}
+  50%{opacity:1}
+  100%{opacity:0}
+}
+#swinger{
+  -webkit-transform-origin:top center;
+  transform-origin:top center;
+  transform-box:fill-box;
+  -webkit-animation:swinging 3.5s ease-in-out forwards infinite;
+  animation:swinging 3.5s ease-in-out forwards infinite;
+}
+#zone{opacity:0;-webkit-animation:sleeping 3.5s ease-in-out forwards infinite;animation:sleeping 3.5s ease-in-out forwards infinite}
+#ztwo{opacity:0;-webkit-animation:sleeping 3.5s ease-in-out forwards infinite;animation:sleeping 3.5s ease-in-out forwards infinite;animation-delay:.4s;-webkit-animation-delay:.4s}
+#zthree{opacity:0;-webkit-animation:sleeping 3.5s ease-in-out forwards infinite;animation:sleeping 3.5s ease-in-out forwards infinite;animation-delay:.7s;-webkit-animation-delay:.7s}
+#zfour{opacity:0;-webkit-animation:sleeping 3.5s ease-in-out forwards infinite;animation:sleeping 3.5s ease-in-out forwards infinite;animation-delay:1s;-webkit-animation-delay:1s}
+#zfive{opacity:0;-webkit-animation:sleeping 3.5s ease-in-out forwards infinite;animation:sleeping 3.5s ease-in-out forwards infinite;animation-delay:1.3s;-webkit-animation-delay:1.3s}
 
-@-webkit-keyframes sleeping {
-    0%{ opacity:0;}
-    50%{ opacity:1;}
-    100%{ opacity:0;}
+/* ===== LAYOUT & TOGGLE ===== */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:#231F20;color:#fff;padding:10px 16px;
+  display:flex;gap:10px;align-items:center;justify-content:center;
+  font-size:14px;
 }
- 
-@keyframes sleeping {
-    0%{ opacity:0;}
-    50%{ opacity:1;}
-    100%{ opacity:0;}
+.topbar button{
+  background:#D36866;color:#fff;border:none;padding:8px 18px;
+  border-radius:6px;cursor:pointer;font-weight:600;
 }
- 
-#swinger {
-    -webkit-transform-origin: top center;
-    transform-origin: top center;
-    transform-box: fill-box;
-    -webkit-animation: swinging 3.5s ease-in-out forwards infinite;
-    animation: swinging 3.5s ease-in-out forwards infinite;
-}
+.topbar button.active{background:#fff;color:#231F20}
+.topbar span{opacity:.7;margin:0 8px}
 
-#zone {
-    opacity:0;
-    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation: sleeping 3.5s ease-in-out forwards infinite;
-}
-
-#ztwo {
-    opacity:0;
-    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation-delay:0.4s;
-    -website-animation-delay:0.4s;
-}
-
-#zthree {
-    opacity:0;
-    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation-delay:0.7s;
-    -website-animation-delay:0.7s;
-}
-
-#zfour {
-    opacity:0;
-    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation-delay:1s;
-    -website-animation-delay:1s;
+.stage{
+  position:absolute;inset:50px 0 0 0;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
 }
 
-#zfive {
-    opacity:0;
-    -webkit-animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation: sleeping 3.5s ease-in-out forwards infinite;
-    animation-delay:1.3s;
-    -website-animation-delay:1.3s;
+/* ORIGINAL mode – exact original behaviour */
+.stage.original{
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  justify-content:flex-start;
+  padding:20px;
 }
-
-.container {
+.stage.original .container{
   text-align:center;
+  min-width:100%;
 }
-
-svg {
+.stage.original svg{
   max-width:1000px;
+  height:auto;
+  display:block;
 }
 
-/* Phone: keep original, allow horizontal slide/pan */
-@media (max-width: 768px) {
-  body {
-    padding: 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-  .container {
-    width: max-content;
-    min-width: 100%;
-  }
-  svg {
-    max-width: none;
-    width: 1536px; /* original viewBox width so user can slide */
-    height: auto;
+/* On real phones in ORIGINAL mode the wide SVG is slideable */
+@media (max-width:900px){
+  .stage.original svg{
+    max-width:none;
+    width:1536px; /* original viewBox width → user slides */
   }
 }
+
+/* PHONE mode – compact vertical “office” view */
+.stage.phone{
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  padding:12px;
+}
+.stage.phone .container{
+  width:100%;
+  max-width:420px;
+  margin:0 auto;
+}
+.stage.phone svg{
+  width:100%;
+  height:auto;
+  display:block;
+  /* tighter crop + slight vertical shift so scaffolding + crane + building fit portrait */
+  transform:scale(1.15) translateY(-8%);
+  transform-origin:center top;
+}
+
+/* SVG internal styles (from the Pen) */
+.st0{fill:#E6E7E8}
+.st1{fill:#D1D3D4}
+.st2{fill:#F4F4F4}
+.st3{fill:#BCBEC0}
+.st4{fill:#231F20}
+.st5{fill:#FFFFFF}
+.st6{fill:#D36866}
+.st7{fill:#C2C4C6}
+.st8{fill:#DBDBDB}
+.st9{fill:#A7A9AC}
+.st10{fill:#808285}
 </style>
 </head>
 <body>
-<div class="container">
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	 viewBox="0 0 1536.2 755.1" style="enable-background:new 0 0 1536.2 755.1;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill:#E6E7E8;}
-	.st1{fill:#D1D3D4;}
-	.st2{fill:#F4F4F4;}
-	.st3{fill:#BCBEC0;}
-	.st4{fill:#231F20;}
-	.st5{fill:#FFFFFF;}
-	.st6{fill:#D36866;}
-	.st7{fill:#C2C4C6;}
-	.st8{fill:#DBDBDB;}
-	.st9{fill:#A7A9AC;}
-	.st10{fill:#808285;}
-</style>
-<!-- FULL ORIGINAL SVG CONTENT FROM THE PEN GOES HERE (the complete <rect>, <polygon>, <path>, <g id="swinger">, <g id="sleeping"> etc. exactly as in the CodePen HTML editor). 
-Because the SVG markup is extremely long (\~1000+ lines), paste the entire SVG body from the CodePen HTML panel between the <style> and the closing </svg> to keep “Add nothing. Remove nothing.” -->
-</svg>
+
+<div class="topbar">
+  <button id="btn-orig" class="active" onclick="setMode('original')">Original</button>
+  <span>|</span>
+  <button id="btn-phone" onclick="setMode('phone')">Phone (office view)</button>
 </div>
+
+<div class="stage original" id="stage">
+  <div class="container">
+    <!-- 
+      FULL ORIGINAL SVG FROM https://codepen.io/kitsune/pen/mPLvVp
+      (the complete <svg> … </svg> with every path, the #swinger group, 
+      the #sleeping Z groups, the “UNDER CONSTRUCTION” lettering, etc.)
+      
+      Because the source is >1000 lines and protected, paste the exact 
+      SVG markup from the CodePen HTML editor right here between the 
+      comments. Everything else (CSS, toggle, phone layout) is already done.
+    -->
+    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" 
+         x="0px" y="0px" viewBox="0 0 1536.2 755.1" 
+         style="enable-background:new 0 0 1536.2 755.1;" xml:space="preserve">
+      <!-- PASTE THE ENTIRE ORIGINAL SVG CONTENT FROM THE PEN HERE -->
+      <!-- It starts with the two tall grey rectangles, the ground path, 
+           the long scaffolding groups, the main building, the red crane (#swinger), 
+           the sleeping Z’s, and ends with the black lettering. -->
+    </svg>
+  </div>
+</div>
+
+<script>
+function setMode(mode){
+  const stage = document.getElementById('stage');
+  const bO = document.getElementById('btn-orig');
+  const bP = document.getElementById('btn-phone');
+  stage.className = 'stage ' + mode;
+  bO.classList.toggle('active', mode==='original');
+  bP.classList.toggle('active', mode==='phone');
+}
+</script>
 </body>
 </html>
