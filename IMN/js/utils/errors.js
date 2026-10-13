@@ -1,10 +1,13 @@
 /**
  * Error translation + normalization layer.
  *
- * Services throw AppError instances so the UI layer never has to parse
- * raw Supabase strings. Every service call funnels through `normalize()`
- * which turns a Supabase / network / unknown error into an AppError with
- * a stable `code` and a Persian `message` suitable for a toast.
+ * Every service call funnels through `normalize()` which turns a
+ * Supabase / network / unknown error into an AppError with:
+ *   • a stable `code` from ERROR_CODES
+ *   • a Persian `message` suitable for a toast
+ *   • the original error preserved on `.cause` for debugging
+ *
+ * The raw English message is never used as the user-facing message.
  */
 
 export class AppError extends Error {
@@ -31,6 +34,7 @@ export const ERROR_CODES = {
   PERMISSION: "PERMISSION",
   CONFLICT: "CONFLICT",
   VALIDATION: "VALIDATION",
+  SCHEMA_MISSING: "SCHEMA_MISSING",
   UNKNOWN: "UNKNOWN",
 };
 
@@ -47,6 +51,7 @@ const PERSIAN_MESSAGES = {
   [ERROR_CODES.PERMISSION]: "دسترسی به این بخش مجاز نیست",
   [ERROR_CODES.CONFLICT]: "این مورد از قبل وجود دارد",
   [ERROR_CODES.VALIDATION]: "اطلاعات وارد شده معتبر نیست",
+  [ERROR_CODES.SCHEMA_MISSING]: "جدول دیتابیس یافت نشد — اسکیمای Supabase را اجرا کنید",
   [ERROR_CODES.UNKNOWN]: "خطای غیرمنتظره رخ داد",
 };
 
@@ -56,27 +61,22 @@ export function appError(code, overrides = {}) {
 }
 
 /**
- * Turn any thrown value into an AppError.
- * Recognized shapes:
- *  - Supabase PostgrestError  { code: "PGRST…", message, details }
- *  - Supabase AuthError       { message, status, code }
- *  - TypeError from fetch     (message includes "Failed to fetch")
- *  - our own AppError         (returned as-is)
+ * Turn any thrown value into an AppError with a Persian message.
+ *
+ * Precedence matters — explicit server codes win over ambient state like
+ * "offline", so a validation error is never rewritten to "connection
+ * lost" just because the browser happens to be offline at that moment.
  */
 export function normalize(err) {
   if (!err) return appError(ERROR_CODES.UNKNOWN);
   if (err instanceof AppError) return err;
 
-  // Offline shortcut
-  if (typeof navigator !== "undefined" && navigator.onLine === false) {
-    return appError(ERROR_CODES.OFFLINE, { cause: err });
-  }
-
-  const msg = String(err.message || err.error_description || err.error || "").toLowerCase();
+  const rawMsg = String(err.message || err.error_description || err.error || "");
+  const msg = rawMsg.toLowerCase();
   const code = String(err.code || "").toUpperCase();
   const status = err.status || err.statusCode;
 
-  // Auth
+  /* ---------- Auth (Supabase AuthError) ---------- */
   if (msg.includes("invalid login") || msg.includes("invalid_credentials")) {
     return appError(ERROR_CODES.AUTH_INVALID_CREDENTIALS, { cause: err, status });
   }
@@ -93,46 +93,52 @@ export function normalize(err) {
     return appError(ERROR_CODES.AUTH_RATE_LIMITED, { cause: err, status });
   }
 
-  // PostgREST
-  if (code.startsWith("PGRST")) {
-    if (code === "PGRST116") return appError(ERROR_CODES.NOT_FOUND, { cause: err });
-    return appError(ERROR_CODES.UNKNOWN, { cause: err, details: err.details });
-  }
-  // 23505 unique_violation, 23503 foreign_key_violation, 42P01 undefined_table
+  /* ---------- Postgres / PostgREST codes ---------- */
+  if (code === "PGRST116") return appError(ERROR_CODES.NOT_FOUND, { cause: err });
+  if (code === "PGRST301" || code === "PGRST302") return appError(ERROR_CODES.PERMISSION, { cause: err });
   if (code === "23505") return appError(ERROR_CODES.CONFLICT, { cause: err });
   if (code === "23503") return appError(ERROR_CODES.VALIDATION, { cause: err });
-  if (code === "42501" || status === 403) return appError(ERROR_CODES.PERMISSION, { cause: err, status });
-
-  // Network
-  if (
-    msg.includes("failed to fetch") ||
-    msg.includes("networkerror") ||
-    msg.includes("network request failed")
-  ) {
-    return appError(ERROR_CODES.NETWORK, { cause: err });
+  if (code === "42P01") {
+    return new AppError(ERROR_CODES.SCHEMA_MISSING, PERSIAN_MESSAGES[ERROR_CODES.SCHEMA_MISSING], {
+      cause: err,
+      details: rawMsg,
+    });
+  }
+  if (code === "42501" || status === 403) {
+    return appError(ERROR_CODES.PERMISSION, { cause: err, status });
   }
 
+  /* ---------- Explicit network signals ---------- */
+  const looksNetwork =
+    msg.includes("failed to fetch") ||
+    msg.includes("networkerror") ||
+    msg.includes("network request failed") ||
+    msg.includes("load failed") ||
+    msg.includes("timeout");
+
+  if (looksNetwork) {
+    const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+    return appError(offline ? ERROR_CODES.OFFLINE : ERROR_CODES.NETWORK, { cause: err });
+  }
+
+  /* ---------- HTTP status fallbacks ---------- */
   if (status === 401) return appError(ERROR_CODES.AUTH_REQUIRED, { cause: err, status });
   if (status === 404) return appError(ERROR_CODES.NOT_FOUND, { cause: err, status });
 
-  return new AppError(ERROR_CODES.UNKNOWN, err.message || PERSIAN_MESSAGES[ERROR_CODES.UNKNOWN], {
-    cause: err,
-    details: err.details,
-    status,
-  });
+  /* ---------- Unknown: keep Persian message, preserve cause ---------- */
+  return new AppError(
+    ERROR_CODES.UNKNOWN,
+    PERSIAN_MESSAGES[ERROR_CODES.UNKNOWN],
+    { cause: err, details: rawMsg, status }
+  );
 }
 
-/**
- * Wrap a Supabase call: throws AppError on error, returns data on success.
- *   const data = await run(supabase.from("x").select("*"));
- */
 export async function run(queryBuilder) {
   const { data, error } = await queryBuilder;
   if (error) throw normalize(error);
   return data;
 }
 
-/** Same as run() but returns { data, error } so callers can handle soft failures. */
 export async function tryRun(queryBuilder) {
   try {
     const data = await run(queryBuilder);
