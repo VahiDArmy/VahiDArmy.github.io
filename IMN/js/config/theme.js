@@ -1,49 +1,45 @@
 /**
- * Theme manager — applies/removes data attributes on <html>, persists
- * the choice, and exposes an event so UI components can react.
+ * Theme manager — dark / light.
  *
- * The dark theme is the default; a couple of dark variants (midnight,
- * slate) are supported through [data-theme] selectors. Because we ship a
- * single variables.css, the variants only override a handful of tokens.
+ * Applies `data-theme` on <html>, persists the choice, honors the OS
+ * preference on first visit, and emits `theme:changed` on the bus.
  */
 
 import { STORAGE_KEYS } from "./constants.js";
 import { storage } from "../core/storage.js";
 import { bus } from "../core/event-bus.js";
 
-export const THEMES = ["dark", "midnight", "slate"];
-
+export const THEMES = ["dark", "light"];
 const DEFAULT_THEME = "dark";
 
 let current = DEFAULT_THEME;
 
+function systemPrefersLight() {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia("(prefers-color-scheme: light)").matches;
+}
+
 function readInitial() {
   const saved = storage.get(STORAGE_KEYS.THEME);
   if (saved && THEMES.includes(saved)) return saved;
-  // Prefer user's OS preference the first time.
-  if (typeof window !== "undefined" && window.matchMedia) {
-    // All our themes are dark; respect OS only to decide accent density,
-    // but keep dark regardless.
-    return DEFAULT_THEME;
-  }
-  return DEFAULT_THEME;
+  return systemPrefersLight() ? "light" : DEFAULT_THEME;
 }
 
 export const theme = {
   init() {
     current = readInitial();
-    this.apply(current);
+    this.apply(current, { silent: true });
     this._watchSystem();
     return current;
   },
 
-  apply(name) {
+  apply(name, { silent = false } = {}) {
     if (!THEMES.includes(name)) name = DEFAULT_THEME;
+    const changed = name !== current;
     current = name;
     document.documentElement.setAttribute("data-theme", name);
-    document.documentElement.setAttribute("data-color-scheme", "dark");
     storage.set(STORAGE_KEYS.THEME, name);
-    bus.emit("theme:changed", { theme: name });
+    if (changed && !silent) bus.emit("theme:changed", { theme: name });
   },
 
   get current() {
@@ -51,8 +47,7 @@ export const theme = {
   },
 
   toggle() {
-    const idx = THEMES.indexOf(current);
-    const next = THEMES[(idx + 1) % THEMES.length];
+    const next = current === "dark" ? "light" : "dark";
     this.apply(next);
     return next;
   },
@@ -60,14 +55,11 @@ export const theme = {
   _watchSystem() {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(prefers-color-scheme: light)");
-    // We still stay dark, but we nudge contrast for light-preferring users.
-    const handler = (e) => {
-      document.documentElement.setAttribute(
-        "data-os-preference",
-        e.matches ? "light" : "dark"
-      );
-    };
-    handler(mq);
-    mq.addEventListener?.("change", handler);
+    mq.addEventListener?.("change", (e) => {
+      // Only follow the OS if the user never explicitly picked.
+      if (!storage.get(STORAGE_KEYS.THEME)) {
+        this.apply(e.matches ? "light" : "dark");
+      }
+    });
   },
 };
