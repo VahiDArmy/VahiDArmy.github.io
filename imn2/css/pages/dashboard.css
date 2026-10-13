@@ -1,0 +1,310 @@
+/* ============================================================
+   dashboard.css — صفحه اصلی و کارت‌های خلاصه روزانه
+   ============================================================ */
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  animation: pageEnter 340ms var(--ease-out);
+}
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Daily summary header ---------- */
+.daily-summary {
+  position: relative;
+  padding: var(--sp-5);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+.daily-summary::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: -80px;
+  top: -80px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(34,211,238,0.18), transparent 70%);
+  pointer-events: none;
+}
+.daily-summary::after {
+  content: "";
+  position: absolute;
+  inset-inline-start: -80px;
+  bottom: -80px;
+  width: 240px;
+  height: 240px;
+  background: radial-gradient(circle, rgba(168,85,247,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+.daily-summary__header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--sp-4);
+}
+.daily-summary__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.daily-summary__title-icon {
+  font-size: 1.3em;
+  filter: drop-shadow(0 0 10px var(--accent-soft));
+}
+.daily-summary__subtitle {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  margin-top: 4px;
+}
+.daily-summary__date {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  background: var(--bg-surface-2);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-variant-numeric: tabular-nums;
+}
+
+.daily-summary__stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-3);
+}
+
+.daily-summary__macros {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--sp-4);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ---------- Subject grid on dashboard ---------- */
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--sp-4);
+}
+.subject-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform var(--t-base), box-shadow var(--t-base), border-color var(--t-base);
+}
+.subject-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-md);
+}
+.subject-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.subject-card__icon {
+  width: 42px; height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-3);
+  font-size: 20px;
+}
+.subject-card__arrow {
+  color: var(--text-tertiary);
+  transition: transform var(--t-base), color var(--t-base);
+}
+.subject-card:hover .subject-card__arrow {
+  transform: translateX(-4px);
+  color: var(--accent);
+}
+.subject-card__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+.subject-card__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+.subject-card__value {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.subject-card__value small {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-regular);
+  color: var(--text-tertiary);
+  margin-inline-start: 4px;
+}
+
+/* Color accents */
+.subject-card[data-tone="cyan"]   .subject-card__icon { color: var(--brand-cyan);   background: rgba(34,211,238,0.12); }
+.subject-card[data-tone="violet"] .subject-card__icon { color: var(--brand-violet); background: rgba(168,85,247,0.12); }
+.subject-card[data-tone="amber"]  .subject-card__icon { color: var(--brand-amber);  background: rgba(245,158,11,0.12); }
+.subject-card[data-tone="green"]  .subject-card__icon { color: var(--brand-green);  background: rgba(16,185,129,0.12); }
+.subject-card[data-tone="pink"]   .subject-card__icon { color: var(--brand-pink);   background: rgba(236,72,153,0.12); }
+.subject-card[data-tone="red"]    .subject-card__icon { color: var(--brand-red);    background: rgba(239,68,68,0.12); }
+
+/* ---------- Meals section ---------- */
+.meals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+.meal-card {
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color var(--t-base), box-shadow var(--t-base);
+}
+.meal-card:hover { border-color: var(--border-default); }
+
+.meal-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-surface-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.meal-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+.meal-card__icon {
+  width: 34px; height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-1);
+  font-size: 17px;
+}
+.meal-card__kcal {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.meal-card__kcal-value {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.meal-card__kcal-unit {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+.meal-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding: var(--sp-3);
+}
+.meal-card__empty {
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+.meal-card__add {
+  margin: var(--sp-2) var(--sp-3) var(--sp-3);
+  padding: 10px;
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-tertiary);
+  font-family: var(--font-fa);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-align: center;
+  transition: all var(--t-fast);
+  cursor: pointer;
+  width: calc(100% - var(--sp-6));
+}
+.meal-card__add:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* ---------- Section tabs switcher ---------- */
+.dash-tabs {
+  display: flex;
+  gap: var(--sp-2);
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.dash-tabs::-webkit-scrollbar { display: none; }
+.dash-tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-fa);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.dash-tab:hover {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.dash-tab.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+}
+.dash-tab__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* ---------- Other-info grid ---------- */
+.other-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-4);
+}
+.other-info-grid .card { padding: var(--sp-4); }
