@@ -1,0 +1,182 @@
+/* =============================================================
+   Design Tokens - Dark Theme
+   ============================================================= */
+:root {
+  /* ---------- Colors / Base ---------- */
+  --color-bg-0: #07090f;
+  --color-bg-1: #0a0d14;
+  --color-bg-2: #111623;
+  --color-bg-3: #182030;
+  --color-bg-4: #1e2739;
+  --color-bg-5: #263048;
+
+  --color-surface-1: rgba(17, 22, 35, 0.72);
+  --color-surface-2: rgba(24, 32, 48, 0.72);
+  --color-surface-3: rgba(30, 39, 57, 0.85);
+
+  --color-overlay: rgba(7, 9, 15, 0.72);
+
+  /* ---------- Borders & Dividers ---------- */
+  --color-border-1: #1b2235;
+  --color-border-2: #263048;
+  --color-border-3: #34405c;
+  --color-divider: rgba(255, 255, 255, 0.06);
+
+  /* ---------- Text ---------- */
+  --color-text-1: #e8edf5;   /* primary */
+  --color-text-2: #b6c0d3;   /* secondary */
+  --color-text-3: #8792a9;   /* muted */
+  --color-text-4: #5c667c;   /* disabled */
+  --color-text-inverse: #0a0d14;
+
+  /* ---------- Brand / Accent ---------- */
+  --color-primary: #6366f1;
+  --color-primary-600: #5457e6;
+  --color-primary-700: #4749d1;
+  --color-primary-300: #a5a7f7;
+  --color-primary-soft: rgba(99, 102, 241, 0.14);
+  --color-primary-glow: rgba(99, 102, 241, 0.45);
+
+  --color-accent: #22d3ee;
+  --color-accent-soft: rgba(34, 211, 238, 0.14);
+
+  /* ---------- Semantic ---------- */
+  --color-success: #10b981;
+  --color-success-soft: rgba(16, 185, 129, 0.14);
+  --color-warning: #f59e0b;
+  --color-warning-soft: rgba(245, 158, 11, 0.14);
+  --color-danger: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-soft: rgba(239, 68, 68, 0.14);
+  --color-info: #3b82f6;
+  --color-info-soft: rgba(59, 130, 246, 0.14);
+
+  /* ---------- Gradients ---------- */
+  --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #22d3ee 100%);
+  --gradient-primary-soft: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(34,211,238,0.10));
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  --gradient-success: linear-gradient(135deg, #10b981 0%, #22d3ee 100%);
+  --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(30,39,57,0.55) 0%, rgba(17,22,35,0.55) 100%);
+  --gradient-glass: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+  --gradient-header: linear-gradient(90deg, rgba(99,102,241,0.10), rgba(34,211,238,0.05) 60%, transparent);
+
+  /* ---------- Shadows ---------- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 14px 40px rgba(0, 0, 0, 0.50);
+  --shadow-xl: 0 24px 70px rgba(0, 0, 0, 0.60);
+  --shadow-inner: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  --shadow-primary: 0 8px 26px rgba(99, 102, 241, 0.28);
+  --shadow-danger: 0 8px 26px rgba(239, 68, 68, 0.28);
+
+  /* ---------- Radii ---------- */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ---------- Spacing Scale ---------- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+  --space-10: 72px;
+
+  /* ---------- Typography ---------- */
+  --font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif;
+  --font-mono: "Vazirmatn", "JetBrains Mono", Consolas, monospace;
+
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 28px;
+  --fs-4xl: 34px;
+  --fs-5xl: 44px;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-black: 800;
+
+  --lh-tight: 1.25;
+  --lh-normal: 1.55;
+  --lh-loose: 1.85;
+
+  /* ---------- Layout ---------- */
+  --sidebar-width: 264px;
+  --sidebar-collapsed: 76px;
+  --topbar-height: 68px;
+  --footer-height: 46px;
+  --container-max: 1440px;
+
+  /* ---------- Z-Index ---------- */
+  --z-base: 1;
+  --z-header: 50;
+  --z-sidebar: 60;
+  --z-overlay: 70;
+  --z-dropdown: 200;
+  --z-context: 400;
+  --z-modal: 500;
+  --z-toast: 700;
+  --z-tooltip: 800;
+  --z-loader: 900;
+
+  /* ---------- Motion ---------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --dur-xxs: 90ms;
+  --dur-xs: 140ms;
+  --dur-sm: 200ms;
+  --dur-md: 300ms;
+  --dur-lg: 450ms;
+  --dur-xl: 700ms;
+
+  /* ---------- Component Specific ---------- */
+  --input-bg: rgba(24, 32, 48, 0.6);
+  --input-bg-focus: rgba(30, 39, 57, 0.9);
+  --input-border: #263048;
+  --input-border-focus: #6366f1;
+
+  --btn-height-sm: 32px;
+  --btn-height-md: 40px;
+  --btn-height-lg: 48px;
+
+  --card-bg: linear-gradient(180deg, rgba(30,39,57,0.55) 0%, rgba(17,22,35,0.55) 100%);
+  --card-border: rgba(255, 255, 255, 0.06);
+
+  --scrollbar-track: #0d121d;
+  --scrollbar-thumb: #2a3548;
+  --scrollbar-thumb-hover: #3b4a68;
+
+  color-scheme: dark;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-xxs: 0ms;
+    --dur-xs: 0ms;
+    --dur-sm: 0ms;
+    --dur-md: 0ms;
+    --dur-lg: 0ms;
+    --dur-xl: 0ms;
+  }
+}
