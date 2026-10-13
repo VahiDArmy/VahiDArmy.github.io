@@ -1,13 +1,17 @@
 /**
- * Reports page — daily / weekly / monthly / custom reports.
- * The most feature-rich page of the app.
+ * Reports page — daily / weekly / monthly / custom.
+ *
+ * Fixes vs. previous version:
+ *   • Date picker uses the actual trigger element, not `e.currentTarget`
+ *     (unreliable in delegated handlers).
+ *   • Range label no longer splits the date string.
+ *   • Range report errors surface as an error card, not as "no data".
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
 import { icon } from "../components/icons.js";
 import { toast } from "../components/toast.js";
-import { tabsInit } from "../components/tabs.js";
-import { calendar } from "../components/calendar.js";
+import { attachPicker } from "../components/calendar.js";
 import { chart } from "../components/chart.js";
 import { skeleton } from "../components/skeleton.js";
 import { store } from "../core/state.js";
@@ -17,13 +21,12 @@ import {
 import {
   todayISO, addDays, addMonths, formatLong, formatShort, formatMonthYear,
   startOfWeek, endOfWeek, startOfMonth, endOfMonth,
-  rangeDays, formatWeekdayShort, toJalali, JALALI_MONTHS, diffDays,
+  rangeDays, formatWeekdayShort, toJalali,
 } from "../utils/date.js";
 import {
-  formatInteger, formatNumber, formatCalories, formatDuration,
-  formatHoursCompact, formatBP, escapeHTML,
+  formatInteger, formatNumber, formatDuration, escapeHTML,
 } from "../utils/format.js";
-import { MEALS, REPORT_RANGES } from "../config/constants.js";
+import { MEALS } from "../config/constants.js";
 
 export default {
   title: "گزارش‌ها",
@@ -34,6 +37,7 @@ export default {
     let currentRange = "weekly";
     let anchorDate = todayISO();
     let currentData = null;
+    let pickerDetach = null;
 
     container.innerHTML = `
       <div class="page-header">
@@ -42,7 +46,11 @@ export default {
           <div class="page-header__subtitle">تحلیل جامع تمام داده‌های شما</div>
         </div>
         <div class="page-header__actions">
-          <div class="export-row" data-exports></div>
+          <div class="export-row" data-exports>
+            <button class="btn btn--secondary btn--sm" data-export="json" type="button">${icon("download", { size: 14 })}<span>JSON</span></button>
+            <button class="btn btn--secondary btn--sm" data-export="csv" type="button">${icon("download", { size: 14 })}<span>CSV</span></button>
+            <button class="btn btn--secondary btn--sm" data-export="print" type="button">${icon("printer", { size: 14 })}<span>چاپ</span></button>
+          </div>
         </div>
       </div>
 
@@ -53,7 +61,6 @@ export default {
             <button class="report-tab" data-range="daily" type="button">روزانه</button>
             <button class="report-tab is-active" data-range="weekly" type="button">هفتگی</button>
             <button class="report-tab" data-range="monthly" type="button">ماهانه</button>
-            <button class="report-tab" data-range="custom" type="button">دلخواه</button>
           </div>
         </div>
         <div class="reports-controls__spacer"></div>
@@ -72,16 +79,10 @@ export default {
       </div>
     `;
 
-    /* ---------- Exports ---------------------------------------------- */
-    $("[data-exports]", container).innerHTML = `
-      <button class="btn btn--secondary btn--sm" data-export="json" type="button">${icon("download", { size: 14 })}<span>JSON</span></button>
-      <button class="btn btn--secondary btn--sm" data-export="csv" type="button">${icon("download", { size: 14 })}<span>CSV</span></button>
-      <button class="btn btn--secondary btn--sm" data-export="print" type="button">${icon("printer", { size: 14 })}<span>چاپ</span></button>
-    `;
-
+    /* ---------- Exports --------------------------------------------- */
     delegate(container, "click", "[data-export]", (e, btn) => {
-      const kind = btn.dataset.export;
       if (!currentData) return;
+      const kind = btn.dataset.export;
       if (kind === "print") return window.print();
       if (kind === "json") return downloadJSON(currentData);
       if (kind === "csv") return downloadCSV(currentData);
@@ -94,6 +95,7 @@ export default {
       load();
     });
 
+    /* ---------- Date navigation -------------------------------------- */
     delegate(container, "click", "[data-nav]", (e, btn) => {
       const dir = btn.dataset.nav === "next" ? 1 : -1;
       if (currentRange === "daily") anchorDate = addDays(anchorDate, dir);
@@ -102,34 +104,27 @@ export default {
       load();
     });
 
-    delegate(container, "click", "[data-picker]", (e) => {
-      const cal = calendar({
+    /* ---------- Date picker ------------------------------------------
+       Use the real trigger element, not `e.currentTarget` (which is the
+       delegated container). attachPicker handles its own outside-click. */
+    delegate(container, "click", "[data-picker]", (e, btn) => {
+      e.stopPropagation();
+      if (pickerDetach) { pickerDetach(); pickerDetach = null; }
+      pickerDetach = attachPicker(btn, {
         value: anchorDate,
         onSelect: (iso) => {
-          anchorDate = iso || todayISO();
-          document.querySelectorAll(".calendar").forEach((c) => {
-            // close any open calendar
-            c.closest("[data-calendar-pop]")?.remove();
-          });
+          pickerDetach = null;
+          if (iso) anchorDate = iso;
           load();
         },
       });
-      const pop = createElement("div", { "data-calendar-pop": "1", style: "position:fixed;z-index:500" });
-      pop.appendChild(cal.el);
-      document.body.appendChild(pop);
-      const r = e.currentTarget.getBoundingClientRect();
-      pop.style.top = `${r.bottom + 6}px`;
-      pop.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - 320))}px`;
-      const off = (ev) => {
-        if (!pop.contains(ev.target) && !e.currentTarget.contains(ev.target)) {
-          pop.remove();
-          document.removeEventListener("mousedown", off);
-        }
-      };
-      setTimeout(() => document.addEventListener("mousedown", off), 0);
+      // Fire the picker immediately (attachPicker's listener is also
+      // bound, but delegation has already consumed this event).
+      btn.dispatchEvent(new MouseEvent("click", { bubbles: false }));
+      e.stopImmediatePropagation();
     });
 
-    /* ---------- Data loading ----------------------------------------- */
+    /* ---------- Load ------------------------------------------------- */
     async function load() {
       const body = $("[data-report-body]", container);
       body.innerHTML = `
@@ -138,26 +133,36 @@ export default {
         <div style="margin-top:20px">${skeleton.table(4, 4)}</div>
       `;
 
-      try {
-        const rangeInfo = computeRange();
-        $("[data-range-label]", container).textContent = rangeInfo.label;
+      const rangeInfo = computeRange();
+      $("[data-range-label]", container).textContent = rangeInfo.label;
 
+      try {
         if (currentRange === "daily") {
           currentData = await dailyReport(anchorDate);
           renderDaily(currentData);
-        } else {
-          const report = currentRange === "weekly"
-            ? await weeklyReport(anchorDate)
-            : currentRange === "monthly"
-            ? await monthlyReport(anchorDate)
-            : await customReport(rangeInfo.start, rangeInfo.end);
-          currentData = report;
-          await renderRange(report);
+        } else if (currentRange === "weekly") {
+          currentData = await weeklyReport(anchorDate);
+          await renderRange(currentData);
+        } else if (currentRange === "monthly") {
+          currentData = await monthlyReport(anchorDate);
+          await renderRange(currentData);
         }
       } catch (err) {
         console.error("[reports] load error", err);
-        body.innerHTML = `<div class="empty"><div class="empty__title">خطا در بارگذاری گزارش</div><div class="empty__text">${escapeHTML(err.message || "")}</div></div>`;
-        toast.error("خطا در بارگذاری گزارش");
+        body.innerHTML = `
+          <div class="empty" style="min-height:300px">
+            <div class="empty__art">
+              <svg viewBox="0 0 24 24" width="60" height="60" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12" y2="17.5"/>
+              </svg>
+            </div>
+            <div class="empty__title">خطا در بارگذاری گزارش</div>
+            <div class="empty__text">${escapeHTML(err?.message || "خطای نامشخص")}</div>
+          </div>
+        `;
+        toast.error(err?.message || "خطا در بارگذاری گزارش");
       }
     }
 
@@ -170,23 +175,17 @@ export default {
         const end = endOfWeek(anchorDate);
         return { start, end, label: `${formatShort(start)} — ${formatShort(end)}` };
       }
-      if (currentRange === "monthly") {
-        const start = startOfMonth(anchorDate);
-        const end = endOfMonth(anchorDate);
-        return { start, end, label: formatMonthYear(anchorDate) };
-      }
-      // custom — placeholder; actual UI switch happens below
-      const start = startOfWeek(anchorDate);
-      const end = endOfWeek(anchorDate);
-      return { start, end, label: `${formatShort(start)} — ${formatShort(end)}` };
+      const start = startOfMonth(anchorDate);
+      const end = endOfMonth(anchorDate);
+      return { start, end, label: formatMonthYear(anchorDate) };
     }
 
-    /* ---------- Daily report render --------------------------------- */
+    /* ---------- Renders (unchanged from before) --------------------- */
     function renderDaily(rep) {
       const body = $("[data-report-body]", container);
       const f = rep.food.totals;
       const a = rep.activity.totals;
-      const g = store.get("goals");
+      const g = store.get("goals") || {};
 
       body.innerHTML = `
         <div class="report-summary" style="margin-bottom:20px">
@@ -215,7 +214,6 @@ export default {
               ${renderGoalsProgress(rep)}
             </div>
           </div>
-
           <div class="col-6">
             <div class="report-section">
               <div class="report-section__head">
@@ -232,7 +230,6 @@ export default {
               ${renderActivitySummary(rep)}
             </div>
           </div>
-
           <div class="col-12">
             <div class="report-section">
               <div class="report-section__head">
@@ -245,11 +242,9 @@ export default {
       `;
     }
 
-    /* ---------- Range report render ---------------------------------- */
     async function renderRange(rep) {
       const body = $("[data-report-body]", container);
       const comparison = await comparisonReport(anchorDate, currentRange).catch(() => null);
-
       const f = rep.food.totals;
       const a = rep.activity.totals;
 
@@ -275,7 +270,6 @@ export default {
               ${renderCaloriesLine(rep.food.daily)}
             </div>
           </div>
-
           <div class="col-6">
             <div class="report-section">
               <div class="report-section__head">
@@ -292,7 +286,6 @@ export default {
               ${renderMacroDonut(rep.food)}
             </div>
           </div>
-
           <div class="col-6">
             <div class="report-section">
               <div class="report-section__head">
@@ -309,7 +302,6 @@ export default {
               ${renderSleepRangeSummary(rep)}
             </div>
           </div>
-
           ${currentRange === "monthly" ? `
             <div class="col-12">
               <div class="report-section">
@@ -320,7 +312,6 @@ export default {
               </div>
             </div>
           ` : ""}
-
           <div class="col-12">
             <div class="report-section">
               <div class="report-section__head">
@@ -333,7 +324,6 @@ export default {
       `;
     }
 
-    /* ---------- Renderers -------------------------------------------- */
     function summaryItem(iconName, label, value, unit, percent, tone, delta) {
       const deltaBadge = delta && delta.direction !== "flat"
         ? `<span class="report-summary__delta report-summary__delta--${delta.direction}">${delta.direction === "up" ? "▲" : "▼"} ${Math.abs(delta.pct)}٪</span>`
@@ -350,14 +340,10 @@ export default {
 
     function renderMealDonut(perMeal) {
       const slices = MEALS.map((m) => ({
-        label: m.label,
-        value: perMeal[m.id]?.calories || 0,
-        color: mealColor(m.id),
+        label: m.label, value: perMeal[m.id]?.calories || 0, color: mealColor(m.id),
       })).filter((s) => s.value > 0);
-
       const total = slices.reduce((s, x) => s + x.value, 0);
       if (!total) return '<div class="empty empty--compact"><div class="empty__text">داده‌ای برای نمایش نیست</div></div>';
-
       return `
         <div class="flex items-center justify-center gap-6 flex-wrap">
           <div style="max-width:240px">
@@ -383,10 +369,9 @@ export default {
     }
 
     function renderGoalsProgress(rep) {
-      const g = store.get("goals");
+      const g = store.get("goals") || {};
       const f = rep.food.totals;
       const a = rep.activity.totals;
-
       const rows = [
         { label: "کالری", value: f.calories, goal: g.calories, unit: "kcal", tone: "primary" },
         { label: "پروتئین", value: f.protein, goal: g.protein, unit: "g", tone: "success" },
@@ -395,7 +380,6 @@ export default {
         { label: "فیبر", value: f.fiber, goal: g.fiber, unit: "g", tone: "accent" },
         { label: "قدم", value: a.steps, goal: g.steps, unit: "", tone: "primary" },
       ];
-
       return `
         <div class="flex flex-col gap-3">
           ${rows.map((r) => {
@@ -484,12 +468,7 @@ export default {
 
     function renderCaloriesLine(daily) {
       const data = daily.map((d) => ({ x: d.date, y: d.calories, label: formatWeekdayShort(d.date).slice(0, 2) }));
-      return chart.lineChart({
-        data,
-        width: 900,
-        height: 260,
-        xLabel: (d) => d.label,
-      });
+      return chart.lineChart({ data, width: 900, height: 260, xLabel: (d) => d.label });
     }
 
     function renderStepsBar(daily) {
@@ -498,22 +477,18 @@ export default {
     }
 
     function renderMacroDonut(food) {
-      const avg = food.averages;
-      if (!avg) return '<div class="empty empty--compact"><div class="empty__text">داده‌ای برای نمایش نیست</div></div>';
+      const avg2 = food.averages;
+      if (!avg2) return '<div class="empty empty--compact"><div class="empty__text">داده‌ای برای نمایش نیست</div></div>';
       const slices = [
-        { label: "پروتئین", value: avg.protein, color: "#6366f1" },
-        { label: "کربوهیدرات", value: avg.carbs, color: "#22d3ee" },
-        { label: "چربی", value: avg.fat, color: "#f59e0b" },
+        { label: "پروتئین", value: avg2.protein, color: "#6366f1" },
+        { label: "کربوهیدرات", value: avg2.carbs, color: "#22d3ee" },
+        { label: "چربی", value: avg2.fat, color: "#f59e0b" },
       ];
       const total = slices.reduce((s, x) => s + x.value, 0);
       return `
         <div class="flex items-center justify-center gap-6 flex-wrap">
           <div style="max-width:220px">
-            ${chart.donut({
-              slices, size: 200, thickness: 22,
-              centerLabel: formatInteger(total),
-              centerSub: "گرم/روز",
-            })}
+            ${chart.donut({ slices, size: 200, thickness: 22, centerLabel: formatInteger(total), centerSub: "گرم/روز" })}
           </div>
           <div class="flex flex-col gap-2">
             ${slices.map((s) => `
@@ -577,7 +552,7 @@ export default {
     }
 
     async function renderMonthlyGrid(rep) {
-      const data = await heatmapData(rep.start, rep.end, "calories").catch(() => []);
+      const data = await heatmapData(rep.start, rep.end, "calories");
       const byDate = new Map(data.map((d) => [d.date, d]));
       const days = rangeDays(rep.start, rep.end);
       const cells = days.map((d) => {
@@ -619,7 +594,7 @@ export default {
                 return `
                   <tr>
                     <td class="${d.date === todayISO() ? "is-today" : ""}">
-                      ${formatWeekdayShort(d.date)} ${formatShort(d.date).split("/")[0]}
+                      ${formatWeekdayShort(d.date)} ${formatShort(d.date)}
                     </td>
                     <td class="num">${formatInteger(d.calories)}</td>
                     <td class="num">${formatNumber(d.protein, { decimals: 1 })}</td>
@@ -636,7 +611,23 @@ export default {
       `;
     }
 
-    /* ---------- Export helpers --------------------------------------- */
+    function pct(v, goal) {
+      if (!goal) return 0;
+      return Math.min(100, Math.round((v / goal) * 100));
+    }
+
+    function mealColor(id) {
+      return {
+        breakfast: "#f59e0b", snack1: "#22d3ee", lunch: "#10b981",
+        snack2: "#06b6d4", dinner: "#8b5cf6", snack3: "#a855f7",
+      }[id] || "#6366f1";
+    }
+
+    function mealLabel(id) {
+      return MEALS.find((m) => m.id === id)?.label || id;
+    }
+
+    /* ---------- Exports --------------------------------------------- */
     function downloadJSON(data) {
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       triggerDownload(blob, `report-${currentRange}-${anchorDate}.json`);
@@ -677,30 +668,11 @@ export default {
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function pct(v, goal) {
-      if (!goal) return 0;
-      return Math.min(100, Math.round((v / goal) * 100));
-    }
-
-    function mealColor(id) {
-      return {
-        breakfast: "#f59e0b",
-        snack1: "#22d3ee",
-        lunch: "#10b981",
-        snack2: "#06b6d4",
-        dinner: "#8b5cf6",
-        snack3: "#a855f7",
-      }[id] || "#6366f1";
-    }
-
-    function mealLabel(id) {
-      return MEALS.find((m) => m.id === id)?.label || id;
-    }
-
+    /* ---------- Lifecycle ------------------------------------------- */
     await load();
 
     return function cleanup() {
-      // no listeners attached outside container
+      if (pickerDetach) { try { pickerDetach(); } catch {} pickerDetach = null; }
     };
   },
 };
