@@ -1,8 +1,13 @@
 /**
- * Reports service — aggregates data across all domains for daily, weekly,
- * and monthly views. This is the heart of the reporting page.
+ * Reports service — aggregates data across all domains for daily, weekly
+ * and monthly views.
  *
- * All methods return plain JS objects ready to be handed to the UI.
+ * ERROR POLICY
+ * ------------
+ * This service does NOT swallow errors. If a query fails, the caller
+ * receives a thrown AppError and can show a real error state. The old
+ * `.catch(() => null)` pattern silently converted failures into "no data",
+ * which hid real problems from users.
  */
 
 import { foodLog } from "./food-log.service.js";
@@ -15,9 +20,6 @@ import {
 } from "../utils/date.js";
 import { store } from "../core/state.js";
 
-/* ---------- Helpers ---------------------------------------------------- */
-const safe = (p) => p.catch(() => null);
-
 function avg(arr, key) {
   const vals = arr.map((x) => Number(x[key])).filter(Number.isFinite);
   if (!vals.length) return 0;
@@ -25,9 +27,7 @@ function avg(arr, key) {
 }
 
 function sum(arr, key) {
-  return Number(
-    arr.reduce((s, x) => s + (Number(x[key]) || 0), 0).toFixed(2)
-  );
+  return Number(arr.reduce((s, x) => s + (Number(x[key]) || 0), 0).toFixed(2));
 }
 
 function median(arr, key) {
@@ -39,22 +39,48 @@ function median(arr, key) {
     : Number(((vals[mid - 1] + vals[mid]) / 2).toFixed(2));
 }
 
+function percent(value, goal) {
+  if (!goal) return 0;
+  return Math.min(100, Math.round((Number(value) / Number(goal)) * 100));
+}
+
+function min(rows, key) {
+  const vals = rows.map((r) => Number(r[key])).filter(Number.isFinite);
+  return vals.length ? Math.min(...vals) : 0;
+}
+
+function max(rows, key) {
+  const vals = rows.map((r) => Number(r[key])).filter(Number.isFinite);
+  return vals.length ? Math.max(...vals) : 0;
+}
+
+function delta(current, previous) {
+  const c = Number(current) || 0;
+  const p = Number(previous) || 0;
+  const diff = Number((c - p).toFixed(2));
+  const pct = p === 0 ? (c === 0 ? 0 : 100) : Number(((diff / p) * 100).toFixed(1));
+  return { current: c, previous: p, diff, pct, direction: diff > 0 ? "up" : diff < 0 ? "down" : "flat" };
+}
+
+function qualityLabel(q) {
+  const map = { 1: "بسیار بد", 2: "بد", 3: "متوسط", 4: "خوب", 5: "بسیار خوب" };
+  return map[q] || "—";
+}
+
 /* ---------- Daily report ----------------------------------------------- */
 export async function dailyReport(dateISO) {
-  const [
-    foodResult, insulinRows, glucoseRows, bpRows, weightRows,
-    sleepRow, activityRows,
-  ] = await Promise.all([
-    safe(foodLog.listByDate(dateISO)),
-    safe(insulin.listByDate(dateISO)),
-    safe(glucose.listByDate(dateISO)),
-    safe(bp.listByDate(dateISO)),
-    safe(weight.listByDate(dateISO)),
-    safe(sleep.getByDate(dateISO)),
-    safe(activity.listByDate(dateISO)),
-  ]);
+  const [foodResult, insulinRows, glucoseRows, bpRows, weightRows, sleepRow, activityRows] =
+    await Promise.all([
+      foodLog.listByDate(dateISO),
+      insulin.listByDate(dateISO),
+      glucose.listByDate(dateISO),
+      bp.listByDate(dateISO),
+      weight.listByDate(dateISO),
+      sleep.getByDate(dateISO),
+      activity.listByDate(dateISO),
+    ]);
 
-  const foods = foodResult?.rows ?? [];
+  const foods = foodResult.rows || [];
   const foodTotals = {
     calories: sum(foods, "calories"),
     protein: sum(foods, "protein"),
@@ -66,7 +92,7 @@ export async function dailyReport(dateISO) {
   };
 
   const perMeal = {};
-  for (const [meal, rows] of Object.entries(foodResult?.grouped || {})) {
+  for (const [meal, rows] of Object.entries(foodResult.grouped || {})) {
     perMeal[meal] = {
       calories: sum(rows, "calories"),
       protein: sum(rows, "protein"),
@@ -77,11 +103,11 @@ export async function dailyReport(dateISO) {
   }
 
   const activityTotals = {
-    steps: sum(activityRows || [], "steps"),
-    km: sum(activityRows || [], "distance_km"),
-    minutes: sum(activityRows || [], "duration_min"),
-    kcalBurned: sum(activityRows || [], "calories_burned"),
-    entries: (activityRows || []).length,
+    steps: sum(activityRows, "steps"),
+    km: sum(activityRows, "distance_km"),
+    minutes: sum(activityRows, "duration_min"),
+    kcalBurned: sum(activityRows, "calories_burned"),
+    entries: activityRows.length,
   };
 
   const goals = store.get("goals") || {};
@@ -97,71 +123,50 @@ export async function dailyReport(dateISO) {
   return {
     date: dateISO,
     food: { totals: foodTotals, perMeal, entries: foods },
-    insulin: {
-      entries: insulinRows || [],
-      totalUnits: sum(insulinRows || [], "units"),
-      count: (insulinRows || []).length,
-    },
+    insulin: { entries: insulinRows, totalUnits: sum(insulinRows, "units"), count: insulinRows.length },
     glucose: {
-      entries: glucoseRows || [],
-      avg: avg(glucoseRows || [], "value"),
-      min: min(glucoseRows || [], "value"),
-      max: max(glucoseRows || [], "value"),
-      count: (glucoseRows || []).length,
+      entries: glucoseRows,
+      avg: avg(glucoseRows, "value"),
+      min: min(glucoseRows, "value"),
+      max: max(glucoseRows, "value"),
+      count: glucoseRows.length,
     },
-    bp: {
-      entries: bpRows || [],
-      latest: (bpRows || [])[0] || null,
-    },
-    weight: {
-      entries: weightRows || [],
-      latest: (weightRows || [])[0] || null,
-    },
-    sleep: sleepRow
-      ? {
-          ...sleepRow,
-          qualityLabel: qualityLabel(sleepRow.quality),
-        }
-      : null,
-    activity: {
-      entries: activityRows || [],
-      totals: activityTotals,
-    },
+    bp: { entries: bpRows, latest: bpRows[0] || null },
+    weight: { entries: weightRows, latest: weightRows[0] || null },
+    sleep: sleepRow ? { ...sleepRow, qualityLabel: qualityLabel(sleepRow.quality) } : null,
+    activity: { entries: activityRows, totals: activityTotals },
     goals,
     progress,
   };
 }
 
-/* ---------- Weekly report --------------------------------------------- */
+/* ---------- Range reports ---------------------------------------------- */
 export async function weeklyReport(anchorISO, { weekStartsOn = 6 } = {}) {
   const start = startOfWeek(anchorISO, weekStartsOn);
   const end = endOfWeek(anchorISO, weekStartsOn);
   return rangeReport(start, end, "weekly");
 }
 
-/* ---------- Monthly report -------------------------------------------- */
 export async function monthlyReport(anchorISO) {
   const start = startOfMonth(anchorISO);
   const end = endOfMonth(anchorISO);
   return rangeReport(start, end, "monthly");
 }
 
-/* ---------- Custom range ---------------------------------------------- */
 export async function customReport(startISO, endISO) {
   return rangeReport(startISO, endISO, "custom");
 }
 
-/* ---------- Core range aggregator ------------------------------------- */
 async function rangeReport(startISO, endISO, kind) {
   const [foodDaily, insulinRows, glucoseRows, bpRows, weightRows, sleepRows, activityDaily] =
     await Promise.all([
-      safe(foodLog.totalsByRange(startISO, endISO)) || [],
-      safe(insulin.listByRange(startISO, endISO)) || [],
-      safe(glucose.listByRange(startISO, endISO)) || [],
-      safe(bp.listByRange(startISO, endISO)) || [],
-      safe(weight.listByRange(startISO, endISO)) || [],
-      safe(sleep.listByRange(startISO, endISO)) || [],
-      safe(activity.dailyTotals(startISO, endISO)) || [],
+      foodLog.totalsByRange(startISO, endISO),
+      insulin.listByRange(startISO, endISO),
+      glucose.listByRange(startISO, endISO),
+      bp.listByRange(startISO, endISO),
+      weight.listByRange(startISO, endISO),
+      sleep.listByRange(startISO, endISO),
+      activity.dailyTotals(startISO, endISO),
     ]);
 
   const days = rangeDays(startISO, endISO);
@@ -186,6 +191,7 @@ async function rangeReport(startISO, endISO, kind) {
 
   const insulinTotal = sum(insulinRows, "units");
   const glucoseAvg = avg(glucoseRows, "value");
+
   const sleepStats = sleepRows.length
     ? {
         avgHours: avg(sleepRows, "durationHours"),
@@ -201,15 +207,14 @@ async function rangeReport(startISO, endISO, kind) {
       ? Number((Number(weightRows[weightRows.length - 1].weight) - Number(weightRows[0].weight)).toFixed(2))
       : 0;
 
-  /* averages per active day */
   const averages = activeDays > 0
     ? {
         calories: Number((foodTotals.calories / activeDays).toFixed(0)),
         protein: Number((foodTotals.protein / activeDays).toFixed(1)),
         carbs: Number((foodTotals.carbs / activeDays).toFixed(1)),
         fat: Number((foodTotals.fat / activeDays).toFixed(1)),
-        steps: Number((activityTotals.steps / days.length).toFixed(0)),
-        km: Number((activityTotals.km / days.length).toFixed(2)),
+        steps: Number((activityTotals.steps / Math.max(1, days.length)).toFixed(0)),
+        km: Number((activityTotals.km / Math.max(1, days.length)).toFixed(2)),
       }
     : null;
 
@@ -227,11 +232,7 @@ async function rangeReport(startISO, endISO, kind) {
       best: [...foodDaily].sort((a, b) => b.calories - a.calories)[0],
       worst: [...foodDaily].sort((a, b) => a.calories - b.calories)[0],
     },
-    insulin: {
-      entries: insulinRows,
-      total: insulinTotal,
-      avgPerDay: Number((insulinTotal / days.length).toFixed(2)),
-    },
+    insulin: { entries: insulinRows, total: insulinTotal, avgPerDay: Number((insulinTotal / Math.max(1, days.length)).toFixed(2)) },
     glucose: {
       entries: glucoseRows,
       avg: glucoseAvg,
@@ -256,14 +257,11 @@ async function rangeReport(startISO, endISO, kind) {
       max: max(weightRows, "weight"),
     },
     sleep: sleepStats,
-    activity: {
-      daily: activityDaily,
-      totals: activityTotals,
-    },
+    activity: { daily: activityDaily, totals: activityTotals },
   };
 }
 
-/* ---------- Comparison (this period vs previous) ---------------------- */
+/* ---------- Comparison ------------------------------------------------- */
 export async function comparisonReport(anchorISO, kind) {
   let currentStart, currentEnd, prevStart, prevEnd;
 
@@ -303,62 +301,24 @@ export async function comparisonReport(anchorISO, kind) {
   return { current, previous, deltas };
 }
 
-/* ---------- Small utilities ------------------------------------------- */
-function percent(value, goal) {
-  if (!goal) return 0;
-  return Math.min(100, Math.round((Number(value) / Number(goal)) * 100));
-}
-
-function min(rows, key) {
-  const vals = rows.map((r) => Number(r[key])).filter(Number.isFinite);
-  return vals.length ? Math.min(...vals) : 0;
-}
-
-function max(rows, key) {
-  const vals = rows.map((r) => Number(r[key])).filter(Number.isFinite);
-  return vals.length ? Math.max(...vals) : 0;
-}
-
-function delta(current, previous) {
-  const c = Number(current) || 0;
-  const p = Number(previous) || 0;
-  const diff = Number((c - p).toFixed(2));
-  const pct = p === 0 ? (c === 0 ? 0 : 100) : Number(((diff / p) * 100).toFixed(1));
-  return {
-    current: c,
-    previous: p,
-    diff,
-    pct,
-    direction: diff > 0 ? "up" : diff < 0 ? "down" : "flat",
-  };
-}
-
-function qualityLabel(q) {
-  const map = {
-    1: "بسیار بد", 2: "بد", 3: "متوسط", 4: "خوب", 5: "بسیار خوب",
-  };
-  return map[q] || "—";
-}
-
-/* ---------- Heatmap data (for a year / month grid) -------------------- */
+/* ---------- Heatmap ---------------------------------------------------- */
 export async function heatmapData(startISO, endISO, metric = "calories") {
-  const daily = await foodLog.totalsByRange(startISO, endISO);
-  const act = await activity.dailyTotals(startISO, endISO);
+  const [daily, act] = await Promise.all([
+    foodLog.totalsByRange(startISO, endISO),
+    activity.dailyTotals(startISO, endISO),
+  ]);
   const actByDate = new Map(act.map((d) => [d.date, d]));
 
-  const combined = daily.map((d) => ({
-    date: d.date,
-    calories: d.calories,
-    steps: actByDate.get(d.date)?.steps ?? 0,
-    km: actByDate.get(d.date)?.km ?? 0,
-    value: metric === "steps"
-      ? actByDate.get(d.date)?.steps ?? 0
+  const combined = daily.map((d) => {
+    const a = actByDate.get(d.date);
+    const value = metric === "steps"
+      ? (a?.steps ?? 0)
       : metric === "km"
-      ? actByDate.get(d.date)?.km ?? 0
-      : d.calories,
-  }));
+      ? (a?.km ?? 0)
+      : d.calories;
+    return { date: d.date, calories: d.calories, steps: a?.steps ?? 0, km: a?.km ?? 0, value };
+  });
 
-  // Derive level 0..4 based on quartiles of nonzero values.
   const values = combined.map((c) => c.value).filter((v) => v > 0).sort((a, b) => a - b);
   const q = (p) => values[Math.floor((values.length - 1) * p)] || 0;
   const thresholds = [q(0.25), q(0.5), q(0.75), q(0.9)];
@@ -374,3 +334,6 @@ export async function heatmapData(startISO, endISO, metric = "calories") {
     return { ...c, level };
   });
 }
+
+export const reports = { dailyReport, weeklyReport, monthlyReport, customReport, comparisonReport, heatmapData };
+export { todayISO };
