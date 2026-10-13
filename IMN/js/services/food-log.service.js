@@ -1,32 +1,17 @@
 /**
- * Food log service — records what the user ate.
+ * Food log service.
  *
- * Table: food_logs
- * Columns:
- *   id          uuid pk
- *   user_id     uuid (RLS: auth.uid() = user_id)
- *   log_date    date            -- user-local day
- *   meal        text            -- breakfast | snack1 | lunch | snack2 | dinner | snack3
- *   meal_time   time            -- when the meal was eaten
- *   food_name   text            -- Persian name (denormalized for history)
- *   food_en     text            -- English name (denormalized)
- *   grams       numeric
- *   calories    numeric
- *   protein     numeric
- *   carbs       numeric
- *   fat         numeric
- *   fiber       numeric
- *   sugar       numeric nullable
- *   notes       text nullable
- *   created_at  timestamptz default now()
- *   updated_at  timestamptz default now()
+ * Date arithmetic uses `addDays` from utils/date.js which operates in
+ * LOCAL time. Never use `Date#toISOString()` here — in non-UTC timezones
+ * it shifts the date by up to a day and can freeze `while` loops.
  */
 
 import { db } from "./db.service.js";
 import { foods } from "./foods.service.js";
 import { bus } from "../core/event-bus.js";
-import { store } from "../core/state.js";
+import { addDays } from "../utils/date.js";
 import { normalize } from "../utils/errors.js";
+import { supabase } from "../config/supabase.js";
 
 const TABLE = "food_logs";
 
@@ -35,8 +20,19 @@ function emitChange(action, payload) {
   bus.emit("data:changed", { domain: "food" });
 }
 
+/** Expand a range into a dense array of ISO dates (local-time safe). */
+function expandRange(startISO, endISO) {
+  const days = [];
+  let cur = startISO;
+  let guard = 0;
+  while (cur <= endISO && guard++ < 1900) {
+    days.push(cur);
+    cur = addDays(cur, 1);
+  }
+  return days;
+}
+
 export const foodLog = {
-  /** List entries for one day, grouped by meal. */
   async listByDate(dateISO) {
     const rows = await db.select(TABLE, (q) =>
       q.eq("log_date", dateISO).order("meal").order("created_at")
@@ -50,14 +46,12 @@ export const foodLog = {
     return { rows, grouped };
   },
 
-  /** Range (used by reports). Inclusive on both ends. */
   async listByRange(startISO, endISO) {
     return db.select(TABLE, (q) =>
       q.gte("log_date", startISO).lte("log_date", endISO).order("log_date")
     );
   },
 
-  /** Add a food to a meal. `food` is a row from foods.json. */
   async add({ date, meal, mealTime, food, grams = 100, notes = null }) {
     const m = foods.macrosFor(food, grams);
     const row = await db.insert(TABLE, {
@@ -79,7 +73,6 @@ export const foodLog = {
     return row;
   },
 
-  /** Bulk add (used by "add multiple items at once" modal). */
   async addMany({ date, meal, mealTime, items, notes = null }) {
     if (!items?.length) return [];
     const rows = items.map((it) => {
@@ -105,10 +98,8 @@ export const foodLog = {
     return inserted;
   },
 
-  /** Update an existing entry (grams, meal, time, notes). */
   async update(id, patch) {
     const clean = { ...patch };
-    // If grams changed and we have the food macros, recompute derived fields.
     if ("grams" in clean && clean.food_macros) {
       const m = foods.macrosFor(clean.food_macros, clean.grams);
       Object.assign(clean, {
@@ -126,16 +117,14 @@ export const foodLog = {
     return row;
   },
 
-  /** Remove one entry. */
   async remove(id) {
     await db.remove(TABLE, id);
     emitChange("remove", { id });
     return true;
   },
 
-  /** Remove all entries of one meal on one date. */
   async clearMeal(date, meal) {
-    const { error } = await (await import("../config/supabase.js")).supabase
+    const { error } = await supabase
       .from(TABLE)
       .delete()
       .eq("log_date", date)
@@ -145,7 +134,6 @@ export const foodLog = {
     return true;
   },
 
-  /** Copy every entry from one date to another (used by "duplicate day"). */
   async duplicateDay(fromISO, toISO) {
     const { rows } = await this.listByDate(fromISO);
     if (!rows.length) return [];
@@ -158,7 +146,7 @@ export const foodLog = {
     return inserted;
   },
 
-  /** Daily totals for a date range — used by dashboards/reports. */
+  /** Dense per-day totals (zero-filled) — used by dashboards/reports. */
   async totalsByRange(startISO, endISO) {
     const rows = await this.listByRange(startISO, endISO);
     const byDate = new Map();
@@ -179,25 +167,17 @@ export const foodLog = {
       t.sugar += Number(r.sugar) || 0;
       t.entries += 1;
     }
-    // Return dense array (missing days = zeroes) so charts are gapless.
-    const out = [];
-    let cur = startISO;
-    while (cur <= endISO) {
-      const t = byDate.get(cur) || {
-        date: cur, calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, entries: 0,
+    return expandRange(startISO, endISO).map((date) => {
+      const t = byDate.get(date) || {
+        date, calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, entries: 0,
       };
-      Object.keys(t).forEach((k) => {
-        if (typeof t[k] === "number") t[k] = Number(t[k].toFixed(2));
+      ["calories", "protein", "carbs", "fat", "fiber", "sugar"].forEach((k) => {
+        t[k] = Number(t[k].toFixed(2));
       });
-      out.push(t);
-      const d = new Date(cur + "T00:00:00");
-      d.setDate(d.getDate() + 1);
-      cur = d.toISOString().slice(0, 10);
-    }
-    return out;
+      return t;
+    });
   },
 
-  /** Suggest the most-used foods for a given meal (for quick-add). */
   async frequentForMeal(meal, limit = 8) {
     const rows = await db.select(TABLE, (q) =>
       q.eq("meal", meal).order("created_at", { ascending: false }).limit(300)
