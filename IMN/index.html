@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="fa" dir="rtl" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -17,10 +17,6 @@
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0d14'/%3E%3Cpath d='M18 44 L32 18 L46 44 M24 36 H40' stroke='%236366f1' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 
-  <!-- =========================================================
-       Inline boot screen + error trapping. Runs OUTSIDE any ES
-       module so the user never sees a blank page.
-       ========================================================= -->
   <style>
     .boot-screen {
       position: fixed; inset: 0;
@@ -64,39 +60,20 @@
       color: #fecaca; white-space: pre-wrap;
       word-break: break-word; font-family: monospace;
     }
-    .boot-screen__hint {
-      font-size: 12px; color: #8792a9;
-      line-height: 1.9; text-align: right;
-      margin-top: 12px;
-    }
-    .boot-screen__hint code {
-      background: rgba(255,255,255,0.06);
-      padding: 2px 6px; border-radius: 4px;
-      direction: ltr; display: inline-block;
-    }
-    .boot-screen__actions {
-      display: flex; gap: 10px; justify-content: center;
-      flex-wrap: wrap; margin-top: 12px;
-    }
     .boot-screen__retry {
-      padding: 10px 22px; border-radius: 10px;
+      margin-top: 12px; padding: 10px 22px;
+      border-radius: 10px;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white; border: none;
       font-family: inherit; font-size: 14px; font-weight: 600;
       cursor: pointer;
-    }
-    .boot-screen__retry:hover { filter: brightness(1.08); }
-    .boot-screen__retry--ghost {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.12);
     }
     .boot-screen__log {
       margin-top: 10px; padding: 8px 12px;
       background: rgba(0,0,0,0.35);
       border-radius: 8px; font-size: 11px;
       color: #8792a9; text-align: right;
-      direction: rtl; max-width: 640px;
-      font-family: monospace;
+      max-width: 640px; font-family: monospace;
       max-height: 100px; overflow-y: auto;
       border: 1px solid rgba(255,255,255,0.06);
       white-space: pre-wrap;
@@ -136,54 +113,20 @@
         if (l) l.textContent = logLines.join("\n");
       }
 
-      function renderError(err, opts) {
+      function renderError(err) {
         if (booted) return;
-        opts = opts || {};
         var el = document.getElementById("boot-screen");
         var status = document.getElementById("boot-status");
         if (!el || !status) return;
-
         var stack = (err && (err.stack || err.message)) || String(err || "خطای نامشخص");
-
         el.classList.add("is-error");
         status.innerHTML =
           '<div class="boot-screen__error">' +
-          '<div style="color:#ef4444;font-weight:700;margin-bottom:8px;text-align:right">' +
-            esc(opts.title || "خطا در بارگذاری برنامه") +
-          "</div>" +
+          '<div style="color:#ef4444;font-weight:700;margin-bottom:8px;text-align:right">خطا در بارگذاری برنامه</div>' +
           "<pre>" + esc(stack) + "</pre>" +
-          '<div class="boot-screen__hint">' +
-            (opts.hint ||
-              "اگر این خطا ادامه داشت، DevTools → Console را باز کنید و متن خطا را ارسال کنید.") +
-          "</div>" +
           '<div class="boot-screen__log" id="boot-log">' + esc(logLines.join("\n")) + "</div>" +
-          '<div class="boot-screen__actions">' +
-            '<button class="boot-screen__retry" onclick="location.reload()">تلاش مجدد</button>' +
-            (opts.showKeepWaiting
-              ? '<button class="boot-screen__retry boot-screen__retry--ghost" id="boot-keep-waiting">ادامه انتظار</button>'
-              : "") +
-          "</div>" +
+          '<button class="boot-screen__retry" onclick="location.reload()">تلاش مجدد</button>' +
           "</div>";
-
-        var keepBtn = document.getElementById("boot-keep-waiting");
-        if (keepBtn) {
-          keepBtn.addEventListener("click", function () {
-            // Hide the error UI; keep the boot screen with a spinner and
-            // a longer watchdog.
-            var screen2 = document.getElementById("boot-screen");
-            if (screen2) screen2.classList.remove("is-error");
-            var st2 = document.getElementById("boot-status");
-            if (st2) st2.textContent = "در حال انتظار برای پاسخ سرورها…";
-            setTimeout(function () {
-              if (!booted) {
-                renderError(new Error("برنامه همچنان پاسخ نمی‌دهد"), {
-                  title: "بازه انتظار تمام شد",
-                  hint: "اتصال اینترنت، دسترسی به CDN و پیکربندی Supabase را بررسی کنید.",
-                });
-              }
-            }, 20000);
-          });
-        }
       }
 
       window.__appBootLog = pushLog;
@@ -216,22 +159,11 @@
         renderError(r || new Error(m));
       });
 
-      // Watchdog: only after a *long* delay, and it offers "keep waiting"
-      // so a slow network is not mistaken for a failure.
       setTimeout(function () {
         if (!booted) {
-          renderError(
-            new Error("بارگذاری برنامه بیشتر از حد معمول طول کشید"),
-            {
-              title: "بارگذاری کند",
-              hint:
-                "اگر در شبکه‌ای هستید که دسترسی به CDN ها محدود است، بارگذاری ممکن است طول بکشد. " +
-                "می‌توانید منتظر بمانید یا صفحه را مجدداً بارگذاری کنید.",
-              showKeepWaiting: true,
-            }
-          );
+          renderError(new Error("برنامه در ۱۵ ثانیه بارگذاری نشد."));
         }
-      }, 20000);
+      }, 15000);
 
       pushLog("HTML بارگذاری شد — در انتظار اجرای ماژول‌های JS…");
     })();
@@ -239,25 +171,30 @@
 </head>
 
 <body>
+  <!-- ============ AUTH SCREEN ============ -->
   <div id="auth-screen" class="auth-screen" hidden></div>
 
+  <!-- ============ APP SHELL (no sidebar) ============ -->
   <div id="app-shell" class="app-shell" hidden>
-    <aside id="sidebar" class="sidebar" aria-label="ناوبری اصلی"></aside>
-    <div id="sidebar-overlay" class="sidebar-overlay" hidden></div>
 
-    <div class="app-main">
-      <header id="topbar" class="topbar" aria-label="نوار بالا"></header>
+    <!-- Topbar: subject picker on the RTL-start side, utilities on the end -->
+    <header id="topbar" class="topbar" aria-label="نوار بالا"></header>
 
-      <main id="page-container" class="page-container" role="main"></main>
+    <!-- Day swiper: horizontal scroll strip of dates -->
+    <div id="day-swiper-slot" class="day-swiper-slot"></div>
 
-      <footer class="app-footer">
-        <span>© <span id="footer-year"></span> ردیاب فعالیت روزانه</span>
-        <span class="footer-sep">•</span>
-        <span>ساخته شده با ❤️ برای سلامتی شما</span>
-      </footer>
-    </div>
+    <!-- Page container -->
+    <main id="page-container" class="page-container" role="main"></main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>© <span id="footer-year"></span> ردیاب فعالیت روزانه</span>
+      <span class="footer-sep">•</span>
+      <span>ساخته شده با ❤️ برای سلامتی شما</span>
+    </footer>
   </div>
 
+  <!-- ============ GLOBAL ROOTS ============ -->
   <div id="modal-root" class="modal-root" aria-hidden="true"></div>
   <div id="confirm-root" class="confirm-root" aria-hidden="true"></div>
   <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
