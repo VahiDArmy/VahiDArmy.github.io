@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0f17" />
+  <meta name="description" content="ردیاب جامع فعالیت روزانه — غذا، انسولین، قند خون، فشار، وزن، خواب و ورزش" />
+  <title>سلامت‌یار | ردیاب فعالیت روزانه</title>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%92%9A%3C/text%3E%3C/svg%3E" />
+
+  <!-- فونت وزیرمتن -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+
+  <!-- ═══════════ Loading Screen ═══════════ -->
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-screen__logo">
+      <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+        <defs>
+          <linearGradient id="bootGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#22d3ee" />
+            <stop offset="1" stop-color="#a855f7" />
+          </linearGradient>
+        </defs>
+        <path d="M32 6C19 6 12 15 12 26c0 12 8 20 12 26 3 4 5 6 8 6s5-2 8-6c4-6 12-14 12-26C52 15 45 6 32 6z"
+              fill="none" stroke="url(#bootGrad)" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M18 30h8l3-8 5 16 3-8h9" fill="none" stroke="url(#bootGrad)" stroke-width="3"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="boot-screen__bar"><span></span></div>
+    <p class="boot-screen__text">در حال آماده‌سازی…</p>
+  </div>
+
+  <!-- ═══════════ Auth Screen ═══════════ -->
+  <section id="auth-screen" class="auth-screen hidden" aria-hidden="true">
+    <div class="auth-card">
+      <div class="auth-card__brand">
+        <div class="auth-card__mark">💚</div>
+        <h1 class="auth-card__title">سلامت‌یار</h1>
+        <p class="auth-card__subtitle">ردیاب جامع فعالیت روزانه</p>
+      </div>
+
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab is-active" data-auth-tab="login" role="tab">ورود</button>
+        <button class="auth-tab" data-auth-tab="signup" role="tab">ثبت‌نام</button>
+      </div>
+
+      <form id="login-form" class="auth-form" autocomplete="on" novalidate>
+        <div class="field">
+          <label class="field__label" for="login-email">ایمیل</label>
+          <input class="field__input" id="login-email" name="email" type="email" dir="ltr"
+                 placeholder="you@example.com" required autocomplete="email" />
+          <span class="field__error" data-error-for="login-email"></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="login-password">رمز عبور</label>
+          <div class="field__group">
+            <input class="field__input" id="login-password" name="password" type="password" dir="ltr"
+                   placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="field__eye" data-toggle-password="login-password" aria-label="نمایش رمز">
+              👁
+            </button>
+          </div>
+          <span class="field__error" data-error-for="login-password"></span>
+        </div>
+        <button type="submit" class="btn btn--primary btn--block" id="login-submit">
+          <span class="btn__label">ورود به حساب</span>
+          <span class="btn__spinner hidden"></span>
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm auth-forgot" id="forgot-password-btn">
+          رمز عبور را فراموش کرده‌اید؟
+        </button>
+      </form>
+
+      <form id="signup-form" class="auth-form hidden" autocomplete="on" novalidate>
+        <div class="field">
+          <label class="field__label" for="signup-name">نام نمایشی</label>
+          <input class="field__input" id="signup-name" name="displayName" type="text"
+                 placeholder="مثلاً: علی" required maxlength="40" />
+          <span class="field__error" data-error-for="signup-name"></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="signup-email">ایمیل</label>
+          <input class="field__input" id="signup-email" name="email" type="email" dir="ltr"
+                 placeholder="you@example.com" required autocomplete="email" />
+          <span class="field__error" data-error-for="signup-email"></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="signup-password">رمز عبور</label>
+          <div class="field__group">
+            <input class="field__input" id="signup-password" name="password" type="password" dir="ltr"
+                   placeholder="حداقل ۸ کاراکتر" required minlength="8" autocomplete="new-password" />
+            <button type="button" class="field__eye" data-toggle-password="signup-password" aria-label="نمایش رمز">👁</button>
+          </div>
+          <div class="pw-meter" id="pw-meter">
+            <span class="pw-meter__bar" data-level="1"></span>
+            <span class="pw-meter__bar" data-level="2"></span>
+            <span class="pw-meter__bar" data-level="3"></span>
+            <span class="pw-meter__bar" data-level="4"></span>
+          </div>
+          <span class="field__error" data-error-for="signup-password"></span>
+        </div>
+        <div class="field">
+          <label class="field__label" for="signup-password2">تکرار رمز عبور</label>
+          <input class="field__input" id="signup-password2" name="password2" type="password" dir="ltr"
+                 required autocomplete="new-password" />
+          <span class="field__error" data-error-for="signup-password2"></span>
+        </div>
+        <button type="submit" class="btn btn--primary btn--block" id="signup-submit">
+          <span class="btn__label">ایجاد حساب</span>
+          <span class="btn__spinner hidden"></span>
+        </button>
+        <p class="auth-form__hint">
+          با ثبت‌نام، <a href="#" class="link">قوانین و شرایط</a> را می‌پذیرید.
+        </p>
+      </form>
+    </div>
+    <div class="auth-screen__glow" aria-hidden="true"></div>
+  </section>
+
+  <!-- ═══════════ Main App Shell ═══════════ -->
+  <div id="app-shell" class="app-shell hidden" aria-hidden="true">
+
+    <!-- Header -->
+    <header class="app-header" id="app-header">
+      <div class="app-header__right">
+        <button class="page-subject" id="page-subject-btn"
+                aria-haspopup="menu" aria-expanded="false">
+          <span class="page-subject__icon" id="page-subject-icon">📊</span>
+          <span class="page-subject__text" id="page-subject-text">داشبورد</span>
+          <svg class="page-subject__chev" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="app-header__left">
+        <button class="icon-btn" id="theme-toggle" title="تغییر تم" aria-label="تغییر تم">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"
+                  fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="icon-btn" id="settings-btn" title="تنظیمات" aria-label="تنظیمات">
+          <svg viewBox="0 0 24 24" width="20" height="20">
+            <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+                  fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button class="profile-btn" id="profile-btn" aria-haspopup="menu" aria-expanded="false">
+          <span class="profile-btn__avatar" id="profile-avatar">؟</span>
+          <span class="profile-btn__name" id="profile-name">کاربر</span>
+          <svg viewBox="0 0 24 24" width="14" height="14" class="profile-btn__chev">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="app-header__progress" id="header-progress" aria-hidden="true"></div>
+    </header>
+
+    <!-- Date Navigation Bar -->
+    <div class="date-bar" id="date-bar">
+      <button class="date-bar__nav" id="date-prev" aria-label="روز قبل">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M15 18l-6-6 6-6"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <button class="date-bar__current" id="date-current" aria-haspopup="dialog">
+        <span class="date-bar__weekday" id="date-weekday">—</span>
+        <span class="date-bar__text" id="date-text">—</span>
+        <span class="date-bar__badge hidden" id="date-today-badge">امروز</span>
+      </button>
+
+      <button class="date-bar__nav" id="date-next" aria-label="روز بعد">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M9 6l6 6-6 6"
+          fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <button class="date-bar__today" id="date-today" title="برو به امروز">امروز</button>
+    </div>
+
+    <!-- Page Container -->
+    <main class="app-main" id="page-container" role="main"></main>
+
+    <!-- Bottom FAB (quick add) -->
+    <button class="fab" id="fab-quick-add" title="ثبت سریع" aria-label="ثبت سریع">
+      <svg viewBox="0 0 24 24" width="24" height="24">
+        <path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4"
+              stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ═══════════ Roots ═══════════ -->
+  <div id="modal-root"></div>
+  <div id="dropdown-root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+  <!-- App Entry -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
