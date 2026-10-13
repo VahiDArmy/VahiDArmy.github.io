@@ -12,8 +12,8 @@ import { LS_KEYS } from './constants.js';
    ------------------------------------------------------------------------
    این مقادیر را با اطلاعات پروژه Supabase خودتان جایگزین کنید.
    ========================================================================= */
-const SUPABASE_URL  = window.SUPABASE_URL  || 'https://YOUR-PROJECT.supabase.co';
-const SUPABASE_ANON = window.SUPABASE_ANON || 'YOUR-ANON-KEY';
+const SUPABASE_URL  = window.SUPABASE_URL  || 'https://zzwctmqfxxnsxkumddvi.supabase.co';
+const SUPABASE_ANON = window.SUPABASE_ANON || 'sb_publishable_qzd7iXR5WYwIL-q1a9Gcfg_ZjYTlttz';
 
 /* ---------- ساخت کلاینت ---------- */
 let _client = null;
