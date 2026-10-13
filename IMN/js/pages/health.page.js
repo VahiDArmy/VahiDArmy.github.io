@@ -1,5 +1,12 @@
 /**
  * Health page — insulin, glucose, blood pressure, weight.
+ *
+ * Fixes vs. previous version:
+ *   • Delegation is bound ONCE at container level, not per-render.
+ *     Previously each `renderGrid` re-bound listeners to the same grid
+ *     element, so actions fired N times after N renders.
+ *   • Each handler reads the current date via `currentDate()` so it stays
+ *     correct after date changes.
  */
 
 import { $, createElement, delegate } from "../utils/dom.js";
@@ -13,7 +20,7 @@ import {
   todayISO, addDays, formatLong, formatRelative, nowTimeStr,
 } from "../utils/date.js";
 import {
-  formatInteger, formatNumber, formatBP, formatGlucose, escapeHTML, toLatinDigits,
+  formatInteger, formatNumber, escapeHTML, toLatinDigits,
 } from "../utils/format.js";
 import { INSULIN_TYPES, INSULIN_SITES } from "../config/constants.js";
 
@@ -54,12 +61,66 @@ export default {
       return store.get("selectedDate") || todayISO();
     }
 
+    /* ---------- Delegated listeners — attached ONCE ----------------- */
     delegate(container, "click", "[data-nav]", (e, btn) => {
       const dir = btn.dataset.nav === "next" ? 1 : -1;
       store.setSelectedDate(addDays(currentDate(), dir));
       load();
     });
 
+    delegate(container, "click", "[data-add]", async (e, btn) => {
+      const kind = btn.dataset.add;
+      const iso = currentDate();
+      try {
+        const time = nowTimeStr();
+        if (kind === "insulin") {
+          const units = Number(toLatinDigits($('[data-input="ins-units"]', container).value));
+          if (!units || units <= 0) return toast.warning("مقدار واحد را وارد کنید");
+          await insulin.add({
+            log_date: iso, log_time: time, units,
+            type: $('[data-input="ins-type"]', container).value || null,
+            site: $('[data-input="ins-site"]', container).value || null,
+          });
+        } else if (kind === "glucose") {
+          const value = Number(toLatinDigits($('[data-input="gl-value"]', container).value));
+          if (!value) return toast.warning("مقدار قند را وارد کنید");
+          await glucose.add({
+            log_date: iso, log_time: time, value,
+            context: $('[data-input="gl-ctx"]', container).value || null,
+          });
+        } else if (kind === "bp") {
+          const systolic = Number(toLatinDigits($('[data-input="bp-sys"]', container).value));
+          const diastolic = Number(toLatinDigits($('[data-input="bp-dia"]', container).value));
+          if (!systolic || !diastolic) return toast.warning("هر دو مقدار را وارد کنید");
+          await bp.add({ log_date: iso, log_time: time, systolic, diastolic });
+        } else if (kind === "weight") {
+          const w = Number(toLatinDigits($('[data-input="w-value"]', container).value));
+          if (!w) return toast.warning("وزن را وارد کنید");
+          await weight.add({ log_date: iso, log_time: time, weight: w });
+        }
+        toast.success("ثبت شد");
+      } catch (err) {
+        console.error("[health] add failed", err);
+        toast.error(err?.message || "ثبت ناموفق بود");
+      }
+    });
+
+    delegate(container, "click", "[data-del]", async (e, btn) => {
+      e.stopPropagation();
+      const kind = btn.dataset.kind;
+      const id = btn.dataset.del;
+      const ok = await confirm({ title: "حذف", message: "این مورد حذف شود؟", variant: "danger", confirmLabel: "حذف" });
+      if (!ok) return;
+      try {
+        const svc = { insulin, glucose, bp, weight }[kind];
+        await svc.remove(id);
+        toast.success("حذف شد");
+      } catch (err) {
+        toast.error(err?.message || "حذف ناموفق بود");
+      }
+    });
+
+    /* ---------- Load ------------------------------------------------ */
     async function load() {
       const iso = currentDate();
       $("[data-date-label]", container).textContent = formatRelative(iso);
@@ -68,14 +129,14 @@ export default {
       try {
         const snap = await healthSnapshot(iso);
         renderGrid(snap, iso);
-        renderHistory(snap);
+        renderHistory();
       } catch (err) {
         console.error("[health] load error", err);
-        toast.error("خطا در بارگذاری اطلاعات");
+        toast.error(err?.message || "خطا در بارگذاری اطلاعات");
       }
     }
 
-    function renderGrid(snap, iso) {
+    function renderGrid(snap) {
       const grid = $("[data-health-grid]", container);
       grid.innerHTML = `
         ${insulinCard(snap.insulin, snap.totals.insulinUnits)}
@@ -83,7 +144,6 @@ export default {
         ${bpCard(snap.bp, snap.totals.latestBP)}
         ${weightCard(snap.weight, snap.totals.latestWeight)}
       `;
-      wireCards(grid, iso);
     }
 
     function insulinCard(rows, total) {
@@ -105,7 +165,7 @@ export default {
               <div class="health-entry">
                 <span class="health-entry__value num">${formatNumber(r.units, { decimals: 1 })}U</span>
                 <span class="health-entry__note">${escapeHTML(r.type || "—")}${r.site ? " • " + escapeHTML(r.site) : ""}</span>
-                <span class="health-entry__time">${r.log_time || "—"}</span>
+                <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
                 <button class="icon-btn" data-del="${r.id}" data-kind="insulin" type="button" title="حذف">${icon("trash", { size: 12 })}</button>
               </div>
             `).join("") : '<div class="text-2xs text-muted text-center" style="padding:12px 0">موردی ثبت نشده</div>'}
@@ -143,13 +203,13 @@ export default {
             <span class="health-card__value num">${rows.length ? formatInteger(rows[0].value) : "—"}</span>
             <span class="health-card__unit">mg/dL</span>
           </div>
-          <div class="health-card__time">${rows.length ? `آخرین: ${rows[0].log_time || "—"}` : "ثبت نشده"}</div>
+          <div class="health-card__time">${rows.length ? `آخرین: ${(rows[0].log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
             ${rows.slice(0, 5).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${formatInteger(r.value)}</span>
                 <span class="health-entry__note">${escapeHTML(r.context || "")}</span>
-                <span class="health-entry__time">${r.log_time || "—"}</span>
+                <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
                 <button class="icon-btn" data-del="${r.id}" data-kind="glucose" type="button">${icon("trash", { size: 12 })}</button>
               </div>
             `).join("")}
@@ -184,13 +244,13 @@ export default {
             <span class="health-card__value num">${latest ? `${latest.systolic}/${latest.diastolic}` : "—"}</span>
             <span class="health-card__unit">mmHg</span>
           </div>
-          <div class="health-card__time">${latest ? `آخرین: ${latest.log_time || "—"}` : "ثبت نشده"}</div>
+          <div class="health-card__time">${latest ? `آخرین: ${(latest.log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
             ${rows.slice(0, 5).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${r.systolic}/${r.diastolic}</span>
                 <span class="health-entry__note">${r.pulse ? "نبض " + r.pulse : ""}</span>
-                <span class="health-entry__time">${r.log_time || "—"}</span>
+                <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
                 <button class="icon-btn" data-del="${r.id}" data-kind="bp" type="button">${icon("trash", { size: 12 })}</button>
               </div>
             `).join("")}
@@ -219,12 +279,12 @@ export default {
             <span class="health-card__value num">${latest ? formatNumber(latest.weight, { decimals: 1 }) : "—"}</span>
             <span class="health-card__unit">کیلوگرم</span>
           </div>
-          <div class="health-card__time">${latest ? `آخرین: ${latest.log_time || "—"}` : "ثبت نشده"}</div>
+          <div class="health-card__time">${latest ? `آخرین: ${(latest.log_time || "").slice(0, 5) || "—"}` : "ثبت نشده"}</div>
           <div class="health-entries">
             ${rows.slice(0, 5).map((r) => `
               <div class="health-entry">
                 <span class="health-entry__value num">${formatNumber(r.weight, { decimals: 1 })}</span>
-                <span class="health-entry__time">${r.log_time || "—"}</span>
+                <span class="health-entry__time">${(r.log_time || "").slice(0, 5) || "—"}</span>
                 <button class="icon-btn" data-del="${r.id}" data-kind="weight" type="button">${icon("trash", { size: 12 })}</button>
               </div>
             `).join("")}
@@ -237,62 +297,7 @@ export default {
       `;
     }
 
-    function wireCards(grid, iso) {
-      // Add handlers
-      delegate(grid, "click", "[data-add]", async (e, btn) => {
-        const kind = btn.dataset.add;
-        try {
-          const time = nowTimeStr();
-          if (kind === "insulin") {
-            const units = Number(toLatinDigits(grid.querySelector('[data-input="ins-units"]').value));
-            if (!units || units <= 0) return toast.warning("مقدار واحد را وارد کنید");
-            await insulin.add({
-              log_date: iso, log_time: time, units,
-              type: grid.querySelector('[data-input="ins-type"]').value || null,
-              site: grid.querySelector('[data-input="ins-site"]').value || null,
-            });
-          } else if (kind === "glucose") {
-            const value = Number(toLatinDigits(grid.querySelector('[data-input="gl-value"]').value));
-            if (!value) return toast.warning("مقدار قند را وارد کنید");
-            await glucose.add({
-              log_date: iso, log_time: time, value,
-              context: grid.querySelector('[data-input="gl-ctx"]').value || null,
-            });
-          } else if (kind === "bp") {
-            const systolic = Number(toLatinDigits(grid.querySelector('[data-input="bp-sys"]').value));
-            const diastolic = Number(toLatinDigits(grid.querySelector('[data-input="bp-dia"]').value));
-            if (!systolic || !diastolic) return toast.warning("هر دو مقدار را وارد کنید");
-            await bp.add({ log_date: iso, log_time: time, systolic, diastolic });
-          } else if (kind === "weight") {
-            const w = Number(toLatinDigits(grid.querySelector('[data-input="w-value"]').value));
-            if (!w) return toast.warning("وزن را وارد کنید");
-            await weight.add({ log_date: iso, log_time: time, weight: w });
-          }
-          toast.success("ثبت شد");
-        } catch (err) {
-          console.error(err);
-          toast.error("ثبت ناموفق بود");
-        }
-      });
-
-      // Delete handlers
-      delegate(grid, "click", "[data-del]", async (e, btn) => {
-        e.stopPropagation();
-        const kind = btn.dataset.kind;
-        const id = btn.dataset.del;
-        const ok = await confirm({ title: "حذف", message: "این مورد حذف شود؟", variant: "danger", confirmLabel: "حذف" });
-        if (!ok) return;
-        try {
-          const svc = { insulin, glucose, bp, weight }[kind];
-          await svc.remove(id);
-          toast.success("حذف شد");
-        } catch {
-          toast.error("حذف ناموفق بود");
-        }
-      });
-    }
-
-    /* ---------- History ---------------------------------------------- */
+    /* ---------- History -------------------------------------------- */
     async function renderHistory() {
       const end = currentDate();
       const start = addDays(end, -6);
@@ -311,7 +316,7 @@ export default {
         b.forEach((r) => rows.push({ date: r.log_date, kind: "فشار خون", value: `${r.systolic}/${r.diastolic}`, time: r.log_time }));
         w.forEach((r) => rows.push({ date: r.log_date, kind: "وزن", value: `${formatNumber(r.weight, { decimals: 1 })} kg`, time: r.log_time }));
 
-        rows.sort((a, b) => (b.date + (b.time || "")).localeCompare(a.date + (a.time || "")));
+        rows.sort((a, b2) => (b2.date + (b2.time || "")).localeCompare(a.date + (a.time || "")));
 
         if (!rows.length) {
           el.innerHTML = '<div class="text-sm text-muted text-center" style="padding:32px 0">موردی در ۷ روز اخیر ثبت نشده است</div>';
@@ -328,7 +333,7 @@ export default {
                     <td>${formatRelative(r.date)}</td>
                     <td>${r.kind}</td>
                     <td class="num">${r.value}</td>
-                    <td class="num">${r.time || "—"}</td>
+                    <td class="num">${(r.time || "").slice(0, 5) || "—"}</td>
                   </tr>
                 `).join("")}
               </tbody>
@@ -340,10 +345,8 @@ export default {
       }
     }
 
-    /* ---------- Subscribe ------------------------------------------- */
-    ["health:changed"].forEach((ev) => {
-      unsubscribers.push(bus.on(ev, () => load()));
-    });
+    /* ---------- Subscribe ----------------------------------------- */
+    unsubscribers.push(bus.on("health:changed", () => load()));
 
     await load();
 
