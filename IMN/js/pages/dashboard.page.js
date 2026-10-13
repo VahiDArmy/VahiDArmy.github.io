@@ -1,14 +1,16 @@
 /**
- * Dashboard — compact overview. Entry form first, then a global report
- * block. No page-level date nav (the day swiper handles it), no welcome
- * hero.
+ * Dashboard — compact overview.
+ *
+ * Every KPI card is a link to the relevant subject page. The `data-goto`
+ * attribute is added to each `.kpi` element so the container-level
+ * delegate handler picks up the click and navigates.
  */
 
 import { $, delegate } from "../utils/dom.js";
 import { icon } from "../components/icons.js";
 import { toast } from "../components/toast.js";
 import { mountReportBlock } from "../components/report-block.js";
-import { chart } from "../components/chart.js";
+import { chart, radial } from "../components/chart.js";
 import { store } from "../core/state.js";
 import { bus } from "../core/event-bus.js";
 import { dailyReport } from "../services/reports.service.js";
@@ -17,10 +19,9 @@ import { activity } from "../services/activity.service.js";
 import { sleep } from "../services/sleep.service.js";
 import { healthSnapshot } from "../services/health.service.js";
 import { navigate } from "../router.js";
-import { todayISO, addDays, formatShort } from "../utils/date.js";
+import { todayISO, addDays, formatShort, formatWeekdayShort } from "../utils/date.js";
 import { formatInteger, formatNumber, escapeHTML } from "../utils/format.js";
 import { MEALS } from "../config/constants.js";
-import { radial } from "../components/chart.js";
 
 export default {
   title: "داشبورد",
@@ -70,6 +71,12 @@ export default {
           [data-page="dashboard"] .grid[style*="grid-template-columns: 1.4fr"] { grid-template-columns: 1fr !important; }
           [data-page="dashboard"] .grid[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
         }
+        /* KPI cards are clickable */
+        .kpi[data-goto] { cursor: pointer; }
+        .kpi[data-goto]:focus-visible {
+          outline: 2px solid var(--color-primary);
+          outline-offset: 2px;
+        }
       </style>
     `;
 
@@ -77,7 +84,17 @@ export default {
       return store.get("selectedDate") || todayISO();
     }
 
-    delegate(container, "click", "[data-goto]", (e, btn) => navigate(btn.dataset.goto));
+    /* Every `[data-goto]` element navigates — KPIs, quick actions, headers. */
+    delegate(container, "click", "[data-goto]", (e, btn) => {
+      const route = btn.dataset.goto;
+      if (route) navigate(route);
+    });
+    delegate(container, "keydown", "[data-goto]", (e, btn) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        navigate(btn.dataset.goto);
+      }
+    });
 
     async function load() {
       const iso = currentDate();
@@ -100,6 +117,9 @@ export default {
       }
     }
 
+    /* --------------------------------------------------------------
+       KPI cards — each one links to the page that owns that metric
+       -------------------------------------------------------------- */
     function renderKpis(report, snap, sleepRow) {
       const goals = store.get("goals");
       const f = report.food.totals;
@@ -107,30 +127,72 @@ export default {
       const kcalPct = goals.calories ? Math.min(100, Math.round((f.calories / goals.calories) * 100)) : 0;
 
       const kpis = [
-        { icon: "flame", tone: kcalPct > 110 ? "danger" : kcalPct > 90 ? "warning" : "success",
-          label: "کالری", value: formatInteger(f.calories), unit: "از " + formatInteger(goals.calories), pct: kcalPct },
-        { icon: "footsteps", tone: a.steps >= goals.steps ? "success" : "accent",
-          label: "قدم‌ها", value: formatInteger(a.steps), unit: "از " + formatInteger(goals.steps),
-          pct: goals.steps ? Math.min(100, Math.round((a.steps / goals.steps) * 100)) : 0 },
-        { icon: "moon", tone: sleepRow && sleepRow.durationHours >= 7 ? "success" : sleepRow ? "warning" : "",
-          label: "خواب", value: sleepRow ? formatNumber(sleepRow.durationHours, { decimals: 1 }) : "—",
+        {
+          icon: "flame",
+          tone: kcalPct > 110 ? "danger" : kcalPct > 90 ? "warning" : "success",
+          label: "کالری",
+          value: formatInteger(f.calories),
+          unit: "از " + formatInteger(goals.calories),
+          pct: kcalPct,
+          route: "food",
+        },
+        {
+          icon: "footsteps",
+          tone: a.steps >= goals.steps ? "success" : "accent",
+          label: "قدم‌ها",
+          value: formatInteger(a.steps),
+          unit: "از " + formatInteger(goals.steps),
+          pct: goals.steps ? Math.min(100, Math.round((a.steps / goals.steps) * 100)) : 0,
+          route: "activity",
+        },
+        {
+          icon: "moon",
+          tone: sleepRow && sleepRow.durationHours >= 7 ? "success" : sleepRow ? "warning" : "",
+          label: "خواب",
+          value: sleepRow ? formatNumber(sleepRow.durationHours, { decimals: 1 }) : "—",
           unit: "از " + formatNumber(goals.sleepHours, { decimals: 1 }) + " ساعت",
-          pct: sleepRow ? Math.min(100, Math.round((sleepRow.durationHours / goals.sleepHours) * 100)) : 0 },
-        { icon: "droplet", tone: snap.glucoseAvg == null ? "" : snap.glucoseAvg > 140 ? "danger" : "success",
-          label: "میانگین قند", value: snap.glucoseAvg == null ? "—" : formatInteger(snap.glucoseAvg),
-          unit: "mg/dL", pct: null },
-        { icon: "syringe", tone: "primary",
-          label: "انسولین", value: formatNumber(snap.totals.insulinUnits, { decimals: 1 }), unit: "واحد", pct: null },
-        { icon: "scale", tone: "accent",
-          label: "آخرین وزن", value: snap.totals.latestWeight ? formatNumber(snap.totals.latestWeight.weight, { decimals: 1 }) : "—",
-          unit: "kg", pct: null },
+          pct: sleepRow ? Math.min(100, Math.round((sleepRow.durationHours / goals.sleepHours) * 100)) : 0,
+          route: "sleep",
+        },
+        {
+          icon: "droplet",
+          tone: snap.glucoseAvg == null ? "" : snap.glucoseAvg > 140 ? "danger" : "success",
+          label: "میانگین قند",
+          value: snap.glucoseAvg == null ? "—" : formatInteger(snap.glucoseAvg),
+          unit: "mg/dL",
+          pct: null,
+          route: "health",
+        },
+        {
+          icon: "syringe",
+          tone: "primary",
+          label: "انسولین",
+          value: formatNumber(snap.totals.insulinUnits, { decimals: 1 }),
+          unit: "واحد",
+          pct: null,
+          route: "health",
+        },
+        {
+          icon: "scale",
+          tone: "accent",
+          label: "آخرین وزن",
+          value: snap.totals.latestWeight ? formatNumber(snap.totals.latestWeight.weight, { decimals: 1 }) : "—",
+          unit: "کیلوگرم",
+          pct: null,
+          route: "health",
+        },
       ];
 
       $("[data-kpis]", container).innerHTML = kpis.map((k) => `
-        <div class="kpi anim-fade-in-up">
+        <div class="kpi anim-fade-in-up"
+             data-goto="${k.route}"
+             role="button"
+             tabindex="0"
+             aria-label="${escapeHTML(k.label)} — رفتن به صفحه مربوطه">
           <div class="kpi__head">
             <span class="kpi__icon kpi__icon--${k.tone}">${icon(k.icon, { size: 16 })}</span>
             <span>${escapeHTML(k.label)}</span>
+            <span class="kpi__chevron" aria-hidden="true">${icon("chevronLeft", { size: 14 })}</span>
           </div>
           <div class="kpi__value">${k.value}<span class="kpi__unit">${escapeHTML(k.unit)}</span></div>
           ${k.pct != null ? `
@@ -262,11 +324,12 @@ export default {
       ];
 
       const chartData = foodDaily.map((d) => ({
+        x: formatWeekdayShort(d.date).slice(0, 2),
+        y: d.calories,
         label: formatWeekdayShort(d.date).slice(0, 2),
-        value: d.calories,
       }));
       const chartHtml = chart.lineChart({
-        data: chartData.map((d) => ({ x: d.label, y: d.value, label: d.label })),
+        data: chartData,
         width: 900, height: 180,
         xLabel: (d) => d.label,
       });
@@ -314,10 +377,4 @@ function ACTIVITY_LABEL(type) {
     swim: "شنا", yoga: "یوگا", other: "فعالیت",
   };
   return map[type] || type;
-}
-
-function formatWeekdayShort(iso) {
-  try {
-    return new Intl.DateTimeFormat("fa-IR-u-ca-persian-nu-latn", { weekday: "short" }).format(new Date(iso + "T00:00:00"));
-  } catch { return ""; }
 }
