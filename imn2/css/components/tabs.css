@@ -1,0 +1,125 @@
+/* ============================================================
+   tabs.css — تب‌های افقی و زیرخطی و قرصی
+   ============================================================ */
+
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+/* ---------- Underline variant ---------- */
+.tabs--underline {
+  border-bottom: 1px solid var(--border-subtle);
+  padding-inline: var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs--underline::-webkit-scrollbar { display: none; }
+
+.tabs--underline .tab {
+  position: relative;
+  padding: 12px 16px;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  transition: color var(--t-fast);
+}
+.tabs--underline .tab:hover { color: var(--text-primary); }
+.tabs--underline .tab.is-active { color: var(--text-primary); font-weight: var(--fw-semibold); }
+.tabs--underline .tab.is-active::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  right: 10px;
+  left: 10px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--grad-accent);
+  animation: tabIndicator 240ms var(--ease-spring);
+}
+@keyframes tabIndicator {
+  from { transform: scaleX(0.4); opacity: 0; }
+  to   { transform: scaleX(1); opacity: 1; }
+}
+
+.tabs--underline .tab__count {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  color: var(--text-tertiary);
+  background: var(--bg-surface-3);
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  margin-inline-start: 6px;
+}
+.tabs--underline .tab.is-active .tab__count {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Pill variant ---------- */
+.tabs--pill {
+  padding: 4px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs--pill::-webkit-scrollbar { display: none; }
+
+.tabs--pill .tab {
+  padding: 7px 16px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  transition: background var(--t-base), color var(--t-base);
+}
+.tabs--pill .tab:hover { color: var(--text-primary); }
+.tabs--pill .tab.is-active {
+  background: var(--bg-surface-1);
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Card variant (segmented buttons) ---------- */
+.tabs--card {
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+.tabs--card .tab {
+  flex: 1;
+  min-width: 90px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-align: center;
+  transition: all var(--t-base);
+}
+.tabs--card .tab:hover {
+  background: var(--bg-surface-3);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+.tabs--card .tab.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+/* ---------- Tab panel ---------- */
+.tab-panel { animation: fadeIn 220ms var(--ease-out); }
+.tab-panel[hidden] { display: none; }
