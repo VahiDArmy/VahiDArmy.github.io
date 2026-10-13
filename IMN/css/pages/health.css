@@ -1,6 +1,216 @@
 /* =============================================================
-   Health (Insulin / Glucose / BP / Weight)
+   Health page — cards + metrics (BMI / BMR / TDEE)
    ============================================================= */
+
+/* -------- BMI/BMR/TDEE metrics card ----------------------------- */
+.health-metrics {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  overflow: hidden;
+}
+.health-metrics::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: -80px;
+  top: -80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: var(--gradient-primary-soft);
+  filter: blur(50px);
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.health-metrics__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  flex-wrap: wrap;
+  position: relative;
+}
+.health-metrics__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.health-metrics__title svg {
+  width: 20px; height: 20px;
+  stroke: var(--color-primary);
+  fill: none; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.health-metrics__meta {
+  display: flex;
+  gap: 6px;
+  font-size: var(--fs-2xs);
+  color: var(--color-text-3);
+  font-weight: var(--fw-semibold);
+}
+.health-metrics__meta span {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-1);
+}
+
+.health-metrics__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  position: relative;
+}
+
+.health-metrics__cell {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-divider);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.health-metrics__label {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.health-metrics__value {
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  letter-spacing: -0.02em;
+}
+.health-metrics__value small {
+  font-size: var(--fs-sm);
+  color: var(--color-text-3);
+  font-weight: var(--fw-medium);
+}
+.health-metrics__value--success { color: var(--color-success); }
+.health-metrics__value--warning { color: var(--color-warning); }
+.health-metrics__value--danger  { color: var(--color-danger); }
+.health-metrics__value--primary { color: var(--color-primary); }
+
+.health-metrics__badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  padding: 3px 10px;
+  border-radius: 999px;
+  width: fit-content;
+  margin-top: 2px;
+}
+.health-metrics__badge--success { background: var(--color-success-soft); color: var(--color-success); }
+.health-metrics__badge--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.health-metrics__badge--danger  { background: var(--color-danger-soft);  color: var(--color-danger);  }
+
+.health-metrics__hint {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  line-height: 1.6;
+}
+
+/* BMI scale bar */
+.health-metrics__bmi-bar {
+  position: relative;
+  height: 8px;
+  margin-top: 10px;
+}
+.health-metrics__bmi-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    to left,
+    #f59e0b 0%,     /* under */
+    #10b981 24%,    /* normal */
+    #f59e0b 48%,    /* over */
+    #ef4444 75%,    /* obese 1-2 */
+    #dc2626 100%    /* obese 3 */
+  );
+  opacity: 0.85;
+}
+.health-metrics__bmi-marker {
+  position: absolute;
+  top: -4px;
+  width: 3px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--color-text-1);
+  transform: translateX(50%);
+  box-shadow: 0 0 0 2px var(--color-bg-2), 0 0 8px rgba(255,255,255,0.4);
+  transition: inset-inline-start var(--dur-md) var(--ease-out);
+}
+.health-metrics__bmi-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 9px;
+  color: var(--color-text-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.health-metrics__foot {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-size: var(--fs-sm);
+  color: var(--color-text-3);
+  text-align: center;
+  position: relative;
+}
+.health-metrics__foot strong { color: var(--color-text-1); font-weight: var(--fw-bold); }
+
+/* Incomplete state */
+.health-metrics--incomplete { padding: var(--space-4); }
+.health-metrics__incomplete {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-info-soft);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  flex-wrap: wrap;
+}
+.health-metrics__incomplete-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--color-info);
+  flex-shrink: 0;
+}
+.health-metrics__incomplete-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+.health-metrics__incomplete-title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.health-metrics__incomplete-desc {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  margin-top: 2px;
+}
+.health-metrics__incomplete .btn { margin-inline-start: auto; }
+
+/* -------- Health grid (existing) --------------------------------- */
 .health-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -28,42 +238,9 @@
 }
 .health-card > * { position: relative; }
 
-.health-card--insulin::after {
-  content: "";
-  position: absolute;
-  top: -40px;
-  inset-inline-end: -40px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(99, 102, 241, 0.16);
-  filter: blur(30px);
-  pointer-events: none;
-}
-.health-card--glucose::after {
-  content: "";
-  position: absolute;
-  top: -40px;
-  inset-inline-end: -40px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(239, 68, 68, 0.16);
-  filter: blur(30px);
-  pointer-events: none;
-}
-.health-card--bp::after {
-  content: "";
-  position: absolute;
-  top: -40px;
-  inset-inline-end: -40px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(16, 185, 129, 0.16);
-  filter: blur(30px);
-  pointer-events: none;
-}
+.health-card--insulin::after,
+.health-card--glucose::after,
+.health-card--bp::after,
 .health-card--weight::after {
   content: "";
   position: absolute;
@@ -72,10 +249,13 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgba(34, 211, 238, 0.16);
   filter: blur(30px);
   pointer-events: none;
 }
+.health-card--insulin::after { background: rgba(99, 102, 241, 0.16); }
+.health-card--glucose::after { background: rgba(239, 68, 68, 0.16); }
+.health-card--bp::after      { background: rgba(16, 185, 129, 0.16); }
+.health-card--weight::after  { background: rgba(34, 211, 238, 0.16); }
 
 .health-card__head {
   display: flex;
@@ -97,9 +277,9 @@
   border-radius: 10px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   background: var(--color-primary-soft);
   color: var(--color-primary-300);
-  flex-shrink: 0;
 }
 .health-card--insulin .health-card__icon { background: var(--color-primary-soft); color: var(--color-primary-300); }
 .health-card--glucose .health-card__icon { background: var(--color-danger-soft); color: var(--color-danger); }
@@ -135,7 +315,6 @@
   margin-top: 2px;
 }
 
-/* Entry list */
 .health-entries {
   display: flex;
   flex-direction: column;
@@ -150,12 +329,12 @@
   gap: var(--space-2);
   padding: 8px 10px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--color-surface-1);
   border: 1px solid var(--color-divider);
   font-size: var(--fs-xs);
   transition: background var(--dur-xxs);
 }
-.health-entry:hover { background: rgba(255,255,255,0.04); }
+.health-entry:hover { background: var(--color-bg-3); }
 .health-entry__value {
   font-weight: var(--fw-bold);
   color: var(--color-text-1);
@@ -177,7 +356,6 @@
   margin-inline-start: 6px;
 }
 
-/* Inline add form */
 .health-add {
   display: flex;
   gap: 6px;
@@ -202,7 +380,6 @@
 .health-add input::placeholder { color: var(--color-text-4); }
 .health-add .btn { height: 36px; padding: 0 12px; flex-shrink: 0; }
 
-/* BP dual input */
 .bp-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -210,7 +387,6 @@
   flex: 1;
 }
 
-/* Insulin extra fields */
 .insulin-fields {
   display: flex;
   flex-direction: column;
@@ -222,7 +398,6 @@
 .insulin-fields .form-input,
 .insulin-fields .form-select { height: 36px; font-size: var(--fs-xs); padding: 0 10px; }
 
-/* Weight change indicator */
 .weight-delta {
   display: inline-flex;
   align-items: center;
@@ -234,4 +409,9 @@
 }
 .weight-delta--down { background: var(--color-success-soft); color: var(--color-success); }
 .weight-delta--up { background: var(--color-danger-soft); color: var(--color-danger); }
-.weight-delta--flat { background: rgba(255,255,255,0.05); color: var(--color-text-3); }
+.weight-delta--flat { background: var(--color-bg-4); color: var(--color-text-3); }
+
+@media (max-width: 640px) {
+  .health-metrics__value { font-size: var(--fs-3xl); }
+  .health-metrics__incomplete .btn { margin-inline-start: 0; width: 100%; }
+}
