@@ -1,0 +1,126 @@
+/* ============================================================
+   settings.css — تنظیمات کاربر (مودال یا صفحه)
+   ============================================================ */
+
+.settings-modal .modal__body { gap: var(--sp-5); padding: var(--sp-5); }
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.settings-section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+.settings-section__title-icon {
+  width: 26px; height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-3);
+  font-size: 14px;
+}
+
+/* ---------- Row (label + control) ---------- */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--t-fast);
+  flex-wrap: wrap;
+}
+.setting-row:hover { background: var(--bg-hover); }
+.setting-row__info { flex: 1; min-width: 0; }
+.setting-row__label {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+.setting-row__hint {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+/* ---------- Theme picker ---------- */
+.theme-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-3);
+}
+.theme-option {
+  position: relative;
+  padding: var(--sp-3);
+  border: 2px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-1);
+  cursor: pointer;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  align-items: center;
+}
+.theme-option:hover { border-color: var(--border-default); transform: translateY(-2px); }
+.theme-option.is-active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.theme-option__preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  position: relative;
+}
+.theme-option__preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #0b0f17 0%, #070a11 100%);
+}
+.theme-option[data-theme-value="light"] .theme-option__preview::before {
+  background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+}
+.theme-option__preview::after {
+  content: "";
+  position: absolute;
+  top: 12%; inset-inline-start: 12%;
+  width: 40%; height: 8%;
+  border-radius: 4px;
+  background: var(--accent);
+  box-shadow:
+    0 22px 0 -2px rgba(255,255,255,0.15),
+    0 44px 0 -2px rgba(255,255,255,0.08);
+}
+.theme-option__name { font-size: var(--fs-xs); font-weight: var(--fw-medium); color: var(--text-secondary); }
+.theme-option.is-active .theme-option__name { color: var(--accent); font-weight: var(--fw-semibold); }
+
+/* ---------- Target settings ---------- */
+.target-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--sp-3);
+}
+
+/* ---------- Danger zone ---------- */
+.danger-zone {
+  border-color: var(--danger-fg) !important;
+  background: var(--danger-bg) !important;
+}
+.danger-zone .settings-section__title { color: var(--danger-fg); }
+.danger-zone .settings-section__title-icon { background: rgba(239,68,68,0.2); color: var(--danger-fg); }
+.danger-zone .setting-row__label { color: var(--danger-fg); }
