@@ -1,28 +1,31 @@
 /**
  * Day Swiper — horizontal strip of day chips under the topbar.
  *
- * Centering logic
- * ---------------
- * The strip lives in an RTL document. Modern browsers (Chrome 85+,
- * Firefox 68+, Safari 14+) use the spec-compliant RTL `scrollLeft`
- * convention: 0 is the RIGHT edge (the START), and increasing values
- * scroll toward the LEFT edge.
+ * Design choices that make this version reliable
+ * ----------------------------------------------
+ *   • NO auto-scroll on mount when the whole strip already fits. The
+ *     chips are rendered in DOM order and, in RTL, the browser places
+ *     the first chip on the right. As long as the container is wider
+ *     than the content, everything is visible without scroll math.
  *
- * We do NOT compute scrollLeft ourselves. Instead we measure the chip
- * and the strip with `getBoundingClientRect()` and compute the visual
- * delta, then flip the sign for RTL. This works regardless of the
- * scrollLeft convention, CSS padding, or the strip's inner direction.
+ *   • When the content is wider than the container, we center the
+ *     selected chip using `getBoundingClientRect()` deltas — no
+ *     `offsetLeft`, no `scrollWidth`, no RTL scrollLeft conventions.
+ *     The math is simply: "how far is the chip from the visual center
+ *     of the strip?" and then scroll in the opposite direction.
  *
- * Three stacked `requestAnimationFrame`s make sure the DOM has laid out
- * fully before we measure — the chips have real dimensions at that
- * point.
+ *   • The sign of the scroll correction is flipped for RTL because in
+ *     RTL `scrollLeft` increases as you scroll toward the LEFT edge of
+ *     the content (the "end" in RTL is on the left).
  *
- * Auto-centering is triggered:
- *   • on mount
- *   • whenever the selected date changes (setDate)
- *   • on `scrollToToday()` / `date:today`
- *   • on route changes back to a swiper-enabled page
- *   • on a 30-second interval as a safety net while the swiper is visible
+ *   • Swipe detection uses a short time window so a fast tap is never
+ *     mistaken for a swipe.
+ *
+ * Public API:
+ *   const swiper = mountDaySwiper(container, { date, onChange });
+ *   swiper.setDate(iso);
+ *   swiper.scrollToToday();
+ *   swiper.destroy();
  */
 
 import { delegate } from "../utils/dom.js";
@@ -33,6 +36,8 @@ import {
 
 const DAYS_BEFORE = 14;
 const DAYS_AFTER = 7;
+const SWIPE_THRESHOLD_PX = 60;
+const SWIPE_MAX_MS = 400; // if the pointer is held longer, it's a "hold", not a swipe
 
 function buildChips(centerISO) {
   const chips = [];
@@ -62,7 +67,7 @@ export function mountDaySwiper(container, opts = {}) {
       const jal = toJalali(iso);
       const isSel = iso === selected;
       const isTod = isToday(iso);
-      const isFuture = iso > today;
+      const isFut = iso > today;
       const hasData = dataSet.has(iso);
       const weekday = formatWeekdayShort(iso).slice(0, 3);
       const monthLabel = JALALI_MONTHS[jal.month - 1]?.slice(0, 3) || "";
@@ -71,7 +76,7 @@ export function mountDaySwiper(container, opts = {}) {
         "day-chip",
         isSel ? "is-selected" : "",
         isTod ? "is-today" : "",
-        isFuture ? "is-future" : "",
+        isFut ? "is-future" : "",
         hasData ? "has-data" : "",
       ].filter(Boolean).join(" ");
 
@@ -91,12 +96,13 @@ export function mountDaySwiper(container, opts = {}) {
   }
 
   /**
-   * Center the currently-selected chip in the strip's viewport.
-   * Direction-aware, uses viewport-relative measurement only.
+   * Center the selected chip using only visual measurements. No
+   * assumptions about RTL scrollLeft semantics — we just look at where
+   * the chip currently appears on screen and correct the difference.
    */
   function centerSelected() {
-    // Triple rAF — first paints innerHTML, second settles fonts, third
-    // settles scroll snapping. Measurements are safe at this point.
+    // Give the browser time to complete layout. Three rAFs are enough
+    // on every browser we care about.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -105,35 +111,35 @@ export function mountDaySwiper(container, opts = {}) {
           if (!sel) return;
 
           const stripRect = strip.getBoundingClientRect();
-          const selRect = sel.getBoundingClientRect();
-
-          // If the strip itself has no size (hidden route), skip.
           if (stripRect.width === 0) return;
 
-          // Positive = chip is currently to the RIGHT of the strip's center
-          const stripCenter = stripRect.left + stripRect.width / 2;
-          const chipCenter = selRect.left + selRect.width / 2;
-          const offset = chipCenter - stripCenter;
+          // If the entire content fits, there's nothing to scroll.
+          if (strip.scrollWidth <= strip.clientWidth + 2) return;
 
-          // Close enough — avoid jittery micro-scrolls.
-          if (Math.abs(offset) < 4) return;
+          const chipRect = sel.getBoundingClientRect();
 
+          // Visual horizontal distance between chip center and strip center.
+          // Positive → chip is currently RIGHT of the strip's center.
+          const delta =
+            (chipRect.left + chipRect.width / 2) -
+            (stripRect.left + stripRect.width / 2);
+
+          if (Math.abs(delta) < 4) return; // already centered
+
+          // Direction-aware correction:
+          //   LTR: positive delta → scroll right   → scrollLeft + delta
+          //   RTL: positive delta → scroll left    → scrollLeft - delta
           const isRTL = getComputedStyle(strip).direction === "rtl";
-          // LTR: +offset → scroll right (increase scrollLeft)
-          // RTL: +offset → chip is closer to the START (right); scroll
-          //                back toward 0 (decrease scrollLeft)
-          const delta = isRTL ? -offset : offset;
+          const correction = isRTL ? -delta : delta;
 
-          const maxLeft = strip.scrollWidth - strip.clientWidth;
-          const target = strip.scrollLeft + delta;
-          const clamped = Math.max(0, Math.min(target, maxLeft));
+          const target = strip.scrollLeft + correction;
+          const max = strip.scrollWidth - strip.clientWidth;
+          const clamped = Math.max(0, Math.min(target, max));
 
-          try {
-            strip.scrollTo({ left: clamped, behavior: "smooth" });
-          } catch {
-            // Older Safari ignores options object
-            strip.scrollLeft = clamped;
-          }
+          // Use direct assignment (no smooth) for instant, deterministic
+          // positioning. Smooth scroll can be interrupted by layout
+          // recalcs and leave the strip half-centered.
+          strip.scrollLeft = clamped;
         });
       });
     });
@@ -150,32 +156,45 @@ export function mountDaySwiper(container, opts = {}) {
 
   delegate(strip, "click", ".day-chip", (e, chip) => {
     if (chip.classList.contains("is-future")) return;
+    if (swipeJustHappened) return; // suppress click right after a swipe
     selectDate(chip.dataset.iso);
   });
 
-  /* ---------- Swipe gesture ------------------------------------------- */
+  /* ---------- Swipe gesture -------------------------------------------- */
+  /* Track both distance and duration to avoid misclassifying taps. */
 
   let pointerDown = false;
   let startX = 0;
+  let startTime = 0;
+  let swipeJustHappened = false;
+
   strip.addEventListener("pointerdown", (e) => {
     pointerDown = true;
     startX = e.clientX;
+    startTime = Date.now();
   });
+
   strip.addEventListener("pointerup", (e) => {
     if (!pointerDown) return;
     pointerDown = false;
     const dx = e.clientX - startX;
-    const threshold = 60;
-    if (dx > threshold) selectDate(addDays(selected, -1));
-    else if (dx < -threshold) selectDate(addDays(selected, 1));
+    const dt = Date.now() - startTime;
+    const isFastSwipe = Math.abs(dx) >= SWIPE_THRESHOLD_PX && dt <= SWIPE_MAX_MS;
+
+    if (!isFastSwipe) return;
+
+    // Block the subsequent `click` event that browsers fire after touch.
+    swipeJustHappened = true;
+    setTimeout(() => (swipeJustHappened = false), 350);
+
+    if (dx > 0) selectDate(addDays(selected, -1)); // swipe right → previous day
+    else selectDate(addDays(selected, 1));         // swipe left  → next day
   });
+
   strip.addEventListener("pointercancel", () => (pointerDown = false));
 
-  /* ---------- Visibility observer ------------------------------------- */
-  /**
-   * When the strip is hidden (e.g. on /settings) we don't want to waste
-   * rAFs on centering. When it becomes visible again, we re-center.
-   */
+  /* ---------- Visibility observer -------------------------------------- */
+
   const io = new IntersectionObserver(([entry]) => {
     const wasVisible = visible;
     visible = entry.isIntersecting || entry.intersectionRatio > 0;
@@ -183,7 +202,7 @@ export function mountDaySwiper(container, opts = {}) {
   }, { threshold: 0 });
   io.observe(strip);
 
-  /* ---------- Midnight + safety interval ------------------------------ */
+  /* ---------- Midnight watcher ----------------------------------------- */
 
   let midnightTimer = null;
   function scheduleMidnightRefresh() {
@@ -199,34 +218,18 @@ export function mountDaySwiper(container, opts = {}) {
   }
   scheduleMidnightRefresh();
 
-  // Safety net: every 20s, if the strip is visible and the selected chip
-  // is off-center by more than a chip-width, re-center. This catches
-  // edge cases where a browser resets scrollLeft after a re-render or
-  // orientation change.
-  const safetyInterval = setInterval(() => {
-    if (!visible) return;
-    const sel = strip.querySelector(".day-chip.is-selected");
-    if (!sel) return;
-    const stripRect = strip.getBoundingClientRect();
-    const selRect = sel.getBoundingClientRect();
-    const offset =
-      (selRect.left + selRect.width / 2) -
-      (stripRect.left + stripRect.width / 2);
-    if (Math.abs(offset) > selRect.width * 1.5) centerSelected();
-  }, 20000);
-
-  // Re-center on window resize / orientation change
+  // Re-center on viewport resize / orientation change.
   window.addEventListener("resize", centerSelected);
 
   render();
 
-  /* ---------- Public API ---------------------------------------------- */
+  /* ---------- Public API ----------------------------------------------- */
 
   return {
     setDate(iso, { silent = true } = {}) {
       if (!iso) return;
       if (iso === selected) {
-        // Same date — but strip may have been scrolled away; re-center.
+        // Same date — make sure it's visible.
         centerSelected();
         return;
       }
@@ -240,8 +243,7 @@ export function mountDaySwiper(container, opts = {}) {
       const changed = selected !== today;
       selected = today;
       render({ scroll: true });
-      // Second pass after smooth scroll settles, in case layout shifted
-      setTimeout(centerSelected, 300);
+      setTimeout(centerSelected, 250); // second pass after layout settles
       if (changed && !silent) onChange?.(today);
     },
 
@@ -250,14 +252,12 @@ export function mountDaySwiper(container, opts = {}) {
       render({ scroll: false });
     },
 
-    /** Force a re-center — useful after an explicit route change. */
     recenter: centerSelected,
 
     get date() { return selected; },
 
     destroy() {
       if (midnightTimer) clearTimeout(midnightTimer);
-      clearInterval(safetyInterval);
       io.disconnect();
       window.removeEventListener("resize", centerSelected);
       container.innerHTML = "";
