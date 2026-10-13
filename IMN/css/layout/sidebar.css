@@ -222,19 +222,35 @@
   inset: 0;
   background: rgba(7, 9, 15, 0.6);
   backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   z-index: calc(var(--z-sidebar) - 1);
   animation: fadeIn var(--dur-sm) var(--ease-out) both;
 }
 
-/* Mobile behavior */
+/* -------------------------------------------------------------
+   Mobile behaviour — HARD hide on <=980px.
+   Both transform AND visibility are used so the sidebar is
+   guaranteed invisible until explicitly opened via `.is-open`.
+   ------------------------------------------------------------- */
 @media (max-width: 980px) {
   .sidebar {
-    transform: translateX(100%);
     width: min(85vw, 320px);
+    inset-inline-end: 0;
+    transform: translateX(110%);
+    visibility: hidden;
+    pointer-events: none;
     box-shadow: var(--shadow-xl);
+    transition:
+      transform var(--dur-md) var(--ease-out),
+      visibility 0s linear var(--dur-md);
   }
   .sidebar.is-open {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      transform var(--dur-md) var(--ease-out),
+      visibility 0s linear 0s;
   }
 }
 
