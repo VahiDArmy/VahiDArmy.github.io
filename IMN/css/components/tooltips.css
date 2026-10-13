@@ -1,0 +1,78 @@
+/* =============================================================
+   Tooltips
+   ============================================================= */
+.tooltip-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+}
+
+.tooltip {
+  position: absolute;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(20, 26, 40, 0.98);
+  color: var(--color-text-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-2);
+  pointer-events: none;
+  animation: fadeIn var(--dur-xxs) var(--ease-out) both;
+  max-width: 280px;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: inherit;
+  border: inherit;
+  transform: rotate(45deg);
+}
+.tooltip[data-placement="top"]::after    { bottom: -5px; left: 50%; margin-left: -4px; border-top: none; border-left: none; }
+.tooltip[data-placement="bottom"]::after { top: -5px;    left: 50%; margin-left: -4px; border-bottom: none; border-right: none; }
+.tooltip[data-placement="right"]::after  { right: -5px;  top: 50%;  margin-top: -4px;  border-bottom: none; border-left: none; }
+.tooltip[data-placement="left"]::after   { left: -5px;   top: 50%;  margin-top: -4px;  border-top: none; border-right: none; }
+
+/* Simple [data-tooltip] attribute approach */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  transform-origin: bottom center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(20, 26, 40, 0.98);
+  color: var(--color-text-1);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border-2);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-xs) var(--ease-out), transform var(--dur-xs) var(--ease-out);
+  z-index: var(--z-tooltip);
+  max-width: 240px;
+  white-space: normal;
+  text-align: center;
+}
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+[data-tooltip-position="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 8px);
+  transform-origin: top center;
+}
