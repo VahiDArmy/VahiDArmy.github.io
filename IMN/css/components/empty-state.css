@@ -1,0 +1,63 @@
+/* =============================================================
+   Empty State (variants + illustrations)
+   ============================================================= */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  min-height: 220px;
+}
+.empty--compact { padding: var(--space-5) var(--space-3); min-height: 140px; }
+
+.empty__art {
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  position: relative;
+  margin-bottom: var(--space-2);
+}
+.empty__art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--gradient-primary-soft);
+  filter: blur(12px);
+  opacity: 0.65;
+}
+.empty__art svg {
+  width: 60px;
+  height: 60px;
+  stroke: var(--color-primary-300);
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  position: relative;
+  z-index: 1;
+  animation: floatY 4s ease-in-out infinite;
+}
+
+.empty__title {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.empty__text {
+  font-size: var(--fs-sm);
+  color: var(--color-text-3);
+  max-width: 380px;
+  line-height: 1.7;
+}
+.empty__actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
