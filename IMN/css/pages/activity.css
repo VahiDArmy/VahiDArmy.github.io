@@ -1,0 +1,205 @@
+/* =============================================================
+   Activity / Exercise / Steps Page
+   ============================================================= */
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.activity-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.activity-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.activity-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.activity-card__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-300);
+}
+.activity-card__icon--walk { background: rgba(34, 211, 238, 0.14); color: #22d3ee; }
+.activity-card__icon--gym { background: rgba(239, 68, 68, 0.14); color: #ef4444; }
+.activity-card__icon--run { background: rgba(245, 158, 11, 0.14); color: #f59e0b; }
+.activity-card__icon--bike { background: rgba(16, 185, 129, 0.14); color: #10b981; }
+.activity-card__icon--other { background: rgba(139, 92, 246, 0.14); color: #8b5cf6; }
+.activity-card__icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Steps display */
+.steps-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.steps-display__value {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.steps-display__number {
+  font-size: var(--fs-4xl);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.steps-display__label {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.steps-display__goal {
+  font-size: var(--fs-sm);
+  color: var(--color-text-3);
+  font-weight: var(--fw-medium);
+}
+
+/* KM tracker with slider */
+.km-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.km-input__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.km-input__value {
+  font-size: var(--fs-3xl);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+  min-width: 90px;
+  text-align: center;
+  line-height: 1;
+}
+.km-input__unit {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  font-weight: var(--fw-medium);
+}
+.km-input__slider { flex: 1; }
+
+/* Exercise log */
+.exercise-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.exercise-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--color-divider);
+  transition: background var(--dur-xxs);
+}
+.exercise-entry:hover { background: rgba(255,255,255,0.04); }
+.exercise-entry__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.04);
+}
+.exercise-entry__icon svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+.exercise-entry__body { flex: 1; min-width: 0; }
+.exercise-entry__name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.exercise-entry__meta {
+  display: flex;
+  gap: 8px;
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.exercise-entry__meta span { display: flex; align-items: center; gap: 3px; }
+
+/* Weekly chart */
+.activity-week-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+  padding: var(--space-3) 0 0;
+  position: relative;
+}
+.activity-week-chart__bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  justify-content: flex-end;
+}
+.activity-week-chart__bar-fill {
+  width: 100%;
+  max-width: 44px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(180deg, #22d3ee, #0891b2);
+  transition: height var(--dur-lg) var(--ease-out);
+  position: relative;
+  min-height: 4px;
+  box-shadow: 0 -2px 10px rgba(34, 211, 238, 0.28);
+}
+.activity-week-chart__bar-fill:hover { filter: brightness(1.15); }
+.activity-week-chart__bar-value {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-bold);
+}
+.activity-week-chart__bar-label {
+  font-size: 10px;
+  color: var(--color-text-4);
+  font-weight: var(--fw-semibold);
+}
+.activity-week-chart__bar.is-today .activity-week-chart__bar-label { color: var(--color-primary-300); }
+.activity-week-chart__bar.is-today .activity-week-chart__bar-fill {
+  background: linear-gradient(180deg, #6366f1, #4f46e5);
+  box-shadow: 0 -2px 12px rgba(99, 102, 241, 0.5);
+}
