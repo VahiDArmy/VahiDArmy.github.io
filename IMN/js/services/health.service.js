@@ -1,12 +1,8 @@
 /**
  * Health service — insulin, blood glucose, blood pressure, weight.
  *
- * Tables (all RLS-scoped, all have `id`, `user_id`, `log_date`, `log_time`):
- *   insulin_logs(id, user_id, log_date, log_time, units, type, site, note, created_at)
- *   glucose_logs(id, user_id, log_date, log_time, value, context, note, created_at)
- *      context ∈ fasting | pre_meal | post_meal | bedtime | random
- *   bp_logs     (id, user_id, log_date, log_time, systolic, diastolic, pulse, note, created_at)
- *   weight_logs (id, user_id, log_date, log_time, weight, note, created_at)
+ * BP classification uses the HIGHER category of the two readings,
+ * matching AHA 2017 guidelines.
  */
 
 import { db } from "./db.service.js";
@@ -17,7 +13,6 @@ function emitChange(kind, action, payload) {
   bus.emit("data:changed", { domain: "health", kind });
 }
 
-/* ---------- Generic helpers ------------------------------------------- */
 function makeKindService(table, kind) {
   return {
     async listByDate(dateISO) {
@@ -54,10 +49,8 @@ function makeKindService(table, kind) {
   };
 }
 
-/* ---------- Insulin ---------------------------------------------------- */
 export const insulin = {
   ...makeKindService("insulin_logs", "insulin"),
-  /** Daily total units — used for the report summary. */
   async dailyTotals(startISO, endISO) {
     const rows = await this.listByRange(startISO, endISO);
     const byDate = new Map();
@@ -70,17 +63,15 @@ export const insulin = {
   },
 };
 
-/* ---------- Glucose ---------------------------------------------------- */
 export const glucose = {
   ...makeKindService("glucose_logs", "glucose"),
-  /** Classify a value for coloring. Uses mg/dL thresholds (ADA-ish). */
   classify(value) {
     const v = Number(value);
     if (!Number.isFinite(v)) return { level: "unknown", label: "—", tone: "flat" };
-    if (v < 70)  return { level: "low",      label: "پایین",  tone: "danger" };
-    if (v < 100) return { level: "normal",   label: "نرمال",  tone: "success" };
-    if (v < 126) return { level: "elevated", label: "مرزی",   tone: "warning" };
-    if (v < 200) return { level: "high",     label: "بالا",   tone: "danger" };
+    if (v < 70) return { level: "low", label: "پایین", tone: "danger" };
+    if (v < 100) return { level: "normal", label: "نرمال", tone: "success" };
+    if (v < 126) return { level: "elevated", label: "مرزی", tone: "warning" };
+    if (v < 200) return { level: "high", label: "بالا", tone: "danger" };
     return { level: "veryHigh", label: "بسیار بالا", tone: "danger" };
   },
   async dailyAverages(startISO, endISO) {
@@ -98,30 +89,35 @@ export const glucose = {
   },
 };
 
-/* ---------- Blood pressure -------------------------------------------- */
 export const bp = {
   ...makeKindService("bp_logs", "bp"),
+  /**
+   * AHA 2017 classification. Uses the HIGHER category of the two numbers.
+   * High categories are checked first so e.g. 145/75 is classified as
+   * Stage 2 (systolic), not elevated.
+   */
   classify(systolic, diastolic) {
-    const s = Number(systolic), d = Number(diastolic);
+    const s = Number(systolic);
+    const d = Number(diastolic);
     if (!Number.isFinite(s) || !Number.isFinite(d)) {
       return { level: "unknown", label: "—", tone: "flat" };
     }
-    if (s < 90 || d < 60)   return { level: "low",       label: "پایین",         tone: "warning" };
-    if (s < 120 && d < 80)  return { level: "normal",    label: "نرمال",         tone: "success" };
-    if (s < 130 && d < 80)  return { level: "elevated",  label: "کمی بالا",      tone: "warning" };
-    if (s < 140 || d < 90)  return { level: "stage1",    label: "فشار بالا (مرحله ۱)", tone: "danger" };
-    if (s < 180 || d < 120) return { level: "stage2",    label: "فشار بالا (مرحله ۲)", tone: "danger" };
-    return { level: "crisis", label: "بحرانی", tone: "danger" };
+    if (s > 180 || d > 120) return { level: "crisis",   label: "بحرانی",               tone: "danger"  };
+    if (s >= 140 || d >= 90) return { level: "stage2",   label: "فشار بالا (مرحله ۲)", tone: "danger"  };
+    if (s >= 130 || d >= 80) return { level: "stage1",   label: "فشار بالا (مرحله ۱)", tone: "warning" };
+    if (s >= 120)            return { level: "elevated", label: "کمی بالا",             tone: "warning" };
+    if (s < 90 || d < 60)    return { level: "low",      label: "پایین",                tone: "warning" };
+    return { level: "normal", label: "نرمال", tone: "success" };
   },
 };
 
-/* ---------- Weight ----------------------------------------------------- */
 export const weight = {
   ...makeKindService("weight_logs", "weight"),
-  /** Change between first and last entry in range. */
   async trend(startISO, endISO) {
     const rows = await this.listByRange(startISO, endISO);
-    if (rows.length < 2) return { change: 0, start: rows[0]?.weight ?? null, end: rows[0]?.weight ?? null };
+    if (rows.length < 2) {
+      return { change: 0, start: rows[0]?.weight ?? null, end: rows[0]?.weight ?? null };
+    }
     const first = rows[0];
     const last = rows[rows.length - 1];
     return {
@@ -134,7 +130,6 @@ export const weight = {
   },
 };
 
-/* ---------- Combined daily snapshot ----------------------------------- */
 export async function healthSnapshot(dateISO) {
   const [ins, glu, b, w] = await Promise.all([
     insulin.listByDate(dateISO),
