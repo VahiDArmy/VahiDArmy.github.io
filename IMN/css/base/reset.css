@@ -1,5 +1,5 @@
 /* =============================================================
-   Modern Reset
+   Modern Reset — theme-aware
    ============================================================= */
 *,
 *::before,
@@ -28,6 +28,15 @@ body {
     var(--color-bg-1);
   color: var(--color-text-1);
   overflow-x: hidden;
+  transition: background-color var(--dur-md) var(--ease-out),
+              color var(--dur-md) var(--ease-out);
+}
+
+[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 700px at 100% -10%, rgba(99, 102, 241, 0.08), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(34, 211, 238, 0.06), transparent 60%),
+    var(--color-bg-1);
 }
 
 img,
@@ -75,17 +84,15 @@ table {
 
 ::selection {
   background: var(--color-primary);
-  color: white;
+  color: #fff;
 }
 
-/* Focus visible */
 :focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -111,14 +118,8 @@ table {
   display: none !important;
 }
 
-/* Utilities used globally */
-.no-scroll {
-  overflow: hidden !important;
-}
-
-.no-select {
-  user-select: none;
-}
+.no-scroll { overflow: hidden !important; }
+.no-select { user-select: none; }
 
 .sr-only {
   position: absolute;
