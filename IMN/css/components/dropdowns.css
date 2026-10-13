@@ -1,0 +1,63 @@
+/* =============================================================
+   Dropdowns / Popovers
+   ============================================================= */
+.popover {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  min-width: 220px;
+  background: rgba(24, 32, 48, 0.98);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  padding: 6px;
+  animation: popoverIn var(--dur-sm) var(--ease-spring) both;
+  transform-origin: top right;
+}
+@keyframes popoverIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.popover--left { transform-origin: top left; }
+.popover--bottom { transform-origin: bottom right; }
+
+.popover__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: var(--fs-sm);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: background var(--dur-xxs), color var(--dur-xxs);
+  user-select: none;
+}
+.popover__item:hover { background: rgba(255, 255, 255, 0.05); color: var(--color-text-1); }
+.popover__item svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.9; flex-shrink: 0; }
+.popover__item.is-danger { color: var(--color-danger); }
+.popover__item.is-danger:hover { background: var(--color-danger-soft); }
+.popover__item.is-active { background: var(--color-primary-soft); color: var(--color-primary-300); }
+
+.popover__divider {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--color-divider);
+}
+
+.popover__header {
+  padding: 8px 10px 6px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.popover__footer {
+  padding: 6px 4px 4px;
+  border-top: 1px solid var(--color-divider);
+  margin-top: 4px;
+}
