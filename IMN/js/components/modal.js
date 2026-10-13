@@ -1,22 +1,22 @@
 /**
  * Modal system.
  *
- * Usage:
- *   const m = modal.open({
- *     title: "افزودن غذا",
- *     size: "md",
- *     content: `<div>...</div>` || HTMLElement,
- *     footer: [ { label: "انصراف", variant: "ghost", onClick: close },
- *               { label: "ذخیره", variant: "primary", onClick: save } ],
- *     onClose,
- *     closeOnBackdrop: true,
- *     closeOnEscape: true,
- *   });
+ * Public API:
+ *   const m = modal.open({ title, content, footer, ... });
  *   m.close();
- *   m.setContent(...)
+ *   m.setContent(...);
+ *   modal.closeAll();
  *
- * Only one modal is visible at a time (a stack is supported but the top
- * one gets focus; when it closes, focus returns to the previous opener).
+ * Footer action contract
+ * ----------------------
+ * Each action is `{ label, variant, onClick, keepOpen, closeOnClick }`.
+ * `onClick` may return:
+ *   • undefined / true  → modal closes
+ *   • false             → modal stays open (keep user's input)
+ *   • a Promise         → awaited; resolves to one of the above
+ *
+ * This makes async validation and network errors safe: return `false`
+ * from the awaited handler and the modal won't close on failure.
  */
 
 import { $, createElement, focusFirst } from "../utils/dom.js";
@@ -84,14 +84,14 @@ export function open(opts = {}) {
 
   modal.querySelector(".modal__title-text").textContent = title;
 
-  // Body content
   const body = modal.querySelector(".modal__body");
   if (typeof content === "string") body.innerHTML = content;
   else if (content instanceof Node) body.appendChild(content);
 
-  // Footer actions
+  /* ---------- Footer actions ---------- */
   if (footer && Array.isArray(footer)) {
     const footerEl = modal.querySelector(".modal__footer");
+
     footer.forEach((action) => {
       const btn = createElement("button", {
         type: "button",
@@ -100,28 +100,51 @@ export function open(opts = {}) {
       if (action.icon) btn.innerHTML = icon(action.icon, { size: 16 });
       else btn.textContent = action.label || "";
       if (action.title) btn.title = action.title;
-      btn.addEventListener("click", (e) => {
-        const result = action.onClick?.(e, handle);
-        if (result === false) return; // keep modal open
-        if (action.keepOpen) return;
-        if (action.closeOnClick !== false) close();
+
+      btn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (btn.disabled) return;
+
+        const wasDisabled = btn.disabled;
+        btn.disabled = true;
+        const isPrimary = (action.variant || "secondary") === "primary";
+        if (isPrimary) btn.classList.add("is-loading");
+
+        try {
+          let result = action.onClick ? action.onClick(e, handle) : undefined;
+          if (result && typeof result.then === "function") {
+            result = await result;
+          }
+          if (result === false) return; // keep open
+          if (action.keepOpen) return;
+          if (action.closeOnClick === false) return;
+          close();
+        } catch (err) {
+          // Swallow to keep the modal open on error; callers normally
+          // surface the error via toast before rejecting.
+          console.error("[modal] footer action failed", err);
+        } finally {
+          if (document.body.contains(btn)) {
+            btn.disabled = wasDisabled;
+            if (isPrimary) btn.classList.remove("is-loading");
+          }
+        }
       });
+
       footerEl.appendChild(btn);
     });
   }
 
-  // Backdrop click
-  if (closeOnBackdrop) {
-    backdrop.addEventListener("click", () => close());
-  }
+  /* ---------- Backdrop ---------- */
+  if (closeOnBackdrop) backdrop.addEventListener("click", () => close());
 
-  // Escape key
+  /* ---------- Keyboard + focus trap ---------- */
   function onKey(e) {
     if (e.key === "Escape" && closeOnEscape) {
       e.stopPropagation();
       close();
     }
-    // Focus trap
     if (e.key === "Tab") {
       const focusables = modal.querySelectorAll(
         'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -139,14 +162,19 @@ export function open(opts = {}) {
     }
   }
 
+  /* ---------- Close ---------- */
+  let closed = false;
   function close() {
+    if (closed) return;
+    closed = true;
+
     document.removeEventListener("keydown", onKey, true);
-    modal.classList.add("is-leaving");
-    backdrop.style.opacity = "0";
-    backdrop.style.transition = "opacity .2s";
     modal.style.transition = "transform .18s, opacity .18s";
     modal.style.transform = "scale(.96)";
     modal.style.opacity = "0";
+    backdrop.style.transition = "opacity .18s";
+    backdrop.style.opacity = "0";
+
     setTimeout(() => {
       backdrop.remove();
       modal.remove();
@@ -184,12 +212,9 @@ export function open(opts = {}) {
   container.classList.add("is-open");
   container.setAttribute("aria-hidden", "false");
   document.body.classList.add("no-scroll");
-
   document.addEventListener("keydown", onKey, true);
 
   stack.push(handle);
-
-  // Focus first input
   requestAnimationFrame(() => {
     focusFirst(modal);
     if (document.activeElement === document.body) modal.focus();
@@ -198,11 +223,9 @@ export function open(opts = {}) {
   return handle;
 }
 
-export function confirm(opts) {
-  // delegate to confirm.js to avoid circular imports
-  return import("./confirm.js").then((m) => m.confirm(opts));
-}
-
 export function closeAll() {
   [...stack].forEach((h) => h.close());
 }
+
+export const modal = { open, closeAll };
+export default modal;
