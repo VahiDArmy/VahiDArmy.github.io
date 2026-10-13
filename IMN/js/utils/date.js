@@ -1,16 +1,19 @@
 /**
  * Date helpers.
  *
- * Two calendars coexist in this app:
- *  - ISO strings (YYYY-MM-DD) for storage & API.
- *  - Jalali (Persian) dates for display.
+ * Jalali ⇄ Gregorian conversion uses the jalaali-js algorithm
+ * (public domain, by Behrang Noruzi Niya).
  *
- * The Jalali ⇄ Gregorian conversion uses the well-tested jalaali-js
- * algorithm (public domain) — it is deterministic and does not depend on
- * Intl's implementation.
+ * IMPORTANT BUG FIX
+ * -----------------
+ * In jalaali-js, `jalCal(jy).leap` returns 0 for a LEAP year and 1..4 for
+ * non-leap years. The previous version of this file compared against
+ * `=== 1`, which is backwards. This corrupted the "previous Jalali year"
+ * branch of `d2j` and the length of Esfand in leap years, so dates near
+ * the Farvardin/Esfand boundary could be off by a day — and around the
+ * new-year rollover, by an entire month.
  *
- * All conversions go through LOCAL time (never toISOString) so a user in
- * UTC+3:30 gets consistent day boundaries.
+ * All date math is LOCAL time. Never use `toISOString()` here.
  */
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -50,10 +53,6 @@ export function addDays(iso, days) {
   return toISO(d);
 }
 
-/**
- * Add months, clamping the day so that 31 Jan + 1 month → 28/29 Feb
- * (rather than rolling over into March).
- */
 export function addMonths(iso, months) {
   const d = fromISO(iso);
   const originalDay = d.getDate();
@@ -70,7 +69,7 @@ export function diffDays(aISO, bISO) {
   return Math.round((a - b) / 86400000);
 }
 
-export function startOfWeek(iso, weekStartsOn = 6 /* Saturday */) {
+export function startOfWeek(iso, weekStartsOn = 6) {
   const d = fromISO(iso);
   const day = d.getDay();
   const delta = (day - weekStartsOn + 7) % 7;
@@ -95,7 +94,6 @@ export function endOfMonth(iso) {
 export function rangeDays(startISO, endISO) {
   const out = [];
   let cur = startISO;
-  // Safety: cap at 5 years to avoid runaway loops
   let guard = 0;
   while (cur <= endISO && guard++ < 1900) {
     out.push(cur);
@@ -104,17 +102,9 @@ export function rangeDays(startISO, endISO) {
   return out;
 }
 
-export function isSameDay(aISO, bISO) {
-  return aISO === bISO;
-}
-
-export function isToday(iso) {
-  return iso === todayISO();
-}
-
-export function isFuture(iso) {
-  return iso > todayISO();
-}
+export function isSameDay(aISO, bISO) { return aISO === bISO; }
+export function isToday(iso) { return iso === todayISO(); }
+export function isFuture(iso) { return iso > todayISO(); }
 
 /* ---------- Formatting ------------------------------------------------ */
 const FA_LOCALE = "fa-IR-u-ca-persian-nu-latn";
@@ -123,17 +113,11 @@ export function formatLong(iso) {
   const d = fromISO(iso);
   try {
     return new Intl.DateTimeFormat(FA_LOCALE, {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
     }).format(d);
-  } catch {
-    return iso;
-  }
+  } catch { return iso; }
 }
 
-/** Short Jalali date, always `YYYY/MM/DD`, always Latin digits. */
 export function formatShort(iso) {
   const j = toJalali(iso);
   return `${j.year}/${String(j.month).padStart(2, "0")}/${String(j.day).padStart(2, "0")}`;
@@ -141,32 +125,21 @@ export function formatShort(iso) {
 
 export function formatWeekday(iso) {
   const d = fromISO(iso);
-  try {
-    return new Intl.DateTimeFormat(FA_LOCALE, { weekday: "long" }).format(d);
-  } catch {
-    return iso;
-  }
+  try { return new Intl.DateTimeFormat(FA_LOCALE, { weekday: "long" }).format(d); }
+  catch { return iso; }
 }
 
 export function formatWeekdayShort(iso) {
   const d = fromISO(iso);
-  try {
-    return new Intl.DateTimeFormat(FA_LOCALE, { weekday: "short" }).format(d);
-  } catch {
-    return iso;
-  }
+  try { return new Intl.DateTimeFormat(FA_LOCALE, { weekday: "short" }).format(d); }
+  catch { return iso; }
 }
 
 export function formatMonthYear(iso) {
   const d = fromISO(iso);
   try {
-    return new Intl.DateTimeFormat(FA_LOCALE, {
-      month: "long",
-      year: "numeric",
-    }).format(d);
-  } catch {
-    return iso;
-  }
+    return new Intl.DateTimeFormat(FA_LOCALE, { month: "long", year: "numeric" }).format(d);
+  } catch { return iso; }
 }
 
 export function formatRelative(iso) {
@@ -178,7 +151,6 @@ export function formatRelative(iso) {
 }
 
 /* ---------- Time helpers ----------------------------------------------- */
-/** Accepts "HH:MM" or "HH:MM:SS". Returns { hours, minutes, seconds } or null. */
 export function parseTime(str) {
   if (!str || typeof str !== "string") return null;
   const m = str.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
@@ -205,11 +177,20 @@ export function minutesBetween(start, end) {
   return b - a;
 }
 
-/* ---------- Gregorian ⇄ Jalali (jalaali-js, public domain) ------------- */
+/* =============================================================
+   Jalali ⇄ Gregorian — jalaali-js algorithm (public domain)
+   ============================================================= */
 
 function div(a, b) { return Math.trunc(a / b); }
 function mod(a, b) { return a - Math.trunc(a / b) * b; }
 
+/**
+ * Calculate the Jalali year info for a given jy.
+ *
+ * NOTE: `leap` returned here is 0 for a LEAP year and 1..4 for a
+ * NON-leap year. This is the jalaali-js convention — everywhere we
+ * check `=== 0` to detect leap.
+ */
 function jalCal(jy) {
   const breaks = [
     -61, 9, 38, 199, 426, 686, 756, 818, 1111, 1181, 1210,
@@ -276,6 +257,7 @@ function d2j(jdn) {
   const jdn1f = g2d(gy, 3, r.march);
   let jd, jm, k;
   k = jdn - jdn1f;
+
   if (k >= 0) {
     if (k <= 185) {
       jm = 1 + div(k, 31);
@@ -284,9 +266,11 @@ function d2j(jdn) {
     }
     k -= 186;
   } else {
+    // We are in the previous Jalali year.
+    // NOTE: jalaali-js convention — leap === 0 means the year IS a leap year.
     jy -= 1;
     k += 179;
-    if (r.leap === 1) k += 1;
+    if (r.leap === 0) k += 1;   // ← was `=== 1` (BUG), now correct
   }
   jm = 7 + div(k, 30);
   jd = mod(k, 30) + 1;
@@ -306,11 +290,14 @@ export function jalaliToISO(jy, jm, jd) {
   return toISO(new Date(g.gy, g.gm - 1, g.gd));
 }
 
+/** Number of days in a Jalali month. */
 export function jalaliMonthLength(jy, jm) {
   if (jm <= 6) return 31;
   if (jm <= 11) return 30;
+  // Esfand — 30 days only in a leap year.
+  // jalaali-js convention: leap === 0 means it IS a leap year.
   const r = jalCal(jy);
-  return r.leap === 1 ? 30 : 29;
+  return r.leap === 0 ? 30 : 29;   // ← was `=== 1 ? 30 : 29` (BUG)
 }
 
 export const JALALI_MONTHS = [
