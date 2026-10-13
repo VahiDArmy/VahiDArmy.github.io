@@ -1,5 +1,5 @@
 /* =============================================================
-   Settings Page — simplified for the new no-sidebar layout
+   Settings Page — includes the metrics live preview
    ============================================================= */
 .settings-layout {
   display: flex;
@@ -7,9 +7,7 @@
   gap: var(--space-4);
 }
 
-.settings-panel {
-  display: none;
-}
+.settings-panel { display: none; }
 .settings-panel.is-active { display: block; animation: fadeInUp var(--dur-md) var(--ease-out) both; }
 
 .settings-section {
@@ -45,6 +43,7 @@
   font-size: var(--fs-xs);
   color: var(--color-text-3);
   margin-top: 4px;
+  line-height: 1.7;
 }
 
 .setting-row {
@@ -140,43 +139,6 @@
 .avatar-upload__preview img { width: 100%; height: 100%; object-fit: cover; }
 .avatar-upload__body { display: flex; flex-direction: column; gap: 6px; }
 
-/* Settings tabs at top */
-.settings-tabs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 4px 0 12px;
-  border-bottom: 1px solid var(--color-divider);
-  margin-bottom: var(--space-4);
-  scrollbar-width: none;
-}
-.settings-tabs::-webkit-scrollbar { display: none; }
-.settings-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius-md);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--color-text-3);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all var(--dur-xs);
-  flex-shrink: 0;
-}
-.settings-tab:hover { background: var(--color-bg-3); color: var(--color-text-1); }
-.settings-tab.is-active {
-  background: var(--gradient-primary);
-  color: #fff;
-  box-shadow: var(--shadow-primary);
-}
-.settings-tab svg {
-  width: 14px; height: 14px;
-  stroke: currentColor; fill: none; stroke-width: 2.2;
-}
-
 /* Highlight when scrolled-to by a report block */
 .is-highlighted {
   animation: highlightPulse 1.4s var(--ease-out);
@@ -186,4 +148,160 @@
   0% { box-shadow: 0 0 0 0 var(--color-primary-glow); }
   50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
   100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+/* =============================================================
+   Metrics form section — highlighted block inside Profile
+   ============================================================= */
+.metrics-form {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, var(--color-primary-soft) 0%, transparent 100%);
+  border: 1px solid rgba(99, 102, 241, 0.22);
+  position: relative;
+}
+.metrics-form__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  margin-bottom: var(--space-3);
+}
+.metrics-form__title svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* =============================================================
+   Live metrics preview (BMI / BMR / TDEE)
+   ============================================================= */
+.settings-metrics-preview { margin-top: var(--space-3); }
+
+.metrics-preview {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-2);
+  border: 1px solid var(--color-border-2);
+  position: relative;
+  overflow: hidden;
+}
+.metrics-preview::before {
+  content: "";
+  position: absolute;
+  inset-inline-end: -60px;
+  top: -60px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: var(--gradient-primary-soft);
+  filter: blur(40px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.metrics-preview__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  position: relative;
+}
+
+.metrics-preview__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-divider);
+}
+
+.metrics-preview__label {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.metrics-preview__value {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  color: var(--color-text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  letter-spacing: -0.02em;
+}
+.metrics-preview__value small {
+  font-size: var(--fs-2xs);
+  color: var(--color-text-4);
+  font-weight: var(--fw-medium);
+}
+.metrics-preview__value--success { color: var(--color-success); }
+.metrics-preview__value--warning { color: var(--color-warning); }
+.metrics-preview__value--danger  { color: var(--color-danger); }
+
+.metrics-preview__badge {
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+.metrics-preview__badge--success { background: var(--color-success-soft); color: var(--color-success); }
+.metrics-preview__badge--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.metrics-preview__badge--danger  { background: var(--color-danger-soft);  color: var(--color-danger);  }
+
+.metrics-preview__hint {
+  font-size: 10px;
+  color: var(--color-text-4);
+  line-height: 1.5;
+}
+
+.metrics-preview__foot {
+  position: relative;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  text-align: center;
+}
+.metrics-preview__foot strong { color: var(--color-text-1); font-weight: var(--fw-bold); }
+
+/* Incomplete preview */
+.metrics-preview--incomplete {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-info-soft);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+.metrics-preview__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--color-info);
+  flex-shrink: 0;
+}
+.metrics-preview__icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+.metrics-preview__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+}
+.metrics-preview__desc {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+  margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .metrics-preview__value { font-size: var(--fs-xl); }
+  .settings-section { padding: var(--space-4); }
 }
