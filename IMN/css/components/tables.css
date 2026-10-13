@@ -1,0 +1,140 @@
+/* =============================================================
+   Tables
+   ============================================================= */
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-1);
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.table {
+  width: 100%;
+  font-size: var(--fs-sm);
+  border-collapse: collapse;
+}
+
+.table thead {
+  background: rgba(255, 255, 255, 0.025);
+  border-bottom: 1px solid var(--color-border-2);
+}
+
+.table thead th {
+  padding: 12px 14px;
+  text-align: right;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  user-select: none;
+  position: sticky;
+  top: 0;
+  background: inherit;
+  z-index: 1;
+}
+
+.table thead th.is-sortable {
+  cursor: pointer;
+  transition: color var(--dur-xs);
+}
+.table thead th.is-sortable:hover { color: var(--color-text-1); }
+.table thead th.is-sortable::after {
+  content: "⇅";
+  margin-inline-start: 6px;
+  opacity: 0.4;
+  font-size: 10px;
+}
+.table thead th.is-sorted-asc::after { content: "↑"; opacity: 1; color: var(--color-primary); }
+.table thead th.is-sorted-desc::after { content: "↓"; opacity: 1; color: var(--color-primary); }
+
+.table tbody tr {
+  border-bottom: 1px solid var(--color-divider);
+  transition: background var(--dur-xxs);
+}
+.table tbody tr:hover { background: rgba(255, 255, 255, 0.025); }
+.table tbody tr:last-child { border-bottom: none; }
+
+.table tbody td {
+  padding: 12px 14px;
+  color: var(--color-text-2);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.table tbody td.num,
+.table thead th.num {
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.table tbody tr.is-selected {
+  background: var(--color-primary-soft);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.table--compact thead th,
+.table--compact tbody td { padding: 8px 10px; font-size: var(--fs-xs); }
+
+.table__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.table__actions .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 4px 0;
+  flex-wrap: wrap;
+}
+.pagination__info {
+  font-size: var(--fs-xs);
+  color: var(--color-text-3);
+}
+.pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.pagination__btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: background var(--dur-xxs), color var(--dur-xxs);
+  border: 1px solid transparent;
+  background: transparent;
+}
+.pagination__btn:hover { background: rgba(255,255,255,0.05); color: var(--color-text-1); }
+.pagination__btn.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-300);
+  border-color: rgba(99,102,241,0.28);
+}
+.pagination__btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+.pagination__btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+
+/* Empty state inside table */
+.table__empty {
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-text-4);
+  font-size: var(--fs-sm);
+}
