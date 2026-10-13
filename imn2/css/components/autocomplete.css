@@ -1,0 +1,150 @@
+/* ============================================================
+   autocomplete.css — جستجوی هوشمند غذاها
+   ============================================================ */
+
+.autocomplete {
+  position: relative;
+  width: 100%;
+}
+
+.autocomplete__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline: 0;
+  z-index: var(--z-dropdown);
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--bg-surface-1);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  animation: dropdownIn 180ms var(--ease-out);
+  scrollbar-width: thin;
+}
+.autocomplete__panel::-webkit-scrollbar { width: 6px; }
+.autocomplete__panel::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: var(--radius-full); }
+
+.autocomplete__section {
+  padding: 6px 10px 4px;
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.autocomplete__option {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  font-family: var(--font-fa);
+}
+.autocomplete__option:hover,
+.autocomplete__option.is-highlighted {
+  background: var(--bg-hover);
+}
+.autocomplete__option.is-selected {
+  background: var(--accent-soft);
+}
+.autocomplete__option.is-selected .autocomplete__name { color: var(--accent); }
+
+.autocomplete__icon {
+  width: 32px; height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-3);
+  font-size: 15px;
+  flex-shrink: 0;
+}
+.autocomplete__body { flex: 1; min-width: 0; }
+.autocomplete__name {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.autocomplete__sub {
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  display: flex;
+  gap: var(--sp-2);
+}
+.autocomplete__kcal {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.autocomplete__mark {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+.autocomplete__empty {
+  padding: var(--sp-4);
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+.autocomplete__hint {
+  padding: 6px 10px;
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+.autocomplete__hint kbd {
+  background: var(--bg-surface-3);
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* Recent / frequent chips */
+.recent-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+.recent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-subtle);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.recent-chip:hover {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+.recent-chip__kcal {
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.recent-chip:hover .recent-chip__kcal { color: var(--accent); }
