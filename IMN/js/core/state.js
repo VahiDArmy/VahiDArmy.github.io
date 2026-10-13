@@ -6,13 +6,21 @@
  *   • `store.setSelectedDate(iso)`    → updates state.selectedDate AND persists
  *   • `store.setGoals(patch)`         → merges into state.goals AND persists
  *   • `store.setPrefs(patch)`         → merges into state.prefs AND persists
+ *
+ * Date policy
+ * -----------
+ * On boot the app ALWAYS starts on today's date. The user's last-viewed
+ * date is preserved for within-session navigation, but we don't restore a
+ * stale date on reload — that was confusing ("why is the app on yesterday
+ * when I just opened it?"). `resetToToday()` is called by the app at
+ * startup and is also available to any component that needs it.
  */
 
 import { bus } from "./event-bus.js";
 import { storage } from "./storage.js";
 import { STORAGE_KEYS, DEFAULT_GOALS } from "../config/constants.js";
 
-const todayISO = () => {
+export const todayISO = () => {
   const d = new Date();
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -25,7 +33,9 @@ const initial = {
   session: null,
   profile: null,
   ready: false,
-  selectedDate: storage.get(STORAGE_KEYS.SELECTED_DATE) || todayISO(),
+  // Always start on today. Users who need a past day can pick it from
+  // the day swiper or the topbar date chip.
+  selectedDate: todayISO(),
   route: "dashboard",
   goals: { ...DEFAULT_GOALS, ...(storage.get(STORAGE_KEYS.GOALS) || {}) },
   prefs: storage.get(STORAGE_KEYS.USER_PREFS) || {
@@ -79,6 +89,21 @@ export const store = {
     notify("selectedDate", iso);
   },
 
+  /**
+   * Force the selected date back to today. Emits even if the state
+   * already equals today so subscribers can react (e.g. a swiper that
+   * needs to re-center).
+   */
+  resetToToday() {
+    const today = todayISO();
+    const changed = state.selectedDate !== today;
+    state.selectedDate = today;
+    storage.set(STORAGE_KEYS.SELECTED_DATE, today);
+    if (changed) notify("selectedDate", today);
+    bus.emit("date:changed", today);
+    return today;
+  },
+
   setRoute(route) {
     if (state.route === route) return;
     state.route = route;
@@ -110,10 +135,9 @@ export const store = {
   reset() {
     Object.assign(state, {
       ...initial,
-      // Re-read persisted values so we don't reset the user's preferences
+      selectedDate: todayISO(),
       goals: { ...DEFAULT_GOALS, ...(storage.get(STORAGE_KEYS.GOALS) || {}) },
       prefs: storage.get(STORAGE_KEYS.USER_PREFS) || initial.prefs,
-      selectedDate: storage.get(STORAGE_KEYS.SELECTED_DATE) || todayISO(),
     });
     bus.emit("state:reset");
   },
