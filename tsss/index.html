@@ -175,6 +175,10 @@
 
 </main>
 
+<button type="button" class="mizan-note-add-btn" id="mizanNoteAddBtn" hidden>
+  ✎ افزودن یادداشت
+</button>
+
 <div class="modal-overlay" id="linkToolModal" hidden>
   <div class="modal-card card">
     <div class="modal-card__head">
@@ -249,6 +253,33 @@
       <button type="button" class="btn btn--icon btn--ghost" id="mizanTocClose" aria-label="بستن">✕</button>
     </div>
     <div class="mizan-toc-list" id="mizanTocList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mizanNoteModal" hidden>
+  <div class="modal-card card">
+    <div class="modal-card__head">
+      <span id="mizanNoteTitle">افزودن یادداشت</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="mizanNoteClose" aria-label="بستن">✕</button>
+    </div>
+    <div class="mizan-note-modal__quote" id="mizanNoteQuote">—</div>
+    <label class="mizan-note-modal__label" for="mizanNoteInput">یادداشت شما</label>
+    <div class="field" style="margin-bottom:0;">
+      <textarea id="mizanNoteInput" rows="4" placeholder="یادداشت خود را بنویسید…"></textarea>
+    </div>
+    <div class="mizan-note-modal__actions">
+      <button type="button" class="btn btn--primary" id="mizanNoteSaveBtn">ثبت یادداشت</button>
+      <button type="button" class="btn btn--ghost" id="mizanNoteDeleteBtn" style="display:none; color:var(--danger); border-color:var(--danger);">حذف یادداشت</button>
+    </div>
+  </div>
+</div>
+
+<div class="mizan-note-popup" id="mizanNotePopup" hidden>
+  <button type="button" class="mizan-note-popup__close" id="mizanNotePopupClose" aria-label="بستن">✕</button>
+  <p class="mizan-note-popup__text" id="mizanNotePopupText"></p>
+  <div class="mizan-note-popup__actions">
+    <button type="button" class="mizan-note-popup__btn" id="mizanNotePopupEdit">ویرایش</button>
+    <button type="button" class="mizan-note-popup__btn mizan-note-popup__btn--danger" id="mizanNotePopupDel">حذف</button>
   </div>
 </div>
 
