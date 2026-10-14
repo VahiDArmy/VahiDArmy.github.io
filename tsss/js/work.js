@@ -27,6 +27,15 @@
   const mizanError   = document.getElementById('mizanError');
   const mizanRange   = document.getElementById('mizanRange');
 
+  const mizanPager    = document.getElementById('mizanPager');
+  const mizanPrevBtn  = document.getElementById('mizanPrevBtn');
+  const mizanNextBtn  = document.getElementById('mizanNextBtn');
+  const mizanPageInfo = document.getElementById('mizanPageInfo');
+  const mizanTocBtn   = document.getElementById('mizanTocBtn');
+  const mizanTocModal = document.getElementById('mizanTocModal');
+  const mizanTocClose = document.getElementById('mizanTocClose');
+  const mizanTocList  = document.getElementById('mizanTocList');
+
   const aiReviewModal = document.getElementById('aiReviewModal');
   const aiReviewCloseBtn = document.getElementById('aiReviewCloseBtn');
   const aiReviewLoading = document.getElementById('aiReviewLoading');
@@ -54,6 +63,10 @@
   let currentAiContent = '';
   let currentAiModel = '';
   let currentAiGenerationId = null;
+
+  // Mizan pager state
+  let mizanPages = [];        // [{ heading, pageNum }]
+  let mizanCurrentPage = 0;   // zero-based
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -398,12 +411,16 @@
     } catch (e) {}
   }
 
+  // =============================================================
   // ---- Mizan ----
+  // =============================================================
+
   function showMizanState(state, payload) {
     mizanEmpty.classList.add('hidden');
     mizanLoading.classList.add('hidden');
     mizanContent.classList.add('hidden');
     mizanError.classList.add('hidden');
+    if (mizanPager) mizanPager.classList.add('hidden');
     if (mizanRange) mizanRange.textContent = '';
 
     if (state === 'empty') mizanEmpty.classList.remove('hidden');
@@ -431,8 +448,34 @@
       .trim();
   }
 
-  // هر بلوک آیه را با data-ayah برچسب می‌زند و اگر متن عربی در یک <p> لخت
-  // آمده باشد (بدون ```arabic)، آن را با کلاس mizan-arabic-raw هم‌شکل pre می‌کند.
+  // تبدیل کاراکترهای عربی به فارسی داخل متن غیرقرآنی
+  function normalizeMizanChars(rootEl) {
+    if (!rootEl) return;
+    const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        let p = node.parentElement;
+        while (p && p !== rootEl) {
+          if (p.matches && (p.matches('code.language-arabic') || p.matches('.mizan-arabic-raw'))) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          p = p.parentElement;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach((textNode) => {
+      textNode.nodeValue = textNode.nodeValue
+        .replace(/\u0649/g, '\u06CC') // ى → ی
+        .replace(/\u064A/g, '\u06CC') // ي → ی
+        .replace(/\u0643/g, '\u06A9') // ك → ک
+        .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
+    });
+  }
+
+  // بلوک‌های عربی خام را با کلاس mizan-arabic-raw برچسب می‌زند و data-ayah می‌دهد
   function styleMizanAyahs(rootEl) {
     if (!rootEl) return;
     const spans = rootEl.querySelectorAll('span[id^="surah-"]');
@@ -443,7 +486,6 @@
 
       let target = null;
 
-      // حالت A: خود <p> حاوی span، متن آیه را هم درون دارد
       const parentP = (span.parentElement && span.parentElement.tagName === 'P')
         ? span.parentElement
         : null;
@@ -459,7 +501,6 @@
         }
       }
 
-      // حالت B: span تنها در <p> خالی است، محتوا در بلوک بعدی می‌آید
       if (!target) {
         let node = span;
         let guard = 0;
@@ -492,12 +533,157 @@
     });
   }
 
-  function highlightCurrentAyah(rootEl, surah, ayah) {
-    if (!rootEl) return;
-    rootEl.querySelectorAll('.is-current-ayah').forEach((el) => el.classList.remove('is-current-ayah'));
-    rootEl.querySelectorAll(`[data-ayah="${ayah}"]`).forEach((el) => {
-      el.classList.add('is-current-ayah');
+  // تقسیم محتوا به صفحات بر اساس h3 و h4
+  function paginateMizan(rootEl) {
+    const children = Array.from(rootEl.children);
+    const pageGroups = [];
+    let current = null;
+
+    children.forEach((child) => {
+      const isHeading = child.tagName === 'H3' || child.tagName === 'H4';
+      if (isHeading || !current) {
+        if (current) pageGroups.push(current);
+        current = { heading: isHeading ? child.textContent.trim() : 'شروع', nodes: [child] };
+      } else {
+        current.nodes.push(child);
+      }
     });
+    if (current) pageGroups.push(current);
+
+    // اگر فقط یک صفحه داریم، برچسب مخصوص
+    if (pageGroups.length <= 1) {
+      mizanPages = [];
+      if (mizanPager) mizanPager.classList.add('hidden');
+      rootEl.querySelectorAll('.mizan-page').forEach((el) => {
+        while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+        el.parentNode.removeChild(el);
+      });
+      return;
+    }
+
+    // پاک کردن و بازسازی به شکل صفحات
+    rootEl.innerHTML = '';
+    mizanPages = [];
+    pageGroups.forEach((group, i) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mizan-page';
+      wrapper.dataset.pageNum = String(i + 1);
+      wrapper.hidden = i !== 0;
+      group.nodes.forEach((node) => wrapper.appendChild(node));
+      rootEl.appendChild(wrapper);
+      mizanPages.push({ heading: group.heading, pageNum: i + 1 });
+    });
+  }
+
+  function getMizanProgressKey() {
+    return `mizan-page-${current.surah}-${current.ayah}`;
+  }
+
+  function loadMizanProgress() {
+    try {
+      const v = localStorage.getItem(getMizanProgressKey());
+      if (!v) return 0;
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 0 ? n : 0;
+    } catch (e) { return 0; }
+  }
+
+  function saveMizanProgress(pageIdx) {
+    try {
+      localStorage.setItem(getMizanProgressKey(), String(pageIdx));
+    } catch (e) {}
+  }
+
+  function updateMizanPagerUI() {
+    if (!mizanPager) return;
+    if (mizanPages.length <= 1) {
+      mizanPager.classList.add('hidden');
+      return;
+    }
+    mizanPager.classList.remove('hidden');
+    const total = mizanPages.length;
+    const cur = mizanCurrentPage + 1;
+    if (mizanPageInfo) {
+      mizanPageInfo.textContent = `صفحهٔ ${UI.toPersianDigits(cur)} از ${UI.toPersianDigits(total)}`;
+    }
+    if (mizanPrevBtn) mizanPrevBtn.disabled = mizanCurrentPage === 0;
+    if (mizanNextBtn) mizanNextBtn.disabled = mizanCurrentPage >= total - 1;
+  }
+
+  function showMizanPage(n) {
+    if (!mizanContent) return;
+    const pages = mizanContent.querySelectorAll('.mizan-page');
+    if (!pages.length) return;
+    const total = pages.length;
+    if (n < 0) n = 0;
+    if (n >= total) n = total - 1;
+    pages.forEach((p, i) => { p.hidden = i !== n; });
+    mizanCurrentPage = n;
+    updateMizanPagerUI();
+    saveMizanProgress(n);
+  }
+
+  function buildMizanToc() {
+    if (!mizanTocList) return;
+    if (!mizanPages.length) {
+      mizanTocList.innerHTML = '<p style="color:var(--text-faint); text-align:center; padding:20px 0;">فهرستی موجود نیست.</p>';
+      return;
+    }
+    mizanTocList.innerHTML = mizanPages.map((p, i) => `
+      <button type="button" class="mizan-toc-item" data-page="${i}">
+        <span class="mizan-toc-item__num">${UI.toPersianDigits(i + 1)}</span>
+        <span class="mizan-toc-item__title">${escapeHtml(p.heading)}</span>
+      </button>
+    `).join('');
+
+    mizanTocList.querySelectorAll('.mizan-toc-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const n = Number(btn.getAttribute('data-page'));
+        showMizanPage(n);
+        closeMizanToc();
+        // اسکرول به بالای بخش Mizan
+        const sec = document.getElementById('mizanTafsirSection');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str == null ? '' : str);
+    return div.innerHTML;
+  }
+
+  function openMizanToc() {
+    if (!mizanTocModal) return;
+    buildMizanToc();
+    mizanTocModal.hidden = false;
+  }
+  function closeMizanToc() {
+    if (mizanTocModal) mizanTocModal.hidden = true;
+  }
+
+  if (mizanPrevBtn) mizanPrevBtn.addEventListener('click', () => showMizanPage(mizanCurrentPage - 1));
+  if (mizanNextBtn) mizanNextBtn.addEventListener('click', () => showMizanPage(mizanCurrentPage + 1));
+  if (mizanTocBtn) mizanTocBtn.addEventListener('click', openMizanToc);
+  if (mizanTocClose) mizanTocClose.addEventListener('click', closeMizanToc);
+  if (mizanTocModal) {
+    mizanTocModal.addEventListener('click', (e) => { if (e.target === mizanTocModal) closeMizanToc(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !mizanTocModal.hidden) closeMizanToc();
+    });
+  }
+
+  function jumpToAyahPage() {
+    if (!mizanContent) return;
+    const anchor = mizanContent.querySelector(`#surah-${current.surah}-ayah-${current.ayah}`);
+    if (!anchor) return;
+    const page = anchor.closest('.mizan-page');
+    if (!page) return;
+    const pageNum = Number(page.dataset.pageNum) - 1;
+    if (!Number.isNaN(pageNum) && pageNum !== mizanCurrentPage) {
+      showMizanPage(pageNum);
+    }
   }
 
   async function renderMizan(surah, ayah) {
@@ -525,8 +711,20 @@
       }
 
       showMizanState('content', { html, range });
+      normalizeMizanChars(mizanContent);
       styleMizanAyahs(mizanContent);
-      highlightCurrentAyah(mizanContent, surah, ayah);
+      paginateMizan(mizanContent);
+
+      // بازگرداندن پیشرفت یا رفتن به صفحهٔ آیهٔ جاری
+      if (mizanPages.length > 1) {
+        const saved = loadMizanProgress();
+        if (saved > 0 && saved < mizanPages.length) {
+          showMizanPage(saved);
+        } else {
+          showMizanPage(0);
+          jumpToAyahPage();
+        }
+      }
     } catch (e) {
       console.warn('[mizan] load failed:', e);
       showMizanState('error', { message: 'تفسیر المیزان برای این آیه در دسترس نیست.' });
