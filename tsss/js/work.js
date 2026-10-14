@@ -86,10 +86,15 @@
   let mizanContentKeys = [];
   let mizanSaveTimer = null;
   let mizanNotes = [];
-  let pendingNoteAnchor = null;   // { contentId, before, after }
+  let pendingNoteAnchor = null;
   let editingNoteId = null;
   let activePopupNoteId = null;
-  let capturedAnchor = null;      // برای pointerdown روی دکمه
+  let capturedAnchor = null;
+
+  // ★ حالت دو-کلیک برای تأیید محل یادداشت
+  let lastAnchorKey = null;
+  let lastAnchorTime = 0;
+  const ANCHOR_CONFIRM_WINDOW_MS = 6000;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -561,14 +566,13 @@
   }
 
   // --------------------------------------------------------
-  // Notes — anchor by cursor position between two words
+  // Notes — anchor by cursor position
   // --------------------------------------------------------
 
   const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
   const NOTE_CONTEXT_CHARS = 30;
 
   function getTextOffsetInBlock(block, container, offset) {
-    // اگر container خودش متن است
     let pos = 0;
     const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
     let n;
@@ -576,15 +580,12 @@
       if (n === container) return pos + offset;
       pos += (n.nodeValue || '').length;
     }
-    // اگر container عنصر است (مثلاً block یا یک والد میانی)
     if (container === block || block.contains(container)) {
-      // مجموع متن فرزندان قبل از offset در container
       let acc = 0;
       const kids = container.childNodes;
       for (let i = 0; i < offset && i < kids.length; i++) {
         acc += (kids[i].textContent || '').length;
       }
-      // اضافه کردن متن قبل از خود container در block
       const preRange = document.createRange();
       try {
         preRange.setStart(block, 0);
@@ -603,7 +604,6 @@
     if (!sel || sel.rangeCount === 0) return null;
     const range = sel.getRangeAt(0);
 
-    // مطمئن شو انتخاب داخل mizan است
     if (!mizanContent.contains(range.startContainer)) return null;
 
     let block = range.startContainer;
@@ -619,7 +619,6 @@
     const pos = getTextOffsetInBlock(block, range.startContainer, range.startOffset);
     const safePos = Math.max(0, Math.min(pos, blockText.length));
 
-    // اگر در حالت انتخاب است، ابتدای انتخاب را استفاده کن
     const before = blockText.slice(Math.max(0, safePos - NOTE_CONTEXT_CHARS), safePos);
     const after = blockText.slice(safePos, safePos + NOTE_CONTEXT_CHARS);
 
@@ -646,7 +645,6 @@
       }
       acc += len;
     }
-    // در انتهای block
     const r = document.createRange();
     try {
       r.selectNodeContents(block);
@@ -720,7 +718,6 @@
       rootEl.appendChild(box);
     }
 
-    // اتصال کلیک روی یادداشت‌ها
     rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -893,7 +890,10 @@
   });
 
   // --------------------------------------------------------
-  // "Add note" button
+  // Add note — flow:
+  //   1) اولین کلیک: کروسر در محل قرار می‌گیرد، دکمهٔ شناور ظاهر می‌شود
+  //   2) کلیک دوم روی همان نقطه: تأیید می‌شود، مودال باز می‌شود
+  //   (دکمهٔ شناور هم به‌عنوان راه میان‌بر باقی می‌ماند)
   // --------------------------------------------------------
 
   function showNoteAddBtn() {
@@ -918,11 +918,90 @@
     else hideNoteAddBtn();
   });
 
-  // جلوگیری از پاک شدن انتخاب قبل از کلیک
+  // کلید تشخیص: before + \0 + after
+  function anchorKeyOf(anchor) {
+    if (!anchor) return null;
+    return (anchor.before || '') + '\u0000' + (anchor.after || '');
+  }
+
+  function resetAnchorConfirm() {
+    lastAnchorKey = null;
+    lastAnchorTime = 0;
+  }
+
+  async function openNoteAtAnchor(anchor) {
+    if (!anchor) {
+      UI.toast('موقعیت یادداشت پیدا نشد');
+      return;
+    }
+
+    const { data } = await sb.auth.getSession();
+    if (!data?.session) {
+      UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
+      return;
+    }
+
+    const page = anchor.block.closest('.mizan-page');
+    let contentId = mizanContentKeys[0] || null;
+    if (page && mizanContentKeys.length > 1) {
+      const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
+      contentId = mizanContentKeys[idx] || mizanContentKeys[0];
+    }
+    if (!contentId) {
+      UI.toast('خطا در تشخیص محتوا');
+      return;
+    }
+
+    pendingNoteAnchor = {
+      contentId,
+      before: anchor.before,
+      after: anchor.after,
+    };
+
+    resetAnchorConfirm();
+    hideNoteAddBtn();
+    openNoteModal({});
+  }
+
+  // کلیک روی متن المیزان — تشخیص تأیید با کلیک دوم روی همان نقطه
+  if (mizanContent) {
+    mizanContent.addEventListener('click', (e) => {
+      // کلیک روی یادداشت موجود → پاپ‌آپ؛ دخالت نکن
+      if (e.target.closest && e.target.closest('.mizan-note-inline')) return;
+      // کلیک روی لینک → بگذار مرورگر کار خودش را بکند
+      if (e.target.closest && e.target.closest('a')) { resetAnchorConfirm(); return; }
+
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) {
+        // انتخاب متن → حالت تأیید پاک شود
+        resetAnchorConfirm();
+        return;
+      }
+
+      // بعد از اینکه مرورگر selection را به‌روز کرد
+      setTimeout(async () => {
+        const anchor = getCursorAnchor();
+        if (!anchor) { resetAnchorConfirm(); return; }
+
+        const key = anchorKeyOf(anchor);
+        const now = Date.now();
+
+        if (lastAnchorKey === key && (now - lastAnchorTime) < ANCHOR_CONFIRM_WINDOW_MS) {
+          // کلیک دوم روی همان نقطه → تأیید
+          await openNoteAtAnchor(anchor);
+        } else {
+          // کلیک اول (یا تغییر محل)
+          lastAnchorKey = key;
+          lastAnchorTime = now;
+        }
+      }, 0);
+    });
+  }
+
+  // دکمهٔ شناور — راه میان‌بر
   if (mizanNoteBtn) {
     mizanNoteBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      // انتخاب را حفظ می‌کنیم
       capturedAnchor = getCursorAnchor();
     });
   }
@@ -932,38 +1011,7 @@
       e.preventDefault();
       const anchor = capturedAnchor || getCursorAnchor();
       capturedAnchor = null;
-      if (!anchor) {
-        UI.toast('اول نشانگر را در متن المیزان بگذارید یا متنی را انتخاب کنید');
-        return;
-      }
-
-      // بررسی لاگین
-      const { data } = await sb.auth.getSession();
-      if (!data?.session) {
-        UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
-        return;
-      }
-
-      // شناسایی content_id
-      const page = anchor.block.closest('.mizan-page');
-      let contentId = mizanContentKeys[0] || null;
-      if (page && mizanContentKeys.length > 1) {
-        const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
-        contentId = mizanContentKeys[idx] || mizanContentKeys[0];
-      }
-      if (!contentId) {
-        UI.toast('خطا در تشخیص محتوا');
-        return;
-      }
-
-      pendingNoteAnchor = {
-        contentId,
-        before: anchor.before,
-        after: anchor.after,
-      };
-
-      hideNoteAddBtn();
-      openNoteModal({});
+      await openNoteAtAnchor(anchor);
     });
   }
 
@@ -1052,6 +1100,7 @@
     mizanCurrentPage = n;
     updateMizanPagerUI();
     scheduleMizanSave(n);
+    resetAnchorConfirm();
   }
 
   function scheduleMizanSave(pageIndex) {
@@ -1123,6 +1172,7 @@
     showMizanState('loading');
     hideNoteAddBtn();
     hideNotePopup();
+    resetAnchorConfirm();
     mizanContentKeys = [];
     mizanNotes = [];
     try {
