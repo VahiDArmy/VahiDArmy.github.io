@@ -26,6 +26,7 @@
   const mizanLoading = document.getElementById('mizanLoading');
   const mizanError   = document.getElementById('mizanError');
   const mizanRange   = document.getElementById('mizanRange');
+  const mizanSection = document.getElementById('mizanTafsirSection');
 
   const mizanPager    = document.getElementById('mizanPager');
   const mizanPrevBtn  = document.getElementById('mizanPrevBtn');
@@ -35,6 +36,21 @@
   const mizanTocModal = document.getElementById('mizanTocModal');
   const mizanTocClose = document.getElementById('mizanTocClose');
   const mizanTocList  = document.getElementById('mizanTocList');
+  const mizanNoteBtn  = document.getElementById('mizanNoteAddBtn');
+
+  const mizanNoteModal   = document.getElementById('mizanNoteModal');
+  const mizanNoteClose   = document.getElementById('mizanNoteClose');
+  const mizanNoteInput   = document.getElementById('mizanNoteInput');
+  const mizanNoteSaveBtn = document.getElementById('mizanNoteSaveBtn');
+  const mizanNoteDeleteBtn = document.getElementById('mizanNoteDeleteBtn');
+  const mizanNoteQuote   = document.getElementById('mizanNoteQuote');
+  const mizanNoteTitle   = document.getElementById('mizanNoteTitle');
+
+  const mizanNotePopup   = document.getElementById('mizanNotePopup');
+  const mizanNotePopupText = document.getElementById('mizanNotePopupText');
+  const mizanNotePopupEdit = document.getElementById('mizanNotePopupEdit');
+  const mizanNotePopupDel  = document.getElementById('mizanNotePopupDel');
+  const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
   const aiReviewModal = document.getElementById('aiReviewModal');
   const aiReviewCloseBtn = document.getElementById('aiReviewCloseBtn');
@@ -64,11 +80,15 @@
   let currentAiModel = '';
   let currentAiGenerationId = null;
 
-  // Mizan pager state
+  // Mizan state
   let mizanPages = [];
   let mizanCurrentPage = 0;
-  let mizanContentKey = null; // کلید ذخیره در Supabase
+  let mizanContentKeys = [];   // content_id های فعلی
   let mizanSaveTimer = null;
+  let mizanNotes = [];         // یادداشت‌های فعلی برای content_id ها
+  let pendingNoteSelection = null; // { contentId, before, selected, after }
+  let editingNoteId = null;
+  let activePopupNoteId = null;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -533,8 +553,393 @@
     });
   }
 
+  // -------------- Note injection --------------
+
+  function findNoteAnchorInBlocks(rootEl, note) {
+    // جستجو در همهٔ بلوک‌های متنی
+    const blocks = rootEl.querySelectorAll('p, li, blockquote, h2, h3, h4, td, th');
+    const anchorFull = (note.anchor_before || '') + note.anchor_selected + (note.anchor_after || '');
+    let best = null;
+
+    for (const block of blocks) {
+      const txt = block.textContent || '';
+      if (!txt) continue;
+
+      // تلاش اول: کل قالب
+      let idx = txt.indexOf(anchorFull);
+      let start, end;
+      if (idx !== -1) {
+        start = idx + (note.anchor_before || '').length;
+        end = start + note.anchor_selected.length;
+      } else {
+        // تلاش دوم: فقط متن انتخاب‌شده
+        idx = txt.indexOf(note.anchor_selected);
+        if (idx === -1) continue;
+        start = idx;
+        end = start + note.anchor_selected.length;
+      }
+
+      best = { block, start, end };
+      break;
+    }
+    return best;
+  }
+
+  function wrapTextRange(block, start, end, note) {
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    const textNodes = [];
+    let n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+
+    let pos = 0;
+    let startNode = null, startOffset = 0;
+    let endNode = null, endOffset = 0;
+
+    for (const t of textNodes) {
+      const len = t.nodeValue.length;
+      if (!startNode && pos + len > start) {
+        startNode = t;
+        startOffset = start - pos;
+      }
+      if (!endNode && pos + len >= end) {
+        endNode = t;
+        endOffset = end - pos;
+        break;
+      }
+      pos += len;
+    }
+
+    if (!startNode || !endNode) return false;
+
+    const range = document.createRange();
+    try {
+      range.setStart(startNode, startOffset);
+      range.setEnd(endNode, endOffset);
+    } catch (e) {
+      return false;
+    }
+
+    const wrap = document.createElement('span');
+    wrap.className = 'mizan-note-anchor';
+    wrap.dataset.noteId = note.id;
+
+    try {
+      range.surroundContents(wrap);
+    } catch (e) {
+      try {
+        const frag = range.extractContents();
+        wrap.appendChild(frag);
+        range.insertNode(wrap);
+      } catch (e2) {
+        return false;
+      }
+    }
+
+    // شماره و نشانگر
+    const sup = document.createElement('sup');
+    sup.className = 'mizan-note-marker';
+    sup.dataset.noteId = note.id;
+    sup.textContent = String(note._num);
+    sup.setAttribute('role', 'button');
+    sup.setAttribute('tabindex', '0');
+    sup.setAttribute('title', 'نمایش یادداشت');
+    wrap.parentNode.insertBefore(sup, wrap.nextSibling);
+
+    return true;
+  }
+
+  function injectMizanNotes(rootEl) {
+    if (!rootEl || !mizanNotes.length) return;
+    // شماره‌دهی بر اساس ترتیب
+    mizanNotes.forEach((note, i) => { note._num = i + 1; });
+    const orphans = [];
+    for (const note of mizanNotes) {
+      const found = findNoteAnchorInBlocks(rootEl, note);
+      if (found) {
+        const ok = wrapTextRange(found.block, found.start, found.end, note);
+        if (!ok) orphans.push(note);
+      } else {
+        orphans.push(note);
+      }
+    }
+    // یادداشت‌های بی‌قرار را در پایان لیست کن
+    if (orphans.length) {
+      const box = document.createElement('div');
+      box.className = 'mizan-orphans';
+      box.innerHTML = `
+        <div class="mizan-orphans__title">یادداشت‌های بدون جای مشخص</div>
+        ${orphans.map((n) => `
+          <div class="mizan-orphan" data-note-id="${n.id}">
+            <span class="mizan-note-marker" style="position:static; margin-inline-end:6px;">${n._num}</span>
+            <span>${escapeHtml(n.anchor_selected).slice(0, 80)}</span>
+          </div>
+        `).join('')}
+      `;
+      rootEl.appendChild(box);
+    }
+
+    // اتصال به popup
+    rootEl.querySelectorAll('.mizan-note-marker').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = el.dataset.noteId;
+        const note = mizanNotes.find((n) => n.id === id);
+        if (note) showNotePopup(note, el);
+      });
+    });
+  }
+
+  // -------------- Note popup --------------
+
+  let popupOpenedFor = null;
+
+  function showNotePopup(note, anchorEl) {
+    if (!mizanNotePopup) return;
+    activePopupNoteId = note.id;
+    popupOpenedFor = anchorEl;
+
+    mizanNotePopupText.textContent = note.note_text;
+
+    mizanNotePopup.hidden = false;
+
+    // موقعیت: نزدیک نشانگر، با احتیاط از لبه‌ها
+    const rect = anchorEl.getBoundingClientRect();
+    const popup = mizanNotePopup;
+    // نمایش اولیه برای اندازه‌گیری
+    popup.style.left = '-9999px';
+    popup.style.top = '-9999px';
+    requestAnimationFrame(() => {
+      const pw = popup.offsetWidth;
+      const ph = popup.offsetHeight;
+      let x = rect.left + rect.width / 2 - pw / 2;
+      let y = rect.bottom + 8;
+      if (x < 8) x = 8;
+      if (x + pw > window.innerWidth - 8) x = window.innerWidth - pw - 8;
+      if (y + ph > window.innerHeight - 8) y = rect.top - ph - 8;
+      if (y < 8) y = 8;
+      popup.style.left = x + 'px';
+      popup.style.top = y + 'px';
+    });
+  }
+
+  function hideNotePopup() {
+    if (!mizanNotePopup) return;
+    mizanNotePopup.hidden = true;
+    activePopupNoteId = null;
+    popupOpenedFor = null;
+  }
+
+  if (mizanNotePopupClose) mizanNotePopupClose.addEventListener('click', hideNotePopup);
+  if (mizanNotePopupEdit) mizanNotePopupEdit.addEventListener('click', () => {
+    const note = mizanNotes.find((n) => n.id === activePopupNoteId);
+    if (!note) return;
+    hideNotePopup();
+    openNoteModal({ editing: note });
+  });
+  if (mizanNotePopupDel) mizanNotePopupDel.addEventListener('click', async () => {
+    const note = mizanNotes.find((n) => n.id === activePopupNoteId);
+    if (!note) return;
+    if (!confirm('این یادداشت حذف شود؟')) return;
+    try {
+      await Store.deleteMizanNote(note.id);
+      hideNotePopup();
+      UI.toast('یادداشت حذف شد');
+      await reloadMizanNotesAndRerender();
+    } catch (e) {
+      console.error(e);
+      UI.toast('خطا در حذف یادداشت');
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!mizanNotePopup || mizanNotePopup.hidden) return;
+    if (mizanNotePopup.contains(e.target)) return;
+    if (e.target.classList && e.target.classList.contains('mizan-note-marker')) return;
+    hideNotePopup();
+  });
+
+  // -------------- Note modal --------------
+
+  function openNoteModal(opts = {}) {
+    if (!mizanNoteModal) return;
+    editingNoteId = opts.editing ? opts.editing.id : null;
+
+    if (opts.editing) {
+      mizanNoteTitle.textContent = 'ویرایش یادداشت';
+      mizanNoteInput.value = opts.editing.note_text || '';
+      mizanNoteQuote.textContent = opts.editing.anchor_selected || '';
+      mizanNoteDeleteBtn.classList.remove('hidden');
+      mizanNoteSaveBtn.textContent = 'به‌روزرسانی';
+    } else {
+      mizanNoteTitle.textContent = 'افزودن یادداشت';
+      mizanNoteInput.value = '';
+      mizanNoteQuote.textContent = pendingNoteSelection ? pendingNoteSelection.selected : '';
+      mizanNoteDeleteBtn.classList.add('hidden');
+      mizanNoteSaveBtn.textContent = 'ثبت یادداشت';
+    }
+
+    mizanNoteModal.hidden = false;
+    setTimeout(() => mizanNoteInput.focus(), 50);
+  }
+
+  function closeNoteModal() {
+    if (!mizanNoteModal) return;
+    mizanNoteModal.hidden = true;
+    mizanNoteInput.value = '';
+    editingNoteId = null;
+    pendingNoteSelection = null;
+  }
+
+  if (mizanNoteClose) mizanNoteClose.addEventListener('click', closeNoteModal);
+  if (mizanNoteModal) {
+    mizanNoteModal.addEventListener('click', (e) => {
+      if (e.target === mizanNoteModal) closeNoteModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !mizanNoteModal.hidden) closeNoteModal();
+    });
+  }
+
+  if (mizanNoteSaveBtn) mizanNoteSaveBtn.addEventListener('click', async () => {
+    const text = mizanNoteInput.value.trim();
+    if (!text) { UI.toast('متن یادداشت خالی است'); return; }
+
+    try {
+      if (editingNoteId) {
+        await Store.updateMizanNote(editingNoteId, text);
+        UI.toast('یادداشت به‌روزرسانی شد');
+      } else {
+        if (!pendingNoteSelection) {
+          UI.toast('متن انتخاب‌شده معتبر نیست');
+          return;
+        }
+        await Store.addMizanNote({
+          contentId: pendingNoteSelection.contentId,
+          anchorBefore: pendingNoteSelection.before,
+          anchorSelected: pendingNoteSelection.selected,
+          anchorAfter: pendingNoteSelection.after,
+          noteText: text,
+        });
+        UI.toast('یادداشت ثبت شد');
+      }
+      closeNoteModal();
+      await reloadMizanNotesAndRerender();
+    } catch (e) {
+      console.error(e);
+      UI.toast('خطا: ' + (e.message || 'نامشخص'));
+    }
+  });
+
+  if (mizanNoteDeleteBtn) mizanNoteDeleteBtn.addEventListener('click', async () => {
+    if (!editingNoteId) return;
+    if (!confirm('این یادداشت حذف شود؟')) return;
+    try {
+      await Store.deleteMizanNote(editingNoteId);
+      closeNoteModal();
+      UI.toast('یادداشت حذف شد');
+      await reloadMizanNotesAndRerender();
+    } catch (e) {
+      console.error(e);
+      UI.toast('خطا در حذف');
+    }
+  });
+
+  // -------------- Selection -> add note --------------
+
+  function getSelectionInfo() {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return null;
+    const range = sel.getRangeAt(0);
+    const selectedText = sel.toString().trim();
+    if (!selectedText || selectedText.length < 2) return null;
+
+    let block = range.commonAncestorContainer;
+    if (block.nodeType === 3) block = block.parentElement;
+    while (block && block !== mizanContent && !/^(P|LI|BLOCKQUOTE|H[1-6]|TD|TH)$/.test(block.tagName)) {
+      block = block.parentElement;
+    }
+    if (!block || block === mizanContent || !/^(P|LI|BLOCKQUOTE|H[1-6]|TD|TH)$/.test(block.tagName)) return null;
+
+    // پیدا کردن موقعیت انتخاب در متن بلوک
+    const blockText = block.textContent || '';
+    // از آخر انتخاب به قبل یک بازه جستجو تا نزدیک‌ترین را بیابیم
+    let idx = blockText.indexOf(selectedText);
+    if (idx === -1) return null;
+
+    const before = blockText.slice(Math.max(0, idx - 40), idx);
+    const after = blockText.slice(idx + selectedText.length, idx + selectedText.length + 40);
+
+    return { block, before, selected: selectedText, after };
+  }
+
+  function showNoteAddBtn() {
+    if (!mizanNoteBtn) return;
+    mizanNoteBtn.hidden = false;
+  }
+  function hideNoteAddBtn() {
+    if (!mizanNoteBtn) return;
+    mizanNoteBtn.hidden = true;
+  }
+
+  document.addEventListener('selectionchange', () => {
+    if (!mizanContent || mizanContent.classList.contains('hidden')) return;
+    const info = getSelectionInfo();
+    if (info) showNoteAddBtn();
+    else hideNoteAddBtn();
+  });
+
+  if (mizanNoteBtn) mizanNoteBtn.addEventListener('click', () => {
+    const info = getSelectionInfo();
+    if (!info) { UI.toast('اول متن را انتخاب کنید'); return; }
+    // بررسی لاگین
+    sb.auth.getSession().then(({ data }) => {
+      if (!data?.session) {
+        UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
+        return;
+      }
+      // تعیین content_id متناسب با این بلوک
+      const page = info.block.closest('.mizan-page');
+      let contentId = mizanContentKeys[0] || null;
+      if (page && mizanContentKeys.length > 1) {
+        const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
+        contentId = mizanContentKeys[idx] || mizanContentKeys[0];
+      }
+      if (!contentId) {
+        UI.toast('خطا در تشخیص محتوا');
+        return;
+      }
+      pendingNoteSelection = {
+        contentId,
+        before: info.before,
+        selected: info.selected,
+        after: info.after,
+      };
+      // پاک کردن انتخاب تا کاربر ببیندش
+      window.getSelection().removeAllRanges();
+      hideNoteAddBtn();
+      openNoteModal({});
+    });
+  });
+
+  async function reloadMizanNotesAndRerender() {
+    if (!mizanContentKeys.length) return;
+    try {
+      const all = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
+      mizanNotes = all.flat();
+      // فقط بخش‌های یادداشت را دوباره تزریق کن — ساده‌تر: دوباره رندر
+      // اما برای حفظ صفحهٔ فعلی، از نو رندر می‌کنیم و به همان صفحه می‌رویم
+      const prevPage = mizanCurrentPage;
+      await renderMizan(current.surah, current.ayah, { keepPage: prevPage });
+    } catch (e) {
+      console.warn('[mizan] reload notes failed:', e);
+    }
+  }
+
+  // -------------- Pager / TOC --------------
+
   function paginateMizan(rootEl) {
-    const children = Array.from(rootEl.children);
+    const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
+    const orphansBox = rootEl.querySelector('.mizan-orphans');
     const pageGroups = [];
     let current = null;
 
@@ -556,6 +961,7 @@
         while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
         el.parentNode.removeChild(el);
       });
+      if (orphansBox) rootEl.appendChild(orphansBox);
       return;
     }
 
@@ -570,6 +976,7 @@
       rootEl.appendChild(wrapper);
       mizanPages.push({ heading: group.heading, pageNum: i + 1 });
     });
+    if (orphansBox) rootEl.appendChild(orphansBox);
   }
 
   function updateMizanPagerUI() {
@@ -601,13 +1008,12 @@
     scheduleMizanSave(n);
   }
 
-  // ذخیرهٔ پیشرفت با debounce
   function scheduleMizanSave(pageIndex) {
-    if (!mizanContentKey) return;
+    if (!mizanContentKeys.length) return;
     clearTimeout(mizanSaveTimer);
     mizanSaveTimer = setTimeout(async () => {
       try {
-        await Store.saveMizanProgress(mizanContentKey, pageIndex);
+        await Store.saveMizanProgress(mizanContentKeys.join('-'), pageIndex);
       } catch (e) {
         console.warn('[mizan] save progress failed:', e);
       }
@@ -632,8 +1038,7 @@
         const n = Number(btn.getAttribute('data-page'));
         showMizanPage(n);
         closeMizanToc();
-        const sec = document.getElementById('mizanTafsirSection');
-        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (mizanSection) mizanSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     });
   }
@@ -659,9 +1064,6 @@
   if (mizanTocClose) mizanTocClose.addEventListener('click', closeMizanToc);
   if (mizanTocModal) {
     mizanTocModal.addEventListener('click', (e) => { if (e.target === mizanTocModal) closeMizanToc(); });
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && !mizanTocModal.hidden) closeMizanToc();
-    });
   }
 
   function jumpToAyahPage() {
@@ -677,9 +1079,12 @@
     return true;
   }
 
-  async function renderMizan(surah, ayah) {
+  async function renderMizan(surah, ayah, opts = {}) {
     showMizanState('loading');
-    mizanContentKey = null;
+    hideNoteAddBtn();
+    hideNotePopup();
+    mizanContentKeys = [];
+    mizanNotes = [];
     try {
       const contents = await Mizan.getForAyah(surah, ayah);
       if (!contents || !contents.length) {
@@ -687,8 +1092,16 @@
         return;
       }
 
-      // کلید ذخیره بر اساس شناسهٔ content(ها)
-      mizanContentKey = contents.map((c) => c.content_id).join('-');
+      mizanContentKeys = contents.map((c) => c.content_id);
+
+      // یادداشت‌ها
+      try {
+        const all = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
+        mizanNotes = all.flat();
+      } catch (e) {
+        console.warn('[mizan] load notes failed:', e);
+        mizanNotes = [];
+      }
 
       const combinedText = contents
         .map((c) => cleanMizanText(c.text))
@@ -708,22 +1121,24 @@
       showMizanState('content', { html, range });
       normalizeMizanChars(mizanContent);
       styleMizanAyahs(mizanContent);
+      injectMizanNotes(mizanContent);
       paginateMizan(mizanContent);
 
       if (mizanPages.length > 1) {
-        // اول از Supabase (یا localStorage برای مهمان) بخوان
-        let saved = null;
-        try {
-          saved = await Store.getMizanProgress(mizanContentKey);
-        } catch (e) {
-          console.warn('[mizan] load progress failed:', e);
-        }
-
-        if (typeof saved === 'number' && saved >= 0 && saved < mizanPages.length) {
-          showMizanPage(saved);
+        // اگر keepPage داده شده، به همان برگرد
+        if (typeof opts.keepPage === 'number' && opts.keepPage < mizanPages.length) {
+          showMizanPage(opts.keepPage);
         } else {
-          showMizanPage(0);
-          jumpToAyahPage();
+          let saved = null;
+          try {
+            saved = await Store.getMizanProgress(mizanContentKeys.join('-'));
+          } catch (e) {}
+          if (typeof saved === 'number' && saved >= 0 && saved < mizanPages.length) {
+            showMizanPage(saved);
+          } else {
+            showMizanPage(0);
+            jumpToAyahPage();
+          }
         }
       }
     } catch (e) {
