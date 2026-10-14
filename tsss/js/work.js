@@ -65,8 +65,10 @@
   let currentAiGenerationId = null;
 
   // Mizan pager state
-  let mizanPages = [];        // [{ heading, pageNum }]
-  let mizanCurrentPage = 0;   // zero-based
+  let mizanPages = [];
+  let mizanCurrentPage = 0;
+  let mizanContentKey = null; // کلید ذخیره در Supabase
+  let mizanSaveTimer = null;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -448,7 +450,6 @@
       .trim();
   }
 
-  // تبدیل کاراکترهای عربی به فارسی داخل متن غیرقرآنی
   function normalizeMizanChars(rootEl) {
     if (!rootEl) return;
     const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
@@ -468,14 +469,13 @@
     while ((n = walker.nextNode())) nodes.push(n);
     nodes.forEach((textNode) => {
       textNode.nodeValue = textNode.nodeValue
-        .replace(/\u0649/g, '\u06CC') // ى → ی
-        .replace(/\u064A/g, '\u06CC') // ي → ی
-        .replace(/\u0643/g, '\u06A9') // ك → ک
-        .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
+        .replace(/\u0649/g, '\u06CC')
+        .replace(/\u064A/g, '\u06CC')
+        .replace(/\u0643/g, '\u06A9')
+        .replace(/\u200B/g, '\u200C');
     });
   }
 
-  // بلوک‌های عربی خام را با کلاس mizan-arabic-raw برچسب می‌زند و data-ayah می‌دهد
   function styleMizanAyahs(rootEl) {
     if (!rootEl) return;
     const spans = rootEl.querySelectorAll('span[id^="surah-"]');
@@ -533,7 +533,6 @@
     });
   }
 
-  // تقسیم محتوا به صفحات بر اساس h3 و h4
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children);
     const pageGroups = [];
@@ -550,7 +549,6 @@
     });
     if (current) pageGroups.push(current);
 
-    // اگر فقط یک صفحه داریم، برچسب مخصوص
     if (pageGroups.length <= 1) {
       mizanPages = [];
       if (mizanPager) mizanPager.classList.add('hidden');
@@ -561,7 +559,6 @@
       return;
     }
 
-    // پاک کردن و بازسازی به شکل صفحات
     rootEl.innerHTML = '';
     mizanPages = [];
     pageGroups.forEach((group, i) => {
@@ -573,25 +570,6 @@
       rootEl.appendChild(wrapper);
       mizanPages.push({ heading: group.heading, pageNum: i + 1 });
     });
-  }
-
-  function getMizanProgressKey() {
-    return `mizan-page-${current.surah}-${current.ayah}`;
-  }
-
-  function loadMizanProgress() {
-    try {
-      const v = localStorage.getItem(getMizanProgressKey());
-      if (!v) return 0;
-      const n = Number(v);
-      return Number.isFinite(n) && n >= 0 ? n : 0;
-    } catch (e) { return 0; }
-  }
-
-  function saveMizanProgress(pageIdx) {
-    try {
-      localStorage.setItem(getMizanProgressKey(), String(pageIdx));
-    } catch (e) {}
   }
 
   function updateMizanPagerUI() {
@@ -620,7 +598,20 @@
     pages.forEach((p, i) => { p.hidden = i !== n; });
     mizanCurrentPage = n;
     updateMizanPagerUI();
-    saveMizanProgress(n);
+    scheduleMizanSave(n);
+  }
+
+  // ذخیرهٔ پیشرفت با debounce
+  function scheduleMizanSave(pageIndex) {
+    if (!mizanContentKey) return;
+    clearTimeout(mizanSaveTimer);
+    mizanSaveTimer = setTimeout(async () => {
+      try {
+        await Store.saveMizanProgress(mizanContentKey, pageIndex);
+      } catch (e) {
+        console.warn('[mizan] save progress failed:', e);
+      }
+    }, 400);
   }
 
   function buildMizanToc() {
@@ -641,7 +632,6 @@
         const n = Number(btn.getAttribute('data-page'));
         showMizanPage(n);
         closeMizanToc();
-        // اسکرول به بالای بخش Mizan
         const sec = document.getElementById('mizanTafsirSection');
         if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
@@ -675,25 +665,30 @@
   }
 
   function jumpToAyahPage() {
-    if (!mizanContent) return;
+    if (!mizanContent) return false;
     const anchor = mizanContent.querySelector(`#surah-${current.surah}-ayah-${current.ayah}`);
-    if (!anchor) return;
+    if (!anchor) return false;
     const page = anchor.closest('.mizan-page');
-    if (!page) return;
+    if (!page) return false;
     const pageNum = Number(page.dataset.pageNum) - 1;
     if (!Number.isNaN(pageNum) && pageNum !== mizanCurrentPage) {
       showMizanPage(pageNum);
     }
+    return true;
   }
 
   async function renderMizan(surah, ayah) {
     showMizanState('loading');
+    mizanContentKey = null;
     try {
       const contents = await Mizan.getForAyah(surah, ayah);
       if (!contents || !contents.length) {
         showMizanState('empty');
         return;
       }
+
+      // کلید ذخیره بر اساس شناسهٔ content(ها)
+      mizanContentKey = contents.map((c) => c.content_id).join('-');
 
       const combinedText = contents
         .map((c) => cleanMizanText(c.text))
@@ -715,10 +710,16 @@
       styleMizanAyahs(mizanContent);
       paginateMizan(mizanContent);
 
-      // بازگرداندن پیشرفت یا رفتن به صفحهٔ آیهٔ جاری
       if (mizanPages.length > 1) {
-        const saved = loadMizanProgress();
-        if (saved > 0 && saved < mizanPages.length) {
+        // اول از Supabase (یا localStorage برای مهمان) بخوان
+        let saved = null;
+        try {
+          saved = await Store.getMizanProgress(mizanContentKey);
+        } catch (e) {
+          console.warn('[mizan] load progress failed:', e);
+        }
+
+        if (typeof saved === 'number' && saved >= 0 && saved < mizanPages.length) {
           showMizanPage(saved);
         } else {
           showMizanPage(0);
