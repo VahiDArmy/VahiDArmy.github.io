@@ -91,10 +91,13 @@
   let activePopupNoteId = null;
   let capturedAnchor = null;
 
-  // ★ حالت دو-کلیک برای تأیید محل یادداشت
+  // دو-کلیک برای تأیید محل یادداشت
   let lastAnchorKey = null;
   let lastAnchorTime = 0;
   const ANCHOR_CONFIRM_WINDOW_MS = 6000;
+
+  // کروسر مجازی
+  let mizanCaretEl = null;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -566,7 +569,34 @@
   }
 
   // --------------------------------------------------------
-  // Notes — anchor by cursor position
+  // کروسر مجازی
+  // --------------------------------------------------------
+
+  function insertCaretAtRange(range) {
+    removeCaret();
+    if (!range) return;
+    try {
+      const caret = document.createElement('span');
+      caret.className = 'mizan-caret';
+      caret.setAttribute('aria-hidden', 'true');
+      const r = range.cloneRange();
+      r.collapse(true);
+      r.insertNode(caret);
+      mizanCaretEl = caret;
+    } catch (e) {
+      console.warn('[mizan] caret insert failed:', e);
+    }
+  }
+
+  function removeCaret() {
+    if (mizanCaretEl && mizanCaretEl.parentNode) {
+      mizanCaretEl.parentNode.removeChild(mizanCaretEl);
+    }
+    mizanCaretEl = null;
+  }
+
+  // --------------------------------------------------------
+  // Notes
   // --------------------------------------------------------
 
   const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
@@ -807,6 +837,7 @@
   function openNoteModal(opts = {}) {
     if (!mizanNoteModal) return;
     editingNoteId = opts.editing ? opts.editing.id : null;
+    removeCaret();
 
     if (opts.editing) {
       mizanNoteTitle.textContent = 'ویرایش یادداشت';
@@ -833,6 +864,7 @@
     mizanNoteInput.value = '';
     editingNoteId = null;
     pendingNoteAnchor = null;
+    removeCaret();
   }
 
   if (mizanNoteClose) mizanNoteClose.addEventListener('click', closeNoteModal);
@@ -890,10 +922,7 @@
   });
 
   // --------------------------------------------------------
-  // Add note — flow:
-  //   1) اولین کلیک: کروسر در محل قرار می‌گیرد، دکمهٔ شناور ظاهر می‌شود
-  //   2) کلیک دوم روی همان نقطه: تأیید می‌شود، مودال باز می‌شود
-  //   (دکمهٔ شناور هم به‌عنوان راه میان‌بر باقی می‌ماند)
+  // Add note — two-click confirmation
   // --------------------------------------------------------
 
   function showNoteAddBtn() {
@@ -918,7 +947,6 @@
     else hideNoteAddBtn();
   });
 
-  // کلید تشخیص: before + \0 + after
   function anchorKeyOf(anchor) {
     if (!anchor) return null;
     return (anchor.before || '') + '\u0000' + (anchor.after || '');
@@ -963,34 +991,37 @@
     openNoteModal({});
   }
 
-  // کلیک روی متن المیزان — تشخیص تأیید با کلیک دوم روی همان نقطه
+  // کلیک روی متن المیزان
   if (mizanContent) {
     mizanContent.addEventListener('click', (e) => {
-      // کلیک روی یادداشت موجود → پاپ‌آپ؛ دخالت نکن
       if (e.target.closest && e.target.closest('.mizan-note-inline')) return;
-      // کلیک روی لینک → بگذار مرورگر کار خودش را بکند
-      if (e.target.closest && e.target.closest('a')) { resetAnchorConfirm(); return; }
+      if (e.target.closest && e.target.closest('a')) { removeCaret(); resetAnchorConfirm(); return; }
+      if (e.target.classList && e.target.classList.contains('mizan-caret')) return;
 
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) {
-        // انتخاب متن → حالت تأیید پاک شود
+        removeCaret();
         resetAnchorConfirm();
         return;
       }
 
-      // بعد از اینکه مرورگر selection را به‌روز کرد
+      // ★ ذخیرهٔ range کلیک قبل از تغییر DOM
+      const clickRange = sel.getRangeAt(0).cloneRange();
+
       setTimeout(async () => {
         const anchor = getCursorAnchor();
-        if (!anchor) { resetAnchorConfirm(); return; }
+        if (!anchor) { removeCaret(); resetAnchorConfirm(); return; }
+
+        // کروسر مجازی
+        insertCaretAtRange(clickRange);
 
         const key = anchorKeyOf(anchor);
         const now = Date.now();
 
         if (lastAnchorKey === key && (now - lastAnchorTime) < ANCHOR_CONFIRM_WINDOW_MS) {
-          // کلیک دوم روی همان نقطه → تأیید
+          removeCaret();
           await openNoteAtAnchor(anchor);
         } else {
-          // کلیک اول (یا تغییر محل)
           lastAnchorKey = key;
           lastAnchorTime = now;
         }
@@ -1101,6 +1132,7 @@
     updateMizanPagerUI();
     scheduleMizanSave(n);
     resetAnchorConfirm();
+    removeCaret();
   }
 
   function scheduleMizanSave(pageIndex) {
@@ -1172,6 +1204,7 @@
     showMizanState('loading');
     hideNoteAddBtn();
     hideNotePopup();
+    removeCaret();
     resetAnchorConfirm();
     mizanContentKeys = [];
     mizanNotes = [];
