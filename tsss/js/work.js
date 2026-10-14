@@ -38,19 +38,19 @@
   const mizanTocList  = document.getElementById('mizanTocList');
   const mizanNoteBtn  = document.getElementById('mizanNoteAddBtn');
 
-  const mizanNoteModal   = document.getElementById('mizanNoteModal');
-  const mizanNoteClose   = document.getElementById('mizanNoteClose');
-  const mizanNoteInput   = document.getElementById('mizanNoteInput');
-  const mizanNoteSaveBtn = document.getElementById('mizanNoteSaveBtn');
+  const mizanNoteModal     = document.getElementById('mizanNoteModal');
+  const mizanNoteClose     = document.getElementById('mizanNoteClose');
+  const mizanNoteInput     = document.getElementById('mizanNoteInput');
+  const mizanNoteSaveBtn   = document.getElementById('mizanNoteSaveBtn');
   const mizanNoteDeleteBtn = document.getElementById('mizanNoteDeleteBtn');
-  const mizanNoteQuote   = document.getElementById('mizanNoteQuote');
-  const mizanNoteTitle   = document.getElementById('mizanNoteTitle');
+  const mizanNoteQuote     = document.getElementById('mizanNoteQuote');
+  const mizanNoteTitle     = document.getElementById('mizanNoteTitle');
 
-  const mizanNotePopup   = document.getElementById('mizanNotePopup');
-  const mizanNotePopupText = document.getElementById('mizanNotePopupText');
-  const mizanNotePopupEdit = document.getElementById('mizanNotePopupEdit');
-  const mizanNotePopupDel  = document.getElementById('mizanNotePopupDel');
-  const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
+  const mizanNotePopup       = document.getElementById('mizanNotePopup');
+  const mizanNotePopupText   = document.getElementById('mizanNotePopupText');
+  const mizanNotePopupEdit   = document.getElementById('mizanNotePopupEdit');
+  const mizanNotePopupDel    = document.getElementById('mizanNotePopupDel');
+  const mizanNotePopupClose  = document.getElementById('mizanNotePopupClose');
 
   const aiReviewModal = document.getElementById('aiReviewModal');
   const aiReviewCloseBtn = document.getElementById('aiReviewCloseBtn');
@@ -83,12 +83,13 @@
   // Mizan state
   let mizanPages = [];
   let mizanCurrentPage = 0;
-  let mizanContentKeys = [];   // content_id های فعلی
+  let mizanContentKeys = [];
   let mizanSaveTimer = null;
-  let mizanNotes = [];         // یادداشت‌های فعلی برای content_id ها
-  let pendingNoteSelection = null; // { contentId, before, selected, after }
+  let mizanNotes = [];
+  let pendingNoteAnchor = null;   // { contentId, before, after }
   let editingNoteId = null;
   let activePopupNoteId = null;
+  let capturedAnchor = null;      // برای pointerdown روی دکمه
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -132,6 +133,12 @@
 
   function parseTags(str) {
     return Array.from(new Set(str.split(/[,،]/).map(t => t.trim()).filter(Boolean)));
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str == null ? '' : str);
+    return div.innerHTML;
   }
 
   const LINK_TOKEN_RE = /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]{1,120}))?\]\]/g;
@@ -553,116 +560,152 @@
     });
   }
 
-  // -------------- Note injection --------------
+  // --------------------------------------------------------
+  // Notes — anchor by cursor position between two words
+  // --------------------------------------------------------
 
-  function findNoteAnchorInBlocks(rootEl, note) {
-    // جستجو در همهٔ بلوک‌های متنی
-    const blocks = rootEl.querySelectorAll('p, li, blockquote, h2, h3, h4, td, th');
-    const anchorFull = (note.anchor_before || '') + note.anchor_selected + (note.anchor_after || '');
-    let best = null;
+  const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
+  const NOTE_CONTEXT_CHARS = 30;
+
+  function getTextOffsetInBlock(block, container, offset) {
+    // اگر container خودش متن است
+    let pos = 0;
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    let n;
+    while ((n = walker.nextNode())) {
+      if (n === container) return pos + offset;
+      pos += (n.nodeValue || '').length;
+    }
+    // اگر container عنصر است (مثلاً block یا یک والد میانی)
+    if (container === block || block.contains(container)) {
+      // مجموع متن فرزندان قبل از offset در container
+      let acc = 0;
+      const kids = container.childNodes;
+      for (let i = 0; i < offset && i < kids.length; i++) {
+        acc += (kids[i].textContent || '').length;
+      }
+      // اضافه کردن متن قبل از خود container در block
+      const preRange = document.createRange();
+      try {
+        preRange.setStart(block, 0);
+        preRange.setEnd(container, offset);
+        return preRange.toString().length;
+      } catch (e) {
+        return pos + acc;
+      }
+    }
+    return pos;
+  }
+
+  function getCursorAnchor() {
+    if (!mizanContent) return null;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return null;
+    const range = sel.getRangeAt(0);
+
+    // مطمئن شو انتخاب داخل mizan است
+    if (!mizanContent.contains(range.startContainer)) return null;
+
+    let block = range.startContainer;
+    if (block.nodeType === 3) block = block.parentElement;
+    while (block && block !== mizanContent && !block.matches(NOTE_BLOCK_SELECTOR)) {
+      block = block.parentElement;
+    }
+    if (!block || block === mizanContent || !block.matches(NOTE_BLOCK_SELECTOR)) return null;
+
+    const blockText = block.textContent || '';
+    if (!blockText.trim()) return null;
+
+    const pos = getTextOffsetInBlock(block, range.startContainer, range.startOffset);
+    const safePos = Math.max(0, Math.min(pos, blockText.length));
+
+    // اگر در حالت انتخاب است، ابتدای انتخاب را استفاده کن
+    const before = blockText.slice(Math.max(0, safePos - NOTE_CONTEXT_CHARS), safePos);
+    const after = blockText.slice(safePos, safePos + NOTE_CONTEXT_CHARS);
+
+    if (!before && !after) return null;
+
+    return { block, before, after };
+  }
+
+  function positionToRange(block, posInBlock) {
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    let n, acc = 0;
+    while ((n = walker.nextNode())) {
+      const len = (n.nodeValue || '').length;
+      if (acc + len >= posInBlock) {
+        const off = posInBlock - acc;
+        const r = document.createRange();
+        try {
+          r.setStart(n, off);
+          r.setEnd(n, off);
+          return r;
+        } catch (e) {
+          return null;
+        }
+      }
+      acc += len;
+    }
+    // در انتهای block
+    const r = document.createRange();
+    try {
+      r.selectNodeContents(block);
+      r.collapse(false);
+      return r;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function insertInlineNoteAt(rootEl, note) {
+    const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
+    const before = note.anchor_before || '';
+    const after = note.anchor_after || '';
+    const fullAnchor = before + after;
 
     for (const block of blocks) {
       const txt = block.textContent || '';
-      if (!txt) continue;
+      let posInBlock = -1;
 
-      // تلاش اول: کل قالب
-      let idx = txt.indexOf(anchorFull);
-      let start, end;
-      if (idx !== -1) {
-        start = idx + (note.anchor_before || '').length;
-        end = start + note.anchor_selected.length;
-      } else {
-        // تلاش دوم: فقط متن انتخاب‌شده
-        idx = txt.indexOf(note.anchor_selected);
-        if (idx === -1) continue;
-        start = idx;
-        end = start + note.anchor_selected.length;
+      if (fullAnchor && txt.indexOf(fullAnchor) !== -1) {
+        posInBlock = txt.indexOf(fullAnchor) + before.length;
+      } else if (after && txt.indexOf(after) !== -1) {
+        posInBlock = txt.indexOf(after);
+      } else if (before && txt.indexOf(before) !== -1) {
+        posInBlock = txt.indexOf(before) + before.length;
       }
 
-      best = { block, start, end };
-      break;
-    }
-    return best;
-  }
+      if (posInBlock < 0) continue;
 
-  function wrapTextRange(block, start, end, note) {
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-    const textNodes = [];
-    let n;
-    while ((n = walker.nextNode())) textNodes.push(n);
+      const range = positionToRange(block, posInBlock);
+      if (!range) continue;
 
-    let pos = 0;
-    let startNode = null, startOffset = 0;
-    let endNode = null, endOffset = 0;
+      const el = document.createElement('span');
+      el.className = 'mizan-note-inline';
+      el.dataset.noteId = note.id;
+      el.textContent = note.note_text;
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('title', 'کلیک برای ویرایش');
 
-    for (const t of textNodes) {
-      const len = t.nodeValue.length;
-      if (!startNode && pos + len > start) {
-        startNode = t;
-        startOffset = start - pos;
-      }
-      if (!endNode && pos + len >= end) {
-        endNode = t;
-        endOffset = end - pos;
-        break;
-      }
-      pos += len;
-    }
-
-    if (!startNode || !endNode) return false;
-
-    const range = document.createRange();
-    try {
-      range.setStart(startNode, startOffset);
-      range.setEnd(endNode, endOffset);
-    } catch (e) {
-      return false;
-    }
-
-    const wrap = document.createElement('span');
-    wrap.className = 'mizan-note-anchor';
-    wrap.dataset.noteId = note.id;
-
-    try {
-      range.surroundContents(wrap);
-    } catch (e) {
       try {
-        const frag = range.extractContents();
-        wrap.appendChild(frag);
-        range.insertNode(wrap);
-      } catch (e2) {
-        return false;
+        range.insertNode(el);
+        return true;
+      } catch (e) {
+        console.warn('[mizan] insert failed:', e);
+        continue;
       }
     }
-
-    // شماره و نشانگر
-    const sup = document.createElement('sup');
-    sup.className = 'mizan-note-marker';
-    sup.dataset.noteId = note.id;
-    sup.textContent = String(note._num);
-    sup.setAttribute('role', 'button');
-    sup.setAttribute('tabindex', '0');
-    sup.setAttribute('title', 'نمایش یادداشت');
-    wrap.parentNode.insertBefore(sup, wrap.nextSibling);
-
-    return true;
+    return false;
   }
 
   function injectMizanNotes(rootEl) {
     if (!rootEl || !mizanNotes.length) return;
-    // شماره‌دهی بر اساس ترتیب
-    mizanNotes.forEach((note, i) => { note._num = i + 1; });
     const orphans = [];
     for (const note of mizanNotes) {
-      const found = findNoteAnchorInBlocks(rootEl, note);
-      if (found) {
-        const ok = wrapTextRange(found.block, found.start, found.end, note);
-        if (!ok) orphans.push(note);
-      } else {
-        orphans.push(note);
-      }
+      const ok = insertInlineNoteAt(rootEl, note);
+      if (!ok) orphans.push(note);
     }
-    // یادداشت‌های بی‌قرار را در پایان لیست کن
     if (orphans.length) {
       const box = document.createElement('div');
       box.className = 'mizan-orphans';
@@ -670,16 +713,15 @@
         <div class="mizan-orphans__title">یادداشت‌های بدون جای مشخص</div>
         ${orphans.map((n) => `
           <div class="mizan-orphan" data-note-id="${n.id}">
-            <span class="mizan-note-marker" style="position:static; margin-inline-end:6px;">${n._num}</span>
-            <span>${escapeHtml(n.anchor_selected).slice(0, 80)}</span>
+            <span class="mizan-note-inline" style="cursor:pointer;">${escapeHtml(n.note_text)}</span>
           </div>
         `).join('')}
       `;
       rootEl.appendChild(box);
     }
 
-    // اتصال به popup
-    rootEl.querySelectorAll('.mizan-note-marker').forEach((el) => {
+    // اتصال کلیک روی یادداشت‌ها
+    rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
         const id = el.dataset.noteId;
@@ -689,23 +731,18 @@
     });
   }
 
-  // -------------- Note popup --------------
-
-  let popupOpenedFor = null;
+  // --------------------------------------------------------
+  // Note popup
+  // --------------------------------------------------------
 
   function showNotePopup(note, anchorEl) {
     if (!mizanNotePopup) return;
     activePopupNoteId = note.id;
-    popupOpenedFor = anchorEl;
-
     mizanNotePopupText.textContent = note.note_text;
-
     mizanNotePopup.hidden = false;
 
-    // موقعیت: نزدیک نشانگر، با احتیاط از لبه‌ها
     const rect = anchorEl.getBoundingClientRect();
     const popup = mizanNotePopup;
-    // نمایش اولیه برای اندازه‌گیری
     popup.style.left = '-9999px';
     popup.style.top = '-9999px';
     requestAnimationFrame(() => {
@@ -726,7 +763,6 @@
     if (!mizanNotePopup) return;
     mizanNotePopup.hidden = true;
     activePopupNoteId = null;
-    popupOpenedFor = null;
   }
 
   if (mizanNotePopupClose) mizanNotePopupClose.addEventListener('click', hideNotePopup);
@@ -754,11 +790,22 @@
   document.addEventListener('click', (e) => {
     if (!mizanNotePopup || mizanNotePopup.hidden) return;
     if (mizanNotePopup.contains(e.target)) return;
-    if (e.target.classList && e.target.classList.contains('mizan-note-marker')) return;
+    if (e.target.classList && e.target.classList.contains('mizan-note-inline')) return;
     hideNotePopup();
   });
 
-  // -------------- Note modal --------------
+  // --------------------------------------------------------
+  // Note modal
+  // --------------------------------------------------------
+
+  function renderNoteQuoteFromAnchor(anchor) {
+    if (!mizanNoteQuote) return;
+    if (!anchor) { mizanNoteQuote.textContent = '—'; return; }
+    const b = (anchor.before || '').slice(-40);
+    const a = (anchor.after || '').slice(0, 40);
+    mizanNoteQuote.innerHTML =
+      `${escapeHtml(b)}<span class="mizan-note-modal__caret">|</span>${escapeHtml(a)}`;
+  }
 
   function openNoteModal(opts = {}) {
     if (!mizanNoteModal) return;
@@ -767,14 +814,15 @@
     if (opts.editing) {
       mizanNoteTitle.textContent = 'ویرایش یادداشت';
       mizanNoteInput.value = opts.editing.note_text || '';
-      mizanNoteQuote.textContent = opts.editing.anchor_selected || '';
-      mizanNoteDeleteBtn.classList.remove('hidden');
+      mizanNoteQuote.textContent = (opts.editing.anchor_before || '').slice(-40) +
+        ' | ' + (opts.editing.anchor_after || '').slice(0, 40);
+      mizanNoteDeleteBtn.style.display = '';
       mizanNoteSaveBtn.textContent = 'به‌روزرسانی';
     } else {
       mizanNoteTitle.textContent = 'افزودن یادداشت';
       mizanNoteInput.value = '';
-      mizanNoteQuote.textContent = pendingNoteSelection ? pendingNoteSelection.selected : '';
-      mizanNoteDeleteBtn.classList.add('hidden');
+      renderNoteQuoteFromAnchor(pendingNoteAnchor);
+      mizanNoteDeleteBtn.style.display = 'none';
       mizanNoteSaveBtn.textContent = 'ثبت یادداشت';
     }
 
@@ -787,7 +835,7 @@
     mizanNoteModal.hidden = true;
     mizanNoteInput.value = '';
     editingNoteId = null;
-    pendingNoteSelection = null;
+    pendingNoteAnchor = null;
   }
 
   if (mizanNoteClose) mizanNoteClose.addEventListener('click', closeNoteModal);
@@ -809,15 +857,15 @@
         await Store.updateMizanNote(editingNoteId, text);
         UI.toast('یادداشت به‌روزرسانی شد');
       } else {
-        if (!pendingNoteSelection) {
-          UI.toast('متن انتخاب‌شده معتبر نیست');
+        if (!pendingNoteAnchor) {
+          UI.toast('موقعیت یادداشت معتبر نیست');
           return;
         }
         await Store.addMizanNote({
-          contentId: pendingNoteSelection.contentId,
-          anchorBefore: pendingNoteSelection.before,
-          anchorSelected: pendingNoteSelection.selected,
-          anchorAfter: pendingNoteSelection.after,
+          contentId: pendingNoteAnchor.contentId,
+          anchorBefore: pendingNoteAnchor.before,
+          anchorSelected: '',
+          anchorAfter: pendingNoteAnchor.after,
           noteText: text,
         });
         UI.toast('یادداشت ثبت شد');
@@ -844,33 +892,9 @@
     }
   });
 
-  // -------------- Selection -> add note --------------
-
-  function getSelectionInfo() {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed) return null;
-    const range = sel.getRangeAt(0);
-    const selectedText = sel.toString().trim();
-    if (!selectedText || selectedText.length < 2) return null;
-
-    let block = range.commonAncestorContainer;
-    if (block.nodeType === 3) block = block.parentElement;
-    while (block && block !== mizanContent && !/^(P|LI|BLOCKQUOTE|H[1-6]|TD|TH)$/.test(block.tagName)) {
-      block = block.parentElement;
-    }
-    if (!block || block === mizanContent || !/^(P|LI|BLOCKQUOTE|H[1-6]|TD|TH)$/.test(block.tagName)) return null;
-
-    // پیدا کردن موقعیت انتخاب در متن بلوک
-    const blockText = block.textContent || '';
-    // از آخر انتخاب به قبل یک بازه جستجو تا نزدیک‌ترین را بیابیم
-    let idx = blockText.indexOf(selectedText);
-    if (idx === -1) return null;
-
-    const before = blockText.slice(Math.max(0, idx - 40), idx);
-    const after = blockText.slice(idx + selectedText.length, idx + selectedText.length + 40);
-
-    return { block, before, selected: selectedText, after };
-  }
+  // --------------------------------------------------------
+  // "Add note" button
+  // --------------------------------------------------------
 
   function showNoteAddBtn() {
     if (!mizanNoteBtn) return;
@@ -881,24 +905,47 @@
     mizanNoteBtn.hidden = true;
   }
 
+  function selectionIsInsideMizan() {
+    if (!mizanContent || mizanContent.classList.contains('hidden')) return false;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return false;
+    const r = sel.getRangeAt(0);
+    return mizanContent.contains(r.startContainer);
+  }
+
   document.addEventListener('selectionchange', () => {
-    if (!mizanContent || mizanContent.classList.contains('hidden')) return;
-    const info = getSelectionInfo();
-    if (info) showNoteAddBtn();
+    if (selectionIsInsideMizan()) showNoteAddBtn();
     else hideNoteAddBtn();
   });
 
-  if (mizanNoteBtn) mizanNoteBtn.addEventListener('click', () => {
-    const info = getSelectionInfo();
-    if (!info) { UI.toast('اول متن را انتخاب کنید'); return; }
-    // بررسی لاگین
-    sb.auth.getSession().then(({ data }) => {
+  // جلوگیری از پاک شدن انتخاب قبل از کلیک
+  if (mizanNoteBtn) {
+    mizanNoteBtn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      // انتخاب را حفظ می‌کنیم
+      capturedAnchor = getCursorAnchor();
+    });
+  }
+
+  if (mizanNoteBtn) {
+    mizanNoteBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const anchor = capturedAnchor || getCursorAnchor();
+      capturedAnchor = null;
+      if (!anchor) {
+        UI.toast('اول نشانگر را در متن المیزان بگذارید یا متنی را انتخاب کنید');
+        return;
+      }
+
+      // بررسی لاگین
+      const { data } = await sb.auth.getSession();
       if (!data?.session) {
         UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
         return;
       }
-      // تعیین content_id متناسب با این بلوک
-      const page = info.block.closest('.mizan-page');
+
+      // شناسایی content_id
+      const page = anchor.block.closest('.mizan-page');
       let contentId = mizanContentKeys[0] || null;
       if (page && mizanContentKeys.length > 1) {
         const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
@@ -908,26 +955,23 @@
         UI.toast('خطا در تشخیص محتوا');
         return;
       }
-      pendingNoteSelection = {
+
+      pendingNoteAnchor = {
         contentId,
-        before: info.before,
-        selected: info.selected,
-        after: info.after,
+        before: anchor.before,
+        after: anchor.after,
       };
-      // پاک کردن انتخاب تا کاربر ببیندش
-      window.getSelection().removeAllRanges();
+
       hideNoteAddBtn();
       openNoteModal({});
     });
-  });
+  }
 
   async function reloadMizanNotesAndRerender() {
     if (!mizanContentKeys.length) return;
     try {
       const all = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
       mizanNotes = all.flat();
-      // فقط بخش‌های یادداشت را دوباره تزریق کن — ساده‌تر: دوباره رندر
-      // اما برای حفظ صفحهٔ فعلی، از نو رندر می‌کنیم و به همان صفحه می‌رویم
       const prevPage = mizanCurrentPage;
       await renderMizan(current.surah, current.ayah, { keepPage: prevPage });
     } catch (e) {
@@ -935,7 +979,9 @@
     }
   }
 
-  // -------------- Pager / TOC --------------
+  // --------------------------------------------------------
+  // Pager / TOC
+  // --------------------------------------------------------
 
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
@@ -1043,12 +1089,6 @@
     });
   }
 
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = String(str == null ? '' : str);
-    return div.innerHTML;
-  }
-
   function openMizanToc() {
     if (!mizanTocModal) return;
     buildMizanToc();
@@ -1094,7 +1134,6 @@
 
       mizanContentKeys = contents.map((c) => c.content_id);
 
-      // یادداشت‌ها
       try {
         const all = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
         mizanNotes = all.flat();
@@ -1125,7 +1164,6 @@
       paginateMizan(mizanContent);
 
       if (mizanPages.length > 1) {
-        // اگر keepPage داده شده، به همان برگرد
         if (typeof opts.keepPage === 'number' && opts.keepPage < mizanPages.length) {
           showMizanPage(opts.keepPage);
         } else {
