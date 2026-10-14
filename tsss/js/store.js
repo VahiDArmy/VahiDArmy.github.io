@@ -424,7 +424,6 @@ const Store = (function () {
 
   // ---------- Mizan progress ----------
   async function getMizanProgress(contentKey) {
-    // اگر کاربر لاگین است، از Supabase بخوان؛ وگرنه از localStorage
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.id) {
       const { data, error } = await sb
@@ -469,6 +468,53 @@ const Store = (function () {
     return false;
   }
 
+  // ---------- Mizan notes ----------
+  async function getMizanNotes(contentId) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) return [];
+    const { data, error } = await sb
+      .from('mizan_notes')
+      .select('*')
+      .eq('content_id', contentId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function addMizanNote({ contentId, anchorBefore, anchorSelected, anchorAfter, noteText }) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) throw new Error('برای ثبت یادداشت باید وارد حساب شوید');
+    const { data, error } = await sb
+      .from('mizan_notes')
+      .insert({
+        content_id: contentId,
+        anchor_before: anchorBefore,
+        anchor_selected: anchorSelected,
+        anchor_after: anchorAfter,
+        note_text: noteText,
+      })
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function updateMizanNote(id, noteText) {
+    const { data, error } = await sb
+      .from('mizan_notes')
+      .update({ note_text: noteText, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data;
+  }
+
+  async function deleteMizanNote(id) {
+    const { error } = await sb.from('mizan_notes').delete().eq('id', id);
+    if (error) throw error;
+  }
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
@@ -506,5 +552,9 @@ const Store = (function () {
     getModelScores,
     getMizanProgress,
     saveMizanProgress,
+    getMizanNotes,
+    addMizanNote,
+    updateMizanNote,
+    deleteMizanNote,
   };
 })();
