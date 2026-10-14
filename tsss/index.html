@@ -164,6 +164,12 @@
       </div>
       <div id="mizanContent" class="mizan-tafsir-content hidden"></div>
       <div id="mizanError" class="mizan-tafsir-error hidden"></div>
+      <div id="mizanPager" class="mizan-pager hidden">
+        <button type="button" class="mizan-pager__btn" id="mizanPrevBtn">‹ صفحهٔ قبل</button>
+        <span class="mizan-pager__info" id="mizanPageInfo">—</span>
+        <button type="button" class="mizan-pager__btn" id="mizanNextBtn">صفحهٔ بعد ›</button>
+        <button type="button" class="mizan-pager__toc" id="mizanTocBtn">فهرست</button>
+      </div>
     </div>
   </section>
 
@@ -233,6 +239,16 @@
     <div class="ai-models-modal__footer">
       <button type="button" class="btn btn--primary" id="saveModelBtn" style="width:100%">ذخیره</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mizanTocModal" hidden>
+  <div class="modal-card card mizan-toc-modal">
+    <div class="modal-card__head">
+      <span>فهرست تفسیر المیزان</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="mizanTocClose" aria-label="بستن">✕</button>
+    </div>
+    <div class="mizan-toc-list" id="mizanTocList"></div>
   </div>
 </div>
 
