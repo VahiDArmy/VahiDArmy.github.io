@@ -113,16 +113,16 @@ button.mark-toggle:hover { border-color: #FFB020; }
 /* 5. FORMS */
 .field { margin-bottom: 14px; }
 .field label { display: block; margin-bottom: 6px; font-size: .82rem; font-weight: 600; color: var(--text-dim); }
-.field textarea, .field input[type="text"], .name-row input, .comment-form input[type="text"] {
+.field textarea, .field input[type="text"], .field input[type="email"], .field input[type="password"], .name-row input, .comment-form input[type="text"] {
   width: 100%; background: var(--read-bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
   color: var(--text); font-family: var(--font-ui);
   transition: border-color .2s ease, box-shadow .2s ease, background .2s ease, min-height .25s ease;
 }
-.field textarea, .field input[type="text"] { padding: 12px 14px; font-size: .92rem; line-height: 1.8; }
+.field textarea, .field input[type="text"], .field input[type="email"], .field input[type="password"] { padding: 12px 14px; font-size: .92rem; line-height: 1.8; }
 .name-row input, .comment-form input[type="text"] { padding: 9px 14px; font-size: .85rem; }
 .field textarea { min-height: 110px; resize: vertical; }
 .field textarea:focus { min-height: 280px; }
-.field textarea:focus, .field input[type="text"]:focus, .name-row input:focus, .comment-form input[type="text"]:focus {
+.field textarea:focus, .field input[type="text"]:focus, .field input[type="email"]:focus, .field input[type="password"]:focus, .name-row input:focus, .comment-form input[type="text"]:focus {
   outline: none; border-color: var(--neon); background: var(--read-bg-strong); box-shadow: 0 0 0 3px var(--neon-glow);
 }
 ::placeholder { color: var(--text-faint); opacity: 1; }
@@ -247,7 +247,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
 .mizan-tafsir-content > :first-child { margin-top: 0; }
 .mizan-tafsir-content > :last-child { margin-bottom: 0; }
 
-/* --- تیتر اصلی بلوک (##) — تمیز، بدون خط --- */
+/* h2 — تیتر اصلی بلوک */
 .mizan-tafsir-content h2 {
   font-size: 1.22rem;
   font-weight: 800;
@@ -271,7 +271,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   box-shadow: 0 0 10px var(--neon-glow);
 }
 
-/* --- تیتر صفحه (###) — تمیز، بدون خط کنار --- */
+/* h3 — تیتر صفحه */
 .mizan-tafsir-content h3 {
   font-size: 1.04rem;
   font-weight: 700;
@@ -295,7 +295,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   transform: translateY(-1px);
 }
 
-/* --- زیرتیتر (####) --- */
+/* h4 — زیرتیتر */
 .mizan-tafsir-content h4 {
   font-size: .95rem;
   font-weight: 700;
@@ -534,7 +534,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   overflow-wrap: anywhere;
 }
 
-/* --- یادداشت درون‌متنی — داخل { }، بدون border --- */
+/* --- یادداشت درون‌متنی --- */
 .mizan-note-inline {
   display: inline;
   margin: 0;
@@ -572,7 +572,25 @@ a.tag-pill:hover { filter: brightness(1.2); }
   text-shadow: 0 0 14px var(--violet), 0 0 28px var(--violet-glow);
 }
 
-/* --- دکمهٔ شناور --- */
+/* --- کروسر مجازی روی متن المیزان --- */
+.mizan-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: var(--violet);
+  box-shadow:
+    0 0 6px var(--violet),
+    0 0 14px var(--violet-glow);
+  vertical-align: text-bottom;
+  margin: 0 -1px;
+  pointer-events: none;
+  animation: mizanCaretBlink 1s steps(2, start) infinite;
+}
+@keyframes mizanCaretBlink {
+  50% { opacity: 0; }
+}
+
+/* --- دکمهٔ شناور افزودن یادداشت --- */
 .mizan-note-add-btn {
   position: fixed;
   bottom: calc(84px + env(safe-area-inset-bottom, 0px));
@@ -705,7 +723,6 @@ a.tag-pill:hover { filter: brightness(1.2); }
   font-weight: 800;
   animation: mizanCaretBlink 1.2s steps(2) infinite;
 }
-@keyframes mizanCaretBlink { 50% { opacity: .25; } }
 
 .mizan-note-modal__label {
   display: block;
@@ -778,4 +795,5 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .ayah-frame::before { display: none; }
   .mizan-note-add-btn { animation: none; }
   .mizan-note-modal__caret { animation: none; }
+  .mizan-caret { animation: none; }
 }
