@@ -422,6 +422,53 @@ const Store = (function () {
     return map;
   }
 
+  // ---------- Mizan progress ----------
+  async function getMizanProgress(contentKey) {
+    // اگر کاربر لاگین است، از Supabase بخوان؛ وگرنه از localStorage
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user?.id) {
+      const { data, error } = await sb
+        .from('mizan_progress')
+        .select('page_index')
+        .eq('user_id', session.user.id)
+        .eq('content_key', contentKey)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? data.page_index : null;
+    }
+    try {
+      const v = localStorage.getItem('mizan-page-' + contentKey);
+      if (v == null) return null;
+      const n = Number(v);
+      return Number.isFinite(n) && n >= 0 ? n : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function saveMizanProgress(contentKey, pageIndex) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user?.id) {
+      const { error } = await sb
+        .from('mizan_progress')
+        .upsert(
+          {
+            user_id: session.user.id,
+            content_key: contentKey,
+            page_index: pageIndex,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id,content_key' }
+        );
+      if (error) throw error;
+      return true;
+    }
+    try {
+      localStorage.setItem('mizan-page-' + contentKey, String(pageIndex));
+    } catch (e) {}
+    return false;
+  }
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
@@ -457,5 +504,7 @@ const Store = (function () {
     getMyFeedback,
     setFeedback,
     getModelScores,
+    getMizanProgress,
+    saveMizanProgress,
   };
 })();
