@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Brick Wall</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{color-scheme:dark;--bh:3vw;--space:2px;--n:7;--brick:hsl(0 43% 40%);--brick-dark:hsl(0 45% 22%)}
+html,body{height:100%;margin:0;background:#0b0605;overflow:hidden}
+
+/* brick.css ported from LESS: same radius, spacing, inset shadow, running bond. Bricks are solid and never change. */
+.wall{position:fixed;inset:calc(var(--space) * -1);display:flex;flex-direction:column;overflow:hidden}
+.row{display:flex;flex:none}
+.brick{
+  flex:0 0 calc(100% / var(--n) - var(--space) * 2);
+  height:var(--bh);
+  margin:var(--space);
+  border-radius:2px;
+  background:var(--brick);
+  box-shadow:0 0 19px 1px var(--brick-dark) inset;
+}
+.brick.half{flex-basis:calc(50% / var(--n) - var(--space) * 2)}
+
+/* light that escapes through the gaps */
+#rays{position:fixed;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:screen}
+</style>
+</head>
+<body>
+<div class="wall" aria-hidden="true"></div>
+<canvas id="rays" aria-hidden="true"></canvas>
+<script>
+(()=>{
+const root=document.documentElement.style,
+      wall=document.querySelector('.wall'),
+      cv=document.getElementById('rays'),ctx=cv.getContext('2d'),
+      tmp=document.createElement('canvas'),tx=tmp.getContext('2d'),
+      msk=document.createElement('canvas'),mx=msk.getContext('2d'),
+      still=matchMedia('(prefers-reduced-motion: reduce)').matches,
+      K=5;                                   // bulb now + 4 earlier positions = the wake
+let W,H,sc,cw,ch,Rf;
+
+// slow route of the bulb behind the wall
+const path=t=>[
+  W*(.5+.36*Math.sin(t*.23+.6)+.07*Math.sin(t*.61)),
+  H*(.5+.31*Math.sin(t*.17+2)+.06*Math.cos(t*.53))
+];
+
+function build(){
+  W=innerWidth;H=innerHeight;sc=W<700?.3:.38;
+  cw=cv.width=tmp.width=msk.width=Math.ceil(W*sc);
+  ch=cv.height=tmp.height=msk.height=Math.ceil(H*sc);
+  Rf=Math.max(cw,ch)*.55;                    // how far the light reaches
+  const bh=Math.max(22,Math.min(46,W*.03)),n=Math.max(3,Math.round(W/(bh*5)));
+  root.setProperty('--bh',bh+'px');root.setProperty('--n',n);
+  wall.textContent='';
+  const rows=Math.ceil(H/(bh+4))+1,frag=document.createDocumentFragment();
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');row.className='row';
+    const add=c=>{const b=document.createElement('div');b.className=c;row.appendChild(b)};
+    if(r%2){add('brick half');for(let i=1;i<n;i++)add('brick');add('brick half')}
+    else for(let i=0;i<n;i++)add('brick');
+    frag.appendChild(row);
+  }
+  wall.appendChild(frag);
+  // light mask: light only where there is no brick (the gaps)
+  mx.fillStyle='#ffc47a';mx.fillRect(0,0,cw,ch);
+  for(const el of wall.querySelectorAll('.brick')){
+    const q=el.getBoundingClientRect();
+    mx.clearRect((q.left+1)*sc,(q.top+1)*sc,(q.width-2)*sc,(q.height-2)*sc);
+  }
+}
+
+function draw(ms){
+  const t=(still?9:ms/1000)*.6;
+  ctx.globalCompositeOperation='source-over';ctx.clearRect(0,0,cw,ch);
+  ctx.globalCompositeOperation='lighter';
+  for(let j=0;j<K;j++){
+    const n=j?14:30,[bx,by]=path(t-j*.9),X=bx*sc,Y=by*sc;
+    tx.setTransform(1,0,0,1,0,0);
+    tx.globalCompositeOperation='source-over';tx.clearRect(0,0,cw,ch);
+    tx.globalCompositeOperation='lighter';
+    // push the gap pattern outward from the bulb centre: every gap throws a ray straight away from the bulb, fanning wider with distance
+    for(let i=0;i<=n;i++){
+      const s=1+.6*i/n;
+      tx.setTransform(s,0,0,s,X*(1-s),Y*(1-s));
+      tx.globalAlpha=i?.13*(30/n)*Math.exp(-3*i/n):1;
+      tx.drawImage(msk,0,0);
+    }
+    // rays fade with distance from the bulb
+    tx.setTransform(1,0,0,1,0,0);tx.globalAlpha=1;
+    tx.globalCompositeOperation='destination-in';
+    const g=tx.createRadialGradient(X,Y,0,X,Y,Rf);
+    g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(.3,'rgba(0,0,0,.6)');g.addColorStop(1,'rgba(0,0,0,0)');
+    tx.fillStyle=g;tx.fillRect(0,0,cw,ch);
+    ctx.globalAlpha=j?.5*(1-j/K)**1.5:1;
+    ctx.drawImage(tmp,0,0);
+  }
+  ctx.globalAlpha=1;
+  if(!still)requestAnimationFrame(draw);
+}
+
+let rt;
+addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{build();if(still)draw(0)},120)});
+build();requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
