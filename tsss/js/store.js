@@ -214,7 +214,6 @@ const Store = (function () {
     return round + 1;
   }
 
-  // ---------- AI Review ----------
   async function getAiReview(tafsirId) {
     const { data, error } = await sb
       .from('ai_reviews')
@@ -289,7 +288,6 @@ const Store = (function () {
     };
   }
 
-  // ---------- Ask AI ----------
   async function saveAskAi({ surah, ayah, model, question, answerRaw }) {
     const { data, error } = await sb
       .from('ask_ai')
@@ -336,7 +334,6 @@ const Store = (function () {
     if (error) throw error;
   }
 
-  // ---------- AI generations & feedback ----------
   async function createGeneration({ source, refId, model }) {
     const { data, error } = await sb
       .from('ai_generations')
@@ -422,7 +419,6 @@ const Store = (function () {
     return map;
   }
 
-  // ---------- Mizan progress ----------
   async function getMizanProgress(contentKey) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.id) {
@@ -468,7 +464,6 @@ const Store = (function () {
     return false;
   }
 
-  // ---------- Mizan notes ----------
   async function getMizanNotes(contentId) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.user?.id) return [];
@@ -535,17 +530,14 @@ const Store = (function () {
     const rows = tags.map((t) => ({
       content_id: contentId,
       ayah: t.ayah,
-      start_before: t.startBefore,
-      start_after: t.startAfter,
-      end_before: t.endBefore,
-      end_after: t.endAfter,
+      start_excerpt: t.startExcerpt,
+      end_excerpt: t.endExcerpt,
       model: model || null,
     }));
     const { error } = await sb.from('mizan_tags').insert(rows);
     if (error) throw error;
   }
 
-  // ★ هیچ خطایی استخراج نمی‌شود — متن کامل پاسخ برگردانده می‌شود
   async function callMizanTagger({ surahName, ayahs, content, model }) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.access_token) {
@@ -573,14 +565,11 @@ const Store = (function () {
     }
 
     const rawText = await res.text();
-
     let parsed = null;
     try { parsed = JSON.parse(rawText); } catch (e) {}
 
     if (!res.ok) {
-      const err = new Error(
-        (parsed && parsed.error) || ('HTTP ' + res.status)
-      );
+      const err = new Error((parsed && parsed.error) || ('HTTP ' + res.status));
       err.status = res.status;
       err.raw = rawText;
       throw err;
