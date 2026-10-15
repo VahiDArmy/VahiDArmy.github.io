@@ -41,6 +41,14 @@
   const mizanTaggerBtn   = document.getElementById('mizanTaggerBtn');
   const mizanTaggerLabel = document.getElementById('mizanTaggerLabel');
 
+  const mizanTaggerRawModal  = document.getElementById('mizanTaggerRawModal');
+  const mizanTaggerRawClose  = document.getElementById('mizanTaggerRawClose');
+  const mizanTaggerRawMeta   = document.getElementById('mizanTaggerRawMeta');
+  const mizanTaggerRawText   = document.getElementById('mizanTaggerRawText');
+  const mizanTaggerRawApply  = document.getElementById('mizanTaggerRawApply');
+  const mizanTaggerRawCopy   = document.getElementById('mizanTaggerRawCopy');
+  const mizanTaggerRawCancel = document.getElementById('mizanTaggerRawCancel');
+
   const mizanNoteModal     = document.getElementById('mizanNoteModal');
   const mizanNoteClose     = document.getElementById('mizanNoteClose');
   const mizanNoteInput     = document.getElementById('mizanNoteInput');
@@ -100,6 +108,9 @@
   const ANCHOR_CONFIRM_WINDOW_MS = 6000;
 
   let mizanCaretEl = null;
+
+  // Tagger state
+  let pendingTaggerResults = null;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -811,7 +822,6 @@
       if (seg.markerType === 'start') {
         openStack.push({ ayah: seg.ayah, cleanOffset: seg.cleanOffset });
       } else {
-        // find matching start (LIFO)
         let idx = -1;
         for (let i = openStack.length - 1; i >= 0; i--) {
           if (openStack[i].ayah === seg.ayah) { idx = i; break; }
@@ -897,7 +907,6 @@
       } catch (e) {}
     }
 
-    // CSS Custom Highlight API
     if (window.CSS && CSS.highlights && highlightRanges.length) {
       try {
         CSS.highlights.set('mizan-tag', new Highlight(...highlightRanges));
@@ -1205,6 +1214,83 @@
   }
 
   // --------------------------------------------------------
+  // Tagger — مودال پاسخ خام
+  // --------------------------------------------------------
+
+  function openTaggerRawModal(results) {
+    if (!mizanTaggerRawModal) return;
+    pendingTaggerResults = results;
+
+    const hasError = results.some((r) => r.error);
+    const totalTags = results.reduce((acc, r) => acc + (r.tags ? r.tags.length : 0), 0);
+    const model = results.find((r) => r.model)?.model || '—';
+
+    mizanTaggerRawMeta.setAttribute('data-error', hasError ? 'true' : 'false');
+    mizanTaggerRawMeta.innerHTML = `
+      <span>محتواها: <b>${UI.toPersianDigits(results.length)}</b></span>
+      <span>تگ‌های شناسایی‌شده: <b>${UI.toPersianDigits(totalTags)}</b></span>
+      <span>مدل: <b>${escapeHtml(model)}</b></span>
+      ${hasError ? '<span><b>خطا در برخی محتواها</b></span>' : ''}
+    `;
+
+    const rawCombined = results.map((r) => {
+      if (results.length === 1) return r.raw;
+      const prefix = r.error ? `[خطا] content_id: ${r.contentId}` : `content_id: ${r.contentId}`;
+      return `${prefix}\n────\n${r.raw}`;
+    }).join('\n\n');
+
+    mizanTaggerRawText.textContent = rawCombined;
+    mizanTaggerRawModal.hidden = false;
+  }
+
+  function closeTaggerRawModal() {
+    if (mizanTaggerRawModal) mizanTaggerRawModal.hidden = true;
+    pendingTaggerResults = null;
+  }
+
+  async function applyTaggerResults() {
+    if (!pendingTaggerResults) return;
+    const valid = pendingTaggerResults.filter((r) => !r.error && r.tags);
+    if (!valid.length) {
+      UI.toast('چیزی برای ذخیره نیست');
+      closeTaggerRawModal();
+      return;
+    }
+    try {
+      for (const r of valid) {
+        await Store.replaceMizanTags(r.contentId, r.tags, r.model);
+      }
+      UI.toast('تفکیک ذخیره شد');
+      closeTaggerRawModal();
+      await renderMizan(current.surah, current.ayah, { keepPage: mizanCurrentPage });
+    } catch (e) {
+      console.error('[mizan tagger] apply failed:', e);
+      UI.toast('خطا در ذخیره: ' + (e.message || 'نامشخص'));
+    }
+  }
+
+  if (mizanTaggerRawClose) mizanTaggerRawClose.addEventListener('click', closeTaggerRawModal);
+  if (mizanTaggerRawCancel) mizanTaggerRawCancel.addEventListener('click', closeTaggerRawModal);
+  if (mizanTaggerRawApply) mizanTaggerRawApply.addEventListener('click', applyTaggerResults);
+  if (mizanTaggerRawCopy) mizanTaggerRawCopy.addEventListener('click', async () => {
+    const text = mizanTaggerRawText.textContent || '';
+    try {
+      await navigator.clipboard.writeText(text);
+      UI.toast('کپی شد');
+    } catch (e) {
+      UI.toast('کپی ناموفق بود');
+    }
+  });
+  if (mizanTaggerRawModal) {
+    mizanTaggerRawModal.addEventListener('click', (e) => {
+      if (e.target === mizanTaggerRawModal) closeTaggerRawModal();
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mizanTaggerRawModal && !mizanTaggerRawModal.hidden) closeTaggerRawModal();
+  });
+
+  // --------------------------------------------------------
   // Tagger — دکمه
   // --------------------------------------------------------
 
@@ -1231,8 +1317,10 @@
     const surahName = surahMeta ? surahMeta.name_fa : String(current.surah);
 
     setTaggerState('busy');
-    try {
-      for (const cid of mizanContentKeys) {
+    const results = [];
+
+    for (const cid of mizanContentKeys) {
+      try {
         const content = await Mizan.loadContent(cid);
         const ayahs = await Mizan.getAyahsForContent(current.surah, cid);
 
@@ -1244,18 +1332,27 @@
         });
 
         const parsed = parseMizanTaggerResponse(result.content);
-        await Store.replaceMizanTags(cid, parsed, result.model);
+        results.push({
+          contentId: cid,
+          raw: result.content || '(پاسخ خالی)',
+          model: result.model || null,
+          tags: parsed,
+          error: false,
+        });
+      } catch (err) {
+        console.error('[mizan tagger]', err);
+        results.push({
+          contentId: cid,
+          raw: err && err.message ? err.message : String(err),
+          model: null,
+          tags: [],
+          error: true,
+        });
       }
-
-      UI.toast('تفکیک انجام شد');
-      await renderMizan(current.surah, current.ayah, { keepPage: mizanCurrentPage });
-    } catch (e) {
-      console.error('[mizan tagger]', e);
-      UI.toast('خطا در تفکیک: ' + (e.message || 'نامشخص'));
-    } finally {
-      const hasTags = mizanTags.length > 0;
-      setTaggerState('idle', hasTags ? 'تفکیک مجدد' : 'تفکیک آیه‌ای');
     }
+
+    setTaggerState('idle');
+    openTaggerRawModal(results);
   }
 
   if (mizanTaggerBtn) {
@@ -1412,7 +1509,6 @@
     mizanNotes = [];
     mizanTags = [];
 
-    // پاک کردن هایلایت‌های قبلی
     if (window.CSS && CSS.highlights) {
       try { CSS.highlights.delete('mizan-tag'); } catch (e) {}
     }
@@ -1463,7 +1559,6 @@
       applyMizanTags(mizanContent, mizanTags);
       paginateMizan(mizanContent);
 
-      // وضعیت دکمهٔ tagger
       if (mizanTaggerBtn) {
         mizanTaggerBtn.classList.remove('hidden');
         setTaggerState('idle', mizanTags.length > 0 ? 'تفکیک مجدد' : 'تفکیک آیه‌ای');
