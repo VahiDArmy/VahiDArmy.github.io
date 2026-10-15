@@ -106,6 +106,17 @@ const MizanPanel = (function () {
     return String(s).replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
   }
 
+  // همسان‌سازی کاراکترهای عربی به فارسی — دقیقاً همان تبدیلی که
+  // normalizeMizanChars روی محتوا اعمال می‌کند؛ برای اینکه موقع جست‌وجوی
+  // گزیده‌ها در متنِ نرمال‌شده، تطبیق از دست نرود.
+  function normalizeExcerptChars(s) {
+    return String(s == null ? '' : s)
+      .replace(/\u0649/g, '\u06CC')  // ى → ی
+      .replace(/\u064A/g, '\u06CC')  // ي → ی
+      .replace(/\u0643/g, '\u06A9')  // ك → ک
+      .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
+  }
+
   // ---------- State machine ----------
   function showMizanState(state, payload) {
     mizanEmpty.classList.add('hidden');
@@ -405,107 +416,71 @@ const MizanPanel = (function () {
   }
 
   // ---------- Tag parsing ----------
+  // خروجی AI: هر خط به شکل
+  //   <شمارهٔ آیه> ← <گزیدهٔ شروع> … <گزیدهٔ پایان> |<شمارهٔ آیه>
+  // مثال:
+  //   ۲۵۸ ← و لیکن این حجت با همه روشنی … قهرا بدن خروس نيز زنده |۲۵۸
+  //
+  // نتیجه: آرایه‌ای از { ayah, startExcerpt, endExcerpt } — دقیقاً همان
+  // کلیدهایی که Store.replaceMizanTags و اسکیمای mizan_tags انتظار دارند.
   function parseMizanTaggerResponse(text) {
     if (!text) return [];
-    const tokenRe = /([\u06F0-\u06F9\d]+)\s*←|\|([\u06F0-\u06F9\d]+)/g;
-
-    const segments = [];
-    let lastIdx = 0;
-    let cleanOffset = 0;
-    let m;
-
-    while ((m = tokenRe.exec(text))) {
-      const textBefore = text.slice(lastIdx, m.index);
-      if (textBefore) {
-        segments.push({ type: 'text', text: textBefore, cleanOffset });
-        cleanOffset += textBefore.length;
-      }
-
-      let ayah, markerType;
-      if (m[1] !== undefined) {
-        ayah = Number(faToEnDigits(m[1]));
-        markerType = 'start';
-      } else {
-        ayah = Number(faToEnDigits(m[2]));
-        markerType = 'end';
-      }
-
-      segments.push({ type: 'marker', ayah, markerType, cleanOffset });
-      lastIdx = tokenRe.lastIndex;
-    }
-
-    const textAfter = text.slice(lastIdx);
-    if (textAfter) {
-      segments.push({ type: 'text', text: textAfter, cleanOffset });
-      cleanOffset += textAfter.length;
-    }
-
-    const cleanText = segments.filter((s) => s.type === 'text').map((s) => s.text).join('');
-
     const tags = [];
-    const openStack = [];
+    const lines = String(text).split(/\r?\n/);
 
-    for (const seg of segments) {
-      if (seg.type !== 'marker') continue;
+    // فلش ← اجباری؛ سه‌نقطه (… یا ...) جداکننده؛ پایپ | پایان.
+    // بک‌تیک/کوتیشن اضافی در ابتدا/انتهای خط (اگر AI داخل کد بلاک گذاشته) تحمل می‌شود.
+    const lineRe = /^[`«"'(\[]*\s*([\u06F0-\u06F9\d]+)\s*[←⟵]\s*(.+?)\s*(?:…+|\.{3,})\s*(.+?)\s*[|¦│]\s*([\u06F0-\u06F9\d]+)\s*[`»"')\]]*\s*$/;
 
-      if (seg.markerType === 'start') {
-        openStack.push({ ayah: seg.ayah, cleanOffset: seg.cleanOffset });
-      } else {
-        let idx = -1;
-        for (let i = openStack.length - 1; i >= 0; i--) {
-          if (openStack[i].ayah === seg.ayah) { idx = i; break; }
-        }
-        if (idx === -1) continue;
-        const startTag = openStack.splice(idx, 1)[0];
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      const m = line.match(lineRe);
+      if (!m) continue;
 
-        const startOffset = startTag.cleanOffset;
-        const endOffset = seg.cleanOffset;
+      const ayahStart = Number(faToEnDigits(m[1]));
+      const ayahEnd   = Number(faToEnDigits(m[4]));
+      if (!ayahStart || ayahStart !== ayahEnd) continue;
 
-        tags.push({
-          ayah: seg.ayah,
-          startBefore: cleanText.slice(Math.max(0, startOffset - NOTE_CONTEXT_CHARS), startOffset),
-          startAfter: cleanText.slice(startOffset, startOffset + NOTE_CONTEXT_CHARS),
-          endBefore: cleanText.slice(Math.max(0, endOffset - NOTE_CONTEXT_CHARS), endOffset),
-          endAfter: cleanText.slice(endOffset, endOffset + NOTE_CONTEXT_CHARS),
-        });
-      }
+      const startExcerpt = m[2].trim();
+      const endExcerpt   = m[3].trim();
+      if (!startExcerpt || !endExcerpt) continue;
+
+      tags.push({ ayah: ayahStart, startExcerpt, endExcerpt });
     }
 
     return tags;
   }
 
-  function findTagAnchorRange(rootEl, before, after) {
-    const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
-    const fullAnchor = (before || '') + (after || '');
+  // گزیده را در متن می‌گردد و یک جفت range (شروع و پایان گزیده) برمی‌گرداند.
+  // گزیده‌ها به لاتین/عربی هم‌ارز نرمال می‌شوند تا با متنِ normalize‌شده بخوابند.
+  function findExcerptRange(rootEl, excerpt) {
+    if (!excerpt) return null;
+    const needle = normalizeExcerptChars(String(excerpt).trim());
+    if (!needle) return null;
 
+    const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
     for (const block of blocks) {
       const txt = block.textContent || '';
-      let posInBlock = -1;
+      const idx = txt.indexOf(needle);
+      if (idx < 0) continue;
 
-      if (fullAnchor && txt.indexOf(fullAnchor) !== -1) {
-        posInBlock = txt.indexOf(fullAnchor) + (before || '').length;
-      } else if (after && txt.indexOf(after) !== -1) {
-        posInBlock = txt.indexOf(after);
-      } else if (before && txt.indexOf(before) !== -1) {
-        posInBlock = txt.indexOf(before) + before.length;
-      }
-
-      if (posInBlock < 0) continue;
-      const r = rangeFromOffsets(block, posInBlock);
-      if (r) return r;
+      const startRange = rangeFromOffsets(block, idx);
+      const endRange   = rangeFromOffsets(block, idx + needle.length);
+      if (startRange && endRange) return { startRange, endRange };
     }
     return null;
   }
 
   function applyMizanTags(rootEl, tags) {
-    if (!rootEl || !tags.length) return;
+    if (!rootEl || !tags || !tags.length) return;
 
     const items = [];
     for (const tag of tags) {
-      const startRange = findTagAnchorRange(rootEl, tag.start_before, tag.start_after);
-      const endRange = findTagAnchorRange(rootEl, tag.end_before, tag.end_after);
-      if (!startRange || !endRange) continue;
-      items.push({ tag, startRange, endRange });
+      const start = findExcerptRange(rootEl, tag.start_excerpt);
+      const end   = findExcerptRange(rootEl, tag.end_excerpt);
+      if (!start || !end) continue;
+      items.push({ tag, startRange: start.startRange, endRange: end.endRange });
     }
     if (!items.length) return;
 
