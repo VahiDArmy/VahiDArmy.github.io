@@ -91,7 +91,6 @@
   let currentAiModel = '';
   let currentAiGenerationId = null;
 
-  // Mizan state
   let mizanPages = [];
   let mizanCurrentPage = 0;
   let mizanContentKeys = [];
@@ -108,8 +107,6 @@
   const ANCHOR_CONFIRM_WINDOW_MS = 6000;
 
   let mizanCaretEl = null;
-
-  // Tagger state
   let pendingTaggerResults = null;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
@@ -581,10 +578,6 @@
     });
   }
 
-  // --------------------------------------------------------
-  // کروسر مجازی
-  // --------------------------------------------------------
-
   function insertCaretAtRange(range) {
     removeCaret();
     if (!range) return;
@@ -605,10 +598,6 @@
     }
     mizanCaretEl = null;
   }
-
-  // --------------------------------------------------------
-  // Notes
-  // --------------------------------------------------------
 
   const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
   const NOTE_CONTEXT_CHARS = 30;
@@ -768,10 +757,6 @@
     });
   }
 
-  // --------------------------------------------------------
-  // Tagger — پارس خروجی AI
-  // --------------------------------------------------------
-
   function faToEnDigits(s) {
     return String(s).replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
   }
@@ -845,10 +830,6 @@
     return tags;
   }
 
-  // --------------------------------------------------------
-  // Tagger — اعمال روی DOM
-  // --------------------------------------------------------
-
   function findTagAnchorRange(rootEl, before, after) {
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
     const fullAnchor = (before || '') + (after || '');
@@ -916,10 +897,6 @@
     }
   }
 
-  // --------------------------------------------------------
-  // Note popup
-  // --------------------------------------------------------
-
   function showNotePopup(note, anchorEl) {
     if (!mizanNotePopup) return;
     activePopupNoteId = note.id;
@@ -978,10 +955,6 @@
     if (e.target.classList && e.target.classList.contains('mizan-note-inline')) return;
     hideNotePopup();
   });
-
-  // --------------------------------------------------------
-  // Note modal
-  // --------------------------------------------------------
 
   function renderNoteQuoteFromAnchor(anchor) {
     if (!mizanNoteQuote) return;
@@ -1078,10 +1051,6 @@
       UI.toast('خطا در حذف');
     }
   });
-
-  // --------------------------------------------------------
-  // Add note — two-click confirmation
-  // --------------------------------------------------------
 
   function showNoteAddBtn() {
     if (!mizanNoteBtn) return;
@@ -1215,6 +1184,7 @@
 
   // --------------------------------------------------------
   // Tagger — مودال پاسخ خام
+  // ★ همیشه و بدون استثنا کامل نشان داده می‌شود، حتی وقتی خطا.
   // --------------------------------------------------------
 
   function openTaggerRawModal(results) {
@@ -1234,10 +1204,11 @@
     `;
 
     const rawCombined = results.map((r) => {
-      if (results.length === 1) return r.raw;
-      const prefix = r.error ? `[خطا] content_id: ${r.contentId}` : `content_id: ${r.contentId}`;
-      return `${prefix}\n────\n${r.raw}`;
-    }).join('\n\n');
+      const header = r.error
+        ? `[خطا${r.status ? ' — HTTP ' + r.status : ''}] content_id: ${r.contentId}`
+        : `[موفق] content_id: ${r.contentId}`;
+      return `${header}\n──────────\n${r.raw}`;
+    }).join('\n\n\n');
 
     mizanTaggerRawText.textContent = rawCombined;
     mizanTaggerRawModal.hidden = false;
@@ -1250,10 +1221,9 @@
 
   async function applyTaggerResults() {
     if (!pendingTaggerResults) return;
-    const valid = pendingTaggerResults.filter((r) => !r.error && r.tags);
+    const valid = pendingTaggerResults.filter((r) => !r.error && r.tags && r.tags.length);
     if (!valid.length) {
       UI.toast('چیزی برای ذخیره نیست');
-      closeTaggerRawModal();
       return;
     }
     try {
@@ -1289,10 +1259,6 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && mizanTaggerRawModal && !mizanTaggerRawModal.hidden) closeTaggerRawModal();
   });
-
-  // --------------------------------------------------------
-  // Tagger — دکمه
-  // --------------------------------------------------------
 
   function setTaggerState(state, label) {
     if (!mizanTaggerBtn || !mizanTaggerLabel) return;
@@ -1334,19 +1300,21 @@
         const parsed = parseMizanTaggerResponse(result.content);
         results.push({
           contentId: cid,
-          raw: result.content || '(پاسخ خالی)',
+          raw: result.content,
           model: result.model || null,
           tags: parsed,
           error: false,
+          status: result.status,
         });
       } catch (err) {
-        console.error('[mizan tagger]', err);
+        // ★ کل خطا همراه با متن خام کامل ذخیره می‌شود
         results.push({
           contentId: cid,
-          raw: err && err.message ? err.message : String(err),
+          raw: (err && err.raw) ? err.raw : (err && err.message) ? err.message : String(err),
           model: null,
           tags: [],
           error: true,
+          status: err && err.status ? err.status : null,
         });
       }
     }
@@ -1358,10 +1326,6 @@
   if (mizanTaggerBtn) {
     mizanTaggerBtn.addEventListener('click', runMizanTagger);
   }
-
-  // --------------------------------------------------------
-  // Pager / TOC
-  // --------------------------------------------------------
 
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
