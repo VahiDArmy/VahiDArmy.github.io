@@ -1,5 +1,5 @@
 // =============================================================
-// تفسیر المیزان — خوانندهٔ داده از data/surah/ و data/content/
+// خوانندهٔ داده‌های تفسیر المیزان
 // =============================================================
 const Mizan = (function () {
   const surahCache = new Map();
@@ -31,5 +31,15 @@ const Mizan = (function () {
     return await Promise.all(ids.map((id) => loadContent(id)));
   }
 
-  return { loadSurah, loadContent, getForAyah };
+  // برای یک content، لیست آیات مرتبط را برمی‌گرداند
+  async function getAyahsForContent(surah, contentId) {
+    const map = await loadSurah(surah);
+    const ayahs = [];
+    for (const [ayahStr, ids] of Object.entries(map.ayah_to_content || {})) {
+      if (ids.includes(contentId)) ayahs.push(Number(ayahStr));
+    }
+    return ayahs.sort((a, b) => a - b);
+  }
+
+  return { loadSurah, loadContent, getForAyah, getAyahsForContent };
 })();
