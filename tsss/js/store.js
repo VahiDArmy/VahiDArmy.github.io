@@ -545,27 +545,60 @@ const Store = (function () {
     if (error) throw error;
   }
 
+  // ★ هیچ خطایی استخراج نمی‌شود — متن کامل پاسخ برگردانده می‌شود
   async function callMizanTagger({ surahName, ayahs, content, model }) {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session?.access_token) throw new Error('برای تگ‌گذاری باید وارد حساب شوید');
+    if (!session?.access_token) {
+      const err = new Error('برای تگ‌گذاری باید وارد حساب شوید');
+      err.raw = err.message;
+      err.status = null;
+      throw err;
+    }
 
-    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/mizan-tagger`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        surah_name: surahName,
-        ayahs,
-        content,
-        model,
-      }),
-    });
+    let res;
+    try {
+      res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/mizan-tagger`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ surah_name: surahName, ayahs, content, model }),
+      });
+    } catch (e) {
+      const err = new Error(String(e && e.message || e));
+      err.raw = 'network error — درخواست به سرور نرسید\n\n' + String(e);
+      err.status = null;
+      throw err;
+    }
 
-    const json = await res.json();
-    if (!res.ok) throw new Error(json.error || 'خطا در تگ‌گذاری');
-    return { content: json.content, model: json.model || null };
+    const rawText = await res.text();
+
+    let parsed = null;
+    try { parsed = JSON.parse(rawText); } catch (e) {}
+
+    if (!res.ok) {
+      const err = new Error(
+        (parsed && parsed.error) || ('HTTP ' + res.status)
+      );
+      err.status = res.status;
+      err.raw = rawText;
+      throw err;
+    }
+
+    if (!parsed || !parsed.content) {
+      const err = new Error('پاسخ خالی از مدل');
+      err.status = res.status;
+      err.raw = rawText;
+      throw err;
+    }
+
+    return {
+      content: parsed.content,
+      model: parsed.model || null,
+      raw: rawText,
+      status: res.status,
+    };
   }
 
   return {
