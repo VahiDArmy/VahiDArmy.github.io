@@ -90,7 +90,6 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  // نرمال‌سازی ۱:۱ (طول را حفظ می‌کند تا آفست‌ها معتبر بمانند)
   function normalizeChars(s) {
     return String(s == null ? '' : s)
       .replace(/\u0649/g, '\u06CC')
@@ -104,7 +103,6 @@ const MizanPanel = (function () {
       .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
   }
 
-  // تشخیص متن قرآنی با چگالی اعراب
   function looksLikeQuran(text) {
     const t = String(text || '');
     if (t.length < 20) return false;
@@ -115,16 +113,13 @@ const MizanPanel = (function () {
   }
 
   // ============================================================
-  // 3) CONTENT PIPELINE — از صفر
+  // 3) CONTENT PIPELINE
   // ============================================================
-
-  // ---- 3.1: تجزیه به بلوک ----
   function parseContent(rawText) {
     let text = String(rawText || '')
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n');
 
-    // حذف ستاره‌های تزئینی ابتدا/انتها
     text = text
       .replace(/^\s*\*{4,}\s*\n+/, '')
       .replace(/\n+\s*\*{4,}\s*$/, '');
@@ -150,10 +145,8 @@ const MizanPanel = (function () {
       const raw = lines[i];
       const line = raw.trim();
 
-      // خط خالی
       if (!line) { flushPara(); flushList(); i++; continue; }
 
-      // Code fence (arabic / farsi / plain)
       const fm = line.match(/^```([a-zA-Z0-9_-]*)\s*$/);
       if (fm) {
         flushPara(); flushList();
@@ -164,19 +157,17 @@ const MizanPanel = (function () {
           body.push(lines[i]);
           i++;
         }
-        i++; // رد کردن ``` پایانی
+        i++;
         blocks.push({ type: 'code', lang, body: body.join('\n') });
         continue;
       }
 
-      // Heading
       const hm = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
       if (hm) {
         flushPara(); flushList();
         const level = hm[1].length;
         const headingText = hm[2].trim();
 
-        // نشانگر محدودهٔ آیات؟ [سوره X (N): آیات A تا B]
         const rm = headingText.match(
           /^\[\s*سوره\s+(.+?)\s*[(（]\s*([\d\u06F0-\u06F9]+)\s*[)）]\s*[:：]\s*.+?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\s*\]$/
         );
@@ -195,7 +186,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // Anchor آیه
       const am = line.match(/^<span\s+id=["']surah-(\d+)-ayah-(\d+)["']\s*>\s*<\/span>\s*$/i);
       if (am) {
         flushPara(); flushList();
@@ -208,7 +198,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // لیست نشانه‌دار
       const ulm = line.match(/^[-*•·]\s+(.+)$/);
       if (ulm) {
         flushPara();
@@ -221,7 +210,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // لیست شماره‌دار
       const olm = line.match(/^(\d+)[.)]\s+(.+)$/);
       if (olm) {
         flushPara();
@@ -234,7 +222,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // نقل‌قول
       if (line.startsWith('>')) {
         flushPara(); flushList();
         const q = [line.replace(/^>\s?/, '')];
@@ -247,7 +234,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // خط جداکننده
       if (/^[-*_]{3,}$/.test(line)) {
         flushPara(); flushList();
         blocks.push({ type: 'hr' });
@@ -255,7 +241,6 @@ const MizanPanel = (function () {
         continue;
       }
 
-      // خط معمولی
       flushList();
       paraBuf.push(line);
       i++;
@@ -263,7 +248,6 @@ const MizanPanel = (function () {
     flushPara();
     flushList();
 
-    // Post-process: آیهٔ لخت بعد از anchor — با چگالی اعراب تشخیص می‌دهیم
     for (let j = 0; j < blocks.length; j++) {
       if (blocks[j].type !== 'anchor') continue;
       let k = j + 1;
@@ -279,34 +263,22 @@ const MizanPanel = (function () {
     return blocks;
   }
 
-  // ---- 3.2: inline renderer ----
   function renderInline(text) {
     let s = escapeHtml(text);
 
-    // استناد قرآنی ﴿...﴾
     s = s.replace(/﴿([^﴾]+)﴾/g, '<span class="mizan-quran-inline">﴿$1﴾</span>');
-
-    // code inline
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // bold
     s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-
-    // italic
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-
-    // newlines
     s = s.replace(/\n/g, '<br>');
 
     return s;
   }
 
-  // ---- 3.3: ayah block renderer ----
   function renderAyahBlock(rawText, fallbackNum) {
     const trimmed = String(rawText || '').trim();
     if (!trimmed) return '';
 
-    // شمارهٔ آیه در انتها: (...) با ارقام فارسی/عربی/لاتین
     const numMatch = trimmed.match(/\s*[(（]\s*([\d\u0660-\u0669\u06F0-\u06F9]+)\s*[)）]\s*$/);
     let display = trimmed;
     let num = null;
@@ -326,7 +298,6 @@ const MizanPanel = (function () {
 </div>`;
   }
 
-  // ---- 3.4: block renderer ----
   function renderBlock(block, ctx) {
     switch (block.type) {
 
@@ -1163,16 +1134,28 @@ const MizanPanel = (function () {
   // ============================================================
   // 8) PAGINATION
   // ============================================================
+  //
+  // قاعده:
+  //  - هر H3 یا H4 در حالت عادی صفحهٔ جدید می‌سازد.
+  //  - اما اگر گروهی فقط شامل یک سرتیتر باشد و محتوایی پس از آن
+  //    (پیش از سرتیتر بعدی) نباشد، آن گروه با گروه بعدی ادغام می‌شود
+  //    تا سرتیتر تنها در یک صفحهٔ خالی نماند.
+  //  - عنوان گروه ادغام‌شده از سرتیتر اصلی (اولین سرتیتر در انتظار)
+  //    گرفته می‌شود تا در فهرست هم درست دیده شود.
+  //
   function paginateMizan(rootEl) {
-    const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
+    const children = Array.from(rootEl.children)
+      .filter((c) => !c.classList.contains('mizan-orphans'));
     const orphansBox = rootEl.querySelector('.mizan-orphans');
-    const pageGroups = [];
+
+    // گروه‌بندی اولیه — هر سرتیتر یک گروه جدید
+    const rawGroups = [];
     let current = null;
 
     children.forEach((child) => {
       const isHeading = child.tagName === 'H3' || child.tagName === 'H4';
       if (isHeading || !current) {
-        if (current) pageGroups.push(current);
+        if (current) rawGroups.push(current);
         current = {
           heading: isHeading ? child.textContent.trim() : 'شروع',
           nodes: [child],
@@ -1181,7 +1164,44 @@ const MizanPanel = (function () {
         current.nodes.push(child);
       }
     });
-    if (current) pageGroups.push(current);
+    if (current) rawGroups.push(current);
+
+    // ادغام گروه‌های «فقط سرتیتر» با گروه بعدی
+    const pageGroups = [];
+    let pendingHeadings = [];        // سرتیترهای بدون محتوا
+    let pendingHeadingText = null;   // عنوان صفحه از اولین سرتیتر اصلی
+
+    for (const g of rawGroups) {
+      const onlyHeading = g.nodes.length === 1 && /^H[34]$/.test(g.nodes[0].tagName || '');
+
+      if (onlyHeading) {
+        pendingHeadings.push(g.nodes[0]);
+        if (!pendingHeadingText) pendingHeadingText = g.heading;
+        continue;
+      }
+
+      if (pendingHeadings.length) {
+        g.nodes = [...pendingHeadings, ...g.nodes];
+        if (pendingHeadingText) g.heading = pendingHeadingText;
+        pendingHeadings = [];
+        pendingHeadingText = null;
+      }
+      pageGroups.push(g);
+    }
+
+    // اگر سرتیتر بدون محتوا در انتها ماند، به آخرین گروه بچسبان
+    if (pendingHeadings.length) {
+      if (pageGroups.length) {
+        const last = pageGroups[pageGroups.length - 1];
+        last.nodes.push(...pendingHeadings);
+      } else {
+        // هیچ گروه دیگری نبود → یک گروه واحد از همه بساز
+        pageGroups.push({
+          heading: pendingHeadingText || 'شروع',
+          nodes: pendingHeadings,
+        });
+      }
+    }
 
     if (pageGroups.length <= 1) {
       mizanPages = [];
@@ -1331,7 +1351,6 @@ const MizanPanel = (function () {
         mizanTags = await filterTrivialTags(allTags.flat(), surah, ayah);
       } catch (e) { mizanTags = []; }
 
-      // محدوده از نشانگر title
       let range = null;
       const allBlocks = [];
       for (const c of contents) {
