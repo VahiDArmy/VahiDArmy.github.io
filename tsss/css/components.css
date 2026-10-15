@@ -247,7 +247,6 @@ a.tag-pill:hover { filter: brightness(1.2); }
 .mizan-tafsir-content > :first-child { margin-top: 0; }
 .mizan-tafsir-content > :last-child { margin-bottom: 0; }
 
-/* h2 — تیتر اصلی بلوک */
 .mizan-tafsir-content h2 {
   font-size: 1.22rem;
   font-weight: 800;
@@ -271,7 +270,6 @@ a.tag-pill:hover { filter: brightness(1.2); }
   box-shadow: 0 0 10px var(--neon-glow);
 }
 
-/* h3 — تیتر صفحه */
 .mizan-tafsir-content h3 {
   font-size: 1.04rem;
   font-weight: 700;
@@ -295,7 +293,6 @@ a.tag-pill:hover { filter: brightness(1.2); }
   transform: translateY(-1px);
 }
 
-/* h4 — زیرتیتر */
 .mizan-tafsir-content h4 {
   font-size: .95rem;
   font-weight: 700;
@@ -323,7 +320,6 @@ a.tag-pill:hover { filter: brightness(1.2); }
   color: var(--text-dim);
 }
 
-/* بلوک‌های عربی */
 .mizan-tafsir-content pre,
 .mizan-tafsir-content p.mizan-arabic-raw {
   margin: 1em 0;
@@ -413,6 +409,38 @@ a.tag-pill:hover { filter: brightness(1.2); }
 /* صفحه‌بندی */
 .mizan-page { display: block; }
 .mizan-page[hidden] { display: none !important; }
+
+/* ★ breadcrumb صفحهٔ جاری — تیترهای بالاتر روی هر صفحه */
+.mizan-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 20px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--neon) 10%, var(--surface-2)), var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--neon) 22%, var(--border-soft));
+  border-inline-start: 3px solid var(--neon);
+  font-family: var(--font-ui);
+  font-size: .78rem;
+  line-height: 1.7;
+  color: var(--text-dim);
+}
+.mizan-breadcrumb__item {
+  color: var(--text-dim);
+  font-weight: 700;
+}
+.mizan-breadcrumb__item[data-level="2"] {
+  color: var(--neon);
+  text-shadow: 0 0 8px var(--neon-glow);
+}
+.mizan-breadcrumb__sep {
+  color: var(--text-faint);
+  opacity: .6;
+  font-size: .9em;
+  font-weight: 400;
+}
 
 .mizan-pager {
   display: flex;
@@ -527,6 +555,11 @@ a.tag-pill:hover { filter: brightness(1.2); }
   color: var(--text-faint);
   font-size: .72rem;
   font-weight: 700;
+}
+.mizan-toc-item__anc {
+  color: var(--text-faint);
+  font-weight: 400;
+  font-size: .92em;
 }
 .mizan-toc-item__title {
   flex: 1;
@@ -848,6 +881,7 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .mizan-note-popup { max-width: calc(100vw - 24px); }
   .mizan-tagger-btn { font-size: .7rem; padding: 2px 10px 2px 8px; }
   .mizan-tag-marker { font-size: .78em; margin: 0 4px; }
+  .mizan-breadcrumb { font-size: .72rem; padding: 6px 10px; margin-bottom: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
