@@ -515,6 +515,59 @@ const Store = (function () {
     if (error) throw error;
   }
 
+  // ---------- Mizan tags ----------
+  async function getMizanTags(contentId) {
+    const { data, error } = await sb
+      .from('mizan_tags')
+      .select('*')
+      .eq('content_id', contentId);
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function replaceMizanTags(contentId, tags, model) {
+    const { error: delErr } = await sb
+      .from('mizan_tags')
+      .delete()
+      .eq('content_id', contentId);
+    if (delErr) throw delErr;
+    if (!tags.length) return;
+    const rows = tags.map((t) => ({
+      content_id: contentId,
+      ayah: t.ayah,
+      start_before: t.startBefore,
+      start_after: t.startAfter,
+      end_before: t.endBefore,
+      end_after: t.endAfter,
+      model: model || null,
+    }));
+    const { error } = await sb.from('mizan_tags').insert(rows);
+    if (error) throw error;
+  }
+
+  async function callMizanTagger({ surahName, ayahs, content, model }) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.access_token) throw new Error('برای تگ‌گذاری باید وارد حساب شوید');
+
+    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/mizan-tagger`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        surah_name: surahName,
+        ayahs,
+        content,
+        model,
+      }),
+    });
+
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || 'خطا در تگ‌گذاری');
+    return { content: json.content, model: json.model || null };
+  }
+
   return {
     getLatestTafsir,
     getTafsirsForAyah,
@@ -556,5 +609,8 @@ const Store = (function () {
     addMizanNote,
     updateMizanNote,
     deleteMizanNote,
+    getMizanTags,
+    replaceMizanTags,
+    callMizanTagger,
   };
 })();
