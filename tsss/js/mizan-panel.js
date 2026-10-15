@@ -67,7 +67,6 @@ const MizanPanel = (function () {
   let mizanCaretEl = null;
   let pendingTaggerResults = null;
 
-  // آیهٔ جاری (آخرین درخواست render)
   let lastSurah = 1;
   let lastAyah = 1;
 
@@ -106,15 +105,78 @@ const MizanPanel = (function () {
     return String(s).replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
   }
 
-  // همسان‌سازی کاراکترهای عربی به فارسی — دقیقاً همان تبدیلی که
-  // normalizeMizanChars روی محتوا اعمال می‌کند؛ برای اینکه موقع جست‌وجوی
-  // گزیده‌ها در متنِ نرمال‌شده، تطبیق از دست نرود.
+  // تنها نرمال‌سازی ۱:۱ (طول متن تغییر نمی‌کند → آفست‌ها معتبر می‌مانند)
   function normalizeExcerptChars(s) {
     return String(s == null ? '' : s)
       .replace(/\u0649/g, '\u06CC')  // ى → ی
       .replace(/\u064A/g, '\u06CC')  // ي → ی
       .replace(/\u0643/g, '\u06A9')  // ك → ک
       .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
+  }
+
+  // ============================================================
+  // پیمایشگر text-node — متن «تمیز» را می‌سازد و نگاشت آفست → گره را می‌دهد.
+  // اسپن‌های تزریق‌شده (یادداشت و مارکر تگ) نادیده گرفته می‌شوند تا
+  // جست‌وجوی گزیده‌ها با محتوای واقعی المیزان انجام شود.
+  // ============================================================
+  const SKIP_CLASSES = ['mizan-note-inline', 'mizan-tag-marker', 'mizan-caret'];
+
+  function collectBlockText(block) {
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        let p = node.parentElement;
+        while (p && p !== block) {
+          if (p.classList) {
+            for (const c of SKIP_CLASSES) {
+              if (p.classList.contains(c)) return NodeFilter.FILTER_REJECT;
+            }
+          }
+          p = p.parentElement;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    let text = '';
+    const map = [];
+    let n;
+    while ((n = walker.nextNode())) {
+      const v = n.nodeValue || '';
+      if (!v) continue;
+      map.push({ node: n, start: text.length, len: v.length });
+      text += v;
+    }
+    return { text, map };
+  }
+
+  function rangeAtOffsetInBlock(map, offset) {
+    if (!map.length) return null;
+    if (offset < 0) offset = 0;
+    const total = map[map.length - 1].start + map[map.length - 1].len;
+    if (offset > total) offset = total;
+
+    for (const item of map) {
+      if (offset <= item.start + item.len) {
+        const local = offset - item.start;
+        const r = document.createRange();
+        try {
+          r.setStart(item.node, local);
+          r.setEnd(item.node, local);
+          return r;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    const last = map[map.length - 1];
+    const r = document.createRange();
+    try {
+      r.setStart(last.node, last.len);
+      r.setEnd(last.node, last.len);
+      return r;
+    } catch (e) {
+      return null;
+    }
   }
 
   // ---------- State machine ----------
@@ -314,56 +376,29 @@ const MizanPanel = (function () {
     return { block, before, after };
   }
 
-  function rangeFromOffsets(block, offset) {
-    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-    let n, acc = 0;
-    while ((n = walker.nextNode())) {
-      const len = (n.nodeValue || '').length;
-      if (acc + len >= offset) {
-        const off = offset - acc;
-        const r = document.createRange();
-        try {
-          r.setStart(n, off);
-          r.setEnd(n, off);
-          return r;
-        } catch (e) {
-          return null;
-        }
-      }
-      acc += len;
-    }
-    const r = document.createRange();
-    try {
-      r.selectNodeContents(block);
-      r.collapse(false);
-      return r;
-    } catch (e) {
-      return null;
-    }
-  }
-
   // ---------- Notes ----------
   function insertInlineNoteAt(rootEl, note) {
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
-    const before = note.anchor_before || '';
-    const after = note.anchor_after || '';
-    const fullAnchor = before + after;
+    const beforeN = normalizeExcerptChars(note.anchor_before || '');
+    const afterN  = normalizeExcerptChars(note.anchor_after  || '');
+    const fullN   = beforeN + afterN;
 
     for (const block of blocks) {
-      const txt = block.textContent || '';
+      const { text, map } = collectBlockText(block);
+      if (!text) continue;
+      const normText = normalizeExcerptChars(text);
+
       let posInBlock = -1;
-
-      if (fullAnchor && txt.indexOf(fullAnchor) !== -1) {
-        posInBlock = txt.indexOf(fullAnchor) + before.length;
-      } else if (after && txt.indexOf(after) !== -1) {
-        posInBlock = txt.indexOf(after);
-      } else if (before && txt.indexOf(before) !== -1) {
-        posInBlock = txt.indexOf(before) + before.length;
+      if (fullN && normText.indexOf(fullN) !== -1) {
+        posInBlock = normText.indexOf(fullN) + beforeN.length;
+      } else if (afterN && normText.indexOf(afterN) !== -1) {
+        posInBlock = normText.indexOf(afterN);
+      } else if (beforeN && normText.indexOf(beforeN) !== -1) {
+        posInBlock = normText.indexOf(beforeN) + beforeN.length;
       }
-
       if (posInBlock < 0) continue;
 
-      const range = rangeFromOffsets(block, posInBlock);
+      const range = rangeAtOffsetInBlock(map, posInBlock);
       if (!range) continue;
 
       const el = document.createElement('span');
@@ -415,58 +450,83 @@ const MizanPanel = (function () {
     });
   }
 
-  // ---------- Tag parsing ----------
-  // خروجی AI: هر خط به شکل
+  // ============================================================
+  // Tag parsing — ورودی AI به این شکل است:
   //   <شمارهٔ آیه> ← <گزیدهٔ شروع> … <گزیدهٔ پایان> |<شمارهٔ آیه>
-  // مثال:
-  //   ۲۵۸ ← و لیکن این حجت با همه روشنی … قهرا بدن خروس نيز زنده |۲۵۸
-  //
-  // نتیجه: آرایه‌ای از { ayah, startExcerpt, endExcerpt } — دقیقاً همان
-  // کلیدهایی که Store.replaceMizanTags و اسکیمای mizan_tags انتظار دارند.
+  // شماره‌ها داینامیک‌اند (هر عدد ۱ تا ۲۸۶). مثال ۲۵۸ فقط نمونه است.
+  // خروجی: آرایه‌ای از { ayah, startExcerpt, endExcerpt }
+  //   — دقیقاً همان کلیدهایی که store.js و اسکیمای mizan_tags انتظار دارند.
+  // ============================================================
   function parseMizanTaggerResponse(text) {
     if (!text) return [];
     const tags = [];
     const lines = String(text).split(/\r?\n/);
 
-    // فلش ← اجباری؛ سه‌نقطه (… یا ...) جداکننده؛ پایپ | پایان.
-    // بک‌تیک/کوتیشن اضافی در ابتدا/انتهای خط (اگر AI داخل کد بلاک گذاشته) تحمل می‌شود.
-    const lineRe = /^[`«"'(\[]*\s*([\u06F0-\u06F9\d]+)\s*[←⟵]\s*(.+?)\s*(?:…+|\.{3,})\s*(.+?)\s*[|¦│]\s*([\u06F0-\u06F9\d]+)\s*[`»"')\]]*\s*$/;
+    // فلش‌های پذیرفته‌شده، جداکننده‌های سه‌نقطه، جداکننده‌های پایپ
+    const ARROW  = '[←⟵⟸⇐➔➜➝➞→►▶▸]';
+    const DOTS   = '(?:…+|\\.{3,}|⋯|•••)';
+    const PIPE   = '[|¦│┃｜]';
+    const NUM    = '[\\u06F0-\\u06F9\\d]+';
+
+    const lineRe = new RegExp(
+      '^(' + NUM + ')\\s*' + ARROW + '\\s*' +
+      '(.+?)\\s*' + DOTS + '\\s*' +
+      '(.+?)\\s*' +
+      '(?:' + PIPE + '\\s*(' + NUM + '))?' +
+      '\\s*$'
+    );
 
     for (const raw of lines) {
-      const line = raw.trim();
+      let line = raw.trim();
       if (!line) continue;
+
+      // حذف پیشوندهای لیست مارک‌داون و کاراکترهای بسته‌بندی
+      line = line.replace(/^[-*•·●◆◇]\s+/, '');
+      line = line.replace(/^[`«"'(\[]+/, '');
+      line = line.replace(/[`»"')\]]+$/, '').trim();
+      if (!line) continue;
+
       const m = line.match(lineRe);
       if (!m) continue;
 
-      const ayahStart = Number(faToEnDigits(m[1]));
-      const ayahEnd   = Number(faToEnDigits(m[4]));
-      if (!ayahStart || ayahStart !== ayahEnd) continue;
+      const aStart = m[1] ? Number(faToEnDigits(m[1])) : 0;
+      const aEnd   = m[4] ? Number(faToEnDigits(m[4])) : 0;
 
-      const startExcerpt = m[2].trim();
-      const endExcerpt   = m[3].trim();
+      // اگر مدل شمارهٔ ابتدا و انتها را متفاوت داد، هشدار می‌دهیم ولی
+      // از شمارهٔ ابتدایی استفاده می‌کنیم (بهترین حدس).
+      if (aStart && aEnd && aStart !== aEnd) {
+        console.warn('[mizan tagger] mismatched ayah numbers in line:', line);
+      }
+      const ayah = aStart || aEnd;
+      if (!ayah) continue;
+
+      const startExcerpt = (m[2] || '').trim();
+      const endExcerpt   = (m[3] || '').trim();
       if (!startExcerpt || !endExcerpt) continue;
 
-      tags.push({ ayah: ayahStart, startExcerpt, endExcerpt });
+      tags.push({ ayah, startExcerpt, endExcerpt });
     }
 
     return tags;
   }
 
-  // گزیده را در متن می‌گردد و یک جفت range (شروع و پایان گزیده) برمی‌گرداند.
-  // گزیده‌ها به لاتین/عربی هم‌ارز نرمال می‌شوند تا با متنِ normalize‌شده بخوابند.
+  // گزیده را در متنِ تمیز پیدا می‌کند (بدون دخالت یادداشت‌ها و مارکرها)
   function findExcerptRange(rootEl, excerpt) {
-    if (!excerpt) return null;
-    const needle = normalizeExcerptChars(String(excerpt).trim());
+    const raw = String(excerpt || '').trim();
+    if (!raw) return null;
+    const needle = normalizeExcerptChars(raw);
     if (!needle) return null;
 
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
     for (const block of blocks) {
-      const txt = block.textContent || '';
-      const idx = txt.indexOf(needle);
+      const { text, map } = collectBlockText(block);
+      if (!text) continue;
+      const normText = normalizeExcerptChars(text);
+      const idx = normText.indexOf(needle);
       if (idx < 0) continue;
 
-      const startRange = rangeFromOffsets(block, idx);
-      const endRange   = rangeFromOffsets(block, idx + needle.length);
+      const startRange = rangeAtOffsetInBlock(map, idx);
+      const endRange   = rangeAtOffsetInBlock(map, idx + needle.length);
       if (startRange && endRange) return { startRange, endRange };
     }
     return null;
@@ -487,17 +547,19 @@ const MizanPanel = (function () {
     const highlightRanges = [];
 
     for (const item of items) {
-      const startMarker = document.createElement('span');
-      startMarker.className = 'mizan-tag-marker';
-      startMarker.dataset.tagId = item.tag.id;
-      startMarker.textContent = `${UI.toPersianDigits(item.tag.ayah)} ←`;
-      item.startRange.insertNode(startMarker);
-
+      // ترتیب مهم است: ابتدا مارکر پایانی، سپس مارکر شروع — تا با درجِ
+      // مارکر شروع، جای مارکر پایانی به‌هم نریزد.
       const endMarker = document.createElement('span');
       endMarker.className = 'mizan-tag-marker';
       endMarker.dataset.tagId = item.tag.id;
       endMarker.textContent = `|${UI.toPersianDigits(item.tag.ayah)}`;
       item.endRange.insertNode(endMarker);
+
+      const startMarker = document.createElement('span');
+      startMarker.className = 'mizan-tag-marker';
+      startMarker.dataset.tagId = item.tag.id;
+      startMarker.textContent = `${UI.toPersianDigits(item.tag.ayah)} ←`;
+      item.startRange.insertNode(startMarker);
 
       try {
         const hl = document.createRange();
@@ -555,7 +617,7 @@ const MizanPanel = (function () {
     openNoteModal({ editing: note });
   });
   if (mizanNotePopupDel) mizanNotePopupDel.addEventListener('click', async () => {
-    const note = mizanNotes.find((n) => n.id === activePopupNoteId);
+    const note = mizanNotes.find((n) => n.id === activeNoteId(activePopupNoteId));
     if (!note) return;
     if (!confirm('این یادداشت حذف شود؟')) return;
     try {
@@ -568,6 +630,8 @@ const MizanPanel = (function () {
       UI.toast('خطا در حذف یادداشت');
     }
   });
+
+  function activeNoteId(id) { return id; }
 
   document.addEventListener('click', (e) => {
     if (!mizanNotePopup || mizanNotePopup.hidden) return;
@@ -1145,8 +1209,11 @@ const MizanPanel = (function () {
       showMizanState('content', { html, range });
       normalizeMizanChars(mizanContent);
       styleMizanAyahs(mizanContent);
-      injectMizanNotes(mizanContent);
+      // ترتیب مهم: ابتدا مارکرهای تگ، سپس یادداشت‌ها.
+      // چون پیمایشگر text-node هر دو نوع را skip می‌کند، ترتیب اثری
+      // بر صحت جست‌وجو ندارد؛ ولی این ترتیب از نظر بصری طبیعی‌تر است.
       applyMizanTags(mizanContent, mizanTags);
+      injectMizanNotes(mizanContent);
       paginateMizan(mizanContent);
 
       if (mizanTaggerBtn) {
