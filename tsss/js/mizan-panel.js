@@ -1135,27 +1135,21 @@ const MizanPanel = (function () {
   // 8) PAGINATION
   // ============================================================
   //
-  // قاعده:
-  //  - هر H3 یا H4 در حالت عادی صفحهٔ جدید می‌سازد.
-  //  - اما اگر گروهی فقط شامل یک سرتیتر باشد و محتوایی پس از آن
-  //    (پیش از سرتیتر بعدی) نباشد، آن گروه با گروه بعدی ادغام می‌شود
-  //    تا سرتیتر تنها در یک صفحهٔ خالی نماند.
-  //  - عنوان گروه ادغام‌شده از سرتیتر اصلی (اولین سرتیتر در انتظار)
-  //    گرفته می‌شود تا در فهرست هم درست دیده شود.
+  // هر H3 یا H4 آغاز یک صفحهٔ جدید است.
+  // سرتیتر می‌تواند تنها در صفحهٔ خودش بماند — این طبیعی است
+  // (مانند صفحهٔ عنوان یک فصل).
   //
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children)
       .filter((c) => !c.classList.contains('mizan-orphans'));
     const orphansBox = rootEl.querySelector('.mizan-orphans');
-
-    // گروه‌بندی اولیه — هر سرتیتر یک گروه جدید
-    const rawGroups = [];
+    const pageGroups = [];
     let current = null;
 
     children.forEach((child) => {
       const isHeading = child.tagName === 'H3' || child.tagName === 'H4';
       if (isHeading || !current) {
-        if (current) rawGroups.push(current);
+        if (current) pageGroups.push(current);
         current = {
           heading: isHeading ? child.textContent.trim() : 'شروع',
           nodes: [child],
@@ -1164,44 +1158,7 @@ const MizanPanel = (function () {
         current.nodes.push(child);
       }
     });
-    if (current) rawGroups.push(current);
-
-    // ادغام گروه‌های «فقط سرتیتر» با گروه بعدی
-    const pageGroups = [];
-    let pendingHeadings = [];        // سرتیترهای بدون محتوا
-    let pendingHeadingText = null;   // عنوان صفحه از اولین سرتیتر اصلی
-
-    for (const g of rawGroups) {
-      const onlyHeading = g.nodes.length === 1 && /^H[34]$/.test(g.nodes[0].tagName || '');
-
-      if (onlyHeading) {
-        pendingHeadings.push(g.nodes[0]);
-        if (!pendingHeadingText) pendingHeadingText = g.heading;
-        continue;
-      }
-
-      if (pendingHeadings.length) {
-        g.nodes = [...pendingHeadings, ...g.nodes];
-        if (pendingHeadingText) g.heading = pendingHeadingText;
-        pendingHeadings = [];
-        pendingHeadingText = null;
-      }
-      pageGroups.push(g);
-    }
-
-    // اگر سرتیتر بدون محتوا در انتها ماند، به آخرین گروه بچسبان
-    if (pendingHeadings.length) {
-      if (pageGroups.length) {
-        const last = pageGroups[pageGroups.length - 1];
-        last.nodes.push(...pendingHeadings);
-      } else {
-        // هیچ گروه دیگری نبود → یک گروه واحد از همه بساز
-        pageGroups.push({
-          heading: pendingHeadingText || 'شروع',
-          nodes: pendingHeadings,
-        });
-      }
-    }
+    if (current) pageGroups.push(current);
 
     if (pageGroups.length <= 1) {
       mizanPages = [];
