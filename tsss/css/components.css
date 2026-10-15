@@ -758,6 +758,63 @@ a.tag-pill:hover { filter: brightness(1.2); }
   line-height: 2;
 }
 
+/* --- دکمهٔ تفکیک آیه‌ای (فقط ادمین) --- */
+.mizan-tagger-btn {
+  all: unset;
+  cursor: pointer;
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--neon-dim);
+  background: var(--card-2);
+  color: var(--neon);
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, transform .15s ease;
+}
+.mizan-tagger-btn[hidden],
+.mizan-tagger-btn.hidden { display: none !important; }
+.mizan-tagger-btn:hover {
+  border-color: var(--neon);
+  box-shadow: 0 0 0 4px var(--neon-glow);
+}
+.mizan-tagger-btn:active { transform: scale(.97); }
+.mizan-tagger-btn:disabled { opacity: .6; cursor: wait; }
+.mizan-tagger-btn.is-busy { animation: mizanTaggerPulse 1.6s ease-in-out infinite; }
+.mizan-tagger-btn__icon { font-size: .9em; }
+
+@keyframes mizanTaggerPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--neon-glow); }
+  50%      { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* --- مارکرهای آیه روی متن المیزان --- */
+.mizan-tag-marker {
+  display: inline;
+  margin: 0 6px;
+  padding: 0;
+  color: var(--violet);
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: .82em;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 0 10px var(--violet-glow);
+  cursor: default;
+  user-select: none;
+  vertical-align: baseline;
+}
+
+/* --- هایلایت محو بین مارکرها --- */
+::highlight(mizan-tag) {
+  background: rgba(180, 120, 200, 0.08);
+  color: inherit;
+}
+
 /* 10. UTILITIES, TOASTS, SKELETONS */
 .empty-state { padding: 40px 20px; text-align: center; color: var(--text-faint); }
 .empty-state__icon { margin-bottom: 10px; font-size: 2rem; opacity: .5; }
@@ -789,6 +846,8 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .mizan-pager__btn, .mizan-pager__toc { padding: 6px 12px; font-size: .76rem; }
   .mizan-note-inline { font-size: .9em; }
   .mizan-note-popup { max-width: calc(100vw - 24px); }
+  .mizan-tagger-btn { font-size: .7rem; padding: 2px 10px 2px 8px; }
+  .mizan-tag-marker { font-size: .78em; margin: 0 4px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
@@ -796,4 +855,5 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .mizan-note-add-btn { animation: none; }
   .mizan-note-modal__caret { animation: none; }
   .mizan-caret { animation: none; }
+  .mizan-tagger-btn.is-busy { animation: none; }
 }
