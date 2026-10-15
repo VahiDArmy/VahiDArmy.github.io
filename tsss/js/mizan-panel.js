@@ -113,6 +113,136 @@ const MizanPanel = (function () {
   }
 
   // ============================================================
+  // 2b) لایهٔ تبدیل «نمایش چاپی» → «نمایش وب»
+  // ============================================================
+  //
+  // فایل content یک متن دیجیتالی‌شدهٔ چاپی است و سه دسته artifact
+  // در آن باقی مانده که پیش از رندر باید پاک شوند — نه به‌عنوان
+  // سه اصلاح مستقل، بلکه به‌عنوان یک مسئولیت واحد:
+  //
+  //  ۱) نویسه‌های عربی در متن فارسی (ي U+064A، ك U+0643، ى U+0649)
+  //  ۲) RLM/LRM که در چاپ قدیم به‌جای ZWNJ برای نیم‌فاصله به‌کار می‌رفت
+  //  ۳) شکست پاراگراف در اثر پایان صفحهٔ چاپی که ادامهٔ جمله است
+  //
+
+  // ---- نویسه‌های عربی → فارسی + نیم‌فاصله‌سازی ----
+  function normalizePersianChars(text) {
+    return String(text == null ? '' : text)
+      // RLM/LRM بین دو حرف عربی-خط = نیم‌فاصلهٔ چاپی → ZWNJ
+      .replace(/([\u0600-\u06FF])[\u200E\u200F]+(?=[\u0600-\u06FF])/g, '$1\u200C')
+      // حذف باقی‌ماندهٔ نشانه‌های جهت
+      .replace(/[\u200E\u200F]/g, '')
+      // نویسه‌های عربی → معادل فارسی
+      .replace(/\u064A/g, '\u06CC')  // ي → ی
+      .replace(/\u0649/g, '\u06CC')  // ى → ی
+      .replace(/\u0643/g, '\u06A9'); // ك → ک
+  }
+
+  // نرمال‌سازی متن فارسی، با محافظت از متن قرآنی داخل ﴿...﴾
+  function normalizePersianString(text) {
+    const s = String(text == null ? '' : text);
+    if (!s) return s;
+    const re = /﴿[^﴾]*﴾/g;
+    let out = '';
+    let lastIdx = 0;
+    let m;
+    while ((m = re.exec(s))) {
+      out += normalizePersianChars(s.slice(lastIdx, m.index));
+      out += m[0]; // محتوای قرآنی دست‌نخورده
+      lastIdx = re.lastIndex;
+    }
+    out += normalizePersianChars(s.slice(lastIdx));
+    return out;
+  }
+
+  // آیا این بلوک باید نرمال‌سازی شود؟ (متن عربی خالص نباید تغییر کند)
+  function shouldNormalizeBlock(block) {
+    if (!block) return false;
+    if (block.type === 'anchor' || block.type === 'hr' || block.type === 'range-title') return false;
+    if (block.type === 'code' && block.lang === 'arabic') return false;
+    if (block.type === 'arabic-raw') return false;
+    return true;
+  }
+
+  function normalizeBlock(block) {
+    if (!shouldNormalizeBlock(block)) return block;
+    const copy = { ...block };
+    if (typeof copy.text === 'string') copy.text = normalizePersianString(copy.text);
+    if (Array.isArray(copy.items)) copy.items = copy.items.map(normalizePersianString);
+    return copy;
+  }
+
+  // ---- پیوند پاراگراف‌های شکسته‌شده در اثر صفحه‌آرایی چاپی ----
+  function escapeRe(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function hasUnclosedBracket(text) {
+    const s = String(text || '');
+    const pairs = [
+      ['«', '»'],
+      ['(', ')'],
+      ['[', ']'],
+      ['{', '}'],
+      ['﴿', '﴾'],
+    ];
+    for (const [open, close] of pairs) {
+      const o = (s.match(new RegExp(escapeRe(open), 'g')) || []).length;
+      const c = (s.match(new RegExp(escapeRe(close), 'g')) || []).length;
+      if (o > c) return true;
+    }
+    return false;
+  }
+
+  function endsWithTerminator(text) {
+    return /[.؟!:؛»\)\]\u06D4\u061F…]\s*$/.test(String(text || ''));
+  }
+
+  function startsWithNewBlockMarker(text) {
+    const t = String(text || '').trimStart();
+    if (!t) return true;
+    return /^[﴿#>\-*•\u06F0-\u06F9\d]/.test(t);
+  }
+
+  function shouldRejoinParagraphs(prevText, nextText) {
+    if (!prevText || !nextText) return false;
+    // سیگنال قوی: نقل‌قول/پرانتز باز مانده در بلوک قبل
+    if (hasUnclosedBracket(prevText)) return true;
+    // اگر بلوک قبل با علامت پایان جمله تمام شده → پاراگراف واقعی
+    if (endsWithTerminator(prevText)) return false;
+    // اگر بلوک بعد نشانهٔ شروع تازه دارد → پاراگراف واقعی
+    if (startsWithNewBlockMarker(nextText)) return false;
+    // در غیر این صورت: ادامهٔ جمله است
+    return true;
+  }
+
+  function rejoinPrintBreaks(blocks) {
+    const out = [];
+    let i = 0;
+    while (i < blocks.length) {
+      const cur = blocks[i];
+      if (cur.type !== 'paragraph') { out.push(cur); i++; continue; }
+      let text = cur.text;
+      let j = i + 1;
+      while (j < blocks.length
+          && blocks[j].type === 'paragraph'
+          && shouldRejoinParagraphs(text, blocks[j].text)) {
+        text = text.replace(/\s+$/, '') + ' ' + blocks[j].text.replace(/^\s+/, '');
+        j++;
+      }
+      out.push(j > i + 1 ? { ...cur, text } : cur);
+      i = j;
+    }
+    return out;
+  }
+
+  // ---- نقطهٔ ورود لایه ----
+  function processPrintArtifacts(blocks) {
+    const normalized = blocks.map(normalizeBlock);
+    return rejoinPrintBreaks(normalized);
+  }
+
+  // ============================================================
   // 3) CONTENT PIPELINE
   // ============================================================
   function parseContent(rawText) {
@@ -270,7 +400,8 @@ const MizanPanel = (function () {
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-    s = s.replace(/\n/g, '<br>');
+    // شکست خطوط چاپی داخل یک پاراگراف → فاصلهٔ ساده (نه <br>)
+    s = s.replace(/[ \t]*\n+[ \t]*/g, ' ');
 
     return s;
   }
@@ -1135,20 +1266,15 @@ const MizanPanel = (function () {
   // 8) PAGINATION
   // ============================================================
   //
-  // قاعده:
-  //  - هر H3 یا H4 در حالت عادی صفحهٔ جدید می‌سازد.
-  //  - اما اگر گروهی فقط شامل یک سرتیتر باشد و محتوایی پس از آن
-  //    (پیش از سرتیتر بعدی) نباشد، آن گروه با گروه بعدی ادغام می‌شود
-  //    تا سرتیتر تنها در یک صفحهٔ خالی نماند.
-  //  - عنوان گروه ادغام‌شده از سرتیتر اصلی (اولین سرتیتر در انتظار)
-  //    گرفته می‌شود تا در فهرست هم درست دیده شود.
+  // قاعده: هر H3 یا H4 یک صفحهٔ جدید است.
+  // گروهی که فقط شامل یک سرتیتر باشد با گروه بعدی ادغام می‌شود
+  // تا سرتیتر تنها در یک صفحهٔ خالی نماند.
   //
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children)
       .filter((c) => !c.classList.contains('mizan-orphans'));
     const orphansBox = rootEl.querySelector('.mizan-orphans');
 
-    // گروه‌بندی اولیه — هر سرتیتر یک گروه جدید
     const rawGroups = [];
     let current = null;
 
@@ -1166,10 +1292,9 @@ const MizanPanel = (function () {
     });
     if (current) rawGroups.push(current);
 
-    // ادغام گروه‌های «فقط سرتیتر» با گروه بعدی
     const pageGroups = [];
-    let pendingHeadings = [];        // سرتیترهای بدون محتوا
-    let pendingHeadingText = null;   // عنوان صفحه از اولین سرتیتر اصلی
+    let pendingHeadings = [];
+    let pendingHeadingText = null;
 
     for (const g of rawGroups) {
       const onlyHeading = g.nodes.length === 1 && /^H[34]$/.test(g.nodes[0].tagName || '');
@@ -1189,7 +1314,6 @@ const MizanPanel = (function () {
       pageGroups.push(g);
     }
 
-    // اگر سرتیتر بدون محتوا در انتها ماند، به آخرین گروه بچسبان
     if (pendingHeadings.length) {
       if (pageGroups.length) {
         const last = pageGroups[pageGroups.length - 1];
@@ -1360,7 +1484,10 @@ const MizanPanel = (function () {
         }
         allBlocks.push(...blocks);
       }
-      const html = renderBlocks(allBlocks);
+
+      // ★ لایهٔ واحد تبدیل «نمایش چاپی» → «نمایش وب»
+      const processed = processPrintArtifacts(allBlocks);
+      const html = renderBlocks(processed);
 
       showMizanState('content', { html, range });
 
