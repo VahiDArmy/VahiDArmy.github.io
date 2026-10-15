@@ -1,8 +1,8 @@
 // =============================================================
-// پنل تفسیر المیزان — نسخهٔ بازنویسی‌شده از صفر
-//   • خط لولهٔ رندر محتوا کاملاً بازنویسی شد (بدون marked)
-//   • صفحه‌بندی، یادداشت‌ها و تگ‌گذاری حفظ شدند
-//   • تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
+// پنل تفسیر المیزان — بازنویسی کامل از صفر بر اساس ساختار واقعی
+// فایل content: عنوان‌ها، anchors، code block های arabic/farsi،
+// و آیه‌های لخت (بدون fence) — همه تشخیص داده می‌شوند.
+// تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
 // =============================================================
 const MizanPanel = (function () {
 
@@ -85,272 +85,309 @@ const MizanPanel = (function () {
   }
 
   function faToEnDigits(s) {
-    return String(s).replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
+    return String(s)
+      .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0))
+      .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  // نرمال‌سازی نویسه‌های عربی/فارسی — طول متن تغییر نمی‌کند
+  // نرمال‌سازی ۱:۱ (طول را حفظ می‌کند تا آفست‌ها معتبر بمانند)
   function normalizeChars(s) {
     return String(s == null ? '' : s)
-      .replace(/\u0649/g, '\u06CC')  // ى → ی
-      .replace(/\u064A/g, '\u06CC')  // ي → ی
-      .replace(/\u0643/g, '\u06A9')  // ك → ک
-      .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
+      .replace(/\u0649/g, '\u06CC')
+      .replace(/\u064A/g, '\u06CC')
+      .replace(/\u0643/g, '\u06A9')
+      .replace(/\u200B/g, '\u200C');
   }
 
-  // حذف اعراب برای مقایسه‌های سطحی
   function stripDiacritics(s) {
-    return String(s == null ? '' : s).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+    return String(s == null ? '' : s)
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
   }
 
-  function cleanContentText(s) {
-    return String(s || '')
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n')
-      .replace(/^\s*\*{4,}\s*\n+/, '')
-      .replace(/\n+\s*\*{4,}\s*$/, '')
-      .trim();
+  // تشخیص متن قرآنی با چگالی اعراب
+  function looksLikeQuran(text) {
+    const t = String(text || '');
+    if (t.length < 20) return false;
+    const diacritics = (t.match(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g) || []).length;
+    const letters    = (t.match(/[\u0621-\u064A\u0671\u06CC\u06A9]/g) || []).length;
+    if (letters < 10) return false;
+    return diacritics / letters > 0.10;
   }
 
   // ============================================================
   // 3) CONTENT PIPELINE — از صفر
   // ============================================================
-  //
-  // مرحله ۱: تجزیهٔ خط‌به‌خط متن به بلوک‌های تایپ‌دار
-  // مرحله ۲: رندر هر بلوک به HTML
-  // مرحله ۳: پردازش DOM (تزئین آیات، تزریق یادداشت و تگ)
-  //
 
-  // ---- 3.1: تجزیهٔ متن به بلوک ----
+  // ---- 3.1: تجزیه به بلوک ----
   function parseContent(rawText) {
-    const text = cleanContentText(rawText);
+    let text = String(rawText || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+
+    // حذف ستاره‌های تزئینی ابتدا/انتها
+    text = text
+      .replace(/^\s*\*{4,}\s*\n+/, '')
+      .replace(/\n+\s*\*{4,}\s*$/, '');
+
     const lines = text.split('\n');
     const blocks = [];
 
-    let paragraphBuf = [];
-    let inCode = false;
-    let codeLang = '';
-    let codeBuf = [];
+    let paraBuf = [];
+    let listBuf = null;
 
-    function flushParagraph() {
-      const joined = paragraphBuf.join('\n').trim();
-      if (joined) blocks.push({ type: 'paragraph', text: joined });
-      paragraphBuf = [];
-    }
+    const flushPara = () => {
+      if (!paraBuf.length) return;
+      const t = paraBuf.join('\n').trim();
+      if (t) blocks.push({ type: 'paragraph', text: t });
+      paraBuf = [];
+    };
+    const flushList = () => {
+      if (listBuf) { blocks.push(listBuf); listBuf = null; }
+    };
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const trimmed = line.trim();
+    let i = 0;
+    while (i < lines.length) {
+      const raw = lines[i];
+      const line = raw.trim();
 
-      // داخل code block
-      if (inCode) {
-        if (/^```\s*$/.test(trimmed)) {
-          inCode = false;
-          blocks.push({ type: 'code', lang: codeLang, body: codeBuf.join('\n') });
-          codeLang = '';
-          codeBuf = [];
-        } else {
-          codeBuf.push(line);
+      // خط خالی
+      if (!line) { flushPara(); flushList(); i++; continue; }
+
+      // Code fence (arabic / farsi / plain)
+      const fm = line.match(/^```([a-zA-Z0-9_-]*)\s*$/);
+      if (fm) {
+        flushPara(); flushList();
+        const lang = (fm[1] || '').toLowerCase();
+        const body = [];
+        i++;
+        while (i < lines.length && !/^```\s*$/.test(lines[i].trim())) {
+          body.push(lines[i]);
+          i++;
         }
+        i++; // رد کردن ``` پایانی
+        blocks.push({ type: 'code', lang, body: body.join('\n') });
         continue;
       }
 
-      // شروع code block
-      const fence = trimmed.match(/^```([a-zA-Z0-9_-]*)\s*$/);
-      if (fence) {
-        flushParagraph();
-        inCode = true;
-        codeLang = (fence[1] || '').toLowerCase();
-        codeBuf = [];
+      // Heading
+      const hm = line.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
+      if (hm) {
+        flushPara(); flushList();
+        const level = hm[1].length;
+        const headingText = hm[2].trim();
+
+        // نشانگر محدودهٔ آیات؟ [سوره X (N): آیات A تا B]
+        const rm = headingText.match(
+          /^\[\s*سوره\s+(.+?)\s*[(（]\s*([\d\u06F0-\u06F9]+)\s*[)）]\s*[:：]\s*.+?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\s*\]$/
+        );
+        if (rm) {
+          blocks.push({
+            type: 'range-title',
+            surahName: rm[1].trim(),
+            surahNum: Number(faToEnDigits(rm[2])),
+            from: Number(faToEnDigits(rm[3])),
+            to:   Number(faToEnDigits(rm[4])),
+          });
+        } else {
+          blocks.push({ type: 'heading', level, text: headingText });
+        }
+        i++;
         continue;
       }
 
-      // خط خالی → پایان پاراگراف
-      if (!trimmed) { flushParagraph(); continue; }
-
-      // heading
-      const headingMatch = trimmed.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
-      if (headingMatch) {
-        flushParagraph();
-        blocks.push({
-          type: 'heading',
-          level: headingMatch[1].length,
-          text: headingMatch[2].trim(),
-        });
-        continue;
-      }
-
-      // anchor آیه: <span id="surah-X-ayah-Y"></span>
-      const anchorMatch = trimmed.match(/^<span\s+id=["']surah-(\d+)-ayah-(\d+)["']\s*>\s*<\/span>$/i);
-      if (anchorMatch) {
-        flushParagraph();
+      // Anchor آیه
+      const am = line.match(/^<span\s+id=["']surah-(\d+)-ayah-(\d+)["']\s*>\s*<\/span>\s*$/i);
+      if (am) {
+        flushPara(); flushList();
         blocks.push({
           type: 'anchor',
-          surah: Number(anchorMatch[1]),
-          ayah: Number(anchorMatch[2]),
+          surah: Number(am[1]),
+          ayah: Number(am[2]),
         });
+        i++;
         continue;
       }
 
-      // نشانگر range: [سوره ...: آیات ... تا ...]
-      if (/^\[\s*سوره\s+.+?:\s*آیه(?:ات)?\s*[\d\u06F0-\u06F9]+\s*(?:تا\s*[\d\u06F0-\u06F9]+\s*)?\]$/.test(trimmed)) {
-        flushParagraph();
-        blocks.push({ type: 'range', text: trimmed });
-        continue;
-      }
-
-      // خط جداکننده
-      if (/^[-*_]{3,}$/.test(trimmed)) {
-        flushParagraph();
-        blocks.push({ type: 'hr' });
-        continue;
-      }
-
-      // نقل‌قول
-      if (trimmed.startsWith('>')) {
-        flushParagraph();
-        const qtext = trimmed.replace(/^>\s?/, '');
-        const last = blocks[blocks.length - 1];
-        if (last && last.type === 'quote') {
-          last.text += '\n' + qtext;
-        } else {
-          blocks.push({ type: 'quote', text: qtext });
+      // لیست نشانه‌دار
+      const ulm = line.match(/^[-*•·]\s+(.+)$/);
+      if (ulm) {
+        flushPara();
+        if (!listBuf || listBuf.type !== 'ul') {
+          flushList();
+          listBuf = { type: 'ul', items: [] };
         }
-        continue;
-      }
-
-      // لیست نقطه‌ای
-      const ulMatch = trimmed.match(/^[-*•]\s+(.+)$/);
-      if (ulMatch) {
-        flushParagraph();
-        const last = blocks[blocks.length - 1];
-        if (last && last.type === 'ul') {
-          last.items.push(ulMatch[1]);
-        } else {
-          blocks.push({ type: 'ul', items: [ulMatch[1]] });
-        }
+        listBuf.items.push(ulm[1]);
+        i++;
         continue;
       }
 
       // لیست شماره‌دار
-      const olMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
-      if (olMatch) {
-        flushParagraph();
-        const last = blocks[blocks.length - 1];
-        if (last && last.type === 'ol') {
-          last.items.push(olMatch[2]);
-        } else {
-          blocks.push({ type: 'ol', items: [olMatch[2]] });
+      const olm = line.match(/^(\d+)[.)]\s+(.+)$/);
+      if (olm) {
+        flushPara();
+        if (!listBuf || listBuf.type !== 'ol') {
+          flushList();
+          listBuf = { type: 'ol', items: [] };
         }
+        listBuf.items.push(olm[2]);
+        i++;
         continue;
       }
 
-      // خط معمولی → برو در بافر پاراگراف
-      paragraphBuf.push(trimmed);
-    }
+      // نقل‌قول
+      if (line.startsWith('>')) {
+        flushPara(); flushList();
+        const q = [line.replace(/^>\s?/, '')];
+        i++;
+        while (i < lines.length && lines[i].trim().startsWith('>')) {
+          q.push(lines[i].trim().replace(/^>\s?/, ''));
+          i++;
+        }
+        blocks.push({ type: 'quote', text: q.join('\n') });
+        continue;
+      }
 
-    if (inCode) {
-      blocks.push({ type: 'code', lang: codeLang, body: codeBuf.join('\n') });
+      // خط جداکننده
+      if (/^[-*_]{3,}$/.test(line)) {
+        flushPara(); flushList();
+        blocks.push({ type: 'hr' });
+        i++;
+        continue;
+      }
+
+      // خط معمولی
+      flushList();
+      paraBuf.push(line);
+      i++;
     }
-    flushParagraph();
+    flushPara();
+    flushList();
+
+    // Post-process: آیهٔ لخت بعد از anchor — با چگالی اعراب تشخیص می‌دهیم
+    for (let j = 0; j < blocks.length; j++) {
+      if (blocks[j].type !== 'anchor') continue;
+      let k = j + 1;
+      while (k < blocks.length && blocks[k].type === 'anchor') k++;
+      if (k >= blocks.length) continue;
+      const nx = blocks[k];
+      if (nx.type === 'paragraph' && looksLikeQuran(nx.text)) {
+        nx.type = 'arabic-raw';
+        nx.ayah = blocks[j].ayah;
+      }
+    }
 
     return blocks;
   }
 
-  // ---- 3.2: رندر inline ----
-  function renderInline(rawText) {
-    let s = escapeHtml(rawText);
+  // ---- 3.2: inline renderer ----
+  function renderInline(text) {
+    let s = escapeHtml(text);
 
-    // لینک مارک‌داون [label](url)
-    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => {
-      const safeUrl = escapeHtml(url);
-      return `<a href="${safeUrl}" target="_blank" rel="noopener">${label}</a>`;
-    });
+    // استناد قرآنی ﴿...﴾
+    s = s.replace(/﴿([^﴾]+)﴾/g, '<span class="mizan-quran-inline">﴿$1﴾</span>');
+
+    // code inline
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
 
     // bold
     s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
 
-    // italic — فقط تک‌ستاره، نه بخشی از bold
+    // italic
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
 
-    // کد inline
-    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // خط جدید داخل پاراگراف
+    // newlines
     s = s.replace(/\n/g, '<br>');
 
     return s;
   }
 
-  // ---- 3.3: رندر بلوک ----
-  function renderBlock(block) {
+  // ---- 3.3: ayah block renderer ----
+  function renderAyahBlock(rawText, fallbackNum) {
+    const trimmed = String(rawText || '').trim();
+    if (!trimmed) return '';
+
+    // شمارهٔ آیه در انتها: (...) با ارقام فارسی/عربی/لاتین
+    const numMatch = trimmed.match(/\s*[(（]\s*([\d\u0660-\u0669\u06F0-\u06F9]+)\s*[)）]\s*$/);
+    let display = trimmed;
+    let num = null;
+    if (numMatch) {
+      display = trimmed.slice(0, numMatch.index).trim();
+      num = Number(faToEnDigits(numMatch[1]));
+    }
+    const ayahNum = num || fallbackNum || null;
+
+    const badge = ayahNum
+      ? `<span class="mizan-ayah__badge" aria-label="آیهٔ ${ayahNum}">آیهٔ ${UI.toPersianDigits(ayahNum)}</span>`
+      : '';
+
+    return `<div class="mizan-ayah" data-ayah="${ayahNum || ''}">
+  <p class="mizan-ayah__text">${escapeHtml(display)}</p>
+  ${badge}
+</div>`;
+  }
+
+  // ---- 3.4: block renderer ----
+  function renderBlock(block, ctx) {
     switch (block.type) {
+
+      case 'range-title':
+        return `<div class="mizan-title">
+  <span class="mizan-title__ornament" aria-hidden="true"></span>
+  <span class="mizan-title__text">سورهٔ ${escapeHtml(block.surahName)} · آیات ${UI.toPersianDigits(block.from)} تا ${UI.toPersianDigits(block.to)}</span>
+  <span class="mizan-title__ornament" aria-hidden="true"></span>
+</div>`;
+
       case 'heading': {
-        const lvl = Math.min(Math.max(block.level, 1), 6);
-        return `<h${lvl}>${renderInline(block.text)}</h${lvl}>`;
+        const lvl = Math.min(Math.max(block.level, 2), 4);
+        if (lvl === 2) return `<h2 class="mizan-h2">${renderInline(block.text)}</h2>`;
+        if (lvl === 3) return `<h3 class="mizan-h3">${renderInline(block.text)}</h3>`;
+        return `<h4 class="mizan-h4">${renderInline(block.text)}</h4>`;
       }
+
       case 'anchor':
-        return `<span id="surah-${block.surah}-ayah-${block.ayah}"></span>`;
-      case 'range':
-        // نشانگر در UI نمایش داده نمی‌شود (فقط برای محاسبهٔ range استفاده شد)
-        return '';
-      case 'hr':
-        return '<hr>';
-      case 'quote':
-        return `<blockquote>${renderInline(block.text)}</blockquote>`;
-      case 'ul':
-        return `<ul>${block.items.map((i) => `<li>${renderInline(i)}</li>`).join('')}</ul>`;
-      case 'ol':
-        return `<ol>${block.items.map((i) => `<li>${renderInline(i)}</li>`).join('')}</ol>`;
-      case 'code': {
-        const lang = block.lang || '';
-        const cls = lang ? ` class="language-${escapeHtml(lang)}"` : '';
-        return `<pre><code${cls}>${escapeHtml(block.body)}</code></pre>`;
-      }
+        return `<span class="mizan-anchor" id="surah-${block.surah}-ayah-${block.ayah}" data-ayah="${block.ayah}" aria-hidden="true"></span>`;
+
+      case 'code':
+        if (block.lang === 'arabic') return renderAyahBlock(block.body, ctx.lastAyah);
+        if (block.lang === 'farsi') {
+          return `<div class="mizan-translation">
+  <div class="mizan-translation__label">ترجمهٔ آیات</div>
+  <p class="mizan-translation__text">${renderInline(block.body.trim())}</p>
+</div>`;
+        }
+        return `<pre class="mizan-code"><code>${escapeHtml(block.body)}</code></pre>`;
+
+      case 'arabic-raw':
+        return renderAyahBlock(block.text, block.ayah || ctx.lastAyah);
+
       case 'paragraph':
+        return `<p class="mizan-p">${renderInline(block.text)}</p>`;
+
+      case 'quote':
+        return `<blockquote class="mizan-quote">${renderInline(block.text)}</blockquote>`;
+
+      case 'ul':
+        return `<ul class="mizan-list">${block.items.map((it) => `<li>${renderInline(it)}</li>`).join('')}</ul>`;
+
+      case 'ol':
+        return `<ol class="mizan-list mizan-list--ol">${block.items.map((it) => `<li>${renderInline(it)}</li>`).join('')}</ol>`;
+
+      case 'hr':
+        return `<hr class="mizan-hr">`;
+
       default:
-        return `<p>${renderInline(block.text)}</p>`;
+        return '';
     }
   }
 
   function renderBlocks(blocks) {
-    return blocks.map(renderBlock).join('\n');
-  }
-
-  // ---- 3.4: پردازش DOM پس از رندر ----
-  //
-  // هر anchor آیه، بلوک بعدی را (اگر عربی باشد) به عنوان «بلوک آیه»
-  // تزئین می‌کند تا CSS آن را به شکل یک آیهٔ برجسته نشان دهد.
-  function looksArabic(text) {
-    const stripped = String(text || '').replace(/[\s\u200C\u200E\u200F]/g, '');
-    if (!stripped) return false;
-    const arabicChars = (stripped.match(/[\u0600-\u06FF]/g) || []).length;
-    return arabicChars / stripped.length > 0.85;
-  }
-
-  function decorateAyahAnchors(container) {
-    const anchors = container.querySelectorAll('span[id^="surah-"]');
-    anchors.forEach((anchor) => {
-      const idMatch = anchor.id.match(/^surah-(\d+)-ayah-(\d+)$/);
-      if (!idMatch) return;
-      const ayahNum = Number(idMatch[2]);
-      anchor.dataset.ayah = String(ayahNum);
-
-      // بلوک بعدی را پیدا کن (با پریدن از روی anchor های دیگر)
-      let next = anchor.nextElementSibling;
-      while (next && next.tagName === 'SPAN' && /^surah-/.test(next.id || '')) {
-        next = next.nextElementSibling;
-      }
-      if (!next) return;
-
-      if (next.tagName === 'PRE') {
-        next.classList.add('mizan-ayah-block');
-      } else if (next.tagName === 'P') {
-        if (looksArabic(next.textContent || '')) {
-          next.classList.add('mizan-arabic-raw');
-        }
-        next.classList.add('mizan-ayah-block');
-      }
-    });
+    const out = [];
+    const ctx = { lastAyah: null };
+    for (const b of blocks) {
+      if (b.type === 'anchor') ctx.lastAyah = b.ayah;
+      out.push(renderBlock(b, ctx));
+    }
+    return out.filter(Boolean).join('\n');
   }
 
   // ============================================================
@@ -382,7 +419,7 @@ const MizanPanel = (function () {
   }
 
   // ============================================================
-  // 5) CARET / ANCHOR — برای سیستم یادداشت
+  // 5) CARET / ANCHOR
   // ============================================================
   function insertCaretAtRange(range) {
     removeCaret();
@@ -494,7 +531,6 @@ const MizanPanel = (function () {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return null;
     const range = sel.getRangeAt(0);
-
     if (!mizanContent.contains(range.startContainer)) return null;
 
     let block = range.startContainer;
@@ -512,7 +548,6 @@ const MizanPanel = (function () {
 
     const before = blockText.slice(Math.max(0, safePos - NOTE_CONTEXT_CHARS), safePos);
     const after = blockText.slice(safePos, safePos + NOTE_CONTEXT_CHARS);
-
     if (!before && !after) return null;
 
     return { block, before, after };
@@ -552,13 +587,10 @@ const MizanPanel = (function () {
       el.setAttribute('role', 'button');
       el.setAttribute('tabindex', '0');
       el.setAttribute('title', 'کلیک برای ویرایش');
-
       try {
         range.insertNode(el);
         return true;
-      } catch (e) {
-        continue;
-      }
+      } catch (e) { continue; }
     }
     return false;
   }
@@ -583,7 +615,6 @@ const MizanPanel = (function () {
       `;
       rootEl.appendChild(box);
     }
-
     rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -594,7 +625,6 @@ const MizanPanel = (function () {
     });
   }
 
-  // ---- Note popup ----
   function showNotePopup(note, anchorEl) {
     if (!mizanNotePopup) return;
     activePopupNoteId = note.id;
@@ -654,7 +684,6 @@ const MizanPanel = (function () {
     hideNotePopup();
   });
 
-  // ---- Note modal ----
   function renderNoteQuoteFromAnchor(anchor) {
     if (!mizanNoteQuote) return;
     if (!anchor) { mizanNoteQuote.textContent = '—'; return; }
@@ -710,16 +739,12 @@ const MizanPanel = (function () {
   if (mizanNoteSaveBtn) mizanNoteSaveBtn.addEventListener('click', async () => {
     const text = mizanNoteInput.value.trim();
     if (!text) { UI.toast('متن یادداشت خالی است'); return; }
-
     try {
       if (editingNoteId) {
         await Store.updateMizanNote(editingNoteId, text);
         UI.toast('یادداشت به‌روزرسانی شد');
       } else {
-        if (!pendingNoteAnchor) {
-          UI.toast('موقعیت یادداشت معتبر نیست');
-          return;
-        }
+        if (!pendingNoteAnchor) { UI.toast('موقعیت یادداشت معتبر نیست'); return; }
         await Store.addMizanNote({
           contentId: pendingNoteAnchor.contentId,
           anchorBefore: pendingNoteAnchor.before,
@@ -751,7 +776,6 @@ const MizanPanel = (function () {
     }
   });
 
-  // ---- Floating note button ----
   function showNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = false; }
   function hideNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = true; }
 
@@ -779,34 +803,25 @@ const MizanPanel = (function () {
   }
 
   async function openNoteAtAnchor(anchor) {
-    if (!anchor) {
-      UI.toast('موقعیت یادداشت پیدا نشد');
-      return;
-    }
-
+    if (!anchor) { UI.toast('موقعیت یادداشت پیدا نشد'); return; }
     const { data } = await sb.auth.getSession();
     if (!data?.session) {
       UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
       return;
     }
-
     const page = anchor.block.closest('.mizan-page');
     let contentId = mizanContentKeys[0] || null;
     if (page && mizanContentKeys.length > 1) {
       const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
       contentId = mizanContentKeys[idx] || mizanContentKeys[0];
     }
-    if (!contentId) {
-      UI.toast('خطا در تشخیص محتوا');
-      return;
-    }
+    if (!contentId) { UI.toast('خطا در تشخیص محتوا'); return; }
 
     pendingNoteAnchor = {
       contentId,
       before: anchor.before,
       after: anchor.after,
     };
-
     resetAnchorConfirm();
     hideNoteAddBtn();
     openNoteModal({});
@@ -831,12 +846,9 @@ const MizanPanel = (function () {
       setTimeout(async () => {
         const anchor = getCursorAnchor();
         if (!anchor) { removeCaret(); resetAnchorConfirm(); return; }
-
         insertCaretAtRange(clickRange);
-
         const key = anchorKeyOf(anchor);
         const now = Date.now();
-
         if (lastAnchorKey === key && (now - lastAnchorTime) < ANCHOR_CONFIRM_WINDOW_MS) {
           removeCaret();
           await openNoteAtAnchor(anchor);
@@ -853,9 +865,6 @@ const MizanPanel = (function () {
       e.preventDefault();
       capturedAnchor = getCursorAnchor();
     });
-  }
-
-  if (mizanNoteBtn) {
     mizanNoteBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       const anchor = capturedAnchor || getCursorAnchor();
@@ -877,7 +886,7 @@ const MizanPanel = (function () {
   }
 
   // ============================================================
-  // 7) TAGS — تجزیه + فیلتر + اعمال
+  // 7) TAGS
   // ============================================================
   function parseMizanTaggerResponse(text) {
     if (!text) return [];
@@ -911,29 +920,23 @@ const MizanPanel = (function () {
 
       const aStart = m[1] ? Number(faToEnDigits(m[1])) : 0;
       const aEnd   = m[4] ? Number(faToEnDigits(m[4])) : 0;
-
       const ayah = aStart || aEnd;
       if (!ayah) continue;
 
       const startExcerpt = (m[2] || '').trim();
       const endExcerpt   = (m[3] || '').trim();
       if (!startExcerpt || !endExcerpt) continue;
-
       if ((startExcerpt.length + endExcerpt.length) < 8) continue;
 
       tags.push({ ayah, startExcerpt, endExcerpt });
     }
-
     return tags;
   }
 
-  // فیلتر تگ‌هایی که گزیده‌هایشان داخل ترجمه یا عین آیه است
   async function filterTrivialTags(tags, surah, ayah) {
     if (!tags || !tags.length) return tags;
     let ayahObj = null;
-    try {
-      ayahObj = await QuranData.getAyah(surah, ayah);
-    } catch (e) { return tags; }
+    try { ayahObj = await QuranData.getAyah(surah, ayah); } catch (e) { return tags; }
     if (!ayahObj) return tags;
 
     const translation = stripDiacritics(normalizeChars(ayahObj.fa || ''));
@@ -943,12 +946,9 @@ const MizanPanel = (function () {
     for (const tag of tags) {
       const sN = stripDiacritics(normalizeChars(tag.startExcerpt || ''));
       const eN = stripDiacritics(normalizeChars(tag.endExcerpt   || ''));
-
       if (sN.length < 3 || eN.length < 3) { out.push(tag); continue; }
-
       const inTrans = translation.length > 0 && translation.includes(sN) && translation.includes(eN);
       const inAr    = arabic.length > 0 && arabic.includes(sN) && arabic.includes(eN);
-
       if (inTrans || inAr) {
         console.info('[mizan tagger] dropped trivial tag:', tag);
         continue;
@@ -992,9 +992,7 @@ const MizanPanel = (function () {
     if (!items.length) return;
 
     const highlightRanges = [];
-
     for (const item of items) {
-      // ترتیب مهم: ابتدا مارکر پایانی، سپس شروع
       const endMarker = document.createElement('span');
       endMarker.className = 'mizan-tag-marker';
       endMarker.dataset.tagId = item.tag.id;
@@ -1024,7 +1022,6 @@ const MizanPanel = (function () {
     }
   }
 
-  // ---- Tagger modal ----
   function openTaggerRawModal(results) {
     if (!mizanTaggerRawModal) return;
     pendingTaggerResults = results;
@@ -1062,10 +1059,7 @@ const MizanPanel = (function () {
   async function applyTaggerResults() {
     if (!pendingTaggerResults) return;
     const valid = pendingTaggerResults.filter((r) => !r.error && r.tags && r.tags.length);
-    if (!valid.length) {
-      UI.toast('چیزی برای ذخیره نیست');
-      return;
-    }
+    if (!valid.length) { UI.toast('چیزی برای ذخیره نیست'); return; }
     try {
       for (const r of valid) {
         await Store.replaceMizanTags(r.contentId, r.tags, r.model);
@@ -1087,9 +1081,7 @@ const MizanPanel = (function () {
     try {
       await navigator.clipboard.writeText(text);
       UI.toast('کپی شد');
-    } catch (e) {
-      UI.toast('کپی ناموفق بود');
-    }
+    } catch (e) { UI.toast('کپی ناموفق بود'); }
   });
   if (mizanTaggerRawModal) {
     mizanTaggerRawModal.addEventListener('click', (e) => {
@@ -1130,14 +1122,12 @@ const MizanPanel = (function () {
       try {
         const content = await Mizan.loadContent(cid);
         const ayahs = await Mizan.getAyahsForContent(lastSurah, cid);
-
         const result = await Store.callMizanTagger({
           surahName,
           ayahs,
           content: content.text,
           model,
         });
-
         const parsedRaw = parseMizanTaggerResponse(result.content);
         const parsed = await filterTrivialTags(parsedRaw, lastSurah, lastAyah);
         const dropped = Math.max(0, parsedRaw.length - parsed.length);
@@ -1168,9 +1158,7 @@ const MizanPanel = (function () {
     openTaggerRawModal(results);
   }
 
-  if (mizanTaggerBtn) {
-    mizanTaggerBtn.addEventListener('click', runMizanTagger);
-  }
+  if (mizanTaggerBtn) mizanTaggerBtn.addEventListener('click', runMizanTagger);
 
   // ============================================================
   // 8) PAGINATION
@@ -1222,10 +1210,7 @@ const MizanPanel = (function () {
 
   function updateMizanPagerUI() {
     if (!mizanPager) return;
-    if (mizanPages.length <= 1) {
-      mizanPager.classList.add('hidden');
-      return;
-    }
+    if (mizanPages.length <= 1) { mizanPager.classList.add('hidden'); return; }
     mizanPager.classList.remove('hidden');
     const total = mizanPages.length;
     const cur = mizanCurrentPage + 1;
@@ -1255,9 +1240,7 @@ const MizanPanel = (function () {
     if (!mizanContentKeys.length) return;
     clearTimeout(mizanSaveTimer);
     mizanSaveTimer = setTimeout(async () => {
-      try {
-        await Store.saveMizanProgress(mizanContentKeys.join('-'), pageIndex);
-      } catch (e) {}
+      try { await Store.saveMizanProgress(mizanContentKeys.join('-'), pageIndex); } catch (e) {}
     }, 400);
   }
 
@@ -1284,14 +1267,8 @@ const MizanPanel = (function () {
     });
   }
 
-  function openMizanToc() {
-    if (!mizanTocModal) return;
-    buildMizanToc();
-    mizanTocModal.hidden = false;
-  }
-  function closeMizanToc() {
-    if (mizanTocModal) mizanTocModal.hidden = true;
-  }
+  function openMizanToc() { if (!mizanTocModal) return; buildMizanToc(); mizanTocModal.hidden = false; }
+  function closeMizanToc() { if (mizanTocModal) mizanTocModal.hidden = true; }
 
   if (mizanPrevBtn) mizanPrevBtn.addEventListener('click', () => showMizanPage(mizanCurrentPage - 1));
   if (mizanNextBtn) mizanNextBtn.addEventListener('click', () => showMizanPage(mizanCurrentPage + 1));
@@ -1344,7 +1321,6 @@ const MizanPanel = (function () {
 
       mizanContentKeys = contents.map((c) => c.content_id);
 
-      // یادداشت‌ها و تگ‌ها
       try {
         const allNotes = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
         mizanNotes = allNotes.flat();
@@ -1355,30 +1331,21 @@ const MizanPanel = (function () {
         mizanTags = await filterTrivialTags(allTags.flat(), surah, ayah);
       } catch (e) { mizanTags = []; }
 
-      // محدودهٔ آیات از اولین content
+      // محدوده از نشانگر title
       let range = null;
-      const firstRaw = cleanContentText(contents[0]?.text || '');
-      const rangeMatch = firstRaw.match(
-        /\[\s*سوره\s+.+?:\s*آیات?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\s*\]/
-      );
-      if (rangeMatch) {
-        range = {
-          from: Number(faToEnDigits(rangeMatch[1])),
-          to:   Number(faToEnDigits(rangeMatch[2])),
-        };
-      }
-
-      // تجزیه و رندر همهٔ محتواها
       const allBlocks = [];
       for (const c of contents) {
-        allBlocks.push(...parseContent(c.text));
+        const blocks = parseContent(c.text);
+        if (!range) {
+          const rt = blocks.find((b) => b.type === 'range-title');
+          if (rt) range = { from: rt.from, to: rt.to };
+        }
+        allBlocks.push(...blocks);
       }
       const html = renderBlocks(allBlocks);
 
       showMizanState('content', { html, range });
 
-      // تزئین DOM
-      decorateAyahAnchors(mizanContent);
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
       paginateMizan(mizanContent);
@@ -1393,9 +1360,7 @@ const MizanPanel = (function () {
           showMizanPage(opts.keepPage);
         } else {
           let saved = null;
-          try {
-            saved = await Store.getMizanProgress(mizanContentKeys.join('-'));
-          } catch (e) {}
+          try { saved = await Store.getMizanProgress(mizanContentKeys.join('-')); } catch (e) {}
           if (typeof saved === 'number' && saved >= 0 && saved < mizanPages.length) {
             showMizanPage(saved);
           } else {
