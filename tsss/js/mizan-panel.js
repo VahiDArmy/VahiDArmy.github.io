@@ -90,12 +90,70 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  function normalizeChars(s) {
+  // --- گروه‌های نویسه‌ای مشترک بین نمایش و مقایسه ---
+  //
+  // نویسه‌های نامرئی: هر چیزی که به‌عنوان «جداکننده» در متن چاپی
+  // به‌کار می‌رفت ولی در وب فقط ZWNJ (U+200C) معنای «نیم‌فاصله» دارد.
+  //
+  const INVISIBLE_SEPARATORS =
+    '\u200B' +        // ZWSP
+    '\u200D' +        // ZWJ
+    '\u200E' +        // LRM
+    '\u200F' +        // RLM
+    '\u061C' +        // ALM
+    '\u202A-\u202E' + // LRE/RLE/PDF/LRO/RLO
+    '\u2066-\u2069' + // LRI/RLI/FSI/PDI
+    '\uFEFF';         // BOM
+
+  // Presentation Forms-A برای ی و ک
+  const YEH_PRESENTATION = '[\uFBFC-\uFBFF\uFEEF\uFEF0\uFEF1-\uFEF4]';
+  const KAF_PRESENTATION = '[\uFED9-\uFEDC]';
+
+  // --- تبدیل استاندارد: یکسان‌سازی برای «نمایش» و «مقایسه» ---
+  //
+  // این تابع در دو جا استفاده می‌شود:
+  //   ۱) نمایش: قبل از رندر متن، تا نویسه‌های عربی-نما به فارسی تبدیل شوند
+  //   ۲) مقایسه: قبل از جست‌وجوی گزیده/یادداشت، تا متن رندرشده با متن خام
+  //      تطبیق یابد
+  //
+  function canonizeLetters(s) {
     return String(s == null ? '' : s)
-      .replace(/\u0649/g, '\u06CC')
-      .replace(/\u064A/g, '\u06CC')
-      .replace(/\u0643/g, '\u06A9')
-      .replace(/\u200B/g, '\u200C');
+      // Presentation Forms → canonical
+      .replace(new RegExp(YEH_PRESENTATION, 'g'), '\u06CC')
+      .replace(new RegExp(KAF_PRESENTATION, 'g'), '\u06A9')
+      // Arabic → Farsi
+      .replace(/\u064A/g, '\u06CC')  // ي → ی
+      .replace(/\u0649/g, '\u06CC')  // ى → ی
+      .replace(/\u06D2/g, '\u06CC')  // ے → ی
+      .replace(/\u06D0/g, '\u06CC')  // ې → ی
+      .replace(/\u06CD/g, '\u06CC')  // ۍ → ی
+      .replace(/\u0643/g, '\u06A9'); // ك → ک
+  }
+
+  function canonizeInvisibles(s) {
+    // ابتدا: نامرئی بین دو حرف عربی → ZWNJ
+    const between = new RegExp(
+      `([\\u0600-\\u06FF])[${INVISIBLE_SEPARATORS}]+(?=[\\u0600-\\u06FF])`,
+      'g'
+    );
+    s = s.replace(between, '$1\u200C');
+    // سپس: نامرئی باقی‌مانده → حذف (به‌جز ZWNJ که باید بماند)
+    const remain = new RegExp(`[${INVISIBLE_SEPARATORS}]`, 'g');
+    s = s.replace(remain, '');
+    // ادغام ZWNJهای تکراری
+    s = s.replace(/\u200C{2,}/g, '\u200C');
+    return s;
+  }
+
+  // نسخهٔ کامل برای نمایش (کاراکترهای عربی-نما را هم تبدیل می‌کند)
+  function normalizePersianChars(text) {
+    return canonizeInvisibles(canonizeLetters(text));
+  }
+
+  // نسخهٔ سبک برای مقایسه (یادداشت‌ها و تگ‌ها)
+  function normalizeChars(text) {
+    return canonizeInvisibles(canonizeLetters(text))
+      .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
   }
 
   function stripDiacritics(s) {
@@ -112,33 +170,7 @@ const MizanPanel = (function () {
     return diacritics / letters > 0.10;
   }
 
-  // ============================================================
-  // 2b) لایهٔ تبدیل «نمایش چاپی» → «نمایش وب»
-  // ============================================================
-  //
-  // فایل content یک متن دیجیتالی‌شدهٔ چاپی است و سه دسته artifact
-  // در آن باقی مانده که پیش از رندر باید پاک شوند — نه به‌عنوان
-  // سه اصلاح مستقل، بلکه به‌عنوان یک مسئولیت واحد:
-  //
-  //  ۱) نویسه‌های عربی در متن فارسی (ي U+064A، ك U+0643، ى U+0649)
-  //  ۲) RLM/LRM که در چاپ قدیم به‌جای ZWNJ برای نیم‌فاصله به‌کار می‌رفت
-  //  ۳) شکست پاراگراف در اثر پایان صفحهٔ چاپی که ادامهٔ جمله است
-  //
-
-  // ---- نویسه‌های عربی → فارسی + نیم‌فاصله‌سازی ----
-  function normalizePersianChars(text) {
-    return String(text == null ? '' : text)
-      // RLM/LRM بین دو حرف عربی-خط = نیم‌فاصلهٔ چاپی → ZWNJ
-      .replace(/([\u0600-\u06FF])[\u200E\u200F]+(?=[\u0600-\u06FF])/g, '$1\u200C')
-      // حذف باقی‌ماندهٔ نشانه‌های جهت
-      .replace(/[\u200E\u200F]/g, '')
-      // نویسه‌های عربی → معادل فارسی
-      .replace(/\u064A/g, '\u06CC')  // ي → ی
-      .replace(/\u0649/g, '\u06CC')  // ى → ی
-      .replace(/\u0643/g, '\u06A9'); // ك → ک
-  }
-
-  // نرمال‌سازی متن فارسی، با محافظت از متن قرآنی داخل ﴿...﴾
+  // --- نرمال‌سازی متن فارسی، با محافظت از متن قرآنی داخل ﴿...﴾ ---
   function normalizePersianString(text) {
     const s = String(text == null ? '' : text);
     if (!s) return s;
@@ -155,7 +187,9 @@ const MizanPanel = (function () {
     return out;
   }
 
-  // آیا این بلوک باید نرمال‌سازی شود؟ (متن عربی خالص نباید تغییر کند)
+  // ============================================================
+  // 2b) لایهٔ تبدیل «نمایش چاپی» → «نمایش وب»
+  // ============================================================
   function shouldNormalizeBlock(block) {
     if (!block) return false;
     if (block.type === 'anchor' || block.type === 'hr' || block.type === 'range-title') return false;
@@ -168,11 +202,11 @@ const MizanPanel = (function () {
     if (!shouldNormalizeBlock(block)) return block;
     const copy = { ...block };
     if (typeof copy.text === 'string') copy.text = normalizePersianString(copy.text);
+    if (typeof copy.body === 'string') copy.body = normalizePersianString(copy.body);
     if (Array.isArray(copy.items)) copy.items = copy.items.map(normalizePersianString);
     return copy;
   }
 
-  // ---- پیوند پاراگراف‌های شکسته‌شده در اثر صفحه‌آرایی چاپی ----
   function escapeRe(s) {
     return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
@@ -206,13 +240,9 @@ const MizanPanel = (function () {
 
   function shouldRejoinParagraphs(prevText, nextText) {
     if (!prevText || !nextText) return false;
-    // سیگنال قوی: نقل‌قول/پرانتز باز مانده در بلوک قبل
     if (hasUnclosedBracket(prevText)) return true;
-    // اگر بلوک قبل با علامت پایان جمله تمام شده → پاراگراف واقعی
     if (endsWithTerminator(prevText)) return false;
-    // اگر بلوک بعد نشانهٔ شروع تازه دارد → پاراگراف واقعی
     if (startsWithNewBlockMarker(nextText)) return false;
-    // در غیر این صورت: ادامهٔ جمله است
     return true;
   }
 
@@ -236,7 +266,6 @@ const MizanPanel = (function () {
     return out;
   }
 
-  // ---- نقطهٔ ورود لایه ----
   function processPrintArtifacts(blocks) {
     const normalized = blocks.map(normalizeBlock);
     return rejoinPrintBreaks(normalized);
@@ -400,7 +429,6 @@ const MizanPanel = (function () {
     s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
     s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
     s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
-    // شکست خطوط چاپی داخل یک پاراگراف → فاصلهٔ ساده (نه <br>)
     s = s.replace(/[ \t]*\n+[ \t]*/g, ' ');
 
     return s;
@@ -1265,11 +1293,6 @@ const MizanPanel = (function () {
   // ============================================================
   // 8) PAGINATION
   // ============================================================
-  //
-  // قاعده: هر H3 یا H4 یک صفحهٔ جدید است.
-  // گروهی که فقط شامل یک سرتیتر باشد با گروه بعدی ادغام می‌شود
-  // تا سرتیتر تنها در یک صفحهٔ خالی نماند.
-  //
   function paginateMizan(rootEl) {
     const children = Array.from(rootEl.children)
       .filter((c) => !c.classList.contains('mizan-orphans'));
@@ -1485,7 +1508,6 @@ const MizanPanel = (function () {
         allBlocks.push(...blocks);
       }
 
-      // ★ لایهٔ واحد تبدیل «نمایش چاپی» → «نمایش وب»
       const processed = processPrintArtifacts(allBlocks);
       const html = renderBlocks(processed);
 
