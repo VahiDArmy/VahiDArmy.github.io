@@ -1,17 +1,14 @@
 // =============================================================
-// پنل تفسیر المیزان — رندر، صفحه‌بندی، یادداشت‌ها، تگ‌گذاری آیه‌ای
-// این ماژول از work.js جدا شده و از طریق window.MizanPanel
-// در دسترس است. تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
-//
-// تغییرات نسخهٔ جدید:
-//   • صفحه‌بندی، breadcrumb می‌سازد: تیترهای بالاتر روی هر صفحه
-//     تکرار می‌شوند (H2 در بالای صفحه‌های H3، H2+H3 در بالای H4).
-//   • تگ‌گذاری آیه‌ای فقط روی «صفحهٔ جاری» اجرا می‌شود و
-//     تگ‌های صفحات دیگر حفظ می‌شوند.
+// پنل تفسیر المیزان — نسخهٔ بازنویسی‌شده از صفر
+//   • خط لولهٔ رندر محتوا کاملاً بازنویسی شد (بدون marked)
+//   • صفحه‌بندی، یادداشت‌ها و تگ‌گذاری حفظ شدند
+//   • تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
 // =============================================================
 const MizanPanel = (function () {
 
-  // ---------- DOM ----------
+  // ============================================================
+  // 0) DOM
+  // ============================================================
   const mizanEmpty   = document.getElementById('mizanEmpty');
   const mizanContent = document.getElementById('mizanContent');
   const mizanLoading = document.getElementById('mizanLoading');
@@ -54,7 +51,9 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  // ---------- State ----------
+  // ============================================================
+  // 1) STATE
+  // ============================================================
   let mizanPages = [];
   let mizanCurrentPage = 0;
   let mizanContentKeys = [];
@@ -76,57 +75,339 @@ const MizanPanel = (function () {
   let lastSurah = 1;
   let lastAyah = 1;
 
-  // ---------- Helpers ----------
+  // ============================================================
+  // 2) UTILITIES
+  // ============================================================
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = String(str == null ? '' : str);
     return div.innerHTML;
   }
 
-  function renderMarkdown(md) {
-    if (!md) return '';
-    if (!window.marked || !window.DOMPurify) {
-      const div = document.createElement('div');
-      div.textContent = md;
-      return div.innerHTML.replace(/\n/g, '<br>');
-    }
-    const raw = marked.parse(md);
-    const clean = DOMPurify.sanitize(raw, {
-      ADD_ATTR: ['target', 'rel', 'id'],
-      ADD_TAGS: ['span'],
-    });
-    const tmp = document.createElement('div');
-    tmp.innerHTML = clean;
-    tmp.querySelectorAll('table').forEach((table) => {
-      if (table.parentElement?.classList.contains('table-scroll')) return;
-      const wrap = document.createElement('div');
-      wrap.className = 'table-scroll';
-      table.parentNode.insertBefore(wrap, table);
-      wrap.appendChild(table);
-    });
-    return tmp.innerHTML;
-  }
-
   function faToEnDigits(s) {
     return String(s).replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
   }
 
-  function normalizeExcerptChars(s) {
+  // نرمال‌سازی نویسه‌های عربی/فارسی — طول متن تغییر نمی‌کند
+  function normalizeChars(s) {
     return String(s == null ? '' : s)
-      .replace(/\u0649/g, '\u06CC')
-      .replace(/\u064A/g, '\u06CC')
-      .replace(/\u0643/g, '\u06A9')
-      .replace(/\u200B/g, '\u200C');
+      .replace(/\u0649/g, '\u06CC')  // ى → ی
+      .replace(/\u064A/g, '\u06CC')  // ي → ی
+      .replace(/\u0643/g, '\u06A9')  // ك → ک
+      .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
   }
 
+  // حذف اعراب برای مقایسه‌های سطحی
   function stripDiacritics(s) {
     return String(s == null ? '' : s).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
   }
 
+  function cleanContentText(s) {
+    return String(s || '')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/^\s*\*{4,}\s*\n+/, '')
+      .replace(/\n+\s*\*{4,}\s*$/, '')
+      .trim();
+  }
+
   // ============================================================
-  // پیمایشگر text-node — متن تمیز + نگاشت آفست→گره
+  // 3) CONTENT PIPELINE — از صفر
   // ============================================================
-  const SKIP_CLASSES = ['mizan-note-inline', 'mizan-tag-marker', 'mizan-caret', 'mizan-breadcrumb'];
+  //
+  // مرحله ۱: تجزیهٔ خط‌به‌خط متن به بلوک‌های تایپ‌دار
+  // مرحله ۲: رندر هر بلوک به HTML
+  // مرحله ۳: پردازش DOM (تزئین آیات، تزریق یادداشت و تگ)
+  //
+
+  // ---- 3.1: تجزیهٔ متن به بلوک ----
+  function parseContent(rawText) {
+    const text = cleanContentText(rawText);
+    const lines = text.split('\n');
+    const blocks = [];
+
+    let paragraphBuf = [];
+    let inCode = false;
+    let codeLang = '';
+    let codeBuf = [];
+
+    function flushParagraph() {
+      const joined = paragraphBuf.join('\n').trim();
+      if (joined) blocks.push({ type: 'paragraph', text: joined });
+      paragraphBuf = [];
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      // داخل code block
+      if (inCode) {
+        if (/^```\s*$/.test(trimmed)) {
+          inCode = false;
+          blocks.push({ type: 'code', lang: codeLang, body: codeBuf.join('\n') });
+          codeLang = '';
+          codeBuf = [];
+        } else {
+          codeBuf.push(line);
+        }
+        continue;
+      }
+
+      // شروع code block
+      const fence = trimmed.match(/^```([a-zA-Z0-9_-]*)\s*$/);
+      if (fence) {
+        flushParagraph();
+        inCode = true;
+        codeLang = (fence[1] || '').toLowerCase();
+        codeBuf = [];
+        continue;
+      }
+
+      // خط خالی → پایان پاراگراف
+      if (!trimmed) { flushParagraph(); continue; }
+
+      // heading
+      const headingMatch = trimmed.match(/^(#{1,6})\s+(.+?)\s*#*\s*$/);
+      if (headingMatch) {
+        flushParagraph();
+        blocks.push({
+          type: 'heading',
+          level: headingMatch[1].length,
+          text: headingMatch[2].trim(),
+        });
+        continue;
+      }
+
+      // anchor آیه: <span id="surah-X-ayah-Y"></span>
+      const anchorMatch = trimmed.match(/^<span\s+id=["']surah-(\d+)-ayah-(\d+)["']\s*>\s*<\/span>$/i);
+      if (anchorMatch) {
+        flushParagraph();
+        blocks.push({
+          type: 'anchor',
+          surah: Number(anchorMatch[1]),
+          ayah: Number(anchorMatch[2]),
+        });
+        continue;
+      }
+
+      // نشانگر range: [سوره ...: آیات ... تا ...]
+      if (/^\[\s*سوره\s+.+?:\s*آیه(?:ات)?\s*[\d\u06F0-\u06F9]+\s*(?:تا\s*[\d\u06F0-\u06F9]+\s*)?\]$/.test(trimmed)) {
+        flushParagraph();
+        blocks.push({ type: 'range', text: trimmed });
+        continue;
+      }
+
+      // خط جداکننده
+      if (/^[-*_]{3,}$/.test(trimmed)) {
+        flushParagraph();
+        blocks.push({ type: 'hr' });
+        continue;
+      }
+
+      // نقل‌قول
+      if (trimmed.startsWith('>')) {
+        flushParagraph();
+        const qtext = trimmed.replace(/^>\s?/, '');
+        const last = blocks[blocks.length - 1];
+        if (last && last.type === 'quote') {
+          last.text += '\n' + qtext;
+        } else {
+          blocks.push({ type: 'quote', text: qtext });
+        }
+        continue;
+      }
+
+      // لیست نقطه‌ای
+      const ulMatch = trimmed.match(/^[-*•]\s+(.+)$/);
+      if (ulMatch) {
+        flushParagraph();
+        const last = blocks[blocks.length - 1];
+        if (last && last.type === 'ul') {
+          last.items.push(ulMatch[1]);
+        } else {
+          blocks.push({ type: 'ul', items: [ulMatch[1]] });
+        }
+        continue;
+      }
+
+      // لیست شماره‌دار
+      const olMatch = trimmed.match(/^(\d+)[.)]\s+(.+)$/);
+      if (olMatch) {
+        flushParagraph();
+        const last = blocks[blocks.length - 1];
+        if (last && last.type === 'ol') {
+          last.items.push(olMatch[2]);
+        } else {
+          blocks.push({ type: 'ol', items: [olMatch[2]] });
+        }
+        continue;
+      }
+
+      // خط معمولی → برو در بافر پاراگراف
+      paragraphBuf.push(trimmed);
+    }
+
+    if (inCode) {
+      blocks.push({ type: 'code', lang: codeLang, body: codeBuf.join('\n') });
+    }
+    flushParagraph();
+
+    return blocks;
+  }
+
+  // ---- 3.2: رندر inline ----
+  function renderInline(rawText) {
+    let s = escapeHtml(rawText);
+
+    // لینک مارک‌داون [label](url)
+    s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, url) => {
+      const safeUrl = escapeHtml(url);
+      return `<a href="${safeUrl}" target="_blank" rel="noopener">${label}</a>`;
+    });
+
+    // bold
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+
+    // italic — فقط تک‌ستاره، نه بخشی از bold
+    s = s.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+
+    // کد inline
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // خط جدید داخل پاراگراف
+    s = s.replace(/\n/g, '<br>');
+
+    return s;
+  }
+
+  // ---- 3.3: رندر بلوک ----
+  function renderBlock(block) {
+    switch (block.type) {
+      case 'heading': {
+        const lvl = Math.min(Math.max(block.level, 1), 6);
+        return `<h${lvl}>${renderInline(block.text)}</h${lvl}>`;
+      }
+      case 'anchor':
+        return `<span id="surah-${block.surah}-ayah-${block.ayah}"></span>`;
+      case 'range':
+        // نشانگر در UI نمایش داده نمی‌شود (فقط برای محاسبهٔ range استفاده شد)
+        return '';
+      case 'hr':
+        return '<hr>';
+      case 'quote':
+        return `<blockquote>${renderInline(block.text)}</blockquote>`;
+      case 'ul':
+        return `<ul>${block.items.map((i) => `<li>${renderInline(i)}</li>`).join('')}</ul>`;
+      case 'ol':
+        return `<ol>${block.items.map((i) => `<li>${renderInline(i)}</li>`).join('')}</ol>`;
+      case 'code': {
+        const lang = block.lang || '';
+        const cls = lang ? ` class="language-${escapeHtml(lang)}"` : '';
+        return `<pre><code${cls}>${escapeHtml(block.body)}</code></pre>`;
+      }
+      case 'paragraph':
+      default:
+        return `<p>${renderInline(block.text)}</p>`;
+    }
+  }
+
+  function renderBlocks(blocks) {
+    return blocks.map(renderBlock).join('\n');
+  }
+
+  // ---- 3.4: پردازش DOM پس از رندر ----
+  //
+  // هر anchor آیه، بلوک بعدی را (اگر عربی باشد) به عنوان «بلوک آیه»
+  // تزئین می‌کند تا CSS آن را به شکل یک آیهٔ برجسته نشان دهد.
+  function looksArabic(text) {
+    const stripped = String(text || '').replace(/[\s\u200C\u200E\u200F]/g, '');
+    if (!stripped) return false;
+    const arabicChars = (stripped.match(/[\u0600-\u06FF]/g) || []).length;
+    return arabicChars / stripped.length > 0.85;
+  }
+
+  function decorateAyahAnchors(container) {
+    const anchors = container.querySelectorAll('span[id^="surah-"]');
+    anchors.forEach((anchor) => {
+      const idMatch = anchor.id.match(/^surah-(\d+)-ayah-(\d+)$/);
+      if (!idMatch) return;
+      const ayahNum = Number(idMatch[2]);
+      anchor.dataset.ayah = String(ayahNum);
+
+      // بلوک بعدی را پیدا کن (با پریدن از روی anchor های دیگر)
+      let next = anchor.nextElementSibling;
+      while (next && next.tagName === 'SPAN' && /^surah-/.test(next.id || '')) {
+        next = next.nextElementSibling;
+      }
+      if (!next) return;
+
+      if (next.tagName === 'PRE') {
+        next.classList.add('mizan-ayah-block');
+      } else if (next.tagName === 'P') {
+        if (looksArabic(next.textContent || '')) {
+          next.classList.add('mizan-arabic-raw');
+        }
+        next.classList.add('mizan-ayah-block');
+      }
+    });
+  }
+
+  // ============================================================
+  // 4) STATE MACHINE
+  // ============================================================
+  function showMizanState(state, payload) {
+    mizanEmpty.classList.add('hidden');
+    mizanLoading.classList.add('hidden');
+    mizanContent.classList.add('hidden');
+    mizanError.classList.add('hidden');
+    if (mizanPager) mizanPager.classList.add('hidden');
+    if (mizanRange) mizanRange.textContent = '';
+
+    if (state === 'empty') mizanEmpty.classList.remove('hidden');
+    else if (state === 'loading') mizanLoading.classList.remove('hidden');
+    else if (state === 'content') {
+      mizanContent.classList.remove('hidden');
+      mizanContent.innerHTML = payload.html || '';
+      if (mizanRange && payload.range) {
+        const { from, to } = payload.range;
+        mizanRange.textContent = (from === to)
+          ? `آیهٔ ${UI.toPersianDigits(from)}`
+          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
+      }
+    } else if (state === 'error') {
+      mizanError.classList.remove('hidden');
+      mizanError.textContent = payload.message || 'خطا در بارگذاری تفسیر المیزان';
+    }
+  }
+
+  // ============================================================
+  // 5) CARET / ANCHOR — برای سیستم یادداشت
+  // ============================================================
+  function insertCaretAtRange(range) {
+    removeCaret();
+    if (!range) return;
+    try {
+      const caret = document.createElement('span');
+      caret.className = 'mizan-caret';
+      caret.setAttribute('aria-hidden', 'true');
+      const r = range.cloneRange();
+      r.collapse(true);
+      r.insertNode(caret);
+      mizanCaretEl = caret;
+    } catch (e) {}
+  }
+
+  function removeCaret() {
+    if (mizanCaretEl && mizanCaretEl.parentNode) {
+      mizanCaretEl.parentNode.removeChild(mizanCaretEl);
+    }
+    mizanCaretEl = null;
+  }
+
+  const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
+  const NOTE_CONTEXT_CHARS = 30;
+  const SKIP_CLASSES = ['mizan-note-inline', 'mizan-tag-marker', 'mizan-caret'];
 
   function collectBlockText(block) {
     const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
@@ -141,7 +422,7 @@ const MizanPanel = (function () {
           p = p.parentElement;
         }
         return NodeFilter.FILTER_ACCEPT;
-      }
+      },
     });
 
     let text = '';
@@ -170,9 +451,7 @@ const MizanPanel = (function () {
           r.setStart(item.node, local);
           r.setEnd(item.node, local);
           return r;
-        } catch (e) {
-          return null;
-        }
+        } catch (e) { return null; }
       }
     }
     const last = map[map.length - 1];
@@ -181,152 +460,8 @@ const MizanPanel = (function () {
       r.setStart(last.node, last.len);
       r.setEnd(last.node, last.len);
       return r;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
-
-  // ---------- State machine ----------
-  function showMizanState(state, payload) {
-    mizanEmpty.classList.add('hidden');
-    mizanLoading.classList.add('hidden');
-    mizanContent.classList.add('hidden');
-    mizanError.classList.add('hidden');
-    if (mizanPager) mizanPager.classList.add('hidden');
-    if (mizanRange) mizanRange.textContent = '';
-
-    if (state === 'empty') mizanEmpty.classList.remove('hidden');
-    else if (state === 'loading') mizanLoading.classList.remove('hidden');
-    else if (state === 'content') {
-      mizanContent.classList.remove('hidden');
-      mizanContent.innerHTML = payload.html || '';
-      if (mizanRange && payload.range) {
-        const { from, to } = payload.range;
-        mizanRange.textContent = (from === to)
-          ? `آیهٔ ${UI.toPersianDigits(from)}`
-          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
-      }
-    } else if (state === 'error') {
-      mizanError.classList.remove('hidden');
-      mizanError.textContent = payload.message || 'خطا در بارگذاری تفسیر المیزان';
-    }
-  }
-
-  function cleanMizanText(text) {
-    if (!text) return '';
-    return String(text)
-      .replace(/^\s*\*{4,}\s*\n+/, '')
-      .replace(/\n+\s*\*{4,}\s*$/, '')
-      .trim();
-  }
-
-  function normalizeMizanChars(rootEl) {
-    if (!rootEl) return;
-    const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        let p = node.parentElement;
-        while (p && p !== rootEl) {
-          if (p.matches && (p.matches('code.language-arabic') || p.matches('.mizan-arabic-raw'))) {
-            return NodeFilter.FILTER_REJECT;
-          }
-          p = p.parentElement;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
-    const nodes = [];
-    let n;
-    while ((n = walker.nextNode())) nodes.push(n);
-    nodes.forEach((textNode) => {
-      textNode.nodeValue = textNode.nodeValue
-        .replace(/\u0649/g, '\u06CC')
-        .replace(/\u064A/g, '\u06CC')
-        .replace(/\u0643/g, '\u06A9')
-        .replace(/\u200B/g, '\u200C');
-    });
-  }
-
-  function styleMizanAyahs(rootEl) {
-    if (!rootEl) return;
-    const spans = rootEl.querySelectorAll('span[id^="surah-"]');
-    spans.forEach((span) => {
-      const m = span.id.match(/^surah-(\d+)-ayah-(\d+)$/);
-      if (!m) return;
-      const ayahNum = Number(m[2]);
-
-      let target = null;
-
-      const parentP = (span.parentElement && span.parentElement.tagName === 'P')
-        ? span.parentElement
-        : null;
-      if (parentP) {
-        const others = Array.from(parentP.childNodes)
-          .filter((n) => n !== span)
-          .map((n) => n.textContent || '')
-          .join('')
-          .trim();
-        if (others.length > 0) {
-          parentP.classList.add('mizan-arabic-raw');
-          target = parentP;
-        }
-      }
-
-      if (!target) {
-        let node = span;
-        let guard = 0;
-        outer: while (node && node !== rootEl && guard < 3000) {
-          guard++;
-          let sib = node.nextSibling;
-          while (sib) {
-            if (sib.nodeType === 1) {
-              if (sib.tagName === 'PRE') {
-                if (sib.querySelector('code.language-arabic')) { target = sib; break outer; }
-              } else if (sib.tagName === 'P') {
-                if (sib.contains(span)) { sib = sib.nextSibling; continue; }
-                if (sib.textContent.trim() === '') { sib = sib.nextSibling; continue; }
-                sib.classList.add('mizan-arabic-raw');
-                target = sib; break outer;
-              } else if (/^(H[1-6]|HR)$/.test(sib.tagName)) {
-                break outer;
-              } else if (/^(BLOCKQUOTE|UL|OL|DIV|TABLE)$/.test(sib.tagName)) {
-                target = sib; break outer;
-              }
-            }
-            sib = sib.nextSibling;
-          }
-          node = node.parentNode;
-          if (!node) break;
-        }
-      }
-
-      if (target) target.dataset.ayah = String(ayahNum);
-    });
-  }
-
-  // ---------- Caret / anchor ----------
-  function insertCaretAtRange(range) {
-    removeCaret();
-    if (!range) return;
-    try {
-      const caret = document.createElement('span');
-      caret.className = 'mizan-caret';
-      caret.setAttribute('aria-hidden', 'true');
-      const r = range.cloneRange();
-      r.collapse(true);
-      r.insertNode(caret);
-      mizanCaretEl = caret;
-    } catch (e) {}
-  }
-
-  function removeCaret() {
-    if (mizanCaretEl && mizanCaretEl.parentNode) {
-      mizanCaretEl.parentNode.removeChild(mizanCaretEl);
-    }
-    mizanCaretEl = null;
-  }
-
-  const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
-  const NOTE_CONTEXT_CHARS = 30;
 
   function getTextOffsetInBlock(block, container, offset) {
     let pos = 0;
@@ -383,17 +518,19 @@ const MizanPanel = (function () {
     return { block, before, after };
   }
 
-  // ---------- Notes ----------
+  // ============================================================
+  // 6) NOTES
+  // ============================================================
   function insertInlineNoteAt(rootEl, note) {
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
-    const beforeN = normalizeExcerptChars(note.anchor_before || '');
-    const afterN  = normalizeExcerptChars(note.anchor_after  || '');
+    const beforeN = normalizeChars(note.anchor_before || '');
+    const afterN  = normalizeChars(note.anchor_after  || '');
     const fullN   = beforeN + afterN;
 
     for (const block of blocks) {
       const { text, map } = collectBlockText(block);
       if (!text) continue;
-      const normText = normalizeExcerptChars(text);
+      const normText = normalizeChars(text);
 
       let posInBlock = -1;
       if (fullN && normText.indexOf(fullN) !== -1) {
@@ -457,325 +594,7 @@ const MizanPanel = (function () {
     });
   }
 
-  // ============================================================
-  // Tag parsing — ورودی AI:
-  //   <شمارهٔ آیه> ← <گزیدهٔ شروع> … <گزیدهٔ پایان> |<شمارهٔ آیه>
-  // خروجی: [{ ayah, startExcerpt, endExcerpt }]
-  // ============================================================
-  function parseMizanTaggerResponse(text) {
-    if (!text) return [];
-    const tags = [];
-    const lines = String(text).split(/\r?\n/);
-
-    const ARROW  = '[←⟵⟸⇐➔➜➝➞→►▶▸]';
-    const DOTS   = '(?:…+|\\.{3,}|⋯|•••)';
-    const PIPE   = '[|¦│┃｜]';
-    const NUM    = '[\\u06F0-\\u06F9\\d]+';
-
-    const lineRe = new RegExp(
-      '^(' + NUM + ')\\s*' + ARROW + '\\s*' +
-      '(.+?)\\s*' + DOTS + '\\s*' +
-      '(.+?)\\s*' +
-      '(?:' + PIPE + '\\s*(' + NUM + '))?' +
-      '\\s*$'
-    );
-
-    for (const raw of lines) {
-      let line = raw.trim();
-      if (!line) continue;
-
-      line = line.replace(/^[-*•·●◆◇]\s+/, '');
-      line = line.replace(/^[`«"'(\[]+/, '');
-      line = line.replace(/[`»"')\]]+$/, '').trim();
-      if (!line) continue;
-
-      const m = line.match(lineRe);
-      if (!m) continue;
-
-      const aStart = m[1] ? Number(faToEnDigits(m[1])) : 0;
-      const aEnd   = m[4] ? Number(faToEnDigits(m[4])) : 0;
-
-      const ayah = aStart || aEnd;
-      if (!ayah) continue;
-
-      const startExcerpt = (m[2] || '').trim();
-      const endExcerpt   = (m[3] || '').trim();
-      if (!startExcerpt || !endExcerpt) continue;
-
-      if ((startExcerpt.length + endExcerpt.length) < 8) continue;
-
-      tags.push({ ayah, startExcerpt, endExcerpt });
-    }
-
-    return tags;
-  }
-
-  // ============================================================
-  // فیلتر تگ‌های بدیهی (ترجمه/عین آیه) — روی کل آیه کار می‌کند
-  // ============================================================
-  async function filterTrivialTags(tags, surah, ayah) {
-    if (!tags || !tags.length) return tags;
-    let ayahObj = null;
-    try {
-      ayahObj = await QuranData.getAyah(surah, ayah);
-    } catch (e) {
-      return tags;
-    }
-    if (!ayahObj) return tags;
-
-    const translation = stripDiacritics(normalizeExcerptChars(ayahObj.fa || ''));
-    const arabic      = stripDiacritics(normalizeExcerptChars(ayahObj.ar || ''));
-
-    const out = [];
-    for (const tag of tags) {
-      const sN = stripDiacritics(normalizeExcerptChars(tag.startExcerpt || ''));
-      const eN = stripDiacritics(normalizeExcerptChars(tag.endExcerpt   || ''));
-
-      if (sN.length < 3 || eN.length < 3) { out.push(tag); continue; }
-
-      const inTrans = translation.length > 0 &&
-        translation.includes(sN) && translation.includes(eN);
-      const inAr = arabic.length > 0 &&
-        arabic.includes(sN) && arabic.includes(eN);
-
-      if (inTrans || inAr) continue;
-      out.push(tag);
-    }
-    return out;
-  }
-
-  // ============================================================
-  // یافتن گزیده در یک ریشهٔ مشخص (صفحه یا کل محتوا)
-  // ============================================================
-  function findExcerptRange(rootEl, excerpt) {
-    const raw = String(excerpt || '').trim();
-    if (!raw || !rootEl) return null;
-    const needle = normalizeExcerptChars(raw);
-    if (!needle) return null;
-
-    const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
-    for (const block of blocks) {
-      const { text, map } = collectBlockText(block);
-      if (!text) continue;
-      const normText = normalizeExcerptChars(text);
-      const idx = normText.indexOf(needle);
-      if (idx < 0) continue;
-
-      const startRange = rangeAtOffsetInBlock(map, idx);
-      const endRange   = rangeAtOffsetInBlock(map, idx + needle.length);
-      if (startRange && endRange) return { startRange, endRange };
-    }
-    return null;
-  }
-
-  function applyMizanTags(rootEl, tags) {
-    if (!rootEl || !tags || !tags.length) return;
-
-    const items = [];
-    for (const tag of tags) {
-      const start = findExcerptRange(rootEl, tag.start_excerpt);
-      const end   = findExcerptRange(rootEl, tag.end_excerpt);
-      if (!start || !end) continue;
-      items.push({ tag, startRange: start.startRange, endRange: end.endRange });
-    }
-    if (!items.length) return;
-
-    const highlightRanges = [];
-
-    for (const item of items) {
-      const endMarker = document.createElement('span');
-      endMarker.className = 'mizan-tag-marker';
-      endMarker.dataset.tagId = item.tag.id;
-      endMarker.textContent = `|${UI.toPersianDigits(item.tag.ayah)}`;
-      item.endRange.insertNode(endMarker);
-
-      const startMarker = document.createElement('span');
-      startMarker.className = 'mizan-tag-marker';
-      startMarker.dataset.tagId = item.tag.id;
-      startMarker.textContent = `${UI.toPersianDigits(item.tag.ayah)} ←`;
-      item.startRange.insertNode(startMarker);
-
-      try {
-        const hl = document.createRange();
-        hl.setStartAfter(startMarker);
-        hl.setEndBefore(endMarker);
-        highlightRanges.push(hl);
-      } catch (e) {}
-    }
-
-    if (window.CSS && CSS.highlights && highlightRanges.length) {
-      try {
-        CSS.highlights.set('mizan-tag', new Highlight(...highlightRanges));
-      } catch (e) {
-        console.warn('[mizan] highlight failed:', e);
-      }
-    }
-  }
-
-  // ============================================================
-  // صفحه‌بندی با breadcrumb — تیترهای بالاتر روی هر صفحه حفظ می‌شوند
-  // ============================================================
-  const HEADING_LEVEL_OF = { H2: 2, H3: 3, H4: 4 };
-
-  function paginateMizan(rootEl) {
-    const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
-    const orphansBox = rootEl.querySelector('.mizan-orphans');
-
-    const activeHeadings = { 2: null, 3: null, 4: null };
-    const groups = [];
-    let currentGroup = null;
-
-    for (const child of children) {
-      const tag = child.tagName;
-      const level = HEADING_LEVEL_OF[tag] || 0;
-      const text = level ? child.textContent.trim() : '';
-
-      if (level) {
-        for (let l = level; l <= 4; l++) activeHeadings[l] = null;
-        activeHeadings[level] = text;
-      }
-
-      const isPageBreak = level === 3 || level === 4;
-
-      if (isPageBreak) {
-        if (currentGroup) groups.push(currentGroup);
-
-        const ancestors = [];
-        for (let l = 2; l < level; l++) {
-          if (activeHeadings[l]) ancestors.push({ level: l, text: activeHeadings[l] });
-        }
-
-        currentGroup = {
-          headingLevel: level,
-          headingText: text,
-          ancestors,
-          nodes: [child],
-        };
-      } else {
-        if (!currentGroup) {
-          currentGroup = {
-            headingLevel: 0,
-            headingText: '',
-            ancestors: [],
-            nodes: [],
-          };
-        }
-        if (level === 2 && !currentGroup.headingText) {
-          currentGroup.headingLevel = 2;
-          currentGroup.headingText = text;
-        }
-        currentGroup.nodes.push(child);
-      }
-    }
-    if (currentGroup) groups.push(currentGroup);
-
-    // ادغام گروه‌های «فقط-تیتر» (مثل H2 تنها، بدون محتوا) با گروه بعدی
-    const merged = [];
-    for (let i = 0; i < groups.length; i++) {
-      const g = groups[i];
-      const hasNonHeading = g.nodes.some((n) => {
-        const t = n.tagName;
-        return t !== 'H2' && t !== 'H3' && t !== 'H4';
-      });
-
-      if (!hasNonHeading && i + 1 < groups.length && g.headingLevel <= 2) {
-        const next = groups[i + 1];
-        if (g.headingText && !next.ancestors.some((a) => a.level === g.headingLevel)) {
-          next.ancestors.unshift({ level: g.headingLevel, text: g.headingText });
-          next.ancestors.sort((a, b) => a.level - b.level);
-        }
-      } else {
-        merged.push(g);
-      }
-    }
-
-    if (merged.length <= 1) {
-      mizanPages = [];
-      if (mizanPager) mizanPager.classList.add('hidden');
-      rootEl.querySelectorAll('.mizan-page').forEach((el) => {
-        while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
-        el.parentNode.removeChild(el);
-      });
-      rootEl.querySelectorAll('.mizan-breadcrumb').forEach((el) => el.remove());
-      if (orphansBox) rootEl.appendChild(orphansBox);
-      return;
-    }
-
-    rootEl.innerHTML = '';
-    mizanPages = [];
-
-    merged.forEach((group, i) => {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'mizan-page';
-      wrapper.dataset.pageNum = String(i + 1);
-      wrapper.hidden = i !== 0;
-
-      if (group.ancestors && group.ancestors.length) {
-        const bc = document.createElement('div');
-        bc.className = 'mizan-breadcrumb';
-        group.ancestors.forEach((anc, idx) => {
-          if (idx > 0) {
-            const sep = document.createElement('span');
-            sep.className = 'mizan-breadcrumb__sep';
-            sep.textContent = '›';
-            bc.appendChild(sep);
-          }
-          const item = document.createElement('span');
-          item.className = 'mizan-breadcrumb__item';
-          item.dataset.level = String(anc.level);
-          item.textContent = anc.text;
-          bc.appendChild(item);
-        });
-        wrapper.appendChild(bc);
-      }
-
-      group.nodes.forEach((node) => wrapper.appendChild(node));
-      rootEl.appendChild(wrapper);
-
-      mizanPages.push({
-        heading: group.headingText || 'شروع',
-        pageNum: i + 1,
-        ancestors: group.ancestors || [],
-      });
-    });
-
-    if (orphansBox) rootEl.appendChild(orphansBox);
-  }
-
-  // ============================================================
-  // استخراج متن صفحهٔ جاری (برای تگ‌گذاری)
-  // ============================================================
-  function getCurrentPageEl() {
-    if (!mizanContent) return null;
-    const pages = mizanContent.querySelectorAll('.mizan-page');
-    if (!pages.length) return mizanContent;
-    for (const p of pages) {
-      if (!p.hidden) return p;
-    }
-    return null;
-  }
-
-  function getPageText(pageEl) {
-    if (!pageEl) return '';
-    const blocks = pageEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
-    const parts = [];
-    for (const block of blocks) {
-      const { text } = collectBlockText(block);
-      const trimmed = text.trim();
-      if (trimmed) parts.push(trimmed);
-    }
-    return parts.join('\n\n');
-  }
-
-  function getPageBreadcrumbText(pageEl) {
-    if (!pageEl || !pageEl.classList || !pageEl.classList.contains('mizan-page')) return '';
-    const bc = pageEl.querySelector('.mizan-breadcrumb');
-    if (!bc) return '';
-    const items = bc.querySelectorAll('.mizan-breadcrumb__item');
-    return Array.from(items).map((i) => i.textContent.trim()).filter(Boolean).join(' › ');
-  }
-
-  // ---------- Note popup ----------
+  // ---- Note popup ----
   function showNotePopup(note, anchorEl) {
     if (!mizanNotePopup) return;
     activePopupNoteId = note.id;
@@ -835,7 +654,7 @@ const MizanPanel = (function () {
     hideNotePopup();
   });
 
-  // ---------- Note modal ----------
+  // ---- Note modal ----
   function renderNoteQuoteFromAnchor(anchor) {
     if (!mizanNoteQuote) return;
     if (!anchor) { mizanNoteQuote.textContent = '—'; return; }
@@ -932,15 +751,9 @@ const MizanPanel = (function () {
     }
   });
 
-  // ---------- Floating note button ----------
-  function showNoteAddBtn() {
-    if (!mizanNoteBtn) return;
-    mizanNoteBtn.hidden = false;
-  }
-  function hideNoteAddBtn() {
-    if (!mizanNoteBtn) return;
-    mizanNoteBtn.hidden = true;
-  }
+  // ---- Floating note button ----
+  function showNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = false; }
+  function hideNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = true; }
 
   function selectionIsInsideMizan() {
     if (!mizanContent || mizanContent.classList.contains('hidden')) return false;
@@ -1003,7 +816,6 @@ const MizanPanel = (function () {
     mizanContent.addEventListener('click', (e) => {
       if (e.target.closest && e.target.closest('.mizan-note-inline')) return;
       if (e.target.closest && e.target.closest('.mizan-tag-marker')) return;
-      if (e.target.closest && e.target.closest('.mizan-breadcrumb')) return;
       if (e.target.closest && e.target.closest('a')) { removeCaret(); resetAnchorConfirm(); return; }
       if (e.target.classList && e.target.classList.contains('mizan-caret')) return;
 
@@ -1064,28 +876,171 @@ const MizanPanel = (function () {
     }
   }
 
-  // --------------------------------------------------------
-  // Tagger — مودال پاسخ خام
-  // --------------------------------------------------------
+  // ============================================================
+  // 7) TAGS — تجزیه + فیلتر + اعمال
+  // ============================================================
+  function parseMizanTaggerResponse(text) {
+    if (!text) return [];
+    const tags = [];
+    const lines = String(text).split(/\r?\n/);
+
+    const ARROW = '[←⟵⟸⇐➔➜➝➞→►▶▸]';
+    const DOTS  = '(?:…+|\\.{3,}|⋯|•••)';
+    const PIPE  = '[|¦│┃｜]';
+    const NUM   = '[\\u06F0-\\u06F9\\d]+';
+
+    const lineRe = new RegExp(
+      '^(' + NUM + ')\\s*' + ARROW + '\\s*' +
+      '(.+?)\\s*' + DOTS + '\\s*' +
+      '(.+?)\\s*' +
+      '(?:' + PIPE + '\\s*(' + NUM + '))?' +
+      '\\s*$'
+    );
+
+    for (const raw of lines) {
+      let line = raw.trim();
+      if (!line) continue;
+
+      line = line.replace(/^[-*•·●◆◇]\s+/, '');
+      line = line.replace(/^[`«"'(\[]+/, '');
+      line = line.replace(/[`»"')\]]+$/, '').trim();
+      if (!line) continue;
+
+      const m = line.match(lineRe);
+      if (!m) continue;
+
+      const aStart = m[1] ? Number(faToEnDigits(m[1])) : 0;
+      const aEnd   = m[4] ? Number(faToEnDigits(m[4])) : 0;
+
+      const ayah = aStart || aEnd;
+      if (!ayah) continue;
+
+      const startExcerpt = (m[2] || '').trim();
+      const endExcerpt   = (m[3] || '').trim();
+      if (!startExcerpt || !endExcerpt) continue;
+
+      if ((startExcerpt.length + endExcerpt.length) < 8) continue;
+
+      tags.push({ ayah, startExcerpt, endExcerpt });
+    }
+
+    return tags;
+  }
+
+  // فیلتر تگ‌هایی که گزیده‌هایشان داخل ترجمه یا عین آیه است
+  async function filterTrivialTags(tags, surah, ayah) {
+    if (!tags || !tags.length) return tags;
+    let ayahObj = null;
+    try {
+      ayahObj = await QuranData.getAyah(surah, ayah);
+    } catch (e) { return tags; }
+    if (!ayahObj) return tags;
+
+    const translation = stripDiacritics(normalizeChars(ayahObj.fa || ''));
+    const arabic      = stripDiacritics(normalizeChars(ayahObj.ar || ''));
+
+    const out = [];
+    for (const tag of tags) {
+      const sN = stripDiacritics(normalizeChars(tag.startExcerpt || ''));
+      const eN = stripDiacritics(normalizeChars(tag.endExcerpt   || ''));
+
+      if (sN.length < 3 || eN.length < 3) { out.push(tag); continue; }
+
+      const inTrans = translation.length > 0 && translation.includes(sN) && translation.includes(eN);
+      const inAr    = arabic.length > 0 && arabic.includes(sN) && arabic.includes(eN);
+
+      if (inTrans || inAr) {
+        console.info('[mizan tagger] dropped trivial tag:', tag);
+        continue;
+      }
+      out.push(tag);
+    }
+    return out;
+  }
+
+  function findExcerptRange(rootEl, excerpt) {
+    const raw = String(excerpt || '').trim();
+    if (!raw) return null;
+    const needle = normalizeChars(raw);
+    if (!needle) return null;
+
+    const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
+    for (const block of blocks) {
+      const { text, map } = collectBlockText(block);
+      if (!text) continue;
+      const normText = normalizeChars(text);
+      const idx = normText.indexOf(needle);
+      if (idx < 0) continue;
+
+      const startRange = rangeAtOffsetInBlock(map, idx);
+      const endRange   = rangeAtOffsetInBlock(map, idx + needle.length);
+      if (startRange && endRange) return { startRange, endRange };
+    }
+    return null;
+  }
+
+  function applyMizanTags(rootEl, tags) {
+    if (!rootEl || !tags || !tags.length) return;
+
+    const items = [];
+    for (const tag of tags) {
+      const start = findExcerptRange(rootEl, tag.start_excerpt);
+      const end   = findExcerptRange(rootEl, tag.end_excerpt);
+      if (!start || !end) continue;
+      items.push({ tag, startRange: start.startRange, endRange: end.endRange });
+    }
+    if (!items.length) return;
+
+    const highlightRanges = [];
+
+    for (const item of items) {
+      // ترتیب مهم: ابتدا مارکر پایانی، سپس شروع
+      const endMarker = document.createElement('span');
+      endMarker.className = 'mizan-tag-marker';
+      endMarker.dataset.tagId = item.tag.id;
+      endMarker.textContent = `|${UI.toPersianDigits(item.tag.ayah)}`;
+      item.endRange.insertNode(endMarker);
+
+      const startMarker = document.createElement('span');
+      startMarker.className = 'mizan-tag-marker';
+      startMarker.dataset.tagId = item.tag.id;
+      startMarker.textContent = `${UI.toPersianDigits(item.tag.ayah)} ←`;
+      item.startRange.insertNode(startMarker);
+
+      try {
+        const hl = document.createRange();
+        hl.setStartAfter(startMarker);
+        hl.setEndBefore(endMarker);
+        highlightRanges.push(hl);
+      } catch (e) {}
+    }
+
+    if (window.CSS && CSS.highlights && highlightRanges.length) {
+      try {
+        CSS.highlights.set('mizan-tag', new Highlight(...highlightRanges));
+      } catch (e) {
+        console.warn('[mizan] highlight failed:', e);
+      }
+    }
+  }
+
+  // ---- Tagger modal ----
   function openTaggerRawModal(results) {
     if (!mizanTaggerRawModal) return;
     pendingTaggerResults = results;
 
     const hasError = results.some((r) => r.error);
-    const totalNew = results.reduce((acc, r) => acc + (r.newTags ? r.newTags.length : 0), 0);
-    const totalPreserved = results.reduce((acc, r) => acc + (r.preserved || 0), 0);
+    const totalTags = results.reduce((acc, r) => acc + (r.tags ? r.tags.length : 0), 0);
     const totalDropped = results.reduce((acc, r) => acc + (r.dropped || 0), 0);
     const model = results.find((r) => r.model)?.model || '—';
-    const pageLabel = results.find((r) => r.pageLabel)?.pageLabel || '';
 
     mizanTaggerRawMeta.setAttribute('data-error', hasError ? 'true' : 'false');
     mizanTaggerRawMeta.innerHTML = `
-      ${pageLabel ? `<span>صفحهٔ: <b>${escapeHtml(pageLabel)}</b></span>` : ''}
-      <span>تگ جدید (این صفحه): <b>${UI.toPersianDigits(totalNew)}</b></span>
-      ${totalPreserved > 0 ? `<span>حفظ‌شده (صفحات دیگر): <b>${UI.toPersianDigits(totalPreserved)}</b></span>` : ''}
+      <span>محتواها: <b>${UI.toPersianDigits(results.length)}</b></span>
+      <span>تگ‌های معتبر: <b>${UI.toPersianDigits(totalTags)}</b></span>
       ${totalDropped > 0 ? `<span>حذف‌شده (ترجمه/عین آیه): <b>${UI.toPersianDigits(totalDropped)}</b></span>` : ''}
       <span>مدل: <b>${escapeHtml(model)}</b></span>
-      ${hasError ? '<span><b>خطا</b></span>' : ''}
+      ${hasError ? '<span><b>خطا در برخی محتواها</b></span>' : ''}
     `;
 
     const rawCombined = results.map((r) => {
@@ -1150,7 +1105,7 @@ const MizanPanel = (function () {
     if (state === 'idle') {
       mizanTaggerBtn.disabled = false;
       mizanTaggerBtn.classList.remove('is-busy');
-      mizanTaggerLabel.textContent = label || 'تفکیک این صفحه';
+      mizanTaggerLabel.textContent = label || 'تفکیک آیه‌ای';
     } else if (state === 'busy') {
       mizanTaggerBtn.disabled = true;
       mizanTaggerBtn.classList.add('is-busy');
@@ -1158,113 +1113,55 @@ const MizanPanel = (function () {
     }
   }
 
-  // ============================================================
-  // اجرای تگ‌گذاری — فقط روی صفحهٔ جاری
-  // ============================================================
   async function runMizanTagger() {
     if (!mizanContentKeys.length) { UI.toast('محتوایی موجود نیست'); return; }
     const { data } = await sb.auth.getSession();
     if (!data?.session) { UI.toast('برای تگ‌گذاری باید وارد حساب شوید'); return; }
-
-    const pageEl = getCurrentPageEl();
-    if (!pageEl) { UI.toast('صفحهٔ جاری پیدا نشد'); return; }
-
-    const pageText = getPageText(pageEl);
-    if (!pageText.trim()) {
-      UI.toast('این صفحه محتوایی برای تگ‌گذاری ندارد');
-      return;
-    }
-
-    const breadcrumb = getPageBreadcrumbText(pageEl);
-    const header = breadcrumb
-      ? `[این تکه زیر این عنوان‌ها قرار دارد: ${breadcrumb}]\n\n`
-      : '';
-    const contentForAI = header + pageText;
 
     const model = localStorage.getItem('askAiModel') || CONFIG.OPENROUTER_DEFAULT_MODEL;
     const index = await QuranData.getIndex();
     const surahMeta = index.find((s) => s.number === lastSurah);
     const surahName = surahMeta ? surahMeta.name_fa : String(lastSurah);
 
-    const cid = mizanContentKeys[0];
-    const ayahs = await Mizan.getAyahsForContent(lastSurah, cid);
-
     setTaggerState('busy');
     const results = [];
 
-    try {
-      const result = await Store.callMizanTagger({
-        surahName,
-        ayahs,
-        content: contentForAI,
-        model,
-      });
-
-      const parsedRaw = parseMizanTaggerResponse(result.content);
-      const validNew = await filterTrivialTags(parsedRaw, lastSurah, lastAyah);
-      const dropped = Math.max(0, parsedRaw.length - validNew.length);
-
-      // ── حفظ تگ‌های صفحات دیگر ──
-      // هر تگ موجودی که گزیدهٔ شروش در صفحهٔ جاری پیدا نشود، از صفحهٔ دیگریست
-      // و باید حفظ شود. آن‌هایی که در همین صفحه‌اند، جایگزین می‌شوند.
-      let preservedExisting = [];
+    for (const cid of mizanContentKeys) {
       try {
-        const existingAll = await Store.getMizanTags(cid);
-        preservedExisting = existingAll
-          .filter((t) => !findExcerptRange(pageEl, t.start_excerpt))
-          .map((t) => ({
-            ayah: t.ayah,
-            startExcerpt: t.start_excerpt,
-            endExcerpt: t.end_excerpt,
-          }));
-      } catch (e) {
-        console.warn('[mizan tagger] load existing failed:', e);
+        const content = await Mizan.loadContent(cid);
+        const ayahs = await Mizan.getAyahsForContent(lastSurah, cid);
+
+        const result = await Store.callMizanTagger({
+          surahName,
+          ayahs,
+          content: content.text,
+          model,
+        });
+
+        const parsedRaw = parseMizanTaggerResponse(result.content);
+        const parsed = await filterTrivialTags(parsedRaw, lastSurah, lastAyah);
+        const dropped = Math.max(0, parsedRaw.length - parsed.length);
+
+        results.push({
+          contentId: cid,
+          raw: result.content,
+          model: result.model || null,
+          tags: parsed,
+          dropped,
+          error: false,
+          status: result.status,
+        });
+      } catch (err) {
+        results.push({
+          contentId: cid,
+          raw: (err && err.raw) ? err.raw : (err && err.message) ? err.message : String(err),
+          model: null,
+          tags: [],
+          dropped: 0,
+          error: true,
+          status: err && err.status ? err.status : null,
+        });
       }
-
-      // ادغام: حفظ‌شده‌ها + جدیدها (بدون تکرار مطلق)
-      const seen = new Set();
-      const merged = [];
-      const pushTag = (t) => {
-        const key = `${t.ayah}|${(t.startExcerpt || '').slice(0, 40)}|${(t.endExcerpt || '').slice(0, 40)}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        merged.push(t);
-      };
-      preservedExisting.forEach(pushTag);
-      validNew.forEach(pushTag);
-
-      const pageNum = pageEl.classList && pageEl.classList.contains('mizan-page')
-        ? pageEl.dataset.pageNum
-        : '1';
-      const pageLabel = breadcrumb
-        ? `صفحهٔ ${UI.toPersianDigits(pageNum)} — ${breadcrumb}`
-        : `صفحهٔ ${UI.toPersianDigits(pageNum)}`;
-
-      results.push({
-        contentId: cid,
-        raw: result.content,
-        model: result.model || null,
-        tags: merged,        // برای ذخیره
-        newTags: validNew,   // فقط جدیدها (نمایش)
-        preserved: preservedExisting.length,
-        dropped,
-        pageLabel,
-        error: false,
-        status: result.status,
-      });
-    } catch (err) {
-      results.push({
-        contentId: cid,
-        raw: (err && err.raw) ? err.raw : (err && err.message) ? err.message : String(err),
-        model: null,
-        tags: [],
-        newTags: [],
-        preserved: 0,
-        dropped: 0,
-        pageLabel: '',
-        error: true,
-        status: err && err.status ? err.status : null,
-      });
     }
 
     setTaggerState('idle');
@@ -1275,7 +1172,54 @@ const MizanPanel = (function () {
     mizanTaggerBtn.addEventListener('click', runMizanTagger);
   }
 
-  // ---------- Pager UI ----------
+  // ============================================================
+  // 8) PAGINATION
+  // ============================================================
+  function paginateMizan(rootEl) {
+    const children = Array.from(rootEl.children).filter((c) => !c.classList.contains('mizan-orphans'));
+    const orphansBox = rootEl.querySelector('.mizan-orphans');
+    const pageGroups = [];
+    let current = null;
+
+    children.forEach((child) => {
+      const isHeading = child.tagName === 'H3' || child.tagName === 'H4';
+      if (isHeading || !current) {
+        if (current) pageGroups.push(current);
+        current = {
+          heading: isHeading ? child.textContent.trim() : 'شروع',
+          nodes: [child],
+        };
+      } else {
+        current.nodes.push(child);
+      }
+    });
+    if (current) pageGroups.push(current);
+
+    if (pageGroups.length <= 1) {
+      mizanPages = [];
+      if (mizanPager) mizanPager.classList.add('hidden');
+      rootEl.querySelectorAll('.mizan-page').forEach((el) => {
+        while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el);
+        el.parentNode.removeChild(el);
+      });
+      if (orphansBox) rootEl.appendChild(orphansBox);
+      return;
+    }
+
+    rootEl.innerHTML = '';
+    mizanPages = [];
+    pageGroups.forEach((group, i) => {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'mizan-page';
+      wrapper.dataset.pageNum = String(i + 1);
+      wrapper.hidden = i !== 0;
+      group.nodes.forEach((node) => wrapper.appendChild(node));
+      rootEl.appendChild(wrapper);
+      mizanPages.push({ heading: group.heading, pageNum: i + 1 });
+    });
+    if (orphansBox) rootEl.appendChild(orphansBox);
+  }
+
   function updateMizanPagerUI() {
     if (!mizanPager) return;
     if (mizanPages.length <= 1) {
@@ -1317,22 +1261,18 @@ const MizanPanel = (function () {
     }, 400);
   }
 
-  // ---------- TOC ----------
   function buildMizanToc() {
     if (!mizanTocList) return;
     if (!mizanPages.length) {
       mizanTocList.innerHTML = '<p style="color:var(--text-faint); text-align:center; padding:20px 0;">فهرستی موجود نیست.</p>';
       return;
     }
-    mizanTocList.innerHTML = mizanPages.map((p, i) => {
-      const anc = (p.ancestors || []).map((a) => a.text).join(' › ');
-      const prefix = anc ? `<span class="mizan-toc-item__anc">${escapeHtml(anc)} ›</span> ` : '';
-      return `
+    mizanTocList.innerHTML = mizanPages.map((p, i) => `
       <button type="button" class="mizan-toc-item" data-page="${i}">
         <span class="mizan-toc-item__num">${UI.toPersianDigits(i + 1)}</span>
-        <span class="mizan-toc-item__title">${prefix}${escapeHtml(p.heading)}</span>
-      </button>`;
-    }).join('');
+        <span class="mizan-toc-item__title">${escapeHtml(p.heading)}</span>
+      </button>
+    `).join('');
 
     mizanTocList.querySelectorAll('.mizan-toc-item').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1374,7 +1314,9 @@ const MizanPanel = (function () {
     return true;
   }
 
-  // ---------- Main render ----------
+  // ============================================================
+  // 9) MAIN RENDER
+  // ============================================================
   async function renderMizan(surah, ayah, opts = {}) {
     lastSurah = surah;
     lastAyah = ayah;
@@ -1402,45 +1344,48 @@ const MizanPanel = (function () {
 
       mizanContentKeys = contents.map((c) => c.content_id);
 
+      // یادداشت‌ها و تگ‌ها
       try {
         const allNotes = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
         mizanNotes = allNotes.flat();
-      } catch (e) {
-        mizanNotes = [];
-      }
+      } catch (e) { mizanNotes = []; }
 
       try {
         const allTags = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanTags(cid)));
         mizanTags = await filterTrivialTags(allTags.flat(), surah, ayah);
-      } catch (e) {
-        mizanTags = [];
-      }
+      } catch (e) { mizanTags = []; }
 
-      const combinedText = contents
-        .map((c) => cleanMizanText(c.text))
-        .filter(Boolean)
-        .join('\n\n<hr>\n\n');
-
-      const html = renderMarkdown(combinedText);
-
+      // محدودهٔ آیات از اولین content
       let range = null;
-      const firstContent = contents[0]?.text || '';
-      const m = firstContent.match(/\[سوره\s+.+?:\s*آیات?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\]/);
-      if (m) {
-        const faToEn = (s) => s.replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0));
-        range = { from: Number(faToEn(m[1])), to: Number(faToEn(m[2])) };
+      const firstRaw = cleanContentText(contents[0]?.text || '');
+      const rangeMatch = firstRaw.match(
+        /\[\s*سوره\s+.+?:\s*آیات?\s*([\d\u06F0-\u06F9]+)\s*تا\s*([\d\u06F0-\u06F9]+)\s*\]/
+      );
+      if (rangeMatch) {
+        range = {
+          from: Number(faToEnDigits(rangeMatch[1])),
+          to:   Number(faToEnDigits(rangeMatch[2])),
+        };
       }
+
+      // تجزیه و رندر همهٔ محتواها
+      const allBlocks = [];
+      for (const c of contents) {
+        allBlocks.push(...parseContent(c.text));
+      }
+      const html = renderBlocks(allBlocks);
 
       showMizanState('content', { html, range });
-      normalizeMizanChars(mizanContent);
-      styleMizanAyahs(mizanContent);
+
+      // تزئین DOM
+      decorateAyahAnchors(mizanContent);
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
       paginateMizan(mizanContent);
 
       if (mizanTaggerBtn) {
         mizanTaggerBtn.classList.remove('hidden');
-        setTaggerState('idle', mizanTags.length > 0 ? 'تفکیک این صفحه' : 'تفکیک این صفحه');
+        setTaggerState('idle', mizanTags.length > 0 ? 'تفکیک مجدد' : 'تفکیک آیه‌ای');
       }
 
       if (mizanPages.length > 1) {
