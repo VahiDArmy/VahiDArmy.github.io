@@ -1,0 +1,295 @@
+/* ==========================================================================
+   Mizan Content — Professional typography
+   بدون هیچ خط رنگی کنار چپ/راست — تأکید فقط با وزن، رنگ متن و فاصله
+   بارگذاری بعد از components.css تا استایل‌های قدیمی را خنثی کند.
+   ========================================================================== */
+
+/* ---------- خنثی‌سازی استایل‌های قدیمی ---------- */
+.mizan-tafsir-content h1::before,
+.mizan-tafsir-content h1::after,
+.mizan-tafsir-content h2::before,
+.mizan-tafsir-content h2::after,
+.mizan-tafsir-content h3::before,
+.mizan-tafsir-content h3::after,
+.mizan-tafsir-content h4::before,
+.mizan-tafsir-content h4::after {
+  content: none !important;
+  display: none !important;
+}
+.mizan-tafsir-content pre::before,
+.mizan-tafsir-content pre::after,
+.mizan-tafsir-content p.mizan-arabic-raw::before,
+.mizan-tafsir-content p.mizan-arabic-raw::after {
+  content: none !important;
+  display: none !important;
+}
+.mizan-tafsir-content blockquote {
+  border-inline-start: none !important;
+  background: none !important;
+}
+
+/* ---------- Container ---------- */
+.mizan-tafsir-content {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 2.1;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.mizan-tafsir-content > :first-child { margin-top: 0; }
+.mizan-tafsir-content > :last-child  { margin-bottom: 0; }
+
+/* ---------- عنوانِ محدودهٔ سوره ---------- */
+.mizan-tafsir-content .mizan-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0 36px;
+  text-align: center;
+}
+.mizan-tafsir-content .mizan-title__text {
+  flex: 0 1 auto;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--text);
+  line-height: 1.7;
+  padding: 0 4px;
+}
+.mizan-tafsir-content .mizan-title__ornament {
+  flex: 1 1 40px;
+  max-width: 96px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--neon) 60%, transparent), transparent);
+  box-shadow: 0 0 8px var(--neon-glow);
+}
+
+/* ---------- سرتیتر سطح ۲ ---------- */
+.mizan-tafsir-content .mizan-h2 {
+  margin: 36px 0 20px;
+  padding: 0 0 14px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* ---------- سرتیتر سطح ۳ (بخش اصلی) ---------- */
+.mizan-tafsir-content .mizan-h3 {
+  margin: 40px 0 20px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--neon) 22%, var(--border-soft));
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.75;
+  color: var(--neon);
+  letter-spacing: .01em;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--neon) 40%, transparent);
+}
+
+/* ---------- سرتیتر سطح ۴ (زیربخش) ---------- */
+.mizan-tafsir-content .mizan-h4 {
+  margin: 28px 0 14px;
+  font-size: .98rem;
+  font-weight: 700;
+  line-height: 1.85;
+  color: var(--text-dim);
+  letter-spacing: .01em;
+}
+
+/* ---------- بلوک آیه ---------- */
+.mizan-tafsir-content .mizan-ayah {
+  position: relative;
+  margin: 22px 0;
+  padding: 30px 22px 20px;
+  border-radius: 18px;
+  background:
+    radial-gradient(120% 120% at 50% 0%,
+      color-mix(in srgb, var(--neon) 6%, transparent),
+      transparent 65%),
+    var(--read-bg);
+  border: 1px solid color-mix(in srgb, var(--neon) 18%, var(--border-soft));
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .03);
+}
+.mizan-tafsir-content .mizan-ayah__text {
+  margin: 0;
+  font-family: var(--font-quran);
+  font-size: 1.55rem;
+  line-height: 2.65;
+  color: var(--text);
+  direction: rtl;
+  text-align: center;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+}
+.mizan-tafsir-content .mizan-ayah__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  margin-top: 18px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--neon) 12%, var(--card-2));
+  border: 1px solid color-mix(in srgb, var(--neon) 45%, transparent);
+  color: var(--neon);
+  font-family: var(--font-ui);
+  font-size: .76rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  box-shadow: 0 0 14px color-mix(in srgb, var(--neon) 20%, transparent);
+}
+
+/* ---------- بلوک ترجمه ---------- */
+.mizan-tafsir-content .mizan-translation {
+  position: relative;
+  margin: 20px 0 30px;
+  padding: 20px 22px 22px;
+  border-radius: 14px;
+  background: var(--read-bg-strong);
+  border: 1px solid var(--border-soft);
+}
+.mizan-tafsir-content .mizan-translation__label {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--violet) 14%, transparent);
+  color: var(--violet);
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+.mizan-tafsir-content .mizan-translation__text {
+  margin: 0;
+  font-size: .95rem;
+  line-height: 2.15;
+  color: var(--text-dim);
+  text-align: justify;
+  text-justify: inter-word;
+  white-space: pre-wrap;
+}
+
+/* ---------- پاراگراف ---------- */
+.mizan-tafsir-content .mizan-p {
+  margin: 16px 0;
+  font-size: 1rem;
+  line-height: 2.2;
+  color: var(--text);
+  text-align: justify;
+  text-justify: inter-word;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- استناد قرآنی درون متن ﴿...﴾ ---------- */
+.mizan-tafsir-content .mizan-quran-inline {
+  display: inline;
+  font-family: var(--font-quran);
+  font-size: 1.18em;
+  line-height: inherit;
+  color: var(--neon);
+  padding: 0 3px;
+  text-shadow: 0 0 10px color-mix(in srgb, var(--neon) 35%, transparent);
+}
+
+/* ---------- نقل‌قول ---------- */
+.mizan-tafsir-content .mizan-quote {
+  margin: 22px 0;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--violet) 7%, var(--surface-2));
+  color: var(--text-dim);
+  font-size: .96rem;
+  line-height: 2.1;
+}
+.mizan-tafsir-content .mizan-quote :first-child { margin-top: 0; }
+.mizan-tafsir-content .mizan-quote :last-child  { margin-bottom: 0; }
+
+/* ---------- لیست‌ها ---------- */
+.mizan-tafsir-content .mizan-list {
+  margin: 20px 0;
+  padding-inline-start: 1.7em;
+  font-size: .98rem;
+  line-height: 2.15;
+}
+.mizan-tafsir-content .mizan-list li {
+  margin: 10px 0;
+  color: var(--text);
+}
+.mizan-tafsir-content .mizan-list--ol {
+  list-style: persian;
+}
+
+/* ---------- جداکننده ---------- */
+.mizan-tafsir-content .mizan-hr {
+  margin: 36px 0;
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+/* ---------- code عمومی ---------- */
+.mizan-tafsir-content .mizan-code {
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+  font-size: .85rem;
+}
+.mizan-tafsir-content .mizan-code code {
+  background: transparent;
+  padding: 0;
+}
+
+/* ---------- anchor آیه (غیرقابل‌دیدن، برای ناوبری) ---------- */
+.mizan-tafsir-content .mizan-anchor {
+  display: block;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  line-height: 0;
+}
+
+/* ---------- موبایل ---------- */
+@media (max-width: 560px) {
+  .mizan-tafsir-content .mizan-title { gap: 10px; margin-bottom: 26px; }
+  .mizan-tafsir-content .mizan-title__text { font-size: 1.08rem; }
+  .mizan-tafsir-content .mizan-h3 { font-size: 1rem; margin-top: 32px; }
+  .mizan-tafsir-content .mizan-h4 { font-size: .92rem; margin-top: 22px; }
+  .mizan-tafsir-content .mizan-ayah { padding: 22px 14px 16px; border-radius: 14px; }
+  .mizan-tafsir-content .mizan-ayah__text { font-size: 1.28rem; line-height: 2.5; }
+  .mizan-tafsir-content .mizan-ayah__badge { height: 26px; font-size: .7rem; padding: 0 12px; }
+  .mizan-tafsir-content .mizan-translation { padding: 16px 16px 18px; }
+  .mizan-tafsir-content .mizan-translation__text { font-size: .9rem; line-height: 2.05; }
+  .mizan-tafsir-content .mizan-p { font-size: .95rem; line-height: 2.1; }
+  .mizan-tafsir-content .mizan-quran-inline { font-size: 1.12em; }
+}
+
+/* ---------- تم روشن ---------- */
+[data-theme="light"] .mizan-tafsir-content .mizan-h3 {
+  color: hsl(185 60% 30%);
+  text-shadow: none;
+  border-bottom-color: color-mix(in srgb, hsl(185 60% 40%) 30%, var(--border-soft));
+}
+[data-theme="light"] .mizan-tafsir-content .mizan-ayah__badge {
+  color: hsl(185 60% 30%);
+  background: hsl(185 55% 42% / .1);
+  border-color: hsl(185 55% 40% / .5);
+  box-shadow: none;
+}
+[data-theme="light"] .mizan-tafsir-content .mizan-quran-inline {
+  color: hsl(185 60% 32%);
+  text-shadow: none;
+}
+[data-theme="light"] .mizan-tafsir-content .mizan-ayah {
+  border-color: hsl(185 55% 45% / .25);
+  box-shadow: none;
+}
