@@ -114,6 +114,11 @@ const MizanPanel = (function () {
       .replace(/\u200B/g, '\u200C'); // ZWSP → ZWNJ
   }
 
+  // حذف اعراب/تشدید برای مقایسهٔ سطحی‌تر
+  function stripDiacritics(s) {
+    return String(s == null ? '' : s).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
+  }
+
   // ============================================================
   // پیمایشگر text-node — متن «تمیز» را می‌سازد و نگاشت آفست → گره را می‌دهد.
   // اسپن‌های تزریق‌شده (یادداشت و مارکر تگ) نادیده گرفته می‌شوند تا
@@ -492,8 +497,6 @@ const MizanPanel = (function () {
       const aStart = m[1] ? Number(faToEnDigits(m[1])) : 0;
       const aEnd   = m[4] ? Number(faToEnDigits(m[4])) : 0;
 
-      // اگر مدل شمارهٔ ابتدا و انتها را متفاوت داد، هشدار می‌دهیم ولی
-      // از شمارهٔ ابتدایی استفاده می‌کنیم (بهترین حدس).
       if (aStart && aEnd && aStart !== aEnd) {
         console.warn('[mizan tagger] mismatched ayah numbers in line:', line);
       }
@@ -504,10 +507,57 @@ const MizanPanel = (function () {
       const endExcerpt   = (m[3] || '').trim();
       if (!startExcerpt || !endExcerpt) continue;
 
+      // حداقل طول — تگ‌های خیلی کوتاه احتمالاً نویزند
+      if ((startExcerpt.length + endExcerpt.length) < 8) continue;
+
       tags.push({ ayah, startExcerpt, endExcerpt });
     }
 
     return tags;
+  }
+
+  // ============================================================
+  // فیلتر تگ‌های بدیهی — هر تگی که گزیده‌هایش داخل ترجمهٔ فارسی
+  // یا متن عربیِ خودِ آیه باشد (یعنی فقط دارد خودِ آیه را بازگو
+  // می‌کند، نه تفسیرش) حذف می‌شود.
+  // ============================================================
+  async function filterTrivialTags(tags, surah, ayah) {
+    if (!tags || !tags.length) return tags;
+    let ayahObj = null;
+    try {
+      ayahObj = await QuranData.getAyah(surah, ayah);
+    } catch (e) {
+      return tags;
+    }
+    if (!ayahObj) return tags;
+
+    const translationRaw = ayahObj.fa || '';
+    const arabicRaw      = ayahObj.ar || '';
+    const translation = stripDiacritics(normalizeExcerptChars(translationRaw));
+    const arabic      = stripDiacritics(normalizeExcerptChars(arabicRaw));
+
+    const out = [];
+    for (const tag of tags) {
+      const sN = stripDiacritics(normalizeExcerptChars(tag.startExcerpt || ''));
+      const eN = stripDiacritics(normalizeExcerptChars(tag.endExcerpt   || ''));
+
+      if (sN.length < 3 || eN.length < 3) { out.push(tag); continue; }
+
+      const inTrans = translation.length > 0 &&
+        translation.includes(sN) && translation.includes(eN);
+      const inAr = arabic.length > 0 &&
+        arabic.includes(sN) && arabic.includes(eN);
+
+      if (inTrans || inAr) {
+        console.info(
+          '[mizan tagger] dropped trivial tag (ayah itself):',
+          { ayah: tag.ayah, startExcerpt: tag.startExcerpt, endExcerpt: tag.endExcerpt }
+        );
+        continue;
+      }
+      out.push(tag);
+    }
+    return out;
   }
 
   // گزیده را در متنِ تمیز پیدا می‌کند (بدون دخالت یادداشت‌ها و مارکرها)
@@ -547,8 +597,6 @@ const MizanPanel = (function () {
     const highlightRanges = [];
 
     for (const item of items) {
-      // ترتیب مهم است: ابتدا مارکر پایانی، سپس مارکر شروع — تا با درجِ
-      // مارکر شروع، جای مارکر پایانی به‌هم نریزد.
       const endMarker = document.createElement('span');
       endMarker.className = 'mizan-tag-marker';
       endMarker.dataset.tagId = item.tag.id;
@@ -617,7 +665,7 @@ const MizanPanel = (function () {
     openNoteModal({ editing: note });
   });
   if (mizanNotePopupDel) mizanNotePopupDel.addEventListener('click', async () => {
-    const note = mizanNotes.find((n) => n.id === activeNoteId(activePopupNoteId));
+    const note = mizanNotes.find((n) => n.id === activePopupNoteId);
     if (!note) return;
     if (!confirm('این یادداشت حذف شود؟')) return;
     try {
@@ -630,8 +678,6 @@ const MizanPanel = (function () {
       UI.toast('خطا در حذف یادداشت');
     }
   });
-
-  function activeNoteId(id) { return id; }
 
   document.addEventListener('click', (e) => {
     if (!mizanNotePopup || mizanNotePopup.hidden) return;
@@ -877,12 +923,14 @@ const MizanPanel = (function () {
 
     const hasError = results.some((r) => r.error);
     const totalTags = results.reduce((acc, r) => acc + (r.tags ? r.tags.length : 0), 0);
+    const totalDropped = results.reduce((acc, r) => acc + (r.dropped || 0), 0);
     const model = results.find((r) => r.model)?.model || '—';
 
     mizanTaggerRawMeta.setAttribute('data-error', hasError ? 'true' : 'false');
     mizanTaggerRawMeta.innerHTML = `
       <span>محتواها: <b>${UI.toPersianDigits(results.length)}</b></span>
-      <span>تگ‌های شناسایی‌شده: <b>${UI.toPersianDigits(totalTags)}</b></span>
+      <span>تگ‌های معتبر: <b>${UI.toPersianDigits(totalTags)}</b></span>
+      ${totalDropped > 0 ? `<span>حذف‌شده (ترجمه/عین آیه): <b>${UI.toPersianDigits(totalDropped)}</b></span>` : ''}
       <span>مدل: <b>${escapeHtml(model)}</b></span>
       ${hasError ? '<span><b>خطا در برخی محتواها</b></span>' : ''}
     `;
@@ -982,12 +1030,16 @@ const MizanPanel = (function () {
           model,
         });
 
-        const parsed = parseMizanTaggerResponse(result.content);
+        const parsedRaw = parseMizanTaggerResponse(result.content);
+        const parsed = await filterTrivialTags(parsedRaw, lastSurah, lastAyah);
+        const dropped = Math.max(0, parsedRaw.length - parsed.length);
+
         results.push({
           contentId: cid,
           raw: result.content,
           model: result.model || null,
           tags: parsed,
+          dropped,
           error: false,
           status: result.status,
         });
@@ -997,6 +1049,7 @@ const MizanPanel = (function () {
           raw: (err && err.raw) ? err.raw : (err && err.message) ? err.message : String(err),
           model: null,
           tags: [],
+          dropped: 0,
           error: true,
           status: err && err.status ? err.status : null,
         });
@@ -1186,7 +1239,9 @@ const MizanPanel = (function () {
 
       try {
         const allTags = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanTags(cid)));
-        mizanTags = allTags.flat();
+        // تگ‌های قدیمیِ موجود در دیتابیس هم فیلتر می‌شوند تا اگر قبلاً
+        // تگ بدیهی ذخیره شده بود، اینجا نمایش داده نشود.
+        mizanTags = await filterTrivialTags(allTags.flat(), surah, ayah);
       } catch (e) {
         mizanTags = [];
       }
@@ -1209,9 +1264,6 @@ const MizanPanel = (function () {
       showMizanState('content', { html, range });
       normalizeMizanChars(mizanContent);
       styleMizanAyahs(mizanContent);
-      // ترتیب مهم: ابتدا مارکرهای تگ، سپس یادداشت‌ها.
-      // چون پیمایشگر text-node هر دو نوع را skip می‌کند، ترتیب اثری
-      // بر صحت جست‌وجو ندارد؛ ولی این ترتیب از نظر بصری طبیعی‌تر است.
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
       paginateMizan(mizanContent);
