@@ -1,0 +1,170 @@
+/* ============================================================
+   css/components/modal.css
+   ============================================================ */
+
+.modal-root {
+  position: relative;
+  z-index: var(--z-modal);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(6px) saturate(140%);
+  -webkit-backdrop-filter: blur(6px) saturate(140%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--s-6);
+  z-index: var(--z-modal);
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+.modal-backdrop--entering { opacity: 1; }
+.modal-backdrop--leaving  { opacity: 0; }
+
+@media (max-width: 640px) {
+  .modal-backdrop { padding: var(--s-3); align-items: flex-end; }
+}
+
+.modal {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  max-height: min(90dvh, 860px);
+  transform: scale(.96) translateY(8px);
+  opacity: 0;
+  transition: transform var(--dur-slow) var(--ease-spring), opacity var(--dur-base);
+  overflow: hidden;
+  position: relative;
+}
+.modal-backdrop--entering .modal {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+.modal-backdrop--leaving .modal {
+  transform: scale(.97) translateY(6px);
+  opacity: 0;
+}
+
+/* Sizes */
+.modal--sm   { max-width: 420px; }
+.modal--md   { max-width: 620px; }
+.modal--lg   { max-width: 860px; }
+.modal--xl   { max-width: 1120px; }
+.modal--full {
+  max-width: 100%;
+  max-height: 100dvh;
+  height: 100dvh;
+  border-radius: 0;
+  border: none;
+}
+
+/* Decorative top glow */
+.modal::before {
+  content: "";
+  position: absolute;
+  inset-inline: 10%;
+  top: -1px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: .7;
+  pointer-events: none;
+}
+
+/* Head */
+.modal__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-6);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+.modal__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+.modal__title {
+  flex: 1;
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.modal__close {
+  flex-shrink: 0;
+}
+
+/* Body */
+.modal__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-6);
+  line-height: var(--lh-relaxed);
+  color: var(--text-secondary);
+}
+
+/* Foot */
+.modal__foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-6);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-inset);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Confirm dialog body / foot */
+.confirm-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.confirm-body__message {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-relaxed);
+  color: var(--text-secondary);
+}
+.confirm-body__hint {
+  font-size: var(--fs-sm);
+  color: var(--text-tertiary);
+}
+.confirm-foot {
+  display: flex;
+  gap: var(--s-3);
+  justify-content: flex-end;
+  width: 100%;
+  flex-wrap: wrap;
+}
+.prompt-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.prompt-body__message {
+  font-size: var(--fs-md);
+  color: var(--text-secondary);
+}
+
+/* Prevent body scroll when modal open */
+body.has-modal { overflow: hidden; }
+
+/* Animations */
+@keyframes modalPulse {
+  0%, 100% { box-shadow: var(--shadow-xl), 0 0 0 0 var(--accent-ring); }
+  50%      { box-shadow: var(--shadow-xl), 0 0 0 8px transparent; }
+}
