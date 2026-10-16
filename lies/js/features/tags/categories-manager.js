@@ -1,16 +1,17 @@
 /* ============================================================
    js/features/tags/categories-manager.js
    CRUD + drag-reorder + inline edit for categories
+   FIXED: COLOR_PALETTE from constants.js, LIMITS from app.config.js
    ============================================================ */
 
 import { el, clear } from '../../utils/dom.js';
 import * as categoriesService from '../../services/categories.service.js';
-import { COLOR_PALETTE, LIMITS } from '../../config/app.config.js';
+import { LIMITS } from '../../config/app.config.js';
+import { COLOR_PALETTE } from '../../config/constants.js';   // ← FIXED
 import { toast } from '../../ui/toast.js';
 import { confirm } from '../../ui/confirm.js';
 import { toFaDigits } from '../../utils/format.js';
 import { emptyState } from '../../ui/empty-state.js';
-import { colorFromString } from '../../utils/id.js';
 
 const ICONS = ['📁', '🎭', '💭', '🔥', '🌊', '⚡', '🌱', '🗝️', '🎯', '🌙', '☀️', '💎', '🪞', '🧩', '🧭', '⏳'];
 
@@ -80,20 +81,17 @@ function renderCategoryRow(cat, idx, count, onChange, categories, listEl) {
     attrs: { draggable: 'true' },
   });
 
-  // Drag handle
   const handle = el('div', { class: 'manager-row__handle', attrs: { title: 'کشیدن برای مرتب‌سازی' } }, { children: ['⋮⋮'] });
   row.appendChild(handle);
 
-  // Icon (clickable to edit)
   const iconBtn = el('button', {
     class: 'manager-row__icon',
     attrs: { type: 'button', title: 'تغییر آیکون' },
     style: { '--cat-color': cat.color },
-    on: { click: () => pickIcon(cat, () => onChange?.()) },
   }, { children: [cat.icon || '📁'] });
+  iconBtn.addEventListener('click', () => pickIcon(cat, () => onChange?.()));
   row.appendChild(iconBtn);
 
-  // Body
   const body = el('div', { class: 'manager-row__body' });
   body.appendChild(el('div', { class: 'manager-row__name' }, { children: [cat.name] }));
   if (cat.description) {
@@ -101,23 +99,19 @@ function renderCategoryRow(cat, idx, count, onChange, categories, listEl) {
   }
   row.appendChild(body);
 
-  // Count
-  const countEl = el('span', { class: 'manager-row__count' }, {
-    children: [`${toFaDigits(count)} دروغ`],
+  row.appendChild(el('span', {
+    class: 'manager-row__count',
     attrs: { title: `${count} مورد` },
-  });
-  row.appendChild(countEl);
+  }, { children: [`${toFaDigits(count)} دروغ`] }));
 
-  // Color swatch
   const swatch = el('button', {
     class: 'manager-row__swatch',
     attrs: { type: 'button', title: 'تغییر رنگ' },
     style: { background: cat.color },
-    on: { click: () => pickColor(cat, () => onChange?.()) },
   });
+  swatch.addEventListener('click', () => pickColor(cat, () => onChange?.()));
   row.appendChild(swatch);
 
-  // Actions
   const actions = el('div', { class: 'manager-row__actions' });
   const editBtn = el('button', { class: 'icon-btn', attrs: { type: 'button', title: 'ویرایش' } }, { children: ['✎'] });
   editBtn.addEventListener('click', () => openCategoryEditor(cat, () => onChange?.()));
@@ -136,7 +130,9 @@ function renderCategoryRow(cat, idx, count, onChange, categories, listEl) {
       await categoriesService.remove(cat.id);
       toast.success('دسته حذف شد.');
       onChange?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
   actions.appendChild(delBtn);
 
@@ -195,7 +191,9 @@ function initDragReorder(listEl, categories, onChange) {
       await categoriesService.reorder(ids);
       toast.success('ترتیب ذخیره شد.');
       onChange?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
 
   listEl.addEventListener('dragend', () => {
@@ -214,7 +212,9 @@ async function openCategoryEditor(cat, onDone) {
 
   // Name
   const nameField = el('div', { class: 'field' });
-  nameField.appendChild(el('label', { class: 'field__label' }, { children: ['نام', el('span', { class: 'req' }, { children: ['*'] })] }));
+  nameField.appendChild(el('label', { class: 'field__label' }, {
+    children: ['نام', el('span', { class: 'req' }, { children: ['*'] })],
+  }));
   const nameInput = el('input', {
     class: 'input',
     attrs: { type: 'text', maxlength: String(LIMITS.categoryNameMax), placeholder: 'مثلاً: ترس از شکست' },
@@ -223,7 +223,7 @@ async function openCategoryEditor(cat, onDone) {
   nameField.appendChild(nameInput);
   body.appendChild(nameField);
 
-  // Icon + color in one row
+  // Icon + color
   const row = el('div', { class: 'editor-form__row' });
 
   const iconField = el('div', { class: 'field' });
@@ -274,7 +274,6 @@ async function openCategoryEditor(cat, onDone) {
   descField.appendChild(descInput);
   body.appendChild(descField);
 
-  // Footer
   const saveBtn = el('button', { class: 'btn btn--primary' }, { children: [isEdit ? 'ذخیره' : 'ساخت'] });
   const cancelBtn = el('button', { class: 'btn btn--ghost' }, { children: ['لغو'] });
   const foot = el('div', { class: 'confirm-foot' }, { children: [cancelBtn, saveBtn] });
@@ -290,7 +289,12 @@ async function openCategoryEditor(cat, onDone) {
   cancelBtn.addEventListener('click', () => modal.close());
   saveBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
-    if (!name) { nameInput.focus(); nameInput.classList.add('anim-shake'); setTimeout(() => nameInput.classList.remove('anim-shake'), 450); return; }
+    if (!name) {
+      nameInput.focus();
+      nameInput.classList.add('anim-shake');
+      setTimeout(() => nameInput.classList.remove('anim-shake'), 450);
+      return;
+    }
     try {
       if (isEdit) {
         await categoriesService.update(cat.id, {
@@ -304,7 +308,9 @@ async function openCategoryEditor(cat, onDone) {
       toast.success(isEdit ? 'دسته به‌روزرسانی شد.' : 'دسته ساخته شد.');
       modal.close();
       onDone?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
 
   requestAnimationFrame(() => nameInput.focus());
