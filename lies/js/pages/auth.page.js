@@ -2,8 +2,8 @@
    js/pages/auth.page.js
    Wires the login / signup / forgot forms on the auth screen.
    FIXED:
+     - clearBanner → hideBanner (typo fix in setupTabs)
      - Inline form-level error banner above the submit button
-       (so users ALWAYS see what went wrong, even if toast fails)
      - Verbose console logging for debugging
      - Never leaves the submit button in a stuck state
    ============================================================ */
@@ -51,7 +51,17 @@ function setupTabs() {
     btn.addEventListener('click', () => {
       const target = btn.dataset.tab;
       // Clear any stale banners when switching tabs
-      ['login-form', 'signup-form'].forEach((id) => clearBanner(byId(id)));
+      const loginForm = byId('login-form');
+      const signupForm = byId('signup-form');
+      if (loginForm) {
+        const b = loginForm.querySelector('[data-auth-banner]');
+        if (b) hideBanner(b);
+      }
+      if (signupForm) {
+        const b = signupForm.querySelector('[data-auth-banner]');
+        if (b) hideBanner(b);
+      }
+
       tabs.forEach((b) => {
         const active = b === btn;
         b.classList.toggle('is-active', active);
@@ -146,7 +156,7 @@ function setupLoginForm() {
     } catch (err) {
       console.error('[auth] signIn failed', err);
       const msg = err?.message || 'ورود ناموفق بود. دوباره تلاش کنید.';
-      showBanner(banner, msg, 'error');
+      showBanner(banner, msg, 'error', { sticky: true });
       showFieldError(pwdEl, msg);
       toast.error(msg, { duration: 5000 });
     } finally {
@@ -301,7 +311,7 @@ function ensureBanner(form, submit) {
       dataset: { authBanner: '1' },
     });
     banner.hidden = true;
-    // Insert right before the submit button's parent row (or the submit itself)
+    // Insert right before the submit button (or its wrapper)
     if (submit.parentNode === form) {
       form.insertBefore(banner, submit);
     } else {
@@ -328,7 +338,6 @@ function showBanner(banner, message, variant = 'info', opts = {}) {
   banner.classList.add('is-visible');
 
   if (!opts.sticky) {
-    // Auto-hide after 8s (only for non-sticky)
     clearTimeout(banner._hideTimer);
     banner._hideTimer = setTimeout(() => hideBanner(banner), 8000);
   }
