@@ -1,6 +1,8 @@
 /* ============================================================
    css/base/variables.css
    Design tokens — Dark Theme (default) + Light fallback
+   FIXED: z-index ladder so that Toast/Modal appear ABOVE
+          the auth screen (which sits at 900).
    ============================================================ */
 
 :root {
@@ -165,7 +167,12 @@
   --ease-spring:   cubic-bezier(.34,1.56,.64,1);
   --ease-inout:    cubic-bezier(.65,.05,.36,1);
 
-  /* ── Z-index ladder ──────────────────────────────────── */
+  /* ══════════════════════════════════════════════════════
+     Z-index ladder  (FIXED ORDER — DO NOT REORDER)
+     Important: AUTH screen sits at 900. Anything that must
+     be visible OVER the auth screen (toasts, modals opened
+     from auth, error overlays) must be > 900.
+     ══════════════════════════════════════════════════════ */
   --z-base: 1;
   --z-sticky: 100;
   --z-sidebar: 200;
@@ -174,9 +181,12 @@
   --z-tooltip: 500;
   --z-context: 600;
   --z-modal: 700;
-  --z-toast: 800;
-  --z-loader: 900;
-  --z-boot: 1000;
+  --z-auth: 900;
+  --z-overlay: 950;   /* generic overlays above auth */
+  --z-toast: 980;     /* ← FIXED: was 800, now above auth */
+  --z-loader: 990;    /* full-screen loaders */
+  --z-error: 1000;    /* error boundary overlay */
+  --z-boot: 1010;     /* boot splash — highest */
 
   /* ── Misc ────────────────────────────────────────────── */
   --blur-sm: 6px;
