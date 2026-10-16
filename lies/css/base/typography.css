@@ -1,0 +1,149 @@
+/* ============================================================
+   css/base/typography.css
+   Persian-first typographic scale
+   ============================================================ */
+
+body {
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "ss01" 1;
+  font-variant-numeric: normal;
+}
+
+/* Persian digit helper */
+.num-fa { font-feature-settings: "ss02" 1; }
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+h1, .h1 { font-size: var(--fs-4xl); font-weight: var(--fw-black); }
+h2, .h2 { font-size: var(--fs-3xl); }
+h3, .h3 { font-size: var(--fs-2xl); }
+h4, .h4 { font-size: var(--fs-xl); }
+h5, .h5 { font-size: var(--fs-lg); }
+h6, .h6 { font-size: var(--fs-md); font-weight: var(--fw-semibold); }
+
+.display-1 { font-size: var(--fs-hero); font-weight: var(--fw-black); line-height: 1.15; letter-spacing: -0.02em; }
+.display-2 { font-size: var(--fs-5xl); font-weight: var(--fw-black); line-height: 1.15; }
+
+.lead {
+  font-size: var(--fs-lg);
+  line-height: var(--lh-relaxed);
+  color: var(--text-secondary);
+  font-weight: var(--fw-light);
+  text-wrap: pretty;
+}
+
+p { text-wrap: pretty; }
+
+small, .text-sm { font-size: var(--fs-sm); }
+.text-xs { font-size: var(--fs-xs); }
+.text-2xs { font-size: var(--fs-2xs); }
+.text-lg { font-size: var(--fs-lg); }
+.text-xl { font-size: var(--fs-xl); }
+
+.text-muted { color: var(--text-secondary); }
+.text-dim { color: var(--text-tertiary); }
+.text-faint { color: var(--text-quaternary); }
+.text-accent { color: var(--accent-300); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
+.text-danger { color: var(--danger); }
+.text-info { color: var(--info); }
+
+.fw-light { font-weight: var(--fw-light); }
+.fw-normal { font-weight: var(--fw-normal); }
+.fw-medium { font-weight: var(--fw-medium); }
+.fw-semibold { font-weight: var(--fw-semibold); }
+.fw-bold { font-weight: var(--fw-bold); }
+.fw-black { font-weight: var(--fw-black); }
+
+.italic { font-style: italic; }
+.underline { text-decoration: underline; text-underline-offset: 3px; }
+.strike { text-decoration: line-through; }
+.uppercase { text-transform: uppercase; letter-spacing: var(--ls-wide); }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clamp-1, .clamp-2, .clamp-3, .clamp-4 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-1 { -webkit-line-clamp: 1; line-clamp: 1; }
+.clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+.clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
+.clamp-4 { -webkit-line-clamp: 4; line-clamp: 4; }
+
+.prose {
+  max-width: var(--reading-max);
+  line-height: var(--lh-relaxed);
+  color: var(--text-secondary);
+  font-size: var(--fs-lg);
+}
+.prose > * + * { margin-top: var(--s-4); }
+.prose strong { color: var(--text-primary); font-weight: var(--fw-semibold); }
+.prose em { color: var(--accent-300); font-style: italic; }
+.prose blockquote {
+  border-inline-start: 3px solid var(--accent);
+  padding-inline-start: var(--s-5);
+  color: var(--text-primary);
+  font-style: italic;
+  background: var(--accent-softer);
+  border-radius: var(--r-sm);
+  padding-block: var(--s-3);
+}
+.prose code {
+  background: var(--bg-surface-2);
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  color: var(--accent-200);
+  font-size: .9em;
+}
+.prose ul { list-style: disc; padding-inline-start: 1.4em; }
+.prose ol { list-style: decimal; padding-inline-start: 1.4em; }
+.prose li + li { margin-top: var(--s-2); }
+
+/* Section eyebrow */
+.eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--accent-300);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(115deg, var(--accent-200), var(--accent-400) 45%, #f0619a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Numeric display */
+.stat-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--fw-black);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
