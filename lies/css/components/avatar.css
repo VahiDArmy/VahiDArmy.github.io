@@ -1,0 +1,80 @@
+/* ============================================================
+   css/components/avatar.css
+   ============================================================ */
+
+.avatar {
+  --avatar-color: var(--accent);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,
+    color-mix(in srgb, var(--avatar-color) 90%, white 10%),
+    color-mix(in srgb, var(--avatar-color) 70%, black 30%)
+  );
+  color: #fff;
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-sm);
+  flex-shrink: 0;
+  user-select: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+  overflow: hidden;
+}
+
+.avatar--xs { width: 20px; height: 20px; font-size: 9px; }
+.avatar--sm { width: 28px; height: 28px; font-size: 11px; }
+.avatar--md { width: 40px; height: 40px; font-size: 13px; }
+.avatar--lg { width: 56px; height: 56px; font-size: 18px; }
+.avatar--xl { width: 80px; height: 80px; font-size: 26px; }
+
+.avatar--ring {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.12),
+    0 0 0 2px var(--bg-base);
+}
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar__initials {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.avatar__status {
+  position: absolute;
+  bottom: -1px;
+  inset-inline-end: -1px;
+  width: 25%;
+  min-width: 8px;
+  height: 25%;
+  min-height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-base);
+}
+.avatar__status--online  { background: var(--success); }
+.avatar__status--offline { background: var(--text-tertiary); }
+.avatar__status--busy    { background: var(--danger); }
+
+.avatar--more {
+  background: var(--bg-surface-3);
+  color: var(--text-secondary);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-2xs);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.avatar-group {
+  display: inline-flex;
+  align-items: center;
+}
+.avatar-group .avatar + .avatar,
+.avatar-group .avatar + .avatar--more { margin-inline-start: -8px; }
+.avatar-group .avatar:hover { z-index: 1; transform: translateY(-2px); transition: transform var(--dur-fast); }
