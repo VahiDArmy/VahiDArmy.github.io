@@ -1,0 +1,82 @@
+/* ============================================================
+   css/components/progress.css
+   ============================================================ */
+
+.progress-wrap { display: flex; flex-direction: column; gap: 6px; }
+.progress-wrap__label {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  display: flex;
+  justify-content: space-between;
+}
+.progress-wrap__value {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  align-self: flex-end;
+}
+
+.progress {
+  height: 6px;
+  background: var(--bg-surface-3);
+  border-radius: var(--r-full);
+  overflow: hidden;
+  position: relative;
+}
+.progress--xs { height: 3px; }
+.progress--sm { height: 4px; }
+.progress--md { height: 6px; }
+.progress--lg { height: 10px; }
+
+.progress__bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent-300));
+  border-radius: inherit;
+  transition: width var(--dur-slow) var(--ease-decel);
+}
+
+.progress--accent .progress__bar { background: linear-gradient(90deg, var(--accent), var(--accent-300)); }
+.progress--success .progress__bar { background: linear-gradient(90deg, var(--success), hsl(var(--hue-success) 70% 60%)); }
+.progress--warning .progress__bar { background: linear-gradient(90deg, var(--warning), hsl(var(--hue-warning) 90% 68%)); }
+.progress--danger .progress__bar { background: linear-gradient(90deg, var(--danger), hsl(var(--hue-danger) 80% 68%)); }
+
+.progress--striped .progress__bar {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255,255,255,.18) 25%,
+    transparent 25%, transparent 50%,
+    rgba(255,255,255,.18) 50%, rgba(255,255,255,.18) 75%,
+    transparent 75%, transparent
+  );
+  background-size: 20px 20px;
+}
+.progress--animated .progress__bar {
+  animation: progressStripes 1s linear infinite;
+}
+
+/* ── Ring ───────────────────────────────────────────────── */
+.progress-ring {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.progress-ring__bg { stroke: var(--bg-surface-3); }
+.progress-ring__fg {
+  stroke: var(--accent);
+  transition: stroke-dashoffset var(--dur-slower) var(--ease-decel);
+  filter: drop-shadow(0 0 4px hsl(var(--accent-h) var(--accent-s) 55% / .55));
+}
+.progress-ring--success .progress-ring__fg { stroke: var(--success); filter: none; }
+.progress-ring--warning .progress-ring__fg { stroke: var(--warning); filter: none; }
+.progress-ring--danger  .progress-ring__fg { stroke: var(--danger);  filter: none; }
+
+.progress-ring__value {
+  position: absolute;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
