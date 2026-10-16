@@ -1,0 +1,94 @@
+/* ============================================================
+   css/features/lie-editor.css
+   ============================================================ */
+
+.modal--editor { max-width: 760px; }
+
+.lie-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
+
+.lie-editor__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-4);
+}
+.lie-editor__row--sliders {
+  gap: var(--s-5);
+  padding: var(--s-4);
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+}
+@media (max-width: 560px) {
+  .lie-editor__row { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Truth field emphasis */
+.lie-editor__truth {
+  padding: var(--s-3) var(--s-4);
+  background: linear-gradient(135deg, var(--success-soft), transparent 90%);
+  border-inline-start: 3px solid var(--success);
+  border-radius: var(--r-md);
+}
+.lie-editor__truth .field__label { color: var(--success); }
+.textarea--truth {
+  background: rgba(255,255,255,.03);
+  font-style: italic;
+  min-height: 80px;
+}
+
+/* Sliders */
+.lie-editor__slider {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 0;
+}
+.lie-editor__slider-head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+}
+.lie-editor__slider-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  background: var(--accent-soft);
+  color: var(--accent-200);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.lie-editor__slider-value {
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-black);
+  color: var(--accent-200);
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+  text-align: center;
+}
+.lie-editor__ticks {
+  display: flex;
+  justify-content: space-between;
+  padding-inline: 2px;
+  font-size: 10px;
+  color: var(--text-quaternary);
+}
+
+/* Footer */
+.lie-editor__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  width: 100%;
+}
+@media (max-width: 480px) {
+  .lie-editor__foot { flex-direction: column-reverse; }
+  .lie-editor__foot .btn { width: 100%; }
+}
