@@ -1,9 +1,11 @@
 /* ============================================================
    js/core/supabase.client.js
-   Single Supabase client instance + session helpers
+   Single Supabase client instance + session helpers.
+   Updated: newer supabase-js (supports sb_publishable_ keys) +
+            verbose error logging for debugging.
    ============================================================ */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm';
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/+esm';
 import {
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
@@ -37,7 +39,25 @@ export function getSupabase() {
     throw new Error(msg);
   }
 
-  _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_AUTH_OPTIONS);
+  try {
+    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_AUTH_OPTIONS);
+  } catch (err) {
+    console.error('[Supabase] createClient failed', err);
+    throw err;
+  }
+
+  // Diagnostic: log which project we're connected to (URL only, no secrets)
+  try {
+    const ref = SUPABASE_URL.replace(/^https:\/\//, '').split('.')[0];
+    console.info(
+      `%c[Supabase] متصل به پروژه: ${ref}`,
+      'color:#7c5cff;font-weight:bold'
+    );
+    console.info(
+      `%c[Supabase] نوع کلید: ${SUPABASE_ANON_KEY.startsWith('sb_publishable_') ? 'publishable (جدید)' : 'JWT anon (قدیمی)'}`,
+      'color:#7c5cff'
+    );
+  } catch { /* silent */ }
 
   // Wire auth state → EventBus
   _client.auth.onAuthStateChange((event, session) => {
@@ -130,4 +150,24 @@ export async function clearLocalSession() {
   } catch (err) {
     console.warn('[Supabase] clearLocalSession', err);
   }
+}
+
+/**
+ * Diagnostic helper — dump connection info to console.
+ * Call this from the browser console: `__app.debugSupabase()`
+ * @returns {Promise<object>}
+ */
+export async function debugSupabase() {
+  const client = getSupabase();
+  const { data: session } = await client.auth.getSession();
+  const info = {
+    url: SUPABASE_URL,
+    keyType: SUPABASE_ANON_KEY.startsWith('sb_publishable_') ? 'publishable' : 'jwt',
+    keyPrefix: SUPABASE_ANON_KEY.slice(0, 20) + '…',
+    hasSession: !!session?.session,
+    userEmail: session?.session?.user?.email || null,
+    expiresAt: session?.session?.expires_at || null,
+  };
+  console.table(info);
+  return info;
 }
