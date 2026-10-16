@@ -1,6 +1,8 @@
 /* ============================================================
    css/main.css
    Single entry stylesheet — imports everything in cascade order
+   Updated: added missing component imports (skeleton, table,
+   accordion, empty-state)
    ============================================================ */
 
 /* ── 1. Base / tokens ────────────────────────────────────── */
@@ -13,6 +15,7 @@
 /* ── 2. Layout ───────────────────────────────────────────── */
 @import url("./layout/app-shell.css");
 @import url("./layout/page.css");
+@import url("./layout/responsive.css");
 
 /* ── 3. UI primitives ────────────────────────────────────── */
 @import url("./components/buttons.css");
@@ -30,13 +33,14 @@
 @import url("./components/context-menu.css");
 @import url("./components/tooltip.css");
 @import url("./components/loader.css");
-@import url("./components/skeleton.css");
-@import url("./components/empty-state.css");
 @import url("./components/pagination.css");
-@import url("./components/accordion.css");
-@import url("./components/table.css");
 @import url("./components/avatar.css");
 @import url("./components/segmented.css");
+@import url("./components/charts.css");
+@import url("./components/skeleton.css");     /* ✅ added */
+@import url("./components/table.css");         /* ✅ added */
+@import url("./components/accordion.css");     /* ✅ added */
+@import url("./components/empty-state.css");   /* ✅ added */
 
 /* ── 4. Feature blocks ───────────────────────────────────── */
 @import url("./features/auth.css");
@@ -49,6 +53,6 @@
 @import url("./features/analytics.css");
 @import url("./features/tags.css");
 @import url("./features/settings.css");
-
-/* ── 5. Responsive last (so it wins) ─────────────────────── */
-@import url("./layout/responsive.css");
+@import url("./features/archive-trash.css");
+@import url("./features/about.css");
+@import url("./base/final-polish.css");        /* ✅ added */
