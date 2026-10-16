@@ -1,0 +1,109 @@
+/* ============================================================
+   css/components/skeleton.css
+   Loading skeleton components
+   ============================================================ */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-surface-2) 25%,
+    var(--bg-surface-3) 50%,
+    var(--bg-surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: var(--r-sm);
+}
+
+.skeleton--line {
+  height: 14px;
+  border-radius: var(--r-xs);
+}
+
+.skeleton--card {
+  border-radius: var(--r-lg);
+  width: 100%;
+}
+
+.skeleton--avatar {
+  border-radius: 50%;
+}
+
+.skeleton--chart {
+  border-radius: var(--r-lg);
+  width: 100%;
+}
+
+/* Card-shaped skeleton */
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.skeleton-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+/* Grid of skeleton cards */
+.skeleton-grid {
+  display: grid;
+  gap: var(--s-4);
+}
+
+/* List of skeleton rows */
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+}
+
+.skeleton-row__lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Full page skeleton */
+.skeleton-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+  animation: fadeIn var(--dur-base) var(--ease-standard);
+}
+
+/* Skeleton variants */
+.skeleton-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .skeleton--line,
+  .skeleton--card,
+  .skeleton--avatar,
+  .skeleton--chart {
+    animation: none;
+    background: var(--bg-surface-2);
+  }
+}
