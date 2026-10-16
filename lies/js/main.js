@@ -1,6 +1,7 @@
 /* ============================================================
    js/main.js
    Entry point: boot sequence, session, router, layout, shortcuts
+   Last updated: after phase 8 (all pages wired)
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -83,7 +84,7 @@ async function startApp() {
   showLoader('در حال آماده‌سازی فضای شخصی…');
   try {
     // Register routes BEFORE mounting app shell (so first route render has them)
-    registerRoutes();
+    await registerRoutes();
 
     // Mount layout
     mountAppShell();
@@ -134,121 +135,82 @@ function stopApp() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   Routes — real page modules land in later phases.
-   Here we ship dashboard + placeholders so the app runs.
+   Routes — all pages lazy-loaded for smaller initial bundle
    ══════════════════════════════════════════════════════════ */
 
-function registerRoutes() {
-  // Dashboard
-  router.register(`/${ROUTES.DASHBOARD}`, {
-    title: 'داشبورد',
-    render: async (container) => {
-      const { renderDashboard } = await import('./pages/dashboard.page.js').catch(() => ({ renderDashboard: null }));
-      if (renderDashboard) return renderDashboard(container);
-      container.appendChild(skeletonPage({ variant: 'grid' }));
-      await new Promise((r) => setTimeout(r, 400));
-      container.innerHTML = '';
-      container.appendChild(emptyState({
-        icon: '🏠',
-        title: 'داشبورد',
-        message: 'این بخش در فاز بعدی تکمیل می‌شود. فعلاً از منوی کناری «دروغ‌ها» را باز کنید.',
-      }));
-    },
-  });
+async function registerRoutes() {
+  /**
+   * @typedef {Object} RouteDef
+   * @property {string} path
+   * @property {string} title
+   * @property {() => Promise<Function>} load  returns render(container, params, query)
+   */
 
-  // Lies list
-  router.register(`/${ROUTES.LIES}`, {
-    title: 'دروغ‌ها',
-    render: async (container, _params, query) => {
-      const mod = await import('./pages/lies.page.js').catch(() => null);
-      if (mod?.renderLies) return mod.renderLies(container, query);
-      container.appendChild(emptyState({
-        icon: '🎭',
-        title: 'لیست دروغ‌ها',
-        message: 'این بخش در فاز بعدی تکمیل می‌شود.',
-        action: { label: 'بازگشت به داشبورد', onClick: () => { location.hash = `#/${ROUTES.DASHBOARD}`; } },
-      }));
+  /** @type {RouteDef[]} */
+  const routes = [
+    {
+      path: `/${ROUTES.DASHBOARD}`,
+      title: 'داشبورد',
+      load: () => import('./pages/dashboard.page.js').then((m) => m.renderDashboard),
     },
-  });
-
-  // Lie detail
-  router.register('/lie/:id', {
-    title: 'جزئیات',
-    render: async (container, params) => {
-      const mod = await import('./pages/lie-detail.page.js').catch(() => null);
-      if (mod?.renderLieDetail) return mod.renderLieDetail(container, params.id);
-      container.appendChild(emptyState({
-        icon: '🔍',
-        title: 'جزئیات دروغ',
-        message: `شناسه: ${params.id} — این بخش در فاز بعدی تکمیل می‌شود.`,
-        action: { label: 'بازگشت', onClick: () => history.back() },
-      }));
+    {
+      path: `/${ROUTES.LIES}`,
+      title: 'دروغ‌ها',
+      load: () => import('./pages/lies.page.js').then((m) => m.renderLies),
     },
-  });
-
-  // Analytics
-  router.register(`/${ROUTES.ANALYTICS}`, {
-    title: 'تحلیل و آمار',
-    render: async (container) => {
-      const mod = await import('./pages/analytics.page.js').catch(() => null);
-      if (mod?.renderAnalytics) return mod.renderAnalytics(container);
-      container.appendChild(emptyState({ icon: '📊', title: 'تحلیل و آمار', message: 'به‌زودی…' }));
+    {
+      path: '/lie/:id',
+      title: 'جزئیات',
+      load: () => import('./pages/lie-detail.page.js').then((m) => m.renderLieDetail),
     },
-  });
-
-  // Tags / Categories
-  router.register(`/${ROUTES.TAGS}`, {
-    title: 'دسته‌ها و برچسب‌ها',
-    render: async (container) => {
-      const mod = await import('./pages/tags.page.js').catch(() => null);
-      if (mod?.renderTags) return mod.renderTags(container);
-      container.appendChild(emptyState({ icon: '🏷️', title: 'دسته‌ها و برچسب‌ها', message: 'به‌زودی…' }));
+    {
+      path: `/${ROUTES.ANALYTICS}`,
+      title: 'تحلیل و آمار',
+      load: () => import('./pages/analytics.page.js').then((m) => m.renderAnalytics),
     },
-  });
-
-  // Archive
-  router.register(`/${ROUTES.ARCHIVE}`, {
-    title: 'بایگانی',
-    render: async (container) => {
-      container.appendChild(emptyState({ icon: '📦', title: 'بایگانی', message: 'به‌زودی…' }));
+    {
+      path: `/${ROUTES.TAGS}`,
+      title: 'دسته‌ها و برچسب‌ها',
+      load: () => import('./pages/tags.page.js').then((m) => m.renderTags),
     },
-  });
-
-  // Trash
-  router.register(`/${ROUTES.TRASH}`, {
-    title: 'سطل زباله',
-    render: async (container) => {
-      container.appendChild(emptyState({ icon: '🗑️', title: 'سطل زباله', message: 'به‌زودی…' }));
+    {
+      path: `/${ROUTES.ARCHIVE}`,
+      title: 'بایگانی',
+      load: () => import('./pages/archive.page.js').then((m) => m.renderArchive),
     },
-  });
-
-  // Settings
-  router.register(`/${ROUTES.SETTINGS}`, {
-    title: 'تنظیمات',
-    render: async (container) => {
-      const mod = await import('./pages/settings.page.js').catch(() => null);
-      if (mod?.renderSettings) return mod.renderSettings(container);
-      container.appendChild(emptyState({ icon: '⚙️', title: 'تنظیمات', message: 'به‌زودی…' }));
+    {
+      path: `/${ROUTES.TRASH}`,
+      title: 'سطل زباله',
+      load: () => import('./pages/trash.page.js').then((m) => m.renderTrash),
     },
-  });
-
-  // About
-  router.register(`/${ROUTES.ABOUT}`, {
-    title: 'درباره',
-    render: (container) => {
-      container.appendChild(emptyState({
-        icon: 'ℹ️',
-        title: 'آینهٔ درون',
-        message: `نسخهٔ ${APP.version} — یک ژورنال کاملاً خصوصی برای رویارویی با دروغ‌هایی که به خودمان می‌گوییم.`,
-      }));
+    {
+      path: `/${ROUTES.SETTINGS}`,
+      title: 'تنظیمات',
+      load: () => import('./pages/settings.page.js').then((m) => m.renderSettings),
     },
-  });
+    {
+      path: `/${ROUTES.ABOUT}`,
+      title: 'درباره',
+      load: () => import('./pages/about.page.js').then((m) => m.renderAbout),
+    },
+  ];
 
-  // Auth guard: block everything that is not public
+  for (const r of routes) {
+    router.register(r.path, {
+      title: r.title,
+      render: async (container, params, query) => {
+        const renderFn = await r.load();
+        return renderFn(container, params, query);
+      },
+    });
+  }
+
+  // Auth guard: block everything that is not public.
+  // Runs for every navigation (unless the route is explicitly public).
   router.beforeEach(async ({ route }) => {
     if (route?.public) return true;
     if (isAuthenticated()) return true;
-    // Not authenticated → show auth screen and cancel
+    // Not authenticated → show auth screen and cancel navigation
     showAuthScreen();
     return false;
   });
@@ -290,7 +252,7 @@ function registerGlobalShortcuts() {
     handler: () => byId('help-btn')?.click(),
   });
 
-  // Esc → close drawer
+  // Esc → close mobile drawer
   shortcuts.register({
     combo: 'esc', scope: SHORTCUT_SCOPES.GLOBAL,
     label: 'بستن پنجره/کشو', group: 'عمومی',
@@ -307,7 +269,7 @@ function registerGlobalShortcuts() {
     handler: () => bus.emit('ui:focus-search'),
   });
 
-  // G + <letter> sequences
+  // G + <letter> sequences from NAV_ITEMS
   for (const item of NAV_ITEMS) {
     if (!item.shortcut) continue;
     const letter = item.shortcut.split(/\s+/)[1] || '';
