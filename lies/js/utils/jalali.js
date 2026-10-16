@@ -1,7 +1,11 @@
 /* ============================================================
    js/utils/jalali.js
    Jalali (Shamsi) calendar utilities built on Intl API.
-   No external library needed.
+   FIXED:
+     - Removed invalid `timeZone: 'local'` from Intl.DateTimeFormat.
+       'local' is NOT a valid time-zone id; omitting it lets the
+       browser use the local zone by default.
+     - All Intl calls are now wrapped in try/catch with safe fallbacks.
    ============================================================ */
 
 import { FA_WEEKDAYS, FA_WEEKDAYS_SHORT, FA_MONTHS } from '../config/constants.js';
@@ -10,32 +14,66 @@ import { toFaDigits } from './format.js';
 const PERSIAN_CAL = 'fa-IR-u-ca-persian';
 const GREGORIAN_CAL = 'en-US-u-ca-gregory';
 
+/* ── Safe Intl wrapper ──────────────────────────────────── */
+
+/**
+ * Safely build an Intl.DateTimeFormat. Never throws.
+ * @param {string} locale
+ * @param {Intl.DateTimeFormatOptions} [opts]
+ * @returns {Intl.DateTimeFormat|null}
+ */
+function safeFormatter(locale, opts = {}) {
+  try {
+    // Never pass `timeZone: 'local'` — it's invalid.
+    // If a caller passed something we don't trust, strip it.
+    const clean = { ...opts };
+    if (clean.timeZone === 'local' || clean.timeZone === 'Local') {
+      delete clean.timeZone;
+    }
+    return new Intl.DateTimeFormat(locale, clean);
+  } catch (err) {
+    console.warn('[jalali] Intl.DateTimeFormat failed', err);
+    return null;
+  }
+}
+
+/* ── Parts extraction ───────────────────────────────────── */
+
 /**
  * Format a date to Jalali parts using Intl.
  * @param {Date} date
  * @returns {{year:number, month:number, day:number, weekday:number}}
  */
 function partsOf(date) {
-  const dtf = new Intl.DateTimeFormat(GREGORIAN_CAL, {
+  const fmt = safeFormatter(PERSIAN_CAL, {
     year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short',
-    timeZone: 'UTC',
   });
-  // Use a proper formatter to extract Persian date
-  const fmt = new Intl.DateTimeFormat(PERSIAN_CAL, {
-    year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short',
-    timeZone: 'local',
-  });
+  if (!fmt) {
+    return { year: 0, month: 0, day: 0, weekday: 0 };
+  }
+
   const out = {};
-  for (const p of fmt.formatToParts(date)) out[p.type] = p.value;
-  const weekdayMap = { شنبه: 0, یک‌شنبه: 1, 'یکشنبه': 1, دوشنبه: 2, 'سه‌شنبه': 3, سه‌شنبه: 3, چهارشنبه: 4, 'پنج‌شنبه': 5, پنجشنبه: 5, جمعه: 6, Sat: 0, Sun: 1, Mon: 2, Tue: 3, Wed: 4, Thu: 5, Fri: 6 };
+  try {
+    for (const p of fmt.formatToParts(date)) out[p.type] = p.value;
+  } catch (err) {
+    console.warn('[jalali] formatToParts failed', err);
+    return { year: 0, month: 0, day: 0, weekday: 0 };
+  }
+
+  const weekdayMap = {
+    'شنبه': 0, 'یک‌شنبه': 1, 'یکشنبه': 1,
+    'دوشنبه': 2, 'سه‌شنبه': 3, 'سه شنبه': 3,
+    'چهارشنبه': 4, 'پنج‌شنبه': 5, 'پنجشنبه': 5,
+    'جمعه': 6,
+    'Sat': 0, 'Sun': 1, 'Mon': 2, 'Tue': 3, 'Wed': 4, 'Thu': 5, 'Fri': 6,
+  };
+
   return {
-    year: Number(out.year?.replace(/\D/g, '')) || 0,
-    month: Number(out.month?.replace(/\D/g, '')) || 0,
-    day: Number(out.day?.replace(/\D/g, '')) || 0,
+    year: Number(String(out.year || '').replace(/\D/g, '')) || 0,
+    month: Number(String(out.month || '').replace(/\D/g, '')) || 0,
+    day: Number(String(out.day || '').replace(/\D/g, '')) || 0,
     weekday: weekdayMap[out.weekday] ?? 0,
   };
-  // eslint-disable-next-line no-unreachable
-  void dtf;
 }
 
 /**
@@ -49,22 +87,19 @@ export function getJalaliParts(date = new Date()) {
   return partsOf(d);
 }
 
+/* ── Leap-year & month length ───────────────────────────── */
+
 /**
- * Is a Gregorian year a leap year (approximation is fine for the Jalali cycle).
- * We compute properly by checking the number of days in the Jalali year.
- * @param {number} jy Jalali year
+ * Is a Jalali year a leap year?
+ * @param {number} jy
  * @returns {boolean}
  */
 export function isJalaliLeap(jy) {
-  // Convert to a rough Gregorian guess and check via Intl
-  const gregYear = jy + 621;
   const startDate = jalaliToDate(jy, 1, 1);
   const endDate = jalaliToDate(jy + 1, 1, 1);
   if (!startDate || !endDate) return false;
   const days = Math.round((endDate - startDate) / 86400000);
   return days === 366;
-  // eslint-disable-next-line no-unreachable
-  void gregYear;
 }
 
 /**
@@ -78,18 +113,18 @@ export function jalaliMonthDays(jy, jm) {
   return isJalaliLeap(jy) ? 30 : 29;
 }
 
+/* ── Conversion ─────────────────────────────────────────── */
+
 /**
  * Convert Jalali date to Gregorian Date object.
- * Approximation: start from a known Jalali epoch (March 21, 622 CE / 1 Farvardin 1).
- * Uses iterative correction to stay within ±1 day.
  * @param {number} jy
  * @param {number} jm 1-12
  * @param {number} jd 1-31
  * @returns {Date|null}
  */
 export function jalaliToDate(jy, jm, jd) {
-  // Known anchor: 1 Farvardin 1400 = 2021-03-21
-  const anchor = new Date(Date.UTC(2021, 2, 21));
+  // Anchor: 1 Farvardin 1400 = 2021-03-21 (UTC)
+  const anchor = Date.UTC(2021, 2, 21);
   const ANCHOR_JY = 1400;
   const ANCHOR_JM = 1;
   const ANCHOR_JD = 1;
@@ -98,12 +133,11 @@ export function jalaliToDate(jy, jm, jd) {
     { y: ANCHOR_JY, m: ANCHOR_JM, d: ANCHOR_JD },
     { y: jy, m: jm, d: jd }
   );
-  const target = new Date(anchor.getTime() + daysBetween * 86400000);
+  const target = new Date(anchor + daysBetween * 86400000);
   return Number.isNaN(target.getTime()) ? null : target;
 }
 
 /**
- * Number of days between two Jalali dates (b - a).
  * @param {{y:number,m:number,d:number}} a
  * @param {{y:number,m:number,d:number}} b
  * @returns {number}
@@ -114,13 +148,12 @@ function jalaliDayDiff(a, b) {
 
 /**
  * Convert Jalali to Julian Day Number (JDN).
- * Standard algorithm (Borkowski).
  * @param {{y:number,m:number,d:number}} j
  * @returns {number}
  */
 function jalaliToJulianDay(j) {
   const jy = j.y + 1595;
-  let days = -355668 +
+  const days = -355668 +
     (365 * jy) +
     Math.floor(jy / 33) * 8 +
     Math.floor(((jy % 33) + 3) / 4) +
@@ -139,9 +172,10 @@ export function dateToJalali(date) {
   return { y: p.year, m: p.month, d: p.day };
 }
 
+/* ── Grid ───────────────────────────────────────────────── */
+
 /**
- * Build a month grid: array of weeks, each week = array of 7 cells.
- * Cells are `{ date: Date|null, day: number|null, isToday: boolean, isCurrentMonth: boolean }`.
+ * Build a month grid for a Jalali month.
  * @param {number} jy
  * @param {number} jm
  * @param {Date} [today=new Date()]
@@ -179,6 +213,8 @@ export function buildJalaliMonthGrid(jy, jm, today = new Date()) {
   return weeks;
 }
 
+/* ── Labels ─────────────────────────────────────────────── */
+
 /**
  * Persian weekday names (Saturday-first order).
  * @returns {string[]}
@@ -201,7 +237,7 @@ export function getWeekdayShortLabels() {
  * @returns {string}
  */
 export function getMonthName(m) {
-  return FA_MONTHS[Math.max(0, Math.min(11, m - 1))] || '';
+  return FA_MONTHS[Math.max(0, Math.min(11, Number(m) - 1))] || '';
 }
 
 /**
@@ -211,14 +247,16 @@ export function getMonthName(m) {
  * @returns {string}
  */
 export function formatJalali(date, style = 'short') {
-  const { y, m, d } = dateToJalali(new Date(date));
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '—';
+  const { y, m, d: day } = dateToJalali(d);
   if (!y) return '—';
-  if (style === 'long') return `${toFaDigits(d)} ${getMonthName(m)} ${toFaDigits(y)}`;
-  return `${toFaDigits(y)}/${toFaDigits(String(m).padStart(2, '0'))}/${toFaDigits(String(d).padStart(2, '0'))}`;
+  if (style === 'long') return `${toFaDigits(day)} ${getMonthName(m)} ${toFaDigits(y)}`;
+  return `${toFaDigits(y)}/${toFaDigits(String(m).padStart(2, '0'))}/${toFaDigits(String(day).padStart(2, '0'))}`;
 }
 
 /**
- * Get the start & end dates of a Jalali month as Gregorian Dates.
+ * Get start & end of a Jalali month as Gregorian Dates.
  * @param {number} jy @param {number} jm
  * @returns {{start:Date, end:Date}}
  */
@@ -263,3 +301,6 @@ export function jalaliToISO(jy, jm, jd, time = {}) {
   d.setHours(time.hour ?? 12, time.minute ?? 0, 0, 0);
   return d.toISOString();
 }
+
+// Silence unused-import lint
+void GREGORIAN_CAL;
