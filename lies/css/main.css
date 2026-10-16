@@ -1,0 +1,54 @@
+/* ============================================================
+   css/main.css
+   Single entry stylesheet — imports everything in cascade order
+   ============================================================ */
+
+/* ── 1. Base / tokens ────────────────────────────────────── */
+@import url("./base/variables.css");
+@import url("./base/reset.css");
+@import url("./base/typography.css");
+@import url("./base/animations.css");
+@import url("./base/utilities.css");
+
+/* ── 2. Layout ───────────────────────────────────────────── */
+@import url("./layout/app-shell.css");
+@import url("./layout/page.css");
+
+/* ── 3. UI primitives ────────────────────────────────────── */
+@import url("./components/buttons.css");
+@import url("./components/forms.css");
+@import url("./components/cards.css");
+@import url("./components/badges.css");
+@import url("./components/chips.css");
+@import url("./components/progress.css");
+@import url("./components/switch.css");
+@import url("./components/checkbox.css");
+@import url("./components/tabs.css");
+@import url("./components/modal.css");
+@import url("./components/toast.css");
+@import url("./components/dropdown.css");
+@import url("./components/context-menu.css");
+@import url("./components/tooltip.css");
+@import url("./components/loader.css");
+@import url("./components/skeleton.css");
+@import url("./components/empty-state.css");
+@import url("./components/pagination.css");
+@import url("./components/accordion.css");
+@import url("./components/table.css");
+@import url("./components/avatar.css");
+@import url("./components/segmented.css");
+
+/* ── 4. Feature blocks ───────────────────────────────────── */
+@import url("./features/auth.css");
+@import url("./features/sidebar.css");
+@import url("./features/topbar.css");
+@import url("./features/dashboard.css");
+@import url("./features/lies.css");
+@import url("./features/lie-editor.css");
+@import url("./features/lie-detail.css");
+@import url("./features/analytics.css");
+@import url("./features/tags.css");
+@import url("./features/settings.css");
+
+/* ── 5. Responsive last (so it wins) ─────────────────────── */
+@import url("./layout/responsive.css");
