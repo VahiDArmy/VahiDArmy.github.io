@@ -1,11 +1,13 @@
 /* ============================================================
    css/components/checkbox.css
+   FIXED: Removed pointer-events:none on input so the label click
+   always toggles the checkbox. Also made the visual box clickable.
    ============================================================ */
 
 .checkbox {
   display: inline-flex;
   align-items: flex-start;
-  gap: var(--s-2);
+  gap: var(--s-2, 8px);
   cursor: pointer;
   user-select: none;
   position: relative;
@@ -13,33 +15,41 @@
 }
 .checkbox.is-disabled { opacity: .55; cursor: not-allowed; }
 
+/* The native input stays in the DOM (so label association works)
+   but is visually hidden. We DO NOT use pointer-events:none. */
 .checkbox input {
   position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  width: 1px;
+  height: 1px;
   opacity: 0;
-  pointer-events: none;
-  width: 0;
-  height: 0;
+  margin: 0;
+  padding: 0;
+  /* Note: no pointer-events:none — clicking the label must reach it */
 }
 
+/* The visible box */
 .checkbox__box {
   position: relative;
   --size: 18px;
   width: var(--size);
   height: var(--size);
   flex-shrink: 0;
-  background: var(--bg-inset);
-  border: 1.5px solid var(--border-strong);
+  background: var(--bg-inset, #0b0b12);
+  border: 1.5px solid var(--border-strong, rgba(255,255,255,0.16));
   border-radius: 5px;
   margin-top: 2px;
   transition:
-    background var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast) var(--ease-standard),
-    box-shadow var(--dur-fast) var(--ease-standard);
+    background var(--dur-fast, 140ms) var(--ease-standard, ease),
+    border-color var(--dur-fast, 140ms) var(--ease-standard, ease),
+    box-shadow var(--dur-fast, 140ms) var(--ease-standard, ease);
+  pointer-events: none; /* label handles the click */
 }
 .checkbox--sm .checkbox__box { --size: 15px; border-radius: 4px; }
 .checkbox--lg .checkbox__box { --size: 22px; border-radius: 6px; }
 
-.checkbox:hover .checkbox__box { border-color: var(--text-tertiary); }
+.checkbox:hover .checkbox__box { border-color: var(--text-tertiary, #6f6f88); }
 
 .checkbox__check {
   position: absolute;
@@ -52,7 +62,8 @@
   font-weight: 900;
   opacity: 0;
   transform: scale(.5);
-  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
+  transition: opacity var(--dur-fast, 140ms), transform var(--dur-fast, 140ms) var(--ease-spring, ease);
+  pointer-events: none;
 }
 .checkbox--lg .checkbox__check { font-size: 15px; }
 
@@ -62,6 +73,7 @@
   display: none;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 .checkbox__indeterminate::before {
   content: "";
@@ -72,25 +84,32 @@
 }
 
 .checkbox.is-checked .checkbox__box {
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  background: linear-gradient(135deg, var(--accent-500, #7c5cff), var(--accent-600, #6a4ae6));
   border-color: transparent;
-  box-shadow: 0 4px 12px -4px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+  box-shadow: 0 4px 12px -4px rgba(124,92,255,0.55);
 }
 .checkbox.is-checked .checkbox__check { opacity: 1; transform: scale(1); }
 .checkbox.is-indeterminate .checkbox__box {
-  background: var(--accent-500);
+  background: var(--accent-500, #7c5cff);
   border-color: transparent;
 }
 .checkbox.is-indeterminate .checkbox__indeterminate { display: flex; }
 .checkbox.is-indeterminate .checkbox__check { opacity: 0; }
 
 .checkbox input:focus-visible + .checkbox__box {
-  box-shadow: var(--focus-ring);
+  box-shadow: 0 0 0 3px rgba(124,92,255,0.35);
 }
 
 .checkbox__label {
-  font-size: var(--fs-sm);
-  color: var(--text-primary);
+  font-size: var(--fs-sm, 13px);
+  color: var(--text-primary, #f2f2f7);
   line-height: 1.55;
   padding-top: 1px;
+  pointer-events: none; /* label handles the click */
+}
+
+/* Ensure the whole row is a big tap target */
+.checkbox,
+.checkbox > * {
+  -webkit-tap-highlight-color: transparent;
 }
