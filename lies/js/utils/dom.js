@@ -1,6 +1,13 @@
 /* ============================================================
    js/utils/dom.js
    Tiny DOM toolkit — query, create, events, class helpers
+   FIXED:
+     - `el()` now accepts BOTH forms:
+         el('div', { class: 'x', children: [...] })
+         el('div', { class: 'x' }, { children: [...] })
+       Previously the 3rd argument was silently ignored, which
+       caused many components (toast, modal, etc.) to render
+       without their text/children.
    ============================================================ */
 
 /* ── Query ───────────────────────────────────────────────── */
@@ -38,61 +45,74 @@ export function byId(id) {
 /* ── Create ──────────────────────────────────────────────── */
 
 /**
- * Create an element with props, attrs, dataset, styles, and children.
+ * Create an element.
+ *
+ * Usage examples (ALL supported):
+ *   el('div')
+ *   el('div', { class: 'x' })
+ *   el('div', { class: 'x', children: ['hello'] })
+ *   el('div', { class: 'x' }, { children: ['hello'] })   ← 3-arg form
+ *
  * @param {string} tag
  * @param {Object} [opts]
- * @param {Object} [opts.props]   - direct property assignments
- * @param {Object} [opts.attrs]   - attributes
- * @param {Object} [opts.dataset] - data-* attributes
- * @param {Object} [opts.style]   - inline styles
- * @param {Object} [opts.class]   - class list (string | string[])
- * @param {Object} [opts.on]      - event listeners { eventName: handler }
- * @param {(Node|string)[]} [opts.children]
+ * @param {Object} [extra]  - optional 3rd arg; merged into opts
  * @returns {HTMLElement}
  */
-export function el(tag, opts = {}) {
+export function el(tag, opts = {}, extra = {}) {
   const node = document.createElement(tag);
 
-  if (opts.class) {
-    const list = Array.isArray(opts.class) ? opts.class : String(opts.class).split(/\s+/);
-    list.filter(Boolean).forEach((c) => node.classList.add(c));
-  }
-
-  if (opts.attrs) {
-    for (const [k, v] of Object.entries(opts.attrs)) {
-      if (v === null || v === undefined || v === false) continue;
-      node.setAttribute(k, v === true ? '' : String(v));
+  // Merge any 3rd-argument props (e.g. { children })
+  const merged = { ...opts };
+  if (extra && typeof extra === 'object') {
+    for (const [k, v] of Object.entries(extra)) {
+      if (merged[k] === undefined) merged[k] = v;
     }
   }
 
-  if (opts.dataset) {
-    for (const [k, v] of Object.entries(opts.dataset)) {
+  if (merged.class) {
+    const list = Array.isArray(merged.class)
+      ? merged.class
+      : String(merged.class).split(/\s+/);
+    list.filter(Boolean).forEach((c) => node.classList.add(c));
+  }
+
+  if (merged.attrs) {
+    for (const [k, v] of Object.entries(merged.attrs)) {
+      if (v === null || v === undefined || v === false) continue;
+      try { node.setAttribute(k, v === true ? '' : String(v)); } catch { /* noop */ }
+    }
+  }
+
+  if (merged.dataset) {
+    for (const [k, v] of Object.entries(merged.dataset)) {
       if (v === null || v === undefined) continue;
       node.dataset[k] = String(v);
     }
   }
 
-  if (opts.style) {
-    for (const [k, v] of Object.entries(opts.style)) {
+  if (merged.style) {
+    for (const [k, v] of Object.entries(merged.style)) {
       if (k.startsWith('--')) node.style.setProperty(k, v);
       else node.style[k] = v;
     }
   }
 
-  if (opts.props) {
-    for (const [k, v] of Object.entries(opts.props)) {
-      node[k] = v;
+  if (merged.props) {
+    for (const [k, v] of Object.entries(merged.props)) {
+      try { node[k] = v; } catch { /* noop */ }
     }
   }
 
-  if (opts.on) {
-    for (const [evt, handler] of Object.entries(opts.on)) {
-      node.addEventListener(evt, handler);
+  if (merged.on) {
+    for (const [evt, handler] of Object.entries(merged.on)) {
+      if (typeof handler === 'function') node.addEventListener(evt, handler);
     }
   }
 
-  if (opts.children) {
-    append(node, opts.children);
+  // Children can be either `opts.children` or `extra.children`
+  const children = merged.children;
+  if (children !== undefined && children !== null) {
+    append(node, children);
   }
 
   return node;
@@ -102,13 +122,18 @@ export function el(tag, opts = {}) {
  * Create an SVG element (namespace-aware).
  * @param {string} tag
  * @param {Object} [attrs]
+ * @param {Object} [extra] - optional 3rd arg; supports { children }
  * @returns {SVGElement}
  */
-export function svg(tag, attrs = {}) {
+export function svg(tag, attrs = {}, extra = {}) {
   const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
   for (const [k, v] of Object.entries(attrs)) {
     if (v === null || v === undefined) continue;
-    node.setAttribute(k, String(v));
+    try { node.setAttribute(k, String(v)); } catch { /* noop */ }
+  }
+  const children = extra?.children;
+  if (children !== undefined && children !== null) {
+    append(node, children);
   }
   return node;
 }
@@ -120,7 +145,7 @@ export function svg(tag, attrs = {}) {
  */
 export function frag(html) {
   const t = document.createElement('template');
-  t.innerHTML = html.trim();
+  t.innerHTML = String(html || '').trim();
   return t.content;
 }
 
@@ -136,7 +161,13 @@ export function append(parent, children) {
   const list = Array.isArray(children) ? children : [children];
   for (const child of list) {
     if (child === null || child === undefined || child === false) continue;
-    parent.appendChild(child instanceof Node ? child : document.createTextNode(String(child)));
+    try {
+      parent.appendChild(
+        child instanceof Node ? child : document.createTextNode(String(child))
+      );
+    } catch (err) {
+      console.warn('[dom] append failed', err, child);
+    }
   }
   return parent;
 }
@@ -154,6 +185,7 @@ export function remove(node) {
  * @param {Node} node
  */
 export function clear(node) {
+  if (!node) return;
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
@@ -260,7 +292,11 @@ export function delegate(root, type, selector, handler) {
  * @param {{bubbles?:boolean, cancelable?:boolean}} [opts]
  */
 export function emit(target, type, detail, opts = {}) {
-  const ev = new CustomEvent(type, { detail, bubbles: opts.bubbles ?? true, cancelable: opts.cancelable ?? true });
+  const ev = new CustomEvent(type, {
+    detail,
+    bubbles: opts.bubbles ?? true,
+    cancelable: opts.cancelable ?? true,
+  });
   target.dispatchEvent(ev);
   return ev;
 }
@@ -274,15 +310,9 @@ export function emit(target, type, detail, opts = {}) {
  */
 export function once(target, type, opts = {}) {
   return new Promise((resolve, reject) => {
-    const handler = (ev) => {
-      cleanup();
-      resolve(ev);
-    };
+    const handler = (ev) => { cleanup(); resolve(ev); };
     const timer = opts.timeout
-      ? setTimeout(() => {
-          cleanup();
-          reject(new Error(`Timeout waiting for "${type}"`));
-        }, opts.timeout)
+      ? setTimeout(() => { cleanup(); reject(new Error(`Timeout waiting for "${type}"`)); }, opts.timeout)
       : null;
     const cleanup = () => {
       target.removeEventListener(type, handler);
@@ -354,7 +384,6 @@ export function trapFocus(container) {
   };
 
   container.addEventListener('keydown', onKeydown);
-  // Focus first available element after paint
   requestAnimationFrame(() => {
     const f = first();
     if (f) f.focus();
@@ -370,30 +399,14 @@ export function trapFocus(container) {
 
 /* ── Misc ────────────────────────────────────────────────── */
 
-/**
- * Scroll an element into view smoothly.
- * @param {Element} node
- * @param {ScrollIntoViewOptions} [opts]
- */
 export function scrollTo(node, opts = { behavior: 'smooth', block: 'center' }) {
   node?.scrollIntoView(opts);
 }
 
-/**
- * Measure an element's rect.
- * @param {Element} node
- * @returns {DOMRect}
- */
 export function rect(node) {
   return node.getBoundingClientRect();
 }
 
-/**
- * Check if an element is in the viewport.
- * @param {Element} node
- * @param {number} [threshold=0]
- * @returns {boolean}
- */
 export function inViewport(node, threshold = 0) {
   const r = rect(node);
   return (
@@ -404,11 +417,6 @@ export function inViewport(node, threshold = 0) {
   );
 }
 
-/**
- * Clamp an element within the viewport (for popovers/menus).
- * @param {HTMLElement} node
- * @param {number} [pad=8]
- */
 export function clampToViewport(node, pad = 8) {
   const r = rect(node);
   const vw = window.innerWidth;
