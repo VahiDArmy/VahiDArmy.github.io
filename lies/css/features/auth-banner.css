@@ -1,0 +1,67 @@
+/* ============================================================
+   css/features/auth-banner.css
+   Inline banner shown above the auth form submit button
+   ============================================================ */
+
+.auth-banner {
+  display: block;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  border: 1px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-secondary);
+  margin-block-end: var(--s-3);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--dur-base) var(--ease-standard),
+              transform var(--dur-base) var(--ease-spring);
+}
+
+.auth-banner.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.auth-banner[hidden] { display: none; }
+
+/* ── Variants ────────────────────────────────────────────── */
+
+.auth-banner--info {
+  background: var(--info-soft);
+  border-color: hsl(var(--hue-info) 88% 60% / .35);
+  color: var(--info);
+}
+
+.auth-banner--success {
+  background: var(--success-soft);
+  border-color: hsl(var(--hue-success) 62% 46% / .35);
+  color: var(--success);
+}
+
+.auth-banner--warning {
+  background: var(--warning-soft);
+  border-color: hsl(var(--hue-warning) 92% 58% / .35);
+  color: var(--warning);
+}
+
+.auth-banner--error {
+  background: var(--danger-soft);
+  border-color: hsl(var(--hue-danger) 76% 60% / .4);
+  color: var(--danger);
+  font-weight: var(--fw-medium);
+}
+
+/* Small icon prefix */
+.auth-banner::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-inline-end: 8px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 25%, transparent);
+}
