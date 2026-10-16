@@ -1,0 +1,17 @@
+/* ============================================================
+   css/features/about.css
+   ============================================================ */
+
+.page--about {
+  max-width: 820px;
+  margin-inline: auto;
+  gap: var(--s-5);
+}
+
+.page--about .settings-section {
+  padding: var(--s-7);
+}
+
+.page--about .settings-section__title {
+  font-size: var(--fs-3xl);
+}
