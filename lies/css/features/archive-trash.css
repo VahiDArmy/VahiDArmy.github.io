@@ -1,0 +1,24 @@
+/* ============================================================
+   css/features/archive-trash.css
+   ============================================================ */
+
+.page--archive,
+.page--trash { gap: var(--s-5); }
+
+.archive-content,
+.trash-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.page--trash .lies-list .lie-row { opacity: .85; }
+.page--trash .lies-list .lie-row:hover { opacity: 1; }
+
+.page--archive .toolbar,
+.page--trash .toolbar {
+  padding: var(--s-3) var(--s-4);
+  background: var(--bg-glass);
+  backdrop-filter: blur(var(--blur-md));
+  -webkit-backdrop-filter: blur(var(--blur-md));
+}
