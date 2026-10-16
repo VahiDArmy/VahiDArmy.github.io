@@ -1,0 +1,30 @@
+/* ============================================================
+   css/components/tooltip.css
+   ============================================================ */
+
+.tooltip-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+}
+.tooltip-root:empty { display: none; }
+
+.tooltip {
+  max-width: 320px;
+  padding: 6px 10px;
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-md);
+  color: var(--text-primary);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur-fast), transform var(--dur-fast);
+  pointer-events: none;
+}
+.tooltip.is-visible { opacity: 1; transform: translateY(0); }
+.tooltip--flipped { transform: translateY(-4px); }
+.tooltip--flipped.is-visible { transform: translateY(0); }
