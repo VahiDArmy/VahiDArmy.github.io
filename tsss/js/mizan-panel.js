@@ -5,7 +5,6 @@
 // تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
 // =============================================================
 const MizanPanel = (function () {
-  console.log('[mizan-panel] IIFE starting');
 
   // ============================================================
   // 0) DOM
@@ -52,12 +51,24 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  console.log('[mizan-panel] DOM refs', {
-    mizanContent: !!mizanContent,
-    mizanNoteSaveBtn: !!mizanNoteSaveBtn,
-    mizanNoteInput: !!mizanNoteInput,
-    mizanNoteModal: !!mizanNoteModal,
-  });
+  // ============================================================
+  // ★ محافظت از layout-shift هنگام کلیک روی دکمه‌های مودال یادداشت
+  //
+  // قاعدهٔ CSS `.field textarea:focus { min-height: 280px; }` باعث
+  // می‌شود وقتی textarea فوکوس دارد، ارتفاعش زیاد شود. هنگام
+  // mousedown روی دکمه، مرورگر می‌خواهد فوکوس را به دکمه بدهد؛
+  // blur روی textarea ارتفاعش را برمی‌گرداند و دکمه جابه‌جا می‌شود.
+  // نتیجه: click اصلاً fire نمی‌شود.
+  //
+  // با preventDefault روی mousedown، فوکوس از textarea جدا نمی‌شود
+  // و layout ثابت می‌ماند؛ پس click به‌طور عادی fire می‌شود.
+  // ============================================================
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target || !e.target.closest) return;
+    const btn = e.target.closest('#mizanNoteSaveBtn')
+             || e.target.closest('#mizanNoteDeleteBtn');
+    if (btn) e.preventDefault();
+  }, true);
 
   // ============================================================
   // 1) STATE
@@ -84,8 +95,6 @@ const MizanPanel = (function () {
   let lastAyah = 1;
 
   let renderSeq = 0;
-
-  // پرچم حفاظت از دوبار-کلیک (نه با disabled — با flag)
   let noteSaving = false;
 
   // ============================================================
@@ -859,7 +868,7 @@ const MizanPanel = (function () {
 
   function openNoteModal(opts = {}) {
     if (!mizanNoteModal) return;
-    noteSaving = false; // ★ ریست flag در هر باز شدن
+    noteSaving = false;
     editingNoteId = opts.editing ? opts.editing.id : null;
     removeCaret();
 
@@ -902,18 +911,10 @@ const MizanPanel = (function () {
     });
   }
 
-  // ★★★★★★★ ذخیرهٔ یادداشت — با DELEGATION روی document ★★★★★★★
-  //
-  // به‌جای اتصال مستقیم به mizanNoteSaveBtn (که اگر در لحظهٔ load
-  // null باشد، هیچ listener ای وصل نمی‌شود)، روی document گوش می‌دهیم
-  // و با closest بررسی می‌کنیم که آیا هدف کلیک، همان دکمه است یا نه.
-  // این روش در برابر همهٔ موارد (modal دوباره ساخته شود، دکمه
-  // disabled نباشد، و…) مقاوم است.
-  //
+  // ذخیرهٔ یادداشت — با delegation روی document
   document.addEventListener('click', async (e) => {
     const btn = e.target && e.target.closest && e.target.closest('#mizanNoteSaveBtn');
     if (!btn) return;
-    console.log('[mizan note] save clicked');
 
     e.preventDefault();
     e.stopPropagation();
@@ -925,7 +926,6 @@ const MizanPanel = (function () {
       const text = (mizanNoteInput && mizanNoteInput.value || '').trim();
       if (!text) { UI.toast('متن یادداشت خالی است'); return; }
 
-      // اگر pendingNoteAnchor null شد، از selection فعلی بازسازی کن
       if (!pendingNoteAnchor) {
         const anchor = getCursorAnchor();
         if (anchor) {
@@ -939,7 +939,6 @@ const MizanPanel = (function () {
           }
         }
       }
-      // اگر باز هم null، با اولین کلید محتوا ادامه بده
       if (!pendingNoteAnchor) {
         const fallbackId = mizanContentKeys[0] || null;
         if (!fallbackId) {
@@ -970,9 +969,9 @@ const MizanPanel = (function () {
     } finally {
       noteSaving = false;
     }
-  }, true); // capture phase — قبل از هر listener دیگری
+  }, true);
 
-  // ★ حذف یادداشت — با delegation مشابه
+  // حذف یادداشت — با delegation مشابه
   document.addEventListener('click', async (e) => {
     const btn = e.target && e.target.closest && e.target.closest('#mizanNoteDeleteBtn');
     if (!btn) return;
@@ -1641,6 +1640,5 @@ const MizanPanel = (function () {
     }
   }
 
-  console.log('[mizan-panel] IIFE done; MizanPanel ready');
   return { render: renderMizan };
 })();
