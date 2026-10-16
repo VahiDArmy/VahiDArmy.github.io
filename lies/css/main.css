@@ -1,8 +1,9 @@
 /* ============================================================
    css/main.css
    Single entry stylesheet — imports everything in cascade order
-   Updated: added missing component imports (skeleton, table,
-   accordion, empty-state)
+   FIXED: added missing feature imports:
+     - auth-banner.css (inline banner on the auth form)
+     - final-polish.css (last)
    ============================================================ */
 
 /* ── 1. Base / tokens ────────────────────────────────────── */
@@ -37,13 +38,14 @@
 @import url("./components/avatar.css");
 @import url("./components/segmented.css");
 @import url("./components/charts.css");
-@import url("./components/skeleton.css");     /* ✅ added */
-@import url("./components/table.css");         /* ✅ added */
-@import url("./components/accordion.css");     /* ✅ added */
-@import url("./components/empty-state.css");   /* ✅ added */
+@import url("./components/skeleton.css");
+@import url("./components/table.css");
+@import url("./components/accordion.css");
+@import url("./components/empty-state.css");
 
 /* ── 4. Feature blocks ───────────────────────────────────── */
 @import url("./features/auth.css");
+@import url("./features/auth-banner.css");        /* ✅ FIX: was missing */
 @import url("./features/sidebar.css");
 @import url("./features/topbar.css");
 @import url("./features/dashboard.css");
@@ -55,4 +57,6 @@
 @import url("./features/settings.css");
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
-@import url("./base/final-polish.css");        /* ✅ added */
+
+/* ── 5. Final polish — MUST BE LAST ─────────────────────── */
+@import url("./base/final-polish.css");
