@@ -1,26 +1,17 @@
 /* ============================================================
    js/pages/auth.page.js
    Wires the login / signup / forgot forms on the auth screen.
-
-   FIXED (this version):
-   - Checkbox visual state now syncs with underlying input.
-   - Missing `.checkbox__check` element is auto-injected into
-     `.checkbox__box` so the ✓ icon actually appears.
-   - Submit button no longer gets stuck if an error is thrown.
-   - Auto-focus first input when switching tabs.
-   - Prevent double-submit on Enter while button is loading.
-   - Shake animation on the checkbox label when terms not accepted.
+   FIXED:
+     - Inline form-level error banner above the submit button
+       (so users ALWAYS see what went wrong, even if toast fails)
+     - Verbose console logging for debugging
+     - Never leaves the submit button in a stuck state
    ============================================================ */
 
-import { byId, $$ } from '../utils/dom.js';
+import { byId, $$, el } from '../utils/dom.js';
 import { toast } from '../ui/toast.js';
 import { setButtonLoading } from '../ui/loader.js';
-import {
-  validateEmail,
-  validatePassword,
-  validatePasswordMatch,
-  validateDisplayName,
-} from '../utils/validation.js';
+import { validateEmail, validatePassword, validatePasswordMatch, validateDisplayName } from '../utils/validation.js';
 import { authService } from '../services/index.js';
 import { get as lsGet } from '../utils/storage.js';
 import { LS_KEYS } from '../config/app.config.js';
@@ -37,7 +28,6 @@ export function mountAuthPage() {
   setupTabs();
   setupPasswordToggles();
   setupPasswordMeter();
-  setupCheckboxes();      // NEW — fixes checkbox visual state
   setupLoginForm();
   setupSignupForm();
   setupForgot();
@@ -45,8 +35,8 @@ export function mountAuthPage() {
   // Prefill remembered email
   const remembered = lsGet(LS_KEYS.REMEMBER_EMAIL, '');
   if (remembered) {
-    const el = byId('login-email');
-    if (el) el.value = remembered;
+    const el0 = byId('login-email');
+    if (el0) el0.value = remembered;
     const pwd = byId('login-password');
     if (pwd) setTimeout(() => pwd.focus(), 250);
   }
@@ -60,6 +50,8 @@ function setupTabs() {
   tabs.forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.tab;
+      // Clear any stale banners when switching tabs
+      ['login-form', 'signup-form'].forEach((id) => clearBanner(byId(id)));
       tabs.forEach((b) => {
         const active = b === btn;
         b.classList.toggle('is-active', active);
@@ -69,14 +61,6 @@ function setupTabs() {
         const show = p.dataset.panel === target;
         p.classList.toggle('is-active', show);
         p.hidden = !show;
-      });
-      // Focus the first real input in the visible panel
-      requestAnimationFrame(() => {
-        const visiblePanel = panels.find((p) => p.dataset.panel === target);
-        const firstInput = visiblePanel?.querySelector(
-          'input:not([type="hidden"]):not([type="checkbox"])'
-        );
-        firstInput?.focus();
       });
     });
   });
@@ -116,55 +100,7 @@ function setupPasswordMeter() {
     const res = validatePassword(v);
     meter.setAttribute('data-strength', String(res.score || 1));
     label.textContent = `قدرت: ${res.label}`;
-    label.style.color =
-      res.score >= 3
-        ? 'var(--success)'
-        : res.score === 2
-        ? 'var(--warning)'
-        : 'var(--danger)';
-  });
-}
-
-/* ── Checkbox visual sync (THE FIX) ────────────────────── */
-
-/**
- * The index.html uses a label-wrapped native checkbox with a
- * custom `.checkbox__box` visual. Two things were missing:
- *   1. The `.checkbox__check` element (the ✓) was not present.
- *   2. Nothing toggled the `is-checked` class on the label.
- * This function injects the missing element (if needed) and
- * keeps the visual state in sync with the underlying input.
- */
-function setupCheckboxes() {
-  $$('.checkbox').forEach((label) => {
-    const input = label.querySelector('input[type="checkbox"]');
-    if (!input) return;
-
-    // Inject the ✓ element if the HTML omitted it
-    const box = label.querySelector('.checkbox__box');
-    if (box && !box.querySelector('.checkbox__check')) {
-      const check = document.createElement('span');
-      check.className = 'checkbox__check';
-      check.setAttribute('aria-hidden', 'true');
-      check.textContent = '✓';
-      box.appendChild(check);
-    }
-
-    const sync = () => {
-      label.classList.toggle('is-checked', input.checked);
-    };
-
-    // Native change event (fires when clicking the label)
-    input.addEventListener('change', sync);
-
-    // Safety net: some mobile browsers fire `click` before the
-    // checkbox state flips, so we re-sync on the next tick too.
-    label.addEventListener('click', () => {
-      setTimeout(sync, 0);
-    });
-
-    // Initial state
-    sync();
+    label.style.color = res.score >= 3 ? 'var(--success)' : res.score === 2 ? 'var(--warning)' : 'var(--danger)';
   });
 }
 
@@ -175,33 +111,45 @@ function setupLoginForm() {
   const submit = byId('login-submit');
   if (!form || !submit) return;
 
+  // Ensure a banner exists above the submit button
+  const banner = ensureBanner(form, submit);
+
   const emailEl = byId('login-email');
   const pwdEl = byId('login-password');
   const rememberEl = byId('remember-me');
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (submit.disabled) return; // guard against double-submit
     clearErrors(form);
+    hideBanner(banner);
 
     const email = emailEl.value.trim();
     const password = pwdEl.value;
 
     const emailCheck = validateEmail(email);
-    if (!emailCheck.valid) return showError(emailEl, emailCheck.message);
-    if (!password) return showError(pwdEl, 'رمز عبور را وارد کنید.');
+    if (!emailCheck.valid) {
+      showFieldError(emailEl, emailCheck.message);
+      showBanner(banner, emailCheck.message, 'warning');
+      return;
+    }
+    if (!password) {
+      showFieldError(pwdEl, 'رمز عبور را وارد کنید.');
+      showBanner(banner, 'رمز عبور را وارد کنید.', 'warning');
+      return;
+    }
 
     setButtonLoading(submit, true, 'در حال ورود…');
     try {
-      await authService.signIn(email, password, {
-        remember: rememberEl?.checked ?? true,
-      });
+      await authService.signIn(email, password, { remember: rememberEl?.checked ?? true });
       toast.success('خوش آمدید 👋');
-      // On success we intentionally do NOT reset the button —
-      // the app will transition to the shell.
+      // App shell takes over
     } catch (err) {
-      toast.error(err.message || 'ورود ناموفق بود.');
-      showError(pwdEl, err.message || 'خطا در ورود');
+      console.error('[auth] signIn failed', err);
+      const msg = err?.message || 'ورود ناموفق بود. دوباره تلاش کنید.';
+      showBanner(banner, msg, 'error');
+      showFieldError(pwdEl, msg);
+      toast.error(msg, { duration: 5000 });
+    } finally {
       setButtonLoading(submit, false);
     }
   });
@@ -214,6 +162,8 @@ function setupSignupForm() {
   const submit = byId('signup-submit');
   if (!form || !submit) return;
 
+  const banner = ensureBanner(form, submit);
+
   const nameEl = byId('signup-name');
   const emailEl = byId('signup-email');
   const pwdEl = byId('signup-password');
@@ -222,42 +172,88 @@ function setupSignupForm() {
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
-    if (submit.disabled) return; // guard against double-submit
     clearErrors(form);
+    hideBanner(banner);
 
     const displayName = nameEl.value.trim();
     const email = emailEl.value.trim();
     const password = pwdEl.value;
     const password2 = pwd2El.value;
 
+    // Local validation
     const nameRes = validateDisplayName(displayName);
-    if (!nameRes.valid) return showError(nameEl, nameRes.message);
-
+    if (!nameRes.valid) {
+      showFieldError(nameEl, nameRes.message);
+      showBanner(banner, nameRes.message, 'warning');
+      return;
+    }
     const emailRes = validateEmail(email);
-    if (!emailRes.valid) return showError(emailEl, emailRes.message);
-
+    if (!emailRes.valid) {
+      showFieldError(emailEl, emailRes.message);
+      showBanner(banner, emailRes.message, 'warning');
+      return;
+    }
     const pwRes = validatePassword(password);
-    if (!pwRes.valid) return showError(pwdEl, pwRes.message);
-
+    if (!pwRes.valid) {
+      showFieldError(pwdEl, pwRes.message);
+      showBanner(banner, pwRes.message, 'warning');
+      return;
+    }
     const matchRes = validatePasswordMatch(password, password2);
-    if (!matchRes.valid) return showError(pwd2El, matchRes.message);
-
-    if (termsEl && !termsEl.checked) {
+    if (!matchRes.valid) {
+      showFieldError(pwd2El, matchRes.message);
+      showBanner(banner, matchRes.message, 'warning');
+      return;
+    }
+    if (!termsEl?.checked) {
+      showBanner(banner, 'برای ادامه، تأییدیه را بپذیرید.', 'warning');
       toast.warning('برای ادامه، تأییدیه را بپذیرید.');
-      termsEl.focus();
-      const label = termsEl.closest('.checkbox');
-      label?.classList.add('anim-shake');
-      setTimeout(() => label?.classList.remove('anim-shake'), 500);
+      termsEl?.focus();
       return;
     }
 
+    // Show progress
     setButtonLoading(submit, true, 'در حال ساخت فضا…');
+    showBanner(banner, 'در حال ارتباط با سرور…', 'info');
+
     try {
-      await authService.signUp({ email, password, displayName });
+      const result = await authService.signUp({ email, password, displayName });
+
+      // Edge case: signUp succeeded but no session (email confirmation is ON)
+      if (!result?.session) {
+        hideBanner(banner);
+        showBanner(
+          banner,
+          'ثبت‌نام انجام شد، اما تأیید ایمیل در پروژه فعال است. لطفاً ایمیل خود را بررسی کنید و سپس وارد شوید.',
+          'info',
+          { sticky: true }
+        );
+        toast.info('ایمیل تأیید برای شما ارسال شد.', { duration: 6000 });
+        return;
+      }
+
+      // Normal path: signed in
+      hideBanner(banner);
       toast.success('فضای شخصی شما ساخته شد ✨');
-      // Session flow (bus AUTH_SIGNED_IN) will transition the app.
+      // App shell takes over from here.
     } catch (err) {
-      toast.error(err.message || 'ثبت‌نام ناموفق بود.');
+      console.error('[auth] signUp failed', err);
+
+      // Build the best possible message for the user
+      const msg = err?.message || 'ثبت‌نام ناموفق بود. دوباره تلاش کنید.';
+
+      // Show inline banner (persistent) — this is the FIX
+      showBanner(banner, msg, 'error', { sticky: true });
+
+      // Also show toast (now visible thanks to z-index fix)
+      toast.error(msg, { duration: 7000 });
+
+      // Highlight the relevant field
+      if (/ایمیل|email/i.test(msg)) showFieldError(emailEl, msg);
+      else if (/رمز|password/i.test(msg)) showFieldError(pwdEl, msg);
+      else if (/نام|name/i.test(msg)) showFieldError(nameEl, msg);
+    } finally {
+      // ALWAYS reset the button — this was missing before on error paths
       setButtonLoading(submit, false);
     }
   });
@@ -272,11 +268,10 @@ function setupForgot() {
   btn.addEventListener('click', async () => {
     const email = await prompt({
       title: 'بازیابی رمز عبور',
-      message:
-        'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازنشانی برایتان ارسال می‌شود.',
+      message: 'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازنشانی برایتان ارسال می‌شود.',
       placeholder: 'you@example.com',
       okLabel: 'ارسال لینک',
-      validate: (v) => (validateEmail(v).valid ? null : 'ایمیل معتبر وارد کنید.'),
+      validate: (v) => validateEmail(v).valid ? null : 'ایمیل معتبر وارد کنید.',
     });
     if (!email) return;
 
@@ -289,17 +284,71 @@ function setupForgot() {
   });
 }
 
-/* ── Error helpers ──────────────────────────────────────── */
+/* ── Inline banner ──────────────────────────────────────── */
 
-function showError(input, message) {
+/**
+ * Ensure a banner element exists just above the submit button.
+ * @param {HTMLFormElement} form
+ * @param {HTMLElement} submit
+ * @returns {HTMLElement}
+ */
+function ensureBanner(form, submit) {
+  let banner = form.querySelector('[data-auth-banner]');
+  if (!banner) {
+    banner = el('div', {
+      class: 'auth-banner',
+      attrs: { role: 'alert', 'aria-live': 'assertive' },
+      dataset: { authBanner: '1' },
+    });
+    banner.hidden = true;
+    // Insert right before the submit button's parent row (or the submit itself)
+    if (submit.parentNode === form) {
+      form.insertBefore(banner, submit);
+    } else {
+      submit.parentNode.insertBefore(banner, submit);
+    }
+  }
+  return banner;
+}
+
+/**
+ * @param {HTMLElement} banner
+ * @param {string} message
+ * @param {'info'|'warning'|'error'|'success'} [variant='info']
+ * @param {{sticky?:boolean}} [opts]
+ */
+function showBanner(banner, message, variant = 'info', opts = {}) {
+  if (!banner) return;
+  banner.className = `auth-banner auth-banner--${variant}`;
+  banner.hidden = false;
+  banner.textContent = message;
+  // Re-trigger the entrance animation
+  banner.classList.remove('is-visible');
+  void banner.offsetWidth; // force reflow
+  banner.classList.add('is-visible');
+
+  if (!opts.sticky) {
+    // Auto-hide after 8s (only for non-sticky)
+    clearTimeout(banner._hideTimer);
+    banner._hideTimer = setTimeout(() => hideBanner(banner), 8000);
+  }
+}
+
+function hideBanner(banner) {
+  if (!banner) return;
+  clearTimeout(banner._hideTimer);
+  banner.classList.remove('is-visible');
+  setTimeout(() => { banner.hidden = true; }, 200);
+}
+
+/* ── Field errors ───────────────────────────────────────── */
+
+function showFieldError(input, message) {
   if (!input) return;
   const field = input.closest('.field');
   field?.classList.add('has-error');
   const errEl = field?.querySelector('.field__error');
-  if (errEl) {
-    errEl.textContent = message;
-    errEl.classList.add('is-visible');
-  }
+  if (errEl) { errEl.textContent = message; errEl.classList.add('is-visible'); }
   input.focus();
   input.classList.add('anim-shake');
   setTimeout(() => input.classList.remove('anim-shake'), 450);
