@@ -1,0 +1,109 @@
+/* ============================================================
+   css/components/accordion.css
+   Collapsible accordion panels
+   ============================================================ */
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--bg-surface);
+}
+
+.accordion__item {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.accordion__item:last-child {
+  border-bottom: none;
+}
+
+.accordion__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  width: 100%;
+  padding: var(--s-4) var(--s-5);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-md);
+  font-weight: var(--fw-medium);
+  text-align: start;
+  transition: background var(--dur-fast), color var(--dur-fast);
+  cursor: pointer;
+}
+
+.accordion__trigger:hover {
+  background: var(--bg-hover);
+}
+
+.accordion__trigger:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+}
+
+.accordion__trigger[aria-expanded="true"] {
+  background: var(--accent-softer);
+  color: var(--accent-200);
+}
+
+.accordion__icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--dur-base) var(--ease-spring);
+  color: var(--text-tertiary);
+}
+
+.accordion__trigger[aria-expanded="true"] .accordion__icon {
+  transform: rotate(180deg);
+  color: var(--accent);
+}
+
+.accordion__panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height var(--dur-slow) var(--ease-decel);
+}
+
+.accordion__panel[aria-hidden="false"] {
+  max-height: 2000px;
+}
+
+.accordion__content {
+  padding: var(--s-4) var(--s-5) var(--s-5);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-relaxed);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Flush variant (no outer border) */
+.accordion--flush {
+  border: none;
+  background: transparent;
+}
+
+.accordion--flush .accordion__item {
+  border: none;
+  margin-bottom: var(--s-2);
+  border-radius: var(--r-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+
+/* Compact variant */
+.accordion--compact .accordion__trigger {
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--fs-sm);
+}
+
+.accordion--compact .accordion__content {
+  padding: var(--s-3) var(--s-4) var(--s-4);
+}
