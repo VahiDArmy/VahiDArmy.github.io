@@ -1,11 +1,10 @@
 /* ============================================================
    js/pages/auth.page.js
-   Wires the login / signup / forgot forms on the auth screen.
    FIXED:
-     - clearBanner → hideBanner (typo fix in setupTabs)
-     - Inline form-level error banner above the submit button
-     - Verbose console logging for debugging
-     - Never leaves the submit button in a stuck state
+     - Checkbox works reliably (explicit toggle on label click)
+     - Always shows a visible message (inline banner + toast)
+     - Never leaves submit button stuck
+     - Removed reliance on `required` attribute (we validate in JS)
    ============================================================ */
 
 import { byId, $$, el } from '../utils/dom.js';
@@ -19,7 +18,7 @@ import { prompt } from '../ui/confirm.js';
 
 let initialized = false;
 
-/* ── Public API ─────────────────────────────────────────── */
+/* ── Public ──────────────────────────────────────────────── */
 
 export function mountAuthPage() {
   if (initialized) return;
@@ -28,11 +27,11 @@ export function mountAuthPage() {
   setupTabs();
   setupPasswordToggles();
   setupPasswordMeter();
+  setupTermsCheckbox();
   setupLoginForm();
   setupSignupForm();
   setupForgot();
 
-  // Prefill remembered email
   const remembered = lsGet(LS_KEYS.REMEMBER_EMAIL, '');
   if (remembered) {
     const el0 = byId('login-email');
@@ -50,18 +49,12 @@ function setupTabs() {
   tabs.forEach((btn) => {
     btn.addEventListener('click', () => {
       const target = btn.dataset.tab;
-      // Clear any stale banners when switching tabs
-      const loginForm = byId('login-form');
-      const signupForm = byId('signup-form');
-      if (loginForm) {
-        const b = loginForm.querySelector('[data-auth-banner]');
+      // Hide banners on both forms
+      ['login-form', 'signup-form'].forEach((id) => {
+        const form = byId(id);
+        const b = form?.querySelector('[data-auth-banner]');
         if (b) hideBanner(b);
-      }
-      if (signupForm) {
-        const b = signupForm.querySelector('[data-auth-banner]');
-        if (b) hideBanner(b);
-      }
-
+      });
       tabs.forEach((b) => {
         const active = b === btn;
         b.classList.toggle('is-active', active);
@@ -76,7 +69,7 @@ function setupTabs() {
   });
 }
 
-/* ── Password toggles ──────────────────────────────────── */
+/* ── Password toggles ───────────────────────────────────── */
 
 function setupPasswordToggles() {
   $$('[data-toggle-password]').forEach((btn) => {
@@ -114,6 +107,64 @@ function setupPasswordMeter() {
   });
 }
 
+/* ── Terms checkbox — FIX ──────────────────────────────── */
+
+/**
+ * Make the terms checkbox clickable by:
+ *   1) Removing `required` (we validate in JS — `required` can interfere
+ *      with some browsers when wrapped in a custom label).
+ *   2) Adding an explicit click handler on the *label* so clicking
+ *      anywhere on the label toggles the underlying input and updates
+ *      the visual `is-checked` class.
+ */
+function setupTermsCheckbox() {
+  const input = byId('signup-terms');
+  if (!input) return;
+
+  // Remove `required` — we validate manually
+  input.removeAttribute('required');
+
+  const label = input.closest('label');
+  if (!label) return;
+
+  // Sync the visual state when input changes (native or programmatic)
+  const syncVisual = () => {
+    label.classList.toggle('is-checked', input.checked);
+  };
+  input.addEventListener('change', syncVisual);
+  syncVisual();
+
+  // Explicit toggle on any click inside the label
+  label.addEventListener('click', (ev) => {
+    // If the click target is already the input, the browser will
+    // toggle it natively — don't double-toggle.
+    if (ev.target === input) return;
+
+    // Otherwise prevent default label behavior and toggle manually
+    ev.preventDefault();
+    input.checked = !input.checked;
+    syncVisual();
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+
+  // Keyboard support: Space toggles
+  label.addEventListener('keydown', (ev) => {
+    if (ev.key === ' ' || ev.key === 'Spacebar') {
+      ev.preventDefault();
+      input.checked = !input.checked;
+      syncVisual();
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
+
+  // Make label focusable for keyboard users
+  label.setAttribute('tabindex', '0');
+  label.setAttribute('role', 'checkbox');
+  const updateAria = () => label.setAttribute('aria-checked', String(input.checked));
+  input.addEventListener('change', updateAria);
+  updateAria();
+}
+
 /* ── Login ──────────────────────────────────────────────── */
 
 function setupLoginForm() {
@@ -121,9 +172,7 @@ function setupLoginForm() {
   const submit = byId('login-submit');
   if (!form || !submit) return;
 
-  // Ensure a banner exists above the submit button
   const banner = ensureBanner(form, submit);
-
   const emailEl = byId('login-email');
   const pwdEl = byId('login-password');
   const rememberEl = byId('remember-me');
@@ -149,10 +198,12 @@ function setupLoginForm() {
     }
 
     setButtonLoading(submit, true, 'در حال ورود…');
+    showBanner(banner, 'در حال ارتباط با سرور…', 'info');
+
     try {
       await authService.signIn(email, password, { remember: rememberEl?.checked ?? true });
+      hideBanner(banner);
       toast.success('خوش آمدید 👋');
-      // App shell takes over
     } catch (err) {
       console.error('[auth] signIn failed', err);
       const msg = err?.message || 'ورود ناموفق بود. دوباره تلاش کنید.';
@@ -173,7 +224,6 @@ function setupSignupForm() {
   if (!form || !submit) return;
 
   const banner = ensureBanner(form, submit);
-
   const nameEl = byId('signup-name');
   const emailEl = byId('signup-email');
   const pwdEl = byId('signup-password');
@@ -190,7 +240,6 @@ function setupSignupForm() {
     const password = pwdEl.value;
     const password2 = pwd2El.value;
 
-    // Local validation
     const nameRes = validateDisplayName(displayName);
     if (!nameRes.valid) {
       showFieldError(nameEl, nameRes.message);
@@ -216,20 +265,24 @@ function setupSignupForm() {
       return;
     }
     if (!termsEl?.checked) {
-      showBanner(banner, 'برای ادامه، تأییدیه را بپذیرید.', 'warning');
-      toast.warning('برای ادامه، تأییدیه را بپذیرید.');
-      termsEl?.focus();
+      const msg = 'برای ادامه، تأییدیه را بپذیرید.';
+      showBanner(banner, msg, 'warning');
+      toast.warning(msg);
+      // Flash the checkbox label
+      const label = termsEl?.closest('label');
+      if (label) {
+        label.classList.add('anim-shake');
+        setTimeout(() => label.classList.remove('anim-shake'), 450);
+      }
       return;
     }
 
-    // Show progress
     setButtonLoading(submit, true, 'در حال ساخت فضا…');
     showBanner(banner, 'در حال ارتباط با سرور…', 'info');
 
     try {
       const result = await authService.signUp({ email, password, displayName });
 
-      // Edge case: signUp succeeded but no session (email confirmation is ON)
       if (!result?.session) {
         hideBanner(banner);
         showBanner(
@@ -242,28 +295,19 @@ function setupSignupForm() {
         return;
       }
 
-      // Normal path: signed in
       hideBanner(banner);
       toast.success('فضای شخصی شما ساخته شد ✨');
-      // App shell takes over from here.
     } catch (err) {
       console.error('[auth] signUp failed', err);
-
-      // Build the best possible message for the user
       const msg = err?.message || 'ثبت‌نام ناموفق بود. دوباره تلاش کنید.';
 
-      // Show inline banner (persistent) — this is the FIX
       showBanner(banner, msg, 'error', { sticky: true });
-
-      // Also show toast (now visible thanks to z-index fix)
       toast.error(msg, { duration: 7000 });
 
-      // Highlight the relevant field
       if (/ایمیل|email/i.test(msg)) showFieldError(emailEl, msg);
       else if (/رمز|password/i.test(msg)) showFieldError(pwdEl, msg);
       else if (/نام|name/i.test(msg)) showFieldError(nameEl, msg);
     } finally {
-      // ALWAYS reset the button — this was missing before on error paths
       setButtonLoading(submit, false);
     }
   });
@@ -278,7 +322,7 @@ function setupForgot() {
   btn.addEventListener('click', async () => {
     const email = await prompt({
       title: 'بازیابی رمز عبور',
-      message: 'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازنشانی برایتان ارسال می‌شود.',
+      message: 'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید.',
       placeholder: 'you@example.com',
       okLabel: 'ارسال لینک',
       validate: (v) => validateEmail(v).valid ? null : 'ایمیل معتبر وارد کنید.',
@@ -296,12 +340,6 @@ function setupForgot() {
 
 /* ── Inline banner ──────────────────────────────────────── */
 
-/**
- * Ensure a banner element exists just above the submit button.
- * @param {HTMLFormElement} form
- * @param {HTMLElement} submit
- * @returns {HTMLElement}
- */
 function ensureBanner(form, submit) {
   let banner = form.querySelector('[data-auth-banner]');
   if (!banner) {
@@ -311,31 +349,46 @@ function ensureBanner(form, submit) {
       dataset: { authBanner: '1' },
     });
     banner.hidden = true;
-    // Insert right before the submit button (or its wrapper)
-    if (submit.parentNode === form) {
-      form.insertBefore(banner, submit);
-    } else {
-      submit.parentNode.insertBefore(banner, submit);
-    }
+
+    // Hardcoded inline styles so it works even if CSS hasn't loaded
+    banner.style.cssText = `
+      display: block;
+      padding: 10px 14px;
+      margin-block-end: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.7;
+      border: 1px solid transparent;
+      font-family: Vazirmatn, system-ui, sans-serif;
+      direction: rtl;
+      text-align: right;
+      transition: opacity 220ms;
+    `;
+
+    if (submit.parentNode === form) form.insertBefore(banner, submit);
+    else submit.parentNode.insertBefore(banner, submit);
   }
   return banner;
 }
 
-/**
- * @param {HTMLElement} banner
- * @param {string} message
- * @param {'info'|'warning'|'error'|'success'} [variant='info']
- * @param {{sticky?:boolean}} [opts]
- */
+function applyBannerVariant(banner, variant) {
+  const base = 'display:block;padding:10px 14px;margin-block-end:12px;border-radius:10px;font-size:13px;line-height:1.7;border:1px solid;font-family:Vazirmatn,system-ui,sans-serif;direction:rtl;text-align:right;transition:opacity 220ms;';
+  const styles = {
+    info:    'background:rgba(88,179,255,0.12);border-color:rgba(88,179,255,0.35);color:#8bcaff;',
+    warning: 'background:rgba(240,166,62,0.12);border-color:rgba(240,166,62,0.35);color:#f5c477;',
+    error:   'background:rgba(255,107,107,0.12);border-color:rgba(255,107,107,0.4);color:#ff9b9b;font-weight:500;',
+    success: 'background:rgba(62,199,168,0.12);border-color:rgba(62,199,168,0.35);color:#7adfc4;',
+  };
+  banner.style.cssText = base + (styles[variant] || styles.info);
+}
+
 function showBanner(banner, message, variant = 'info', opts = {}) {
   if (!banner) return;
   banner.className = `auth-banner auth-banner--${variant}`;
+  applyBannerVariant(banner, variant);
   banner.hidden = false;
   banner.textContent = message;
-  // Re-trigger the entrance animation
-  banner.classList.remove('is-visible');
-  void banner.offsetWidth; // force reflow
-  banner.classList.add('is-visible');
+  banner.style.opacity = '1';
 
   if (!opts.sticky) {
     clearTimeout(banner._hideTimer);
@@ -346,11 +399,11 @@ function showBanner(banner, message, variant = 'info', opts = {}) {
 function hideBanner(banner) {
   if (!banner) return;
   clearTimeout(banner._hideTimer);
-  banner.classList.remove('is-visible');
+  banner.style.opacity = '0';
   setTimeout(() => { banner.hidden = true; }, 200);
 }
 
-/* ── Field errors ───────────────────────────────────────── */
+/* ── Field errors ──────────────────────────────────────── */
 
 function showFieldError(input, message) {
   if (!input) return;
@@ -358,7 +411,7 @@ function showFieldError(input, message) {
   field?.classList.add('has-error');
   const errEl = field?.querySelector('.field__error');
   if (errEl) { errEl.textContent = message; errEl.classList.add('is-visible'); }
-  input.focus();
+  try { input.focus({ preventScroll: true }); } catch { /* noop */ }
   input.classList.add('anim-shake');
   setTimeout(() => input.classList.remove('anim-shake'), 450);
 }
