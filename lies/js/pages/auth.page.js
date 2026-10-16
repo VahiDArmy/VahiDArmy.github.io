@@ -1,12 +1,26 @@
 /* ============================================================
    js/pages/auth.page.js
    Wires the login / signup / forgot forms on the auth screen.
+
+   FIXED (this version):
+   - Checkbox visual state now syncs with underlying input.
+   - Missing `.checkbox__check` element is auto-injected into
+     `.checkbox__box` so the ✓ icon actually appears.
+   - Submit button no longer gets stuck if an error is thrown.
+   - Auto-focus first input when switching tabs.
+   - Prevent double-submit on Enter while button is loading.
+   - Shake animation on the checkbox label when terms not accepted.
    ============================================================ */
 
 import { byId, $$ } from '../utils/dom.js';
 import { toast } from '../ui/toast.js';
 import { setButtonLoading } from '../ui/loader.js';
-import { validateEmail, validatePassword, validatePasswordMatch, validateDisplayName } from '../utils/validation.js';
+import {
+  validateEmail,
+  validatePassword,
+  validatePasswordMatch,
+  validateDisplayName,
+} from '../utils/validation.js';
 import { authService } from '../services/index.js';
 import { get as lsGet } from '../utils/storage.js';
 import { LS_KEYS } from '../config/app.config.js';
@@ -23,6 +37,7 @@ export function mountAuthPage() {
   setupTabs();
   setupPasswordToggles();
   setupPasswordMeter();
+  setupCheckboxes();      // NEW — fixes checkbox visual state
   setupLoginForm();
   setupSignupForm();
   setupForgot();
@@ -54,6 +69,14 @@ function setupTabs() {
         const show = p.dataset.panel === target;
         p.classList.toggle('is-active', show);
         p.hidden = !show;
+      });
+      // Focus the first real input in the visible panel
+      requestAnimationFrame(() => {
+        const visiblePanel = panels.find((p) => p.dataset.panel === target);
+        const firstInput = visiblePanel?.querySelector(
+          'input:not([type="hidden"]):not([type="checkbox"])'
+        );
+        firstInput?.focus();
       });
     });
   });
@@ -93,7 +116,55 @@ function setupPasswordMeter() {
     const res = validatePassword(v);
     meter.setAttribute('data-strength', String(res.score || 1));
     label.textContent = `قدرت: ${res.label}`;
-    label.style.color = res.score >= 3 ? 'var(--success)' : res.score === 2 ? 'var(--warning)' : 'var(--danger)';
+    label.style.color =
+      res.score >= 3
+        ? 'var(--success)'
+        : res.score === 2
+        ? 'var(--warning)'
+        : 'var(--danger)';
+  });
+}
+
+/* ── Checkbox visual sync (THE FIX) ────────────────────── */
+
+/**
+ * The index.html uses a label-wrapped native checkbox with a
+ * custom `.checkbox__box` visual. Two things were missing:
+ *   1. The `.checkbox__check` element (the ✓) was not present.
+ *   2. Nothing toggled the `is-checked` class on the label.
+ * This function injects the missing element (if needed) and
+ * keeps the visual state in sync with the underlying input.
+ */
+function setupCheckboxes() {
+  $$('.checkbox').forEach((label) => {
+    const input = label.querySelector('input[type="checkbox"]');
+    if (!input) return;
+
+    // Inject the ✓ element if the HTML omitted it
+    const box = label.querySelector('.checkbox__box');
+    if (box && !box.querySelector('.checkbox__check')) {
+      const check = document.createElement('span');
+      check.className = 'checkbox__check';
+      check.setAttribute('aria-hidden', 'true');
+      check.textContent = '✓';
+      box.appendChild(check);
+    }
+
+    const sync = () => {
+      label.classList.toggle('is-checked', input.checked);
+    };
+
+    // Native change event (fires when clicking the label)
+    input.addEventListener('change', sync);
+
+    // Safety net: some mobile browsers fire `click` before the
+    // checkbox state flips, so we re-sync on the next tick too.
+    label.addEventListener('click', () => {
+      setTimeout(sync, 0);
+    });
+
+    // Initial state
+    sync();
   });
 }
 
@@ -110,6 +181,7 @@ function setupLoginForm() {
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (submit.disabled) return; // guard against double-submit
     clearErrors(form);
 
     const email = emailEl.value.trim();
@@ -121,8 +193,12 @@ function setupLoginForm() {
 
     setButtonLoading(submit, true, 'در حال ورود…');
     try {
-      await authService.signIn(email, password, { remember: rememberEl?.checked ?? true });
+      await authService.signIn(email, password, {
+        remember: rememberEl?.checked ?? true,
+      });
       toast.success('خوش آمدید 👋');
+      // On success we intentionally do NOT reset the button —
+      // the app will transition to the shell.
     } catch (err) {
       toast.error(err.message || 'ورود ناموفق بود.');
       showError(pwdEl, err.message || 'خطا در ورود');
@@ -146,6 +222,7 @@ function setupSignupForm() {
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
+    if (submit.disabled) return; // guard against double-submit
     clearErrors(form);
 
     const displayName = nameEl.value.trim();
@@ -165,9 +242,12 @@ function setupSignupForm() {
     const matchRes = validatePasswordMatch(password, password2);
     if (!matchRes.valid) return showError(pwd2El, matchRes.message);
 
-    if (!termsEl?.checked) {
+    if (termsEl && !termsEl.checked) {
       toast.warning('برای ادامه، تأییدیه را بپذیرید.');
-      termsEl?.focus();
+      termsEl.focus();
+      const label = termsEl.closest('.checkbox');
+      label?.classList.add('anim-shake');
+      setTimeout(() => label?.classList.remove('anim-shake'), 500);
       return;
     }
 
@@ -175,6 +255,7 @@ function setupSignupForm() {
     try {
       await authService.signUp({ email, password, displayName });
       toast.success('فضای شخصی شما ساخته شد ✨');
+      // Session flow (bus AUTH_SIGNED_IN) will transition the app.
     } catch (err) {
       toast.error(err.message || 'ثبت‌نام ناموفق بود.');
       setButtonLoading(submit, false);
@@ -191,10 +272,11 @@ function setupForgot() {
   btn.addEventListener('click', async () => {
     const email = await prompt({
       title: 'بازیابی رمز عبور',
-      message: 'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازنشانی برایتان ارسال می‌شود.',
+      message:
+        'ایمیلی که با آن ثبت‌نام کرده‌اید را وارد کنید. لینک بازنشانی برایتان ارسال می‌شود.',
       placeholder: 'you@example.com',
       okLabel: 'ارسال لینک',
-      validate: (v) => validateEmail(v).valid ? null : 'ایمیل معتبر وارد کنید.',
+      validate: (v) => (validateEmail(v).valid ? null : 'ایمیل معتبر وارد کنید.'),
     });
     if (!email) return;
 
@@ -214,7 +296,10 @@ function showError(input, message) {
   const field = input.closest('.field');
   field?.classList.add('has-error');
   const errEl = field?.querySelector('.field__error');
-  if (errEl) { errEl.textContent = message; errEl.classList.add('is-visible'); }
+  if (errEl) {
+    errEl.textContent = message;
+    errEl.classList.add('is-visible');
+  }
   input.focus();
   input.classList.add('anim-shake');
   setTimeout(() => input.classList.remove('anim-shake'), 450);
