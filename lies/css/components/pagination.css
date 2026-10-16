@@ -1,0 +1,82 @@
+/* ============================================================
+   css/components/pagination.css
+   ============================================================ */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-3) 0;
+  flex-wrap: wrap;
+}
+
+.pagination__sizes {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+}
+.pagination__sizes-label { white-space: nowrap; }
+.pagination__sizes .select { width: auto; min-width: 70px; }
+
+.pagination__nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 3px;
+}
+
+.pagination__btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.pagination__btn:hover:not(:disabled):not(.is-active) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.pagination__btn:disabled { opacity: .35; cursor: not-allowed; }
+.pagination__btn.is-active {
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: #fff;
+  font-weight: var(--fw-semibold);
+  box-shadow: 0 4px 10px -4px hsl(var(--accent-h) var(--accent-s) 55% / .5);
+}
+.pagination__btn--nav { font-size: 16px; }
+
+.pagination__ellipsis {
+  padding: 0 6px;
+  color: var(--text-quaternary);
+  font-size: var(--fs-sm);
+  user-select: none;
+}
+
+.pagination__info {
+  font-size: var(--fs-xs);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Compact variant */
+.pagination--compact { padding: 0; }
+.pagination--compact .pagination__nav { background: transparent; border: none; padding: 0; }
+
+@media (max-width: 640px) {
+  .pagination { justify-content: center; }
+  .pagination__info { display: none; }
+}
