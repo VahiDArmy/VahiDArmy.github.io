@@ -1,6 +1,7 @@
 /* ============================================================
    js/features/settings/profile-section.js
    Profile editor: display name, bio, avatar color
+   FIXED: COLOR_PALETTE is imported from constants.js (not app.config.js)
    ============================================================ */
 
 import { el } from '../../utils/dom.js';
@@ -8,10 +9,10 @@ import * as authService from '../../services/auth.service.js';
 import { sessionStore } from '../../core/store.js';
 import { bus } from '../../core/event-bus.js';
 import { EVENTS } from '../../config/constants.js';
+import { COLOR_PALETTE } from '../../config/constants.js';    // ← FIXED
 import { toast } from '../../ui/toast.js';
 import { setButtonLoading } from '../../ui/loader.js';
 import { avatar } from '../../ui/avatar.js';
-import { COLOR_PALETTE } from '../../config/app.config.js';
 import { validateDisplayName } from '../../utils/validation.js';
 
 /**
@@ -72,7 +73,10 @@ export function profileSection() {
   // Bio
   const bioField = el('div', { class: 'field' });
   bioField.appendChild(el('label', { class: 'field__label' }, { children: ['درباره من (اختیاری)'] }));
-  const bioInput = el('textarea', { class: 'textarea', attrs: { rows: 3, maxlength: '400', placeholder: 'چند خط از خودت…' } });
+  const bioInput = el('textarea', {
+    class: 'textarea',
+    attrs: { rows: 3, maxlength: '400', placeholder: 'چند خط از خودت…' },
+  });
   bioInput.value = profile.bio || '';
   bioField.appendChild(bioInput);
   body.appendChild(bioField);
@@ -92,6 +96,7 @@ export function profileSection() {
       selectedColor = c;
       colorWrap.querySelectorAll('.color-picker__item').forEach((n) => n.classList.remove('is-active'));
       b.classList.add('is-active');
+      // Update preview avatar color
       avatarEl.style.setProperty('--avatar-color', c);
     });
     colorWrap.appendChild(b);
@@ -99,7 +104,7 @@ export function profileSection() {
   colorField.appendChild(colorWrap);
   body.appendChild(colorField);
 
-  // Save button
+  // Save
   const saveBtn = el('button', {
     class: 'btn btn--primary',
     attrs: { type: 'button' },
