@@ -1,0 +1,152 @@
+/* ============================================================
+   css/components/table.css
+   Data table styles
+   ============================================================ */
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table thead {
+  background: var(--bg-inset);
+  border-bottom: 1px solid var(--border);
+}
+
+.table thead th {
+  padding: var(--s-3) var(--s-4);
+  text-align: start;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bg-inset);
+}
+
+.table tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--dur-fast);
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.table tbody td {
+  padding: var(--s-3) var(--s-4);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.table tbody td strong {
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+/* Striped variant */
+.table--striped tbody tr:nth-child(even) {
+  background: var(--bg-inset);
+}
+
+.table--striped tbody tr:nth-child(even):hover {
+  background: var(--bg-hover);
+}
+
+/* Compact variant */
+.table--compact thead th,
+.table--compact tbody td {
+  padding: var(--s-2) var(--s-3);
+}
+
+/* Bordered variant */
+.table--bordered {
+  border: 1px solid var(--border);
+}
+
+.table--bordered th,
+.table--bordered td {
+  border: 1px solid var(--border-subtle);
+}
+
+/* Sortable header */
+.table th[data-sortable] {
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--dur-fast);
+}
+
+.table th[data-sortable]:hover {
+  color: var(--text-primary);
+}
+
+.table th[data-sort-direction="asc"]::after {
+  content: "▲";
+  margin-inline-start: 4px;
+  font-size: 10px;
+  color: var(--accent);
+}
+
+.table th[data-sort-direction="desc"]::after {
+  content: "▼";
+  margin-inline-start: 4px;
+  font-size: 10px;
+  color: var(--accent);
+}
+
+/* Table actions */
+.table-actions {
+  display: flex;
+  gap: var(--s-1);
+  justify-content: flex-end;
+}
+
+/* Empty state inside table */
+.table__empty {
+  padding: var(--s-8);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+}
+
+/* Responsive: stack on mobile */
+@media (max-width: 720px) {
+  .table--stack thead {
+    display: none;
+  }
+  .table--stack tbody tr {
+    display: block;
+    margin-bottom: var(--s-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: var(--s-3);
+  }
+  .table--stack tbody td {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--s-1) 0;
+    border: none;
+  }
+  .table--stack tbody td::before {
+    content: attr(data-label);
+    font-weight: var(--fw-semibold);
+    color: var(--text-tertiary);
+    margin-inline-end: var(--s-3);
+  }
+}
