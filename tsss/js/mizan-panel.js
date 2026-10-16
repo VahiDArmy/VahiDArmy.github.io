@@ -5,6 +5,7 @@
 // تنها نقطهٔ ورود: MizanPanel.render(surah, ayah, opts)
 // =============================================================
 const MizanPanel = (function () {
+  console.log('[mizan-panel] IIFE starting');
 
   // ============================================================
   // 0) DOM
@@ -51,6 +52,13 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
+  console.log('[mizan-panel] DOM refs', {
+    mizanContent: !!mizanContent,
+    mizanNoteSaveBtn: !!mizanNoteSaveBtn,
+    mizanNoteInput: !!mizanNoteInput,
+    mizanNoteModal: !!mizanNoteModal,
+  });
+
   // ============================================================
   // 1) STATE
   // ============================================================
@@ -75,9 +83,10 @@ const MizanPanel = (function () {
   let lastSurah = 1;
   let lastAyah = 1;
 
-  // توکن ترتیب رندر — هر بار renderMizan یک عدد یکتا می‌گیرد؛
-  // رندرهای همپوشان به‌طور خودکار باطل می‌شوند.
   let renderSeq = 0;
+
+  // پرچم حفاظت از دوبار-کلیک (نه با disabled — با flag)
+  let noteSaving = false;
 
   // ============================================================
   // 2) UTILITIES
@@ -681,7 +690,6 @@ const MizanPanel = (function () {
     return { block, before, after };
   }
 
-  // بازسازی contentId از یک بلوک DOM
   function resolveContentIdForBlock(blockEl) {
     if (!mizanContentKeys.length) return null;
     if (mizanContentKeys.length === 1) return mizanContentKeys[0];
@@ -849,17 +857,9 @@ const MizanPanel = (function () {
       `${escapeHtml(b)}<span class="mizan-note-modal__caret">|</span>${escapeHtml(a)}`;
   }
 
-  // ★ ریست کامل وضعیت دکمهٔ ذخیره — قبل از هر بار باز شدن مودال
-  function resetNoteModalControls() {
-    if (mizanNoteSaveBtn) {
-      mizanNoteSaveBtn.disabled = false;
-      mizanNoteSaveBtn.removeAttribute('disabled');
-    }
-  }
-
   function openNoteModal(opts = {}) {
     if (!mizanNoteModal) return;
-    resetNoteModalControls();
+    noteSaving = false; // ★ ریست flag در هر باز شدن
     editingNoteId = opts.editing ? opts.editing.id : null;
     removeCaret();
 
@@ -888,8 +888,8 @@ const MizanPanel = (function () {
     mizanNoteInput.value = '';
     editingNoteId = null;
     pendingNoteAnchor = null;
+    noteSaving = false;
     removeCaret();
-    resetNoteModalControls();
   }
 
   if (mizanNoteClose) mizanNoteClose.addEventListener('click', closeNoteModal);
@@ -902,16 +902,30 @@ const MizanPanel = (function () {
     });
   }
 
-  // ★ ذخیرهٔ یادداشت — بدون پرچم پیچیده، فقط disabled موقت
-  if (mizanNoteSaveBtn) {
-    mizanNoteSaveBtn.addEventListener('click', async () => {
-      // اطمینان از اینکه دکمه در حالت عادی است
-      mizanNoteSaveBtn.disabled = false;
+  // ★★★★★★★ ذخیرهٔ یادداشت — با DELEGATION روی document ★★★★★★★
+  //
+  // به‌جای اتصال مستقیم به mizanNoteSaveBtn (که اگر در لحظهٔ load
+  // null باشد، هیچ listener ای وصل نمی‌شود)، روی document گوش می‌دهیم
+  // و با closest بررسی می‌کنیم که آیا هدف کلیک، همان دکمه است یا نه.
+  // این روش در برابر همهٔ موارد (modal دوباره ساخته شود، دکمه
+  // disabled نباشد، و…) مقاوم است.
+  //
+  document.addEventListener('click', async (e) => {
+    const btn = e.target && e.target.closest && e.target.closest('#mizanNoteSaveBtn');
+    if (!btn) return;
+    console.log('[mizan note] save clicked');
 
-      const text = mizanNoteInput.value.trim();
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (noteSaving) return;
+    noteSaving = true;
+
+    try {
+      const text = (mizanNoteInput && mizanNoteInput.value || '').trim();
       if (!text) { UI.toast('متن یادداشت خالی است'); return; }
 
-      // اگر pendingNoteAnchor به هر دلیلی null شد، از selection فعلی بازسازی کن
+      // اگر pendingNoteAnchor null شد، از selection فعلی بازسازی کن
       if (!pendingNoteAnchor) {
         const anchor = getCursorAnchor();
         if (anchor) {
@@ -925,7 +939,7 @@ const MizanPanel = (function () {
           }
         }
       }
-      // اگر باز هم null است، با اولین کلید محتوا و بدون anchor ادامه بده
+      // اگر باز هم null، با اولین کلید محتوا ادامه بده
       if (!pendingNoteAnchor) {
         const fallbackId = mizanContentKeys[0] || null;
         if (!fallbackId) {
@@ -935,34 +949,37 @@ const MizanPanel = (function () {
         pendingNoteAnchor = { contentId: fallbackId, before: '', after: '' };
       }
 
-      // حفاظت ساده در برابر دوبار کلیک
-      mizanNoteSaveBtn.disabled = true;
-      try {
-        if (editingNoteId) {
-          await Store.updateMizanNote(editingNoteId, text);
-          UI.toast('یادداشت به‌روزرسانی شد');
-        } else {
-          await Store.addMizanNote({
-            contentId: pendingNoteAnchor.contentId,
-            anchorBefore: pendingNoteAnchor.before,
-            anchorSelected: '',
-            anchorAfter: pendingNoteAnchor.after,
-            noteText: text,
-          });
-          UI.toast('یادداشت ثبت شد');
-        }
-        closeNoteModal();
-        await reloadMizanNotesAndRerender();
-      } catch (e) {
-        console.error('[mizan note] save failed:', e);
-        UI.toast('خطا: ' + (e && e.message ? e.message : 'نامشخص'));
-      } finally {
-        if (mizanNoteSaveBtn) mizanNoteSaveBtn.disabled = false;
+      if (editingNoteId) {
+        await Store.updateMizanNote(editingNoteId, text);
+        UI.toast('یادداشت به‌روزرسانی شد');
+      } else {
+        await Store.addMizanNote({
+          contentId: pendingNoteAnchor.contentId,
+          anchorBefore: pendingNoteAnchor.before,
+          anchorSelected: '',
+          anchorAfter: pendingNoteAnchor.after,
+          noteText: text,
+        });
+        UI.toast('یادداشت ثبت شد');
       }
-    });
-  }
+      closeNoteModal();
+      await reloadMizanNotesAndRerender();
+    } catch (err) {
+      console.error('[mizan note] save failed:', err);
+      UI.toast('خطا: ' + (err && err.message ? err.message : 'نامشخص'));
+    } finally {
+      noteSaving = false;
+    }
+  }, true); // capture phase — قبل از هر listener دیگری
 
-  if (mizanNoteDeleteBtn) mizanNoteDeleteBtn.addEventListener('click', async () => {
+  // ★ حذف یادداشت — با delegation مشابه
+  document.addEventListener('click', async (e) => {
+    const btn = e.target && e.target.closest && e.target.closest('#mizanNoteDeleteBtn');
+    if (!btn) return;
+    if (btn.style.display === 'none') return;
+    e.preventDefault();
+    e.stopPropagation();
+
     if (!editingNoteId) return;
     if (!confirm('این یادداشت حذف شود؟')) return;
     try {
@@ -970,11 +987,11 @@ const MizanPanel = (function () {
       closeNoteModal();
       UI.toast('یادداشت حذف شد');
       await reloadMizanNotesAndRerender();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error('[mizan note] delete failed:', err);
       UI.toast('خطا در حذف');
     }
-  });
+  }, true);
 
   function showNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = false; }
   function hideNoteAddBtn() { if (mizanNoteBtn) mizanNoteBtn.hidden = true; }
@@ -1624,5 +1641,6 @@ const MizanPanel = (function () {
     }
   }
 
+  console.log('[mizan-panel] IIFE done; MizanPanel ready');
   return { render: renderMizan };
 })();
