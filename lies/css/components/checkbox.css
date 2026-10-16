@@ -1,0 +1,96 @@
+/* ============================================================
+   css/components/checkbox.css
+   ============================================================ */
+
+.checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  line-height: 1.5;
+}
+.checkbox.is-disabled { opacity: .55; cursor: not-allowed; }
+
+.checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.checkbox__box {
+  position: relative;
+  --size: 18px;
+  width: var(--size);
+  height: var(--size);
+  flex-shrink: 0;
+  background: var(--bg-inset);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 5px;
+  margin-top: 2px;
+  transition:
+    background var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
+}
+.checkbox--sm .checkbox__box { --size: 15px; border-radius: 4px; }
+.checkbox--lg .checkbox__box { --size: 22px; border-radius: 6px; }
+
+.checkbox:hover .checkbox__box { border-color: var(--text-tertiary); }
+
+.checkbox__check {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0;
+  transform: scale(.5);
+  transition: opacity var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
+}
+.checkbox--lg .checkbox__check { font-size: 15px; }
+
+.checkbox__indeterminate {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.checkbox__indeterminate::before {
+  content: "";
+  width: 60%;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+}
+
+.checkbox.is-checked .checkbox__box {
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  border-color: transparent;
+  box-shadow: 0 4px 12px -4px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+}
+.checkbox.is-checked .checkbox__check { opacity: 1; transform: scale(1); }
+.checkbox.is-indeterminate .checkbox__box {
+  background: var(--accent-500);
+  border-color: transparent;
+}
+.checkbox.is-indeterminate .checkbox__indeterminate { display: flex; }
+.checkbox.is-indeterminate .checkbox__check { opacity: 0; }
+
+.checkbox input:focus-visible + .checkbox__box {
+  box-shadow: var(--focus-ring);
+}
+
+.checkbox__label {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  line-height: 1.55;
+  padding-top: 1px;
+}
