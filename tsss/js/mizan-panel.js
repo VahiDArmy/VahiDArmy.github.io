@@ -75,6 +75,11 @@ const MizanPanel = (function () {
   let lastSurah = 1;
   let lastAyah = 1;
 
+  // توکن ترتیب رندر — هر بار که renderMizan شروع می‌شود یک عدد
+  // یکتا می‌گیرد. تمام awaitهای داخل تابع بعد از بازگشت بررسی می‌کنند
+  // که هنوز «رندر جاری» هستند یا رندر جدیدتری شروع شده.
+  let renderSeq = 0;
+
   // ============================================================
   // 2) UTILITIES
   // ============================================================
@@ -90,11 +95,7 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  // --- گروه‌های نویسه‌ای مشترک بین نمایش و مقایسه ---
-  //
-  // نویسه‌های نامرئی: هر چیزی که به‌عنوان «جداکننده» در متن چاپی
-  // به‌کار می‌رفت ولی در وب فقط ZWNJ (U+200C) معنای «نیم‌فاصله» دارد.
-  //
+  // گروه‌های نویسه‌ای مشترک بین نمایش و مقایسه
   const INVISIBLE_SEPARATORS =
     '\u200B' +        // ZWSP
     '\u200D' +        // ZWJ
@@ -105,23 +106,13 @@ const MizanPanel = (function () {
     '\u2066-\u2069' + // LRI/RLI/FSI/PDI
     '\uFEFF';         // BOM
 
-  // Presentation Forms-A برای ی و ک
   const YEH_PRESENTATION = '[\uFBFC-\uFBFF\uFEEF\uFEF0\uFEF1-\uFEF4]';
   const KAF_PRESENTATION = '[\uFED9-\uFEDC]';
 
-  // --- تبدیل استاندارد: یکسان‌سازی برای «نمایش» و «مقایسه» ---
-  //
-  // این تابع در دو جا استفاده می‌شود:
-  //   ۱) نمایش: قبل از رندر متن، تا نویسه‌های عربی-نما به فارسی تبدیل شوند
-  //   ۲) مقایسه: قبل از جست‌وجوی گزیده/یادداشت، تا متن رندرشده با متن خام
-  //      تطبیق یابد
-  //
   function canonizeLetters(s) {
     return String(s == null ? '' : s)
-      // Presentation Forms → canonical
       .replace(new RegExp(YEH_PRESENTATION, 'g'), '\u06CC')
       .replace(new RegExp(KAF_PRESENTATION, 'g'), '\u06A9')
-      // Arabic → Farsi
       .replace(/\u064A/g, '\u06CC')  // ي → ی
       .replace(/\u0649/g, '\u06CC')  // ى → ی
       .replace(/\u06D2/g, '\u06CC')  // ے → ی
@@ -131,26 +122,21 @@ const MizanPanel = (function () {
   }
 
   function canonizeInvisibles(s) {
-    // ابتدا: نامرئی بین دو حرف عربی → ZWNJ
     const between = new RegExp(
       `([\\u0600-\\u06FF])[${INVISIBLE_SEPARATORS}]+(?=[\\u0600-\\u06FF])`,
       'g'
     );
     s = s.replace(between, '$1\u200C');
-    // سپس: نامرئی باقی‌مانده → حذف (به‌جز ZWNJ که باید بماند)
     const remain = new RegExp(`[${INVISIBLE_SEPARATORS}]`, 'g');
     s = s.replace(remain, '');
-    // ادغام ZWNJهای تکراری
     s = s.replace(/\u200C{2,}/g, '\u200C');
     return s;
   }
 
-  // نسخهٔ کامل برای نمایش (کاراکترهای عربی-نما را هم تبدیل می‌کند)
   function normalizePersianChars(text) {
     return canonizeInvisibles(canonizeLetters(text));
   }
 
-  // نسخهٔ سبک برای مقایسه (یادداشت‌ها و تگ‌ها)
   function normalizeChars(text) {
     return canonizeInvisibles(canonizeLetters(text))
       .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, '');
@@ -170,7 +156,22 @@ const MizanPanel = (function () {
     return diacritics / letters > 0.10;
   }
 
-  // --- نرمال‌سازی متن فارسی، با محافظت از متن قرآنی داخل ﴿...﴾ ---
+  // حذف تکراری‌ها بر اساس .id (برای یادداشت‌ها و تگ‌ها)
+  function dedupeById(arr) {
+    if (!Array.isArray(arr)) return [];
+    const seen = new Set();
+    const out = [];
+    for (const item of arr) {
+      if (!item) continue;
+      const key = item.id != null ? String(item.id) : null;
+      if (key == null) { out.push(item); continue; }
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(item);
+    }
+    return out;
+  }
+
   function normalizePersianString(text) {
     const s = String(text == null ? '' : text);
     if (!s) return s;
@@ -180,7 +181,7 @@ const MizanPanel = (function () {
     let m;
     while ((m = re.exec(s))) {
       out += normalizePersianChars(s.slice(lastIdx, m.index));
-      out += m[0]; // محتوای قرآنی دست‌نخورده
+      out += m[0];
       lastIdx = re.lastIndex;
     }
     out += normalizePersianChars(s.slice(lastIdx));
@@ -693,6 +694,11 @@ const MizanPanel = (function () {
     const fullN   = beforeN + afterN;
 
     for (const block of blocks) {
+      // اگر این بلاک قبلاً همین یادداشت را دارد، رد کن (محافظت در برابر رندر دوگانه)
+      if (block.querySelector(`.mizan-note-inline[data-note-id="${note.id}"]`)) {
+        return true;
+      }
+
       const { text, map } = collectBlockText(block);
       if (!text) continue;
       const normText = normalizeChars(text);
@@ -727,11 +733,27 @@ const MizanPanel = (function () {
 
   function injectMizanNotes(rootEl) {
     if (!rootEl || !mizanNotes.length) return;
+
+    // پاکسازی یادداشت‌های موجود در DOM (محافظت در برابر رندر دوگانه)
+    rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
+      const parent = el.parentNode;
+      if (!parent) return;
+      // جایگزینی span با متن خودش تا ساختار متن به حالت اول برگردد
+      const txt = document.createTextNode(el.textContent || '');
+      parent.replaceChild(txt, el);
+      parent.normalize();
+    });
+
     const orphans = [];
     for (const note of mizanNotes) {
       const ok = insertInlineNoteAt(rootEl, note);
       if (!ok) orphans.push(note);
     }
+
+    // حذف جعبهٔ orphans قبلی اگر هست
+    const oldOrphans = rootEl.querySelector('.mizan-orphans');
+    if (oldOrphans) oldOrphans.remove();
+
     if (orphans.length) {
       const box = document.createElement('div');
       box.className = 'mizan-orphans';
@@ -745,6 +767,7 @@ const MizanPanel = (function () {
       `;
       rootEl.appendChild(box);
     }
+
     rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -866,9 +889,15 @@ const MizanPanel = (function () {
     });
   }
 
+  // --- ذخیرهٔ یادداشت با محافظت در برابر دوبار کلیک ---
+  let noteSaveBusy = false;
   if (mizanNoteSaveBtn) mizanNoteSaveBtn.addEventListener('click', async () => {
+    if (noteSaveBusy) return;
     const text = mizanNoteInput.value.trim();
     if (!text) { UI.toast('متن یادداشت خالی است'); return; }
+
+    noteSaveBusy = true;
+    mizanNoteSaveBtn.disabled = true;
     try {
       if (editingNoteId) {
         await Store.updateMizanNote(editingNoteId, text);
@@ -889,6 +918,9 @@ const MizanPanel = (function () {
     } catch (e) {
       console.error(e);
       UI.toast('خطا: ' + (e.message || 'نامشخص'));
+    } finally {
+      noteSaveBusy = false;
+      mizanNoteSaveBtn.disabled = false;
     }
   });
 
@@ -1007,7 +1039,7 @@ const MizanPanel = (function () {
     if (!mizanContentKeys.length) return;
     try {
       const all = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
-      mizanNotes = all.flat();
+      mizanNotes = dedupeById(all.flat());
       const prevPage = mizanCurrentPage;
       await renderMizan(lastSurah, lastAyah, { keepPage: prevPage });
     } catch (e) {
@@ -1111,6 +1143,9 @@ const MizanPanel = (function () {
 
   function applyMizanTags(rootEl, tags) {
     if (!rootEl || !tags || !tags.length) return;
+
+    // پاکسازی مارکرهای قبلی (محافظت در برابر رندر دوگانه)
+    rootEl.querySelectorAll('.mizan-tag-marker').forEach((m) => m.remove());
 
     const items = [];
     for (const tag of tags) {
@@ -1461,6 +1496,9 @@ const MizanPanel = (function () {
   // 9) MAIN RENDER
   // ============================================================
   async function renderMizan(surah, ayah, opts = {}) {
+    // گرفتن توکن ترتیب — هر رندر جدید، رندرهای قبلی را باطل می‌کند
+    const mySeq = ++renderSeq;
+
     lastSurah = surah;
     lastAyah = ayah;
 
@@ -1479,23 +1517,32 @@ const MizanPanel = (function () {
 
     try {
       const contents = await Mizan.getForAyah(surah, ayah);
+      if (mySeq !== renderSeq) return;
+
       if (!contents || !contents.length) {
         showMizanState('empty');
         if (mizanTaggerBtn) mizanTaggerBtn.classList.add('hidden');
         return;
       }
 
-      mizanContentKeys = contents.map((c) => c.content_id);
+      // حذف content_id های تکراری
+      mizanContentKeys = Array.from(new Set(contents.map((c) => c.content_id)));
 
       try {
         const allNotes = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanNotes(cid)));
-        mizanNotes = allNotes.flat();
+        if (mySeq !== renderSeq) return;
+        mizanNotes = dedupeById(allNotes.flat());
       } catch (e) { mizanNotes = []; }
 
       try {
         const allTags = await Promise.all(mizanContentKeys.map((cid) => Store.getMizanTags(cid)));
-        mizanTags = await filterTrivialTags(allTags.flat(), surah, ayah);
+        if (mySeq !== renderSeq) return;
+        const filtered = await filterTrivialTags(allTags.flat(), surah, ayah);
+        if (mySeq !== renderSeq) return;
+        mizanTags = dedupeById(filtered);
       } catch (e) { mizanTags = []; }
+
+      if (mySeq !== renderSeq) return;
 
       let range = null;
       const allBlocks = [];
@@ -1510,6 +1557,8 @@ const MizanPanel = (function () {
 
       const processed = processPrintArtifacts(allBlocks);
       const html = renderBlocks(processed);
+
+      if (mySeq !== renderSeq) return;
 
       showMizanState('content', { html, range });
 
@@ -1528,6 +1577,7 @@ const MizanPanel = (function () {
         } else {
           let saved = null;
           try { saved = await Store.getMizanProgress(mizanContentKeys.join('-')); } catch (e) {}
+          if (mySeq !== renderSeq) return;
           if (typeof saved === 'number' && saved >= 0 && saved < mizanPages.length) {
             showMizanPage(saved);
           } else {
@@ -1537,6 +1587,7 @@ const MizanPanel = (function () {
         }
       }
     } catch (e) {
+      if (mySeq !== renderSeq) return;
       console.warn('[mizan] load failed:', e);
       showMizanState('error', { message: 'تفسیر المیزان برای این آیه در دسترس نیست.' });
       if (mizanTaggerBtn) mizanTaggerBtn.classList.add('hidden');
