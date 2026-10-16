@@ -1,0 +1,139 @@
+/* ============================================================
+   css/components/chips.css
+   ============================================================ */
+
+.chip {
+  --chip-color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: var(--r-full);
+  background: color-mix(in srgb, var(--chip-color) 14%, transparent);
+  color: color-mix(in srgb, var(--chip-color) 88%, white 12%);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-medium);
+  border: 1px solid color-mix(in srgb, var(--chip-color) 30%, transparent);
+  line-height: 1.5;
+  white-space: nowrap;
+  transition: transform var(--dur-fast), background var(--dur-fast);
+}
+.chip--md { font-size: var(--fs-xs); padding: 4px 10px; }
+.chip--sm { font-size: 10px; padding: 2px 7px; }
+.chip.is-clickable { cursor: pointer; }
+.chip.is-clickable:hover {
+  background: color-mix(in srgb, var(--chip-color) 22%, transparent);
+  transform: translateY(-1px);
+}
+.chip.is-active {
+  background: color-mix(in srgb, var(--chip-color) 30%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--chip-color) 40%, transparent);
+}
+
+.chip__dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--chip-color);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--chip-color) 60%, transparent);
+  flex-shrink: 0;
+}
+.chip__icon { font-size: 1em; line-height: 1; }
+.chip__label { line-height: 1; }
+.chip__remove {
+  margin-inline-start: 2px;
+  width: 14px; height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: inherit;
+  opacity: .7;
+  font-size: 9px;
+  transition: opacity var(--dur-fast), background var(--dur-fast);
+}
+.chip__remove:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--chip-color) 30%, transparent);
+}
+
+.chip-list { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* ── Chip selector ─────────────────────────────────────── */
+.chip-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 40px;
+  padding: 6px 8px;
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: text;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+  position: relative;
+}
+.chip-selector:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+.chip-selector__selected { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip-selector__input {
+  flex: 1;
+  min-width: 100px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: var(--fs-sm);
+  padding: 4px 6px;
+  outline: none;
+}
+.chip-selector__input::placeholder { color: var(--text-quaternary); }
+
+.chip-selector__suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline: 0;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity var(--dur-fast), transform var(--dur-fast);
+}
+.chip-selector__suggestions.is-open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.chip-selector__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: var(--r-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  text-align: start;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.chip-selector__option:hover,
+.chip-selector__option:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  outline: none;
+}
+.chip-selector__option--create { color: var(--accent-300); }
+.chip-selector__swatch {
+  width: 12px; height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.chip-selector__option-icon { font-size: 12px; }
