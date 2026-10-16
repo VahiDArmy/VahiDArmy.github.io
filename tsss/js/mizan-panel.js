@@ -75,9 +75,8 @@ const MizanPanel = (function () {
   let lastSurah = 1;
   let lastAyah = 1;
 
-  // توکن ترتیب رندر — هر بار که renderMizan شروع می‌شود یک عدد
-  // یکتا می‌گیرد. تمام awaitهای داخل تابع بعد از بازگشت بررسی می‌کنند
-  // که هنوز «رندر جاری» هستند یا رندر جدیدتری شروع شده.
+  // توکن ترتیب رندر — هر بار renderMizan یک عدد یکتا می‌گیرد؛
+  // رندرهای همپوشان به‌طور خودکار باطل می‌شوند.
   let renderSeq = 0;
 
   // ============================================================
@@ -95,16 +94,15 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  // گروه‌های نویسه‌ای مشترک بین نمایش و مقایسه
   const INVISIBLE_SEPARATORS =
-    '\u200B' +        // ZWSP
-    '\u200D' +        // ZWJ
-    '\u200E' +        // LRM
-    '\u200F' +        // RLM
-    '\u061C' +        // ALM
-    '\u202A-\u202E' + // LRE/RLE/PDF/LRO/RLO
-    '\u2066-\u2069' + // LRI/RLI/FSI/PDI
-    '\uFEFF';         // BOM
+    '\u200B' +
+    '\u200D' +
+    '\u200E' +
+    '\u200F' +
+    '\u061C' +
+    '\u202A-\u202E' +
+    '\u2066-\u2069' +
+    '\uFEFF';
 
   const YEH_PRESENTATION = '[\uFBFC-\uFBFF\uFEEF\uFEF0\uFEF1-\uFEF4]';
   const KAF_PRESENTATION = '[\uFED9-\uFEDC]';
@@ -113,12 +111,12 @@ const MizanPanel = (function () {
     return String(s == null ? '' : s)
       .replace(new RegExp(YEH_PRESENTATION, 'g'), '\u06CC')
       .replace(new RegExp(KAF_PRESENTATION, 'g'), '\u06A9')
-      .replace(/\u064A/g, '\u06CC')  // ي → ی
-      .replace(/\u0649/g, '\u06CC')  // ى → ی
-      .replace(/\u06D2/g, '\u06CC')  // ے → ی
-      .replace(/\u06D0/g, '\u06CC')  // ې → ی
-      .replace(/\u06CD/g, '\u06CC')  // ۍ → ی
-      .replace(/\u0643/g, '\u06A9'); // ك → ک
+      .replace(/\u064A/g, '\u06CC')
+      .replace(/\u0649/g, '\u06CC')
+      .replace(/\u06D2/g, '\u06CC')
+      .replace(/\u06D0/g, '\u06CC')
+      .replace(/\u06CD/g, '\u06CC')
+      .replace(/\u0643/g, '\u06A9');
   }
 
   function canonizeInvisibles(s) {
@@ -156,7 +154,6 @@ const MizanPanel = (function () {
     return diacritics / letters > 0.10;
   }
 
-  // حذف تکراری‌ها بر اساس .id (برای یادداشت‌ها و تگ‌ها)
   function dedupeById(arr) {
     if (!Array.isArray(arr)) return [];
     const seen = new Set();
@@ -684,6 +681,16 @@ const MizanPanel = (function () {
     return { block, before, after };
   }
 
+  // بازسازی contentId از یک بلوک DOM
+  function resolveContentIdForBlock(blockEl) {
+    if (!mizanContentKeys.length) return null;
+    if (mizanContentKeys.length === 1) return mizanContentKeys[0];
+    const page = blockEl && blockEl.closest && blockEl.closest('.mizan-page');
+    if (!page) return mizanContentKeys[0];
+    const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
+    return mizanContentKeys[idx] || mizanContentKeys[0];
+  }
+
   // ============================================================
   // 6) NOTES
   // ============================================================
@@ -694,7 +701,6 @@ const MizanPanel = (function () {
     const fullN   = beforeN + afterN;
 
     for (const block of blocks) {
-      // اگر این بلاک قبلاً همین یادداشت را دارد، رد کن (محافظت در برابر رندر دوگانه)
       if (block.querySelector(`.mizan-note-inline[data-note-id="${note.id}"]`)) {
         return true;
       }
@@ -734,11 +740,9 @@ const MizanPanel = (function () {
   function injectMizanNotes(rootEl) {
     if (!rootEl || !mizanNotes.length) return;
 
-    // پاکسازی یادداشت‌های موجود در DOM (محافظت در برابر رندر دوگانه)
     rootEl.querySelectorAll('.mizan-note-inline').forEach((el) => {
       const parent = el.parentNode;
       if (!parent) return;
-      // جایگزینی span با متن خودش تا ساختار متن به حالت اول برگردد
       const txt = document.createTextNode(el.textContent || '');
       parent.replaceChild(txt, el);
       parent.normalize();
@@ -750,7 +754,6 @@ const MizanPanel = (function () {
       if (!ok) orphans.push(note);
     }
 
-    // حذف جعبهٔ orphans قبلی اگر هست
     const oldOrphans = rootEl.querySelector('.mizan-orphans');
     if (oldOrphans) oldOrphans.remove();
 
@@ -846,8 +849,17 @@ const MizanPanel = (function () {
       `${escapeHtml(b)}<span class="mizan-note-modal__caret">|</span>${escapeHtml(a)}`;
   }
 
+  // ★ ریست کامل وضعیت دکمهٔ ذخیره — قبل از هر بار باز شدن مودال
+  function resetNoteModalControls() {
+    if (mizanNoteSaveBtn) {
+      mizanNoteSaveBtn.disabled = false;
+      mizanNoteSaveBtn.removeAttribute('disabled');
+    }
+  }
+
   function openNoteModal(opts = {}) {
     if (!mizanNoteModal) return;
+    resetNoteModalControls();
     editingNoteId = opts.editing ? opts.editing.id : null;
     removeCaret();
 
@@ -877,6 +889,7 @@ const MizanPanel = (function () {
     editingNoteId = null;
     pendingNoteAnchor = null;
     removeCaret();
+    resetNoteModalControls();
   }
 
   if (mizanNoteClose) mizanNoteClose.addEventListener('click', closeNoteModal);
@@ -889,40 +902,65 @@ const MizanPanel = (function () {
     });
   }
 
-  // --- ذخیرهٔ یادداشت با محافظت در برابر دوبار کلیک ---
-  let noteSaveBusy = false;
-  if (mizanNoteSaveBtn) mizanNoteSaveBtn.addEventListener('click', async () => {
-    if (noteSaveBusy) return;
-    const text = mizanNoteInput.value.trim();
-    if (!text) { UI.toast('متن یادداشت خالی است'); return; }
-
-    noteSaveBusy = true;
-    mizanNoteSaveBtn.disabled = true;
-    try {
-      if (editingNoteId) {
-        await Store.updateMizanNote(editingNoteId, text);
-        UI.toast('یادداشت به‌روزرسانی شد');
-      } else {
-        if (!pendingNoteAnchor) { UI.toast('موقعیت یادداشت معتبر نیست'); return; }
-        await Store.addMizanNote({
-          contentId: pendingNoteAnchor.contentId,
-          anchorBefore: pendingNoteAnchor.before,
-          anchorSelected: '',
-          anchorAfter: pendingNoteAnchor.after,
-          noteText: text,
-        });
-        UI.toast('یادداشت ثبت شد');
-      }
-      closeNoteModal();
-      await reloadMizanNotesAndRerender();
-    } catch (e) {
-      console.error(e);
-      UI.toast('خطا: ' + (e.message || 'نامشخص'));
-    } finally {
-      noteSaveBusy = false;
+  // ★ ذخیرهٔ یادداشت — بدون پرچم پیچیده، فقط disabled موقت
+  if (mizanNoteSaveBtn) {
+    mizanNoteSaveBtn.addEventListener('click', async () => {
+      // اطمینان از اینکه دکمه در حالت عادی است
       mizanNoteSaveBtn.disabled = false;
-    }
-  });
+
+      const text = mizanNoteInput.value.trim();
+      if (!text) { UI.toast('متن یادداشت خالی است'); return; }
+
+      // اگر pendingNoteAnchor به هر دلیلی null شد، از selection فعلی بازسازی کن
+      if (!pendingNoteAnchor) {
+        const anchor = getCursorAnchor();
+        if (anchor) {
+          const contentId = resolveContentIdForBlock(anchor.block);
+          if (contentId) {
+            pendingNoteAnchor = {
+              contentId,
+              before: anchor.before,
+              after: anchor.after,
+            };
+          }
+        }
+      }
+      // اگر باز هم null است، با اولین کلید محتوا و بدون anchor ادامه بده
+      if (!pendingNoteAnchor) {
+        const fallbackId = mizanContentKeys[0] || null;
+        if (!fallbackId) {
+          UI.toast('موقعیت یادداشت معتبر نیست');
+          return;
+        }
+        pendingNoteAnchor = { contentId: fallbackId, before: '', after: '' };
+      }
+
+      // حفاظت ساده در برابر دوبار کلیک
+      mizanNoteSaveBtn.disabled = true;
+      try {
+        if (editingNoteId) {
+          await Store.updateMizanNote(editingNoteId, text);
+          UI.toast('یادداشت به‌روزرسانی شد');
+        } else {
+          await Store.addMizanNote({
+            contentId: pendingNoteAnchor.contentId,
+            anchorBefore: pendingNoteAnchor.before,
+            anchorSelected: '',
+            anchorAfter: pendingNoteAnchor.after,
+            noteText: text,
+          });
+          UI.toast('یادداشت ثبت شد');
+        }
+        closeNoteModal();
+        await reloadMizanNotesAndRerender();
+      } catch (e) {
+        console.error('[mizan note] save failed:', e);
+        UI.toast('خطا: ' + (e && e.message ? e.message : 'نامشخص'));
+      } finally {
+        if (mizanNoteSaveBtn) mizanNoteSaveBtn.disabled = false;
+      }
+    });
+  }
 
   if (mizanNoteDeleteBtn) mizanNoteDeleteBtn.addEventListener('click', async () => {
     if (!editingNoteId) return;
@@ -971,12 +1009,7 @@ const MizanPanel = (function () {
       UI.toast('برای افزودن یادداشت باید وارد حساب شوید');
       return;
     }
-    const page = anchor.block.closest('.mizan-page');
-    let contentId = mizanContentKeys[0] || null;
-    if (page && mizanContentKeys.length > 1) {
-      const idx = Array.from(mizanContent.querySelectorAll('.mizan-page')).indexOf(page);
-      contentId = mizanContentKeys[idx] || mizanContentKeys[0];
-    }
+    const contentId = resolveContentIdForBlock(anchor.block);
     if (!contentId) { UI.toast('خطا در تشخیص محتوا'); return; }
 
     pendingNoteAnchor = {
@@ -1144,7 +1177,6 @@ const MizanPanel = (function () {
   function applyMizanTags(rootEl, tags) {
     if (!rootEl || !tags || !tags.length) return;
 
-    // پاکسازی مارکرهای قبلی (محافظت در برابر رندر دوگانه)
     rootEl.querySelectorAll('.mizan-tag-marker').forEach((m) => m.remove());
 
     const items = [];
@@ -1496,7 +1528,6 @@ const MizanPanel = (function () {
   // 9) MAIN RENDER
   // ============================================================
   async function renderMizan(surah, ayah, opts = {}) {
-    // گرفتن توکن ترتیب — هر رندر جدید، رندرهای قبلی را باطل می‌کند
     const mySeq = ++renderSeq;
 
     lastSurah = surah;
@@ -1525,7 +1556,6 @@ const MizanPanel = (function () {
         return;
       }
 
-      // حذف content_id های تکراری
       mizanContentKeys = Array.from(new Set(contents.map((c) => c.content_id)));
 
       try {
