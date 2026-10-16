@@ -1,11 +1,13 @@
 /* ============================================================
    js/features/tags/tags-manager.js
    Tags CRUD + merge + search
+   FIXED: COLOR_PALETTE from constants.js, LIMITS from app.config.js
    ============================================================ */
 
 import { el, clear } from '../../utils/dom.js';
 import * as tagsService from '../../services/tags.service.js';
-import { COLOR_PALETTE, LIMITS } from '../../config/app.config.js';
+import { LIMITS } from '../../config/app.config.js';
+import { COLOR_PALETTE } from '../../config/constants.js';   // ← FIXED
 import { toast } from '../../ui/toast.js';
 import { confirm } from '../../ui/confirm.js';
 import { toFaDigits } from '../../utils/format.js';
@@ -85,7 +87,6 @@ export function tagsManager(opts) {
       return;
     }
 
-    // Sort by count desc
     const sorted = [...items].sort((a, b) => (b.count || 0) - (a.count || 0));
     for (const tag of sorted) {
       grid.appendChild(renderTagCard(tag, () => onChange?.()));
@@ -109,9 +110,7 @@ function renderTagCard(tag, onChange) {
     style: { '--tag-color': tag.color },
   });
 
-  const dot = el('span', { class: 'tag-card__dot', style: { background: tag.color } });
-  card.appendChild(dot);
-
+  card.appendChild(el('span', { class: 'tag-card__dot', style: { background: tag.color } }));
   card.appendChild(el('span', { class: 'tag-card__name' }, { children: [tag.name] }));
 
   const count = tag.count || 0;
@@ -121,11 +120,21 @@ function renderTagCard(tag, onChange) {
   }, { children: [toFaDigits(count)] }));
 
   const actions = el('div', { class: 'tag-card__actions' });
-  const editBtn = el('button', { class: 'icon-btn icon-btn--xs', attrs: { type: 'button', title: 'ویرایش' } }, { children: ['✎'] });
-  editBtn.addEventListener('click', (ev) => { ev.stopPropagation(); openTagEditor(tag, () => onChange?.()); });
+
+  const editBtn = el('button', {
+    class: 'icon-btn icon-btn--xs',
+    attrs: { type: 'button', title: 'ویرایش' },
+  }, { children: ['✎'] });
+  editBtn.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    openTagEditor(tag, () => onChange?.());
+  });
   actions.appendChild(editBtn);
 
-  const delBtn = el('button', { class: 'icon-btn icon-btn--xs tag-card__delete', attrs: { type: 'button', title: 'حذف' } }, { children: ['✕'] });
+  const delBtn = el('button', {
+    class: 'icon-btn icon-btn--xs tag-card__delete',
+    attrs: { type: 'button', title: 'حذف' },
+  }, { children: ['✕'] });
   delBtn.addEventListener('click', async (ev) => {
     ev.stopPropagation();
     const ok = await confirm({
@@ -139,7 +148,9 @@ function renderTagCard(tag, onChange) {
       await tagsService.remove(tag.id);
       toast.success('برچسب حذف شد.');
       onChange?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
   actions.appendChild(delBtn);
 
@@ -159,7 +170,9 @@ async function openTagEditor(tag, onDone) {
   const body = el('div', { class: 'editor-form' });
 
   const nameField = el('div', { class: 'field' });
-  nameField.appendChild(el('label', { class: 'field__label' }, { children: ['نام', el('span', { class: 'req' }, { children: ['*'] })] }));
+  nameField.appendChild(el('label', { class: 'field__label' }, {
+    children: ['نام', el('span', { class: 'req' }, { children: ['*'] })],
+  }));
   const nameInput = el('input', {
     class: 'input',
     attrs: { type: 'text', maxlength: String(LIMITS.tagNameMax), placeholder: 'مثلاً: ترس از شکست' },
@@ -203,14 +216,21 @@ async function openTagEditor(tag, onDone) {
   cancelBtn.addEventListener('click', () => modal.close());
   saveBtn.addEventListener('click', async () => {
     const name = nameInput.value.trim();
-    if (!name) { nameInput.focus(); nameInput.classList.add('anim-shake'); setTimeout(() => nameInput.classList.remove('anim-shake'), 450); return; }
+    if (!name) {
+      nameInput.focus();
+      nameInput.classList.add('anim-shake');
+      setTimeout(() => nameInput.classList.remove('anim-shake'), 450);
+      return;
+    }
     try {
       if (isEdit) await tagsService.update(tag.id, { name, color: selectedColor });
       else await tagsService.create({ name, color: selectedColor });
       toast.success(isEdit ? 'برچسب به‌روزرسانی شد.' : 'برچسب ساخته شد.');
       modal.close();
       onDone?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
 
   requestAnimationFrame(() => nameInput.focus());
@@ -236,7 +256,7 @@ async function openMergeDialog(tags, onDone) {
   const toField = el('div', { class: 'field' });
   toField.appendChild(el('label', { class: 'field__label' }, { children: ['به برچسب'] }));
   const toSelect = el('select', { class: 'select' });
-  toSelect.appendChild(el('option', { attrs: { value: '' } }, { children: ['— انتخاب —' ] }));
+  toSelect.appendChild(el('option', { attrs: { value: '' } }, { children: ['— انتخاب —'] }));
   for (const t of tags) toSelect.appendChild(el('option', { attrs: { value: t.id } }, { children: [t.name] }));
   toField.appendChild(toSelect);
   body.appendChild(toField);
@@ -245,7 +265,13 @@ async function openMergeDialog(tags, onDone) {
   const cancelBtn = el('button', { class: 'btn btn--ghost' }, { children: ['لغو'] });
   const foot = el('div', { class: 'confirm-foot' }, { children: [cancelBtn, saveBtn] });
 
-  const modal = openModal({ title: 'ادغام برچسب‌ها', icon: '🔗', size: MODAL_SIZES.SM, content: body, footer: foot });
+  const modal = openModal({
+    title: 'ادغام برچسب‌ها',
+    icon: '🔗',
+    size: MODAL_SIZES.SM,
+    content: body,
+    footer: foot,
+  });
 
   cancelBtn.addEventListener('click', () => modal.close());
   saveBtn.addEventListener('click', async () => {
@@ -260,7 +286,9 @@ async function openMergeDialog(tags, onDone) {
       toast.success('برچسب‌ها ادغام شدند.');
       modal.close();
       onDone?.();
-    } catch (err) { toast.error(err.message); }
+    } catch (err) {
+      toast.error(err.message);
+    }
   });
 }
 
