@@ -1,0 +1,82 @@
+/* ============================================================
+   css/components/tabs.css
+   ============================================================ */
+
+.tabs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  --tabs-indicator-x: 0px;
+  --tabs-indicator-w: 0px;
+}
+.tabs--full .tabs__btn { flex: 1; }
+.tabs--pill { border-bottom: none; background: var(--bg-inset); border-radius: var(--r-lg); padding: 4px; }
+.tabs--segmented { border-bottom: none; background: var(--bg-inset); border-radius: var(--r-lg); padding: 4px; }
+
+.tabs__btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  color: var(--text-tertiary);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  border-radius: var(--r-sm) var(--r-sm) 0 0;
+  transition:
+    color var(--dur-fast) var(--ease-standard),
+    background var(--dur-fast) var(--ease-standard);
+  white-space: nowrap;
+}
+.tabs__btn:hover { color: var(--text-secondary); }
+.tabs__btn:disabled { opacity: .4; cursor: not-allowed; }
+.tabs__btn.is-active { color: var(--text-primary); font-weight: var(--fw-semibold); }
+
+.tabs__btn-icon { font-size: 1.1em; }
+.tabs__btn-label { line-height: 1; }
+.tabs__btn-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--accent-soft);
+  color: var(--accent-200);
+  border-radius: var(--r-full);
+  font-weight: var(--fw-bold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.tabs__btn.is-active .tabs__btn-badge {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tabs__indicator {
+  position: absolute;
+  bottom: -1px;
+  inset-inline-start: var(--tabs-indicator-x);
+  width: var(--tabs-indicator-w);
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-300));
+  border-radius: 2px 2px 0 0;
+  transition:
+    inset-inline-start var(--dur-base) var(--ease-spring),
+    width var(--dur-base) var(--ease-spring);
+  box-shadow: 0 0 12px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+}
+
+/* Pill / segmented variants */
+.tabs--pill .tabs__btn,
+.tabs--segmented .tabs__btn { border-radius: var(--r-md); padding: 8px 14px; }
+.tabs--pill .tabs__btn.is-active,
+.tabs--segmented .tabs__btn.is-active {
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  color: #fff;
+  box-shadow: 0 4px 12px -4px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+}
+.tabs--pill .tabs__indicator,
+.tabs--segmented .tabs__indicator { display: none; }
+
+/* Tab panel */
+.tabs-panel { padding: var(--s-5) 0; }
+.tabs-panel[hidden] { display: none; }
