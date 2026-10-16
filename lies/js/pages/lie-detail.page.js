@@ -1,26 +1,26 @@
 /* ============================================================
    js/pages/lie-detail.page.js
    Full view of a single lie + reflections
+   FIXED: cleaner imports, no ambiguous names, category resolved
+          from service (not from a global), no stray references.
    ============================================================ */
 
-import { el, byId, clear } from '../utils/dom.js';
-import { ROUTES, LIE_TYPES, MOODS } from '../config/app.config.js';
+import { el, clear } from '../utils/dom.js';
+import { LIE_TYPES, MOODS } from '../config/app.config.js';
 import { getLie } from '../services/index.js';
 import * as liesService from '../services/lies.service.js';
+import * as categoriesService from '../services/categories.service.js';
 import * as reflectionsService from '../services/reflections.service.js';
 import { reflectionsPanel } from '../features/lie-detail/reflections.js';
 import { toast } from '../ui/toast.js';
-import { confirm, confirmDanger } from '../ui/confirm.js';
 import { openLieEditor } from '../features/lies/lie-editor.js';
+import { openTagPicker, openCategoryPicker } from '../features/lies/lies-context-menu.js';
 import { badge, statusBadge } from '../ui/badges.js';
 import { chip } from '../ui/chips.js';
 import { progressRing } from '../ui/progress.js';
 import { formatRelative, formatDate, formatTime, toFaDigits } from '../utils/format.js';
-import { breadcrumbForLie } from '../layout/breadcrumb.js';
 import { bus } from '../core/event-bus.js';
 import { EVENTS } from '../config/constants.js';
-import { openTagPicker, openCategoryPicker } from '../features/lies/lies-context-menu.js';
-import { sparkline } from '../ui/charts/index.js';
 
 const TYPES_BY_ID = Object.fromEntries(LIE_TYPES.map((t) => [t.id, t]));
 const MOODS_BY_ID = Object.fromEntries(MOODS.map((m) => [m.id, m]));
@@ -30,25 +30,32 @@ const MOODS_BY_ID = Object.fromEntries(MOODS.map((m) => [m.id, m]));
  * @param {string} lieId
  */
 export async function renderLieDetail(container, lieId) {
+  clear(container);
   container.appendChild(el('div', { class: 'page-loader' }, {
     children: [el('span', { class: 'spinner spinner--lg' })],
   }));
 
   let lie = null;
   let reflections = [];
+  let categories = [];
   try {
-    [lie, reflections] = await Promise.all([
+    const [lieRes, reflRes, cats] = await Promise.all([
       getLie(lieId),
-      reflectionsService.listForLie(lieId),
+      reflectionsService.listForLie(lieId).catch(() => []),
+      categoriesService.list().catch(() => []),
     ]);
+    lie = lieRes;
+    reflections = reflRes;
+    categories = cats;
   } catch (err) {
-    container.innerHTML = '';
+    console.error('[lie-detail] load failed', err);
+    clear(container);
     container.appendChild(renderError(err));
     return;
   }
 
   if (!lie) {
-    container.innerHTML = '';
+    clear(container);
     container.appendChild(renderNotFound());
     return;
   }
@@ -58,11 +65,10 @@ export async function renderLieDetail(container, lieId) {
   const page = el('article', { class: 'page page--lie-detail' });
   page.appendChild(renderHeader(lie));
   page.appendChild(renderMain(lie, reflections));
-  page.appendChild(renderSidebar(lie, reflections));
+  page.appendChild(renderSidebar(lie, reflections, categories));
   container.appendChild(page);
 
-  // Update topbar breadcrumb
-  bus.emit(EVENTS.ROUTE_BREADCRUMB, breadcrumbForLie(lie.title));
+  bus.emit(EVENTS.ROUTE_CHANGED, { path: `/lie/${lieId}`, params: { id: lieId } });
 }
 
 /* ── Header ──────────────────────────────────────────────── */
@@ -85,21 +91,40 @@ function renderHeader(lie) {
   top.appendChild(statusBadge(lie.status));
 
   const actions = el('div', { class: 'lie-detail__actions' });
-  actions.appendChild(mkAction('✎ ویرایش', 'ghost', () => {
-    openLieEditor(lie, { onSaved: () => location.reload() });
-  }));
-  actions.appendChild(mkAction('⎘ تکثیر', 'ghost', async () => {
-    const created = await liesService.duplicate(lie.id);
-    toast.success('تکثیر شد.');
-    location.hash = `#/lie/${created.id}`;
-  }));
-  actions.appendChild(mkAction('📌', 'ghost', async () => {
-    await liesService.togglePin(lie.id, !lie.isPinned);
-    location.reload();
-  }, { title: 'سنجاق/برداشتن' }));
-  actions.appendChild(mkAction('⋯', 'ghost', () => openMoreMenu(lie), { title: 'بیشتر' }));
-  top.appendChild(actions);
 
+  const editBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, {
+    children: ['✎ ویرایش'],
+  });
+  editBtn.addEventListener('click', () => {
+    openLieEditor(lie, { onSaved: () => location.reload() });
+  });
+  actions.appendChild(editBtn);
+
+  const dupBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, {
+    children: ['⎘ تکثیر'],
+  });
+  dupBtn.addEventListener('click', async () => {
+    try {
+      const created = await liesService.duplicate(lie.id);
+      toast.success('تکثیر شد.');
+      location.hash = `#/lie/${created.id}`;
+    } catch (err) { toast.error(err.message); }
+  });
+  actions.appendChild(dupBtn);
+
+  const pinBtn = el('button', {
+    class: 'btn btn--ghost btn--sm',
+    attrs: { type: 'button', title: lie.isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن' },
+  }, { children: ['📌'] });
+  pinBtn.addEventListener('click', async () => {
+    try {
+      await liesService.togglePin(lie.id, !lie.isPinned);
+      location.reload();
+    } catch (err) { toast.error(err.message); }
+  });
+  actions.appendChild(pinBtn);
+
+  top.appendChild(actions);
   header.appendChild(top);
 
   header.appendChild(el('h1', { class: 'lie-detail__title' }, { children: [lie.title] }));
@@ -114,15 +139,6 @@ function renderHeader(lie) {
   header.appendChild(meta);
 
   return header;
-}
-
-function mkAction(label, variant, onClick, opts = {}) {
-  const b = el('button', {
-    class: ['btn', `btn--${variant}`, 'btn--sm'].join(' '),
-    attrs: { type: 'button', title: opts.title || label },
-  }, { children: [label] });
-  b.addEventListener('click', onClick);
-  return b;
 }
 
 /* ── Main column ─────────────────────────────────────────── */
@@ -151,19 +167,14 @@ function renderMain(lie, reflections) {
   }
 
   // Reflections
-  const refl = reflectionsPanel(lie.id, {
-    reflections: [...reflections],
-    onCreated: () => {},
-    onDeleted: () => {},
-  });
-  main.appendChild(refl);
+  main.appendChild(reflectionsPanel(lie.id, { reflections: [...reflections] }));
 
   return main;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 
-function renderSidebar(lie, reflections) {
+function renderSidebar(lie, reflections, categories) {
   const side = el('aside', { class: 'lie-detail__sidebar' });
 
   // Intensity & Belief rings
@@ -219,12 +230,11 @@ function renderSidebar(lie, reflections) {
   const catCard = el('div', { class: 'lie-detail__meta-card' });
   catCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['دسته‌بندی'] }));
   const catRow = el('div', { class: 'lie-detail__tags-row' });
-  if (lie.categoryId) {
-    const cat = window.__app?.categories?.find?.((c) => c.id === lie.categoryId);
-    if (cat) {
-      const c = chip({ label: cat.name, icon: cat.icon, color: cat.color, size: 'md' });
-      catRow.appendChild(c);
-    }
+  const cat = lie.categoryId ? categories.find((c) => c.id === lie.categoryId) : null;
+  if (cat) {
+    catRow.appendChild(chip({ label: cat.name, icon: cat.icon || '📁', color: cat.color, size: 'md' }));
+  } else {
+    catRow.appendChild(el('span', { class: 'text-dim' }, { children: ['— بدون دسته'] }));
   }
   const changeCatBtn = el('button', {
     class: 'btn btn--ghost btn--xs',
@@ -253,62 +263,19 @@ function renderSidebar(lie, reflections) {
   tagsCard.appendChild(tagRow);
   side.appendChild(tagsCard);
 
-  // Activity summary
+  // Summary
   const actCard = el('div', { class: 'lie-detail__meta-card' });
   actCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['خلاصه'] }));
   actCard.appendChild(el('p', { class: 'lie-detail__meta-summary' }, {
     children: [
-      `این دروغ ${reflections.length ? toFaDigits(reflections.length) + ' بازتاب' : 'هنوز بازتابی ندارد'}.`,
       reflections.length
-        ? `آخرین به‌روزرسانی ${formatRelative(reflections[0]?.createdAt || lie.updatedAt)}.`
-        : ' می‌توانی اولین بازتاب را بنویسی.',
+        ? `این دروغ ${toFaDigits(reflections.length)} بازتاب دارد. آخرین بازتاب ${formatRelative(reflections[0]?.createdAt || lie.updatedAt)}.`
+        : 'هنوز بازتابی ثبت نشده. اولین بازتاب را می‌توانی همین حالا بنویسی.',
     ],
   }));
   side.appendChild(actCard);
 
   return side;
-}
-
-/* ── More menu ───────────────────────────────────────────── */
-
-function openMoreMenu(lie) {
-  import('../ui/context-menu.js').then(({ openMenuAt }) => {
-    const btn = byId('more-menu-anchor') || document.activeElement;
-    openMenuAt(btn, [
-      { label: 'خروجی JSON', icon: '📤', action: () => exportJson(lie) },
-      { label: 'خروجی Markdown', icon: '📄', action: () => exportMarkdown(lie) },
-      { divider: true },
-      lie.status === 'active'
-        ? { label: 'بایگانی', icon: '📦', action: async () => { await liesService.archive(lie.id); toast.success('بایگانی شد.'); location.hash = '#/lies'; } }
-        : { label: 'خروج از بایگانی', icon: '↺', action: async () => { await liesService.restore(lie.id); toast.success('بازگردانی شد.'); location.reload(); } },
-      { label: 'انتقال به سطل زباله', icon: '🗑️', danger: true, action: async () => {
-          await liesService.trash(lie.id);
-          toast.success('به سطل زباله رفت.');
-          location.hash = '#/lies';
-      } },
-    ]);
-  });
-}
-
-function exportJson(lie) {
-  const blob = new Blob([JSON.stringify(lie, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${lie.title.replace(/\s+/g, '-').slice(0, 40)}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportMarkdown(lie) {
-  const md = `# ${lie.title}\n\n${lie.body || ''}\n\n${lie.truth ? `> **حقیقت:** ${lie.truth}\n` : ''}`;
-  const blob = new Blob([md], { type: 'text/markdown' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${lie.title.replace(/\s+/g, '-').slice(0, 40)}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 /* ── Error views ─────────────────────────────────────────── */
