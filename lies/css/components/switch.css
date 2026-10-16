@@ -1,0 +1,82 @@
+/* ============================================================
+   css/components/switch.css
+   ============================================================ */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+}
+.switch.is-disabled { opacity: .55; cursor: not-allowed; }
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.switch__track {
+  --track-w: 40px;
+  --track-h: 22px;
+  --thumb-size: 16px;
+  position: relative;
+  width: var(--track-w);
+  height: var(--track-h);
+  background: var(--bg-surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  flex-shrink: 0;
+  transition:
+    background var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard);
+}
+
+.switch--sm .switch__track { --track-w: 32px; --track-h: 18px; --thumb-size: 13px; }
+.switch--lg .switch__track { --track-w: 52px; --track-h: 28px; --thumb-size: 22px; }
+
+.switch__thumb {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    inset-inline-start var(--dur-base) var(--ease-spring);
+}
+
+[dir="rtl"] .switch__thumb { inset-inline-start: 2px; }
+.switch.is-checked .switch__thumb {
+  inset-inline-start: calc(100% - var(--thumb-size) - 2px);
+  background: #ffffff;
+}
+
+.switch.is-checked .switch__track {
+  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  border-color: transparent;
+  box-shadow: 0 4px 12px -4px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+}
+.switch input:focus-visible + .switch__track {
+  box-shadow: var(--focus-ring);
+}
+
+.switch__text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.switch__label {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+.switch__description {
+  font-size: var(--fs-2xs);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
