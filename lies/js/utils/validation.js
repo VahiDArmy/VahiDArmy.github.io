@@ -1,9 +1,11 @@
 /* ============================================================
    js/utils/validation.js
    Field-level validators + form-level engine
+   FIXED: Import LIMITS from app.config.js instead of constants.js
    ============================================================ */
 
-import { REGEX, LIMITS } from '../config/constants.js';
+import { REGEX } from '../config/constants.js';
+import { LIMITS } from '../config/app.config.js'; // ← FIX: LIMITS lives here
 import { toEnDigits } from './format.js';
 import { cleanText } from './sanitize.js';
 
@@ -114,22 +116,13 @@ export function validateRange(v, min, max) {
 /**
  * @typedef {Object} FieldRule
  * @property {(value:any, all:Object)=>({valid:boolean,message?:string,value?:any})} validate
- * @property {string} [errorFor] - attribute on the error element
+ * @property {string} [errorFor]
  */
 
 /**
  * Create a lightweight form validator.
  * @param {HTMLFormElement} form
  * @param {Record<string, (value:any, all:Record<string,any>) => ({valid:boolean, message?:string, value?:any})>} rules
- * @returns {{
- *   validateAll: () => {ok:boolean, values:Record<string,any>, errors:Record<string,string>},
- *   validateField: (name:string) => boolean,
- *   setError: (name:string, message:string) => void,
- *   clearError: (name:string) => void,
- *   clearAll: () => void,
- *   getValues: () => Record<string,any>,
- *   focusFirstError: () => void,
- * }}
  */
 export function createValidator(form, rules) {
   const $fields = () => Array.from(form.elements).filter((n) => n.name);
@@ -213,7 +206,6 @@ export function createValidator(form, rules) {
     first?.focus();
   }
 
-  // Live re-validation after first blur
   for (const name of Object.keys(rules)) {
     const el = form.elements[name];
     if (!el) continue;
