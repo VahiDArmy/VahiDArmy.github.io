@@ -1,18 +1,20 @@
 /* ============================================================
    js/core/command-palette.js
    Ctrl+K command palette: nav + actions + search lies (fuzzy)
+   FIXED: ACCENTS, THEMES, FONT_SIZES from ui/theme.js
+          ROUTES from app.config.js (not constants.js)
    ============================================================ */
 
-import { el, byId, clear, focusables, trapFocus } from '../utils/dom.js';
+import { el, byId, clear, trapFocus } from '../utils/dom.js';
 import { bus } from './event-bus.js';
-import { EVENTS, ROUTES } from '../config/constants.js';
-import { NAV_ITEMS, THEMES, ACCENTS, FONT_SIZES, APP } from '../config/app.config.js';
+import { EVENTS } from '../config/constants.js';
+import { NAV_ITEMS, ROUTES, APP } from '../config/app.config.js';
+import { THEMES, ACCENTS, FONT_SIZES, applyTheme, cycleTheme, getTheme } from '../ui/theme.js';
 import { escapeHtml, truncate } from '../utils/sanitize.js';
 import { toast } from '../ui/toast.js';
 import { confirmDanger } from '../ui/confirm.js';
 import * as liesService from '../services/lies.service.js';
 import * as exportService from '../services/export.service.js';
-import { applyTheme, cycleTheme, getTheme } from '../ui/theme.js';
 import { toFaDigits, formatRelative } from '../utils/format.js';
 import { debounce } from '../utils/debounce.js';
 
@@ -123,6 +125,20 @@ function buildStaticCommands() {
       toast.info(`تم: ${t.theme}`);
     },
   });
+  
+  // Themes (now correctly imported)
+  for (const t of THEMES) {
+    cmds.push({
+      id: `action:theme:${t}`,
+      type: 'action',
+      label: `تم: ${t}`,
+      icon: '🌗',
+      keywords: `تم ${t}`,
+      run: () => { applyTheme({ theme: t }); toast.info(`تم: ${t}`); },
+    });
+  }
+
+  // Accents (now correctly imported)
   for (const a of ACCENTS) {
     cmds.push({
       id: `action:accent:${a.id}`,
@@ -133,6 +149,8 @@ function buildStaticCommands() {
       run: () => { applyTheme({ accent: a.id }); toast.info(`اکسنت: ${a.label}`); },
     });
   }
+
+  // Font sizes (now correctly imported)
   for (const s of FONT_SIZES) {
     cmds.push({
       id: `action:font:${s}`,
@@ -143,6 +161,7 @@ function buildStaticCommands() {
       run: () => { applyTheme({ fontSize: s }); toast.info(`اندازه: ${s}`); },
     });
   }
+
   cmds.push({
     id: 'action:export-json',
     type: 'action',
@@ -296,10 +315,8 @@ function buildPalette() {
 const runSearch = async (query) => {
   const q = String(query || '').trim();
 
-  // Static commands (filtered by fuzzy)
   let cmds;
   if (!q) {
-    // Show recent first then rest
     const recents = recentIds.map((id) => staticCommands.find((c) => c.id === id)).filter(Boolean);
     const rest = staticCommands.filter((c) => !recentIds.includes(c.id));
     cmds = [...recents, ...rest].slice(0, 12);
@@ -307,7 +324,6 @@ const runSearch = async (query) => {
     cmds = fuzzyFilter(staticCommands, q).slice(0, 8);
   }
 
-  // Lies (search server-side)
   let lies = [];
   if (q.length >= 2) {
     const token = ++searchToken;
