@@ -1,29 +1,25 @@
 /* ============================================================
    css/base/reset.css
-   Modern normalize + opinionated base
-   FIXED: Forced body/html to have no margins and no horizontal 
-          scroll to prevent layout shift.
+   LOCKED: html and body are now fixed to 100% height with 
+           no overflow. Only .page-container will scroll.
    ============================================================ */
 
-*,
-*::before,
-*::after { box-sizing: border-box; }
-
+*, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; padding: 0; }
 
 html {
   -webkit-text-size-adjust: 100%;
   -moz-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  scroll-behavior: smooth;
   tab-size: 4;
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
+  
+  /* 🛡️ LOCK THE WINDOW */
   height: 100%;
+  overflow: hidden; 
 }
 
 body {
-  min-height: 100dvh;
   font-family: var(--font-sans);
   font-size: var(--fs-base);
   line-height: var(--lh-normal);
@@ -33,10 +29,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
   overscroll-behavior-y: none;
-  margin: 0;
-  padding: 0;
+
+  /* 🛡️ LOCK THE BODY */
+  height: 100%;
+  overflow: hidden;
 }
 
 /* Background ambience */
@@ -52,54 +49,25 @@ body::before {
     radial-gradient(700px 500px at 50% 108%, hsl(292 80% 60% / .06), transparent 60%);
 }
 
-img, svg, video, canvas, audio, iframe, embed, object {
-  display: block;
-  max-width: 100%;
-}
+img, svg, video, canvas, audio, iframe, embed, object { display: block; max-width: 100%; }
 img, video { height: auto; }
 
 button, input, optgroup, select, textarea {
-  font: inherit;
-  color: inherit;
-  letter-spacing: inherit;
-  background: none;
-  border: none;
-  outline: none;
+  font: inherit; color: inherit; letter-spacing: inherit; background: none; border: none; outline: none;
 }
 
 button { cursor: pointer; user-select: none; }
 button:disabled { cursor: not-allowed; }
-
 input, textarea { -webkit-user-select: text; user-select: text; }
 
-a {
-  color: var(--text-link);
-  text-decoration: none;
-  transition: color var(--dur-fast) var(--ease-standard);
-}
+a { color: var(--text-link); text-decoration: none; transition: color var(--dur-fast) var(--ease-standard); }
 a:hover { color: var(--accent-200); }
 
 ul, ol { list-style: none; }
 table { border-collapse: collapse; border-spacing: 0; width: 100%; }
+hr { border: 0; height: 1px; background: var(--border); margin: var(--s-6) 0; }
 
-hr {
-  border: 0;
-  height: 1px;
-  background: var(--border);
-  margin: var(--s-6) 0;
-}
-
-::selection {
-  background: var(--accent-soft);
-  color: var(--text-primary);
-}
-
+::selection { background: var(--accent-soft); color: var(--text-primary); }
 :focus { outline: none; }
-:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--r-sm);
-}
-
-/* Hide elements strictly when they have hidden attr */
+:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--r-sm); }
 [hidden] { display: none !important; }
