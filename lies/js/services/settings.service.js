@@ -1,8 +1,8 @@
 /* ============================================================
    js/services/settings.service.js
-   User preferences persisted in the user_settings table.
-   FIXED: Added a 3-second timeout to getUser() to prevent 
-          infinite hanging if the network is slow/unstable.
+   FIXED: Replaced getUser() (network request) with getSession() 
+          (instant read from local storage). 
+          Removed the artificial 3-second timeout entirely.
    ============================================================ */
 
 import { getSupabase } from '../core/supabase.client.js';
@@ -52,12 +52,11 @@ export async function fetch() {
   
   let user = null;
   try {
-    // 3-Second timeout for auth check
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
-    const { data } = await Promise.race([supabase.auth.getUser(), timeoutPromise]);
-    user = data?.user;
+    // 🛡️ FIX: Use getSession instead of getUser to avoid network timeout
+    const { data } = await supabase.auth.getSession();
+    user = data?.session?.user;
   } catch (err) {
-    console.warn('[settings] getUser timed out or failed:', err.message);
+    console.warn('[settings] getSession failed:', err);
     return getLocal();
   }
 
@@ -101,7 +100,10 @@ export async function fetch() {
 
 export async function update(patch) {
   const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
+  
+  // 🛡️ FIX: Use getSession instead of getUser
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) throw new Error('unauthorized');
 
   const clean = {};
