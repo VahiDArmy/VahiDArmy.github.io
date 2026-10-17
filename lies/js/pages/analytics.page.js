@@ -1,23 +1,17 @@
 /* ============================================================
    js/pages/analytics.page.js
-   Full analytics: heatmap, donuts, histograms, trends, top tags.
-   FIXED: Removed the incorrect import of FA_MONTHS from jalali.js.
+   UPDATED: Fetches dynamic Lie Types and Moods from DB 
+            for the donut charts.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
 import * as statsService from '../services/stats.service.js';
+import * as taxonomyService from '../services/taxonomy.service.js';
 import { lineChart, barChart, donutChart, heatmap } from '../ui/charts/index.js';
-import { LIE_TYPES, MOODS } from '../config/app.config.js';
 import { toFaDigits } from '../utils/format.js';
 import { getJalaliParts, getMonthName } from '../utils/jalali.js';
 import { skeletonPage } from '../ui/skeleton.js';
 
-const TYPES_BY_ID = Object.fromEntries(LIE_TYPES.map((t) => [t.id, t]));
-const MOODS_BY_ID = Object.fromEntries(MOODS.map((m) => [m.id, m]));
-
-/**
- * @param {HTMLElement} container
- */
 export async function renderAnalytics(container) {
   clear(container);
   container.appendChild(skeletonPage({ variant: 'grid' }));
@@ -29,18 +23,24 @@ export async function renderAnalytics(container) {
   let heatmapData = {};
   let yearTrend = [];
   let beliefHist = new Array(11).fill(0);
+  let lieTypes = [];
+  let moods = [];
 
   try {
-    const [b, heat, daily, bh] = await Promise.all([
+    const [b, heat, daily, bh, types, mds] = await Promise.all([
       statsService.dashboardBundle(currentYear),
       statsService.heatmapByYear(currentYear),
       statsService.monthlyCounts(12),
       statsService.beliefHistogram().catch(() => new Array(11).fill(0)),
+      taxonomyService.listTypes().catch(() => []),
+      taxonomyService.listMoods().catch(() => []),
     ]);
     bundle = b;
     heatmapData = heat;
     yearTrend = daily;
     beliefHist = bh;
+    lieTypes = types;
+    moods = mds;
   } catch (err) {
     console.error('[analytics] load failed', err);
     clear(container);
@@ -58,9 +58,6 @@ export async function renderAnalytics(container) {
   headLeft.appendChild(el('h1', { class: 'page-title' }, {
     children: [el('span', { class: 'page-title__icon' }, { children: ['📊'] }), 'تحلیل و آمار'],
   }));
-  headLeft.appendChild(el('p', { class: 'page-subtitle' }, {
-    children: ['الگوها، روند، و بینش‌های حاصل از دروغ‌هایی که به خودت گفته‌ای.'],
-  }));
   head.appendChild(headLeft);
   page.appendChild(head);
 
@@ -77,11 +74,7 @@ export async function renderAnalytics(container) {
   const heatSection = el('section', { class: 'analytics-section' });
   heatSection.appendChild(sectionHead('نقشهٔ فعالیت', '🔥', 'الگوی روزانه در ماه‌ها'));
   const heatCard = el('div', { class: 'analytics-card analytics-card--wide' });
-  heatCard.appendChild(heatmap({
-    dataByDay: heatmapData,
-    jy: j.year,
-    jm: j.month,
-  }));
+  heatCard.appendChild(heatmap({ dataByDay: heatmapData, jy: j.year, jm: j.month }));
   heatSection.appendChild(heatCard);
   page.appendChild(heatSection);
 
@@ -103,19 +96,18 @@ export async function renderAnalytics(container) {
 
   // Two-col: type donut + mood donut
   const donutRow = el('div', { class: 'analytics-row' });
+  const typesMap = Object.fromEntries(lieTypes.map((t) => [t.id, t]));
+  const moodsMap = Object.fromEntries(moods.map((m) => [m.id, m]));
 
   const typeCard = el('div', { class: 'analytics-card' });
   typeCard.appendChild(cardHead('🎭 توزیع انواع'));
   if (bundle.byType?.length) {
     typeCard.appendChild(donutChart({
       data: bundle.byType.slice(0, 8).map((t) => {
-        const m = TYPES_BY_ID[t.type] || TYPES_BY_ID.other;
+        const m = typesMap[t.type] || { label: 'دروغ دیگر', color: 'var(--text-tertiary)', icon: '✳️' };
         return { label: m.label, value: t.count, color: m.color, icon: m.icon };
       }),
-      size: 200,
-      thickness: 30,
-      centerLabel: toFaDigits(bundle.overview.active),
-      centerSub: 'فعال',
+      size: 200, thickness: 30, centerLabel: toFaDigits(bundle.overview.active), centerSub: 'فعال',
     }));
   } else {
     typeCard.appendChild(el('p', { class: 'analytics-empty' }, { children: ['داده‌ای نیست'] }));
@@ -127,11 +119,10 @@ export async function renderAnalytics(container) {
   if (bundle.byMood?.length) {
     moodCard.appendChild(donutChart({
       data: bundle.byMood.slice(0, 8).map((m) => {
-        const meta = MOODS_BY_ID[m.mood] || { label: m.mood, icon: '•' };
+        const meta = moodsMap[m.mood] || { label: m.mood, icon: '•' };
         return { label: meta.label, value: m.count, icon: meta.icon };
       }),
-      size: 200,
-      thickness: 30,
+      size: 200, thickness: 30,
     }));
   } else {
     moodCard.appendChild(el('p', { class: 'analytics-empty' }, { children: ['داده‌ای نیست'] }));
@@ -146,8 +137,7 @@ export async function renderAnalytics(container) {
   intCard.appendChild(cardHead('⚡ توزیع شدت'));
   intCard.appendChild(barChart({
     data: bundle.intensityHistogram.map((n, i) => ({ label: toFaDigits(i), value: n })),
-    height: 220,
-    color: 'var(--warning)',
+    height: 220, color: 'var(--warning)',
   }));
   histRow.appendChild(intCard);
 
@@ -155,8 +145,7 @@ export async function renderAnalytics(container) {
   beliefCard.appendChild(cardHead('◉ توزیع باور'));
   beliefCard.appendChild(barChart({
     data: beliefHist.map((n, i) => ({ label: toFaDigits(i), value: n })),
-    height: 220,
-    color: 'var(--cat-2)',
+    height: 220, color: 'var(--cat-2)',
   }));
   histRow.appendChild(beliefCard);
   page.appendChild(histRow);
@@ -173,9 +162,7 @@ export async function renderAnalytics(container) {
       const li = el('li', { class: 'analytics-list__item' });
       li.appendChild(el('span', { class: 'analytics-list__dot', style: { background: t.color } }));
       li.appendChild(el('span', { class: 'analytics-list__label' }, { children: [t.name] }));
-      li.appendChild(el('span', { class: 'analytics-list__bar-wrap' }, {
-        children: [el('span', { class: 'analytics-list__bar', style: { width: `${(t.count / max) * 100}%`, background: t.color } })],
-      }));
+      li.appendChild(el('span', { class: 'analytics-list__bar-wrap' }, { children: [el('span', { class: 'analytics-list__bar', style: { width: `${(t.count / max) * 100}%`, background: t.color } })] }));
       li.appendChild(el('span', { class: 'analytics-list__value' }, { children: [toFaDigits(t.count)] }));
       list.appendChild(li);
     }
@@ -194,9 +181,7 @@ export async function renderAnalytics(container) {
       const li = el('li', { class: 'analytics-list__item' });
       li.appendChild(el('span', { class: 'analytics-list__icon' }, { children: [c.icon] }));
       li.appendChild(el('span', { class: 'analytics-list__label' }, { children: [c.name] }));
-      li.appendChild(el('span', { class: 'analytics-list__bar-wrap' }, {
-        children: [el('span', { class: 'analytics-list__bar', style: { width: `${(c.count / max) * 100}%`, background: c.color } })],
-      }));
+      li.appendChild(el('span', { class: 'analytics-list__bar-wrap' }, { children: [el('span', { class: 'analytics-list__bar', style: { width: `${(c.count / max) * 100}%`, background: c.color } })] }));
       li.appendChild(el('span', { class: 'analytics-list__value' }, { children: [toFaDigits(c.count)] }));
       list.appendChild(li);
     }
@@ -210,30 +195,22 @@ export async function renderAnalytics(container) {
   container.appendChild(page);
 }
 
-/* ── Helpers ─────────────────────────────────────────────── */
-
 function kpiTile(label, value, accent) {
   const tile = el('div', { class: 'kpi-tile', style: { '--kpi-accent': accent } });
-  tile.appendChild(el('span', { class: 'kpi-tile__value' }, {
-    children: [typeof value === 'number' ? toFaDigits(value) : value],
-  }));
+  tile.appendChild(el('span', { class: 'kpi-tile__value' }, { children: [typeof value === 'number' ? toFaDigits(value) : value] }));
   tile.appendChild(el('span', { class: 'kpi-tile__label' }, { children: [label] }));
   return tile;
 }
 
 function sectionHead(title, icon, subtitle) {
   const head = el('header', { class: 'analytics-section__head' });
-  head.appendChild(el('h2', { class: 'analytics-section__title' }, {
-    children: [el('span', {}, { children: [icon] }), title],
-  }));
+  head.appendChild(el('h2', { class: 'analytics-section__title' }, { children: [el('span', {}, { children: [icon] }), title] }));
   if (subtitle) head.appendChild(el('p', { class: 'analytics-section__subtitle' }, { children: [subtitle] }));
   return head;
 }
 
 function cardHead(title) {
-  return el('header', { class: 'analytics-card__head' }, {
-    children: [el('h3', { class: 'analytics-card__title' }, { children: [title] })],
-  });
+  return el('header', { class: 'analytics-card__head' }, { children: [el('h3', { class: 'analytics-card__title' }, { children: [title] })] });
 }
 
 function renderError(err) {
