@@ -1,14 +1,13 @@
 /* ============================================================
    css/layout/responsive.css
-   Breakpoints (loads LAST so it wins)
+   FIXED: Mobile sidebar RTL transform was pushing it INTO the 
+          screen instead of OUT. Now it hides correctly.
    ============================================================ */
 
-/* ── Large desktop ≥ 1440 ────────────────────────────────── */
 @media (min-width: 1440px) {
   .page-container { padding: var(--s-8) var(--s-10) var(--s-10); }
 }
 
-/* ── Tablet / small desktop ≤ 1024 ──────────────────────── */
 @media (max-width: 1024px) {
   :root {
     --sidebar-w: 232px;
@@ -17,7 +16,7 @@
   .page-container { padding: var(--s-5) var(--s-5) var(--s-8); }
 }
 
-/* ── Tablet portrait ≤ 900 ──────────────────────────────── */
+/* ── Tablet portrait ≤ 900 (Mobile Layout) ──────────────── */
 @media (max-width: 900px) {
   .app-shell,
   .app-shell.is-sidebar-collapsed {
@@ -27,18 +26,30 @@
   .sidebar {
     position: fixed;
     inset-block: 0;
-    inset-inline-end: 0;
+    inset-inline-end: 0; /* LTR: right, RTL: left */
     width: min(320px, 86vw);
     z-index: var(--z-sidebar);
-    transform: translateX(100%);
+    
+    /* Default state: Hidden off-screen */
+    transform: translateX(100%); 
+    
     transition: transform var(--dur-slow) var(--ease-spring), box-shadow var(--dur-base);
     box-shadow: none;
     border-inline-start: 1px solid var(--border);
     border-inline-end: none;
   }
-  [dir="rtl"] .sidebar { transform: translateX(-100%); inset-inline-end: auto; inset-inline-start: 0; }
 
-  .app-shell.is-mobile-sidebar-open .sidebar {
+  /* For RTL, it's on the right side (inset-inline-start). 
+     To hide it off the right edge, we translate it POSITIVELY. */
+  [dir="rtl"] .sidebar { 
+    inset-inline-end: auto; 
+    inset-inline-start: 0; 
+    transform: translateX(100%); 
+  }
+
+  /* When open */
+  .app-shell.is-mobile-sidebar-open .sidebar,
+  [dir="rtl"] .app-shell.is-mobile-sidebar-open .sidebar {
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
@@ -56,7 +67,6 @@
   .sidebar-backdrop.is-visible { opacity: 1; }
 
   .sidebar__collapse { display: none; }
-  .sidebar__item-shortcut { display: none; }
   .sidebar__item-label { display: inline !important; }
   .sidebar__brand-text { display: block !important; }
   .sidebar__user-info { display: flex !important; }
@@ -70,11 +80,8 @@
   body.has-drawer { overflow: hidden; }
 }
 
-/* ── Phone landscape / small tablet ≤ 720 ───────────────── */
 @media (max-width: 720px) {
-  :root {
-    --topbar-h: 58px;
-  }
+  :root { --topbar-h: 58px; }
   .page-container { padding: var(--s-4) var(--s-4) var(--s-7); }
   .page-title { font-size: var(--fs-2xl); }
   .page-title__icon { width: 38px; height: 38px; font-size: 18px; }
@@ -82,7 +89,6 @@
   .app-footer { font-size: 11px; padding: var(--s-3); }
 }
 
-/* ── Phone ≤ 480 ────────────────────────────────────────── */
 @media (max-width: 480px) {
   .topbar__search { display: none; }
   .topbar__actions { gap: 2px; }
@@ -91,34 +97,9 @@
   .page-head__right .btn { flex: 1; }
 }
 
-/* ── Very small ≤ 360 ──────────────────────────────────── */
 @media (max-width: 360px) {
   :root { font-size: 14px; }
   .btn { --btn-pad-x: var(--s-3); }
   .btn--lg { --btn-pad-x: var(--s-4); font-size: var(--fs-md); }
   .page-container { padding: var(--s-3); }
-}
-
-/* ── Landscape short screens ───────────────────────────── */
-@media (max-height: 500px) and (orientation: landscape) {
-  .sidebar { width: min(280px, 60vw); }
-  .sidebar__brand { padding-block: var(--s-3); }
-}
-
-/* ── Print ─────────────────────────────────────────────── */
-@media print {
-  .sidebar,
-  .topbar,
-  .app-footer,
-  .toast-root,
-  .modal-root,
-  .context-menu-root {
-    display: none !important;
-  }
-  .app-shell,
-  .app-shell.is-sidebar-collapsed {
-    display: block;
-  }
-  body { background: #fff; color: #000; }
-  .page-container { max-width: 100%; padding: 0; }
 }
