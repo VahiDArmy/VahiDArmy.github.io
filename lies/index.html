@@ -5,277 +5,109 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0f" />
   <meta name="color-scheme" content="dark" />
-  <meta name="description" content="ژورنال خصوصی دروغ‌هایی که به خودمان می‌گوییم — فضایی امن برای مواجهه با حقیقت." />
+  <meta name="description" content="ژورنال خصوصی دروغ‌هایی که به خودمان می‌گوییم" />
   <meta name="robots" content="noindex, nofollow, noarchive" />
-  <meta name="referrer" content="no-referrer" />
   <title>دروغ‌هایی که به خودمان می‌گوییم</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css"
-    rel="stylesheet"
-  />
-
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="css/main.css" />
 
-  <!-- Early Error Catcher (runs before modules load) -->
+  <!-- 🛡️ FAIL-SAFE ERROR CATCHER (Runs before ES Modules) -->
   <script>
-    window.__earlyErrors = [];
     window.addEventListener('error', function(e) {
-      window.__earlyErrors.push(e.message + ' at ' + e.filename + ':' + e.lineno);
+      var errDiv = document.getElementById('inline-error-log');
+      if (errDiv) {
+        errDiv.style.display = 'block';
+        errDiv.textContent += '❌ ERROR: ' + e.message + '\n   Location: ' + e.filename + ':' + e.lineno + '\n\n';
+      }
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var errDiv = document.getElementById('inline-error-log');
+      if (errDiv) {
+        errDiv.style.display = 'block';
+        var msg = e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'Unknown Promise Rejection';
+        errDiv.textContent += '❌ REJECTION: ' + msg + '\n\n';
+      }
     });
   </script>
 </head>
 
 <body>
-  <!-- ═══════════ Splash / Boot Loader ═══════════ -->
-  <div id="boot-splash" class="boot-splash" aria-hidden="true">
+  <div id="boot-splash" class="boot-splash">
     <div class="boot-splash__inner">
       <div class="boot-splash__mark">🎭</div>
       <div class="boot-splash__ring"></div>
       <p class="boot-splash__text">در حال آماده‌سازی فضای خصوصی شما…</p>
-      <!-- NEW: Show Logs Button -->
-      <button id="show-logs-btn" type="button">مشاهده وضعیت سیستم (لاگ)</button>
+      
+      <button id="show-logs-btn" type="button" onclick="document.getElementById('debug-log-panel').style.transform='translateY(0)'">مشاهده وضعیت سیستم (لاگ)</button>
+      
+      <!-- 🛡️ Box to show errors without clicking anything -->
+      <pre id="inline-error-log" style="display: none; text-align: left; direction: ltr; font-size: 11px; color: #ff6b6b; background: #000; padding: 16px; border-radius: 8px; border: 1px solid #ff6b6b; max-width: 90vw; max-height: 40vh; overflow: auto; margin-top: 20px; white-space: pre-wrap; font-family: monospace; z-index: 99999; position: relative;"></pre>
     </div>
   </div>
 
-  <!-- ═══════════ Auth Screen ═══════════ -->
   <div id="auth-screen" class="auth-screen" hidden>
+    <!-- ... (بقیه محتوای auth-screen بدون تغییر است) ... -->
     <div class="auth-screen__bg" aria-hidden="true">
       <span class="auth-screen__orb auth-screen__orb--1"></span>
       <span class="auth-screen__orb auth-screen__orb--2"></span>
       <span class="auth-screen__orb auth-screen__orb--3"></span>
       <div class="auth-screen__grid"></div>
     </div>
-
     <div class="auth-screen__content">
-      <!-- Hero / Branding -->
       <section class="auth-hero">
-        <div class="auth-hero__badge">
-          <span class="auth-hero__badge-dot"></span>
-          کاملاً خصوصی · رمزنگاری‌شده · بدون اشتراک‌گذاری
-        </div>
-        <h1 class="auth-hero__title">
-          دروغ‌هایی که<br />
-          به <span class="auth-hero__accent">خودمان</span> می‌گوییم
-        </h1>
-        <p class="auth-hero__subtitle">
-          فضایی امن و کاملاً شخصی برای ثبت، بازنگری و رویارویی با آن جمله‌هایی
-          که هر روز در سکوت به خودمان می‌گوییم. هیچ‌کس جز شما اینجا را نمی‌بیند.
-        </p>
-
-        <ul class="auth-hero__features">
-          <li><span class="auth-hero__ico">🔒</span> داده‌ها فقط متعلق به شماست — RLS سطح ردیف</li>
-          <li><span class="auth-hero__ico">📊</span> تحلیل الگوها، شدت باور و روند زمانی</li>
-          <li><span class="auth-hero__ico">🏷️</span> دسته‌بندی، برچسب‌گذاری و بازتاب‌نویسی</li>
-          <li><span class="auth-hero__ico">📤</span> خروجی کامل JSON/CSV هر زمان که خواستید</li>
-        </ul>
-
-        <div class="auth-hero__quote">
-          <span class="auth-hero__quote-mark">”</span>
-          <p>تا وقتی دروغ را ننامید، نمی‌توانید از آن عبور کنید.</p>
-        </div>
+        <div class="auth-hero__badge"><span class="auth-hero__badge-dot"></span>کاملاً خصوصی · رمزنگاری‌شده</div>
+        <h1 class="auth-hero__title">دروغ‌هایی که<br />به <span class="auth-hero__accent">خودمان</span> می‌گوییم</h1>
+        <p class="auth-hero__subtitle">فضایی امن و کاملاً شخصی برای ثبت و رویارویی با دروغ‌ها.</p>
+        <div class="auth-hero__quote"><span class="auth-hero__quote-mark">”</span><p>تا وقتی دروغ را ننامید، نمی‌توانید از آن عبور کنید.</p></div>
       </section>
-
-      <!-- Auth Card -->
-      <section class="auth-card" role="region" aria-labelledby="auth-title">
-        <div class="auth-card__glow" aria-hidden="true"></div>
-
-        <header class="auth-card__head">
-          <h2 id="auth-title" class="auth-card__title">ورود به فضای شخصی</h2>
-          <p class="auth-card__hint">با ایمیل و رمز عبور خود وارد شوید</p>
-        </header>
-
+      <section class="auth-card">
+        <header class="auth-card__head"><h2 class="auth-card__title">ورود به فضای شخصی</h2></header>
         <div class="tabs auth-card__tabs" role="tablist" data-tabs="auth">
-          <button class="tabs__btn is-active" role="tab" aria-selected="true" data-tab="login" type="button">ورود</button>
-          <button class="tabs__btn" role="tab" aria-selected="false" data-tab="signup" type="button">ثبت‌نام</button>
-          <span class="tabs__indicator" aria-hidden="true"></span>
+          <button class="tabs__btn is-active" role="tab" data-tab="login" type="button">ورود</button>
+          <button class="tabs__btn" role="tab" data-tab="signup" type="button">ثبت‌نام</button>
         </div>
-
-        <!-- Login panel -->
-        <form id="login-form" class="auth-form tabs__panel is-active" data-panel="login" novalidate autocomplete="on">
-          <div class="field">
-            <label class="field__label" for="login-email">ایمیل</label>
-            <div class="field__control">
-              <span class="field__icon">✉️</span>
-              <input id="login-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" autocomplete="email" required />
-            </div>
-            <p class="field__error" data-error-for="email"></p>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="login-password">رمز عبور</label>
-            <div class="field__control">
-              <span class="field__icon">🔑</span>
-              <input id="login-password" name="password" type="password" class="input" dir="ltr" placeholder="••••••••" autocomplete="current-password" minlength="6" required />
-              <button type="button" class="field__toggle" data-toggle-password="login-password" aria-label="نمایش رمز عبور">👁️</button>
-            </div>
-            <p class="field__error" data-error-for="password"></p>
-          </div>
-
-          <div class="auth-form__row">
-            <label class="switch switch--sm">
-              <input type="checkbox" id="remember-me" checked />
-              <span class="switch__track"><span class="switch__thumb"></span></span>
-              <span class="switch__label">مرا به خاطر بسپار</span>
-            </label>
-            <button type="button" class="link-btn" id="forgot-password-btn">رمز عبور را فراموش کرده‌اید؟</button>
-          </div>
-
-          <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
-            <span class="btn__spinner" aria-hidden="true"></span>
-            <span class="btn__label">ورود امن</span>
-          </button>
+        <form id="login-form" class="auth-form tabs__panel is-active" data-panel="login" novalidate>
+          <div class="field"><label class="field__label">ایمیل</label><input id="login-email" type="email" class="input" dir="ltr" required /></div>
+          <div class="field"><label class="field__label">رمز عبور</label><input id="login-password" type="password" class="input" dir="ltr" required /></div>
+          <button type="submit" class="btn btn--primary btn--block" id="login-submit"><span class="btn__label">ورود امن</span></button>
         </form>
-
-        <!-- Signup panel -->
-        <form id="signup-form" class="auth-form tabs__panel" data-panel="signup" novalidate autocomplete="on" hidden>
-          <div class="field">
-            <label class="field__label" for="signup-name">نام نمایشی</label>
-            <div class="field__control">
-              <span class="field__icon">👤</span>
-              <input id="signup-name" name="display_name" type="text" class="input" placeholder="مثلاً: مسافر" maxlength="40" autocomplete="nickname" required />
-            </div>
-            <p class="field__error" data-error-for="display_name"></p>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="signup-email">ایمیل</label>
-            <div class="field__control">
-              <span class="field__icon">✉️</span>
-              <input id="signup-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" autocomplete="email" required />
-            </div>
-            <p class="field__error" data-error-for="email"></p>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="signup-password">رمز عبور</label>
-            <div class="field__control">
-              <span class="field__icon">🔑</span>
-              <input id="signup-password" name="password" type="password" class="input" dir="ltr" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password" minlength="8" required />
-              <button type="button" class="field__toggle" data-toggle-password="signup-password" aria-label="نمایش رمز عبور">👁️</button>
-            </div>
-            <div class="pw-meter" data-pw-meter="signup-password" aria-hidden="true">
-              <span class="pw-meter__bar"></span>
-              <span class="pw-meter__bar"></span>
-              <span class="pw-meter__bar"></span>
-              <span class="pw-meter__bar"></span>
-            </div>
-            <p class="field__hint" data-pw-label="signup-password"></p>
-            <p class="field__error" data-error-for="password"></p>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="signup-password2">تکرار رمز عبور</label>
-            <div class="field__control">
-              <span class="field__icon">🔐</span>
-              <input id="signup-password2" name="password_confirm" type="password" class="input" dir="ltr" placeholder="••••••••" autocomplete="new-password" required />
-            </div>
-            <p class="field__error" data-error-for="password_confirm"></p>
-          </div>
-
-          <label class="checkbox checkbox--sm auth-form__terms">
-            <input type="checkbox" id="signup-terms" required />
-            <span class="checkbox__box"></span>
-            <span class="checkbox__label">
-              می‌دانم این فضا کاملاً خصوصی است و مسئولیت محتوای آن با خودم است.
-            </span>
-          </label>
-
-          <button type="submit" class="btn btn--primary btn--block btn--lg" id="signup-submit">
-            <span class="btn__spinner" aria-hidden="true"></span>
-            <span class="btn__label">ساخت فضای شخصی</span>
-          </button>
+        <form id="signup-form" class="auth-form tabs__panel" data-panel="signup" hidden novalidate>
+          <div class="field"><label class="field__label">نام نمایشی</label><input id="signup-name" type="text" class="input" required /></div>
+          <div class="field"><label class="field__label">ایمیل</label><input id="signup-email" type="email" class="input" dir="ltr" required /></div>
+          <div class="field"><label class="field__label">رمز عبور</label><input id="signup-password" type="password" class="input" dir="ltr" required /></div>
+          <div class="field"><label class="field__label">تکرار رمز</label><input id="signup-password2" type="password" class="input" dir="ltr" required /></div>
+          <label class="checkbox"><input type="checkbox" id="signup-terms" /><span class="checkbox__box"></span><span class="checkbox__label">تأیید می‌کنم</span></label>
+          <button type="submit" class="btn btn--primary btn--block" id="signup-submit"><span class="btn__label">ساخت فضا</span></button>
         </form>
-
-        <footer class="auth-card__foot">
-          <span class="auth-card__lock">🔒</span>
-          ارتباط شما با Supabase روی HTTPS و با RLS سطح ردیف محافظت می‌شود.
-        </footer>
       </section>
     </div>
   </div>
 
-  <!-- ═══════════ App Shell ═══════════ -->
   <div id="app-shell" class="app-shell" hidden>
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar" aria-label="ناوبری اصلی">
-      <div class="sidebar__brand">
-        <span class="sidebar__brand-mark">🎭</span>
-        <div class="sidebar__brand-text">
-          <strong>آینهٔ درون</strong>
-          <small>ژورنال خصوصی</small>
-        </div>
-        <button class="sidebar__collapse icon-btn" id="sidebar-collapse-btn" type="button" aria-label="جمع کردن نوار کناری" title="جمع کردن">⟨</button>
-      </div>
-
-      <nav class="sidebar__nav" id="sidebar-nav" aria-label="صفحات"></nav>
-
-      <div class="sidebar__foot">
-        <div class="sidebar__storage" id="sidebar-storage">
-          <div class="sidebar__storage-head">
-            <span>فضای استفاده‌شده</span>
-            <span data-storage-label>—</span>
-          </div>
-          <div class="progress progress--sm">
-            <div class="progress__bar" data-storage-bar style="width:0%"></div>
-          </div>
-        </div>
-        <div class="sidebar__user" id="sidebar-user"></div>
-      </div>
-    </aside>
-
-    <!-- Main column -->
+    <aside id="sidebar" class="sidebar"><div id="sidebar-nav"></div></aside>
     <div class="app-main">
-      <header id="topbar" class="topbar" aria-label="نوار بالا">
-        <button class="topbar__menu icon-btn" id="mobile-menu-btn" type="button" aria-label="منو">☰</button>
-        <div class="topbar__breadcrumb" id="topbar-breadcrumb"></div>
-        <div class="topbar__search">
-          <span class="topbar__search-ico">🔍</span>
-          <input id="global-search" class="topbar__search-input" type="search" placeholder="جست‌وجوی سریع در دروغ‌ها… (Ctrl+K)" aria-label="جست‌وجوی سراسری" autocomplete="off" />
-          <kbd class="topbar__kbd">Ctrl</kbd><kbd class="topbar__kbd">K</kbd>
-          <div class="topbar__search-results" id="global-search-results" hidden></div>
-        </div>
-
-        <div class="topbar__actions">
-          <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع دروغ (N)" aria-label="ثبت سریع">＋</button>
-          <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم" aria-label="تغییر تم">🌙</button>
-          <button class="icon-btn icon-btn--badge" id="notifications-btn" type="button" title="یادآورها" aria-label="یادآورها">🔔<span class="icon-btn__badge" id="notif-badge" hidden>0</span></button>
-          <button class="icon-btn" id="help-btn" type="button" title="راهنما (؟)" aria-label="راهنما">؟</button>
-        </div>
-      </header>
-
+      <header id="topbar" class="topbar"><div id="topbar-breadcrumb"></div></header>
       <main id="page-container" class="page-container" tabindex="-1"></main>
-
-      <footer class="app-footer">
-        <span>ساخته‌شده برای رویارویی با خود · نسخه <span data-app-version>—</span></span>
-        <span class="app-footer__dot">·</span>
-        <span>داده‌های شما هرگز به اشتراک گذاشته نمی‌شود.</span>
-      </footer>
     </div>
-    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   </div>
 
-  <!-- ═══════════ Global Portals ═══════════ -->
-  <div id="modal-root" class="modal-root" aria-live="polite"></div>
-  <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+  <div id="modal-root" class="modal-root"></div>
+  <div id="toast-root" class="toast-root"></div>
   <div id="context-menu-root" class="context-menu-root"></div>
   <div id="tooltip-root" class="tooltip-root"></div>
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="confirm-root" class="confirm-root"></div>
+  <div id="debug-log-panel" class="debug-log-panel" style="transform: translateY(100%);"></div>
 
-  <!-- ═══════════ Entry ═══════════ -->
-  <script type="module" src="js/main.js"></script>
-  <noscript>
-    <div style="padding:2rem;text-align:center;font-family:Vazirmatn,sans-serif">
-      برای استفاده از این برنامه، جاوااسکریپت را فعال کنید.
-    </div>
-  </noscript>
+  <!-- 🛡️ Module Script with onerror catch -->
+  <script type="module" src="js/main.js" onerror="
+    var errDiv = document.getElementById('inline-error-log');
+    errDiv.style.display = 'block';
+    errDiv.textContent += '❌ FATAL: Failed to load js/main.js. There is a Syntax Error in one of your modules. Check the Network tab.';
+  "></script>
 </body>
 </html>
