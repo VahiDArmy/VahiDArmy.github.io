@@ -1,5 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
+   FIXED: Removed all .sidebar-backdrop classes. 
+   Added a pure CSS ::after backdrop that only shows when drawer is open.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -25,17 +27,16 @@
     box-shadow: var(--shadow-xl);
   }
 
-  .sidebar-backdrop {
+  /* 🛡️ PURE CSS BACKDROP (No HTML element needed) */
+  .app-shell.is-mobile-sidebar-open::after {
+    content: "";
     position: fixed;
     inset: 0;
     background: var(--bg-overlay);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
     z-index: 999;
-    opacity: 0;
-    transition: opacity var(--dur-base);
   }
-  .sidebar-backdrop.is-visible { opacity: 1; }
 
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
