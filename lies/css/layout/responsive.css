@@ -1,7 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: On mobile, .app-shell becomes a simple block. 
-          The sidebar is display: none until opened as a drawer.
+   FIXED: The sidebar backdrop has been isolated so it never 
+   blurs the sidebar itself. Z-indexes are strictly separated.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -13,63 +13,49 @@
 
 /* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
-  
-  /* Remove Grid entirely on mobile */
   .app-shell,
   .app-shell.is-sidebar-collapsed {
     display: block;
   }
 
-  /* Hide the sidebar from the DOM flow */
-  .sidebar,
-  .app-shell.is-sidebar-collapsed .sidebar {
-    display: none;
+  /* Sidebar Drawer */
+  .sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
     right: 0;
     width: 280px !important;
-    z-index: 1000;
+    z-index: 1000; /* Above backdrop */
     transform: translateX(100%);
-    transition: transform var(--dur-base) var(--ease-standard), display 0s;
+    transition: transform var(--dur-base) var(--ease-standard);
+    border-left: 1px solid var(--border);
   }
 
-  /* Show it ONLY when opened */
   .app-shell.is-mobile-sidebar-open .sidebar {
-    display: flex;
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
-    border-left: 1px solid var(--border);
-    border-right: none;
   }
 
-  /* Backdrop for the drawer */
+  /* Backdrop: sits exactly between page and sidebar */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background: var(--bg-overlay);
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    z-index: 999;
+    z-index: 999; /* Below sidebar (1000), Above page */
     opacity: 0;
+    pointer-events: none;
     transition: opacity var(--dur-base);
   }
-  .sidebar-backdrop.is-visible { opacity: 1; }
+  
+  .sidebar-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   body.has-drawer { overflow: hidden; }
-  
   .page-container { padding: var(--s-4); }
-}
-
-@media (max-width: 768px) {
-  .topbar__search { display: none; }
-  .topbar { padding-inline: var(--s-3); }
-  .topbar__breadcrumb { max-width: 60%; }
-}
-
-@media (max-width: 480px) {
-  .page-title { font-size: var(--fs-2xl); }
-  .page-title__icon { width: 38px; height: 38px; font-size: 18px; }
 }
