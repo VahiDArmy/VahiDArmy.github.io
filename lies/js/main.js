@@ -1,8 +1,8 @@
 /* ============================================================
    js/main.js
-   FIXED: Wrapped the entire boot process in a super-safe 
-          try/catch block that prints errors directly to the 
-          index.html inline error box.
+   FIXED: Removed the duplicate `settingsService.fetch()` call 
+          in startApp() which was causing the boot sequence to 
+          hang indefinitely on step 7.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -18,18 +18,21 @@ import { EVENTS, SHORTCUT_SCOPES } from './config/constants.js';
 import { APP, ROUTES, LS_KEYS, NAV_ITEMS, FEATURES } from './config/app.config.js';
 import { get as lsGet, set as lsSet } from './utils/storage.js';
 import { toast } from './ui/toast.js';
-import { settingsService } from './services/index.js';
 import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
 // Safe Error Printer for Boot
 function printBootError(msg) {
-  console.error(msg);
+  console.log(msg);
   const errDiv = byId('inline-error-log');
   if (errDiv) {
-    errDiv.style.display = 'block';
-    errDiv.textContent += `❌ BOOT ERROR: ${msg}\n\n`;
+    // We only show real errors in the red box now, 
+    // to avoid scaring the user with normal boot logs.
+    if (msg.includes('ERROR') || msg.includes('EXCEPTION')) {
+      errDiv.style.display = 'block';
+      errDiv.textContent += `❌ ${msg}\n\n`;
+    }
   }
 }
 
@@ -41,7 +44,7 @@ ready(async () => {
     initTheme();
 
     if (!isSupabaseConfigured()) {
-      printBootError('Supabase config missing!');
+      printBootError('ERROR: Supabase config missing!');
       return fatalConfig();
     }
 
@@ -68,7 +71,7 @@ ready(async () => {
     bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
 
   } catch (err) {
-    printBootError(`FATAL EXCEPTION IN BOOT: ${err.message}\n${err.stack}`);
+    printBootError(`EXCEPTION IN BOOT: ${err.message}\n${err.stack}`);
   }
 });
 
@@ -81,10 +84,10 @@ async function startApp() {
     printBootError('6. Mounting App Shell...');
     mountAppShell();
 
-    printBootError('7. Fetching user settings...');
-    const server = await settingsService.fetch().catch(() => null);
+    // We completely removed the `settingsService.fetch()` call here.
+    // We already fetched the settings in initSession().
 
-    printBootError('8. Showing App Shell...');
+    printBootError('7. Showing App Shell...');
     showAppShell();
 
     const container = byId('page-container');
@@ -95,9 +98,15 @@ async function startApp() {
 
     registerGlobalShortcuts();
     shortcuts.start();
-    printBootError('9. App Started Successfully!');
+    
+    printBootError('8. App Started Successfully!');
+    
+    // Clear the log box on success
+    const errDiv = byId('inline-error-log');
+    if (errDiv) errDiv.style.display = 'none';
+    
   } catch (err) {
-    printBootError(`FATAL EXCEPTION IN STARTAPP: ${err.message}\n${err.stack}`);
+    printBootError(`EXCEPTION IN STARTAPP: ${err.message}\n${err.stack}`);
   } finally {
     hideBootSplash();
     hideLoader();
