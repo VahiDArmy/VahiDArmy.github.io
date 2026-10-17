@@ -1,10 +1,29 @@
 /* ============================================================
    css/features/tags.css
+   FIXED: Added horizontal scrolling for tabs on mobile.
    ============================================================ */
 
 .page--tags { gap: var(--s-5); }
 
-.tags-tabs { margin-bottom: var(--s-4); }
+/* 🛡️ FIX: Allow tabs to scroll horizontally on mobile */
+.tags-tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+.tags-tabs::-webkit-scrollbar { display: none; }
+
+.tags-tabs .tabs {
+  flex-wrap: nowrap !important;
+  min-width: max-content;
+  border-bottom: none;
+}
+
+.tags-tabs .tabs__btn {
+  flex-shrink: 0;
+}
+
 .tags-content { display: block; }
 
 /* ── Manager wrapper ────────────────────────────────────── */
