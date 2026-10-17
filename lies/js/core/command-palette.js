@@ -1,8 +1,9 @@
 /* ============================================================
    js/core/command-palette.js
    Ctrl+K command palette: nav + actions + search lies (fuzzy)
-   FIXED: ACCENTS, THEMES, FONT_SIZES from ui/theme.js
-          ROUTES from app.config.js (not constants.js)
+   FIXED: truncate imported from format.js (not sanitize.js)
+          escapeHtml from sanitize.js
+          ACCENTS, THEMES, FONT_SIZES from ui/theme.js
    ============================================================ */
 
 import { el, byId, clear, trapFocus } from '../utils/dom.js';
@@ -10,12 +11,12 @@ import { bus } from './event-bus.js';
 import { EVENTS } from '../config/constants.js';
 import { NAV_ITEMS, ROUTES, APP } from '../config/app.config.js';
 import { THEMES, ACCENTS, FONT_SIZES, applyTheme, cycleTheme, getTheme } from '../ui/theme.js';
-import { escapeHtml, truncate } from '../utils/sanitize.js';
+import { escapeHtml } from '../utils/sanitize.js';
+import { truncate, toFaDigits, formatRelative } from '../utils/format.js';  // ← FIXED: truncate from format
 import { toast } from '../ui/toast.js';
 import { confirmDanger } from '../ui/confirm.js';
 import * as liesService from '../services/lies.service.js';
 import * as exportService from '../services/export.service.js';
-import { toFaDigits, formatRelative } from '../utils/format.js';
 import { debounce } from '../utils/debounce.js';
 
 /** @type {HTMLElement|null} */
@@ -126,7 +127,7 @@ function buildStaticCommands() {
     },
   });
   
-  // Themes (now correctly imported)
+  // Themes
   for (const t of THEMES) {
     cmds.push({
       id: `action:theme:${t}`,
@@ -138,7 +139,7 @@ function buildStaticCommands() {
     });
   }
 
-  // Accents (now correctly imported)
+  // Accents
   for (const a of ACCENTS) {
     cmds.push({
       id: `action:accent:${a.id}`,
@@ -150,7 +151,7 @@ function buildStaticCommands() {
     });
   }
 
-  // Font sizes (now correctly imported)
+  // Font sizes
   for (const s of FONT_SIZES) {
     cmds.push({
       id: `action:font:${s}`,
