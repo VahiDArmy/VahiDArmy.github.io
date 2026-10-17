@@ -1,7 +1,6 @@
 /* ============================================================
    css/main.css
-   FIXED: Moved final-polish.css to the VERY END so it correctly
-          overrides everything else.
+   UPDATED: Added taxonomy.css import.
    ============================================================ */
 
 @import url("./base/variables.css");
@@ -37,7 +36,6 @@
 @import url("./components/table.css");
 @import url("./components/accordion.css");
 @import url("./components/empty-state.css");
-@import url("./components/debug-log.css");
 
 @import url("./features/auth.css");
 @import url("./features/auth-banner.css");
@@ -49,9 +47,9 @@
 @import url("./features/lie-detail.css");
 @import url("./features/analytics.css");
 @import url("./features/tags.css");
+@import url("./features/taxonomy.css"); /* 🛡️ NEW */
 @import url("./features/settings.css");
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
 
-/* ── Final polish MUST BE LAST ──────────────────────────── */
 @import url("./base/final-polish.css");
