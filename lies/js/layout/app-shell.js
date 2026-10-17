@@ -1,7 +1,7 @@
 /* ============================================================
    js/layout/app-shell.js
-   FIXED: Ensure mobile sidebar closes automatically when a 
-          route changes (so tapping a link closes the drawer).
+   FIXED: Ensured that when showing the Auth screen, the 
+   app-shell is completely hidden, and vice versa.
    ============================================================ */
 
 import { byId } from '../utils/dom.js';
@@ -17,17 +17,14 @@ export function showAppShell() {
   const shell = byId('app-shell');
   const auth = byId('auth-screen');
   if (auth) auth.hidden = true;
-  if (shell) {
-    shell.hidden = false;
-    // Removed opacity tricks, it's visible instantly now.
-  }
+  if (shell) shell.hidden = false;
 }
 
 export function showAuthScreen() {
   const shell = byId('app-shell');
   const auth = byId('auth-screen');
   if (shell) shell.hidden = true;
-  if (auth) auth.hidden = false;
+  if (auth) auth.hidden = false; // Make sure it's visible!
 }
 
 export function mountAppShell() {
@@ -40,30 +37,21 @@ export function mountAppShell() {
   const versionEls = document.querySelectorAll('[data-app-version]');
   versionEls.forEach((el0) => { el0.textContent = `${APP.version}`; });
 
-  // Close drawer on route change
   bus.on(EVENTS.ROUTE_CHANGED, () => {
-    if (window.innerWidth < 900) {
-      closeMobileSidebar();
-    }
+    if (window.innerWidth < 900) closeMobileSidebar();
   });
 
-  // Close drawer on Escape
   document.addEventListener('keydown', (ev) => {
     if (ev.key === 'Escape' && byId('app-shell')?.classList.contains('is-mobile-sidebar-open')) {
       closeMobileSidebar();
     }
   });
 
-  // Online / offline banner
   window.addEventListener('online', () => bus.emit(EVENTS.ONLINE));
   window.addEventListener('offline', () => bus.emit(EVENTS.OFFLINE));
 
-  bus.on(EVENTS.ONLINE, () => {
-    document.body.classList.remove('is-offline');
-  });
-  bus.on(EVENTS.OFFLINE, () => {
-    document.body.classList.add('is-offline');
-  });
+  bus.on(EVENTS.ONLINE, () => document.body.classList.remove('is-offline'));
+  bus.on(EVENTS.OFFLINE, () => document.body.classList.add('is-offline'));
 
   if (!navigator.onLine) document.body.classList.add('is-offline');
 }
