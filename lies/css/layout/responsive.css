@@ -1,60 +1,59 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: 100% Bulletproof mobile layout.
-          No flex. No pushing. No transform bugs.
+   FIXED: Standard, bug-free mobile drawer using transform.
    ============================================================ */
 
 @media (max-width: 1024px) {
   :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
 }
 
-/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
   
-  /* 1. Kill the flex layout entirely on mobile */
+  /* App shell just blocks */
   .app-shell {
     display: block !important;
   }
 
-  /* 2. The main content takes the full width. No margins, no offsets. */
+  /* Main content takes 100% width */
   .app-main {
     width: 100%;
     height: 100%;
   }
 
-  /* 3. Sidebar becomes an off-screen fixed drawer */
+  /* Sidebar drawer */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
-    right: -320px; /* Hide off the physical right edge */
+    right: 0;
     width: 280px !important;
     z-index: 1000;
-    transition: right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateX(100%); /* Standard RTL hide */
+    transition: transform 0.3s ease-in-out;
     border-left: 1px solid var(--border);
     border-right: none;
-    box-shadow: none;
   }
 
-  /* 4. Slide in */
+  /* Slide in */
   .app-shell.is-mobile-sidebar-open .sidebar {
-    right: 0;
+    transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
 
-  /* 5. Pure CSS Backdrop (Attached to app-shell, behind sidebar) */
-  .app-shell.is-mobile-sidebar-open::after {
-    content: "";
-    position: absolute;
+  /* Backdrop (Controlled by JS) */
+  .sidebar-backdrop {
+    position: fixed;
     inset: 0;
     background: rgba(5, 5, 9, 0.6);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
     z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
   }
+  .sidebar-backdrop.is-visible { opacity: 1; }
 
-  /* 6. Cleanup */
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   body.has-drawer { overflow: hidden; }
