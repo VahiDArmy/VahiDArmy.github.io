@@ -1,7 +1,7 @@
 /* ============================================================
    css/base/reset.css
-   LOCKED: html and body are now fixed to 100% height with 
-           no overflow. Only .page-container will scroll.
+   FIXED: Removed height: 100% and overflow: hidden from 
+          html and body to restore natural native scrolling.
    ============================================================ */
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -13,13 +13,13 @@ html {
   text-size-adjust: 100%;
   tab-size: 4;
   -webkit-tap-highlight-color: transparent;
-  
-  /* 🛡️ LOCK THE WINDOW */
-  height: 100%;
-  overflow: hidden; 
+  scroll-behavior: smooth;
+  /* Let the page scroll naturally */
+  min-height: 100%; 
 }
 
 body {
+  min-height: 100dvh;
   font-family: var(--font-sans);
   font-size: var(--fs-base);
   line-height: var(--lh-normal);
@@ -30,10 +30,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
-
-  /* 🛡️ LOCK THE BODY */
-  height: 100%;
-  overflow: hidden;
+  
+  /* NO overflow hidden here! */
+  width: 100%;
+  direction: rtl;
 }
 
 /* Background ambience */
