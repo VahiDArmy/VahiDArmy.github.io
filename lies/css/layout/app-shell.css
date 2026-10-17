@@ -1,23 +1,29 @@
 /* ============================================================
    css/layout/app-shell.css
-   Sidebar + main column layout
+   FIXED: 
+     - Removed opacity 0 to stop page-jumps and blank screens.
+     - Forced direction: rtl to ensure sidebar goes to the right.
    ============================================================ */
 
+html, body {
+  direction: rtl;
+}
+
 .app-shell {
+  direction: rtl;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100dvh;
   transition: grid-template-columns var(--dur-base) var(--ease-standard);
-  opacity: 0;
-  transition: opacity var(--dur-slow) var(--ease-decel), grid-template-columns var(--dur-base) var(--ease-standard);
+  /* Removed opacity: 0 — it was causing the page to stay blank on slow loads */
+  opacity: 1;
 }
-.app-shell.is-ready { opacity: 1; }
-
 .app-shell.is-sidebar-collapsed {
   grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
 }
 
 .app-main {
+  direction: rtl;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -53,7 +59,6 @@
 }
 .app-footer__dot { opacity: .4; }
 
-/* Offline indicator */
 body.is-offline .app-main::before {
   content: "اتصال اینترنت قطع است — تغییرات ممکن است ذخیره نشوند";
   display: block;
@@ -64,42 +69,4 @@ body.is-offline .app-main::before {
   padding: 6px var(--s-4);
   text-align: center;
   border-bottom: 1px solid hsl(var(--hue-warning) 90% 55% / .2);
-}
-
-/* Fatail config screen */
-.fatal-config {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--s-6);
-  background: var(--bg-base);
-  z-index: var(--z-boot);
-}
-.fatal-config__card {
-  max-width: 520px;
-  padding: var(--s-8);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
-  text-align: center;
-  line-height: var(--lh-relaxed);
-}
-.fatal-config__icon { font-size: 42px; margin-bottom: var(--s-4); }
-.fatal-config__title {
-  font-size: var(--fs-xl);
-  font-weight: var(--fw-bold);
-  margin-bottom: var(--s-3);
-  color: var(--text-primary);
-}
-.fatal-config__message { color: var(--text-secondary); font-size: var(--fs-md); }
-.fatal-config__message code {
-  background: var(--bg-inset);
-  padding: 2px 6px;
-  border-radius: var(--r-xs);
-  color: var(--accent-200);
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
 }
