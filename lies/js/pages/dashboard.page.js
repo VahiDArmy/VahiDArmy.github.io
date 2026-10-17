@@ -1,7 +1,6 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   RESTORED: Beautiful dashboard with hero, charts, and stat cards.
-             Safe fallbacks if stats are 0.
+   FIXED: Removed all extra hero text. Just stats and charts.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
@@ -11,7 +10,6 @@ import * as taxonomyService from '../services/taxonomy.service.js';
 import { statCardsGrid } from '../features/dashboard/stat-cards.js';
 import { recentActivity } from '../features/dashboard/recent-activity.js';
 import { quickActions } from '../features/dashboard/quick-actions.js';
-import { sessionStore } from '../core/store.js';
 import { lineChart, donutChart, barChart } from '../ui/charts/index.js';
 import { skeletonPage } from '../ui/skeleton.js';
 import { toFaDigits } from '../utils/format.js';
@@ -46,48 +44,30 @@ export async function renderDashboard(container) {
 
   const page = el('div', { class: 'page page--dashboard' });
 
-  // 1. Hero
-  const user = sessionStore.get('user');
-  const profile = sessionStore.get('profile');
-  const name = profile?.display_name || user?.email?.split('@')[0] || 'کاربر';
-
+  // 🛡️ FIX: Minimal Header (No extra text)
   const j = getJalaliParts(new Date());
   const monthName = getMonthName(j.month) || 'مهر';
   const dateStr = `${toFaDigits(j.day || 1)} ${monthName} ${toFaDigits(j.year || 1403)}`;
 
-  const greeting = getGreeting();
-
-  const hero = el('header', { class: 'dashboard-hero' });
-  const heroLeft = el('div', { class: 'dashboard-hero__left' });
-
-  heroLeft.appendChild(el('span', { class: 'dashboard-hero__greeting' }, { children: [`${greeting}، ${name} 👋`] }));
-  heroLeft.appendChild(el('h1', { class: 'dashboard-hero__title' }, { children: ['آینهٔ درون'] }));
-  heroLeft.appendChild(el('p', { class: 'dashboard-hero__subtitle' }, {
-    children: ['این فضای خصوصی شماست. هیچ‌کس جز خودتان به اینجا دسترسی ندارد. امروز چه دروغی را می‌خواهی با آن روبه‌رو شوی؟'],
+  const header = el('div', { style: { marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } });
+  header.appendChild(el('h1', { style: { fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)' } }, { children: ['داشبورد'] }));
+  header.appendChild(el('div', { style: { padding: '6px 16px', background: 'var(--bg-surface-2)', borderRadius: '20px', fontSize: '13px', color: 'var(--text-tertiary)' } }, {
+    children: [dateStr]
   }));
+  page.appendChild(header);
 
-  const heroRight = el('div', { class: 'dashboard-hero__right' });
-  const dateChip = el('div', { class: 'dashboard-hero__date' });
-  dateChip.appendChild(el('span', { class: 'dashboard-hero__date-icon' }, { children: ['🗓'] }));
-  dateChip.appendChild(el('span', {}, { children: [dateStr] }));
-  heroRight.appendChild(dateChip);
-  
-  hero.appendChild(heroLeft);
-  hero.appendChild(heroRight);
-  page.appendChild(hero);
-
-  // 2. Quick Actions
+  // 1. Quick Actions
   page.appendChild(sectionHead('دسترسی سریع', '⚡'));
   page.appendChild(quickActions());
 
-  // 3. Stat Cards
+  // 2. Stat Cards
   page.appendChild(sectionHead('آمار کلی', '📈'));
   page.appendChild(statCardsGrid({
     overview: bundle.overview,
     monthlyCounts: bundle.monthly || [],
   }));
 
-  // 4. Charts Row
+  // 3. Charts Row
   const chartsRow = el('div', { class: 'dashboard-charts' });
 
   const chartCard = el('div', { class: 'dashboard-card' });
@@ -132,7 +112,7 @@ export async function renderDashboard(container) {
   chartsRow.appendChild(typeCard);
   page.appendChild(chartsRow);
 
-  // 5. Bottom Row (Recent + Histogram)
+  // 4. Bottom Row (Recent + Histogram)
   const bottomRow = el('div', { class: 'dashboard-charts' });
 
   const recentCard = el('div', { class: 'dashboard-card' });
@@ -165,15 +145,6 @@ function sectionHead(title, icon) {
   return el('div', { class: 'dashboard-section-head' }, {
     children: [el('h2', { class: 'dashboard-section-title' }, { children: [el('span', {}, { children: [icon] }), title] })],
   });
-}
-
-function getGreeting() {
-  const h = new Date().getHours();
-  if (h < 5) return 'شب بخیر';
-  if (h < 12) return 'صبح بخیر';
-  if (h < 17) return 'ظهر بخیر';
-  if (h < 20) return 'عصر بخیر';
-  return 'شب بخیر';
 }
 
 function renderError(err) {
