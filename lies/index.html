@@ -13,8 +13,8 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- 🛡️ Cache Buster added: ?v=10 -->
-  <link rel="stylesheet" href="css/main.css?v=10" />
+  <!-- 🛡️ Cache Buster added: ?v=13 -->
+  <link rel="stylesheet" href="css/main.css?v=13" />
 
   <script>
     window.addEventListener('error', function(e) {
@@ -25,6 +25,12 @@
       }
     });
   </script>
+  
+  <style>
+    /* 🛡️ CRITICAL FIX: Force hidden elements to actually be hidden */
+    [hidden] { display: none !important; }
+    #boot-splash.is-hidden { display: none !important; }
+  </style>
 </head>
 
 <body>
@@ -82,7 +88,7 @@
             <label class="field__label" for="login-email">ایمیل</label>
             <div class="field__control">
               <span class="field__icon">✉️</span>
-              <input id="login-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" autocomplete="email" required />
+              <input id="login-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" required />
             </div>
             <p class="field__error" data-error-for="email"></p>
           </div>
@@ -91,7 +97,7 @@
             <label class="field__label" for="login-password">رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔑</span>
-              <input id="login-password" name="password" type="password" class="input" dir="ltr" placeholder="••••••••" autocomplete="current-password" required />
+              <input id="login-password" name="password" type="password" class="input" dir="ltr" placeholder="••••••••" required />
               <button type="button" class="field__toggle" data-toggle-password="login-password" aria-label="نمایش رمز عبور">👁️</button>
             </div>
             <p class="field__error" data-error-for="password"></p>
@@ -214,7 +220,7 @@
   <div id="confirm-root" class="confirm-root"></div>
   <div id="debug-log-panel" class="debug-log-panel" style="transform: translateY(100%);"></div>
 
-  <!-- 🛡️ Cache Buster added: ?v=10 -->
-  <script type="module" src="js/main.js?v=10"></script>
+  <!-- 🛡️ Cache Buster added: ?v=13 -->
+  <script type="module" src="js/main.js?v=13"></script>
 </body>
 </html>
