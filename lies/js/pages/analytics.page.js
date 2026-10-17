@@ -1,17 +1,15 @@
 /* ============================================================
    js/pages/analytics.page.js
-   Full analytics: heatmap, donuts, histograms, trends, top tags
+   Full analytics: heatmap, donuts, histograms, trends, top tags.
+   FIXED: Removed the incorrect import of FA_MONTHS from jalali.js.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
 import * as statsService from '../services/stats.service.js';
-import { sessionStore } from '../core/store.js';
 import { lineChart, barChart, donutChart, heatmap } from '../ui/charts/index.js';
 import { LIE_TYPES, MOODS } from '../config/app.config.js';
 import { toFaDigits } from '../utils/format.js';
-import { getJalaliParts, getMonthName, FA_MONTHS } from '../utils/jalali.js';
-import { emptyState } from '../ui/empty-state.js';
-import { tabs } from '../ui/tabs.js';
+import { getJalaliParts, getMonthName } from '../utils/jalali.js';
 import { skeletonPage } from '../ui/skeleton.js';
 
 const TYPES_BY_ID = Object.fromEntries(LIE_TYPES.map((t) => [t.id, t]));
@@ -21,6 +19,7 @@ const MOODS_BY_ID = Object.fromEntries(MOODS.map((m) => [m.id, m]));
  * @param {HTMLElement} container
  */
 export async function renderAnalytics(container) {
+  clear(container);
   container.appendChild(skeletonPage({ variant: 'grid' }));
 
   const currentYear = new Date().getFullYear();
@@ -29,16 +28,21 @@ export async function renderAnalytics(container) {
   let bundle = null;
   let heatmapData = {};
   let yearTrend = [];
+  let beliefHist = new Array(11).fill(0);
+
   try {
-    const [b, heat, daily] = await Promise.all([
+    const [b, heat, daily, bh] = await Promise.all([
       statsService.dashboardBundle(currentYear),
       statsService.heatmapByYear(currentYear),
       statsService.monthlyCounts(12),
+      statsService.beliefHistogram().catch(() => new Array(11).fill(0)),
     ]);
     bundle = b;
     heatmapData = heat;
     yearTrend = daily;
+    beliefHist = bh;
   } catch (err) {
+    console.error('[analytics] load failed', err);
     clear(container);
     container.appendChild(renderError(err));
     return;
@@ -149,7 +153,6 @@ export async function renderAnalytics(container) {
 
   const beliefCard = el('div', { class: 'analytics-card' });
   beliefCard.appendChild(cardHead('◉ توزیع باور'));
-  const beliefHist = await statsService.beliefHistogram().catch(() => new Array(11).fill(0));
   beliefCard.appendChild(barChart({
     data: beliefHist.map((n, i) => ({ label: toFaDigits(i), value: n })),
     height: 220,
