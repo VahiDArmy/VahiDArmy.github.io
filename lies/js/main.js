@@ -1,8 +1,9 @@
 /* ============================================================
    js/main.js
-   FIXED: Mounts the Auth Page IMMEDIATELY so buttons work 
-          even if the network is slow. Added a 4s timeout to 
-          force-hide the splash screen.
+   BOOT SEQUENCE: Deterministic.
+   1. Mount Auth Page immediately (buttons work).
+   2. Force hide splash after 1.5s no matter what.
+   3. Init session in the background.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -22,18 +23,18 @@ import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
 ready(async () => {
-  // 🛡️ 1. MOUNT AUTH PAGE IMMEDIATELY (so tabs work without waiting for network)
+  // 1. Mount auth page FIRST. This ensures clicks/tabs work instantly.
   try { mountAuthPage(); } catch(e) { console.error('Auth mount failed', e); }
 
-  // 🛡️ 2. Force hide splash after 4 seconds if boot hangs
+  // 2. Safety Timeout: Never let the splash screen block the user for more than 1.5s
   setTimeout(() => {
     const splash = byId('boot-splash');
     if (splash && splash.style.display !== 'none') {
-      console.warn('Boot taking too long. Forcing auth screen.');
+      console.warn('Boot taking too long. Forcing UI.');
       showAuthScreen();
       hideBootSplash();
     }
-  }, 4000);
+  }, 1500);
 
   try {
     try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
@@ -41,12 +42,10 @@ ready(async () => {
     initErrorBoundary();
     try { initTheme(); } catch(e) { console.error('Theme init failed', e); }
 
-    if (!isSupabaseConfigured()) {
-      return fatalConfig();
-    }
+    if (!isSupabaseConfigured()) return fatalConfig();
+    if (FEATURES.commandPalette) initCommandPalette();
 
-    try { if (FEATURES.commandPalette) initCommandPalette(); } catch(e) { console.warn('Command palette failed', e); }
-
+    // 3. Check session
     const outcome = await initSession();
 
     if (outcome.user) {
@@ -144,9 +143,7 @@ function hideBootSplash() {
   if (!splash) return;
   splash.style.display = 'none';
   splash.classList.add('is-hidden');
-  setTimeout(() => { 
-    if (splash.parentNode) splash.parentNode.removeChild(splash); 
-  }, 700);
+  setTimeout(() => { if (splash.parentNode) splash.parentNode.removeChild(splash); }, 700);
 }
 
 function fatalConfig() {
