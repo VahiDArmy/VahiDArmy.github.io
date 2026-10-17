@@ -1,8 +1,6 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: 
-     - Removed opacity 0 to stop page-jumps and blank screens.
-     - Forced direction: rtl to ensure sidebar goes to the right.
+   FIXED: Removed all opacity rules. Forced standard RTL Grid.
    ============================================================ */
 
 html, body {
@@ -12,12 +10,13 @@ html, body {
 .app-shell {
   direction: rtl;
   display: grid;
+  /* Sidebar is always in the first column (right side in RTL) */
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100dvh;
   transition: grid-template-columns var(--dur-base) var(--ease-standard);
-  /* Removed opacity: 0 — it was causing the page to stay blank on slow loads */
-  opacity: 1;
+  background: var(--bg-base);
 }
+
 .app-shell.is-sidebar-collapsed {
   grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
 }
@@ -57,7 +56,6 @@ html, body {
   -webkit-backdrop-filter: blur(var(--blur-sm));
   flex-wrap: wrap;
 }
-.app-footer__dot { opacity: .4; }
 
 body.is-offline .app-main::before {
   content: "اتصال اینترنت قطع است — تغییرات ممکن است ذخیره نشوند";
