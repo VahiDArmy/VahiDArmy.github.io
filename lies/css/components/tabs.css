@@ -1,5 +1,7 @@
 /* ============================================================
    css/components/tabs.css
+   FIXED: Added global horizontal scrolling for tabs on mobile
+          so they never wrap or get cut off.
    ============================================================ */
 
 .tabs {
@@ -10,7 +12,15 @@
   border-bottom: 1px solid var(--border);
   --tabs-indicator-x: 0px;
   --tabs-indicator-w: 0px;
+  
+  /* 🛡️ FIX: Horizontal scroll globally */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  flex-wrap: nowrap;
 }
+.tabs::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
 .tabs--full .tabs__btn { flex: 1; }
 .tabs--pill { border-bottom: none; background: var(--bg-inset); border-radius: var(--r-lg); padding: 4px; }
 .tabs--segmented { border-bottom: none; background: var(--bg-inset); border-radius: var(--r-lg); padding: 4px; }
@@ -25,10 +35,9 @@
   font-size: var(--fs-sm);
   font-weight: var(--fw-medium);
   border-radius: var(--r-sm) var(--r-sm) 0 0;
-  transition:
-    color var(--dur-fast) var(--ease-standard),
-    background var(--dur-fast) var(--ease-standard);
+  transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
   white-space: nowrap;
+  flex-shrink: 0; /* 🛡️ Prevents tabs from squishing */
 }
 .tabs__btn:hover { color: var(--text-secondary); }
 .tabs__btn:disabled { opacity: .4; cursor: not-allowed; }
@@ -59,10 +68,13 @@
   height: 2px;
   background: linear-gradient(90deg, var(--accent), var(--accent-300));
   border-radius: 2px 2px 0 0;
-  transition:
-    inset-inline-start var(--dur-base) var(--ease-spring),
-    width var(--dur-base) var(--ease-spring);
+  transition: inset-inline-start var(--dur-base) var(--ease-spring), width var(--dur-base) var(--ease-spring);
   box-shadow: 0 0 12px hsl(var(--accent-h) var(--accent-s) 55% / .55);
+  display: none; /* Hide on mobile if scrolling is active, but keep for desktop */
+}
+
+@media (min-width: 768px) {
+  .tabs__indicator { display: block; }
 }
 
 /* Pill / segmented variants */
