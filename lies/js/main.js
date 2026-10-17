@@ -1,7 +1,7 @@
 /* ============================================================
    js/main.js
-   FIXED: Removed the 1.5s "Force UI" hack.
-   The boot sequence is now fast enough that it's not needed.
+   FIXED: Added a global window.onerror handler that prints 
+          a visible red box if any code fails to load.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -20,20 +20,35 @@ import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
+// 🛡️ GLOBAL ERROR HANDLER (Shows error on screen)
+window.addEventListener('error', function(e) {
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;z-index:99999;font-family:monospace;font-size:12px;direction:ltr;text-align:left;';
+  box.textContent = 'ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+  document.body.appendChild(box);
+});
+
 ready(async () => {
-  // 1. Mount auth page FIRST so clicks/tabs work instantly
   try { mountAuthPage(); } catch(e) { console.error('Auth mount failed', e); }
+
+  setTimeout(() => {
+    const splash = byId('boot-splash');
+    if (splash && splash.style.display !== 'none') {
+      console.warn('Boot taking too long. Forcing UI.');
+      showAuthScreen();
+      hideBootSplash();
+    }
+  }, 1500);
 
   try {
     try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
 
     initErrorBoundary();
-    try { initTheme(); } catch(e) { console.error('Theme init failed', e); }
+    initTheme();
 
     if (!isSupabaseConfigured()) return fatalConfig();
     if (FEATURES.commandPalette) initCommandPalette();
 
-    // 2. Check session (now resolves instantly)
     const outcome = await initSession();
 
     if (outcome.user) {
