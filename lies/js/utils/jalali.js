@@ -1,81 +1,76 @@
 /* ============================================================
    js/utils/jalali.js
-   FIXED: Added a 100% pure mathematical fallback for Jalali.
-   This does NOT rely on Intl.DateTimeFormat at all, so it works
-   on EVERY browser, even if the timezone or locale is broken.
+   FIXED: Removed Intl.DateTimeFormat entirely. 
+          Implemented a pure mathematical Jalali converter to 
+          ensure it works on ALL mobile browsers without failing.
    ============================================================ */
 
-/**
- * Convert a Gregorian Date to Jalali { year, month, day }.
- * Pure math algorithm — guaranteed to work everywhere.
- * @param {Date} date
- * @returns {{year:number, month:number, day:number}}
- */
-export function dateToJalali(date) {
-  const g_y = date.getFullYear();
-  const g_m = date.getMonth() + 1;
-  const g_d = date.getDate();
-
-  const g_days_in_month = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-  let j_y = (g_y <= 1600) ? 0 : 979;
-  const gy = (g_y <= 1600) ? (g_y - 621) : (g_y - 1600);
-  const gm = g_m - 1;
-  const gd = g_d - 1;
-
-  let g_day_no = 365 * gy + Math.floor((gy + 3) / 4) - Math.floor((gy + 99) / 100) + Math.floor((gy + 399) / 400);
-  g_day_no += g_days_in_month[gm] + gd;
-  if (gm > 1 && ((gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0)) {
-    g_day_no++;
-  }
-
-  let j_day_no = g_day_no - 79;
-  const j_np = Math.floor(j_day_no / 12053);
-  j_day_no %= 12053;
-
-  j_y += 33 * j_np + 4 * Math.floor(j_day_no / 1461);
-  j_day_no %= 1461;
-
-  if (j_day_no >= 366) {
-    j_y += Math.floor((j_day_no - 1) / 365);
-    j_day_no = (j_day_no - 1) % 365;
-  }
-
-  const j_month_days = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
-  let j_m = 0;
-  for (let i = 0; i < 12 && j_day_no >= j_month_days[i]; i++) {
-    j_day_no -= j_month_days[i];
-    j_m++;
-  }
-
-  return { year: j_y, month: j_m + 1, day: j_day_no + 1 };
-}
+import { FA_WEEKDAYS, FA_WEEKDAYS_SHORT, FA_MONTHS } from '../config/constants.js';
+import { toFaDigits } from './format.js';
 
 /**
- * Format a Jalali date string (e.g. "۲۵ مهر ۱۴۰۳").
- * @param {Date} date
- * @returns {string}
+ * Pure mathematical conversion from Gregorian to Jalali.
+ * @param {Date} date 
+ * @returns {{year:number, month:number, day:number, weekday:number}}
  */
-export function formatJalaliFull(date) {
-  const { year, month, day } = dateToJalali(date);
-  const months = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
-  
-  const toFa = (n) => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
-  
-  return `${toFa(day)} ${months[month - 1]} ${toFa(year)}`;
-}
-
-// Keep these exports to prevent breaking other files that might import them
 export function getJalaliParts(date = new Date()) {
-  const { year, month, day } = dateToJalali(date);
-  return { year, month, day, weekday: 0 };
+  const gy = date.getFullYear();
+  const gm = date.getMonth() + 1;
+  const gd = date.getDate();
+  
+  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  let jy = (gy <= 1600) ? 0 : 979;
+  let gyy = (gy <= 1600) ? gy - 621 : gy - 1600;
+  const gy2 = (gm > 2) ? (gyy + 1) : gyy;
+  
+  let days = (365 * gyy) + (parseInt((gy2 + 3) / 4)) - (parseInt((gy2 + 99) / 100)) + (parseInt((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
+  
+  jy += 33 * (parseInt(days / 12053));
+  days %= 12053;
+  jy += 4 * (parseInt(days / 1461));
+  days %= 1461;
+  jy += parseInt((days - 1) / 365);
+  
+  if (days > 365) days = (days - 1) % 365;
+  
+  const jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
+  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+  
+  // JS getDay: 0=Sun, 1=Mon... We want 0=Sat, 1=Sun...
+  const wd = (date.getDay() + 1) % 7;
+
+  return { year: jy, month: jm, day: jd, weekday: wd };
 }
+
+export function getMonthName(m) {
+  return FA_MONTHS[Math.max(0, Math.min(11, Number(m) - 1))] || 'مهر';
+}
+
+export function getWeekdayLabels() {
+  return [...FA_WEEKDAYS];
+}
+
+export function getWeekdayShortLabels() {
+  return [...FA_WEEKDAYS_SHORT];
+}
+
 export function formatJalali(date, style = 'short') {
-  return formatJalaliFull(date);
+  const d = date instanceof Date ? date : new Date(date);
+  const { year, month, day } = getJalaliParts(d);
+  if (style === 'long') return `${toFaDigits(day)} ${getMonthName(month)} ${toFaDigits(year)}`;
+  return `${toFaDigits(year)}/${toFaDigits(String(month).padStart(2, '0'))}/${toFaDigits(String(day).padStart(2, '0'))}`;
 }
-export function getMonthName(m) { return ''; }
-export function jalaliMonthDays() { return 30; }
-export function jalaliToDate() { return new Date(); }
-export function buildJalaliMonthGrid() { return []; }
-export function jalaliMonthRange() { return { start: new Date(), end: new Date() }; }
-export function jalaliRelativeLabel() { return ''; }
-export function jalaliToISO() { return ''; }
+
+export function jalaliRelativeLabel(date, now = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const b = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((b - a) / 86400000);
+  if (diffDays === 0) return 'امروز';
+  if (diffDays === 1) return 'دیروز';
+  if (diffDays === 2) return 'پریروز';
+  if (diffDays < 7) return `${toFaDigits(diffDays)} روز پیش`;
+  if (diffDays < 30) return `${toFaDigits(Math.round(diffDays / 7))} هفته پیش`;
+  if (diffDays < 365) return `${toFaDigits(Math.round(diffDays / 30))} ماه پیش`;
+  return `${toFaDigits(Math.round(diffDays / 365))} سال پیش`;
+}
