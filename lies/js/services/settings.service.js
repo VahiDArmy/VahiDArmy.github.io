@@ -1,7 +1,8 @@
 /* ============================================================
    js/services/settings.service.js
    User preferences persisted in the user_settings table.
-   Falls back to local storage for instant boot.
+   FIXED: Added a 3-second timeout to getUser() to prevent 
+          infinite hanging if the network is slow/unstable.
    ============================================================ */
 
 import { getSupabase } from '../core/supabase.client.js';
@@ -38,66 +39,66 @@ function normalize(row) {
   };
 }
 
-/**
- * Get settings from local cache (instant, no network).
- * @returns {typeof DEFAULTS}
- */
 export function getLocal() {
   return { ...DEFAULTS, ...(get(LOCAL_KEY, {}) || {}) };
 }
 
-/**
- * Persist settings locally (used for instant boot before server responds).
- * @param {object} patch
- */
 export function setLocal(patch) {
   set(LOCAL_KEY, { ...getLocal(), ...patch });
 }
 
-/**
- * Fetch settings from the server (falls back to defaults).
- * @returns {Promise<typeof DEFAULTS>}
- */
 export async function fetch() {
   const supabase = getSupabase();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return getLocal();
-
-  const { data, error } = await supabase
-    .from(TABLE)
-    .select('*')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.warn('[settings] fetch failed', error);
+  
+  let user = null;
+  try {
+    // 3-Second timeout for auth check
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
+    const { data } = await Promise.race([supabase.auth.getUser(), timeoutPromise]);
+    user = data?.user;
+  } catch (err) {
+    console.warn('[settings] getUser timed out or failed:', err.message);
     return getLocal();
   }
-  if (!data) {
-    // No row yet → create with defaults
-    const { data: inserted, error: insErr } = await supabase
+
+  if (!user) return getLocal();
+
+  try {
+    const { data, error } = await supabase
       .from(TABLE)
-      .insert({ user_id: user.id })
       .select('*')
-      .single();
-    if (insErr) {
-      console.warn('[settings] insert failed', insErr);
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.warn('[settings] fetch failed', error);
       return getLocal();
     }
-    const norm = normalize(inserted);
+    
+    if (!data) {
+      // Create default row
+      const { data: inserted, error: insErr } = await supabase
+        .from(TABLE)
+        .insert({ user_id: user.id })
+        .select('*')
+        .single();
+        
+      if (insErr) return getLocal();
+      
+      const norm = normalize(inserted);
+      setLocal(norm);
+      return norm;
+    }
+    
+    const norm = normalize(data);
     setLocal(norm);
     return norm;
+  } catch (err) {
+    console.warn('[settings] unexpected error', err);
+    return getLocal();
   }
-  const norm = normalize(data);
-  setLocal(norm);
-  return norm;
 }
 
-/**
- * Update settings (partial). Upserts to handle first call.
- * @param {Partial<typeof DEFAULTS>} patch
- * @returns {Promise<typeof DEFAULTS>}
- */
 export async function update(patch) {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
