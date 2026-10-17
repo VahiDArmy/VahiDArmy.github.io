@@ -1,5 +1,7 @@
 /* ============================================================
    css/features/sidebar.css
+   FIXED: Collapsed state icons were floating on the left.
+          Now they are perfectly centered in a fixed 48x48 box.
    ============================================================ */
 
 .sidebar {
@@ -17,13 +19,11 @@
   transition: width var(--dur-base) var(--ease-standard);
 }
 
-/* subtle vertical gradient glow */
 .sidebar::before {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(600px 400px at 100% 0%, hsl(var(--accent-h) var(--accent-s) 55% / .07), transparent 60%);
+  background: radial-gradient(600px 400px at 100% 0%, hsl(var(--accent-h) var(--accent-s) 55% / .07), transparent 60%);
   pointer-events: none;
 }
 
@@ -110,10 +110,7 @@
   font-size: var(--fs-md);
   font-weight: var(--fw-medium);
   position: relative;
-  transition:
-    background var(--dur-fast) var(--ease-standard),
-    color var(--dur-fast) var(--ease-standard),
-    transform var(--dur-fast) var(--ease-standard);
+  transition: background var(--dur-fast), color var(--dur-fast), transform var(--dur-fast);
   user-select: none;
 }
 .sidebar__item:hover {
@@ -193,7 +190,7 @@
   line-height: 1;
 }
 
-/* ── Footer (storage + user) ─────────────────────────────── */
+/* ── Footer ─────────────────────────────────────────────── */
 .sidebar__foot {
   padding: var(--s-3) var(--s-3) var(--s-4);
   border-top: 1px solid var(--border-subtle);
@@ -217,9 +214,7 @@
   color: var(--text-tertiary);
   margin-bottom: 6px;
 }
-.sidebar__storage [data-storage-label] {
-  font-variant-numeric: tabular-nums;
-}
+.sidebar__storage [data-storage-label] { font-variant-numeric: tabular-nums; }
 .sidebar__storage .progress {
   height: 4px;
   background: var(--bg-inset);
@@ -232,12 +227,8 @@
   border-radius: var(--r-full);
   transition: width var(--dur-slow) var(--ease-decel);
 }
-.sidebar__storage [data-level="warn"] .progress__bar {
-  background: linear-gradient(90deg, var(--warning), hsl(var(--hue-warning) 90% 65%));
-}
-.sidebar__storage [data-level="danger"] .progress__bar {
-  background: linear-gradient(90deg, var(--danger), hsl(var(--hue-danger) 80% 65%));
-}
+.sidebar__storage [data-level="warn"] .progress__bar { background: linear-gradient(90deg, var(--warning), hsl(var(--hue-warning) 90% 65%)); }
+.sidebar__storage [data-level="danger"] .progress__bar { background: linear-gradient(90deg, var(--danger), hsl(var(--hue-danger) 80% 65%)); }
 
 /* User block */
 .sidebar__user {
@@ -308,7 +299,7 @@
 }
 
 /* ══════════════════════════════════════════════════════════
-   Collapsed state
+   Collapsed state — FIXED LAYOUT
    ══════════════════════════════════════════════════════════ */
 
 .app-shell.is-sidebar-collapsed .sidebar__brand-text,
@@ -337,16 +328,27 @@
   border: 1px solid var(--border);
 }
 
+/* FIX: Center the icons perfectly in a fixed square */
+.app-shell.is-sidebar-collapsed .sidebar__nav {
+  align-items: center;
+  padding-inline: 0;
+}
+
 .app-shell.is-sidebar-collapsed .sidebar__item {
   justify-content: center;
-  padding: 10px 0;
-  margin-inline: 6px;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 4px 0;
 }
-.app-shell.is-sidebar-collapsed .sidebar__item-icon { margin: 0; }
+
+.app-shell.is-sidebar-collapsed .sidebar__item-icon {
+  margin: 0;
+}
 
 .app-shell.is-sidebar-collapsed .sidebar__item-badge {
   position: absolute;
-  top: 4px;
+  top: 6px;
   inset-inline-end: 6px;
   min-width: 16px;
   height: 16px;
@@ -359,7 +361,7 @@
   padding: 6px;
 }
 .app-shell.is-sidebar-collapsed .sidebar__storage { display: none; }
-.app-shell.is-sidebar-collapsed .sidebar__foot { align-items: center; }
+.app-shell.is-sidebar-collapsed .sidebar__foot { align-items: center; padding-inline: 0; }
 
 /* Hover tooltips in collapsed mode */
 .app-shell.is-sidebar-collapsed .sidebar__item::after {
@@ -381,7 +383,7 @@
   box-shadow: var(--shadow-md);
   z-index: 100;
 }
-[dir="rtl"].app-shell.is-sidebar-collapsed .sidebar__item::after {
+[dir="rtl"] .app-shell.is-sidebar-collapsed .sidebar__item::after {
   inset-inline-start: auto;
   inset-inline-end: calc(100% + 12px);
 }
