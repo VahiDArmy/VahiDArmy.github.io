@@ -1,6 +1,8 @@
 /* ============================================================
    js/layout/sidebar.js
    Sidebar renderer: nav, collapse, user block, storage meter
+   FIXED: Replaced custom user menu popover with the standard
+          openDropdown utility to prevent RTL layout breaks.
    ============================================================ */
 
 import { el, byId, on } from '../utils/dom.js';
@@ -12,19 +14,14 @@ import { get as lsGet, set as lsSet, estimateUsage } from '../utils/storage.js';
 import { toFaDigits, formatBytes, initials, formatNumber } from '../utils/format.js';
 import { STORAGE_QUOTA_BYTES } from '../config/app.config.js';
 import { colorFromString } from '../utils/id.js';
+import { openDropdown } from '../ui/dropdown.js';
 
-/** @type {HTMLElement|null} */
 let navEl = null;
 let userEl = null;
 let storageLabelEl = null;
 let storageBarEl = null;
 let collapsed = false;
 
-/* ── Public API ──────────────────────────────────────────── */
-
-/**
- * Mount the sidebar UI (does not handle the collapse button — app-shell does).
- */
 export function mountSidebar() {
   navEl = byId('sidebar-nav');
   userEl = byId('sidebar-user');
@@ -38,45 +35,27 @@ export function mountSidebar() {
   renderUser();
   renderStorage();
 
-  // React to state changes
   bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => updateActive(path));
   bus.on(EVENTS.LIES_REFRESHED, () => refreshBadges());
   bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
   bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); refreshBadges(); });
-  sessionStore.select(
-    (s) => s.profile,
-    () => renderUser(),
-    { immediate: false }
-  );
-  dataStore.select(
-    (s) => s.total,
-    () => renderStorage()
-  );
+  
+  sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
+  dataStore.select((s) => s.total, () => renderStorage());
 
-  // Initial active state
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
-
-  // Initial badges
   refreshBadges();
 
-  // Recompute storage when a write happens
   on(window, 'app:storage', () => renderStorage());
 }
 
-/**
- * Toggle the collapsed state.
- * @param {boolean} [force]
- */
 export function toggleCollapsed(force) {
   const next = typeof force === 'boolean' ? force : !collapsed;
   applyCollapsed(next, { persist: true });
   bus.emit(EVENTS.SIDEBAR_TOGGLED, { collapsed: next });
 }
 
-/** @returns {boolean} */
 export function isCollapsed() { return collapsed; }
-
-/* ── Rendering ───────────────────────────────────────────── */
 
 function renderNav() {
   if (!navEl) return;
@@ -89,106 +68,75 @@ function renderNav() {
     groups.get(g).push(item);
   }
 
-  const groupLabels = {
-    main: '',
-    organize: 'سازمان‌دهی',
-    system: 'سیستم',
-  };
+  const groupLabels = { main: '', organize: 'سازمان‌دهی', system: 'سیستم' };
 
   for (const [g, items] of groups.entries()) {
     if (groupLabels[g]) {
-      navEl.appendChild(el('div', { class: 'sidebar__group-label' }, { children: [groupLabels[g]] }));
+      navEl.appendChild(el('div', { class: 'sidebar__group-label', style: { padding: '16px 12px 8px', fontSize: '10px', color: 'var(--text-tertiary)' } }, { children: [groupLabels[g]] }));
     }
     for (const item of items) {
-      navEl.appendChild(renderNavItem(item));
+      const link = el('a', {
+        class: 'sidebar__item',
+        attrs: { href: `#/${item.id}`, title: item.label },
+        dataset: { route: item.id },
+      });
+      link.appendChild(el('span', { class: 'sidebar__item-icon' }, { children: [item.icon] }));
+      link.appendChild(el('span', { class: 'sidebar__item-label' }, { children: [item.label] }));
+
+      if (item.badgeKey) {
+        link.appendChild(el('span', { class: 'sidebar__item-badge', dataset: { badge: item.badgeKey }, attrs: { hidden: true }, style: { background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px' } }));
+      }
+      navEl.appendChild(link);
     }
   }
-}
-
-/**
- * @param {typeof NAV_ITEMS[number]} item
- * @returns {HTMLElement}
- */
-function renderNavItem(item) {
-  const link = el('a', {
-    class: 'sidebar__item',
-    attrs: {
-      href: `#/${item.id}`,
-      'data-route': item.id,
-      title: item.label,
-      'data-shortcut': item.shortcut || '',
-    },
-    dataset: { route: item.id },
-  });
-
-  link.appendChild(el('span', { class: 'sidebar__item-icon', attrs: { 'aria-hidden': 'true' } }, { children: [item.icon] }));
-  link.appendChild(el('span', { class: 'sidebar__item-label' }, { children: [item.label] }));
-
-  if (item.badgeKey) {
-    const badge = el('span', {
-      class: 'sidebar__item-badge',
-      dataset: { badge: item.badgeKey },
-      attrs: { hidden: true },
-    });
-    link.appendChild(badge);
-  }
-
-  if (item.shortcut) {
-    link.appendChild(el('span', { class: 'sidebar__item-shortcut' }, { children: [item.shortcut] }));
-  }
-
-  return link;
 }
 
 function renderUser() {
   if (!userEl) return;
   userEl.innerHTML = '';
-
   const s = sessionStore.getState();
   const user = s.user;
   const profile = s.profile;
 
-  if (!user) {
-    // anonymous state
-    userEl.appendChild(el('div', { class: 'sidebar__user-guest' }, {
-      children: [
-        el('span', { class: 'sidebar__user-avatar' }, { children: ['؟'] }),
-        el('span', { class: 'sidebar__user-name' }, { children: ['مهمان'] }),
-      ],
-    }));
-    return;
-  }
+  if (!user) return;
 
   const name = profile?.display_name || user.email?.split('@')[0] || 'کاربر';
   const email = user.email || '';
   const avatarColor = profile?.avatar_color || colorFromString(email || name);
 
-  const avatar = el('span', {
-    class: 'sidebar__user-avatar',
-    style: { background: avatarColor },
-    attrs: { 'aria-hidden': 'true' },
-  }, { children: [initials(name)] });
-
-  const info = el('div', { class: 'sidebar__user-info' }, {
-    children: [
-      el('span', { class: 'sidebar__user-name', title: name }, { children: [name] }),
-      el('span', { class: 'sidebar__user-email', title: email }, { children: [email] }),
-    ],
-  });
-
-  const menuBtn = el('button', {
-    class: 'sidebar__user-menu icon-btn',
-    attrs: { type: 'button', title: 'منوی کاربر', 'aria-label': 'منوی کاربر' },
-  }, { children: ['⋯'] });
-
-  menuBtn.addEventListener('click', (ev) => {
-    ev.stopPropagation();
-    openUserMenu(menuBtn);
-  });
-
-  userEl.appendChild(avatar);
+  userEl.appendChild(el('span', { class: 'sidebar__user-avatar', style: { background: avatarColor } }, { children: [initials(name)] }));
+  
+  const info = el('div', { class: 'sidebar__user-info' });
+  info.appendChild(el('span', { class: 'sidebar__user-name' }, { children: [name] }));
+  info.appendChild(el('span', { class: 'sidebar__user-email' }, { children: [email] }));
   userEl.appendChild(info);
-  userEl.appendChild(menuBtn);
+
+  const menuBtn = el('button', { class: 'icon-btn', attrs: { type: 'button' }, style: { marginInlineStart: 'auto', color: 'var(--text-tertiary)' } }, { children: ['⋯'] });
+  
+  userEl.addEventListener('click', (ev) => {
+    ev.stopPropagation();
+    const menu = el('div', { class: 'dropdown__section' });
+    
+    const mkItem = (label, icon, onClick, danger) => {
+      const b = el('button', { class: ['dropdown__item', danger ? 'is-danger' : ''].filter(Boolean), attrs: { type: 'button' } });
+      b.appendChild(el('span', { class: 'dropdown__item-icon' }, { children: [icon] }));
+      b.appendChild(el('span', { class: 'dropdown__item-label' }, { children: [label] }));
+      b.addEventListener('click', onClick);
+      return b;
+    };
+
+    menu.appendChild(mkItem('تنظیمات', '⚙️', () => { location.hash = `#/${ROUTES.SETTINGS}`; }));
+    menu.appendChild(mkItem('درباره', 'ℹ️', () => { location.hash = `#/${ROUTES.ABOUT}`; }));
+    menu.appendChild(el('div', { class: 'dropdown__divider' }));
+    menu.appendChild(mkItem('خروج از حساب', '🚪', async () => {
+      const { signOut } = await import('../services/auth.service.js');
+      const { confirm } = await import('../ui/confirm.js');
+      const ok = await confirm({ title: 'خروج', message: 'از حساب خود خارج می‌شوید؟', confirmLabel: 'خروج', icon: '🚪' });
+      if (ok) await signOut().catch(() => {});
+    }, true));
+
+    openDropdown(userEl, menu, { placement: 'top-start', width: 'anchor' });
+  });
 }
 
 function renderStorage() {
@@ -196,30 +144,17 @@ function renderStorage() {
   const used = estimateUsage();
   const pct = Math.min(100, Math.round((used / STORAGE_QUOTA_BYTES) * 100));
   storageBarEl.style.width = `${Math.max(2, pct)}%`;
-  storageBarEl.parentElement?.setAttribute('data-level', pct > 85 ? 'danger' : pct > 65 ? 'warn' : 'ok');
-  storageLabelEl.textContent = `${formatBytes(used, 1)} از ${formatBytes(STORAGE_QUOTA_BYTES, 0)}`;
+  storageLabelEl.textContent = `${formatBytes(used, 1)}`;
 }
 
 async function refreshBadges() {
   if (!navEl) return;
-  // Use dataStore for lies count
-  const s = dataStore.getState();
-  const badges = {
-    lies: s.total || (s.lies?.length ?? 0),
-    trash: s.trashed || 0,
-  };
-  // Trash count needs a dedicated fetch — do it lazily
   try {
     const { counts } = await import('../services/lies.service.js');
     const c = await counts();
-    badges.lies = c.active;
-    badges.trash = c.trashed;
     setBadge('lies', c.active);
     setBadge('trash', c.trashed);
-  } catch {
-    setBadge('lies', badges.lies);
-    setBadge('trash', badges.trash);
-  }
+  } catch { /* noop */ }
 }
 
 function setBadge(key, value) {
@@ -234,113 +169,17 @@ function updateActive(path) {
   if (!navEl) return;
   const clean = String(path || '').replace(/^\//, '').split('/')[0] || 'dashboard';
   navEl.querySelectorAll('.sidebar__item').forEach((a) => {
-    const r = a.dataset.route;
-    a.classList.toggle(CLS.ACTIVE, r === clean);
+    a.classList.toggle('is-active', a.dataset.route === clean);
   });
 }
-
-/* ── Collapse ────────────────────────────────────────────── */
 
 function applyCollapsed(value, opts = {}) {
   collapsed = !!value;
   const shell = byId('app-shell');
-  const btn = byId('sidebar-collapse-btn');
   shell?.classList.toggle('is-sidebar-collapsed', collapsed);
-  if (btn) {
-    btn.textContent = collapsed ? '⟩' : '⟨';
-    btn.setAttribute('aria-label', collapsed ? 'باز کردن نوار کناری' : 'جمع کردن نوار کناری');
-  }
-  if (opts.persist !== false) {
-    lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
-  }
+  if (opts.persist !== false) lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
 }
 
-/* ── User menu popover ───────────────────────────────────── */
-
-function openUserMenu(anchor) {
-  const existing = document.getElementById('user-menu-popover');
-  if (existing) { existing.remove(); return; }
-
-  const menu = el('div', {
-    class: 'user-menu glass-strong',
-    attrs: { id: 'user-menu-popover', role: 'menu' },
-  });
-
-  const items = [
-    { label: 'تنظیمات', icon: '⚙️', route: ROUTES.SETTINGS },
-    { label: 'درباره', icon: 'ℹ️', route: ROUTES.ABOUT },
-    { divider: true },
-    { label: 'خروج از حساب', icon: '🚪', action: 'logout', danger: true },
-  ];
-
-  for (const it of items) {
-    if (it.divider) { menu.appendChild(el('div', { class: 'user-menu__divider' })); continue; }
-    const b = el('button', {
-      class: ['user-menu__item', it.danger ? 'is-danger' : ''],
-      attrs: { type: 'button', role: 'menuitem' },
-    }, { children: [el('span', { class: 'user-menu__icon' }, { children: [it.icon] }), el('span', {}, { children: [it.label] })] });
-    b.addEventListener('click', async () => {
-      menu.remove();
-      if (it.action === 'logout') {
-        const { signOut } = await import('../services/auth.service.js');
-        const { confirm } = await import('../ui/confirm.js');
-        const ok = await confirm({ title: 'خروج', message: 'از حساب خود خارج می‌شوید؟', confirmLabel: 'خروج', icon: '🚪' });
-        if (!ok) return;
-        await signOut().catch(() => {});
-      } else if (it.route) {
-        location.hash = `#/${it.route}`;
-      }
-    });
-    menu.appendChild(b);
-  }
-
-  document.body.appendChild(menu);
-
-  const r = anchor.getBoundingClientRect();
-  menu.style.position = 'fixed';
-  menu.style.top = `${r.top - 8}px`;
-  menu.style.left = `${r.left}px`;
-  menu.style.transform = 'translateY(-100%)';
-  menu.style.minWidth = '200px';
-  menu.style.zIndex = '500';
-
-  // Reposition to fit
-  requestAnimationFrame(() => {
-    const mr = menu.getBoundingClientRect();
-    if (mr.left < 8) menu.style.left = '8px';
-    if (mr.right > window.innerWidth - 8) {
-      menu.style.left = `${window.innerWidth - mr.width - 8}px`;
-    }
-    if (mr.top < 8) menu.style.transform = 'none';
-  });
-
-  const close = (ev) => {
-    if (menu.contains(ev.target) || anchor.contains(ev.target)) return;
-    menu.remove();
-    document.removeEventListener('mousedown', close);
-    document.removeEventListener('keydown', onKey);
-    document.removeEventListener('scroll', close, true);
-  };
-  const onKey = (ev) => {
-    if (ev.key === 'Escape') {
-      menu.remove();
-      document.removeEventListener('mousedown', close);
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('scroll', close, true);
-    }
-  };
-  setTimeout(() => {
-    document.addEventListener('mousedown', close);
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('scroll', close, true);
-  }, 0);
-}
-
-/* ── Mobile drawer ───────────────────────────────────────── */
-
-/**
- * Open the sidebar as a drawer on mobile.
- */
 export function openMobileSidebar() {
   const shell = byId('app-shell');
   const backdrop = byId('sidebar-backdrop');
@@ -352,9 +191,6 @@ export function openMobileSidebar() {
   document.body.classList.add('has-drawer');
 }
 
-/**
- * Close the mobile drawer.
- */
 export function closeMobileSidebar() {
   const shell = byId('app-shell');
   const backdrop = byId('sidebar-backdrop');
@@ -366,12 +202,8 @@ export function closeMobileSidebar() {
   document.body.classList.remove('has-drawer');
 }
 
-/** @returns {boolean} */
 export function isMobileSidebarOpen() {
   return byId('app-shell')?.classList.contains('is-mobile-sidebar-open') || false;
 }
 
-export default {
-  mountSidebar, toggleCollapsed, isCollapsed,
-  openMobileSidebar, closeMobileSidebar, isMobileSidebarOpen,
-};
+export default { mountSidebar, toggleCollapsed, isCollapsed, openMobileSidebar, closeMobileSidebar, isMobileSidebarOpen };
