@@ -1,10 +1,12 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   Dashboard: stats, recent activity, charts, quick actions
+   Dashboard: stats, recent activity, charts, quick actions.
+   FIXED: Added try/catch around chart rendering to prevent the
+          whole page from crashing if a chart fails.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
-import { ROUTES } from '../config/app.config.js';
+import { ROUTES, LIE_TYPES } from '../config/app.config.js';
 import * as statsService from '../services/stats.service.js';
 import * as liesService from '../services/lies.service.js';
 import { statCardsGrid } from '../features/dashboard/stat-cards.js';
@@ -12,9 +14,7 @@ import { recentActivity } from '../features/dashboard/recent-activity.js';
 import { quickActions } from '../features/dashboard/quick-actions.js';
 import { sessionStore } from '../core/store.js';
 import { lineChart, donutChart, barChart } from '../ui/charts/index.js';
-import { LIE_TYPES } from '../config/app.config.js';
 import { skeletonPage } from '../ui/skeleton.js';
-import { emptyState } from '../ui/empty-state.js';
 import { toFaDigits, formatDate } from '../utils/format.js';
 import { getJalaliParts } from '../utils/jalali.js';
 
@@ -36,6 +36,7 @@ export async function renderDashboard(container) {
     bundle = b;
     recent = recentRes.items;
   } catch (err) {
+    console.error('[dashboard] load failed', err);
     clear(container);
     container.appendChild(renderError(err));
     return;
@@ -54,8 +55,7 @@ export async function renderDashboard(container) {
   const greeting = getGreeting();
 
   const hero = el('header', { class: 'dashboard-hero' });
-  hero.appendChild(el('div', { class: 'dashboard-hero__left' }));
-  const heroLeft = hero.firstElementChild;
+  const heroLeft = el('div', { class: 'dashboard-hero__left' });
 
   heroLeft.appendChild(el('span', { class: 'dashboard-hero__greeting' }, {
     children: [`${greeting}، ${name} 👋`],
@@ -75,6 +75,7 @@ export async function renderDashboard(container) {
   dateChip.appendChild(el('span', { class: 'dashboard-hero__date-icon' }, { children: ['🗓'] }));
   dateChip.appendChild(el('span', {}, { children: [formatDate(new Date(), { style: 'long' })] }));
   heroRight.appendChild(dateChip);
+  hero.appendChild(heroLeft);
   hero.appendChild(heroRight);
 
   page.appendChild(hero);
@@ -90,7 +91,7 @@ export async function renderDashboard(container) {
     monthlyCounts: bundle.monthly,
   }));
 
-  // Charts row: monthly + type breakdown
+  // Charts row
   const chartsRow = el('div', { class: 'dashboard-charts' });
 
   const chartCard = el('div', { class: 'dashboard-card' });
@@ -101,19 +102,25 @@ export async function renderDashboard(container) {
       }),
     ],
   }));
+  
   const monthlyData = (bundle.monthly || []).map((m) => ({
     label: m.month.split('-')[1] ? toFaDigits(Number(m.month.split('-')[1])) : '',
     value: m.count,
   }));
+
   if (monthlyData.length) {
-    const chartWrap = el('div', { class: 'dashboard-card__chart' });
-    chartWrap.appendChild(lineChart({
-      data: monthlyData,
-      height: 220,
-      color: 'var(--accent)',
-      showDots: monthlyData.length <= 12,
-    }));
-    chartCard.appendChild(chartWrap);
+    try {
+      const chartWrap = el('div', { class: 'dashboard-card__chart' });
+      chartWrap.appendChild(lineChart({
+        data: monthlyData,
+        height: 220,
+        color: 'var(--accent)',
+        showDots: monthlyData.length <= 12,
+      }));
+      chartCard.appendChild(chartWrap);
+    } catch (e) {
+      chartCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['خطا در رسم نمودار'] }));
+    }
   } else {
     chartCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['داده‌ای برای نمایش نیست'] }));
   }
@@ -127,19 +134,25 @@ export async function renderDashboard(container) {
       }),
     ],
   }));
+  
   const typeData = (bundle.byType || []).slice(0, 6).map((t) => {
     const meta = TYPES_BY_ID[t.type] || TYPES_BY_ID.other;
     return { label: meta.label, value: t.count, color: meta.color, icon: meta.icon };
   });
+
   if (typeData.length) {
-    const donut = donutChart({
-      data: typeData,
-      size: 200,
-      thickness: 28,
-      centerLabel: toFaDigits(bundle.overview.active),
-      centerSub: 'مورد فعال',
-    });
-    typeCard.appendChild(donut);
+    try {
+      const donut = donutChart({
+        data: typeData,
+        size: 200,
+        thickness: 28,
+        centerLabel: toFaDigits(bundle.overview.active),
+        centerSub: 'مورد فعال',
+      });
+      typeCard.appendChild(donut);
+    } catch (e) {
+      typeCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['خطا در رسم نمودار'] }));
+    }
   } else {
     typeCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['داده‌ای برای نمایش نیست'] }));
   }
@@ -164,14 +177,20 @@ export async function renderDashboard(container) {
       }),
     ],
   }));
+  
   const histData = (bundle.intensityHistogram || []).map((n, i) => ({
     label: toFaDigits(i),
     value: n,
   }));
+
   if (histData.some((d) => d.value > 0)) {
-    const chartWrap = el('div', { class: 'dashboard-card__chart' });
-    chartWrap.appendChild(barChart({ data: histData, height: 200, color: 'var(--warning)' }));
-    intCard.appendChild(chartWrap);
+    try {
+      const chartWrap = el('div', { class: 'dashboard-card__chart' });
+      chartWrap.appendChild(barChart({ data: histData, height: 200, color: 'var(--warning)' }));
+      intCard.appendChild(chartWrap);
+    } catch (e) {
+      intCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['خطا در رسم نمودار'] }));
+    }
   } else {
     intCard.appendChild(el('p', { class: 'dashboard-card__empty' }, { children: ['داده‌ای برای نمایش نیست'] }));
   }
