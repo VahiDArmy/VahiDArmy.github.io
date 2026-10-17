@@ -1,26 +1,15 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Mobile layout allows native scroll. Sidebar acts 
-          as a fixed overlay.
+   MOBILE: Sidebar becomes a fixed drawer. Main content is 
+           100% width and scrolls normally.
    ============================================================ */
 
 @media (max-width: 1024px) {
-  :root {
-    --sidebar-w: 232px;
-    --sidebar-w-collapsed: 68px;
-  }
+  :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
 }
 
-/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
-  
-  /* Flexbox to Block for mobile */
-  .app-shell,
-  .app-shell.is-sidebar-collapsed {
-    display: block;
-  }
-
-  /* Sidebar becomes a fixed drawer */
+  /* Sidebar becomes a fixed overlay */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
     position: fixed;
@@ -34,7 +23,7 @@
     border-left: 1px solid var(--border);
   }
 
-  /* Opened state */
+  /* When opened via JS */
   .app-shell.is-mobile-sidebar-open .sidebar {
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
@@ -53,22 +42,15 @@
   }
   .sidebar-backdrop.is-visible { opacity: 1; }
 
+  /* Hide desktop collapse, show mobile menu */
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   
-  /* ONLY lock body scroll when the drawer is OPEN */
+  /* Lock scroll only when drawer is open */
   body.has-drawer { overflow: hidden; }
   
   .page-container { padding: var(--s-4); }
-}
-
-@media (max-width: 768px) {
+  
+  /* Make topbar search hidden on small screens */
   .topbar__search { display: none; }
-  .topbar { padding-inline: var(--s-3); }
-  .topbar__breadcrumb { max-width: 60%; }
-}
-
-@media (max-width: 480px) {
-  .page-title { font-size: var(--fs-2xl); }
-  .page-title__icon { width: 38px; height: 38px; font-size: 18px; }
 }
