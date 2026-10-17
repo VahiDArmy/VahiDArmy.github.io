@@ -1,8 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Mobile blur overlay issue resolved. 
-          We use right: -280px instead of transform to avoid 
-          RTL bugs. Backdrop uses opacity so it animates cleanly.
+   FIXED: Z-index issue resolved by moving backdrop to body level.
+          Removed backdrop-filter to prevent mobile touch blocking.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -10,53 +9,52 @@
 }
 
 @media (max-width: 900px) {
-  /* App shell behaves like a normal block */
+  
   .app-shell,
   .app-shell.is-sidebar-collapsed {
     display: block;
   }
 
-  /* Sidebar is fixed and hidden to the right */
+  /* Sidebar Drawer */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
-    position: fixed;
+    position: fixed !important;
     top: 0;
     bottom: 0;
-    right: -280px; /* 🛡️ Hidden off-screen */
+    right: -280px !important; /* Hidden off-screen */
     width: 280px !important;
-    z-index: 1000;
-    transition: right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-    display: flex;
-    border-left: 1px solid var(--border);
+    z-index: 10000 !important; /* Highest */
+    transition: right 0.3s ease;
+    display: flex !important;
+    background: var(--bg-surface);
+    box-shadow: -2px 0 10px rgba(0,0,0,0.5);
   }
 
-  /* Open state */
   .app-shell.is-mobile-sidebar-open .sidebar {
-    right: 0; /* 🛡️ Slide in */
-    box-shadow: var(--shadow-xl);
+    right: 0 !important;
   }
 
   /* Backdrop */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 999;
+    background: rgba(0,0,0,0.65); /* Solid dark, no blur */
+    z-index: 9999 !important; /* Below sidebar */
     opacity: 0;
-    pointer-events: none;
+    pointer-events: none; /* Ignore touches when closed */
     transition: opacity 0.3s ease;
   }
-  
-  /* Show backdrop ONLY when open */
-  .app-shell.is-mobile-sidebar-open .sidebar-backdrop {
+
+  /* When active */
+  .sidebar-backdrop.is-open {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto; /* Catch touches to close */
   }
 
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
+  
+  /* Prevent background scroll ONLY when menu is open */
   body.has-drawer { overflow: hidden; }
   
   .page-container { padding: var(--s-3); }
