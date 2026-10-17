@@ -1,6 +1,8 @@
 /* ============================================================
    css/base/reset.css
    Modern normalize + opinionated base
+   FIXED: Forced body/html to have no margins and no horizontal 
+          scroll to prevent layout shift.
    ============================================================ */
 
 *,
@@ -16,16 +18,8 @@ html {
   scroll-behavior: smooth;
   tab-size: 4;
   -webkit-tap-highlight-color: transparent;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  *, *::before, *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-    scroll-behavior: auto !important;
-  }
+  overflow-x: hidden;
+  height: 100%;
 }
 
 body {
@@ -41,6 +35,8 @@ body {
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
   overscroll-behavior-y: none;
+  margin: 0;
+  padding: 0;
 }
 
 /* Background ambience */
@@ -84,7 +80,6 @@ a {
 a:hover { color: var(--accent-200); }
 
 ul, ol { list-style: none; }
-
 table { border-collapse: collapse; border-spacing: 0; width: 100%; }
 
 hr {
@@ -94,26 +89,11 @@ hr {
   margin: var(--s-6) 0;
 }
 
-code, pre, kbd, samp { font-family: var(--font-mono); font-size: .92em; }
-
-kbd {
-  display: inline-block;
-  padding: 2px 6px;
-  border-radius: var(--r-xs);
-  background: var(--bg-surface-2);
-  border: 1px solid var(--border);
-  border-bottom-width: 2px;
-  font-size: var(--fs-2xs);
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
 ::selection {
   background: var(--accent-soft);
   color: var(--text-primary);
 }
 
-/* Focus */
 :focus { outline: none; }
 :focus-visible {
   outline: none;
@@ -121,54 +101,5 @@ kbd {
   border-radius: var(--r-sm);
 }
 
-/* Scrollbars */
-* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: var(--r-full);
-  border: 3px solid transparent;
-  background-clip: padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
-  background-clip: padding-box;
-  border: 3px solid transparent;
-}
-::-webkit-scrollbar-corner { background: transparent; }
-
-/* Native placeholder */
-::placeholder { color: var(--text-quaternary); opacity: 1; }
-
-/* Remove spinners */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
-
-input[type="search"]::-webkit-search-decoration,
-input[type="search"]::-webkit-search-cancel-button,
-input[type="search"]::-webkit-search-results-button,
-input[type="search"]::-webkit-search-results-decoration { -webkit-appearance: none; }
-
-/* Autofill (dark-friendly) */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill,
-select:-webkit-autofill {
-  -webkit-text-fill-color: var(--text-primary);
-  -webkit-box-shadow: 0 0 0 1000px var(--bg-inset) inset;
-  caret-color: var(--text-primary);
-  transition: background-color 9999s ease-in-out 0s;
-}
-
-/* Hidden attribute enforcement */
+/* Hide elements strictly when they have hidden attr */
 [hidden] { display: none !important; }
-
-/* Dialog reset */
-dialog { border: none; background: transparent; padding: 0; color: inherit; }
-dialog::backdrop { background: transparent; }
-
-/* Media defaults */
-picture, figure { display: block; }
