@@ -1,25 +1,55 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Sidebar is now sticky and stays fixed while the 
-          content scrolls on PC. Height is set to 100dvh.
+   NEW METHOD: Fixed Sidebar + Margined Content.
+   This completely bypasses Flex/Grid layout bugs and guarantees
+   the sidebar never moves on PC.
    ============================================================ */
 
-.app-shell {
-  direction: rtl;
-  display: flex;
-  min-height: 100dvh;
-  width: 100%;
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   background: var(--bg-base);
-  overflow-x: hidden;
+  direction: rtl;
 }
 
-/* Main Content Area */
+/* The wrapper is just a normal block now */
+.app-shell {
+  display: block;
+  min-height: 100dvh;
+  width: 100%;
+}
+
+/* 🛡️ THE FIX: The sidebar is FIXED. It never scrolls. */
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  right: 0; /* RTL: stick to the right */
+  width: var(--sidebar-w);
+  z-index: 100;
+  transition: width var(--dur-base) var(--ease-standard);
+}
+
+/* Collapsed state on desktop */
+.app-shell.is-sidebar-collapsed .sidebar {
+  width: var(--sidebar-w-collapsed);
+}
+
+/* 🛡️ THE FIX: The main content is just pushed to the left */
 .app-main {
-  flex: 1;
+  margin-right: var(--sidebar-w); /* Leave space for sidebar */
+  width: calc(100% - var(--sidebar-w));
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  min-width: 0; /* Prevents flex blowout */
-  min-height: 100dvh;
+  transition: margin-right var(--dur-base) var(--ease-standard), width var(--dur-base) var(--ease-standard);
+}
+
+/* Main content shrinks when sidebar collapses */
+.app-shell.is-sidebar-collapsed .app-main {
+  margin-right: var(--sidebar-w-collapsed);
+  width: calc(100% - var(--sidebar-w-collapsed));
 }
 
 .page-container {
@@ -27,7 +57,7 @@
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding: var(--s-6) var(--s-5) var(--s-8);
+  padding: var(--s-6) var(--s-6) var(--s-8);
   outline: none;
 }
 
