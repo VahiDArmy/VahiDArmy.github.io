@@ -1,17 +1,16 @@
 /* ============================================================
    js/layout/sidebar.js
-   FIXED: Added direct listener to the backdrop so it can never 
-          get stuck. Synced classes perfectly.
+   Sidebar renderer: nav, collapse, user block.
+   FIXED: Defined `isCollapsed` properly and exported it.
    ============================================================ */
 
 import { el, byId, on } from '../utils/dom.js';
-import { NAV_ITEMS, ROUTES, LS_KEYS, LIMITS } from '../config/app.config.js';
-import { EVENTS, CLS } from '../config/constants.js';
+import { NAV_ITEMS, ROUTES, LS_KEYS } from '../config/app.config.js';
+import { EVENTS } from '../config/constants.js';
 import { bus } from '../core/event-bus.js';
 import { sessionStore, dataStore } from '../core/store.js';
-import { get as lsGet, set as lsSet, estimateUsage } from '../utils/storage.js';
-import { toFaDigits, formatBytes, initials } from '../utils/format.js';
-import { STORAGE_QUOTA_BYTES } from '../config/app.config.js';
+import { get as lsGet, set as lsSet } from '../utils/storage.js';
+import { initials, toFaDigits } from '../utils/format.js';
 import { colorFromString } from '../utils/id.js';
 import { openDropdown } from '../ui/dropdown.js';
 
@@ -19,36 +18,27 @@ let navEl = null;
 let userEl = null;
 let collapsed = false;
 
+/* ── Public API ──────────────────────────────────────────── */
+
 export function mountSidebar() {
   navEl = byId('sidebar-nav');
   userEl = byId('sidebar-user');
 
+  // Restore collapsed state (always false on mobile)
   collapsed = !!lsGet(LS_KEYS.SIDEBAR_COLLAPSED, false);
   applyCollapsed(collapsed, { persist: false });
 
   renderNav();
   renderUser();
 
-  // Attach backdrop click listener directly here
-  const backdrop = byId('sidebar-backdrop');
-  if (backdrop) {
-    backdrop.addEventListener('click', () => {
-      closeMobileSidebar();
-    });
-  }
-
-  bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => {
-    updateActive(path);
-    // Auto-close on route change for mobile
-    if (window.innerWidth < 900) {
-      closeMobileSidebar();
-    }
-  });
-  
+  // React to state changes
+  bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => updateActive(path));
   bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
   bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); });
+  
   sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
 
+  // Initial active state
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
 }
 
@@ -57,6 +47,39 @@ export function toggleCollapsed(force) {
   applyCollapsed(next, { persist: true });
   bus.emit(EVENTS.SIDEBAR_TOGGLED, { collapsed: next });
 }
+
+// 🛡️ FIX: This was missing and caused the ReferenceError
+export function isCollapsed() { 
+  return collapsed; 
+}
+
+export function openMobileSidebar() {
+  const shell = byId('app-shell');
+  const backdrop = byId('sidebar-backdrop');
+  shell?.classList.add('is-mobile-sidebar-open');
+  if (backdrop) {
+    backdrop.hidden = false;
+    requestAnimationFrame(() => backdrop.classList.add('is-visible'));
+  }
+  document.body.classList.add('has-drawer');
+}
+
+export function closeMobileSidebar() {
+  const shell = byId('app-shell');
+  const backdrop = byId('sidebar-backdrop');
+  shell?.classList.remove('is-mobile-sidebar-open');
+  if (backdrop) {
+    backdrop.classList.remove('is-visible');
+    setTimeout(() => { backdrop.hidden = true; }, 250);
+  }
+  document.body.classList.remove('has-drawer');
+}
+
+export function isMobileSidebarOpen() {
+  return byId('app-shell')?.classList.contains('is-mobile-sidebar-open') || false;
+}
+
+/* ── Rendering ───────────────────────────────────────────── */
 
 function renderNav() {
   if (!navEl) return;
@@ -151,32 +174,11 @@ function applyCollapsed(value, opts = {}) {
   if (opts.persist !== false) lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
 }
 
-/* ── Mobile Sidebar Logic ──────────────────────────────── */
-
-export function openMobileSidebar() {
-  const shell = byId('app-shell');
-  const backdrop = byId('sidebar-backdrop');
-  
-  if (shell) shell.classList.add('is-mobile-sidebar-open');
-  if (backdrop) {
-    backdrop.classList.add('is-open');
-  }
-  document.body.classList.add('has-drawer');
-}
-
-export function closeMobileSidebar() {
-  const shell = byId('app-shell');
-  const backdrop = byId('sidebar-backdrop');
-  
-  if (shell) shell.classList.remove('is-mobile-sidebar-open');
-  if (backdrop) {
-    backdrop.classList.remove('is-open');
-  }
-  document.body.classList.remove('has-drawer');
-}
-
-export function isMobileSidebarOpen() {
-  return byId('app-shell')?.classList.contains('is-mobile-sidebar-open') || false;
-}
-
-export default { mountSidebar, toggleCollapsed, isCollapsed, openMobileSidebar, closeMobileSidebar, isMobileSidebarOpen };
+export default { 
+  mountSidebar, 
+  toggleCollapsed, 
+  isCollapsed, 
+  openMobileSidebar, 
+  closeMobileSidebar, 
+  isMobileSidebarOpen 
+};
