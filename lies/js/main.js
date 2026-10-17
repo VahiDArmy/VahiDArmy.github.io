@@ -1,8 +1,9 @@
 /* ============================================================
    js/main.js
-   FIXED: Removed the duplicate `settingsService.fetch()` call 
-          in startApp() which was causing the boot sequence to 
-          hang indefinitely on step 7.
+   FIXED: 
+     - hideBootSplash() now physically removes the element from 
+       the DOM using .remove() to guarantee it doesn't push 
+       content down.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -22,13 +23,10 @@ import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
-// Safe Error Printer for Boot
 function printBootError(msg) {
   console.log(msg);
   const errDiv = byId('inline-error-log');
   if (errDiv) {
-    // We only show real errors in the red box now, 
-    // to avoid scaring the user with normal boot logs.
     if (msg.includes('ERROR') || msg.includes('EXCEPTION')) {
       errDiv.style.display = 'block';
       errDiv.textContent += `❌ ${msg}\n\n`;
@@ -50,7 +48,7 @@ ready(async () => {
 
     if (FEATURES.commandPalette) initCommandPalette();
 
-    printBootError('2. Initializing Session (awaiting network)...');
+    printBootError('2. Initializing Session...');
     const outcome = await initSession();
     
     printBootError('3. Session initialized. Mounting auth page...');
@@ -84,9 +82,6 @@ async function startApp() {
     printBootError('6. Mounting App Shell...');
     mountAppShell();
 
-    // We completely removed the `settingsService.fetch()` call here.
-    // We already fetched the settings in initSession().
-
     printBootError('7. Showing App Shell...');
     showAppShell();
 
@@ -98,10 +93,8 @@ async function startApp() {
 
     registerGlobalShortcuts();
     shortcuts.start();
-    
     printBootError('8. App Started Successfully!');
     
-    // Clear the log box on success
     const errDiv = byId('inline-error-log');
     if (errDiv) errDiv.style.display = 'none';
     
@@ -161,15 +154,18 @@ function registerGlobalShortcuts() {
   }
 }
 
+// 🛡️ THE MAGIC FIX: Physically remove the element from the DOM
 function hideBootSplash() {
   const splash = byId('boot-splash');
   if (!splash) return;
   splash.classList.add('is-hidden');
-  setTimeout(() => { splash.hidden = true; }, 700);
+  setTimeout(() => { 
+    if (splash.parentNode) splash.parentNode.removeChild(splash); 
+  }, 700);
 }
 
 function fatalConfig() {
   const splash = byId('boot-splash');
-  if (splash) splash.hidden = true;
+  if (splash) splash.remove();
   document.body.innerHTML = '<h1 style="color:red; text-align:center; margin-top:50px;">خطا: تنظیمات Supabase یافت نشد.</h1>';
 }
