@@ -1,27 +1,17 @@
 /* ============================================================
    js/features/lies/lies-filters.js
-   Advanced filter panel (drawer on desktop side, sheet on mobile)
+   UPDATED: Renders dynamic Lie Types and Moods instead of 
+            hardcoded lists.
    ============================================================ */
 
 import { el, clear } from '../../utils/dom.js';
-import { LIE_TYPES, MOODS, SORT_OPTIONS } from '../../config/app.config.js';
 import { chipSelector } from '../../ui/chips.js';
 import { activeFilterCount } from './lies-storage.js';
 import { toFaDigits } from '../../utils/format.js';
+import { segmented } from '../../ui/segmented.js';
 
-/**
- * @param {{
- *   filters: object,
- *   categories: any[],
- *   tags: any[],
- *   onApply: (patch:object)=>void,
- *   onReset: ()=>void,
- *   onClose: ()=>void,
- * }} opts
- * @returns {HTMLElement}
- */
 export function liesFiltersPanel(opts) {
-  const { filters, categories, tags, onApply, onReset, onClose } = opts;
+  const { filters, categories, tags, lieTypes = [], moods = [], onApply, onReset, onClose } = opts;
 
   const panel = el('aside', { class: 'lies-filters', attrs: { role: 'complementary', 'aria-label': 'فیلترها' } });
 
@@ -57,7 +47,8 @@ export function liesFiltersPanel(opts) {
   const allTypeBtn = typePill('all', 'همه', '✳️', filters.type === 'all');
   allTypeBtn.addEventListener('click', () => onApply({ type: 'all' }));
   typeGrid.appendChild(allTypeBtn);
-  for (const t of LIE_TYPES) {
+  
+  for (const t of lieTypes) {
     const btn = typePill(t.id, t.label, t.icon, filters.type === t.id, t.color);
     btn.addEventListener('click', () => onApply({ type: t.id }));
     typeGrid.appendChild(btn);
@@ -89,7 +80,8 @@ export function liesFiltersPanel(opts) {
   const allMood = moodPill('all', 'همه', '✳️', filters.mood === 'all');
   allMood.addEventListener('click', () => onApply({ mood: 'all' }));
   moodWrap.appendChild(allMood);
-  for (const m of MOODS) {
+  
+  for (const m of moods) {
     const btn = moodPill(m.id, m.label, m.icon, filters.mood === m.id);
     btn.addEventListener('click', () => onApply({ mood: m.id }));
     moodWrap.appendChild(btn);
@@ -112,29 +104,16 @@ export function liesFiltersPanel(opts) {
 
   /* Date range */
   const dateRow = el('div', { class: 'lies-filters__dates' });
-  const fromInput = el('input', {
-    class: 'input',
-    attrs: { type: 'date' },
-  });
+  const fromInput = el('input', { class: 'input', attrs: { type: 'date' } });
   if (filters.dateFrom) fromInput.value = filters.dateFrom.slice(0, 10);
   fromInput.addEventListener('change', () => onApply({ dateFrom: fromInput.value ? new Date(fromInput.value).toISOString() : null }));
 
-  const toInput = el('input', {
-    class: 'input',
-    attrs: { type: 'date' },
-  });
+  const toInput = el('input', { class: 'input', attrs: { type: 'date' } });
   if (filters.dateTo) toInput.value = filters.dateTo.slice(0, 10);
-  toInput.addEventListener('change', () => {
-    const v = toInput.value;
-    onApply({ dateTo: v ? new Date(v + 'T23:59:59').toISOString() : null });
-  });
+  toInput.addEventListener('change', () => { const v = toInput.value; onApply({ dateTo: v ? new Date(v + 'T23:59:59').toISOString() : null }); });
 
-  dateRow.appendChild(el('div', { class: 'lies-filters__date-field' }, {
-    children: [el('label', {}, { children: ['از'] }), fromInput],
-  }));
-  dateRow.appendChild(el('div', { class: 'lies-filters__date-field' }, {
-    children: [el('label', {}, { children: ['تا'] }), toInput],
-  }));
+  dateRow.appendChild(el('div', { class: 'lies-filters__date-field' }, { children: [el('label', {}, { children: ['از'] }), fromInput] }));
+  dateRow.appendChild(el('div', { class: 'lies-filters__date-field' }, { children: [el('label', {}, { children: ['تا'] }), toInput] }));
   body.appendChild(section('بازه زمانی', dateRow));
 
   /* Pinned only */
@@ -152,26 +131,17 @@ export function liesFiltersPanel(opts) {
   /* Footer */
   const foot = el('footer', { class: 'lies-filters__foot' });
   const count = activeFilterCount();
-  const resetBtn = el('button', {
-    class: 'btn btn--ghost',
-    attrs: { type: 'button' },
-  }, { children: ['پاک کردن همه'] });
+  const resetBtn = el('button', { class: 'btn btn--ghost', attrs: { type: 'button' } }, { children: ['پاک کردن همه'] });
   resetBtn.disabled = count === 0;
   resetBtn.addEventListener('click', onReset);
   foot.appendChild(resetBtn);
 
-  const applyBtn = el('button', {
-    class: 'btn btn--primary',
-    attrs: { type: 'button' },
-    on: { click: onClose },
-  }, { children: ['اعمال'] });
+  const applyBtn = el('button', { class: 'btn btn--primary', attrs: { type: 'button' }, on: { click: onClose } }, { children: ['اعمال'] });
   foot.appendChild(applyBtn);
   panel.appendChild(foot);
 
   return panel;
 }
-
-/* ── Helpers ─────────────────────────────────────────────── */
 
 function section(title, content) {
   const wrap = el('div', { class: 'lies-filters__section' });
@@ -203,25 +173,15 @@ function moodPill(id, label, icon, active) {
 
 function rangeRow(lo, hi, onChange) {
   const wrap = el('div', { class: 'range-row' });
-
   const numLo = el('span', { class: 'range-row__value' }, { children: [toFaDigits(lo)] });
   const numHi = el('span', { class: 'range-row__value' }, { children: [toFaDigits(hi)] });
-
-  const sliderLo = el('input', {
-    class: 'range',
-    attrs: { type: 'range', min: '0', max: '10', step: '1', value: String(lo) },
-  });
-  const sliderHi = el('input', {
-    class: 'range',
-    attrs: { type: 'range', min: '0', max: '10', step: '1', value: String(hi) },
-  });
+  const sliderLo = el('input', { class: 'range', attrs: { type: 'range', min: '0', max: '10', step: '1', value: String(lo) } });
+  const sliderHi = el('input', { class: 'range', attrs: { type: 'range', min: '0', max: '10', step: '1', value: String(hi) } });
 
   const emit = () => {
-    let a = Number(sliderLo.value);
-    let b = Number(sliderHi.value);
+    let a = Number(sliderLo.value); let b = Number(sliderHi.value);
     if (a > b) [a, b] = [b, a];
-    numLo.textContent = toFaDigits(a);
-    numHi.textContent = toFaDigits(b);
+    numLo.textContent = toFaDigits(a); numHi.textContent = toFaDigits(b);
     onChange(a, b);
   };
 
@@ -230,9 +190,5 @@ function rangeRow(lo, hi, onChange) {
 
   wrap.appendChild(el('div', { class: 'range-row__head' }, { children: [numLo, el('span', { class: 'range-row__sep' }, { children: ['—'] }), numHi] }));
   wrap.appendChild(el('div', { class: 'range-row__sliders' }, { children: [sliderLo, sliderHi] }));
-
   return wrap;
 }
-
-/* Import segmented after the fact to avoid circular loops */
-import { segmented } from '../../ui/segmented.js';
