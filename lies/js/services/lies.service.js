@@ -1,6 +1,7 @@
 /* ============================================================
    js/services/lies.service.js
-   Full CRUD + filters + pagination + bulk ops + search
+   FIXED: Ignored 'all' string for type and mood filters.
+          Added support for pinnedOnly filter.
    ============================================================ */
 
 import { getSupabase } from '../core/supabase.client.js';
@@ -11,8 +12,6 @@ import { uuid } from '../utils/id.js';
 
 const T_LIES = TABLES.LIES;
 const T_LINKS = TABLES.LIE_TAGS;
-
-/* ── Normalization ───────────────────────────────────────── */
 
 function normalize(row, tagsMap = {}) {
   if (!row) return null;
@@ -38,8 +37,6 @@ function normalize(row, tagsMap = {}) {
   };
 }
 
-/* ── List ────────────────────────────────────────────────── */
-
 const SORT_MAP = {
   created_desc:  { column: 'created_at',  ascending: false },
   created_asc:   { column: 'created_at',  ascending: true  },
@@ -53,33 +50,6 @@ const SORT_MAP = {
   title_asc:     { column: 'title',       ascending: true  },
 };
 
-/**
- * @typedef {Object} ListOptions
- * @property {string} [query]
- * @property {string} [status='active']
- * @property {string} [type]
- * @property {string} [mood]
- * @property {string} [categoryId]
- * @property {string[]} [tagIds]
- * @property {number} [intensityMin]
- * @property {number} [intensityMax]
- * @property {number} [beliefMin]
- * @property {number} [beliefMax]
- * @property {string} [dateFrom]  ISO
- * @property {string} [dateTo]    ISO
- * @property {boolean} [pinnedFirst=true]
- * @property {string} [sort='created_desc']
- * @property {number} [page=1]
- * @property {number} [pageSize=24]
- * @property {boolean} [withTags=true]
- * @property {boolean} [withCount=false]
- */
-
-/**
- * List lies with filters + pagination.
- * @param {ListOptions} opts
- * @returns {Promise<{items:any[], total:number, page:number, pageSize:number, hasMore:boolean}>}
- */
 export async function list(opts = {}) {
   const {
     query = '',
@@ -95,6 +65,7 @@ export async function list(opts = {}) {
     dateFrom,
     dateTo,
     pinnedFirst = true,
+    pinnedOnly = false,
     sort = 'created_desc',
     page = 1,
     pageSize = 24,
@@ -104,7 +75,7 @@ export async function list(opts = {}) {
 
   const supabase = getSupabase();
 
-  // Restrict by tags: pre-resolve lie_ids
+  // Restrict by tags
   let restrictIds = null;
   if (tagIds.length) {
     const { data: links, error: lErr } = await supabase
@@ -120,10 +91,15 @@ export async function list(opts = {}) {
 
   let q = supabase.from(T_LIES).select('*', { count: withCount ? 'exact' : undefined });
 
+  // 🛡️ FIXED: Ignore 'all' strings from the UI
   if (status && status !== 'all') q = q.eq('status', status);
-  if (type) q = q.eq('type', type);
-  if (mood) q = q.eq('mood', mood);
+  if (type && type !== 'all') q = q.eq('type', type);
+  if (mood && mood !== 'all') q = q.eq('mood', mood);
   if (categoryId) q = q.eq('category_id', categoryId);
+  
+  // 🛡️ FIXED: Added pinnedOnly
+  if (pinnedOnly) q = q.eq('is_pinned', true);
+
   if (intensityMin !== undefined && intensityMin !== null) q = q.gte('intensity', intensityMin);
   if (intensityMax !== undefined && intensityMax !== null) q = q.lte('intensity', intensityMax);
   if (beliefMin !== undefined && beliefMin !== null) q = q.gte('belief', beliefMin);
@@ -175,25 +151,16 @@ export async function list(opts = {}) {
   };
 }
 
-/* ── Fetch one ───────────────────────────────────────────── */
-
-/** @param {string} id */
 export async function getById(id) {
   const supabase = getSupabase();
   const { data, error } = await supabase.from(T_LIES).select('*').eq('id', id).maybeSingle();
   if (error) throw error;
   if (!data) return null;
 
-  const { data: links } = await supabase
-    .from(T_LINKS)
-    .select('tags(*)')
-    .eq('lie_id', id);
-
+  const { data: links } = await supabase.from(T_LINKS).select('tags(*)').eq('lie_id', id);
   const tagsMap = { [id]: (links || []).map((l) => l.tags).filter(Boolean) };
   return normalize(data, tagsMap);
 }
-
-/* ── Create / Update ─────────────────────────────────────── */
 
 function buildPayload(input) {
   const payload = {};
@@ -210,22 +177,12 @@ function buildPayload(input) {
   return payload;
 }
 
-/**
- * @param {{
- *   title:string, body?:string, truth?:string, type?:string, mood?:string,
- *   intensity?:number, belief?:number, occurredAt?:string|null,
- *   categoryId?:string|null, isPinned?:boolean, tagIds?:string[]
- * }} input
- */
 export async function create(input) {
   const supabase = getSupabase();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('unauthorized');
 
-  const payload = {
-    user_id: user.id,
-    ...buildPayload(input),
-  };
+  const payload = { user_id: user.id, ...buildPayload(input) };
   if (!payload.title) throw new Error('عنوان الزامی است.');
 
   const { data, error } = await supabase.from(T_LIES).insert(payload).select('*').single();
@@ -233,9 +190,7 @@ export async function create(input) {
 
   if (Array.isArray(input.tagIds) && input.tagIds.length) {
     const rows = [...new Set(input.tagIds)].map((tag_id) => ({ lie_id: data.id, tag_id }));
-    const { error: linkErr } = await supabase
-      .from(T_LINKS)
-      .upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
+    const { error: linkErr } = await supabase.from(T_LINKS).upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
     if (linkErr) console.warn('[lies] tag link failed', linkErr);
   }
 
@@ -245,11 +200,6 @@ export async function create(input) {
   return lie;
 }
 
-/**
- * @param {string} id
- * @param {object} patch
- * @param {{tagIds?:string[]}} [opts]
- */
 export async function update(id, patch, opts = {}) {
   const supabase = getSupabase();
   const payload = buildPayload(patch);
@@ -263,9 +213,7 @@ export async function update(id, patch, opts = {}) {
     if (delErr) throw delErr;
     if (opts.tagIds.length) {
       const rows = [...new Set(opts.tagIds)].map((tag_id) => ({ lie_id: id, tag_id }));
-      const { error: insErr } = await supabase
-        .from(T_LINKS)
-        .upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
+      const { error: insErr } = await supabase.from(T_LINKS).upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
       if (insErr) throw insErr;
     }
   }
@@ -276,50 +224,32 @@ export async function update(id, patch, opts = {}) {
   return lie;
 }
 
-/* ── Lifecycle ───────────────────────────────────────────── */
-
-/** Move to trash (soft delete). @param {string} id */
 export async function trash(id) {
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(T_LIES)
-    .update({ status: 'trashed', trashed_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await supabase.from(T_LIES).update({ status: 'trashed', trashed_at: new Date().toISOString() }).eq('id', id);
   if (error) throw error;
   bus.emit(EVENTS.LIE_DELETED, { id });
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Restore from trash/archive to active. @param {string} id */
 export async function restore(id) {
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(T_LIES)
-    .update({ status: 'active', trashed_at: null, archived_at: null })
-    .eq('id', id);
+  const { error } = await supabase.from(T_LIES).update({ status: 'active', trashed_at: null, archived_at: null }).eq('id', id);
   if (error) throw error;
   bus.emit(EVENTS.LIE_RESTORED, { id });
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Archive a lie. @param {string} id */
 export async function archive(id) {
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(T_LIES)
-    .update({ status: 'archived', archived_at: new Date().toISOString(), trashed_at: null })
-    .eq('id', id);
+  const { error } = await supabase.from(T_LIES).update({ status: 'archived', archived_at: new Date().toISOString(), trashed_at: null }).eq('id', id);
   if (error) throw error;
   bus.emit(EVENTS.LIE_ARCHIVED, { id });
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Unarchive → active. @param {string} id */
-export async function unarchive(id) {
-  return restore(id);
-}
+export async function unarchive(id) { return restore(id); }
 
-/** Permanent delete. @param {string} id */
 export async function hardDelete(id) {
   const supabase = getSupabase();
   const { error } = await supabase.from(T_LIES).delete().eq('id', id);
@@ -327,7 +257,6 @@ export async function hardDelete(id) {
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Toggle pin state. @param {string} id @param {boolean} pinned */
 export async function togglePin(id, pinned) {
   const supabase = getSupabase();
   const { error } = await supabase.from(T_LIES).update({ is_pinned: !!pinned }).eq('id', id);
@@ -336,12 +265,6 @@ export async function togglePin(id, pinned) {
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/* ── Bulk operations ─────────────────────────────────────── */
-
-/**
- * @param {string[]} ids
- * @param {'trash'|'restore'|'archive'|'hardDelete'} action
- */
 export async function bulk(ids, action) {
   if (!ids?.length) return 0;
   const supabase = getSupabase();
@@ -373,55 +296,32 @@ export async function bulk(ids, action) {
   return 0;
 }
 
-/**
- * Bulk add tags.
- * @param {string[]} lieIds
- * @param {string[]} tagIds
- */
 export async function bulkAddTags(lieIds, tagIds) {
   if (!lieIds?.length || !tagIds?.length) return;
   const supabase = getSupabase();
   const rows = [];
   for (const lie_id of lieIds) for (const tag_id of tagIds) rows.push({ lie_id, tag_id });
-  const { error } = await supabase
-    .from(T_LINKS)
-    .upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
+  const { error } = await supabase.from(T_LINKS).upsert(rows, { onConflict: 'lie_id,tag_id', ignoreDuplicates: true });
   if (error) throw error;
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Bulk remove tags. */
 export async function bulkRemoveTags(lieIds, tagIds) {
   if (!lieIds?.length || !tagIds?.length) return;
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(T_LINKS)
-    .delete()
-    .in('lie_id', lieIds)
-    .in('tag_id', tagIds);
+  const { error } = await supabase.from(T_LINKS).delete().in('lie_id', lieIds).in('tag_id', tagIds);
   if (error) throw error;
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/** Bulk set category (null to clear). */
 export async function bulkSetCategory(lieIds, categoryId) {
   if (!lieIds?.length) return;
   const supabase = getSupabase();
-  const { error } = await supabase
-    .from(T_LIES)
-    .update({ category_id: categoryId || null })
-    .in('id', lieIds);
+  const { error } = await supabase.from(T_LIES).update({ category_id: categoryId || null }).in('id', lieIds);
   if (error) throw error;
   bus.emit(EVENTS.LIES_REFRESHED);
 }
 
-/* ── Search ──────────────────────────────────────────────── */
-
-/**
- * Global search across active lies.
- * @param {string} query
- * @param {number} [limit=8]
- */
 export async function search(query, limit = 8) {
   const q = String(query || '').trim();
   if (!q) return [];
@@ -440,9 +340,6 @@ export async function search(query, limit = 8) {
   return data || [];
 }
 
-/* ── Duplicate ───────────────────────────────────────────── */
-
-/** Duplicate a lie. @param {string} id */
 export async function duplicate(id) {
   const original = await getById(id);
   if (!original) throw new Error('not found');
@@ -460,12 +357,6 @@ export async function duplicate(id) {
   });
 }
 
-/* ── Counts ──────────────────────────────────────────────── */
-
-/**
- * Quick counts by status.
- * @returns {Promise<{active:number,archived:number,trashed:number}>}
- */
 export async function counts() {
   const supabase = getSupabase();
   const [a, b, c] = await Promise.all([
@@ -480,10 +371,6 @@ export async function counts() {
   };
 }
 
-/**
- * Purge trash older than N days (RPC).
- * @param {number} [olderThanDays=30]
- */
 export async function purgeTrash(olderThanDays = 30) {
   const supabase = getSupabase();
   const { data, error } = await supabase.rpc('purge_trash', { older_than_days: olderThanDays });
@@ -492,7 +379,6 @@ export async function purgeTrash(olderThanDays = 30) {
   return data ?? 0;
 }
 
-/** Helper: local uuid for optimistic UI. */
 export function localId() { return uuid(); }
 
 export default {
