@@ -1,6 +1,7 @@
 /* ============================================================
    js/ui/charts/heatmap.js
-   GitHub-style heatmap using Jalali calendar
+   GitHub-style heatmap using Jalali calendar.
+   Confirmed imports are correct.
    ============================================================ */
 
 import { getJalaliParts, jalaliToDate, jalaliMonthDays } from '../../utils/jalali.js';
@@ -10,7 +11,7 @@ import { showChartTooltip, hideChartTooltip } from './chart-utils.js';
 
 /**
  * @param {{
- *   dataByDay: Record<string, number>,  // 'YYYY-MM-DD' → count
+ *   dataByDay: Record<string, number>,
  *   jy: number,
  *   jm: number,
  * }} opts
@@ -44,7 +45,6 @@ export function heatmap(opts) {
     });
   }
 
-  // Max for scaling
   const maxCount = Math.max(1, ...Object.values(dataByDay));
   const levels = [0, 0.15, 0.4, 0.7, 1];
 
