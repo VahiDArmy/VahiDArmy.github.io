@@ -1,5 +1,7 @@
 /* ============================================================
    css/features/topbar.css
+   FIXED: Added a solid background fallback so the topbar 
+          never disappears on mobile.
    ============================================================ */
 
 .topbar {
@@ -8,16 +10,21 @@
   gap: var(--s-3);
   padding: 0 var(--s-5);
   height: var(--topbar-h);
+  
+  /* Solid fallback first, then glass effect */
+  background: #0e0e15; 
   background: var(--bg-glass-strong);
   backdrop-filter: blur(var(--blur-lg)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(160%);
   border-bottom: 1px solid var(--border);
+  
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  width: 100%;
 }
 
-.topbar__menu { display: none; } /* shown on mobile via responsive */
+.topbar__menu { display: none; }
 
 .topbar__breadcrumb {
   display: flex;
@@ -30,7 +37,6 @@
   white-space: nowrap;
 }
 
-/* ── Search ─────────────────────────────────────────────── */
 .topbar__search {
   position: relative;
   flex: 1;
@@ -57,10 +63,7 @@
   padding-inline-end: 86px;
   color: var(--text-primary);
   font-size: var(--fs-sm);
-  transition:
-    background var(--dur-fast) var(--ease-standard),
-    border-color var(--dur-fast),
-    box-shadow var(--dur-fast);
+  transition: background var(--dur-fast), border-color var(--dur-fast), box-shadow var(--dur-fast);
 }
 .topbar__search-input::placeholder { color: var(--text-quaternary); }
 .topbar__search-input:hover { border-color: var(--border-strong); }
@@ -79,7 +82,6 @@
 }
 .topbar__kbd kbd { font-size: 10px; padding: 1px 5px; }
 
-/* Results dropdown */
 .topbar__search-results {
   position: absolute;
   top: calc(100% + 8px);
@@ -112,8 +114,7 @@
   color: var(--text-secondary);
   transition: background var(--dur-fast), color var(--dur-fast);
 }
-.search-result:hover,
-.search-result:focus-visible {
+.search-result:hover, .search-result:focus-visible {
   background: var(--bg-hover);
   color: var(--text-primary);
   outline: none;
@@ -159,46 +160,9 @@
   font-size: var(--fs-sm);
 }
 
-/* ── Actions ────────────────────────────────────────────── */
 .topbar__actions {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
 }
-
-/* ══════════════════════════════════════════════════════════
-   Shortcuts modal
-   ══════════════════════════════════════════════════════════ */
-.shortcuts-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-5);
-}
-.shortcuts-group { display: flex; flex-direction: column; gap: var(--s-2); }
-.shortcuts-group__title {
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--ls-wide);
-  text-transform: uppercase;
-  color: var(--accent-300);
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.shortcut-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s-4);
-  padding: 6px 0;
-  font-size: var(--fs-md);
-  color: var(--text-secondary);
-}
-.shortcut-row__label { flex: 1; min-width: 0; }
-.shortcut-row__keys {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.shortcut-row__keys kbd { font-size: 11px; padding: 2px 7px; }
