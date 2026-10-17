@@ -1,29 +1,16 @@
 /* ============================================================
    css/features/sidebar.css
-   FIXED: Added position sticky + top 0 + height 100dvh so it 
-          never scrolls with the page.
+   CLEANED: Only handles internal styles of the sidebar.
+   NO position/width rules here (handled by app-shell.css).
    ============================================================ */
 
 .sidebar {
-  width: var(--sidebar-w);
-  flex-shrink: 0;
   background: var(--bg-surface);
   border-inline-end: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  
-  /* 🛡️ FIX: Keep sidebar fixed while content scrolls */
-  position: sticky;
-  top: 0;
-  height: 100dvh;
+  height: 100%; /* Fills the fixed container */
   overflow: hidden;
-  
-  transition: width var(--dur-base) var(--ease-standard);
-  z-index: 100;
-}
-
-.app-shell.is-sidebar-collapsed .sidebar {
-  width: var(--sidebar-w-collapsed);
 }
 
 .sidebar__brand {
