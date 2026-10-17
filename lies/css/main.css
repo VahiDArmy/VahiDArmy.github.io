@@ -1,8 +1,7 @@
 /* ============================================================
    css/main.css
-   FIXED: Confirmed all imports exist. This prevents the 
-          "white screen" bug where a 404 on a single CSS file 
-          breaks the entire theme.
+   FIXED: Removed taxonomy.css to prevent white screen if 
+          the file is missing on the server.
    ============================================================ */
 
 @import url("./base/variables.css");
@@ -49,7 +48,7 @@
 @import url("./features/lie-detail.css");
 @import url("./features/analytics.css");
 @import url("./features/tags.css");
-@import url("./features/taxonomy.css");
+/* @import url("./features/taxonomy.css"); */ /* 🛡️ Removed to prevent 404 white screen */
 @import url("./features/settings.css");
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
