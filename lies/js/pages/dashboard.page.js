@@ -1,14 +1,14 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   APPROACH: Fully stripped down. No Intl, no complex CSS, 
-   just plain text and standard Date methods to ensure 
-   it NEVER shows 'undefined'.
+   FIXED: Uses the pure math Jalali formatter. 
+   No more 'undefined', no more Gregorian dates.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
 import { sessionStore } from '../core/store.js';
 import * as statsService from '../services/stats.service.js';
 import { toFaDigits } from '../utils/format.js';
+import { formatJalaliFull } from '../utils/jalali.js'; // 👈 Import the new function
 
 export async function renderDashboard(container) {
   clear(container);
@@ -24,10 +24,8 @@ export async function renderDashboard(container) {
     console.warn('Could not load stats', err);
   }
 
-  // 🛡️ SIMPLE HARDCODED DATE (No Intl, No Undefined)
-  const now = new Date();
-  const months = ['ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن', 'ژوئیه', 'اوت', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'];
-  const dateStr = `${toFaDigits(now.getDate())} ${months[now.getMonth()]} ${toFaDigits(now.getFullYear())}`;
+  // 🛡️ JALALI DATE
+  const dateStr = formatJalaliFull(new Date());
 
   const page = el('div', { class: 'page page--dashboard', style: { padding: '24px', maxWidth: '800px', margin: '0 auto' } });
 
