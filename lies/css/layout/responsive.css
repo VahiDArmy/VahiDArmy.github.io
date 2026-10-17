@@ -1,62 +1,49 @@
 /* ============================================================
    css/layout/responsive.css
-   NEW METHOD: Mobile overrides. Removes margins and turns 
-   sidebar into an off-screen drawer.
+   MOBILE: Sidebar becomes an absolute overlay. .app-main 
+           stays 100% width and doesn't get pushed.
    ============================================================ */
 
 @media (max-width: 1024px) {
-  :root {
-    --sidebar-w: 232px;
-    --sidebar-w-collapsed: 68px;
-  }
+  :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
 }
 
-/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
-  
-  /* 1. Main content takes full width (no margin) */
-  .app-main,
-  .app-shell.is-sidebar-collapsed .app-main {
-    margin-right: 0 !important;
-    width: 100% !important;
-  }
-
-  /* 2. Sidebar becomes an off-screen drawer */
-  .sidebar,
-  .app-shell.is-sidebar-collapsed .sidebar {
-    width: 280px !important; /* Override collapsed width */
-    transform: translateX(100%); /* Hide off the right edge */
+  /* Sidebar Drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 280px !important; /* Override desktop width */
+    z-index: 1000;
+    transform: translateX(100%);
     transition: transform var(--dur-base) var(--ease-standard);
     box-shadow: none;
-    border-left: none;
-    border-right: 1px solid var(--border);
+    border-left: 1px solid var(--border);
   }
 
-  /* 3. Open state */
-  .app-shell.is-mobile-sidebar-open .sidebar,
-  .app-shell.is-sidebar-collapsed.is-mobile-sidebar-open .sidebar {
+  /* When open */
+  .app-shell.is-mobile-sidebar-open .sidebar {
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
 
-  /* 4. Backdrop */
+  /* Backdrop */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
     background: var(--bg-overlay);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    z-index: 99;
+    z-index: 999;
     opacity: 0;
     transition: opacity var(--dur-base);
   }
   .sidebar-backdrop.is-visible { opacity: 1; }
 
-  /* 5. Hide collapse button, show mobile menu */
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
-  
-  /* 6. Prevent body scroll when drawer is open */
   body.has-drawer { overflow: hidden; }
   
   .page-container { padding: var(--s-4); }
