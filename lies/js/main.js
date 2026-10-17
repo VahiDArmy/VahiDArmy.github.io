@@ -1,8 +1,8 @@
 /* ============================================================
    js/main.js
-   FIXED: Removed ALL try/catch fallbacks and timeouts. 
-          No more "خطا در بارگذاری" popups. 
-          If it crashes, it crashes.
+   FIXED: Mounts the Auth Page IMMEDIATELY so buttons work 
+          even if the network is slow. Added a 4s timeout to 
+          force-hide the splash screen.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -22,51 +22,73 @@ import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
 ready(async () => {
-  try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
+  // 🛡️ 1. MOUNT AUTH PAGE IMMEDIATELY (so tabs work without waiting for network)
+  try { mountAuthPage(); } catch(e) { console.error('Auth mount failed', e); }
 
-  initErrorBoundary();
-  initTheme();
+  // 🛡️ 2. Force hide splash after 4 seconds if boot hangs
+  setTimeout(() => {
+    const splash = byId('boot-splash');
+    if (splash && splash.style.display !== 'none') {
+      console.warn('Boot taking too long. Forcing auth screen.');
+      showAuthScreen();
+      hideBootSplash();
+    }
+  }, 4000);
 
-  if (!isSupabaseConfigured()) {
-    return fatalConfig();
-  }
+  try {
+    try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
 
-  if (FEATURES.commandPalette) initCommandPalette();
+    initErrorBoundary();
+    try { initTheme(); } catch(e) { console.error('Theme init failed', e); }
 
-  const outcome = await initSession();
-  mountAuthPage();
+    if (!isSupabaseConfigured()) {
+      return fatalConfig();
+    }
 
-  if (outcome.user) {
-    await startApp();
-  } else {
+    try { if (FEATURES.commandPalette) initCommandPalette(); } catch(e) { console.warn('Command palette failed', e); }
+
+    const outcome = await initSession();
+
+    if (outcome.user) {
+      await startApp();
+    } else {
+      showAuthScreen();
+      hideBootSplash();
+    }
+
+    bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
+      if (byId('app-shell')?.hidden !== false) await startApp();
+    });
+    bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
+
+  } catch (err) {
+    console.error('EXCEPTION IN BOOT:', err);
     showAuthScreen();
     hideBootSplash();
   }
-
-  bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
-    if (byId('app-shell')?.hidden !== false) await startApp();
-  });
-  bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
 });
 
 async function startApp() {
   showLoader('در حال آماده‌سازی…');
-  
-  await registerRoutes();
-  mountAppShell();
-  showAppShell();
+  try {
+    await registerRoutes();
+    mountAppShell();
+    showAppShell();
 
-  const container = byId('page-container');
-  if (container) {
-    container.innerHTML = '';
-    router.start(container);
+    const container = byId('page-container');
+    if (container) {
+      container.innerHTML = '';
+      router.start(container);
+    }
+
+    registerGlobalShortcuts();
+    shortcuts.start();
+  } catch (err) {
+    console.error('EXCEPTION IN STARTAPP:', err);
+  } finally {
+    hideBootSplash();
+    hideLoader();
   }
-
-  registerGlobalShortcuts();
-  shortcuts.start();
-
-  hideBootSplash();
-  hideLoader();
 }
 
 function stopApp() {
@@ -122,6 +144,9 @@ function hideBootSplash() {
   if (!splash) return;
   splash.style.display = 'none';
   splash.classList.add('is-hidden');
+  setTimeout(() => { 
+    if (splash.parentNode) splash.parentNode.removeChild(splash); 
+  }, 700);
 }
 
 function fatalConfig() {
