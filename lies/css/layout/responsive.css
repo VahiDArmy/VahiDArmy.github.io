@@ -1,8 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Mobile layout is now completely isolated. .app-shell 
-          becomes display: block, so the sidebar doesn't take up 
-          grid/flex space and acts purely as a drawer.
+   NEW METHOD: Mobile overrides. Removes margins and turns 
+   sidebar into an off-screen drawer.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -15,54 +14,54 @@
 /* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
   
-  /* Make the app shell a normal block on mobile */
-  .app-shell {
-    display: block;
+  /* 1. Main content takes full width (no margin) */
+  .app-main,
+  .app-shell.is-sidebar-collapsed .app-main {
+    margin-right: 0 !important;
+    width: 100% !important;
   }
 
-  /* Sidebar becomes a fixed drawer */
-  .sidebar {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    right: 0; /* RTL */
-    width: 280px !important; /* Force width even if collapsed state exists */
-    z-index: 1000;
-    transform: translateX(100%); /* Hide off-screen */
+  /* 2. Sidebar becomes an off-screen drawer */
+  .sidebar,
+  .app-shell.is-sidebar-collapsed .sidebar {
+    width: 280px !important; /* Override collapsed width */
+    transform: translateX(100%); /* Hide off the right edge */
     transition: transform var(--dur-base) var(--ease-standard);
     box-shadow: none;
-    border-inline-end: none;
-    border-inline-start: 1px solid var(--border);
+    border-left: none;
+    border-right: 1px solid var(--border);
   }
 
-  /* Opened state */
-  .app-shell.is-mobile-sidebar-open .sidebar {
+  /* 3. Open state */
+  .app-shell.is-mobile-sidebar-open .sidebar,
+  .app-shell.is-sidebar-collapsed.is-mobile-sidebar-open .sidebar {
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
 
-  /* Backdrop */
+  /* 4. Backdrop */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
     background: var(--bg-overlay);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    z-index: 999;
+    z-index: 99;
     opacity: 0;
     transition: opacity var(--dur-base);
   }
   .sidebar-backdrop.is-visible { opacity: 1; }
 
+  /* 5. Hide collapse button, show mobile menu */
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   
+  /* 6. Prevent body scroll when drawer is open */
   body.has-drawer { overflow: hidden; }
   
   .page-container { padding: var(--s-4); }
 }
 
-/* Hide search on smaller screens to prevent topbar overflow */
 @media (max-width: 768px) {
   .topbar__search { display: none; }
   .topbar { padding-inline: var(--s-3); }
