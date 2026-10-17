@@ -1,7 +1,9 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: 100% Bulletproof mobile layout. No transforms. 
-          Just display: none and display: flex.
+   FIXED: 
+     1. z-index for sidebar is now 10000 and backdrop is 9999.
+     2. Removed backdrop-filter: blur() because it blocks clicks
+        on mobile browsers.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -19,7 +21,7 @@
     height: 100%;
   }
 
-  /* Sidebar: hidden by default, shown when class is added */
+  /* Sidebar Drawer */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
     display: none !important;
@@ -28,7 +30,7 @@
     bottom: 0;
     right: 0;
     width: 280px !important;
-    z-index: 1000;
+    z-index: 10000; /* 🛡️ Higher than backdrop */
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow-xl);
   }
@@ -43,9 +45,8 @@
     position: fixed;
     inset: 0;
     background: rgba(5, 5, 9, 0.7);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    z-index: 999;
+    /* 🛡️ REMOVED backdrop-filter: blur() — it blocks clicks on mobile */
+    z-index: 9999; 
   }
   
   .app-shell.is-mobile-sidebar-open .sidebar-backdrop {
