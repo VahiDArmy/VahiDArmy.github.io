@@ -1,0 +1,12 @@
+.top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:20px;padding:12px 24px;background:rgba(10,12,20,.75);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.top nav{display:flex;gap:6px;flex:1}
+.brand{font-size:19px;background:linear-gradient(90deg,var(--primary),var(--primary-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.navlink{color:var(--muted);text-decoration:none;padding:6px 14px;border-radius:10px;transition:.2s}
+.navlink:hover,.navlink.on{color:var(--text);background:var(--surface-2)}
+.content{max-width:1000px;margin:0 auto;padding:28px 20px;animation:rise .4s var(--ease)}
+.center{min-height:100vh;display:grid;place-items:center;padding:20px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-bottom:16px}
+.grid.two{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center}
+.toolbar input[type=search]{flex:1;min-width:180px}
+@media(max-width:640px){.top{padding:10px 12px;gap:8px}}

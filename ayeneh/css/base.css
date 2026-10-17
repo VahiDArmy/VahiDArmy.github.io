@@ -1,0 +1,11 @@
+*{box-sizing:border-box;margin:0}
+html{color-scheme:dark}
+body{font:400 15px/1.8 var(--font);color:var(--text);min-height:100vh;
+background:radial-gradient(900px 500px at 85% -10%,#2b1d63,transparent 60%),radial-gradient(700px 400px at 0 110%,#0d3550,transparent 60%),var(--bg)}
+h1,h2,h3{font-weight:800;line-height:1.4}
+.muted{color:var(--muted);font-size:13px}
+:focus-visible{outline:2px solid var(--primary-2);outline-offset:2px}
+::-webkit-scrollbar{width:10px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:9px}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes fade{from{opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

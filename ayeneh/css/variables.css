@@ -1,0 +1,4 @@
+:root{--bg:#0a0c14;--surface:#11141f;--surface-2:#181c2b;--border:#262b40;--text:#e9ebf5;--muted:#8a91ab;
+--primary:#8b5cf6;--primary-2:#22d3ee;--danger:#ff5d73;--ok:#34d399;--warn:#fbbf24;
+--radius:14px;--shadow:0 10px 40px rgba(0,0,0,.45);--glow:0 0 24px rgba(139,92,246,.35);
+--ease:cubic-bezier(.2,.8,.2,1);--font:'Vazirmatn',system-ui,sans-serif}
