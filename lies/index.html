@@ -13,8 +13,8 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- 🛡️ Cache Buster added: ?v=13 -->
-  <link rel="stylesheet" href="css/main.css?v=13" />
+  <!-- 🛡️ Cache Buster: ?v=14 -->
+  <link rel="stylesheet" href="css/main.css?v=14" />
 
   <script>
     window.addEventListener('error', function(e) {
@@ -27,7 +27,7 @@
   </script>
   
   <style>
-    /* 🛡️ CRITICAL FIX: Force hidden elements to actually be hidden */
+    /* Absolute fallback for hidden elements */
     [hidden] { display: none !important; }
     #boot-splash.is-hidden { display: none !important; }
   </style>
@@ -39,9 +39,7 @@
       <div class="boot-splash__mark">🎭</div>
       <div class="boot-splash__ring"></div>
       <p class="boot-splash__text">در حال آماده‌سازی فضای خصوصی شما…</p>
-      
       <button id="show-logs-btn" type="button" onclick="document.getElementById('debug-log-panel').style.transform='translateY(0)'">مشاهده وضعیت سیستم (لاگ)</button>
-      
       <pre id="inline-error-log" style="display: none; text-align: left; direction: ltr; font-size: 11px; color: #ff6b6b; background: #000; padding: 16px; border-radius: 8px; border: 1px solid #ff6b6b; max-width: 90vw; max-height: 40vh; overflow: auto; margin-top: 20px; white-space: pre-wrap; font-family: monospace; z-index: 99999; position: relative;"></pre>
     </div>
   </div>
@@ -220,7 +218,7 @@
   <div id="confirm-root" class="confirm-root"></div>
   <div id="debug-log-panel" class="debug-log-panel" style="transform: translateY(100%);"></div>
 
-  <!-- 🛡️ Cache Buster added: ?v=13 -->
-  <script type="module" src="js/main.js?v=13"></script>
+  <!-- 🛡️ Cache Buster: ?v=14 -->
+  <script type="module" src="js/main.js?v=14"></script>
 </body>
 </html>
