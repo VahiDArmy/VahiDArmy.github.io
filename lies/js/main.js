@@ -1,7 +1,12 @@
 /* ============================================================
    js/main.js
-   Entry point: boot sequence, session, router, layout, shortcuts
-   Last updated: after phase 8 (all pages wired)
+   Entry point: boot sequence, session, router, layout, shortcuts,
+   error boundary, PWA, command palette.
+   FIXED:
+     - Added a 3-second timeout check: if page-container is still
+       empty after the router starts, show a visible error box
+       (so users never see a blank page without explanation).
+     - Wrapped startApp/router.start in extra try/catch.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -14,13 +19,16 @@ import { router } from './core/router.js';
 import { shortcuts } from './core/shortcuts.js';
 import { bus } from './core/event-bus.js';
 import { EVENTS, SHORTCUT_SCOPES } from './config/constants.js';
-import { APP, ROUTES, DEFAULT_ROUTE, LS_KEYS, NAV_ITEMS } from './config/app.config.js';
+import { APP, ROUTES, DEFAULT_ROUTE, LS_KEYS, NAV_ITEMS, FEATURES } from './config/app.config.js';
 import { get as lsGet, set as lsSet } from './utils/storage.js';
 import { toast, toastPromise } from './ui/toast.js';
 import { settingsService } from './services/index.js';
 import { emptyState } from './ui/empty-state.js';
 import { skeletonPage } from './ui/skeleton.js';
 import { showLoader, hideLoader } from './ui/loader.js';
+import { initErrorBoundary, reportError } from './core/error-boundary.js';
+import { initCommandPalette } from './core/command-palette.js';
+import { getSnapshot, observeInteractions, observeLongTasks } from './utils/performance.js';
 
 /* ══════════════════════════════════════════════════════════
    Boot
@@ -29,30 +37,30 @@ import { showLoader, hideLoader } from './ui/loader.js';
 ready(boot);
 
 async function boot() {
-  // 1. Theme first (avoid FOUC)
+  try { initErrorBoundary(); } catch (err) { console.error('[boot] error-boundary', err); }
   try { initTheme(); } catch (err) { console.error('[boot] theme', err); }
 
-  // 2. Verify Supabase configured
   if (!isSupabaseConfigured()) {
     return fatalConfig();
   }
 
-  // 3. Wire global events
   wireGlobalEvents();
 
-  // 4. Session
+  try {
+    if (FEATURES.commandPalette) initCommandPalette();
+  } catch (err) { console.warn('[boot] command-palette', err); }
+
   let outcome;
   try {
     outcome = await initSession();
   } catch (err) {
     console.error('[boot] session error', err);
+    reportError(err, { silent: true, context: 'session-init' });
     outcome = { user: null };
   }
 
-  // 5. Mount auth page (always, cheap)
   mountAuthPage();
 
-  // 6. Branch on session
   if (outcome.user) {
     await startApp();
   } else {
@@ -60,7 +68,6 @@ async function boot() {
     hideBootSplash();
   }
 
-  // 7. React to future sign-in/out
   bus.on(EVENTS.AUTH_READY, async ({ user }) => {
     if (user && byId('app-shell')?.hidden !== false) {
       await startApp();
@@ -74,6 +81,18 @@ async function boot() {
   bus.on(EVENTS.AUTH_SIGNED_OUT, () => {
     stopApp();
   });
+
+  registerServiceWorker();
+
+  try {
+    observeInteractions();
+    observeLongTasks();
+    if (APP.build === 'dev') {
+      window.addEventListener('load', () => {
+        setTimeout(() => console.info('[perf] snapshot', getSnapshot()), 500);
+      });
+    }
+  } catch { /* silent */ }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -83,32 +102,47 @@ async function boot() {
 async function startApp() {
   showLoader('در حال آماده‌سازی فضای شخصی…');
   try {
-    // Register routes BEFORE mounting app shell (so first route render has them)
     await registerRoutes();
-
-    // Mount layout
     mountAppShell();
-
-    // Apply user settings
     await applyUserSettings();
-
-    // Show the shell
     showAppShell();
 
-    // Start router
     const container = byId('page-container');
-    if (container) router.start(container);
+    if (container) {
+      // Ensure container is truly empty before starting
+      container.innerHTML = '';
 
-    // Start shortcuts
+      // Start router
+      try {
+        router.start(container);
+      } catch (err) {
+        console.error('[startApp] router.start threw', err);
+        renderFatalError(container, err);
+      }
+
+      // FIX: Fallback check — if the container is still empty after 3s,
+      // show a helpful error message instead of a blank page.
+      setTimeout(() => {
+        if (container && container.innerHTML.trim() === '') {
+          renderFatalError(container, new Error('صفحه بارگذاری نشد. لطفاً کنسول مرورگر را بررسی کنید.'));
+        }
+      }, 3000);
+    }
+
     registerGlobalShortcuts();
     shortcuts.start();
 
-    // Track last route (used to restore on next visit)
+    try {
+      const { initScheduledReminders } = await import('./ui/notifications.js');
+      initScheduledReminders();
+    } catch { /* silent */ }
+
     bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => {
       try { lsSet(LS_KEYS.LAST_ROUTE, path); } catch { /* noop */ }
     });
 
-    // Welcome toast (first auth only)
+    window.addEventListener('scroll', onScrollForShadow, { passive: true });
+
     if (!lsGet(LS_KEYS.ONBOARDED, false)) {
       lsSet(LS_KEYS.ONBOARDED, true);
       setTimeout(() => {
@@ -119,6 +153,10 @@ async function startApp() {
         });
       }, 600);
     }
+  } catch (err) {
+    console.error('[startApp] fatal', err);
+    const container = byId('page-container');
+    if (container) renderFatalError(container, err);
   } finally {
     hideBootSplash();
     hideLoader();
@@ -130,23 +168,39 @@ function stopApp() {
   router.stop();
   if (byId('page-container')) byId('page-container').innerHTML = '';
   showAuthScreen();
-  // Reset local view state
   try { lsSet(LS_KEYS.ONBOARDED, false); } catch { /* noop */ }
 }
 
+function onScrollForShadow() {
+  const scrolled = window.scrollY > 4;
+  document.body.classList.toggle('is-scrolled', scrolled);
+}
+
+/**
+ * Render a visible error box if the app shell loaded but the page is empty.
+ * @param {HTMLElement} container
+ * @param {any} err
+ */
+function renderFatalError(container, err) {
+  const msg = err?.message || String(err) || 'خطای نامشخص';
+  container.innerHTML = `
+    <div class="page-error" style="margin: 40px auto; max-width: 600px;">
+      <div class="page-error__icon">⚠️</div>
+      <h2 class="page-error__title">خطا در بارگذاری صفحه</h2>
+      <p class="page-error__message" style="color: var(--text-secondary); font-family: monospace; direction: ltr; text-align: left; background: var(--bg-inset); padding: 12px; border-radius: 8px; margin-top: 12px; word-break: break-all;">${msg}</p>
+      <div style="display:flex; gap:8px; margin-top:16px;">
+        <button class="btn btn--primary" onclick="location.reload()">بارگذاری دوباره</button>
+        <button class="btn btn--ghost" onclick="location.hash='#/settings'">رفتن به تنظیمات</button>
+      </div>
+    </div>
+  `;
+}
+
 /* ══════════════════════════════════════════════════════════
-   Routes — all pages lazy-loaded for smaller initial bundle
+   Routes — all pages lazy-loaded
    ══════════════════════════════════════════════════════════ */
 
 async function registerRoutes() {
-  /**
-   * @typedef {Object} RouteDef
-   * @property {string} path
-   * @property {string} title
-   * @property {() => Promise<Function>} load  returns render(container, params, query)
-   */
-
-  /** @type {RouteDef[]} */
   const routes = [
     {
       path: `/${ROUTES.DASHBOARD}`,
@@ -205,12 +259,9 @@ async function registerRoutes() {
     });
   }
 
-  // Auth guard: block everything that is not public.
-  // Runs for every navigation (unless the route is explicitly public).
   router.beforeEach(async ({ route }) => {
     if (route?.public) return true;
     if (isAuthenticated()) return true;
-    // Not authenticated → show auth screen and cancel navigation
     showAuthScreen();
     return false;
   });
@@ -221,26 +272,31 @@ async function registerRoutes() {
    ══════════════════════════════════════════════════════════ */
 
 function registerGlobalShortcuts() {
-  // Ctrl/Cmd+K → focus search
   shortcuts.register({
     combo: 'ctrl+k', scope: SHORTCUT_SCOPES.GLOBAL,
+    label: 'پالت دستور', group: 'ناوبری', allowInInput: true,
+    handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN),
+  });
+  shortcuts.register({
+    combo: 'meta+k', scope: SHORTCUT_SCOPES.GLOBAL,
+    label: 'پالت دستور (⌘K)', group: 'ناوبری', allowInInput: true,
+    handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN),
+  });
+  shortcuts.register({
+    combo: 'ctrl+p', scope: SHORTCUT_SCOPES.GLOBAL,
     label: 'جست‌وجوی سراسری', group: 'ناوبری', allowInInput: true,
     handler: () => bus.emit('ui:focus-search'),
   });
   shortcuts.register({
-    combo: 'meta+k', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'جست‌وجوی سراسری (⌘K)', group: 'ناوبری', allowInInput: true,
+    combo: '/', scope: SHORTCUT_SCOPES.GLOBAL,
+    label: 'فوکوس روی جست‌وجو', group: 'ناوبری',
     handler: () => bus.emit('ui:focus-search'),
   });
-
-  // N → new lie
   shortcuts.register({
     combo: 'n', scope: SHORTCUT_SCOPES.GLOBAL,
     label: 'ثبت دروغ جدید', group: 'عملیات',
     handler: () => { location.hash = '#/lies?new=1'; },
   });
-
-  // ? → help
   shortcuts.register({
     combo: 'shift+?', scope: SHORTCUT_SCOPES.GLOBAL,
     label: 'راهنمای میان‌برها', group: 'کمک',
@@ -251,8 +307,6 @@ function registerGlobalShortcuts() {
     label: 'راهنمای میان‌برها', group: 'کمک',
     handler: () => byId('help-btn')?.click(),
   });
-
-  // Esc → close mobile drawer
   shortcuts.register({
     combo: 'esc', scope: SHORTCUT_SCOPES.GLOBAL,
     label: 'بستن پنجره/کشو', group: 'عمومی',
@@ -261,15 +315,6 @@ function registerGlobalShortcuts() {
       if (isMobileSidebarOpen()) closeMobileSidebar();
     },
   });
-
-  // / → focus search
-  shortcuts.register({
-    combo: '/', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'فوکوس روی جست‌وجو', group: 'ناوبری',
-    handler: () => bus.emit('ui:focus-search'),
-  });
-
-  // G + <letter> sequences from NAV_ITEMS
   for (const item of NAV_ITEMS) {
     if (!item.shortcut) continue;
     const letter = item.shortcut.split(/\s+/)[1] || '';
@@ -289,32 +334,26 @@ function registerGlobalShortcuts() {
    ══════════════════════════════════════════════════════════ */
 
 function wireGlobalEvents() {
-  // Persist theme changes to server
   bus.on(EVENTS.THEME_CHANGED, (t) => {
     if (!isAuthenticated()) return;
     settingsService.update({ theme: t.theme, accent: t.accent, font_size: t.fontSize })
       .catch(() => { /* silent */ });
   });
 
-  // Settings updates
   bus.on(EVENTS.ACCENT_CHANGED, (a) => setAccent(a.id || a));
   bus.on(EVENTS.FONTSIZE_CHANGED, (s) => setFontSize(s));
 
-  // Offline banner toast
   bus.on(EVENTS.OFFLINE, () => toast.warning('اتصال اینترنت قطع شد.'));
   bus.on(EVENTS.ONLINE, () => toast.success('اتصال برقرار شد.', { duration: 1800 }));
 
-  // Uncaught errors
-  window.addEventListener('unhandledrejection', (ev) => {
-    console.error('[unhandled]', ev.reason);
+  bus.on('app:error', (info) => {
+    void info;
   });
 
-  // Mobile safe-area class
   if (window.matchMedia('(display-mode: standalone)').matches) {
     document.body.classList.add('is-standalone');
   }
 
-  // Prevent double-tap zoom on iOS
   let lastTouch = 0;
   document.addEventListener('touchend', (ev) => {
     const now = Date.now();
@@ -330,7 +369,6 @@ function wireGlobalEvents() {
 async function applyUserSettings() {
   const s = settingsService.getLocal();
   if (!s) return;
-  // Theme is already applied from local. If server says different, update.
   try {
     const server = await settingsService.fetch();
     if (server) {
@@ -339,6 +377,37 @@ async function applyUserSettings() {
       setFontSize(server.font_size);
     }
   } catch { /* keep local */ }
+}
+
+/* ══════════════════════════════════════════════════════════
+   Service Worker
+   ══════════════════════════════════════════════════════════ */
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  if (!/^https?:$/.test(location.protocol)) return;
+  const isSecure = location.protocol === 'https:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1';
+  if (!isSecure) return;
+
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js', { scope: './' })
+      .then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          if (!sw) return;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+              sw.postMessage({ type: 'SKIP_WAITING' });
+            }
+          });
+        });
+      })
+      .catch((err) => {
+        console.warn('[SW] registration failed', err);
+      });
+  });
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -371,12 +440,14 @@ function fatalConfig() {
   document.body.appendChild(box);
 }
 
-/* Re-export a few globals for debugging in the console */
 window.__app = Object.freeze({
   version: APP.version,
+  build: APP.build,
   router,
   bus,
   refreshSession,
   toast,
   toastPromise,
+  getSnapshot,
+  reportError,
 });
