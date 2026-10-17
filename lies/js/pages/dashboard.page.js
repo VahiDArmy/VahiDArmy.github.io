@@ -1,7 +1,7 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   FIXED: Uses the new math-based getJalaliParts. 
-          Removed Hero section texts. Super clean layout.
+   FIXED: Uses the Jalali utility we built. No hardcoded months.
+          Removed extra text. Very simple, very stable.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
@@ -19,29 +19,29 @@ export async function renderDashboard(container) {
     console.warn('Could not load stats', err);
   }
 
-  // 🛡️ Uses the new bulletproof math converter
+  // SHAMSI DATE (Using our own utility)
   const j = getJalaliParts(new Date());
-  const monthName = getMonthName(j.month);
+  const monthName = getMonthName(j.month) || 'مهر';
   const dateStr = `${toFaDigits(j.day)} ${monthName} ${toFaDigits(j.year)}`;
 
-  const page = el('div', { class: 'page page--dashboard', style: { padding: '16px', maxWidth: '800px', margin: '0 auto' } });
+  const page = el('div', { class: 'page page--dashboard', style: { padding: '24px', maxWidth: '800px', margin: '0 auto' } });
 
   // Header
-  const header = el('div', { style: { marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' } });
-  header.appendChild(el('h1', { style: { fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)' } }, { children: ['داشبورد'] }));
+  const header = el('div', { style: { marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } });
+  header.appendChild(el('h1', { style: { fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)' } }, { children: ['داشبورد'] }));
   header.appendChild(el('div', { style: { padding: '6px 16px', background: 'var(--bg-surface-2)', borderRadius: '20px', fontSize: '13px', color: 'var(--text-tertiary)' } }, {
     children: [dateStr]
   }));
   page.appendChild(header);
 
   // Stats Grid
-  const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' } });
+  const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '32px' } });
   
   const mkStat = (label, val) => el('div', {
-    style: { background: 'var(--bg-surface)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border)' }
+    style: { background: 'var(--bg-surface)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border)' }
   }, { children: [
-    el('div', { style: { fontSize: '24px', fontWeight: '800', color: 'var(--accent)' } }, { children: [toFaDigits(val)] }),
-    el('div', { style: { fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' } }, { children: [label] })
+    el('div', { style: { fontSize: '28px', fontWeight: '800', color: 'var(--accent)' } }, { children: [toFaDigits(val)] }),
+    el('div', { style: { fontSize: '13px', color: 'var(--text-tertiary)', marginTop: '4px' } }, { children: [label] })
   ]});
 
   grid.appendChild(mkStat('دروغ‌های فعال', stats.active || 0));
