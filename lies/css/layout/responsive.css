@@ -1,6 +1,8 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Mobile Drawer logic fixed. Clean slide-in from right.
+   FIXED: Mobile layout is now completely isolated. .app-shell 
+          becomes display: block, so the sidebar doesn't take up 
+          grid/flex space and acts purely as a drawer.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -13,15 +15,20 @@
 /* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
   
-  /* Sidebar Drawer */
+  /* Make the app shell a normal block on mobile */
+  .app-shell {
+    display: block;
+  }
+
+  /* Sidebar becomes a fixed drawer */
   .sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
-    right: 0; /* RTL: right side */
-    width: 280px; /* Fixed width, not percentage */
-    z-index: 200;
-    transform: translateX(100%); /* Hide off-screen right */
+    right: 0; /* RTL */
+    width: 280px !important; /* Force width even if collapsed state exists */
+    z-index: 1000;
+    transform: translateX(100%); /* Hide off-screen */
     transition: transform var(--dur-base) var(--ease-standard);
     box-shadow: none;
     border-inline-end: none;
@@ -41,7 +48,7 @@
     background: var(--bg-overlay);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    z-index: 199;
+    z-index: 999;
     opacity: 0;
     transition: opacity var(--dur-base);
   }
@@ -55,6 +62,14 @@
   .page-container { padding: var(--s-4); }
 }
 
-@media (max-width: 480px) {
+/* Hide search on smaller screens to prevent topbar overflow */
+@media (max-width: 768px) {
   .topbar__search { display: none; }
+  .topbar { padding-inline: var(--s-3); }
+  .topbar__breadcrumb { max-width: 60%; }
+}
+
+@media (max-width: 480px) {
+  .page-title { font-size: var(--fs-2xl); }
+  .page-title__icon { width: 38px; height: 38px; font-size: 18px; }
 }
