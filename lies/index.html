@@ -132,15 +132,11 @@
     <aside id="sidebar" class="sidebar" aria-label="ناوبری اصلی">
       <div class="sidebar__brand">
         <span class="sidebar__brand-mark">🎭</span>
-        <div class="sidebar__brand-text">
-          <strong>آینهٔ درون</strong>
-        </div>
+        <div class="sidebar__brand-text"><strong>آینهٔ درون</strong></div>
         <button class="sidebar__collapse icon-btn" id="sidebar-collapse-btn" type="button" aria-label="جمع کردن">⟨</button>
       </div>
       <nav class="sidebar__nav" id="sidebar-nav" aria-label="صفحات"></nav>
-      <div class="sidebar__foot">
-        <div class="sidebar__user" id="sidebar-user"></div>
-      </div>
+      <div class="sidebar__foot"><div class="sidebar__user" id="sidebar-user"></div></div>
     </aside>
 
     <div class="app-main">
@@ -163,10 +159,8 @@
         <span>نسخه <span data-app-version>—</span></span>
       </footer>
     </div>
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   </div>
-
-  <!-- 🛡️ THE FIX: Backdrop is now a direct child of body, not inside app-shell -->
-  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
   <div id="modal-root" class="modal-root"></div>
   <div id="toast-root" class="toast-root"></div>
