@@ -1,8 +1,7 @@
 /* ============================================================
    css/features/lies.css
-   FIXED: Mobile Toolbar is now a vertical flex stack (no 
-          overlapping). Mobile filter panel is a full-screen fixed 
-          overlay.
+   FIXED: Sticky toolbar top offset changed to 0 because the 
+          scroll container is now .page-container, not body.
    ============================================================ */
 
 .page--lies { gap: var(--s-5); }
@@ -10,8 +9,11 @@
 /* ── Toolbar host ────────────────────────────────────────── */
 .lies-toolbar-host {
   position: sticky;
-  top: calc(var(--topbar-h) + 8px);
+  top: 0; /* 🛡️ FIXED: Was calc(var(--topbar-h) + 8px) */
   z-index: 30;
+  padding-block: 8px;
+  /* Solid background to hide content scrolling behind it */
+  background: var(--bg-base); 
   margin-bottom: var(--s-2);
 }
 
@@ -86,7 +88,7 @@
   grid-template-columns: minmax(0, 1fr) 320px;
 }
 
-/* FILTERS PANEL (Mobile Fix) */
+/* FILTERS PANEL */
 @media (max-width: 900px) {
   .lies-layout.has-filters {
     grid-template-columns: minmax(0, 1fr);
@@ -95,7 +97,7 @@
   .lies-filters-host {
     position: fixed;
     inset: 0;
-    z-index: 200;
+    z-index: 2000; /* Ensure it's above everything */
     background: var(--bg-base);
     padding: var(--s-4);
     overflow-y: auto;
