@@ -1,12 +1,14 @@
 /* ============================================================
    js/config/app.config.js
-   Application-level configuration
+   UPDATED: LIE_TYPES and MOODS now include description & example.
+   These are fallbacks if the DB fails to load, and also serve
+   as the initial data structure.
    ============================================================ */
 
 export const APP = Object.freeze({
   name: 'آینهٔ درون',
   fullName: 'دروغ‌هایی که به خودمان می‌گوییم',
-  version: '0.1.0',
+  version: '1.0.0',
   build: 'dev',
   defaultLocale: 'fa-IR',
   defaultDir: 'rtl',
@@ -27,7 +29,6 @@ export const ROUTES = Object.freeze({
 
 export const DEFAULT_ROUTE = ROUTES.DASHBOARD;
 
-/** Sidebar navigation definition. */
 export const NAV_ITEMS = Object.freeze([
   { id: ROUTES.DASHBOARD, label: 'داشبورد',      icon: '🏠', shortcut: 'G D', group: 'main' },
   { id: ROUTES.LIES,      label: 'دروغ‌ها',      icon: '🎭', shortcut: 'G L', group: 'main', badgeKey: 'lies' },
@@ -39,40 +40,38 @@ export const NAV_ITEMS = Object.freeze([
   { id: ROUTES.ABOUT,     label: 'درباره',       icon: 'ℹ️', shortcut: 'G H', group: 'system' },
 ]);
 
-/** Lie "type" taxonomy — used in the editor and analytics. */
+// 🛡️ Updated with description and example
 export const LIE_TYPES = Object.freeze([
-  { id: 'self_doubt',   label: 'تردید به خود',        icon: '🪞', color: 'var(--cat-1)' },
-  { id: 'procrastination', label: 'به تعویق انداختن', icon: '⏳', color: 'var(--cat-4)' },
-  { id: 'denial',       label: 'انکار واقعیت',        icon: '🙈', color: 'var(--cat-7)' },
-  { id: 'excuse',       label: 'بهانه‌تراشی',         icon: '🧩', color: 'var(--cat-6)' },
-  { id: 'comparison',   label: 'مقایسه با دیگران',    icon: '⚖️', color: 'var(--cat-5)' },
-  { id: 'perfectionism',label: 'کمال‌گرایی افراطی',   icon: '💎', color: 'var(--cat-8)' },
-  { id: 'avoidance',    label: 'اجتناب',              icon: '🚪', color: 'var(--cat-2)' },
-  { id: 'control',      label: 'توهم کنترل',          icon: '🎛️', color: 'var(--cat-3)' },
-  { id: 'deserving',    label: 'ناشایستگی',           icon: '🕳️', color: 'var(--cat-1)' },
-  { id: 'other',        label: 'دیگر',                icon: '✳️', color: 'var(--text-tertiary)' },
+  { id: 'self_doubt',     label: 'تردید به خود',        icon: '🪞', color: 'var(--cat-1)', description: 'توهم ناتوانی و بی‌کفایتی در برابر چالش‌ها.', example: 'من هیچ‌وقت نمی‌تونم از پس این کار بربیام.' },
+  { id: 'procrastination', label: 'به تعویق انداختن',   icon: '⏳', color: 'var(--cat-4)', description: 'فرار از سختیِ لحظه با وعده‌ی فردا.', example: 'فردا با انرژی شروع می‌کنم.' },
+  { id: 'denial',         label: 'انکار واقعیت',        icon: '🙈', color: 'var(--cat-7)', description: 'چشم بستن روی حقیقتی که آزاردهنده است.', example: 'مشکلی وجود نداره، همه چیز خوبه.' },
+  { id: 'excuse',         label: 'بهانه‌تراشی',         icon: '🧩', color: 'var(--cat-6)', description: 'ساختن دلیل و منطق برای توجیه فرار.', example: 'من وقت کافی برای این کار ندارم.' },
+  { id: 'comparison',     label: 'مقایسه با دیگران',    icon: '⚖️', color: 'var(--cat-5)', description: 'احساس کمبود در مقایسه با موفقیت دیگران.', example: 'همه از من موفق‌ترن.' },
+  { id: 'perfectionism',  label: 'کمال‌گرایی افراطی',   icon: '💎', color: 'var(--cat-8)', description: 'ترس از ناقص بودن که مانع شروع کار می‌شود.', example: 'اگه کامل نباشه، بی‌ارزشه.' },
+  { id: 'avoidance',      label: 'اجتناب',              icon: '🚪', color: 'var(--cat-2)', description: 'دور ماندن از موقعیت‌هایی که ترسناک‌اند.', example: 'من برای این موقعیت ساخته نشدم.' },
+  { id: 'control',        label: 'توهم کنترل',          icon: '🎛️', color: 'var(--cat-3)', description: 'باور غلط به اینکه همه‌چیز باید در کنترل ما باشد.', example: 'اگه همه چیز رو خودم مدیریت نکنم، خراب میشه.' },
+  { id: 'deserving',      label: 'ناشایستگی',           icon: '🕳️', color: 'var(--cat-1)', description: 'باور ریشه‌ای به اینکه لایق عشق و موفقیت نیستیم.', example: 'من لایق خوشحال بودن نیستم.' },
+  { id: 'other',          label: 'دروغ دیگر',           icon: '✳️', color: 'var(--text-tertiary)', description: 'هر دروغی که در دسته‌های بالا نگنجد.', example: 'یک دروغ تازه...' },
 ]);
 
-/** Emotional tones that can be attached to a lie. */
+// 🛡️ Updated with description
 export const MOODS = Object.freeze([
-  { id: 'calm',     label: 'آرام',       icon: '😌', score:  2 },
-  { id: 'neutral',  label: 'خنثی',       icon: '😐', score:  0 },
-  { id: 'anxious',  label: 'مضطرب',      icon: '😰', score: -2 },
-  { id: 'sad',      label: 'غمگین',      icon: '😔', score: -1 },
-  { id: 'angry',    label: 'خشمگین',     icon: '😠', score: -2 },
-  { id: 'ashamed',  label: 'شرمنده',     icon: '😖', score: -3 },
-  { id: 'hopeful',  label: 'امیدوار',    icon: '🌤️', score:  3 },
-  { id: 'proud',    label: 'سربلند',     icon: '🌟', score:  3 },
+  { id: 'calm',     label: 'آرام',       icon: '😌', score:  2, description: 'احساس تعادل و نداشتن تنش.' },
+  { id: 'neutral',  label: 'خنثی',       icon: '😐', score:  0, description: 'بدون احساس خاصی، نه خوب و نه بد.' },
+  { id: 'anxious',  label: 'مضطرب',      icon: '😰', score: -2, description: 'احساس نگرانی و دلشوره از آینده.' },
+  { id: 'sad',      label: 'غمگین',      icon: '😔', score: -1, description: 'احساس اندوه و از دست دادن انرژی.' },
+  { id: 'angry',    label: 'خشمگین',     icon: '😠', score: -2, description: 'احساس نارضایتی و فشار درونی.' },
+  { id: 'ashamed',  label: 'شرمنده',     icon: '😖', score: -3, description: 'احساس خجالت و قضاوت شدن توسط خود.' },
+  { id: 'hopeful',  label: 'امیدوار',    icon: '🌤️', score:  3, description: 'نگاه مثبت و باور به بهتر شدن.' },
+  { id: 'proud',    label: 'سربلند',     icon: '🌟', score:  3, description: 'احساس غرور و رضایت از خود.' },
 ]);
 
-/** Statuses a lie can be in. */
 export const LIE_STATUS = Object.freeze({
   ACTIVE: 'active',
   ARCHIVED: 'archived',
   TRASHED: 'trashed',
 });
 
-/** Sorting options for the lies list. */
 export const SORT_OPTIONS = Object.freeze([
   { id: 'created_desc',  label: 'جدیدترین' },
   { id: 'created_asc',   label: 'قدیمی‌ترین' },
@@ -86,10 +85,8 @@ export const SORT_OPTIONS = Object.freeze([
   { id: 'title_asc',     label: 'عنوان (الفبا)' },
 ]);
 
-/** Page sizes available in the lies list. */
 export const PAGE_SIZES = Object.freeze([12, 24, 48, 96]);
 
-/** View modes for the lies list. */
 export const VIEW_MODES = Object.freeze({
   GRID: 'grid',
   LIST: 'list',
@@ -97,7 +94,6 @@ export const VIEW_MODES = Object.freeze({
   TIMELINE: 'timeline',
 });
 
-/** Toast default durations (ms). */
 export const TOAST_DURATION = Object.freeze({
   short: 2600,
   normal: 4200,
@@ -105,7 +101,6 @@ export const TOAST_DURATION = Object.freeze({
   sticky: 0,
 });
 
-/** LocalStorage keys (prefixed). */
 export const LS_KEYS = Object.freeze({
   THEME: 'theme',
   ACCENT: 'accent',
@@ -120,7 +115,6 @@ export const LS_KEYS = Object.freeze({
   REMEMBER_EMAIL: 'auth:remember-email',
 });
 
-/** Feature flags — flip to enable/disable subsystems. */
 export const FEATURES = Object.freeze({
   realtime: false,
   reminders: true,
@@ -134,7 +128,6 @@ export const FEATURES = Object.freeze({
   offlineQueue: false,
 });
 
-/** Limits to keep the UI sane & protect the DB. */
 export const LIMITS = Object.freeze({
   titleMax: 140,
   bodyMax: 12000,
@@ -151,5 +144,4 @@ export const LIMITS = Object.freeze({
   globalSearchLimit: 8,
 });
 
-/** Storage quota assumption for the sidebar progress meter (bytes). */
 export const STORAGE_QUOTA_BYTES = 50 * 1024 * 1024;
