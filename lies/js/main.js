@@ -1,12 +1,7 @@
 /* ============================================================
    js/main.js
-   Entry point: boot sequence, session, router, layout, shortcuts,
-   error boundary, PWA, command palette.
-   FIXED:
-     - Added a 3-second timeout check: if page-container is still
-       empty after the router starts, show a visible error box
-       (so users never see a blank page without explanation).
-     - Wrapped startApp/router.start in extra try/catch.
+   Entry point: boot sequence, session, router, layout, shortcuts.
+   FIXED: Added initDebugLogger and auto-open log on timeout.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -29,6 +24,7 @@ import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary, reportError } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 import { getSnapshot, observeInteractions, observeLongTasks } from './utils/performance.js';
+import { initDebugLogger, showDebugLog } from './utils/debug-logger.js';
 
 /* ══════════════════════════════════════════════════════════
    Boot
@@ -37,62 +33,89 @@ import { getSnapshot, observeInteractions, observeLongTasks } from './utils/perf
 ready(boot);
 
 async function boot() {
-  try { initErrorBoundary(); } catch (err) { console.error('[boot] error-boundary', err); }
-  try { initTheme(); } catch (err) { console.error('[boot] theme', err); }
+  // 0. Init Logger FIRST
+  initDebugLogger();
+  console.info('[boot] Starting boot sequence...');
 
-  if (!isSupabaseConfigured()) {
-    return fatalConfig();
-  }
-
-  wireGlobalEvents();
-
-  try {
-    if (FEATURES.commandPalette) initCommandPalette();
-  } catch (err) { console.warn('[boot] command-palette', err); }
-
-  let outcome;
-  try {
-    outcome = await initSession();
-  } catch (err) {
-    console.error('[boot] session error', err);
-    reportError(err, { silent: true, context: 'session-init' });
-    outcome = { user: null };
-  }
-
-  mountAuthPage();
-
-  if (outcome.user) {
-    await startApp();
-  } else {
-    showAuthScreen();
+  // Safety net: force-open logs and hide splash after 5 seconds
+  const bootTimeout = setTimeout(() => {
+    console.warn('[boot] Boot sequence took too long (5s). Opening logs...');
+    showDebugLog();
     hideBootSplash();
-  }
-
-  bus.on(EVENTS.AUTH_READY, async ({ user }) => {
-    if (user && byId('app-shell')?.hidden !== false) {
-      await startApp();
+    hideLoader();
+    if (!isAuthenticated()) {
+      showAuthScreen();
+    } else {
+      const container = byId('page-container');
+      if (container && container.innerHTML.trim() === '') {
+        renderFatalError(container, new Error('اتصال به سرور طول کشید. لطفاً لاگ را بررسی کنید.'));
+      }
     }
-  });
-  bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
-    if (byId('app-shell')?.hidden !== false) {
-      await startApp();
-    }
-  });
-  bus.on(EVENTS.AUTH_SIGNED_OUT, () => {
-    stopApp();
-  });
-
-  registerServiceWorker();
+  }, 5000);
 
   try {
-    observeInteractions();
-    observeLongTasks();
-    if (APP.build === 'dev') {
-      window.addEventListener('load', () => {
-        setTimeout(() => console.info('[perf] snapshot', getSnapshot()), 500);
-      });
+    try { initErrorBoundary(); } catch (err) { console.error('[boot] error-boundary', err); }
+    try { initTheme(); } catch (err) { console.error('[boot] theme', err); }
+
+    if (!isSupabaseConfigured()) {
+      clearTimeout(bootTimeout);
+      console.error('[boot] Supabase is not configured properly.');
+      return fatalConfig();
     }
-  } catch { /* silent */ }
+
+    wireGlobalEvents();
+
+    try {
+      if (FEATURES.commandPalette) initCommandPalette();
+    } catch (err) { console.warn('[boot] command-palette', err); }
+
+    console.info('[boot] Initializing session...');
+    let outcome;
+    try {
+      outcome = await initSession();
+    } catch (err) {
+      console.error('[boot] session error', err);
+      reportError(err, { silent: true, context: 'session-init' });
+      outcome = { user: null };
+    }
+
+    console.info('[boot] Mounting auth page...');
+    mountAuthPage();
+
+    if (outcome.user) {
+      console.info('[boot] User found. Starting app...');
+      await startApp();
+    } else {
+      console.info('[boot] No user session. Showing auth screen.');
+      showAuthScreen();
+      hideBootSplash();
+    }
+
+    bus.on(EVENTS.AUTH_READY, async ({ user }) => {
+      if (user && byId('app-shell')?.hidden !== false) {
+        await startApp();
+      }
+    });
+    bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
+      if (byId('app-shell')?.hidden !== false) {
+        await startApp();
+      }
+    });
+    bus.on(EVENTS.AUTH_SIGNED_OUT, () => {
+      stopApp();
+    });
+
+    registerServiceWorker();
+
+    try {
+      observeInteractions();
+      observeLongTasks();
+    } catch { /* silent */ }
+    
+    console.info('[boot] Boot sequence completed.');
+  } finally {
+    clearTimeout(bootTimeout);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -102,31 +125,28 @@ async function boot() {
 async function startApp() {
   showLoader('در حال آماده‌سازی فضای شخصی…');
   try {
+    console.info('[startApp] Registering routes...');
     await registerRoutes();
+    
+    console.info('[startApp] Mounting app shell...');
     mountAppShell();
+    
+    console.info('[startApp] Applying settings...');
     await applyUserSettings();
+    
+    console.info('[startApp] Showing app shell...');
     showAppShell();
 
     const container = byId('page-container');
     if (container) {
-      // Ensure container is truly empty before starting
       container.innerHTML = '';
-
-      // Start router
       try {
+        console.info('[startApp] Starting router...');
         router.start(container);
       } catch (err) {
         console.error('[startApp] router.start threw', err);
         renderFatalError(container, err);
       }
-
-      // FIX: Fallback check — if the container is still empty after 3s,
-      // show a helpful error message instead of a blank page.
-      setTimeout(() => {
-        if (container && container.innerHTML.trim() === '') {
-          renderFatalError(container, new Error('صفحه بارگذاری نشد. لطفاً کنسول مرورگر را بررسی کنید.'));
-        }
-      }, 3000);
     }
 
     registerGlobalShortcuts();
@@ -176,11 +196,6 @@ function onScrollForShadow() {
   document.body.classList.toggle('is-scrolled', scrolled);
 }
 
-/**
- * Render a visible error box if the app shell loaded but the page is empty.
- * @param {HTMLElement} container
- * @param {any} err
- */
 function renderFatalError(container, err) {
   const msg = err?.message || String(err) || 'خطای نامشخص';
   container.innerHTML = `
@@ -190,63 +205,27 @@ function renderFatalError(container, err) {
       <p class="page-error__message" style="color: var(--text-secondary); font-family: monospace; direction: ltr; text-align: left; background: var(--bg-inset); padding: 12px; border-radius: 8px; margin-top: 12px; word-break: break-all;">${msg}</p>
       <div style="display:flex; gap:8px; margin-top:16px;">
         <button class="btn btn--primary" onclick="location.reload()">بارگذاری دوباره</button>
-        <button class="btn btn--ghost" onclick="location.hash='#/settings'">رفتن به تنظیمات</button>
+        <button class="btn btn--ghost" onclick="document.getElementById('show-logs-btn')?.click()">مشاهده لاگ</button>
       </div>
     </div>
   `;
 }
 
 /* ══════════════════════════════════════════════════════════
-   Routes — all pages lazy-loaded
+   Routes
    ══════════════════════════════════════════════════════════ */
 
 async function registerRoutes() {
   const routes = [
-    {
-      path: `/${ROUTES.DASHBOARD}`,
-      title: 'داشبورد',
-      load: () => import('./pages/dashboard.page.js').then((m) => m.renderDashboard),
-    },
-    {
-      path: `/${ROUTES.LIES}`,
-      title: 'دروغ‌ها',
-      load: () => import('./pages/lies.page.js').then((m) => m.renderLies),
-    },
-    {
-      path: '/lie/:id',
-      title: 'جزئیات',
-      load: () => import('./pages/lie-detail.page.js').then((m) => m.renderLieDetail),
-    },
-    {
-      path: `/${ROUTES.ANALYTICS}`,
-      title: 'تحلیل و آمار',
-      load: () => import('./pages/analytics.page.js').then((m) => m.renderAnalytics),
-    },
-    {
-      path: `/${ROUTES.TAGS}`,
-      title: 'دسته‌ها و برچسب‌ها',
-      load: () => import('./pages/tags.page.js').then((m) => m.renderTags),
-    },
-    {
-      path: `/${ROUTES.ARCHIVE}`,
-      title: 'بایگانی',
-      load: () => import('./pages/archive.page.js').then((m) => m.renderArchive),
-    },
-    {
-      path: `/${ROUTES.TRASH}`,
-      title: 'سطل زباله',
-      load: () => import('./pages/trash.page.js').then((m) => m.renderTrash),
-    },
-    {
-      path: `/${ROUTES.SETTINGS}`,
-      title: 'تنظیمات',
-      load: () => import('./pages/settings.page.js').then((m) => m.renderSettings),
-    },
-    {
-      path: `/${ROUTES.ABOUT}`,
-      title: 'درباره',
-      load: () => import('./pages/about.page.js').then((m) => m.renderAbout),
-    },
+    { path: `/${ROUTES.DASHBOARD}`, title: 'داشبورد', load: () => import('./pages/dashboard.page.js').then((m) => m.renderDashboard) },
+    { path: `/${ROUTES.LIES}`,      title: 'دروغ‌ها', load: () => import('./pages/lies.page.js').then((m) => m.renderLies) },
+    { path: '/lie/:id',             title: 'جزئیات', load: () => import('./pages/lie-detail.page.js').then((m) => m.renderLieDetail) },
+    { path: `/${ROUTES.ANALYTICS}`, title: 'تحلیل و آمار', load: () => import('./pages/analytics.page.js').then((m) => m.renderAnalytics) },
+    { path: `/${ROUTES.TAGS}`,      title: 'دسته‌ها و برچسب‌ها', load: () => import('./pages/tags.page.js').then((m) => m.renderTags) },
+    { path: `/${ROUTES.ARCHIVE}`,   title: 'بایگانی', load: () => import('./pages/archive.page.js').then((m) => m.renderArchive) },
+    { path: `/${ROUTES.TRASH}`,     title: 'سطل زباله', load: () => import('./pages/trash.page.js').then((m) => m.renderTrash) },
+    { path: `/${ROUTES.SETTINGS}`,  title: 'تنظیمات', load: () => import('./pages/settings.page.js').then((m) => m.renderSettings) },
+    { path: `/${ROUTES.ABOUT}`,     title: 'درباره', load: () => import('./pages/about.page.js').then((m) => m.renderAbout) },
   ];
 
   for (const r of routes) {
@@ -272,60 +251,22 @@ async function registerRoutes() {
    ══════════════════════════════════════════════════════════ */
 
 function registerGlobalShortcuts() {
-  shortcuts.register({
-    combo: 'ctrl+k', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'پالت دستور', group: 'ناوبری', allowInInput: true,
-    handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN),
-  });
-  shortcuts.register({
-    combo: 'meta+k', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'پالت دستور (⌘K)', group: 'ناوبری', allowInInput: true,
-    handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN),
-  });
-  shortcuts.register({
-    combo: 'ctrl+p', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'جست‌وجوی سراسری', group: 'ناوبری', allowInInput: true,
-    handler: () => bus.emit('ui:focus-search'),
-  });
-  shortcuts.register({
-    combo: '/', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'فوکوس روی جست‌وجو', group: 'ناوبری',
-    handler: () => bus.emit('ui:focus-search'),
-  });
-  shortcuts.register({
-    combo: 'n', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'ثبت دروغ جدید', group: 'عملیات',
-    handler: () => { location.hash = '#/lies?new=1'; },
-  });
-  shortcuts.register({
-    combo: 'shift+?', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'راهنمای میان‌برها', group: 'کمک',
-    handler: () => byId('help-btn')?.click(),
-  });
-  shortcuts.register({
-    combo: '?', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'راهنمای میان‌برها', group: 'کمک',
-    handler: () => byId('help-btn')?.click(),
-  });
-  shortcuts.register({
-    combo: 'esc', scope: SHORTCUT_SCOPES.GLOBAL,
-    label: 'بستن پنجره/کشو', group: 'عمومی',
-    handler: async () => {
+  shortcuts.register({ combo: 'ctrl+k', scope: SHORTCUT_SCOPES.GLOBAL, label: 'پالت دستور', group: 'ناوبری', allowInInput: true, handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN) });
+  shortcuts.register({ combo: 'meta+k', scope: SHORTCUT_SCOPES.GLOBAL, label: 'پالت دستور (⌘K)', group: 'ناوبری', allowInInput: true, handler: () => bus.emit(EVENTS.COMMAND_PALETTE_OPEN) });
+  shortcuts.register({ combo: 'ctrl+p', scope: SHORTCUT_SCOPES.GLOBAL, label: 'جست‌وجوی سراسری', group: 'ناوبری', allowInInput: true, handler: () => bus.emit('ui:focus-search') });
+  shortcuts.register({ combo: '/', scope: SHORTCUT_SCOPES.GLOBAL, label: 'فوکوس روی جست‌وجو', group: 'ناوبری', handler: () => bus.emit('ui:focus-search') });
+  shortcuts.register({ combo: 'n', scope: SHORTCUT_SCOPES.GLOBAL, label: 'ثبت دروغ جدید', group: 'عملیات', handler: () => { location.hash = '#/lies?new=1'; } });
+  shortcuts.register({ combo: 'shift+?', scope: SHORTCUT_SCOPES.GLOBAL, label: 'راهنمای میان‌برها', group: 'کمک', handler: () => byId('help-btn')?.click() });
+  shortcuts.register({ combo: '?', scope: SHORTCUT_SCOPES.GLOBAL, label: 'راهنمای میان‌برها', group: 'کمک', handler: () => byId('help-btn')?.click() });
+  shortcuts.register({ combo: 'esc', scope: SHORTCUT_SCOPES.GLOBAL, label: 'بستن پنجره/کشو', group: 'عمومی', handler: async () => {
       const { isMobileSidebarOpen, closeMobileSidebar } = await import('./layout/sidebar.js');
       if (isMobileSidebarOpen()) closeMobileSidebar();
-    },
-  });
+  } });
   for (const item of NAV_ITEMS) {
     if (!item.shortcut) continue;
     const letter = item.shortcut.split(/\s+/)[1] || '';
     if (!letter) continue;
-    shortcuts.register({
-      combo: `g ${letter.toLowerCase()}`,
-      scope: SHORTCUT_SCOPES.GLOBAL,
-      label: `رفتن به ${item.label}`,
-      group: 'ناوبری سریع',
-      handler: () => { location.hash = `#/${item.id}`; },
-    });
+    shortcuts.register({ combo: `g ${letter.toLowerCase()}`, scope: SHORTCUT_SCOPES.GLOBAL, label: `رفتن به ${item.label}`, group: 'ناوبری سریع', handler: () => { location.hash = `#/${item.id}`; } });
   }
 }
 
@@ -336,24 +277,15 @@ function registerGlobalShortcuts() {
 function wireGlobalEvents() {
   bus.on(EVENTS.THEME_CHANGED, (t) => {
     if (!isAuthenticated()) return;
-    settingsService.update({ theme: t.theme, accent: t.accent, font_size: t.fontSize })
-      .catch(() => { /* silent */ });
+    settingsService.update({ theme: t.theme, accent: t.accent, font_size: t.fontSize }).catch(() => { /* silent */ });
   });
-
   bus.on(EVENTS.ACCENT_CHANGED, (a) => setAccent(a.id || a));
   bus.on(EVENTS.FONTSIZE_CHANGED, (s) => setFontSize(s));
-
   bus.on(EVENTS.OFFLINE, () => toast.warning('اتصال اینترنت قطع شد.'));
   bus.on(EVENTS.ONLINE, () => toast.success('اتصال برقرار شد.', { duration: 1800 }));
-
-  bus.on('app:error', (info) => {
-    void info;
-  });
-
   if (window.matchMedia('(display-mode: standalone)').matches) {
     document.body.classList.add('is-standalone');
   }
-
   let lastTouch = 0;
   document.addEventListener('touchend', (ev) => {
     const now = Date.now();
@@ -361,10 +293,6 @@ function wireGlobalEvents() {
     lastTouch = now;
   }, { passive: false });
 }
-
-/* ══════════════════════════════════════════════════════════
-   User settings → DOM
-   ══════════════════════════════════════════════════════════ */
 
 async function applyUserSettings() {
   const s = settingsService.getLocal();
@@ -379,16 +307,10 @@ async function applyUserSettings() {
   } catch { /* keep local */ }
 }
 
-/* ══════════════════════════════════════════════════════════
-   Service Worker
-   ══════════════════════════════════════════════════════════ */
-
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator)) return;
   if (!/^https?:$/.test(location.protocol)) return;
-  const isSecure = location.protocol === 'https:' ||
-    location.hostname === 'localhost' ||
-    location.hostname === '127.0.0.1';
+  const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
   if (!isSecure) return;
 
   window.addEventListener('load', () => {
@@ -404,15 +326,9 @@ function registerServiceWorker() {
           });
         });
       })
-      .catch((err) => {
-        console.warn('[SW] registration failed', err);
-      });
+      .catch((err) => { console.warn('[SW] registration failed', err); });
   });
 }
-
-/* ══════════════════════════════════════════════════════════
-   Utils
-   ══════════════════════════════════════════════════════════ */
 
 function hideBootSplash() {
   const splash = byId('boot-splash');
