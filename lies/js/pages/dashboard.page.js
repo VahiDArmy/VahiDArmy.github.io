@@ -1,13 +1,14 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   FIXED: Replaced the fragile formatJalali logic with the 
-          standard formatDate utility to prevent the "undefined" bug.
+   APPROACH: Fully stripped down. No Intl, no complex CSS, 
+   just plain text and standard Date methods to ensure 
+   it NEVER shows 'undefined'.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
 import { sessionStore } from '../core/store.js';
 import * as statsService from '../services/stats.service.js';
-import { toFaDigits, formatDate } from '../utils/format.js';
+import { toFaDigits } from '../utils/format.js';
 
 export async function renderDashboard(container) {
   clear(container);
@@ -20,15 +21,16 @@ export async function renderDashboard(container) {
   try {
     stats = await statsService.overview();
   } catch (err) {
-    console.warn('Could not load stats, using fallback.', err);
+    console.warn('Could not load stats', err);
   }
 
-  // 🛡️ FIX: Use the robust formatDate utility
-  const dateStr = formatDate(new Date(), { style: 'long', withTime: false });
+  // 🛡️ SIMPLE HARDCODED DATE (No Intl, No Undefined)
+  const now = new Date();
+  const months = ['ژانویه', 'فوریه', 'مارس', 'آوریل', 'مه', 'ژوئن', 'ژوئیه', 'اوت', 'سپتامبر', 'اکتبر', 'نوامبر', 'دسامبر'];
+  const dateStr = `${toFaDigits(now.getDate())} ${months[now.getMonth()]} ${toFaDigits(now.getFullYear())}`;
 
   const page = el('div', { class: 'page page--dashboard', style: { padding: '24px', maxWidth: '800px', margin: '0 auto' } });
 
-  // Hero Card
   const hero = el('div', { 
     class: 'card', 
     style: { 
@@ -58,7 +60,6 @@ export async function renderDashboard(container) {
 
   page.appendChild(hero);
 
-  // Stats Grid
   const grid = el('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' } });
   
   const mkStat = (label, val) => el('div', {
@@ -73,7 +74,6 @@ export async function renderDashboard(container) {
 
   page.appendChild(grid);
 
-  // New Button
   const btn = el('button', { class: 'btn btn--primary btn--block btn--lg', style: { marginTop: '32px' } }, { children: ['＋ ثبت دروغ جدید'] });
   btn.addEventListener('click', () => { location.hash = '#/lies?new=1'; });
   page.appendChild(btn);
