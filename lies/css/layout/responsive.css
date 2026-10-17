@@ -1,35 +1,49 @@
 /* ============================================================
    css/layout/responsive.css
-   MOBILE: Sidebar becomes an absolute overlay. .app-main 
-           stays 100% width and doesn't get pushed.
+   FIXED: On mobile, .app-shell becomes a simple block. 
+          The sidebar is display: none until opened as a drawer.
    ============================================================ */
 
 @media (max-width: 1024px) {
-  :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
+  :root {
+    --sidebar-w: 232px;
+    --sidebar-w-collapsed: 68px;
+  }
 }
 
+/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
-  /* Sidebar Drawer */
-  .sidebar {
+  
+  /* Remove Grid entirely on mobile */
+  .app-shell,
+  .app-shell.is-sidebar-collapsed {
+    display: block;
+  }
+
+  /* Hide the sidebar from the DOM flow */
+  .sidebar,
+  .app-shell.is-sidebar-collapsed .sidebar {
+    display: none;
     position: fixed;
     top: 0;
     bottom: 0;
     right: 0;
-    width: 280px !important; /* Override desktop width */
+    width: 280px !important;
     z-index: 1000;
     transform: translateX(100%);
-    transition: transform var(--dur-base) var(--ease-standard);
-    box-shadow: none;
-    border-left: 1px solid var(--border);
+    transition: transform var(--dur-base) var(--ease-standard), display 0s;
   }
 
-  /* When open */
+  /* Show it ONLY when opened */
   .app-shell.is-mobile-sidebar-open .sidebar {
+    display: flex;
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
+    border-left: 1px solid var(--border);
+    border-right: none;
   }
 
-  /* Backdrop */
+  /* Backdrop for the drawer */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
