@@ -1,15 +1,14 @@
 /* ============================================================
    js/pages/lie-detail.page.js
-   Full view of a single lie + reflections
-   FIXED: cleaner imports, no ambiguous names, category resolved
-          from service (not from a global), no stray references.
+   UPDATED: Fetches taxonomy and shows Type description/example 
+            in the sidebar info card.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
-import { LIE_TYPES, MOODS } from '../config/app.config.js';
 import { getLie } from '../services/index.js';
 import * as liesService from '../services/lies.service.js';
 import * as categoriesService from '../services/categories.service.js';
+import * as taxonomyService from '../services/taxonomy.service.js';
 import * as reflectionsService from '../services/reflections.service.js';
 import { reflectionsPanel } from '../features/lie-detail/reflections.js';
 import { toast } from '../ui/toast.js';
@@ -22,31 +21,43 @@ import { formatRelative, formatDate, formatTime, toFaDigits } from '../utils/for
 import { bus } from '../core/event-bus.js';
 import { EVENTS } from '../config/constants.js';
 
-const TYPES_BY_ID = Object.fromEntries(LIE_TYPES.map((t) => [t.id, t]));
-const MOODS_BY_ID = Object.fromEntries(MOODS.map((m) => [m.id, m]));
+export async function renderLieDetail(container, params = {}, query) {
+  let lieId;
+  if (typeof params === 'string') lieId = params;
+  else if (params && typeof params === 'object' && params.id) lieId = params.id;
+  else if (typeof location !== 'undefined') {
+    const parts = location.hash.replace(/^#/, '').split('?')[0].split('/');
+    lieId = parts[parts.length - 1];
+  }
+  void query;
 
-/**
- * @param {HTMLElement} container
- * @param {string} lieId
- */
-export async function renderLieDetail(container, lieId) {
   clear(container);
-  container.appendChild(el('div', { class: 'page-loader' }, {
-    children: [el('span', { class: 'spinner spinner--lg' })],
-  }));
+
+  if (!lieId) {
+    container.appendChild(renderNotFound());
+    return;
+  }
+
+  container.appendChild(el('div', { class: 'page-loader' }, { children: [el('span', { class: 'spinner spinner--lg' })] }));
 
   let lie = null;
   let reflections = [];
   let categories = [];
+  let lieTypes = [];
+  let moods = [];
   try {
-    const [lieRes, reflRes, cats] = await Promise.all([
+    const [lieRes, reflRes, cats, types, mds] = await Promise.all([
       getLie(lieId),
       reflectionsService.listForLie(lieId).catch(() => []),
       categoriesService.list().catch(() => []),
+      taxonomyService.listTypes().catch(() => []),
+      taxonomyService.listMoods().catch(() => []),
     ]);
     lie = lieRes;
     reflections = reflRes;
     categories = cats;
+    lieTypes = types;
+    moods = mds;
   } catch (err) {
     console.error('[lie-detail] load failed', err);
     clear(container);
@@ -63,9 +74,9 @@ export async function renderLieDetail(container, lieId) {
   clear(container);
 
   const page = el('article', { class: 'page page--lie-detail' });
-  page.appendChild(renderHeader(lie));
+  page.appendChild(renderHeader(lie, lieTypes));
   page.appendChild(renderMain(lie, reflections));
-  page.appendChild(renderSidebar(lie, reflections, categories));
+  page.appendChild(renderSidebar(lie, reflections, categories, lieTypes, moods));
   container.appendChild(page);
 
   bus.emit(EVENTS.ROUTE_CHANGED, { path: `/lie/${lieId}`, params: { id: lieId } });
@@ -73,12 +84,12 @@ export async function renderLieDetail(container, lieId) {
 
 /* ── Header ──────────────────────────────────────────────── */
 
-function renderHeader(lie) {
+function renderHeader(lie, lieTypes) {
   const header = el('header', { class: 'lie-detail__header' });
 
   const top = el('div', { class: 'lie-detail__top' });
 
-  const type = TYPES_BY_ID[lie.type] || TYPES_BY_ID.other;
+  const type = lieTypes.find(t => t.id === lie.type) || { label: 'دروغ دیگر', color: 'var(--text-tertiary)', icon: '✳️' };
   const typePill = el('span', {
     class: 'lie-detail__type',
     style: { '--type-color': type.color },
@@ -92,17 +103,11 @@ function renderHeader(lie) {
 
   const actions = el('div', { class: 'lie-detail__actions' });
 
-  const editBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, {
-    children: ['✎ ویرایش'],
-  });
-  editBtn.addEventListener('click', () => {
-    openLieEditor(lie, { onSaved: () => location.reload() });
-  });
+  const editBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, { children: ['✎ ویرایش'] });
+  editBtn.addEventListener('click', () => { openLieEditor(lie, { onSaved: () => location.reload() }); });
   actions.appendChild(editBtn);
 
-  const dupBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, {
-    children: ['⎘ تکثیر'],
-  });
+  const dupBtn = el('button', { class: 'btn btn--ghost btn--sm', attrs: { type: 'button' } }, { children: ['⎘ تکثیر'] });
   dupBtn.addEventListener('click', async () => {
     try {
       const created = await liesService.duplicate(lie.id);
@@ -146,7 +151,6 @@ function renderHeader(lie) {
 function renderMain(lie, reflections) {
   const main = el('div', { class: 'lie-detail__main' });
 
-  // Body
   if (lie.body) {
     const bodyBlock = el('section', { class: 'lie-detail__block' });
     bodyBlock.appendChild(el('h3', { class: 'lie-detail__block-title' }, {
@@ -156,7 +160,6 @@ function renderMain(lie, reflections) {
     main.appendChild(bodyBlock);
   }
 
-  // Truth
   if (lie.truth) {
     const truthBlock = el('section', { class: 'lie-detail__truth-block' });
     truthBlock.appendChild(el('div', { class: 'lie-detail__truth-label' }, {
@@ -166,86 +169,81 @@ function renderMain(lie, reflections) {
     main.appendChild(truthBlock);
   }
 
-  // Reflections
   main.appendChild(reflectionsPanel(lie.id, { reflections: [...reflections] }));
-
   return main;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 
-function renderSidebar(lie, reflections, categories) {
+function renderSidebar(lie, reflections, categories, lieTypes, moods) {
   const side = el('aside', { class: 'lie-detail__sidebar' });
 
-  // Intensity & Belief rings
   const meters = el('div', { class: 'lie-detail__meters' });
 
   const intRing = el('div', { class: 'lie-detail__meter' });
-  intRing.appendChild(progressRing({
-    value: lie.intensity / 10,
-    size: 96,
-    thickness: 8,
-    label: toFaDigits(lie.intensity),
-    variant: 'warning',
-  }));
+  intRing.appendChild(progressRing({ value: lie.intensity / 10, size: 96, thickness: 8, label: toFaDigits(lie.intensity), variant: 'warning' }));
   intRing.appendChild(el('div', { class: 'lie-detail__meter-label' }, { children: ['⚡ شدت احساس'] }));
   intRing.appendChild(el('div', { class: 'lie-detail__meter-desc' }, { children: ['چقدر در لحظه فشار می‌آورد'] }));
   meters.appendChild(intRing);
 
   const beliefRing = el('div', { class: 'lie-detail__meter' });
-  beliefRing.appendChild(progressRing({
-    value: lie.belief / 10,
-    size: 96,
-    thickness: 8,
-    label: toFaDigits(lie.belief),
-    variant: 'accent',
-  }));
+  beliefRing.appendChild(progressRing({ value: lie.belief / 10, size: 96, thickness: 8, label: toFaDigits(lie.belief), variant: 'accent' }));
   beliefRing.appendChild(el('div', { class: 'lie-detail__meter-label' }, { children: ['◉ میزان باور'] }));
   beliefRing.appendChild(el('div', { class: 'lie-detail__meter-desc' }, { children: ['چقدر به آن باور داشتی'] }));
   meters.appendChild(beliefRing);
 
   side.appendChild(meters);
 
-  // Meta info
+  // 🛡️ Meta Info with Type Description & Example
   const metaCard = el('div', { class: 'lie-detail__meta-card' });
   metaCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['اطلاعات'] }));
 
+  const typeObj = lieTypes.find(t => t.id === lie.type) || { label: 'دروغ دیگر', description: '', example: '' };
+  const moodObj = lie.mood ? moods.find(m => m.id === lie.mood) : null;
+
   const rows = [
     ['وضعیت', lie.status === 'active' ? 'فعال' : lie.status === 'archived' ? 'بایگانی' : 'زباله'],
-    ['نوع', TYPES_BY_ID[lie.type]?.label || '—'],
-    ['حال', MOODS_BY_ID[lie.mood] ? `${MOODS_BY_ID[lie.mood].icon} ${MOODS_BY_ID[lie.mood].label}` : '—'],
+    ['نوع', typeObj.label],
+    ['حال', moodObj ? `${moodObj.icon} ${moodObj.label}` : '—'],
     ['تاریخ رخداد', lie.occurredAt ? formatDate(lie.occurredAt, { style: 'long' }) : '—'],
     ['ساخته‌شده', formatDate(lie.createdAt, { style: 'long' })],
     ['ویرایش', formatRelative(lie.updatedAt)],
   ];
+
   for (const [k, v] of rows) {
     const r = el('div', { class: 'lie-detail__meta-row' });
     r.appendChild(el('span', { class: 'lie-detail__meta-key' }, { children: [k] }));
     r.appendChild(el('span', { class: 'lie-detail__meta-value' }, { children: [v] }));
     metaCard.appendChild(r);
   }
+
+  // Type Description & Example Box
+  if (typeObj.description || typeObj.example) {
+    const infoBox = el('div', { style: { marginTop: 'var(--s-3)', padding: 'var(--s-3)', background: 'var(--bg-inset)', borderRadius: 'var(--r-md)', fontSize: 'var(--fs-sm)', color: 'var(--text-secondary)' } });
+    if (typeObj.description) infoBox.appendChild(el('div', { children: [typeObj.description] }));
+    if (typeObj.example) {
+      infoBox.appendChild(el('div', { style: { marginTop: '8px', fontStyle: 'italic', color: 'var(--text-tertiary)' } }, {
+        children: [`مثال: «${typeObj.example}»`]
+      }));
+    }
+    metaCard.appendChild(infoBox);
+  }
+
   side.appendChild(metaCard);
 
-  // Category
   const catCard = el('div', { class: 'lie-detail__meta-card' });
   catCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['دسته‌بندی'] }));
   const catRow = el('div', { class: 'lie-detail__tags-row' });
   const cat = lie.categoryId ? categories.find((c) => c.id === lie.categoryId) : null;
-  if (cat) {
-    catRow.appendChild(chip({ label: cat.name, icon: cat.icon || '📁', color: cat.color, size: 'md' }));
-  } else {
-    catRow.appendChild(el('span', { class: 'text-dim' }, { children: ['— بدون دسته'] }));
-  }
-  const changeCatBtn = el('button', {
-    class: 'btn btn--ghost btn--xs',
-    attrs: { type: 'button' },
-  }, { children: ['تغییر'] });
+  if (cat) catRow.appendChild(chip({ label: cat.name, icon: cat.icon || '📁', color: cat.color, size: 'md' }));
+  else catRow.appendChild(el('span', { class: 'text-dim' }, { children: ['— بدون دسته'] }));
+  
+  const changeCatBtn = el('button', { class: 'btn btn--ghost btn--xs', attrs: { type: 'button' } }, { children: ['تغییر'] });
   changeCatBtn.addEventListener('click', () => openCategoryPicker(lie, () => location.reload()));
   catRow.appendChild(changeCatBtn);
   catCard.appendChild(catRow);
   side.appendChild(catCard);
 
-  // Tags
   const tagsCard = el('div', { class: 'lie-detail__meta-card' });
   tagsCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['برچسب‌ها'] }));
   const tagRow = el('div', { class: 'lie-detail__tags-row' });
@@ -254,16 +252,12 @@ function renderSidebar(lie, reflections, categories) {
   } else {
     tagRow.appendChild(el('span', { class: 'text-dim' }, { children: ['— بدون برچسب'] }));
   }
-  const changeTagBtn = el('button', {
-    class: 'btn btn--ghost btn--xs',
-    attrs: { type: 'button' },
-  }, { children: ['تغییر'] });
+  const changeTagBtn = el('button', { class: 'btn btn--ghost btn--xs', attrs: { type: 'button' } }, { children: ['تغییر'] });
   changeTagBtn.addEventListener('click', () => openTagPicker(lie, () => location.reload()));
   tagRow.appendChild(changeTagBtn);
   tagsCard.appendChild(tagRow);
   side.appendChild(tagsCard);
 
-  // Summary
   const actCard = el('div', { class: 'lie-detail__meta-card' });
   actCard.appendChild(el('h4', { class: 'lie-detail__meta-title' }, { children: ['خلاصه'] }));
   actCard.appendChild(el('p', { class: 'lie-detail__meta-summary' }, {
