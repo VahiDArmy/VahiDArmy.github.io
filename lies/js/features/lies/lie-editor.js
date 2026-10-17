@@ -1,6 +1,6 @@
 /* ============================================================
    js/features/lies/lie-editor.js
-   Modal for creating and editing a lie
+   UPDATED: Reads dynamic Lie Types and Moods from liesStore.
    ============================================================ */
 
 import { el } from '../../utils/dom.js';
@@ -11,19 +11,14 @@ import { setButtonLoading } from '../../ui/loader.js';
 import { liesStore, prependItem, upsertItem } from './lies-store.js';
 import * as liesService from '../../services/lies.service.js';
 import * as tagsService from '../../services/tags.service.js';
-import { LIE_TYPES, MOODS, LIMITS } from '../../config/app.config.js';
+import { LIMITS } from '../../config/app.config.js';
 import { toFaDigits, charCount } from '../../utils/format.js';
-import { debounce } from '../../utils/debounce.js';
 
-/**
- * Open the editor modal.
- * @param {any} [existing]  if provided, edits; otherwise creates
- * @param {{onSaved?: (lie:any)=>void}} [opts]
- * @returns {{close:()=>void}}
- */
 export function openLieEditor(existing = null, opts = {}) {
   const isEdit = !!existing;
   const state = liesStore.getState();
+  const types = state.lieTypes || [];
+  const moods = state.moods || [];
 
   const form = el('form', { class: 'lie-editor' });
 
@@ -48,9 +43,9 @@ export function openLieEditor(existing = null, opts = {}) {
   const typeField = el('div', { class: 'field' });
   typeField.appendChild(el('label', { class: 'field__label' }, { children: ['نوع'] }));
   const typeSelect = el('select', { class: 'select' });
-  for (const t of LIE_TYPES) {
+  for (const t of types) {
     const opt = el('option', { attrs: { value: t.id } }, { children: [`${t.icon} ${t.label}`] });
-    if ((existing?.type || 'self_doubt') === t.id) opt.selected = true;
+    if ((existing?.type || types[0]?.id) === t.id) opt.selected = true;
     typeSelect.appendChild(opt);
   }
   typeField.appendChild(typeSelect);
@@ -60,7 +55,7 @@ export function openLieEditor(existing = null, opts = {}) {
   moodField.appendChild(el('label', { class: 'field__label' }, { children: ['حال و احساس'] }));
   const moodSelect = el('select', { class: 'select' });
   moodSelect.appendChild(el('option', { attrs: { value: '' } }, { children: ['— انتخاب کنید —'] }));
-  for (const m of MOODS) {
+  for (const m of moods) {
     const opt = el('option', { attrs: { value: m.id } }, { children: [`${m.icon} ${m.label}`] });
     if (existing?.mood === m.id) opt.selected = true;
     moodSelect.appendChild(opt);
@@ -88,7 +83,7 @@ export function openLieEditor(existing = null, opts = {}) {
   bodyField.appendChild(el('label', { class: 'field__label' }, { children: ['متن دروغ'] }));
   const bodyInput = el('textarea', {
     class: 'textarea',
-    attrs: { placeholder: 'وقتی این جمله را به خودت گفتی، در چه موقعیتی بودی؟ چه چیزهایی در ذهنت بود؟', rows: 5, maxlength: String(LIMITS.bodyMax) },
+    attrs: { placeholder: 'وقتی این جمله را به خودت گفتی، در چه موقعیتی بودی؟', rows: 5, maxlength: String(LIMITS.bodyMax) },
   });
   bodyInput.value = existing?.body || '';
   bodyField.appendChild(bodyInput);
@@ -241,18 +236,13 @@ export function openLieEditor(existing = null, opts = {}) {
     }
   });
 
-  /* ── Focus ─────────────────────────────────────────── */
   requestAnimationFrame(() => {
-    if (isEdit) titleInput.focus();
-    else titleInput.focus();
-    // Select all on edit
+    titleInput.focus();
     titleInput.select();
   });
 
   return modal;
 }
-
-/* ── Helpers ─────────────────────────────────────────────── */
 
 function sliderField({ id, label, description, value, icon }) {
   const field = el('div', { class: 'field lie-editor__slider' });
