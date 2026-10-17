@@ -1,10 +1,7 @@
 /* ============================================================
    js/main.js
-   FIXED: 
-     - Removed `is-ready` dependency.
-     - Added a Safe Mode fallback in router.
-     - FORCE RESET of sidebar storage to prevent the "collapsed" 
-       lock on mobile.
+   FIXED: Force display: none on splash screen to prevent 
+          the white space on top in mobile.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -38,7 +35,6 @@ ready(async () => {
   try {
     printBootError('1. Starting boot sequence...');
     
-    // FORCE RESET SIDEBAR STATE to fix the broken UI on mobile
     try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
 
     initErrorBoundary();
@@ -92,8 +88,6 @@ async function startApp() {
     if (container) {
       container.innerHTML = '';
       
-      // 🛡️ SAFE MODE FALLBACK
-      // If the dashboard crashes, show a fallback message instead of a blank page
       setTimeout(() => {
         if (container.innerHTML.trim() === '') {
           container.innerHTML = `
@@ -174,6 +168,8 @@ function registerGlobalShortcuts() {
 function hideBootSplash() {
   const splash = byId('boot-splash');
   if (!splash) return;
+  // 🛡️ Force display none immediately to prevent white gap
+  splash.style.display = 'none';
   splash.classList.add('is-hidden');
   setTimeout(() => { 
     if (splash.parentNode) splash.parentNode.removeChild(splash); 
