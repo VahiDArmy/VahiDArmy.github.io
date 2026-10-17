@@ -13,13 +13,13 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- 🛡️ Cache Buster: ?v=50 -->
-  <link rel="stylesheet" href="css/main.css?v=50" />
+  <!-- 🛡️ Cache Buster: ?v=60 -->
+  <link rel="stylesheet" href="css/main.css?v=60" />
   
   <style>
     [hidden] { display: none !important; }
-    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; }
-    /* 🛡️ Removed background: #0a0a0f so the CSS handles it natively */
+    /* 🛡️ Force dark background inline just in case CSS fails */
+    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: #0a0a0f; color: #f2f2f7; }
   </style>
 </head>
 
@@ -172,7 +172,7 @@
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="confirm-root" class="confirm-root"></div>
 
-  <!-- 🛡️ Cache Buster: ?v=50 -->
-  <script type="module" src="js/main.js?v=50"></script>
+  <!-- 🛡️ Cache Buster: ?v=60 -->
+  <script type="module" src="js/main.js?v=60"></script>
 </body>
 </html>
