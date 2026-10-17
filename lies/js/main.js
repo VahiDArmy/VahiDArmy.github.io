@@ -1,9 +1,10 @@
 /* ============================================================
    js/main.js
    FIXED: 
-     - hideBootSplash() now physically removes the element from 
-       the DOM using .remove() to guarantee it doesn't push 
-       content down.
+     - Removed `is-ready` dependency.
+     - Added a Safe Mode fallback in router.
+     - FORCE RESET of sidebar storage to prevent the "collapsed" 
+       lock on mobile.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -18,7 +19,6 @@ import { bus } from './core/event-bus.js';
 import { EVENTS, SHORTCUT_SCOPES } from './config/constants.js';
 import { APP, ROUTES, LS_KEYS, NAV_ITEMS, FEATURES } from './config/app.config.js';
 import { get as lsGet, set as lsSet } from './utils/storage.js';
-import { toast } from './ui/toast.js';
 import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
@@ -38,6 +38,9 @@ ready(async () => {
   try {
     printBootError('1. Starting boot sequence...');
     
+    // FORCE RESET SIDEBAR STATE to fix the broken UI on mobile
+    try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
+
     initErrorBoundary();
     initTheme();
 
@@ -88,6 +91,20 @@ async function startApp() {
     const container = byId('page-container');
     if (container) {
       container.innerHTML = '';
+      
+      // 🛡️ SAFE MODE FALLBACK
+      // If the dashboard crashes, show a fallback message instead of a blank page
+      setTimeout(() => {
+        if (container.innerHTML.trim() === '') {
+          container.innerHTML = `
+            <div style="padding: 40px; text-align: center; color: #fff;">
+              <h2>خطایی در بارگذاری داشبورد رخ داد</h2>
+              <p style="color: #aaa; margin-top: 8px;">لطفاً از منوی کناری صفحه‌ی دیگری را انتخاب کنید.</p>
+            </div>
+          `;
+        }
+      }, 1500);
+
       router.start(container);
     }
 
@@ -154,7 +171,6 @@ function registerGlobalShortcuts() {
   }
 }
 
-// 🛡️ THE MAGIC FIX: Physically remove the element from the DOM
 function hideBootSplash() {
   const splash = byId('boot-splash');
   if (!splash) return;
