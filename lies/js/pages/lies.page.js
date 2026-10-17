@@ -1,13 +1,17 @@
 /* ============================================================
    js/pages/lies.page.js
-   Main page orchestrator for the lies list
+   FIXED: Completely rewritten with (container, params, query)
+          signature to prevent "query.get is not a function".
    ============================================================ */
 
-import { el, byId, clear } from '../utils/dom.js';
+import { el, clear } from '../utils/dom.js';
 import { bus } from '../core/event-bus.js';
 import { EVENTS } from '../config/constants.js';
-import { ROUTES } from '../config/app.config.js';
-import { liesStore, loadFirstPage, loadReferenceData, setSort, setView, setPageSize, updateFilters, resetFilters, gotoPage, selectItem, clearSelection, loadMore } from '../features/lies/lies-store.js';
+import {
+  liesStore, loadFirstPage, loadReferenceData, setSort, setView,
+  setPageSize, updateFilters, resetFilters, gotoPage, selectItem,
+  clearSelection, loadMore, getSelectedItems,
+} from '../features/lies/lies-store.js';
 import { renderLiesList } from '../features/lies/lies-list.js';
 import { liesToolbar } from '../features/lies/lies-toolbar.js';
 import { liesFiltersPanel } from '../features/lies/lies-filters.js';
@@ -16,26 +20,29 @@ import { attachSelectionKeyboard, renderBulkBar } from '../features/lies/lies-se
 import { initDragDrop } from '../features/lies/lies-dragdrop.js';
 import { openLieEditor } from '../features/lies/lie-editor.js';
 import {
-  bulkTrash, bulkArchive, bulkRestore, bulkHardDelete,
-  bulkAddTag, bulkSetCategory, bulkTogglePin, bulkExport,
+  bulkTrash, bulkArchive, bulkRestore, bulkSetCategory,
+  bulkAddTag, bulkTogglePin, bulkExport,
 } from '../features/lies/lies-bulk-actions.js';
-import { getSelectedItems } from '../features/lies/lies-store.js';
 import { pagination } from '../ui/pagination.js';
-import { toast } from '../ui/toast.js';
 import { activeFilterCount } from '../features/lies/lies-storage.js';
 
 let _unmounts = [];
 let _container = null;
 
 /**
- * Entry point — called by the router.
  * @param {HTMLElement} container
+ * @param {Record<string, string>} params
  * @param {URLSearchParams} query
  */
-export async function renderLies(container, query = new URLSearchParams()) {
+export async function renderLies(container, params = {}, query) {
+  // Safety fallback for URLs
+  let qs = query;
+  if (!qs || typeof qs.get !== 'function') {
+    qs = new URLSearchParams(location.hash.split('?')[1] || '');
+  }
+
   _container = container;
 
-  /* Layout: page-head + main grid (list + filters aside) */
   const page = el('div', { class: 'page page--lies' });
 
   /* Header */
@@ -45,7 +52,7 @@ export async function renderLies(container, query = new URLSearchParams()) {
     children: [el('span', { class: 'page-title__icon' }, { children: ['🎭'] }), 'دروغ‌ها'],
   }));
   headLeft.appendChild(el('p', { class: 'page-subtitle' }, {
-    children: ['همهٔ دروغ‌هایی که تا حالا به خودت گفته‌ای — جست‌وجو، فیلتر، دسته‌بندی و بازنگری.'],
+    children: ['همهٔ دروغ‌هایی که تا حالا به خودت گفته‌ای.'],
   }));
   head.appendChild(headLeft);
   page.appendChild(head);
@@ -54,7 +61,7 @@ export async function renderLies(container, query = new URLSearchParams()) {
   const toolbarHost = el('div', { class: 'lies-toolbar-host' });
   page.appendChild(toolbarHost);
 
-  /* Main layout: filters aside + content */
+  /* Main layout */
   const main = el('div', { class: 'lies-layout' });
   const filtersHost = el('div', { class: 'lies-filters-host', hidden: true });
   const contentHost = el('div', { class: 'lies-content' });
@@ -72,13 +79,20 @@ export async function renderLies(container, query = new URLSearchParams()) {
 
   container.appendChild(page);
 
-  /* Load data + reference in parallel */
+  /* Load data */
   await loadReferenceData();
   await loadFirstPage();
 
-  /* Open editor if ?new=1 */
-  if (query.get('new') === '1') {
-    setTimeout(() => openLieEditor(), 100);
+  /* Handle query params safely */
+  const newParam = qs.get('new');
+  if (newParam === '1') {
+    try { history.replaceState(null, '', location.pathname + location.search + '#/lies'); } catch { /* noop */ }
+    setTimeout(() => openLieEditor(), 120);
+  }
+  
+  const tagIdParam = qs.get('tagId');
+  if (tagIdParam) {
+    updateFilters({ tagIds: [tagIdParam] });
   }
 
   /* Render pipeline */
@@ -88,44 +102,34 @@ export async function renderLies(container, query = new URLSearchParams()) {
 
   render();
 
-  /* Subscribe to store changes */
   const unsub = liesStore.subscribe(render);
   _unmounts.push(unsub);
 
-  /* Drag & drop init */
   const detachDD = initDragDrop(contentHost);
   _unmounts.push(detachDD);
 
-  /* Selection keyboard */
   const detachKey = attachSelectionKeyboard(contentHost);
   _unmounts.push(detachKey);
 
-  /* Refresh on external changes */
   const onRefresh = async () => { await loadFirstPage(); };
   bus.on(EVENTS.LIES_REFRESHED, onRefresh);
   _unmounts.push(() => bus.off(EVENTS.LIES_REFRESHED, onRefresh));
 
-  /* Listen for trash request from selection keyboard */
   const trashHandler = ({ items }) => bulkTrash(items.map((it) => it.id));
   bus.on('lies:request-trash', trashHandler);
   _unmounts.push(() => bus.off('lies:request-trash', trashHandler));
 }
 
-/* ── Unmount ──────────────────────────────────────────────── */
-
 export function unmountLies() {
   _unmounts.forEach((fn) => { try { fn(); } catch (e) { console.error(e); } });
   _unmounts = [];
-  clearSelection();
+  try { clearSelection(); } catch { /* noop */ }
   _container = null;
 }
-
-/* ── Rendering ────────────────────────────────────────────── */
 
 function renderAll(hosts) {
   const state = liesStore.getState();
 
-  // Toolbar
   clear(hosts.toolbarHost);
   hosts.toolbarHost.appendChild(liesToolbar({
     state: {
@@ -144,7 +148,6 @@ function renderAll(hosts) {
     onCreateNew: () => openLieEditor(),
   }));
 
-  // Filters panel
   if (!hosts.filtersHost.hidden) {
     clear(hosts.filtersHost);
     hosts.filtersHost.appendChild(liesFiltersPanel({
@@ -157,7 +160,6 @@ function renderAll(hosts) {
     }));
   }
 
-  // List
   clear(hosts.contentHost);
   const listState = {
     items: state.items,
@@ -181,7 +183,6 @@ function renderAll(hosts) {
   };
   renderLiesList(hosts.contentHost, listState);
 
-  // Bulk bar
   clear(hosts.bulkHost);
   if (state.selection.size > 0) {
     renderBulkBar(hosts.bulkHost, {
@@ -196,7 +197,6 @@ function renderAll(hosts) {
     });
   }
 
-  // Pagination (only in grid/list views)
   clear(hosts.paginationHost);
   if (state.total > state.pageSize && state.view !== 'timeline') {
     hosts.paginationHost.appendChild(pagination({
@@ -209,8 +209,6 @@ function renderAll(hosts) {
     }));
   }
 }
-
-/* ── Filters toggle ───────────────────────────────────────── */
 
 function toggleFiltersPanel(hosts, force) {
   const open = force !== undefined ? force : hosts.filtersHost.hidden;
