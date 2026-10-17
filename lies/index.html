@@ -13,7 +13,8 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <link rel="stylesheet" href="css/main.css" />
+  <!-- 🛡️ Cache Buster added: ?v=10 -->
+  <link rel="stylesheet" href="css/main.css?v=10" />
 
   <script>
     window.addEventListener('error', function(e) {
@@ -21,14 +22,6 @@
       if (errDiv) {
         errDiv.style.display = 'block';
         errDiv.textContent += '❌ ERROR: ' + e.message + '\n   Location: ' + e.filename + ':' + e.lineno + '\n\n';
-      }
-    });
-    window.addEventListener('unhandledrejection', function(e) {
-      var errDiv = document.getElementById('inline-error-log');
-      if (errDiv) {
-        errDiv.style.display = 'block';
-        var msg = e.reason ? (e.reason.stack || e.reason.message || String(e.reason)) : 'Unknown Promise Rejection';
-        errDiv.textContent += '❌ REJECTION: ' + msg + '\n\n';
       }
     });
   </script>
@@ -69,18 +62,6 @@
           فضایی امن و کاملاً شخصی برای ثبت، بازنگری و رویارویی با آن جمله‌هایی
           که هر روز در سکوت به خودمان می‌گوییم. هیچ‌کس جز شما اینجا را نمی‌بیند.
         </p>
-
-        <ul class="auth-hero__features">
-          <li><span class="auth-hero__ico">🔒</span> داده‌ها فقط متعلق به شماست — RLS سطح ردیف</li>
-          <li><span class="auth-hero__ico">📊</span> تحلیل الگوها، شدت باور و روند زمانی</li>
-          <li><span class="auth-hero__ico">🏷️</span> دسته‌بندی، برچسب‌گذاری و بازتاب‌نویسی</li>
-          <li><span class="auth-hero__ico">📤</span> خروجی کامل JSON/CSV هر زمان که خواستید</li>
-        </ul>
-
-        <div class="auth-hero__quote">
-          <span class="auth-hero__quote-mark">”</span>
-          <p>تا وقتی دروغ را ننامید، نمی‌توانید از آن عبور کنید.</p>
-        </div>
       </section>
 
       <section class="auth-card" role="region" aria-labelledby="auth-title">
@@ -114,15 +95,6 @@
               <button type="button" class="field__toggle" data-toggle-password="login-password" aria-label="نمایش رمز عبور">👁️</button>
             </div>
             <p class="field__error" data-error-for="password"></p>
-          </div>
-
-          <div class="auth-form__row">
-            <label class="switch switch--sm">
-              <input type="checkbox" id="remember-me" checked />
-              <span class="switch__track"><span class="switch__thumb"></span></span>
-              <span class="switch__label">مرا به خاطر بسپار</span>
-            </label>
-            <button type="button" class="link-btn" id="forgot-password-btn">رمز عبور را فراموش کرده‌اید؟</button>
           </div>
 
           <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
@@ -242,6 +214,7 @@
   <div id="confirm-root" class="confirm-root"></div>
   <div id="debug-log-panel" class="debug-log-panel" style="transform: translateY(100%);"></div>
 
-  <script type="module" src="js/main.js"></script>
+  <!-- 🛡️ Cache Buster added: ?v=10 -->
+  <script type="module" src="js/main.js?v=10"></script>
 </body>
 </html>
