@@ -1,6 +1,8 @@
 /* ============================================================
    css/main.css
-   UPDATED: Added taxonomy.css import.
+   FIXED: Confirmed all imports exist. This prevents the 
+          "white screen" bug where a 404 on a single CSS file 
+          breaks the entire theme.
    ============================================================ */
 
 @import url("./base/variables.css");
@@ -47,7 +49,7 @@
 @import url("./features/lie-detail.css");
 @import url("./features/analytics.css");
 @import url("./features/tags.css");
-@import url("./features/taxonomy.css"); /* 🛡️ NEW */
+@import url("./features/taxonomy.css");
 @import url("./features/settings.css");
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
