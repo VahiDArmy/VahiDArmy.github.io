@@ -1,7 +1,6 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Added explicit direction: rtl to prevent the layout
-          from flipping on certain browsers.
+   FIXED: Flexbox for desktop. Block for mobile.
    ============================================================ */
 
 html, body {
@@ -14,11 +13,11 @@ html, body {
 
 .app-shell {
   display: flex;
-  flex-direction: row;
-  direction: rtl; /* 🛡️ Force RTL */
+  direction: rtl;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: relative; /* Crucial for the mobile backdrop */
 }
 
 .sidebar {
@@ -38,7 +37,6 @@ html, body {
 }
 
 .app-main {
-  direction: rtl; /* 🛡️ Force RTL */
   flex: 1;
   display: flex;
   flex-direction: column;
