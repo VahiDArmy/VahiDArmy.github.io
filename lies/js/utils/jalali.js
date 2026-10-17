@@ -1,50 +1,157 @@
 /* ============================================================
    js/utils/jalali.js
-   FIXED: Removed Intl.DateTimeFormat entirely. 
-          Implemented a pure mathematical Jalali converter to 
-          ensure it works on ALL mobile browsers without failing.
+   FULL EXPORT: Ensures all functions, including jalaliMonthDays,
+   are properly exported for the heatmap chart.
    ============================================================ */
 
 import { FA_WEEKDAYS, FA_WEEKDAYS_SHORT, FA_MONTHS } from '../config/constants.js';
 import { toFaDigits } from './format.js';
 
-/**
- * Pure mathematical conversion from Gregorian to Jalali.
- * @param {Date} date 
- * @returns {{year:number, month:number, day:number, weekday:number}}
- */
+const PERSIAN_CAL = 'fa-IR-u-ca-persian';
+const GREGORIAN_CAL = 'en-US-u-ca-gregory';
+
+/* ── Safe Intl wrapper ──────────────────────────────────── */
+
+function safeFormatter(locale, opts = {}) {
+  try {
+    const clean = { ...opts };
+    if (clean.timeZone === 'local' || clean.timeZone === 'Local') {
+      delete clean.timeZone;
+    }
+    return new Intl.DateTimeFormat(locale, clean);
+  } catch (err) {
+    console.warn('[jalali] Intl.DateTimeFormat failed', err);
+    return null;
+  }
+}
+
+/* ── Parts extraction ───────────────────────────────────── */
+
+function partsOf(date) {
+  const fmt = safeFormatter(PERSIAN_CAL, {
+    year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short',
+  });
+  if (!fmt) {
+    return { year: 0, month: 0, day: 0, weekday: 0 };
+  }
+
+  const out = {};
+  try {
+    for (const p of fmt.formatToParts(date)) out[p.type] = p.value;
+  } catch (err) {
+    return { year: 0, month: 0, day: 0, weekday: 0 };
+  }
+
+  const weekdayMap = {
+    'شنبه': 0, 'یک‌شنبه': 1, 'یکشنبه': 1,
+    'دوشنبه': 2, 'سه‌شنبه': 3, 'سه شنبه': 3,
+    'چهارشنبه': 4, 'پنج‌شنبه': 5, 'پنجشنبه': 5,
+    'جمعه': 6,
+    'Sat': 0, 'Sun': 1, 'Mon': 2, 'Tue': 3, 'Wed': 4, 'Thu': 5, 'Fri': 6,
+  };
+
+  return {
+    year: Number(String(out.year || '').replace(/\D/g, '')) || 0,
+    month: Number(String(out.month || '').replace(/\D/g, '')) || 0,
+    day: Number(String(out.day || '').replace(/\D/g, '')) || 0,
+    weekday: weekdayMap[out.weekday] ?? 0,
+  };
+}
+
 export function getJalaliParts(date = new Date()) {
-  const gy = date.getFullYear();
-  const gm = date.getMonth() + 1;
-  const gd = date.getDate();
-  
-  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-  let jy = (gy <= 1600) ? 0 : 979;
-  let gyy = (gy <= 1600) ? gy - 621 : gy - 1600;
-  const gy2 = (gm > 2) ? (gyy + 1) : gyy;
-  
-  let days = (365 * gyy) + (parseInt((gy2 + 3) / 4)) - (parseInt((gy2 + 99) / 100)) + (parseInt((gy2 + 399) / 400)) - 80 + gd + g_d_m[gm - 1];
-  
-  jy += 33 * (parseInt(days / 12053));
-  days %= 12053;
-  jy += 4 * (parseInt(days / 1461));
-  days %= 1461;
-  jy += parseInt((days - 1) / 365);
-  
-  if (days > 365) days = (days - 1) % 365;
-  
-  const jm = (days < 186) ? 1 + parseInt(days / 31) : 7 + parseInt((days - 186) / 30);
-  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
-  
-  // JS getDay: 0=Sun, 1=Mon... We want 0=Sat, 1=Sun...
-  const wd = (date.getDay() + 1) % 7;
-
-  return { year: jy, month: jm, day: jd, weekday: wd };
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return { year: 0, month: 0, day: 0, weekday: 0 };
+  return partsOf(d);
 }
 
-export function getMonthName(m) {
-  return FA_MONTHS[Math.max(0, Math.min(11, Number(m) - 1))] || 'مهر';
+/* ── Leap-year & month length ───────────────────────────── */
+
+export function isJalaliLeap(jy) {
+  const startDate = jalaliToDate(jy, 1, 1);
+  const endDate = jalaliToDate(jy + 1, 1, 1);
+  if (!startDate || !endDate) return false;
+  const days = Math.round((endDate - startDate) / 86400000);
+  return days === 366;
 }
+
+// 🛡️ THIS IS THE MISSING FUNCTION
+export function jalaliMonthDays(jy, jm) {
+  if (jm <= 6) return 31;
+  if (jm <= 11) return 30;
+  return isJalaliLeap(jy) ? 30 : 29;
+}
+
+/* ── Conversion ─────────────────────────────────────────── */
+
+export function jalaliToDate(jy, jm, jd) {
+  const anchor = Date.UTC(2021, 2, 21);
+  const ANCHOR_JY = 1400;
+  const ANCHOR_JM = 1;
+  const ANCHOR_JD = 1;
+
+  const daysBetween = jalaliDayDiff(
+    { y: ANCHOR_JY, m: ANCHOR_JM, d: ANCHOR_JD },
+    { y: jy, m: jm, d: jd }
+  );
+  const target = new Date(anchor + daysBetween * 86400000);
+  return Number.isNaN(target.getTime()) ? null : target;
+}
+
+function jalaliDayDiff(a, b) {
+  return jalaliToJulianDay(b) - jalaliToJulianDay(a);
+}
+
+function jalaliToJulianDay(j) {
+  const jy = j.y + 1595;
+  const days = -355668 +
+    (365 * jy) +
+    Math.floor(jy / 33) * 8 +
+    Math.floor(((jy % 33) + 3) / 4) +
+    j.d +
+    (j.m < 7 ? (j.m - 1) * 31 : (j.m - 7) * 30 + 186);
+  return days + 1948320;
+}
+
+export function dateToJalali(date) {
+  const p = getJalaliParts(date);
+  return { y: p.year, m: p.month, d: p.day };
+}
+
+/* ── Grid ───────────────────────────────────────────────── */
+
+export function buildJalaliMonthGrid(jy, jm, today = new Date()) {
+  const daysInMonth = jalaliMonthDays(jy, jm);
+  const firstDate = jalaliToDate(jy, jm, 1);
+  if (!firstDate) return [];
+
+  const firstWeekday = getJalaliParts(firstDate).weekday; 
+  const todayParts = getJalaliParts(today);
+
+  const cells = [];
+  for (let i = 0; i < firstWeekday; i++) {
+    cells.push({ date: null, day: null, isToday: false, isCurrentMonth: false });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = jalaliToDate(jy, jm, d);
+    cells.push({
+      date,
+      day: d,
+      isToday: !!date && date.toDateString() === today.toDateString(),
+      isCurrentMonth: jy === todayParts.year && jm === todayParts.month,
+    });
+  }
+  while (cells.length % 7 !== 0) {
+    cells.push({ date: null, day: null, isToday: false, isCurrentMonth: false });
+  }
+
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
+  return weeks;
+}
+
+/* ── Labels ─────────────────────────────────────────────── */
 
 export function getWeekdayLabels() {
   return [...FA_WEEKDAYS];
@@ -54,15 +161,30 @@ export function getWeekdayShortLabels() {
   return [...FA_WEEKDAYS_SHORT];
 }
 
+export function getMonthName(m) {
+  return FA_MONTHS[Math.max(0, Math.min(11, Number(m) - 1))] || '';
+}
+
 export function formatJalali(date, style = 'short') {
   const d = date instanceof Date ? date : new Date(date);
-  const { year, month, day } = getJalaliParts(d);
-  if (style === 'long') return `${toFaDigits(day)} ${getMonthName(month)} ${toFaDigits(year)}`;
-  return `${toFaDigits(year)}/${toFaDigits(String(month).padStart(2, '0'))}/${toFaDigits(String(day).padStart(2, '0'))}`;
+  if (Number.isNaN(d.getTime())) return '—';
+  const { y, m, d: day } = dateToJalali(d);
+  if (!y) return '—';
+  if (style === 'long') return `${toFaDigits(day)} ${getMonthName(m)} ${toFaDigits(y)}`;
+  return `${toFaDigits(y)}/${toFaDigits(String(m).padStart(2, '0'))}/${toFaDigits(String(day).padStart(2, '0'))}`;
+}
+
+export function jalaliMonthRange(jy, jm) {
+  const start = jalaliToDate(jy, jm, 1) || new Date();
+  const lastDay = jalaliMonthDays(jy, jm);
+  const end = jalaliToDate(jy, jm, lastDay) || start;
+  end.setHours(23, 59, 59, 999);
+  return { start, end };
 }
 
 export function jalaliRelativeLabel(date, now = new Date()) {
   const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return '—';
   const a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   const b = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.round((b - a) / 86400000);
@@ -74,3 +196,13 @@ export function jalaliRelativeLabel(date, now = new Date()) {
   if (diffDays < 365) return `${toFaDigits(Math.round(diffDays / 30))} ماه پیش`;
   return `${toFaDigits(Math.round(diffDays / 365))} سال پیش`;
 }
+
+export function jalaliToISO(jy, jm, jd, time = {}) {
+  const d = jalaliToDate(jy, jm, jd);
+  if (!d) return new Date().toISOString();
+  d.setHours(time.hour ?? 12, time.minute ?? 0, 0, 0);
+  return d.toISOString();
+}
+
+// Unused import cleanup
+void GREGORIAN_CAL;
