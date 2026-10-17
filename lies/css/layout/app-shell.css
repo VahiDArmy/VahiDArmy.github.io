@@ -1,7 +1,7 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Switched to Flexbox for perfect stability. No more 
-          grid issues in RTL. No more blank spaces.
+   FIXED: Sidebar is now sticky and stays fixed while the 
+          content scrolls on PC. Height is set to 100dvh.
    ============================================================ */
 
 .app-shell {
