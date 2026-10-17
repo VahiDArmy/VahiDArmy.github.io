@@ -1,5 +1,6 @@
 /* ============================================================
    js/layout/sidebar.js
+   FIXED: Controls the backdrop element properly.
    ============================================================ */
 
 import { el, byId } from '../utils/dom.js';
@@ -34,6 +35,12 @@ export function mountSidebar() {
   sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
 
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
+
+  // Backdrop click listener
+  const backdrop = byId('sidebar-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', closeMobileSidebar);
+  }
 }
 
 export function toggleCollapsed(force) {
@@ -61,7 +68,7 @@ export function closeMobileSidebar() {
   shell?.classList.remove('is-mobile-sidebar-open');
   if (backdrop) {
     backdrop.classList.remove('is-visible');
-    setTimeout(() => { backdrop.hidden = true; }, 250);
+    setTimeout(() => { backdrop.hidden = true; }, 300);
   }
   document.body.classList.remove('has-drawer');
 }
