@@ -1,55 +1,56 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: The sidebar backdrop has been isolated so it never 
-   blurs the sidebar itself. Z-indexes are strictly separated.
+   FIXED: Mobile blur overlay issue resolved. 
+          We use right: -280px instead of transform to avoid 
+          RTL bugs. Backdrop uses opacity so it animates cleanly.
    ============================================================ */
 
 @media (max-width: 1024px) {
-  :root {
-    --sidebar-w: 232px;
-    --sidebar-w-collapsed: 68px;
-  }
+  :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
 }
 
-/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
+  /* App shell behaves like a normal block */
   .app-shell,
   .app-shell.is-sidebar-collapsed {
     display: block;
   }
 
-  /* Sidebar Drawer */
-  .sidebar {
+  /* Sidebar is fixed and hidden to the right */
+  .sidebar,
+  .app-shell.is-sidebar-collapsed .sidebar {
     position: fixed;
     top: 0;
     bottom: 0;
-    right: 0;
+    right: -280px; /* 🛡️ Hidden off-screen */
     width: 280px !important;
-    z-index: 1000; /* Above backdrop */
-    transform: translateX(100%);
-    transition: transform var(--dur-base) var(--ease-standard);
+    z-index: 1000;
+    transition: right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
     border-left: 1px solid var(--border);
   }
 
+  /* Open state */
   .app-shell.is-mobile-sidebar-open .sidebar {
-    transform: translateX(0);
+    right: 0; /* 🛡️ Slide in */
     box-shadow: var(--shadow-xl);
   }
 
-  /* Backdrop: sits exactly between page and sidebar */
+  /* Backdrop */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
-    z-index: 999; /* Below sidebar (1000), Above page */
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 999;
     opacity: 0;
     pointer-events: none;
-    transition: opacity var(--dur-base);
+    transition: opacity 0.3s ease;
   }
   
-  .sidebar-backdrop.is-visible {
+  /* Show backdrop ONLY when open */
+  .app-shell.is-mobile-sidebar-open .sidebar-backdrop {
     opacity: 1;
     pointer-events: auto;
   }
@@ -57,5 +58,12 @@
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   body.has-drawer { overflow: hidden; }
-  .page-container { padding: var(--s-4); }
+  
+  .page-container { padding: var(--s-3); }
+}
+
+@media (max-width: 768px) {
+  .topbar__search { display: none; }
+  .topbar { padding-inline: var(--s-3); }
+  .topbar__breadcrumb { max-width: 60%; }
 }
