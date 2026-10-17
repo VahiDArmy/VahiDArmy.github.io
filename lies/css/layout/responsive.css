@@ -1,9 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: 
-     1. z-index for sidebar is now 10000 and backdrop is 9999.
-     2. Removed backdrop-filter: blur() because it blocks clicks
-        on mobile browsers.
+   FIXED: Removed backdrop-filter. Made sure sidebar z-index 
+          is high enough.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -30,7 +28,7 @@
     bottom: 0;
     right: 0;
     width: 280px !important;
-    z-index: 10000; /* 🛡️ Higher than backdrop */
+    z-index: 10000; 
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow-xl);
   }
@@ -39,13 +37,13 @@
     display: flex !important;
   }
 
-  /* Backdrop */
+  /* Backdrop (No blur) */
   .sidebar-backdrop {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(5, 5, 9, 0.7);
-    /* 🛡️ REMOVED backdrop-filter: blur() — it blocks clicks on mobile */
+    background: rgba(0, 0, 0, 0.6);
+    /* 🛡️ REMOVED backdrop-filter */
     z-index: 9999; 
   }
   
