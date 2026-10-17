@@ -1,58 +1,50 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Returned to the most stable CSS Grid layout.
-   No more margin-right hacks. No more missing sidebars.
+   APPROACH: Standard Document Flow.
+   We DO NOT use overflow: hidden on the body. 
+   The browser scrolls the whole page naturally.
    ============================================================ */
 
 html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  direction: rtl;
   background: var(--bg-base);
+  direction: rtl;
+  /* No overflow: hidden here! Let mobile scroll naturally */
 }
 
-/* The wrapper is a strict 2-column Grid */
 .app-shell {
-  display: grid;
-  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  display: flex;
+  min-height: 100vh;
   width: 100%;
-  height: 100dvh;
-  overflow: hidden;
-  transition: grid-template-columns var(--dur-base) var(--ease-standard);
 }
 
-/* When collapsed, the first column shrinks */
-.app-shell.is-sidebar-collapsed {
-  grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
+/* Sidebar is sticky on desktop */
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  flex-shrink: 0;
 }
 
-/* Main Content Area */
 .app-main {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
   min-width: 0;
 }
 
-/* 🛡️ THE ONLY SCROLLING ELEMENT IN THE APP */
 .page-container {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
   padding: var(--s-6) var(--s-6) var(--s-8);
   outline: none;
-  -webkit-overflow-scrolling: touch;
 }
 
 .app-footer {
-  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,4 +56,5 @@ html, body {
   background: var(--bg-glass);
   backdrop-filter: blur(var(--blur-sm));
   -webkit-backdrop-filter: blur(var(--blur-sm));
+  flex-wrap: wrap;
 }
