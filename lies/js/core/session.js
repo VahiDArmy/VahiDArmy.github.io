@@ -1,9 +1,8 @@
 /* ============================================================
    js/core/session.js
-   Session state machine: boot → anonymous | authenticated
-   FIXED: Deferred the onAuthStateChange handler to prevent the
-          Supabase v2 deadlock. Avoids calling getUser/getSession
-          synchronously inside the auth callback.
+   FIXED: Removed the 3-second blocking wait. 
+   Now it returns the session IMMEDIATELY from LocalStorage and 
+   hydrates the profile/settings in the background.
    ============================================================ */
 
 import { getSupabase, getSession } from './supabase.client.js';
@@ -13,32 +12,28 @@ import { EVENTS } from '../config/constants.js';
 import * as authService from '../services/auth.service.js';
 import * as settingsService from '../services/settings.service.js';
 
-/* ── State helpers ───────────────────────────────────────── */
-
 function setStatus(status, error = null) {
   sessionStore.set({ status, error });
 }
 
-async function hydrateAuthenticated(user, session) {
-  sessionStore.set({ user, status: 'authenticated', error: null });
+// Background task: fetch profile and settings without blocking the UI
+async function hydrateInBackground(user, session) {
   try {
     const [profile, settings] = await Promise.all([
       authService.getProfile().catch(() => null),
       settingsService.fetch().catch(() => settingsService.getLocal()),
     ]);
     sessionStore.set({ profile: profile || null, settings });
+    bus.emit(EVENTS.AUTH_READY, { user, session });
   } catch (err) {
-    console.warn('[session] hydrate failed', err);
+    console.warn('[session] background hydration failed', err);
   }
-  bus.emit(EVENTS.AUTH_READY, { user, session });
 }
 
 function setAnonymous() {
   sessionStore.set({ user: null, profile: null, status: 'anonymous', error: null });
   bus.emit(EVENTS.AUTH_READY, { user: null, session: null });
 }
-
-/* ── Public API ──────────────────────────────────────────── */
 
 let _initialized = false;
 
@@ -52,7 +47,6 @@ export async function initSession() {
 
   const supabase = getSupabase();
 
-  // DEADLOCK FIX: defer all async work to a macro-task
   supabase.auth.onAuthStateChange((event, session) => {
     setTimeout(async () => {
       try {
@@ -61,7 +55,8 @@ export async function initSession() {
           return;
         }
         if (event === 'SIGNED_IN' && session?.user) {
-          await hydrateAuthenticated(session.user, session);
+          sessionStore.set({ user: session.user, status: 'authenticated' });
+          hydrateInBackground(session.user, session);
           return;
         }
         if (event === 'USER_UPDATED' && session?.user) {
@@ -74,10 +69,15 @@ export async function initSession() {
   });
 
   try {
-    // getSession() is safe here because it's called OUTSIDE the lock
+    // 🛡️ getSession() is instant (reads from LocalStorage)
     const session = await getSession();
     if (session?.user) {
-      await hydrateAuthenticated(session.user, session);
+      // Set state IMMEDIATELY
+      sessionStore.set({ user: session.user, status: 'authenticated', error: null });
+      
+      // Hydrate in background, DO NOT await
+      hydrateInBackground(session.user, session);
+      
       return { user: session.user, session };
     }
     setAnonymous();
@@ -96,7 +96,8 @@ export async function refreshSession() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: { session } } = await supabase.auth.getSession();
-      await hydrateAuthenticated(user, session);
+      sessionStore.set({ user });
+      hydrateInBackground(user, session);
     } else {
       setAnonymous();
     }
