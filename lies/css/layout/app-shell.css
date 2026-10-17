@@ -1,20 +1,16 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Removed all opacity rules. Forced standard RTL Grid.
+   FIXED: Grid layout is solid. Removed opacity tricks.
    ============================================================ */
-
-html, body {
-  direction: rtl;
-}
 
 .app-shell {
   direction: rtl;
   display: grid;
-  /* Sidebar is always in the first column (right side in RTL) */
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
   min-height: 100dvh;
-  transition: grid-template-columns var(--dur-base) var(--ease-standard);
+  width: 100%;
   background: var(--bg-base);
+  transition: grid-template-columns var(--dur-base) var(--ease-standard);
 }
 
 .app-shell.is-sidebar-collapsed {
@@ -38,9 +34,7 @@ html, body {
   padding: var(--s-6) var(--s-7) var(--s-8);
   min-height: 0;
   outline: none;
-  transition: opacity var(--dur-fast) var(--ease-standard);
 }
-.page-container--swapping { opacity: .4; }
 
 .app-footer {
   display: flex;
@@ -55,16 +49,4 @@ html, body {
   backdrop-filter: blur(var(--blur-sm));
   -webkit-backdrop-filter: blur(var(--blur-sm));
   flex-wrap: wrap;
-}
-
-body.is-offline .app-main::before {
-  content: "اتصال اینترنت قطع است — تغییرات ممکن است ذخیره نشوند";
-  display: block;
-  background: linear-gradient(90deg, var(--warning-soft), transparent);
-  color: var(--warning);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  padding: 6px var(--s-4);
-  text-align: center;
-  border-bottom: 1px solid hsl(var(--hue-warning) 90% 55% / .2);
 }
