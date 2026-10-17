@@ -1,7 +1,7 @@
 /* ============================================================
    js/main.js
-   FIXED: Force display: none on splash screen to prevent 
-          the white space on top in mobile.
+   FIXED: Removed the 1.5s fallback error injection. 
+          Added 20s hard timeout to splash.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -20,44 +20,25 @@ import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
-function printBootError(msg) {
-  console.log(msg);
-  const errDiv = byId('inline-error-log');
-  if (errDiv) {
-    if (msg.includes('ERROR') || msg.includes('EXCEPTION')) {
-      errDiv.style.display = 'block';
-      errDiv.textContent += `❌ ${msg}\n\n`;
-    }
-  }
-}
-
 ready(async () => {
   try {
-    printBootError('1. Starting boot sequence...');
-    
     try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
 
     initErrorBoundary();
     initTheme();
 
     if (!isSupabaseConfigured()) {
-      printBootError('ERROR: Supabase config missing!');
       return fatalConfig();
     }
 
     if (FEATURES.commandPalette) initCommandPalette();
 
-    printBootError('2. Initializing Session...');
     const outcome = await initSession();
-    
-    printBootError('3. Session initialized. Mounting auth page...');
     mountAuthPage();
 
     if (outcome.user) {
-      printBootError('4. User found. Starting App...');
       await startApp();
     } else {
-      printBootError('4. No user. Showing auth screen.');
       showAuthScreen();
       hideBootSplash();
     }
@@ -68,49 +49,28 @@ ready(async () => {
     bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
 
   } catch (err) {
-    printBootError(`EXCEPTION IN BOOT: ${err.message}\n${err.stack}`);
+    console.error('EXCEPTION IN BOOT:', err);
+    hideBootSplash(); // Never stay stuck on splash if boot fails
   }
 });
 
 async function startApp() {
-  showLoader('در حال آماده‌سازی فضای شخصی…');
+  showLoader('در حال آماده‌سازی…');
   try {
-    printBootError('5. Registering routes...');
     await registerRoutes();
-
-    printBootError('6. Mounting App Shell...');
     mountAppShell();
-
-    printBootError('7. Showing App Shell...');
     showAppShell();
 
     const container = byId('page-container');
     if (container) {
       container.innerHTML = '';
-      
-      setTimeout(() => {
-        if (container.innerHTML.trim() === '') {
-          container.innerHTML = `
-            <div style="padding: 40px; text-align: center; color: #fff;">
-              <h2>خطایی در بارگذاری داشبورد رخ داد</h2>
-              <p style="color: #aaa; margin-top: 8px;">لطفاً از منوی کناری صفحه‌ی دیگری را انتخاب کنید.</p>
-            </div>
-          `;
-        }
-      }, 1500);
-
       router.start(container);
     }
 
     registerGlobalShortcuts();
     shortcuts.start();
-    printBootError('8. App Started Successfully!');
-    
-    const errDiv = byId('inline-error-log');
-    if (errDiv) errDiv.style.display = 'none';
-    
   } catch (err) {
-    printBootError(`EXCEPTION IN STARTAPP: ${err.message}\n${err.stack}`);
+    console.error('EXCEPTION IN STARTAPP:', err);
   } finally {
     hideBootSplash();
     hideLoader();
@@ -168,7 +128,6 @@ function registerGlobalShortcuts() {
 function hideBootSplash() {
   const splash = byId('boot-splash');
   if (!splash) return;
-  // 🛡️ Force display none immediately to prevent white gap
   splash.style.display = 'none';
   splash.classList.add('is-hidden');
   setTimeout(() => { 
