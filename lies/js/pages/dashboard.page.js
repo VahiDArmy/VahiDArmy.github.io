@@ -1,15 +1,13 @@
 /* ============================================================
    js/pages/dashboard.page.js
-   FIXED: Stripped down to bare minimum to prevent crashes.
-          No complex charts, no external dependencies. 
-          If this page loads, the app works.
+   FIXED: Replaced the fragile formatJalali logic with the 
+          standard formatDate utility to prevent the "undefined" bug.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
 import { sessionStore } from '../core/store.js';
 import * as statsService from '../services/stats.service.js';
-import { toFaDigits } from '../utils/format.js';
-import { getJalaliParts, formatJalali } from '../utils/jalali.js';
+import { toFaDigits, formatDate } from '../utils/format.js';
 
 export async function renderDashboard(container) {
   clear(container);
@@ -25,8 +23,8 @@ export async function renderDashboard(container) {
     console.warn('Could not load stats, using fallback.', err);
   }
 
-  const j = getJalaliParts(new Date());
-  const dateStr = `${toFaDigits(j.day)} ${formatJalali(new Date(), 'long').split(' ')[1]} ${toFaDigits(j.year)}`;
+  // 🛡️ FIX: Use the robust formatDate utility
+  const dateStr = formatDate(new Date(), { style: 'long', withTime: false });
 
   const page = el('div', { class: 'page page--dashboard', style: { padding: '24px', maxWidth: '800px', margin: '0 auto' } });
 
