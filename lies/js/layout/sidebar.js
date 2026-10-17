@@ -1,7 +1,10 @@
 /* ============================================================
    js/layout/sidebar.js
-   Sidebar renderer: nav, collapse, user block.
-   FIXED: Defined `isCollapsed` properly and exported it.
+   FIXED: 
+     1. Used `userEl.onclick` instead of `addEventListener` to 
+        prevent multiple listeners stacking up on re-renders.
+     2. Imported `closeDropdown` and added it to menu item clicks.
+     3. Added a listener to `user` state so it renders immediately.
    ============================================================ */
 
 import { el, byId, on } from '../utils/dom.js';
@@ -12,7 +15,7 @@ import { sessionStore, dataStore } from '../core/store.js';
 import { get as lsGet, set as lsSet } from '../utils/storage.js';
 import { initials, toFaDigits } from '../utils/format.js';
 import { colorFromString } from '../utils/id.js';
-import { openDropdown } from '../ui/dropdown.js';
+import { openDropdown, closeDropdown } from '../ui/dropdown.js';
 
 let navEl = null;
 let userEl = null;
@@ -24,21 +27,20 @@ export function mountSidebar() {
   navEl = byId('sidebar-nav');
   userEl = byId('sidebar-user');
 
-  // Restore collapsed state (always false on mobile)
   collapsed = !!lsGet(LS_KEYS.SIDEBAR_COLLAPSED, false);
   applyCollapsed(collapsed, { persist: false });
 
   renderNav();
   renderUser();
 
-  // React to state changes
   bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => updateActive(path));
   bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
   bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); });
   
+  // 🛡️ FIX: Listen to both user and profile changes to ensure it renders
+  sessionStore.select((s) => s.user, () => renderUser(), { immediate: false });
   sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
 
-  // Initial active state
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
 }
 
@@ -48,7 +50,6 @@ export function toggleCollapsed(force) {
   bus.emit(EVENTS.SIDEBAR_TOGGLED, { collapsed: next });
 }
 
-// 🛡️ FIX: This was missing and caused the ReferenceError
 export function isCollapsed() { 
   return collapsed; 
 }
@@ -133,7 +134,8 @@ function renderUser() {
 
   const menuBtn = el('button', { class: 'icon-btn', attrs: { type: 'button' }, style: { marginInlineStart: 'auto', color: 'var(--text-tertiary)' } }, { children: ['⋯'] });
   
-  userEl.addEventListener('click', (ev) => {
+  // 🛡️ FIX: Use onclick instead of addEventListener to prevent stacking
+  userEl.onclick = (ev) => {
     ev.stopPropagation();
     const menu = el('div', { class: 'dropdown__section' });
     
@@ -141,7 +143,10 @@ function renderUser() {
       const b = el('button', { class: ['dropdown__item', danger ? 'is-danger' : ''].filter(Boolean), attrs: { type: 'button' } });
       b.appendChild(el('span', { class: 'dropdown__item-icon' }, { children: [icon] }));
       b.appendChild(el('span', { class: 'dropdown__item-label' }, { children: [label] }));
-      b.addEventListener('click', onClick);
+      b.addEventListener('click', () => {
+        closeDropdown(); // 🛡️ FIX: Close menu on click
+        onClick();
+      });
       return b;
     };
 
@@ -156,7 +161,7 @@ function renderUser() {
     }, true));
 
     openDropdown(userEl, menu, { placement: 'top-start', width: 'anchor' });
-  });
+  };
 }
 
 function updateActive(path) {
