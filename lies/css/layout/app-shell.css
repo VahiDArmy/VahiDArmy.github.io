@@ -1,30 +1,44 @@
 /* ============================================================
    css/layout/app-shell.css
-   APP-LIKE LAYOUT: Flexbox everywhere. Only .page-container 
-                    has overflow-y: auto.
+   FIXED: Returned to the most stable CSS Grid layout.
+   No more margin-right hacks. No more missing sidebars.
    ============================================================ */
 
-.app-shell {
-  direction: rtl;
-  display: flex;
+html, body {
+  margin: 0;
+  padding: 0;
   width: 100%;
-  height: 100vh; /* Fallback */
-  height: 100dvh; /* Mobile exact height */
+  height: 100%;
   overflow: hidden;
+  direction: rtl;
   background: var(--bg-base);
+}
+
+/* The wrapper is a strict 2-column Grid */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  transition: grid-template-columns var(--dur-base) var(--ease-standard);
+}
+
+/* When collapsed, the first column shrinks */
+.app-shell.is-sidebar-collapsed {
+  grid-template-columns: var(--sidebar-w-collapsed) minmax(0, 1fr);
 }
 
 /* Main Content Area */
 .app-main {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  height: 100%;
+  height: 100dvh;
   overflow: hidden;
+  min-width: 0;
 }
 
-/* 🛡️ THIS IS THE ONLY SCROLLING ELEMENT */
+/* 🛡️ THE ONLY SCROLLING ELEMENT IN THE APP */
 .page-container {
   flex: 1;
   overflow-y: auto;
@@ -34,7 +48,7 @@
   margin-inline: auto;
   padding: var(--s-6) var(--s-6) var(--s-8);
   outline: none;
-  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+  -webkit-overflow-scrolling: touch;
 }
 
 .app-footer {
