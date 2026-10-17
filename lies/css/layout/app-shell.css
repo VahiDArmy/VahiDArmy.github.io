@@ -1,38 +1,23 @@
 /* ============================================================
    css/layout/app-shell.css
-   APPROACH: Standard Document Flow.
-   We DO NOT use overflow: hidden on the body. 
-   The browser scrolls the whole page naturally.
+   FIXED: Uses standard Flexbox and native document scrolling.
+          The sidebar uses `position: sticky` to stay in place.
    ============================================================ */
-
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  background: var(--bg-base);
-  direction: rtl;
-  /* No overflow: hidden here! Let mobile scroll naturally */
-}
 
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
+  background: var(--bg-base);
 }
 
-/* Sidebar is sticky on desktop */
-.sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  flex-shrink: 0;
-}
-
+/* Main Content Area */
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* Removed height and overflow. The body handles scrolling. */
 }
 
 .page-container {
@@ -42,9 +27,11 @@ html, body {
   margin-inline: auto;
   padding: var(--s-6) var(--s-6) var(--s-8);
   outline: none;
+  /* Removed overflow-y: auto. It now grows naturally. */
 }
 
 .app-footer {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
