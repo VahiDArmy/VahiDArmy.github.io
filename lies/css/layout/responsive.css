@@ -1,15 +1,20 @@
 /* ============================================================
    css/layout/responsive.css
-   MOBILE: Sidebar becomes a fixed drawer. Main content is 
-           100% width and scrolls normally.
+   FIXED: Sidebar z-index is 10000, backdrop is 9999.
+          This guarantees the sidebar is clickable.
    ============================================================ */
 
 @media (max-width: 1024px) {
-  :root { --sidebar-w: 232px; --sidebar-w-collapsed: 68px; }
+  :root {
+    --sidebar-w: 232px;
+    --sidebar-w-collapsed: 68px;
+  }
 }
 
+/* ── Mobile / Tablet (≤ 900) ────────────────────────────── */
 @media (max-width: 900px) {
-  /* Sidebar becomes a fixed overlay */
+  
+  /* Sidebar becomes a fixed drawer with MAX z-index */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
     position: fixed;
@@ -17,40 +22,46 @@
     bottom: 0;
     right: 0;
     width: 280px !important;
-    z-index: 1000;
+    z-index: 10000 !important; 
     transform: translateX(100%);
     transition: transform var(--dur-base) var(--ease-standard);
     border-left: 1px solid var(--border);
   }
 
-  /* When opened via JS */
+  /* Opened state */
   .app-shell.is-mobile-sidebar-open .sidebar {
     transform: translateX(0);
     box-shadow: var(--shadow-xl);
   }
 
-  /* Backdrop */
+  /* Backdrop is just below the sidebar */
   .sidebar-backdrop {
     position: fixed;
     inset: 0;
     background: var(--bg-overlay);
     backdrop-filter: blur(2px);
     -webkit-backdrop-filter: blur(2px);
-    z-index: 999;
+    z-index: 9999 !important;
     opacity: 0;
     transition: opacity var(--dur-base);
   }
   .sidebar-backdrop.is-visible { opacity: 1; }
 
-  /* Hide desktop collapse, show mobile menu */
   .sidebar__collapse { display: none !important; }
   .topbar__menu { display: inline-flex !important; }
   
-  /* Lock scroll only when drawer is open */
   body.has-drawer { overflow: hidden; }
   
   .page-container { padding: var(--s-4); }
-  
-  /* Make topbar search hidden on small screens */
+}
+
+@media (max-width: 768px) {
   .topbar__search { display: none; }
+  .topbar { padding-inline: var(--s-3); }
+  .topbar__breadcrumb { max-width: 60%; }
+}
+
+@media (max-width: 480px) {
+  .page-title { font-size: var(--fs-2xl); }
+  .page-title__icon { width: 38px; height: 38px; font-size: 18px; }
 }
