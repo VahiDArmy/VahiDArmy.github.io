@@ -1,8 +1,7 @@
 /* ============================================================
    css/features/auth.css
-   FIXED: Removed all opacity/ready class dependencies. 
-   The screen is 100% visible as soon as the 'hidden' attribute 
-   is removed by JavaScript.
+   FIXED: Removed the 2-column grid. Auth card is perfectly 
+          centered on all screens.
    ============================================================ */
 
 .auth-screen {
@@ -17,37 +16,20 @@
   background: var(--bg-deep);
 }
 
-.auth-screen[hidden] {
-  display: none !important;
-}
-
 .auth-screen__content {
   position: relative;
   z-index: 2;
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  gap: var(--s-10);
   width: 100%;
-  max-width: 1160px;
-  align-items: center;
+  max-width: 440px;
   margin: auto;
 }
 
-@media (max-width: 960px) {
-  .auth-screen__content {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--s-6);
-    max-width: 480px;
-  }
-}
-
-/* ── Ambient background ──────────────────────────────────── */
+/* Ambient background */
 .auth-screen__bg {
-  position: absolute;
+  position: fixed;
   inset: 0;
   overflow: hidden;
   z-index: 1;
-  pointer-events: none;
 }
 .auth-screen__orb {
   position: absolute;
@@ -59,94 +41,30 @@
 .auth-screen__orb--1 {
   width: 480px; height: 480px;
   background: radial-gradient(circle, hsl(var(--accent-h) var(--accent-s) 55% / .55), transparent 65%);
-  top: -120px; inset-inline-end: -100px;
+  top: -120px; right: -100px;
 }
 .auth-screen__orb--2 {
   width: 420px; height: 420px;
   background: radial-gradient(circle, hsl(205 90% 55% / .35), transparent 65%);
-  bottom: -120px; inset-inline-start: -100px;
+  bottom: -120px; left: -100px;
   animation-delay: -3s;
 }
 
-/* ── Hero side ───────────────────────────────────────────── */
-.auth-hero {
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-6);
-  padding: var(--s-6) 0;
-}
-.auth-hero__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  align-self: flex-start;
-  padding: 6px 14px;
-  border-radius: var(--r-full);
-  background: var(--accent-soft);
-  color: var(--accent-200);
-  font-size: var(--fs-xs);
-  font-weight: var(--fw-medium);
-  border: 1px solid hsl(var(--accent-h) var(--accent-s) 60% / .25);
-}
-.auth-hero__badge-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px hsl(var(--accent-h) var(--accent-s) 60% / .25);
-  animation: pulse 2s var(--ease-inout) infinite;
-}
-.auth-hero__title {
-  font-size: clamp(1.9rem, 1.1rem + 2.8vw, 3.1rem);
-  font-weight: var(--fw-black);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
-}
-.auth-hero__accent {
-  background: linear-gradient(115deg, var(--accent-200), var(--accent-400) 45%, #f0619a);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-}
-.auth-hero__subtitle {
-  font-size: var(--fs-lg);
-  line-height: var(--lh-relaxed);
-  color: var(--text-secondary);
-  max-width: 52ch;
-}
-
-/* ── Auth card ───────────────────────────────────────────── */
 .auth-card {
   position: relative;
-  padding: var(--s-7);
+  padding: var(--s-6) var(--s-5);
   background: var(--bg-glass-strong);
   backdrop-filter: blur(var(--blur-lg)) saturate(160%);
   -webkit-backdrop-filter: blur(var(--blur-lg)) saturate(160%);
   border: 1px solid var(--border);
-  border-radius: var(--r-2xl);
+  border-radius: var(--r-xl);
   box-shadow: var(--shadow-xl);
-  max-width: 460px;
-  width: 100%;
-  margin-inline: auto;
 }
-.auth-card__glow {
-  position: absolute;
-  inset-inline: 15%; top: -1px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: .7;
-  pointer-events: none;
-}
+
 .auth-card__head { margin-bottom: var(--s-5); text-align: center; }
-.auth-card__title {
-  font-size: var(--fs-2xl);
-  font-weight: var(--fw-bold);
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-.auth-card__hint { font-size: var(--fs-sm); color: var(--text-tertiary); }
+.auth-card__title { font-size: var(--fs-xl); font-weight: var(--fw-bold); color: var(--text-primary); }
 
 .auth-card__tabs {
-  position: relative;
   display: flex;
   background: var(--bg-inset);
   border: 1px solid var(--border);
@@ -155,20 +73,22 @@
   margin-bottom: var(--s-5);
 }
 .auth-card__tabs .tabs__btn {
-  flex: 1; padding: 9px 12px;
+  flex: 1;
+  padding: 9px 12px;
   border-radius: var(--r-md);
-  font-size: var(--fs-sm); font-weight: var(--fw-medium);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
   color: var(--text-secondary);
   transition: color var(--dur-fast), background var(--dur-fast);
-  z-index: 1; position: relative;
+  z-index: 1;
 }
 .auth-card__tabs .tabs__btn.is-active {
   color: var(--text-primary);
-  background: linear-gradient(135deg, var(--accent-500), var(--accent-600));
+  background: var(--accent);
   box-shadow: 0 4px 12px -4px hsl(var(--accent-h) var(--accent-s) 55% / .5);
   font-weight: var(--fw-semibold);
 }
-.auth-card__tabs .tabs__indicator { display: none; }
 
 .auth-form { display: flex; flex-direction: column; gap: var(--s-3); }
 .auth-form[hidden] { display: none !important; }
+.auth-form__terms { display: flex; align-items: center; gap: var(--s-2); font-size: var(--fs-xs); color: var(--text-tertiary); margin-top: var(--s-2); }
