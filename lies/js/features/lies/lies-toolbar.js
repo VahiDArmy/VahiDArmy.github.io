@@ -1,11 +1,12 @@
 /* ============================================================
    js/features/lies/lies-toolbar.js
-   Search, sort dropdown, view switcher, layout controls
+   FIXED: Imported `closeDropdown` so the sort/page-size menus
+          actually close when an option is selected.
    ============================================================ */
 
 import { el, byId } from '../../utils/dom.js';
 import { debounce } from '../../utils/debounce.js';
-import { toggleDropdown } from '../../ui/dropdown.js';
+import { toggleDropdown, closeDropdown } from '../../ui/dropdown.js';
 import { segmented } from '../../ui/segmented.js';
 import { badge } from '../../ui/badges.js';
 import { SORT_OPTIONS, VIEW_MODES, PAGE_SIZES } from '../../config/app.config.js';
@@ -19,20 +20,6 @@ const VIEW_ITEMS = [
   { id: VIEW_MODES.TIMELINE, icon: '◷', title: 'خط زمانی' },
 ];
 
-/**
- * @param {{
- *   state: {view:string, sort:string, filters:object, pageSize:number, total:number, selection:Set<string>},
- *   onSearchChange: (q:string)=>void,
- *   onSortChange: (s:string)=>void,
- *   onViewChange: (v:string)=>void,
- *   onPageSizeChange: (n:number)=>void,
- *   onToggleFilters: ()=>void,
- *   onCreateNew: ()=>void,
- *   onSelectAll: ()=>void,
- *   onClearSelection: ()=>void,
- * }} opts
- * @returns {HTMLElement}
- */
 export function liesToolbar(opts) {
   const {
     state, onSearchChange, onSortChange, onViewChange,
@@ -48,7 +35,7 @@ export function liesToolbar(opts) {
     class: 'input',
     attrs: {
       type: 'search',
-      placeholder: 'جست‌وجو در عنوان، متن، حقیقت…',
+      placeholder: 'جست‌وجو…',
       autocomplete: 'off',
     },
   });
@@ -110,9 +97,7 @@ export function liesToolbar(opts) {
       });
       menu.appendChild(item);
     }
-    import('../../ui/dropdown.js').then(({ toggleDropdown }) => {
-      toggleDropdown(sortBtn, menu, { placement: 'bottom-end', width: 220 });
-    });
+    toggleDropdown(sortBtn, menu, { placement: 'bottom-end', width: 220 });
   });
   bar.appendChild(sortBtn);
 
@@ -125,11 +110,12 @@ export function liesToolbar(opts) {
   });
   bar.appendChild(viewSwitch);
 
-  /* Page size (small dropdown) */
+  /* Page size */
   const sizeBtn = el('button', {
     class: 'btn btn--ghost btn--sm',
     attrs: { type: 'button', title: 'تعداد در هر صفحه' },
   }, { children: [`${toFaDigits(state.pageSize)}/صفحه`] });
+  
   sizeBtn.addEventListener('click', () => {
     const menu = el('div');
     for (const s of PAGE_SIZES) {
