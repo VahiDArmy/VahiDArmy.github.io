@@ -1,7 +1,6 @@
 /* ============================================================
    js/pages/lies.page.js
-   FIXED: Completely rewritten with (container, params, query)
-          signature to prevent "query.get is not a function".
+   UPDATED: Passes lieTypes and moods to filters and list state.
    ============================================================ */
 
 import { el, clear } from '../utils/dom.js';
@@ -29,20 +28,13 @@ import { activeFilterCount } from '../features/lies/lies-storage.js';
 let _unmounts = [];
 let _container = null;
 
-/**
- * @param {HTMLElement} container
- * @param {Record<string, string>} params
- * @param {URLSearchParams} query
- */
 export async function renderLies(container, params = {}, query) {
-  // Safety fallback for URLs
   let qs = query;
   if (!qs || typeof qs.get !== 'function') {
     qs = new URLSearchParams(location.hash.split('?')[1] || '');
   }
 
   _container = container;
-
   const page = el('div', { class: 'page page--lies' });
 
   /* Header */
@@ -57,11 +49,9 @@ export async function renderLies(container, params = {}, query) {
   head.appendChild(headLeft);
   page.appendChild(head);
 
-  /* Toolbar host */
   const toolbarHost = el('div', { class: 'lies-toolbar-host' });
   page.appendChild(toolbarHost);
 
-  /* Main layout */
   const main = el('div', { class: 'lies-layout' });
   const filtersHost = el('div', { class: 'lies-filters-host', hidden: true });
   const contentHost = el('div', { class: 'lies-content' });
@@ -69,21 +59,17 @@ export async function renderLies(container, params = {}, query) {
   main.appendChild(contentHost);
   page.appendChild(main);
 
-  /* Bulk bar host */
   const bulkHost = el('div', { class: 'bulk-host' });
   page.appendChild(bulkHost);
 
-  /* Pagination host */
   const paginationHost = el('div', { class: 'lies-pagination-host' });
   page.appendChild(paginationHost);
 
   container.appendChild(page);
 
-  /* Load data */
   await loadReferenceData();
   await loadFirstPage();
 
-  /* Handle query params safely */
   const newParam = qs.get('new');
   if (newParam === '1') {
     try { history.replaceState(null, '', location.pathname + location.search + '#/lies'); } catch { /* noop */ }
@@ -91,11 +77,8 @@ export async function renderLies(container, params = {}, query) {
   }
   
   const tagIdParam = qs.get('tagId');
-  if (tagIdParam) {
-    updateFilters({ tagIds: [tagIdParam] });
-  }
+  if (tagIdParam) updateFilters({ tagIds: [tagIdParam] });
 
-  /* Render pipeline */
   const render = () => renderAll({
     container, contentHost, toolbarHost, filtersHost, paginationHost, bulkHost,
   });
@@ -154,6 +137,8 @@ function renderAll(hosts) {
       filters: state.filters,
       categories: state.categories,
       tags: state.tags,
+      lieTypes: state.lieTypes, // 🛡️ Passing dynamic types
+      moods: state.moods,       // 🛡️ Passing dynamic moods
       onApply: (patch) => updateFilters(patch),
       onReset: () => resetFilters(),
       onClose: () => toggleFiltersPanel(hosts, false),
@@ -168,6 +153,8 @@ function renderAll(hosts) {
     error: state.error,
     selection: state.selection,
     categories: state.categories,
+    lieTypes: state.lieTypes, // 🛡️ Passing to cards
+    moods: state.moods,       // 🛡️ Passing to cards
     total: state.total,
     hasMore: state.hasMore,
     loadingMore: state.loadingMore,
@@ -222,6 +209,8 @@ function toggleFiltersPanel(hosts, force) {
       filters: state.filters,
       categories: state.categories,
       tags: state.tags,
+      lieTypes: state.lieTypes, // 🛡️
+      moods: state.moods,       // 🛡️
       onApply: (patch) => updateFilters(patch),
       onReset: () => resetFilters(),
       onClose: () => toggleFiltersPanel(hosts, false),
