@@ -13,23 +13,11 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- 🛡️ Cache Buster: ?v=14 -->
-  <link rel="stylesheet" href="css/main.css?v=14" />
-
-  <script>
-    window.addEventListener('error', function(e) {
-      var errDiv = document.getElementById('inline-error-log');
-      if (errDiv) {
-        errDiv.style.display = 'block';
-        errDiv.textContent += '❌ ERROR: ' + e.message + '\n   Location: ' + e.filename + ':' + e.lineno + '\n\n';
-      }
-    });
-  </script>
+  <!-- 🛡️ Cache Buster: ?v=20 -->
+  <link rel="stylesheet" href="css/main.css?v=20" />
   
   <style>
-    /* Absolute fallback for hidden elements */
     [hidden] { display: none !important; }
-    #boot-splash.is-hidden { display: none !important; }
   </style>
 </head>
 
@@ -39,8 +27,6 @@
       <div class="boot-splash__mark">🎭</div>
       <div class="boot-splash__ring"></div>
       <p class="boot-splash__text">در حال آماده‌سازی فضای خصوصی شما…</p>
-      <button id="show-logs-btn" type="button" onclick="document.getElementById('debug-log-panel').style.transform='translateY(0)'">مشاهده وضعیت سیستم (لاگ)</button>
-      <pre id="inline-error-log" style="display: none; text-align: left; direction: ltr; font-size: 11px; color: #ff6b6b; background: #000; padding: 16px; border-radius: 8px; border: 1px solid #ff6b6b; max-width: 90vw; max-height: 40vh; overflow: auto; margin-top: 20px; white-space: pre-wrap; font-family: monospace; z-index: 99999; position: relative;"></pre>
     </div>
   </div>
 
@@ -198,7 +184,6 @@
         <div class="topbar__actions">
           <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع دروغ (N)">＋</button>
           <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم">🌙</button>
-          <button class="icon-btn icon-btn--badge" id="notifications-btn" type="button" title="یادآورها">🔔<span class="icon-btn__badge" id="notif-badge" hidden>0</span></button>
           <button class="icon-btn" id="help-btn" type="button" title="راهنما (؟)">؟</button>
         </div>
       </header>
@@ -216,9 +201,8 @@
   <div id="tooltip-root" class="tooltip-root"></div>
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="confirm-root" class="confirm-root"></div>
-  <div id="debug-log-panel" class="debug-log-panel" style="transform: translateY(100%);"></div>
 
-  <!-- 🛡️ Cache Buster: ?v=14 -->
-  <script type="module" src="js/main.js?v=14"></script>
+  <!-- 🛡️ Cache Buster: ?v=20 -->
+  <script type="module" src="js/main.js?v=20"></script>
 </body>
 </html>
