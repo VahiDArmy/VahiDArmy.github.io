@@ -1,7 +1,8 @@
 /* ============================================================
    js/main.js
-   FIXED: Removed the 1.5s fallback error injection. 
-          Added 20s hard timeout to splash.
+   FIXED: Removed ALL try/catch fallbacks and timeouts. 
+          No more "خطا در بارگذاری" popups. 
+          If it crashes, it crashes.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -21,60 +22,51 @@ import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
 ready(async () => {
-  try {
-    try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
+  try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
 
-    initErrorBoundary();
-    initTheme();
+  initErrorBoundary();
+  initTheme();
 
-    if (!isSupabaseConfigured()) {
-      return fatalConfig();
-    }
-
-    if (FEATURES.commandPalette) initCommandPalette();
-
-    const outcome = await initSession();
-    mountAuthPage();
-
-    if (outcome.user) {
-      await startApp();
-    } else {
-      showAuthScreen();
-      hideBootSplash();
-    }
-
-    bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
-      if (byId('app-shell')?.hidden !== false) await startApp();
-    });
-    bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
-
-  } catch (err) {
-    console.error('EXCEPTION IN BOOT:', err);
-    hideBootSplash(); // Never stay stuck on splash if boot fails
+  if (!isSupabaseConfigured()) {
+    return fatalConfig();
   }
+
+  if (FEATURES.commandPalette) initCommandPalette();
+
+  const outcome = await initSession();
+  mountAuthPage();
+
+  if (outcome.user) {
+    await startApp();
+  } else {
+    showAuthScreen();
+    hideBootSplash();
+  }
+
+  bus.on(EVENTS.AUTH_SIGNED_IN, async () => {
+    if (byId('app-shell')?.hidden !== false) await startApp();
+  });
+  bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
 });
 
 async function startApp() {
   showLoader('در حال آماده‌سازی…');
-  try {
-    await registerRoutes();
-    mountAppShell();
-    showAppShell();
+  
+  await registerRoutes();
+  mountAppShell();
+  showAppShell();
 
-    const container = byId('page-container');
-    if (container) {
-      container.innerHTML = '';
-      router.start(container);
-    }
-
-    registerGlobalShortcuts();
-    shortcuts.start();
-  } catch (err) {
-    console.error('EXCEPTION IN STARTAPP:', err);
-  } finally {
-    hideBootSplash();
-    hideLoader();
+  const container = byId('page-container');
+  if (container) {
+    container.innerHTML = '';
+    router.start(container);
   }
+
+  registerGlobalShortcuts();
+  shortcuts.start();
+
+  hideBootSplash();
+  hideLoader();
 }
 
 function stopApp() {
@@ -130,9 +122,6 @@ function hideBootSplash() {
   if (!splash) return;
   splash.style.display = 'none';
   splash.classList.add('is-hidden');
-  setTimeout(() => { 
-    if (splash.parentNode) splash.parentNode.removeChild(splash); 
-  }, 700);
 }
 
 function fatalConfig() {
