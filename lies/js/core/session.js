@@ -1,6 +1,9 @@
 /* ============================================================
    js/core/session.js
    Session state machine: boot → anonymous | authenticated
+   FIXED: Deferred the onAuthStateChange handler to prevent the
+          Supabase v2 deadlock. Avoids calling getUser/getSession
+          synchronously inside the auth callback.
    ============================================================ */
 
 import { getSupabase, getSession } from './supabase.client.js';
@@ -16,11 +19,6 @@ function setStatus(status, error = null) {
   sessionStore.set({ status, error });
 }
 
-/**
- * Load the full authenticated state: profile + settings.
- * @param {any} user
- * @param {any} session
- */
 async function hydrateAuthenticated(user, session) {
   sessionStore.set({ user, status: 'authenticated', error: null });
   try {
@@ -35,9 +33,6 @@ async function hydrateAuthenticated(user, session) {
   bus.emit(EVENTS.AUTH_READY, { user, session });
 }
 
-/**
- * Set the anonymous state.
- */
 function setAnonymous() {
   sessionStore.set({ user: null, profile: null, status: 'anonymous', error: null });
   bus.emit(EVENTS.AUTH_READY, { user: null, session: null });
@@ -47,11 +42,6 @@ function setAnonymous() {
 
 let _initialized = false;
 
-/**
- * Initialize the session. Runs once. Returns a promise resolving
- * to the current user (or null) when the initial state is known.
- * @returns {Promise<{user:any|null, session:any|null}>}
- */
 export async function initSession() {
   if (_initialized) {
     const s = sessionStore.getState();
@@ -60,28 +50,31 @@ export async function initSession() {
   _initialized = true;
   setStatus('booting');
 
-  // Subscribe to Supabase auth state changes (before we check, to catch races).
   const supabase = getSupabase();
-  supabase.auth.onAuthStateChange(async (event, session) => {
-    if (event === 'SIGNED_OUT') {
-      setAnonymous();
-      return;
-    }
-    if (event === 'SIGNED_IN' && session?.user) {
-      await hydrateAuthenticated(session.user, session);
-      return;
-    }
-    if (event === 'USER_UPDATED' && session?.user) {
-      sessionStore.set({ user: session.user });
-    }
+
+  // DEADLOCK FIX: defer all async work to a macro-task
+  supabase.auth.onAuthStateChange((event, session) => {
+    setTimeout(async () => {
+      try {
+        if (event === 'SIGNED_OUT') {
+          setAnonymous();
+          return;
+        }
+        if (event === 'SIGNED_IN' && session?.user) {
+          await hydrateAuthenticated(session.user, session);
+          return;
+        }
+        if (event === 'USER_UPDATED' && session?.user) {
+          sessionStore.set({ user: session.user });
+        }
+      } catch (err) {
+        console.warn('[session] auth state change failed', err);
+      }
+    }, 0);
   });
 
-  // Handle recovery flow (reset-password hash)
-  if (location.hash.startsWith('#reset-password')) {
-    // Let Supabase parse the tokens from the URL — it does this on init
-  }
-
   try {
+    // getSession() is safe here because it's called OUTSIDE the lock
     const session = await getSession();
     if (session?.user) {
       await hydrateAuthenticated(session.user, session);
@@ -97,9 +90,6 @@ export async function initSession() {
   }
 }
 
-/**
- * Force refresh the current session/user from the server.
- */
 export async function refreshSession() {
   const supabase = getSupabase();
   try {
@@ -115,9 +105,6 @@ export async function refreshSession() {
   }
 }
 
-/**
- * Convenience getters.
- */
 export function getUser() { return sessionStore.get('user'); }
 export function getProfile() { return sessionStore.get('profile'); }
 export function isAuthenticated() { return sessionStore.get('status') === 'authenticated'; }
