@@ -1,8 +1,7 @@
 /* ============================================================
    js/services/settings.service.js
-   FIXED: Replaced getUser() (network request) with getSession() 
-          (instant read from local storage). 
-          Removed the artificial 3-second timeout entirely.
+   FIXED: Restored `getUser()` because the deadlock is now fixed 
+          at the client level. No timeouts, no hiding bugs.
    ============================================================ */
 
 import { getSupabase } from '../core/supabase.client.js';
@@ -52,11 +51,11 @@ export async function fetch() {
   
   let user = null;
   try {
-    // 🛡️ FIX: Use getSession instead of getUser to avoid network timeout
-    const { data } = await supabase.auth.getSession();
-    user = data?.session?.user;
+    // Since the lock is bypassed in the client config, this won't hang anymore.
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
   } catch (err) {
-    console.warn('[settings] getSession failed:', err);
+    console.warn('[settings] getUser failed:', err);
     return getLocal();
   }
 
@@ -75,7 +74,6 @@ export async function fetch() {
     }
     
     if (!data) {
-      // Create default row
       const { data: inserted, error: insErr } = await supabase
         .from(TABLE)
         .insert({ user_id: user.id })
@@ -101,9 +99,7 @@ export async function fetch() {
 export async function update(patch) {
   const supabase = getSupabase();
   
-  // 🛡️ FIX: Use getSession instead of getUser
-  const { data: { session } } = await supabase.auth.getSession();
-  const user = session?.user;
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('unauthorized');
 
   const clean = {};
