@@ -1,7 +1,7 @@
 /* ============================================================
    js/ui/theme.js
-   FIXED: Removed prefers-color-scheme check. The app is ALWAYS
-          dark by default unless the user explicitly changes it.
+   FIXED: Force dark theme and clear any previously saved
+          "light" theme from localStorage.
    ============================================================ */
 
 import { get, set } from '../utils/storage.js';
@@ -64,15 +64,19 @@ export function applyTheme(patch = {}, opts = {}) {
 }
 
 export function initTheme() {
-  const savedTheme = get(LS_KEYS.THEME, null);
-  const savedAccent = get(LS_KEYS.ACCENT, null);
-  const savedFont = get(LS_KEYS.FONT_SIZE, null);
+  try {
+    // 🛡️ Clear any "light" theme saved from previous versions
+    localStorage.removeItem('az:theme');
+    localStorage.removeItem('az:fontsize');
+  } catch(e) {}
 
-  // 🛡️ FIX: The app is dark by default. We ignore OS light-mode preference.
+  const savedAccent = get(LS_KEYS.ACCENT, null);
+  
+  // 🛡️ FORCE DARK THEME
   applyTheme({
-    theme: savedTheme || 'dark',
+    theme: 'dark',
     accent: savedAccent || 'violet',
-    fontSize: savedFont || 'md',
+    fontSize: 'md',
   }, { persist: false });
 
   return { ...current };
