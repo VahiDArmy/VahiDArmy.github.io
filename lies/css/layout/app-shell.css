@@ -1,9 +1,21 @@
 /* ============================================================
    css/layout/app-shell.css
+   FIXED: Added explicit direction: rtl to prevent the layout
+          from flipping on certain browsers.
    ============================================================ */
+
+html, body {
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  direction: rtl;
+  background: var(--bg-base);
+}
 
 .app-shell {
   display: flex;
+  flex-direction: row;
+  direction: rtl; /* 🛡️ Force RTL */
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -26,6 +38,7 @@
 }
 
 .app-main {
+  direction: rtl; /* 🛡️ Force RTL */
   flex: 1;
   display: flex;
   flex-direction: column;
