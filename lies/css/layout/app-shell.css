@@ -1,67 +1,44 @@
 /* ============================================================
    css/layout/app-shell.css
-   NEW METHOD: Fixed Sidebar + Margined Content.
-   This completely bypasses Flex/Grid layout bugs and guarantees
-   the sidebar never moves on PC.
+   APP-LIKE LAYOUT: Flexbox everywhere. Only .page-container 
+                    has overflow-y: auto.
    ============================================================ */
 
-html, body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden; /* Prevent horizontal scroll */
-  background: var(--bg-base);
-  direction: rtl;
-}
-
-/* The wrapper is just a normal block now */
 .app-shell {
-  display: block;
-  min-height: 100dvh;
+  direction: rtl;
+  display: flex;
   width: 100%;
+  height: 100vh; /* Fallback */
+  height: 100dvh; /* Mobile exact height */
+  overflow: hidden;
+  background: var(--bg-base);
 }
 
-/* 🛡️ THE FIX: The sidebar is FIXED. It never scrolls. */
-.sidebar {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  right: 0; /* RTL: stick to the right */
-  width: var(--sidebar-w);
-  z-index: 100;
-  transition: width var(--dur-base) var(--ease-standard);
-}
-
-/* Collapsed state on desktop */
-.app-shell.is-sidebar-collapsed .sidebar {
-  width: var(--sidebar-w-collapsed);
-}
-
-/* 🛡️ THE FIX: The main content is just pushed to the left */
+/* Main Content Area */
 .app-main {
-  margin-right: var(--sidebar-w); /* Leave space for sidebar */
-  width: calc(100% - var(--sidebar-w));
-  min-height: 100dvh;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  transition: margin-right var(--dur-base) var(--ease-standard), width var(--dur-base) var(--ease-standard);
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Main content shrinks when sidebar collapses */
-.app-shell.is-sidebar-collapsed .app-main {
-  margin-right: var(--sidebar-w-collapsed);
-  width: calc(100% - var(--sidebar-w-collapsed));
-}
-
+/* 🛡️ THIS IS THE ONLY SCROLLING ELEMENT */
 .page-container {
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
   padding: var(--s-6) var(--s-6) var(--s-8);
   outline: none;
+  -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
 }
 
 .app-footer {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -73,5 +50,4 @@ html, body {
   background: var(--bg-glass);
   backdrop-filter: blur(var(--blur-sm));
   -webkit-backdrop-filter: blur(var(--blur-sm));
-  flex-wrap: wrap;
 }
