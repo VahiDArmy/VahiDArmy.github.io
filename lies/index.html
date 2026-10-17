@@ -10,7 +10,7 @@
   <meta name="referrer" content="no-referrer" />
   <title>دروغ‌هایی که به خودمان می‌گوییم</title>
 
-  <!-- Fonts: Vazirmatn (Persian) -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -23,6 +23,14 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/main.css" />
+
+  <!-- Early Error Catcher (runs before modules load) -->
+  <script>
+    window.__earlyErrors = [];
+    window.addEventListener('error', function(e) {
+      window.__earlyErrors.push(e.message + ' at ' + e.filename + ':' + e.lineno);
+    });
+  </script>
 </head>
 
 <body>
@@ -32,6 +40,8 @@
       <div class="boot-splash__mark">🎭</div>
       <div class="boot-splash__ring"></div>
       <p class="boot-splash__text">در حال آماده‌سازی فضای خصوصی شما…</p>
+      <!-- NEW: Show Logs Button -->
+      <button id="show-logs-btn" type="button">مشاهده وضعیت سیستم (لاگ)</button>
     </div>
   </div>
 
@@ -83,45 +93,18 @@
         </header>
 
         <div class="tabs auth-card__tabs" role="tablist" data-tabs="auth">
-          <button
-            class="tabs__btn is-active"
-            role="tab"
-            aria-selected="true"
-            data-tab="login"
-            type="button"
-          >ورود</button>
-          <button
-            class="tabs__btn"
-            role="tab"
-            aria-selected="false"
-            data-tab="signup"
-            type="button"
-          >ثبت‌نام</button>
+          <button class="tabs__btn is-active" role="tab" aria-selected="true" data-tab="login" type="button">ورود</button>
+          <button class="tabs__btn" role="tab" aria-selected="false" data-tab="signup" type="button">ثبت‌نام</button>
           <span class="tabs__indicator" aria-hidden="true"></span>
         </div>
 
         <!-- Login panel -->
-        <form
-          id="login-form"
-          class="auth-form tabs__panel is-active"
-          data-panel="login"
-          novalidate
-          autocomplete="on"
-        >
+        <form id="login-form" class="auth-form tabs__panel is-active" data-panel="login" novalidate autocomplete="on">
           <div class="field">
             <label class="field__label" for="login-email">ایمیل</label>
             <div class="field__control">
               <span class="field__icon">✉️</span>
-              <input
-                id="login-email"
-                name="email"
-                type="email"
-                class="input"
-                dir="ltr"
-                placeholder="you@example.com"
-                autocomplete="email"
-                required
-              />
+              <input id="login-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" autocomplete="email" required />
             </div>
             <p class="field__error" data-error-for="email"></p>
           </div>
@@ -130,23 +113,8 @@
             <label class="field__label" for="login-password">رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔑</span>
-              <input
-                id="login-password"
-                name="password"
-                type="password"
-                class="input"
-                dir="ltr"
-                placeholder="••••••••"
-                autocomplete="current-password"
-                minlength="6"
-                required
-              />
-              <button
-                type="button"
-                class="field__toggle"
-                data-toggle-password="login-password"
-                aria-label="نمایش رمز عبور"
-              >👁️</button>
+              <input id="login-password" name="password" type="password" class="input" dir="ltr" placeholder="••••••••" autocomplete="current-password" minlength="6" required />
+              <button type="button" class="field__toggle" data-toggle-password="login-password" aria-label="نمایش رمز عبور">👁️</button>
             </div>
             <p class="field__error" data-error-for="password"></p>
           </div>
@@ -157,9 +125,7 @@
               <span class="switch__track"><span class="switch__thumb"></span></span>
               <span class="switch__label">مرا به خاطر بسپار</span>
             </label>
-            <button type="button" class="link-btn" id="forgot-password-btn">
-              رمز عبور را فراموش کرده‌اید؟
-            </button>
+            <button type="button" class="link-btn" id="forgot-password-btn">رمز عبور را فراموش کرده‌اید؟</button>
           </div>
 
           <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
@@ -169,28 +135,12 @@
         </form>
 
         <!-- Signup panel -->
-        <form
-          id="signup-form"
-          class="auth-form tabs__panel"
-          data-panel="signup"
-          novalidate
-          autocomplete="on"
-          hidden
-        >
+        <form id="signup-form" class="auth-form tabs__panel" data-panel="signup" novalidate autocomplete="on" hidden>
           <div class="field">
             <label class="field__label" for="signup-name">نام نمایشی</label>
             <div class="field__control">
               <span class="field__icon">👤</span>
-              <input
-                id="signup-name"
-                name="display_name"
-                type="text"
-                class="input"
-                placeholder="مثلاً: مسافر"
-                maxlength="40"
-                autocomplete="nickname"
-                required
-              />
+              <input id="signup-name" name="display_name" type="text" class="input" placeholder="مثلاً: مسافر" maxlength="40" autocomplete="nickname" required />
             </div>
             <p class="field__error" data-error-for="display_name"></p>
           </div>
@@ -199,16 +149,7 @@
             <label class="field__label" for="signup-email">ایمیل</label>
             <div class="field__control">
               <span class="field__icon">✉️</span>
-              <input
-                id="signup-email"
-                name="email"
-                type="email"
-                class="input"
-                dir="ltr"
-                placeholder="you@example.com"
-                autocomplete="email"
-                required
-              />
+              <input id="signup-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" autocomplete="email" required />
             </div>
             <p class="field__error" data-error-for="email"></p>
           </div>
@@ -217,23 +158,8 @@
             <label class="field__label" for="signup-password">رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔑</span>
-              <input
-                id="signup-password"
-                name="password"
-                type="password"
-                class="input"
-                dir="ltr"
-                placeholder="حداقل ۸ کاراکتر"
-                autocomplete="new-password"
-                minlength="8"
-                required
-              />
-              <button
-                type="button"
-                class="field__toggle"
-                data-toggle-password="signup-password"
-                aria-label="نمایش رمز عبور"
-              >👁️</button>
+              <input id="signup-password" name="password" type="password" class="input" dir="ltr" placeholder="حداقل ۸ کاراکتر" autocomplete="new-password" minlength="8" required />
+              <button type="button" class="field__toggle" data-toggle-password="signup-password" aria-label="نمایش رمز عبور">👁️</button>
             </div>
             <div class="pw-meter" data-pw-meter="signup-password" aria-hidden="true">
               <span class="pw-meter__bar"></span>
@@ -249,16 +175,7 @@
             <label class="field__label" for="signup-password2">تکرار رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔐</span>
-              <input
-                id="signup-password2"
-                name="password_confirm"
-                type="password"
-                class="input"
-                dir="ltr"
-                placeholder="••••••••"
-                autocomplete="new-password"
-                required
-              />
+              <input id="signup-password2" name="password_confirm" type="password" class="input" dir="ltr" placeholder="••••••••" autocomplete="new-password" required />
             </div>
             <p class="field__error" data-error-for="password_confirm"></p>
           </div>
@@ -295,18 +212,10 @@
           <strong>آینهٔ درون</strong>
           <small>ژورنال خصوصی</small>
         </div>
-        <button
-          class="sidebar__collapse icon-btn"
-          id="sidebar-collapse-btn"
-          type="button"
-          aria-label="جمع کردن نوار کناری"
-          title="جمع کردن"
-        >⟨</button>
+        <button class="sidebar__collapse icon-btn" id="sidebar-collapse-btn" type="button" aria-label="جمع کردن نوار کناری" title="جمع کردن">⟨</button>
       </div>
 
-      <nav class="sidebar__nav" id="sidebar-nav" aria-label="صفحات">
-        <!-- dynamically rendered -->
-      </nav>
+      <nav class="sidebar__nav" id="sidebar-nav" aria-label="صفحات"></nav>
 
       <div class="sidebar__foot">
         <div class="sidebar__storage" id="sidebar-storage">
@@ -318,48 +227,26 @@
             <div class="progress__bar" data-storage-bar style="width:0%"></div>
           </div>
         </div>
-        <div class="sidebar__user" id="sidebar-user">
-          <!-- dynamically rendered -->
-        </div>
+        <div class="sidebar__user" id="sidebar-user"></div>
       </div>
     </aside>
 
     <!-- Main column -->
     <div class="app-main">
       <header id="topbar" class="topbar" aria-label="نوار بالا">
-        <button
-          class="topbar__menu icon-btn"
-          id="mobile-menu-btn"
-          type="button"
-          aria-label="منو"
-        >☰</button>
-
+        <button class="topbar__menu icon-btn" id="mobile-menu-btn" type="button" aria-label="منو">☰</button>
         <div class="topbar__breadcrumb" id="topbar-breadcrumb"></div>
-
         <div class="topbar__search">
           <span class="topbar__search-ico">🔍</span>
-          <input
-            id="global-search"
-            class="topbar__search-input"
-            type="search"
-            placeholder="جست‌وجوی سریع در دروغ‌ها…  (Ctrl+K)"
-            aria-label="جست‌وجوی سراسری"
-            autocomplete="off"
-          />
+          <input id="global-search" class="topbar__search-input" type="search" placeholder="جست‌وجوی سریع در دروغ‌ها… (Ctrl+K)" aria-label="جست‌وجوی سراسری" autocomplete="off" />
           <kbd class="topbar__kbd">Ctrl</kbd><kbd class="topbar__kbd">K</kbd>
           <div class="topbar__search-results" id="global-search-results" hidden></div>
         </div>
 
         <div class="topbar__actions">
-          <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع دروغ (N)" aria-label="ثبت سریع">
-            ＋
-          </button>
-          <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم" aria-label="تغییر تم">
-            🌙
-          </button>
-          <button class="icon-btn icon-btn--badge" id="notifications-btn" type="button" title="یادآورها" aria-label="یادآورها">
-            🔔<span class="icon-btn__badge" id="notif-badge" hidden>0</span>
-          </button>
+          <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع دروغ (N)" aria-label="ثبت سریع">＋</button>
+          <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم" aria-label="تغییر تم">🌙</button>
+          <button class="icon-btn icon-btn--badge" id="notifications-btn" type="button" title="یادآورها" aria-label="یادآورها">🔔<span class="icon-btn__badge" id="notif-badge" hidden>0</span></button>
           <button class="icon-btn" id="help-btn" type="button" title="راهنما (؟)" aria-label="راهنما">؟</button>
         </div>
       </header>
@@ -372,8 +259,6 @@
         <span>داده‌های شما هرگز به اشتراک گذاشته نمی‌شود.</span>
       </footer>
     </div>
-
-    <!-- Mobile overlay -->
     <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
   </div>
 
