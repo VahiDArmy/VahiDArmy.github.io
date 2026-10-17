@@ -1,33 +1,65 @@
 /* ============================================================
    css/layout/app-shell.css
-   FIXED: Uses standard Flexbox and native document scrolling.
-          The sidebar uses `position: sticky` to stay in place.
+   THE CORE LAYOUT: Flexbox.
+   Only .page-container will scroll.
    ============================================================ */
 
 .app-shell {
   display: flex;
-  min-height: 100dvh;
   width: 100%;
-  background: var(--bg-base);
+  height: 100%;
+  overflow: hidden;
 }
 
-/* Main Content Area */
+/* Sidebar: fixed width, full height, flex-shrink: 0 */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border-inline-end: 1px solid var(--border);
+  transition: width var(--dur-base) var(--ease-standard);
+  z-index: 100;
+}
+
+.app-shell.is-sidebar-collapsed .sidebar {
+  width: var(--sidebar-w-collapsed);
+}
+
+/* Main: takes remaining space */
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
-  /* Removed height and overflow. The body handles scrolling. */
+  height: 100%;
+  overflow: hidden;
 }
 
+/* Topbar: fixed height */
+.topbar {
+  flex-shrink: 0;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--s-5);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(var(--blur-lg));
+  -webkit-backdrop-filter: blur(var(--blur-lg));
+  border-bottom: 1px solid var(--border);
+  z-index: 50;
+}
+
+/* Page Container: THE ONLY SCROLLING AREA */
 .page-container {
   flex: 1;
-  width: 100%;
-  max-width: var(--content-max);
-  margin-inline: auto;
-  padding: var(--s-6) var(--s-6) var(--s-8);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--s-6);
   outline: none;
-  /* Removed overflow-y: auto. It now grows naturally. */
 }
 
 .app-footer {
@@ -35,13 +67,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s-2);
-  padding: var(--s-4) var(--s-6);
+  padding: var(--s-4);
   font-size: var(--fs-xs);
   color: var(--text-tertiary);
   border-top: 1px solid var(--border-subtle);
-  background: var(--bg-glass);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  flex-wrap: wrap;
 }
