@@ -1,9 +1,7 @@
 /* ============================================================
    js/main.js
-   BOOT SEQUENCE: Deterministic.
-   1. Mount Auth Page immediately (buttons work).
-   2. Force hide splash after 1.5s no matter what.
-   3. Init session in the background.
+   FIXED: Removed the 1.5s "Force UI" hack.
+   The boot sequence is now fast enough that it's not needed.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -23,18 +21,8 @@ import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
 ready(async () => {
-  // 1. Mount auth page FIRST. This ensures clicks/tabs work instantly.
+  // 1. Mount auth page FIRST so clicks/tabs work instantly
   try { mountAuthPage(); } catch(e) { console.error('Auth mount failed', e); }
-
-  // 2. Safety Timeout: Never let the splash screen block the user for more than 1.5s
-  setTimeout(() => {
-    const splash = byId('boot-splash');
-    if (splash && splash.style.display !== 'none') {
-      console.warn('Boot taking too long. Forcing UI.');
-      showAuthScreen();
-      hideBootSplash();
-    }
-  }, 1500);
 
   try {
     try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
@@ -45,7 +33,7 @@ ready(async () => {
     if (!isSupabaseConfigured()) return fatalConfig();
     if (FEATURES.commandPalette) initCommandPalette();
 
-    // 3. Check session
+    // 2. Check session (now resolves instantly)
     const outcome = await initSession();
 
     if (outcome.user) {
