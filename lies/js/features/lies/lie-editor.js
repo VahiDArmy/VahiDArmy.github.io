@@ -1,6 +1,7 @@
 /* ============================================================
    js/features/lies/lie-editor.js
-   UPDATED: Reads dynamic Lie Types and Moods from liesStore.
+   UPDATED: Added dynamic description and example hints below
+            the Type and Mood selects.
    ============================================================ */
 
 import { el } from '../../utils/dom.js';
@@ -49,6 +50,22 @@ export function openLieEditor(existing = null, opts = {}) {
     typeSelect.appendChild(opt);
   }
   typeField.appendChild(typeSelect);
+  
+  // 🛡️ Hint Box for Type
+  const typeHint = el('div', { class: 'field__hint', style: { marginTop: '6px', lineHeight: '1.6', minHeight: '20px' } });
+  typeField.appendChild(typeHint);
+  
+  const updateTypeHint = () => {
+    const selected = types.find(t => t.id === typeSelect.value);
+    typeHint.innerHTML = '';
+    if (selected) {
+      if (selected.description) typeHint.appendChild(el('div', {}, { children: [selected.description] }));
+      if (selected.example) typeHint.appendChild(el('div', { style: { fontStyle: 'italic', marginTop: '4px', color: 'var(--text-quaternary)' } }, { children: [`مثال: «${selected.example}»`] }));
+    }
+  };
+  typeSelect.addEventListener('change', updateTypeHint);
+  updateTypeHint();
+
   row1.appendChild(typeField);
 
   const moodField = el('div', { class: 'field' });
@@ -61,6 +78,21 @@ export function openLieEditor(existing = null, opts = {}) {
     moodSelect.appendChild(opt);
   }
   moodField.appendChild(moodSelect);
+
+  // 🛡️ Hint Box for Mood
+  const moodHint = el('div', { class: 'field__hint', style: { marginTop: '6px', lineHeight: '1.6', minHeight: '20px' } });
+  moodField.appendChild(moodHint);
+
+  const updateMoodHint = () => {
+    const selected = moods.find(m => m.id === moodSelect.value);
+    moodHint.innerHTML = '';
+    if (selected && selected.description) {
+      moodHint.appendChild(el('div', {}, { children: [selected.description] }));
+    }
+  };
+  moodSelect.addEventListener('change', updateMoodHint);
+  updateMoodHint();
+
   row1.appendChild(moodField);
 
   form.appendChild(row1);
