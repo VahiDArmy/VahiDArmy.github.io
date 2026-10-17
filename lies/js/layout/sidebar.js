@@ -1,27 +1,20 @@
 /* ============================================================
    js/layout/sidebar.js
-   FIXED: 
-     1. Used `userEl.onclick` instead of `addEventListener` to 
-        prevent multiple listeners stacking up on re-renders.
-     2. Imported `closeDropdown` and added it to menu item clicks.
-     3. Added a listener to `user` state so it renders immediately.
    ============================================================ */
 
-import { el, byId, on } from '../utils/dom.js';
+import { el, byId } from '../utils/dom.js';
 import { NAV_ITEMS, ROUTES, LS_KEYS } from '../config/app.config.js';
 import { EVENTS } from '../config/constants.js';
 import { bus } from '../core/event-bus.js';
-import { sessionStore, dataStore } from '../core/store.js';
+import { sessionStore } from '../core/store.js';
 import { get as lsGet, set as lsSet } from '../utils/storage.js';
-import { initials, toFaDigits } from '../utils/format.js';
+import { initials } from '../utils/format.js';
 import { colorFromString } from '../utils/id.js';
 import { openDropdown, closeDropdown } from '../ui/dropdown.js';
 
 let navEl = null;
 let userEl = null;
 let collapsed = false;
-
-/* ── Public API ──────────────────────────────────────────── */
 
 export function mountSidebar() {
   navEl = byId('sidebar-nav');
@@ -37,7 +30,6 @@ export function mountSidebar() {
   bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
   bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); });
   
-  // 🛡️ FIX: Listen to both user and profile changes to ensure it renders
   sessionStore.select((s) => s.user, () => renderUser(), { immediate: false });
   sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
 
@@ -50,9 +42,7 @@ export function toggleCollapsed(force) {
   bus.emit(EVENTS.SIDEBAR_TOGGLED, { collapsed: next });
 }
 
-export function isCollapsed() { 
-  return collapsed; 
-}
+export function isCollapsed() { return collapsed; }
 
 export function openMobileSidebar() {
   const shell = byId('app-shell');
@@ -79,8 +69,6 @@ export function closeMobileSidebar() {
 export function isMobileSidebarOpen() {
   return byId('app-shell')?.classList.contains('is-mobile-sidebar-open') || false;
 }
-
-/* ── Rendering ───────────────────────────────────────────── */
 
 function renderNav() {
   if (!navEl) return;
@@ -132,9 +120,6 @@ function renderUser() {
   info.appendChild(el('span', { class: 'sidebar__user-email' }, { children: [email] }));
   userEl.appendChild(info);
 
-  const menuBtn = el('button', { class: 'icon-btn', attrs: { type: 'button' }, style: { marginInlineStart: 'auto', color: 'var(--text-tertiary)' } }, { children: ['⋯'] });
-  
-  // 🛡️ FIX: Use onclick instead of addEventListener to prevent stacking
   userEl.onclick = (ev) => {
     ev.stopPropagation();
     const menu = el('div', { class: 'dropdown__section' });
@@ -144,7 +129,7 @@ function renderUser() {
       b.appendChild(el('span', { class: 'dropdown__item-icon' }, { children: [icon] }));
       b.appendChild(el('span', { class: 'dropdown__item-label' }, { children: [label] }));
       b.addEventListener('click', () => {
-        closeDropdown(); // 🛡️ FIX: Close menu on click
+        closeDropdown();
         onClick();
       });
       return b;
@@ -178,12 +163,3 @@ function applyCollapsed(value, opts = {}) {
   shell?.classList.toggle('is-sidebar-collapsed', collapsed);
   if (opts.persist !== false) lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
 }
-
-export default { 
-  mountSidebar, 
-  toggleCollapsed, 
-  isCollapsed, 
-  openMobileSidebar, 
-  closeMobileSidebar, 
-  isMobileSidebarOpen 
-};
