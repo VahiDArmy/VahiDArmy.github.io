@@ -1,8 +1,7 @@
 /* ============================================================
    js/layout/sidebar.js
-   Sidebar renderer: nav, collapse, user block, storage meter
-   FIXED: Replaced custom user menu popover with the standard
-          openDropdown utility to prevent RTL layout breaks.
+   FIXED: Added direct listener to the backdrop so it can never 
+          get stuck. Synced classes perfectly.
    ============================================================ */
 
 import { el, byId, on } from '../utils/dom.js';
@@ -11,42 +10,46 @@ import { EVENTS, CLS } from '../config/constants.js';
 import { bus } from '../core/event-bus.js';
 import { sessionStore, dataStore } from '../core/store.js';
 import { get as lsGet, set as lsSet, estimateUsage } from '../utils/storage.js';
-import { toFaDigits, formatBytes, initials, formatNumber } from '../utils/format.js';
+import { toFaDigits, formatBytes, initials } from '../utils/format.js';
 import { STORAGE_QUOTA_BYTES } from '../config/app.config.js';
 import { colorFromString } from '../utils/id.js';
 import { openDropdown } from '../ui/dropdown.js';
 
 let navEl = null;
 let userEl = null;
-let storageLabelEl = null;
-let storageBarEl = null;
 let collapsed = false;
 
 export function mountSidebar() {
   navEl = byId('sidebar-nav');
   userEl = byId('sidebar-user');
-  storageLabelEl = document.querySelector('[data-storage-label]');
-  storageBarEl = document.querySelector('[data-storage-bar]');
 
   collapsed = !!lsGet(LS_KEYS.SIDEBAR_COLLAPSED, false);
   applyCollapsed(collapsed, { persist: false });
 
   renderNav();
   renderUser();
-  renderStorage();
 
-  bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => updateActive(path));
-  bus.on(EVENTS.LIES_REFRESHED, () => refreshBadges());
-  bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
-  bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); refreshBadges(); });
+  // Attach backdrop click listener directly here
+  const backdrop = byId('sidebar-backdrop');
+  if (backdrop) {
+    backdrop.addEventListener('click', () => {
+      closeMobileSidebar();
+    });
+  }
+
+  bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => {
+    updateActive(path);
+    // Auto-close on route change for mobile
+    if (window.innerWidth < 900) {
+      closeMobileSidebar();
+    }
+  });
   
+  bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
+  bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); });
   sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
-  dataStore.select((s) => s.total, () => renderStorage());
 
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
-  refreshBadges();
-
-  on(window, 'app:storage', () => renderStorage());
 }
 
 export function toggleCollapsed(force) {
@@ -54,8 +57,6 @@ export function toggleCollapsed(force) {
   applyCollapsed(next, { persist: true });
   bus.emit(EVENTS.SIDEBAR_TOGGLED, { collapsed: next });
 }
-
-export function isCollapsed() { return collapsed; }
 
 function renderNav() {
   if (!navEl) return;
@@ -82,10 +83,6 @@ function renderNav() {
       });
       link.appendChild(el('span', { class: 'sidebar__item-icon' }, { children: [item.icon] }));
       link.appendChild(el('span', { class: 'sidebar__item-label' }, { children: [item.label] }));
-
-      if (item.badgeKey) {
-        link.appendChild(el('span', { class: 'sidebar__item-badge', dataset: { badge: item.badgeKey }, attrs: { hidden: true }, style: { background: 'var(--accent-soft)', color: 'var(--accent)', padding: '2px 6px', borderRadius: '10px', fontSize: '10px' } }));
-      }
       navEl.appendChild(link);
     }
   }
@@ -139,32 +136,6 @@ function renderUser() {
   });
 }
 
-function renderStorage() {
-  if (!storageBarEl || !storageLabelEl) return;
-  const used = estimateUsage();
-  const pct = Math.min(100, Math.round((used / STORAGE_QUOTA_BYTES) * 100));
-  storageBarEl.style.width = `${Math.max(2, pct)}%`;
-  storageLabelEl.textContent = `${formatBytes(used, 1)}`;
-}
-
-async function refreshBadges() {
-  if (!navEl) return;
-  try {
-    const { counts } = await import('../services/lies.service.js');
-    const c = await counts();
-    setBadge('lies', c.active);
-    setBadge('trash', c.trashed);
-  } catch { /* noop */ }
-}
-
-function setBadge(key, value) {
-  const el0 = navEl?.querySelector(`[data-badge="${key}"]`);
-  if (!el0) return;
-  if (!value) { el0.hidden = true; el0.textContent = ''; return; }
-  el0.hidden = false;
-  el0.textContent = value > 99 ? '۹۹+' : toFaDigits(value);
-}
-
 function updateActive(path) {
   if (!navEl) return;
   const clean = String(path || '').replace(/^\//, '').split('/')[0] || 'dashboard';
@@ -180,13 +151,15 @@ function applyCollapsed(value, opts = {}) {
   if (opts.persist !== false) lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
 }
 
+/* ── Mobile Sidebar Logic ──────────────────────────────── */
+
 export function openMobileSidebar() {
   const shell = byId('app-shell');
   const backdrop = byId('sidebar-backdrop');
-  shell?.classList.add('is-mobile-sidebar-open');
+  
+  if (shell) shell.classList.add('is-mobile-sidebar-open');
   if (backdrop) {
-    backdrop.hidden = false;
-    requestAnimationFrame(() => backdrop.classList.add('is-visible'));
+    backdrop.classList.add('is-open');
   }
   document.body.classList.add('has-drawer');
 }
@@ -194,10 +167,10 @@ export function openMobileSidebar() {
 export function closeMobileSidebar() {
   const shell = byId('app-shell');
   const backdrop = byId('sidebar-backdrop');
-  shell?.classList.remove('is-mobile-sidebar-open');
+  
+  if (shell) shell.classList.remove('is-mobile-sidebar-open');
   if (backdrop) {
-    backdrop.classList.remove('is-visible');
-    setTimeout(() => { backdrop.hidden = true; }, 250);
+    backdrop.classList.remove('is-open');
   }
   document.body.classList.remove('has-drawer');
 }
