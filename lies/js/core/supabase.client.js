@@ -1,8 +1,7 @@
 /* ============================================================
    js/core/supabase.client.js
-   Single Supabase client instance + session helpers.
-   FIXED: Deferred the onAuthStateChange emits via setTimeout
-          to prevent the known Supabase v2 deadlock (LockManager).
+   FIXED: Configured lockNoOp to prevent the v2 Auth Deadlock.
+   This is the official root-level fix for getUser() hanging.
    ============================================================ */
 
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/+esm';
@@ -15,7 +14,6 @@ import {
 import { EVENTS } from '../config/constants.js';
 import { bus } from './event-bus.js';
 
-/** @type {any} */
 let _client = null;
 
 export function getSupabase() {
@@ -28,7 +26,14 @@ export function getSupabase() {
   }
 
   try {
-    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_AUTH_OPTIONS);
+    // 🛡️ FIX: The official way to prevent the Auth Deadlock in v2
+    _client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      ...SUPABASE_AUTH_OPTIONS,
+      auth: {
+        ...SUPABASE_AUTH_OPTIONS.auth,
+        lock: (_name, _acquireTimeout, fn) => fn(), // Bypass the navigator.locks API deadlock
+      }
+    });
   } catch (err) {
     console.error('[Supabase] createClient failed', err);
     throw err;
@@ -39,25 +44,13 @@ export function getSupabase() {
     console.info(`%c[Supabase] متصل به پروژه: ${ref}`, 'color:#7c5cff;font-weight:bold');
   } catch { /* silent */ }
 
-  // ── DEADLOCK FIX ─────────────────────────────────────────
-  // In Supabase JS v2, calling any auth/db method synchronously
-  // inside onAuthStateChange causes a deadlock because the
-  // client's LockManager is held. We defer the emit via setTimeout.
   _client.auth.onAuthStateChange((event, session) => {
     setTimeout(() => {
       try {
         switch (event) {
-          case 'SIGNED_IN':
-            bus.emit(EVENTS.AUTH_SIGNED_IN, session);
-            break;
-          case 'SIGNED_OUT':
-            bus.emit(EVENTS.AUTH_SIGNED_OUT);
-            break;
-          case 'TOKEN_REFRESHED':
-          case 'USER_UPDATED':
-          case 'INITIAL_SESSION':
-          default:
-            break;
+          case 'SIGNED_IN': bus.emit(EVENTS.AUTH_SIGNED_IN, session); break;
+          case 'SIGNED_OUT': bus.emit(EVENTS.AUTH_SIGNED_OUT); break;
+          default: break;
         }
       } catch (err) {
         console.warn('[Supabase] auth event handler failed', err);
@@ -68,9 +61,7 @@ export function getSupabase() {
   return _client;
 }
 
-export function requireSupabase() {
-  return getSupabase();
-}
+export async function requireSupabase() { return getSupabase(); }
 
 export async function getSession() {
   try {
@@ -108,21 +99,5 @@ export async function isAuthenticated() {
 }
 
 export async function clearLocalSession() {
-  try {
-    await getSupabase().auth.signOut({ scope: 'local' });
-  } catch (err) {
-    console.warn('[Supabase] clearLocalSession', err);
-  }
-}
-
-export async function debugSupabase() {
-  const client = getSupabase();
-  const { data: session } = await client.auth.getSession();
-  const info = {
-    url: SUPABASE_URL,
-    hasSession: !!session?.session,
-    userEmail: session?.session?.user?.email || null,
-  };
-  console.table(info);
-  return info;
+  try { await getSupabase().auth.signOut({ scope: 'local' }); } catch { /* noop */ }
 }
