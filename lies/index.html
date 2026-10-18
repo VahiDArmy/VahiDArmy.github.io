@@ -5,32 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a0f" />
   <meta name="color-scheme" content="dark light" />
-  <meta name="description" content="ژورنال خصوصی" />
-  <meta name="robots" content="noindex, nofollow, noarchive" />
   <title>آینهٔ درون</title>
 
-  <!-- 🛡️ FOUC Fix: Apply theme instantly before CSS loads -->
+  <!-- FOUC Fix: Apply theme/accent/font instantly from localStorage -->
   <script>
     (function() {
       try {
-        var t = localStorage.getItem('az:theme');
-        if (t) document.documentElement.setAttribute('data-theme', t.replace(/"/g, ''));
+        const theme = JSON.parse(localStorage.getItem('az:theme') || '"dark"');
+        const accent = JSON.parse(localStorage.getItem('az:accent') || '"violet"');
+        const font = JSON.parse(localStorage.getItem('az:fontsize') || '"md"');
+        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-accent', accent);
+        document.documentElement.setAttribute('data-fontsize', font);
       } catch(e) {}
     })();
   </script>
 
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
-
-  <!-- 🛡️ Cache Buster: ?v=72 -->
-  <link rel="stylesheet" href="css/main.css?v=72" />
-  
-  <style>
-    [hidden] { display: none !important; }
-    html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; }
-    /* 🛡️ Removed hardcoded colors. CSS variables handle it. */
-  </style>
+  <link rel="stylesheet" href="css/main.css?v=100" />
 </head>
 
 <body>
@@ -80,6 +72,11 @@
             </div>
             <p class="field__error" data-error-for="password"></p>
           </div>
+          
+          <div class="auth-form__row" style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
+            <button type="button" class="link-btn" id="forgot-password-btn">رمز عبور را فراموش کرده‌اید؟</button>
+          </div>
+
           <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__label">ورود امن</span>
@@ -108,7 +105,12 @@
             <div class="field__control">
               <span class="field__icon">🔑</span>
               <input id="signup-password" name="password" type="password" class="input" dir="ltr" placeholder="حداقل ۸ کاراکتر" minlength="8" required />
+              <button type="button" class="field__toggle" data-toggle-password="signup-password">👁️</button>
             </div>
+            <div class="pw-meter" data-pw-meter="signup-password" aria-hidden="true">
+              <span class="pw-meter__bar"></span><span class="pw-meter__bar"></span><span class="pw-meter__bar"></span><span class="pw-meter__bar"></span>
+            </div>
+            <p class="field__hint" data-pw-label="signup-password"></p>
             <p class="field__error" data-error-for="password"></p>
           </div>
           <div class="field">
@@ -150,13 +152,13 @@
         <div class="topbar__breadcrumb" id="topbar-breadcrumb"></div>
         <div class="topbar__search">
           <span class="topbar__search-ico">🔍</span>
-          <input id="global-search" class="topbar__search-input" type="search" placeholder="جست‌وجو…" autocomplete="off" />
-          <div class="topbar__search-results" id="global-search-results" hidden></div>
+          <input id="global-search" class="topbar__search-input" type="search" placeholder="جست‌وجو…" autocomplete="off" aria-label="جست‌وجو" />
+          <div class="topbar__search-results" id="global-search-results" hidden role="listbox"></div>
         </div>
         <div class="topbar__actions">
-          <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع">＋</button>
-          <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم">🌙</button>
-          <button class="icon-btn" id="help-btn" type="button" title="راهنما">؟</button>
+          <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع" aria-label="ثبت سریع">＋</button>
+          <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم" aria-label="تغییر تم">🌙</button>
+          <button class="icon-btn" id="help-btn" type="button" title="راهنما" aria-label="راهنما">؟</button>
         </div>
       </header>
       <main id="page-container" class="page-container" tabindex="-1"></main>
@@ -169,11 +171,8 @@
   <div id="modal-root" class="modal-root"></div>
   <div id="toast-root" class="toast-root"></div>
   <div id="context-menu-root" class="context-menu-root"></div>
-  <div id="tooltip-root" class="tooltip-root"></div>
   <div id="loader-root" class="loader-root" hidden></div>
-  <div id="confirm-root" class="confirm-root"></div>
 
-  <!-- 🛡️ Cache Buster: ?v=72 -->
-  <script type="module" src="js/main.js?v=72"></script>
+  <script type="module" src="js/main.js?v=100"></script>
 </body>
 </html>
