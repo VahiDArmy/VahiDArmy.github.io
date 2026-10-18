@@ -1,7 +1,6 @@
 /* ============================================================
    js/ui/theme.js
-   FIXED: Fully functional theme cycling (dark -> midnight -> 
-          obsidian -> light).
+   FIXED: Unified localStorage read/write.
    ============================================================ */
 
 import { get, set } from '../utils/storage.js';
@@ -10,29 +9,20 @@ import { bus } from '../core/event-bus.js';
 import { EVENTS } from '../config/constants.js';
 import { byId } from '../utils/dom.js';
 
-export const THEMES = Object.freeze(['dark', 'midnight', 'obsidian', 'light']);
-export const ACCENTS = Object.freeze([
-  { id: 'violet',  label: 'بنفش نیلی',   hsl: 258 },
-  { id: 'blue',    label: 'آبی',         hsl: 214 },
-  { id: 'cyan',    label: 'فیروزه‌ای',   hsl: 190 },
-  { id: 'emerald', label: 'زمرد',        hsl: 158 },
-  { id: 'amber',   label: 'کهربا',       hsl: 34 },
-  { id: 'rose',    label: 'سرخابی',      hsl: 344 },
-  { id: 'fuchsia', label: 'ارغوانی',     hsl: 292 },
-]);
-export const FONT_SIZES = Object.freeze(['sm', 'md', 'lg', 'xl']);
+export const THEMES = ['dark', 'midnight', 'obsidian', 'light'];
+export const ACCENTS = [
+  { id: 'violet', label: 'بنفش نیلی', hsl: 258 }, { id: 'blue', label: 'آبی', hsl: 214 },
+  { id: 'cyan', label: 'فیروزه‌ای', hsl: 190 }, { id: 'emerald', label: 'زمرد', hsl: 158 },
+  { id: 'amber', label: 'کهربا', hsl: 34 }, { id: 'rose', label: 'سرخابی', hsl: 344 },
+  { id: 'fuchsia', label: 'ارغوانی', hsl: 292 },
+];
+export const FONT_SIZES = ['sm', 'md', 'lg', 'xl'];
 
-let current = {
-  theme: 'dark',
-  accent: 'violet',
-  fontSize: 'md',
-};
+let current = { theme: 'dark', accent: 'violet', fontSize: 'md' };
 
 export function applyTheme(patch = {}, opts = {}) {
-  const { persist = true, silent = false } = opts;
-  
   if (patch.theme && THEMES.includes(patch.theme)) current.theme = patch.theme;
-  if (patch.accent && ACCENTS.some((a) => a.id === patch.accent)) current.accent = patch.accent;
+  if (patch.accent && ACCENTS.some(a => a.id === patch.accent)) current.accent = patch.accent;
   if (patch.fontSize && FONT_SIZES.includes(patch.fontSize)) current.fontSize = patch.fontSize;
 
   const html = document.documentElement;
@@ -40,57 +30,30 @@ export function applyTheme(patch = {}, opts = {}) {
   html.setAttribute('data-accent', current.accent);
   html.setAttribute('data-fontsize', current.fontSize);
 
-  const metaTheme = document.querySelector('meta[name="theme-color"]');
-  if (metaTheme) {
-    const bg = getComputedStyle(html).getPropertyValue('--bg-base').trim() || '#0a0a0f';
-    metaTheme.setAttribute('content', bg);
-  }
-
   const btn = byId('theme-toggle-btn');
   if (btn) {
-    const icon = current.theme === 'light' ? '☀️' : '🌙';
-    btn.textContent = icon;
+    btn.textContent = current.theme === 'light' ? '☀️' : '🌙';
     btn.title = current.theme === 'light' ? 'حالت تاریک' : 'حالت روشن';
   }
 
-  if (persist) {
+  if (opts.persist !== false) {
     set(LS_KEYS.THEME, current.theme);
     set(LS_KEYS.ACCENT, current.accent);
     set(LS_KEYS.FONT_SIZE, current.fontSize);
   }
-
-  if (!silent) {
-    bus.emit(EVENTS.THEME_CHANGED, { ...current });
-  }
+  if (!opts.silent) bus.emit(EVENTS.THEME_CHANGED, { ...current });
 }
 
 export function initTheme() {
-  const savedTheme = get(LS_KEYS.THEME, 'dark');
-  const savedAccent = get(LS_KEYS.ACCENT, 'violet');
-  const savedFont = get(LS_KEYS.FONT_SIZE, 'md');
-
-  // Apply saved theme (or default to dark)
   applyTheme({
-    theme: THEMES.includes(savedTheme) ? savedTheme : 'dark',
-    accent: ACCENTS.some(a => a.id === savedAccent) ? savedAccent : 'violet',
-    fontSize: FONT_SIZES.includes(savedFont) ? savedFont : 'md',
-  }, { persist: false });
-
+    theme: get(LS_KEYS.THEME, 'dark'),
+    accent: get(LS_KEYS.ACCENT, 'violet'),
+    fontSize: get(LS_KEYS.FONT_SIZE, 'md'),
+  }, { persist: false, silent: true });
   return { ...current };
 }
 
 export function cycleTheme() {
-  const idx = THEMES.indexOf(current.theme);
-  const next = THEMES[(idx + 1) % THEMES.length];
+  const next = THEMES[(THEMES.indexOf(current.theme) + 1) % THEMES.length];
   applyTheme({ theme: next });
 }
-
-export function getTheme() { return { ...current }; }
-export function setTheme(theme) { applyTheme({ theme }); }
-export function setAccent(accent) { applyTheme({ accent }); }
-export function setFontSize(size) { applyTheme({ fontSize: size }); }
-
-export default {
-  initTheme, applyTheme, cycleTheme, getTheme, setTheme, setAccent, setFontSize,
-  THEMES, ACCENTS, FONT_SIZES,
-};
