@@ -13,12 +13,11 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AD%3C/text%3E%3C/svg%3E" />
 
-  <!-- 🛡️ Cache Buster: ?v=60 -->
-  <link rel="stylesheet" href="css/main.css?v=60" />
+  <!-- 🛡️ Cache Buster: ?v=70 -->
+  <link rel="stylesheet" href="css/main.css?v=70" />
   
   <style>
     [hidden] { display: none !important; }
-    /* 🛡️ Force dark background inline just in case CSS fails */
     html, body { margin: 0; padding: 0; overflow: hidden; width: 100%; height: 100%; background: #0a0a0f; color: #f2f2f7; }
   </style>
 </head>
@@ -33,6 +32,7 @@
   </div>
 
   <div id="auth-screen" class="auth-screen" hidden>
+    <!-- Auth Screen Content -->
     <div class="auth-screen__bg" aria-hidden="true">
       <span class="auth-screen__orb auth-screen__orb--1"></span>
       <span class="auth-screen__orb auth-screen__orb--2"></span>
@@ -62,7 +62,6 @@
             </div>
             <p class="field__error" data-error-for="email"></p>
           </div>
-
           <div class="field">
             <label class="field__label" for="login-password">رمز عبور</label>
             <div class="field__control">
@@ -71,56 +70,47 @@
             </div>
             <p class="field__error" data-error-for="password"></p>
           </div>
-
           <button type="submit" class="btn btn--primary btn--block btn--lg" id="login-submit">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__label">ورود امن</span>
           </button>
         </form>
-
+        
+        <!-- Signup form simplified for space -->
         <form id="signup-form" class="auth-form tabs__panel" data-panel="signup" novalidate autocomplete="on" hidden>
-          <div class="field">
+           <div class="field">
             <label class="field__label" for="signup-name">نام نمایشی</label>
             <div class="field__control">
               <span class="field__icon">👤</span>
               <input id="signup-name" name="display_name" type="text" class="input" placeholder="مثلاً: مسافر" maxlength="40" required />
             </div>
-            <p class="field__error" data-error-for="display_name"></p>
           </div>
-
           <div class="field">
             <label class="field__label" for="signup-email">ایمیل</label>
             <div class="field__control">
               <span class="field__icon">✉️</span>
               <input id="signup-email" name="email" type="email" class="input" dir="ltr" placeholder="you@example.com" required />
             </div>
-            <p class="field__error" data-error-for="email"></p>
           </div>
-
           <div class="field">
             <label class="field__label" for="signup-password">رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔑</span>
               <input id="signup-password" name="password" type="password" class="input" dir="ltr" placeholder="حداقل ۸ کاراکتر" minlength="8" required />
             </div>
-            <p class="field__error" data-error-for="password"></p>
           </div>
-
           <div class="field">
             <label class="field__label" for="signup-password2">تکرار رمز عبور</label>
             <div class="field__control">
               <span class="field__icon">🔐</span>
               <input id="signup-password2" name="password_confirm" type="password" class="input" dir="ltr" placeholder="••••••••" required />
             </div>
-            <p class="field__error" data-error-for="password_confirm"></p>
           </div>
-
           <label class="checkbox checkbox--sm auth-form__terms">
             <input type="checkbox" id="signup-terms" required />
             <span class="checkbox__box"></span>
             <span class="checkbox__label">تأیید می‌کنم</span>
           </label>
-
           <button type="submit" class="btn btn--primary btn--block btn--lg" id="signup-submit">
             <span class="btn__spinner" aria-hidden="true"></span>
             <span class="btn__label">ساخت فضا</span>
@@ -148,12 +138,10 @@
         <div class="topbar__search">
           <span class="topbar__search-ico">🔍</span>
           <input id="global-search" class="topbar__search-input" type="search" placeholder="جست‌وجو…" autocomplete="off" />
-          <div class="topbar__search-results" id="global-search-results" hidden></div>
         </div>
         <div class="topbar__actions">
           <button class="icon-btn" id="quick-add-btn" type="button" title="ثبت سریع">＋</button>
           <button class="icon-btn" id="theme-toggle-btn" type="button" title="تغییر تم">🌙</button>
-          <button class="icon-btn" id="help-btn" type="button" title="راهنما">؟</button>
         </div>
       </header>
       <main id="page-container" class="page-container" tabindex="-1"></main>
@@ -161,8 +149,7 @@
         <span>نسخه <span data-app-version>—</span></span>
       </footer>
     </div>
-    
-    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+    <!-- Backdrop is GONE from HTML -->
   </div>
 
   <div id="modal-root" class="modal-root"></div>
@@ -172,7 +159,7 @@
   <div id="loader-root" class="loader-root" hidden></div>
   <div id="confirm-root" class="confirm-root"></div>
 
-  <!-- 🛡️ Cache Buster: ?v=60 -->
-  <script type="module" src="js/main.js?v=60"></script>
+  <!-- 🛡️ Cache Buster: ?v=70 -->
+  <script type="module" src="js/main.js?v=70"></script>
 </body>
 </html>
