@@ -1,8 +1,6 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Removed `display: none` from search on mobile.
-          Instead, we hide the breadcrumb on very small screens 
-          to give the search bar room.
+   FIXED: Removed `!important`. Used specific Z-index variables.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -11,7 +9,7 @@
 
 @media (max-width: 900px) {
   .app-shell {
-    display: block !important;
+    display: block;
   }
 
   .app-main {
@@ -22,20 +20,20 @@
   /* Sidebar Drawer */
   .sidebar,
   .app-shell.is-sidebar-collapsed .sidebar {
-    display: none !important;
+    display: none;
     position: fixed;
     top: 0;
     bottom: 0;
     right: 0;
-    width: 280px !important;
-    z-index: 900; 
+    width: 280px;
+    z-index: var(--z-drawer); 
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow-xl);
     height: 100dvh;
   }
 
   .app-shell.is-mobile-sidebar-open .sidebar {
-    display: flex !important;
+    display: flex;
   }
 
   /* Backdrop */
@@ -44,16 +42,15 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
-    z-index: 800; 
+    z-index: var(--z-drawer-bg); 
   }
 
-  .sidebar__collapse { display: none !important; }
-  .topbar__menu { display: inline-flex !important; }
+  .sidebar__collapse { display: none; }
+  .topbar__menu { display: inline-flex; }
   
   .page-container { padding: var(--s-4); }
 }
 
-/* 🛡️ FIX: On mobile, hide breadcrumbs to let search breathe */
 @media (max-width: 768px) {
   .topbar__breadcrumb { display: none; }
   .topbar { padding-inline: var(--s-3); }
