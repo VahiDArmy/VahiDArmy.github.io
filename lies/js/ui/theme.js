@@ -1,7 +1,7 @@
 /* ============================================================
    js/ui/theme.js
-   FIXED: Force dark theme and clear any previously saved
-          "light" theme from localStorage.
+   FIXED: Fully functional theme cycling (dark -> midnight -> 
+          obsidian -> light).
    ============================================================ */
 
 import { get, set } from '../utils/storage.js';
@@ -30,6 +30,7 @@ let current = {
 
 export function applyTheme(patch = {}, opts = {}) {
   const { persist = true, silent = false } = opts;
+  
   if (patch.theme && THEMES.includes(patch.theme)) current.theme = patch.theme;
   if (patch.accent && ACCENTS.some((a) => a.id === patch.accent)) current.accent = patch.accent;
   if (patch.fontSize && FONT_SIZES.includes(patch.fontSize)) current.fontSize = patch.fontSize;
@@ -64,19 +65,15 @@ export function applyTheme(patch = {}, opts = {}) {
 }
 
 export function initTheme() {
-  try {
-    // 🛡️ Clear any "light" theme saved from previous versions
-    localStorage.removeItem('az:theme');
-    localStorage.removeItem('az:fontsize');
-  } catch(e) {}
+  const savedTheme = get(LS_KEYS.THEME, 'dark');
+  const savedAccent = get(LS_KEYS.ACCENT, 'violet');
+  const savedFont = get(LS_KEYS.FONT_SIZE, 'md');
 
-  const savedAccent = get(LS_KEYS.ACCENT, null);
-  
-  // 🛡️ FORCE DARK THEME
+  // Apply saved theme (or default to dark)
   applyTheme({
-    theme: 'dark',
-    accent: savedAccent || 'violet',
-    fontSize: 'md',
+    theme: THEMES.includes(savedTheme) ? savedTheme : 'dark',
+    accent: ACCENTS.some(a => a.id === savedAccent) ? savedAccent : 'violet',
+    fontSize: FONT_SIZES.includes(savedFont) ? savedFont : 'md',
   }, { persist: false });
 
   return { ...current };
