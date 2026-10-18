@@ -1,6 +1,6 @@
 /* ============================================================
    css/main.css
-   FIXED: Moved responsive.css to the END to fix the cascade bug.
+   FIXED: Consolidated imports. Removed dead CSS files.
    ============================================================ */
 
 @import url("./base/variables.css");
@@ -25,15 +25,12 @@
 @import url("./components/toast.css");
 @import url("./components/dropdown.css");
 @import url("./components/context-menu.css");
-@import url("./components/tooltip.css");
 @import url("./components/loader.css");
 @import url("./components/pagination.css");
 @import url("./components/avatar.css");
 @import url("./components/segmented.css");
 @import url("./components/charts.css");
 @import url("./components/skeleton.css");
-@import url("./components/table.css");
-@import url("./components/accordion.css");
 @import url("./components/empty-state.css");
 
 @import url("./features/auth.css");
@@ -50,6 +47,6 @@
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
 
-/* 🛡️ RESPONSIVE MUST BE LAST TO OVERRIDE BASE FEATURE STYLES */
+/* 🛡️ RESPONSIVE MUST BE LAST */
 @import url("./layout/responsive.css");
 @import url("./base/final-polish.css");
