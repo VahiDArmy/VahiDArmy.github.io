@@ -1,7 +1,8 @@
 /* ============================================================
    js/main.js
-   FIXED: Added a global window.onerror handler that prints 
-          a visible red box if any code fails to load.
+   FIXED: Removed red error box (rely on error-boundary).
+          Removed 1.5s timeout hack (rely on proper init).
+          Removed forced localStorage wipe of sidebar.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -14,41 +15,21 @@ import { router } from './core/router.js';
 import { shortcuts } from './core/shortcuts.js';
 import { bus } from './core/event-bus.js';
 import { EVENTS, SHORTCUT_SCOPES } from './config/constants.js';
-import { APP, ROUTES, LS_KEYS, NAV_ITEMS, FEATURES } from './config/app.config.js';
-import { get as lsGet, set as lsSet } from './utils/storage.js';
+import { APP, ROUTES, NAV_ITEMS, FEATURES } from './config/app.config.js';
 import { showLoader, hideLoader } from './ui/loader.js';
 import { initErrorBoundary } from './core/error-boundary.js';
 import { initCommandPalette } from './core/command-palette.js';
 
-// 🛡️ GLOBAL ERROR HANDLER (Shows error on screen)
-window.addEventListener('error', function(e) {
-  const box = document.createElement('div');
-  box.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;z-index:99999;font-family:monospace;font-size:12px;direction:ltr;text-align:left;';
-  box.textContent = 'ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
-  document.body.appendChild(box);
-});
-
 ready(async () => {
-  try { mountAuthPage(); } catch(e) { console.error('Auth mount failed', e); }
+  try { initErrorBoundary(); } catch(e) { console.error(e); }
+  try { initTheme(); } catch(e) { console.error(e); }
 
-  setTimeout(() => {
-    const splash = byId('boot-splash');
-    if (splash && splash.style.display !== 'none') {
-      console.warn('Boot taking too long. Forcing UI.');
-      showAuthScreen();
-      hideBootSplash();
-    }
-  }, 1500);
+  if (!isSupabaseConfigured()) return fatalConfig();
+
+  try { mountAuthPage(); } catch(e) { console.error(e); }
+  if (FEATURES.commandPalette) initCommandPalette();
 
   try {
-    try { localStorage.removeItem('az:sidebar:collapsed'); } catch(e){}
-
-    initErrorBoundary();
-    initTheme();
-
-    if (!isSupabaseConfigured()) return fatalConfig();
-    if (FEATURES.commandPalette) initCommandPalette();
-
     const outcome = await initSession();
 
     if (outcome.user) {
@@ -62,10 +43,9 @@ ready(async () => {
       if (byId('app-shell')?.hidden !== false) await startApp();
     });
     bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
-
   } catch (err) {
     console.error('EXCEPTION IN BOOT:', err);
-    showAuthScreen();
+    showAuthScreen(); // Fallback only on true exception
     hideBootSplash();
   }
 });
@@ -103,7 +83,7 @@ function stopApp() {
 async function registerRoutes() {
   const routes = [
     { path: `/${ROUTES.DASHBOARD}`, title: 'داشبورد', load: () => import('./pages/dashboard.page.js').then((m) => m.renderDashboard) },
-    { path: `/${ROUTES.LIES}`,      title: 'دروغ‌ها', load: () => import('./pages/lies.page.js').then((m) => m.renderLies) },
+    { path: `/${ROUTES.LIES}`,      title: 'دروغ‌ها', load: () => import('./pages/lies.page.js').then((m) => m.renderLies), unmount: () => import('./pages/lies.page.js').then((m) => m.unmountLies) },
     { path: '/lie/:id',             title: 'جزئیات', load: () => import('./pages/lie-detail.page.js').then((m) => m.renderLieDetail) },
     { path: `/${ROUTES.ANALYTICS}`, title: 'تحلیل', load: () => import('./pages/analytics.page.js').then((m) => m.renderAnalytics) },
     { path: `/${ROUTES.TAGS}`,      title: 'دسته‌ها', load: () => import('./pages/tags.page.js').then((m) => m.renderTags) },
@@ -120,6 +100,10 @@ async function registerRoutes() {
         const renderFn = await r.load();
         return renderFn(container, params, query);
       },
+      unmount: r.unmount ? async () => {
+        const unmountFn = await r.unmount();
+        return unmountFn();
+      } : null
     });
   }
 
