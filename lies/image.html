@@ -575,7 +575,6 @@
       const toggleKeyBtn = document.getElementById("toggleKeyBtn");
       const dropzone = document.getElementById("dropzone");
       const fileInput = document.getElementById("fileInput");
-      const previewWrap = document.getElementById("previewWrap");
       const previewImg = document.getElementById("previewImg");
       const removeImgBtn = document.getElementById("removeImgBtn");
       const promptInput = document.getElementById("promptInput");
@@ -593,8 +592,9 @@
       let toastTimer = null;
 
       // ── Constants ──
-      const MODEL = "gemini-2.0-flash";
-      const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+      // If "gemini-3.8-flash" is rejected, try "gemini-3-flash" or "gemini-2.5-flash".
+      const MODEL = "gemini-3.8-flash";
+      const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions";
       const MAX_INLINE_BYTES = 7 * 1024 * 1024; // 7 MB
 
       // ── Helpers ──
@@ -625,14 +625,12 @@
       function setImage(file) {
         if (!file) return;
 
-        // Validate type
         const allowed = ["image/png", "image/jpeg", "image/webp", "image/heic", "image/heif"];
         if (!allowed.includes(file.type)) {
           showToast("Unsupported format. Use PNG, JPEG, WebP, HEIC or HEIF.");
           return;
         }
 
-        // Validate size (inline data limit)
         if (file.size > MAX_INLINE_BYTES) {
           showToast("Image is too large (max 7 MB for inline upload).");
           return;
@@ -641,7 +639,6 @@
         const reader = new FileReader();
         reader.onload = (e) => {
           const dataUrl = e.target.result;
-          // dataUrl looks like: data:image/png;base64,XXXX
           const base64 = dataUrl.split(",")[1];
           imageBase64 = base64;
           imageMime = file.type;
@@ -729,55 +726,77 @@
           return;
         }
 
-        // UI: loading state
         sendBtn.classList.add("loading");
         sendBtn.disabled = true;
         responseCard.classList.remove("visible");
         responseBody.classList.remove("error");
         responseBody.textContent = "";
 
-        // Build the request payload
+        // Interactions API payload
         const payload = {
-          contents: [
+          model: MODEL,
+          input: [
             {
-              parts: [
-                {
-                  inline_data: {
-                    mime_type: imageMime,
-                    data: imageBase64,
-                  },
-                },
-                {
-                  text: prompt,
-                },
-              ],
+              type: "image",
+              mime_type: imageMime,
+              data: imageBase64,
+            },
+            {
+              type: "text",
+              text: prompt,
             },
           ],
+          generation_config: { thinking_level: "low" },
         };
 
         try {
-          const res = await fetch(`${ENDPOINT}?key=${encodeURIComponent(key)}`, {
+          const res = await fetch(ENDPOINT, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": key,
+            },
             body: JSON.stringify(payload),
           });
 
           const data = await res.json();
 
           if (!res.ok) {
-            // Try to surface the API error message
             const msg =
               data?.error?.message ||
               `Request failed with status ${res.status}`;
             throw new Error(msg);
           }
 
-          // Extract text from the first candidate
-          const text =
-            data?.candidates?.[0]?.content?.parts
-              ?.filter((p) => typeof p.text === "string")
+          let text = "";
+
+          // Interactions API: walk steps looking for model_output
+          if (Array.isArray(data.steps)) {
+            const outputStep = data.steps.find((s) => s.type === "model_output");
+            if (outputStep?.content) {
+              text = outputStep.content
+                .filter((c) => c.type === "text" && typeof c.text === "string")
+                .map((c) => c.text)
+                .join("\n");
+            }
+          }
+
+          // Flat output_text fallback
+          if (!text && typeof data.output_text === "string") {
+            text = data.output_text;
+          }
+
+          // Legacy generateContent shape fallback
+          if (!text && Array.isArray(data.candidates)) {
+            text = (data.candidates[0]?.content?.parts || [])
+              .filter((p) => typeof p.text === "string")
               .map((p) => p.text)
-              .join("\n") || "(No text returned by the model.)";
+              .join("\n");
+          }
+
+          if (!text) {
+            text = "(No text returned by the model.)";
+          }
 
           responseBody.textContent = text;
           responseCard.classList.add("visible");
@@ -792,7 +811,7 @@
         }
       });
 
-      // ── Initialise ──
+      // ── Init ──
       updateSendState();
     })();
   </script>
