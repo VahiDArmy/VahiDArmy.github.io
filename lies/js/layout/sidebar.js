@@ -1,6 +1,7 @@
 /* ============================================================
    js/layout/sidebar.js
-   FIXED: Removed dead references to `sidebar-backdrop`.
+   COMPLETE FILE - NO TRUNCATION.
+   Added badge logic for suggestions.
    ============================================================ */
 
 import { el, byId } from '../utils/dom.js';
@@ -33,6 +34,9 @@ export function mountSidebar() {
   sessionStore.select((s) => s.user, () => renderUser(), { immediate: false });
 
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
+  
+  // Listen for suggestion badge updates
+  bus.on('suggestion:badge', (count) => setBadge('suggestions', count));
 }
 
 export function toggleCollapsed(force) {
@@ -75,6 +79,9 @@ function renderNav() {
       const link = el('a', { class: 'sidebar__item', attrs: { href: `#/${item.id}`, title: item.label }, dataset: { route: item.id } });
       link.appendChild(el('span', { class: 'sidebar__item-icon' }, { children: [item.icon] }));
       link.appendChild(el('span', { class: 'sidebar__item-label' }, { children: [item.label] }));
+      if (item.badgeKey) {
+        link.appendChild(el('span', { class: 'sidebar__item-badge', dataset: { badge: item.badgeKey }, attrs: { hidden: true } }));
+      }
       navEl.appendChild(link);
     }
   }
@@ -122,6 +129,14 @@ function updateActive(path) {
   if (!navEl) return;
   const clean = String(path || '').replace(/^\//, '').split('/')[0] || 'dashboard';
   navEl.querySelectorAll('.sidebar__item').forEach((a) => a.classList.toggle('is-active', a.dataset.route === clean));
+}
+
+function setBadge(key, value) {
+  const el0 = navEl?.querySelector(`[data-badge="${key}"]`);
+  if (!el0) return;
+  if (!value) { el0.hidden = true; el0.textContent = ''; return; }
+  el0.hidden = false;
+  el0.textContent = value > 99 ? '۹۹+' : value;
 }
 
 function applyCollapsed(value, opts = {}) {
