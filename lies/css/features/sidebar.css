@@ -1,13 +1,12 @@
 /* ============================================================
    css/features/sidebar.css
-   FIXED: Removed all `backdrop-filter` rules. They were causing
-          rendering bugs and blocking clicks on mobile browsers.
+   FIXED: 100% Solid background. NO backdrop-filter!
    ============================================================ */
 
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: var(--bg-surface); /* Solid background */
+  background: var(--bg-surface); /* Solid dark color */
   border-inline-end: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -166,14 +165,11 @@
   text-align: right;
 }
 
-/* Collapsed State */
+/* Collapsed State (Desktop Only) */
 @media (min-width: 901px) {
   .app-shell.is-sidebar-collapsed .sidebar__brand-text,
   .app-shell.is-sidebar-collapsed .sidebar__item-label,
-  .app-shell.is-sidebar-collapsed .sidebar__storage,
-  .app-shell.is-sidebar-collapsed .sidebar__user-info {
-    display: none !important;
-  }
+  .app-shell.is-sidebar-collapsed .sidebar__user-info { display: none !important; }
   .app-shell.is-sidebar-collapsed .sidebar__brand { justify-content: center; padding-inline: 0; }
   .app-shell.is-sidebar-collapsed .sidebar__nav { align-items: center; padding-inline: 0; }
   .app-shell.is-sidebar-collapsed .sidebar__item { justify-content: center; padding: 0; width: 44px; height: 44px; margin: 0 auto; }
