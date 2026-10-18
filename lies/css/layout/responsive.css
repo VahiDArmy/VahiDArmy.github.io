@@ -1,7 +1,7 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Removed backdrop-filter. Made sure sidebar z-index 
-          is high enough.
+   FIXED: Uses ::before on .app-shell to create a perfect overlay
+          that sits exactly behind the sidebar.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -30,25 +30,20 @@
     width: 280px !important;
     z-index: 10000; 
     border-left: 1px solid var(--border);
-    box-shadow: var(--shadow-xl);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
   }
 
   .app-shell.is-mobile-sidebar-open .sidebar {
     display: flex !important;
   }
 
-  /* Backdrop (No blur) */
-  .sidebar-backdrop {
-    display: none;
+  /* 🛡️ THE MAGIC FIX: Overlay attached to the shell, but physically BELOW the sidebar */
+  .app-shell.is-mobile-sidebar-open::before {
+    content: "";
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    /* 🛡️ REMOVED backdrop-filter */
-    z-index: 9999; 
-  }
-  
-  .app-shell.is-mobile-sidebar-open .sidebar-backdrop {
-    display: block;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 9999;
   }
 
   .sidebar__collapse { display: none !important; }
