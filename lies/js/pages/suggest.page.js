@@ -1,27 +1,47 @@
 /* ============================================================
    js/pages/suggest.page.js
    COMPLETE FILE - NO TRUNCATION.
-   A completely standalone public page for Anon users.
+   FIXED: Made the page a fixed, scrollable overlay so it works
+          regardless of the body's overflow:hidden setting.
+          Used `margin: auto` for perfect vertical centering
+          without cutting off content on small screens.
    ============================================================ */
 
 import { el } from '../utils/dom.js';
 import * as suggestionsService from '../services/suggestions.service.js';
 import { toast } from '../ui/toast.js';
 import { setButtonLoading } from '../ui/loader.js';
-import { cleanText } from '../utils/sanitize.js';
 
 export function renderSuggestPage(container, token) {
   container.innerHTML = '';
   
+  // 🛡️ FIX: Fixed, full-screen, scrollable container
   const page = el('div', { style: {
-    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: '24px', background: 'var(--bg-base)', direction: 'rtl', fontFamily: 'Vazirmatn, sans-serif'
+    position: 'fixed',
+    inset: '0',
+    overflowY: 'auto',
+    WebkitOverflowScrolling: 'touch',
+    background: 'var(--bg-base)',
+    direction: 'rtl',
+    fontFamily: 'Vazirmatn, sans-serif',
+    display: 'flex',
+    padding: '24px'
   }});
 
+  // 🛡️ FIX: margin: auto centers it perfectly, but allows scrolling if it's taller than the screen
   const card = el('div', { style: {
-    background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '24px',
-    padding: '32px', maxWidth: '500px', width: '100%', boxShadow: 'var(--shadow-xl)',
-    display: 'flex', flexDirection: 'column', gap: '24px'
+    margin: 'auto',
+    background: 'var(--bg-surface)',
+    border: '1px solid var(--border)',
+    borderRadius: '24px',
+    padding: '32px',
+    maxWidth: '500px',
+    width: '100%',
+    boxShadow: 'var(--shadow-xl)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '24px',
+    position: 'relative'
   }});
 
   card.appendChild(el('div', { style: { fontSize: '48px', textAlign: 'center', marginBottom: '-10px' } }, { children: ['🎭'] }));
@@ -66,10 +86,11 @@ export function renderSuggestPage(container, token) {
     setButtonLoading(submitBtn, true, 'در حال ارسال…');
     try {
       await suggestionsService.submitAnon(token, text, name);
-      form.innerHTML = ''; // Clear form
       
-      // Success Message
-      card.appendChild(el('div', { style: { textAlign: 'center', padding: '20px', background: 'var(--success-soft)', borderRadius: '12px', color: 'var(--success)' } }, {
+      // Clear form and show success
+      form.innerHTML = ''; 
+      
+      card.appendChild(el('div', { style: { textAlign: 'center', padding: '24px', background: 'var(--success-soft)', borderRadius: '12px', color: 'var(--success)', fontWeight: 'bold' } }, {
         children: ['✅ پیشنهاد شما با موفقیت ارسال شد. متشکرم!']
       }));
       
