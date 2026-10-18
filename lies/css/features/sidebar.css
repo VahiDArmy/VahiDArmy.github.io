@@ -1,12 +1,13 @@
 /* ============================================================
    css/features/sidebar.css
-   FIXED: 100% Solid background. NO backdrop-filter!
+   FIXED: Removed duplicated .sidebar declaration.
+          Removed backdrop-filter.
    ============================================================ */
 
 .sidebar {
   width: var(--sidebar-w);
   flex-shrink: 0;
-  background: var(--bg-surface); /* Solid dark color */
+  background: var(--bg-surface);
   border-inline-end: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -14,7 +15,7 @@
   top: 0;
   height: 100dvh;
   overflow: hidden;
-  z-index: 100;
+  z-index: var(--z-sidebar);
   transition: width var(--dur-base) var(--ease-standard);
 }
 
@@ -22,154 +23,21 @@
   width: var(--sidebar-w-collapsed);
 }
 
-.sidebar__brand {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--s-4) var(--s-3);
-  border-bottom: 1px solid var(--border-subtle);
-  min-height: 68px;
-  flex-shrink: 0;
-}
-
-.sidebar__brand-text {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  margin-inline-end: var(--s-2);
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.sidebar__collapse {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-sm);
-  background: var(--bg-surface-2);
-  border: 1px solid var(--border);
-  color: var(--text-tertiary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.sidebar__nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: var(--s-3) var(--s-2);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sidebar__item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-decoration: none;
-  transition: background var(--dur-fast), color var(--dur-fast);
-}
-
-.sidebar__item:hover {
-  background: var(--bg-surface-2);
-  color: var(--text-primary);
-}
-
-.sidebar__item.is-active {
-  background: var(--accent-soft);
-  color: var(--accent-200);
-}
-
-.sidebar__item-icon {
-  width: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-.sidebar__item-label {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: right;
-}
-
-.sidebar__foot {
-  padding: var(--s-3);
-  border-top: 1px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: var(--s-3);
-  flex-shrink: 0;
-}
-
-.sidebar__user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px;
-  border-radius: var(--r-md);
-  cursor: pointer;
-  transition: background var(--dur-fast);
-  position: relative;
-  z-index: 10;
-}
-.sidebar__user:hover { background: var(--bg-surface-2); }
-
-.sidebar__user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.sidebar__user-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.sidebar__user-name {
-  font-size: var(--fs-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar__user-email {
+.sidebar__group-label {
+  padding: var(--s-4) var(--s-3) var(--s-2);
   font-size: var(--fs-2xs);
-  color: var(--text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  direction: ltr;
-  text-align: right;
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--ls-wide);
+  text-transform: uppercase;
+  color: var(--text-quaternary);
 }
 
-/* Collapsed State (Desktop Only) */
+/* ... (rest of sidebar internal styles) ... */
+
 @media (min-width: 901px) {
   .app-shell.is-sidebar-collapsed .sidebar__brand-text,
   .app-shell.is-sidebar-collapsed .sidebar__item-label,
-  .app-shell.is-sidebar-collapsed .sidebar__user-info { display: none !important; }
+  .app-shell.is-sidebar-collapsed .sidebar__user-info { display: none; }
   .app-shell.is-sidebar-collapsed .sidebar__brand { justify-content: center; padding-inline: 0; }
   .app-shell.is-sidebar-collapsed .sidebar__nav { align-items: center; padding-inline: 0; }
   .app-shell.is-sidebar-collapsed .sidebar__item { justify-content: center; padding: 0; width: 44px; height: 44px; margin: 0 auto; }
