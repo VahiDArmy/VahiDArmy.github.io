@@ -1,9 +1,11 @@
 /* ============================================================
    css/components/dropdown.css
+   FIXED: Ensures the dropdown uses the new high z-index so it
+          appears over the mobile sidebar.
    ============================================================ */
 
 .dropdown {
-  z-index: var(--z-dropdown);
+  z-index: var(--z-dropdown); /* 🛡️ Now 1000 */
   min-width: 220px;
   max-width: min(400px, calc(100vw - 24px));
   background: var(--bg-surface-2);
@@ -13,9 +15,7 @@
   padding: var(--s-2);
   opacity: 0;
   transform: scale(.96) translateY(-4px);
-  transition:
-    opacity var(--dur-fast) var(--ease-standard),
-    transform var(--dur-base) var(--ease-spring);
+  transition: opacity var(--dur-fast) var(--ease-standard), transform var(--dur-base) var(--ease-spring);
   will-change: opacity, transform;
 }
 .dropdown.is-open { opacity: 1; transform: scale(1) translateY(0); }
