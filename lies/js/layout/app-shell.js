@@ -1,8 +1,8 @@
 /* ============================================================
    js/layout/app-shell.js
-   FIXED: Removed all references to #sidebar-backdrop.
-   Added a click listener to the main shell to close the drawer
-   when the user clicks anywhere outside the sidebar.
+   FIXED: Added a click listener to .app-shell. 
+          If the sidebar is open and the user clicks 
+          anywhere OUTSIDE the sidebar, it closes.
    ============================================================ */
 
 import { byId } from '../utils/dom.js';
@@ -50,11 +50,13 @@ export function mountAppShell() {
     }
   });
 
-  // 🛡️ FIX: Click anywhere outside the sidebar to close it
+  // 🛡️ THE ULTIMATE FIX: Click on Shell (Overlay)
   const shell = byId('app-shell');
   if (shell) {
     shell.addEventListener('click', (ev) => {
+      // Only if drawer is open
       if (isMobileSidebarOpen()) {
+        // If the click target is NOT inside the sidebar, close it.
         if (!ev.target.closest('.sidebar')) {
           closeMobileSidebar();
         }
@@ -66,12 +68,8 @@ export function mountAppShell() {
   window.addEventListener('online', () => bus.emit(EVENTS.ONLINE));
   window.addEventListener('offline', () => bus.emit(EVENTS.OFFLINE));
 
-  bus.on(EVENTS.ONLINE, () => {
-    document.body.classList.remove('is-offline');
-  });
-  bus.on(EVENTS.OFFLINE, () => {
-    document.body.classList.add('is-offline');
-  });
+  bus.on(EVENTS.ONLINE, () => document.body.classList.remove('is-offline'));
+  bus.on(EVENTS.OFFLINE, () => document.body.classList.add('is-offline'));
 
   if (!navigator.onLine) document.body.classList.add('is-offline');
 }
