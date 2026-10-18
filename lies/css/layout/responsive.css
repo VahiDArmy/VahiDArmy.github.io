@@ -1,7 +1,8 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Uses ::before on .app-shell to create a perfect overlay
-          that sits exactly behind the sidebar.
+   FIXED: Explicitly assigns z-index: 900 (sidebar) and 800 
+          (backdrop) so they don't conflict with the new 
+          1000+ dropdown z-index.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -28,22 +29,28 @@
     bottom: 0;
     right: 0;
     width: 280px !important;
-    z-index: 10000; 
+    
+    /* 🛡️ FIXED: Force specific z-index */
+    z-index: 900; 
+    
     border-left: 1px solid var(--border);
-    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    box-shadow: var(--shadow-xl);
+    height: 100dvh;
   }
 
   .app-shell.is-mobile-sidebar-open .sidebar {
     display: flex !important;
   }
 
-  /* 🛡️ THE MAGIC FIX: Overlay attached to the shell, but physically BELOW the sidebar */
+  /* Backdrop */
   .app-shell.is-mobile-sidebar-open::before {
     content: "";
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
-    z-index: 9999;
+    
+    /* 🛡️ FIXED: Force specific z-index */
+    z-index: 800; 
   }
 
   .sidebar__collapse { display: none !important; }
