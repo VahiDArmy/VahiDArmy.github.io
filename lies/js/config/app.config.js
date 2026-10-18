@@ -1,8 +1,7 @@
 /* ============================================================
    js/config/app.config.js
-   UPDATED: LIE_TYPES and MOODS now include description & example.
-   These are fallbacks if the DB fails to load, and also serve
-   as the initial data structure.
+   COMPLETE FILE - NO TRUNCATION.
+   Added SUGGESTIONS route and nav item.
    ============================================================ */
 
 export const APP = Object.freeze({
@@ -25,6 +24,7 @@ export const ROUTES = Object.freeze({
   TRASH: 'trash',
   SETTINGS: 'settings',
   ABOUT: 'about',
+  SUGGESTIONS: 'suggestions', // New Inbox route
 });
 
 export const DEFAULT_ROUTE = ROUTES.DASHBOARD;
@@ -32,6 +32,7 @@ export const DEFAULT_ROUTE = ROUTES.DASHBOARD;
 export const NAV_ITEMS = Object.freeze([
   { id: ROUTES.DASHBOARD, label: 'داشبورد',      icon: '🏠', shortcut: 'G D', group: 'main' },
   { id: ROUTES.LIES,      label: 'دروغ‌ها',      icon: '🎭', shortcut: 'G L', group: 'main', badgeKey: 'lies' },
+  { id: ROUTES.SUGGESTIONS, label: 'پیشنهادها',  icon: '📥', shortcut: 'G I', group: 'main', badgeKey: 'suggestions' }, // New
   { id: ROUTES.ANALYTICS, label: 'تحلیل و آمار', icon: '📊', shortcut: 'G A', group: 'main' },
   { id: ROUTES.TAGS,      label: 'دسته‌ها و برچسب‌ها', icon: '🏷️', shortcut: 'G T', group: 'organize' },
   { id: ROUTES.ARCHIVE,   label: 'بایگانی',      icon: '📦', shortcut: 'G R', group: 'organize' },
@@ -40,7 +41,6 @@ export const NAV_ITEMS = Object.freeze([
   { id: ROUTES.ABOUT,     label: 'درباره',       icon: 'ℹ️', shortcut: 'G H', group: 'system' },
 ]);
 
-// 🛡️ Updated with description and example
 export const LIE_TYPES = Object.freeze([
   { id: 'self_doubt',     label: 'تردید به خود',        icon: '🪞', color: 'var(--cat-1)', description: 'توهم ناتوانی و بی‌کفایتی در برابر چالش‌ها.', example: 'من هیچ‌وقت نمی‌تونم از پس این کار بربیام.' },
   { id: 'procrastination', label: 'به تعویق انداختن',   icon: '⏳', color: 'var(--cat-4)', description: 'فرار از سختیِ لحظه با وعده‌ی فردا.', example: 'فردا با انرژی شروع می‌کنم.' },
@@ -54,7 +54,6 @@ export const LIE_TYPES = Object.freeze([
   { id: 'other',          label: 'دروغ دیگر',           icon: '✳️', color: 'var(--text-tertiary)', description: 'هر دروغی که در دسته‌های بالا نگنجد.', example: 'یک دروغ تازه...' },
 ]);
 
-// 🛡️ Updated with description
 export const MOODS = Object.freeze([
   { id: 'calm',     label: 'آرام',       icon: '😌', score:  2, description: 'احساس تعادل و نداشتن تنش.' },
   { id: 'neutral',  label: 'خنثی',       icon: '😐', score:  0, description: 'بدون احساس خاصی، نه خوب و نه بد.' },
@@ -67,81 +66,37 @@ export const MOODS = Object.freeze([
 ]);
 
 export const LIE_STATUS = Object.freeze({
-  ACTIVE: 'active',
-  ARCHIVED: 'archived',
-  TRASHED: 'trashed',
+  ACTIVE: 'active', ARCHIVED: 'archived', TRASHED: 'trashed',
 });
 
 export const SORT_OPTIONS = Object.freeze([
-  { id: 'created_desc',  label: 'جدیدترین' },
-  { id: 'created_asc',   label: 'قدیمی‌ترین' },
-  { id: 'updated_desc',  label: 'آخرین ویرایش' },
-  { id: 'occurred_desc', label: 'تاریخ رخداد (نزولی)' },
-  { id: 'occurred_asc',  label: 'تاریخ رخداد (صعودی)' },
-  { id: 'intensity_desc',label: 'شدت (بیشترین)' },
-  { id: 'intensity_asc', label: 'شدت (کمترین)' },
-  { id: 'belief_desc',   label: 'باور (بیشترین)' },
-  { id: 'belief_asc',    label: 'باور (کمترین)' },
-  { id: 'title_asc',     label: 'عنوان (الفبا)' },
+  { id: 'created_desc',  label: 'جدیدترین' }, { id: 'created_asc',   label: 'قدیمی‌ترین' },
+  { id: 'updated_desc',  label: 'آخرین ویرایش' }, { id: 'occurred_desc', label: 'تاریخ رخداد (نزولی)' },
+  { id: 'occurred_asc',  label: 'تاریخ رخداد (صعودی)' }, { id: 'intensity_desc',label: 'شدت (بیشترین)' },
+  { id: 'intensity_asc', label: 'شدت (کمترین)' }, { id: 'belief_desc',   label: 'باور (بیشترین)' },
+  { id: 'belief_asc',    label: 'باور (کمترین)' }, { id: 'title_asc',     label: 'عنوان (الفبا)' },
 ]);
 
 export const PAGE_SIZES = Object.freeze([12, 24, 48, 96]);
-
-export const VIEW_MODES = Object.freeze({
-  GRID: 'grid',
-  LIST: 'list',
-  COMPACT: 'compact',
-  TIMELINE: 'timeline',
-});
-
-export const TOAST_DURATION = Object.freeze({
-  short: 2600,
-  normal: 4200,
-  long: 7000,
-  sticky: 0,
-});
+export const VIEW_MODES = Object.freeze({ GRID: 'grid', LIST: 'list', COMPACT: 'compact', TIMELINE: 'timeline' });
+export const TOAST_DURATION = Object.freeze({ short: 2600, normal: 4200, long: 7000, sticky: 0 });
 
 export const LS_KEYS = Object.freeze({
-  THEME: 'theme',
-  ACCENT: 'accent',
-  FONT_SIZE: 'fontsize',
-  SIDEBAR_COLLAPSED: 'sidebar:collapsed',
-  LIES_VIEW: 'lies:view',
-  LIES_SORT: 'lies:sort',
-  LIES_PAGE_SIZE: 'lies:pagesize',
-  LIES_FILTERS: 'lies:filters',
-  LAST_ROUTE: 'route:last',
-  ONBOARDED: 'onboarded',
-  REMEMBER_EMAIL: 'auth:remember-email',
+  THEME: 'theme', ACCENT: 'accent', FONT_SIZE: 'fontsize', SIDEBAR_COLLAPSED: 'sidebar:collapsed',
+  LIES_VIEW: 'lies:view', LIES_SORT: 'lies:sort', LIES_PAGE_SIZE: 'lies:pagesize', LIES_FILTERS: 'lies:filters',
+  LAST_ROUTE: 'route:last', ONBOARDED: 'onboarded', REMEMBER_EMAIL: 'auth:remember-email',
 });
 
 export const FEATURES = Object.freeze({
-  realtime: false,
-  reminders: true,
-  exportImport: true,
-  keyboardShortcuts: true,
-  commandPalette: true,
-  dragAndDrop: true,
-  heatmap: true,
-  charts: true,
-  autoSave: true,
-  offlineQueue: false,
+  realtime: false, reminders: true, exportImport: true, keyboardShortcuts: true,
+  commandPalette: true, dragAndDrop: true, heatmap: true, charts: true, autoSave: true, offlineQueue: false,
 });
 
 export const LIMITS = Object.freeze({
-  titleMax: 140,
-  bodyMax: 12000,
-  truthMax: 2000,
-  reflectionMax: 4000,
-  tagNameMax: 32,
-  categoryNameMax: 40,
-  displayNameMax: 40,
-  maxTagsPerLie: 12,
-  maxCategories: 24,
-  maxTags: 80,
-  searchDebounceMs: 280,
-  autosaveDebounceMs: 900,
-  globalSearchLimit: 8,
+  titleMax: 140, bodyMax: 12000, truthMax: 2000, reflectionMax: 4000,
+  tagNameMax: 32, categoryNameMax: 40, displayNameMax: 40,
+  maxTagsPerLie: 12, maxCategories: 24, maxTags: 80,
+  searchDebounceMs: 280, autosaveDebounceMs: 900, globalSearchLimit: 8,
 });
 
 export const STORAGE_QUOTA_BYTES = 50 * 1024 * 1024;
