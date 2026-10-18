@@ -1,8 +1,7 @@
 /* ============================================================
    js/main.js
-   FIXED: Removed red error box (rely on error-boundary).
-          Removed 1.5s timeout hack (rely on proper init).
-          Removed forced localStorage wipe of sidebar.
+   COMPLETE FILE - NO TRUNCATION.
+   Added routing intercept for the Anon Suggest page.
    ============================================================ */
 
 import { ready, byId } from './utils/dom.js';
@@ -11,6 +10,7 @@ import { isSupabaseConfigured } from './config/supabase.config.js';
 import { initSession, isAuthenticated } from './core/session.js';
 import { mountAppShell, showAppShell, showAuthScreen } from './layout/app-shell.js';
 import { mountAuthPage } from './pages/auth.page.js';
+import { renderSuggestPage } from './pages/suggest.page.js';
 import { router } from './core/router.js';
 import { shortcuts } from './core/shortcuts.js';
 import { bus } from './core/event-bus.js';
@@ -25,6 +25,18 @@ ready(async () => {
   try { initTheme(); } catch(e) { console.error(e); }
 
   if (!isSupabaseConfigured()) return fatalConfig();
+
+  // 🛡️ INTERCEPT PUBLIC ROUTE
+  const hash = location.hash.replace(/^#/, '');
+  if (hash.startsWith('/suggest/')) {
+    const token = hash.split('/')[2];
+    if (token) {
+      const container = byId('page-container'); // Reuse container or body
+      document.body.innerHTML = ''; // Clear everything for a clean public page
+      renderSuggestPage(document.body, token);
+      return; // STOP boot process here
+    }
+  }
 
   try { mountAuthPage(); } catch(e) { console.error(e); }
   if (FEATURES.commandPalette) initCommandPalette();
@@ -45,7 +57,7 @@ ready(async () => {
     bus.on(EVENTS.AUTH_SIGNED_OUT, () => stopApp());
   } catch (err) {
     console.error('EXCEPTION IN BOOT:', err);
-    showAuthScreen(); // Fallback only on true exception
+    showAuthScreen();
     hideBootSplash();
   }
 });
@@ -85,6 +97,7 @@ async function registerRoutes() {
     { path: `/${ROUTES.DASHBOARD}`, title: 'داشبورد', load: () => import('./pages/dashboard.page.js').then((m) => m.renderDashboard) },
     { path: `/${ROUTES.LIES}`,      title: 'دروغ‌ها', load: () => import('./pages/lies.page.js').then((m) => m.renderLies), unmount: () => import('./pages/lies.page.js').then((m) => m.unmountLies) },
     { path: '/lie/:id',             title: 'جزئیات', load: () => import('./pages/lie-detail.page.js').then((m) => m.renderLieDetail) },
+    { path: `/${ROUTES.SUGGESTIONS}`, title: 'پیشنهادها', load: () => import('./pages/suggestions-inbox.page.js').then((m) => m.renderSuggestionsInbox) },
     { path: `/${ROUTES.ANALYTICS}`, title: 'تحلیل', load: () => import('./pages/analytics.page.js').then((m) => m.renderAnalytics) },
     { path: `/${ROUTES.TAGS}`,      title: 'دسته‌ها', load: () => import('./pages/tags.page.js').then((m) => m.renderTags) },
     { path: `/${ROUTES.ARCHIVE}`,   title: 'بایگانی', load: () => import('./pages/archive.page.js').then((m) => m.renderArchive) },
