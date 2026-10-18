@@ -1,8 +1,8 @@
 /* ============================================================
    css/layout/responsive.css
-   FIXED: Explicitly assigns z-index: 900 (sidebar) and 800 
-          (backdrop) so they don't conflict with the new 
-          1000+ dropdown z-index.
+   FIXED: Removed `display: none` from search on mobile.
+          Instead, we hide the breadcrumb on very small screens 
+          to give the search bar room.
    ============================================================ */
 
 @media (max-width: 1024px) {
@@ -10,7 +10,6 @@
 }
 
 @media (max-width: 900px) {
-  
   .app-shell {
     display: block !important;
   }
@@ -29,10 +28,7 @@
     bottom: 0;
     right: 0;
     width: 280px !important;
-    
-    /* 🛡️ FIXED: Force specific z-index */
     z-index: 900; 
-    
     border-left: 1px solid var(--border);
     box-shadow: var(--shadow-xl);
     height: 100dvh;
@@ -48,8 +44,6 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
-    
-    /* 🛡️ FIXED: Force specific z-index */
     z-index: 800; 
   }
 
@@ -59,8 +53,8 @@
   .page-container { padding: var(--s-4); }
 }
 
+/* 🛡️ FIX: On mobile, hide breadcrumbs to let search breathe */
 @media (max-width: 768px) {
-  .topbar__search { display: none; }
+  .topbar__breadcrumb { display: none; }
   .topbar { padding-inline: var(--s-3); }
-  .topbar__breadcrumb { max-width: 60%; }
 }
