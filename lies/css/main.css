@@ -1,7 +1,6 @@
 /* ============================================================
    css/main.css
-   FIXED: Removed taxonomy.css to prevent white screen if 
-          the file is missing on the server.
+   FIXED: Moved responsive.css to the END to fix the cascade bug.
    ============================================================ */
 
 @import url("./base/variables.css");
@@ -12,7 +11,6 @@
 
 @import url("./layout/app-shell.css");
 @import url("./layout/page.css");
-@import url("./layout/responsive.css");
 
 @import url("./components/buttons.css");
 @import url("./components/forms.css");
@@ -48,9 +46,10 @@
 @import url("./features/lie-detail.css");
 @import url("./features/analytics.css");
 @import url("./features/tags.css");
-/* @import url("./features/taxonomy.css"); */ /* 🛡️ Removed to prevent 404 white screen */
 @import url("./features/settings.css");
 @import url("./features/archive-trash.css");
 @import url("./features/about.css");
 
+/* 🛡️ RESPONSIVE MUST BE LAST TO OVERRIDE BASE FEATURE STYLES */
+@import url("./layout/responsive.css");
 @import url("./base/final-polish.css");
