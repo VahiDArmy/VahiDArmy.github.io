@@ -1,5 +1,6 @@
 /* ============================================================
    js/layout/sidebar.js
+   FIXED: Removed dead references to `sidebar-backdrop`.
    ============================================================ */
 
 import { el, byId } from '../utils/dom.js';
@@ -27,18 +28,11 @@ export function mountSidebar() {
   renderUser();
 
   bus.on(EVENTS.ROUTE_CHANGED, ({ path }) => updateActive(path));
-  bus.on(EVENTS.AUTH_SIGNED_OUT, () => { renderUser(); });
-  bus.on(EVENTS.AUTH_SIGNED_IN, () => { renderUser(); });
-  
+  bus.on(EVENTS.AUTH_SIGNED_OUT, () => renderUser());
+  bus.on(EVENTS.AUTH_SIGNED_IN, () => renderUser());
   sessionStore.select((s) => s.user, () => renderUser(), { immediate: false });
-  sessionStore.select((s) => s.profile, () => renderUser(), { immediate: false });
 
   updateActive(location.hash.replace(/^#/, '/') || '/dashboard');
-
-  const backdrop = byId('sidebar-backdrop');
-  if (backdrop) {
-    backdrop.addEventListener('click', closeMobileSidebar);
-  }
 }
 
 export function toggleCollapsed(force) {
@@ -51,17 +45,13 @@ export function isCollapsed() { return collapsed; }
 
 export function openMobileSidebar() {
   const shell = byId('app-shell');
-  const backdrop = byId('sidebar-backdrop');
   shell?.classList.add('is-mobile-sidebar-open');
-  if (backdrop) backdrop.hidden = false;
   document.body.classList.add('has-drawer');
 }
 
 export function closeMobileSidebar() {
   const shell = byId('app-shell');
-  const backdrop = byId('sidebar-backdrop');
   shell?.classList.remove('is-mobile-sidebar-open');
-  if (backdrop) backdrop.hidden = true;
   document.body.classList.remove('has-drawer');
 }
 
@@ -72,26 +62,17 @@ export function isMobileSidebarOpen() {
 function renderNav() {
   if (!navEl) return;
   navEl.innerHTML = '';
-
   const groups = new Map();
   for (const item of NAV_ITEMS) {
     const g = item.group || 'main';
     if (!groups.has(g)) groups.set(g, []);
     groups.get(g).push(item);
   }
-
   const groupLabels = { main: '', organize: 'سازمان‌دهی', system: 'سیستم' };
-
   for (const [g, items] of groups.entries()) {
-    if (groupLabels[g]) {
-      navEl.appendChild(el('div', { class: 'sidebar__group-label', style: { padding: '16px 12px 8px', fontSize: '10px', color: 'var(--text-tertiary)' } }, { children: [groupLabels[g]] }));
-    }
+    if (groupLabels[g]) navEl.appendChild(el('div', { class: 'sidebar__group-label' }, { children: [groupLabels[g]] }));
     for (const item of items) {
-      const link = el('a', {
-        class: 'sidebar__item',
-        attrs: { href: `#/${item.id}`, title: item.label },
-        dataset: { route: item.id },
-      });
+      const link = el('a', { class: 'sidebar__item', attrs: { href: `#/${item.id}`, title: item.label }, dataset: { route: item.id } });
       link.appendChild(el('span', { class: 'sidebar__item-icon' }, { children: [item.icon] }));
       link.appendChild(el('span', { class: 'sidebar__item-label' }, { children: [item.label] }));
       navEl.appendChild(link);
@@ -103,17 +84,13 @@ function renderUser() {
   if (!userEl) return;
   userEl.innerHTML = '';
   const s = sessionStore.getState();
-  const user = s.user;
-  const profile = s.profile;
+  if (!s.user) return;
 
-  if (!user) return;
-
-  const name = profile?.display_name || user.email?.split('@')[0] || 'کاربر';
-  const email = user.email || '';
-  const avatarColor = profile?.avatar_color || colorFromString(email || name);
+  const name = s.profile?.display_name || s.user.email?.split('@')[0] || 'کاربر';
+  const email = s.user.email || '';
+  const avatarColor = s.profile?.avatar_color || colorFromString(email || name);
 
   userEl.appendChild(el('span', { class: 'sidebar__user-avatar', style: { background: avatarColor } }, { children: [initials(name)] }));
-  
   const info = el('div', { class: 'sidebar__user-info' });
   info.appendChild(el('span', { class: 'sidebar__user-name' }, { children: [name] }));
   info.appendChild(el('span', { class: 'sidebar__user-email' }, { children: [email] }));
@@ -122,28 +99,21 @@ function renderUser() {
   userEl.onclick = (ev) => {
     ev.stopPropagation();
     const menu = el('div', { class: 'dropdown__section' });
-    
     const mkItem = (label, icon, onClick, danger) => {
       const b = el('button', { class: ['dropdown__item', danger ? 'is-danger' : ''].filter(Boolean), attrs: { type: 'button' } });
       b.appendChild(el('span', { class: 'dropdown__item-icon' }, { children: [icon] }));
       b.appendChild(el('span', { class: 'dropdown__item-label' }, { children: [label] }));
-      b.addEventListener('click', () => {
-        closeDropdown();
-        onClick();
-      });
+      b.addEventListener('click', () => { closeDropdown(); onClick(); });
       return b;
     };
-
     menu.appendChild(mkItem('تنظیمات', '⚙️', () => { location.hash = `#/${ROUTES.SETTINGS}`; }));
     menu.appendChild(mkItem('درباره', 'ℹ️', () => { location.hash = `#/${ROUTES.ABOUT}`; }));
     menu.appendChild(el('div', { class: 'dropdown__divider' }));
-    menu.appendChild(mkItem('خروج از حساب', '🚪', async () => {
+    menu.appendChild(mkItem('خروج', '🚪', async () => {
       const { signOut } = await import('../services/auth.service.js');
       const { confirm } = await import('../ui/confirm.js');
-      const ok = await confirm({ title: 'خروج', message: 'از حساب خود خارج می‌شوید؟', confirmLabel: 'خروج', icon: '🚪' });
-      if (ok) await signOut().catch(() => {});
+      if (await confirm({ title: 'خروج', message: 'از حساب خود خارج می‌شوید؟' })) await signOut();
     }, true));
-
     openDropdown(userEl, menu, { placement: 'top-start', width: 'anchor' });
   };
 }
@@ -151,14 +121,11 @@ function renderUser() {
 function updateActive(path) {
   if (!navEl) return;
   const clean = String(path || '').replace(/^\//, '').split('/')[0] || 'dashboard';
-  navEl.querySelectorAll('.sidebar__item').forEach((a) => {
-    a.classList.toggle('is-active', a.dataset.route === clean);
-  });
+  navEl.querySelectorAll('.sidebar__item').forEach((a) => a.classList.toggle('is-active', a.dataset.route === clean));
 }
 
 function applyCollapsed(value, opts = {}) {
   collapsed = !!value;
-  const shell = byId('app-shell');
-  shell?.classList.toggle('is-sidebar-collapsed', collapsed);
+  byId('app-shell')?.classList.toggle('is-sidebar-collapsed', collapsed);
   if (opts.persist !== false) lsSet(LS_KEYS.SIDEBAR_COLLAPSED, collapsed);
 }
