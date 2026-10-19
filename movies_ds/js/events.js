@@ -274,9 +274,6 @@ window.Events = (function () {
     State.on('title:restored', function () { renderList(); Render.renderSidebarCounts(); });
   }
 
-  /* =========================================================
-     مدیریت دیتابیس — با Event Delegation
-     ========================================================= */
   function bindDbAdmin() {
     document.addEventListener('click', function (e) {
       const btn = e.target.closest && e.target.closest('#btn-db-admin, [data-action="db-admin"]');
@@ -426,11 +423,18 @@ window.Events = (function () {
     }
 
     form.appendChild(Utils.el('div', { class: 'field' }, [
-      Utils.el('label', { class: 'field-label' }, ['یادداشت']),
+      Utils.el('label', { class: 'field-label' }, [
+        'یادداشت ',
+        Utils.el('span', { class: 'field-hint-inline' }, ['(تأثیرگذار در تحلیل و پیشنهاد)'])
+      ]),
       Utils.el('textarea', {
         class: 'field-textarea', name: 'notes',
-        placeholder: 'چی دوست داشتی یا نداشتی…', maxlength: CONFIG.LIMITS.NOTES_MAX
-      }, [data.notes || ''])
+        placeholder: 'نظر شخصی شما درباره‌ی این اثر…',
+        maxlength: CONFIG.LIMITS.NOTES_MAX
+      }, [data.notes || '']),
+      Utils.el('div', { class: 'field-hint' }, [
+        '📝 این یادداشت به همراه امتیاز شما، مستقیماً برای تحلیل سلیقه و پیشنهاد تک‌اثر به هوش مصنوعی ارسال می‌شود.'
+      ])
     ]));
 
     const favSwitch = Utils.el('label', { class: 'switch' });
@@ -601,9 +605,6 @@ window.Events = (function () {
     });
   }
 
-  /* =========================================================
-     جزئیات
-     ========================================================= */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -686,9 +687,6 @@ window.Events = (function () {
     ]);
   }
 
-  /* =========================================================
-     تنظیمات
-     ========================================================= */
   function openSettings() {
     const s = GitHub.getSettings();
     const token = GitHub.getToken();
