@@ -41,62 +41,26 @@ window.CONFIG = {
   },
 
   /* =========================================================
-     سیستم ستاره — معیار اصلی برنامه
+     Supabase — برای پیشنهاد هوشمند با Gemini
      ========================================================= */
-  STARS: {
-    0: {
-      value: 0,
-      label: 'بدون امتیاز',
-      description: 'هنوز نمره نداده‌ام',
-      color: '#5a5a72',
-      emoji: '○',
-      glow: null
-    },
-    1: {
-      value: 1,
-      label: 'متنفرم',
-      description: 'از دیدنش پشیمانم',
-      color: '#ff4d5e',
-      emoji: '⭐',
-      glow: 'rgba(255, 77, 94, 0.7)'
-    },
-    2: {
-      value: 2,
-      label: 'ضعیف',
-      description: 'کاش ندیده بودم',
-      color: '#ff9f43',
-      emoji: '⭐⭐',
-      glow: 'rgba(255, 159, 67, 0.7)'
-    },
-    3: {
-      value: 3,
-      label: 'خنثی',
-      description: 'بد نبود، خوب نبود',
-      color: '#9a9ab0',
-      emoji: '⭐⭐⭐',
-      glow: 'rgba(154, 154, 176, 0.5)'
-    },
-    4: {
-      value: 4,
-      label: 'خوب',
-      description: 'از دیدنش راضی‌ام',
-      color: '#3ddc97',
-      emoji: '⭐⭐⭐⭐',
-      glow: 'rgba(61, 220, 151, 0.7)'
-    },
-    5: {
-      value: 5,
-      label: 'شاهکار',
-      description: 'بی‌همتا — دوباره خواهم دید',
-      color: '#ffd700',
-      emoji: '⭐⭐⭐⭐⭐',
-      glow: 'rgba(255, 215, 0, 0.8)'
-    }
+  SUPABASE: {
+    URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
+    ANON_KEY: 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6',
+    EDGE_FUNCTION: 'movie-suggest'
   },
 
   /* =========================================================
-     معیار سلیقه
+     سیستم ستاره — معیار اصلی برنامه
      ========================================================= */
+  STARS: {
+    0: { value: 0, label: 'بدون امتیاز', description: 'هنوز نمره نداده‌ام', color: '#5a5a72', emoji: '○', glow: null },
+    1: { value: 1, label: 'متنفرم', description: 'از دیدنش پشیمانم', color: '#ff4d5e', emoji: '⭐', glow: 'rgba(255, 77, 94, 0.7)' },
+    2: { value: 2, label: 'ضعیف', description: 'کاش ندیده بودم', color: '#ff9f43', emoji: '⭐⭐', glow: 'rgba(255, 159, 67, 0.7)' },
+    3: { value: 3, label: 'خنثی', description: 'بد نبود، خوب نبود', color: '#9a9ab0', emoji: '⭐⭐⭐', glow: 'rgba(154, 154, 176, 0.5)' },
+    4: { value: 4, label: 'خوب', description: 'از دیدنش راضی‌ام', color: '#3ddc97', emoji: '⭐⭐⭐⭐', glow: 'rgba(61, 220, 151, 0.7)' },
+    5: { value: 5, label: 'شاهکار', description: 'بی‌همتا — دوباره خواهم دید', color: '#ffd700', emoji: '⭐⭐⭐⭐⭐', glow: 'rgba(255, 215, 0, 0.8)' }
+  },
+
   TASTE_PROFILE: {
     manifesto: 'داستان باید جهان خودش را بسازد، به قوانین خودش وفادار بماند، نتیجه را به دست بیاورد و به شعور مخاطب برای استنتاج آن اعتماد کند.',
     loves: [
