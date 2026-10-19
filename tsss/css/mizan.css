@@ -29,73 +29,15 @@
 }
 
 /* ==========================================================================
-   ★ پیل‌های آیات در هدر بخش
+   ★ خط موجی طلایی برای بخش «تفسیر المیزان»
+   فقط در همین بخش اعمال می‌شود؛ خط موجی بقیهٔ بخش‌ها همان رنگ رز می‌ماند.
    ========================================================================== */
-
-#mizanRange {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
-  max-width: 100%;
-  /* override inline styles partially — colors and sizes به پایین منتقل شده */
-}
-#mizanRange:empty { display: none; }
-
-.mizan-range-label {
-  font-size: 0.7rem;
-  color: var(--text-faint);
-  font-weight: 400;
-  margin-inline-end: 2px;
-  letter-spacing: 0.01em;
+#mizanTafsirSection .section__label::after {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'%3E%3Cpath d='M0 4Q6 0 12 4T24 4' fill='none' stroke='%23d4af37' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") repeat-x center;
+  opacity: .9;
 }
 
-.mizan-range-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 26px;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-soft);
-  color: var(--text-dim);
-  font-family: var(--font-ui);
-  font-size: 0.7rem;
-  font-weight: 700;
-  line-height: 1;
-  text-decoration: none;
-  transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-.mizan-range-pill:hover {
-  border-color: var(--neon);
-  color: var(--neon);
-  box-shadow: 0 0 0 3px var(--neon-glow);
-}
-.mizan-range-pill.is-current {
-  border-color: var(--neon);
-  color: var(--neon);
-  background: color-mix(in srgb, var(--neon) 10%, var(--surface-2));
-}
-
-[data-theme="light"] .mizan-range-pill {
-  color: hsl(220 20% 35%);
-}
-[data-theme="light"] .mizan-range-pill:hover {
-  color: hsl(185 60% 32%);
-  box-shadow: none;
-}
-[data-theme="light"] .mizan-range-pill.is-current {
-  color: hsl(185 60% 28%);
-  background: hsl(185 55% 42% / .12);
-  border-color: hsl(185 55% 40% / .5);
-}
-
-/* ==========================================================================
-   Container
-   ========================================================================== */
+/* ---------- Container ---------- */
 .mizan-tafsir-content {
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -338,9 +280,6 @@
   .mizan-tafsir-content .mizan-translation__text { font-size: .9rem; line-height: 2.05; }
   .mizan-tafsir-content .mizan-p { font-size: .95rem; line-height: 2.1; }
   .mizan-tafsir-content .mizan-quran-inline { font-size: 1.12em; }
-
-  .mizan-range-pill { min-width: 24px; height: 20px; padding: 0 7px; font-size: .66rem; }
-  .mizan-range-label { font-size: .66rem; }
 }
 
 /* ---------- تم روشن ---------- */
