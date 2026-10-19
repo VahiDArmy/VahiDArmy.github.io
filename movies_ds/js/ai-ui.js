@@ -6,7 +6,7 @@ window.AIUI = (function () {
   let activeAbort = null;
 
   /* =========================================================
-     Markdown renderer — با پشتیبانی کامل از جدول
+     Markdown renderer
      ========================================================= */
   function renderMarkdown(text) {
     if (!text) return '';
@@ -136,7 +136,7 @@ window.AIUI = (function () {
   }
 
   /* =========================================================
-     Helpers — تبدیل هر نوع مقدار به متن قابل نمایش
+     Helpers
      ========================================================= */
   function valueToText(v) {
     if (v == null) return '';
@@ -165,9 +165,6 @@ window.AIUI = (function () {
     return false;
   }
 
-  /* =========================================================
-     badge مدل
-     ========================================================= */
   function buildModelBadge(info) {
     if (!info) return null;
     const children = [
@@ -191,9 +188,6 @@ window.AIUI = (function () {
     if (badge) container.appendChild(badge);
   }
 
-  /* =========================================================
-     پنل استریم
-     ========================================================= */
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
@@ -325,13 +319,6 @@ window.AIUI = (function () {
     }
   }
 
-  /* =========================================================
-     رندر یک لیست ساختاریافته
-     =========================================================
-     هر فیلد داخل هر آیتم را نمایش می‌دهد — نه فقط فیلدهای
-     شناخته‌شده. هر کلید اضافه‌ای که AI تولید کرده باشد،
-     همچنان روی صفحه می‌آید و گم نمی‌شود.
-     ========================================================= */
   const KNOWN_ITEM_KEYS = {
     location: 1, scene: 1, rule_broken: 1, technique: 1,
     issue: 1, what_happened: 1, why: 1, why_assumes_stupidity: 1,
@@ -363,7 +350,6 @@ window.AIUI = (function () {
       if (item.type) headChildren.push(Utils.el('span', { class: 'story-structured-type' }, [item.type]));
       itemEl.appendChild(Utils.el('div', { class: 'story-structured-head' }, headChildren));
 
-      /* فیلدهای شناخته‌شده با ترتیب مشخص */
       if (item.scene) itemEl.appendChild(row('صحنه:', item.scene));
       if (item.rule_broken) itemEl.appendChild(row('قاعده شکسته:', item.rule_broken));
       if (item.technique) itemEl.appendChild(row('تکنیک نویسنده:', item.technique));
@@ -373,7 +359,6 @@ window.AIUI = (function () {
       if (why) itemEl.appendChild(row(item.why ? 'چرا سوراخ است:' : 'چرا احمق‌فرض‌گیری است:', why));
       if (item.cascade) itemEl.appendChild(row('اثر زنجیره‌ای:', item.cascade));
 
-      /* هر فیلد دیگری که AI اضافه کرده — بدون حذف */
       Object.keys(item).forEach(function (k) {
         if (KNOWN_ITEM_KEYS[k]) return;
         const v = item[k];
@@ -405,9 +390,6 @@ window.AIUI = (function () {
     return 'unknown';
   }
 
-  /* =========================================================
-     رندر فیلدهای اضافی از JSON
-     ========================================================= */
   const KNOWN_KEYS = {
     standard_title: 1, title_fa: 1, type: 1,
     year_start: 1, year_end: 1, seasons: 1, episodes: 1, episodes_per_season: 1,
@@ -461,13 +443,6 @@ window.AIUI = (function () {
     return box;
   }
 
-  /* =========================================================
-     بخش تاشوی «پاسخ کامل AI»
-     =========================================================
-     تضمین می‌کند هر کاراکتری که از استریم دیده شد، در نتیجه‌ی
-     نهایی هم قابل دیدن باشد — حتی اگر ساختارش با استخراج
-     ساختاریافته جور نشده باشد.
-     ========================================================= */
   function buildRawSection(rawText) {
     if (!rawText || !String(rawText).trim()) return null;
 
@@ -566,7 +541,6 @@ window.AIUI = (function () {
 
         const fullRaw = result.__raw || '';
 
-        /* ---------- حالت ۱: پاسخ کاملاً متن آزاد (بدون JSON) ---------- */
         if (result.__text_only) {
           proseBox.hidden = false;
           proseBox.innerHTML = renderMarkdown(fullRaw);
@@ -574,7 +548,6 @@ window.AIUI = (function () {
           storyBox.hidden = true;
           extrasBox.hidden = true;
 
-          /* بخش تاشوی خام حتی در این حالت هم بی‌ضرر است */
           const rawSec = buildRawSection(fullRaw);
           if (rawSec) {
             rawSectionEl.hidden = false;
@@ -586,12 +559,10 @@ window.AIUI = (function () {
           applyBtn.textContent = '⚠️ بدون ساختار — قابل اعمال نیست';
           applyBtn.title = 'AI پاسخ فرمت‌دار برنگرداند؛ فقط متن آزاد بود.';
 
-          /* پنل استریم دیگر لازم نیست */
           setTimeout(function () { panel.hide(); }, 400);
           return;
         }
 
-        /* ---------- حالت ۲: JSON به‌همراه متن آزاد (پیش/پس) ---------- */
         const before = (result.__before || '').trim();
         const after = (result.__after || '').trim();
         if (before || after) {
@@ -605,7 +576,6 @@ window.AIUI = (function () {
           proseBox.hidden = true;
         }
 
-        /* ---------- فیلدهای استاندارد ---------- */
         resultBox.hidden = false;
         resultBox.innerHTML = '';
         [
@@ -647,7 +617,6 @@ window.AIUI = (function () {
         storyBox.hidden = false;
         renderStoryAnalysis(storyBox, storyData, result.reason, rating);
 
-        /* ---------- فیلدهای اضافی از JSON ---------- */
         const extras = buildExtrasBox(result);
         if (extras) {
           extrasBox.hidden = false;
@@ -657,7 +626,6 @@ window.AIUI = (function () {
           extrasBox.hidden = true;
         }
 
-        /* ---------- بخش تاشوی پاسخ کامل ---------- */
         const rawSec = buildRawSection(fullRaw);
         if (rawSec) {
           rawSectionEl.hidden = false;
@@ -667,7 +635,6 @@ window.AIUI = (function () {
           rawSectionEl.hidden = true;
         }
 
-        /* ---------- تحلیل عمیق فصل به فصل ---------- */
         const seasons = Number(result.seasons) || 0;
         if (seasons > 3) {
           deepBtnWrap.hidden = false;
@@ -686,8 +653,6 @@ window.AIUI = (function () {
         }
 
         applyBtn.disabled = false;
-
-        /* پنل استریم را ببند تا متن خام و JSON خام دوباره دیده نشود */
         setTimeout(function () { panel.hide(); }, 500);
       })
       .catch(function (err) {
@@ -696,9 +661,6 @@ window.AIUI = (function () {
       });
   }
 
-  /* =========================================================
-     تحلیل عمیق فصل به فصل
-     ========================================================= */
   function openSeasonalDeep(id, title, seasonsCount, type, year) {
     const chunkCount = Math.ceil(seasonsCount / 3);
     const progressBox = Utils.el('div', { class: 'ai-deep-progress' });
@@ -796,9 +758,6 @@ window.AIUI = (function () {
     });
   }
 
-  /* =========================================================
-     استانداردسازی دسته‌ای
-     ========================================================= */
   function openStandardizeBatch() {
     if (!requireAI()) return;
     const titles = DB.getAllTitles();
@@ -878,96 +837,49 @@ window.AIUI = (function () {
   }
 
   /* =========================================================
-     تحلیل سلیقه و پیشنهاد
+     پیشنهاد تک‌اثر — Supabase + Gemini
      ========================================================= */
   function openAnalysis() {
-    if (!requireAI()) return;
-    const panel = createStreamPanel('تحلیل سلیقه');
-    panel.setContent('<p class="ai-hint">برای شروع دکمه را بزن.</p>');
+    const panel = createStreamPanel('تحلیل سلیقه و پیشنهاد');
+    panel.setContent('<p class="ai-hint">برای دریافت پیشنهاد روی دکمه بزنید.</p>');
 
-    const kindPicker = Utils.el('div', { class: 'ai-kind-picker' }, [
-      chip('both', '🎬 هر دو', true),
-      chip('movie', '🎥 فقط فیلم'),
-      chip('series', '📺 فقط سریال')
-    ]);
-    let selectedKind = 'both';
-    kindPicker.querySelectorAll('.chip').forEach(function (c) {
-      c.addEventListener('click', function () {
-        kindPicker.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('is-on'); });
-        c.classList.add('is-on');
-        selectedKind = c.dataset.kind;
-      });
-    });
-    function chip(kind, label, on) {
-      return Utils.el('button', { class: 'chip' + (on ? ' is-on' : ''), dataset: { kind: kind } }, [label]);
-    }
-
+    const btn = Utils.el('button', { class: 'btn btn-primary', id: 'btn-suggest' }, ['دریافت پیشنهاد']);
+    
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-section' }, [
-        Utils.el('div', { class: 'ai-section-title' }, ['۱. تحلیل عمیق سلیقه']),
-        Utils.el('div', { class: 'ai-section-actions' }, [
-          Utils.el('button', { class: 'btn btn-soft btn-sm', id: 'ai-analyze-btn' }, ['🔍 تحلیل کن'])
-        ])
+        Utils.el('div', { class: 'ai-section-title' }, ['پیشنهاد هوشمند (تک‌اثر)']),
+        Utils.el('div', { class: 'ai-section-desc' }, ['همه‌ی آثاری که امتیاز داده‌اید، به همراه یادداشت‌ها و دلایل شما تحلیل می‌شود و تنها یک اثر (فیلم یا سریال) پیشنهاد می‌شود.']),
+        Utils.el('div', { class: 'ai-section-actions' }, [btn])
       ]),
-      panel.panel,
-      Utils.el('div', { class: 'divider' }),
-      Utils.el('div', { class: 'ai-section' }, [
-        Utils.el('div', { class: 'ai-section-title' }, ['۲. پیشنهاد هوشمند']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['بر اساس معیارهای سلیقه، پیشنهاد دقیق دریافت کن.']),
-        kindPicker,
-        Utils.el('button', { class: 'btn btn-soft btn-sm', id: 'ai-recommend-btn', style: { marginTop: '10px' } }, ['✨ پیشنهاد بده'])
-      ])
+      panel.panel
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
-      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { AI.abort(); Modal.close(); } }, ['بستن'])
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن'])
     ]);
 
-    Modal.open({ title: 'تحلیل و پیشنهاد AI', icon: '🧠', size: 'xl', body: body, footer: footer });
+    Modal.open({ title: 'تحلیل و پیشنهاد', icon: '🧠', size: 'xl', body: body, footer: footer });
 
-    const analyzeBtn = body.querySelector('#ai-analyze-btn');
-    const recBtn = body.querySelector('#ai-recommend-btn');
-
-    analyzeBtn.addEventListener('click', async function () {
-      analyzeBtn.disabled = true; recBtn.disabled = true;
+    btn.addEventListener('click', async function () {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> در حال تحلیل…';
+      panel.setContent('');
       panel.setStatus('در حال تحلیل…', 'loading');
-      panel.setContent('');
-      activeAbort = new AbortController();
+      
       try {
-        await AIAnalysis.analyze({
-          signal: activeAbort.signal,
-          onToken: function (_, acc) { panel.appendText(acc); }
-        });
-        panel.setStatus('تحلیل کامل شد', 'done');
-        panel.setModelBadge();
-      } catch (err) {
-        panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
-      } finally { analyzeBtn.disabled = false; recBtn.disabled = false; }
-    });
-
-    recBtn.addEventListener('click', async function () {
-      analyzeBtn.disabled = true; recBtn.disabled = true;
-      panel.setStatus('در حال پیشنهاد…', 'loading');
-      panel.setContent('');
-      activeAbort = new AbortController();
-      try {
-        await AIAnalysis.recommend(selectedKind, {
-          signal: activeAbort.signal,
-          onToken: function (_, acc) { panel.appendText(acc); }
-        });
+        const resultText = await AIAnalysis.suggest();
+        panel.setContent(renderMarkdown(resultText));
         panel.setStatus('پیشنهاد آماده شد', 'done');
-        panel.setModelBadge();
       } catch (err) {
         panel.setStatus('خطا', 'error');
         panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
-      } finally { analyzeBtn.disabled = false; recBtn.disabled = false; }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'دریافت پیشنهاد مجدد';
+      }
     });
   }
 
-  /* =========================================================
-     جستجوی هوشمند عنوان
-     ========================================================= */
   function openTitleLookup(form, titleInput) {
     if (!requireAI()) return;
     const rawTitle = titleInput.value.trim();
