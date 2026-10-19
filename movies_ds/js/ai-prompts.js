@@ -221,6 +221,45 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
+  /* =========================================================
+     استانداردسازی (بدون تحلیل)
+     ========================================================= */
+  function buildStandardizeSingleSystem() {
+    return [
+      'تو یک متخصص دیتابیس فیلم و سریال هستی.',
+      'وظیفه تو فقط و فقط استخراج اطلاعات دقیق (متادیتا) برای این عنوان است.',
+      'هیچ‌گونه تحلیل داستانی، نقد، یا پیدا کردن سوراخ داستانی انجام نده. فقط مشخصات را پیدا و استاندارد کن.',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'قاعده سال',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'اگر کاربر سال اعلام کرده: همان سال را مبنا بگیر.',
+      'اگر کاربر سال اعلام نکرده: سال شروع را پیدا کن. اگر پیدا نکردی null بگذار.',
+      '',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'خروجی',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      'فقط و فقط یک آبجکت JSON با ساختار زیر برگردان:',
+      '{',
+      '  "standard_title": "عنوان انگلیسی استاندارد",',
+      '  "title_fa": "عنوان فارسی رایج یا null",',
+      '  "type": "series" یا "movie" یا "anime" یا "documentary",',
+      '  "year_start": عدد یا null,',
+      '  "year_end": عدد یا null,',
+      '  "seasons": عدد یا null,',
+      '  "episodes": عدد یا null,',
+      '  "episodes_per_season": عدد یا null,',
+      '  "country": "کشور",',
+      '  "language": "زبان اصلی",',
+      '  "genre": "ژانرها",',
+      '  "status": "پایان‌یافته" یا "در حال پخش",',
+      '  "creators": "سازنده‌ها",',
+      '  "main_cast": "بازیگران اصلی",',
+      '  "summary": "خلاصه داستان در ۲ تا ۳ جمله فارسی"',
+      '}'
+    ].join('\n');
+  }
+
   const TYPE_FA = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' };
 
   function cleanTitle(raw, year) {
@@ -315,6 +354,33 @@ window.AIPrompts = (function () {
     lines.push('۵. نتیجه‌های به‌دست‌آمده و تحمیل‌شده را بنویس.');
     lines.push('');
     lines.push('خروجی ترجیحاً JSON باشد، اما ساختار اجباری نیست و بخش‌های خارج از قالب را حذف نکن.');
+    return lines.join('\n');
+  }
+
+  function standardizeUser(title, type, year, meta) {
+    const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
+    const lines = titleBlock(title, type, year, meta).concat(['نوع اعلام‌شده: ' + typeLabel]);
+    if (year) lines.push('سال اعلام‌شده: ' + year);
+    else lines.push('سال اعلام‌شده: وارد نشده');
+
+    lines.push('');
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('نکته درباره نوع');
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('');
+    lines.push('این عنوان از دید کاربر یک ' + typeLabel + ' است.');
+    lines.push('اگر چند اثر با نام مشابه وجود دارد، همانی را پیدا کن که با نوع اعلام‌شده می‌خواند.');
+    lines.push('اگر نام شامل نشانه نسخه است مثل (us) یا (uk)، همان نسخه را مبنا بگیر.');
+    if (year) lines.push('سال اعلام‌شده (' + year + ') را مبنا بگیر.');
+
+    lines.push('');
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('وظیفه');
+    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    lines.push('');
+    lines.push('فقط اطلاعات متادیتا (عنوان، سال، فصل‌ها، بازیگران و ...) را استخراج کن.');
+    lines.push('از تحلیل داستان، نقد یا پیدا کردن اشکال خودداری کن.');
+    lines.push('خروجی فقط یک آبجکت JSON باشد.');
     return lines.join('\n');
   }
 
@@ -612,9 +678,11 @@ window.AIPrompts = (function () {
   return {
     tasteCriteria: buildTasteCriteria(),
     analyzeSystem: buildAnalyzeSystem(),
+    standardizeSingleSystem: buildStandardizeSingleSystem(),
     standardTitle: standardTitle,
     standardLine: standardLine,
     analyzeUser: analyzeUser,
+    standardizeUser: standardizeUser,
     analyzeDeepUser: analyzeDeepUser,
     standardizeBatchSystem: buildStandardizeBatchSystem(),
     standardizeBatchUser: standardizeBatchUser,
