@@ -51,7 +51,6 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  // محافظت از layout-shift هنگام کلیک روی دکمه‌های مودال یادداشت
   document.addEventListener('mousedown', (e) => {
     if (!e.target || !e.target.closest) return;
     const btn = e.target.closest('#mizanNoteSaveBtn')
@@ -524,42 +523,18 @@ const MizanPanel = (function () {
     mizanContent.classList.add('hidden');
     mizanError.classList.add('hidden');
     if (mizanPager) mizanPager.classList.add('hidden');
-    if (mizanRange) mizanRange.innerHTML = '';
+    if (mizanRange) mizanRange.textContent = '';
 
     if (state === 'empty') mizanEmpty.classList.remove('hidden');
     else if (state === 'loading') mizanLoading.classList.remove('hidden');
     else if (state === 'content') {
       mizanContent.classList.remove('hidden');
       mizanContent.innerHTML = payload.html || '';
-
-      // ★ نمایش آیات پوشش‌داده‌شده به‌صورت پیل‌های کلیک‌پذیر
-      if (mizanRange) {
-        if (payload.ayahList && payload.ayahList.length) {
-          const surah = payload.surah || lastSurah;
-          const currentAyah = payload.currentAyah || lastAyah;
-
-          const label = document.createElement('span');
-          label.className = 'mizan-range-label';
-          label.textContent = 'آیات:';
-
-          const pills = payload.ayahList.map((n) => {
-            const isCur = n === currentAyah;
-            const a = document.createElement('a');
-            a.href = `index.html?surah=${surah}&ayah=${n}`;
-            a.className = 'mizan-range-pill' + (isCur ? ' is-current' : '');
-            a.title = `مطالعهٔ آیهٔ ${UI.toPersianDigits(n)}`;
-            a.textContent = UI.toPersianDigits(n);
-            return a;
-          });
-
-          mizanRange.appendChild(label);
-          pills.forEach((p) => mizanRange.appendChild(p));
-        } else if (payload.range) {
-          const { from, to } = payload.range;
-          mizanRange.textContent = (from === to)
-            ? `آیهٔ ${UI.toPersianDigits(from)}`
-            : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
-        }
+      if (mizanRange && payload.range) {
+        const { from, to } = payload.range;
+        mizanRange.textContent = (from === to)
+          ? `آیهٔ ${UI.toPersianDigits(from)}`
+          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
       }
     } else if (state === 'error') {
       mizanError.classList.remove('hidden');
@@ -1591,23 +1566,15 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
-      // ★ جمع‌آوری تمام آیات پوشش‌داده‌شده (از anchor و range-title)
-      const ayahSet = new Set();
+      let range = null;
       const allBlocks = [];
       for (const c of contents) {
         const blocks = parseContent(c.text);
-        for (const b of blocks) {
-          if (b.type === 'anchor') ayahSet.add(b.ayah);
-          if (b.type === 'range-title') {
-            for (let n = b.from; n <= b.to; n++) ayahSet.add(n);
-          }
+        if (!range) {
+          const rt = blocks.find((b) => b.type === 'range-title');
+          if (rt) range = { from: rt.from, to: rt.to };
         }
         allBlocks.push(...blocks);
-      }
-      const ayahList = Array.from(ayahSet).sort((a, b) => a - b);
-      let range = null;
-      if (ayahList.length) {
-        range = { from: ayahList[0], to: ayahList[ayahList.length - 1] };
       }
 
       const processed = processPrintArtifacts(allBlocks);
@@ -1615,13 +1582,7 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
-      showMizanState('content', {
-        html,
-        range,
-        ayahList,
-        surah,
-        currentAyah: ayah,
-      });
+      showMizanState('content', { html, range });
 
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
