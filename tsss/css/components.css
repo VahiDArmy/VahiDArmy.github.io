@@ -129,15 +129,14 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .name-row { display: flex; gap: 8px; margin-bottom: 10px; }
 .name-row input { flex: 1; }
 
-/* ★ اصلاح دراپ‌دان‌ها: ارتفاع ثابت، بدون wrap، متن وسط‌چین */
+/* ★ تنظیمات دراپ‌دان‌ها برای جلوگیری از بریدگی */
 .select-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
 .select-wrap { position: relative; }
 .select-wrap select { 
   width: 100%; 
   appearance: none; 
-  height: 44px; /* ارتفاع ثابت */
-  line-height: 42px; /* برای وسط‌چین شدن عمودی متن */
-  padding: 0 14px 0 34px; /* حذف پدینگ بالا/پایین */
+  min-height: 44px; /* استفاده از min-height به جای height */
+  padding: 10px 14px 10px 40px; /* 40px فاصله از چپ برای فلش و ظاهر بهتر */
   background: var(--card); 
   border: 1px solid var(--border); 
   border-radius: 999px; 
@@ -145,14 +144,14 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-family: var(--font-ui); 
   font-size: .88rem; 
   cursor: pointer; 
-  white-space: nowrap; /* جلوگیری از رفتن به خط بعد */
+  white-space: nowrap; 
   overflow: hidden; 
   text-overflow: ellipsis; 
   transition: border-color .2s ease, box-shadow .2s ease; 
 }
 .select-wrap select:hover, .select-wrap select:focus { outline: none; border-color: var(--neon); }
 .select-wrap select:focus { box-shadow: 0 0 0 3px var(--neon-glow); }
-.select-wrap::after { content: ''; position: absolute; left: 14px; top: 50%; translate: 0 -65%; width: 8px; height: 8px; border-left: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint); transform: rotate(-45deg); pointer-events: none; transition: border-color .2s ease; }
+.select-wrap::after { content: ''; position: absolute; left: 16px; top: 50%; translate: 0 -65%; width: 8px; height: 8px; border-left: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint); transform: rotate(-45deg); pointer-events: none; transition: border-color .2s ease; }
 .select-wrap:hover::after { border-color: var(--neon); }
 .select-wrap select option { background: var(--card); color: var(--text); font-family: var(--font-ui); }
 
@@ -256,11 +255,13 @@ a.tag-pill:hover { filter: brightness(1.2); }
   font-family: var(--font-ui);
 }
 
+/* ★ فاصله دادن به متن المیزان از لبه‌های کادر */
 .mizan-tafsir-content {
   font-size: .96rem;
   line-height: 2.2;
   color: var(--text);
   overflow-wrap: anywhere;
+  padding: 8px 16px; /* فاصله داخلی اضافه شد */
 }
 .mizan-tafsir-content > :first-child { margin-top: 0; }
 .mizan-tafsir-content > :last-child { margin-bottom: 0; }
