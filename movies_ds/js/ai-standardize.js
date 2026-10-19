@@ -3,6 +3,28 @@
    ========================================================= */
 window.AIStandardize = (function () {
 
+  /* استانداردسازی سریع یک عنوان (بدون تحلیل) */
+  async function standardizeSingle(title, type, year, options) {
+    options = options || {};
+    const messages = [
+      { role: 'system', content: AIPrompts.standardizeSingleSystem },
+      { role: 'user', content: AIPrompts.standardizeUser(title, type, year, options.meta) }
+    ];
+    let full = '';
+    await AI.chatStream({
+      messages: messages,
+      temperature: 0.1,
+      signal: options.signal,
+      onToken: function (delta, acc) {
+        full = acc;
+        if (options.onToken) options.onToken(delta, acc);
+      }
+    });
+    const parsed = AI.parseJSONResponse(full);
+    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+    return parsed;
+  }
+
   /* تحلیل کامل */
   async function analyzeOne(title, type, year, options) {
     options = options || {};
@@ -20,35 +42,8 @@ window.AIStandardize = (function () {
         if (options.onToken) options.onToken(delta, acc);
       }
     });
-
-    const extracted = AI.extractJsonAndText(full);
-
-    /* متن آزاد بدون JSON — همه چیز نگه داشته می‌شود */
-    if (!extracted.parsed) {
-      return {
-        __text_only: true,
-        __raw: full,
-        __before: full,
-        __after: ''
-      };
-    }
-
-    const parsed = extracted.parsed;
-
-    /* آرایه برگشته باشد — به‌عنوان متن آزاد در نظر بگیر */
-    if (Array.isArray(parsed)) {
-      return {
-        __text_only: true,
-        __raw: full,
-        __before: full,
-        __after: ''
-      };
-    }
-
-    /* متن‌های اطراف JSON را روی شیء برگشتی نگه دار */
-    parsed.__raw = full;
-    parsed.__before = extracted.before;
-    parsed.__after = extracted.after;
+    const parsed = AI.parseJSONResponse(full);
+    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
     return parsed;
   }
 
@@ -69,22 +64,8 @@ window.AIStandardize = (function () {
         if (options.onToken) options.onToken(delta, acc);
       }
     });
-
-    const extracted = AI.extractJsonAndText(full);
-    if (!extracted.parsed || Array.isArray(extracted.parsed)) {
-      return {
-        __text_only: true,
-        __raw: full,
-        __before: full,
-        __after: '',
-        plot_holes: [],
-        assumed_stupidity: []
-      };
-    }
-    const parsed = extracted.parsed;
-    parsed.__raw = full;
-    parsed.__before = extracted.before;
-    parsed.__after = extracted.after;
+    const parsed = AI.parseJSONResponse(full);
+    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
     return parsed;
   }
 
@@ -207,6 +188,39 @@ window.AIStandardize = (function () {
     } catch (e) { return null; }
   }
 
+  /* ذخیره متادیتا روی دیتابیس بدون دست زدن به تحلیل‌ها و یادداشت‌ها */
+  function applyStandardToDb(id, meta) {
+    if (!id || !meta) return;
+    const current = DB.getTitle(id);
+    if (!current) return;
+
+    const patch = {
+      title: current.title,
+      type: normalizeType(meta.type) || current.type,
+      genre: meta.genre || current.genre,
+      year: current.year, // سال دست کاربر نمی‌خورد، مگر کاربر اعلام کرده باشد
+      rating: current.rating,
+      favorite: current.favorite,
+      notes: current.notes,
+      reason: current.reason,
+      watched_date: current.watched_date,
+      summary: meta.summary || current.summary || '',
+      original_title: meta.standard_title || current.original_title || '',
+      seasons: meta.seasons != null ? meta.seasons : current.seasons,
+      episodes: meta.episodes != null ? meta.episodes : current.episodes,
+      episodes_per_season: meta.episodes_per_season != null ? meta.episodes_per_season : current.episodes_per_season,
+      country: meta.country || current.country || '',
+      language: meta.language || current.language || '',
+      status: meta.status || current.status || '',
+      story_analysis: current.story_analysis ? JSON.stringify(current.story_analysis) : '',
+      ai_standardized_at: new Date().toISOString()
+    };
+
+    DB.updateTitle(id, patch, false);
+    DB.logActivity('ai_standardize', 'title', id, current.title);
+  }
+
+  /* ذخیره تحلیل کامل + متادیتا */
   function applyToDb(id, ai) {
     if (!id || !ai) return;
     const current = DB.getTitle(id);
@@ -282,10 +296,12 @@ window.AIStandardize = (function () {
   }
 
   return {
+    standardizeSingle: standardizeSingle,
     analyzeOne: analyzeOne,
     analyzeSeasonRange: analyzeSeasonRange,
     analyzeSeasonalDeep: analyzeSeasonalDeep,
     standardizeBatch: standardizeBatch,
+    applyStandardToDb: applyStandardToDb,
     applyToDb: applyToDb,
     applyDeepToDb: applyDeepToDb
   };
