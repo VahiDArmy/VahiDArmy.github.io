@@ -242,25 +242,17 @@ window.AIUI = (function () {
       if (badge) foot.appendChild(badge);
     }
     function hide() { panel.hidden = true; }
-    function show() { panel.hidden = false; }
 
     return {
       panel: panel, body: body,
       setStatus: setStatus, setContent: setContent,
       appendText: appendText, setModelBadge: setModelBadge,
-      hide: hide, show: show
+      hide: hide
     };
   }
 
   function requireAI() {
-    if (window.AILog) {
-      try { AILog.show(); } catch (e) {}
-      try { AILog.info('بررسی تنظیمات AI'); } catch (e) {}
-    }
     if (!AI.isConfigured()) {
-      if (window.AILog) {
-        try { AILog.error('کلید OpenRouter تنظیم نشده'); AILog.scheduleAutoHide(); } catch (e) {}
-      }
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
         title: 'AI تنظیم نشده',
         action: { label: 'تنظیمات', onClick: function () { Events.openSettings(); } }
@@ -443,31 +435,99 @@ window.AIUI = (function () {
     return box;
   }
 
-  function buildRawSection(rawText) {
-    if (!rawText || !String(rawText).trim()) return null;
+  /* =========================================================
+     استانداردسازی سریع (بدون تحلیل)
+     ========================================================= */
+  function openStandardizeSingle(id) {
+    if (!requireAI()) return;
+    const t = DB.getTitle(id);
+    if (!t) return;
 
-    const arrow = Utils.el('span', { class: 'ai-raw-arrow' }, ['▸']);
-    const body = Utils.el('div', { class: 'ai-raw-body', hidden: true });
-    body.innerHTML = renderMarkdown(String(rawText));
+    const panel = createStreamPanel('استانداردسازی: ' + t.title);
+    const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
+    const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-std-apply-btn', disabled: true }, ['✅ ذخیره در دیتابیس']);
 
-    const btn = Utils.el('button', {
-      class: 'ai-raw-toggle',
-      type: 'button',
-      onclick: function () {
-        body.hidden = !body.hidden;
-        arrow.textContent = body.hidden ? '▸' : '▾';
-      }
-    }, [
-      arrow,
-      Utils.el('span', { class: 'ai-raw-label' }, ['🖋️ پاسخ کامل AI — متن اصلی استریم']),
-      Utils.el('span', { class: 'ai-raw-hint' }, ['(برای اطمینان از اینکه چیزی گم نشده)'])
+    const body = Utils.el('div', { class: 'ai-layout' }, [
+      Utils.el('div', { class: 'ai-source' }, [
+        Utils.el('span', { class: 'ai-source-label' }, ['عنوان:']),
+        Utils.el('span', { class: 'ai-source-value' }, [t.title])
+      ]),
+      Utils.el('div', { class: 'alert alert-info' }, [
+        Utils.el('span', { class: 'alert-icon' }, ['🪄']),
+        Utils.el('div', {}, ['این بخش فقط متادیتا (عنوان، سال، فصل‌ها و ...) را استخراج می‌کند و وارد تحلیل داستانی نمی‌شود. امتیاز و یادداشت‌های شما دست‌نخورده می‌مانند.'])
+      ]),
+      panel.panel,
+      resultBox
     ]);
 
-    return Utils.el('div', { class: 'ai-raw-section' }, [btn, body]);
+    const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { AI.abort(); Modal.close(); } }, ['بستن']),
+      applyBtn
+    ]);
+
+    Modal.open({ title: 'استانداردسازی متادیتا', icon: '✨', size: 'lg', body: body, footer: footer });
+
+    let lastResult = null;
+
+    applyBtn.addEventListener('click', function () {
+      if (!lastResult) return;
+      AIStandardize.applyStandardToDb(id, lastResult);
+      State.loadAll(); State.applyFilters();
+      Events.renderList(); Render.renderSidebarCounts();
+      Toast.success('اطلاعات با موفقیت ذخیره شد ✅');
+      Modal.close();
+    });
+
+    panel.setStatus('در حال استخراج…', 'loading');
+    activeAbort = new AbortController();
+
+    AIStandardize.standardizeSingle(t.title, t.type, t.year, {
+      meta: t,
+      signal: activeAbort.signal,
+      onToken: function (_, acc) { panel.appendText(acc); }
+    })
+      .then(function (result) {
+        lastResult = result;
+        panel.setStatus('انجام شد', 'done');
+        panel.setModelBadge();
+
+        resultBox.hidden = false;
+        resultBox.innerHTML = '';
+        [
+          ['عنوان استاندارد', result.standard_title],
+          ['عنوان فارسی', result.title_fa],
+          ['نوع', CONFIG.TYPES[result.type] || result.type],
+          ['سال شروع', result.year_start],
+          ['سال پایان', result.year_end],
+          ['فصل‌ها', result.seasons],
+          ['قسمت‌ها', result.episodes],
+          ['قسمت در فصل', result.episodes_per_season],
+          ['کشور', result.country],
+          ['زبان', result.language],
+          ['ژانر', result.genre],
+          ['وضعیت', result.status],
+          ['سازنده', result.creators],
+          ['بازیگران', result.main_cast],
+          ['خلاصه', result.summary]
+        ].forEach(function (pair) {
+          if (isEmptyValue(pair[1])) return;
+          resultBox.appendChild(Utils.el('div', { class: 'ai-result-row' }, [
+            Utils.el('span', { class: 'ai-result-key' }, [pair[0] + ':']),
+            Utils.el('span', { class: 'ai-result-val' }, [valueToText(pair[1])])
+          ]));
+        });
+
+        applyBtn.disabled = false;
+        setTimeout(function () { panel.hide(); }, 500);
+      })
+      .catch(function (err) {
+        panel.setStatus('خطا', 'error');
+        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+      });
   }
 
   /* =========================================================
-     تحلیل یک عنوان
+     تحلیل کامل داستانی
      ========================================================= */
   function openAnalyzeSingle(id) {
     if (!requireAI()) return;
@@ -515,10 +575,6 @@ window.AIUI = (function () {
 
     applyBtn.addEventListener('click', function () {
       if (!lastResult) return;
-      if (lastResult.__text_only) {
-        Toast.warning('پاسخ AI فرمت ساختاری نداشت — چیزی برای اعمال نیست');
-        return;
-      }
       AIStandardize.applyToDb(id, lastResult);
       State.loadAll(); State.applyFilters();
       Events.renderList(); Render.renderSidebarCounts();
@@ -539,30 +595,6 @@ window.AIUI = (function () {
         panel.setStatus('انجام شد', 'done');
         panel.setModelBadge();
 
-        const fullRaw = result.__raw || '';
-
-        if (result.__text_only) {
-          proseBox.hidden = false;
-          proseBox.innerHTML = renderMarkdown(fullRaw);
-          resultBox.hidden = true;
-          storyBox.hidden = true;
-          extrasBox.hidden = true;
-
-          const rawSec = buildRawSection(fullRaw);
-          if (rawSec) {
-            rawSectionEl.hidden = false;
-            rawSectionEl.innerHTML = '';
-            rawSectionEl.appendChild(rawSec);
-          }
-
-          applyBtn.disabled = true;
-          applyBtn.textContent = '⚠️ بدون ساختار — قابل اعمال نیست';
-          applyBtn.title = 'AI پاسخ فرمت‌دار برنگرداند؛ فقط متن آزاد بود.';
-
-          setTimeout(function () { panel.hide(); }, 400);
-          return;
-        }
-
         const before = (result.__before || '').trim();
         const after = (result.__after || '').trim();
         if (before || after) {
@@ -572,8 +604,6 @@ window.AIUI = (function () {
           if (before && after) parts.push('<hr class="ai-prose-hr">');
           if (after) parts.push(renderMarkdown(after));
           proseBox.innerHTML = parts.join('');
-        } else {
-          proseBox.hidden = true;
         }
 
         resultBox.hidden = false;
@@ -622,17 +652,6 @@ window.AIUI = (function () {
           extrasBox.hidden = false;
           extrasBox.innerHTML = '';
           extrasBox.appendChild(extras);
-        } else {
-          extrasBox.hidden = true;
-        }
-
-        const rawSec = buildRawSection(fullRaw);
-        if (rawSec) {
-          rawSectionEl.hidden = false;
-          rawSectionEl.innerHTML = '';
-          rawSectionEl.appendChild(rawSec);
-        } else {
-          rawSectionEl.hidden = true;
         }
 
         const seasons = Number(result.seasons) || 0;
@@ -662,6 +681,7 @@ window.AIUI = (function () {
   }
 
   function openSeasonalDeep(id, title, seasonsCount, type, year) {
+    // ... (کدهای قبلی بدون تغییر)
     const chunkCount = Math.ceil(seasonsCount / 3);
     const progressBox = Utils.el('div', { class: 'ai-deep-progress' });
     const logBox = Utils.el('div', { class: 'ai-deep-log' });
@@ -759,6 +779,7 @@ window.AIUI = (function () {
   }
 
   function openStandardizeBatch() {
+    // ... (کدهای قبلی بدون تغییر)
     if (!requireAI()) return;
     const titles = DB.getAllTitles();
     if (!titles.length) { Toast.warning('هیچ عنوانی وجود ندارد'); return; }
@@ -818,7 +839,7 @@ window.AIUI = (function () {
 
         let applied = 0;
         results.forEach(function (r) {
-          if (r && r._id && !r._error) { AIStandardize.applyToDb(r._id, r); applied++; }
+          if (r && r._id && !r._error) { AIStandardize.applyStandardToDb(r._id, r); applied++; }
         });
 
         State.loadAll(); State.applyFilters();
@@ -836,10 +857,8 @@ window.AIUI = (function () {
     });
   }
 
-  /* =========================================================
-     پیشنهاد تک‌اثر — Supabase + Gemini
-     ========================================================= */
   function openAnalysis() {
+    // ... (کدهای قبلی بدون تغییر)
     const panel = createStreamPanel('تحلیل سلیقه و پیشنهاد');
     panel.setContent('<p class="ai-hint">برای دریافت پیشنهاد روی دکمه بزنید.</p>');
 
@@ -899,6 +918,7 @@ window.AIUI = (function () {
   }
 
   function openTitleLookup(form, titleInput) {
+    // ... (کدهای قبلی بدون تغییر)
     if (!requireAI()) return;
     const rawTitle = titleInput.value.trim();
     if (!rawTitle) {
@@ -973,6 +993,7 @@ window.AIUI = (function () {
   }
 
   function buildCandidateCard(c, onPick) {
+    // ... (کدهای قبلی بدون تغییر)
     const conf = Number(c.confidence) || 0;
     const confClass = conf >= 8 ? 'high' : conf >= 5 ? 'mid' : 'low';
 
@@ -1011,6 +1032,7 @@ window.AIUI = (function () {
   }
 
   return {
+    openStandardizeSingle: openStandardizeSingle,
     openAnalyzeSingle: openAnalyzeSingle,
     openSeasonalDeep: openSeasonalDeep,
     openStandardizeBatch: openStandardizeBatch,
