@@ -12,7 +12,8 @@ const UI = (function () {
   function populateAyahSelect(selectEl, ayahCount, selected) {
     let html = '';
     for (let i = 1; i <= ayahCount; i++) {
-      html += `<option value="${i}" ${i === selected ? 'selected' : ''}>آیه ${i}</option>`;
+      // ★ فقط عدد فارسی نمایش داده می‌شود، کلمهٔ «آیه» حذف شد تا در موبایل جا شود
+      html += `<option value="${i}" ${i === selected ? 'selected' : ''}>${toPersianDigits(i)}</option>`;
     }
     selectEl.innerHTML = html;
   }
@@ -76,26 +77,6 @@ const UI = (function () {
     };
   }
 
-  // اگر کلمه‌ای در متن دقیقاً با یکی از برچسب‌های همان تفسیر یکی باشد،
-  // رنگی (هم‌رنگ با برچسب) + کمی گلو + لینک به صفحهٔ آن برچسب می‌شود.
-  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
-  function highlightTags(escapedHtml, tags) {
-    if (!tags || !tags.length) return escapedHtml;
-    const clean = tags.map((t) => t.trim()).filter(Boolean).sort((a, b) => b.length - a.length);
-    if (!clean.length) return escapedHtml;
-    const pattern = clean.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    let re;
-    try {
-      re = new RegExp(`(?<![\\p{L}\\p{N}])(${pattern})(?![\\p{L}\\p{N}])`, 'gu');
-    } catch (e) {
-      re = new RegExp(`(${pattern})`, 'g'); // مرورگرهای خیلی قدیمی: بدون مرز کلمه
-    }
-    return escapedHtml.replace(re, (match) => {
-      const c = tagColor(match);
-      return `<a class="tag-inline" style="color:${c.color};text-shadow:0 0 5px ${c.glow},0 0 12px ${c.bg};" href="tags.html?tag=${encodeURIComponent(match)}">${match}</a>`;
-    });
-  }
-
   function tagPill(tag, { href, count, active } = {}) {
     const c = tagColor(tag);
     const style = active
@@ -110,8 +91,6 @@ const UI = (function () {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  // اجازه می‌دهد بعد از هر کلمهٔ تگ، یک پسوند رایج فارسی (ی، ها، ...) هم بیاید
-  // مثلاً تگ «حقیقت بالاتر» با متن «حقیقتی بالاتر» هم تطبیق پیدا کند
   function tagToRegexSource(tag) {
     const words = tag
       .trim()
@@ -121,9 +100,6 @@ const UI = (function () {
     return words.join('\\s+');
   }
 
-  // کلمات/عبارت‌هایی از متن تفسیر که با یکی از تگ‌های خودش هم‌خانواده‌اند را
-  // رنگی، با کمی گلو، و لینک‌شده به صفحهٔ همان برچسب می‌کند.
-  // ورودی باید از قبل escape شده باشد (خروجی escapeHtml).
   function highlightTags(escapedHtml, tags) {
     if (!tags || !tags.length) return escapedHtml;
     let matches = [];
