@@ -100,6 +100,16 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
+  // عدد → واژهٔ فارسی برای اعداد کوچک، و رقم برای بزرگ‌ترها
+  function numberToPersianWords(n) {
+    const words = [
+      '', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه', 'ده',
+      'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده', 'بیست'
+    ];
+    if (Number.isInteger(n) && n >= 1 && n <= 20) return words[n];
+    return UI.toPersianDigits(n);
+  }
+
   const INVISIBLE_SEPARATORS =
     '\u200B' + '\u200D' + '\u200E' + '\u200F' + '\u061C' +
     '\u202A-\u202E' + '\u2066-\u2069' + '\uFEFF';
@@ -530,11 +540,16 @@ const MizanPanel = (function () {
     else if (state === 'content') {
       mizanContent.classList.remove('hidden');
       mizanContent.innerHTML = payload.html || '';
-      if (mizanRange && payload.range) {
-        const { from, to } = payload.range;
-        mizanRange.textContent = (from === to)
-          ? `آیهٔ ${UI.toPersianDigits(from)}`
-          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
+
+      // ★ نمایش تعداد آیات به‌جای بازه (مثلاً «سه آیه»)
+      if (mizanRange) {
+        let count = 0;
+        if (payload.range) count = payload.range.to - payload.range.from + 1;
+        else if (payload.ayahCount) count = payload.ayahCount;
+
+        if (count > 0) {
+          mizanRange.textContent = numberToPersianWords(count) + ' آیه';
+        }
       }
     } else if (state === 'error') {
       mizanError.classList.remove('hidden');
@@ -1566,23 +1581,29 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
+      // ★ جمع‌آوری محدوده و تعداد آیات از anchor ها و range-title
       let range = null;
+      const ayahSet = new Set();
       const allBlocks = [];
       for (const c of contents) {
         const blocks = parseContent(c.text);
-        if (!range) {
-          const rt = blocks.find((b) => b.type === 'range-title');
-          if (rt) range = { from: rt.from, to: rt.to };
+        for (const b of blocks) {
+          if (b.type === 'anchor') ayahSet.add(b.ayah);
+          if (b.type === 'range-title') {
+            for (let n = b.from; n <= b.to; n++) ayahSet.add(n);
+            if (!range) range = { from: b.from, to: b.to };
+          }
         }
         allBlocks.push(...blocks);
       }
+      const ayahCount = range ? (range.to - range.from + 1) : ayahSet.size;
 
       const processed = processPrintArtifacts(allBlocks);
       const html = renderBlocks(processed);
 
       if (mySeq !== renderSeq) return;
 
-      showMizanState('content', { html, range });
+      showMizanState('content', { html, range, ayahCount });
 
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
