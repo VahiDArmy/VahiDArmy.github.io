@@ -605,6 +605,9 @@ window.Events = (function () {
     });
   }
 
+  /* =========================================================
+     جزئیات
+     ========================================================= */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -660,20 +663,24 @@ window.Events = (function () {
       ]) : null
     ].filter(Boolean));
 
-    const footer = Utils.el('div', { class: 'flex gap-3 w-full flex-wrap' }, [
-      Utils.el('button', {
-        class: 'btn btn-danger',
-        onclick: function () { Modal.close(); setTimeout(function () { deleteWithUndo(id); }, 150); }
-      }, ['حذف']),
-      Utils.el('button', {
-        class: 'btn btn-soft',
-        onclick: function () { Modal.close(); setTimeout(function () { AIUI.openAnalyzeSingle(id); }, 150); }
-      }, ['🔬 تحلیل AI']),
-      Utils.el('div', { class: 'flex-1' }),
-      Utils.el('button', {
-        class: 'btn btn-ghost',
-        onclick: function () { Modal.close(); setTimeout(function () { openAddEdit(id); }, 150); }
-      }, ['ویرایش']),
+    const footer = Utils.el('div', { class: 'detail-footer' }, [
+      Utils.el('div', { class: 'detail-footer-actions' }, [
+        Utils.el('button', {
+          class: 'btn btn-ghost danger-text',
+          title: 'حذف',
+          onclick: function () { Modal.close(); setTimeout(function () { deleteWithUndo(id); }, 150); }
+        }, ['🗑️ حذف']),
+        Utils.el('button', {
+          class: 'btn btn-ghost',
+          title: 'ویرایش',
+          onclick: function () { Modal.close(); setTimeout(function () { openAddEdit(id); }, 150); }
+        }, ['✏️ ویرایش']),
+        Utils.el('button', {
+          class: 'btn btn-soft',
+          title: 'تحلیل AI',
+          onclick: function () { Modal.close(); setTimeout(function () { AIUI.openAnalyzeSingle(id); }, 150); }
+        }, ['🔬 تحلیل AI'])
+      ]),
       Utils.el('button', { class: 'btn btn-primary', onclick: function () { Modal.close(); } }, ['بستن'])
     ]);
 
