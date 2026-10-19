@@ -1,6 +1,5 @@
 /* ==========================================================================
    Mizan Content — Professional typography
-   بدون هیچ خط رنگی کنار چپ/راست — تأکید فقط با وزن، رنگ متن و فاصله
    بارگذاری بعد از components.css تا استایل‌های قدیمی را خنثی کند.
    ========================================================================== */
 
@@ -29,12 +28,16 @@
 }
 
 /* ==========================================================================
-   ★ خط موجی طلایی برای بخش «آیهٔ در حال کار»
-   فقط همین بخش طلایی می‌شود — بقیهٔ بخش‌ها همچنان رز می‌مانند.
+   ★ فقط وقتی آیهٔ جاری، آخرین آیهٔ یک تفسیر المیزان است:
+     خط موجی بخش «آیهٔ در حال کار» طلایی می‌شود.
+     در غیر این صورت، همان خط موجی رز پیش‌فرض می‌ماند.
    ========================================================================== */
-section[aria-label="آیهٔ در حال کار"] .section__label::after {
+section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final) .section__label::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'%3E%3Cpath d='M0 4Q6 0 12 4T24 4' fill='none' stroke='%23d4af37' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
-  opacity: .85;
+  opacity: .95;
+}
+section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final) .section__label {
+  color: #d4af37;
 }
 
 /* ---------- Container ---------- */
@@ -268,7 +271,7 @@ section[aria-label="آیهٔ در حال کار"] .section__label::after {
 }
 
 /* ==========================================================================
-   ★ طلایی‌شدن نوار «آیهٔ در حال کار» وقتی به آخرین آیهٔ یک تفسیر می‌رسد
+   ★ طلایی‌شدن خودِ کارت آیه وقتی به آخرین آیهٔ یک تفسیر می‌رسد
    ========================================================================== */
 .ayah-frame.is-mizan-final .ayah-frame__inner {
   border-color: rgba(212, 175, 55, 0.7);
@@ -317,7 +320,6 @@ section[aria-label="آیهٔ در حال کار"] .section__label::after {
   filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
 }
 
-/* تم روشن */
 [data-theme="light"] .ayah-frame.is-mizan-final .ayah-frame__inner {
   border-color: rgba(180, 140, 30, 0.7);
   box-shadow:
