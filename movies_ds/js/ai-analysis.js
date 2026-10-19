@@ -3,15 +3,10 @@
    ========================================================= */
 window.AIAnalysis = (function () {
 
-  /**
-   * جمع‌آوری داده‌های لازم برای تحلیل:
-   * فقط آثاری که امتیاز داده شده‌اند به همراه یادداشت‌ها و دلایل.
-   */
   function collectUserData() {
     const all = DB.getAllTitles();
     const rated = all.filter(function (t) { return (t.rating || 0) > 0; });
     
-    // ساخت آرایه‌ی ارسالی به Edge Function
     const titlesForAI = rated.map(function (t) {
       return {
         title: t.title,
@@ -26,14 +21,10 @@ window.AIAnalysis = (function () {
     return { all: all, rated: titlesForAI };
   }
 
-  /**
-   * ارسال درخواست به Supabase Edge Function
-   * @param {Object} options 
-   * @returns {Promise<string>} متن پاسخ
-   */
   async function suggest(options) {
     options = options || {};
     const data = collectUserData();
+    const kind = options.kind || 'both';
 
     if (data.rated.length < 3) {
       throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای تحلیل لازم است.');
@@ -41,7 +32,8 @@ window.AIAnalysis = (function () {
 
     const payload = {
       titles: data.rated,
-      tasteCriteria: AIPrompts.tasteCriteria
+      tasteCriteria: AIPrompts.tasteCriteria,
+      kind: kind
     };
 
     const url = CONFIG.SUPABASE.URL + '/functions/v1/' + CONFIG.SUPABASE.EDGE_FUNCTION;
