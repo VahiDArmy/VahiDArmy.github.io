@@ -12,8 +12,8 @@ const UI = (function () {
   function populateAyahSelect(selectEl, ayahCount, selected) {
     let html = '';
     for (let i = 1; i <= ayahCount; i++) {
-      // ★ فقط عدد فارسی نمایش داده می‌شود، کلمهٔ «آیه» حذف شد تا در موبایل جا شود
-      html += `<option value="${i}" ${i === selected ? 'selected' : ''}>${toPersianDigits(i)}</option>`;
+      // ★ کلمهٔ «آیه» برگشت
+      html += `<option value="${i}" ${i === selected ? 'selected' : ''}>آیه ${toPersianDigits(i)}</option>`;
     }
     selectEl.innerHTML = html;
   }
