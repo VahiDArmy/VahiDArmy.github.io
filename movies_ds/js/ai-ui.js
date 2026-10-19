@@ -843,13 +843,31 @@ window.AIUI = (function () {
     const panel = createStreamPanel('تحلیل سلیقه و پیشنهاد');
     panel.setContent('<p class="ai-hint">برای دریافت پیشنهاد روی دکمه بزنید.</p>');
 
+    const kindPicker = Utils.el('div', { class: 'ai-kind-picker' }, [
+      chip('both', '🎬 هر دو', true),
+      chip('movie', '🎥 فقط فیلم'),
+      chip('series', '📺 فقط سریال')
+    ]);
+    let selectedKind = 'both';
+    kindPicker.querySelectorAll('.chip').forEach(function (c) {
+      c.addEventListener('click', function () {
+        kindPicker.querySelectorAll('.chip').forEach(function (x) { x.classList.remove('is-on'); });
+        c.classList.add('is-on');
+        selectedKind = c.dataset.kind;
+      });
+    });
+    function chip(kind, label, on) {
+      return Utils.el('button', { class: 'chip' + (on ? ' is-on' : ''), dataset: { kind: kind } }, [label]);
+    }
+
     const btn = Utils.el('button', { class: 'btn btn-primary', id: 'btn-suggest' }, ['دریافت پیشنهاد']);
     
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-section' }, [
         Utils.el('div', { class: 'ai-section-title' }, ['پیشنهاد هوشمند (تک‌اثر)']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['همه‌ی آثاری که امتیاز داده‌اید، به همراه یادداشت‌ها و دلایل شما تحلیل می‌شود و تنها یک اثر (فیلم یا سریال) پیشنهاد می‌شود.']),
-        Utils.el('div', { class: 'ai-section-actions' }, [btn])
+        Utils.el('div', { class: 'ai-section-desc' }, ['همه‌ی آثاری که امتیاز داده‌اید، به همراه یادداشت‌ها و دلایل شما تحلیل می‌شود و تنها یک اثر پیشنهاد می‌شود.']),
+        kindPicker,
+        Utils.el('div', { class: 'ai-section-actions', style: { marginTop: '14px' } }, [btn])
       ]),
       panel.panel
     ]);
@@ -867,7 +885,7 @@ window.AIUI = (function () {
       panel.setStatus('در حال تحلیل…', 'loading');
       
       try {
-        const resultText = await AIAnalysis.suggest();
+        const resultText = await AIAnalysis.suggest({ kind: selectedKind });
         panel.setContent(renderMarkdown(resultText));
         panel.setStatus('پیشنهاد آماده شد', 'done');
       } catch (err) {
