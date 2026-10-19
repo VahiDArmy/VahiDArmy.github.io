@@ -51,18 +51,7 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  // ============================================================
-  // ★ محافظت از layout-shift هنگام کلیک روی دکمه‌های مودال یادداشت
-  //
-  // قاعدهٔ CSS `.field textarea:focus { min-height: 280px; }` باعث
-  // می‌شود وقتی textarea فوکوس دارد، ارتفاعش زیاد شود. هنگام
-  // mousedown روی دکمه، مرورگر می‌خواهد فوکوس را به دکمه بدهد؛
-  // blur روی textarea ارتفاعش را برمی‌گرداند و دکمه جابه‌جا می‌شود.
-  // نتیجه: click اصلاً fire نمی‌شود.
-  //
-  // با preventDefault روی mousedown، فوکوس از textarea جدا نمی‌شود
-  // و layout ثابت می‌ماند؛ پس click به‌طور عادی fire می‌شود.
-  // ============================================================
+  // محافظت از layout-shift هنگام کلیک روی دکمه‌های مودال یادداشت
   document.addEventListener('mousedown', (e) => {
     if (!e.target || !e.target.closest) return;
     const btn = e.target.closest('#mizanNoteSaveBtn')
@@ -113,14 +102,8 @@ const MizanPanel = (function () {
   }
 
   const INVISIBLE_SEPARATORS =
-    '\u200B' +
-    '\u200D' +
-    '\u200E' +
-    '\u200F' +
-    '\u061C' +
-    '\u202A-\u202E' +
-    '\u2066-\u2069' +
-    '\uFEFF';
+    '\u200B' + '\u200D' + '\u200E' + '\u200F' + '\u061C' +
+    '\u202A-\u202E' + '\u2066-\u2069' + '\uFEFF';
 
   const YEH_PRESENTATION = '[\uFBFC-\uFBFF\uFEEF\uFEF0\uFEF1-\uFEF4]';
   const KAF_PRESENTATION = '[\uFED9-\uFEDC]';
@@ -230,11 +213,7 @@ const MizanPanel = (function () {
   function hasUnclosedBracket(text) {
     const s = String(text || '');
     const pairs = [
-      ['«', '»'],
-      ['(', ')'],
-      ['[', ']'],
-      ['{', '}'],
-      ['﴿', '﴾'],
+      ['«', '»'], ['(', ')'], ['[', ']'], ['{', '}'], ['﴿', '﴾'],
     ];
     for (const [open, close] of pairs) {
       const o = (s.match(new RegExp(escapeRe(open), 'g')) || []).length;
@@ -545,18 +524,42 @@ const MizanPanel = (function () {
     mizanContent.classList.add('hidden');
     mizanError.classList.add('hidden');
     if (mizanPager) mizanPager.classList.add('hidden');
-    if (mizanRange) mizanRange.textContent = '';
+    if (mizanRange) mizanRange.innerHTML = '';
 
     if (state === 'empty') mizanEmpty.classList.remove('hidden');
     else if (state === 'loading') mizanLoading.classList.remove('hidden');
     else if (state === 'content') {
       mizanContent.classList.remove('hidden');
       mizanContent.innerHTML = payload.html || '';
-      if (mizanRange && payload.range) {
-        const { from, to } = payload.range;
-        mizanRange.textContent = (from === to)
-          ? `آیهٔ ${UI.toPersianDigits(from)}`
-          : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
+
+      // ★ نمایش آیات پوشش‌داده‌شده به‌صورت پیل‌های کلیک‌پذیر
+      if (mizanRange) {
+        if (payload.ayahList && payload.ayahList.length) {
+          const surah = payload.surah || lastSurah;
+          const currentAyah = payload.currentAyah || lastAyah;
+
+          const label = document.createElement('span');
+          label.className = 'mizan-range-label';
+          label.textContent = 'آیات:';
+
+          const pills = payload.ayahList.map((n) => {
+            const isCur = n === currentAyah;
+            const a = document.createElement('a');
+            a.href = `index.html?surah=${surah}&ayah=${n}`;
+            a.className = 'mizan-range-pill' + (isCur ? ' is-current' : '');
+            a.title = `مطالعهٔ آیهٔ ${UI.toPersianDigits(n)}`;
+            a.textContent = UI.toPersianDigits(n);
+            return a;
+          });
+
+          mizanRange.appendChild(label);
+          pills.forEach((p) => mizanRange.appendChild(p));
+        } else if (payload.range) {
+          const { from, to } = payload.range;
+          mizanRange.textContent = (from === to)
+            ? `آیهٔ ${UI.toPersianDigits(from)}`
+            : `آیات ${UI.toPersianDigits(from)} تا ${UI.toPersianDigits(to)}`;
+        }
       }
     } else if (state === 'error') {
       mizanError.classList.remove('hidden');
@@ -911,7 +914,6 @@ const MizanPanel = (function () {
     });
   }
 
-  // ذخیرهٔ یادداشت — با delegation روی document
   document.addEventListener('click', async (e) => {
     const btn = e.target && e.target.closest && e.target.closest('#mizanNoteSaveBtn');
     if (!btn) return;
@@ -971,7 +973,6 @@ const MizanPanel = (function () {
     }
   }, true);
 
-  // حذف یادداشت — با delegation مشابه
   document.addEventListener('click', async (e) => {
     const btn = e.target && e.target.closest && e.target.closest('#mizanNoteDeleteBtn');
     if (!btn) return;
@@ -1590,15 +1591,23 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
-      let range = null;
+      // ★ جمع‌آوری تمام آیات پوشش‌داده‌شده (از anchor و range-title)
+      const ayahSet = new Set();
       const allBlocks = [];
       for (const c of contents) {
         const blocks = parseContent(c.text);
-        if (!range) {
-          const rt = blocks.find((b) => b.type === 'range-title');
-          if (rt) range = { from: rt.from, to: rt.to };
+        for (const b of blocks) {
+          if (b.type === 'anchor') ayahSet.add(b.ayah);
+          if (b.type === 'range-title') {
+            for (let n = b.from; n <= b.to; n++) ayahSet.add(n);
+          }
         }
         allBlocks.push(...blocks);
+      }
+      const ayahList = Array.from(ayahSet).sort((a, b) => a - b);
+      let range = null;
+      if (ayahList.length) {
+        range = { from: ayahList[0], to: ayahList[ayahList.length - 1] };
       }
 
       const processed = processPrintArtifacts(allBlocks);
@@ -1606,7 +1615,13 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
-      showMizanState('content', { html, range });
+      showMizanState('content', {
+        html,
+        range,
+        ayahList,
+        surah,
+        currentAyah: ayah,
+      });
 
       applyMizanTags(mizanContent, mizanTags);
       injectMizanNotes(mizanContent);
