@@ -16,7 +16,6 @@ window.Render = (function () {
   function starsHTML(rating) {
     const n = Math.floor(Number(rating) || 0);
     if (n < 1) {
-      /* بدون امتیاز */
       return '<span class="stars stars-empty" title="بدون امتیاز">' +
         '<span class="stars-empty-text">بدون امتیاز</span></span>';
     }
@@ -62,7 +61,10 @@ window.Render = (function () {
       '      <div class="card-meta">' + metaParts.join('<span class="dot"></span>') + '</div>',
       '    </div>',
       '    <div class="card-actions">',
-      '      <button class="card-act" data-act="ai" title="تحلیل با AI">',
+      '      <button class="card-act" data-act="standardize" title="استانداردسازی اطلاعات">',
+      '        🪄',
+      '      </button>',
+      '      <button class="card-act" data-act="ai" title="تحلیل عمیق با AI">',
       '        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>',
       '      </button>',
       '      <button class="card-act ' + (t.favorite ? 'is-fav' : '') + '" data-act="fav" title="علاقه‌مندی">',
