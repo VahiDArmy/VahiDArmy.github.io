@@ -59,21 +59,50 @@
   const linkAyahPreview = document.getElementById('linkAyahPreview');
   const insertLinkBtn = document.getElementById('insertLinkBtn');
 
-  // ============================================================
-  // ★ محافظت از layout-shift روی دکمه‌های داخل فرم تفسیر
-  //
-  // قاعدهٔ CSS `.field textarea:focus { min-height: 280px; }` باعث
-  // می‌شود وقتی textarea فوکوس دارد ارتفاعش زیاد شود. هنگام
-  // mousedown روی دکمه، مرورگر می‌خواهد فوکوس را بدهد؛ blur روی
-  // textarea ارتفاعش را برمی‌گرداند و دکمه جابه‌جا می‌شود. در
-  // نتیجه mouseup روی دکمه نمی‌افتد و click اصلاً fire نمی‌شود.
-  // ============================================================
   document.addEventListener('mousedown', (e) => {
     if (!e.target || !e.target.closest) return;
     const inForm = e.target.closest('#tafsirForm');
     if (!inForm) return;
     if (e.target.closest('button')) e.preventDefault();
   }, true);
+
+  // ============================================================
+  // ★ طلایی شدن نوار «آیهٔ در حال کار» وقتی به آیهٔ آخر یک تفسیر می‌رسد
+  // ============================================================
+  //
+  // برای هر surah، یک‌بار محاسبه می‌کنیم که کدام آیه‌ها «آخرین آیه»
+  // یک content_id در Mizan هستند. سپس در هر رندر، اگر آیهٔ جاری
+  // در آن مجموعه باشد، کلاس is-mizan-final به نوار آیه اضافه می‌شود.
+  //
+  const mizanFinalsCache = new Map();
+
+  async function computeMizanFinalAyahs(surah) {
+    const finals = new Set();
+    try {
+      const map = await Mizan.loadSurah(surah);
+      if (!map || !map.ayah_to_content) return finals;
+      const byContent = new Map();
+      for (const [ayahStr, ids] of Object.entries(map.ayah_to_content)) {
+        const ayah = Number(ayahStr);
+        if (!Number.isFinite(ayah)) continue;
+        for (const id of ids || []) {
+          const cur = byContent.get(id) || 0;
+          if (ayah > cur) byContent.set(id, ayah);
+        }
+      }
+      for (const maxAyah of byContent.values()) finals.add(maxAyah);
+    } catch (e) {
+      console.warn('[mizan-final] compute failed:', e);
+    }
+    return finals;
+  }
+
+  async function getMizanFinals(surah) {
+    if (mizanFinalsCache.has(surah)) return mizanFinalsCache.get(surah);
+    const finals = await computeMizanFinalAyahs(surah);
+    mizanFinalsCache.set(surah, finals);
+    return finals;
+  }
 
   let index = [];
   try {
@@ -436,6 +465,15 @@
         },
       });
 
+      // ★ اگر آیهٔ جاری، آخرین آیهٔ یک تفسیر المیزان است، نوار را طلایی کن
+      try {
+        const finals = await getMizanFinals(current.surah);
+        const frameEl = stickyFrame.querySelector('.ayah-frame');
+        if (frameEl) {
+          frameEl.classList.toggle('is-mizan-final', finals.has(current.ayah));
+        }
+      } catch (e) {}
+
       prevBtn.disabled = current.surah === 1 && current.ayah === 1;
       nextBtn.disabled = current.surah === 114 && current.ayah === surahData.ayah_count;
 
@@ -772,12 +810,6 @@
     await renderCurrentAyah();
   });
 
-  // ★★★★★★★ ذخیرهٔ تفسیر — با تفکیک مراحل و پیام خطای واقعی ★★★★★★★
-  //
-  // مرحله ۱: ذخیرهٔ خود تفسیر — اگر شکست بخورد، واقعاً خطاست
-  // مرحله ۲: همگام‌سازی لینک‌ها — best effort، شکستش نباید ذخیره را خراب کند
-  // مرحله ۳: به‌روزرسانی UI
-  //
   tafsirForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -790,7 +822,6 @@
 
     tafsirSubmitting = true;
     try {
-      // ---- مرحله ۱: ذخیرهٔ تفسیر ----
       let savedId = null;
       try {
         if (isEditMode) {
@@ -824,18 +855,15 @@
         return;
       }
 
-      // ---- مرحله ۲: همگام‌سازی لینک‌ها (best effort) ----
       if (savedId) {
         try {
           const links = AyahLinks.extract(content);
           await Store.syncAyahLinks(savedId, current.surah, current.ayah, links);
         } catch (linkErr) {
-          // تفسیر ذخیره شده؛ فقط لینک‌ها sync نشده‌اند
           console.warn('[tafsir save] link sync failed (tafsir saved OK):', linkErr);
         }
       }
 
-      // ---- مرحله ۳: به‌روزرسانی UI ----
       if (isEditMode) {
         UI.toast('تفسیر به‌روزرسانی شد');
         exitEditMode();
