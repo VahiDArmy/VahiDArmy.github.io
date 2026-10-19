@@ -221,15 +221,14 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
-  /* ── عنوان استاندارد برای ارسال به AI: تمیز، بدون نویز، همراه با مشخصات هویتی (نوع/سال/عنوان اصلی) ── */
   const TYPE_FA = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' };
 
   function cleanTitle(raw, year) {
     let s = String(raw == null ? '' : raw).normalize('NFC')
-      .replace(/[\u200b\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')   // علائم نامرئی/جهت‌دهی (ZWNJ حفظ می‌شود)
-      .replace(/\u064a/g, '\u06cc').replace(/\u0643/g, '\u06a9')                    // ي ك عربی ← ی ک فارسی
-      .replace(/[\u064b-\u065f\u0670]/g, '')                                        // اعراب
-      .replace(/[\u06f0-\u06f9]/g, (d) => d.charCodeAt(0) - 0x06f0)                 // ارقام فارسی/عربی ← لاتین
+      .replace(/[\u200b\u200d\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g, '')
+      .replace(/\u064a/g, '\u06cc').replace(/\u0643/g, '\u06a9')
+      .replace(/[\u064b-\u065f\u0670]/g, '')
+      .replace(/[\u06f0-\u06f9]/g, (d) => d.charCodeAt(0) - 0x06f0)
       .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x0660)
       .replace(/_+/g, ' ')
       .replace(/[\[(][^\])]*\b(?:2160p|1080p|720p|480p|4k|blu-?ray|web-?dl|web-?rip|hd-?rip|hdtv|dvd-?rip|x26[45]|hevc|dual|dubbed|subbed)\b[^\])]*[\])]/gi, ' ')
@@ -237,15 +236,15 @@ window.AIPrompts = (function () {
       .replace(/\s+/g, ' ').trim()
       .replace(/^["'\u201c\u201d\u00ab\u00bb]+|["'\u201c\u201d\u00ab\u00bb]+$/g, '').trim();
     const y = String(year || '').replace(/\D/g, '');
-    if (y) s = s.replace(new RegExp('\\s*[(\\[]\\s*' + y + '\\s*[)\\]]\\s*$'), '').trim();   // سال تکراری انتهای عنوان
+    if (y) s = s.replace(new RegExp('\\s*[(\\[]\\s*' + y + '\\s*[)\\]]\\s*$'), '').trim();
     return s;
   }
 
-  function standardTitle(title, year, meta) {      // عنوان اصلی/استاندارد ذخیره‌شده اولویت دارد
+  function standardTitle(title, year, meta) {
     return cleanTitle(meta && meta.original_title, year) || cleanTitle(title, year);
   }
 
-  function standardLine(title, type, year, meta) { // مثال: Inception (2010) — فیلم
+  function standardLine(title, type, year, meta) {
     const y = String(year || '').replace(/\D/g, '');
     return standardTitle(title, y, meta) + (y ? ' (' + y + ')' : '') + ' — ' + (TYPE_FA[type] || type || 'نامشخص');
   }
@@ -258,7 +257,6 @@ window.AIPrompts = (function () {
     return lines;
   }
 
-  /* ── امتیاز و دیدگاه کاربر — به‌عنوان زمینه‌ی طبیعی به پیام کاربر افزوده می‌شود ── */
   function userStanceLines(meta) {
     const stars = Math.floor(Number(meta && meta.rating) || 0);
     const starMeta = (window.CONFIG && CONFIG.STARS && CONFIG.STARS[stars]) || null;
@@ -446,9 +444,6 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
-  /* =========================================================
-     جستجوی هوشمند عنوان
-     ========================================================= */
   function buildLookupSystem() {
     return [
       'تو یک متخصص دیتابیس فیلم و سریال هستی.',
@@ -529,9 +524,6 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
-  /* =========================================================
-     استخراج مشخصات مدل — برای پنل مدل‌های AI
-     ========================================================= */
   function buildModelEnrichSystem() {
     return [
       'تو یک متخصص مدل‌های زبانی و پلتفرم OpenRouter هستی.',
@@ -618,6 +610,7 @@ window.AIPrompts = (function () {
   }
 
   return {
+    tasteCriteria: buildTasteCriteria(),
     analyzeSystem: buildAnalyzeSystem(),
     standardTitle: standardTitle,
     standardLine: standardLine,
