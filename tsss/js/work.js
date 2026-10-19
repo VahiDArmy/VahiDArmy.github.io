@@ -49,6 +49,7 @@
   let currentAiContent = '';
   let currentAiModel = '';
   let currentAiGenerationId = null;
+  let tafsirSubmitting = false;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
   const linkToolModal = document.getElementById('linkToolModal');
@@ -57,6 +58,22 @@
   const linkAyahSelect = document.getElementById('linkAyahSelect');
   const linkAyahPreview = document.getElementById('linkAyahPreview');
   const insertLinkBtn = document.getElementById('insertLinkBtn');
+
+  // ============================================================
+  // ★ محافظت از layout-shift روی دکمه‌های داخل فرم تفسیر
+  //
+  // قاعدهٔ CSS `.field textarea:focus { min-height: 280px; }` باعث
+  // می‌شود وقتی textarea فوکوس دارد ارتفاعش زیاد شود. هنگام
+  // mousedown روی دکمه، مرورگر می‌خواهد فوکوس را بدهد؛ blur روی
+  // textarea ارتفاعش را برمی‌گرداند و دکمه جابه‌جا می‌شود. در
+  // نتیجه mouseup روی دکمه نمی‌افتد و click اصلاً fire نمی‌شود.
+  // ============================================================
+  document.addEventListener('mousedown', (e) => {
+    if (!e.target || !e.target.closest) return;
+    const inForm = e.target.closest('#tafsirForm');
+    if (!inForm) return;
+    if (e.target.closest('button')) e.preventDefault();
+  }, true);
 
   let index = [];
   try {
@@ -755,28 +772,84 @@
     await renderCurrentAyah();
   });
 
+  // ★★★★★★★ ذخیرهٔ تفسیر — با تفکیک مراحل و پیام خطای واقعی ★★★★★★★
+  //
+  // مرحله ۱: ذخیرهٔ خود تفسیر — اگر شکست بخورد، واقعاً خطاست
+  // مرحله ۲: همگام‌سازی لینک‌ها — best effort، شکستش نباید ذخیره را خراب کند
+  // مرحله ۳: به‌روزرسانی UI
+  //
   tafsirForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    if (tafsirSubmitting) return;
+
     const content = tafsirContent.value.trim();
     if (!content) return;
     const tags = parseTags(tafsirTags.value);
+    const isEditMode = !!editingId;
+
+    tafsirSubmitting = true;
     try {
-      if (editingId) {
-        await Store.updateTafsir(editingId, content, tags);
-        await Store.syncAyahLinks(editingId, current.surah, current.ayah, AyahLinks.extract(content));
+      // ---- مرحله ۱: ذخیرهٔ تفسیر ----
+      let savedId = null;
+      try {
+        if (isEditMode) {
+          await Store.updateTafsir(editingId, content, tags);
+          savedId = editingId;
+        } else {
+          const newTafsir = await Store.addTafsir({
+            surah: current.surah,
+            ayah: current.ayah,
+            content,
+            tags,
+          });
+          savedId = newTafsir && newTafsir.id;
+        }
+      } catch (err) {
+        console.error('[tafsir save] failed. input:', {
+          surah: current.surah,
+          ayah: current.ayah,
+          contentLength: content.length,
+          contentPreview: content.slice(0, 120),
+          tags,
+          editingId: editingId || null,
+        }, 'error:', err);
+        const msgParts = [
+          err && err.message,
+          err && err.code ? '(' + err.code + ')' : null,
+          err && err.hint,
+        ].filter(Boolean);
+        const msg = msgParts.length ? msgParts.join(' · ') : 'خطای نامشخص';
+        UI.toast('خطا در ذخیره تفسیر: ' + msg);
+        return;
+      }
+
+      // ---- مرحله ۲: همگام‌سازی لینک‌ها (best effort) ----
+      if (savedId) {
+        try {
+          const links = AyahLinks.extract(content);
+          await Store.syncAyahLinks(savedId, current.surah, current.ayah, links);
+        } catch (linkErr) {
+          // تفسیر ذخیره شده؛ فقط لینک‌ها sync نشده‌اند
+          console.warn('[tafsir save] link sync failed (tafsir saved OK):', linkErr);
+        }
+      }
+
+      // ---- مرحله ۳: به‌روزرسانی UI ----
+      if (isEditMode) {
         UI.toast('تفسیر به‌روزرسانی شد');
         exitEditMode();
         await renderTafsirsList();
       } else {
-        const newTafsir = await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags });
-        await Store.syncAyahLinks(newTafsir.id, current.surah, current.ayah, AyahLinks.extract(content));
         tafsirContent.value = '';
         tafsirTags.value = '';
         await renderTafsirsList();
         await refreshProgress();
         UI.toast('تفسیر با موفقیت ثبت شد');
       }
-    } catch (err) { UI.toast('خطا در ذخیره تفسیر'); }
+    } finally {
+      tafsirSubmitting = false;
+    }
   });
 
   editBanner.querySelector('[data-cancel-edit]')?.addEventListener('click', exitEditMode);
