@@ -28,7 +28,74 @@
   background: none !important;
 }
 
-/* ---------- Container ---------- */
+/* ==========================================================================
+   ★ پیل‌های آیات در هدر بخش
+   ========================================================================== */
+
+#mizanRange {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 100%;
+  /* override inline styles partially — colors and sizes به پایین منتقل شده */
+}
+#mizanRange:empty { display: none; }
+
+.mizan-range-label {
+  font-size: 0.7rem;
+  color: var(--text-faint);
+  font-weight: 400;
+  margin-inline-end: 2px;
+  letter-spacing: 0.01em;
+}
+
+.mizan-range-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  color: var(--text-dim);
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  transition: border-color .2s ease, color .2s ease, box-shadow .2s ease, background .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.mizan-range-pill:hover {
+  border-color: var(--neon);
+  color: var(--neon);
+  box-shadow: 0 0 0 3px var(--neon-glow);
+}
+.mizan-range-pill.is-current {
+  border-color: var(--neon);
+  color: var(--neon);
+  background: color-mix(in srgb, var(--neon) 10%, var(--surface-2));
+}
+
+[data-theme="light"] .mizan-range-pill {
+  color: hsl(220 20% 35%);
+}
+[data-theme="light"] .mizan-range-pill:hover {
+  color: hsl(185 60% 32%);
+  box-shadow: none;
+}
+[data-theme="light"] .mizan-range-pill.is-current {
+  color: hsl(185 60% 28%);
+  background: hsl(185 55% 42% / .12);
+  border-color: hsl(185 55% 40% / .5);
+}
+
+/* ==========================================================================
+   Container
+   ========================================================================== */
 .mizan-tafsir-content {
   font-family: var(--font-ui);
   font-size: 1rem;
@@ -76,7 +143,7 @@
   color: var(--text);
 }
 
-/* ---------- سرتیتر سطح ۳ (بخش اصلی) ---------- */
+/* ---------- سرتیتر سطح ۳ ---------- */
 .mizan-tafsir-content .mizan-h3 {
   margin: 40px 0 20px;
   padding: 0 0 12px;
@@ -89,7 +156,7 @@
   text-shadow: 0 0 16px color-mix(in srgb, var(--neon) 40%, transparent);
 }
 
-/* ---------- سرتیتر سطح ۴ (زیربخش) ---------- */
+/* ---------- سرتیتر سطح ۴ ---------- */
 .mizan-tafsir-content .mizan-h4 {
   margin: 28px 0 14px;
   font-size: .98rem;
@@ -185,7 +252,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ---------- استناد قرآنی درون متن ﴿...﴾ ---------- */
+/* ---------- استناد قرآنی ---------- */
 .mizan-tafsir-content .mizan-quran-inline {
   display: inline;
   font-family: var(--font-quran);
@@ -248,7 +315,7 @@
   padding: 0;
 }
 
-/* ---------- anchor آیه (غیرقابل‌دیدن، برای ناوبری) ---------- */
+/* ---------- anchor آیه ---------- */
 .mizan-tafsir-content .mizan-anchor {
   display: block;
   width: 0;
@@ -271,6 +338,9 @@
   .mizan-tafsir-content .mizan-translation__text { font-size: .9rem; line-height: 2.05; }
   .mizan-tafsir-content .mizan-p { font-size: .95rem; line-height: 2.1; }
   .mizan-tafsir-content .mizan-quran-inline { font-size: 1.12em; }
+
+  .mizan-range-pill { min-width: 24px; height: 20px; padding: 0 7px; font-size: .66rem; }
+  .mizan-range-label { font-size: .66rem; }
 }
 
 /* ---------- تم روشن ---------- */
