@@ -213,6 +213,7 @@ window.Events = (function () {
       else if (act === 'edit') { openAddEdit(id); }
       else if (act === 'delete') { deleteWithUndo(id); }
       else if (act === 'ai') { AIUI.openAnalyzeSingle(id); }
+      else if (act === 'standardize') { AIUI.openStandardizeSingle(id); }
       else { openDetail(id); }
     });
     grid.addEventListener('keydown', function (e) {
@@ -605,9 +606,6 @@ window.Events = (function () {
     });
   }
 
-  /* =========================================================
-     جزئیات
-     ========================================================= */
   function openDetail(id) {
     const t = DB.getTitle(id);
     if (!t) return;
@@ -675,6 +673,11 @@ window.Events = (function () {
           title: 'ویرایش',
           onclick: function () { Modal.close(); setTimeout(function () { openAddEdit(id); }, 150); }
         }, ['✏️ ویرایش']),
+        Utils.el('button', {
+          class: 'btn btn-ghost',
+          title: 'استانداردسازی',
+          onclick: function () { Modal.close(); setTimeout(function () { AIUI.openStandardizeSingle(id); }, 150); }
+        }, ['✨ استانداردسازی']),
         Utils.el('button', {
           class: 'btn btn-soft',
           title: 'تحلیل AI',
