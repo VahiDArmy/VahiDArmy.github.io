@@ -147,6 +147,32 @@
 }
 .input-group__addon svg { width: 16px; height: 16px; }
 
+/* Input with an icon on the opposite side of the text */
+.icon-field {
+  position: relative;
+  width: 100%;
+}
+.icon-field .input {
+  padding-inline-start: var(--space-10);
+}
+.icon-field__icon {
+  position: absolute;
+  inset-inline-end: var(--space-2-5);
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-tertiary);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-field__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
 /* Search input */
 .search {
   position: relative;
@@ -246,8 +272,6 @@
 }
 .checkbox input[disabled] + .checkbox__box,
 .radio input[disabled] + .radio__box { opacity: .5; }
-
-/* Switch (moved to switch.css for full styling) */
 
 /* File input */
 .file-input {
