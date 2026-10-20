@@ -18,10 +18,13 @@ import { openContextMenu } from '../ui/context-menu.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { formatNumber } from '../utils/format.js';
 
 export default async function peoplePage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const state = {
     search: getQueryParam('q', ''),
     status: getQueryParam('status', 'all'),
