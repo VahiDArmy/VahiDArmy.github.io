@@ -52,14 +52,12 @@ const pages = {
   home:       () => import('./pages/home.page.js'),
   people:     () => import('./pages/people.page.js'),
   person:     () => import('./pages/person.page.js'),
-  theories:   () => import('./pages/theories.page.js'),
-  theory:     () => import('./pages/theory.page.js'),
+  theories:   () => import('./pages/theories.page.js'), // If renamed to tellalls, adjust here
+  theory:     () => import('./pages/theory.page.js'),   // If renamed to tellall, adjust here
   rankings:   () => import('./pages/rankings.page.js'),
   ranking:    () => import('./pages/ranking.page.js'),
   tables:     () => import('./pages/tables.page.js'),
   table:      () => import('./pages/table.page.js'),
-  tellalls:   () => import('./pages/tellalls.page.js'),
-  tellall:    () => import('./pages/tellall.page.js'),
   login:      () => import('./pages/login.page.js'),
   signup:     () => import('./pages/signup.page.js'),
   forgot:     () => import('./pages/forgot-password.page.js'),
@@ -78,46 +76,68 @@ function registerRoutes() {
     const mod = await pages.home();
     return mod.default(info, outlet);
   });
+
+  // --- People ---
   router.add(ROUTES.PEOPLE, async (info) => {
     const mod = await pages.people();
     return mod.default(info, outlet);
+  });
+  router.add('/people/new', async (info) => {
+    toast.warning('فرم افزودن فرد به زودی اضافه می‌شود.');
+    router.navigate(ROUTES.PEOPLE, { replace: true });
+    return () => {};
   });
   router.add(ROUTES.PERSON(':id'), async (info) => {
     const mod = await pages.person();
     return mod.default(info, outlet);
   });
+
+  // --- Theories (Tellalls) ---
   router.add(ROUTES.THEORIES, async (info) => {
     const mod = await pages.theories();
     return mod.default(info, outlet);
+  });
+  router.add('/theories/new', async (info) => {
+    toast.warning('فرم ایجاد موضوع جدید به زودی اضافه می‌شود.');
+    router.navigate(ROUTES.THEORIES, { replace: true });
+    return () => {};
   });
   router.add(ROUTES.THEORY(':id'), async (info) => {
     const mod = await pages.theory();
     return mod.default(info, outlet);
   });
+
+  // --- Rankings ---
   router.add(ROUTES.RANKINGS, async (info) => {
     const mod = await pages.rankings();
     return mod.default(info, outlet);
+  });
+  router.add('/rankings/new', async (info) => {
+    toast.warning('فرم ایجاد رتبه‌بندی جدید به زودی اضافه می‌شود.');
+    router.navigate(ROUTES.RANKINGS, { replace: true });
+    return () => {};
   });
   router.add(ROUTES.RANKING(':id'), async (info) => {
     const mod = await pages.ranking();
     return mod.default(info, outlet);
   });
+
+  // --- Tables ---
   router.add(ROUTES.TABLES, async (info) => {
     const mod = await pages.tables();
     return mod.default(info, outlet);
+  });
+  router.add('/tables/new', async (info) => {
+    toast.warning('فرم ایجاد جدول جدید به زودی اضافه می‌شود.');
+    router.navigate(ROUTES.TABLES, { replace: true });
+    return () => {};
   });
   router.add(ROUTES.TABLE(':id'), async (info) => {
     const mod = await pages.table();
     return mod.default(info, outlet);
   });
-  router.add(ROUTES.TELLALLS, async (info) => {
-    const mod = await pages.tellalls();
-    return mod.default(info, outlet);
-  });
-  router.add(ROUTES.TELLALL(':id'), async (info) => {
-    const mod = await pages.tellall();
-    return mod.default(info, outlet);
-  });
+
+  // --- Auth & Profile ---
   router.add(ROUTES.LOGIN, async (info) => {
     const mod = await pages.login();
     return mod.default(info, outlet);
@@ -142,7 +162,7 @@ function registerRoutes() {
     const mod = await pages.profile();
     return mod.default(info, outlet);
   });
-  router.add(ROUTES.SETTINGS, async (info) => {
+  router.add('/settings', async (info) => {
     const mod = await pages.settings();
     return mod.default(info, outlet);
   });
