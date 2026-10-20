@@ -47,24 +47,25 @@ function showLoading() {
     </div>`;
 }
 
-/* ---- Lazy page loaders (top-level await import) ---- */
+/* ---- Lazy page loaders ---- */
 const pages = {
-  home: () => import('./pages/home.page.js'),
-  people: () => import('./pages/people.page.js'),
-  person: () => import('./pages/person.page.js'),
-  theories: () => import('./pages/theories.page.js'),
-  theory: () => import('./pages/theory.page.js'),
-  rankings: () => import('./pages/rankings.page.js'),
-  ranking: () => import('./pages/ranking.page.js'),
-  tables: () => import('./pages/tables.page.js'),
-  table: () => import('./pages/table.page.js'),
-  login: () => import('./pages/login.page.js'),
-  signup: () => import('./pages/signup.page.js'),
-  forgot: () => import('./pages/forgot-password.page.js'),
-  reset: () => import('./pages/reset-password.page.js'),
-  callback: () => import('./pages/auth-callback.page.js'),
-  profile: () => import('./pages/profile.page.js'),
-  notFound: () => import('./pages/not-found.page.js'),
+  home:       () => import('./pages/home.page.js'),
+  people:     () => import('./pages/people.page.js'),
+  person:     () => import('./pages/person.page.js'),
+  theories:   () => import('./pages/theories.page.js'),
+  theory:     () => import('./pages/theory.page.js'),
+  rankings:   () => import('./pages/rankings.page.js'),
+  ranking:    () => import('./pages/ranking.page.js'),
+  tables:     () => import('./pages/tables.page.js'),
+  table:      () => import('./pages/table.page.js'),
+  login:      () => import('./pages/login.page.js'),
+  signup:     () => import('./pages/signup.page.js'),
+  forgot:     () => import('./pages/forgot-password.page.js'),
+  reset:      () => import('./pages/reset-password.page.js'),
+  callback:   () => import('./pages/auth-callback.page.js'),
+  profile:    () => import('./pages/profile.page.js'),
+  settings:   () => import('./pages/settings.page.js'),
+  notFound:   () => import('./pages/not-found.page.js'),
 };
 
 /* ---- Route registration ---- */
@@ -131,6 +132,10 @@ function registerRoutes() {
     const mod = await pages.profile();
     return mod.default(info, outlet);
   });
+  router.add('/settings', async (info) => {
+    const mod = await pages.settings();
+    return mod.default(info, outlet);
+  });
 
   // Catch-all
   router.add('/:rest*', async (info) => {
@@ -152,16 +157,12 @@ function installErrorSurface() {
   });
 }
 
-/* ---- Route-level flash feedback ---- */
+/* ---- Route-level feedback ---- */
 function wireRouteFeedback() {
   bus.on('route:error', ({ error }) => {
     toast.error(error?.message || 'بارگذاری صفحه ناموفق بود.');
   });
-  bus.on('route:notfound', () => {
-    // The catch-all handler renders the 404 page, nothing more to do.
-  });
   bus.on('route:after', () => {
-    // Re-bind tooltips for freshly rendered DOM.
     attachTooltips(document.body);
   });
 }
@@ -177,7 +178,6 @@ async function boot() {
   if (headerRoot) mountHeader(headerRoot);
   if (footerRoot) mountFooter(footerRoot);
 
-  // Initialise auth in parallel with router registration
   registerRoutes();
   wireRouteFeedback();
 
@@ -188,17 +188,19 @@ async function boot() {
     console.error('[boot] auth init failed', err);
   }
 
-  // Route-level loading feedback
+  // Fire-and-forget: command palette, shortcuts, offline, scroll-top
+  import('./core/boot-extras.js')
+    .then((m) => m.installExtras())
+    .catch((err) => {
+      // eslint-disable-next-line no-console
+      console.warn('[boot] extras failed', err);
+    });
+
   const outlet = getOutlet();
-  if (outlet) {
-    // Show a lightweight skeleton on very first navigation only
-    // (subsequent navigations render their own states).
-    if (!window.location.hash) showLoading();
-  }
+  if (outlet && !window.location.hash) showLoading();
 
   await router.start();
 
-  // Small grace period so entrance transitions finish
   setTimeout(hideSplash, 60);
 }
 
@@ -210,8 +212,8 @@ boot().catch((err) => {
   toast.error('راه‌اندازی برنامه با خطا مواجه شد.');
 });
 
-/* Re-attach tooltips on theme/data changes */
+/* Re-attach tooltips on theme change */
 bus.on('theme:toggled', () => attachTooltips(document.body));
 
-/* Expose store/session for debugging (harmless, no secrets) */
+/* Debug handle (harmless) */
 window.__office__ = { store: appStore };
