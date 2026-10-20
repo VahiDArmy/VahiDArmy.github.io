@@ -4,7 +4,7 @@
 
 export const APP_NAME = 'The Office';
 export const APP_NAME_FA = 'اداره';
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '0.2.0';
 
 export const ROUTES = Object.freeze({
   HOME: '/',
@@ -16,12 +16,15 @@ export const ROUTES = Object.freeze({
   RANKING: (id = ':id') => `/rankings/${id}`,
   TABLES: '/tables',
   TABLE: (id = ':id') => `/tables/${id}`,
+  TELLALLS: '/tellalls',
+  TELLALL: (id = ':id') => `/tellalls/${id}`,
   LOGIN: '/login',
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   AUTH_CALLBACK: '/auth/callback',
   PROFILE: '/profile',
+  SETTINGS: '/settings',
   NOT_FOUND: '/404',
 });
 
@@ -31,6 +34,7 @@ export const NAV_ITEMS = Object.freeze([
   { key: 'theories', label: 'نظریه‌ها',   href: ROUTES.THEORIES, icon: 'lightbulb' },
   { key: 'rankings', label: 'رتبه‌بندی', href: ROUTES.RANKINGS, icon: 'trophy' },
   { key: 'tables',   label: 'جدول‌ها',   href: ROUTES.TABLES,   icon: 'table' },
+  { key: 'tellalls', label: 'بگایی‌ها',   href: ROUTES.TELLALLS, icon: 'message' },
 ]);
 
 export const THEMES = Object.freeze({ LIGHT: 'light', DARK: 'dark' });
