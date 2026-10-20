@@ -1,0 +1,251 @@
+/* ============================================================
+   Theory detail page
+   ============================================================ */
+
+.theory-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.theory-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  align-self: flex-start;
+}
+.theory-back:hover { color: var(--text-primary); text-decoration: none; }
+.theory-back svg { width: 14px; height: 14px; }
+
+.theory-body-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.theory-head {
+  padding: var(--space-5);
+  display: flex;
+  gap: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  position: relative;
+}
+.theory-head::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--brand-300));
+}
+
+.theory-head__vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+  padding: var(--space-2);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-md);
+  align-self: flex-start;
+}
+.theory-head__vote .theory-card__vote-btn {
+  width: 32px;
+  height: 32px;
+}
+.theory-head__vote .theory-card__vote-btn svg { width: 17px; height: 17px; }
+.theory-head__vote .theory-card__score {
+  font-size: var(--text-lg);
+  font-weight: var(--fw-bold);
+}
+
+.theory-head__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.theory-head__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+.theory-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  align-items: center;
+}
+.theory-head__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.theory-head__meta-item svg { width: 14px; height: 14px; }
+.theory-head__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+}
+.theory-head__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-self: flex-start;
+}
+
+/* Body (rendered as plain text — Persian content) */
+.theory-content {
+  padding: var(--space-5);
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  line-height: var(--lh-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.theory-content p + p { margin-block-start: var(--space-4); }
+
+/* Related people / links */
+.theory-related-people {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+}
+.theory-related-people__label {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-semibold);
+  margin-inline-end: var(--space-2);
+  align-self: center;
+}
+
+/* Comments */
+.comments-section {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.comments-section__head {
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-md);
+}
+.comments-section__head svg { width: 16px; height: 16px; color: var(--accent); }
+.comments-section__count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-regular);
+}
+
+.comments-list {
+  display: flex;
+  flex-direction: column;
+}
+.comment {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.comment:last-child { border-block-end: 0; }
+.comment__avatar { flex: none; }
+.comment__avatar .avatar { width: 32px; height: 32px; font-size: var(--text-xs); }
+.comment__main { flex: 1 1 auto; min-width: 0; }
+.comment__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.comment__author {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+.comment__time {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+.comment__delete {
+  margin-inline-start: auto;
+  color: var(--text-tertiary);
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1);
+  transition: var(--transition-fast);
+}
+.comment__delete:hover { color: var(--danger-500); background: var(--danger-50); }
+.comment__delete svg { width: 12px; height: 12px; }
+.comment__body {
+  margin-block-start: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--lh-relaxed);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Comment composer */
+.comment-composer {
+  padding: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.comment-composer__avatar { flex: none; }
+.comment-composer__avatar .avatar { width: 32px; height: 32px; font-size: var(--text-xs); }
+.comment-composer__main { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--space-2); }
+.comment-composer__textarea {
+  width: 100%;
+  min-height: 72px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: var(--lh-normal);
+  resize: vertical;
+  color: var(--text-primary);
+  outline: none;
+  transition: var(--transition-fast);
+}
+.comment-composer__textarea:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+.comment-composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .theory-head { flex-direction: column; }
+  .theory-head__vote {
+    flex-direction: row;
+    align-self: stretch;
+    justify-content: center;
+    padding: var(--space-2);
+  }
+  .theory-head__title { font-size: var(--text-xl); }
+}
