@@ -44,7 +44,14 @@ img, picture, svg, video, canvas {
   height: auto;
 }
 
-svg { fill: currentColor; }
+/* 
+  Fix: Only apply currentColor to SVGs that don't explicitly 
+  set a fill. This allows our stroke-based icons (fill="none") 
+  to render correctly as outlines.
+*/
+svg:not([fill]) {
+  fill: currentColor;
+}
 
 button, input, select, textarea {
   font: inherit;
