@@ -1,16 +1,16 @@
 /**
  * Supabase configuration.
- * Replace the two values below with your project's PUBLIC anon key + URL.
- * (The anon key is safe to expose; RLS protects your data.)
+ * Public anon/publishable key — safe to expose. All data access is
+ * enforced by Row Level Security (see supabase/rls.sql).
  */
 
 export const SUPABASE_URL =
   window.__SUPABASE_URL__ ||
-  'https://YOUR-PROJECT.supabase.co';
+  'https://nvmevqkaovazhmoznusf.supabase.co';
 
 export const SUPABASE_ANON_KEY =
   window.__SUPABASE_ANON_KEY__ ||
-  'YOUR-PUBLIC-ANON-KEY';
+  'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_Bg4VNHgE';
 
 /** Where Supabase should redirect after email confirmation / OAuth. */
 export const AUTH_REDIRECT_PATH = '/auth/callback';
