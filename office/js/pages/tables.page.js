@@ -16,12 +16,15 @@ import { open as openModal } from '../ui/modal.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { formatNumber, formatDate, slugify } from '../utils/format.js';
 import { validate, rules, hasErrors } from '../utils/validators.js';
 import { debounce } from '../utils/debounce.js';
 
 export default async function tablesPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const state = {
     search: getQueryParam('q', ''),
     page: parseInt(getQueryParam('page', '1'), 10) || 1,
