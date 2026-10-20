@@ -16,11 +16,14 @@ import { openContextMenu } from '../ui/context-menu.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { formatNumber, formatDate } from '../utils/format.js';
 import { debounce } from '../utils/debounce.js';
 
 export default async function rankingsPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const state = {
     search: getQueryParam('q', ''),
     page: parseInt(getQueryParam('page', '1'), 10) || 1,
