@@ -1,0 +1,65 @@
+/* ============================================================
+   Tooltips
+   ============================================================ */
+
+.tooltip-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+}
+
+.tooltip {
+  position: fixed;
+  max-width: 240px;
+  padding: var(--space-1-5) var(--space-2-5);
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-snug);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  animation: fade-in var(--dur-fast) var(--ease-out) both;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tooltip--wrap { white-space: normal; }
+
+.tooltip__arrow {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--text-primary);
+  transform: rotate(45deg);
+}
+.tooltip[data-pos="top"] .tooltip__arrow { inset-block-end: -4px; inset-inline-start: calc(50% - 4px); }
+.tooltip[data-pos="bottom"] .tooltip__arrow { inset-block-start: -4px; inset-inline-start: calc(50% - 4px); }
+.tooltip[data-pos="right"] .tooltip__arrow { inset-inline-start: -4px; inset-block-start: calc(50% - 4px); }
+.tooltip[data-pos="left"] .tooltip__arrow { inset-inline-end: -4px; inset-block-start: calc(50% - 4px); }
+
+/* Attribute-based tooltip on any element */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  inset-block-end: calc(100% + 8px);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-medium);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--z-tooltip);
+  box-shadow: var(--shadow-md);
+  animation: fade-in var(--dur-fast) var(--ease-out);
+}
