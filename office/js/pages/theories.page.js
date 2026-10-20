@@ -59,7 +59,7 @@ export default async function theoriesPage(info, outlet) {
 
   page.appendChild(
     pageHeader({
-      eyebrow: 'سامانه اداره',
+      eyebrow: 'بایگانی',
       title: 'نظریه‌ها',
       subtitle: 'اینجا می‌توانید هر بگایی که در اداره بوده را با جزئیاتش ثبت کنید.',
       actions: headerActions,
