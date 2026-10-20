@@ -29,8 +29,6 @@
 
 /* ==========================================================================
    ★ فقط خط موجی بخش «آیهٔ در حال کار»
-     وقتی آیهٔ جاری، آخرین آیهٔ یک تفسیر المیزان است، طلایی می‌شود.
-     هیچ چیز دیگری تغییر نمی‌کند.
    ========================================================================== */
 section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final) .section__label::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='8' viewBox='0 0 24 8'%3E%3Cpath d='M0 4Q6 0 12 4T24 4' fill='none' stroke='%23d4af37' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
@@ -44,7 +42,7 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
   line-height: 2.1;
   color: var(--text);
   overflow-wrap: anywhere;
-  padding: 12px 20px; /* فاصله داخلی */
+  padding: 12px 20px;
 }
 .mizan-tafsir-content > :first-child { margin-top: 0; }
 .mizan-tafsir-content > :last-child  { margin-bottom: 0; }
@@ -317,7 +315,7 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
 }
 
 /* ==========================================================================
-   ★ نشانگر خواندن روی متن
+   ★ نشانگر خواندن روی متن (با قابلیت حذف)
    ========================================================================== */
 .mizan-read-marker {
   display: flex;
@@ -326,6 +324,11 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
   margin: 1.8em 0;
   width: 100%;
   user-select: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.mizan-read-marker:hover {
+  opacity: 0.85;
 }
 .mizan-read-marker::before {
   content: '';
@@ -342,7 +345,7 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
   z-index: 2;
   background: var(--read-bg-strong);
   color: #d4af37;
-  padding: 2px 14px;
+  padding: 4px 14px;
   font-family: var(--font-ui);
   font-size: 0.72rem;
   font-weight: 800;
@@ -350,6 +353,25 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
   border: 1px solid color-mix(in srgb, #d4af37 30%, transparent);
   margin: 0 auto;
   box-shadow: 0 0 12px color-mix(in srgb, #d4af37 15%, transparent);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.mizan-read-marker__del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-faint);
+  font-size: 0.65rem;
+  transition: background 0.2s, color 0.2s;
+}
+.mizan-read-marker:hover .mizan-read-marker__del {
+  background: var(--danger);
+  color: #fff;
 }
 
 /* ==========================================================================
