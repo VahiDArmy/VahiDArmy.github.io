@@ -1,0 +1,257 @@
+/* ============================================================
+   Utility classes
+   ============================================================ */
+
+/* Display */
+.d-none { display: none !important; }
+.d-block { display: block; }
+.d-inline { display: inline; }
+.d-inline-block { display: inline-block; }
+.d-flex { display: flex; }
+.d-inline-flex { display: inline-flex; }
+.d-grid { display: grid; }
+
+/* Flex */
+.flex-row { flex-direction: row; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-nowrap { flex-wrap: nowrap; }
+.flex-1 { flex: 1 1 0%; }
+.flex-auto { flex: 1 1 auto; }
+.flex-none { flex: none; }
+
+.items-start   { align-items: flex-start; }
+.items-center  { align-items: center; }
+.items-end     { align-items: flex-end; }
+.items-stretch { align-items: stretch; }
+
+.justify-start   { justify-content: flex-start; }
+.justify-center  { justify-content: center; }
+.justify-end     { justify-content: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-around  { justify-content: space-around; }
+
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5 { gap: var(--space-5); }
+.gap-6 { gap: var(--space-6); }
+.gap-8 { gap: var(--space-8); }
+
+/* Spacing (margins/paddings — logical properties for RTL) */
+.m-0 { margin: 0; }
+.mt-2 { margin-block-start: var(--space-2); }
+.mt-4 { margin-block-start: var(--space-4); }
+.mt-6 { margin-block-start: var(--space-6); }
+.mb-2 { margin-block-end: var(--space-2); }
+.mb-4 { margin-block-end: var(--space-4); }
+.mb-6 { margin-block-end: var(--space-6); }
+
+.p-0 { padding: 0; }
+.p-2 { padding: var(--space-2); }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+.p-6 { padding: var(--space-6); }
+
+/* Sizing */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.min-w-0 { min-width: 0; }
+
+/* Text */
+.text-center { text-align: center; }
+.text-start  { text-align: start; }
+.text-end    { text-align: end; }
+
+.fw-regular  { font-weight: var(--fw-regular); }
+.fw-medium   { font-weight: var(--fw-medium); }
+.fw-semibold { font-weight: var(--fw-semibold); }
+.fw-bold     { font-weight: var(--fw-bold); }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Position */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.sticky   { position: sticky; }
+
+/* Visibility */
+.invisible { visibility: hidden; }
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border-default);
+  border: 0;
+  margin-block: var(--space-4);
+}
+
+/* Common containers */
+.surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+}
+
+.surface--flat {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+}
+
+/* Text link inside body */
+.link {
+  color: var(--text-link);
+  font-weight: var(--fw-medium);
+}
+.link:hover { text-decoration: underline; }
+
+/* Boot splash + noscript */
+.boot-splash {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-app);
+  display: grid;
+  place-items: center;
+  z-index: 9000;
+  transition: opacity var(--dur-slow) var(--ease-out), visibility var(--dur-slow);
+}
+.boot-splash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.boot-splash__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-5);
+}
+.boot-splash__logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.boot-splash__mark {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--brand-600), var(--brand-400));
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: var(--fw-bold);
+  font-size: var(--text-xl);
+  box-shadow: var(--shadow-md);
+}
+.boot-splash__wordmark {
+  font-weight: var(--fw-bold);
+  font-size: var(--text-xl);
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+.boot-splash__spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-default);
+  border-top-color: var(--accent);
+  animation: spin 800ms linear infinite;
+}
+
+.page-loading {
+  padding-block: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.page-loading__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.page-loading__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.noscript-warning {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  background: var(--danger-500);
+  color: #fff;
+  text-align: center;
+  padding: var(--space-3);
+  z-index: 10000;
+}
+
+/* App layout wrappers */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.app-main {
+  flex: 1 1 auto;
+  padding-block: var(--space-6) var(--space-12);
+}
+
+/* Generic empty state (component file extends this) */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding-block: var(--space-16);
+  color: var(--text-secondary);
+}
+
+/* Section headings */
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-5);
+}
+.section-heading__title {
+  font-size: var(--text-xl);
+  font-weight: var(--fw-bold);
+  color: var(--text-primary);
+}
+.section-heading__subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
