@@ -3,7 +3,7 @@
  * Password reset link redirects to /reset-password.
  */
 
-import { el } from '../utils/dom.js';
+import { el, icon } from '../utils/dom.js';
 import { router } from '../core/router.js';
 import { supabase } from '../services/supabase.client.js';
 import { toast } from '../ui/toast.js';
@@ -36,7 +36,10 @@ export default function forgotPasswordPage(info, outlet) {
   const form = el('form', { class: 'auth-form', novalidate: true }, [
     el('div', { class: 'form-field' }, [
       el('label', { class: 'form-label', for: 'fp-email' }, ['ایمیل حساب']),
-      emailInput,
+      el('div', { class: 'icon-field' }, [
+        emailInput,
+        el('span', { class: 'icon-field__icon' }, [icon('mail')]),
+      ]),
     ]),
     submitBtn,
   ]);
