@@ -1,0 +1,58 @@
+/* ============================================================
+   Responsive container
+   ============================================================ */
+
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+.container--narrow { max-width: 820px; }
+.container--wide   { max-width: 1440px; }
+
+@media (min-width: 640px) {
+  :root { --container-pad: 1.25rem; }
+}
+@media (min-width: 960px) {
+  :root { --container-pad: 1.5rem; }
+}
+
+/* Page shell / header padding */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.page-header__eyebrow {
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.page-header__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+
+.page-header__subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  line-height: var(--lh-relaxed);
+  max-width: 70ch;
+}
+
+@media (min-width: 768px) {
+  .page-header__title { font-size: var(--text-3xl); }
+}
