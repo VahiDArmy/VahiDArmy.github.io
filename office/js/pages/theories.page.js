@@ -59,9 +59,9 @@ export default async function theoriesPage(info, outlet) {
 
   page.appendChild(
     pageHeader({
-      eyebrow: 'بایگانی',
+      eyebrow: 'سامانه اداره',
       title: 'نظریه‌ها',
-      subtitle: 'روایت‌ها و نظریه‌های تیم درباره افراد و رویدادهای اداره.',
+      subtitle: 'اینجا می‌توانید هر بگایی که در اداره بوده را با جزئیاتش ثبت کنید.',
       actions: headerActions,
     })
   );
