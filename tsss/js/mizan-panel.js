@@ -51,12 +51,86 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  document.addEventListener('mousedown', (e) => {
-    if (!e.target || !e.target.closest) return;
-    const btn = e.target.closest('#mizanNoteSaveBtn')
-             || e.target.closest('#mizanNoteDeleteBtn');
-    if (btn) e.preventDefault();
-  }, true);
+  // ============================================================
+  // 0b) FLOATING MENU (New UI)
+  // ============================================================
+  const floatMenu = document.createElement('div');
+  floatMenu.className = 'mizan-float-menu';
+  floatMenu.hidden = true;
+  floatMenu.innerHTML = `
+    <button type="button" class="mizan-float-btn mizan-float-btn--top" title="ثبت نشانگر خواندن در اینجا">
+      <span class="mizan-float-icon">⚑</span>
+      <span>نشانگر خواندن</span>
+    </button>
+    <div class="mizan-float-divider"></div>
+    <button type="button" class="mizan-float-btn mizan-float-btn--bottom" title="افزودن یادداشت">
+      <span class="mizan-float-icon">✎</span>
+      <span>افزودن یادداشت</span>
+    </button>
+  `;
+  document.body.appendChild(floatMenu);
+
+  let currentFloatAnchor = null;
+
+  // جلوگیری از بسته شدن منو با کلیک روی خودش
+  floatMenu.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // جلوگیری از blur شدن ادیتور
+  });
+
+  floatMenu.querySelector('.mizan-float-btn--top').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (currentFloatAnchor) saveReadMarker(currentFloatAnchor);
+  });
+
+  floatMenu.querySelector('.mizan-float-btn--bottom').addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (currentFloatAnchor) {
+      const a = currentFloatAnchor;
+      closeFloatMenu();
+      openNoteAtAnchor(a);
+    }
+  });
+
+  function showFloatMenu(range, anchor) {
+    currentFloatAnchor = anchor;
+    floatMenu.hidden = false;
+    floatMenu.style.left = '-9999px';
+    floatMenu.style.top = '-9999px';
+    
+    requestAnimationFrame(() => {
+      const rect = range.getBoundingClientRect();
+      const mw = floatMenu.offsetWidth;
+      const mh = floatMenu.offsetHeight;
+      
+      let x = rect.left + rect.width / 2 - mw / 2;
+      let y = rect.top - mh - 10;
+      
+      // اگر از بالا بیرون زد، پایین نشان بده
+      if (y < 10) y = rect.bottom + 10;
+      if (x < 10) x = 10;
+      if (x + mw > window.innerWidth - 10) x = window.innerWidth - mw - 10;
+      
+      floatMenu.style.left = x + 'px';
+      floatMenu.style.top = y + 'px';
+    });
+  }
+
+  function closeFloatMenu() {
+    floatMenu.hidden = true;
+    currentFloatAnchor = null;
+  }
+
+  // بستن منو با کلیک بیرون
+  document.addEventListener('click', (e) => {
+    if (!floatMenu.hidden && !floatMenu.contains(e.target)) {
+      // اگر کلیک روی خود متن المیزان بود، آن هندلر مدیریت می‌کند (نشانگر جدید)
+      if (!mizanContent.contains(e.target)) closeFloatMenu();
+    }
+  });
+  // بستن منو با اسکرول
+  window.addEventListener('scroll', () => { if (!floatMenu.hidden) closeFloatMenu(); }, { passive: true });
 
   // ============================================================
   // 1) STATE
@@ -100,7 +174,6 @@ const MizanPanel = (function () {
       .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660));
   }
 
-  // عدد → واژهٔ فارسی برای اعداد کوچک، و رقم برای بزرگ‌ترها
   function numberToPersianWords(n) {
     const words = [
       '', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه', 'ده',
@@ -541,7 +614,6 @@ const MizanPanel = (function () {
       mizanContent.classList.remove('hidden');
       mizanContent.innerHTML = payload.html || '';
 
-      // ★ نمایش تعداد آیات به‌جای بازه (مثلاً «سه آیه»)
       if (mizanRange) {
         let count = 0;
         if (payload.range) count = payload.range.to - payload.range.from + 1;
@@ -583,7 +655,7 @@ const MizanPanel = (function () {
 
   const NOTE_BLOCK_SELECTOR = 'p, li, blockquote, h2, h3, h4, td, th, pre';
   const NOTE_CONTEXT_CHARS = 30;
-  const SKIP_CLASSES = ['mizan-note-inline', 'mizan-tag-marker', 'mizan-caret'];
+  const SKIP_CLASSES = ['mizan-note-inline', 'mizan-tag-marker', 'mizan-caret', 'mizan-read-marker'];
 
   function collectBlockText(block) {
     const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT, {
@@ -702,16 +774,17 @@ const MizanPanel = (function () {
   }
 
   // ============================================================
-  // 6) NOTES
+  // 6) NOTES & READ MARKER
   // ============================================================
   function insertInlineNoteAt(rootEl, note) {
+    const isReadMarker = note.note_text === '[[READ_MARKER]]';
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
     const beforeN = normalizeChars(note.anchor_before || '');
     const afterN  = normalizeChars(note.anchor_after  || '');
     const fullN   = beforeN + afterN;
 
     for (const block of blocks) {
-      if (block.querySelector(`.mizan-note-inline[data-note-id="${note.id}"]`)) {
+      if (!isReadMarker && block.querySelector(`.mizan-note-inline[data-note-id="${note.id}"]`)) {
         return true;
       }
 
@@ -733,12 +806,18 @@ const MizanPanel = (function () {
       if (!range) continue;
 
       const el = document.createElement('span');
-      el.className = 'mizan-note-inline';
-      el.dataset.noteId = note.id;
-      el.textContent = note.note_text;
-      el.setAttribute('role', 'button');
-      el.setAttribute('tabindex', '0');
-      el.setAttribute('title', 'کلیک برای ویرایش');
+      if (isReadMarker) {
+        el.className = 'mizan-read-marker';
+        el.innerHTML = '<span class="mizan-read-marker__label">تا اینجا خوانده شد</span>';
+      } else {
+        el.className = 'mizan-note-inline';
+        el.dataset.noteId = note.id;
+        el.textContent = note.note_text;
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('title', 'کلیک برای ویرایش');
+      }
+
       try {
         range.insertNode(el);
         return true;
@@ -757,11 +836,12 @@ const MizanPanel = (function () {
       parent.replaceChild(txt, el);
       parent.normalize();
     });
+    rootEl.querySelectorAll('.mizan-read-marker').forEach(el => el.remove());
 
     const orphans = [];
     for (const note of mizanNotes) {
       const ok = insertInlineNoteAt(rootEl, note);
-      if (!ok) orphans.push(note);
+      if (!ok && note.note_text !== '[[READ_MARKER]]') orphans.push(note);
     }
 
     const oldOrphans = rootEl.querySelector('.mizan-orphans');
@@ -789,6 +869,37 @@ const MizanPanel = (function () {
         if (note) showNotePopup(note, el);
       });
     });
+  }
+
+  async function saveReadMarker(anchor) {
+    const contentId = resolveContentIdForBlock(anchor.block);
+    if (!contentId) { UI.toast('خطا در تشخیص محتوا'); return; }
+
+    closeFloatMenu();
+    removeCaret();
+
+    try {
+      // حذف نشانگرهای قبلی
+      const existing = mizanNotes.filter(n => String(n.content_id) === String(contentId) && n.note_text === '[[READ_MARKER]]');
+      for (const n of existing) {
+        await Store.deleteMizanNote(n.id);
+      }
+
+      // ثبت نشانگر جدید
+      await Store.addMizanNote({
+        contentId: contentId,
+        anchorBefore: anchor.before,
+        anchorSelected: '',
+        anchorAfter: anchor.after,
+        noteText: '[[READ_MARKER]]'
+      });
+      
+      UI.toast('نشانگر خواندن ثبت شد');
+      await reloadMizanNotesAndRerender();
+    } catch (err) {
+      console.error('[read marker] save failed:', err);
+      UI.toast('خطا در ثبت نشانگر');
+    }
   }
 
   function showNotePopup(note, anchorEl) {
@@ -1033,6 +1144,7 @@ const MizanPanel = (function () {
     mizanContent.addEventListener('click', (e) => {
       if (e.target.closest && e.target.closest('.mizan-note-inline')) return;
       if (e.target.closest && e.target.closest('.mizan-tag-marker')) return;
+      if (e.target.closest && e.target.closest('.mizan-read-marker')) return;
       if (e.target.closest && e.target.closest('a')) { removeCaret(); resetAnchorConfirm(); return; }
       if (e.target.classList && e.target.classList.contains('mizan-caret')) return;
 
@@ -1048,12 +1160,14 @@ const MizanPanel = (function () {
       setTimeout(async () => {
         const anchor = getCursorAnchor();
         if (!anchor) { removeCaret(); resetAnchorConfirm(); return; }
+        
         insertCaretAtRange(clickRange);
+
         const key = anchorKeyOf(anchor);
         const now = Date.now();
         if (lastAnchorKey === key && (now - lastAnchorTime) < ANCHOR_CONFIRM_WINDOW_MS) {
           removeCaret();
-          await openNoteAtAnchor(anchor);
+          showFloatMenu(clickRange, anchor);
         } else {
           lastAnchorKey = key;
           lastAnchorTime = now;
@@ -1543,6 +1657,7 @@ const MizanPanel = (function () {
     showMizanState('loading');
     hideNoteAddBtn();
     hideNotePopup();
+    closeFloatMenu();
     removeCaret();
     resetAnchorConfirm();
     mizanContentKeys = [];
@@ -1581,7 +1696,6 @@ const MizanPanel = (function () {
 
       if (mySeq !== renderSeq) return;
 
-      // ★ جمع‌آوری محدوده و تعداد آیات از anchor ها و range-title
       let range = null;
       const ayahSet = new Set();
       const allBlocks = [];
