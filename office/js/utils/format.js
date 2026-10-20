@@ -130,6 +130,21 @@ export function pluralFa(count, singular, plural) {
 export function friendlyError(err, fallback = 'خطایی رخ داد. دوباره تلاش کنید.') {
   if (!err) return fallback;
   const message = err.message || err.error_description || err.hint || '';
+  
+  // SECURITY: Never leak database internals, table names, or RLS details to the UI.
+  // Treat any permission or relation error as a generic access issue.
+  if (
+    err.code === '42501' || // Postgres: insufficient_privilege
+    err.code === '42P01' || // Postgres: undefined_table
+    err.code === 'PGRST301' || // PostgREST: JWT invalid
+    message.includes('permission denied') || 
+    message.includes('relation') ||
+    message.includes('does not exist') ||
+    message.includes('JWT')
+  ) {
+    return 'دسترسی غیرمجاز. لطفاً از حساب کاربری خود مطمئن شوید.';
+  }
+
   if (!message) return fallback;
 
   const map = {
