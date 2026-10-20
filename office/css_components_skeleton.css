@@ -1,0 +1,48 @@
+/* ============================================================
+   Skeleton loaders
+   ============================================================ */
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--bg-muted) 0%,
+    color-mix(in srgb, var(--bg-muted) 60%, var(--border-default)) 50%,
+    var(--bg-muted) 100%
+  );
+  background-size: 400px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .skeleton {
+    background: var(--bg-muted);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+}
+
+.skeleton--circle { border-radius: 50%; }
+.skeleton--line {
+  height: 12px;
+  border-radius: var(--radius-full);
+}
+.skeleton--line + .skeleton--line { margin-block-start: var(--space-2); }
+.skeleton--block {
+  height: 88px;
+  border-radius: var(--radius-md);
+}
+.skeleton--title {
+  height: 20px;
+  width: 40%;
+  border-radius: var(--radius-full);
+}
+.skeleton--text {
+  height: 12px;
+  border-radius: var(--radius-full);
+}
+.skeleton--text:nth-child(3n) { width: 70%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
