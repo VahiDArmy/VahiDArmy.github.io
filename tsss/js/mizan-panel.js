@@ -125,7 +125,6 @@ const MizanPanel = (function () {
   // بستن منو با کلیک بیرون
   document.addEventListener('click', (e) => {
     if (!floatMenu.hidden && !floatMenu.contains(e.target)) {
-      // اگر کلیک روی خود متن المیزان بود، آن هندلر مدیریت می‌کند (نشانگر جدید)
       if (!mizanContent.contains(e.target)) closeFloatMenu();
     }
   });
@@ -808,7 +807,10 @@ const MizanPanel = (function () {
       const el = document.createElement('span');
       if (isReadMarker) {
         el.className = 'mizan-read-marker';
-        el.innerHTML = '<span class="mizan-read-marker__label">تا اینجا خوانده شد</span>';
+        el.dataset.noteId = note.id;
+        el.innerHTML = '<span class="mizan-read-marker__label">تا اینجا خوانده شد <span class="mizan-read-marker__del" title="حذف نشانگر">✕</span></span>';
+        el.setAttribute('role', 'button');
+        el.setAttribute('title', 'کلیک برای حذف نشانگر خواندن');
       } else {
         el.className = 'mizan-note-inline';
         el.dataset.noteId = note.id;
@@ -867,6 +869,23 @@ const MizanPanel = (function () {
         const id = el.dataset.noteId;
         const note = mizanNotes.find((n) => n.id === id);
         if (note) showNotePopup(note, el);
+      });
+    });
+
+    rootEl.querySelectorAll('.mizan-read-marker').forEach((el) => {
+      el.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const id = el.dataset.noteId;
+        if (!id) return;
+        if (!confirm('آیا نشانگر خواندن حذف شود؟')) return;
+        try {
+          await Store.deleteMizanNote(id);
+          UI.toast('نشانگر خواندن حذف شد');
+          await reloadMizanNotesAndRerender();
+        } catch (err) {
+          console.error('[mizan read marker] delete failed:', err);
+          UI.toast('خطا در حذف نشانگر');
+        }
       });
     });
   }
