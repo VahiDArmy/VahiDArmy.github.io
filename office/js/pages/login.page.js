@@ -62,7 +62,10 @@ export default function loginPage(info, outlet) {
   const form = el('form', { class: 'auth-form', novalidate: true }, [
     el('div', { class: 'form-field' }, [
       el('label', { class: 'form-label', for: 'login-email' }, ['ایمیل']),
-      emailInput,
+      el('div', { class: 'icon-field' }, [
+        emailInput,
+        el('span', { class: 'icon-field__icon' }, [icon('mail')]),
+      ]),
     ]),
     el('div', { class: 'form-field' }, [
       el('label', { class: 'form-label', for: 'login-password' }, ['رمز عبور']),
