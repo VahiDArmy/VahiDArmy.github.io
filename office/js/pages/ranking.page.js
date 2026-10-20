@@ -15,11 +15,14 @@ import { confirmAndDelete } from '../components/confirm-delete.js';
 import { open as openModal } from '../ui/modal.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { toast } from '../ui/toast.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { formatNumber, formatDate } from '../utils/format.js';
 import { csv, downloadCsv } from '../utils/csv.js';
 
 export default async function rankingPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const id = info?.params?.id;
   if (!id) {
     router.navigate(ROUTES.RANKINGS, { replace: true });
