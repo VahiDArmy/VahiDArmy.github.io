@@ -1,0 +1,77 @@
+/* ============================================================
+   Switch / toggle
+   ============================================================ */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.switch__track {
+  width: 40px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--border-strong);
+  position: relative;
+  transition: background var(--dur-base) var(--ease-out);
+  flex: none;
+  border: 1px solid transparent;
+}
+.switch__thumb {
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-base) var(--ease-spring),
+              background var(--dur-fast);
+}
+
+.switch input:checked + .switch__track {
+  background: var(--accent);
+}
+.switch input:checked + .switch__track .switch__thumb {
+  transform: translateX(18px);
+}
+[dir="rtl"] .switch input:checked + .switch__track .switch__thumb {
+  transform: translateX(-18px);
+}
+
+.switch input:focus-visible + .switch__track {
+  box-shadow: var(--shadow-focus);
+}
+
+.switch input[disabled] + .switch__track {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* Sizes */
+.switch--sm .switch__track { width: 32px; height: 18px; }
+.switch--sm .switch__thumb { width: 12px; height: 12px; }
+.switch--sm input:checked + .switch__track .switch__thumb { transform: translateX(14px); }
+[dir="rtl"] .switch--sm input:checked + .switch__track .switch__thumb { transform: translateX(-14px); }
+
+.switch--lg .switch__track { width: 48px; height: 26px; }
+.switch--lg .switch__thumb { width: 20px; height: 20px; }
+.switch--lg input:checked + .switch__track .switch__thumb { transform: translateX(22px); }
+[dir="rtl"] .switch--lg input:checked + .switch__track .switch__thumb { transform: translateX(-22px); }
+
+/* Label position variant */
+.switch--label-start { flex-direction: row-reverse; }
