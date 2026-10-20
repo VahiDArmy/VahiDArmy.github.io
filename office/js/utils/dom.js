@@ -107,11 +107,43 @@ export function unlockBodyScroll() {
   if (lockCount === 0) document.body.style.overflow = '';
 }
 
-/** Trap focus inside a container (for modals). */
+/* ------------------------------------------------------------
+   Focus management
+   ------------------------------------------------------------ */
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
+
+/**
+ * Focus the first focusable element inside a container.
+ * Used by modals, popovers, and anything that opens with a fresh surface.
+ * @param {Element|null} container
+ * @param {{ preventScroll?: boolean }} [opts]
+ * @returns {Element|null} the focused element, or null if none was focusable
+ */
+export function focusFirst(container, { preventScroll = true } = {}) {
+  if (!container || typeof container.querySelectorAll !== 'function') return null;
+  const focusable = container.querySelectorAll(FOCUSABLE_SELECTOR);
+  if (!focusable.length) return null;
+  const first = focusable[0];
+  try {
+    first.focus({ preventScroll });
+  } catch {
+    first.focus();
+  }
+  return first;
+}
+
+/** Trap focus inside a container (for modals). Returns a detach function. */
 export function trapFocus(container) {
-  const focusable = container.querySelectorAll(
-    'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
-  );
+  if (!container) return () => {};
+  const focusable = container.querySelectorAll(FOCUSABLE_SELECTOR);
   if (!focusable.length) return () => {};
   const first = focusable[0];
   const last = focusable[focusable.length - 1];
@@ -137,7 +169,11 @@ export function fragment(nodes = []) {
   return f;
 }
 
-/** Inline SVG icon lookup — populated by icons.js later. */
+/* ------------------------------------------------------------
+   Icon registry
+   ------------------------------------------------------------ */
+
+/** Inline SVG icon lookup — populated by icons.js. */
 export const icons = new Map();
 export function registerIcon(name, svgString) { icons.set(name, svgString); }
 export function icon(name, attrs = {}) {
