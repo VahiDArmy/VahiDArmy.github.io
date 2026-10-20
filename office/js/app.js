@@ -52,8 +52,11 @@ const pages = {
   home:       () => import('./pages/home.page.js'),
   people:     () => import('./pages/people.page.js'),
   person:     () => import('./pages/person.page.js'),
-  theories:   () => import('./pages/theories.page.js'), // If renamed to tellalls, adjust here
-  theory:     () => import('./pages/theory.page.js'),   // If renamed to tellall, adjust here
+  
+  // تغییر نام یافته به tellalls
+  tellalls:   () => import('./pages/tellalls.page.js'),
+  tellall:    () => import('./pages/tellall.page.js'), // اگر صفحه جزئیات را جدا ساخته‌اید
+  
   rankings:   () => import('./pages/rankings.page.js'),
   ranking:    () => import('./pages/ranking.page.js'),
   tables:     () => import('./pages/tables.page.js'),
@@ -92,19 +95,24 @@ function registerRoutes() {
     return mod.default(info, outlet);
   });
 
-  // --- Theories (Tellalls) ---
-  router.add(ROUTES.THEORIES, async (info) => {
-    const mod = await pages.theories();
+  // --- Tellalls (جایگزین Theories) ---
+  router.add('/tellalls', async (info) => {
+    const mod = await pages.tellalls();
     return mod.default(info, outlet);
   });
-  router.add('/theories/new', async (info) => {
+  router.add('/tellalls/new', async (info) => {
     toast.warning('فرم ایجاد موضوع جدید به زودی اضافه می‌شود.');
-    router.navigate(ROUTES.THEORIES, { replace: true });
+    router.navigate('/tellalls', { replace: true });
     return () => {};
   });
-  router.add(ROUTES.THEORY(':id'), async (info) => {
-    const mod = await pages.theory();
-    return mod.default(info, outlet);
+  router.add('/tellalls/:id', async (info) => {
+    // اگر صفحه جزئیات رو دارید، این خط را آنکامنت کنید:
+    // const mod = await pages.tellall();
+    // return mod.default(info, outlet);
+    
+    toast.warning('صفحه جزئیات به زودی اضافه می‌شود.');
+    router.navigate('/tellalls', { replace: true });
+    return () => {};
   });
 
   // --- Rankings ---
@@ -167,7 +175,7 @@ function registerRoutes() {
     return mod.default(info, outlet);
   });
 
-  // Catch-all
+  // Catch-all (404)
   router.add('/:rest*', async (info) => {
     const mod = await pages.notFound();
     return mod.default(info, outlet);
