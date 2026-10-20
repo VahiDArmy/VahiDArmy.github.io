@@ -102,7 +102,9 @@
 
 /* Password visibility toggle */
 .password-field { position: relative; }
-.password-field .input { padding-inline-end: var(--space-10); }
+/* The input is dir="ltr", so padding-inline-start creates padding on the LEFT,
+   matching the RTL-positioned toggle button (inset-inline-end → left). */
+.password-field .input { padding-inline-start: var(--space-10); }
 .password-field__toggle {
   position: absolute;
   inset-inline-end: var(--space-1-5);
