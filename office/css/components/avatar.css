@@ -1,0 +1,81 @@
+/* ============================================================
+   Avatars
+   ============================================================ */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  overflow: hidden;
+  flex: none;
+  position: relative;
+  user-select: none;
+  box-shadow: var(--shadow-xs);
+  border: 2px solid var(--bg-surface);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar--square { border-radius: var(--radius-md); }
+
+.avatar--xs { width: 24px; height: 24px; font-size: var(--text-2xs); }
+.avatar--sm { width: 32px; height: 32px; font-size: var(--text-xs); }
+.avatar--lg { width: 56px; height: 56px; font-size: var(--text-md); }
+.avatar--xl { width: 72px; height: 72px; font-size: var(--text-lg); }
+.avatar--2xl { width: 96px; height: 96px; font-size: var(--text-xl); }
+
+/* Status indicator */
+.avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.avatar__status {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+  background: var(--text-tertiary);
+}
+.avatar__status--online { background: var(--success-500); }
+.avatar__status--offline { background: var(--text-tertiary); }
+.avatar__status--away { background: var(--warning-500); }
+.avatar__status--busy { background: var(--danger-500); }
+
+/* Avatar group (stacked) */
+.avatar-group {
+  display: inline-flex;
+  align-items: center;
+}
+.avatar-group .avatar {
+  margin-inline-start: -10px;
+  border-color: var(--bg-surface);
+}
+.avatar-group .avatar:first-child { margin-inline-start: 0; }
+.avatar-group__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-inline-start: -10px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  border: 2px solid var(--bg-surface);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
+}
