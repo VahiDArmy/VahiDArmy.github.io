@@ -1,0 +1,176 @@
+/* ============================================================
+   Buttons
+   ============================================================ */
+
+.btn {
+  --btn-bg: var(--bg-surface);
+  --btn-fg: var(--text-primary);
+  --btn-border: var(--border-default);
+  --btn-bg-hover: var(--bg-hover);
+  --btn-shadow: var(--shadow-xs);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  height: 40px;
+  min-width: 40px;
+  border-radius: var(--radius-md);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-border);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out),
+              color var(--dur-fast) var(--ease-out),
+              border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+  user-select: none;
+  position: relative;
+  box-shadow: var(--btn-shadow);
+}
+
+.btn:hover {
+  background: var(--btn-bg-hover);
+  text-decoration: none;
+}
+.btn:active { transform: translateY(1px); }
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-xs), var(--shadow-focus);
+}
+.btn[disabled],
+.btn.is-disabled {
+  opacity: .55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* — Variants — */
+.btn--primary {
+  --btn-bg: var(--accent);
+  --btn-fg: var(--accent-text);
+  --btn-border: var(--accent);
+  --btn-bg-hover: var(--accent-hover);
+  box-shadow: var(--shadow-sm);
+}
+.btn--primary:active { background: var(--accent-active); }
+
+.btn--secondary {
+  --btn-bg: var(--bg-surface);
+  --btn-fg: var(--text-primary);
+  --btn-border: var(--border-strong);
+  --btn-bg-hover: var(--bg-hover);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-secondary);
+  --btn-border: transparent;
+  --btn-bg-hover: var(--bg-hover);
+  --btn-shadow: none;
+}
+.btn--ghost:hover { color: var(--text-primary); }
+
+.btn--danger {
+  --btn-bg: var(--danger-500);
+  --btn-fg: #fff;
+  --btn-border: var(--danger-500);
+  --btn-bg-hover: var(--danger-700);
+}
+
+.btn--success {
+  --btn-bg: var(--success-500);
+  --btn-fg: #fff;
+  --btn-border: var(--success-500);
+  --btn-bg-hover: var(--success-700);
+}
+
+.btn--warning {
+  --btn-bg: var(--warning-500);
+  --btn-fg: #fff;
+  --btn-border: var(--warning-500);
+  --btn-bg-hover: var(--warning-700);
+}
+
+.btn--link {
+  --btn-bg: transparent;
+  --btn-fg: var(--text-link);
+  --btn-border: transparent;
+  --btn-bg-hover: transparent;
+  --btn-shadow: none;
+  padding-inline: var(--space-1);
+  height: auto;
+}
+.btn--link:hover { text-decoration: underline; }
+
+/* — Sizes — */
+.btn--sm { height: 32px; padding: 0 var(--space-3); font-size: var(--text-xs); border-radius: var(--radius-sm); }
+.btn--sm svg { width: 14px; height: 14px; }
+.btn--lg { height: 48px; padding: 0 var(--space-5); font-size: var(--text-md); border-radius: var(--radius-lg); }
+.btn--lg svg { width: 18px; height: 18px; }
+
+.btn--block { width: 100%; }
+
+.btn--icon {
+  padding: 0;
+  width: 40px;
+  min-width: 40px;
+}
+.btn--icon.btn--sm { width: 32px; min-width: 32px; }
+.btn--icon.btn--lg { width: 48px; min-width: 48px; }
+
+/* — Loading state — */
+.btn.is-loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  color: var(--btn-fg);
+  animation: spin 700ms linear infinite;
+  opacity: .9;
+}
+
+/* — Button groups — */
+.btn-group {
+  display: inline-flex;
+  align-items: stretch;
+}
+.btn-group .btn {
+  border-radius: 0;
+  box-shadow: none;
+}
+.btn-group .btn:not(:first-child) { border-inline-start: 0; }
+.btn-group .btn:first-child {
+  border-start-start-radius: var(--radius-md);
+  border-end-start-radius: var(--radius-md);
+}
+.btn-group .btn:last-child {
+  border-start-end-radius: var(--radius-md);
+  border-end-end-radius: var(--radius-md);
+}
+.btn-group .btn.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
