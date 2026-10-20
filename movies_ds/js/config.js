@@ -44,8 +44,8 @@ window.CONFIG = {
      Supabase — برای پیشنهاد هوشمند با Gemini
      ========================================================= */
   SUPABASE: {
-    URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
-    ANON_KEY: 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6',
+    URL: 'https://nvmevqkaovazhmoznusf.supabase.co',
+    ANON_KEY: 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_Bg4VNHgE',
     EDGE_FUNCTION: 'movie-suggest'
   },
 
