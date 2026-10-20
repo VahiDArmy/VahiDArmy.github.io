@@ -33,5 +33,7 @@ export const TABLES = Object.freeze({
   STORIES:         'stories',
   PROJECTS:        'projects',
   PERSON_LINKS:    'person_links',
+  TELLALLS:        'tellalls',
+  TELLALL_ENTRIES: 'tellall_entries',
   AUDIT_LOG:       'audit_log',
 });
