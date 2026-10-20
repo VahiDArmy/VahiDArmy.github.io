@@ -17,13 +17,16 @@ import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { open as openModal } from '../ui/modal.js';
 import { toast } from '../ui/toast.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { formatNumber, formatDate, slugify } from '../utils/format.js';
 import { csv, downloadCsv } from '../utils/csv.js';
 import { debounce } from '../utils/debounce.js';
 import { validate, rules, hasErrors } from '../utils/validators.js';
 
 export default async function tablePage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const id = info?.params?.id;
   if (!id) {
     router.navigate(ROUTES.TABLES, { replace: true });
