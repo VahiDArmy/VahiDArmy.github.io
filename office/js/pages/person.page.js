@@ -10,7 +10,7 @@ import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { relatedSection } from '../components/related-section.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { toast } from '../ui/toast.js';
 import { formatDate, initials, truncateText, formatNumber } from '../utils/format.js';
 
@@ -24,6 +24,9 @@ function statusBadgeClass(status) {
 }
 
 export default async function personPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const id = info?.params?.id;
   if (!id) {
     router.navigate(ROUTES.PEOPLE, { replace: true });
