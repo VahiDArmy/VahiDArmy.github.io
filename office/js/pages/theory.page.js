@@ -13,7 +13,7 @@ import { emptyState } from '../components/empty-state.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { toast } from '../ui/toast.js';
 import { formatDate, formatNumber, initials, timeAgo, truncateText } from '../utils/format.js';
-import { canEditContent } from '../components/auth-guard.js';
+import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 
 function statusBadgeClass(status) {
   switch (status) {
@@ -25,6 +25,9 @@ function statusBadgeClass(status) {
 }
 
 export default async function theoryPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const id = info?.params?.id;
   if (!id) {
     router.navigate(ROUTES.THEORIES, { replace: true });
