@@ -58,6 +58,8 @@ const pages = {
   ranking:    () => import('./pages/ranking.page.js'),
   tables:     () => import('./pages/tables.page.js'),
   table:      () => import('./pages/table.page.js'),
+  tellalls:   () => import('./pages/tellalls.page.js'),
+  tellall:    () => import('./pages/tellall.page.js'),
   login:      () => import('./pages/login.page.js'),
   signup:     () => import('./pages/signup.page.js'),
   forgot:     () => import('./pages/forgot-password.page.js'),
@@ -108,6 +110,14 @@ function registerRoutes() {
     const mod = await pages.table();
     return mod.default(info, outlet);
   });
+  router.add(ROUTES.TELLALLS, async (info) => {
+    const mod = await pages.tellalls();
+    return mod.default(info, outlet);
+  });
+  router.add(ROUTES.TELLALL(':id'), async (info) => {
+    const mod = await pages.tellall();
+    return mod.default(info, outlet);
+  });
   router.add(ROUTES.LOGIN, async (info) => {
     const mod = await pages.login();
     return mod.default(info, outlet);
@@ -132,7 +142,7 @@ function registerRoutes() {
     const mod = await pages.profile();
     return mod.default(info, outlet);
   });
-  router.add('/settings', async (info) => {
+  router.add(ROUTES.SETTINGS, async (info) => {
     const mod = await pages.settings();
     return mod.default(info, outlet);
   });
