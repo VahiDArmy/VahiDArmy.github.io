@@ -1,0 +1,219 @@
+/* ============================================================
+   Ranking detail page
+   ============================================================ */
+
+.ranking-detail { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.ranking-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  align-self: flex-start;
+}
+.ranking-back:hover { color: var(--text-primary); text-decoration: none; }
+.ranking-back svg { width: 14px; height: 14px; }
+
+.ranking-hero {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.ranking-hero::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--brand-300));
+}
+.ranking-hero__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.ranking-hero__icon svg { width: 24px; height: 24px; }
+.ranking-hero__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+.ranking-hero__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+  line-height: var(--lh-tight);
+}
+.ranking-hero__criteria {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  padding: var(--space-1) var(--space-2);
+  background: var(--bg-muted);
+  border-radius: var(--radius-full);
+  width: fit-content;
+}
+.ranking-hero__criteria svg { width: 12px; height: 12px; color: var(--accent); }
+.ranking-hero__desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--lh-relaxed);
+  max-width: 72ch;
+}
+.ranking-hero__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+/* Entries list */
+.ranking-entries-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.ranking-entries-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.ranking-entries-head__title {
+  font-size: var(--text-md);
+  font-weight: var(--fw-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ranking-entries-head__title svg { width: 16px; height: 16px; color: var(--accent); }
+.ranking-entries-head__count {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  font-weight: var(--fw-regular);
+}
+
+.ranking-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.ranking-entry:last-child { border-block-end: 0; }
+.ranking-entry:hover { background: var(--bg-hover); }
+
+.ranking-entry__rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  flex: none;
+}
+.ranking-entry__rank.is-1 {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(245, 158, 11, .35);
+}
+.ranking-entry__rank.is-2 {
+  background: linear-gradient(135deg, #cbd5e1, #94a3b8);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(148, 163, 184, .35);
+}
+.ranking-entry__rank.is-3 {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, .35);
+}
+
+.ranking-entry__person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1 1 auto;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+.ranking-entry__person:hover { text-decoration: none; }
+.ranking-entry__person .avatar { width: 40px; height: 40px; font-size: var(--text-sm); flex: none; }
+.ranking-entry__person-main { flex: 1 1 auto; min-width: 0; }
+.ranking-entry__name {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ranking-entry__job {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ranking-entry__notes {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-block-start: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ranking-entry__score {
+  font-size: var(--text-md);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  padding: var(--space-1) var(--space-3);
+  background: var(--accent-soft);
+  border-radius: var(--radius-md);
+  min-width: 56px;
+  text-align: center;
+  flex: none;
+  cursor: text;
+}
+.ranking-entry__score:focus { outline: 2px solid var(--ring-color); outline-offset: 2px; }
+
+.ranking-entry__actions {
+  display: flex;
+  gap: var(--space-1);
+  flex: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.ranking-entry:hover .ranking-entry__actions,
+.ranking-entry:focus-within .ranking-entry__actions { opacity: 1; }
+
+@media (max-width: 640px) {
+  .ranking-entry { padding: var(--space-2) var(--space-3); gap: var(--space-2); }
+  .ranking-entry__rank { width: 26px; height: 26px; font-size: var(--text-xs); }
+  .ranking-entry__score { font-size: var(--text-sm); min-width: 44px; padding: var(--space-1) var(--space-2); }
+  .ranking-entry__actions { opacity: 1; }
+}
