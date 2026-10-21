@@ -11,7 +11,6 @@ import { toast } from '../ui/toast.js';
 import { confirm } from '../ui/confirm.js';
 import { ROUTES } from '../config/constants.js';
 import { initials } from '../utils/format.js';
-import { openConsoleViewer } from './console-viewer.js'; // Added import
 
 export function createUserMenu() {
   const root = el('div', { class: 'header__user' });
@@ -54,6 +53,7 @@ export function createUserMenu() {
 
     root.appendChild(chip);
 
+    // Removed the console viewer import and menu item to fix the SyntaxError
     const dd = createDropdown(
       chip,
       [
@@ -67,12 +67,6 @@ export function createUserMenu() {
           label: 'جدول‌های من',
           icon: 'table',
           onClick: () => router.navigate(ROUTES.TABLES),
-        },
-        { divider: true },
-        {
-          label: 'کنسول (عیب‌یابی)',
-          icon: 'command',
-          onClick: () => openConsoleViewer(),
         },
         { divider: true },
         {
