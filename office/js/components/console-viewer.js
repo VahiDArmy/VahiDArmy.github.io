@@ -1,32 +1,53 @@
 /**
  * Console Viewer Component
+ * Provides a visible floating trigger button and a modal to display raw logs.
  */
 
 import { el, icon, lockBodyScroll, unlockBodyScroll } from '../utils/dom.js';
 
 let consoleStore = null;
 let activeBackdrop = null;
+let triggerBtn = null;
 
-export function initConsoleViewer(store) {
-  consoleStore = store;
+export function initConsoleViewer() {
+  // Try to get the store from window (initialized in index.html)
+  consoleStore = window.__consoleStore__;
+  
+  if (!consoleStore) {
+    console.warn('Console store not found. Log viewer will not work.');
+    return;
+  }
+
+  // Create the floating trigger button
+  triggerBtn = el('button', {
+    class: 'console-trigger',
+    title: 'ابزار عیب‌یابی (کنسول)',
+    html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
+    on: { click: openConsoleViewer }
+  });
+
+  document.body.appendChild(triggerBtn);
+
+  // Listen for new logs to show a red dot on the button if there are errors
+  window.addEventListener('console:new', (e) => {
+    if (e.detail && e.detail.type === 'error') {
+      triggerBtn.classList.add('has-error');
+    }
+  });
 }
 
-export function openConsoleViewer() {
-  if (!consoleStore) {
-    alert('Console store not initialized.');
+function openConsoleViewer() {
+  if (!consoleStore) return;
+
+  if (activeBackdrop) {
+    close();
     return;
   }
 
-  if (activeBackdrop) {
-    activeBackdrop.remove();
-    activeBackdrop = null;
-    unlockBodyScroll();
-    return;
-  }
+  triggerBtn.classList.remove('has-error');
 
   const list = el('div', { class: 'console-list' });
   
-  // Header Actions
   const copyAllBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('copy'), 'کپی همه']);
   const clearBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('trash'), 'پاک کردن']);
   const closeBtn = el('button', { class: 'btn btn--ghost btn--icon btn--sm', style: { color: '#fff' } }, [icon('x')]);
@@ -55,7 +76,6 @@ export function openConsoleViewer() {
     if (activeBackdrop) render();
   }
 
-  // Helper for copying text across different browsers/contexts
   function copyToClipboard(text) {
     if (navigator.clipboard && window.isSecureContext) {
       return navigator.clipboard.writeText(text);
@@ -66,11 +86,7 @@ export function openConsoleViewer() {
       textArea.style.left = "-999999px";
       document.body.appendChild(textArea);
       textArea.select();
-      try {
-        document.execCommand('copy');
-      } catch (err) {
-        console.error('Fallback copy failed', err);
-      }
+      try { document.execCommand('copy'); } catch (err) { console.error(err); }
       textArea.remove();
       return Promise.resolve();
     }
@@ -113,11 +129,9 @@ export function openConsoleViewer() {
       list.appendChild(item);
     });
 
-    // Auto-scroll to bottom
     setTimeout(() => { list.scrollTop = list.scrollHeight; }, 10);
   }
 
-  // Events
   closeBtn.addEventListener('click', close);
   clearBtn.addEventListener('click', () => { consoleStore.clear(); render(); });
   
