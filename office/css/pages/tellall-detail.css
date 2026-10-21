@@ -1,8 +1,12 @@
 /* ============================================================
-   Tell-all detail page — entries, mention links, composer
+   Tellall detail page
    ============================================================ */
 
-.tellall-detail { display: flex; flex-direction: column; gap: var(--space-5); }
+.tellall-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
 
 .tellall-back {
   display: inline-flex;
@@ -16,18 +20,22 @@
 .tellall-back:hover { color: var(--text-primary); text-decoration: none; }
 .tellall-back svg { width: 14px; height: 14px; }
 
-.tellall-hero {
-  position: relative;
-  overflow: hidden;
-  padding: var(--space-5);
+.tellall-body-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  display: flex;
-  gap: var(--space-4);
-  flex-wrap: wrap;
+  overflow: hidden;
 }
-.tellall-hero::before {
+
+.tellall-head {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+  position: relative;
+}
+.tellall-head::before {
   content: "";
   position: absolute;
   inset-block-start: 0;
@@ -35,185 +43,129 @@
   height: 4px;
   background: linear-gradient(90deg, var(--accent), var(--brand-300));
 }
-.tellall-hero__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-lg);
-  background: var(--accent-soft);
-  color: var(--accent);
-  display: grid;
-  place-items: center;
-  flex: none;
-}
-.tellall-hero__icon svg { width: 24px; height: 24px; }
-.tellall-hero__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-.tellall-hero__title { font-size: var(--text-2xl); font-weight: var(--fw-bold); letter-spacing: -0.01em; line-height: var(--lh-tight); }
-.tellall-hero__desc { font-size: var(--text-sm); color: var(--text-secondary); line-height: var(--lh-relaxed); max-width: 72ch; }
-.tellall-hero__actions { display: flex; gap: var(--space-2); align-self: flex-start; flex-wrap: wrap; }
 
-.tellall-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-5);
-  max-width: 800px;
-  margin-inline: auto;
-  width: 100%;
-}
-
-.tellall-entries-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-/* Entry Card */
-.tellall-entry {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  transition: var(--transition-base);
-  position: relative;
-}
-.tellall-entry:hover {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
-}
-
-.tellall-entry__header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-.tellall-entry__meta {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.tellall-entry__author {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-semibold);
+.tellall-head__title {
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-tight);
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
-.tellall-entry__time {
+
+.tellall-head__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
   font-size: var(--text-xs);
   color: var(--text-tertiary);
+  align-items: center;
 }
-.tellall-entry__actions {
+.tellall-head__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+}
+.tellall-head__meta-item svg { width: 14px; height: 14px; }
+
+.tellall-head__tags {
   display: flex;
-  gap: var(--space-1);
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out);
-}
-.tellall-entry:hover .tellall-entry__actions,
-.tellall-entry:focus-within .tellall-entry__actions {
-  opacity: 1;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  align-items: center;
+  padding-block-start: var(--space-2);
+  border-block-start: 1px dashed var(--border-subtle);
 }
 
-.tellall-entry__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-/* 
-  If the entry has no title, we apply a subtle adjustment to the content 
-  so it doesn't look weirdly top-aligned.
-*/
-.tellall-entry__title {
-  font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
+.tellall-content {
+  padding: var(--space-5);
   color: var(--text-primary);
-  margin-block-end: var(--space-1);
-}
-.tellall-entry__content {
   font-size: var(--text-base);
-  color: var(--text-primary);
   line-height: var(--lh-relaxed);
   word-break: break-word;
 }
 
-/* 
-  Mention Links — styled distinctly but consistently with the theme
-*/
-.mention-link {
-  display: inline-block;
-  background: var(--accent-soft);
-  color: var(--accent);
-  padding: 0 var(--space-1);
-  border-radius: var(--radius-sm);
-  font-weight: var(--fw-semibold);
-  text-decoration: none;
-  transition: var(--transition-fast);
-}
-.mention-link:hover {
-  background: var(--accent);
-  color: var(--accent-text);
-  text-decoration: none;
-}
-
-/* Composer */
-.tellall-composer {
-  background: var(--bg-subtle);
+/* Entries (Replies/Discussion) */
+.entries-section {
+  background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  padding: var(--space-4);
-  margin-block-start: var(--space-3);
-}
-.tellall-composer__title {
-  font-size: var(--text-md);
-  font-weight: var(--fw-semibold);
-  margin-block-end: var(--space-3);
-  color: var(--text-primary);
+  overflow: hidden;
 }
 
-/* Mention Textarea Dropdown */
-.mention-textarea-wrap {
-  position: relative;
-  width: 100%;
-}
-.mention-dropdown {
-  position: absolute;
-  z-index: var(--z-dropdown);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  animation: slide-down var(--dur-fast) var(--ease-out) both;
-}
-.mention-dropdown__item {
+.entries-section__head {
+  padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 100%;
-  padding: var(--space-2) var(--space-3);
-  text-align: start;
-  background: transparent;
-  color: var(--text-primary);
-  transition: background var(--dur-fast);
-  cursor: pointer;
+  font-weight: var(--fw-semibold);
+  font-size: var(--text-md);
+  background: var(--bg-subtle);
 }
-.mention-dropdown__item:hover,
-.mention-dropdown__item:focus-visible {
-  background: var(--bg-hover);
-}
-.mention-dropdown__name {
-  font-size: var(--text-sm);
-  font-weight: var(--fw-medium);
-}
-.mention-dropdown__empty {
-  padding: var(--space-3);
+.entries-section__head svg { width: 16px; height: 16px; color: var(--accent); }
+.entries-section__count {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
-  text-align: center;
+  font-weight: var(--fw-regular);
 }
 
+.entries-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.entry {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-block-end: 1px solid var(--border-subtle);
+}
+.entry:last-child { border-block-end: 0; }
+
+.entry__avatar { flex: none; }
+.entry__avatar .avatar { width: 36px; height: 36px; font-size: var(--text-sm); }
+.entry__main { flex: 1 1 auto; min-width: 0; }
+
+.entry__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-block-end: var(--space-1-5);
+}
+.entry__author {
+  font-size: var(--text-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+}
+.entry__time {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+}
+
+.entry__body {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--lh-relaxed);
+  word-break: break-word;
+}
+
+/* Composer */
+.entry-composer {
+  padding: var(--space-4);
+  border-block-start: 1px solid var(--border-subtle);
+  background: var(--bg-subtle);
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+.entry-composer__avatar { flex: none; }
+.entry-composer__avatar .avatar { width: 36px; height: 36px; font-size: var(--text-sm); }
+.entry-composer__main { flex: 1 1 auto; display: flex; flex-direction: column; gap: var(--space-2); }
+.entry-composer__actions { display: flex; justify-content: flex-end; }
+
 @media (max-width: 640px) {
-  .tellall-hero { flex-direction: column; }
-  .tellall-hero__actions { margin-inline-start: 0; width: 100%; }
+  .tellall-head__title { font-size: var(--text-xl); }
+  .entry { padding: var(--space-3); }
+  .entry-composer { padding: var(--space-3); }
 }
