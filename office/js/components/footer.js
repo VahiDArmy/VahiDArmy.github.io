@@ -22,6 +22,7 @@ export function mountFooter(root) {
       el('nav', { class: 'footer__links', 'aria-label': 'پیوندهای پاورقی' }, [
         el('a', { class: 'footer__link', href: router.href(ROUTES.PEOPLE) }, ['افراد']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.THEORIES) }, ['نظریه‌ها']),
+        el('a', { class: 'footer__link', href: router.href(ROUTES.TELLALLS) }, ['بگایی‌ها']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.RANKINGS) }, ['رتبه‌بندی']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.TABLES) }, ['جدول‌ها']),
       ]),
