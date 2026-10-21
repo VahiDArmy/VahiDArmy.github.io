@@ -1,6 +1,5 @@
 /**
- * Person detail page — full profile + related theories, stories, projects, tellalls,
- * and person-links. Supports edit/delete for authorized users.
+ * Person detail page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -11,9 +10,9 @@ import { tellallsService } from '../services/tellalls.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { relatedSection } from '../components/related-section.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
+import { openPersonForm } from '../components/person-form.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
-import { toast } from '../ui/toast.js';
-import { formatDate, initials, truncateText, formatNumber } from '../utils/format.js';
+import { formatDate, initials } from '../utils/format.js';
 
 function statusBadgeClass(status) {
   switch (status) {
@@ -48,14 +47,12 @@ export default async function personPage(info, outlet) {
       return () => {};
     }
 
-    // Fetch related data in parallel, including tellalls
     const [relData, tellallsData] = await Promise.all([
       peopleService.related(id),
       tellallsService.getByPersonId(id).catch(() => [])
     ]);
     
     related = { ...relData, tellalls: tellallsData };
-
   } catch (err) {
     outlet.innerHTML = '';
     outlet.appendChild(
@@ -64,13 +61,7 @@ export default async function personPage(info, outlet) {
           iconName: 'alert-circle',
           title: 'خطا در بارگذاری',
           description: err?.message || 'این فرد یافت نشد.',
-          actions: [
-            el(
-              'a',
-              { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) },
-              ['بازگشت به فهرست افراد']
-            ),
-          ],
+          actions: [el('a', { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) }, ['بازگشت به فهرست افراد'])],
         }),
       ])
     );
@@ -98,9 +89,7 @@ function buildNotFound() {
       iconName: 'user',
       title: 'فرد پیدا نشد',
       description: 'این فرد وجود ندارد یا حذف شده است.',
-      actions: [
-        el('a', { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) }, ['بازگشت']),
-      ],
+      actions: [el('a', { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) }, ['بازگشت'])],
     }),
   ]);
 }
@@ -115,8 +104,19 @@ function buildView(person, related) {
   const actions = el('div', { class: 'person-hero__actions' }, [
     canEdit
       ? el(
-          'a',
-          { class: 'btn btn--secondary btn--sm', href: `/people/${person.id}/edit` },
+          'button',
+          {
+            type: 'button',
+            class: 'btn btn--secondary btn--sm',
+            on: { click: async () => {
+              const updated = await openPersonForm({ person });
+              if (updated) {
+                // Reload the page to reflect changes
+                const currentPath = router.getCurrent()?.path || '';
+                router.navigate(currentPath, { replace: true });
+              }
+            }},
+          },
           [icon('edit'), 'ویرایش']
         )
       : null,
@@ -156,18 +156,10 @@ function buildView(person, related) {
         actions,
       ]),
       el('div', { class: 'person-hero__badges' }, [
-        person.status
-          ? el(
-              'span',
-              { class: `badge ${statusBadgeClass(person.status)}` },
-              [PEOPLE_STATUS_LABELS[person.status] || person.status]
-            )
-          : null,
+        person.status ? el('span', { class: `badge ${statusBadgeClass(person.status)}` }, [PEOPLE_STATUS_LABELS[person.status] || person.status]) : null,
         ...(person.tags || []).map((t) => el('span', { class: 'chip chip--brand' }, [t])),
       ]),
-      person.bio
-        ? el('p', { class: 'person-hero__bio' }, [person.bio])
-        : null,
+      person.bio ? el('p', { class: 'person-hero__bio' }, [person.bio]) : null,
     ]),
   ]);
 
@@ -178,15 +170,13 @@ function buildView(person, related) {
     person.birth_date ? infoItem('تاریخ تولد', formatDate(person.birth_date)) : null,
   ].filter(Boolean));
 
-  // --- Related Sections ---
-
   const relatedTellalls = relatedSection({
     title: 'بگایی‌های مرتبط',
     iconName: 'message',
     items: (related.tellalls || []).map((t) => ({
       title: t.title,
       meta: t.created_at ? formatDate(t.created_at) : '',
-      href: `/tellalls/${t.id}`, // Assuming this is the route for a single tellall
+      href: `/tellalls/${t.id}`,
     })),
     emptyText: 'هیچ بگایی مرتبط با این فرد ثبت نشده است.',
     viewAllHref: `/tellalls?person=${person.id}`,
@@ -226,18 +216,13 @@ function buildView(person, related) {
     emptyText: 'پروژه‌ای مرتبط با این فرد ثبت نشده است.',
   });
 
-  const back = el(
-    'a',
-    { class: 'person-back', href: router.href(ROUTES.PEOPLE) },
-    [icon('chevron-right'), 'بازگشت به افراد']
-  );
+  const back = el('a', { class: 'person-back', href: router.href(ROUTES.PEOPLE) }, [icon('chevron-right'), 'بازگشت به افراد']);
 
   return el('div', { class: 'container' }, [
     el('div', { class: 'person-detail' }, [
       back,
       hero,
       info,
-      // Adding the Tellalls section here
       relatedTellalls,
       el('div', { class: 'form-grid form-grid--2', style: { alignItems: 'start' } }, [
         relatedTheories,
