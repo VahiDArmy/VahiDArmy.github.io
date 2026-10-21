@@ -21,7 +21,6 @@ export const tellallsService = {
   },
 
   async getById(id) {
-    // 1. Fetch the tellall and its entries (Without risky joins)
     const { data: tellall, error } = await supabase
       .from('tellalls')
       .select(`
@@ -35,31 +34,23 @@ export const tellallsService = {
     guard(error);
     if (!tellall) return null;
 
-    // 2. Safely fetch the profiles for the author and all entry authors
     const authorIds = new Set([tellall.created_by]);
     (tellall.entries || []).forEach(e => authorIds.add(e.author_id));
-
     const idsToFetch = Array.from(authorIds).filter(Boolean);
     let profiles = [];
     
     if (idsToFetch.length > 0) {
-      const { data: profilesData, error: profError } = await supabase
+      const { data: profilesData } = await supabase
         .from('profiles')
         .select('id, display_name, avatar_url')
         .in('id', idsToFetch);
-      
-      if (!profError && profilesData) {
-        profiles = profilesData;
-      }
+      if (profilesData) profiles = profilesData;
     }
 
-    // Map profiles to their IDs for easy lookup
     const profileMap = {};
     profiles.forEach(p => { profileMap[p.id] = p; });
 
-    // 3. Attach the author data to the objects
     tellall.author = profileMap[tellall.created_by] || { display_name: 'کاربر', avatar_url: null };
-    
     tellall.entries = (tellall.entries || []).map(entry => ({
       ...entry,
       author: profileMap[entry.author_id] || { display_name: 'کاربر', avatar_url: null }
@@ -70,7 +61,6 @@ export const tellallsService = {
 
   async create(payload) {
     const session = await requireSession();
-    
     const { data: tellallData, error: tellallError } = await supabase
       .from('tellalls')
       .insert({ 
@@ -98,10 +88,32 @@ export const tellallsService = {
     return tellallData;
   },
 
+  async update(id, payload) {
+    await requireSession();
+    const { data, error } = await supabase
+      .from('tellalls')
+      .update({
+        title: payload.title,
+        description: payload.description,
+        person_id: payload.person_id,
+        related_people: payload.related_people || []
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    guard(error);
+    return data;
+  },
+
+  async remove(id) {
+    await requireSession();
+    const { error } = await supabase.from('tellalls').delete().eq('id', id);
+    guard(error);
+    return true;
+  },
+
   async addEntry(tellallId, content, personId) {
     const session = await requireSession();
-    
-    // Insert the entry
     const { data, error } = await supabase
       .from('tellall_entries')
       .insert({
@@ -114,7 +126,6 @@ export const tellallsService = {
       .single();
     guard(error);
 
-    // Fetch the author profile for immediate UI update
     const { data: profile } = await supabase
       .from('profiles')
       .select('display_name, avatar_url')
@@ -125,6 +136,25 @@ export const tellallsService = {
       ...data,
       author: profile || { display_name: 'کاربر', avatar_url: null }
     };
+  },
+
+  async updateEntry(id, content) {
+    await requireSession();
+    const { data, error } = await supabase
+      .from('tellall_entries')
+      .update({ content })
+      .eq('id', id)
+      .select()
+      .single();
+    guard(error);
+    return data;
+  },
+
+  async removeEntry(id) {
+    await requireSession();
+    const { error } = await supabase.from('tellall_entries').delete().eq('id', id);
+    guard(error);
+    return true;
   }
 };
 
