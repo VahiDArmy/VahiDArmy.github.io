@@ -129,10 +129,13 @@ export function pluralFa(count, singular, plural) {
 /** Extract a friendly error message from an unknown error / supabase error. */
 export function friendlyError(err, fallback = 'خطایی رخ داد. دوباره تلاش کنید.') {
   if (!err) return fallback;
+  
+  // LOG THE RAW ERROR TO CONSOLE (So our viewer can catch it)
+  console.error('[RAW API ERROR]', err);
+
   const message = err.message || err.error_description || err.hint || '';
   
   // SECURITY: Never leak database internals, table names, or RLS details to the UI.
-  // Treat any permission or relation error as a generic access issue.
   if (
     err.code === '42501' || // Postgres: insufficient_privilege
     err.code === '42P01' || // Postgres: undefined_table
