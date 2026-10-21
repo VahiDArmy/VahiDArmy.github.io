@@ -6,8 +6,8 @@
 
 import { el, icon } from '../utils/dom.js';
 
-export function createStringTagInput({ placeholder = 'افزودن برچسب...' } = {}) {
-  const selectedTags = new Set();
+export function createStringTagInput({ placeholder = 'افزودن برچسب...', initialValues = [] } = {}) {
+  const selectedTags = new Set(initialValues);
   
   const wrapper = el('div', { class: 'tag-input-wrapper' });
   const container = el('div', { 
@@ -68,13 +68,14 @@ export function createStringTagInput({ placeholder = 'افزودن برچسب...
     }
   });
 
-  // Add tag on blur if something was typed
   input.addEventListener('blur', () => {
     addTag();
   });
 
   container.appendChild(input);
   wrapper.appendChild(container);
+  
+  renderChips();
 
   return {
     node: wrapper,
