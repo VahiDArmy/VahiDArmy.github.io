@@ -1,5 +1,5 @@
 /**
- * Person detail page — full profile + related theories, stories, projects,
+ * Person detail page — full profile + related theories, stories, projects, tellalls,
  * and person-links. Supports edit/delete for authorized users.
  */
 
@@ -7,6 +7,7 @@ import { el, icon } from '../utils/dom.js';
 import { router } from '../core/router.js';
 import { ROUTES, PEOPLE_STATUS_LABELS } from '../config/constants.js';
 import { peopleService } from '../services/people.service.js';
+import { tellallsService } from '../services/tellalls.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { relatedSection } from '../components/related-section.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
@@ -37,7 +38,8 @@ export default async function personPage(info, outlet) {
   outlet.appendChild(buildLoading());
 
   let person;
-  let related = { theories: [], stories: [], projects: [], links: [] };
+  let related = { theories: [], stories: [], projects: [], tellalls: [], links: [] };
+  
   try {
     person = await peopleService.getById(id);
     if (!person) {
@@ -45,7 +47,15 @@ export default async function personPage(info, outlet) {
       outlet.appendChild(buildNotFound());
       return () => {};
     }
-    related = await peopleService.related(id);
+
+    // Fetch related data in parallel, including tellalls
+    const [relData, tellallsData] = await Promise.all([
+      peopleService.related(id),
+      tellallsService.getByPersonId(id).catch(() => [])
+    ]);
+    
+    related = { ...relData, tellalls: tellallsData };
+
   } catch (err) {
     outlet.innerHTML = '';
     outlet.appendChild(
@@ -168,10 +178,24 @@ function buildView(person, related) {
     person.birth_date ? infoItem('تاریخ تولد', formatDate(person.birth_date)) : null,
   ].filter(Boolean));
 
+  // --- Related Sections ---
+
+  const relatedTellalls = relatedSection({
+    title: 'بگایی‌های مرتبط',
+    iconName: 'message',
+    items: (related.tellalls || []).map((t) => ({
+      title: t.title,
+      meta: t.created_at ? formatDate(t.created_at) : '',
+      href: `/tellalls/${t.id}`, // Assuming this is the route for a single tellall
+    })),
+    emptyText: 'هیچ بگایی مرتبط با این فرد ثبت نشده است.',
+    viewAllHref: `/tellalls?person=${person.id}`,
+  });
+
   const relatedTheories = relatedSection({
     title: 'نظریه‌های مرتبط',
     iconName: 'lightbulb',
-    items: related.theories.map((t) => ({
+    items: (related.theories || []).map((t) => ({
       title: t.title,
       meta: t.created_at ? formatDate(t.created_at) : '',
       href: ROUTES.THEORY(t.id),
@@ -183,7 +207,7 @@ function buildView(person, related) {
   const relatedStories = relatedSection({
     title: 'روایت‌ها',
     iconName: 'message',
-    items: related.stories.map((s) => ({
+    items: (related.stories || []).map((s) => ({
       title: s.title,
       meta: s.created_at ? formatDate(s.created_at) : '',
       href: `/stories/${s.id}`,
@@ -194,7 +218,7 @@ function buildView(person, related) {
   const relatedProjects = relatedSection({
     title: 'پروژه‌ها',
     iconName: 'folder',
-    items: related.projects.map((p) => ({
+    items: (related.projects || []).map((p) => ({
       title: p.title,
       meta: p.status || '',
       href: `/projects/${p.id}`,
@@ -213,6 +237,8 @@ function buildView(person, related) {
       back,
       hero,
       info,
+      // Adding the Tellalls section here
+      relatedTellalls,
       el('div', { class: 'form-grid form-grid--2', style: { alignItems: 'start' } }, [
         relatedTheories,
         relatedStories,
