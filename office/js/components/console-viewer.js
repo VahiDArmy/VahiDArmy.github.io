@@ -10,7 +10,6 @@ let activeBackdrop = null;
 let triggerBtn = null;
 
 export function initConsoleViewer() {
-  // Try to get the store from window (initialized in index.html)
   consoleStore = window.__consoleStore__;
   
   if (!consoleStore) {
@@ -18,7 +17,6 @@ export function initConsoleViewer() {
     return;
   }
 
-  // Create the floating trigger button
   triggerBtn = el('button', {
     class: 'console-trigger',
     title: 'ابزار عیب‌یابی (کنسول)',
@@ -28,7 +26,6 @@ export function initConsoleViewer() {
 
   document.body.appendChild(triggerBtn);
 
-  // Listen for new logs to show a red dot on the button if there are errors
   window.addEventListener('console:new', (e) => {
     if (e.detail && e.detail.type === 'error') {
       triggerBtn.classList.add('has-error');
