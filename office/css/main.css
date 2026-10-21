@@ -37,6 +37,7 @@
 @import url("./components/offline.css");
 @import url("./components/tag-input.css");
 @import url("./components/mention-textarea.css");
+@import url("./components/console-viewer.css");
 
 /* Pages */
 @import url("./pages/auth.css");
