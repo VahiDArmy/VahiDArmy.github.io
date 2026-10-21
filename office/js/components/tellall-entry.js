@@ -5,17 +5,17 @@
  */
 
 import { el, icon } from '../utils/dom.js';
-import { renderMentions } from '../utils/mentions.js';
+import { renderMentions } from '../utils/render-mentions.js';
 import { formatDate, initials, timeAgo } from '../utils/format.js';
 import { appStore } from '../core/store.js';
 
-export function createTellallEntry(entry, { canEdit = false, onDelete, onEdit } = {}) {
+export function createTellallEntry(entry, { canEdit = false, onDelete, onEdit, people = [] } = {}) {
   const user = appStore.get('user');
   const authorName = entry.profiles?.display_name || 'کاربر';
   const authorAvatar = entry.profiles?.avatar_url;
 
   // Parse content into safe HTML with mention links
-  const htmlContent = renderMentions(entry.content);
+  const htmlContent = renderMentions(entry.content, people);
 
   const contentNode = el('div', {
     class: 'tellall-entry__content',
@@ -23,7 +23,6 @@ export function createTellallEntry(entry, { canEdit = false, onDelete, onEdit } 
   });
 
   // If title is provided, it gets a nice styled heading.
-  // If not, we just don't render the heading element. The spacing is managed by CSS.
   const titleNode = entry.title 
     ? el('h3', { class: 'tellall-entry__title' }, [entry.title]) 
     : null;
@@ -50,7 +49,7 @@ export function createTellallEntry(entry, { canEdit = false, onDelete, onEdit } 
   return el('div', { class: 'tellall-entry', dataset: { id: entry.id } }, [
     el('div', { class: 'tellall-entry__header' }, [
       el('span', { class: 'avatar avatar--sm' }, [
-        authorAvatar ? el('img', { src: authorAvatar }) : initials(authorName)
+        authorAvatar ? el('img', { src: authorAvatar, alt: authorName }) : initials(authorName)
       ]),
       el('div', { class: 'tellall-entry__meta' }, [
         el('span', { class: 'tellall-entry__author' }, [authorName]),
