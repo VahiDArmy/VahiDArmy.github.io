@@ -1,6 +1,6 @@
 /**
  * Full Page Form for creating a new Tellall.
- * Features a large text editor, central person selection, and a professional Tag Input.
+ * Features a large text editor (with @mentions), central person selection, and tagging.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -10,6 +10,7 @@ import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { peopleService } from '../services/people.service.js';
 import { tellallsService } from '../services/tellalls.service.js';
 import { createTagInput } from '../components/tag-input.js';
+import { createMentionTextarea } from '../components/mention-textarea.js';
 import { validate, rules, hasErrors } from '../utils/validators.js';
 import { toast } from '../ui/toast.js';
 import { pageHeader } from '../components/page-header.js';
@@ -19,7 +20,6 @@ export default async function tellallsNewPage(info, outlet) {
   if (!session) return () => {};
 
   const user = session.user;
-  const profile = appStore.get('profile');
 
   outlet.innerHTML = '';
   const page = el('div', { class: 'container container--narrow' }, [
@@ -62,35 +62,17 @@ export default async function tellallsNewPage(info, outlet) {
     ]))
   );
 
-  // Filter out the central person from the tag list initially
-  const availableForTags = peopleList.filter(p => p.id !== defaultPersonId);
-  
+  // Tag Input (for explicit DB relation)
   const tagger = createTagInput({ 
-    people: availableForTags, 
-    placeholder: 'نام افراد دیگر را جستجو و تگ کنید...' 
+    people: peopleList, // Everyone is available
+    placeholder: 'نام افراد را جستجو و انتخاب کنید...' 
   });
 
-  // Update tagger when central person changes
-  personSelect.addEventListener('change', (e) => {
-    // Re-create or update the tag input if needed
-    const newAvailable = peopleList.filter(p => p.id !== e.target.value);
-    // For simplicity, we just replace the component
-    // In a real reactive system, we'd update the array, but this is fine for this architecture
-    const newTagger = createTagInput({ people: newAvailable, placeholder: 'نام افراد دیگر را جستجو و تگ کنید...' });
-    tagger.node.replaceWith(newTagger.node);
-    tagger = newTagger; // Reassign to keep reference for submission
-  });
-
-  const contentInput = el('textarea', {
-    class: 'textarea',
-    rows: 15,
-    placeholder: 'جزئیات بگایی را با ذکر تمام موارد اینجا بنویسید...',
-    style: { 
-      minHeight: '400px', 
-      fontSize: '1rem', 
-      lineHeight: '1.8',
-      fontFamily: 'var(--font-sans)'
-    },
+  // Mention Textarea (for in-text tagging)
+  const editor = createMentionTextarea({
+    people: peopleList,
+    placeholder: 'جزئیات بگایی را با ذکر تمام موارد اینجا بنویسید...\n\nنکته: برای لینک دادن به یک فرد، از علامت @ استفاده کنید (مثلاً @نام_فرد)',
+    rows: 15
   });
 
   const submitBtn = el('button', {
@@ -100,7 +82,7 @@ export default async function tellallsNewPage(info, outlet) {
       click: async () => {
         const title = titleInput.value.trim();
         const personId = personSelect.value;
-        const content = contentInput.value.trim();
+        const content = editor.getValue().trim();
         const relatedPeople = tagger.getValue();
 
         const errors = validate({ title, content, personId }, {
@@ -153,7 +135,7 @@ export default async function tellallsNewPage(info, outlet) {
         personSelect,
       ]),
       el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['تگ کردن افراد دیگر']),
+        el('label', { class: 'form-label' }, ['تگ کردن افراد (برای دیتابیس)']),
         tagger.node
       ])
     ]),
@@ -161,7 +143,7 @@ export default async function tellallsNewPage(info, outlet) {
     // Content
     el('div', { class: 'form-field' }, [
       el('label', { class: 'form-label' }, ['متن و جزئیات بگایی ', el('span', { class: 'required' }, ['*'])]),
-      contentInput,
+      editor.node,
       el('p', { class: 'form-help' }, ['شما می‌توانید متن طولانی خود را در این بخش بنویسید.'])
     ]),
 
