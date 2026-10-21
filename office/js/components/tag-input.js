@@ -6,8 +6,8 @@
 import { el, icon } from '../utils/dom.js';
 import { initials } from '../utils/format.js';
 
-export function createTagInput({ people = [], placeholder = 'افزودن تگ...' } = {}) {
-  const selectedIds = new Set();
+export function createTagInput({ people = [], placeholder = 'افزودن تگ...', initialValues = [] } = {}) {
+  const selectedIds = new Set(initialValues);
   
   const wrapper = el('div', { class: 'tag-input-wrapper' });
   const container = el('div', { 
@@ -64,7 +64,6 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
   function renderDropdown() {
     const query = input.value.trim().toLowerCase();
     
-    // Show ALL people (except those already selected)
     filteredPeople = people.filter(p => 
       !selectedIds.has(p.id) && 
       (p.full_name || '').toLowerCase().includes(query)
@@ -158,6 +157,8 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
   container.appendChild(input);
   wrapper.appendChild(container);
   wrapper.appendChild(dropdown);
+
+  renderChips();
 
   return {
     node: wrapper,
