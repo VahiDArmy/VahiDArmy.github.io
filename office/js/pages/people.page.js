@@ -50,9 +50,11 @@ export default async function peoplePage(info, outlet) {
         'button',
         { 
           class: 'btn btn--primary', 
-          onClick: async () => {
-            const created = await openPersonForm();
-            if (created) load();
+          on: {
+            click: async () => {
+              const created = await openPersonForm();
+              if (created) load();
+            }
           }
         },
         [icon('plus'), 'افزودن فرد']
@@ -207,10 +209,15 @@ export default async function peoplePage(info, outlet) {
             ? [
                 el(
                   'button',
-                  { class: 'btn btn--primary', onClick: async () => {
-                    const created = await openPersonForm();
-                    if (created) load();
-                  } },
+                  { 
+                    class: 'btn btn--primary', 
+                    on: {
+                      click: async () => {
+                        const created = await openPersonForm();
+                        if (created) load();
+                      }
+                    } 
+                  },
                   [icon('plus'), 'افزودن اولین فرد']
                 ),
               ]
