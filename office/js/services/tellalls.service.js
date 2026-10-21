@@ -15,7 +15,7 @@ export const tellallsService = {
   async getByPersonId(personId) {
     const { data, error } = await supabase
       .from('tellalls')
-      .select('id, title, description, created_at, created_by, person_id')
+      .select('id, title, description, created_at, created_by, person_id, people:person_id(full_name)')
       .eq('person_id', personId)
       .order('created_at', { ascending: false });
     
@@ -40,17 +40,40 @@ export const tellallsService = {
     return data;
   },
 
-  /** Create a new tellall */
+  /** Create a new tellall and its first entry */
   async create(payload) {
     const session = await requireSession();
-    const { data, error } = await supabase
+    
+    // 1. Insert into tellalls
+    const { data: tellallData, error: tellallError } = await supabase
       .from('tellalls')
-      .insert({ ...payload, created_by: session.user.id })
+      .insert({ 
+        title: payload.title,
+        description: payload.description,
+        person_id: payload.person_id,
+        related_people: payload.related_people || [],
+        created_by: session.user.id 
+      })
       .select()
       .single();
     
-    guard(error);
-    return data;
+    guard(tellallError);
+
+    // 2. Insert first entry into tellall_entries if content is provided
+    if (payload.first_entry_content) {
+      const { error: entryError } = await supabase
+        .from('tellall_entries')
+        .insert({
+          tellall_id: tellallData.id,
+          person_id: payload.person_id,
+          content: payload.first_entry_content,
+          author_id: session.user.id
+        });
+      
+      guard(entryError);
+    }
+    
+    return tellallData;
   }
 };
 
