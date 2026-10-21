@@ -54,6 +54,7 @@ const pages = {
   person:     () => import('./pages/person.page.js'),
   
   theories:   () => import('./pages/theories.page.js'),
+  theoriesNew:() => import('./pages/theories-new.page.js'),
   theory:     () => import('./pages/theory.page.js'),
 
   tellalls:   () => import('./pages/tellalls.page.js'),
@@ -104,9 +105,8 @@ function registerRoutes() {
     return mod.default(info, outlet);
   });
   router.add('/theories/new', async (info) => {
-    toast.warning('فرم ایجاد نظریه به زودی اضافه می‌شود.');
-    router.navigate(ROUTES.THEORIES, { replace: true });
-    return () => {};
+    const mod = await pages.theoriesNew();
+    return mod.default(info, outlet);
   });
   router.add(ROUTES.THEORY(':id'), async (info) => {
     const mod = await pages.theory();
