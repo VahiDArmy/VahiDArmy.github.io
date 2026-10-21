@@ -208,6 +208,24 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* FIX: Size the icons inside the recent list */
+.recent-item__score .icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.recent-item > .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--text-tertiary);
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Features (signed-out) */
 .home-features {
   display: grid;
