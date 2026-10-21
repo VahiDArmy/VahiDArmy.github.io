@@ -6,6 +6,7 @@
   width: 100%;
   max-width: 800px;
   height: 80vh;
+  max-height: 90dvh;
   background: #1e1e1e;
   color: #d4d4d4;
   border-radius: 8px;
@@ -16,6 +17,7 @@
   direction: ltr; /* Force LTR for console logs */
   animation: pop-in 0.3s ease-out;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .console-header {
@@ -51,22 +53,27 @@
 .console-list {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .console-item {
   display: flex;
   gap: 8px;
-  padding: 6px 8px;
+  padding: 8px;
   border-radius: 4px;
   background: #2d2d2d;
   border-left: 3px solid transparent;
   font-family: monospace;
   font-size: 12px;
   align-items: flex-start;
+  width: 100%;
+  box-sizing: border-box;
 }
 .console-item--error { border-left-color: #f44336; background: #3e2723; color: #ef9a9a; }
 .console-item--warn { border-left-color: #ff9800; background: #332a1b; color: #ffcc80; }
@@ -83,26 +90,33 @@
 }
 .console-item__msg {
   flex: 1;
+  min-width: 0; /* Critical: allows flex child to shrink below its intrinsic width */
   margin: 0;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
   text-align: left;
   font-family: monospace;
   line-height: 1.4;
 }
 .console-item__copy {
-  flex: none;
-  opacity: 0.3;
+  flex: none; /* Prevents the button from being pushed out */
+  opacity: 0.4;
   transition: opacity 0.2s;
   color: #fff !important;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
 }
 .console-item:hover .console-item__copy { opacity: 1; }
+.console-item__copy:hover { background: rgba(255,255,255,0.1) !important; }
 
 .console-empty {
   text-align: center;
