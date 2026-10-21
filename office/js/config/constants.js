@@ -4,20 +4,25 @@
 
 export const APP_NAME = 'The Office';
 export const APP_NAME_FA = 'اداره';
-export const APP_VERSION = '0.2.0';
+export const APP_VERSION = '0.1.0';
 
 export const ROUTES = Object.freeze({
   HOME: '/',
   PEOPLE: '/people',
   PERSON: (id = ':id') => `/people/${id}`,
+  
+  // مسیرهای نظریه‌ها
   THEORIES: '/theories',
   THEORY: (id = ':id') => `/theories/${id}`,
+
+  // مسیرهای بگایی‌ها
+  TELLALLS: '/tellalls',
+  TELLALL: (id = ':id') => `/tellalls/${id}`,
+  
   RANKINGS: '/rankings',
   RANKING: (id = ':id') => `/rankings/${id}`,
   TABLES: '/tables',
   TABLE: (id = ':id') => `/tables/${id}`,
-  TELLALLS: '/tellalls',
-  TELLALL: (id = ':id') => `/tellalls/${id}`,
   LOGIN: '/login',
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
@@ -28,13 +33,14 @@ export const ROUTES = Object.freeze({
   NOT_FOUND: '/404',
 });
 
+// هر دو سیستم در منو قرار می‌گیرند
 export const NAV_ITEMS = Object.freeze([
   { key: 'home',     label: 'خانه',      href: ROUTES.HOME,     icon: 'home' },
   { key: 'people',   label: 'افراد',     href: ROUTES.PEOPLE,   icon: 'users' },
   { key: 'theories', label: 'نظریه‌ها',   href: ROUTES.THEORIES, icon: 'lightbulb' },
+  { key: 'tellalls', label: 'بگایی‌ها',   href: ROUTES.TELLALLS, icon: 'message' },
   { key: 'rankings', label: 'رتبه‌بندی', href: ROUTES.RANKINGS, icon: 'trophy' },
   { key: 'tables',   label: 'جدول‌ها',   href: ROUTES.TABLES,   icon: 'table' },
-  { key: 'tellalls', label: 'بگایی‌ها',   href: ROUTES.TELLALLS, icon: 'message' },
 ]);
 
 export const THEMES = Object.freeze({ LIGHT: 'light', DARK: 'dark' });
