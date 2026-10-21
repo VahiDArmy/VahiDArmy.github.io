@@ -1,6 +1,5 @@
 /**
  * Application entry point.
- * Boots theme, auth, header/footer, routes, then hides the splash.
  */
 
 import { initTheme } from './core/theme.js';
@@ -24,9 +23,7 @@ function hideSplash() {
 }
 
 /* ---- Router outlet helpers ---- */
-function getOutlet() {
-  return document.getElementById('app-main');
-}
+function getOutlet() { return document.getElementById('app-main'); }
 
 function showLoading() {
   const outlet = getOutlet();
@@ -55,10 +52,12 @@ const pages = {
   
   theories:   () => import('./pages/theories.page.js'),
   theoriesNew:() => import('./pages/theories-new.page.js'),
+  theoriesEdit:() => import('./pages/theories-edit.page.js'),
   theory:     () => import('./pages/theory.page.js'),
 
   tellalls:   () => import('./pages/tellalls.page.js'),
   tellallsNew:() => import('./pages/tellalls-new.page.js'),
+  tellallsEdit:() => import('./pages/tellalls-edit.page.js'),
   tellall:    () => import('./pages/tellall.page.js'),
   
   rankings:   () => import('./pages/rankings.page.js'),
@@ -89,17 +88,12 @@ function registerRoutes() {
     const mod = await pages.people();
     return mod.default(info, outlet);
   });
-  router.add('/people/new', async (info) => {
-    toast.warning('فرم افزودن فرد به زودی اضافه می‌شود.');
-    router.navigate(ROUTES.PEOPLE, { replace: true });
-    return () => {};
-  });
   router.add(ROUTES.PERSON(':id'), async (info) => {
     const mod = await pages.person();
     return mod.default(info, outlet);
   });
 
-  // --- Theories (نظریه‌ها) ---
+  // --- Theories ---
   router.add(ROUTES.THEORIES, async (info) => {
     const mod = await pages.theories();
     return mod.default(info, outlet);
@@ -108,18 +102,26 @@ function registerRoutes() {
     const mod = await pages.theoriesNew();
     return mod.default(info, outlet);
   });
+  router.add('/theories/:id/edit', async (info) => {
+    const mod = await pages.theoriesEdit();
+    return mod.default(info, outlet);
+  });
   router.add(ROUTES.THEORY(':id'), async (info) => {
     const mod = await pages.theory();
     return mod.default(info, outlet);
   });
 
-  // --- Tellalls (بگایی‌ها) ---
+  // --- Tellalls ---
   router.add('/tellalls', async (info) => {
     const mod = await pages.tellalls();
     return mod.default(info, outlet);
   });
   router.add('/tellalls/new', async (info) => {
     const mod = await pages.tellallsNew();
+    return mod.default(info, outlet);
+  });
+  router.add('/tellalls/:id/edit', async (info) => {
+    const mod = await pages.tellallsEdit();
     return mod.default(info, outlet);
   });
   router.add('/tellalls/:id', async (info) => {
@@ -197,7 +199,6 @@ function registerRoutes() {
 /* ---- Global error surface ---- */
 function installErrorSurface() {
   window.addEventListener('unhandledrejection', (e) => {
-    // eslint-disable-next-line no-console
     console.error('[unhandled]', e.reason);
     if (e.reason?.message === 'AUTH_REQUIRED') return;
     toast.error(e.reason?.message || 'خطای غیرمنتظره‌ای رخ داد.');
@@ -233,16 +234,12 @@ async function boot() {
   try {
     await initAuth();
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('[boot] auth init failed', err);
   }
 
   import('./core/boot-extras.js')
     .then((m) => m.installExtras())
-    .catch((err) => {
-      // eslint-disable-next-line no-console
-      console.warn('[boot] extras failed', err);
-    });
+    .catch((err) => console.warn('[boot] extras failed', err));
 
   const outlet = getOutlet();
   if (outlet && !window.location.hash) showLoading();
@@ -253,7 +250,6 @@ async function boot() {
 }
 
 boot().catch((err) => {
-  // eslint-disable-next-line no-console
   console.error('[boot] fatal', err);
   hideSplash();
   toast.error('راه‌اندازی برنامه با خطا مواجه شد.');
