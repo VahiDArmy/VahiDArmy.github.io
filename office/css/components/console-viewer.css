@@ -2,6 +2,42 @@
    Console Viewer (Debug Tool)
    ============================================================ */
 
+/* Floating Trigger Button */
+.console-trigger {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 9999;
+  cursor: pointer;
+  border: 1px solid #333;
+  transition: transform 0.2s;
+}
+.console-trigger:hover { transform: scale(1.1); }
+.console-trigger svg { width: 20px; height: 20px; }
+
+/* Red dot for errors */
+.console-trigger.has-error::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #f44336;
+  border-radius: 50%;
+  border: 2px solid #1e1e1e;
+}
+
+/* Modal */
 .console-modal {
   width: 100%;
   max-width: 800px;
@@ -14,7 +50,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid #333;
-  direction: ltr; /* Force LTR for console logs */
+  direction: ltr;
   animation: pop-in 0.3s ease-out;
   overflow: hidden;
   box-sizing: border-box;
@@ -90,7 +126,7 @@
 }
 .console-item__msg {
   flex: 1;
-  min-width: 0; /* Critical: allows flex child to shrink below its intrinsic width */
+  min-width: 0;
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -100,7 +136,7 @@
   line-height: 1.4;
 }
 .console-item__copy {
-  flex: none; /* Prevents the button from being pushed out */
+  flex: none;
   opacity: 0.4;
   transition: opacity 0.2s;
   color: #fff !important;
