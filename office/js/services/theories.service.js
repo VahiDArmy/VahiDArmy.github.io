@@ -51,16 +51,6 @@ export const theoriesService = {
     return data;
   },
 
-  async getBySlug(slug) {
-    const { data, error } = await supabase
-      .from(TABLES.THEORIES)
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle();
-    guard(error);
-    return data;
-  },
-
   async create(payload) {
     const session = await requireSession();
     const { data, error } = await supabase
@@ -91,7 +81,6 @@ export const theoriesService = {
     return true;
   },
 
-  /** Vote: +1 up, -1 down, 0 = clear. Returns updated vote + score. */
   async vote(theoryId, value) {
     const session = await requireSession();
     if (![1, -1, 0].includes(value)) throw new Error('invalid vote');
@@ -113,7 +102,6 @@ export const theoriesService = {
       guard(error);
     }
 
-    // Re-read aggregate row (trigger on votes updates theories)
     const { data: theory, error: readErr } = await supabase
       .from(TABLES.THEORIES)
       .select('id, score, votes_count')
@@ -150,6 +138,18 @@ export const theoriesService = {
     const { data, error } = await supabase
       .from(TABLES.THEORY_COMMENTS)
       .insert({ theory_id: theoryId, body, author_id: session.user.id })
+      .select()
+      .single();
+    guard(error);
+    return data;
+  },
+
+  async updateComment(id, body) {
+    await requireSession();
+    const { data, error } = await supabase
+      .from(TABLES.THEORY_COMMENTS)
+      .update({ body })
+      .eq('id', id)
       .select()
       .single();
     guard(error);
