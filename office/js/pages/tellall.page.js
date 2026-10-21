@@ -1,6 +1,5 @@
 /**
- * Tell-all detail page.
- * Shows the subject, list of entries, and a form to add a new entry.
+ * Tellall detail page — full content, central person, related people, and entries.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -8,45 +7,57 @@ import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
 import { ROUTES } from '../config/constants.js';
 import { tellallsService } from '../services/tellalls.service.js';
+import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
-import { createTellallEntry } from '../components/tellall-entry.js';
+import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { createMentionTextarea } from '../components/mention-textarea.js';
-import { confirmAndDelete } from '../components/confirm-delete.js';
-import { open as openModal } from '../ui/modal.js';
+import { renderMentions } from '../utils/render-mentions.js';
 import { toast } from '../ui/toast.js';
-import { canEditContent } from '../components/auth-guard.js';
-import { formatDate, formatNumber } from '../utils/format.js';
+import { formatDate, formatNumber, initials, timeAgo } from '../utils/format.js';
 
 export default async function tellallPage(info, outlet) {
+  const session = await requireAuthOrRedirect();
+  if (!session) return () => {};
+
   const id = info?.params?.id;
   if (!id) {
-    router.navigate(ROUTES.TELLALLS, { replace: true });
+    router.navigate('/tellalls', { replace: true });
     return () => {};
   }
 
   outlet.innerHTML = '';
   outlet.appendChild(buildLoading());
 
-  let tellall, entries;
+  let tellall;
+  let peopleList = [];
+
   try {
-    tellall = await tellallsService.getById(id);
+    // Fetch tellall and all people in parallel
+    // (fetching all people is required for @mention rendering and selection)
+    const [tellallRes, peopleRes] = await Promise.all([
+      tellallsService.getById(id),
+      peopleService.list({ limit: 500 })
+    ]);
+
+    tellall = tellallRes;
+    peopleList = peopleRes.items;
+
     if (!tellall) {
       outlet.innerHTML = '';
       outlet.appendChild(
         el('div', { class: 'container' }, [
           emptyState({
             iconName: 'message',
-            title: 'موضوع پیدا نشد',
+            title: 'بگایی پیدا نشد',
             description: 'این موضوع وجود ندارد یا حذف شده است.',
             actions: [
-              el('a', { class: 'btn btn--primary', href: router.href(ROUTES.TELLALLS) }, ['بازگشت']),
+              el('a', { class: 'btn btn--primary', href: router.href('/tellalls') }, ['بازگشت']),
             ],
           }),
         ])
       );
       return () => {};
     }
-    entries = await tellallsService.listEntries(id);
   } catch (err) {
     outlet.innerHTML = '';
     outlet.appendChild(
@@ -54,18 +65,15 @@ export default async function tellallPage(info, outlet) {
         emptyState({
           iconName: 'alert-circle',
           title: 'خطا در بارگذاری',
-          description: err?.message || 'اطلاعات بارگذاری نشد.',
+          description: err?.message || 'این بگایی بارگذاری نشد.',
         }),
       ])
     );
     return () => {};
   }
 
-  const user = appStore.get('user');
-  const canEdit = canEditContent() || user?.id === tellall.created_by;
-
   outlet.innerHTML = '';
-  outlet.appendChild(buildView(tellall, entries, canEdit));
+  outlet.appendChild(buildView(tellall, peopleList));
 
   return () => {};
 }
@@ -75,210 +83,189 @@ function buildLoading() {
     el('div', { class: 'page-loading' }, [
       el('div', { class: 'skeleton skeleton--title' }),
       el('div', { class: 'skeleton skeleton--block' }),
+      el('div', { class: 'skeleton skeleton--block' }),
     ]),
   ]);
 }
 
-function buildView(tellall, entries, canEdit) {
+function buildView(tellall, peopleList) {
+  const user = appStore.get('user');
+  const profile = appStore.get('profile');
+
+  // Resolve related people (tags)
+  const relatedPeopleData = (tellall.related_people || [])
+    .map(id => peopleList.find(p => p.id === id))
+    .filter(Boolean);
+
+  // Central person
+  const centralPerson = tellall.person;
+
+  /* ---- Header ---- */
   const back = el(
     'a',
-    { class: 'tellall-back', href: router.href(ROUTES.TELLALLS) },
-    [icon('chevron-right'), 'بازگشت به لیست']
+    { class: 'tellall-back', href: router.href('/tellalls') },
+    [icon('chevron-right'), 'بازگشت به بگایی‌ها']
   );
 
-  const actions = el('div', { class: 'tellall-hero__actions' }, [
-    canEdit
-      ? el(
-          'button',
-          {
-            type: 'button',
-            class: 'btn btn--danger btn--sm',
-            on: { click: () => deleteTellall() },
-          },
-          [icon('trash'), 'حذف موضوع']
-        )
-      : null,
-  ].filter(Boolean));
-
-  const hero = el('div', { class: 'tellall-hero' }, [
-    el('div', { class: 'tellall-hero__icon' }, [icon('message')]),
-    el('div', { class: 'tellall-hero__main' }, [
-      el('h1', { class: 'tellall-hero__title' }, [tellall.title]),
-      tellall.description ? el('p', { class: 'tellall-hero__desc' }, [tellall.description]) : null,
-      el('div', {
-        style: { display: 'flex', gap: 'var(--space-3)', fontSize: 'var(--text-xs)', color: 'var(--text-tertiary)', flexWrap: 'wrap' }
-      }, [
-        el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [
-          icon('list'),
-          `${formatNumber(entries.length)} بگایی`,
-        ]),
-        tellall.created_at ? el('span', {}, [`ایجاد: ${formatDate(tellall.created_at)}`]) : null,
-      ]),
+  const metaRow = el('div', { class: 'tellall-head__meta' }, [
+    el('span', { class: 'tellall-head__meta-item' }, [
+      icon('clock'),
+      formatDate(tellall.created_at, { withTime: true })
     ]),
-    actions,
+    el('span', { class: 'tellall-head__meta-item' }, [
+      icon('user'),
+      `نویسنده: ${tellall.author?.display_name || 'کاربر'}`
+    ]),
+    centralPerson ? el('span', { class: 'tellall-head__meta-item' }, [
+      icon('flag'),
+      `شخص محوری: `,
+      el('a', { href: router.href(ROUTES.PERSON(centralPerson.id)), class: 'link' }, [centralPerson.full_name])
+    ]) : null
   ]);
 
-  const entriesList = el('div', { class: 'tellall-entries-list' });
+  const tagsRow = relatedPeopleData.length > 0 
+    ? el('div', { class: 'tellall-head__tags' }, [
+        el('span', { class: 'text-xs text-muted', style: { marginLeft: '8px' } }, ['افراد تگ شده:']),
+        ...relatedPeopleData.map(p => 
+          el('a', { 
+            href: router.href(ROUTES.PERSON(p.id)), 
+            class: 'chip chip--interactive' 
+          }, [
+            el('span', { class: 'chip__avatar' }, [
+              p.avatar_url ? el('img', { src: p.avatar_url, alt: p.full_name }) : initials(p.full_name)
+            ]),
+            el('span', { class: 'chip__label' }, [p.full_name])
+          ])
+        )
+      ])
+    : null;
+
+  const head = el('div', { class: 'tellall-head' }, [
+    el('h1', { class: 'tellall-head__title' }, [tellall.title || 'بدون عنوان']),
+    metaRow,
+    tagsRow
+  ].filter(Boolean));
+
+  /* ---- Main Content ---- */
+  // Convert @mentions to clickable links
+  const bodyHtml = renderMentions(tellall.description || '', peopleList);
+  const body = el('div', { class: 'tellall-content', html: bodyHtml });
+
+  const bodyCard = el('div', { class: 'tellall-body-card' }, [head, body]);
+
+  /* ---- Entries (Replies) ---- */
+  const entries = tellall.entries || [];
   
-  function renderEntries() {
+  const entriesList = el('div', { class: 'entries-list' });
+  const renderEntries = () => {
     entriesList.innerHTML = '';
-    if (entries.length === 0) {
+    if (!entries.length) {
       entriesList.appendChild(
-        el('div', { class: 'empty-state', style: { padding: 'var(--space-8)' } }, [
-          el('p', { style: { color: 'var(--text-tertiary)' } }, ['هنوز هیچ بگایی‌ای برای این موضوع ثبت نشده است.'])
+        el('div', { style: { padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-tertiary)' } }, [
+          'هنوز پاسخی ثبت نشده است.'
         ])
       );
       return;
     }
-    entries.forEach(entry => {
+
+    // Sort by date
+    const sortedEntries = [...entries].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    for (const entry of sortedEntries) {
+      const authorName = entry.author?.display_name || 'کاربر';
+      const authorAvatar = entry.author?.avatar_url;
+      const entryHtml = renderMentions(entry.content, peopleList);
+
       entriesList.appendChild(
-        createTellallEntry(entry, {
-          canEdit,
-          onDelete: handleDeleteEntry,
-          onEdit: handleEditEntry
-        })
+        el('div', { class: 'entry' }, [
+          el('div', { class: 'entry__avatar' }, [
+            el('span', { class: 'avatar' }, [
+              authorAvatar ? el('img', { src: authorAvatar, alt: authorName }) : initials(authorName)
+            ])
+          ]),
+          el('div', { class: 'entry__main' }, [
+            el('div', { class: 'entry__head' }, [
+              el('span', { class: 'entry__author' }, [authorName]),
+              el('span', { class: 'entry__time' }, [timeAgo(entry.created_at)])
+            ]),
+            el('div', { class: 'entry__body', html: entryHtml })
+          ])
+        ])
       );
-    });
-  }
+    }
+  };
   renderEntries();
 
-  /* ---- New Entry Form ---- */
-  let composerNode = null;
-  if (appStore.get('user')) {
-    const titleInput = el('input', {
-      type: 'text',
-      class: 'input',
-      placeholder: 'عنوان (اختیاری)',
-      style: { marginBottom: 'var(--space-2)' }
-    });
-    
-    const mentionTextarea = createMentionTextarea({
-      placeholder: 'متن بگایی خود را اینجا بنویسید. برای منشن کردن افراد از @ استفاده کنید.',
+  /* ---- Composer ---- */
+  let composer = null;
+  if (user) {
+    const editor = createMentionTextarea({
+      people: peopleList,
+      placeholder: 'پاسخ یا جزئیات جدیدی اضافه کنید...\nبرای تگ کردن از @ استفاده کنید.',
+      rows: 3,
+      minHeight: '100px'
     });
 
     const submitBtn = el('button', {
       type: 'button',
-      class: 'btn btn--primary',
+      class: 'btn btn--primary btn--sm',
       on: {
         click: async () => {
-          const content = mentionTextarea.getValue().trim();
+          const content = editor.getValue().trim();
           if (!content) {
-            toast.warning('متن بگایی نمی‌تواند خالی باشد.');
+            toast.warning('متن پاسخ نمی‌تواند خالی باشد.');
             return;
           }
+
           submitBtn.classList.add('is-loading');
           submitBtn.disabled = true;
+
           try {
-            const newEntry = await tellallsService.addEntry(tellall.id, {
-              title: titleInput.value.trim(),
-              content,
-            });
+            const newEntry = await tellallsService.addEntry(tellall.id, content, tellall.person_id);
             entries.push(newEntry);
+            editor.setValue('');
             renderEntries();
-            titleInput.value = '';
-            mentionTextarea.setValue('');
-            toast.success('بگایی شما ثبت شد.');
+            toast.success('پاسخ شما ثبت شد.');
           } catch (err) {
-            toast.error(err?.message || 'ثبت ناموفق بود.');
+            toast.error(err?.message || 'خطا در ثبت پاسخ.');
           } finally {
             submitBtn.classList.remove('is-loading');
             submitBtn.disabled = false;
           }
         }
       }
-    }, ['ثبت بگایی']);
+    }, [icon('send'), 'ارسال پاسخ']);
 
-    composerNode = el('div', { class: 'tellall-composer' }, [
-      el('h3', { class: 'tellall-composer__title' }, ['بگایی جدید اضافه کنید']),
-      titleInput,
-      mentionTextarea.node,
-      el('div', { style: { display: 'flex', justifyContent: 'flex-end', marginTop: 'var(--space-2)' } }, [submitBtn])
+    composer = el('div', { class: 'entry-composer' }, [
+      el('div', { class: 'entry-composer__avatar' }, [
+        el('span', { class: 'avatar' }, [
+          profile?.avatar_url ? el('img', { src: profile.avatar_url, alt: profile.display_name }) : initials(profile?.display_name || 'کاربر')
+        ])
+      ]),
+      el('div', { class: 'entry-composer__main' }, [
+        editor.node,
+        el('div', { class: 'entry-composer__actions' }, [submitBtn])
+      ])
     ]);
   } else {
-    composerNode = el('div', { class: 'tellall-composer', style: { textAlign: 'center' } }, [
-      el('span', {}, ['برای ثبت بگایی جدید ']),
+    composer = el('div', { class: 'entry-composer', style: { justifyContent: 'center', color: 'var(--text-secondary)' } }, [
+      el('span', {}, ['برای ثبت پاسخ ']),
       el('a', { href: router.href(ROUTES.LOGIN), class: 'link' }, ['وارد شوید']),
-      el('span', {}, ['.']),
+      el('span', {}, ['.'])
     ]);
   }
 
-  async function deleteTellall() {
-    await confirmAndDelete({
-      title: 'حذف موضوع',
-      message: `«${tellall.title}» و همه بگایی‌های آن حذف شوند؟`,
-      onConfirm: () => tellallsService.remove(tellall.id),
-      successMessage: 'موضوع حذف شد.',
-      onDeleted: () => router.navigate(ROUTES.TELLALLS, { replace: true }),
-    });
-  }
-
-  async function handleDeleteEntry(entry) {
-    await confirmAndDelete({
-      title: 'حذف بگایی',
-      message: 'این متن حذف شود؟',
-      onConfirm: () => tellallsService.removeEntry(entry.id),
-      successMessage: 'حذف شد.',
-      onDeleted: () => {
-        entries = entries.filter(e => e.id !== entry.id);
-        renderEntries();
-      }
-    });
-  }
-
-  async function handleEditEntry(entry) {
-    // Simple inline edit modal
-    const titleInput = el('input', { type: 'text', class: 'input', value: entry.title || '', placeholder: 'عنوان (اختیاری)' });
-    const mentionTextarea = createMentionTextarea({ value: entry.content });
-    
-    const saveBtn = el('button', {
-      type: 'button',
-      class: 'btn btn--primary',
-      on: {
-        click: async () => {
-          const content = mentionTextarea.getValue().trim();
-          if (!content) {
-            toast.warning('متن نمی‌تواند خالی باشد.');
-            return;
-          }
-          saveBtn.classList.add('is-loading');
-          try {
-            await tellallsService.updateEntry(entry.id, { title: titleInput.value.trim(), content });
-            entry.title = titleInput.value.trim();
-            entry.content = content;
-            renderEntries();
-            handle.close();
-            toast.success('ویرایش شد.');
-          } catch (err) {
-            toast.error(err?.message || 'ویرایش ناموفق بود.');
-          } finally {
-            saveBtn.classList.remove('is-loading');
-          }
-        }
-      }
-    }, ['ذخیره']);
-
-    const handle = openModal({
-      title: 'ویرایش بگایی',
-      body: el('div', { class: 'form-grid' }, [
-        titleInput,
-        mentionTextarea.node
-      ]),
-      footer: el('div', { style: { display: 'flex', gap: '8px', justifyContent: 'flex-end' } }, [
-        el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => handle.close() } }, ['انصراف']),
-        saveBtn
-      ]),
-      size: 'md'
-    });
-  }
-
-  return el('div', { class: 'container' }, [
-    el('div', { class: 'tellall-detail' }, [
-      back,
-      hero,
-      el('div', { class: 'tellall-content-wrapper' }, [
-        entriesList,
-        composerNode
-      ])
+  const entriesSection = el('section', { class: 'entries-section' }, [
+    el('div', { class: 'entries-section__head' }, [
+      icon('message'),
+      'پاسخ‌ها و جزئیات',
+      el('span', { class: 'entries-section__count' }, [`(${formatNumber(entries.length)})`])
     ]),
+    entriesList,
+    composer
+  ]);
+
+  return el('div', { class: 'container container--narrow' }, [
+    el('div', { class: 'tellall-detail' }, [back, bodyCard, entriesSection])
   ]);
 }
