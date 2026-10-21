@@ -16,7 +16,7 @@ import { initConsoleInterceptor } from './utils/console-interceptor.js';
 import { initConsoleViewer } from './components/console-viewer.js';
 import './ui/icons.js'; // register icons eagerly
 
-// Initialize Debug Console Viewer (Only for development/debugging)
+// Initialize Console Store (For debugging)
 const consoleStore = initConsoleInterceptor();
 initConsoleViewer(consoleStore);
 
