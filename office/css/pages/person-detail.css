@@ -183,9 +183,14 @@
   color: var(--text-tertiary);
   margin-block-start: 2px;
 }
-.related-item > svg {
+
+/* Fix: Target the wrapper span, not the raw SVG directly */
+.related-item > .icon {
   width: 14px;
   height: 14px;
   color: var(--text-tertiary);
   flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
