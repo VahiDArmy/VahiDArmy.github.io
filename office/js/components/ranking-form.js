@@ -1,8 +1,5 @@
 /**
  * Create / edit ranking modal.
- *
- *   const result = await openRankingForm({ ranking });
- *   if (result) { /* has title, description, criteria, slug *\/ }
  */
 
 import { el } from '../utils/dom.js';
@@ -15,82 +12,36 @@ export function openRankingForm({ ranking = null } = {}) {
   return new Promise((resolve) => {
     const isEdit = !!ranking;
 
-    const titleInput = el('input', {
-      type: 'text',
-      class: 'input',
-      placeholder: 'مثلاً: بهترین همکار سال',
-      value: ranking?.title || '',
-      maxlength: 120,
-    });
-    const criteriaInput = el('input', {
-      type: 'text',
-      class: 'input',
-      placeholder: 'مثلاً: خلاقیت، همکاری، تعهد',
-      value: ranking?.criteria || '',
-      maxlength: 200,
-    });
-    const descInput = el('textarea', {
-      class: 'textarea',
-      rows: 3,
-      placeholder: 'توضیح کوتاه درباره معیارها و هدف این رتبه‌بندی...',
-      maxlength: 500,
-    });
+    const titleInput = el('input', { type: 'text', class: 'input', placeholder: 'مثلاً: بهترین همکار سال', value: ranking?.title || '', maxlength: 120 });
+    const criteriaInput = el('input', { type: 'text', class: 'input', placeholder: 'مثلاً: خلاقیت، همکاری، تعهد', value: ranking?.criteria || '', maxlength: 200 });
+    const descInput = el('textarea', { class: 'textarea', rows: 3, placeholder: 'توضیح کوتاه درباره معیارها و هدف این رتبه‌بندی...', maxlength: 500 });
     descInput.value = ranking?.description || '';
+    const slugInput = el('input', { type: 'text', class: 'input', dir: 'ltr', placeholder: 'auto-generated', value: ranking?.slug || '' });
 
-    const slugInput = el('input', {
-      type: 'text',
-      class: 'input',
-      dir: 'ltr',
-      placeholder: 'auto-generated',
-      value: ranking?.slug || '',
-    });
-
-    // Auto-fill slug from title when empty
     titleInput.addEventListener('input', () => {
       if (!slugInput.value || slugInput.value === slugify(ranking?.title || '')) {
         slugInput.placeholder = slugify(titleInput.value) || 'auto-generated';
       }
     });
 
-    const submitBtn = el(
-      'button',
-      {
-        type: 'submit',
-        class: 'btn btn--primary',
-      },
-      [isEdit ? 'ذخیره تغییرات' : 'ایجاد']
-    );
-
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
-
     const form = el('form', { class: 'form-grid' }, [
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['عنوان ', el('span', { class: 'required' }, ['*'])]),
-        titleInput,
-      ]),
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['معیار']),
-        criteriaInput,
-        el('p', { class: 'form-help' }, ['مثلاً «خلاقیت، همکاری، تعهد»']),
-      ]),
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['توضیحات']),
-        descInput,
-      ]),
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['شناسه (slug)']),
-        slugInput,
-        el('p', { class: 'form-help' }, ['آدرس‌پذیر — فقط حروف، عدد و خط تیره.']),
-      ]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['عنوان ', el('span', { class: 'required' }, ['*'])]), titleInput]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['معیار']), criteriaInput, el('p', { class: 'form-help' }, ['مثلاً «خلاقیت، همکاری، تعهد»'])]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['توضیحات']), descInput]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['شناسه (slug)']), slugInput, el('p', { class: 'form-help' }, ['آدرس‌پذیر — فقط حروف، عدد و خط تیره.'])]),
     ]);
+
+    const submitBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--primary',
+      on: { click: () => form.requestSubmit() }
+    }, [isEdit ? 'ذخیره تغییرات' : 'ایجاد']);
+
+    const cancelBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--secondary', 
+      on: { click: () => { handle.close(); resolve(null); } } 
+    }, ['انصراف']);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
