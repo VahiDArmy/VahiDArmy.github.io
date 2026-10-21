@@ -1,0 +1,85 @@
+/* ============================================================
+   Mention Textarea (Autocomplete for @mentions)
+   ============================================================ */
+
+.mention-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.mention-wrapper .textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.mention-dropdown {
+  position: absolute;
+  bottom: calc(100% + 4px); /* Opens upwards to not hide behind text */
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  padding: var(--space-1);
+  animation: slide-up var(--dur-fast) var(--ease-out) both;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.mention-item:hover,
+.mention-item.is-active {
+  background: var(--bg-hover);
+}
+
+.mention-item__avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  overflow: hidden;
+}
+
+.mention-item__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mention-item__name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+/* Style for the mention link in the final rendered text */
+.mention-link {
+  color: var(--accent);
+  font-weight: var(--fw-semibold);
+  text-decoration: none;
+  background: var(--accent-soft);
+  padding: 0 4px;
+  border-radius: 4px;
+  transition: background var(--dur-fast);
+}
+.mention-link:hover {
+  background: var(--accent-soft-hover);
+  text-decoration: none;
+}
