@@ -1,7 +1,5 @@
 /* ============================================================
    The Office — CSS entrypoint
-   Order matters: variables → reset → typography → animations →
-   utilities → layout → components → pages
    ============================================================ */
 
 /* Base */
@@ -38,6 +36,7 @@
 @import url("./components/command-palette.css");
 @import url("./components/offline.css");
 @import url("./components/tag-input.css");
+@import url("./components/mention-textarea.css");
 
 /* Pages */
 @import url("./pages/auth.css");
