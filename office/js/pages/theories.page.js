@@ -1,6 +1,5 @@
 /**
- * Theories list page — search, filter by status/tag/person, sort, pagination,
- * inline voting, create button, right-click context menu.
+ * Theories list page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -239,6 +238,9 @@ export default async function theoriesPage(info, outlet) {
       renderResults();
       pagination.update({ total: state.total, page: state.page, pageSize: state.pageSize });
     } catch (err) {
+      // FORCE THE RAW ERROR INTO THE CONSOLE
+      console.error('[Page Error]', err); 
+      
       listWrap.innerHTML = '';
       listWrap.appendChild(
         emptyState({
