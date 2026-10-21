@@ -1,24 +1,33 @@
 /**
  * Console Viewer Component
- * A floating button that opens a modal displaying raw console logs.
- * Includes individual copy buttons and a "Copy All" button.
+ * Provides a function to open a modal displaying raw console logs.
+ * No floating buttons added to the main UI.
  */
 
-import { el, icon } from '../utils/dom.js';
+import { el, icon, lockBodyScroll, unlockBodyScroll } from '../utils/dom.js';
+
+let consoleStore = null;
+let activeBackdrop = null;
 
 export function initConsoleViewer(store) {
-  // --- Trigger Button ---
-  const triggerBtn = el('button', {
-    class: 'console-trigger',
-    title: 'کنسول پیام‌ها (لاگ‌ها)',
-    html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>'
-  });
+  consoleStore = store;
+}
 
-  // --- Modal ---
-  const modal = el('div', { class: 'console-modal', hidden: true });
+export function openConsoleViewer() {
+  if (!consoleStore) {
+    alert('Console store not initialized.');
+    return;
+  }
+
+  // Toggle close if already open
+  if (activeBackdrop) {
+    activeBackdrop.remove();
+    activeBackdrop = null;
+    unlockBodyScroll();
+    return;
+  }
+
   const list = el('div', { class: 'console-list' });
-  
-  // --- Actions ---
   const copyAllBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('copy'), 'کپی همه']);
   const clearBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('trash'), 'پاک کردن']);
   const closeBtn = el('button', { class: 'btn btn--ghost btn--icon btn--sm', style: { color: '#fff' } }, [icon('x')]);
@@ -28,14 +37,29 @@ export function initConsoleViewer(store) {
     el('div', { class: 'console-actions' }, [copyAllBtn, clearBtn, closeBtn])
   ]);
 
-  modal.appendChild(header);
-  modal.appendChild(list);
+  const modal = el('div', { class: 'console-modal' }, [header, list]);
 
-  // --- Logic ---
+  const backdrop = el('div', {
+    class: 'modal-backdrop',
+    style: { zIndex: 99999, padding: '20px', alignItems: 'center' },
+    on: { mousedown: (e) => { if (e.target === backdrop) close(); } }
+  }, [modal]);
+
+  function close() {
+    backdrop.remove();
+    activeBackdrop = null;
+    unlockBodyScroll();
+    window.removeEventListener('console:new', handleNewLog);
+  }
+
+  function handleNewLog() {
+    if (activeBackdrop) render();
+  }
+
   function render() {
     list.innerHTML = '';
-    const logs = store.getLogs();
-    
+    const logs = consoleStore.getLogs();
+
     if (logs.length === 0) {
       list.appendChild(el('div', { class: 'console-empty' }, ['هیچ پیامی در کنسول ثبت نشده است.']));
       return;
@@ -50,46 +74,38 @@ export function initConsoleViewer(store) {
           title: 'کپی این پیام',
           onClick: () => {
             navigator.clipboard.writeText(log.msg);
-            const oldIcon = item.querySelector('.console-item__copy').innerHTML;
-            item.querySelector('.console-item__copy').innerHTML = icon('check').innerHTML;
-            setTimeout(() => { item.querySelector('.console-item__copy').innerHTML = oldIcon; }, 1500);
+            const btn = item.querySelector('.console-item__copy');
+            const oldIcon = btn.innerHTML;
+            btn.innerHTML = icon('check').innerHTML;
+            setTimeout(() => { btn.innerHTML = oldIcon; }, 1500);
           }
         }, [icon('copy')])
       ]);
       list.appendChild(item);
     });
-    
+
     // Scroll to bottom
     setTimeout(() => { list.scrollTop = list.scrollHeight; }, 10);
   }
 
-  // --- Events ---
-  triggerBtn.addEventListener('click', () => {
-    modal.hidden = false;
-    render();
-  });
-
-  closeBtn.addEventListener('click', () => { modal.hidden = true; });
-  
-  clearBtn.addEventListener('click', () => {
-    store.clear();
-    render();
-  });
-
+  closeBtn.addEventListener('click', close);
+  clearBtn.addEventListener('click', () => { consoleStore.clear(); render(); });
   copyAllBtn.addEventListener('click', () => {
-    const text = store.getLogs().map(l => `[${l.type.toUpperCase()}] ${l.msg}`).join('\n\n');
+    const text = consoleStore.getLogs().map(l => `[${l.type.toUpperCase()}] ${l.msg}`).join('\n\n');
     if (text) {
       navigator.clipboard.writeText(text);
-      const oldText = copyAllBtn.innerHTML;
-      copyAllBtn.innerHTML = icon('check').innerHTML + ' کپی شد';
-      setTimeout(() => { copyAllBtn.innerHTML = oldText; }, 1500);
+      const btn = copyAllBtn;
+      const oldText = btn.innerHTML;
+      btn.innerHTML = icon('check').innerHTML + ' کپی شد';
+      setTimeout(() => { btn.innerHTML = oldText; }, 1500);
     }
   });
 
-  window.addEventListener('console:new', () => {
-    if (!modal.hidden) render();
-  });
+  window.addEventListener('console:new', handleNewLog);
 
-  document.body.appendChild(triggerBtn);
-  document.body.appendChild(modal);
+  document.body.appendChild(backdrop);
+  lockBodyScroll();
+  activeBackdrop = backdrop;
+
+  render();
 }
