@@ -27,13 +27,9 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
   let activeIndex = 0;
   let filteredPeople = [];
 
-  // --- Logic ---
-
   function renderChips() {
-    // Remove all chips
     container.querySelectorAll('.chip').forEach(c => c.remove());
     
-    // Re-add them before the input field
     for (const id of selectedIds) {
       const person = people.find(p => p.id === id);
       if (!person) continue;
@@ -68,6 +64,7 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
   function renderDropdown() {
     const query = input.value.trim().toLowerCase();
     
+    // Show ALL people (except those already selected)
     filteredPeople = people.filter(p => 
       !selectedIds.has(p.id) && 
       (p.full_name || '').toLowerCase().includes(query)
@@ -88,7 +85,7 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
         class: `tag-dropdown__item${idx === activeIndex ? ' is-active' : ''}`,
         on: {
           mousedown: (e) => {
-            e.preventDefault(); // prevent blur
+            e.preventDefault();
             selectPerson(person);
           }
         }
@@ -115,16 +112,6 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
     input.focus();
   }
 
-  function hideDropdown() {
-    setTimeout(() => {
-      if (!container.contains(document.activeElement) && !dropdown.contains(document.activeElement)) {
-        dropdown.hidden = true;
-      }
-    }, 150);
-  }
-
-  // --- Events ---
-
   input.addEventListener('focus', () => {
     container.classList.add('is-focused');
     renderDropdown();
@@ -132,7 +119,7 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
 
   input.addEventListener('blur', () => {
     container.classList.remove('is-focused');
-    hideDropdown();
+    setTimeout(() => { dropdown.hidden = true; }, 150);
   });
 
   input.addEventListener('input', () => {
@@ -142,7 +129,6 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
 
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Backspace' && input.value === '' && selectedIds.size > 0) {
-      // Remove last chip
       const ids = Array.from(selectedIds);
       selectedIds.delete(ids[ids.length - 1]);
       renderChips();
@@ -169,11 +155,6 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
     }
   });
 
-  // Prevent form submission when hitting Enter in the input
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') e.preventDefault();
-  });
-
   container.appendChild(input);
   wrapper.appendChild(container);
   wrapper.appendChild(dropdown);
@@ -181,9 +162,5 @@ export function createTagInput({ people = [], placeholder = 'افزودن تگ..
   return {
     node: wrapper,
     getValue: () => Array.from(selectedIds),
-    setExclude: (excludeId) => {
-      // Optional: if you want to exclude the central person from the dropdown
-      // For now, we can just filter them out of the people array or handle it here
-    }
   };
 }
