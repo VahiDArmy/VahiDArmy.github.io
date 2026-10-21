@@ -53,9 +53,8 @@ const pages = {
   people:     () => import('./pages/people.page.js'),
   person:     () => import('./pages/person.page.js'),
   
-  // تغییر نام یافته به tellalls
   tellalls:   () => import('./pages/tellalls.page.js'),
-  tellall:    () => import('./pages/tellall.page.js'), // اگر صفحه جزئیات را جدا ساخته‌اید
+  // tellall: () => import('./pages/tellall.page.js'), // For future detail page
   
   rankings:   () => import('./pages/rankings.page.js'),
   ranking:    () => import('./pages/ranking.page.js'),
@@ -95,22 +94,18 @@ function registerRoutes() {
     return mod.default(info, outlet);
   });
 
-  // --- Tellalls (جایگزین Theories) ---
+  // --- Tellalls (بگایی‌ها) ---
   router.add('/tellalls', async (info) => {
     const mod = await pages.tellalls();
     return mod.default(info, outlet);
   });
+  // Route /tellalls/new is handled via modal in the list page
   router.add('/tellalls/new', async (info) => {
-    toast.warning('فرم ایجاد موضوع جدید به زودی اضافه می‌شود.');
     router.navigate('/tellalls', { replace: true });
     return () => {};
   });
   router.add('/tellalls/:id', async (info) => {
-    // اگر صفحه جزئیات رو دارید، این خط را آنکامنت کنید:
-    // const mod = await pages.tellall();
-    // return mod.default(info, outlet);
-    
-    toast.warning('صفحه جزئیات به زودی اضافه می‌شود.');
+    toast.warning('صفحه جزئیات بگایی به زودی اضافه می‌شود.');
     router.navigate('/tellalls', { replace: true });
     return () => {};
   });
