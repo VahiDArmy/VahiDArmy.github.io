@@ -1,6 +1,5 @@
 /**
- * People list page — search, filter by status/department, sort,
- * grid/list toggle, bulk selection, create button, pagination.
+ * People list page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -15,6 +14,7 @@ import { createPagination } from '../components/pagination.js';
 import { createPersonCard } from '../components/person-card.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
+import { openPersonForm } from '../components/person-form.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
@@ -47,8 +47,14 @@ export default async function peoplePage(info, outlet) {
   if (canEditContent()) {
     headerActions.push(
       el(
-        'a',
-        { class: 'btn btn--primary', href: router.href('/people/new') },
+        'button',
+        { 
+          class: 'btn btn--primary', 
+          onClick: async () => {
+            const created = await openPersonForm();
+            if (created) load();
+          }
+        },
         [icon('plus'), 'افزودن فرد']
       )
     );
@@ -65,26 +71,8 @@ export default async function peoplePage(info, outlet) {
 
   // View toggle
   const viewToggle = el('div', { class: 'view-toggle', role: 'group', 'aria-label': 'حالت نمایش' }, [
-    el(
-      'button',
-      {
-        type: 'button',
-        class: `view-toggle__btn${state.view === 'grid' ? ' is-active' : ''}`,
-        'aria-label': 'نمای کارت',
-        on: { click: () => setView('grid') },
-      },
-      [icon('grid')]
-    ),
-    el(
-      'button',
-      {
-        type: 'button',
-        class: `view-toggle__btn${state.view === 'list' ? ' is-active' : ''}`,
-        'aria-label': 'نمای فهرست',
-        on: { click: () => setView('list') },
-      },
-      [icon('list')]
-    ),
+    el('button', { type: 'button', class: `view-toggle__btn${state.view === 'grid' ? ' is-active' : ''}`, 'aria-label': 'نمای کارت', on: { click: () => setView('grid') } }, [icon('grid')]),
+    el('button', { type: 'button', class: `view-toggle__btn${state.view === 'list' ? ' is-active' : ''}`, 'aria-label': 'نمای فهرست', on: { click: () => setView('list') } }, [icon('list')]),
   ]);
 
   // Toolbar
@@ -98,10 +86,7 @@ export default async function peoplePage(info, outlet) {
         key: 'status',
         label: 'وضعیت',
         value: state.status,
-        options: [
-          { value: 'all', label: 'همه وضعیت‌ها' },
-          ...Object.entries(PEOPLE_STATUS_LABELS).map(([k, v]) => ({ value: k, label: v })),
-        ],
+        options: [{ value: 'all', label: 'همه وضعیت‌ها' }, ...Object.entries(PEOPLE_STATUS_LABELS).map(([k, v]) => ({ value: k, label: v }))],
       },
       {
         type: 'select',
@@ -221,8 +206,11 @@ export default async function peoplePage(info, outlet) {
           actions: canEditContent()
             ? [
                 el(
-                  'a',
-                  { class: 'btn btn--primary', href: router.href('/people/new') },
+                  'button',
+                  { class: 'btn btn--primary', onClick: async () => {
+                    const created = await openPersonForm();
+                    if (created) load();
+                  } },
                   [icon('plus'), 'افزودن اولین فرد']
                 ),
               ]
@@ -260,34 +248,10 @@ export default async function peoplePage(info, outlet) {
       return;
     }
     bulkBar.hidden = false;
-    bulkBar.appendChild(
-      el('span', { class: 'bulk-bar__count' }, [
-        `${formatNumber(state.selected.size)} انتخاب شده`,
-      ])
-    );
-    bulkBar.appendChild(
-      el(
-        'button',
-        {
-          type: 'button',
-          class: 'btn',
-          on: { click: () => { state.selected.clear(); renderBulkBar(); renderResults(); } },
-        },
-        [icon('x'), 'لغو انتخاب']
-      )
-    );
+    bulkBar.appendChild(el('span', { class: 'bulk-bar__count' }, [`${formatNumber(state.selected.size)} انتخاب شده`]));
+    bulkBar.appendChild(el('button', { type: 'button', class: 'btn', on: { click: () => { state.selected.clear(); renderBulkBar(); renderResults(); } } }, [icon('x'), 'لغو انتخاب']));
     if (canEditContent()) {
-      bulkBar.appendChild(
-        el(
-          'button',
-          {
-            type: 'button',
-            class: 'btn btn--danger',
-            on: { click: bulkDelete },
-          },
-          [icon('trash'), 'حذف']
-        )
-      );
+      bulkBar.appendChild(el('button', { type: 'button', class: 'btn btn--danger', on: { click: bulkDelete } }, [icon('trash'), 'حذف']));
     }
   }
 
@@ -297,15 +261,9 @@ export default async function peoplePage(info, outlet) {
     const ok = await confirmAndDelete({
       title: 'حذف افراد',
       message: `آیا ${formatNumber(count)} فرد انتخاب‌شده حذف شوند؟ این عمل بازگشت‌پذیر نیست.`,
-      onConfirm: async () => {
-        await Promise.all(ids.map((id) => peopleService.remove(id)));
-      },
+      onConfirm: async () => { await Promise.all(ids.map((id) => peopleService.remove(id))); },
       successMessage: `${formatNumber(count)} فرد حذف شد.`,
-      onDeleted: () => {
-        state.selected.clear();
-        renderBulkBar();
-        load();
-      },
+      onDeleted: () => { state.selected.clear(); renderBulkBar(); load(); },
     });
     return ok;
   }
@@ -331,7 +289,10 @@ export default async function peoplePage(info, outlet) {
       items.push({
         label: 'ویرایش',
         icon: 'edit',
-        onClick: () => router.navigate(`/people/${person.id}/edit`),
+        onClick: async () => {
+          const updated = await openPersonForm({ person });
+          if (updated) load();
+        },
       });
       items.push({
         label: 'حذف',
@@ -351,28 +312,19 @@ export default async function peoplePage(info, outlet) {
     openContextMenu(e.clientX, e.clientY, items);
   }
 
-  // Populate departments in the filter select once data loads
-  peopleService
-    .departments()
-    .then((depts) => {
-      const select = toolbar.node.querySelector('select');
-      if (!select) return;
-      const allSelects = toolbar.node.querySelectorAll('select');
-      const deptSelect = allSelects[1];
-      if (!deptSelect) return;
-      for (const d of depts) {
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = d;
-        if (d === state.department) opt.selected = true;
-        deptSelect.appendChild(opt);
-      }
-    })
-    .catch(() => {});
+  peopleService.departments().then((depts) => {
+    const allSelects = toolbar.node.querySelectorAll('select');
+    const deptSelect = allSelects[1];
+    if (!deptSelect) return;
+    for (const d of depts) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      if (d === state.department) opt.selected = true;
+      deptSelect.appendChild(opt);
+    }
+  }).catch(() => {});
 
   await load();
-
-  return () => {
-    state.selected.clear();
-  };
+  return () => { state.selected.clear(); };
 }
