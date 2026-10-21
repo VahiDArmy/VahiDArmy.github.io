@@ -1,8 +1,5 @@
 /**
  * Row create/edit modal — renders inputs for every column type.
- *
- *   const result = await openRowEditor({ columns, values, people });
- *   // returns { [columnId]: value } or null
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -13,132 +10,44 @@ import { toFaDigits } from '../utils/format.js';
 
 function renderField(col, value, allValues, { people = [] } = {}) {
   const id = `col-${col.id}`;
-  const label = el(
-    'label',
-    { class: 'form-label', for: id },
-    [col.name, col.required ? el('span', { class: 'required' }, ['*']) : null]
-  );
+  const label = el('label', { class: 'form-label', for: id }, [col.name, col.required ? el('span', { class: 'required' }, ['*']) : null]);
 
   let input;
   switch (col.type) {
     case COLUMN_TYPES.NUMBER:
-      input = el('input', {
-        type: 'number',
-        class: 'input',
-        id,
-        dir: 'ltr',
-        value: value != null ? String(value) : '',
-        step: 'any',
-      });
+      input = el('input', { type: 'number', class: 'input', id, dir: 'ltr', value: value != null ? String(value) : '', step: 'any' });
       break;
-
     case COLUMN_TYPES.DATE:
-      input = el('input', {
-        type: 'date',
-        class: 'input',
-        id,
-        dir: 'ltr',
-        value: value || '',
-      });
+      input = el('input', { type: 'date', class: 'input', id, dir: 'ltr', value: value || '' });
       break;
-
     case COLUMN_TYPES.CHECKBOX:
-      input = el(
-        'label',
-        { class: 'checkbox' },
-        [
-          el('input', { type: 'checkbox', id, checked: !!value }),
-          el('span', { class: 'checkbox__box' }),
-          el('span', {}, ['بله']),
-        ]
-      );
+      input = el('label', { class: 'checkbox' }, [el('input', { type: 'checkbox', id, checked: !!value }), el('span', { class: 'checkbox__box' }), el('span', {}, ['بله'])]);
       break;
-
     case COLUMN_TYPES.LONG_TEXT:
-      input = el('textarea', {
-        class: 'textarea',
-        id,
-        rows: 4,
-        placeholder: '',
-      });
+      input = el('textarea', { class: 'textarea', id, rows: 4, placeholder: '' });
       input.value = value || '';
       break;
-
     case COLUMN_TYPES.URL:
-      input = el('input', {
-        type: 'url',
-        class: 'input',
-        id,
-        dir: 'ltr',
-        value: value || '',
-        placeholder: 'https://...',
-      });
+      input = el('input', { type: 'url', class: 'input', id, dir: 'ltr', value: value || '', placeholder: 'https://...' });
       break;
-
     case COLUMN_TYPES.SELECT: {
       const choices = col.options?.choices || [];
-      input = el(
-        'select',
-        { class: 'select', id },
-        [
-          el('option', { value: '' }, ['— انتخاب نشده —']),
-          ...choices.map((c) =>
-            el('option', { value: c, selected: c === value }, [c])
-          ),
-        ]
-      );
+      input = el('select', { class: 'select', id }, [el('option', { value: '' }, ['— انتخاب نشده —']), ...choices.map((c) => el('option', { value: c, selected: c === value }, [c]))]);
       break;
     }
-
     case COLUMN_TYPES.MULTI_SELECT: {
       const choices = col.options?.choices || [];
       const selectedSet = new Set(Array.isArray(value) ? value : []);
-      input = el(
-        'div',
-        { class: 'options-editor', id },
-        choices.map((c) =>
-          el(
-            'label',
-            { class: 'checkbox' },
-            [
-              el('input', {
-                type: 'checkbox',
-                value: c,
-                checked: selectedSet.has(c),
-                dataset: { multiSelect: col.id },
-              }),
-              el('span', { class: 'checkbox__box' }),
-              el('span', {}, [c]),
-            ]
-          )
-        )
-      );
+      input = el('div', { class: 'options-editor', id }, choices.map((c) => el('label', { class: 'checkbox' }, [el('input', { type: 'checkbox', value: c, checked: selectedSet.has(c), dataset: { multiSelect: col.id } }), el('span', { class: 'checkbox__box' }), el('span', {}, [c])])));
       break;
     }
-
     case COLUMN_TYPES.PERSON_REF: {
-      input = el(
-        'select',
-        { class: 'select', id },
-        [
-          el('option', { value: '' }, ['— انتخاب نشده —']),
-          ...people.map((p) =>
-            el('option', { value: p.id, selected: p.id === value }, [p.full_name || 'بدون نام'])
-          ),
-        ]
-      );
+      input = el('select', { class: 'select', id }, [el('option', { value: '' }, ['— انتخاب نشده —']), ...people.map((p) => el('option', { value: p.id, selected: p.id === value }, [p.full_name || 'بدون نام']))]);
       break;
     }
-
     case COLUMN_TYPES.TEXT:
     default:
-      input = el('input', {
-        type: 'text',
-        class: 'input',
-        id,
-        value: value || '',
-        maxlength: 500,
-      });
+      input = el('input', { type: 'text', class: 'input', id, value: value || '', maxlength: 500 });
       break;
   }
 
@@ -148,28 +57,21 @@ function renderField(col, value, allValues, { people = [] } = {}) {
 export function openRowEditor({ columns, values = {}, people = [] } = {}) {
   return new Promise((resolve) => {
     const isEdit = !!values && Object.keys(values).length > 0;
-
-    const fields = columns.map((col) =>
-      renderField(col, values[col.id], values, { people })
-    );
-
-    const submitBtn = el(
-      'button',
-      { type: 'submit', class: 'btn btn--primary' },
-      [isEdit ? 'ذخیره' : 'افزودن ردیف']
-    );
-
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
-
+    const fields = columns.map((col) => renderField(col, values[col.id], values, { people }));
+    
     const form = el('form', { class: 'row-editor-form' }, fields);
+
+    const submitBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--primary',
+      on: { click: () => form.requestSubmit() }
+    }, [isEdit ? 'ذخیره' : 'افزودن ردیف']);
+
+    const cancelBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--secondary', 
+      on: { click: () => { handle.close(); resolve(null); } } 
+    }, ['انصراف']);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -182,23 +84,16 @@ export function openRowEditor({ columns, values = {}, people = [] } = {}) {
 
         let value;
         switch (col.type) {
-          case COLUMN_TYPES.NUMBER: {
-            const num = node.value === '' ? null : Number(node.value);
-            value = num;
+          case COLUMN_TYPES.NUMBER:
+            value = node.value === '' ? null : Number(node.value);
             break;
-          }
-          case COLUMN_TYPES.CHECKBOX: {
+          case COLUMN_TYPES.CHECKBOX:
             const cb = node.querySelector('input[type="checkbox"]');
             value = cb ? cb.checked : false;
             break;
-          }
-          case COLUMN_TYPES.MULTI_SELECT: {
-            const checked = Array.from(
-              node.querySelectorAll(`input[data-multi-select="${col.id}"]:checked`)
-            ).map((n) => n.value);
-            value = checked;
+          case COLUMN_TYPES.MULTI_SELECT:
+            value = Array.from(node.querySelectorAll(`input[data-multi-select="${col.id}"]:checked`)).map((n) => n.value);
             break;
-          }
           case COLUMN_TYPES.LONG_TEXT:
             value = node.value.trim();
             break;
