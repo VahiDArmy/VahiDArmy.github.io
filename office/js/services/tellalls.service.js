@@ -21,18 +21,51 @@ export const tellallsService = {
   },
 
   async getById(id) {
-    const { data, error } = await supabase
+    // 1. Fetch the tellall and its entries (Without risky joins)
+    const { data: tellall, error } = await supabase
       .from('tellalls')
       .select(`
         *,
-        author:created_by(display_name, avatar_url),
         person:person_id(id, full_name, job_title, avatar_url),
-        entries:tellall_entries(*, author:author_id(display_name, avatar_url))
+        entries:tellall_entries(*)
       `)
       .eq('id', id)
       .maybeSingle();
+    
     guard(error);
-    return data;
+    if (!tellall) return null;
+
+    // 2. Safely fetch the profiles for the author and all entry authors
+    const authorIds = new Set([tellall.created_by]);
+    (tellall.entries || []).forEach(e => authorIds.add(e.author_id));
+
+    const idsToFetch = Array.from(authorIds).filter(Boolean);
+    let profiles = [];
+    
+    if (idsToFetch.length > 0) {
+      const { data: profilesData, error: profError } = await supabase
+        .from('profiles')
+        .select('id, display_name, avatar_url')
+        .in('id', idsToFetch);
+      
+      if (!profError && profilesData) {
+        profiles = profilesData;
+      }
+    }
+
+    // Map profiles to their IDs for easy lookup
+    const profileMap = {};
+    profiles.forEach(p => { profileMap[p.id] = p; });
+
+    // 3. Attach the author data to the objects
+    tellall.author = profileMap[tellall.created_by] || { display_name: 'کاربر', avatar_url: null };
+    
+    tellall.entries = (tellall.entries || []).map(entry => ({
+      ...entry,
+      author: profileMap[entry.author_id] || { display_name: 'کاربر', avatar_url: null }
+    }));
+
+    return tellall;
   },
 
   async create(payload) {
@@ -67,6 +100,8 @@ export const tellallsService = {
 
   async addEntry(tellallId, content, personId) {
     const session = await requireSession();
+    
+    // Insert the entry
     const { data, error } = await supabase
       .from('tellall_entries')
       .insert({
@@ -75,13 +110,21 @@ export const tellallsService = {
         content,
         author_id: session.user.id
       })
-      .select(`
-        *,
-        author:author_id(display_name, avatar_url)
-      `)
+      .select()
       .single();
     guard(error);
-    return data;
+
+    // Fetch the author profile for immediate UI update
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('display_name, avatar_url')
+      .eq('id', session.user.id)
+      .single();
+
+    return {
+      ...data,
+      author: profile || { display_name: 'کاربر', avatar_url: null }
+    };
   }
 };
 
