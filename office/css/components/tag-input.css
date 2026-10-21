@@ -1,0 +1,110 @@
+/* ============================================================
+   Tag Input (Autocomplete + Chips)
+   ============================================================ */
+
+.tag-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.tag-input-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: 44px;
+  padding: var(--space-1-5) var(--space-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  cursor: text;
+  transition: border-color var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.tag-input-container:hover {
+  border-color: var(--border-strong);
+}
+
+.tag-input-container.is-focused {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.tag-input-container .chip {
+  margin: 0;
+  user-select: none;
+  animation: pop-in var(--dur-base) var(--ease-spring) both;
+}
+
+.tag-input__field {
+  flex: 1 1 120px;
+  min-width: 120px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.tag-input__field::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Dropdown menu */
+.tag-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: var(--z-dropdown);
+  padding: var(--space-1);
+  animation: slide-down var(--dur-fast) var(--ease-out) both;
+}
+
+.tag-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2-5);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+
+.tag-dropdown__item:hover,
+.tag-dropdown__item.is-active {
+  background: var(--bg-hover);
+}
+
+.tag-dropdown__item .avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 10px;
+}
+
+.tag-dropdown__name {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  font-weight: var(--fw-medium);
+}
+
+.tag-dropdown__job {
+  font-size: var(--text-2xs);
+  color: var(--text-tertiary);
+  margin-inline-start: auto;
+}
+
+.tag-dropdown__empty {
+  padding: var(--space-3);
+  text-align: center;
+  color: var(--text-tertiary);
+  font-size: var(--text-xs);
+}
