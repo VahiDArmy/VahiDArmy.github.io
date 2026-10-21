@@ -1,7 +1,5 @@
 /**
  * Console Viewer Component
- * Provides a function to open a modal displaying raw console logs.
- * No floating buttons added to the main UI.
  */
 
 import { el, icon, lockBodyScroll, unlockBodyScroll } from '../utils/dom.js';
@@ -19,7 +17,6 @@ export function openConsoleViewer() {
     return;
   }
 
-  // Toggle close if already open
   if (activeBackdrop) {
     activeBackdrop.remove();
     activeBackdrop = null;
@@ -28,6 +25,8 @@ export function openConsoleViewer() {
   }
 
   const list = el('div', { class: 'console-list' });
+  
+  // Header Actions
   const copyAllBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('copy'), 'کپی همه']);
   const clearBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('trash'), 'پاک کردن']);
   const closeBtn = el('button', { class: 'btn btn--ghost btn--icon btn--sm', style: { color: '#fff' } }, [icon('x')]);
@@ -56,6 +55,27 @@ export function openConsoleViewer() {
     if (activeBackdrop) render();
   }
 
+  // Helper for copying text across different browsers/contexts
+  function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "absolute";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.error('Fallback copy failed', err);
+      }
+      textArea.remove();
+      return Promise.resolve();
+    }
+  }
+
   function render() {
     list.innerHTML = '';
     const logs = consoleStore.getLogs();
@@ -66,38 +86,49 @@ export function openConsoleViewer() {
     }
 
     logs.forEach(log => {
+      const copyBtn = el('button', {
+        class: 'console-item__copy',
+        title: 'کپی این پیام',
+        html: icon('copy').innerHTML,
+      });
+
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        copyToClipboard(log.msg).then(() => {
+          copyBtn.innerHTML = icon('check').innerHTML;
+          copyBtn.style.color = '#4caf50';
+          setTimeout(() => {
+            copyBtn.innerHTML = icon('copy').innerHTML;
+            copyBtn.style.color = '';
+          }, 1500);
+        });
+      });
+
       const item = el('div', { class: `console-item console-item--${log.type}` }, [
         el('div', { class: 'console-item__time' }, [log.time.toLocaleTimeString('fa-IR')]),
         el('pre', { class: 'console-item__msg' }, [log.msg]),
-        el('button', {
-          class: 'console-item__copy btn btn--ghost btn--icon btn--sm',
-          title: 'کپی این پیام',
-          onClick: () => {
-            navigator.clipboard.writeText(log.msg);
-            const btn = item.querySelector('.console-item__copy');
-            const oldIcon = btn.innerHTML;
-            btn.innerHTML = icon('check').innerHTML;
-            setTimeout(() => { btn.innerHTML = oldIcon; }, 1500);
-          }
-        }, [icon('copy')])
+        copyBtn
       ]);
+      
       list.appendChild(item);
     });
 
-    // Scroll to bottom
+    // Auto-scroll to bottom
     setTimeout(() => { list.scrollTop = list.scrollHeight; }, 10);
   }
 
+  // Events
   closeBtn.addEventListener('click', close);
   clearBtn.addEventListener('click', () => { consoleStore.clear(); render(); });
+  
   copyAllBtn.addEventListener('click', () => {
     const text = consoleStore.getLogs().map(l => `[${l.type.toUpperCase()}] ${l.msg}`).join('\n\n');
     if (text) {
-      navigator.clipboard.writeText(text);
-      const btn = copyAllBtn;
-      const oldText = btn.innerHTML;
-      btn.innerHTML = icon('check').innerHTML + ' کپی شد';
-      setTimeout(() => { btn.innerHTML = oldText; }, 1500);
+      copyToClipboard(text).then(() => {
+        const oldHtml = copyAllBtn.innerHTML;
+        copyAllBtn.innerHTML = icon('check').innerHTML + ' کپی شد';
+        setTimeout(() => { copyAllBtn.innerHTML = oldHtml; }, 1500);
+      });
     }
   });
 
