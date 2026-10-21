@@ -102,16 +102,24 @@ function buildView(tellall, peopleList) {
     : null;
 
   const headActions = canEdit ? el('div', { style: { display: 'flex', gap: '8px', marginInlineStart: 'auto' } }, [
-    el('button', { class: 'btn btn--secondary btn--sm', onClick: () => router.navigate(`/tellalls/${tellall.id}/edit`) }, [icon('edit'), 'ویرایش']),
-    el('button', { class: 'btn btn--danger btn--sm', onClick: () => {
-      confirmAndDelete({
-        title: 'حذف بگایی',
-        message: `«${tellall.title}» حذف شود؟`,
-        onConfirm: () => tellallsService.remove(tellall.id),
-        successMessage: 'بگایی حذف شد.',
-        onDeleted: () => router.navigate('/tellalls', { replace: true })
-      });
-    }}, [icon('trash'), 'حذف'])
+    el('button', { 
+      class: 'btn btn--secondary btn--sm', 
+      on: { click: () => router.navigate(`/tellalls/${tellall.id}/edit`) } 
+    }, [icon('edit'), 'ویرایش']),
+    el('button', { 
+      class: 'btn btn--danger btn--sm', 
+      on: { 
+        click: () => {
+          confirmAndDelete({
+            title: 'حذف بگایی',
+            message: `«${tellall.title}» حذف شود؟`,
+            onConfirm: () => tellallsService.remove(tellall.id),
+            successMessage: 'بگایی حذف شد.',
+            onDeleted: () => router.navigate('/tellalls', { replace: true })
+          });
+        } 
+      } 
+    }, [icon('trash'), 'حذف'])
   ]) : null;
 
   const head = el('div', { class: 'tellall-head', style: { flexDirection: 'row', flexWrap: 'wrap' } }, [
@@ -145,39 +153,55 @@ function buildView(tellall, peopleList) {
       const entryHtml = renderMentions(entry.content, peopleList);
 
       const entryActions = (canEdit || user?.id === entry.author_id) ? el('div', { style: { display: 'flex', gap: '4px', marginInlineStart: 'auto' } }, [
-        el('button', { class: 'btn btn--ghost btn--icon btn--sm', onClick: () => {
-          const editor = createMentionTextarea({ people: peopleList, rows: 5 });
-          editor.setValue(entry.content);
-          const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
-            try {
-              await tellallsService.updateEntry(entry.id, editor.getValue());
-              entry.content = editor.getValue();
-              renderEntries();
-              handle.close();
-              toast.success('پاسخ ویرایش شد.');
-            } catch (e) { toast.error(e.message); }
-          }}, ['ذخیره']);
-          
-          const handle = openModal({
-            title: 'ویرایش پاسخ',
-            body: el('div', { class: 'form-field' }, [editor.node]),
-            footer: saveBtn,
-            size: 'md',
-          });
-        }}, [icon('edit')]),
-        el('button', { class: 'btn btn--ghost btn--icon btn--sm', style: { color: 'var(--danger-500)' }, onClick: () => {
-          confirmAndDelete({
-            title: 'حذف پاسخ',
-            message: 'این پاسخ حذف شود؟',
-            onConfirm: () => tellallsService.removeEntry(entry.id),
-            successMessage: 'پاسخ حذف شد.',
-            onDeleted: () => {
-              const idx = entries.findIndex(e => e.id === entry.id);
-              if (idx !== -1) entries.splice(idx, 1);
-              renderEntries();
-            }
-          });
-        }}, [icon('trash')])
+        el('button', { 
+          class: 'btn btn--ghost btn--icon btn--sm', 
+          on: { 
+            click: () => {
+              const editor = createMentionTextarea({ people: peopleList, rows: 5 });
+              editor.setValue(entry.content);
+              const saveBtn = el('button', { 
+                class: 'btn btn--primary', 
+                on: {
+                  click: async () => {
+                    try {
+                      await tellallsService.updateEntry(entry.id, editor.getValue());
+                      entry.content = editor.getValue();
+                      renderEntries();
+                      handle.close();
+                      toast.success('پاسخ ویرایش شد.');
+                    } catch (e) { toast.error(e.message); }
+                  }
+                }
+              }, ['ذخیره']);
+              
+              const handle = openModal({
+                title: 'ویرایش پاسخ',
+                body: el('div', { class: 'form-field' }, [editor.node]),
+                footer: saveBtn,
+                size: 'md',
+              });
+            } 
+          } 
+        }, [icon('edit')]),
+        el('button', { 
+          class: 'btn btn--ghost btn--icon btn--sm', 
+          style: { color: 'var(--danger-500)' }, 
+          on: { 
+            click: () => {
+              confirmAndDelete({
+                title: 'حذف پاسخ',
+                message: 'این پاسخ حذف شود؟',
+                onConfirm: () => tellallsService.removeEntry(entry.id),
+                successMessage: 'پاسخ حذف شد.',
+                onDeleted: () => {
+                  const idx = entries.findIndex(e => e.id === entry.id);
+                  if (idx !== -1) entries.splice(idx, 1);
+                  renderEntries();
+                }
+              });
+            } 
+          } 
+        }, [icon('trash')])
       ]) : null;
 
       entriesList.appendChild(
@@ -200,22 +224,27 @@ function buildView(tellall, peopleList) {
   let composer = null;
   if (user) {
     const editor = createMentionTextarea({ people: peopleList, placeholder: 'پاسخ یا جزئیات جدیدی اضافه کنید...', rows: 3, minHeight: '100px' });
-    const submitBtn = el('button', { class: 'btn btn--primary btn--sm', onClick: async () => {
-      const content = editor.getValue().trim();
-      if (!content) return toast.warning('متن پاسخ نمی‌تواند خالی باشد.');
-      submitBtn.classList.add('is-loading');
-      try {
-        const newEntry = await tellallsService.addEntry(tellall.id, content, tellall.person_id);
-        entries.push(newEntry);
-        editor.setValue('');
-        renderEntries();
-        toast.success('پاسخ شما ثبت شد.');
-      } catch (err) {
-        toast.error(err?.message || 'خطا در ثبت پاسخ.');
-      } finally {
-        submitBtn.classList.remove('is-loading');
+    const submitBtn = el('button', { 
+      class: 'btn btn--primary btn--sm', 
+      on: {
+        click: async () => {
+          const content = editor.getValue().trim();
+          if (!content) return toast.warning('متن پاسخ نمی‌تواند خالی باشد.');
+          submitBtn.classList.add('is-loading');
+          try {
+            const newEntry = await tellallsService.addEntry(tellall.id, content, tellall.person_id);
+            entries.push(newEntry);
+            editor.setValue('');
+            renderEntries();
+            toast.success('پاسخ شما ثبت شد.');
+          } catch (err) {
+            toast.error(err?.message || 'خطا در ثبت پاسخ.');
+          } finally {
+            submitBtn.classList.remove('is-loading');
+          }
+        }
       }
-    }}, [icon('send'), 'ارسال پاسخ']);
+    }, [icon('send'), 'ارسال پاسخ']);
 
     composer = el('div', { class: 'entry-composer' }, [
       el('div', { class: 'entry-composer__avatar' }, [el('span', { class: 'avatar' }, [profile?.avatar_url ? el('img', { src: profile.avatar_url, alt: profile.display_name }) : initials(profile?.display_name || 'کاربر')])]),
