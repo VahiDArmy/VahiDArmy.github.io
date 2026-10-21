@@ -1,24 +1,24 @@
 /**
- * Tellalls (Bugayi-ha) list page — search, filter, sort, pagination, etc.
+ * Tellalls list page — search, pagination, create via modal.
  */
 
 import { el, icon } from '../utils/dom.js';
 import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
-import { ROUTES, THEORY_STATUS_LABELS, DEFAULT_PAGE_SIZE } from '../config/constants.js';
-import { theoriesService } from '../services/theories.service.js';
+import { ROUTES } from '../config/constants.js';
+import { tellallsService } from '../services/tellalls.service.js';
 import { pageHeader } from '../components/page-header.js';
 import { emptyState } from '../components/empty-state.js';
-import { createListToolbar } from '../components/list-toolbar.js';
 import { createPagination } from '../components/pagination.js';
-import { createTheoryCard } from '../components/theory-card.js';
+import { openTellallForm } from '../components/tellall-form.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
-import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
-import { formatNumber } from '../utils/format.js';
+import { requireAuthOrRedirect } from '../components/auth-guard.js';
+import { formatNumber, formatDate } from '../utils/format.js';
+import { debounce } from '../utils/debounce.js';
 
 export default async function tellallsPage(info, outlet) {
   const session = await requireAuthOrRedirect();
@@ -26,31 +26,26 @@ export default async function tellallsPage(info, outlet) {
 
   const state = {
     search: getQueryParam('q', ''),
-    status: getQueryParam('status', 'published'),
-    tag: getQueryParam('tag', ''),
-    personId: getQueryParam('person', ''),
-    sort: getQueryParam('sort', 'created_at'),
-    direction: getQueryParam('dir', 'desc'),
     page: parseInt(getQueryParam('page', '1'), 10) || 1,
-    pageSize: parseInt(getQueryParam('size', String(DEFAULT_PAGE_SIZE)), 10) || DEFAULT_PAGE_SIZE,
-    compact: getQueryParam('compact', '0') === '1',
+    pageSize: parseInt(getQueryParam('size', '12'), 10) || 12,
     items: [],
     total: 0,
   };
 
   outlet.innerHTML = '';
-  const page = el(
-    'div',
-    { class: `container theories-page${state.compact ? ' is-compact' : ''}` }
-  );
+  const page = el('div', { class: 'container theories-page' });
   outlet.appendChild(page);
 
   const headerActions = [];
   if (appStore.get('user')) {
     headerActions.push(
       el(
-        'a',
-        { class: 'btn btn--primary', href: router.href('/tellalls/new') },
+        'button',
+        {
+          type: 'button',
+          class: 'btn btn--primary',
+          on: { click: () => createTellall() },
+        },
         [icon('plus'), 'موضوع جدید']
       )
     );
@@ -65,67 +60,29 @@ export default async function tellallsPage(info, outlet) {
     })
   );
 
-  // Toolbar
-  const toolbar = createListToolbar({
-    searchPlaceholder: 'جستجو در عنوان موضوعات...',
-    searchValue: state.search,
-    onSearch: (v) => { state.search = v; state.page = 1; persist(); load(); },
-    filters: [
-      {
-        type: 'select',
-        key: 'status',
-        label: 'وضعیت',
-        value: state.status,
-        options: [
-          { value: 'all', label: 'همه' },
-          ...Object.entries(THEORY_STATUS_LABELS).map(([k, v]) => ({ value: k, label: v })),
-        ],
-      },
-    ],
-    sort: {
-      value: state.sort,
-      direction: state.direction,
-      options: [
-        { value: 'created_at', label: 'جدیدترین' },
-        { value: 'score', label: 'بیشترین امتیاز' },
-        { value: 'comments_count', label: 'بیشترین کامنت' },
-        { value: 'title', label: 'عنوان' },
-      ],
-    },
-    actions: [
-      el(
-        'button',
-        {
-          type: 'button',
-          class: 'btn btn--ghost btn--icon btn--sm',
-          'aria-label': 'نمای فشرده',
-          title: 'نمای فشرده',
-          on: {
-            click: (e) => {
-              state.compact = !state.compact;
-              e.currentTarget.classList.toggle('is-active', state.compact);
-              page.classList.toggle('is-compact', state.compact);
-              persist();
-            },
-          },
-        },
-        [icon('list')]
-      ),
-    ],
-    onFilterChange: (key, value) => {
-      if (key === 'status') state.status = value;
-      else if (key === 'sort') state.sort = value;
-      else if (key === 'direction') state.direction = value;
-      state.page = 1;
-      persist();
-      load();
-    },
+  // Search bar
+  const searchInput = el('input', {
+    type: 'search',
+    class: 'input',
+    placeholder: 'جستجو در عنوان بگایی‌ها...',
+    value: state.search,
   });
-  page.appendChild(toolbar.node);
+  const onSearch = debounce((v) => {
+    state.search = v.trim();
+    state.page = 1;
+    persist();
+    load();
+  }, 300);
+  searchInput.addEventListener('input', () => onSearch(searchInput.value));
 
-  // Active filters (person / tag)
-  const activeFilters = el('div', { class: 'filter-summary', hidden: true });
-  page.appendChild(activeFilters);
+  page.appendChild(
+    el('div', { class: 'toolbar' }, [
+      el('div', { class: 'search toolbar__search' }, [
+        el('span', { class: 'search__icon' }, [icon('search')]),
+        searchInput,
+      ]),
+    ])
+  );
 
   const listWrap = el('div', { id: 'tellalls-results' });
   page.appendChild(listWrap);
@@ -146,96 +103,28 @@ export default async function tellallsPage(info, outlet) {
   function persist() {
     setQuery({
       q: state.search || null,
-      status: state.status === 'published' ? null : state.status,
-      tag: state.tag || null,
-      person: state.personId || null,
-      sort: state.sort === 'created_at' ? null : state.sort,
-      dir: state.direction === 'desc' ? null : state.direction,
       page: state.page === 1 ? null : state.page,
-      size: state.pageSize === DEFAULT_PAGE_SIZE ? null : state.pageSize,
-      compact: state.compact ? '1' : null,
+      size: state.pageSize === 12 ? null : state.pageSize,
     });
   }
 
-  function renderActiveFilters() {
-    activeFilters.innerHTML = '';
-    const chips = [];
-    if (state.tag) {
-      chips.push(
-        el('span', { class: 'chip chip--brand' }, [
-          `برچسب: ${state.tag}`,
-          el(
-            'button',
-            {
-              type: 'button',
-              class: 'chip__close',
-              'aria-label': 'حذف فیلتر',
-              on: {
-                click: () => {
-                  state.tag = '';
-                  persist();
-                  renderActiveFilters();
-                  load();
-                },
-              },
-            },
-            [icon('x')]
-          ),
-        ])
-      );
-    }
-    if (state.personId) {
-      chips.push(
-        el('span', { class: 'chip chip--brand' }, [
-          `فرد مرتبط`,
-          el(
-            'button',
-            {
-              type: 'button',
-              class: 'chip__close',
-              'aria-label': 'حذف فیلتر',
-              on: {
-                click: () => {
-                  state.personId = '';
-                  persist();
-                  renderActiveFilters();
-                  load();
-                },
-              },
-            },
-            [icon('x')]
-          ),
-        ])
-      );
-    }
-    if (!chips.length) {
-      activeFilters.hidden = true;
-      return;
-    }
-    activeFilters.hidden = false;
-    activeFilters.appendChild(el('span', { class: 'filter-summary__label' }, ['فیلترهای فعال:']));
-    for (const c of chips) activeFilters.appendChild(c);
-  }
-  renderActiveFilters();
-
   async function load() {
     listWrap.innerHTML = '';
-    listWrap.appendChild(skeletonList({ count: 4, variant: 'row' }));
-
+    listWrap.appendChild(skeletonList({ count: 6 }));
     try {
-      const res = await theoriesService.list({
-        search: state.search,
-        status: state.status,
-        tag: state.tag,
-        personId: state.personId,
-        sort: state.sort,
-        direction: state.direction,
-        limit: state.pageSize,
-        offset: (state.page - 1) * state.pageSize,
-      });
-      state.items = res.items;
-      state.total = res.total;
-      renderResults();
+      // Direct supabase query for simplicity since tellallsService.list might not exist yet
+      const { supabase } = await import('../services/supabase.client.js');
+      let q = supabase.from('tellalls').select('id, title, description, created_at, created_by, person_id, people:person_id(full_name)', { count: 'exact' });
+      
+      if (state.search) q = q.ilike('title', `%${state.search}%`);
+      q = q.order('created_at', { ascending: false }).range((state.page - 1) * state.pageSize, state.page * state.pageSize - 1);
+      
+      const { data, error, count } = await q;
+      if (error) throw error;
+      
+      state.items = data || [];
+      state.total = count || 0;
+      render();
       pagination.update({ total: state.total, page: state.page, pageSize: state.pageSize });
     } catch (err) {
       listWrap.innerHTML = '';
@@ -243,13 +132,13 @@ export default async function tellallsPage(info, outlet) {
         emptyState({
           iconName: 'alert-circle',
           title: 'خطا در بارگذاری',
-          description: err?.message || 'موضوعات بارگذاری نشد.',
+          description: err?.message || 'بگایی‌ها بارگذاری نشد.',
         })
       );
     }
   }
 
-  async function renderResults() {
+  function render() {
     listWrap.innerHTML = '';
     if (!state.items.length) {
       listWrap.appendChild(
@@ -262,113 +151,69 @@ export default async function tellallsPage(info, outlet) {
           actions: appStore.get('user')
             ? [
                 el(
-                  'a',
-                  { class: 'btn btn--primary', href: router.href('/tellalls/new') },
+                  'button',
+                  {
+                    type: 'button',
+                    class: 'btn btn--primary',
+                    on: { click: () => createTellall() },
+                  },
                   [icon('plus'), 'موضوع جدید']
                 ),
               ]
             : [
-                el(
-                  'a',
-                  { class: 'btn btn--primary', href: router.href(ROUTES.LOGIN) },
-                  ['ورود برای ایجاد']
-                ),
+                el('a', { class: 'btn btn--primary', href: router.href(ROUTES.LOGIN) }, ['ورود']),
               ],
         })
       );
       return;
     }
 
-    const list = el('div', { class: 'theory-list' });
-
-    // Fetch my votes for all theories on this page
-    const myVotes = new Map();
-    if (appStore.get('user')) {
-      const voteResults = await Promise.all(
-        state.items.map((t) =>
-          theoriesService
-            .myVote(t.id)
-            .then((v) => [t.id, v])
-            .catch(() => [t.id, 0])
-        )
-      );
-      for (const [id, v] of voteResults) myVotes.set(id, v);
+    const grid = el('div', { class: 'rankings-grid' }); // Reusing ranking card grid style for simplicity
+    for (const tellall of state.items) {
+      grid.appendChild(buildCard(tellall));
     }
-
-    for (const theory of state.items) {
-      list.appendChild(
-        createTheoryCard(theory, {
-          myVote: myVotes.get(theory.id) || 0,
-          onVote: handleVote,
-          onContextMenu: (e, t) => openTellallContext(e, t),
-        })
-      );
-    }
-    listWrap.appendChild(list);
+    listWrap.appendChild(grid);
   }
 
-  async function handleVote(theory, value) {
-    if (!appStore.get('user')) {
-      toast.warning('برای رأی دادن وارد شوید.');
-      router.navigate(ROUTES.LOGIN);
-      return;
-    }
-    try {
-      const updated = await theoriesService.vote(theory.id, value);
-      theory.score = updated?.score ?? theory.score;
-      toast.success('رأی شما ثبت شد.');
-      // Re-fetch just this item on the page
-      renderResults();
-    } catch (err) {
-      toast.error(err?.message || 'ثبت رأی ناموفق بود.');
-    }
-  }
-
-  function openTellallContext(e, theory) {
-    e.preventDefault();
-    e.stopPropagation();
-    const user = appStore.get('user');
-    const isAuthor = user && theory.author_id === user.id;
-    const items = [
+  function buildCard(tellall) {
+    const personName = tellall.people?.full_name || 'نامشخص';
+    
+    return el(
+      'div',
       {
-        label: 'باز کردن',
-        icon: 'eye',
-        onClick: () => router.navigate(`/tellalls/${theory.id}`),
-      },
-      {
-        label: 'کپی لینک',
-        icon: 'link',
-        onClick: () => {
-          const url = window.location.origin + window.location.pathname + router.href(`/tellalls/${theory.id}`);
-          navigator.clipboard.writeText(url);
-          toast.success('لینک کپی شد.');
+        class: 'ranking-card',
+        role: 'link',
+        tabindex: '0',
+        on: {
+          click: () => router.navigate(`/tellalls/${tellall.id}`),
         },
       },
-    ];
+      [
+        el('div', { class: 'ranking-card__head' }, [
+          el('div', { class: 'ranking-card__icon' }, [icon('message')]),
+          el('div', { style: { minWidth: 0, flex: '1 1 auto' } }, [
+            el('div', { class: 'ranking-card__title' }, [tellall.title || 'بدون عنوان']),
+            el('div', { class: 'ranking-card__criteria' }, [`شخص محوری: ${personName}`]),
+          ]),
+        ]),
+        tellall.description
+          ? el('div', { class: 'ranking-card__desc' }, [tellall.description])
+          : null,
+        el('div', { class: 'ranking-card__footer' }, [
+          el('span', { class: 'ranking-card__count' }, [
+            icon('clock'),
+            formatDate(tellall.created_at)
+          ]),
+        ]),
+      ]
+    );
+  }
 
-    if (isAuthor || canEditContent()) {
-      items.push({ divider: true });
-      items.push({
-        label: 'ویرایش',
-        icon: 'edit',
-        onClick: () => router.navigate(`/tellalls/${theory.id}/edit`),
-      });
-      items.push({
-        label: 'حذف',
-        icon: 'trash',
-        danger: true,
-        onClick: () =>
-          confirmAndDelete({
-            title: 'حذف موضوع',
-            message: `«${theory.title}» حذف شود؟`,
-            onConfirm: () => theoriesService.remove(theory.id),
-            successMessage: 'موضوع حذف شد.',
-            onDeleted: () => load(),
-          }),
-      });
+  async function createTellall() {
+    const result = await openTellallForm();
+    if (result) {
+      load();
     }
-
-    openContextMenu(e.clientX, e.clientY, items);
   }
 
   await load();
