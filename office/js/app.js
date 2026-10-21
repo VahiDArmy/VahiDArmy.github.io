@@ -54,6 +54,7 @@ const pages = {
   person:     () => import('./pages/person.page.js'),
   
   tellalls:   () => import('./pages/tellalls.page.js'),
+  tellallsNew:() => import('./pages/tellalls-new.page.js'),
   // tellall: () => import('./pages/tellall.page.js'), // For future detail page
   
   rankings:   () => import('./pages/rankings.page.js'),
@@ -99,10 +100,9 @@ function registerRoutes() {
     const mod = await pages.tellalls();
     return mod.default(info, outlet);
   });
-  // Route /tellalls/new is handled via modal in the list page
   router.add('/tellalls/new', async (info) => {
-    router.navigate('/tellalls', { replace: true });
-    return () => {};
+    const mod = await pages.tellallsNew();
+    return mod.default(info, outlet);
   });
   router.add('/tellalls/:id', async (info) => {
     toast.warning('صفحه جزئیات بگایی به زودی اضافه می‌شود.');
