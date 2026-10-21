@@ -55,7 +55,7 @@ const pages = {
   
   tellalls:   () => import('./pages/tellalls.page.js'),
   tellallsNew:() => import('./pages/tellalls-new.page.js'),
-  // tellall: () => import('./pages/tellall.page.js'), // For future detail page
+  tellall:    () => import('./pages/tellall.page.js'),
   
   rankings:   () => import('./pages/rankings.page.js'),
   ranking:    () => import('./pages/ranking.page.js'),
@@ -105,9 +105,8 @@ function registerRoutes() {
     return mod.default(info, outlet);
   });
   router.add('/tellalls/:id', async (info) => {
-    toast.warning('صفحه جزئیات بگایی به زودی اضافه می‌شود.');
-    router.navigate('/tellalls', { replace: true });
-    return () => {};
+    const mod = await pages.tellall();
+    return mod.default(info, outlet);
   });
 
   // --- Rankings ---
@@ -205,7 +204,6 @@ async function boot() {
   initTheme();
   installErrorSurface();
 
-  // Mount chrome
   const headerRoot = document.getElementById('app-header');
   const footerRoot = document.getElementById('app-footer');
   if (headerRoot) mountHeader(headerRoot);
@@ -221,7 +219,6 @@ async function boot() {
     console.error('[boot] auth init failed', err);
   }
 
-  // Fire-and-forget: command palette, shortcuts, offline, scroll-top
   import('./core/boot-extras.js')
     .then((m) => m.installExtras())
     .catch((err) => {
@@ -237,7 +234,6 @@ async function boot() {
   setTimeout(hideSplash, 60);
 }
 
-// Kick off
 boot().catch((err) => {
   // eslint-disable-next-line no-console
   console.error('[boot] fatal', err);
@@ -245,8 +241,5 @@ boot().catch((err) => {
   toast.error('راه‌اندازی برنامه با خطا مواجه شد.');
 });
 
-/* Re-attach tooltips on theme change */
 bus.on('theme:toggled', () => attachTooltips(document.body));
-
-/* Debug handle (harmless) */
 window.__office__ = { store: appStore };
