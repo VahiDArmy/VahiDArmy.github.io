@@ -1,6 +1,6 @@
 /**
  * Full Page Form for creating a new Tellall.
- * Features a large text editor, central person selection, and tagging.
+ * Features a large text editor, central person selection, and a professional Tag Input.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -9,7 +9,7 @@ import { appStore } from '../core/store.js';
 import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { peopleService } from '../services/people.service.js';
 import { tellallsService } from '../services/tellalls.service.js';
-import { createPeopleTagger } from '../components/people-tagger.js';
+import { createTagInput } from '../components/tag-input.js';
 import { validate, rules, hasErrors } from '../utils/validators.js';
 import { toast } from '../ui/toast.js';
 import { pageHeader } from '../components/page-header.js';
@@ -53,7 +53,7 @@ export default async function tellallsNewPage(info, outlet) {
     class: 'input',
     placeholder: 'عنوان بگایی (مثلاً: ماجرای خراب شدن پرینتر)',
     maxlength: 150,
-    style: { fontSize: '1.25rem', fontWeight: 'bold' } // Make it look like a title
+    style: { fontSize: '1.25rem', fontWeight: 'bold' }
   });
 
   const personSelect = el('select', { class: 'select' },
@@ -62,14 +62,23 @@ export default async function tellallsNewPage(info, outlet) {
     ]))
   );
 
-  const tagger = createPeopleTagger({ 
-    people: peopleList, 
-    excludeId: defaultPersonId 
+  // Filter out the central person from the tag list initially
+  const availableForTags = peopleList.filter(p => p.id !== defaultPersonId);
+  
+  const tagger = createTagInput({ 
+    people: availableForTags, 
+    placeholder: 'نام افراد دیگر را جستجو و تگ کنید...' 
   });
 
   // Update tagger when central person changes
   personSelect.addEventListener('change', (e) => {
-    tagger.setExclude(e.target.value);
+    // Re-create or update the tag input if needed
+    const newAvailable = peopleList.filter(p => p.id !== e.target.value);
+    // For simplicity, we just replace the component
+    // In a real reactive system, we'd update the array, but this is fine for this architecture
+    const newTagger = createTagInput({ people: newAvailable, placeholder: 'نام افراد دیگر را جستجو و تگ کنید...' });
+    tagger.node.replaceWith(newTagger.node);
+    tagger = newTagger; // Reassign to keep reference for submission
   });
 
   const contentInput = el('textarea', {
