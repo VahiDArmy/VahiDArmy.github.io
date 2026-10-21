@@ -1,24 +1,21 @@
 /**
- * Tellalls list page — search, pagination, create via modal.
+ * Tellalls list page — search, pagination, create via new page link.
  */
 
 import { el, icon } from '../utils/dom.js';
 import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
 import { ROUTES } from '../config/constants.js';
-import { tellallsService } from '../services/tellalls.service.js';
 import { pageHeader } from '../components/page-header.js';
 import { emptyState } from '../components/empty-state.js';
 import { createPagination } from '../components/pagination.js';
-import { openTellallForm } from '../components/tellall-form.js';
-import { confirmAndDelete } from '../components/confirm-delete.js';
-import { openContextMenu } from '../ui/context-menu.js';
 import { toast } from '../ui/toast.js';
 import { skeletonList } from '../ui/loading.js';
 import { getQueryParam, setQuery } from '../utils/url.js';
 import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { formatNumber, formatDate } from '../utils/format.js';
 import { debounce } from '../utils/debounce.js';
+import { supabase } from '../services/supabase.client.js';
 
 export default async function tellallsPage(info, outlet) {
   const session = await requireAuthOrRedirect();
@@ -40,11 +37,10 @@ export default async function tellallsPage(info, outlet) {
   if (appStore.get('user')) {
     headerActions.push(
       el(
-        'button',
+        'a',
         {
-          type: 'button',
+          href: router.href('/tellalls/new'),
           class: 'btn btn--primary',
-          on: { click: () => createTellall() },
         },
         [icon('plus'), 'موضوع جدید']
       )
@@ -112,8 +108,6 @@ export default async function tellallsPage(info, outlet) {
     listWrap.innerHTML = '';
     listWrap.appendChild(skeletonList({ count: 6 }));
     try {
-      // Direct supabase query for simplicity since tellallsService.list might not exist yet
-      const { supabase } = await import('../services/supabase.client.js');
       let q = supabase.from('tellalls').select('id, title, description, created_at, created_by, person_id, people:person_id(full_name)', { count: 'exact' });
       
       if (state.search) q = q.ilike('title', `%${state.search}%`);
@@ -151,12 +145,8 @@ export default async function tellallsPage(info, outlet) {
           actions: appStore.get('user')
             ? [
                 el(
-                  'button',
-                  {
-                    type: 'button',
-                    class: 'btn btn--primary',
-                    on: { click: () => createTellall() },
-                  },
+                  'a',
+                  { class: 'btn btn--primary', href: router.href('/tellalls/new') },
                   [icon('plus'), 'موضوع جدید']
                 ),
               ]
@@ -168,7 +158,7 @@ export default async function tellallsPage(info, outlet) {
       return;
     }
 
-    const grid = el('div', { class: 'rankings-grid' }); // Reusing ranking card grid style for simplicity
+    const grid = el('div', { class: 'rankings-grid' });
     for (const tellall of state.items) {
       grid.appendChild(buildCard(tellall));
     }
@@ -197,7 +187,7 @@ export default async function tellallsPage(info, outlet) {
           ]),
         ]),
         tellall.description
-          ? el('div', { class: 'ranking-card__desc' }, [tellall.description])
+          ? el('div', { class: 'ranking-card__desc', style: { WebkitLineClamp: 3 } }, [tellall.description])
           : null,
         el('div', { class: 'ranking-card__footer' }, [
           el('span', { class: 'ranking-card__count' }, [
@@ -207,13 +197,6 @@ export default async function tellallsPage(info, outlet) {
         ]),
       ]
     );
-  }
-
-  async function createTellall() {
-    const result = await openTellallForm();
-    if (result) {
-      load();
-    }
   }
 
   await load();
