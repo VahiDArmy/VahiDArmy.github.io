@@ -1,6 +1,5 @@
 /**
  * Signed-in user chip + dropdown menu.
- * Signed-out state shows "ورود" / "ثبت‌نام" buttons.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -12,6 +11,7 @@ import { toast } from '../ui/toast.js';
 import { confirm } from '../ui/confirm.js';
 import { ROUTES } from '../config/constants.js';
 import { initials } from '../utils/format.js';
+import { openConsoleViewer } from './console-viewer.js'; // Added import
 
 export function createUserMenu() {
   const root = el('div', { class: 'header__user' });
@@ -70,6 +70,12 @@ export function createUserMenu() {
         },
         { divider: true },
         {
+          label: 'کنسول (عیب‌یابی)',
+          icon: 'command',
+          onClick: () => openConsoleViewer(),
+        },
+        { divider: true },
+        {
           label: 'خروج',
           icon: 'log-out',
           danger: true,
@@ -94,7 +100,6 @@ export function createUserMenu() {
       { align: 'end' }
     );
 
-    // Keep the dropdown alive
     chip._dropdown = dd;
   }
 
