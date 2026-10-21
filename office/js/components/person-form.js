@@ -26,9 +26,6 @@ export function openPersonForm({ person = null } = {}) {
     const bioInput = el('textarea', { class: 'textarea', rows: 3, placeholder: 'توضیحات یا سابقه (اختیاری)', maxlength: 1000 });
     bioInput.value = person?.bio || '';
 
-    const submitBtn = el('button', { type: 'submit', class: 'btn btn--primary' }, [isEdit ? 'ذخیره تغییرات' : 'افزودن فرد']);
-    const cancelBtn = el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => { handle.close(); resolve(false); } } }, ['انصراف']);
-
     const form = el('form', { class: 'form-grid' }, [
       el('div', { class: 'form-field' }, [
         el('label', { class: 'form-label' }, ['نام کامل ', el('span', { class: 'required' }, ['*'])]),
@@ -45,6 +42,18 @@ export function openPersonForm({ person = null } = {}) {
       el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['ایمیل']), emailInput]),
       el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['بیوگرافی']), bioInput]),
     ]);
+
+    const submitBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--primary',
+      on: { click: () => form.requestSubmit() }
+    }, [isEdit ? 'ذخیره تغییرات' : 'افزودن فرد']);
+
+    const cancelBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--secondary', 
+      on: { click: () => { handle.close(); resolve(false); } } 
+    }, ['انصراف']);
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
