@@ -53,6 +53,9 @@ const pages = {
   people:     () => import('./pages/people.page.js'),
   person:     () => import('./pages/person.page.js'),
   
+  theories:   () => import('./pages/theories.page.js'),
+  theory:     () => import('./pages/theory.page.js'),
+
   tellalls:   () => import('./pages/tellalls.page.js'),
   tellallsNew:() => import('./pages/tellalls-new.page.js'),
   tellall:    () => import('./pages/tellall.page.js'),
@@ -92,6 +95,21 @@ function registerRoutes() {
   });
   router.add(ROUTES.PERSON(':id'), async (info) => {
     const mod = await pages.person();
+    return mod.default(info, outlet);
+  });
+
+  // --- Theories (نظریه‌ها) ---
+  router.add(ROUTES.THEORIES, async (info) => {
+    const mod = await pages.theories();
+    return mod.default(info, outlet);
+  });
+  router.add('/theories/new', async (info) => {
+    toast.warning('فرم ایجاد نظریه به زودی اضافه می‌شود.');
+    router.navigate(ROUTES.THEORIES, { replace: true });
+    return () => {};
+  });
+  router.add(ROUTES.THEORY(':id'), async (info) => {
+    const mod = await pages.theory();
     return mod.default(info, outlet);
   });
 
