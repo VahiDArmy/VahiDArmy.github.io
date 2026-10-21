@@ -22,7 +22,8 @@ export function renderMentions(text, people = []) {
     const escapedName = person.full_name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = new RegExp(`@${escapedName}`, 'g');
     
-    const link = `<a href="#/people/${person.id}" class="mention-link">@${person.full_name}</a>`;
+    // Removed the @ symbol from the visible link text
+    const link = `<a href="#/people/${person.id}" class="mention-link">${person.full_name}</a>`;
     safeText = safeText.replace(regex, link);
   }
 
