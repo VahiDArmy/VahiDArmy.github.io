@@ -12,7 +12,13 @@ import { mountFooter } from './components/footer.js';
 import { toast } from './ui/toast.js';
 import { attachTooltips } from './ui/tooltip.js';
 import { ROUTES } from './config/constants.js';
+import { initConsoleInterceptor } from './utils/console-interceptor.js';
+import { initConsoleViewer } from './components/console-viewer.js';
 import './ui/icons.js'; // register icons eagerly
+
+// Initialize Debug Console Viewer (Only for development/debugging)
+const consoleStore = initConsoleInterceptor();
+initConsoleViewer(consoleStore);
 
 /* ---- Splash helpers ---- */
 function hideSplash() {
