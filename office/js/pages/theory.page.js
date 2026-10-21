@@ -1,6 +1,5 @@
 /**
- * Theory detail page — full content, vote widget, comments thread.
- * Authorized users can edit/delete; the author can also delete comments.
+ * Theory detail page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -12,6 +11,7 @@ import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { toast } from '../ui/toast.js';
+import { open as openModal } from '../ui/modal.js';
 import { formatDate, formatNumber, initials, timeAgo, truncateText } from '../utils/format.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 
@@ -249,7 +249,6 @@ function buildView(theory, { myVote, people, comments }) {
       theory.score = updated?.score ?? theory.score;
       theory.votes_count = updated?.votes_count ?? theory.votes_count;
       myVote = next;
-      // Update UI
       upBtn.classList.toggle('is-active', myVote === 1);
       upBtn.setAttribute('aria-pressed', myVote === 1 ? 'true' : 'false');
       downBtn.classList.toggle('is-active', myVote === -1);
@@ -288,18 +287,7 @@ function buildComments(theory, comments) {
     list.innerHTML = '';
     if (!comments.length) {
       list.appendChild(
-        el(
-          'div',
-          {
-            style: {
-              padding: 'var(--space-8) var(--space-4)',
-              textAlign: 'center',
-              color: 'var(--text-tertiary)',
-              fontSize: 'var(--text-sm)',
-            },
-          },
-          ['هنوز نظری ثبت نشده است. اولین نفر باشید!']
-        )
+        el('div', { style: { padding: 'var(--space-8)', textAlign: 'center', color: 'var(--text-tertiary)' } }, ['هنوز نظری ثبت نشده است. اولین نفر باشید!'])
       );
       return;
     }
@@ -356,30 +344,16 @@ function buildComments(theory, comments) {
 
     composer = el('div', { class: 'comment-composer' }, [
       el('span', { class: 'comment-composer__avatar' }, [
-        el('span', { class: 'avatar' }, [
-          profile?.avatar_url
-            ? el('img', { src: profile.avatar_url, alt: name })
-            : initials(name),
-        ]),
+        el('span', { class: 'avatar' }, [profile?.avatar_url ? el('img', { src: profile.avatar_url, alt: name }) : initials(name)]),
       ]),
-      el('div', { class: 'comment-composer__main' }, [
-        textarea,
-        el('div', { class: 'comment-composer__actions' }, [submitBtn]),
-      ]),
+      el('div', { class: 'comment-composer__main' }, [textarea, el('div', { class: 'comment-composer__actions' }, [submitBtn])]),
     ]);
   } else {
-    composer = el(
-      'div',
-      {
-        class: 'comment-composer',
-        style: { justifyContent: 'center', textAlign: 'center', color: 'var(--text-secondary)' },
-      },
-      [
-        el('span', {}, ['برای ثبت نظر ']),
-        el('a', { href: router.href(ROUTES.LOGIN), class: 'link' }, ['وارد شوید']),
-        el('span', {}, ['.']),
-      ]
-    );
+    composer = el('div', { class: 'comment-composer', style: { justifyContent: 'center', textAlign: 'center', color: 'var(--text-secondary)' } }, [
+      el('span', {}, ['برای ثبت نظر ']),
+      el('a', { href: router.href(ROUTES.LOGIN), class: 'link' }, ['وارد شوید']),
+      el('span', {}, ['.']),
+    ]);
   }
 
   return el('section', { class: 'comments-section' }, [
@@ -395,48 +369,71 @@ function buildComments(theory, comments) {
   function renderComment(c) {
     const authorName = c.profiles?.display_name || 'کاربر';
     const authorAvatar = c.profiles?.avatar_url;
+    const canModify = appStore.get('user')?.id === c.author_id || canEditContent();
 
-    const canDelete =
-      appStore.get('user')?.id === c.author_id || canEditContent();
+    const editBtn = canModify
+      ? el('button', {
+          type: 'button',
+          class: 'comment__delete', // reuse style
+          style: { marginRight: '8px' },
+          'aria-label': 'ویرایش نظر',
+          on: {
+            click: () => {
+              const input = el('textarea', { class: 'textarea', rows: 3, value: c.body });
+              const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
+                try {
+                  await theoriesService.updateComment(c.id, input.value);
+                  c.body = input.value;
+                  renderList();
+                  handle.close();
+                  toast.success('نظر ویرایش شد.');
+                } catch (e) { toast.error(e.message); }
+              }}, ['ذخیره']);
+              
+              const handle = openModal({
+                title: 'ویرایش نظر',
+                body: el('div', { class: 'form-field' }, [input]),
+                footer: saveBtn,
+                size: 'sm',
+                initialFocus: input
+              });
+            }
+          }
+        }, [icon('edit')])
+      : null;
+
+    const deleteBtn = canModify
+      ? el('button', {
+          type: 'button',
+          class: 'comment__delete',
+          'aria-label': 'حذف نظر',
+          on: {
+            click: async () => {
+              const ok = await confirmAndDelete({
+                title: 'حذف نظر',
+                message: 'این نظر حذف شود؟',
+                onConfirm: () => theoriesService.deleteComment(c.id),
+                successMessage: 'نظر حذف شد.',
+              });
+              if (ok) {
+                const idx = comments.findIndex((x) => x.id === c.id);
+                if (idx !== -1) comments.splice(idx, 1);
+                renderList();
+              }
+            },
+          },
+        }, [icon('trash')])
+      : null;
 
     return el('div', { class: 'comment' }, [
       el('span', { class: 'comment__avatar' }, [
-        el('span', { class: 'avatar' }, [
-          authorAvatar
-            ? el('img', { src: authorAvatar, alt: authorName })
-            : initials(authorName),
-        ]),
+        el('span', { class: 'avatar' }, [authorAvatar ? el('img', { src: authorAvatar, alt: authorName }) : initials(authorName)]),
       ]),
       el('div', { class: 'comment__main' }, [
         el('div', { class: 'comment__head' }, [
           el('span', { class: 'comment__author' }, [authorName]),
           el('span', { class: 'comment__time' }, [timeAgo(c.created_at)]),
-          canDelete
-            ? el(
-                'button',
-                {
-                  type: 'button',
-                  class: 'comment__delete',
-                  'aria-label': 'حذف نظر',
-                  on: {
-                    click: async () => {
-                      const ok = await confirmAndDelete({
-                        title: 'حذف نظر',
-                        message: 'این نظر حذف شود؟',
-                        onConfirm: () => theoriesService.deleteComment(c.id),
-                        successMessage: 'نظر حذف شد.',
-                      });
-                      if (ok) {
-                        const idx = comments.findIndex((x) => x.id === c.id);
-                        if (idx !== -1) comments.splice(idx, 1);
-                        renderList();
-                      }
-                    },
-                  },
-                },
-                [icon('trash')]
-              )
-            : null,
+          el('div', { style: { marginInlineStart: 'auto', display: 'flex' } }, [editBtn, deleteBtn].filter(Boolean)),
         ]),
         el('div', { class: 'comment__body' }, [c.body || '']),
       ]),
