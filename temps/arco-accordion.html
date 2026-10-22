@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arco · Accordion</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;450;500;600&display=swap">
+<style>
+/* ================================
+   Arco · Accordion
+   github.com/emanuelbento/arco-components
+   ================================ */
+
+:root {
+  --arco-stage: #08070a;
+  --arco-ink: #0d0d0d;
+  --arco-ink-invert: #f2f0ed;
+  --arco-ink-muted: rgb(242 240 237 / 0.45);
+
+  --arco-ochre: #d6a64f;
+  --arco-lilac: #b9b0e3;
+  --arco-aqua: #8fc7bd;
+  --arco-coral: #ec8f73;
+
+  --arco-font: "Inter Tight", "Neue Haas Grotesk Display", "Helvetica Neue", Helvetica, Arial, sans-serif;
+
+  --arco-max-width: 64rem;
+  --arco-max-height: 38rem;
+  --arco-gap: 0.5rem;
+  --arco-pill: 4rem;
+  --arco-pill-height: 80%;
+  --arco-bar: 3.5rem;
+  --arco-radius: 1.125rem;
+  --arco-media-radius: 0.625rem;
+
+  --arco-stage-pad: 1.25rem;
+  --arco-bar-height: 3.5rem;
+}
+
+@media (max-width: 991px) {
+  :root {
+    --arco-pill: 3.5rem;
+    --arco-radius: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --arco-gap: 0.375rem;
+    --arco-radius: 0.875rem;
+    --arco-media-radius: 0.5rem;
+    --arco-stage-pad: 0.75rem;
+    --arco-bar-height: 3rem;
+  }
+}
+
+/* Demo page only. Everything else is scoped to the section, so pasting the
+   component into a site never restyles the rest of the page. */
+body {
+  margin: 0;
+}
+
+.section_arco-accordion,
+.section_arco-accordion *,
+.section_arco-accordion *::before,
+.section_arco-accordion *::after {
+  box-sizing: border-box;
+}
+
+.section_arco-accordion {
+  color: var(--arco-ink-invert);
+  font-family: var(--arco-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+/* Stage */
+
+.section_arco-accordion {
+  display: grid;
+  grid-template-rows: var(--arco-bar-height) minmax(0, 1fr) var(--arco-bar-height);
+  height: 100vh;
+  height: 100dvh;
+  padding-inline: var(--arco-stage-pad);
+  overflow: clip;
+  background-color: var(--arco-stage);
+}
+
+.arco-accordion_bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.arco-accordion_logo {
+  display: flex;
+  color: var(--arco-ink-invert);
+}
+
+.arco-accordion_logo svg {
+  display: block;
+  width: 4.25rem;
+  height: auto;
+}
+
+.arco-accordion_bar-muted {
+  color: var(--arco-ink-muted);
+}
+
+.arco-accordion_wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding-block: clamp(1rem, 4vh, 3rem);
+}
+
+/* Webflow CMS: let the Collection List Wrapper pass the layout through */
+.arco-accordion_wrapper > .w-dyn-list {
+  display: contents;
+}
+
+/* Component
+   The open panel takes whatever the closed ones leave. JS sets --arco-count. */
+
+.arco-accordion_component {
+  --arco-count: 4;
+  --arco-open: calc(100cqw - (var(--arco-count) - 1) * (var(--arco-pill) + var(--arco-gap)));
+
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--arco-gap);
+  width: min(100%, var(--arco-max-width));
+  height: min(100%, var(--arco-max-height));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.arco-accordion_item {
+  position: relative;
+  flex: none;
+  width: var(--arco-pill);
+  height: var(--arco-pill-height);
+  border-radius: calc(var(--arco-pill) / 2);
+  overflow: hidden;
+  isolation: isolate;
+  background-color: var(--arco-panel, var(--arco-lilac));
+  color: var(--arco-ink);
+}
+
+.arco-accordion_item.is-active {
+  width: var(--arco-open);
+  height: 100%;
+  border-radius: var(--arco-radius);
+}
+
+.arco-accordion_item[data-panel="ochre"] { --arco-panel: var(--arco-ochre); }
+.arco-accordion_item[data-panel="lilac"] { --arco-panel: var(--arco-lilac); }
+.arco-accordion_item[data-panel="aqua"] { --arco-panel: var(--arco-aqua); }
+.arco-accordion_item[data-panel="coral"] { --arco-panel: var(--arco-coral); }
+
+.arco-accordion_item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background-color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arco-accordion_item:not(.is-active):hover::after {
+    opacity: 0.12;
+  }
+}
+
+.arco-accordion_trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.arco-accordion_trigger:focus-visible {
+  outline: 2px solid var(--arco-ink-invert);
+  outline-offset: 3px;
+}
+
+.arco-accordion_item.is-active .arco-accordion_trigger {
+  pointer-events: none;
+}
+
+.arco-accordion_label {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  pointer-events: none;
+}
+
+/* Content stays at the open size, the panel clips it while it resizes */
+
+.arco-accordion_content {
+  container-type: size;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: var(--arco-open);
+  height: 100cqh;
+  padding: clamp(1rem, 2vw, 2rem);
+}
+
+.arco-accordion_item:not(.is-active) .arco-accordion_content {
+  visibility: hidden;
+}
+
+.arco-accordion_heading {
+  margin: 0;
+  font-size: min(12.5cqi, 21cqh);
+  font-weight: 500;
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+}
+
+/* SplitText masks: extra room so descenders are not clipped */
+.arco-accordion_line-mask {
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.arco-accordion_bottom {
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: min(38cqi, 52cqh) minmax(0, 1fr);
+  column-gap: min(5cqi, 3.5rem);
+  align-items: end;
+}
+
+.arco-accordion_media {
+  aspect-ratio: 3 / 2;
+  border-radius: var(--arco-media-radius);
+  overflow: hidden;
+  background-color: rgb(13 13 13 / 0.07);
+}
+
+.arco-accordion_visual {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.arco-accordion_text {
+  max-width: 32ch;
+  margin: 0;
+  font-size: clamp(0.8125rem, 1.6cqi, 1.0625rem);
+  font-weight: 450;
+  line-height: 1.42;
+  letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+
+/* Stacked layout for phones and portrait tablets.
+   Keep the query in sync with STACKED in accordion.js. */
+
+@media (max-width: 767px), (max-width: 991px) and (orientation: portrait) {
+  .arco-accordion_component {
+    --arco-open: calc(100cqh - (var(--arco-count) - 1) * (var(--arco-bar) + var(--arco-gap)));
+
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .arco-accordion_item {
+    width: 100%;
+    height: var(--arco-bar);
+    border-radius: calc(var(--arco-bar) / 2);
+  }
+
+  .arco-accordion_item.is-active {
+    width: 100%;
+    height: var(--arco-open);
+  }
+
+  .arco-accordion_label {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 0.875rem;
+  }
+
+  .arco-accordion_content {
+    row-gap: clamp(1rem, 4cqh, 2rem);
+    width: 100cqw;
+    height: var(--arco-open);
+  }
+
+  .arco-accordion_heading {
+    font-size: min(16cqi, 12cqh);
+  }
+
+  .arco-accordion_bottom {
+    display: contents;
+  }
+
+  .arco-accordion_media {
+    grid-row: 2;
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .arco-accordion_text {
+    grid-row: 3;
+    max-width: 40ch;
+    font-size: 0.875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arco-accordion_item::after {
+    transition: none;
+  }
+}
+</style>
+</head>
+<body>
+<section class="section_arco-accordion" aria-label="Arco Library">
+  <header class="arco-accordion_bar">
+    <div class="arco-accordion_logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 25" fill="none" role="img" aria-label="Arco Studio">
+        <path d="M21.266 22.158C19.245 20.618 16.548 21.481 14.195 22.636C10.656 24.383 5.494 26.076 2.379 23.632C0.822 22.404.205 20.545 0 18.559-.066 15.611.862 12.875 2.081 10.173L7.349 0H18.589L30.67 24.934 23.307 24.993C22.79 23.858 22.154 22.988 21.266 22.151V22.158ZM11.134 18.274 14.633 16.66C15.918 16.062 17.184 15.677 18.576 15.246L13.075 4.004 8.927 12.158C7.986 14.011 6.647 17.317 7.601 18.473 8.191 19.19 9.861 18.865 11.134 18.274Z" fill="currentColor"/>
+        <path d="M35.455 20.033C35.455 16.959 37.377 15.199 40.77 14.575L45.495 13.725C47.483 13.367 47.907 12.583 47.907 11.341 47.907 9.25 46.701 7.975 43.374 7.975 39.822 7.975 38.159 9.542 38.159 11.866L36.138 11.7C36.138 8.367 38.841 6.149 43.441 6.149 48.04 6.149 49.962 8.174 49.962 11.182V21.766C49.962 22.583 50.187 23.141 51.068 23.141 51.36 23.141 51.526 23.108 51.751 23.041H51.884V24.675C51.625 24.774 51.068 24.874 50.545 24.874 48.782 24.874 47.967 23.831 47.967 22.224V21.574C46.728 23.891 44.216 25.007 41.38 25.007 37.728 25.007 35.442 23.015 35.442 20.04L35.455 20.033ZM47.94 19.051V14.641C47.45 15 46.476 15.325 44.746 15.624L41.651 16.149C38.749 16.64 37.609 18.008 37.609 19.807 37.609 21.833 38.981 23.207 41.85 23.207 45.011 23.207 47.457 21.541 47.947 19.057L47.94 19.051Z" fill="currentColor"/>
+        <path d="M54.17 6.474H55.966L56.165 9.283C57.112 7.357 58.511 6.308 60.532 6.308 61.122 6.308 61.672 6.375 61.996 6.507V8.466H61.831C61.539 8.367 61.049 8.3 60.591 8.3 57.98 8.3 56.224 10.193 56.224 13.101V24.668H54.17V6.474Z" fill="currentColor"/>
+        <path d="M61.831 15.558C61.831 9.874 65.124 6.149 70.214 6.149 74.257 6.149 77.06 8.499 77.55 12.324L75.43 12.523C75.105 9.748 73.117 8.114 70.115 8.114 66.297 8.114 63.951 10.923 63.951 15.564 63.951 20.206 66.297 23.015 70.115 23.015 73.017 23.015 74.939 21.514 75.396 18.931L77.484 19.13C76.894 22.756 74.157 24.98 70.181 24.98 65.124 24.98 61.831 21.255 61.831 15.571V15.558Z" fill="currentColor"/>
+        <path d="M79.34 15.657C79.34 9.874 82.633 6.149 87.69 6.149 92.746 6.149 96.007 9.841 96.007 15.624 96.007 21.408 92.746 25 87.69 25 82.633 25 79.34 21.308 79.34 15.657ZM93.886 15.558C93.886 10.823 91.606 8.108 87.69 8.108 83.773 8.108 81.46 10.916 81.46 15.591 81.46 20.266 83.74 23.041 87.657 23.041 91.573 23.041 93.886 20.299 93.886 15.558Z" fill="currentColor"/>
+      </svg>
+    </div>
+    <span class="arco-accordion_bar-muted">Arco Library</span>
+  </header>
+
+  <div class="arco-accordion_wrapper">
+    <ul class="arco-accordion_component" data-arco-accordion data-arco-accordion-active="1" data-arco-accordion-trigger="hover" data-arco-accordion-ease="signature">
+      <li class="arco-accordion_item" data-panel="ochre">
+        <p class="arco-accordion_label">Components</p>
+        <div class="arco-accordion_content">
+          <h2 class="arco-accordion_heading">Webflow<br>Components</h2>
+          <div class="arco-accordion_bottom">
+            <div class="arco-accordion_media">
+              <img class="arco-accordion_visual" src="https://cdn.jsdelivr.net/gh/emanuelbento/arco-components@2.1.0/components/accordion/images/accordion_001.svg" alt="Webflow page with a selected card component" width="540" height="360" loading="lazy">
+            </div>
+            <p class="arco-accordion_text">Ready to drop Webflow blocks built for speed and precision. Client-First classes and a clean Navigator, with nothing to tidy after you paste.</p>
+          </div>
+        </div>
+      </li>
+      <li class="arco-accordion_item" data-panel="lilac">
+        <p class="arco-accordion_label">Animations</p>
+        <div class="arco-accordion_content">
+          <h2 class="arco-accordion_heading">GSAP<br>Animations</h2>
+          <div class="arco-accordion_bottom">
+            <div class="arco-accordion_media">
+              <img class="arco-accordion_visual" src="https://cdn.jsdelivr.net/gh/emanuelbento/arco-components@2.1.0/components/accordion/images/accordion_002.svg" alt="Signature easing curve" width="540" height="360" loading="lazy">
+            </div>
+            <p class="arco-accordion_text">GSAP powered motion you can copy, paste and own. Every curve is tuned by hand, including the one drawn here.</p>
+          </div>
+        </div>
+      </li>
+      <li class="arco-accordion_item" data-panel="aqua">
+        <p class="arco-accordion_label">Templates</p>
+        <div class="arco-accordion_content">
+          <h2 class="arco-accordion_heading">Client<br>Templates</h2>
+          <div class="arco-accordion_bottom">
+            <div class="arco-accordion_media">
+              <img class="arco-accordion_visual" src="https://cdn.jsdelivr.net/gh/emanuelbento/arco-components@2.1.0/components/accordion/images/accordion_003.svg" alt="Page template on a 12 column grid" width="540" height="360" loading="lazy">
+            </div>
+            <p class="arco-accordion_text">Full Webflow templates crafted with real clients in mind. CMS ready and fluid across every breakpoint.</p>
+          </div>
+        </div>
+      </li>
+      <li class="arco-accordion_item" data-panel="coral">
+        <p class="arco-accordion_label">Interactions</p>
+        <div class="arco-accordion_content">
+          <h2 class="arco-accordion_heading">Micro<br>Interactions</h2>
+          <div class="arco-accordion_bottom">
+            <div class="arco-accordion_media">
+              <img class="arco-accordion_visual" src="https://cdn.jsdelivr.net/gh/emanuelbento/arco-components@2.1.0/components/accordion/images/accordion_004.svg" alt="Magnetic button reacting to the cursor" width="540" height="360" loading="lazy">
+            </div>
+            <p class="arco-accordion_text">Scroll, hover and cursor effects that make a site feel alive, without getting in the way of the content.</p>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <footer class="arco-accordion_bar">
+    <span class="arco-accordion_bar-muted">Select a panel</span>
+    <span class="arco-accordion_counter">02 / 04</span>
+  </footer>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15/dist/CustomEase.min.js"></script>
+<script>
+/* ================================
+   Arco · Accordion
+   github.com/emanuelbento/arco-components
+   ================================ */
+
+(() => {
+  gsap.registerPlugin(Flip, SplitText, CustomEase);
+
+  CustomEase.create("arco-signature", "0.625, 0.05, 0, 1");
+  CustomEase.create("arco-smooth", "0.76, 0, 0.24, 1");
+  CustomEase.create("arco-snappy", "0.16, 1, 0.3, 1");
+  CustomEase.create("arco-reveal", "0.16, 1, 0.3, 1");
+  CustomEase.create("arco-exit", "0.7, 0, 0.84, 0");
+
+  const presets = {
+    signature: { ease: "arco-signature", duration: 1.1 },
+    smooth: { ease: "arco-smooth", duration: 1.25 },
+    snappy: { ease: "arco-snappy", duration: 0.9 },
+  };
+
+  // Must match the stacked layout query in accordion.css
+  const STACKED = "(max-width: 767px), (max-width: 991px) and (orientation: portrait)";
+
+  // While panels resize they slide under a still cursor, so hover is held
+  // for a moment and then resolved against whatever is under the pointer.
+  const HOVER_LOCK = 0.34;
+  const HOVER_INTENT = 0.05;
+
+  let count = 0;
+
+  class ArcoAccordion {
+    constructor(el, options = {}) {
+      this.el = el;
+      this.items = gsap.utils.toArray(".arco-accordion_item", el);
+      if (this.items.length < 2) return;
+
+      // data-arco-accordion-* matches the other components, data-arco-* still works
+      const data = el.dataset;
+      this.options = {
+        active: Number(data.arcoAccordionActive ?? data.arcoActive ?? 0),
+        trigger: data.arcoAccordionTrigger ?? data.arcoTrigger ?? "hover",
+        ease: data.arcoAccordionEase ?? data.arcoEase ?? "signature",
+        ...options,
+      };
+
+      this.id = el.id || `arco-accordion-${++count}`;
+      this.index = gsap.utils.clamp(0, this.items.length - 1, this.options.active);
+      this.motion = presets[this.options.ease] ?? presets.signature;
+      this.abort = new AbortController();
+      this.pointer = null;
+      this.counter = (el.closest("section") ?? el).querySelector(".arco-accordion_counter");
+
+      el.style.setProperty("--arco-count", this.items.length);
+      this.panels = this.items.map((item, i) => this.setup(item, i));
+
+      this.stacked = window.matchMedia(STACKED);
+      this.reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      this.panels.forEach((panel, i) => {
+        this.toggle(panel, i === this.index);
+        this.reset(panel, i === this.index);
+      });
+      this.bind();
+      this.count();
+
+      el.arcoAccordion = this;
+      this.emit("init");
+    }
+
+    setup(item, i) {
+      const q = gsap.utils.selector(item);
+      const [label] = q(".arco-accordion_label");
+      const [content] = q(".arco-accordion_content");
+      const [heading] = q(".arco-accordion_heading");
+
+      content.id ||= `${this.id}-panel-${i}`;
+      content.setAttribute("role", "region");
+      label?.setAttribute("aria-hidden", "true");
+
+      if (heading) {
+        heading.id ||= `${this.id}-heading-${i}`;
+        content.setAttribute("aria-labelledby", heading.id);
+      }
+
+      let [button] = q(".arco-accordion_trigger");
+      if (!button) {
+        button = document.createElement("button");
+        button.type = "button";
+        button.className = "arco-accordion_trigger";
+        button.setAttribute("aria-label", `Open ${(label ?? heading).textContent.trim()}`);
+        item.prepend(button);
+      }
+      button.setAttribute("aria-controls", content.id);
+
+      const split = heading
+        ? SplitText.create(heading, {
+            type: "lines",
+            mask: "lines",
+            linesClass: "arco-accordion_line",
+            aria: "none",
+            autoSplit: true,
+          })
+        : null;
+
+      return {
+        item,
+        button,
+        label,
+        content,
+        split,
+        media: q(".arco-accordion_media")[0],
+        visual: q(".arco-accordion_visual")[0],
+        text: q(".arco-accordion_text")[0],
+        tl: null,
+      };
+    }
+
+    go(index) {
+      if (index === this.index || !this.panels[index]) return;
+
+      const from = this.panels[this.index];
+      const to = this.panels[index];
+      const dir = index > this.index ? 1 : -1;
+      const state = Flip.getState(this.items, { props: "borderRadius" });
+
+      this.index = index;
+      this.panels.forEach((panel, i) => this.toggle(panel, i === index));
+
+      if (this.reduced.matches) {
+        this.panels.forEach((panel, i) => this.reset(panel, i === index));
+      } else {
+        this.flip = Flip.from(state, { ...this.motion, absolute: true });
+        this.leave(from, dir);
+        this.enter(to, dir);
+      }
+
+      this.count();
+      this.emit("change", { index, previous: this.panels.indexOf(from) });
+    }
+
+    next() {
+      this.go(gsap.utils.wrap(0, this.items.length, this.index + 1));
+    }
+
+    prev() {
+      this.go(gsap.utils.wrap(0, this.items.length, this.index - 1));
+    }
+
+    setEase(name) {
+      if (!presets[name]) return;
+      this.motion = presets[name];
+      this.emit("ease", { ease: name });
+    }
+
+    count() {
+      if (!this.counter) return;
+      const pad = (n) => String(n).padStart(2, "0");
+      this.counter.textContent = `${pad(this.index + 1)} / ${pad(this.items.length)}`;
+    }
+
+    toggle({ item, button, content }, open) {
+      item.classList.toggle("is-active", open);
+      button.setAttribute("aria-expanded", open);
+      button.tabIndex = open ? 0 : -1;
+      content.inert = !open;
+    }
+
+    reset(panel, open) {
+      panel.tl?.kill();
+      gsap.set(panel.content, { autoAlpha: open ? 1 : 0, xPercent: 0, yPercent: 0 });
+      gsap.set(panel.label, { autoAlpha: open ? 0 : 1 });
+      gsap.set(panel.split?.lines ?? [], { yPercent: 0 });
+      gsap.set(panel.media, { clipPath: "inset(0% 0% 0% 0%)" });
+      gsap.set(panel.visual, { scale: 1 });
+      gsap.set(panel.text, { autoAlpha: 1, y: 0 });
+    }
+
+    enter(panel, dir) {
+      const { ease, duration } = this.motion;
+      const axis = this.stacked.matches ? "yPercent" : "xPercent";
+      const at = duration * 0.2;
+
+      panel.tl?.kill();
+      panel.tl = gsap
+        .timeline({ defaults: { ease: "arco-reveal", duration: 1 } })
+        .set(panel.content, { autoAlpha: 1 })
+        .to(panel.label, { autoAlpha: 0, duration: 0.2, ease: "power1.out" }, 0)
+        .fromTo(panel.content, { [axis]: dir * 6 }, { [axis]: 0, duration: duration * 1.15, ease }, 0)
+        .fromTo(panel.split?.lines ?? [], { yPercent: 140 }, { yPercent: 0, stagger: 0.075 }, at)
+        .fromTo(panel.media, { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)" }, at + 0.08)
+        .fromTo(panel.visual, { scale: 1.3 }, { scale: 1, duration: 1.4 }, "<")
+        .fromTo(panel.text, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.8 }, at + 0.18);
+    }
+
+    leave(panel, dir) {
+      const axis = this.stacked.matches ? "yPercent" : "xPercent";
+
+      panel.tl?.kill();
+      panel.tl = gsap
+        .timeline({ defaults: { ease: "arco-exit", duration: 0.42 } })
+        .to(panel.text, { autoAlpha: 0, duration: 0.2, ease: "none" }, 0)
+        .to(panel.media, { clipPath: "inset(0% 0% 100% 0%)" }, 0)
+        .to(panel.split?.lines ?? [], { yPercent: -140, stagger: 0.03 }, 0)
+        .to(panel.content, { [axis]: dir * -6, duration: 0.6 }, 0)
+        .to(panel.content, { autoAlpha: 0, duration: 0.12, ease: "none" }, 0.38)
+        .to(panel.label, { autoAlpha: 1, duration: 0.8, ease: "arco-reveal" }, this.motion.duration * 0.45);
+    }
+
+    hovered() {
+      if (!this.pointer) return -1;
+      const item = document.elementFromPoint(this.pointer.x, this.pointer.y)?.closest(".arco-accordion_item");
+      return this.items.indexOf(item);
+    }
+
+    resolveHover() {
+      this.intent?.kill();
+      const locked = this.flip?.isActive() ? Math.max(HOVER_LOCK - this.flip.time(), 0) : 0;
+
+      this.intent = gsap.delayedCall(locked + HOVER_INTENT, () => {
+        const index = this.hovered();
+        if (index > -1) this.go(index);
+      });
+    }
+
+    bind() {
+      const { signal } = this.abort;
+      const canHover = window.matchMedia("(hover: hover) and (pointer: fine)");
+
+      this.el.addEventListener(
+        "pointermove",
+        (e) => {
+          if (e.pointerType !== "mouse" || this.options.trigger !== "hover" || !canHover.matches) return;
+          const before = this.hovered();
+          this.pointer = { x: e.clientX, y: e.clientY };
+          if (this.hovered() !== before) this.resolveHover();
+        },
+        { signal }
+      );
+
+      this.el.addEventListener(
+        "pointerleave",
+        () => {
+          this.pointer = null;
+          this.intent?.kill();
+        },
+        { signal }
+      );
+
+      this.panels.forEach(({ button }, i) => {
+        button.addEventListener("click", () => this.go(i), { signal });
+      });
+
+      this.el.addEventListener(
+        "keydown",
+        (e) => {
+          const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+          let index = null;
+
+          if (e.key in keys) index = gsap.utils.wrap(0, this.items.length, this.index + keys[e.key]);
+          if (e.key === "Home") index = 0;
+          if (e.key === "End") index = this.items.length - 1;
+          if (index === null) return;
+
+          e.preventDefault();
+          this.go(index);
+          this.panels[index].button.focus();
+        },
+        { signal }
+      );
+    }
+
+    emit(name, detail = {}) {
+      this.el.dispatchEvent(new CustomEvent(`arco:${name}`, { detail: { instance: this, ...detail } }));
+    }
+
+    destroy() {
+      this.abort.abort();
+      this.intent?.kill();
+      this.flip?.kill();
+      this.panels.forEach((panel) => {
+        panel.tl?.kill();
+        panel.split?.revert();
+        gsap.set([panel.item, panel.content, panel.label, panel.media, panel.visual, panel.text], { clearProps: "all" });
+      });
+      delete this.el.arcoAccordion;
+    }
+
+    static init(scope = document) {
+      return gsap.utils
+        .toArray("[data-arco-accordion]", scope)
+        .map((el) => el.arcoAccordion ?? new ArcoAccordion(el));
+    }
+  }
+
+  ArcoAccordion.presets = presets;
+  window.ArcoAccordion = ArcoAccordion;
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => ArcoAccordion.init());
+  } else {
+    ArcoAccordion.init();
+  }
+})();
+</script>
+</body>
+</html>
