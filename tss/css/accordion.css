@@ -1,0 +1,455 @@
+/* ==========================================================================
+   Accordion — adapted from "Arco · Accordion"
+   github.com/emanuelbento/arco-components
+
+   Geometry, motion tokens and structure follow the reference. Adaptations:
+     · Persian: Vazirmatn, no negative letter-spacing (it breaks Arabic-script
+       joins), relaxed line-height so the SplitText masks don't clip glyphs
+     · RTL: logical properties; slide direction + keyboard handled in JS
+     · Stage is sized to the page (not 100dvh) and sits transparent on the
+       site background, so light/dark theme keeps working
+     · Panel body is an inset surface in the page colour, so every existing
+       component (cards, forms, Mizan reader) looks exactly as before
+   Everything is scoped under html.rm-acc. If GSAP fails to load, accordion.js
+   removes that class and the sections fall back to the plain stacked layout
+   (see the "Fallback" block at the bottom).
+   ========================================================================== */
+
+:root {
+  --arco-ink: #0d0d0d;
+
+  --arco-ochre: #d6a64f;
+  --arco-lilac: #b9b0e3;
+  --arco-aqua: #8fc7bd;
+  --arco-coral: #ec8f73;
+  --arco-sky: #9fbfe6;
+
+  --arco-max-width: 64rem;
+  --arco-max-height: 38rem;
+  --arco-gap: 0.5rem;
+  --arco-pill: 4rem;
+  --arco-pill-height: 80%;
+  --arco-bar: 3.5rem;
+  --arco-radius: 1.125rem;
+  --arco-media-radius: 0.625rem;
+
+  --arco-stage-pad: 0rem;
+  --arco-bar-height: 2.75rem;
+
+  /* Stage height: fill what the header + progress card leave, never less than
+     a comfortable working height (the page scrolls a little instead). */
+  --rm-stage-h: clamp(35rem, calc(100dvh - 21rem), 46rem);
+}
+
+@media (max-width: 991px) {
+  :root {
+    --arco-pill: 3.5rem;
+    --arco-radius: 1rem;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --arco-gap: 0.375rem;
+    --arco-radius: 0.875rem;
+    --arco-media-radius: 0.5rem;
+    --arco-bar: 3rem;
+    --arco-bar-height: 2.5rem;
+    --rm-stage-h: clamp(38rem, calc(100dvh - 11rem), 54rem);
+  }
+}
+
+@media (max-width: 991px) and (orientation: portrait) {
+  :root {
+    --arco-bar: 3rem;
+    --rm-stage-h: clamp(38rem, calc(100dvh - 11rem), 54rem);
+  }
+}
+
+/* The work page uses a wider stage than the other pages (open panel needs room) */
+.container--stage { max-width: calc(var(--arco-max-width) + 2 * 18px); }
+.container--stage > .section:not(.section--stage) { max-width: 720px; margin-inline: auto; }
+
+html.rm-acc .section_arco-accordion,
+html.rm-acc .section_arco-accordion *,
+html.rm-acc .section_arco-accordion *::before,
+html.rm-acc .section_arco-accordion *::after {
+  box-sizing: border-box;
+}
+
+/* Stage ------------------------------------------------------------------ */
+
+html.rm-acc .section_arco-accordion {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) var(--arco-bar-height);
+  height: var(--rm-stage-h);
+  padding-inline: var(--arco-stage-pad);
+  overflow: clip;
+  color: var(--text);
+  font-family: var(--font-ui);
+}
+
+.arco-accordion_bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.arco-accordion_counter { color: var(--text-dim); font-weight: 600; direction: ltr; unicode-bidi: isolate; }
+
+html.rm-acc .arco-accordion_wrapper {
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding-block: 0.25rem 0.5rem;
+}
+
+/* Component
+   The open panel takes whatever the closed ones leave. JS sets --arco-count. */
+
+html.rm-acc .arco-accordion_component {
+  --arco-count: 5;
+  --arco-open: calc(100cqw - (var(--arco-count) - 1) * (var(--arco-pill) + var(--arco-gap)));
+
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--arco-gap);
+  width: min(100%, var(--arco-max-width));
+  height: min(100%, var(--arco-max-height));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+html.rm-acc .arco-accordion_item {
+  position: relative;
+  flex: none;
+  width: var(--arco-pill);
+  height: var(--arco-pill-height);
+  border-radius: calc(var(--arco-pill) / 2);
+  overflow: hidden;
+  overflow: clip;            /* clip can't be scrolled by focus()/scrollIntoView */
+  isolation: isolate;
+  background-color: var(--arco-panel, var(--arco-lilac));
+  color: var(--arco-ink);
+}
+
+html.rm-acc .arco-accordion_item.is-active {
+  width: var(--arco-open);
+  height: 100%;
+  border-radius: var(--arco-radius);
+}
+
+.arco-accordion_item[data-panel="ochre"] { --arco-panel: var(--arco-ochre); }
+.arco-accordion_item[data-panel="lilac"] { --arco-panel: var(--arco-lilac); }
+.arco-accordion_item[data-panel="aqua"]  { --arco-panel: var(--arco-aqua); }
+.arco-accordion_item[data-panel="coral"] { --arco-panel: var(--arco-coral); }
+.arco-accordion_item[data-panel="sky"]   { --arco-panel: var(--arco-sky); }
+
+html.rm-acc .arco-accordion_item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background-color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.rm-acc .arco-accordion_item:not(.is-active):hover::after {
+    opacity: 0.12;
+  }
+}
+
+html.rm-acc .arco-accordion_trigger {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+html.rm-acc .arco-accordion_trigger:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: -4px;
+  border-radius: inherit;
+}
+
+html.rm-acc .arco-accordion_item.is-active .arco-accordion_trigger {
+  pointer-events: none;
+}
+
+/* Pill label (vertical in the row layout, horizontal when stacked) */
+
+html.rm-acc .arco-accordion_label {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  pointer-events: none;
+}
+
+/* Count bubble on a pill (e.g. number of saved tafsirs) */
+.rm-badge {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 0.75rem;
+  inset-inline: 0;
+  margin-inline: auto;
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--arco-ink);
+  color: var(--arco-panel, #fff);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+.rm-badge[hidden] { display: none; }
+
+/* Content stays at the open size, the panel clips it while it resizes */
+
+html.rm-acc .arco-accordion_content {
+  container-type: size;
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  row-gap: clamp(0.5rem, 2cqh, 0.9rem);
+  width: var(--arco-open);
+  height: 100cqh;
+  padding: clamp(0.75rem, 2cqi, 1.25rem);
+}
+
+html.rm-acc .arco-accordion_item:not(.is-active) .arco-accordion_content {
+  visibility: hidden;
+}
+
+.rm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+html.rm-acc .arco-accordion_heading {
+  margin: 0;
+  font-size: clamp(1.45rem, min(6.4cqi, 10cqh), 2.9rem);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* SplitText masks: extra room so Persian ascenders/descenders are not clipped */
+.arco-accordion_line-mask {
+  padding-block: 0.14em;
+  margin-block: -0.14em;
+}
+
+/* range label next to the Mizan heading (was an inline style) */
+.rm-range { color: color-mix(in srgb, var(--arco-ink) 70%, transparent); font-weight: 600; }
+.rm-range:empty { display: none; }
+
+.rm-head__aside {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-inline-start: auto;
+  color: var(--arco-ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* "Which ayah am I on" chip — replaces the old sticky ayah while a panel is open */
+.rm-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 100%;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--arco-ink) 30%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--arco-ink) 5%, transparent);
+  color: var(--arco-ink);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.rm-ref:hover { background: color-mix(in srgb, var(--arco-ink) 12%, transparent); border-color: color-mix(in srgb, var(--arco-ink) 55%, transparent); }
+.rm-ref:focus-visible { outline: 2px solid var(--arco-ink); outline-offset: 2px; }
+.rm-ref::before { content: ""; width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--arco-ink); opacity: 0.7; }
+.rm-ref:empty { display: none; }
+
+/* Panel body: inset page surface — existing components keep their look */
+
+html.rm-acc .rm-body {
+  --rm-body-pad: 12px;
+  min-height: 0;
+  padding: var(--rm-body-pad);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+  background: var(--bg-solid);
+  color: var(--text);
+  border-radius: max(calc(var(--arco-radius) - 0.35rem), var(--arco-media-radius));
+  -webkit-overflow-scrolling: touch;
+}
+html.rm-acc .rm-body::-webkit-scrollbar { width: 8px; }
+html.rm-acc .rm-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* Components that were laid out for a full-width page */
+html.rm-acc .rm-body .sticky-ayah { position: static; padding: 0; margin: 0; background: none; z-index: auto; }
+html.rm-acc .rm-body .tafsir-card:first-child { margin-top: 0; }
+html.rm-acc .rm-body .ayah-frame__arabic { font-size: clamp(1.35rem, 3.4cqi, 1.8rem); }
+
+/* Ayah quote strip shown above the tafsir form (the sticky ayah is gone) */
+.rm-quote {
+  flex: none;                 /* وگرنه در بدنهٔ flex فشرده و بریده می‌شد */
+  margin: 0 0 10px;
+  padding: 2px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  background: var(--read-bg);
+  color: var(--text);
+  font-family: var(--font-quran);
+  font-size: 1.1rem;
+  line-height: 2.1;
+  text-align: center;
+  cursor: pointer;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rm-quote.is-expanded { -webkit-line-clamp: unset; display: block; padding-block: 8px; }
+.rm-quote[hidden] { display: none; }
+
+/* label + «link to another ayah» share one row (saves a line of height) */
+.field__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.field__head label { margin: 0; }
+
+/* Tafsir form: the writing area grows into the available height */
+html.rm-acc .rm-body--form { display: flex; flex-direction: column; }
+html.rm-acc .rm-body--form > .card { flex: 1 0 auto; display: flex; flex-direction: column; }
+html.rm-acc .rm-body--form form { flex: 1 0 auto; display: flex; flex-direction: column; }
+html.rm-acc .rm-body--form .field--grow { flex: 1 0 auto; display: flex; flex-direction: column; }
+html.rm-acc .rm-body--form .field--grow textarea { flex: 1 0 auto; min-height: 120px; }
+html.rm-acc .rm-body--form .field textarea:focus { min-height: 120px; }
+
+/* Mizan reader: card flush with the body, pager always reachable */
+html.rm-acc .rm-body .mizan-tafsir-container { padding: 14px 8px 0; }
+html.rm-acc .rm-body .mizan-tafsir-content { padding: 4px 8px; }
+html.rm-acc .rm-body .mizan-pager {
+  position: sticky;
+  inset-block-end: calc(-1 * var(--rm-body-pad));
+  z-index: 3;
+  margin-top: 12px;
+  padding: 10px 4px calc(var(--rm-body-pad) + 2px);
+  background: var(--card);
+}
+
+/* Stacked layout for phones and portrait tablets.
+   Keep the query in sync with STACKED in accordion.js. */
+
+@media (max-width: 767px), (max-width: 991px) and (orientation: portrait) {
+  html.rm-acc .arco-accordion_component {
+    --arco-open: calc(100cqh - (var(--arco-count) - 1) * (var(--arco-bar) + var(--arco-gap)));
+
+    flex-direction: column;
+    height: 100%;
+  }
+
+  html.rm-acc .arco-accordion_item {
+    width: 100%;
+    height: var(--arco-bar);
+    border-radius: calc(var(--arco-bar) / 2);
+  }
+
+  html.rm-acc .arco-accordion_item.is-active {
+    width: 100%;
+    height: var(--arco-open);
+  }
+
+  html.rm-acc .arco-accordion_label {
+    writing-mode: horizontal-tb;
+    transform: none;
+    font-size: 0.875rem;
+  }
+
+  .rm-badge {
+    inset-block: 0;
+    inset-inline: auto 1.1rem;
+    margin: auto 0;
+  }
+
+  html.rm-acc .arco-accordion_content {
+    row-gap: clamp(0.4rem, 2cqh, 0.8rem);
+    width: 100cqw;
+    height: var(--arco-open);
+    padding: 0.75rem;
+  }
+
+  html.rm-acc .arco-accordion_heading {
+    font-size: clamp(1.25rem, min(7.5cqi, 8cqh), 1.9rem);
+  }
+
+  .rm-head__aside { margin-inline-start: 0; }
+  html.rm-acc .rm-body { --rm-body-pad: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.rm-acc .arco-accordion_item::after {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Fallback — no GSAP: the panels read as the original stacked sections
+   ========================================================================== */
+html:not(.rm-acc) .arco-accordion_component { margin: 0; padding: 0; list-style: none; }
+html:not(.rm-acc) .arco-accordion_item { margin-top: 28px; }
+html:not(.rm-acc) .arco-accordion_item:first-child { margin-top: 0; }
+html:not(.rm-acc) .arco-accordion_trigger,
+html:not(.rm-acc) .arco-accordion_label,
+html:not(.rm-acc) .rm-badge,
+html:not(.rm-acc) .arco-accordion_bar,
+html:not(.rm-acc) .rm-ref { display: none; }
+html:not(.rm-acc) .rm-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: nowrap; }
+html:not(.rm-acc) .arco-accordion_heading { margin: 0; font-size: 0.86rem; font-weight: 700; color: var(--text-dim); }
+html:not(.rm-acc) .rm-head::after { content: ""; flex: 1; height: 8px; background: var(--wave-line) repeat-x center; opacity: 0.7; order: 5; }
+html:not(.rm-acc) .rm-head__aside { order: 4; color: var(--text-faint); margin-inline-start: 0; }

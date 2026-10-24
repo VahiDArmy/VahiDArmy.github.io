@@ -7,61 +7,50 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
 <style>
-  .login-wrap {
-    min-height: 100dvh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    position: relative;
-    z-index: 1;
-  }
-  .login-card {
-    width: 100%;
-    max-width: 360px;
-  }
-  .login-card .brand {
-    justify-content: center;
-    margin-bottom: 24px;
-    font-size: 1.3rem;
-  }
-  .login-back {
-    display: block;
-    text-align: center;
-    margin-top: 16px;
-    font-size: 0.85rem;
-    color: var(--text-dim);
-  }
+  .login-wrap { display: flex; justify-content: center; padding: 6px 18px 40px; }
+  .login-card { width: 100%; max-width: 380px; }
+  .login-back { display: block; margin-top: 16px; text-align: center; font-size: .85rem; color: var(--text-dim); }
   .login-back:hover { color: var(--neon); }
-  .login-error {
-    color: var(--danger);
-    font-size: 0.82rem;
-    margin-top: 10px;
-    display: none;
-  }
+  .login-error { display: none; margin-top: 10px; font-size: .82rem; color: var(--danger); }
 </style>
 </head>
 <body>
 
 
+<header class="site-header wave">
+  <div class="site-header__inner">
+    <div class="brand">
+      <span class="brand__latin" dir="ltr"><span class="brand__mark">Raise</span><span>Mind</span></span>
+      <span class="brand__fa">· ارتقا ذهن</span>
+    </div>
+    <div class="header-actions">
+      <button class="theme-toggle" data-theme-toggle aria-label="تغییر تم" aria-pressed="false">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="main-head">
+    <h1>ورود</h1>
+  </div>
+</header>
+
 <div class="login-wrap">
   <div class="login-card">
-    <div class="brand"><span class="brand__mark">Raise</span><span>Mind</span></div>
     <div class="card">
       <form id="loginForm">
         <div class="field">
           <label for="email">ایمیل</label>
-          <input type="text" id="email" name="email" required autocomplete="username" />
+          <input type="email" id="email" name="email" required autocomplete="username" dir="ltr" />
         </div>
         <div class="field">
           <label for="password">رمز عبور</label>
-          <input type="text" id="password" name="password" required autocomplete="current-password" style="-webkit-text-security: disc;" />
+          <input type="password" id="password" name="password" required autocomplete="current-password" dir="ltr" />
         </div>
         <button type="submit" class="btn btn--primary" style="width:100%">ورود</button>
         <p class="login-error" id="loginError">ایمیل یا رمز عبور اشتباه است.</p>
@@ -76,26 +65,53 @@
 <script src="js/supabase-client.js"></script>
 <script src="js/theme.js"></script>
 <script>
+  // «next» از آدرس می‌آید و هر کسی می‌تواند آن را بسازد. قبلاً مستقیم به location.href داده می‌شد؛
+  // یعنی ?next=javascript:… در همین صفحه کد اجرا می‌کرد و ?next=https://evil.example کاربر را به سایت دیگر می‌برد.
+  // حالا فقط مسیرهای همین سایت پذیرفته می‌شود.
+  function safeNext() {
+    const fallback = 'index.html';
+    const raw = new URLSearchParams(location.search).get('next');
+    if (!raw) return fallback;
+    try {
+      const url = new URL(raw, location.href);
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return fallback;
+      if (url.origin !== location.origin) return fallback;
+      if (url.pathname.endsWith('/login.html')) return fallback; // حلقهٔ بی‌پایان
+      return url.pathname + url.search + url.hash;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
   (async function () {
-    const session = await Auth.getSession();
+    let session = null;
+    try {
+      session = await Auth.getSession();
+    } catch (e) {
+      session = null; // اگر خواندن نشست خراب بود، همان فرم ورود را نشان بده
+    }
     if (session) {
-      const next = new URLSearchParams(location.search).get('next') || 'index.html';
-      location.href = next;
+      location.replace(safeNext());
       return;
     }
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    const form = document.getElementById('loginForm');
+    const errorEl = document.getElementById('loginError');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (submitBtn && submitBtn.disabled) return; // کلیک/Enter دوباره وسط ورود
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      const errorEl = document.getElementById('loginError');
       errorEl.style.display = 'none';
+      if (submitBtn) submitBtn.disabled = true;
       try {
         await Auth.signIn(email, password);
-        const next = new URLSearchParams(location.search).get('next') || 'index.html';
-        location.href = next;
+        location.replace(safeNext());
       } catch (err) {
         errorEl.style.display = 'block';
+        if (submitBtn) submitBtn.disabled = false;
       }
     });
   })();

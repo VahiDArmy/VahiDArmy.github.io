@@ -5,25 +5,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>RaiseMind | ارتقا ذهن</title>
 <meta name="description" content="نظر و برداشت شخصی، آیه به آیه از قرآن" />
+<meta name="theme-color" content="#2b3339" />
+<script>document.documentElement.classList.add('rm-acc')</script>
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&family=Amiri+Quran&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=Amiri+Quran&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
 
 <link rel="stylesheet" href="css/tokens.css" />
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/mizan.css" />
+<link rel="stylesheet" href="css/ask-ai.css" />
+<link rel="stylesheet" href="css/ai-feedback.css" />
+<link rel="stylesheet" href="css/accordion.css" />
 </head>
 <body>
 
-<header class="site-header">
+<header class="site-header wave wave--slim">
   <div class="site-header__inner">
     <div class="brand">
-      <span class="brand__mark">Raise</span><span>Mind</span>
+      <span class="brand__latin" dir="ltr"><span class="brand__mark">Raise</span><span>Mind</span></span>
       <span class="brand__fa">· ارتقا ذهن</span>
     </div>
     <nav class="nav-tabs" aria-label="ناوبری اصلی">
-      <a href="index.html" class="active">کار</a>
+      <a href="index.html" class="active" aria-current="page">کار</a>
       <a href="browse.html">مرور</a>
       <a href="tags.html">برچسب‌ها</a>
       <a href="relations.html">رابطه‌ها</a>
@@ -40,9 +46,8 @@
   </div>
 </header>
 
-<main class="container">
+<main class="container container--stage">
 
-  <!-- پیشرفت دور + دکمه‌ها -->
   <section class="section" aria-label="پیشرفت">
     <div class="progress-hero">
       <div class="progress-ring" id="progressRing">
@@ -71,89 +76,185 @@
     </div>
   </section>
 
-  <!-- آیهٔ در حال کار -->
-  <section class="section" aria-label="آیهٔ در حال کار">
-    <div class="section__label">آیهٔ در حال کار</div>
-    <div class="select-row" style="margin-bottom:10px">
-      <div class="select-wrap"><select id="formSurahSelect" aria-label="انتخاب سوره"></select></div>
-      <div class="select-wrap"><select id="formAyahSelect" aria-label="انتخاب آیه"></select></div>
-    </div>
-    <div class="sticky-ayah">
-      <div id="workAyahFrame"></div>
-      <div class="ayah-nav">
-        <button class="btn" id="workPrevBtn">آیه قبلی ‹</button>
-        <button class="btn" id="workNextBtn">› آیه بعدی</button>
-      </div>
-    </div>
-  </section>
+  <section class="section section--stage" aria-label="بخش‌های کار">
+    <div class="section_arco-accordion">
+      <div class="arco-accordion_wrapper">
+        <ul class="arco-accordion_component" id="workAccordion" aria-label="بخش‌های کار"
+            data-arco-accordion data-arco-accordion-active="0" data-arco-accordion-trigger="click" data-arco-accordion-ease="signature">
 
-  <!-- تفسیرهای موجود -->
-  <section class="section" aria-label="تفسیرهای این آیه">
-    <div class="section__label">تفسیرهای ثبت‌شده برای این آیه</div>
-    <div id="workTafsirsList"></div>
-  </section>
+          <!-- 1 · آیه -->
+          <li class="arco-accordion_item is-active" data-panel="aqua" data-panel-key="ayah">
+            <button type="button" class="arco-accordion_trigger" aria-label="باز کردن بخش آیه"></button>
+            <p class="arco-accordion_label">آیه</p>
+            <div class="arco-accordion_content">
+              <header class="rm-head">
+                <h2 class="arco-accordion_heading">آیهٔ در حال کار</h2>
+              </header>
+              <div class="rm-body">
+                <div class="select-row" style="margin-bottom:10px">
+                  <div class="select-wrap"><select id="formSurahSelect" aria-label="انتخاب سوره"></select></div>
+                  <div class="select-wrap"><select id="formAyahSelect" aria-label="انتخاب آیه"></select></div>
+                </div>
+                <div class="sticky-ayah">
+                  <div id="workAyahFrame"></div>
+                  <div class="ayah-nav">
+                    <button class="btn" id="workPrevBtn">آیه قبلی ‹</button>
+                    <button class="btn" id="workNextBtn">› آیه بعدی</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
 
-  <!-- فرم افزودن/ویرایش تفسیر -->
-  <section class="section" aria-label="افزودن تفسیر">
-    <div class="section__label">تفسیر تازه</div>
-    <div class="card">
-      <div class="edit-banner" id="editBanner" hidden>
-        <span>در حال ویرایش یک تفسیر موجود</span>
-        <button type="button" data-cancel-edit>انصراف</button>
-      </div>
-      <form id="tafsirForm">
-        <div class="field">
-          <label for="tafsirContent">نظر و برداشت شما</label>
-          <textarea id="tafsirContent" rows="4" spellcheck="false" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
-          <button type="button" class="btn btn--sm" id="openLinkToolBtn" style="margin-top:8px;">﹢ لینک به آیهٔ دیگر</button>
-        </div>
-        <div class="field">
-          <label for="tafsirTags">برچسب‌ها (اختیاری، با ، یا , جدا کنید)</label>
-          <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت، اخلاق فردی" />
-        </div>
-        <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
-      </form>
-    </div>
-  </section>
+          <!-- 2 · تفسیرها -->
+          <li class="arco-accordion_item" data-panel="lilac" data-panel-key="tafsirs">
+            <button type="button" class="arco-accordion_trigger" aria-label="باز کردن بخش تفسیرهای ثبت‌شده"></button>
+            <p class="arco-accordion_label">تفسیرها</p>
+            <span class="rm-badge" hidden aria-hidden="true"></span>
+            <div class="arco-accordion_content">
+              <header class="rm-head">
+                <h2 class="arco-accordion_heading">تفسیرهای این آیه</h2>
+                <div class="rm-head__aside"><button type="button" class="rm-ref" data-rm-ref data-open-panel="ayah" title="رفتن به بخش آیه"></button></div>
+              </header>
+              <div class="rm-body">
+                <div id="workTafsirsList"></div>
+              </div>
+            </div>
+          </li>
 
-  <!-- تفسیر روان جاوید -->
-  <section class="section" aria-label="تفسیر روان جاوید" id="ravanTafsirSection">
-    <div class="section__label">
-      <span>تفسیر روان جاوید</span>
-      <div style="display:flex; gap:6px; margin-inline-start:auto;">
-        <button class="btn btn--sm btn--primary" id="ravanTafsirLoadBtn" style="font-size:0.75rem;">↻ بارگذاری تفسیر</button>
-        <button class="btn btn--sm btn--ghost hidden" id="ravanTafsirDeleteBtn" style="font-size:0.75rem; color:var(--danger); border-color:var(--danger);">✕ حذف</button>
+          <!-- 3 · تفسیر تازه -->
+          <li class="arco-accordion_item" data-panel="ochre" data-panel-key="new">
+            <button type="button" class="arco-accordion_trigger" aria-label="باز کردن بخش تفسیر تازه"></button>
+            <p class="arco-accordion_label">تفسیر تازه</p>
+            <div class="arco-accordion_content">
+              <header class="rm-head">
+                <h2 class="arco-accordion_heading">تفسیر تازه</h2>
+                <div class="rm-head__aside"><button type="button" class="rm-ref" data-rm-ref data-open-panel="ayah" title="رفتن به بخش آیه"></button></div>
+              </header>
+              <div class="rm-body rm-body--form">
+                <p class="rm-quote" id="rmAyahQuote" lang="ar" dir="rtl" hidden title="برای نمایش کامل کلیک کنید"></p>
+                <div class="card">
+                  <div class="edit-banner" id="editBanner" hidden>
+                    <span>در حال ویرایش یک تفسیر موجود</span>
+                    <button type="button" data-cancel-edit>انصراف</button>
+                  </div>
+                  <form id="tafsirForm">
+                    <div class="field field--grow">
+                      <div class="field__head">
+                        <label for="tafsirContent">نظر و برداشت شما</label>
+                        <button type="button" class="btn btn--sm" id="openLinkToolBtn">﹢ لینک به آیهٔ دیگر</button>
+                      </div>
+                      <textarea id="tafsirContent" rows="4" spellcheck="false" placeholder="نظر خود را دربارهٔ این آیه بنویسید…" required></textarea>
+                    </div>
+                    <div class="field">
+                      <label for="tafsirTags">برچسب‌ها (اختیاری، با ، یا , جدا کنید)</label>
+                      <input type="text" id="tafsirTags" placeholder="مثلاً: عدالت، اخلاق فردی" />
+                    </div>
+                    <button type="submit" class="btn btn--primary" id="submitBtn" style="width:100%">ثبت تفسیر</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- 4 · پرسش از هوش مصنوعی -->
+          <li class="arco-accordion_item" data-panel="coral" data-panel-key="ai">
+            <button type="button" class="arco-accordion_trigger" aria-label="باز کردن بخش پرسش از هوش مصنوعی"></button>
+            <p class="arco-accordion_label">پرسش هوشمند</p>
+            <div class="arco-accordion_content">
+              <header class="rm-head">
+                <h2 class="arco-accordion_heading">پرسش از هوش مصنوعی</h2>
+                <div class="rm-head__aside"><button type="button" class="rm-ref" data-rm-ref data-open-panel="ayah" title="رفتن به بخش آیه"></button></div>
+              </header>
+              <div class="rm-body" id="askAiSection">
+                <div class="ask-ai-composer card">
+      <div class="ask-ai-composer__head">
+        <button type="button" class="ask-ai-composer__model" id="askAiCurrentModel" title="تغییر مدل">
+          <span class="ask-ai-composer__model-dot"></span>
+          <span id="askAiModelLabel">—</span>
+        </button>
+        <button type="button" class="ask-ai-composer__format-toggle is-on" id="askAiFormatToggle"
+                aria-pressed="true" title="قالب اجباری — برای آزادسازی قالب کلیک کنید">
+          <span class="format-toggle__dot"></span>
+          <span class="format-toggle__label" id="askAiFormatLabel">قالب اجباری</span>
+        </button>
+      </div>
+      <div class="ask-ai-composer__followup" id="askAiFollowUpChip" hidden>
+        <span class="followup__icon">↩</span>
+        <span class="followup__label">
+          پیگیری از: <b id="askAiFollowUpLabel">—</b>
+          <span class="followup__excerpt" id="askAiFollowUpExcerpt"></span>
+        </span>
+        <button type="button" class="followup__clear" id="askAiFollowUpClear" aria-label="لغو پیگیری" title="لغو پیگیری">✕</button>
+      </div>
+      <textarea id="askAiInput" rows="2" placeholder="دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)"></textarea>
+      <div class="ask-ai-composer__actions">
+        <span class="ai-status" id="aiStatus" data-state="idle" aria-live="polite" aria-label="وضعیت"></span>
+        <button type="button" class="btn btn--primary btn--sm" id="askAiSubmit">بپرس</button>
       </div>
     </div>
-    <div class="card ravan-tafsir-container" id="ravanTafsirContainer">
-      <div id="ravanTafsirEmpty" class="ravan-tafsir-empty">
-        <p style="color:var(--text-faint); text-align:center; padding:16px 0;">برای دریافت تفسیر روان جاوید، دکمه «بارگذاری تفسیر» را بزنید.</p>
+
+    <div id="askAiAnswer"></div>
+    <div id="askAiHistory"></div>
+              </div>
+            </div>
+          </li>
+
+          <!-- 5 · تفسیر المیزان -->
+          <li class="arco-accordion_item" data-panel="sky" data-panel-key="mizan">
+            <button type="button" class="arco-accordion_trigger" aria-label="باز کردن بخش تفسیر المیزان"></button>
+            <p class="arco-accordion_label">المیزان</p>
+            <div class="arco-accordion_content">
+              <header class="rm-head">
+                <h2 class="arco-accordion_heading">تفسیر المیزان</h2>
+                <div class="rm-head__aside">
+                  <span class="rm-range" id="mizanRange"></span>
+                  <button type="button" class="mizan-tagger-btn hidden" id="mizanTaggerBtn" title="تفکیک محتوا بر اساس آیات">
+                    <span class="mizan-tagger-btn__icon">⚡</span>
+                    <span id="mizanTaggerLabel">تفکیک آیه‌ای</span>
+                  </button>
+                  <button type="button" class="rm-ref" data-rm-ref data-open-panel="ayah" title="رفتن به بخش آیه"></button>
+                </div>
+              </header>
+              <div class="rm-body" id="mizanTafsirSection">
+                <div class="card mizan-tafsir-container" id="mizanTafsirContainer">
+      <div id="mizanEmpty" class="mizan-tafsir-empty">
+        <p style="color:var(--text-faint); text-align:center; padding:16px 0;">تفسیر المیزان برای این آیه در دسترس نیست.</p>
       </div>
-      <div id="ravanTafsirLoading" class="ravan-tafsir-loading hidden">
+      <div id="mizanLoading" class="mizan-tafsir-loading hidden">
         <div class="skeleton" style="height:60px; width:100%;"></div>
         <div class="skeleton" style="height:40px; width:80%; margin-top:8px;"></div>
+        <div class="skeleton" style="height:40px; width:90%; margin-top:8px;"></div>
       </div>
-      <div id="ravanTafsirContent" class="ravan-tafsir-content hidden"></div>
-      <div id="ravanTafsirError" class="ravan-tafsir-error hidden"></div>
-      <button id="ravanTafsirManualBtn" class="btn btn--sm hidden" style="margin-top:10px;">↺ وارد کردن آدرس دستی</button>
-      <div id="ravanTafsirManualPaste" class="hidden" style="margin-top:12px;">
-        <textarea id="ravanTafsirPasteArea" rows="8" placeholder="متن تفسیر روان جاوید را اینجا پیست کنید..." style="width:100%; min-height:160px;"></textarea>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button id="ravanTafsirPasteSave" class="btn btn--primary btn--sm">ذخیره متن</button>
-          <button id="ravanTafsirPasteCancel" class="btn btn--sm">انصراف</button>
-        </div>
+      <div id="mizanContent" class="mizan-tafsir-content hidden"></div>
+      <div id="mizanError" class="mizan-tafsir-error hidden"></div>
+      <div id="mizanPager" class="mizan-pager hidden">
+        <button type="button" class="mizan-pager__btn" id="mizanPrevBtn">‹ صفحهٔ قبل</button>
+        <span class="mizan-pager__info" id="mizanPageInfo">—</span>
+        <button type="button" class="mizan-pager__btn" id="mizanNextBtn">صفحهٔ بعد ›</button>
+        <button type="button" class="mizan-pager__toc" id="mizanTocBtn">فهرست</button>
       </div>
-      <div id="ravanTafsirManualInput" class="ravan-tafsir-manual-input hidden" style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-        <input type="text" placeholder="آدرس کامل صفحه ویکی را وارد کنید..." style="flex:1; min-width:200px; background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:var(--radius-sm); padding:8px 12px; color:var(--text);">
-        <button class="btn btn--sm btn--primary" id="ravanTafsirManualSubmit">دریافت</button>
-        <button class="btn btn--sm btn--ghost" id="ravanTafsirManualCancel">انصراف</button>
+    </div>
+              </div>
+            </div>
+          </li>
+
+        </ul>
       </div>
+
+      <footer class="arco-accordion_bar">
+        <span class="arco-accordion_hint">یک بخش را انتخاب کنید</span>
+        <span class="arco-accordion_counter" aria-hidden="true">۰۱ / ۰۵</span>
+      </footer>
     </div>
   </section>
 
 </main>
 
-<!-- پاپ‌آپ انتخاب آیهٔ مقصد برای لینک -->
+<button type="button" class="mizan-note-add-btn" id="mizanNoteAddBtn" hidden>
+  ✎ افزودن یادداشت
+</button>
+
 <div class="modal-overlay" id="linkToolModal" hidden>
   <div class="modal-card card">
     <div class="modal-card__head">
@@ -170,7 +271,6 @@
   </div>
 </div>
 
-<!-- پاپ‌آپ بررسی هوشمند -->
 <div class="modal-overlay" id="aiReviewModal" hidden>
   <div class="modal-card card ai-review-modal">
     <div class="modal-card__head">
@@ -182,8 +282,6 @@
     <div id="aiReviewExternalLinks" class="ai-ext-links hidden">
       <span class="ai-ext-links__label">باز کردن در:</span>
       <button type="button" class="ai-ext-btn" data-provider="deepseek">DeepSeek ↗</button>
-      <button type="button" class="ai-ext-btn" data-provider="glm">GLM ↗</button>
-      <button type="button" class="ai-ext-btn" data-provider="kimi">Kimi ↗</button>
     </div>
     <div id="aiReviewLoading" class="ai-review-loading hidden">
       <div class="skeleton" style="height:18px; width:90%; margin-bottom:10px;"></div>
@@ -196,7 +294,10 @@
       <p style="text-align:center; color:var(--text-faint); padding:24px 0; font-size:0.9rem;">هنوز بررسی هوشمندی برای این تفسیر ثبت نشده است.</p>
       <button type="button" class="btn btn--primary" id="aiReviewStartBtn" style="width:100%;">شروع بررسی هوشمند</button>
     </div>
-    <div id="aiReviewContent" class="ai-review-content hidden"><div id="aiReviewText" class="ai-review-text"></div></div>
+    <div id="aiReviewContent" class="ai-review-content hidden">
+      <div id="aiReviewText" class="ai-review-text"></div>
+      <div id="aiReviewFeedback"></div>
+    </div>
     <div id="aiReviewEdit" class="ai-review-edit hidden"><textarea id="aiReviewEditArea" rows="8" style="width:100%; min-height:160px;"></textarea></div>
     <div class="ai-review-actions" id="aiReviewActions" style="display:none;">
       <button type="button" class="btn btn--sm" id="aiReviewRefreshBtn">تولید مجدد</button>
@@ -208,29 +309,106 @@
   </div>
 </div>
 
-<footer style="text-align:center; padding:20px; font-size:0.72rem; color:var(--text-faint);">
+<div class="modal-overlay" id="aiModelsModal" hidden>
+  <div class="modal-card card ai-models-modal">
+    <div class="modal-card__head">
+      <span>انتخاب مدل هوش مصنوعی</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="closeModelsBtn" aria-label="بستن">✕</button>
+    </div>
+    <div class="ai-models-list" id="aiModelsList"></div>
+    <div class="ai-models-modal__footer">
+      <button type="button" class="btn btn--primary" id="saveModelBtn" style="width:100%">ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mizanTocModal" hidden>
+  <div class="modal-card card mizan-toc-modal">
+    <div class="modal-card__head">
+      <span>فهرست تفسیر المیزان</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="mizanTocClose" aria-label="بستن">✕</button>
+    </div>
+    <div class="mizan-toc-list" id="mizanTocList"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mizanNoteModal" hidden>
+  <div class="modal-card card">
+    <div class="modal-card__head">
+      <span id="mizanNoteTitle">افزودن یادداشت</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="mizanNoteClose" aria-label="بستن">✕</button>
+    </div>
+    <div class="mizan-note-modal__quote" id="mizanNoteQuote">—</div>
+    <label class="mizan-note-modal__label" for="mizanNoteInput">یادداشت شما</label>
+    <div class="field" style="margin-bottom:0;">
+      <textarea id="mizanNoteInput" rows="4" placeholder="یادداشت خود را بنویسید…"></textarea>
+    </div>
+    <div class="mizan-note-modal__actions">
+      <button type="button" class="btn btn--primary" id="mizanNoteSaveBtn">ثبت یادداشت</button>
+      <button type="button" class="btn btn--ghost" id="mizanNoteDeleteBtn" style="display:none; color:var(--danger); border-color:var(--danger);">حذف یادداشت</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mizanTaggerRawModal" hidden>
+  <div class="modal-card card mizan-tagger-raw-modal">
+    <div class="modal-card__head">
+      <span>پاسخ خام هوش مصنوعی</span>
+      <button type="button" class="btn btn--icon btn--ghost" id="mizanTaggerRawClose" aria-label="بستن">✕</button>
+    </div>
+    <div class="mizan-tagger-raw-meta" id="mizanTaggerRawMeta">—</div>
+    <pre class="mizan-tagger-raw-text" id="mizanTaggerRawText"></pre>
+    <div class="mizan-tagger-raw-actions">
+      <button type="button" class="btn btn--primary" id="mizanTaggerRawApply">ذخیره و اعمال</button>
+      <button type="button" class="btn" id="mizanTaggerRawCopy">کپی</button>
+      <button type="button" class="btn btn--ghost" id="mizanTaggerRawCancel">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<div class="mizan-note-popup" id="mizanNotePopup" hidden>
+  <button type="button" class="mizan-note-popup__close" id="mizanNotePopupClose" aria-label="بستن">✕</button>
+  <p class="mizan-note-popup__text" id="mizanNotePopupText"></p>
+  <div class="mizan-note-popup__actions">
+    <button type="button" class="mizan-note-popup__btn" id="mizanNotePopupEdit">ویرایش</button>
+    <button type="button" class="mizan-note-popup__btn mizan-note-popup__btn--danger" id="mizanNotePopupDel">حذف</button>
+  </div>
+</div>
+
+<footer class="site-footer">
   متن آیات و ترجمهٔ فولادوند برگرفته از <a href="https://tanzil.net" target="_blank" rel="noopener" style="color:var(--text-dim); text-decoration:underline;">Tanzil.net</a>
 </footer>
 
 <nav class="mobile-tabbar" aria-label="ناوبری موبایل">
-  <a href="index.html" class="active">کار</a>
+  <a href="index.html" class="active" aria-current="page">کار</a>
   <a href="browse.html">مرور</a>
   <a href="tags.html">برچسب‌ها</a>
   <a href="relations.html">رابطه‌ها</a>
   <a href="search.html">جستجو</a>
 </nav>
 
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/CustomEase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script src="js/config.js"></script>
+<script src="js/ai-models.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/quran-data.js"></script>
+<script src="js/mizan.js"></script>
 <script src="js/ui-helpers.js"></script>
 <script src="js/store.js"></script>
 <script src="js/theme.js"></script>
+<script src="js/accordion.js"></script>
 <script src="js/ayah-render.js"></script>
 <script src="js/ayah-links.js"></script>
+<script src="js/ai-format.js"></script>
+<script src="js/mizan-panel.js"></script>
 <script src="js/work.js"></script>
+<script src="js/ask-ai.js"></script>
+<script src="js/notifications.js"></script>
 </body>
 </html>
