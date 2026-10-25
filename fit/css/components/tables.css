@@ -1,8 +1,9 @@
 /* ==========================================================================
    Data Table — spreadsheet-style grid
-   The TABLE container is LTR (Excel-style): columns flow A → B → C left to
-   right, row numbers stick to the left. All Persian UI text outside the
-   table (toolbars, labels) stays RTL via the parent context.
+   Forced LTR to match Excel exactly:
+   - Row numbers stick to the LEFT.
+   - Columns flow A, B, C from LEFT to RIGHT.
+   - All app chrome (toolbars, bars) stays RTL via the parent context.
    ========================================================================== */
 
 .data-table-wrapper {
@@ -16,17 +17,16 @@
   position: relative;
 }
 
-/* LTR context for the data grid — matches Excel conventions.
-   Do NOT remove this: without it, column order becomes C, B, A (RTL). */
+/* LTR context for the data grid */
 .data-table-scroll {
-  direction: ltr;
+  direction: ltr !important; 
   overflow: auto;
   max-height: calc(100vh - 340px);
   position: relative;
 }
 
 .data-table {
-  direction: ltr;
+  direction: ltr !important;
   width: max-content;
   min-width: 100%;
   border-collapse: separate;
@@ -41,7 +41,7 @@
 
 .data-table th,
 .data-table td {
-  border-inline-end: 1px solid var(--table-cell-border);
+  border-right: 1px solid var(--table-cell-border);
   border-bottom: 1px solid var(--table-cell-border);
   padding: 0;
   height: 34px;
@@ -52,7 +52,7 @@
 
 .data-table th:last-child,
 .data-table td:last-child {
-  border-inline-end: none;
+  border-right: none;
 }
 
 /* ---------- Header ---------- */
@@ -70,8 +70,7 @@
   height: 36px;
   user-select: none;
   transition: background var(--transition-base);
-  /* Header text is usually Persian — let per-cell bidi handle it */
-  direction: rtl;
+  direction: ltr; /* Ensure header content doesn't flip */
 }
 
 .data-table thead th[data-col-index] {
@@ -97,6 +96,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 220px;
+  unicode-bidi: plaintext; /* Mixed Persian/English text handled correctly */
 }
 
 .th-sort-icon {
@@ -131,12 +131,12 @@
   color: var(--fg-1);
 }
 
-/* Column resize handle — sits on the right edge of each column (LTR). */
+/* Column resize handle */
 .col-resizer {
   position: absolute;
   top: 0;
   bottom: 0;
-  inset-inline-end: -3px;
+  right: -3px; /* In LTR, handle sits on the right edge of the cell */
   width: 6px;
   cursor: col-resize;
   z-index: 4;
@@ -166,12 +166,11 @@
   bottom: 0;
 }
 
-/* ---------- Row numbers (row header) ----------
-   Sticky to the LEFT edge of the table, matching Excel. */
+/* ---------- Row numbers (Excel-style, Left) ---------- */
 
 .data-table .row-number {
   position: sticky;
-  inset-inline-start: 0;
+  left: 0 !important; /* Force to left edge */
   z-index: 2;
   background: var(--bg-3);
   color: var(--fg-3);
@@ -183,7 +182,7 @@
   padding: 0;
   cursor: pointer;
   user-select: none;
-  direction: ltr;
+  direction: ltr !important;
 }
 .data-table thead .row-number {
   z-index: 5;
@@ -252,7 +251,7 @@
   min-width: 80px;
   white-space: nowrap;
   direction: ltr;
-  unicode-bidi: plaintext; /* ensures mixed Persian/numbers stay coherent */
+  unicode-bidi: plaintext; /* Mixed Persian/English text handled correctly */
   text-align: center;
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
@@ -293,10 +292,10 @@
   text-align: center;
   color: var(--fg-3);
   font-size: var(--fs-sm);
-  direction: rtl; /* empty message is Persian */
+  direction: rtl; /* Empty text is Persian */
 }
 
-/* ---------- Toolbar (stays RTL — it's app chrome) ---------- */
+/* ---------- Toolbar (RTL) ---------- */
 
 .data-toolbar {
   display: flex;
@@ -324,7 +323,7 @@
   width: 240px;
 }
 
-/* ---------- Selection info bar (RTL — it's a Persian message) ---------- */
+/* ---------- Selection info bar (RTL) ---------- */
 
 .selection-bar {
   display: flex;
