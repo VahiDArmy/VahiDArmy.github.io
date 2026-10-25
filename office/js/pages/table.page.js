@@ -1,6 +1,5 @@
 /**
- * Dynamic table detail page — column management, row CRUD, inline editing,
- * CSV export, search, right-click menus, and bulk people addition.
+ * Dynamic table detail page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -60,7 +59,6 @@ export default async function tablePage(info, outlet) {
       tablesService.listColumns(id),
       tablesService.listRows(id, { limit: 500 }),
     ]);
-    // Load people only if there are person_ref columns
     if (columns.some((c) => c.type === 'person_ref')) {
       const res = await peopleService.list({ limit: 300 });
       people = res.items;
@@ -79,8 +77,7 @@ export default async function tablePage(info, outlet) {
     return () => {};
   }
 
-  const canEdit =
-    canEditContent() || appStore.get('user')?.id === table.created_by;
+  const canEdit = canEditContent() || appStore.get('user')?.id === table.created_by;
 
   outlet.innerHTML = '';
   outlet.appendChild(buildView());
@@ -100,64 +97,40 @@ export default async function tablePage(info, outlet) {
       canEdit
         ? el(
             'button',
-            {
-              type: 'button',
-              class: 'btn btn--primary btn--sm',
-              on: { click: () => addRow() },
-            },
+            { type: 'button', class: 'btn btn--primary btn--sm', on: { click: () => addRow() } },
             [icon('plus'), 'افزودن ردیف']
           )
         : null,
       canEdit
         ? el(
             'button',
-            {
-              type: 'button',
-              class: 'btn btn--secondary btn--sm',
-              on: { click: () => addColumn() },
-            },
+            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => addColumn() } },
             [icon('grid'), 'افزودن ستون']
           )
         : null,
       canEdit
         ? el(
             'button',
-            {
-              type: 'button',
-              class: 'btn btn--secondary btn--sm',
-              on: { click: () => bulkAddPeople() },
-            },
+            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } },
             [icon('users'), 'افزودن افراد']
           )
         : null,
       el(
         'button',
-        {
-          type: 'button',
-          class: 'btn btn--secondary btn--sm',
-          on: { click: () => exportCsv() },
-        },
+        { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => exportCsv() } },
         [icon('download'), 'CSV']
       ),
       canEdit
         ? el(
             'button',
-            {
-              type: 'button',
-              class: 'btn btn--secondary btn--sm',
-              on: { click: () => editTable() },
-            },
+            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } },
             [icon('edit'), 'ویرایش']
           )
         : null,
       canEdit
         ? el(
             'button',
-            {
-              type: 'button',
-              class: 'btn btn--danger btn--sm',
-              on: { click: () => deleteTable() },
-            },
+            { type: 'button', class: 'btn btn--danger btn--sm', on: { click: () => deleteTable() } },
             [icon('trash'), 'حذف']
           )
         : null,
@@ -166,35 +139,17 @@ export default async function tablePage(info, outlet) {
     const hero = el('div', { class: 'table-hero' }, [
       el('div', { class: 'table-hero__main' }, [
         el('h1', { class: 'table-hero__title' }, [table.name || 'بدون نام']),
-        table.description
-          ? el('p', { class: 'table-hero__desc' }, [table.description])
-          : null,
+        table.description ? el('p', { class: 'table-hero__desc' }, [table.description]) : null,
         el('div', { class: 'table-hero__meta' }, [
-          el('span', { class: 'table-hero__meta-item' }, [
-            icon('grid'),
-            `${formatNumber(columns.length)} ستون`,
-          ]),
-          el('span', { class: 'table-hero__meta-item' }, [
-            icon('list'),
-            `${formatNumber(rowsData.items.length)} ردیف`,
-          ]),
-          table.updated_at
-            ? el('span', { class: 'table-hero__meta-item' }, [
-                icon('clock'),
-                formatDate(table.updated_at),
-              ])
-            : null,
+          el('span', { class: 'table-hero__meta-item' }, [icon('grid'), `${formatNumber(columns.length)} ستون`]),
+          el('span', { class: 'table-hero__meta-item' }, [icon('list'), `${formatNumber(rowsData.items.length)} ردیف`]),
+          table.updated_at ? el('span', { class: 'table-hero__meta-item' }, [icon('clock'), formatDate(table.updated_at)]) : null,
         ]),
       ]),
       actions,
     ]);
 
-    /* Grid section with search */
-    const searchInput = el('input', {
-      type: 'search',
-      class: 'input',
-      placeholder: 'جستجو در ردیف‌ها...',
-    });
+    const searchInput = el('input', { type: 'search', class: 'input', placeholder: 'جستجو در ردیف‌ها...' });
 
     const grid = createTableGrid({
       columns,
@@ -231,9 +186,7 @@ export default async function tablePage(info, outlet) {
 
     const applySearch = debounce((query) => {
       const q = String(query || '').trim().toLowerCase();
-      const filtered = !q
-        ? rowsData.items
-        : rowsData.items.filter((row) =>
+      const filtered = !q ? rowsData.items : rowsData.items.filter((row) =>
             Object.values(row.values || {}).some((v) => {
               if (v == null) return false;
               if (Array.isArray(v)) return v.join(' ').toLowerCase().includes(q);
@@ -280,10 +233,7 @@ export default async function tablePage(info, outlet) {
       if (!values) return;
       try {
         const position = columns.length;
-        const created = await tablesService.createColumn(table.id, {
-          ...values,
-          position,
-        });
+        const created = await tablesService.createColumn(table.id, { ...values, position });
         columns.push(created);
         grid.refresh(columns, rowsData.items);
         toast.success('ستون اضافه شد.');
@@ -293,11 +243,11 @@ export default async function tablePage(info, outlet) {
     }
 
     async function bulkAddPeople() {
-      const result = await openBulkPeopleForm({ hasColumns: columns.length > 0 });
+      const result = await openBulkPeopleForm({ hasColumns: columns.length > 0, columns });
       if (!result) return;
 
-      const { mode, people: selectedPeople } = result;
-      const toastId = toast.info(`در حال افزودن ${formatNumber(selectedPeople.length)} فرد...`, { duration: 0 });
+      const { mode, people: selectedPeople, colType, rowTargetColId } = result;
+      const toastId = toast.info(`در حال پردازش ${formatNumber(selectedPeople.length)} نفر...`, { duration: 0 });
 
       try {
         if (mode === 'columns') {
@@ -305,35 +255,40 @@ export default async function tablePage(info, outlet) {
           for (const person of selectedPeople) {
             await tablesService.createColumn(table.id, {
               name: person.full_name,
-              type: COLUMN_TYPES.TEXT,
+              type: colType || COLUMN_TYPES.TEXT,
               position: currentPos++,
             });
           }
-          toast.success(`${formatNumber(selectedPeople.length)} ستون اضافه شد.`);
+          toast.success(`${formatNumber(selectedPeople.length)} ستون برای افراد ساخته شد.`);
           toastId.dismiss();
-          // Reload page to refresh columns cleanly
-          window.location.reload(); 
+          setTimeout(() => window.location.reload(), 500); 
           
         } else if (mode === 'rows') {
-          // Find best target column
-          let targetCol = columns.find(c => c.type === COLUMN_TYPES.PERSON_REF);
-          let isPersonRef = !!targetCol;
-          if (!targetCol) targetCol = columns.find(c => c.type === COLUMN_TYPES.TEXT);
-          if (!targetCol) targetCol = columns[0];
-
-          if (!targetCol) {
-            toast.error('ابتدا باید یک ستون ایجاد کنید.');
-            toastId.dismiss();
-            return;
+          // If table has NO columns at all, create a default text column first
+          if (columns.length === 0) {
+            await tablesService.createColumn(table.id, {
+              name: 'نام فرد',
+              type: COLUMN_TYPES.TEXT,
+              position: 0
+            });
           }
+          
+          // Determine target column id
+          let targetColId = rowTargetColId;
+          if (!targetColId) {
+             const fallbackCol = columns[0]; // Should not happen since we just created one
+             targetColId = fallbackCol ? fallbackCol.id : null; 
+          }
+
+          const isRef = columns.find(c => c.id === targetColId)?.type === COLUMN_TYPES.PERSON_REF;
 
           for (const person of selectedPeople) {
-            const val = isPersonRef ? person.id : person.full_name;
-            await tablesService.createRow(table.id, { [targetCol.id]: val });
+            const val = isRef ? person.id : person.full_name;
+            await tablesService.createRow(table.id, { [targetColId]: val });
           }
-          toast.success(`${formatNumber(selectedPeople.length)} ردیف اضافه شد.`);
+          toast.success(`${formatNumber(selectedPeople.length)} ردیف برای افراد ساخته شد.`);
           toastId.dismiss();
-          window.location.reload();
+          setTimeout(() => window.location.reload(), 500);
         }
       } catch (err) {
         toast.error(err?.message || 'خطا در افزودن گروهی.');
@@ -343,18 +298,9 @@ export default async function tablePage(info, outlet) {
 
     function openColumnContext(e, col) {
       openContextMenu(e.clientX, e.clientY, [
-        {
-          label: 'ویرایش ستون',
-          icon: 'edit',
-          onClick: () => editColumn(col),
-        },
+        { label: 'ویرایش ستون', icon: 'edit', onClick: () => editColumn(col) },
         { divider: true },
-        {
-          label: 'حذف ستون',
-          icon: 'trash',
-          danger: true,
-          onClick: () => deleteColumn(col),
-        },
+        { label: 'حذف ستون', icon: 'trash', danger: true, onClick: () => deleteColumn(col) },
       ]);
     }
 
@@ -498,55 +444,19 @@ function buildLoading() {
 
 function editTableDialog(table) {
   return new Promise((resolve) => {
-    const nameInput = el('input', {
-      type: 'text',
-      class: 'input',
-      value: table?.name || '',
-      maxlength: 120,
-    });
-    const descInput = el('textarea', {
-      class: 'textarea',
-      rows: 3,
-      maxlength: 500,
-    });
+    const nameInput = el('input', { type: 'text', class: 'input', value: table?.name || '', maxlength: 120 });
+    const descInput = el('textarea', { class: 'textarea', rows: 3, maxlength: 500 });
     descInput.value = table?.description || '';
-    const slugInput = el('input', {
-      type: 'text',
-      class: 'input',
-      dir: 'ltr',
-      value: table?.slug || '',
-    });
+    const slugInput = el('input', { type: 'text', class: 'input', dir: 'ltr', value: table?.slug || '' });
 
     const form = el('form', { class: 'form-grid' }, [
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['نام']),
-        nameInput,
-      ]),
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['توضیحات']),
-        descInput,
-      ]),
-      el('div', { class: 'form-field' }, [
-        el('label', { class: 'form-label' }, ['شناسه (slug)']),
-        slugInput,
-      ]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['نام']), nameInput]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['توضیحات']), descInput]),
+      el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['شناسه (slug)']), slugInput]),
     ]);
 
-    const submitBtn = el('button', { 
-      type: 'button', 
-      class: 'btn btn--primary',
-      on: { click: () => form.requestSubmit() }
-    }, ['ذخیره']);
-
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
+    const submitBtn = el('button', { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } }, ['ذخیره']);
+    const cancelBtn = el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => { handle.close(); resolve(null); } } }, ['انصراف']);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -555,9 +465,7 @@ function editTableDialog(table) {
         description: descInput.value.trim(),
         slug: slugInput.value.trim() || slugify(nameInput.value),
       };
-      const errors = validate(values, {
-        name: [rules.required('نام الزامی است')],
-      });
+      const errors = validate(values, { name: [rules.required('نام الزامی است')] });
       if (hasErrors(errors)) {
         toast.error(Object.values(errors)[0]);
         return;
