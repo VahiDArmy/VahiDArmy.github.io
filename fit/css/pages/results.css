@@ -1,0 +1,308 @@
+/* ==========================================================================
+   Page: Results
+   ========================================================================== */
+
+.results-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ---------- Summary strip at top ---------- */
+
+.results-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+/* ---------- Equation display ---------- */
+
+.equation-card {
+  background:
+    linear-gradient(135deg, var(--bg-3) 0%, rgba(99, 102, 241, 0.05) 100%);
+  border: 1px solid var(--accent-soft-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  position: relative;
+  overflow: hidden;
+}
+
+.equation-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--accent), var(--accent-3));
+}
+
+.equation-card__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.equation-card__label svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-text);
+}
+
+.equation-card__formula {
+  font-family: var(--font-mono);
+  font-size: var(--fs-lg);
+  color: var(--fg-1);
+  direction: ltr;
+  text-align: left;
+  line-height: 1.6;
+  word-break: break-word;
+  padding: var(--space-3);
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  font-variant-numeric: tabular-nums;
+  overflow-x: auto;
+}
+
+.equation-card__formula .eq-var {
+  color: var(--accent-text);
+  font-style: italic;
+}
+.equation-card__formula .eq-num {
+  color: var(--warning-text);
+}
+.equation-card__formula .eq-op {
+  color: var(--fg-3);
+}
+
+.equation-card__copy {
+  align-self: flex-start;
+}
+
+/* ---------- Fit quality badges row ---------- */
+
+.quality-strip {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- Comparison table (all fits) ---------- */
+
+.comparison-card {
+  margin-top: var(--space-2);
+}
+
+.comparison-table-wrap {
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.comparison-table thead th {
+  text-align: right;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-3);
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--border-1);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.comparison-table tbody td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border-1);
+  color: var(--fg-2);
+  vertical-align: middle;
+}
+
+.comparison-table tbody tr {
+  transition: background var(--transition-base);
+  cursor: pointer;
+}
+.comparison-table tbody tr:hover {
+  background: var(--bg-4);
+}
+.comparison-table tbody tr.is-active {
+  background: var(--accent-soft);
+}
+.comparison-table tbody tr.is-best {
+  background: rgba(16, 185, 129, 0.06);
+}
+.comparison-table tbody tr.is-best td:first-child {
+  box-shadow: inset 3px 0 0 var(--success);
+}
+
+.comparison-table .num {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-align: left;
+}
+
+.comparison-table__type {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--fw-medium);
+  color: var(--fg-1);
+}
+
+/* ---------- Residual plot (below main chart) ---------- */
+
+.residual-note {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-1);
+  line-height: 1.6;
+}
+
+/* ---------- Predict section ---------- */
+
+.predict-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.predict-input-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.predict-input-row .input {
+  flex: 1;
+  min-width: 140px;
+}
+
+.predict-result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  min-height: 52px;
+}
+
+.predict-result__label {
+  color: var(--fg-3);
+  font-size: var(--fs-xs);
+}
+
+.predict-result__value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
+  color: var(--accent-text);
+  direction: ltr;
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.predict-result.is-empty {
+  color: var(--fg-4);
+  font-style: italic;
+}
+
+/* ---------- Export panel ---------- */
+
+.export-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.export-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
+  text-align: right;
+  width: 100%;
+}
+.export-option:hover {
+  border-color: var(--accent);
+  background: var(--bg-4);
+}
+
+.export-option__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+.export-option__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.export-option__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.export-option__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-1);
+  margin-bottom: 2px;
+}
+
+.export-option__desc {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  line-height: 1.5;
+}
+
+/* ---------- Empty state page ---------- */
+
+.results-empty {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  .equation-card__formula {
+    font-size: var(--fs-base);
+    padding: var(--space-2);
+  }
+}
