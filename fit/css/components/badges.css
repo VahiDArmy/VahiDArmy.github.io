@@ -1,0 +1,82 @@
+/* ==========================================================================
+   Badges
+   ========================================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.badge svg {
+  width: 12px;
+  height: 12px;
+}
+
+.badge--sm {
+  padding: 0 6px;
+  font-size: 0.65rem;
+  line-height: 1.6;
+}
+
+/* Variants */
+.badge--neutral {
+  background: var(--bg-4);
+  color: var(--fg-2);
+  border-color: var(--border-2);
+}
+
+.badge--accent {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  border-color: var(--accent-soft-2);
+}
+
+.badge--success {
+  background: var(--success-soft);
+  color: var(--success-text);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.badge--warning {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+  border-color: rgba(245, 158, 11, 0.25);
+}
+
+.badge--danger {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.badge--info {
+  background: var(--info-soft);
+  color: var(--info-text);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* With dot */
+.badge--dot::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Fit type badges — one per type */
+.badge--fit-linear       { background: rgba(99, 102, 241, 0.16); color: #a5b4fc; border-color: rgba(99, 102, 241, 0.3); }
+.badge--fit-exponential  { background: rgba(6, 182, 212, 0.16); color: #67e8f9; border-color: rgba(6, 182, 212, 0.3); }
+.badge--fit-logarithmic  { background: rgba(139, 92, 246, 0.16); color: #c4b5fd; border-color: rgba(139, 92, 246, 0.3); }
+.badge--fit-polynomial   { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); }
+.badge--fit-power        { background: rgba(245, 158, 11, 0.16); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+.badge--fit-moving-average { background: rgba(236, 72, 153, 0.16); color: #f9a8d4; border-color: rgba(236, 72, 153, 0.3); }
