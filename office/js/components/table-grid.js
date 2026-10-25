@@ -84,20 +84,6 @@ function isInlineEditable(type) {
   return [COLUMN_TYPES.TEXT, COLUMN_TYPES.NUMBER, COLUMN_TYPES.DATE, COLUMN_TYPES.URL, COLUMN_TYPES.CHECKBOX].includes(type);
 }
 
-/**
- * @param {Object} opts
- * @param {Array} opts.columns
- * @param {Array} opts.rows
- * @param {Array} [opts.people]
- * @param {Function} opts.onEditRow    — (row) => Promise<void>
- * @param {Function} opts.onDeleteRow  — (row) => Promise<void>
- * @param {Function} opts.onInlineSave — (row, column, value) => Promise<void>
- * @param {Function} opts.onAddRow
- * @param {Function} opts.onAddColumn
- * @param {Function} opts.onColumnContext — (e, column)
- * @param {Function} [opts.onRowContext]  — (e, row)
- * @param {boolean} [opts.canEdit]
- */
 export function createTableGrid({
   columns,
   rows,
@@ -119,10 +105,7 @@ export function createTableGrid({
 
   function render() {
     scroller.innerHTML = '';
-
     const table = el('table', { class: 'data-grid' });
-
-    /* Head */
     const thead = el('thead');
     const headRow = el('tr');
 
@@ -170,7 +153,6 @@ export function createTableGrid({
     thead.appendChild(headRow);
     table.appendChild(thead);
 
-    /* Body */
     const tbody = el('tbody');
 
     if (!rows.length) {
@@ -259,32 +241,39 @@ export function createTableGrid({
   async function startCellEdit(cell, row, col) {
     if (cell.classList.contains('is-editing')) return;
 
-    /* Complex types → full row editor */
+    // Complex types → full row editor modal
     if (!isInlineEditable(col.type)) {
       const values = await openRowEditor({ columns, values: row.values || {}, people });
       if (!values) return;
       try {
         await onEditRow?.(row, values);
       } catch (err) {
-        // Parent already toasts
+        // Parent already toasts, nothing to do here
       }
       return;
     }
 
     const currentValue = row.values?.[col.id];
 
-    /* Checkbox: instant toggle */
+    // Checkbox: instant toggle and Live UI update
     if (col.type === COLUMN_TYPES.CHECKBOX) {
       const next = !currentValue;
+      
+      // Optimistic UI Update
+      cell.innerHTML = '';
+      cell.appendChild(formatCellDisplay(col, next, { people }));
+
       try {
         await onInlineSave?.(row, col, next);
       } catch (err) {
-        return;
+        // Revert on failure
+        cell.innerHTML = '';
+        cell.appendChild(formatCellDisplay(col, currentValue, { people }));
       }
       return;
     }
 
-    /* Inline text/number/date/url */
+    // Inline text/number/date/url
     cell.classList.add('is-editing');
     cell.innerHTML = '';
 
@@ -320,12 +309,18 @@ export function createTableGrid({
       let value = input.value;
       if (col.type === COLUMN_TYPES.NUMBER && value !== '') value = Number(value);
       if (col.type === COLUMN_TYPES.URL || col.type === COLUMN_TYPES.TEXT) value = value.trim();
-      if (col.type === COLUMN_TYPES.CHECKBOX) value = !!value;
 
       try {
         await onInlineSave?.(row, col, value);
+        // Success: Remove editing state and show the newly saved value
+        cell.classList.remove('is-editing');
+        cell.innerHTML = '';
+        cell.appendChild(formatCellDisplay(col, value, { people }));
       } catch (err) {
-        cancel();
+        // Failed: Revert to the previously known value
+        cell.classList.remove('is-editing');
+        cell.innerHTML = '';
+        cell.appendChild(formatCellDisplay(col, row.values?.[col.id], { people }));
       }
     }
 
