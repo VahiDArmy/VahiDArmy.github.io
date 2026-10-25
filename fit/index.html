@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ابزار حرفه‌ای تحلیل داده و برازش منحنی با پشتیبانی از اکسل" />
+  <meta name="theme-color" content="#0a0e17" />
+  <title>تحلیل‌گر داده | برازش منحنی</title>
+
+  <!-- Persian Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Base -->
+  <link rel="stylesheet" href="css/base/variables.css" />
+  <link rel="stylesheet" href="css/base/reset.css" />
+  <link rel="stylesheet" href="css/base/typography.css" />
+  <link rel="stylesheet" href="css/base/animations.css" />
+
+  <!-- Layout -->
+  <link rel="stylesheet" href="css/layout/layout.css" />
+  <link rel="stylesheet" href="css/layout/header.css" />
+  <link rel="stylesheet" href="css/layout/tabs.css" />
+
+  <!-- Components -->
+  <link rel="stylesheet" href="css/components/buttons.css" />
+  <link rel="stylesheet" href="css/components/forms.css" />
+  <link rel="stylesheet" href="css/components/tables.css" />
+  <link rel="stylesheet" href="css/components/modals.css" />
+  <link rel="stylesheet" href="css/components/notifications.css" />
+  <link rel="stylesheet" href="css/components/tooltips.css" />
+  <link rel="stylesheet" href="css/components/context-menu.css" />
+  <link rel="stylesheet" href="css/components/cards.css" />
+  <link rel="stylesheet" href="css/components/charts.css" />
+  <link rel="stylesheet" href="css/components/badges.css" />
+  <link rel="stylesheet" href="css/components/empty-states.css" />
+  <link rel="stylesheet" href="css/components/statistics.css" />
+
+  <!-- Pages -->
+  <link rel="stylesheet" href="css/pages/data-input.css" />
+  <link rel="stylesheet" href="css/pages/fitting.css" />
+  <link rel="stylesheet" href="css/pages/results.css" />
+  <link rel="stylesheet" href="css/pages/settings.css" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>" />
+</head>
+<body>
+
+  <!-- ===== App Root ===== -->
+  <div id="app" class="app">
+
+    <!-- ===== Header ===== -->
+    <header class="app-header" id="app-header">
+      <div class="app-header__brand">
+        <div class="app-header__logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18" />
+            <path d="M7 14l4-4 3 3 5-6" />
+            <circle cx="7" cy="14" r="1.5" fill="currentColor" />
+            <circle cx="11" cy="10" r="1.5" fill="currentColor" />
+            <circle cx="14" cy="13" r="1.5" fill="currentColor" />
+            <circle cx="19" cy="7" r="1.5" fill="currentColor" />
+          </svg>
+        </div>
+        <div class="app-header__titles">
+          <h1 class="app-header__title">تحلیل‌گر داده</h1>
+          <p class="app-header__subtitle">برازش منحنی و پردازش داده</p>
+        </div>
+      </div>
+
+      <div class="app-header__actions">
+        <button
+          class="btn btn--ghost btn--icon"
+          id="btn-help"
+          type="button"
+          data-tooltip="راهنما و کلیدهای میان‌بر"
+          aria-label="راهنما"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </button>
+        <button
+          class="btn btn--ghost btn--icon"
+          id="btn-settings"
+          type="button"
+          data-tooltip="تنظیمات"
+          aria-label="تنظیمات"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ===== Tab Navigation ===== -->
+    <nav class="app-tabs" role="tablist" aria-label="بخش‌های برنامه">
+      <button class="app-tab is-active" role="tab" data-tab="data" aria-selected="true" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="9" y1="3" x2="9" y2="21" />
+        </svg>
+        <span>داده‌ها</span>
+      </button>
+      <button class="app-tab" role="tab" data-tab="fitting" aria-selected="false" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 18c4-8 8-8 12 0" />
+          <path d="M3 6c4 4 8 4 12 0" />
+          <circle cx="6" cy="6" r="1.5" fill="currentColor" />
+          <circle cx="18" cy="6" r="1.5" fill="currentColor" />
+        </svg>
+        <span>برازش</span>
+      </button>
+      <button class="app-tab" role="tab" data-tab="results" aria-selected="false" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18" />
+          <path d="M7 14l4-4 3 3 5-6" />
+        </svg>
+        <span>نتایج</span>
+      </button>
+      <button class="app-tab" role="tab" data-tab="settings" aria-selected="false" type="button">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
+        </svg>
+        <span>تنظیمات</span>
+      </button>
+    </nav>
+
+    <!-- ===== Main Content ===== -->
+    <main class="app-main" id="app-main">
+
+      <!-- Data Tab -->
+      <section class="tab-panel is-active" data-tab-panel="data" role="tabpanel">
+        <div class="page-header">
+          <div class="page-header__text">
+            <h2 class="page-title">داده‌های ورودی</h2>
+            <p class="page-subtitle">داده‌ها را در جدول زیر وارد کنید یا از فایل اکسل بارگذاری کنید</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn--secondary" data-action="import-excel" type="button">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              ورود از اکسل
+            </button>
+            <button class="btn btn--secondary" data-action="export-excel" type="button">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              خروجی اکسل
+            </button>
+          </div>
+        </div>
+
+        <div class="data-toolbar" id="data-toolbar">
+          <div class="data-toolbar__group">
+            <button class="btn btn--ghost btn--sm" data-action="add-row" type="button">+ سطر</button>
+            <button class="btn btn--ghost btn--sm" data-action="add-column" type="button">+ ستون</button>
+            <button class="btn btn--ghost btn--sm" data-action="clear-all" type="button">پاک‌سازی همه</button>
+          </div>
+          <div class="data-toolbar__group data-toolbar__group--end">
+            <input
+              type="search"
+              class="input input--sm data-toolbar__search"
+              id="data-search"
+              placeholder="جستجو در جدول..."
+              aria-label="جستجو در جدول"
+            />
+          </div>
+        </div>
+
+        <div class="data-table-wrapper" id="data-table-wrapper">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div class="statistics-panel" id="statistics-panel">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Fitting Tab -->
+      <section class="tab-panel" data-tab-panel="fitting" role="tabpanel" hidden>
+        <div class="page-header">
+          <div class="page-header__text">
+            <h2 class="page-title">برازش منحنی</h2>
+            <p class="page-subtitle">نوع برازش، ستون‌ها و پارامترها را انتخاب کنید</p>
+          </div>
+        </div>
+        <div class="fitting-layout" id="fitting-layout">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Results Tab -->
+      <section class="tab-panel" data-tab-panel="results" role="tabpanel" hidden>
+        <div class="page-header">
+          <div class="page-header__text">
+            <h2 class="page-title">نتایج برازش</h2>
+            <p class="page-subtitle">نتایج محاسبه‌شده، نمودارها و خروجی‌ها</p>
+          </div>
+          <div class="page-header__actions">
+            <button class="btn btn--secondary" data-action="export-results" type="button">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              خروجی نتایج
+            </button>
+          </div>
+        </div>
+        <div class="results-layout" id="results-layout">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Settings Tab -->
+      <section class="tab-panel" data-tab-panel="settings" role="tabpanel" hidden>
+        <div class="page-header">
+          <div class="page-header__text">
+            <h2 class="page-title">تنظیمات</h2>
+            <p class="page-subtitle">تنظیمات نمایش، ذخیره‌سازی و ظاهر برنامه</p>
+          </div>
+        </div>
+        <div class="settings-layout" id="settings-layout">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ===== Footer / Status Bar ===== -->
+    <footer class="app-footer" id="app-footer">
+      <div class="app-footer__left">
+        <span class="status-dot" id="save-status-dot" aria-hidden="true"></span>
+        <span id="save-status-text">آماده</span>
+      </div>
+      <div class="app-footer__right">
+        <span id="footer-cell-info">۰ سطر × ۰ ستون</span>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ===== Global UI Mount Points ===== -->
+  <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="false"></div>
+  <div id="modal-root" class="modal-root"></div>
+  <div id="context-menu-root" class="context-menu-root"></div>
+  <div id="tooltip-root" class="tooltip-root"></div>
+
+  <!-- ===== Hidden file input ===== -->
+  <input type="file" id="excel-file-input" accept=".xlsx,.xls,.csv" hidden />
+
+  <!-- ===== Vendor Libraries ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- ===== App Scripts (order matters) ===== -->
+  <!-- config -->
+  <script src="js/config/constants.js"></script>
+  <script src="js/config/fit-types.js"></script>
+
+  <!-- core -->
+  <script src="js/core/state.js"></script>
+  <script src="js/core/events.js"></script>
+
+  <!-- utils -->
+  <script src="js/utils/dom.js"></script>
+  <script src="js/utils/math.js"></script>
+  <script src="js/utils/format.js"></script>
+  <script src="js/utils/storage.js"></script>
+  <script src="js/utils/validators.js"></script>
+  <script src="js/utils/debounce.js"></script>
+
+  <!-- services -->
+  <script src="js/services/excel-service.js"></script>
+  <script src="js/services/data-service.js"></script>
+  <script src="js/services/fit-service.js"></script>
+  <script src="js/services/plot-service.js"></script>
+  <script src="js/services/export-service.js"></script>
+
+  <!-- components -->
+  <script src="js/components/toast.js"></script>
+  <script src="js/components/modal.js"></script>
+  <script src="js/components/context-menu.js"></script>
+  <script src="js/components/tooltip.js"></script>
+  <script src="js/components/data-table.js"></script>
+  <script src="js/components/chart.js"></script>
+
+  <!-- pages -->
+  <script src="js/pages/data-input.js"></script>
+  <script src="js/pages/fitting.js"></script>
+  <script src="js/pages/results.js"></script>
+  <script src="js/pages/settings.js"></script>
+
+  <!-- app bootstrap -->
+  <script src="js/app.js"></script>
+</body>
+</html>
