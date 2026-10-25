@@ -1,9 +1,6 @@
 /* ==========================================================================
    Component — Data Table
-   Full-featured spreadsheet-style grid.
-   Features: render, cell edit, keyboard nav, cell selection, row selection,
-             column sort, column resize, header menu, row menu, drag rows,
-             search, add/delete, pagination-friendly rendering.
+   Full-featured spreadsheet-style grid (Excel LTR style).
    ========================================================================== */
 
 (function (window) {
@@ -22,11 +19,10 @@
     wrapper: null,
     lastFocusedCell: null, // { rowId, colIdx }
     editingCell: null, // { rowId, colIdx, element }
-    clipboard: null, // { cells: [[...]], anchorRowId, anchorColIdx }
+    clipboard: null, // { cells: [[...]], anchorRowIdx, anchorColIdx }
     dragRow: null, // { rowId, startIndex }
     resizeState: null, // { colId, startX, startWidth }
     sortHandlersAttached: false,
-    // Sorted+filtered rows cache
     _visibleRowsCache: null,
     _visibleRowsCacheKey: ''
   };
@@ -107,16 +103,16 @@
 
     DOM.empty(ui.wrapper);
 
-    // Build table wrapper
+    // Build table wrapper (Force LTR at DOM level)
     const tableWrap = DOM.el('div', { class: 'data-table-wrapper' });
-    const scroll = DOM.el('div', { class: 'data-table-scroll' });
-    const table = DOM.el('table', { class: 'data-table', role: 'grid' });
+    const scroll = DOM.el('div', { class: 'data-table-scroll', dir: 'ltr' });
+    const table = DOM.el('table', { class: 'data-table', role: 'grid', dir: 'ltr' });
 
     // ---- THEAD ----
     const thead = DOM.el('thead');
     const headRow = DOM.el('tr');
 
-    // Row number header (select-all)
+    // Row number header (select-all) — First child -> Leftmost in LTR
     const rowNumHead = DOM.el('th', { class: 'row-number', scope: 'col' });
     if (isAllRowsSelected()) rowNumHead.classList.add('is-all-selected');
     rowNumHead.appendChild(
@@ -131,10 +127,10 @@
     });
     headRow.appendChild(rowNumHead);
 
-    // Column headers
+    // Column headers (A, B, C...) flow left-to-right
     columns.forEach((col, colIdx) => {
       if (col.hidden) return;
-      const th = DOM.el('th', { scope: 'col', 'data-col-index': colIdx });
+      const th = DOM.el('th', { scope: 'col', 'data-col-index': colIdx, dir: 'ltr' });
       th.style.width = col.width + 'px';
       th.style.minWidth = col.width + 'px';
       th.style.maxWidth = col.width + 'px';
@@ -188,7 +184,7 @@
         State.setSort(colIdx);
       });
 
-      // Resizer
+      // Resizer (sits on right edge in LTR)
       const resizer = DOM.el('div', { class: 'col-resizer', 'data-col-id': col.id });
       resizer.addEventListener('mousedown', (ev) => startColumnResize(ev, col));
       th.appendChild(resizer);
@@ -249,36 +245,28 @@
 
   function typeSymbol(t) {
     switch (t) {
-      case 'number':
-        return '۱';
-      case 'text':
-        return 'A';
-      case 'mixed':
-        return '!';
+      case 'number': return '۱';
+      case 'text': return 'A';
+      case 'mixed': return '!';
       case 'empty':
-      default:
-        return '·';
+      default: return '·';
     }
   }
 
   function typeLabel(t) {
     switch (t) {
-      case 'number':
-        return 'ستون عددی';
-      case 'text':
-        return 'ستون متنی';
-      case 'mixed':
-        return 'ستون مختلط (عدد و متن)';
+      case 'number': return 'ستون عددی';
+      case 'text': return 'ستون متنی';
+      case 'mixed': return 'ستون مختلط (عدد و متن)';
       case 'empty':
-      default:
-        return 'ستون خالی';
+      default: return 'ستون خالی';
     }
   }
 
   function buildRow(row, originalIndex, columns) {
     const tr = DOM.el('tr', { 'data-row-id': row.id, 'data-row-index': String(originalIndex) });
 
-    // Row number
+    // Row number (leftmost)
     const rowNum = DOM.el('td', { class: 'row-number' });
     rowNum.appendChild(
       DOM.el('span', { text: Format.toPersian(String(originalIndex + 1)) })
@@ -340,7 +328,6 @@
       // Context menu
       td.addEventListener('contextmenu', (ev) => {
         ev.preventDefault();
-        // Ensure the cell is selected
         const cs = State.getData().cellSelection;
         if (!cs || !isSameCell(cs.focus, { rowId: row.id, colIdx })) {
           State.setCellSelection(
@@ -354,8 +341,8 @@
       tr.appendChild(td);
     });
 
-    // Row drag
-    tr.setAttribute('draggable', 'false'); // drag handled via row number
+    // Row drag (drag by row number)
+    tr.setAttribute('draggable', 'false');
     rowNum.setAttribute('draggable', 'true');
     rowNum.addEventListener('dragstart', (ev) => {
       ui.dragRow = { rowId: row.id, startIndex: originalIndex };
@@ -522,8 +509,6 @@
     const cols = State.getColumns().filter((c) => !c.hidden);
     let rowIdx = visible.findIndex((v) => v.row.id === row.id);
     if (rowIdx < 0) return;
-    const visibleColIdx = cols.findIndex((c, i) => i === colIdx);
-    // colIdx is the raw index; find position within visible columns
     const visIdx = cols.findIndex((c) => State.getColumns().indexOf(c) === colIdx);
     if (visIdx < 0) return;
 
@@ -570,7 +555,8 @@
 
   function onResizeMove(ev) {
     if (!ui.resizeState) return;
-    const delta = ui.resizeState.startX - ev.clientX;
+    // In LTR, dragging right increases width
+    const delta = ev.clientX - ui.resizeState.startX;
     const newWidth = ui.resizeState.startWidth + delta;
     State.setColumnWidth(ui.resizeState.colId, newWidth);
   }
@@ -607,13 +593,13 @@
       { type: 'separator' },
       {
         icon: App.ContextMenu.ICONS.arrowUp,
-        label: 'جابه‌جایی به راست',
+        label: 'جابه‌جایی به چپ',
         disabled: colIdx === 0,
         onClick: () => State.moveColumn(colIdx, colIdx - 1)
       },
       {
         icon: App.ContextMenu.ICONS.arrowDown,
-        label: 'جابه‌جایی به چپ',
+        label: 'جابه‌جایی به راست',
         disabled: colIdx === State.getColumns().length - 1,
         onClick: () => State.moveColumn(colIdx, colIdx + 1)
       },
@@ -801,7 +787,6 @@
   function copyToClipboard(text) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).catch(() => {
-        // Fallback silently
         fallbackCopy(text);
       });
     } else {
@@ -818,9 +803,7 @@
     ta.select();
     try {
       document.execCommand('copy');
-    } catch (e) {
-      /* noop */
-    }
+    } catch (e) {}
     ta.remove();
   }
 
@@ -866,8 +849,9 @@
           dCol = 0;
         if (ev.key === 'ArrowUp') dRow = -1;
         else if (ev.key === 'ArrowDown') dRow = 1;
-        else if (ev.key === 'ArrowRight') dCol = -1; // RTL: right = previous
-        else if (ev.key === 'ArrowLeft') dCol = 1; // RTL: left = next
+        else if (ev.key === 'ArrowLeft') dCol = -1;
+        else if (ev.key === 'ArrowRight') dCol = 1;
+        
         if (ev.shiftKey) {
           const anchor = State.getData().cellSelection
             ? State.getData().cellSelection.anchor
@@ -876,7 +860,6 @@
             rowId: row.row.id,
             colIdx: ui.lastFocusedCell.colIdx + dCol
           };
-          // For row delta, find new row id
           if (dRow !== 0) {
             const rowIdx = visible.indexOf(row);
             const newIdx = Math.max(0, Math.min(visible.length - 1, rowIdx + dRow));
