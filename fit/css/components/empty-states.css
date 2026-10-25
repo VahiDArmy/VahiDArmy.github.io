@@ -1,0 +1,90 @@
+/* ==========================================================================
+   Empty states
+   ========================================================================== */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-10) var(--space-6);
+  gap: var(--space-4);
+  min-height: 280px;
+}
+
+.empty-state__icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  color: var(--fg-3);
+  margin-bottom: var(--space-2);
+}
+.empty-state__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.empty-state__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-1);
+  line-height: 1.4;
+}
+
+.empty-state__description {
+  font-size: var(--fs-sm);
+  color: var(--fg-3);
+  max-width: 360px;
+  line-height: 1.7;
+}
+
+.empty-state__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-2);
+}
+
+/* Compact variant for inline use */
+.empty-state--compact {
+  padding: var(--space-6) var(--space-4);
+  min-height: 160px;
+  gap: var(--space-2);
+}
+.empty-state--compact .empty-state__icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 0;
+}
+.empty-state--compact .empty-state__icon svg {
+  width: 20px;
+  height: 20px;
+}
+.empty-state--compact .empty-state__title {
+  font-size: var(--fs-sm);
+}
+.empty-state--compact .empty-state__description {
+  font-size: var(--fs-xs);
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-3) 0%,
+    var(--bg-4) 50%,
+    var(--bg-3) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: var(--radius-sm);
+  color: transparent !important;
+  user-select: none;
+  pointer-events: none;
+}
