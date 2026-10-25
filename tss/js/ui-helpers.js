@@ -91,11 +91,6 @@ const UI = (function () {
   // ---------------------------------------------------------------
   // پیشرفت
   // ---------------------------------------------------------------
-  function formatPercent(percent) {
-    return (
-      Number(percent).toLocaleString('fa-IR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '٪'
-    );
-  }
 
   function setProgressRing(ringEl, percent, labelEl) {
     const circle = ringEl.querySelector('.ring-fg');
@@ -106,7 +101,7 @@ const UI = (function () {
     requestAnimationFrame(() => {
       circle.style.strokeDashoffset = offset;
     });
-    if (labelEl) labelEl.textContent = formatPercent(percent);
+    if (labelEl) labelEl.textContent = toPersianDigits(percent.toFixed(2)) + '٪';
   }
 
   function countUp(el, target, duration = 900) {
@@ -289,20 +284,6 @@ const UI = (function () {
     return a ? a.isOpen(key) : true;
   }
 
-  // شمارندهٔ روی قرص بخش؛ مستقیم روی DOM کار می‌کند تا به زمان آماده‌شدن آکاردئون وابسته نباشد
-  function setPanelBadge(key, value) {
-    const li = document.querySelector(`.arco-accordion_item[data-panel-key="${key}"]`);
-    const badge = li && li.querySelector('.rm-badge');
-    if (!badge) return;
-    const n = Number(value);
-    if (!Number.isFinite(n) || n <= 0) {
-      badge.hidden = true;
-      return;
-    }
-    badge.textContent = n.toLocaleString('fa-IR');
-    badge.hidden = false;
-  }
-
   function setPanelHidden(key, hidden) {
     const a = accordion();
     if (a) a.setHidden(key, hidden);
@@ -310,21 +291,6 @@ const UI = (function () {
       const li = document.querySelector(`.arco-accordion_item[data-panel-key="${key}"]`);
       if (li) li.hidden = hidden;
     }
-  }
-
-  // اسکرول به عنصر داخل بدنهٔ بخش (نه کل صفحه)
-  function scrollInPanel(el, block = 'start') {
-    if (!el) return;
-    const body = el.closest('.rm-body');
-    if (!body) { el.scrollIntoView({ behavior: 'smooth', block }); return; }
-    const top = el.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop;
-    const target = block === 'center' ? top - (body.clientHeight - el.offsetHeight) / 2 : top;
-    body.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
-  }
-
-  function scrollPanelTop(el) {
-    const body = el && el.closest ? el.closest('.rm-body') : null;
-    if (body) body.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   return {
@@ -343,9 +309,6 @@ const UI = (function () {
     renderMarkdown,
     openPanel,
     isPanelOpen,
-    setPanelBadge,
     setPanelHidden,
-    scrollInPanel,
-    scrollPanelTop,
   };
 })();

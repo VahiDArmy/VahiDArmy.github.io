@@ -84,7 +84,9 @@
       renderAyahFrame(frameEl, ayahData, surahData, {
         marked,
         isBookmarked,
-        // دکمه‌های نوشتن فقط برای صاحب سایت؛ بازدیدکننده فقط نشانهٔ «آخرین آیه» را می‌بیند
+        // همان رابط قبلی: دکمهٔ نشانک برای همه دیده می‌شود. برای بازدیدکننده ثبت رد می‌شود
+        // و یک پیام می‌آید (قبلاً خطای کنترل‌نشده بود).
+        onBookmark: () => Store.setBookmark(surah, actualAyah),
         ...(isOwner
           ? {
               onToggleMark: async (btn) => {
@@ -98,7 +100,6 @@
                   UI.toast('ثبت نشان‌گذاری ناموفق بود');
                 }
               },
-              onBookmark: () => Store.setBookmark(surah, actualAyah),
             }
           : {}),
       });

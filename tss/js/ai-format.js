@@ -541,8 +541,7 @@ const AiFormat = (function () {
         ta.dispatchEvent(new Event('input', { bubbles: true }));   // پیش‌نویس خودکار و وضعیت دکمهٔ لینک
         await UI.openPanel('new');
         ta.focus({ preventScroll: true });
-        ta.setSelectionRange(ta.value.length, ta.value.length);
-        ta.scrollTop = ta.scrollHeight;
+        ta.scrollIntoView({ behavior: 'smooth', block: 'center' });
         UI.toast('پیش‌نویس در فرم درج شد');
       });
     }

@@ -110,7 +110,7 @@
     updatePlaceholder();
     if (inputEl) {
       inputEl.focus({ preventScroll: true });
-      UI.scrollInPanel(inputEl, 'center');
+      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
     if (window.UI && UI.toast) UI.toast('حالت پیگیری فعال شد — پرسش خود را بنویسید');
   }

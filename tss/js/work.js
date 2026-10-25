@@ -486,16 +486,8 @@
     } catch (e) {}
   }
 
-  // نوار «ارجاع آیه» و نقل آیه در بخش‌های دیگر + اطلاع به ماژول‌های دیگر
-  function announceAyah(surahData, ayahData) {
-    const label = `سورهٔ ${surahData.name_fa} · آیهٔ ${UI.toPersianDigits(ayahData.v)}`;
-    document.querySelectorAll('[data-rm-ref]').forEach((b) => { b.textContent = label; });
-    const quote = document.getElementById('rmAyahQuote');
-    if (quote) {
-      quote.textContent = ayahData.ar;
-      quote.classList.remove('is-expanded');
-      quote.hidden = false;
-    }
+  // به ماژول‌های دیگر (پرسش از هوش مصنوعی) خبر می‌دهد که آیه عوض شده
+  function announceAyah() {
     window.RMCurrent = { surah: current.surah, ayah: current.ayah };
     document.dispatchEvent(new CustomEvent('rm:ayahchange', { detail: { ...window.RMCurrent } }));
   }
@@ -527,7 +519,7 @@
       draftKey = keyOf(current);
       loadDraft();
       updateLinkButtonState();
-      announceAyah(surahData, ayahData);
+      announceAyah();
 
       const marked = await Store.isMarked(current.surah, current.ayah).catch(() => false);
       if (stale()) return;
@@ -576,7 +568,6 @@
     try {
       const tafsirs = await Store.getTafsirsForAyah(at.surah, at.ayah);
       if (mySeq !== renderSeq) return;
-      UI.setPanelBadge('tafsirs', tafsirs.length);
       if (!tafsirs.length) {
         tafsirsListEl.innerHTML = `<p style="color:var(--text-faint); font-size:0.85rem; text-align:center; padding:16px 0;">هنوز تفسیری برای این آیه ثبت نشده — اولین نفر باشید.</p>`;
         return;
@@ -1035,14 +1026,6 @@
   tafsirContent.addEventListener('input', scheduleDraftSave);
   tafsirTags.addEventListener('input', scheduleDraftSave);
   window.addEventListener('pagehide', saveDraft);
-
-  document.addEventListener('click', (e) => {
-    const opener = e.target.closest && e.target.closest('[data-open-panel]');
-    if (opener) UI.openPanel(opener.getAttribute('data-open-panel'));
-  });
-
-  const quoteEl = document.getElementById('rmAyahQuote');
-  if (quoteEl) quoteEl.addEventListener('click', () => quoteEl.classList.toggle('is-expanded'));
 
   initAiFunctionSelect();
   await renderCurrentAyah();

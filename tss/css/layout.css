@@ -94,7 +94,6 @@
   font-size: 1.2rem;
   color: #fff;
 }
-.brand__latin { display: inline-flex; direction: ltr; unicode-bidi: isolate; }
 .brand__mark { color: var(--wave-c2); }
 .brand__fa { font-family: var(--font-ui); font-size: .78rem; font-weight: 500; color: #e9efef; }
 

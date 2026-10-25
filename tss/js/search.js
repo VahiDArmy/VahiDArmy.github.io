@@ -12,17 +12,8 @@
 
   const escapeHtml = (s) => UI.escapeHtml(s);
 
-  // [[2:255|لینک]] در نتیجهٔ جستجو به «سورهٔ بقره، آیهٔ ۲۵۵» تبدیل می‌شود تا نشانه‌گذاری خام دیده نشود
-  const TOKEN_RE = /\[\[(\d{1,3}):(\d{1,3})(?:\|([^\]]*))?\]\]/g;
-  function plainTokens(text) {
-    return text.replace(TOKEN_RE, (m, s, a, label) => {
-      const l = (label || '').trim();
-      return l || `سورهٔ ${nameOf(Number(s))}، آیهٔ ${UI.toPersianDigits(a)}`;
-    });
-  }
-
   function buildSnippet(rawContent, query, maxLen = 180) {
-    const content = plainTokens(rawContent);
+    const content = rawContent;
     // ilike بدون حساسیت به حروف بزرگ/کوچک است؛ برش و برجسته‌سازی هم باید همین‌طور باشد
     const idx = content.toLowerCase().indexOf(query.toLowerCase());
     let snippet;

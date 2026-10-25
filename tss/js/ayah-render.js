@@ -23,14 +23,10 @@ function renderAyahFrame(container, ayah, surahMeta, options = {}) {
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
                 </svg>
               </button>
-            ` : isBookmarked ? `
-              <span class="bookmark-btn bookmark-btn--static is-bookmarked" role="img" aria-label="آخرین آیهٔ خوانده‌شده" title="آخرین آیهٔ خوانده‌شده">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-              </span>
             ` : ''}
           </span>
         </div>
-        <p class="ayah-frame__arabic" lang="ar" dir="rtl">${ayah.ar}</p>
+        <p class="ayah-frame__arabic">${ayah.ar}</p>
         <div class="translation-bar">
           <button class="translation-toggle" type="button" aria-expanded="false">
             نمایش ترجمهٔ فولادوند
@@ -116,25 +112,18 @@ function ayahSkeleton(container) {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   let angle = 0;
-  let pending = 0;          // مسافت اسکرولِ جمع‌شده از آخرین فریم
+  let lastY = window.scrollY;
   let ticking = false;
   let fadeTimer = null;
-  const lastPos = new WeakMap();
 
-  const isPage = (t) => t === document || t === document.documentElement || t === document.body;
-
-  function onScroll(e) {
-    const t = e.target;
-    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'INPUT')) return;
-    const y = isPage(t) ? window.scrollY : t.scrollTop;
-    const prev = lastPos.has(t) ? lastPos.get(t) : y;
-    lastPos.set(t, y);
-    pending += Math.abs(y - prev);
+  function onScroll() {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
-      angle = (angle + Math.min(pending * 1.6, 50)) % 360;
-      pending = 0;
+      const y = window.scrollY;
+      const delta = Math.abs(y - lastY);
+      lastY = y;
+      angle = (angle + Math.min(delta * 1.6, 50)) % 360;
 
       document.querySelectorAll('.ayah-frame').forEach((el) => {
         el.style.setProperty('--angle', angle + 'deg');
@@ -150,6 +139,5 @@ function ayahSkeleton(container) {
     });
   }
 
-  // capture: رویداد scroll برای عنصرها bubble نمی‌شود، ولی در فاز capture دیده می‌شود
-  window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
 })();

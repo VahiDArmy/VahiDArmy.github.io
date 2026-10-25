@@ -77,8 +77,7 @@
   opacity: 0; transition: opacity .6s ease, --angle .15s linear; pointer-events: none;
 }
 .ayah-frame.is-comet-active::before { opacity: 1; }
-/* inherits:true — JS می‌نویسد --angle را روی .ayah-frame و ::before باید آن را به ارث ببرد (با false همیشه 0deg می‌ماند) */
-@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
+@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
 
 .ayah-frame__inner { border-radius: calc(var(--radius-lg) - 2px); padding: 20px 18px 14px; }
 .ayah-frame__ref { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -877,5 +876,3 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .mizan-caret { animation: none; }
   .mizan-tagger-btn.is-busy { animation: none; }
 }
-/* نشانگر غیرقابل‌کلیک «آخرین آیهٔ خوانده‌شده» برای بازدیدکننده */
-.bookmark-btn--static { pointer-events: none; cursor: default; }

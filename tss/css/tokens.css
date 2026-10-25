@@ -97,9 +97,6 @@
 
 html, body { margin: 0; padding: 0; min-height: 100vh; }
 
-/* خصوصیت hidden باید همیشه برنده باشد؛ وگرنه هر قانون display (مثل .edit-banner) آن را بی‌اثر می‌کند */
-[hidden] { display: none !important; }
-
 body {
   background: var(--bg-solid);
   color: var(--text);

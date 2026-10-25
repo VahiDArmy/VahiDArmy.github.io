@@ -1615,9 +1615,8 @@ const MizanPanel = (function () {
     if (persist) scheduleMizanSave(n);
     resetAnchorConfirm();
     removeCaret();
-    // صفحهٔ تازه باید از بالا خوانده شود (پیمایش در بدنهٔ بخش است، نه کل صفحه)
-    const body = mizanSection && mizanSection.closest('.rm-body') ? mizanSection.closest('.rm-body') : mizanSection;
-    if (body && body.scrollTo) body.scrollTo({ top: 0, behavior: instant ? 'auto' : 'smooth' });
+    // صفحهٔ تازه باید از بالا خوانده شود: فقط وقتی کاربر خودش صفحه عوض کرده، بالای خواننده را بیاور
+    if (persist && !instant && mizanSection) mizanSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function scheduleMizanSave(pageIndex) {
