@@ -47,26 +47,44 @@ export default async function peoplePage(info, outlet) {
   const headerActions = [];
   if (canEditContent()) {
     headerActions.push(
-      el('button', { class: 'btn btn--primary', onClick: async () => { const created = await openPersonForm(); if (created) load(); } }, [icon('plus'), 'افزودن فرد'])
+      el('button', { 
+        class: 'btn btn--primary', 
+        on: { 
+          click: async () => { 
+            const created = await openPersonForm(); 
+            if (created) load(); 
+          } 
+        } 
+      }, [icon('plus'), 'افزودن فرد'])
     );
   }
   
   if (isAdmin()) {
     headerActions.push(
-      el('button', { class: 'btn btn--secondary', style: { marginRight: '8px' }, onClick: async () => {
-        // Fetch all people to allow merging any of them
-        const res = await peopleService.list({ limit: 1000 });
-        const mergeData = await openMergePeopleForm({ people: res.items });
-        if (mergeData) {
-          try {
-            await peopleService.mergePeople(mergeData.sourceId, mergeData.targetId);
-            toast.success('افراد با موفقیت ادغام شدند.');
-            load();
-          } catch (err) {
-            toast.error(err?.message || 'خطا در ادغام');
-          }
-        }
-      } }, [icon('users'), 'ادغام افراد'])
+      el('button', { 
+        class: 'btn btn--secondary', 
+        style: { marginRight: '8px' }, 
+        on: { 
+          click: async () => {
+            try {
+              const res = await peopleService.list({ limit: 1000 });
+              const mergeData = await openMergePeopleForm({ people: res.items });
+              if (mergeData) {
+                try {
+                  await peopleService.mergePeople(mergeData.sourceId, mergeData.targetId);
+                  toast.success('افراد با موفقیت ادغام شدند.');
+                  load();
+                } catch (err) {
+                  toast.error(err?.message || 'خطا در ادغام');
+                }
+              }
+            } catch (e) {
+              toast.error('خطا در دریافت لیست افراد.');
+              console.error(e);
+            }
+          } 
+        } 
+      }, [icon('users'), 'ادغام افراد'])
     );
   }
 
@@ -79,13 +97,11 @@ export default async function peoplePage(info, outlet) {
     })
   );
 
-  // View toggle
   const viewToggle = el('div', { class: 'view-toggle', role: 'group', 'aria-label': 'حالت نمایش' }, [
     el('button', { type: 'button', class: `view-toggle__btn${state.view === 'grid' ? ' is-active' : ''}`, 'aria-label': 'نمای کارت', on: { click: () => setView('grid') } }, [icon('grid')]),
     el('button', { type: 'button', class: `view-toggle__btn${state.view === 'list' ? ' is-active' : ''}`, 'aria-label': 'نمای فهرست', on: { click: () => setView('list') } }, [icon('list')]),
   ]);
 
-  // Toolbar
   const toolbar = createListToolbar({
     searchPlaceholder: 'جستجو در نام، سمت یا ایمیل...',
     searchValue: state.search,
@@ -116,15 +132,12 @@ export default async function peoplePage(info, outlet) {
   });
   page.appendChild(toolbar.node);
 
-  // Bulk bar
   const bulkBar = el('div', { class: 'bulk-bar', hidden: true });
   page.appendChild(bulkBar);
 
-  // Grid
   const gridWrap = el('div', { id: 'people-results' });
   page.appendChild(gridWrap);
 
-  // Pagination
   const pagination = createPagination({
     total: 0,
     page: state.page,
@@ -192,7 +205,12 @@ export default async function peoplePage(info, outlet) {
         iconName: 'users',
         title: 'فردی پیدا نشد',
         description: state.search ? `هیچ نتیجه‌ای برای «${state.search}» وجود ندارد.` : 'هنوز فردی به بایگانی اضافه نشده است.',
-        actions: canEditContent() ? [el('button', { class: 'btn btn--primary', onClick: async () => { const created = await openPersonForm(); if (created) load(); } }, [icon('plus'), 'افزودن اولین فرد'])] : null,
+        actions: canEditContent() ? [
+          el('button', { 
+            class: 'btn btn--primary', 
+            on: { click: async () => { const created = await openPersonForm(); if (created) load(); } } 
+          }, [icon('plus'), 'افزودن اولین فرد'])
+        ] : null,
       }));
       return;
     }
