@@ -1,12 +1,11 @@
 /**
- * Row create/edit modal — renders inputs for every column type.
+ * Row create/edit modal.
  */
 
 import { el, icon } from '../utils/dom.js';
 import { open as openModal } from '../ui/modal.js';
 import { toast } from '../ui/toast.js';
 import { COLUMN_TYPES } from '../config/constants.js';
-import { toFaDigits } from '../utils/format.js';
 
 function renderField(col, value, allValues, { people = [] } = {}) {
   const id = `col-${col.id}`;
@@ -54,24 +53,25 @@ function renderField(col, value, allValues, { people = [] } = {}) {
   return el('div', { class: 'form-field' }, [label, input]);
 }
 
-export function openRowEditor({ columns, values = {}, people = [] } = {}) {
+export function openRowEditor({ columns, values = {}, people = [], tablePermissionType = 'public', isOwnerDetermining = false } = {}) {
   return new Promise((resolve) => {
     const isEdit = !!values && Object.keys(values).length > 0;
     const fields = columns.map((col) => renderField(col, values[col.id], values, { people }));
     
-    const form = el('form', { class: 'row-editor-form' }, fields);
+    const ownerCheck = el('input', { type: 'checkbox', checked: isOwnerDetermining });
+    const ownerWrap = el('div', { class: 'form-field', style: { display: tablePermissionType === 'private_row' ? 'block' : 'none', marginTop: '12px', padding: '12px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)' } }, [
+      el('label', { class: 'checkbox' }, [
+        ownerCheck,
+        el('span', { class: 'checkbox__box' }),
+        el('span', { style: { fontWeight: 'bold' } }, ['این ردیف تعیین‌کننده مالک ستون است'])
+      ]),
+      el('p', { class: 'form-help' }, ['در حالت مالکیت خصوصی، هر ستون متعلق به شخصی است که نامش در این ردیف نوشته شده است.'])
+    ]);
 
-    const submitBtn = el('button', { 
-      type: 'button', 
-      class: 'btn btn--primary',
-      on: { click: () => form.requestSubmit() }
-    }, [isEdit ? 'ذخیره' : 'افزودن ردیف']);
+    const form = el('form', { class: 'row-editor-form' }, [...fields, ownerWrap]);
 
-    const cancelBtn = el('button', { 
-      type: 'button', 
-      class: 'btn btn--secondary', 
-      on: { click: () => { handle.close(); resolve(null); } } 
-    }, ['انصراف']);
+    const submitBtn = el('button', { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } }, [isEdit ? 'ذخیره' : 'افزودن ردیف']);
+    const cancelBtn = el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => { handle.close(); resolve(null); } } }, ['انصراف']);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -84,21 +84,14 @@ export function openRowEditor({ columns, values = {}, people = [] } = {}) {
 
         let value;
         switch (col.type) {
-          case COLUMN_TYPES.NUMBER:
-            value = node.value === '' ? null : Number(node.value);
-            break;
+          case COLUMN_TYPES.NUMBER: value = node.value === '' ? null : Number(node.value); break;
           case COLUMN_TYPES.CHECKBOX:
             const cb = node.querySelector('input[type="checkbox"]');
             value = cb ? cb.checked : false;
             break;
-          case COLUMN_TYPES.MULTI_SELECT:
-            value = Array.from(node.querySelectorAll(`input[data-multi-select="${col.id}"]:checked`)).map((n) => n.value);
-            break;
-          case COLUMN_TYPES.LONG_TEXT:
-            value = node.value.trim();
-            break;
-          default:
-            value = node.value != null ? String(node.value).trim() : '';
+          case COLUMN_TYPES.MULTI_SELECT: value = Array.from(node.querySelectorAll(`input[data-multi-select="${col.id}"]:checked`)).map((n) => n.value); break;
+          case COLUMN_TYPES.LONG_TEXT: value = node.value.trim(); break;
+          default: value = node.value != null ? String(node.value).trim() : '';
         }
 
         if (col.required && (value === '' || value == null || (Array.isArray(value) && !value.length))) {
@@ -111,7 +104,7 @@ export function openRowEditor({ columns, values = {}, people = [] } = {}) {
 
       submitBtn.classList.add('is-loading');
       handle.close();
-      resolve(out);
+      resolve({ values: out, isOwnerDetermining: ownerCheck.checked });
     });
 
     const handle = openModal({
