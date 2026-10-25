@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Statistics panel — compact stat cards
+   ========================================================================== */
+
+.statistics-panel {
+  margin-top: var(--space-4);
+}
+
+.statistics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+.stat-card {
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base),
+    transform var(--dur-fast) var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card:hover {
+  border-color: var(--border-3);
+  background: var(--bg-4);
+}
+
+.stat-card--accent {
+  border-color: var(--accent-soft-2);
+  background: linear-gradient(135deg, var(--bg-3) 0%, rgba(99, 102, 241, 0.06) 100%);
+}
+.stat-card--accent::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--accent);
+}
+
+.stat-card__label {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  font-weight: var(--fw-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  line-height: 1.3;
+}
+
+.stat-card__label svg {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+.stat-card__value {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  direction: ltr;
+  text-align: right;
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  word-break: break-all;
+}
+
+.stat-card__unit {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  font-weight: var(--fw-normal);
+}
+
+.stat-card__hint {
+  font-size: var(--fs-xs);
+  color: var(--fg-4);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Value tone */
+.stat-card--positive .stat-card__value { color: var(--success-text); }
+.stat-card--negative .stat-card__value { color: var(--danger-text); }
+.stat-card--warning  .stat-card__value { color: var(--warning-text); }
+
+/* Compact stats row (used inside result cards) */
+.stats-row {
+  display: flex;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  padding: var(--space-2) 0;
+}
+
+.stats-row__item {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 90px;
+}
+
+.stats-row__label {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  line-height: 1.3;
+}
+
+.stats-row__value {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  text-align: right;
+}
+
+/* Fit-quality indicator — small pill showing R² */
+.quality-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+.quality-pill--excellent { background: var(--success-soft); color: var(--success-text); }
+.quality-pill--good      { background: var(--info-soft);    color: var(--info-text);    }
+.quality-pill--fair      { background: var(--warning-soft); color: var(--warning-text); }
+.quality-pill--poor      { background: var(--danger-soft);  color: var(--danger-text);  }
