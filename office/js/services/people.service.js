@@ -11,8 +11,7 @@ function guard(error) {
   if (error) throw Object.assign(new Error(friendlyError(error)), { cause: error });
 }
 
-const LIST_COLUMNS =
-  'id, full_name, slug, job_title, department, status, avatar_url, email, hire_date, tags, created_at, updated_at';
+const LIST_COLUMNS = 'id, full_name, slug, job_title, department, status, avatar_url, email, hire_date, tags, created_at, updated_at';
 
 export const peopleService = {
   async list({ search = '', status = 'all', department = '', sort = 'full_name', direction = 'asc', limit = DEFAULT_PAGE_SIZE, offset = 0 } = {}) {
@@ -35,23 +34,14 @@ export const peopleService = {
 
   async create(payload) {
     const session = await requireSession();
-    const { data, error } = await supabase
-      .from(TABLES.PEOPLE)
-      .insert({ ...payload, created_by: session.user.id })
-      .select()
-      .single();
+    const { data, error } = await supabase.from(TABLES.PEOPLE).insert({ ...payload, created_by: session.user.id }).select().single();
     guard(error);
     return data;
   },
 
   async update(id, patch) {
     await requireSession();
-    const { data, error } = await supabase
-      .from(TABLES.PEOPLE)
-      .update(patch)
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await supabase.from(TABLES.PEOPLE).update(patch).eq('id', id).select().single();
     guard(error);
     return data;
   },
@@ -85,6 +75,44 @@ export const peopleService = {
       links: links.data || [],
     };
   },
+
+  /** Fetch people that don't have a user account linked */
+  async getUnlinked(search = '') {
+    let q = supabase.from(TABLES.PEOPLE).select('id, full_name, job_title, avatar_url').is('user_id', null);
+    if (search) q = q.ilike('full_name', `%${search}%`);
+    const { data, error } = await q.limit(10);
+    guard(error);
+    return data || [];
+  },
+
+  /** Link current user to an existing person record */
+  async linkAccount(personId) {
+    const session = await requireSession();
+    
+    // 1. Link to the new person
+    const { error: linkErr } = await supabase.from(TABLES.PEOPLE).update({ user_id: session.user.id, status: 'in_site' }).eq('id', personId);
+    guard(linkErr);
+
+    // 2. Find the auto-created person record (the one currently attached to this user)
+    const { data: currentRecords } = await supabase.from(TABLES.PEOPLE).select('id').eq('user_id', session.user.id).neq('id', personId);
+    
+    // 3. Delete the auto-created record to avoid duplicates
+    if (currentRecords && currentRecords.length > 0) {
+      for (const rec of currentRecords) {
+        await supabase.from(TABLES.PEOPLE).delete().eq('id', rec.id);
+      }
+    }
+    
+    return true;
+  },
+
+  /** Merge two people (Admin only) */
+  async mergePeople(sourceId, targetId) {
+    await requireSession();
+    const { error } = await supabase.rpc('merge_people', { source_id: sourceId, target_id: targetId });
+    guard(error);
+    return true;
+  }
 };
 
 export default peopleService;
