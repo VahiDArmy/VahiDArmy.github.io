@@ -177,12 +177,25 @@
     return card;
   }
 
+  /**
+   * Safely highlights parts of the equation.
+   * Uses a single-pass replacement to avoid corrupting generated HTML tags.
+   */
   function highlightEquation(eq) {
-    // Simple highlight: numbers -> warning color, operators -> muted, rest -> default
-    return DOM.escapeHTML(eq)
-      .replace(/([0-9]+(?:\.[0-9]+)?(?:e[-+]?[0-9]+)?)/gi, '<span class="eq-num">$1</span>')
-      .replace(/([+\-−·×*/^()])/g, '<span class="eq-op">$1</span>')
-      .replace(/\b([xy])\b/g, '<span class="eq-var">$1</span>');
+    if (!eq || eq === '—') return '—';
+    
+    // Escape the raw string first
+    const escaped = DOM.escapeHTML(eq);
+    
+    // Regex to match: 1) Numbers (incl. scientific), 2) Variables (x, y), 3) Operators
+    const regex = /(\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)|(\b[xXyY]\b)|([+\-−·×*\/^()])/g;
+    
+    return escaped.replace(regex, (match, num, variable, op) => {
+      if (num !== undefined) return `<span class="eq-num">${num}</span>`;
+      if (variable !== undefined) return `<span class="eq-var">${variable}</span>`;
+      if (op !== undefined) return `<span class="eq-op">${op}</span>`;
+      return match;
+    });
   }
 
   /* ---------- Charts ---------- */
