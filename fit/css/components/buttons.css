@@ -1,0 +1,225 @@
+/* ==========================================================================
+   Buttons
+   Variants: primary · secondary · ghost · outline · danger · success
+   Sizes: sm · md (default) · lg · icon
+   ========================================================================== */
+
+.btn {
+  --btn-bg: var(--bg-3);
+  --btn-bg-hover: var(--bg-4);
+  --btn-bg-active: var(--bg-5);
+  --btn-fg: var(--fg-1);
+  --btn-border: var(--border-2);
+  --btn-border-hover: var(--border-3);
+  --btn-shadow: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--btn-height-md);
+  height: var(--btn-height-md);
+  padding: 0 var(--space-4);
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-fg);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    color var(--transition-base),
+    box-shadow var(--transition-base),
+    transform var(--dur-fast) var(--ease-out);
+  box-shadow: var(--btn-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--btn-bg-hover);
+  border-color: var(--btn-border-hover);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--btn-bg-active);
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ---------- Variants ---------- */
+
+.btn--primary {
+  --btn-bg: var(--accent);
+  --btn-bg-hover: var(--accent-hover);
+  --btn-bg-active: var(--accent-active);
+  --btn-fg: #fff;
+  --btn-border: transparent;
+  --btn-border-hover: transparent;
+  --btn-shadow: 0 4px 14px -4px rgba(99, 102, 241, 0.55);
+}
+.btn--primary:hover:not(:disabled) {
+  --btn-shadow: 0 6px 20px -4px rgba(99, 102, 241, 0.65);
+}
+
+.btn--secondary {
+  --btn-bg: var(--bg-3);
+  --btn-bg-hover: var(--bg-4);
+  --btn-bg-active: var(--bg-5);
+  --btn-fg: var(--fg-1);
+  --btn-border: var(--border-2);
+  --btn-border-hover: var(--border-3);
+}
+
+.btn--ghost {
+  --btn-bg: transparent;
+  --btn-bg-hover: var(--bg-3);
+  --btn-bg-active: var(--bg-4);
+  --btn-fg: var(--fg-2);
+  --btn-border: transparent;
+  --btn-border-hover: transparent;
+}
+.btn--ghost:hover:not(:disabled) {
+  color: var(--fg-1);
+}
+
+.btn--outline {
+  --btn-bg: transparent;
+  --btn-bg-hover: var(--accent-soft);
+  --btn-bg-active: var(--accent-soft-2);
+  --btn-fg: var(--accent-text);
+  --btn-border: var(--accent);
+  --btn-border-hover: var(--accent-hover);
+}
+
+.btn--danger {
+  --btn-bg: var(--danger);
+  --btn-bg-hover: #f87171;
+  --btn-bg-active: #dc2626;
+  --btn-fg: #fff;
+  --btn-border: transparent;
+  --btn-border-hover: transparent;
+  --btn-shadow: 0 4px 14px -4px rgba(239, 68, 68, 0.55);
+}
+
+.btn--success {
+  --btn-bg: var(--success);
+  --btn-bg-hover: #34d399;
+  --btn-bg-active: #059669;
+  --btn-fg: #052e1b;
+  --btn-border: transparent;
+  --btn-border-hover: transparent;
+  --btn-shadow: 0 4px 14px -4px rgba(16, 185, 129, 0.55);
+}
+
+/* ---------- Sizes ---------- */
+
+.btn--sm {
+  height: var(--btn-height-sm);
+  min-height: var(--btn-height-sm);
+  padding: 0 var(--space-3);
+  font-size: var(--fs-xs);
+  gap: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+.btn--sm svg {
+  width: 14px;
+  height: 14px;
+}
+
+.btn--lg {
+  height: var(--btn-height-lg);
+  min-height: var(--btn-height-lg);
+  padding: 0 var(--space-6);
+  font-size: var(--fs-md);
+  border-radius: var(--radius-lg);
+}
+
+.btn--icon {
+  width: var(--btn-height-md);
+  padding: 0;
+}
+.btn--icon.btn--sm {
+  width: var(--btn-height-sm);
+}
+.btn--icon.btn--lg {
+  width: var(--btn-height-lg);
+}
+
+.btn--block {
+  width: 100%;
+  display: flex;
+}
+
+/* ---------- Loading state ---------- */
+
+.btn.is-loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  color: var(--btn-fg);
+}
+
+/* ---------- Button group ---------- */
+
+.btn-group {
+  display: inline-flex;
+  align-items: stretch;
+}
+.btn-group > .btn {
+  border-radius: 0;
+  margin-inline-start: -1px;
+}
+.btn-group > .btn:first-child {
+  border-start-start-radius: var(--btn-radius);
+  border-end-start-radius: var(--btn-radius);
+  margin-inline-start: 0;
+}
+.btn-group > .btn:last-child {
+  border-start-end-radius: var(--btn-radius);
+  border-end-end-radius: var(--btn-radius);
+}
+.btn-group > .btn:hover,
+.btn-group > .btn.is-active {
+  z-index: 1;
+}
+.btn-group > .btn.is-active {
+  --btn-bg: var(--accent-soft);
+  --btn-fg: var(--accent-text);
+  --btn-border: var(--accent);
+}
+
+/* ---------- Icon-only tooltip helper ---------- */
+
+.btn[data-tooltip] {
+  position: relative;
+}
