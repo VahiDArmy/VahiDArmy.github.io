@@ -50,7 +50,6 @@ export default async function tablePage(info, outlet) {
       tablesService.listRows(id, { limit: 500 }),
     ]);
     
-    // Load people if needed for PersonRef columns or Ownership check
     if (columns.some((c) => c.type === 'person_ref') || table.permission_type !== 'public') {
       const res = await peopleService.list({ limit: 500 });
       people = res.items;
@@ -67,9 +66,30 @@ export default async function tablePage(info, outlet) {
   const isOwner = user?.id === table.created_by;
   const isAdmin = canEditContent();
 
-  // Table level permissions
-  const canEditStructure = isAdmin || isOwner; // Only owner/admin can edit columns or row structure
+  const canEditStructure = isAdmin || isOwner;
   const canEditData = canEditStructure || table.permission_type === 'public';
+
+  // Calculate User's Owned Rows/Cols for UI Highlighting
+  const userOwnedRowIds = new Set();
+  const userOwnedColumnIds = new Set();
+
+  if (!canEditStructure && myPersonId) {
+    if (table.permission_type === 'private_column') {
+      const ownerCol = columns.find(c => c.is_owner_determining);
+      if (ownerCol) {
+        rowsData.items.forEach(r => {
+          if (r.values?.[ownerCol.id] === myPersonId) userOwnedRowIds.add(r.id);
+        });
+      }
+    } else if (table.permission_type === 'private_row') {
+      const ownerRow = rowsData.items.find(r => r.is_owner_determining);
+      if (ownerRow) {
+        columns.forEach(c => {
+          if (ownerRow.values?.[c.id] === myPersonId) userOwnedColumnIds.add(c.id);
+        });
+      }
+    }
+  }
 
   outlet.innerHTML = '';
   outlet.appendChild(buildView());
@@ -109,10 +129,6 @@ export default async function tablePage(info, outlet) {
 
     const searchInput = el('input', { type: 'search', class: 'input', placeholder: 'جستجو در ردیف‌ها...' });
 
-    // Advanced Permission Logic
-    const findOwnerCol = () => columns.find(c => c.is_owner_determining);
-    const findOwnerRow = () => rowsData.items.find(r => r.is_owner_determining);
-
     const checkCanEditRow = (row) => {
       if (isAdmin || isOwner) return true;
       if (table.permission_type === 'public') return true;
@@ -120,19 +136,16 @@ export default async function tablePage(info, outlet) {
       
       if (table.permission_type === 'private_column') {
         if (!myPersonId) return false;
-        const ownerCol = findOwnerCol();
+        const ownerCol = columns.find(c => c.is_owner_determining);
         return ownerCol && row.values?.[ownerCol.id] === myPersonId;
       }
-      
-      // In private_row mode, the row itself isn't owned, the *columns* are owned.
-      // So the row is "editable" globally, but cells will be restricted.
-      return true; 
+      return true; // in private_row mode, row editing depends on cells
     };
 
     const checkCanEditCell = (row, col) => {
       if (!checkCanEditRow(row)) return false;
       if (table.permission_type === 'private_row') {
-        const ownerRow = findOwnerRow();
+        const ownerRow = rowsData.items.find(r => r.is_owner_determining);
         if (!ownerRow) return false;
         if (!myPersonId) return false;
         return ownerRow.values?.[col.id] === myPersonId;
@@ -147,6 +160,8 @@ export default async function tablePage(info, outlet) {
       canEdit: canEditStructure || table.permission_type !== 'public',
       canEditRow: checkCanEditRow, 
       canEditCell: checkCanEditCell,
+      userOwnedRowIds,       // Passed for UI
+      userOwnedColumnIds,    // Passed for UI
       onEditRow: async (row, values) => {
         try {
           await tablesService.updateRow(row.id, values);
@@ -274,7 +289,6 @@ export default async function tablePage(info, outlet) {
       const values = await openColumnEditor({ column: col, tablePermissionType: table.permission_type });
       if (!values) return;
       try {
-        // If setting this col as owner, remove the flag from others
         if (values.is_owner_determining) {
           const others = columns.filter(c => c.id !== col.id && c.is_owner_determining);
           for (const other of others) {
@@ -366,7 +380,7 @@ export default async function tablePage(info, outlet) {
         const updated = await tablesService.update(table.id, values);
         Object.assign(table, updated);
         toast.success('تنظیمات جدول به‌روز شد.');
-        window.location.reload(); // Reload to apply new permission states cleanly
+        window.location.reload(); 
       } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
     }
 
