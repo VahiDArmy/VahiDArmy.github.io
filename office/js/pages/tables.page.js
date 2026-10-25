@@ -318,22 +318,6 @@ function openTableForm({ table = null } = {}) {
       placeholder: 'auto-generated',
     });
 
-    const submitBtn = el(
-      'button',
-      { type: 'submit', class: 'btn btn--primary' },
-      [isEdit ? 'ذخیره' : 'ایجاد']
-    );
-
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
-
     const form = el('form', { class: 'form-grid' }, [
       el('div', { class: 'form-field' }, [
         el('label', { class: 'form-label' }, ['نام جدول ', el('span', { class: 'required' }, ['*'])]),
@@ -348,6 +332,27 @@ function openTableForm({ table = null } = {}) {
         slugInput,
       ]),
     ]);
+
+    // FIX: Changed from type="submit" to type="button" with requestSubmit
+    const submitBtn = el(
+      'button',
+      { 
+        type: 'button', 
+        class: 'btn btn--primary',
+        on: { click: () => form.requestSubmit() }
+      },
+      [isEdit ? 'ذخیره' : 'ایجاد']
+    );
+
+    const cancelBtn = el(
+      'button',
+      {
+        type: 'button',
+        class: 'btn btn--secondary',
+        on: { click: () => { handle.close(); resolve(null); } },
+      },
+      ['انصراف']
+    );
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
