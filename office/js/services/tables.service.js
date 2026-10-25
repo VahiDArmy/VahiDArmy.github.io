@@ -55,18 +55,6 @@ export const tablesService = {
     return data;
   },
 
-  async transferOwnership(id, newOwnerId) {
-    await requireSession();
-    const { data, error } = await supabase
-      .from(TABLES.DATA_TABLES)
-      .update({ created_by: newOwnerId })
-      .eq('id', id)
-      .select()
-      .single();
-    guard(error);
-    return data;
-  },
-
   async remove(id) {
     await requireSession();
     const { error } = await supabase.from(TABLES.DATA_TABLES).delete().eq('id', id);
@@ -105,15 +93,18 @@ export const tablesService = {
     guard(error);
     return { items: data || [], total: count || 0 };
   },
-  async createRow(tableId, values) {
+  async createRow(tableId, values, isOwnerDetermining = false) {
     await requireSession();
-    const { data, error } = await supabase.from(TABLES.DATA_ROWS).insert({ table_id: tableId, values }).select().single();
+    const { data, error } = await supabase.from(TABLES.DATA_ROWS).insert({ table_id: tableId, values, is_owner_determining: isOwnerDetermining }).select().single();
     guard(error);
     return data;
   },
-  async updateRow(id, values) {
+  async updateRow(id, values, isOwnerDetermining = null) {
     await requireSession();
-    const { data, error } = await supabase.from(TABLES.DATA_ROWS).update({ values }).eq('id', id).select().single();
+    const patch = { values };
+    if (isOwnerDetermining !== null) patch.is_owner_determining = isOwnerDetermining;
+    
+    const { data, error } = await supabase.from(TABLES.DATA_ROWS).update(patch).eq('id', id).select().single();
     guard(error);
     return data;
   },
