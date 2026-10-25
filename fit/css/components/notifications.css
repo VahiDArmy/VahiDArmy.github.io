@@ -9,15 +9,19 @@
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
   z-index: var(--z-toast);
   pointer-events: none;
-  width: 100%;
-  max-width: 380px;
-  padding: 0 var(--space-4);
+  /* Fix: ensure width never overflows screen on small devices */
+  width: calc(100% - var(--space-6));
+  max-width: 400px;
+  padding: 0;
 }
 
 .toast {
+  width: 100%; /* Fill the container */
+  box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   gap: var(--space-3);
@@ -164,14 +168,10 @@
 }
 
 /* Small screens */
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .toast-container {
-    max-width: 100%;
     top: auto;
     bottom: calc(var(--footer-height) + var(--space-3));
-    left: var(--space-2);
-    right: var(--space-2);
-    transform: none;
-    padding: 0;
+    width: calc(100% - var(--space-4));
   }
 }
