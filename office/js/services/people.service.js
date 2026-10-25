@@ -32,6 +32,13 @@ export const peopleService = {
     return data;
   },
 
+  // NEW METHOD: Check if current user is already linked to a person record
+  async getByUserId(userId) {
+    const { data, error } = await supabase.from(TABLES.PEOPLE).select('*').eq('user_id', userId).maybeSingle();
+    guard(error);
+    return data;
+  },
+
   async create(payload) {
     const session = await requireSession();
     const { data, error } = await supabase.from(TABLES.PEOPLE).insert({ ...payload, created_by: session.user.id }).select().single();
@@ -76,7 +83,6 @@ export const peopleService = {
     };
   },
 
-  /** Fetch people that don't have a user account linked */
   async getUnlinked(search = '') {
     let q = supabase.from(TABLES.PEOPLE).select('id, full_name, job_title, avatar_url').is('user_id', null);
     if (search) q = q.ilike('full_name', `%${search}%`);
@@ -85,7 +91,6 @@ export const peopleService = {
     return data || [];
   },
 
-  /** Link current user to an existing person record */
   async linkAccount(personId) {
     const session = await requireSession();
     
@@ -106,7 +111,6 @@ export const peopleService = {
     return true;
   },
 
-  /** Merge two people (Admin only) */
   async mergePeople(sourceId, targetId) {
     await requireSession();
     const { error } = await supabase.rpc('merge_people', { source_id: sourceId, target_id: targetId });
