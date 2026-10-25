@@ -1,15 +1,14 @@
 /**
  * Column create/edit modal.
- * Uses the shared createColumnProperties component.
  */
 
-import { el } from '../utils/dom.js';
+import { el, icon } from '../utils/dom.js';
 import { open as openModal } from '../ui/modal.js';
 import { toast } from '../ui/toast.js';
 import { validate, rules, hasErrors } from '../utils/validators.js';
 import { createColumnProperties } from './column-properties.js';
 
-export function openColumnEditor({ column = null } = {}) {
+export function openColumnEditor({ column = null, tablePermissionType = 'public' } = {}) {
   return new Promise((resolve) => {
     const isEdit = !!column;
 
@@ -27,48 +26,47 @@ export function openColumnEditor({ column = null } = {}) {
       initialChoices: column?.options?.choices || [],
     });
 
+    const ownerCheck = el('input', { type: 'checkbox', checked: !!column?.is_owner_determining });
+    const ownerWrap = el('div', { class: 'form-field', style: { display: tablePermissionType === 'private_column' ? 'block' : 'none', marginTop: '12px', padding: '12px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)' } }, [
+      el('label', { class: 'checkbox' }, [
+        ownerCheck,
+        el('span', { class: 'checkbox__box' }),
+        el('span', { style: { fontWeight: 'bold' } }, ['این ستون تعیین‌کننده مالک ردیف است'])
+      ]),
+      el('p', { class: 'form-help' }, ['در حالت مالکیت خصوصی، هر ردیف متعلق به شخصی است که نامش در این ستون نوشته شده است.'])
+    ]);
+
     const form = el('form', { class: 'column-editor-form' }, [
       el('div', { class: 'form-field' }, [
         el('label', { class: 'form-label' }, ['نام ستون ', el('span', { class: 'required' }, ['*'])]),
         nameInput,
       ]),
       propForm.node,
+      ownerWrap
     ]);
 
     const submitBtn = el(
       'button',
-      { 
-        type: 'button', 
-        class: 'btn btn--primary',
-        on: { click: () => form.requestSubmit() }
-      },
+      { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } },
       [isEdit ? 'ذخیره' : 'افزودن ستون']
     );
 
     const cancelBtn = el(
       'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
+      { type: 'button', class: 'btn btn--secondary', on: { click: () => { handle.close(); resolve(null); } } },
       ['انصراف']
     );
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const name = nameInput.value.trim();
-      const errors = validate({ name }, {
-        name: [rules.required('نام ستون الزامی است'), rules.maxLength(80)],
-      });
-      if (hasErrors(errors)) {
-        toast.error(Object.values(errors)[0]);
-        return;
-      }
+      const errors = validate({ name }, { name: [rules.required('نام ستون الزامی است'), rules.maxLength(80)] });
+      if (hasErrors(errors)) return toast.error(Object.values(errors)[0]);
       
       const values = {
         name,
-        ...propForm.getValue()
+        ...propForm.getValue(),
+        is_owner_determining: ownerCheck.checked
       };
       
       submitBtn.classList.add('is-loading');
