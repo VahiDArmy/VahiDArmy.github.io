@@ -1,7 +1,5 @@
 /**
  * Dynamic table renderer.
- * Renders a scrolling, sticky-header table with inline cell editing
- * for simple types and modal-based editing for complex types.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -247,8 +245,21 @@ export function createTableGrid({
       if (!values) return;
       try {
         await onEditRow?.(row, values);
+        
+        // Update the whole row UI immediately
+        const tr = cell.closest('tr');
+        if (tr) {
+          const tds = tr.querySelectorAll('.data-grid__cell');
+          columns.forEach((c, i) => {
+            const td = tds[i];
+            if (td) {
+              td.innerHTML = '';
+              td.appendChild(formatCellDisplay(c, values[c.id], { people }));
+            }
+          });
+        }
       } catch (err) {
-        // Parent already toasts, nothing to do here
+        // Parent already toasts
       }
       return;
     }
