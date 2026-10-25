@@ -1,12 +1,5 @@
 /**
  * Right-click context menu (and programmatic dropdowns anywhere).
- *
- *   openContextMenu(x, y, [
- *     { header: 'عملیات' },
- *     { label: 'ویرایش', icon: 'edit', onClick: fn },
- *     { divider: true },
- *     { label: 'حذف', icon: 'trash', danger: true, onClick: fn, shortcut: 'Del' },
- *   ]);
  */
 
 import { el, icon, lockBodyScroll, unlockBodyScroll } from '../utils/dom.js';
@@ -109,13 +102,13 @@ export function openContextMenu(x, y, items = []) {
     menu.appendChild(node);
   }
 
-  // Backdrop for outside clicks (pointer-events on root covers all)
+  // FIX: Use a backdrop with a LOWER z-index than the menu so clicks on the menu work.
   const backdrop = el('div', {
     style: {
       position: 'fixed',
       inset: '0',
       background: 'transparent',
-      zIndex: 'var(--z-context)',
+      zIndex: 'calc(var(--z-context) - 1)', // Put it behind the menu
     },
   });
 
@@ -136,7 +129,6 @@ export function openContextMenu(x, y, items = []) {
   if (left < pad) left = pad;
   if (top < pad) top = pad;
 
-  // In RTL: prefer opening toward start-of-screen (right side) — X stays as-is.
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
   menu.style.visibility = '';
