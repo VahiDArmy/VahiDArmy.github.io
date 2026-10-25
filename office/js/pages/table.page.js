@@ -69,11 +69,11 @@ export default async function tablePage(info, outlet) {
   const canEditStructure = isAdmin || isOwner;
   const canEditData = canEditStructure || table.permission_type === 'public';
 
-  // Calculate User's Owned Rows/Cols for UI Highlighting
+  // Calculate User's Owned Rows/Cols for UI Highlighting (Works for Admins too)
   const userOwnedRowIds = new Set();
   const userOwnedColumnIds = new Set();
 
-  if (!canEditStructure && myPersonId) {
+  if (myPersonId) {
     if (table.permission_type === 'private_column') {
       const ownerCol = columns.find(c => c.is_owner_determining);
       if (ownerCol) {
@@ -139,7 +139,7 @@ export default async function tablePage(info, outlet) {
         const ownerCol = columns.find(c => c.is_owner_determining);
         return ownerCol && row.values?.[ownerCol.id] === myPersonId;
       }
-      return true; // in private_row mode, row editing depends on cells
+      return true; // in private_row mode
     };
 
     const checkCanEditCell = (row, col) => {
@@ -160,12 +160,12 @@ export default async function tablePage(info, outlet) {
       canEdit: canEditStructure || table.permission_type !== 'public',
       canEditRow: checkCanEditRow, 
       canEditCell: checkCanEditCell,
-      userOwnedRowIds,       // Passed for UI
-      userOwnedColumnIds,    // Passed for UI
-      onEditRow: async (row, values) => {
+      userOwnedRowIds,
+      userOwnedColumnIds,
+      onEditRow: async (row, result) => {
         try {
-          await tablesService.updateRow(row.id, values);
-          row.values = values;
+          await tablesService.updateRow(row.id, result.values, row.is_owner_determining);
+          row.values = result.values;
           toast.success('ردیف به‌روز شد.');
         } catch (err) {
           toast.error(err?.message || 'ذخیره ناموفق بود.');
