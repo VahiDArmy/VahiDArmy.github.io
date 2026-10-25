@@ -7,6 +7,7 @@ import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
 import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { profilesService } from '../services/profiles.service.js';
+import { peopleService } from '../services/people.service.js'; // Imported to check current person record
 import { openClaimAvatarModal } from '../components/claim-avatar.js';
 import { toast } from '../ui/toast.js';
 import { pageHeader } from '../components/page-header.js';
@@ -26,8 +27,16 @@ export default async function profilePage(info, outlet) {
   let profile = appStore.get('profile');
   if (!profile) profile = await profilesService.getById(user.id);
 
+  // Check if the user already has a linked person record
+  let myPersonRecord = null;
+  try {
+    myPersonRecord = await peopleService.getByUserId(user.id);
+  } catch (e) {
+    // Ignore error, assume they don't have one
+  }
+
   outlet.innerHTML = '';
-  outlet.appendChild(buildView({ user, profile }));
+  outlet.appendChild(buildView({ user, profile, hasPersonRecord: !!myPersonRecord }));
 
   return () => {};
 }
@@ -36,7 +45,7 @@ function buildLoading() {
   return el('div', { class: 'container' }, [el('div', { class: 'page-loading' }, [el('div', { class: 'skeleton skeleton--title' }), el('div', { class: 'skeleton skeleton--block' })])]);
 }
 
-function buildView({ user, profile }) {
+function buildView({ user, profile, hasPersonRecord }) {
   const displayName = profile?.display_name || user.email?.split('@')[0] || 'کاربر';
   const roleLabel = ROLE_LABELS[profile?.role] || 'عضو';
   const memberSince = formatDate(profile?.created_at || user.created_at);
@@ -54,17 +63,20 @@ function buildView({ user, profile }) {
     ]),
   ]);
 
-  const claimSection = el('section', { class: 'profile-card', style: { borderColor: 'var(--accent)' } }, [
-    el('h2', { class: 'profile-card__title', style: { color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' } }, [icon('user'), 'آواتار از قبل وجود دارد؟']),
-    el('p', { class: 'form-help', style: { marginBottom: '12px' } }, ['اگر شما قبلاً توسط مدیر در لیست اداره ثبت شده‌اید، می‌توانید پروفایل خود را به آن متصل کنید تا اطلاعات قبلی حفظ شود.']),
-    el('button', { 
-      class: 'btn btn--secondary', 
-      onClick: () => openClaimAvatarModal() 
-    }, ['اتصال به پروفایل موجود'])
-  ]);
-
   const form = buildEditForm({ user, profile });
-  const main = el('div', { class: 'profile-main' }, [claimSection, form]);
+
+  // Subtle claim link (Only show if they DO NOT have a person record yet)
+  const claimLink = !hasPersonRecord ? el('div', { style: { marginTop: 'var(--space-4)', textAlign: 'center' } }, [
+    el('p', { class: 'form-help', style: { marginBottom: '8px' } }, ['آیا شما قبلاً توسط مدیر در لیست اداره ثبت شده‌اید؟']),
+    el('button', {
+      type: 'button',
+      class: 'btn btn--link',
+      style: { fontSize: 'var(--text-sm)' },
+      onClick: () => openClaimAvatarModal()
+    }, ['اتصال به پروفایل موجود'])
+  ]) : null;
+
+  const main = el('div', { class: 'profile-main' }, [form, claimLink].filter(Boolean));
 
   const grid = el('div', { class: 'profile-grid' }, [sidebar, main]);
 
