@@ -13,6 +13,7 @@ import { createTableGrid } from '../components/table-grid.js';
 import { openColumnEditor } from '../components/column-editor.js';
 import { openRowEditor } from '../components/row-editor.js';
 import { openBulkPeopleForm } from '../components/table-bulk-people.js';
+import { openBulkEditColumns } from '../components/bulk-edit-columns.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { open as openModal } from '../ui/modal.js';
@@ -111,6 +112,13 @@ export default async function tablePage(info, outlet) {
       canEdit
         ? el(
             'button',
+            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkEditColumns() } },
+            [icon('edit'), 'ویرایش ستون‌ها']
+          )
+        : null,
+      canEdit
+        ? el(
+            'button',
             { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } },
             [icon('users'), 'افزودن افراد']
           )
@@ -124,7 +132,7 @@ export default async function tablePage(info, outlet) {
         ? el(
             'button',
             { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } },
-            [icon('edit'), 'ویرایش']
+            [icon('settings'), 'تنظیمات']
           )
         : null,
       canEdit
@@ -242,11 +250,32 @@ export default async function tablePage(info, outlet) {
       }
     }
 
+    async function bulkEditColumns() {
+      if (!columns.length) return;
+      const result = await openBulkEditColumns({ columns });
+      if (!result) return;
+
+      const { ids, props } = result;
+      const toastId = toast.info(`در حال ویرایش ${formatNumber(ids.length)} ستون...`, { duration: 0 });
+
+      try {
+        for (const id of ids) {
+          await tablesService.updateColumn(id, props);
+        }
+        toast.success(`تغییرات روی ${formatNumber(ids.length)} ستون اعمال شد.`);
+        toastId.dismiss();
+        setTimeout(() => window.location.reload(), 500);
+      } catch (err) {
+        toast.error(err?.message || 'خطا در ویرایش گروهی.');
+        toastId.dismiss();
+      }
+    }
+
     async function bulkAddPeople() {
       const result = await openBulkPeopleForm({ hasColumns: columns.length > 0, columns });
       if (!result) return;
 
-      const { mode, people: selectedPeople, colType, rowTargetColId } = result;
+      const { mode, people: selectedPeople, columnProps, rowTargetColId } = result;
       const toastId = toast.info(`در حال پردازش ${formatNumber(selectedPeople.length)} نفر...`, { duration: 0 });
 
       try {
@@ -254,8 +283,8 @@ export default async function tablePage(info, outlet) {
           let currentPos = columns.length;
           for (const person of selectedPeople) {
             await tablesService.createColumn(table.id, {
+              ...columnProps,
               name: person.full_name,
-              type: colType || COLUMN_TYPES.TEXT,
               position: currentPos++,
             });
           }
@@ -264,7 +293,6 @@ export default async function tablePage(info, outlet) {
           setTimeout(() => window.location.reload(), 500); 
           
         } else if (mode === 'rows') {
-          // If table has NO columns at all, create a default text column first
           if (columns.length === 0) {
             await tablesService.createColumn(table.id, {
               name: 'نام فرد',
@@ -273,10 +301,9 @@ export default async function tablePage(info, outlet) {
             });
           }
           
-          // Determine target column id
           let targetColId = rowTargetColId;
           if (!targetColId) {
-             const fallbackCol = columns[0]; // Should not happen since we just created one
+             const fallbackCol = columns[0];
              targetColId = fallbackCol ? fallbackCol.id : null; 
           }
 
