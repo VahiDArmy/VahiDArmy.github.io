@@ -1,5 +1,10 @@
 /* ==========================================================================
    Page: Results
+   Note on direction:
+     · Comparison TABLE is LTR (columns: type → R² → R²adj → RMSE → MAE →
+       status, in that reading order like Excel).
+     · Persian labels/headers inside cells still render RTL per word.
+     · Equation formula is LTR (math).
    ========================================================================== */
 
 .results-layout {
@@ -17,7 +22,7 @@
   margin-bottom: var(--space-2);
 }
 
-/* ---------- Equation display ---------- */
+/* ---------- Equation display (LTR — math) ---------- */
 
 .equation-card {
   background:
@@ -51,6 +56,7 @@
   color: var(--fg-3);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  /* Persian label — stays RTL */
 }
 
 .equation-card__label svg {
@@ -99,24 +105,25 @@
   align-items: center;
 }
 
-/* ---------- Comparison table (all fits) ---------- */
+/* ---------- Comparison table (LTR data grid) ---------- */
 
 .comparison-card {
   margin-top: var(--space-2);
 }
 
 .comparison-table-wrap {
+  direction: ltr; /* columns flow left → right like Excel */
   overflow-x: auto;
 }
 
 .comparison-table {
+  direction: ltr;
   width: 100%;
   font-size: var(--fs-sm);
   font-variant-numeric: tabular-nums;
 }
 
 .comparison-table thead th {
-  text-align: right;
   padding: var(--space-2) var(--space-3);
   font-size: var(--fs-xs);
   font-weight: var(--fw-semibold);
@@ -127,6 +134,9 @@
   position: sticky;
   top: 0;
   z-index: 1;
+  /* Persian headers — center them; each word renders RTL inside */
+  text-align: center;
+  direction: rtl;
 }
 
 .comparison-table tbody td {
@@ -134,6 +144,7 @@
   border-bottom: 1px solid var(--border-1);
   color: var(--fg-2);
   vertical-align: middle;
+  text-align: center;
 }
 
 .comparison-table tbody tr {
@@ -153,16 +164,21 @@
   box-shadow: inset 3px 0 0 var(--success);
 }
 
+/* Numeric cells — LTR, tabular, centered */
 .comparison-table .num {
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
-  text-align: left;
+  direction: ltr;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
+/* Type cell keeps Persian badges in natural RTL flow inside the LTR row */
 .comparison-table__type {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  direction: rtl;
   font-weight: var(--fw-medium);
   color: var(--fg-1);
 }
@@ -196,6 +212,8 @@
 .predict-input-row .input {
   flex: 1;
   min-width: 140px;
+  direction: ltr;
+  text-align: center;
 }
 
 .predict-result {
@@ -223,6 +241,7 @@
   direction: ltr;
   margin-inline-start: auto;
   font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .predict-result.is-empty {
