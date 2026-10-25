@@ -51,7 +51,9 @@ export function createTableGrid({
   rows,
   people = [],
   canEdit = false,
-  canEditRow = () => true, // NEW: Function to check specific row permissions
+  canEditRow = () => true,
+  userOwnedRowIds = new Set(), // New
+  userOwnedColumnIds = new Set(), // New
   onEditRow,
   onInlineSave,
   onAddColumn,
@@ -73,11 +75,20 @@ export function createTableGrid({
     headRow.appendChild(el('th', { class: 'data-grid__row-num' }, ['#']));
 
     for (const col of columns) {
-      const th = el('th', { dataset: { colId: col.id }, on: { contextmenu: (e) => { if (!canEdit) return; e.preventDefault(); onColumnContext?.(e, col); } } }, [
+      const isMyCol = userOwnedColumnIds.has(col.id);
+      const thClasses = ['data-grid__cell'];
+      if (isMyCol) thClasses.push('is-my-col');
+
+      const th = el('th', { 
+        class: thClasses.join(' '),
+        dataset: { colId: col.id }, 
+        on: { contextmenu: (e) => { if (!canEdit) return; e.preventDefault(); onColumnContext?.(e, col); } } 
+      }, [
         el('span', { class: 'data-grid__col-head' }, [
           el('span', { class: 'data-grid__col-name' }, [col.name || '—']),
           el('span', { class: 'data-grid__col-type' }, [col.type]),
           col.required ? el('span', { style: { color: 'var(--danger-500)' } }, ['*']) : null,
+          isMyCol ? el('span', { class: 'badge badge--brand', style: { fontSize: '9px', padding: '0 4px', height: '16px', marginLeft: '4px' } }, ['ستون شما']) : null,
         ]),
       ]);
       headRow.appendChild(th);
@@ -95,9 +106,20 @@ export function createTableGrid({
     } else {
       rows.forEach((row, index) => {
         const rowEditable = canEdit && canEditRow(row);
+        const isMyRow = userOwnedRowIds.has(row.id);
         
-        const tr = el('tr', { dataset: { rowId: row.id }, on: { contextmenu: (e) => { if (!canEdit) return; e.preventDefault(); onRowContext?.(e, row); } } }, [
-          el('td', { class: 'data-grid__row-num' }, [formatNumber(index + 1)])
+        const trClasses = [];
+        if (isMyRow) trClasses.push('is-my-row');
+
+        const tr = el('tr', { 
+          class: trClasses.join(' '),
+          dataset: { rowId: row.id }, 
+          on: { contextmenu: (e) => { if (!canEdit) return; e.preventDefault(); onRowContext?.(e, row); } } 
+        }, [
+          el('td', { class: 'data-grid__row-num' }, [
+            formatNumber(index + 1),
+            isMyRow ? el('span', { class: 'badge badge--brand', style: { display: 'block', fontSize: '8px', padding: '0 2px', marginTop: '2px' } }, ['شما']) : null
+          ])
         ]);
 
         for (const col of columns) {
@@ -108,7 +130,7 @@ export function createTableGrid({
             cell.addEventListener('click', () => startCellEdit(cell, row, col));
           } else {
             cell.style.cursor = 'default';
-            cell.title = 'شما مجاز به ویرایش این ردیف نیستید.';
+            cell.title = 'شما مجاز به ویرایش این سلول نیستید.';
           }
 
           tr.appendChild(cell);
