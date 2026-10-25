@@ -1,6 +1,5 @@
 /**
  * Bulk Add People to Table
- * Allows selecting all or specific people and adding them as rows or columns.
  */
 
 import { el } from '../utils/dom.js';
@@ -8,7 +7,8 @@ import { open as openModal } from '../ui/modal.js';
 import { toast } from '../ui/toast.js';
 import { peopleService } from '../services/people.service.js';
 import { createTagInput } from './tag-input.js';
-import { COLUMN_TYPES, COLUMN_TYPE_LABELS } from '../config/constants.js';
+import { createColumnProperties } from './column-properties.js';
+import { COLUMN_TYPES } from '../config/constants.js';
 
 export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
   return new Promise(async (resolve) => {
@@ -26,23 +26,19 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       return resolve(null);
     }
 
-    // --- UI Elements ---
-    let mode = 'columns'; // default
+    let mode = 'columns';
 
     const radioCol = el('input', { type: 'radio', name: 'bulk_mode', value: 'columns', checked: true });
     const radioRow = el('input', { type: 'radio', name: 'bulk_mode', value: 'rows', disabled: !hasColumns });
 
+    // Use the shared form for column properties
+    const colPropForm = createColumnProperties({ initialType: COLUMN_TYPES.NUMBER });
+    
     const colOptions = el('div', { class: 'form-field', style: { marginTop: '12px', padding: '12px', background: 'var(--bg-subtle)', borderRadius: 'var(--radius-md)' } }, [
-      el('label', { class: 'form-label' }, ['نوع داده برای ستون‌های جدید']),
-      el('select', { class: 'select' },
-        Object.entries(COLUMN_TYPE_LABELS)
-          .filter(([k]) => [COLUMN_TYPES.TEXT, COLUMN_TYPES.NUMBER, COLUMN_TYPES.SELECT].includes(k))
-          .map(([k, v]) => el('option', { value: k, selected: k === COLUMN_TYPES.NUMBER }, [v]))
-      ),
-      el('p', { class: 'form-help' }, ['اگر قصد ثبت امتیاز دارید، «عدد» را انتخاب کنید.'])
+      el('p', { class: 'form-label', style: { marginBottom: '8px' } }, ['تنظیمات ستون‌های جدید:']),
+      colPropForm.node
     ]);
 
-    // Find best column for row names
     const personRefCol = columns.find(c => c.type === COLUMN_TYPES.PERSON_REF);
     const textCol = columns.find(c => c.type === COLUMN_TYPES.TEXT);
     const bestRowColId = personRefCol ? personRefCol.id : (textCol ? textCol.id : (columns[0]?.id || ''));
@@ -53,11 +49,6 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
         columns.map(c => el('option', { value: c.id, selected: c.id === bestRowColId }, [c.name + (c.type === COLUMN_TYPES.PERSON_REF ? ' (ارجاع به فرد)' : '')]))
       ),
       el('p', { class: 'form-help' }, ['نام فرد در این ستون قرار می‌گیرد.'])
-    ]);
-
-    // If no columns exist yet, we must create one
-    const noColumnsMsg = el('div', { class: 'form-help', style: { color: 'var(--warning-700)', display: hasColumns ? 'none' : 'block', marginTop: '8px' } }, [
-      'برای افزودن به عنوان ردیف، ابتدا باید حداقل یک ستون بسازید.'
     ]);
 
     radioCol.addEventListener('change', () => {
@@ -75,13 +66,11 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       }
     });
 
-    // Tagger for manual selection
     const tagger = createTagInput({ 
       people: peopleList, 
       placeholder: 'نام افراد را جستجو و انتخاب کنید...' 
     });
 
-    // Select All Toggle
     const selectAllCheckbox = el('input', { type: 'checkbox' });
     const selectAllToggle = el('label', { class: 'switch switch--label-start', style: { marginBottom: '12px' } }, [
       selectAllCheckbox,
@@ -101,21 +90,13 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       }
     });
 
-    // --- Form Layout ---
     const form = el('form', { class: 'form-grid' }, [
       el('div', { class: 'form-field' }, [
         el('label', { class: 'form-label' }, ['حالت افزودن']),
         el('div', { style: { display: 'flex', gap: '16px', marginTop: '8px', flexWrap: 'wrap' } }, [
-          el('label', { class: 'radio' }, [
-            radioCol, el('span', { class: 'radio__box' }),
-            el('span', {}, ['به عنوان ستون'])
-          ]),
-          el('label', { class: 'radio' }, [
-            radioRow, el('span', { class: 'radio__box' }),
-            el('span', { style: hasColumns ? {} : { opacity: 0.5 } }, ['به عنوان ردیف'])
-          ])
+          el('label', { class: 'radio' }, [radioCol, el('span', { class: 'radio__box' }), el('span', {}, ['به عنوان ستون'])]),
+          el('label', { class: 'radio' }, [radioRow, el('span', { class: 'radio__box' }), el('span', { style: hasColumns ? {} : { opacity: 0.5 } }, ['به عنوان ردیف'])])
         ]),
-        noColumnsMsg,
         colOptions,
         rowOptions
       ]),
@@ -126,25 +107,8 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       ]),
     ]);
 
-    const submitBtn = el(
-      'button',
-      { 
-        type: 'button', 
-        class: 'btn btn--primary',
-        on: { click: () => form.requestSubmit() }
-      },
-      ['افزودن به جدول']
-    );
-
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
+    const submitBtn = el('button', { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } }, ['افزودن به جدول']);
+    const cancelBtn = el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => { handle.close(); resolve(null); } } }, ['انصراف']);
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -164,7 +128,7 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       const result = {
         mode,
         people: targetPeople,
-        colType: mode === 'columns' ? colOptions.querySelector('select').value : null,
+        columnProps: mode === 'columns' ? colPropForm.getValue() : null,
         rowTargetColId: mode === 'rows' ? rowOptions.querySelector('select').value : null
       };
       
@@ -177,7 +141,7 @@ export function openBulkPeopleForm({ hasColumns = false, columns = [] } = {}) {
       subtitle: 'می‌توانید همه افراد یا تعدادی از آن‌ها را همزمان اضافه کنید.',
       body: form,
       footer: el('div', { style: { display: 'flex', gap: '8px' } }, [cancelBtn, submitBtn]),
-      size: 'md',
+      size: 'lg',
     });
   });
 }
