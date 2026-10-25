@@ -259,12 +259,14 @@ export default async function tablePage(info, outlet) {
       const toastId = toast.info(`در حال ویرایش ${formatNumber(ids.length)} ستون...`, { duration: 0 });
 
       try {
-        for (const id of ids) {
-          await tablesService.updateColumn(id, props);
-        }
+        await Promise.all(ids.map(id => tablesService.updateColumn(id, props)));
         toast.success(`تغییرات روی ${formatNumber(ids.length)} ستون اعمال شد.`);
         toastId.dismiss();
-        setTimeout(() => window.location.reload(), 500);
+        
+        // Live Update without page reload
+        columns = await tablesService.listColumns(table.id);
+        outlet.innerHTML = '';
+        outlet.appendChild(buildView());
       } catch (err) {
         toast.error(err?.message || 'خطا در ویرایش گروهی.');
         toastId.dismiss();
@@ -280,42 +282,50 @@ export default async function tablePage(info, outlet) {
 
       try {
         if (mode === 'columns') {
-          let currentPos = columns.length;
-          for (const person of selectedPeople) {
-            await tablesService.createColumn(table.id, {
+          const promises = selectedPeople.map((person, idx) => 
+            tablesService.createColumn(table.id, {
               ...columnProps,
               name: person.full_name,
-              position: currentPos++,
-            });
-          }
+              position: columns.length + idx,
+            })
+          );
+          await Promise.all(promises);
+          
           toast.success(`${formatNumber(selectedPeople.length)} ستون برای افراد ساخته شد.`);
           toastId.dismiss();
-          setTimeout(() => window.location.reload(), 500); 
+          
+          columns = await tablesService.listColumns(table.id);
+          outlet.innerHTML = '';
+          outlet.appendChild(buildView());
           
         } else if (mode === 'rows') {
+          let targetColId = rowTargetColId;
           if (columns.length === 0) {
-            await tablesService.createColumn(table.id, {
+            const newCol = await tablesService.createColumn(table.id, {
               name: 'نام فرد',
               type: COLUMN_TYPES.TEXT,
               position: 0
             });
-          }
-          
-          let targetColId = rowTargetColId;
-          if (!targetColId) {
-             const fallbackCol = columns[0];
-             targetColId = fallbackCol ? fallbackCol.id : null; 
+            targetColId = newCol.id;
+          } else if (!targetColId) {
+            targetColId = columns[0].id;
           }
 
           const isRef = columns.find(c => c.id === targetColId)?.type === COLUMN_TYPES.PERSON_REF;
 
-          for (const person of selectedPeople) {
+          const promises = selectedPeople.map(person => {
             const val = isRef ? person.id : person.full_name;
-            await tablesService.createRow(table.id, { [targetColId]: val });
-          }
+            return tablesService.createRow(table.id, { [targetColId]: val });
+          });
+          await Promise.all(promises);
+          
           toast.success(`${formatNumber(selectedPeople.length)} ردیف برای افراد ساخته شد.`);
           toastId.dismiss();
-          setTimeout(() => window.location.reload(), 500);
+          
+          columns = await tablesService.listColumns(table.id);
+          rowsData = await tablesService.listRows(table.id, { limit: 500 });
+          outlet.innerHTML = '';
+          outlet.appendChild(buildView());
         }
       } catch (err) {
         toast.error(err?.message || 'خطا در افزودن گروهی.');
