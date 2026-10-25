@@ -48,7 +48,7 @@
 .table-hero__meta-item svg { width: 12px; height: 12px; }
 .table-hero__actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-self: flex-start; }
 
-/* Grid wrapper — reuses .table + adds specific cell styles */
+/* Grid wrapper */
 .data-grid-wrap {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
@@ -84,6 +84,13 @@
   z-index: 2;
 }
 .data-grid thead th:hover { color: var(--text-primary); }
+
+/* Highlight user's column */
+.data-grid thead th.is-my-col {
+  background: color-mix(in srgb, var(--accent) 15%, var(--bg-subtle));
+  border-bottom: 2px solid var(--accent);
+  color: var(--accent);
+}
 
 .data-grid__col-head {
   display: inline-flex;
@@ -127,8 +134,19 @@
 .data-grid tbody tr.is-selected { background: var(--accent-soft); }
 .data-grid tbody tr:last-child td { border-block-end: 0; }
 
+/* Highlight user's row */
+.data-grid tbody tr.is-my-row {
+  background-color: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.data-grid tbody tr.is-my-row:hover {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.data-grid tbody tr.is-my-row td:first-child {
+  border-left: 3px solid var(--accent);
+}
+
 .data-grid__row-num {
-  width: 44px;
+  width: 50px; /* Slightly wider for badge */
   text-align: center;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
