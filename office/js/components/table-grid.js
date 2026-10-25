@@ -52,8 +52,9 @@ export function createTableGrid({
   people = [],
   canEdit = false,
   canEditRow = () => true,
-  userOwnedRowIds = new Set(), // New
-  userOwnedColumnIds = new Set(), // New
+  canEditCell = () => true, // Added for cell-level permissions
+  userOwnedRowIds = new Set(),
+  userOwnedColumnIds = new Set(),
   onEditRow,
   onInlineSave,
   onAddColumn,
@@ -105,9 +106,7 @@ export function createTableGrid({
       tbody.appendChild(el('tr', { class: 'data-grid__empty-row' }, [el('td', { colspan: String(columns.length + (canEdit ? 2 : 1)) }, ['ردیفی وجود ندارد.'])]));
     } else {
       rows.forEach((row, index) => {
-        const rowEditable = canEdit && canEditRow(row);
         const isMyRow = userOwnedRowIds.has(row.id);
-        
         const trClasses = [];
         if (isMyRow) trClasses.push('is-my-row');
 
@@ -124,9 +123,11 @@ export function createTableGrid({
 
         for (const col of columns) {
           const value = row.values?.[col.id];
+          const cellEditable = canEdit && canEditCell(row, col); // Use cell-specific permission
+          
           const cell = el('td', { class: 'data-grid__cell', dataset: { colId: col.id, rowId: row.id } }, [formatCellDisplay(col, value, { people })]);
 
-          if (rowEditable) {
+          if (cellEditable) {
             cell.addEventListener('click', () => startCellEdit(cell, row, col));
           } else {
             cell.style.cursor = 'default';
@@ -160,17 +161,18 @@ export function createTableGrid({
     if (cell.classList.contains('is-editing')) return;
 
     if (!isInlineEditable(col.type)) {
-      const values = await openRowEditor({ columns, values: row.values || {}, people });
-      if (!values) return;
+      const result = await openRowEditor({ columns, values: row.values || {}, people });
+      if (!result) return;
       try {
-        await onEditRow?.(row, values);
+        await onEditRow?.(row, result); // Pass the whole result object
         const tr = cell.closest('tr');
         if (tr) {
           const tds = tr.querySelectorAll('.data-grid__cell');
           columns.forEach((c, i) => {
-            if (tds[i]) {
-              tds[i].innerHTML = '';
-              tds[i].appendChild(formatCellDisplay(c, values[c.id], { people }));
+            const td = tds[i];
+            if (td) {
+              td.innerHTML = '';
+              td.appendChild(formatCellDisplay(c, result.values[c.id], { people })); // Use result.values here
             }
           });
         }
