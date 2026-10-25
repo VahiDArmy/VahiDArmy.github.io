@@ -1,0 +1,222 @@
+/* ==========================================================================
+   Page: Data Input
+   Table + statistics panel + toolbar stacking
+   ========================================================================== */
+
+#data-table-wrapper {
+  transition: opacity var(--transition-base);
+}
+
+#data-table-wrapper.is-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* When search finds nothing */
+.data-no-results {
+  padding: var(--space-10) var(--space-4);
+  text-align: center;
+  color: var(--fg-3);
+  font-size: var(--fs-sm);
+}
+.data-no-results strong {
+  color: var(--fg-2);
+}
+
+/* Row actions panel — appears when a row is selected */
+.row-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.row-actions-bar__info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.row-actions-bar__info strong {
+  color: var(--fg-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.row-actions-bar__buttons {
+  display: flex;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+/* ---------- Column header dropdown indicator ---------- */
+
+.col-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: var(--fw-bold);
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.col-type-badge--number {
+  background: var(--info-soft);
+  color: var(--info-text);
+}
+.col-type-badge--text {
+  background: var(--warning-soft);
+  color: var(--warning-text);
+}
+.col-type-badge--empty {
+  background: var(--bg-4);
+  color: var(--fg-4);
+}
+.col-type-badge--mixed {
+  background: var(--danger-soft);
+  color: var(--danger-text);
+}
+
+/* ---------- Statistics panel header ---------- */
+
+.statistics-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.statistics-panel__title {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.statistics-panel__title svg {
+  width: 15px;
+  height: 15px;
+  color: var(--accent-text);
+}
+
+.statistics-panel__tabs {
+  display: flex;
+  gap: var(--space-1);
+  background: var(--bg-2);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-1);
+  flex-wrap: wrap;
+}
+
+.stats-tab {
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  transition:
+    background var(--transition-base),
+    color var(--transition-base);
+  white-space: nowrap;
+}
+.stats-tab:hover {
+  color: var(--fg-1);
+}
+.stats-tab.is-active {
+  background: var(--bg-4);
+  color: var(--fg-1);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- Import drop zone ---------- */
+
+.drop-zone {
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-6);
+  text-align: center;
+  background: var(--bg-2);
+  transition:
+    border-color var(--transition-base),
+    background var(--transition-base);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+}
+.drop-zone:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.drop-zone.is-dragover {
+  border-color: var(--accent);
+  background: var(--accent-soft-2);
+  transform: scale(1.005);
+}
+.drop-zone__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.drop-zone__icon svg {
+  width: 24px;
+  height: 24px;
+}
+.drop-zone__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--fg-1);
+}
+.drop-zone__hint {
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+}
+
+/* ---------- Column visibility dropdown ---------- */
+
+.columns-dropdown {
+  background: var(--bg-3);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  box-shadow: var(--shadow-lg);
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.columns-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 5px var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  color: var(--fg-2);
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+.columns-dropdown__item:hover {
+  background: var(--bg-4);
+  color: var(--fg-1);
+}
