@@ -8,12 +8,14 @@ import { appStore } from '../core/store.js';
 import { ROUTES, COLUMN_TYPES } from '../config/constants.js';
 import { tablesService } from '../services/tables.service.js';
 import { peopleService } from '../services/people.service.js';
+import { profilesService } from '../services/profiles.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { createTableGrid } from '../components/table-grid.js';
 import { openColumnEditor } from '../components/column-editor.js';
 import { openRowEditor } from '../components/row-editor.js';
 import { openBulkPeopleForm } from '../components/table-bulk-people.js';
 import { openBulkEditColumns } from '../components/bulk-edit-columns.js';
+import { openTransferOwnership } from '../components/transfer-ownership.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { open as openModal } from '../ui/modal.js';
@@ -37,48 +39,49 @@ export default async function tablePage(info, outlet) {
   outlet.innerHTML = '';
   outlet.appendChild(buildLoading());
 
-  let table, columns, rowsData, people = [];
+  let table, columns, rowsData, people = [], profiles = [], myPersonId = null;
   try {
     table = await tablesService.getById(id);
     if (!table) {
       outlet.innerHTML = '';
-      outlet.appendChild(
-        el('div', { class: 'container' }, [
-          emptyState({
-            iconName: 'table',
-            title: 'جدول پیدا نشد',
-            description: 'این جدول وجود ندارد یا حذف شده است.',
-            actions: [
-              el('a', { class: 'btn btn--primary', href: router.href(ROUTES.TABLES) }, ['بازگشت']),
-            ],
-          }),
-        ])
-      );
+      outlet.appendChild(el('div', { class: 'container' }, [emptyState({ iconName: 'table', title: 'جدول پیدا نشد', actions: [el('a', { class: 'btn btn--primary', href: router.href(ROUTES.TABLES) }, ['بازگشت'])] })]));
       return () => {};
     }
     [columns, rowsData] = await Promise.all([
       tablesService.listColumns(id),
       tablesService.listRows(id, { limit: 500 }),
     ]);
-    if (columns.some((c) => c.type === 'person_ref')) {
-      const res = await peopleService.list({ limit: 300 });
+    
+    // Fetch context data needed for permissions
+    if (columns.some((c) => c.type === 'person_ref') || table.permission_type === 'row_owner') {
+      const res = await peopleService.list({ limit: 500 });
       people = res.items;
+      const myPerson = people.find(p => p.user_id === session.user.id);
+      if (myPerson) myPersonId = myPerson.id;
     }
+
+    const user = appStore.get('user');
+    const isOwner = user?.id === table.created_by;
+    const isAdmin = canEditContent();
+    
+    // Fetch profiles only if user can transfer ownership
+    if (isOwner || isAdmin) {
+      const profRes = await profilesService.list({ limit: 500 });
+      profiles = profRes.items;
+    }
+
   } catch (err) {
     outlet.innerHTML = '';
-    outlet.appendChild(
-      el('div', { class: 'container' }, [
-        emptyState({
-          iconName: 'alert-circle',
-          title: 'خطا در بارگذاری',
-          description: err?.message || 'این جدول بارگذاری نشد.',
-        }),
-      ])
-    );
+    outlet.appendChild(el('div', { class: 'container' }, [emptyState({ iconName: 'alert-circle', title: 'خطا در بارگذاری', description: err?.message })]));
     return () => {};
   }
 
-  const canEdit = canEditContent() || appStore.get('user')?.id === table.created_by;
+  const user = appStore.get('user');
+  const isOwner = user?.id === table.created_by;
+  const isAdmin = canEditContent();
+
+  // Determine overall table editing capability
+  const canEditTable = isAdmin || isOwner || table.permission_type === 'public';
 
   outlet.innerHTML = '';
   outlet.appendChild(buildView());
@@ -88,60 +91,16 @@ export default async function tablePage(info, outlet) {
   /* ================= build ================= */
 
   function buildView() {
-    const back = el(
-      'a',
-      { class: 'table-back', href: router.href(ROUTES.TABLES) },
-      [icon('chevron-right'), 'بازگشت به جدول‌ها']
-    );
+    const back = el('a', { class: 'table-back', href: router.href(ROUTES.TABLES) }, [icon('chevron-right'), 'بازگشت به جدول‌ها']);
 
     const actions = el('div', { class: 'table-hero__actions' }, [
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--primary btn--sm', on: { click: () => addRow() } },
-            [icon('plus'), 'افزودن ردیف']
-          )
-        : null,
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => addColumn() } },
-            [icon('grid'), 'افزودن ستون']
-          )
-        : null,
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkEditColumns() } },
-            [icon('edit'), 'ویرایش ستون‌ها']
-          )
-        : null,
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } },
-            [icon('users'), 'افزودن افراد']
-          )
-        : null,
-      el(
-        'button',
-        { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => exportCsv() } },
-        [icon('download'), 'CSV']
-      ),
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } },
-            [icon('settings'), 'تنظیمات']
-          )
-        : null,
-      canEdit
-        ? el(
-            'button',
-            { type: 'button', class: 'btn btn--danger btn--sm', on: { click: () => deleteTable() } },
-            [icon('trash'), 'حذف']
-          )
-        : null,
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--primary btn--sm', on: { click: () => addRow() } }, [icon('plus'), 'افزودن ردیف']) : null,
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => addColumn() } }, [icon('grid'), 'افزودن ستون']) : null,
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkEditColumns() } }, [icon('edit'), 'ویرایش ستون‌ها']) : null,
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } }, [icon('users'), 'افزودن افراد']) : null,
+      el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => exportCsv() } }, [icon('download'), 'CSV']),
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } }, [icon('settings'), 'تنظیمات']) : null,
+      canEditTable ? el('button', { type: 'button', class: 'btn btn--danger btn--sm', on: { click: () => deleteTable() } }, [icon('trash'), 'حذف']) : null,
     ].filter(Boolean));
 
     const hero = el('div', { class: 'table-hero' }, [
@@ -151,6 +110,7 @@ export default async function tablePage(info, outlet) {
         el('div', { class: 'table-hero__meta' }, [
           el('span', { class: 'table-hero__meta-item' }, [icon('grid'), `${formatNumber(columns.length)} ستون`]),
           el('span', { class: 'table-hero__meta-item' }, [icon('list'), `${formatNumber(rowsData.items.length)} ردیف`]),
+          el('span', { class: 'table-hero__meta-item' }, [icon('lock'), `سطح دسترسی: ${table.permission_type === 'public' ? 'عمومی' : table.permission_type === 'owner_only' ? 'فقط سازنده' : 'مالک سطر'}`]),
           table.updated_at ? el('span', { class: 'table-hero__meta-item' }, [icon('clock'), formatDate(table.updated_at)]) : null,
         ]),
       ]),
@@ -159,11 +119,25 @@ export default async function tablePage(info, outlet) {
 
     const searchInput = el('input', { type: 'search', class: 'input', placeholder: 'جستجو در ردیف‌ها...' });
 
+    // Logic to check if current user can edit a specific row
+    const checkCanEditRow = (row) => {
+      if (isAdmin) return true;
+      if (table.permission_type === 'public') return true;
+      if (table.permission_type === 'owner_only') return isOwner;
+      if (table.permission_type === 'row_owner') {
+        if (!myPersonId) return false;
+        // Check if user's person_id exists anywhere in this row's values
+        return Object.values(row.values || {}).some(v => v === myPersonId);
+      }
+      return false;
+    };
+
     const grid = createTableGrid({
       columns,
       rows: rowsData.items,
       people,
-      canEdit,
+      canEdit: canEditTable, // Give the grid the overall capability
+      canEditRow: checkCanEditRow, // Give it the row-specific check
       onEditRow: async (row, values) => {
         try {
           await tablesService.updateRow(row.id, values);
@@ -206,10 +180,7 @@ export default async function tablePage(info, outlet) {
     searchInput.addEventListener('input', () => applySearch(searchInput.value));
 
     const searchBar = el('div', { class: 'toolbar' }, [
-      el('div', { class: 'search toolbar__search' }, [
-        el('span', { class: 'search__icon' }, [icon('search')]),
-        searchInput,
-      ]),
+      el('div', { class: 'search toolbar__search' }, [el('span', { class: 'search__icon' }, [icon('search')]), searchInput]),
     ]);
 
     return el('div', { class: 'container' }, [
@@ -219,10 +190,7 @@ export default async function tablePage(info, outlet) {
     /* ================= actions ================= */
 
     async function addRow() {
-      if (!columns.length) {
-        toast.warning('ابتدا حداقل یک ستون اضافه کنید.');
-        return;
-      }
+      if (!columns.length) return toast.warning('ابتدا حداقل یک ستون اضافه کنید.');
       const values = await openRowEditor({ columns, values: {}, people });
       if (!values) return;
       try {
@@ -231,9 +199,7 @@ export default async function tablePage(info, outlet) {
         grid.refresh(columns, rowsData.items);
         searchInput.value = '';
         toast.success('ردیف اضافه شد.');
-      } catch (err) {
-        toast.error(err?.message || 'افزودن ناموفق بود.');
-      }
+      } catch (err) { toast.error(err?.message || 'افزودن ناموفق بود.'); }
     }
 
     async function addColumn() {
@@ -245,92 +211,46 @@ export default async function tablePage(info, outlet) {
         columns.push(created);
         grid.refresh(columns, rowsData.items);
         toast.success('ستون اضافه شد.');
-      } catch (err) {
-        toast.error(err?.message || 'افزودن ستون ناموفق بود.');
-      }
+      } catch (err) { toast.error(err?.message || 'افزودن ستون ناموفق بود.'); }
     }
 
     async function bulkEditColumns() {
       if (!columns.length) return;
       const result = await openBulkEditColumns({ columns });
       if (!result) return;
-
       const { ids, props } = result;
       const toastId = toast.info(`در حال ویرایش ${formatNumber(ids.length)} ستون...`, { duration: 0 });
-
       try {
         await Promise.all(ids.map(id => tablesService.updateColumn(id, props)));
         toast.success(`تغییرات روی ${formatNumber(ids.length)} ستون اعمال شد.`);
         toastId.dismiss();
-        
-        // Live Update without page reload
         columns = await tablesService.listColumns(table.id);
         outlet.innerHTML = '';
         outlet.appendChild(buildView());
-      } catch (err) {
-        toast.error(err?.message || 'خطا در ویرایش گروهی.');
-        toastId.dismiss();
-      }
+      } catch (err) { toast.error(err?.message || 'خطا در ویرایش گروهی.'); toastId.dismiss(); }
     }
 
     async function bulkAddPeople() {
       const result = await openBulkPeopleForm({ hasColumns: columns.length > 0, columns });
       if (!result) return;
-
       const { mode, people: selectedPeople, columnProps, rowTargetColId } = result;
       const toastId = toast.info(`در حال پردازش ${formatNumber(selectedPeople.length)} نفر...`, { duration: 0 });
-
       try {
         if (mode === 'columns') {
-          const promises = selectedPeople.map((person, idx) => 
-            tablesService.createColumn(table.id, {
-              ...columnProps,
-              name: person.full_name,
-              position: columns.length + idx,
-            })
-          );
-          await Promise.all(promises);
-          
+          await Promise.all(selectedPeople.map((person, idx) => tablesService.createColumn(table.id, { ...columnProps, name: person.full_name, position: columns.length + idx })));
           toast.success(`${formatNumber(selectedPeople.length)} ستون برای افراد ساخته شد.`);
-          toastId.dismiss();
-          
-          columns = await tablesService.listColumns(table.id);
-          outlet.innerHTML = '';
-          outlet.appendChild(buildView());
-          
-        } else if (mode === 'rows') {
-          let targetColId = rowTargetColId;
-          if (columns.length === 0) {
-            const newCol = await tablesService.createColumn(table.id, {
-              name: 'نام فرد',
-              type: COLUMN_TYPES.TEXT,
-              position: 0
-            });
-            targetColId = newCol.id;
-          } else if (!targetColId) {
-            targetColId = columns[0].id;
-          }
-
+        } else {
+          let targetColId = rowTargetColId || (columns.length === 0 ? (await tablesService.createColumn(table.id, { name: 'نام فرد', type: COLUMN_TYPES.TEXT, position: 0 })).id : columns[0].id);
           const isRef = columns.find(c => c.id === targetColId)?.type === COLUMN_TYPES.PERSON_REF;
-
-          const promises = selectedPeople.map(person => {
-            const val = isRef ? person.id : person.full_name;
-            return tablesService.createRow(table.id, { [targetColId]: val });
-          });
-          await Promise.all(promises);
-          
+          await Promise.all(selectedPeople.map(person => tablesService.createRow(table.id, { [targetColId]: isRef ? person.id : person.full_name })));
           toast.success(`${formatNumber(selectedPeople.length)} ردیف برای افراد ساخته شد.`);
-          toastId.dismiss();
-          
-          columns = await tablesService.listColumns(table.id);
-          rowsData = await tablesService.listRows(table.id, { limit: 500 });
-          outlet.innerHTML = '';
-          outlet.appendChild(buildView());
         }
-      } catch (err) {
-        toast.error(err?.message || 'خطا در افزودن گروهی.');
         toastId.dismiss();
-      }
+        columns = await tablesService.listColumns(table.id);
+        rowsData = await tablesService.listRows(table.id, { limit: 500 });
+        outlet.innerHTML = '';
+        outlet.appendChild(buildView());
+      } catch (err) { toast.error(err?.message || 'خطا در افزودن گروهی.'); toastId.dismiss(); }
     }
 
     function openColumnContext(e, col) {
@@ -350,9 +270,7 @@ export default async function tablePage(info, outlet) {
         if (idx !== -1) columns[idx] = updated;
         grid.refresh(columns, rowsData.items);
         toast.success('ستون به‌روز شد.');
-      } catch (err) {
-        toast.error(err?.message || 'ویرایش ناموفق بود.');
-      }
+      } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
     }
 
     async function deleteColumn(col) {
@@ -363,19 +281,20 @@ export default async function tablePage(info, outlet) {
         successMessage: 'ستون حذف شد.',
         onDeleted: () => {
           columns = columns.filter((c) => c.id !== col.id);
-          rowsData.items.forEach((r) => {
-            if (r.values && col.id in r.values) delete r.values[col.id];
-          });
+          rowsData.items.forEach((r) => { if (r.values && col.id in r.values) delete r.values[col.id]; });
           grid.refresh(columns, rowsData.items);
         },
       });
     }
 
     function openRowContext(e, row) {
-      openContextMenu(e.clientX, e.clientY, [
+      const isRowEditable = canEditTable && checkCanEditRow(row);
+      
+      const items = [
         {
           label: 'ویرایش ردیف',
           icon: 'edit',
+          disabled: !isRowEditable,
           onClick: async () => {
             const values = await openRowEditor({ columns, values: row.values || {}, people });
             if (!values) return;
@@ -384,9 +303,7 @@ export default async function tablePage(info, outlet) {
               row.values = values;
               grid.refresh(columns, rowsData.items);
               toast.success('ردیف به‌روز شد.');
-            } catch (err) {
-              toast.error(err?.message || 'ذخیره ناموفق بود.');
-            }
+            } catch (err) { toast.error(err?.message || 'ذخیره ناموفق بود.'); }
           },
         },
         {
@@ -398,9 +315,7 @@ export default async function tablePage(info, outlet) {
               rowsData.items.push(created);
               grid.refresh(columns, rowsData.items);
               toast.success('ردیف کپی شد.');
-            } catch (err) {
-              toast.error(err?.message || 'کپی ناموفق بود.');
-            }
+            } catch (err) { toast.error(err?.message || 'کپی ناموفق بود.'); }
           },
         },
         { divider: true },
@@ -408,8 +323,8 @@ export default async function tablePage(info, outlet) {
           label: 'حذف ردیف',
           icon: 'trash',
           danger: true,
-          onClick: () =>
-            confirmAndDelete({
+          disabled: !isRowEditable,
+          onClick: () => confirmAndDelete({
               title: 'حذف ردیف',
               message: 'این ردیف حذف شود؟',
               onConfirm: () => tablesService.removeRow(row.id),
@@ -420,7 +335,29 @@ export default async function tablePage(info, outlet) {
               },
             }),
         },
-      ]);
+      ];
+
+      // Add Transfer Ownership option if user is owner
+      if (isOwner || isAdmin) {
+        items.push({ divider: true });
+        items.push({
+          label: 'انتقال مالکیت جدول',
+          icon: 'users',
+          onClick: () => transferOwnershipAction(),
+        });
+      }
+
+      openContextMenu(e.clientX, e.clientY, items);
+    }
+
+    async function transferOwnershipAction() {
+      const newOwnerId = await openTransferOwnership({ table, profiles });
+      if (!newOwnerId) return;
+      try {
+        await tablesService.transferOwnership(table.id, newOwnerId);
+        toast.success('مالکیت جدول با موفقیت منتقل شد.');
+        window.location.reload();
+      } catch (err) { toast.error(err?.message || 'انتقال مالکیت ناموفق بود.'); }
     }
 
     async function editTable() {
@@ -429,12 +366,9 @@ export default async function tablePage(info, outlet) {
       try {
         const updated = await tablesService.update(table.id, values);
         Object.assign(table, updated);
-        toast.success('جدول به‌روز شد.');
-        const container = hero.closest('.container');
-        if (container) container.replaceWith(buildView());
-      } catch (err) {
-        toast.error(err?.message || 'ویرایش ناموفق بود.');
-      }
+        toast.success('تنظیمات جدول به‌روز شد.');
+        window.location.reload();
+      } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
     }
 
     async function deleteTable() {
@@ -448,10 +382,7 @@ export default async function tablePage(info, outlet) {
     }
 
     function exportCsv() {
-      if (!columns.length || !rowsData.items.length) {
-        toast.warning('داده‌ای برای خروجی وجود ندارد.');
-        return;
-      }
+      if (!columns.length || !rowsData.items.length) return toast.warning('داده‌ای برای خروجی وجود ندارد.');
       const headers = ['#', ...columns.map((c) => c.name)];
       const csvRows = rowsData.items.map((row, i) => [
         i + 1,
@@ -463,8 +394,7 @@ export default async function tablePage(info, outlet) {
           return v == null ? '' : String(v);
         }),
       ]);
-      const csvString = csv.rowsToCsv(headers, csvRows);
-      downloadCsv(`${table.slug || 'table'}.csv`, csvString);
+      downloadCsv(`${table.slug || 'table'}.csv`, csv.rowsToCsv(headers, csvRows));
       toast.success('فایل CSV دانلود شد.');
     }
   }
@@ -472,10 +402,7 @@ export default async function tablePage(info, outlet) {
 
 function buildLoading() {
   return el('div', { class: 'container' }, [
-    el('div', { class: 'page-loading' }, [
-      el('div', { class: 'skeleton skeleton--title' }),
-      el('div', { class: 'skeleton skeleton--block', style: { height: '200px' } }),
-    ]),
+    el('div', { class: 'page-loading' }, [el('div', { class: 'skeleton skeleton--title' }), el('div', { class: 'skeleton skeleton--block', style: { height: '200px' } })]),
   ]);
 }
 
@@ -485,11 +412,22 @@ function editTableDialog(table) {
     const descInput = el('textarea', { class: 'textarea', rows: 3, maxlength: 500 });
     descInput.value = table?.description || '';
     const slugInput = el('input', { type: 'text', class: 'input', dir: 'ltr', value: table?.slug || '' });
+    
+    const permSelect = el('select', { class: 'select' }, [
+      el('option', { value: 'public', selected: table?.permission_type === 'public' }, ['عمومی (همه کاربران می‌توانند ویرایش کنند)']),
+      el('option', { value: 'owner_only', selected: table?.permission_type === 'owner_only' }, ['فقط سازنده (فقط شما)']),
+      el('option', { value: 'row_owner', selected: table?.permission_type === 'row_owner' }, ['مالک سطر (فقط سطرهایی که نام شما در آن‌هاست)']),
+    ]);
 
     const form = el('form', { class: 'form-grid' }, [
       el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['نام']), nameInput]),
       el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['توضیحات']), descInput]),
       el('div', { class: 'form-field' }, [el('label', { class: 'form-label' }, ['شناسه (slug)']), slugInput]),
+      el('div', { class: 'form-field' }, [
+        el('label', { class: 'form-label' }, ['سطح دسترسی ویرایش']),
+        permSelect,
+        el('p', { class: 'form-help' }, ['تعیین کنید چه کسانی اجازه ویرایش داده‌های این جدول را دارند.'])
+      ]),
     ]);
 
     const submitBtn = el('button', { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } }, ['ذخیره']);
@@ -501,18 +439,16 @@ function editTableDialog(table) {
         name: nameInput.value.trim(),
         description: descInput.value.trim(),
         slug: slugInput.value.trim() || slugify(nameInput.value),
+        permission_type: permSelect.value,
       };
       const errors = validate(values, { name: [rules.required('نام الزامی است')] });
-      if (hasErrors(errors)) {
-        toast.error(Object.values(errors)[0]);
-        return;
-      }
+      if (hasErrors(errors)) return toast.error(Object.values(errors)[0]);
       handle.close();
       resolve(values);
     });
 
     const handle = openModal({
-      title: 'ویرایش جدول',
+      title: 'تنظیمات جدول',
       body: form,
       footer: el('div', { style: { display: 'flex', gap: '8px' } }, [cancelBtn, submitBtn]),
       size: 'md',
