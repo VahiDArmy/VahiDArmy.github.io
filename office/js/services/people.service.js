@@ -11,7 +11,8 @@ function guard(error) {
   if (error) throw Object.assign(new Error(friendlyError(error)), { cause: error });
 }
 
-const LIST_COLUMNS = 'id, full_name, slug, job_title, department, status, avatar_url, email, hire_date, tags, created_at, updated_at';
+// FIX: Added user_id to the list of fetched columns
+const LIST_COLUMNS = 'id, full_name, slug, job_title, department, status, avatar_url, email, hire_date, tags, user_id, created_at, updated_at';
 
 export const peopleService = {
   async list({ search = '', status = 'all', department = '', sort = 'full_name', direction = 'asc', limit = DEFAULT_PAGE_SIZE, offset = 0 } = {}) {
@@ -32,7 +33,6 @@ export const peopleService = {
     return data;
   },
 
-  // NEW METHOD: Check if current user is already linked to a person record
   async getByUserId(userId) {
     const { data, error } = await supabase.from(TABLES.PEOPLE).select('*').eq('user_id', userId).maybeSingle();
     guard(error);
@@ -94,20 +94,16 @@ export const peopleService = {
   async linkAccount(personId) {
     const session = await requireSession();
     
-    // 1. Link to the new person
     const { error: linkErr } = await supabase.from(TABLES.PEOPLE).update({ user_id: session.user.id, status: 'in_site' }).eq('id', personId);
     guard(linkErr);
 
-    // 2. Find the auto-created person record (the one currently attached to this user)
     const { data: currentRecords } = await supabase.from(TABLES.PEOPLE).select('id').eq('user_id', session.user.id).neq('id', personId);
     
-    // 3. Delete the auto-created record to avoid duplicates
     if (currentRecords && currentRecords.length > 0) {
       for (const rec of currentRecords) {
         await supabase.from(TABLES.PEOPLE).delete().eq('id', rec.id);
       }
     }
-    
     return true;
   },
 
