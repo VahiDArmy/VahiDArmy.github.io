@@ -1,6 +1,8 @@
 /* ==========================================================================
    Data Table — spreadsheet-style grid
-   Sticky headers · selection · resize handles · editing · drag rows
+   The TABLE container is LTR (Excel-style): columns flow A → B → C left to
+   right, row numbers stick to the left. All Persian UI text outside the
+   table (toolbars, labels) stays RTL via the parent context.
    ========================================================================== */
 
 .data-table-wrapper {
@@ -14,13 +16,17 @@
   position: relative;
 }
 
+/* LTR context for the data grid — matches Excel conventions.
+   Do NOT remove this: without it, column order becomes C, B, A (RTL). */
 .data-table-scroll {
+  direction: ltr;
   overflow: auto;
   max-height: calc(100vh - 340px);
   position: relative;
 }
 
 .data-table {
+  direction: ltr;
   width: max-content;
   min-width: 100%;
   border-collapse: separate;
@@ -64,6 +70,8 @@
   height: 36px;
   user-select: none;
   transition: background var(--transition-base);
+  /* Header text is usually Persian — let per-cell bidi handle it */
+  direction: rtl;
 }
 
 .data-table thead th[data-col-index] {
@@ -123,7 +131,7 @@
   color: var(--fg-1);
 }
 
-/* Column resize handle */
+/* Column resize handle — sits on the right edge of each column (LTR). */
 .col-resizer {
   position: absolute;
   top: 0;
@@ -158,7 +166,8 @@
   bottom: 0;
 }
 
-/* ---------- Row numbers (row header) ---------- */
+/* ---------- Row numbers (row header) ----------
+   Sticky to the LEFT edge of the table, matching Excel. */
 
 .data-table .row-number {
   position: sticky;
@@ -174,6 +183,7 @@
   padding: 0;
   cursor: pointer;
   user-select: none;
+  direction: ltr;
 }
 .data-table thead .row-number {
   z-index: 5;
@@ -242,6 +252,8 @@
   min-width: 80px;
   white-space: nowrap;
   direction: ltr;
+  unicode-bidi: plaintext; /* ensures mixed Persian/numbers stay coherent */
+  text-align: center;
   font-family: var(--font-mono);
   font-size: var(--fs-sm);
 }
@@ -281,9 +293,10 @@
   text-align: center;
   color: var(--fg-3);
   font-size: var(--fs-sm);
+  direction: rtl; /* empty message is Persian */
 }
 
-/* ---------- Toolbar ---------- */
+/* ---------- Toolbar (stays RTL — it's app chrome) ---------- */
 
 .data-toolbar {
   display: flex;
@@ -311,7 +324,7 @@
   width: 240px;
 }
 
-/* ---------- Selection info bar ---------- */
+/* ---------- Selection info bar (RTL — it's a Persian message) ---------- */
 
 .selection-bar {
   display: flex;
@@ -329,6 +342,7 @@
 
 .selection-bar__count {
   font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Responsive ---------- */
