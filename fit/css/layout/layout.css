@@ -1,0 +1,139 @@
+/* ==========================================================================
+   App Layout — RTL
+   Header (fixed top) · Tabs · Main (scroll) · Footer (fixed bottom)
+   ========================================================================== */
+
+.app {
+  display: grid;
+  grid-template-rows: var(--header-height) var(--tabs-height) 1fr var(--footer-height);
+  height: 100vh;
+  width: 100vw;
+  background:
+    radial-gradient(1200px 600px at 100% -10%, rgba(99, 102, 241, 0.08), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(6, 182, 212, 0.06), transparent 60%),
+    var(--bg-0);
+  color: var(--fg-1);
+  overflow: hidden;
+}
+
+/* ---------- Main scrollable area ---------- */
+.app-main {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-6) var(--space-6) var(--space-10);
+  position: relative;
+}
+
+.app-main > * {
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+}
+
+/* ---------- Tab panels ---------- */
+.tab-panel {
+  display: none;
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+.tab-panel.is-active {
+  display: block;
+}
+
+/* ---------- Page header (used inside each tab) ---------- */
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  flex-wrap: wrap;
+}
+
+.page-header__text {
+  min-width: 0;
+}
+
+.page-header__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- Footer / status bar ---------- */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-4);
+  background: var(--bg-1);
+  border-top: 1px solid var(--border-1);
+  font-size: var(--fs-xs);
+  color: var(--fg-3);
+  user-select: none;
+}
+
+.app-footer__left,
+.app-footer__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  transition: background var(--transition-base), box-shadow var(--transition-base);
+}
+
+.status-dot.is-saving {
+  background: var(--warning);
+  box-shadow: 0 0 8px var(--warning);
+  animation: pulse 1s var(--ease-in-out) infinite;
+}
+
+.status-dot.is-error {
+  background: var(--danger);
+  box-shadow: 0 0 8px var(--danger);
+}
+
+/* ---------- Generic flex helpers ---------- */
+.row   { display: flex; align-items: center; gap: var(--space-3); }
+.row--between { justify-content: space-between; }
+.row--start   { justify-content: flex-start; }
+.row--end     { justify-content: flex-end; }
+.col   { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* ---------- Spacer ---------- */
+.spacer { flex: 1 1 auto; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .app-main {
+    padding: var(--space-4) var(--space-4) var(--space-8);
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .page-header__actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --header-height: 56px;
+    --tabs-height: 48px;
+  }
+  .app-main {
+    padding: var(--space-3) var(--space-3) var(--space-6);
+  }
+  .page-title {
+    font-size: var(--fs-xl);
+  }
+}
