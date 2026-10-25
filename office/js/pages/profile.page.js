@@ -7,7 +7,7 @@ import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
 import { requireAuthOrRedirect } from '../components/auth-guard.js';
 import { profilesService } from '../services/profiles.service.js';
-import { peopleService } from '../services/people.service.js'; // Imported to check current person record
+import { peopleService } from '../services/people.service.js';
 import { openClaimAvatarModal } from '../components/claim-avatar.js';
 import { toast } from '../ui/toast.js';
 import { pageHeader } from '../components/page-header.js';
@@ -27,13 +27,10 @@ export default async function profilePage(info, outlet) {
   let profile = appStore.get('profile');
   if (!profile) profile = await profilesService.getById(user.id);
 
-  // Check if the user already has a linked person record
   let myPersonRecord = null;
   try {
     myPersonRecord = await peopleService.getByUserId(user.id);
-  } catch (e) {
-    // Ignore error, assume they don't have one
-  }
+  } catch (e) {}
 
   outlet.innerHTML = '';
   outlet.appendChild(buildView({ user, profile, hasPersonRecord: !!myPersonRecord }));
@@ -65,14 +62,14 @@ function buildView({ user, profile, hasPersonRecord }) {
 
   const form = buildEditForm({ user, profile });
 
-  // Subtle claim link (Only show if they DO NOT have a person record yet)
   const claimLink = !hasPersonRecord ? el('div', { style: { marginTop: 'var(--space-4)', textAlign: 'center' } }, [
     el('p', { class: 'form-help', style: { marginBottom: '8px' } }, ['آیا شما قبلاً توسط مدیر در لیست اداره ثبت شده‌اید؟']),
     el('button', {
       type: 'button',
       class: 'btn btn--link',
       style: { fontSize: 'var(--text-sm)' },
-      onClick: () => openClaimAvatarModal()
+      // FIX: Changed onClick to on: { click: ... }
+      on: { click: () => openClaimAvatarModal() }
     }, ['اتصال به پروفایل موجود'])
   ]) : null;
 
