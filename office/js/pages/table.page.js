@@ -1,18 +1,19 @@
 /**
  * Dynamic table detail page — column management, row CRUD, inline editing,
- * CSV export, search, right-click menus.
+ * CSV export, search, right-click menus, and bulk people addition.
  */
 
 import { el, icon } from '../utils/dom.js';
 import { router } from '../core/router.js';
 import { appStore } from '../core/store.js';
-import { ROUTES } from '../config/constants.js';
+import { ROUTES, COLUMN_TYPES } from '../config/constants.js';
 import { tablesService } from '../services/tables.service.js';
 import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { createTableGrid } from '../components/table-grid.js';
 import { openColumnEditor } from '../components/column-editor.js';
 import { openRowEditor } from '../components/row-editor.js';
+import { openBulkPeopleForm } from '../components/table-bulk-people.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openContextMenu } from '../ui/context-menu.js';
 import { open as openModal } from '../ui/modal.js';
@@ -118,6 +119,17 @@ export default async function tablePage(info, outlet) {
             [icon('grid'), 'افزودن ستون']
           )
         : null,
+      canEdit
+        ? el(
+            'button',
+            {
+              type: 'button',
+              class: 'btn btn--secondary btn--sm',
+              on: { click: () => bulkAddPeople() },
+            },
+            [icon('users'), 'افزودن افراد']
+          )
+        : null,
       el(
         'button',
         {
@@ -215,10 +227,8 @@ export default async function tablePage(info, outlet) {
       onRowContext: (e, row) => openRowContext(e, row),
     });
 
-    // Grid container
     const gridWrap = el('div', {}, [grid.node]);
 
-    // Search filters rows visually (not server-side, table has all rows loaded)
     const applySearch = debounce((query) => {
       const q = String(query || '').trim().toLowerCase();
       const filtered = !q
@@ -279,6 +289,55 @@ export default async function tablePage(info, outlet) {
         toast.success('ستون اضافه شد.');
       } catch (err) {
         toast.error(err?.message || 'افزودن ستون ناموفق بود.');
+      }
+    }
+
+    async function bulkAddPeople() {
+      const result = await openBulkPeopleForm({ hasColumns: columns.length > 0 });
+      if (!result) return;
+
+      const { mode, people: selectedPeople } = result;
+      const toastId = toast.info(`در حال افزودن ${formatNumber(selectedPeople.length)} فرد...`, { duration: 0 });
+
+      try {
+        if (mode === 'columns') {
+          let currentPos = columns.length;
+          for (const person of selectedPeople) {
+            await tablesService.createColumn(table.id, {
+              name: person.full_name,
+              type: COLUMN_TYPES.TEXT,
+              position: currentPos++,
+            });
+          }
+          toast.success(`${formatNumber(selectedPeople.length)} ستون اضافه شد.`);
+          toastId.dismiss();
+          // Reload page to refresh columns cleanly
+          window.location.reload(); 
+          
+        } else if (mode === 'rows') {
+          // Find best target column
+          let targetCol = columns.find(c => c.type === COLUMN_TYPES.PERSON_REF);
+          let isPersonRef = !!targetCol;
+          if (!targetCol) targetCol = columns.find(c => c.type === COLUMN_TYPES.TEXT);
+          if (!targetCol) targetCol = columns[0];
+
+          if (!targetCol) {
+            toast.error('ابتدا باید یک ستون ایجاد کنید.');
+            toastId.dismiss();
+            return;
+          }
+
+          for (const person of selectedPeople) {
+            const val = isPersonRef ? person.id : person.full_name;
+            await tablesService.createRow(table.id, { [targetCol.id]: val });
+          }
+          toast.success(`${formatNumber(selectedPeople.length)} ردیف اضافه شد.`);
+          toastId.dismiss();
+          window.location.reload();
+        }
+      } catch (err) {
+        toast.error(err?.message || 'خطا در افزودن گروهی.');
+        toastId.dismiss();
       }
     }
 
@@ -388,7 +447,6 @@ export default async function tablePage(info, outlet) {
         const updated = await tablesService.update(table.id, values);
         Object.assign(table, updated);
         toast.success('جدول به‌روز شد.');
-        // Rebuild
         const container = hero.closest('.container');
         if (container) container.replaceWith(buildView());
       } catch (err) {
@@ -459,17 +517,6 @@ function editTableDialog(table) {
       value: table?.slug || '',
     });
 
-    const submitBtn = el('button', { type: 'submit', class: 'btn btn--primary' }, ['ذخیره']);
-    const cancelBtn = el(
-      'button',
-      {
-        type: 'button',
-        class: 'btn btn--secondary',
-        on: { click: () => { handle.close(); resolve(null); } },
-      },
-      ['انصراف']
-    );
-
     const form = el('form', { class: 'form-grid' }, [
       el('div', { class: 'form-field' }, [
         el('label', { class: 'form-label' }, ['نام']),
@@ -484,6 +531,22 @@ function editTableDialog(table) {
         slugInput,
       ]),
     ]);
+
+    const submitBtn = el('button', { 
+      type: 'button', 
+      class: 'btn btn--primary',
+      on: { click: () => form.requestSubmit() }
+    }, ['ذخیره']);
+
+    const cancelBtn = el(
+      'button',
+      {
+        type: 'button',
+        class: 'btn btn--secondary',
+        on: { click: () => { handle.close(); resolve(null); } },
+      },
+      ['انصراف']
+    );
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
