@@ -15,6 +15,7 @@ import { createMentionTextarea } from '../components/mention-textarea.js';
 import { renderMentions } from '../utils/render-mentions.js';
 import { toast } from '../ui/toast.js';
 import { open as openModal } from '../ui/modal.js';
+import { validate, rules, hasErrors } from '../utils/validators.js';
 import { formatDate, initials, timeAgo } from '../utils/format.js';
 
 export default async function characterologyDetailPage(info, outlet) {
@@ -52,24 +53,31 @@ export default async function characterologyDetailPage(info, outlet) {
   const back = el('a', { class: 'btn btn--ghost btn--sm', href: router.href(ROUTES.CHARACTEROLOGY), style: { marginBottom: '16px' } }, [icon('chevron-right'), 'بازگشت به شخصیت شناسی']);
 
   // Scenario Hero
-  const heroActions = canEditScenario ? el('div', { style: { display: 'flex', gap: '8px', marginTop: '16px' } }, [
-    el('button', { type: 'button', class: 'btn btn--danger btn--sm', onClick: () => {
-      confirmAndDelete({
-        title: 'حذف سناریو',
-        message: `«${scenario.title}» و تمام پاسخ‌های آن حذف شوند؟`,
-        onConfirm: () => characterologyService.removeScenario(scenario.id),
-        successMessage: 'سناریو حذف شد.',
-        onDeleted: () => router.navigate(ROUTES.CHARACTEROLOGY, { replace: true })
-      });
-    }}, [icon('trash'), 'حذف سناریو'])
+  const heroActions = canEditScenario ? el('div', { style: { display: 'flex', gap: '8px', marginTop: '16px', flexWrap: 'wrap' } }, [
+    el('button', { 
+      type: 'button', 
+      class: 'btn btn--secondary btn--sm', 
+      on: { click: () => editScenarioAction() } 
+    }, [icon('edit'), 'ویرایش سناریو']),
+    el('button', { 
+      type: 'button', 
+      class: 'btn btn--danger btn--sm', 
+      on: { click: () => deleteScenarioAction() } 
+    }, [icon('trash'), 'حذف سناریو'])
   ]) : null;
 
   const hero = el('div', { class: 'scenario-hero' }, [
     el('h1', { class: 'scenario-hero__title' }, [scenario.title]),
     el('div', { class: 'scenario-hero__desc', html: renderMentions(scenario.description, peopleList) }),
     el('div', { class: 'scenario-hero__meta' }, [
-      el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [icon('user'), `سازنده: ${scenario.author?.display_name || 'کاربر'}`]),
-      el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [icon('clock'), formatDate(scenario.created_at, { withTime: true })])
+      el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [
+        icon('user', { style: { width: '14px', height: '14px' } }), 
+        `سازنده: ${scenario.author?.display_name || 'کاربر'}`
+      ]),
+      el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [
+        icon('clock', { style: { width: '14px', height: '14px' } }), 
+        formatDate(scenario.created_at, { withTime: true })
+      ])
     ]),
     heroActions
   ]);
@@ -83,25 +91,8 @@ export default async function characterologyDetailPage(info, outlet) {
       type: 'button',
       class: 'btn btn--sm',
       style: { marginInlineStart: 'auto', fontSize: '11px', height: '24px', padding: '0 8px' },
-      onClick: () => {
-        const editor = createMentionTextarea({ people: peopleList, rows: 3 });
-        editor.setValue(scenario.result || '');
-        
-        const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
-          try {
-            await characterologyService.updateScenario(scenario.id, { result: editor.getValue() });
-            toast.success('نتیجه به‌روز شد.');
-            window.location.reload();
-          } catch (e) { toast.error(e.message); }
-        }}, ['ذخیره']);
-        
-        openModal({
-          title: 'ثبت / ویرایش نتیجه',
-          body: el('div', { class: 'form-field' }, [editor.node]),
-          footer: saveBtn,
-          size: 'md',
-          initialFocus: editor.textareaNode
-        });
+      on: { 
+        click: () => editResultAction() 
       }
     }, [icon('edit'), 'ویرایش نتیجه']) : null;
 
@@ -191,17 +182,19 @@ export default async function characterologyDetailPage(info, outlet) {
         type: 'button',
         class: 'btn btn--ghost btn--icon btn--sm',
         style: { color: 'var(--danger-500)', marginInlineStart: 'auto' },
-        onClick: () => {
-          confirmAndDelete({
-            title: 'حذف پاسخ',
-            message: 'این پاسخ حذف شود؟',
-            onConfirm: () => characterologyService.removeAnswer(answer.id),
-            successMessage: 'پاسخ حذف شد.',
-            onDeleted: () => {
-              answers = answers.filter(a => a.id !== answer.id);
-              renderAnswers();
-            }
-          });
+        on: {
+          click: () => {
+            confirmAndDelete({
+              title: 'حذف پاسخ',
+              message: 'این پاسخ حذف شود؟',
+              onConfirm: () => characterologyService.removeAnswer(answer.id),
+              successMessage: 'پاسخ حذف شد.',
+              onDeleted: () => {
+                answers = answers.filter(a => a.id !== answer.id);
+                renderAnswers();
+              }
+            });
+          }
         }
       }, [icon('trash')]) : null;
 
@@ -243,4 +236,91 @@ export default async function characterologyDetailPage(info, outlet) {
 
   outlet.appendChild(finalLayout);
   return () => {};
+
+  /* ================= actions ================= */
+
+  function deleteScenarioAction() {
+    confirmAndDelete({
+      title: 'حذف سناریو',
+      message: `«${scenario.title}» و تمام پاسخ‌های آن حذف شوند؟`,
+      onConfirm: () => characterologyService.removeScenario(scenario.id),
+      successMessage: 'سناریو حذف شد.',
+      onDeleted: () => router.navigate(ROUTES.CHARACTEROLOGY, { replace: true })
+    });
+  }
+
+  function editScenarioAction() {
+    const titleInput = el('input', { type: 'text', class: 'input', value: scenario.title, maxlength: 150 });
+    const descEditor = createMentionTextarea({ people: peopleList, rows: 6 });
+    descEditor.setValue(scenario.description);
+
+    const form = el('form', { class: 'form-grid' }, [
+      el('div', { class: 'form-field' }, [
+        el('label', { class: 'form-label' }, ['عنوان']),
+        titleInput
+      ]),
+      el('div', { class: 'form-field' }, [
+        el('label', { class: 'form-label' }, ['شرح موقعیت']),
+        descEditor.node
+      ])
+    ]);
+
+    const submitBtn = el('button', { type: 'button', class: 'btn btn--primary', on: { click: () => form.requestSubmit() } }, ['ذخیره']);
+    const cancelBtn = el('button', { type: 'button', class: 'btn btn--secondary', on: { click: () => handle.close() } }, ['انصراف']);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      const description = descEditor.getValue().trim();
+      
+      const errors = validate({ title, description }, {
+        title: [rules.required('عنوان الزامی است')],
+        description: [rules.required('توضیحات الزامی است')]
+      });
+      
+      if (hasErrors(errors)) return toast.error(Object.values(errors)[0]);
+
+      submitBtn.classList.add('is-loading');
+      try {
+        await characterologyService.updateScenario(scenario.id, { title, description });
+        toast.success('سناریو ویرایش شد.');
+        handle.close();
+        window.location.reload();
+      } catch (err) {
+        toast.error(err?.message || 'خطا در ویرایش سناریو.');
+        submitBtn.classList.remove('is-loading');
+      }
+    });
+
+    const handle = openModal({
+      title: 'ویرایش سناریو',
+      body: form,
+      footer: el('div', { style: { display: 'flex', gap: '8px' } }, [cancelBtn, submitBtn]),
+      size: 'md',
+      initialFocus: titleInput
+    });
+  }
+
+  function editResultAction() {
+    const editor = createMentionTextarea({ people: peopleList, rows: 3 });
+    editor.setValue(scenario.result || '');
+    
+    const saveBtn = el('button', { type: 'button', class: 'btn btn--primary', on: {
+      click: async () => {
+        try {
+          await characterologyService.updateScenario(scenario.id, { result: editor.getValue() });
+          toast.success('نتیجه به‌روز شد.');
+          window.location.reload();
+        } catch (e) { toast.error(e.message); }
+      }
+    }}, ['ذخیره']);
+    
+    openModal({
+      title: 'ثبت / ویرایش نتیجه',
+      body: el('div', { class: 'form-field' }, [editor.node]),
+      footer: saveBtn,
+      size: 'md',
+      initialFocus: editor.textareaNode
+    });
+  }
 }
