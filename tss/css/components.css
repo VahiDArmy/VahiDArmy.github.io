@@ -77,7 +77,9 @@
   opacity: 0; transition: opacity .6s ease, --angle .15s linear; pointer-events: none;
 }
 .ayah-frame.is-comet-active::before { opacity: 1; }
-@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+/* inherits:true — ayah-render.js sets --angle on .ayah-frame, but the glow is drawn by its ::before;
+   with inherits:false the pseudo-element never received the value and the comet stayed at 0deg */
+@property --angle { syntax: '<angle>'; initial-value: 0deg; inherits: true; }
 
 .ayah-frame__inner { border-radius: calc(var(--radius-lg) - 2px); padding: 20px 18px 14px; }
 .ayah-frame__ref { position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }

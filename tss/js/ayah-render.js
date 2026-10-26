@@ -111,7 +111,6 @@ function ayahSkeleton(container) {
 (function initScrollComet() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  let angle = 0;
   let lastY = window.scrollY;
   let ticking = false;
   let fadeTimer = null;
@@ -123,10 +122,16 @@ function ayahSkeleton(container) {
       const y = window.scrollY;
       const delta = Math.abs(y - lastY);
       lastY = y;
-      angle = (angle + Math.min(delta * 1.6, 50)) % 360;
+      const step = Math.min(delta * 1.6, 50);
 
+      // The angle lives on each frame (not in one shared variable) and only ever grows:
+      //  · no "% 360": conic-gradient is periodic (370deg == 10deg), but a registered <angle>
+      //    transitions numerically, so wrapping 350 -> 20 made the glow spin backwards;
+      //  · a frame that was just rendered (every ayah change makes a new one) starts from its own
+      //    0deg instead of jumping to a huge shared total and spinning for a moment.
       document.querySelectorAll('.ayah-frame').forEach((el) => {
-        el.style.setProperty('--angle', angle + 'deg');
+        const current = parseFloat(el.style.getPropertyValue('--angle')) || 0;
+        el.style.setProperty('--angle', (current + step) + 'deg');
         el.classList.add('is-comet-active');
       });
 
