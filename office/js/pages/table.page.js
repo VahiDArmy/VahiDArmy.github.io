@@ -51,9 +51,10 @@ export default async function tablePage(info, outlet) {
     ]);
     
     if (columns.some((c) => c.type === 'person_ref') || table.permission_type !== 'public') {
-      const res = await peopleService.list({ limit: 500 });
+      const res = await peopleService.list({ limit: 1000 });
       people = res.items;
-      const myPerson = people.find(p => p.user_id === session.user.id);
+      // Fallback: find by user_id OR by email
+      const myPerson = people.find(p => p.user_id === session.user.id || (session.user.email && p.email === session.user.email));
       if (myPerson) myPersonId = myPerson.id;
     }
   } catch (err) {
@@ -69,7 +70,6 @@ export default async function tablePage(info, outlet) {
   const canEditStructure = isAdmin || isOwner;
   const canEditData = canEditStructure || table.permission_type === 'public';
 
-  // Calculate User's Owned Rows/Cols for UI Highlighting (Works for Admins too)
   const userOwnedRowIds = new Set();
   const userOwnedColumnIds = new Set();
 
