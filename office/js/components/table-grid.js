@@ -31,7 +31,6 @@ function formatCellDisplay(col, value, { people = [] } = {}) {
       const person = people.find((p) => p.id === value);
       if (!person) return el('span', { style: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' } }, ['—']);
       
-      // FIX: Changed from <a> to <div> to remove link behavior, but kept the color intact.
       return el('div', { 
         class: 'data-grid__person', 
         style: { color: 'var(--text-link)', cursor: 'default' } 
@@ -120,9 +119,9 @@ export function createTableGrid({
           dataset: { rowId: row.id }, 
           on: { contextmenu: (e) => { if (!canEdit) return; e.preventDefault(); onRowContext?.(e, row); } } 
         }, [
+          // FIX: Removed the "You" badge, keeping only the row number.
           el('td', { class: 'data-grid__row-num' }, [
-            formatNumber(index + 1),
-            isMyRow ? el('span', { class: 'badge badge--brand', style: { display: 'inline-block', fontSize: '8px', padding: '0 2px', marginRight: '4px' } }, ['شما']) : null
+            formatNumber(index + 1)
           ])
         ]);
 
