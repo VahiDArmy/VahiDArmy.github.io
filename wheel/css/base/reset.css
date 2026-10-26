@@ -14,6 +14,7 @@ html {
     font-size: 16px;
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
+    transition: background-color var(--transition-normal);
 }
 
 body {
@@ -28,6 +29,7 @@ body {
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 img,
@@ -74,7 +76,7 @@ table {
 }
 
 /* ============================================
-   پس‌زمینه ذرات (رفع باگ)
+   پس‌زمینه ذرات
    ============================================ */
 
 .particles-canvas {
@@ -87,10 +89,11 @@ table {
     height: 100vh;
     z-index: 0;
     pointer-events: none;
-    opacity: 0.6;
+    opacity: var(--particles-opacity);
+    transition: opacity var(--transition-normal);
 }
 
-/* اطمینان از اینکه محتوای اصلی روی ذرات قرار می‌گیرد */
+/* محتوای اصلی روی ذرات */
 .main-header,
 .main-content,
 .main-footer {
@@ -99,7 +102,7 @@ table {
 }
 
 /* ============================================
-   اسکرول‌بار سفارشی
+   اسکرول‌بار
    ============================================ */
 
 ::-webkit-scrollbar {
@@ -108,25 +111,32 @@ table {
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--color-bg-secondary);
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--color-bg-elevated);
+    background: var(--scrollbar-thumb);
     border-radius: var(--border-radius-full);
+    transition: background var(--transition-fast);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--color-accent-primary);
 }
 
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
 /* انتخاب متن */
 ::selection {
     background: var(--color-accent-primary);
-    color: var(--color-text-primary);
+    color: #ffffff;
 }
 
-/* حذف اوت‌لاین پیش‌فرض */
+/* اوت‌لاین */
 :focus {
     outline: none;
 }
