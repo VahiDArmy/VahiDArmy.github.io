@@ -1,5 +1,5 @@
 /**
- * Dynamic table detail page
+ * Dynamic table detail page — complete permissions logic
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -29,10 +29,7 @@ export default async function tablePage(info, outlet) {
   if (!session) return () => {};
 
   const id = info?.params?.id;
-  if (!id) {
-    router.navigate(ROUTES.TABLES, { replace: true });
-    return () => {};
-  }
+  if (!id) { router.navigate(ROUTES.TABLES, { replace: true }); return () => {}; }
 
   outlet.innerHTML = '';
   outlet.appendChild(buildLoading());
@@ -66,27 +63,24 @@ export default async function tablePage(info, outlet) {
   const isOwner = user?.id === table.created_by;
   const isAdmin = canEditContent();
 
-  const canEditStructure = isAdmin || isOwner;
-  const canEditData = canEditStructure || table.permission_type === 'public';
+  // 3 distinct permission levels
+  const canManageStructure = isAdmin || isOwner;  // Columns, table settings, delete
+  const isPublic = table.permission_type === 'public' || !table.permission_type;
+  const canAddRow = canManageStructure || isPublic;  // In private tables only owner adds rows
+  const canAddColumn = canManageStructure;
+  const canAddPeople = canManageStructure;
 
+  // Compute ownership sets for UI highlighting
   const userOwnedRowIds = new Set();
   const userOwnedColumnIds = new Set();
 
   if (myPersonId) {
     if (table.permission_type === 'private_column') {
       const ownerCol = columns.find(c => c.is_owner_determining);
-      if (ownerCol) {
-        rowsData.items.forEach(r => {
-          if (r.values?.[ownerCol.id] === myPersonId) userOwnedRowIds.add(r.id);
-        });
-      }
+      if (ownerCol) rowsData.items.forEach(r => { if (r.values?.[ownerCol.id] === myPersonId) userOwnedRowIds.add(r.id); });
     } else if (table.permission_type === 'private_row') {
       const ownerRow = rowsData.items.find(r => r.is_owner_determining);
-      if (ownerRow) {
-        columns.forEach(c => {
-          if (ownerRow.values?.[c.id] === myPersonId) userOwnedColumnIds.add(c.id);
-        });
-      }
+      if (ownerRow) columns.forEach(c => { if (ownerRow.values?.[c.id] === myPersonId) userOwnedColumnIds.add(c.id); });
     }
   }
 
@@ -95,24 +89,21 @@ export default async function tablePage(info, outlet) {
 
   return () => {};
 
-  /* ================= build ================= */
-
   function buildView() {
     const back = el('a', { class: 'table-back', href: router.href(ROUTES.TABLES) }, [icon('chevron-right'), 'بازگشت به جدول‌ها']);
 
     const actions = el('div', { class: 'table-hero__actions' }, [
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--primary btn--sm', on: { click: () => addRow() } }, [icon('plus'), 'افزودن ردیف']) : null,
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => addColumn() } }, [icon('grid'), 'افزودن ستون']) : null,
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkEditColumns() } }, [icon('edit'), 'ویرایش ستون‌ها']) : null,
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } }, [icon('users'), 'افزودن افراد']) : null,
+      canAddRow ? el('button', { type: 'button', class: 'btn btn--primary btn--sm', on: { click: () => addRow() } }, [icon('plus'), 'افزودن ردیف']) : null,
+      canAddColumn ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => addColumn() } }, [icon('grid'), 'افزودن ستون']) : null,
+      canAddColumn ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkEditColumns() } }, [icon('edit'), 'ویرایش ستون‌ها']) : null,
+      canAddPeople ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => bulkAddPeople() } }, [icon('users'), 'افزودن افراد']) : null,
       el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => exportCsv() } }, [icon('download'), 'CSV']),
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } }, [icon('settings'), 'تنظیمات']) : null,
-      canEditStructure ? el('button', { type: 'button', class: 'btn btn--danger btn--sm', on: { click: () => deleteTable() } }, [icon('trash'), 'حذف']) : null,
+      canManageStructure ? el('button', { type: 'button', class: 'btn btn--secondary btn--sm', on: { click: () => editTable() } }, [icon('settings'), 'تنظیمات']) : null,
+      canManageStructure ? el('button', { type: 'button', class: 'btn btn--danger btn--sm', on: { click: () => deleteTable() } }, [icon('trash'), 'حذف']) : null,
     ].filter(Boolean));
 
-    const permLabel = table.permission_type === 'public' ? 'عمومی' : table.permission_type === 'private_column' ? 'خصوصی (ردیف‌ها)' : 'خصوصی (ستون‌ها)';
+    const permLabel = isPublic ? 'عمومی' : table.permission_type === 'private_column' ? 'خصوصی (ردیف‌ها)' : 'خصوصی (ستون‌ها)';
     
-    // Warning if permissions are misconfigured
     let permWarning = null;
     if (table.permission_type === 'private_column' && !columns.some(c => c.is_owner_determining)) {
       permWarning = el('div', { class: 'badge badge--danger', style: { marginTop: '8px' } }, ['هشدار: ستون تعیین‌کننده مالک مشخص نشده است.']);
@@ -137,25 +128,25 @@ export default async function tablePage(info, outlet) {
 
     const searchInput = el('input', { type: 'search', class: 'input', placeholder: 'جستجو در ردیف‌ها...' });
 
+    // === ROW/CELL PERMISSION LOGIC ===
     const checkCanEditRow = (row) => {
-      if (isAdmin || isOwner) return true;
-      if (table.permission_type === 'public') return true;
-      if (!canEditData) return false;
-      
+      if (canManageStructure) return true;
+      if (isPublic) return true;
       if (table.permission_type === 'private_column') {
         if (!myPersonId) return false;
         const ownerCol = columns.find(c => c.is_owner_determining);
         return ownerCol && row.values?.[ownerCol.id] === myPersonId;
       }
-      return true; 
+      if (table.permission_type === 'private_row') return true;
+      return false;
     };
 
     const checkCanEditCell = (row, col) => {
       if (!checkCanEditRow(row)) return false;
+      if (canManageStructure) return true;
       if (table.permission_type === 'private_row') {
         const ownerRow = rowsData.items.find(r => r.is_owner_determining);
-        if (!ownerRow) return false;
-        if (!myPersonId) return false;
+        if (!ownerRow || !myPersonId) return false;
         return ownerRow.values?.[col.id] === myPersonId;
       }
       return true;
@@ -165,7 +156,7 @@ export default async function tablePage(info, outlet) {
       columns,
       rows: rowsData.items,
       people,
-      canEdit: canEditStructure || table.permission_type !== 'public',
+      canEdit: true, // Always true; checkCanEditRow/Cell does the real filtering
       canEditRow: checkCanEditRow, 
       canEditCell: checkCanEditCell,
       userOwnedRowIds,
@@ -190,10 +181,10 @@ export default async function tablePage(info, outlet) {
           throw err;
         }
       },
-      onAddRow: () => addRow(),
-      onAddColumn: () => addColumn(),
-      onColumnContext: (e, col) => canEditStructure ? openColumnContext(e, col) : toast.warning('دسترسی ندارید.'),
-      onRowContext: (e, row) => canEditStructure ? openRowContext(e, row) : toast.warning('دسترسی ندارید.'),
+      onAddRow: () => canAddRow ? addRow() : toast.warning('دسترسی ندارید.'),
+      onAddColumn: () => canAddColumn ? addColumn() : toast.warning('دسترسی ندارید.'),
+      onColumnContext: (e, col) => canManageStructure ? openColumnContext(e, col) : null,
+      onRowContext: (e, row) => openRowContext(e, row),
     });
 
     const gridWrap = el('div', {}, [grid.node]);
@@ -299,9 +290,7 @@ export default async function tablePage(info, outlet) {
       try {
         if (values.is_owner_determining) {
           const others = columns.filter(c => c.id !== col.id && c.is_owner_determining);
-          for (const other of others) {
-             await tablesService.updateColumn(other.id, { is_owner_determining: false });
-          }
+          for (const other of others) await tablesService.updateColumn(other.id, { is_owner_determining: false });
         }
         const updated = await tablesService.updateColumn(col.id, values);
         const idx = columns.findIndex((c) => c.id === col.id);
@@ -327,19 +316,21 @@ export default async function tablePage(info, outlet) {
     }
 
     function openRowContext(e, row) {
+      const canEditThisRow = checkCanEditRow(row);
+      const canDeleteThisRow = canManageStructure || canEditThisRow;
+
       openContextMenu(e.clientX, e.clientY, [
         {
           label: 'ویرایش ردیف',
           icon: 'edit',
+          disabled: !canEditThisRow,
           onClick: async () => {
             const result = await openRowEditor({ columns, values: row.values || {}, people, tablePermissionType: table.permission_type, isOwnerDetermining: row.is_owner_determining });
             if (!result) return;
             try {
               if (result.isOwnerDetermining) {
                 const others = rowsData.items.filter(r => r.id !== row.id && r.is_owner_determining);
-                for (const other of others) {
-                   await tablesService.updateRow(other.id, other.values, false);
-                }
+                for (const other of others) await tablesService.updateRow(other.id, other.values, false);
               }
               await tablesService.updateRow(row.id, result.values, result.isOwnerDetermining);
               row.values = result.values;
@@ -353,6 +344,7 @@ export default async function tablePage(info, outlet) {
         {
           label: 'کپی ردیف',
           icon: 'copy',
+          disabled: !canManageStructure,
           onClick: async () => {
             try {
               const created = await tablesService.createRow(table.id, { ...row.values }, false);
@@ -367,6 +359,7 @@ export default async function tablePage(info, outlet) {
           label: 'حذف ردیف',
           icon: 'trash',
           danger: true,
+          disabled: !canDeleteThisRow,
           onClick: () => confirmAndDelete({
               title: 'حذف ردیف',
               message: 'این ردیف حذف شود؟',
@@ -388,7 +381,7 @@ export default async function tablePage(info, outlet) {
         const updated = await tablesService.update(table.id, values);
         Object.assign(table, updated);
         toast.success('تنظیمات جدول به‌روز شد.');
-        window.location.reload(); 
+        window.location.reload();
       } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
     }
 
