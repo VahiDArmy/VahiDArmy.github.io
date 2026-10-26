@@ -12,6 +12,7 @@ import { relatedSection } from '../components/related-section.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { openPersonForm } from '../components/person-form.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
+import { renderMentions } from '../utils/render-mentions.js';
 import { formatDate, initials } from '../utils/format.js';
 
 function statusBadgeClass(status) {
@@ -38,6 +39,7 @@ export default async function personPage(info, outlet) {
 
   let person;
   let related = { theories: [], stories: [], projects: [], tellalls: [], links: [] };
+  let allPeople = [];
   
   try {
     person = await peopleService.getById(id);
@@ -47,12 +49,15 @@ export default async function personPage(info, outlet) {
       return () => {};
     }
 
-    const [relData, tellallsData] = await Promise.all([
+    const [relData, tellallsData, peopleRes] = await Promise.all([
       peopleService.related(id),
-      tellallsService.getByPersonId(id).catch(() => [])
+      tellallsService.getByPersonId(id).catch(() => []),
+      peopleService.list({ limit: 500 }) // Fetch all people to render mentions in bio
     ]);
     
     related = { ...relData, tellalls: tellallsData };
+    allPeople = peopleRes.items;
+
   } catch (err) {
     outlet.innerHTML = '';
     outlet.appendChild(
@@ -61,7 +66,13 @@ export default async function personPage(info, outlet) {
           iconName: 'alert-circle',
           title: 'خطا در بارگذاری',
           description: err?.message || 'این فرد یافت نشد.',
-          actions: [el('a', { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) }, ['بازگشت به فهرست افراد'])],
+          actions: [
+            el(
+              'a',
+              { class: 'btn btn--primary', href: router.href(ROUTES.PEOPLE) },
+              ['بازگشت به فهرست افراد']
+            ),
+          ],
         }),
       ])
     );
@@ -69,7 +80,7 @@ export default async function personPage(info, outlet) {
   }
 
   outlet.innerHTML = '';
-  outlet.appendChild(buildView(person, related));
+  outlet.appendChild(buildView(person, related, allPeople));
   return () => {};
 }
 
@@ -94,7 +105,7 @@ function buildNotFound() {
   ]);
 }
 
-function buildView(person, related) {
+function buildView(person, related, allPeople) {
   const avatarInner = person.avatar_url
     ? el('img', { src: person.avatar_url, alt: person.full_name || '', loading: 'lazy' })
     : el('span', {}, [initials(person.full_name || '')]);
@@ -111,7 +122,6 @@ function buildView(person, related) {
             on: { click: async () => {
               const updated = await openPersonForm({ person });
               if (updated) {
-                // Reload the page to reflect changes
                 const currentPath = router.getCurrent()?.path || '';
                 router.navigate(currentPath, { replace: true });
               }
@@ -142,6 +152,8 @@ function buildView(person, related) {
       : null,
   ].filter(Boolean));
 
+  const bioHtml = person.bio ? renderMentions(person.bio, allPeople) : null;
+
   const hero = el('div', { class: 'person-hero' }, [
     el('div', { class: 'person-hero__avatar' }, [el('span', { class: 'avatar avatar--2xl' }, [avatarInner])]),
     el('div', { class: 'person-hero__main' }, [
@@ -159,7 +171,7 @@ function buildView(person, related) {
         person.status ? el('span', { class: `badge ${statusBadgeClass(person.status)}` }, [PEOPLE_STATUS_LABELS[person.status] || person.status]) : null,
         ...(person.tags || []).map((t) => el('span', { class: 'chip chip--brand' }, [t])),
       ]),
-      person.bio ? el('p', { class: 'person-hero__bio' }, [person.bio]) : null,
+      bioHtml ? el('p', { class: 'person-hero__bio', html: bioHtml }) : null,
     ]),
   ]);
 
