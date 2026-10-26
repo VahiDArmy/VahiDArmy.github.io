@@ -49,6 +49,17 @@
   border-block-start: 1px solid var(--border-subtle);
 }
 
+/* Fix for Meta Icons */
+.scenario-hero__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.scenario-hero__meta-item .icon {
+  width: 14px;
+  height: 14px;
+}
+
 /* Result Box */
 .scenario-result-box {
   background: var(--success-50);
@@ -67,7 +78,10 @@
   gap: var(--space-2);
   margin-bottom: var(--space-2);
 }
-.scenario-result-box__title svg { width: 18px; height: 18px; }
+.scenario-result-box__title .icon {
+  width: 18px;
+  height: 18px;
+}
 .scenario-result-box__content {
   font-size: var(--text-sm);
   color: var(--text-primary);
@@ -90,6 +104,10 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+}
+.answer-form-card__title .icon {
+  width: 18px;
+  height: 18px;
 }
 
 /* Answers List */
