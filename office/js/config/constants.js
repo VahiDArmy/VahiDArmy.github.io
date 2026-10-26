@@ -1,5 +1,5 @@
 /**
- * Global constants — the entire app should pull magic strings from here.
+ * Global constants
  */
 
 export const APP_NAME = 'The Office';
@@ -11,13 +11,14 @@ export const ROUTES = Object.freeze({
   PEOPLE: '/people',
   PERSON: (id = ':id') => `/people/${id}`,
   
-  // مسیرهای نظریه‌ها
   THEORIES: '/theories',
   THEORY: (id = ':id') => `/theories/${id}`,
 
-  // مسیرهای بگایی‌ها
   TELLALLS: '/tellalls',
   TELLALL: (id = ':id') => `/tellalls/${id}`,
+
+  CHARACTEROLOGY: '/characterology',
+  CHARACTEROLOGY_DETAIL: (id = ':id') => `/characterology/${id}`,
   
   RANKINGS: '/rankings',
   RANKING: (id = ':id') => `/rankings/${id}`,
@@ -33,14 +34,14 @@ export const ROUTES = Object.freeze({
   NOT_FOUND: '/404',
 });
 
-// هر دو سیستم در منو قرار می‌گیرند
 export const NAV_ITEMS = Object.freeze([
-  { key: 'home',     label: 'خانه',      href: ROUTES.HOME,     icon: 'home' },
-  { key: 'people',   label: 'افراد',     href: ROUTES.PEOPLE,   icon: 'users' },
-  { key: 'theories', label: 'نظریه‌ها',   href: ROUTES.THEORIES, icon: 'lightbulb' },
-  { key: 'tellalls', label: 'بگایی‌ها',   href: ROUTES.TELLALLS, icon: 'message' },
-  { key: 'rankings', label: 'رتبه‌بندی', href: ROUTES.RANKINGS, icon: 'trophy' },
-  { key: 'tables',   label: 'جدول‌ها',   href: ROUTES.TABLES,   icon: 'table' },
+  { key: 'home',           label: 'خانه',        href: ROUTES.HOME,           icon: 'home' },
+  { key: 'people',         label: 'افراد',       href: ROUTES.PEOPLE,         icon: 'users' },
+  { key: 'theories',       label: 'نظریه‌ها',     href: ROUTES.THEORIES,       icon: 'lightbulb' },
+  { key: 'tellalls',       label: 'بگایی‌ها',     href: ROUTES.TELLALLS,       icon: 'message' },
+  { key: 'characterology', label: 'شخصیت شناسی', href: ROUTES.CHARACTEROLOGY, icon: 'user' },
+  { key: 'rankings',       label: 'رتبه‌بندی',   href: ROUTES.RANKINGS,       icon: 'trophy' },
+  { key: 'tables',         label: 'جدول‌ها',     href: ROUTES.TABLES,         icon: 'table' },
 ]);
 
 export const THEMES = Object.freeze({ LIGHT: 'light', DARK: 'dark' });
