@@ -1,5 +1,6 @@
 /**
  * راه‌انداز اصلی برنامه
+ * ⚠️ ترتیب مهم است: Theme قبل از SQLStorage.init()
  * @module app
  */
 
@@ -7,6 +8,19 @@ const App = {
     async init() {
         console.log('🚀 راه‌اندازی چرخ فلک...');
 
+        // ═══════════════════════════════════════
+        // فاز ۰: تم (فوری از LocalStorage - بدون انتظار)
+        // ═══════════════════════════════════════
+        try {
+            Theme.init();
+            console.log('✅ تم اعمال شد:', Theme.current);
+        } catch (e) {
+            console.error('❌ خطا در راه‌اندازی تم:', e);
+        }
+
+        // ═══════════════════════════════════════
+        // فاز ۱: UI پایه
+        // ═══════════════════════════════════════
         try {
             Notification.init();
             Confetti.init();
@@ -15,15 +29,29 @@ const App = {
             console.error('خطا در راه‌اندازی UI پایه:', e);
         }
 
-        try { Theme.init(); } catch (e) { console.error('خطا در تم:', e); }
-        try { Events.init(); } catch (e) { console.error('خطا در رویدادها:', e); }
+        // ═══════════════════════════════════════
+        // فاز ۲: رویدادها (دکمه‌ها)
+        // ═══════════════════════════════════════
+        try {
+            Events.init();
+        } catch (e) {
+            console.error('خطا در راه‌اندازی رویدادها:', e);
+        }
 
+        // ═══════════════════════════════════════
+        // فاز ۳: ذرات پس‌زمینه
+        // ═══════════════════════════════════════
         try {
             if (AppState.get('settings.particlesEnabled') !== false) {
                 Particles.init('particles-canvas');
             }
-        } catch (e) { console.error('خطا در ذرات:', e); }
+        } catch (e) {
+            console.error('خطا در ذرات:', e);
+        }
 
+        // ═══════════════════════════════════════
+        // فاز ۴: دیتابیس SQLite (async - کند)
+        // ═══════════════════════════════════════
         try {
             console.log('📦 در حال راه‌اندازی دیتابیس SQLite...');
             await SQLStorage.init();
@@ -31,31 +59,49 @@ const App = {
             console.log('✅ دیتابیس آماده است');
         } catch (e) {
             console.error('❌ خطا در راه‌اندازی دیتابیس:', e);
-            Notification.warning('دیتابیس در دسترس نیست. صفحه را رفرش کنید.', 8000);
+            Notification.warning(
+                'دیتابیس در دسترس نیست. صفحه را رفرش کنید.',
+                8000
+            );
         }
 
-        try { Router.init(); } catch (e) { console.error('خطا در روتر:', e); }
+        // ═══════════════════════════════════════
+        // فاز ۵: مسیریابی
+        // ═══════════════════════════════════════
+        try {
+            Router.init();
+        } catch (e) {
+            console.error('خطا در روتر:', e);
+        }
 
+        // ═══════════════════════════════════════
+        // فاز ۶: گردونه
+        // ═══════════════════════════════════════
         try {
             if (document.getElementById('wheel-canvas')) {
                 WheelCore.init('wheel-canvas');
                 WheelCore.setItems(People.getInWheel());
 
-                // ⚡ بازیابی زاویه چرخش
                 const savedRotation = AppState.get('wheel.rotation');
                 if (typeof savedRotation === 'number' && savedRotation !== 0) {
                     WheelCore.rotation = savedRotation;
                     WheelCore.render();
-                    console.log('🔄 زاویه گردونه بازیابی شد:', savedRotation);
                 }
             }
-        } catch (e) { console.error('خطا در گردونه:', e); }
+        } catch (e) {
+            console.error('خطا در گردونه:', e);
+        }
 
+        // ═══════════════════════════════════════
+        // فاز ۷: همگام‌سازی خودکار
+        // ═══════════════════════════════════════
         try {
             if (AppState.get('settings.autoSync') && GitHubStorage.isConfigured()) {
                 Sync.startAutoSync();
             }
-        } catch (e) { console.error('خطا در همگام‌سازی خودکار:', e); }
+        } catch (e) {
+            console.error('خطا در همگام‌سازی خودکار:', e);
+        }
 
         console.log('✅ چرخ فلک آماده است');
     },
@@ -138,11 +184,24 @@ const App = {
             const merged = Utils.deepMerge(AppState.get('settings'), settings);
             AppState.set('settings', merged);
             console.log('📥 تنظیمات بارگذاری شد:', Object.keys(settings).join(', '));
+
+            // ═══════════════════════════════════════════
+            // 🔑 حل باگ اصلی: همگام‌سازی تم بعد از SQLite
+            // ═══════════════════════════════════════════
+            // اگر تم ذخیره‌شده در SQLite با تم فعلی (از LocalStorage) فرق داشت،
+            // یعنی کاربر روی دستگاه دیگری تم را عوض کرده - پس اعمال کن
+            if (merged.theme && Theme.current !== merged.theme) {
+                console.log(
+                    `🎨 سینک تم از دیتابیس: ${Theme.current} → ${merged.theme}`
+                );
+                // saveToDb = false چون در حال حاضر در DB هست
+                Theme.apply(merged.theme, false);
+            }
         }
 
-        // ═══════════════════════════════════════
-        // ⚡ بازیابی وضعیت گردونه (session)
-        // ═══════════════════════════════════════
+        // ═══════════════════════════════════════════
+        // بازیابی وضعیت گردونه (session)
+        // ═══════════════════════════════════════════
         try {
             const wheelState = SQLStorage.getSetting('wheel_state');
 
@@ -159,14 +218,6 @@ const App = {
                 if (typeof wheelState.rotation === 'number') {
                     AppState.set('wheel.rotation', wheelState.rotation);
                 }
-
-                console.log('🔄 وضعیت گردونه بازیابی شد:', {
-                    mode: wheelState.currentMode,
-                    hasLastResult: !!wheelState.lastResult,
-                    hasSetup: !!wheelState.setup,
-                    hasItems: !!(wheelState.setup && wheelState.setup.items && wheelState.setup.items.length),
-                    rotation: wheelState.rotation,
-                });
             }
         } catch (e) {
             console.error('خطا در بازیابی وضعیت گردونه:', e);
