@@ -11,11 +11,14 @@ function guard(error) {
 }
 
 export const tablesService = {
-  async list({ search = '', limit = 50, offset = 0 } = {}) {
+  async list({ search = '', limit = 50, offset = 0, ownerId = null } = {}) {
     let q = supabase
       .from(TABLES.DATA_TABLES)
       .select('id, name, slug, description, columns_count, rows_count, created_by, created_at, updated_at, permission_type', { count: 'exact' });
+    
     if (search) q = q.ilike('name', `%${search}%`);
+    if (ownerId) q = q.eq('created_by', ownerId); // Filter by owner
+
     q = q.order('updated_at', { ascending: false }).range(offset, offset + limit - 1);
     const { data, error, count } = await q;
     guard(error);
