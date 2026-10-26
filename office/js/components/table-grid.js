@@ -30,7 +30,12 @@ function formatCellDisplay(col, value, { people = [] } = {}) {
     case COLUMN_TYPES.PERSON_REF: {
       const person = people.find((p) => p.id === value);
       if (!person) return el('span', { style: { color: 'var(--text-tertiary)', fontSize: 'var(--text-xs)' } }, ['—']);
-      return el('a', { class: 'data-grid__person', href: router.href(ROUTES.PERSON(person.id)), on: { click: (e) => e.stopPropagation() } }, [
+      
+      // FIX: Changed from <a> to <div> to remove link behavior, but kept the color intact.
+      return el('div', { 
+        class: 'data-grid__person', 
+        style: { color: 'var(--text-link)', cursor: 'default' } 
+      }, [
         el('span', { class: 'avatar' }, [person.avatar_url ? el('img', { src: person.avatar_url, alt: person.full_name }) : initials(person.full_name || '')]),
         el('span', {}, [truncateText(person.full_name || '', 24)]),
       ]);
@@ -52,7 +57,7 @@ export function createTableGrid({
   people = [],
   canEdit = false,
   canEditRow = () => true,
-  canEditCell = () => true, // Added for cell-level permissions
+  canEditCell = () => true,
   userOwnedRowIds = new Set(),
   userOwnedColumnIds = new Set(),
   onEditRow,
@@ -117,13 +122,13 @@ export function createTableGrid({
         }, [
           el('td', { class: 'data-grid__row-num' }, [
             formatNumber(index + 1),
-            isMyRow ? el('span', { class: 'badge badge--brand', style: { display: 'block', fontSize: '8px', padding: '0 2px', marginTop: '2px' } }, ['شما']) : null
+            isMyRow ? el('span', { class: 'badge badge--brand', style: { display: 'inline-block', fontSize: '8px', padding: '0 2px', marginRight: '4px' } }, ['شما']) : null
           ])
         ]);
 
         for (const col of columns) {
           const value = row.values?.[col.id];
-          const cellEditable = canEdit && canEditCell(row, col); // Use cell-specific permission
+          const cellEditable = canEdit && canEditCell(row, col);
           
           const cell = el('td', { class: 'data-grid__cell', dataset: { colId: col.id, rowId: row.id } }, [formatCellDisplay(col, value, { people })]);
 
@@ -164,7 +169,7 @@ export function createTableGrid({
       const result = await openRowEditor({ columns, values: row.values || {}, people });
       if (!result) return;
       try {
-        await onEditRow?.(row, result); // Pass the whole result object
+        await onEditRow?.(row, result);
         const tr = cell.closest('tr');
         if (tr) {
           const tds = tr.querySelectorAll('.data-grid__cell');
@@ -172,7 +177,7 @@ export function createTableGrid({
             const td = tds[i];
             if (td) {
               td.innerHTML = '';
-              td.appendChild(formatCellDisplay(c, result.values[c.id], { people })); // Use result.values here
+              td.appendChild(formatCellDisplay(c, result.values[c.id], { people }));
             }
           });
         }
