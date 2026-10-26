@@ -1,15 +1,33 @@
 /**
- * مدیریت تم
+ * مدیریت تم - ۵ تم
+ * - dark, darker, purple, ocean, light
+ * - اعمال همزمان روی html[data-theme] و body.theme-X
+ * - تنظیم color-scheme برای کنترل‌های بومی
  * @module theme
  */
 
 const Theme = {
-    themes: ['dark', 'darker', 'purple', 'ocean'],
+    themes: ['dark', 'darker', 'purple', 'ocean', 'light'],
     current: 'dark',
+
+    NAMES: {
+        dark: 'تاریک',
+        darker: 'تاریک عمیق',
+        purple: 'بنفش',
+        ocean: 'اقیانوس',
+        light: 'روشن',
+    },
+
+    ICONS: {
+        dark: '🌙',
+        darker: '🌑',
+        purple: '🔮',
+        ocean: '🌊',
+        light: '☀️',
+    },
 
     init() {
         let saved = 'dark';
-        
         try {
             if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
                 saved = SQLStorage.getSetting('theme') || AppState.get('settings.theme') || 'dark';
@@ -19,47 +37,64 @@ const Theme = {
         } catch (e) {
             saved = 'dark';
         }
-        
         this.apply(saved, false);
     },
 
     apply(themeName, saveToDb = true) {
+        // اعتبارسنجی
         if (!this.themes.includes(themeName)) {
             themeName = 'dark';
         }
 
-        document.body.classList.remove(...this.themes.map((t) => `theme-${t}`));
-        document.body.classList.add(`theme-${themeName}`);
-        document.documentElement.setAttribute('data-theme', themeName);
+        const root = document.documentElement;
+        const body = document.body;
 
+        // حذف همه‌ی کلاس‌های تم از body
+        this.themes.forEach((t) => {
+            body.classList.remove(`theme-${t}`);
+        });
+
+        // اعمال تم جدید
+        body.classList.add(`theme-${themeName}`);
+        root.setAttribute('data-theme', themeName);
+
+        // تنظیم color-scheme برای کنترل‌های بومی (input, select, scrollbar)
+        if (themeName === 'light') {
+            root.style.colorScheme = 'light';
+        } else {
+            root.style.colorScheme = 'dark';
+        }
+
+        // به‌روزرسانی state
         this.current = themeName;
         AppState.set('settings.theme', themeName);
 
+        // ذخیره در دیتابیس
         if (saveToDb) {
             try {
                 if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
                     SQLStorage.setSetting('theme', themeName);
                 }
-            } catch (e) {
-                // نادیده بگیر
-            }
+            } catch (e) {}
         }
 
         this._updateIcon();
+
+        // اجبار به re-render canvas (wheel) برای اعمال رنگ‌های جدید
+        if (window.WheelCore && typeof WheelCore.render === 'function') {
+            setTimeout(() => {
+                try { WheelCore.render(); } catch (e) {}
+            }, 50);
+        }
     },
 
     toggle() {
-        const currentIndex = this.themes.indexOf(this.current);
-        const nextIndex = (currentIndex + 1) % this.themes.length;
-        const nextTheme = this.themes[nextIndex];
-        
-        this.apply(nextTheme);
-        
-        try {
-            if (typeof Notification !== 'undefined') {
-                Notification.info(`تم: ${this._getThemeName(nextTheme)}`);
-            }
-        } catch (e) {}
+        const idx = this.themes.indexOf(this.current);
+        const next = this.themes[(idx + 1) % this.themes.length];
+        this.apply(next);
+        if (typeof Notification !== 'undefined') {
+            Notification.info(`تم: ${this.NAMES[next] || next}`);
+        }
     },
 
     set(themeName) {
@@ -71,19 +106,8 @@ const Theme = {
         if (!btn) return;
         const icon = btn.querySelector('.icon');
         if (icon) {
-            const icons = { dark: '🌙', darker: '🌑', purple: '🔮', ocean: '🌊' };
-            icon.textContent = icons[this.current] || '🌙';
+            icon.textContent = this.ICONS[this.current] || '🌙';
         }
-    },
-
-    _getThemeName(theme) {
-        const names = {
-            dark: 'تاریک',
-            darker: 'تاریک عمیق',
-            purple: 'بنفش',
-            ocean: 'اقیانوس',
-        };
-        return names[theme] || theme;
     },
 };
 
