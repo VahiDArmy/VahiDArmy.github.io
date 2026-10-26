@@ -12,7 +12,8 @@ import { emptyState } from '../components/empty-state.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
 import { toast } from '../ui/toast.js';
-import { formatDate, formatNumber, initials, timeAgo } from '../utils/format.js';
+import { open as openModal } from '../ui/modal.js';
+import { formatDate, initials, timeAgo } from '../utils/format.js';
 
 export default async function characterologyDetailPage(info, outlet) {
   const session = await requireAuthOrRedirect();
@@ -71,6 +72,47 @@ export default async function characterologyDetailPage(info, outlet) {
     heroActions
   ]);
 
+  // Result Box (Optional)
+  let resultBox = null;
+  if (scenario.result || canEditScenario) {
+    const resultContent = el('div', { class: 'scenario-result-box__content' }, [
+      scenario.result || 'هنوز نتیجه‌ای برای این سناریو ثبت نشده است.'
+    ]);
+    
+    const editResultBtn = canEditScenario ? el('button', {
+      type: 'button',
+      class: 'btn btn--sm',
+      style: { marginInlineStart: 'auto', fontSize: '11px', height: '24px', padding: '0 8px' },
+      onClick: () => {
+        const textarea = el('textarea', { class: 'textarea', rows: 3, value: scenario.result || '', placeholder: 'نتیجه نهایی چه شد؟' });
+        const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
+          try {
+            await characterologyService.updateScenario(scenario.id, { result: textarea.value });
+            toast.success('نتیجه به‌روز شد.');
+            window.location.reload();
+          } catch (e) { toast.error(e.message); }
+        }}, ['ذخیره']);
+        
+        openModal({
+          title: 'ثبت / ویرایش نتیجه',
+          body: el('div', { class: 'form-field' }, [textarea]),
+          footer: saveBtn,
+          size: 'md',
+          initialFocus: textarea
+        });
+      }
+    }, [icon('edit'), 'ویرایش نتیجه']) : null;
+
+    resultBox = el('div', { class: 'scenario-result-box', style: scenario.result ? {} : { background: 'var(--bg-subtle)', borderColor: 'var(--border-default)' } }, [
+      el('div', { class: 'scenario-result-box__title', style: scenario.result ? {} : { color: 'var(--text-secondary)' } }, [
+        icon('check-circle'), 
+        'نتیجه نهایی',
+        editResultBtn
+      ]),
+      resultContent
+    ]);
+  }
+
   // Answer Form
   const personSelect = el('select', { class: 'select' }, [
     el('option', { value: '' }, ['--- شخص مورد نظر را انتخاب کنید ---']),
@@ -91,7 +133,6 @@ export default async function characterologyDetailPage(info, outlet) {
         try {
           const newAnswer = await characterologyService.addAnswer(scenario.id, personId, content);
           
-          // Find person details for immediate UI update
           const p = peopleList.find(x => x.id === personId);
           newAnswer.author = { display_name: profile?.display_name || user?.email?.split('@')[0], avatar_url: profile?.avatar_url };
           newAnswer.person = { id: p.id, full_name: p.full_name, avatar_url: p.avatar_url, job_title: p.job_title };
@@ -183,6 +224,7 @@ export default async function characterologyDetailPage(info, outlet) {
   const finalLayout = el('div', { class: 'container container--narrow characterology-detail' }, [
     back,
     hero,
+    resultBox,
     formCard,
     el('div', { style: { marginTop: '16px' } }, [
       el('h2', { style: { fontSize: 'var(--text-lg)', fontWeight: 'bold', marginBottom: '16px' } }, ['پاسخ‌های ثبت شده']),
