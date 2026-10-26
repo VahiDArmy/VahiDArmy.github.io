@@ -1,25 +1,11 @@
 [
   {
-    "id": "hist_1792997854816_umfivaulk",
-    "winner": {
-      "id": "person_1791110785869_3k5yg5e9y",
-      "name": "وحید",
-      "description": "",
-      "starred": false,
-      "color": "#ef4444",
-      "weight": 1,
-      "created_at": 1791110785869,
-      "updated_at": 1792996662642,
-      "in_wheel": 1,
-      "inWheel": true,
-      "createdAt": 1791110785869,
-      "updatedAt": 1792996662642,
-      "index": 2
-    },
+    "id": "hist_1792997854814_pybfnf651",
+    "winner_id": "person_1791110785869_3k5yg5e9y",
     "winner_name": "وحید",
     "mode": "single",
-    "spinType": "random",
-    "timestamp": 1792997854816
+    "spin_type": "random",
+    "timestamp": 1792997854814
   },
   {
     "id": "hist_1792997771453_127qtf4r5",
