@@ -1,62 +1,11 @@
-/* ============================================
-   متغیرهای CSS - تم دارک حرفه‌ای
-   ============================================ */
+/* ═══════════════════════════════════════════
+   Variables - 5 Theme System
+   Default = Dark
+   Override via: html[data-theme="X"] OR body.theme-X
+   ═══════════════════════════════════════════ */
 
 :root {
-    /* رنگ‌های اصلی */
-    --color-bg-primary: #0a0a0f;
-    --color-bg-secondary: #12121a;
-    --color-bg-tertiary: #1a1a28;
-    --color-bg-elevated: #22223a;
-    --color-bg-hover: #2a2a45;
-    --color-bg-active: #32325a;
-    
-    /* رنگ‌های متن */
-    --color-text-primary: #f0f0ff;
-    --color-text-secondary: #a0a0c0;
-    --color-text-tertiary: #707090;
-    --color-text-muted: #505070;
-    --color-text-inverse: #0a0a0f;
-    
-    /* رنگ‌های تأکیدی */
-    --color-accent-primary: #8b5cf6;
-    --color-accent-secondary: #06b6d4;
-    --color-accent-tertiary: #ec4899;
-    --color-accent-success: #10b981;
-    --color-accent-warning: #f59e0b;
-    --color-accent-danger: #ef4444;
-    --color-accent-info: #3b82f6;
-    
-    /* رنگ‌های گرادیانی */
-    --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-    --gradient-secondary: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
-    --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #ec4899 100%);
-    --gradient-dark: linear-gradient(180deg, #12121a 0%, #0a0a0f 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
-    
-    /* سایه‌ها */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
-    --shadow-glow-primary: 0 0 20px rgba(139, 92, 246, 0.3);
-    --shadow-glow-secondary: 0 0 20px rgba(6, 182, 212, 0.3);
-    --shadow-glow-danger: 0 0 20px rgba(239, 68, 68, 0.3);
-    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-    
-    /* حاشیه‌ها */
-    --border-radius-sm: 6px;
-    --border-radius-md: 10px;
-    --border-radius-lg: 16px;
-    --border-radius-xl: 24px;
-    --border-radius-full: 9999px;
-    
-    --border-color: rgba(255, 255, 255, 0.08);
-    --border-color-hover: rgba(255, 255, 255, 0.15);
-    --border-color-accent: rgba(139, 92, 246, 0.5);
-    
-    /* فاصله‌ها */
+    /* ─── Theme-invariant ─── */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
@@ -64,8 +13,7 @@
     --spacing-xl: 32px;
     --spacing-2xl: 48px;
     --spacing-3xl: 64px;
-    
-    /* فونت‌ها */
+
     --font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
     --font-size-xs: 0.75rem;
     --font-size-sm: 0.875rem;
@@ -76,26 +24,30 @@
     --font-size-3xl: 1.875rem;
     --font-size-4xl: 2.25rem;
     --font-size-5xl: 3rem;
-    
+
     --font-weight-light: 300;
     --font-weight-normal: 400;
     --font-weight-medium: 500;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
     --font-weight-black: 900;
-    
+
     --line-height-tight: 1.25;
     --line-height-normal: 1.5;
     --line-height-relaxed: 1.75;
     --line-height-loose: 2;
-    
-    /* انتقال‌ها */
+
+    --border-radius-sm: 6px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 16px;
+    --border-radius-xl: 24px;
+    --border-radius-full: 9999px;
+
     --transition-fast: 150ms ease;
     --transition-normal: 250ms ease;
     --transition-slow: 350ms ease;
     --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
-    
-    /* z-index */
+
     --z-dropdown: 100;
     --z-sticky: 200;
     --z-modal: 300;
@@ -103,10 +55,252 @@
     --z-tooltip: 500;
     --z-particles: 1;
     --z-overlay: 250;
-    
-    /* اندازه‌های خاص */
+
     --header-height: 70px;
     --sidebar-width: 260px;
     --wheel-size: 500px;
     --wheel-size-mobile: 320px;
+
+    /* ─── Accents (shared across themes) ─── */
+    --color-accent-primary: #8b5cf6;
+    --color-accent-secondary: #06b6d4;
+    --color-accent-tertiary: #ec4899;
+    --color-accent-success: #10b981;
+    --color-accent-warning: #f59e0b;
+    --color-accent-danger: #ef4444;
+    --color-accent-info: #3b82f6;
+
+    --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+    --gradient-secondary: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+    --gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+    --gradient-danger: linear-gradient(135deg, #ef4444 0%, #ec4899 100%);
+
+    /* ─── Default: Dark Theme ─── */
+    --color-bg-primary: #0a0a0f;
+    --color-bg-secondary: #12121a;
+    --color-bg-tertiary: #1a1a28;
+    --color-bg-elevated: #22223a;
+    --color-bg-hover: #2a2a45;
+    --color-bg-active: #32325a;
+
+    --color-text-primary: #f0f0ff;
+    --color-text-secondary: #a0a0c0;
+    --color-text-tertiary: #707090;
+    --color-text-muted: #505070;
+    --color-text-inverse: #0a0a0f;
+
+    --gradient-dark: linear-gradient(180deg, #12121a 0%, #0a0a0f 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+    --shadow-glow-primary: 0 0 20px rgba(139, 92, 246, 0.3);
+    --shadow-glow-secondary: 0 0 20px rgba(6, 182, 212, 0.3);
+    --shadow-glow-danger: 0 0 20px rgba(239, 68, 68, 0.3);
+    --shadow-inset: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-color-hover: rgba(255, 255, 255, 0.15);
+    --border-color-accent: rgba(139, 92, 246, 0.5);
+    --border-color-strong: rgba(255, 255, 255, 0.2);
+
+    --header-bg: rgba(18, 18, 26, 0.85);
+    --overlay-bg: rgba(0, 0, 0, 0.75);
+    --overlay-bg-soft: rgba(0, 0, 0, 0.5);
+    --scrollbar-thumb: #22223a;
+    --scrollbar-track: #12121a;
+    --glass-bg: rgba(26, 26, 40, 0.6);
+
+    --particles-opacity: 0.6;
+    --lever-base-gradient: linear-gradient(180deg, #333 0%, #111 100%);
+}
+
+/* ═══════════════════════════════════════════
+   Explicit Dark (same as default, kept for consistency)
+   ═══════════════════════════════════════════ */
+html[data-theme="dark"],
+body.theme-dark {
+    --color-bg-primary: #0a0a0f;
+    --color-bg-secondary: #12121a;
+    --color-bg-tertiary: #1a1a28;
+    --color-bg-elevated: #22223a;
+    --color-bg-hover: #2a2a45;
+    --color-bg-active: #32325a;
+
+    --color-text-primary: #f0f0ff;
+    --color-text-secondary: #a0a0c0;
+    --color-text-tertiary: #707090;
+    --color-text-muted: #505070;
+
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-color-hover: rgba(255, 255, 255, 0.15);
+    --border-color-strong: rgba(255, 255, 255, 0.2);
+
+    --header-bg: rgba(18, 18, 26, 0.85);
+    --overlay-bg: rgba(0, 0, 0, 0.75);
+    --overlay-bg-soft: rgba(0, 0, 0, 0.5);
+    --scrollbar-thumb: #22223a;
+    --scrollbar-track: #12121a;
+    --glass-bg: rgba(26, 26, 40, 0.6);
+    --particles-opacity: 0.6;
+}
+
+/* ═══════════════════════════════════════════
+   Darker (Deep Black)
+   ═══════════════════════════════════════════ */
+html[data-theme="darker"],
+body.theme-darker {
+    --color-bg-primary: #000000;
+    --color-bg-secondary: #0a0a0a;
+    --color-bg-tertiary: #151515;
+    --color-bg-elevated: #1e1e1e;
+    --color-bg-hover: #282828;
+    --color-bg-active: #333333;
+
+    --color-text-primary: #f5f5f5;
+    --color-text-secondary: #a8a8a8;
+    --color-text-tertiary: #707070;
+    --color-text-muted: #505050;
+
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-color-hover: rgba(255, 255, 255, 0.12);
+    --border-color-strong: rgba(255, 255, 255, 0.18);
+
+    --header-bg: rgba(0, 0, 0, 0.9);
+    --overlay-bg: rgba(0, 0, 0, 0.85);
+    --overlay-bg-soft: rgba(0, 0, 0, 0.6);
+    --scrollbar-thumb: #1e1e1e;
+    --scrollbar-track: #0a0a0a;
+    --glass-bg: rgba(15, 15, 15, 0.7);
+    --particles-opacity: 0.5;
+}
+
+/* ═══════════════════════════════════════════
+   Purple (Deep Violet)
+   ═══════════════════════════════════════════ */
+html[data-theme="purple"],
+body.theme-purple {
+    --color-bg-primary: #0f0520;
+    --color-bg-secondary: #1a0a30;
+    --color-bg-tertiary: #241240;
+    --color-bg-elevated: #2e1850;
+    --color-bg-hover: #3a2060;
+    --color-bg-active: #462a70;
+
+    --color-text-primary: #f3eaff;
+    --color-text-secondary: #c0a8e0;
+    --color-text-tertiary: #9070b0;
+    --color-text-muted: #6a5080;
+
+    --border-color: rgba(180, 150, 255, 0.12);
+    --border-color-hover: rgba(180, 150, 255, 0.25);
+    --border-color-strong: rgba(180, 150, 255, 0.35);
+
+    --header-bg: rgba(26, 10, 48, 0.9);
+    --overlay-bg: rgba(15, 5, 32, 0.8);
+    --overlay-bg-soft: rgba(15, 5, 32, 0.55);
+    --scrollbar-thumb: #2e1850;
+    --scrollbar-track: #1a0a30;
+    --glass-bg: rgba(36, 18, 64, 0.65);
+    --particles-opacity: 0.7;
+    --lever-base-gradient: linear-gradient(180deg, #3a2060 0%, #1a0a30 100%);
+}
+
+/* ═══════════════════════════════════════════
+   Ocean (Deep Blue)
+   ═══════════════════════════════════════════ */
+html[data-theme="ocean"],
+body.theme-ocean {
+    --color-bg-primary: #041120;
+    --color-bg-secondary: #0a1e35;
+    --color-bg-tertiary: #102a45;
+    --color-bg-elevated: #163654;
+    --color-bg-hover: #1e4266;
+    --color-bg-active: #285078;
+
+    --color-text-primary: #e8f4ff;
+    --color-text-secondary: #a8c8e0;
+    --color-text-tertiary: #7090b0;
+    --color-text-muted: #506880;
+
+    --border-color: rgba(120, 180, 255, 0.1);
+    --border-color-hover: rgba(120, 180, 255, 0.22);
+    --border-color-strong: rgba(120, 180, 255, 0.32);
+
+    --header-bg: rgba(10, 30, 53, 0.9);
+    --overlay-bg: rgba(4, 17, 32, 0.8);
+    --overlay-bg-soft: rgba(4, 17, 32, 0.55);
+    --scrollbar-thumb: #163654;
+    --scrollbar-track: #0a1e35;
+    --glass-bg: rgba(16, 42, 69, 0.65);
+    --particles-opacity: 0.7;
+    --lever-base-gradient: linear-gradient(180deg, #1e4266 0%, #0a1e35 100%);
+}
+
+/* ═══════════════════════════════════════════
+   LIGHT - Colorful Light (not pure white)
+   Lavender / Soft Lilac base
+   ═══════════════════════════════════════════ */
+html[data-theme="light"],
+body.theme-light {
+    /* Backgrounds - light lavender, not pure white */
+    --color-bg-primary: #f4f2fb;
+    --color-bg-secondary: #ebe7f7;
+    --color-bg-tertiary: #e0daf3;
+    --color-bg-elevated: #d5cdef;
+    --color-bg-hover: #c9beeb;
+    --color-bg-active: #bcafe6;
+
+    /* Text - dark purple-gray, high contrast */
+    --color-text-primary: #1e1838;
+    --color-text-secondary: #4a4066;
+    --color-text-tertiary: #6b6089;
+    --color-text-muted: #8a7fa8;
+    --color-text-inverse: #ffffff;
+
+    /* Accents - slightly deeper for contrast on light */
+    --color-accent-primary: #7c3aed;
+    --color-accent-secondary: #0891b2;
+    --color-accent-tertiary: #db2777;
+    --color-accent-success: #059669;
+    --color-accent-warning: #d97706;
+    --color-accent-danger: #dc2626;
+    --color-accent-info: #2563eb;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #7c3aed 0%, #0891b2 100%);
+    --gradient-secondary: linear-gradient(135deg, #db2777 0%, #7c3aed 100%);
+    --gradient-success: linear-gradient(135deg, #059669 0%, #0891b2 100%);
+    --gradient-danger: linear-gradient(135deg, #dc2626 0%, #db2777 100%);
+    --gradient-dark: linear-gradient(180deg, #ebe7f7 0%, #f4f2fb 100%);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.25) 100%);
+
+    /* Shadows - purple-tinted soft shadows */
+    --shadow-sm: 0 1px 2px rgba(30, 24, 56, 0.08);
+    --shadow-md: 0 4px 8px rgba(30, 24, 56, 0.12);
+    --shadow-lg: 0 10px 20px rgba(30, 24, 56, 0.15);
+    --shadow-xl: 0 20px 40px rgba(30, 24, 56, 0.2);
+    --shadow-glow-primary: 0 0 20px rgba(124, 58, 237, 0.25);
+    --shadow-glow-secondary: 0 0 20px rgba(8, 145, 178, 0.25);
+    --shadow-glow-danger: 0 0 20px rgba(220, 38, 38, 0.25);
+    --shadow-inset: inset 0 1px 2px rgba(30, 24, 56, 0.08);
+
+    /* Borders - visible but soft on light */
+    --border-color: rgba(30, 24, 56, 0.12);
+    --border-color-hover: rgba(30, 24, 56, 0.22);
+    --border-color-accent: rgba(124, 58, 237, 0.4);
+    --border-color-strong: rgba(30, 24, 56, 0.28);
+
+    /* Component-specific */
+    --header-bg: rgba(244, 242, 251, 0.85);
+    --overlay-bg: rgba(30, 24, 56, 0.55);
+    --overlay-bg-soft: rgba(30, 24, 56, 0.35);
+    --scrollbar-thumb: #bcafe6;
+    --scrollbar-track: #ebe7f7;
+    --glass-bg: rgba(235, 231, 247, 0.7);
+
+    --particles-opacity: 0.35;
+    --lever-base-gradient: linear-gradient(180deg, #a898d0 0%, #6b6089 100%);
 }
