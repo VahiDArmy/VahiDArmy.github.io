@@ -1,5 +1,5 @@
 /**
- * Tables list page — search, pagination, create/edit/delete.
+ * Tables list page
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -24,6 +24,8 @@ import { debounce } from '../utils/debounce.js';
 export default async function tablesPage(info, outlet) {
   const session = await requireAuthOrRedirect();
   if (!session) return () => {};
+
+  const isMyTables = getQueryParam('my') === 'true';
 
   const state = {
     search: getQueryParam('q', ''),
@@ -55,13 +57,12 @@ export default async function tablesPage(info, outlet) {
   page.appendChild(
     pageHeader({
       eyebrow: 'بایگانی',
-      title: 'جدول‌ها',
-      subtitle: 'جدول‌های داده سفارشی با ستون‌های دلخواه.',
+      title: isMyTables ? 'جدول‌های من' : 'جدول‌ها',
+      subtitle: isMyTables ? 'جدول‌هایی که توسط شما ساخته شده‌اند.' : 'همه جدول‌های داده سفارشی در سیستم.',
       actions: headerActions,
     })
   );
 
-  // Search
   const searchInput = el('input', {
     type: 'search',
     class: 'input',
@@ -106,6 +107,7 @@ export default async function tablesPage(info, outlet) {
       q: state.search || null,
       page: state.page === 1 ? null : state.page,
       size: state.pageSize === 12 ? null : state.pageSize,
+      my: isMyTables ? 'true' : null
     });
   }
 
@@ -117,6 +119,7 @@ export default async function tablesPage(info, outlet) {
         search: state.search,
         limit: state.pageSize,
         offset: (state.page - 1) * state.pageSize,
+        ownerId: isMyTables ? session.user.id : null
       });
       state.items = res.items;
       state.total = res.total;
@@ -143,7 +146,7 @@ export default async function tablesPage(info, outlet) {
           title: 'جدولی پیدا نشد',
           description: state.search
             ? `نتیجه‌ای برای «${state.search}» نیست.`
-            : 'اولین جدول خود را بسازید.',
+            : 'جدولی وجود ندارد.',
           actions: appStore.get('user')
             ? [
                 el(
@@ -333,7 +336,6 @@ function openTableForm({ table = null } = {}) {
       ]),
     ]);
 
-    // FIX: Changed from type="submit" to type="button" with requestSubmit
     const submitBtn = el(
       'button',
       { 
