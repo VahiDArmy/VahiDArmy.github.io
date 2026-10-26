@@ -146,11 +146,12 @@
 }
 
 .data-grid__row-num {
-  width: 50px; /* Slightly wider for badge */
+  width: 56px; /* Slightly wider to fit the inline badge */
   text-align: center;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
+  white-space: nowrap; /* Prevent wrapping to avoid height increase */
 }
 
 .data-grid__cell {
