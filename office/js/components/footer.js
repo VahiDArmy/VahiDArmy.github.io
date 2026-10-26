@@ -1,5 +1,5 @@
 /**
- * Footer — brand, quick links, version.
+ * Footer
  */
 
 import { el } from '../utils/dom.js';
@@ -23,6 +23,7 @@ export function mountFooter(root) {
         el('a', { class: 'footer__link', href: router.href(ROUTES.PEOPLE) }, ['افراد']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.THEORIES) }, ['نظریه‌ها']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.TELLALLS) }, ['بگایی‌ها']),
+        el('a', { class: 'footer__link', href: router.href(ROUTES.CHARACTEROLOGY) }, ['شخصیت شناسی']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.RANKINGS) }, ['رتبه‌بندی']),
         el('a', { class: 'footer__link', href: router.href(ROUTES.TABLES) }, ['جدول‌ها']),
       ]),
