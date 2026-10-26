@@ -145,13 +145,20 @@
   border-left: 3px solid var(--accent);
 }
 
+/* FIX: Glow effect on the number for the user's row */
+.data-grid tbody tr.is-my-row .data-grid__row-num {
+  color: var(--accent);
+  font-weight: var(--fw-bold);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
 .data-grid__row-num {
-  width: 56px; /* Slightly wider to fit the inline badge */
+  width: 44px;
   text-align: center;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
   font-size: var(--text-xs);
-  white-space: nowrap; /* Prevent wrapping to avoid height increase */
+  /* Removed white-space: nowrap as it's no longer needed */
 }
 
 .data-grid__cell {
