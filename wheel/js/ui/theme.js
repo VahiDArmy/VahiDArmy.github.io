@@ -1,8 +1,7 @@
 /**
  * مدیریت تم - ۵ تم
- * - dark, darker, purple, ocean, light
- * - اعمال همزمان روی html[data-theme] و body.theme-X
- * - تنظیم color-scheme برای کنترل‌های بومی
+ * - LocalStorage: منبع فوری (sync)
+ * - SQLite: پشتیبان (async, بین دستگاه‌ها)
  * @module theme
  */
 
@@ -26,20 +25,31 @@ const Theme = {
         light: '☀️',
     },
 
+    /**
+     * راه‌اندازی
+     * ⚠️ مهم: از LocalStorage می‌خواند نه SQLite
+     * چون باید قبل از SQLStorage.init() اجرا شود
+     */
     init() {
-        let saved = 'dark';
-        try {
-            if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
-                saved = SQLStorage.getSetting('theme') || AppState.get('settings.theme') || 'dark';
-            } else {
-                saved = AppState.get('settings.theme') || 'dark';
-            }
-        } catch (e) {
-            saved = 'dark';
+        // اولویت ۱: LocalStorage (sync، فوری)
+        let saved = LocalStorage.get('theme', null);
+
+        // اولویت ۲: AppState (اگر جای دیگری ست شده باشد)
+        if (!saved) {
+            saved = AppState.get('settings.theme') || 'dark';
         }
+
+        console.log('🎨 Theme.init - saved from LocalStorage:', saved);
+
+        // اعمال فوری (بدون ذخیره در DB - چون هنوز آماده نیست)
         this.apply(saved, false);
     },
 
+    /**
+     * اعمال تم
+     * @param {string} themeName - نام تم
+     * @param {boolean} saveToDb - آیا در SQLite هم ذخیره شود
+     */
     apply(themeName, saveToDb = true) {
         // اعتبارسنجی
         if (!this.themes.includes(themeName)) {
@@ -49,38 +59,46 @@ const Theme = {
         const root = document.documentElement;
         const body = document.body;
 
+        if (!body) return;
+
         // حذف همه‌ی کلاس‌های تم از body
         this.themes.forEach((t) => {
             body.classList.remove(`theme-${t}`);
         });
 
-        // اعمال تم جدید
+        // اعمال تم جدید روی DOM
         body.classList.add(`theme-${themeName}`);
         root.setAttribute('data-theme', themeName);
 
-        // تنظیم color-scheme برای کنترل‌های بومی (input, select, scrollbar)
-        if (themeName === 'light') {
-            root.style.colorScheme = 'light';
-        } else {
-            root.style.colorScheme = 'dark';
-        }
+        // تنظیم color-scheme برای کنترل‌های بومی
+        root.style.colorScheme = themeName === 'light' ? 'light' : 'dark';
 
         // به‌روزرسانی state
         this.current = themeName;
         AppState.set('settings.theme', themeName);
 
-        // ذخیره در دیتابیس
+        // ✅ ذخیره فوری در LocalStorage (sync)
+        try {
+            LocalStorage.set('theme', themeName);
+        } catch (e) {
+            console.warn('خطا در ذخیره تم در LocalStorage:', e);
+        }
+
+        // ✅ ذخیره در SQLite فقط اگر درخواست شده و آماده است
         if (saveToDb) {
             try {
                 if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
                     SQLStorage.setSetting('theme', themeName);
                 }
-            } catch (e) {}
+            } catch (e) {
+                console.warn('خطا در ذخیره تم در SQLite:', e);
+            }
         }
 
+        // به‌روزرسانی آیکون
         this._updateIcon();
 
-        // اجبار به re-render canvas (wheel) برای اعمال رنگ‌های جدید
+        // Re-render canvas گردونه (اگر وجود دارد)
         if (window.WheelCore && typeof WheelCore.render === 'function') {
             setTimeout(() => {
                 try { WheelCore.render(); } catch (e) {}
