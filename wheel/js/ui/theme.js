@@ -1,7 +1,7 @@
 /**
  * مدیریت تم - ۵ تم
- * - LocalStorage: منبع فوری (sync)
- * - SQLite: پشتیبان (async, بین دستگاه‌ها)
+ * - Inline blocking script اولیه را از قبل اعمال کرده
+ * - این ماژول فقط برای sync و toggle است
  * @module theme
  */
 
@@ -27,78 +27,66 @@ const Theme = {
 
     /**
      * راه‌اندازی
-     * ⚠️ مهم: از LocalStorage می‌خواند نه SQLite
-     * چون باید قبل از SQLStorage.init() اجرا شود
+     * ⚠️ نکته: تم قبلاً توسط inline script در <head> اعمال شده
+     * این فقط state داخلی و آیکون را sync می‌کند - بدون هیچ flash
      */
     init() {
-        // اولویت ۱: LocalStorage (sync، فوری)
-        let saved = LocalStorage.get('theme', null);
+        const initial = window.__INITIAL_THEME__ ||
+                        document.documentElement.getAttribute('data-theme') ||
+                        'dark';
 
-        // اولویت ۲: AppState (اگر جای دیگری ست شده باشد)
-        if (!saved) {
-            saved = AppState.get('settings.theme') || 'dark';
+        this.current = this.themes.includes(initial) ? initial : 'dark';
+
+        // sync با AppState
+        AppState.set('settings.theme', this.current);
+
+        // به‌روزرسانی آیکون دکمه
+        this._updateIcon();
+
+        // re-render گردونه در صورت وجود (ممکن است رنگ‌های canvas تغییر کند)
+        if (window.WheelCore && typeof WheelCore.render === 'function') {
+            setTimeout(() => {
+                try { WheelCore.render(); } catch (e) {}
+            }, 100);
         }
 
-        console.log('🎨 Theme.init - saved from LocalStorage:', saved);
-
-        // اعمال فوری (بدون ذخیره در DB - چون هنوز آماده نیست)
-        this.apply(saved, false);
+        console.log('🎨 Theme ready:', this.current);
     },
 
     /**
-     * اعمال تم
-     * @param {string} themeName - نام تم
-     * @param {boolean} saveToDb - آیا در SQLite هم ذخیره شود
+     * اعمال تم - فقط در تغییر دستی یا sync با SQLite
      */
     apply(themeName, saveToDb = true) {
-        // اعتبارسنجی
         if (!this.themes.includes(themeName)) {
             themeName = 'dark';
         }
 
         const root = document.documentElement;
-        const body = document.body;
 
-        if (!body) return;
-
-        // حذف همه‌ی کلاس‌های تم از body
-        this.themes.forEach((t) => {
-            body.classList.remove(`theme-${t}`);
-        });
-
-        // اعمال تم جدید روی DOM
-        body.classList.add(`theme-${themeName}`);
+        // ⚠️ فقط attribute روی html - هیچ کلاسی روی body نیست
         root.setAttribute('data-theme', themeName);
-
-        // تنظیم color-scheme برای کنترل‌های بومی
         root.style.colorScheme = themeName === 'light' ? 'light' : 'dark';
 
-        // به‌روزرسانی state
         this.current = themeName;
         AppState.set('settings.theme', themeName);
 
-        // ✅ ذخیره فوری در LocalStorage (sync)
+        // ذخیره‌ی sync در LocalStorage (برای لود بعدی صفحه)
         try {
             LocalStorage.set('theme', themeName);
-        } catch (e) {
-            console.warn('خطا در ذخیره تم در LocalStorage:', e);
-        }
+        } catch (e) {}
 
-        // ✅ ذخیره در SQLite فقط اگر درخواست شده و آماده است
+        // ذخیره در SQLite (فقط اگر درخواست شده و آماده است)
         if (saveToDb) {
             try {
                 if (typeof SQLStorage !== 'undefined' && SQLStorage.isReady) {
                     SQLStorage.setSetting('theme', themeName);
                 }
-            } catch (e) {
-                console.warn('خطا در ذخیره تم در SQLite:', e);
-            }
+            } catch (e) {}
         }
 
-        // به‌روزرسانی آیکون
         this._updateIcon();
 
-        // Re-render canvas گردونه (اگر وجود دارد)
+        // re-render گردونه
         if (window.WheelCore && typeof WheelCore.render === 'function') {
             setTimeout(() => {
                 try { WheelCore.render(); } catch (e) {}
