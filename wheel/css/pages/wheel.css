@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════
-   صفحه گردونه - کامل
+   صفحه گردونه
    ═══════════════════════════════════════════ */
 
 .wheel-page {
@@ -456,9 +456,10 @@
 .lever-base {
     width: 80px;
     height: 10px;
-    background: linear-gradient(180deg, #333 0%, #111 100%);
+    background: var(--lever-base-gradient);
     border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
     margin-top: -2px;
+    transition: background var(--transition-normal);
 }
 
 .lever-active .lever-handle { transform: scale(0.9); }
@@ -483,7 +484,7 @@
     display: none;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.75);
+    background: var(--overlay-bg);
     backdrop-filter: blur(10px);
     z-index: 500;
     padding: var(--spacing-lg);
@@ -499,7 +500,7 @@
     max-width: 480px;
     width: 100%;
     max-height: 90vh;
-    box-shadow: 0 0 60px rgba(139, 92, 246, 0.5), 0 20px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-xl), 0 0 60px rgba(139, 92, 246, 0.5);
     animation: scaleIn var(--transition-bounce);
 }
 
@@ -515,7 +516,7 @@
 .winner-popup-header {
     padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
     text-align: center;
-    background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, transparent 100%);
+    background: var(--gradient-glass);
     border-bottom: 1px solid var(--border-color);
     flex-shrink: 0;
 }
@@ -569,7 +570,6 @@
 .story-loading .spinner { width: 32px; height: 32px; border-width: 3px; }
 .story-loading p { animation: pulse 1.5s ease-in-out infinite; }
 
-/* حالت خطای عمومی */
 .story-error {
     padding: var(--spacing-md);
     background: rgba(245, 158, 11, 0.08);
@@ -771,7 +771,7 @@
     padding: 2px 8px;
     background: rgba(139, 92, 246, 0.1);
     border-radius: var(--border-radius-sm);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid var(--border-color-accent);
     font-size: 0.7rem;
 }
 
@@ -943,7 +943,7 @@
     padding: 2px 8px;
     background: rgba(139, 92, 246, 0.15);
     color: var(--color-accent-primary);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid var(--border-color-accent);
     border-radius: var(--border-radius-full);
     white-space: nowrap;
 }
