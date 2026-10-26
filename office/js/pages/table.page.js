@@ -53,7 +53,6 @@ export default async function tablePage(info, outlet) {
     if (columns.some((c) => c.type === 'person_ref') || table.permission_type !== 'public') {
       const res = await peopleService.list({ limit: 1000 });
       people = res.items;
-      // Fallback: find by user_id OR by email
       const myPerson = people.find(p => p.user_id === session.user.id || (session.user.email && p.email === session.user.email));
       if (myPerson) myPersonId = myPerson.id;
     }
@@ -112,6 +111,14 @@ export default async function tablePage(info, outlet) {
     ].filter(Boolean));
 
     const permLabel = table.permission_type === 'public' ? 'عمومی' : table.permission_type === 'private_column' ? 'خصوصی (ردیف‌ها)' : 'خصوصی (ستون‌ها)';
+    
+    // Warning if permissions are misconfigured
+    let permWarning = null;
+    if (table.permission_type === 'private_column' && !columns.some(c => c.is_owner_determining)) {
+      permWarning = el('div', { class: 'badge badge--danger', style: { marginTop: '8px' } }, ['هشدار: ستون تعیین‌کننده مالک مشخص نشده است.']);
+    } else if (table.permission_type === 'private_row' && !rowsData.items.some(r => r.is_owner_determining)) {
+      permWarning = el('div', { class: 'badge badge--danger', style: { marginTop: '8px' } }, ['هشدار: ردیف تعیین‌کننده مالک مشخص نشده است.']);
+    }
 
     const hero = el('div', { class: 'table-hero' }, [
       el('div', { class: 'table-hero__main' }, [
@@ -123,6 +130,7 @@ export default async function tablePage(info, outlet) {
           el('span', { class: 'table-hero__meta-item' }, [icon('lock'), `دسترسی: ${permLabel}`]),
           table.updated_at ? el('span', { class: 'table-hero__meta-item' }, [icon('clock'), formatDate(table.updated_at)]) : null,
         ]),
+        permWarning
       ]),
       actions,
     ]);
@@ -139,7 +147,7 @@ export default async function tablePage(info, outlet) {
         const ownerCol = columns.find(c => c.is_owner_determining);
         return ownerCol && row.values?.[ownerCol.id] === myPersonId;
       }
-      return true; // in private_row mode
+      return true; 
     };
 
     const checkCanEditCell = (row, col) => {
