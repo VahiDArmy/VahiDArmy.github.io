@@ -1,6 +1,6 @@
 /**
  * Console Viewer Component
- * Provides a visible floating trigger button and a modal to display raw logs.
+ * Provides a floating trigger button and a modal to display raw logs and network requests.
  */
 
 import { el, icon, lockBodyScroll, unlockBodyScroll } from '../utils/dom.js';
@@ -19,7 +19,7 @@ export function initConsoleViewer() {
 
   triggerBtn = el('button', {
     class: 'console-trigger',
-    title: 'ابزار عیب‌یابی (کنسول)',
+    title: 'ابزار عیب‌یابی (کنسول و شبکه)',
     html: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
     on: { click: openConsoleViewer }
   });
@@ -27,7 +27,7 @@ export function initConsoleViewer() {
   document.body.appendChild(triggerBtn);
 
   window.addEventListener('console:new', (e) => {
-    if (e.detail && e.detail.type === 'error') {
+    if (e.detail && (e.detail.type === 'error' || e.detail.type === 'network')) {
       triggerBtn.classList.add('has-error');
     }
   });
@@ -44,13 +44,38 @@ function openConsoleViewer() {
   triggerBtn.classList.remove('has-error');
 
   const list = el('div', { class: 'console-list' });
+  let currentFilter = 'all'; // 'all' | 'console' | 'network'
   
+  // Header Actions
   const copyAllBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('copy'), 'کپی همه']);
   const clearBtn = el('button', { class: 'btn btn--secondary btn--sm', style: { fontSize: '11px', padding: '0 8px', height: '28px' } }, [icon('trash'), 'پاک کردن']);
   const closeBtn = el('button', { class: 'btn btn--ghost btn--icon btn--sm', style: { color: '#fff' } }, [icon('x')]);
 
+  // Filter Buttons
+  const btnAll = el('button', { class: 'is-active' }, ['همه']);
+  const btnConsole = el('button', {}, ['کنسول']);
+  const btnNetwork = el('button', {}, ['شبکه (Network)']);
+  
+  const filterWrap = el('div', { class: 'console-filter' }, [btnAll, btnConsole, btnNetwork]);
+
+  btnAll.addEventListener('click', () => setFilter('all'));
+  btnConsole.addEventListener('click', () => setFilter('console'));
+  btnNetwork.addEventListener('click', () => setFilter('network'));
+
+  function setFilter(f) {
+    currentFilter = f;
+    btnAll.classList.toggle('is-active', f === 'all');
+    btnConsole.classList.toggle('is-active', f === 'console');
+    btnNetwork.classList.toggle('is-active', f === 'network');
+    
+    list.className = 'console-list';
+    if (f === 'console') list.classList.add('filter-console');
+    if (f === 'network') list.classList.add('filter-network');
+  }
+
   const header = el('div', { class: 'console-header' }, [
-    el('div', { class: 'console-title' }, ['Raw Console Messages']),
+    el('div', { class: 'console-title' }, ['DevTools']),
+    filterWrap,
     el('div', { class: 'console-actions' }, [copyAllBtn, clearBtn, closeBtn])
   ]);
 
@@ -129,11 +154,16 @@ function openConsoleViewer() {
     setTimeout(() => { list.scrollTop = list.scrollHeight; }, 10);
   }
 
+  // Events
   closeBtn.addEventListener('click', close);
   clearBtn.addEventListener('click', () => { consoleStore.clear(); render(); });
   
   copyAllBtn.addEventListener('click', () => {
-    const text = consoleStore.getLogs().map(l => `[${l.type.toUpperCase()}] ${l.msg}`).join('\n\n');
+    let visibleLogs = consoleStore.getLogs();
+    if (currentFilter === 'console') visibleLogs = visibleLogs.filter(l => l.type !== 'network');
+    if (currentFilter === 'network') visibleLogs = visibleLogs.filter(l => l.type === 'network');
+
+    const text = visibleLogs.map(l => `[${l.type.toUpperCase()}] ${l.msg}`).join('\n\n');
     if (text) {
       copyToClipboard(text).then(() => {
         const oldHtml = copyAllBtn.innerHTML;
