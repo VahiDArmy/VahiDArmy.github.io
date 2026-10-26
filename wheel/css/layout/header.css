@@ -8,12 +8,12 @@
     right: 0;
     left: 0;
     height: var(--header-height);
-    background: rgba(18, 18, 26, 0.85);
+    background: var(--header-bg);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
     z-index: var(--z-sticky);
-    transition: all var(--transition-normal);
+    transition: background var(--transition-normal), border-color var(--transition-normal);
 }
 
 .header-container {
@@ -104,7 +104,7 @@
 }
 
 /* ============================================
-   دکمه منوی موبایل (همبرگری)
+   دکمه منوی موبایل
    ============================================ */
 
 .nav-toggle {
