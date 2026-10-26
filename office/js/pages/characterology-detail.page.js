@@ -11,6 +11,8 @@ import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
+import { createMentionTextarea } from '../components/mention-textarea.js';
+import { renderMentions } from '../utils/render-mentions.js';
 import { toast } from '../ui/toast.js';
 import { open as openModal } from '../ui/modal.js';
 import { formatDate, initials, timeAgo } from '../utils/format.js';
@@ -64,7 +66,7 @@ export default async function characterologyDetailPage(info, outlet) {
 
   const hero = el('div', { class: 'scenario-hero' }, [
     el('h1', { class: 'scenario-hero__title' }, [scenario.title]),
-    el('div', { class: 'scenario-hero__desc' }, [scenario.description]),
+    el('div', { class: 'scenario-hero__desc', html: renderMentions(scenario.description, peopleList) }),
     el('div', { class: 'scenario-hero__meta' }, [
       el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [icon('user'), `سازنده: ${scenario.author?.display_name || 'کاربر'}`]),
       el('span', { style: { display: 'inline-flex', alignItems: 'center', gap: '4px' } }, [icon('clock'), formatDate(scenario.created_at, { withTime: true })])
@@ -75,19 +77,19 @@ export default async function characterologyDetailPage(info, outlet) {
   // Result Box (Optional)
   let resultBox = null;
   if (scenario.result || canEditScenario) {
-    const resultContent = el('div', { class: 'scenario-result-box__content' }, [
-      scenario.result || 'هنوز نتیجه‌ای برای این سناریو ثبت نشده است.'
-    ]);
+    const resultContent = el('div', { class: 'scenario-result-box__content', html: scenario.result ? renderMentions(scenario.result, peopleList) : 'هنوز نتیجه‌ای برای این سناریو ثبت نشده است.' });
     
     const editResultBtn = canEditScenario ? el('button', {
       type: 'button',
       class: 'btn btn--sm',
       style: { marginInlineStart: 'auto', fontSize: '11px', height: '24px', padding: '0 8px' },
       onClick: () => {
-        const textarea = el('textarea', { class: 'textarea', rows: 3, value: scenario.result || '', placeholder: 'نتیجه نهایی چه شد؟' });
+        const editor = createMentionTextarea({ people: peopleList, rows: 3 });
+        editor.setValue(scenario.result || '');
+        
         const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
           try {
-            await characterologyService.updateScenario(scenario.id, { result: textarea.value });
+            await characterologyService.updateScenario(scenario.id, { result: editor.getValue() });
             toast.success('نتیجه به‌روز شد.');
             window.location.reload();
           } catch (e) { toast.error(e.message); }
@@ -95,10 +97,10 @@ export default async function characterologyDetailPage(info, outlet) {
         
         openModal({
           title: 'ثبت / ویرایش نتیجه',
-          body: el('div', { class: 'form-field' }, [textarea]),
+          body: el('div', { class: 'form-field' }, [editor.node]),
           footer: saveBtn,
           size: 'md',
-          initialFocus: textarea
+          initialFocus: editor.textareaNode
         });
       }
     }, [icon('edit'), 'ویرایش نتیجه']) : null;
@@ -118,7 +120,13 @@ export default async function characterologyDetailPage(info, outlet) {
     el('option', { value: '' }, ['--- شخص مورد نظر را انتخاب کنید ---']),
     ...peopleList.map(p => el('option', { value: p.id }, [p.full_name]))
   ]);
-  const contentInput = el('textarea', { class: 'textarea', rows: 3, placeholder: 'به نظر شما این شخص چه واکنشی نشان می‌دهد؟' });
+  
+  const answerEditor = createMentionTextarea({
+    people: peopleList,
+    placeholder: 'به نظر شما این شخص چه واکنشی نشان می‌دهد؟',
+    rows: 3,
+    minHeight: '80px'
+  });
 
   const submitAnswerBtn = el('button', {
     type: 'button',
@@ -126,7 +134,7 @@ export default async function characterologyDetailPage(info, outlet) {
     on: {
       click: async () => {
         const personId = personSelect.value;
-        const content = contentInput.value.trim();
+        const content = answerEditor.getValue().trim();
         if (!personId || !content) return toast.warning('لطفاً شخص و متن پاسخ را وارد کنید.');
 
         submitAnswerBtn.classList.add('is-loading');
@@ -140,7 +148,7 @@ export default async function characterologyDetailPage(info, outlet) {
           answers.unshift(newAnswer);
           renderAnswers();
           personSelect.value = '';
-          contentInput.value = '';
+          answerEditor.setValue('');
           toast.success('پاسخ شما ثبت شد.');
         } catch (err) {
           toast.error(err?.message || 'خطا در ثبت پاسخ.');
@@ -159,7 +167,7 @@ export default async function characterologyDetailPage(info, outlet) {
     ]),
     el('div', { class: 'form-field' }, [
       el('label', { class: 'form-label' }, ['پاسخ / واکنش']),
-      contentInput
+      answerEditor.node
     ]),
     el('div', { style: { display: 'flex', justifyContent: 'flex-end' } }, [submitAnswerBtn])
   ]);
@@ -177,6 +185,7 @@ export default async function characterologyDetailPage(info, outlet) {
     answers.forEach(answer => {
       const isAuthor = user?.id === answer.author_id;
       const canDelete = isAuthor || canEditContent();
+      const htmlContent = renderMentions(answer.content, peopleList);
 
       const deleteBtn = canDelete ? el('button', {
         type: 'button',
@@ -212,7 +221,7 @@ export default async function characterologyDetailPage(info, outlet) {
               ]),
               deleteBtn
             ]),
-            el('div', { class: 'answer-card__body' }, [answer.content])
+            el('div', { class: 'answer-card__body', html: htmlContent })
           ])
         ])
       );
