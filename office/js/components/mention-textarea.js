@@ -11,13 +11,14 @@ export function createMentionTextarea({
   people = [], 
   placeholder = 'متن خود را بنویسید...', 
   rows = 15,
-  minHeight = '400px' 
+  minHeight = '400px',
+  className = '' // Added className support
 } = {}) {
   
   const wrapper = el('div', { class: 'mention-wrapper' });
   
   const textarea = el('textarea', {
-    class: 'textarea',
+    class: `textarea ${className}`.trim(),
     placeholder,
     rows,
     style: { minHeight, fontSize: '1rem', lineHeight: '1.8', fontFamily: 'var(--font-sans)' }
@@ -128,6 +129,7 @@ export function createMentionTextarea({
 
   return {
     node: wrapper,
+    textareaNode: textarea, // Exposed for custom styling if needed
     getValue: () => textarea.value,
     setValue: (val) => { textarea.value = val; }
   };
