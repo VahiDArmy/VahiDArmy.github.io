@@ -6,6 +6,26 @@
     <meta name="description" content="چرخ فلک - گردونه شانس هوشمند با هوش مصنوعی">
     <title>چرخ فلک | صفحه اصلی</title>
 
+    <!-- ═══════════════════════════════════════
+         🔑 مهم‌ترین بخش: اعمال تم قبل از هر paint
+         باید اولین چیز در <head> باشد
+         ═══════════════════════════════════════ -->
+    <script>
+    (function() {
+        try {
+            var raw = localStorage.getItem('wheel_app_theme');
+            var theme = raw ? JSON.parse(raw) : 'dark';
+            var valid = ['dark', 'darker', 'purple', 'ocean', 'light'];
+            if (valid.indexOf(theme) === -1) theme = 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.colorScheme = theme === 'light' ? 'light' : 'dark';
+            window.__INITIAL_THEME__ = theme;
+        } catch (e) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    })();
+    </script>
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
 
     <link rel="stylesheet" href="css/base/reset.css">
@@ -32,7 +52,7 @@
     <link rel="stylesheet" href="css/animations/keyframes.css">
     <link rel="stylesheet" href="css/animations/transitions.css">
 </head>
-<body class="dark-theme">
+<body>
     <canvas id="particles-canvas" class="particles-canvas"></canvas>
 
     <header class="main-header">
