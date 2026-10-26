@@ -12,7 +12,7 @@
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.7);
+    background: var(--overlay-bg);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     display: flex;
@@ -60,24 +60,11 @@
     opacity: 0;
 }
 
-/* اندازه‌ها */
-.modal-sm {
-    max-width: 380px;
-}
+.modal-sm { max-width: 380px; }
+.modal-md { max-width: 500px; }
+.modal-lg { max-width: 720px; }
+.modal-xl { max-width: 960px; }
 
-.modal-md {
-    max-width: 500px;
-}
-
-.modal-lg {
-    max-width: 720px;
-}
-
-.modal-xl {
-    max-width: 960px;
-}
-
-/* هدر مودال */
 .modal-header {
     display: flex;
     align-items: center;
@@ -118,7 +105,6 @@
     transform: rotate(90deg);
 }
 
-/* بدنه مودال */
 .modal-body {
     padding: var(--spacing-lg);
     overflow-y: auto;
@@ -135,7 +121,6 @@
     margin-bottom: 0;
 }
 
-/* فوتر مودال */
 .modal-footer {
     padding: var(--spacing-md) var(--spacing-lg);
     border-top: 1px solid var(--border-color);
@@ -146,7 +131,6 @@
     background: var(--color-bg-tertiary);
 }
 
-/* انیمیشن ورود */
 @keyframes modalIn {
     from {
         transform: scale(0.9) translateY(20px);
@@ -158,7 +142,6 @@
     }
 }
 
-/* ریسپانسیو */
 @media (max-width: 640px) {
     .modal {
         max-width: 100%;
