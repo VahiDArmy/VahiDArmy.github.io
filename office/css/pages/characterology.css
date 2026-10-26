@@ -1,0 +1,82 @@
+/* ============================================================
+   Characterology (Personality) list page
+   ============================================================ */
+
+.characterology-page { display: flex; flex-direction: column; gap: var(--space-5); }
+
+.scenario-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.scenario-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  display: flex;
+  gap: var(--space-4);
+  transition: var(--transition-base);
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+.scenario-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  text-decoration: none;
+}
+.scenario-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.scenario-card__icon svg { width: 20px; height: 20px; }
+.scenario-card__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.scenario-card__title {
+  font-size: var(--text-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  line-height: var(--lh-snug);
+}
+.scenario-card__desc {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--lh-normal);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.scenario-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5) var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  align-items: center;
+  margin-block-start: auto;
+  padding-block-start: var(--space-1);
+}
+.scenario-card__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.scenario-card__meta-item svg { width: 12px; height: 12px; }
+
+@media (max-width: 640px) {
+  .scenario-card { padding: var(--space-3); gap: var(--space-3); }
+}
