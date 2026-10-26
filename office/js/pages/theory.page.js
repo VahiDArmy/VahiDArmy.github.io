@@ -11,9 +11,10 @@ import { peopleService } from '../services/people.service.js';
 import { emptyState } from '../components/empty-state.js';
 import { confirmAndDelete } from '../components/confirm-delete.js';
 import { toast } from '../ui/toast.js';
-import { open as openModal } from '../ui/modal.js';
 import { formatDate, formatNumber, initials, timeAgo, truncateText } from '../utils/format.js';
 import { requireAuthOrRedirect, canEditContent } from '../components/auth-guard.js';
+import { createMentionTextarea } from '../components/mention-textarea.js';
+import { renderMentions } from '../utils/render-mentions.js';
 
 function statusBadgeClass(status) {
   switch (status) {
@@ -39,7 +40,8 @@ export default async function theoryPage(info, outlet) {
 
   let theory;
   let myVote = 0;
-  let people = [];
+  let relatedPeople = [];
+  let allPeople = [];
   let comments = [];
 
   try {
@@ -61,18 +63,17 @@ export default async function theoryPage(info, outlet) {
       return () => {};
     }
 
-    const [vote, commentsRes] = await Promise.all([
+    const [vote, commentsRes, allPeopleRes] = await Promise.all([
       appStore.get('user') ? theoriesService.myVote(id) : Promise.resolve(0),
       theoriesService.listComments(id),
+      peopleService.list({ limit: 500 }) // Fetch all for mentions
     ]);
     myVote = vote || 0;
     comments = commentsRes || [];
+    allPeople = allPeopleRes.items || [];
 
     if (theory.related_people && theory.related_people.length) {
-      const fetched = await Promise.all(
-        theory.related_people.map((pid) => peopleService.getById(pid).catch(() => null))
-      );
-      people = fetched.filter(Boolean);
+      relatedPeople = allPeople.filter(p => theory.related_people.includes(p.id));
     }
   } catch (err) {
     outlet.innerHTML = '';
@@ -89,7 +90,7 @@ export default async function theoryPage(info, outlet) {
   }
 
   outlet.innerHTML = '';
-  outlet.appendChild(buildView(theory, { myVote, people, comments }));
+  outlet.appendChild(buildView(theory, { myVote, relatedPeople, comments, allPeople }));
 
   return () => {};
 }
@@ -104,7 +105,7 @@ function buildLoading() {
   ]);
 }
 
-function buildView(theory, { myVote, people, comments }) {
+function buildView(theory, { myVote, relatedPeople, comments, allPeople }) {
   const canEdit = canEditContent();
   const isAuthor = appStore.get('user') && theory.author_id === appStore.get('user').id;
   const canDelete = canEdit || isAuthor;
@@ -191,16 +192,15 @@ function buildView(theory, { myVote, people, comments }) {
   ]);
 
   /* ---- Body ---- */
-  const body = el('div', { class: 'theory-content' }, [
-    theory.body || theory.summary || 'محتوایی ثبت نشده است.',
-  ]);
+  const bodyHtml = renderMentions(theory.body || theory.summary || 'محتوایی ثبت نشده است.', allPeople);
+  const body = el('div', { class: 'theory-content', html: bodyHtml });
 
   /* ---- Related people ---- */
   let relatedPeopleNode = null;
-  if (people.length) {
+  if (relatedPeople.length) {
     relatedPeopleNode = el('div', { class: 'theory-related-people' }, [
       el('span', { class: 'theory-related-people__label' }, ['افراد مرتبط:']),
-      ...people.map((p) =>
+      ...relatedPeople.map((p) =>
         el(
           'a',
           {
@@ -227,7 +227,7 @@ function buildView(theory, { myVote, people, comments }) {
   ]);
 
   /* ---- Comments ---- */
-  const commentsNode = buildComments(theory, comments);
+  const commentsNode = buildComments(theory, comments, allPeople);
 
   /* ---- Back ---- */
   const back = el(
@@ -281,7 +281,7 @@ function voteButton(dir, active, label, onClick) {
   );
 }
 
-function buildComments(theory, comments) {
+function buildComments(theory, comments, allPeople) {
   const list = el('div', { class: 'comments-list' });
   const renderList = () => {
     list.innerHTML = '';
@@ -302,11 +302,14 @@ function buildComments(theory, comments) {
 
   let composer = null;
   if (user) {
-    const textarea = el('textarea', {
-      class: 'comment-composer__textarea',
+    const editor = createMentionTextarea({
+      people: allPeople,
       placeholder: 'نظر خود را بنویسید...',
-      maxlength: 2000,
+      rows: 3,
+      minHeight: '72px',
+      className: 'comment-composer__textarea'
     });
+
     const submitBtn = el(
       'button',
       {
@@ -314,7 +317,7 @@ function buildComments(theory, comments) {
         class: 'btn btn--primary btn--sm',
         on: {
           click: async () => {
-            const body = textarea.value.trim();
+            const body = editor.getValue().trim();
             if (!body) {
               toast.warning('متن نظر خالی است.');
               return;
@@ -327,7 +330,7 @@ function buildComments(theory, comments) {
                 ...c,
                 profiles: { display_name: name, avatar_url: profile?.avatar_url },
               });
-              textarea.value = '';
+              editor.setValue('');
               renderList();
               toast.success('نظر شما ثبت شد.');
             } catch (err) {
@@ -346,7 +349,7 @@ function buildComments(theory, comments) {
       el('span', { class: 'comment-composer__avatar' }, [
         el('span', { class: 'avatar' }, [profile?.avatar_url ? el('img', { src: profile.avatar_url, alt: name }) : initials(name)]),
       ]),
-      el('div', { class: 'comment-composer__main' }, [textarea, el('div', { class: 'comment-composer__actions' }, [submitBtn])]),
+      el('div', { class: 'comment-composer__main' }, [editor.node, el('div', { class: 'comment-composer__actions' }, [submitBtn])]),
     ]);
   } else {
     composer = el('div', { class: 'comment-composer', style: { justifyContent: 'center', textAlign: 'center', color: 'var(--text-secondary)' } }, [
@@ -370,20 +373,23 @@ function buildComments(theory, comments) {
     const authorName = c.profiles?.display_name || 'کاربر';
     const authorAvatar = c.profiles?.avatar_url;
     const canModify = appStore.get('user')?.id === c.author_id || canEditContent();
+    const htmlContent = renderMentions(c.body, allPeople);
 
     const editBtn = canModify
       ? el('button', {
           type: 'button',
-          class: 'comment__delete', // reuse style
+          class: 'comment__delete',
           style: { marginRight: '8px' },
           'aria-label': 'ویرایش نظر',
           on: {
             click: () => {
-              const input = el('textarea', { class: 'textarea', rows: 3, value: c.body });
+              const editor = createMentionTextarea({ people: allPeople, rows: 3 });
+              editor.setValue(c.body);
+              
               const saveBtn = el('button', { class: 'btn btn--primary', onClick: async () => {
                 try {
-                  await theoriesService.updateComment(c.id, input.value);
-                  c.body = input.value;
+                  await theoriesService.updateComment(c.id, editor.getValue());
+                  c.body = editor.getValue();
                   renderList();
                   handle.close();
                   toast.success('نظر ویرایش شد.');
@@ -392,10 +398,10 @@ function buildComments(theory, comments) {
               
               const handle = openModal({
                 title: 'ویرایش نظر',
-                body: el('div', { class: 'form-field' }, [input]),
+                body: el('div', { class: 'form-field' }, [editor.node]),
                 footer: saveBtn,
                 size: 'sm',
-                initialFocus: input
+                initialFocus: editor.textareaNode
               });
             }
           }
@@ -435,7 +441,7 @@ function buildComments(theory, comments) {
           el('span', { class: 'comment__time' }, [timeAgo(c.created_at)]),
           el('div', { style: { marginInlineStart: 'auto', display: 'flex' } }, [editBtn, deleteBtn].filter(Boolean)),
         ]),
-        el('div', { class: 'comment__body' }, [c.body || '']),
+        el('div', { class: 'comment__body', html: htmlContent }),
       ]),
     ]);
   }
