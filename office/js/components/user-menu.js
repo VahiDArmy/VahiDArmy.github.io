@@ -53,7 +53,6 @@ export function createUserMenu() {
 
     root.appendChild(chip);
 
-    // Removed the console viewer import and menu item to fix the SyntaxError
     const dd = createDropdown(
       chip,
       [
@@ -66,7 +65,7 @@ export function createUserMenu() {
         {
           label: 'جدول‌های من',
           icon: 'table',
-          onClick: () => router.navigate(ROUTES.TABLES),
+          onClick: () => router.navigate('/tables?my=true'), // FIX: Added query param
         },
         { divider: true },
         {
