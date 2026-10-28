@@ -24,12 +24,16 @@ export function normalizeName(name) {
 }
 
 export const apiService = {
-  async getMealsInRange(startDate, endDate) {
-    const { data, error } = await supabase
-      .from('meals')
-      .select('*')
-      .gte('meal_date', startDate)
-      .lte('meal_date', endDate);
+  // Fetch ALL meals to build the multi-week view
+  async getAllMeals() {
+    const { data, error } = await supabase.from('meals').select('*');
+    if (error) throw error;
+    return data || [];
+  },
+
+  // Fetch ALL votes for weekly score calculation
+  async getAllVotes() {
+    const { data, error } = await supabase.from('meal_votes').select('*');
     if (error) throw error;
     return data || [];
   },
