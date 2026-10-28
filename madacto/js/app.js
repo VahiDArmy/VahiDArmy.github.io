@@ -6,8 +6,9 @@ import { supabase, apiService } from './services/api.js';
 import { renderLogin } from './pages/login.page.js';
 import { renderHome } from './pages/home.page.js';
 import { renderUpload } from './pages/upload.page.js';
-import { initTheme, toggleTheme, openModal, showToast } from './utils/ui.js';
+import { initTheme, toggleTheme, openModal, showToast, escapeHtml } from './utils/ui.js';
 import { formatDateShamsi, toGregorian, formatDateISO } from './utils/date.js';
+import { MEAL_TYPES } from './config.js';
 
 const root = document.getElementById('app-main');
 const header = document.getElementById('app-header');
@@ -19,8 +20,6 @@ const icons = {
   moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
   logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
   upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
-  edit: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`,
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`
 };
 
@@ -62,58 +61,47 @@ function renderHeader(user) {
   }
 }
 
-// Global function so Home Page can trigger it
-window.openManualEntryModal = async function(defaultDateShamsi = '', defaultType = 'breakfast') {
+// Global function to open the Manual Entry Modal
+window.openManualEntryModal = async function(dateShamsi = '', type = 'breakfast', currentName = '', currentDesc = '') {
   let allNames = [];
   try {
     allNames = await apiService.getAllMealNames();
   } catch (e) { console.warn('Could not fetch meal names'); }
 
-  const datalistOptions = allNames.map(name => `<option value="${name}">`).join('');
-  const todayShamsi = defaultDateShamsi || formatDateShamsi(new Date());
+  const datalistOptions = allNames.map(name => `<option value="${escapeHtml(name)}">`).join('');
+  const mealTypeLabel = MEAL_TYPES.find(m => m.id === type)?.label || type;
 
   const content = document.createElement('form');
   content.innerHTML = `
-    <div class="form-group">
-      <label>تاریخ (شمسی)</label>
-      <input type="text" id="m-date" value="${todayShamsi}" placeholder="مثلاً 1405/08/15" dir="ltr" required>
-    </div>
-    <div class="form-group">
-      <label>وعده غذایی</label>
-      <select id="m-type">
-        <option value="breakfast" ${defaultType === 'breakfast' ? 'selected' : ''}>صبحانه</option>
-        <option value="lunch1" ${defaultType === 'lunch1' ? 'selected' : ''}>ناهار ۱</option>
-        <option value="lunch2" ${defaultType === 'lunch2' ? 'selected' : ''}>ناهار ۲</option>
-      </select>
+    <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; text-align: center; background: var(--bg-subtle); padding: 4px; border-radius: 4px;">
+      ${dateShamsi} • ${mealTypeLabel}
     </div>
     <div class="form-group">
       <label>نام غذا</label>
-      <input type="text" id="m-name" list="meal-names" required autocomplete="off">
+      <input type="text" id="m-name" list="meal-names" value="${escapeHtml(currentName)}" required autocomplete="off" placeholder="جستجو یا تایپ نام...">
       <datalist id="meal-names">${datalistOptions}</datalist>
     </div>
     <div class="form-group">
-      <label>توضیحات</label>
-      <input type="text" id="m-desc">
+      <label>توضیحات (اختیاری)</label>
+      <input type="text" id="m-desc" value="${escapeHtml(currentDesc)}" placeholder="مثلاً همراه با نوشابه">
     </div>
   `;
 
   const modal = openModal({
-    title: 'ثبت / ویرایش غذا',
+    title: currentName ? 'ویرایش غذا' : 'ثبت غذا',
     content: content,
     actions: [
       {
         label: 'ذخیره',
         primary: true,
         onClick: async () => {
-          const dateStr = document.getElementById('m-date').value;
-          const type = document.getElementById('m-type').value;
           const name = document.getElementById('m-name').value;
           const desc = document.getElementById('m-desc').value;
 
-          if (!dateStr || !name) return showToast('تاریخ و نام غذا الزامی است', 'error');
+          if (!name) return showToast('نام غذا الزامی است', 'error');
 
           try {
-            const parts = dateStr.split('/').map(Number);
+            const parts = dateShamsi.split('/').map(Number);
             if (parts.length !== 3) throw new Error('فرمت تاریخ نامعتبر است');
             const [gy, gm, gd] = toGregorian(parts[0], parts[1], parts[2]);
             const iso = formatDateISO(new Date(gy, gm - 1, gd));
@@ -122,12 +110,12 @@ window.openManualEntryModal = async function(defaultDateShamsi = '', defaultType
               meal_date: iso,
               meal_type: type,
               name: name.trim(),
-              description: desc || null
+              description: desc.trim() || null
             }]);
             
             showToast('غذا با موفقیت ذخیره شد', 'success');
             modal.close();
-            // Trigger refresh
+            
             if (window.location.hash === '' || window.location.hash === '#/') {
               window.dispatchEvent(new HashChangeEvent('hashchange'));
             }
