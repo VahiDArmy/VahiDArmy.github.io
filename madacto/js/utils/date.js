@@ -1,5 +1,5 @@
 /**
- * Date Utilities for Madacto (Jalali <-> Gregorian)
+ * Date Utilities (1. Timezone Fix)
  */
 
 export function toJalali(gy, gm, gd) {
@@ -45,25 +45,27 @@ export function toGregorian(jy, jm, jd) {
   return [gy, gm, gd];
 }
 
-/** Format JS Date to YYYY-MM-DD (Gregorian) */
+/** FIXED: Use local time instead of UTC to avoid 1-day shift */
 export function formatDateISO(date) {
   const d = new Date(date);
-  return d.toISOString().split('T')[0];
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
-/** Format JS Date to Shamsi "1405/08/12" */
 export function formatDateShamsi(date) {
   const d = new Date(date);
   const [jy, jm, jd] = toJalali(d.getFullYear(), d.getMonth() + 1, d.getDate());
   return `${jy}/${String(jm).padStart(2, '0')}/${String(jd).padStart(2, '0')}`;
 }
 
-/** Get Start of Current Week (Saturday) */
 export function getStartOfWeek() {
   const now = new Date();
-  const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const day = now.getDay();
   const diff = (day === 6) ? 0 : -(day + 1);
-  const start = new Date(now.setDate(now.getDate() + diff));
-  start.setHours(0, 0, 0, 0);
+  const start = new Date(now);
+  start.setDate(start.getDate() + diff);
+  start.setHours(0, 0, 0, 0); // Ensure local midnight
   return start;
 }
