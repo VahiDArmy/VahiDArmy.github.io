@@ -3,6 +3,7 @@
  */
 
 import { supabase } from '../services/api.js';
+import { showToast } from '../utils/ui.js';
 
 export function renderLogin(root, onSuccess) {
   const isSignup = window.location.hash === '#/signup';
@@ -14,12 +15,12 @@ export function renderLogin(root, onSuccess) {
         <p>برای رزرو غذا وارد حساب خود شوید.</p>
         <form id="auth-form">
           <div class="input-group">
-            <label>ایمیل</label>
-            <input type="email" id="email" dir="ltr" required>
+            <label for="email-input">ایمیل</label>
+            <input type="email" id="email-input" dir="ltr" autocomplete="email" required>
           </div>
           <div class="input-group">
-            <label>رمز عبور</label>
-            <input type="password" id="password" dir="ltr" required>
+            <label for="pwd-input">رمز عبور</label>
+            <input type="password" id="pwd-input" dir="ltr" autocomplete="${isSignup ? 'new-password' : 'current-password'}" required>
           </div>
           <button type="submit" class="btn btn--primary" style="width:100%;margin-top:8px">
             ${isSignup ? 'ثبت‌نام' : 'ورود'}
@@ -36,9 +37,10 @@ export function renderLogin(root, onSuccess) {
 
   document.getElementById('auth-form').onsubmit = async (e) => {
     e.preventDefault();
-    const email = document.getElementById('email').value;
-    const pwd = document.getElementById('password').value;
+    const email = document.getElementById('email-input').value;
+    const pwd = document.getElementById('pwd-input').value;
     const btn = e.target.querySelector('button');
+    
     btn.textContent = 'در حال پردازش...';
     btn.disabled = true;
 
@@ -46,14 +48,16 @@ export function renderLogin(root, onSuccess) {
       if (isSignup) {
         const { error } = await supabase.auth.signUp({ email, password: pwd });
         if (error) throw error;
-        alert('ایمیل تأیید ارسال شد. لطفاً پس از تأیید وارد شوید.');
+        showToast('ایمیل تأیید ارسال شد. لطفاً پس از تأیید وارد شوید.', 'success');
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
         if (error) throw error;
         onSuccess();
       }
     } catch (err) {
-      alert(err.message);
+      showToast(err.message, 'error');
+    } finally {
+      // 2. Fix Freeze: Always restore button state
       btn.textContent = isSignup ? 'ثبت‌نام' : 'ورود';
       btn.disabled = false;
     }
