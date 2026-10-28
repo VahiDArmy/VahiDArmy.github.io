@@ -9,9 +9,19 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { 
     persistSession: true, 
     autoRefreshToken: true, 
-    storageKey: 'office-auth' // SHARED AUTH WITH MAIN APP
+    storageKey: 'office-auth'
   }
 });
+
+// Normalization Helper
+export function normalizeName(name) {
+  if (!name) return '';
+  return name
+    .replace(/ي/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/\s+/g, '')
+    .trim();
+}
 
 export const apiService = {
   async getMealsInRange(startDate, endDate) {
@@ -22,6 +32,30 @@ export const apiService = {
       .lte('meal_date', endDate);
     if (error) throw error;
     return data || [];
+  },
+
+  // Fetch all votes joined with meal names for Overall Calculation
+  async getOverallScores() {
+    const { data, error } = await supabase
+      .from('meal_votes')
+      .select('vote, meals!inner(name)');
+    if (error) throw error;
+    
+    const scores = {};
+    data.forEach(v => {
+      if (!v.meals || !v.meals.name) return;
+      const norm = normalizeName(v.meals.name);
+      scores[norm] = (scores[norm] || 0) + v.vote;
+    });
+    return scores;
+  },
+
+  // Get unique meal names for datalist autocomplete
+  async getAllMealNames() {
+    const { data, error } = await supabase.from('meals').select('name');
+    if (error) throw error;
+    const uniqueNames = [...new Set(data.map(m => m.name.trim()))];
+    return uniqueNames.sort();
   },
 
   async getMyVotes() {
@@ -49,7 +83,6 @@ export const apiService = {
   },
 
   async saveMeals(mealsToSave) {
-    // mealsToSave: [{ meal_date, meal_type, name, description }]
     const { error } = await supabase.from('meals').upsert(mealsToSave, { onConflict: 'meal_date,meal_type' });
     if (error) throw error;
   },
