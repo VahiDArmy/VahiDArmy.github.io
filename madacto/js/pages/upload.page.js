@@ -5,6 +5,7 @@
 import { apiService } from '../services/api.js';
 import { WEEKDAYS, MEAL_TYPES } from '../config.js';
 import { toGregorian, formatDateISO, formatDateShamsi } from '../utils/date.js';
+import { escapeHtml, showToast } from '../utils/ui.js';
 
 export function renderUpload(root) {
   root.innerHTML = `
@@ -17,7 +18,8 @@ export function renderUpload(root) {
 
       <div id="upload-state">
         <label class="upload-area">
-          <input type="file" id="file-input" accept="image/*" />
+          <!-- 17. MIME restricted, 13. A11y overlay handled in CSS -->
+          <input type="file" id="file-input" accept="image/jpeg,image/png" />
           <div style="font-size: 40px; margin-bottom: 12px;">📷</div>
           <div style="font-weight: bold; margin-bottom: 4px;">برای انتخاب عکس کلیک کنید</div>
           <div style="font-size: 12px; color: var(--text-secondary);">فرمت‌های مجاز: JPG, PNG</div>
@@ -41,9 +43,7 @@ export function renderUpload(root) {
                 ${MEAL_TYPES.map(mt => `<th>${mt.label}</th>`).join('')}
               </tr>
             </thead>
-            <tbody id="preview-tbody">
-              <!-- Rows will be injected here -->
-            </tbody>
+            <tbody id="preview-tbody"></tbody>
           </table>
         </div>
         <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
@@ -60,30 +60,27 @@ export function renderUpload(root) {
   const previewState = document.getElementById('preview-state');
   const previewTbody = document.getElementById('preview-tbody');
 
-  let extractedData = []; // Array of { date_iso, day_name, meals: { breakfast, lunch1, lunch2 } }
+  let extractedData = [];
 
   fileInput.onchange = async (e) => {
     const file = e.target.files[0];
+    // 4. Reset file input value
+    fileInput.value = ''; 
+    
     if (!file) return;
 
     uploadState.style.display = 'none';
     loadingState.style.display = 'block';
 
     try {
-      // 1. Call AI Edge Function
       const result = await apiService.extractFromImage(file);
-      
-      // 2. Parse AI Result based on expected format
-      // Assuming result has: { week_start_date: "1405/08/10", days: [{ day_name: "شنبه", meals: [{ type: "breakfast", name: "املت" }] }] }
       
       if (!result.days || result.days.length === 0) {
         throw new Error('هوش مصنوعی نتوانست داده‌ای استخراج کند.');
       }
 
-      // 3. Determine start date
       let startDateGregorian = null;
       if (result.week_start_date) {
-        // Assume format YYYY/MM/DD in Shamsi
         const parts = result.week_start_date.split('/').map(Number);
         if (parts.length === 3) {
           const [gy, gm, gd] = toGregorian(parts[0], parts[1], parts[2]);
@@ -92,16 +89,14 @@ export function renderUpload(root) {
       }
 
       if (!startDateGregorian) {
-        // If AI didn't find date, ask user (for now, default to current week start)
-        // TODO: Add a prompt modal here to ask user for date.
         const now = new Date();
         const day = now.getDay();
         const diff = (day === 6) ? 0 : -(day + 1);
         startDateGregorian = new Date(now.setDate(now.getDate() + diff));
-        alert('تاریخ در عکس یافت نشد. تاریخ شروع هفته جاری در نظر گرفته شد. لطفاً در پیش‌نمایش بررسی کنید.');
+        startDateGregorian.setHours(0,0,0,0); // 1. Date fix
+        showToast('تاریخ در عکس یافت نشد. تاریخ هفته جاری در نظر گرفته شد.', 'success');
       }
 
-      // 4. Build Preview Data Structure
       const daysMap = {};
       WEEKDAYS.forEach((d, i) => {
         const dObj = new Date(startDateGregorian);
@@ -113,29 +108,22 @@ export function renderUpload(root) {
         };
       });
 
-      // 5. Merge AI Data (Resolving the Paradoxes)
       result.days.forEach(dayData => {
         const dName = dayData.day_name;
-        if (!daysMap[dName]) return; // Skip unknown days
+        if (!daysMap[dName]) return;
 
         const day = daysMap[dName];
-        
-        // Sort meals to process breakfast first, then lunches
         const sortedMeals = (dayData.meals || []).sort((a, b) => {
           const order = { breakfast: 0, lunch1: 1, lunch2: 2 };
           return (order[a.type] || 0) - (order[b.type] || 0);
         });
 
         let lunchCount = 0;
-
         sortedMeals.forEach(m => {
           if (m.type === 'breakfast' && !day.meals.breakfast.name) {
             day.meals.breakfast = { name: m.name, desc: m.description || '' };
           } else if (m.type === 'lunch1' || m.type === 'lunch2' || m.type === 'lunch') {
-            // Smart assignment for lunches
             const targetKey = lunchCount === 0 ? 'lunch1' : 'lunch2';
-            
-            // Check for duplicates
             const isDuplicate = 
               (day.meals.lunch1.name && day.meals.lunch1.name.trim() === m.name.trim()) ||
               (day.meals.lunch2.name && day.meals.lunch2.name.trim() === m.name.trim());
@@ -148,7 +136,6 @@ export function renderUpload(root) {
         });
       });
 
-      // 6. Prepare data for rendering
       extractedData = WEEKDAYS.map(dName => ({
         day_name: dName,
         date_iso: daysMap[dName].date_iso,
@@ -161,7 +148,7 @@ export function renderUpload(root) {
       previewState.style.display = 'block';
 
     } catch (err) {
-      alert('خطا در پردازش عکس: ' + err.message);
+      showToast('خطا در پردازش عکس: ' + err.message, 'error');
       loadingState.style.display = 'none';
       uploadState.style.display = 'block';
     }
@@ -172,21 +159,20 @@ export function renderUpload(root) {
     extractedData.forEach((day, dIdx) => {
       const tr = document.createElement('tr');
       
-      // Header (Day Name + Date)
       const tdDay = document.createElement('td');
+      // 14. XSS Escape
       tdDay.innerHTML = `
         <div style="font-weight:bold">${day.day_name}</div>
-        <input type="text" value="${day.date_shamsi}" class="date-input" data-didx="${dIdx}" style="margin-top:4px; text-align:center" dir="ltr" />
+        <input type="text" value="${escapeHtml(day.date_shamsi)}" class="date-input" data-didx="${dIdx}" style="margin-top:4px; text-align:center" dir="ltr" aria-label="تاریخ" />
       `;
       tr.appendChild(tdDay);
 
-      // Meals
       MEAL_TYPES.forEach(mt => {
         const meal = day.meals[mt.id];
         const tdMeal = document.createElement('td');
         tdMeal.innerHTML = `
-          <input type="text" value="${meal.name}" placeholder="نام غذا..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" />
-          <input type="text" value="${meal.desc}" placeholder="توضیحات (اختیاری)..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="margin-top:4px" />
+          <input type="text" value="${escapeHtml(meal.name)}" placeholder="نام غذا..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" aria-label="نام غذا" />
+          <input type="text" value="${escapeHtml(meal.desc)}" placeholder="توضیحات..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="margin-top:4px" aria-label="توضیحات" />
         `;
         tr.appendChild(tdMeal);
       });
@@ -206,8 +192,6 @@ export function renderUpload(root) {
 
     try {
       const mealsToSave = [];
-
-      // Read data from DOM (allows user edits)
       document.querySelectorAll('.name-input').forEach(input => {
         const dIdx = parseInt(input.dataset.didx);
         const mtype = input.dataset.mtype;
@@ -218,9 +202,8 @@ export function renderUpload(root) {
           const desc = descInput ? descInput.value.trim() : '';
           
           const dateInput = document.querySelector(`.date-input[data-didx="${dIdx}"]`);
-          let date_iso = extractedData[dIdx].date_iso; // Fallback
+          let date_iso = extractedData[dIdx].date_iso;
           
-          // If user changed the date, we need to convert it back
           if (dateInput && dateInput.value !== extractedData[dIdx].date_shamsi) {
             const parts = dateInput.value.split('/').map(Number);
             if (parts.length === 3) {
@@ -243,11 +226,11 @@ export function renderUpload(root) {
       }
 
       await apiService.saveMeals(mealsToSave);
-      alert('اطلاعات با موفقیت ذخیره شد.');
+      showToast('اطلاعات با موفقیت ذخیره شد.', 'success');
       window.location.hash = '#/';
 
     } catch (err) {
-      alert('خطا در ذخیره: ' + err.message);
+      showToast('خطا در ذخیره: ' + err.message, 'error');
       btn.textContent = 'تایید و ذخیره در دیتابیس';
       btn.disabled = false;
     }
