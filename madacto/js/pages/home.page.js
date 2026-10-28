@@ -15,7 +15,7 @@ const iconPlus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const iconEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`;
 
 export async function renderHome(root) {
-  root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--text-secondary)">در حال بارگذاری برنامه هفتگی...</div>`;
+  root.innerHTML = `<div class="container" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px">در حال بارگذاری...</div>`;
 
   try {
     const dates = [];
@@ -37,14 +37,6 @@ export async function renderHome(root) {
     const mealMap = {};
     meals.forEach(m => { mealMap[`${m.meal_date}_${m.meal_type}`] = m; });
 
-    // Calculate Weekly Scores for current view
-    const weeklyScores = {};
-    meals.forEach(m => {
-      // Sum of votes for this specific meal instance
-      weeklyScores[m.id] = Object.values(myVotes).length > 0 ? 0 : 0; // Placeholder, we'll calculate from all votes below
-    });
-
-    // We need all votes for the current week's meals to calculate weekly scores correctly
     const mealIds = meals.map(m => m.id);
     let allWeekVotes = [];
     if (mealIds.length > 0) {
@@ -57,7 +49,6 @@ export async function renderHome(root) {
       weeklyVoteSums[v.meal_id] = (weeklyVoteSums[v.meal_id] || 0) + v.vote;
     });
 
-    // Find the worst weekly score
     let worstScore = 0;
     let worstMealId = null;
     
@@ -123,9 +114,7 @@ export async function renderHome(root) {
           else if (overall < 0) bgClass = 'overall-negative';
 
           const worstClass = isWorst ? 'worst-weekly' : '';
-          
           const weeklyClass = weekly > 0 ? 'positive' : weekly < 0 ? 'negative' : '';
-
           const upClass = myVote === 1 ? 'active-up' : '';
           const downClass = myVote === -1 ? 'active-down' : '';
 
@@ -148,7 +137,7 @@ export async function renderHome(root) {
             <td>
               <button class="add-meal-btn" data-date="${shamsiStr}" data-type="${mt.id}">
                 ${iconPlus}
-                <span>ثبت غذا</span>
+                <span>ثبت</span>
               </button>
             </td>
           `;
@@ -204,8 +193,10 @@ export async function renderHome(root) {
 
         try {
           await apiService.vote(mealId, nextVal);
-          // Re-render to update weekly/overall scores and worst meal highlight
-          renderHome(root);
+          // Re-render silently to update weekly/overall scores and worst meal highlight without flashing loading text
+          const scrollPos = window.scrollY;
+          await renderHome(root);
+          window.scrollTo(0, scrollPos);
         } catch (err) {
           showToast('خطا در ثبت رأی', 'error');
           renderHome(root);
@@ -214,6 +205,6 @@ export async function renderHome(root) {
     });
 
   } catch (err) {
-    root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--danger-500)">خطا در دریافت اطلاعات: ${err.message}</div>`;
+    root.innerHTML = `<div class="container" style="text-align:center;padding:20px;color:var(--danger-500);font-size:12px">خطا در دریافت اطلاعات: ${err.message}</div>`;
   }
 }
