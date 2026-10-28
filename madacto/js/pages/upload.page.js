@@ -7,7 +7,6 @@ import { WEEKDAYS, MEAL_TYPES } from '../config.js';
 import { toGregorian, formatDateISO, formatDateShamsi } from '../utils/date.js';
 import { escapeHtml, showToast, openModal } from '../utils/ui.js';
 
-// The exact prompt used in the Edge Function
 const AI_PROMPT = `You are an expert OCR system for a Persian office restaurant menu.
 Extract the meal schedule from the provided image. The image might contain multiple weeks.
 
@@ -106,13 +105,12 @@ export function renderUpload(root) {
       throw new Error('داده‌ای استخراج نشد.');
     }
 
-    // Group days by week dynamically
     const weeksMap = {}; 
 
     result.days.forEach(dayData => {
       const dName = dayData.day_name;
       const dayIndex = WEEKDAYS.indexOf(dName);
-      if (dayIndex === -1) return; // Skip invalid days
+      if (dayIndex === -1) return; 
 
       let dateObj = null;
       if (dayData.date_shamsi) {
@@ -123,7 +121,6 @@ export function renderUpload(root) {
         }
       }
       
-      // Fallback to current week if date missing
       if (!dateObj) {
         const now = new Date();
         const currentDay = now.getDay();
@@ -138,19 +135,14 @@ export function renderUpload(root) {
       const isoDate = formatDateISO(dateObj);
       const shamsiDate = formatDateShamsi(dateObj);
 
-      // Find week start (Saturday) for this day
       const weekStart = new Date(dateObj);
       weekStart.setDate(weekStart.getDate() - dayIndex);
       const weekKey = formatDateISO(weekStart);
 
       if (!weeksMap[weekKey]) {
-        weeksMap[weekKey] = {
-          start_date: weekStart,
-          days: {}
-        };
+        weeksMap[weekKey] = { start_date: weekStart, days: {} };
       }
 
-      // Merge logic: avoid duplicates, handle lunch1/lunch2
       const day = weeksMap[weekKey].days[shamsiDate] || {
         day_name: dName,
         date_iso: isoDate,
@@ -183,7 +175,6 @@ export function renderUpload(root) {
       weeksMap[weekKey].days[shamsiDate] = day;
     });
 
-    // Flatten into a single array for the preview, sorted by date
     extractedData = [];
     const sortedWeekKeys = Object.keys(weeksMap).sort();
     sortedWeekKeys.forEach(wk => {
@@ -222,48 +213,73 @@ export function renderUpload(root) {
 
   // --- Manual AI Chat (Copy Prompt & Paste JSON) ---
   document.getElementById('btn-manual-ai').onclick = () => {
+    const wrapper = document.createElement('div');
+
+    // Part 1: Prompt Copying
+    const p1 = document.createElement('p');
+    p1.style.fontSize = '12px';
+    p1.style.marginBottom = '8px';
+    p1.textContent = '۱. پرامپت زیر را کپی کنید و همراه با عکس به هوش مصنوعی بدهید.';
+
     const promptTextArea = document.createElement('textarea');
-    promptTextArea.className = 'form-group';
     promptTextArea.style.width = '100%';
     promptTextArea.style.height = '120px';
     promptTextArea.style.fontFamily = 'monospace';
     promptTextArea.style.fontSize = '10px';
     promptTextArea.style.direction = 'ltr';
+    promptTextArea.style.padding = '8px';
+    promptTextArea.style.border = '1px solid var(--border-default)';
+    promptTextArea.style.borderRadius = 'var(--radius-sm)';
     promptTextArea.value = AI_PROMPT;
     promptTextArea.readOnly = true;
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'btn btn--secondary btn--sm';
     copyBtn.textContent = 'کپی پرامپت';
-    copyBtn.style.marginTop = '4px';
+    copyBtn.style.marginTop = '8px';
+    copyBtn.style.display = 'block';
+    copyBtn.style.width = '100%';
     copyBtn.onclick = () => {
-      navigator.clipboard.writeText(AI_PROMPT);
+      promptTextArea.select();
+      document.execCommand('copy');
+      navigator.clipboard.writeText(AI_PROMPT).catch(() => {});
       copyBtn.textContent = 'کپی شد!';
       setTimeout(() => copyBtn.textContent = 'کپی پرامپت', 2000);
     };
 
+    // Separator
+    const hr = document.createElement('hr');
+    hr.style.margin = '16px 0';
+    hr.style.border = '0';
+    hr.style.borderTop = '1px solid var(--border-default)';
+
+    // Part 2: JSON Input
+    const p2 = document.createElement('p');
+    p2.style.fontSize = '12px';
+    p2.style.marginBottom = '8px';
+    p2.textContent = '۲. پاسخ JSON دریافتی را در کادر زیر پیست کنید:';
+
     const jsonInput = document.createElement('textarea');
-    jsonInput.className = 'form-group';
     jsonInput.style.width = '100%';
     jsonInput.style.height = '100px';
     jsonInput.style.fontFamily = 'monospace';
     jsonInput.style.direction = 'ltr';
+    jsonInput.style.padding = '8px';
+    jsonInput.style.border = '1px solid var(--border-default)';
+    jsonInput.style.borderRadius = 'var(--radius-sm)';
     jsonInput.placeholder = '{"days": [...]}';
-    jsonInput.style.marginTop = '12px';
 
-    const content = document.createElement('div');
-    content.innerHTML = `
-      <p style="font-size: 12px; margin-bottom: 8px;">۱. پرامپت زیر را کپی کنید و همراه با عکس به هوش مصنوعی بدهید.</p>
-    `;
-    content.appendChild(promptTextArea);
-    content.appendChild(copyBtn);
-    content.innerHTML += `<hr style="margin: 16px 0; border: 0; border-top: 1px solid var(--border-default);">`;
-    content.innerHTML += `<p style="font-size: 12px; margin-bottom: 8px;">۲. پاسخ JSON دریافتی را در کادر زیر پیست کنید:</p>`;
-    content.appendChild(jsonInput);
+    // Assemble
+    wrapper.appendChild(p1);
+    wrapper.appendChild(promptTextArea);
+    wrapper.appendChild(copyBtn);
+    wrapper.appendChild(hr);
+    wrapper.appendChild(p2);
+    wrapper.appendChild(jsonInput);
 
     const modal = openModal({
       title: 'استفاده از هوش مصنوعی‌های دیگر',
-      content: content,
+      content: wrapper,
       actions: [
         {
           label: 'پردازش JSON',
@@ -274,7 +290,7 @@ export function renderUpload(root) {
               modal.close();
               uploadState.style.display = 'none';
               loadingState.style.display = 'block';
-              setTimeout(() => processAIResult(parsed), 100); // short delay to show loading
+              setTimeout(() => processAIResult(parsed), 100);
             } catch (err) {
               showToast('فرمت JSON نامعتبر است.', 'error');
             }
