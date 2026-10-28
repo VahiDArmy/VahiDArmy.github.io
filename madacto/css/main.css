@@ -107,25 +107,103 @@ button { font: inherit; cursor: pointer; }
 .toast--success { background: var(--success-500); color: white; }
 @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
+/* Week Navigation (NEW STYLISH DESIGN) */
+.week-nav { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  margin-bottom: var(--space-4); 
+  background: var(--bg-surface); 
+  padding: var(--space-3) var(--space-4); 
+  border-radius: var(--radius-lg); 
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-sm);
+}
+.week-nav__center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+.week-nav__title {
+  font-size: var(--text-md);
+  font-weight: bold;
+  color: var(--text-primary);
+}
+.week-nav__range {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  direction: ltr;
+  background: var(--bg-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+.btn-nav {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-default);
+  background: var(--bg-app);
+  color: var(--text-secondary);
+  display: flex; align-items: center; justify-content: center;
+  transition: 0.2s;
+}
+.btn-nav:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-nav svg { width: 18px; height: 18px; }
+
 /* Menu Table */
-.week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); background: var(--bg-surface); padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg); border: 1px solid var(--border-default); }
-.week-nav h2 { margin: 0; font-size: var(--text-lg); }
 .meal-table-wrap { overflow-x: auto; background: var(--bg-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid var(--border-default); }
 .meal-table { width: 100%; border-collapse: collapse; min-width: 700px; }
-.meal-table th, .meal-table td { padding: var(--space-3); border-bottom: 1px solid var(--border-subtle); border-inline-end: 1px solid var(--border-subtle); text-align: center; vertical-align: top; }
+.meal-table th, .meal-table td { padding: var(--space-3); border-bottom: 1px solid var(--border-subtle); border-inline-end: 1px solid var(--border-subtle); text-align: center; vertical-align: middle; }
 .meal-table th:last-child, .meal-table td:last-child { border-inline-end: none; }
-.meal-table th:first-child, .meal-table td:first-child { text-align: right; background: var(--bg-subtle); width: 140px; }
-.meal-table th { background: var(--bg-muted); font-weight: 600; color: var(--text-secondary); }
+.meal-table th:first-child, .meal-table td:first-child { text-align: right; background: var(--bg-subtle); width: 130px; }
+.meal-table th { background: var(--bg-muted); font-weight: 600; font-size: var(--text-sm); color: var(--text-secondary); padding-block: var(--space-4); }
 .meal-table th:first-child { background: var(--bg-muted); }
 
-.day-name { font-weight: bold; font-size: var(--text-sm); margin-bottom: 4px; }
-.day-date { font-size: var(--text-md); font-weight: 800; color: var(--accent); direction: ltr; letter-spacing: 0.5px; }
+/* Date Cell (Stylish & Small) */
+.day-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.day-name { font-weight: 700; font-size: var(--text-sm); color: var(--text-primary); }
+.day-date { 
+  font-size: 10px; 
+  font-weight: 600; 
+  color: var(--text-secondary); 
+  direction: ltr; 
+  background: var(--bg-muted); 
+  padding: 2px 6px; 
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  letter-spacing: 0.5px;
+}
 
-.meal-name { font-size: var(--text-sm); font-weight: 500; margin-bottom: var(--space-2); color: var(--text-primary); }
-.meal-desc { font-size: var(--text-xs); color: var(--text-secondary); margin-bottom: var(--space-3); }
+/* Meal Cell */
+.meal-name { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-1); color: var(--text-primary); }
+.meal-desc { font-size: 11px; color: var(--text-secondary); margin-bottom: var(--space-2); }
+.empty-meal { font-size: 12px; color: var(--text-tertiary); display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.empty-meal svg { width: 16px; height: 16px; opacity: 0.5; }
 
-.vote-btn { background: var(--bg-app); border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 4px 10px; cursor: pointer; transition: all 0.2s; font-size: 16px; color: var(--text-tertiary); }
-.vote-btn:hover { background: var(--bg-muted); }
+/* Vote Buttons */
+.vote-group { display: flex; justify-content: center; gap: 6px; }
+.vote-btn { 
+  width: 32px; height: 32px; 
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-app); 
+  border: 1px solid var(--border-default); 
+  border-radius: var(--radius-md); 
+  cursor: pointer; 
+  transition: all 0.2s; 
+  font-size: 14px; 
+  color: var(--text-tertiary); 
+}
+.vote-btn:hover { background: var(--bg-muted); transform: scale(1.05); }
 .vote-btn.active-up { background: var(--success-50); color: var(--success-500); border-color: var(--success-500); }
 .vote-btn.active-down { background: var(--danger-50); color: var(--danger-500); border-color: var(--danger-500); }
 
@@ -150,9 +228,10 @@ button { font: inherit; cursor: pointer; }
 .form-group input:focus, .form-group select:focus { border-color: var(--accent); outline: none; }
 
 @media (max-width: 600px) {
-  .header__brand span:last-child { display: none; } /* Hide "Madacto" text on very small screens, keep logo */
+  .header__brand span:last-child { display: none; }
   .header__email { display: none; }
   .header__actions { gap: 2px; }
   .icon-btn { width: 32px; height: 32px; }
   .icon-btn svg { width: 18px; height: 18px; }
+  .week-nav__title { font-size: var(--text-sm); }
 }
