@@ -42,6 +42,8 @@ export const NAV_ITEMS = Object.freeze([
   { key: 'characterology', label: 'شخصیت شناسی', href: ROUTES.CHARACTEROLOGY, icon: 'user' },
   { key: 'rankings',       label: 'رتبه‌بندی',   href: ROUTES.RANKINGS,       icon: 'trophy' },
   { key: 'tables',         label: 'جدول‌ها',     href: ROUTES.TABLES,         icon: 'table' },
+  // لینک جدید به مینی‌اپلیکیشن ماداکتو
+  { key: 'madacto',        label: 'رزرو غذا',    href: '../madacto/index.html', icon: 'message', isExternal: true },
 ]);
 
 export const THEMES = Object.freeze({ LIGHT: 'light', DARK: 'dark' });
