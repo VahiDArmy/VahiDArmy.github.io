@@ -4,36 +4,45 @@
 
 import { apiService } from '../services/api.js';
 import { WEEKDAYS, MEAL_TYPES } from '../config.js';
-import { getStartOfWeek, formatDateISO } from '../utils/date.js';
-import { escapeHtml } from '../utils/ui.js';
+import { getStartOfWeek, formatDateISO, formatDateShamsi, toJalali } from '../utils/date.js';
+import { escapeHtml, showToast } from '../utils/ui.js';
+
+let currentWeekStart = getStartOfWeek();
 
 export async function renderHome(root) {
   root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--text-secondary)">در حال بارگذاری برنامه هفتگی...</div>`;
 
   try {
-    const start = getStartOfWeek();
     const dates = [];
     for (let i = 0; i < 5; i++) {
-      const d = new Date(start);
+      const d = new Date(currentWeekStart);
       d.setDate(d.getDate() + i);
       dates.push(formatDateISO(d));
     }
 
-    const meals = await apiService.getWeeklyMeals(dates);
+    // Fetch a range that covers the current week to ensure we get all meals
+    const startDateISO = dates[0];
+    const endDateISO = dates[4];
+    
+    const meals = await apiService.getMealsInRange(startDateISO, endDateISO);
     const myVotes = await apiService.getMyVotes();
 
     const mealMap = {};
     meals.forEach(m => { mealMap[`${m.meal_date}_${m.meal_type}`] = m; });
 
+    // Calculate Week Title (e.g., هفته ۱۲ آبان تا ۱۶ آبان)
+    const startShamsi = formatDateShamsi(currentWeekStart);
+    const endShamsi = formatDateShamsi(new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate() + 4)));
+
     let tableHTML = `
       <div class="container">
-        <div class="home-header-row" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:16px;flex-wrap:wrap">
-          <div>
-            <h2 style="margin:0 0 8px;font-size:24px">برنامه غذایی هفته</h2>
-            <p style="margin:0;color:var(--text-secondary);font-size:14px">به غذاهای خوب رأی مثبت و به غذاهای ضعیف رأی منفی بدهید.</p>
-          </div>
-          <a href="#/upload" class="btn btn--secondary btn--sm">📷 آپلود عکس منو</a>
+        
+        <div class="week-nav">
+          <button id="prev-week" class="btn btn--secondary btn--sm">&rarr; هفته قبل</button>
+          <h2>برنامه غذایی (${startShamsi} تا ${endShamsi})</h2>
+          <button id="next-week" class="btn btn--secondary btn--sm">هفته بعد &larr;</button>
         </div>
+
         <div class="meal-table-wrap">
           <table class="meal-table">
             <thead>
@@ -46,8 +55,15 @@ export async function renderHome(root) {
     `;
 
     dates.forEach((date, idx) => {
+      const dObj = new Date(currentWeekStart);
+      dObj.setDate(dObj.getDate() + idx);
+      const shamsiStr = formatDateShamsi(dObj);
+
       tableHTML += `<tr>`;
-      tableHTML += `<td>${WEEKDAYS[idx]}</td>`;
+      tableHTML += `<td>
+        <div class="day-name">${WEEKDAYS[idx]}</div>
+        <div class="day-date">${shamsiStr}</div>
+      </td>`;
 
       MEAL_TYPES.forEach(mt => {
         const meal = mealMap[`${date}_${mt.id}`];
@@ -56,7 +72,6 @@ export async function renderHome(root) {
           const upClass = vote === 1 ? 'active-up' : '';
           const downClass = vote === -1 ? 'active-down' : '';
           
-          // 14. XSS Escape
           tableHTML += `
             <td>
               <div class="meal-name">${escapeHtml(meal.name)}</div>
@@ -77,7 +92,17 @@ export async function renderHome(root) {
     tableHTML += `</tbody></table></div></div>`;
     root.innerHTML = tableHTML;
 
-    // 3. Fix Vote Flash: Optimistic UI update
+    // Navigation Logic
+    document.getElementById('prev-week').onclick = () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+      renderHome(root);
+    };
+    document.getElementById('next-week').onclick = () => {
+      currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+      renderHome(root);
+    };
+
+    // Attach Vote Logic
     document.querySelectorAll('.vote-btn').forEach(btn => {
       btn.onclick = async (e) => {
         e.preventDefault();
@@ -90,7 +115,6 @@ export async function renderHome(root) {
         const upBtn = parent.querySelector('[data-val="1"]');
         const downBtn = parent.querySelector('[data-val="-1"]');
 
-        // Optimistic Update
         upBtn.className = `vote-btn ${nextVal === 1 ? 'active-up' : ''}`;
         downBtn.className = `vote-btn ${nextVal === -1 ? 'active-down' : ''}`;
         myVotes[mealId] = nextVal;
@@ -98,7 +122,6 @@ export async function renderHome(root) {
         try {
           await apiService.vote(mealId, nextVal);
         } catch (err) {
-          // Revert on failure
           upBtn.className = `vote-btn ${current === 1 ? 'active-up' : ''}`;
           downBtn.className = `vote-btn ${current === -1 ? 'active-down' : ''}`;
           myVotes[mealId] = current;
