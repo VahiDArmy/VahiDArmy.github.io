@@ -12,6 +12,11 @@ const root = document.getElementById('app-main');
 const header = document.getElementById('app-header');
 const footer = document.getElementById('app-footer');
 
+// Icons
+const iconSun = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>`;
+const iconMoon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`;
+const iconLogout = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`;
+
 // Initialize Theme
 initTheme();
 
@@ -25,15 +30,18 @@ function renderHeader(user) {
         <span>ماداکتو</span>
       </div>
       <div class="header__user">
-        <button id="theme-btn" class="btn btn--ghost btn--sm" aria-label="تغییر تم">${isDark ? '☀️' : '🌙'}</button>
-        ${user ? `<span class="header__email" title="${user.email}">${user.email}</span><button id="logout-btn" class="btn btn--ghost btn--sm">خروج</button>` : ''}
+        <button id="theme-btn" class="icon-btn" aria-label="تغییر تم">${isDark ? iconSun : iconMoon}</button>
+        ${user ? `
+          <span class="header__email" title="${user.email}">${user.email}</span>
+          <button id="logout-btn" class="icon-btn" aria-label="خروج">${iconLogout}</button>
+        ` : ''}
       </div>
     </div>
   `;
 
   document.getElementById('theme-btn').onclick = () => {
     toggleTheme();
-    renderHeader(user); // Re-render to swap icon
+    renderHeader(user);
   };
 
   if (user) {
@@ -55,7 +63,6 @@ function renderFooter() {
 }
 
 async function router() {
-  // 16. Scroll Reset on Route Change
   window.scrollTo(0, 0);
 
   try {
@@ -89,7 +96,6 @@ async function init() {
   } catch (err) {
     console.error(err);
   } finally {
-    // 5. Fix Splash Hang: Always remove splash in finally block
     const splash = document.getElementById('boot-splash');
     if (splash) {
       splash.classList.add('is-hidden');
