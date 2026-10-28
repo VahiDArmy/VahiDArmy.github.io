@@ -38,6 +38,8 @@ export function renderLogin(root, onSuccess) {
           ${isSignup 
             ? `حساب دارید؟ <a href="#/">وارد شوید</a>` 
             : `حساب ندارید؟ <a href="#/signup">ثبت‌نام کنید</a>`}
+          <br><br>
+          <a href="#/" style="color: var(--text-tertiary); font-size: 12px;">&rarr; بازگشت به جدول غذا (مشاهده به عنوان مهمان)</a>
         </div>
       </div>
     </div>
@@ -74,6 +76,7 @@ export function renderLogin(root, onSuccess) {
         });
         if (error) throw error;
         showToast('ایمیل تأیید ارسال شد. لطفاً پس از تأیید وارد شوید.', 'success');
+        window.location.hash = '#/login';
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password: pwd });
         if (error) throw error;
