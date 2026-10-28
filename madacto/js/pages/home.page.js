@@ -69,8 +69,12 @@ export async function renderHome(root) {
         <div class="week-nav">
           <button id="prev-week" class="btn-nav" aria-label="هفته قبل">${iconRight}</button>
           <div class="week-nav__center">
-            <div class="week-nav__title">برنامه غذایی هفته</div>
-            <div class="week-nav__range">${startShamsi} تا ${endShamsi}</div>
+            <div class="week-nav__title">برنامه غذایی</div>
+            <div class="week-nav__range">
+              <span dir="ltr">${startShamsi}</span>
+              <span>تا</span>
+              <span dir="ltr">${endShamsi}</span>
+            </div>
           </div>
           <button id="next-week" class="btn-nav" aria-label="هفته بعد">${iconLeft}</button>
         </div>
@@ -193,7 +197,6 @@ export async function renderHome(root) {
 
         try {
           await apiService.vote(mealId, nextVal);
-          // Re-render silently to update weekly/overall scores and worst meal highlight without flashing loading text
           const scrollPos = window.scrollY;
           await renderHome(root);
           window.scrollTo(0, scrollPos);
