@@ -14,6 +14,14 @@ export function renderLogin(root, onSuccess) {
         <h1>${isSignup ? 'ثبت‌نام در ماداکتو' : 'ورود به ماداکتو'}</h1>
         <p>برای رزرو غذا وارد حساب خود شوید.</p>
         <form id="auth-form">
+          
+          ${isSignup ? `
+          <div class="input-group">
+            <label for="name-input">نام نمایشی</label>
+            <input type="text" id="name-input" required autocomplete="name" placeholder="مثلاً: مایکل اسکات">
+          </div>
+          ` : ''}
+
           <div class="input-group">
             <label for="email-input">ایمیل</label>
             <input type="email" id="email-input" dir="ltr" autocomplete="email" required>
@@ -37,16 +45,33 @@ export function renderLogin(root, onSuccess) {
 
   document.getElementById('auth-form').onsubmit = async (e) => {
     e.preventDefault();
+    
     const email = document.getElementById('email-input').value;
     const pwd = document.getElementById('pwd-input').value;
     const btn = e.target.querySelector('button');
+
+    let displayName = '';
+    if (isSignup) {
+      displayName = document.getElementById('name-input').value.trim();
+      if (!displayName) {
+        return showToast('نام نمایشی الزامی است.', 'error');
+      }
+    }
     
     btn.textContent = 'در حال پردازش...';
     btn.disabled = true;
 
     try {
       if (isSignup) {
-        const { error } = await supabase.auth.signUp({ email, password: pwd });
+        const { error } = await supabase.auth.signUp({ 
+          email, 
+          password: pwd,
+          options: {
+            data: {
+              display_name: displayName
+            }
+          }
+        });
         if (error) throw error;
         showToast('ایمیل تأیید ارسال شد. لطفاً پس از تأیید وارد شوید.', 'success');
       } else {
@@ -57,7 +82,6 @@ export function renderLogin(root, onSuccess) {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
-      // 2. Fix Freeze: Always restore button state
       btn.textContent = isSignup ? 'ثبت‌نام' : 'ورود';
       btn.disabled = false;
     }
