@@ -6,6 +6,13 @@ export const APP_NAME = 'The Office';
 export const APP_NAME_FA = 'اداره';
 export const APP_VERSION = '0.1.0';
 
+// Dynamically calculate the absolute URL for Madacto based on current location
+// This works both locally and on GitHub Pages
+const getMadactoUrl = () => {
+  const base = window.location.origin + window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/') + 1);
+  return new URL('../madacto/index.html', base).href;
+};
+
 export const ROUTES = Object.freeze({
   HOME: '/',
   PEOPLE: '/people',
@@ -42,8 +49,9 @@ export const NAV_ITEMS = Object.freeze([
   { key: 'characterology', label: 'شخصیت شناسی', href: ROUTES.CHARACTEROLOGY, icon: 'user' },
   { key: 'rankings',       label: 'رتبه‌بندی',   href: ROUTES.RANKINGS,       icon: 'trophy' },
   { key: 'tables',         label: 'جدول‌ها',     href: ROUTES.TABLES,         icon: 'table' },
-  // لینک جدید به مینی‌اپلیکیشن ماداکتو
-  { key: 'madacto',        label: 'رزرو غذا',    href: '../madacto/index.html', icon: 'message', isExternal: true },
+  
+  // External Link
+  { key: 'madacto',        label: 'رزرو غذا',    href: getMadactoUrl(),       icon: 'grid', isExternal: true },
 ]);
 
 export const THEMES = Object.freeze({ LIGHT: 'light', DARK: 'dark' });
