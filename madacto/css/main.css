@@ -57,7 +57,9 @@ button { font: inherit; cursor: pointer; }
 
 .container { width: 100%; max-width: var(--container-max); margin-inline: auto; padding-inline: var(--space-4); }
 .app { display: flex; flex-direction: column; min-height: 100dvh; }
-.app-main { flex: 1; display: flex; flex-direction: column; }
+
+/* FIX: Added padding-block to prevent touching the header */
+.app-main { flex: 1; display: flex; flex-direction: column; padding-block: var(--space-4); }
 
 /* Header */
 .app-header { min-height: var(--header-height); background: var(--bg-surface); border-bottom: 1px solid var(--border-default); display: flex; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: var(--shadow-sm); padding-block: var(--space-1); }
@@ -106,9 +108,7 @@ button { font: inherit; cursor: pointer; }
 .toast--success { background: var(--success-500); color: white; }
 @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* ============================================================
-   FIXED Week Navigation
-   ============================================================ */
+/* Week Navigation */
 .week-nav { 
   display: flex; 
   align-items: center; 
@@ -161,9 +161,7 @@ button { font: inherit; cursor: pointer; }
 .btn-nav:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 .btn-nav svg { width: 14px; height: 14px; }
 
-/* ============================================================
-   Compact Dense Table (Reduced Heights)
-   ============================================================ */
+/* Compact Dense Table */
 .meal-table-wrap { overflow-x: auto; background: var(--bg-surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); border: 1px solid var(--border-default); }
 .meal-table { width: 100%; border-collapse: collapse; min-width: 500px; table-layout: fixed; }
 .meal-table th, .meal-table td { padding: 0; border-bottom: 1px solid var(--border-subtle); border-inline-end: 1px solid var(--border-subtle); text-align: center; vertical-align: middle; position: relative; }
@@ -177,7 +175,7 @@ button { font: inherit; cursor: pointer; }
 .day-name { font-weight: 700; font-size: 11px; color: var(--text-primary); }
 .day-date { font-size: 9px; font-weight: 500; color: var(--text-secondary); direction: ltr; }
 
-/* Meal Cell States (Reduced min-height) */
+/* Meal Cell States */
 .meal-cell-inner { padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-height: 50px; position: relative; height: 100%; }
 .meal-cell-inner.overall-positive { background-color: var(--success-50); }
 .meal-cell-inner.overall-negative { background-color: var(--danger-50); }
@@ -234,7 +232,7 @@ button { font: inherit; cursor: pointer; }
 .vote-btn.active-up { background: var(--success-500); color: white; border-color: var(--success-500); }
 .vote-btn.active-down { background: var(--danger-500); color: white; border-color: var(--danger-500); }
 
-/* Minimal Empty State Add Button (Reduced min-height) */
+/* Minimal Empty State Add Button */
 .add-meal-btn {
   display: flex;
   flex-direction: column;
