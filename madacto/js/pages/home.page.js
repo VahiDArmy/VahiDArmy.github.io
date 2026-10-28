@@ -13,8 +13,21 @@ const iconRight = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 const iconLeft = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
 const iconPlus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
 const iconEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`;
+const iconUser = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
 
-export async function renderHome(root) {
+// Helper to block action for guests
+function requireAuth(e, user) {
+  if (!user) {
+    e.preventDefault();
+    e.stopPropagation();
+    showToast('برای انجام این عملیات باید وارد شوید.', 'error');
+    window.location.hash = '#/login';
+    return true; // Blocked
+  }
+  return false; // Allowed
+}
+
+export async function renderHome(root, user = null) {
   root.innerHTML = `<div class="container" style="text-align:center;padding:20px;color:var(--text-secondary);font-size:12px">در حال بارگذاری...</div>`;
 
   try {
@@ -30,7 +43,7 @@ export async function renderHome(root) {
     
     const [meals, myVotes, overallScores] = await Promise.all([
       apiService.getMealsInRange(startDateISO, endDateISO),
-      apiService.getMyVotes(),
+      user ? apiService.getMyVotes() : Promise.resolve({}),
       apiService.getOverallScores()
     ]);
 
@@ -66,6 +79,19 @@ export async function renderHome(root) {
     let tableHTML = `
       <div class="container">
         
+        ${!user ? `
+          <div style="background: var(--bg-surface); border: 1px solid var(--accent); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-3); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; box-shadow: var(--shadow-sm);">
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;">
+              <span style="color: var(--accent); display: flex;">${iconUser}</span>
+              <span>شما در حالت مهمان هستید. برای ثبت رأی و رزرو غذا وارد شوید.</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a href="#/login" class="btn btn--primary btn--sm">ورود</a>
+              <a href="#/signup" class="btn btn--secondary btn--sm">ثبت‌نام</a>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="week-nav">
           <button id="prev-week" class="btn-nav" aria-label="هفته قبل">${iconRight}</button>
           <div class="week-nav__center">
@@ -156,17 +182,17 @@ export async function renderHome(root) {
     // Navigation Logic
     document.getElementById('prev-week').onclick = () => {
       currentWeekStart.setDate(currentWeekStart.getDate() - 7);
-      renderHome(root);
+      renderHome(root, user);
     };
     document.getElementById('next-week').onclick = () => {
       currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-      renderHome(root);
+      renderHome(root, user);
     };
 
     // Add Manual Entry Triggers
     document.querySelectorAll('.add-meal-btn').forEach(btn => {
       btn.onclick = (e) => {
-        e.preventDefault();
+        if (requireAuth(e, user)) return;
         window.openManualEntryModal(btn.dataset.date, btn.dataset.type);
       };
     });
@@ -174,7 +200,7 @@ export async function renderHome(root) {
     // Edit Meal Triggers
     document.querySelectorAll('.edit-meal-btn').forEach(btn => {
       btn.onclick = (e) => {
-        e.preventDefault();
+        if (requireAuth(e, user)) return;
         window.openManualEntryModal(btn.dataset.date, btn.dataset.type, btn.dataset.name, btn.dataset.desc);
       };
     });
@@ -182,7 +208,8 @@ export async function renderHome(root) {
     // Attach Vote Logic
     document.querySelectorAll('.vote-btn').forEach(btn => {
       btn.onclick = async (e) => {
-        e.preventDefault();
+        if (requireAuth(e, user)) return;
+        
         const mealId = btn.dataset.meal;
         const val = parseInt(btn.dataset.val);
         const current = myVotes[mealId] || 0;
@@ -198,11 +225,11 @@ export async function renderHome(root) {
         try {
           await apiService.vote(mealId, nextVal);
           const scrollPos = window.scrollY;
-          await renderHome(root);
+          await renderHome(root, user);
           window.scrollTo(0, scrollPos);
         } catch (err) {
           showToast('خطا در ثبت رأی', 'error');
-          renderHome(root);
+          renderHome(root, user);
         }
       };
     });
