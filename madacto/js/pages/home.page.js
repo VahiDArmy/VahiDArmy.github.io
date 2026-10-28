@@ -4,10 +4,15 @@
 
 import { apiService } from '../services/api.js';
 import { WEEKDAYS, MEAL_TYPES } from '../config.js';
-import { getStartOfWeek, formatDateISO, formatDateShamsi, toJalali } from '../utils/date.js';
+import { getStartOfWeek, formatDateISO, formatDateShamsi } from '../utils/date.js';
 import { escapeHtml, showToast } from '../utils/ui.js';
 
 let currentWeekStart = getStartOfWeek();
+
+// SVG Icons for nav
+const iconRight = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
+const iconLeft = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
+const iconEmpty = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
 
 export async function renderHome(root) {
   root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--text-secondary)">در حال بارگذاری برنامه هفتگی...</div>`;
@@ -20,7 +25,6 @@ export async function renderHome(root) {
       dates.push(formatDateISO(d));
     }
 
-    // Fetch a range that covers the current week to ensure we get all meals
     const startDateISO = dates[0];
     const endDateISO = dates[4];
     
@@ -30,7 +34,6 @@ export async function renderHome(root) {
     const mealMap = {};
     meals.forEach(m => { mealMap[`${m.meal_date}_${m.meal_type}`] = m; });
 
-    // Calculate Week Title (e.g., هفته ۱۲ آبان تا ۱۶ آبان)
     const startShamsi = formatDateShamsi(currentWeekStart);
     const endShamsi = formatDateShamsi(new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate() + 4)));
 
@@ -38,9 +41,12 @@ export async function renderHome(root) {
       <div class="container">
         
         <div class="week-nav">
-          <button id="prev-week" class="btn btn--secondary btn--sm">&rarr; هفته قبل</button>
-          <h2>برنامه غذایی (${startShamsi} تا ${endShamsi})</h2>
-          <button id="next-week" class="btn btn--secondary btn--sm">هفته بعد &larr;</button>
+          <button id="prev-week" class="btn-nav" aria-label="هفته قبل">${iconRight}</button>
+          <div class="week-nav__center">
+            <div class="week-nav__title">برنامه غذایی هفته</div>
+            <div class="week-nav__range">${startShamsi} تا ${endShamsi}</div>
+          </div>
+          <button id="next-week" class="btn-nav" aria-label="هفته بعد">${iconLeft}</button>
         </div>
 
         <div class="meal-table-wrap">
@@ -61,8 +67,10 @@ export async function renderHome(root) {
 
       tableHTML += `<tr>`;
       tableHTML += `<td>
-        <div class="day-name">${WEEKDAYS[idx]}</div>
-        <div class="day-date">${shamsiStr}</div>
+        <div class="day-cell">
+          <span class="day-name">${WEEKDAYS[idx]}</span>
+          <span class="day-date">${shamsiStr}</span>
+        </div>
       </td>`;
 
       MEAL_TYPES.forEach(mt => {
@@ -76,14 +84,14 @@ export async function renderHome(root) {
             <td>
               <div class="meal-name">${escapeHtml(meal.name)}</div>
               ${meal.description ? `<div class="meal-desc">${escapeHtml(meal.description)}</div>` : ''}
-              <div style="display:flex;justify-content:center;gap:8px">
-                <button class="vote-btn ${upClass}" data-meal="${meal.id}" data-val="1">👍</button>
-                <button class="vote-btn ${downClass}" data-meal="${meal.id}" data-val="-1">👎</button>
+              <div class="vote-group">
+                <button class="vote-btn ${upClass}" data-meal="${meal.id}" data-val="1" aria-label="رأی مثبت">👍</button>
+                <button class="vote-btn ${downClass}" data-meal="${meal.id}" data-val="-1" aria-label="رأی منفی">👎</button>
               </div>
             </td>
           `;
         } else {
-          tableHTML += `<td style="color:var(--text-tertiary);font-size:12px;vertical-align:middle">ثبت نشده</td>`;
+          tableHTML += `<td><div class="empty-meal">${iconEmpty} ثبت نشده</div></td>`;
         }
       });
       tableHTML += `</tr>`;
