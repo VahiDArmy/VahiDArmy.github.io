@@ -5,7 +5,36 @@
 import { apiService } from '../services/api.js';
 import { WEEKDAYS, MEAL_TYPES } from '../config.js';
 import { toGregorian, formatDateISO, formatDateShamsi } from '../utils/date.js';
-import { escapeHtml, showToast } from '../utils/ui.js';
+import { escapeHtml, showToast, openModal } from '../utils/ui.js';
+
+// The exact prompt used in the Edge Function
+const AI_PROMPT = `You are an expert OCR system for a Persian office restaurant menu.
+Extract the meal schedule from the provided image. The image might contain multiple weeks.
+
+Rules:
+1. Identify the days (شنبه, یکشنبه, دوشنبه, سه‌شنبه, چهارشنبه). Ignore Thursday and Friday.
+2. Extract the date for EACH day if visible. The date will be in Jalali format (e.g., 1405/08/10). If not visible, leave it empty.
+3. For each day, extract the meals:
+   - Breakfast (صبحانه)
+   - Lunch (ناهار). If there are two lunch options, identify them as "lunch1" and "lunch2". If only one, use "lunch1".
+4. Return the data STRICTLY as a valid JSON object matching the following schema. Do not include markdown formatting or backticks.
+
+JSON Schema:
+{
+  "days": [
+    {
+      "day_name": "string (شنبه, یکشنبه, دوشنبه, سه‌شنبه, چهارشنبه)",
+      "date_shamsi": "string (e.g., 1405/08/10 or empty)",
+      "meals": [
+        {
+          "type": "string (breakfast, lunch1, lunch2)",
+          "name": "string",
+          "description": "string"
+        }
+      ]
+    }
+  ]
+}`;
 
 export function renderUpload(root) {
   root.innerHTML = `
@@ -13,28 +42,37 @@ export function renderUpload(root) {
       <div style="margin-bottom: 20px;">
         <a href="#/" style="color: var(--text-secondary); text-decoration: none;">&rarr; بازگشت به برنامه هفتگی</a>
         <h2 style="margin-top: 8px;">آپلود عکس منو</h2>
-        <p style="color: var(--text-secondary); font-size: 14px;">عکس منوی غذا را آپلود کنید تا هوش مصنوعی آن را استخراج کند.</p>
       </div>
 
       <div id="upload-state">
         <label class="upload-area">
-          <!-- 17. MIME restricted, 13. A11y overlay handled in CSS -->
           <input type="file" id="file-input" accept="image/jpeg,image/png" />
           <div style="font-size: 40px; margin-bottom: 12px;">📷</div>
           <div style="font-weight: bold; margin-bottom: 4px;">برای انتخاب عکس کلیک کنید</div>
-          <div style="font-size: 12px; color: var(--text-secondary);">فرمت‌های مجاز: JPG, PNG</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">استخراج خودکار توسط هوش مصنوعی سرور</div>
         </label>
+
+        <div style="text-align: center; margin: 16px 0; color: var(--text-tertiary); font-size: 12px; display: flex; align-items: center; gap: 8px;">
+          <div style="flex: 1; height: 1px; background: var(--border-default);"></div>
+          <span>یا</span>
+          <div style="flex: 1; height: 1px; background: var(--border-default);"></div>
+        </div>
+
+        <div style="text-align: center;">
+          <button id="btn-manual-ai" class="btn btn--secondary" style="width: 100%; height: 44px; font-size: 14px;">
+            استفاده از چت‌های دیگر (کپی پرامپت و دریافت JSON)
+          </button>
+        </div>
       </div>
 
       <div id="loading-state" style="display:none; text-align:center; padding: 40px;">
         <div class="boot-splash__spinner" style="margin: 0 auto 16px;"></div>
-        <div style="font-weight: bold;">در حال پردازش با هوش مصنوعی...</div>
-        <div style="font-size: 12px; color: var(--text-secondary);">ممکن است چند لحظه طول بکشد.</div>
+        <div style="font-weight: bold;">در حال پردازش...</div>
       </div>
 
       <div id="preview-state" style="display:none;">
-        <h3>پیش‌نمایش داده‌های استخراج شده</h3>
-        <p style="font-size: 13px; color: var(--text-secondary);">در صورت نیاز، مقادیر را ویرایش کنید و سپس ذخیره کنید.</p>
+        <h3 style="margin-bottom: 8px;">پیش‌نمایش داده‌های استخراج شده</h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">در صورت نیاز، مقادیر را ویرایش کنید و سپس ذخیره کنید.</p>
         <div class="meal-table-wrap">
           <table class="meal-table preview-table">
             <thead>
@@ -59,14 +97,114 @@ export function renderUpload(root) {
   const loadingState = document.getElementById('loading-state');
   const previewState = document.getElementById('preview-state');
   const previewTbody = document.getElementById('preview-tbody');
-
+  
   let extractedData = [];
 
+  // --- Core Processing Logic (Shared) ---
+  function processAIResult(result) {
+    if (!result.days || result.days.length === 0) {
+      throw new Error('داده‌ای استخراج نشد.');
+    }
+
+    // Group days by week dynamically
+    const weeksMap = {}; 
+
+    result.days.forEach(dayData => {
+      const dName = dayData.day_name;
+      const dayIndex = WEEKDAYS.indexOf(dName);
+      if (dayIndex === -1) return; // Skip invalid days
+
+      let dateObj = null;
+      if (dayData.date_shamsi) {
+        const parts = dayData.date_shamsi.split('/').map(Number);
+        if (parts.length === 3) {
+          const [gy, gm, gd] = toGregorian(parts[0], parts[1], parts[2]);
+          dateObj = new Date(gy, gm - 1, gd);
+        }
+      }
+      
+      // Fallback to current week if date missing
+      if (!dateObj) {
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToSat = (currentDay === 6) ? 0 : -(currentDay + 1);
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(startOfWeek.getDate() + diffToSat);
+        dateObj = new Date(startOfWeek);
+        dateObj.setDate(dateObj.getDate() + dayIndex);
+        dateObj.setHours(0,0,0,0);
+      }
+
+      const isoDate = formatDateISO(dateObj);
+      const shamsiDate = formatDateShamsi(dateObj);
+
+      // Find week start (Saturday) for this day
+      const weekStart = new Date(dateObj);
+      weekStart.setDate(weekStart.getDate() - dayIndex);
+      const weekKey = formatDateISO(weekStart);
+
+      if (!weeksMap[weekKey]) {
+        weeksMap[weekKey] = {
+          start_date: weekStart,
+          days: {}
+        };
+      }
+
+      // Merge logic: avoid duplicates, handle lunch1/lunch2
+      const day = weeksMap[weekKey].days[shamsiDate] || {
+        day_name: dName,
+        date_iso: isoDate,
+        date_shamsi: shamsiDate,
+        meals: { breakfast: { name: '', desc: '' }, lunch1: { name: '', desc: '' }, lunch2: { name: '', desc: '' } }
+      };
+
+      const sortedMeals = (dayData.meals || []).sort((a, b) => {
+        const order = { breakfast: 0, lunch1: 1, lunch2: 2 };
+        return (order[a.type] || 0) - (order[b.type] || 0);
+      });
+
+      let lunchCount = 0;
+      sortedMeals.forEach(m => {
+        if (m.type === 'breakfast' && !day.meals.breakfast.name) {
+          day.meals.breakfast = { name: m.name, desc: m.description || '' };
+        } else if (m.type === 'lunch1' || m.type === 'lunch2' || m.type === 'lunch') {
+          const targetKey = lunchCount === 0 ? 'lunch1' : 'lunch2';
+          const isDuplicate = 
+            (day.meals.lunch1.name && day.meals.lunch1.name.trim() === m.name.trim()) ||
+            (day.meals.lunch2.name && day.meals.lunch2.name.trim() === m.name.trim());
+
+          if (!isDuplicate && lunchCount < 2) {
+            day.meals[targetKey] = { name: m.name, desc: m.description || '' };
+            lunchCount++;
+          }
+        }
+      });
+
+      weeksMap[weekKey].days[shamsiDate] = day;
+    });
+
+    // Flatten into a single array for the preview, sorted by date
+    extractedData = [];
+    const sortedWeekKeys = Object.keys(weeksMap).sort();
+    sortedWeekKeys.forEach(wk => {
+      const weekDays = weeksMap[wk].days;
+      const sortedDates = Object.keys(weekDays).sort();
+      sortedDates.forEach(dt => {
+        extractedData.push(weekDays[dt]);
+      });
+    });
+
+    if (extractedData.length === 0) throw new Error('هیچ روز معتبری یافت نشد.');
+
+    renderPreview();
+    loadingState.style.display = 'none';
+    previewState.style.display = 'block';
+  }
+
+  // --- File Upload (Edge Function) ---
   fileInput.onchange = async (e) => {
     const file = e.target.files[0];
-    // 4. Reset file input value
-    fileInput.value = ''; 
-    
+    fileInput.value = '';
     if (!file) return;
 
     uploadState.style.display = 'none';
@@ -74,79 +212,7 @@ export function renderUpload(root) {
 
     try {
       const result = await apiService.extractFromImage(file);
-      
-      if (!result.days || result.days.length === 0) {
-        throw new Error('هوش مصنوعی نتوانست داده‌ای استخراج کند.');
-      }
-
-      let startDateGregorian = null;
-      if (result.week_start_date) {
-        const parts = result.week_start_date.split('/').map(Number);
-        if (parts.length === 3) {
-          const [gy, gm, gd] = toGregorian(parts[0], parts[1], parts[2]);
-          startDateGregorian = new Date(gy, gm - 1, gd);
-        }
-      }
-
-      if (!startDateGregorian) {
-        const now = new Date();
-        const day = now.getDay();
-        const diff = (day === 6) ? 0 : -(day + 1);
-        startDateGregorian = new Date(now.setDate(now.getDate() + diff));
-        startDateGregorian.setHours(0,0,0,0); // 1. Date fix
-        showToast('تاریخ در عکس یافت نشد. تاریخ هفته جاری در نظر گرفته شد.', 'success');
-      }
-
-      const daysMap = {};
-      WEEKDAYS.forEach((d, i) => {
-        const dObj = new Date(startDateGregorian);
-        dObj.setDate(dObj.getDate() + i);
-        daysMap[d] = {
-          date_iso: formatDateISO(dObj),
-          date_shamsi: formatDateShamsi(dObj),
-          meals: { breakfast: { name: '', desc: '' }, lunch1: { name: '', desc: '' }, lunch2: { name: '', desc: '' } }
-        };
-      });
-
-      result.days.forEach(dayData => {
-        const dName = dayData.day_name;
-        if (!daysMap[dName]) return;
-
-        const day = daysMap[dName];
-        const sortedMeals = (dayData.meals || []).sort((a, b) => {
-          const order = { breakfast: 0, lunch1: 1, lunch2: 2 };
-          return (order[a.type] || 0) - (order[b.type] || 0);
-        });
-
-        let lunchCount = 0;
-        sortedMeals.forEach(m => {
-          if (m.type === 'breakfast' && !day.meals.breakfast.name) {
-            day.meals.breakfast = { name: m.name, desc: m.description || '' };
-          } else if (m.type === 'lunch1' || m.type === 'lunch2' || m.type === 'lunch') {
-            const targetKey = lunchCount === 0 ? 'lunch1' : 'lunch2';
-            const isDuplicate = 
-              (day.meals.lunch1.name && day.meals.lunch1.name.trim() === m.name.trim()) ||
-              (day.meals.lunch2.name && day.meals.lunch2.name.trim() === m.name.trim());
-
-            if (!isDuplicate && lunchCount < 2) {
-              day.meals[targetKey] = { name: m.name, desc: m.description || '' };
-              lunchCount++;
-            }
-          }
-        });
-      });
-
-      extractedData = WEEKDAYS.map(dName => ({
-        day_name: dName,
-        date_iso: daysMap[dName].date_iso,
-        date_shamsi: daysMap[dName].date_shamsi,
-        meals: daysMap[dName].meals
-      }));
-
-      renderPreview();
-      loadingState.style.display = 'none';
-      previewState.style.display = 'block';
-
+      processAIResult(result);
     } catch (err) {
       showToast('خطا در پردازش عکس: ' + err.message, 'error');
       loadingState.style.display = 'none';
@@ -154,16 +220,81 @@ export function renderUpload(root) {
     }
   };
 
+  // --- Manual AI Chat (Copy Prompt & Paste JSON) ---
+  document.getElementById('btn-manual-ai').onclick = () => {
+    const promptTextArea = document.createElement('textarea');
+    promptTextArea.className = 'form-group';
+    promptTextArea.style.width = '100%';
+    promptTextArea.style.height = '120px';
+    promptTextArea.style.fontFamily = 'monospace';
+    promptTextArea.style.fontSize = '10px';
+    promptTextArea.style.direction = 'ltr';
+    promptTextArea.value = AI_PROMPT;
+    promptTextArea.readOnly = true;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn btn--secondary btn--sm';
+    copyBtn.textContent = 'کپی پرامپت';
+    copyBtn.style.marginTop = '4px';
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(AI_PROMPT);
+      copyBtn.textContent = 'کپی شد!';
+      setTimeout(() => copyBtn.textContent = 'کپی پرامپت', 2000);
+    };
+
+    const jsonInput = document.createElement('textarea');
+    jsonInput.className = 'form-group';
+    jsonInput.style.width = '100%';
+    jsonInput.style.height = '100px';
+    jsonInput.style.fontFamily = 'monospace';
+    jsonInput.style.direction = 'ltr';
+    jsonInput.placeholder = '{"days": [...]}';
+    jsonInput.style.marginTop = '12px';
+
+    const content = document.createElement('div');
+    content.innerHTML = `
+      <p style="font-size: 12px; margin-bottom: 8px;">۱. پرامپت زیر را کپی کنید و همراه با عکس به هوش مصنوعی بدهید.</p>
+    `;
+    content.appendChild(promptTextArea);
+    content.appendChild(copyBtn);
+    content.innerHTML += `<hr style="margin: 16px 0; border: 0; border-top: 1px solid var(--border-default);">`;
+    content.innerHTML += `<p style="font-size: 12px; margin-bottom: 8px;">۲. پاسخ JSON دریافتی را در کادر زیر پیست کنید:</p>`;
+    content.appendChild(jsonInput);
+
+    const modal = openModal({
+      title: 'استفاده از هوش مصنوعی‌های دیگر',
+      content: content,
+      actions: [
+        {
+          label: 'پردازش JSON',
+          primary: true,
+          onClick: () => {
+            try {
+              const parsed = JSON.parse(jsonInput.value);
+              modal.close();
+              uploadState.style.display = 'none';
+              loadingState.style.display = 'block';
+              setTimeout(() => processAIResult(parsed), 100); // short delay to show loading
+            } catch (err) {
+              showToast('فرمت JSON نامعتبر است.', 'error');
+            }
+          }
+        },
+        { label: 'انصراف', onClick: () => modal.close() }
+      ]
+    });
+  };
+
+  // --- Preview Rendering & Saving ---
   function renderPreview() {
     previewTbody.innerHTML = '';
     extractedData.forEach((day, dIdx) => {
       const tr = document.createElement('tr');
       
       const tdDay = document.createElement('td');
-      // 14. XSS Escape
       tdDay.innerHTML = `
-        <div style="font-weight:bold">${day.day_name}</div>
-        <input type="text" value="${escapeHtml(day.date_shamsi)}" class="date-input" data-didx="${dIdx}" style="margin-top:4px; text-align:center" dir="ltr" aria-label="تاریخ" />
+        <div style="font-weight:bold; font-size:11px">${day.day_name}</div>
+        <input type="text" value="${escapeHtml(day.date_shamsi)}" class="date-input" data-didx="${dIdx}" style="margin-top:4px; text-align:center; width: 80px; padding: 2px;" dir="ltr" />
       `;
       tr.appendChild(tdDay);
 
@@ -171,8 +302,8 @@ export function renderUpload(root) {
         const meal = day.meals[mt.id];
         const tdMeal = document.createElement('td');
         tdMeal.innerHTML = `
-          <input type="text" value="${escapeHtml(meal.name)}" placeholder="نام غذا..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" aria-label="نام غذا" />
-          <input type="text" value="${escapeHtml(meal.desc)}" placeholder="توضیحات..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="margin-top:4px" aria-label="توضیحات" />
+          <input type="text" value="${escapeHtml(meal.name)}" placeholder="نام..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="padding: 4px; font-size: 11px;" />
+          <input type="text" value="${escapeHtml(meal.desc)}" placeholder="توضیح..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="margin-top:4px; padding: 4px; font-size: 10px;" />
         `;
         tr.appendChild(tdMeal);
       });
@@ -221,10 +352,8 @@ export function renderUpload(root) {
         }
       });
 
-      if (mealsToSave.length === 0) {
-        throw new Error('هیچ غذایی برای ذخیره وجود ندارد.');
-      }
-
+      if (mealsToSave.length === 0) throw new Error('هیچ غذایی برای ذخیره وجود ندارد.');
+      
       await apiService.saveMeals(mealsToSave);
       showToast('اطلاعات با موفقیت ذخیره شد.', 'success');
       window.location.hash = '#/';
