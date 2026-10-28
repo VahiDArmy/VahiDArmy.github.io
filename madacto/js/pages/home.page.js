@@ -2,17 +2,17 @@
  * Madacto Home Page (Weekly Table)
  */
 
-import { apiService } from '../services/api.js';
+import { apiService, normalizeName } from '../services/api.js';
 import { WEEKDAYS, MEAL_TYPES } from '../config.js';
 import { getStartOfWeek, formatDateISO, formatDateShamsi } from '../utils/date.js';
 import { escapeHtml, showToast } from '../utils/ui.js';
 
 let currentWeekStart = getStartOfWeek();
 
-// SVG Icons for nav
 const iconRight = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>`;
 const iconLeft = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>`;
-const iconEmpty = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+const iconPlus = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const iconEdit = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg>`;
 
 export async function renderHome(root) {
   root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--text-secondary)">در حال بارگذاری برنامه هفتگی...</div>`;
@@ -28,11 +28,46 @@ export async function renderHome(root) {
     const startDateISO = dates[0];
     const endDateISO = dates[4];
     
-    const meals = await apiService.getMealsInRange(startDateISO, endDateISO);
-    const myVotes = await apiService.getMyVotes();
+    const [meals, myVotes, overallScores] = await Promise.all([
+      apiService.getMealsInRange(startDateISO, endDateISO),
+      apiService.getMyVotes(),
+      apiService.getOverallScores()
+    ]);
 
     const mealMap = {};
     meals.forEach(m => { mealMap[`${m.meal_date}_${m.meal_type}`] = m; });
+
+    // Calculate Weekly Scores for current view
+    const weeklyScores = {};
+    meals.forEach(m => {
+      // Sum of votes for this specific meal instance
+      weeklyScores[m.id] = Object.values(myVotes).length > 0 ? 0 : 0; // Placeholder, we'll calculate from all votes below
+    });
+
+    // We need all votes for the current week's meals to calculate weekly scores correctly
+    const mealIds = meals.map(m => m.id);
+    let allWeekVotes = [];
+    if (mealIds.length > 0) {
+      const { data } = await import('../services/api.js').then(m => m.supabase.from('meal_votes').select('*').in('meal_id', mealIds));
+      allWeekVotes = data || [];
+    }
+
+    const weeklyVoteSums = {};
+    allWeekVotes.forEach(v => {
+      weeklyVoteSums[v.meal_id] = (weeklyVoteSums[v.meal_id] || 0) + v.vote;
+    });
+
+    // Find the worst weekly score
+    let worstScore = 0;
+    let worstMealId = null;
+    
+    meals.forEach(m => {
+      const score = weeklyVoteSums[m.id] || 0;
+      if (score < worstScore || (worstMealId === null && score < 0)) {
+        worstScore = score;
+        worstMealId = m.id;
+      }
+    });
 
     const startShamsi = formatDateShamsi(currentWeekStart);
     const endShamsi = formatDateShamsi(new Date(new Date(currentWeekStart).setDate(currentWeekStart.getDate() + 4)));
@@ -76,22 +111,47 @@ export async function renderHome(root) {
       MEAL_TYPES.forEach(mt => {
         const meal = mealMap[`${date}_${mt.id}`];
         if (meal) {
-          const vote = myVotes[meal.id] || 0;
-          const upClass = vote === 1 ? 'active-up' : '';
-          const downClass = vote === -1 ? 'active-down' : '';
+          const normName = normalizeName(meal.name);
+          const overall = overallScores[normName] || 0;
+          const weekly = weeklyVoteSums[meal.id] || 0;
+          const myVote = myVotes[meal.id] || 0;
+
+          const isWorst = meal.id === worstMealId;
           
+          let bgClass = '';
+          if (overall > 0) bgClass = 'overall-positive';
+          else if (overall < 0) bgClass = 'overall-negative';
+
+          const worstClass = isWorst ? 'worst-weekly' : '';
+          
+          const weeklyClass = weekly > 0 ? 'positive' : weekly < 0 ? 'negative' : '';
+
+          const upClass = myVote === 1 ? 'active-up' : '';
+          const downClass = myVote === -1 ? 'active-down' : '';
+
           tableHTML += `
             <td>
-              <div class="meal-name">${escapeHtml(meal.name)}</div>
-              ${meal.description ? `<div class="meal-desc">${escapeHtml(meal.description)}</div>` : ''}
-              <div class="vote-group">
-                <button class="vote-btn ${upClass}" data-meal="${meal.id}" data-val="1" aria-label="رأی مثبت">👍</button>
-                <button class="vote-btn ${downClass}" data-meal="${meal.id}" data-val="-1" aria-label="رأی منفی">👎</button>
+              <div class="meal-cell-inner ${bgClass} ${worstClass}">
+                <div class="weekly-score ${weeklyClass}">${weekly > 0 ? '+' : ''}${weekly}</div>
+                <button class="edit-meal-btn" data-date="${shamsiStr}" data-type="${mt.id}" data-name="${escapeHtml(meal.name)}" data-desc="${escapeHtml(meal.description || '')}" title="ویرایش">${iconEdit}</button>
+                <div class="meal-name">${escapeHtml(meal.name)}</div>
+                ${meal.description ? `<div class="meal-desc">${escapeHtml(meal.description)}</div>` : ''}
+                <div class="vote-group">
+                  <button class="vote-btn ${upClass}" data-meal="${meal.id}" data-val="1">👍</button>
+                  <button class="vote-btn ${downClass}" data-meal="${meal.id}" data-val="-1">👎</button>
+                </div>
               </div>
             </td>
           `;
         } else {
-          tableHTML += `<td><div class="empty-meal">${iconEmpty} ثبت نشده</div></td>`;
+          tableHTML += `
+            <td>
+              <button class="add-meal-btn" data-date="${shamsiStr}" data-type="${mt.id}">
+                ${iconPlus}
+                <span>ثبت غذا</span>
+              </button>
+            </td>
+          `;
         }
       });
       tableHTML += `</tr>`;
@@ -110,6 +170,22 @@ export async function renderHome(root) {
       renderHome(root);
     };
 
+    // Add Manual Entry Triggers
+    document.querySelectorAll('.add-meal-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        window.openManualEntryModal(btn.dataset.date, btn.dataset.type);
+      };
+    });
+
+    // Edit Meal Triggers
+    document.querySelectorAll('.edit-meal-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        window.openManualEntryModal(btn.dataset.date, btn.dataset.type, btn.dataset.name, btn.dataset.desc);
+      };
+    });
+
     // Attach Vote Logic
     document.querySelectorAll('.vote-btn').forEach(btn => {
       btn.onclick = async (e) => {
@@ -119,21 +195,20 @@ export async function renderHome(root) {
         const current = myVotes[mealId] || 0;
         const nextVal = current === val ? 0 : val;
 
+        // Optimistic UI
         const parent = btn.parentElement;
         const upBtn = parent.querySelector('[data-val="1"]');
         const downBtn = parent.querySelector('[data-val="-1"]');
-
         upBtn.className = `vote-btn ${nextVal === 1 ? 'active-up' : ''}`;
         downBtn.className = `vote-btn ${nextVal === -1 ? 'active-down' : ''}`;
-        myVotes[mealId] = nextVal;
 
         try {
           await apiService.vote(mealId, nextVal);
+          // Re-render to update weekly/overall scores and worst meal highlight
+          renderHome(root);
         } catch (err) {
-          upBtn.className = `vote-btn ${current === 1 ? 'active-up' : ''}`;
-          downBtn.className = `vote-btn ${current === -1 ? 'active-down' : ''}`;
-          myVotes[mealId] = current;
           showToast('خطا در ثبت رأی', 'error');
+          renderHome(root);
         }
       };
     });
