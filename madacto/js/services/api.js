@@ -6,12 +6,20 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY, EDGE_FUNCTION_URL } from '../config.js';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'madacto-auth' }
+  auth: { 
+    persistSession: true, 
+    autoRefreshToken: true, 
+    storageKey: 'office-auth' // SHARED AUTH WITH MAIN APP
+  }
 });
 
 export const apiService = {
-  async getWeeklyMeals(dates) {
-    const { data, error } = await supabase.from('meals').select('*').in('meal_date', dates);
+  async getMealsInRange(startDate, endDate) {
+    const { data, error } = await supabase
+      .from('meals')
+      .select('*')
+      .gte('meal_date', startDate)
+      .lte('meal_date', endDate);
     if (error) throw error;
     return data || [];
   },
@@ -41,7 +49,7 @@ export const apiService = {
   },
 
   async saveMeals(mealsToSave) {
-    // mealsToSave is an array of objects: { meal_date, meal_type, name, description }
+    // mealsToSave: [{ meal_date, meal_type, name, description }]
     const { error } = await supabase.from('meals').upsert(mealsToSave, { onConflict: 'meal_date,meal_type' });
     if (error) throw error;
   },
@@ -51,15 +59,13 @@ export const apiService = {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
-          const base64 = reader.result;
           const res = await fetch(EDGE_FUNCTION_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image: base64 })
+            body: JSON.stringify({ image: reader.result })
           });
           if (!res.ok) throw new Error('خطا در ارتباط با هوش مصنوعی');
-          const json = await res.json();
-          resolve(json);
+          resolve(await res.json());
         } catch (err) {
           reject(err);
         }
