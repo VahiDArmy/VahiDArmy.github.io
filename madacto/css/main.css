@@ -108,12 +108,11 @@ button { font: inherit; cursor: pointer; }
 .toast--success { background: var(--success-500); color: white; }
 @keyframes slideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-/* Week Navigation */
+/* Week Navigation (Simplified for Multi-Week) */
 .week-nav { 
   display: flex; 
   align-items: center; 
-  justify-content: space-between; 
-  margin-bottom: var(--space-2); 
+  justify-content: center; 
   background: var(--bg-surface); 
   padding: 4px var(--space-2); 
   border-radius: var(--radius-md); 
@@ -133,33 +132,6 @@ button { font: inherit; cursor: pointer; }
   font-weight: 700; 
   color: var(--text-primary); 
 }
-.week-nav__range { 
-  font-size: 10px; 
-  color: var(--text-secondary); 
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.week-nav__range span[dir="ltr"] {
-  font-family: monospace;
-  background: var(--bg-muted);
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-.btn-nav { 
-  width: 28px; 
-  height: 28px; 
-  border-radius: 50%; 
-  border: 1px solid var(--border-default); 
-  background: var(--bg-app); 
-  color: var(--text-secondary); 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  transition: 0.2s; 
-}
-.btn-nav:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-.btn-nav svg { width: 14px; height: 14px; }
 
 /* Compact Dense Table */
 .meal-table-wrap { overflow-x: auto; background: var(--bg-surface); border-radius: var(--radius-sm); box-shadow: var(--shadow-sm); border: 1px solid var(--border-default); }
