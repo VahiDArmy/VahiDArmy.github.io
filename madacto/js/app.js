@@ -20,7 +20,8 @@ const icons = {
   moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
   logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
   upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
+  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
 };
 
 initTheme();
@@ -36,13 +37,16 @@ function renderHeader(user) {
       </div>
       <div class="header__actions">
         <a href="../office/index.html" class="icon-btn" title="بازگشت به اداره">${icons.back}</a>
+        
         ${user ? `
           <a href="#/upload" class="icon-btn" title="آپلود عکس">${icons.upload}</a>
           <button id="theme-btn" class="icon-btn" title="تغییر تم">${isDark ? icons.sun : icons.moon}</button>
           <span class="header__email" title="${user.email}">${user.email}</span>
           <button id="logout-btn" class="icon-btn" title="خروج">${icons.logout}</button>
         ` : `
-          <button id="theme-btn" class="icon-btn">${isDark ? icons.sun : icons.moon}</button>
+          <button id="theme-btn" class="icon-btn" title="تغییر تم">${isDark ? icons.sun : icons.moon}</button>
+          <a href="#/login" class="btn btn--primary btn--sm" style="margin-inline-start: 4px;">ورود</a>
+          <a href="#/signup" class="btn btn--secondary btn--sm">ثبت‌نام</a>
         `}
       </div>
     </div>
@@ -143,22 +147,37 @@ async function router() {
 
   try {
     const { data: { session } } = await supabase.auth.getSession();
-    renderHeader(session?.user);
+    const user = session?.user || null;
+    renderHeader(user);
 
-    if (!session) {
+    const hash = window.location.hash || '#/';
+
+    // Auth Routes
+    if (hash === '#/login' || hash === '#/signup') {
+      if (user) {
+        window.location.hash = '#/'; // Redirect to home if already logged in
+        return;
+      }
       renderLogin(root, () => {
         window.location.reload();
       });
       return;
     }
 
-    const hash = window.location.hash || '#/';
-
+    // Protected Routes
     if (hash === '#/upload') {
+      if (!user) {
+        showToast('برای آپلود عکس باید وارد شوید.', 'error');
+        window.location.hash = '#/login';
+        return;
+      }
       renderUpload(root);
-    } else {
-      renderHome(root);
+      return;
     }
+
+    // Public / Home Route
+    renderHome(root, user);
+
   } catch (err) {
     console.error('Router error:', err);
     root.innerHTML = `<div class="container" style="text-align:center;padding:40px;color:var(--danger-500)">خطا در اتصال به سرور.</div>`;
