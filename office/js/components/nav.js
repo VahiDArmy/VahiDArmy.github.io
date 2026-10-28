@@ -1,6 +1,6 @@
 /**
  * Primary navigation — desktop inline nav + mobile context-menu.
- * Both are built from the same NAV_ITEMS source of truth.
+ * Handles both internal (hash) and external (absolute) links safely.
  */
 
 import { el, icon } from '../utils/dom.js';
@@ -13,18 +13,27 @@ function isActive(href, currentPath) {
   return currentPath === href || currentPath.startsWith(href + '/');
 }
 
+// Safely generate the href attribute based on link type
+function getSafeHref(item) {
+  return item.isExternal ? item.href : router.href(item.href);
+}
+
 export function createDesktopNav() {
   const nav = el('nav', { class: 'header__nav', 'aria-label': 'ناوبری اصلی' });
   const links = NAV_ITEMS.map((item) => {
-    const a = el(
-      'a',
-      {
-        class: 'nav-link',
-        href: router.href(item.href),
-        dataset: { navKey: item.key, navHref: item.href },
-      },
-      [item.label]
-    );
+    const attrs = {
+      class: 'nav-link',
+      href: getSafeHref(item),
+      dataset: { navKey: item.key, navHref: item.href },
+    };
+    
+    if (item.isExternal) {
+      attrs.target = '_blank';
+      attrs.rel = 'noopener noreferrer';
+      attrs.title = 'باز شدن در تب جدید';
+    }
+
+    const a = el('a', attrs, [item.label]);
     nav.appendChild(a);
     return a;
   });
@@ -33,8 +42,11 @@ export function createDesktopNav() {
     const current = router.getCurrent();
     const path = current?.path || '';
     for (const a of links) {
-      const href = a.dataset.navHref || '/';
-      a.classList.toggle('is-active', isActive(href, path));
+      const item = NAV_ITEMS.find(i => i.key === a.dataset.navKey);
+      // Only highlight internal links
+      if (item && !item.isExternal) {
+        a.classList.toggle('is-active', isActive(item.href, path));
+      }
     }
   }
 
@@ -43,10 +55,8 @@ export function createDesktopNav() {
 
 /**
  * Mobile context menu opened by the header hamburger.
- * Uses the same items, collapses on click/outside/Escape.
  */
 export function openMobileNav(anchor) {
-  // Remove any existing menu
   document.querySelectorAll('.mobile-nav').forEach((n) => n.remove());
 
   const current = router.getCurrent();
@@ -59,21 +69,26 @@ export function openMobileNav(anchor) {
       role: 'menu',
       'aria-label': 'منوی اصلی',
     },
-    NAV_ITEMS.map((item) =>
-      el(
-        'a',
-        {
-          href: router.href(item.href),
-          class: `mobile-nav__item${isActive(item.href, path) ? ' is-active' : ''}`,
-          role: 'menuitem',
-          on: { click: () => close() },
-        },
-        [
-          el('span', { class: 'icon', style: { width: '16px', height: '16px' } }, [icon(item.icon)]),
-          el('span', {}, [item.label]),
-        ]
-      )
-    )
+    NAV_ITEMS.map((item) => {
+      const isExt = item.isExternal;
+      const attrs = {
+        href: getSafeHref(item),
+        class: `mobile-nav__item${!isExt && isActive(item.href, path) ? ' is-active' : ''}`,
+        role: 'menuitem',
+        on: { click: () => close() },
+      };
+      
+      if (isExt) {
+        attrs.target = '_blank';
+        attrs.rel = 'noopener noreferrer';
+      }
+
+      return el('a', attrs, [
+        el('span', { class: 'icon', style: { width: '16px', height: '16px' } }, [icon(item.icon)]),
+        el('span', {}, [item.label]),
+        isExt ? el('span', { class: 'icon', style: { width: '12px', height: '12px', marginInlineStart: 'auto', opacity: 0.5 } }, [icon('external')]) : null
+      ]);
+    })
   );
 
   function close() {
@@ -92,7 +107,6 @@ export function openMobileNav(anchor) {
   document.body.appendChild(menu);
   anchor?.setAttribute('aria-expanded', 'true');
 
-  // Defer so the click that opened the menu doesn't immediately close it
   setTimeout(() => {
     document.addEventListener('mousedown', outside, true);
     document.addEventListener('keydown', onKey, true);
