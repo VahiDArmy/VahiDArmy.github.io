@@ -51,16 +51,19 @@ const MizanPanel = (function () {
   // ============================================================
   // 0b) DYNAMIC UI (Read Page Button)
   // ============================================================
+  const readPageBtnWrapper = document.createElement('div');
+  readPageBtnWrapper.className = 'mizan-read-page-wrapper';
+  
   const readPageBtn = document.createElement('button');
   readPageBtn.type = 'button';
   readPageBtn.className = 'mizan-read-page-btn';
-  readPageBtn.style.display = 'none'; // initially hidden
-  readPageBtn.innerHTML = 'علامت‌گذاری به عنوان خوانده‌شده';
+  readPageBtn.innerHTML = 'علامت‌گذاری خوانده‌شده';
   
-  // Append below the Pager (Bottom of the container)
+  readPageBtnWrapper.appendChild(readPageBtn);
+  
   const mizanContainer = document.getElementById('mizanTafsirContainer');
   if (mizanContainer) {
-    mizanContainer.appendChild(readPageBtn);
+    mizanContainer.appendChild(readPageBtnWrapper);
   }
 
   // ============================================================
@@ -72,7 +75,7 @@ const MizanPanel = (function () {
   let mizanSaveTimer = null;
   let mizanNotes = [];
   let mizanTags = [];
-  let mizanReadPages = new Set(); // Stores string numbers of read pages
+  let mizanReadPages = new Set(); 
   
   let pendingNoteAnchor = null;
   let editingNoteId = null;
@@ -126,6 +129,7 @@ const MizanPanel = (function () {
   function normalizePersianChars(text) { return canonizeInvisibles(canonizeLetters(text)); }
   function normalizeChars(text) { return canonizeInvisibles(canonizeLetters(text)).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, ''); }
   function stripDiacritics(s) { return String(s == null ? '' : s).replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, ''); }
+  
   function dedupeById(arr) {
     if (!Array.isArray(arr)) return [];
     const seen = new Set(); const out = [];
@@ -343,7 +347,7 @@ const MizanPanel = (function () {
     mizanEmpty.classList.add('hidden'); mizanLoading.classList.add('hidden');
     mizanContent.classList.add('hidden'); mizanError.classList.add('hidden');
     if (mizanPager) mizanPager.classList.add('hidden');
-    if (readPageBtn) readPageBtn.style.display = 'none';
+    if (readPageBtnWrapper) readPageBtnWrapper.style.display = 'none';
     if (mizanRange) mizanRange.textContent = '';
 
     if (state === 'empty') mizanEmpty.classList.remove('hidden');
@@ -439,7 +443,7 @@ const MizanPanel = (function () {
   // ============================================================
   function insertInlineNoteAt(rootEl, note) {
     const isReadMarker = note.note_text === '[[READ_MARKER]]';
-    if (isReadMarker && note.anchor_before) return false; // Don't render inside text
+    if (isReadMarker && note.anchor_before) return false; 
     
     const blocks = rootEl.querySelectorAll(NOTE_BLOCK_SELECTOR);
     const beforeN = normalizeChars(note.anchor_before || ''); const afterN = normalizeChars(note.anchor_after || '');
@@ -482,7 +486,7 @@ const MizanPanel = (function () {
 
     const orphans = [];
     for (const note of mizanNotes) {
-      if (note.note_text === '[[PAGE_READ]]') continue; // Skip DB records for read pages
+      if (note.note_text === '[[PAGE_READ]]') continue; 
       const ok = insertInlineNoteAt(rootEl, note);
       if (!ok && note.note_text !== '[[READ_MARKER]]') orphans.push(note);
     }
@@ -779,7 +783,7 @@ const MizanPanel = (function () {
 
   function updateMizanPagerUI() {
     if (!mizanPager) return;
-    if (mizanPages.length <= 1) { mizanPager.classList.add('hidden'); readPageBtn.style.display = 'none'; return; }
+    if (mizanPages.length <= 1) { mizanPager.classList.add('hidden'); readPageBtnWrapper.style.display = 'none'; return; }
     mizanPager.classList.remove('hidden');
     
     const total = mizanPages.length; const cur = mizanCurrentPage;
@@ -792,12 +796,12 @@ const MizanPanel = (function () {
     }
     
     // Button update
-    readPageBtn.style.display = 'block';
+    readPageBtnWrapper.style.display = 'block';
     if (isRead) {
-      readPageBtn.innerHTML = '✓ این صفحه خوانده شده است';
+      readPageBtn.innerHTML = '✓ خوانده شد';
       readPageBtn.classList.add('is-read');
     } else {
-      readPageBtn.innerHTML = 'علامت‌گذاری به عنوان خوانده‌شده';
+      readPageBtn.innerHTML = 'علامت‌گذاری خوانده‌شده';
       readPageBtn.classList.remove('is-read');
     }
 
