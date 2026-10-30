@@ -1156,3 +1156,23 @@
 .app[data-page="personality"] .side-section-library {
   display: none;
 }
+
+.pers-toolbar-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.pers-kind {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+}
+.pers-kind-btn.is-active {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 700;
+}

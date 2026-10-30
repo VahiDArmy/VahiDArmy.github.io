@@ -87,48 +87,54 @@ window.AIAnalysis = (function () {
     return lines.join('\n');
   }
 
-  /** تحلیل عمیق سلیقه */
-  function buildTasteAnalysisMessages() {
+  /**
+   * پرامپت تحلیل سلیقه/شخصیت
+   * kind: 'movie' | 'series' — قبل از ارسال مشخص می‌شود
+   */
+  function buildTasteAnalysisMessages(kind) {
+    kind = kind === 'series' ? 'series' : 'movie';
+    var kindFa = kind === 'series' ? 'سریال' : 'فیلم';
+
     var data = collectUserData();
     if (data.rated.length < 3) {
       throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای تحلیل سلیقه لازم است.');
     }
 
-    /* همهٔ امتیازدارها — عنوان صحیح + سال + نوع + امتیاز */
+    /* فقط: عنوان صحیح + سال ساخت + امتیاز (+ نوع برای خوانایی) */
     var lines = data.rated.map(function (t) {
-      var name = t.original_title
-        ? (t.title + ' / ' + t.original_title)
-        : t.title;
-      return '• ' + name
-        + (t.year ? ' (' + t.year + ')' : '')
-        + ' — ' + (t.type === 'movie' ? 'فیلم' : t.type === 'series' ? 'سریال' : (t.type || 'عنوان'))
-        + ' — امتیاز ' + t.rating + '/5';
+      var name = (t.title || '').trim();
+      if (t.original_title && String(t.original_title).trim()
+          && String(t.original_title).trim() !== name) {
+        name = name + ' / ' + String(t.original_title).trim();
+      }
+      return '- ' + name
+        + (t.year ? ' | سال ' + t.year : '')
+        + ' | امتیاز ' + t.rating;
     });
 
+    /* ۱) منطق امتیاز — ۲) لیست — ۳) تحلیل شخصیت — ۴) یک پیشنهاد از نوع مشخص‌شده */
     var system = [
-      'تو تحلیل‌گر سلیقه و شخصیت سینمایی هستی.',
-      'فقط بر اساس دادهٔ کاربر حرف بزن؛ حدس بی‌پایه نزن.',
-      'پاسخ را فارسی و با Markdown بنویس.',
-      '',
-      'منطق امتیازبندی کاربر (حتماً رعایت کن):',
-      '۵ = عالی بود؛ به قدری که بیش از یک بار خواهم دید',
-      '۴ = خوب بود و از تماشایش راضی‌ام',
-      '۳ = خوب / قابل قبول',
-      '۲ = افتضاح؛ اگر به گذشته برگردم هرگز تماشا نمی‌کنم',
-      '۱ = افتضاح؛ از تماشایش عصبانی‌ام'
+      'تو تحلیل‌گر سلیقه و شخصیت بیننده بر اساس آثار سینمایی هستی.',
+      'فقط از دادهٔ داده‌شده استفاده کن.',
+      'پاسخ فارسی با Markdown.'
     ].join('\n');
 
     var user = [
-      tasteProfileBlock(),
+      'منطق امتیازبندی کاربر:',
+      '۵ = عالی بود؛ بیش از یک بار خواهم دید',
+      '۴ = خوب بود و راضی‌ام',
+      '۳ = خوب / قابل قبول',
+      '۲ = افتضاح؛ هرگز دوباره تماشا نمی‌کنم',
+      '۱ = افتضاح؛ از تماشا عصبانی‌ام',
       '',
-      '## فهرست آثار امتیازداده‌شده (عنوان صحیح + سال ساخت + نوع + امتیاز)',
+      'فهرست آثار امتیازداده‌شده (عنوان صحیح | سال ساخت | امتیاز):',
       lines.join('\n'),
       '',
-      '## درخواست',
-      '۱) بر اساس همین فهرست و منطق امتیازها، سلیقه و شخصیت این بیننده را عمیق تحلیل کن.',
-      '۲) در پایان، دقیقاً یک فیلم یا یک سریال پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
-      '۳) دلیل پیشنهاد را کوتاه و با ارجاع به الگوهای امتیازهای بالا بنویس.'
-    ].filter(Boolean).join('\n');
+      'درخواست:',
+      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را عمیق تحلیل کن.',
+      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
+      'دلیل پیشنهاد را کوتاه بنویس.'
+    ].join('\n');
 
     return [
       { role: 'system', content: system },
@@ -173,7 +179,8 @@ window.AIAnalysis = (function () {
 
   async function analyzeTaste(options) {
     options = options || {};
-    var messages = buildTasteAnalysisMessages();
+    var kind = options.kind === 'series' ? 'series' : 'movie';
+    var messages = buildTasteAnalysisMessages(kind);
     var full = '';
     await AI.chatStream({
       messages: messages,

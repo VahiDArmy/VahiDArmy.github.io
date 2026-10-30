@@ -287,6 +287,7 @@ window.Events = (function () {
      ========================================================= */
   var persPanel = null;
   var persRunning = false;
+  var persSelectedKind = 'movie';
 
   function formatPersDate(iso) {
     if (!iso) return '';
@@ -416,6 +417,7 @@ window.Events = (function () {
 
     try {
       var result = await AIAnalysis.analyzeTaste({
+        kind: persSelectedKind,
         onToken: function (_c, full) { panel.appendText(full); }
       });
       panel.appendText(result || '');
@@ -445,6 +447,14 @@ window.Events = (function () {
   }
 
   function bindPersonalityPage() {
+    document.querySelectorAll('.pers-kind-btn').forEach(function (b) {
+      b.addEventListener('click', function () {
+        persSelectedKind = b.dataset.kind === 'series' ? 'series' : 'movie';
+        document.querySelectorAll('.pers-kind-btn').forEach(function (x) {
+          x.classList.toggle('is-active', x === b);
+        });
+      });
+    });
     var btn = document.getElementById('btn-run-personality');
     if (btn) btn.addEventListener('click', function () { runPersonalityAnalysis(); });
   }
