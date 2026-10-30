@@ -3,45 +3,26 @@
 // =============================================================
 const Store = (function () {
   async function getLatestTafsir() {
-    const { data, error } = await sb
-      .from('tafsirs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await sb.from('tafsirs').select('*').order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (error) throw error;
     return data;
   }
 
   async function getTafsirsForAyah(surah, ayah) {
-    const { data, error } = await sb
-      .from('tafsirs')
-      .select('*')
-      .eq('surah', surah)
-      .eq('ayah', ayah)
-      .order('created_at', { ascending: false });
+    const { data, error } = await sb.from('tafsirs').select('*').eq('surah', surah).eq('ayah', ayah).order('created_at', { ascending: false });
     if (error) throw error;
     return data;
   }
 
   async function addTafsir({ surah, ayah, content, tags }) {
     const round = await getCurrentRound();
-    const { data, error } = await sb
-      .from('tafsirs')
-      .insert({ surah, ayah, round_number: round, content, tags: tags || [] })
-      .select()
-      .single();
+    const { data, error } = await sb.from('tafsirs').insert({ surah, ayah, round_number: round, content, tags: tags || [] }).select().single();
     if (error) throw error;
     return data;
   }
 
   async function updateTafsir(id, content, tags) {
-    const { data, error } = await sb
-      .from('tafsirs')
-      .update({ content, tags: tags || [] })
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await sb.from('tafsirs').update({ content, tags: tags || [] }).eq('id', id).select().single();
     if (error) throw error;
     return data;
   }
@@ -52,21 +33,13 @@ const Store = (function () {
   }
 
   async function getComments(tafsirId) {
-    const { data, error } = await sb
-      .from('comments')
-      .select('*')
-      .eq('tafsir_id', tafsirId)
-      .order('created_at', { ascending: true });
+    const { data, error } = await sb.from('comments').select('*').eq('tafsir_id', tafsirId).order('created_at', { ascending: true });
     if (error) throw error;
     return data;
   }
 
   async function addComment({ tafsirId, guestName, content }) {
-    const { data, error } = await sb
-      .from('comments')
-      .insert({ tafsir_id: tafsirId, guest_name: guestName, content })
-      .select()
-      .single();
+    const { data, error } = await sb.from('comments').insert({ tafsir_id: tafsirId, guest_name: guestName, content }).select().single();
     if (error) throw error;
     return data;
   }
@@ -85,17 +58,11 @@ const Store = (function () {
         freq.set(tag, (freq.get(tag) || 0) + 1);
       }
     }
-    return Array.from(freq.entries())
-      .map(([tag, count]) => ({ tag, count }))
-      .sort((a, b) => b.count - a.count);
+    return Array.from(freq.entries()).map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count);
   }
 
   async function getTafsirsByTag(tag) {
-    const { data, error } = await sb
-      .from('tafsirs')
-      .select('*')
-      .contains('tags', [tag])
-      .order('created_at', { ascending: false });
+    const { data, error } = await sb.from('tafsirs').select('*').contains('tags', [tag]).order('created_at', { ascending: false });
     if (error) throw error;
     return data;
   }
@@ -105,12 +72,7 @@ const Store = (function () {
     if (delErr) throw delErr;
     if (!links.length) return;
     const rows = links.map((l) => ({
-      tafsir_id: tafsirId,
-      from_surah: fromSurah,
-      from_ayah: fromAyah,
-      to_surah: l.surah,
-      to_ayah: l.ayah,
-      excerpt: l.excerpt,
+      tafsir_id: tafsirId, from_surah: fromSurah, from_ayah: fromAyah, to_surah: l.surah, to_ayah: l.ayah, excerpt: l.excerpt,
     }));
     const { error } = await sb.from('ayah_links').insert(rows);
     if (error) throw error;
@@ -123,19 +85,15 @@ const Store = (function () {
   }
 
   async function isMarked(surah, ayah) {
-    const { data, error } = await sb
-      .from('marked_ayahs')
-      .select('surah')
-      .eq('surah', surah)
-      .eq('ayah', ayah)
-      .maybeSingle();
+    const { data, error } = await sb.from('marked_ayahs').select('surah').eq('surah', surah).eq('ayah', ayah).maybeSingle();
     if (error) throw error;
     return !!data;
   }
 
+  // ★ اصلاح (مورد ۲۵): استفاده از upsert برای جلوگیری از خطای کلید تکراری
   async function toggleMark(surah, ayah, mark) {
     if (mark) {
-      const { error } = await sb.from('marked_ayahs').insert({ surah, ayah });
+      const { error } = await sb.from('marked_ayahs').upsert({ surah, ayah }, { onConflict: 'surah,ayah', ignoreDuplicates: true });
       if (error) throw error;
     } else {
       const { error } = await sb.from('marked_ayahs').delete().eq('surah', surah).eq('ayah', ayah);
@@ -144,12 +102,8 @@ const Store = (function () {
   }
 
   async function searchTafsirs(query) {
-    const { data, error } = await sb
-      .from('tafsirs')
-      .select('*')
-      .ilike('content', `%${query}%`)
-      .order('created_at', { ascending: false })
-      .limit(100);
+    const safeQuery = query.replace(/[%_]/g, '\\$&'); // اصلاح (مورد ۵۸): جلوگیری از جستجوی همه چیز با کاراکتر %
+    const { data, error } = await sb.from('tafsirs').select('*').ilike('content', `%${safeQuery}%`).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
     return data;
   }
@@ -161,25 +115,22 @@ const Store = (function () {
   }
 
   async function getSiteMeta() {
-    const { data, error } = await sb
-      .from('site_meta')
-      .select('current_round, bookmark_surah, bookmark_ayah')
-      .eq('id', 1)
-      .single();
+    const { data, error } = await sb.from('site_meta').select('current_round, bookmark_surah, bookmark_ayah').eq('id', 1).single();
     if (error) throw error;
     return data;
+  }
+
+  // ★ اضافه شده (مورد ۱): این متد در browse.js صدا زده می‌شد ولی وجود نداشت
+  async function updateBookmark(surah, ayah) {
+    const { error } = await sb.from('site_meta').update({ bookmark_surah: surah, bookmark_ayah: ayah }).eq('id', 1);
+    if (error) throw error;
   }
 
   async function getProgress() {
     const meta = await getSiteMeta();
     const readIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
-
-    const { count, error } = await sb
-      .from('tafsirs')
-      .select('*', { count: 'exact', head: true })
-      .eq('round_number', meta.current_round);
+    const { count, error } = await sb.from('tafsirs').select('*', { count: 'exact', head: true }).eq('round_number', meta.current_round);
     if (error) throw error;
-
     return {
       round: meta.current_round,
       bookmarkSurah: meta.bookmark_surah,
@@ -196,61 +147,36 @@ const Store = (function () {
     const newIndex = await QuranData.cumulativeIndex(surah, ayah);
     const currentIndex = await QuranData.cumulativeIndex(meta.bookmark_surah, meta.bookmark_ayah);
     if (newIndex <= currentIndex) return false;
-    const { error } = await sb
-      .from('site_meta')
-      .update({ bookmark_surah: surah, bookmark_ayah: ayah })
-      .eq('id', 1);
+    const { error } = await sb.from('site_meta').update({ bookmark_surah: surah, bookmark_ayah: ayah }).eq('id', 1);
     if (error) throw error;
     return true;
   }
 
   async function endRound() {
     const round = await getCurrentRound();
-    const { error } = await sb
-      .from('site_meta')
-      .update({ current_round: round + 1, bookmark_surah: 1, bookmark_ayah: 1 })
-      .eq('id', 1);
+    const { error } = await sb.from('site_meta').update({ current_round: round + 1, bookmark_surah: 1, bookmark_ayah: 1 }).eq('id', 1);
     if (error) throw error;
     return round + 1;
   }
 
   async function getAiReview(tafsirId) {
-    const { data, error } = await sb
-      .from('ai_reviews')
-      .select('*')
-      .eq('tafsir_id', tafsirId)
-      .maybeSingle();
+    const { data, error } = await sb.from('ai_reviews').select('*').eq('tafsir_id', tafsirId).maybeSingle();
     if (error) throw error;
     return data;
   }
 
   async function saveAiReview(tafsirId, content) {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session?.user?.id) {
-      throw new Error('برای ثبت بررسی هوشمند باید وارد حساب شوید');
-    }
+    if (!session?.user?.id) throw new Error('برای ثبت بررسی هوشمند باید وارد حساب شوید');
 
     const existing = await getAiReview(tafsirId);
     if (existing) {
-      const { data, error } = await sb
-        .from('ai_reviews')
-        .update({ content, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .select()
-        .single();
+      const { data, error } = await sb.from('ai_reviews').update({ content, updated_at: new Date().toISOString() }).eq('id', existing.id).select().single();
       if (error) throw error;
       return data;
     }
 
-    const { data, error } = await sb
-      .from('ai_reviews')
-      .insert({
-        tafsir_id: tafsirId,
-        content,
-        user_id: session.user.id,
-      })
-      .select()
-      .single();
+    const { data, error } = await sb.from('ai_reviews').insert({ tafsir_id: tafsirId, content, user_id: session.user.id }).select().single();
     if (error) throw error;
     return data;
   }
@@ -262,60 +188,34 @@ const Store = (function () {
 
   async function callAiReview({ surah, ayah, ayahText, userOpinion }) {
     const { data: { session } } = await sb.auth.getSession();
-    if (!session?.access_token) {
-      throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
-    }
+    if (!session?.access_token) throw new Error('برای بررسی هوشمند باید وارد حساب شوید');
 
-    const fn = localStorage.getItem('ai_fn')
-      || CONFIG.AI_FUNCTION_DEFAULT
-      || 'ai-review';
-
+    const fn = localStorage.getItem('ai_fn') || CONFIG.AI_FUNCTION_DEFAULT || 'ai-review';
     const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/${fn}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ surah, ayah, ayahText, userOpinion }),
     });
 
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || 'خطا در دریافت پاسخ هوشمند');
-
-    return {
-      content: json.content,
-      model: json.model || null,
-    };
+    return { content: json.content, model: json.model || null };
   }
 
   async function saveAskAi({ surah, ayah, model, question, answerRaw }) {
-    const { data, error } = await sb
-      .from('ask_ai')
-      .insert({ surah, ayah, model, question, answer_raw: answerRaw })
-      .select()
-      .single();
+    const { data, error } = await sb.from('ask_ai').insert({ surah, ayah, model, question, answer_raw: answerRaw }).select().single();
     if (error) throw error;
     return data;
   }
 
   async function getAskAiHistory(surah, ayah, limit = 20) {
-    const { data, error } = await sb
-      .from('ask_ai')
-      .select('*')
-      .eq('surah', surah)
-      .eq('ayah', ayah)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const { data, error } = await sb.from('ask_ai').select('*').eq('surah', surah).eq('ayah', ayah).order('created_at', { ascending: false }).limit(limit);
     if (error) throw error;
     return data || [];
   }
 
   async function deleteAskAi(id) {
-    const { data: gens, error: gErr } = await sb
-      .from('ai_generations')
-      .select('id')
-      .eq('source', 'ask_ai')
-      .eq('ref_id', id);
+    const { data: gens, error: gErr } = await sb.from('ai_generations').select('id').eq('source', 'ask_ai').eq('ref_id', id);
     if (gErr) throw gErr;
     const ids = (gens || []).map((g) => g.id);
     if (ids.length) {
@@ -327,41 +227,42 @@ const Store = (function () {
   }
 
   async function updateAskAiRaw(id, answerRaw) {
-    const { error } = await sb
-      .from('ask_ai')
-      .update({ answer_raw: answerRaw })
-      .eq('id', id);
+    const { error } = await sb.from('ask_ai').update({ answer_raw: answerRaw }).eq('id', id);
     if (error) throw error;
   }
 
   async function createGeneration({ source, refId, model }) {
-    const { data, error } = await sb
-      .from('ai_generations')
-      .insert({ source, ref_id: refId, model })
-      .select()
-      .single();
+    const { data, error } = await sb.from('ai_generations').insert({ source, ref_id: refId, model }).select().single();
     if (error) throw error;
     return data;
   }
 
   async function getLatestGeneration(source, refId) {
-    const { data, error } = await sb
-      .from('ai_generations')
-      .select('id, model, created_at')
-      .eq('source', source)
-      .eq('ref_id', refId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const { data, error } = await sb.from('ai_generations').select('id, model, created_at').eq('source', source).eq('ref_id', refId).order('created_at', { ascending: false }).limit(1).maybeSingle();
     if (error) throw error;
     return data;
   }
 
+  // ★ اضافه شده (مورد ۷): واکشی تمام نسل‌ها با یک درخواست (N+1 Query Optimization)
+  async function getLatestGenerations(refIds) {
+    if (!refIds.length) return [];
+    const { data, error } = await sb.from('ai_generations')
+      .select('id, ref_id, model, created_at')
+      .eq('source', 'ask_ai')
+      .in('ref_id', refIds)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    
+    // فیلتر کردن برای اینکه فقط جدیدترین هر ref_id را برداریم
+    const map = new Map();
+    for (const row of data || []) {
+      if (!map.has(row.ref_id)) map.set(row.ref_id, row);
+    }
+    return Array.from(map.values());
+  }
+
   async function getGenerationFeedback(generationId) {
-    const { data, error } = await sb
-      .from('ai_feedback')
-      .select('vote')
-      .eq('generation_id', generationId);
+    const { data, error } = await sb.from('ai_feedback').select('vote').eq('generation_id', generationId);
     if (error) throw error;
     const votes = data || [];
     const up = votes.filter((v) => v.vote === 1).length;
@@ -372,12 +273,7 @@ const Store = (function () {
   async function getMyFeedback(generationId) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.user?.id) return 0;
-    const { data, error } = await sb
-      .from('ai_feedback')
-      .select('vote')
-      .eq('generation_id', generationId)
-      .eq('user_id', session.user.id)
-      .maybeSingle();
+    const { data, error } = await sb.from('ai_feedback').select('vote').eq('generation_id', generationId).eq('user_id', session.user.id).maybeSingle();
     if (error) throw error;
     return data ? data.vote : 0;
   }
@@ -388,26 +284,12 @@ const Store = (function () {
     const userId = session.user.id;
 
     if (vote === 0) {
-      const { error } = await sb
-        .from('ai_feedback')
-        .delete()
-        .eq('generation_id', generationId)
-        .eq('user_id', userId);
+      const { error } = await sb.from('ai_feedback').delete().eq('generation_id', generationId).eq('user_id', userId);
       if (error) throw error;
       return;
     }
 
-    const { error } = await sb
-      .from('ai_feedback')
-      .upsert(
-        {
-          generation_id: generationId,
-          user_id: userId,
-          vote,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: 'user_id,generation_id' }
-      );
+    const { error } = await sb.from('ai_feedback').upsert({ generation_id: generationId, user_id: userId, vote, updated_at: new Date().toISOString() }, { onConflict: 'user_id,generation_id' });
     if (error) throw error;
   }
 
@@ -422,12 +304,7 @@ const Store = (function () {
   async function getMizanProgress(contentKey) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.id) {
-      const { data, error } = await sb
-        .from('mizan_progress')
-        .select('page_index')
-        .eq('user_id', session.user.id)
-        .eq('content_key', contentKey)
-        .maybeSingle();
+      const { data, error } = await sb.from('mizan_progress').select('page_index').eq('user_id', session.user.id).eq('content_key', contentKey).maybeSingle();
       if (error) throw error;
       return data ? data.page_index : null;
     }
@@ -436,42 +313,24 @@ const Store = (function () {
       if (v == null) return null;
       const n = Number(v);
       return Number.isFinite(n) && n >= 0 ? n : null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   async function saveMizanProgress(contentKey, pageIndex) {
     const { data: { session } } = await sb.auth.getSession();
     if (session?.user?.id) {
-      const { error } = await sb
-        .from('mizan_progress')
-        .upsert(
-          {
-            user_id: session.user.id,
-            content_key: contentKey,
-            page_index: pageIndex,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,content_key' }
-        );
+      const { error } = await sb.from('mizan_progress').upsert({ user_id: session.user.id, content_key: contentKey, page_index: pageIndex, updated_at: new Date().toISOString() }, { onConflict: 'user_id,content_key' });
       if (error) throw error;
       return true;
     }
-    try {
-      localStorage.setItem('mizan-page-' + contentKey, String(pageIndex));
-    } catch (e) {}
+    try { localStorage.setItem('mizan-page-' + contentKey, String(pageIndex)); } catch (e) {}
     return false;
   }
 
   async function getMizanNotes(contentId) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.user?.id) return [];
-    const { data, error } = await sb
-      .from('mizan_notes')
-      .select('*')
-      .eq('content_id', contentId)
-      .order('created_at', { ascending: true });
+    const { data, error } = await sb.from('mizan_notes').select('*').eq('content_id', contentId).order('created_at', { ascending: true });
     if (error) throw error;
     return data || [];
   }
@@ -479,28 +338,13 @@ const Store = (function () {
   async function addMizanNote({ contentId, anchorBefore, anchorSelected, anchorAfter, noteText }) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session?.user?.id) throw new Error('برای ثبت یادداشت باید وارد حساب شوید');
-    const { data, error } = await sb
-      .from('mizan_notes')
-      .insert({
-        content_id: contentId,
-        anchor_before: anchorBefore,
-        anchor_selected: anchorSelected,
-        anchor_after: anchorAfter,
-        note_text: noteText,
-      })
-      .select()
-      .single();
+    const { data, error } = await sb.from('mizan_notes').insert({ content_id: contentId, anchor_before: anchorBefore, anchor_selected: anchorSelected, anchor_after: anchorAfter, note_text: noteText }).select().single();
     if (error) throw error;
     return data;
   }
 
   async function updateMizanNote(id, noteText) {
-    const { data, error } = await sb
-      .from('mizan_notes')
-      .update({ note_text: noteText, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single();
+    const { data, error } = await sb.from('mizan_notes').update({ note_text: noteText, updated_at: new Date().toISOString() }).eq('id', id).select().single();
     if (error) throw error;
     return data;
   }
@@ -510,30 +354,17 @@ const Store = (function () {
     if (error) throw error;
   }
 
-  // ---------- Mizan tags ----------
   async function getMizanTags(contentId) {
-    const { data, error } = await sb
-      .from('mizan_tags')
-      .select('*')
-      .eq('content_id', contentId);
+    const { data, error } = await sb.from('mizan_tags').select('*').eq('content_id', contentId);
     if (error) throw error;
     return data || [];
   }
 
   async function replaceMizanTags(contentId, tags, model) {
-    const { error: delErr } = await sb
-      .from('mizan_tags')
-      .delete()
-      .eq('content_id', contentId);
+    const { error: delErr } = await sb.from('mizan_tags').delete().eq('content_id', contentId);
     if (delErr) throw delErr;
     if (!tags.length) return;
-    const rows = tags.map((t) => ({
-      content_id: contentId,
-      ayah: t.ayah,
-      start_excerpt: t.startExcerpt,
-      end_excerpt: t.endExcerpt,
-      model: model || null,
-    }));
+    const rows = tags.map((t) => ({ content_id: contentId, ayah: t.ayah, start_excerpt: t.startExcerpt, end_excerpt: t.endExcerpt, model: model || null }));
     const { error } = await sb.from('mizan_tags').insert(rows);
     if (error) throw error;
   }
@@ -546,15 +377,11 @@ const Store = (function () {
       err.status = null;
       throw err;
     }
-
     let res;
     try {
       res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/mizan-tagger`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ surah_name: surahName, ayahs, content, model }),
       });
     } catch (e) {
@@ -563,76 +390,33 @@ const Store = (function () {
       err.status = null;
       throw err;
     }
-
     const rawText = await res.text();
     let parsed = null;
     try { parsed = JSON.parse(rawText); } catch (e) {}
-
     if (!res.ok) {
       const err = new Error((parsed && parsed.error) || ('HTTP ' + res.status));
       err.status = res.status;
       err.raw = rawText;
       throw err;
     }
-
     if (!parsed || !parsed.content) {
       const err = new Error('پاسخ خالی از مدل');
       err.status = res.status;
       err.raw = rawText;
       throw err;
     }
-
-    return {
-      content: parsed.content,
-      model: parsed.model || null,
-      raw: rawText,
-      status: res.status,
-    };
+    return { content: parsed.content, model: parsed.model || null, raw: rawText, status: res.status };
   }
 
   return {
-    getLatestTafsir,
-    getTafsirsForAyah,
-    addTafsir,
-    updateTafsir,
-    deleteTafsir,
-    getComments,
-    addComment,
-    deleteComment,
-    getAllTags,
-    getTafsirsByTag,
-    isMarked,
-    toggleMark,
-    syncAyahLinks,
-    getAllLinks,
-    searchTafsirs,
-    getCurrentRound,
-    getSiteMeta,
-    getProgress,
-    advanceBookmarkIfAhead,
-    endRound,
-    getAiReview,
-    saveAiReview,
-    deleteAiReview,
-    callAiReview,
-    saveAskAi,
-    getAskAiHistory,
-    deleteAskAi,
-    updateAskAiRaw,
-    createGeneration,
-    getLatestGeneration,
-    getGenerationFeedback,
-    getMyFeedback,
-    setFeedback,
-    getModelScores,
-    getMizanProgress,
-    saveMizanProgress,
-    getMizanNotes,
-    addMizanNote,
-    updateMizanNote,
-    deleteMizanNote,
-    getMizanTags,
-    replaceMizanTags,
-    callMizanTagger,
+    getLatestTafsir, getTafsirsForAyah, addTafsir, updateTafsir, deleteTafsir,
+    getComments, addComment, deleteComment, getAllTags, getTafsirsByTag,
+    isMarked, toggleMark, syncAyahLinks, getAllLinks, searchTafsirs,
+    getCurrentRound, getSiteMeta, updateBookmark, getProgress, advanceBookmarkIfAhead, endRound,
+    getAiReview, saveAiReview, deleteAiReview, callAiReview,
+    saveAskAi, getAskAiHistory, deleteAskAi, updateAskAiRaw,
+    createGeneration, getLatestGeneration, getLatestGenerations, getGenerationFeedback, getMyFeedback, setFeedback, getModelScores,
+    getMizanProgress, saveMizanProgress, getMizanNotes, addMizanNote, updateMizanNote, deleteMizanNote,
+    getMizanTags, replaceMizanTags, callMizanTagger,
   };
 })();
