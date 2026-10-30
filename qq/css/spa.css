@@ -174,3 +174,14 @@ html.is-navigating #app {
   padding: 24px;
   line-height: 1.7;
 }
+
+/* Keep content clear of the floating mobile tabbar */
+@media (max-width: 560px) {
+  #view-work,
+  #app {
+    padding-bottom: 96px;
+  }
+  .mizan-pager {
+    flex-wrap: nowrap;
+  }
+}

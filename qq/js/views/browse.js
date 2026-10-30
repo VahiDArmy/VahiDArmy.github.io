@@ -1,7 +1,14 @@
 window.Views = window.Views || {};
 window.Views.Browse = async function ({ container, params }) {
-  let surah = +(params.surah || 1);
-  let ayah = +(params.ayah || 1);
+  // Prefer explicit route params; otherwise stay on the same ayah as Work page
+  let surah = +(params.surah || 0);
+  let ayah = +(params.ayah || 0);
+  if (!surah || !ayah) {
+    const sEl = document.getElementById('formSurahSelect');
+    const aEl = document.getElementById('formAyahSelect');
+    surah = +(sEl && sEl.value) || 1;
+    ayah = +(aEl && aEl.value) || 1;
+  }
 
   container.innerHTML = `
     <div class="view view-browse">

@@ -439,11 +439,11 @@ a.tag-pill:hover { filter: brightness(1.2); }
 .mizan-pager {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px dashed var(--border);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .mizan-pager__btn {
   all: unset;
@@ -864,8 +864,9 @@ a.tag-pill:hover { filter: brightness(1.2); }
   .mizan-tafsir-content p.mizan-arabic-raw { font-size: 1.2rem; line-height: 2.5; }
   .mizan-tafsir-content h2 { font-size: 1.08rem; }
   .mizan-tafsir-content h3 { font-size: .96rem; }
-  .mizan-pager__info { font-size: .76rem; min-width: 80px; }
-  .mizan-pager__btn, .mizan-pager__toc { padding: 6px 12px; font-size: .76rem; }
+  .mizan-pager { gap: 4px; }
+  .mizan-pager__info { font-size: .72rem; min-width: 0; flex: 1 1 auto; }
+  .mizan-pager__btn, .mizan-pager__toc { padding: 6px 10px; font-size: .72rem; flex-shrink: 0; }
   .mizan-note-inline { font-size: .9em; }
   .mizan-note-popup { max-width: calc(100vw - 24px); }
   .mizan-tagger-btn { font-size: .7rem; padding: 2px 10px 2px 8px; }
