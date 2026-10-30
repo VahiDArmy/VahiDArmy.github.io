@@ -12,7 +12,6 @@ const UI = (function () {
   function populateAyahSelect(selectEl, ayahCount, selected) {
     let html = '';
     for (let i = 1; i <= ayahCount; i++) {
-      // ★ کلمهٔ «آیه» برگشت
       html += `<option value="${i}" ${i === selected ? 'selected' : ''}>آیه ${toPersianDigits(i)}</option>`;
     }
     selectEl.innerHTML = html;
@@ -83,7 +82,12 @@ const UI = (function () {
       ? `background:${c.color};border-color:${c.color};color:#0B0E14;`
       : `background:${c.bg};border-color:${c.border};color:${c.color};`;
     const countHtml = count != null ? ` <span class="tag-pill__count">${toPersianDigits(count)}</span>` : '';
-    const tagEsc = tag.replace(/</g, '&lt;');
+    
+    // ★ امنیت (مورد ۱۴): اصلاح escapeHtml برای جلوگیری از شکستن Attribute
+    const tagEsc = String(tag).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[m]));
+    
     return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
   }
 
