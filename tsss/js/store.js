@@ -85,24 +85,28 @@ const Store = (function () {
   }
 
   async function isMarked(surah, ayah) {
-    const { data, error } = await sb.from('marked_ayahs').select('surah').eq('surah', surah).eq('ayah', ayah).maybeSingle();
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) return false;
+    const { data, error } = await sb.from('marked_ayahs').select('surah').eq('surah', surah).eq('ayah', ayah).eq('user_id', session.user.id).maybeSingle();
     if (error) throw error;
     return !!data;
   }
 
-  // ★ اصلاح (مورد ۲۵): استفاده از upsert برای جلوگیری از خطای کلید تکراری
   async function toggleMark(surah, ayah, mark) {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session?.user?.id) throw new Error('برای نشانک‌گذاری باید وارد شوید');
+    
     if (mark) {
-      const { error } = await sb.from('marked_ayahs').upsert({ surah, ayah }, { onConflict: 'surah,ayah', ignoreDuplicates: true });
+      const { error } = await sb.from('marked_ayahs').upsert({ surah, ayah, user_id: session.user.id }, { onConflict: 'surah,ayah,user_id', ignoreDuplicates: true });
       if (error) throw error;
     } else {
-      const { error } = await sb.from('marked_ayahs').delete().eq('surah', surah).eq('ayah', ayah);
+      const { error } = await sb.from('marked_ayahs').delete().eq('surah', surah).eq('ayah', ayah).eq('user_id', session.user.id);
       if (error) throw error;
     }
   }
 
   async function searchTafsirs(query) {
-    const safeQuery = query.replace(/[%_]/g, '\\$&'); // اصلاح (مورد ۵۸): جلوگیری از جستجوی همه چیز با کاراکتر %
+    const safeQuery = query.replace(/[%_]/g, '\\$&'); 
     const { data, error } = await sb.from('tafsirs').select('*').ilike('content', `%${safeQuery}%`).order('created_at', { ascending: false }).limit(100);
     if (error) throw error;
     return data;
@@ -120,7 +124,7 @@ const Store = (function () {
     return data;
   }
 
-  // ★ اضافه شده (مورد ۱): این متد در browse.js صدا زده می‌شد ولی وجود نداشت
+  // ★ رفع باگ B1: این متد در browse.js صدا زده می‌شد ولی وجود نداشت
   async function updateBookmark(surah, ayah) {
     const { error } = await sb.from('site_meta').update({ bookmark_surah: surah, bookmark_ayah: ayah }).eq('id', 1);
     if (error) throw error;
@@ -243,7 +247,7 @@ const Store = (function () {
     return data;
   }
 
-  // ★ اضافه شده (مورد ۷): واکشی تمام نسل‌ها با یک درخواست (N+1 Query Optimization)
+  // ★ رفع باگ E5: واکشی تمام نسل‌ها با یک درخواست (N+1 Query Optimization)
   async function getLatestGenerations(refIds) {
     if (!refIds.length) return [];
     const { data, error } = await sb.from('ai_generations')
@@ -253,7 +257,6 @@ const Store = (function () {
       .order('created_at', { ascending: false });
     if (error) throw error;
     
-    // فیلتر کردن برای اینکه فقط جدیدترین هر ref_id را برداریم
     const map = new Map();
     for (const row of data || []) {
       if (!map.has(row.ref_id)) map.set(row.ref_id, row);
