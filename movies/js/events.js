@@ -169,6 +169,13 @@ window.Events = (function () {
     if (btnBatch) btnBatch.addEventListener('click', function () { AIUI.openStandardizeBatch(); });
     const btnAnalyze = document.getElementById('btn-ai-analyze');
     if (btnAnalyze) btnAnalyze.addEventListener('click', function () { AIUI.openAnalysis(); });
+
+    /* --- AI Roulette --- */
+    const btnRoulette = document.getElementById('btn-ai-roulette');
+    if (btnRoulette) btnRoulette.addEventListener('click', function () {
+      if (typeof AIRoulette !== 'undefined') AIRoulette.open();
+      else Toast.error('ماژول رولت بارگذاری نشده');
+    });
   }
 
   function bindToolbar() {
@@ -745,20 +752,20 @@ window.Events = (function () {
       Utils.el('div', { id: 'migrate-status', style: 'margin-top:0.75rem;font-size:0.9rem;color:var(--text-muted)' }, [])
     ]);
 
-    /* ---- AI (kept) ---- */
+    /* ---- AI ---- */
     const picker = AIModelsUI.buildModelPicker(currentModel, function () {});
 
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🪄']),
         Utils.el('div', { class: 'settings-info' }, [
-          Utils.el('h4', {}, ['هوش مصنوعی (Gemini)']),
-          Utils.el('p', {}, ['مدل از طریق Edge — کلید روی سرور است'])
+          Utils.el('h4', {}, ['هوش مصنوعی (Edge)']),
+          Utils.el('p', {}, ['Gemini مستقیم + OpenRouter — کلیدها روی سرور'])
         ]),
         Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'تنظیم نشده'])
       ]),
       Utils.el('div', { class: 'settings-fields' }, [
-        Utils.el('div', { class: 'settings-hint' }, [Utils.el('span', {}, ['کلید Gemini فقط روی سرور (Secret: GEM_MALI) است و در مرورگر ذخیره نمی‌شود.'])])
+        Utils.el('div', { class: 'settings-hint' }, [Utils.el('span', {}, ['کلیدها فقط روی سرور (GEM_MALI و OPENROUTER_API_KEY) هستند و در مرورگر ذخیره نمی‌شوند.'])])
       ]),
       Utils.el('div', { class: 'settings-fieldset' }, [
         Utils.el('div', { class: 'settings-fieldset-label' }, ['مدل فعال']),
@@ -848,13 +855,20 @@ window.Events = (function () {
     });
 
     document.getElementById('btn-ai-log')?.addEventListener('click', function () {
-      if (typeof AILog !== 'undefined' && AILog.open) AILog.open();
+      try {
+        if (typeof AIUI !== 'undefined' && typeof AIUI.showLog === 'function') {
+          AIUI.showLog();
+        } else if (typeof AILog !== 'undefined' && typeof AILog.show === 'function') {
+          AILog.show();
+        } else {
+          Toast.info('لاگ AI در دسترس نیست');
+        }
+      } catch (e) { console.error('[ai-log]', e); }
     });
 
     document.getElementById('btn-test-ai')?.addEventListener('click', async function () {
       try {
         Toast.info('در حال تست AI…');
-        // simple test via existing AI module if available
         if (typeof AI.testConnection === 'function') {
           await AI.testConnection();
           Toast.success('اتصال AI برقرار است');
@@ -884,7 +898,6 @@ window.Events = (function () {
     const el = document.getElementById('sync-status');
     const lbl = document.getElementById('sync-label');
     if (!el || !lbl) return;
-    // Always online when using Supabase
     el.dataset.state = 'online';
     lbl.textContent = 'آنلاین';
   }
