@@ -76,6 +76,13 @@ const UI = (function () {
     };
   }
 
+  // ★ امنیت (مورد C5): اصلاح escapeHtml برای جلوگیری از شکستن Attribute
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+    }[m]));
+  }
+
   function tagPill(tag, { href, count, active } = {}) {
     const c = tagColor(tag);
     const style = active
@@ -83,10 +90,7 @@ const UI = (function () {
       : `background:${c.bg};border-color:${c.border};color:${c.color};`;
     const countHtml = count != null ? ` <span class="tag-pill__count">${toPersianDigits(count)}</span>` : '';
     
-    // ★ امنیت (مورد ۱۴): اصلاح escapeHtml برای جلوگیری از شکستن Attribute
-    const tagEsc = String(tag).replace(/[&<>"']/g, m => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
-    }[m]));
+    const tagEsc = escapeHtml(tag);
     
     return `<a class="tag-pill" style="${style}" href="${href}">${tagEsc}${countHtml}</a>`;
   }
@@ -149,5 +153,6 @@ const UI = (function () {
     tagColor,
     tagPill,
     highlightTags,
+    escapeHtml,
   };
 })();
