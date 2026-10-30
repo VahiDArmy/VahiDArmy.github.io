@@ -50,7 +50,6 @@
   let currentAiGenerationId = null;
   let tafsirSubmitting = false;
 
-  // ★ اصلاح (مورد ۸): محافظت در برابر Race Condition در رندر
   let renderSeq = 0;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
@@ -371,7 +370,7 @@
   }
 
   async function renderCurrentAyah() {
-    const mySeq = ++renderSeq; // ★ اصلاح (مورد ۸)
+    const mySeq = ++renderSeq;
     ayahSkeleton(stickyFrame);
     exitEditMode();
     try {
@@ -391,7 +390,6 @@
           btn.classList.toggle('is-marked', nowMarked);
           btn.setAttribute('aria-pressed', String(nowMarked));
         },
-        // ★ اصلاح (مورد ۵): فعال کردن دکمه نشانک درون کادر آیه
         isBookmarked: false,
         onBookmark: async (isBookmarked) => {
           if (isBookmarked) await Store.updateBookmark(current.surah, current.ayah).catch(()=>{});
@@ -471,7 +469,7 @@
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-delete');
           if (!confirm('همین یک تفسیر حذف شود؟')) return;
-          try { // ★ اصلاح (مورد ۶)
+          try {
             await Store.deleteTafsir(id);
             if (editingId === id) exitEditMode();
             UI.toast('تفسیر حذف شد');
@@ -487,7 +485,9 @@
           if (t) openAiReview(t);
         });
       });
-    } catch (e) { tafsirsListEl.innerHTML = `<p style="color:var(--danger); text-align:center;">خطا در بارگذاری تفسیرها.</p>`; }
+    } catch (e) { 
+      tafsirsListEl.innerHTML = `<p style="color:var(--danger); text-align:center;">خطا در بارگذاری تفسیرها.</p>`; 
+    }
   }
 
   function showAiState(state) {
@@ -528,3 +528,192 @@
       }
     } catch (err) { updateAiModelBadge(); showAiState('empty'); }
   }
+
+  async function renderAiReviewFeedback() {
+    if (!aiReviewFeedback) return;
+    if (!currentAiGenerationId) { aiReviewFeedback.innerHTML = ''; return; }
+    const model = currentAiModel || '—';
+    const scoreMap = await Store.getModelScores().catch(() => new Map());
+    const sc = scoreMap.get(model)?.score || 0;
+    const sign = sc > 0 ? 'pos' : sc < 0 ? 'neg' : 'zero';
+    const scoreTxt = (sc > 0 ? '+' : '') + UI.toPersianDigits(sc);
+
+    aiReviewFeedback.innerHTML = `
+      <div class="ai-feedback-bar">
+        <span class="ai-feedback-bar__model">پاسخ از: <code>${AiFormat.escapeHtml(model)}</code></span>
+        <span class="ai-feedback-bar__score" data-sign="${sign}">⭐ ${scoreTxt}</span>
+        <div class="ai-vote-group">
+          <button type="button" class="ai-vote" data-vote="1" aria-label="پسندیدم">👍</button>
+          <button type="button" class="ai-vote" data-vote="-1" aria-label="نپسندیدم">👎</button>
+        </div>
+      </div>`;
+
+    const genId = currentAiGenerationId;
+    const mine = await Store.getMyFeedback(genId).catch(() => 0);
+    aiReviewFeedback.querySelectorAll('.ai-vote').forEach((b) => {
+      const v = Number(b.getAttribute('data-vote')); b.classList.toggle('is-active', v === mine);
+    });
+
+    aiReviewFeedback.querySelectorAll('.ai-vote').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const want = Number(btn.getAttribute('data-vote'));
+        const mineNow = await Store.getMyFeedback(genId).catch(() => 0);
+        const next = (mineNow === want) ? 0 : want;
+        try {
+          aiReviewFeedback.querySelectorAll('.ai-vote').forEach((b) => (b.disabled = true));
+          await Store.setFeedback(genId, next); await renderAiReviewFeedback();
+        } catch (e) { UI.toast('خطا در ثبت رأی'); } finally { aiReviewFeedback.querySelectorAll('.ai-vote').forEach((b) => (b.disabled = false)); }
+      });
+    });
+  }
+
+  async function generateAiReview() {
+    if (!currentAiTafsirId || !currentAiTafsirContent) return;
+    showAiState('loading');
+    try {
+      const surahData = await QuranData.getSurah(current.surah);
+      const ayahObj = surahData.ayahs.find((a) => a.v === current.ayah);
+      const ayahText = ayahObj ? ayahObj.ar : '';
+      const result = await Store.callAiReview({ surah: current.surah, ayah: current.ayah, ayahText, userOpinion: currentAiTafsirContent });
+
+      await Store.saveAiReview(currentAiTafsirId, result.content);
+      currentAiContent = result.content; currentAiModel = result.model || '';
+      aiReviewText.innerHTML = renderMarkdown(result.content); updateAiModelBadge();
+
+      if (currentAiModel) {
+        try {
+          const gen = await Store.createGeneration({ source: 'ai_review', refId: currentAiTafsirId, model: currentAiModel });
+          currentAiGenerationId = gen.id;
+        } catch (e) {}
+      }
+      await renderAiReviewFeedback(); showAiState('content');
+    } catch (err) {
+      UI.toast('خطا در بررسی هوشمند: ' + (err.message || 'نامشخص'));
+      if (currentAiContent) {
+        aiReviewText.innerHTML = renderMarkdown(currentAiContent);
+        updateAiModelBadge(); await renderAiReviewFeedback(); showAiState('content');
+      } else { showAiState('empty'); }
+    }
+  }
+
+  function enterAiEditMode() { aiReviewEditArea.value = currentAiContent; showAiState('edit'); }
+  function cancelAiEdit() { showAiState('content'); }
+  async function saveAiEdit() {
+    const newContent = aiReviewEditArea.value.trim(); if (!newContent) { UI.toast('متن خالی است'); return; }
+    try { await Store.saveAiReview(currentAiTafsirId, newContent); currentAiContent = newContent; aiReviewText.innerHTML = renderMarkdown(newContent); showAiState('content'); UI.toast('ذخیره شد'); } catch (err) { UI.toast('خطا'); }
+  }
+  async function deleteAiReview() {
+    if (!currentAiTafsirId || !confirm('پاسخ بررسی هوشمند حذف شود؟')) return;
+    try { await Store.deleteAiReview(currentAiTafsirId); currentAiContent = ''; currentAiModel = ''; currentAiGenerationId = null; updateAiModelBadge(); if (aiReviewFeedback) aiReviewFeedback.innerHTML = ''; showAiState('empty'); UI.toast('حذف شد'); } catch (err) { UI.toast('خطا'); }
+  }
+
+  document.getElementById('goToCurrentBtn').addEventListener('click', async () => {
+    try {
+      const meta = await Store.getSiteMeta();
+      current = { surah: meta.bookmark_surah, ayah: meta.bookmark_ayah };
+      await renderCurrentAyah();
+    } catch(e) { UI.toast('خطا در دریافت آیه'); }
+  });
+
+  document.getElementById('setBookmarkBtn').addEventListener('click', async () => {
+    const surahName = index.find(s => s.number === current.surah)?.name_fa || current.surah;
+    if (!confirm(`آیهٔ جاری (سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)}) به عنوان آخرین آیهٔ بررسی‌شده ثبت شود؟`)) return;
+    try {
+      await Store.updateBookmark(current.surah, current.ayah);
+      UI.toast(`نشانک ثبت شد: سورهٔ ${surahName}، آیهٔ ${UI.toPersianDigits(current.ayah)} ✦`);
+      await refreshProgress();
+    } catch (err) { UI.toast('خطا در ثبت نشانک'); }
+  });
+
+  document.getElementById('endRoundBtn').addEventListener('click', async () => {
+    try {
+      const p = await Store.getProgress();
+      if (!confirm(`دور ${UI.toPersianDigits(p.round)} بسته می‌شود و دور ${UI.toPersianDigits(p.round + 1)} شروع می‌شود. ادامه؟`)) return;
+      await Store.endRound();
+      UI.toast(`دور جدید آغاز شد ✦`);
+      current = { surah: 1, ayah: 1 };
+      await renderCurrentAyah();
+    } catch (err) { UI.toast('خطا در بستن دور'); }
+  });
+
+  selectRow.surah.addEventListener('change', async () => { current = { surah: Number(selectRow.surah.value), ayah: 1 }; await renderCurrentAyah(); });
+  selectRow.ayah.addEventListener('change', async () => { current.ayah = Number(selectRow.ayah.value); await renderCurrentAyah(); });
+
+  prevBtn.addEventListener('click', async () => {
+    if (current.ayah > 1) current.ayah -= 1;
+    else if (current.surah > 1) {
+      const prevSurah = await QuranData.getSurah(current.surah - 1);
+      current = { surah: current.surah - 1, ayah: prevSurah.ayah_count };
+    } else return;
+    await renderCurrentAyah();
+  });
+
+  nextBtn.addEventListener('click', async () => {
+    const surahData = await QuranData.getSurah(current.surah);
+    if (current.ayah < surahData.ayah_count) current.ayah += 1;
+    else if (current.surah < 114) current = { surah: current.surah + 1, ayah: 1 };
+    else return;
+    await renderCurrentAyah();
+  });
+
+  tafsirForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (tafsirSubmitting) return;
+    const content = tafsirContent.value.trim(); if (!content) return;
+    const tags = parseTags(tafsirTags.value); const isEditMode = !!editingId;
+
+    tafsirSubmitting = true;
+    try {
+      let savedId = null;
+      try {
+        if (isEditMode) { await Store.updateTafsir(editingId, content, tags); savedId = editingId; }
+        else { const newTafsir = await Store.addTafsir({ surah: current.surah, ayah: current.ayah, content, tags }); savedId = newTafsir && newTafsir.id; }
+      } catch (err) {
+        const msg = err?.message || 'خطای نامشخص'; UI.toast('خطا در ذخیره تفسیر: ' + msg); return;
+      }
+
+      if (savedId) {
+        try { const links = AyahLinks.extract(content); await Store.syncAyahLinks(savedId, current.surah, current.ayah, links); } catch (linkErr) {}
+      }
+
+      if (isEditMode) { UI.toast('تفسیر به‌روزرسانی شد'); exitEditMode(); await renderTafsirsList(); }
+      else {
+        tafsirContent.value = ''; tafsirTags.value = '';
+        await renderTafsirsList(); await refreshProgress(); UI.toast('تفسیر با موفقیت ثبت شد');
+      }
+    } finally { tafsirSubmitting = false; }
+  });
+
+  editBanner.querySelector('[data-cancel-edit]')?.addEventListener('click', exitEditMode);
+  if (openLinkToolBtn) openLinkToolBtn.addEventListener('click', openLinkTool);
+  if (tafsirContent) {
+    tafsirContent.addEventListener('keyup', () => updateLinkButtonState());
+    tafsirContent.addEventListener('input', () => updateLinkButtonState());
+    tafsirContent.addEventListener('focus', () => updateLinkButtonState());
+    tafsirContent.addEventListener('click', () => { requestAnimationFrame(() => updateLinkButtonState({ selectToken: true })); });
+  }
+  if (cancelLinkBtn) cancelLinkBtn.addEventListener('click', closeLinkTool);
+  if (linkToolModal) linkToolModal.addEventListener('click', (e) => { if (e.target === linkToolModal) closeLinkTool(); });
+  if (linkSurahSelect) {
+    linkSurahSelect.addEventListener('change', async () => {
+      const surah = Number(linkSurahSelect.value);
+      try { const surahData = await QuranData.getSurah(surah); UI.populateAyahSelect(linkAyahSelect, surahData.ayah_count, 1); await updateLinkPreview(); } catch (e) {}
+    });
+  }
+  if (linkAyahSelect) linkAyahSelect.addEventListener('change', updateLinkPreview);
+  if (insertLinkBtn) insertLinkBtn.addEventListener('click', insertLinkFromTool);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && linkToolModal && !linkToolModal.hidden) closeLinkTool(); });
+
+  aiReviewCloseBtn.addEventListener('click', closeAiModal);
+  aiReviewModal.addEventListener('click', (e) => { if (e.target === aiReviewModal) closeAiModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !aiReviewModal.hidden) closeAiModal(); });
+  if (aiReviewStartBtn) aiReviewStartBtn.addEventListener('click', generateAiReview);
+  aiReviewRefreshBtn.addEventListener('click', generateAiReview);
+  aiReviewEditBtn.addEventListener('click', enterAiEditMode);
+  aiReviewCancelEditBtn.addEventListener('click', cancelAiEdit);
+  aiReviewSaveBtn.addEventListener('click', saveAiEdit);
+  aiReviewDeleteBtn.addEventListener('click', deleteAiReview);
+
+  initAiFunctionSelect();
+  await renderCurrentAyah();
+})();
