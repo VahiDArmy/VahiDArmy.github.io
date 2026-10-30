@@ -6,7 +6,7 @@ const AiFormat = (function () {
   const CLOSE = '[[/AI]]';
   const SECTION_NAMES = ['title', 'answer', 'insight', 'draft', 'caution', 'refs', 'tags'];
 
-  // ★ امنیت (مورد ۱۳): اصلاح escapeHtml برای جلوگیری از تزریق در Attribute
+  // ★ امنیت (مورد C5): اصلاح escapeHtml برای جلوگیری از تزریق در Attribute
   function escapeHtml(str) {
     return String(str == null ? '' : str).replace(/[&<>"']/g, m => ({
       '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
@@ -233,7 +233,7 @@ const AiFormat = (function () {
     if (!md) return '';
     if (!window.marked || !window.DOMPurify) return escapeHtml(md).replace(/\n/g, '<br>');
     
-    // ★ امنیت (مورد ۱۵): افزودن rel=noopener به لینک‌ها جهت جلوگیری از Reverse Tabnabbing
+    // ★ امنیت (مورد C7): افزودن rel=noopener
     const raw = window.marked.parse(md);
     const clean = window.DOMPurify.sanitize(raw, { 
       ADD_ATTR: ['target', 'rel'],
@@ -243,7 +243,6 @@ const AiFormat = (function () {
     const tmp = document.createElement('div');
     tmp.innerHTML = clean;
     
-    // اصلاح لینک‌های target=_blank
     tmp.querySelectorAll('a[target="_blank"]').forEach(a => {
       a.setAttribute('rel', 'noopener noreferrer');
     });
@@ -379,7 +378,6 @@ const AiFormat = (function () {
       </div>`;
   }
 
-  // ★ بهینه‌سازی (مورد ۵۷): جلوگیری از رفرش کل DOM در استریم
   function renderStreaming(container, question, text, model) {
     let card = container.querySelector('.ai-answer-card');
     if (!card) {
