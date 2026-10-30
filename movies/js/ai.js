@@ -3,6 +3,9 @@
    ---------------------------------------------------------
    Edge: movies-quran
    Secrets: GEM_MALI (provider=google), OPENROUTER_API_KEY (provider=openrouter)
+
+   هر مدلی که از بیرون (رولت یا picker) پاس داده می‌شود،
+   همان اجرا می‌شود. هیچ fallback خودکاری در کار نیست.
    ========================================================= */
 window.AI = (function () {
   const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
@@ -48,7 +51,6 @@ window.AI = (function () {
     else localStorage.removeItem(MODEL_KEY);
   }
 
-  /* ---- متای یک مدل مشخص (نه فقط مدل فعال) ---- */
   function modelMetaById(id) {
     if (!id) return null;
     try {
@@ -63,12 +65,10 @@ window.AI = (function () {
     };
   }
 
-  /* ---- متای مدل فعال ---- */
   function getModelMeta() {
     return modelMetaById(getModel()) || { id: DEFAULT_MODEL, label: DEFAULT_MODEL, provider: 'google' };
   }
 
-  /* ---- provider معتبر برای یک مدل ---- */
   function resolveProvider(modelId) {
     const meta = modelMetaById(modelId);
     if (meta && meta.provider) return meta.provider;
@@ -84,10 +84,13 @@ window.AI = (function () {
     try { if (window.AILog && AILog.show) AILog.show(); } catch (e) {}
   }
   function aiLog(type, msg) {
-    try { if (window.AILog && AILog.push) AILog.push(type, msg); } catch (e) {}
+    try {
+      if (window.AILog && AILog.log) AILog.log(msg, type);
+      else if (window.AILog && AILog.push) AILog.push(type, msg);
+    } catch (e) {}
   }
   function aiAutoHide() {
-    try { if (window.AILog && AILog.autoHide) AILog.autoHide(); } catch (e) {}
+    try { if (window.AILog && AILog.scheduleAutoHide) AILog.scheduleAutoHide(); } catch (e) {}
   }
 
   function abort() {
@@ -97,7 +100,6 @@ window.AI = (function () {
     }
   }
 
-  /* ---- فقط trim؛ هیچ تحمیلی به Gemini نیست ---- */
   function resolveModel(requested) {
     return String(requested || getModel() || DEFAULT_MODEL).trim();
   }
@@ -115,10 +117,6 @@ window.AI = (function () {
     return msg || ('خطای سرور (HTTP ' + status + ')');
   }
 
-  /**
-   * استریم واقعی از Edge → Gemini / OpenRouter SSE
-   * opts: { messages, temperature?, model?, provider?, signal?, onToken?, onDone? }
-   */
   async function chatStream(opts) {
     opts = opts || {};
     const messages = opts.messages || [];
@@ -134,20 +132,18 @@ window.AI = (function () {
 
     const model = resolveModel(opts.model);
     const provider = opts.provider || resolveProvider(model);
+    const meta = modelMetaById(model) || {};
+
     lastUsedModel = {
       id: model,
-      label: (modelMetaById(model) || {}).label || model,
-      vendor: (modelMetaById(model) || {}).vendor || '',
+      label: meta.label || model,
+      vendor: meta.vendor || '',
       provider: provider,
-      meta: (function () {
-        const m = modelMetaById(model) || {};
-        return { size: m.size, context: m.context, speed: m.speed };
-      })(),
+      meta: { size: meta.size, context: meta.context, speed: meta.speed },
       at: new Date().toISOString()
     };
 
-    aiLog('info', '▸ استریم ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + ' (Edge)');
-    aiLog('meta', 'مدل: ' + model + ' · provider: ' + provider);
+    aiLog('info', '▸ ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + ' · ' + model);
 
     let res;
     try {
@@ -172,7 +168,7 @@ window.AI = (function () {
 
     const ctype = (res.headers.get('content-type') || '').toLowerCase();
 
-    /* Non-SSE (error body from edge, or old non-stream response) */
+    /* Non-SSE (error body from edge) */
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
       if (!res.ok || json.error) {
