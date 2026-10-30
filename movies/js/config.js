@@ -54,11 +54,11 @@ window.CONFIG = {
      ========================================================= */
   STARS: {
     0: { value: 0, label: 'بدون امتیاز', description: 'هنوز نمره نداده‌ام', color: '#5a5a72', emoji: '○', glow: null },
-    1: { value: 1, label: 'متنفرم', description: 'از دیدنش پشیمانم', color: '#ff4d5e', emoji: '⭐', glow: 'rgba(255, 77, 94, 0.7)' },
-    2: { value: 2, label: 'ضعیف', description: 'کاش ندیده بودم', color: '#ff9f43', emoji: '⭐⭐', glow: 'rgba(255, 159, 67, 0.7)' },
-    3: { value: 3, label: 'خنثی', description: 'بد نبود، خوب نبود', color: '#9a9ab0', emoji: '⭐⭐⭐', glow: 'rgba(154, 154, 176, 0.5)' },
-    4: { value: 4, label: 'خوب', description: 'از دیدنش راضی‌ام', color: '#3ddc97', emoji: '⭐⭐⭐⭐', glow: 'rgba(61, 220, 151, 0.7)' },
-    5: { value: 5, label: 'شاهکار', description: 'بی‌همتا — دوباره خواهم دید', color: '#ffd700', emoji: '⭐⭐⭐⭐⭐', glow: 'rgba(255, 215, 0, 0.8)' }
+    1: { value: 1, label: 'خشمگین', description: 'افتضاح بود و از تماشایش عصبانی هستم', color: '#ff4d5e', emoji: '⭐', glow: 'rgba(255, 77, 94, 0.7)' },
+    2: { value: 2, label: 'پشیمان', description: 'افتضاح بود و اگر به گذشته برگردم هرگز تماشا نخواهم کرد', color: '#ff9f43', emoji: '⭐⭐', glow: 'rgba(255, 159, 67, 0.7)' },
+    3: { value: 3, label: 'خوب', description: 'خوب بود', color: '#9a9ab0', emoji: '⭐⭐⭐', glow: 'rgba(154, 154, 176, 0.5)' },
+    4: { value: 4, label: 'راضی', description: 'خوب بود و خوشحالم که تماشا کردم', color: '#3ddc97', emoji: '⭐⭐⭐⭐', glow: 'rgba(61, 220, 151, 0.7)' },
+    5: { value: 5, label: 'عالی', description: 'عالی بود به قدری که بیش از یک بار خواهم دید', color: '#ffd700', emoji: '⭐⭐⭐⭐⭐', glow: 'rgba(255, 215, 0, 0.8)' }
   },
 
   TASTE_PROFILE: {
