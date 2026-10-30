@@ -1,11 +1,13 @@
 /* =========================================================
-   کلاینت AI — پرامپت در فرانت، اجرا روی Edge (Gemini STREAM)
-   Secret سرور: GEM_MALI
-   Function: movies-quran
+   کلاینت AI — پرامپت در فرانت، اجرا روی Edge
+   ---------------------------------------------------------
+   Edge: movies-quran
+   Secrets: GEM_MALI (provider=google), OPENROUTER_API_KEY (provider=openrouter)
    ========================================================= */
 window.AI = (function () {
   const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
   const EDGE_NAME = (CONFIG.SUPABASE && CONFIG.SUPABASE.EDGE_FUNCTION) || 'movies-quran';
+  const DEFAULT_MODEL = 'gemini-3.8-flash';
 
   let abortController = null;
   let lastUsedModel = null;
@@ -35,9 +37,9 @@ window.AI = (function () {
       const stored = localStorage.getItem(MODEL_KEY);
       const models = getModels();
       if (stored && models.some(function (m) { return m.id === stored; })) return stored;
-      return 'gemini-3.8-flash';
+      return DEFAULT_MODEL;
     } catch (e) {
-      return 'gemini-3.8-flash';
+      return DEFAULT_MODEL;
     }
   }
 
@@ -46,14 +48,34 @@ window.AI = (function () {
     else localStorage.removeItem(MODEL_KEY);
   }
 
-  function getModelMeta() {
-    const id = getModel();
-    const models = getModels();
-    const found = models.filter(function (m) { return m.id === id; })[0];
-    return found || { id: id, label: id, note: 'Gemini via Edge', tags: ['gemini'] };
+  /* ---- متای یک مدل مشخص (نه فقط مدل فعال) ---- */
+  function modelMetaById(id) {
+    if (!id) return null;
+    try {
+      const models = getModels();
+      const found = models.filter(function (m) { return m.id === id; })[0];
+      if (found) return found;
+    } catch (e) {}
+    return {
+      id: id,
+      label: id,
+      provider: String(id).toLowerCase().indexOf('gemini') === 0 ? 'google' : 'openrouter'
+    };
   }
 
-  function isDefaultModel() { return getModel() === 'gemini-3.8-flash'; }
+  /* ---- متای مدل فعال ---- */
+  function getModelMeta() {
+    return modelMetaById(getModel()) || { id: DEFAULT_MODEL, label: DEFAULT_MODEL, provider: 'google' };
+  }
+
+  /* ---- provider معتبر برای یک مدل ---- */
+  function resolveProvider(modelId) {
+    const meta = modelMetaById(modelId);
+    if (meta && meta.provider) return meta.provider;
+    return String(modelId || '').toLowerCase().indexOf('gemini') === 0 ? 'google' : 'openrouter';
+  }
+
+  function isDefaultModel() { return getModel() === DEFAULT_MODEL; }
   function resetModel() { localStorage.removeItem(MODEL_KEY); }
   function getLastUsedModel() { return lastUsedModel; }
   function clearLastUsedModel() { lastUsedModel = null; }
@@ -75,27 +97,27 @@ window.AI = (function () {
     }
   }
 
+  /* ---- فقط trim؛ هیچ تحمیلی به Gemini نیست ---- */
   function resolveModel(requested) {
-    let model = requested || getModel() || 'gemini-3.8-flash';
-    if (String(model).indexOf('gemini') === -1) model = 'gemini-3.8-flash';
-    return model;
+    return String(requested || getModel() || DEFAULT_MODEL).trim();
   }
 
   function friendlyHttpError(status, msg) {
     msg = msg || '';
     if (status === 504 || /504|timeout|timed out|Gateway/i.test(msg)) {
-      return 'زمان پاسخ تمام شد (504). با استریم معمولاً بهتر است؛ دوباره تلاش کن.';
+      return 'زمان پاسخ تمام شد (504). دوباره تلاش کن.';
     }
-    if (status === 502) return 'خطای واسط (502): ' + (msg || 'Gemini یا Edge پاسخ معتبر نداد.');
+    if (status === 502) return 'خطای واسط (502): ' + (msg || 'پاسخ معتبر از سرور نیامد.');
     if (status === 401 || status === 403) return 'دسترسی رد شد (' + status + ').';
-    if (status === 500 && /GEM_MALI|secret|misconfigured/i.test(msg)) {
-      return 'کلید Gemini روی سرور تنظیم نشده (secret: GEM_MALI).';
+    if (status === 500 && /GEM_MALI|OPENROUTER_API_KEY|secret|misconfigured/i.test(msg)) {
+      return 'کلید روی سرور تنظیم نشده — ' + msg;
     }
     return msg || ('خطای سرور (HTTP ' + status + ')');
   }
 
   /**
-   * استریم واقعی از Edge → Gemini SSE
+   * استریم واقعی از Edge → Gemini / OpenRouter SSE
+   * opts: { messages, temperature?, model?, provider?, signal?, onToken?, onDone? }
    */
   async function chatStream(opts) {
     opts = opts || {};
@@ -106,15 +128,26 @@ window.AI = (function () {
     const signal = opts.signal;
 
     aiShow();
-    aiLog('info', '▸ استریم Gemini (Edge)');
-    aiLog('meta', 'پیام‌ها: ' + messages.length + ' · دما: ' + temperature);
 
     abortController = new AbortController();
     const combined = signal || abortController.signal;
 
     const model = resolveModel(opts.model);
-    lastUsedModel = model;
-    aiLog('meta', 'مدل: ' + model);
+    const provider = opts.provider || resolveProvider(model);
+    lastUsedModel = {
+      id: model,
+      label: (modelMetaById(model) || {}).label || model,
+      vendor: (modelMetaById(model) || {}).vendor || '',
+      provider: provider,
+      meta: (function () {
+        const m = modelMetaById(model) || {};
+        return { size: m.size, context: m.context, speed: m.speed };
+      })(),
+      at: new Date().toISOString()
+    };
+
+    aiLog('info', '▸ استریم ' + (provider === 'openrouter' ? 'OpenRouter' : 'Gemini') + ' (Edge)');
+    aiLog('meta', 'مدل: ' + model + ' · provider: ' + provider);
 
     let res;
     try {
@@ -122,9 +155,10 @@ window.AI = (function () {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({
+          provider: provider,
+          model: model,
           messages: messages,
           temperature: temperature,
-          model: model,
           stream: true
         }),
         signal: combined
@@ -138,7 +172,7 @@ window.AI = (function () {
 
     const ctype = (res.headers.get('content-type') || '').toLowerCase();
 
-    // Non-SSE fallback (error JSON or old non-stream response)
+    /* Non-SSE (error body from edge, or old non-stream response) */
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
       if (!res.ok || json.error) {
@@ -191,7 +225,6 @@ window.AI = (function () {
             onToken(obj.text);
           }
           if (obj.done && typeof obj.text === 'string' && obj.text.length > full.length) {
-            // final full text if edge sent complete
             const extra = obj.text.slice(full.length);
             if (extra) {
               full = obj.text;
@@ -223,6 +256,7 @@ window.AI = (function () {
     await chatStream({
       messages: opts.messages,
       model: opts.model,
+      provider: opts.provider,
       temperature: opts.temperature,
       signal: opts.signal,
       onToken: function (t) { full += t; },
@@ -249,6 +283,7 @@ window.AI = (function () {
     return await chat({
       messages: messages,
       model: opts.model,
+      provider: opts.provider,
       temperature: opts.temperature != null ? opts.temperature : 0.3,
       signal: opts.signal
     });
@@ -307,6 +342,8 @@ window.AI = (function () {
     getModel: getModel,
     setModel: setModel,
     getModelMeta: getModelMeta,
+    modelMetaById: modelMetaById,
+    resolveProvider: resolveProvider,
     isDefaultModel: isDefaultModel,
     resetModel: resetModel,
     getLastUsedModel: getLastUsedModel,
