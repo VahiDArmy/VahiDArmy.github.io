@@ -172,6 +172,71 @@ window.AI = (function () {
     return text;
   }
 
+
+  /* ---------- JSON (بدون استریم) — برای lookup / standardize ---------- */
+  async function chatJSON(opts) {
+    opts = opts || {};
+    const messages = (opts.messages || []).slice();
+    // Nudge model toward JSON when not already instructed
+    var hasJsonHint = messages.some(function (m) {
+      return /json/i.test(m.content || '');
+    });
+    if (!hasJsonHint && messages.length) {
+      var last = messages[messages.length - 1];
+      if (last.role === 'user') {
+        messages[messages.length - 1] = {
+          role: last.role,
+          content: (last.content || '') + '\n\nپاسخ را فقط به‌صورت JSON معتبر برگردان.'
+        };
+      }
+    }
+    const text = await chat({
+      messages: messages,
+      model: opts.model,
+      temperature: opts.temperature != null ? opts.temperature : 0.3,
+      signal: opts.signal
+    });
+    return text;
+  }
+
+  function extractJsonAndText(raw) {
+    if (!raw) return { parsed: null, before: '', after: '', raw: '' };
+    const original = String(raw);
+    const s = original;
+
+    const fenced = s.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
+    if (fenced && /[\{\[]/.test(fenced[1])) {
+      const inner = fenced[1].trim();
+      const before = s.slice(0, fenced.index).trim();
+      const after = s.slice(fenced.index + fenced[0].length).trim();
+      let parsed = null;
+      try { parsed = JSON.parse(inner); } catch (e) {}
+      if (!parsed) {
+        const fb = inner.search(/[\{\[]/);
+        const lb = Math.max(inner.lastIndexOf('}'), inner.lastIndexOf(']'));
+        if (fb >= 0 && lb > fb) {
+          try { parsed = JSON.parse(inner.slice(fb, lb + 1)); } catch (e) {}
+        }
+      }
+      return { parsed: parsed, before: before, after: after, raw: original };
+    }
+
+    const trimmed = s.trim();
+    const fb = trimmed.search(/[\{\[]/);
+    if (fb < 0) return { parsed: null, before: original, after: '', raw: original };
+    const lb = Math.max(trimmed.lastIndexOf('}'), trimmed.lastIndexOf(']'));
+    if (lb < 0 || lb < fb) return { parsed: null, before: original, after: '', raw: original };
+    const before = trimmed.slice(0, fb).trim();
+    const after = trimmed.slice(lb + 1).trim();
+    let parsed = null;
+    try { parsed = JSON.parse(trimmed.slice(fb, lb + 1)); } catch (e) {}
+    return { parsed: parsed, before: before, after: after, raw: original };
+  }
+
+  function parseJSONResponse(raw) {
+    return extractJsonAndText(raw).parsed;
+  }
+
   return {
     getKey: getKey,
     setKey: setKey,
@@ -186,7 +251,10 @@ window.AI = (function () {
     clearLastUsedModel: clearLastUsedModel,
     chatStream: chatStream,
     chat: chat,
+    chatJSON: chatJSON,
     abort: abort,
-    testConnection: testConnection
+    testConnection: testConnection,
+    extractJsonAndText: extractJsonAndText,
+    parseJSONResponse: parseJSONResponse
   };
 })();
