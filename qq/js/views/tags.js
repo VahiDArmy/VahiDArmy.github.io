@@ -1,5 +1,5 @@
-const Views = window.Views || {};
-Views.Tags = async function ({ container, params }) {
+window.Views = window.Views || {};
+window.Views.Tags = async function ({ container, params }) {
   container.innerHTML = `
     <div class="view view-tags">
       <section class="section">
@@ -52,4 +52,3 @@ Views.Tags = async function ({ container, params }) {
     listEl.innerHTML = '<p style="color:var(--danger)">خطا در بارگذاری برچسب‌ها</p>';
   }
 };
-window.Views = Views;

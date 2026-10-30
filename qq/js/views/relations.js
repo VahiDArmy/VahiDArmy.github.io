@@ -1,5 +1,5 @@
-const Views = window.Views || {};
-Views.Relations = async function ({ container }) {
+window.Views = window.Views || {};
+window.Views.Relations = async function ({ container }) {
   container.innerHTML = `
     <div class="view view-relations">
       <section class="section">
@@ -34,4 +34,3 @@ Views.Relations = async function ({ container }) {
     document.getElementById('relationsList').innerHTML = '<p style="color:var(--danger)">خطا در بارگذاری رابطه‌ها</p>';
   }
 };
-window.Views = Views;

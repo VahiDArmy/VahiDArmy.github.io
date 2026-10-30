@@ -1,9 +1,9 @@
 // =============================================================
 // Work view — آیه در حال کار + تفسیرها + نظرات (بدون رفرش)
 // =============================================================
-const Views = window.Views || {};
+window.Views = window.Views || {};
 
-Views.Work = async function ({ container, params }) {
+window.Views.Work = async function ({ container, params }) {
   // Require auth for full work features
   const session = await Auth.requireAuth();
   if (!session) return;
@@ -310,4 +310,3 @@ Views.Work = async function ({ container, params }) {
   await updateProgress();
 };
 
-window.Views = Views;

@@ -1,5 +1,5 @@
-const Views = window.Views || {};
-Views.Search = async function ({ container }) {
+window.Views = window.Views || {};
+window.Views.Search = async function ({ container }) {
   container.innerHTML = `
     <div class="view view-search">
       <section class="section">
@@ -45,4 +45,3 @@ Views.Search = async function ({ container }) {
     }
   });
 };
-window.Views = Views;

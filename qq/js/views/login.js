@@ -1,6 +1,6 @@
 // Login view
-const Views = window.Views || {};
-Views.Login = async function ({ container }) {
+window.Views = window.Views || {};
+window.Views.Login = async function ({ container }) {
   const session = await Auth.getSession();
   if (session) {
     Router.navigate('/', { replace: true });
@@ -45,4 +45,3 @@ Views.Login = async function ({ container }) {
     }
   });
 };
-window.Views = Views;

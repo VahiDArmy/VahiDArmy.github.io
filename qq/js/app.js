@@ -73,13 +73,13 @@
 
   Router.register('/', WorkRoute);
   Router.register('/work', WorkRoute);
-  Router.register('/browse', wrap(Views.Browse));
-  Router.register('/browse/:surah/:ayah', wrap(Views.Browse));
-  Router.register('/tags', wrap(Views.Tags));
-  Router.register('/tags/:tag', wrap(Views.Tags));
-  Router.register('/relations', wrap(Views.Relations));
-  Router.register('/search', wrap(Views.Search));
-  Router.register('/login', wrap(Views.Login));
+  Router.register('/browse', wrap(window.Views.Browse));
+  Router.register('/browse/:surah/:ayah', wrap(window.Views.Browse));
+  Router.register('/tags', wrap(window.Views.Tags));
+  Router.register('/tags/:tag', wrap(window.Views.Tags));
+  Router.register('/relations', wrap(window.Views.Relations));
+  Router.register('/search', wrap(window.Views.Search));
+  Router.register('/login', wrap(window.Views.Login));
 
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) {

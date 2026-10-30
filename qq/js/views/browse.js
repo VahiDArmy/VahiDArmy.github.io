@@ -1,5 +1,5 @@
-const Views = window.Views || {};
-Views.Browse = async function ({ container, params }) {
+window.Views = window.Views || {};
+window.Views.Browse = async function ({ container, params }) {
   let surah = +(params.surah || 1);
   let ayah = +(params.ayah || 1);
 
@@ -82,4 +82,3 @@ Views.Browse = async function ({ container, params }) {
 
   await render();
 };
-window.Views = Views;
