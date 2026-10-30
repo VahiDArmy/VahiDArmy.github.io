@@ -51,48 +51,29 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
 .mizan-tafsir-content .mizan-anchor { display: block; width: 0; height: 0; overflow: hidden; visibility: hidden; line-height: 0; }
 
 /* ==========================================================================
-   ★ دکمه خوانده شدن صفحه (طراحی حداقلی و مینیمال)
+   ★ دکمه‌های صفحه‌بندی و خوانده‌شدن (اصلاح شده)
    ========================================================================== */
-.mizan-read-page-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-
-.mizan-read-page-btn {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 16px;
-  border-radius: 999px;
-  border: 1px dashed var(--border); /* حاشیه نقطه‌چین برای عدم جلب توجه */
-  background: transparent;
-  color: var(--text-faint);
-  font-family: var(--font-ui);
-  font-size: 0.75rem;
+.mizan-pager__info {
+  flex: 1;
+  text-align: center;
+  font-size: .82rem;
+  color: var(--text-dim);
   font-weight: 600;
-  transition: all .2s ease;
+  min-width: 100px;
+  cursor: pointer; /* نشان می‌دهد قابل کلیک است */
+  user-select: none;
+  transition: color .2s ease;
 }
-.mizan-read-page-btn:hover {
-  border-color: var(--neon);
-  color: var(--neon);
-  background: color-mix(in srgb, var(--neon) 5%, transparent);
-}
-.mizan-read-page-btn.is-read {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--neon) 40%, transparent);
-  color: var(--neon);
-  background: transparent; /* بدون بک‌گراند، فقط تغییر رنگ متن و حاشیه */
+.mizan-pager__info:hover {
+  color: var(--text); /* کمی روشن‌تر در هاور */
 }
 
-/* رنگ و گلو برای عدد صفحه در جمله «صفحهٔ ۴ از ۲۶» */
+/* رنگ و گلو برای عدد صفحه */
 .mizan-page-num--read {
   color: var(--neon);
   font-weight: 800;
   text-shadow: 0 0 10px var(--neon-glow), 0 0 20px var(--neon-glow);
+  transition: color .3s ease, text-shadow .3s ease;
 }
 
 /* ==========================================================================
@@ -146,5 +127,4 @@ section[aria-label="آیهٔ در حال کار"]:has(.ayah-frame.is-mizan-final
 [data-theme="light"] .mizan-tafsir-content .mizan-ayah__badge { color: hsl(185 60% 30%); background: hsl(185 55% 42% / .1); border-color: hsl(185 55% 40% / .5); box-shadow: none; }
 [data-theme="light"] .mizan-tafsir-content .mizan-quran-inline { color: hsl(185 60% 32%); text-shadow: none; }
 [data-theme="light"] .mizan-tafsir-content .mizan-ayah { border-color: hsl(185 55% 45% / .25); box-shadow: none; }
-[data-theme="light"] .mizan-read-page-btn.is-read { color: hsl(185 60% 28%); background: transparent; }
 [data-theme="light"] .mizan-page-num--read { color: hsl(185 60% 28%); text-shadow: none; }
