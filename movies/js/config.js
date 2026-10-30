@@ -1,9 +1,15 @@
 /* =========================================================
    پیکربندی برنامه
+   =========================================================
+   دو ارائه‌دهندهٔ AI در یک استخر واحد (`cinema_ai_models`):
+     provider = 'google'      → Gemini مستقیم، سکرت سرور: GEM_MALI
+     provider = 'openrouter'  → OpenRouter، سکرت سرور: OPENROUTER_API_KEY
+   شناسهٔ یکتاساز هر مدل، `id` است — هرگز دو ردیف برای
+   یک مدل ساخته نمی‌شود. مدل غیرفعال می‌شود، حذف نمی‌شود.
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '3.0.0-online',
+  APP_VERSION: '3.1.0-online',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
@@ -16,32 +22,44 @@ window.CONFIG = {
   },
 
   AI: {
+    /* AI حالا از طریق Edge Function اجرا می‌شود، نه مستقیم از مرورگر.
+       دو سکرت روی سرور: GEM_MALI (Google) و OPENROUTER_API_KEY (OpenRouter). */
     API_URL: 'https://openrouter.ai/api/v1/chat/completions',
     STORAGE_KEY: 'cinema_openrouter_key',
     MODEL_STORAGE_KEY: 'cinema_openrouter_model',
-    DEFAULT_MODEL: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    DEFAULT_MODEL: 'gemini-3.8-flash',
+
+    /* ==== استخر اولیه — فقط مدل‌های شناخته‌شده ====
+       هر مدل شناسهٔ یکتای OpenRouter/Google دارد. دو Ling «-fin» و
+       «-sante» عمداً جدا نگه داشته شده‌اند چون شاید نسخه‌های متفاوت
+       باشند؛ اگر یکی از این دو تکراری بود، در roulette آزمون می‌شود و
+       در صورت ناموفق، غیرفعال می‌ماند (حذف نمی‌شود). */
     MODELS: [
-      { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra', vendor: 'NVIDIA', size: '5.86T', context: '1M', speed: '44', note: 'قدرتمندترین — پیشنهاد اول برای تحلیل داستانی', tags: ['تحلیل عمیق', 'کانتکست بزرگ'], recommended: true, bestFor: 'analysis' },
-      { id: 'inclusionai/ling-3.0-flash-fin:free', label: 'Ling 3.0 Flash Fin', vendor: 'inclusionAI', size: '1.23T', context: '262K', speed: '147', note: 'سریع و متعادل — عالی برای استانداردسازی دسته‌ای', tags: ['سریع', 'تحلیل'], recommended: true, bestFor: 'batch' },
-      { id: 'poolside/laguna-s-2.1:free', label: 'Laguna S 2.1', vendor: 'Poolside', size: '1.15T', context: '262K', speed: '37', note: 'قدرتمند با تمرکز روی منطق', tags: ['منطق', 'تحلیل'] },
-      { id: 'dots-studio/dots-3-note-preview:free', label: 'Dots3 Note Preview', vendor: 'Dots Studio', size: '605B', context: '512K', speed: '58', note: 'کانتکست ۵۱۲K — مناسب توضیحات طولانی', tags: ['کانتکست بزرگ'], bestFor: 'long' },
-      { id: 'nvidia/nemotron-3.5-lightning:free', label: 'Nemotron 3.5 Lightning', vendor: 'NVIDIA', size: '472B', context: '1M', speed: '35', note: 'کانتکست ۱M — سبک‌تر از Ultra', tags: ['کانتکست بزرگ'], bestFor: 'long' },
-      { id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super', vendor: 'NVIDIA', size: '332B', context: '262K', speed: '71', note: 'متعادل بین کیفیت و سرعت', tags: ['تحلیل', 'متعادل'] },
-      { id: 'inclusionai/ling-3.0-flash-sante:free', label: 'Ling 3.0 Flash Sante', vendor: 'inclusionAI', size: '329B', context: '262K', speed: '147', note: 'سرعت بالا با تحلیل قابل قبول', tags: ['سریع', 'متعادل'] },
-      { id: 'cohere/north-mini-code:free', label: 'North Mini Code', vendor: 'Cohere', size: '127B', context: '256K', speed: '72', note: 'بهینه برای کد و ساختار JSON', tags: ['کد', 'JSON'] },
-      { id: 'poolside/laguna-xs-2.1:free', label: 'Laguna XS 2.1', vendor: 'Poolside', size: '83.5B', context: '262K', speed: '53', note: 'سبک و پایدار', tags: ['سبک'] },
-      { id: 'qwen/qwen3.8-27b:free', label: 'Qwen3.8 27B', vendor: 'Qwen', size: '32.9B', context: '262K', speed: '35', note: 'چندزبانه با پشتیبانی خوب فارسی', tags: ['چندزبانه', 'سبک'] },
-      { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano Omni', vendor: 'NVIDIA', size: '26.2B', context: '256K', speed: '41', note: 'چندوجهی و سبک', tags: ['سبک'] },
-      { id: 'liquid/lfm-2.5-2.6b:free', label: 'LFM2.5 2.6B', vendor: 'LiquidAI', size: '18.7B', context: '66K', speed: '167', note: 'سریع‌ترین — مناسب تست سریع', tags: ['سریع‌ترین', 'سبک'] },
-      { id: 'nvidia/nemotron-3.5-content-safety:free', label: 'Nemotron 3.5 Content Safety', vendor: 'NVIDIA', size: '2.21B', context: '128K', speed: '60', note: 'بهینه برای بررسی محتوا', tags: ['اختصاصی'] },
-      { id: 'google/gemma-4-26b-a4b-it:free', label: 'Gemma 4 26B A4B', vendor: 'Google', size: '1.37B', context: '262K', speed: '34', note: 'MoE سبک از گوگل', tags: ['سبک', 'MoE'] },
-      { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B', vendor: 'Google', size: '469M', context: '262K', speed: '13', note: 'سبک‌ترین Gemma', tags: ['سبک'] }
+      /* ---- Google مستقیم ---- */
+      { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', vendor: 'Google', provider: 'google', size: '—', context: '1M', speed: '—', note: 'مستقیم از Google — پیش‌فرض فعلی', tags: ['Google', 'مستقیم'], recommended: true, bestFor: 'analysis' },
+
+      /* ---- OpenRouter (رایگان) ---- */
+      { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra', vendor: 'NVIDIA', provider: 'openrouter', size: '5.86T', context: '1M', speed: '44', note: 'قدرتمندترین — پیشنهاد اول برای تحلیل داستانی', tags: ['تحلیل عمیق', 'کانتکست بزرگ'], recommended: true, bestFor: 'analysis' },
+      { id: 'inclusionai/ling-3.0-flash-fin:free', label: 'Ling 3.0 Flash Fin', vendor: 'inclusionAI', provider: 'openrouter', size: '1.23T', context: '262K', speed: '147', note: 'سریع و متعادل — عالی برای استانداردسازی دسته‌ای', tags: ['سریع', 'تحلیل'], recommended: true, bestFor: 'batch' },
+      { id: 'poolside/laguna-s-2.1:free', label: 'Laguna S 2.1', vendor: 'Poolside', provider: 'openrouter', size: '1.15T', context: '262K', speed: '37', note: 'قدرتمند با تمرکز روی منطق', tags: ['منطق', 'تحلیل'] },
+      { id: 'dots-studio/dots-3-note-preview:free', label: 'Dots3 Note Preview', vendor: 'Dots Studio', provider: 'openrouter', size: '605B', context: '512K', speed: '58', note: 'کانتکست ۵۱۲K — مناسب توضیحات طولانی', tags: ['کانتکست بزرگ'], bestFor: 'long' },
+      { id: 'nvidia/nemotron-3.5-lightning:free', label: 'Nemotron 3.5 Lightning', vendor: 'NVIDIA', provider: 'openrouter', size: '472B', context: '1M', speed: '35', note: 'کانتکست ۱M — سبک‌تر از Ultra', tags: ['کانتکست بزرگ'], bestFor: 'long' },
+      { id: 'nvidia/nemotron-3-super-120b-a12b:free', label: 'Nemotron 3 Super', vendor: 'NVIDIA', provider: 'openrouter', size: '332B', context: '262K', speed: '71', note: 'متعادل بین کیفیت و سرعت', tags: ['تحلیل', 'متعادل'] },
+      { id: 'inclusionai/ling-3.0-flash-sante:free', label: 'Ling 3.0 Flash Sante', vendor: 'inclusionAI', provider: 'openrouter', size: '329B', context: '262K', speed: '147', note: 'سرعت بالا با تحلیل قابل قبول', tags: ['سریع', 'متعادل'] },
+      { id: 'cohere/north-mini-code:free', label: 'North Mini Code', vendor: 'Cohere', provider: 'openrouter', size: '127B', context: '256K', speed: '72', note: 'بهینه برای کد و ساختار JSON', tags: ['کد', 'JSON'] },
+      { id: 'poolside/laguna-xs-2.1:free', label: 'Laguna XS 2.1', vendor: 'Poolside', provider: 'openrouter', size: '83.5B', context: '262K', speed: '53', note: 'سبک و پایدار', tags: ['سبک'] },
+      { id: 'qwen/qwen3.8-27b:free', label: 'Qwen3.8 27B', vendor: 'Qwen', provider: 'openrouter', size: '32.9B', context: '262K', speed: '35', note: 'چندزبانه با پشتیبانی خوب فارسی', tags: ['چندزبانه', 'سبک'] },
+      { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano Omni', vendor: 'NVIDIA', provider: 'openrouter', size: '26.2B', context: '256K', speed: '41', note: 'چندوجهی و سبک', tags: ['سبک'] },
+      { id: 'liquid/lfm-2.5-2.6b:free', label: 'LFM2.5 2.6B', vendor: 'LiquidAI', provider: 'openrouter', size: '18.7B', context: '66K', speed: '167', note: 'سریع‌ترین — مناسب تست سریع', tags: ['سریع‌ترین', 'سبک'] },
+      { id: 'nvidia/nemotron-3.5-content-safety:free', label: 'Nemotron 3.5 Content Safety', vendor: 'NVIDIA', provider: 'openrouter', size: '2.21B', context: '128K', speed: '60', note: 'بهینه برای بررسی محتوا', tags: ['اختصاصی'] },
+      { id: 'google/gemma-4-26b-a4b-it:free', label: 'Gemma 4 26B A4B', vendor: 'Google', provider: 'openrouter', size: '1.37B', context: '262K', speed: '34', note: 'MoE سبک از گوگل (از طریق OpenRouter)', tags: ['سبک', 'MoE'] },
+      { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B', vendor: 'Google', provider: 'openrouter', size: '469M', context: '262K', speed: '13', note: 'سبک‌ترین Gemma (از طریق OpenRouter)', tags: ['سبک'] }
     ],
     BATCH_SIZE: 5
   },
 
   /* =========================================================
-     Supabase — برای پیشنهاد هوشمند با Gemini
+     Supabase — Edge Function با دو provider
      ========================================================= */
   SUPABASE: {
     URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
