@@ -22,7 +22,6 @@
 </head>
 <body>
 
-
 <header class="site-header wave">
   <div class="site-header__inner">
     <div class="brand">
@@ -66,10 +65,21 @@
 <script src="js/theme.js"></script>
 <script>
   (async function () {
+    // ★ امنیت (مورد ۱۲): جلوگیری از Open Redirect
+    function getSafeNext() {
+      let next = new URLSearchParams(location.search).get('next') || 'index.html';
+      try {
+        const url = new URL(next, window.location.origin);
+        if (url.origin !== window.location.origin) return 'index.html';
+        return url.pathname + url.search + url.hash;
+      } catch {
+        return 'index.html';
+      }
+    }
+
     const session = await Auth.getSession();
     if (session) {
-      const next = new URLSearchParams(location.search).get('next') || 'index.html';
-      location.href = next;
+      location.href = getSafeNext();
       return;
     }
 
@@ -81,8 +91,7 @@
       errorEl.style.display = 'none';
       try {
         await Auth.signIn(email, password);
-        const next = new URLSearchParams(location.search).get('next') || 'index.html';
-        location.href = next;
+        location.href = getSafeNext();
       } catch (err) {
         errorEl.style.display = 'block';
       }
