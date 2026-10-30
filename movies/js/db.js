@@ -8,7 +8,6 @@ window.DB = (function () {
   let ready = false;
   let currentUser = null;
 
-  // In-memory stores (sync API)
   let titles = [];
   let titlesById = {};
   let conversations = [];
@@ -57,6 +56,7 @@ window.DB = (function () {
     await getClient().auth.signOut();
     currentUser = null;
     titles = []; titlesById = {}; conversations = []; activity = []; meta = {};
+    aiModels = []; deletedAiModelIds = new Set();
   }
 
   function fromDbTitle(row) {
@@ -98,6 +98,37 @@ window.DB = (function () {
     return out;
   }
 
+  /* نرمال‌سازی ردیف مدل — tags در DB به‌صورت رشته‌ی کامایی است؛
+     مصرف‌کننده‌ها آرایه انتظار دارند. wins/losses عدد؛ active بولین. */
+  function fromDbAiModel(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      label: row.label || row.id,
+      vendor: row.vendor || '',
+      size: row.size || '',
+      context: row.context || '',
+      speed: row.speed || '',
+      note: row.note || '',
+      tags: typeof row.tags === 'string'
+        ? row.tags.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
+        : (Array.isArray(row.tags) ? row.tags : []),
+      recommended: !!row.recommended,
+      best_for: row.best_for || '',
+      bestFor: row.best_for || '',   // سازگاری با مصرف‌کننده‌های قدیمی
+      is_free: row.is_free !== false,
+      source: row.source || 'seed',
+      provider: row.provider || (String(row.id || '').toLowerCase().indexOf('gemini') === 0 ? 'google' : 'openrouter'),
+      active: row.active !== false,
+      wins: Number(row.wins) || 0,
+      losses: Number(row.losses) || 0,
+      last_tried_at: row.last_tried_at || null,
+      fetched_at: row.fetched_at || null,
+      created_at: row.created_at,
+      updated_at: row.updated_at
+    };
+  }
+
   async function loadAll() {
     const client = getClient();
     const results = await Promise.all([
@@ -119,7 +150,7 @@ window.DB = (function () {
     activity = aRes.data || [];
     meta = {};
     (mRes.data || []).forEach(function (r) { meta[r.k] = r.v; });
-    aiModels = amRes.data || [];
+    aiModels = (amRes.data || []).map(fromDbAiModel).filter(Boolean);
     deletedAiModelIds = new Set((delRes.data || []).map(function (r) { return r.id; }));
   }
 
@@ -128,6 +159,8 @@ window.DB = (function () {
     await initAuth();
     if (!currentUser) return false;
     await loadAll();
+    /* استخر اولیه — روی IDs موجود دست نمی‌زند، پس active/wins/losses حفظ می‌شوند. */
+    try { seedAiModels(); } catch (e) { console.error('[DB] seedAiModels', e); }
     ready = true;
     return true;
   }
@@ -199,24 +232,19 @@ window.DB = (function () {
         logActivity('delete', 'title', id, t.title);
       } catch (e) { console.error(e); }
     })();
-    return t; // return deleted row for undo
+    return t;
   }
 
   function restoreTitle(row) {
     if (!row) return null;
-    // re-insert; prefer keeping original id if it was a uuid
     var payload = Object.assign({}, row);
-    delete payload.id; // let supabase generate, or keep if we want
-    // Keep the same id if it looks like a uuid
+    delete payload.id;
     var keepId = row.id && String(row.id).indexOf('tmp_') !== 0;
-    if (keepId) {
-      payload.id = row.id;
-    }
+    if (keepId) payload.id = row.id;
     var now = new Date().toISOString();
     payload.updated_at = now;
     if (!payload.created_at) payload.created_at = now;
 
-    // optimistic
     var local = Object.assign({}, payload);
     if (!local.id) local.id = 'tmp_' + Date.now();
     titles.unshift(local);
@@ -233,9 +261,7 @@ window.DB = (function () {
         var real = fromDbTitle(res.data);
         var idx = titles.findIndex(function (t) { return t.id === local.id; });
         if (idx >= 0) titles[idx] = real;
-        if (local.id !== real.id) {
-          delete titlesById[local.id];
-        }
+        if (local.id !== real.id) delete titlesById[local.id];
         titlesById[real.id] = real;
         logActivity('restore', 'title', real.id, real.title);
       } catch (e) {
@@ -309,27 +335,125 @@ window.DB = (function () {
   }
   function updateConversation(id, patch) { return saveConversation(Object.assign({ id: id }, patch)); }
 
+  /* =========================================================
+     AI models
+     ========================================================= */
   function getAiModels() { return aiModels.slice(); }
   function getAiModel(id) { return aiModels.find(function (m) { return m.id === id; }) || null; }
   function countAiModels() { return aiModels.length; }
 
+  /* فقط مدل‌های فعال — استخر roulette */
+  function getActiveAiModels() {
+    return aiModels.filter(function (m) { return m.active !== false; });
+  }
+
+  /* provider پیش‌فرض اگر از مدل نیامده باشد */
+  function inferProvider(model) {
+    if (model && model.provider) return model.provider;
+    var id = String((model && model.id) || '').toLowerCase();
+    return id.indexOf('gemini') === 0 ? 'google' : 'openrouter';
+  }
+
+  /* metadata را روی ردیف موجود به‌روز می‌کند، ولی به provider/wins/losses/active
+     دست نمی‌زند اگر نگه‌داشتنشان لازم است. provider استثناست: چون از id
+     استنباط می‌شود، اجازه می‌دهیم تا در upsert به‌درستی ست شود. */
   function upsertAiModel(model) {
+    if (!model || !model.id) return;
+
+    var provider = inferProvider(model);
+    var payload = {
+      id: model.id,
+      label: model.label || model.id,
+      vendor: model.vendor || '',
+      size: model.size || '',
+      context: model.context || '',
+      speed: model.speed || '',
+      note: model.note || '',
+      tags: Array.isArray(model.tags) ? model.tags.join(',') : (model.tags || ''),
+      recommended: !!model.recommended,
+      best_for: model.best_for || model.bestFor || '',
+      is_free: model.is_free !== false && model.isFree !== false,
+      source: model.source || 'seed',
+      provider: provider,
+      fetched_at: model.fetched_at || model.fetchedAt || null,
+      updated_at: new Date().toISOString()
+    };
+
+    /* local memory: preserve wins/losses/active/last_tried_at از ردیف موجود */
     var idx = aiModels.findIndex(function (m) { return m.id === model.id; });
-    if (idx >= 0) aiModels[idx] = Object.assign({}, aiModels[idx], model);
-    else aiModels.push(model);
+    if (idx >= 0) {
+      var existing = aiModels[idx];
+      aiModels[idx] = Object.assign({}, existing, payload, {
+        tags: typeof payload.tags === 'string'
+          ? payload.tags.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
+          : payload.tags,
+        bestFor: payload.best_for,
+        wins: existing.wins,
+        losses: existing.losses,
+        last_tried_at: existing.last_tried_at,
+        active: existing.active,
+        created_at: existing.created_at
+      });
+    } else {
+      aiModels.push(Object.assign({}, payload, {
+        tags: typeof payload.tags === 'string'
+          ? payload.tags.split(',').map(function (t) { return t.trim(); }).filter(Boolean)
+          : payload.tags,
+        bestFor: payload.best_for,
+        wins: 0,
+        losses: 0,
+        last_tried_at: null,
+        active: true,
+        created_at: new Date().toISOString()
+      }));
+    }
+
+    /* remote write — upsert با فقط ستون‌های متادیتا؛ wins/losses/active
+       در SET clause نیستند، پس روی UPDATE دست‌نخورده می‌مانند و روی
+       INSERT مقدار پیش‌فرض جدول (0/0/true) می‌گیرند. */
     (async function () {
       try {
-        await getClient().from('cinema_ai_models').upsert({
-          id: model.id, label: model.label, vendor: model.vendor || '', size: model.size || '',
-          context: model.context || '', speed: model.speed || '', note: model.note || '',
-          tags: Array.isArray(model.tags) ? model.tags.join(',') : (model.tags || ''),
-          recommended: !!model.recommended, best_for: model.best_for || model.bestFor || '',
-          is_free: model.is_free !== false, source: model.source || 'seed', updated_at: new Date().toISOString()
-        });
-      } catch (e) { console.error(e); }
+        var res = await getClient().from('cinema_ai_models').upsert(payload);
+        if (res.error) console.error('upsertAiModel', res.error);
+      } catch (e) { console.error('upsertAiModel', e); }
     })();
   }
 
+  /* یک تلاش roulette را ثبت می‌کند — +1 موفق، یا +1 ناموفق */
+  function recordAiTrial(id, accepted) {
+    var m = aiModels.find(function (x) { return x.id === id; });
+    if (!m) return null;
+    if (accepted) m.wins = (m.wins || 0) + 1;
+    else m.losses = (m.losses || 0) + 1;
+    m.last_tried_at = new Date().toISOString();
+
+    (async function () {
+      try {
+        var patch = { last_tried_at: m.last_tried_at };
+        if (accepted) patch.wins = m.wins; else patch.losses = m.losses;
+        var res = await getClient().from('cinema_ai_models').update(patch).eq('id', id);
+        if (res.error) console.error('recordAiTrial', res.error);
+      } catch (e) { console.error('recordAiTrial', e); }
+    })();
+    return m;
+  }
+
+  /* فعال / غیرفعال — غیرفعال یعنی خارج از استخر roulette، اما ردیف می‌ماند */
+  function setAiModelActive(id, active) {
+    var m = aiModels.find(function (x) { return x.id === id; });
+    if (!m) return null;
+    m.active = !!active;
+    (async function () {
+      try {
+        var res = await getClient().from('cinema_ai_models').update({ active: !!active }).eq('id', id);
+        if (res.error) console.error('setAiModelActive', res.error);
+      } catch (e) { console.error('setAiModelActive', e); }
+    })();
+    return m;
+  }
+
+  /* حذف کامل — فقط برای «پاک‌سازی مطلق». جریان عادی roulette از
+     setAiModelActive استفاده می‌کند نه این. */
   function deleteAiModel(id) {
     aiModels = aiModels.filter(function (m) { return m.id !== id; });
     deletedAiModelIds.add(id);
@@ -442,7 +566,10 @@ window.DB = (function () {
     getMeta: getMeta, setMeta: setMeta,
     saveConversation: saveConversation, getAllConversations: getAllConversations, getConversationsByTitle: getConversationsByTitle,
     getConversation: getConversation, deleteConversation: deleteConversation, updateConversation: updateConversation,
-    getAiModels: getAiModels, getAiModel: getAiModel, countAiModels: countAiModels, upsertAiModel: upsertAiModel, deleteAiModel: deleteAiModel,
+    getAiModels: getAiModels, getAiModel: getAiModel, countAiModels: countAiModels,
+    getActiveAiModels: getActiveAiModels,
+    upsertAiModel: upsertAiModel, deleteAiModel: deleteAiModel,
+    recordAiTrial: recordAiTrial, setAiModelActive: setAiModelActive,
     seedAiModels: seedAiModels, getDeletedAiModelIds: getDeletedAiModelIds, markAiModelDeleted: markAiModelDeleted,
     unmarkAiModelDeleted: unmarkAiModelDeleted, clearDeletedAiModelIds: clearDeletedAiModelIds, countDeletedAiModels: countDeletedAiModels,
     bulkInsertFromSqliteRows: bulkInsertFromSqliteRows, loadAll: loadAll,
