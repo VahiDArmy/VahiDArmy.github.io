@@ -1,0 +1,132 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.tafsirs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  surah smallint NOT NULL CHECK (surah >= 1 AND surah <= 114),
+  ayah smallint NOT NULL CHECK (ayah > 0),
+  round_number smallint NOT NULL DEFAULT 1,
+  content text NOT NULL CHECK (char_length(content) > 0),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  tags ARRAY NOT NULL DEFAULT '{}'::text[],
+  user_id uuid DEFAULT auth.uid(),
+  CONSTRAINT tafsirs_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.comments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tafsir_id uuid NOT NULL,
+  guest_name text NOT NULL DEFAULT 'ناشناس'::text CHECK (char_length(guest_name) <= 60),
+  content text NOT NULL CHECK (char_length(content) > 0 AND char_length(content) <= 2000),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id uuid DEFAULT auth.uid(),
+  CONSTRAINT comments_pkey PRIMARY KEY (id),
+  CONSTRAINT comments_tafsir_id_fkey FOREIGN KEY (tafsir_id) REFERENCES public.tafsirs(id)
+);
+CREATE TABLE public.site_meta (
+  id smallint NOT NULL DEFAULT 1 CHECK (id = 1),
+  current_round smallint NOT NULL DEFAULT 1,
+  bookmark_surah smallint NOT NULL DEFAULT 1,
+  bookmark_ayah smallint NOT NULL DEFAULT 1,
+  CONSTRAINT site_meta_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.marked_ayahs (
+  surah smallint NOT NULL CHECK (surah >= 1 AND surah <= 114),
+  ayah smallint NOT NULL CHECK (ayah > 0),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id uuid DEFAULT auth.uid(),
+  CONSTRAINT marked_ayahs_pkey PRIMARY KEY (surah, ayah)
+);
+CREATE TABLE public.ayah_links (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tafsir_id uuid NOT NULL,
+  from_surah smallint NOT NULL,
+  from_ayah smallint NOT NULL,
+  to_surah smallint NOT NULL,
+  to_ayah smallint NOT NULL,
+  excerpt text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ayah_links_pkey PRIMARY KEY (id),
+  CONSTRAINT ayah_links_tafsir_id_fkey FOREIGN KEY (tafsir_id) REFERENCES public.tafsirs(id)
+);
+CREATE TABLE public.ravan_tafsirs (
+  surah smallint NOT NULL CHECK (surah >= 1 AND surah <= 114),
+  ayah smallint NOT NULL CHECK (ayah > 0),
+  content text NOT NULL,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ravan_tafsirs_pkey PRIMARY KEY (surah, ayah)
+);
+CREATE TABLE public.ai_reviews (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  tafsir_id uuid NOT NULL UNIQUE,
+  content text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id uuid NOT NULL DEFAULT auth.uid(),
+  CONSTRAINT ai_reviews_pkey PRIMARY KEY (id),
+  CONSTRAINT ai_reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT ai_reviews_tafsir_id_fkey FOREIGN KEY (tafsir_id) REFERENCES public.tafsirs(id)
+);
+CREATE TABLE public.ask_ai (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  surah integer NOT NULL,
+  ayah integer NOT NULL,
+  user_id uuid DEFAULT auth.uid(),
+  model text NOT NULL,
+  question text NOT NULL,
+  answer_raw text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ask_ai_pkey PRIMARY KEY (id),
+  CONSTRAINT ask_ai_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.ai_generations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  source text NOT NULL CHECK (source = ANY (ARRAY['ask_ai'::text, 'ai_review'::text])),
+  ref_id uuid NOT NULL,
+  model text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ai_generations_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.ai_feedback (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  generation_id uuid NOT NULL,
+  user_id uuid NOT NULL DEFAULT auth.uid(),
+  vote smallint NOT NULL CHECK (vote = ANY (ARRAY['-1'::integer, 1])),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT ai_feedback_pkey PRIMARY KEY (id),
+  CONSTRAINT ai_feedback_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT ai_feedback_generation_id_fkey FOREIGN KEY (generation_id) REFERENCES public.ai_generations(id)
+);
+CREATE TABLE public.mizan_progress (
+  user_id uuid NOT NULL,
+  content_key text NOT NULL,
+  page_index integer NOT NULL DEFAULT 0,
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT mizan_progress_pkey PRIMARY KEY (user_id, content_key),
+  CONSTRAINT mizan_progress_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.mizan_notes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  content_id integer NOT NULL,
+  anchor_before text NOT NULL DEFAULT ''::text,
+  anchor_selected text NOT NULL,
+  anchor_after text NOT NULL DEFAULT ''::text,
+  note_text text NOT NULL,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id uuid NOT NULL DEFAULT auth.uid(),
+  CONSTRAINT mizan_notes_pkey PRIMARY KEY (id),
+  CONSTRAINT mizan_notes_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
+);
+CREATE TABLE public.mizan_tags (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  content_id integer NOT NULL,
+  ayah integer NOT NULL,
+  start_excerpt text NOT NULL,
+  end_excerpt text NOT NULL,
+  model text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  user_id uuid DEFAULT auth.uid(),
+  CONSTRAINT mizan_tags_pkey PRIMARY KEY (id)
+);
