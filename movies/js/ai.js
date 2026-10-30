@@ -161,6 +161,7 @@ window.AI = (function () {
           model: model,
           messages: messages,
           temperature: temperature,
+          max_tokens: opts.max_tokens != null ? opts.max_tokens : undefined,
           stream: true,
           stream_options: { include_usage: false }
         }),

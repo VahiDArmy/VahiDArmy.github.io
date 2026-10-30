@@ -226,37 +226,13 @@ window.AIPrompts = (function () {
      ========================================================= */
   function buildStandardizeSingleSystem() {
     return [
-      'تو یک متخصص دیتابیس فیلم و سریال هستی.',
-      'وظیفه تو فقط و فقط استخراج اطلاعات دقیق (متادیتا) برای این عنوان است.',
-      'هیچ‌گونه تحلیل داستانی، نقد، یا پیدا کردن سوراخ داستانی انجام نده. فقط مشخصات را پیدا و استاندارد کن.',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'قاعده سال',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'اگر کاربر سال اعلام کرده: همان سال را مبنا بگیر.',
-      'اگر کاربر سال اعلام نکرده: سال شروع را پیدا کن. اگر پیدا نکردی null بگذار.',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'خروجی',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'فقط و فقط یک آبجکت JSON با ساختار زیر برگردان:',
-      '{',
-      '  "standard_title": "عنوان انگلیسی استاندارد",',
-      '  "title_fa": "عنوان فارسی رایج یا null",',
-      '  "type": "series" یا "movie" یا "anime" یا "documentary",',
-      '  "year_start": عدد یا null,',
-      '  "year_end": عدد یا null,',
-      '  "seasons": عدد یا null,',
-      '  "episodes": عدد یا null,',
-      '  "episodes_per_season": عدد یا null,',
-      '  "country": "کشور",',
-      '  "language": "زبان اصلی",',
-      '  "genre": "ژانرها",',
-      '  "status": "پایان‌یافته" یا "در حال پخش",',
-      '  "creators": "سازنده‌ها",',
-      '  "main_cast": "بازیگران اصلی",',
-      '  "summary": "خلاصه داستان در ۲ تا ۳ جمله فارسی"',
-      '}'
+      'متخصص متادیتای فیلم/سریال. فقط JSON معتبر، بدون توضیح.',
+      'سال اعلام‌شده را مبنا بگیر؛ وگرنه year_start را پیدا کن یا null.',
+      'schema:',
+      '{"standard_title":"","title_fa":null,"type":"movie|series|anime|documentary",' +
+      '"year_start":null,"year_end":null,"seasons":null,"episodes":null,"episodes_per_season":null,' +
+      '"country":"","language":"","genre":"","status":"","creators":"","main_cast":"",' +
+      '"summary":"۲ جمله فارسی"}'
     ].join('\n');
   }
 
@@ -358,29 +334,14 @@ window.AIPrompts = (function () {
   }
 
   function standardizeUser(title, type, year, meta) {
-    const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || 'نامشخص');
-    const lines = titleBlock(title, type, year, meta).concat(['نوع اعلام‌شده: ' + typeLabel]);
-    if (year) lines.push('سال اعلام‌شده: ' + year);
-    else lines.push('سال اعلام‌شده: وارد نشده');
-
-    lines.push('');
-    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    lines.push('نکته درباره نوع');
-    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    lines.push('');
-    lines.push('این عنوان از دید کاربر یک ' + typeLabel + ' است.');
-    lines.push('اگر چند اثر با نام مشابه وجود دارد، همانی را پیدا کن که با نوع اعلام‌شده می‌خواند.');
-    lines.push('اگر نام شامل نشانه نسخه است مثل (us) یا (uk)، همان نسخه را مبنا بگیر.');
-    if (year) lines.push('سال اعلام‌شده (' + year + ') را مبنا بگیر.');
-
-    lines.push('');
-    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    lines.push('وظیفه');
-    lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    lines.push('');
-    lines.push('فقط اطلاعات متادیتا (عنوان، سال، فصل‌ها، بازیگران و ...) را استخراج کن.');
-    lines.push('از تحلیل داستان، نقد یا پیدا کردن اشکال خودداری کن.');
-    lines.push('خروجی فقط یک آبجکت JSON باشد.');
+    const typeLabel = { series: 'سریال', movie: 'فیلم', anime: 'انیمیشن', documentary: 'مستند' }[type] || (type || '?');
+    const lines = [
+      'عنوان: ' + (title || ''),
+      'نوع: ' + typeLabel,
+      year ? ('سال: ' + year) : 'سال: نامشخص',
+      'فقط JSON متادیتا طبق schema. خلاصه حداکثر ۲ جمله.'
+    ];
+    if (meta && meta.notes) lines.push('یادداشت: ' + String(meta.notes).slice(0, 120));
     return lines.join('\n');
   }
 
@@ -410,20 +371,10 @@ window.AIPrompts = (function () {
 
   function buildStandardizeBatchSystem() {
     return [
-      'تو یک متخصص دیتابیس فیلم و سریال هستی.',
-      'برای هر ورودی، اطلاعات استاندارد برگردان. خروجی: فقط آرایه JSON.',
-      '',
-      'هر آیتم:',
-      '{',
-      '  "original": "عنوان ورودی",',
-      '  "standard_title": "...",',
-      '  "title_fa": "...",',
-      '  "type": "series" یا "movie" یا "anime" یا "documentary",',
-      '  "year_start": null, "year_end": null,',
-      '  "seasons": null, "episodes": null,',
-      '  "country": "", "language": "", "genre": "", "status": "",',
-      '  "summary": "", "creators": "", "main_cast": ""',
-      '}'
+      'متخصص متادیتا. فقط آرایه JSON، بدون توضیح.',
+      'هر آیتم: {"original":"","standard_title":"","title_fa":"","type":"movie|series|anime|documentary",' +
+      '"year_start":null,"year_end":null,"seasons":null,"episodes":null,"country":"","language":"",' +
+      '"genre":"","status":"","summary":"","creators":"","main_cast":""}'
     ].join('\n');
   }
 
@@ -512,64 +463,10 @@ window.AIPrompts = (function () {
 
   function buildLookupSystem() {
     return [
-      'تو یک متخصص دیتابیس فیلم و سریال هستی.',
-      '',
-      'وظیفه: کاربر یک عنوان را تایپ می‌کند که ممکن است:',
-      '- غلط دیکته‌ای داشته باشد',
-      '- نسخه‌های مختلف داشته باشد (US, UK, Australia, Japan, ...)',
-      '- بازسازی یا ریبوت داشته باشد',
-      '- فقط یک نسخه مشخص داشته باشد',
-      '',
-      'تو باید:',
-      '۱. عنوان را تصحیح کنی (corrected_query).',
-      '۲. همه نسخه‌های معناداری که با آن عنوان مطابقت دارند را پیدا کنی.',
-      '۳. برای هر نسخه، اطلاعات استاندارد و دقیق برگردانی.',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'قواعد کاندیدها',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '',
-      '• اگر عنوان منحصربه‌فرد است، فقط یک کاندید برگردان.',
-      '• اگر چند نسخه دارد، همه را برگردان (مثلاً US, UK, Japan).',
-      '• اگر مطمئن نیستی، یک کاندید با confidence پایین برگردان.',
-      '• اگر عنوان را نمی‌شناسی، آرایه خالی برگردان.',
-      '• حداکثر ۵ کاندید برگردان.',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'برای هر کاندید، این فیلدها را پر کن',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '',
-      '{',
-      '  "standard_title": "عنوان انگلیسی استاندارد (شامل نشانه نسخه اگر دارد)",',
-      '  "title_fa": "عنوان فارسی رایج یا null",',
-      '  "type": "series" یا "movie" یا "anime" یا "documentary",',
-      '  "version_label": "US" یا "UK" یا "Australia" یا "Japan" یا null,',
-      '  "year_start": عدد یا null,',
-      '  "year_end": عدد یا null,',
-      '  "seasons": عدد یا null,',
-      '  "episodes": عدد یا null,',
-      '  "episodes_per_season": عدد یا null,',
-      '  "country": "کشور",',
-      '  "language": "زبان اصلی",',
-      '  "genre": "ژانرها",',
-      '  "status": "پایان‌یافته" یا "در حال پخش",',
-      '  "summary": "خلاصه ۲ تا ۳ جمله فارسی",',
-      '  "creators": "سازنده‌ها",',
-      '  "main_cast": "بازیگران اصلی",',
-      '  "confidence": 0 تا 10,',
-      '  "why": "چرا این کاندید — یک جمله کوتاه"',
-      '}',
-      '',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      'خروجی',
-      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
-      '',
-      'فقط یک آبجکت JSON برگردان. هیچ متن اضافه‌ای ننویس.',
-      '',
-      '{',
-      '  "corrected_query": "عنوان تصحیح‌شده ورودی کاربر",',
-      '  "candidates": [ آرایه‌ای از کاندیدها ]',
-      '}'
+      'متخصص شناسایی عنوان فیلم/سریال. فقط JSON، بدون توضیح اضافه.',
+      'غلط‌املایی را اصلاح کن؛ نسخه‌های معنادار را برگردان (حداکثر ۵).',
+      '{"corrected_query":"","candidates":[{"standard_title":"","title_fa":null,"type":"movie|series",' +
+      '"year_start":null,"year_end":null,"seasons":null,"country":"","note":""}]}'
     ].join('\n');
   }
 
