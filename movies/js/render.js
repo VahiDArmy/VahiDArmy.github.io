@@ -1,226 +1,168 @@
 /* =========================================================
-   رندر کارت‌ها و UI
+   رندر کارت‌ها و اجزای رابط
    ========================================================= */
 window.Render = (function () {
-  const { $, $$, escapeHtml, ratingStars, categoryEmoji, formatDate } = Utils;
 
-  function renderCards(list) {
-    const grid = $('#cards-grid');
-    const empty = $('#empty-state');
-    if (!grid) return;
+  const TYPE_LABEL = CONFIG.TYPES;
 
-    if (!list || list.length === 0) {
-      grid.innerHTML = '';
-      if (empty) empty.hidden = false;
-      return;
+  /* ---- ساخت یک ستاره SVG ---- */
+  function starSvg(filled, color) {
+    const cls = filled ? 'star filled' : 'star';
+    const fill = filled ? color : 'currentColor';
+    return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="' + fill + '" stroke="currentColor" stroke-width="1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>';
+  }
+
+  /* ---- رندر ۵ ستاره بر اساس rating ---- */
+  function starsHTML(rating) {
+    const n = Math.floor(Number(rating) || 0);
+    if (n < 1) {
+      return '<span class="stars stars-empty" title="بدون امتیاز">' +
+        '<span class="stars-empty-text">بدون امتیاز</span></span>';
     }
-    if (empty) empty.hidden = true;
+    const meta = CONFIG.STARS[n];
+    const color = meta ? meta.color : 'var(--star-3)';
+    let html = '<span class="stars" data-stars="' + n + '" title="' + (meta ? meta.label : '') + '" style="--star-color: ' + color + '">';
+    for (let i = 1; i <= 5; i++) {
+      html += starSvg(i <= n, color);
+    }
+    html += '</span>';
+    return html;
+  }
 
-    grid.innerHTML = list.map(t => cardHtml(t)).join('');
-    // Bind clicks
-    grid.querySelectorAll('.card').forEach(card => {
-      card.addEventListener('click', () => {
-        const id = card.dataset.id;
-        openDetail(id);
+  /* ---- کارت ---- */
+  function cardHTML(t, query) {
+    const favCls = t.favorite ? 'is-fav' : '';
+    const titleHtml = Utils.highlight(t.title, query);
+    const metaParts = [];
+    if (t.year) metaParts.push('<span>' + Utils.toFa(t.year) + '</span>');
+    if (t.type) metaParts.push('<span>' + (TYPE_LABEL[t.type] || t.type) + '</span>');
+    if (t.seasons) metaParts.push('<span>' + Utils.toFa(t.seasons) + ' فصل</span>');
+    if (t.genre) metaParts.push('<span>' + Utils.esc(t.genre) + '</span>');
+
+    const aiBadge = t.ai_standardized_at
+      ? '<span class="ai-badge" title="استانداردسازی‌شده با AI">🪄</span>'
+      : '';
+
+    const rating = Math.floor(Number(t.rating) || 0);
+    const ratingCls = rating >= 1 ? 'rating-' + rating : 'rating-none';
+
+    const reasonBlock = t.reason
+      ? '<div class="card-reason" data-stars="' + rating + '">' +
+          '<span class="card-reason-icon">' + reasonIcon(rating) + '</span>' +
+          '<span class="card-reason-text">' + Utils.esc(t.reason) + '</span>' +
+        '</div>'
+      : '';
+
+    return [
+      '<article class="card ' + favCls + ' ' + ratingCls + '" data-id="' + t.id + '" data-rating="' + rating + '" tabindex="0">',
+      '  <header class="card-head">',
+      '    <div class="card-title-wrap">',
+      '      <h3 class="card-title">' + titleHtml + aiBadge + '</h3>',
+      '      <div class="card-meta">' + metaParts.join('<span class="dot"></span>') + '</div>',
+      '    </div>',
+      '    <div class="card-actions">',
+      '      <button class="card-act" data-act="standardize" title="استانداردسازی اطلاعات">',
+      '        🪄',
+      '      </button>',
+      '      <button class="card-act" data-act="ai" title="تحلیل عمیق با AI">',
+      '        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>',
+      '      </button>',
+      '      <button class="card-act ' + (t.favorite ? 'is-fav' : '') + '" data-act="fav" title="علاقه‌مندی">',
+      '        <svg viewBox="0 0 24 24" width="16" height="16" fill="' + (t.favorite ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>',
+      '      </button>',
+      '      <button class="card-act" data-act="edit" title="ویرایش">',
+      '        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+      '      </button>',
+      '      <button class="card-act danger" data-act="delete" title="حذف">',
+      '        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>',
+      '      </button>',
+      '    </div>',
+      '  </header>',
+      '  <div class="card-body">',
+      '    ' + reasonBlock,
+      (t.notes ? '<p class="card-notes">' + Utils.esc(t.notes) + '</p>' : ''),
+      (!t.notes && t.summary && !t.reason ? '<p class="card-notes">' + Utils.esc(t.summary) + '</p>' : ''),
+      '  </div>',
+      '  <footer class="card-foot">',
+      '    <div class="flex items-center gap-2">' + starsHTML(t.rating) + '</div>',
+      '    <span class="text-4 text-xs">' + Utils.relativeTime(t.created_at) + '</span>',
+      '  </footer>',
+      '</article>'
+    ].join('');
+  }
+
+  function reasonIcon(rating) {
+    if (rating >= 5) return '🏆';
+    if (rating === 4) return '👍';
+    if (rating === 3) return '😐';
+    if (rating === 2) return '👎';
+    if (rating === 1) return '💔';
+    return '💬';
+  }
+
+  function renderGrid(container, items, query) {
+    if (!items.length) { container.innerHTML = ''; return; }
+    container.innerHTML = items.map(function (t) { return cardHTML(t, query); }).join('');
+    Utils.stagger(Array.from(container.children), 22, 260);
+    container.querySelectorAll('.card').forEach(function (card) {
+      card.addEventListener('mousemove', function (e) {
+        const r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
       });
     });
   }
 
-  function cardHtml(t) {
-    const cat = CONFIG.CATEGORIES[t.category] || {};
-    const stars = ratingStars(t.rating);
-    const fav = t.favorite ? '❤️' : '';
-    return `
-      <article class="card" data-id="${t.id}" data-category="${t.category}">
-        <div class="card-top">
-          <span class="card-cat" style="color:${cat.color || '#aaa'}">${cat.emoji || '🎬'} ${escapeHtml(cat.label || t.category)}</span>
-          <span class="card-fav">${fav}</span>
-        </div>
-        <h3 class="card-title">${escapeHtml(t.title)}</h3>
-        ${t.original_title ? `<div class="card-orig">${escapeHtml(t.original_title)}</div>` : ''}
-        <div class="card-meta">
-          <span>${t.year || '—'}</span>
-          <span>${t.type || ''}</span>
-          <span class="card-rating">${stars}</span>
-        </div>
-        ${t.genre ? `<div class="card-genre">${escapeHtml(t.genre)}</div>` : ''}
-      </article>
-    `;
+  /* ---- شمارش ستاره‌ها در سایدبار ---- */
+  function renderSidebarCounts() {
+    const counts = DB.getStarCounts();
+    document.querySelectorAll('[data-star-count]').forEach(function (el) {
+      const k = el.dataset.starCount;
+      const v = k === 'all' ? counts.all : counts[Number(k)] || 0;
+      el.textContent = Utils.toFa(v);
+    });
+    const stat = DB.getStats();
+    const tEl = document.getElementById('mini-total');
+    const aEl = document.getElementById('mini-avg');
+    const fEl = document.getElementById('mini-fav');
+    if (tEl) tEl.textContent = Utils.toFa(stat.totals.count);
+    if (aEl) aEl.textContent = stat.totals.avgRating ? Utils.toFa(stat.totals.avgRating.toFixed(1)) : '—';
+    if (fEl) fEl.textContent = Utils.toFa(stat.totals.favorites || 0);
   }
 
-  async function openDetail(id) {
-    Utils.showLoader(true);
-    try {
-      const t = await DB.getTitle(id);
-      if (!t) {
-        Utils.toast('عنوان پیدا نشد', 'error');
-        return;
+  function renderPageTitle() {
+    const s = State.get();
+    const titleEl = document.getElementById('page-title');
+    const subEl = document.getElementById('page-sub');
+    let title = 'همه';
+    if (s.starFilter !== 'all') {
+      const n = Number(s.starFilter);
+      if (n === 0) title = 'بدون امتیاز';
+      else {
+        const meta = CONFIG.STARS[n];
+        title = (meta ? meta.emoji : '') + ' ' + (meta ? meta.label : n + ' ستاره');
       }
-      const body = $('#modal-body');
-      const overlay = $('#modal-overlay');
-      if (!body || !overlay) return;
-
-      const cat = CONFIG.CATEGORIES[t.category] || {};
-      body.innerHTML = `
-        <div class="detail-header">
-          <h2>${escapeHtml(t.title)}</h2>
-          ${t.original_title ? `<p class="orig">${escapeHtml(t.original_title)}</p>` : ''}
-          <div class="detail-badges">
-            <span class="badge" style="background:${cat.color || '#555'}">${cat.emoji} ${escapeHtml(cat.label || '')}</span>
-            <span class="badge">${ratingStars(t.rating)} ${t.rating || 0}</span>
-            ${t.favorite ? '<span class="badge">❤️ علاقه‌مندی</span>' : ''}
-            <span class="badge">${t.type || ''}</span>
-            ${t.year ? `<span class="badge">${t.year}</span>` : ''}
-          </div>
-        </div>
-        <div class="detail-body">
-          ${t.genre ? `<p><strong>ژانر:</strong> ${escapeHtml(t.genre)}</p>` : ''}
-          ${t.notes ? `<div class="notes"><strong>یادداشت:</strong><br>${escapeHtml(t.notes).replace(/\n/g, '<br>')}</div>` : ''}
-          ${t.summary ? `<div class="summary"><strong>خلاصه:</strong><br>${escapeHtml(t.summary).replace(/\n/g, '<br>')}</div>` : ''}
-          ${t.story_analysis ? `<div class="analysis"><strong>تحلیل داستانی:</strong><pre>${escapeHtml(t.story_analysis)}</pre></div>` : ''}
-          <p class="meta-date">اضافه شده: ${formatDate(t.created_at)}</p>
-        </div>
-        <div class="detail-actions">
-          <button class="btn-primary" id="btn-edit-detail">ویرایش</button>
-          <button class="btn-secondary" id="btn-ai-detail">تحلیل AI</button>
-          <button class="btn-danger" id="btn-delete-detail">حذف</button>
-        </div>
-      `;
-
-      overlay.hidden = false;
-      document.body.classList.add('modal-open');
-
-      $('#btn-edit-detail')?.addEventListener('click', () => {
-        closeModal();
-        openEdit(t);
-      });
-      $('#btn-delete-detail')?.addEventListener('click', async () => {
-        if (!confirm('آیا مطمئن هستید؟')) return;
-        Utils.showLoader(true);
-        try {
-          await DB.deleteTitle(id);
-          Utils.toast('حذف شد', 'success');
-          closeModal();
-          await State.loadTitles();
-        } catch (e) {
-          Utils.toast(e.message, 'error');
-        } finally {
-          Utils.showLoader(false);
-        }
-      });
-      $('#btn-ai-detail')?.addEventListener('click', () => {
-        Utils.toast('قابلیت AI در حال اتصال به edge function...', 'info');
-        // TODO: call AI
-      });
-    } catch (e) {
-      Utils.toast(e.message, 'error');
-    } finally {
-      Utils.showLoader(false);
+    } else {
+      title = '📽️ همه‌ی عنوان‌ها';
     }
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = Utils.toFa(s.filtered.length) + ' مورد';
   }
 
-  function closeModal() {
-    const overlay = $('#modal-overlay');
-    if (overlay) overlay.hidden = true;
-    document.body.classList.remove('modal-open');
-  }
-
-  function openEdit(t) {
-    State.set({ view: 'add', editingId: t.id });
-    switchView('add');
-    $('#form-title').textContent = 'ویرایش عنوان';
-    $('#edit-id').value = t.id;
-    $('#f-title').value = t.title || '';
-    $('#f-original').value = t.original_title || '';
-    $('#f-category').value = t.category || 'love';
-    $('#f-type').value = t.type || 'series';
-    $('#f-year').value = t.year || '';
-    $('#f-rating').value = t.rating || 0;
-    $('#f-genre').value = t.genre || '';
-    $('#f-notes').value = t.notes || '';
-    $('#f-favorite').checked = !!t.favorite;
-  }
-
-  function openAdd() {
-    State.set({ view: 'add', editingId: null });
-    switchView('add');
-    $('#form-title').textContent = 'افزودن عنوان جدید';
-    $('#title-form').reset();
-    $('#edit-id').value = '';
-  }
-
-  function switchView(name) {
-    $$('.view-section').forEach(s => s.classList.remove('active'));
-    const el = $('#view-' + name);
-    if (el) el.classList.add('active');
-
-    $$('.side-item').forEach(b => {
-      b.classList.toggle('active', b.dataset.view === name || (name === 'grid' && b.dataset.filter === State.get().categoryFilter));
-    });
-
-    State.set({ view: name });
-  }
-
-  function updateHeaderStats(titles) {
-    const total = titles.length;
-    const rated = titles.filter(t => t.rating > 0);
-    const avg = rated.length ? (rated.reduce((s, t) => s + t.rating, 0) / rated.length).toFixed(1) : '—';
-    const totEl = $('#hd-total');
-    const avgEl = $('#hd-avg');
-    if (totEl) totEl.textContent = total;
-    if (avgEl) avgEl.textContent = avg;
-  }
-
-  function renderStats(titles) {
-    const container = $('#stats-container');
-    if (!container) return;
-
-    const byCat = { love: 0, good: 0, hate: 0 };
-    let totalRating = 0, ratedCount = 0, favCount = 0;
-    titles.forEach(t => {
-      if (byCat[t.category] !== undefined) byCat[t.category]++;
-      if (t.rating > 0) { totalRating += t.rating; ratedCount++; }
-      if (t.favorite) favCount++;
-    });
-
-    container.innerHTML = `
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-value">${titles.length}</div>
-          <div class="stat-label">کل عناوین</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${ratedCount ? (totalRating / ratedCount).toFixed(2) : '—'}</div>
-          <div class="stat-label">میانگین امتیاز</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${favCount}</div>
-          <div class="stat-label">علاقه‌مندی‌ها</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${byCat.love}</div>
-          <div class="stat-label">❤️ عاشقشم</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${byCat.good}</div>
-          <div class="stat-label">👍 خوبه</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value">${byCat.hate}</div>
-          <div class="stat-label">👎 متنفرم</div>
-        </div>
-      </div>
-    `;
+  function toggleEmpty(show) {
+    const grid = document.getElementById('grid');
+    const empty = document.getElementById('empty-state');
+    if (!grid || !empty) return;
+    grid.hidden = show;
+    empty.hidden = !show;
   }
 
   return {
-    renderCards,
-    openDetail,
-    closeModal,
-    openEdit,
-    openAdd,
-    switchView,
-    updateHeaderStats,
-    renderStats
+    cardHTML: cardHTML,
+    starsHTML: starsHTML,
+    renderGrid: renderGrid,
+    renderSidebarCounts: renderSidebarCounts,
+    renderPageTitle: renderPageTitle,
+    toggleEmpty: toggleEmpty
   };
 })();

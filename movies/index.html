@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
   <meta name="theme-color" content="#0a0a0c" />
-  <meta name="description" content="سینما من — مدیریت شخصی فیلم و سریال (آنلاین)" />
+  <meta name="description" content="سینما من — مدیریت شخصی فیلم و سریال" />
   <title>سینما من | آرشیو شخصی</title>
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -25,107 +25,17 @@
   <link rel="stylesheet" href="css/animations.css" />
   <link rel="stylesheet" href="css/utilities.css" />
   <link rel="stylesheet" href="css/ai.css" />
+  <link rel="stylesheet" href="css/ai-log.css" />
   <link rel="stylesheet" href="css/settings.css" />
+  <link rel="stylesheet" href="css/free-prompt.css" />
+  <link rel="stylesheet" href="css/terminal.css" />
+  <link rel="stylesheet" href="css/db-admin.css" />
   <link rel="stylesheet" href="css/responsive.css" />
-
-  <style>
-    /* SPA specific + auth + loading overrides */
-    .auth-gate {
-      position: fixed; inset: 0; z-index: 9999;
-      background: var(--bg-deep, #0a0a0c);
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 1.5rem;
-      padding: 2rem;
-    }
-    .auth-card {
-      background: var(--bg-card, #12121a);
-      border: 1px solid var(--border, #2a2a3a);
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 100%; max-width: 400px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-    .auth-card h1 {
-      font-size: 1.6rem; margin: 0 0 0.5rem; text-align: center;
-      background: linear-gradient(135deg, #ff4d6d, #ffd700);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .auth-card p.sub { text-align: center; color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
-    .auth-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
-    .auth-tabs button {
-      flex: 1; padding: 0.6rem; border: 1px solid var(--border);
-      background: transparent; color: var(--text-muted); border-radius: 8px;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .auth-tabs button.active {
-      background: var(--accent, #ff4d6d); color: #fff; border-color: transparent;
-    }
-    .auth-form input {
-      width: 100%; padding: 0.75rem 1rem; margin-bottom: 0.75rem;
-      background: var(--bg-input, #1a1a24); border: 1px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: inherit;
-    }
-    .auth-form button[type=submit] {
-      width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #ff4d6d, #c73e54);
-      border: none; border-radius: 8px; color: #fff; font-weight: 600;
-      cursor: pointer; margin-top: 0.5rem; transition: transform 0.15s;
-    }
-    .auth-form button[type=submit]:hover { transform: translateY(-1px); }
-    .auth-error { color: #ff4d5e; font-size: 0.85rem; margin-top: 0.5rem; text-align: center; min-height: 1.2em; }
-    .auth-loading { opacity: 0.6; pointer-events: none; }
-
-    .global-loader {
-      position: fixed; inset: 0; z-index: 9000;
-      background: rgba(10,10,12,0.75); backdrop-filter: blur(4px);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; pointer-events: none; transition: opacity 0.25s;
-    }
-    .global-loader.show { opacity: 1; pointer-events: auto; }
-    .global-loader .spinner {
-      width: 48px; height: 48px; border: 3px solid rgba(255,77,109,0.2);
-      border-top-color: #ff4d6d; border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .view-section { display: none; }
-    .view-section.active { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-
-    .empty-state {
-      text-align: center; padding: 4rem 1rem; color: var(--text-muted);
-    }
-    .empty-state .emoji { font-size: 3rem; margin-bottom: 1rem; }
-  </style>
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
 </head>
 <body>
 
-<!-- Auth Gate -->
-<div id="auth-gate" class="auth-gate" hidden>
-  <div class="auth-card">
-    <h1>سینما من</h1>
-    <p class="sub">آرشیو شخصی فیلم و سریال — نسخه آنلاین</p>
-    <div class="auth-tabs">
-      <button type="button" data-tab="login" class="active">ورود</button>
-      <button type="button" data-tab="signup">ثبت‌نام</button>
-    </div>
-    <form id="auth-form" class="auth-form">
-      <input type="email" id="auth-email" placeholder="ایمیل" required autocomplete="email" />
-      <input type="password" id="auth-password" placeholder="رمز عبور" required minlength="6" autocomplete="current-password" />
-      <button type="submit" id="auth-submit">ورود</button>
-      <div class="auth-error" id="auth-error"></div>
-    </form>
-  </div>
-</div>
-
-<!-- Global loader -->
-<div id="global-loader" class="global-loader">
-  <div class="spinner"></div>
-</div>
-
-<!-- Boot loader (reused style) -->
 <div id="boot-loader" class="boot-loader">
   <div class="boot-reel">
     <div class="boot-reel-ring"></div>
@@ -141,14 +51,21 @@
 
   <header class="app-header" id="app-header">
     <div class="header-brand">
-      <button class="icon-btn menu-btn" id="btn-menu" title="منو">
-        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <button class="icon-btn menu-toggle" id="btn-menu-toggle" title="منو" aria-label="منو">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
       </button>
-      <span class="brand-text">سینما من</span>
+      <div class="brand-mark">🎬</div>
+      <div class="brand-text">
+        <h1 class="brand-title">سینما من</h1>
+        <span class="brand-sub">آرشیو شخصی</span>
+      </div>
     </div>
 
     <div class="header-search">
-      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+        <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
       <input type="search" id="global-search" class="search-input" placeholder="جستجو… (Ctrl+K)" autocomplete="off" spellcheck="false" />
       <button class="search-clear icon-btn" id="btn-search-clear" title="پاک کردن" hidden>
         <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
@@ -159,9 +76,9 @@
       <span class="hd-chip">TITLES <b id="hd-total">0</b></span>
       <span class="hd-chip">AVG &#9733; <b id="hd-avg">&mdash;</b></span>
       <span class="hd-chip hd-clock" id="hd-clock">00:00:00</span>
-      <div class="sync-status" id="sync-status" data-state="online" title="آنلاین — Supabase">
+      <div class="sync-status" id="sync-status" data-state="idle" role="button" tabindex="0" title="برای ارسال به گیت‌هاب بزن">
         <span class="sync-dot"></span>
-        <span class="sync-label" id="sync-label">آنلاین</span>
+        <span class="sync-label" id="sync-label">آفلاین</span>
       </div>
       <button class="icon-btn" id="btn-stats" title="آمار">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
@@ -169,175 +86,228 @@
       <button class="icon-btn" id="btn-theme" title="تم">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
       </button>
-      <button class="icon-btn" id="btn-user" title="حساب کاربری">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>
+      <button class="icon-btn" id="btn-settings" title="تنظیمات">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
       </button>
     </div>
   </header>
 
+  <div class="ticker" id="ticker" aria-hidden="true">
+    <span class="tk-label">&#9650; LIVE</span>
+    <div class="tk-track"><div class="tk-inner" id="tk-inner"></div></div>
+  </div>
+
   <div class="app-body">
     <aside class="sidebar" id="sidebar">
-      <nav class="side-nav">
-        <button class="side-item active" data-view="grid" data-filter="all">
-          <span class="side-icon">🎬</span> همه
-        </button>
-        <button class="side-item" data-view="grid" data-filter="love">
-          <span class="side-icon">❤️</span> عاشقشم
-        </button>
-        <button class="side-item" data-view="grid" data-filter="good">
-          <span class="side-icon">👍</span> خوبه
-        </button>
-        <button class="side-item" data-view="grid" data-filter="hate">
-          <span class="side-icon">👎</span> متنفرم
-        </button>
-        <hr class="side-divider" />
-        <button class="side-item" data-view="add">
-          <span class="side-icon">➕</span> افزودن عنوان
-        </button>
-        <button class="side-item" data-view="stats">
-          <span class="side-icon">📊</span> آمار
-        </button>
-        <button class="side-item" data-view="migrate">
-          <span class="side-icon">📦</span> انتقال داده
-        </button>
+      <nav class="side-nav" id="side-nav">
+
+        <div class="side-section">
+          <h3 class="side-title">ستاره‌ها</h3>
+          <ul class="side-list" id="star-list">
+            <li><button class="side-item is-active" data-star="all">
+              <span class="side-icon">📽️</span>
+              <span class="side-label">همه</span>
+              <span class="side-count" data-star-count="all">0</span>
+            </button></li>
+            <li><button class="side-item star-5" data-star="5">
+              <span class="side-icon">⭐⭐⭐⭐⭐</span>
+              <span class="side-label">شاهکار</span>
+              <span class="side-count" data-star-count="5">0</span>
+            </button></li>
+            <li><button class="side-item star-4" data-star="4">
+              <span class="side-icon">⭐⭐⭐⭐</span>
+              <span class="side-label">خوب</span>
+              <span class="side-count" data-star-count="4">0</span>
+            </button></li>
+            <li><button class="side-item star-3" data-star="3">
+              <span class="side-icon">⭐⭐⭐</span>
+              <span class="side-label">خنثی</span>
+              <span class="side-count" data-star-count="3">0</span>
+            </button></li>
+            <li><button class="side-item star-2" data-star="2">
+              <span class="side-icon">⭐⭐</span>
+              <span class="side-label">ضعیف</span>
+              <span class="side-count" data-star-count="2">0</span>
+            </button></li>
+            <li><button class="side-item star-1" data-star="1">
+              <span class="side-icon">⭐</span>
+              <span class="side-label">متنفرم</span>
+              <span class="side-count" data-star-count="1">0</span>
+            </button></li>
+            <li><button class="side-item" data-star="0">
+              <span class="side-icon">○</span>
+              <span class="side-label">بدون امتیاز</span>
+              <span class="side-count" data-star-count="0">0</span>
+            </button></li>
+          </ul>
+        </div>
+
+        <div class="side-section">
+          <h3 class="side-title">فیلترها</h3>
+          <label class="side-filter">
+            <span>نوع</span>
+            <select id="filter-type">
+              <option value="all">همه</option>
+              <option value="series">سریال</option>
+              <option value="movie">فیلم</option>
+              <option value="anime">انیمیشن</option>
+              <option value="documentary">مستند</option>
+            </select>
+          </label>
+          <label class="side-filter">
+            <span>مرتب‌سازی</span>
+            <select id="filter-sort">
+              <option value="recent">جدیدترین</option>
+              <option value="oldest">قدیمی‌ترین</option>
+              <option value="rating-desc">بیشترین ستاره</option>
+              <option value="rating-asc">کمترین ستاره</option>
+              <option value="title-asc">نام (الف-ی)</option>
+              <option value="title-desc">نام (ی-الف)</option>
+              <option value="year-desc">جدیدترین سال</option>
+            </select>
+          </label>
+          <label class="side-checkbox">
+            <input type="checkbox" id="filter-favorite" />
+            <span class="checkbox-box"></span>
+            <span>فقط علاقه‌مندی‌ها ⭐</span>
+          </label>
+          <label class="side-checkbox">
+            <input type="checkbox" id="filter-rated" />
+            <span class="checkbox-box"></span>
+            <span>فقط امتیازداده‌شده</span>
+          </label>
+        </div>
+
+        <div class="side-section side-stats-mini">
+          <h3 class="side-title">خلاصه</h3>
+          <div class="mini-stat"><span>کل</span><strong id="mini-total">۰</strong></div>
+          <div class="mini-stat"><span>میانگین ستاره</span><strong id="mini-avg">—</strong></div>
+          <div class="mini-stat"><span>علاقه‌مندی</span><strong id="mini-fav">۰</strong></div>
+        </div>
+
+        <div class="side-section">
+          <h3 class="side-title">🪄 هوش مصنوعی</h3>
+          <button class="side-action" id="btn-free-prompt">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+            پرامپت آزاد
+          </button>
+          <button class="side-action" id="btn-ai-batch">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+            استانداردسازی سریع
+          </button>
+          <button class="side-action" id="btn-ai-analyze">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24A2.5 2.5 0 0 1 9.5 2zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24A2.5 2.5 0 0 0 14.5 2z"/></svg>
+            تحلیل و پیشنهاد
+          </button>
+        </div>
+
+        <div class="side-section">
+          <h3 class="side-title">ابزارها</h3>
+          <button class="side-action" id="btn-export">خروجی JSON</button>
+          <button class="side-action" id="btn-import">ورود از JSON</button>
+          <button class="side-action" id="btn-pull">دریافت از گیت‌هاب</button>
+          <button class="side-action" id="btn-push">ارسال به گیت‌هاب</button>
+        </div>
+
+        <input type="file" id="import-file" accept="application/json" hidden />
       </nav>
     </aside>
 
     <main class="main-content" id="main-content">
-      <!-- Grid View -->
-      <section id="view-grid" class="view-section active">
-        <div class="view-toolbar">
-          <div class="filter-chips" id="filter-chips">
-            <button class="chip active" data-star="all">همه</button>
-            <button class="chip" data-star="5">۵⭐</button>
-            <button class="chip" data-star="4">۴⭐</button>
-            <button class="chip" data-star="3">۳⭐</button>
-            <button class="chip" data-star="0">بدون امتیاز</button>
-          </div>
-          <div class="sort-select">
-            <select id="sort-select">
-              <option value="recent">جدیدترین</option>
-              <option value="rating">امتیاز</option>
-              <option value="title">عنوان</option>
-              <option value="year">سال</option>
-            </select>
-          </div>
+      <div class="toolbar" id="toolbar">
+        <div class="toolbar-left">
+          <h2 class="page-title" id="page-title">📽️ همه‌ی عنوان‌ها</h2>
+          <span class="page-sub" id="page-sub">۰ مورد</span>
         </div>
-        <div class="cards-grid" id="cards-grid">
-          <!-- cards injected here -->
+        <div class="toolbar-right">
+          <div class="view-switch" role="tablist">
+            <button class="view-btn is-active" data-view="grid" title="کارتی">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            </button>
+            <button class="view-btn" data-view="list" title="لیستی">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-primary" id="btn-add">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            افزودن
+          </button>
         </div>
+      </div>
+
+      <div class="content-area" id="content-area">
+        <div class="grid" id="grid"></div>
         <div class="empty-state" id="empty-state" hidden>
-          <div class="emoji">🎞️</div>
-          <p>هنوز عنوانی اضافه نشده</p>
-          <button class="btn-primary" id="btn-empty-add">افزودن اولین عنوان</button>
+          <div class="empty-icon">🎞️</div>
+          <h3>چیزی اینجا نیست</h3>
+          <p>هنوز عنوانی اضافه نکردی یا فیلترها چیزی رو نشون نمی‌دن.</p>
+          <button class="btn btn-primary" id="btn-empty-add">افزودن اولین عنوان</button>
         </div>
-      </section>
-
-      <!-- Add / Edit View -->
-      <section id="view-add" class="view-section">
-        <div class="form-container">
-          <h2 id="form-title">افزودن عنوان جدید</h2>
-          <form id="title-form" class="title-form">
-            <input type="hidden" id="edit-id" />
-            <div class="form-row">
-              <label>عنوان *</label>
-              <input type="text" id="f-title" required placeholder="نام فیلم یا سریال" />
-            </div>
-            <div class="form-row">
-              <label>عنوان اصلی</label>
-              <input type="text" id="f-original" placeholder="Original Title" />
-            </div>
-            <div class="form-row two-col">
-              <div>
-                <label>دسته‌بندی *</label>
-                <select id="f-category" required>
-                  <option value="love">❤️ عاشقشم</option>
-                  <option value="good">👍 خوبه</option>
-                  <option value="hate">👎 متنفرم</option>
-                </select>
-              </div>
-              <div>
-                <label>نوع</label>
-                <select id="f-type">
-                  <option value="series">سریال</option>
-                  <option value="movie">فیلم</option>
-                  <option value="anime">انیمه</option>
-                  <option value="documentary">مستند</option>
-                </select>
-              </div>
-            </div>
-            <div class="form-row two-col">
-              <div>
-                <label>سال</label>
-                <input type="number" id="f-year" min="1900" max="2030" placeholder="2020" />
-              </div>
-              <div>
-                <label>امتیاز (۰–۵)</label>
-                <input type="number" id="f-rating" min="0" max="5" step="0.5" value="0" />
-              </div>
-            </div>
-            <div class="form-row">
-              <label>ژانر</label>
-              <input type="text" id="f-genre" placeholder="درام، کمدی، ..." />
-            </div>
-            <div class="form-row">
-              <label>خلاصه / یادداشت</label>
-              <textarea id="f-notes" rows="4" placeholder="یادداشت شخصی..."></textarea>
-            </div>
-            <div class="form-row">
-              <label>
-                <input type="checkbox" id="f-favorite" /> علاقه‌مندی
-              </label>
-            </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary" id="btn-save">ذخیره</button>
-              <button type="button" class="btn-secondary" id="btn-cancel">انصراف</button>
-            </div>
-          </form>
-        </div>
-      </section>
-
-      <!-- Stats View -->
-      <section id="view-stats" class="view-section">
-        <div class="stats-container" id="stats-container">
-          <p class="loading-text">در حال محاسبه آمار...</p>
-        </div>
-      </section>
-
-      <!-- Migrate View -->
-      <section id="view-migrate" class="view-section">
-        <div class="form-container">
-          <h2>انتقال داده از SQLite</h2>
-          <p class="sub">فایل cinema.sqlite خود را انتخاب کنید تا داده‌ها به سرور منتقل شوند.</p>
-          <input type="file" id="sqlite-file" accept=".sqlite,.db" />
-          <div id="migrate-status" style="margin-top:1rem;"></div>
-          <button class="btn-primary" id="btn-migrate" disabled style="margin-top:1rem;">شروع انتقال</button>
-        </div>
-      </section>
+      </div>
     </main>
+
+    <aside class="side-r" id="rail" aria-label="آمار زنده">
+      <section class="rail-panel"><h3 class="side-title"><span>RATINGS</span><em>[0-5]</em></h3><ul class="rl-bars" id="rail-stars"></ul></section>
+      <section class="rail-panel"><h3 class="side-title"><span>TYPES</span></h3><ul class="rl-bars" id="rail-types"></ul></section>
+      <section class="rail-panel"><h3 class="side-title"><span>ACTIVITY</span><em id="rail-act-meta">12W</em></h3>
+        <div class="rl-spark"><svg viewBox="0 0 200 60" preserveAspectRatio="none"><polygon id="sp-fill"/><polyline id="sp-line"/></svg></div></section>
+      <section class="rail-panel"><h3 class="side-title"><span>TOP PICKS</span></h3><ol class="rl-picks" id="rail-picks"></ol></section>
+    </aside>
   </div>
+
+  <div class="db-page" id="db-page"></div>
+
+  <footer class="app-footer">
+    <label class="cmdbar"><span class="cmd-prompt">&#10095;</span><input id="cmd" type="text" dir="ltr" autocomplete="off" spellcheck="false" placeholder="type a command — help" /><span class="cmd-out" id="cmd-out"></span></label>
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">2.2.0</span></span>
+    <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
+    <span id="footer-status">آماده</span>
+  </footer>
 </div>
 
-<!-- Modal for detail / AI -->
-<div id="modal-overlay" class="modal-overlay" hidden>
-  <div class="modal" id="detail-modal">
-    <button class="modal-close" id="modal-close">&times;</button>
-    <div class="modal-body" id="modal-body"></div>
-  </div>
-</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="lg-distort" x="0%" y="0%" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="noise" />
+    <feGaussianBlur in="noise" stdDeviation="3" result="soft" />
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="60" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+  <filter id="lg-distort-lite" x="0%" y="0%" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 0.01" numOctaves="1" seed="5" result="noise" />
+    <feGaussianBlur in="noise" stdDeviation="3" result="soft" />
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="20" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+</svg>
 
-<!-- Toast container -->
-<div id="toast-container" class="toast-container"></div>
+<div class="modal-root" id="modal-root" aria-hidden="true"></div>
+<div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
-<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
+<script src="data/initial-data.js"></script>
 <script src="js/config.js"></script>
-<script src="js/db.js"></script>
 <script src="js/utils.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/github.js"></script>
+<script src="js/db.js"></script>
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
+<script src="js/stats.js"></script>
+
+<script src="js/ai-log.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ai-prompts.js"></script>
+<script src="js/ai-title-lookup.js"></script>
+<script src="js/ai-standardize.js"></script>
+<script src="js/ai-analysis.js"></script>
+<script src="js/ai-models.js"></script>
+<script src="js/ai-ui.js"></script>
+<script src="js/ai-free-prompt.js"></script>
+<script src="js/db-admin.js"></script>
+
 <script src="js/events.js"></script>
 <script src="js/app.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/glitch.js"></script>
 </body>
 </html>
