@@ -135,8 +135,11 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap select { 
   width: 100%; 
   appearance: none; 
-  min-height: 44px; /* استفاده از min-height به جای height */
-  padding: 10px 14px 10px 40px; /* 40px فاصله از چپ برای فلش و ظاهر بهتر */
+  min-height: 44px;
+  /* logical padding: start (text side) has room for آ, end has room for chevron */
+  padding-block: 10px;
+  padding-inline-start: 18px;
+  padding-inline-end: 40px;
   background: var(--card); 
   border: 1px solid var(--border); 
   border-radius: 999px; 
