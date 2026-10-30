@@ -861,7 +861,7 @@ window.AIUI = (function () {
 
   function openAnalysis() {
     const panel = createStreamPanel('تحلیل سلیقه و پیشنهاد');
-    panel.setContent('<p class="ai-hint">می‌توانی اول سلیقه‌ات را عمیق تحلیل کنی، یا مستقیم یک پیشنهاد بگیری.</p>');
+    panel.setContent('');
 
     const kindPicker = Utils.el('div', { class: 'ai-kind-picker' }, [
       chip('both', '🎬 هر دو', true),
@@ -886,26 +886,12 @@ window.AIUI = (function () {
       style: { display: 'none', marginTop: '16px', padding: '14px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card, #12121a)' }
     });
 
+    /* هر دو یک استایل — هر دو استریم */
     const btnTaste = Utils.el('button', { class: 'btn btn-primary', id: 'btn-taste-analysis', type: 'button' }, ['🔍 تحلیل عمیق سلیقه']);
-    const btnSuggest = Utils.el('button', { class: 'btn btn-ghost', id: 'btn-suggest', type: 'button' }, ['✨ دریافت پیشنهاد']);
-
-    const legend = Utils.el('div', {
-      class: 'ai-section-desc',
-      style: { marginTop: '10px', fontSize: '0.85rem', lineHeight: '1.6' }
-    }, [
-      'معنی ستاره‌ها برای AI: ',
-      '۵ عالی (دوباره می‌بینم) · ',
-      '۴ خوب و راضی · ',
-      '۳ خوب · ',
-      '۲ افتضاح (هرگز دوباره) · ',
-      '۱ افتضاح و عصبانی از تماشا'
-    ]);
+    const btnSuggest = Utils.el('button', { class: 'btn btn-primary', id: 'btn-suggest', type: 'button' }, ['✨ دریافت پیشنهاد']);
 
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-section' }, [
-        Utils.el('div', { class: 'ai-section-title' }, ['سلیقه و پیشنهاد']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['آثار امتیازدار + معنی ستاره‌ها برای هوش مصنوعی ارسال می‌شود.']),
-        legend,
         kindPicker,
         Utils.el('div', { class: 'ai-section-actions', style: { marginTop: '14px', display: 'flex', flexWrap: 'wrap', gap: '8px' } }, [btnTaste, btnSuggest])
       ]),
@@ -960,7 +946,7 @@ window.AIUI = (function () {
       try { typeSelect.value = parsed.type || 'series'; } catch (e) {}
       var yearInput = Utils.el('input', { class: 'field-input', type: 'number', value: parsed.year || '', placeholder: 'سال', style: { width: '100%', marginBottom: '12px' } });
       var btnSeen = Utils.el('button', { class: 'btn btn-primary', type: 'button' }, ['✅ دیده‌ام — ثبت در آرشیو']);
-      var btnWill = Utils.el('button', { class: 'btn btn-ghost', type: 'button' }, ['👀 خواهم دید']);
+      var btnWill = Utils.el('button', { class: 'btn btn-primary', type: 'button' }, ['👀 خواهم دید']);
       actionBox.appendChild(Utils.el('div', { class: 'ai-section-title', style: { marginBottom: '8px' } }, ['اثر پیشنهادی AI']));
       actionBox.appendChild(titleInput);
       actionBox.appendChild(typeSelect);

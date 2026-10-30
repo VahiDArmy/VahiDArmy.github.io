@@ -977,3 +977,23 @@
   /* keep AI tools accessible from library too */
 }
 
+/* unified analysis action buttons */
+.ai-section-actions .btn {
+  flex: 1 1 180px;
+  min-width: 160px;
+  justify-content: center;
+}
+.suggest-actions .btn {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+.suggest-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.suggest-actions .btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
