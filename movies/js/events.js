@@ -752,13 +752,13 @@ window.Events = (function () {
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🪄']),
         Utils.el('div', { class: 'settings-info' }, [
-          Utils.el('h4', {}, ['هوش مصنوعی OpenRouter']),
-          Utils.el('p', {}, ['انتخاب مدل + کلید API'])
+          Utils.el('h4', {}, ['هوش مصنوعی (Gemini)']),
+          Utils.el('p', {}, ['مدل از طریق Edge — کلید روی سرور است'])
         ]),
         Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'تنظیم نشده'])
       ]),
       Utils.el('div', { class: 'settings-fields' }, [
-        row('کلید API', input('ai_key', aiKey, { type: 'password', placeholder: 'sk-or-v1-...', autocomplete: 'new-password' }), 'همان توکن OpenRouter')
+        Utils.el('div', { class: 'settings-hint' }, [Utils.el('span', {}, ['کلید Gemini فقط روی سرور (Secret: GEM_MALI) است و در مرورگر ذخیره نمی‌شود.'])])
       ]),
       Utils.el('div', { class: 'settings-fieldset' }, [
         Utils.el('div', { class: 'settings-fieldset-label' }, ['مدل فعال']),
@@ -839,13 +839,11 @@ window.Events = (function () {
     });
 
     document.getElementById('btn-save-settings')?.addEventListener('click', function () {
-      const keyInput = body.querySelector('input[name="ai_key"]');
-      if (keyInput) AI.setKey(keyInput.value.trim());
       if (picker && typeof picker.getSelected === 'function') {
         const m = picker.getSelected();
         if (m && typeof AI.setModel === 'function') AI.setModel(m);
       }
-      Toast.success('تنظیمات AI ذخیره شد');
+      Toast.success('تنظیمات ذخیره شد');
       Modal.close();
     });
 
