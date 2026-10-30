@@ -1,0 +1,379 @@
+/* =========================================================
+   سایدبار
+   ========================================================= */
+
+/* =========================================================
+   ۱. دسکتاپ
+   ========================================================= */
+.sidebar {
+  background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  border-left: 1px solid var(--border-1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 14px 26px;
+  height: calc(100vh - var(--header-h) - var(--footer-h));
+  position: sticky;
+  top: var(--header-h);
+  z-index: var(--z-sidebar);
+  -webkit-overflow-scrolling: touch;
+}
+
+.side-section { margin-bottom: 22px; }
+.side-section:last-child { margin-bottom: 0; }
+
+.side-title {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--text-4);
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+
+.side-list { display: flex; flex-direction: column; gap: 3px; }
+
+/* =========================================================
+   آیتم سایدبار
+   ========================================================= */
+.side-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast) var(--ease-out);
+  text-align: right;
+  position: relative;
+  border: 1px solid transparent;
+  cursor: pointer;
+  min-height: 38px;
+}
+.side-item:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border-color: var(--border-1);
+}
+.side-item.is-active {
+  background: linear-gradient(90deg, var(--accent-soft), transparent);
+  color: var(--text-1);
+  border-color: rgba(124, 92, 255, 0.22);
+  font-weight: 600;
+}
+.side-item.is-active::before {
+  content: "";
+  position: absolute;
+  right: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: var(--radius-pill);
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* =========================================================
+   آیکن — در ستاره‌ها از متن ★ استفاده می‌کنیم نه emoji
+   =========================================================
+   دلیل: emoji ستاره (⭐) با font-size کوچک نمی‌شود و
+   از عرض خودش بیرون می‌زند. کاراکتر ★ تابع font-size است.
+   ========================================================= */
+.side-icon {
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  min-width: 22px;
+  white-space: nowrap;
+}
+
+/* ---- پنهان‌کردن emoji های موجود در HTML و جایگزینی با ★ ---- */
+.side-item[data-star] .side-icon {
+  font-size: 0;
+  min-width: 58px;
+  max-width: 58px;
+  overflow: hidden;
+  letter-spacing: 0;
+  justify-content: flex-start;
+}
+.side-item[data-star] .side-icon::before {
+  font-size: 11px;
+  letter-spacing: -1px;
+  font-family: var(--font-fa), system-ui, sans-serif;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* ---- هر سطح، تعداد ستاره‌های متفاوت ---- */
+.side-item[data-star="1"] .side-icon::before { content: "★"; font-size: 14px; }
+.side-item[data-star="2"] .side-icon::before { content: "★★"; font-size: 12px; }
+.side-item[data-star="3"] .side-icon::before { content: "★★★"; font-size: 11px; }
+.side-item[data-star="4"] .side-icon::before { content: "★★★★"; font-size: 10px; }
+.side-item[data-star="5"] .side-icon::before { content: "★★★★★"; font-size: 10px; }
+
+/* ---- رنگ و درخشش هر سطح ---- */
+.side-item[data-star="5"] .side-icon::before {
+  color: var(--star-5);
+  text-shadow: 0 0 6px var(--star-5-glow), 0 0 12px var(--star-5-glow);
+}
+.side-item[data-star="4"] .side-icon::before {
+  color: var(--star-4);
+  text-shadow: 0 0 6px var(--star-4-glow);
+}
+.side-item[data-star="3"] .side-icon::before {
+  color: var(--star-3);
+  text-shadow: 0 0 5px var(--star-3-glow);
+}
+.side-item[data-star="2"] .side-icon::before {
+  color: var(--star-2);
+  text-shadow: 0 0 6px var(--star-2-glow);
+}
+.side-item[data-star="1"] .side-icon::before {
+  color: var(--star-1);
+  text-shadow: 0 0 6px var(--star-1-glow);
+}
+
+/* ---- ردیف بدون امتیاز — از emoji ○ استفاده می‌کند ---- */
+.side-item[data-star="0"] .side-icon {
+  color: var(--star-0);
+  font-size: 14px;
+  min-width: 58px;
+  max-width: 58px;
+  justify-content: center;
+}
+
+/* ---- برچسب ---- */
+.side-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 2px;
+}
+
+/* ---- شمارش ---- */
+.side-count {
+  flex-shrink: 0;
+  min-width: 26px;
+  padding: 2px 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  color: var(--text-3);
+}
+
+/* ---- رنگ شمارش ---- */
+.side-item[data-star="5"] .side-count { color: var(--star-5); background: rgba(255, 215, 0, 0.10); }
+.side-item[data-star="4"] .side-count { color: var(--star-4); background: rgba(61, 220, 151, 0.10); }
+.side-item[data-star="3"] .side-count { color: var(--star-3); background: rgba(154, 154, 176, 0.10); }
+.side-item[data-star="2"] .side-count { color: var(--star-2); background: rgba(255, 159, 67, 0.10); }
+.side-item[data-star="1"] .side-count { color: var(--star-1); background: rgba(255, 77, 94, 0.10); }
+
+/* ---- آیتم فعال ---- */
+.side-item[data-star="5"].is-active { border-color: rgba(255, 215, 0, 0.35); }
+.side-item[data-star="5"].is-active::before { background: var(--star-5); box-shadow: 0 0 10px var(--star-5-glow); }
+.side-item[data-star="5"].is-active .side-count { background: var(--star-5); color: #000; }
+.side-item[data-star="4"].is-active .side-count { background: var(--star-4); color: #000; }
+.side-item[data-star="3"].is-active .side-count { background: var(--star-3); color: #000; }
+.side-item[data-star="2"].is-active .side-count { background: var(--star-2); color: #000; }
+.side-item[data-star="1"].is-active .side-count { background: var(--star-1); color: #fff; }
+
+/* =========================================================
+   فیلترها
+   ========================================================= */
+.side-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.side-filter > span {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.side-filter select,
+.side-filter input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  background-size: 14px;
+  padding-left: 30px;
+}
+.side-filter select:hover,
+.side-filter input:hover { border-color: var(--border-3); }
+.side-filter select:focus,
+.side-filter input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.side-filter select option {
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+/* =========================================================
+   چک‌باکس
+   ========================================================= */
+.side-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast);
+  user-select: none;
+}
+.side-checkbox:hover { background: var(--bg-2); }
+.side-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.checkbox-box {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border-3);
+  display: grid;
+  place-items: center;
+  transition: all var(--dur-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+.checkbox-box::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform var(--dur-fast) var(--ease-spring);
+  margin-top: -3px;
+}
+.side-checkbox input:checked ~ .checkbox-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.side-checkbox input:checked ~ .checkbox-box::after {
+  transform: rotate(-45deg) scale(1);
+}
+
+/* =========================================================
+   خلاصه
+   ========================================================= */
+.side-stats-mini {
+  padding: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.side-stats-mini .side-title {
+  padding: 0;
+  margin-bottom: 12px;
+}
+.mini-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  border-bottom: 1px dashed var(--border-1);
+}
+.mini-stat:last-child { border-bottom: none; }
+.mini-stat strong {
+  color: var(--text-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   اکشن‌ها
+   ========================================================= */
+.side-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast);
+  text-align: right;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.side-action:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border-color: var(--border-1);
+}
+.side-action svg {
+  color: var(--text-3);
+  transition: color var(--dur-fast);
+  flex-shrink: 0;
+}
+.side-action:hover svg { color: var(--accent-2); }
+
+/* =========================================================
+   ۲. موبایل
+   ========================================================= */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed !important;
+    top: var(--header-h) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: 280px !important;
+    height: auto !important;
+    z-index: 45 !important;
+    transform: translateX(100%) !important;
+    transition: transform var(--dur-slow) var(--ease-out) !important;
+    box-shadow: var(--shadow-4);
+    background: var(--bg-1);
+    border-left: 1px solid var(--border-2);
+    border-top: none;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 16px;
+  }
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body.sidebar-open .content-area {
+    overflow: hidden !important;
+    touch-action: none;
+    pointer-events: none;
+  }
+}
