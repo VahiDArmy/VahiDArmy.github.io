@@ -519,31 +519,6 @@ window.DB = (function () {
 
   function findSimilar() { return []; }
 
-  async function bulkInsertFromSqliteRows(rows) {
-    var mapped = rows.map(function (r) {
-      return {
-        legacy_id: r.id, title: r.title, category: r.category || 'good', type: r.type || 'series',
-        genre: r.genre || '', year: r.year, rating: Number(r.rating) || 0, favorite: !!r.favorite,
-        notes: r.notes || '', watched_date: r.watched_date, summary: r.summary || '',
-        original_title: r.original_title || '', seasons: r.seasons, episodes: r.episodes,
-        episodes_per_season: r.episodes_per_season, country: r.country || '', language: r.language || '',
-        status: r.status || '', reason: r.reason || '', story_analysis: r.story_analysis || '',
-        ai_standardized_at: r.ai_standardized_at,
-        created_at: r.created_at || new Date().toISOString(),
-        updated_at: r.updated_at || new Date().toISOString()
-      };
-    });
-    var client = getClient();
-    var inserted = 0;
-    for (var i = 0; i < mapped.length; i += 40) {
-      var chunk = mapped.slice(i, i + 40);
-      var res = await client.from('cinema_titles').insert(chunk);
-      if (res.error) throw res.error;
-      inserted += chunk.length;
-    }
-    await loadAll();
-    return inserted;
-  }
 
   function exportBinary() { return null; }
   function exportBase64() { return null; }
@@ -571,7 +546,7 @@ window.DB = (function () {
     recordAiTrial: recordAiTrial, setAiModelActive: setAiModelActive,
     seedAiModels: seedAiModels, getDeletedAiModelIds: getDeletedAiModelIds, markAiModelDeleted: markAiModelDeleted,
     unmarkAiModelDeleted: unmarkAiModelDeleted, clearDeletedAiModelIds: clearDeletedAiModelIds, countDeletedAiModels: countDeletedAiModels,
-    bulkInsertFromSqliteRows: bulkInsertFromSqliteRows, loadAll: loadAll,
+    loadAll: loadAll,
     exportBinary: exportBinary, exportBase64: exportBase64, exportJSON: exportJSON, importJSON: importJSON, importBinary: importBinary,
     persistLocal: persistLocal, pullFromGitHub: pullFromGitHub, pushToGitHub: pushToGitHub, getLastSha: getLastSha, query: query, run: run
   };

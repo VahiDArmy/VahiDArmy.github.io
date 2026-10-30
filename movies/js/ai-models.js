@@ -210,9 +210,13 @@ window.AIModelsUI = (function () {
 
         function select() {
           selected = m.id;
+          if (typeof AI !== 'undefined' && AI.setModel) AI.setModel(m.id);
           if (onSelect) onSelect(m.id);
           renderList(searchInput.value);
           updateStats();
+          try {
+            if (window.Toast) Toast.info('مدل: ' + (m.label || m.id));
+          } catch (e) {}
         }
         card.addEventListener('click', select);
         card.addEventListener('keydown', function (e) {
@@ -871,9 +875,6 @@ window.AIModelsUI = (function () {
       if (recordWin && DB.recordAiTrial) {
         try { DB.recordAiTrial(id, true); } catch (e) {}
       }
-      try {
-        document.dispatchEvent(new CustomEvent('cinema:model-changed', { detail: { id: id } }));
-      } catch (e) {}
       picker.refresh();
       if (typeof onSelect === 'function') onSelect(id);
     }

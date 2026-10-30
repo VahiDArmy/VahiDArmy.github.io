@@ -8,6 +8,7 @@ window.Events = (function () {
     bindSidebar();
     bindPages();
     bindAiPage();
+    bindPersonalityPage();
     bindToolbar();
     bindContent();
     bindKeyboard();
@@ -167,10 +168,8 @@ window.Events = (function () {
 
     /* GitHub pull/push removed */
 
-    const btnBatch = document.getElementById('btn-ai-batch');
-    if (btnBatch) btnBatch.addEventListener('click', function () { AIUI.openStandardizeBatch(); });
     const btnAnalyze = document.getElementById('btn-ai-analyze');
-    if (btnAnalyze) btnAnalyze.addEventListener('click', function () { AIUI.openAnalysis(); });
+    if (btnAnalyze) btnAnalyze.addEventListener('click', function () { setPage('personality'); });
   }
 
 
@@ -178,34 +177,46 @@ window.Events = (function () {
      دو صفحه: AI (اصلی) و Library (لیست فیلم/سریال)
      ========================================================= */
   function setPage(page) {
-    page = page === 'library' ? 'library' : 'ai';
+    if (page !== 'library' && page !== 'personality') page = 'ai';
     var app = document.getElementById('app');
     if (app) app.dataset.page = page;
 
     var aiPage = document.getElementById('ai-page');
     var libPage = document.getElementById('library-page');
+    var persPage = document.getElementById('personality-page');
     if (aiPage) aiPage.classList.toggle('is-active', page === 'ai');
     if (libPage) libPage.classList.toggle('is-active', page === 'library');
+    if (persPage) persPage.classList.toggle('is-active', page === 'personality');
 
     document.querySelectorAll('#side-page-nav .side-page-btn').forEach(function (btn) {
       btn.classList.toggle('is-active', btn.dataset.page === page);
     });
 
-    /* ریل آمار فقط روی کتابخانه معنا دارد */
     var rail = document.getElementById('rail');
     if (rail) rail.style.display = page === 'library' ? '' : 'none';
 
     if (page === 'ai') refreshAiGlobalLabel();
+    if (page === 'personality') renderPersonalityHistory();
   }
 
   function refreshAiGlobalLabel() {
     var el = document.getElementById('ai-global-model-label');
+    var idEl = document.getElementById('ai-global-model-id');
     if (!el) return;
     try {
       var meta = (typeof AI !== 'undefined' && AI.getModelMeta) ? AI.getModelMeta() : null;
-      el.textContent = meta ? (meta.label || meta.id) : '—';
-    } catch (e) {
+      var id = (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '';
+      el.textContent = meta ? (meta.label || meta.id || id) : (id || '—');
+      if (idEl) {
+        var provider = meta && meta.provider ? meta.provider : '';
+        idEl.textContent = id
+          ? ((provider === 'google' ? 'Google' : provider === 'openrouter' ? 'OpenRouter' : '') +
+             (provider ? ' · ' : '') + id)
+          : '';
+      }
+    } catch (err) {
       el.textContent = '—';
+      if (idEl) idEl.textContent = '';
     }
   }
 
@@ -261,16 +272,181 @@ window.Events = (function () {
       if (btn) btn.click();
       else if (typeof AIFreePrompt !== 'undefined' && AIFreePrompt.open) AIFreePrompt.open();
     });
-    wireCard('ai-card-batch', function () {
-      if (typeof AIUI !== 'undefined') AIUI.openStandardizeBatch();
-    });
     wireCard('ai-card-analyze', function () {
-      if (typeof AIUI !== 'undefined') AIUI.openAnalysis();
+      setPage('personality');
     });
 
     document.addEventListener('cinema:model-changed', function () {
       refreshAiGlobalLabel();
     });
+  }
+
+
+  /* =========================================================
+     صفحه تحلیل عمیق شخصیت
+     ========================================================= */
+  var persPanel = null;
+  var persRunning = false;
+
+  function formatPersDate(iso) {
+    if (!iso) return '';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso).slice(0, 16);
+      return d.toLocaleString('fa-IR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch (e) {
+      return String(iso).slice(0, 16);
+    }
+  }
+
+  function renderPersonalityHistory(activeId) {
+    var list = document.getElementById('pers-history-list');
+    if (!list) return;
+    list.innerHTML = '';
+    var items = [];
+    try {
+      items = (typeof AIAnalysis !== 'undefined' && AIAnalysis.getLatestTasteAnalyses)
+        ? AIAnalysis.getLatestTasteAnalyses(5)
+        : [];
+    } catch (e) { items = []; }
+
+    if (!items.length) {
+      list.appendChild(Utils.el('div', { class: 'pers-history-empty' }, [
+        'هنوز تحلیلی ذخیره نشده.'
+      ]));
+      return;
+    }
+
+    items.forEach(function (item, idx) {
+      var preview = String(item.response || '').replace(/[#*_`]/g, ' ').trim().slice(0, 120);
+      var card = Utils.el('button', {
+        class: 'pers-history-card' + (activeId && item.id === activeId ? ' is-active' : ''),
+        type: 'button',
+        dataset: { id: item.id || '' }
+      }, [
+        Utils.el('div', { class: 'pers-history-card-top' }, [
+          Utils.el('span', { class: 'pers-history-idx' }, ['#' + (idx + 1)]),
+          Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)])
+        ]),
+        Utils.el('div', { class: 'pers-history-model' }, [item.ai_model || '—']),
+        Utils.el('div', { class: 'pers-history-preview' }, [preview || '(خالی)'])
+      ]);
+      card.addEventListener('click', function () {
+        showPersonalityResult(item);
+        renderPersonalityHistory(item.id);
+      });
+      list.appendChild(card);
+    });
+  }
+
+  function showPersonalityResult(item) {
+    var empty = document.getElementById('pers-stream-empty');
+    var host = document.getElementById('pers-stream-host');
+    if (empty) empty.hidden = true;
+    if (!host) return;
+    host.innerHTML = '';
+    var md = (typeof AIUI !== 'undefined' && AIUI.renderMarkdown)
+      ? AIUI.renderMarkdown(item.response || '')
+      : Utils.esc(item.response || '');
+    var body = Utils.el('div', { class: 'ai-stream-panel' }, [
+      Utils.el('div', { class: 'ai-stream-head' }, [
+        Utils.el('div', { class: 'ai-stream-title' }, ['تحلیل ذخیره‌شده']),
+        Utils.el('div', { class: 'ai-stream-status', dataset: { state: 'done' } }, [
+          Utils.el('span', { class: 'ai-status-dot' }),
+          Utils.el('span', { class: 'ai-status-text' }, [formatPersDate(item.created_at)])
+        ])
+      ]),
+      Utils.el('div', { class: 'ai-stream-body' }, [
+        Utils.el('div', { class: 'ai-stream-content', html: md })
+      ]),
+      Utils.el('div', { class: 'ai-stream-foot' }, [
+        Utils.el('span', { class: 'pers-foot-model' }, [item.ai_model || ''])
+      ])
+    ]);
+    host.appendChild(body);
+  }
+
+  function ensurePersStreamPanel() {
+    var empty = document.getElementById('pers-stream-empty');
+    var host = document.getElementById('pers-stream-host');
+    if (empty) empty.hidden = true;
+    if (!host) return null;
+    host.innerHTML = '';
+    /* use AIUI internal if exposed; else local mirror via openAnalysis pattern */
+    if (typeof AIUI !== 'undefined' && typeof AIUI.createStreamPanelForPage === 'function') {
+      persPanel = AIUI.createStreamPanelForPage('تحلیل عمیق شخصیت');
+      host.appendChild(persPanel.panel);
+      return persPanel;
+    }
+    /* minimal panel compatible with appendText API from createStreamPanel — call through AIUI */
+    var fake = document.createElement('div');
+    host.appendChild(fake);
+    /* Build via modal-less copy: invoke AIUI helper */
+    return null;
+  }
+
+  async function runPersonalityAnalysis() {
+    if (persRunning) return;
+    if (typeof AIAnalysis === 'undefined') {
+      Toast.error('ماژول تحلیل در دسترس نیست');
+      return;
+    }
+    persRunning = true;
+    var btn = document.getElementById('btn-run-personality');
+    if (btn) { btn.disabled = true; btn.textContent = 'در حال تحلیل…'; }
+
+    var empty = document.getElementById('pers-stream-empty');
+    var host = document.getElementById('pers-stream-host');
+    if (empty) empty.hidden = true;
+    if (host) host.innerHTML = '';
+
+    var panel = null;
+    try {
+      panel = AIUI.createStreamPanelForPage('تحلیل عمیق شخصیت');
+      if (host) host.appendChild(panel.panel);
+    } catch (e) {
+      Toast.error('پنل استریم ساخته نشد');
+      persRunning = false;
+      if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
+      return;
+    }
+
+    panel.setContent('');
+    panel.setStatus('استریم تحلیل…', 'loading');
+
+    try {
+      var result = await AIAnalysis.analyzeTaste({
+        onToken: function (_c, full) { panel.appendText(full); }
+      });
+      panel.appendText(result || '');
+      panel.setModelBadge();
+      panel.setStatus('آماده', 'done');
+      try {
+        var msgs = AIAnalysis.buildTasteAnalysisMessages();
+        var promptText = msgs.map(function (m) {
+          return '## ' + m.role + '\\n' + m.content;
+        }).join('\\n\\n');
+        AIAnalysis.saveTasteAnalysis(
+          promptText,
+          result || '',
+          (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''
+        );
+      } catch (e2) { console.error(e2); }
+      renderPersonalityHistory();
+      Toast.success('تحلیل ذخیره شد');
+    } catch (err) {
+      panel.setStatus('خطا', 'error');
+      panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
+      Toast.error(err.message || 'خطا در تحلیل');
+    } finally {
+      persRunning = false;
+      if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
+    }
+  }
+
+  function bindPersonalityPage() {
+    var btn = document.getElementById('btn-run-personality');
+    if (btn) btn.addEventListener('click', function () { runPersonalityAnalysis(); });
   }
 
   function bindToolbar() {
@@ -826,27 +1002,6 @@ window.Events = (function () {
       ])
     ]);
 
-    /* ---- Migration ---- */
-    const migrateSection = Utils.el('div', { class: 'settings-section' }, [
-      Utils.el('div', { class: 'settings-section-head' }, [
-        Utils.el('div', { class: 'settings-icon' }, ['📦']),
-        Utils.el('div', { class: 'settings-info' }, [
-          Utils.el('h4', {}, ['انتقال از SQLite']),
-          Utils.el('p', {}, ['وارد کردن داده‌های نسخه آفلاین قبلی'])
-        ])
-      ]),
-      Utils.el('div', { class: 'settings-fields' }, [
-        Utils.el('input', {
-          class: 'field-input', type: 'file', id: 'migrate-file',
-          accept: '.sqlite,.db,application/x-sqlite3'
-        })
-      ]),
-      Utils.el('div', { class: 'settings-tests' }, [
-        Utils.el('button', { class: 'settings-test-btn', id: 'btn-migrate', type: 'button' }, ['شروع انتقال'])
-      ]),
-      Utils.el('div', { id: 'migrate-status', style: 'margin-top:0.75rem;font-size:0.9rem;color:var(--text-muted)' }, [])
-    ]);
-
     /* ---- AI ---- */
     const picker = AIModelsUI.buildModelPicker(currentModel, function () {});
 
@@ -872,7 +1027,7 @@ window.Events = (function () {
       ])
     ]);
 
-    const body = Utils.el('div', { class: 'settings' }, [accountSection, migrateSection, aiSection]);
+    const body = Utils.el('div', { class: 'settings' }, [accountSection, aiSection]);
 
     const footer = Utils.el('div', { class: 'settings-footer' }, [
       Utils.el('button', {
@@ -896,47 +1051,6 @@ window.Events = (function () {
         location.reload();
       } catch (e) {
         Toast.error(e.message || 'خطا در خروج');
-      }
-    });
-
-    document.getElementById('btn-migrate')?.addEventListener('click', async function () {
-      const fileInput = document.getElementById('migrate-file');
-      const statusEl = document.getElementById('migrate-status');
-      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-        Toast.warning('ابتدا فایل SQLite را انتخاب کن');
-        return;
-      }
-      const file = fileInput.files[0];
-      statusEl.textContent = 'در حال خواندن فایل…';
-      try {
-        const buffer = await file.arrayBuffer();
-        const SQL = await initSqlJs({
-          locateFile: function (f) { return 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/' + f; }
-        });
-        const db = new SQL.Database(new Uint8Array(buffer));
-        const res = db.exec('SELECT * FROM titles');
-        if (!res.length) {
-          statusEl.textContent = 'جدول titles پیدا نشد';
-          Toast.error('جدول titles پیدا نشد');
-          return;
-        }
-        const cols = res[0].columns;
-        const rows = res[0].values.map(function (vals) {
-          const obj = {};
-          cols.forEach(function (c, i) { obj[c] = vals[i]; });
-          return obj;
-        });
-        statusEl.textContent = rows.length + ' عنوان پیدا شد — در حال ارسال…';
-        const count = await DB.bulkInsertFromSqliteRows(rows);
-        statusEl.textContent = '✅ ' + count + ' عنوان منتقل شد';
-        Toast.success(count + ' عنوان با موفقیت منتقل شد');
-        State.loadAll();
-        State.applyFilters();
-        Events.renderList();
-      } catch (e) {
-        console.error(e);
-        statusEl.textContent = 'خطا: ' + (e.message || e);
-        Toast.error(e.message || 'خطا در انتقال');
       }
     });
 

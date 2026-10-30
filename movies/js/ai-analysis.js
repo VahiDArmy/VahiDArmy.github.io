@@ -41,18 +41,23 @@ window.AIAnalysis = (function () {
     return { all: all, rated: titlesForAI };
   }
 
-  function formatTitleLine(t) {
-    var parts = [
-      '• «' + t.title + '»',
-      t.year ? '(' + t.year + ')' : '',
-      '[' + (t.type || 'نامشخص') + ']',
-      t.genre ? 'ژانر: ' + t.genre : '',
-      'امتیاز: ' + t.rating + '/5 — ' + t.rating_meaning
-    ];
-    var line = parts.filter(Boolean).join(' ');
-    if (t.reason) line += '\n  دلیل/نظر: ' + t.reason;
-    if (t.notes) line += '\n  یادداشت: ' + t.notes;
+  function formatTitleLine(t, compact) {
+    var line = '• «' + t.title + '»'
+      + (t.year ? ' (' + t.year + ')' : '')
+      + ' [' + (t.type || '?') + ']'
+      + ' ★' + t.rating
+      + (t.genre ? ' · ' + t.genre : '');
+    if (!compact) {
+      if (t.reason) line += '\n  دلیل: ' + String(t.reason).slice(0, 180);
+      if (t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 120);
+    } else if (t.reason) {
+      line += ' — ' + String(t.reason).slice(0, 80);
+    }
     return line;
+  }
+
+  function takeTop(arr, n) {
+    return arr.slice(0, n);
   }
 
   function legendBlock() {
@@ -89,40 +94,41 @@ window.AIAnalysis = (function () {
       throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای تحلیل سلیقه لازم است.');
     }
 
-    var loves = data.rated.filter(function (t) { return t.rating >= 4; });
-    var mid = data.rated.filter(function (t) { return t.rating === 3; });
-    var hates = data.rated.filter(function (t) { return t.rating <= 2; });
+    /* همهٔ امتیازدارها — عنوان صحیح + سال + نوع + امتیاز */
+    var lines = data.rated.map(function (t) {
+      var name = t.original_title
+        ? (t.title + ' / ' + t.original_title)
+        : t.title;
+      return '• ' + name
+        + (t.year ? ' (' + t.year + ')' : '')
+        + ' — ' + (t.type === 'movie' ? 'فیلم' : t.type === 'series' ? 'سریال' : (t.type || 'عنوان'))
+        + ' — امتیاز ' + t.rating + '/5';
+    });
 
     var system = [
-      'تو منتقد و تحلیل‌گر عمیق سلیقهٔ سینمایی هستی.',
+      'تو تحلیل‌گر سلیقه و شخصیت سینمایی هستی.',
       'فقط بر اساس دادهٔ کاربر حرف بزن؛ حدس بی‌پایه نزن.',
-      'پاسخ را فارسی، منسجم و با Markdown بنویس.',
-      'از کلی‌گویی پرهیز کن؛ به آثار مشخص و امتیاز+معنی آن‌ها ارجاع بده.'
+      'پاسخ را فارسی و با Markdown بنویس.',
+      '',
+      'منطق امتیازبندی کاربر (حتماً رعایت کن):',
+      '۵ = عالی بود؛ به قدری که بیش از یک بار خواهم دید',
+      '۴ = خوب بود و از تماشایش راضی‌ام',
+      '۳ = خوب / قابل قبول',
+      '۲ = افتضاح؛ اگر به گذشته برگردم هرگز تماشا نمی‌کنم',
+      '۱ = افتضاح؛ از تماشایش عصبانی‌ام'
     ].join('\n');
 
     var user = [
-      legendBlock(),
-      '',
       tasteProfileBlock(),
       '',
-      '## آثار با امتیاز ۴ و ۵ (خوشایند)',
-      loves.length ? loves.map(formatTitleLine).join('\n') : '(هیچ)',
+      '## فهرست آثار امتیازداده‌شده (عنوان صحیح + سال ساخت + نوع + امتیاز)',
+      lines.join('\n'),
       '',
-      '## آثار با امتیاز ۳ (متوسط/قابل قبول)',
-      mid.length ? mid.map(formatTitleLine).join('\n') : '(هیچ)',
-      '',
-      '## آثار با امتیاز ۱ و ۲ (ناخوشایند / پشیمانی)',
-      hates.length ? hates.map(formatTitleLine).join('\n') : '(هیچ)',
-      '',
-      '## خواسته',
-      'یک تحلیل عمیق از سلیقهٔ این بیننده بنویس که حداقل این بخش‌ها را داشته باشد:',
-      '1. خلاصهٔ شخصیت سلیقه‌ای (یک پاراگراف)',
-      '2. از چه چیزهایی و به‌چه دلیل خوشش می‌آید (با ارجاع به آثار ۵⭐ و ۴⭐)',
-      '3. از چه چیزهایی و به‌چه دلیل خوشش نمی‌آید (با ارجاع به آثار ۱⭐ و ۲⭐)',
-      '4. الگوهای تکراری (ژانر، لحن، شخصیت‌پردازی، پایان‌بندی، ریتم، جهان‌سازی، ...)',
-      '5. تناقض‌ها یا نقاط خاکستری (اگر هست)',
-      '6. جمع‌بندی: چه نوع اثری احتمالاً برایش «۵ ستاره» می‌شود و چه نوعی را باید رد کند'
-    ].join('\n');
+      '## درخواست',
+      '۱) بر اساس همین فهرست و منطق امتیازها، سلیقه و شخصیت این بیننده را عمیق تحلیل کن.',
+      '۲) در پایان، دقیقاً یک فیلم یا یک سریال پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
+      '۳) دلیل پیشنهاد را کوتاه و با ارجاع به الگوهای امتیازهای بالا بنویس.'
+    ].filter(Boolean).join('\n');
 
     return [
       { role: 'system', content: system },
@@ -200,11 +206,49 @@ window.AIAnalysis = (function () {
     return full;
   }
 
+  function getLatestTasteAnalyses(limit) {
+    limit = limit || 5;
+    try {
+      return (DB.getAllConversations() || [])
+        .filter(function (c) {
+          var tags = String(c.tags || '');
+          return tags.indexOf('taste_analysis') >= 0 || tags.indexOf('personality') >= 0;
+        })
+        .sort(function (a, b) {
+          return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+        })
+        .slice(0, limit);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveTasteAnalysis(prompt, response, model) {
+    try {
+      return DB.saveConversation({
+        title_id: null,
+        title_context: 'تحلیل عمیق شخصیت',
+        prompt: prompt || '',
+        response: response || '',
+        ai_model: model || (typeof AI !== 'undefined' && AI.getModel ? AI.getModel() : ''),
+        tags: 'taste_analysis,personality'
+      });
+    } catch (e) {
+      console.error('saveTasteAnalysis', e);
+      return null;
+    }
+  }
+
   return {
     STAR_MEANINGS: STAR_MEANINGS,
     starMeaning: starMeaning,
     collectUserData: collectUserData,
+    buildTasteAnalysisMessages: buildTasteAnalysisMessages,
+    buildSuggestMessages: buildSuggestMessages,
+    legendBlock: legendBlock,
     analyzeTaste: analyzeTaste,
-    suggest: suggest
+    suggest: suggest,
+    getLatestTasteAnalyses: getLatestTasteAnalyses,
+    saveTasteAnalysis: saveTasteAnalysis
   };
 })();

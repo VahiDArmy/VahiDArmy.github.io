@@ -106,6 +106,10 @@
             <span class="page-icon">🪄</span>
             <span>هوش مصنوعی</span>
           </button>
+          <button class="side-page-btn" data-page="personality" type="button">
+            <span class="page-icon">🧠</span>
+            <span>تحلیل عمیق شخصیت</span>
+          </button>
           <button class="side-page-btn" data-page="library" type="button">
             <span class="page-icon">🎬</span>
             <span>فیلم و سریال</span>
@@ -198,17 +202,13 @@
 
         <div class="side-section side-section-ai-tools">
           <h3 class="side-title">🪄 ابزارهای AI</h3>
-          <button class="side-action" id="btn-free-prompt">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
-            پرامپت آزاد
-          </button>
-          <button class="side-action" id="btn-ai-batch">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
-            استانداردسازی سریع
-          </button>
           <button class="side-action" id="btn-ai-analyze">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24A2.5 2.5 0 0 1 9.5 2zM14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24A2.5 2.5 0 0 0 14.5 2z"/></svg>
             تحلیل و پیشنهاد
+          </button>
+          <button class="side-action" id="btn-free-prompt">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+            پرامپت آزاد
           </button>
         </div>
 
@@ -226,33 +226,62 @@
 
       <!-- ========== PAGE 1: AI ========== -->
       <div class="ai-page is-active" id="ai-page">
-        <div class="ai-global-picker" id="ai-global-picker">
-          <span class="ai-global-picker-label">مدل سراسری سایت:</span>
-          <strong class="ai-global-picker-value" id="ai-global-model-label">—</strong>
-          <button class="btn btn-secondary btn-sm" type="button" id="btn-ai-change-model">تغییر مدل</button>
-          <button class="btn btn-ghost btn-sm" type="button" id="btn-ai-fetch-models" title="جستجوی مدل‌های رایگان OpenRouter">🔍 OpenRouter</button>
-        </div>
+        <!-- same top rhythm as library .toolbar so first box never kisses the header -->
+        <div class="ai-page-top" aria-hidden="true"></div>
 
-        <section class="ai-section">
-          <h3 class="ai-section-title">⚡ ابزارهای سریع</h3>
+        <div class="ai-page-body">
           <div class="ai-tools-grid">
-            <button class="ai-tool-card" type="button" id="ai-card-free-prompt">
-              <span class="tool-icon">✨</span>
-              <span class="tool-name">پرامپت آزاد</span>
-              <span class="tool-desc">گفت‌وگوی آزاد با مدل فعلی</span>
-            </button>
-            <button class="ai-tool-card" type="button" id="ai-card-batch">
-              <span class="tool-icon">📦</span>
-              <span class="tool-name">استانداردسازی</span>
-              <span class="tool-desc">یکدست‌سازی دسته‌ای عنوان‌ها</span>
-            </button>
             <button class="ai-tool-card" type="button" id="ai-card-analyze">
               <span class="tool-icon">🧠</span>
               <span class="tool-name">تحلیل و پیشنهاد</span>
               <span class="tool-desc">تحلیل سلیقه و پیشنهاد عنوان</span>
             </button>
+            <button class="ai-tool-card" type="button" id="ai-card-free-prompt">
+              <span class="tool-icon">✨</span>
+              <span class="tool-name">پرامپت آزاد</span>
+              <span class="tool-desc">گفت‌وگوی آزاد با مدل فعلی</span>
+            </button>
           </div>
-        </section>
+
+          <div class="ai-global-picker" id="ai-global-picker">
+            <div class="ai-global-picker-text">
+              <span class="ai-global-picker-label">مدل فعال برای همهٔ ابزارهای AI</span>
+              <strong class="ai-global-picker-value" id="ai-global-model-label">—</strong>
+              <span class="ai-global-picker-id" id="ai-global-model-id"></span>
+            </div>
+            <div class="ai-global-picker-actions">
+              <button class="btn btn-primary btn-sm" type="button" id="btn-ai-change-model">انتخاب / تست مدل</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="btn-ai-fetch-models" title="جستجوی مدل‌های رایگان OpenRouter">افزودن از OpenRouter</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== PAGE: PERSONALITY ========== -->
+      <div class="personality-page" id="personality-page">
+        <div class="pers-toolbar">
+          <div class="pers-toolbar-left">
+            <h2 class="page-title">🧠 تحلیل عمیق شخصیت</h2>
+            <span class="page-sub">بر اساس آثار امتیازدار · ۵ تحلیل اخیر</span>
+          </div>
+          <div class="pers-toolbar-right">
+            <button class="btn btn-primary" type="button" id="btn-run-personality">▶ اجرای تحلیل جدید</button>
+          </div>
+        </div>
+
+        <div class="pers-layout">
+          <div class="pers-stream-wrap" id="pers-stream-wrap">
+            <div class="pers-stream-empty" id="pers-stream-empty">
+              برای شروع، «اجرای تحلیل جدید» را بزن.
+            </div>
+            <div id="pers-stream-host"></div>
+          </div>
+
+          <aside class="pers-history" id="pers-history">
+            <h3 class="pers-history-title">۵ تحلیل اخیر</h3>
+            <div class="pers-history-list" id="pers-history-list"></div>
+          </aside>
+        </div>
       </div>
 
       <!-- ========== PAGE 2: LIBRARY ========== -->
@@ -327,7 +356,6 @@
 <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js"></script>
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/toast.js"></script>

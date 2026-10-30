@@ -38,8 +38,7 @@ window.AI = (function () {
   function getModel() {
     try {
       const stored = localStorage.getItem(MODEL_KEY);
-      const models = getModels();
-      if (stored && models.some(function (m) { return m.id === stored; })) return stored;
+      if (stored && String(stored).trim()) return String(stored).trim();
       return DEFAULT_MODEL;
     } catch (e) {
       return DEFAULT_MODEL;
@@ -47,8 +46,13 @@ window.AI = (function () {
   }
 
   function setModel(id) {
-    if (id) localStorage.setItem(MODEL_KEY, id);
+    if (id) localStorage.setItem(MODEL_KEY, String(id).trim());
     else localStorage.removeItem(MODEL_KEY);
+    try {
+      document.dispatchEvent(new CustomEvent('cinema:model-changed', {
+        detail: { id: id || DEFAULT_MODEL }
+      }));
+    } catch (e) {}
   }
 
   function modelMetaById(id) {
@@ -147,15 +151,18 @@ window.AI = (function () {
 
     let res;
     try {
+      const headers = authHeaders();
+      headers['Accept'] = 'text/event-stream';
       res = await fetch(edgeUrl(), {
         method: 'POST',
-        headers: authHeaders(),
+        headers: headers,
         body: JSON.stringify({
           provider: provider,
           model: model,
           messages: messages,
           temperature: temperature,
-          stream: true
+          stream: true,
+          stream_options: { include_usage: false }
         }),
         signal: combined
       });
@@ -168,16 +175,18 @@ window.AI = (function () {
 
     const ctype = (res.headers.get('content-type') || '').toLowerCase();
 
-    /* Non-SSE (error body from edge) */
+    /* Non-SSE: edge did not stream — often means timeout or buffered full response */
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
       if (!res.ok || json.error) {
-        const msg = friendlyHttpError(res.status, json.error || '');
+        const msg = friendlyHttpError(res.status, json.error || json.message || '');
         aiLog('error', '✗ ' + msg);
         aiAutoHide();
         throw new Error(msg);
       }
-      const text = json.text || '';
+      /* still deliver text if present, but log that stream failed */
+      const text = json.text || json.content || '';
+      aiLog('warn', '⚠ پاسخ غیر‌استریمی از Edge (ممکن است نزدیک timeout باشد)');
       if (text) onToken(text);
       onDone(text);
       aiLog('success', '✓ پاسخ کامل (' + text.length + ' کاراکتر)');

@@ -208,14 +208,24 @@ window.AIUI = (function () {
     let pendingText = '';
     let rafScheduled = false;
     let lastRendered = '';
+    /* stick-to-bottom only if user is near bottom; scrolling up freezes auto-scroll */
+    let stickBottom = true;
+
+    body.addEventListener('scroll', function () {
+      var dist = body.scrollHeight - body.scrollTop - body.clientHeight;
+      stickBottom = dist < 80;
+    }, { passive: true });
 
     function flushRender() {
       rafScheduled = false;
       if (pendingText === lastRendered) return;
-      const atBottom = body.scrollHeight - body.scrollTop - body.clientHeight < 60;
+      var prevStick = stickBottom;
       contentEl.innerHTML = renderMarkdown(pendingText);
       lastRendered = pendingText;
-      if (atBottom) body.scrollTop = body.scrollHeight;
+      if (prevStick) {
+        body.scrollTop = body.scrollHeight;
+        stickBottom = true;
+      }
     }
     function appendText(acc) {
       pendingText = acc;
@@ -227,6 +237,8 @@ window.AIUI = (function () {
       pendingText = '';
       lastRendered = '';
       contentEl.innerHTML = html;
+      /* only jump top when clearing / error — not during stream */
+      stickBottom = true;
       body.scrollTop = 0;
     }
     function setStatus(text, state) {
@@ -1028,16 +1040,22 @@ window.AIUI = (function () {
     btnTaste.addEventListener('click', async function () {
       setBusy(true, 'در حال تحلیل…', null);
       panel.setContent('');
-      panel.setStatus('تحلیل عمیق سلیقه…', 'loading');
+      panel.setStatus('تحلیل عمیق سلیقه (استریم)…', 'loading');
       actionBox.style.display = 'none';
       try {
         var result = await AIAnalysis.analyzeTaste({
           onToken: function (_chunk, full) {
-            panel.setContent(renderMarkdown(full));
+            panel.appendText(full);
           }
         });
-        panel.setContent(renderMarkdown(result));
+        panel.appendText(result || '');
+        panel.setModelBadge();
         panel.setStatus('تحلیل سلیقه آماده شد', 'done');
+        try {
+          var msgs = AIAnalysis.buildTasteAnalysisMessages();
+          var promptText = msgs.map(function (m) { return m.role + ':\n' + m.content; }).join('\n\n');
+          AIAnalysis.saveTasteAnalysis(promptText, result || '', AI.getModel && AI.getModel());
+        } catch (eSave) { console.error(eSave); }
       } catch (err) {
         panel.setStatus('خطا', 'error');
         panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
@@ -1049,17 +1067,18 @@ window.AIUI = (function () {
     btnSuggest.addEventListener('click', async function () {
       setBusy(true, null, 'در حال پیشنهاد…');
       panel.setContent('');
-      panel.setStatus('در حال تحلیل و پیشنهاد…', 'loading');
+      panel.setStatus('در حال پیشنهاد (استریم)…', 'loading');
       actionBox.style.display = 'none';
       actionBox.innerHTML = '';
       try {
         var resultText = await AIAnalysis.suggest({
           kind: selectedKind,
           onToken: function (_chunk, full) {
-            panel.setContent(renderMarkdown(full));
+            panel.appendText(full);
           }
         });
-        panel.setContent(renderMarkdown(resultText));
+        panel.appendText(resultText || '');
+        panel.setModelBadge();
         panel.setStatus('پیشنهاد آماده شد', 'done');
         showActions(parseSuggestion(resultText || ''));
       } catch (err) {
@@ -1185,6 +1204,10 @@ window.AIUI = (function () {
     AILog.scheduleAutoHide();
   }
 
+  function createStreamPanelForPage(titleText) {
+    return createStreamPanel(titleText || 'AI');
+  }
+
   return {
     openStandardizeSingle: openStandardizeSingle,
     openAnalyzeSingle: openAnalyzeSingle,
@@ -1194,6 +1217,7 @@ window.AIUI = (function () {
     openTitleLookup: openTitleLookup,
     renderMarkdown: renderMarkdown,
     renderStoryAnalysis: renderStoryAnalysis,
+    createStreamPanelForPage: createStreamPanelForPage,
     cleanup: cleanup,
     showLog: showLog
   };
