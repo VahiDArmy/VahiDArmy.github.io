@@ -163,10 +163,7 @@ window.Events = (function () {
       e.target.value = '';
     });
 
-    const btnPull = document.getElementById('btn-pull');
-    if (btnPull) btnPull.addEventListener('click', pullFromGitHub);
-    const btnPush = document.getElementById('btn-push');
-    if (btnPush) btnPush.addEventListener('click', pushToGitHub);
+    /* GitHub pull/push removed */
 
     const btnBatch = document.getElementById('btn-ai-batch');
     if (btnBatch) btnBatch.addEventListener('click', function () { AIUI.openStandardizeBatch(); });

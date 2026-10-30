@@ -857,8 +857,8 @@ window.AIUI = (function () {
     });
   }
 
+
   function openAnalysis() {
-    // ... (کدهای قبلی بدون تغییر)
     const panel = createStreamPanel('تحلیل سلیقه و پیشنهاد');
     panel.setContent('<p class="ai-hint">برای دریافت پیشنهاد روی دکمه بزنید.</p>');
 
@@ -879,16 +879,23 @@ window.AIUI = (function () {
       return Utils.el('button', { class: 'chip' + (on ? ' is-on' : ''), dataset: { kind: kind } }, [label]);
     }
 
+    const actionBox = Utils.el('div', {
+      id: 'suggest-actions',
+      class: 'suggest-actions',
+      style: { display: 'none', marginTop: '16px', padding: '14px', border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card, #12121a)' }
+    });
+
     const btn = Utils.el('button', { class: 'btn btn-primary', id: 'btn-suggest' }, ['دریافت پیشنهاد']);
-    
+
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-section' }, [
         Utils.el('div', { class: 'ai-section-title' }, ['پیشنهاد هوشمند (تک‌اثر)']),
-        Utils.el('div', { class: 'ai-section-desc' }, ['همه‌ی آثاری که امتیاز داده‌اید، به همراه یادداشت‌ها و دلایل شما تحلیل می‌شود و تنها یک اثر پیشنهاد می‌شود.']),
+        Utils.el('div', { class: 'ai-section-desc' }, ['همه‌ی آثاری که امتیاز داده‌اید، به همراه یادداشت‌ها و دلایل شما تحلیل می‌شود و تنها یک اثر پیشنهاد می‌شود. سپس مشخص می‌کنید دیده‌اید یا خواهید دید.']),
         kindPicker,
         Utils.el('div', { class: 'ai-section-actions', style: { marginTop: '14px' } }, [btn])
       ]),
-      panel.panel
+      panel.panel,
+      actionBox
     ]);
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
@@ -897,16 +904,183 @@ window.AIUI = (function () {
 
     Modal.open({ title: 'تحلیل و پیشنهاد', icon: '🧠', size: 'xl', body: body, footer: footer });
 
+    function parseSuggestion(text) {
+      // Try JSON block first
+      var m = text.match(/\{[\s\S]*?"title"\s*:\s*"([^"]+)"[\s\S]*?\}/);
+      if (m) {
+        try {
+          var j = JSON.parse(m[0]);
+          return {
+            title: j.title || '',
+            original_title: j.original_title || j.originalTitle || '',
+            year: j.year || null,
+            type: j.type || (selectedKind === 'series' ? 'series' : selectedKind === 'movie' ? 'movie' : 'series'),
+            reason: j.reason || j.why || ''
+          };
+        } catch (e) {}
+      }
+      // Markdown **Title** or # Title
+      var title = '';
+      var ym = text.match(/\*\*([^*]{2,80})\*\*/);
+      if (ym) title = ym[1].trim();
+      if (!title) {
+        var hm = text.match(/^#+\s+(.+)$/m);
+        if (hm) title = hm[1].trim();
+      }
+      if (!title) {
+        var lm = text.match(/(?:پیشنهاد|عنوان|فیلم|سریال)\s*[:：]\s*(.+)/i);
+        if (lm) title = lm[1].trim().replace(/[*_]/g, '').slice(0, 80);
+      }
+      var year = null;
+      var ymatch = text.match(/\b(19|20)\d{2}\b/);
+      if (ymatch) year = Number(ymatch[0]);
+      var type = selectedKind === 'movie' ? 'movie' : selectedKind === 'series' ? 'series' : 'series';
+      if (/فیلم|movie/i.test(text) && !/سریال|series/i.test(text)) type = 'movie';
+      if (/سریال|series/i.test(text) && !/فیلم|movie/i.test(text)) type = 'series';
+      return { title: title, original_title: '', year: year, type: type, reason: '' };
+    }
+
+    function showActions(parsed, rawText) {
+      actionBox.style.display = 'block';
+      actionBox.innerHTML = '';
+
+      var titleInput = Utils.el('input', {
+        class: 'field-input', type: 'text',
+        value: parsed.title || '',
+        placeholder: 'نام اثر پیشنهادی',
+        style: { width: '100%', marginBottom: '8px' }
+      });
+      var typeSelect = Utils.el('select', { class: 'field-input', style: { width: '100%', marginBottom: '8px' } }, [
+        Utils.el('option', { value: 'series', selected: parsed.type === 'series' }, ['سریال']),
+        Utils.el('option', { value: 'movie', selected: parsed.type === 'movie' }, ['فیلم']),
+        Utils.el('option', { value: 'anime', selected: parsed.type === 'anime' }, ['انیمه']),
+        Utils.el('option', { value: 'documentary', selected: parsed.type === 'documentary' }, ['مستند'])
+      ]);
+      // fix selected
+      try { typeSelect.value = parsed.type || 'series'; } catch (e) {}
+
+      var yearInput = Utils.el('input', {
+        class: 'field-input', type: 'number',
+        value: parsed.year || '',
+        placeholder: 'سال (اختیاری)',
+        style: { width: '100%', marginBottom: '12px' }
+      });
+
+      var btnSeen = Utils.el('button', { class: 'btn btn-primary', type: 'button' }, ['✅ دیده‌ام — ثبت در آرشیو']);
+      var btnWill = Utils.el('button', { class: 'btn btn-ghost', type: 'button' }, ['👀 خواهم دید']);
+
+      actionBox.appendChild(Utils.el('div', { class: 'ai-section-title', style: { marginBottom: '8px' } }, ['اثر پیشنهادی AI']));
+      actionBox.appendChild(Utils.el('div', { class: 'ai-section-desc', style: { marginBottom: '10px' } }, ['عنوان را در صورت نیاز اصلاح کن، بعد وضعیتت را مشخص کن.']));
+      actionBox.appendChild(titleInput);
+      actionBox.appendChild(typeSelect);
+      actionBox.appendChild(yearInput);
+      actionBox.appendChild(Utils.el('div', { class: 'flex gap-3', style: { flexWrap: 'wrap' } }, [btnSeen, btnWill]));
+
+      function currentPayload() {
+        return {
+          title: (titleInput.value || '').trim(),
+          type: typeSelect.value || 'series',
+          year: yearInput.value ? Number(yearInput.value) : null,
+          original_title: parsed.original_title || '',
+          reason: parsed.reason || '',
+          notes: 'پیشنهاد AI'
+        };
+      }
+
+      btnSeen.addEventListener('click', function () {
+        var p = currentPayload();
+        if (!p.title) {
+          Toast.warning('عنوان را وارد کن');
+          titleInput.focus();
+          return;
+        }
+        // Check duplicate
+        var existing = DB.getAllTitles().filter(function (t) {
+          return (t.title || '').toLowerCase() === p.title.toLowerCase();
+        });
+        if (existing.length) {
+          Toast.info('این عنوان از قبل در آرشیو هست — در حال باز کردن برای ویرایش');
+          Modal.close();
+          setTimeout(function () { Events.openAddEdit(existing[0].id); }, 200);
+          return;
+        }
+        Modal.close();
+        // Open add form prefilled so user enters rating + opinion
+        setTimeout(function () {
+          Events.openAddEdit(null);
+          // Prefill after modal opens
+          setTimeout(function () {
+            var form = document.querySelector('.modal form.form, .modal .form, form.form');
+            if (!form) form = document.querySelector('.modal');
+            if (!form) return;
+            var setVal = function (name, val) {
+              var el = form.querySelector('[name="' + name + '"]');
+              if (el && val != null && val !== '') {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+              }
+            };
+            setVal('title', p.title);
+            setVal('type', p.type);
+            setVal('year', p.year);
+            setVal('original_title', p.original_title);
+            setVal('notes', p.notes);
+            setVal('reason', p.reason);
+            Toast.info('امتیاز و نظرت را وارد کن و ذخیره کن');
+          }, 150);
+        }, 200);
+      });
+
+      btnWill.addEventListener('click', function () {
+        var p = currentPayload();
+        if (!p.title) {
+          Toast.warning('عنوان را وارد کن');
+          titleInput.focus();
+          return;
+        }
+        var existing = DB.getAllTitles().filter(function (t) {
+          return (t.title || '').toLowerCase() === p.title.toLowerCase();
+        });
+        if (existing.length) {
+          Toast.info('این عنوان از قبل در آرشیو هست');
+          return;
+        }
+        try {
+          State.addTitle({
+            title: p.title,
+            type: p.type,
+            year: p.year,
+            original_title: p.original_title || '',
+            category: 'good',
+            rating: 0,
+            favorite: false,
+            notes: 'پیشنهاد AI — خواهم دید',
+            reason: p.reason || '',
+            status: 'will_watch'
+          });
+          Toast.success('به لیست «خواهم دید» اضافه شد');
+          Events.renderList();
+          Render.renderSidebarCounts && Render.renderSidebarCounts();
+        } catch (e) {
+          Toast.error(e.message || 'خطا در ذخیره');
+        }
+      });
+    }
+
     btn.addEventListener('click', async function () {
       btn.disabled = true;
       btn.innerHTML = '<span class="spinner"></span> در حال تحلیل…';
       panel.setContent('');
       panel.setStatus('در حال تحلیل…', 'loading');
-      
+      actionBox.style.display = 'none';
+      actionBox.innerHTML = '';
+
       try {
         const resultText = await AIAnalysis.suggest({ kind: selectedKind });
         panel.setContent(renderMarkdown(resultText));
         panel.setStatus('پیشنهاد آماده شد', 'done');
+        var parsed = parseSuggestion(resultText || '');
+        showActions(parsed, resultText || '');
       } catch (err) {
         panel.setStatus('خطا', 'error');
         panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
