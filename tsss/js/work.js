@@ -50,6 +50,7 @@
   let currentAiGenerationId = null;
   let tafsirSubmitting = false;
 
+  // ★ رفع باگ B5: محافظت در برابر تداخل رندر
   let renderSeq = 0;
 
   const openLinkToolBtn = document.getElementById('openLinkToolBtn');
@@ -370,7 +371,7 @@
   }
 
   async function renderCurrentAyah() {
-    const mySeq = ++renderSeq;
+    const mySeq = ++renderSeq; // ★ رفع باگ B5
     ayahSkeleton(stickyFrame);
     exitEditMode();
     try {
@@ -469,7 +470,7 @@
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-delete');
           if (!confirm('همین یک تفسیر حذف شود؟')) return;
-          try {
+          try { // ★ رفع باگ B7
             await Store.deleteTafsir(id);
             if (editingId === id) exitEditMode();
             UI.toast('تفسیر حذف شد');
