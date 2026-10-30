@@ -4,7 +4,7 @@
    ========================================================= */
 window.AI = (function () {
   const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
-  const EDGE_NAME = (CONFIG.SUPABASE && CONFIG.SUPABASE.EDGE_FUNCTION) || 'gemini-proxy';
+  const EDGE_NAME = (CONFIG.SUPABASE && CONFIG.SUPABASE.EDGE_FUNCTION) || 'movies-quran';
 
   let abortController = null;
   let lastUsedModel = null;
