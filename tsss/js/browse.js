@@ -12,7 +12,7 @@
   let isOwner = false;
   try {
     const session = await Auth.getSession();
-    isOwner = !!session;
+    isOwner = !!session; // توجه: برای امنیت کامل، این باید با نقش ادمین در دیتابیس چک شود.
   } catch (e) {
     isOwner = false;
   }
@@ -42,7 +42,6 @@
     surahSelect.value = surah;
     UI.populateAyahSelect(ayahSelect, surahData.ayah_count, actualAyah);
 
-    // بررسی اینکه آیا این آیه نشانک خواندن است
     const meta = await Store.getSiteMeta();
     const isBookmarked = (meta.bookmark_surah === surah && meta.bookmark_ayah === actualAyah);
 
@@ -62,6 +61,7 @@
       ...markOptions,
       onBookmark: async (isBookmarked) => {
         if (isBookmarked) {
+          // ★ اصلاح (مورد ۱): استفاده از متد صحیح
           await Store.updateBookmark(surah, actualAyah);
         }
       },
@@ -201,7 +201,6 @@
   if (params.has('surah') && params.has('ayah')) {
     setHash(Number(params.get('surah')), Number(params.get('ayah')), true);
   } else if (!location.hash) {
-    // نمایش آخرین نشانک خواندن
     const meta = await Store.getSiteMeta();
     setHash(meta.bookmark_surah, meta.bookmark_ayah, true);
   }
