@@ -46,9 +46,9 @@ window.AI = (function () {
       const models = getModels();
       if (stored && models.some(function (m) { return m.id === stored; })) return stored;
       // default Gemini flash
-      return 'gemini-2.0-flash';
+      return 'gemini-3.8-flash';
     } catch (e) {
-      return 'gemini-2.0-flash';
+      return 'gemini-3.8-flash';
     }
   }
 
@@ -64,7 +64,7 @@ window.AI = (function () {
     return found || { id: id, label: id, note: 'Gemini via Edge', tags: ['gemini'] };
   }
 
-  function isDefaultModel() { return getModel() === 'gemini-2.0-flash'; }
+  function isDefaultModel() { return getModel() === 'gemini-3.8-flash'; }
   function resetModel() { localStorage.removeItem(MODEL_KEY); }
   function getLastUsedModel() { return lastUsedModel; }
   function clearLastUsedModel() { lastUsedModel = null; }
@@ -106,9 +106,9 @@ window.AI = (function () {
     const combined = signal || abortController.signal;
 
     // map display model id to a gemini model if user picked openrouter-style id
-    let model = opts.model || getModel() || 'gemini-2.0-flash';
+    let model = opts.model || getModel() || 'gemini-3.8-flash';
     if (model.indexOf('gemini') === -1) {
-      model = 'gemini-2.0-flash';
+      model = 'gemini-3.8-flash';
     }
     lastUsedModel = model;
     aiLog('meta', 'مدل: ' + model);
