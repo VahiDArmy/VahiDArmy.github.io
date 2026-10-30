@@ -1,6 +1,7 @@
 /* =========================================================
-   کلاینت AI — پرامپت در فرانت، اجرا روی Edge (Gemini)
-   کلید API فقط روی سرور (Secret: GEM_MALI)
+   کلاینت AI — پرامپت در فرانت، اجرا روی Edge (Gemini STREAM)
+   Secret سرور: GEM_MALI
+   Function: movies-quran
    ========================================================= */
 window.AI = (function () {
   const MODEL_KEY = CONFIG.AI.MODEL_STORAGE_KEY;
@@ -14,30 +15,19 @@ window.AI = (function () {
   }
 
   function authHeaders() {
-    const h = {
+    return {
       'Content-Type': 'application/json',
       'apikey': CONFIG.SUPABASE.ANON_KEY,
       'Authorization': 'Bearer ' + CONFIG.SUPABASE.ANON_KEY
     };
-    // If logged in, prefer user JWT so edge can identify user later
-    try {
-      const client = DB.getClient && DB.getClient();
-      // session may be async; use stored if available
-      const raw = localStorage.getItem('sb-' + new URL(CONFIG.SUPABASE.URL).hostname.split('.')[0] + '-auth-token');
-      // simpler: always anon is enough for secret-backed proxy
-    } catch (e) {}
-    return h;
   }
 
-  /* ---------- سازگاری با UI قدیمی (کلید دیگر لازم نیست) ---------- */
   function getKey() { return 'server'; }
-  function setKey() { /* no-op — key is on Edge */ }
+  function setKey() {}
   function isConfigured() { return true; }
 
-  /* ---------- مدل (برچسب نمایشی؛ اجرای واقعی روی Edge با Gemini) ---------- */
   function getModels() {
-    try { return DB.getAiModels(); }
-    catch (e) { return []; }
+    try { return DB.getAiModels(); } catch (e) { return []; }
   }
 
   function getModel() {
@@ -45,7 +35,6 @@ window.AI = (function () {
       const stored = localStorage.getItem(MODEL_KEY);
       const models = getModels();
       if (stored && models.some(function (m) { return m.id === stored; })) return stored;
-      // default Gemini flash
       return 'gemini-3.8-flash';
     } catch (e) {
       return 'gemini-3.8-flash';
@@ -86,9 +75,27 @@ window.AI = (function () {
     }
   }
 
+  function resolveModel(requested) {
+    let model = requested || getModel() || 'gemini-3.8-flash';
+    if (String(model).indexOf('gemini') === -1) model = 'gemini-3.8-flash';
+    return model;
+  }
+
+  function friendlyHttpError(status, msg) {
+    msg = msg || '';
+    if (status === 504 || /504|timeout|timed out|Gateway/i.test(msg)) {
+      return 'زمان پاسخ تمام شد (504). با استریم معمولاً بهتر است؛ دوباره تلاش کن.';
+    }
+    if (status === 502) return 'خطای واسط (502): ' + (msg || 'Gemini یا Edge پاسخ معتبر نداد.');
+    if (status === 401 || status === 403) return 'دسترسی رد شد (' + status + ').';
+    if (status === 500 && /GEM_MALI|secret|misconfigured/i.test(msg)) {
+      return 'کلید Gemini روی سرور تنظیم نشده (secret: GEM_MALI).';
+    }
+    return msg || ('خطای سرور (HTTP ' + status + ')');
+  }
+
   /**
-   * ارسال messages آماده‌شده از فرانت به Edge → Gemini
-   * Stream واقعی نداریم؛ کل متن یکجا برمی‌گردد و به onToken داده می‌شود.
+   * استریم واقعی از Edge → Gemini SSE
    */
   async function chatStream(opts) {
     opts = opts || {};
@@ -99,17 +106,13 @@ window.AI = (function () {
     const signal = opts.signal;
 
     aiShow();
-    aiLog('info', '▸ ارسال به Gemini (Edge)');
+    aiLog('info', '▸ استریم Gemini (Edge)');
     aiLog('meta', 'پیام‌ها: ' + messages.length + ' · دما: ' + temperature);
 
     abortController = new AbortController();
     const combined = signal || abortController.signal;
 
-    // map display model id to a gemini model if user picked openrouter-style id
-    let model = opts.model || getModel() || 'gemini-3.8-flash';
-    if (model.indexOf('gemini') === -1) {
-      model = 'gemini-3.8-flash';
-    }
+    const model = resolveModel(opts.model);
     lastUsedModel = model;
     aiLog('meta', 'مدل: ' + model);
 
@@ -118,34 +121,100 @@ window.AI = (function () {
       res = await fetch(edgeUrl(), {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ messages: messages, temperature: temperature, model: model }),
+        body: JSON.stringify({
+          messages: messages,
+          temperature: temperature,
+          model: model,
+          stream: true
+        }),
         signal: combined
       });
     } catch (netErr) {
-      if (netErr.name === 'AbortError') {
-        aiLog('warn', '⊘ لغو شد');
-      } else {
-        aiLog('error', '✗ شبکه: ' + netErr.message);
-      }
+      if (netErr.name === 'AbortError') aiLog('warn', '⊘ لغو شد');
+      else aiLog('error', '✗ شبکه: ' + netErr.message);
       aiAutoHide();
       throw netErr;
     }
 
-    const json = await res.json().catch(function () { return {}; });
-    if (!res.ok || json.error) {
-      const msg = json.error || ('HTTP ' + res.status);
+    const ctype = (res.headers.get('content-type') || '').toLowerCase();
+
+    // Non-SSE fallback (error JSON or old non-stream response)
+    if (!ctype.includes('text/event-stream')) {
+      const json = await res.json().catch(function () { return {}; });
+      if (!res.ok || json.error) {
+        const msg = friendlyHttpError(res.status, json.error || '');
+        aiLog('error', '✗ ' + msg);
+        aiAutoHide();
+        throw new Error(msg);
+      }
+      const text = json.text || '';
+      if (text) onToken(text);
+      onDone(text);
+      aiLog('success', '✓ پاسخ کامل (' + text.length + ' کاراکتر)');
+      aiAutoHide();
+      return text;
+    }
+
+    if (!res.ok) {
+      const msg = friendlyHttpError(res.status, '');
       aiLog('error', '✗ ' + msg);
       aiAutoHide();
       throw new Error(msg);
     }
 
-    const text = json.text || '';
-    aiLog('success', '✓ پاسخ دریافت شد (' + text.length + ' کاراکتر)');
-    // deliver as one chunk so existing UI still works
-    if (text) onToken(text);
-    onDone(text);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let full = '';
+    let streamError = null;
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n');
+      buffer = parts.pop() || '';
+
+      for (let i = 0; i < parts.length; i++) {
+        const line = parts[i].trim();
+        if (!line.startsWith('data:')) continue;
+        const raw = line.slice(5).trim();
+        if (!raw) continue;
+        try {
+          const obj = JSON.parse(raw);
+          if (obj.error) {
+            streamError = obj.error;
+            continue;
+          }
+          if (typeof obj.text === 'string' && obj.text && !obj.done) {
+            full += obj.text;
+            onToken(obj.text);
+          }
+          if (obj.done && typeof obj.text === 'string' && obj.text.length > full.length) {
+            // final full text if edge sent complete
+            const extra = obj.text.slice(full.length);
+            if (extra) {
+              full = obj.text;
+              onToken(extra);
+            } else if (!full && obj.text) {
+              full = obj.text;
+              onToken(obj.text);
+            }
+          }
+        } catch (e) { /* skip */ }
+      }
+    }
+
+    if (streamError) {
+      aiLog('error', '✗ ' + streamError);
+      aiAutoHide();
+      throw new Error(streamError);
+    }
+
+    aiLog('success', '✓ استریم تمام شد (' + full.length + ' کاراکتر)');
+    onDone(full);
     aiAutoHide();
-    return text;
+    return full;
   }
 
   async function chat(opts) {
@@ -162,22 +231,9 @@ window.AI = (function () {
     return full;
   }
 
-  async function testConnection() {
-    const text = await chat({
-      messages: [
-        { role: 'user', content: 'فقط بگو: ok' }
-      ],
-      temperature: 0
-    });
-    return text;
-  }
-
-
-  /* ---------- JSON (بدون استریم) — برای lookup / standardize ---------- */
   async function chatJSON(opts) {
     opts = opts || {};
     const messages = (opts.messages || []).slice();
-    // Nudge model toward JSON when not already instructed
     var hasJsonHint = messages.some(function (m) {
       return /json/i.test(m.content || '');
     });
@@ -190,13 +246,12 @@ window.AI = (function () {
         };
       }
     }
-    const text = await chat({
+    return await chat({
       messages: messages,
       model: opts.model,
       temperature: opts.temperature != null ? opts.temperature : 0.3,
       signal: opts.signal
     });
-    return text;
   }
 
   function extractJsonAndText(raw) {
@@ -235,6 +290,13 @@ window.AI = (function () {
 
   function parseJSONResponse(raw) {
     return extractJsonAndText(raw).parsed;
+  }
+
+  async function testConnection() {
+    return await chat({
+      messages: [{ role: 'user', content: 'فقط بگو: ok' }],
+      temperature: 0
+    });
   }
 
   return {
