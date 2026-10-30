@@ -224,14 +224,7 @@
       const verEl = document.getElementById('app-version');
       if (verEl) verEl.textContent = Utils.toFa(CONFIG.APP_VERSION);
 
-      /* ---- ذخیره‌ی خودکار ---- */
-      setInterval(function () {
-        try { DB.persistLocal(); } catch (e) {}
-      }, 10000);
-
-      window.addEventListener('beforeunload', function () {
-        try { DB.persistLocal(); } catch (e) {}
-      });
+      /* offline persistence removed — Supabase handles storage */
 
       /* ---- اتمام ---- */
       BootLog.done('همه‌چیز آماده است ✓');
@@ -249,9 +242,6 @@
 
       /* ---- پیام خوش‌آمد ---- */
       setTimeout(function () {
-        let configured = false;
-        try { configured = GitHub.isConfigured(); } catch (e) { configured = false; }
-
         try {
           const stat = DB.getStats();
           Toast.info('آرشیو آنلاین آماده است — ' + Utils.toFa(stat.total || 0) + ' عنوان.', {

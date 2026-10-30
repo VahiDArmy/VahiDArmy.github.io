@@ -71,14 +71,8 @@ window.Events = (function () {
 
     const syncEl = document.getElementById('sync-status');
     if (syncEl) {
-      const trigger = function () {
-        if (syncEl.dataset.state === 'syncing') { Toast.info('در حال ارسال'); return; }
-        pushToGitHub();
-      };
-      syncEl.addEventListener('click', trigger);
-      syncEl.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); trigger(); }
-      });
+      syncEl.title = 'متصل به Supabase';
+      // no-op click — data saves automatically
     }
   }
 
@@ -257,7 +251,6 @@ window.Events = (function () {
         if (s) s.focus();
         return;
       }
-      if (mod && e.key.toLowerCase() === 's') { e.preventDefault(); pushToGitHub(); return; }
       if (!inField && e.key.toLowerCase() === 'n') { e.preventDefault(); openAddEdit(); }
       if (!inField && e.key.toLowerCase() === 's' && !mod) Stats.openDashboard();
     });
@@ -697,13 +690,13 @@ window.Events = (function () {
     ]);
   }
 
+
   function openSettings() {
-    const s = GitHub.getSettings();
-    const token = GitHub.getToken();
     const aiKey = AI.getKey();
     const currentModel = (typeof AI.getModel === 'function') ? AI.getModel() : '';
-    const ghOK = !!(s.owner && s.repo && token);
     const aiOK = !!aiKey;
+    const user = DB.getUser && DB.getUser();
+    const email = user && user.email ? user.email : '—';
 
     function row(label, input, hint) {
       const children = [Utils.el('label', {}, [label]), input];
@@ -719,31 +712,43 @@ window.Events = (function () {
       });
     }
 
-    const githubSection = Utils.el('div', { class: 'settings-section' }, [
+    /* ---- Account ---- */
+    const accountSection = Utils.el('div', { class: 'settings-section' }, [
       Utils.el('div', { class: 'settings-section-head' }, [
-        Utils.el('div', { class: 'settings-icon' }, ['🔗']),
+        Utils.el('div', { class: 'settings-icon' }, ['👤']),
         Utils.el('div', { class: 'settings-info' }, [
-          Utils.el('h4', {}, ['اتصال گیت‌هاب']),
-          Utils.el('p', {}, ['ذخیره دیتابیس در مخزن'])
+          Utils.el('h4', {}, ['حساب کاربری']),
+          Utils.el('p', {}, [email])
         ]),
-        Utils.el('span', { class: 'settings-status', dataset: { status: ghOK ? 'ok' : 'missing' } }, [ghOK ? 'متصل' : 'تنظیم نشده'])
+        Utils.el('span', { class: 'settings-status', dataset: { status: user ? 'ok' : 'missing' } }, [user ? 'وارد شده' : 'خارج'])
       ]),
-      Utils.el('div', { class: 'settings-fields' }, [
-        row('نام کاربری GitHub', input('owner', s.owner, { placeholder: 'username' })),
-        row('نام مخزن', input('repo', s.repo, { placeholder: 'username.github.io' })),
-        row('شاخه', input('branch', s.branch, { placeholder: 'master' })),
-        row('مسیر فایل دیتابیس', input('path', s.path, { placeholder: 'movies/data/cinema.sqlite' })),
-        row('توکن دسترسی', input('token', token, { type: 'password', placeholder: 'ghp_...', autocomplete: 'new-password' }), 'نیاز به دسترسی repo یا contents:write دارد')
-      ]),
-      Utils.el('div', { class: 'settings-hint' }, [
-        Utils.el('span', { class: 'hint-icon' }, ['💡']),
-        Utils.el('div', {}, [
-          'برای ساخت توکن: GitHub ← Settings ← Developer settings ← Personal access tokens. ',
-          Utils.el('a', { href: 'https://github.com/settings/tokens', target: '_blank', rel: 'noopener' }, ['باز کردن'])
-        ])
+      Utils.el('div', { class: 'settings-tests' }, [
+        Utils.el('button', { class: 'settings-test-btn', id: 'btn-logout', type: 'button' }, ['خروج از حساب'])
       ])
     ]);
 
+    /* ---- Migration ---- */
+    const migrateSection = Utils.el('div', { class: 'settings-section' }, [
+      Utils.el('div', { class: 'settings-section-head' }, [
+        Utils.el('div', { class: 'settings-icon' }, ['📦']),
+        Utils.el('div', { class: 'settings-info' }, [
+          Utils.el('h4', {}, ['انتقال از SQLite']),
+          Utils.el('p', {}, ['وارد کردن داده‌های نسخه آفلاین قبلی'])
+        ])
+      ]),
+      Utils.el('div', { class: 'settings-fields' }, [
+        Utils.el('input', {
+          class: 'field-input', type: 'file', id: 'migrate-file',
+          accept: '.sqlite,.db,application/x-sqlite3'
+        })
+      ]),
+      Utils.el('div', { class: 'settings-tests' }, [
+        Utils.el('button', { class: 'settings-test-btn', id: 'btn-migrate', type: 'button' }, ['شروع انتقال'])
+      ]),
+      Utils.el('div', { id: 'migrate-status', style: 'margin-top:0.75rem;font-size:0.9rem;color:var(--text-muted)' }, [])
+    ]);
+
+    /* ---- AI (kept) ---- */
     const picker = AIModelsUI.buildModelPicker(currentModel, function () {});
 
     const aiSection = Utils.el('div', { class: 'settings-section' }, [
@@ -768,15 +773,9 @@ window.Events = (function () {
       ])
     ]);
 
-    const warnBox = Utils.el('div', { class: 'alert alert-warn' }, [
-      Utils.el('span', { class: 'alert-icon' }, ['🔒']),
-      Utils.el('div', {}, ['اطلاعات در localStorage مرورگر ذخیره می‌شود.'])
-    ]);
-
-    const body = Utils.el('div', { class: 'settings' }, [githubSection, aiSection, warnBox]);
+    const body = Utils.el('div', { class: 'settings' }, [accountSection, migrateSection, aiSection]);
 
     const footer = Utils.el('div', { class: 'settings-footer' }, [
-      Utils.el('button', { class: 'settings-test-btn', id: 'btn-test-conn', type: 'button' }, ['🧪 تست اتصال گیت‌هاب']),
       Utils.el('button', {
         class: 'settings-test-btn',
         id: 'btn-db-admin',
@@ -784,109 +783,119 @@ window.Events = (function () {
         type: 'button'
       }, ['🗄️ مدیریت دیتابیس']),
       Utils.el('div', { class: 'spacer' }),
-      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
-      Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره'])
+      Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['بستن']),
+      Utils.el('button', { class: 'btn btn-primary', id: 'btn-save-settings' }, ['💾 ذخیره تنظیمات AI'])
     ]);
 
-    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'xl', body: body, footer: footer });
+    Modal.open({ title: 'تنظیمات', icon: '⚙️', size: 'lg', body: body, footer: footer });
 
-    function refreshStatus() {
-      const ghEl = githubSection.querySelector('.settings-status');
-      const ghOk = !!(body.querySelector('[name="owner"]').value.trim() && body.querySelector('[name="repo"]').value.trim() && body.querySelector('[name="token"]').value.trim());
-      ghEl.dataset.status = ghOk ? 'ok' : 'missing';
-      ghEl.textContent = ghOk ? 'متصل' : 'تنظیم نشده';
-      const aiEl = aiSection.querySelector('.settings-status');
-      const aiOk = !!body.querySelector('[name="ai_key"]').value.trim();
-      aiEl.dataset.status = aiOk ? 'ok' : 'missing';
-      aiEl.textContent = aiOk ? 'فعال' : 'تنظیم نشده';
-    }
-    body.querySelectorAll('.field-input').forEach(function (inp) {
-      inp.addEventListener('input', refreshStatus);
+    /* ---- handlers ---- */
+    document.getElementById('btn-logout')?.addEventListener('click', async function () {
+      if (!confirm('خروج از حساب؟')) return;
+      try {
+        await DB.signOut();
+        location.reload();
+      } catch (e) {
+        Toast.error(e.message || 'خطا در خروج');
+      }
     });
 
-    document.getElementById('btn-save-settings').addEventListener('click', function () {
-      const g = function (n) { return body.querySelector('[name="' + n + '"]').value.trim(); };
-      GitHub.saveSettings({ owner: g('owner'), repo: g('repo'), branch: g('branch') || 'master', path: g('path') || 'movies/data/cinema.sqlite' });
-      GitHub.setToken(g('token'));
-      AI.setKey(g('ai_key'));
-      if (typeof AI.setModel === 'function') AI.setModel(picker.getSelected());
-      const meta = (typeof AI.getModelMeta === 'function') ? AI.getModelMeta() : { label: picker.getSelected() };
-      Toast.success('تنظیمات ذخیره شد — مدل: ' + (meta.label || '—'));
+    document.getElementById('btn-migrate')?.addEventListener('click', async function () {
+      const fileInput = document.getElementById('migrate-file');
+      const statusEl = document.getElementById('migrate-status');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) {
+        Toast.warning('ابتدا فایل SQLite را انتخاب کن');
+        return;
+      }
+      const file = fileInput.files[0];
+      statusEl.textContent = 'در حال خواندن فایل…';
+      try {
+        const buffer = await file.arrayBuffer();
+        const SQL = await initSqlJs({
+          locateFile: function (f) { return 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/' + f; }
+        });
+        const db = new SQL.Database(new Uint8Array(buffer));
+        const res = db.exec('SELECT * FROM titles');
+        if (!res.length) {
+          statusEl.textContent = 'جدول titles پیدا نشد';
+          Toast.error('جدول titles پیدا نشد');
+          return;
+        }
+        const cols = res[0].columns;
+        const rows = res[0].values.map(function (vals) {
+          const obj = {};
+          cols.forEach(function (c, i) { obj[c] = vals[i]; });
+          return obj;
+        });
+        statusEl.textContent = rows.length + ' عنوان پیدا شد — در حال ارسال…';
+        const count = await DB.bulkInsertFromSqliteRows(rows);
+        statusEl.textContent = '✅ ' + count + ' عنوان منتقل شد';
+        Toast.success(count + ' عنوان با موفقیت منتقل شد');
+        State.loadAll();
+        State.applyFilters();
+        Events.renderList();
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'خطا: ' + (e.message || e);
+        Toast.error(e.message || 'خطا در انتقال');
+      }
+    });
+
+    document.getElementById('btn-save-settings')?.addEventListener('click', function () {
+      const keyInput = body.querySelector('input[name="ai_key"]');
+      if (keyInput) AI.setKey(keyInput.value.trim());
+      if (picker && typeof picker.getSelected === 'function') {
+        const m = picker.getSelected();
+        if (m && typeof AI.setModel === 'function') AI.setModel(m);
+      }
+      Toast.success('تنظیمات AI ذخیره شد');
       Modal.close();
-      refreshSyncStatus();
     });
 
-    document.getElementById('btn-test-conn').addEventListener('click', async function (e) {
-      const btn = e.currentTarget; const old = btn.textContent;
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
+    document.getElementById('btn-ai-log')?.addEventListener('click', function () {
+      if (typeof AILog !== 'undefined' && AILog.open) AILog.open();
+    });
+
+    document.getElementById('btn-test-ai')?.addEventListener('click', async function () {
       try {
-        const g = function (n) { return body.querySelector('[name="' + n + '"]').value.trim(); };
-        GitHub.saveSettings({ owner: g('owner'), repo: g('repo'), branch: g('branch') || 'master', path: g('path') || 'movies/data/cinema.sqlite' });
-        GitHub.setToken(g('token'));
-        await GitHub.testConnection();
-        const fi = await GitHub.getFileInfo();
-        if (fi.exists) Toast.success('اتصال موفق ✅ (' + Utils.toFa(Math.round(fi.size / 1024)) + ' KB)');
-        else Toast.warning('اتصال موفق، ولی فایل دیتابیس موجود نیست.');
-      } catch (err) { Toast.error(err.message || 'خطا'); }
-      finally { btn.disabled = false; btn.textContent = old; }
+        Toast.info('در حال تست AI…');
+        // simple test via existing AI module if available
+        if (typeof AI.testConnection === 'function') {
+          await AI.testConnection();
+          Toast.success('اتصال AI برقرار است');
+        } else {
+          Toast.info('کلید ذخیره شد — برای تست از تحلیل یک عنوان استفاده کن');
+        }
+      } catch (e) {
+        Toast.error(e.message || 'تست ناموفق');
+      }
     });
 
-    document.getElementById('btn-test-ai').addEventListener('click', async function (e) {
-      const btn = e.currentTarget;
-      const key = body.querySelector('[name="ai_key"]').value.trim();
-      const modelId = picker.getSelected();
-      const modelMeta = DB.getAiModel(modelId) || { label: modelId || '—' };
-      AI.setKey(key);
-      if (!key) { Toast.warning('ابتدا کلید را وارد کنید'); return; }
-      if (!modelId) { Toast.warning('یک مدل انتخاب کن'); return; }
-      const old = btn.textContent;
-      btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> تست…';
-      try {
-        await AI.chatStream({ model: modelId, messages: [{ role: 'system', content: 'پاسخ فقط کلمه سلام باشد.' }, { role: 'user', content: 'بگو سلام' }], temperature: 0, onToken: function () {} });
-        Toast.success('اتصال به ' + (modelMeta.label || modelId) + ' موفق ✅');
-      } catch (err) { Toast.error(err.message || 'خطا'); }
-      finally { btn.disabled = false; btn.textContent = old; }
+    document.getElementById('btn-db-admin')?.addEventListener('click', function () {
+      if (typeof DBAdmin !== 'undefined' && DBAdmin.open) DBAdmin.open();
+      else Toast.info('مدیریت دیتابیس در نسخه آنلاین محدود است');
     });
-
-    document.getElementById('btn-ai-log').addEventListener('click', function () { AIUI.showLog(); });
   }
 
   async function pullFromGitHub() {
-    if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
-    updateSyncStatus('syncing');
-    const t = Toast.loading('در حال دریافت…');
-    try {
-      await DB.pullFromGitHub();
-      State.loadAll(); State.applyFilters();
-      Render.renderSidebarCounts(); Render.renderPageTitle(); renderList();
-      Toast.update(t, 'دریافت موفق ✅', 'success');
-      updateSyncStatus('online');
-    } catch (e) { Toast.update(t, e.message || 'خطا', 'error'); updateSyncStatus('error'); }
+    Toast.info('همگام‌سازی با گیت‌هاب در نسخه آنلاین غیرفعال است');
   }
 
   async function pushToGitHub() {
-    if (!GitHub.isConfigured()) { Toast.warning('ابتدا توکن گیت‌هاب را تنظیم کن'); return; }
-    updateSyncStatus('syncing');
-    const t = Toast.loading('در حال ارسال…');
-    try {
-      await DB.pushToGitHub();
-      Toast.update(t, 'ارسال موفق ✅', 'success');
-      updateSyncStatus('online');
-    } catch (e) { Toast.update(t, e.message || 'خطا', 'error'); updateSyncStatus('error'); }
+    Toast.info('داده‌ها به‌صورت خودکار روی Supabase ذخیره می‌شوند');
   }
 
   function updateSyncStatus(state) {
     const el = document.getElementById('sync-status');
     const lbl = document.getElementById('sync-label');
     if (!el || !lbl) return;
-    el.dataset.state = state;
-    const labels = { idle: 'آفلاین', syncing: 'در حال سینک', online: 'متصل — برای ارسال بزن', error: 'خطا — تلاش دوباره', offline: 'آفلاین' };
-    lbl.textContent = labels[state] || state;
+    // Always online when using Supabase
+    el.dataset.state = 'online';
+    lbl.textContent = 'آنلاین';
   }
 
   function refreshSyncStatus() {
-    if (GitHub.isConfigured()) updateSyncStatus('online');
-    else updateSyncStatus('idle');
+    updateSyncStatus('online');
   }
 
   return {
