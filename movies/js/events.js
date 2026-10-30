@@ -200,7 +200,7 @@ window.Events = (function () {
     grid.addEventListener('click', function (e) {
       const card = e.target.closest('.card');
       if (!card) return;
-      const id = Number(card.dataset.id);
+      const id = card.dataset.id;
       const actEl = e.target.closest('[data-act]');
       const act = actEl ? actEl.dataset.act : null;
       if (act === 'fav') { State.toggleFavorite(id); renderList(); Render.renderSidebarCounts(); }
@@ -213,7 +213,7 @@ window.Events = (function () {
     grid.addEventListener('keydown', function (e) {
       const card = e.target.closest('.card');
       if (!card) return;
-      if (e.key === 'Enter') openDetail(Number(card.dataset.id));
+      if (e.key === 'Enter') openDetail(card.dataset.id);
     });
   }
 

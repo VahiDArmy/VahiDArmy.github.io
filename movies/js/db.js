@@ -190,15 +190,59 @@ window.DB = (function () {
 
   function deleteTitle(id) {
     var t = titlesById[id];
+    if (!t) return null;
     titles = titles.filter(function (x) { return x.id !== id; });
     delete titlesById[id];
     (async function () {
       try {
         await getClient().from('cinema_titles').delete().eq('id', id);
-        if (t) logActivity('delete', 'title', id, t.title);
+        logActivity('delete', 'title', id, t.title);
       } catch (e) { console.error(e); }
     })();
-    return true;
+    return t; // return deleted row for undo
+  }
+
+  function restoreTitle(row) {
+    if (!row) return null;
+    // re-insert; prefer keeping original id if it was a uuid
+    var payload = Object.assign({}, row);
+    delete payload.id; // let supabase generate, or keep if we want
+    // Keep the same id if it looks like a uuid
+    var keepId = row.id && String(row.id).indexOf('tmp_') !== 0;
+    if (keepId) {
+      payload.id = row.id;
+    }
+    var now = new Date().toISOString();
+    payload.updated_at = now;
+    if (!payload.created_at) payload.created_at = now;
+
+    // optimistic
+    var local = Object.assign({}, payload);
+    if (!local.id) local.id = 'tmp_' + Date.now();
+    titles.unshift(local);
+    titlesById[local.id] = local;
+
+    (async function () {
+      try {
+        var rowDb = toDbTitle(payload);
+        if (keepId) rowDb.id = row.id;
+        rowDb.created_at = payload.created_at;
+        rowDb.updated_at = now;
+        var res = await getClient().from('cinema_titles').upsert(rowDb).select().single();
+        if (res.error) throw res.error;
+        var real = fromDbTitle(res.data);
+        var idx = titles.findIndex(function (t) { return t.id === local.id; });
+        if (idx >= 0) titles[idx] = real;
+        if (local.id !== real.id) {
+          delete titlesById[local.id];
+        }
+        titlesById[real.id] = real;
+        logActivity('restore', 'title', real.id, real.title);
+      } catch (e) {
+        console.error('restoreTitle failed', e);
+      }
+    })();
+    return local.id;
   }
 
   function logActivity(action, entity, entityId, detail) {
@@ -393,7 +437,7 @@ window.DB = (function () {
   return {
     init: init, initAuth: initAuth, getUser: getUser, signIn: signIn, signUp: signUp, signOut: signOut,
     ready: isReady, isReady: isReady,
-    getAllTitles: getAllTitles, getTitle: getTitle, insertTitle: insertTitle, updateTitle: updateTitle, deleteTitle: deleteTitle,
+    getAllTitles: getAllTitles, getTitle: getTitle, insertTitle: insertTitle, updateTitle: updateTitle, deleteTitle: deleteTitle, restoreTitle: restoreTitle,
     logActivity: logActivity, getActivity: getActivity, getStarCounts: getStarCounts, getStats: getStats, findSimilar: findSimilar,
     getMeta: getMeta, setMeta: setMeta,
     saveConversation: saveConversation, getAllConversations: getAllConversations, getConversationsByTitle: getConversationsByTitle,
