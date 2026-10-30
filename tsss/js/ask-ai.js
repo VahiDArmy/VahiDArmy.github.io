@@ -65,6 +65,7 @@
     setStatus('idle');
     answerEl.innerHTML = '';
     inputEl.value = '';
+    submitBtn.disabled = false; // ★ رفع باگ B2 (اطمینان از فعال بودن دکمه هنگام تغییر آیه)
     clearFollowUp();
     await renderHistory();
   }
@@ -227,7 +228,7 @@
         signal: streamAbort.signal,
       });
     } catch (err) {
-      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ اصلاح (مورد ۲)
+      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ رفع باگ B2
       finishWithError(err);
       return;
     }
@@ -279,7 +280,7 @@
         }
       }
     } catch (err) {
-      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ اصلاح (مورد ۲)
+      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ رفع باگ B2
       finishWithError(err);
       return;
     }
@@ -326,7 +327,7 @@
     UI.toast('خطا: ' + (err.message || 'نامشخص'));
   }
 
-  // ★ بهینه‌سازی (مورد ۷): کاهش N+1 query به ۱ کوئری
+  // ★ رفع باگ E5 / N+1 Query: استفاده از getLatestGenerations به جای حلقه
   async function renderHistory() {
     let rows = [];
     try { rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20); } catch (e) { console.error('[ask-ai] history failed:', e); }
