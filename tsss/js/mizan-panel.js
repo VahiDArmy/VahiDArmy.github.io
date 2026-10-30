@@ -1,5 +1,5 @@
 // =============================================================
-// پنل تفسیر المیزان (نسخه کامل و نهایی - بدون خطا)
+// پنل تفسیر المیزان (نسخه نهایی - خوانده شدن با کلیک روی نوار صفحه)
 // =============================================================
 const MizanPanel = (function () {
 
@@ -48,17 +48,6 @@ const MizanPanel = (function () {
   const mizanNotePopupDel   = document.getElementById('mizanNotePopupDel');
   const mizanNotePopupClose = document.getElementById('mizanNotePopupClose');
 
-  // Read Page Button
-  const readPageBtnWrapper = document.createElement('div');
-  readPageBtnWrapper.className = 'mizan-read-page-wrapper';
-  const readPageBtn = document.createElement('button');
-  readPageBtn.type = 'button';
-  readPageBtn.className = 'mizan-read-page-btn';
-  readPageBtn.innerHTML = 'علامت‌گذاری خوانده‌شده';
-  readPageBtnWrapper.appendChild(readPageBtn);
-  const mizanContainer = document.getElementById('mizanTafsirContainer');
-  if (mizanContainer) mizanContainer.appendChild(readPageBtnWrapper);
-
   // ============================================================
   // 1) STATE
   // ============================================================
@@ -85,6 +74,7 @@ const MizanPanel = (function () {
   let lastAyah = 1;
   let renderSeq = 0;
   let noteSaving = false;
+  let isTogglingRead = false;
 
   // ============================================================
   // 2) UTILITIES
@@ -337,7 +327,6 @@ const MizanPanel = (function () {
     mizanEmpty.classList.add('hidden'); mizanLoading.classList.add('hidden');
     mizanContent.classList.add('hidden'); mizanError.classList.add('hidden');
     if (mizanPager) mizanPager.classList.add('hidden');
-    if (readPageBtnWrapper) readPageBtnWrapper.style.display = 'none';
     if (mizanRange) mizanRange.textContent = '';
 
     if (state === 'empty') mizanEmpty.classList.remove('hidden');
@@ -911,9 +900,12 @@ const MizanPanel = (function () {
 
   // Read Page Logic
   async function toggleCurrentPageRead() {
+    if (isTogglingRead) return;
+    isTogglingRead = true;
+    
     const pageIdx = String(mizanCurrentPage);
-    const contentId = mizanContentKeys[0]; if (!contentId) return;
-    readPageBtn.disabled = true;
+    const contentId = mizanContentKeys[0]; if (!contentId) { isTogglingRead = false; return; }
+    
     try {
       if (mizanReadPages.has(pageIdx)) {
         const toDel = mizanNotes.filter(n => n.note_text === '[[PAGE_READ]]' && n.anchor_before === pageIdx);
@@ -924,9 +916,12 @@ const MizanPanel = (function () {
         mizanReadPages.add(pageIdx); UI.toast('علامت‌گذاری شد');
       }
       await reloadMizanNotesAndRerender();
-    } catch (e) { UI.toast('خطا'); } finally { readPageBtn.disabled = false; }
+    } catch (e) { UI.toast('خطا'); } finally { isTogglingRead = false; }
   }
-  readPageBtn.addEventListener('click', toggleCurrentPageRead);
+
+  if (mizanPageInfo) {
+    mizanPageInfo.addEventListener('click', toggleCurrentPageRead);
+  }
 
   // ============================================================
   // 7) PAGINATION
@@ -976,7 +971,7 @@ const MizanPanel = (function () {
 
   function updateMizanPagerUI() {
     if (!mizanPager) return;
-    if (mizanPages.length <= 1) { mizanPager.classList.add('hidden'); readPageBtnWrapper.style.display = 'none'; return; }
+    if (mizanPages.length <= 1) { mizanPager.classList.add('hidden'); return; }
     mizanPager.classList.remove('hidden');
     
     const total = mizanPages.length; const cur = mizanCurrentPage;
@@ -985,15 +980,6 @@ const MizanPanel = (function () {
     const curStr = UI.toPersianDigits(cur + 1);
     if (mizanPageInfo) {
       mizanPageInfo.innerHTML = `صفحهٔ <span class="${isRead ? 'mizan-page-num--read' : ''}">${curStr}</span> از ${UI.toPersianDigits(total)}`;
-    }
-    
-    readPageBtnWrapper.style.display = 'block';
-    if (isRead) {
-      readPageBtn.innerHTML = '✓ خوانده شد';
-      readPageBtn.classList.add('is-read');
-    } else {
-      readPageBtn.innerHTML = 'علامت‌گذاری خوانده‌شده';
-      readPageBtn.classList.remove('is-read');
     }
 
     if (mizanPrevBtn) mizanPrevBtn.disabled = cur === 0;
