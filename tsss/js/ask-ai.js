@@ -36,7 +36,6 @@
   let renderedModelId = pendingModelId;
   let modelScoresCache = new Map();
   let formatMode = getStoredFormatMode();
-  // وضعیت پیگیری: null یا { sectionKey, sectionLabel, sectionText, fromQuestion }
   let followUpCtx = null;
 
   function readCurrentAyah() {
@@ -66,11 +65,10 @@
     setStatus('idle');
     answerEl.innerHTML = '';
     inputEl.value = '';
-    clearFollowUp(); // پیگیری متعلق به آیهٔ قبلی است
+    clearFollowUp();
     await renderHistory();
   }
 
-  // ---------- Follow-up (chain) ----------
   function clearFollowUp() {
     followUpCtx = null;
     if (followUpChip) followUpChip.hidden = true;
@@ -81,19 +79,12 @@
 
   function updatePlaceholder() {
     if (!inputEl) return;
-    inputEl.placeholder = followUpCtx
-      ? 'پرسش پیگیری خود را بنویسید… (Ctrl+Enter برای ارسال)'
-      : 'دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)';
+    inputEl.placeholder = followUpCtx ? 'پرسش پیگیری خود را بنویسید… (Ctrl+Enter برای ارسال)' : 'دربارهٔ این آیه بپرس… (Ctrl+Enter برای ارسال)';
   }
 
   function handleFollowUp(ctx) {
     if (!ctx || !ctx.sectionText) return;
-    followUpCtx = {
-      sectionKey: ctx.sectionKey || 'answer',
-      sectionLabel: ctx.sectionLabel || 'پاسخ',
-      sectionText: ctx.sectionText || '',
-      fromQuestion: ctx.fromQuestion || '',
-    };
+    followUpCtx = { sectionKey: ctx.sectionKey || 'answer', sectionLabel: ctx.sectionLabel || 'پاسخ', sectionText: ctx.sectionText || '', fromQuestion: ctx.fromQuestion || '' };
     if (followUpLabel) followUpLabel.textContent = followUpCtx.sectionLabel;
     if (followUpExcerpt) {
       const t = followUpCtx.sectionText.replace(/\s+/g, ' ').trim();
@@ -102,71 +93,45 @@
     }
     if (followUpChip) followUpChip.hidden = false;
     updatePlaceholder();
-    if (inputEl) {
-      inputEl.focus();
-      inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
+    if (inputEl) { inputEl.focus(); inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     if (window.UI && UI.toast) UI.toast('حالت پیگیری فعال شد — پرسش خود را بنویسید');
   }
 
-  if (followUpClear) followUpClear.addEventListener('click', () => {
-    clearFollowUp();
-    if (window.UI && UI.toast) UI.toast('پیگیری لغو شد');
-  });
+  if (followUpClear) followUpClear.addEventListener('click', () => { clearFollowUp(); if (window.UI && UI.toast) UI.toast('پیگیری لغو شد'); });
 
-  // ساخت متن نهایی پرسش که به API می‌رود
   function buildChainedQuestion(newQuestion) {
     if (!followUpCtx) return newQuestion;
     const raw = (followUpCtx.sectionText || '').trim();
     const excerpt = raw.length > 1200 ? raw.slice(0, 1200) + '…' : raw;
-    return (
-      '[پیگیری از پاسخ پیشین]\n\n' +
-      'پرسش نخستین من:\n' +
-      '«' + (followUpCtx.fromQuestion || '—') + '»\n\n' +
-      'گزیده‌ای که از پاسخ پیشین انتخاب کردم — از بخش «' + followUpCtx.sectionLabel + '»:\n' +
-      '«' + excerpt + '»\n\n' +
-      'پرسش پیگیری من:\n' +
-      newQuestion + '\n\n' +
-      'لطفاً پاسخت را با توجه به گزیدهٔ بالا و در ادامهٔ گفت‌وگوی پیشین بده. همان قالب و لحن قبلی را نگه دار.'
-    );
+    return '[پیگیری از پاسخ پیشین]\n\n' +
+      'پرسش نخستین من:\n' + '«' + (followUpCtx.fromQuestion || '—') + '»\n\n' +
+      'گزیده‌ای که از پاسخ پیشین انتخاب کردم — از بخش «' + followUpCtx.sectionLabel + '»:\n' + '«' + excerpt + '»\n\n' +
+      'پرسش پیگیری من:\n' + newQuestion + '\n\n' +
+      'لطفاً پاسخت را با توجه به گزیدهٔ بالا و در ادامهٔ گفت‌وگوی پیشین بده. همان قالب و لحن قبلی را نگه دار.';
   }
 
-  // ---------- Format mode toggle ----------
   function getStoredFormatMode() {
-    try {
-      const v = localStorage.getItem('askAiMode');
-      if (v === 'natural' || v === 'strict') return v;
-    } catch (e) {}
+    try { const v = localStorage.getItem('askAiMode'); if (v === 'natural' || v === 'strict') return v; } catch (e) {}
     return 'strict';
   }
-  function setStoredFormatMode(v) {
-    try { localStorage.setItem('askAiMode', v); } catch (e) {}
-  }
+  function setStoredFormatMode(v) { try { localStorage.setItem('askAiMode', v); } catch (e) {} }
   function paintFormatToggle() {
     if (!formatToggle) return;
     const isOn = formatMode === 'strict';
     formatToggle.classList.toggle('is-on', isOn);
     formatToggle.setAttribute('aria-pressed', String(isOn));
-    formatToggle.setAttribute(
-      'title',
-      isOn ? 'قالب اجباری — برای آزادسازی قالب کلیک کنید'
-           : 'قالب آزاد — برای بازگرداندن قالب اجباری کلیک کنید'
-    );
+    formatToggle.setAttribute('title', isOn ? 'قالب اجباری' : 'قالب آزاد');
     if (formatLabel) formatLabel.textContent = isOn ? 'قالب اجباری' : 'قالب آزاد';
   }
   if (formatToggle) {
     formatToggle.addEventListener('click', () => {
       formatMode = (formatMode === 'strict') ? 'natural' : 'strict';
-      setStoredFormatMode(formatMode);
-      paintFormatToggle();
-      UI.toast(formatMode === 'natural'
-        ? 'قالب آزاد — مدل خودش تصمیم می‌گیرد'
-        : 'قالب اجباری — پاسخ در قالب ثابت');
+      setStoredFormatMode(formatMode); paintFormatToggle();
+      UI.toast(formatMode === 'natural' ? 'قالب آزاد' : 'قالب اجباری');
     });
     paintFormatToggle();
   }
 
-  // ---------- Model picker ----------
   function getStoredModelId() {
     try {
       const v = localStorage.getItem('askAiModel');
@@ -174,29 +139,14 @@
     } catch (e) {}
     return CONFIG.OPENROUTER_DEFAULT_MODEL;
   }
-  function setStoredModelId(id) {
-    try { localStorage.setItem('askAiModel', id); } catch (e) {}
-  }
-  function modelById(id) {
-    return CONFIG.OPENROUTER_MODELS.find((m) => m.id === id) || CONFIG.OPENROUTER_MODELS[0];
-  }
+  function setStoredModelId(id) { try { localStorage.setItem('askAiModel', id); } catch (e) {} }
+  function modelById(id) { return CONFIG.OPENROUTER_MODELS.find((m) => m.id === id) || CONFIG.OPENROUTER_MODELS[0]; }
+  function paintComposerModel() { const m = modelById(renderedModelId); if (modelLabel) modelLabel.textContent = m.provider + ' · ' + m.name; }
 
-  function paintComposerModel() {
-    const m = modelById(renderedModelId);
-    if (modelLabel) modelLabel.textContent = m.provider + ' · ' + m.name;
-  }
-
-  async function loadModelScores() {
-    try {
-      modelScoresCache = await Store.getModelScores();
-    } catch (e) {
-      modelScoresCache = new Map();
-    }
-  }
+  async function loadModelScores() { try { modelScoresCache = await Store.getModelScores(); } catch (e) { modelScoresCache = new Map(); } }
 
   function scoreChipHtml(modelId) {
-    const s = modelScoresCache.get(modelId);
-    if (!s || (!s.voters && !s.score)) return '';
+    const s = modelScoresCache.get(modelId); if (!s || (!s.voters && !s.score)) return '';
     const sign = s.score > 0 ? 'pos' : s.score < 0 ? 'neg' : 'zero';
     const txt = (s.score > 0 ? '+' : '') + UI.toPersianDigits(s.score);
     return `<span class="ai-model-card__score" data-sign="${sign}">⭐ ${txt}</span>`;
@@ -206,78 +156,41 @@
     modelsListEl.innerHTML = CONFIG.OPENROUTER_MODELS.map((m) => {
       const selected = m.id === pendingModelId ? 'true' : 'false';
       const isAuto = !!m.auto;
-
-      const badge = m.default
-        ? '<span class="ai-model-card__badge">پیش‌فرض</span>'
-        : (m.star ? '<span class="ai-model-card__badge" style="background:var(--surface-2);color:var(--text-faint);">★</span>' : '');
-
+      const badge = m.default ? '<span class="ai-model-card__badge">پیش‌فرض</span>' : (m.star ? '<span class="ai-model-card__badge" style="background:var(--surface-2);color:var(--text-faint);">★</span>' : '');
       const scoreHtml = isAuto ? '' : scoreChipHtml(m.id);
-
-      const statsHtml = isAuto ? '' : `
-        <div class="ai-model-card__stats">
-          <span><b>${m.tps}</b> t/s</span>
-          <span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span>
-          <span><b>${AiFormat.escapeHtml(m.size)}</b></span>
-        </div>`;
-
+      const statsHtml = isAuto ? '' : `<div class="ai-model-card__stats"><span><b>${m.tps}</b> t/s</span><span><b>${AiFormat.escapeHtml(m.ctx)}</b> ctx</span><span><b>${AiFormat.escapeHtml(m.size)}</b></span></div>`;
       const idHtml = isAuto ? '' : `<code class="ai-model-card__id">${AiFormat.escapeHtml(m.id)}</code>`;
-
       return `
         <button type="button" class="ai-model-card" data-id="${m.id}" data-selected="${selected}">
           <div class="ai-model-card__head">
             <span class="ai-model-card__provider">${AiFormat.escapeHtml(m.provider)}</span>
             <span class="ai-model-card__name">${AiFormat.escapeHtml(m.name)}</span>
-            ${scoreHtml}
-            ${badge}
+            ${scoreHtml}${badge}
           </div>
           <p class="ai-model-card__desc">${AiFormat.escapeHtml(m.desc)}</p>
-          ${statsHtml}
-          ${idHtml}
+          ${statsHtml}${idHtml}
         </button>`;
     }).join('');
-
     modelsListEl.querySelectorAll('.ai-model-card').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        pendingModelId = btn.getAttribute('data-id');
-        paintModelsList();
-      });
+      btn.addEventListener('click', () => { pendingModelId = btn.getAttribute('data-id'); paintModelsList(); });
     });
   }
 
-  async function openModels() {
-    pendingModelId = renderedModelId;
-    await loadModelScores();
-    paintModelsList();
-    modelsModal.hidden = false;
-  }
+  async function openModels() { pendingModelId = renderedModelId; await loadModelScores(); paintModelsList(); modelsModal.hidden = false; }
   function closeModels() { modelsModal.hidden = true; }
 
   if (composerModel) composerModel.addEventListener('click', openModels);
   if (closeModelsBtn) closeModelsBtn.addEventListener('click', closeModels);
   modelsModal.addEventListener('click', (e) => { if (e.target === modelsModal) closeModels(); });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !modelsModal.hidden) closeModels();
-  });
-  if (saveModelBtn) saveModelBtn.addEventListener('click', () => {
-    renderedModelId = pendingModelId;
-    setStoredModelId(renderedModelId);
-    paintComposerModel();
-    closeModels();
-    UI.toast('مدل ذخیره شد');
-  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modelsModal.hidden) closeModels(); });
+  if (saveModelBtn) saveModelBtn.addEventListener('click', () => { renderedModelId = pendingModelId; setStoredModelId(renderedModelId); paintComposerModel(); closeModels(); UI.toast('مدل ذخیره شد'); });
 
   paintComposerModel();
   updatePlaceholder();
 
   function setStatus(state) { statusEl.setAttribute('data-state', state); }
+  async function generationScore(modelId) { if (!modelScoresCache.has(modelId)) await loadModelScores(); const s = modelScoresCache.get(modelId); return s ? s.score : 0; }
 
-  async function generationScore(modelId) {
-    if (!modelScoresCache.has(modelId)) await loadModelScores();
-    const s = modelScoresCache.get(modelId);
-    return s ? s.score : 0;
-  }
-
-  // ---------- Ask ----------
   async function askAi(question) {
     const modelId = renderedModelId;
     const model = modelById(modelId);
@@ -291,7 +204,6 @@
       if (ay) { ayahText = ay.ar; ayahTranslation = ay.fa; }
     } catch (e) {}
 
-    // ★ ساخت پرسش نهایی (اگر در حالت پیگیری هستیم)
     const isFollowUp = !!followUpCtx;
     const apiQuestion = buildChainedQuestion(question);
     const displayQuestion = isFollowUp ? ('↩ ' + question) : question;
@@ -305,32 +217,21 @@
 
     const fnName = (formatMode === 'natural') ? 'bright-api-natural' : 'bright-api';
     const url = CONFIG.SUPABASE_URL + '/functions/v1/' + fnName;
-    console.log('[ask-ai] mode =', formatMode, '| follow-up =', isFollowUp, '→ fn =', fnName);
 
     let res;
     try {
       res = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token,
-        },
-        body: JSON.stringify({
-          surah: currentAyah.surah,
-          ayah: currentAyah.ayah,
-          surahName, ayahText, ayahTranslation,
-          question: apiQuestion,
-          model: modelId,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ surah: currentAyah.surah, ayah: currentAyah.ayah, surahName, ayahText, ayahTranslation, question: apiQuestion, model: modelId }),
         signal: streamAbort.signal,
       });
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ اصلاح (مورد ۲)
       finishWithError(err);
       return;
     }
 
-    // ★ پیگیری بعد از ارسال پاک می‌شود (حتی اگر پاسخ شکست بخورد)
     clearFollowUp();
 
     if (!res.ok || !res.body) {
@@ -378,108 +279,64 @@
         }
       }
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') { submitBtn.disabled = false; return; } // ★ اصلاح (مورد ۲)
       finishWithError(err);
       return;
     }
 
     if (!realModel) realModel = modelId;
 
-    console.log('[ask-ai] stream finished. realModel =', realModel, 'acc.length =', acc.length);
-
     const parsed = AiFormat.parse(acc);
 
-    console.log('[ask-ai] calling saveAskAi...');
     let askRow = null;
     try {
-      askRow = await Store.saveAskAi({
-        surah: currentAyah.surah,
-        ayah: currentAyah.ayah,
-        model: realModel,
-        question: displayQuestion,
-        answerRaw: acc,
-      });
-      console.log('[ask-ai] saveAskAi OK, id =', askRow && askRow.id);
-    } catch (e) {
-      console.error('[ask-ai] saveAskAi FAILED:', e);
-      UI.toast('ذخیرهٔ پاسخ ناموفق بود: ' + (e?.message || e?.details || e?.hint || 'خطای نامشخص'));
-    }
+      askRow = await Store.saveAskAi({ surah: currentAyah.surah, ayah: currentAyah.ayah, model: realModel, question: displayQuestion, answerRaw: acc });
+    } catch (e) { UI.toast('ذخیرهٔ پاسخ ناموفق بود'); }
 
     let generationId = null;
     if (askRow) {
       try {
-        const gen = await Store.createGeneration({
-          source: 'ask_ai',
-          refId: askRow.id,
-          model: realModel,
-        });
+        const gen = await Store.createGeneration({ source: 'ask_ai', refId: askRow.id, model: realModel });
         generationId = gen.id;
-        console.log('[ask-ai] createGeneration OK, id =', generationId);
-      } catch (e) {
-        console.error('[ask-ai] createGeneration FAILED:', e);
-      }
+      } catch (e) {}
     }
 
     const sc = await generationScore(realModel);
 
-    AiFormat.render(answerEl, parsed, {
-      model: realModel,
-      question: displayQuestion,
-      surahIndex: index,
-      generationId,
-      refId: askRow ? askRow.id : null,
-      myVote: 0,
-      modelScore: sc,
-    });
+    AiFormat.render(answerEl, parsed, { model: realModel, question: displayQuestion, surahIndex: index, generationId, refId: askRow ? askRow.id : null, myVote: 0, modelScore: sc });
     AiFormat.wireCard(answerEl, parsed, {
-      generationId,
-      refId: askRow ? askRow.id : null,
-      model: realModel,
-      question: displayQuestion,
-      surahIndex: index,
-      modelScore: sc,
+      generationId, refId: askRow ? askRow.id : null, model: realModel, question: displayQuestion, surahIndex: index, modelScore: sc,
       modelScoreAfter: async () => await generationScore(realModel),
       onAfterVote: async () => { await loadModelScores(); },
       onAfterSectionChange: async () => { await renderHistory(); },
-      onAfterDelete: async () => {
-        answerEl.innerHTML = '';
-        await renderHistory();
-      },
+      onAfterDelete: async () => { answerEl.innerHTML = ''; await renderHistory(); },
       onFollowUp: handleFollowUp,
     });
 
     setStatus('done');
     submitBtn.disabled = false;
     streamAbort = null;
-
     await renderHistory();
   }
 
   function finishWithError(err) {
-    console.error('[ask-ai]', err);
     setStatus('error');
     submitBtn.disabled = false;
     streamAbort = null;
     UI.toast('خطا: ' + (err.message || 'نامشخص'));
   }
 
-  // ---------- History ----------
+  // ★ بهینه‌سازی (مورد ۷): کاهش N+1 query به ۱ کوئری
   async function renderHistory() {
     let rows = [];
-    try {
-      rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20);
-    } catch (e) {
-      console.error('[ask-ai] getAskAiHistory failed:', e);
-    }
-
+    try { rows = await Store.getAskAiHistory(currentAyah.surah, currentAyah.ayah, 20); } catch (e) { console.error('[ask-ai] history failed:', e); }
     if (!rows || !rows.length) { historyEl.innerHTML = ''; return; }
 
-    const enriched = await Promise.all(rows.map(async (r) => {
-      let gen = null;
-      try { gen = await Store.getLatestGeneration('ask_ai', r.id); }
-      catch (e) { console.error('[ask-ai] getLatestGeneration failed:', e, r.id); }
-      return { ...r, gen };
-    }));
+    const refIds = rows.map(r => r.id);
+    const gens = await Store.getLatestGenerations(refIds).catch(() => []);
+    const genMap = new Map(gens.map(g => [g.ref_id, g]));
+    
+    const enriched = rows.map(r => ({ ...r, gen: genMap.get(r.id) || null }));
 
     historyEl.innerHTML = `
       <div class="ai-history">
@@ -491,7 +348,7 @@
               <div class="ai-history-item__head">
                 <span class="ai-history-item__q">${AiFormat.escapeHtml(r.question)}</span>
                 <span class="ai-history-item__date">${date}</span>
-                <button type="button" class="ai-delete-question" data-ai-delete-history="${r.id}" aria-label="حذف این پرسش" title="حذف این پرسش">✕</button>
+                <button type="button" class="ai-delete-question" data-ai-delete-history="${r.id}" aria-label="حذف">✕</button>
               </div>
               <div class="ai-history-item__body"></div>
             </div>`;
@@ -502,11 +359,7 @@
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
         const id = btn.getAttribute('data-ai-delete-history');
-        const ok = await AiFormat.confirm({
-          title: 'حذف پرسش',
-          message: 'کل این پرسش و پاسخش برای همیشه حذف می‌شود.',
-          confirmText: 'حذف',
-        });
+        const ok = await AiFormat.confirm({ title: 'حذف پرسش', message: 'کل این پرسش و پاسخش حذف می‌شود.', confirmText: 'حذف' });
         if (!ok) return;
         try {
           btn.disabled = true;
@@ -514,7 +367,6 @@
           UI.toast('پرسش حذف شد');
           await renderHistory();
         } catch (err) {
-          console.error('[ask-ai] deleteAskAi failed:', err);
           UI.toast('خطا در حذف پرسش: ' + (err?.message || 'نامشخص'));
           btn.disabled = false;
         }
@@ -533,22 +385,9 @@
         const parsed = AiFormat.parse(row.answer_raw || '');
         const genId = row.gen ? row.gen.id : null;
         const sc = row.model ? await generationScore(row.model) : 0;
-        AiFormat.render(bodyEl, parsed, {
-          model: row.model,
-          question: row.question,
-          surahIndex: index,
-          generationId: genId,
-          refId: row.id,
-          myVote: 0,
-          modelScore: sc,
-        });
+        AiFormat.render(bodyEl, parsed, { model: row.model, question: row.question, surahIndex: index, generationId: genId, refId: row.id, myVote: 0, modelScore: sc });
         AiFormat.wireCard(bodyEl, parsed, {
-          generationId: genId,
-          refId: row.id,
-          model: row.model,
-          question: row.question,
-          surahIndex: index,
-          modelScore: sc,
+          generationId: genId, refId: row.id, model: row.model, question: row.question, surahIndex: index, modelScore: sc,
           modelScoreAfter: async () => row.model ? await generationScore(row.model) : 0,
           onAfterVote: async () => { await loadModelScores(); },
           onAfterSectionChange: async () => { await renderHistory(); },
@@ -557,6 +396,7 @@
         });
         rendered = true;
       };
+      
       if (item.getAttribute('data-open') === 'true') openIt();
 
       head.addEventListener('click', async () => {
@@ -574,9 +414,7 @@
     askAi(q);
   }
   submitBtn.addEventListener('click', submit);
-  inputEl.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); }
-  });
+  inputEl.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); submit(); } });
 
   setStatus('idle');
   await loadModelScores();
