@@ -1,5 +1,5 @@
 // =============================================================
-// RaiseMind SPA bootstrap — full feature parity
+// RaiseMind SPA bootstrap — lazy-loaded heavy modules
 // =============================================================
 (function () {
   const np = document.getElementById('nprogress');
@@ -39,11 +39,23 @@
     after:  async () => { hideProgress(); },
   });
 
-  // Work route — reveal the pre-rendered original markup
-  // (MizanPanel, AskAI, work-original.js already bound to the permanent DOM)
+  let workBootstrapped = false;
+
   async function WorkRoute() {
     showWorkView();
-    // Optional deep-link: #/?surah=2&ayah=255
+
+    // Load heavy Work modules only the first time this route is used
+    if (!workBootstrapped) {
+      try {
+        await Lazy.ensureWork();
+        workBootstrapped = true;
+      } catch (e) {
+        console.error('Work modules failed to load', e);
+        UI?.toast?.('خطا در بارگذاری صفحهٔ کار');
+      }
+    }
+
+    // Deep-link: #/?surah=2&ayah=255
     try {
       const qs = location.hash.split('?')[1] || '';
       const p = new URLSearchParams(qs);
@@ -71,13 +83,23 @@
     };
   }
 
+  async function RelationsRoute(ctx) {
+    showAppView();
+    try {
+      await Lazy.ensureRelations();
+    } catch (e) {
+      console.error('D3 failed to load', e);
+    }
+    await window.Views.Relations(ctx);
+  }
+
   Router.register('/', WorkRoute);
   Router.register('/work', WorkRoute);
   Router.register('/browse', wrap(window.Views.Browse));
   Router.register('/browse/:surah/:ayah', wrap(window.Views.Browse));
   Router.register('/tags', wrap(window.Views.Tags));
   Router.register('/tags/:tag', wrap(window.Views.Tags));
-  Router.register('/relations', wrap(window.Views.Relations));
+  Router.register('/relations', RelationsRoute);
   Router.register('/search', wrap(window.Views.Search));
   Router.register('/login', wrap(window.Views.Login));
 

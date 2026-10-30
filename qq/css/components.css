@@ -135,11 +135,11 @@ button.mark-toggle:hover { border-color: #FFB020; }
 .select-wrap select { 
   width: 100%; 
   appearance: none; 
+  -webkit-appearance: none;
   min-height: 44px;
-  /* logical padding: start (text side) has room for آ, end has room for chevron */
   padding-block: 10px;
-  padding-inline-start: 18px;
-  padding-inline-end: 40px;
+  padding-inline-start: 22px;
+  padding-inline-end: 42px;
   background: var(--card); 
   border: 1px solid var(--border); 
   border-radius: 999px; 
@@ -148,13 +148,15 @@ button.mark-toggle:hover { border-color: #FFB020; }
   font-size: .88rem; 
   cursor: pointer; 
   white-space: nowrap; 
-  overflow: hidden; 
-  text-overflow: ellipsis; 
+  overflow: visible;
+  text-overflow: clip;
+  text-align: start;
+  direction: rtl;
   transition: border-color .2s ease, box-shadow .2s ease; 
 }
 .select-wrap select:hover, .select-wrap select:focus { outline: none; border-color: var(--neon); }
 .select-wrap select:focus { box-shadow: 0 0 0 3px var(--neon-glow); }
-.select-wrap::after { content: ''; position: absolute; left: 16px; top: 50%; translate: 0 -65%; width: 8px; height: 8px; border-left: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint); transform: rotate(-45deg); pointer-events: none; transition: border-color .2s ease; }
+.select-wrap::after { content: ''; position: absolute; left: 16px; top: 50%; translate: 0 -65%; width: 8px; height: 8px; border-left: 2px solid var(--text-faint); border-bottom: 2px solid var(--text-faint); transform: rotate(-45deg); pointer-events: none; transition: border-color .2s ease; z-index: 1; }
 .select-wrap:hover::after { border-color: var(--neon); }
 .select-wrap select option { background: var(--card); color: var(--text); font-family: var(--font-ui); }
 
