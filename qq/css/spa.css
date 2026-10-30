@@ -117,3 +117,15 @@ html.is-navigating #app {
     animation: none !important;
   }
 }
+
+/* Work view is permanent in the DOM; just toggle visibility */
+#view-work {
+  min-height: calc(100vh - 140px);
+}
+#view-work[hidden],
+#app[hidden] {
+  display: none !important;
+}
+#view-work:not([hidden]) {
+  animation: viewIn 0.25s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

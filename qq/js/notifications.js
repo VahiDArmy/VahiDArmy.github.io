@@ -37,7 +37,7 @@
           const surahName = surahMeta ? surahMeta.name_fa : tafsir.surah;
 
           const message = `💬 نظر جدید از "${newComment.guest_name}" روی تفسیر سورهٔ ${surahName} آیهٔ ${UI.toPersianDigits(tafsir.ayah)}`;
-          const link = `browse.html?surah=${tafsir.surah}&ayah=${tafsir.ayah}`;
+          const link = `#/browse/${tafsir.surah}/${tafsir.ayah}`;
 
           UI.toast(message, link);
         }
