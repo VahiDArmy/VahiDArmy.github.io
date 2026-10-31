@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Magic Octagon</title>
+<style>
+/* ---------- page ---------- */
+:root{--bg:#cfd6dc;--bg-hi:#e9edf0;--fg:#1b2830;--dim:#43535e;--accent:#0c8577;--on:#fff;--panel:rgba(255,255,255,.6);
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1215;--bg-hi:#1f2a31;--fg:#e6eef2;--dim:#8da0ab;--accent:#4fd6c1;--on:#06201b;--panel:rgba(255,255,255,.1)}}
+:root[data-theme="dark"]{--bg:#0d1215;--bg-hi:#1f2a31;--fg:#e6eef2;--dim:#8da0ab;--accent:#4fd6c1;--on:#06201b;--panel:rgba(255,255,255,.1)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background-color:var(--bg);background-image:radial-gradient(circle at 50% 45%,var(--bg-hi),var(--bg) 72%);color:var(--fg);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- stage ---------- */
+.stage{
+  --oct:polygon(50% 0,85.36% 14.64%,100% 50%,85.36% 85.36%,50% 100%,14.64% 85.36%,0 50%,14.64% 14.64%);
+  --s:min(75vmin,700px,calc(100vh - 240px));
+  --lx:-.6;--ly:-.7;--la:140deg;
+  --dark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='a' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .12 0 0 0 0 .05 0 0 0 0 .02 0 0 0 1.3 -.5'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23a)'/%3E%3C/svg%3E");
+  --fleck:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='b' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='2' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .78 0 0 0 0 .6 0 0 0 1.6 -.88'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23b)'/%3E%3C/svg%3E");
+  --mottle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='c' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .02' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .1 0 0 0 0 .05 0 0 0 1.6 -.6'/%3E%3C/filter%3E%3Crect width='640' height='640' filter='url(%23c)'/%3E%3C/svg%3E");
+  position:relative;height:100%;perspective:1400px;touch-action:none;user-select:none;-webkit-user-select:none}
+
+.coin,.shadow{position:absolute;left:50%;top:56%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2)}
+.coin{transform-style:preserve-3d;will-change:transform}
+.shadow{filter:blur(calc(var(--s)*.03));opacity:.4;pointer-events:none}
+.shadow i{position:absolute;inset:0;clip-path:var(--oct);background:#000}
+
+/* thickness: a stack of octagon slices between the two faces */
+.slice{position:absolute;inset:0;clip-path:var(--oct);background:linear-gradient(#80422a,#4d2314);transform:translateZ(calc(var(--s)*var(--z)))}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.front{transform:translateZ(calc(var(--s)*.036))}
+/* The back face rotation is now dynamic via --back-trick */
+.back{transform:translateZ(calc(var(--s)*-.036)) rotateY(180deg) rotateZ(calc(90deg + var(--back-trick, 0deg)));--mp:-210px 170px}
+.face>*{position:absolute;pointer-events:none}
+.edge,.rim,.wall,.well,.studs,.sheen{clip-path:var(--oct)}
+
+/* ---------- coin face ---------- */
+.edge{inset:0;background:linear-gradient(var(--la),#f2b88f,#8c4829 55%,#46200f)}
+.rim{inset:1.3%;background:
+  radial-gradient(closest-side,transparent 62%,rgba(74,30,12,.32)),
+  linear-gradient(var(--la),#e2a377,#c87e55 45%,#a85e3b)}
+.wall{inset:10.2%;background:linear-gradient(var(--la),#1a0a05,#3b1b0d 45%,#8e4c2d 68%,#f4b98f)}
+.well{inset:11.8%;background:
+  linear-gradient(var(--la),rgba(20,8,3,.4),rgba(20,8,3,0) 45%,rgba(255,200,160,.1)),
+  radial-gradient(closest-side,#cb8964,#bc7a53 52%,#80422a 80%,#2c140b)}
+.rim::after,.well::after,.arrow i::after{content:"";position:absolute;inset:0;
+  background:var(--fleck),var(--dark),var(--mottle);background-size:260px 260px,260px 260px,640px 640px;background-position:0 0,0 0,var(--mp,0 0)}
+.arrow{left:39%;top:32.4%;width:22%;height:35.5%;
+  filter:drop-shadow(calc(var(--lx)*var(--s)*-.005) calc(var(--ly)*var(--s)*-.005) 0 rgba(255,208,170,.75))}
+.arrow i{display:block;position:absolute;inset:0;
+  clip-path:polygon(50% 0,100% 40%,64.5% 40%,64.5% 100%,50% 92.7%,35.5% 100%,35.5% 40%,0 40%);
+  background:linear-gradient(var(--la),#140702,#2d160b 38%,#6b3722)}
+.studs{inset:1.3%}
+.rivet{--r:calc(var(--s)*.058);position:absolute;left:50%;top:50%;width:var(--r);height:var(--r);
+  margin:calc(var(--r)/-2) 0 0 calc(var(--r)/-2);
+  transform:rotate(calc(var(--i)*45deg)) translateY(calc(var(--s)*-.44))}
+.rivet::before,.rivet::after{content:"";position:absolute}
+.rivet::before{inset:-50%;border-radius:26%;background:#c6845b;
+  box-shadow:0 0 0 calc(var(--s)*.002) rgba(36,14,7,.4),0 0 calc(var(--s)*.014) rgba(0,0,0,.35)}
+.rivet::after{inset:0;border-radius:50%;
+  background:radial-gradient(closest-side,#140602 0 17%,#cc8c65 21%,#a85f3b 50%,#24100a 57% 73%,transparent 77%)}
+.sheen{inset:0;mix-blend-mode:soft-light;
+  background:radial-gradient(circle at calc(50% + var(--lx)*40%) calc(50% + var(--ly)*40%),rgba(255,236,214,.9),rgba(255,236,214,0) 55%)}
+
+/* Dashed line for visual feedback */
+.axisline{position:absolute;left:50%;top:56%;width:calc(var(--s)*1.26);margin:0 0 0 calc(var(--s)*-.63);
+  border-top:2px dashed var(--accent);opacity:.4;pointer-events:none;z-index:10;
+  transform:rotate(calc(var(--aa,0)*1deg - 90deg));transition:transform .45s ease}
+.axisline.hint{animation:hint .7s ease}
+@keyframes hint{40%{opacity:1;border-top-width:4px}}
+
+/* ---------- Mini Coin Gallery ---------- */
+.mini-gallery {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 15px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px 25px; 
+  z-index: 100;
+  pointer-events: none;
+  --lx: -.6; --ly: -.7; --la: 140deg;
+  --oct: polygon(50% 0,85.36% 14.64%,100% 50%,85.36% 85.36%,50% 100%,14.64% 85.36%,0 50%,14.64% 14.64%);
+}
+.mini-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.mini-coin-wrapper {
+  position: relative;
+  --s: clamp(50px, 12vw, 80px);
+  width: var(--s);
+  height: var(--s);
+}
+.mini-coin-inner {
+  position: absolute;
+  inset: 0;
+  clip-path: var(--oct);
+}
+.mini-coin-inner .face {
+  transform: none !important;
+  position: absolute;
+  inset: 0;
+  backface-visibility: visible;
+}
+.mini-coin-inner .face.front { display: none; }
+.mini-coin-inner .face.back { display: block; }
+.mini-badge {
+  font-size: clamp(11px, 2.5vw, 14px);
+  font-weight: 700;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1.5px solid var(--dim);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<div class="mini-gallery" id="mini-gallery"></div>
+
+<main class="stage" id="stage">
+  <div class="shadow" id="shadow"><i></i></div>
+  <div class="coin" id="coin" role="img" aria-label="Copper octagonal coin with an engraved arrow"></div>
+  <i class="axisline" id="axisline"></i>
+</main>
+
+<template id="face">
+  <div class="edge"></div><div class="rim"></div><div class="wall"></div><div class="well"></div>
+  <div class="arrow"><i></i></div>
+  <div class="studs">
+    <i class="rivet" style="--i:0"></i><i class="rivet" style="--i:1"></i><i class="rivet" style="--i:2"></i><i class="rivet" style="--i:3"></i>
+    <i class="rivet" style="--i:4"></i><i class="rivet" style="--i:5"></i><i class="rivet" style="--i:6"></i><i class="rivet" style="--i:7"></i>
+  </div>
+  <div class="sheen"></div>
+</template>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const stage = $('#stage'), coin = $('#coin'), shadow = $('#shadow'), line = $('#axisline');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rad = d => d * Math.PI / 180, mod = (n, m) => ((n % m) + m) % m;
+  const Lv = (() => { const v = [-.45, -.55, .7], n = Math.hypot(...v); return v.map(x => x / n); })();
+  
+  const BACK = new DOMMatrix().rotate(0, 180, 0).rotate(0, 0, 90);
+
+  for (let z = -3; z <= 3; z++) coin.insertAdjacentHTML('beforeend', `<i class="slice" style="--z:${z / 100}"></i>`);
+  const faces = ['front', 'back'].map(c => {
+    const f = document.createElement('div');
+    f.className = 'face ' + c;
+    f.append($('#face').content.cloneNode(true));
+    coin.append(f);
+    return f;
+  });
+
+  const gallery = document.getElementById('mini-gallery');
+  for (let i = 0; i < 8; i++) {
+    const item = document.createElement('div');
+    item.className = 'mini-item';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'mini-coin-wrapper';
+    wrapper.style.transform = `rotate(${i * 45 - 90}deg)`;
+
+    const inner = document.createElement('div');
+    inner.className = 'mini-coin-inner';
+
+    const backFace = document.createElement('div');
+    backFace.className = 'face back';
+    backFace.append(document.getElementById('face').content.cloneNode(true));
+
+    inner.appendChild(backFace);
+    wrapper.appendChild(inner);
+    item.appendChild(wrapper);
+
+    const badge = document.createElement('div');
+    badge.className = 'mini-badge';
+    badge.textContent = i + 1;
+
+    item.appendChild(badge);
+    gallery.appendChild(item);
+  }
+
+  // Added st.trick to hold the magical offset
+  const st = { axis: 0, ax: 0, theta: 0, phi: 0, flips: 0, trick: 0, busy: false };
+  
+  const orient = () => new DOMMatrix()
+    .rotateAxisAngle(Math.sin(rad(st.ax)), -Math.cos(rad(st.ax)), 0, st.phi)
+    .rotate(0, 0, st.theta);
+
+  function render(lift = 0) {
+    const M = orient(), S = coin.offsetWidth;
+    coin.style.transform = new DOMMatrix().translate(0, 0, lift).multiply(M).toString();
+    shadow.style.transform = new DOMMatrix().translate(S * .03 + lift * .25, S * .05 + lift * .35, 0).multiply(M).toString();
+    shadow.style.opacity = Math.max(.12, .4 - lift / 400);
+    
+    // We must adjust the lighting matrix to account for the trick
+    const trickMatrix = new DOMMatrix().rotate(0, 0, st.trick);
+    const backLightMatrix = BACK.multiply(trickMatrix);
+
+    [new DOMMatrix(), backLightMatrix].forEach((B, i) => {
+      const p = M.multiply(B).inverse().transformPoint(new DOMPoint(Lv[0], Lv[1], Lv[2], 0));
+      const s = faces[i].style;
+      s.setProperty('--lx', (p.x * 1.4).toFixed(3));
+      s.setProperty('--ly', (p.y * 1.4).toFixed(3));
+      s.setProperty('--la', (Math.atan2(-p.x, p.y) * 180 / Math.PI).toFixed(1) + 'deg');
+    });
+  }
+
+  const ease = p => p < .5 ? 4 * p ** 3 : 1 - (-2 * p + 2) ** 3 / 2;
+  function tween(ms, step, done) {
+    st.busy = true;
+    const t0 = performance.now(), dur = still ? 0 : ms;
+    const tick = now => {
+      const p = dur ? Math.min(1, (now - t0) / dur) : 1;
+      step(ease(p), p);
+      if (p < 1) requestAnimationFrame(tick); else { st.busy = false; done(); }
+    };
+    tick(t0);
+  }
+
+  function settle() {
+    st.flips %= 2;
+    st.phi = st.flips ? 180 : 0;
+    st.theta = mod(st.theta, 360);
+    render(0);
+  }
+
+  function pointTo(n) {
+    const targetTheta = (n - 1) * 45;
+    const targetAx = ((n - 1) % 4) * 45;
+    
+    st.flips = 0;
+    st.phi = 0;
+    st.axis = (n - 1) % 4;
+    line.style.setProperty('--aa', st.axis * 45);
+    
+    const fromTheta = st.theta;
+    const fromPhi = st.phi;
+    
+    let dTheta = (targetTheta - fromTheta) % 360;
+    if (dTheta > 180) dTheta -= 360;
+    if (dTheta < -180) dTheta += 360;
+
+    st.ax = targetAx; 
+
+    tween(650, e => {
+      st.theta = fromTheta + dTheta * e;
+      st.phi = fromPhi + (0 - fromPhi) * e;
+      render(0);
+    }, settle);
+  }
+
+  function flip(dir, isTrick = false) {
+    if (st.busy) return;
+    const from = st.phi, to = from - 180 * dir;
+    st.flips += 1;
+    
+    // Determine when to apply the trick
+    const startOnBack = (from === 180);
+    let trickDone = false;
+
+    tween(950, (e, p) => {
+      // Apply the trick ONLY when the back face is guaranteed hidden
+      if (isTrick && !trickDone && (startOnBack ? e >= 0.5 : e >= 0)) {
+        trickDone = true;
+        
+        // Rotate ONLY the back face's content, not the coin itself
+        st.trick = mod(st.trick + 90 * dir, 360);
+        coin.style.setProperty('--back-trick', st.trick + 'deg');
+      }
+      
+      st.phi = from + (to - from) * e; 
+      render(still ? 0 : Math.sin(Math.PI * p) * 140); 
+    }, settle);
+  }
+
+  // --- Interaction Logic ---
+  let start = null;
+
+  stage.addEventListener('pointerdown', e => {
+    start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  });
+
+  stage.addEventListener('pointermove', e => {
+    if (!start || e.pointerId !== start.id) return;
+    const dx = e.clientX - start.x, dy = e.clientY - start.y;
+    if (Math.hypot(dx, dy) < 40) return;
+    
+    start = null;
+    const a = rad(st.ax);
+    const perp = dx * Math.cos(a) + dy * Math.sin(a);
+    const along = dx * Math.sin(a) - dy * Math.cos(a);
+    
+    if (Math.abs(perp) > Math.abs(along) * 1.2) {
+      // Calculate distance from center to the swipe path
+      const rect = coin.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      
+      const x1 = e.clientX - dx, y1 = e.clientY - dy; 
+      const x2 = e.clientX, y2 = e.clientY;           
+      
+      const num = Math.abs((y2 - y1) * cx - (x2 - x1) * cy + x2 * y1 - y2 * x1);
+      const den = Math.hypot(y2 - y1, x2 - x1);
+      const dist = num / den;
+      
+      // If the swipe cuts through the outer edge (far from center)
+      const isTrick = dist > coin.offsetWidth * 0.25;
+
+      flip(Math.sign(perp), isTrick);
+    } else {
+      line.classList.remove('hint'); void line.offsetWidth; line.classList.add('hint');
+    }
+  });
+
+  stage.addEventListener('pointerup', e => {
+    if (!start || e.pointerId !== start.id) return;
+    const rect = coin.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    
+    const angle = Math.atan2(e.clientY - cy, e.clientX - cx) * 180 / Math.PI;
+    let dir = Math.round((angle + 90) / 45);
+    dir = mod(dir, 8);
+    
+    pointTo(dir + 1);
+    start = null;
+  });
+
+  ['pointercancel'].forEach(t => addEventListener(t, () => { start = null; }));
+
+  addEventListener('keydown', e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (/^[1-8]$/.test(e.key)) pointTo(+e.key);
+    else if ((e.key === ' ' && !e.target.closest('button')) || e.key.toLowerCase() === 'f') { e.preventDefault(); flip(1, false); }
+  });
+  
+  addEventListener('resize', () => { if (!st.busy) render(0); });
+
+  settle();
+})();
+</script>
+</body>
+</html>
