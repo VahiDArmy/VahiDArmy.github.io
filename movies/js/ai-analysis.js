@@ -209,11 +209,17 @@ window.AIAnalysis = (function () {
   /** آیا متن احتمالاً وسط کار قطع شده؟ */
   function looksTruncated(text) {
     text = String(text || '').trim();
-    if (text.length < 500) return false;
-    /* پایان طبیعی جمله / بلوک */
-    if (/[.!?…»"'۔؟]\s*$/.test(text)) return false;
+    if (!text) return false;
+    /* markdown/bold باز */
+    if (/\*\*[^*]*$/.test(text)) return true;
+    if (/\*[^*\n]+$/.test(text)) return true;
+    /* تیتر یا لیست بدون ادامه */
+    if (/#{1,6}\s*\S*$/.test(text)) return true;
+    if (/^\s*\d+\.\s+\S*$/m.test(text.split('\n').pop() || '')) return true;
+    if (text.length < 400) return false;
+    /* پایان طبیعی */
+    if (/[.!?…»"'\u06D4\u061F)]\s*$/.test(text)) return false;
     if (/```\s*$/.test(text)) return false;
-    /* JSON کامل در انتها */
     if (/\}\s*$/.test(text) && text.lastIndexOf('{') >= 0) return false;
     return true;
   }

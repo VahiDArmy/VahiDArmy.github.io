@@ -492,11 +492,10 @@ window.Events = (function () {
       };
       renderPersonalityHistory();
       showPersonalitySuggestionActions(result || '', persSelectedKind);
-      showPersonalityContinueBar(panel);
+      var trunc = AIAnalysis.looksTruncated && AIAnalysis.looksTruncated(result || '');
+      showPersonalityContinueBar(panel, { truncated: trunc });
       Toast.success('تحلیل ذخیره شد');
-      if (AIAnalysis.looksTruncated && AIAnalysis.looksTruncated(result || '')) {
-        Toast.info('متن ممکن است ناقص باشد — می‌توانی «ادامه بده» را بزنی');
-      }
+      if (trunc) Toast.info('پاسخ ناقص است — دکمهٔ ادامه را بزن');
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
         panel.setStatus('لغو شد', 'done');
@@ -514,27 +513,55 @@ window.Events = (function () {
 
 
 
-  function showPersonalityContinueBar(panel) {
+  function showPersonalityContinueBar(panel, opts) {
+    opts = opts || {};
     var host = document.getElementById('pers-stream-host');
     if (!host) return;
     var old = document.getElementById('pers-continue-bar');
     if (old) old.remove();
 
-    var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
-      Utils.el('span', { class: 'pers-continue-hint' }, [
-        'اگر پاسخ وسط جمله قطع شد (سقف توکن / شبکه):'
+    var truncated = opts.truncated ||
+      (typeof AIAnalysis !== 'undefined' && AIAnalysis.looksTruncated &&
+        AIAnalysis.looksTruncated((persLastContext && persLastContext.result) || ''));
+
+    var bar = Utils.el('div', {
+      id: 'pers-continue-bar',
+      class: 'pers-continue-bar' + (truncated ? ' is-urgent' : '')
+    }, [
+      Utils.el('div', { class: 'pers-continue-text' }, [
+        Utils.el('strong', {}, [
+          truncated ? '⚠ پاسخ ناقص قطع شده' : 'ادامهٔ پاسخ'
+        ]),
+        Utils.el('span', { class: 'pers-continue-hint' }, [
+          truncated
+            ? 'مدل/شبکه متن را وسط کار تمام کرده. با همان مدل از همان‌جا ادامه بده.'
+            : 'اگر جایی کم است، می‌توانی ادامه بگیری.'
+        ])
       ]),
       Utils.el('button', {
         type: 'button',
-        class: 'btn btn-primary btn-sm',
+        class: 'btn btn-primary',
         id: 'btn-pers-continue'
       }, ['▶️ ادامه با همان مدل'])
     ]);
-    host.appendChild(bar);
+
+    /* همیشه بالای باکس افزودن به لیست — دیده شود */
+    var suggest = document.getElementById('pers-suggest-actions');
+    if (suggest && suggest.parentNode) {
+      suggest.parentNode.insertBefore(bar, suggest);
+    } else if (panel && panel.panel && panel.panel.parentNode) {
+      panel.panel.parentNode.insertBefore(bar, panel.panel.nextSibling);
+    } else {
+      host.insertBefore(bar, host.firstChild);
+    }
 
     document.getElementById('btn-pers-continue').addEventListener('click', function () {
       continuePersonalityAnalysis(panel);
     });
+
+    try {
+      bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {}
   }
 
   async function continuePersonalityAnalysis(panel) {
@@ -589,7 +616,9 @@ window.Events = (function () {
 
       renderPersonalityHistory();
       showPersonalitySuggestionActions(combined, persLastContext.kind || persSelectedKind);
-      showPersonalityContinueBar(panel);
+      showPersonalityContinueBar(panel, {
+        truncated: AIAnalysis.looksTruncated && AIAnalysis.looksTruncated(combined)
+      });
       Toast.success('ادامه به پاسخ اضافه شد');
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
