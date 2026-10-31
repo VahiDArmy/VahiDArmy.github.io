@@ -405,51 +405,66 @@ window.Events = (function () {
       ? AIAnalysis.formatMessagesForPreview(messages)
       : messages.map(function (m) { return m.role + ':\n' + m.content; }).join('\n\n'));
 
-    var confirmed = await new Promise(function (resolve) {
-      var pre = Utils.el('pre', {
-        class: 'pers-prompt-preview',
+    var editResult = await new Promise(function (resolve) {
+      var ta = Utils.el('textarea', {
+        class: 'pers-prompt-editor field-input',
+        id: 'pers-prompt-editor',
+        rows: 22,
         style: {
+          width: '100%',
           maxHeight: '55vh',
-          overflow: 'auto',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
+          minHeight: '280px',
+          fontFamily: 'var(--font-mono, monospace)',
           fontSize: '12px',
           direction: 'rtl',
           textAlign: 'right',
-          margin: '0',
+          whiteSpace: 'pre-wrap',
+          lineHeight: '1.5',
           padding: '12px',
-          background: 'var(--bg-2)',
-          border: '1px solid var(--border-1)'
+          boxSizing: 'border-box'
         }
-      }, [previewText]);
+      });
+      ta.value = previewText;
 
       var body = Utils.el('div', {}, [
         Utils.el('p', { style: { marginBottom: '10px', color: 'var(--text-2)' } }, [
-          'این همان پرامپتی است که ارسال می‌شود. اگر تأیید می‌کنی، اجرا شود.'
+          'پرامپت را بررسی و در صورت نیاز ویرایش کن. همان متنی که اینجا می‌بینی ارسال می‌شود.'
         ]),
-        pre
+        ta
       ]);
 
       Modal.open({
-        title: 'پیش‌نمایش پرامپت — قبل از ارسال',
+        title: 'ویرایش پرامپت — قبل از ارسال',
         icon: '📝',
         size: 'lg',
         body: body,
         footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
           Utils.el('button', {
             class: 'btn btn-ghost', type: 'button',
-            onclick: function () { Modal.close(); resolve(false); }
+            onclick: function () { Modal.close(); resolve(null); }
           }, ['انصراف']),
           Utils.el('button', {
             class: 'btn btn-primary', type: 'button',
-            onclick: function () { Modal.close(); resolve(true); }
+            onclick: function () {
+              var el = document.getElementById('pers-prompt-editor');
+              var val = el ? el.value : previewText;
+              Modal.close();
+              resolve(val);
+            }
           }, ['تأیید و ارسال'])
         ]),
-        onClose: function () { resolve(false); }
+        onClose: function () { resolve(null); }
       });
     });
 
-    if (!confirmed) return;
+    if (editResult == null) return;
+    var editedMessages = (AIAnalysis.parsePreviewToMessages
+      ? AIAnalysis.parsePreviewToMessages(editResult)
+      : [{ role: 'user', content: editResult }]);
+    if (!editedMessages || !editedMessages.length) {
+      Toast.error('پرامپت خالی است');
+      return;
+    }
 
     persRunning = true;
     var btn = document.getElementById('btn-run-personality');
@@ -477,14 +492,14 @@ window.Events = (function () {
     try {
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
+        messages: editedMessages,
         onToken: function (_c, full) { panel.appendText(full); }
       });
       panel.appendText(result || '');
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
       try {
-        var msgs = AIAnalysis.buildTasteAnalysisMessages(persSelectedKind);
-        var promptText = msgs.map(function (m) {
+        var promptText = (editedMessages || []).map(function (m) {
           return '## ' + m.role + '\n' + m.content;
         }).join('\n\n');
         AIAnalysis.saveTasteAnalysis(

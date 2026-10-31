@@ -117,9 +117,10 @@ window.AIAnalysis = (function () {
     });
 
     var system = [
-      'تو تحلیل‌گر سلیقه و شخصیت بیننده بر اساس آثار سینمایی هستی.',
-      'فقط از دادهٔ داده‌شده استفاده کن.',
-      'پاسخ فارسی، مفصل و عمیق با Markdown.'
+      'تو تحلیل‌گر ارشد سلیقه، شخصیت و روان‌شناسی تماشای سینمایی هستی.',
+      'فقط از دادهٔ داده‌شده استفاده کن؛ حدس بی‌پایه نزن.',
+      'پاسخ را فارسی با Markdown بنویس.',
+      'تحلیل باید همه‌جانبه، طولانی، مفصل و عمیق باشد — از خلاصه‌نویسی و کوتاه‌کردن خودداری کن.'
     ].join('\n');
 
     var user = [
@@ -134,13 +135,14 @@ window.AIAnalysis = (function () {
       lines.join('\n'),
       '',
       'درخواست:',
-      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را عمیق، مفصل و جامع تحلیل کن.',
+      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را به‌صورت همه‌جانبه، طولانی، مفصل و عمیق تحلیل کن.',
+      'نوع شخصیت MBTI احتمالی را هم با دلیل (بر اساس الگوی امتیازها و انتخاب آثار) مشخص کن.',
       'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
-      'دلیل پیشنهاد را بنویس.',
+      'دلیل پیشنهاد را مفصل بنویس.',
       '',
       'در انتهای پاسخ فقط این JSON را بگذار:',
       '```json',
-      '{"title":"...","original_title":"...","year":2020,"type":"' + kind + '","reason":"..."}',
+      '{"title":"...","original_title":"...","year":2020,"type":"' + kind + '","reason":"...","mbti":"XXXX"}',
       '```'
     ].join('\n');
 
@@ -188,7 +190,7 @@ window.AIAnalysis = (function () {
   async function analyzeTaste(options) {
     options = options || {};
     var kind = options.kind === 'series' ? 'series' : 'movie';
-    var messages = buildTasteAnalysisMessages(kind);
+    var messages = options.messages || buildTasteAnalysisMessages(kind);
     var full = '';
     await AI.chatStream({
       messages: messages,
@@ -202,6 +204,25 @@ window.AIAnalysis = (function () {
       onDone: function () {}
     });
     return full;
+  }
+
+  function parsePreviewToMessages(text) {
+    text = String(text || '').trim();
+    if (!text) return null;
+    var parts = text.split(/===== (SYSTEM|USER|ASSISTANT) =====/i);
+    if (parts.length >= 3) {
+      var messages = [];
+      for (var i = 1; i + 1 < parts.length; i += 2) {
+        var role = String(parts[i] || '').toLowerCase();
+        var content = String(parts[i + 1] || '').replace(/^\n+/, '').replace(/\n+$/, '');
+        if (role === 'system' || role === 'user' || role === 'assistant') {
+          messages.push({ role: role, content: content });
+        }
+      }
+      if (messages.length) return messages;
+    }
+    /* fallback: whole text as user */
+    return [{ role: 'user', content: text }];
   }
 
   function formatMessagesForPreview(messages) {
@@ -300,6 +321,7 @@ window.AIAnalysis = (function () {
     suggest: suggest,
     parseSuggestion: parseSuggestion,
     formatMessagesForPreview: formatMessagesForPreview,
+    parsePreviewToMessages: parsePreviewToMessages,
     buildTasteAnalysisMessages: buildTasteAnalysisMessages,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
     saveTasteAnalysis: saveTasteAnalysis
