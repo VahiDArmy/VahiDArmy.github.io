@@ -35,7 +35,7 @@ window.CONFIG = {
        باشند؛ اگر یکی از این دو تکراری بود، می‌تواند غیرفعال بماند (حذف نمی‌شود). */
     MODELS: [
       /* ---- Google مستقیم ---- */
-      { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', vendor: 'Google', provider: 'google', size: '—', context: '1M', speed: '—', note: 'مستقیم از Google — پیش‌فرض فعلی', tags: ['Google', 'مستقیم'], recommended: true, bestFor: 'analysis' },
+      { id: 'gemini-3.8-flash', label: 'Gemini 3.8 Flash', vendor: 'Google', provider: 'google', size: '—', context: '1M', speed: '—', note: 'مستقیم از Google — Edge به gemini-2.0-flash نگاشت می‌کند اگر 3.8 در API نباشد', tags: ['Google', 'مستقیم'], recommended: true, bestFor: 'analysis' },
 
       /* ---- OpenRouter (رایگان) ---- */
       { id: 'nvidia/nemotron-3-ultra-550b-a55b:free', label: 'Nemotron 3 Ultra', vendor: 'NVIDIA', provider: 'openrouter', size: '5.86T', context: '1M', speed: '44', note: 'قدرتمندترین — پیشنهاد اول برای تحلیل داستانی', tags: ['تحلیل عمیق', 'کانتکست بزرگ'], recommended: true, bestFor: 'analysis' },

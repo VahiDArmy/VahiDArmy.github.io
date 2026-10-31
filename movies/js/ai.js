@@ -109,16 +109,18 @@ window.AI = (function () {
   }
 
   function friendlyHttpError(status, msg) {
-    msg = msg || '';
-    if (status === 504 || /504|timeout|timed out|Gateway/i.test(msg)) {
-      return 'زمان پاسخ تمام شد (504). دوباره تلاش کن.';
+    msg = String(msg || '');
+    if (status === 401 || status === 403) return 'دسترسی مجاز نیست (کلید یا تنظیمات سرور).';
+    if (status === 429) return 'محدودیت نرخ — کمی بعد دوباره تلاش کن.';
+    if (status === 502 || /Provider returned error/i.test(msg)) {
+      return 'خطای واسط (502): ' + (msg || 'Provider returned error');
     }
-    if (status === 502) return 'خطای واسط (502): ' + (msg || 'پاسخ معتبر از سرور نیامد.');
-    if (status === 401 || status === 403) return 'دسترسی رد شد (' + status + ').';
-    if (status === 500 && /GEM_MALI|OPENROUTER_API_KEY|secret|misconfigured/i.test(msg)) {
-      return 'کلید روی سرور تنظیم نشده — ' + msg;
+    /* Supabase Edge: 546 = worker killed (often WallClockTime) */
+    if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
+      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند — مشکل مدل Google نیست، مشکل مسیر Edge است.';
     }
-    return msg || ('خطای سرور (HTTP ' + status + ')');
+    if (msg) return msg;
+    return 'خطای سرور (HTTP ' + status + ')';
   }
 
   async function chatStream(opts) {
