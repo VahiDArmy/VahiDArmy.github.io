@@ -1242,3 +1242,39 @@
   font-size: var(--fs-sm);
   color: var(--text-3);
 }
+
+.pers-history-card {
+  position: relative;
+  text-align: right;
+  cursor: pointer;
+}
+.pers-history-card.is-pinned {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.pers-pin-btn {
+  margin-right: auto;
+  background: transparent;
+  border: 1px solid var(--border-1);
+  color: var(--text-3);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 12px;
+  line-height: 1;
+}
+.pers-pin-btn.is-on,
+.pers-pin-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.pers-result-pin.is-on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.ai-stream-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}

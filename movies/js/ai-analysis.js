@@ -278,18 +278,46 @@ window.AIAnalysis = (function () {
     return full;
   }
 
+  function isTasteAnalysis(c) {
+    var tags = String(c && c.tags || '');
+    return tags.indexOf('taste_analysis') >= 0 || tags.indexOf('personality') >= 0;
+  }
+
+  function isPinnedAnalysis(c) {
+    return String(c && c.tags || '').indexOf('pinned') >= 0;
+  }
+
+  function tagList(tags) {
+    return String(tags || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  }
+
+  function withTag(tags, tag) {
+    var arr = tagList(tags);
+    if (arr.indexOf(tag) < 0) arr.push(tag);
+    return arr.join(',');
+  }
+
+  function withoutTag(tags, tag) {
+    return tagList(tags).filter(function (t) { return t !== tag; }).join(',');
+  }
+
+  /**
+   * سنجاق‌شده‌ها همیشه + تا limit تا از غیرسنجاق‌شده‌های اخیر
+   */
   function getLatestTasteAnalyses(limit) {
     limit = limit || 5;
     try {
-      return (DB.getAllConversations() || [])
-        .filter(function (c) {
-          var tags = String(c.tags || '');
-          return tags.indexOf('taste_analysis') >= 0 || tags.indexOf('personality') >= 0;
-        })
+      var all = (DB.getAllConversations() || [])
+        .filter(isTasteAnalysis)
         .sort(function (a, b) {
           return String(b.created_at || '').localeCompare(String(a.created_at || ''));
-        })
-        .slice(0, limit);
+        });
+      var pinned = all.filter(isPinnedAnalysis);
+      var pinnedIds = {};
+      pinned.forEach(function (c) { pinnedIds[c.id] = true; });
+      var recent = all.filter(function (c) { return !pinnedIds[c.id]; }).slice(0, limit);
+      /* pinned first (oldest pin order by date desc), then recent */
+      return pinned.concat(recent);
     } catch (e) {
       return [];
     }
@@ -311,6 +339,29 @@ window.AIAnalysis = (function () {
     }
   }
 
+  function pinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    var tags = withTag(c.tags, 'pinned');
+    DB.updateConversation(id, { tags: tags, prompt: c.prompt, response: c.response, ai_model: c.ai_model, title_context: c.title_context, title_id: c.title_id });
+    return true;
+  }
+
+  function unpinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    var tags = withoutTag(c.tags, 'pinned');
+    DB.updateConversation(id, { tags: tags, prompt: c.prompt, response: c.response, ai_model: c.ai_model, title_context: c.title_context, title_id: c.title_id });
+    return true;
+  }
+
+  function togglePinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    if (isPinnedAnalysis(c)) return unpinTasteAnalysis(id);
+    return pinTasteAnalysis(id);
+  }
+
   return {
     STAR_MEANINGS: STAR_MEANINGS,
     starMeaning: starMeaning,
@@ -324,6 +375,10 @@ window.AIAnalysis = (function () {
     parsePreviewToMessages: parsePreviewToMessages,
     buildTasteAnalysisMessages: buildTasteAnalysisMessages,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
-    saveTasteAnalysis: saveTasteAnalysis
+    saveTasteAnalysis: saveTasteAnalysis,
+    isPinnedAnalysis: isPinnedAnalysis,
+    pinTasteAnalysis: pinTasteAnalysis,
+    unpinTasteAnalysis: unpinTasteAnalysis,
+    togglePinTasteAnalysis: togglePinTasteAnalysis
   };
 })();

@@ -313,29 +313,53 @@ window.Events = (function () {
 
     if (!items.length) {
       list.appendChild(Utils.el('div', { class: 'pers-history-empty' }, [
-        'هنوز تحلیلی ذخیره نشده.'
+        'هنوز تحلیلی ذخیره نشده. یک تحلیل جدید اجرا کن.'
       ]));
       return;
     }
 
     items.forEach(function (item, idx) {
-      var preview = String(item.response || '').replace(/[#*_`]/g, ' ').trim().slice(0, 120);
-      var card = Utils.el('button', {
-        class: 'pers-history-card' + (activeId && item.id === activeId ? ' is-active' : ''),
-        type: 'button',
-        dataset: { id: item.id || '' }
+      var pinned = (typeof AIAnalysis !== 'undefined' && AIAnalysis.isPinnedAnalysis)
+        ? AIAnalysis.isPinnedAnalysis(item) : false;
+      var preview = String(item.response || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+      var card = Utils.el('div', {
+        class: 'pers-history-card' + (activeId && item.id === activeId ? ' is-active' : '') + (pinned ? ' is-pinned' : ''),
+        dataset: { id: item.id }
       }, [
         Utils.el('div', { class: 'pers-history-card-top' }, [
-          Utils.el('span', { class: 'pers-history-idx' }, ['#' + (idx + 1)]),
-          Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)])
+          Utils.el('span', { class: 'pers-history-idx' }, [pinned ? '📌' : ('#' + (idx + 1))]),
+          Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)]),
+          Utils.el('button', {
+            type: 'button',
+            class: 'pers-pin-btn' + (pinned ? ' is-on' : ''),
+            title: pinned ? 'برداشتن سنجاق (دیگر دائمی نیست)' : 'سنجاق دائمی',
+            dataset: { id: item.id }
+          }, [pinned ? '📌' : '📍'])
         ]),
         Utils.el('div', { class: 'pers-history-model' }, [item.ai_model || '—']),
         Utils.el('div', { class: 'pers-history-preview' }, [preview || '(خالی)'])
       ]);
-      card.addEventListener('click', function () {
-        showPersonalityResult(item);
+      card.addEventListener('click', function (ev) {
+        if (ev.target.closest && ev.target.closest('.pers-pin-btn')) return;
+        var fresh = DB.getConversation(item.id) || item;
+        showPersonalityResult(fresh);
         renderPersonalityHistory(item.id);
       });
+      var pinBtn = card.querySelector('.pers-pin-btn');
+      if (pinBtn) {
+        pinBtn.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          try {
+            AIAnalysis.togglePinTasteAnalysis(item.id);
+            var nowPinned = AIAnalysis.isPinnedAnalysis(DB.getConversation(item.id) || item);
+            Toast.success(nowPinned ? 'تحلیل سنجاق شد — دائمی نگه داشته می‌شود' : 'سنجاق برداشته شد');
+            renderPersonalityHistory(item.id);
+          } catch (err) {
+            Toast.error(err.message || 'خطا');
+          }
+        });
+      }
       list.appendChild(card);
     });
   }
@@ -346,12 +370,28 @@ window.Events = (function () {
     if (empty) empty.hidden = true;
     if (!host) return;
     host.innerHTML = '';
+    item = DB.getConversation(item.id) || item;
+    var pinned = (typeof AIAnalysis !== 'undefined' && AIAnalysis.isPinnedAnalysis)
+      ? AIAnalysis.isPinnedAnalysis(item) : false;
     var md = (typeof AIUI !== 'undefined' && AIUI.renderMarkdown)
       ? AIUI.renderMarkdown(item.response || '')
       : Utils.esc(item.response || '');
+    var pinBtn = Utils.el('button', {
+      type: 'button',
+      class: 'btn btn-ghost btn-sm pers-result-pin' + (pinned ? ' is-on' : '')
+    }, [pinned ? '📌 برداشتن سنجاق' : '📍 سنجاق دائمی']);
+    pinBtn.addEventListener('click', function () {
+      AIAnalysis.togglePinTasteAnalysis(item.id);
+      var now = AIAnalysis.isPinnedAnalysis(DB.getConversation(item.id) || item);
+      Toast.success(now ? 'دائمی شد' : 'سنجاق برداشته شد');
+      showPersonalityResult(DB.getConversation(item.id) || item);
+      renderPersonalityHistory(item.id);
+    });
     var body = Utils.el('div', { class: 'ai-stream-panel' }, [
       Utils.el('div', { class: 'ai-stream-head' }, [
-        Utils.el('div', { class: 'ai-stream-title' }, ['تحلیل ذخیره‌شده']),
+        Utils.el('div', { class: 'ai-stream-title' }, [
+          (pinned ? '📌 ' : '') + 'تحلیل ذخیره‌شده'
+        ]),
         Utils.el('div', { class: 'ai-stream-status', dataset: { state: 'done' } }, [
           Utils.el('span', { class: 'ai-status-dot' }),
           Utils.el('span', { class: 'ai-status-text' }, [formatPersDate(item.created_at)])
@@ -361,7 +401,8 @@ window.Events = (function () {
         Utils.el('div', { class: 'ai-stream-content', html: md })
       ]),
       Utils.el('div', { class: 'ai-stream-foot' }, [
-        Utils.el('span', { class: 'pers-foot-model' }, [item.ai_model || ''])
+        Utils.el('span', { class: 'pers-foot-model' }, [item.ai_model || '']),
+        pinBtn
       ])
     ]);
     host.appendChild(body);
