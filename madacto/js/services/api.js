@@ -6,60 +6,42 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY, EDGE_FUNCTION_URL } from '../config.js';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { 
-    persistSession: true, 
-    autoRefreshToken: true, 
-    storageKey: 'office-auth'
-  }
+  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'office-auth' }
 });
 
-// Normalization Helper
 export function normalizeName(name) {
   if (!name) return '';
-  return name
-    .replace(/ي/g, 'ی')
-    .replace(/ك/g, 'ک')
-    .replace(/\s+/g, '')
-    .trim();
+  return name.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, '').trim();
 }
 
 export const apiService = {
-  // Fetch ALL meals to build the multi-week view
   async getAllMeals() {
     const { data, error } = await supabase.from('meals').select('*');
     if (error) throw error;
     return data || [];
   },
 
-  // Fetch ALL votes for weekly score calculation
   async getAllVotes() {
     const { data, error } = await supabase.from('meal_votes').select('*');
     if (error) throw error;
     return data || [];
   },
 
-  // Fetch all votes joined with meal names for Overall Calculation
   async getOverallScores() {
-    const { data, error } = await supabase
-      .from('meal_votes')
-      .select('vote, meals!inner(name)');
+    const { data, error } = await supabase.from('meal_votes').select('vote, meals!inner(name)');
     if (error) throw error;
-    
     const scores = {};
     data.forEach(v => {
       if (!v.meals || !v.meals.name) return;
-      const norm = normalizeName(v.meals.name);
-      scores[norm] = (scores[norm] || 0) + v.vote;
+      scores[normalizeName(v.meals.name)] = (scores[normalizeName(v.meals.name)] || 0) + v.vote;
     });
     return scores;
   },
 
-  // Get unique meal names for datalist autocomplete
   async getAllMealNames() {
     const { data, error } = await supabase.from('meals').select('name');
     if (error) throw error;
-    const uniqueNames = [...new Set(data.map(m => m.name.trim()))];
-    return uniqueNames.sort();
+    return [...new Set(data.map(m => m.name.trim()))].sort();
   },
 
   async getMyVotes() {
@@ -91,18 +73,32 @@ export const apiService = {
     if (error) throw error;
   },
 
-  async extractFromImage(file) {
+  // --- Async AI Extraction Logic ---
+
+  async startImageExtraction(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) throw new Error('Not authenticated');
+
           const res = await fetch(EDGE_FUNCTION_URL, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Authorization': `Bearer ${session.access_token}`,
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ image: reader.result })
           });
-          if (!res.ok) throw new Error('خطا در ارتباط با هوش مصنوعی');
-          resolve(await res.json());
+          
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.error || 'Failed to start extraction');
+          }
+          
+          const { jobId } = await res.json();
+          resolve(jobId);
         } catch (err) {
           reject(err);
         }
@@ -110,5 +106,16 @@ export const apiService = {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  },
+
+  async checkJobStatus(jobId) {
+    const { data, error } = await supabase
+      .from('ai_extraction_jobs')
+      .select('*')
+      .eq('id', jobId)
+      .single();
+    
+    if (error) throw error;
+    return data;
   }
 };
