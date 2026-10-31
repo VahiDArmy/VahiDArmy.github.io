@@ -102,7 +102,23 @@ export function renderUpload(root) {
   let extractedData = [];
   let pollingInterval = null;
 
-  // --- Core Processing Logic ---
+  function showErrorModal(title, message) {
+    const content = document.createElement('div');
+    content.innerHTML = `
+      <div style="background: var(--danger-50); border: 1px solid var(--danger-100); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
+        <p style="margin: 0; font-size: 13px; color: var(--danger-700); font-weight: bold;">${title}</p>
+      </div>
+      <p style="font-size: 12px; margin-bottom: 8px;">جزئیات خطا (برای کپی کردن انتخاب کنید):</p>
+      <textarea style="width: 100%; height: 120px; font-family: monospace; font-size: 11px; direction: ltr; padding: 8px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-subtle);" readonly>${message}</textarea>
+    `;
+    
+    openModal({
+      title: 'خطای سیستم',
+      content: content,
+      actions: [{ label: 'بستن', onClick: () => document.getElementById('modal-root').innerHTML = '' }]
+    });
+  }
+
   function processAIResult(result) {
     if (!result.days || result.days.length === 0) {
       throw new Error('داده‌ای استخراج نشد.');
@@ -195,7 +211,6 @@ export function renderUpload(root) {
     previewState.style.display = 'block';
   }
 
-  // --- File Upload & Polling Logic ---
   fileInput.onchange = async (e) => {
     const file = e.target.files[0];
     fileInput.value = '';
@@ -206,20 +221,18 @@ export function renderUpload(root) {
     loadingStatusText.textContent = 'در حال ارسال عکس...';
 
     try {
-      // 1. Start Job
       const jobId = await apiService.startImageExtraction(file);
       
-      loadingStatusText.textContent = 'هوش مصنوعی در حال خواندن منو است (ممکن است کمی طول بکشد)...';
+      loadingStatusText.textContent = 'هوش مصنوعی در حال خواندن منو است...';
 
-      // 2. Poll for results
       let attempts = 0;
-      const maxAttempts = 40; // 40 * 3s = 120 seconds timeout
+      const maxAttempts = 40;
 
       pollingInterval = setInterval(async () => {
         attempts++;
         if (attempts > maxAttempts) {
           clearInterval(pollingInterval);
-          showToast('زمان پردازش به پایان رسید. لطفاً دوباره تلاش کنید.', 'error');
+          showErrorModal('زمان پردازش به پایان رسید', 'پردازش بیش از حد طول کشید. لطفاً دوباره تلاش کنید.');
           loadingState.style.display = 'none';
           uploadState.style.display = 'block';
           return;
@@ -233,24 +246,23 @@ export function renderUpload(root) {
             processAIResult(job.result);
           } else if (job.status === 'failed') {
             clearInterval(pollingInterval);
-            showToast('خطای هوش مصنوعی: ' + job.error, 'error');
+            showErrorModal('خطای هوش مصنوعی', job.error || 'پردازش ناموفق بود.');
             loadingState.style.display = 'none';
             uploadState.style.display = 'block';
           }
-          // If 'processing', just wait for the next interval
         } catch (err) {
           console.warn('Polling error', err);
         }
       }, 3000);
 
     } catch (err) {
-      showToast('خطا در ارتباط با سرور: ' + err.message, 'error');
+      // Show rich error modal instead of just toast
+      showErrorModal('خطای اتصال به سرور', err.message);
       loadingState.style.display = 'none';
       uploadState.style.display = 'block';
     }
   };
 
-  // --- Manual AI Chat ---
   document.getElementById('btn-manual-ai').onclick = () => {
     const wrapper = document.createElement('div');
     const p1 = document.createElement('p');
@@ -311,7 +323,6 @@ export function renderUpload(root) {
     });
   };
 
-  // --- Render Preview ---
   function renderPreview() {
     previewTbody.innerHTML = '';
     extractedData.forEach((day, dIdx) => {
