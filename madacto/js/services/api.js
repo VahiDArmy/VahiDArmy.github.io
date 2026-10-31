@@ -73,28 +73,45 @@ export const apiService = {
     if (error) throw error;
   },
 
-  // --- Async AI Extraction Logic ---
-
+  // RICH ERROR HANDLING FOR FETCH
   async startImageExtraction(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const { data: { session } } = await supabase.auth.getSession();
-          if (!session) throw new Error('Not authenticated');
+          if (!session) throw new Error('شما وارد نشده اید.');
 
-          const res = await fetch(EDGE_FUNCTION_URL, {
-            method: 'POST',
-            headers: { 
-              'Authorization': `Bearer ${session.access_token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ image: reader.result })
-          });
+          let res;
+          try {
+            res = await fetch(EDGE_FUNCTION_URL, {
+              method: 'POST',
+              headers: { 
+                'Authorization': `Bearer ${session.access_token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ image: reader.result })
+            });
+          } catch (networkError) {
+            // CORS or Network failure caught here
+            throw new Error(`خطای شبکه یا CORS: ${networkError.message}. لطفا کنسول مرورگر را بررسی کنید.`);
+          }
           
+          // Try to read the response body for detailed server errors
           if (!res.ok) {
-            const errData = await res.json();
-            throw new Error(errData.error || 'Failed to start extraction');
+            let errorDetails = '';
+            try {
+              const contentType = res.headers.get('content-type');
+              if (contentType && contentType.includes('application/json')) {
+                const errData = await res.json();
+                errorDetails = errData.error || JSON.stringify(errData);
+              } else {
+                errorDetails = await res.text();
+              }
+            } catch (e) {
+              errorDetails = 'پاسخ نامفهوم از سرور';
+            }
+            throw new Error(`خطای سرور (${res.status}): ${errorDetails}`);
           }
           
           const { jobId } = await res.json();
@@ -103,7 +120,7 @@ export const apiService = {
           reject(err);
         }
       };
-      reader.onerror = reject;
+      reader.onerror = () => reject(new Error('خطا در خواندن فایل عکس'));
       reader.readAsDataURL(file);
     });
   },
