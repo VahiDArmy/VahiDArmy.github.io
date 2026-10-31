@@ -8,6 +8,10 @@ import { showToast } from '../utils/ui.js';
 export function renderLogin(root, onSuccess) {
   const isSignup = window.location.hash === '#/signup';
 
+  // Build the exact redirect URL for email confirmation
+  const baseUrl = window.location.origin + window.location.pathname;
+  const redirectUrl = `${baseUrl}#/auth/callback`;
+
   root.innerHTML = `
     <div class="auth-page">
       <div class="auth-card">
@@ -36,7 +40,7 @@ export function renderLogin(root, onSuccess) {
         </form>
         <div style="text-align:center;margin-top:16px;font-size:13px">
           ${isSignup 
-            ? `حساب دارید؟ <a href="#/">وارد شوید</a>` 
+            ? `حساب دارید؟ <a href="#/login">وارد شوید</a>` 
             : `حساب ندارید؟ <a href="#/signup">ثبت‌نام کنید</a>`}
           <br><br>
           <a href="#/" style="color: var(--text-tertiary); font-size: 12px;">&rarr; بازگشت به جدول غذا (مشاهده به عنوان مهمان)</a>
@@ -71,7 +75,8 @@ export function renderLogin(root, onSuccess) {
           options: {
             data: {
               display_name: displayName
-            }
+            },
+            emailRedirectTo: redirectUrl // <--- هدایت به سایت ماداکتو
           }
         });
         if (error) throw error;
