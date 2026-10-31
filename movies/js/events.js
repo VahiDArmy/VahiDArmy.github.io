@@ -442,71 +442,6 @@ window.Events = (function () {
       return;
     }
 
-    var previewText = (AIAnalysis.formatMessagesForPreview
-      ? AIAnalysis.formatMessagesForPreview(messages)
-      : messages.map(function (m) { return m.role + ':\n' + m.content; }).join('\n\n'));
-
-    var editResult = await new Promise(function (resolve) {
-      var ta = Utils.el('textarea', {
-        class: 'pers-prompt-editor field-input',
-        id: 'pers-prompt-editor',
-        rows: 22,
-        style: {
-          width: '100%',
-          maxHeight: '55vh',
-          minHeight: '280px',
-          fontFamily: 'var(--font-mono, monospace)',
-          fontSize: '12px',
-          direction: 'rtl',
-          textAlign: 'right',
-          whiteSpace: 'pre-wrap',
-          lineHeight: '1.5',
-          padding: '12px',
-          boxSizing: 'border-box'
-        }
-      });
-      ta.value = previewText;
-
-      var body = Utils.el('div', {}, [
-        Utils.el('p', { style: { marginBottom: '10px', color: 'var(--text-2)' } }, [
-          'پرامپت را بررسی و در صورت نیاز ویرایش کن. همان متنی که اینجا می‌بینی ارسال می‌شود.'
-        ]),
-        ta
-      ]);
-
-      Modal.open({
-        title: 'ویرایش پرامپت — قبل از ارسال',
-        icon: '📝',
-        size: 'lg',
-        body: body,
-        footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
-          Utils.el('button', {
-            class: 'btn btn-ghost', type: 'button',
-            onclick: function () { Modal.close(); resolve(null); }
-          }, ['انصراف']),
-          Utils.el('button', {
-            class: 'btn btn-primary', type: 'button',
-            onclick: function () {
-              var el = document.getElementById('pers-prompt-editor');
-              var val = el ? el.value : previewText;
-              Modal.close();
-              resolve(val);
-            }
-          }, ['تأیید و ارسال'])
-        ]),
-        onClose: function () { resolve(null); }
-      });
-    });
-
-    if (editResult == null) return;
-    var editedMessages = (AIAnalysis.parsePreviewToMessages
-      ? AIAnalysis.parsePreviewToMessages(editResult)
-      : [{ role: 'user', content: editResult }]);
-    if (!editedMessages || !editedMessages.length) {
-      Toast.error('پرامپت خالی است');
-      return;
-    }
-
     persRunning = true;
     var btn = document.getElementById('btn-run-personality');
     if (btn) { btn.disabled = true; btn.textContent = 'در حال تحلیل…'; }
@@ -533,14 +468,14 @@ window.Events = (function () {
     try {
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
-        messages: editedMessages,
+        messages: messages,
         onToken: function (_c, full) { panel.appendText(full); }
       });
       panel.appendText(result || '');
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
       try {
-        var promptText = (editedMessages || []).map(function (m) {
+        var promptText = (messages || []).map(function (m) {
           return '## ' + m.role + '\n' + m.content;
         }).join('\n\n');
         AIAnalysis.saveTasteAnalysis(
@@ -553,9 +488,14 @@ window.Events = (function () {
       showPersonalitySuggestionActions(result || '', persSelectedKind);
       Toast.success('تحلیل ذخیره شد');
     } catch (err) {
-      panel.setStatus('خطا', 'error');
-      panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
-      Toast.error(err.message || 'خطا در تحلیل');
+      if (err && err.code === 'PROMPT_CANCELLED') {
+        panel.setStatus('لغو شد', 'done');
+        Toast.info('ارسال لغو شد');
+      } else {
+        panel.setStatus('خطا', 'error');
+        panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
+        Toast.error(err.message || 'خطا در تحلیل');
+      }
     } finally {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }

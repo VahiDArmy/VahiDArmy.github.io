@@ -1278,3 +1278,5 @@
   gap: 8px;
   justify-content: space-between;
 }
+
+.ai-prompt-gate-editor { resize: vertical; }

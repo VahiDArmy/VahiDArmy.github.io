@@ -123,13 +123,118 @@ window.AI = (function () {
     return 'خطای سرور (HTTP ' + status + ')';
   }
 
+
+  function formatMessagesPreview(messages) {
+    return (messages || []).map(function (m) {
+      return '===== ' + String(m.role || 'user').toUpperCase() + ' =====\n' + String(m.content || '');
+    }).join('\n\n');
+  }
+
+  function parseMessagesPreview(text) {
+    text = String(text || '').trim();
+    if (!text) return null;
+    var parts = text.split(/===== (SYSTEM|USER|ASSISTANT) =====/i);
+    if (parts.length >= 3) {
+      var messages = [];
+      for (var i = 1; i + 1 < parts.length; i += 2) {
+        var role = String(parts[i] || '').toLowerCase();
+        var content = String(parts[i + 1] || '').replace(/^\n+/, '').replace(/\n+$/, '');
+        if (role === 'system' || role === 'user' || role === 'assistant') {
+          messages.push({ role: role, content: content });
+        }
+      }
+      if (messages.length) return messages;
+    }
+    return [{ role: 'user', content: text }];
+  }
+
+  /**
+   * قبل از هر ارسال به Edge: نمایش و ویرایش پرامپت.
+   * resolve: messages ویرایش‌شده | null اگر انصراف
+   */
+  function confirmPrompt(messages, meta) {
+    meta = meta || {};
+    return new Promise(function (resolve) {
+      if (typeof Modal === 'undefined' || !Modal.open) {
+        resolve(messages);
+        return;
+      }
+      var previewText = formatMessagesPreview(messages);
+      var ta = document.createElement('textarea');
+      ta.className = 'field-input ai-prompt-gate-editor';
+      ta.rows = 20;
+      ta.value = previewText;
+      ta.setAttribute('style',
+        'width:100%;max-height:55vh;min-height:260px;font-family:var(--font-mono,monospace);' +
+        'font-size:12px;direction:rtl;text-align:right;white-space:pre-wrap;line-height:1.5;' +
+        'padding:12px;box-sizing:border-box');
+
+      var hint = document.createElement('p');
+      hint.setAttribute('style', 'margin:0 0 10px;color:var(--text-2);font-size:13px');
+      hint.textContent = (meta.title ? meta.title + ' — ' : '') +
+        'این پرامپت دقیقاً ارسال می‌شود. در صورت نیاز ویرایش کن، بعد تأیید.';
+
+      var wrap = document.createElement('div');
+      wrap.appendChild(hint);
+      wrap.appendChild(ta);
+
+      var resolved = false;
+      function finish(val) {
+        if (resolved) return;
+        resolved = true;
+        resolve(val);
+      }
+
+      var footer = document.createElement('div');
+      footer.className = 'flex gap-3 w-full justify-end';
+      var btnCancel = document.createElement('button');
+      btnCancel.type = 'button';
+      btnCancel.className = 'btn btn-ghost';
+      btnCancel.textContent = 'انصراف';
+      btnCancel.onclick = function () { Modal.close(); finish(null); };
+      var btnOk = document.createElement('button');
+      btnOk.type = 'button';
+      btnOk.className = 'btn btn-primary';
+      btnOk.textContent = 'تأیید و ارسال';
+      btnOk.onclick = function () {
+        var edited = parseMessagesPreview(ta.value);
+        Modal.close();
+        finish(edited);
+      };
+      footer.appendChild(btnCancel);
+      footer.appendChild(btnOk);
+
+      Modal.open({
+        title: 'پرامپت قبل از ارسال',
+        icon: '📝',
+        size: 'lg',
+        body: wrap,
+        footer: footer,
+        onClose: function () { finish(null); }
+      });
+    });
+  }
+
   async function chatStream(opts) {
     opts = opts || {};
-    const messages = opts.messages || [];
+    let messages = opts.messages || [];
     const temperature = opts.temperature != null ? opts.temperature : 0.5;
     const onToken = opts.onToken || function () {};
     const onDone = opts.onDone || function () {};
     const signal = opts.signal;
+
+    /* همهٔ فراخوانی‌های AI: پرامپت را قبل از ارسال ببین / ویرایش کن */
+    if (!opts.skipPreview) {
+      const confirmed = await confirmPrompt(messages, {
+        title: opts.previewTitle || (opts.model || getModel())
+      });
+      if (!confirmed) {
+        const err = new Error('ارسال لغو شد');
+        err.code = 'PROMPT_CANCELLED';
+        throw err;
+      }
+      messages = confirmed;
+    }
 
     aiShow();
 
@@ -384,6 +489,8 @@ window.AI = (function () {
     chatStream: chatStream,
     chat: chat,
     chatJSON: chatJSON,
+    confirmPrompt: confirmPrompt,
+    formatMessagesPreview: formatMessagesPreview,
     abort: abort,
     testConnection: testConnection,
     extractJsonAndText: extractJsonAndText,
