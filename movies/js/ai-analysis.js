@@ -206,6 +206,54 @@ window.AIAnalysis = (function () {
     return full;
   }
 
+  /** آیا متن احتمالاً وسط کار قطع شده؟ */
+  function looksTruncated(text) {
+    text = String(text || '').trim();
+    if (text.length < 500) return false;
+    /* پایان طبیعی جمله / بلوک */
+    if (/[.!?…»"'۔؟]\s*$/.test(text)) return false;
+    if (/```\s*$/.test(text)) return false;
+    /* JSON کامل در انتها */
+    if (/\}\s*$/.test(text) && text.lastIndexOf('{') >= 0) return false;
+    return true;
+  }
+
+  /**
+   * ادامهٔ همان تحلیل با همان مدل
+   * originalMessages: پیام‌های اولیه (system+user)
+   * partialAssistant: متن ناقص تا اینجا
+   */
+  async function continueTasteAnalysis(options) {
+    options = options || {};
+    var original = options.messages || [];
+    var partial = String(options.partial || '').trim();
+    if (!partial) throw new Error('متنی برای ادامه وجود ندارد.');
+
+    var contUser =
+      'پاسخ قبلی تو ناقص قطع شده است. از همان جایی که رها شد ادامه بده.\n' +
+      'هیچ بخشی از متن قبلی را تکرار نکن.\n' +
+      'اگر به بلوک JSON انتهایی نرسیده بودی، در پایان همان JSON را کامل کن.';
+
+    var messages = original.slice();
+    messages.push({ role: 'assistant', content: partial });
+    messages.push({ role: 'user', content: contUser });
+
+    var full = '';
+    await AI.chatStream({
+      messages: messages,
+      temperature: 0.55,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 8192,
+      signal: options.signal,
+      previewTitle: options.previewTitle || 'ادامه تحلیل',
+      onToken: function (t) {
+        full += t;
+        if (options.onToken) options.onToken(t, full);
+      },
+      onDone: function () {}
+    });
+    return full;
+  }
+
   function parsePreviewToMessages(text) {
     text = String(text || '').trim();
     if (!text) return null;
@@ -369,6 +417,8 @@ window.AIAnalysis = (function () {
     buildSuggestMessages: buildSuggestMessages,
     legendBlock: legendBlock,
     analyzeTaste: analyzeTaste,
+    continueTasteAnalysis: continueTasteAnalysis,
+    looksTruncated: looksTruncated,
     suggest: suggest,
     parseSuggestion: parseSuggestion,
     formatMessagesForPreview: formatMessagesForPreview,

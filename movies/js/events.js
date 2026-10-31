@@ -287,6 +287,7 @@ window.Events = (function () {
      ========================================================= */
   var persPanel = null;
   var persRunning = false;
+  var persLastContext = null; /* { messages, result, kind } */
   var persSelectedKind = 'movie';
 
   function formatPersDate(iso) {
@@ -484,9 +485,18 @@ window.Events = (function () {
           (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''
         );
       } catch (e2) { console.error(e2); }
+      persLastContext = {
+        messages: messages,
+        result: result || '',
+        kind: persSelectedKind
+      };
       renderPersonalityHistory();
       showPersonalitySuggestionActions(result || '', persSelectedKind);
+      showPersonalityContinueBar(panel);
       Toast.success('تحلیل ذخیره شد');
+      if (AIAnalysis.looksTruncated && AIAnalysis.looksTruncated(result || '')) {
+        Toast.info('متن ممکن است ناقص باشد — می‌توانی «ادامه بده» را بزنی');
+      }
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
         panel.setStatus('لغو شد', 'done');
@@ -502,6 +512,99 @@ window.Events = (function () {
     }
   }
 
+
+
+  function showPersonalityContinueBar(panel) {
+    var host = document.getElementById('pers-stream-host');
+    if (!host) return;
+    var old = document.getElementById('pers-continue-bar');
+    if (old) old.remove();
+
+    var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
+      Utils.el('span', { class: 'pers-continue-hint' }, [
+        'اگر پاسخ وسط جمله قطع شد (سقف توکن / شبکه):'
+      ]),
+      Utils.el('button', {
+        type: 'button',
+        class: 'btn btn-primary btn-sm',
+        id: 'btn-pers-continue'
+      }, ['▶️ ادامه با همان مدل'])
+    ]);
+    host.appendChild(bar);
+
+    document.getElementById('btn-pers-continue').addEventListener('click', function () {
+      continuePersonalityAnalysis(panel);
+    });
+  }
+
+  async function continuePersonalityAnalysis(panel) {
+    if (persRunning) return;
+    if (!persLastContext || !persLastContext.result) {
+      Toast.warning('تحلیل قبلی برای ادامه در دسترس نیست');
+      return;
+    }
+    if (typeof AIAnalysis === 'undefined' || !AIAnalysis.continueTasteAnalysis) {
+      Toast.error('ادامه پشتیبانی نمی‌شود');
+      return;
+    }
+
+    persRunning = true;
+    var btn = document.getElementById('btn-pers-continue');
+    var runBtn = document.getElementById('btn-run-personality');
+    if (btn) { btn.disabled = true; btn.textContent = 'در حال ادامه…'; }
+    if (runBtn) runBtn.disabled = true;
+
+    if (panel && panel.setStatus) panel.setStatus('ادامه استریم…', 'loading');
+
+    var before = String(persLastContext.result || '');
+    try {
+      var more = await AIAnalysis.continueTasteAnalysis({
+        messages: persLastContext.messages,
+        partial: before,
+        onToken: function (_c, full) {
+          if (panel && panel.appendText) {
+            panel.appendText(before + '\n\n' + full);
+          }
+        }
+      });
+      var combined = before;
+      if (more && String(more).trim()) {
+        combined = before + (before.endsWith('\n') ? '\n' : '\n\n') + String(more).trim();
+      }
+      persLastContext.result = combined;
+      if (panel && panel.appendText) panel.appendText(combined);
+      if (panel && panel.setStatus) panel.setStatus('ادامه آماده شد', 'done');
+      if (panel && panel.setModelBadge) panel.setModelBadge();
+
+      try {
+        var promptText = (persLastContext.messages || []).map(function (m) {
+          return '## ' + m.role + '\n' + m.content;
+        }).join('\n\n');
+        AIAnalysis.saveTasteAnalysis(
+          promptText + '\n\n## continue',
+          combined,
+          (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''
+        );
+      } catch (e2) { console.error(e2); }
+
+      renderPersonalityHistory();
+      showPersonalitySuggestionActions(combined, persLastContext.kind || persSelectedKind);
+      showPersonalityContinueBar(panel);
+      Toast.success('ادامه به پاسخ اضافه شد');
+    } catch (err) {
+      if (err && err.code === 'PROMPT_CANCELLED') {
+        Toast.info('ادامه لغو شد');
+        if (panel && panel.setStatus) panel.setStatus('لغو شد', 'done');
+      } else {
+        Toast.error(err.message || 'خطا در ادامه');
+        if (panel && panel.setStatus) panel.setStatus('خطا', 'error');
+      }
+    } finally {
+      persRunning = false;
+      if (btn) { btn.disabled = false; btn.textContent = '▶️ ادامه با همان مدل'; }
+      if (runBtn) runBtn.disabled = false;
+    }
+  }
 
   function showPersonalitySuggestionActions(resultText, kind) {
     var host = document.getElementById('pers-stream-host');
