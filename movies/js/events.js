@@ -392,6 +392,65 @@ window.Events = (function () {
       Toast.error('ماژول تحلیل در دسترس نیست');
       return;
     }
+
+    var messages;
+    try {
+      messages = AIAnalysis.buildTasteAnalysisMessages(persSelectedKind);
+    } catch (errBuild) {
+      Toast.error(errBuild.message || 'ساخت پرامپت ناموفق');
+      return;
+    }
+
+    var previewText = (AIAnalysis.formatMessagesForPreview
+      ? AIAnalysis.formatMessagesForPreview(messages)
+      : messages.map(function (m) { return m.role + ':\n' + m.content; }).join('\n\n'));
+
+    var confirmed = await new Promise(function (resolve) {
+      var pre = Utils.el('pre', {
+        class: 'pers-prompt-preview',
+        style: {
+          maxHeight: '55vh',
+          overflow: 'auto',
+          whiteSpace: 'pre-wrap',
+          wordBreak: 'break-word',
+          fontSize: '12px',
+          direction: 'rtl',
+          textAlign: 'right',
+          margin: '0',
+          padding: '12px',
+          background: 'var(--bg-2)',
+          border: '1px solid var(--border-1)'
+        }
+      }, [previewText]);
+
+      var body = Utils.el('div', {}, [
+        Utils.el('p', { style: { marginBottom: '10px', color: 'var(--text-2)' } }, [
+          'این همان پرامپتی است که ارسال می‌شود. اگر تأیید می‌کنی، اجرا شود.'
+        ]),
+        pre
+      ]);
+
+      Modal.open({
+        title: 'پیش‌نمایش پرامپت — قبل از ارسال',
+        icon: '📝',
+        size: 'lg',
+        body: body,
+        footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+          Utils.el('button', {
+            class: 'btn btn-ghost', type: 'button',
+            onclick: function () { Modal.close(); resolve(false); }
+          }, ['انصراف']),
+          Utils.el('button', {
+            class: 'btn btn-primary', type: 'button',
+            onclick: function () { Modal.close(); resolve(true); }
+          }, ['تأیید و ارسال'])
+        ]),
+        onClose: function () { resolve(false); }
+      });
+    });
+
+    if (!confirmed) return;
+
     persRunning = true;
     var btn = document.getElementById('btn-run-personality');
     if (btn) { btn.disabled = true; btn.textContent = 'در حال تحلیل…'; }
@@ -450,7 +509,8 @@ window.Events = (function () {
 
   function showPersonalitySuggestionActions(resultText, kind) {
     var host = document.getElementById('pers-stream-host');
-    if (!host) return;
+    var wrap = document.getElementById('pers-stream-wrap') || host;
+    if (!wrap) return;
     var old = document.getElementById('pers-suggest-actions');
     if (old) old.remove();
 
@@ -458,22 +518,28 @@ window.Events = (function () {
       ? AIAnalysis.parseSuggestion(resultText, kind)
       : { title: '', type: kind, year: null, reason: '', original_title: '' };
 
-    if (!parsed || !parsed.title) {
-      Toast.info('پیشنهاد قابل استخراج نبود — دستی اضافه کن');
-      return;
-    }
+    var titleInput = Utils.el('input', {
+      class: 'field-input', type: 'text', id: 'pers-suggest-title',
+      value: parsed.title || '', placeholder: 'عنوان پیشنهاد'
+    });
+    var yearInput = Utils.el('input', {
+      class: 'field-input', type: 'number', id: 'pers-suggest-year',
+      value: parsed.year || '', placeholder: 'سال', style: { width: '100px' }
+    });
+    var typeSelect = Utils.el('select', { class: 'field-input', id: 'pers-suggest-type' }, [
+      Utils.el('option', { value: 'movie', selected: (parsed.type || kind) !== 'series' }, ['فیلم']),
+      Utils.el('option', { value: 'series', selected: (parsed.type || kind) === 'series' }, ['سریال'])
+    ]);
 
     var box = Utils.el('div', { id: 'pers-suggest-actions', class: 'pers-suggest-actions' }, [
-      Utils.el('div', { class: 'pers-suggest-title' }, [
-        'پیشنهاد: «' + parsed.title + '»'
-        + (parsed.year ? ' (' + parsed.year + ')' : '')
-      ]),
+      Utils.el('div', { class: 'pers-suggest-title' }, ['افزودن پیشنهاد AI به لیست']),
+      Utils.el('div', { class: 'pers-suggest-fields' }, [titleInput, yearInput, typeSelect]),
       Utils.el('div', { class: 'pers-suggest-btns' }, [
         Utils.el('button', { class: 'btn btn-primary', type: 'button', id: 'pers-add-archive' }, ['➕ افزودن به آرشیو']),
         Utils.el('button', { class: 'btn btn-ghost', type: 'button', id: 'pers-add-will' }, ['👀 خواهم دید'])
       ])
     ]);
-    host.appendChild(box);
+    wrap.appendChild(box);
 
     function alreadyExists(title) {
       return DB.getAllTitles().some(function (t) {
@@ -481,54 +547,59 @@ window.Events = (function () {
       });
     }
 
-    function payload(willWatch) {
+    function readForm() {
       return {
-        title: parsed.title,
+        title: (document.getElementById('pers-suggest-title').value || '').trim(),
+        year: document.getElementById('pers-suggest-year').value
+          ? Number(document.getElementById('pers-suggest-year').value) : null,
+        type: document.getElementById('pers-suggest-type').value || kind || 'movie',
         original_title: parsed.original_title || '',
-        type: parsed.type || kind || 'movie',
-        year: parsed.year || null,
+        reason: parsed.reason || ''
+      };
+    }
+
+    function payload(willWatch) {
+      var f = readForm();
+      return {
+        title: f.title,
+        original_title: f.original_title,
+        type: f.type,
+        year: f.year,
         rating: 0,
         category: 'good',
         status: willWatch ? 'will_watch' : '',
         source: 'ai',
         notes: willWatch ? '[AI · خواهم دید]' : '[AI]',
-        reason: parsed.reason || '',
+        reason: f.reason,
         story_analysis: resultText || '',
         favorite: false
       };
     }
 
-    document.getElementById('pers-add-archive').addEventListener('click', function () {
-      if (alreadyExists(parsed.title)) {
+    function doAdd(willWatch) {
+      var f = readForm();
+      if (!f.title) {
+        Toast.warning('عنوان را وارد کن');
+        return;
+      }
+      if (alreadyExists(f.title)) {
         Toast.info('این عنوان از قبل در آرشیو هست');
         return;
       }
       try {
-        State.addTitle(payload(false));
-        Toast.success('با برچسب AI به آرشیو اضافه شد');
-        State.loadAll && State.loadAll();
-        State.applyFilters && State.applyFilters();
-        if (Events.renderList) Events.renderList();
+        State.addTitle(payload(willWatch));
+        Toast.success(willWatch
+          ? 'به «خواهم دید» اضافه شد (امتیاز ۰ — در تحلیل بعدی نمی‌آید)'
+          : 'با برچسب AI به آرشیو اضافه شد');
+        if (typeof Events !== 'undefined' && Events.renderList) Events.renderList();
       } catch (err) {
+        console.error(err);
         Toast.error(err.message || 'خطا در افزودن');
       }
-    });
+    }
 
-    document.getElementById('pers-add-will').addEventListener('click', function () {
-      if (alreadyExists(parsed.title)) {
-        Toast.info('این عنوان از قبل در آرشیو هست');
-        return;
-      }
-      try {
-        State.addTitle(payload(true));
-        Toast.success('به «خواهم دید» اضافه شد (بدون امتیاز — در تحلیل بعدی نمی‌آید)');
-        State.loadAll && State.loadAll();
-        State.applyFilters && State.applyFilters();
-        if (Events.renderList) Events.renderList();
-      } catch (err) {
-        Toast.error(err.message || 'خطا در افزودن');
-      }
-    });
+    document.getElementById('pers-add-archive').addEventListener('click', function () { doAdd(false); });
+    document.getElementById('pers-add-will').addEventListener('click', function () { doAdd(true); });
   }
 
   function bindPersonalityPage() {

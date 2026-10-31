@@ -1196,3 +1196,17 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.pers-suggest-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.pers-suggest-fields .field-input {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+.pers-prompt-preview {
+  font-family: var(--font-mono, monospace);
+}

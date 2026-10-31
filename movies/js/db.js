@@ -92,7 +92,7 @@ window.DB = (function () {
     const out = {};
     const keys = ['title','category','type','genre','year','rating','favorite','notes',
       'watched_date','summary','original_title','seasons','episodes','episodes_per_season',
-      'country','language','status','reason','story_analysis','ai_standardized_at','legacy_id'];
+      'country','language','status','reason','story_analysis','source','ai_standardized_at','legacy_id'];
     keys.forEach(function (k) { if (obj[k] !== undefined) out[k] = obj[k]; });
     if (out.favorite !== undefined) out.favorite = !!out.favorite;
     return out;

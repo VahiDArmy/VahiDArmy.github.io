@@ -111,20 +111,15 @@ window.AIAnalysis = (function () {
           && String(t.original_title).trim() !== name) {
         name = name + ' / ' + String(t.original_title).trim();
       }
-      var line = '- ' + name
+      return '- ' + name
         + (t.year ? ' | سال ' + t.year : '')
-        + ' | امتیاز ' + t.rating
-        + (t.type ? ' | ' + (t.type === 'movie' ? 'فیلم' : t.type === 'series' ? 'سریال' : t.type) : '');
-      if (t.reason) line += '\n  دلیل کاربر: ' + String(t.reason).slice(0, 200);
-      if (t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 150);
-      return line;
+        + ' | امتیاز ' + t.rating;
     });
 
     var system = [
-      'تو تحلیل‌گر ارشد سلیقه، شخصیت و روان‌شناسی تماشای سینمایی هستی.',
-      'فقط از دادهٔ کاربر استفاده کن؛ حدس بی‌پایه نزن.',
-      'پاسخ را فارسی، بسیار مفصل، عمیق و جامع با Markdown بنویس.',
-      'از کوتاه‌نویسی پرهیز کن؛ هر بخش را با ارجاع به آثار مشخص و امتیازشان گسترش بده.'
+      'تو تحلیل‌گر سلیقه و شخصیت بیننده بر اساس آثار سینمایی هستی.',
+      'فقط از دادهٔ داده‌شده استفاده کن.',
+      'پاسخ فارسی، مفصل و عمیق با Markdown.'
     ].join('\n');
 
     var user = [
@@ -138,20 +133,12 @@ window.AIAnalysis = (function () {
       'فهرست آثار امتیازداده‌شده (عنوان صحیح | سال ساخت | امتیاز):',
       lines.join('\n'),
       '',
-      'درخواست اصلی:',
-      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را تحلیل عمیق و جامع کن.',
-      'حداقل این محورها را پوشش بده (هر کدام چند پاراگراف، با مثال از آثار):',
-      '۱) تصویر کلی شخصیت سلیقه‌ای',
-      '۲) الگوهای تکرارشونده در آثار با امتیاز ۴ و ۵ (ژانر، لحن، تم، شخصیت‌پردازی، پایان‌بندی، ریتم، جهان‌سازی، ...)',
-      '۳) آنچه در آثار ۱ و ۲ ستاره رد می‌شود و چرا',
-      '۴) تناقض‌ها، نقاط خاکستری و استثناها',
-      '۵) حساسیت‌های روایی و خطوط قرمز احتمالی',
-      '۶) جمع‌بندی روان‌شناختی تماشا (چه نیازی با تماشا برطرف می‌شود)',
+      'درخواست:',
+      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را عمیق، مفصل و جامع تحلیل کن.',
+      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
+      'دلیل پیشنهاد را بنویس.',
       '',
-      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که در فهرست بالا نباشد و با سلیقهٔ امتیازهای بالا هم‌خوان باشد.',
-      'دلیل پیشنهاد را مفصل و با ارجاع به الگوهای بالا بنویس.',
-      '',
-      'حتماً در انتهای پاسخ این JSON را بگذار (فقط یک آبجکت):',
+      'در انتهای پاسخ فقط این JSON را بگذار:',
       '```json',
       '{"title":"...","original_title":"...","year":2020,"type":"' + kind + '","reason":"..."}',
       '```'
@@ -215,6 +202,12 @@ window.AIAnalysis = (function () {
       onDone: function () {}
     });
     return full;
+  }
+
+  function formatMessagesForPreview(messages) {
+    return (messages || []).map(function (m) {
+      return '===== ' + (m.role || '').toUpperCase() + ' =====\n' + (m.content || '');
+    }).join('\n\n');
   }
 
   function parseSuggestion(text, kind) {
@@ -301,12 +294,13 @@ window.AIAnalysis = (function () {
     STAR_MEANINGS: STAR_MEANINGS,
     starMeaning: starMeaning,
     collectUserData: collectUserData,
-    buildTasteAnalysisMessages: buildTasteAnalysisMessages,
     buildSuggestMessages: buildSuggestMessages,
     legendBlock: legendBlock,
     analyzeTaste: analyzeTaste,
     suggest: suggest,
     parseSuggestion: parseSuggestion,
+    formatMessagesForPreview: formatMessagesForPreview,
+    buildTasteAnalysisMessages: buildTasteAnalysisMessages,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
     saveTasteAnalysis: saveTasteAnalysis
   };
