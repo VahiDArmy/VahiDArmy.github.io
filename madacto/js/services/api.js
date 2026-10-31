@@ -14,6 +14,51 @@ export function normalizeName(name) {
   return name.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, '').trim();
 }
 
+// Helper to resize and compress images before sending
+async function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 1200; // Max dimension
+
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob((blob) => {
+        if (!blob) return reject(new Error('Canvas toBlob failed'));
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }, 'image/jpeg', 0.8);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('خطا در بارگذاری فایل عکس'));
+    };
+    img.src = url;
+  });
+}
+
 export const apiService = {
   async getAllMeals() {
     const { data, error } = await supabase.from('meals').select('*');
@@ -73,56 +118,51 @@ export const apiService = {
     if (error) throw error;
   },
 
-  // RICH ERROR HANDLING FOR FETCH
   async startImageExtraction(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) throw new Error('شما وارد نشده اید.');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('شما وارد نشده اید.');
 
-          let res;
-          try {
-            res = await fetch(EDGE_FUNCTION_URL, {
-              method: 'POST',
-              headers: { 
-                'Authorization': `Bearer ${session.access_token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ image: reader.result })
-            });
-          } catch (networkError) {
-            // CORS or Network failure caught here
-            throw new Error(`خطای شبکه یا CORS: ${networkError.message}. لطفا کنسول مرورگر را بررسی کنید.`);
+      // 1. Compress image
+      const compressedBase64 = await compressImage(file);
+
+      // 2. Send compressed image
+      let res;
+      try {
+        res = await fetch(EDGE_FUNCTION_URL, {
+          method: 'POST',
+          headers: { 
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': SUPABASE_ANON_KEY, // Required by Supabase Gateway for direct fetch
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ image: compressedBase64 })
+        });
+      } catch (networkError) {
+        throw new Error(`خطای شبکه یا CORS: ${networkError.message}`);
+      }
+      
+      if (!res.ok) {
+        let errorDetails = '';
+        try {
+          const contentType = res.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errData = await res.json();
+            errorDetails = errData.error || JSON.stringify(errData);
+          } else {
+            errorDetails = await res.text();
           }
-          
-          // Try to read the response body for detailed server errors
-          if (!res.ok) {
-            let errorDetails = '';
-            try {
-              const contentType = res.headers.get('content-type');
-              if (contentType && contentType.includes('application/json')) {
-                const errData = await res.json();
-                errorDetails = errData.error || JSON.stringify(errData);
-              } else {
-                errorDetails = await res.text();
-              }
-            } catch (e) {
-              errorDetails = 'پاسخ نامفهوم از سرور';
-            }
-            throw new Error(`خطای سرور (${res.status}): ${errorDetails}`);
-          }
-          
-          const { jobId } = await res.json();
-          resolve(jobId);
-        } catch (err) {
-          reject(err);
+        } catch (e) {
+          errorDetails = 'پاسخ نامفهوم از سرور';
         }
-      };
-      reader.onerror = () => reject(new Error('خطا در خواندن فایل عکس'));
-      reader.readAsDataURL(file);
-    });
+        throw new Error(`خطای سرور (${res.status}): ${errorDetails}`);
+      }
+      
+      const { jobId } = await res.json();
+      return jobId;
+    } catch (err) {
+      throw err;
+    }
   },
 
   async checkJobStatus(jobId) {
