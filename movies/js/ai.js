@@ -295,6 +295,26 @@ window.AI = (function () {
     });
   }
 
+  function sanitizeJsonCandidate(str) {
+    if (!str) return str;
+    var s = String(str);
+    /* quotes رایج مدل‌ها */
+    s = s.replace(/[\u201c\u201d\u00ab\u00bb]/g, '"').replace(/[\u2018\u2019]/g, "'");
+    /* trailing commas قبل } یا ] */
+    s = s.replace(/,\s*([}\]])/g, '$1');
+    /* حذف BOM و کاراکترهای کنترل به‌جز newline/tab */
+    s = s.replace(/^\uFEFF/, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
+    return s.trim();
+  }
+
+  function tryParseJson(str) {
+    var candidates = [str, sanitizeJsonCandidate(str)];
+    for (var i = 0; i < candidates.length; i++) {
+      try { return JSON.parse(candidates[i]); } catch (e) {}
+    }
+    return null;
+  }
+
   function extractJsonAndText(raw) {
     if (!raw) return { parsed: null, before: '', after: '', raw: '' };
     const original = String(raw);
@@ -305,14 +325,11 @@ window.AI = (function () {
       const inner = fenced[1].trim();
       const before = s.slice(0, fenced.index).trim();
       const after = s.slice(fenced.index + fenced[0].length).trim();
-      let parsed = null;
-      try { parsed = JSON.parse(inner); } catch (e) {}
+      var parsed = tryParseJson(inner);
       if (!parsed) {
         const fb = inner.search(/[\{\[]/);
         const lb = Math.max(inner.lastIndexOf('}'), inner.lastIndexOf(']'));
-        if (fb >= 0 && lb > fb) {
-          try { parsed = JSON.parse(inner.slice(fb, lb + 1)); } catch (e) {}
-        }
+        if (fb >= 0 && lb > fb) parsed = tryParseJson(inner.slice(fb, lb + 1));
       }
       return { parsed: parsed, before: before, after: after, raw: original };
     }
@@ -324,13 +341,19 @@ window.AI = (function () {
     if (lb < 0 || lb < fb) return { parsed: null, before: original, after: '', raw: original };
     const before = trimmed.slice(0, fb).trim();
     const after = trimmed.slice(lb + 1).trim();
-    let parsed = null;
-    try { parsed = JSON.parse(trimmed.slice(fb, lb + 1)); } catch (e) {}
-    return { parsed: parsed, before: before, after: after, raw: original };
+    var parsed2 = tryParseJson(trimmed.slice(fb, lb + 1));
+    return { parsed: parsed2, before: before, after: after, raw: original };
   }
 
+  var lastRawResponse = '';
+
   function parseJSONResponse(raw) {
+    lastRawResponse = raw == null ? '' : String(raw);
     return extractJsonAndText(raw).parsed;
+  }
+
+  function getLastRawResponse() {
+    return lastRawResponse;
   }
 
   async function testConnection() {
@@ -360,6 +383,7 @@ window.AI = (function () {
     abort: abort,
     testConnection: testConnection,
     extractJsonAndText: extractJsonAndText,
-    parseJSONResponse: parseJSONResponse
+    parseJSONResponse: parseJSONResponse,
+    getLastRawResponse: getLastRawResponse
   };
 })();

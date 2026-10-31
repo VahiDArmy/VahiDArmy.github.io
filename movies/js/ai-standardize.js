@@ -21,7 +21,13 @@ window.AIStandardize = (function () {
       }
     });
     const parsed = AI.parseJSONResponse(full);
-    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+    if (!parsed) {
+      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
+      var err = new Error('پاسخ AI قابل تفسیر نبود.');
+      err.rawResponse = raw;
+      err.code = 'PARSE_JSON';
+      throw err;
+    }
     return parsed;
   }
 
@@ -43,7 +49,13 @@ window.AIStandardize = (function () {
       }
     });
     const parsed = AI.parseJSONResponse(full);
-    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+    if (!parsed) {
+      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
+      var err = new Error('پاسخ AI قابل تفسیر نبود.');
+      err.rawResponse = raw;
+      err.code = 'PARSE_JSON';
+      throw err;
+    }
     return parsed;
   }
 
@@ -65,7 +77,13 @@ window.AIStandardize = (function () {
       }
     });
     const parsed = AI.parseJSONResponse(full);
-    if (!parsed) throw new Error('پاسخ AI قابل تفسیر نبود.');
+    if (!parsed) {
+      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
+      var err = new Error('پاسخ AI قابل تفسیر نبود.');
+      err.rawResponse = raw;
+      err.code = 'PARSE_JSON';
+      throw err;
+    }
     return parsed;
   }
 

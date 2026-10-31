@@ -263,6 +263,21 @@ window.AIUI = (function () {
     };
   }
 
+  function formatAiErrorHtml(err) {
+    var msg = (err && err.message) ? err.message : String(err || 'خطا');
+    var raw = (err && err.rawResponse != null) ? err.rawResponse
+      : (typeof AI !== 'undefined' && AI.getLastRawResponse ? AI.getLastRawResponse() : '');
+    var html = '<div class="ai-error"><strong>' + Utils.esc(msg) + '</strong></div>';
+    if (raw && String(raw).trim()) {
+      html += '<div class="ai-raw-error">' +
+        '<div class="ai-raw-error-label">پاسخ خام مدل:</div>' +
+        '<pre class="ai-raw-error-pre">' + Utils.esc(String(raw)) + '</pre></div>';
+    } else {
+      html += '<div class="ai-error-hint">پاسخ خالی بود یا استریم قطع شد (گاهی به‌خاطر max_tokens یا مدل).</div>';
+    }
+    return html;
+  }
+
   function requireAI() {
     if (!AI.isConfigured()) {
       Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
@@ -534,7 +549,7 @@ window.AIUI = (function () {
       })
       .catch(function (err) {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+        panel.setContent(formatAiErrorHtml(err));
       });
   }
 
@@ -688,7 +703,7 @@ window.AIUI = (function () {
       })
       .catch(function (err) {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+        panel.setContent(formatAiErrorHtml(err));
       });
   }
 
@@ -862,7 +877,7 @@ window.AIUI = (function () {
         startBtn.innerHTML = '✅ پایان یافت';
       } catch (err) {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+        panel.setContent(formatAiErrorHtml(err));
         startBtn.disabled = false;
         startBtn.textContent = '🔄 تلاش مجدد';
       }
@@ -1058,7 +1073,7 @@ window.AIUI = (function () {
         } catch (eSave) { console.error(eSave); }
       } catch (err) {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+        panel.setContent(formatAiErrorHtml(err));
       } finally {
         setBusy(false, '🔍 تحلیل عمیق سلیقه', '✨ دریافت پیشنهاد');
       }
@@ -1083,7 +1098,7 @@ window.AIUI = (function () {
         showActions(parseSuggestion(resultText || ''));
       } catch (err) {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message) + '</div>');
+        panel.setContent(formatAiErrorHtml(err));
       } finally {
         setBusy(false, '🔍 تحلیل عمیق سلیقه', '✨ دریافت پیشنهاد');
       }

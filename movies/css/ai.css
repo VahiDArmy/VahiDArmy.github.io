@@ -1210,3 +1210,35 @@
 .pers-prompt-preview {
   font-family: var(--font-mono, monospace);
 }
+
+.ai-raw-error {
+  margin-top: 12px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-1);
+  padding: 10px 12px;
+}
+.ai-raw-error-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--text-3);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.ai-raw-error-pre {
+  margin: 0;
+  max-height: 40vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  direction: ltr;
+  text-align: left;
+  color: var(--text-2);
+}
+.ai-error-hint {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+}
