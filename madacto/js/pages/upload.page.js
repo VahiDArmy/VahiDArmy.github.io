@@ -104,7 +104,6 @@ export function renderUpload(root) {
 
   function showErrorModal(title, message) {
     const content = document.createElement('div');
-    // FIX: Improved colors for dark mode
     content.innerHTML = `
       <div style="background: var(--danger-50); border: 1px solid var(--danger-100); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
         <p style="margin: 0; font-size: 13px; color: var(--danger-700); font-weight: bold;">${title}</p>
@@ -327,10 +326,11 @@ export function renderUpload(root) {
     previewTbody.innerHTML = '';
     extractedData.forEach((day, dIdx) => {
       const tr = document.createElement('tr');
+      
       const tdDay = document.createElement('td');
       tdDay.innerHTML = `
-        <div style="font-weight:bold; font-size:11px">${day.day_name}</div>
-        <input type="text" value="${escapeHtml(day.date_shamsi)}" class="date-input" data-didx="${dIdx}" style="margin-top:4px; text-align:center; width: 80px; padding: 2px;" dir="ltr" />
+        <div class="preview-day">${day.day_name}</div>
+        <input type="text" value="${escapeHtml(day.date_shamsi)}" class="date-input" data-didx="${dIdx}" dir="ltr" />
       `;
       tr.appendChild(tdDay);
 
@@ -338,8 +338,8 @@ export function renderUpload(root) {
         const meal = day.meals[mt.id];
         const tdMeal = document.createElement('td');
         tdMeal.innerHTML = `
-          <input type="text" value="${escapeHtml(meal.name)}" placeholder="نام..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="padding: 4px; font-size: 11px;" />
-          <input type="text" value="${escapeHtml(meal.desc)}" placeholder="توضیح..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" style="margin-top:4px; padding: 4px; font-size: 10px;" />
+          <input type="text" value="${escapeHtml(meal.name)}" placeholder="نام غذا..." class="name-input" data-didx="${dIdx}" data-mtype="${mt.id}" />
+          <input type="text" value="${escapeHtml(meal.desc)}" placeholder="توضیحات..." class="desc-input" data-didx="${dIdx}" data-mtype="${mt.id}" />
         `;
         tr.appendChild(tdMeal);
       });
