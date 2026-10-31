@@ -549,7 +549,24 @@ window.AIUI = (function () {
       })
       .catch(function (err) {
         panel.setStatus('خطا', 'error');
+        var raw = (err && err.rawResponse) || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
         panel.setContent(formatAiErrorHtml(err));
+        /* همیشه پاسخ خام را در جعبهٔ نتیجه هم نشان بده */
+        resultBox.hidden = false;
+        resultBox.innerHTML = '';
+        resultBox.appendChild(Utils.el('div', { class: 'ai-error' }, [
+          Utils.el('strong', {}, [(err && err.message) || 'خطا'])
+        ]));
+        if (raw && String(raw).trim()) {
+          resultBox.appendChild(Utils.el('div', { class: 'ai-raw-error' }, [
+            Utils.el('div', { class: 'ai-raw-error-label' }, ['پاسخ خام مدل:']),
+            Utils.el('pre', { class: 'ai-raw-error-pre' }, [String(raw)])
+          ]));
+        } else {
+          resultBox.appendChild(Utils.el('div', { class: 'ai-error-hint' }, [
+            'پاسخ خالی بود — احتمالاً استریم ناقص یا مدل بدون خروجی.'
+          ]));
+        }
       });
   }
 

@@ -259,16 +259,17 @@ window.AI = (function () {
   async function chat(opts) {
     opts = opts || {};
     let full = '';
-    await chatStream({
+    const ret = await chatStream({
       messages: opts.messages,
       model: opts.model,
       provider: opts.provider,
       temperature: opts.temperature,
+      max_tokens: opts.max_tokens,
       signal: opts.signal,
-      onToken: function (t) { full += t; },
+      onToken: function (t) { full += t || ''; },
       onDone: function () {}
     });
-    return full;
+    return ret || full;
   }
 
   async function chatJSON(opts) {
@@ -291,6 +292,7 @@ window.AI = (function () {
       model: opts.model,
       provider: opts.provider,
       temperature: opts.temperature != null ? opts.temperature : 0.3,
+      max_tokens: opts.max_tokens != null ? opts.max_tokens : 1200,
       signal: opts.signal
     });
   }

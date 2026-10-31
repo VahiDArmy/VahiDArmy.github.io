@@ -1,9 +1,8 @@
 /* =========================================================
-   تسک استانداردسازی + تحلیل داستانی + تحلیل عمیق فصل‌به‌فصل
+   استانداردسازی و تحلیل AI
    ========================================================= */
 window.AIStandardize = (function () {
 
-  /* استانداردسازی سریع یک عنوان (بدون تحلیل) */
   async function standardizeSingle(title, type, year, options) {
     options = options || {};
     const messages = [
@@ -11,27 +10,37 @@ window.AIStandardize = (function () {
       { role: 'user', content: AIPrompts.standardizeUser(title, type, year, options.meta) }
     ];
     let full = '';
-    await AI.chatStream({
-      messages: messages,
-      temperature: 0.1,
-      signal: options.signal,
-      onToken: function (delta, acc) {
-        full = acc;
-        if (options.onToken) options.onToken(delta, acc);
-      }
-    });
+    /* مثل lookup: chatJSON مطمئن‌تر است؛ همزمان UI را با onToken تغذیه می‌کنیم اگر stream خواست */
+    if (options.forceStream) {
+      full = await AI.chatStream({
+        messages: messages,
+        temperature: 0.1,
+        max_tokens: options.max_tokens != null ? options.max_tokens : 1200,
+        signal: options.signal,
+        onToken: function (delta) {
+          full += delta || '';
+          if (options.onToken) options.onToken(delta, full);
+        }
+      }) || full;
+    } else {
+      full = await AI.chatJSON({
+        messages: messages,
+        temperature: 0.1,
+        max_tokens: options.max_tokens != null ? options.max_tokens : 1200,
+        signal: options.signal
+      }) || '';
+      if (options.onToken) options.onToken(full, full);
+    }
     const parsed = AI.parseJSONResponse(full);
     if (!parsed) {
-      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
       var err = new Error('پاسخ AI قابل تفسیر نبود.');
-      err.rawResponse = raw;
+      err.rawResponse = full || '';
       err.code = 'PARSE_JSON';
       throw err;
     }
     return parsed;
   }
 
-  /* تحلیل کامل */
   async function analyzeOne(title, type, year, options) {
     options = options || {};
     const messages = [
@@ -39,27 +48,26 @@ window.AIStandardize = (function () {
       { role: 'user', content: AIPrompts.analyzeUser(title, type, year, options.meta) }
     ];
     let full = '';
-    await AI.chatStream({
+    full = await AI.chatStream({
       messages: messages,
       temperature: 0.3,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 4096,
       signal: options.signal,
-      onToken: function (delta, acc) {
-        full = acc;
-        if (options.onToken) options.onToken(delta, acc);
+      onToken: function (delta) {
+        full += delta || '';
+        if (options.onToken) options.onToken(delta, full);
       }
-    });
+    }) || full;
     const parsed = AI.parseJSONResponse(full);
     if (!parsed) {
-      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
       var err = new Error('پاسخ AI قابل تفسیر نبود.');
-      err.rawResponse = raw;
+      err.rawResponse = full || '';
       err.code = 'PARSE_JSON';
       throw err;
     }
     return parsed;
   }
 
-  /* تحلیل یک بازه */
   async function analyzeSeasonRange(title, fromSeason, toSeason, options) {
     options = options || {};
     const messages = [
@@ -67,27 +75,26 @@ window.AIStandardize = (function () {
       { role: 'user', content: AIPrompts.analyzeDeepUser(title, fromSeason, toSeason, options.type, options.year, options.meta) }
     ];
     let full = '';
-    await AI.chatStream({
+    full = await AI.chatStream({
       messages: messages,
       temperature: 0.3,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 4096,
       signal: options.signal,
-      onToken: function (delta, acc) {
-        full = acc;
-        if (options.onToken) options.onToken(delta, acc);
+      onToken: function (delta) {
+        full += delta || '';
+        if (options.onToken) options.onToken(delta, full);
       }
-    });
+    }) || full;
     const parsed = AI.parseJSONResponse(full);
     if (!parsed) {
-      var raw = full || (AI.getLastRawResponse && AI.getLastRawResponse()) || '';
       var err = new Error('پاسخ AI قابل تفسیر نبود.');
-      err.rawResponse = raw;
+      err.rawResponse = full || '';
       err.code = 'PARSE_JSON';
       throw err;
     }
     return parsed;
   }
 
-  /* تحلیل عمیق فصل به فصل */
   async function analyzeSeasonalDeep(title, seasonsCount, options) {
     options = options || {};
     if (!seasonsCount || seasonsCount < 1) throw new Error('تعداد فصل‌ها مشخص نیست.');
