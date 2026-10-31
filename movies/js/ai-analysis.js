@@ -23,7 +23,12 @@ window.AIAnalysis = (function () {
 
   function collectUserData() {
     var all = DB.getAllTitles();
-    var rated = all.filter(function (t) { return (t.rating || 0) > 0; });
+    /* فقط امتیازدار؛ خواهم‌دید بدون امتیاز وارد تحلیل نمی‌شود */
+    var rated = all.filter(function (t) {
+      if ((Number(t.rating) || 0) <= 0) return false;
+      if (String(t.status || '') === 'will_watch') return false;
+      return true;
+    });
     var titlesForAI = rated.map(function (t) {
       var r = Math.round(Number(t.rating) || 0);
       return {
@@ -100,23 +105,26 @@ window.AIAnalysis = (function () {
       throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای تحلیل سلیقه لازم است.');
     }
 
-    /* فقط: عنوان صحیح + سال ساخت + امتیاز (+ نوع برای خوانایی) */
     var lines = data.rated.map(function (t) {
       var name = (t.title || '').trim();
       if (t.original_title && String(t.original_title).trim()
           && String(t.original_title).trim() !== name) {
         name = name + ' / ' + String(t.original_title).trim();
       }
-      return '- ' + name
+      var line = '- ' + name
         + (t.year ? ' | سال ' + t.year : '')
-        + ' | امتیاز ' + t.rating;
+        + ' | امتیاز ' + t.rating
+        + (t.type ? ' | ' + (t.type === 'movie' ? 'فیلم' : t.type === 'series' ? 'سریال' : t.type) : '');
+      if (t.reason) line += '\n  دلیل کاربر: ' + String(t.reason).slice(0, 200);
+      if (t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 150);
+      return line;
     });
 
-    /* ۱) منطق امتیاز — ۲) لیست — ۳) تحلیل شخصیت — ۴) یک پیشنهاد از نوع مشخص‌شده */
     var system = [
-      'تو تحلیل‌گر سلیقه و شخصیت بیننده بر اساس آثار سینمایی هستی.',
-      'فقط از دادهٔ داده‌شده استفاده کن.',
-      'پاسخ فارسی با Markdown.'
+      'تو تحلیل‌گر ارشد سلیقه، شخصیت و روان‌شناسی تماشای سینمایی هستی.',
+      'فقط از دادهٔ کاربر استفاده کن؛ حدس بی‌پایه نزن.',
+      'پاسخ را فارسی، بسیار مفصل، عمیق و جامع با Markdown بنویس.',
+      'از کوتاه‌نویسی پرهیز کن؛ هر بخش را با ارجاع به آثار مشخص و امتیازشان گسترش بده.'
     ].join('\n');
 
     var user = [
@@ -130,10 +138,23 @@ window.AIAnalysis = (function () {
       'فهرست آثار امتیازداده‌شده (عنوان صحیح | سال ساخت | امتیاز):',
       lines.join('\n'),
       '',
-      'درخواست:',
-      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را عمیق تحلیل کن.',
-      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
-      'دلیل پیشنهاد را کوتاه بنویس.'
+      'درخواست اصلی:',
+      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را تحلیل عمیق و جامع کن.',
+      'حداقل این محورها را پوشش بده (هر کدام چند پاراگراف، با مثال از آثار):',
+      '۱) تصویر کلی شخصیت سلیقه‌ای',
+      '۲) الگوهای تکرارشونده در آثار با امتیاز ۴ و ۵ (ژانر، لحن، تم، شخصیت‌پردازی، پایان‌بندی، ریتم، جهان‌سازی، ...)',
+      '۳) آنچه در آثار ۱ و ۲ ستاره رد می‌شود و چرا',
+      '۴) تناقض‌ها، نقاط خاکستری و استثناها',
+      '۵) حساسیت‌های روایی و خطوط قرمز احتمالی',
+      '۶) جمع‌بندی روان‌شناختی تماشا (چه نیازی با تماشا برطرف می‌شود)',
+      '',
+      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که در فهرست بالا نباشد و با سلیقهٔ امتیازهای بالا هم‌خوان باشد.',
+      'دلیل پیشنهاد را مفصل و با ارجاع به الگوهای بالا بنویس.',
+      '',
+      'حتماً در انتهای پاسخ این JSON را بگذار (فقط یک آبجکت):',
+      '```json',
+      '{"title":"...","original_title":"...","year":2020,"type":"' + kind + '","reason":"..."}',
+      '```'
     ].join('\n');
 
     return [
@@ -185,6 +206,7 @@ window.AIAnalysis = (function () {
     await AI.chatStream({
       messages: messages,
       temperature: 0.55,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 8192,
       signal: options.signal,
       onToken: function (t) {
         full += t;
@@ -193,6 +215,35 @@ window.AIAnalysis = (function () {
       onDone: function () {}
     });
     return full;
+  }
+
+  function parseSuggestion(text, kind) {
+    kind = kind === 'series' ? 'series' : 'movie';
+    text = String(text || '');
+    var m = text.match(/\{[\s\S]*?"title"\s*:\s*"[^"]+"[\s\S]*?\}/);
+    if (m) {
+      try {
+        var j = JSON.parse(m[0]);
+        return {
+          title: j.title || '',
+          original_title: j.original_title || j.originalTitle || '',
+          year: j.year || null,
+          type: j.type === 'series' || j.type === 'movie' ? j.type : kind,
+          reason: j.reason || j.why || ''
+        };
+      } catch (e) {}
+    }
+    var title = '';
+    var ym = text.match(/\*\*([^*]{2,80})\*\*/);
+    if (ym) title = ym[1].trim();
+    if (!title) {
+      var hm = text.match(/^#+\s+(.+)$/m);
+      if (hm) title = hm[1].trim();
+    }
+    var year = null;
+    var ymatch = text.match(/\b(19|20)\d{2}\b/);
+    if (ymatch) year = Number(ymatch[0]);
+    return { title: title, original_title: '', year: year, type: kind, reason: '' };
   }
 
   async function suggest(options) {
@@ -255,6 +306,7 @@ window.AIAnalysis = (function () {
     legendBlock: legendBlock,
     analyzeTaste: analyzeTaste,
     suggest: suggest,
+    parseSuggestion: parseSuggestion,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
     saveTasteAnalysis: saveTasteAnalysis
   };

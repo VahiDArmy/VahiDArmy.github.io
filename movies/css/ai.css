@@ -1176,3 +1176,23 @@
   border-color: var(--accent);
   font-weight: 700;
 }
+
+.pers-suggest-actions {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pers-suggest-title {
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--accent);
+}
+.pers-suggest-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

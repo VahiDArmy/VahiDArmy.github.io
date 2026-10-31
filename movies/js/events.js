@@ -424,10 +424,10 @@ window.Events = (function () {
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
       try {
-        var msgs = AIAnalysis.buildTasteAnalysisMessages();
+        var msgs = AIAnalysis.buildTasteAnalysisMessages(persSelectedKind);
         var promptText = msgs.map(function (m) {
-          return '## ' + m.role + '\\n' + m.content;
-        }).join('\\n\\n');
+          return '## ' + m.role + '\n' + m.content;
+        }).join('\n\n');
         AIAnalysis.saveTasteAnalysis(
           promptText,
           result || '',
@@ -435,6 +435,7 @@ window.Events = (function () {
         );
       } catch (e2) { console.error(e2); }
       renderPersonalityHistory();
+      showPersonalitySuggestionActions(result || '', persSelectedKind);
       Toast.success('تحلیل ذخیره شد');
     } catch (err) {
       panel.setStatus('خطا', 'error');
@@ -444,6 +445,90 @@ window.Events = (function () {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
     }
+  }
+
+
+  function showPersonalitySuggestionActions(resultText, kind) {
+    var host = document.getElementById('pers-stream-host');
+    if (!host) return;
+    var old = document.getElementById('pers-suggest-actions');
+    if (old) old.remove();
+
+    var parsed = (typeof AIAnalysis !== 'undefined' && AIAnalysis.parseSuggestion)
+      ? AIAnalysis.parseSuggestion(resultText, kind)
+      : { title: '', type: kind, year: null, reason: '', original_title: '' };
+
+    if (!parsed || !parsed.title) {
+      Toast.info('پیشنهاد قابل استخراج نبود — دستی اضافه کن');
+      return;
+    }
+
+    var box = Utils.el('div', { id: 'pers-suggest-actions', class: 'pers-suggest-actions' }, [
+      Utils.el('div', { class: 'pers-suggest-title' }, [
+        'پیشنهاد: «' + parsed.title + '»'
+        + (parsed.year ? ' (' + parsed.year + ')' : '')
+      ]),
+      Utils.el('div', { class: 'pers-suggest-btns' }, [
+        Utils.el('button', { class: 'btn btn-primary', type: 'button', id: 'pers-add-archive' }, ['➕ افزودن به آرشیو']),
+        Utils.el('button', { class: 'btn btn-ghost', type: 'button', id: 'pers-add-will' }, ['👀 خواهم دید'])
+      ])
+    ]);
+    host.appendChild(box);
+
+    function alreadyExists(title) {
+      return DB.getAllTitles().some(function (t) {
+        return String(t.title || '').toLowerCase() === String(title || '').toLowerCase();
+      });
+    }
+
+    function payload(willWatch) {
+      return {
+        title: parsed.title,
+        original_title: parsed.original_title || '',
+        type: parsed.type || kind || 'movie',
+        year: parsed.year || null,
+        rating: 0,
+        category: 'good',
+        status: willWatch ? 'will_watch' : '',
+        source: 'ai',
+        notes: willWatch ? '[AI · خواهم دید]' : '[AI]',
+        reason: parsed.reason || '',
+        story_analysis: resultText || '',
+        favorite: false
+      };
+    }
+
+    document.getElementById('pers-add-archive').addEventListener('click', function () {
+      if (alreadyExists(parsed.title)) {
+        Toast.info('این عنوان از قبل در آرشیو هست');
+        return;
+      }
+      try {
+        State.addTitle(payload(false));
+        Toast.success('با برچسب AI به آرشیو اضافه شد');
+        State.loadAll && State.loadAll();
+        State.applyFilters && State.applyFilters();
+        if (Events.renderList) Events.renderList();
+      } catch (err) {
+        Toast.error(err.message || 'خطا در افزودن');
+      }
+    });
+
+    document.getElementById('pers-add-will').addEventListener('click', function () {
+      if (alreadyExists(parsed.title)) {
+        Toast.info('این عنوان از قبل در آرشیو هست');
+        return;
+      }
+      try {
+        State.addTitle(payload(true));
+        Toast.success('به «خواهم دید» اضافه شد (بدون امتیاز — در تحلیل بعدی نمی‌آید)');
+        State.loadAll && State.loadAll();
+        State.applyFilters && State.applyFilters();
+        if (Events.renderList) Events.renderList();
+      } catch (err) {
+        Toast.error(err.message || 'خطا در افزودن');
+      }
+    });
   }
 
   function bindPersonalityPage() {

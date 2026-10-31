@@ -39,9 +39,17 @@ window.Render = (function () {
     if (t.seasons) metaParts.push('<span>' + Utils.toFa(t.seasons) + ' فصل</span>');
     if (t.genre) metaParts.push('<span>' + Utils.esc(t.genre) + '</span>');
 
-    const aiBadge = t.ai_standardized_at
-      ? '<span class="ai-badge" title="استانداردسازی‌شده با AI">🪄</span>'
-      : '';
+    var badges = '';
+    if (t.source === 'ai' || (t.notes && String(t.notes).indexOf('[AI') === 0)) {
+      badges += '<span class="ai-badge" title="افزوده‌شده توسط AI">🤖 AI</span>';
+    }
+    if (String(t.status || '') === 'will_watch') {
+      badges += '<span class="ai-badge will-watch-badge" title="خواهم دید">👀</span>';
+    }
+    if (t.ai_standardized_at) {
+      badges += '<span class="ai-badge" title="استانداردسازی‌شده با AI">🪄</span>';
+    }
+    const aiBadge = badges;
 
     const rating = Math.floor(Number(t.rating) || 0);
     const ratingCls = rating >= 1 ? 'rating-' + rating : 'rating-none';
