@@ -104,12 +104,13 @@ export function renderUpload(root) {
 
   function showErrorModal(title, message) {
     const content = document.createElement('div');
+    // FIX: Improved colors for dark mode
     content.innerHTML = `
       <div style="background: var(--danger-50); border: 1px solid var(--danger-100); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 12px;">
         <p style="margin: 0; font-size: 13px; color: var(--danger-700); font-weight: bold;">${title}</p>
       </div>
-      <p style="font-size: 12px; margin-bottom: 8px;">جزئیات خطا (برای کپی کردن انتخاب کنید):</p>
-      <textarea style="width: 100%; height: 120px; font-family: monospace; font-size: 11px; direction: ltr; padding: 8px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-subtle);" readonly>${message}</textarea>
+      <p style="font-size: 12px; margin-bottom: 8px; color: var(--text-primary);">جزئیات خطا (برای کپی کردن انتخاب کنید):</p>
+      <textarea style="width: 100%; height: 120px; font-family: monospace; font-size: 11px; direction: ltr; padding: 8px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-subtle); color: var(--text-primary);" readonly>${message}</textarea>
     `;
     
     openModal({
@@ -256,7 +257,6 @@ export function renderUpload(root) {
       }, 3000);
 
     } catch (err) {
-      // Show rich error modal instead of just toast
       showErrorModal('خطای اتصال به سرور', err.message);
       loadingState.style.display = 'none';
       uploadState.style.display = 'block';
@@ -270,7 +270,7 @@ export function renderUpload(root) {
     p1.textContent = '۱. پرامپت زیر را کپی کنید و همراه با عکس به هوش مصنوعی بدهید.';
 
     const promptTextArea = document.createElement('textarea');
-    Object.assign(promptTextArea.style, { width: '100%', height: '120px', fontFamily: 'monospace', fontSize: '10px', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' });
+    Object.assign(promptTextArea.style, { width: '100%', height: '120px', fontFamily: 'monospace', fontSize: '10px', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', background: 'var(--bg-subtle)' });
     promptTextArea.value = AI_PROMPT;
     promptTextArea.readOnly = true;
 
@@ -294,7 +294,7 @@ export function renderUpload(root) {
     p2.textContent = '۲. پاسخ JSON دریافتی را در کادر زیر پیست کنید:';
 
     const jsonInput = document.createElement('textarea');
-    Object.assign(jsonInput.style, { width: '100%', height: '100px', fontFamily: 'monospace', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' });
+    Object.assign(jsonInput.style, { width: '100%', height: '100px', fontFamily: 'monospace', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)', color: 'var(--text-primary)', background: 'var(--bg-subtle)' });
     jsonInput.placeholder = '{"days": [...]}';
 
     wrapper.append(p1, promptTextArea, copyBtn, hr, p2, jsonInput);
