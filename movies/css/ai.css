@@ -1282,16 +1282,11 @@
 .ai-prompt-gate-editor { resize: vertical; }
 
 .pers-continue-bar {
+  margin: 8px 0 4px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin: 12px 0;
-  padding: 14px 16px;
-  border: 2px solid var(--accent);
-  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
-  border-radius: var(--radius-md);
+  justify-content: flex-start;
 }
+
 .pers-continue-bar.is-urgent {
   box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.25);
 }
