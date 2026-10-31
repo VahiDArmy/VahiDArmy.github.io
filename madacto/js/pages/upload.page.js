@@ -1,5 +1,5 @@
 /**
- * Madacto Upload Page (AI Extraction & Preview)
+ * Madacto Upload Page (Async AI Extraction & Preview)
  */
 
 import { apiService } from '../services/api.js';
@@ -67,6 +67,7 @@ export function renderUpload(root) {
       <div id="loading-state" style="display:none; text-align:center; padding: 40px;">
         <div class="boot-splash__spinner" style="margin: 0 auto 16px;"></div>
         <div style="font-weight: bold;">در حال پردازش...</div>
+        <div id="loading-status-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 8px;">لطفاً صبر کنید...</div>
       </div>
 
       <div id="preview-state" style="display:none;">
@@ -94,12 +95,14 @@ export function renderUpload(root) {
   const fileInput = document.getElementById('file-input');
   const uploadState = document.getElementById('upload-state');
   const loadingState = document.getElementById('loading-state');
+  const loadingStatusText = document.getElementById('loading-status-text');
   const previewState = document.getElementById('preview-state');
   const previewTbody = document.getElementById('preview-tbody');
   
   let extractedData = [];
+  let pollingInterval = null;
 
-  // --- Core Processing Logic (Shared) ---
+  // --- Core Processing Logic ---
   function processAIResult(result) {
     if (!result.days || result.days.length === 0) {
       throw new Error('داده‌ای استخراج نشد.');
@@ -192,7 +195,7 @@ export function renderUpload(root) {
     previewState.style.display = 'block';
   }
 
-  // --- File Upload (Edge Function) ---
+  // --- File Upload & Polling Logic ---
   fileInput.onchange = async (e) => {
     const file = e.target.files[0];
     fileInput.value = '';
@@ -200,45 +203,69 @@ export function renderUpload(root) {
 
     uploadState.style.display = 'none';
     loadingState.style.display = 'block';
+    loadingStatusText.textContent = 'در حال ارسال عکس...';
 
     try {
-      const result = await apiService.extractFromImage(file);
-      processAIResult(result);
+      // 1. Start Job
+      const jobId = await apiService.startImageExtraction(file);
+      
+      loadingStatusText.textContent = 'هوش مصنوعی در حال خواندن منو است (ممکن است کمی طول بکشد)...';
+
+      // 2. Poll for results
+      let attempts = 0;
+      const maxAttempts = 40; // 40 * 3s = 120 seconds timeout
+
+      pollingInterval = setInterval(async () => {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(pollingInterval);
+          showToast('زمان پردازش به پایان رسید. لطفاً دوباره تلاش کنید.', 'error');
+          loadingState.style.display = 'none';
+          uploadState.style.display = 'block';
+          return;
+        }
+
+        try {
+          const job = await apiService.checkJobStatus(jobId);
+
+          if (job.status === 'completed') {
+            clearInterval(pollingInterval);
+            processAIResult(job.result);
+          } else if (job.status === 'failed') {
+            clearInterval(pollingInterval);
+            showToast('خطای هوش مصنوعی: ' + job.error, 'error');
+            loadingState.style.display = 'none';
+            uploadState.style.display = 'block';
+          }
+          // If 'processing', just wait for the next interval
+        } catch (err) {
+          console.warn('Polling error', err);
+        }
+      }, 3000);
+
     } catch (err) {
-      showToast('خطا در پردازش عکس: ' + err.message, 'error');
+      showToast('خطا در ارتباط با سرور: ' + err.message, 'error');
       loadingState.style.display = 'none';
       uploadState.style.display = 'block';
     }
   };
 
-  // --- Manual AI Chat (Copy Prompt & Paste JSON) ---
+  // --- Manual AI Chat ---
   document.getElementById('btn-manual-ai').onclick = () => {
     const wrapper = document.createElement('div');
-
-    // Part 1: Prompt Copying
     const p1 = document.createElement('p');
-    p1.style.fontSize = '12px';
-    p1.style.marginBottom = '8px';
+    p1.style.fontSize = '12px'; p1.style.marginBottom = '8px';
     p1.textContent = '۱. پرامپت زیر را کپی کنید و همراه با عکس به هوش مصنوعی بدهید.';
 
     const promptTextArea = document.createElement('textarea');
-    promptTextArea.style.width = '100%';
-    promptTextArea.style.height = '120px';
-    promptTextArea.style.fontFamily = 'monospace';
-    promptTextArea.style.fontSize = '10px';
-    promptTextArea.style.direction = 'ltr';
-    promptTextArea.style.padding = '8px';
-    promptTextArea.style.border = '1px solid var(--border-default)';
-    promptTextArea.style.borderRadius = 'var(--radius-sm)';
+    Object.assign(promptTextArea.style, { width: '100%', height: '120px', fontFamily: 'monospace', fontSize: '10px', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' });
     promptTextArea.value = AI_PROMPT;
     promptTextArea.readOnly = true;
 
     const copyBtn = document.createElement('button');
     copyBtn.className = 'btn btn--secondary btn--sm';
     copyBtn.textContent = 'کپی پرامپت';
-    copyBtn.style.marginTop = '8px';
-    copyBtn.style.display = 'block';
-    copyBtn.style.width = '100%';
+    Object.assign(copyBtn.style, { marginTop: '8px', display: 'block', width: '100%' });
     copyBtn.onclick = () => {
       promptTextArea.select();
       document.execCommand('copy');
@@ -247,35 +274,18 @@ export function renderUpload(root) {
       setTimeout(() => copyBtn.textContent = 'کپی پرامپت', 2000);
     };
 
-    // Separator
     const hr = document.createElement('hr');
-    hr.style.margin = '16px 0';
-    hr.style.border = '0';
-    hr.style.borderTop = '1px solid var(--border-default)';
+    Object.assign(hr.style, { margin: '16px 0', border: '0', borderTop: '1px solid var(--border-default)' });
 
-    // Part 2: JSON Input
     const p2 = document.createElement('p');
-    p2.style.fontSize = '12px';
-    p2.style.marginBottom = '8px';
+    p2.style.fontSize = '12px'; p2.style.marginBottom = '8px';
     p2.textContent = '۲. پاسخ JSON دریافتی را در کادر زیر پیست کنید:';
 
     const jsonInput = document.createElement('textarea');
-    jsonInput.style.width = '100%';
-    jsonInput.style.height = '100px';
-    jsonInput.style.fontFamily = 'monospace';
-    jsonInput.style.direction = 'ltr';
-    jsonInput.style.padding = '8px';
-    jsonInput.style.border = '1px solid var(--border-default)';
-    jsonInput.style.borderRadius = 'var(--radius-sm)';
+    Object.assign(jsonInput.style, { width: '100%', height: '100px', fontFamily: 'monospace', direction: 'ltr', padding: '8px', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-sm)' });
     jsonInput.placeholder = '{"days": [...]}';
 
-    // Assemble
-    wrapper.appendChild(p1);
-    wrapper.appendChild(promptTextArea);
-    wrapper.appendChild(copyBtn);
-    wrapper.appendChild(hr);
-    wrapper.appendChild(p2);
-    wrapper.appendChild(jsonInput);
+    wrapper.append(p1, promptTextArea, copyBtn, hr, p2, jsonInput);
 
     const modal = openModal({
       title: 'استفاده از هوش مصنوعی‌های دیگر',
@@ -301,12 +311,11 @@ export function renderUpload(root) {
     });
   };
 
-  // --- Preview Rendering & Saving ---
+  // --- Render Preview ---
   function renderPreview() {
     previewTbody.innerHTML = '';
     extractedData.forEach((day, dIdx) => {
       const tr = document.createElement('tr');
-      
       const tdDay = document.createElement('td');
       tdDay.innerHTML = `
         <div style="font-weight:bold; font-size:11px">${day.day_name}</div>
@@ -323,12 +332,12 @@ export function renderUpload(root) {
         `;
         tr.appendChild(tdMeal);
       });
-
       previewTbody.appendChild(tr);
     });
   }
 
   document.getElementById('cancel-btn').onclick = () => {
+    if (pollingInterval) clearInterval(pollingInterval);
     window.location.hash = '#/';
   };
 
@@ -369,8 +378,8 @@ export function renderUpload(root) {
       });
 
       if (mealsToSave.length === 0) throw new Error('هیچ غذایی برای ذخیره وجود ندارد.');
-      
       await apiService.saveMeals(mealsToSave);
+      
       showToast('اطلاعات با موفقیت ذخیره شد.', 'success');
       window.location.hash = '#/';
 
