@@ -20,8 +20,7 @@ const icons = {
   moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
   logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
   upload: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>`,
-  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`,
-  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>`
 };
 
 initTheme();
@@ -155,7 +154,7 @@ async function router() {
     // Auth Routes
     if (hash === '#/login' || hash === '#/signup') {
       if (user) {
-        window.location.hash = '#/'; // Redirect to home if already logged in
+        window.location.hash = '#/'; 
         return;
       }
       renderLogin(root, () => {
@@ -184,9 +183,42 @@ async function router() {
   }
 }
 
+// ============================================================
+// AUTH CALLBACK HANDLER (PKCE Flow)
+// ============================================================
+async function handleAuthCallback() {
+  // 1. Check if there is a ?code= parameter in the URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get('code');
+
+  if (code) {
+    try {
+      showToast('در حال تایید حساب...', 'success');
+      // 2. Exchange the code for a session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      
+      // 3. Clean the URL so the code doesn't stay in the browser history
+      window.history.replaceState({}, document.title, window.location.pathname + '#/');
+      
+      showToast('حساب شما با موفقیت فعال شد.', 'success');
+    } catch (err) {
+      console.error('Auth callback error:', err);
+      showToast('خطا در تایید حساب: ' + err.message, 'error');
+      // Clean URL even on error
+      window.history.replaceState({}, document.title, window.location.pathname + '#/');
+    }
+  }
+}
+
 async function init() {
   try {
     renderFooter();
+    
+    // VERY IMPORTANT: Handle the auth callback BEFORE starting the router
+    // so the session is established before the app tries to load user data.
+    await handleAuthCallback();
+    
     await router();
   } catch (err) {
     console.error(err);
