@@ -35,6 +35,7 @@ export default async function tablePage(info, outlet) {
   outlet.appendChild(buildLoading());
 
   let table, columns, rowsData, people = [], myPersonId = null;
+  
   try {
     table = await tablesService.getById(id);
     if (!table) {
@@ -47,12 +48,7 @@ export default async function tablePage(info, outlet) {
       tablesService.listRows(id, { limit: 500 }),
     ]);
     
-    if (columns.some((c) => c.type === 'person_ref') || table.permission_type !== 'public') {
-      const res = await peopleService.list({ limit: 1000 });
-      people = res.items;
-      const myPerson = people.find(p => p.user_id === session.user.id || (session.user.email && p.email === session.user.email));
-      if (myPerson) myPersonId = myPerson.id;
-    }
+    await refreshPeopleData();
   } catch (err) {
     outlet.innerHTML = '';
     outlet.appendChild(el('div', { class: 'container' }, [emptyState({ iconName: 'alert-circle', title: 'خطا در بارگذاری', description: err?.message })]));
@@ -70,20 +66,47 @@ export default async function tablePage(info, outlet) {
   const userOwnedRowIds = new Set();
   const userOwnedColumnIds = new Set();
 
-  if (myPersonId) {
-    if (table.permission_type === 'private_column') {
-      const ownerCol = columns.find(c => c.is_owner_determining);
-      if (ownerCol) rowsData.items.forEach(r => { if (r.values?.[ownerCol.id] === myPersonId) userOwnedRowIds.add(r.id); });
-    } else if (table.permission_type === 'private_row') {
-      const ownerRow = rowsData.items.find(r => r.is_owner_determining);
-      if (ownerRow) columns.forEach(c => { if (ownerRow.values?.[c.id] === myPersonId) userOwnedColumnIds.add(c.id); });
-    }
-  }
+  updateOwnershipHighlights();
 
   outlet.innerHTML = '';
   outlet.appendChild(buildView());
 
   return () => {};
+
+  /* ================= Helpers ================= */
+
+  async function refreshPeopleData() {
+    if (columns.some((c) => c.type === 'person_ref') || table.permission_type !== 'public') {
+      const res = await peopleService.list({ limit: 1000 });
+      people = res.items;
+      const myPerson = people.find(p => p.user_id === session.user.id || (session.user.email && p.email === session.user.email));
+      if (myPerson) myPersonId = myPerson.id;
+    }
+  }
+
+  function updateOwnershipHighlights() {
+    userOwnedRowIds.clear();
+    userOwnedColumnIds.clear();
+    if (myPersonId) {
+      if (table.permission_type === 'private_column') {
+        const ownerCol = columns.find(c => c.is_owner_determining);
+        if (ownerCol) {
+          rowsData.items.forEach(r => {
+            if (r.values?.[ownerCol.id] === myPersonId) userOwnedRowIds.add(r.id);
+          });
+        }
+      } else if (table.permission_type === 'private_row') {
+        const ownerRow = rowsData.items.find(r => r.is_owner_determining);
+        if (ownerRow) {
+          columns.forEach(c => {
+            if (ownerRow.values?.[c.id] === myPersonId) userOwnedColumnIds.add(c.id);
+          });
+        }
+      }
+    }
+  }
+
+  /* ================= build ================= */
 
   function buildView() {
     const back = el('a', { class: 'table-back', href: router.href(ROUTES.TABLES) }, [icon('chevron-right'), 'بازگشت به جدول‌ها']);
@@ -124,46 +147,33 @@ export default async function tablePage(info, outlet) {
 
     const searchInput = el('input', { type: 'search', class: 'input', placeholder: 'جستجو در ردیف‌ها...' });
 
-    const checkCanEditCell = (row, col) => {
-      if (isAdmin) return true;
+    const checkCanEditRow = (row) => {
+      if (isAdmin || isOwner) return true;
       if (isPublic) return true;
-      
       if (table.permission_type === 'private_column') {
+        if (!myPersonId) return false;
         const ownerCol = columns.find(c => c.is_owner_determining);
-        if (!ownerCol) return false;
-        
-        // Only table owner can edit the owner-determining column
-        if (col.id === ownerCol.id) return isOwner;
-        
-        // For other columns, only the row owner can edit
-        return myPersonId && row.values?.[ownerCol.id] === myPersonId;
+        return ownerCol && row.values?.[ownerCol.id] === myPersonId;
       }
-      
+      return true; // in private_row mode
+    };
+
+    const checkCanEditCell = (row, col) => {
+      if (!checkCanEditRow(row)) return false;
       if (table.permission_type === 'private_row') {
         const ownerRow = rowsData.items.find(r => r.is_owner_determining);
         if (!ownerRow) return false;
-        
-        // Only table owner can edit the owner-determining row
-        if (row.id === ownerRow.id) return isOwner;
-        
-        // For other rows, only the column owner can edit
-        return myPersonId && ownerRow.values?.[col.id] === myPersonId;
+        if (!myPersonId) return false;
+        return ownerRow.values?.[col.id] === myPersonId;
       }
-      return false;
-    };
-
-    const checkCanEditRow = (row) => {
-      if (isAdmin) return true;
-      if (isPublic) return true;
-      // Returns true if at least one cell in this row is editable
-      return columns.some(col => checkCanEditCell(row, col));
+      return true;
     };
 
     const grid = createTableGrid({
       columns,
       rows: rowsData.items,
       people,
-      canEdit: true,
+      canEdit: canManageStructure || table.permission_type !== 'public',
       canEditRow: checkCanEditRow, 
       canEditCell: checkCanEditCell,
       userOwnedRowIds,
@@ -221,6 +231,10 @@ export default async function tablePage(info, outlet) {
 
     async function addRow() {
       if (!columns.length) return toast.warning('ابتدا حداقل یک ستون اضافه کنید.');
+      
+      // Refresh people just in case they were added recently
+      await refreshPeopleData();
+
       const result = await openRowEditor({ columns, values: {}, people, tablePermissionType: table.permission_type });
       if (!result) return;
       try {
@@ -239,6 +253,8 @@ export default async function tablePage(info, outlet) {
         const position = columns.length;
         const created = await tablesService.createColumn(table.id, { ...values, position });
         columns.push(created);
+        // Refresh people if the new column is a person_ref
+        if (created.type === COLUMN_TYPES.PERSON_REF) await refreshPeopleData();
         grid.refresh(columns, rowsData.items);
         toast.success('ستون اضافه شد.');
       } catch (err) { toast.error(err?.message || 'افزودن ستون ناموفق بود.'); }
@@ -255,6 +271,8 @@ export default async function tablePage(info, outlet) {
         toast.success(`تغییرات روی ${formatNumber(ids.length)} ستون اعمال شد.`);
         toastId.dismiss();
         columns = await tablesService.listColumns(table.id);
+        await refreshPeopleData();
+        updateOwnershipHighlights();
         outlet.innerHTML = '';
         outlet.appendChild(buildView());
       } catch (err) { toast.error(err?.message || 'خطا در ویرایش گروهی.'); toastId.dismiss(); }
@@ -278,6 +296,11 @@ export default async function tablePage(info, outlet) {
         toastId.dismiss();
         columns = await tablesService.listColumns(table.id);
         rowsData = await tablesService.listRows(table.id, { limit: 500 });
+        
+        // CRITICAL FIX: Refresh people data before rebuilding view
+        await refreshPeopleData(); 
+        updateOwnershipHighlights();
+        
         outlet.innerHTML = '';
         outlet.appendChild(buildView());
       } catch (err) { toast.error(err?.message || 'خطا در افزودن گروهی.'); toastId.dismiss(); }
@@ -303,6 +326,8 @@ export default async function tablePage(info, outlet) {
         const idx = columns.findIndex((c) => c.id === col.id);
         if (idx !== -1) columns[idx] = updated;
         columns = await tablesService.listColumns(table.id);
+        await refreshPeopleData();
+        updateOwnershipHighlights();
         grid.refresh(columns, rowsData.items);
         toast.success('ستون به‌روز شد.');
       } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
@@ -317,6 +342,7 @@ export default async function tablePage(info, outlet) {
         onDeleted: () => {
           columns = columns.filter((c) => c.id !== col.id);
           rowsData.items.forEach((r) => { if (r.values && col.id in r.values) delete r.values[col.id]; });
+          updateOwnershipHighlights();
           grid.refresh(columns, rowsData.items);
         },
       });
@@ -324,7 +350,7 @@ export default async function tablePage(info, outlet) {
 
     function openRowContext(e, row) {
       const canEditThisRow = checkCanEditRow(row);
-      const canDeleteThisRow = isAdmin || isOwner; // Only admin/owner can delete structural rows
+      const canDeleteThisRow = isAdmin || isOwner;
       
       openContextMenu(e.clientX, e.clientY, [
         {
@@ -332,9 +358,10 @@ export default async function tablePage(info, outlet) {
           icon: 'edit',
           disabled: !canEditThisRow,
           onClick: async () => {
-            // Determine which cells are disabled
+            // Refresh people before editing just in case
+            await refreshPeopleData();
+
             const disabledCols = columns.filter(c => !checkCanEditCell(row, c)).map(c => c.id);
-            
             const result = await openRowEditor({ 
               columns, 
               values: row.values || {}, 
@@ -353,6 +380,7 @@ export default async function tablePage(info, outlet) {
               row.values = result.values;
               row.is_owner_determining = result.isOwnerDetermining;
               rowsData = await tablesService.listRows(table.id, { limit: 500 });
+              updateOwnershipHighlights();
               grid.refresh(columns, rowsData.items);
               toast.success('ردیف به‌روز شد.');
             } catch (err) { toast.error(err?.message || 'ذخیره ناموفق بود.'); }
@@ -366,6 +394,7 @@ export default async function tablePage(info, outlet) {
             try {
               const created = await tablesService.createRow(table.id, { ...row.values }, false);
               rowsData.items.push(created);
+              updateOwnershipHighlights();
               grid.refresh(columns, rowsData.items);
               toast.success('ردیف کپی شد.');
             } catch (err) { toast.error(err?.message || 'کپی ناموفق بود.'); }
@@ -384,6 +413,7 @@ export default async function tablePage(info, outlet) {
               successMessage: 'ردیف حذف شد.',
               onDeleted: () => {
                 rowsData.items = rowsData.items.filter((r) => r.id !== row.id);
+                updateOwnershipHighlights();
                 grid.refresh(columns, rowsData.items);
               },
             }),
@@ -398,7 +428,7 @@ export default async function tablePage(info, outlet) {
         const updated = await tablesService.update(table.id, values);
         Object.assign(table, updated);
         toast.success('تنظیمات جدول به‌روز شد.');
-        window.location.reload();
+        window.location.reload(); 
       } catch (err) { toast.error(err?.message || 'ویرایش ناموفق بود.'); }
     }
 
