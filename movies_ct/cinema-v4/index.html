@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#0a0a0c" />
+  <title>سینما من | هوش مصنوعی</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+  <link rel="stylesheet" href="css/core.css" />
+  <link rel="stylesheet" href="css/ai.css" />
+  <link rel="stylesheet" href="css/hub.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<div id="boot-loader" class="boot-loader">
+  <div class="boot-logo-text">سینما من</div>
+  <div class="boot-progress"><div class="boot-progress-fill"></div></div>
+  <div class="boot-log" id="boot-log"></div>
+</div>
+
+<div id="modal-root" class="modal-root" aria-hidden="true"></div>
+<div id="toast-root" class="toast-root" aria-live="polite"></div>
+<div class="app" id="app" hidden>
+  <header class="app-header" id="app-header">
+    <div class="header-brand">
+      <div class="brand-text"><h1 class="brand-title">سینما من</h1><span class="brand-sub">آرشیو شخصی</span></div>
+    </div>
+    <nav class="header-nav" aria-label="صفحه‌ها">
+      <a class="nav-link is-active" href="index.html"><span>🪄</span><span class="nav-text">هوش مصنوعی</span></a>
+      <a class="nav-link" href="movies.html"><span>🎞️</span><span class="nav-text">فیلم و سریال</span></a>
+    </nav>
+    <div class="header-spacer"></div>
+    <div class="header-actions">
+      <span class="hd-chip">TITLES <b id="hd-titles">0</b></span>
+      <span class="hd-chip">MODELS <b id="hd-models">0</b></span>
+      <div class="sync-status" id="sync-status" data-state="online" title="وضعیت اتصال">
+        <span class="sync-dot"></span><span class="sync-label" id="sync-label">آنلاین</span>
+      </div>
+      <button class="icon-btn" id="btn-theme" title="تغییر تم" aria-label="تغییر تم"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <button class="icon-btn" id="btn-logout" title="خروج" aria-label="خروج"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+    </div>
+  </header>
+
+  <main class="hub">
+
+    <!-- ۱) مدل سایت -->
+    <section class="panel" id="sec-model">
+      <div class="panel-title"><span>AI MODEL — مدل سایت</span><em id="pool-summary"></em></div>
+      <div class="panel-body">
+        <div class="cur">
+          <div id="cur-model"></div>
+          <div class="cur-actions">
+            <button class="btn btn-primary" id="btn-sync" type="button">🔄 همگام‌سازی مدل‌های رایگان OpenRouter</button>
+            <button class="btn btn-ghost" id="btn-test" type="button">⚡ تست اتصال</button>
+          </div>
+        </div>
+        <p class="panel-hint">این مدل برای همهٔ بخش‌های سایت (هر دو صفحه) استفاده می‌شود. اگر مدلی خطا بدهد یا نتیجه‌اش را رد کنی، یک مدل تصادفی دیگر از استخر امتحان می‌شود و نتیجه را برای پذیرش یا رد به تو نشان می‌دهد.</p>
+      </div>
+    </section>
+
+    <!-- ۲) ابزارها -->
+    <div class="tools">
+      <section class="panel tool-wide" id="sec-free">
+        <div class="panel-title"><span>FREE PROMPT — پرامپت آزاد</span><button class="btn btn-ghost btn-sm" id="fp-history" type="button">📚 تاریخچه</button></div>
+        <div class="panel-body">
+          <select class="field-select" id="fp-title"><option value="">بدون عنوان مشخص (عمومی)</option></select>
+          <textarea class="field-textarea" id="fp-text" placeholder="هر چیزی دربارهٔ فیلم و سریال بپرس… (Ctrl+Enter برای ارسال)"></textarea>
+          <div class="tool-row"><button class="btn btn-primary" id="fp-send" type="button">🪄 ارسال</button></div>
+          <div id="fp-result" hidden></div>
+        </div>
+      </section>
+
+      <section class="panel" id="sec-taste">
+        <div class="panel-title"><span>TASTE — سلیقه و پیشنهاد</span></div>
+        <div class="panel-body">
+          <p class="panel-hint">بر اساس امتیازها و دلیل‌هایی که در لیستت ثبت کرده‌ای.</p>
+          <div class="chip-row" id="kind-chips">
+            <button class="chip is-on" data-kind="both" type="button">فیلم و سریال</button>
+            <button class="chip" data-kind="movie" type="button">فقط فیلم</button>
+            <button class="chip" data-kind="series" type="button">فقط سریال</button>
+          </div>
+          <div class="tool-row">
+            <button class="btn btn-primary" id="btn-taste" type="button">🔍 تحلیل عمیق سلیقه</button>
+            <button class="btn btn-ghost" id="btn-suggest" type="button">✨ پیشنهاد یک اثر</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="sec-batch">
+        <div class="panel-title"><span>BATCH — استانداردسازی دسته‌ای</span><em id="batch-info"></em></div>
+        <div class="panel-body">
+          <p class="panel-hint">عنوان، فصل‌ها، کشور و … را برای چند عنوان یک‌جا درست می‌کند. امتیاز و یادداشت تو دست‌نخورده می‌ماند.</p>
+          <label class="mt-check"><input type="checkbox" id="batch-only" checked /> فقط عنوان‌هایی که هنوز استاندارد نشده‌اند</label>
+          <div class="tool-row">
+            <button class="btn btn-primary" id="btn-batch" type="button">⚡ شروع</button>
+            <button class="btn btn-ghost" id="btn-history" type="button">📚 تاریخچهٔ گفتگوها</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ۳) استخر مدل‌ها و بازخورد -->
+    <section class="panel" id="sec-pool">
+      <div class="panel-title"><span>MODEL POOL — استخر مدل‌ها و بازخورد</span><em id="model-count"></em></div>
+      <div class="panel-body">
+        <div class="mt-bar">
+          <input class="field-input" id="model-search" type="search" placeholder="جستجوی مدل…" autocomplete="off" />
+          <div class="chip-row" id="provider-chips">
+            <button class="chip is-on" data-provider="all" type="button">همه</button>
+            <button class="chip" data-provider="google" type="button">Google</button>
+            <button class="chip" data-provider="openrouter" type="button">OpenRouter</button>
+          </div>
+          <select class="field-select" id="model-sort" aria-label="مرتب‌سازی">
+            <option value="wins">بیشترین پذیرش</option>
+            <option value="fails">کمترین خطا</option>
+            <option value="name">نام</option>
+          </select>
+          <label class="mt-check"><input type="checkbox" id="model-inactive" /> نمایش غیرفعال‌ها</label>
+        </div>
+        <div class="mt-wrap">
+          <table class="mt">
+            <thead><tr><th>مدل</th><th>منبع</th><th>کانتکست</th><th title="پذیرفته‌شده">✓</th><th title="ردشده">✗</th><th title="خطا">⚠</th><th>موفقیت</th><th>در استخر</th><th></th></tr></thead>
+            <tbody id="model-rows"></tbody>
+          </table>
+        </div>
+        <p class="panel-hint">✓ پذیرفتی · ✗ ردکردی · ⚠ خطا یا پاسخ نامعتبر. مدل غیرفعال در انتخاب تصادفی شرکت نمی‌کند ولی می‌توانی دستی انتخابش کنی.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer"><span>سینما من · v<span id="app-version"></span></span><span id="footer-status">● آنلاین</span></footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/db.js"></script>
+<script src="js/ai-prompts.js"></script>
+<script src="js/ai-render.js"></script>
+<script src="js/ai-core.js"></script>
+<script src="js/ai-review.js"></script>
+<script src="js/ai-tasks.js"></script>
+<script src="js/boot.js"></script>
+<script src="js/ai-hub.js"></script>
+</body>
+</html>

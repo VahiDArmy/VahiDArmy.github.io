@@ -1,0 +1,1364 @@
+/* ==== movies.css — فقط صفحهٔ فیلم و سریال ==== */
+.app-body {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 0;
+  position: relative;
+}
+.main-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+/* =========================================================
+   ۳. تولبار
+   ========================================================= */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--border-1);
+  background: linear-gradient(180deg, var(--bg-1), transparent);
+  flex-shrink: 0;
+  backdrop-filter: blur(8px);
+}
+
+.toolbar-left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.page-title { font-size: var(--fs-xl); font-weight: 700; }
+.page-sub { font-size: var(--fs-sm); color: var(--text-3); }
+
+.toolbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.view-switch {
+  display: flex;
+  padding: 3px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.view-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  transition: all var(--dur-fast) var(--ease-out);
+}
+.view-btn:hover { color: var(--text-1); }
+.view-btn.is-active {
+  background: var(--bg-4);
+  color: var(--accent-2);
+  box-shadow: var(--shadow-1);
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 22px 26px 40px;
+  min-height: 0;
+  position: relative;
+}
+
+/* =========================================================
+   سایدبار
+   ========================================================= */
+
+/* =========================================================
+   ۱. دسکتاپ
+   ========================================================= */
+.sidebar {
+  background: linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  border-left: 1px solid var(--border-1);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 14px 26px;
+  height: calc(100vh - var(--header-h) - var(--footer-h));
+  position: sticky;
+  top: var(--header-h);
+  z-index: var(--z-sidebar);
+  -webkit-overflow-scrolling: touch;
+}
+
+.side-section { margin-bottom: 22px; }
+.side-section:last-child { margin-bottom: 0; }
+
+.side-title {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.9px;
+  color: var(--text-4);
+  padding: 0 10px;
+  margin-bottom: 10px;
+}
+
+.side-list { display: flex; flex-direction: column; gap: 3px; }
+
+/* =========================================================
+   آیتم سایدبار
+   ========================================================= */
+.side-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast) var(--ease-out);
+  text-align: right;
+  position: relative;
+  border: 1px solid transparent;
+  cursor: pointer;
+  min-height: 38px;
+}
+.side-item:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border-color: var(--border-1);
+}
+.side-item.is-active {
+  background: linear-gradient(90deg, var(--accent-soft), transparent);
+  color: var(--text-1);
+  border-color: rgba(124, 92, 255, 0.22);
+  font-weight: 600;
+}
+.side-item.is-active::before {
+  content: "";
+  position: absolute;
+  right: 0; top: 20%; bottom: 20%;
+  width: 3px; border-radius: var(--radius-pill);
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* =========================================================
+   آیکن — در ستاره‌ها از متن ★ استفاده می‌کنیم نه emoji
+   =========================================================
+   دلیل: emoji ستاره (⭐) با font-size کوچک نمی‌شود و
+   از عرض خودش بیرون می‌زند. کاراکتر ★ تابع font-size است.
+   ========================================================= */
+.side-icon {
+  font-size: 14px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  min-width: 22px;
+  white-space: nowrap;
+}
+
+/* ---- پنهان‌کردن emoji های موجود در HTML و جایگزینی با ★ ---- */
+.side-item[data-star] .side-icon {
+  font-size: 0;
+  min-width: 58px;
+  max-width: 58px;
+  overflow: hidden;
+  letter-spacing: 0;
+  justify-content: flex-start;
+}
+.side-item[data-star] .side-icon::before {
+  font-size: 11px;
+  letter-spacing: -1px;
+  font-family: var(--font-fa), system-ui, sans-serif;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* ---- هر سطح، تعداد ستاره‌های متفاوت ---- */
+.side-item[data-star="1"] .side-icon::before { content: "★"; font-size: 14px; }
+.side-item[data-star="2"] .side-icon::before { content: "★★"; font-size: 12px; }
+.side-item[data-star="3"] .side-icon::before { content: "★★★"; font-size: 11px; }
+.side-item[data-star="4"] .side-icon::before { content: "★★★★"; font-size: 10px; }
+.side-item[data-star="5"] .side-icon::before { content: "★★★★★"; font-size: 10px; }
+
+/* ---- رنگ و درخشش هر سطح ---- */
+.side-item[data-star="5"] .side-icon::before {
+  color: var(--star-5);
+  text-shadow: 0 0 6px var(--star-5-glow), 0 0 12px var(--star-5-glow);
+}
+.side-item[data-star="4"] .side-icon::before {
+  color: var(--star-4);
+  text-shadow: 0 0 6px var(--star-4-glow);
+}
+.side-item[data-star="3"] .side-icon::before {
+  color: var(--star-3);
+  text-shadow: 0 0 5px var(--star-3-glow);
+}
+.side-item[data-star="2"] .side-icon::before {
+  color: var(--star-2);
+  text-shadow: 0 0 6px var(--star-2-glow);
+}
+.side-item[data-star="1"] .side-icon::before {
+  color: var(--star-1);
+  text-shadow: 0 0 6px var(--star-1-glow);
+}
+
+/* ---- ردیف بدون امتیاز — از emoji ○ استفاده می‌کند ---- */
+.side-item[data-star="0"] .side-icon {
+  color: var(--star-0);
+  font-size: 14px;
+  min-width: 58px;
+  max-width: 58px;
+  justify-content: center;
+}
+
+/* ---- برچسب ---- */
+.side-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 2px;
+}
+
+/* ---- شمارش ---- */
+.side-count {
+  flex-shrink: 0;
+  min-width: 26px;
+  padding: 2px 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  text-align: center;
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  color: var(--text-3);
+}
+
+/* ---- رنگ شمارش ---- */
+.side-item[data-star="5"] .side-count { color: var(--star-5); background: rgba(255, 215, 0, 0.10); }
+.side-item[data-star="4"] .side-count { color: var(--star-4); background: rgba(61, 220, 151, 0.10); }
+.side-item[data-star="3"] .side-count { color: var(--star-3); background: rgba(154, 154, 176, 0.10); }
+.side-item[data-star="2"] .side-count { color: var(--star-2); background: rgba(255, 159, 67, 0.10); }
+.side-item[data-star="1"] .side-count { color: var(--star-1); background: rgba(255, 77, 94, 0.10); }
+
+/* ---- آیتم فعال ---- */
+.side-item[data-star="5"].is-active { border-color: rgba(255, 215, 0, 0.35); }
+.side-item[data-star="5"].is-active::before { background: var(--star-5); box-shadow: 0 0 10px var(--star-5-glow); }
+.side-item[data-star="5"].is-active .side-count { background: var(--star-5); color: #000; }
+.side-item[data-star="4"].is-active .side-count { background: var(--star-4); color: #000; }
+.side-item[data-star="3"].is-active .side-count { background: var(--star-3); color: #000; }
+.side-item[data-star="2"].is-active .side-count { background: var(--star-2); color: #000; }
+.side-item[data-star="1"].is-active .side-count { background: var(--star-1); color: #fff; }
+
+/* =========================================================
+   فیلترها
+   ========================================================= */
+.side-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.side-filter > span {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.side-filter select,
+.side-filter input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  font-size: var(--fs-sm);
+  color: var(--text-1);
+  background: var(--bg-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238888a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 10px center;
+  background-size: 14px;
+  padding-left: 30px;
+}
+.side-filter select:hover,
+.side-filter input:hover { border-color: var(--border-3); }
+.side-filter select:focus,
+.side-filter input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.side-filter select option {
+  background: var(--bg-2);
+  color: var(--text-1);
+}
+
+/* =========================================================
+   چک‌باکس
+   ========================================================= */
+.side-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--dur-fast);
+  user-select: none;
+}
+.side-checkbox:hover { background: var(--bg-2); }
+.side-checkbox input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.checkbox-box {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-xs);
+  border: 1.5px solid var(--border-3);
+  display: grid;
+  place-items: center;
+  transition: all var(--dur-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+.checkbox-box::after {
+  content: "";
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg) scale(0);
+  transition: transform var(--dur-fast) var(--ease-spring);
+  margin-top: -3px;
+}
+.side-checkbox input:checked ~ .checkbox-box {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.side-checkbox input:checked ~ .checkbox-box::after {
+  transform: rotate(-45deg) scale(1);
+}
+
+/* =========================================================
+   خلاصه
+   ========================================================= */
+.side-stats-mini {
+  padding: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.side-stats-mini .side-title {
+  padding: 0;
+  margin-bottom: 12px;
+}
+.mini-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  border-bottom: 1px dashed var(--border-1);
+}
+.mini-stat:last-child { border-bottom: none; }
+.mini-stat strong {
+  color: var(--text-1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   اکشن‌ها
+   ========================================================= */
+.side-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: var(--radius-sm);
+  transition: all var(--dur-fast);
+  text-align: right;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.side-action:hover {
+  background: var(--bg-2);
+  color: var(--text-1);
+  border-color: var(--border-1);
+}
+.side-action svg {
+  color: var(--text-3);
+  transition: color var(--dur-fast);
+  flex-shrink: 0;
+}
+.side-action:hover svg { color: var(--accent-2); }
+
+/* =========================================================
+   ۲. موبایل
+   ========================================================= */
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed !important;
+    top: var(--header-h) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: 280px !important;
+    height: auto !important;
+    z-index: 45 !important;
+    transform: translateX(100%) !important;
+    transition: transform var(--dur-slow) var(--ease-out) !important;
+    box-shadow: var(--shadow-4);
+    background: var(--bg-1);
+    border-left: 1px solid var(--border-2);
+    border-top: none;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 16px;
+  }
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body.sidebar-open .content-area {
+    overflow: hidden !important;
+    touch-action: none;
+    pointer-events: none;
+  }
+}/* =========================================================
+   کارت‌ها و گرید — سیستم ستاره
+   ========================================================= */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+.grid.is-list { grid-template-columns: 1fr; gap: 8px; }
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--dur-base) var(--ease-out);
+  overflow: hidden;
+  isolation: isolate;
+  animation: card-enter var(--dur-slow) var(--ease-out) both;
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(600px 100px at var(--mx, 50%) var(--my, 0%), rgba(124,92,255,0.10), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--dur-base);
+  pointer-events: none;
+  z-index: -1;
+}
+.card:hover::before { opacity: 1; }
+.card:hover { transform: translateY(-3px); border-color: var(--border-2); box-shadow: var(--shadow-3); }
+
+/* ---- رنگ مرز بر اساس ستاره ---- */
+.card.rating-1 { border-right: 3px solid var(--star-1); }
+.card.rating-2 { border-right: 3px solid var(--star-2); }
+.card.rating-3 { border-right: 3px solid var(--star-3); }
+.card.rating-4 { border-right: 3px solid var(--star-4); }
+.card.rating-5 { border-right: 3px solid var(--star-5); }
+.card.rating-none { border-right: 3px solid var(--border-2); }
+
+.card.rating-1:hover { box-shadow: 0 12px 32px rgba(255, 77, 94, 0.15), var(--shadow-3); }
+.card.rating-2:hover { box-shadow: 0 12px 32px rgba(255, 159, 67, 0.15), var(--shadow-3); }
+.card.rating-4:hover { box-shadow: 0 12px 32px rgba(61, 220, 151, 0.15), var(--shadow-3); }
+.card.rating-5:hover { box-shadow: 0 12px 32px rgba(255, 215, 0, 0.20), var(--shadow-3); }
+
+.card.is-fav { background: linear-gradient(180deg, rgba(255, 204, 77, 0.05), var(--bg-1)); }
+
+/* ---- سر کارت ---- */
+.card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-title-wrap { min-width: 0; flex: 1; }
+
+.card-title {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text-1);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  transition: color var(--dur-fast);
+}
+.card:hover .card-title { color: var(--accent-2); }
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  flex-wrap: wrap;
+}
+.card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-4); }
+
+.card-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity var(--dur-fast);
+}
+.card:hover .card-actions,
+.card:focus-within .card-actions { opacity: 1; }
+
+.card-act {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-3);
+  transition: all var(--dur-fast);
+}
+.card-act:hover { background: var(--bg-4); color: var(--text-1); }
+.card-act.is-fav { color: var(--warning); }
+.card-act.is-fav svg { fill: var(--warning); }
+.card-act.danger:hover { background: rgba(255,77,94,0.15); color: var(--danger); }
+
+/* ---- بدنه ---- */
+.card-body { display: flex; flex-direction: column; gap: 10px; }
+
+.card-notes {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  padding: 8px 10px;
+  background: var(--bg-3);
+  border-radius: var(--radius-sm);
+  border-right: 2px solid var(--border-2);
+}
+
+/* ---- فوتر ---- */
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-1);
+}
+
+/* =========================================================
+   ستاره‌ها
+   ========================================================= */
+.stars { display: inline-flex; gap: 2px; align-items: center; }
+.star {
+  width: 16px;
+  height: 16px;
+  color: var(--text-4);
+  transition: color var(--dur-fast), filter var(--dur-fast);
+}
+.star.filled {
+  color: var(--star-color, var(--star-5));
+  fill: var(--star-color, var(--star-5));
+  filter: drop-shadow(0 0 6px var(--star-color, var(--star-5)));
+}
+.stars-empty {
+  font-size: var(--fs-xs);
+  color: var(--text-4);
+  font-style: italic;
+}
+.stars-empty-text { padding: 2px 8px; background: var(--bg-3); border-radius: var(--radius-pill); }
+
+.stars[data-stars="1"] .star.filled { filter: drop-shadow(0 0 6px var(--star-1-glow)); }
+.stars[data-stars="2"] .star.filled { filter: drop-shadow(0 0 6px var(--star-2-glow)); }
+.stars[data-stars="3"] .star.filled { filter: drop-shadow(0 0 6px var(--star-3-glow)); }
+.stars[data-stars="4"] .star.filled { filter: drop-shadow(0 0 6px var(--star-4-glow)); }
+.stars[data-stars="5"] .star.filled { filter: drop-shadow(0 0 10px var(--star-5-glow)); }
+
+/* ---- بج‌ها ---- */
+.ai-badge {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 12px;
+  filter: drop-shadow(0 0 4px rgba(139, 92, 255, 0.8));
+}
+
+/* ---- دلیل روی کارت ---- */
+.card-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--text-2);
+  background: var(--bg-3);
+  border-right: 2px solid var(--border-2);
+}
+.card-reason[data-stars="5"] { background: rgba(255, 215, 0, 0.05); border-right-color: var(--star-5); }
+.card-reason[data-stars="4"] { background: rgba(61, 220, 151, 0.05); border-right-color: var(--star-4); }
+.card-reason[data-stars="3"] { background: rgba(154, 154, 176, 0.05); border-right-color: var(--star-3); }
+.card-reason[data-stars="2"] { background: rgba(255, 159, 67, 0.05); border-right-color: var(--star-2); }
+.card-reason[data-stars="1"] { background: rgba(255, 77, 94, 0.05); border-right-color: var(--star-1); }
+
+.card-reason-icon { font-size: 13px; line-height: 1.4; flex-shrink: 0; }
+.card-reason-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* ---- نمای لیستی ---- */
+.grid.is-list .card {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 16px;
+}
+.grid.is-list .card-head { flex: 1; min-width: 0; align-items: center; }
+.grid.is-list .card-body { display: none; }
+.grid.is-list .card-reason { display: none; }
+.grid.is-list .card-foot {
+  margin: 0; padding: 0; border: none;
+  flex-shrink: 0; width: auto;
+}
+.grid.is-list .card-title { -webkit-line-clamp: 1; font-size: var(--fs-md); }
+.grid.is-list .card-actions { opacity: 1; }
+
+@media (max-width: 720px) {
+  .grid.is-list .card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 12px 14px !important;
+  }
+  .grid.is-list .card-head {
+    flex: initial !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+  .grid.is-list .card-title-wrap { flex: 1 !important; min-width: 0 !important; }
+  .grid.is-list .card-title { -webkit-line-clamp: 2 !important; font-size: var(--fs-md) !important; white-space: normal !important; }
+  .grid.is-list .card-actions { opacity: 1 !important; flex-shrink: 0 !important; }
+  .grid.is-list .card-foot {
+    margin-top: 6px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid var(--border-1) !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
+/* ---- حالت خالی ---- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 80px 24px;
+  text-align: center;
+}
+.empty-icon { font-size: 64px; filter: grayscale(0.4); opacity: 0.7; animation: float 3.5s infinite var(--ease-in-out); }
+.empty-state h3 { font-size: var(--fs-xl); color: var(--text-1); }
+.empty-state p { max-width: 380px; color: var(--text-3); }
+
+/* =========================================================
+   ۵. کارت آمار
+   ========================================================= */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.stat-box {
+  padding: 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  transition: all var(--dur-base);
+  position: relative;
+  overflow: hidden;
+}
+.stat-box::before {
+  content: "";
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle at top right, var(--accent-soft), transparent 70%);
+  pointer-events: none;
+}
+.stat-box:hover {
+  border-color: var(--border-3);
+  transform: translateY(-2px);
+}
+.stat-label {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.stat-value {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  color: var(--text-1);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.stat-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-4);
+  margin-top: 4px;
+}
+
+.stat-box[data-cat="love"] .stat-value { color: var(--love); }
+.stat-box[data-cat="good"] .stat-value { color: var(--good); }
+.stat-box[data-cat="hate"] .stat-value { color: var(--hate); }
+
+/* =========================================================
+   ۶. نوارها
+   ========================================================= */
+.bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bar-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 44px;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-sm);
+}
+.bar-label {
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bar-track {
+  height: 8px;
+  background: var(--bg-3);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 900ms var(--ease-out);
+}
+.bar-value {
+  color: var(--text-2);
+  font-weight: 700;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.bar-fill[data-cat="love"] { background: linear-gradient(90deg, var(--love), #ff7a95); }
+.bar-fill[data-cat="good"] { background: linear-gradient(90deg, var(--good), #7cc4ff); }
+.bar-fill[data-cat="hate"] { background: linear-gradient(90deg, var(--hate), #ffc27a); }
+
+/* =========================================================
+   ۷. مودال جزئیات
+   ========================================================= */
+.detail-hero {
+  padding: 22px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--bg-3), var(--bg-2));
+  border: 1px solid var(--border-2);
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.detail-hero[data-cat="love"] {
+  background: linear-gradient(135deg, rgba(255, 59, 107, 0.12), var(--bg-2));
+  border-color: rgba(255, 59, 107, 0.25);
+}
+.detail-hero[data-cat="good"] {
+  background: linear-gradient(135deg, rgba(77, 171, 247, 0.12), var(--bg-2));
+  border-color: rgba(77, 171, 247, 0.25);
+}
+.detail-hero[data-cat="hate"] {
+  background: linear-gradient(135deg, rgba(255, 159, 67, 0.12), var(--bg-2));
+  border-color: rgba(255, 159, 67, 0.25);
+}
+
+.detail-title {
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.25;
+}
+.detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.detail-item {
+  padding: 12px 14px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+}
+.detail-item .k {
+  font-size: var(--fs-xs);
+  color: var(--text-4);
+  margin-bottom: 4px;
+}
+.detail-item .v {
+  font-size: var(--fs-md);
+  color: var(--text-1);
+  font-weight: 600;
+}
+
+.detail-notes {
+  padding: 14px 16px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-right: 3px solid var(--accent);
+  border-radius: var(--radius-md);
+  color: var(--text-2);
+  font-size: var(--fs-md);
+  line-height: 1.9;
+  white-space: pre-wrap;
+}
+
+/* ---- فوتر اختصاصی مودال جزئیات ---- */
+.detail-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.detail-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.detail-footer-actions .btn {
+  border: 1px solid transparent;
+}
+.detail-footer-actions .btn:hover {
+  border-color: var(--border-2);
+  background: var(--bg-2);
+}
+.detail-footer-actions .btn.danger-text {
+  color: var(--danger);
+}
+.detail-footer-actions .btn.danger-text:hover {
+  background: rgba(255, 77, 94, 0.1);
+  border-color: rgba(255, 77, 94, 0.2);
+}
+
+/* =========================================================
+   ۸. هشدار عنوان مشابه
+   ========================================================= */
+.dup-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dup-intro {
+  color: var(--text-2);
+  font-size: var(--fs-md);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.dup-intro strong {
+  color: var(--accent-2);
+  font-weight: 700;
+}
+
+.dup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-md);
+  max-height: 260px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.dup-item {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 159, 67, 0.05);
+  border: 1px solid rgba(255, 159, 67, 0.2);
+}
+
+.dup-item[data-match="exact"] {
+  background: rgba(255, 77, 94, 0.06);
+  border-color: rgba(255, 77, 94, 0.28);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+.dup-item[data-match="contains"] {
+  background: rgba(255, 159, 67, 0.06);
+  border-color: rgba(255, 159, 67, 0.26);
+  box-shadow: inset 3px 0 0 var(--hate);
+}
+.dup-item[data-match="similar"] {
+  background: rgba(255, 204, 77, 0.05);
+  border-color: rgba(255, 204, 77, 0.22);
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+.dup-icon {
+  font-size: 14px;
+  text-align: center;
+}
+
+.dup-info { min-width: 0; }
+
+.dup-title {
+  color: var(--text-1);
+  font-weight: 600;
+  font-size: var(--fs-md);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.dup-meta {
+  font-size: 10.5px;
+  color: var(--text-4);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.dup-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+}
+
+.dup-item[data-match="exact"] .dup-tag {
+  background: rgba(255, 77, 94, 0.14);
+  color: var(--danger);
+  border: 1px solid rgba(255, 77, 94, 0.3);
+  text-shadow: 0 0 6px rgba(255, 77, 94, 0.5);
+}
+.dup-item[data-match="contains"] .dup-tag {
+  background: rgba(255, 159, 67, 0.14);
+  color: var(--hate);
+  border: 1px solid rgba(255, 159, 67, 0.3);
+  text-shadow: 0 0 6px rgba(255, 159, 67, 0.5);
+}
+.dup-item[data-match="similar"] .dup-tag {
+  background: rgba(255, 204, 77, 0.14);
+  color: var(--warning);
+  border: 1px solid rgba(255, 204, 77, 0.3);
+  text-shadow: 0 0 6px rgba(255, 204, 77, 0.5);
+}
+
+.dup-question {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  line-height: 1.8;
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(139, 92, 255, 0.05);
+  border-right: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+/* ── کانال رنگ معنایی: --sc از روی امتیاز (همان منطق قبلی) ── */
+.card, .side-item { --sc: var(--border-2); }
+.side-item[data-star="all"] { --sc: var(--accent); }
+.side-item[data-star="0"] { --sc: var(--text-3); }
+.card.rating-1, .side-item[data-star="1"], [data-stars="1"] { --sc: var(--star-1); }
+.card.rating-2, .side-item[data-star="2"], [data-stars="2"] { --sc: var(--star-2); }
+.card.rating-3, .side-item[data-star="3"], [data-stars="3"] { --sc: var(--star-3); }
+.card.rating-4, .side-item[data-star="4"], [data-stars="4"] { --sc: var(--star-4); }
+.card.rating-5, .side-item[data-star="5"], [data-stars="5"] { --sc: var(--star-5); }
+
+/* ── سایدبار: هر بخش یک «پنل» ── */
+.sidebar { background: var(--bg-1); border-inline-end: 1px solid var(--border-1); backdrop-filter: none; }
+.side-section { background: var(--bg-0); border: 1px solid var(--border-1); margin-bottom: 12px; }
+.side-section:last-child { margin-bottom: 0; }
+.side-title { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 7px 10px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: 0.25em; color: var(--accent); background: var(--bg-2); border-bottom: 1px solid var(--border-1); }
+.side-section > :not(.side-title) { margin-inline: 8px; }
+.side-title + * { margin-top: 8px; }
+.side-section > :last-child { margin-bottom: 8px; }
+.side-item { border-radius: 0; font-size: 11px; letter-spacing: 0.06em; }
+.side-item:hover { background: var(--bg-2); color: var(--text-1); }
+.side-item.is-active { background: var(--bg-2); color: var(--accent); }
+.side-count { border-radius: 0; }
+.side-item[data-star] .side-count { background: color-mix(in srgb, var(--sc) 14%, transparent); }
+.side-item[data-star].is-active { border-color: color-mix(in srgb, var(--sc) 45%, transparent); }
+.side-item[data-star].is-active .side-count { background: var(--sc); color: #000; }
+.side-filter input, .side-filter select, .checkbox-box, .side-action { border-radius: 0; }
+.side-action:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── نوار ابزار ── */
+.toolbar { background: var(--bg-1); border-bottom: 1px solid var(--border-1); }
+.page-title { font-size: 14px; letter-spacing: 0.06em; color: var(--accent); }
+.page-sub { font-size: 10.5px; letter-spacing: 0.14em; color: var(--text-3); }
+.view-switch, .view-btn { border-radius: 0; }
+.view-btn.is-active { background: var(--accent); color: #000; }
+
+/* ── کارت‌ها ── */
+.grid { gap: 12px; }
+.card { background: var(--bg-1); border: 1px solid var(--border-1); border-radius: 0; box-shadow: none; backdrop-filter: none; }
+.card::before { display: none; }
+.card.is-fav { background: linear-gradient(180deg, color-mix(in srgb, var(--warning) 7%, transparent), var(--bg-1)); }
+.card[data-rating]:hover { transform: translateX(-2px); background: var(--bg-2);
+  border-color: var(--accent) var(--sc) var(--accent) var(--accent); box-shadow: 0 0 18px -6px var(--sc); }
+.card:focus-visible { outline: none; border-color: var(--accent); box-shadow: -2px 0 0 var(--accent); }
+.card-title { font-size: 15px; font-weight: 700; letter-spacing: -0.005em; }
+.card-meta { font-size: 10px; letter-spacing: 0.14em; color: var(--text-4); }
+.card-meta .dot { width: 4px; height: 4px; border-radius: 0; background: var(--accent); }
+.card-notes { font-size: 12px; line-height: 1.8; color: var(--text-3); }
+.card-foot { border-top: 1px solid var(--border-1); font-size: 10px; letter-spacing: 0.12em; }
+.card-act { border-radius: 0; }
+.card-reason[data-stars], .story-reason[data-stars] { background: color-mix(in srgb, var(--sc) 7%, transparent); border-right-color: var(--sc); }
+.stars-empty-text { border-radius: 0; background: var(--bg-2); border: 1px solid var(--border-1); }
+.empty-icon { filter: grayscale(1); }
+
+/* ═════════ v2 — ticker · rail · command bar ═════════ */
+:root { --tick-h: 28px; }
+.app { grid-template-rows: var(--header-h) var(--tick-h) 1fr var(--footer-h); }
+.app-body { grid-template-columns: var(--sidebar-w) minmax(0, 1fr) 252px; }
+.sidebar { top: calc(var(--header-h) + var(--tick-h)); height: calc(100vh - var(--header-h) - var(--tick-h) - var(--footer-h)); }
+
+.ticker { position: sticky; top: var(--header-h); z-index: 49; display: flex; overflow: hidden; direction: ltr; background: #000; border-bottom: 1px solid var(--border-1); }
+:root[data-theme="light"] .ticker { background: var(--bg-3); }
+.tk-label { flex: none; display: flex; align-items: center; padding: 0 14px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 0.25em; }
+.tk-track { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; display: flex; align-items: center; }
+.tk-inner { display: inline-block; padding-left: 100%; animation: tk-scroll 60s linear infinite; }
+.ticker:hover .tk-inner { animation-play-state: paused; }
+.tk-item { font-size: 11.5px; margin: 0 16px; color: var(--text-1); }
+.tk-sep { color: var(--text-4); }
+.tk-tag { display: inline-block; margin-inline-end: 8px; padding: 1px 6px; font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em;
+  color: var(--sc, var(--text-3)); background: color-mix(in srgb, var(--sc, var(--text-3)) 18%, transparent); }
+@keyframes tk-scroll { to { transform: translateX(-100%); } }
+
+
+.side-r { position: sticky; top: calc(var(--header-h) + var(--tick-h)); height: calc(100vh - var(--header-h) - var(--tick-h) - var(--footer-h));
+  overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 12px; background: var(--bg-1); border-right: 1px solid var(--border-1); }
+.rail-panel { background: var(--bg-0); border: 1px solid var(--border-1); flex: none; }
+.rail-panel .side-title em { font-style: normal; color: var(--text-4); font-size: 9px; letter-spacing: 0.1em; }
+.rl-bars, .rl-picks { list-style: none; padding: 6px 0; }
+.rl-row { display: grid; grid-template-columns: 54px 1fr 28px; align-items: center; gap: 8px; padding: 4px 10px; cursor: pointer; font-size: 10.5px; color: var(--text-2); }
+.rl-row:hover, .rl-row:focus-visible, .rl-picks li:hover, .rl-picks li:focus-visible { background: var(--bg-2); color: var(--text-1); outline: none; }
+.rl-k { color: var(--sc, var(--text-3)); letter-spacing: 0.06em; }
+.rl-bar { display: block; height: 6px; background: var(--bg-2); }
+.rl-bar i { display: block; height: 100%; background: var(--sc, var(--accent)); box-shadow: 0 0 8px -1px var(--sc, transparent); transition: width var(--dur-slow) var(--ease-out); }
+.rl-row em { font-style: normal; text-align: end; color: var(--text-3); font-size: 10px; }
+.rl-spark { padding: 10px; color: var(--info); }
+.rl-spark svg { display: block; width: 100%; height: 56px; }
+#sp-line { fill: none; stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+#sp-fill { fill: color-mix(in srgb, currentColor 14%, transparent); }
+.rl-picks li { display: flex; align-items: center; gap: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; color: var(--text-2); }
+.rl-picks b { color: var(--accent); }
+.rl-picks span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-picks em { font-style: normal; font-size: 10px; color: var(--sc, var(--text-3)); }
+.rl-picks .rl-empty { color: var(--text-4); cursor: default; }
+
+.app-footer { position: sticky; bottom: 0; z-index: 60; }
+.cmdbar { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 8px; direction: ltr; cursor: text; }
+.cmd-prompt { color: var(--success); font-weight: 800; font-size: 12px; }
+#cmd { flex: 0 1 340px; min-width: 60px; background: transparent; border: 0; outline: 0; font: inherit; font-size: 12px; color: var(--text-1); caret-color: var(--accent); }
+#cmd::placeholder { color: var(--text-4); }
+.cmd-out { font-size: 10.5px; letter-spacing: 0.08em; color: var(--success); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmd-out.is-bad { color: var(--danger); }
+.cmd-help { position: fixed; z-index: 80; inset-inline-start: 14px; bottom: calc(var(--footer-h) + 8px); width: min(560px, calc(100vw - 28px)); max-height: 60vh; overflow: auto;
+  background: var(--bg-1); border: 1px solid var(--accent); box-shadow: var(--shadow-3); font-size: 11px; }
+.cmd-help[hidden] { display: none; }
+.ch-h { display: flex; justify-content: space-between; padding: 7px 10px; background: var(--bg-2); border-bottom: 1px solid var(--border-1); color: var(--accent); font-size: 9.5px; font-weight: 700; letter-spacing: 0.25em; }
+.ch-g { display: grid; grid-template-columns: max-content 1fr; gap: 5px 16px; padding: 10px 12px; }
+.ch-g code { color: var(--accent); direction: ltr; text-align: left; font-family: inherit; }
+.ch-g span { color: var(--text-3); }
+.ch-k { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 12px; border-top: 1px solid var(--border-1); color: var(--text-3); }
+
+.grid { counter-reset: n; }
+.card { counter-increment: n; scroll-margin: 96px 0 56px; }
+.card-meta::before { content: "№" counter(n, decimal-leading-zero); color: var(--accent); font-weight: 700; letter-spacing: 0.12em; margin-inline-end: 6px; direction: ltr; }
+.tm-new { background: var(--success); color: #000; font-size: 9px; font-weight: 800; letter-spacing: 0.2em; padding: 1px 6px; margin-inline-start: 6px; }
+
+@media (max-width: 1180px) { .app-body { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); } .side-r { display: none; } .hd-chip:not(.hd-clock) { display: none; } }
+@media (max-width: 900px) { :root { --tick-h: 0px; } .ticker { height: 0; border: 0; } .footer-hint, .app-footer > span:first-of-type { display: none; } }
+@media (max-width: 560px) { .hd-clock { display: none; } }
+@media (prefers-reduced-motion: reduce) { .tk-inner { animation: none; padding-left: 0; } }
+
+
+/* ═════════ v3 — glitch nav (از پن «Retro glitchy navigation»: اسکن‌لاین · RGB-split · جابه‌جایی نواری · بلوک فعال)
+   فقط روی المان‌های ناوبری‌مانند: ردیف‌ها و دکمه‌های سایدبار، «افزودن»، لوگو. رنگ‌ها از توکن‌های خود تم می‌آیند:
+   کانال اول = رنگ معنایی ردیف (--sc از منطق ستاره‌ها)، کانال دوم = --info ═════════ */
+.brand-title { --sc: var(--neon-pink); }
+#btn-add { --gl-tint: rgba(0, 0, 0, 0.22); }
+.side-item, .side-action, #btn-add { position: relative; isolation: isolate; overflow: hidden; }
+.side-item::after, .side-action::after, #btn-add::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0; transition: opacity var(--dur-base);
+  background: linear-gradient(transparent 4px, var(--gl-tint, color-mix(in srgb, var(--sc, var(--accent)) 24%, transparent)) 4px) 0 0 / 100% 5px,
+              radial-gradient(ellipse at center, transparent 55%, color-mix(in srgb, var(--bg-0) 80%, transparent) 100%);
+}
+/* بلوک فعال: دو رنگ، با ایزینگ پله‌ای شبیه RoughEase */
+.side-item::before { content: ""; position: absolute; z-index: 1; inset-block: 0 auto; inset-inline-start: 0; width: 6px; height: 0; margin: 0; transform: none; pointer-events: none; transition: height 0.32s steps(8, end); }
+.side-item.is-active::before, .side-item[data-star].is-active::before {
+  height: 100%; width: 6px; transform: none;
+  background: linear-gradient(var(--sc), var(--sc)) left / 50% 100% no-repeat, linear-gradient(var(--info), var(--info)) right / 50% 100% no-repeat;
+  box-shadow: 0 0 12px -2px var(--sc);
+}
+@media (hover: hover) {
+  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after, .side-item:focus-visible::after, .side-action:focus-visible::after { opacity: 1; animation: gl-scan 0.65s linear infinite; }
+  .side-item:hover .side-label, .brand-title:hover { animation: gl-rgb 0.3s steps(6) both; }
+  .side-action:hover, #btn-add:hover { animation: gl-rgb-lite 0.3s steps(6) both; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-item::before { transition: none; }
+  .side-item:hover::after, .side-action:hover::after, #btn-add:hover::after,
+  .side-item:hover .side-label, .brand-title:hover, .side-action:hover, #btn-add:hover { animation: none; }
+}
+
+/* =========================================================
+   واکنش‌گرا
+   =========================================================
+   ترتیب از بزرگ به کوچک:
+     ۱۱۰۰px  → سایدبار باریک‌تر
+      ۹۰۰px  → سایدبار به حالت کشویی (نکته: همان قواعد در sidebar.css هم هست)
+      ۷۲۰px  → موبایل — فوتر حذف، هدر فشرده
+      ۴۲۰px  → موبایل کوچک
+   ========================================================= */
+
+/* =========================================================
+   ۱. تبلت افقی — ۱۱۰۰px
+   ========================================================= */
+@media (max-width: 1100px) {
+  :root { --sidebar-w: 232px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+}
+
+/* =========================================================
+   ۲. تبلت — ۹۰۰px (سایدبار کشویی)
+   ========================================================= */
+@media (max-width: 900px) {
+  /* ---- چیدمان بدنه: تک‌ستونی ---- */
+  .app-body {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ---- سایدبار: fixed و پنهان ---- */
+  .sidebar {
+    position: fixed !important;
+    top: var(--header-h) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    left: auto !important;
+    width: 280px !important;
+    height: auto !important;
+    z-index: 45 !important;
+    transform: translateX(100%) !important;
+    transition: transform var(--dur-slow) var(--ease-out) !important;
+    box-shadow: var(--shadow-4);
+    background: var(--bg-1);
+    border-left: 1px solid var(--border-2);
+    border-top: none;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 16px;
+  }
+  .sidebar.is-open {
+    transform: translateX(0) !important;
+  }
+
+  /* ---- بک‌دراپ ---- */
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    top: var(--header-h);
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 44;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-base);
+  }
+  .sidebar-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ---- هدر ---- */
+  .menu-toggle { display: inline-flex; }
+  .brand-sub { display: none; }
+  .header-search { max-width: none; }
+  .footer-hint { display: none; }
+
+  /* ---- قفل اسکرول پس‌زمینه ---- */
+  body.sidebar-open {
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+  body.sidebar-open .content-area {
+    overflow: hidden !important;
+    touch-action: none;
+    pointer-events: none;
+  }
+}
+
+/* =========================================================
+   ۳. موبایل — ۷۲۰px
+   ========================================================= */
+@media (max-width: 720px) {
+  :root {
+    --header-h: 60px;
+    --footer-h: 0px;
+  }
+
+  /* ---- هدر فشرده ---- */
+  .app-footer { display: none; }
+
+  .app-header {
+    grid-template-columns: auto 1fr auto;
+    padding: 0 12px;
+    gap: 10px;
+  }
+  .brand-text { display: none; }
+  .brand-mark { width: 36px; height: 36px; font-size: 19px; }
+  .header-search { max-width: none; }
+  .sync-label { display: none; }
+  .sync-status { padding: 6px; }
+
+  /* ---- تولبار ---- */
+  .toolbar {
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+  .toolbar-left { width: 100%; }
+  .page-title { font-size: var(--fs-lg); }
+  .toolbar-right { width: 100%; justify-content: space-between; }
+
+  /* ---- محتوا ---- */
+  .content-area { padding: 14px 14px 40px; }
+  .grid { grid-template-columns: 1fr; gap: 10px; }
+
+  /* ---- مودال ---- */
+  .modal-root { padding: 0; }
+  .modal-wrapper { padding: 10px; align-items: flex-end; }
+  .modal { max-height: 92vh; border-radius: var(--radius-lg); }
+  .modal-header, .modal-body, .modal-footer { padding: 14px 16px; }
+
+  /* ---- فرم ---- */
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+
+  /* ---- آمار ---- */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .bar-row { grid-template-columns: 80px 1fr 36px; }
+
+  /* ---- توست ---- */
+  .toast-root { right: 12px; left: 12px; width: auto; }
+
+  /* ---- AI ---- */
+  .ai-stream-body { max-height: 260px; padding: 14px; }
+  .ai-result-row { grid-template-columns: 100px 1fr; font-size: var(--fs-xs); }
+  .ai-progress-text { min-width: 80px; font-size: var(--fs-xs); }
+  .ai-result-item { grid-template-columns: 18px 1fr; }
+  .ai-result-new { grid-column: 2; font-size: var(--fs-xs); }
+
+}
+
+/* =========================================================
+   ۴. موبایل کوچک — ۴۲۰px
+   ========================================================= */
+@media (max-width: 420px) {
+  .stats-grid { grid-template-columns: 1fr; }
+  .detail-grid { grid-template-columns: 1fr 1fr; }
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-footer .btn { width: 100%; }
+}
+
+/* =========================================================
+   ۵. چاپ
+   ========================================================= */
+@media print {
+  .app-header,
+  .sidebar,
+  .sidebar-backdrop,
+  .toolbar,
+  .app-footer,
+  .toast-root,
+  .card-actions,
+  .modal-root {
+    display: none !important;
+  }
+  body { background: #fff; color: #000; }
+  .card { break-inside: avoid; border: 1px solid #ddd; box-shadow: none; }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}

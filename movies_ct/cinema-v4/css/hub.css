@@ -1,0 +1,50 @@
+/* =========================================================
+   hub.css — فقط صفحهٔ اصلی (AI)
+   ========================================================= */
+.hub { width: min(1120px, 100%); margin: 0 auto; padding: 22px 22px 48px; display: flex; flex-direction: column; gap: 18px; }
+.panel { background: var(--bg-1); border: 1px solid var(--border-1); }
+.panel-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px; background: var(--bg-2); border-bottom: 1px solid var(--border-1);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.25em; color: var(--accent); }
+.panel-title em { font-style: normal; color: var(--text-4); letter-spacing: 0.08em; font-weight: 500; }
+.panel-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.panel-hint { font-size: var(--fs-sm); color: var(--text-3); line-height: 1.9; }
+
+/* مدل سایت */
+.cur { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+#cur-model { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: var(--fs-lg); }
+.cur-vendor { color: var(--text-3); font-size: var(--fs-sm); }
+.cur-id { direction: ltr; font-size: var(--fs-xs); color: var(--text-4); overflow-wrap: anywhere; }
+.cur-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+#pool-summary { font-size: var(--fs-sm); color: var(--text-2); }
+
+/* ابزارها */
+.tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tool-wide { grid-column: 1 / -1; }
+.tool-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+#fp-text { min-height: 110px; }
+#fp-result { margin-top: 4px; }
+
+/* جدول مدل‌ها */
+.mt-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mt-bar .field-input { flex: 1 1 200px; max-width: 320px; }
+.mt-bar .field-select { width: auto; }
+.mt-check { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--text-3); cursor: pointer; }
+.mt-wrap { overflow-x: auto; border: 1px solid var(--border-1); }
+.mt { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.mt th { padding: 8px 10px; text-align: start; font-size: 10px; letter-spacing: 0.1em; color: var(--text-4); background: var(--bg-2); border-bottom: 1px solid var(--border-1); white-space: nowrap; }
+.mt td { padding: 8px 10px; border-bottom: 1px solid var(--border-1); vertical-align: middle; }
+.mt tr:last-child td { border-bottom: 0; }
+.mt tr.is-site td { background: var(--accent-soft); }
+.mt tr.is-site td:first-child { box-shadow: inset -3px 0 var(--accent); }
+.mt tr.is-off { opacity: 0.5; }
+.mr-label { font-weight: 700; color: var(--text-1); }
+.mr-id { display: block; direction: ltr; text-align: left; font-size: 10px; color: var(--text-4); overflow-wrap: anywhere; }
+.mr-ctx, .mr-n, .mr-rate { direction: ltr; text-align: center; white-space: nowrap; }
+.mr-n { font-weight: 700; }
+.mr-act { white-space: nowrap; display: flex; gap: 6px; align-items: center; }
+.mr-empty { padding: 28px; text-align: center; color: var(--text-4); }
+
+@media (max-width: 900px) {
+  .hub { padding: 14px 12px 40px; }
+  .tools, .cur { grid-template-columns: 1fr; }
+}
