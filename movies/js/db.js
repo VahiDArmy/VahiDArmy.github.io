@@ -161,6 +161,7 @@ window.DB = (function () {
     await loadAll();
     /* استخر اولیه — روی IDs موجود دست نمی‌زند، پس active/wins/losses حفظ می‌شوند. */
     try { seedAiModels(); } catch (e) { console.error('[DB] seedAiModels', e); }
+    try { applyActiveOverrides(); } catch (e) { console.error('[DB] applyActiveOverrides', e); }
     ready = true;
     return true;
   }
@@ -338,6 +339,34 @@ window.DB = (function () {
   /* =========================================================
      AI models
      ========================================================= */
+
+  var ACTIVE_LS_KEY = 'cinema_ai_models_active_v1';
+
+  function readActiveOverrides() {
+    try {
+      var raw = localStorage.getItem(ACTIVE_LS_KEY);
+      if (!raw) return {};
+      var o = JSON.parse(raw);
+      return o && typeof o === 'object' ? o : {};
+    } catch (e) { return {}; }
+  }
+
+  function writeActiveOverride(id, active) {
+    try {
+      var o = readActiveOverrides();
+      o[id] = !!active;
+      localStorage.setItem(ACTIVE_LS_KEY, JSON.stringify(o));
+    } catch (e) {}
+  }
+
+  function applyActiveOverrides() {
+    var o = readActiveOverrides();
+    Object.keys(o).forEach(function (id) {
+      var m = aiModels.find(function (x) { return x.id === id; });
+      if (m) m.active = !!o[id];
+    });
+  }
+
   function getAiModels() { return aiModels.slice(); }
   function getAiModel(id) { return aiModels.find(function (m) { return m.id === id; }) || null; }
   function countAiModels() { return aiModels.length; }
@@ -443,10 +472,14 @@ window.DB = (function () {
     var m = aiModels.find(function (x) { return x.id === id; });
     if (!m) return null;
     m.active = !!active;
+    writeActiveOverride(id, active);
     (async function () {
       try {
         var res = await getClient().from('cinema_ai_models').update({ active: !!active }).eq('id', id);
-        if (res.error) console.error('setAiModelActive', res.error);
+        if (res.error) {
+          console.error('setAiModelActive', res.error);
+          /* RLS اغلب anon را بلاک می‌کند — localStorage منبع پشتیبان است */
+        }
       } catch (e) { console.error('setAiModelActive', e); }
     })();
     return m;

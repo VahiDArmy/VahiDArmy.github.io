@@ -37,9 +37,23 @@ window.AI = (function () {
 
   function getModel() {
     try {
-      const stored = localStorage.getItem(MODEL_KEY);
-      if (stored && String(stored).trim()) return String(stored).trim();
-      return DEFAULT_MODEL;
+      var stored = localStorage.getItem(MODEL_KEY);
+      var id = stored && String(stored).trim() ? String(stored).trim() : DEFAULT_MODEL;
+      /* مدل غیرفعال را برای درخواست استفاده نکن */
+      try {
+        var models = getModels();
+        var found = models.filter(function (m) { return m.id === id; })[0];
+        if (found && found.active === false) {
+          var alt = models.filter(function (m) { return m.active !== false; })[0];
+          if (alt && alt.id) {
+            id = alt.id;
+            try { localStorage.setItem(MODEL_KEY, id); } catch (e2) {}
+          } else if (DEFAULT_MODEL) {
+            id = DEFAULT_MODEL;
+          }
+        }
+      } catch (e3) {}
+      return id;
     } catch (e) {
       return DEFAULT_MODEL;
     }
