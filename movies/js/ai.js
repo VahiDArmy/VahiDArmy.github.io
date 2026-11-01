@@ -215,6 +215,29 @@ window.AI = (function () {
     });
   }
 
+
+  function applyResolvedModel(resolvedId, requestedId) {
+    if (!resolvedId || typeof resolvedId !== 'string') return;
+    const id = String(resolvedId).trim();
+    if (!id) return;
+    const requested = requestedId ? String(requestedId).trim() : '';
+    const meta = modelMetaById(id) || {};
+    const reqMeta = requested ? (modelMetaById(requested) || {}) : {};
+    lastUsedModel = {
+      id: id,
+      label: meta.label || id,
+      vendor: meta.vendor || '',
+      provider: meta.provider || resolveProvider(id),
+      meta: { size: meta.size, context: meta.context, speed: meta.speed },
+      requested_id: requested || (lastUsedModel && lastUsedModel.id) || '',
+      requested_label: reqMeta.label || requested || '',
+      at: new Date().toISOString()
+    };
+    if (requested && id !== requested) {
+      aiLog('info', '↳ مدل واقعی: ' + id + (reqMeta.label || requested ? ' (درخواست: ' + (reqMeta.label || requested) + ')' : ''));
+    }
+  }
+
   async function chatStream(opts) {
     opts = opts || {};
     let messages = opts.messages || [];
@@ -294,6 +317,7 @@ window.AI = (function () {
       }
       /* still deliver text if present, but log that stream failed */
       const text = json.text || json.content || '';
+      if (json.model) applyResolvedModel(json.model, json.requested_model);
       aiLog('warn', '⚠ پاسخ غیر‌استریمی از Edge (ممکن است نزدیک timeout باشد)');
       if (text) onToken(text);
       onDone(text);
@@ -333,6 +357,7 @@ window.AI = (function () {
             streamError = obj.error;
             continue;
           }
+          if (obj.model) applyResolvedModel(obj.model, obj.requested_model);
           if (typeof obj.text === 'string' && obj.text && !obj.done) {
             full += obj.text;
             onToken(obj.text);
