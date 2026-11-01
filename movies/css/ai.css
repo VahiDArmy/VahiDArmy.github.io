@@ -1329,3 +1329,18 @@
   align-items: center;
   margin-right: auto;
 }
+
+.ai-model-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+.ai-model-badge-via {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  opacity: 0.85;
+}
+.ai-model-add-btn {
+  margin-inline-start: 4px;
+}

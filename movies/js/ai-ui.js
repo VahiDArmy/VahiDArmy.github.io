@@ -165,6 +165,55 @@ window.AIUI = (function () {
     return false;
   }
 
+  function isModelInList(id) {
+    if (!id) return false;
+    try {
+      var models = (typeof DB !== 'undefined' && DB.getAiModels) ? DB.getAiModels() : (AI.getModels ? AI.getModels() : []);
+      return models.some(function (m) { return m.id === id; });
+    } catch (e) { return false; }
+  }
+
+  function addResolvedModelToList(info) {
+    if (!info || !info.id) return;
+    if (isModelInList(info.id)) {
+      Toast.info('این مدل از قبل در لیست است');
+      return;
+    }
+    var id = String(info.id);
+    var label = info.label && info.label !== id
+      ? info.label
+      : id.split('/').pop();
+    var vendor = info.vendor || (id.indexOf('/') > 0 ? id.split('/')[0] : '');
+    var provider = info.provider || (String(id).toLowerCase().indexOf('gemini') === 0 ? 'google' : 'openrouter');
+    try {
+      DB.upsertAiModel({
+        id: id,
+        label: label,
+        vendor: vendor,
+        provider: provider,
+        size: (info.meta && info.meta.size) || '',
+        context: (info.meta && info.meta.context) || '',
+        speed: (info.meta && info.meta.speed) || '',
+        note: info.requested_id
+          ? ('کشف‌شده از روتر: ' + (info.requested_label || info.requested_id))
+          : 'افزوده‌شده از پاسخ واقعی',
+        tags: ['کشف‌شده'],
+        recommended: false,
+        bestFor: '',
+        isFree: true,
+        source: 'resolved',
+        fetchedAt: new Date().toISOString()
+      });
+      Toast.success('«' + label + '» به لیست مدل‌ها اضافه شد');
+      try {
+        if (window.AIModels && AIModels.renderPicker) AIModels.renderPicker();
+        document.dispatchEvent(new CustomEvent('cinema:models-changed'));
+      } catch (e2) {}
+    } catch (e) {
+      Toast.error('افزودن مدل: ' + (e.message || e));
+    }
+  }
+
   function buildModelBadge(info) {
     if (!info) return null;
     const children = [
@@ -174,9 +223,33 @@ window.AIUI = (function () {
     ];
     if (info.vendor) children.push(Utils.el('span', { class: 'ai-model-badge-vendor' }, [info.vendor]));
     const speed = info.meta && info.meta.speed;
-    if (speed && speed !== '—') children.push(Utils.el('span', { class: 'ai-model-badge-meta' }, ['⚡ ' + speed + ' t/s']));
-    return Utils.el('div', { class: 'ai-model-badge' }, children);
+    if (speed && speed !== '—' && speed !== '-') {
+      children.push(Utils.el('span', { class: 'ai-model-badge-speed' }, ['⚡ ' + speed + ' t/s']));
+    }
+    if (info.requested_id && info.requested_id !== info.id) {
+      children.push(Utils.el('span', { class: 'ai-model-badge-via' }, [
+        'via ' + (info.requested_label || info.requested_id)
+      ]));
+    }
+    const wrap = Utils.el('div', { class: 'ai-model-badge' }, children);
+    /* مدل واقعی در لیست نیست → دکمه افزودن */
+    if (info.id && !isModelInList(info.id)) {
+      const addBtn = Utils.el('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-sm ai-model-add-btn'
+      }, ['+ افزودن به لیست']);
+      addBtn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        addResolvedModelToList(info);
+        addBtn.disabled = true;
+        addBtn.textContent = 'اضافه شد';
+      });
+      wrap.appendChild(addBtn);
+    }
+    return wrap;
   }
+
 
   function appendModelBadge(container, info) {
     if (!container) return;
