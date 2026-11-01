@@ -403,12 +403,18 @@ window.Events = (function () {
       ]),
       Utils.el('div', { class: 'ai-stream-foot' }, [
         Utils.el('span', { class: 'pers-foot-model' }, [item.ai_model || '']),
-        pinBtn
+        Utils.el('div', { class: 'pers-foot-actions' }, [
+          pinBtn,
+          Utils.el('button', {
+            type: 'button',
+            class: 'btn btn-ghost btn-sm',
+            id: 'btn-pers-continue'
+          }, ['ادامه'])
+        ])
       ])
     ]);
     host.appendChild(body);
 
-    /* قابل ادامه حتی بعداً — از prompt ذخیره‌شده */
     if (item && item.response) {
       persLastContext = {
         id: item.id,
@@ -417,7 +423,12 @@ window.Events = (function () {
         kind: persSelectedKind || 'movie',
         messages: null
       };
-      showPersonalityContinueBar(body);
+      var contBtn = document.getElementById('btn-pers-continue');
+      if (contBtn) {
+        contBtn.addEventListener('click', function () {
+          continuePersonalityAnalysis(null);
+        });
+      }
     }
   }
 
