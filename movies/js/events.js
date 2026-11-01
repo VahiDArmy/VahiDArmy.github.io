@@ -409,12 +409,15 @@ window.Events = (function () {
     host.appendChild(body);
 
     /* قابل ادامه حتی بعداً — از prompt ذخیره‌شده */
-    if (typeof AIAnalysis !== 'undefined' && AIAnalysis.contextFromConversation) {
-      var ctx = AIAnalysis.contextFromConversation(item);
-      if (ctx && ctx.result) {
-        persLastContext = ctx;
-        showPersonalityContinueBar({ panel: body });
-      }
+    if (item && item.response) {
+      persLastContext = {
+        id: item.id,
+        result: item.response || '',
+        model: item.ai_model || '',
+        kind: persSelectedKind || 'movie',
+        messages: null
+      };
+      showPersonalityContinueBar(body);
     }
   }
 
@@ -525,30 +528,18 @@ window.Events = (function () {
 
 
 
-  function showPersonalityContinueBar(panel, opts) {
-    opts = opts || {};
+  function showPersonalityContinueBar(panel) {
     var host = document.getElementById('pers-stream-host');
     if (!host) return;
     var old = document.getElementById('pers-continue-bar');
     if (old) old.remove();
-
-    var origModel = (persLastContext && persLastContext.model) || '';
-    var curModel = (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '';
 
     var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
       Utils.el('button', {
         type: 'button',
         class: 'btn btn-ghost btn-sm',
         id: 'btn-pers-continue'
-      }, ['ادامه']),
-      Utils.el('label', { class: 'pers-continue-model-label' }, [
-        Utils.el('input', {
-          type: 'checkbox',
-          id: 'pers-continue-use-current',
-          class: 'pers-continue-use-current'
-        }),
-        ' مدل فعلی' + (curModel ? ' (' + String(curModel).split('/').pop() + ')' : '')
-      ])
+      }, ['ادامه'])
     ]);
 
     var suggest = document.getElementById('pers-suggest-actions');
@@ -563,20 +554,14 @@ window.Events = (function () {
     }
 
     document.getElementById('btn-pers-continue').addEventListener('click', function () {
-      var useCurrent = !!(document.getElementById('pers-continue-use-current') || {}).checked;
-      continuePersonalityAnalysis(panel, { useCurrentModel: useCurrent });
+      continuePersonalityAnalysis(panel);
     });
   }
 
-  async function continuePersonalityAnalysis(panel, opts) {
-    opts = opts || {};
+  async function continuePersonalityAnalysis(panel) {
     if (persRunning) return;
     if (!persLastContext || !persLastContext.result) {
-      Toast.warning('تحلیل قبلی برای ادامه در دسترس نیست');
-      return;
-    }
-    if (!persLastContext.messages || !persLastContext.messages.length) {
-      Toast.error('پرامپت اولیه این تحلیل ذخیره نشده — ادامه ممکن نیست');
+      Toast.warning('متن ناقصی برای ادامه نیست');
       return;
     }
     if (typeof AIAnalysis === 'undefined' || !AIAnalysis.continueTasteAnalysis) {
@@ -584,23 +569,30 @@ window.Events = (function () {
       return;
     }
 
-    var useCurrent = !!opts.useCurrentModel;
-    var modelToUse = useCurrent
-      ? ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '')
-      : (persLastContext.model || ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''));
+    /* پرامپت را از لیست امتیازها دوباره می‌سازیم — همان منبع حقیقت */
+    var kind = persLastContext.kind || persSelectedKind || 'movie';
+    var messages;
+    try {
+      messages = AIAnalysis.buildTasteAnalysisMessages(kind);
+    } catch (errBuild) {
+      Toast.error(errBuild.message || 'لیست امتیازدار کافی نیست');
+      return;
+    }
+
+    /* مدل = هرچه در picker سراسری است (پیش‌فرض همان مدل قبلی می‌ماند مگر عوضش کنی) */
+    var modelToUse = (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : (persLastContext.model || '');
 
     persRunning = true;
     var btn = document.getElementById('btn-pers-continue');
     var runBtn = document.getElementById('btn-run-personality');
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
     if (runBtn) runBtn.disabled = true;
-
-    if (panel && panel.setStatus) panel.setStatus('ادامه استریم…', 'loading');
+    if (panel && panel.setStatus) panel.setStatus('ادامه…', 'loading');
 
     var before = String(persLastContext.result || '');
     try {
       var more = await AIAnalysis.continueTasteAnalysis({
-        messages: persLastContext.messages,
+        messages: messages,
         partial: before,
         model: modelToUse || undefined,
         onToken: function (_c, full) {
@@ -620,21 +612,20 @@ window.Events = (function () {
         combined = before + (before.endsWith('\n') ? '\n' : '\n\n') + String(more).trim();
       }
       persLastContext.result = combined;
+      persLastContext.messages = messages;
       if (panel && panel.appendText) panel.appendText(combined);
-      if (panel && panel.setStatus) panel.setStatus('ادامه آماده شد', 'done');
+      if (panel && panel.setStatus) panel.setStatus('آماده', 'done');
       if (panel && panel.setModelBadge) panel.setModelBadge();
 
       try {
-        var promptText = (persLastContext.messages || []).map(function (m) {
+        var promptText = messages.map(function (m) {
           return '## ' + m.role + '\n' + m.content;
         }).join('\n\n');
         var resolved = (typeof AI !== 'undefined' && AI.getLastUsedModel && AI.getLastUsedModel())
           ? AI.getLastUsedModel().id
           : modelToUse;
         var savedId = AIAnalysis.saveTasteAnalysis(
-          promptText,
-          combined,
-          resolved || modelToUse,
+          promptText, combined, resolved || modelToUse,
           { id: persLastContext.id || null }
         );
         if (savedId) persLastContext.id = savedId;
@@ -642,17 +633,16 @@ window.Events = (function () {
       } catch (e2) { console.error(e2); }
 
       renderPersonalityHistory(persLastContext.id);
-      showPersonalitySuggestionActions(combined, persLastContext.kind || persSelectedKind);
+      showPersonalitySuggestionActions(combined, kind);
       showPersonalityContinueBar(panel);
       Toast.success('ادامه ذخیره شد');
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
-        Toast.info('ادامه لغو شد');
-        if (panel && panel.setStatus) panel.setStatus('لغو شد', 'done');
+        Toast.info('لغو شد');
       } else {
         Toast.error(err.message || 'خطا در ادامه');
-        if (panel && panel.setStatus) panel.setStatus('خطا', 'error');
       }
+      if (panel && panel.setStatus) panel.setStatus('خطا', 'error');
     } finally {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = 'ادامه'; }
