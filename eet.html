@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Engine endurance test: power lever schedule</title>
+<style>
+:root{color-scheme:light dark;--bg:#f8f9fb;--text-primary:#1c2230;--text-secondary:#4b5365;--text-muted:#6f7788;--border:rgba(28,34,48,.12);--border-strong:rgba(28,34,48,.32);--surface-1:#eef0f5;--bg-accent:#dfe8fb;--border-accent:#2a78d6;--text-accent:#1b4f9c;--c-cy:#6250d6;--c-st:#139a69;--c-hd:#76808f;--c-ai:#2a78d6;--c-mn:#c2457a}
+@media (prefers-color-scheme:dark){:root{--bg:#14161a;--text-primary:#e8eaf0;--text-secondary:#b5bbc9;--text-muted:#8e96a8;--border:rgba(255,255,255,.12);--border-strong:rgba(255,255,255,.32);--surface-1:#1f232b;--bg-accent:#1c3a6b;--border-accent:#6ea6ef;--text-accent:#bcd6f8;--c-cy:#9085e9;--c-st:#2bb585;--c-hd:#9aa3b3;--c-ai:#3987e5;--c-mn:#d55181}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text-primary);font:16px/1.6 "Avenir Next","Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:780px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:22px;font-weight:500;line-height:1.3;margin:0 0 4px}
+.sub{font-size:15px;color:var(--text-secondary);margin:0 0 22px}
+#info{font-size:14px;color:var(--text-secondary);margin:0 0 6px;min-height:42px}
+#info b{font-weight:500;color:var(--text-primary)}
+.sc{overflow-x:auto}
+svg{display:block;width:100%;min-width:600px;height:auto}
+svg g[data-n]:focus-visible{outline:2px solid var(--border-accent);outline-offset:2px}
+.lg{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:12px;color:var(--text-secondary);margin:6px 0 24px}
+.lg span{display:flex;align-items:center;gap:6px}
+.lg i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.cap{font-size:13px;color:var(--text-secondary);margin:0 0 4px}
+.small{font-size:12px;color:var(--text-secondary);margin:2px 0 0}
+.note{font-size:13px;color:var(--text-secondary);max-width:68ch;margin:24px 0 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Engine endurance test: one 6-hour cycle</h1>
+<p class="sub">Power lever schedule from section 4.6.1.3, repeated for 25 cycles with a 2-hour shutdown before each.</p>
+<div id="info"></div>
+<div class="sc"><svg id="main" viewBox="0 0 680 322" role="img" aria-label="Power lever position against time for one endurance test cycle, runs a to k"></svg></div>
+<div class="lg">
+<span><i style="background:var(--c-cy)"></i>Cycling and transients: a, c, d</span>
+<span><i style="background:var(--c-st)"></i>Stepped runs: b, i, k</span>
+<span><i style="background:var(--c-hd)"></i>Steady holds: e, f, g, h, j</span>
+</div>
+<p class="cap">Run c close-up, minutes 156 to 195</p>
+<div class="sc"><svg id="zoom" viewBox="0 0 680 200" role="img" aria-label="Close-up of run c, the 39 minute thrust transient run, in blocks c1 to c5"></svg></div>
+<p class="cap" style="margin-top:24px">All 25 cycles, select one to update the plot above</p>
+<div class="sc"><svg id="strip" viewBox="0 0 680 84" role="group" aria-label="Overview of 25 cycles, each preceded by a 2 hour shutdown"></svg></div>
+<p class="small">B: maximum air bleed. M: manual control in runs a and e.</p>
+<p class="note">The vertical axis is power lever position, drawn schematically because the spec gives no thrust values. Where the text is silent, run b steps ascend from idle to intermediate, manual mode takes the start of each period, run k anti-icing minutes sit at the end of each 5-minute interval, and run c shows nine excursions per 3-minute block. The plot assumes an engine with augmentation and reverse thrust.</p>
+</main>
+<script>
+const X0=86,X1=640,C={cy:'var(--c-cy)',st:'var(--c-st)',hd:'var(--c-hd)'},L={REV:0,IDLE:1,MC:2,INT:3,MAX:6},AG=p=>3.5+2.5*p;
+const T=(x,y,s,a='start',c='secondary',w=400,z=11)=>`<text x="${x}" y="${y}" text-anchor="${a}" style="fill:var(--text-${c});font-size:${z}px;font-weight:${w}">${s}</text>`;
+const LN=(x1,y1,x2,y2,c='border',d='none')=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke-dasharray="${d}" style="stroke:var(--${c})"/>`;
+const F=(c,o)=>`style="fill:${c};fill-opacity:${o}"`;
+const r1=v=>+v.toFixed(1);
+function sched(n){
+  const R=[],add=(id,name,cat,a,b,segs)=>R.push({id,name,cat,a,b,segs}),Q=(a,b,x,y)=>[a,b,x,y,9];
+  let s=[];
+  for(let k=0;k<6;k++)s.push([10*k,10*k+5,L.MAX],[10*k+5,10*k+10,L.IDLE]);
+  add('a','Maximum–idle cycling','cy',0,60,s);
+  s=[];
+  for(let k=0;k<12;k++)s.push([60+8*k,68+8*k,1+2*k/11]);
+  add('b','Incremental speed steps','st',60,156,s);
+  add('c','Thrust transients','cy',156,195,[[156,160,1],[160,160.5,6],[160.5,164.5,1],[164.5,165,6],Q(165,168,1,3),Q(168,171,1,3),Q(171,174,1,6),Q(174,177,1,6),[177,179,1],Q(179,182,6,1),Q(182,185,6,1),[185,187,6],Q(187,190,3,1),Q(190,193,3,1),[193,195,3]]);
+  add('d','Reverse thrust','cy',195,204,[[195,196,L.IDLE],[196,199,L.REV],[199,200,L.MAX],[200,203,L.REV],[203,204,L.IDLE]]);
+  add('e','Intermediate thrust','hd',204,234,[[204,234,L.INT]]);
+  add('f','Maximum continuous thrust','hd',234,254,[[234,254,L.MC]]);
+  add('g','Intermediate thrust','hd',254,269,[[254,269,L.INT]]);
+  add('h','Maximum continuous thrust','hd',269,284,[[269,284,L.MC]]);
+  const q=n%2?[.8,.6,.4,.2,0]:[0,.2,.4,.6,.8];
+  add('i','Modulated augmentation','st',284,314,q.map((p,k)=>[284+6*k,290+6*k,AG(p)]));
+  add('j','Maximum continuous thrust','hd',314,330,[[314,330,L.MC]]);
+  add('k','Intermediate, then maximum thrust','st',330,360,[[330,345,L.INT],[345,360,L.MAX]]);
+  return R;
+}
+function pts(segs,prev,t0){
+  const P=[[t0,prev]];
+  for(const [a,b,v,w,c] of segs){
+    if(!c){P.push([a,v],[b,v]);continue}
+    const d=(b-a)/c;
+    for(let i=0;i<c;i++){const s=a+i*d;P.push([s,v],[s+.5*d,v],[s+.5*d,w],[s+.8*d,w],[s+.8*d,v],[s+d,v])}
+  }
+  return P;
+}
+const path=(P,px,py)=>'M'+P.map(p=>px(p[0])+','+py(p[1])).join('L');
+function drawMain(n){
+  const px=t=>r1(X0+t*(X1-X0)/360),py=v=>r1(244-(v+.3)*31.34),R=sched(n);
+  let h='';
+  R.forEach(r=>{h+=`<rect x="${px(r.a)}" y="30" width="${r1(px(r.b)-px(r.a))}" height="214" ${F(C[r.cat],.09)}/>`});
+  [[0,'Max reverse'],[1,'Idle'],[2,'Max continuous'],[3,'Intermediate'],[6,'Maximum']].forEach(([v,s])=>{h+=LN(X0,py(v),X1,py(v))+T(X0-6,py(v)+4,s,'end')});
+  [[0,'Aug min'],[.2,'20%'],[.4,'40%'],[.6,'60%'],[.8,'80%']].forEach(([p,s])=>{const v=AG(p);h+=LN(X0,py(v),X1,py(v),'border','2 4')+T(X0-6,py(v)+4,s,'end','muted')});
+  R.forEach(r=>{const x=px(r.a),w=r1(px(r.b)-x);h+=`<g><title>Run ${r.id}: ${r.name}, ${r.b-r.a} min</title><rect x="${x+.5}" y="6" width="${w-1}" height="20" rx="3" ${F(C[r.cat],.25)}/>`+T(r1(x+w/2),20,r.id,'middle','primary',500,12)+'</g>'});
+  let prev=L.MAX;
+  R.forEach(r=>{const P=pts(r.segs,prev,r.a);prev=P[P.length-1][1];h+=`<path d="${path(P,px,py)}" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:${C[r.cat]}"/>`});
+  h+=LN(X0,244,X1,244,'border-strong');
+  for(let t=0;t<=360;t+=30){h+=LN(px(t),244,px(t),248,'border-strong')+T(px(t),261,t,'middle')}
+  h+=T(r1((X0+X1)/2),278,'Minutes into the cycle','middle');
+  h+=T(X0-6,297,'Anti-icing','end');
+  for(let k=0;k<6;k++){[[10*k+4,10*k+5],[334+5*k,335+5*k]].forEach(([a,b])=>{h+=`<rect x="${px(a)}" y="288" width="${Math.max(2,r1(px(b)-px(a)))}" height="10" ${F('var(--c-ai)',1)}/>`})}
+  h+=T(X0-6,313,'Manual mode','end');
+  if(n%5==0){
+    for(let k=0;k<6;k++){h+=`<rect x="${px(10*k)}" y="304" width="${r1(px(10*k+3)-px(10*k))}" height="10" ${F('var(--c-mn)',.85)}/>`}
+    h+=`<rect x="${px(204)}" y="304" width="${r1(px(230)-px(204))}" height="10" ${F('var(--c-mn)',.85)}/>`;
+  }else h+=T(X0+4,313,'Cycles 5, 10, 15, 20 and 25 only','start','muted');
+  document.getElementById('main').innerHTML=h;
+  const parts=['2 h shutdown, then 6 h running',n%5==4?'maximum air bleed':'no customer air bleed',n%5==0?'manual control in runs a and e':'','run i augmentation '+(n%2?'80% to minimum':'minimum to 80%')].filter(Boolean);
+  document.getElementById('info').innerHTML=`<b>Cycle ${n} of 25:</b> `+parts.join('; ')+'.';
+}
+function drawStrip(n){
+  const hp=(X1-X0)/200;
+  let h=LN(X0,38,X1,38,'border-strong')+T(X0-6,29,'Running','end')+T(X0-6,54,'Cycle','end');
+  for(let i=1;i<=25;i++){
+    const x=r1(X0+(i-1)*8*hp+2*hp),w=r1(6*hp),s=i==n,b=i%5==4,m=i%5==0,cx=r1(x+w/2);
+    h+=`<g data-n="${i}" tabindex="0" role="button" aria-label="Show cycle ${i}" style="cursor:pointer"><rect x="${x}" y="12" width="${w}" height="26" rx="3" stroke-width="${s?2:1}" style="fill:var(${s?'--bg-accent':'--surface-1'});stroke:var(${s?'--border-accent':'--border-strong'})"/>`+(b||m?T(cx,29,b?'B':'M','middle',s?'accent':'primary',500):'')+T(cx,54,i,'middle',s?'accent':'secondary',s?500:400)+'</g>';
+  }
+  h+=LN(X0,62,X1,62,'border-strong');
+  for(let t=0;t<=200;t+=50){const x=r1(X0+t*hp);h+=LN(x,62,x,66,'border-strong')+T(x,79,t+' h','middle')}
+  document.getElementById('strip').innerHTML=h;
+}
+function drawZoom(){
+  const k=(X1-X0)/39,px=t=>r1(X0+(t-156)*k),py=v=>r1(140-(v-1)*20);
+  let h='';
+  [[1,'Idle'],[3,'Intermediate'],[6,'Maximum']].forEach(([v,s])=>{h+=LN(X0,py(v),X1,py(v))+T(X0-6,py(v)+4,s,'end')});
+  [[156,165,'c1','4 min idle,','30 s max, ×2'],[165,171,'c2','idle ↔ int.','2 × 3 min'],[171,179,'c3','idle ↔ max','2 × 3 min + 2 idle'],[179,187,'c4','max ↔ idle','2 × 3 min + 2 max'],[187,195,'c5','int. ↔ idle','2 × 3 min + 2 int.']].forEach(([a,b,id,l1,l2],i)=>{
+    const x=px(a),w=r1(px(b)-x),m=r1(x+w/2);
+    h+=`<rect x="${x}" y="30" width="${w}" height="118" ${F(C.cy,i%2?.05:.12)}/><rect x="${x+.5}" y="6" width="${w-1}" height="20" rx="3" ${F(C.cy,.25)}/>`+T(m,20,id,'middle','primary',500,12)+T(m,178,l1,'middle')+T(m,192,l2,'middle');
+  });
+  const rc=sched(1).find(q=>q.id=='c');
+  h+=`<path d="${path(pts(rc.segs,1,156),px,py)}" fill="none" stroke-width="1.5" style="stroke:${C.cy}"/>`;
+  h+=LN(X0,148,X1,148,'border-strong');
+  [156,165,171,179,187,195].forEach(t=>{h+=LN(px(t),148,px(t),152,'border-strong')+T(px(t),164,t,'middle')});
+  document.getElementById('zoom').innerHTML=h;
+}
+const st=document.getElementById('strip');
+function sel(n){drawMain(n);drawStrip(n)}
+st.addEventListener('click',e=>{const g=e.target.closest('g[data-n]');if(g)sel(+g.dataset.n)});
+st.addEventListener('keydown',e=>{const g=e.target.closest('g[data-n]');if(g&&(e.key=='Enter'||e.key==' ')){e.preventDefault();const n=+g.dataset.n;sel(n);st.querySelector(`g[data-n="${n}"]`).focus()}});
+drawZoom();sel(1);
+</script>
+</body>
+</html>
