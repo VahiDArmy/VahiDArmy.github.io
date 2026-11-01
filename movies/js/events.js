@@ -407,6 +407,15 @@ window.Events = (function () {
       ])
     ]);
     host.appendChild(body);
+
+    /* قابل ادامه حتی بعداً — از prompt ذخیره‌شده */
+    if (typeof AIAnalysis !== 'undefined' && AIAnalysis.contextFromConversation) {
+      var ctx = AIAnalysis.contextFromConversation(item);
+      if (ctx && ctx.result) {
+        persLastContext = ctx;
+        showPersonalityContinueBar({ panel: body });
+      }
+    }
   }
 
   function ensurePersStreamPanel() {
@@ -479,16 +488,21 @@ window.Events = (function () {
         var promptText = (messages || []).map(function (m) {
           return '## ' + m.role + '\n' + m.content;
         }).join('\n\n');
-        AIAnalysis.saveTasteAnalysis(
+        var used = (typeof AI !== 'undefined' && AI.getLastUsedModel && AI.getLastUsedModel())
+          ? AI.getLastUsedModel().id
+          : ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '');
+        var savedId = AIAnalysis.saveTasteAnalysis(
           promptText,
           result || '',
-          (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''
+          used
         );
-      } catch (e2) { console.error(e2); }
+      } catch (e2) { console.error(e2); var savedId = null; var used = ''; }
       persLastContext = {
+        id: savedId || null,
         messages: messages,
         result: result || '',
-        kind: persSelectedKind
+        kind: persSelectedKind,
+        model: used || ''
       };
       renderPersonalityHistory();
       showPersonalitySuggestionActions(result || '', persSelectedKind);
@@ -518,12 +532,23 @@ window.Events = (function () {
     var old = document.getElementById('pers-continue-bar');
     if (old) old.remove();
 
+    var origModel = (persLastContext && persLastContext.model) || '';
+    var curModel = (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '';
+
     var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
       Utils.el('button', {
         type: 'button',
         class: 'btn btn-ghost btn-sm',
         id: 'btn-pers-continue'
-      }, ['ادامه'])
+      }, ['ادامه']),
+      Utils.el('label', { class: 'pers-continue-model-label' }, [
+        Utils.el('input', {
+          type: 'checkbox',
+          id: 'pers-continue-use-current',
+          class: 'pers-continue-use-current'
+        }),
+        ' مدل فعلی' + (curModel ? ' (' + String(curModel).split('/').pop() + ')' : '')
+      ])
     ]);
 
     var suggest = document.getElementById('pers-suggest-actions');
@@ -531,25 +556,38 @@ window.Events = (function () {
       suggest.parentNode.insertBefore(bar, suggest);
     } else if (panel && panel.panel && panel.panel.parentNode) {
       panel.panel.parentNode.insertBefore(bar, panel.panel.nextSibling);
+    } else if (panel && panel.parentNode) {
+      panel.parentNode.insertBefore(bar, panel.nextSibling);
     } else {
       host.appendChild(bar);
     }
 
     document.getElementById('btn-pers-continue').addEventListener('click', function () {
-      continuePersonalityAnalysis(panel);
+      var useCurrent = !!(document.getElementById('pers-continue-use-current') || {}).checked;
+      continuePersonalityAnalysis(panel, { useCurrentModel: useCurrent });
     });
   }
 
-  async function continuePersonalityAnalysis(panel) {
+  async function continuePersonalityAnalysis(panel, opts) {
+    opts = opts || {};
     if (persRunning) return;
     if (!persLastContext || !persLastContext.result) {
       Toast.warning('تحلیل قبلی برای ادامه در دسترس نیست');
+      return;
+    }
+    if (!persLastContext.messages || !persLastContext.messages.length) {
+      Toast.error('پرامپت اولیه این تحلیل ذخیره نشده — ادامه ممکن نیست');
       return;
     }
     if (typeof AIAnalysis === 'undefined' || !AIAnalysis.continueTasteAnalysis) {
       Toast.error('ادامه پشتیبانی نمی‌شود');
       return;
     }
+
+    var useCurrent = !!opts.useCurrentModel;
+    var modelToUse = useCurrent
+      ? ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '')
+      : (persLastContext.model || ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''));
 
     persRunning = true;
     var btn = document.getElementById('btn-pers-continue');
@@ -564,9 +602,16 @@ window.Events = (function () {
       var more = await AIAnalysis.continueTasteAnalysis({
         messages: persLastContext.messages,
         partial: before,
+        model: modelToUse || undefined,
         onToken: function (_c, full) {
           if (panel && panel.appendText) {
             panel.appendText(before + '\n\n' + full);
+          } else {
+            var host = document.getElementById('pers-stream-host');
+            var content = host && host.querySelector('.ai-stream-content');
+            if (content && typeof AIUI !== 'undefined' && AIUI.renderMarkdown) {
+              content.innerHTML = AIUI.renderMarkdown(before + '\n\n' + full);
+            }
           }
         }
       });
@@ -583,17 +628,23 @@ window.Events = (function () {
         var promptText = (persLastContext.messages || []).map(function (m) {
           return '## ' + m.role + '\n' + m.content;
         }).join('\n\n');
-        AIAnalysis.saveTasteAnalysis(
-          promptText + '\n\n## continue',
+        var resolved = (typeof AI !== 'undefined' && AI.getLastUsedModel && AI.getLastUsedModel())
+          ? AI.getLastUsedModel().id
+          : modelToUse;
+        var savedId = AIAnalysis.saveTasteAnalysis(
+          promptText,
           combined,
-          (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : ''
+          resolved || modelToUse,
+          { id: persLastContext.id || null }
         );
+        if (savedId) persLastContext.id = savedId;
+        if (resolved) persLastContext.model = resolved;
       } catch (e2) { console.error(e2); }
 
-      renderPersonalityHistory();
+      renderPersonalityHistory(persLastContext.id);
       showPersonalitySuggestionActions(combined, persLastContext.kind || persSelectedKind);
       showPersonalityContinueBar(panel);
-      Toast.success('ادامه به پاسخ اضافه شد');
+      Toast.success('ادامه ذخیره شد');
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
         Toast.info('ادامه لغو شد');

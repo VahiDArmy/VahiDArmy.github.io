@@ -1313,3 +1313,23 @@
   color: var(--text-3);
   flex: 1 1 160px;
 }
+
+.pers-continue-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+.pers-continue-model-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  cursor: pointer;
+  user-select: none;
+}
+.pers-continue-use-current {
+  accent-color: var(--accent);
+}

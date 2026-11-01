@@ -247,6 +247,7 @@ window.AIAnalysis = (function () {
     var full = '';
     await AI.chatStream({
       messages: messages,
+      model: options.model || undefined,
       temperature: 0.55,
       max_tokens: options.max_tokens != null ? options.max_tokens : 8192,
       signal: options.signal,
@@ -377,20 +378,63 @@ window.AIAnalysis = (function () {
     }
   }
 
-  function saveTasteAnalysis(prompt, response, model) {
+  function saveTasteAnalysis(prompt, response, model, opts) {
+    opts = opts || {};
     try {
-      return DB.saveConversation({
+      var payload = {
         title_id: null,
         title_context: 'تحلیل عمیق شخصیت',
         prompt: prompt || '',
         response: response || '',
         ai_model: model || (typeof AI !== 'undefined' && AI.getModel ? AI.getModel() : ''),
-        tags: 'taste_analysis,personality'
-      });
+        tags: opts.tags || 'taste_analysis,personality'
+      };
+      if (opts.id) {
+        var existing = DB.getConversation(opts.id);
+        if (existing) {
+          if (existing.tags && String(existing.tags).indexOf('pinned') >= 0) {
+            payload.tags = withTag(existing.tags, 'pinned');
+          }
+          payload.id = opts.id;
+        }
+      }
+      return DB.saveConversation(payload);
     } catch (e) {
       console.error('saveTasteAnalysis', e);
       return null;
     }
+  }
+
+  /** بازسازی messages از prompt ذخیره‌شده (## role) */
+  function messagesFromSavedPrompt(prompt) {
+    prompt = String(prompt || '').trim();
+    if (!prompt) return null;
+    var messages = [];
+    var parts = prompt.split(/^##\s+/m);
+    for (var i = 0; i < parts.length; i++) {
+      var block = parts[i].trim();
+      if (!block) continue;
+      var nl = block.indexOf('\n');
+      var role = (nl >= 0 ? block.slice(0, nl) : block).trim().toLowerCase();
+      var content = nl >= 0 ? block.slice(nl + 1).trim() : '';
+      if (role === 'continue') continue;
+      if (role === 'system' || role === 'user' || role === 'assistant') {
+        if (content) messages.push({ role: role, content: content });
+      }
+    }
+    return messages.length ? messages : null;
+  }
+
+  function contextFromConversation(item) {
+    if (!item) return null;
+    var messages = messagesFromSavedPrompt(item.prompt);
+    return {
+      id: item.id,
+      messages: messages,
+      result: item.response || '',
+      kind: 'movie',
+      model: item.ai_model || ''
+    };
   }
 
   function pinTasteAnalysis(id) {
@@ -432,6 +476,8 @@ window.AIAnalysis = (function () {
     buildTasteAnalysisMessages: buildTasteAnalysisMessages,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
     saveTasteAnalysis: saveTasteAnalysis,
+    messagesFromSavedPrompt: messagesFromSavedPrompt,
+    contextFromConversation: contextFromConversation,
     isPinnedAnalysis: isPinnedAnalysis,
     pinTasteAnalysis: pinTasteAnalysis,
     unpinTasteAnalysis: unpinTasteAnalysis,
