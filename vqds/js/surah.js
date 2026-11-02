@@ -3,12 +3,13 @@
    ========================================================================== */
 
 import { AYAHS, SURAH_META } from './data/surah.js';
-import { $, el, faDigits, storage, onDblTap } from './utils.js';
+import { $, el, faDigits, storage } from './utils.js';
 import { CONFIG } from './config.js';
 import { incrementReadCount } from './counters.js';
 import { toast, successToast } from './toast.js';
 
 let activeFilter = 'all'; // all | bookmarked
+let showTranslation = false; // پیش‌فرض: مخفی
 
 function getBookmarks() {
   return storage.get(CONFIG.storageKeys.bookmarks, []);
@@ -57,8 +58,10 @@ function renderAyahCard(ayah) {
   // متن عربی
   card.appendChild(el('div', { class: 'ayah-card__arabic text-arabic', text: ayah.ar }));
 
-  // متن فارسی
-  card.appendChild(el('div', { class: 'ayah-card__farsi text-farsi', text: ayah.fa }));
+  // متن فارسی (فقط اگر نمایش ترجمه فعال باشد)
+  if (showTranslation) {
+    card.appendChild(el('div', { class: 'ayah-card__farsi text-farsi', text: ayah.fa }));
+  }
 
   // اکشن‌ها
   const actions = el('div', { class: 'ayah-card__actions' });
@@ -105,7 +108,7 @@ function renderHeader() {
 }
 
 function renderFilters() {
-  const filterBar = el('div', { class: 'surah-filters flex justify-center gap-2 mb-6' });
+  const filterBar = el('div', { class: 'surah-filters flex justify-center gap-2 mb-4 flex-wrap' });
   
   const allBtn = el('button', {
     class: `tafsir-page-btn ${activeFilter === 'all' ? 'is-active' : ''}`,
@@ -121,15 +124,22 @@ function renderFilters() {
     onclick: () => { activeFilter = 'marked'; renderSurahView(); }
   });
 
+  const transBtn = el('button', {
+    class: `tafsir-page-btn ${showTranslation ? 'is-active' : ''}`,
+    type: 'button',
+    text: showTranslation ? 'مخفی کردن ترجمه' : 'نمایش ترجمه',
+    onclick: () => { showTranslation = !showTranslation; renderSurahView(); }
+  });
+
   filterBar.appendChild(allBtn);
   filterBar.appendChild(markedBtn);
+  filterBar.appendChild(transBtn);
   return filterBar;
 }
 
 function updateFiltersUI() {
-  const markedBtn = $('#view-surah .tafsir-page-btn:last-child');
   if (activeFilter === 'marked') {
-    renderSurahView(); // اگر در حالت نشانه‌دار هستیم، صفحه را رفرش کن
+    renderSurahView(); 
   }
 }
 
@@ -151,7 +161,7 @@ function renderFAB() {
 }
 
 function renderReadAction() {
-  const container = el('div', { class: 'surah-read-action mt-8 mb-8 text-center' });
+  const container = el('div', { class: 'surah-read-action mt-6 mb-6 text-center' });
   
   const btn = el('button', {
     class: 'btn btn--primary ripple',
@@ -231,9 +241,4 @@ export function initSurah() {
   renderSurahView();
   $('#surahContent').removeAttribute('hidden');
   $('#surahLoader').setAttribute('hidden', '');
-
-  // لغو ثبت رویدادهای اضافی در صورت رفرش
-  window.addEventListener('q56:read-registered', () => {
-    // به‌روزرسانی UI مثلا نمایش یک پیام خاص
-  });
 }
