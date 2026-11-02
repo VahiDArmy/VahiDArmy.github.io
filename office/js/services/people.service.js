@@ -84,35 +84,55 @@ export const peopleService = {
   },
 
   async getUnlinked(search = '') {
-    let q = supabase.from(TABLES.PEOPLE).select('id, full_name, job_title, avatar_url').is('user_id', null);
-    if (search) q = q.ilike('full_name', `%${search}%`);
-    const { data, error } = await q.limit(10);
+    let q = supabase.from(TABLES.PEOPLE).select('id, full_name, job_title, avatar_url, email, department').is('user_id', null);
+    if (search) q = q.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
+    const { data, error } = await q.order('full_name').limit(20);
     guard(error);
     return data || [];
   },
 
+  /**
+   * Claim an existing unlinked person for the current user.
+   * Uses DB function claim_person which correctly merges any
+   * previously linked people row into the claimed one (no data loss).
+   */
   async linkAccount(personId) {
-    const session = await requireSession();
-    
-    const { error: linkErr } = await supabase.from(TABLES.PEOPLE).update({ user_id: session.user.id, status: 'in_site' }).eq('id', personId);
-    guard(linkErr);
+    await requireSession();
+    const { data, error } = await supabase.rpc('claim_person', { person_id: personId });
+    guard(error);
+    return data;
+  },
 
-    const { data: currentRecords } = await supabase.from(TABLES.PEOPLE).select('id').eq('user_id', session.user.id).neq('id', personId);
-    
-    if (currentRecords && currentRecords.length > 0) {
-      for (const rec of currentRecords) {
-        await supabase.from(TABLES.PEOPLE).delete().eq('id', rec.id);
-      }
-    }
+  /**
+   * Admin merge: move all data from source → target, delete source.
+   */
+  async mergePeople(sourceId, targetId) {
+    await requireSession();
+    const { error } = await supabase.rpc('merge_people', {
+      source_id: sourceId,
+      target_id: targetId,
+    });
+    guard(error);
     return true;
   },
 
-  async mergePeople(sourceId, targetId) {
-    await requireSession();
-    const { error } = await supabase.rpc('merge_people', { source_id: sourceId, target_id: targetId });
-    guard(error);
-    return true;
-  }
+  /**
+   * After login/signup: if a people row has the same email and no user_id, claim it.
+   */
+  async tryAutoLinkByEmail() {
+    try {
+      await requireSession();
+      const { data, error } = await supabase.rpc('try_auto_link_by_email');
+      if (error) {
+        console.warn('[people] tryAutoLinkByEmail', error);
+        return null;
+      }
+      return data;
+    } catch (e) {
+      console.warn('[people] tryAutoLinkByEmail', e);
+      return null;
+    }
+  },
 };
 
 export default peopleService;

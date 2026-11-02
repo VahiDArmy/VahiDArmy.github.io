@@ -56,6 +56,13 @@ export function openMergePeopleForm({ people = [] }) {
         toast.warning('فرد مبدا و مقصد نمی‌توانند یکی باشند.');
         return;
       }
+
+      const src = people.find(x => x.id === sourceSelect.value);
+      const tgt = people.find(x => x.id === targetSelect.value);
+      if (src?.user_id && tgt?.user_id && src.user_id !== tgt.user_id) {
+        toast.warning('نمی‌توان دو نفری که هر دو حساب کاربری جدا دارند را ادغام کرد. اول یکی را از حساب جدا کنید.');
+        return;
+      }
       
       handle.close();
       resolve({ sourceId: sourceSelect.value, targetId: targetSelect.value });

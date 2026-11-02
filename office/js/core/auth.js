@@ -61,7 +61,13 @@ export async function initAuth() {
     console.debug('[auth event]', event);
     // Fire and forget — state updates happen after fetch
     syncSession(session).then(({ user }) => {
-      if (event === 'SIGNED_IN' && user) bus.emit('auth:signed-in', user);
+      if (event === 'SIGNED_IN' && user) {
+        bus.emit('auth:signed-in', user);
+        // Auto-claim people row with matching email (if any)
+        import('../services/people.service.js')
+          .then(({ peopleService }) => peopleService.tryAutoLinkByEmail())
+          .catch(() => {});
+      }
       if (event === 'SIGNED_OUT') bus.emit('auth:signed-out');
       if (event === 'PASSWORD_RECOVERY') bus.emit('auth:password-recovery');
     });

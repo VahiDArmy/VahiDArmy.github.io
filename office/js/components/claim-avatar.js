@@ -51,7 +51,9 @@ export function openClaimAvatarModal() {
               ]),
               el('div', { class: 'recent-item__main' }, [
                 el('div', { class: 'recent-item__title' }, [person.full_name]),
-                el('div', { class: 'recent-item__meta' }, [person.job_title || 'بدون سمت']),
+                el('div', { class: 'recent-item__meta' }, [
+                  [person.job_title, person.department, person.email].filter(Boolean).join(' · ') || 'بدون سمت'
+                ]),
               ])
             ]),
             el('button', {
