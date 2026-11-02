@@ -1,0 +1,214 @@
+/* ==========================================================================
+   layout.css — ساختار اصلی، پس‌زمینه‌های محیطی (Ambient) و Splash
+   ========================================================================== */
+
+/* --- اسپلش (صفحه ورود) --- */
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-splash);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-app);
+  transition: opacity var(--dur-700) var(--ease-out-soft),
+              visibility var(--dur-700);
+}
+
+.splash.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.splash__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  animation: splashFadeUp 1s var(--ease-out-soft) both;
+}
+
+.splash__heart {
+  width: 80px;
+  height: 80px;
+  animation: heartbeat 1.2s infinite var(--ease-in-out-soft);
+}
+
+.splash__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  color: var(--color-text-strong);
+}
+
+.splash__sub {
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.1em;
+}
+
+.splash__bar {
+  width: 120px;
+  height: 4px;
+  background: var(--bg-muted);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-top: var(--space-4);
+}
+
+.splash__bar span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  background: var(--gradient-brand);
+  border-radius: inherit;
+  animation: loadingBar 1.2s ease-in-out infinite;
+}
+
+/* --- Ambient Background (قلب‌ها، گرید، نور) --- */
+.ambient {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-ambient);
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--gradient-hero);
+  transition: background var(--dur-500) var(--ease-out-soft);
+}
+
+.ambient__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--ambient-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--ambient-grid) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+  opacity: 0.6;
+}
+
+.ambient__glow {
+  position: absolute;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.8;
+  animation: floatGlow 20s infinite alternate ease-in-out;
+}
+
+.ambient__glow--a {
+  top: -10%;
+  right: -10%;
+  background: var(--ambient-a);
+}
+
+.ambient__glow--b {
+  bottom: -15%;
+  left: -10%;
+  background: var(--ambient-b);
+  animation-delay: -10s;
+  animation-duration: 25s;
+}
+
+.ambient__particles {
+  position: absolute;
+  inset: 0;
+}
+
+.page-vignette {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-ambient) + 1);
+  background: var(--vignette);
+  pointer-events: none;
+}
+
+/* --- پوسته‌ی اصلی برنامه --- */
+.app {
+  position: relative;
+  z-index: var(--z-base);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-4) var(--container-pad) var(--space-16);
+  display: flex;
+  flex-direction: column;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  animation: viewFadeIn var(--dur-500) var(--ease-out-soft) forwards;
+}
+
+.view__loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16) 0;
+  color: var(--color-text-muted);
+  gap: var(--space-4);
+}
+
+.loader-heart {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-color: var(--color-primary-400);
+  animation: loaderPulse 1s infinite alternate var(--ease-in-out-soft);
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>') no-repeat center / contain;
+  -webkit-mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>') no-repeat center / contain;
+}
+
+.view__content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* --- فوتر --- */
+.site-footer {
+  margin-top: auto;
+  padding: var(--space-8) var(--container-pad);
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.site-footer__line {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.site-footer__heart {
+  color: var(--color-heart);
+  font-size: 0.8em;
+  display: inline-block;
+}
+
+.site-footer__meta {
+  font-size: var(--fs-xs);
+  color: var(--color-text-faint);
+  margin-top: var(--space-2);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+}
