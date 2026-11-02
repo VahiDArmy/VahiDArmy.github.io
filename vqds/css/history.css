@@ -1,0 +1,174 @@
+/* ==========================================================================
+   history.css — مودال تاریخچه‌ی قرائت و تایم‌لاین شمسی
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--dur-300) var(--ease-out-soft),
+              visibility var(--dur-300);
+}
+
+.modal-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-content {
+  background: var(--bg-surface);
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: transform var(--dur-350) var(--ease-spring);
+}
+
+.modal-overlay.is-open .modal-content {
+  transform: translateY(0) scale(1);
+}
+
+/* --- هدر مودال --- */
+.modal-header {
+  padding: var(--space-4) var(--space-5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--bg-muted);
+}
+
+.modal-header h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--color-text-strong);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.modal-header h3 svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary-500);
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  background: var(--bg-surface);
+  transition: all var(--dur-200);
+}
+
+.modal-close:hover {
+  background: var(--color-primary-100);
+  color: var(--color-primary-700);
+}
+
+/* --- بدنه مودال (تاریخچه) --- */
+.modal-body {
+  padding: var(--space-4) var(--space-5);
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* استایل لیست تایم‌لاین */
+.history-timeline {
+  position: relative;
+  padding-right: var(--space-4);
+}
+
+.history-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 5px;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+.history-item {
+  position: relative;
+  padding-bottom: var(--space-5);
+  padding-right: var(--space-4);
+}
+
+.history-item:last-child {
+  padding-bottom: 0;
+}
+
+.history-item::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid var(--color-primary-400);
+  z-index: 1;
+}
+
+.history-item--active::before {
+  background: var(--color-primary-500);
+  box-shadow: 0 0 0 4px var(--color-primary-100);
+}
+
+.history-date {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-strong);
+  margin-bottom: 2px;
+}
+
+.history-time {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.history-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-muted);
+  color: var(--color-primary-600);
+  border: 1px solid var(--color-primary-200);
+}
+
+.history-empty {
+  text-align: center;
+  padding: var(--space-8) 0;
+  color: var(--color-text-muted);
+}
+
+.history-empty svg {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto var(--space-3);
+  opacity: 0.5;
+}
