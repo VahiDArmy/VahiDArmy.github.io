@@ -85,9 +85,12 @@ function ayahNode(item) {
       role: "button",
       "aria-label": `آیهٔ ${fa(item.ayah)}`,
     },
-    el("div", { class: "ayah__row" },
-      el("span", { class: "ayah__num", "aria-hidden": "true" }, fa(item.ayah)),
-      el("p", { class: "ayah__ar", lang: "ar", dir: "rtl" }, item.ar)
+    el(
+      "p",
+      { class: "ayah__ar", lang: "ar", dir: "rtl" },
+      el("span", { class: "ayah__text" }, item.ar),
+      "\u00a0",
+      el("span", { class: "ayah__num", "aria-hidden": "true" }, `﴿${fa(item.ayah)}﴾`)
     )
   );
   node.addEventListener("click", () => selectAyah(item.ayah));
@@ -297,7 +300,7 @@ export const applySearch = debounce((query) => {
     if (fa) fa.hidden = !match || !surahState.showTranslation;
     if (match) hits += 1;
 
-    const arText = ar.querySelector(".ayah__ar");
+    const arText = ar.querySelector(".ayah__text");
     const faText = fa?.querySelector(".ayah__ftext");
     if (arText) arText.innerHTML = hasQuery ? highlight(item.ar, query, true) : escapeHtml(item.ar);
     if (faText) faText.innerHTML = hasQuery ? highlight(item.fa, query, false) : escapeHtml(item.fa);

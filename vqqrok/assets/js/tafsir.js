@@ -184,6 +184,13 @@ function blockWeight(block) {
 }
 
 /* ---------- صفحه‌بندی ---------- */
+/**
+ * صفحه‌بندی منطقی بر اساس ساختار تفسیر المیزان:
+ * - هر فایل JSON یک بخش (مثلاً آیات ۱–۱۰)
+ * - صفحات در مرز عنوان‌های ### و #### شکسته می‌شوند
+ * - عنوان‌های کوتاه با متن بعدشان در یک صفحه می‌مانند
+ * - صفحهٔ خالی ساخته نمی‌شود
+ */
 function paginate(blocks, docMeta) {
   const pages = [];
   let current = [];
@@ -192,14 +199,19 @@ function paginate(blocks, docMeta) {
   let docTitle = docMeta.title || "";
   let docIndex = docMeta.index ?? 0;
 
+  const softMax = SITE.pageMax || 3200;
+  const softTarget = SITE.pageTarget || 1800;
+
   const pushPage = () => {
     if (!current.length) return;
-    // عنوان تنها در انتهای صفحه نماند — به صفحهٔ بعد منتقل شود
+    // عنوان تنها در انتهای صفحه نماند
     const trailing = [];
     while (current.length > 1 && HEADINGS.has(current[current.length - 1].type)) {
       trailing.unshift(current.pop());
     }
-    if (current.length) {
+    // صفحهٔ بدون محتوای واقعی را دور بریز
+    const hasBody = current.some((b) => !HEADINGS.has(b.type));
+    if (hasBody || current.length > 1) {
       pages.push(buildPage(current, { section, docTitle, docIndex }));
     }
     current = trailing;
@@ -207,22 +219,48 @@ function paginate(blocks, docMeta) {
   };
 
   for (const block of blocks) {
+    // هر h2 = شروع بخش جدید
     if (block.type === "h2") {
       pushPage();
       docTitle = block.text;
       section = "";
-      current.push(block);
-      weight += blockWeight(block);
+      current = [block];
+      weight = blockWeight(block);
       continue;
     }
-    if (block.type === "h3") section = block.text;
+
+    // هر h3 (بیان آیات / بحث روایتی / ترجمه) = صفحهٔ جدید
+    if (block.type === "h3") {
+      pushPage();
+      section = block.text;
+      current = [block];
+      weight = blockWeight(block);
+      continue;
+    }
+
+    // h4: اگر صفحه پر است، صفحهٔ جدید
+    if (block.type === "h4") {
+      if (weight >= softTarget && current.some((b) => !HEADINGS.has(b.type))) {
+        pushPage();
+      }
+      current.push(block);
+      weight += blockWeight(block);
+      if (block.text) section = block.text;
+      continue;
+    }
+
+    // بلوک‌های عربی/ترجمه: سبک نگه دار؛ با بیان ادغام نشوند اگر خیلی بزرگ‌اند
     const size = blockWeight(block);
-    if (weight + size > SITE.pageMax && current.length && !HEADINGS.has(block.type)) {
+    if (
+      current.length &&
+      weight + size > softMax &&
+      !HEADINGS.has(block.type) &&
+      current.some((b) => !HEADINGS.has(b.type))
+    ) {
       pushPage();
     }
     current.push(block);
     weight += size;
-    if (weight >= SITE.pageTarget && !HEADINGS.has(block.type)) pushPage();
   }
   pushPage();
   return pages.map((page, index) => ({ ...page, id: `p${index + 1}`, index }));
@@ -231,16 +269,20 @@ function paginate(blocks, docMeta) {
 function buildPage(blocks, meta) {
   const ayahNumbers = [];
   for (const block of blocks) {
-    if (block.type === "arabic-grid") for (const row of block.rows) ayahNumbers.push(row.ayah);
+    if (block.type === "arabic-grid") {
+      for (const row of block.rows) ayahNumbers.push(row.ayah);
+    }
   }
-  const heading = blocks.find((b) => b.type === "h3" || b.type === "h2");
+  // شماره آیه از عنوان‌های h4 هم استخراج شود (مثل ﴿نَحْنُ خَلَقْنَاكُمْ...﴾)
+  const heading = blocks.find((b) => b.type === "h4" || b.type === "h3" || b.type === "h2");
+  const sectionTitle = meta.section || heading?.text || meta.docTitle || "تفسیر";
   return {
     blocks,
-    section: meta.section || "",
+    section: sectionTitle,
     docTitle: meta.docTitle || "",
     docIndex: meta.docIndex ?? 0,
-    title: meta.section || meta.docTitle || "تفسیر",
-    heading: heading?.text || meta.section || "",
+    title: sectionTitle,
+    heading: heading?.text || sectionTitle,
     ayahs: ayahNumbers,
     from: ayahNumbers.length ? Math.min(...ayahNumbers) : null,
     to: ayahNumbers.length ? Math.max(...ayahNumbers) : null,
@@ -275,15 +317,15 @@ export function blocksToHtml(blocks) {
           `<div class="ayahgrid" aria-label="متن آیه">${block.rows
             .map(
               (row) =>
-                `<div class="ayahgrid__row" data-ayah="${row.ayah}">` +
-                `<span class="ayahgrid__n" aria-label="آیهٔ ${fa(row.ayah)}">${fa(row.ayah)}</span>` +
-                `<p class="ayahgrid__ar" lang="ar" dir="rtl">${escapeHtml(row.text)}</p></div>`
+                `<p class="ayahgrid__ar" lang="ar" dir="rtl" data-ayah="${row.ayah}">` +
+                `${escapeHtml(row.text)}` +
+                `<span class="ayahgrid__n" aria-hidden="true"> ﴿${fa(row.ayah)}﴾</span></p>`
             )
             .join("")}</div>`
         );
         break;
       case "trans-list":
-        // ترجمهٔ آیات داخل تفسیر را نشان نده — متن تفسیر مهم است
+        // ترجمهٔ آیات داخل تفسیر نمایش داده نمی‌شود (متن تفسیر کافی است)
         break;
       case "list":
         parts.push(`<ul>${block.items.map((item) => `<li>${inline(item)}</li>`).join("")}</ul>`);
@@ -309,18 +351,38 @@ export function parseTafsirDocs(docs) {
   const sections = [];
 
   sorted.forEach((doc, docIndex) => {
-    const blocks = mergeRuns(toBlocks(doc.text));
+    // ترجمهٔ آیات داخل تفسیر را از صفحه‌بندی حذف کن
+    const blocks = mergeRuns(toBlocks(doc.text)).filter((b) => b.type !== "trans-list");
     const firstTitle = blocks.find((b) => b.type === "h2")?.text || `بخش ${docIndex + 1}`;
     const docPages = paginate(blocks, { title: firstTitle, index: docIndex });
 
     docPages.forEach((page) => {
       const hasBody = page.blocks.some((b) => !HEADINGS.has(b.type));
-      if (!hasBody && page.blocks.length <= 1) return; // صفحهٔ خالی یا فقط عنوان
+      if (!hasBody) return;
       page.docIndex = docIndex;
       page.docTitle = firstTitle;
       pages.push(page);
     });
   });
+
+  // صفحات خیلی کوتاه را با صفحهٔ قبلی ادغام کن
+  const merged = [];
+  for (const page of pages) {
+    const bodyLen = page.blocks
+      .filter((b) => !HEADINGS.has(b.type))
+      .reduce((sum, b) => sum + blockWeight(b), 0);
+    if (merged.length && bodyLen < 1000 && page.docIndex === merged[merged.length - 1].docIndex) {
+      const prev = merged[merged.length - 1];
+      prev.blocks = [...prev.blocks, ...page.blocks];
+      prev.ayahs = [...new Set([...(prev.ayahs || []), ...(page.ayahs || [])])];
+      if (page.from != null) prev.from = prev.from == null ? page.from : Math.min(prev.from, page.from);
+      if (page.to != null) prev.to = prev.to == null ? page.to : Math.max(prev.to, page.to);
+      continue;
+    }
+    merged.push(page);
+  }
+  pages.length = 0;
+  pages.push(...merged);
 
   pages.forEach((page, index) => {
     page.id = `p${index + 1}`;

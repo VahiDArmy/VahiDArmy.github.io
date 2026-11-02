@@ -393,56 +393,36 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
 .ayah.is-marked { border-color: color-mix(in oklab, var(--gold) 40%, transparent); }
 .ayah[hidden] { display: none; }
 
-.ayah__row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: .7rem;
-  align-items: start;
-}
-
+/* شماره آیه به سبک رایج قرآن: ﴿۱۲﴾ */
 .ayah__num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-inline-size: 2rem;
-  block-size: 2rem;
-  margin-block-start: .35em;
-  font-family: var(--font-ui, var(--font-body, system-ui));
-  font-size: .72rem;
-  font-weight: 800;
+  display: inline;
+  font-family: var(--font-quran), var(--font-ui, system-ui);
+  font-size: .78em;
+  font-weight: 500;
   line-height: 1;
   color: var(--accent-deep);
-  background: color-mix(in oklab, var(--accent-soft) 78%, var(--card-solid));
-  border: 1px solid color-mix(in oklab, var(--gold) 48%, transparent);
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease);
+  white-space: nowrap;
+  padding-inline: .05em;
+  vertical-align: baseline;
+  transition: color .2s var(--ease);
 }
-.ayah.is-marked .ayah__num {
-  color: var(--accent-ink);
-  background: var(--accent);
-  border-color: transparent;
-}
-html[data-theme="night"] .ayah__num {
-  color: var(--gold);
-  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .14), rgba(19, 30, 50, .92) 72%);
-  border-color: color-mix(in oklab, var(--gold) 42%, transparent);
-}
-html[data-theme="night"] .ayah.is-marked .ayah__num { color: var(--accent-ink); background: var(--accent); }
+.ayah.is-marked .ayah__num { color: var(--accent); }
+html[data-theme="night"] .ayah__num { color: var(--gold); }
+html[data-theme="night"] .ayah.is-marked .ayah__num { color: var(--accent-2); }
 
 .ayah__ar {
   margin: 0;
   font-family: var(--font-quran);
   font-size: calc(clamp(1.35rem, 3vw, 1.85rem) * var(--fs));
-  line-height: 2.2;
+  line-height: 2.25;
   color: var(--arabic-ink);
   text-align: right;
   word-spacing: .04em;
 }
+.ayah__text { font: inherit; color: inherit; }
 
 .ayah__fa {
-  margin-inline-start: calc(2rem + .7rem);
-  padding: .15rem .1rem .1rem;
+  padding: .2rem .05rem .05rem;
   font-size: calc(var(--step-0) * var(--fs));
   line-height: 1.85;
   color: var(--ink-soft);
@@ -627,41 +607,30 @@ html[data-theme="night"] .reader__body h4 { color: var(--accent-2); }
 
 .ayahgrid {
   display: grid;
-  gap: .45rem;
-  margin-block: 1rem 1.2rem;
+  gap: .35rem;
+  margin-block: 1rem 1.25rem;
   padding: .85rem 1rem;
   border-radius: var(--r-md);
-  background: color-mix(in oklab, var(--accent-soft) 28%, transparent);
+  background: color-mix(in oklab, var(--accent-soft) 22%, transparent);
   border: 1px solid color-mix(in oklab, var(--gold) 28%, transparent);
   border-inline-start: 3px solid color-mix(in oklab, var(--gold) 65%, transparent);
-}
-.ayahgrid__row {
-  display: grid;
-  grid-template-columns: 1.75rem 1fr;
-  align-items: start;
-  gap: .55rem;
-}
-.ayahgrid__n {
-  display: grid;
-  place-items: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  margin-block-start: .2em;
-  border-radius: 50%;
-  font-size: .68rem;
-  font-weight: 800;
-  color: var(--accent-deep);
-  background: color-mix(in oklab, var(--accent-soft) 70%, var(--card-solid));
-  border: 1px solid color-mix(in oklab, var(--gold) 40%, transparent);
 }
 .ayahgrid__ar {
   margin: 0;
   font-family: var(--font-quran);
-  font-size: calc(1.15rem * var(--fs));
-  line-height: 2;
+  font-size: calc(1.12rem * var(--fs));
+  line-height: 2.05;
   color: var(--arabic-ink);
   text-align: right;
 }
+.ayahgrid__n {
+  font-family: var(--font-quran), var(--font-ui, system-ui);
+  font-size: .82em;
+  font-weight: 500;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+html[data-theme="night"] .ayahgrid__n { color: var(--gold); }
 .translist { display: none; } /* ترجمهٔ تکراری داخل تفسیر نمایش داده نمی‌شود */
 
 .quranquote {
@@ -989,8 +958,8 @@ html[data-theme="night"] .quranquote { color: var(--accent-2); }
   .mushaf { padding: 1rem .75rem .9rem; }
   .ayah { padding: .45rem .5rem .5rem; }
   .ayah__ar { font-size: calc(clamp(1.22rem, 5.2vw, 1.65rem) * var(--fs)); line-height: 2.15; }
-  .ayah__num { min-inline-size: 1.75rem; block-size: 1.75rem; font-size: .68rem; }
-  .ayah__fa { margin-inline-start: calc(1.75rem + .55rem); font-size: calc(var(--step-00) * var(--fs)); }
+  .ayah__num { font-size: .75em; }
+  .ayah__fa { font-size: calc(var(--step-00) * var(--fs)); }
   .reader__body { padding: 1.1rem; }
   .modal__card { padding: 1.2rem; }
   .toasts { inset-inline: 12px; justify-items: stretch; }
