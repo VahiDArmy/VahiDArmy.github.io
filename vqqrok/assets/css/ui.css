@@ -183,12 +183,12 @@ html[data-theme="night"] .iconbtn--theme .ico--sun { opacity: 1; transform: none
 .hero { margin-block-end: clamp(.9rem, 2vw, 1.4rem); }
 .hero__frame {
   position: relative;
-  padding: clamp(.85rem, 2.2vw, 1.25rem) clamp(1rem, 3vw, 1.8rem);
-  border-radius: var(--r-lg);
+  padding: clamp(1.15rem, 3vw, 1.7rem) clamp(1.1rem, 3.4vw, 2rem);
+  border-radius: var(--r-xl);
   background:
-    linear-gradient(160deg, color-mix(in oklab, var(--card-solid) 94%, transparent), color-mix(in oklab, var(--card-solid) 75%, transparent));
+    linear-gradient(160deg, color-mix(in oklab, var(--card-solid) 92%, transparent), color-mix(in oklab, var(--card-solid) 68%, transparent));
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-lg);
   text-align: center;
   overflow: hidden;
   isolation: isolate;
@@ -196,12 +196,26 @@ html[data-theme="night"] .iconbtn--theme .ico--sun { opacity: 1; transform: none
 .hero__frame::before {
   content: ""; position: absolute; inset: 0; z-index: -1;
   background-image:
-    radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--accent) 12%, transparent), transparent 55%);
+    radial-gradient(circle at 12% 18%, color-mix(in oklab, var(--accent-2) 22%, transparent), transparent 42%),
+    radial-gradient(circle at 88% 12%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 40%),
+    radial-gradient(circle at 50% 120%, color-mix(in oklab, var(--gold) 18%, transparent), transparent 55%);
 }
-.hero__frame::after { display: none; }
-.hero__corner { display: none; }
+.hero__frame::after {
+  content: ""; position: absolute; inset: 10px; border-radius: calc(var(--r-xl) - 10px);
+  border: 1px dashed color-mix(in oklab, var(--gold) 45%, transparent);
+  opacity: .55; pointer-events: none;
+}
+.hero__corner {
+  position: absolute; inline-size: 42px; block-size: 42px; pointer-events: none;
+  border: 2px solid color-mix(in oklab, var(--gold) 60%, transparent);
+  opacity: .8;
+}
+.hero__corner--tl { inset-block-start: 16px; inset-inline-start: 16px; border-inline-end: 0; border-block-end: 0; border-start-start-radius: 14px; }
+.hero__corner--tr { inset-block-start: 16px; inset-inline-end: 16px; border-inline-start: 0; border-block-end: 0; border-start-end-radius: 14px; }
+.hero__corner--bl { inset-block-end: 16px; inset-inline-start: 16px; border-inline-end: 0; border-block-start: 0; border-end-start-radius: 14px; }
+.hero__corner--br { inset-block-end: 16px; inset-inline-end: 16px; border-inline-start: 0; border-block-start: 0; border-end-end-radius: 14px; }
 
-.hero__bismillah { display: grid; place-items: center; margin-block-end: .35rem; }
+.hero__bismillah { display: grid; place-items: center; margin-block-end: .4rem; }
 .bismillah { inline-size: min(280px, 78%); block-size: auto; overflow: visible; }
 .bismillah__text {
   font-family: var(--font-quran); font-size: 20px; fill: var(--gold);
@@ -214,6 +228,7 @@ html[data-theme="night"] .iconbtn--theme .ico--sun { opacity: 1; transform: none
   font-family: var(--font-display); font-weight: 400;
   font-size: clamp(1.55rem, 4.2vw, 2.1rem); line-height: 1.25;
   color: var(--ink);
+  text-shadow: 0 2px 0 color-mix(in oklab, var(--accent-2) 25%, transparent);
   margin-block-end: .15rem;
 }
 .hero__toggle {
