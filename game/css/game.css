@@ -77,3 +77,12 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px #5eead433}
 .left{text-align:center;color:var(--mut);font-weight:700}
 .mn{display:block;padding:4px 14px 0;font-size:11px;color:var(--mut)}.mcard .ph{color:var(--mut);font-weight:400}
 .btn.danger{color:#ffb4c4;border-color:#f9a8d480}.btn.danger.ask{background:#f43f5e;color:#fff;border-color:#f43f5e}
+
+/* Payment / card-to-card */
+.paybox{border-color:#fcd34d55;background:linear-gradient(145deg,rgba(252,211,77,.08),var(--card))}
+.paycard{display:grid;gap:8px;margin:12px 0;padding:14px;border-radius:16px;background:#ffffff10;border:1px solid var(--line)}
+.payrow{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.payrow span{color:var(--mut)}.payrow b{font-weight:800;text-align:left}
+.payrow b.gold,.pill.gold{color:var(--gold)}
+.btn.sm{padding:10px 14px;font-size:14px;border-radius:12px;width:auto;display:inline-block}
+.pill.gold{background:#fcd34d22;border-color:#fcd34d55}

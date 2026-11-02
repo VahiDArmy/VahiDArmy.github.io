@@ -83,24 +83,41 @@ addEventListener('hashchange', () => me && route());
 
 /* ---------- Tournaments list ---------- */
 const GAMES = { nim: 'نیم', mani: 'مانی' };
+const PAY_CARD = {
+  number: '5894 6312 3451 8108',
+  name: 'میثم راه گذر خنکداری',
+  bank: 'بانک رفاه کارگران',
+  exp: '1409/01',
+  cvv: '333'
+};
 const rule = (g, p) => g === 'mani' ? `${fa(p)} مهره؛ در هر نوبت ۱ یا ۲ یا ۳ مهره بردار. هر کس آخرین مهره را بردارد، برنده است.` : 'چهار ردیف مهره؛ در هر نوبت از یک ردیف هر چند مهره خواستی بردار. هر کس آخرین مهره را بردارد، برنده است.';
+const feeLabel = f => f > 0 ? `${fa(f)} تومان` : 'رایگان';
 function home() {
   view.innerHTML = `<section class="stack"><form class="card stack" id="nf"><div class="row2"><input name="n" placeholder="نام مسابقه جدید" minlength="2" maxlength="60" required style="margin:0"><button class="btn sm">بساز</button></div>
-    <div class="seg"><label><input type="radio" name="g" value="nim" checked><span>نیم</span></label><label><input type="radio" name="g" value="mani"><span>مانی</span></label></div>
-    <label class="pcs" id="pc" hidden>تعداد مهره<input name="p" type="number" min="5" max="60" value="21"></label><p class="muted" id="gh" style="margin:0"></p></form>
+    <div class="seg"><label><input type="radio" name="g" value="mani" checked><span>مانی</span></label><label><input type="radio" name="g" value="nim"><span>نیم</span></label></div>
+    <label class="pcs" id="pc">تعداد مهره<input name="p" type="number" min="5" max="60" value="21"></label>
+    <div class="seg"><label><input type="radio" name="pay" value="free" checked><span>رایگان</span></label><label><input type="radio" name="pay" value="paid"><span>پولی</span></label></div>
+    <label class="pcs" id="feeBox" hidden>ورودیه (تومان)<input name="fee" type="number" min="1000" step="1000" value="10000"></label>
+    <p class="muted" id="gh" style="margin:0"></p></form>
     <h2>مسابقه‌ها</h2><div id="list" class="stack"></div></section>`;
-  const f = $('#nf'), sync = () => { $('#pc').hidden = f.g.value !== 'mani'; $('#gh').textContent = rule(f.g.value, +f.p.value || 21) };
+  const f = $('#nf'), sync = () => {
+    $('#pc').hidden = f.g.value !== 'mani';
+    $('#feeBox').hidden = f.pay.value !== 'paid';
+    $('#gh').textContent = rule(f.g.value, +f.p.value || 21);
+  };
   f.oninput = f.onchange = sync; sync();
   f.onsubmit = async e => {
-    e.preventDefault(); const g = f.g.value, p = Math.min(60, Math.max(5, +f.p.value || 21));
-    const { data, error } = await sb.from('nim_tournaments').insert({ name: f.n.value.trim(), game: g, pieces: p }).select().single();
+    e.preventDefault();
+    const g = f.g.value, p = Math.min(60, Math.max(5, +f.p.value || 21));
+    const fee = f.pay.value === 'paid' ? Math.max(1000, Math.round(+f.fee.value || 10000)) : 0;
+    const { data, error } = await sb.from('nim_tournaments').insert({ name: f.n.value.trim(), game: g, pieces: p, fee, paid: fee > 0 }).select().single();
     if (error) return toast('ساخت مسابقه ممکن نشد');
     await sb.from('nim_entries').insert({ tournament_id: data.id, name: myName });
     location.hash = '#/t/' + data.id;
   };
   cur.refresh = async () => {
-    const { data } = await sb.from('nim_tournaments').select('id,name,status,game').order('created_at', { ascending: false }).limit(30);
-    $('#list').innerHTML = (data || []).map(t => `<a class="card tcard" href="#/t/${t.id}"><b>${esc(t.name)}</b><span class="row2"><span class="pill">${GAMES[t.game]}</span><span class="pill ${t.status}">${ST[t.status]}</span></span></a>`).join('') || '<p class="muted">هنوز مسابقه‌ای نیست. اولین را بساز.</p>';
+    const { data } = await sb.from('nim_tournaments').select('id,name,status,game,fee').order('created_at', { ascending: false }).limit(30);
+    $('#list').innerHTML = (data || []).map(t => `<a class="card tcard" href="#/t/${t.id}"><b>${esc(t.name)}</b><span class="row2"><span class="pill">${GAMES[t.game]}</span><span class="pill ${t.status}">${ST[t.status]}</span>${t.fee > 0 ? `<span class="pill gold">${feeLabel(t.fee)}</span>` : '<span class="pill">رایگان</span>'}</span></a>`).join('') || '<p class="muted">هنوز مسابقه‌ای نیست. اولین را بساز.</p>';
   };
   cur.refresh();
 }
@@ -122,10 +139,27 @@ function tView(id) {
     const t = a.data, es = b.data || [], ms = c.data || [], tv = $('#tv');
     if (!tv) return; if (!t) return tv.innerHTML = '<p class="muted">این مسابقه پیدا نشد.</p>';
     const nm = Object.fromEntries(es.map(e => [e.user_id, e.name])), L = t.rounds;
-    let h = `<div class="hero"><h1>${esc(t.name)}</h1><span class="pill ${t.status}">${ST[t.status]}</span></div><p class="muted" style="margin:0"><b>${GAMES[t.game]}</b> — ${rule(t.game, t.pieces)}</p>`;
+    const isPaid = (t.fee || 0) > 0;
+    let h = `<div class="hero"><h1>${esc(t.name)}</h1><span class="pill ${t.status}">${ST[t.status]}</span>${isPaid ? `<span class="pill gold">${feeLabel(t.fee)}</span>` : '<span class="pill">رایگان</span>'}</div><p class="muted" style="margin:0"><b>${GAMES[t.game]}</b> — ${rule(t.game, t.pieces)}</p>`;
     if (t.status === 'lobby') {
       h += `<div class="card"><h2>بازیکنان (${fa(es.length)})</h2><div class="chips">${es.map(e => `<span class="chip">${esc(e.name)}</span>`).join('')}</div></div>`;
-      h += nm[me.id] ? '<button class="btn ghost" id="lv">انصراف از شرکت</button>' : '<button class="btn" id="jn">شرکت در مسابقه</button>';
+      if (isPaid && !nm[me.id]) {
+        h += `<div class="card paybox" id="paybox">
+          <h2>پرداخت ورودیه</h2>
+          <p class="muted" style="margin:0 0 10px">برای شرکت در این مسابقه باید ${feeLabel(t.fee)} به کارت زیر واریز کنی (کارت‌به‌کارت).</p>
+          <div class="paycard">
+            <div class="payrow"><span>بانک</span><b>${PAY_CARD.bank}</b></div>
+            <div class="payrow"><span>شماره کارت</span><b dir="ltr" id="pcopy">${PAY_CARD.number}</b></div>
+            <div class="payrow"><span>به نام</span><b>${PAY_CARD.name}</b></div>
+            <div class="payrow"><span>مبلغ</span><b class="gold">${feeLabel(t.fee)}</b></div>
+          </div>
+          <button type="button" class="btn ghost sm" id="cp">کپی شماره کارت</button>
+          <p class="muted" style="margin:12px 0 0;font-size:13px">بعد از واریز، دکمه زیر را بزن. سازنده می‌تواند پرداخت را بررسی کند.</p>
+          <button class="btn" id="jn">پرداخت کردم — شرکت در مسابقه</button>
+        </div>`;
+      } else {
+        h += nm[me.id] ? '<button class="btn ghost" id="lv">انصراف از شرکت</button>' : '<button class="btn" id="jn">شرکت در مسابقه</button>';
+      }
       h += t.owner === me.id ? `<button class="btn gold" id="st" ${es.length < 2 ? 'disabled' : ''}>شروع مسابقه و قرعه‌کشی</button>`
         : '<p class="muted">منتظر بمان تا سازنده مسابقه را شروع کند؛ جدول خودکار ساخته می‌شود.</p>';
     } else {
@@ -140,6 +174,10 @@ function tView(id) {
     on('#jn', () => sb.from('nim_entries').insert({ tournament_id: id, name: myName }));
     on('#lv', () => sb.from('nim_entries').delete().eq('tournament_id', id).eq('user_id', me.id));
     on('#st', () => sb.rpc('nim_start', { t: id }));
+    const cp = $('#cp');
+    if (cp) cp.onclick = () => {
+      navigator.clipboard?.writeText(PAY_CARD.number.replace(/\s/g, '')).then(() => toast('شماره کارت کپی شد')).catch(() => toast('کپی نشد؛ دستی کپی کن'));
+    };
     const dl = $('#dl');
     if (dl) dl.onclick = async () => {
       if (!dl.classList.contains('ask')) { dl.classList.add('ask'); dl.textContent = 'مطمئنی؟ برای حذف دوباره بزن'; return setTimeout(() => { dl.classList.remove('ask'); dl.textContent = 'حذف مسابقه' }, 4000) }
