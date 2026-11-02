@@ -5,18 +5,19 @@
 .tafsir-wrapper {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-4);
 }
 
 /* --- تیتر اصلی تفسیر --- */
 .tafsir-hero {
-  text-align: center;
-  padding: var(--space-8) var(--space-4);
+  padding: var(--space-4) 0;
   background: var(--bg-surface-glass);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   position: relative;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
 }
 
 .tafsir-hero::before {
@@ -24,20 +25,22 @@
   position: absolute;
   inset: 0;
   background: var(--gradient-brand-soft);
-  opacity: 0.3;
+  opacity: 0.2;
   z-index: 0;
 }
 
-.tafsir-hero h2 {
+.tafsir-hero > div {
   position: relative;
   z-index: 1;
-  font-size: var(--fs-2xl);
-  margin-bottom: var(--space-2);
+}
+
+.tafsir-hero h2 {
+  font-size: var(--fs-xl);
+  margin-bottom: var(--space-1);
+  color: var(--color-text-strong);
 }
 
 .tafsir-hero p {
-  position: relative;
-  z-index: 1;
   color: var(--color-text-muted);
   font-size: var(--fs-sm);
 }
@@ -48,8 +51,8 @@
   flex-wrap: wrap;
   gap: var(--space-2);
   justify-content: center;
-  margin-bottom: var(--space-6);
-  padding: var(--space-4);
+  margin-bottom: var(--space-2);
+  padding: var(--space-2);
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
@@ -57,9 +60,9 @@
 }
 
 .tafsir-page-btn {
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   color: var(--color-text-soft);
   background: var(--bg-muted);
   border: 1px solid transparent;
@@ -94,14 +97,14 @@
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
-  padding: var(--space-6);
+  padding: var(--space-5) var(--space-6);
   box-shadow: var(--shadow-sm);
   animation: fadeInUp var(--dur-500) var(--ease-out-soft) both;
 }
 
 .tafsir-block__title {
   font-family: var(--font-display);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   color: var(--color-primary-700);
   margin-bottom: var(--space-4);
   padding-bottom: var(--space-2);
@@ -109,6 +112,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  line-height: 1.5;
 }
 
 .tafsir-block__title::before {
@@ -131,41 +135,30 @@
   text-align: center;
 }
 
-/* فهرست مطالب تفسیر (در ابتدای صفحه) */
-.tafsir-toc {
-  background: var(--bg-surface);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-border);
-  padding: var(--space-4);
-  margin-bottom: var(--space-6);
-}
-
-.tafsir-toc h3 {
-  font-size: var(--fs-lg);
-  margin-bottom: var(--space-3);
-  color: var(--color-text-strong);
-}
-
-.tafsir-toc ul {
+/* استایل فهرست داخل پاپ‌آپ */
+.tafsir-toc-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  padding: var(--space-2);
 }
 
-.tafsir-toc a {
+.tafsir-toc-list a {
   display: block;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-soft);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text-base);
   font-size: var(--fs-sm);
+  background: var(--bg-muted);
   transition: all var(--dur-200);
-  border-right: 2px solid transparent;
+  border-right: 3px solid transparent;
+  line-height: 1.5;
 }
 
-.tafsir-toc a:hover {
-  background: var(--bg-muted);
-  color: var(--color-primary-600);
-  border-right-color: var(--color-primary-400);
+.tafsir-toc-list a:hover {
+  background: var(--bg-highlight);
+  color: var(--color-primary-700);
+  border-right-color: var(--color-primary-500);
   padding-right: var(--space-4);
 }
 
@@ -173,7 +166,7 @@
 .tafsir-nav-bottom {
   display: flex;
   justify-content: space-between;
-  margin-top: var(--space-8);
+  margin-top: var(--space-6);
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border);
 }
