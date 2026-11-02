@@ -1,0 +1,71 @@
+/* ==========================================================================
+   nav.css — ناوبری تب‌ها با نشانگر متحرک
+   ========================================================================== */
+
+.tabs {
+  position: relative;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+  display: flex;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-muted);
+  transition: color var(--dur-250) ease;
+  z-index: 1;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.tab svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.7;
+  transition: opacity var(--dur-250), transform var(--dur-250);
+}
+
+.tab:hover {
+  color: var(--color-text-strong);
+}
+
+.tab:hover svg {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.tab.is-active {
+  color: var(--color-primary-600);
+}
+
+.tab.is-active svg {
+  opacity: 1;
+  stroke: var(--color-primary-600);
+}
+
+/* نشانگر متحرک */
+.tabs__indicator {
+  position: absolute;
+  bottom: -1px;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-brand);
+  border-radius: var(--radius-full) var(--radius-full) 0 0;
+  transition: all var(--dur-350) var(--ease-spring);
+  width: 0;
+  box-shadow: 0 -2px 10px var(--color-primary-300);
+}
+
+/* برای تم پسرانه یک درخشش فیروزه‌ای اضافه کنیم */
+[data-theme="boy"] .tabs__indicator {
+  box-shadow: 0 -2px 10px var(--color-accent-500);
+  background: linear-gradient(90deg, var(--color-primary-500), var(--color-accent-500));
+}
