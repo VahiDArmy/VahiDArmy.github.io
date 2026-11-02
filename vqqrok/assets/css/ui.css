@@ -391,13 +391,14 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
   line-height: 2.35;
   color: var(--arabic-ink);
   text-align: right;
-  word-spacing: .02em;
+  word-spacing: 0;
 }
 
 .ayah {
   display: inline;
-  padding: .04em .02em;
-  border-radius: .35em;
+  padding: 0;
+  margin: 0;
+  border-radius: .25em;
   cursor: pointer;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
@@ -418,16 +419,16 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
 .ayah__num {
   display: inline;
   font-family: var(--font-quran), var(--font-ui, system-ui);
-  font-size: .78em;
+  font-size: .55em;
   font-weight: 500;
   line-height: 1;
   color: var(--accent-deep);
   white-space: nowrap;
-  margin-inline: .02em .04em;
+  margin: 0;
   padding: 0;
   border: 0;
   background: none;
-  vertical-align: baseline;
+  vertical-align: .15em;
   transition: color .2s var(--ease);
 }
 .ayah.is-marked .ayah__num { color: var(--accent); }
@@ -1029,7 +1030,7 @@ html[data-theme="night"] .quranquote { color: var(--gold); background: color-mix
   .mushaf { padding: 1rem .75rem .9rem; }
   .ayah { padding: .45rem .5rem .5rem; }
   .mushaf__ar { font-size: calc(clamp(1.28rem, 5.4vw, 1.72rem) * var(--fs)); line-height: 2.25; }
-  .ayah__num { font-size: .75em; }
+  .ayah__num { font-size: .52em; }
   .mushaf__fa { font-size: calc(var(--step-0) * var(--fs)); line-height: 2; }
   .reader__body { padding: 1.1rem; }
   .modal__card { padding: 1.2rem; }

@@ -85,7 +85,7 @@ function ayahNode(item) {
       role: "button",
       "aria-label": `آیهٔ ${fa(item.ayah)}`,
     },
-    el("span", { class: "ayah__text" }, item.ar),
+    el("span", { class: "ayah__text" }, (item.ar || "").trim()),
     el("span", { class: "ayah__num", "aria-hidden": "true" }, `﴿${fa(item.ayah)}﴾`)
   );
   node.addEventListener("click", () => selectAyah(item.ayah));
