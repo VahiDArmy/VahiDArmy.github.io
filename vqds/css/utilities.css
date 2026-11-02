@@ -1,0 +1,58 @@
+/* ==========================================================================
+   utilities.css — کلاس‌های کمکی برای چیدمان و تایپوگرافی سریع
+   ========================================================================== */
+
+/* --- Margins & Paddings --- */
+.mt-0 { margin-top: 0 !important; }
+.mt-1 { margin-top: var(--space-1) !important; }
+.mt-2 { margin-top: var(--space-2) !important; }
+.mt-4 { margin-top: var(--space-4) !important; }
+.mt-6 { margin-top: var(--space-6) !important; }
+.mt-8 { margin-top: var(--space-8) !important; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-2 { margin-bottom: var(--space-2) !important; }
+.mb-4 { margin-bottom: var(--space-4) !important; }
+.mb-6 { margin-bottom: var(--space-6) !important; }
+.mb-8 { margin-bottom: var(--space-8) !important; }
+
+.p-0 { padding: 0 !important; }
+.p-2 { padding: var(--space-2) !important; }
+.p-4 { padding: var(--space-4) !important; }
+.p-6 { padding: var(--space-6) !important; }
+
+/* --- Flexbox Helpers --- */
+.flex { display: flex !important; }
+.flex-col { flex-direction: column !important; }
+.items-center { align-items: center !important; }
+.items-start { align-items: flex-start !important; }
+.justify-center { justify-content: center !important; }
+.justify-between { justify-content: space-between !important; }
+.gap-1 { gap: var(--space-1) !important; }
+.gap-2 { gap: var(--space-2) !important; }
+.gap-3 { gap: var(--space-3) !important; }
+.gap-4 { gap: var(--space-4) !important; }
+
+/* --- Typography --- */
+.text-center { text-align: center !important; }
+.text-right { text-align: right !important; }
+.text-left { text-align: left !important; }
+.font-bold { font-weight: var(--fw-bold) !important; }
+.font-medium { font-weight: var(--fw-medium) !important; }
+.text-primary { color: var(--color-primary-600) !important; }
+.text-muted { color: var(--color-text-muted) !important; }
+
+/* --- Visibility & Layout --- */
+.hidden { display: none !important; }
+.w-full { width: 100% !important; }
+.h-full { height: 100% !important; }
+.relative { position: relative !important; }
+.absolute { position: absolute !important; }
+.rounded-full { border-radius: var(--radius-full) !important; }
+.rounded-lg { border-radius: var(--radius-lg) !important; }
+
+/* --- Separators --- */
+.sep-dot::after {
+  content: '·';
+  margin: 0 var(--space-2);
+  opacity: 0.5;
+}
