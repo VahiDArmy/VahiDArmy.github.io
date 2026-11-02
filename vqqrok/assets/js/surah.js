@@ -239,7 +239,7 @@ export function renderAyahs(host) {
     const faNode = translationNode(item);
     surahState.nodes.set(item.ayah, ar);
     surahState.faNodes.set(item.ayah, faNode);
-    arFragment.append(ar, document.createTextNode(" "));
+    arFragment.append(ar);
     faFragment.append(faNode, document.createTextNode(" "));
   }
 

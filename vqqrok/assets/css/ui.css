@@ -423,7 +423,7 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
   line-height: 1;
   color: var(--accent-deep);
   white-space: nowrap;
-  margin-inline: .04em .12em;
+  margin-inline: .02em .04em;
   padding: 0;
   border: 0;
   background: none;
