@@ -95,3 +95,24 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px #5eead433}
 .admin-hint b{font-weight:800}
 .orb.hint{box-shadow:0 0 0 3px #fcd34d,0 0 22px 6px #fcd34d88;transform:translateY(-6px) scale(1.08)}
 .t3 .btn.hint{outline:3px solid #fcd34d;box-shadow:0 0 18px #fcd34d66}
+
+/* فکر بکر / Mastermind */
+.fekr-arena .fekr-board{display:grid;gap:8px;margin:8px 0}
+.fekr-row{display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.fekr-n{color:var(--mut);font-size:13px;font-weight:700}
+.fekr-dots{display:flex;gap:8px}
+.fekr-dot{width:28px;height:28px;border-radius:50%;box-shadow:inset -2px -3px 6px #0004,0 0 10px #0002}
+.fekr-keys{display:flex;flex-wrap:wrap;gap:4px;min-width:52px}
+.fekr-keys .key{width:10px;height:10px;border-radius:50%;display:inline-block}
+.fekr-keys .key.black{background:#0f0a24;border:1px solid #fff3}
+.fekr-keys .key.white{background:#f3eefc;border:1px solid #fff6}
+.fekr-who{font-size:12px;color:var(--mut);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fekr-compose{display:grid;gap:12px;margin-top:8px}
+.fekr-slots{display:flex;justify-content:center;gap:12px}
+.fekr-slot{width:48px;height:48px;border-radius:50%;border:2px dashed var(--line);background:#ffffff10;cursor:pointer;padding:0}
+.fekr-slot.on{border-color:var(--teal);box-shadow:0 0 0 3px #5eead433}
+.fekr-slot:not(.empty){border-style:solid}
+.fekr-palette{display:flex;justify-content:center;flex-wrap:wrap;gap:10px}
+.fekr-swatch{width:36px;height:36px;border-radius:50%;border:2px solid #fff3;background:var(--c);cursor:pointer;padding:0;box-shadow:0 0 12px color-mix(in srgb,var(--c) 40%,transparent)}
+.fekr-swatch:active{transform:scale(.92)}
+.seg{flex-wrap:wrap}

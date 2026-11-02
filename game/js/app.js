@@ -82,7 +82,8 @@ function route() {
 addEventListener('hashchange', () => me && route());
 
 /* ---------- Tournaments list ---------- */
-const GAMES = { nim: 'نیم', mani: 'مانی' };
+const GAMES = { nim: 'نیم', mani: 'مانی', fekr: 'فکر بکر' };
+const FEKR_COLORS = ['#ef4444','#3b82f6','#22c55e','#eab308','#a855f7','#f97316']; // 0..5
 const PAY_CARD = {
   number: '5894 6312 3451 8108',
   name: 'میثم راه گذر خنکداری',
@@ -90,11 +91,15 @@ const PAY_CARD = {
   exp: '1409/01',
   cvv: '333'
 };
-const rule = (g, p) => g === 'mani' ? `${fa(p)} مهره؛ در هر نوبت ۱ یا ۲ یا ۳ مهره بردار. هر کس آخرین مهره را بردارد، برنده است.` : 'چهار ردیف مهره؛ در هر نوبت از یک ردیف هر چند مهره خواستی بردار. هر کس آخرین مهره را بردارد، برنده است.';
+const rule = (g, p) => g === 'mani'
+  ? `${fa(p)} مهره؛ در هر نوبت ۱ یا ۲ یا ۳ مهره بردار. هر کس آخرین مهره را بردارد، برنده است.`
+  : g === 'fekr'
+  ? 'رمز ۴ رنگی پنهان است. هر نوبت یک حدس ۴ تایی بزن. سیاه = رنگ و جای درست، سفید = فقط رنگ درست. اول کسی که رمز را کامل پیدا کند برنده است (حداکثر ۱۲ حدس).'
+  : 'چهار ردیف مهره؛ در هر نوبت از یک ردیف هر چند مهره خواستی بردار. هر کس آخرین مهره را بردارد، برنده است.';
 const feeLabel = f => f > 0 ? `${fa(f)} تومان` : 'رایگان';
 function home() {
   view.innerHTML = `<section class="stack"><form class="card stack" id="nf"><div class="row2"><input name="n" placeholder="نام مسابقه جدید" minlength="2" maxlength="60" required style="margin:0"><button class="btn sm">بساز</button></div>
-    <div class="seg"><label><input type="radio" name="g" value="mani" checked><span>مانی</span></label><label><input type="radio" name="g" value="nim"><span>نیم</span></label></div>
+    <div class="seg"><label><input type="radio" name="g" value="mani" checked><span>مانی</span></label><label><input type="radio" name="g" value="nim"><span>نیم</span></label><label><input type="radio" name="g" value="fekr"><span>فکر بکر</span></label></div>
     <label class="pcs" id="pc">تعداد مهره<input name="p" type="number" min="5" max="60" value="21"></label>
     <div class="seg"><label><input type="radio" name="pay" value="free" checked><span>رایگان</span></label><label><input type="radio" name="pay" value="paid"><span>پولی</span></label></div>
     <label class="pcs" id="feeBox" hidden>ورودیه (تومان)<input name="fee" type="number" min="1000" step="1000" value="10000"></label>
@@ -222,12 +227,121 @@ function bestMove(mani, heaps) {
   return mani ? bestMani(heaps[0] || 0) : bestNim(heaps || []);
 }
 
-/* ---------- The match: orbs (Nim: pick a row · Mani: take 1-3) ---------- */
+/* ---------- The match: orbs (Nim/Mani) or Fekr (Mastermind) ---------- */
 async function mView(id) {
   const { data: M0 } = await sb.from('nim_matches').select('*').eq('id', id).maybeSingle();
   if (!M0) return view.innerHTML = '<p class="muted">این بازی پیدا نشد.</p>';
-  const [{ data: T }, { data: es }] = await Promise.all([sb.from('nim_tournaments').select('game,pieces').eq('id', M0.tournament_id).single(), sb.from('nim_entries').select('user_id,name').eq('tournament_id', M0.tournament_id)]);
+  const [{ data: T }, { data: es }] = await Promise.all([
+    sb.from('nim_tournaments').select('game,pieces').eq('id', M0.tournament_id).single(),
+    sb.from('nim_entries').select('user_id,name').eq('tournament_id', M0.tournament_id)]);
   if (location.hash !== '#/m/' + id) return;
+  if (T.game === 'fekr') return mViewFekr(id, M0, T, es);
+  return mViewNimMani(id, M0, T, es);
+}
+
+async function mViewFekr(id, M0, T, es) {
+  const nm = Object.fromEntries((es || []).map(e => [e.user_id, e.name]));
+  let M = M0, draft = [null, null, null, null], over = false, first = true;
+  const palette = FEKR_COLORS.map((c, i) =>
+    `<button type="button" class="fekr-swatch" data-c="${i}" style="--c:${c}" aria-label="رنگ ${i + 1}"></button>`).join('');
+  view.innerHTML = `<div class="arena fekr-arena"><a class="back" href="#/t/${M0.tournament_id}">بازگشت به جدول</a>
+    <div class="vs"><div class="pl" id="pa"></div><b>VS</b><div class="pl" id="pb"></div></div>
+    <div class="banner" id="bn"></div>
+    <div class="admin-hint" id="ah" hidden></div>
+    <div class="fekr-board" id="fb"></div>
+    <div class="fekr-compose card" id="fc">
+      <div class="fekr-slots" id="slots">${[0,1,2,3].map(i => `<button type="button" class="fekr-slot" data-i="${i}"></button>`).join('')}</div>
+      <div class="fekr-palette">${palette}</div>
+      <button type="button" class="btn" id="fg" disabled>ثبت حدس</button>
+    </div>
+    <p class="hint">${rule('fekr')}</p></div>`;
+
+  const slots = $$('.fekr-slot'), swatches = $$('.fekr-swatch');
+  let pick = 0;
+  const paintDraft = () => {
+    slots.forEach((s, i) => {
+      const c = draft[i];
+      s.style.background = c == null ? '' : FEKR_COLORS[c];
+      s.classList.toggle('empty', c == null);
+      s.classList.toggle('on', pick === i);
+    });
+    $('#fg').disabled = draft.some(x => x == null) || !(M.status === 'live' && M.turn === me.id);
+  };
+  slots.forEach(s => s.onclick = () => { pick = +s.dataset.i; paintDraft(); });
+  swatches.forEach(s => s.onclick = () => {
+    if (!(M.status === 'live' && M.turn === me.id)) return;
+    draft[pick] = +s.dataset.c;
+    pick = Math.min(3, pick + 1);
+    navigator.vibrate?.(10);
+    paintDraft();
+  });
+  $('#fg').onclick = async () => {
+    if (draft.some(x => x == null)) return;
+    $('#fg').disabled = true;
+    const { error } = await sb.rpc('fekr_guess', { m: id, guess: draft });
+    if (error) toast('حدس پذیرفته نشد');
+    draft = [null, null, null, null]; pick = 0;
+    load();
+  };
+
+  const finish = () => {
+    const w = M.winner === me.id, part = M.p1 === me.id || M.p2 === me.id;
+    const o = document.createElement('div'); o.className = 'over';
+    o.innerHTML = `<div><h1>${w ? 'برنده شدی!' : part ? 'این بار نشد' : 'بازی تمام شد'}</h1>
+      <p>${w ? 'رمز را پیدا کردی.' : 'برنده: ' + esc(nm[M.winner])}</p>
+      <a class="btn" href="#/t/${M.tournament_id}">دیدن جدول</a></div>`;
+    document.body.append(o); if (w) confetti();
+  };
+
+  const renderGuesses = () => {
+    const list = Array.isArray(M.guesses) ? M.guesses : [];
+    $('#fb').innerHTML = list.map((g, i) => {
+      const pegs = FEKR_COLORS.map(() => '').map((_, j) => {
+        // not used
+      });
+      const colors = (g.g || []).map(c => `<span class="fekr-dot" style="background:${FEKR_COLORS[c]}"></span>`).join('');
+      const keys = Array(g.black || 0).fill('<i class="key black"></i>').join('')
+        + Array(g.white || 0).fill('<i class="key white"></i>').join('');
+      const who = esc(nm[g.by] || '؟');
+      return `<div class="fekr-row"><span class="fekr-n">${fa(i + 1)}</span><div class="fekr-dots">${colors}</div><div class="fekr-keys">${keys}</div><span class="fekr-who">${who}</span></div>`;
+    }).join('') || '<p class="muted" style="text-align:center">هنوز حدسی زده نشده.</p>';
+  };
+
+  const paint = () => {
+    const live = M.status === 'live', mine = live && M.turn === me.id, part = M.p1 === me.id || M.p2 === me.id;
+    $('#pa').textContent = nm[M.p1] || '—'; $('#pb').textContent = nm[M.p2] || '—';
+    $('#pa').classList.toggle('turn', live && M.turn === M.p1); $('#pb').classList.toggle('turn', live && M.turn === M.p2);
+    const bn = $('#bn'); bn.className = 'banner' + (mine ? ' mine' : '');
+    const n = Array.isArray(M.guesses) ? M.guesses.length : 0;
+    bn.textContent = M.status === 'waiting' ? 'منتظر تعیین حریف…'
+      : live ? (mine ? `نوبت توست — حدس ${fa(n + 1)} از ۱۲` : part ? `نوبت ${nm[M.turn]}…` : `تماشاگر — نوبت ${nm[M.turn]}`)
+      : `برنده: ${nm[M.winner] || '؟'}`;
+    renderGuesses();
+    paintDraft();
+    $('#fc').style.opacity = mine ? '1' : '.55';
+    // Admin: show a simple next-guess tip (random consistent-ish is heavy; just encourage)
+    const ah = $('#ah');
+    if (ah) {
+      const show = isAdmin && mine && live;
+      ah.hidden = !show;
+      if (show) {
+        ah.innerHTML = `<div class="admin-hint__body"><span class="admin-hint__badge">ادمین</span>
+          <span class="muted">از اطلاعات سیاه/سفید حدس‌های قبلی برای حذف حالت‌های ناممکن استفاده کن. تکرار رنگ مجاز است.</span></div>`;
+      }
+    }
+    if (M.status === 'done' && !over && !first) { over = true; finish(); }
+    first = false;
+  };
+
+  const load = async () => {
+    const { data } = await sb.from('nim_matches').select('id,tournament_id,p1,p2,turn,winner,status,guesses,updated_at').eq('id', id).maybeSingle();
+    if (!data) { toast('این مسابقه حذف شد'); location.hash = '#/'; return; }
+    M = data; paint();
+  };
+  cur.refresh = load; paint();
+}
+
+async function mViewNimMani(id, M0, T, es) {
   const mani = T.game === 'mani', SZ = mani ? [T.pieces] : INIT, nm = Object.fromEntries((es || []).map(e => [e.user_id, e.name]));
   let M = M0, sel = null, first = true, over = false;
   const tg = mani ? 'span' : 'button', rows = mani ? Array.from({ length: Math.ceil(SZ[0] / 7) }, (_, c) => [0, c * 7, Math.min(SZ[0], c * 7 + 7), c % 4]) : SZ.map((n, r) => [r, 0, n, r]);
@@ -267,8 +381,6 @@ async function mView(id) {
     if (t3) { $$('button', t3).forEach(b => { b.disabled = !mine || +b.dataset.k > M.heaps[0]; b.classList.remove('hint'); }); $('#lf').textContent = `${fa(M.heaps[0])} مهره باقی مانده` }
     const bn = $('#bn'); bn.className = 'banner' + (mine ? ' mine' : '');
     bn.textContent = M.status === 'waiting' ? 'منتظر تعیین حریف…' : live ? (mine ? 'نوبت توست' : part ? `نوبت ${nm[M.turn]} است…` : `تماشاگر — نوبت ${nm[M.turn]}`) : `برنده: ${nm[M.winner] || '؟'}`;
-
-    // Admin coach: suggest winning move when it is admin's turn
     const ah = $('#ah');
     if (ah) {
       const show = isAdmin && mine && live;
@@ -286,22 +398,18 @@ async function mView(id) {
             <button type="button" class="btn sm gold" id="applyHint">اعمال پیشنهاد</button></div>`;
           const apply = $('#applyHint');
           if (apply) apply.onclick = () => move(sug.h, sug.k);
-          // Visual highlight
           if (mani && t3) {
             const b = t3.querySelector(`button[data-k="${sug.k}"]`);
             if (b) b.classList.add('hint');
           } else {
-            // mark last `k` remaining orbs in that row
             const rowOrbs = orbs.filter(o => +o.dataset.r === sug.h && +o.dataset.i < M.heaps[sug.h]);
             rowOrbs.slice(-sug.k).forEach(o => o.classList.add('hint'));
-            // pre-select for convenience
             sel = { r: sug.h, s: new Set(rowOrbs.slice(-sug.k).map(o => +o.dataset.i)) };
             upd();
           }
         }
       }
     }
-
     if (M.status === 'done' && !over && !first) { over = true; finish() }
     first = false;
   };
@@ -312,7 +420,7 @@ async function mView(id) {
 /* ---------- Leaderboard (all games / per game) ---------- */
 function lbView() {
   let g = 'all';
-  view.innerHTML = `<div class="stack"><h2>جدول رتبه‌ها</h2><div class="seg" id="lg">${[['all', 'همه'], ['nim', 'نیم'], ['mani', 'مانی']].map(([k, t]) => `<button data-g="${k}" class="${k === g ? 'on' : ''}">${t}</button>`).join('')}</div><div id="lb" class="stack"></div></div>`;
+  view.innerHTML = `<div class="stack"><h2>جدول رتبه‌ها</h2><div class="seg" id="lg">${[['all', 'همه'], ['nim', 'نیم'], ['mani', 'مانی'], ['fekr', 'فکر بکر']].map(([k, t]) => `<button data-g="${k}" class="${k === g ? 'on' : ''}">${t}</button>`).join('')}</div><div id="lb" class="stack"></div></div>`;
   $('#lg').onclick = e => { const b = e.target.closest('button'); if (!b) return; g = b.dataset.g; $$('#lg button').forEach(x => x.classList.toggle('on', x === b)); cur.refresh() };
   cur.refresh = async () => {
     const { data } = await sb.from('nim_leaderboard').select('*'), by = {};
