@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="pink">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <title>سوره واقعه | قرآن کریم</title>
+  <meta name="description" content="قرآن کریم — سوره واقعه با تفسیر المیزان، تجربه‌ای خصوصی برای دو نفر. شمارش قرائت، تاریخچه، تم صورتی و تم پسرانه." />
+  <meta name="theme-color" content="#f9a8d4" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%92%97%3C/text%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&family=Amiri:ital,wght@0,400;0,700;1,400&family=Lalezar&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- ===== استایل‌ها به ترتیب لایه‌بندی ===== -->
+  <link rel="stylesheet" href="css/00_reset.css" />
+  <link rel="stylesheet" href="css/01_variables.css" />
+  <link rel="stylesheet" href="css/02_themes.css" />
+  <link rel="stylesheet" href="css/03_typography.css" />
+  <link rel="stylesheet" href="css/04_layout.css" />
+  <link rel="stylesheet" href="css/05_header.css" />
+  <link rel="stylesheet" href="css/06_nav.css" />
+  <link rel="stylesheet" href="css/07_surah.css" />
+  <link rel="stylesheet" href="css/08_tafsir.css" />
+  <link rel="stylesheet" href="css/09_auth.css" />
+  <link rel="stylesheet" href="css/10_history.css" />
+  <link rel="stylesheet" href="css/11_components.css" />
+  <link rel="stylesheet" href="css/12_animations.css" />
+  <link rel="stylesheet" href="css/13_effects.css" />
+  <link rel="stylesheet" href="css/14_utilities.css" />
+  <link rel="stylesheet" href="css/15_responsive.css" />
+</head>
+
+<body data-view="surah" data-auth="guest">
+
+  <!-- ===================================================== -->
+  <!--  صفحه‌ی خوش‌آمد (Splash)                              -->
+  <!-- ===================================================== -->
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="splash__inner">
+      <div class="splash__heart">
+        <svg viewBox="0 0 120 120" role="img" aria-label="قلب">
+          <defs>
+            <linearGradient id="splashHeartGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ff9ec4" />
+              <stop offset="55%" stop-color="#f472b6" />
+              <stop offset="100%" stop-color="#db2777" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M60 104S12 76 12 44.5C12 27.1 25.6 14 42.5 14 51.5 14 57.6 18.5 60 22.4 62.4 18.5 68.5 14 77.5 14 94.4 14 108 27.1 108 44.5 108 76 60 104 60 104Z"
+            fill="url(#splashHeartGrad)"
+          />
+        </svg>
+      </div>
+      <p class="splash__title">سوره واقعه</p>
+      <p class="splash__sub">قرآن کریم</p>
+      <div class="splash__bar"><span></span></div>
+    </div>
+  </div>
+
+  <!-- ===================================================== -->
+  <!--  لایه‌ی پس‌زمینه‌ی زنده (قلب‌ها / ستاره‌ها)              -->
+  <!-- ===================================================== -->
+  <div class="ambient" id="ambient" aria-hidden="true">
+    <div class="ambient__grid"></div>
+    <div class="ambient__glow ambient__glow--a"></div>
+    <div class="ambient__glow ambient__glow--b"></div>
+    <div class="ambient__particles" id="ambientParticles"></div>
+  </div>
+  <div class="page-vignette" aria-hidden="true"></div>
+
+  <!-- ===================================================== -->
+  <!--  پوسته‌ی اصلی                                        -->
+  <!-- ===================================================== -->
+  <div class="app" id="app">
+
+    <!-- ---------------- هدر ---------------- -->
+    <header class="site-header" id="siteHeader">
+      <div class="site-header__shine" aria-hidden="true"></div>
+      <div class="site-header__inner">
+
+        <div class="brand" id="brand">
+          <div class="brand__mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" class="brand__mark-svg">
+              <circle cx="32" cy="32" r="30" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".45" />
+              <circle cx="32" cy="32" r="24" fill="none" stroke="currentColor" stroke-width=".8" opacity=".28" />
+            </svg>
+            <span class="brand__mark-num">۵۶</span>
+          </div>
+
+          <div class="brand__text">
+            <h1
+              class="brand__title"
+              id="brandTitle"
+              data-dbltap="brand"
+              title="دو ضربه بزنید: تاریخچه‌ی قرائت"
+              tabindex="0"
+              role="button"
+              aria-label="سوره واقعه — دو ضربه برای تاریخچه‌ی قرائت"
+            >سوره واقعه</h1>
+            <p class="brand__sub">
+              <span class="brand__sub-dot"></span>
+              قرآن کریم
+              <span class="brand__sub-sep">·</span>
+              <span id="brandJuz">جزء ۲۷</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="icon-btn" id="themeToggle" type="button" aria-label="تغییر تم" title="تغییر تم">
+            <svg class="icon-btn__svg icon-btn__svg--moon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="icon-btn__svg icon-btn__svg--sun" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="4.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M12 2v2.2M12 19.8V22M2 12h2.2M19.8 12H22M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M19.1 4.9l-1.6 1.6M6.5 17.5l-1.6 1.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+          <button class="icon-btn icon-btn--account" id="authBtn" type="button" aria-label="حساب کاربری" title="حساب کاربری">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8.2" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M4.8 20c.8-3.6 3.7-5.6 7.2-5.6s6.4 2 7.2 5.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+            </svg>
+            <span class="icon-btn__dot" id="authDot" aria-hidden="true"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ---------------- شمارنده‌ی دو نفر ---------------- -->
+      <div class="counters" id="counters" aria-label="شمارنده‌ی قرائت">
+
+        <article
+          class="counter-card"
+          id="counterCard1"
+          data-slot="1"
+          data-dbltap="person1"
+          tabindex="0"
+          role="button"
+          aria-label="شخص ۱ — دو ضربه برای تاریخچه‌ی قرائت"
+        >
+          <span class="counter-card__ribbon">شخص ۱</span>
+          <div class="counter-card__avatar" id="counterAvatar1" aria-hidden="true">🌸</div>
+          <div class="counter-card__body">
+            <span class="counter-card__name" id="counterName1">شخص ۱</span>
+            <span class="counter-card__count">
+              <b id="counterValue1">۰</b>
+              <i>بار</i>
+            </span>
+          </div>
+          <div class="counter-card__deco" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="heart-svg"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>
+            <svg viewBox="0 0 24 24" class="heart-svg"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>
+          </div>
+          <span class="counter-card__ring" aria-hidden="true"></span>
+        </article>
+
+        <article
+          class="counter-card counter-card--alt"
+          id="counterCard2"
+          data-slot="2"
+          data-dbltap="person2"
+          tabindex="0"
+          role="button"
+          aria-label="شخص ۲ — دو ضربه برای تاریخچه‌ی قرائت"
+        >
+          <span class="counter-card__ribbon">شخص ۲</span>
+          <div class="counter-card__avatar" id="counterAvatar2" aria-hidden="true">🌊</div>
+          <div class="counter-card__body">
+            <span class="counter-card__name" id="counterName2">شخص ۲</span>
+            <span class="counter-card__count">
+              <b id="counterValue2">۰</b>
+              <i>بار</i>
+            </span>
+          </div>
+          <div class="counter-card__deco" aria-hidden="true">
+            <svg viewBox="0 0 24 24" class="heart-svg"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>
+            <svg viewBox="0 0 24 24" class="heart-svg"><path d="M12 21S3.5 15.5 3.5 9.4A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.5 2.6C20.5 15.5 12 21 12 21Z"/></svg>
+          </div>
+          <span class="counter-card__ring" aria-hidden="true"></span>
+        </article>
+      </div>
+
+      <!-- ---------------- ناوبری تب‌ها ---------------- -->
+      <nav class="tabs" id="tabs" aria-label="ناوبری اصلی">
+        <button class="tab is-active" data-tab="surah" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15.5A2.5 2.5 0 0 0 17.5 21H6.5A2.5 2.5 0 0 1 4 18.5Z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 7h8M8 11h8M8 15h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span>سوره</span>
+        </button>
+        <button class="tab" data-tab="tafsir" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M12 3c-3 0-5 1.6-5 4s2 4 5 4 5-1.6 5-4-2-4-5-4Zm0 8c-3.5 0-6 1.8-6 4.4S8.5 21 12 21s6-1.8 6-4.6S15.5 11 12 11Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <span>تفسیر</span>
+        </button>
+        <button class="tab" data-tab="auth" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20c.9-3.7 3.8-5.8 7.5-5.8s6.6 2.1 7.5 5.8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <span id="authTabLabel">ورود</span>
+        </button>
+        <span class="tabs__indicator" id="tabIndicator" aria-hidden="true"></span>
+      </nav>
+    </header>
+
+    <!-- ---------------- محتوای اصلی ---------------- -->
+    <main class="main" id="main">
+
+      <section class="view view--surah" id="view-surah" aria-label="سوره واقعه">
+        <div class="view__loader" id="surahLoader">
+          <span class="loader-heart"></span>
+          <p>در حال آماده‌سازی سوره…</p>
+        </div>
+        <div class="view__content" id="surahContent" hidden></div>
+      </section>
+
+      <section class="view view--tafsir" id="view-tafsir" aria-label="تفسیر سوره واقعه" hidden>
+        <div class="view__loader" id="tafsirLoader">
+          <span class="loader-heart"></span>
+          <p>در حال آماده‌سازی تفسیر…</p>
+        </div>
+        <div class="view__content" id="tafsirContent" hidden></div>
+      </section>
+
+      <section class="view view--auth" id="view-auth" aria-label="ورود و حساب" hidden>
+        <div class="view__content" id="authContent"></div>
+      </section>
+
+    </main>
+
+    <!-- ---------------- فوتر ---------------- -->
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p class="site-footer__line">
+          <span class="site-footer__heart">♥</span>
+          ساخته‌شده با عشق، برای دو نفر
+          <span class="site-footer__heart">♥</span>
+        </p>
+        <p class="site-footer__meta">
+          <span>سوره واقعه · ۹۶ آیه</span>
+          <span class="site-footer__sep">·</span>
+          <span>تفسیر المیزان</span>
+        </p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ===================================================== -->
+  <!--  ریشه‌ی مودال و توست                                   -->
+  <!-- ===================================================== -->
+  <div class="modal-root" id="modalRoot" aria-live="polite"></div>
+  <div class="toast-root" id="toastRoot" aria-live="polite" aria-atomic="true"></div>
+
+  <noscript>
+    <div class="noscript">برای استفاده از این سایت، جاوااسکریپت را فعال کنید.</div>
+  </noscript>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
