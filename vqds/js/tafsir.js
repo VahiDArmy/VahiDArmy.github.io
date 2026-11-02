@@ -3,8 +3,8 @@
    ========================================================================== */
 
 import { TAFSIR_RAW_500, TAFSIR_RAW_501 } from './data/tafsir.js';
-import { $, el, clear, faDigits, storage, CONFIG } from './utils.js';
-import { store } from './store.js';
+import { $, el, clear, faDigits, storage } from './utils.js';
+import { CONFIG } from './config.js';
 
 // تبدیل خام به ساختار صفحه‌بندی شده
 function parseTafsir(raw) {
