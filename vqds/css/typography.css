@@ -1,0 +1,122 @@
+/* ==========================================================================
+   typography.css — تایپوگرافی، فونت‌ها و جهت‌دهی متن
+   ========================================================================== */
+
+body {
+  font-family: var(--font-fa);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  color: var(--color-text-base);
+  background-color: var(--bg-app);
+  font-weight: var(--fw-regular);
+  transition: background-color var(--dur-500) var(--ease-out-soft),
+              color var(--dur-500) var(--ease-out-soft);
+}
+
+/* --- تیترها --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--color-text-strong);
+  letter-spacing: -0.01em;
+  font-weight: var(--fw-bold);
+}
+
+/* --- متن عربی (آیات) --- */
+.text-arabic {
+  font-family: var(--font-ar);
+  font-size: 1.6em;
+  line-height: 2.2;
+  color: var(--color-text-strong);
+  direction: rtl;
+  text-align: justify;
+  text-align-last: center;
+  word-spacing: 0.1em;
+}
+
+.text-arabic--small {
+  font-size: 1.2em;
+  line-height: 2;
+  text-align: right;
+  text-align-last: right;
+}
+
+/* --- متن فارسی عمومی --- */
+.text-farsi {
+  font-family: var(--font-fa);
+  font-size: 1rem;
+  line-height: var(--lh-relaxed);
+  color: var(--color-text-soft);
+  text-align: justify;
+}
+
+/* --- نقل‌قول‌ها و متون فرعی --- */
+.text-quote {
+  position: relative;
+  padding: var(--space-4) var(--space-6);
+  font-style: italic;
+  color: var(--color-text-muted);
+  border-right: 3px solid var(--color-primary-300);
+  background: var(--bg-muted);
+  border-radius: var(--radius-sm);
+}
+
+.text-small {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+.text-xs {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+/* --- اعداد فارسی --- */
+.num-fa {
+  font-feature-settings: "ss01" on;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+/* --- لینک‌ها --- */
+a.text-link {
+  color: var(--color-primary-600);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--dur-150) ease;
+}
+
+a.text-link:hover {
+  color: var(--color-primary-800);
+}
+
+/* --- گرادیان متن --- */
+.text-gradient {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--color-primary-600); /* Fallback */
+  display: inline-block;
+}
+
+/* --- نشانه‌گذاری متون تفسیر --- */
+.tafsir-text {
+  font-size: 1.05rem;
+  line-height: var(--lh-relaxed);
+  color: var(--color-text-base);
+  text-align: justify;
+}
+
+.tafsir-text p {
+  margin-bottom: var(--space-4);
+  text-indent: 2rem;
+}
+
+.tafsir-text p:last-child {
+  margin-bottom: 0;
+}
+
+.tafsir-text b, .tafsir-text strong {
+  color: var(--color-primary-600);
+  font-weight: var(--fw-bold);
+}
