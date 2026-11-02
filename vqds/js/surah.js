@@ -3,10 +3,10 @@
    ========================================================================== */
 
 import { AYAHS, SURAH_META } from './data/surah.js';
-import { $, el, faDigits, storage, CONFIG, onDblTap } from './utils.js';
+import { $, el, faDigits, storage, onDblTap } from './utils.js';
+import { CONFIG } from './config.js';
 import { incrementReadCount } from './counters.js';
 import { toast, successToast } from './toast.js';
-import { store } from './store.js';
 
 let activeFilter = 'all'; // all | bookmarked
 
