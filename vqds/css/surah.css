@@ -1,19 +1,19 @@
 /* ==========================================================================
-   surah.css — استایل کارت‌های آیات، متن عربی و فارسی
+   surah.css — استایل کارت‌های آیات، متن عربی و فارسی (با فاصله‌های بهینه)
    ========================================================================== */
 
 .surah-header {
   text-align: center;
-  padding: var(--space-8) 0 var(--space-6);
-  margin-bottom: var(--space-6);
+  padding: var(--space-4) 0 var(--space-2);
+  margin-bottom: var(--space-2);
   position: relative;
 }
 
 .surah-header__bismillah {
   font-family: var(--font-ar);
-  font-size: var(--fs-2xl);
+  font-size: var(--fs-xl);
   color: var(--color-primary-700);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-2);
   line-height: 1.8;
 }
 
@@ -23,54 +23,54 @@
   justify-content: center;
   gap: var(--space-4);
   color: var(--color-primary-300);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .surah-header__ornament::before,
 .surah-header__ornament::after {
   content: '';
   height: 1px;
-  width: 60px;
+  width: 40px;
   background: linear-gradient(90deg, transparent, var(--color-primary-300), transparent);
 }
 
 .surah-header__ornament svg {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   fill: currentColor;
 }
 
 .surah-header__meta {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   color: var(--color-text-muted);
 }
 
-/* --- لیست آیات --- */
+/* --- لیست آیات (کاهش شدید فاصله‌ها) --- */
 .ayah-list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-2); /* کاهش از 5 به 2 */
 }
 
-/* --- کارت آیه --- */
+/* --- کارت آیه (طراحی فشرده‌تر) --- */
 .ayah-card {
   position: relative;
   background: var(--bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6) var(--space-5);
-  box-shadow: var(--shadow-sm);
-  transition: transform var(--dur-300) var(--ease-out-soft),
-              box-shadow var(--dur-300) var(--ease-out-soft),
-              border-color var(--dur-300);
-  scroll-margin-top: 180px;
+  border-radius: var(--radius-md);
+  padding: var(--space-4); /* کاهش از 6 به 4 */
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--dur-250) var(--ease-out-soft),
+              box-shadow var(--dur-250) var(--ease-out-soft),
+              border-color var(--dur-250);
+  scroll-margin-top: 160px;
 }
 
 @media (hover: hover) {
   .ayah-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-primary-200);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-primary-300);
   }
 }
 
@@ -82,54 +82,58 @@
 /* شماره آیه */
 .ayah-card__number {
   position: absolute;
-  top: var(--space-4);
-  right: calc(var(--space-5) * -1 + 4px);
-  width: 34px;
-  height: 34px;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   background: var(--gradient-brand-soft);
   color: var(--color-primary-800);
-  border: 1px solid var(--color-primary-300);
+  border: 1px solid var(--color-primary-200);
   border-radius: var(--radius-full);
   font-family: var(--font-fa);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
   font-weight: var(--fw-bold);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-xs);
   z-index: 2;
 }
 
 /* متن عربی */
 .ayah-card__arabic {
   font-family: var(--font-ar);
-  font-size: 1.85rem;
-  line-height: 2.3;
+  font-size: 1.6rem; /* کمی کوچک‌تر */
+  line-height: 2;
   color: var(--color-text-strong);
   text-align: center;
-  margin-bottom: var(--space-4);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px dashed var(--color-border);
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
   direction: rtl;
+  padding-top: 4px; /* برای فاصله از شماره آیه */
 }
 
 /* متن فارسی */
 .ayah-card__farsi {
   font-family: var(--font-fa);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   line-height: var(--lh-relaxed);
   color: var(--color-text-base);
   text-align: justify;
   direction: rtl;
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-border);
 }
 
 /* دکمه‌های کنش آیه */
 .ayah-card__actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--space-2);
-  margin-top: var(--space-3);
-  opacity: 0.6;
-  transition: opacity var(--dur-250);
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  opacity: 0.5;
+  transition: opacity var(--dur-200);
 }
 
 .ayah-card:hover .ayah-card__actions {
@@ -137,8 +141,8 @@
 }
 
 .ayah-card__action-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-full);
   display: grid;
   place-items: center;
@@ -152,8 +156,8 @@
 }
 
 .ayah-card__action-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 /* حالت نشان‌گذاری‌شده (بوکمارک) */
@@ -167,22 +171,22 @@
 /* دکمه‌های شناور ناوبری در پایین صفحه */
 .surah-fab {
   position: fixed;
-  bottom: var(--space-6);
-  left: var(--space-6);
+  bottom: var(--space-4);
+  left: var(--space-4);
   z-index: var(--z-nav);
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .fab-btn {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--radius-full);
   background: var(--bg-surface-glass-strong);
   backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--color-border-glass);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
   display: grid;
   place-items: center;
   color: var(--color-text-base);
