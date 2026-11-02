@@ -1,0 +1,131 @@
+/* ==========================================================================
+   themes.css — پالت رنگی دو تم: صورتی (دخترانه) و پسرانه (شبانه)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   تم پیش‌فرض: صورتی (Pink)
+   -------------------------------------------------------------------------- */
+[data-theme="pink"] {
+  /* رنگ اصلی (Primary) */
+  --color-primary-50: #fff1f6;
+  --color-primary-100: #ffe4ef;
+  --color-primary-200: #fbcfe8;
+  --color-primary-300: #f9a8d4;
+  --color-primary-400: #f472b6;
+  --color-primary-500: #ec4899;
+  --color-primary-600: #db2777;
+  --color-primary-700: #be185d;
+  --color-primary-800: #9d174d;
+  --color-primary-900: #831843;
+
+  /* رنگ مکمل (Accent) */
+  --color-accent-300: #fda4af;
+  --color-accent-500: #f43f5e;
+  --color-accent-glow: rgba(244, 63, 94, 0.25);
+
+  /* پس‌زمینه */
+  --bg-app: #fff5f8;
+  --bg-surface: #ffffff;
+  --bg-surface-glass: rgba(255, 255, 255, 0.72);
+  --bg-surface-glass-strong: rgba(255, 255, 255, 0.88);
+  --bg-muted: #fdf2f8;
+  --bg-highlight: #fff0f6;
+  --bg-overlay: rgba(131, 24, 67, 0.28);
+
+  /* متن */
+  --color-text-strong: #500724;
+  --color-text-base: #831843;
+  --color-text-soft: #9d174d;
+  --color-text-muted: #be185d;
+  --color-text-faint: #f472b6;
+  --color-text-inverse: #ffffff;
+
+  /* مرزها */
+  --color-border: rgba(236, 72, 153, 0.14);
+  --color-border-strong: rgba(236, 72, 153, 0.28);
+  --color-border-glass: rgba(255, 255, 255, 0.6);
+
+  /* گرادیان‌ها */
+  --gradient-brand: linear-gradient(135deg, #f472b6 0%, #ec4899 48%, #db2777 100%);
+  --gradient-brand-soft: linear-gradient(135deg, #ffe4ef 0%, #fbcfe8 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(255, 241, 246, 0.9) 100%);
+  --gradient-hero: radial-gradient(120% 100% at 20% 0%, #fff1f6 0%, #ffe4ef 40%, #fbcfe8 100%);
+  --gradient-text: linear-gradient(120deg, #db2777 0%, #f43f5e 100%);
+  --gradient-border: linear-gradient(135deg, rgba(236, 72, 153, 0.4), rgba(244, 63, 94, 0.1));
+
+  /* عناصر خاص */
+  --color-heart: #f43f5e;
+  --color-heart-soft: #fda4af;
+  --color-ribbon: #be185d;
+  --ambient-a: rgba(249, 168, 212, 0.45);
+  --ambient-b: rgba(253, 164, 175, 0.35);
+  --ambient-grid: rgba(236, 72, 153, 0.045);
+  --vignette: radial-gradient(circle at 50% 50%, transparent 55%, rgba(219, 39, 119, 0.06) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   تم دوم: پسرانه (Boy / Night)
+   -------------------------------------------------------------------------- */
+[data-theme="boy"] {
+  /* رنگ اصلی (Primary) */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+
+  /* رنگ مکمل (Accent - فیروزه‌ای) */
+  --color-accent-300: #67e8f9;
+  --color-accent-500: #06b6d4;
+  --color-accent-glow: rgba(6, 182, 212, 0.3);
+
+  /* پس‌زمینه (Dark Mode) */
+  --bg-app: #070f19;
+  --bg-surface: #0f1a2a;
+  --bg-surface-glass: rgba(15, 26, 42, 0.72);
+  --bg-surface-glass-strong: rgba(15, 26, 42, 0.9);
+  --bg-muted: #111c2e;
+  --bg-highlight: #16243a;
+  --bg-overlay: rgba(3, 7, 18, 0.65);
+
+  /* متن */
+  --color-text-strong: #f8fafc;
+  --color-text-base: #e2e8f0;
+  --color-text-soft: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-faint: #64748b;
+  --color-text-inverse: #0f172a;
+
+  /* مرزها */
+  --color-border: rgba(148, 163, 184, 0.15);
+  --color-border-strong: rgba(148, 163, 184, 0.3);
+  --color-border-glass: rgba(255, 255, 255, 0.1);
+
+  /* گرادیان‌ها */
+  --gradient-brand: linear-gradient(135deg, #3b82f6 0%, #2563eb 48%, #1d4ed8 100%);
+  --gradient-brand-soft: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
+  --gradient-surface: linear-gradient(180deg, rgba(15, 26, 42, 0.96) 0%, rgba(7, 15, 25, 0.9) 100%);
+  --gradient-hero: radial-gradient(120% 100% at 20% 0%, #0f1a2a 0%, #070f19 40%, #020617 100%);
+  --gradient-text: linear-gradient(120deg, #60a5fa 0%, #22d3ee 100%);
+  --gradient-border: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(6, 182, 212, 0.1));
+
+  /* عناصر خاص */
+  --color-heart: #38bdf8; 
+  --color-heart-soft: #0ea5e9;
+  --color-ribbon: #3b82f6;
+  --ambient-a: rgba(59, 130, 246, 0.25);
+  --ambient-b: rgba(6, 182, 212, 0.2);
+  --ambient-grid: rgba(56, 189, 248, 0.06);
+  --vignette: radial-gradient(circle at 50% 50%, transparent 50%, rgba(2, 6, 23, 0.8) 100%);
+  
+  /* سایه‌های خاص دارک‌مود */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 14px 36px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 8px 30px rgba(6, 182, 212, 0.15);
+}
