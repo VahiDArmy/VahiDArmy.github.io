@@ -1,0 +1,315 @@
+/* ==========================================================================
+   header.css — هدر شیشه‌ای، لوگو، دکمه‌ها و شمارنده‌های دوگانه
+   ========================================================================== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  background: var(--bg-surface-glass-strong);
+  backdrop-filter: blur(var(--glass-blur-strong)) saturate(1.4);
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong)) saturate(1.4);
+  border-bottom: 1px solid var(--color-border-glass);
+  transition: background var(--dur-300), box-shadow var(--dur-300);
+}
+
+.site-header.is-scrolled {
+  box-shadow: var(--shadow-md);
+  background: var(--bg-surface-glass);
+}
+
+.site-header__shine {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  transform: translateX(-100%);
+  animation: shine 8s infinite;
+}
+
+.site-header__inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-3) var(--container-pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* --- لوگو و برند --- */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.brand__mark {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  color: var(--color-primary-600);
+}
+
+.brand__mark-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: transform var(--dur-700) var(--ease-spring);
+}
+
+.brand:hover .brand__mark-svg {
+  transform: rotate(15deg) scale(1.05);
+}
+
+.brand__mark-num {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--color-primary-700);
+  z-index: 1;
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.brand__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  color: var(--color-text-strong);
+  cursor: pointer;
+  transition: color var(--dur-150);
+  line-height: 1.2;
+}
+
+.brand__title:hover, .brand__title:focus-visible {
+  color: var(--color-primary-600);
+}
+
+.brand__sub {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.brand__sub-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary-400);
+  box-shadow: 0 0 8px var(--color-primary-400);
+}
+
+.brand__sub-sep {
+  opacity: 0.5;
+}
+
+/* --- اکشن‌های هدر (تم و کاربر) --- */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-soft);
+  transition: all var(--dur-250) var(--ease-spring);
+  position: relative;
+}
+
+.icon-btn:hover {
+  background: var(--bg-highlight);
+  color: var(--color-primary-600);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.icon-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.icon-btn__svg {
+  width: 20px;
+  height: 20px;
+  transition: transform var(--dur-300) var(--ease-spring);
+}
+
+/* تغییر آیکون تم */
+[data-theme="pink"] .icon-btn__svg--sun { display: none; }
+[data-theme="boy"] .icon-btn__svg--moon { display: none; }
+
+.icon-btn__dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: var(--color-accent-500);
+  border-radius: 50%;
+  border: 2px solid var(--bg-surface);
+  opacity: 0;
+  transform: scale(0);
+  transition: all var(--dur-300) var(--ease-spring);
+}
+
+body[data-auth="authenticated"] .icon-btn__dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* --- شمارنده‌های دوگانه --- */
+.counters {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-pad) var(--space-3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.counter-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--gradient-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2) var(--space-3);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--dur-300) var(--ease-spring);
+  user-select: none;
+}
+
+.counter-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-300);
+}
+
+.counter-card:active {
+  transform: scale(0.98);
+}
+
+.counter-card__ring {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--gradient-border);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-300);
+}
+
+.counter-card:hover .counter-card__ring {
+  opacity: 1;
+}
+
+.counter-card__ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: var(--color-ribbon);
+  color: white;
+  font-size: 10px;
+  padding: 2px 10px;
+  border-bottom-left-radius: 10px;
+  font-weight: var(--fw-bold);
+}
+
+.counter-card--alt .counter-card__ribbon {
+  background: var(--color-primary-500);
+}
+
+.counter-card__avatar {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  background: var(--bg-muted);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.counter-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.counter-card__name {
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.counter-card__count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--color-text-strong);
+}
+
+.counter-card__count b {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  line-height: 1;
+}
+
+.counter-card__count i {
+  font-size: var(--fs-2xs);
+  font-style: normal;
+  color: var(--color-text-faint);
+}
+
+.counter-card__deco {
+  position: absolute;
+  bottom: -10px;
+  left: -5px;
+  display: flex;
+  pointer-events: none;
+  color: var(--color-heart-soft);
+  opacity: 0.15;
+  transform: rotate(-15deg);
+}
+
+.counter-card__deco .heart-svg {
+  width: 30px;
+  height: 30px;
+  fill: currentColor;
+}
+
+.counter-card__deco .heart-svg:nth-child(2) {
+  width: 20px;
+  height: 20px;
+  transform: translateY(-10px) translateX(-10px);
+}
