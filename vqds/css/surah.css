@@ -1,0 +1,196 @@
+/* ==========================================================================
+   surah.css — استایل کارت‌های آیات، متن عربی و فارسی
+   ========================================================================== */
+
+.surah-header {
+  text-align: center;
+  padding: var(--space-8) 0 var(--space-6);
+  margin-bottom: var(--space-6);
+  position: relative;
+}
+
+.surah-header__bismillah {
+  font-family: var(--font-ar);
+  font-size: var(--fs-2xl);
+  color: var(--color-primary-700);
+  margin-bottom: var(--space-4);
+  line-height: 1.8;
+}
+
+.surah-header__ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  color: var(--color-primary-300);
+  margin-bottom: var(--space-2);
+}
+
+.surah-header__ornament::before,
+.surah-header__ornament::after {
+  content: '';
+  height: 1px;
+  width: 60px;
+  background: linear-gradient(90deg, transparent, var(--color-primary-300), transparent);
+}
+
+.surah-header__ornament svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.surah-header__meta {
+  font-size: var(--fs-sm);
+  color: var(--color-text-muted);
+}
+
+/* --- لیست آیات --- */
+.ayah-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* --- کارت آیه --- */
+.ayah-card {
+  position: relative;
+  background: var(--bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-300) var(--ease-out-soft),
+              box-shadow var(--dur-300) var(--ease-out-soft),
+              border-color var(--dur-300);
+  scroll-margin-top: 180px;
+}
+
+@media (hover: hover) {
+  .ayah-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary-200);
+  }
+}
+
+.ayah-card.is-highlighted {
+  animation: highlightPulse 2s ease-out;
+  border-color: var(--color-primary-400);
+}
+
+/* شماره آیه */
+.ayah-card__number {
+  position: absolute;
+  top: var(--space-4);
+  right: calc(var(--space-5) * -1 + 4px);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--gradient-brand-soft);
+  color: var(--color-primary-800);
+  border: 1px solid var(--color-primary-300);
+  border-radius: var(--radius-full);
+  font-family: var(--font-fa);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  box-shadow: var(--shadow-sm);
+  z-index: 2;
+}
+
+/* متن عربی */
+.ayah-card__arabic {
+  font-family: var(--font-ar);
+  font-size: 1.85rem;
+  line-height: 2.3;
+  color: var(--color-text-strong);
+  text-align: center;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px dashed var(--color-border);
+  direction: rtl;
+}
+
+/* متن فارسی */
+.ayah-card__farsi {
+  font-family: var(--font-fa);
+  font-size: 1.05rem;
+  line-height: var(--lh-relaxed);
+  color: var(--color-text-base);
+  text-align: justify;
+  direction: rtl;
+}
+
+/* دکمه‌های کنش آیه */
+.ayah-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  opacity: 0.6;
+  transition: opacity var(--dur-250);
+}
+
+.ayah-card:hover .ayah-card__actions {
+  opacity: 1;
+}
+
+.ayah-card__action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-muted);
+  transition: all var(--dur-200);
+}
+
+.ayah-card__action-btn:hover {
+  background: var(--bg-muted);
+  color: var(--color-primary-600);
+}
+
+.ayah-card__action-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* حالت نشان‌گذاری‌شده (بوکمارک) */
+.ayah-card.is-bookmarked .ayah-card__action-btn--bookmark {
+  color: var(--color-primary-500);
+}
+.ayah-card.is-bookmarked .ayah-card__action-btn--bookmark svg {
+  fill: currentColor;
+}
+
+/* دکمه‌های شناور ناوبری در پایین صفحه */
+.surah-fab {
+  position: fixed;
+  bottom: var(--space-6);
+  left: var(--space-6);
+  z-index: var(--z-nav);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.fab-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface-glass-strong);
+  backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border-glass);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-base);
+  transition: all var(--dur-300) var(--ease-spring);
+}
+
+.fab-btn:hover {
+  background: var(--color-primary-500);
+  color: white;
+  transform: scale(1.1) translateY(-2px);
+}
