@@ -5,7 +5,7 @@
 import { supabase } from './supabase.js';
 import { CONFIG } from './config.js';
 import { store } from './store.js';
-import { $, el, clear, show, hide } from './utils.js';
+import { $, el, clear } from './utils.js';
 import { toast, successToast, errorToast } from './toast.js';
 
 let isSignupMode = false;
@@ -227,6 +227,10 @@ export function renderAuthView() {
           await signIn(email, password);
           successToast('خوش آمدید!');
         }
+        
+        // هدایت به صفحه سوره پس از ورود موفق
+        window.dispatchEvent(new CustomEvent('q56:navigate', { detail: { route: 'surah' } }));
+        
       } catch (error) {
         errorToast(error.message || 'خطایی رخ داد');
       } finally {
