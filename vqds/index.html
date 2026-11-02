@@ -17,6 +17,39 @@
     rel="stylesheet"
   />
 
+  <!-- استایل حیاتی برای اسپلش (تضمین عدم به‌هم‌ریختگی در صورت قطع بودن CSS) -->
+  <style>
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #fff5f8;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+    [data-theme="boy"] #splash {
+      background-color: #070f19;
+    }
+    #splash.is-hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .splash__inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+    }
+    .splash__heart {
+      width: 80px;
+      height: 80px;
+    }
+  </style>
+
   <!-- ===== استایل‌ها به ترتیب لایه‌بندی ===== -->
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/variables.css" />
@@ -259,5 +292,15 @@
   </noscript>
 
   <script type="module" src="js/app.js"></script>
+  
+  <!-- اسکریپت پشتیبان: اگر به هر دلیلی اسکریپت اصلی لود نشد، اسپلش بعد از ۴ ثانیه محو شود -->
+  <script>
+    setTimeout(function() {
+      var splash = document.getElementById('splash');
+      if (splash && !splash.classList.contains('is-hidden')) {
+        splash.classList.add('is-hidden');
+      }
+    }, 4000);
+  </script>
 </body>
 </html>
