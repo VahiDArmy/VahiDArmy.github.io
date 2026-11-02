@@ -194,18 +194,16 @@ function paginate(blocks, docMeta) {
 
   const pushPage = () => {
     if (!current.length) return;
-    // عنوان تنها در انتهای صفحه نماند
+    // عنوان تنها در انتهای صفحه نماند — به صفحهٔ بعد منتقل شود
+    const trailing = [];
     while (current.length > 1 && HEADINGS.has(current[current.length - 1].type)) {
-      const heading = current.pop();
-      pages.push(buildPage(current, { section, docTitle, docIndex }));
-      current = [heading];
-      weight = blockWeight(heading);
-      countPage(pages[pages.length - 1], { section, docTitle, docIndex });
-      return;
+      trailing.unshift(current.pop());
     }
-    pages.push(buildPage(current, { section, docTitle, docIndex }));
-    current = [];
-    weight = 0;
+    if (current.length) {
+      pages.push(buildPage(current, { section, docTitle, docIndex }));
+    }
+    current = trailing;
+    weight = current.reduce((sum, block) => sum + blockWeight(block), 0);
   };
 
   for (const block of blocks) {
@@ -274,25 +272,18 @@ export function blocksToHtml(blocks) {
         break;
       case "arabic-grid":
         parts.push(
-          `<div class="ayahgrid">${block.rows
+          `<div class="ayahgrid" aria-label="متن آیه">${block.rows
             .map(
               (row) =>
-                `<div class="ayahgrid__row"><span class="ayahgrid__n">${fa(row.ayah)}</span>` +
-                `<p class="ayahgrid__ar" lang="ar" dir="rtl">${inline(row.text)}</p></div>`
+                `<div class="ayahgrid__row" data-ayah="${row.ayah}">` +
+                `<span class="ayahgrid__n" aria-label="آیهٔ ${fa(row.ayah)}">${fa(row.ayah)}</span>` +
+                `<p class="ayahgrid__ar" lang="ar" dir="rtl">${escapeHtml(row.text)}</p></div>`
             )
             .join("")}</div>`
         );
         break;
       case "trans-list":
-        parts.push(
-          `<div class="translist">${block.rows
-            .map(
-              (row) =>
-                `<div class="translist__row"><span class="translist__n">${row.n ? fa(row.n) : "•"}</span>` +
-                `<p>${inline(row.text)}</p></div>`
-            )
-            .join("")}</div>`
-        );
+        // ترجمهٔ آیات داخل تفسیر را نشان نده — متن تفسیر مهم است
         break;
       case "list":
         parts.push(`<ul>${block.items.map((item) => `<li>${inline(item)}</li>`).join("")}</ul>`);
@@ -322,11 +313,11 @@ export function parseTafsirDocs(docs) {
     const firstTitle = blocks.find((b) => b.type === "h2")?.text || `بخش ${docIndex + 1}`;
     const docPages = paginate(blocks, { title: firstTitle, index: docIndex });
 
-    docPages.forEach((page, pageIndexInDoc) => {
+    docPages.forEach((page) => {
+      const hasBody = page.blocks.some((b) => !HEADINGS.has(b.type));
+      if (!hasBody && page.blocks.length <= 1) return; // صفحهٔ خالی یا فقط عنوان
       page.docIndex = docIndex;
       page.docTitle = firstTitle;
-      page.pageInDoc = pageIndexInDoc;
-      page.docPageCount = docPages.length;
       pages.push(page);
     });
   });
@@ -334,6 +325,7 @@ export function parseTafsirDocs(docs) {
   pages.forEach((page, index) => {
     page.id = `p${index + 1}`;
     page.index = index;
+    page.pageInDoc = index;
     page.html = pageHtml(page);
   });
 

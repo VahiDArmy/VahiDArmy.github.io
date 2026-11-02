@@ -27,6 +27,7 @@ export const surahState = {
   query: "",
   active: 1,
   sessionReads: 0,
+  showTranslation: store.get("showTranslation", false) === true,
   hooks: {},
 };
 
@@ -75,7 +76,7 @@ export async function loadSurah() {
 function ayahNode(item) {
   const marked = surahState.marks.has(item.ayah);
   const node = el(
-    "span",
+    "article",
     {
       class: `ayah${marked ? " is-marked" : ""}`,
       id: `ayah-${item.ayah}`,
@@ -84,8 +85,10 @@ function ayahNode(item) {
       role: "button",
       "aria-label": `آیهٔ ${fa(item.ayah)}`,
     },
-    el("span", { class: "ayah__ar" }, item.ar),
-    el("span", { class: "ayah__num", "aria-hidden": "true" }, fa(item.ayah))
+    el("div", { class: "ayah__row" },
+      el("span", { class: "ayah__num", "aria-hidden": "true" }, fa(item.ayah)),
+      el("p", { class: "ayah__ar", lang: "ar", dir: "rtl" }, item.ar)
+    )
   );
   node.addEventListener("click", () => selectAyah(item.ayah));
   node.addEventListener("keydown", (event) => {
@@ -99,17 +102,33 @@ function ayahNode(item) {
 function translationNode(item) {
   const marked = surahState.marks.has(item.ayah);
   const node = el(
-    "span",
+    "div",
     {
       class: `ayah__fa${marked ? " is-marked" : ""}`,
       id: `fa-${item.ayah}`,
       dataset: { ayah: item.ayah },
+      hidden: !surahState.showTranslation,
     },
-    el("span", { class: "ayah__fnum", "aria-hidden": "true" }, fa(item.ayah)),
     el("span", { class: "ayah__ftext" }, item.fa)
   );
-  node.addEventListener("click", () => selectAyah(item.ayah));
+  node.addEventListener("click", (event) => {
+    event.stopPropagation();
+    selectAyah(item.ayah);
+  });
   return node;
+}
+
+export function setShowTranslation(on) {
+  surahState.showTranslation = Boolean(on);
+  store.set("showTranslation", surahState.showTranslation);
+  for (const node of surahState.faNodes.values()) {
+    node.hidden = !surahState.showTranslation;
+  }
+  const btn = $("#toggleTranslation");
+  if (btn) {
+    btn.classList.toggle("is-on", surahState.showTranslation);
+    btn.setAttribute("aria-pressed", String(surahState.showTranslation));
+  }
 }
 
 function setDockAyahVisible(visible) {
@@ -210,29 +229,30 @@ export function renderAyahs(host) {
   surahState.faNodes.clear();
 
   const panel = el("section", { class: "mushaf", id: "mushaf" });
-  const arTrack = el("div", { class: "mushaf__ar", lang: "ar", dir: "rtl" });
-  const faTrack = el("div", { class: "mushaf__fa", lang: "fa", dir: "rtl" });
-  const arFragment = document.createDocumentFragment();
-  const faFragment = document.createDocumentFragment();
+  const list = el("div", { class: "mushaf__list", lang: "ar", dir: "rtl" });
+  const fragment = document.createDocumentFragment();
 
   for (const item of surahState.ayahs) {
     const ar = ayahNode(item);
     const faNode = translationNode(item);
     surahState.nodes.set(item.ayah, ar);
     surahState.faNodes.set(item.ayah, faNode);
-    arFragment.append(ar, document.createTextNode(" "));
-    faFragment.append(faNode, document.createTextNode(" "));
+    ar.append(faNode);
+    fragment.append(ar);
   }
 
-  arTrack.append(arFragment);
-  faTrack.append(faFragment);
+  list.append(fragment);
   panel.append(
-    arTrack,
-    el("div", { class: "mushaf__rule", "aria-hidden": "true" }),
-    faTrack,
+    list,
     el("p", { class: "mushaf__hint" }, "روی هر آیه بزن تا در نوار پایین، رونوشت و نشان و تفسیر همان آیه را داشته باشی.")
   );
   host.append(panel);
+
+  const btn = $("#toggleTranslation");
+  if (btn) {
+    btn.classList.toggle("is-on", surahState.showTranslation);
+    btn.setAttribute("aria-pressed", String(surahState.showTranslation));
+  }
 }
 
 /* ---------- جست‌وجو ---------- */
@@ -266,19 +286,19 @@ export const applySearch = debounce((query) => {
   for (const item of surahState.ayahs) {
     const ar = surahState.nodes.get(item.ayah);
     const fa = surahState.faNodes.get(item.ayah);
-    if (!ar || !fa) continue;
+    if (!ar) continue;
     const match =
       !hasQuery ||
       normalizeAr(item.ar).includes(needleAr) ||
       normalizeFa(item.fa).includes(needleFa) ||
       String(item.ayah) === query.trim();
     ar.hidden = !match;
-    fa.hidden = !match;
     ar.classList.toggle("is-hit", hasQuery && match);
+    if (fa) fa.hidden = !match || !surahState.showTranslation;
     if (match) hits += 1;
 
     const arText = ar.querySelector(".ayah__ar");
-    const faText = fa.querySelector(".ayah__ftext");
+    const faText = fa?.querySelector(".ayah__ftext");
     if (arText) arText.innerHTML = hasQuery ? highlight(item.ar, query, true) : escapeHtml(item.ar);
     if (faText) faText.innerHTML = hasQuery ? highlight(item.fa, query, false) : escapeHtml(item.fa);
   }

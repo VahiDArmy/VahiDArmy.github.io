@@ -170,6 +170,9 @@
             <button class="chipbtn" id="jumpBtn" type="button">
               <svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span>پرش به آیه</span>
             </button>
+            <button class="chipbtn" id="toggleTranslation" type="button" aria-pressed="false" title="نمایش ترجمه">
+              <span>ترجمه</span>
+            </button>
             <div class="fontctl" role="group" aria-label="اندازهٔ متن">
               <button class="fontctl__btn" type="button" data-font-step="-1" aria-label="کوچک‌تر">A−</button>
               <span class="fontctl__value" id="fontValue" aria-live="polite">متوسط</span>
@@ -212,7 +215,12 @@
 
         <div class="reader">
           <header class="reader__head">
-            <div class="reader__crumb" id="readerCrumb">تفسیر</div>
+            <div class="reader__crumbrow">
+              <div class="reader__crumb" id="readerCrumb">تفسیر</div>
+              <button class="chipbtn reader__tocbtn" id="openTocBtn" type="button" aria-label="فهرست تفسیر">
+                <svg class="ico" aria-hidden="true"><use href="#i-pages"/></svg><span>فهرست</span>
+              </button>
+            </div>
             <h2 class="reader__title" id="readerTitle">—</h2>
             <div class="reader__meta">
               <span id="readerRange"></span>
@@ -360,6 +368,20 @@ data/tafsir/501.json</code></pre>
 
       <div class="history" id="historyList"></div>
       <p class="modal__fine" id="historyFine">تاریخچه فقط شمارنده و زمان را نشان می‌دهد.</p>
+    </div>
+  </dialog>
+
+  <dialog class="modal modal--wide" id="tocModal" aria-labelledby="tocModalTitle">
+    <div class="modal__card">
+      <button class="modal__close" type="button" data-close aria-label="بستن">
+        <svg class="ico" aria-hidden="true"><use href="#i-close"/></svg>
+      </button>
+      <div class="modal__head">
+        <span class="modal__seal"><svg aria-hidden="true"><use href="#i-pages"/></svg></span>
+        <h2 id="tocModalTitle">فهرست تفسیر</h2>
+        <p id="tocModalMeta">—</p>
+      </div>
+      <nav class="tocmodal__list" id="tocModalList" aria-label="فهرست تفسیر"></nav>
     </div>
   </dialog>
 

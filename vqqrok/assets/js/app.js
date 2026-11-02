@@ -47,6 +47,7 @@ import {
   surahState,
   setSessionReads,
   initAyahTools,
+  setShowTranslation,
 } from "./surah.js";
 import { loadTafsirFiles, parseTafsirDocs, readLocalFiles, pageHtml } from "./tafsir.js";
 
@@ -372,44 +373,43 @@ function setupTafsir(data) {
   }
 }
 
+function makeTocItem(section, { closeModal = false } = {}) {
+  const isDoc = section.kind === "doc";
+  return el(
+    "button",
+    {
+      class: `toc__item${isDoc ? "" : " toc__item--sub"}`,
+      type: "button",
+      dataset: { page: section.page },
+      onclick: () => {
+        gotoPage(section.page);
+        if (closeModal) closeDialog($("#tocModal"));
+      },
+    },
+    el("span", {}, isDoc ? shortDocTitle(section.title) : section.title),
+    isDoc ? el("small", {}, `${fa(section.page + 1)} / ${fa(tafsirState.pages.length)}`) : null
+  );
+}
+
 function renderToc() {
   const list = $("#tocList");
   const meta = $("#tocMeta");
-  list.innerHTML = "";
-  meta.textContent = `${fa(tafsirState.pages.length)} صفحه`;
+  const modalList = $("#tocModalList");
+  const modalMeta = $("#tocModalMeta");
+  if (list) list.innerHTML = "";
+  if (modalList) modalList.innerHTML = "";
+  const label = `${fa(tafsirState.pages.length)} صفحه`;
+  if (meta) meta.textContent = label;
+  if (modalMeta) modalMeta.textContent = label;
 
   let lastDoc = null;
   for (const section of tafsirState.sections) {
     if (section.kind === "doc") {
       if (lastDoc === section.title) continue;
       lastDoc = section.title;
-      list.append(
-        el(
-          "button",
-          {
-            class: "toc__item",
-            type: "button",
-            dataset: { page: section.page },
-            onclick: () => gotoPage(section.page),
-          },
-          el("span", {}, shortDocTitle(section.title)),
-          el("small", {}, `${fa(section.page + 1)} / ${fa(tafsirState.pages.length)}`)
-        )
-      );
-    } else {
-      list.append(
-        el(
-          "button",
-          {
-            class: "toc__item toc__item--sub",
-            type: "button",
-            dataset: { page: section.page },
-            onclick: () => gotoPage(section.page),
-          },
-          el("span", {}, section.title)
-        )
-      );
     }
+    list?.append(makeTocItem(section));
+    modalList?.append(makeTocItem(section, { closeModal: true }));
   }
 }
 
@@ -436,7 +436,9 @@ function renderTafsirPage(index, { push = true } = {}) {
   $("#readerBar").style.inlineSize = `${Math.round(((page.index + 1) / tafsirState.pages.length) * 100)}%`;
   $("#topProgress").style.inlineSize = `${Math.round(((page.index + 1) / tafsirState.pages.length) * 100)}%`;
 
-  $$("#tocList .toc__item").forEach((item) => item.classList.toggle("is-current", Number(item.dataset.page) === page.index));
+  $$("#tocList .toc__item, #tocModalList .toc__item").forEach((item) =>
+    item.classList.toggle("is-current", Number(item.dataset.page) === page.index)
+  );
   $$("#tocList .toc__item.is-current")[0]?.scrollIntoView({ block: "nearest", inline: "nearest" });
 
   renderPager(page.index);
@@ -732,6 +734,18 @@ function wireEvents() {
   $("#jumpBtn")?.addEventListener("click", () => {
     buildJumpGrid();
     openDialog("jumpModal");
+  });
+
+  $("#toggleTranslation")?.addEventListener("click", () => {
+    setShowTranslation(!surahState.showTranslation);
+  });
+
+  $("#openTocBtn")?.addEventListener("click", () => {
+    if (!tafsirState.loaded) {
+      toast("اول فایل‌های تفسیر را بارگذاری کن.", "warn");
+      return;
+    }
+    openDialog("tocModal");
   });
 
   $("#markReadBtn")?.addEventListener("click", handleMarkRead);
