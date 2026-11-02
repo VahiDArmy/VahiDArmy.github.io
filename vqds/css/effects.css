@@ -1,0 +1,117 @@
+/* ==========================================================================
+   effects.css — افکت‌های بصری، ذرات شناور (قلب/ستاره) و شیشه‌ای‌سازی
+   ========================================================================== */
+
+/* --- ذرات شناور (تولید شده توسط JS) --- */
+.particle {
+  position: absolute;
+  bottom: -50px;
+  pointer-events: none;
+  z-index: 1;
+  animation: floatHeart linear infinite;
+}
+
+.particle--heart {
+  color: var(--color-heart-soft);
+  fill: currentColor;
+  opacity: 0.4;
+}
+
+.particle--star {
+  color: var(--color-primary-300);
+  fill: currentColor;
+  opacity: 0.3;
+}
+
+/* تغییر جهت انیمیشن بر اساس تصادفی بودن */
+.particle:nth-child(even) {
+  animation-duration: 15s;
+}
+.particle:nth-child(odd) {
+  animation-duration: 22s;
+}
+.particle:nth-child(3n) {
+  animation-duration: 18s;
+  animation-delay: 2s;
+}
+
+/* --- افکت شیشه‌ای با درخشش --- */
+.glass-panel {
+  position: relative;
+  background: var(--bg-surface-glass);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--color-border-glass);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.glass-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* --- متن‌های درخشان --- */
+.glow-text {
+  text-shadow: 0 0 10px var(--color-primary-300),
+               0 0 20px var(--color-primary-200);
+}
+
+[data-theme="boy"] .glow-text {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.6),
+               0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* --- هاله‌ی نور برای کارت‌ها --- */
+.halo-effect {
+  position: relative;
+}
+
+.halo-effect::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: var(--gradient-border);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--dur-300);
+  filter: blur(4px);
+}
+
+.halo-effect:hover::before {
+  opacity: 1;
+}
+
+/* --- افکت کلیک (Ripple) --- */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform .5s, opacity 1s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: .2;
+  transition: 0s;
+}
