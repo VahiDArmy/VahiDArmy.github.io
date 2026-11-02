@@ -3,7 +3,8 @@
    ========================================================================== */
 
 import { CONFIG } from './config.js';
-import { $, sleep, device, toast } from './utils.js';
+import { $, sleep } from './utils.js';
+import { toast } from './toast.js';
 import { initTheme } from './theme.js';
 import { initParticles } from './particles.js';
 import { initAuth, renderAuthView } from './auth.js';
