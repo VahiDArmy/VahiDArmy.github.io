@@ -19,7 +19,9 @@ function stripBismillah(text = "") {
 export const surahState = {
   ayahs: [],
   nodes: new Map(),
+  faNodes: new Map(),
   marks: new Set(store.get("marks", [])),
+  selected: null,
   lastAyah: Number(store.get("lastAyah", 1)) || 1,
   progress: 0,
   query: "",
@@ -69,95 +71,168 @@ export async function loadSurah() {
   }
 }
 
-/* ---------- کارت آیه ---------- */
-function ayahCard(item) {
-  const isMarked = surahState.marks.has(item.ayah);
-  const card = el("article", {
-    class: "ayah",
-    id: `ayah-${item.ayah}`,
-    dataset: { ayah: item.ayah },
-  });
-
-  card.append(
-    el("div", { class: "ayah__num", "aria-hidden": "true" }, fa(item.ayah)),
-    el(
-      "div",
-      { class: "ayah__content" },
-      el("p", { class: "ayah__ar", lang: "ar", dir: "rtl" }, item.ar),
-      el("p", { class: "ayah__fa", lang: "fa" }, item.fa),
-      el(
-        "div",
-        { class: "ayah__tools" },
-        el(
-          "button",
-          {
-            class: "toolbtn",
-            type: "button",
-            "aria-label": `رونوشت آیهٔ ${fa(item.ayah)}`,
-            onclick: async () => {
-              const ok = await copyText(`﴿${item.ar}﴾\n${item.fa}\n(واقعه، آیهٔ ${fa(item.ayah)})`);
-              toast(ok ? "آیه رونوشت شد." : "رونوشت نشد.", ok ? "ok" : "warn");
-            },
-          },
-          icon("copy"),
-          el("span", {}, "رونوشت")
-        ),
-        el(
-          "button",
-          {
-            class: `toolbtn markbtn${isMarked ? " is-on" : ""}`,
-            type: "button",
-            "aria-pressed": String(isMarked),
-            onclick: (event) => toggleMark(item.ayah, event.currentTarget),
-          },
-          icon("heart"),
-          el("span", {}, isMarked ? "نشان‌شده" : "نشان")
-        ),
-        el(
-          "button",
-          {
-            class: "toolbtn",
-            type: "button",
-            onclick: () => surahState.hooks.onTafsir?.(item.ayah),
-          },
-          icon("scroll"),
-          el("span", {}, "تفسیر این آیه")
-        )
-      )
-    )
+/* ---------- صفحهٔ پیوستهٔ سوره ---------- */
+function ayahNode(item) {
+  const marked = surahState.marks.has(item.ayah);
+  const node = el(
+    "span",
+    {
+      class: `ayah${marked ? " is-marked" : ""}`,
+      id: `ayah-${item.ayah}`,
+      dataset: { ayah: item.ayah },
+      tabindex: "0",
+      role: "button",
+      "aria-label": `آیهٔ ${fa(item.ayah)}`,
+    },
+    el("span", { class: "ayah__ar" }, item.ar),
+    el("span", { class: "ayah__num", "aria-hidden": "true" }, fa(item.ayah))
   );
-
-  return card;
+  node.addEventListener("click", () => selectAyah(item.ayah));
+  node.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    selectAyah(item.ayah);
+  });
+  return node;
 }
 
-function toggleMark(ayah, button) {
-  const marks = surahState.marks;
-  if (marks.has(ayah)) {
-    marks.delete(ayah);
-    button.classList.remove("is-on");
-    button.setAttribute("aria-pressed", "false");
-    button.querySelector("span").textContent = "نشان";
-    toast("نشان برداشته شد.");
-  } else {
-    marks.add(ayah);
-    button.classList.add("is-on");
-    button.setAttribute("aria-pressed", "true");
-    button.querySelector("span").textContent = "نشان‌شده";
-    toast(`آیهٔ ${fa(ayah)} نشان شد.`, "ok");
+function translationNode(item) {
+  const marked = surahState.marks.has(item.ayah);
+  const node = el(
+    "span",
+    {
+      class: `ayah__fa${marked ? " is-marked" : ""}`,
+      id: `fa-${item.ayah}`,
+      dataset: { ayah: item.ayah },
+    },
+    el("span", { class: "ayah__fnum", "aria-hidden": "true" }, fa(item.ayah)),
+    el("span", { class: "ayah__ftext" }, item.fa)
+  );
+  node.addEventListener("click", () => selectAyah(item.ayah));
+  return node;
+}
+
+function setDockAyahVisible(visible) {
+  for (const selector of ["#dockAyahLabel", "#dockSep", "#dockCopy", "#dockMark", "#dockTafsir"]) {
+    const node = $(selector);
+    if (node) node.hidden = !visible;
   }
+  const dock = $("#dock");
+  if (dock) dock.classList.toggle("is-visible", visible || window.scrollY > 420);
+}
+
+function syncDock(ayah) {
+  const label = $("#dockAyahLabel");
+  const num = label?.querySelector("[data-dock-num]");
+  if (num) num.textContent = fa(ayah);
+  const mark = $("#dockMark");
+  if (mark) {
+    const on = surahState.marks.has(ayah);
+    mark.classList.toggle("is-on", on);
+    mark.setAttribute("aria-pressed", String(on));
+  }
+  setDockAyahVisible(true);
+}
+
+export function selectAyah(ayah, { scroll = false, smooth = true, toggle = true } = {}) {
+  const num = Number(ayah);
+  const node = surahState.nodes.get(num);
+  if (!node) return;
+  if (toggle && surahState.selected === num) {
+    clearSelection();
+    return;
+  }
+  clearSelection({ keepDock: true });
+  surahState.selected = num;
+  node.classList.add("is-active");
+  surahState.faNodes.get(num)?.classList.add("is-active");
+  if (scroll) {
+    node.scrollIntoView({
+      behavior: smooth && !prefersReducedMotion() ? "smooth" : "auto",
+      block: "start",
+    });
+  }
+  surahState.lastAyah = num;
+  store.set("lastAyah", num);
+  syncDock(num);
+}
+
+export function clearSelection({ keepDock = false } = {}) {
+  const previous = surahState.selected;
+  if (previous != null) {
+    surahState.nodes.get(previous)?.classList.remove("is-active");
+    surahState.faNodes.get(previous)?.classList.remove("is-active");
+    surahState.selected = null;
+  }
+  if (!keepDock) setDockAyahVisible(false);
+}
+
+export function toggleMarkAyah(ayah) {
+  const num = Number(ayah);
+  const marks = surahState.marks;
+  const on = !marks.has(num);
+  if (on) marks.add(num);
+  else marks.delete(num);
   store.set("marks", [...marks]);
+  surahState.nodes.get(num)?.classList.toggle("is-marked", on);
+  surahState.faNodes.get(num)?.classList.toggle("is-marked", on);
+  if (surahState.selected === num) syncDock(num);
+  toast(on ? `آیهٔ ${fa(num)} نشان شد.` : "نشان برداشته شد.", on ? "ok" : undefined);
+  return on;
+}
+
+export function initAyahTools() {
+  $("#dockCopy")?.addEventListener("click", async () => {
+    const item = surahState.ayahs.find((entry) => entry.ayah === surahState.selected);
+    if (!item) return;
+    const ok = await copyText(`﴿${item.ar}﴾\n${item.fa}\n(واقعه، آیهٔ ${fa(item.ayah)})`);
+    toast(ok ? "آیه رونوشت شد." : "رونوشت نشد.", ok ? "ok" : "warn");
+  });
+
+  $("#dockMark")?.addEventListener("click", () => {
+    if (surahState.selected != null) toggleMarkAyah(surahState.selected);
+  });
+
+  $("#dockTafsir")?.addEventListener("click", () => {
+    if (surahState.selected != null) surahState.hooks.onTafsir?.(surahState.selected);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (document.querySelector(".modal[open]")) return;
+    clearSelection();
+  });
 }
 
 export function renderAyahs(host) {
   host.innerHTML = "";
-  const fragment = document.createDocumentFragment();
   surahState.nodes.clear();
+  surahState.faNodes.clear();
+
+  const panel = el("section", { class: "mushaf", id: "mushaf" });
+  const arTrack = el("div", { class: "mushaf__ar", lang: "ar", dir: "rtl" });
+  const faTrack = el("div", { class: "mushaf__fa", lang: "fa", dir: "rtl" });
+  const arFragment = document.createDocumentFragment();
+  const faFragment = document.createDocumentFragment();
+
   for (const item of surahState.ayahs) {
-    const card = ayahCard(item);
-    surahState.nodes.set(item.ayah, card);
-    fragment.append(card);
+    const ar = ayahNode(item);
+    const faNode = translationNode(item);
+    surahState.nodes.set(item.ayah, ar);
+    surahState.faNodes.set(item.ayah, faNode);
+    arFragment.append(ar, document.createTextNode(" "));
+    faFragment.append(faNode, document.createTextNode(" "));
   }
-  host.append(fragment);
+
+  arTrack.append(arFragment);
+  faTrack.append(faFragment);
+  panel.append(
+    arTrack,
+    el("div", { class: "mushaf__rule", "aria-hidden": "true" }),
+    faTrack,
+    el("p", { class: "mushaf__hint" }, "روی هر آیه بزن تا در نوار پایین، رونوشت و نشان و تفسیر همان آیه را داشته باشی.")
+  );
+  host.append(panel);
 }
 
 /* ---------- جست‌وجو ---------- */
@@ -189,22 +264,26 @@ export const applySearch = debounce((query) => {
   let hits = 0;
 
   for (const item of surahState.ayahs) {
-    const card = surahState.nodes.get(item.ayah);
-    if (!card) continue;
+    const ar = surahState.nodes.get(item.ayah);
+    const fa = surahState.faNodes.get(item.ayah);
+    if (!ar || !fa) continue;
     const match =
       !hasQuery ||
       normalizeAr(item.ar).includes(needleAr) ||
       normalizeFa(item.fa).includes(needleFa) ||
       String(item.ayah) === query.trim();
-    card.hidden = !match;
-    card.classList.toggle("is-hit", hasQuery && match);
+    ar.hidden = !match;
+    fa.hidden = !match;
+    ar.classList.toggle("is-hit", hasQuery && match);
     if (match) hits += 1;
 
-    const arNode = card.querySelector(".ayah__ar");
-    const faNode = card.querySelector(".ayah__fa");
-    if (arNode) arNode.innerHTML = hasQuery ? highlight(item.ar, query, true) : escapeHtml(item.ar);
-    if (faNode) faNode.innerHTML = hasQuery ? highlight(item.fa, query, false) : escapeHtml(item.fa);
+    const arText = ar.querySelector(".ayah__ar");
+    const faText = fa.querySelector(".ayah__ftext");
+    if (arText) arText.innerHTML = hasQuery ? highlight(item.ar, query, true) : escapeHtml(item.ar);
+    if (faText) faText.innerHTML = hasQuery ? highlight(item.fa, query, false) : escapeHtml(item.fa);
   }
+
+  if (surahState.selected != null && surahState.nodes.get(surahState.selected)?.hidden) clearSelection();
 
   if (counter) {
     counter.hidden = !hasQuery;
@@ -228,17 +307,12 @@ export const applySearch = debounce((query) => {
 
 /* ---------- پیمایش و پیشرفت ---------- */
 export function focusAyah(ayah, { smooth = true } = {}) {
-  const card = surahState.nodes.get(Number(ayah));
-  if (!card) return;
-  card.scrollIntoView({ behavior: smooth && !prefersReducedMotion() ? "smooth" : "auto", block: "start" });
-  card.classList.add("is-active");
-  setTimeout(() => card.classList.remove("is-active"), 2200);
+  selectAyah(Number(ayah), { scroll: true, smooth, toggle: false });
   setActive(Number(ayah));
 }
 
 function setActive(ayah) {
   if (surahState.active === ayah) return;
-  surahState.nodes.get(surahState.active)?.classList.remove("is-active");
   surahState.active = ayah;
   surahState.lastAyah = ayah;
   store.set("lastAyah", ayah);
@@ -249,8 +323,9 @@ export function updateProgress() {
   const cards = [...surahState.nodes.values()];
   if (!cards.length) return;
   const viewportMid = window.innerHeight * 0.36;
-  let current = cards[0];
+  let current = cards.find((card) => !card.hidden) || cards[0];
   for (const card of cards) {
+    if (card.hidden) continue;
     const rect = card.getBoundingClientRect();
     if (rect.top <= viewportMid) current = card;
     else break;

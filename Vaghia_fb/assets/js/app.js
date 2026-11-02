@@ -46,6 +46,7 @@ import {
   attachSurahScroll,
   surahState,
   setSessionReads,
+  initAyahTools,
 } from "./surah.js";
 import { loadTafsirFiles, parseTafsirDocs, readLocalFiles, pageHtml } from "./tafsir.js";
 
@@ -859,6 +860,7 @@ async function boot() {
 
   $("#completion").hidden = true;
   wireEvents();
+  initAyahTools();
   buildJumpGrid();
   setSessionReads(0);
 

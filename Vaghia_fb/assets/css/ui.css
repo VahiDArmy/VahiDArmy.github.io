@@ -353,80 +353,122 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
 .fontctl__btn:hover { background: var(--accent-soft); color: var(--accent-deep); }
 .fontctl__value { font-size: var(--step-000); color: var(--ink-mute); min-inline-size: 3.6em; text-align: center; }
 
-/* ---------- 7. کارت آیه ---------- */
-.ayahs { display: grid; gap: .85rem; }
+/* ---------- 7. متن پیوستهٔ سوره ---------- */
+.ayahs { display: block; }
 
-.ayah {
+.mushaf {
   position: relative;
-  display: grid; grid-template-columns: auto 1fr; gap: clamp(.7rem, 2vw, 1.2rem);
-  padding: clamp(1rem, 2.6vw, 1.6rem) clamp(.9rem, 2.6vw, 1.7rem);
+  padding: clamp(1.1rem, 3vw, 2rem) clamp(1rem, 3.2vw, 2.4rem) clamp(.9rem, 2.4vw, 1.5rem);
   border-radius: var(--r-lg);
   background:
-    linear-gradient(170deg, color-mix(in oklab, var(--card-solid) 96%, transparent), color-mix(in oklab, var(--card-solid) 74%, transparent));
+    linear-gradient(170deg, color-mix(in oklab, var(--card-solid) 97%, transparent), color-mix(in oklab, var(--card-solid) 80%, transparent));
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
-  transition: transform .3s var(--ease), box-shadow .3s var(--ease), border-color .3s var(--ease);
-  scroll-margin-block-start: 190px;
 }
-.ayah::before {
-  content: ""; position: absolute; inset-inline-start: 0; inset-block: 14%;
-  inline-size: 3px; border-radius: 99px;
-  background: linear-gradient(180deg, transparent, color-mix(in oklab, var(--accent) 55%, transparent), transparent);
-  opacity: 0; transition: opacity .3s var(--ease);
+
+.mushaf__ar {
+  font-family: var(--font-quran);
+  font-size: calc(clamp(1.5rem, 3.3vw, 2.02rem) * var(--fs));
+  line-height: 2.45;
+  color: var(--arabic-ink);
+  text-align: justify;
+  text-justify: inter-word;
+  word-spacing: .06em;
 }
-.ayah:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--line-strong); }
-.ayah:hover::before, .ayah.is-active::before { opacity: 1; }
-.ayah.is-active { border-color: color-mix(in oklab, var(--accent) 40%, transparent); box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 22%, transparent), var(--shadow); }
-.ayah.is-hit { background: linear-gradient(170deg, color-mix(in oklab, var(--accent-soft) 55%, var(--card-solid)), var(--card-solid)); }
+
+.ayah {
+  display: inline;
+  padding: .04em .1em;
+  border-radius: .45em;
+  cursor: pointer;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background .22s var(--ease), box-shadow .22s var(--ease);
+  scroll-margin-block-start: 200px;
+}
+.ayah:hover { background: color-mix(in oklab, var(--accent) 7%, transparent); }
+.ayah:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ayah.is-hit { background: color-mix(in oklab, var(--accent-soft) 55%, transparent); }
+.ayah.is-active,
+.ayah__fa.is-active {
+  background: color-mix(in oklab, var(--accent-soft) 85%, transparent);
+  box-shadow: 0 0 0 .16em color-mix(in oklab, var(--accent-soft) 85%, transparent);
+}
+.ayah[hidden], .ayah__fa[hidden] { display: none; }
 
 .ayah__num {
-  display: grid; place-items: center;
-  inline-size: 46px; block-size: 46px; align-self: start;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-inline-size: 1.62em; block-size: 1.62em;
+  margin-inline: .3em .32em;
+  font-family: var(--font-ui, var(--font-body, system-ui));
+  font-size: .42em; font-weight: 700; line-height: 1;
+  color: var(--accent-deep);
+  background: color-mix(in oklab, var(--accent-soft) 72%, var(--card-solid));
+  border: 1px solid color-mix(in oklab, var(--gold) 50%, transparent);
   border-radius: 50%;
-  font-size: var(--step-0); font-weight: 800; color: var(--accent-deep);
-  background:
-    radial-gradient(circle at 30% 25%, #fff, color-mix(in oklab, var(--accent-soft) 70%, #fff) 70%);
-  border: 1.5px solid color-mix(in oklab, var(--gold) 55%, transparent);
-  box-shadow: 0 6px 14px -10px rgba(160, 40, 90, .6), inset 0 0 0 3px color-mix(in oklab, #fff 55%, transparent);
-  position: relative;
+  vertical-align: middle;
+  transform: translateY(-.1em);
+  transition: background .25s var(--ease), color .25s var(--ease), border-color .25s var(--ease);
 }
-.ayah__num::after {
-  content: ""; position: absolute; inset: -4px; border-radius: 50%;
-  border: 1px dotted color-mix(in oklab, var(--gold) 55%, transparent);
-  opacity: .7;
+.ayah.is-marked .ayah__num {
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-color: transparent;
 }
 html[data-theme="night"] .ayah__num {
   color: var(--gold);
-  background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .12), rgba(20, 32, 52, .9) 72%);
-  box-shadow: 0 0 18px -6px rgba(220, 176, 121, .4), inset 0 0 0 3px rgba(255, 255, 255, .04);
+  background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .14), rgba(19, 30, 50, .92) 72%);
+  border-color: color-mix(in oklab, var(--gold) 42%, transparent);
+}
+html[data-theme="night"] .ayah.is-marked .ayah__num { color: var(--accent-ink); background: var(--accent); }
+
+.mushaf__rule {
+  block-size: 1px;
+  margin-block: clamp(1.05rem, 2.8vw, 1.6rem);
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
 }
 
-.ayah__content { min-inline-size: 0; }
-.ayah__ar {
-  font-family: var(--font-quran);
-  font-size: calc(clamp(1.5rem, 3.6vw, 2.05rem) * var(--fs));
+.mushaf__fa {
+  font-size: calc(var(--step-1) * var(--fs));
   line-height: 2.15;
-  color: var(--arabic-ink);
-  text-align: start;
-  margin-block-end: .7rem;
-  word-spacing: .04em;
+  color: var(--ink-soft);
+  text-align: justify;
+  text-justify: inter-word;
 }
 .ayah__fa {
-  position: relative;
-  color: var(--ink-soft);
-  font-size: calc(var(--step-1) * var(--fs));
-  line-height: 2.05;
+  display: inline;
+  padding: .06em .1em;
+  border-radius: .4em;
+  cursor: pointer;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background .22s var(--ease), color .22s var(--ease);
+}
+.ayah__fa:hover { background: color-mix(in oklab, var(--accent) 6%, transparent); }
+.ayah__fa.is-marked { color: var(--ink); }
+
+.ayah__fnum {
+  display: inline-block;
+  min-inline-size: 1.8em;
+  margin-inline-end: .15em;
+  padding: .02em .3em;
+  font-size: .7em; font-weight: 700; line-height: 1.7;
+  text-align: center;
+  color: var(--accent-deep);
+  background: color-mix(in oklab, var(--accent-soft) 78%, transparent);
+  border-radius: var(--r-pill);
+  vertical-align: .12em;
+}
+.ayah__fa.is-marked .ayah__fnum { color: var(--accent-ink); background: var(--accent); }
+
+.mushaf__hint {
+  margin-block-start: clamp(.9rem, 2.4vw, 1.3rem);
   padding-block-start: .7rem;
-  border-block-start: 1px solid var(--line);
+  border-block-start: 1px dashed var(--line);
+  font-size: var(--step-000);
+  color: var(--ink-mute);
+  text-align: center;
 }
-.ayah__tools {
-  display: flex; align-items: center; gap: .35rem;
-  margin-block-start: .8rem;
-  opacity: 0; transform: translateY(4px);
-  transition: opacity .25s var(--ease), transform .25s var(--ease);
-}
-.ayah:hover .ayah__tools, .ayah:focus-within .ayah__tools { opacity: 1; transform: none; }
-@media (hover: none) { .ayah__tools { opacity: 1; transform: none; } }
 
 .toolbtn {
   display: inline-flex; align-items: center; gap: .3rem;
@@ -687,6 +729,13 @@ html[data-theme="night"] .quranquote { color: var(--accent-2); }
 .dockbtn:hover { background: var(--accent-soft); color: var(--accent-deep); transform: translateY(-1px); }
 .dockbtn .ico { inline-size: 18px; block-size: 18px; }
 
+.dock__lbl { padding-inline: .5rem .15rem; font-size: var(--step-000); color: var(--ink-mute); white-space: nowrap; }
+.dock__lbl b { color: var(--accent-deep); font-weight: 800; }
+.dock__sep { inline-size: 1px; block-size: 22px; margin-inline: .15rem; background: var(--line-strong); opacity: .7; }
+.dockbtn.is-on { color: var(--accent); }
+.dockbtn.is-on .ico { fill: currentColor; }
+.dockbtn[hidden], .dock__lbl[hidden], .dock__sep[hidden] { display: none; }
+
 /* ---------- 12. توست ---------- */
 .toasts {
   position: fixed; inset-block-end: 24px; inset-inline-end: 24px; z-index: 80;
@@ -908,9 +957,10 @@ html[data-theme="night"] .quranquote { color: var(--accent-2); }
   .surahtools__inner { flex-wrap: wrap; }
   .searchbox { order: 2; flex-basis: 100%; }
   .surahtools__actions { order: 1; inline-size: 100%; justify-content: space-between; }
-  .ayah { grid-template-columns: 1fr; gap: .5rem; padding-inline-start: 1rem; }
-  .ayah__num { inline-size: 38px; block-size: 38px; font-size: var(--step-000); }
-  .ayah__ar { font-size: calc(clamp(1.35rem, 6vw, 1.8rem) * var(--fs)); line-height: 2.05; }
+  .mushaf { padding: 1.1rem .9rem 1rem; }
+  .mushaf__ar { font-size: calc(clamp(1.32rem, 5.6vw, 1.78rem) * var(--fs)); line-height: 2.4; }
+  .mushaf__fa { font-size: calc(clamp(.95rem, 3.6vw, 1.06rem) * var(--fs)); line-height: 2.1; }
+  .ayah__num { font-size: .45em; }
   .reader__body { padding: 1.1rem; }
   .modal__card { padding: 1.2rem; }
   .toasts { inset-inline: 12px; justify-items: stretch; }
@@ -940,5 +990,6 @@ html[data-theme="night"] .quranquote { color: var(--accent-2); }
 @media print {
   .topbar, .dock, .surahtools, .backdrop, .sitefoot, .pager, .toc, .modal { display: none !important; }
   body { background: #fff; color: #000; }
-  .ayah, .reader { box-shadow: none; border-color: #ddd; break-inside: avoid; }
+  .mushaf, .reader { box-shadow: none; border-color: #ddd; }
+  .ayah, .ayah__fa { background: none !important; box-shadow: none !important; }
 }
