@@ -7,7 +7,7 @@ const fa = n => Number(n).toLocaleString('fa-IR');
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const view = $('#view'), INIT = [1, 3, 5, 7], COL = ['#5eead4', '#a5b4fc', '#f9a8d4', '#fcd34d'];
 const ST = { lobby: 'در انتظار بازیکن', live: 'در جریان', done: 'پایان‌یافته' };
-let me, myName, cur = {}, timer, subscribed;
+let me, myName, cur = {}, timer, subscribed, isAdmin = false;
 const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2600) };
 
 /* ---------- FX: drifting starfield + particle bursts ---------- */
@@ -61,6 +61,7 @@ async function boot() {
   const { data: p } = await sb.from('profiles').select('display_name').eq('id', me.id).maybeSingle();
   const dn = p?.display_name?.trim(); // column defaults to 'کاربر' when no name was set
   myName = (dn && dn !== 'کاربر' ? dn : '') || me.user_metadata?.display_name || me.email.split('@')[0];
+  isAdmin = !!(await sb.rpc('nim_is_admin')).data; // same 'admin' rule as the office app, enforced in the database
   $('#who').innerHTML = `<span class="chip">${esc(myName)}</span><button class="link" id="out">خروج</button>`;
   $('#out').onclick = () => sb.auth.signOut().then(() => location.reload());
   $('#tabs').hidden = false;
@@ -133,11 +134,20 @@ function tView(id) {
       if (mine) h += `<a class="btn go" href="#/m/${mine.id}">${mine.turn === me.id ? 'نوبت توست' : 'بازی تو در جریان است'} — مقابل ${esc(nm[mine.p1 === me.id ? mine.p2 : mine.p1])}</a>`;
       h += '<div class="bracket">' + Array.from({ length: L }, (_, i) => i + 1).map(r => `<section class="rnd"><h3>${r === L ? 'فینال' : r === L - 1 ? 'نیمه‌نهایی' : 'دور ' + fa(r)}</h3>${ms.filter(m => m.round === r).map(m => mcard(m, nm, ms)).join('')}</section>`).join('') + '</div>';
     }
+    if (isAdmin) h += '<button class="btn ghost danger" id="dl">حذف مسابقه</button>';
     tv.innerHTML = h;
     const on = (q, fn) => { const e = $(q); if (e) e.onclick = async () => { e.disabled = true; const r = await fn(); if (r?.error) toast('انجام نشد؛ دوباره تلاش کن'); cur.refresh() } };
     on('#jn', () => sb.from('nim_entries').insert({ tournament_id: id, name: myName }));
     on('#lv', () => sb.from('nim_entries').delete().eq('tournament_id', id).eq('user_id', me.id));
     on('#st', () => sb.rpc('nim_start', { t: id }));
+    const dl = $('#dl');
+    if (dl) dl.onclick = async () => {
+      if (!dl.classList.contains('ask')) { dl.classList.add('ask'); dl.textContent = 'مطمئنی؟ برای حذف دوباره بزن'; return setTimeout(() => { dl.classList.remove('ask'); dl.textContent = 'حذف مسابقه' }, 4000) }
+      dl.disabled = true;
+      const { data, error } = await sb.from('nim_tournaments').delete().eq('id', id).select('id');
+      if (error || !data?.length) { dl.disabled = false; return toast('حذف انجام نشد') }
+      toast('مسابقه حذف شد'); location.hash = '#/';
+    };
     if (t.status === 'done' && !cheered) { cheered = true; confetti() }
   };
   cur.refresh();
@@ -189,7 +199,7 @@ async function mView(id) {
     if (M.status === 'done' && !over && !first) { over = true; finish() }
     first = false;
   };
-  const load = async () => { const { data } = await sb.from('nim_matches').select('*').eq('id', id).maybeSingle(); if (data) { M = data; paint() } };
+  const load = async () => { const { data } = await sb.from('nim_matches').select('*').eq('id', id).maybeSingle(); if (!data) { toast('این مسابقه حذف شد'); location.hash = '#/'; return } M = data; paint() };
   cur.refresh = load; paint();
 }
 
