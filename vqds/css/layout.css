@@ -1,5 +1,6 @@
 /* ==========================================================================
    layout.css — ساختار اصلی، پس‌زمینه‌های محیطی (Ambient) و Splash
+   (اصلاح انیمیشن‌ها و ترنزیشن‌ها)
    ========================================================================== */
 
 /* --- اسپلش (صفحه ورود) --- */
@@ -140,7 +141,7 @@
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--container-pad) var(--space-16);
+  padding: var(--space-4) var(--container-pad) var(--space-12); /* کاهش padding پایین */
   display: flex;
   flex-direction: column;
 }
@@ -149,7 +150,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  animation: viewFadeIn var(--dur-500) var(--ease-out-soft) forwards;
+  /* حذف انیمیشن از view برای جلوگیری از باگ */
 }
 
 .view__loader {
@@ -176,12 +177,13 @@
   display: flex;
   flex-direction: column;
   width: 100%;
+  animation: fadeIn var(--dur-300) ease-out; /* انیمیشن ملایم به جای ترنزیشن سنگین */
 }
 
 /* --- فوتر --- */
 .site-footer {
   margin-top: auto;
-  padding: var(--space-8) var(--container-pad);
+  padding: var(--space-6) var(--container-pad);
   text-align: center;
   border-top: 1px solid var(--color-border);
   background: var(--bg-surface-glass);
