@@ -191,6 +191,37 @@ function tView(id) {
   cur.refresh();
 }
 
+
+/* ---------- Optimal move for admin (misère-free normal play) ---------- */
+/** Mani: single pile, take 1–3. Winning iff n % 4 !== 0; take n % 4. */
+function bestMani(n) {
+  if (n <= 0) return null;
+  const r = n % 4;
+  if (r === 0) return { h: 0, k: 1, win: false }; // losing; stall with 1
+  return { h: 0, k: r, win: true };
+}
+/** Classic Nim XOR: find heap h and k so xor becomes 0. */
+function bestNim(heaps) {
+  const hp = heaps.map(Number);
+  const xor = hp.reduce((a, b) => a ^ b, 0);
+  if (xor === 0) {
+    // losing — pick smallest non-empty heap, take 1
+    const h = hp.findIndex(x => x > 0);
+    if (h < 0) return null;
+    return { h, k: 1, win: false };
+  }
+  for (let h = 0; h < hp.length; h++) {
+    const target = hp[h] ^ xor;
+    if (target < hp[h]) {
+      return { h, k: hp[h] - target, win: true };
+    }
+  }
+  return null;
+}
+function bestMove(mani, heaps) {
+  return mani ? bestMani(heaps[0] || 0) : bestNim(heaps || []);
+}
+
 /* ---------- The match: orbs (Nim: pick a row · Mani: take 1-3) ---------- */
 async function mView(id) {
   const { data: M0 } = await sb.from('nim_matches').select('*').eq('id', id).maybeSingle();
@@ -204,6 +235,7 @@ async function mView(id) {
   const ctrl = mani ? `<div class="t3" id="t3">${[1, 2, 3].map(k => `<button class="btn" data-k="${k}" disabled>${fa(k)}</button>`).join('')}</div><div class="left" id="lf"></div>` : '<button class="btn big" id="tk" disabled></button>';
   view.innerHTML = `<div class="arena"><a class="back" id="bk" href="#/t/${M0.tournament_id}">بازگشت به جدول</a>
     <div class="vs"><div class="pl" id="pa"></div><b>VS</b><div class="pl" id="pb"></div></div><div class="banner" id="bn"></div>
+    <div class="admin-hint" id="ah" hidden></div>
     <div class="field${mani ? ' pile' : ''}" id="fd">${field}</div>${ctrl}<p class="hint">${rule(T.game, T.pieces)}</p></div>`;
   const fd = $('#fd'), orbs = $$('.orb', fd), tk = $('#tk'), t3 = $('#t3');
   const move = async (h, k) => { $$('.btn', view).forEach(b => b.disabled = true); sel = null; const { error } = await sb.rpc('nim_move', { m: id, h, k }); if (error) toast('این حرکت پذیرفته نشد'); load() };
@@ -229,11 +261,47 @@ async function mView(id) {
       const gone = +o.dataset.i >= M.heaps[+o.dataset.r];
       if (gone && !o.classList.contains('gone') && !first) { const b = o.getBoundingClientRect(); burst(b.x + b.width / 2, b.y + b.height / 2, COL[+o.dataset.k], 22) }
       o.classList.toggle('gone', gone); if (!mani) o.disabled = gone || !mine;
+      o.classList.remove('hint');
     });
     if (!mine) sel = null; upd();
-    if (t3) { $$('button', t3).forEach(b => b.disabled = !mine || +b.dataset.k > M.heaps[0]); $('#lf').textContent = `${fa(M.heaps[0])} مهره باقی مانده` }
+    if (t3) { $$('button', t3).forEach(b => { b.disabled = !mine || +b.dataset.k > M.heaps[0]; b.classList.remove('hint'); }); $('#lf').textContent = `${fa(M.heaps[0])} مهره باقی مانده` }
     const bn = $('#bn'); bn.className = 'banner' + (mine ? ' mine' : '');
     bn.textContent = M.status === 'waiting' ? 'منتظر تعیین حریف…' : live ? (mine ? 'نوبت توست' : part ? `نوبت ${nm[M.turn]} است…` : `تماشاگر — نوبت ${nm[M.turn]}`) : `برنده: ${nm[M.winner] || '؟'}`;
+
+    // Admin coach: suggest winning move when it is admin's turn
+    const ah = $('#ah');
+    if (ah) {
+      const show = isAdmin && mine && live;
+      ah.hidden = !show;
+      if (show) {
+        const sug = bestMove(mani, M.heaps);
+        if (!sug) {
+          ah.innerHTML = '<span class="muted">حرکتی باقی نمانده.</span>';
+        } else {
+          const label = mani
+            ? `بردار ${fa(sug.k)} مهره`
+            : `از ردیف ${fa(sug.h + 1)}، ${fa(sug.k)} مهره بردار`;
+          const tone = sug.win ? 'این حرکت موقعیت را برنده می‌کند.' : 'موقعیت فعلاً بازنده است؛ این بهترین تلاش است.';
+          ah.innerHTML = `<div class="admin-hint__body"><span class="admin-hint__badge">ادمین</span><b>${label}</b><span class="muted">${tone}</span>
+            <button type="button" class="btn sm gold" id="applyHint">اعمال پیشنهاد</button></div>`;
+          const apply = $('#applyHint');
+          if (apply) apply.onclick = () => move(sug.h, sug.k);
+          // Visual highlight
+          if (mani && t3) {
+            const b = t3.querySelector(`button[data-k="${sug.k}"]`);
+            if (b) b.classList.add('hint');
+          } else {
+            // mark last `k` remaining orbs in that row
+            const rowOrbs = orbs.filter(o => +o.dataset.r === sug.h && +o.dataset.i < M.heaps[sug.h]);
+            rowOrbs.slice(-sug.k).forEach(o => o.classList.add('hint'));
+            // pre-select for convenience
+            sel = { r: sug.h, s: new Set(rowOrbs.slice(-sug.k).map(o => +o.dataset.i)) };
+            upd();
+          }
+        }
+      }
+    }
+
     if (M.status === 'done' && !over && !first) { over = true; finish() }
     first = false;
   };

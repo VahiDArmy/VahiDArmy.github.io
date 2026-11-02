@@ -86,3 +86,12 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px #5eead433}
 .payrow b.gold,.pill.gold{color:var(--gold)}
 .btn.sm{padding:10px 14px;font-size:14px;border-radius:12px;width:auto;display:inline-block}
 .pill.gold{background:#fcd34d22;border-color:#fcd34d55}
+
+/* Admin winning-move coach */
+.admin-hint{margin:4px 0 8px;padding:12px 14px;border-radius:16px;border:1px solid #fcd34d55;background:linear-gradient(145deg,rgba(252,211,77,.12),rgba(255,255,255,.05))}
+.admin-hint[hidden]{display:none}
+.admin-hint__body{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.admin-hint__badge{font-size:11px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:999px;background:#fcd34d;color:#1a1433}
+.admin-hint b{font-weight:800}
+.orb.hint{box-shadow:0 0 0 3px #fcd34d,0 0 22px 6px #fcd34d88;transform:translateY(-6px) scale(1.08)}
+.t3 .btn.hint{outline:3px solid #fcd34d;box-shadow:0 0 18px #fcd34d66}
