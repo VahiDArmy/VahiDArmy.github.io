@@ -120,39 +120,44 @@
           </div>
 
           <h1 class="hero__title">سورهٔ واقعه</h1>
+          <button class="hero__toggle" id="heroToggle" type="button" aria-expanded="false" aria-controls="heroExtra">
+            <span data-hero-more>جزئیات</span>
+            <span data-hero-less hidden>بستن</span>
+          </button>
 
-          <!-- عناصر جمع‌شده: برای اسکریپت‌های موجود نگه داشته شده‌اند -->
-          <p class="hero__arabic" hidden>سُورَةُ الْوَاقِعَة</p>
-          <p class="hero__lede" hidden>قیامت، سه گروه، و بهشتِ نزدیکان — با ترجمهٔ روان فارسی و تفسیر المیزان.</p>
-          <ul class="hero__meta" hidden>
-            <li><span class="pill"><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg>مکی</span></li>
-            <li><span class="pill">۹۶ آیه</span></li>
-            <li><span class="pill">جزء ۲۷</span></li>
-            <li><span class="pill pill--soft">تفسیر المیزان</span></li>
-          </ul>
-          <div class="hero__actions" hidden>
-            <button class="btn btn--primary" id="startReading" type="button">
-              <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg>
-              <span data-start-label>شروع تلاوت</span>
-            </button>
-            <button class="btn btn--ghost" id="openTafsir" type="button">
-              <svg class="ico" aria-hidden="true"><use href="#i-scroll"/></svg>
-              <span>خواندن تفسیر</span>
-            </button>
-            <button class="btn btn--quiet" id="openHistory" type="button">
-              <svg class="ico" aria-hidden="true"><use href="#i-calendar"/></svg>
-              <span>تاریخچه</span>
-            </button>
-          </div>
-          <div class="hero__stats" hidden>
-            <div class="stat">
-              <span class="stat__label">پیشرفت مطالعه</span>
-              <span class="stat__value"><b id="heroProgressText">۰٪</b></span>
-              <div class="stat__bar"><span id="heroProgressBar" style="inline-size:0%"></span></div>
+          <div class="hero__extra" id="heroExtra" hidden>
+            <p class="hero__arabic">سُورَةُ الْوَاقِعَة</p>
+            <p class="hero__lede">قیامت، سه گروه، و بهشتِ نزدیکان — با ترجمهٔ روان فارسی و تفسیر المیزان.</p>
+            <ul class="hero__meta">
+              <li><span class="pill"><svg class="ico" aria-hidden="true"><use href="#i-spark"/></svg>مکی</span></li>
+              <li><span class="pill">۹۶ آیه</span></li>
+              <li><span class="pill">جزء ۲۷</span></li>
+              <li><span class="pill pill--soft">تفسیر المیزان</span></li>
+            </ul>
+            <div class="hero__actions">
+              <button class="btn btn--primary" id="startReading" type="button">
+                <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg>
+                <span data-start-label>شروع تلاوت</span>
+              </button>
+              <button class="btn btn--ghost" id="openTafsir" type="button">
+                <svg class="ico" aria-hidden="true"><use href="#i-scroll"/></svg>
+                <span>خواندن تفسیر</span>
+              </button>
+              <button class="btn btn--quiet" id="openHistory" type="button">
+                <svg class="ico" aria-hidden="true"><use href="#i-calendar"/></svg>
+                <span>تاریخچه</span>
+              </button>
             </div>
-            <div class="stat stat--read">
-              <span class="stat__label">تلاوت این نشست</span>
-              <span class="stat__value"><b id="sessionMakrs">۰</b> بار</span>
+            <div class="hero__stats">
+              <div class="stat">
+                <span class="stat__label">پیشرفت مطالعه</span>
+                <span class="stat__value"><b id="heroProgressText">۰٪</b></span>
+                <div class="stat__bar"><span id="heroProgressBar" style="inline-size:0%"></span></div>
+              </div>
+              <div class="stat stat--read">
+                <span class="stat__label">تلاوت این نشست</span>
+                <span class="stat__value"><b id="sessionMakrs">۰</b> بار</span>
+              </div>
             </div>
           </div>
         </div>

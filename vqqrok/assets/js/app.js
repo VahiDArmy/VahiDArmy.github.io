@@ -387,7 +387,7 @@ function makeTocItem(section, { closeModal = false } = {}) {
       },
     },
     el("span", {}, isDoc ? shortDocTitle(section.title) : section.title),
-    isDoc ? el("small", {}, `${fa(section.page + 1)} / ${fa(tafsirState.pages.length)}`) : null
+    el("small", {}, `ص ${fa(section.page + 1)}`)
   );
 }
 
@@ -738,6 +738,20 @@ function wireEvents() {
 
   $("#toggleTranslation")?.addEventListener("click", () => {
     setShowTranslation(!surahState.showTranslation);
+  });
+
+  $("#heroToggle")?.addEventListener("click", () => {
+    const extra = $("#heroExtra");
+    const btn = $("#heroToggle");
+    if (!extra || !btn) return;
+    const open = extra.hasAttribute("hidden");
+    if (open) extra.removeAttribute("hidden");
+    else extra.setAttribute("hidden", "");
+    btn.setAttribute("aria-expanded", String(open));
+    const more = btn.querySelector("[data-hero-more]");
+    const less = btn.querySelector("[data-hero-less]");
+    if (more) more.hidden = open;
+    if (less) less.hidden = !open;
   });
 
   $("#openTocBtn")?.addEventListener("click", () => {

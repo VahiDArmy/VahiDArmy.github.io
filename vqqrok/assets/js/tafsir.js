@@ -294,7 +294,8 @@ function inline(text = "") {
   let html = escapeHtml(text);
   html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
   html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
-  html = html.replace(/﴿([^﴾]{1,400})﴾/g, '<span class="quranquote">﴿$1﴾</span>');
+  // نقل‌قول قرآنی با ایزولهٔ دوجهته تا در متن فارسی نشکند
+  html = html.replace(/﴿([^﴾]{1,500})﴾/g, '<span class="quranquote" lang="ar" dir="rtl">﴿$1﴾</span>');
   html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   return html;
 }
@@ -314,12 +315,11 @@ export function blocksToHtml(blocks) {
         break;
       case "arabic-grid":
         parts.push(
-          `<div class="ayahgrid" aria-label="متن آیه">${block.rows
+          `<div class="ayahgrid" aria-label="متن آیه" lang="ar" dir="rtl">${block.rows
             .map(
               (row) =>
-                `<p class="ayahgrid__ar" lang="ar" dir="rtl" data-ayah="${row.ayah}">` +
-                `${escapeHtml(row.text)}` +
-                `<span class="ayahgrid__n" aria-hidden="true"> ﴿${fa(row.ayah)}﴾</span></p>`
+                `<span class="ayahgrid__ar" data-ayah="${row.ayah}">${escapeHtml(row.text)}</span>` +
+                `<span class="ayahgrid__n" aria-hidden="true">﴿${fa(row.ayah)}﴾</span> `
             )
             .join("")}</div>`
         );
@@ -392,14 +392,28 @@ export function parseTafsirDocs(docs) {
   });
 
   let lastDoc = null;
+  const seenSection = new Set();
   pages.forEach((page) => {
     if (page.docTitle !== lastDoc) {
       sections.push({ kind: "doc", title: page.docTitle, page: page.index, docIndex: page.docIndex });
       lastDoc = page.docTitle;
     }
     for (const block of page.blocks) {
-      if (block.type === "h3") {
+      // h3 عمومی مثل «بیان آیات» را نادیده بگیر؛ h4 موضوعی را فهرست کن
+      if (block.type === "h4") {
+        const key = `${page.docIndex}:${block.text}`;
+        if (seenSection.has(key)) continue;
+        seenSection.add(key);
         sections.push({ kind: "section", title: block.text, page: page.index, docIndex: page.docIndex });
+      } else if (block.type === "h3") {
+        const t = block.text || "";
+        // فقط بخش‌های متمایز مثل بحث روایتی
+        if (/بحث\s*روا/i.test(t) || /روایت/i.test(t)) {
+          const key = `${page.docIndex}:${t}`;
+          if (seenSection.has(key)) continue;
+          seenSection.add(key);
+          sections.push({ kind: "section", title: t, page: page.index, docIndex: page.docIndex });
+        }
       }
     }
   });
