@@ -1,0 +1,490 @@
+/* =========================================================
+   تحلیل سلیقه + پیشنهاد تک‌اثر
+   پرامپت در فرانت — اجرا روی Edge/Gemini (استریم)
+   ========================================================= */
+window.AIAnalysis = (function () {
+
+  /** معنی رسمی ستاره‌ها برای ارسال به AI */
+  var STAR_MEANINGS = {
+    5: 'عالی بود به قدری که بیش از یک بار خواهم دید',
+    4: 'خوب بود و راضی‌ام که تماشا کردم',
+    3: 'عادی',
+    2: 'افتضاح؛ کاش تماشا نمی‌کردم، اگر به گذشته برگردم وقتم رو تلف نمیکنم',
+    1: 'افتضاح بود و از تماشایش عصبانی هستم',
+    0: 'هنوز امتیاز نداده'
+  };
+
+  function starMeaning(rating) {
+    var n = Math.round(Number(rating) || 0);
+    if (n < 0) n = 0;
+    if (n > 5) n = 5;
+    return STAR_MEANINGS[n] || STAR_MEANINGS[0];
+  }
+
+  function collectUserData() {
+    var all = DB.getAllTitles();
+    /* فقط امتیازدار؛ خواهم‌دید بدون امتیاز وارد تحلیل نمی‌شود */
+    var rated = all.filter(function (t) {
+      if ((Number(t.rating) || 0) <= 0) return false;
+      if (String(t.status || '') === 'will_watch') return false;
+      return true;
+    });
+    var titlesForAI = rated.map(function (t) {
+      var r = Math.round(Number(t.rating) || 0);
+      var tags = String(t.genre || '')
+        .split(/[،,]/)
+        .map(function (s) { return s.trim(); })
+        .filter(Boolean);
+      return {
+        title: t.title,
+        original_title: t.original_title || '',
+        type: t.type,
+        year: t.year,
+        rating: r,
+        rating_meaning: starMeaning(r),
+        tags: tags,
+        notes: (t.notes || '').trim()
+      };
+    });
+    return { all: all, rated: titlesForAI };
+  }
+
+  function formatTitleLine(t, compact) {
+    var tags = t.tags || (t.genre ? String(t.genre).split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
+    var line = '• «' + t.title + '»'
+      + (t.year ? ' (' + t.year + ')' : '')
+      + ' [' + (t.type || '?') + ']'
+      + ' ★' + t.rating
+      + (tags.length ? ' · ' + tags.join('، ') : '');
+    if (!compact && t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 120);
+    return line;
+  }
+
+  function takeTop(arr, n) {
+    return arr.slice(0, n);
+  }
+
+  function legendBlock() {
+    return [
+      'معنی امتیازهای کاربر (حتماً رعایت کن):',
+      '۵⭐ = عالی بود به قدری که بیش از یک بار خواهم دید',
+      '۴⭐ = خوب بود و راضی‌ام که تماشا کردم',
+      '۳⭐ = عادی',
+      '۲⭐ = افتضاح؛ کاش تماشا نمی‌کردم، اگر به گذشته برگردم وقتم رو تلف نمیکنم',
+      '۱⭐ = افتضاح بود و از تماشایش عصبانی هستم'
+    ].join('\n');
+  }
+
+  function tasteProfileBlock() {
+    if (!window.CONFIG || !CONFIG.TASTE_PROFILE) return '';
+    var tp = CONFIG.TASTE_PROFILE;
+    var lines = ['معیار کلی سلیقهٔ اعلام‌شده توسط کاربر:'];
+    if (tp.manifesto) lines.push('مانیفست: ' + tp.manifesto);
+    if (tp.loves && tp.loves.length) {
+      lines.push('علاقه‌ها:');
+      tp.loves.forEach(function (x) { lines.push('  + ' + x); });
+    }
+    if (tp.hates && tp.hates.length) {
+      lines.push('بیزاری‌ها:');
+      tp.hates.forEach(function (x) { lines.push('  - ' + x); });
+    }
+    return lines.join('\n');
+  }
+
+  /**
+   * پرامپت تحلیل سلیقه/شخصیت
+   * kind: 'movie' | 'series' — قبل از ارسال مشخص می‌شود
+   */
+  function buildTasteAnalysisMessages(kind) {
+    kind = kind === 'series' ? 'series' : 'movie';
+    var kindFa = kind === 'series' ? 'سریال' : 'فیلم';
+
+    var data = collectUserData();
+    if (data.rated.length < 3) {
+      throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای تحلیل سلیقه لازم است.');
+    }
+
+    var lines = data.rated.map(function (t) {
+      var name = (t.title || '').trim();
+      if (t.original_title && String(t.original_title).trim()
+          && String(t.original_title).trim() !== name) {
+        name = name + ' / ' + String(t.original_title).trim();
+      }
+      var line = '- ' + name
+        + (t.year ? ' | سال ' + t.year : '')
+        + ' | امتیاز ' + t.rating;
+      if (t.tags && t.tags.length) {
+        line += ' | تگ: ' + t.tags.join('، ');
+      }
+      return line;
+    });
+
+    var system = [
+      'تو تحلیل‌گر ارشد سلیقه، شخصیت و روان‌شناسی تماشای سینمایی هستی.',
+      'فقط از دادهٔ داده‌شده استفاده کن؛ حدس بی‌پایه نزن.',
+      'پاسخ را فارسی با Markdown بنویس.',
+      'تحلیل باید همه‌جانبه، طولانی، مفصل و عمیق باشد — از خلاصه‌نویسی و کوتاه‌کردن خودداری کن.'
+    ].join('\n');
+
+    var user = [
+      'منطق امتیازبندی کاربر:',
+      '۵ = عالی بود؛ بیش از یک بار خواهم دید',
+      '۴ = خوب بود و راضی‌ام که تماشا کردم',
+      '۳ = عادی',
+      '۲ = افتضاح؛ کاش تماشا نمی‌کردم، اگر به گذشته برگردم وقتم رو تلف نمیکنم',
+      '۱ = افتضاح؛ از تماشا عصبانی‌ام',
+      '',
+      'فهرست آثار امتیازداده‌شده (عنوان | سال | امتیاز | تگ‌های کاربر در صورت وجود):',
+      lines.join('\n'),
+      '',
+      'درخواست:',
+      'بر اساس منطق امتیازها، تگ‌های کاربر (اگر هست) و فهرست بالا، سلیقه و شخصیت این بیننده را به‌صورت همه‌جانبه، طولانی، مفصل و عمیق تحلیل کن.',
+      'تگ‌ها برچسب‌های انتخابی کاربر روی هر اثرند — در تحلیل سلیقه وزن بده.',
+      'نوع شخصیت MBTI احتمالی را هم با دلیل (بر اساس الگوی امتیازها و انتخاب آثار) مشخص کن.',
+      'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
+      'دلیل پیشنهاد را مفصل بنویس.',
+      '',
+      'در انتهای پاسخ فقط این JSON را بگذار:',
+      '```json',
+      '{"title":"...","original_title":"...","year":2020,"type":"' + kind + '","reason":"...","mbti":"XXXX"}',
+      '```'
+    ].join('\n');
+
+    return [
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ];
+  }
+
+  function buildSuggestMessages(kind) {
+    var data = collectUserData();
+    if (data.rated.length < 3) {
+      throw new Error('حداقل ۳ عنوان امتیازداده‌شده برای پیشنهاد لازم است.');
+    }
+
+    var kindFa = kind === 'movie' ? 'فیلم' : kind === 'series' ? 'سریال' : 'فیلم یا سریال';
+    var system = [
+      'تو متخصص پیشنهاد ' + kindFa + ' بر اساس سلیقهٔ واقعی کاربر هستی.',
+      'فقط یک اثر پیشنهاد بده که در لیست دیده‌شده‌ها نباشد.',
+      'پاسخ فارسی با Markdown.',
+      'در انتها یک بلوک JSON با این شکل بگذار:',
+      '```json',
+      '{"title":"...","original_title":"...","year":2020,"type":"movie|series","reason":"..."}',
+      '```'
+    ].join('\n');
+
+    var user = [
+      legendBlock(),
+      '',
+      tasteProfileBlock(),
+      '',
+      '## لیست دیده‌شده با امتیاز و معنی',
+      data.rated.map(formatTitleLine).join('\n'),
+      '',
+      'فقط یک ' + kindFa + ' پیشنهاد بده که با الگوی امتیازهای بالا هم‌خوان باشد و شبیه آثار ۱–۲ ستاره نباشد.',
+      'دلیل پیشنهاد را با ارجاع به سلیقهٔ کاربر بنویس.'
+    ].join('\n');
+
+    return [
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ];
+  }
+
+  async function analyzeTaste(options) {
+    options = options || {};
+    var kind = options.kind === 'series' ? 'series' : 'movie';
+    var messages = options.messages || buildTasteAnalysisMessages(kind);
+    var full = '';
+    await AI.chatStream({
+      messages: messages,
+      temperature: 0.55,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 8192,
+      signal: options.signal,
+      onToken: function (t) {
+        full += t;
+        if (options.onToken) options.onToken(t, full);
+      },
+      onDone: function () {}
+    });
+    return full;
+  }
+
+  /** آیا متن احتمالاً وسط کار قطع شده؟ */
+  function looksTruncated(text) {
+    text = String(text || '').trim();
+    if (!text) return false;
+    /* markdown/bold باز */
+    if (/\*\*[^*]*$/.test(text)) return true;
+    if (/\*[^*\n]+$/.test(text)) return true;
+    /* تیتر یا لیست بدون ادامه */
+    if (/#{1,6}\s*\S*$/.test(text)) return true;
+    if (/^\s*\d+\.\s+\S*$/m.test(text.split('\n').pop() || '')) return true;
+    if (text.length < 400) return false;
+    /* پایان طبیعی */
+    if (/[.!?…»"'\u06D4\u061F)]\s*$/.test(text)) return false;
+    if (/```\s*$/.test(text)) return false;
+    if (/\}\s*$/.test(text) && text.lastIndexOf('{') >= 0) return false;
+    return true;
+  }
+
+  /**
+   * ادامهٔ همان تحلیل با همان مدل
+   * originalMessages: پیام‌های اولیه (system+user)
+   * partialAssistant: متن ناقص تا اینجا
+   */
+  async function continueTasteAnalysis(options) {
+    options = options || {};
+    var original = options.messages || [];
+    var partial = String(options.partial || '').trim();
+    if (!partial) throw new Error('متنی برای ادامه وجود ندارد.');
+
+    var contUser =
+      'پاسخ قبلی تو ناقص قطع شده است. از همان جایی که رها شد ادامه بده.\n' +
+      'هیچ بخشی از متن قبلی را تکرار نکن.\n' +
+      'اگر به بلوک JSON انتهایی نرسیده بودی، در پایان همان JSON را کامل کن.';
+
+    var messages = original.slice();
+    messages.push({ role: 'assistant', content: partial });
+    messages.push({ role: 'user', content: contUser });
+
+    var full = '';
+    await AI.chatStream({
+      messages: messages,
+      model: options.model || undefined,
+      temperature: 0.55,
+      max_tokens: options.max_tokens != null ? options.max_tokens : 8192,
+      signal: options.signal,
+      previewTitle: options.previewTitle || 'ادامه تحلیل',
+      onToken: function (t) {
+        full += t;
+        if (options.onToken) options.onToken(t, full);
+      },
+      onDone: function () {}
+    });
+    return full;
+  }
+
+  function parsePreviewToMessages(text) {
+    text = String(text || '').trim();
+    if (!text) return null;
+    var parts = text.split(/===== (SYSTEM|USER|ASSISTANT) =====/i);
+    if (parts.length >= 3) {
+      var messages = [];
+      for (var i = 1; i + 1 < parts.length; i += 2) {
+        var role = String(parts[i] || '').toLowerCase();
+        var content = String(parts[i + 1] || '').replace(/^\n+/, '').replace(/\n+$/, '');
+        if (role === 'system' || role === 'user' || role === 'assistant') {
+          messages.push({ role: role, content: content });
+        }
+      }
+      if (messages.length) return messages;
+    }
+    /* fallback: whole text as user */
+    return [{ role: 'user', content: text }];
+  }
+
+  function formatMessagesForPreview(messages) {
+    return (messages || []).map(function (m) {
+      return '===== ' + (m.role || '').toUpperCase() + ' =====\n' + (m.content || '');
+    }).join('\n\n');
+  }
+
+  function parseSuggestion(text, kind) {
+    kind = kind === 'series' ? 'series' : 'movie';
+    text = String(text || '');
+    var m = text.match(/\{[\s\S]*?"title"\s*:\s*"[^"]+"[\s\S]*?\}/);
+    if (m) {
+      try {
+        var j = JSON.parse(m[0]);
+        return {
+          title: j.title || '',
+          original_title: j.original_title || j.originalTitle || '',
+          year: j.year || null,
+          type: j.type === 'series' || j.type === 'movie' ? j.type : kind,
+          reason: j.reason || j.why || ''
+        };
+      } catch (e) {}
+    }
+    var title = '';
+    var ym = text.match(/\*\*([^*]{2,80})\*\*/);
+    if (ym) title = ym[1].trim();
+    if (!title) {
+      var hm = text.match(/^#+\s+(.+)$/m);
+      if (hm) title = hm[1].trim();
+    }
+    var year = null;
+    var ymatch = text.match(/\b(19|20)\d{2}\b/);
+    if (ymatch) year = Number(ymatch[0]);
+    return { title: title, original_title: '', year: year, type: kind, reason: '' };
+  }
+
+  async function suggest(options) {
+    options = options || {};
+    var kind = options.kind || 'both';
+    var messages = buildSuggestMessages(kind);
+    var full = '';
+    await AI.chatStream({
+      messages: messages,
+      temperature: 0.6,
+      signal: options.signal,
+      onToken: function (t) {
+        full += t;
+        if (options.onToken) options.onToken(t, full);
+      },
+      onDone: function () {}
+    });
+    return full;
+  }
+
+  function isTasteAnalysis(c) {
+    var tags = String(c && c.tags || '');
+    return tags.indexOf('taste_analysis') >= 0 || tags.indexOf('personality') >= 0;
+  }
+
+  function isPinnedAnalysis(c) {
+    return String(c && c.tags || '').indexOf('pinned') >= 0;
+  }
+
+  function tagList(tags) {
+    return String(tags || '').split(',').map(function (t) { return t.trim(); }).filter(Boolean);
+  }
+
+  function withTag(tags, tag) {
+    var arr = tagList(tags);
+    if (arr.indexOf(tag) < 0) arr.push(tag);
+    return arr.join(',');
+  }
+
+  function withoutTag(tags, tag) {
+    return tagList(tags).filter(function (t) { return t !== tag; }).join(',');
+  }
+
+  /**
+   * سنجاق‌شده‌ها همیشه + تا limit تا از غیرسنجاق‌شده‌های اخیر
+   */
+  function getLatestTasteAnalyses(limit) {
+    limit = limit || 5;
+    try {
+      var all = (DB.getAllConversations() || [])
+        .filter(isTasteAnalysis)
+        .sort(function (a, b) {
+          return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+        });
+      var pinned = all.filter(isPinnedAnalysis);
+      var pinnedIds = {};
+      pinned.forEach(function (c) { pinnedIds[c.id] = true; });
+      var recent = all.filter(function (c) { return !pinnedIds[c.id]; }).slice(0, limit);
+      /* pinned first (oldest pin order by date desc), then recent */
+      return pinned.concat(recent);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveTasteAnalysis(prompt, response, model, opts) {
+    opts = opts || {};
+    try {
+      var payload = {
+        title_id: null,
+        title_context: 'تحلیل عمیق شخصیت',
+        prompt: prompt || '',
+        response: response || '',
+        ai_model: model || (typeof AI !== 'undefined' && AI.getModel ? AI.getModel() : ''),
+        tags: opts.tags || 'taste_analysis,personality'
+      };
+      if (opts.id) {
+        var existing = DB.getConversation(opts.id);
+        if (existing) {
+          if (existing.tags && String(existing.tags).indexOf('pinned') >= 0) {
+            payload.tags = withTag(existing.tags, 'pinned');
+          }
+          payload.id = opts.id;
+        }
+      }
+      return DB.saveConversation(payload);
+    } catch (e) {
+      console.error('saveTasteAnalysis', e);
+      return null;
+    }
+  }
+
+  /** بازسازی messages از prompt ذخیره‌شده (## role) */
+  function messagesFromSavedPrompt(prompt) {
+    prompt = String(prompt || '').trim();
+    if (!prompt) return null;
+    var messages = [];
+    var parts = prompt.split(/^##\s+/m);
+    for (var i = 0; i < parts.length; i++) {
+      var block = parts[i].trim();
+      if (!block) continue;
+      var nl = block.indexOf('\n');
+      var role = (nl >= 0 ? block.slice(0, nl) : block).trim().toLowerCase();
+      var content = nl >= 0 ? block.slice(nl + 1).trim() : '';
+      if (role === 'continue') continue;
+      if (role === 'system' || role === 'user' || role === 'assistant') {
+        if (content) messages.push({ role: role, content: content });
+      }
+    }
+    return messages.length ? messages : null;
+  }
+
+  function contextFromConversation(item) {
+    if (!item) return null;
+    var messages = messagesFromSavedPrompt(item.prompt);
+    return {
+      id: item.id,
+      messages: messages,
+      result: item.response || '',
+      kind: 'movie',
+      model: item.ai_model || ''
+    };
+  }
+
+  function pinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    var tags = withTag(c.tags, 'pinned');
+    DB.updateConversation(id, { tags: tags, prompt: c.prompt, response: c.response, ai_model: c.ai_model, title_context: c.title_context, title_id: c.title_id });
+    return true;
+  }
+
+  function unpinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    var tags = withoutTag(c.tags, 'pinned');
+    DB.updateConversation(id, { tags: tags, prompt: c.prompt, response: c.response, ai_model: c.ai_model, title_context: c.title_context, title_id: c.title_id });
+    return true;
+  }
+
+  function togglePinTasteAnalysis(id) {
+    var c = DB.getConversation(id);
+    if (!c) return false;
+    if (isPinnedAnalysis(c)) return unpinTasteAnalysis(id);
+    return pinTasteAnalysis(id);
+  }
+
+  return {
+    STAR_MEANINGS: STAR_MEANINGS,
+    starMeaning: starMeaning,
+    collectUserData: collectUserData,
+    buildSuggestMessages: buildSuggestMessages,
+    legendBlock: legendBlock,
+    analyzeTaste: analyzeTaste,
+    continueTasteAnalysis: continueTasteAnalysis,
+    looksTruncated: looksTruncated,
+    suggest: suggest,
+    parseSuggestion: parseSuggestion,
+    formatMessagesForPreview: formatMessagesForPreview,
+    parsePreviewToMessages: parsePreviewToMessages,
+    buildTasteAnalysisMessages: buildTasteAnalysisMessages,
+    getLatestTasteAnalyses: getLatestTasteAnalyses,
+    saveTasteAnalysis: saveTasteAnalysis,
+    messagesFromSavedPrompt: messagesFromSavedPrompt,
+    contextFromConversation: contextFromConversation,
+    isPinnedAnalysis: isPinnedAnalysis,
+    pinTasteAnalysis: pinTasteAnalysis,
+    unpinTasteAnalysis: unpinTasteAnalysis,
+    togglePinTasteAnalysis: togglePinTasteAnalysis
+  };
+})();
