@@ -1309,11 +1309,148 @@ window.AIUI = (function () {
     AILog.scheduleAutoHide();
   }
 
+
+  async function openSuggestTags(id) {
+    if (!requireAI()) return;
+    const t = DB.getTitle(id);
+    if (!t) return;
+
+    const panel = createStreamPanel('پیشنهاد تگ: ' + t.title);
+    const pickBox = Utils.el('div', { class: 'tag-pick-box', hidden: true });
+    const descArea = Utils.el('textarea', {
+      class: 'field-textarea',
+      rows: 3,
+      placeholder: 'یادداشت توصیفی اختیاری — اگر پر باشد تگ‌های مرتبط با متن تو هم می‌آید'
+    });
+    if (t.notes) descArea.value = t.notes;
+
+    const body = Utils.el('div', { class: 'ai-layout' }, [
+      Utils.el('div', { class: 'ai-source' }, [
+        Utils.el('span', { class: 'ai-source-label' }, ['عنوان:']),
+        Utils.el('span', { class: 'ai-source-value' }, [t.title])
+      ]),
+      Utils.el('div', { class: 'field mb-3' }, [
+        Utils.el('label', { class: 'field-label' }, ['یادداشت توصیفی (اختیاری)']),
+        descArea
+      ]),
+      panel.panel,
+      pickBox
+    ]);
+
+    const applyBtn = Utils.el('button', {
+      class: 'btn btn-primary', type: 'button', disabled: true
+    }, ['ذخیره تگ‌های انتخابی']);
+
+    Modal.open({
+      title: 'تگ‌های پیشنهادی',
+      icon: '🏷️',
+      size: 'lg',
+      body: body,
+      footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
+        Utils.el('button', {
+          class: 'btn btn-ghost', type: 'button',
+          onclick: function () { AI.abort(); Modal.close(); }
+        }, ['بستن']),
+        applyBtn
+      ])
+    });
+
+    var selected = {};
+
+    function renderPicks(tags) {
+      pickBox.hidden = false;
+      pickBox.innerHTML = '';
+      pickBox.appendChild(Utils.el('div', { class: 'tag-pick-hint' }, [
+        'تگ‌هایی که می‌پسندی را انتخاب کن:'
+      ]));
+      var row = Utils.el('div', { class: 'tag-pick-row' });
+      tags.forEach(function (tag) {
+        tag = String(tag || '').trim();
+        if (!tag) return;
+        var btn = Utils.el('button', {
+          type: 'button',
+          class: 'tag-chip' + (selected[tag] ? ' is-on' : '')
+        }, [tag]);
+        btn.addEventListener('click', function () {
+          if (selected[tag]) delete selected[tag];
+          else selected[tag] = true;
+          btn.classList.toggle('is-on', !!selected[tag]);
+          applyBtn.disabled = Object.keys(selected).length === 0;
+        });
+        row.appendChild(btn);
+      });
+      pickBox.appendChild(row);
+    }
+
+    applyBtn.addEventListener('click', function () {
+      var tags = Object.keys(selected);
+      if (!tags.length) return;
+      var current = DB.getTitle(id);
+      if (!current) return;
+      var prev = String(current.genre || '').split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean);
+      tags.forEach(function (tg) {
+        if (prev.indexOf(tg) < 0) prev.push(tg);
+      });
+      DB.updateTitle(id, Object.assign({}, current, { genre: prev.join('، ') }), false);
+      try { State.loadAll(); State.applyFilters(); Events.renderList(); } catch (e) {}
+      Toast.success('تگ‌ها ذخیره شد');
+      Modal.close();
+    });
+
+    panel.setStatus('در حال پیشنهاد تگ…', 'loading');
+    activeAbort = new AbortController();
+    var meta = Object.assign({}, t, { notes: descArea.value.trim() || t.notes });
+    try {
+      var messages = [
+        { role: 'system', content: AIPrompts.suggestTagsSystem },
+        { role: 'user', content: AIPrompts.suggestTagsUser(t.title, t.type, t.year, meta) }
+      ];
+      var raw = await AI.chatJSON({
+        messages: messages,
+        temperature: 0.4,
+        max_tokens: 800,
+        signal: activeAbort.signal
+      });
+      var parsed = AI.parseJSONResponse(raw);
+      var suggested = (parsed && Array.isArray(parsed.tags)) ? parsed.tags : [];
+      if (!suggested.length && raw) {
+        suggested = String(raw).split(/[\n,،]/).map(function (s) {
+          return s.replace(/^[\s\-\*\d.]+/, '').trim();
+        }).filter(function (s) { return s.length > 1 && s.length < 40; }).slice(0, 14);
+      }
+      if (!suggested.length) throw new Error('تگی برنگشت');
+      panel.setStatus('انتخاب کن', 'done');
+      panel.setModelBadge();
+      panel.setContent('');
+      renderPicks(suggested);
+      applyBtn.disabled = true;
+    } catch (err) {
+      if (err && err.code === 'PROMPT_CANCELLED') {
+        panel.setStatus('لغو شد', 'done');
+      } else {
+        panel.setStatus('خطا', 'error');
+        panel.setContent(formatAiErrorHtml(err));
+      }
+    }
+  }
+
+  function cleanup() {
+    if (activeAbort) { try { activeAbort.abort(); } catch (e) {} activeAbort = null; }
+  }
+
+  function showLog() {
+    if (!window.AILog) return;
+    AILog.show();
+    AILog.info('نمایش دستی لاگ');
+    AILog.scheduleAutoHide();
+  }
+
   function createStreamPanelForPage(titleText) {
     return createStreamPanel(titleText || 'AI');
   }
 
   return {
+    openSuggestTags: openSuggestTags,
     openStandardizeSingle: openStandardizeSingle,
     openAnalyzeSingle: openAnalyzeSingle,
     openSeasonalDeep: openSeasonalDeep,

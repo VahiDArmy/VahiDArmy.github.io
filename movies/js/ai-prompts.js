@@ -227,9 +227,10 @@ window.AIPrompts = (function () {
   function buildStandardizeSingleSystem() {
     return [
       'متخصص متادیتای فیلم/سریال. فقط JSON معتبر، بدون توضیح.',
+      'standard_title همیشه عنوان رسمی انگلیسی لاتین است (نه فارسی، نه آوانویسی فارسی). title_fa جدا و فارسی.',
       'سال اعلام‌شده را مبنا بگیر؛ وگرنه year_start را پیدا کن یا null.',
       'schema:',
-      '{"standard_title":"","title_fa":null,"type":"movie|series|anime|documentary",' +
+      '{"standard_title":"English official title only","title_fa":null,"type":"movie|series|anime|documentary",' +
       '"year_start":null,"year_end":null,"seasons":null,"episodes":null,"episodes_per_season":null,' +
       '"country":"","language":"","genre":"","status":"","creators":"","main_cast":"",' +
       '"summary":"۲ جمله فارسی"}'
@@ -571,10 +572,43 @@ window.AIPrompts = (function () {
     lines.push('خروجی: فقط یک آبجکت JSON.');
     return lines.join('\n');
   }
+  function suggestTagsSystem() {
+    return [
+      'تو متخصص برچسب‌گذاری سلیقه و تم فیلم/سریال هستی.',
+      'فقط JSON معتبر برگردان، بدون توضیح اضافه.',
+      'تگ‌ها کوتاه (۱–۴ کلمه)، مشخص، مفید برای تحلیل سلیقه.',
+      'ترکیبی از فارسی و انگلیسی مجاز است؛ تکراری نده.',
+      'schema: {"tags":["تگ۱","تگ۲",...]}'
+    ].join('\n');
+  }
+
+  function suggestTagsUser(title, type, year, meta) {
+    meta = meta || {};
+    var lines = [
+      'عنوان: ' + (title || ''),
+      'نوع: ' + (type || ''),
+      year ? ('سال: ' + year) : '',
+      meta.genre ? ('ژانر فعلی: ' + meta.genre) : '',
+      meta.rating ? ('امتیاز کاربر: ' + meta.rating) : '',
+      meta.reason ? ('چرا این امتیاز: ' + meta.reason) : '',
+      '',
+      '۸ تا ۱۴ تگ پیشنهادی برای این اثر بده (تم، حس، سبک روایت، لحن، مخاطب).'
+    ].filter(Boolean);
+    var desc = String(meta.notes || meta.user_take || '').trim();
+    if (desc) {
+      lines.push('');
+      lines.push('یادداشت توصیفی کاربر:');
+      lines.push(desc);
+      lines.push('علاوه بر تگ‌های اثر، ۲ تا ۵ تگ که مستقیماً با توصیف کاربر هم‌خوان است هم بده.');
+    }
+    return lines.join('\n');
+  }
 
   return {
     tasteCriteria: buildTasteCriteria(),
     analyzeSystem: buildAnalyzeSystem(),
+    suggestTagsSystem: suggestTagsSystem(),
+    suggestTagsUser: suggestTagsUser,
     standardizeSingleSystem: buildStandardizeSingleSystem(),
     standardTitle: standardTitle,
     standardLine: standardLine,
@@ -583,10 +617,6 @@ window.AIPrompts = (function () {
     analyzeDeepUser: analyzeDeepUser,
     standardizeBatchSystem: buildStandardizeBatchSystem(),
     standardizeBatchUser: standardizeBatchUser,
-    analysisSystem: buildAnalysisSystem(),
-    analysisUser: analysisUser,
-    recommendSystem: buildRecommendSystem(),
-    recommendUser: recommendUser,
     lookupSystem: buildLookupSystem(),
     lookupUser: lookupUser,
     modelEnrichSystem: buildModelEnrichSystem(),

@@ -111,9 +111,14 @@ window.AIAnalysis = (function () {
           && String(t.original_title).trim() !== name) {
         name = name + ' / ' + String(t.original_title).trim();
       }
-      return '- ' + name
+      var line = '- ' + name
         + (t.year ? ' | سال ' + t.year : '')
         + ' | امتیاز ' + t.rating;
+      /* چرا؟ فقط اگر پر باشد — اختیاری */
+      if (t.reason && String(t.reason).trim()) {
+        line += ' | چرا: ' + String(t.reason).trim().slice(0, 200);
+      }
+      return line;
     });
 
     var system = [

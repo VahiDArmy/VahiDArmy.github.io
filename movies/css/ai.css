@@ -1344,3 +1344,29 @@
 .ai-model-add-btn {
   margin-inline-start: 4px;
 }
+
+.tag-pick-box { margin-top: 12px; }
+.tag-pick-hint {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin-bottom: 8px;
+}
+.tag-pick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tag-chip {
+  border: 1px solid var(--border-1);
+  background: var(--bg-2);
+  color: var(--text-2);
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: var(--fs-sm);
+}
+.tag-chip.is-on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}

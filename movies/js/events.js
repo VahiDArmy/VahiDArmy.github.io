@@ -1263,6 +1263,11 @@ window.Events = (function () {
         }, ['✏️ ویرایش']),
         Utils.el('button', {
           class: 'btn btn-ghost',
+          title: 'تگ AI',
+          onclick: function () { Modal.close(); setTimeout(function () { AIUI.openSuggestTags(id); }, 150); }
+        }, ['🏷️ تگ']),
+        Utils.el('button', {
+          class: 'btn btn-ghost',
           title: 'استانداردسازی',
           onclick: function () { Modal.close(); setTimeout(function () { AIUI.openStandardizeSingle(id); }, 150); }
         }, ['✨ استانداردسازی']),
