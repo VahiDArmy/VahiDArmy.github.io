@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="pink">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fff3f7">
+<title>سوره واقعه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<style>
+:root{--shape:path('M18 33C2 21 0 11 7 6c5-4 10-1 11 3 1-4 6-7 11-3 7 5 5 15-11 27z');--orn:"♥";--bg:#fff3f7;--card:rgba(255,255,255,.78);--ink:#4b1d34;--mut:#9b617a;--ac:#e0185f;--ac2:#ff7fae;--line:#f6c3d6;--g1:#ffe0ec;--g2:#ffc9de;--sh:0 10px 30px -12px rgba(224,24,95,.42)}
+[data-theme=boy]{--shape:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);--orn:"✦";--bg:#0b1322;--card:rgba(20,35,64,.76);--ink:#e6eefc;--mut:#8ea6cf;--ac:#3d9bff;--ac2:#7fd8ff;--line:#243a63;--g1:#10223f;--g2:#0d3a66;--sh:0 12px 34px -14px rgba(61,155,255,.55)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;font:400 16px/1.9 Vazirmatn,system-ui,sans-serif;color:var(--ink);background:radial-gradient(900px 520px at 90% -8%,var(--g2),transparent 62%),radial-gradient(800px 560px at -10% 30%,var(--g1),transparent 62%),var(--bg);padding-bottom:calc(96px + env(safe-area-inset-bottom));overflow-x:hidden}
+:focus-visible{outline:3px solid var(--ac2);outline-offset:2px}
+#pr{position:fixed;top:0;inset-inline:0;height:3px;z-index:30;transform-origin:right;transform:scaleX(0);background:linear-gradient(90deg,var(--ac2),var(--ac));transition:transform .35s}
+.fl{position:fixed;bottom:-40px;z-index:0;color:var(--ac);opacity:0;pointer-events:none;animation:fl linear infinite}.fl:before,.bh:before,.big:before,.sep i:before{content:var(--orn)}
+header{position:sticky;top:0;z-index:20;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;background:color-mix(in srgb,var(--bg) 80%,transparent);-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5);border-bottom:1px solid var(--line)}
+.hw{max-width:760px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px}.r2{grid-column:1/-1;display:flex;align-items:center;gap:8px}
+.chip{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:20px;background:var(--card);border:1px solid var(--line);box-shadow:var(--sh);user-select:none;-webkit-user-select:none;touch-action:manipulation;transition:transform .15s}
+.chip:active{transform:scale(.97)}.chip.me{outline:2px solid var(--ac);outline-offset:1px}
+.av{flex:none;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,var(--ac2),var(--ac));color:#fff;font-weight:700}
+.nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}
+.num,.n,.cnt{display:inline-grid;place-items:center;flex:none;width:36px;height:36px;clip-path:var(--shape);background:linear-gradient(145deg,var(--ac2),var(--ac));color:#fff;font:700 11.5px/1 Vazirmatn;padding-top:3px}
+.cnt{font-size:13px}.bump{animation:bump .55s}
+.seg{flex:1;max-width:300px;margin-inline:auto;display:flex;position:relative;padding:4px;border-radius:99px;background:var(--card);border:1px solid var(--line)}
+.seg i{position:absolute;top:4px;bottom:4px;width:calc(50% - 4px);inset-inline-start:4px;border-radius:99px;background:linear-gradient(135deg,var(--ac2),var(--ac));box-shadow:var(--sh);transition:inset-inline-start .4s cubic-bezier(.5,1.4,.5,1)}
+.seg[data-v=tafsir] i{inset-inline-start:calc(50%)}
+.seg button{all:unset;flex:1;text-align:center;cursor:pointer;position:relative;z-index:1;padding:6px 0;font-weight:600;font-size:14px;color:var(--mut);transition:color .3s}.seg button.on{color:#fff}
+.tools{display:flex;gap:8px;align-items:center}
+.ib{all:unset;cursor:pointer;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--line);background:var(--card);color:var(--ink);flex:none}
+.orb{background:linear-gradient(135deg,#ff7fae 50%,#3d9bff 50%);border:3px solid var(--card);box-shadow:var(--sh)}
+.btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:18px;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,var(--ac2),var(--ac));box-shadow:var(--sh);transition:transform .15s,opacity .2s;touch-action:manipulation;white-space:nowrap}
+.btn:active{transform:scale(.95)}.btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}.btn.sm{padding:8px 16px;font-size:14px;border-radius:14px}.btn[disabled]{opacity:.35;pointer-events:none}.rd,.mid{flex:1}
+main{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:18px 14px}main.in{animation:fade .45s}
+.hero{text-align:center;padding:30px 18px 22px;border-radius:32px;background:var(--card);border:1px solid var(--line);box-shadow:var(--sh);position:relative;overflow:hidden;margin-bottom:18px}
+.hero:before,.hero:after{content:var(--orn);position:absolute;font-size:130px;line-height:1;color:var(--ac);opacity:.09}.hero:before{top:-22px;right:-8px;transform:rotate(-14deg)}.hero:after{bottom:-36px;left:-8px;transform:rotate(16deg)}
+.sn{margin:0;font:400 clamp(40px,10vw,64px)/1.6 'Amiri Quran',serif;background:linear-gradient(120deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.meta{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;font-size:13px}.meta span,.crumb span{padding:1px 14px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mut)}
+.sep{display:flex;align-items:center;gap:12px;margin:14px auto 4px;max-width:260px}.sep:before,.sep:after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--ac2))}.sep:after{transform:scaleX(-1)}.sep i{font-style:normal;color:var(--ac)}
+.bsm{margin:0;font:400 clamp(22px,5.5vw,30px)/2.2 'Amiri Quran',serif}
+.ay{padding:18px 18px 14px;margin:0 0 12px;border-radius:26px;background:var(--card);border:1px solid var(--line)}
+.ar{font:400 clamp(25px,5.6vw,34px)/2.3 'Amiri Quran',serif;text-align:justify}.ar .num{margin-inline-start:8px;vertical-align:middle}
+.fa{margin:6px 0 0;padding-top:8px;border-top:1px dashed var(--line);color:var(--mut);font-size:15.5px;line-height:2}
+.end{text-align:center;padding:26px 0 8px;font:400 24px/2 'Amiri Quran',serif}.big{font-size:44px;color:var(--ac);display:block;line-height:1}
+.crumb{display:flex;flex-wrap:wrap;gap:6px;font-size:12.5px}.crumb .sub{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp h2{margin:.35em 0 .7em;font:800 clamp(21px,5vw,28px)/1.75 Vazirmatn}
+.body p{margin:0 0 1.1em;font-size:16.5px;line-height:2.15;text-align:justify}
+.q{font:400 1.2em/2 'Amiri Quran',serif;color:var(--ac)}h2 .q{font-size:1em}
+.ta{display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:20px;background:var(--card);border:1px solid var(--line);font:400 clamp(23px,5vw,29px)/2.2 'Amiri Quran',serif!important}
+.body .tr{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:20px;background:var(--card);border:1px solid var(--line)}.tr span{padding-top:2px}
+#bar{position:fixed;inset-inline:0;bottom:0;z-index:20;padding:10px 12px calc(10px + env(safe-area-inset-bottom));display:flex;justify-content:center;pointer-events:none}
+#bar>div{pointer-events:auto;display:flex;gap:8px;width:min(100%,560px);padding:8px;border-radius:28px;background:color-mix(in srgb,var(--bg) 82%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);box-shadow:var(--sh)}
+#md{position:fixed;inset:0;z-index:40;display:none;align-items:flex-end;justify-content:center;background:rgba(20,0,12,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}#md.on{display:flex}
+.sheet{width:min(100%,520px);max-height:86vh;overflow:auto;padding:20px 18px calc(24px + env(safe-area-inset-bottom));border-radius:30px 30px 0 0;background:var(--bg);border:1px solid var(--line);animation:up .35s cubic-bezier(.2,.9,.3,1)}
+@media(min-width:640px){#md{align-items:center}.sheet{border-radius:30px}}
+.hh{display:flex;align-items:center;gap:12px;margin-bottom:12px}.hh h3{margin:0;flex:1;font-size:20px}.hh small{color:var(--mut)}
+.in{width:100%;padding:12px 14px;margin:0 0 10px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit}
+.er{min-height:1.5em;margin:0 0 8px;color:#e5484d;font-size:13.5px}.alt{margin:14px 0 0;text-align:center;color:var(--mut);font-size:14px}.lnk{all:unset;cursor:pointer;color:var(--ac);font-weight:700}
+.day{display:flex;justify-content:space-between;margin:16px 0 6px;font-weight:700;color:var(--ac)}.day small{color:var(--mut);font-weight:400}
+.row{display:flex;gap:10px;align-items:center;padding:7px 14px;margin-bottom:6px;border-radius:14px;background:var(--card);border:1px solid var(--line)}.row b{color:var(--ac)}
+.tg{margin:16px 0 6px;font-weight:800;color:var(--ac)}
+.ti{all:unset;display:block;box-sizing:border-box;width:100%;cursor:pointer;padding:8px 14px;margin-bottom:4px;border-radius:14px;font-size:14.5px;line-height:1.8;border:1px solid transparent}
+.ti.sub{width:calc(100% - 18px);margin-inline-start:18px;color:var(--mut)}.ti:hover{background:var(--card)}.ti.on{background:var(--card);border-color:var(--ac);color:var(--ink);font-weight:700}
+#ts{position:fixed;inset-inline:0;bottom:calc(98px + env(safe-area-inset-bottom));z-index:50;display:flex;justify-content:center;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:10px 18px;border-radius:18px;background:var(--ink);color:var(--bg);box-shadow:var(--sh);font-size:14px;animation:up .3s}.toast button{all:unset;cursor:pointer;font-weight:700;color:var(--ac2)}
+.bh{position:fixed;z-index:60;color:var(--ac);pointer-events:none;animation:burst .9s ease-out forwards}
+@keyframes fl{0%{transform:translate(0,0) rotate(0);opacity:0}10%{opacity:.3}90%{opacity:.15}100%{transform:translate(var(--dx),-118vh) rotate(var(--r));opacity:0}}
+@keyframes burst{to{transform:translate(var(--x),var(--y)) scale(1.5) rotate(var(--r));opacity:0}}
+@keyframes bump{40%{transform:scale(1.4)}}@keyframes up{from{transform:translateY(26px);opacity:0}}@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.fl{display:none}}
+</style>
+</head>
+<body>
+<div id="pr"></div><header id="hd"></header><main></main><div id="bar"><div></div></div><div id="md"></div><div id="ts"></div>
+<script>
+const sb=supabase.createClient('https://ummhohozmpwltbgeczsf.supabase.co','sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6');
+const $=(s,e=document)=>e.querySelector(s),fa=n=>(+n).toLocaleString('fa-IR',{useGrouping:false}),
+esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+dayF=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+timeF=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{hour:'2-digit',minute:'2-digit'}),
+S={u:null,prof:{},reads:[],pc:{},tr:localStorage.wqTr!=='0',v:'surah',pg:0,lt:0,ltn:0};
+let D,P,G;
+const me=()=>Object.values(S.prof).find(p=>p.id===S.u?.id),nm=(p,n)=>p?(p.name||'؟'):'نفر '+(n==1?'اول':'دوم');
+function theme(t,save){document.documentElement.dataset.theme=t;localStorage.wqTheme=t;$('meta[name=theme-color]').content=t=='pink'?'#fff3f7':'#0b1322';if(save&&me())sb.from('waqia_profiles').update({theme:t}).eq('id',S.u.id).then(()=>{})}
+function hdr(){
+ if(!$('.hw'))$('#hd').innerHTML='<div class="hw"><div id="c1"></div><div id="c2"></div><div class="r2"><div class="seg"><i></i><button data-a="sv">سوره</button><button data-a="tv">تفسیر</button></div><div class="tools"><button class="ib orb" data-a="th" aria-label="تغییر پوسته"></button><span id="au"></span></div></div></div>';
+ [1,2].forEach(n=>{const p=S.prof[n],c=p?S.reads.filter(r=>r.user_id==p.id).length:null,b=c!==null&&S.pc[n]!==undefined&&S.pc[n]!==c;S.pc[n]=c;
+  $('#c'+n).innerHTML=`<button class="chip${p&&p.id==S.u?.id?' me':''}" data-a="chip" data-n="${n}"><span class="av">${esc(nm(p,n))[0]}</span><span class="nm">${esc(nm(p,n))}</span><b class="cnt${b?' bump':''}">${c===null?'–':fa(c)}</b></button>`});
+ $('#au').innerHTML=S.u?'<button class="btn ghost sm" data-a="out">خروج</button>':'<button class="btn sm" data-a="au">ورود</button>';
+ const s=$('.seg');s.dataset.v=S.v;s.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',(i==0)==(S.v=='surah')))}
+const surah=()=>`<section class="hero"><h1 class="sn" lang="ar">${D.ar}</h1><div class="meta"><span>سوره ${D.fa}</span><span>${D.rev}</span><span>${fa(D.count)} آیه</span></div><div class="sep"><i></i></div><p class="bsm" lang="ar">${D.bsm}</p></section>`+D.ayahs.map(a=>`<article class="ay"><div class="ar" lang="ar">${a.ar}<span class="num">${fa(a.v)}</span></div>${S.tr?`<p class="fa">${a.fa}</p>`:''}</article>`).join('')+'<div class="end"><span class="big"></span>صَدَقَ اللَّهُ الْعَلِيُّ الْعَظِيمُ</div>';
+const tafsir=()=>{const p=P[S.pg];return `<article class="tp"><div class="crumb"><span>${G[p.g]}</span>${p.p?`<span class="sub">${p.p}</span>`:''}</div><h2>${p.t}</h2><div class="body">${p.h}</div></article>`};
+function bar(){$('#bar>div').innerHTML=S.v=='surah'
+ ?`<button class="btn ghost" data-a="trb">${S.tr?'پنهان‌کردن ترجمه':'نمایش ترجمه'}</button><button class="btn rd" data-a="rd">♥ یک بار خواندم</button>`
+ :`<button class="btn ghost" data-a="pv"${S.pg?'':' disabled'}>→ قبلی</button><button class="btn ghost mid" data-a="toc">${fa(S.pg+1)} از ${fa(P.length)} · فهرست</button><button class="btn" data-a="nx"${S.pg<P.length-1?'':' disabled'}>بعدی ←</button>`}
+const prog=()=>$('#pr').style.transform=`scaleX(${S.v=='tafsir'?(S.pg+1)/P.length:0})`;
+function render(){const m=$('main');m.innerHTML=S.v=='surah'?surah():tafsir();m.classList.remove('in');void m.offsetWidth;m.classList.add('in');scrollTo(0,0);hdr();bar();prog()}
+function route(){const m=location.hash.match(/^#\/(surah|tafsir)(?:\/(\d+))?/);S.v=m?m[1]:'surah';S.pg=Math.min(+(m&&m[2]||0),P.length-1);render()}
+const go=h=>location.hash=h,pgo=i=>go('#/tafsir/'+Math.max(0,Math.min(P.length-1,i)));
+function modal(h){$('#md').innerHTML=`<div class="sheet">${h}</div>`;$('#md').classList.add('on')}
+const close=()=>$('#md').classList.remove('on');
+function toast(t,a,f){const e=document.createElement('div');e.className='toast';e.innerHTML=`<span>${t}</span>${a?`<button>${a}</button>`:''}`;if(a)e.querySelector('button').onclick=()=>{f();e.remove()};$('#ts').replaceChildren(e);clearTimeout(toast.t);toast.t=setTimeout(()=>e.remove(),a?6000:3500)}
+function toc(){let h='<div class="hh"><h3>فهرست تفسیر</h3><button class="ib" data-a="x" aria-label="بستن">✕</button></div>',g=-1;P.forEach((p,i)=>{if(p.g!=g){g=p.g;h+=`<div class="tg">${G[g]}</div>`}h+=`<button class="ti${i==S.pg?' on':''}${p.p?' sub':''}" data-a="pg" data-i="${i}">${p.t}</button>`});modal(h)}
+function auth(up){modal(`<div class="hh"><h3>${up?'ساخت حساب':'ورود'}</h3><button class="ib" data-a="x" aria-label="بستن">✕</button></div><form data-m="${up?'up':'in'}">${up?'<input class="in" name="name" placeholder="نام شما" maxlength="40" required autocomplete="nickname">':''}<input class="in" dir="ltr" type="email" name="email" placeholder="ایمیل" required autocomplete="email"><input class="in" dir="ltr" type="password" name="password" placeholder="گذرواژه" minlength="6" required autocomplete="${up?'new':'current'}-password"><p id="er" class="er"></p><button class="btn" style="width:100%" type="submit">${up?'ساخت حساب':'ورود'}</button></form><p class="alt">${up?'حساب دارید؟':'حساب ندارید؟'} <button class="lnk" data-a="${up?'au':'su'}">${up?'ورود':'ساخت حساب'}</button></p>`)}
+function hist(n){const p=S.prof[n];if(!p)return toast('این نفر هنوز وارد نشده است');const rs=S.reads.filter(r=>r.user_id==p.id),days=new Map();
+ rs.forEach(r=>{const d=new Date(r.read_at),k=dayF.format(d);(days.get(k)||days.set(k,[]).get(k)).push(timeF.format(d))});
+ modal(`<div class="hh"><span class="av">${esc(nm(p,n))[0]}</span><div style="flex:1"><h3>${esc(nm(p,n))}</h3><small>${fa(rs.length)} بار خواندن</small></div><button class="ib" data-a="x" aria-label="بستن">✕</button></div>${rs.length?[...days].map(([d,ts])=>`<div class="day">${d}<small>${fa(ts.length)} بار</small></div>${ts.map(t=>`<div class="row"><b>♥</b>${t}</div>`).join('')}`).join(''):'<p class="alt">هنوز خواندنی ثبت نشده است.</p>'}`)}
+function burst(t){const r=t.getBoundingClientRect();for(let i=0;i<14;i++){const e=document.createElement('i'),a=Math.random()*6.28,d=60+Math.random()*100;e.className='bh';e.style.cssText=`left:${r.left+r.width/2}px;top:${r.top}px;font-size:${14+Math.random()*18}px;--x:${Math.cos(a)*d}px;--y:${Math.sin(a)*d-70}px;--r:${(Math.random()-.5)*100}deg`;document.body.append(e);setTimeout(()=>e.remove(),900)}}
+async function read(t){
+ if(!S.u)return auth(0);if(!me())return toast('پروفایل شما هنوز آماده نیست');
+ burst(t);const {data,error}=await sb.from('waqia_reads').insert({user_id:S.u.id}).select('id,user_id,read_at').single();
+ if(error)return toast('ثبت نشد؛ دوباره تلاش کنید');
+ S.reads.unshift(data);hdr();
+ toast('ثبت شد ♥','بازگردانی',async()=>{await sb.from('waqia_reads').delete().eq('id',data.id);S.reads=S.reads.filter(r=>r.id!=data.id);hdr()})}
+async function sync(){
+ if(!S.u){S.prof={};S.reads=[];S.themed=0;return hdr()}
+ let {data:ps,error}=await sb.from('waqia_profiles').select('*');
+ if(error)return toast('اتصال به پایگاه داده برقرار نشد');
+ if(!ps.some(p=>p.id==S.u.id)){
+  const r=await sb.from('waqia_profiles').insert({id:S.u.id,name:S.u.user_metadata?.name||'',theme:document.documentElement.dataset.theme});
+  if(r.error){toast(/waqia_full/.test(r.error.message)?'ظرفیت این سایت تکمیل است':'ساخت پروفایل ناموفق بود');return sb.auth.signOut()}
+  ps=(await sb.from('waqia_profiles').select('*')).data}
+ S.prof=Object.fromEntries(ps.map(p=>[p.slot,p]));
+ const m=me();if(m&&!S.themed){S.themed=1;theme(m.theme)}
+ S.reads=(await sb.from('waqia_reads').select('id,user_id,read_at').order('read_at',{ascending:false})).data||[];hdr()}
+const A={sv:()=>go('#/surah'),tv:()=>pgo(S.pg),pv:()=>pgo(S.pg-1),nx:()=>pgo(S.pg+1),toc,x:close,au:()=>auth(0),su:()=>auth(1),rd:read,
+ pg:t=>{close();pgo(+t.dataset.i)},th:()=>theme(document.documentElement.dataset.theme=='pink'?'boy':'pink',1),
+ trb:()=>{S.tr=!S.tr;localStorage.wqTr=+S.tr;render()},out:async()=>{await sb.auth.signOut();toast('خارج شدید')},
+ chip:t=>{const n=t.dataset.n,now=Date.now();if(S.ltn==n&&now-S.lt<420){S.lt=0;hist(n)}else{S.ltn=n;S.lt=now}}};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(t&&!t.disabled)A[t.dataset.a]?.(t,e);if(e.target.id=='md')close()});
+$('#md').addEventListener('submit',async e=>{e.preventDefault();const f=e.target,v=Object.fromEntries(new FormData(f)),up=f.dataset.m=='up',er=$('#er'),b=$('[type=submit]',f);er.textContent='';b.disabled=true;
+ const r=up?await sb.auth.signUp({email:v.email,password:v.password,options:{data:{name:v.name}}}):await sb.auth.signInWithPassword({email:v.email,password:v.password});b.disabled=false;
+ if(r.error)return er.textContent=/invalid login/i.test(r.error.message)?'ایمیل یا گذرواژه درست نیست':r.error.message;
+ if(up&&!r.data.session)return er.textContent='ایمیل تأیید ارسال شد. بعد از تأیید وارد شوید.';
+ close();toast('خوش آمدید ♥ روی نام، دو بار بزنید تا سابقه را ببینید')});
+addEventListener('keydown',e=>{if(S.v=='tafsir'&&!$('#md.on')){if(e.key=='ArrowLeft')A.nx();if(e.key=='ArrowRight')A.pv()}if(e.key=='Escape')close()});
+let tx,ty;addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{if(S.v!='tafsir'||$('#md.on'))return;const dx=e.changedTouches[0].clientX-tx,dy=e.changedTouches[0].clientY-ty;if(Math.abs(dx)>80&&Math.abs(dy)<45)pgo(S.pg+(dx<0?1:-1))},{passive:true});
+addEventListener('scroll',()=>{if(S.v=='surah'){const h=document.documentElement;$('#pr').style.transform=`scaleX(${Math.min(1,scrollY/Math.max(1,h.scrollHeight-innerHeight))})`}},{passive:true});
+(async()=>{
+ theme(localStorage.wqTheme||'pink');
+ for(let i=0;i<14;i++){const e=document.createElement('i');e.className='fl';e.style.cssText=`left:${Math.random()*100}%;font-size:${12+Math.random()*26}px;animation-duration:${14+Math.random()*16}s;animation-delay:${-Math.random()*20}s;--dx:${(Math.random()-.5)*120}px;--r:${(Math.random()-.5)*80}deg`;document.body.append(e)}
+ try{[D,{groups:G,pages:P}]=await Promise.all(['surah','tafsir'].map(n=>fetch(`data/${n}.json`).then(r=>r.json())))}catch(e){$('main').innerHTML='<p class="er">داده‌ها بارگذاری نشد.</p>';return}
+ addEventListener('hashchange',route);route();
+ S.u=(await sb.auth.getSession()).data.session?.user||null;await sync();
+ sb.auth.onAuthStateChange((ev,s)=>{const u=s?.user||null;if(u?.id!==S.u?.id){S.u=u;setTimeout(()=>{sync();bar()},0)}});
+ sb.channel('wq').on('postgres_changes',{event:'*',schema:'public',table:'waqia_reads'},()=>S.u&&sync()).subscribe()})();
+</script>
+</body>
+</html>
