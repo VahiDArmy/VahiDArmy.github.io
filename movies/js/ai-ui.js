@@ -1315,60 +1315,66 @@ window.AIUI = (function () {
     const t = DB.getTitle(id);
     if (!t) return;
 
-    const panel = createStreamPanel('پیشنهاد تگ: ' + t.title);
-    const pickBox = Utils.el('div', { class: 'tag-pick-box', hidden: true });
-    const descArea = Utils.el('textarea', {
-      class: 'field-textarea',
-      rows: 3,
-      placeholder: 'یادداشت توصیفی اختیاری — اگر پر باشد تگ‌های مرتبط با متن تو هم می‌آید'
-    });
-    if (t.notes && !/^\[AI/i.test(String(t.notes).trim())) descArea.value = t.notes;
+    var selected = {};
+    var running = false;
 
-    const body = Utils.el('div', { class: 'ai-layout' }, [
-      Utils.el('div', { class: 'ai-source' }, [
-        Utils.el('span', { class: 'ai-source-label' }, ['عنوان:']),
-        Utils.el('span', { class: 'ai-source-value' }, [t.title])
-      ]),
-      Utils.el('div', { class: 'field mb-3' }, [
-        Utils.el('label', { class: 'field-label' }, ['یادداشت توصیفی (اختیاری)']),
-        descArea
-      ]),
-      panel.panel,
-      pickBox
-    ]);
+    const statusEl = Utils.el('div', { class: 'tag-ui-status' }, ['']);
+    const chipsHost = Utils.el('div', { class: 'tag-ui-chips' });
+    const descArea = Utils.el('textarea', {
+      class: 'field-textarea tag-ui-desc',
+      rows: 2,
+      placeholder: 'یادداشت اختیاری (فقط اگر خودت نوشته‌ای)'
+    });
+    if (t.notes && !/^\[AI/i.test(String(t.notes).trim())) {
+      descArea.value = t.notes;
+    }
+
+    const runBtn = Utils.el('button', {
+      type: 'button', class: 'btn btn-soft btn-sm', id: 'tag-ui-run'
+    }, ['پیشنهاد تگ']);
 
     const applyBtn = Utils.el('button', {
-      class: 'btn btn-primary', type: 'button', disabled: true
-    }, ['ذخیره تگ‌های انتخابی']);
+      type: 'button', class: 'btn btn-primary', disabled: true
+    }, ['ذخیره انتخاب‌ها']);
+
+    const body = Utils.el('div', { class: 'tag-ui' }, [
+      Utils.el('div', { class: 'tag-ui-title-line' }, [
+        Utils.el('strong', {}, [t.title || '']),
+        t.year ? Utils.el('span', { class: 'tag-ui-year' }, [String(t.year)]) : null
+      ].filter(Boolean)),
+      Utils.el('div', { class: 'tag-ui-desc-row' }, [
+        descArea,
+        runBtn
+      ]),
+      statusEl,
+      chipsHost
+    ]);
 
     Modal.open({
-      title: 'تگ‌های پیشنهادی',
+      title: 'تگ‌های علتی',
       icon: '🏷️',
-      size: 'lg',
+      size: 'md',
       body: body,
       footer: Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
         Utils.el('button', {
-          class: 'btn btn-ghost', type: 'button',
+          type: 'button', class: 'btn btn-ghost',
           onclick: function () { AI.abort(); Modal.close(); }
         }, ['بستن']),
         applyBtn
       ])
     });
 
-    var selected = {};
+    function setStatus(text, kind) {
+      statusEl.textContent = text || '';
+      statusEl.dataset.kind = kind || '';
+      statusEl.hidden = !text;
+    }
 
-    function renderPicks(tags, positives, negatives) {
-      positives = positives || [];
-      negatives = negatives || [];
-      pickBox.hidden = false;
-      pickBox.innerHTML = '';
-      pickBox.appendChild(Utils.el('div', { class: 'tag-pick-hint' }, [
-        'نقاط مثبت/منفی و علت خوش‌آمدن یا نیامدن — انتخاب کن:'
-      ]));
-
-      function addSection(title, list, kind) {
+    function renderPicks(positives, negatives, flat) {
+      chipsHost.innerHTML = '';
+      function section(label, list, kind) {
         if (!list || !list.length) return;
-        pickBox.appendChild(Utils.el('div', { class: 'tag-pick-section' }, [title]));
+        chipsHost.appendChild(Utils.el('div', { class: 'tag-pick-section' }, [label]));
         var row = Utils.el('div', { class: 'tag-pick-row' });
         list.forEach(function (tag) {
           tag = String(tag || '').trim();
@@ -1385,14 +1391,13 @@ window.AIUI = (function () {
           });
           row.appendChild(btn);
         });
-        pickBox.appendChild(row);
+        chipsHost.appendChild(row);
       }
-
-      if (positives.length || negatives.length) {
-        addSection('+ نقاط مثبت / دلایل خوش‌آمدن', positives, 'pos');
-        addSection('− نقاط منفی / دلایل خوش‌نیامدن', negatives, 'neg');
+      if ((positives && positives.length) || (negatives && negatives.length)) {
+        section('+ خوش‌آمدن', positives, 'pos');
+        section('− خوش‌نیامدن', negatives, 'neg');
       } else {
-        addSection('تگ‌ها', tags, 'neu');
+        section('تگ‌ها', flat || [], 'neu');
       }
     }
 
@@ -1411,51 +1416,56 @@ window.AIUI = (function () {
       Modal.close();
     });
 
-    panel.setStatus('در حال پیشنهاد تگ…', 'loading');
-    activeAbort = new AbortController();
-    var noteVal = descArea.value.trim();
-    var meta = Object.assign({}, t, {
-      notes: noteVal,
-      reason: '' /* عمداً به پرامپت تگ نمی‌رود */
-    });
-    try {
-      var messages = [
-        { role: 'system', content: AIPrompts.suggestTagsSystem },
-        { role: 'user', content: AIPrompts.suggestTagsUser(t.title, t.type, t.year, meta) }
-      ];
-      var raw = await AI.chatJSON({
-        messages: messages,
-        temperature: 0.4,
-        max_tokens: 800,
-        signal: activeAbort.signal
-      });
-      var parsed = AI.parseJSONResponse(raw);
-      var suggested = [];
-      var positives = (parsed && Array.isArray(parsed.positives)) ? parsed.positives : [];
-      var negatives = (parsed && Array.isArray(parsed.negatives)) ? parsed.negatives : [];
-      if (parsed && Array.isArray(parsed.tags)) suggested = parsed.tags.slice();
-      if (!suggested.length) {
-        suggested = positives.concat(negatives);
-      }
-      if (!suggested.length && raw) {
-        suggested = String(raw).split(/[\n,،]/).map(function (s) {
-          return s.replace(/^[\s\-\*\d.]+/, '').trim();
-        }).filter(function (s) { return s.length > 1 && s.length < 48; }).slice(0, 16);
-      }
-      if (!suggested.length) throw new Error('تگی برنگشت');
-      panel.setStatus('انتخاب کن', 'done');
-      panel.setModelBadge();
-      panel.setContent('');
-      renderPicks(suggested, positives, negatives);
+    async function runSuggest() {
+      if (running) return;
+      running = true;
+      runBtn.disabled = true;
       applyBtn.disabled = true;
-    } catch (err) {
-      if (err && err.code === 'PROMPT_CANCELLED') {
-        panel.setStatus('لغو شد', 'done');
-      } else {
-        panel.setStatus('خطا', 'error');
-        panel.setContent(formatAiErrorHtml(err));
+      selected = {};
+      chipsHost.innerHTML = '';
+      setStatus('در حال دریافت تگ…', 'loading');
+      activeAbort = new AbortController();
+      var meta = Object.assign({}, t, { notes: descArea.value.trim(), reason: '' });
+      try {
+        var messages = [
+          { role: 'system', content: AIPrompts.suggestTagsSystem },
+          { role: 'user', content: AIPrompts.suggestTagsUser(t.title, t.type, t.year, meta) }
+        ];
+        var raw = await AI.chatJSON({
+          messages: messages,
+          temperature: 0.4,
+          max_tokens: 800,
+          signal: activeAbort.signal
+        });
+        var parsed = AI.parseJSONResponse(raw);
+        var positives = (parsed && Array.isArray(parsed.positives)) ? parsed.positives : [];
+        var negatives = (parsed && Array.isArray(parsed.negatives)) ? parsed.negatives : [];
+        var flat = (parsed && Array.isArray(parsed.tags)) ? parsed.tags : positives.concat(negatives);
+        if (!flat.length && raw) {
+          flat = String(raw).split(/[\n,،]/).map(function (s) {
+            return s.replace(/^[\s\-\*\d.]+/, '').trim();
+          }).filter(function (s) { return s.length > 1 && s.length < 48; }).slice(0, 16);
+        }
+        if (!positives.length && !negatives.length && !flat.length) {
+          throw new Error('تگی برنگشت');
+        }
+        setStatus('', '');
+        renderPicks(positives, negatives, flat);
+      } catch (err) {
+        if (err && err.code === 'PROMPT_CANCELLED') {
+          setStatus('لغو شد', 'muted');
+        } else {
+          setStatus(err.message || 'خطا', 'error');
+        }
+      } finally {
+        running = false;
+        runBtn.disabled = false;
       }
     }
+
+    runBtn.addEventListener('click', function () { runSuggest(); });
+    /* شروع خودکار */
+    setTimeout(function () { runSuggest(); }, 80);
   }
 
   function cleanup() {
