@@ -123,16 +123,25 @@ window.AI = (function () {
   }
 
   function friendlyHttpError(status, msg) {
-    msg = String(msg || '');
+    msg = String(msg || '').trim();
+
     if (status === 401 || status === 403) return 'دسترسی مجاز نیست (کلید یا تنظیمات سرور).';
     if (status === 429) return 'محدودیت نرخ — کمی بعد دوباره تلاش کن.';
-    if (status === 502 || /Provider returned error/i.test(msg)) {
-      return 'خطای واسط (502): ' + (msg || 'Provider returned error');
+
+    // اگر پیام واقعی از AI آمده، همان را نشان بده
+    if (msg && msg !== 'Provider returned error') {
+      return 'خطای واسط (' + status + '): ' + msg;
     }
+
+    if (status === 502) {
+      return 'خطای واسط (502): Provider returned error';
+    }
+
     /* Supabase Edge: 546 = worker killed (often WallClockTime) */
     if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
       return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند — مشکل مدل Google نیست، مشکل مسیر Edge است.';
     }
+
     if (msg) return msg;
     return 'خطای سرور (HTTP ' + status + ')';
   }
@@ -324,7 +333,7 @@ window.AI = (function () {
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
       if (!res.ok || json.error) {
-        const msg = friendlyHttpError(res.status, json.error || json.message || '');
+        const msg = friendlyHttpError(res.status, json.error || json.message || json.detail || json.raw_error || '');
         aiLog('error', '✗ ' + msg);
         aiAutoHide();
         throw new Error(msg);
@@ -341,7 +350,20 @@ window.AI = (function () {
     }
 
     if (!res.ok) {
-      const msg = friendlyHttpError(res.status, '');
+      // سعی می‌کنیم بدنه پاسخ را بخوانیم تا پیام خام AI را ببینیم
+      let bodyError = '';
+      try {
+        const clone = res.clone();
+        const json = await clone.json();
+        bodyError = json.error || json.message || json.detail || json.raw_error || '';
+      } catch (e) {
+        try {
+          const text = await res.text();
+          bodyError = text.slice(0, 500);
+        } catch (e2) {}
+      }
+
+      const msg = friendlyHttpError(res.status, bodyError);
       aiLog('error', '✗ ' + msg);
       aiAutoHide();
       throw new Error(msg);
@@ -471,7 +493,7 @@ window.AI = (function () {
     const fenced = s.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
     if (fenced && /[\{\[]/.test(fenced[1])) {
       const inner = fenced[1].trim();
-      const before = s.slice(0, fenced.index).trim();
+      const before = s.slice(fenced.index).trim();
       const after = s.slice(fenced.index + fenced[0].length).trim();
       var parsed = tryParseJson(inner);
       if (!parsed) {
