@@ -1318,7 +1318,7 @@ window.AIUI = (function () {
     var selected = {};
     var running = false;
 
-    const statusEl = Utils.el('div', { class: 'tag-ui-status' }, ['']);
+    const statusEl = Utils.el('div', { class: 'tag-ui-status', hidden: true }, ['']);
     const chipsHost = Utils.el('div', { class: 'tag-ui-chips' });
     const descArea = Utils.el('textarea', {
       class: 'field-textarea tag-ui-desc',
@@ -1329,13 +1329,29 @@ window.AIUI = (function () {
       descArea.value = t.notes;
     }
 
+    const manualInp = Utils.el('input', {
+      type: 'text',
+      class: 'field-input',
+      placeholder: 'تگ دستی…'
+    });
+    const manualAddBtn = Utils.el('button', {
+      type: 'button', class: 'btn btn-ghost btn-sm'
+    }, ['افزودن']);
+
     const runBtn = Utils.el('button', {
       type: 'button', class: 'btn btn-soft btn-sm', id: 'tag-ui-run'
-    }, ['پیشنهاد تگ']);
+    }, ['پیشنهاد AI']);
+    const retryBtn = Utils.el('button', {
+      type: 'button', class: 'btn btn-ghost btn-sm', hidden: true
+    }, ['تلاش دوباره']);
 
     const applyBtn = Utils.el('button', {
       type: 'button', class: 'btn btn-primary', disabled: true
     }, ['ذخیره انتخاب‌ها']);
+
+    /* تگ‌های قبلی را از قبل انتخاب‌شده نشان بده */
+    String(t.genre || '').split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean)
+      .forEach(function (tg) { selected[tg] = true; });
 
     const body = Utils.el('div', { class: 'tag-ui' }, [
       Utils.el('div', { class: 'tag-ui-title-line' }, [
@@ -1346,12 +1362,17 @@ window.AIUI = (function () {
         descArea,
         runBtn
       ]),
+      Utils.el('div', { class: 'tag-ui-manual-row' }, [
+        manualInp,
+        manualAddBtn
+      ]),
       statusEl,
+      retryBtn,
       chipsHost
     ]);
 
     Modal.open({
-      title: 'تگ‌های علتی',
+      title: 'تگ‌ها',
       icon: '🏷️',
       size: 'md',
       body: body,
@@ -1368,6 +1389,27 @@ window.AIUI = (function () {
       statusEl.textContent = text || '';
       statusEl.dataset.kind = kind || '';
       statusEl.hidden = !text;
+      retryBtn.hidden = kind !== 'error';
+    }
+
+    function syncApply() {
+      applyBtn.disabled = Object.keys(selected).length === 0;
+    }
+
+    function makeChip(tag, kind) {
+      tag = String(tag || '').trim();
+      if (!tag) return null;
+      var btn = Utils.el('button', {
+        type: 'button',
+        class: 'tag-chip tag-chip-' + (kind || 'neu') + (selected[tag] ? ' is-on' : '')
+      }, [tag]);
+      btn.addEventListener('click', function () {
+        if (selected[tag]) delete selected[tag];
+        else selected[tag] = true;
+        btn.classList.toggle('is-on', !!selected[tag]);
+        syncApply();
+      });
+      return btn;
     }
 
     function renderPicks(positives, negatives, flat) {
@@ -1377,40 +1419,87 @@ window.AIUI = (function () {
         chipsHost.appendChild(Utils.el('div', { class: 'tag-pick-section' }, [label]));
         var row = Utils.el('div', { class: 'tag-pick-row' });
         list.forEach(function (tag) {
-          tag = String(tag || '').trim();
-          if (!tag) return;
-          var btn = Utils.el('button', {
-            type: 'button',
-            class: 'tag-chip tag-chip-' + kind + (selected[tag] ? ' is-on' : '')
-          }, [tag]);
-          btn.addEventListener('click', function () {
-            if (selected[tag]) delete selected[tag];
-            else selected[tag] = true;
-            btn.classList.toggle('is-on', !!selected[tag]);
-            applyBtn.disabled = Object.keys(selected).length === 0;
-          });
-          row.appendChild(btn);
+          var chip = makeChip(tag, kind);
+          if (chip) row.appendChild(chip);
         });
         chipsHost.appendChild(row);
       }
       if ((positives && positives.length) || (negatives && negatives.length)) {
         section('+ خوش‌آمدن', positives, 'pos');
         section('− خوش‌نیامدن', negatives, 'neg');
-      } else {
-        section('تگ‌ها', flat || [], 'neu');
+      } else if (flat && flat.length) {
+        section('تگ‌ها', flat, 'neu');
       }
+      /* انتخاب‌شده‌های دستی که در لیست نیست */
+      var extra = Object.keys(selected).filter(function (tg) {
+        var all = [].concat(positives || [], negatives || [], flat || []);
+        return all.indexOf(tg) < 0;
+      });
+      if (extra.length) section('انتخاب‌شده', extra, 'neu');
+      syncApply();
     }
+
+    function renderSelectedOnly() {
+      chipsHost.innerHTML = '';
+      var keys = Object.keys(selected);
+      if (!keys.length) {
+        chipsHost.appendChild(Utils.el('div', { class: 'tag-pick-hint' }, [
+          'تگ دستی اضافه کن یا از AI پیشنهاد بگیر.'
+        ]));
+        syncApply();
+        return;
+      }
+      chipsHost.appendChild(Utils.el('div', { class: 'tag-pick-section' }, ['تگ‌های انتخابی']));
+      var row = Utils.el('div', { class: 'tag-pick-row' });
+      keys.forEach(function (tag) {
+        var chip = makeChip(tag, 'neu');
+        if (chip) row.appendChild(chip);
+      });
+      chipsHost.appendChild(row);
+      syncApply();
+    }
+
+    function addManual() {
+      var tag = String(manualInp.value || '').trim();
+      if (!tag) return;
+      selected[tag] = true;
+      manualInp.value = '';
+      /* اگر چیپ‌های AI هست، فقط این را هم نشان بده؛ وگرنه لیست انتخابی */
+      if (chipsHost.querySelector('.tag-chip')) {
+        var row = chipsHost.querySelector('.tag-pick-row:last-child');
+        var exists = Array.prototype.some.call(chipsHost.querySelectorAll('.tag-chip'), function (el) {
+          return el.textContent === tag;
+        });
+        if (!exists) {
+          var chip = makeChip(tag, 'neu');
+          if (chip && row) row.appendChild(chip);
+          else renderSelectedOnly();
+        } else {
+          Array.prototype.forEach.call(chipsHost.querySelectorAll('.tag-chip'), function (el) {
+            if (el.textContent === tag) el.classList.add('is-on');
+          });
+        }
+        syncApply();
+      } else {
+        renderSelectedOnly();
+      }
+      manualInp.focus();
+    }
+
+    manualAddBtn.addEventListener('click', addManual);
+    manualInp.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        addManual();
+      }
+    });
 
     applyBtn.addEventListener('click', function () {
       var tags = Object.keys(selected);
       if (!tags.length) return;
       var current = DB.getTitle(id);
       if (!current) return;
-      var prev = String(current.genre || '').split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean);
-      tags.forEach(function (tg) {
-        if (prev.indexOf(tg) < 0) prev.push(tg);
-      });
-      DB.updateTitle(id, Object.assign({}, current, { genre: prev.join('، ') }), false);
+      DB.updateTitle(id, Object.assign({}, current, { genre: tags.join('، ') }), false);
       try { State.loadAll(); State.applyFilters(); Events.renderList(); } catch (e) {}
       Toast.success('تگ‌ها ذخیره شد');
       Modal.close();
@@ -1420,9 +1509,7 @@ window.AIUI = (function () {
       if (running) return;
       running = true;
       runBtn.disabled = true;
-      applyBtn.disabled = true;
-      selected = {};
-      chipsHost.innerHTML = '';
+      retryBtn.hidden = true;
       setStatus('در حال دریافت تگ…', 'loading');
       activeAbort = new AbortController();
       var meta = Object.assign({}, t, { notes: descArea.value.trim(), reason: '' });
@@ -1454,8 +1541,11 @@ window.AIUI = (function () {
       } catch (err) {
         if (err && err.code === 'PROMPT_CANCELLED') {
           setStatus('لغو شد', 'muted');
+          retryBtn.hidden = true;
         } else {
-          setStatus(err.message || 'خطا', 'error');
+          setStatus(err.message || 'خطا — می‌توانی دوباره تلاش کنی یا تگ دستی بزنی', 'error');
+          retryBtn.hidden = false;
+          renderSelectedOnly();
         }
       } finally {
         running = false;
@@ -1464,7 +1554,10 @@ window.AIUI = (function () {
     }
 
     runBtn.addEventListener('click', function () { runSuggest(); });
-    /* شروع خودکار */
+    retryBtn.addEventListener('click', function () { runSuggest(); });
+
+    /* شروع: تگ‌های قبلی + پیشنهاد خودکار */
+    renderSelectedOnly();
     setTimeout(function () { runSuggest(); }, 80);
   }
 

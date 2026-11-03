@@ -1427,3 +1427,12 @@
   flex-direction: column;
   gap: 4px;
 }
+
+.tag-ui-manual-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tag-ui-manual-row .field-input {
+  flex: 1;
+}
