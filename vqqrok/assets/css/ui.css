@@ -419,17 +419,21 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
 .ayah__num {
   display: inline;
   font-family: var(--font-quran), var(--font-ui, system-ui);
-  font-size: .55em;
+  font-size: .5em;
   font-weight: 500;
   line-height: 1;
   color: var(--accent-deep);
   white-space: nowrap;
-  margin: 0;
+  /* کشیدن متن آیهٔ بعدی به سمت شماره — حذف فاصلهٔ بصری */
+  margin-inline: 0 -.12em;
   padding: 0;
   border: 0;
   background: none;
-  vertical-align: .15em;
+  vertical-align: .2em;
   transition: color .2s var(--ease);
+}
+.ayah + .ayah {
+  margin-inline-start: -.08em;
 }
 .ayah.is-marked .ayah__num { color: var(--accent); }
 html[data-theme="night"] .ayah__num { color: var(--gold); }
