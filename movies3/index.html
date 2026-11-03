@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+<meta name="theme-color" content="#131b24" />
+<meta name="description" content="سینما من — آرشیو شخصی فیلم و سریال" />
+<title>سینما من | آرشیو شخصی</title>
+
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+
+<!-- Dialogs, AI screens, settings and DB admin still use these until they are rebuilt -->
+<link rel="stylesheet" href="css/reset.css" />
+<link rel="stylesheet" href="css/utilities.css" />
+<link rel="stylesheet" href="css/animations.css" />
+<link rel="stylesheet" href="css/forms.css" />
+<link rel="stylesheet" href="css/modal.css" />
+<link rel="stylesheet" href="css/ai.css" />
+<link rel="stylesheet" href="css/ai-log.css" />
+<link rel="stylesheet" href="css/settings.css" />
+<link rel="stylesheet" href="css/free-prompt.css" />
+<link rel="stylesheet" href="css/db-admin.css" />
+<!-- The new UI (loaded last so it wins) -->
+<link rel="stylesheet" href="css/ui.css" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+
+<div id="boot-loader" class="boot-loader">
+  <div class="boot-logo-text">سینما من</div>
+  <div class="boot-progress"><div class="boot-progress-fill"></div></div>
+  <div class="boot-log" id="boot-log"></div>
+</div>
+
+<div class="app" id="app" data-page="ai" hidden>
+
+  <header class="m-top" id="app-header">
+    <button class="m-ib menu-toggle" id="btn-menu-toggle" title="منو" aria-label="منو">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+    </button>
+
+    <div class="m-brand">
+      <h1 class="brand-title">سینما من</h1>
+      <small>آرشیو شخصی</small>
+    </div>
+
+    <nav class="m-tabs" id="side-page-nav" aria-label="صفحه‌ها">
+      <button class="side-page-btn m-tab is-active" data-page="ai" type="button">هوش مصنوعی</button>
+      <button class="side-page-btn m-tab" data-page="personality" type="button">تحلیل شخصیت</button>
+      <button class="side-page-btn m-tab" data-page="library" type="button">فیلم و سریال</button>
+    </nav>
+
+    <div class="m-search">
+      <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="global-search" placeholder="جستجو در عنوان‌ها" autocomplete="off" spellcheck="false" />
+      <button class="m-ib search-clear" id="btn-search-clear" title="پاک کردن" hidden>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="m-end">
+      <div class="sync-status" id="sync-status" data-state="idle" role="button" tabindex="0" title="وضعیت اتصال">
+        <span class="sync-dot"></span><span class="sync-label" id="sync-label">آنلاین</span>
+      </div>
+      <button class="m-ib" id="btn-stats" title="آمار" aria-label="آمار">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button class="m-ib" id="btn-theme" title="روشن / تاریک" aria-label="روشن یا تاریک">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+      <button class="m-ib" id="btn-settings" title="تنظیمات" aria-label="تنظیمات">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- nodes the JS still writes to; not part of the new layout -->
+  <div hidden aria-hidden="true">
+    <div id="ticker"><div id="tk-inner"></div></div>
+    <b id="hd-total">0</b><b id="hd-avg">—</b><span id="hd-clock"></span>
+  </div>
+
+  <aside class="m-side" id="sidebar">
+    <section class="m-grp for-lib">
+      <h3>امتیاز</h3>
+      <ul class="rate-list" id="star-list">
+        <li><button class="side-item m-rate is-active" data-star="all"><i style="background:var(--tx-2)"></i><span>همه</span><em data-star-count="all">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="5"><i></i><span>شاهکار</span><em data-star-count="5">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="4"><i></i><span>خوب</span><em data-star-count="4">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="3"><i></i><span>خنثی</span><em data-star-count="3">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="2"><i></i><span>ضعیف</span><em data-star-count="2">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="1"><i></i><span>متنفرم</span><em data-star-count="1">0</em></button></li>
+        <li><button class="side-item m-rate" data-star="0"><i></i><span>بدون امتیاز</span><em data-star-count="0">0</em></button></li>
+      </ul>
+    </section>
+
+    <section class="m-grp for-lib">
+      <h3>فیلتر</h3>
+      <label class="m-field"><span>نوع</span>
+        <select id="filter-type">
+          <option value="all">همه</option><option value="series">سریال</option><option value="movie">فیلم</option>
+          <option value="anime">انیمیشن</option><option value="documentary">مستند</option>
+        </select>
+      </label>
+      <label class="m-field"><span>مرتب‌سازی</span>
+        <select id="filter-sort">
+          <option value="recent">جدیدترین</option><option value="oldest">قدیمی‌ترین</option>
+          <option value="rating-desc">بیشترین ستاره</option><option value="rating-asc">کمترین ستاره</option>
+          <option value="title-asc">نام (الف-ی)</option><option value="title-desc">نام (ی-الف)</option>
+          <option value="year-desc">جدیدترین سال</option>
+        </select>
+      </label>
+      <label class="m-check"><input type="checkbox" id="filter-favorite" /><span>فقط علاقه‌مندی‌ها</span></label>
+      <label class="m-check"><input type="checkbox" id="filter-rated" /><span>فقط امتیازداده‌شده‌ها</span></label>
+    </section>
+
+    <section class="m-grp for-lib">
+      <h3>خلاصه</h3>
+      <div class="m-kv"><span>کل</span><strong id="mini-total">۰</strong></div>
+      <div class="m-kv"><span>میانگین ستاره</span><strong id="mini-avg">—</strong></div>
+      <div class="m-kv"><span>علاقه‌مندی</span><strong id="mini-fav">۰</strong></div>
+    </section>
+
+    <section class="m-grp">
+      <h3>ابزارهای هوش مصنوعی</h3>
+      <button class="side-action" id="btn-ai-analyze" type="button">تحلیل و پیشنهاد</button>
+      <button class="side-action" id="btn-free-prompt" type="button">پرامپت آزاد</button>
+    </section>
+
+    <section class="m-grp">
+      <h3>داده</h3>
+      <button class="side-action" id="btn-export" type="button">خروجی JSON</button>
+      <button class="side-action" id="btn-import" type="button">ورود از JSON</button>
+      <input type="file" id="import-file" accept="application/json" hidden />
+    </section>
+  </aside>
+
+  <main class="m-main" id="main-content">
+
+    <!-- AI -->
+    <section class="m-page is-active" id="ai-page">
+      <div class="m-ph"><div><h2>هوش مصنوعی</h2><p>سلیقه‌ات را تحلیل کن یا آزاد گفت‌وگو کن</p></div></div>
+      <div class="m-tiles">
+        <button class="m-tile" type="button" id="ai-card-analyze">
+          <span class="ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+          <span class="tool-name">تحلیل و پیشنهاد</span>
+          <span class="tool-desc">سلیقه‌ات را بخوان و عنوان‌های تازه پیشنهاد بده</span>
+        </button>
+        <button class="m-tile" type="button" id="ai-card-free-prompt">
+          <span class="ico"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <span class="tool-name">پرامپت آزاد</span>
+          <span class="tool-desc">گفت‌وگوی آزاد با مدل فعال</span>
+        </button>
+      </div>
+      <div class="m-model" id="ai-global-picker">
+        <div>
+          <small>مدل فعال در همهٔ ابزارها</small>
+          <strong id="ai-global-model-label">—</strong>
+          <code id="ai-global-model-id"></code>
+        </div>
+        <div class="m-tools">
+          <button class="m-btn m-btn--gold" type="button" id="btn-ai-change-model">انتخاب یا تست مدل</button>
+          <button class="m-btn m-btn--ghost" type="button" id="btn-ai-fetch-models" title="جستجوی مدل‌های رایگان OpenRouter">افزودن از OpenRouter</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Personality -->
+    <section class="m-page" id="personality-page">
+      <div class="m-ph">
+        <div><h2>تحلیل عمیق شخصیت</h2><p class="page-sub">بر اساس آثار امتیازدار · ۵ تحلیل اخیر</p></div>
+        <div class="m-tools">
+          <div class="m-seg" role="group" aria-label="نوع پیشنهاد">
+            <button type="button" class="pers-kind-btn is-active" data-kind="movie" id="pers-kind-movie">فیلم</button>
+            <button type="button" class="pers-kind-btn" data-kind="series" id="pers-kind-series">سریال</button>
+          </div>
+          <button class="m-btn m-btn--gold" type="button" id="btn-run-personality">اجرای تحلیل جدید</button>
+        </div>
+      </div>
+      <div class="m-pers">
+        <div class="m-panel" id="pers-stream-wrap">
+          <div class="pers-stream-empty" id="pers-stream-empty">برای شروع، «اجرای تحلیل جدید» را بزن.</div>
+          <div id="pers-stream-host"></div>
+        </div>
+        <aside class="m-panel" id="pers-history">
+          <h3>سنجاق‌شده و ۵ اخیر</h3>
+          <div id="pers-history-list"></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- Library -->
+    <section class="m-page" id="library-page">
+      <div class="m-ph" id="toolbar">
+        <div><h2 id="page-title">همه‌ی عنوان‌ها</h2><p id="page-sub">۰ مورد</p></div>
+        <div class="m-tools">
+          <div class="m-seg" role="tablist">
+            <button class="view-btn is-active" data-view="grid" title="کارتی" aria-label="نمای کارتی"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></button>
+            <button class="view-btn" data-view="list" title="لیستی" aria-label="نمای لیستی"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+          </div>
+          <button class="m-btn m-btn--gold" id="btn-add" type="button">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>افزودن
+          </button>
+        </div>
+      </div>
+
+      <details class="m-stats">
+        <summary>آمار کتابخانه</summary>
+        <aside class="side-r" id="rail" aria-label="آمار زنده">
+          <section class="rail-panel"><h3><span>امتیازها</span><em>۰–۵</em></h3><ul id="rail-stars"></ul></section>
+          <section class="rail-panel"><h3><span>نوع‌ها</span></h3><ul id="rail-types"></ul></section>
+          <section class="rail-panel"><h3><span>فعالیت</span><em id="rail-act-meta">۱۲ هفته</em></h3>
+            <div class="rl-spark"><svg viewBox="0 0 200 60" preserveAspectRatio="none"><polygon id="sp-fill"/><polyline id="sp-line"/></svg></div></section>
+          <section class="rail-panel"><h3><span>برترین‌ها</span></h3><ol class="rl-picks" id="rail-picks"></ol></section>
+        </aside>
+      </details>
+
+      <div id="content-area">
+        <div class="m-grid" id="grid"></div>
+        <div class="m-empty" id="empty-state" hidden>
+          <h3>چیزی اینجا نیست</h3>
+          <p>هنوز عنوانی اضافه نکرده‌ای، یا فیلترها چیزی را نشان نمی‌دهند.</p>
+          <button class="m-btn m-btn--gold" id="btn-empty-add" type="button">افزودن اولین عنوان</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="m-foot">
+    <label class="cmdbar"><span class="cmd-prompt">&#10095;</span><input id="cmd" type="text" dir="ltr" autocomplete="off" spellcheck="false" placeholder="دستور — help" /><span class="cmd-out" id="cmd-out"></span></label>
+    <span class="footer-hint"><kbd>Ctrl</kbd> + <kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
+    <span>نسخه <span id="app-version">2.2.0</span></span>
+    <span id="footer-status">آماده</span>
+  </footer>
+</div>
+
+<div class="db-page" id="db-page"></div>
+<div class="modal-root" id="modal-root" aria-hidden="true"></div>
+<div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/toast.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/github.js"></script>
+<script src="js/db.js"></script>
+<script src="js/state.js"></script>
+<script src="js/render.js"></script>
+<script src="js/stats.js"></script>
+
+<script src="js/ai-log.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/ai-prompts.js"></script>
+<script src="js/ai-title-lookup.js"></script>
+<script src="js/ai-standardize.js"></script>
+<script src="js/ai-analysis.js"></script>
+<script src="js/ai-models.js"></script>
+<script src="js/ai-ui.js"></script>
+<script src="js/ai-free-prompt.js"></script>
+<script src="js/db-admin.js"></script>
+
+<script src="js/events.js"></script>
+<script src="js/app.js"></script>
+<script src="js/terminal.js"></script>
+<script src="js/glitch.js"></script>
+</body>
+</html>
