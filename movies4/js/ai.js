@@ -128,22 +128,17 @@ window.AI = (function () {
     if (status === 401 || status === 403) return 'دسترسی مجاز نیست (کلید یا تنظیمات سرور).';
     if (status === 429) return 'محدودیت نرخ — کمی بعد دوباره تلاش کن.';
 
-    // اگر پیام واقعی از AI آمده، همان را نشان بده
-    if (msg && msg !== 'Provider returned error') {
+    if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
+      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند.';
+    }
+
+    // همیشه پیام واقعی را نشان بده
+    if (msg) {
       return 'خطای واسط (' + status + '): ' + msg;
     }
 
-    if (status === 502) {
-      return 'خطای واسط (502): Provider returned error';
-    }
-
-    /* Supabase Edge: 546 = worker killed (often WallClockTime) */
-    if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
-      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند — مشکل مدل Google نیست، مشکل مسیر Edge است.';
-    }
-
-    if (msg) return msg;
-    return 'خطای سرور (HTTP ' + status + ')';
+    // اگر هیچ پیامی نبود
+    return 'خطای واسط (' + status + '): بدنه پاسخ خالی بود (Provider returned no error message)';
   }
 
 
@@ -352,16 +347,22 @@ window.AI = (function () {
     if (!res.ok) {
       // سعی می‌کنیم بدنه پاسخ را بخوانیم تا پیام خام AI را ببینیم
       let bodyError = '';
+      let rawText = '';
+
       try {
         const clone = res.clone();
-        const json = await clone.json();
-        bodyError = json.error || json.message || json.detail || json.raw_error || '';
-      } catch (e) {
+        rawText = await clone.text();
         try {
-          const text = await res.text();
-          bodyError = text.slice(0, 500);
-        } catch (e2) {}
+          const json = JSON.parse(rawText);
+          bodyError = json.error || json.message || json.detail || json.raw_error || json.error_description || '';
+        } catch (e) {
+          bodyError = rawText.slice(0, 800);
+        }
+      } catch (e) {
+        bodyError = '(نتوانستیم بدنه را بخوانیم)';
       }
+
+      console.error('[AI] Error body raw:', rawText || bodyError);
 
       const msg = friendlyHttpError(res.status, bodyError);
       aiLog('error', '✗ ' + msg);
@@ -493,7 +494,7 @@ window.AI = (function () {
     const fenced = s.match(/```(?:json|JSON)?\s*\n?([\s\S]*?)```/);
     if (fenced && /[\{\[]/.test(fenced[1])) {
       const inner = fenced[1].trim();
-      const before = s.slice(fenced.index).trim();
+      const before = s.slice(0, fenced.index).trim();
       const after = s.slice(fenced.index + fenced[0].length).trim();
       var parsed = tryParseJson(inner);
       if (!parsed) {
