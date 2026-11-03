@@ -31,6 +31,10 @@ window.AIAnalysis = (function () {
     });
     var titlesForAI = rated.map(function (t) {
       var r = Math.round(Number(t.rating) || 0);
+      var tags = String(t.genre || '')
+        .split(/[،,]/)
+        .map(function (s) { return s.trim(); })
+        .filter(Boolean);
       return {
         title: t.title,
         original_title: t.original_title || '',
@@ -38,26 +42,21 @@ window.AIAnalysis = (function () {
         year: t.year,
         rating: r,
         rating_meaning: starMeaning(r),
-        reason: (t.reason || '').trim(),
-        notes: (t.notes || '').trim(),
-        genre: t.genre || ''
+        tags: tags,
+        notes: (t.notes || '').trim()
       };
     });
     return { all: all, rated: titlesForAI };
   }
 
   function formatTitleLine(t, compact) {
+    var tags = t.tags || (t.genre ? String(t.genre).split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
     var line = '• «' + t.title + '»'
       + (t.year ? ' (' + t.year + ')' : '')
       + ' [' + (t.type || '?') + ']'
       + ' ★' + t.rating
-      + (t.genre ? ' · ' + t.genre : '');
-    if (!compact) {
-      if (t.reason) line += '\n  دلیل: ' + String(t.reason).slice(0, 180);
-      if (t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 120);
-    } else if (t.reason) {
-      line += ' — ' + String(t.reason).slice(0, 80);
-    }
+      + (tags.length ? ' · ' + tags.join('، ') : '');
+    if (!compact && t.notes) line += '\n  یادداشت: ' + String(t.notes).slice(0, 120);
     return line;
   }
 
@@ -114,9 +113,8 @@ window.AIAnalysis = (function () {
       var line = '- ' + name
         + (t.year ? ' | سال ' + t.year : '')
         + ' | امتیاز ' + t.rating;
-      /* چرا؟ فقط اگر پر باشد — اختیاری */
-      if (t.reason && String(t.reason).trim()) {
-        line += ' | چرا: ' + String(t.reason).trim().slice(0, 200);
+      if (t.tags && t.tags.length) {
+        line += ' | تگ: ' + t.tags.join('، ');
       }
       return line;
     });
@@ -136,11 +134,12 @@ window.AIAnalysis = (function () {
       '۲ = افتضاح؛ کاش تماشا نمی‌کردم، اگر به گذشته برگردم وقتم رو تلف نمیکنم',
       '۱ = افتضاح؛ از تماشا عصبانی‌ام',
       '',
-      'فهرست آثار امتیازداده‌شده (عنوان صحیح | سال ساخت | امتیاز):',
+      'فهرست آثار امتیازداده‌شده (عنوان | سال | امتیاز | تگ‌های کاربر در صورت وجود):',
       lines.join('\n'),
       '',
       'درخواست:',
-      'بر اساس منطق امتیازها و فهرست بالا، سلیقه و شخصیت این بیننده را به‌صورت همه‌جانبه، طولانی، مفصل و عمیق تحلیل کن.',
+      'بر اساس منطق امتیازها، تگ‌های کاربر (اگر هست) و فهرست بالا، سلیقه و شخصیت این بیننده را به‌صورت همه‌جانبه، طولانی، مفصل و عمیق تحلیل کن.',
+      'تگ‌ها برچسب‌های انتخابی کاربر روی هر اثرند — در تحلیل سلیقه وزن بده.',
       'نوع شخصیت MBTI احتمالی را هم با دلیل (بر اساس الگوی امتیازها و انتخاب آثار) مشخص کن.',
       'در پایان دقیقاً یک ' + kindFa + ' پیشنهاد بده که با این سلیقه هم‌خوان باشد و در فهرست بالا نباشد.',
       'دلیل پیشنهاد را مفصل بنویس.',
