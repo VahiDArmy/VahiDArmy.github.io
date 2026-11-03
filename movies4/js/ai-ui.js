@@ -1587,6 +1587,7 @@ window.AIUI = (function () {
     renderMarkdown: renderMarkdown,
     renderStoryAnalysis: renderStoryAnalysis,
     createStreamPanelForPage: createStreamPanelForPage,
+    formatAiErrorHtml: formatAiErrorHtml,
     cleanup: cleanup,
     showLog: showLog
   };

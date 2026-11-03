@@ -327,14 +327,17 @@ window.AI = (function () {
     /* Non-SSE: edge did not stream — often means timeout or buffered full response */
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
+      const text = json.text || json.content || json.message || json.detail || json.raw_error || '';
+      if (text) lastRawResponse = String(text);
       if (!res.ok || json.error) {
         const msg = friendlyHttpError(res.status, json.error || json.message || json.detail || json.raw_error || '');
         aiLog('error', '✗ ' + msg);
         aiAutoHide();
-        throw new Error(msg);
+        const err = new Error(msg);
+        err.rawResponse = lastRawResponse || String(text || '');
+        throw err;
       }
       /* still deliver text if present, but log that stream failed */
-      const text = json.text || json.content || '';
       if (json.model) applyResolvedModel(json.model, json.requested_model);
       aiLog('warn', '⚠ پاسخ غیر‌استریمی از Edge (ممکن است نزدیک timeout باشد)');
       if (text) onToken(text);
@@ -355,9 +358,11 @@ window.AI = (function () {
         try {
           const json = JSON.parse(rawText);
           bodyError = json.error || json.message || json.detail || json.raw_error || json.error_description || '';
+          if (json.text || json.content) lastRawResponse = String(json.text || json.content);
         } catch (e) {
           bodyError = rawText.slice(0, 800);
         }
+        if (!lastRawResponse && rawText) lastRawResponse = rawText.slice(0, 4000);
       } catch (e) {
         bodyError = '(نتوانستیم بدنه را بخوانیم)';
       }
@@ -367,7 +372,9 @@ window.AI = (function () {
       const msg = friendlyHttpError(res.status, bodyError);
       aiLog('error', '✗ ' + msg);
       aiAutoHide();
-      throw new Error(msg);
+      const err = new Error(msg);
+      err.rawResponse = lastRawResponse || bodyError || rawText || '';
+      throw err;
     }
 
     const reader = res.body.getReader();
@@ -391,7 +398,13 @@ window.AI = (function () {
         try {
           const obj = JSON.parse(raw);
           if (obj.error) {
-            streamError = obj.error;
+            streamError = typeof obj.error === 'string' ? obj.error
+              : (obj.error.message || obj.message || obj.detail || obj.raw_error || JSON.stringify(obj.error));
+            /* اگر مدل قبل از خطا متنی فرستاده، نگه دار */
+            if (typeof obj.text === 'string' && obj.text) {
+              full += obj.text;
+              onToken(obj.text);
+            }
             continue;
           }
           if (obj.model) applyResolvedModel(obj.model, obj.requested_model);
@@ -413,10 +426,14 @@ window.AI = (function () {
       }
     }
 
+    lastRawResponse = full || '';
+
     if (streamError) {
       aiLog('error', '✗ ' + streamError);
       aiAutoHide();
-      throw new Error(streamError);
+      const err = new Error(streamError);
+      err.rawResponse = full || lastRawResponse || '';
+      throw err;
     }
 
     aiLog('success', '✓ استریم تمام شد (' + full.length + ' کاراکتر)');
