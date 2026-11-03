@@ -1370,3 +1370,17 @@
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
+
+.tag-pick-section {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin: 10px 0 6px;
+}
+.tag-chip-pos.is-on {
+  border-color: #3d9a6a;
+  color: #3d9a6a;
+}
+.tag-chip-neg.is-on {
+  border-color: #c45c5c;
+  color: #c45c5c;
+}

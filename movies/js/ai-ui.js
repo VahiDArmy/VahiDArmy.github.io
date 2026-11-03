@@ -1357,29 +1357,43 @@ window.AIUI = (function () {
 
     var selected = {};
 
-    function renderPicks(tags) {
+    function renderPicks(tags, positives, negatives) {
+      positives = positives || [];
+      negatives = negatives || [];
       pickBox.hidden = false;
       pickBox.innerHTML = '';
       pickBox.appendChild(Utils.el('div', { class: 'tag-pick-hint' }, [
-        'تگ‌هایی که می‌پسندی را انتخاب کن:'
+        'نقاط مثبت/منفی و علت خوش‌آمدن یا نیامدن — انتخاب کن:'
       ]));
-      var row = Utils.el('div', { class: 'tag-pick-row' });
-      tags.forEach(function (tag) {
-        tag = String(tag || '').trim();
-        if (!tag) return;
-        var btn = Utils.el('button', {
-          type: 'button',
-          class: 'tag-chip' + (selected[tag] ? ' is-on' : '')
-        }, [tag]);
-        btn.addEventListener('click', function () {
-          if (selected[tag]) delete selected[tag];
-          else selected[tag] = true;
-          btn.classList.toggle('is-on', !!selected[tag]);
-          applyBtn.disabled = Object.keys(selected).length === 0;
+
+      function addSection(title, list, kind) {
+        if (!list || !list.length) return;
+        pickBox.appendChild(Utils.el('div', { class: 'tag-pick-section' }, [title]));
+        var row = Utils.el('div', { class: 'tag-pick-row' });
+        list.forEach(function (tag) {
+          tag = String(tag || '').trim();
+          if (!tag) return;
+          var btn = Utils.el('button', {
+            type: 'button',
+            class: 'tag-chip tag-chip-' + kind + (selected[tag] ? ' is-on' : '')
+          }, [tag]);
+          btn.addEventListener('click', function () {
+            if (selected[tag]) delete selected[tag];
+            else selected[tag] = true;
+            btn.classList.toggle('is-on', !!selected[tag]);
+            applyBtn.disabled = Object.keys(selected).length === 0;
+          });
+          row.appendChild(btn);
         });
-        row.appendChild(btn);
-      });
-      pickBox.appendChild(row);
+        pickBox.appendChild(row);
+      }
+
+      if (positives.length || negatives.length) {
+        addSection('+ نقاط مثبت / دلایل خوش‌آمدن', positives, 'pos');
+        addSection('− نقاط منفی / دلایل خوش‌نیامدن', negatives, 'neg');
+      } else {
+        addSection('تگ‌ها', tags, 'neu');
+      }
     }
 
     applyBtn.addEventListener('click', function () {
@@ -1416,17 +1430,23 @@ window.AIUI = (function () {
         signal: activeAbort.signal
       });
       var parsed = AI.parseJSONResponse(raw);
-      var suggested = (parsed && Array.isArray(parsed.tags)) ? parsed.tags : [];
+      var suggested = [];
+      var positives = (parsed && Array.isArray(parsed.positives)) ? parsed.positives : [];
+      var negatives = (parsed && Array.isArray(parsed.negatives)) ? parsed.negatives : [];
+      if (parsed && Array.isArray(parsed.tags)) suggested = parsed.tags.slice();
+      if (!suggested.length) {
+        suggested = positives.concat(negatives);
+      }
       if (!suggested.length && raw) {
         suggested = String(raw).split(/[\n,،]/).map(function (s) {
           return s.replace(/^[\s\-\*\d.]+/, '').trim();
-        }).filter(function (s) { return s.length > 1 && s.length < 40; }).slice(0, 14);
+        }).filter(function (s) { return s.length > 1 && s.length < 48; }).slice(0, 16);
       }
       if (!suggested.length) throw new Error('تگی برنگشت');
       panel.setStatus('انتخاب کن', 'done');
       panel.setModelBadge();
       panel.setContent('');
-      renderPicks(suggested);
+      renderPicks(suggested, positives, negatives);
       applyBtn.disabled = true;
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
