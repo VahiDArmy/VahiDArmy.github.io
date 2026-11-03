@@ -1322,7 +1322,7 @@ window.AIUI = (function () {
       rows: 3,
       placeholder: 'یادداشت توصیفی اختیاری — اگر پر باشد تگ‌های مرتبط با متن تو هم می‌آید'
     });
-    if (t.notes) descArea.value = t.notes;
+    if (t.notes && !/^\[AI/i.test(String(t.notes).trim())) descArea.value = t.notes;
 
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-source' }, [
@@ -1399,7 +1399,11 @@ window.AIUI = (function () {
 
     panel.setStatus('در حال پیشنهاد تگ…', 'loading');
     activeAbort = new AbortController();
-    var meta = Object.assign({}, t, { notes: descArea.value.trim() || t.notes });
+    var noteVal = descArea.value.trim();
+    var meta = Object.assign({}, t, {
+      notes: noteVal,
+      reason: '' /* عمداً به پرامپت تگ نمی‌رود */
+    });
     try {
       var messages = [
         { role: 'system', content: AIPrompts.suggestTagsSystem },

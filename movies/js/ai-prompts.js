@@ -582,20 +582,27 @@ window.AIPrompts = (function () {
     ].join('\n');
   }
 
+  function isRealUserNote(notes) {
+    var s = String(notes || '').trim();
+    if (!s) return false;
+    /* نشانگرهای سیستمی AI / خواهم‌دید — یادداشت توصیفی کاربر نیستند */
+    if (/^\[AI/i.test(s)) return false;
+    if (/خواهم\s*دید/.test(s) && s.length < 40) return false;
+    return true;
+  }
+
   function suggestTagsUser(title, type, year, meta) {
     meta = meta || {};
     var lines = [
       'عنوان: ' + (title || ''),
       'نوع: ' + (type || ''),
       year ? ('سال: ' + year) : '',
-      meta.genre ? ('ژانر فعلی: ' + meta.genre) : '',
-      meta.rating ? ('امتیاز کاربر: ' + meta.rating) : '',
-      meta.reason ? ('چرا این امتیاز: ' + meta.reason) : '',
+      meta.genre ? ('ژانر/تگ فعلی: ' + meta.genre) : '',
       '',
       '۸ تا ۱۴ تگ پیشنهادی برای این اثر بده (تم، حس، سبک روایت، لحن، مخاطب).'
     ].filter(Boolean);
     var desc = String(meta.notes || meta.user_take || '').trim();
-    if (desc) {
+    if (isRealUserNote(desc)) {
       lines.push('');
       lines.push('یادداشت توصیفی کاربر:');
       lines.push(desc);
