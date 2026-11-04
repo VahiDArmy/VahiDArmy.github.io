@@ -8,7 +8,7 @@ const $ = id => document.getElementById(id);
 
 /* ── persisted preferences ─────────────────────────────────── */
 const PREF_KEY = {
-    accent: 'fm_accent', view: 'fm_view', sort: 'fm_sort',
+    accent: 'fm_accent', view: 'fm_view2', sort: 'fm_sort',
     formatted: 'fm_formatted', hideGitkeep: 'fm_hide_gitkeep',
 };
 const store = {
@@ -19,7 +19,7 @@ const store = {
 };
 const prefs = {
     accent: store.get(PREF_KEY.accent, 'cyan'),
-    view: store.get(PREF_KEY.view, 'grid'),
+    view: store.get(PREF_KEY.view, 'list'),
     sort: store.get(PREF_KEY.sort, 'name-asc'),
     formatted: store.get(PREF_KEY.formatted, false),
     hideGitkeep: store.get(PREF_KEY.hideGitkeep, true),
@@ -53,6 +53,7 @@ let displayed = [];
 let viewIndex = new Map();
 let lastDeletion = null;
 let pathCache = null;
+let pendingPath = null;
 
 const selection = new Set();
 
@@ -335,7 +336,7 @@ async function connect() {
     state.owner = owner;
     state.repo = repo;
     state.token = token;
-    state.path = '';
+    state.path = pendingPath || '';
     state.query = '';
     searchInput.value = '';
     searchClear.classList.remove('show');
@@ -359,6 +360,8 @@ async function connect() {
         await loadBranches();
         renderCrumbs();
         await load();
+        pendingPath = null;
+        syncUrl();
         toast(`Connected to ${info.full_name}`, 'ok', { ms: 2200 });
     } catch (err) {
         console.error('Connection error:', err);
@@ -449,6 +452,8 @@ function bindMenu(button, menu, onPick) {
 function navigate(path) {
     const next = normalizeRel(path);
     state.path = next;
+    pendingPath = null;
+    syncUrl();
     state.query = '';
     searchInput.value = '';
     searchClear.classList.remove('show');
@@ -584,6 +589,9 @@ function renderFiles() {
     filesEl.innerHTML = '';
     viewIndex = new Map();
 
+    dateSeq++;
+    dateQueue.length = 0;
+
     if (!state.connected) { renderWelcome(); return; }
     if (state.deepSearch) { renderDeepSearch(); return; }
 
@@ -623,13 +631,19 @@ function backCard() {
     return card;
 }
 
-function cardActions(item) {
+function quickActions(item, context) {
     const isDir = item.type === 'dir';
     const wrap = document.createElement('div');
-    wrap.className = 'card-actions';
-    wrap.innerHTML = `
-        <button class="qa" data-qa="download" title="${isDir ? 'Download folder as .zip' : 'Download file'}">⬇</button>
-        <button class="qa kebab" data-qa="menu" title="More actions" aria-label="More actions">⋯</button>`;
+    wrap.className = context === 'card' ? 'card-actions' : 'r-actions';
+    const button = (action, icon, title, extra = '') =>
+        `<button class="qa${extra}" data-qa="${action}" title="${title}" aria-label="${title}">${icon}</button>`;
+    let html = '';
+    html += button('download', '⬇', isDir ? 'Download folder as .zip' : 'Download file');
+    html += button('replace', '🔄', isDir ? 'Replace folder contents' : 'Replace file');
+    html += button('newtab', '🌐', isDir ? 'Open this folder in a new tab' : 'Open file in a new tab');
+    if (!isDir && isTextFile(item.name)) html += button('copy', '📋', 'Copy file contents', ' copy');
+    html += button('menu', '⋯', 'More actions', ' kebab');
+    wrap.innerHTML = html;
     return wrap;
 }
 
@@ -647,7 +661,7 @@ function buildCard(item) {
         <span class="name">${escapeHtml(item.name)}</span>
         <span class="meta">${isDir ? 'Folder' : formatSize(item.size)}</span>
         ${(!isDir && ext) ? `<span class="ext-badge">${escapeHtml(ext)}</span>` : ''}`;
-    card.appendChild(cardActions(item));
+    card.appendChild(quickActions(item, 'card'));
     if (clipboard && clipboard.mode === 'cut' && clipboard.items.some(i => i.path === item.path)) card.classList.add('cut');
     return card;
 }
@@ -656,11 +670,11 @@ function listHead() {
     const head = document.createElement('div');
     head.className = 'list-head';
     head.innerHTML = `
-        <span></span>
-        <span class="c-sort" data-sort="name">Name</span>
+        <span class="c-name c-sort" data-sort="name">Name</span>
         <span class="c-type c-sort" data-sort="type">Type</span>
-        <span class="c-sort" data-sort="size">Size</span>
-        <span style="text-align:right">Actions</span>`;
+        <span class="c-size c-sort" data-sort="size">Size</span>
+        <span class="c-date">Modified</span>
+        <span class="c-actions">Actions</span>`;
     return head;
 }
 
@@ -677,10 +691,9 @@ function buildRow(item) {
         <span class="r-name"><span class="r-ico">${getFileIcon(item.name, isDir)}</span><span class="r-label">${escapeHtml(item.name)}</span></span>
         <span class="r-type">${isDir ? 'folder' : (extOf(item.name) || 'file')}</span>
         <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-        <span class="r-actions">
-            <button class="qa" data-qa="download" title="${isDir ? 'Download as .zip' : 'Download'}">⬇</button>
-            <button class="qa" data-qa="menu" title="More actions">⋯</button>
-        </span>`;
+        <span class="r-date" title="Loading last commit…">—</span>`;
+    row.appendChild(quickActions(item, 'row'));
+    queueDate(item, row.querySelector('.r-date'));
     if (clipboard && clipboard.mode === 'cut' && clipboard.items.some(i => i.path === item.path)) row.classList.add('cut');
     return row;
 }
@@ -743,7 +756,8 @@ async function renderDeepSearch() {
                 <span class="r-name"><span class="r-ico">${getFileIcon(name, isDir)}</span><span class="r-label">${escapeHtml(name)}</span><span class="r-sub">${escapeHtml(parent)}</span></span>
                 <span class="r-type">${isDir ? 'folder' : (extOf(name) || 'file')}</span>
                 <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-                <span class="r-actions"><button class="qa" data-qa="menu" title="More actions">⋯</button></span>`;
+                <span class="r-date" title="Dates are not loaded for repository-wide search">—</span>`;
+            row.appendChild(quickActions(item, 'row'));
             filesEl.appendChild(row);
         });
         updateStats(hits.length);
@@ -1010,6 +1024,12 @@ async function runAction(action, item) {
             break;
         case 'preview':
             if (item) previewItem(item);
+            break;
+        case 'openNewTab':
+            if (item) openInNewTab(item);
+            break;
+        case 'copyContent':
+            if (item) await copyFileContent(item);
             break;
         case 'download':
             if (item) await (isDir ? downloadFolder(item) : downloadItem(item));
@@ -1406,6 +1426,107 @@ async function duplicateItem(item) {
     } catch (err) {
         console.error('Duplicate error:', err);
         toast('Duplicate failed: ' + err.message, 'err');
+    }
+}
+
+/* ── open in a new tab / copy contents ────────────────────── */
+function openInNewTab(item) {
+    if (!item) return;
+    if (item.type === 'dir') {
+        try {
+            const url = new URL(window.location.href);
+            url.search = '';
+            url.hash = '';
+            if (item.path) url.searchParams.set('path', item.path);
+            window.open(url.toString(), '_blank', 'noopener');
+        } catch (_) {
+            toast('Could not build the folder link', 'err');
+        }
+        return;
+    }
+    const raw = item.download_url
+        || `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${enc(state.branch)}/${enc(item.path)}`;
+    window.open(raw, '_blank', 'noopener');
+}
+
+async function copyFileContent(item) {
+    if (!item) return;
+    setStatus(`Loading ${item.name}…`, 'loading');
+    try {
+        const res = await fetchRaw(item.path);
+        copyToClipboard(await res.text());
+        flashStatus('File contents copied', 'ok');
+    } catch (err) {
+        toast('Copy failed: ' + err.message, 'err');
+    }
+}
+
+function syncUrl() {
+    try {
+        const url = new URL(window.location.href);
+        if (state.path) url.searchParams.set('path', state.path);
+        else url.searchParams.delete('path');
+        window.history.replaceState(null, '', url.toString());
+    } catch (_) { /* ignore */ }
+}
+
+/* ── last-commit dates ────────────────────────────────────── */
+const dateCache = new Map();
+const dateQueue = [];
+let dateActive = 0;
+let dateSeq = 0;
+let dateStopped = false;
+
+function formatDateTime(iso) {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '—';
+    const day = date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
+    const time = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    return `${day} · ${time}`;
+}
+
+function applyDate(node, iso) {
+    if (!node) return;
+    node.textContent = iso ? formatDateTime(iso) : '—';
+    node.title = iso ? new Date(iso).toLocaleString() : 'No commit date available';
+}
+
+function queueDate(item, node) {
+    if (!node) return;
+    const key = `${state.branch}:${item.path}`;
+    if (dateCache.has(key)) { applyDate(node, dateCache.get(key)); return; }
+    if (dateStopped) return;
+    dateQueue.push({ item, node, key, seq: dateSeq });
+    pumpDates();
+}
+
+function pumpDates() {
+    while (dateActive < 3 && dateQueue.length) {
+        const job = dateQueue.shift();
+        if (job.seq !== dateSeq) continue;
+        dateActive++;
+        fetchDate(job).finally(() => { dateActive--; pumpDates(); });
+    }
+}
+
+async function fetchDate(job) {
+    try {
+        const list = await api('GET', `/commits?path=${encodeURIComponent(job.item.path)}&sha=${encodeURIComponent(state.branch)}&per_page=1`);
+        const entry = Array.isArray(list) ? list[0] : null;
+        const commit = entry && entry.commit;
+        const iso = commit
+            ? (commit.committer && commit.committer.date) || (commit.author && commit.author.date) || null
+            : null;
+        dateCache.set(job.key, iso);
+        if (job.node.isConnected) applyDate(job.node, iso);
+    } catch (err) {
+        if (err.status === 403 || err.status === 429) {
+            dateStopped = true;
+            dateQueue.length = 0;
+            return;
+        }
+        dateCache.set(job.key, null);
+        if (job.node.isConnected) applyDate(job.node, null);
     }
 }
 
@@ -3242,9 +3363,12 @@ function wireEvents() {
         const quick = e.target.closest('[data-qa]');
         if (quick) {
             e.stopPropagation();
-            if (quick.dataset.qa === 'download') {
-                (item.type === 'dir' ? downloadFolder(item) : downloadItem(item)).catch(() => {});
-            } else {
+            const action = quick.dataset.qa;
+            if (action === 'download') (item.type === 'dir' ? downloadFolder(item) : downloadItem(item)).catch(() => {});
+            else if (action === 'replace') startReplace(item);
+            else if (action === 'newtab') openInNewTab(item);
+            else if (action === 'copy') copyFileContent(item);
+            else {
                 const rect = quick.getBoundingClientRect();
                 showContextMenu(rect.left, rect.bottom + 4, item, node);
             }
@@ -3458,6 +3582,11 @@ function init() {
     initZipWizard();
     wireEvents();
     applyPrefs();
+
+    try {
+        const fromUrl = normalizeRel(new URLSearchParams(window.location.search).get('path') || '');
+        if (fromUrl) { pendingPath = fromUrl; state.path = fromUrl; }
+    } catch (_) { /* ignore */ }
 
     setStatus('Not connected');
     branchLabel.textContent = state.branch;

@@ -451,7 +451,7 @@ body[data-connected="false"] .toolbar { opacity: .45; pointer-events: none; filt
 .card {
     position: relative;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    padding: 20px 10px 18px;
+    padding: 20px 10px 44px;
     border-radius: var(--radius);
     background: var(--glass);
     border: 1px solid var(--glass-border);
@@ -459,7 +459,7 @@ body[data-connected="false"] .toolbar { opacity: .45; pointer-events: none; filt
     cursor: pointer; user-select: none; -webkit-user-select: none;
     transition: transform .2s, border-color .2s, background .2s, box-shadow .2s;
     overflow: hidden;
-    min-height: 124px;
+    min-height: 148px;
     text-align: center;
 }
 .card::before {
@@ -509,36 +509,44 @@ body.select-mode .card:not(.selected)::before {
 }
 .card .meta { font-size: 10.5px; color: var(--muted); margin-top: 3px; z-index: 1; font-variant-numeric: tabular-nums; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card .ext-badge {
-    position: absolute; bottom: 6px; right: 7px; font-size: 9px; letter-spacing: .03em;
+    position: absolute; top: 8px; right: 8px; font-size: 9px; letter-spacing: .03em;
     padding: 2px 5px; border-radius: 5px; background: rgba(0,0,0,.3); color: var(--dim);
-    text-transform: uppercase;
+    text-transform: uppercase; z-index: 3;
 }
 .card .badge-gitkeep { position: absolute; bottom: 6px; left: 7px; font-size: 8.5px; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; }
 
-/* hover actions — revision: two primary gestures, everything else in the kebab menu */
+/* per-item widgets — a full strip at the bottom of every card */
 .card .card-actions {
-    position: absolute; top: 6px; right: 6px; display: flex; gap: 4px;
-    opacity: 0; transform: translateY(-3px); transition: opacity .16s, transform .16s;
+    position: absolute; left: 6px; right: 6px; bottom: 6px;
+    display: flex; gap: 4px; justify-content: center;
+    opacity: 0; transform: translateY(4px);
+    transition: opacity .16s, transform .16s;
     z-index: 4;
 }
-.card:hover .card-actions, .card:focus-within .card-actions, .card.ctx-active .card-actions { opacity: 1; transform: none; }
+.card:hover .card-actions, .card:focus-within .card-actions,
+.card.ctx-active .card-actions { opacity: 1; transform: none; }
 body.select-mode .card .card-actions { display: none; }
 .card .qa {
-    width: 25px; height: 25px; border-radius: 8px; display: grid; place-items: center;
-    background: rgba(8,8,18,.7); border: 1px solid var(--glass-border);
-    color: var(--text); font-size: 11px; cursor: pointer;
+    width: 22px; height: 22px; border-radius: 7px; display: grid; place-items: center;
+    background: rgba(8,8,18,.72); border: 1px solid rgba(255,255,255,.1);
+    color: var(--text); font-size: 10px; cursor: pointer;
     transition: background .16s, color .16s, border-color .16s;
 }
 .card .qa:hover { background: rgba(var(--accent-rgb), .24); color: var(--accent); border-color: rgba(var(--accent-rgb), .6); }
-.card .qa.kebab { font-size: 15px; line-height: 1; padding-bottom: 4px; }
+.card .qa.kebab { font-size: 14px; line-height: 1; padding-bottom: 4px; }
+.card .qa[data-qa="copy"] { display: none; }
 .card .qa.del:hover { background: rgba(255,77,109,.24); color: var(--danger); border-color: rgba(255,77,109,.6); }
 
-/* list rows */
+/* ── list / detail rows ──
+   Cells get explicit grid areas, so hiding a column (or the absolutely
+   positioned select checkbox) can never shift the name out of view. */
 .list-head, .row {
     display: grid;
-    grid-template-columns: 26px 1fr 104px 96px 92px;
+    grid-template-columns: minmax(0, 1fr) 88px 82px 152px 152px;
+    grid-template-areas: "name type size date actions";
     align-items: center; gap: 10px;
-    padding: 8px 12px; border-radius: 11px;
+    padding: 8px 14px; border-radius: 11px;
+    position: relative;
 }
 .list-head {
     font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--dim);
@@ -546,41 +554,68 @@ body.select-mode .card .card-actions { display: none; }
     margin-bottom: 4px;
 }
 .list-head .c-sort { cursor: pointer; }
+.list-head .c-name { grid-area: name; }
+.list-head .c-type { grid-area: type; }
+.list-head .c-size { grid-area: size; }
+.list-head .c-date { grid-area: date; }
+.list-head .c-actions { grid-area: actions; text-align: right; }
 .row {
     background: rgba(255,255,255,.028);
     border: 1px solid transparent; cursor: pointer; user-select: none;
-    transition: background .16s, border-color .16s, transform .16s;
-    position: relative;
+    transition: background .16s, border-color .16s;
 }
 .row:hover { background: rgba(255,255,255,.075); border-color: rgba(var(--accent-rgb), .35); }
 .row.selected { background: rgba(var(--accent-rgb), .16); border-color: rgba(var(--accent-rgb), .7); }
 .row.cut { opacity: .45; }
-.row .r-ico { font-size: 17px; text-align: center; }
-.row .r-name { display: flex; align-items: center; gap: 7px; font-size: 13px; min-width: 0; }
-.row .r-ico { font-size: 15px; flex-shrink: 0; }
+.row .r-name { grid-area: name; display: flex; align-items: center; gap: 8px; font-size: 13px; min-width: 0; }
+.row .r-ico { font-size: 15px; flex-shrink: 0; text-align: center; }
 .row .r-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .r-sub { color: var(--dim); font-family: var(--mono); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 2; }
-.row .r-type, .row .r-size { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.row .r-type { text-transform: uppercase; font-size: 10px; letter-spacing: .05em; color: var(--dim); }
-.row .r-actions { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity .15s; }
-.row:hover .r-actions, .row.ctx-active .r-actions { opacity: 1; }
+.row .r-sub { color: var(--dim); font-family: var(--mono); font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .r-type, .row .r-size, .row .r-date {
+    font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.row .r-type { grid-area: type; text-transform: uppercase; font-size: 10px; letter-spacing: .05em; color: var(--dim); }
+.row .r-size { grid-area: size; }
+.row .r-date { grid-area: date; font-size: 10.5px; color: var(--dim); }
+.row .r-actions { grid-area: actions; display: flex; gap: 4px; justify-content: flex-end; }
 .row .qa {
-    width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center;
-    background: rgba(8,8,18,.5); border: 1px solid var(--glass-border); color: var(--muted);
+    width: 26px; height: 26px; border-radius: 7px; display: grid; place-items: center;
+    background: rgba(255,255,255,.04); border: 1px solid transparent; color: var(--muted);
     font-size: 11px; cursor: pointer;
+    transition: background .16s, color .16s, border-color .16s;
 }
-.row .qa:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .5); background: rgba(var(--accent-rgb), .16); }
-.row .r-check { display: none; }
-body.select-mode .row .r-check { display: block; }
-body.select-mode .row .r-actions { display: none; }
-.r-check {
+.row:hover .qa { border-color: var(--glass-border); }
+.row .qa:hover { color: var(--accent); border-color: rgba(var(--accent-rgb), .5); background: rgba(var(--accent-rgb), .18); }
+
+/* the select checkbox sits outside the grid flow */
+.row .r-check {
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    display: none; z-index: 4;
     width: 17px; height: 17px; border-radius: 5px; border: 1.5px solid rgba(255,255,255,.3);
-    background: rgba(0,0,0,.3); display: grid; place-items: center; font-size: 10px; color: transparent;
+    background: rgba(0,0,0,.3); place-items: center; font-size: 10px; color: transparent;
 }
+body.select-mode .row .r-check { display: grid; }
+body.select-mode .row { padding-left: 34px; }
+body.select-mode .row .r-actions { display: none; }
 .row.selected .r-check { border-color: var(--accent); background: var(--accent); color: #03040a; }
-@media (max-width: 760px) {
-    .list-head, .row { grid-template-columns: 22px 1fr 66px 58px; }
+
+@media (max-width: 1020px) {
+    .list-head, .row {
+        grid-template-columns: minmax(0, 1fr) 72px 148px 152px;
+        grid-template-areas: "name size date actions";
+    }
     .row .r-type, .list-head .c-type { display: none; }
+}
+@media (max-width: 760px) {
+    .list-head { display: none; }
+    .row {
+        grid-template-columns: minmax(0, 1fr) 116px;
+        grid-template-areas: "name actions";
+        padding: 9px 10px;
+    }
+    .row .r-size, .row .r-date { display: none; }
+    .row .qa[data-qa="copy"] { display: none; }
 }
 
 /* empty / welcome states */
@@ -1120,8 +1155,7 @@ kbd {
     .modal-foot .btn { flex: 1 1 auto; }
     .list-head { display: none; }
     .files.list { gap: 5px; }
-    .row { grid-template-columns: 20px 1fr 54px; }
-    .row .r-size { font-size: 10.5px; }
+    .row { grid-template-columns: minmax(0, 1fr) 116px; grid-template-areas: "name actions"; }
     .toasts { top: 10px; right: 10px; left: 10px; max-width: none; }
     .preview-body { padding: 8px; }
 }
