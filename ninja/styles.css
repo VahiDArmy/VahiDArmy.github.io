@@ -552,8 +552,9 @@ body.select-mode .card .card-actions { display: none; }
    positioned select checkbox) can never shift the name out of view. */
 .list-head, .row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 88px 82px 152px 152px;
-    grid-template-areas: "name type size date actions";
+    /* Name · Size · Modified · Type · Actions  (natural file-data order) */
+    grid-template-columns: minmax(0, 1fr) 90px 158px 78px 152px;
+    grid-template-areas: "name size date type actions";
     align-items: center; gap: 10px;
     padding: 8px 14px; border-radius: 11px;
     position: relative;

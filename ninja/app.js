@@ -570,6 +570,12 @@ function renderWelcome() {
     updateStats(0);
 }
 
+function dateKey(item) {
+    const key = `${state.branch}:${item.path}`;
+    const iso = dateCache.get(key);
+    return iso ? new Date(iso).getTime() : 0;
+}
+
 function sortItems(items) {
     const dirFirst = (a, b) => (a.type === 'dir' ? 0 : 1) - (b.type === 'dir' ? 0 : 1);
     const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
@@ -578,6 +584,8 @@ function sortItems(items) {
         'name-desc': (a, b) => byName(b, a),
         'size-asc': (a, b) => (a.size || 0) - (b.size || 0),
         'size-desc': (a, b) => (b.size || 0) - (a.size || 0),
+        'date-asc': (a, b) => dateKey(a) - dateKey(b) || byName(a, b),
+        'date-desc': (a, b) => dateKey(b) - dateKey(a) || byName(a, b),
         type: (a, b) => (extOf(a.name) || '').localeCompare(extOf(b.name) || '') || byName(a, b),
     };
     const cmp = comparators[prefs.sort] || byName;
@@ -669,11 +677,20 @@ function buildCard(item) {
 function listHead() {
     const head = document.createElement('div');
     head.className = 'list-head';
+    const sort = prefs.sort || 'name-asc';
+    const mark = (key, label) => {
+        let arrow = '';
+        if (key === 'name' && (sort === 'name-asc' || sort === 'name-desc')) arrow = sort === 'name-asc' ? ' ↑' : ' ↓';
+        if (key === 'size' && (sort === 'size-asc' || sort === 'size-desc')) arrow = sort === 'size-asc' ? ' ↑' : ' ↓';
+        if (key === 'date' && (sort === 'date-asc' || sort === 'date-desc')) arrow = sort === 'date-asc' ? ' ↑' : ' ↓';
+        if (key === 'type' && sort === 'type') arrow = ' •';
+        return `${label}${arrow}`;
+    };
     head.innerHTML = `
-        <span class="c-name c-sort" data-sort="name">Name</span>
-        <span class="c-type c-sort" data-sort="type">Type</span>
-        <span class="c-size c-sort" data-sort="size">Size</span>
-        <span class="c-date">Modified</span>
+        <span class="c-name c-sort" data-sort="name">${mark('name', 'Name')}</span>
+        <span class="c-size c-sort" data-sort="size">${mark('size', 'Size')}</span>
+        <span class="c-date c-sort" data-sort="date">${mark('date', 'Modified')}</span>
+        <span class="c-type c-sort" data-sort="type">${mark('type', 'Type')}</span>
         <span class="c-actions">Actions</span>`;
     return head;
 }
@@ -689,9 +706,9 @@ function buildRow(item) {
     row.innerHTML = `
         <span class="r-check">✓</span>
         <span class="r-name"><span class="r-ico">${getFileIcon(item.name, isDir)}</span><span class="r-label">${escapeHtml(item.name)}</span></span>
-        <span class="r-type">${isDir ? 'folder' : (extOf(item.name) || 'file')}</span>
         <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-        <span class="r-date" title="Loading last commit…">—</span>`;
+        <span class="r-date" title="Loading last commit…">—</span>
+        <span class="r-type">${isDir ? 'folder' : (extOf(item.name) || 'file')}</span>`;
     row.appendChild(quickActions(item, 'row'));
     queueDate(item, row.querySelector('.r-date'));
     if (clipboard && clipboard.mode === 'cut' && clipboard.items.some(i => i.path === item.path)) row.classList.add('cut');
@@ -754,9 +771,9 @@ async function renderDeepSearch() {
             row.innerHTML = `
                 <span class="r-check">✓</span>
                 <span class="r-name"><span class="r-ico">${getFileIcon(name, isDir)}</span><span class="r-label">${escapeHtml(name)}</span><span class="r-sub">${escapeHtml(parent)}</span></span>
-                <span class="r-type">${isDir ? 'folder' : (extOf(name) || 'file')}</span>
                 <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-                <span class="r-date" title="Dates are not loaded for repository-wide search">—</span>`;
+                <span class="r-date" title="Dates are not loaded for repository-wide search">—</span>
+                <span class="r-type">${isDir ? 'folder' : (extOf(name) || 'file')}</span>`;
             row.appendChild(quickActions(item, 'row'));
             filesEl.appendChild(row);
         });
@@ -1538,15 +1555,34 @@ async function fetchDate(job) {
             : null;
         dateCache.set(job.key, iso);
         if (job.node.isConnected) applyDate(job.node, iso);
+        // If the user is sorting by date, re-order once this batch of dates settles
+        if ((prefs.sort === 'date-asc' || prefs.sort === 'date-desc') && dateQueue.length === 0 && dateActive <= 1) {
+            scheduleDateResort();
+        }
     } catch (err) {
         if (err.status === 403 || err.status === 429) {
             dateStopped = true;
             dateQueue.length = 0;
+            // Mark remaining visible dates so the user knows why they stayed empty
+            document.querySelectorAll('.r-date').forEach(node => {
+                if (node.textContent === '—' || node.title.includes('Loading')) {
+                    node.textContent = '—';
+                    node.title = 'Date unavailable (API rate limit). Try again later.';
+                }
+            });
             return;
         }
         dateCache.set(job.key, null);
         if (job.node.isConnected) applyDate(job.node, null);
     }
+}
+
+let dateResortTimer = 0;
+function scheduleDateResort() {
+    clearTimeout(dateResortTimer);
+    dateResortTimer = setTimeout(() => {
+        if (prefs.sort === 'date-asc' || prefs.sort === 'date-desc') renderFiles();
+    }, 180);
 }
 
 /* ── downloads ─────────────────────────────────────────────── */
@@ -3228,6 +3264,7 @@ function applySortFromHeader(key) {
     let next;
     if (key === 'name') next = prefs.sort === 'name-asc' ? 'name-desc' : 'name-asc';
     else if (key === 'size') next = prefs.sort === 'size-desc' ? 'size-asc' : 'size-desc';
+    else if (key === 'date') next = prefs.sort === 'date-desc' ? 'date-asc' : 'date-desc';
     else next = 'type';
     savePref('sort', next);
     sortSelect.value = next;
