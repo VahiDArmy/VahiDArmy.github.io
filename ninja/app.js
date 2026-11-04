@@ -640,7 +640,7 @@ function quickActions(item, context) {
     let html = '';
     html += button('download', '⬇', isDir ? 'Download folder as .zip' : 'Download file');
     html += button('replace', '🔄', isDir ? 'Replace folder contents' : 'Replace file');
-    html += button('newtab', '🌐', isDir ? 'Open this folder in a new tab' : 'Open file in a new tab');
+    html += button('newtab', '🌐', isDir ? 'Open live folder on the site' : 'Open live page on the site');
     if (!isDir && isTextFile(item.name)) html += button('copy', '📋', 'Copy file contents', ' copy');
     html += button('menu', '⋯', 'More actions', ' kebab');
     wrap.innerHTML = html;
@@ -1430,23 +1430,42 @@ async function duplicateItem(item) {
 }
 
 /* ── open in a new tab / copy contents ────────────────────── */
+/** Base URL of the published GitHub Pages site for the current repo. */
+function getPagesBase() {
+    // User / organization site: the repository itself is named owner.github.io
+    if (state.repo === `${state.owner}.github.io` || state.repo.endsWith('.github.io')) {
+        return `https://${state.repo.replace(/\/+$/, '')}`;
+    }
+    // Project site
+    return `https://${state.owner}.github.io/${state.repo}`;
+}
+
+/** Live Pages URL for a file or folder (what visitors actually see). */
+function pagesUrlFor(item) {
+    const base = getPagesBase().replace(/\/+$/, '');
+    if (!item || !item.path) return base + '/';
+    const clean = String(item.path).replace(/^\/+/, '').replace(/\/+$/, '');
+    // Folders get a trailing slash so Pages can serve index.html if present
+    if (item.type === 'dir') return `${base}/${clean}/`;
+    return `${base}/${clean}`;
+}
+
+/**
+ * Open the live GitHub Pages URL of the file or folder in a new browser tab.
+ * Examples (for vahidarmy/vahidarmy.github.io):
+ *   file.html          → https://vahidarmy.github.io/file.html
+ *   folder/image.png   → https://vahidarmy.github.io/folder/image.png
+ *   folder/            → https://vahidarmy.github.io/folder/
+ */
 function openInNewTab(item) {
     if (!item) return;
-    if (item.type === 'dir') {
-        try {
-            const url = new URL(window.location.href);
-            url.search = '';
-            url.hash = '';
-            if (item.path) url.searchParams.set('path', item.path);
-            window.open(url.toString(), '_blank', 'noopener');
-        } catch (_) {
-            toast('Could not build the folder link', 'err');
-        }
-        return;
+    try {
+        const url = pagesUrlFor(item);
+        window.open(url, '_blank', 'noopener');
+    } catch (err) {
+        console.error('openInNewTab failed:', err);
+        toast('Could not build the live page link', 'err');
     }
-    const raw = item.download_url
-        || `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${enc(state.branch)}/${enc(item.path)}`;
-    window.open(raw, '_blank', 'noopener');
 }
 
 async function copyFileContent(item) {
@@ -2983,6 +3002,7 @@ function showInfo(item) {
         ['Type', isDir ? 'folder' : (extOf(item.name) || 'file')],
         ['Size', isDir ? '—' : formatSize(item.size)],
         ['SHA', item.sha || '—'],
+        ['Live site', pagesUrlFor(item)],
         ['Raw URL', isDir ? '—' : (item.download_url || `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${state.branch}/${item.path}`)],
         ['GitHub', `https://github.com/${state.owner}/${state.repo}/${isDir ? 'tree' : 'blob'}/${state.branch}/${item.path}`],
     ];
