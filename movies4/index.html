@@ -13,24 +13,24 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700;800&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
 
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/reset.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/header.css" />
-  <link rel="stylesheet" href="css/sidebar.css" />
-  <link rel="stylesheet" href="css/cards.css" />
-  <link rel="stylesheet" href="css/modal.css" />
-  <link rel="stylesheet" href="css/forms.css" />
-  <link rel="stylesheet" href="css/animations.css" />
-  <link rel="stylesheet" href="css/utilities.css" />
-  <link rel="stylesheet" href="css/ai.css" />
-  <link rel="stylesheet" href="css/ai-log.css" />
-  <link rel="stylesheet" href="css/settings.css" />
-  <link rel="stylesheet" href="css/free-prompt.css" />
-  <link rel="stylesheet" href="css/terminal.css" />
-  <link rel="stylesheet" href="css/db-admin.css" />
-  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/variables.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/reset.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/base.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/layout.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/header.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/sidebar.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/cards.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/modal.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/forms.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/animations.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/utilities.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/ai.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/ai-log.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/settings.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/free-prompt.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/terminal.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/db-admin.css?v=3.2.0" />
+  <link rel="stylesheet" href="css/responsive.css?v=3.2.0" />
 
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AC%3C/text%3E%3C/svg%3E" />
 </head>
@@ -265,6 +265,7 @@
             <span class="page-sub">بر اساس آثار امتیازدار · ۵ تحلیل اخیر</span>
           </div>
           <div class="pers-toolbar-right">
+            <label class="pers-opt" title="اگر خاموش باشد، تگ‌های آثار در پرامپت نمی‌آید"><input type="checkbox" id="pers-include-tags" checked><span>تگ‌ها در پرامپت</span></label>
             <div class="pers-kind" role="group" aria-label="نوع پیشنهاد">
               <button type="button" class="btn btn-ghost btn-sm pers-kind-btn is-active" data-kind="movie" id="pers-kind-movie">پیشنهاد فیلم</button>
               <button type="button" class="btn btn-ghost btn-sm pers-kind-btn" data-kind="series" id="pers-kind-series">پیشنهاد سریال</button>
@@ -337,7 +338,7 @@
 
   <footer class="app-footer">
     <label class="cmdbar"><span class="cmd-prompt">&#10095;</span><input id="cmd" type="text" dir="ltr" autocomplete="off" spellcheck="false" placeholder="type a command — help" /><span class="cmd-out" id="cmd-out"></span></label>
-    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">2.2.0</span></span>
+    <span>ساخته‌شده با ❤️ — نسخه <span id="app-version">3.2.0-online</span></span>
     <span class="footer-hint"><kbd>Ctrl</kbd>+<kbd>K</kbd> جستجو · <kbd>N</kbd> جدید · <kbd>Esc</kbd> بستن</span>
     <span id="footer-status">آماده</span>
   </footer>
@@ -360,29 +361,29 @@
 <div class="toast-root" id="toast-root" aria-live="polite" aria-atomic="true"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/toast.js"></script>
-<script src="js/modal.js"></script>
-<script src="js/github.js"></script>
-<script src="js/db.js"></script>
-<script src="js/state.js"></script>
-<script src="js/render.js"></script>
+<script src="js/config.js?v=3.2.0"></script>
+<script src="js/utils.js?v=3.2.0"></script>
+<script src="js/toast.js?v=3.2.0"></script>
+<script src="js/modal.js?v=3.2.0"></script>
+<script src="js/github.js?v=3.2.0"></script>
+<script src="js/db.js?v=3.2.0"></script>
+<script src="js/state.js?v=3.2.0"></script>
+<script src="js/render.js?v=3.2.0"></script>
 
-<script src="js/ai-log.js"></script>
-<script src="js/ai.js"></script>
-<script src="js/ai-prompts.js"></script>
-<script src="js/ai-title-lookup.js"></script>
-<script src="js/ai-standardize.js"></script>
-<script src="js/ai-analysis.js"></script>
-<script src="js/ai-models.js"></script>
-<script src="js/ai-ui.js"></script>
-<script src="js/ai-free-prompt.js"></script>
-<script src="js/db-admin.js"></script>
+<script src="js/ai-log.js?v=3.2.0"></script>
+<script src="js/ai.js?v=3.2.0"></script>
+<script src="js/ai-prompts.js?v=3.2.0"></script>
+<script src="js/ai-title-lookup.js?v=3.2.0"></script>
+<script src="js/ai-standardize.js?v=3.2.0"></script>
+<script src="js/ai-analysis.js?v=3.2.0"></script>
+<script src="js/ai-models.js?v=3.2.0"></script>
+<script src="js/ai-ui.js?v=3.2.0"></script>
+<script src="js/ai-free-prompt.js?v=3.2.0"></script>
+<script src="js/db-admin.js?v=3.2.0"></script>
 
-<script src="js/events.js"></script>
-<script src="js/app.js"></script>
-<script src="js/terminal.js"></script>
-<script src="js/glitch.js"></script>
+<script src="js/events.js?v=3.2.0"></script>
+<script src="js/app.js?v=3.2.0"></script>
+<script src="js/terminal.js?v=3.2.0"></script>
+<script src="js/glitch.js?v=3.2.0"></script>
 </body>
 </html>

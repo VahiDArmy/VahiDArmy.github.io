@@ -1253,3 +1253,6 @@
 .tag-ui-manual-row .field-input {
   flex: 1;
 }
+
+.pers-opt { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.pers-opt input { margin: 0; }

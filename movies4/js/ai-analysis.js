@@ -31,7 +31,7 @@ window.AIAnalysis = (function () {
     });
     var titlesForAI = rated.map(function (t) {
       var r = Math.round(Number(t.rating) || 0);
-      var tags = String(t.genre || '')
+      var tags = String(t.tags || '')
         .split(/[،,]/)
         .map(function (s) { return s.trim(); })
         .filter(Boolean);
@@ -49,8 +49,11 @@ window.AIAnalysis = (function () {
     return { all: all, rated: titlesForAI };
   }
 
+  var includeTags = true;
+  function setIncludeTags(v) { includeTags = !!v; }
+
   function formatTitleLine(t, compact) {
-    var tags = t.tags || (t.genre ? String(t.genre).split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean) : []);
+    var tags = includeTags ? (t.tags || []) : [];
     var line = '• «' + t.title + '»'
       + (t.year ? ' (' + t.year + ')' : '')
       + ' [' + (t.type || '?') + ']'
@@ -113,7 +116,7 @@ window.AIAnalysis = (function () {
       var line = '- ' + name
         + (t.year ? ' | سال ' + t.year : '')
         + ' | امتیاز ' + t.rating;
-      if (t.tags && t.tags.length) {
+      if (includeTags && t.tags && t.tags.length) {
         line += ' | تگ: ' + t.tags.join('، ');
       }
       return line;
@@ -478,6 +481,7 @@ window.AIAnalysis = (function () {
     formatMessagesForPreview: formatMessagesForPreview,
     parsePreviewToMessages: parsePreviewToMessages,
     buildTasteAnalysisMessages: buildTasteAnalysisMessages,
+    setIncludeTags: setIncludeTags,
     getLatestTasteAnalyses: getLatestTasteAnalyses,
     saveTasteAnalysis: saveTasteAnalysis,
     messagesFromSavedPrompt: messagesFromSavedPrompt,

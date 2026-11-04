@@ -489,18 +489,13 @@ window.Events = (function () {
     panel.setContent('');
     panel.setStatus('استریم تحلیل…', 'loading');
 
-    var lastStreamed = '';
     try {
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
         messages: messages,
-        onToken: function (_c, full) {
-          lastStreamed = full || '';
-          panel.appendText(full);
-        }
+        onToken: function (_c, full) { panel.appendText(full); }
       });
-      lastStreamed = result || lastStreamed || '';
-      panel.appendText(lastStreamed);
+      panel.appendText(result || '');
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
       try {
@@ -512,19 +507,19 @@ window.Events = (function () {
           : ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '');
         var savedId = AIAnalysis.saveTasteAnalysis(
           promptText,
-          lastStreamed || '',
+          result || '',
           used
         );
       } catch (e2) { console.error(e2); var savedId = null; var used = ''; }
       persLastContext = {
         id: savedId || null,
         messages: messages,
-        result: lastStreamed || '',
+        result: result || '',
         kind: persSelectedKind,
         model: used || ''
       };
       renderPersonalityHistory();
-      showPersonalitySuggestionActions(lastStreamed || '', persSelectedKind);
+      showPersonalitySuggestionActions(result || '', persSelectedKind);
       showPersonalityContinueBar(panel);
       Toast.success('تحلیل ذخیره شد');
     } catch (err) {
@@ -532,66 +527,9 @@ window.Events = (function () {
         panel.setStatus('لغو شد', 'done');
         Toast.info('ارسال لغو شد');
       } else {
-        /* در هر صورت پاسخ/بازخورد خام هوش مصنوعی را نگه دار و نشان بده */
-        var rawAi = (err && err.rawResponse) || lastStreamed
-          || (typeof AI !== 'undefined' && AI.getLastRawResponse ? AI.getLastRawResponse() : '')
-          || '';
-        panel.setStatus('خطا — اما پاسخ مدل نمایش داده می‌شود', 'error');
-        if (rawAi && String(rawAi).trim()) {
-          /* اول متن مدل را نگه می‌داریم، بعد پیام خطا را اضافه می‌کنیم */
-          panel.appendText(String(rawAi));
-          var errHtml = (typeof AIUI !== 'undefined' && AIUI.formatAiErrorHtml)
-            ? AIUI.formatAiErrorHtml(err)
-            : ('<div class="ai-error"><strong>' + Utils.esc(err.message || String(err)) + '</strong></div>');
-          /* اگر setContent کل محتوا را پاک می‌کند، خودمان ترکیبی می‌سازیم */
-          try {
-            var hostContent = panel.body || (panel.panel && panel.panel.querySelector('.ai-stream-content'));
-            if (hostContent) {
-              var errBlock = document.createElement('div');
-              errBlock.className = 'ai-error-wrap';
-              errBlock.innerHTML = errHtml;
-              hostContent.appendChild(errBlock);
-            } else {
-              panel.setContent(
-                (typeof AIUI !== 'undefined' && AIUI.renderMarkdown
-                  ? AIUI.renderMarkdown(String(rawAi))
-                  : '<pre>' + Utils.esc(String(rawAi)) + '</pre>')
-                + errHtml
-              );
-            }
-          } catch (eShow) {
-            panel.setContent(
-              '<pre class="ai-raw-error-pre">' + Utils.esc(String(rawAi)) + '</pre>'
-              + '<div class="ai-error"><strong>' + Utils.esc(err.message || String(err)) + '</strong></div>'
-            );
-          }
-          /* حتی در خطا، اگر متنی آمده ذخیره کن تا از دست نرود */
-          try {
-            var promptText2 = (messages || []).map(function (m) {
-              return '## ' + m.role + '\n' + m.content;
-            }).join('\n\n');
-            var used2 = (typeof AI !== 'undefined' && AI.getLastUsedModel && AI.getLastUsedModel())
-              ? AI.getLastUsedModel().id
-              : ((typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : '');
-            var savedId2 = AIAnalysis.saveTasteAnalysis(promptText2, String(rawAi), used2);
-            persLastContext = {
-              id: savedId2 || null,
-              messages: messages,
-              result: String(rawAi),
-              kind: persSelectedKind,
-              model: used2 || ''
-            };
-            renderPersonalityHistory();
-            showPersonalityContinueBar(panel);
-          } catch (eSave) { console.error(eSave); }
-        } else {
-          panel.setContent(
-            (typeof AIUI !== 'undefined' && AIUI.formatAiErrorHtml)
-              ? AIUI.formatAiErrorHtml(err)
-              : ('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>')
-          );
-        }
-        Toast.error(err.message || 'خطا در تحلیل — پاسخ خام در صورت وجود نمایش داده شد');
+        panel.setStatus('خطا', 'error');
+        panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
+        Toast.error(err.message || 'خطا در تحلیل');
       }
     } finally {
       persRunning = false;
@@ -712,29 +650,10 @@ window.Events = (function () {
     } catch (err) {
       if (err && err.code === 'PROMPT_CANCELLED') {
         Toast.info('لغو شد');
-        if (panel && panel.setStatus) panel.setStatus('لغو شد', 'done');
       } else {
-        /* در هر صورت متن قبلی + هرچه از مدل آمده را نگه دار */
-        var rawMore = (err && err.rawResponse)
-          || (typeof AI !== 'undefined' && AI.getLastRawResponse ? AI.getLastRawResponse() : '')
-          || '';
-        if (panel && panel.setStatus) panel.setStatus('خطا — پاسخ مدل حفظ شد', 'error');
-        if (rawMore && String(rawMore).trim() && panel && panel.appendText) {
-          panel.appendText(before + '\n\n' + String(rawMore));
-        }
-        if (panel && panel.body) {
-          try {
-            var errHtml2 = (typeof AIUI !== 'undefined' && AIUI.formatAiErrorHtml)
-              ? AIUI.formatAiErrorHtml(err)
-              : ('<div class="ai-error"><strong>' + Utils.esc(err.message || String(err)) + '</strong></div>');
-            var errBlock2 = document.createElement('div');
-            errBlock2.className = 'ai-error-wrap';
-            errBlock2.innerHTML = errHtml2;
-            panel.body.appendChild(errBlock2);
-          } catch (e2) {}
-        }
-        Toast.error(err.message || 'خطا در ادامه — پاسخ خام حفظ شد');
+        Toast.error(err.message || 'خطا در ادامه');
       }
+      if (panel && panel.setStatus) panel.setStatus('خطا', 'error');
     } finally {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = 'ادامه'; }
@@ -848,6 +767,16 @@ window.Events = (function () {
     });
     var btn = document.getElementById('btn-run-personality');
     if (btn) btn.addEventListener('click', function () { runPersonalityAnalysis(); });
+    var tagsOpt = document.getElementById('pers-include-tags');
+    if (tagsOpt && typeof AIAnalysis !== 'undefined') {
+      var savedOpt = null; try { savedOpt = localStorage.getItem('pers-include-tags'); } catch (e) {}
+      tagsOpt.checked = savedOpt !== '0';
+      AIAnalysis.setIncludeTags(tagsOpt.checked);
+      tagsOpt.addEventListener('change', function () {
+        AIAnalysis.setIncludeTags(tagsOpt.checked);
+        try { localStorage.setItem('pers-include-tags', tagsOpt.checked ? '1' : '0'); } catch (e) {}
+      });
+    }
   }
 
   function bindToolbar() {

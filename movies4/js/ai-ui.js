@@ -1350,7 +1350,7 @@ window.AIUI = (function () {
     }, ['ذخیره انتخاب‌ها']);
 
     /* تگ‌های قبلی را از قبل انتخاب‌شده نشان بده */
-    String(t.genre || '').split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean)
+    String(t.tags || '').split(/[،,]/).map(function (s) { return s.trim(); }).filter(Boolean)
       .forEach(function (tg) { selected[tg] = true; });
 
     const body = Utils.el('div', { class: 'tag-ui' }, [
@@ -1499,7 +1499,11 @@ window.AIUI = (function () {
       if (!tags.length) return;
       var current = DB.getTitle(id);
       if (!current) return;
-      DB.updateTitle(id, Object.assign({}, current, { genre: tags.join('، ') }), false);
+      if (DB.hasTagsColumn && !DB.hasTagsColumn()) {
+        Toast.error('ستون tags در دیتابیس نیست — فایل add-tags-column.sql را در Supabase اجرا کن');
+        return;
+      }
+      DB.updateTitle(id, Object.assign({}, current, { tags: tags.join('، ') }), false);
       try { State.loadAll(); State.applyFilters(); Events.renderList(); } catch (e) {}
       Toast.success('تگ‌ها ذخیره شد');
       Modal.close();
@@ -1587,7 +1591,6 @@ window.AIUI = (function () {
     renderMarkdown: renderMarkdown,
     renderStoryAnalysis: renderStoryAnalysis,
     createStreamPanelForPage: createStreamPanelForPage,
-    formatAiErrorHtml: formatAiErrorHtml,
     cleanup: cleanup,
     showLog: showLog
   };

@@ -123,22 +123,18 @@ window.AI = (function () {
   }
 
   function friendlyHttpError(status, msg) {
-    msg = String(msg || '').trim();
-
+    msg = String(msg || '');
     if (status === 401 || status === 403) return 'دسترسی مجاز نیست (کلید یا تنظیمات سرور).';
     if (status === 429) return 'محدودیت نرخ — کمی بعد دوباره تلاش کن.';
-
+    if (status === 502 || /Provider returned error/i.test(msg)) {
+      return 'خطای واسط (502): ' + (msg || 'Provider returned error');
+    }
+    /* Supabase Edge: 546 = worker killed (often WallClockTime) */
     if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
-      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند.';
+      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند — مشکل مدل Google نیست، مشکل مسیر Edge است.';
     }
-
-    // همیشه پیام واقعی را نشان بده
-    if (msg) {
-      return 'خطای واسط (' + status + '): ' + msg;
-    }
-
-    // اگر هیچ پیامی نبود
-    return 'خطای واسط (' + status + '): بدنه پاسخ خالی بود (Provider returned no error message)';
+    if (msg) return msg;
+    return 'خطای سرور (HTTP ' + status + ')';
   }
 
 
@@ -327,17 +323,14 @@ window.AI = (function () {
     /* Non-SSE: edge did not stream — often means timeout or buffered full response */
     if (!ctype.includes('text/event-stream')) {
       const json = await res.json().catch(function () { return {}; });
-      const text = json.text || json.content || json.message || json.detail || json.raw_error || '';
-      if (text) lastRawResponse = String(text);
       if (!res.ok || json.error) {
-        const msg = friendlyHttpError(res.status, json.error || json.message || json.detail || json.raw_error || '');
+        const msg = friendlyHttpError(res.status, json.error || json.message || '');
         aiLog('error', '✗ ' + msg);
         aiAutoHide();
-        const err = new Error(msg);
-        err.rawResponse = lastRawResponse || String(text || '');
-        throw err;
+        throw new Error(msg);
       }
       /* still deliver text if present, but log that stream failed */
+      const text = json.text || json.content || '';
       if (json.model) applyResolvedModel(json.model, json.requested_model);
       aiLog('warn', '⚠ پاسخ غیر‌استریمی از Edge (ممکن است نزدیک timeout باشد)');
       if (text) onToken(text);
@@ -348,33 +341,10 @@ window.AI = (function () {
     }
 
     if (!res.ok) {
-      // سعی می‌کنیم بدنه پاسخ را بخوانیم تا پیام خام AI را ببینیم
-      let bodyError = '';
-      let rawText = '';
-
-      try {
-        const clone = res.clone();
-        rawText = await clone.text();
-        try {
-          const json = JSON.parse(rawText);
-          bodyError = json.error || json.message || json.detail || json.raw_error || json.error_description || '';
-          if (json.text || json.content) lastRawResponse = String(json.text || json.content);
-        } catch (e) {
-          bodyError = rawText.slice(0, 800);
-        }
-        if (!lastRawResponse && rawText) lastRawResponse = rawText.slice(0, 4000);
-      } catch (e) {
-        bodyError = '(نتوانستیم بدنه را بخوانیم)';
-      }
-
-      console.error('[AI] Error body raw:', rawText || bodyError);
-
-      const msg = friendlyHttpError(res.status, bodyError);
+      const msg = friendlyHttpError(res.status, '');
       aiLog('error', '✗ ' + msg);
       aiAutoHide();
-      const err = new Error(msg);
-      err.rawResponse = lastRawResponse || bodyError || rawText || '';
-      throw err;
+      throw new Error(msg);
     }
 
     const reader = res.body.getReader();
@@ -398,13 +368,7 @@ window.AI = (function () {
         try {
           const obj = JSON.parse(raw);
           if (obj.error) {
-            streamError = typeof obj.error === 'string' ? obj.error
-              : (obj.error.message || obj.message || obj.detail || obj.raw_error || JSON.stringify(obj.error));
-            /* اگر مدل قبل از خطا متنی فرستاده، نگه دار */
-            if (typeof obj.text === 'string' && obj.text) {
-              full += obj.text;
-              onToken(obj.text);
-            }
+            streamError = obj.error;
             continue;
           }
           if (obj.model) applyResolvedModel(obj.model, obj.requested_model);
@@ -426,14 +390,10 @@ window.AI = (function () {
       }
     }
 
-    lastRawResponse = full || '';
-
     if (streamError) {
       aiLog('error', '✗ ' + streamError);
       aiAutoHide();
-      const err = new Error(streamError);
-      err.rawResponse = full || lastRawResponse || '';
-      throw err;
+      throw new Error(streamError);
     }
 
     aiLog('success', '✓ استریم تمام شد (' + full.length + ' کاراکتر)');

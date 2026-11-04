@@ -59,6 +59,9 @@ window.DB = (function () {
     aiModels = []; deletedAiModelIds = new Set();
   }
 
+  let tagsColumn = false;
+  function hasTagsColumn() { return tagsColumn; }
+
   function fromDbTitle(row) {
     return {
       id: row.id,
@@ -81,6 +84,7 @@ window.DB = (function () {
       language: row.language || '',
       status: row.status || '',
       reason: row.reason || '',
+      tags: row.tags || '',
       story_analysis: row.story_analysis || '',
       ai_standardized_at: row.ai_standardized_at,
       created_at: row.created_at,
@@ -92,9 +96,10 @@ window.DB = (function () {
     const out = {};
     const keys = ['title','category','type','genre','year','rating','favorite','notes',
       'watched_date','summary','original_title','seasons','episodes','episodes_per_season',
-      'country','language','status','reason','story_analysis','source','ai_standardized_at','legacy_id'];
+      'country','language','status','reason','story_analysis','source','ai_standardized_at','legacy_id','tags'];
     keys.forEach(function (k) { if (obj[k] !== undefined) out[k] = obj[k]; });
     if (out.favorite !== undefined) out.favorite = !!out.favorite;
+    if (!tagsColumn) delete out.tags;
     return out;
   }
 
@@ -143,6 +148,7 @@ window.DB = (function () {
 
     if (tRes.error) throw tRes.error;
     titles = (tRes.data || []).map(fromDbTitle);
+    tagsColumn = !!(tRes.data && tRes.data.length && Object.prototype.hasOwnProperty.call(tRes.data[0], 'tags'));
     titlesById = {};
     titles.forEach(function (t) { titlesById[t.id] = t; });
 
@@ -566,7 +572,7 @@ window.DB = (function () {
   function run() { return { changes: 0 }; }
 
   return {
-    init: init, initAuth: initAuth, getUser: getUser, signIn: signIn, signUp: signUp, signOut: signOut,
+    init: init, initAuth: initAuth, getUser: getUser, hasTagsColumn: hasTagsColumn, signIn: signIn, signUp: signUp, signOut: signOut,
     ready: isReady, isReady: isReady,
     getAllTitles: getAllTitles, getTitle: getTitle, insertTitle: insertTitle, updateTitle: updateTitle, deleteTitle: deleteTitle, restoreTitle: restoreTitle,
     logActivity: logActivity, getActivity: getActivity, getStarCounts: getStarCounts, getStats: getStats, findSimilar: findSimilar,
