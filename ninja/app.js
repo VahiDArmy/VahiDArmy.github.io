@@ -1817,12 +1817,16 @@ async function uploadZipExtract(u) {
     const plan = u.plan;
     const cancelled = () => Object.assign(new Error('Cancelled'), { cancelled: true });
     const total = plan.files.length + (plan.keepZip ? 1 : 0);
+    const log = (msg, ...args) => {
+        console.log(`[zip-extract] ${u.file.name}: ${msg}`, ...args);
+    };
 
     try {
         if (typeof JSZip === 'undefined') throw new Error('Zip library failed to load');
         setUpload(u, 'preparing');
         u.custom = { msg: 'Reading archive…', pct: '', size: formatSize(u.file.size) };
         renderUploadRow(u);
+        log('preparing — reading archive (%s)', formatSize(u.file.size));
 
         let zip;
         try { zip = await JSZip.loadAsync(u.file); }
@@ -1836,12 +1840,16 @@ async function uploadZipExtract(u) {
             .map(pair => ({ ...pair, dest: zipDestination(plan, pair.rel) }))
             .filter(pair => !(plan.conflict === 'skip' && existing.has(pair.dest)));
 
+        log('plan ready — %d of %d selected files will be uploaded (keepZip=%s, conflict=%s, baseDir=%s)',
+            pairs.length, plan.files.length, !!plan.keepZip, plan.conflict || 'overwrite', plan.baseDir || '/');
+
         if (!pairs.length && !plan.keepZip) {
             u.custom = { msg: 'Everything was skipped', pct: '100%', size: formatSize(u.file.size) };
             renderUploadRow(u);
             u.fraction = 1;
             delete u.custom;
             setUpload(u, 'done');
+            log('nothing to upload (all skipped)');
             return;
         }
 
@@ -1851,38 +1859,53 @@ async function uploadZipExtract(u) {
         const baseTree = headCommit.tree.sha;
         const treeEntries = [];
         let done = 0;
+        let uploadedBytes = 0;
 
         setUpload(u, 'uploading');
+        log('starting blob uploads against tree %s', baseTree);
+
         for (const pair of pairs) {
             if (u.cancelled) throw cancelled();
             const base64 = await pair.entry.async('base64');
+            const entrySize = pair.entry._data ? pair.entry._data.uncompressedSize : 0;
             const blob = await api('POST', '/git/blobs', { content: base64, encoding: 'base64' });
             treeEntries.push({ path: pair.dest, mode: '100644', type: 'blob', sha: blob.sha });
             done++;
+            uploadedBytes += entrySize || 0;
             u.fraction = done / total;
             u.custom = {
-                msg: `Extracting ${done}/${pairs.length} · ${pair.rel}`,
+                msg: `Extracting ${done}/${pairs.length} · ${pair.rel} → ${pair.dest}`,
                 pct: Math.floor((done / total) * 100) + '%',
                 size: formatSize(u.file.size),
             };
             renderUploadRow(u);
             renderUploadSummary();
+            log('blob %d/%d  %s → %s  (sha %s)', done, pairs.length, pair.rel, pair.dest, blob.sha.slice(0, 7));
         }
 
         if (plan.keepZip) {
             if (u.cancelled) throw cancelled();
             const base64 = await fileToBase64(u.file);
             const blob = await api('POST', '/git/blobs', { content: base64, encoding: 'base64' });
+            const zipDest = joinPath(plan.baseDir, u.file.name);
             treeEntries.push({
-                path: joinPath(plan.baseDir, u.file.name),
+                path: zipDest,
                 mode: '100644', type: 'blob', sha: blob.sha,
             });
             done++;
             u.fraction = done / total;
+            u.custom = {
+                msg: `Keeping archive · ${u.file.name}`,
+                pct: Math.floor((done / total) * 100) + '%',
+                size: formatSize(u.file.size),
+            };
+            renderUploadRow(u);
+            log('kept original zip as %s (sha %s)', zipDest, blob.sha.slice(0, 7));
         }
 
-        u.custom = { msg: 'Committing to GitHub…', pct: '100%', size: formatSize(u.file.size) };
+        u.custom = { msg: `Committing ${pairs.length} file${pairs.length === 1 ? '' : 's'}…`, pct: '100%', size: formatSize(u.file.size) };
         setUpload(u, 'committing');
+        log('creating tree with %d entries and committing', treeEntries.length);
 
         const newTree = await api('POST', '/git/trees', { base_tree: baseTree, tree: treeEntries });
         const commit = await api('POST', '/git/commits', {
@@ -1896,11 +1919,14 @@ async function uploadZipExtract(u) {
         u.fraction = 1;
         delete u.custom;
         setUpload(u, 'done');
+        log('done — commit %s on %s', commit.sha.slice(0, 7), state.branch);
     } catch (err) {
         delete u.custom;
-        if (err.cancelled || u.cancelled) setUpload(u, 'cancelled');
-        else {
-            console.error('Zip extract error:', err);
+        if (err.cancelled || u.cancelled) {
+            setUpload(u, 'cancelled');
+            log('cancelled by user');
+        } else {
+            console.error('[zip-extract] error:', err);
             u.error = err.message;
             setUpload(u, 'error');
         }
@@ -2006,7 +2032,14 @@ function renderUploadRow(u) {
 }
 
 function planSummary(plan) {
-    return `→ ${plan.baseDir ? '/' + plan.baseDir + '/' : '/'} · ${plural(plan.files.length, 'file')}`;
+    const base = plan.baseDir ? '/' + plan.baseDir + '/' : '/';
+    const opts = [];
+    if (plan.stripPrefix) opts.push('strip root');
+    if (plan.flatten) opts.push('flatten');
+    if (plan.keepZip) opts.push('keep .zip');
+    if (plan.conflict && plan.conflict !== 'overwrite') opts.push(plan.conflict);
+    const extra = opts.length ? ' · ' + opts.join(', ') : '';
+    return `→ ${base} · ${plural(plan.files.length, 'file')}${extra}`;
 }
 
 function renderUploadSummary() {

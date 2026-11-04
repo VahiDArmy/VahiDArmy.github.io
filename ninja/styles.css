@@ -308,10 +308,20 @@ code { font-family: var(--mono); font-size: .92em; }
     background: rgba(10,10,22,.36);
     -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
     z-index: 20;
+    /* Not sticky / fixed — stays in document flow and can be scrolled away */
 }
 .connect-form { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; flex-wrap: wrap; }
 .connect-form .field:nth-of-type(1) { flex: 1 1 220px; max-width: 340px; }
 .connect-form .field:nth-of-type(2) { flex: 1 1 200px; max-width: 300px; }
+/* After connect, hide the credential fields so the auth header is not always visible */
+body[data-connected="true"] .connect-form .field,
+body[data-connected="true"] #connectBtn {
+    display: none !important;
+}
+body[data-connected="true"] .connect-form {
+    flex: 0 0 auto;
+    gap: 6px;
+}
 .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
 .status {
