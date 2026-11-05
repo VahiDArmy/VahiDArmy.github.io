@@ -849,6 +849,7 @@
 
 /* ---- personality page ---- */
 .personality-page {
+  --pers-gutter: clamp(14px, 4vw, 26px);
   display: none;
   flex-direction: column;
   width: 100%;
@@ -859,25 +860,53 @@
 }
 .personality-page.is-active { display: flex; }
 
-.pers-toolbar {
+/* Personality page header: title + one control panel.
+   The controls wrap by design (no fixed widths, no breakpoints):
+   phone  -> segmented control, then [option | run]; wide -> one row. */
+.pers-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 18px 26px;
+  gap: 14px 20px;
+  padding: 16px var(--pers-gutter);
   border-bottom: 1px solid var(--border-1);
   background: linear-gradient(180deg, var(--bg-1), transparent);
   flex-shrink: 0;
 }
-.pers-toolbar-left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.pers-toolbar-right { flex-shrink: 0; }
+.pers-title { flex: 1 1 220px; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pers-controls { flex: 1 1 360px; display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; min-width: 0; }
+.pers-kind {
+  flex: 1 1 220px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+}
+.pers-kind-btn { justify-content: center; min-width: 0; white-space: nowrap; }
+.pers-kind-btn.is-active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+.pers-opt {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  font-size: 12px;
+  cursor: pointer;
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+}
+.pers-opt input { margin: 0; accent-color: var(--accent); }
+.pers-run { flex: 1 1 160px; justify-content: center; min-height: 40px; white-space: nowrap; }
 
 .pers-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 14px;
-  padding: 18px 26px 28px;
+  padding: 18px var(--pers-gutter) 28px;
   min-height: 0;
   flex: 1;
   overflow: hidden;
@@ -1003,26 +1032,6 @@
 
 .app[data-page="personality"] .side-section-library {
   display: none;
-}
-
-.pers-toolbar-right {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-.pers-kind {
-  display: inline-flex;
-  gap: 4px;
-  padding: 3px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-1);
-}
-.pers-kind-btn.is-active {
-  background: var(--accent);
-  color: #000;
-  border-color: var(--accent);
-  font-weight: 700;
 }
 
 .pers-suggest-actions {
@@ -1253,6 +1262,3 @@
 .tag-ui-manual-row .field-input {
   flex: 1;
 }
-
-.pers-opt { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-.pers-opt input { margin: 0; }

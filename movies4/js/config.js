@@ -9,7 +9,7 @@
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '3.2.0-online',
+  APP_VERSION: '3.2.1-online',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
