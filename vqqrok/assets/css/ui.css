@@ -413,6 +413,23 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
   background: color-mix(in oklab, var(--accent-soft) 78%, transparent);
 }
 .ayah.is-marked { background: color-mix(in oklab, var(--gold) 14%, transparent); }
+.ayah.is-partner,
+.ayah__fa.is-partner {
+  background: color-mix(in oklab, #3ecf8e 18%, transparent);
+  box-shadow:
+    0 0 0 .14em color-mix(in oklab, #3ecf8e 45%, transparent),
+    0 0 18px color-mix(in oklab, #3ecf8e 35%, transparent);
+  border-radius: .35em;
+  animation: partnerGlow 2.4s ease-in-out infinite;
+}
+@keyframes partnerGlow {
+  0%, 100% { box-shadow: 0 0 0 .12em color-mix(in oklab, #3ecf8e 40%, transparent), 0 0 14px color-mix(in oklab, #3ecf8e 28%, transparent); }
+  50% { box-shadow: 0 0 0 .18em color-mix(in oklab, #3ecf8e 55%, transparent), 0 0 22px color-mix(in oklab, #3ecf8e 42%, transparent); }
+}
+html[data-theme="night"] .ayah.is-partner,
+html[data-theme="night"] .ayah__fa.is-partner {
+  background: color-mix(in oklab, #3ecf8e 22%, transparent);
+}
 .ayah[hidden], .ayah__fa[hidden] { display: none; }
 
 /* شماره آیه به سبک مصحف: ﴿۱۲﴾ فشرده، بدون قاب اضافه */
@@ -1067,4 +1084,41 @@ html[data-theme="night"] .quranquote { color: var(--gold); background: color-mix
   body { background: #fff; color: #000; }
   .mushaf, .reader { box-shadow: none; border-color: #ddd; }
   .ayah, .ayah__fa { background: none !important; box-shadow: none !important; }
+}
+
+
+/* نشان آیهٔ فعلی همراه */
+.partner-pill {
+  display: none;
+  align-items: center;
+  gap: .35rem;
+  max-inline-size: min(52vw, 16rem);
+  padding: .28rem .65rem;
+  border-radius: var(--r-pill);
+  font-size: var(--step-000);
+  font-weight: 600;
+  color: #0b3d2c;
+  background: color-mix(in oklab, #3ecf8e 55%, var(--card-solid));
+  border: 1px solid color-mix(in oklab, #3ecf8e 50%, transparent);
+  box-shadow: 0 0 16px color-mix(in oklab, #3ecf8e 30%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.partner-pill.is-on { display: inline-flex; }
+html[data-theme="night"] .partner-pill {
+  color: #d4ffe9;
+  background: color-mix(in oklab, #3ecf8e 22%, transparent);
+}
+.partner-pill__dot {
+  inline-size: .55em; block-size: .55em; border-radius: 50%;
+  background: #3ecf8e;
+  box-shadow: 0 0 8px #3ecf8e;
+  flex-shrink: 0;
+  animation: partnerDot 1.6s ease-in-out infinite;
+}
+@keyframes partnerDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .55; transform: scale(.85); }
 }

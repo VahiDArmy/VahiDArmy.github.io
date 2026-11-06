@@ -299,3 +299,106 @@ export function translateError(error) {
   if (message.includes("failed to fetch") || message.includes("network")) return "شبکه در دسترس نیست.";
   return error?.message || "خطای نامشخص";
 }
+
+
+/* ---------- حضور هم‌خوان (آیهٔ فعلی طرف مقابل) ---------- */
+let presenceChannel = null;
+let presenceHandler = null;
+let lastTrackedAyah = null;
+
+export function getClient() {
+  return client;
+}
+
+/**
+ * کانال حضور دو نفر روی یک اتاق ثابت.
+ * onPartner({ online, slot, name, ayah, at }) هر بار که طرف مقابل عوض شود صدا زده می‌شود.
+ */
+export async function startPresence(onPartner) {
+  presenceHandler = typeof onPartner === "function" ? onPartner : null;
+  if (!client || !state.user || !state.slot) {
+    presenceHandler?.({ online: false });
+    return { ok: false, reason: "auth" };
+  }
+  await stopPresence();
+
+  const room = "q56-reading";
+  presenceChannel = client.channel(room, {
+    config: { presence: { key: state.user.id } },
+  });
+
+  const emitPartner = () => {
+    if (!presenceChannel || !presenceHandler) return;
+    const map = presenceChannel.presenceState() || {};
+    let partner = null;
+    for (const [key, metas] of Object.entries(map)) {
+      if (key === state.user.id) continue;
+      const meta = Array.isArray(metas) ? metas[0] : metas;
+      if (!meta) continue;
+      partner = {
+        online: true,
+        slot: Number(meta.slot) || null,
+        name: meta.name || SITE.defaultNames?.[meta.slot] || "همراه",
+        ayah: Number(meta.ayah) || 1,
+        at: meta.at || null,
+      };
+      break;
+    }
+    presenceHandler(partner || { online: false });
+  };
+
+  presenceChannel.on("presence", { event: "sync" }, emitPartner);
+  presenceChannel.on("presence", { event: "join" }, emitPartner);
+  presenceChannel.on("presence", { event: "leave" }, emitPartner);
+
+  const status = await new Promise((resolve) => {
+    presenceChannel.subscribe((s) => {
+      if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") resolve(s);
+    });
+  });
+
+  if (status !== "SUBSCRIBED") {
+    console.warn("[vaqia] presence subscribe", status);
+    presenceHandler?.({ online: false });
+    return { ok: false, reason: status };
+  }
+
+  const ayah = lastTrackedAyah || 1;
+  await presenceChannel.track({
+    slot: state.slot,
+    name: state.profile?.display_name || SITE.defaultNames[state.slot] || "من",
+    ayah,
+    at: new Date().toISOString(),
+  });
+  return { ok: true };
+}
+
+export async function publishReading(ayah) {
+  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
+  if (num === lastTrackedAyah && presenceChannel) return;
+  lastTrackedAyah = num;
+  if (!presenceChannel || !state.user || !state.slot) return;
+  try {
+    await presenceChannel.track({
+      slot: state.slot,
+      name: state.profile?.display_name || SITE.defaultNames[state.slot] || "من",
+      ayah: num,
+      at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.warn("[vaqia] presence track", err?.message || err);
+  }
+}
+
+export async function stopPresence() {
+  if (presenceChannel) {
+    try {
+      await presenceChannel.untrack();
+      await client?.removeChannel(presenceChannel);
+    } catch (_) {
+      /* ignore */
+    }
+    presenceChannel = null;
+  }
+  lastTrackedAyah = null;
+}

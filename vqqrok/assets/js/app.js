@@ -34,6 +34,9 @@ import {
   recordRead,
   currentUserName,
   refreshProfile,
+  startPresence,
+  stopPresence,
+  publishReading,
 } from "./db.js";
 import {
   loadSurah,
@@ -48,6 +51,7 @@ import {
   setSessionReads,
   initAyahTools,
   setShowTranslation,
+  setPartnerAyah,
 } from "./surah.js";
 import { loadTafsirFiles, parseTafsirDocs, readLocalFiles, pageHtml } from "./tafsir.js";
 
@@ -66,6 +70,53 @@ const countersState = { rows: [], loaded: false };
 const historyState = { rows: [], filter: "all", loaded: false };
 let authMode = "signin";
 let sessionReads = 0;
+
+/* ---------- حضور هم‌خوان ---------- */
+let partnerState = { online: false, ayah: null, name: null, slot: null };
+
+function updatePartnerPill() {
+  const pill = $("#partnerPill");
+  const label = $("#partnerPillText");
+  if (!pill) return;
+  if (!partnerState.online || !partnerState.ayah) {
+    pill.hidden = true;
+    pill.classList.remove("is-on");
+    setPartnerAyah(null);
+    return;
+  }
+  pill.hidden = false;
+  pill.classList.add("is-on");
+  const name = partnerState.name || "همراه";
+  if (label) label.textContent = `${name} · آیهٔ ${fa(partnerState.ayah)}`;
+  setPartnerAyah(partnerState.ayah, partnerState);
+}
+
+function onPartnerPresence(info) {
+  if (!info?.online) {
+    partnerState = { online: false, ayah: null, name: null, slot: null };
+    updatePartnerPill();
+    return;
+  }
+  partnerState = {
+    online: true,
+    ayah: Number(info.ayah) || 1,
+    name: info.name || "همراه",
+    slot: info.slot ?? null,
+  };
+  updatePartnerPill();
+}
+
+async function syncPresence() {
+  if (db.user && db.slot) {
+    await startPresence(onPartnerPresence);
+    if (surahState.lastAyah) publishReading(surahState.lastAyah);
+  } else {
+    await stopPresence();
+    onPartnerPresence({ online: false });
+  }
+}
+
+
 
 /* ---------- ابزار ---------- */
 const isTyping = () => {
@@ -864,6 +915,14 @@ function wireEvents() {
     renderAuthState();
     if (db.profile?.theme) applyTheme(db.profile.theme, { persist: true });
     if (db.profile?.font_step && FONT_STEPS.includes(db.profile.font_step)) applyFont(db.profile.font_step);
+    syncPresence();
+  });
+
+  $("#partnerPill")?.addEventListener("click", () => {
+    if (partnerState.ayah) {
+      setView("surah");
+      focusAyah(partnerState.ayah);
+    }
   });
 }
 
@@ -878,7 +937,10 @@ async function boot() {
   } else {
     renderAyahs($("#ayahs"));
     surahState.hooks.onTafsir = openTafsirForAyah;
-    surahState.hooks.onProgress = () => updateHero({ nameFa: SITE.surahNameFa });
+    surahState.hooks.onProgress = (_progress, ayah) => {
+      updateHero({ nameFa: SITE.surahNameFa });
+      if (ayah) publishReading(ayah);
+    };
     updateHero(surah.meta);
     const heroProgress = Math.round(((surahState.lastAyah || 1) / SITE.ayahCount) * 100);
     surahState.progress = heroProgress;
@@ -904,6 +966,7 @@ async function boot() {
   // اگر حساب داریم و نام دارد، شمارنده‌ها را با نام واقعی نشان بده
   await refreshCounters();
   if (db.user && !db.profile) await refreshProfile();
+  await syncPresence();
 
   const completionWatcher = new IntersectionObserver(
     (entries) => {

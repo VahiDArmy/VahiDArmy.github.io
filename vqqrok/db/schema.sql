@@ -184,3 +184,8 @@ grant execute on function public.q56_read_history(integer) to anon, authenticate
 -- select * from public.q56_counter_summary();
 -- select * from public.q56_read_history(20);
 -- select id, slot, display_name, theme from public.q56_profiles order by slot;
+
+
+-- ---------- ۱۱. حضور هم‌خوان ----------
+-- آیهٔ فعلی هر نفر با Supabase Realtime Presence (کانال q56-reading) هم‌رسانی می‌شود.
+-- جدول جدا لازم نیست. در Dashboard → Database → Replication / Realtime را برای پروژه روشن نگه دارید.
