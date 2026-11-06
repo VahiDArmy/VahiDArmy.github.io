@@ -570,6 +570,12 @@ function renderWelcome() {
     updateStats(0);
 }
 
+function dateKey(item) {
+    const key = `${state.branch}:${item.path}`;
+    const iso = dateCache.get(key);
+    return iso ? new Date(iso).getTime() : 0;
+}
+
 function sortItems(items) {
     const dirFirst = (a, b) => (a.type === 'dir' ? 0 : 1) - (b.type === 'dir' ? 0 : 1);
     const byName = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
@@ -578,6 +584,8 @@ function sortItems(items) {
         'name-desc': (a, b) => byName(b, a),
         'size-asc': (a, b) => (a.size || 0) - (b.size || 0),
         'size-desc': (a, b) => (b.size || 0) - (a.size || 0),
+        'date-asc': (a, b) => dateKey(a) - dateKey(b) || byName(a, b),
+        'date-desc': (a, b) => dateKey(b) - dateKey(a) || byName(a, b),
         type: (a, b) => (extOf(a.name) || '').localeCompare(extOf(b.name) || '') || byName(a, b),
     };
     const cmp = comparators[prefs.sort] || byName;
@@ -640,7 +648,7 @@ function quickActions(item, context) {
     let html = '';
     html += button('download', '⬇', isDir ? 'Download folder as .zip' : 'Download file');
     html += button('replace', '🔄', isDir ? 'Replace folder contents' : 'Replace file');
-    html += button('newtab', '🌐', isDir ? 'Open this folder in a new tab' : 'Open file in a new tab');
+    html += button('newtab', '🌐', isDir ? 'Open live folder on the site' : 'Open live page on the site');
     if (!isDir && isTextFile(item.name)) html += button('copy', '📋', 'Copy file contents', ' copy');
     html += button('menu', '⋯', 'More actions', ' kebab');
     wrap.innerHTML = html;
@@ -669,11 +677,20 @@ function buildCard(item) {
 function listHead() {
     const head = document.createElement('div');
     head.className = 'list-head';
+    const sort = prefs.sort || 'name-asc';
+    const mark = (key, label) => {
+        let arrow = '';
+        if (key === 'name' && (sort === 'name-asc' || sort === 'name-desc')) arrow = sort === 'name-asc' ? ' ↑' : ' ↓';
+        if (key === 'size' && (sort === 'size-asc' || sort === 'size-desc')) arrow = sort === 'size-asc' ? ' ↑' : ' ↓';
+        if (key === 'date' && (sort === 'date-asc' || sort === 'date-desc')) arrow = sort === 'date-asc' ? ' ↑' : ' ↓';
+        if (key === 'type' && sort === 'type') arrow = ' •';
+        return `${label}${arrow}`;
+    };
     head.innerHTML = `
-        <span class="c-name c-sort" data-sort="name">Name</span>
-        <span class="c-type c-sort" data-sort="type">Type</span>
-        <span class="c-size c-sort" data-sort="size">Size</span>
-        <span class="c-date">Modified</span>
+        <span class="c-name c-sort" data-sort="name">${mark('name', 'Name')}</span>
+        <span class="c-size c-sort" data-sort="size">${mark('size', 'Size')}</span>
+        <span class="c-date c-sort" data-sort="date">${mark('date', 'Modified')}</span>
+        <span class="c-type c-sort" data-sort="type">${mark('type', 'Type')}</span>
         <span class="c-actions">Actions</span>`;
     return head;
 }
@@ -689,9 +706,9 @@ function buildRow(item) {
     row.innerHTML = `
         <span class="r-check">✓</span>
         <span class="r-name"><span class="r-ico">${getFileIcon(item.name, isDir)}</span><span class="r-label">${escapeHtml(item.name)}</span></span>
-        <span class="r-type">${isDir ? 'folder' : (extOf(item.name) || 'file')}</span>
         <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-        <span class="r-date" title="Loading last commit…">—</span>`;
+        <span class="r-date" title="Loading last commit…">—</span>
+        <span class="r-type">${isDir ? 'folder' : (extOf(item.name) || 'file')}</span>`;
     row.appendChild(quickActions(item, 'row'));
     queueDate(item, row.querySelector('.r-date'));
     if (clipboard && clipboard.mode === 'cut' && clipboard.items.some(i => i.path === item.path)) row.classList.add('cut');
@@ -754,9 +771,9 @@ async function renderDeepSearch() {
             row.innerHTML = `
                 <span class="r-check">✓</span>
                 <span class="r-name"><span class="r-ico">${getFileIcon(name, isDir)}</span><span class="r-label">${escapeHtml(name)}</span><span class="r-sub">${escapeHtml(parent)}</span></span>
-                <span class="r-type">${isDir ? 'folder' : (extOf(name) || 'file')}</span>
                 <span class="r-size">${isDir ? '—' : formatSize(item.size)}</span>
-                <span class="r-date" title="Dates are not loaded for repository-wide search">—</span>`;
+                <span class="r-date" title="Dates are not loaded for repository-wide search">—</span>
+                <span class="r-type">${isDir ? 'folder' : (extOf(name) || 'file')}</span>`;
             row.appendChild(quickActions(item, 'row'));
             filesEl.appendChild(row);
         });
@@ -1430,23 +1447,42 @@ async function duplicateItem(item) {
 }
 
 /* ── open in a new tab / copy contents ────────────────────── */
+/** Base URL of the published GitHub Pages site for the current repo. */
+function getPagesBase() {
+    // User / organization site: the repository itself is named owner.github.io
+    if (state.repo === `${state.owner}.github.io` || state.repo.endsWith('.github.io')) {
+        return `https://${state.repo.replace(/\/+$/, '')}`;
+    }
+    // Project site
+    return `https://${state.owner}.github.io/${state.repo}`;
+}
+
+/** Live Pages URL for a file or folder (what visitors actually see). */
+function pagesUrlFor(item) {
+    const base = getPagesBase().replace(/\/+$/, '');
+    if (!item || !item.path) return base + '/';
+    const clean = String(item.path).replace(/^\/+/, '').replace(/\/+$/, '');
+    // Folders get a trailing slash so Pages can serve index.html if present
+    if (item.type === 'dir') return `${base}/${clean}/`;
+    return `${base}/${clean}`;
+}
+
+/**
+ * Open the live GitHub Pages URL of the file or folder in a new browser tab.
+ * Examples (for vahidarmy/vahidarmy.github.io):
+ *   file.html          → https://vahidarmy.github.io/file.html
+ *   folder/image.png   → https://vahidarmy.github.io/folder/image.png
+ *   folder/            → https://vahidarmy.github.io/folder/
+ */
 function openInNewTab(item) {
     if (!item) return;
-    if (item.type === 'dir') {
-        try {
-            const url = new URL(window.location.href);
-            url.search = '';
-            url.hash = '';
-            if (item.path) url.searchParams.set('path', item.path);
-            window.open(url.toString(), '_blank', 'noopener');
-        } catch (_) {
-            toast('Could not build the folder link', 'err');
-        }
-        return;
+    try {
+        const url = pagesUrlFor(item);
+        window.open(url, '_blank', 'noopener');
+    } catch (err) {
+        console.error('openInNewTab failed:', err);
+        toast('Could not build the live page link', 'err');
     }
-    const raw = item.download_url
-        || `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${enc(state.branch)}/${enc(item.path)}`;
-    window.open(raw, '_blank', 'noopener');
 }
 
 async function copyFileContent(item) {
@@ -1519,15 +1555,34 @@ async function fetchDate(job) {
             : null;
         dateCache.set(job.key, iso);
         if (job.node.isConnected) applyDate(job.node, iso);
+        // If the user is sorting by date, re-order once this batch of dates settles
+        if ((prefs.sort === 'date-asc' || prefs.sort === 'date-desc') && dateQueue.length === 0 && dateActive <= 1) {
+            scheduleDateResort();
+        }
     } catch (err) {
         if (err.status === 403 || err.status === 429) {
             dateStopped = true;
             dateQueue.length = 0;
+            // Mark remaining visible dates so the user knows why they stayed empty
+            document.querySelectorAll('.r-date').forEach(node => {
+                if (node.textContent === '—' || node.title.includes('Loading')) {
+                    node.textContent = '—';
+                    node.title = 'Date unavailable (API rate limit). Try again later.';
+                }
+            });
             return;
         }
         dateCache.set(job.key, null);
         if (job.node.isConnected) applyDate(job.node, null);
     }
+}
+
+let dateResortTimer = 0;
+function scheduleDateResort() {
+    clearTimeout(dateResortTimer);
+    dateResortTimer = setTimeout(() => {
+        if (prefs.sort === 'date-asc' || prefs.sort === 'date-desc') renderFiles();
+    }, 180);
 }
 
 /* ── downloads ─────────────────────────────────────────────── */
@@ -1701,7 +1756,6 @@ async function uploadEntries(entries) {
             dir: state.path,
             status: 'queued', fraction: 0, speed: 0, error: '',
             cancelled: false, xhr: null, el: null, targetPath: null, custom: null,
-            zipJob: null,
         };
         if (plan.mode === 'keep') {
             if (rel) item.targetPath = joinPath(item.dir, rel);
@@ -1814,218 +1868,218 @@ function xhrPut(path, body, u, onProgress) {
     });
 }
 
-/* ── resumable ZIP extraction ──
-   Blobs are content-addressed, so every file that reached GitHub can be reused
-   by its SHA. The job (plus a session checkpoint) keeps those SHAs, which lets
-   a failed extraction continue from the last file instead of starting over. */
-const ZIP_JOB_KEY = 'fm_zip_job';
-const ZIP_JOB_MAX_FILES = 4000;
-
-function zipJobSignature(file, plan) {
-    return [state.owner, state.repo, state.branch, file.name, file.size,
-        plan.baseDir || '', plan.stripPrefix || '',
-        plan.flatten ? 1 : 0, plan.keepZip ? 1 : 0, plan.files.length].join('|');
-}
-
-function zipJobDone(job) {
-    return job.blobs.size + (job.keepZip ? 1 : 0);
-}
-
-function readZipCheckpoint(sig) {
-    let saved;
-    try {
-        const raw = sessionStorage.getItem(ZIP_JOB_KEY);
-        if (!raw) return null;
-        saved = JSON.parse(raw);
-    } catch (_) { return null; }
-    if (!saved || saved.sig !== sig || !saved.blobs) return null;
-    return saved;
-}
-
-function saveZipCheckpoint(job) {
-    if (job.blobs.size > ZIP_JOB_MAX_FILES) return;
-    const blobs = {};
-    job.blobs.forEach((value, dest) => { blobs[dest] = value; });
-    try {
-        sessionStorage.setItem(ZIP_JOB_KEY, JSON.stringify({
-            sig: job.sig, name: job.name, size: job.size,
-            blobs, keepZip: job.keepZip || null,
-            total: job.total, done: zipJobDone(job), savedAt: Date.now(),
-        }));
-    } catch (_) { /* storage full — the in-memory job still resumes */ }
-}
-
-function clearZipCheckpoint() {
-    try { sessionStorage.removeItem(ZIP_JOB_KEY); } catch (_) { /* ignore */ }
-}
-
-async function zipApiRetry(u, run, attempts = 3) {
-    for (let attempt = 1; ; attempt++) {
+/** Upload one Git blob with automatic retries for transient failures. */
+async function postBlobWithRetry(contentBase64, log, label, maxAttempts = 4) {
+    let lastErr = null;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-            return await run();
+            return await api('POST', '/git/blobs', { content: contentBase64, encoding: 'base64' });
         } catch (err) {
-            const transient = !err.status || err.status === 429 || err.status >= 500;
-            if (!transient || attempt >= attempts || u.cancelled) throw err;
-            await new Promise(r => setTimeout(r, (err.status === 429 ? 2000 : 700) * attempt));
+            lastErr = err;
+            const status = err.status || 0;
+            const retryable = !status || status === 408 || status === 429 || status >= 500;
+            if (!retryable || attempt === maxAttempts) throw err;
+            const wait = Math.min(8000, 600 * Math.pow(2, attempt - 1)) + Math.floor(Math.random() * 400);
+            if (log) log('retry %d/%d for %s after %dms (%s)', attempt, maxAttempts, label, wait, err.message);
+            await new Promise(r => setTimeout(r, wait));
         }
     }
+    throw lastErr;
 }
 
 async function uploadZipExtract(u) {
     const plan = u.plan;
     const cancelled = () => Object.assign(new Error('Cancelled'), { cancelled: true });
+    const total = plan.files.length + (plan.keepZip ? 1 : 0);
+    const log = (msg, ...args) => {
+        console.log(`[zip-extract] ${u.file.name}: ${msg}`, ...args);
+    };
+
+    // Persistent resume state across retries (blob path → sha)
+    if (!u.resume) u.resume = { blobs: {}, keepZipSha: null, pairs: null };
 
     try {
         if (typeof JSZip === 'undefined') throw new Error('Zip library failed to load');
         setUpload(u, 'preparing');
 
-        let job = u.zipJob;
-        if (!job) {
-            u.custom = { msg: 'Reading archive…', pct: '', size: formatSize(u.file.size) };
-            renderUploadRow(u);
+        const already = Object.keys(u.resume.blobs).length + (u.resume.keepZipSha ? 1 : 0);
+        const isResume = already > 0;
+        u.custom = {
+            msg: isResume ? `Resuming from ${already}/${total}…` : 'Reading archive…',
+            pct: isResume ? Math.floor((already / total) * 100) + '%' : '',
+            size: formatSize(u.file.size),
+        };
+        renderUploadRow(u);
+        log(isResume ? 'resuming — %d blobs already uploaded' : 'preparing — reading archive (%s)',
+            isResume ? already : formatSize(u.file.size));
 
-            let zip;
-            try { zip = await JSZip.loadAsync(u.file); }
-            catch (_) { throw new Error('Not a valid zip file'); }
-            if (u.cancelled) throw cancelled();
+        let zip;
+        try { zip = await JSZip.loadAsync(u.file); }
+        catch (_) { throw new Error('Not a valid zip file'); }
+        if (u.cancelled) throw cancelled();
 
-            const existing = plan.existing || new Set();
-            const pairs = plan.files
-                .map(rel => {
-                    const entry = zip.file(rel);
-                    if (!entry) return null;
-                    const crc = entry._data && typeof entry._data.crc32 === 'number' ? entry._data.crc32 : null;
-                    return { rel, entry, crc, dest: zipDestination(plan, rel) };
-                })
-                .filter(pair => pair && !(plan.conflict === 'skip' && existing.has(pair.dest)));
-
-            const sig = zipJobSignature(u.file, plan);
-            const saved = readZipCheckpoint(sig);
-            const reusable = new Map();
-            if (saved) {
-                pairs.forEach(pair => {
-                    const hit = saved.blobs[pair.dest];
-                    if (hit && pair.crc !== null && hit.crc === pair.crc && typeof hit.sha === 'string') {
-                        reusable.set(pair.dest, hit);
-                    }
-                });
-            }
-
-            job = u.zipJob = {
-                sig, name: u.file.name, size: u.file.size, plan,
-                pairs, blobs: reusable,
-                keepZip: (saved && saved.keepZip) || null,
-                total: pairs.length + (plan.keepZip ? 1 : 0),
-            };
+        const existing = plan.existing || new Set();
+        let pairs = u.resume.pairs;
+        if (!pairs) {
+            pairs = plan.files
+                .map(rel => ({ rel, entry: zip.file(rel) }))
+                .filter(pair => pair.entry)
+                .map(pair => ({ rel: pair.rel, dest: zipDestination(plan, pair.rel) }))
+                .filter(pair => !(plan.conflict === 'skip' && existing.has(pair.dest)));
+            // Keep a serializable list (no JSZip entry objects) for resume
+            u.resume.pairs = pairs.map(p => ({ rel: p.rel, dest: p.dest }));
+            pairs = u.resume.pairs;
         }
 
-        const total = job.total;
-        if (!total) {
+        log('plan ready — %d of %d selected files will be uploaded (keepZip=%s, conflict=%s, baseDir=%s, resumed=%d)',
+            pairs.length, plan.files.length, !!plan.keepZip, plan.conflict || 'overwrite', plan.baseDir || '/', already);
+
+        if (!pairs.length && !plan.keepZip) {
             u.custom = { msg: 'Everything was skipped', pct: '100%', size: formatSize(u.file.size) };
             renderUploadRow(u);
             u.fraction = 1;
             delete u.custom;
             setUpload(u, 'done');
+            log('nothing to upload (all skipped)');
             return;
         }
-
-        const already = zipJobDone(job);
-        u.fraction = already / total;
-        if (already) {
-            u.custom = {
-                msg: `Resuming — ${already}/${total} already on GitHub`,
-                pct: Math.floor((already / total) * 100) + '%',
-                size: formatSize(u.file.size),
-            };
-            renderUploadRow(u);
-            renderUploadSummary();
-            await new Promise(r => setTimeout(r, 350));
-        }
-        if (u.cancelled) throw cancelled();
 
         const ref = await api('GET', `/git/ref/heads/${enc(state.branch)}`);
         const headSha = ref.object.sha;
         const headCommit = await api('GET', `/git/commits/${headSha}`);
+        const baseTree = headCommit.tree.sha;
         const treeEntries = [];
-        let done = already;
+        let done = 0;
 
-        setUpload(u, 'uploading');
-        for (const pair of job.pairs) {
-            if (u.cancelled) throw cancelled();
-            const cached = job.blobs.get(pair.dest);
-            let sha = cached && cached.crc === pair.crc ? cached.sha : null;
-
-            if (!sha) {
-                const base64 = await pair.entry.async('base64');
-                const blob = await zipApiRetry(u, () => api('POST', '/git/blobs', { content: base64, encoding: 'base64' }));
-                sha = blob.sha;
-                job.blobs.set(pair.dest, { sha, crc: pair.crc });
-                if (job.blobs.size % 20 === 0) saveZipCheckpoint(job);
+        // Re-attach already-uploaded blobs from a previous attempt
+        for (const pair of pairs) {
+            const sha = u.resume.blobs[pair.dest];
+            if (sha) {
+                treeEntries.push({ path: pair.dest, mode: '100644', type: 'blob', sha });
                 done++;
             }
-            treeEntries.push({ path: pair.dest, mode: '100644', type: 'blob', sha });
+        }
+        if (plan.keepZip && u.resume.keepZipSha) {
+            treeEntries.push({
+                path: joinPath(plan.baseDir, u.file.name),
+                mode: '100644', type: 'blob', sha: u.resume.keepZipSha,
+            });
+            done++;
+        }
 
+        setUpload(u, 'uploading');
+        log('starting blob uploads against tree %s (%d already done)', baseTree, done);
+
+        for (const pair of pairs) {
+            if (u.resume.blobs[pair.dest]) continue; // already uploaded
+            if (u.cancelled) throw cancelled();
+
+            const entry = zip.file(pair.rel);
+            if (!entry) {
+                log('missing entry in zip: %s — skipping', pair.rel);
+                continue;
+            }
+
+            u.custom = {
+                msg: `${isResume || done ? 'Resuming' : 'Extracting'} ${done + 1}/${pairs.length} · ${pair.rel} → ${pair.dest}`,
+                pct: Math.floor(((done) / total) * 100) + '%',
+                size: formatSize(u.file.size),
+            };
+            renderUploadRow(u);
+            renderUploadSummary();
+
+            const base64 = await entry.async('base64');
+            const blob = await postBlobWithRetry(base64, log, pair.rel);
+            u.resume.blobs[pair.dest] = blob.sha;
+            treeEntries.push({ path: pair.dest, mode: '100644', type: 'blob', sha: blob.sha });
+            done++;
             u.fraction = done / total;
             u.custom = {
-                msg: `${cached ? 'Resumed' : 'Uploaded'} ${done}/${total} · ${pair.rel}`,
+                msg: `${isResume || done > 1 ? 'Resuming' : 'Extracting'} ${done}/${pairs.length} · ${pair.rel} → ${pair.dest}`,
                 pct: Math.floor((done / total) * 100) + '%',
                 size: formatSize(u.file.size),
             };
             renderUploadRow(u);
             renderUploadSummary();
+            log('blob %d/%d  %s → %s  (sha %s)', done, pairs.length, pair.rel, pair.dest, blob.sha.slice(0, 7));
         }
 
-        if (plan.keepZip) {
+        if (plan.keepZip && !u.resume.keepZipSha) {
             if (u.cancelled) throw cancelled();
-            let sha = job.keepZip ? job.keepZip.sha : null;
-            if (!sha) {
-                const base64 = await fileToBase64(u.file);
-                const blob = await zipApiRetry(u, () => api('POST', '/git/blobs', { content: base64, encoding: 'base64' }));
-                sha = blob.sha;
-                job.keepZip = { sha };
-                saveZipCheckpoint(job);
-                done++;
-            }
-            treeEntries.push({
-                path: joinPath(plan.baseDir, u.file.name),
-                mode: '100644', type: 'blob', sha,
-            });
+            u.custom = {
+                msg: `Keeping archive · ${u.file.name}`,
+                pct: Math.floor((done / total) * 100) + '%',
+                size: formatSize(u.file.size),
+            };
+            renderUploadRow(u);
+            const base64 = await fileToBase64(u.file);
+            const blob = await postBlobWithRetry(base64, log, u.file.name);
+            const zipDest = joinPath(plan.baseDir, u.file.name);
+            u.resume.keepZipSha = blob.sha;
+            treeEntries.push({ path: zipDest, mode: '100644', type: 'blob', sha: blob.sha });
+            done++;
             u.fraction = done / total;
+            log('kept original zip as %s (sha %s)', zipDest, blob.sha.slice(0, 7));
         }
 
-        u.custom = { msg: 'Committing to GitHub…', pct: '100%', size: formatSize(u.file.size) };
+        u.custom = { msg: `Committing ${pairs.length} file${pairs.length === 1 ? '' : 's'}…`, pct: '100%', size: formatSize(u.file.size) };
         setUpload(u, 'committing');
+        log('creating tree with %d entries and committing', treeEntries.length);
 
-        const message = `Extract ${u.file.name} (${plural(job.pairs.length, 'file')})`;
-        const writeCommit = async (baseTree, parent) => {
-            const newTree = await api('POST', '/git/trees', { base_tree: baseTree, tree: treeEntries });
-            const commit = await api('POST', '/git/commits', { message, tree: newTree.sha, parents: [parent] });
-            await api('PATCH', `/git/refs/heads/${enc(state.branch)}`, { sha: commit.sha });
-        };
-
-        try {
-            await writeCommit(headCommit.tree.sha, headSha);
-        } catch (err) {
-            if (err.status !== 409 && err.status !== 422) throw err;
-            // The branch moved while we were uploading — rebase the same blobs onto the new head once.
-            const freshRef = await api('GET', `/git/ref/heads/${enc(state.branch)}`);
-            const freshCommit = await api('GET', `/git/commits/${freshRef.object.sha}`);
-            await writeCommit(freshCommit.tree.sha, freshRef.object.sha);
+        // Commit can also fail transiently — retry a few times
+        let commit = null;
+        let lastCommitErr = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            try {
+                // Refresh head in case the branch moved during a long upload
+                const freshRef = await api('GET', `/git/ref/heads/${enc(state.branch)}`);
+                const freshHead = freshRef.object.sha;
+                const freshCommit = await api('GET', `/git/commits/${freshHead}`);
+                const freshTree = freshCommit.tree.sha;
+                const newTree = await api('POST', '/git/trees', { base_tree: freshTree, tree: treeEntries });
+                commit = await api('POST', '/git/commits', {
+                    message: `Extract ${u.file.name} (${pairs.length} file${pairs.length === 1 ? '' : 's'})`,
+                    tree: newTree.sha,
+                    parents: [freshHead],
+                });
+                await api('PATCH', `/git/refs/heads/${enc(state.branch)}`, { sha: commit.sha });
+                lastCommitErr = null;
+                break;
+            } catch (err) {
+                lastCommitErr = err;
+                const status = err.status || 0;
+                const retryable = !status || status === 408 || status === 429 || status >= 500 || status === 409;
+                if (!retryable || attempt === 3) throw err;
+                const wait = 800 * attempt;
+                log('commit attempt %d failed (%s) — retrying in %dms', attempt, err.message, wait);
+                await new Promise(r => setTimeout(r, wait));
+            }
         }
-        invalidateTree();
+        if (lastCommitErr) throw lastCommitErr;
 
-        u.zipJob = null;
-        clearZipCheckpoint();
+        invalidateTree();
         u.fraction = 1;
         delete u.custom;
+        // Clear resume state on success so a future identical upload starts clean
+        u.resume = null;
         setUpload(u, 'done');
+        log('done — commit %s on %s', commit.sha.slice(0, 7), state.branch);
     } catch (err) {
         delete u.custom;
-        if (err.cancelled || u.cancelled) setUpload(u, 'cancelled');
-        else {
-            console.error('Zip extract error:', err);
-            u.error = err.message;
-            if (u.zipJob) saveZipCheckpoint(u.zipJob);
+        if (err.cancelled || u.cancelled) {
+            setUpload(u, 'cancelled');
+            log('cancelled by user');
+        } else {
+            console.error('[zip-extract] error:', err);
+            const saved = u.resume ? Object.keys(u.resume.blobs || {}).length : 0;
+            u.error = saved
+                ? `${err.message} · ${saved} file${saved === 1 ? '' : 's'} saved — resume available`
+                : err.message;
+            // Keep fraction so the progress bar shows how far we got
+            if (u.resume && total > 0) {
+                const done = Object.keys(u.resume.blobs).length + (u.resume.keepZipSha ? 1 : 0);
+                u.fraction = done / total;
+            }
             setUpload(u, 'error');
         }
     }
@@ -2039,32 +2093,10 @@ function zipDestination(plan, relPath) {
 }
 
 function cancelUpload(u) {
-    if (SETTLED.includes(u.status)) { dismissUpload(u); return; }
-    if (u.status === 'committing') return;
+    if (SETTLED.includes(u.status) || u.status === 'committing') return;
     u.cancelled = true;
     if (u.status === 'queued') setUpload(u, 'cancelled');
     else if (u.status === 'uploading' && u.xhr) u.xhr.abort();
-}
-
-function dismissUpload(u) {
-    const index = uploads.indexOf(u);
-    if (index < 0) return;
-    if (u.zipJob) { clearZipCheckpoint(); u.zipJob = null; }
-    uploads.splice(index, 1);
-    if (u.el) u.el.row.remove();
-    if (!uploads.length) { upPanel.classList.remove('show'); return; }
-    renderUploadSummary();
-}
-
-function resumeUpload(u) {
-    if (!u.zipJob || (u.status !== 'error' && u.status !== 'cancelled')) return;
-    u.error = '';
-    u.cancelled = false;
-    u.fraction = zipJobDone(u.zipJob) / Math.max(1, u.zipJob.total);
-    setUpload(u, 'queued');
-    upPanel.classList.add('show');
-    upPanel.classList.remove('collapsed');
-    if (!pumping) pump();
 }
 
 function setUpload(u, status) {
@@ -2084,24 +2116,23 @@ function buildUploadRow(u) {
             <div class="up-track"><i></i></div>
             <div class="up-line up-meta"><span class="up-st"></span><span class="up-sz"></span></div>
         </div>
-        <button type="button" class="up-resume" title="Resume from where it stopped" hidden>⟲</button>
+        <button type="button" class="up-resume" title="Resume from last successful file" hidden>Resume</button>
         <button type="button" class="up-x" title="Cancel this upload">✕</button>`;
     row.querySelector('.up-ico').textContent = u.plan && u.plan.mode === 'extract' ? '📦' : getFileIcon(u.file.name, false);
     const name = row.querySelector('.up-name');
     name.textContent = u.rel ? u.rel : u.file.name;
     name.title = u.rel || u.file.name;
-    const xBtn = row.querySelector('.up-x');
-    const resumeBtn = row.querySelector('.up-resume');
-    xBtn.onclick = () => cancelUpload(u);
-    resumeBtn.onclick = () => resumeUpload(u);
+    row.querySelector('.up-x').onclick = () => cancelUpload(u);
+    row.querySelector('.up-resume').onclick = () => resumeUpload(u);
     return {
-        row, x: xBtn, resume: resumeBtn,
+        row,
         bar: row.querySelector('.up-track i'),
         pct: row.querySelector('.up-pct'),
         st: row.querySelector('.up-st'),
         sz: row.querySelector('.up-sz'),
         targetLine: row.querySelector('.up-target-line'),
         target: row.querySelector('.up-target'),
+        resumeBtn: row.querySelector('.up-resume'),
     };
 }
 
@@ -2120,6 +2151,10 @@ function renderUploadRow(u) {
     } else {
         r.targetLine.classList.remove('show');
     }
+
+    // Resume button: show on failed ZIP extracts (always useful) and any failed upload
+    const canResume = u.status === 'error' && !u.cancelled;
+    if (r.resumeBtn) r.resumeBtn.hidden = !canResume;
 
     if (u.custom) {
         r.pct.textContent = u.custom.pct || '';
@@ -2153,19 +2188,32 @@ function renderUploadRow(u) {
     r.pct.textContent = pct;
     r.st.textContent = label;
     r.st.title = label;
+}
 
-    if (r.resume) {
-        const resumable = !!u.zipJob && (u.status === 'error' || u.status === 'cancelled');
-        r.resume.hidden = !resumable;
-        if (resumable) {
-            r.resume.title = `Resume — ${zipJobDone(u.zipJob)} of ${u.zipJob.total} files already uploaded`;
-        }
+/** Resume a single failed upload (ZIP extract continues from last successful blob). */
+function resumeUpload(u) {
+    if (!u || u.status !== 'error') return;
+    u.error = '';
+    u.cancelled = false;
+    // Keep u.resume and u.fraction so ZIP extract continues where it left off
+    if (!(u.plan && u.plan.mode === 'extract' && u.resume)) {
+        u.fraction = 0;
+        u.resume = null;
     }
-    if (r.x) r.x.title = u.status === 'error' || u.status === 'cancelled' ? 'Dismiss' : 'Cancel this upload';
+    setUpload(u, 'queued');
+    upPanel.classList.add('show');
+    if (!pumping) pump();
 }
 
 function planSummary(plan) {
-    return `→ ${plan.baseDir ? '/' + plan.baseDir + '/' : '/'} · ${plural(plan.files.length, 'file')}`;
+    const base = plan.baseDir ? '/' + plan.baseDir + '/' : '/';
+    const opts = [];
+    if (plan.stripPrefix) opts.push('strip root');
+    if (plan.flatten) opts.push('flatten');
+    if (plan.keepZip) opts.push('keep .zip');
+    if (plan.conflict && plan.conflict !== 'overwrite') opts.push(plan.conflict);
+    const extra = opts.length ? ' · ' + opts.join(', ') : '';
+    return `→ ${base} · ${plural(plan.files.length, 'file')}${extra}`;
 }
 
 function renderUploadSummary() {
@@ -2185,9 +2233,6 @@ function renderUploadSummary() {
     upOverall.setAttribute('aria-valuenow', pct);
     upPanel.dataset.state = active ? 'active' : failed ? 'error' : done ? 'done' : 'cancelled';
     upRetry.hidden = failed === 0;
-    upRetry.title = uploads.some(u => u.status === 'error' && u.zipJob)
-        ? 'Resume failed ZIP extractions from where they stopped'
-        : 'Retry failed uploads';
 
     if (active) {
         upTitle.textContent = total === 1 ? 'Uploading 1 file' : `Uploading ${settled + 1} of ${total}`;
@@ -2225,8 +2270,12 @@ function retryFailed() {
     if (!failed.length) return;
     failed.forEach(u => {
         u.error = '';
-        u.fraction = u.zipJob ? zipJobDone(u.zipJob) / Math.max(1, u.zipJob.total) : 0;
         u.cancelled = false;
+        // ZIP extracts keep resume progress; plain file uploads restart
+        if (!(u.plan && u.plan.mode === 'extract' && u.resume && Object.keys(u.resume.blobs || {}).length)) {
+            u.fraction = 0;
+            u.resume = null;
+        }
         setUpload(u, 'queued');
     });
     upPanel.classList.add('show');
@@ -3112,6 +3161,7 @@ function showInfo(item) {
         ['Type', isDir ? 'folder' : (extOf(item.name) || 'file')],
         ['Size', isDir ? '—' : formatSize(item.size)],
         ['SHA', item.sha || '—'],
+        ['Live site', pagesUrlFor(item)],
         ['Raw URL', isDir ? '—' : (item.download_url || `https://raw.githubusercontent.com/${state.owner}/${state.repo}/${state.branch}/${item.path}`)],
         ['GitHub', `https://github.com/${state.owner}/${state.repo}/${isDir ? 'tree' : 'blob'}/${state.branch}/${item.path}`],
     ];
@@ -3337,6 +3387,7 @@ function applySortFromHeader(key) {
     let next;
     if (key === 'name') next = prefs.sort === 'name-asc' ? 'name-desc' : 'name-asc';
     else if (key === 'size') next = prefs.sort === 'size-desc' ? 'size-asc' : 'size-desc';
+    else if (key === 'date') next = prefs.sort === 'date-desc' ? 'date-asc' : 'date-desc';
     else next = 'type';
     savePref('sort', next);
     sortSelect.value = next;
