@@ -308,20 +308,10 @@ code { font-family: var(--mono); font-size: .92em; }
     background: rgba(10,10,22,.36);
     -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
     z-index: 20;
-    /* Not sticky / fixed — stays in document flow and can be scrolled away */
 }
 .connect-form { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; flex-wrap: wrap; }
 .connect-form .field:nth-of-type(1) { flex: 1 1 220px; max-width: 340px; }
 .connect-form .field:nth-of-type(2) { flex: 1 1 200px; max-width: 300px; }
-/* After connect, hide the credential fields so the auth header is not always visible */
-body[data-connected="true"] .connect-form .field,
-body[data-connected="true"] #connectBtn {
-    display: none !important;
-}
-body[data-connected="true"] .connect-form {
-    flex: 0 0 auto;
-    gap: 6px;
-}
 .topbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
 .status {
@@ -552,9 +542,8 @@ body.select-mode .card .card-actions { display: none; }
    positioned select checkbox) can never shift the name out of view. */
 .list-head, .row {
     display: grid;
-    /* Name · Size · Modified · Type · Actions  (natural file-data order) */
-    grid-template-columns: minmax(0, 1fr) 90px 158px 78px 152px;
-    grid-template-areas: "name size date type actions";
+    grid-template-columns: minmax(0, 1fr) 88px 82px 152px 152px;
+    grid-template-areas: "name type size date actions";
     align-items: center; gap: 10px;
     padding: 8px 14px; border-radius: 11px;
     position: relative;
@@ -815,7 +804,20 @@ body.select-mode .row .r-actions { display: none; }
 .up-x:hover { background: rgba(255,77,109,.16); color: var(--danger); }
 .up-item[data-status="queued"] .up-x,
 .up-item[data-status="preparing"] .up-x,
-.up-item[data-status="uploading"] .up-x { display: inline-flex; }
+.up-item[data-status="uploading"] .up-x,
+.up-item[data-status="error"] .up-x,
+.up-item[data-status="cancelled"] .up-x { display: inline-flex; }
+.up-resume {
+    display: none; background: rgba(var(--accent-rgb), .1); border: 1px solid rgba(var(--accent-rgb), .45);
+    color: var(--accent); width: 25px; height: 25px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background .15s, box-shadow .15s;
+}
+.up-resume:hover { background: rgba(var(--accent-rgb), .22); box-shadow: 0 0 10px rgba(var(--accent-rgb), .3); }
+.up-resume[hidden] { display: none !important; }
+.up-item[data-status="error"] .up-resume,
+.up-item[data-status="cancelled"] .up-resume { display: inline-flex; }
+.up-item[data-status="error"] .up-track i { background: linear-gradient(90deg, var(--danger), var(--warn)); }
 
 /* ══════════════════════════════════════════════════════════════
    EDITOR
