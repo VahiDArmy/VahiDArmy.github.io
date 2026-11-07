@@ -100,15 +100,18 @@ function stopReadingTimer() {
   }
 }
 
-/** آخرین آیه‌ای که هنوز داخل نمای صفحه است (بدون اسکرول اجباری) */
+/**
+ * آخرین آیهٔ قابل‌دیدن در viewport.
+ * برای متن پیوسته (inline) نباید با break زود قطع شود — همه را چک می‌کنیم.
+ */
 function lastVisibleAyah() {
-  const mid = window.innerHeight * 0.92;
+  const limit = window.innerHeight;
   let last = 1;
   for (const [num, card] of surahState.nodes) {
     if (card.hidden) continue;
     const rect = card.getBoundingClientRect();
-    if (rect.top < mid) last = num;
-    else break;
+    // بخشی از آیه داخل صفحه باشد
+    if (rect.bottom > 8 && rect.top < limit - 8) last = num;
   }
   return last;
 }
@@ -123,14 +126,13 @@ function readingTick() {
     return;
   }
   const current = surahState.active || surahState.lastAyah || 1;
-  const next = Math.min(SITE.ayahCount, current + 1);
-  if (next === current) {
-    stopReadingTimer();
+  if (current >= SITE.ayahCount) {
     updateReadbar();
     return;
   }
+  const next = current + 1;
   if (next > lastVisibleAyah()) {
-    // هنوز در نما نیست — اسکرول اجباری نمی‌کنیم؛ کاربر باید خودش بیاورد
+    // هنوز در نما نیست — اسکرول اجباری نمی‌کنیم
     return;
   }
   setTrackedAyah(next);
@@ -144,21 +146,27 @@ function startReadingTimer() {
 }
 
 function setReadingMode(on) {
-  readingMode = Boolean(on);
-  document.body.classList.toggle("is-reading", readingMode);
   const bar = $("#readbar");
-  if (bar) bar.hidden = !readingMode;
-  if (readingMode) {
+  if (on) {
+    // شروع تمیز: تایمر قبلی را کامل قطع کن و از نو بساز
+    stopReadingTimer();
+    readingMode = true;
+    document.body.classList.add("is-reading");
+    if (bar) bar.hidden = false;
     setView("surah", { push: false });
-    const ayah = surahState.active || surahState.lastAyah || 1;
-    // فقط ردیابی — بدون اسکرول اجباری و بدون هایلایت خودم
+    const ayah = Math.max(1, Math.min(SITE.ayahCount, surahState.active || surahState.lastAyah || 1));
     setTrackedAyah(ayah);
     publishReading(ayah);
     updateReadbar();
     syncPresence();
     startReadingTimer();
   } else {
+    // پایان: فقط مود و تایمر؛ آیه برای ادامهٔ بعدی نگه داشته می‌شود
+    readingMode = false;
+    document.body.classList.remove("is-reading");
+    if (bar) bar.hidden = true;
     stopReadingTimer();
+    updateReadbar();
   }
 }
 
@@ -169,6 +177,10 @@ function updatePartnerUi() {
     setPartnerAyah(partnerState.ayah, partnerState);
   }
   updateReadbar();
+  // قلب هدر وقتی دو نفر وصل‌اند مثل نئون روشن می‌شود
+  const together = Boolean(partnerState.online);
+  document.body.classList.toggle("is-together", together);
+  $("#brand")?.classList.toggle("is-together", together);
 }
 
 function onPartnerPresence(info) {

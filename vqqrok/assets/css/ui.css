@@ -37,11 +37,58 @@
   inline-size: 40px; block-size: 40px; color: var(--accent);
   filter: drop-shadow(0 6px 10px rgba(224, 68, 127, .32));
   animation: beat 4.5s var(--ease) infinite;
+  transition: color .35s var(--ease), filter .35s var(--ease);
 }
 html[data-theme="night"] .brand__seal { color: var(--accent-2); filter: drop-shadow(0 0 14px rgba(58, 214, 192, .45)); }
 .brand__glow {
   position: absolute; inset: -6px; border-radius: 50%;
-  background: var(--glow); z-index: -1; opacity: .8;
+  background: var(--glow); z-index: -1; opacity: .55;
+  transition: opacity .4s var(--ease), transform .4s var(--ease), filter .4s var(--ease);
+}
+/* دو نفر وصل‌اند: قلب مثل لامپ نئون */
+.brand.is-together .brand__seal,
+body.is-together .brand__seal {
+  color: var(--accent);
+  animation: neonBeat 1.6s ease-in-out infinite;
+  filter:
+    drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 90%, white))
+    drop-shadow(0 0 12px var(--accent))
+    drop-shadow(0 0 28px color-mix(in oklab, var(--accent) 70%, transparent));
+}
+html[data-theme="night"] .brand.is-together .brand__seal,
+html[data-theme="night"] body.is-together .brand__seal {
+  color: var(--accent-2);
+  filter:
+    drop-shadow(0 0 4px color-mix(in oklab, var(--accent-2) 90%, white))
+    drop-shadow(0 0 14px var(--accent-2))
+    drop-shadow(0 0 32px color-mix(in oklab, var(--accent) 65%, transparent));
+}
+.brand.is-together .brand__glow,
+body.is-together .brand__glow {
+  opacity: 1;
+  transform: scale(1.35);
+  filter: blur(2px);
+  animation: neonGlow 1.6s ease-in-out infinite;
+}
+@keyframes neonBeat {
+  0%, 100% {
+    transform: scale(1);
+    filter:
+      drop-shadow(0 0 4px color-mix(in oklab, var(--accent) 90%, white))
+      drop-shadow(0 0 12px var(--accent))
+      drop-shadow(0 0 28px color-mix(in oklab, var(--accent) 70%, transparent));
+  }
+  50% {
+    transform: scale(1.08);
+    filter:
+      drop-shadow(0 0 6px color-mix(in oklab, var(--accent) 95%, white))
+      drop-shadow(0 0 18px var(--accent))
+      drop-shadow(0 0 36px color-mix(in oklab, var(--accent) 80%, transparent));
+  }
+}
+@keyframes neonGlow {
+  0%, 100% { opacity: .85; transform: scale(1.25); }
+  50% { opacity: 1; transform: scale(1.45); }
 }
 .brand__text { display: grid; text-align: start; line-height: 1.25; }
 .brand__title {
