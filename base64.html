@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Base64 Combiner — auto-detect</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1e222b; --border:#2a2f3a;
+    --text:#e6e9ef; --muted:#8b93a7; --accent:#5b8cff; --accent-2:#7c5cff;
+    --ok:#3ddc97; --warn:#ffb020; --err:#ff5c6c; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:26px 18px 70px;min-height:100vh;color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 560px at 8% -12%, #1c2440 0%, transparent 62%),
+      radial-gradient(900px 520px at 108% 6%, #2a1b3d 0%, transparent 58%),
+      var(--bg);
+  }
+  .app{max-width:1000px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 6px;letter-spacing:-.02em}
+  h1 span{background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{margin:0 0 20px;color:var(--muted);font-size:14px;line-height:1.5}
+  .sub code{background:#0d1016;border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-size:12.5px}
+
+  .toolbar{
+    position:sticky;top:8px;z-index:10;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;
+    background:rgba(23,26,33,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;
+    box-shadow:0 10px 30px -18px #000;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;font-size:11.5px;color:var(--muted);
+    letter-spacing:.03em;text-transform:uppercase}
+  .field input,.field select{
+    font:inherit;font-size:13.5px;text-transform:none;letter-spacing:normal;
+    background:#0d1016;color:var(--text);border:1px solid var(--border);border-radius:10px;
+    padding:9px 11px;outline:none;min-width:150px;
+  }
+  .field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.18)}
+  .grow{flex:1 1 220px}
+  .grow input{width:100%}
+
+  button{font:inherit;font-size:13.5px;cursor:pointer;border-radius:10px;
+    border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+    padding:10px 15px;transition:.15s ease}
+  button:hover{background:#242a36;border-color:#3a4256}
+  button:active{transform:translateY(1px)}
+  .primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#fff;
+    font-weight:600;box-shadow:0 8px 22px -10px rgba(91,140,255,.9)}
+  .primary:hover{filter:brightness(1.08);background:linear-gradient(135deg,var(--accent),var(--accent-2))}
+  .btn{padding:6px 11px;font-size:12.5px;border-radius:9px}
+  .btn.danger:hover{color:var(--err);border-color:var(--err)}
+
+  .detectbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    margin:0 0 16px;padding:0 4px;font-size:12.5px;color:var(--muted)}
+  .badge{display:inline-flex;align-items:center;gap:7px;padding:5px 11px;border-radius:999px;
+    background:rgba(91,140,255,.13);border:1px solid rgba(91,140,255,.35);
+    color:#bcd0ff;font-weight:600;font-size:12px;transition:.2s}
+  .badge.fallback{background:rgba(255,176,32,.13);border-color:rgba(255,176,32,.4);color:#ffd489}
+  .badge.idle{background:rgba(139,147,167,.10);border-color:var(--border);color:var(--muted);font-weight:500}
+  .badge b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:700}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
+    padding:12px;margin-bottom:12px}
+  .card-head{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .label{font-weight:600;font-size:13px}
+  .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .actions{margin-left:auto;display:flex;gap:8px}
+  textarea{
+    width:100%;min-height:110px;resize:vertical;background:#0d1016;border:1px solid var(--border);
+    border-radius:10px;color:var(--text);padding:10px 12px;outline:none;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;
+  }
+  textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.18)}
+  textarea::placeholder{color:#4d5567}
+
+  .status{margin-top:16px;font-size:13px;min-height:22px;color:var(--muted);line-height:1.5}
+  .status.ok{color:var(--ok)} .status.warn{color:var(--warn)} .status.err{color:var(--err)}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>Base64 <span>Combiner</span></h1>
+  <p class="sub">
+    Paste several Base64 chunks (one per box), then merge them into a single file and download it.
+    Data-URL prefixes (<code>data:…;base64,</code>), line breaks and URL-safe Base64 are cleaned up automatically.
+    The file type is sniffed from the decoded bytes — if nothing matches, <b>.zip</b> is used.
+  </p>
+
+  <section class="toolbar">
+    <label class="field grow">File name
+      <input id="filename" type="text" value="combined.zip" spellcheck="false">
+    </label>
+    <label class="field">MIME type
+      <input id="mime" type="text" value="application/zip" spellcheck="false">
+    </label>
+    <label class="field">Mode
+      <select id="mode">
+        <option value="bytes">Decode → merge bytes</option>
+        <option value="text">Merge as Base64 text</option>
+      </select>
+    </label>
+    <button id="addBtn" type="button">+ Add box</button>
+    <button id="downloadBtn" type="button" class="primary">Combine &amp; Download</button>
+  </section>
+
+  <div class="detectbar">
+    <span>Detected type:</span>
+    <span id="badge" class="badge idle">waiting for input</span>
+  </div>
+
+  <div id="parts"></div>
+  <div id="status" class="status"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const partsEl   = document.getElementById("parts");
+  const statusEl  = document.getElementById("status");
+  const fileInput = document.getElementById("filename");
+  const mimeInput = document.getElementById("mime");
+  const modeSelect= document.getElementById("mode");
+  const badgeEl   = document.getElementById("badge");
+
+  let mimeDirty   = false;    // user typed their own MIME type
+  let lastDetected = null;
+
+  /* ------------------------------------------------------------------ */
+  /*  generic helpers                                                    */
+  /* ------------------------------------------------------------------ */
+
+  function setStatus(msg, kind) {
+    statusEl.textContent = msg;
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function formatBytes(n) {
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + " KB";
+    return (n / 1024 / 1024).toFixed(2) + " MB";
+  }
+
+  function cleanBase64(str) {
+    if (!str) return "";
+    let t = String(str).trim();
+    t = t.replace(/^data:[^,]*;base64,/i, "");
+    t = t.replace(/^data:[^,]*,\s*/i, "");
+    t = t.replace(/\s+/g, "");
+    t = t.replace(/-/g, "+").replace(/_/g, "/");
+    t = t.replace(/[^A-Za-z0-9+/=]/g, "");
+    return t;
+  }
+
+  function getChunks() {
+    return Array.from(partsEl.querySelectorAll("textarea"))
+      .map(t => cleanBase64(t.value))
+      .filter(Boolean);
+  }
+
+  function getRawFirst() {
+    const ta = Array.from(partsEl.querySelectorAll("textarea"))
+      .find(t => t.value.trim().length);
+    return ta ? ta.value : "";
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  file-type sniffing                                                 */
+  /* ------------------------------------------------------------------ */
+
+  function sniffBytes(b) {
+    const n = b.length;
+    if (!n) return null;
+
+    const sw = (sig, off) => {
+      off = off || 0;
+      if (n < off + sig.length) return false;
+      for (let i = 0; i < sig.length; i++) if (b[off + i] !== sig[i]) return false;
+      return true;
+    };
+    const str = (off, len) => {
+      let s = "";
+      for (let i = 0; i < len && off + i < n; i++) s += String.fromCharCode(b[off + i]);
+      return s;
+    };
+
+    /* --- ZIP family (also docx / xlsx / pptx / apk / jar) --- */
+    if (sw([0x50,0x4B,0x03,0x04]) || sw([0x50,0x4B,0x05,0x06]) || sw([0x50,0x4B,0x07,0x08])) {
+      const t = str(0, Math.min(n, 700));
+      if (t.indexOf("word/") !== -1)
+        return {ext:"docx", mime:"application/vnd.openxmlformats-officedocument.wordprocessingml.document", label:"Word document"};
+      if (t.indexOf("xl/") !== -1)
+        return {ext:"xlsx", mime:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", label:"Excel workbook"};
+      if (t.indexOf("ppt/") !== -1)
+        return {ext:"pptx", mime:"application/vnd.openxmlformats-officedocument.presentationml.presentation", label:"PowerPoint deck"};
+      if (t.indexOf("AndroidManifest.xml") !== -1)
+        return {ext:"apk", mime:"application/vnd.android.package-archive", label:"Android package"};
+      if (t.indexOf("META-INF/") !== -1 && t.indexOf(".class") !== -1)
+        return {ext:"jar", mime:"application/java-archive", label:"Java archive"};
+      return {ext:"zip", mime:"application/zip", label:"ZIP archive"};
+    }
+
+    /* --- archives / compression --- */
+    if (sw([0x1F,0x8B]))                      return {ext:"gz",  mime:"application/gzip",  label:"GZIP archive"};
+    if (sw([0x42,0x5A,0x68]))                 return {ext:"bz2", mime:"application/x-bzip2", label:"BZIP2 archive"};
+    if (sw([0xFD,0x37,0x7A,0x58,0x5A,0x00]))  return {ext:"xz",  mime:"application/x-xz", label:"XZ archive"};
+    if (sw([0x28,0xB5,0x2F,0xFD]))            return {ext:"zst", mime:"application/zstd", label:"Zstandard archive"};
+    if (sw([0x37,0x7A,0xBC,0xAF,0x27,0x1C]))  return {ext:"7z",  mime:"application/x-7z-compressed", label:"7-Zip archive"};
+    if (sw([0x52,0x61,0x72,0x21,0x1A,0x07]))  return {ext:"rar", mime:"application/vnd.rar", label:"RAR archive"};
+    if (n > 262 && str(257,5) === "ustar")    return {ext:"tar", mime:"application/x-tar", label:"TAR archive"};
+
+    /* --- images --- */
+    if (sw([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A])) return {ext:"png",  mime:"image/png",  label:"PNG image"};
+    if (sw([0xFF,0xD8,0xFF]))                          return {ext:"jpg",  mime:"image/jpeg", label:"JPEG image"};
+    if (sw([0x47,0x49,0x46,0x38]))                     return {ext:"gif",  mime:"image/gif",  label:"GIF image"};
+    if (sw([0x42,0x4D]) && n > 14)                     return {ext:"bmp",  mime:"image/bmp",  label:"BMP image"};
+    if (sw([0x00,0x00,0x01,0x00]))                     return {ext:"ico",  mime:"image/x-icon", label:"ICO icon"};
+    if (sw([0x49,0x49,0x2A,0x00]) || sw([0x4D,0x4D,0x00,0x2A]))
+      return {ext:"tiff", mime:"image/tiff", label:"TIFF image"};
+    if (sw([0x52,0x49,0x46,0x46])) {
+      const t = str(8, 4);
+      if (t === "WEBP") return {ext:"webp", mime:"image/webp", label:"WebP image"};
+      if (t === "WAVE") return {ext:"wav",  mime:"audio/wav",  label:"WAV audio"};
+      if (t === "AVI ") return {ext:"avi",  mime:"video/x-msvideo", label:"AVI video"};
+    }
+
+    /* --- documents --- */
+    if (sw([0x25,0x50,0x44,0x46])) return {ext:"pdf", mime:"application/pdf", label:"PDF document"};
+
+    /* --- audio / video --- */
+    if (sw([0x4F,0x67,0x67,0x53])) return {ext:"ogg",  mime:"audio/ogg",  label:"OGG audio"};
+    if (sw([0x66,0x4C,0x61,0x43])) return {ext:"flac", mime:"audio/flac", label:"FLAC audio"};
+    if (sw([0x49,0x44,0x33]) || sw([0xFF,0xFB]) || sw([0xFF,0xF3]) || sw([0xFF,0xF2]))
+      return {ext:"mp3", mime:"audio/mpeg", label:"MP3 audio"};
+    if (sw([0x4D,0x54,0x68,0x64])) return {ext:"mid", mime:"audio/midi", label:"MIDI file"};
+    if (sw([0x1A,0x45,0xDF,0xA3])) {
+      return str(0, Math.min(n, 200)).indexOf("webm") !== -1
+        ? {ext:"webm", mime:"video/webm", label:"WebM video"}
+        : {ext:"mkv",  mime:"video/x-matroska", label:"Matroska video"};
+    }
+    if (n >= 12 && str(4,4) === "ftyp") {
+      const brand = str(8,4);
+      if (brand === "qt  ")                                        return {ext:"mov",  mime:"video/quicktime", label:"QuickTime video"};
+      if (["heic","heix","hevc","heim","heis","mif1","msf1"].includes(brand))
+                                                                   return {ext:"heic", mime:"image/heic", label:"HEIC image"};
+      if (brand === "avif" || brand === "avis")                    return {ext:"avif", mime:"image/avif", label:"AVIF image"};
+      if (brand === "M4A " || brand === "M4B ")                    return {ext:"m4a",  mime:"audio/mp4",  label:"M4A audio"};
+      return {ext:"mp4", mime:"video/mp4", label:"MP4 video"};
+    }
+
+    /* --- executables / code --- */
+    if (sw([0x7F,0x45,0x4C,0x46]))       return {ext:"elf",  mime:"application/x-elf", label:"ELF binary"};
+    if (sw([0x4D,0x5A]))                 return {ext:"exe",  mime:"application/x-msdownload", label:"Windows executable"};
+    if (sw([0xCA,0xFE,0xBA,0xBE]))       return {ext:"class",mime:"application/java-vm", label:"Java class"};
+    if (sw([0x00,0x61,0x73,0x6D]))       return {ext:"wasm", mime:"application/wasm", label:"WebAssembly module"};
+    if (sw([0x53,0x51,0x4C,0x69,0x74,0x65,0x20,0x66,0x6F,0x72,0x6D,0x61,0x74,0x20,0x33,0x00]))
+                                         return {ext:"sqlite", mime:"application/vnd.sqlite3", label:"SQLite database"};
+
+    /* --- text-based formats --- */
+    const head = str(0, Math.min(n, 600)).replace(/^\uFEFF/, "").trimStart();
+    if (/^<svg[\s>]/i.test(head) || (/^<\?xml/i.test(head) && /<svg[\s>]/i.test(head)))
+      return {ext:"svg",  mime:"image/svg+xml", label:"SVG image"};
+    if (/^<\?xml/i.test(head))            return {ext:"xml",  mime:"application/xml", label:"XML document"};
+    if (/^<!doctype html/i.test(head) || /^<html/i.test(head))
+      return {ext:"html", mime:"text/html", label:"HTML page"};
+    if (/^#!/.test(head))                 return {ext:"sh",   mime:"text/x-shellscript", label:"Shell script"};
+
+    return null;
+  }
+
+  const MIME_TO_EXT = {
+    "application/zip":"zip", "application/pdf":"pdf", "image/png":"png", "image/jpeg":"jpg",
+    "image/jpg":"jpg", "image/gif":"gif", "image/webp":"webp", "image/svg+xml":"svg",
+    "text/plain":"txt", "text/html":"html", "text/css":"css", "text/csv":"csv",
+    "application/json":"json", "application/xml":"xml", "text/xml":"xml",
+    "audio/mpeg":"mp3", "audio/ogg":"ogg", "audio/wav":"wav",
+    "video/mp4":"mp4", "video/webm":"webm",
+    "application/octet-stream":"bin", "application/gzip":"gz"
+  };
+
+  function mimeFromDataUrl(raw) {
+    const m = /^\s*data:([^;,]+)/i.exec(String(raw || ""));
+    return m ? m[1].trim().toLowerCase() : null;
+  }
+
+  function fromMime(mime) {
+    if (!mime) return null;
+    const ext = MIME_TO_EXT[mime] || (mime.split("/")[1] || "bin").replace(/[^a-z0-9]+/g, "");
+    return { ext: ext, mime: mime, label: mime + " (from data-URL)" };
+  }
+
+  function detectType(chunks) {
+    /* 1. sniff the decoded bytes */
+    try {
+      const head = chunks.join("").replace(/=+$/, "").slice(0, 1024);
+      const pad  = (4 - (head.length % 4)) % 4;
+      const bin  = atob(head + "=".repeat(pad));
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const hit = sniffBytes(bytes);
+      if (hit) return hit;
+    } catch (e) { /* fall through */ }
+
+    /* 2. data-URL prefix as a hint */
+    const hint = fromMime(mimeFromDataUrl(getRawFirst()));
+    if (hint) return hint;
+
+    /* 3. default */
+    return { ext:"zip", mime:"application/zip", label:"ZIP archive (default)", fallback:true };
+  }
+
+  function currentDetection() {
+    const chunks = getChunks();
+    if (!chunks.length) return null;
+    if (modeSelect.value === "text")
+      return { ext:"txt", mime:"text/plain", label:"Base64 text (merge mode)" };
+    return detectType(chunks);
+  }
+
+  function applyDetection(d) {
+    if (!d) {
+      badgeEl.textContent = "waiting for input";
+      badgeEl.className = "badge idle";
+      lastDetected = null;
+      return;
+    }
+    lastDetected = d;
+
+    /* keep the user's base name, always use the detected extension */
+    const cur  = fileInput.value.trim();
+    const base = cur ? cur.replace(/\.[A-Za-z0-9]{1,10}$/, "") : "combined";
+    const name = (base || "combined") + "." + d.ext;
+    if (fileInput.value !== name) fileInput.value = name;
+
+    if (!mimeDirty) mimeInput.value = d.mime;
+
+    badgeEl.textContent = "";
+    badgeEl.className = "badge" + (d.fallback ? " fallback" : "");
+    badgeEl.append(d.label + "  ");
+    const code = document.createElement("b");
+    code.textContent = "." + d.ext;
+    badgeEl.append(code);
+  }
+
+  let detectTimer = null;
+  function scheduleDetect() {
+    clearTimeout(detectTimer);
+    detectTimer = setTimeout(() => applyDetection(currentDetection()), 220);
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  part cards                                                         */
+  /* ------------------------------------------------------------------ */
+
+  function createPart(value) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="card-head">' +
+        '<span class="label"></span>' +
+        '<span class="meta">empty</span>' +
+        '<div class="actions">' +
+          '<button type="button" class="btn paste">Paste</button>' +
+          '<button type="button" class="btn clear">Clear</button>' +
+          '<button type="button" class="btn danger remove" title="Remove this box">✕</button>' +
+        '</div>' +
+      '</div>' +
+      '<textarea spellcheck="false" placeholder="Paste Base64 here…"></textarea>';
+
+    const ta = card.querySelector("textarea");
+    ta.value = value || "";
+
+    ta.addEventListener("input", () => {
+      mimeDirty = false;
+      updateMeta(card);
+      scheduleDetect();
+    });
+
+    card.querySelector(".paste").addEventListener("click", () => pasteInto(ta));
+
+    card.querySelector(".clear").addEventListener("click", () => {
+      ta.value = "";
+      mimeDirty = false;
+      updateMeta(card);
+      scheduleDetect();
+      ta.focus();
+    });
+
+    card.querySelector(".remove").addEventListener("click", () => {
+      card.remove();
+      renumber();
+      mimeDirty = false;
+      scheduleDetect();
+    });
+
+    partsEl.appendChild(card);
+    updateMeta(card);
+    renumber();
+    return card;
+  }
+
+  function renumber() {
+    Array.from(partsEl.children).forEach((card, i) => {
+      card.querySelector(".label").textContent = "Part " + (i + 1);
+    });
+  }
+
+  function updateMeta(card) {
+    const ta = card.querySelector("textarea");
+    const meta = card.querySelector(".meta");
+    const clean = cleanBase64(ta.value);
+    if (!clean) { meta.textContent = "empty"; return; }
+    const estBytes = Math.floor(clean.replace(/=+$/, "").length * 3 / 4);
+    meta.textContent =
+      clean.length.toLocaleString() + " b64 chars · ~" + estBytes.toLocaleString() + " bytes";
+  }
+
+  async function pasteInto(ta) {
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      ta.focus();
+      setStatus("Clipboard API is not available here — focus the box and press Ctrl+V / ⌘V.", "warn");
+      return;
+    }
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) { setStatus("The clipboard appears to be empty.", "warn"); return; }
+      ta.value = text;
+      ta.dispatchEvent(new Event("input"));
+      setStatus("Pasted " + text.length.toLocaleString() + " characters.", "ok");
+    } catch (err) {
+      ta.focus();
+      setStatus("The browser blocked clipboard access (" + (err.name || "error") +
+                "). Focus the box and press Ctrl+V / ⌘V instead.", "warn");
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  combine & download                                                 */
+  /* ------------------------------------------------------------------ */
+
+  function decodeChunks(chunks) {
+    const joined = chunks.map(c => c.replace(/=+$/, "")).join("");
+    const pad = (4 - (joined.length % 4)) % 4;
+    const bin = atob(joined + "=".repeat(pad));
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  function combineAndDownload() {
+    const chunks = getChunks();
+    if (!chunks.length) {
+      setStatus("Nothing to combine yet — paste some Base64 into at least one box.", "warn");
+      return;
+    }
+
+    /* fresh detection right before saving */
+    applyDetection(currentDetection());
+
+    const filename = fileInput.value.trim() || "combined.zip";
+    const mime = mimeInput.value.trim() || "application/octet-stream";
+    const mode = modeSelect.value;
+
+    let blob;
+    try {
+      if (mode === "text") {
+        blob = new Blob([chunks.join("\n")], { type: mime });
+      } else {
+        const bytes = decodeChunks(chunks);
+        if (!bytes.length) { setStatus("Decoded 0 bytes — please check your input.", "warn"); return; }
+        blob = new Blob([bytes], { type: mime });
+      }
+    } catch (err) {
+      setStatus("Invalid Base64 input: " + err.message, "err");
+      return;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+
+    setStatus(
+      "Merged " + chunks.length + " part" + (chunks.length > 1 ? "s" : "") +
+      " → " + filename + " (" + formatBytes(blob.size) + ")",
+      "ok"
+    );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  wiring                                                             */
+  /* ------------------------------------------------------------------ */
+
+  document.getElementById("addBtn").addEventListener("click", () => {
+    const card = createPart("");
+    card.querySelector("textarea").focus();
+  });
+
+  document.getElementById("downloadBtn").addEventListener("click", combineAndDownload);
+
+  mimeInput.addEventListener("input", () => { mimeDirty = true; });
+
+  modeSelect.addEventListener("change", () => { mimeDirty = false; scheduleDetect(); });
+
+  /* start with three empty boxes */
+  createPart("");
+  createPart("");
+  createPart("");
+})();
+</script>
+</body>
+</html>
