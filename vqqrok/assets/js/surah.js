@@ -366,7 +366,14 @@ export function setTrackedAyah(ayah) {
 
 export function updateProgress() {
   if (!surahState.nodes.size) return;
-  // آیهٔ زیر مرکز صفحه — در مود خواندن هم با اسکرول شمارنده تنظیم می‌شود
+  // در مود خواندن: شمارنده فقط با تایمر (جلو) یا لمس آیه عوض می‌شود.
+  // اسکرول هرگز نباید شمارنده را عقب ببرد یا جابه‌جا کند.
+  if (document.body.classList.contains("is-reading")) {
+    const ayah = surahState.active || surahState.lastAyah || 1;
+    surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
+    return;
+  }
+  // خارج از مود خواندن: آیهٔ زیر مرکز صفحه
   const y = window.innerHeight * 0.38;
   const x = window.innerWidth * 0.5;
   let node = null;

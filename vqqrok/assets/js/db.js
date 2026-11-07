@@ -306,6 +306,9 @@ let presenceHandler = null;
 let lastSentAyah = null;
 let pendingAyah = null;
 let sendTimer = null;
+let trackInFlight = false;
+let heartbeatTimer = null;
+const HEARTBEAT_MS = 4000;
 
 function payload(ayah) {
   return {
@@ -338,16 +341,45 @@ function emitPartner() {
   presenceHandler?.(readPartner() || { online: false });
 }
 
-async function flushTrack() {
+function stopHeartbeat() {
+  if (heartbeatTimer != null) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
+}
+
+function startHeartbeat() {
+  stopHeartbeat();
+  heartbeatTimer = setInterval(() => {
+    if (!presenceChannel || !state.user || !state.slot) return;
+    const num = pendingAyah ?? lastSentAyah;
+    if (num == null) return;
+    // force: حتی اگر آیه عوض نشده، presence زنده بماند و طرف مقابل به‌روز شود
+    publishReading(num, { force: true });
+  }, HEARTBEAT_MS);
+}
+
+async function flushTrack(force = false) {
   sendTimer = null;
   if (!presenceChannel || !state.user || !state.slot) return;
   const num = pendingAyah;
-  if (num == null || num === lastSentAyah) return;
+  if (num == null) return;
+  if (!force && num === lastSentAyah) return;
+  if (trackInFlight) {
+    // بعد از اتمام، یک‌بار دیگر با آخرین pending بفرست
+    sendTimer = setTimeout(() => flushTrack(true), 120);
+    return;
+  }
+  trackInFlight = true;
   try {
     await presenceChannel.track(payload(num));
     lastSentAyah = num;
   } catch (err) {
     console.warn("[vaqia] track", err?.message || err);
+    // اجازهٔ تلاش دوباره در تیک بعدی
+    lastSentAyah = null;
+  } finally {
+    trackInFlight = false;
   }
 }
 
@@ -359,6 +391,7 @@ export async function startPresence(onPartner) {
   }
   if (presenceChannel) {
     emitPartner();
+    startHeartbeat();
     return { ok: true, reused: true };
   }
 
@@ -386,26 +419,41 @@ export async function startPresence(onPartner) {
 
   lastSentAyah = null;
   emitPartner();
+  startHeartbeat();
   return { ok: true };
 }
 
-/** ارسال آیهٔ فعلی — debounce کوتاه تا track پشت‌سرهم نشود */
-export function publishReading(ayah) {
+/**
+ * ارسال آیهٔ فعلی به presence
+ * @param {number} ayah
+ * @param {{ force?: boolean }} [opts] force=true برای heartbeat حتی با آیهٔ تکراری
+ */
+export function publishReading(ayah, opts = {}) {
   const num = Math.max(1, Math.min(96, Number(ayah) || 1));
+  const force = Boolean(opts.force);
   pendingAyah = num;
   if (!presenceChannel || !state.user || !state.slot) return;
-  if (num === lastSentAyah && !sendTimer) return;
-  if (sendTimer) return; // pendingAyah already updated; flush will send latest
-  // ارسال اول فوری، بقیه با debounce کوتاه
-  const delay = lastSentAyah == null ? 0 : 250;
-  sendTimer = setTimeout(flushTrack, delay);
+  if (!force && num === lastSentAyah && !sendTimer) return;
+  if (sendTimer) {
+    if (force) {
+      // تایمر فعلی را رها کن؛ pending قبلاً ست شده
+      clearTimeout(sendTimer);
+      sendTimer = null;
+    } else {
+      return; // pending به‌روز است؛ flush همان را می‌فرستد
+    }
+  }
+  const delay = force || lastSentAyah == null ? 0 : 200;
+  sendTimer = setTimeout(() => flushTrack(force), delay);
 }
 
 export async function stopPresence() {
+  stopHeartbeat();
   if (sendTimer) {
     clearTimeout(sendTimer);
     sendTimer = null;
   }
+  trackInFlight = false;
   const ch = presenceChannel;
   presenceChannel = null;
   lastSentAyah = null;
