@@ -300,18 +300,25 @@ export function translateError(error) {
   return error?.message || "خطای نامشخص";
 }
 
-/* ---------- حضور هم‌خوان ---------- */
-let presenceChannel = null;
-let presenceHandler = null;
-let lastSentAyah = null;
-let pendingAyah = null;
-let sendTimer = null;
-let trackInFlight = false;
+/* ---------- هم‌خوانی موقعیت خواندن ----------
+ * Presence فقط برای آنلاین/آفلاین و نام.
+ * Broadcast برای ارسال پیوستهٔ شمارهٔ آیه — ابزار درست برای به‌روزرسانی مکرر است.
+ */
+let readingChannel = null;
+let partnerHandler = null;
+let lastBroadcastAyah = null;
+let lastBroadcastAt = 0;
 let heartbeatTimer = null;
-const HEARTBEAT_MS = 4000;
+let partnerWatchTimer = null;
+let partnerLastSeen = 0;
 
-function payload(ayah) {
+const HEARTBEAT_MS = 2500;
+const PARTNER_STALE_MS = 8000;
+const BROADCAST_EVENT = "ayah";
+
+function selfMeta(ayah) {
   return {
+    uid: state.user?.id || null,
     slot: state.slot,
     name: state.profile?.display_name || SITE.defaultNames?.[state.slot] || "همراه",
     ayah: Math.max(1, Math.min(96, Number(ayah) || 1)),
@@ -319,9 +326,13 @@ function payload(ayah) {
   };
 }
 
-function readPartner() {
-  if (!presenceChannel || !state.user) return null;
-  const map = presenceChannel.presenceState() || {};
+function emitPartner(info) {
+  partnerHandler?.(info || { online: false });
+}
+
+function partnerFromPresence() {
+  if (!readingChannel || !state.user) return null;
+  const map = readingChannel.presenceState() || {};
   for (const [key, metas] of Object.entries(map)) {
     if (key === state.user.id) continue;
     const meta = Array.isArray(metas) ? metas[0] : metas;
@@ -337,8 +348,27 @@ function readPartner() {
   return null;
 }
 
-function emitPartner() {
-  presenceHandler?.(readPartner() || { online: false });
+function onPresenceChange() {
+  const p = partnerFromPresence();
+  if (p) {
+    partnerLastSeen = Date.now();
+    emitPartner(p);
+  } else if (Date.now() - partnerLastSeen > PARTNER_STALE_MS) {
+    emitPartner({ online: false });
+  }
+}
+
+function onBroadcastAyah({ payload }) {
+  if (!payload || !state.user) return;
+  if (payload.uid && payload.uid === state.user.id) return;
+  partnerLastSeen = Date.now();
+  emitPartner({
+    online: true,
+    slot: Number(payload.slot) || null,
+    name: payload.name || SITE.defaultNames?.[payload.slot] || "همراه",
+    ayah: Number(payload.ayah) || 1,
+    at: payload.at || Date.now(),
+  });
 }
 
 function stopHeartbeat() {
@@ -346,62 +376,72 @@ function stopHeartbeat() {
     clearInterval(heartbeatTimer);
     heartbeatTimer = null;
   }
+  if (partnerWatchTimer != null) {
+    clearInterval(partnerWatchTimer);
+    partnerWatchTimer = null;
+  }
 }
 
 function startHeartbeat() {
   stopHeartbeat();
   heartbeatTimer = setInterval(() => {
-    if (!presenceChannel || !state.user || !state.slot) return;
-    const num = pendingAyah ?? lastSentAyah;
+    if (!readingChannel || !state.user || !state.slot) return;
+    const num = lastBroadcastAyah;
     if (num == null) return;
-    // force: حتی اگر آیه عوض نشده، presence زنده بماند و طرف مقابل به‌روز شود
-    publishReading(num, { force: true });
+    sendBroadcast(num, true);
   }, HEARTBEAT_MS);
+  partnerWatchTimer = setInterval(() => {
+    if (partnerLastSeen && Date.now() - partnerLastSeen > PARTNER_STALE_MS) {
+      emitPartner({ online: false });
+    }
+  }, 2000);
 }
 
-async function flushTrack(force = false) {
-  sendTimer = null;
-  if (!presenceChannel || !state.user || !state.slot) return;
-  const num = pendingAyah;
-  if (num == null) return;
-  if (!force && num === lastSentAyah) return;
-  if (trackInFlight) {
-    // بعد از اتمام، یک‌بار دیگر با آخرین pending بفرست
-    sendTimer = setTimeout(() => flushTrack(true), 120);
-    return;
-  }
-  trackInFlight = true;
+async function sendBroadcast(ayah, force = false) {
+  if (!readingChannel || !state.user || !state.slot) return;
+  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
+  const now = Date.now();
+  if (!force && num === lastBroadcastAyah && now - lastBroadcastAt < 150) return;
+  lastBroadcastAyah = num;
+  lastBroadcastAt = now;
+  const body = selfMeta(num);
   try {
-    await presenceChannel.track(payload(num));
-    lastSentAyah = num;
+    // broadcast برای موقعیت؛ presence برای آنلاین ماندن
+    await readingChannel.send({
+      type: "broadcast",
+      event: BROADCAST_EVENT,
+      payload: body,
+    });
+    await readingChannel.track(body);
   } catch (err) {
-    console.warn("[vaqia] track", err?.message || err);
-    // اجازهٔ تلاش دوباره در تیک بعدی
-    lastSentAyah = null;
-  } finally {
-    trackInFlight = false;
+    console.warn("[vaqia] reading send", err?.message || err);
   }
 }
 
 export async function startPresence(onPartner) {
-  presenceHandler = typeof onPartner === "function" ? onPartner : null;
+  partnerHandler = typeof onPartner === "function" ? onPartner : null;
   if (!client || !state.user || !state.slot) {
-    presenceHandler?.({ online: false });
+    partnerHandler?.({ online: false });
     return { ok: false, reason: "auth" };
   }
-  if (presenceChannel) {
-    emitPartner();
+  if (readingChannel) {
+    onPresenceChange();
     startHeartbeat();
     return { ok: true, reused: true };
   }
 
   const channel = client.channel("q56-reading", {
-    config: { presence: { key: state.user.id } },
+    config: {
+      broadcast: { self: false },
+      presence: { key: state.user.id },
+    },
   });
-  presenceChannel = channel;
-  channel.on("presence", { event: "sync" }, emitPartner);
-  channel.on("presence", { event: "join" }, emitPartner);
-  channel.on("presence", { event: "leave" }, emitPartner);
+  readingChannel = channel;
+
+  channel.on("presence", { event: "sync" }, onPresenceChange);
+  channel.on("presence", { event: "join" }, onPresenceChange);
+  channel.on("presence", { event: "leave" }, onPresenceChange);
+  channel.on("broadcast", { event: BROADCAST_EVENT }, onBroadcastAyah);
 
   const status = await new Promise((resolve) => {
     channel.subscribe((s) => {
@@ -409,60 +449,42 @@ export async function startPresence(onPartner) {
     });
   });
 
-  if (status !== "SUBSCRIBED" || presenceChannel !== channel) {
-    console.warn("[vaqia] presence", status);
+  if (status !== "SUBSCRIBED" || readingChannel !== channel) {
+    console.warn("[vaqia] reading channel", status);
     try { await client.removeChannel(channel); } catch (_) {}
-    if (presenceChannel === channel) presenceChannel = null;
-    presenceHandler?.({ online: false });
+    if (readingChannel === channel) readingChannel = null;
+    partnerHandler?.({ online: false });
     return { ok: false, reason: status };
   }
 
-  lastSentAyah = null;
-  emitPartner();
+  lastBroadcastAyah = null;
+  partnerLastSeen = 0;
+  onPresenceChange();
   startHeartbeat();
   return { ok: true };
 }
 
-/**
- * ارسال آیهٔ فعلی به presence
- * @param {number} ayah
- * @param {{ force?: boolean }} [opts] force=true برای heartbeat حتی با آیهٔ تکراری
- */
-export function publishReading(ayah, opts = {}) {
+/** ارسال آیهٔ فعلی به همراه (broadcast + presence) */
+export function publishReading(ayah) {
   const num = Math.max(1, Math.min(96, Number(ayah) || 1));
-  const force = Boolean(opts.force);
-  pendingAyah = num;
-  if (!presenceChannel || !state.user || !state.slot) return;
-  if (!force && num === lastSentAyah && !sendTimer) return;
-  if (sendTimer) {
-    if (force) {
-      // تایمر فعلی را رها کن؛ pending قبلاً ست شده
-      clearTimeout(sendTimer);
-      sendTimer = null;
-    } else {
-      return; // pending به‌روز است؛ flush همان را می‌فرستد
-    }
+  if (!readingChannel || !state.user || !state.slot) {
+    lastBroadcastAyah = num;
+    return;
   }
-  const delay = force || lastSentAyah == null ? 0 : 200;
-  sendTimer = setTimeout(() => flushTrack(force), delay);
+  sendBroadcast(num, false);
 }
 
 export async function stopPresence() {
   stopHeartbeat();
-  if (sendTimer) {
-    clearTimeout(sendTimer);
-    sendTimer = null;
-  }
-  trackInFlight = false;
-  const ch = presenceChannel;
-  presenceChannel = null;
-  lastSentAyah = null;
-  pendingAyah = null;
+  const ch = readingChannel;
+  readingChannel = null;
+  lastBroadcastAyah = null;
+  partnerLastSeen = 0;
   if (ch) {
     try {
       await ch.untrack();
       await client?.removeChannel(ch);
     } catch (_) {}
   }
-  presenceHandler?.({ online: false });
+  partnerHandler?.({ online: false });
 }

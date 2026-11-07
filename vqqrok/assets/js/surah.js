@@ -364,32 +364,53 @@ export function setTrackedAyah(ayah) {
   surahState.hooks.onProgress?.(surahState.progress, num);
 }
 
-export function updateProgress() {
-  if (!surahState.nodes.size) return;
-  // در مود خواندن: شمارنده فقط با تایمر (جلو) یا لمس آیه عوض می‌شود.
-  // اسکرول هرگز نباید شمارنده را عقب ببرد یا جابه‌جا کند.
-  if (document.body.classList.contains("is-reading")) {
-    const ayah = surahState.active || surahState.lastAyah || 1;
-    surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
-    return;
-  }
-  // خارج از مود خواندن: آیهٔ زیر مرکز صفحه
-  const y = window.innerHeight * 0.38;
+/** آیهٔ زیر خط مرجع عمودی صفحه */
+function ayahAtViewportLine(ratio = 0.38) {
+  if (!surahState.nodes.size) return null;
+  const y = window.innerHeight * ratio;
   const x = window.innerWidth * 0.5;
   let node = null;
   const hit = document.elementFromPoint(x, y);
   if (hit) node = hit.closest?.(".ayah");
   if (!node || node.hidden) {
-    const mid = y;
     for (const card of surahState.nodes.values()) {
       if (card.hidden) continue;
       const rect = card.getBoundingClientRect();
-      if (rect.top <= mid) node = card;
+      if (rect.top <= y) node = card;
     }
   }
   if (!node) node = surahState.nodes.get(1) || [...surahState.nodes.values()][0];
   const ayah = Number(node?.dataset?.ayah);
-  if (!Number.isFinite(ayah) || ayah < 1) return;
+  return Number.isFinite(ayah) && ayah >= 1 ? ayah : null;
+}
+
+/** آیا این آیه هنوز جایی روی صفحه دیده می‌شود؟ */
+function isAyahOnScreen(ayah) {
+  const node = surahState.nodes.get(Number(ayah));
+  if (!node || node.hidden) return false;
+  const rect = node.getBoundingClientRect();
+  return rect.bottom > 0 && rect.top < window.innerHeight;
+}
+
+export function updateProgress() {
+  if (!surahState.nodes.size) return;
+
+  if (document.body.classList.contains("is-reading")) {
+    const current = surahState.active || surahState.lastAyah || 1;
+    // کاربر از تایمر جلو زده و آیهٔ فعلی از صفحه خارج شده → فقط به جلو هم‌تراز شو
+    if (!isAyahOnScreen(current)) {
+      const visible = ayahAtViewportLine(0.38);
+      if (visible != null && visible > current) {
+        setTrackedAyah(visible);
+        return;
+      }
+    }
+    surahState.progress = Math.round((current / SITE.ayahCount) * 100);
+    return;
+  }
+
+  const ayah = ayahAtViewportLine(0.38);
+  if (ayah == null) return;
   surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
   setTrackedAyah(ayah);
 }
