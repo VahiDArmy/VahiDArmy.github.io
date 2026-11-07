@@ -450,7 +450,8 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition: background .2s var(--ease);
-  scroll-margin-block-start: 200px;
+  /* حاشیهٔ اسکرول کم — پرش بزرگ به خاطر ۲۰۰px حذف شد */
+  scroll-margin-block-start: 72px;
 }
 .ayah:hover { background: color-mix(in oklab, var(--accent) 8%, transparent); }
 .ayah:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

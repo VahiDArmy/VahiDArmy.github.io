@@ -175,7 +175,7 @@ export function selectAyah(ayah, { scroll = false, smooth = true, toggle = true 
   if (scroll) {
     node.scrollIntoView({
       behavior: smooth && !prefersReducedMotion() ? "smooth" : "auto",
-      block: "start",
+      block: "nearest",
     });
   }
   surahState.lastAyah = num;
@@ -364,7 +364,7 @@ export function setTrackedAyah(ayah) {
   surahState.hooks.onProgress?.(surahState.progress, num);
 }
 
-/** آیهٔ زیر خط مرجع عمودی صفحه */
+/** آیهٔ زیر خط مرجع عمودی صفحه (خارج از مود خواندن) */
 function ayahAtViewportLine(ratio = 0.38) {
   if (!surahState.nodes.size) return null;
   const y = window.innerHeight * ratio;
@@ -384,7 +384,6 @@ function ayahAtViewportLine(ratio = 0.38) {
   return Number.isFinite(ayah) && ayah >= 1 ? ayah : null;
 }
 
-/** آیا این آیه هنوز جایی روی صفحه دیده می‌شود؟ */
 function isAyahOnScreen(ayah) {
   const node = surahState.nodes.get(Number(ayah));
   if (!node || node.hidden) return false;
@@ -392,18 +391,35 @@ function isAyahOnScreen(ayah) {
   return rect.bottom > 0 && rect.top < window.innerHeight;
 }
 
+/**
+ * اولین آیهٔ دیده در بالای viewport (به ترتیب شماره).
+ * وقتی ۸ از صفحه خارج شود → ۹/۱۰/...؛ نه مرکز صفحه که به ۲۴ بپرد.
+ */
+function firstVisibleAyah() {
+  if (!surahState.nodes.size) return null;
+  for (const [num, card] of surahState.nodes) {
+    if (card.hidden) continue;
+    const rect = card.getBoundingClientRect();
+    if (rect.bottom > 0 && rect.top < window.innerHeight) return num;
+  }
+  return null;
+}
+
 export function updateProgress() {
   if (!surahState.nodes.size) return;
 
   if (document.body.classList.contains("is-reading")) {
     const current = surahState.active || surahState.lastAyah || 1;
-    // کاربر از تایمر جلو زده و آیهٔ فعلی از صفحه خارج شده → فقط به جلو هم‌تراز شو
-    if (!isAyahOnScreen(current)) {
-      const visible = ayahAtViewportLine(0.38);
-      if (visible != null && visible > current) {
-        setTrackedAyah(visible);
-        return;
-      }
+    // هنوز روی صفحه است → تایمر مسئول +1 است
+    if (isAyahOnScreen(current)) {
+      surahState.progress = Math.round((current / SITE.ayahCount) * 100);
+      return;
+    }
+    // از صفحه خارج شده → فقط به اولین آیهٔ دیده در بالا (نه وسط صفحه)
+    const top = firstVisibleAyah();
+    if (top != null && top > current) {
+      setTrackedAyah(top);
+      return;
     }
     surahState.progress = Math.round((current / SITE.ayahCount) * 100);
     return;
