@@ -173,6 +173,7 @@ export function selectAyah(ayah, { scroll = false, smooth = true, toggle = true 
   surahState.lastAyah = num;
   store.set("lastAyah", num);
   syncDock(num);
+  surahState.hooks.onSelect?.(num);
 }
 
 export function clearSelection({ keepDock = false } = {}) {

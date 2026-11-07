@@ -1122,3 +1122,14 @@ html[data-theme="night"] .partner-pill {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: .55; transform: scale(.85); }
 }
+
+
+.chipbtn--sim.is-on {
+  color: #0b3d2c;
+  background: color-mix(in oklab, #3ecf8e 55%, var(--card-solid));
+  border-color: color-mix(in oklab, #3ecf8e 45%, transparent);
+}
+html[data-theme="night"] .chipbtn--sim.is-on {
+  color: #d4ffe9;
+  background: color-mix(in oklab, #3ecf8e 22%, transparent);
+}
