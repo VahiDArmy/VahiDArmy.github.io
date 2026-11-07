@@ -300,11 +300,47 @@ export function translateError(error) {
   return error?.message || "خطای نامشخص";
 }
 
-
-/* ---------- حضور هم‌خوان (آیهٔ فعلی طرف مقابل) ---------- */
+/* ---------- حضور هم‌خوان ----------
+ * کانال واحد، track فقط با تغییر آیه و حداقل هر ۲ثانیه یک‌بار.
+ */
 let presenceChannel = null;
 let presenceHandler = null;
-let lastTrackedAyah = null;
+let trackedAyah = null;
+let trackBusy = false;
+let lastTrackAt = 0;
+let deferredTimer = null;
+const TRACK_MIN_MS = 2000;
+
+function presencePayload(ayah) {
+  return {
+    slot: state.slot,
+    name: state.profile?.display_name || SITE.defaultNames?.[state.slot] || "همراه",
+    ayah: Math.max(1, Math.min(96, Number(ayah) || 1)),
+    at: Date.now(),
+  };
+}
+
+function readPartner() {
+  if (!presenceChannel || !state.user) return null;
+  const map = presenceChannel.presenceState() || {};
+  for (const [key, metas] of Object.entries(map)) {
+    if (key === state.user.id) continue;
+    const meta = Array.isArray(metas) ? metas[0] : metas;
+    if (!meta) continue;
+    return {
+      online: true,
+      slot: Number(meta.slot) || null,
+      name: meta.name || SITE.defaultNames?.[meta.slot] || "همراه",
+      ayah: Number(meta.ayah) || 1,
+      at: meta.at || null,
+    };
+  }
+  return null;
+}
+
+function emitPartner() {
+  presenceHandler?.(readPartner() || { online: false });
+}
 
 export async function startPresence(onPartner) {
   presenceHandler = typeof onPartner === "function" ? onPartner : null;
@@ -312,85 +348,84 @@ export async function startPresence(onPartner) {
     presenceHandler?.({ online: false });
     return { ok: false, reason: "auth" };
   }
-  await stopPresence();
+  if (presenceChannel) {
+    emitPartner();
+    await publishReading(trackedAyah || 1, true);
+    return { ok: true, reused: true };
+  }
 
-  const room = "q56-reading";
-  presenceChannel = client.channel(room, {
+  const channel = client.channel("q56-reading", {
     config: { presence: { key: state.user.id } },
   });
-
-  const emitPartner = () => {
-    if (!presenceChannel || !presenceHandler) return;
-    const map = presenceChannel.presenceState() || {};
-    let partner = null;
-    for (const [key, metas] of Object.entries(map)) {
-      if (key === state.user.id) continue;
-      const meta = Array.isArray(metas) ? metas[0] : metas;
-      if (!meta) continue;
-      partner = {
-        online: true,
-        slot: Number(meta.slot) || null,
-        name: meta.name || (SITE.defaultNames && SITE.defaultNames[meta.slot]) || "همراه",
-        ayah: Number(meta.ayah) || 1,
-        at: meta.at || null,
-      };
-      break;
-    }
-    presenceHandler(partner || { online: false });
-  };
-
-  presenceChannel.on("presence", { event: "sync" }, emitPartner);
-  presenceChannel.on("presence", { event: "join" }, emitPartner);
-  presenceChannel.on("presence", { event: "leave" }, emitPartner);
+  presenceChannel = channel;
+  channel.on("presence", { event: "sync" }, emitPartner);
+  channel.on("presence", { event: "join" }, emitPartner);
+  channel.on("presence", { event: "leave" }, emitPartner);
 
   const status = await new Promise((resolve) => {
-    presenceChannel.subscribe((s) => {
+    channel.subscribe((s) => {
       if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") resolve(s);
     });
   });
 
-  if (status !== "SUBSCRIBED") {
-    console.warn("[vaqia] presence subscribe", status);
+  if (status !== "SUBSCRIBED" || presenceChannel !== channel) {
+    console.warn("[vaqia] presence", status);
+    try { await client.removeChannel(channel); } catch (_) {}
+    if (presenceChannel === channel) presenceChannel = null;
     presenceHandler?.({ online: false });
     return { ok: false, reason: status };
   }
 
-  const ayah = lastTrackedAyah || 1;
-  await presenceChannel.track({
-    slot: state.slot,
-    name: state.profile?.display_name || (SITE.defaultNames && SITE.defaultNames[state.slot]) || "من",
-    ayah,
-    at: new Date().toISOString(),
-  });
+  trackedAyah = null;
+  await publishReading(1, true);
+  emitPartner();
   return { ok: true };
 }
 
-export async function publishReading(ayah) {
-  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
-  if (num === lastTrackedAyah && presenceChannel) return;
-  lastTrackedAyah = num;
+export async function publishReading(ayah, force = false) {
   if (!presenceChannel || !state.user || !state.slot) return;
+  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
+  const now = Date.now();
+  if (!force) {
+    if (num === trackedAyah) return;
+    if (now - lastTrackAt < TRACK_MIN_MS || trackBusy) {
+      trackedAyah = num;
+      if (!deferredTimer) {
+        deferredTimer = setTimeout(async () => {
+          deferredTimer = null;
+          const a = trackedAyah;
+          trackedAyah = null;
+          await publishReading(a, true);
+        }, TRACK_MIN_MS);
+      }
+      return;
+    }
+  }
+  trackBusy = true;
+  trackedAyah = num;
+  lastTrackAt = Date.now();
   try {
-    await presenceChannel.track({
-      slot: state.slot,
-      name: state.profile?.display_name || (SITE.defaultNames && SITE.defaultNames[state.slot]) || "من",
-      ayah: num,
-      at: new Date().toISOString(),
-    });
+    await presenceChannel.track(presencePayload(num));
   } catch (err) {
-    console.warn("[vaqia] presence track", err?.message || err);
+    console.warn("[vaqia] track", err?.message || err);
+  } finally {
+    trackBusy = false;
   }
 }
 
 export async function stopPresence() {
-  if (presenceChannel) {
-    try {
-      await presenceChannel.untrack();
-      await client?.removeChannel(presenceChannel);
-    } catch (_) {
-      /* ignore */
-    }
-    presenceChannel = null;
+  if (deferredTimer) {
+    clearTimeout(deferredTimer);
+    deferredTimer = null;
   }
-  lastTrackedAyah = null;
+  const ch = presenceChannel;
+  presenceChannel = null;
+  trackedAyah = null;
+  if (ch) {
+    try {
+      await ch.untrack();
+      await client?.removeChannel(ch);
+    } catch (_) {}
+  }
+  presenceHandler?.({ online: false });
 }

@@ -345,6 +345,7 @@ function setActive(ayah) {
   surahState.active = ayah;
   surahState.lastAyah = ayah;
   store.set("lastAyah", ayah);
+  surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
   surahState.hooks.onProgress?.(surahState.progress, ayah);
 }
 
@@ -360,10 +361,8 @@ export function updateProgress() {
     else break;
   }
   const ayah = Number(current.dataset.ayah);
-  const progress = Math.round((ayah / SITE.ayahCount) * 100);
-  surahState.progress = progress;
+  surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
   setActive(ayah);
-  surahState.hooks.onProgress?.(progress, ayah);
 }
 
 export function updateHero(meta) {
@@ -426,7 +425,9 @@ export function setPartnerAyah(ayah, meta = null) {
 }
 
 export function attachSurahScroll() {
-  const onScroll = () => {
+  let ticking = false;
+  const run = () => {
+    ticking = false;
     updateProgress();
     const progress = surahState.progress;
     const surahVisible = !$("#view-surah")?.hidden;
@@ -439,12 +440,14 @@ export function attachSurahScroll() {
     const dock = $("#dock");
     if (dock) dock.classList.toggle("is-visible", window.scrollY > 420);
     const completion = $("#completion");
-    if (completion) {
-      const nearEnd = progress >= 96;
-      if (nearEnd) completion.hidden = false;
-    }
+    if (completion && progress >= 96) completion.hidden = false;
+  };
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(run);
   };
   window.addEventListener("scroll", onScroll, { passive: true });
   window.addEventListener("resize", debounce(onScroll, 250));
-  onScroll();
+  run();
 }
