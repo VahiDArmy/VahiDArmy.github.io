@@ -350,17 +350,25 @@ function setActive(ayah) {
 }
 
 export function updateProgress() {
-  const cards = [...surahState.nodes.values()];
-  if (!cards.length) return;
-  const viewportMid = window.innerHeight * 0.36;
-  let current = cards.find((card) => !card.hidden) || cards[0];
-  for (const card of cards) {
-    if (card.hidden) continue;
-    const rect = card.getBoundingClientRect();
-    if (rect.top <= viewportMid) current = card;
-    else break;
+  if (!surahState.nodes.size) return;
+  // برای متن پیوسته: آیهٔ زیر مرکز صفحه
+  const y = window.innerHeight * 0.38;
+  const x = window.innerWidth * 0.5;
+  let node = null;
+  const hit = document.elementFromPoint(x, y);
+  if (hit) node = hit.closest?.(".ayah");
+  if (!node || node.hidden) {
+    // fallback: آخرین آیه‌ای که بالای خط میانی است
+    const mid = y;
+    for (const card of surahState.nodes.values()) {
+      if (card.hidden) continue;
+      const rect = card.getBoundingClientRect();
+      if (rect.top <= mid) node = card;
+    }
   }
-  const ayah = Number(current.dataset.ayah);
+  if (!node) node = surahState.nodes.get(1) || [...surahState.nodes.values()][0];
+  const ayah = Number(node?.dataset?.ayah);
+  if (!Number.isFinite(ayah) || ayah < 1) return;
   surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
   setActive(ayah);
 }

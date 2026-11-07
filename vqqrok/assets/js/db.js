@@ -300,18 +300,14 @@ export function translateError(error) {
   return error?.message || "خطای نامشخص";
 }
 
-/* ---------- حضور هم‌خوان ----------
- * کانال واحد، track فقط با تغییر آیه و حداقل هر ۲ثانیه یک‌بار.
- */
+/* ---------- حضور هم‌خوان ---------- */
 let presenceChannel = null;
 let presenceHandler = null;
-let trackedAyah = null;
-let trackBusy = false;
-let lastTrackAt = 0;
-let deferredTimer = null;
-const TRACK_MIN_MS = 2000;
+let lastSentAyah = null;
+let pendingAyah = null;
+let sendTimer = null;
 
-function presencePayload(ayah) {
+function payload(ayah) {
   return {
     slot: state.slot,
     name: state.profile?.display_name || SITE.defaultNames?.[state.slot] || "همراه",
@@ -342,6 +338,19 @@ function emitPartner() {
   presenceHandler?.(readPartner() || { online: false });
 }
 
+async function flushTrack() {
+  sendTimer = null;
+  if (!presenceChannel || !state.user || !state.slot) return;
+  const num = pendingAyah;
+  if (num == null || num === lastSentAyah) return;
+  try {
+    await presenceChannel.track(payload(num));
+    lastSentAyah = num;
+  } catch (err) {
+    console.warn("[vaqia] track", err?.message || err);
+  }
+}
+
 export async function startPresence(onPartner) {
   presenceHandler = typeof onPartner === "function" ? onPartner : null;
   if (!client || !state.user || !state.slot) {
@@ -350,7 +359,6 @@ export async function startPresence(onPartner) {
   }
   if (presenceChannel) {
     emitPartner();
-    await publishReading(trackedAyah || 1, true);
     return { ok: true, reused: true };
   }
 
@@ -376,51 +384,30 @@ export async function startPresence(onPartner) {
     return { ok: false, reason: status };
   }
 
-  trackedAyah = null;
-  await publishReading(1, true);
+  lastSentAyah = null;
   emitPartner();
   return { ok: true };
 }
 
-export async function publishReading(ayah, force = false) {
-  if (!presenceChannel || !state.user || !state.slot) return;
+/** ارسال آیهٔ فعلی — debounce کوتاه تا track پشت‌سرهم نشود */
+export function publishReading(ayah) {
   const num = Math.max(1, Math.min(96, Number(ayah) || 1));
-  const now = Date.now();
-  if (!force) {
-    if (num === trackedAyah) return;
-    if (now - lastTrackAt < TRACK_MIN_MS || trackBusy) {
-      trackedAyah = num;
-      if (!deferredTimer) {
-        deferredTimer = setTimeout(async () => {
-          deferredTimer = null;
-          const a = trackedAyah;
-          trackedAyah = null;
-          await publishReading(a, true);
-        }, TRACK_MIN_MS);
-      }
-      return;
-    }
-  }
-  trackBusy = true;
-  trackedAyah = num;
-  lastTrackAt = Date.now();
-  try {
-    await presenceChannel.track(presencePayload(num));
-  } catch (err) {
-    console.warn("[vaqia] track", err?.message || err);
-  } finally {
-    trackBusy = false;
-  }
+  pendingAyah = num;
+  if (!presenceChannel || !state.user || !state.slot) return;
+  if (num === lastSentAyah && !sendTimer) return;
+  if (sendTimer) return; // pendingAyah already updated; flush will send latest
+  sendTimer = setTimeout(flushTrack, 400);
 }
 
 export async function stopPresence() {
-  if (deferredTimer) {
-    clearTimeout(deferredTimer);
-    deferredTimer = null;
+  if (sendTimer) {
+    clearTimeout(sendTimer);
+    sendTimer = null;
   }
   const ch = presenceChannel;
   presenceChannel = null;
-  trackedAyah = null;
+  lastSentAyah = null;
+  pendingAyah = null;
   if (ch) {
     try {
       await ch.untrack();

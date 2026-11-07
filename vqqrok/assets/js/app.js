@@ -71,36 +71,48 @@ const historyState = { rows: [], filter: "all", loaded: false };
 let authMode = "signin";
 let sessionReads = 0;
 
-/* ---------- حضور هم‌خوان ---------- */
+/* ---------- حضور هم‌خوان + مود خواندن ---------- */
 let partnerState = { online: false, ayah: null, name: null, slot: null };
+let readingMode = false;
 
-function clearPartnerLiveBadges() {
-  document.querySelectorAll(".counter").forEach((chip) => {
-    chip.classList.remove("is-live");
-    const live = chip.querySelector("[data-live]");
-    if (live) {
-      live.hidden = true;
-      live.textContent = "";
-    }
-  });
+function updateReadbar() {
+  const me = $("#readbarMe");
+  const partner = $("#readbarPartner");
+  const partnerName = $("#readbarPartnerName");
+  const myAyah = surahState.active || surahState.lastAyah || 1;
+  if (me) me.textContent = `آیهٔ ${fa(myAyah)}`;
+  if (partnerName) partnerName.textContent = partnerState.online ? (partnerState.name || "همراه") : "همراه";
+  if (partner) {
+    partner.textContent = partnerState.online && partnerState.ayah
+      ? `آیهٔ ${fa(partnerState.ayah)}`
+      : "آفلاین";
+  }
+}
+
+function setReadingMode(on) {
+  readingMode = Boolean(on);
+  document.body.classList.toggle("is-reading", readingMode);
+  const bar = $("#readbar");
+  if (bar) bar.hidden = !readingMode;
+  if (readingMode) {
+    setView("surah", { push: false });
+    updateReadbar();
+    syncPresence();
+    const ayah = surahState.active || surahState.lastAyah || 1;
+    publishReading(ayah);
+    // اسکرول به آیهٔ فعلی
+    const node = surahState.nodes.get(ayah);
+    if (node) node.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+  }
 }
 
 function updatePartnerUi() {
-  clearPartnerLiveBadges();
   if (!partnerState.online || !partnerState.ayah) {
     setPartnerAyah(null);
-    return;
+  } else {
+    setPartnerAyah(partnerState.ayah, partnerState);
   }
-  setPartnerAyah(partnerState.ayah, partnerState);
-  const slot = partnerState.slot || (db.slot === 1 ? 2 : 1);
-  const chip = document.querySelector(`.counter[data-slot="${slot}"]`);
-  if (!chip) return;
-  chip.classList.add("is-live");
-  const live = chip.querySelector("[data-live]");
-  if (live) {
-    live.hidden = false;
-    live.textContent = `آیهٔ ${fa(partnerState.ayah)}`;
-  }
+  updateReadbar();
 }
 
 function onPartnerPresence(info) {
@@ -115,14 +127,13 @@ function onPartnerPresence(info) {
     name: info.name || "همراه",
     slot: info.slot ?? null,
   };
-  updatePartnerUi();
 }
 
 async function syncPresence() {
   if (db.user && db.slot) {
     await startPresence(onPartnerPresence);
     const ayah = surahState.active || surahState.lastAyah || 1;
-    publishReading(ayah, true);
+    publishReading(ayah);
   } else {
     await stopPresence();
     onPartnerPresence({ online: false });
@@ -233,7 +244,6 @@ async function refreshCounters() {
       ? `${currentUserName(row.slot)} · آخرین تلاوت ${shamsi(row.last_at).full}`
       : `${currentUserName(row.slot)} · هنوز تلاوتی ثبت نشده`;
   }
-  updatePartnerUi();
 }
 
 function bumpCounter(slot) {
@@ -803,6 +813,12 @@ function wireEvents() {
     setShowTranslation(!surahState.showTranslation);
   });
 
+  $("#startReadingMode")?.addEventListener("click", () => setReadingMode(true));
+  $("#exitReadingBtn")?.addEventListener("click", () => setReadingMode(false));
+  $("#readbarPartnerBtn")?.addEventListener("click", () => {
+    if (partnerState.ayah) focusAyah(partnerState.ayah);
+  });
+
   $("#heroToggle")?.addEventListener("click", () => {
     const extra = $("#heroExtra");
     const btn = $("#heroToggle");
@@ -944,7 +960,10 @@ async function boot() {
     surahState.hooks.onTafsir = openTafsirForAyah;
     surahState.hooks.onProgress = (_progress, ayah) => {
       updateHero({ nameFa: SITE.surahNameFa });
-      if (ayah) publishReading(ayah);
+      if (ayah) {
+        publishReading(ayah);
+        updateReadbar();
+      }
     };
     updateHero(surah.meta);
     const heroProgress = Math.round(((surahState.lastAyah || 1) / SITE.ayahCount) * 100);

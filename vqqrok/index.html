@@ -60,15 +60,28 @@
       </button>
       <span id="brandHint" class="sr-only">برای دیدن تاریخچهٔ کامل تلاوت‌ها، دو بار روی نام سایت بزنید.</span>
 
-      <nav class="tabswitch" id="tabswitch" role="tablist" aria-label="انتخاب نما">
-        <span class="tabswitch__pill" aria-hidden="true"></span>
-        <button class="tabswitch__btn is-active" role="tab" id="tab-surah" aria-selected="true" aria-controls="view-surah" data-view="surah">
-          <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span>سوره</span>
-        </button>
-        <button class="tabswitch__btn" role="tab" id="tab-tafsir" aria-selected="false" aria-controls="view-tafsir" data-view="tafsir">
-          <svg class="ico" aria-hidden="true"><use href="#i-scroll"/></svg><span>تفسیر</span>
-        </button>
-      </nav>
+      <div class="topbar__center">
+        <nav class="tabswitch" id="tabswitch" role="tablist" aria-label="انتخاب نما">
+          <span class="tabswitch__pill" aria-hidden="true"></span>
+          <button class="tabswitch__btn is-active" role="tab" id="tab-surah" aria-selected="true" aria-controls="view-surah" data-view="surah">
+            <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span>سوره</span>
+          </button>
+          <button class="tabswitch__btn" role="tab" id="tab-tafsir" aria-selected="false" aria-controls="view-tafsir" data-view="tafsir">
+            <svg class="ico" aria-hidden="true"><use href="#i-scroll"/></svg><span>تفسیر</span>
+          </button>
+        </nav>
+        <div class="readbar" id="readbar" hidden>
+          <div class="readbar__me">
+            <span class="readbar__label">من</span>
+            <strong id="readbarMe">آیهٔ ۱</strong>
+          </div>
+          <div class="readbar__partner" id="readbarPartnerBtn" role="button" tabindex="0" title="رفتن به آیهٔ همراه">
+            <span class="readbar__label" id="readbarPartnerName">همراه</span>
+            <strong id="readbarPartner">—</strong>
+          </div>
+          <button type="button" class="readbar__exit" id="exitReadingBtn">پایان</button>
+        </div>
+      </div>
 
       <div class="topbar__side">
         <div class="counters" id="counters" aria-label="شمارندهٔ تلاوت دو نفر">
@@ -77,7 +90,6 @@
             <span class="counter__body">
               <span class="counter__name" data-name>نفر اول</span>
               <span class="counter__num"><b data-num>۰</b><i>بار</i></span>
-              <span class="counter__live" data-live hidden></span>
             </span>
           </button>
           <button class="counter" type="button" data-slot="2" title="تاریخچهٔ نفر دوم">
@@ -85,7 +97,6 @@
             <span class="counter__body">
               <span class="counter__name" data-name>نفر دوم</span>
               <span class="counter__num"><b data-num>۰</b><i>بار</i></span>
-              <span class="counter__live" data-live hidden></span>
             </span>
           </button>
         </div>
@@ -173,6 +184,9 @@
             <span class="searchbox__count" id="searchCount" hidden>۰</span>
           </label>
           <div class="surahtools__actions">
+            <button class="chipbtn chipbtn--read" id="startReadingMode" type="button">
+              <svg class="ico" aria-hidden="true"><use href="#i-book"/></svg><span>شروع خواندن</span>
+            </button>
             <button class="chipbtn" id="jumpBtn" type="button">
               <svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg><span>پرش به آیه</span>
             </button>
