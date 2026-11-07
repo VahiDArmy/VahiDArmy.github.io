@@ -74,6 +74,9 @@ let sessionReads = 0;
 /* ---------- حضور هم‌خوان + مود خواندن ---------- */
 let partnerState = { online: false, ayah: null, name: null, slot: null };
 let readingMode = false;
+/** فاصلهٔ زمانی بین آیه‌ها در مود خواندن (میلی‌ثانیه) — سرعت ثابت */
+const READING_PACE_MS = 9000;
+let readingTimer = null;
 
 function updateReadbar() {
   const me = $("#readbarMe");
@@ -89,6 +92,65 @@ function updateReadbar() {
   }
 }
 
+function stopReadingTimer() {
+  if (readingTimer != null) {
+    clearInterval(readingTimer);
+    readingTimer = null;
+  }
+}
+
+/**
+ * آیهٔ بعدی فقط اگر داخل (یا نزدیک) نمای صفحه باشد جلو می‌رود.
+ * اگر آیه هنوز در صفحه نباشد، اول به همان آیه اسکرول می‌کند و جلو نمی‌رود.
+ */
+function lastVisibleAyah() {
+  const mid = window.innerHeight * 0.92;
+  let last = 1;
+  for (const [num, card] of surahState.nodes) {
+    if (card.hidden) continue;
+    const rect = card.getBoundingClientRect();
+    if (rect.top < mid) last = num;
+    else break;
+  }
+  return last;
+}
+
+function readingTick() {
+  if (!readingMode) {
+    stopReadingTimer();
+    return;
+  }
+  const current = surahState.active || surahState.lastAyah || 1;
+  const next = Math.min(SITE.ayahCount, current + 1);
+  if (next === current) {
+    // به آخر رسیده
+    stopReadingTimer();
+    updateReadbar();
+    return;
+  }
+  // فقط تا جایی که روی صفحه دیده می‌شود پیش برو
+  const visibleLimit = lastVisibleAyah();
+  if (next > visibleLimit) {
+    // آیهٔ بعدی هنوز در نما نیست — فقط کمی اسکرول کن تا وارد شود، آیه عوض نشود
+    const node = surahState.nodes.get(next);
+    if (node) {
+      node.scrollIntoView({
+        block: "end",
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+    }
+    return;
+  }
+  focusAyah(next);
+  publishReading(next);
+  updateReadbar();
+}
+
+function startReadingTimer() {
+  stopReadingTimer();
+  readingTimer = setInterval(readingTick, READING_PACE_MS);
+}
+
 function setReadingMode(on) {
   readingMode = Boolean(on);
   document.body.classList.toggle("is-reading", readingMode);
@@ -96,13 +158,15 @@ function setReadingMode(on) {
   if (bar) bar.hidden = !readingMode;
   if (readingMode) {
     setView("surah", { push: false });
+    const ayah = surahState.active || surahState.lastAyah || 1;
+    // قفل آیه روی مقدار فعلی — دیگر با اسکرول عوض نمی‌شود
+    focusAyah(ayah);
+    publishReading(ayah);
     updateReadbar();
     syncPresence();
-    const ayah = surahState.active || surahState.lastAyah || 1;
-    publishReading(ayah);
-    // اسکرول به آیهٔ فعلی
-    const node = surahState.nodes.get(ayah);
-    if (node) node.scrollIntoView({ block: "center", behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    startReadingTimer();
+  } else {
+    stopReadingTimer();
   }
 }
 
@@ -127,6 +191,8 @@ function onPartnerPresence(info) {
     name: info.name || "همراه",
     slot: info.slot ?? null,
   };
+  // باگ قبلی: وقتی آنلاین بود UI به‌روز نمی‌شد
+  updatePartnerUi();
 }
 
 async function syncPresence() {
@@ -176,17 +242,7 @@ function initTheme() {
     if (db.user) await updateProfile({ theme: next });
   });
 
-  const setFont = async (direction) => {
-    const value = stepFont(direction);
-    if (db.user) await updateProfile({ font_step: value });
-  };
-  $("#dockFontUp")?.addEventListener("click", () => setFont(1));
-  $("#dockFontDown")?.addEventListener("click", () => setFont(-1));
-  $$("[data-font-step]").forEach((btn) =>
-    btn.addEventListener("click", () => setFont(Number(btn.dataset.fontStep)))
-  );
-  $("#fontValue").textContent = { sm: "کوچک", md: "متوسط", lg: "بزرگ", xl: "خیلی بزرگ" }[document.documentElement.dataset.font] || "متوسط";
-}
+  }
 
 /* ---------- پس‌زمینه ---------- */
 function seedHearts() {
@@ -802,11 +858,6 @@ function wireEvents() {
       search.value = "";
       applySearch("");
     }
-  });
-
-  $("#jumpBtn")?.addEventListener("click", () => {
-    buildJumpGrid();
-    openDialog("jumpModal");
   });
 
   $("#toggleTranslation")?.addEventListener("click", () => {

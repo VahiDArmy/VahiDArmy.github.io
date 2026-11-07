@@ -396,7 +396,9 @@ export function publishReading(ayah) {
   if (!presenceChannel || !state.user || !state.slot) return;
   if (num === lastSentAyah && !sendTimer) return;
   if (sendTimer) return; // pendingAyah already updated; flush will send latest
-  sendTimer = setTimeout(flushTrack, 400);
+  // ارسال اول فوری، بقیه با debounce کوتاه
+  const delay = lastSentAyah == null ? 0 : 250;
+  sendTimer = setTimeout(flushTrack, delay);
 }
 
 export async function stopPresence() {
