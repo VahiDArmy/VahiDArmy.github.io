@@ -346,15 +346,15 @@ window.AIUI = (function () {
         '<div class="ai-raw-error-label">پاسخ خام مدل:</div>' +
         '<pre class="ai-raw-error-pre">' + Utils.esc(String(raw)) + '</pre></div>';
     } else {
-      html += '<div class="ai-error-hint">پاسخ خالی بود یا استریم قطع شد (گاهی به‌خاطر max_tokens یا مدل).</div>';
+      html += '<div class="ai-error-hint">پاسخی دریافت نشد؛ دوباره تلاش کن یا مدل دیگری را انتخاب کن.</div>';
     }
     return html;
   }
 
   function requireAI() {
     if (!AI.isConfigured()) {
-      Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
-        title: 'AI تنظیم نشده',
+      Toast.warning('هوش مصنوعی فعلاً در دسترس نیست', {
+        title: 'AI در دسترس نیست',
         action: { label: 'تنظیمات', onClick: function () { Events.openSettings(); } }
       });
       return false;
@@ -545,7 +545,7 @@ window.AIUI = (function () {
 
     const panel = createStreamPanel('استانداردسازی: ' + t.title);
     const resultBox = Utils.el('div', { class: 'ai-result-box', hidden: true });
-    const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-std-apply-btn', disabled: true }, ['✅ ذخیره در دیتابیس']);
+    const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-std-apply-btn', disabled: true }, ['✅ ذخیره']);
 
     const body = Utils.el('div', { class: 'ai-layout' }, [
       Utils.el('div', { class: 'ai-source' }, [
@@ -637,7 +637,7 @@ window.AIUI = (function () {
           ]));
         } else {
           resultBox.appendChild(Utils.el('div', { class: 'ai-error-hint' }, [
-            'پاسخ خالی بود — احتمالاً استریم ناقص یا مدل بدون خروجی.'
+            'پاسخی دریافت نشد؛ دوباره تلاش کن یا مدل دیگری را انتخاب کن.'
           ]));
         }
       });
@@ -658,7 +658,7 @@ window.AIUI = (function () {
     const extrasBox = Utils.el('div', { hidden: true });
     const rawSectionEl = Utils.el('div', { hidden: true });
     const deepBtnWrap = Utils.el('div', { class: 'ai-deep-wrap', hidden: true });
-    const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true }, ['✅ اعمال روی دیتابیس']);
+    const applyBtn = Utils.el('button', { class: 'btn btn-primary', id: 'ai-apply-btn', disabled: true }, ['✅ اعمال تغییرات']);
 
     const rating = Math.floor(Number(t.rating) || 0);
     const starMeta = CONFIG.STARS[rating];
@@ -1145,7 +1145,7 @@ window.AIUI = (function () {
     btnTaste.addEventListener('click', async function () {
       setBusy(true, 'در حال تحلیل…', null);
       panel.setContent('');
-      panel.setStatus('تحلیل عمیق سلیقه (استریم)…', 'loading');
+      panel.setStatus('تحلیل عمیق سلیقه…', 'loading');
       actionBox.style.display = 'none';
       try {
         var result = await AIAnalysis.analyzeTaste({
@@ -1172,7 +1172,7 @@ window.AIUI = (function () {
     btnSuggest.addEventListener('click', async function () {
       setBusy(true, null, 'در حال پیشنهاد…');
       panel.setContent('');
-      panel.setStatus('در حال پیشنهاد (استریم)…', 'loading');
+      panel.setStatus('در حال پیشنهاد…', 'loading');
       actionBox.style.display = 'none';
       actionBox.innerHTML = '';
       try {
@@ -1500,7 +1500,8 @@ window.AIUI = (function () {
       var current = DB.getTitle(id);
       if (!current) return;
       if (DB.hasTagsColumn && !DB.hasTagsColumn()) {
-        Toast.error('ستون tags در دیتابیس نیست — فایل add-tags-column.sql را در Supabase اجرا کن');
+        console.warn('[tags] column "tags" is missing in the titles table: run add-tags-column.sql');
+        Toast.error('ذخیرهٔ تگ‌ها فعلاً ممکن نیست');
         return;
       }
       DB.updateTitle(id, Object.assign({}, current, { tags: tags.join('، ') }), false);

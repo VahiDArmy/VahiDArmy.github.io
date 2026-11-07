@@ -177,7 +177,7 @@
         boot.classList.add('is-hidden');
         return;
       }
-      BootLog.done('ورود موفق — دیتابیس آنلاین');
+      BootLog.done('ورود موفق');
 
       /* ---- مرحله ۳: بارگذاری داده ---- */
       BootLog.active('بارگذاری داده‌ها…');

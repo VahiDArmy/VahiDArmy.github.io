@@ -74,7 +74,7 @@ window.Events = (function () {
 
     const syncEl = document.getElementById('sync-status');
     if (syncEl) {
-      syncEl.title = 'متصل به Supabase';
+      syncEl.title = 'متصل';
       // no-op click — data saves automatically
     }
   }
@@ -480,14 +480,14 @@ window.Events = (function () {
       panel = AIUI.createStreamPanelForPage('تحلیل عمیق شخصیت');
       if (host) host.appendChild(panel.panel);
     } catch (e) {
-      Toast.error('پنل استریم ساخته نشد');
+      Toast.error('نمایش نتیجه ممکن نشد؛ صفحه را دوباره باز کن');
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
       return;
     }
 
     panel.setContent('');
-    panel.setStatus('استریم تحلیل…', 'loading');
+    panel.setStatus('در حال تحلیل…', 'loading');
 
     try {
       var result = await AIAnalysis.analyzeTaste({
@@ -885,14 +885,14 @@ window.Events = (function () {
   function openDbAdmin() {
     if (!window.DBAdmin) {
       console.error('[db-admin] window.DBAdmin is not defined — js/db-admin.js not loaded');
-      Toast.error('مدیریت دیتابیس بارگذاری نشده');
+      Toast.error('این بخش بارگذاری نشد؛ صفحه را دوباره باز کن');
       return;
     }
     try {
       DBAdmin.open();
     } catch (err) {
       console.error('[db-admin] open failed:', err);
-      Toast.error('باز کردن مدیریت دیتابیس ناموفق: ' + (err && err.message || err));
+      Toast.error('باز کردن این بخش ناموفق بود');
     }
   }
 
@@ -1344,13 +1344,10 @@ window.Events = (function () {
       Utils.el('div', { class: 'settings-section-head' }, [
         Utils.el('div', { class: 'settings-icon' }, ['🪄']),
         Utils.el('div', { class: 'settings-info' }, [
-          Utils.el('h4', {}, ['هوش مصنوعی (Edge)']),
-          Utils.el('p', {}, ['Gemini مستقیم + OpenRouter — کلیدها روی سرور'])
+          Utils.el('h4', {}, ['هوش مصنوعی']),
+          Utils.el('p', {}, ['تحلیل سلیقه، پیشنهاد و تگ‌گذاری آثار'])
         ]),
-        Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'تنظیم نشده'])
-      ]),
-      Utils.el('div', { class: 'settings-fields' }, [
-        Utils.el('div', { class: 'settings-hint' }, [Utils.el('span', {}, ['کلیدها فقط روی سرور (GEM_MALI و OPENROUTER_API_KEY) هستند و در مرورگر ذخیره نمی‌شوند.'])])
+        Utils.el('span', { class: 'settings-status', dataset: { status: aiOK ? 'ok' : 'missing' } }, [aiOK ? 'فعال' : 'غیرفعال'])
       ]),
       Utils.el('div', { class: 'settings-fieldset' }, [
         Utils.el('div', { class: 'settings-fieldset-label' }, ['مدل فعال']),
@@ -1426,16 +1423,16 @@ window.Events = (function () {
 
     document.getElementById('btn-db-admin')?.addEventListener('click', function () {
       if (typeof DBAdmin !== 'undefined' && DBAdmin.open) DBAdmin.open();
-      else Toast.info('مدیریت دیتابیس در نسخه آنلاین محدود است');
+      else Toast.info('این بخش در دسترس نیست');
     });
   }
 
   async function pullFromGitHub() {
-    Toast.info('همگام‌سازی با گیت‌هاب در نسخه آنلاین غیرفعال است');
+    Toast.info('این قابلیت در دسترس نیست');
   }
 
   async function pushToGitHub() {
-    Toast.info('داده‌ها به‌صورت خودکار روی Supabase ذخیره می‌شوند');
+    Toast.info('داده‌ها به‌صورت خودکار ذخیره می‌شوند');
   }
 
   function updateSyncStatus(state) {

@@ -9,7 +9,7 @@
    ========================================================= */
 window.CONFIG = {
   APP_NAME: 'سینما من',
-  APP_VERSION: '3.2.1-online',
+  APP_VERSION: '3.2.2-online',
 
   GITHUB: {
     API_BASE: 'https://api.github.com',
@@ -51,8 +51,8 @@ window.CONFIG = {
       { id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', label: 'Nemotron 3 Nano Omni', vendor: 'NVIDIA', provider: 'openrouter', size: '26.2B', context: '256K', speed: '41', note: 'چندوجهی و سبک', tags: ['سبک'] },
       { id: 'liquid/lfm-2.5-2.6b:free', label: 'LFM2.5 2.6B', vendor: 'LiquidAI', provider: 'openrouter', size: '18.7B', context: '66K', speed: '167', note: 'سریع‌ترین — مناسب تست سریع', tags: ['سریع‌ترین', 'سبک'] },
       { id: 'nvidia/nemotron-3.5-content-safety:free', label: 'Nemotron 3.5 Content Safety', vendor: 'NVIDIA', provider: 'openrouter', size: '2.21B', context: '128K', speed: '60', note: 'بهینه برای بررسی محتوا', tags: ['اختصاصی'] },
-      { id: 'google/gemma-4-26b-a4b-it:free', label: 'Gemma 4 26B A4B', vendor: 'Google', provider: 'openrouter', size: '1.37B', context: '262K', speed: '34', note: 'MoE سبک از گوگل (از طریق OpenRouter)', tags: ['سبک', 'MoE'] },
-      { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B', vendor: 'Google', provider: 'openrouter', size: '469M', context: '262K', speed: '13', note: 'سبک‌ترین Gemma (از طریق OpenRouter)', tags: ['سبک'] }
+      { id: 'google/gemma-4-26b-a4b-it:free', label: 'Gemma 4 26B A4B', vendor: 'Google', provider: 'openrouter', size: '1.37B', context: '262K', speed: '34', note: 'MoE سبک از گوگل', tags: ['سبک', 'MoE'] },
+      { id: 'google/gemma-4-31b-it:free', label: 'Gemma 4 31B', vendor: 'Google', provider: 'openrouter', size: '469M', context: '262K', speed: '13', note: 'سبک‌ترین Gemma', tags: ['سبک'] }
     ],
     BATCH_SIZE: 5
   },

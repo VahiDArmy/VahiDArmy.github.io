@@ -13,8 +13,8 @@ window.AIFreePrompt = (function () {
     const presetTitleId = opts.titleId || null;
 
     if (!AI.isConfigured()) {
-      Toast.warning('ابتدا کلید OpenRouter را در تنظیمات وارد کن', {
-        title: 'AI تنظیم نشده',
+      Toast.warning('هوش مصنوعی فعلاً در دسترس نیست', {
+        title: 'AI در دسترس نیست',
         action: { label: 'تنظیمات', onClick: function () { Events.openSettings(); } }
       });
       return;

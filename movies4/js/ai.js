@@ -124,17 +124,17 @@ window.AI = (function () {
 
   function friendlyHttpError(status, msg) {
     msg = String(msg || '');
-    if (status === 401 || status === 403) return 'دسترسی مجاز نیست (کلید یا تنظیمات سرور).';
+    if (status === 401 || status === 403) return 'دسترسی به هوش مصنوعی مجاز نیست.';
     if (status === 429) return 'محدودیت نرخ — کمی بعد دوباره تلاش کن.';
     if (status === 502 || /Provider returned error/i.test(msg)) {
-      return 'خطای واسط (502): ' + (msg || 'Provider returned error');
+      return 'سرویس هوش مصنوعی خطا داد؛ دوباره تلاش کن یا مدل دیگری را انتخاب کن.';
     }
     /* Supabase Edge: 546 = worker killed (often WallClockTime) */
     if (status === 546 || status === 504 || /504|546|timeout|timed out|WallClock|Gateway/i.test(msg)) {
-      return 'Edge تایم‌اوت شد (HTTP ' + status + '). معمولاً استریم Gemini از Edge نمی‌آید و تا سقف زمانی (~۱۵۰ث) معطل می‌ماند — مشکل مدل Google نیست، مشکل مسیر Edge است.';
+      return 'پاسخ‌دهی هوش مصنوعی بیش از حد طول کشید؛ دوباره تلاش کن یا مدل دیگری را انتخاب کن.';
     }
     if (msg) return msg;
-    return 'خطای سرور (HTTP ' + status + ')';
+    return 'خطای سرور؛ کمی بعد دوباره تلاش کن.';
   }
 
 
@@ -332,7 +332,7 @@ window.AI = (function () {
       /* still deliver text if present, but log that stream failed */
       const text = json.text || json.content || '';
       if (json.model) applyResolvedModel(json.model, json.requested_model);
-      aiLog('warn', '⚠ پاسخ غیر‌استریمی از Edge (ممکن است نزدیک timeout باشد)');
+      aiLog('warn', '⚠ پاسخ به‌صورت یک‌جا دریافت شد');
       if (text) onToken(text);
       onDone(text);
       aiLog('success', '✓ پاسخ کامل (' + text.length + ' کاراکتر)');

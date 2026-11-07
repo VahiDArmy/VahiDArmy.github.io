@@ -19,7 +19,7 @@ window.DB = (function () {
   function getClient() {
     if (!supabase) {
       if (typeof window.supabase === 'undefined') {
-        throw new Error('کتابخانه Supabase بارگذاری نشده');
+        throw new Error('اتصال برقرار نشد؛ اینترنت (یا VPN) را بررسی کن و صفحه را دوباره باز کن');
       }
       supabase = window.supabase.createClient(
         (CONFIG.SUPABASE && CONFIG.SUPABASE.URL) || 'https://ummhohozmpwltbgeczsf.supabase.co',

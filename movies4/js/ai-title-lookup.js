@@ -6,7 +6,7 @@ window.AITitleLookup = (function () {
   async function lookup(rawTitle, options) {
     options = options || {};
     if (!AI.isConfigured()) {
-      throw new Error('کلید OpenRouter تنظیم نشده است.');
+      throw new Error('هوش مصنوعی در دسترس نیست.');
     }
     if (!rawTitle || !rawTitle.trim()) {
       throw new Error('عنوان را وارد کن.');

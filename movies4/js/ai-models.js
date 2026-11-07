@@ -646,7 +646,7 @@ window.AIModelsUI = (function () {
 
     const footer = Utils.el('div', { class: 'flex gap-3 w-full justify-end' }, [
       Utils.el('button', { class: 'btn btn-ghost', onclick: function () { Modal.close(); } }, ['انصراف']),
-      Utils.el('button', { class: 'btn btn-primary', id: 'orm-save' }, ['افزودن به دیتابیس'])
+      Utils.el('button', { class: 'btn btn-primary', id: 'orm-save' }, ['افزودن به فهرست'])
     ]);
 
     Modal.open({
@@ -663,11 +663,11 @@ window.AIModelsUI = (function () {
     async function enrichFromAI() {
       if (enriching) return;
       if (!AI.isConfigured()) {
-        Toast.warning('کلید OpenRouter تنظیم نشده — از تنظیمات وارد کن');
+        Toast.warning('هوش مصنوعی در دسترس نیست');
         return;
       }
       if (!AI.getModels().length) {
-        Toast.warning('هیچ مدلی در دیتابیس نیست — AI قابل صدا زدن نیست');
+        Toast.warning('هیچ مدلی تعریف نشده — ابتدا یک مدل اضافه کن');
         return;
       }
 
