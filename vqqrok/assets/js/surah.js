@@ -156,6 +156,14 @@ export function selectAyah(ayah, { scroll = false, smooth = true, toggle = true 
   const num = Number(ayah);
   const node = surahState.nodes.get(num);
   if (!node) return;
+  const reading = document.body.classList.contains("is-reading");
+  // در مود خواندن: لمس آیه فقط موقعیت ردیابی را اصلاح می‌کند — بدون هایلایت خودم
+  if (reading) {
+    clearSelection({ keepDock: true });
+    setTrackedAyah(num);
+    surahState.hooks.onCorrect?.(num);
+    return;
+  }
   if (toggle && surahState.selected === num) {
     clearSelection();
     return;
@@ -337,34 +345,34 @@ export const applySearch = debounce((query) => {
 /* ---------- پیمایش و پیشرفت ---------- */
 export function focusAyah(ayah, { smooth = true } = {}) {
   selectAyah(Number(ayah), { scroll: true, smooth, toggle: false });
-  setActive(Number(ayah));
+  setTrackedAyah(Number(ayah));
 }
 
-function setActive(ayah) {
-  if (surahState.active === ayah) return;
-  surahState.active = ayah;
-  surahState.lastAyah = ayah;
-  store.set("lastAyah", ayah);
-  surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
-  surahState.hooks.onProgress?.(surahState.progress, ayah);
+/** فقط شمارنده/پیشرفت — بدون اسکرول و بدون کلاس هایلایت روی آیهٔ خودم */
+export function setTrackedAyah(ayah) {
+  const num = Number(ayah);
+  if (!Number.isFinite(num) || num < 1) return;
+  if (surahState.active === num) {
+    surahState.lastAyah = num;
+    store.set("lastAyah", num);
+    return;
+  }
+  surahState.active = num;
+  surahState.lastAyah = num;
+  store.set("lastAyah", num);
+  surahState.progress = Math.round((num / SITE.ayahCount) * 100);
+  surahState.hooks.onProgress?.(surahState.progress, num);
 }
 
 export function updateProgress() {
   if (!surahState.nodes.size) return;
-  // در مود خواندن، آیه فقط با تایمر زمان‌محور عوض می‌شود؛ اسکرول دخالت ندارد
-  if (document.body.classList.contains("is-reading")) {
-    const ayah = surahState.active || surahState.lastAyah || 1;
-    surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
-    return;
-  }
-  // برای متن پیوسته: آیهٔ زیر مرکز صفحه
+  // آیهٔ زیر مرکز صفحه — در مود خواندن هم با اسکرول شمارنده تنظیم می‌شود
   const y = window.innerHeight * 0.38;
   const x = window.innerWidth * 0.5;
   let node = null;
   const hit = document.elementFromPoint(x, y);
   if (hit) node = hit.closest?.(".ayah");
   if (!node || node.hidden) {
-    // fallback: آخرین آیه‌ای که بالای خط میانی است
     const mid = y;
     for (const card of surahState.nodes.values()) {
       if (card.hidden) continue;
@@ -376,7 +384,7 @@ export function updateProgress() {
   const ayah = Number(node?.dataset?.ayah);
   if (!Number.isFinite(ayah) || ayah < 1) return;
   surahState.progress = Math.round((ayah / SITE.ayahCount) * 100);
-  setActive(ayah);
+  setTrackedAyah(ayah);
 }
 
 export function updateHero(meta) {

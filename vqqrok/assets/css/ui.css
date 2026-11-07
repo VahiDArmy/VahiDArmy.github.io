@@ -412,16 +412,43 @@ html[data-theme="night"] .stat__value b { color: var(--accent-2); }
 .ayah__fa.is-active {
   background: color-mix(in oklab, var(--accent-soft) 78%, transparent);
 }
+/* در مود خواندن هایلایت آیهٔ خودم معنا ندارد */
+body.is-reading .ayah.is-active,
+body.is-reading .ayah__fa.is-active {
+  background: transparent;
+}
 .ayah.is-marked { background: color-mix(in oklab, var(--gold) 14%, transparent); }
+/* آیهٔ همراه: فقط رنگ متن + درخشش — بدون پس‌زمینه و بدون حاشیه */
 .ayah.is-partner,
 .ayah__fa.is-partner {
-  background: color-mix(in oklab, #2bb673 16%, transparent);
-  box-shadow: 0 0 0 .1em color-mix(in oklab, #2bb673 40%, transparent);
-  border-radius: .3em;
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--accent-deep);
+  text-shadow:
+    0 0 10px color-mix(in oklab, var(--accent) 55%, transparent),
+    0 0 22px color-mix(in oklab, var(--accent-2) 40%, transparent);
+  border-radius: 0;
+}
+.ayah.is-partner .ayah__num,
+.ayah__fa.is-partner .ayah__fnum {
+  color: var(--accent);
+  text-shadow: 0 0 8px color-mix(in oklab, var(--accent) 50%, transparent);
 }
 html[data-theme="night"] .ayah.is-partner,
 html[data-theme="night"] .ayah__fa.is-partner {
-  background: color-mix(in oklab, #2bb673 20%, transparent);
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--accent-2);
+  text-shadow:
+    0 0 12px color-mix(in oklab, var(--accent) 60%, transparent),
+    0 0 28px color-mix(in oklab, var(--accent-2) 45%, transparent);
+}
+html[data-theme="night"] .ayah.is-partner .ayah__num,
+html[data-theme="night"] .ayah__fa.is-partner .ayah__fnum {
+  color: var(--accent);
+  text-shadow: 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent);
 }
 
 .ayah[hidden], .ayah__fa[hidden] { display: none; }

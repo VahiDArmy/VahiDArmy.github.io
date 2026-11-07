@@ -52,6 +52,7 @@ import {
   initAyahTools,
   setShowTranslation,
   setPartnerAyah,
+  setTrackedAyah,
 } from "./surah.js";
 import { loadTafsirFiles, parseTafsirDocs, readLocalFiles, pageHtml } from "./tafsir.js";
 
@@ -75,7 +76,7 @@ let sessionReads = 0;
 let partnerState = { online: false, ayah: null, name: null, slot: null };
 let readingMode = false;
 /** فاصلهٔ زمانی بین آیه‌ها در مود خواندن (میلی‌ثانیه) — سرعت ثابت */
-const READING_PACE_MS = 9000;
+const READING_PACE_MS = 2000;
 let readingTimer = null;
 
 function updateReadbar() {
@@ -99,10 +100,7 @@ function stopReadingTimer() {
   }
 }
 
-/**
- * آیهٔ بعدی فقط اگر داخل (یا نزدیک) نمای صفحه باشد جلو می‌رود.
- * اگر آیه هنوز در صفحه نباشد، اول به همان آیه اسکرول می‌کند و جلو نمی‌رود.
- */
+/** آخرین آیه‌ای که هنوز داخل نمای صفحه است (بدون اسکرول اجباری) */
 function lastVisibleAyah() {
   const mid = window.innerHeight * 0.92;
   let last = 1;
@@ -115,6 +113,10 @@ function lastVisibleAyah() {
   return last;
 }
 
+/**
+ * فقط شمارنده را جلو می‌برد — بدون اسکرول و بدون هایلایت خودم.
+ * اگر آیهٔ بعدی روی صفحه نباشد، صبر می‌کند تا کاربر اسکرول کند.
+ */
 function readingTick() {
   if (!readingMode) {
     stopReadingTimer();
@@ -123,25 +125,15 @@ function readingTick() {
   const current = surahState.active || surahState.lastAyah || 1;
   const next = Math.min(SITE.ayahCount, current + 1);
   if (next === current) {
-    // به آخر رسیده
     stopReadingTimer();
     updateReadbar();
     return;
   }
-  // فقط تا جایی که روی صفحه دیده می‌شود پیش برو
-  const visibleLimit = lastVisibleAyah();
-  if (next > visibleLimit) {
-    // آیهٔ بعدی هنوز در نما نیست — فقط کمی اسکرول کن تا وارد شود، آیه عوض نشود
-    const node = surahState.nodes.get(next);
-    if (node) {
-      node.scrollIntoView({
-        block: "end",
-        behavior: prefersReducedMotion() ? "auto" : "smooth",
-      });
-    }
+  if (next > lastVisibleAyah()) {
+    // هنوز در نما نیست — اسکرول اجباری نمی‌کنیم؛ کاربر باید خودش بیاورد
     return;
   }
-  focusAyah(next);
+  setTrackedAyah(next);
   publishReading(next);
   updateReadbar();
 }
@@ -159,8 +151,8 @@ function setReadingMode(on) {
   if (readingMode) {
     setView("surah", { push: false });
     const ayah = surahState.active || surahState.lastAyah || 1;
-    // قفل آیه روی مقدار فعلی — دیگر با اسکرول عوض نمی‌شود
-    focusAyah(ayah);
+    // فقط ردیابی — بدون اسکرول اجباری و بدون هایلایت خودم
+    setTrackedAyah(ayah);
     publishReading(ayah);
     updateReadbar();
     syncPresence();
@@ -1015,6 +1007,12 @@ async function boot() {
         publishReading(ayah);
         updateReadbar();
       }
+    };
+    // لمس آیه در مود خواندن برای اصلاح موقعیت
+    surahState.hooks.onCorrect = (ayah) => {
+      if (!ayah) return;
+      publishReading(ayah);
+      updateReadbar();
     };
     updateHero(surah.meta);
     const heroProgress = Math.round(((surahState.lastAyah || 1) / SITE.ayahCount) * 100);
