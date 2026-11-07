@@ -71,7 +71,7 @@ const historyState = { rows: [], filter: "all", loaded: false };
 let authMode = "signin";
 let sessionReads = 0;
 
-/* ---------- حضور هم‌خوان ---------- */
+/* ---------- حضور هم‌خوان (واقعی) ---------- */
 let partnerState = { online: false, ayah: null, name: null, slot: null };
 
 function updatePartnerPill() {
@@ -107,16 +107,6 @@ function onPartnerPresence(info) {
 }
 
 async function syncPresence() {
-  if (partnerSim.active) {
-    if (db.user && db.slot) {
-      await startPresence((info) => {
-        if (partnerSim.active) return;
-        onPartnerPresence(info);
-      });
-      if (surahState.lastAyah) publishReading(surahState.lastAyah);
-    }
-    return;
-  }
   if (db.user && db.slot) {
     await startPresence(onPartnerPresence);
     if (surahState.lastAyah) publishReading(surahState.lastAyah);
@@ -124,92 +114,6 @@ async function syncPresence() {
     await stopPresence();
     onPartnerPresence({ online: false });
   }
-}
-
-/* ---------- شبیه‌ساز همراه: کاملاً مستقل، UI شناور + لاگ ---------- */
-const partnerSim = {
-  active: false,
-  timer: null,
-  ayah: 1,
-  paceMs: 3500,
-  name: "همراه آزمایشی",
-};
-
-function simLog(message) {
-  const list = $("#simLog");
-  if (!list) return;
-  const now = new Date();
-  const time = now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const li = el("li", {}, el("time", {}, time), el("span", {}, message));
-  list.prepend(li);
-  while (list.children.length > 80) list.lastElementChild.remove();
-}
-
-function partnerSimTouch(ayah) {
-  // شبیه‌سازی لمس آیه توسط همراه (هایلایت partner، نه انتخاب من)
-  onPartnerPresence({
-    online: true,
-    slot: db.slot === 1 ? 2 : 1,
-    name: partnerSim.name,
-    ayah,
-    at: new Date().toISOString(),
-    simulated: true,
-  });
-  simLog(`لمس آیهٔ ${fa(ayah)}`);
-}
-
-function partnerSimTick() {
-  if (!partnerSim.active) return;
-  const ayah = partnerSim.ayah;
-  partnerSimTouch(ayah);
-  partnerSim.ayah = ayah >= SITE.ayahCount ? 1 : ayah + 1;
-  partnerSim.timer = window.setTimeout(partnerSimTick, partnerSim.paceMs);
-}
-
-function startPartnerSim() {
-  stopPartnerSim({ silent: true });
-  const startInput = Number($("#simStartAyah")?.value);
-  const paceInput = Number($("#simPace")?.value);
-  const start = Number.isFinite(startInput) && startInput >= 1 ? Math.min(SITE.ayahCount, Math.floor(startInput)) : 1;
-  const paceSec = Number.isFinite(paceInput) && paceInput >= 1 ? paceInput : 3.5;
-  partnerSim.paceMs = Math.round(paceSec * 1000);
-  partnerSim.ayah = start;
-  partnerSim.active = true;
-  const startBtn = $("#simStartBtn");
-  const stopBtn = $("#simStopBtn");
-  if (startBtn) startBtn.disabled = true;
-  if (stopBtn) stopBtn.disabled = false;
-  simLog(`شروع از آیهٔ ${fa(start)} · هر ${fa(paceSec)} ثانیه`);
-  partnerSimTouch(start);
-  partnerSim.ayah = start >= SITE.ayahCount ? 1 : start + 1;
-  partnerSim.timer = window.setTimeout(partnerSimTick, partnerSim.paceMs);
-  if (db.user && db.slot && surahState.lastAyah) publishReading(surahState.lastAyah);
-}
-
-function stopPartnerSim({ silent = false } = {}) {
-  if (partnerSim.timer) {
-    clearTimeout(partnerSim.timer);
-    partnerSim.timer = null;
-  }
-  const was = partnerSim.active;
-  partnerSim.active = false;
-  const startBtn = $("#simStartBtn");
-  const stopBtn = $("#simStopBtn");
-  if (startBtn) startBtn.disabled = false;
-  if (stopBtn) stopBtn.disabled = true;
-  if (was) {
-    onPartnerPresence({ online: false });
-    if (!silent) simLog("توقف شبیه‌ساز");
-  }
-}
-
-function openSimPanel() {
-  const panel = $("#simPanel");
-  if (panel) panel.hidden = false;
-}
-function closeSimPanel() {
-  const panel = $("#simPanel");
-  if (panel) panel.hidden = true;
 }
 
 /* ---------- ابزار ---------- */
@@ -1017,18 +921,6 @@ function wireEvents() {
       setView("surah");
       focusAyah(partnerState.ayah);
     }
-  });
-
-  $("#simFabBtn")?.addEventListener("click", () => {
-    const panel = $("#simPanel");
-    if (!panel) return;
-    panel.hidden = !panel.hidden;
-  });
-  $("#simPanelClose")?.addEventListener("click", () => closeSimPanel());
-  $("#simStartBtn")?.addEventListener("click", () => startPartnerSim());
-  $("#simStopBtn")?.addEventListener("click", () => {
-    stopPartnerSim();
-    syncPresence();
   });
 }
 

@@ -28,8 +28,6 @@ export const surahState = {
   active: 1,
   sessionReads: 0,
   showTranslation: store.get("showTranslation", false) === true,
-  partnerAyah: null,
-  partnerMeta: null,
   hooks: {},
 };
 
@@ -125,9 +123,6 @@ export function setShowTranslation(on) {
     btn.classList.toggle("is-on", surahState.showTranslation);
     btn.setAttribute("aria-pressed", String(surahState.showTranslation));
   }
-  if (surahState.partnerAyah != null) {
-    setPartnerAyah(surahState.partnerAyah, surahState.partnerMeta);
-  }
 }
 
 function setDockAyahVisible(visible) {
@@ -173,7 +168,6 @@ export function selectAyah(ayah, { scroll = false, smooth = true, toggle = true 
   surahState.lastAyah = num;
   store.set("lastAyah", num);
   syncDock(num);
-  surahState.hooks.onSelect?.(num);
 }
 
 export function clearSelection({ keepDock = false } = {}) {
@@ -401,32 +395,6 @@ export function renderError(host, error) {
 }
 
 
-export function setPartnerAyah(ayah, meta = null) {
-  const prev = surahState.partnerAyah;
-  if (prev != null) {
-    surahState.nodes.get(prev)?.classList.remove("is-partner");
-    surahState.faNodes.get(prev)?.classList.remove("is-partner");
-  }
-  if (ayah == null || ayah === false) {
-    surahState.partnerAyah = null;
-    surahState.partnerMeta = null;
-    return;
-  }
-  const num = Number(ayah);
-  if (!Number.isFinite(num) || num < 1) {
-    surahState.partnerAyah = null;
-    surahState.partnerMeta = null;
-    return;
-  }
-  surahState.partnerAyah = num;
-  surahState.partnerMeta = meta;
-  surahState.nodes.get(num)?.classList.add("is-partner");
-  surahState.faNodes.get(num)?.classList.add("is-partner");
-}
-
-export function getPartnerAyah() {
-  return surahState.partnerAyah;
-}
 
 export function attachSurahScroll() {
   const onScroll = () => {
