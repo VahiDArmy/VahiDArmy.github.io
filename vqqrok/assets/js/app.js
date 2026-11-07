@@ -108,10 +108,9 @@ function onPartnerPresence(info) {
 
 async function syncPresence() {
   if (partnerSim.active) {
-    // شبیه‌ساز فعال است؛ کانال واقعی را برای نمایش همراه قطع نکن ولی رویداد همراه را نادیده می‌گیریم
     if (db.user && db.slot) {
       await startPresence((info) => {
-        if (partnerSim.active) return; // فقط خودمان را track می‌کنیم
+        if (partnerSim.active) return;
         onPartnerPresence(info);
       });
       if (surahState.lastAyah) publishReading(surahState.lastAyah);
@@ -127,114 +126,91 @@ async function syncPresence() {
   }
 }
 
-/* ---------- شبیه‌ساز همراه (تست دو نفره بدون نفر دوم) ---------- */
+/* ---------- شبیه‌ساز همراه: کاملاً مستقل، UI شناور + لاگ ---------- */
 const partnerSim = {
   active: false,
   timer: null,
   ayah: 1,
-  /** میلی‌ثانیه برای هر آیه — حدود ۳٫۵ثانیه، قابل تنظیم */
   paceMs: 3500,
   name: "همراه آزمایشی",
 };
 
-function partnerSimTick() {
-  if (!partnerSim.active) return;
+function simLog(message) {
+  const list = $("#simLog");
+  if (!list) return;
+  const now = new Date();
+  const time = now.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const li = el("li", {}, el("time", {}, time), el("span", {}, message));
+  list.prepend(li);
+  while (list.children.length > 80) list.lastElementChild.remove();
+}
+
+function partnerSimTouch(ayah) {
+  // شبیه‌سازی لمس آیه توسط همراه (هایلایت partner، نه انتخاب من)
   onPartnerPresence({
     online: true,
     slot: db.slot === 1 ? 2 : 1,
     name: partnerSim.name,
-    ayah: partnerSim.ayah,
+    ayah,
     at: new Date().toISOString(),
     simulated: true,
   });
-  // آیهٔ بعد؛ در انتها از ۱ دوباره شروع می‌کند
-  partnerSim.ayah = partnerSim.ayah >= SITE.ayahCount ? 1 : partnerSim.ayah + 1;
+  simLog(`لمس آیهٔ ${fa(ayah)}`);
+}
+
+function partnerSimTick() {
+  if (!partnerSim.active) return;
+  const ayah = partnerSim.ayah;
+  partnerSimTouch(ayah);
+  partnerSim.ayah = ayah >= SITE.ayahCount ? 1 : ayah + 1;
   partnerSim.timer = window.setTimeout(partnerSimTick, partnerSim.paceMs);
 }
 
-function startPartnerSim(fromAyah = null) {
-  stopPartnerSim({ keepUi: true });
-  const start = Number(fromAyah);
-  partnerSim.ayah = Number.isFinite(start) && start >= 1 ? Math.min(SITE.ayahCount, start) : 1;
+function startPartnerSim() {
+  stopPartnerSim({ silent: true });
+  const startInput = Number($("#simStartAyah")?.value);
+  const paceInput = Number($("#simPace")?.value);
+  const start = Number.isFinite(startInput) && startInput >= 1 ? Math.min(SITE.ayahCount, Math.floor(startInput)) : 1;
+  const paceSec = Number.isFinite(paceInput) && paceInput >= 1 ? paceInput : 3.5;
+  partnerSim.paceMs = Math.round(paceSec * 1000);
+  partnerSim.ayah = start;
   partnerSim.active = true;
-  const btn = $("#togglePartnerSim");
-  if (btn) {
-    btn.classList.add("is-on");
-    btn.setAttribute("aria-pressed", "true");
-  }
-  toast(`شبیه‌ساز همراه از آیهٔ ${fa(partnerSim.ayah)} شروع شد · هر ${fa(Math.round(partnerSim.paceMs / 1000))} ثانیه یک آیه`, "ok");
-  // اولین تیک فوری
-  const first = partnerSim.ayah;
-  onPartnerPresence({
-    online: true,
-    slot: db.slot === 1 ? 2 : 1,
-    name: partnerSim.name,
-    ayah: first,
-    at: new Date().toISOString(),
-    simulated: true,
-  });
-  partnerSim.ayah = first >= SITE.ayahCount ? 1 : first + 1;
+  const startBtn = $("#simStartBtn");
+  const stopBtn = $("#simStopBtn");
+  if (startBtn) startBtn.disabled = true;
+  if (stopBtn) stopBtn.disabled = false;
+  simLog(`شروع از آیهٔ ${fa(start)} · هر ${fa(paceSec)} ثانیه`);
+  partnerSimTouch(start);
+  partnerSim.ayah = start >= SITE.ayahCount ? 1 : start + 1;
   partnerSim.timer = window.setTimeout(partnerSimTick, partnerSim.paceMs);
-  // برای تست واقعی، خودمان هم track می‌کنیم اگر لاگین باشیم
   if (db.user && db.slot && surahState.lastAyah) publishReading(surahState.lastAyah);
 }
 
-function stopPartnerSim({ keepUi = false } = {}) {
+function stopPartnerSim({ silent = false } = {}) {
   if (partnerSim.timer) {
     clearTimeout(partnerSim.timer);
     partnerSim.timer = null;
   }
   const was = partnerSim.active;
   partnerSim.active = false;
-  if (!keepUi) {
-    const btn = $("#togglePartnerSim");
-    if (btn) {
-      btn.classList.remove("is-on");
-      btn.setAttribute("aria-pressed", "false");
-    }
-    if (was) {
-      onPartnerPresence({ online: false });
-      toast("شبیه‌ساز همراه خاموش شد", "ok");
-    }
+  const startBtn = $("#simStartBtn");
+  const stopBtn = $("#simStopBtn");
+  if (startBtn) startBtn.disabled = false;
+  if (stopBtn) stopBtn.disabled = true;
+  if (was) {
+    onPartnerPresence({ online: false });
+    if (!silent) simLog("توقف شبیه‌ساز");
   }
 }
 
-function togglePartnerSim() {
-  if (partnerSim.active) {
-    stopPartnerSim();
-    syncPresence(); // برگرد به presence واقعی
-    return;
-  }
-  // اگر آیه‌ای انتخاب شده، از همان‌جا شروع کن
-  const selected = surahState.selected || surahState.lastAyah || 1;
-  startPartnerSim(selected);
+function openSimPanel() {
+  const panel = $("#simPanel");
+  if (panel) panel.hidden = false;
 }
-
-/** با لمس آیه وقتی شبیه‌ساز روشن است، موقعیت همراه را کالیبره کن */
-function calibratePartnerSimToAyah(ayah) {
-  if (!partnerSim.active) return false;
-  const num = Number(ayah);
-  if (!Number.isFinite(num) || num < 1) return false;
-  if (partnerSim.timer) {
-    clearTimeout(partnerSim.timer);
-    partnerSim.timer = null;
-  }
-  partnerSim.ayah = num;
-  onPartnerPresence({
-    online: true,
-    slot: db.slot === 1 ? 2 : 1,
-    name: partnerSim.name,
-    ayah: num,
-    at: new Date().toISOString(),
-    simulated: true,
-  });
-  partnerSim.ayah = num >= SITE.ayahCount ? 1 : num + 1;
-  partnerSim.timer = window.setTimeout(partnerSimTick, partnerSim.paceMs);
-  toast(`همراه آزمایشی روی آیهٔ ${fa(num)} تنظیم شد`, "ok");
-  return true;
+function closeSimPanel() {
+  const panel = $("#simPanel");
+  if (panel) panel.hidden = true;
 }
-
-
 
 /* ---------- ابزار ---------- */
 const isTyping = () => {
@@ -1042,6 +1018,18 @@ function wireEvents() {
       focusAyah(partnerState.ayah);
     }
   });
+
+  $("#simFabBtn")?.addEventListener("click", () => {
+    const panel = $("#simPanel");
+    if (!panel) return;
+    panel.hidden = !panel.hidden;
+  });
+  $("#simPanelClose")?.addEventListener("click", () => closeSimPanel());
+  $("#simStartBtn")?.addEventListener("click", () => startPartnerSim());
+  $("#simStopBtn")?.addEventListener("click", () => {
+    stopPartnerSim();
+    syncPresence();
+  });
 }
 
 /* ---------- راه‌اندازی ---------- */
@@ -1058,10 +1046,6 @@ async function boot() {
     surahState.hooks.onProgress = (_progress, ayah) => {
       updateHero({ nameFa: SITE.surahNameFa });
       if (ayah) publishReading(ayah);
-    };
-    surahState.hooks.onSelect = (ayah) => {
-      // اگر شبیه‌ساز روشن باشد، لمس آیه = کالیبرهٔ موقعیت همراه
-      if (partnerSim.active && ayah) calibratePartnerSimToAyah(ayah);
     };
     updateHero(surah.meta);
     const heroProgress = Math.round(((surahState.lastAyah || 1) / SITE.ayahCount) * 100);
