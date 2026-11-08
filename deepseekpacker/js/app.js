@@ -1,6 +1,6 @@
 // Project Packer — application bootstrap.
 
-import { loadSettings, restore, subscribe, State, persist } from './core/state.js';
+import { loadSettings, restore, subscribe, State, persist, setUI } from './core/state.js';
 import { initRouter, renderRoute } from './ui/router.js';
 import { initSidebar } from './ui/sidebar.js';
 import { initTopbar } from './ui/topbar.js';
@@ -47,6 +47,31 @@ function boot() {
     handleZipFile(file);
   });
 
+  // Mode Switch logic
+  const modeSwitch = document.getElementById('mode-switch');
+  if (modeSwitch) {
+    // Set initial state
+    for (const btn of modeSwitch.children) {
+      btn.classList.toggle('active', btn.dataset.mode === State.ui.dashboardMode);
+    }
+
+    modeSwitch.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || !btn.dataset.mode) return;
+      
+      const mode = btn.dataset.mode;
+      if (State.ui.dashboardMode === mode) return;
+
+      // Update UI
+      for (const child of modeSwitch.children) {
+        child.classList.toggle('active', child === btn);
+      }
+      
+      // Update State
+      setUI({ dashboardMode: mode });
+    });
+  }
+
   const cmdTrigger = document.getElementById('cmd-trigger');
   if (cmdTrigger) {
     cmdTrigger.addEventListener('click', () => openPalette(buildCommands()));
@@ -80,7 +105,7 @@ function boot() {
 
   toastInfo('Ready — paste blocks or load a .zip to start');
 
-  // Default to the dashboard (which is now the tool view)
+  // Default to the dashboard
   const hash = window.location.hash;
   if (hash && hash.startsWith('#/')) {
     const view = hash.replace(/^#\//, '').split('/')[0];

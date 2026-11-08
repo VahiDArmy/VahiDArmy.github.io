@@ -1,16 +1,14 @@
 /* ==========================================================================
-   Project Packer — app shell layout (Mobile Optimized & Fixed)
+   Project Packer — app shell layout
    ========================================================================== */
 
 :root {
   --sidebar-w: 260px;
   --topbar-h: 56px;
-  --statusbar-h: 30px;
 }
 
 .app {
   position: relative;
-  /* Removed z-index: 1 so fixed elements can stack relative to body */
   height: 100dvh;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
@@ -26,7 +24,7 @@
   background: var(--surface);
   border-right: 1px solid var(--line);
   overflow: hidden;
-  z-index: 50; /* Ensures sidebar is above scrim */
+  z-index: 50;
 }
 
 .brand {
@@ -119,7 +117,7 @@
 
 .main {
   display: grid;
-  grid-template-rows: var(--topbar-h) minmax(0, 1fr) var(--statusbar-h);
+  grid-template-rows: var(--topbar-h) minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
   width: 100%;
@@ -137,8 +135,9 @@
   z-index: 10;
 }
 
-.topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.topbar-left { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+.topbar-center { display: flex; justify-content: center; flex: 1; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; }
 
 .crumb {
   display: flex;
@@ -158,9 +157,11 @@
 .view {
   position: relative;
   min-height: 0;
-  overflow: hidden; 
+  overflow-y: auto; 
   display: flex;
   flex-direction: column;
+  padding: 16px;
+  padding-top: 20px; /* Fix box touching header */
 }
 
 .view-inner {
@@ -168,30 +169,17 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  overflow-y: auto;
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+  gap: 16px;
 }
 
-.statusbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 16px;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-  font-size: 10px;
-  color: var(--faint);
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-/* Scrim Overlay */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 40;
   background: rgba(0, 0, 0, 0.6);
-  /* Removed backdrop-filter blur to fix the mobile glitch */
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms ease;
@@ -200,9 +188,7 @@
 
 /* --- Mobile --- */
 @media (max-width: 980px) {
-  .app { 
-    grid-template-columns: minmax(0, 1fr); 
-  }
+  .app { grid-template-columns: minmax(0, 1fr); }
 
   .sidebar {
     position: fixed;
@@ -211,21 +197,16 @@
     transform: translateX(-100%);
     transition: transform 200ms ease-out;
     box-shadow: 4px 0 24px rgba(0,0,0,0.5);
-    z-index: 50; /* Ensure sidebar is on top of scrim */
+    z-index: 50;
   }
-  
-  .sidebar.is-open { 
-    transform: translateX(0); 
-  }
-  
-  .menu-btn { 
-    display: inline-flex; 
-  }
+  .sidebar.is-open { transform: translateX(0); }
+  .menu-btn { display: inline-flex; }
 }
 
 @media (max-width: 600px) {
   .topbar { padding: 0 12px; }
-  .topbar-right .btn-ghost { display: none; } /* Hide load button on tiny screens */
-  .crumb-sub { display: none; }
-  .view-inner { padding: 12px; }
+  .topbar-center { justify-content: flex-end; margin-right: 8px; }
+  .crumb { display: none; }
+  .topbar-left { flex: 0 0 auto; }
+  .btn-primary { padding: 6px 10px; font-size: 11px; }
 }

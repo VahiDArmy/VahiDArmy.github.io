@@ -45,6 +45,7 @@ export const State = {
     editingPath: null,
     activeView: 'dashboard',
     activeViewParams: {},
+    dashboardMode: 'pack', // 'pack' or 'unpack'
   },
 };
 

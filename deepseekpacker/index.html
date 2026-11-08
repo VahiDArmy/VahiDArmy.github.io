@@ -34,18 +34,25 @@
     <header class="topbar">
       <div class="topbar-left">
         <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Toggle navigation">☰</button>
-        <div class="crumb" id="crumb"></div>
+        <div class="crumb" id="crumb">
+          <b>Dashboard</b>
+        </div>
       </div>
+      
+      <div class="topbar-center">
+        <div class="mode-switch" id="mode-switch">
+          <button class="active" data-mode="pack">Pack</button>
+          <button data-mode="unpack">Unpack</button>
+        </div>
+      </div>
+
       <div class="topbar-right">
-        <button class="btn btn-ghost" id="btn-load-zip" type="button">Load .zip</button>
         <button class="btn btn-primary" id="btn-download" type="button">Download .zip</button>
         <input id="zip-input" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden />
       </div>
     </header>
 
     <main class="view" id="view-root" tabindex="-1"></main>
-
-    <footer class="statusbar" id="statusbar"></footer>
   </div>
 </div>
 
