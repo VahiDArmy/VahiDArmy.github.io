@@ -33,96 +33,83 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* --- Dashboard Stat Grid (Colorful & Styled) ----------------------------- */
+/* --- Dashboard Stats Bar (One Line Design) ------------------------------- */
 
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* Force 2 columns on mobile */
-  gap: 12px;
-  align-items: start;
+.stats-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  padding: 12px 8px;
+  box-shadow: var(--shadow-1);
+  overflow-x: auto;
 }
 
-/* Revert to auto-fit on larger screens */
-@media (min-width: 768px) {
-  .stat-grid { grid-template-columns: repeat(4, 1fr); }
-}
-
-.stat {
+.stat-item {
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
-  padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-  position: relative;
-  overflow: hidden;
-  min-width: 0; /* Prevents overflow in CSS grid */
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--line);
+  padding: 0 4px;
+  min-width: 70px;
 }
 
-/* Colored top border */
-.stat::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; height: 3px;
+.stat-item:last-child {
+  border-right: none;
 }
-.stat.accent::after { background: var(--accent); }
-.stat.blue::after { background: var(--accent-2); }
-.stat.purple::after { background: var(--accent-3); }
-.stat.ok::after { background: var(--ok); }
-.stat.bad::after { background: var(--bad); }
 
 .stat-label {
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
+/* True Neon Glow */
 .stat-value {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   font-family: var(--font-display);
   color: var(--ink);
-  line-height: 1.1;
+  line-height: 1.2;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Glowing Text */
-.stat-value.accent { 
-  color: var(--accent); 
-  text-shadow: 0 0 16px color-mix(in srgb, var(--accent) 50%, transparent);
-}
-.stat-value.blue { 
-  color: var(--accent-2); 
-  text-shadow: 0 0 16px color-mix(in srgb, var(--accent-2) 50%, transparent);
-}
-.stat-value.purple { 
-  color: var(--accent-3); 
-  text-shadow: 0 0 16px color-mix(in srgb, var(--accent-3) 50%, transparent);
-}
-.stat-value.ok { 
-  color: var(--ok); 
-  text-shadow: 0 0 16px color-mix(in srgb, var(--ok) 50%, transparent);
-}
-.stat-value.bad { 
-  color: var(--bad); 
-  text-shadow: 0 0 16px color-mix(in srgb, var(--bad) 50%, transparent);
+.stat-value.accent {
+  color: var(--accent);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent) 80%, transparent), 
+               0 0 16px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.stat-sub {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--faint);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.stat-value.blue {
+  color: var(--accent-2);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent-2) 80%, transparent), 
+               0 0 16px color-mix(in srgb, var(--accent-2) 40%, transparent);
+}
+
+.stat-value.purple {
+  color: var(--accent-3);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--accent-3) 80%, transparent), 
+               0 0 16px color-mix(in srgb, var(--accent-3) 40%, transparent);
+}
+
+.stat-value.ok {
+  color: var(--ok);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--ok) 80%, transparent), 
+               0 0 16px color-mix(in srgb, var(--ok) 40%, transparent);
+}
+
+.stat-value.bad {
+  color: var(--bad);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--bad) 80%, transparent), 
+               0 0 16px color-mix(in srgb, var(--bad) 40%, transparent);
 }
 
 /* --- Tool Cards (Dashboard) ---------------------------------------------- */
@@ -440,10 +427,10 @@
 /* --- Mobile Overrides ---------------------------------------------------- */
 
 @media (max-width: 400px) {
-  .stat-grid { grid-template-columns: 1fr; }
   .file-row { padding: 8px 12px; }
   .file-size { display: none; }
   .file-actions { display: none; }
   .file-main { gap: 8px; }
   .file-ext { width: 28px; height: 28px; }
+  .stat-value { font-size: 14px; }
 }

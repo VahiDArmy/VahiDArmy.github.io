@@ -1,4 +1,4 @@
-// Dashboard view — tool-first layout with Pack/Unpack toggle and colorful stat cards.
+// Dashboard view — tool-first layout with Pack/Unpack toggle and one-line stats.
 
 import { el, clear, copyToClipboard } from '../utils/dom.js';
 import { State, subscribe, getStats } from '../core/state.js';
@@ -12,7 +12,7 @@ export function mountDashboard(root) {
   const shell = el('div', { class: 'view-inner' });
   root.appendChild(shell);
 
-  // 1. Stats Bar (Grid of Cards)
+  // 1. Stats Bar (One-line design)
   const statsContainer = el('div');
   shell.appendChild(statsContainer);
 
@@ -29,42 +29,38 @@ export function mountDashboard(root) {
   function renderStats() {
     clear(statsContainer);
     const stats = getStats();
-    const grid = el('div', { class: 'stat-grid' });
+    const bar = el('div', { class: 'stats-row' });
     
-    // Card 1: Files
-    grid.appendChild(el('div', { class: 'stat accent' }, [
-      el('div', { class: 'stat-label', text: 'Files' }),
-      el('div', { class: 'stat-value accent', text: String(stats.fileCount) }),
-      el('div', { class: 'stat-sub', text: 'packed' })
+    // Files
+    bar.appendChild(el('div', { class: 'stat-item' }, [
+      el('span', { class: 'stat-label', text: 'Files' }),
+      el('span', { class: `stat-value ${stats.fileCount ? 'accent' : ''}`, text: String(stats.fileCount) })
     ]));
     
-    // Card 2: Size
-    grid.appendChild(el('div', { class: 'stat blue' }, [
-      el('div', { class: 'stat-label', text: 'Total Size' }),
-      el('div', { class: 'stat-value blue', text: fmtBytes(stats.totalBytes) }),
-      el('div', { class: 'stat-sub', text: 'on disk' })
+    // Size
+    bar.appendChild(el('div', { class: 'stat-item' }, [
+      el('span', { class: 'stat-label', text: 'Size' }),
+      el('span', { class: 'stat-value blue', text: fmtBytes(stats.totalBytes) })
     ]));
     
-    // Card 3: Lines
-    grid.appendChild(el('div', { class: 'stat purple' }, [
-      el('div', { class: 'stat-label', text: 'Lines' }),
-      el('div', { class: 'stat-value purple', text: fmtNum(stats.totalLines) }),
-      el('div', { class: 'stat-sub', text: 'of code' })
+    // Lines
+    bar.appendChild(el('div', { class: 'stat-item' }, [
+      el('span', { class: 'stat-label', text: 'Lines' }),
+      el('span', { class: 'stat-value purple', text: fmtNum(stats.totalLines) })
     ]));
     
-    // Card 4: Status
+    // Status
     const isHealthy = !stats.failed && stats.fileCount > 0;
     const isFail = stats.failed > 0;
     const statusCls = isFail ? 'bad' : (isHealthy ? 'ok' : '');
     const statusText = isFail ? 'Failed' : (isHealthy ? 'Healthy' : 'Empty');
     
-    grid.appendChild(el('div', { class: `stat ${statusCls}` }, [
-      el('div', { class: 'stat-label', text: 'Status' }),
-      el('div', { class: `stat-value ${statusCls}`, text: statusText }),
-      el('div', { class: 'stat-sub', text: isFail ? 'check log' : (isHealthy ? 'all good' : 'waiting') })
+    bar.appendChild(el('div', { class: 'stat-item' }, [
+      el('span', { class: 'stat-label', text: 'Status' }),
+      el('span', { class: `stat-value ${statusCls}`, text: statusText })
     ]));
 
-    statsContainer.appendChild(grid);
+    statsContainer.appendChild(bar);
   }
 
   function renderMode() {
