@@ -1216,8 +1216,28 @@ kbd {
 .pack-log-txt b { color: var(--text); font-weight: 600; }
 .pack-log-txt .warn { color: var(--warn); }
 
+/* Export text area */
+.export-textarea {
+    width: calc(100% - 36px);
+    margin: 0 18px 10px;
+    flex: 1 1 auto;
+    min-height: 250px;
+    max-height: 50vh;
+    background: rgba(0,0,0,.35);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
+    padding: 10px;
+    resize: vertical;
+    outline: none;
+}
+.export-textarea:focus { border-color: rgba(var(--accent-rgb), .5); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .12); }
+
 /* ══════════════════════════════════════════════════════════════
-   RESPONSIVE (THE NEW ONE-LINE HEADER)
+   RESPONSIVE (ONE-LINE HEADER)
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 1080px) {
     .app { grid-template-columns: 1fr; }
@@ -1294,6 +1314,7 @@ kbd {
     .preview-body { padding: 8px; }
     .small-pack-modal { max-height: calc(100dvh - 12px); }
     .pack-log { max-height: 56px; }
+    .export-textarea { width: calc(100% - 20px); margin: 0 10px 8px; min-height: 200px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

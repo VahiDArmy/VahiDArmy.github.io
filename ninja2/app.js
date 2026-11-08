@@ -976,6 +976,10 @@ function showContextMenu(x, y, item, node) {
     contextMenu.querySelectorAll('[data-file-only]').forEach(el => { el.hidden = !hasItem || isDir || isMulti; });
     contextMenu.querySelectorAll('[data-single-only]').forEach(el => { el.hidden = !hasItem || isMulti; });
     contextMenu.querySelectorAll('[data-clipboard-only]').forEach(el => { el.hidden = !clipboard; });
+    
+    const exportBtn = contextMenu.querySelector('[data-action="exportPack"]');
+    if (exportBtn) exportBtn.hidden = !hasItem || !isDir || isMulti;
+
     const previewEl = contextMenu.querySelector('[data-action="preview"]');
     if (previewEl) previewEl.hidden = !canPreview;
 
@@ -1040,6 +1044,9 @@ async function runAction(action, item) {
         case 'open':
             if (!item) return;
             if (isDir) navigate(item.path); else openFile(item);
+            break;
+        case 'exportPack':
+            if (isDir) await startPackExport(item);
             break;
         case 'preview':
             if (item) previewItem(item);
@@ -3262,6 +3269,115 @@ async function applyPack() {
     }
 }
 
+/* ── export pack (generate formatted text from folder) ─────── */
+async function startPackExport(folderItem) {
+    if (!folderItem || folderItem.type !== 'dir') return;
+
+    const overlay = $('exportOverlay');
+    const textarea = $('exportText');
+    const btnCopy = $('exportCopy');
+    const btnDownload = $('exportDownload');
+    const subtitle = $('exportSubtitle');
+    const loading = $('exportLoading');
+    const tree = $('exportTree');
+
+    $('exportTitle').textContent = `Export: ${folderItem.name}`;
+    subtitle.textContent = 'Reading project…';
+    loading.textContent = 'Reading project tree…';
+    loading.style.display = 'block';
+    tree.style.display = 'none';
+    textarea.hidden = true;
+    textarea.value = '';
+    btnCopy.disabled = true;
+    btnDownload.disabled = true;
+    $('exportFootHint').textContent = '';
+
+    openOverlay(overlay);
+
+    try {
+        const entries = await getRepoTree();
+        const prefix = folderItem.path ? folderItem.path + '/' : '';
+        
+        // Filter out non-text files and files outside the folder
+        const files = entries.filter(e => {
+            if (e.type !== 'blob' || !e.path.startsWith(prefix)) return false;
+            const name = e.path.split('/').pop();
+            if (name === '.DS_Store' || name === 'Thumbs.db') return false;
+            return isTextFile(name);
+        });
+
+        if (!files.length) {
+            loading.textContent = 'No text files found in this folder.';
+            return;
+        }
+
+        files.sort((a, b) => a.path.localeCompare(b.path));
+        
+        let out = 'This is a Project Packer text archive.\n';
+        out += 'It contains the source files of a project so they can be pasted into a chat and later re-assembled into a ZIP.\n\n';
+        out += 'FORMAT\n';
+        out += 'Each file is wrapped in markers:\n';
+        out += '  {[[FILE: relative/path/to/file.ext]]}\n';
+        out += '  <file content, preserved exactly>\n';
+        out += '  {[[END: relative/path/to/file.ext]]}\n\n';
+        out += 'Rules:\n';
+        out += '- Markers must appear on their own lines.\n';
+        out += '- Path in FILE and END must match exactly.\n';
+        out += '- Prose or commentary outside the markers is ignored when packing.\n';
+        out += '- Binary files and common noise (node_modules, .git, etc.) are omitted.\n\n';
+        out += '--- BEGIN PACK ---\n\n';
+
+        for (let i = 0; i < files.length; i++) {
+            const entry = files[i];
+            const relPath = entry.path.slice(prefix.length);
+            subtitle.textContent = `Fetching ${i + 1}/${files.length}: ${relPath}…`;
+            
+            try {
+                const res = await fetchRaw(entry.path);
+                const text = await res.text();
+                out += `{[[FILE: ${relPath}]]}\n`;
+                out += text;
+                if (!text.endsWith('\n')) out += '\n';
+                out += `{[[END: ${relPath}]]}\n\n`;
+            } catch (err) {
+                console.warn(`Skipped ${entry.path}:`, err);
+                out += `{[[FILE: ${relPath}]]}\n`;
+                out += `[Error reading file: ${err.message}]\n`;
+                out += `{[[END: ${relPath}]]}\n\n`;
+            }
+        }
+
+        out += '--- END PACK ---\n';
+
+        loading.style.display = 'none';
+        textarea.hidden = false;
+        textarea.value = out;
+        subtitle.textContent = `Successfully packed ${files.length} file${files.length === 1 ? '' : 's'}`;
+        
+        const kb = new Blob([out]).size;
+        $('exportFootHint').textContent = `${files.length} files · ${formatSize(kb)}`;
+        
+        btnCopy.disabled = false;
+        btnDownload.disabled = false;
+
+        btnCopy.onclick = () => {
+            copyToClipboard(out);
+            btnCopy.textContent = '✓ Copied!';
+            setTimeout(() => { btnCopy.textContent = '📋 Copy to clipboard'; }, 2000);
+        };
+
+        btnDownload.onclick = () => {
+            const blob = new Blob([out], { type: 'text/plain' });
+            saveBlob(blob, `${folderItem.name}-pack.txt`);
+        };
+
+    } catch (err) {
+        console.error('Export pack error:', err);
+        loading.textContent = `Failed to export: ${err.message}`;
+        subtitle.textContent = 'Error';
+    }
+}
+
 /* ── create file / folder ─────────────────────────────────── */
 const TEMPLATES = [
     { id: 'blank', label: 'Empty file', content: '' },
@@ -3853,6 +3969,11 @@ function wireEvents() {
         e.preventDefault();
         ingestPackText(text);
     });
+
+    // ── Export pack modal ──
+    $('exportClose').onclick = () => closeOverlay($('exportOverlay'));
+    $('exportCancel').onclick = () => closeOverlay($('exportOverlay'));
+    onEscape($('exportOverlay'), () => closeOverlay($('exportOverlay')));
 
     fileInput.onchange = e => {
         if (e.target.files.length) uploadEntries([...e.target.files].map(file => ({ file, rel: '' })));

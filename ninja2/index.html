@@ -225,6 +225,7 @@
     <div class="context-menu" id="contextMenu" role="menu" tabindex="-1">
         <div class="ctx-title" id="ctxTitle"></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="open" data-needs-item data-single-only><span class="ico">📂</span><span class="lbl" id="ctxOpenLabel">Open / Edit</span></div>
+        <div class="item" role="menuitem" tabindex="-1" data-action="exportPack" data-needs-item data-single-only><span class="ico">📦</span><span class="lbl">Export as pack text</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="preview" data-needs-item data-file-only data-single-only><span class="ico">👁️</span><span class="lbl">Preview</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="openNewTab" data-needs-item data-single-only><span class="ico">🌐</span><span class="lbl">Open on live site</span></div>
         <div class="item" role="menuitem" tabindex="-1" data-action="copyContent" data-file-only data-single-only><span class="ico">📋</span><span class="lbl">Copy contents</span></div>
@@ -489,6 +490,32 @@
                 <span class="foot-hint" id="packFootHint"></span>
                 <button class="btn" id="packCancel">Cancel</button>
                 <button class="btn btn-primary" id="packApply" disabled>Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════ EXPORT PROJECT PACK ══════════════ -->
+    <div class="overlay" id="exportOverlay">
+        <div class="modal zip-modal" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+            <div class="modal-head">
+                <span class="mh-icon">📦</span>
+                <div class="mh-titles">
+                    <div class="mh-title" id="exportTitle">Export pack</div>
+                    <div class="mh-sub" id="exportSubtitle">Fetching files…</div>
+                </div>
+                <button class="icon-btn" id="exportClose" title="Cancel">✕</button>
+            </div>
+
+            <div class="zip-tree" id="exportTree" style="display:none"></div>
+            <div class="zip-loading" id="exportLoading" style="padding:40px">Reading project…</div>
+
+            <textarea id="exportText" class="export-textarea" readonly spellcheck="false" hidden></textarea>
+
+            <div class="modal-foot">
+                <span class="foot-hint" id="exportFootHint"></span>
+                <button class="btn" id="exportCancel">Cancel</button>
+                <button class="btn" id="exportDownload" disabled>⬇️ Save .txt</button>
+                <button class="btn btn-primary" id="exportCopy" disabled>📋 Copy to clipboard</button>
             </div>
         </div>
     </div>
