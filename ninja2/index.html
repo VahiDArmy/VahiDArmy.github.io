@@ -469,12 +469,15 @@
 
             <div class="zip-tools">
                 <button class="btn btn-primary btn-sm" id="packPaste">📋 Paste from clipboard</button>
-                <span class="muted" style="font-size:11px" id="packHint">or drop a .txt here</span>
+                <button class="btn btn-sm" id="packClear" hidden title="Clear all pasted files">🗑 Clear</button>
+                <span class="muted" style="font-size:11px" id="packHint">or drop a .txt here · Ctrl/⌘+V</span>
             </div>
 
             <div class="zip-tree" id="packTree">
-                <div class="zip-loading">Nothing pasted yet</div>
+                <div class="zip-loading">Paste from clipboard or drop a .txt file</div>
             </div>
+
+            <div class="pack-log" id="packLog" hidden></div>
 
             <div class="zip-summary">
                 <span id="packSummary">—</span>

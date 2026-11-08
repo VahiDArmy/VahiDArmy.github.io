@@ -2986,7 +2986,14 @@ function parsePack(text) {
 
 function openPackOverlay() {
     if (!state.connected) { toast('Connect a repository first', 'err'); return; }
-    packState = { files: [], errors: [], selected: new Set(), existing: null };
+    packState = {
+        pending: new Map(),
+        errors: [],
+        selected: new Set(),
+        existing: null,
+        pasteCount: 0,
+        log: [],
+    };
     $('packSubtitle').textContent = '→ /' + (state.path || '');
     $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
     $('packSummary').textContent = '—';
@@ -2994,6 +3001,9 @@ function openPackOverlay() {
     $('packFootHint').textContent = '';
     $('packApply').disabled = true;
     $('packApply').textContent = 'Apply';
+    $('packClear').hidden = true;
+    $('packLog').hidden = true;
+    $('packLog').innerHTML = '';
     openOverlay($('packOverlay'));
     detectPackOverwrites();
 }
@@ -3009,7 +3019,8 @@ async function detectPackOverwrites() {
         const entries = await getRepoTree();
         if (!packState) return;
         packState.existing = new Set(entries.filter(e => e.type === 'blob').map(e => e.path));
-        if (packState.files.length) renderPackPreview();
+        if (packState.pending.size) renderPackPreview();
+        else updatePackSummary();
     } catch (err) {
         console.warn('Could not list existing files:', err.message);
     }
@@ -3034,9 +3045,22 @@ function ingestPackText(text) {
     if (!packState) return;
     if (!text || !text.trim()) { toast('Nothing to paste', 'warn'); return; }
     const { files, errors } = parsePack(text);
-    packState.files = files;
-    packState.errors = errors;
-    packState.selected = new Set(files.map(f => f.path));
+    if (!files.length && !errors.length) {
+        toast('No {[[FILE: …]]} blocks found', 'warn');
+        return;
+    }
+
+    const n = ++packState.pasteCount;
+    let added = 0, replaced = 0;
+    files.forEach(f => {
+        if (packState.pending.has(f.path)) replaced++;
+        else added++;
+        packState.pending.set(f.path, { content: f.content, pasteNo: n });
+        packState.selected.add(f.path);
+    });
+    errors.forEach(message => packState.errors.push({ pasteNo: n, message }));
+    packState.log.push({ n, files: files.length, errors: errors.length, added, replaced });
+
     renderPackPreview();
 }
 
@@ -3048,27 +3072,30 @@ function renderPackPreview() {
     if (packState.errors.length) {
         const errWrap = document.createElement('div');
         errWrap.style.cssText = 'padding:0 4px 6px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:4px';
-        packState.errors.forEach(err => {
+        packState.errors.forEach(e => {
             const row = document.createElement('div');
             row.className = 'zt-row';
             row.style.color = 'var(--warn)';
             row.innerHTML = '<span class="zt-ico">⚠</span><span class="zt-name"></span>';
-            row.querySelector('.zt-name').textContent = err;
+            row.querySelector('.zt-name').textContent = `#${e.pasteNo}: ${e.message}`;
             errWrap.appendChild(row);
         });
         tree.appendChild(errWrap);
     }
 
-    if (!packState.files.length) {
+    if (!packState.pending.size) {
         if (!packState.errors.length) {
-            tree.innerHTML = '<div class="zip-loading">No {[[FILE: …]]} blocks found</div>';
+            tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
         }
+        renderPackLog();
         updatePackSummary();
         return;
     }
 
-    packState.files.forEach(file => {
-        const dest = joinPath(state.path, file.path);
+    const paths = [...packState.pending.keys()].sort();
+    paths.forEach(path => {
+        const file = packState.pending.get(path);
+        const dest = joinPath(state.path, path);
         const row = document.createElement('div');
         row.className = 'zt-row';
 
@@ -3076,18 +3103,18 @@ function renderPackPreview() {
         check.className = 'zt-check';
         const input = document.createElement('input');
         input.type = 'checkbox';
-        input.checked = packState.selected.has(file.path);
+        input.checked = packState.selected.has(path);
         input.addEventListener('change', () => {
             if (!packState) return;
-            if (input.checked) packState.selected.add(file.path);
-            else packState.selected.delete(file.path);
+            if (input.checked) packState.selected.add(path);
+            else packState.selected.delete(path);
             updatePackSummary();
         });
         check.appendChild(input);
 
         const icon = document.createElement('span');
         icon.className = 'zt-ico';
-        icon.textContent = getFileIcon(file.path, false);
+        icon.textContent = getFileIcon(path, false);
 
         const name = document.createElement('span');
         name.className = 'zt-name';
@@ -3110,35 +3137,94 @@ function renderPackPreview() {
         tree.appendChild(row);
     });
 
+    renderPackLog();
     updatePackSummary();
+}
+
+function renderPackLog() {
+    const log = $('packLog');
+    if (!packState || !packState.log.length) {
+        log.hidden = true;
+        log.innerHTML = '';
+        return;
+    }
+    log.hidden = false;
+    log.innerHTML = '';
+    packState.log.forEach(entry => {
+        const row = document.createElement('div');
+        row.className = 'pack-log-row' + (entry.errors ? ' err' : '');
+
+        const parts = [];
+        if (entry.added) parts.push(`<b>${entry.added}</b> new`);
+        if (entry.replaced) parts.push(`<b>${entry.replaced}</b> overwrite`);
+        if (!parts.length) parts.push(`${entry.files} file${entry.files === 1 ? '' : 's'}`);
+        const errTxt = entry.errors
+            ? ` · <span class="warn">${entry.errors} issue${entry.errors === 1 ? '' : 's'}</span>`
+            : '';
+
+        row.innerHTML =
+            `<span class="pack-log-n${entry.errors ? ' err' : ''}">#${entry.n}</span>` +
+            `<span class="pack-log-txt">${parts.join(' · ')}${errTxt}</span>`;
+        log.appendChild(row);
+    });
+    log.scrollTop = log.scrollHeight;
 }
 
 function updatePackSummary() {
     if (!packState) return;
-    const total = packState.files.length;
+    const total = packState.pending.size;
     const selected = packState.selected.size;
     const errCount = packState.errors.length;
-    const overwrites = packState.existing
-        ? packState.files.filter(f =>
-            packState.selected.has(f.path) &&
-            packState.existing.has(joinPath(state.path, f.path))).length
-        : 0;
+    let overwrites = 0, news = 0;
+    if (packState.existing) {
+        packState.pending.forEach((file, path) => {
+            if (!packState.selected.has(path)) return;
+            if (packState.existing.has(joinPath(state.path, path))) overwrites++;
+            else news++;
+        });
+    } else {
+        news = selected;
+    }
 
-    $('packSummary').textContent = total === 0
-        ? 'No files parsed'
-        : `${selected} of ${total} selected` +
-          (overwrites ? ` · ${overwrites} overwrite${overwrites === 1 ? '' : 's'}` : '');
-    $('packErrors').textContent = errCount
-        ? `${errCount} issue${errCount === 1 ? '' : 's'}` : '';
+    const pastes = packState.pasteCount;
+    let summary;
+    if (total === 0) {
+        summary = 'No files pasted';
+    } else {
+        const parts = [`${selected} of ${total} selected`];
+        if (pastes > 1) parts.unshift(`${pastes} pastes`);
+        if (news) parts.push(`${news} new`);
+        if (overwrites) parts.push(`${overwrites} overwrite`);
+        summary = parts.join(' · ');
+    }
+    $('packSummary').textContent = summary;
+    $('packErrors').textContent = errCount ? `${errCount} issue${errCount === 1 ? '' : 's'}` : '';
     $('packErrors').style.color = errCount ? 'var(--warn)' : '';
     $('packApply').disabled = selected === 0;
     $('packApply').textContent = selected ? `Apply ${selected}` : 'Apply';
     $('packFootHint').textContent = selected ? '→ /' + (state.path ? state.path + '/' : '') : '';
+    $('packClear').hidden = pastes === 0;
+}
+
+function clearPack() {
+    if (!packState) return;
+    packState = {
+        pending: new Map(),
+        errors: [],
+        selected: new Set(),
+        existing: packState.existing,
+        pasteCount: 0,
+        log: [],
+    };
+    $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    $('packLog').hidden = true;
+    $('packLog').innerHTML = '';
+    updatePackSummary();
 }
 
 async function applyPack() {
     if (!packState || !packState.selected.size) return;
-    const selected = packState.files.filter(f => packState.selected.has(f.path));
+    const selected = [...packState.pending.entries()].filter(([path]) => packState.selected.has(path));
     if (!selected.length) return;
 
     const button = $('packApply');
@@ -3149,12 +3235,12 @@ async function applyPack() {
     try {
         const entries = [];
         let done = 0;
-        for (const file of selected) {
+        for (const [path, file] of selected) {
             setStatus(`Uploading ${done + 1}/${selected.length}…`, 'loading');
             const base64 = encodeBase64UTF8(file.content);
             const blob = await api('POST', '/git/blobs', { content: base64, encoding: 'base64' });
             entries.push({
-                path: joinPath(state.path, file.path),
+                path: joinPath(state.path, path),
                 mode: '100644', type: 'blob', sha: blob.sha,
             });
             done++;
@@ -3732,10 +3818,11 @@ function wireEvents() {
     $('navUp').onclick = () => { closeSidebar(); goUp(); };
     $('navPalette').onclick = () => { closeSidebar(); openPalette(); };
 
-    // ── Paste project pack ──
+    // ── Paste project pack (multi-paste) ──
     $('packClose').onclick = closePackOverlay;
     $('packCancel').onclick = closePackOverlay;
     $('packPaste').onclick = pasteFromPackClipboard;
+    $('packClear').onclick = clearPack;
     $('packApply').onclick = applyPack;
     onEscape($('packOverlay'), () => closePackOverlay());
 
@@ -3748,17 +3835,15 @@ function wireEvents() {
         e.preventDefault();
         e.stopPropagation();
         if (!packState) return;
-        const file = e.dataTransfer.files[0];
-        if (!file) return;
-        if (!/\.(txt|pack|text)$/i.test(file.name)) {
-            toast('Drop a .txt file', 'warn');
-            return;
+        const files = [...e.dataTransfer.files].filter(f => /\.(txt|pack|text)$/i.test(f.name));
+        if (!files.length) { toast('Drop a .txt file', 'warn'); return; }
+        for (const file of files) {
+            if (file.size > 20 * 1024 * 1024) {
+                toast(`Skipped ${file.name} — too large (max 20 MB)`, 'err');
+                continue;
+            }
+            ingestPackText(await file.text());
         }
-        if (file.size > 20 * 1024 * 1024) {
-            toast('File too large (max 20 MB)', 'err');
-            return;
-        }
-        ingestPackText(await file.text());
     });
 
     document.addEventListener('paste', e => {
