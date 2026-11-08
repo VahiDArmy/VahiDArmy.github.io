@@ -1,2197 +1,358 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project Packer</title>
 <style>
-  :root {
-    color-scheme: dark;
-    --bg: #07090c;
-    --panel: #0d1015;
-    --panel-2: #0a0d11;
-    --panel-3: #11151b;
-    --line: #1e242c;
-    --line-soft: #161b21;
-    --ink: #e7eaf0;
-    --ink-2: #c3c9d2;
-    --muted: #8b939e;
-    --faint: #667079;
-    --mint: #8fe0bd;
-    --mint-ink: #c9f6e4;
-    --mint-dim: #2b4a3f;
-    --amber: #e9c07a;
-    --amber-dim: #4a3a24;
-    --rose: #e3a1a5;
-    --rose-dim: #4a2b2e;
-    --blue: #9dc0ea;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--ink);
-    font: 13px/1.55 var(--mono);
-    -webkit-font-smoothing: antialiased;
-  }
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(1000px 540px at 6% -12%, rgba(143, 224, 189, .10), transparent 62%),
-      radial-gradient(860px 480px at 102% -6%, rgba(233, 192, 122, .07), transparent 58%);
-    z-index: 0;
-  }
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: .5;
-    background-image:
-      linear-gradient(rgba(255, 255, 255, .022) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, .022) 1px, transparent 1px);
-    background-size: 32px 32px;
-    -webkit-mask-image: radial-gradient(900px 420px at 30% 0%, #000, transparent 72%);
-    mask-image: radial-gradient(900px 420px at 30% 0%, #000, transparent 72%);
-    z-index: 0;
-  }
-  .app {
-    position: relative;
-    z-index: 1;
-    height: 100dvh;
-    max-width: 1120px;
-    margin: 0 auto;
-    padding: 16px 20px 18px;
-    display: grid;
-    grid-template-rows: auto auto auto minmax(118px, .92fr) minmax(150px, 1.08fr);
-    gap: 12px;
-  }
-
-  /* ---------- header ---------- */
-  .topbar { display: grid; gap: 10px; }
-  .brand-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
-  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .brand-mark {
-    width: 15px;
-    height: 15px;
-    border-radius: 4px;
-    background: linear-gradient(150deg, var(--mint), #4fa88a 62%, #2f6f5b);
-    box-shadow: 0 0 0 1px rgba(143, 224, 189, .25), 0 0 18px -4px rgba(143, 224, 189, .75);
-    transform: rotate(8deg);
-    flex: none;
-  }
-  .brand-name {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: #f1f4f8;
-    white-space: nowrap;
-  }
-  .top-actions { display: flex; align-items: center; gap: 8px; }
-  .pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 9px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: rgba(15, 19, 24, .8);
-    color: var(--muted);
-    font-size: 10.5px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .pill::before {
-    content: "";
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--mint);
-    box-shadow: 0 0 8px var(--mint);
-  }
-  .tagline {
-    margin: 0;
-    color: var(--muted);
-    font-size: 12px;
-    max-width: 74ch;
-  }
-  .tagline .mono { color: var(--ink-2); }
-  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-width: 0; }
-  .stat {
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
-    padding: 7px 10px 8px;
-    display: grid;
-    gap: 1px;
-    min-width: 0;
-  }
-  .stat-label {
-    color: var(--faint);
-    font-size: 9.5px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    min-width: 0;
-  }
-  .stat-value {
-    font-size: 16px;
-    line-height: 1.3;
-    color: var(--ink);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -.01em;
-  }
-  .stat.bad .stat-value { color: var(--rose); }
-
-  /* ---------- cards ---------- */
-  .card {
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: linear-gradient(180deg, rgba(17, 21, 27, .92), rgba(12, 15, 20, .96));
-    box-shadow: 0 24px 48px -40px #000, inset 0 1px 0 rgba(255, 255, 255, .025);
-  }
-  .paste-card {
-    display: grid;
-    gap: 8px;
-    padding: 10px 12px 11px;
-    transition: border-color .15s ease, box-shadow .15s ease;
-  }
-  .paste-card.dragging {
-    border-color: rgba(143, 224, 189, .55);
-    box-shadow: 0 0 0 1px rgba(143, 224, 189, .22), 0 0 40px -18px rgba(143, 224, 189, .6);
-  }
-  .paste-card.armed { border-color: rgba(143, 224, 189, .45); }
-  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-  .label {
-    margin: 0;
-    color: var(--muted);
-    font-size: 9.5px;
-    font-weight: 600;
-    letter-spacing: .17em;
-    text-transform: uppercase;
-  }
-  .hint { color: var(--faint); font-size: 11px; }
-  .hint kbd, .kbd {
-    display: inline-block;
-    padding: 0 4px;
-    border: 1px solid #2a323b;
-    border-bottom-color: #333c46;
-    border-radius: 4px;
-    background: #12171d;
-    color: var(--ink-2);
-    font: inherit;
-    font-size: 10px;
-    line-height: 1.5;
-  }
-  #paste {
-    display: block;
-    width: 100%;
-    height: 62px;
-    resize: none;
-    padding: 9px 11px;
-    background: #080b0e;
-    color: var(--ink);
-    border: 1px dashed #2a323b;
-    border-radius: 9px;
-    font: inherit;
-    line-height: 1.5;
-    outline: none;
-    caret-color: var(--mint);
-    overflow: auto;
-    transition: border-color .15s ease, background .15s ease;
-  }
-  #paste::placeholder { color: #59636d; }
-  #paste:focus { border-color: #477a67; border-style: solid; background: #0a0e12; }
-  .paste-card.armed #paste { border-color: var(--mint); border-style: solid; }
-  .card-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .format { color: #6c757e; font-size: 11px; overflow-wrap: anywhere; }
-  .format code {
-    padding: 1px 5px;
-    border: 1px solid #212830;
-    border-radius: 4px;
-    background: #0b0f13;
-    color: #a6b4ae;
-    font: inherit;
-    font-size: 10.5px;
-    white-space: nowrap;
-  }
-
-  /* ---------- buttons ---------- */
-  .btn {
-    appearance: none;
-    border: 1px solid #29313a;
-    border-radius: 7px;
-    background: linear-gradient(180deg, #151a20, #10141a);
-    color: var(--ink-2);
-    padding: 7px 12px;
-    font: inherit;
-    font-size: 12px;
-    line-height: 1.4;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background .13s ease, border-color .13s ease, color .13s ease, transform .13s ease;
-  }
-  .btn:hover:not(:disabled) {
-    background: linear-gradient(180deg, #1a2027, #13181e);
-    border-color: #36404b;
-    color: #eef1f5;
-  }
-  .btn:active:not(:disabled) { transform: translateY(1px); }
-  .btn:focus-visible { outline: 2px solid rgba(143, 224, 189, .55); outline-offset: 2px; }
-  .btn:disabled { opacity: .38; cursor: not-allowed; }
-  .btn.small { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
-  .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
-  .btn.ghost:hover:not(:disabled) { background: #141920; border-color: #262e37; color: var(--ink-2); }
-  .btn.accent {
-    background: linear-gradient(180deg, #a8efd2, #7fd9b5);
-    border-color: #a5eacd;
-    color: #07130e;
-    font-weight: 600;
-    box-shadow: 0 10px 26px -18px rgba(143, 224, 189, .9);
-  }
-  .btn.accent:hover:not(:disabled) { background: linear-gradient(180deg, #b8f6dd, #8fe3c1); color: #061009; }
-  .btn.accent-outline {
-    border-color: #33564a;
-    background: linear-gradient(180deg, #12241e, #0e1a16);
-    color: var(--mint-ink);
-  }
-  .btn.accent-outline:hover:not(:disabled) { border-color: #3f6d5c; background: linear-gradient(180deg, #172e26, #102019); }
-  .btn.danger { background: transparent; border-color: #38282b; color: #cf9a9e; }
-  .btn.danger:hover:not(:disabled) { background: #1a1214; border-color: #4c3236; color: #e8b0b4; }
-  .btn.rose { border-color: #4b3033; background: transparent; color: #e4aeb1; }
-  .btn.rose:hover:not(:disabled) { background: #1b1214; }
-  .icon-btn {
-    width: 30px;
-    height: 30px;
-    display: inline-grid;
-    place-items: center;
-    padding: 0;
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    background: #10151a;
-    color: var(--muted);
-    font: inherit;
-    font-size: 14px;
-    cursor: pointer;
-    transition: color .13s ease, border-color .13s ease, background .13s ease;
-  }
-  .icon-btn:hover { color: var(--ink); border-color: #38424d; background: #161c23; }
-  .icon-btn:focus-visible { outline: 2px solid rgba(143, 224, 189, .55); outline-offset: 2px; }
-
-  .toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    background: rgba(13, 16, 21, .78);
-    padding: 8px 10px;
-  }
-  .toolbar .spacer { flex: 1 1 auto; }
-  .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
-  .paste-btn[data-busy="1"] { opacity: .8; }
-
-  /* ---------- panels ---------- */
-  .panel {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px 12px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--line-soft);
-    background: rgba(10, 13, 17, .75);
-  }
-  .panel-head-right { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 8px; min-width: 0; }
-  .meta {
-    color: var(--faint);
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .panel-tools {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    border-bottom: 1px solid var(--line-soft);
-    background: rgba(9, 12, 15, .55);
-  }
-  .field { position: relative; flex: 1 1 auto; min-width: 0; }
-  .field input {
-    width: 100%;
-    padding: 5px 28px 5px 9px;
-    border: 1px solid #232b33;
-    border-radius: 6px;
-    background: #080b0e;
-    color: var(--ink);
-    font: inherit;
-    font-size: 11.5px;
-    outline: none;
-  }
-  .field input::placeholder { color: #5b656f; }
-  .field input:focus { border-color: #3d6a59; }
-  .field input::-webkit-search-cancel-button { display: none; }
-  .field-clear {
-    position: absolute;
-    right: 4px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 20px;
-    height: 20px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    border-radius: 4px;
-    background: #161c22;
-    color: var(--muted);
-    font: inherit;
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .field-clear:hover { color: var(--ink); background: #1d252d; }
-  .toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 9px;
-    border: 1px solid var(--line);
-    border-radius: 999px;
-    background: transparent;
-    color: var(--muted);
-    font: inherit;
-    font-size: 10.5px;
-    letter-spacing: .04em;
-    cursor: pointer;
-  }
-  .toggle:hover:not(:disabled) { color: var(--ink-2); border-color: #333c46; }
-  .toggle[aria-pressed="true"] {
-    color: var(--rose);
-    border-color: var(--rose-dim);
-    background: rgba(74, 43, 46, .25);
-  }
-  .toggle:disabled { opacity: .4; cursor: not-allowed; }
-  .toggle-count { color: inherit; opacity: .75; font-variant-numeric: tabular-nums; }
-  .panel-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: #29313a transparent;
-  }
-  .panel-body::-webkit-scrollbar { width: 10px; }
-  .panel-body::-webkit-scrollbar-track { background: transparent; }
-  .panel-body::-webkit-scrollbar-thumb {
-    background: #242b33;
-    border-radius: 8px;
-    border: 3px solid var(--panel);
-  }
-
-  /* ---------- file rows ---------- */
-  .file-row {
-    appearance: none;
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto 12px;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 12px;
-    border: 0;
-    border-bottom: 1px solid #151a20;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-    transition: background .12s ease;
-  }
-  .file-row:hover { background: #10151b; }
-  .file-row:focus-visible { outline: 2px solid rgba(143, 224, 189, .45); outline-offset: -2px; }
-  .file-row:last-child { border-bottom: 0; }
-  .file-path {
-    overflow-wrap: anywhere;
-    color: var(--ink);
-    font-size: 12.5px;
-  }
-  .file-meta {
-    color: #707a84;
-    font-size: 11px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-  }
-  .file-open { color: #4f5963; font-size: 14px; }
-  .file-row:hover .file-open { color: var(--mint); }
-  .chip {
-    display: inline-block;
-    padding: 1px 7px;
-    border: 1px solid #2a323b;
-    border-radius: 999px;
-    color: #8b949e;
-    font-size: 9.5px;
-    letter-spacing: .09em;
-    text-transform: uppercase;
-    white-space: nowrap;
-    line-height: 1.6;
-  }
-  .chip.new { color: #9fe0c2; border-color: var(--mint-dim); background: rgba(43, 74, 63, .18); }
-  .chip.changed { color: var(--amber); border-color: var(--amber-dim); background: rgba(74, 58, 36, .18); }
-  .chip.identical { color: #8a949e; }
-  .chip.truncated, .chip.corrupt { color: var(--rose); border-color: var(--rose-dim); background: rgba(74, 43, 46, .18); }
-
-  /* ---------- failure banner ---------- */
-  .failure {
-    margin: 8px 10px 0;
-    border: 1px solid #3d2f33;
-    border-radius: 9px;
-    background: linear-gradient(180deg, rgba(35, 24, 26, .85), rgba(24, 17, 19, .9));
-    padding: 8px 10px;
-  }
-  .failure-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  .failure-title { color: #f0b9bc; font-size: 11.5px; }
-  .failure-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 3px; }
-  .failure-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11.5px;
-    color: #d8b0b3;
-    overflow-wrap: anywhere;
-  }
-  .failure-list code { color: #efc3c6; font: inherit; }
-
-  /* ---------- log ---------- */
-  .log-entry {
-    padding: 9px 12px 10px;
-    border-bottom: 1px solid #151a20;
-    border-left: 2px solid transparent;
-    transition: background .12s ease;
-  }
-  .log-entry:hover { background: rgba(255, 255, 255, .012); }
-  .log-entry:last-child { border-bottom: 0; }
-  .log-entry.has-errors { border-left-color: #5a3338; }
-  .log-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-  .log-head {
-    color: #e2e6eb;
-    font-size: 12px;
-    font-variant-numeric: tabular-nums;
-    overflow-wrap: anywhere;
-  }
-  .log-age { color: #5d6771; font-size: 10px; white-space: nowrap; flex: none; }
-  .note {
-    margin-top: 3px;
-    padding-left: 13px;
-    color: #9aa3ad;
-    font-size: 11.5px;
-    overflow-wrap: anywhere;
-  }
-  .note.bad { color: #dfa8ab; }
-  .note.dim { color: #7a838d; }
-  .note.source { color: #7f8b95; font-size: 11px; }
-  .excerpt {
-    margin-top: 1px;
-    padding-left: 25px;
-    color: #6c757f;
-    font-size: 11px;
-    overflow-wrap: anywhere;
-  }
-  .entry-details { margin-top: 5px; }
-  .entry-details > summary {
-    cursor: pointer;
-    list-style: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 2px 7px;
-    border: 1px solid #222a32;
-    border-radius: 999px;
-    color: #78828c;
-    font-size: 10.5px;
-    user-select: none;
-  }
-  .entry-details > summary::-webkit-details-marker { display: none; }
-  .entry-details > summary::before { content: "▸"; font-size: 9px; color: #5c666f; }
-  .entry-details[open] > summary::before { content: "▾"; }
-  .entry-details > summary:hover { color: var(--ink-2); border-color: #333c46; }
-  .item-list { display: grid; gap: 2px; margin: 6px 0 0; padding: 0 0 0 4px; }
-  .item {
-    display: grid;
-    grid-template-columns: 12px minmax(0, 1fr) auto;
-    gap: 8px;
-    align-items: baseline;
-    font-size: 11px;
-    color: #98a1ab;
-  }
-  .item-mark { color: #6d7781; }
-  .item.new .item-mark { color: var(--mint); }
-  .item.changed .item-mark { color: var(--amber); }
-  .item.truncated .item-mark, .item.corrupt .item-mark { color: var(--rose); }
-  .item-path { overflow-wrap: anywhere; color: #afb7c0; }
-  .item-tag { color: #6c757f; font-size: 10.5px; white-space: nowrap; }
-  .item.truncated .item-tag, .item.corrupt .item-tag { color: #b98e91; }
-
-  /* ---------- empty states ---------- */
-  .empty-state { padding: 18px 16px 20px; display: grid; gap: 10px; justify-items: start; }
-  .empty-title { color: var(--ink-2); font-size: 13px; }
-  .empty-copy { margin: 0; color: var(--muted); font-size: 11.5px; max-width: 62ch; }
-  .steps { margin: 0; padding-left: 18px; color: var(--muted); font-size: 11.5px; display: grid; gap: 3px; }
-  .steps strong { color: var(--ink-2); font-weight: 500; }
-  .empty-dash {
-    border: 1px dashed #28313a;
-    border-radius: 9px;
-    padding: 12px 13px;
-    color: #7d8791;
-    font-size: 11.5px;
-  }
-
-  /* ---------- dialogs ---------- */
-  dialog.dialog {
-    width: min(900px, 92vw);
-    max-height: 88vh;
-    margin: auto;
-    padding: 0;
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: linear-gradient(180deg, #10141a, #0b0e12);
-    color: var(--ink);
-    box-shadow: 0 50px 100px -40px #000;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  dialog.dialog[open] { display: flex; }
-  dialog.dialog::backdrop { background: rgba(3, 5, 7, .66); backdrop-filter: blur(3px); }
-  .dialog-head {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 13px 14px 10px;
-    border-bottom: 1px solid var(--line-soft);
-  }
-  .dialog-title-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .dialog-title {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 500;
-    color: #eef1f5;
-    overflow-wrap: anywhere;
-  }
-  .dialog-meta {
-    padding: 7px 14px;
-    color: #7d8791;
-    font-size: 11px;
-    border-bottom: 1px solid var(--line-soft);
-    font-variant-numeric: tabular-nums;
-  }
-  .dialog-note {
-    margin: 10px 14px 0;
-    padding: 7px 10px;
-    border: 1px solid #3d2f33;
-    border-radius: 7px;
-    background: rgba(45, 29, 31, .55);
-    color: #e0b0b3;
-    font-size: 11.5px;
-  }
-  .dialog-body {
-    padding: 12px 14px;
-    overflow: auto;
-    min-height: 0;
-    flex: 1;
-    display: grid;
-    gap: 12px;
-  }
-  .code {
-    margin: 0;
-    padding: 12px;
-    background: #070a0d;
-    border: 1px solid #1a2027;
-    border-radius: 8px;
-    color: #cdd5de;
-    font: inherit;
-    font-size: 11.5px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    max-height: 52vh;
-    overflow: auto;
-    tab-size: 2;
-  }
-  .dialog-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    padding: 10px 14px;
-    border-top: 1px solid var(--line-soft);
-    background: rgba(8, 11, 14, .6);
-  }
-  .dialog-actions .spacer { flex: 1 1 auto; }
-  .help-grid { display: grid; gap: 14px; }
-  .help-section h4 {
-    margin: 0 0 5px;
-    color: var(--muted);
-    font-size: 9.5px;
-    font-weight: 600;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-  }
-  .help-section p { margin: 0; color: var(--ink-2); font-size: 12px; }
-  .rules { margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 12px; display: grid; gap: 4px; }
-  .rules code { color: #a8bdb4; }
-  .shortcuts { display: grid; gap: 5px; }
-  .shortcut {
-    display: grid;
-    grid-template-columns: 132px minmax(0, 1fr);
-    gap: 10px;
-    align-items: baseline;
-    font-size: 12px;
-  }
-  .shortcut span:last-child { color: var(--muted); }
-  .example-block {
-    margin: 0;
-    padding: 10px 12px;
-    border: 1px solid #1d242b;
-    border-radius: 8px;
-    background: #080b0e;
-    color: #b7c7c0;
-    font: inherit;
-    font-size: 11.5px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-
-  /* ---------- toast ---------- */
-  .toast {
-    position: fixed;
-    left: 50%;
-    bottom: 18px;
-    transform: translate(-50%, 8px);
-    max-width: calc(100vw - 28px);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border: 1px solid #2e3741;
-    border-radius: 9px;
-    background: rgba(18, 23, 29, .97);
-    box-shadow: 0 20px 40px -22px #000;
-    color: #d7dde4;
-    font-size: 12px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity .16s ease, transform .16s ease;
-    z-index: 40;
-  }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-  .toast-action {
-    appearance: none;
-    border: 1px solid #37584b;
-    border-radius: 6px;
-    background: #16261f;
-    color: #b9efd8;
-    padding: 3px 9px;
-    font: inherit;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .toast-action:hover { background: #1b3028; }
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
-
-  @media (max-width: 520px) {
-    .pill { display: none; }
-  }
-  @media (max-width: 760px) {
-    .app {
-      height: auto;
-      min-height: 100dvh;
-      display: flex;
-      flex-direction: column;
-      padding: 12px 11px 16px;
-      gap: 10px;
-    }
-    .tagline { display: none; }
-    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .panel-body { max-height: 42vh; }
-    #paste { height: 88px; }
-    .toolbar .spacer { display: none; }
-    .btn.danger { margin-left: auto; }
-    .hint { display: none; }
-    .file-row { grid-template-columns: minmax(0, 1fr) auto auto 10px; gap: 7px; }
-    .file-meta { display: none; }
-    .shortcut { grid-template-columns: 108px minmax(0, 1fr); }
-  }
-  @media (max-height: 640px) and (min-width: 761px) {
-    .app { height: auto; min-height: 100dvh; }
-    .panel-body { max-height: 40vh; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
-  }
+:root{--bg:#0c0e14;--panel:#141824;--line:#272d40;--fg:#e8ecf6;--mut:#8e97ad;--vio:#8b6cff;--cya:#3ed6ff;--ok:#5eead4;--warn:#fbbf24;--bad:#fb7185;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:880px;margin:0 auto;padding:32px 16px 64px}
+h1{margin:0 0 4px;font-size:26px;font-weight:650;letter-spacing:-.01em}
+.sub{margin:0 0 24px;color:var(--mut);max-width:64ch}
+.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tab{font:inherit;color:var(--mut);background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;margin-bottom:-1px;cursor:pointer}
+.tab:hover{color:var(--fg)}
+.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--cya)}
+.btn{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--cya)}
+.btn.pri{background:var(--vio);border-color:var(--vio);color:#0c0e14;font-weight:600}
+.btn:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:2px solid var(--cya);outline-offset:2px}
+.drop{position:relative;display:block;border:2px dashed var(--line);border-radius:12px;padding:34px 16px;text-align:center;color:var(--mut);cursor:pointer;background:var(--panel);transition:border-color .15s,box-shadow .15s}
+.drop:hover,.drop.over,.drop:focus-within{border-color:var(--cya);color:var(--fg);box-shadow:0 0 0 4px rgba(62,214,255,.12),0 0 28px rgba(139,108,255,.25)}
+.drop input{position:absolute;opacity:0;width:1px;height:1px}
+.row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin:14px 0}
+.row label{color:var(--mut);display:flex;align-items:center;gap:8px}
+input[type=file]{font:inherit;color:var(--fg)}
+select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+textarea{display:block;width:100%;height:44vh;min-height:240px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:12px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;resize:vertical;white-space:pre;overflow:auto}
+.msg{min-height:1.5em;margin:12px 0 4px;color:var(--ok)}
+.msg.bad{color:var(--bad)}
+.warn{margin:4px 0;color:var(--warn);font-size:13px}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
-<main class="app">
-  <header class="topbar">
-    <div class="brand-row">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true"></span>
-        <span class="brand-name">Project Packer</span>
-      </div>
-      <div class="top-actions">
-        <span class="pill">runs locally</span>
-        <button id="help-btn" class="icon-btn" type="button" aria-label="How it works and shortcuts" title="How it works">?</button>
-      </div>
-    </div>
-    <p class="tagline">Paste messages one after another — every <span class="mono">{[[FILE: path]]}</span> block merges into one deterministic <span class="mono">.zip</span>. Nothing leaves this tab.</p>
-    <div class="stats" aria-label="Pack summary">
-      <div class="stat"><span class="stat-label">Files</span><span id="stat-files" class="stat-value">0</span></div>
-      <div class="stat"><span class="stat-label">Size</span><span id="stat-bytes" class="stat-value">0 B</span></div>
-      <div class="stat"><span class="stat-label">Pastes</span><span id="stat-pastes" class="stat-value">0</span></div>
-      <div class="stat" id="stat-failed-wrap"><span class="stat-label">Resend</span><span id="stat-failed" class="stat-value">0</span></div>
-    </div>
-  </header>
+<main>
+  <h1>Project Packer</h1>
+  <p class="sub">Turn a project ZIP into one text file that explains its own format, so an AI can read the whole project. Turn the same format back into a ZIP. Nothing leaves your browser.</p>
 
-  <section id="drop-zone" class="card paste-card" aria-labelledby="paste-label">
-    <div class="card-head">
-      <h2 id="paste-label" class="label">Paste zone</h2>
-      <span class="hint"><kbd>Ctrl</kbd>+<kbd>V</kbd> · <kbd>Shift</kbd>+<kbd>Insert</kbd> · right-click — the box stays empty</span>
-    </div>
-    <label class="sr-only" for="paste">Paste messages here</label>
-    <textarea id="paste" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="format-hint" placeholder="Paste a message here — or drop a .txt file. The text is captured on paste and never stays in this box."></textarea>
-    <div class="card-foot">
-      <span id="format-hint" class="format">Format <code>{[[FILE: path]]}</code> … content … <code>{[[END: path]]}</code> · prose outside blocks is ignored</span>
-      <button class="btn ghost small" type="button" data-copy-example>Copy example</button>
-    </div>
-  </section>
-
-  <div class="toolbar" role="toolbar" aria-label="Pack actions">
-    <button id="paste-btn" class="btn paste-btn accent-outline" type="button" title="Read the clipboard and ingest it">Paste</button>
-    <button id="download" class="btn accent" type="button">Download .zip</button>
-    <span class="sep" aria-hidden="true"></span>
-    <button id="copy-log" class="btn" type="button" title="Copy the full log as plain text">Copy log</button>
-    <button id="copy-resend" class="btn" type="button" title="Copy a request for every failed block">Copy resend request</button>
-    <span class="spacer"></span>
-    <button id="clear" class="btn danger" type="button">Clear all</button>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="a">ZIP to text</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="b">Text to ZIP</button>
   </div>
 
-  <section class="card panel files-panel" aria-labelledby="files-label">
-    <div class="panel-head">
-      <h2 id="files-label" class="label">Files</h2>
-      <div class="panel-head-right">
-        <span id="files-meta" class="meta">0 files</span>
-        <button id="copy-paths" class="btn ghost small" type="button" disabled>Copy paths</button>
-      </div>
-    </div>
-    <div class="panel-tools">
-      <label class="field">
-        <span class="sr-only">Filter files</span>
-        <input id="filter" type="search" placeholder="Filter files  ( / )" autocomplete="off" spellcheck="false">
-        <button id="filter-clear" class="field-clear" type="button" aria-label="Clear filter" hidden>×</button>
+  <section id="a">
+    <label class="drop" id="drop"><input id="zipin" type="file" accept=".zip,application/zip">Drop a project ZIP here, or click to choose one</label>
+    <div class="row">
+      <label>Binary files
+        <select id="bin"><option value="skip">Leave out, list only</option><option value="base64">Embed as base64</option></select>
       </label>
+      <label><input type="checkbox" id="junk" checked> Skip .DS_Store, __MACOSX and Thumbs.db</label>
     </div>
-    <div id="failure-banner" class="failure" hidden>
-      <div class="failure-head">
-        <span id="failure-title" class="failure-title">1 file needs a resend</span>
-        <button id="failure-copy" class="btn rose small" type="button">Copy resend request</button>
-      </div>
-      <ul id="failure-list" class="failure-list"></ul>
-    </div>
-    <div class="panel-body">
-      <div id="files"></div>
+    <p class="msg" id="msgA"></p>
+    <div id="warnA"></div>
+    <textarea id="out" readonly spellcheck="false" placeholder="The packed text appears here"></textarea>
+    <div class="row">
+      <button class="btn pri" id="dl" disabled>Download text file</button>
+      <button class="btn" id="cp" disabled>Copy text</button>
     </div>
   </section>
 
-  <section class="card panel log-panel" aria-labelledby="log-label">
-    <div class="panel-head">
-      <h2 id="log-label" class="label">Log</h2>
-      <div class="panel-head-right">
-        <button id="log-errors" class="toggle" type="button" aria-pressed="false" disabled>Errors only <span id="log-errors-count" class="toggle-count">0</span></button>
-        <span id="log-count" class="meta">0 pastes</span>
-      </div>
+  <section id="b" hidden>
+    <div class="row">
+      <label>Packed text file <input type="file" id="txtin" accept=".txt,.md,text/plain"></label>
+      <label><input type="checkbox" id="fence" checked> Strip code fences around file contents (AI replies)</label>
     </div>
-    <div id="log" class="panel-body" role="log" aria-label="Paste log"></div>
+    <textarea id="inp" spellcheck="false" placeholder="Paste packed text here, or an AI reply that uses the same format"></textarea>
+    <div class="row"><button class="btn pri" id="build">Build ZIP</button></div>
+    <p class="msg" id="msgB"></p>
+    <div id="warnB"></div>
   </section>
 </main>
 
-<div id="toast" class="toast" role="status" aria-live="polite">
-  <span id="toast-msg"></span>
-  <button id="toast-action" class="toast-action" type="button" hidden></button>
-</div>
-
-<dialog id="preview" class="dialog" aria-labelledby="preview-title">
-  <div class="dialog-head">
-    <div class="dialog-title-wrap">
-      <span id="preview-chip" class="chip">new</span>
-      <h3 id="preview-title" class="dialog-title">file</h3>
-    </div>
-    <button id="preview-close" class="icon-btn" type="button" aria-label="Close preview">×</button>
-  </div>
-  <div id="preview-meta" class="dialog-meta"></div>
-  <div id="preview-note" class="dialog-note" hidden></div>
-  <pre id="preview-body" class="code"></pre>
-  <div class="dialog-actions">
-    <button id="preview-copy" class="btn small" type="button">Copy content</button>
-    <button id="preview-path" class="btn small ghost" type="button">Copy path</button>
-    <button id="preview-save" class="btn small" type="button">Download file</button>
-    <span class="spacer"></span>
-    <button id="preview-done" class="btn small ghost" type="button">Close</button>
-  </div>
-</dialog>
-
-<dialog id="help" class="dialog" aria-labelledby="help-title">
-  <div class="dialog-head">
-    <div class="dialog-title-wrap">
-      <h3 id="help-title" class="dialog-title">How the packer works</h3>
-    </div>
-    <button class="icon-btn" type="button" data-close-dialog aria-label="Close help">×</button>
-  </div>
-  <div class="dialog-body">
-    <div class="help-grid">
-      <div class="help-section">
-        <h4>Rules</h4>
-        <ul class="rules">
-          <li>Every <code>{[[FILE: path]]}</code> … <code>{[[END: path]]}</code> pair is captured verbatim, byte for byte. Prose outside pairs is ignored.</li>
-          <li>The same path <strong>replaces</strong> the earlier copy, across pastes. The log says whether it was changed or identical.</li>
-          <li>A missing END keeps the block and flags it <strong>truncated</strong>; a mismatched END name flags it <strong>corrupt</strong>.</li>
-          <li>Flagged paths collect into a resend request; a later clean paste of the same path clears it.</li>
-          <li>The zip stores files uncompressed, sorted by path, with a fixed 2024-01-01 timestamp so identical packs produce identical bytes.</li>
-        </ul>
-      </div>
-      <div class="help-section">
-        <h4>Example block</h4>
-        <pre class="example-block" id="example-block"></pre>
-      </div>
-      <div class="help-section">
-        <h4>Shortcuts</h4>
-        <div class="shortcuts">
-          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">V</span></span><span>Paste a message (box never fills)</span></div>
-          <div class="shortcut"><span><span class="kbd">Shift</span>+<span class="kbd">Insert</span></span><span>Paste without the clipboard menu</span></div>
-          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">S</span></span><span>Download the zip</span></div>
-          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">K</span></span><span>Focus the file filter</span></div>
-          <div class="shortcut"><span><span class="kbd">/</span></span><span>Focus the file filter</span></div>
-          <div class="shortcut"><span><span class="kbd">Esc</span></span><span>Close a dialog or clear the filter</span></div>
-        </div>
-      </div>
-      <div class="help-section">
-        <h4>Tips</h4>
-        <p>Drop one or more <code>.txt</code> message files onto the paste zone — they are ingested exactly like a paste. Drop a non-message file and it is added as a file of its own (useful for packing source files). Click any file to preview, copy, or save it. Everything stays in this tab.</p>
-      </div>
-    </div>
-  </div>
-  <div class="dialog-actions">
-    <button class="btn small accent-outline" type="button" data-copy-example>Copy example block</button>
-    <span class="spacer"></span>
-    <button class="btn small ghost" type="button" data-close-dialog>Close</button>
-  </div>
-</dialog>
-
-<noscript><p style="padding:20px;color:#ccc;font-family:monospace">Project Packer needs JavaScript.</p></noscript>
-
 <script>
-/* ==== core ==== */
-var PackerCore = (function () {
-  'use strict';
+'use strict';
+/* ---------- Format guide placed at the top of every packed text ---------- */
+const GUIDE = [
+'PROJECT PACK: one text file that holds a whole project (format project-pack/1)',
+'',
+'HOW THIS FILE IS ORGANIZED',
+'Everything before the line "=== PACK START ===" is this explanation. The project itself is everything after it.',
+'',
+'MARKER LINES',
+'A marker is a line that starts in the very first column with "=== " and ends with " ===". Every other line is file',
+'content. The examples below are indented, so they are not real markers.',
+'',
+'  Folder: one line, the path ends with "/".',
+'      === FOLDER: css/ ===',
+'  File: an opening marker with the full path, then the exact content of the file, then a closing marker.',
+'      === FILE: css/reset.css ===',
+'      (file content, line by line, nothing added or removed)',
+'      === END FILE ===',
+'  Binary file left out: one informational line. Nothing can be restored from it.',
+'      === SKIPPED: img/logo.png (binary, 5.2 KB) ===',
+'  Binary file embedded: the opening marker ends with "(base64)" and the content is base64 text.',
+'      === FILE: img/logo.png (base64) ===',
+'',
+'RULES',
+'  - Paths are relative to the project root and use "/" as separator. They never start with "/" and never contain "..".',
+'  - Folders and files appear in alphabetical order of their paths. A folder line comes right before its contents.',
+'  - A file is assumed to end with a newline. If it does not, its closing marker reads "=== END FILE (no newline at end) ===".',
+'  - A content line that itself starts with one of the markers above gets one extra backslash in front of it.',
+'    Remove exactly one leading backslash from such lines when restoring the file.',
+'  - The tree at the end of this explanation is only a summary. The marker blocks are the real content.',
+'',
+'IF YOU ARE AN AI AND ARE ASKED TO CHANGE THIS PROJECT',
+'  - Reply with every file you change or add as a complete block in this same format. Write the full content, never "..." or "unchanged".',
+'  - Leave out files you did not touch, unless the whole project is requested.',
+'  - Do not wrap blocks in code fences and do not put commentary inside a block. Text between blocks is ignored.',
+'  - Keep paths exactly as listed here unless you deliberately move or rename a file.',
+'',
+'PROJECT TREE'
+];
 
-  var FILE_RE = /^\{\[\[FILE:\s?(.+)\]\]\}$/;
-  var END_RE = /^\{\[\[END:\s?(.+)\]\]\}$/;
-  var NOTE_ORDER = { source: 0, truncated: 1, corrupt: 2, duplicate: 3, nomarkers: 4, outside: 5, empty: 6 };
-  var encoder = new TextEncoder();
+/* ---------- Helpers ---------- */
+const MARK = /^\\*=== (?:FOLDER|FILE|END FILE|SKIPPED|PACK START)\b/;   // marker-like line, escaped or not
+const UNESC = /^\\+=== (?:FOLDER|FILE|END FILE|SKIPPED|PACK START)\b/;  // marker-like line that was escaped
+const fmt = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
 
-  var crcTable = (function () {
-    var table = new Uint32Array(256);
-    for (var n = 0; n < 256; n++) {
-      var c = n;
-      for (var k = 0; k < 8; k++) {
-        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
-      }
-      table[n] = c >>> 0;
-    }
-    return table;
-  })();
+function cleanPath(p) {
+  if (/[\x00-\x1f]/.test(p)) return null;
+  const parts = p.replace(/\\/g, '/').split('/').filter(s => s && s !== '.');
+  return parts.includes('..') ? null : parts.join('/');
+}
+function asText(d) {
+  if (d.includes(0)) return null;
+  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(d); } catch { return null; }
+}
+function toB64(u8) {
+  let s = '';
+  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+  return btoa(s).replace(/.{76}/g, '$&\n').replace(/\n$/, '');
+}
+const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = -1; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (~c) >>> 0; }
 
-  function crc32(bytes) {
-    var c = 0xFFFFFFFF;
-    for (var i = 0; i < bytes.length; i++) {
-      c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
-    }
-    return (c ^ 0xFFFFFFFF) >>> 0;
+/* ---------- ZIP reader (stored + deflate) ---------- */
+async function inflateRaw(bytes) {
+  const s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function readZip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf), dec = new TextDecoder();
+  let e = -1;
+  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('This is not a ZIP file. Choose a .zip archive.');
+  const count = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
+  if (count === 0xffff || p === 0xffffffff) throw new Error('ZIP64 archives are not supported. Re-zip the project with a standard tool.');
+  const entries = [], warnings = [];
+  for (let n = 0; n < count; n++) {
+    if (p + 46 > u8.length || dv.getUint32(p, true) !== 0x02014b50) throw new Error('The ZIP directory is damaged. Try creating the ZIP again.');
+    const flags = dv.getUint16(p + 8, true), method = dv.getUint16(p + 10, true), crc = dv.getUint32(p + 16, true);
+    const csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + xl + cl;
+    const path = cleanPath(name);
+    if (path === null) { warnings.push('Skipped an unsafe path: ' + name); continue; }
+    if (!path) continue;
+    if (name.endsWith('/')) { entries.push({ path, data: null }); continue; }
+    if (flags & 1) { warnings.push('Skipped an encrypted file: ' + name); continue; }
+    const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), raw = u8.subarray(start, start + csize);
+    let data;
+    try {
+      if (method === 0) data = raw.slice();
+      else if (method === 8) data = await inflateRaw(raw);
+      else { warnings.push('Skipped a file with unsupported compression (method ' + method + '): ' + name); continue; }
+    } catch { warnings.push('Could not decompress: ' + name); continue; }
+    if (crc32(data) !== crc) warnings.push('Checksum mismatch, the file may be damaged: ' + name);
+    entries.push({ path, data });
   }
+  return { entries, warnings };
+}
 
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return false;
-    }
-    return true;
+/* ---------- ZIP writer (stored, UTF-8 names) ---------- */
+function buildZip(list) {
+  const enc = new TextEncoder(), parts = [], cd = [], d = new Date();
+  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  let off = 0;
+  for (const f of list) {
+    const name = enc.encode(f.path), data = f.data || new Uint8Array(0), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x800, true);
+    lh.setUint16(10, time, true); lh.setUint16(12, date, true); lh.setUint32(14, crc, true);
+    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
+    parts.push(new Uint8Array(lh.buffer), name, data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x800, true);
+    ch.setUint16(12, time, true); ch.setUint16(14, date, true); ch.setUint32(16, crc, true);
+    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
+    ch.setUint32(38, f.data ? 0 : 0x10, true); ch.setUint32(42, off, true);
+    cd.push(new Uint8Array(ch.buffer), name);
+    off += 30 + name.length + data.length;
   }
+  const cdSize = cd.reduce((s, a) => s + a.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, list.length, true); end.setUint16(10, list.length, true);
+  end.setUint32(12, cdSize, true); end.setUint32(16, off, true);
+  return new Blob(parts.concat(cd, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
+}
 
-  function fmtInt(n) {
-    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+/* ---------- Pack: entries -> one text ---------- */
+function pack(entries, o) {
+  const warnings = [], dirs = new Set(), files = new Map();
+  const junk = /(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db)(\/|$)/;
+  for (const e of entries) {
+    const path = cleanPath(e.path);
+    if (!path || (o.junk && junk.test(path))) continue;
+    const parts = path.split('/');
+    for (let i = 1; i < parts.length; i++) dirs.add(parts.slice(0, i).join('/') + '/');
+    if (e.data) files.set(path, e.data); else dirs.add(path + '/');
   }
-
-  function pad2(n) {
-    return (n < 10 ? '0' : '') + n;
-  }
-
-  function nowTime() {
-    var d = new Date();
-    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
-  }
-
-  function excerptOf(text, limit) {
-    var max = limit || 120;
-    var chars = Array.from(text);
-    var clipped = chars.length > max;
-    var excerpt = chars.slice(0, max).join('');
-    excerpt = excerpt
-      .replace(/\\/g, '\\\\')
-      .replace(/\r/g, '\\r')
-      .replace(/\n/g, '\\n')
-      .replace(/\t/g, '\\t');
-    excerpt = excerpt.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, function (ch) {
-      return '\\u' + ('000' + ch.charCodeAt(0).toString(16)).slice(-4);
-    });
-    return excerpt + (clipped ? '…' : '');
-  }
-
-  function splitLines(text) {
-    var lines = [];
-    var start = 0;
-    var len = text.length;
-    while (start < len) {
-      var nl = text.indexOf('\n', start);
-      var end = nl === -1 ? len : nl;
-      lines.push({ start: start, end: end, next: nl === -1 ? len : nl + 1 });
-      start = end + 1;
-      if (nl === -1) break;
-    }
-    return lines;
-  }
-
-  function markerPath(text, line, re) {
-    var raw = text.slice(line.start, line.end);
-    if (raw.charCodeAt(raw.length - 1) === 13) raw = raw.slice(0, -1);
-    var match = re.exec(raw);
-    return match ? match[1] : null;
-  }
-
-  function parseBlocks(text) {
-    var lines = splitLines(text);
-    var blocks = [];
-    var outsideChars = 0;
-    var i = 0;
-    while (i < lines.length) {
-      var filePath = markerPath(text, lines[i], FILE_RE);
-      if (filePath === null) {
-        outsideChars += lines[i].next - lines[i].start;
-        i++;
-        continue;
-      }
-      var contentStart = lines[i].next;
-      var endIndex = -1;
-      var endPath = null;
-      for (var j = i + 1; j < lines.length; j++) {
-        var found = markerPath(text, lines[j], END_RE);
-        if (found !== null) {
-          endIndex = j;
-          endPath = found;
-          break;
-        }
-      }
-      if (endIndex === -1) {
-        blocks.push({
-          path: filePath,
-          content: text.slice(contentStart),
-          truncated: true,
-          corrupt: false,
-          corruptName: null
-        });
-        i = lines.length;
-      } else {
-        var content = text.slice(contentStart, lines[endIndex].start);
-        var corrupt = endPath !== filePath;
-        blocks.push({
-          path: filePath,
-          content: content,
-          truncated: false,
-          corrupt: corrupt,
-          corruptName: corrupt ? endPath : null
-        });
-        i = endIndex + 1;
-      }
-    }
-    return { blocks: blocks, outsideChars: outsideChars };
-  }
-
-  function lineCount(content) {
-    if (content === '') return 0;
-    var count = 1;
-    for (var i = 0; i < content.length; i++) {
-      if (content.charCodeAt(i) === 10) count++;
-    }
-    return count;
-  }
-
-  function makeState() {
-    return { files: new Map(), log: [], failures: new Map(), pastes: 0 };
-  }
-
-  var state = makeState();
-
-  function applyBlocks(parsed, source) {
-    var entry = {
-      n: state.pastes + 1,
-      time: nowTime(),
-      at: Date.now(),
-      source: source || null,
-      fresh: 0,
-      changed: 0,
-      identical: 0,
-      errors: 0,
-      notes: [],
-      items: []
-    };
-    state.pastes = entry.n;
-
-    if (source) {
-      entry.notes.push({ kind: 'source', text: 'source: ' + source });
-    }
-
-    var occurrences = new Map();
-    var lastByPath = new Map();
-    parsed.blocks.forEach(function (block) {
-      occurrences.set(block.path, (occurrences.get(block.path) || 0) + 1);
-      lastByPath.set(block.path, block);
-    });
-
-    var emptyPaths = [];
-
-    lastByPath.forEach(function (block, path) {
-      var bytes = encoder.encode(block.content);
-      var prior = state.files.get(path);
-      var same = prior ? bytesEqual(prior.bytes, bytes) : false;
-
-      if (!prior) entry.fresh++;
-      else if (same) entry.identical++;
-      else entry.changed++;
-
-      var failure = block.truncated ? 'truncated' : (block.corrupt ? 'corrupt' : null);
-      var status;
-      if (failure) status = failure;
-      else if (!prior) status = 'new';
-      else status = same ? 'identical' : 'changed';
-
-      state.files.set(path, {
-        path: path,
-        content: block.content,
-        bytes: bytes,
-        failure: failure,
-        status: status
-      });
-
-      entry.items.push({ path: path, status: status, failure: failure, bytes: bytes.length });
-
-      if (block.truncated) {
-        entry.errors++;
-        state.failures.set(path, 'truncated');
-        entry.notes.push({
-          kind: 'truncated',
-          text: 'truncated: ' + path + ' — no END marker, content ran to end of paste',
-          excerpt: excerptOf(block.content)
-        });
-      } else if (block.corrupt) {
-        entry.errors++;
-        state.failures.set(path, 'corrupt');
-        entry.notes.push({
-          kind: 'corrupt',
-          text: 'corrupt: ' + path + ' — END marker named ' + block.corruptName
-        });
-      } else {
-        state.failures.delete(path);
-      }
-
-      if (block.content.length === 0) emptyPaths.push(path);
-    });
-
-    entry.items.sort(function (a, b) {
-      return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
-    });
-
-    occurrences.forEach(function (count, path) {
-      if (count > 1) {
-        entry.notes.push({
-          kind: 'duplicate',
-          text: 'duplicate within paste: ' + path + (count === 2
-            ? ' appeared twice, second kept'
-            : ' appeared ' + count + ' times, last kept')
-        });
-      }
-    });
-
-    if (parsed.blocks.length === 0) {
-      entry.errors++;
-      entry.notes.push({
-        kind: 'nomarkers',
-        text: 'no markers found — this paste contained no FILE markers, check the format'
-      });
-    } else if (parsed.outsideChars > 0) {
-      entry.notes.push({
-        kind: 'outside',
-        text: 'ignored outside markers: ' + fmtInt(parsed.outsideChars) + ' characters of prose skipped'
-      });
-    }
-
-    emptyPaths.forEach(function (path) {
-      entry.notes.push({ kind: 'empty', text: 'empty file: ' + path + ' has zero bytes' });
-    });
-
-    entry.notes.sort(function (a, b) {
-      return NOTE_ORDER[a.kind] - NOTE_ORDER[b.kind];
-    });
-
-    state.log.unshift(entry);
-    return entry;
-  }
-
-  function ingest(text, source) {
-    if (typeof text !== 'string' || text.length === 0) return null;
-    return applyBlocks(parseBlocks(text), source);
-  }
-
-  // Adds whole files without going through marker parsing (drag and drop).
-  function ingestFiles(files, source) {
-    if (!files || !files.length) return null;
-    var blocks = files.map(function (file) {
-      return {
-        path: file.path,
-        content: file.content,
-        truncated: false,
-        corrupt: false,
-        corruptName: null
-      };
-    });
-    return applyBlocks({ blocks: blocks, outsideChars: 0 }, source || 'files');
-  }
-
-  function headerLine(entry) {
-    var parts = ['Paste ' + entry.n, entry.time, entry.fresh + ' new'];
-    var replaced = entry.changed + entry.identical;
-    if (replaced === 0) {
-      parts.push('0 replaced');
-    } else if (entry.changed && entry.identical) {
-      parts.push(replaced + ' replaced (' + entry.changed + ' changed, ' + entry.identical + ' identical)');
-    } else if (entry.changed) {
-      parts.push(replaced + ' replaced (changed)');
+  const body = [], tree = [];
+  let nFiles = 0, skipped = 0, bytes = 0;
+  for (const it of [...dirs, ...files.keys()].sort()) {
+    const isDir = it.endsWith('/'), parts = it.replace(/\/$/, '').split('/');
+    const pad = '  '.repeat(parts.length - 1), label = parts[parts.length - 1] + (isDir ? '/' : '');
+    if (isDir) { body.push('=== FOLDER: ' + it + ' ==='); tree.push(pad + label); continue; }
+    const data = files.get(it), s = asText(data);
+    bytes += data.length;
+    if (s !== null) {
+      const noNl = !s.endsWith('\n');
+      body.push('=== FILE: ' + it + ' ===');
+      for (const l of (noNl ? s : s.slice(0, -1)).split('\n')) body.push(MARK.test(l) ? '\\' + l : l);
+      body.push('=== END FILE' + (noNl ? ' (no newline at end)' : '') + ' ===');
+      tree.push(pad + label); nFiles++;
+    } else if (o.binary === 'base64') {
+      body.push('=== FILE: ' + it + ' (base64) ===');
+      for (const l of toB64(data).split('\n')) body.push(l);
+      body.push('=== END FILE ===');
+      tree.push(pad + label + '   (binary, base64)'); nFiles++;
     } else {
-      parts.push(replaced + ' replaced (identical)');
+      body.push('=== SKIPPED: ' + it + ' (binary, ' + fmt(data.length) + ') ===');
+      tree.push(pad + label + '   (binary, not included)'); skipped++;
     }
-    parts.push(entry.errors + ' error' + (entry.errors === 1 ? '' : 's'));
-    return parts.join(' · ');
   }
+  const info = 'Source: ' + o.name + ' (' + (nFiles + skipped) + ' files in ' + dirs.size + ' folders, ' + fmt(bytes) + (skipped ? ', ' + skipped + ' binary files not included' : '') + ')';
+  const head = [GUIDE[0], info].concat(GUIDE.slice(1), tree, ['', '=== PACK START ===']);
+  return { text: head.concat(body).join('\n') + '\n', files: nFiles, dirs: dirs.size, skipped, warnings };
+}
 
-  function itemLine(item) {
-    var mark = item.failure ? '!' : item.status === 'new' ? '+' : item.status === 'changed' ? '~' : '=';
-    return '  ' + mark + ' ' + item.path + ' — ' + (item.failure || item.status) + ', ' + fmtInt(item.bytes) + ' B';
-  }
-
-  function entryText(entry) {
-    var lines = [headerLine(entry)];
-    entry.notes.forEach(function (note) {
-      lines.push('  ' + note.text);
-      if (note.excerpt !== null && note.excerpt !== undefined) {
-        lines.push('    excerpt: "' + note.excerpt + '"');
-      }
-    });
-    entry.items.forEach(function (item) {
-      lines.push(itemLine(item));
-    });
-    return lines.join('\n');
-  }
-
-  function logText() {
-    if (!state.log.length) return '';
-    var out = [];
-    state.log.forEach(function (entry) { out.push(entryText(entry)); });
-    return out.join('\n') + '\n';
-  }
-
-  function resendText() {
-    var lines = ['Re-send these files complete, using the agreed format:'];
-    state.failures.forEach(function (type, path) {
-      lines.push(path + ' (' + type + ')');
-    });
-    return lines.join('\n') + '\n';
-  }
-
-  function snapshot() {
-    return {
-      files: new Map(state.files),
-      failures: new Map(state.failures),
-      log: state.log.slice(),
-      pastes: state.pastes
-    };
-  }
-
-  function restore(snap) {
-    if (!snap) return false;
-    state.files = new Map(snap.files);
-    state.failures = new Map(snap.failures);
-    state.log = snap.log.slice();
-    state.pastes = snap.pastes;
-    return true;
-  }
-
-  function clearAll() {
-    state.files.clear();
-    state.failures.clear();
-    state.log.length = 0;
-    state.pastes = 0;
-  }
-
-  function buildZip() {
-    var paths = Array.from(state.files.keys()).sort();
-    var chunks = [];
-    var central = [];
-    var offset = 0;
-    var centralSize = 0;
-    var dosTime = 0;
-    var dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1;
-
-    paths.forEach(function (path) {
-      var data = state.files.get(path).bytes;
-      var name = encoder.encode(path);
-      var crc = crc32(data);
-
-      var local = new Uint8Array(30 + name.length);
-      var lv = new DataView(local.buffer);
-      lv.setUint32(0, 0x04034b50, true);
-      lv.setUint16(4, 20, true);
-      lv.setUint16(6, 0x0800, true);
-      lv.setUint16(8, 0, true);
-      lv.setUint16(10, dosTime, true);
-      lv.setUint16(12, dosDate, true);
-      lv.setUint32(14, crc, true);
-      lv.setUint32(18, data.length, true);
-      lv.setUint32(22, data.length, true);
-      lv.setUint16(26, name.length, true);
-      lv.setUint16(28, 0, true);
-      local.set(name, 30);
-      chunks.push(local, data);
-
-      var centralOffset = offset;
-      offset += local.length + data.length;
-
-      var record = new Uint8Array(46 + name.length);
-      var cv = new DataView(record.buffer);
-      cv.setUint32(0, 0x02014b50, true);
-      cv.setUint16(4, 20, true);
-      cv.setUint16(6, 20, true);
-      cv.setUint16(8, 0x0800, true);
-      cv.setUint16(10, 0, true);
-      cv.setUint16(12, dosTime, true);
-      cv.setUint16(14, dosDate, true);
-      cv.setUint32(16, crc, true);
-      cv.setUint32(20, data.length, true);
-      cv.setUint32(24, data.length, true);
-      cv.setUint16(28, name.length, true);
-      cv.setUint16(30, 0, true);
-      cv.setUint16(32, 0, true);
-      cv.setUint16(34, 0, true);
-      cv.setUint16(36, 0, true);
-      cv.setUint32(38, 0, true);
-      cv.setUint32(42, centralOffset, true);
-      record.set(name, 46);
-      central.push(record);
-      centralSize += record.length;
-    });
-
-    var centralStart = offset;
-    central.forEach(function (record) { chunks.push(record); });
-
-    var end = new Uint8Array(22);
-    var ev = new DataView(end.buffer);
-    ev.setUint32(0, 0x06054b50, true);
-    ev.setUint16(4, 0, true);
-    ev.setUint16(6, 0, true);
-    ev.setUint16(8, paths.length, true);
-    ev.setUint16(10, paths.length, true);
-    ev.setUint32(12, centralSize, true);
-    ev.setUint32(16, centralStart, true);
-    ev.setUint16(20, 0, true);
-    chunks.push(end);
-
-    var out = new Uint8Array(centralStart + centralSize + end.length);
-    var pos = 0;
-    chunks.forEach(function (chunk) {
-      out.set(chunk, pos);
-      pos += chunk.length;
-    });
-    return out;
-  }
-
-  return {
-    state: state,
-    ingest: ingest,
-    ingestFiles: ingestFiles,
-    clearAll: clearAll,
-    buildZip: buildZip,
-    logText: logText,
-    resendText: resendText,
-    headerLine: headerLine,
-    entryText: entryText,
-    itemLine: itemLine,
-    snapshot: snapshot,
-    restore: restore,
-    lineCount: lineCount,
-    fmtInt: fmtInt,
-    crc32: crc32
+/* ---------- Unpack: one text -> entries ---------- */
+function unpack(text, o) {
+  if (!/(^|[^\r])\n/.test(text)) text = text.replace(/\r\n/g, '\n');
+  const warnings = [], dirs = new Set(), files = new Map(), enc = new TextEncoder();
+  const addDirs = p => { const s = p.split('/'); for (let i = 1; i <= s.length; i++) dirs.add(s.slice(0, i).join('/') + '/'); };
+  const put = (raw, data) => {
+    const path = cleanPath(raw);
+    if (!path) { warnings.push('Skipped a file with an unsafe or empty path: ' + raw); return; }
+    const s = path.split('/');
+    if (s.length > 1) addDirs(s.slice(0, -1).join('/'));
+    if (files.has(path)) warnings.push('Duplicate file, the later one wins: ' + path);
+    files.set(path, data);
   };
-})();
+  let cur = null;
+  const close = (noNl, open) => {
+    let L = cur.lines;
+    if (open) warnings.push('Missing "=== END FILE ===" after ' + cur.path);
+    if (cur.b64) {
+      try { const bin = atob(L.join('').replace(/\s+/g, '')); put(cur.path, Uint8Array.from(bin, c => c.charCodeAt(0))); }
+      catch { warnings.push('Invalid base64 in ' + cur.path); }
+    } else {
+      if (o.fences && L.length > 1) {
+        const a = /^(`{3,}|~{3,})[^`]*$/.exec(L[0].trim()), z = L[L.length - 1].trim();
+        if (a && /^(`{3,}|~{3,})$/.test(z) && z[0] === a[1][0] && z.length >= a[1].length) L = L.slice(1, -1);
+      }
+      put(cur.path, enc.encode(L.join('\n') + (noNl ? '' : '\n')));
+    }
+    cur = null;
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    let m;
+    if (cur) {
+      if ((m = /^=== END FILE( \(no newline at end\))? ===$/.exec(line))) { close(!!m[1]); continue; }
+      if (/^=== (?:FOLDER|FILE): /.test(line)) close(false, true);
+      else { cur.lines.push(UNESC.test(raw) ? raw.slice(1) : raw); continue; }
+    }
+    if ((m = /^=== FOLDER: (.+) ===$/.exec(line))) {
+      const p = cleanPath(m[1]);
+      if (p) addDirs(p); else warnings.push('Skipped a folder with an unsafe path: ' + m[1]);
+    } else if ((m = /^=== FILE: (.+?)( \(base64\))? ===$/.exec(line))) cur = { path: m[1], b64: !!m[2], lines: [] };
+  }
+  if (cur) close(false, true);
+  const list = [...dirs].sort().map(p => ({ path: p, data: null }));
+  for (const p of [...files.keys()].sort()) list.push({ path: p, data: files.get(p) });
+  return { list, warnings };
+}
 
-/* ==== ui ==== */
-(function () {
-  'use strict';
+/* ---------- Page wiring ---------- */
+if (typeof document !== 'undefined') {
+  const $ = s => document.querySelector(s);
+  let zip = null;
+  const say = (el, msg, bad) => { el.className = 'msg' + (bad ? ' bad' : ''); el.textContent = msg; };
+  const save = (blob, name) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  };
+  function warnList(box, arr) {
+    box.replaceChildren();
+    arr.slice(0, 15).concat(arr.length > 15 ? ['and ' + (arr.length - 15) + ' more warnings'] : []).forEach(w => {
+      const p = document.createElement('p'); p.className = 'warn'; p.textContent = w; box.append(p);
+    });
+  }
 
-  var core = window.PackerCore;
-  var EXAMPLE = '{[[FILE: src/hello.js]]}\nconsole.log("hello from the pack");\n{[[END: src/hello.js]]}\n';
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
+    $('#a').hidden = t.dataset.tab !== 'a';
+    $('#b').hidden = t.dataset.tab !== 'b';
+  });
 
-  function $(id) { return document.getElementById(id); }
-
-  var box = $('paste');
-  var dropZone = $('drop-zone');
-  var pasteBtn = $('paste-btn');
-  var downloadBtn = $('download');
-  var copyLogBtn = $('copy-log');
-  var copyResendBtn = $('copy-resend');
-  var clearBtn = $('clear');
-  var helpBtn = $('help-btn');
-  var filesEl = $('files');
-  var filesMeta = $('files-meta');
-  var copyPathsBtn = $('copy-paths');
-  var filterInput = $('filter');
-  var filterClear = $('filter-clear');
-  var failureBanner = $('failure-banner');
-  var failureTitle = $('failure-title');
-  var failureList = $('failure-list');
-  var failureCopy = $('failure-copy');
-  var logEl = $('log');
-  var logCount = $('log-count');
-  var logErrors = $('log-errors');
-  var logErrorsCount = $('log-errors-count');
-  var toastEl = $('toast');
-  var toastMsg = $('toast-msg');
-  var toastAction = $('toast-action');
-  var preview = $('preview');
-  var previewChip = $('preview-chip');
-  var previewTitle = $('preview-title');
-  var previewMeta = $('preview-meta');
-  var previewNote = $('preview-note');
-  var previewBody = $('preview-body');
-  var help = $('help');
-
-  var ui = {
-    filter: '',
-    errorsOnly: false,
-    previewPath: null,
-    undo: null,
-    armTimer: null,
-    toastTimer: null,
-    toastActionFn: null
+  const refresh = () => {
+    if (!zip) return;
+    const r = pack(zip.entries, { name: zip.name, binary: $('#bin').value, junk: $('#junk').checked });
+    const size = new Blob([r.text]).size;
+    $('#out').value = r.text;
+    $('#dl').disabled = $('#cp').disabled = false;
+    say($('#msgA'), zip.name + ': ' + r.files + ' files in ' + r.dirs + ' folders, packed into ' + fmt(size) +
+      ' of text (about ' + Math.round(size / 4).toLocaleString() + ' tokens)' +
+      (r.skipped ? '. ' + r.skipped + ' binary files are listed but not included.' : '.'));
+    warnList($('#warnA'), zip.warnings.concat(r.warnings));
+  };
+  const load = async f => {
+    if (!f) return;
+    try {
+      const r = await readZip(await f.arrayBuffer());
+      zip = { name: f.name, entries: r.entries, warnings: r.warnings };
+      refresh();
+    } catch (e) { zip = null; say($('#msgA'), e.message, true); }
+  };
+  $('#zipin').onchange = e => load(e.target.files[0]);
+  const drop = $('#drop');
+  ['dragenter', 'dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => load(e.dataTransfer.files[0]));
+  $('#bin').onchange = $('#junk').onchange = refresh;
+  $('#dl').onclick = () => save(new Blob([$('#out').value], { type: 'text/plain;charset=utf-8' }), (zip.name.replace(/\.zip$/i, '') || 'project') + '.txt');
+  $('#cp').onclick = async () => {
+    const t = $('#out'), b = $('#cp');
+    try { await navigator.clipboard.writeText(t.value); } catch { t.select(); document.execCommand('copy'); }
+    b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy text', 1500);
   };
 
-  $('example-block').textContent = EXAMPLE;
-
-  function make(tag, className, text) {
-    var node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== null && text !== undefined) node.textContent = text;
-    return node;
-  }
-
-  function fmtBytes(n) {
-    if (n < 1024) return n + ' B';
-    if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
-    return (n / 1048576).toFixed(1) + ' MB';
-  }
-
-  function ageText(at) {
-    var seconds = Math.floor((Date.now() - at) / 1000);
-    if (seconds < 10) return 'just now';
-    if (seconds < 60) return seconds + 's ago';
-    var minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return minutes + 'm ago';
-    var hours = Math.floor(minutes / 60);
-    if (hours < 24) return hours + 'h ago';
-    return Math.floor(hours / 24) + 'd ago';
-  }
-
-  function basename(path) {
-    var at = path.lastIndexOf('/');
-    return at === -1 ? path : path.slice(at + 1);
-  }
-
-  function toast(message, actionLabel, actionFn, duration) {
-    toastMsg.textContent = message;
-    ui.toastActionFn = actionFn || null;
-    if (actionLabel && actionFn) {
-      toastAction.hidden = false;
-      toastAction.textContent = actionLabel;
-    } else {
-      toastAction.hidden = true;
-      toastAction.textContent = '';
-    }
-    toastEl.classList.add('show');
-    clearTimeout(ui.toastTimer);
-    ui.toastTimer = setTimeout(function () {
-      toastEl.classList.remove('show');
-    }, duration || 2800);
-  }
-
-  function copyText(text) {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      return navigator.clipboard.writeText(text).then(function () {
-        return true;
-      }, function () {
-        return legacyCopy(text);
-      });
-    }
-    return Promise.resolve(legacyCopy(text));
-  }
-
-  function legacyCopy(text) {
-    var helper = document.createElement('textarea');
-    helper.value = text;
-    helper.setAttribute('readonly', '');
-    helper.style.position = 'fixed';
-    helper.style.top = '0';
-    helper.style.left = '-9999px';
-    helper.style.opacity = '0';
-    document.body.appendChild(helper);
-    helper.select();
-    var ok = false;
-    try {
-      ok = document.execCommand('copy');
-    } catch (err) {
-      ok = false;
-    }
-    document.body.removeChild(helper);
-    box.focus();
-    return ok;
-  }
-
-  function summary(entry) {
-    var bits = [];
-    if (entry.fresh) bits.push(entry.fresh + ' new');
-    if (entry.changed) bits.push(entry.changed + ' changed');
-    if (entry.identical) bits.push(entry.identical + ' identical');
-    if (!bits.length) bits.push('nothing to merge');
-    var message = 'Paste ' + entry.n + ' · ' + bits.join(' · ');
-    if (entry.errors) {
-      message += ' · ' + entry.errors + ' error' + (entry.errors === 1 ? '' : 's');
-    }
-    return message;
-  }
-
-  function afterIngest(entry) {
-    renderAll();
-    toast(summary(entry) + (entry.errors ? ' — see the log' : ''), null, null, 3200);
-  }
-
-  function ingestText(text, source) {
-    var entry = core.ingest(text, source);
-    if (!entry) return false;
-    afterIngest(entry);
-    return true;
-  }
-
-  /* ---------- rendering ---------- */
-  function renderStats() {
-    var bytes = 0;
-    var failed = 0;
-    core.state.files.forEach(function (file) {
-      bytes += file.bytes.length;
-      if (file.failure) failed++;
-    });
-    $('stat-files').textContent = core.fmtInt(core.state.files.size);
-    $('stat-bytes').textContent = fmtBytes(bytes);
-    $('stat-pastes').textContent = core.fmtInt(core.state.pastes);
-    $('stat-failed').textContent = core.fmtInt(failed);
-    $('stat-failed-wrap').classList.toggle('bad', failed > 0);
-  }
-
-  function emptyBlock(title, copy, extra) {
-    var wrap = make('div', 'empty-state');
-    wrap.appendChild(make('div', 'empty-title', title));
-    if (copy) wrap.appendChild(make('p', 'empty-copy', copy));
-    if (extra) wrap.appendChild(extra);
-    return wrap;
-  }
-
-  function renderFiles() {
-    filesEl.textContent = '';
-    var paths = Array.from(core.state.files.keys()).sort();
-    var term = ui.filter.trim().toLowerCase();
-    var visible = term ? paths.filter(function (path) {
-      return path.toLowerCase().indexOf(term) !== -1;
-    }) : paths;
-
-    var totalBytes = 0;
-    var failed = 0;
-    paths.forEach(function (path) {
-      var file = core.state.files.get(path);
-      totalBytes += file.bytes.length;
-      if (file.failure) failed++;
-    });
-
-    if (!paths.length) {
-      var hint = make('div', 'empty-dash');
-      hint.appendChild(document.createTextNode('Paste a message, press '));
-      hint.appendChild(make('span', 'kbd', 'Paste'));
-      hint.appendChild(document.createTextNode(', or drop a .txt file.'));
-      filesEl.appendChild(emptyBlock(
-        'No files yet',
-        'Every FILE/END block you paste lands here. The same path replaces the earlier copy; nothing is discarded until you clear the pack.',
-        hint
-      ));
-    } else if (!visible.length) {
-      var reset = make('button', 'btn small', 'Clear filter');
-      reset.type = 'button';
-      reset.addEventListener('click', function () { setFilter(''); });
-      filesEl.appendChild(emptyBlock(
-        'No files match “' + ui.filter + '”',
-        'Try a shorter path, or clear the filter to see all ' + paths.length + ' files.',
-        reset
-      ));
-    } else {
-      visible.forEach(function (path) {
-        var file = core.state.files.get(path);
-        var lines = core.lineCount(file.content);
-        var row = make('button', 'file-row');
-        row.type = 'button';
-        row.title = 'Preview ' + path;
-        row.appendChild(make('span', 'file-path', path));
-        row.appendChild(make('span', 'file-meta', fmtBytes(file.bytes.length) + ' · ' + core.fmtInt(lines) + (lines === 1 ? ' line' : ' lines')));
-        row.appendChild(make('span', 'chip ' + (file.failure || file.status), file.failure || file.status));
-        row.appendChild(make('span', 'file-open', '›'));
-        row.addEventListener('click', function () { openPreview(path); });
-        filesEl.appendChild(row);
-      });
-    }
-
-    var meta;
-    if (!paths.length) {
-      meta = '0 files';
-    } else if (term) {
-      meta = visible.length + ' of ' + paths.length + ' files';
-    } else {
-      meta = paths.length + (paths.length === 1 ? ' file' : ' files') +
-        ' · ' + fmtBytes(totalBytes) +
-        (failed ? ' · ' + failed + ' failed' : '');
-    }
-    filesMeta.textContent = meta;
-    copyPathsBtn.disabled = paths.length === 0;
-  }
-
-  function renderFailures() {
-    var failed = [];
-    core.state.files.forEach(function (file, path) {
-      if (file.failure) failed.push({ path: path, type: file.failure });
-    });
-    failed.sort(function (a, b) { return a.path < b.path ? -1 : 1; });
-
-    failureBanner.hidden = failed.length === 0;
-    failureCopy.disabled = failed.length === 0;
-    failureList.textContent = '';
-    if (!failed.length) return;
-
-    failureTitle.textContent = failed.length + (failed.length === 1 ? ' file needs' : ' files need') + ' a resend';
-    failed.forEach(function (item) {
-      var row = make('li');
-      row.appendChild(make('code', null, item.path));
-      row.appendChild(make('span', 'chip ' + item.type, item.type));
-      failureList.appendChild(row);
-    });
-  }
-
-  function noteClass(kind) {
-    if (kind === 'truncated' || kind === 'corrupt' || kind === 'nomarkers') return 'note bad';
-    if (kind === 'source') return 'note source';
-    if (kind === 'outside') return 'note dim';
-    return 'note';
-  }
-
-  function markFor(item) {
-    if (item.failure) return '!';
-    if (item.status === 'new') return '+';
-    if (item.status === 'changed') return '~';
-    return '=';
-  }
-
-  function buildEntry(entry) {
-    var block = make('article', 'log-entry' + (entry.errors ? ' has-errors' : ''));
-
-    var head = make('div', 'log-head-row');
-    head.appendChild(make('div', 'log-head', core.headerLine(entry)));
-    var age = make('span', 'log-age', ageText(entry.at));
-    age.dataset.at = String(entry.at);
-    head.appendChild(age);
-    block.appendChild(head);
-
-    entry.notes.forEach(function (note) {
-      block.appendChild(make('div', noteClass(note.kind), note.text));
-      if (note.excerpt !== null && note.excerpt !== undefined) {
-        block.appendChild(make('div', 'excerpt', 'excerpt: "' + note.excerpt + '"'));
-      }
-    });
-
-    if (entry.items.length) {
-      var details = document.createElement('details');
-      details.className = 'entry-details';
-      var sum = document.createElement('summary');
-      sum.textContent = entry.items.length + (entry.items.length === 1 ? ' file' : ' files') + ' in this paste';
-      details.appendChild(sum);
-
-      var list = make('div', 'item-list');
-      entry.items.forEach(function (item) {
-        var row = make('div', 'item ' + (item.failure || item.status));
-        row.appendChild(make('span', 'item-mark', markFor(item)));
-        row.appendChild(make('span', 'item-path', item.path));
-        row.appendChild(make('span', 'item-tag', (item.failure || item.status) + ' · ' + fmtBytes(item.bytes)));
-        list.appendChild(row);
-      });
-      details.appendChild(list);
-      block.appendChild(details);
-    }
-
-    return block;
-  }
-
-  function renderLog() {
-    logEl.textContent = '';
-    var entries = core.state.log;
-    var errorEntries = entries.filter(function (entry) { return entry.errors > 0; });
-    var shown = ui.errorsOnly ? errorEntries : entries;
-
-    logCount.textContent = entries.length + (entries.length === 1 ? ' paste' : ' pastes');
-    logErrorsCount.textContent = String(errorEntries.length);
-    logErrors.setAttribute('aria-pressed', ui.errorsOnly ? 'true' : 'false');
-    logErrors.disabled = entries.length === 0;
-
-    if (!entries.length) {
-      var steps = make('ol', 'steps');
-      [
-        ['Copy a message', ' that contains FILE/END blocks.'],
-        ['Paste anywhere', ' on this page — Ctrl+V, Shift+Insert, right-click, or the Paste button.'],
-        ['Watch it merge', ' — paths update, failures get flagged, then download one .zip.']
-      ].forEach(function (step) {
-        var li = make('li');
-        li.appendChild(make('strong', null, step[0]));
-        li.appendChild(document.createTextNode(step[1]));
-        steps.appendChild(li);
-      });
-      var exampleBtn = make('button', 'btn small ghost', 'Copy example block');
-      exampleBtn.type = 'button';
-      exampleBtn.setAttribute('data-copy-example', '');
-      var extra = make('div');
-      extra.appendChild(steps);
-      extra.appendChild(exampleBtn);
-      extra.style.display = 'grid';
-      extra.style.gap = '10px';
-      extra.style.justifyItems = 'start';
-      logEl.appendChild(emptyBlock(
-        'No pastes yet',
-        'This log records every paste: what was added, replaced, or ignored. It is kept for the whole session and copies out as plain text.',
-        extra
-      ));
-      return;
-    }
-
-    if (!shown.length) {
-      logEl.appendChild(emptyBlock(
-        'No failed pastes',
-        'Every paste so far merged cleanly. Untick “Errors only” to see the full history.'
-      ));
-      return;
-    }
-
-    shown.forEach(function (entry) {
-      logEl.appendChild(buildEntry(entry));
-    });
-    logEl.scrollTop = 0;
-  }
-
-  function updateControls() {
-    var hasFiles = core.state.files.size > 0;
-    var hasLog = core.state.log.length > 0;
-    var hasFailures = core.state.failures.size > 0;
-    downloadBtn.disabled = !hasFiles;
-    downloadBtn.title = hasFiles
-      ? 'Download ' + core.state.files.size + (core.state.files.size === 1 ? ' file' : ' files') + ' as a zip'
-      : 'Paste something first';
-    copyLogBtn.disabled = !hasLog;
-    copyResendBtn.disabled = !hasFailures;
-    copyPathsBtn.disabled = !hasFiles;
-    clearBtn.disabled = !hasFiles && !hasLog;
-    logErrors.disabled = !hasLog;
-  }
-
-  function renderAll() {
-    renderStats();
-    renderFiles();
-    renderFailures();
-    renderLog();
-    updateControls();
-  }
-
-  /* ---------- filter ---------- */
-  function setFilter(value) {
-    ui.filter = value;
-    filterInput.value = value;
-    filterClear.hidden = !value;
-    renderFiles();
-  }
-
-  filterInput.addEventListener('input', function () {
-    ui.filter = filterInput.value;
-    filterClear.hidden = !filterInput.value;
-    renderFiles();
-  });
-
-  filterInput.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') {
-      event.stopPropagation();
-      setFilter('');
-      filterInput.blur();
-    }
-  });
-
-  filterClear.addEventListener('click', function () {
-    setFilter('');
-    filterInput.focus();
-  });
-
-  /* ---------- paste interception ---------- */
-  function disarm() {
-    dropZone.classList.remove('armed');
-    clearTimeout(ui.armTimer);
-  }
-
-  function promptManual(reason) {
-    box.focus();
-    dropZone.classList.add('armed');
-    clearTimeout(ui.armTimer);
-    ui.armTimer = setTimeout(function () { dropZone.classList.remove('armed'); }, 9000);
-    toast(reason + ' Press Ctrl+V or Shift+Insert now — the text stays out of the box.', null, null, 5200);
-  }
-
-  document.addEventListener('paste', function (event) {
-    if (event.target === filterInput) return;
-    event.preventDefault();
-    disarm();
-    var data = event.clipboardData || window.clipboardData;
-    if (data) {
-      var text = '';
-      try {
-        text = data.getData('text/plain') || data.getData('Text') || '';
-      } catch (err) {
-        text = '';
-      }
-      if (text) ingestText(text);
-      else toast('That clipboard had no text — try copying the message again.');
-    } else if (navigator.clipboard && navigator.clipboard.readText) {
-      navigator.clipboard.readText().then(function (text) {
-        if (text) ingestText(text);
-        else toast('That clipboard had no text.');
-      }, function () {
-        toast('The browser blocked clipboard access — use the Paste button or Ctrl+V.');
-      });
-    }
-    box.value = '';
-  }, true);
-
-  box.addEventListener('beforeinput', function (event) {
-    event.preventDefault();
-  });
-
-  box.addEventListener('input', function () {
-    if (box.value !== '') {
-      var text = box.value;
-      box.value = '';
-      ingestText(text);
-    }
-  });
-
-  /* ---------- paste button ---------- */
-  function setPasteBusy(busy) {
-    pasteBtn.dataset.busy = busy ? '1' : '0';
-    pasteBtn.textContent = busy ? 'Reading…' : 'Paste';
-    pasteBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
-  }
-
-  pasteBtn.addEventListener('click', function () {
-    if (pasteBtn.dataset.busy === '1') return;
-    if (!navigator.clipboard || !navigator.clipboard.readText) {
-      promptManual('This browser can’t read the clipboard from a button.');
-      return;
-    }
-    setPasteBusy(true);
-    var settled = false;
-    var timer = setTimeout(function () {
-      if (settled) return;
-      settled = true;
-      setPasteBusy(false);
-      promptManual('The browser is waiting for clipboard permission.');
-    }, 2500);
-
-    navigator.clipboard.readText().then(function (text) {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      setPasteBusy(false);
-      if (!text) { toast('The clipboard is empty.'); return; }
-      ingestText(text, 'clipboard button');
-    }, function () {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      setPasteBusy(false);
-      promptManual('Clipboard access was blocked.');
-    });
-  });
-
-  /* ---------- drag and drop ---------- */
-  function cleanPath(name) {
-    var cleaned = name.replace(/[\u0000-\u001f\u007f]/g, '').replace(/^\.?\//, '');
-    return cleaned || 'dropped-file.txt';
-  }
-
-  function hasFileMarkers(text) {
-    return /(?:^|\n)\{\[\[FILE:[^\n]*\]\]\}(?:\r?\n|$)/.test(text);
-  }
-
-  function handleDroppedFiles(fileList) {
-    var files = Array.prototype.slice.call(fileList);
-    if (!files.length) return;
-    var readable = [];
-    var skipped = 0;
-    files.forEach(function (file) {
-      var looksText = !file.type || /^text\//i.test(file.type) ||
-        /\.(txt|md|markdown|log|json|js|mjs|cjs|ts|tsx|jsx|css|html|htm|xml|yml|yaml|csv|ini|toml|sh|py|rb|go|rs|java|kt|c|h|cpp|hpp|sql)$/i.test(file.name);
-      if (looksText) readable.push(file);
-      else skipped++;
-    });
-
-    Promise.all(readable.map(function (file) {
-      return file.text().then(function (text) {
-        return { name: file.name, text: text };
-      }, function () {
-        return null;
-      });
-    })).then(function (results) {
-      var raw = [];
-      var unreadable = skipped;
-      results.forEach(function (item) {
-        if (!item || item.text.indexOf('\u0000') !== -1) { unreadable++; return; }
-        if (hasFileMarkers(item.text)) core.ingest(item.text, 'dropped ' + item.name);
-        else raw.push({ path: cleanPath(item.name), content: item.text });
-      });
-      if (raw.length) {
-        core.ingestFiles(raw, 'dropped ' + (raw.length === 1 ? raw[0].path : raw.length + ' files'));
-      }
-      renderAll();
-      var added = raw.length;
-      var parts = [];
-      if (added) parts.push(added + (added === 1 ? ' file' : ' files') + ' added from the drop');
-      if (unreadable) parts.push(unreadable + ' skipped (binary or unreadable)');
-      toast(parts.length ? parts.join(' · ') : 'Nothing usable in that drop.', null, null, 3600);
-    });
-  }
-
-  ['dragenter', 'dragover'].forEach(function (type) {
-    dropZone.addEventListener(type, function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      dropZone.classList.add('dragging');
-    });
-  });
-
-  dropZone.addEventListener('dragleave', function (event) {
-    if (!dropZone.contains(event.relatedTarget)) dropZone.classList.remove('dragging');
-  });
-
-  dropZone.addEventListener('drop', function (event) {
-    event.preventDefault();
-    event.stopPropagation();
-    dropZone.classList.remove('dragging');
-    var transfer = event.dataTransfer;
-    if (!transfer) return;
-    var files = transfer.files;
-    if (files && files.length) {
-      handleDroppedFiles(files);
-      return;
-    }
-    var text = '';
-    try {
-      text = transfer.getData('text/plain') || '';
-    } catch (err) {
-      text = '';
-    }
-    if (text) ingestText(text, 'dropped text');
-    else toast('That drop had no text or files.');
-  });
-
-  document.addEventListener('dragover', function (event) { event.preventDefault(); });
-  document.addEventListener('drop', function (event) { event.preventDefault(); });
-
-  /* ---------- downloads and copies ---------- */
-  function downloadBytes(bytes, filename, type) {
-    var blob = new Blob([bytes], { type: type });
-    var url = URL.createObjectURL(blob);
-    var link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
-  }
-
-  downloadBtn.addEventListener('click', function () {
-    var count = core.state.files.size;
-    if (!count) return;
-    var bytes = core.buildZip();
-    downloadBytes(bytes, 'project-pack.zip', 'application/zip');
-    var total = 0;
-    core.state.files.forEach(function (file) { total += file.bytes.length; });
-    toast('project-pack.zip · ' + count + (count === 1 ? ' file' : ' files') + ' · ' + fmtBytes(total), null, null, 3200);
-  });
-
-  copyLogBtn.addEventListener('click', function () {
-    if (!core.state.log.length) return;
-    copyText(core.logText()).then(function (ok) {
-      toast(ok ? 'Log copied as plain text.' : 'Copy failed — select the log text instead.');
-    });
-  });
-
-  copyResendBtn.addEventListener('click', copyResend);
-
-  copyPathsBtn.addEventListener('click', function () {
-    var paths = Array.from(core.state.files.keys()).sort();
-    if (!paths.length) return;
-    copyText(paths.join('\n') + '\n').then(function (ok) {
-      toast(ok ? paths.length + (paths.length === 1 ? ' path' : ' paths') + ' copied.' : 'Copy failed.');
-    });
-  });
-
-  function copyResend() {
-    if (!core.state.failures.size) return;
-    copyText(core.resendText()).then(function (ok) {
-      toast(ok ? 'Resend request copied.' : 'Copy failed.');
-    });
-  }
-
-  failureCopy.addEventListener('click', copyResend);
-
-  /* ---------- clear and undo ---------- */
-  clearBtn.addEventListener('click', function () {
-    if (!core.state.files.size && !core.state.log.length) return;
-    var fileCount = core.state.files.size;
-    ui.undo = core.snapshot();
-    core.clearAll();
-    renderAll();
-    box.value = '';
-    box.focus();
-    toast('Cleared ' + fileCount + (fileCount === 1 ? ' file' : ' files') + ' from the pack.', 'Undo', function () {
-      if (core.state.pastes !== 0 || core.state.files.size) {
-        toast('Undo is no longer available — a newer paste arrived.');
-        return;
-      }
-      core.restore(ui.undo);
-      renderAll();
-      toast('Restored ' + core.state.files.size + (core.state.files.size === 1 ? ' file' : ' files') + '.');
-    }, 8000);
-  });
-
-  /* ---------- file preview ---------- */
-  function openPreview(path) {
-    var file = core.state.files.get(path);
-    if (!file) return;
-    ui.previewPath = path;
-    previewTitle.textContent = path;
-    previewChip.className = 'chip ' + (file.failure || file.status);
-    previewChip.textContent = file.failure || file.status;
-    previewMeta.textContent = fmtBytes(file.bytes.length) +
-      ' · ' + core.fmtInt(Array.from(file.content).length) + ' characters' +
-      ' · ' + core.fmtInt(core.lineCount(file.content)) + ' lines';
-    if (file.failure) {
-      previewNote.hidden = false;
-      previewNote.textContent = file.failure === 'truncated'
-        ? 'This block had no END marker. The content below is everything that arrived, and it is already included in the zip.'
-        : 'This block ended with an END marker for another path. The content below is everything up to that marker, and it is already included in the zip.';
-    } else {
-      previewNote.hidden = true;
-      previewNote.textContent = '';
-    }
-    previewBody.textContent = file.content;
-    if (typeof preview.showModal === 'function') preview.showModal();
-    else preview.setAttribute('open', '');
-    previewBody.scrollTop = 0;
-  }
-
-  function closePreview() {
-    if (preview.open) preview.close();
-    preview.removeAttribute('open');
-  }
-
-  $('preview-close').addEventListener('click', closePreview);
-  $('preview-done').addEventListener('click', closePreview);
-
-  preview.addEventListener('click', function (event) {
-    if (event.target === preview) closePreview();
-  });
-
-  $('preview-copy').addEventListener('click', function () {
-    var file = core.state.files.get(ui.previewPath);
-    if (!file) return;
-    copyText(file.content).then(function (ok) {
-      toast(ok ? 'File content copied.' : 'Copy failed.');
-    });
-  });
-
-  $('preview-path').addEventListener('click', function () {
-    if (!ui.previewPath) return;
-    copyText(ui.previewPath).then(function (ok) {
-      toast(ok ? 'Path copied.' : 'Copy failed.');
-    });
-  });
-
-  $('preview-save').addEventListener('click', function () {
-    var file = core.state.files.get(ui.previewPath);
-    if (!file) return;
-    var name = basename(ui.previewPath) || 'file.txt';
-    downloadBytes(file.content, name, 'text/plain;charset=utf-8');
-    toast('Saved ' + name);
-  });
-
-  /* ---------- help ---------- */
-  helpBtn.addEventListener('click', function () {
-    if (typeof help.showModal === 'function') help.showModal();
-    else help.setAttribute('open', '');
-  });
-
-  Array.prototype.forEach.call(document.querySelectorAll('[data-close-dialog]'), function (button) {
-    button.addEventListener('click', function () {
-      if (help.open) help.close();
-      help.removeAttribute('open');
-    });
-  });
-
-  help.addEventListener('click', function (event) {
-    if (event.target === help) help.close();
-  });
-
-  document.addEventListener('click', function (event) {
-    var trigger = event.target.closest ? event.target.closest('[data-copy-example]') : null;
-    if (!trigger) return;
-    event.preventDefault();
-    copyText(EXAMPLE).then(function (ok) {
-      toast(ok ? 'Example block copied — paste it anywhere to try.' : 'Copy failed.');
-    });
-  });
-
-  /* ---------- log controls ---------- */
-  logErrors.addEventListener('click', function () {
-    ui.errorsOnly = !ui.errorsOnly;
-    renderLog();
-  });
-
-  /* ---------- shortcuts ---------- */
-  function isTypingTarget(target) {
-    if (!target) return false;
-    var tag = target.tagName;
-    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
-  }
-
-  document.addEventListener('keydown', function (event) {
-    var mod = event.ctrlKey || event.metaKey;
-    if (mod && (event.key === 's' || event.key === 'S')) {
-      event.preventDefault();
-      if (!downloadBtn.disabled) downloadBtn.click();
-      return;
-    }
-    if (mod && (event.key === 'k' || event.key === 'K')) {
-      event.preventDefault();
-      filterInput.focus();
-      filterInput.select();
-      return;
-    }
-    if (event.key === '/' && !isTypingTarget(event.target) && !preview.open && !help.open) {
-      event.preventDefault();
-      filterInput.focus();
-      return;
-    }
-    if (event.key === '?' && !isTypingTarget(event.target) && !preview.open && !help.open) {
-      event.preventDefault();
-      helpBtn.click();
-    }
-  });
-
-  /* ---------- toast action ---------- */
-  toastAction.addEventListener('click', function () {
-    var fn = ui.toastActionFn;
-    toastEl.classList.remove('show');
-    clearTimeout(ui.toastTimer);
-    ui.toastActionFn = null;
-    if (fn) fn();
-  });
-
-  /* ---------- relative times ---------- */
-  setInterval(function () {
-    Array.prototype.forEach.call(document.querySelectorAll('.log-age'), function (node) {
-      node.textContent = ageText(Number(node.dataset.at));
-    });
-  }, 20000);
-
-  renderAll();
-})();
+  $('#txtin').onchange = async e => { const f = e.target.files[0]; if (f) $('#inp').value = await f.text(); };
+  $('#build').onclick = () => {
+    const r = unpack($('#inp').value, { fences: $('#fence').checked });
+    warnList($('#warnB'), r.warnings);
+    const n = r.list.filter(x => x.data).length;
+    if (!n) return say($('#msgB'), 'No files found. Each file needs an opening line such as "=== FILE: src/app.js ===" and a closing line "=== END FILE ===", both starting in the first column.', true);
+    save(buildZip(r.list), 'project-pack.zip');
+    say($('#msgB'), 'Built project-pack.zip with ' + n + ' files in ' + (r.list.length - n) + ' folders.');
+  };
+}
 </script>
 </body>
 </html>
