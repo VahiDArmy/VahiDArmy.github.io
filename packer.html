@@ -7,18 +7,27 @@
 <style>
   :root {
     color-scheme: dark;
-    --bg: #0a0b0d;
-    --panel: #0f1115;
-    --panel-soft: #0d0f13;
-    --ink: #d9dce1;
-    --ink-soft: #a9afb7;
-    --muted: #767d86;
-    --faint: #5d646d;
-    --line: #22262c;
-    --line-soft: #191d22;
-    --accent: #8fc6ad;
-    --warn: #d6b07a;
-    --bad: #d99a9a;
+    --bg: #07090c;
+    --panel: #0d1015;
+    --panel-2: #0a0d11;
+    --panel-3: #11151b;
+    --line: #1e242c;
+    --line-soft: #161b21;
+    --ink: #e7eaf0;
+    --ink-2: #c3c9d2;
+    --muted: #8b939e;
+    --faint: #667079;
+    --mint: #8fe0bd;
+    --mint-ink: #c9f6e4;
+    --mint-dim: #2b4a3f;
+    --amber: #e9c07a;
+    --amber-dim: #4a3a24;
+    --rose: #e3a1a5;
+    --rose-dim: #4a2b2e;
+    --blue: #9dc0ea;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; }
@@ -26,148 +35,282 @@
     margin: 0;
     background: var(--bg);
     color: var(--ink);
-    font: 13px/1.55 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    font: 13px/1.55 var(--mono);
     -webkit-font-smoothing: antialiased;
   }
-
-  .app {
-    height: 100dvh;
-    max-width: 1080px;
-    margin: 0 auto;
-    padding: 18px 20px 20px;
-    display: grid;
-    grid-template-rows: auto auto auto minmax(110px, 0.85fr) minmax(150px, 1.15fr);
-    gap: 12px;
-  }
-
-  .head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    padding-bottom: 2px;
-  }
-  .brand {
-    font-size: 14px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: #e8eaee;
-  }
-  .brand::before {
+  body::before {
     content: "";
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin-right: 9px;
-    border: 1px solid #6f9f8b;
-    background: #16241f;
-    vertical-align: 1px;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(1000px 540px at 6% -12%, rgba(143, 224, 189, .10), transparent 62%),
+      radial-gradient(860px 480px at 102% -6%, rgba(233, 192, 122, .07), transparent 58%);
+    z-index: 0;
   }
-  .tagline {
-    color: var(--faint);
-    font-size: 11.5px;
-    letter-spacing: 0.02em;
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: .5;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, .022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, .022) 1px, transparent 1px);
+    background-size: 32px 32px;
+    -webkit-mask-image: radial-gradient(900px 420px at 30% 0%, #000, transparent 72%);
+    mask-image: radial-gradient(900px 420px at 30% 0%, #000, transparent 72%);
+    z-index: 0;
+  }
+  .app {
+    position: relative;
+    z-index: 1;
+    height: 100dvh;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 16px 20px 18px;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(118px, .92fr) minmax(150px, 1.08fr);
+    gap: 12px;
+  }
+
+  /* ---------- header ---------- */
+  .topbar { display: grid; gap: 10px; }
+  .brand-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand-mark {
+    width: 15px;
+    height: 15px;
+    border-radius: 4px;
+    background: linear-gradient(150deg, var(--mint), #4fa88a 62%, #2f6f5b);
+    box-shadow: 0 0 0 1px rgba(143, 224, 189, .25), 0 0 18px -4px rgba(143, 224, 189, .75);
+    transform: rotate(8deg);
+    flex: none;
+  }
+  .brand-name {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #f1f4f8;
     white-space: nowrap;
   }
-
-  .paste-panel {
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
     border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--panel);
-    padding: 10px 12px 9px;
-    display: grid;
-    gap: 7px;
-  }
-  .paste-top {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .label {
+    border-radius: 999px;
+    background: rgba(15, 19, 24, .8);
+    color: var(--muted);
     font-size: 10.5px;
-    letter-spacing: 0.16em;
+    letter-spacing: .08em;
     text-transform: uppercase;
-    color: #8a9199;
+    white-space: nowrap;
   }
-  .hint {
-    font-size: 11px;
+  .pill::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--mint);
+    box-shadow: 0 0 8px var(--mint);
+  }
+  .tagline {
+    margin: 0;
+    color: var(--muted);
+    font-size: 12px;
+    max-width: 74ch;
+  }
+  .tagline .mono { color: var(--ink-2); }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; min-width: 0; }
+  .stat {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(180deg, var(--panel-3), var(--panel-2));
+    padding: 7px 10px 8px;
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+  .stat-label {
     color: var(--faint);
-    text-align: right;
+    font-size: 9.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+  .stat-value {
+    font-size: 16px;
+    line-height: 1.3;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.01em;
+  }
+  .stat.bad .stat-value { color: var(--rose); }
+
+  /* ---------- cards ---------- */
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(17, 21, 27, .92), rgba(12, 15, 20, .96));
+    box-shadow: 0 24px 48px -40px #000, inset 0 1px 0 rgba(255, 255, 255, .025);
+  }
+  .paste-card {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px 11px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .paste-card.dragging {
+    border-color: rgba(143, 224, 189, .55);
+    box-shadow: 0 0 0 1px rgba(143, 224, 189, .22), 0 0 40px -18px rgba(143, 224, 189, .6);
+  }
+  .paste-card.armed { border-color: rgba(143, 224, 189, .45); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .label {
+    margin: 0;
+    color: var(--muted);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .17em;
+    text-transform: uppercase;
+  }
+  .hint { color: var(--faint); font-size: 11px; }
+  .hint kbd, .kbd {
+    display: inline-block;
+    padding: 0 4px;
+    border: 1px solid #2a323b;
+    border-bottom-color: #333c46;
+    border-radius: 4px;
+    background: #12171d;
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 10px;
+    line-height: 1.5;
   }
   #paste {
     display: block;
     width: 100%;
-    height: 84px;
+    height: 62px;
     resize: none;
-    padding: 9px 10px;
-    background: #0b0d10;
+    padding: 9px 11px;
+    background: #080b0e;
     color: var(--ink);
-    border: 1px solid #262b33;
-    border-radius: 5px;
+    border: 1px dashed #2a323b;
+    border-radius: 9px;
     font: inherit;
     line-height: 1.5;
     outline: none;
-    caret-color: #6f9f8b;
+    caret-color: var(--mint);
     overflow: auto;
+    transition: border-color .15s ease, background .15s ease;
   }
-  #paste::placeholder { color: #5a616a; }
-  #paste:focus { border-color: #3a4e46; background: #0c0f12; }
-  .format {
-    font-size: 11px;
-    color: #6a717a;
-    overflow-wrap: anywhere;
+  #paste::placeholder { color: #59636d; }
+  #paste:focus { border-color: #477a67; border-style: solid; background: #0a0e12; }
+  .paste-card.armed #paste { border-color: var(--mint); border-style: solid; }
+  .card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
   }
+  .format { color: #6c757e; font-size: 11px; overflow-wrap: anywhere; }
   .format code {
-    color: #93a09a;
-    background: #12161a;
-    border: 1px solid #1f242a;
-    padding: 0 4px;
-    border-radius: 3px;
+    padding: 1px 5px;
+    border: 1px solid #212830;
+    border-radius: 4px;
+    background: #0b0f13;
+    color: #a6b4ae;
     font: inherit;
     font-size: 10.5px;
+    white-space: nowrap;
   }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    appearance: none;
+    border: 1px solid #29313a;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #151a20, #10141a);
+    color: var(--ink-2);
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.4;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .13s ease, border-color .13s ease, color .13s ease, transform .13s ease;
+  }
+  .btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #1a2027, #13181e);
+    border-color: #36404b;
+    color: #eef1f5;
+  }
+  .btn:active:not(:disabled) { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid rgba(143, 224, 189, .55); outline-offset: 2px; }
+  .btn:disabled { opacity: .38; cursor: not-allowed; }
+  .btn.small { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+  .btn.ghost:hover:not(:disabled) { background: #141920; border-color: #262e37; color: var(--ink-2); }
+  .btn.accent {
+    background: linear-gradient(180deg, #a8efd2, #7fd9b5);
+    border-color: #a5eacd;
+    color: #07130e;
+    font-weight: 600;
+    box-shadow: 0 10px 26px -18px rgba(143, 224, 189, .9);
+  }
+  .btn.accent:hover:not(:disabled) { background: linear-gradient(180deg, #b8f6dd, #8fe3c1); color: #061009; }
+  .btn.accent-outline {
+    border-color: #33564a;
+    background: linear-gradient(180deg, #12241e, #0e1a16);
+    color: var(--mint-ink);
+  }
+  .btn.accent-outline:hover:not(:disabled) { border-color: #3f6d5c; background: linear-gradient(180deg, #172e26, #102019); }
+  .btn.danger { background: transparent; border-color: #38282b; color: #cf9a9e; }
+  .btn.danger:hover:not(:disabled) { background: #1a1214; border-color: #4c3236; color: #e8b0b4; }
+  .btn.rose { border-color: #4b3033; background: transparent; color: #e4aeb1; }
+  .btn.rose:hover:not(:disabled) { background: #1b1214; }
+  .icon-btn {
+    width: 30px;
+    height: 30px;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #10151a;
+    color: var(--muted);
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color .13s ease, border-color .13s ease, background .13s ease;
+  }
+  .icon-btn:hover { color: var(--ink); border-color: #38424d; background: #161c23; }
+  .icon-btn:focus-visible { outline: 2px solid rgba(143, 224, 189, .55); outline-offset: 2px; }
 
   .toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-  }
-  .btn {
-    appearance: none;
-    background: #13161b;
-    color: #cdd1d7;
-    border: 1px solid #292e36;
-    border-radius: 5px;
-    padding: 7px 12px;
-    font: inherit;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background .12s ease, border-color .12s ease, color .12s ease;
-  }
-  .btn:hover:not(:disabled) { background: #181c22; border-color: #343b45; }
-  .btn:active:not(:disabled) { background: #101317; }
-  .btn:focus-visible { outline: 1px solid #5c8f7c; outline-offset: 2px; }
-  .btn.primary {
-    background: #152420;
-    border-color: #2f4c41;
-    color: #c6e7d8;
-  }
-  .btn.primary:hover:not(:disabled) { background: #1a2c26; border-color: #3d6354; }
-  .btn.danger {
-    margin-left: auto;
-    background: transparent;
-    color: #c99191;
-    border-color: #352526;
-  }
-  .btn.danger:hover:not(:disabled) { background: #1b1214; border-color: #4a3032; color: #e0a5a5; }
-  .btn:disabled { opacity: .38; cursor: default; }
-
-  .panel {
     border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--panel);
+    border-radius: var(--radius);
+    background: rgba(13, 16, 21, .78);
+    padding: 8px 10px;
+  }
+  .toolbar .spacer { flex: 1 1 auto; }
+  .toolbar .sep { width: 1px; height: 20px; background: var(--line); margin: 0 2px; }
+  .paste-btn[data-busy="1"] { opacity: .8; }
+
+  /* ---------- panels ---------- */
+  .panel {
     display: flex;
     flex-direction: column;
     min-height: 0;
@@ -175,174 +318,612 @@
   }
   .panel-head {
     display: flex;
-    align-items: baseline;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 7px 12px;
-    border-bottom: 1px solid #1a1e24;
-    background: var(--panel-soft);
+    gap: 6px 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    background: rgba(10, 13, 17, .75);
   }
-  .panel-head > span:first-child {
-    font-size: 10.5px;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: #8a9199;
-  }
+  .panel-head-right { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px 8px; min-width: 0; }
   .meta {
+    color: var(--faint);
     font-size: 11px;
-    color: #646b74;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
+  .panel-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    background: rgba(9, 12, 15, .55);
+  }
+  .field { position: relative; flex: 1 1 auto; min-width: 0; }
+  .field input {
+    width: 100%;
+    padding: 5px 28px 5px 9px;
+    border: 1px solid #232b33;
+    border-radius: 6px;
+    background: #080b0e;
+    color: var(--ink);
+    font: inherit;
+    font-size: 11.5px;
+    outline: none;
+  }
+  .field input::placeholder { color: #5b656f; }
+  .field input:focus { border-color: #3d6a59; }
+  .field input::-webkit-search-cancel-button { display: none; }
+  .field-clear {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    background: #161c22;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .field-clear:hover { color: var(--ink); background: #1d252d; }
+  .toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 10.5px;
+    letter-spacing: .04em;
+    cursor: pointer;
+  }
+  .toggle:hover:not(:disabled) { color: var(--ink-2); border-color: #333c46; }
+  .toggle[aria-pressed="true"] {
+    color: var(--rose);
+    border-color: var(--rose-dim);
+    background: rgba(74, 43, 46, .25);
+  }
+  .toggle:disabled { opacity: .4; cursor: not-allowed; }
+  .toggle-count { color: inherit; opacity: .75; font-variant-numeric: tabular-nums; }
   .panel-body {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: #2a3038 var(--panel);
+    scrollbar-color: #29313a transparent;
   }
   .panel-body::-webkit-scrollbar { width: 10px; }
-  .panel-body::-webkit-scrollbar-track { background: var(--panel); }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
   .panel-body::-webkit-scrollbar-thumb {
-    background: #232830;
-    border-radius: 6px;
+    background: #242b33;
+    border-radius: 8px;
     border: 3px solid var(--panel);
   }
 
-  .file-list { list-style: none; margin: 0; padding: 0; }
+  /* ---------- file rows ---------- */
   .file-row {
+    appearance: none;
+    width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto auto 12px;
     align-items: center;
-    padding: 6px 12px;
-    border-bottom: 1px solid #171b20;
+    gap: 10px;
+    padding: 7px 12px;
+    border: 0;
+    border-bottom: 1px solid #151a20;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .12s ease;
   }
+  .file-row:hover { background: #10151b; }
+  .file-row:focus-visible { outline: 2px solid rgba(143, 224, 189, .45); outline-offset: -2px; }
   .file-row:last-child { border-bottom: 0; }
-  .file-path { overflow-wrap: anywhere; color: var(--ink); }
-  .file-size {
-    color: #717882;
-    font-size: 11.5px;
+  .file-path {
+    overflow-wrap: anywhere;
+    color: var(--ink);
+    font-size: 12.5px;
+  }
+  .file-meta {
+    color: #707a84;
+    font-size: 11px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
   }
+  .file-open { color: #4f5963; font-size: 14px; }
+  .file-row:hover .file-open { color: var(--mint); }
   .chip {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0 6px;
-    border: 1px solid #2a3038;
+    display: inline-block;
+    padding: 1px 7px;
+    border: 1px solid #2a323b;
     border-radius: 999px;
-    color: #818892;
+    color: #8b949e;
+    font-size: 9.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
     white-space: nowrap;
+    line-height: 1.6;
   }
-  .chip.new { color: #9fd0b8; border-color: #2c463c; }
-  .chip.changed { color: var(--warn); border-color: #4a3d29; }
-  .chip.identical { color: #7c848d; }
-  .chip.truncated, .chip.corrupt { color: var(--bad); border-color: #4b2f30; }
+  .chip.new { color: #9fe0c2; border-color: var(--mint-dim); background: rgba(43, 74, 63, .18); }
+  .chip.changed { color: var(--amber); border-color: var(--amber-dim); background: rgba(74, 58, 36, .18); }
+  .chip.identical { color: #8a949e; }
+  .chip.truncated, .chip.corrupt { color: var(--rose); border-color: var(--rose-dim); background: rgba(74, 43, 46, .18); }
 
-  .log-entry {
-    padding: 8px 12px;
-    border-bottom: 1px solid #171b20;
+  /* ---------- failure banner ---------- */
+  .failure {
+    margin: 8px 10px 0;
+    border: 1px solid #3d2f33;
+    border-radius: 9px;
+    background: linear-gradient(180deg, rgba(35, 24, 26, .85), rgba(24, 17, 19, .9));
+    padding: 8px 10px;
   }
+  .failure-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .failure-title { color: #f0b9bc; font-size: 11.5px; }
+  .failure-list { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 3px; }
+  .failure-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11.5px;
+    color: #d8b0b3;
+    overflow-wrap: anywhere;
+  }
+  .failure-list code { color: #efc3c6; font: inherit; }
+
+  /* ---------- log ---------- */
+  .log-entry {
+    padding: 9px 12px 10px;
+    border-bottom: 1px solid #151a20;
+    border-left: 2px solid transparent;
+    transition: background .12s ease;
+  }
+  .log-entry:hover { background: rgba(255, 255, 255, .012); }
   .log-entry:last-child { border-bottom: 0; }
+  .log-entry.has-errors { border-left-color: #5a3338; }
+  .log-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .log-head {
-    color: #dfe2e6;
+    color: #e2e6eb;
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
   }
+  .log-age { color: #5d6771; font-size: 10px; white-space: nowrap; flex: none; }
   .note {
-    padding-left: 12px;
-    margin-top: 2px;
-    color: #9aa1a9;
-    font-size: 12px;
-    overflow-wrap: anywhere;
-  }
-  .note.bad { color: #d8a1a1; }
-  .note.dim { color: #767d86; }
-  .excerpt {
-    padding-left: 24px;
-    color: #6f767f;
+    margin-top: 3px;
+    padding-left: 13px;
+    color: #9aa3ad;
     font-size: 11.5px;
     overflow-wrap: anywhere;
   }
-  .empty {
-    padding: 14px 12px;
-    color: #5f666f;
-    font-size: 12px;
+  .note.bad { color: #dfa8ab; }
+  .note.dim { color: #7a838d; }
+  .note.source { color: #7f8b95; font-size: 11px; }
+  .excerpt {
+    margin-top: 1px;
+    padding-left: 25px;
+    color: #6c757f;
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+  .entry-details { margin-top: 5px; }
+  .entry-details > summary {
+    cursor: pointer;
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 7px;
+    border: 1px solid #222a32;
+    border-radius: 999px;
+    color: #78828c;
+    font-size: 10.5px;
+    user-select: none;
+  }
+  .entry-details > summary::-webkit-details-marker { display: none; }
+  .entry-details > summary::before { content: "▸"; font-size: 9px; color: #5c666f; }
+  .entry-details[open] > summary::before { content: "▾"; }
+  .entry-details > summary:hover { color: var(--ink-2); border-color: #333c46; }
+  .item-list { display: grid; gap: 2px; margin: 6px 0 0; padding: 0 0 0 4px; }
+  .item {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: baseline;
+    font-size: 11px;
+    color: #98a1ab;
+  }
+  .item-mark { color: #6d7781; }
+  .item.new .item-mark { color: var(--mint); }
+  .item.changed .item-mark { color: var(--amber); }
+  .item.truncated .item-mark, .item.corrupt .item-mark { color: var(--rose); }
+  .item-path { overflow-wrap: anywhere; color: #afb7c0; }
+  .item-tag { color: #6c757f; font-size: 10.5px; white-space: nowrap; }
+  .item.truncated .item-tag, .item.corrupt .item-tag { color: #b98e91; }
+
+  /* ---------- empty states ---------- */
+  .empty-state { padding: 18px 16px 20px; display: grid; gap: 10px; justify-items: start; }
+  .empty-title { color: var(--ink-2); font-size: 13px; }
+  .empty-copy { margin: 0; color: var(--muted); font-size: 11.5px; max-width: 62ch; }
+  .steps { margin: 0; padding-left: 18px; color: var(--muted); font-size: 11.5px; display: grid; gap: 3px; }
+  .steps strong { color: var(--ink-2); font-weight: 500; }
+  .empty-dash {
+    border: 1px dashed #28313a;
+    border-radius: 9px;
+    padding: 12px 13px;
+    color: #7d8791;
+    font-size: 11.5px;
   }
 
+  /* ---------- dialogs ---------- */
+  dialog.dialog {
+    width: min(900px, 92vw);
+    max-height: 88vh;
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #10141a, #0b0e12);
+    color: var(--ink);
+    box-shadow: 0 50px 100px -40px #000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  dialog.dialog[open] { display: flex; }
+  dialog.dialog::backdrop { background: rgba(3, 5, 7, .66); backdrop-filter: blur(3px); }
+  .dialog-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 13px 14px 10px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .dialog-title-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .dialog-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #eef1f5;
+    overflow-wrap: anywhere;
+  }
+  .dialog-meta {
+    padding: 7px 14px;
+    color: #7d8791;
+    font-size: 11px;
+    border-bottom: 1px solid var(--line-soft);
+    font-variant-numeric: tabular-nums;
+  }
+  .dialog-note {
+    margin: 10px 14px 0;
+    padding: 7px 10px;
+    border: 1px solid #3d2f33;
+    border-radius: 7px;
+    background: rgba(45, 29, 31, .55);
+    color: #e0b0b3;
+    font-size: 11.5px;
+  }
+  .dialog-body {
+    padding: 12px 14px;
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+    display: grid;
+    gap: 12px;
+  }
+  .code {
+    margin: 0;
+    padding: 12px;
+    background: #070a0d;
+    border: 1px solid #1a2027;
+    border-radius: 8px;
+    color: #cdd5de;
+    font: inherit;
+    font-size: 11.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 52vh;
+    overflow: auto;
+    tab-size: 2;
+  }
+  .dialog-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-top: 1px solid var(--line-soft);
+    background: rgba(8, 11, 14, .6);
+  }
+  .dialog-actions .spacer { flex: 1 1 auto; }
+  .help-grid { display: grid; gap: 14px; }
+  .help-section h4 {
+    margin: 0 0 5px;
+    color: var(--muted);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .help-section p { margin: 0; color: var(--ink-2); font-size: 12px; }
+  .rules { margin: 0; padding-left: 16px; color: var(--ink-2); font-size: 12px; display: grid; gap: 4px; }
+  .rules code { color: #a8bdb4; }
+  .shortcuts { display: grid; gap: 5px; }
+  .shortcut {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 10px;
+    align-items: baseline;
+    font-size: 12px;
+  }
+  .shortcut span:last-child { color: var(--muted); }
+  .example-block {
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #1d242b;
+    border-radius: 8px;
+    background: #080b0e;
+    color: #b7c7c0;
+    font: inherit;
+    font-size: 11.5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- toast ---------- */
   .toast {
     position: fixed;
     left: 50%;
     bottom: 18px;
-    transform: translate(-50%, 6px);
-    max-width: calc(100vw - 32px);
-    padding: 6px 12px;
-    background: #161a20;
-    border: 1px solid #2d333c;
-    border-radius: 5px;
-    color: #cfd4da;
+    transform: translate(-50%, 8px);
+    max-width: calc(100vw - 28px);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid #2e3741;
+    border-radius: 9px;
+    background: rgba(18, 23, 29, .97);
+    box-shadow: 0 20px 40px -22px #000;
+    color: #d7dde4;
     font-size: 12px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .15s ease, transform .15s ease;
-    z-index: 10;
+    transition: opacity .16s ease, transform .16s ease;
+    z-index: 40;
   }
-  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast-action {
+    appearance: none;
+    border: 1px solid #37584b;
+    border-radius: 6px;
+    background: #16261f;
+    color: #b9efd8;
+    padding: 3px 9px;
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .toast-action:hover { background: #1b3028; }
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
 
-  @media (max-width: 720px) {
+  @media (max-width: 520px) {
+    .pill { display: none; }
+  }
+  @media (max-width: 760px) {
     .app {
       height: auto;
       min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: 14px 12px 16px;
+      padding: 12px 11px 16px;
+      gap: 10px;
     }
     .tagline { display: none; }
-    .hint { text-align: left; }
-    .panel-body { max-height: 38vh; }
-    .btn.danger { margin-left: 0; }
+    .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .panel-body { max-height: 42vh; }
+    #paste { height: 88px; }
+    .toolbar .spacer { display: none; }
+    .btn.danger { margin-left: auto; }
+    .hint { display: none; }
+    .file-row { grid-template-columns: minmax(0, 1fr) auto auto 10px; gap: 7px; }
+    .file-meta { display: none; }
+    .shortcut { grid-template-columns: 108px minmax(0, 1fr); }
+  }
+  @media (max-height: 640px) and (min-width: 761px) {
+    .app { height: auto; min-height: 100dvh; }
+    .panel-body { max-height: 40vh; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
   }
 </style>
 </head>
 <body>
 <main class="app">
-  <header class="head">
-    <div class="brand">project packer</div>
-    <div class="tagline">paste blocks · merge files · download one zip</div>
+  <header class="topbar">
+    <div class="brand-row">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">Project Packer</span>
+      </div>
+      <div class="top-actions">
+        <span class="pill">runs locally</span>
+        <button id="help-btn" class="icon-btn" type="button" aria-label="How it works and shortcuts" title="How it works">?</button>
+      </div>
+    </div>
+    <p class="tagline">Paste messages one after another — every <span class="mono">{[[FILE: path]]}</span> block merges into one deterministic <span class="mono">.zip</span>. Nothing leaves this tab.</p>
+    <div class="stats" aria-label="Pack summary">
+      <div class="stat"><span class="stat-label">Files</span><span id="stat-files" class="stat-value">0</span></div>
+      <div class="stat"><span class="stat-label">Size</span><span id="stat-bytes" class="stat-value">0 B</span></div>
+      <div class="stat"><span class="stat-label">Pastes</span><span id="stat-pastes" class="stat-value">0</span></div>
+      <div class="stat" id="stat-failed-wrap"><span class="stat-label">Resend</span><span id="stat-failed" class="stat-value">0</span></div>
+    </div>
   </header>
 
-  <section class="paste-panel">
-    <div class="paste-top">
-      <label class="label" for="paste">Paste</label>
-      <div class="hint">Ctrl+V · right-click paste · Shift+Insert — the box stays empty</div>
+  <section id="drop-zone" class="card paste-card" aria-labelledby="paste-label">
+    <div class="card-head">
+      <h2 id="paste-label" class="label">Paste zone</h2>
+      <span class="hint"><kbd>Ctrl</kbd>+<kbd>V</kbd> · <kbd>Shift</kbd>+<kbd>Insert</kbd> · right-click — the box stays empty</span>
     </div>
-    <textarea id="paste" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste a message here. Every FILE/END block is merged into the pack; nothing is discarded until Clear all."></textarea>
-    <div class="format">Format: <code>{[[FILE: path/to/file.ext]]}</code> content <code>{[[END: path/to/file.ext]]}</code> — prose outside blocks is ignored.</div>
+    <label class="sr-only" for="paste">Paste messages here</label>
+    <textarea id="paste" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="format-hint" placeholder="Paste a message here — or drop a .txt file. The text is captured on paste and never stays in this box."></textarea>
+    <div class="card-foot">
+      <span id="format-hint" class="format">Format <code>{[[FILE: path]]}</code> … content … <code>{[[END: path]]}</code> · prose outside blocks is ignored</span>
+      <button class="btn ghost small" type="button" data-copy-example>Copy example</button>
+    </div>
   </section>
 
-  <div class="toolbar">
-    <button id="download" class="btn primary" type="button">Download .zip</button>
-    <button id="copy-log" class="btn" type="button">Copy log</button>
-    <button id="copy-resend" class="btn" type="button">Copy resend request</button>
+  <div class="toolbar" role="toolbar" aria-label="Pack actions">
+    <button id="paste-btn" class="btn paste-btn accent-outline" type="button" title="Read the clipboard and ingest it">Paste</button>
+    <button id="download" class="btn accent" type="button">Download .zip</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button id="copy-log" class="btn" type="button" title="Copy the full log as plain text">Copy log</button>
+    <button id="copy-resend" class="btn" type="button" title="Copy a request for every failed block">Copy resend request</button>
+    <span class="spacer"></span>
     <button id="clear" class="btn danger" type="button">Clear all</button>
   </div>
 
-  <section class="panel files-panel">
-    <div class="panel-head"><span>Files</span><span id="files-meta" class="meta">0 files</span></div>
+  <section class="card panel files-panel" aria-labelledby="files-label">
+    <div class="panel-head">
+      <h2 id="files-label" class="label">Files</h2>
+      <div class="panel-head-right">
+        <span id="files-meta" class="meta">0 files</span>
+        <button id="copy-paths" class="btn ghost small" type="button" disabled>Copy paths</button>
+      </div>
+    </div>
+    <div class="panel-tools">
+      <label class="field">
+        <span class="sr-only">Filter files</span>
+        <input id="filter" type="search" placeholder="Filter files  ( / )" autocomplete="off" spellcheck="false">
+        <button id="filter-clear" class="field-clear" type="button" aria-label="Clear filter" hidden>×</button>
+      </label>
+    </div>
+    <div id="failure-banner" class="failure" hidden>
+      <div class="failure-head">
+        <span id="failure-title" class="failure-title">1 file needs a resend</span>
+        <button id="failure-copy" class="btn rose small" type="button">Copy resend request</button>
+      </div>
+      <ul id="failure-list" class="failure-list"></ul>
+    </div>
     <div class="panel-body">
-      <ul id="files" class="file-list"></ul>
+      <div id="files"></div>
     </div>
   </section>
 
-  <section class="panel log-panel">
-    <div class="panel-head"><span>Log</span><span class="meta">newest first</span></div>
-    <div id="log" class="panel-body" aria-live="polite"></div>
+  <section class="card panel log-panel" aria-labelledby="log-label">
+    <div class="panel-head">
+      <h2 id="log-label" class="label">Log</h2>
+      <div class="panel-head-right">
+        <button id="log-errors" class="toggle" type="button" aria-pressed="false" disabled>Errors only <span id="log-errors-count" class="toggle-count">0</span></button>
+        <span id="log-count" class="meta">0 pastes</span>
+      </div>
+    </div>
+    <div id="log" class="panel-body" role="log" aria-label="Paste log"></div>
   </section>
 </main>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="toast" class="toast" role="status" aria-live="polite">
+  <span id="toast-msg"></span>
+  <button id="toast-action" class="toast-action" type="button" hidden></button>
+</div>
+
+<dialog id="preview" class="dialog" aria-labelledby="preview-title">
+  <div class="dialog-head">
+    <div class="dialog-title-wrap">
+      <span id="preview-chip" class="chip">new</span>
+      <h3 id="preview-title" class="dialog-title">file</h3>
+    </div>
+    <button id="preview-close" class="icon-btn" type="button" aria-label="Close preview">×</button>
+  </div>
+  <div id="preview-meta" class="dialog-meta"></div>
+  <div id="preview-note" class="dialog-note" hidden></div>
+  <pre id="preview-body" class="code"></pre>
+  <div class="dialog-actions">
+    <button id="preview-copy" class="btn small" type="button">Copy content</button>
+    <button id="preview-path" class="btn small ghost" type="button">Copy path</button>
+    <button id="preview-save" class="btn small" type="button">Download file</button>
+    <span class="spacer"></span>
+    <button id="preview-done" class="btn small ghost" type="button">Close</button>
+  </div>
+</dialog>
+
+<dialog id="help" class="dialog" aria-labelledby="help-title">
+  <div class="dialog-head">
+    <div class="dialog-title-wrap">
+      <h3 id="help-title" class="dialog-title">How the packer works</h3>
+    </div>
+    <button class="icon-btn" type="button" data-close-dialog aria-label="Close help">×</button>
+  </div>
+  <div class="dialog-body">
+    <div class="help-grid">
+      <div class="help-section">
+        <h4>Rules</h4>
+        <ul class="rules">
+          <li>Every <code>{[[FILE: path]]}</code> … <code>{[[END: path]]}</code> pair is captured verbatim, byte for byte. Prose outside pairs is ignored.</li>
+          <li>The same path <strong>replaces</strong> the earlier copy, across pastes. The log says whether it was changed or identical.</li>
+          <li>A missing END keeps the block and flags it <strong>truncated</strong>; a mismatched END name flags it <strong>corrupt</strong>.</li>
+          <li>Flagged paths collect into a resend request; a later clean paste of the same path clears it.</li>
+          <li>The zip stores files uncompressed, sorted by path, with a fixed 2024-01-01 timestamp so identical packs produce identical bytes.</li>
+        </ul>
+      </div>
+      <div class="help-section">
+        <h4>Example block</h4>
+        <pre class="example-block" id="example-block"></pre>
+      </div>
+      <div class="help-section">
+        <h4>Shortcuts</h4>
+        <div class="shortcuts">
+          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">V</span></span><span>Paste a message (box never fills)</span></div>
+          <div class="shortcut"><span><span class="kbd">Shift</span>+<span class="kbd">Insert</span></span><span>Paste without the clipboard menu</span></div>
+          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">S</span></span><span>Download the zip</span></div>
+          <div class="shortcut"><span><span class="kbd">Ctrl</span> / <span class="kbd">⌘</span> + <span class="kbd">K</span></span><span>Focus the file filter</span></div>
+          <div class="shortcut"><span><span class="kbd">/</span></span><span>Focus the file filter</span></div>
+          <div class="shortcut"><span><span class="kbd">Esc</span></span><span>Close a dialog or clear the filter</span></div>
+        </div>
+      </div>
+      <div class="help-section">
+        <h4>Tips</h4>
+        <p>Drop one or more <code>.txt</code> message files onto the paste zone — they are ingested exactly like a paste. Drop a non-message file and it is added as a file of its own (useful for packing source files). Click any file to preview, copy, or save it. Everything stays in this tab.</p>
+      </div>
+    </div>
+  </div>
+  <div class="dialog-actions">
+    <button class="btn small accent-outline" type="button" data-copy-example>Copy example block</button>
+    <span class="spacer"></span>
+    <button class="btn small ghost" type="button" data-close-dialog>Close</button>
+  </div>
+</dialog>
+
+<noscript><p style="padding:20px;color:#ccc;font-family:monospace">Project Packer needs JavaScript.</p></noscript>
 
 <script>
 /* ==== core ==== */
@@ -351,7 +932,7 @@ var PackerCore = (function () {
 
   var FILE_RE = /^\{\[\[FILE:\s?(.+)\]\]\}$/;
   var END_RE = /^\{\[\[END:\s?(.+)\]\]\}$/;
-  var NOTE_ORDER = { truncated: 0, corrupt: 1, duplicate: 2, nomarkers: 3, outside: 4, empty: 5 };
+  var NOTE_ORDER = { source: 0, truncated: 1, corrupt: 2, duplicate: 3, nomarkers: 4, outside: 5, empty: 6 };
   var encoder = new TextEncoder();
 
   var crcTable = (function () {
@@ -480,26 +1061,39 @@ var PackerCore = (function () {
     return { blocks: blocks, outsideChars: outsideChars };
   }
 
+  function lineCount(content) {
+    if (content === '') return 0;
+    var count = 1;
+    for (var i = 0; i < content.length; i++) {
+      if (content.charCodeAt(i) === 10) count++;
+    }
+    return count;
+  }
+
   function makeState() {
     return { files: new Map(), log: [], failures: new Map(), pastes: 0 };
   }
 
   var state = makeState();
 
-  function ingest(text) {
-    if (typeof text !== 'string' || text.length === 0) return null;
-
-    var parsed = parseBlocks(text);
+  function applyBlocks(parsed, source) {
     var entry = {
       n: state.pastes + 1,
       time: nowTime(),
+      at: Date.now(),
+      source: source || null,
       fresh: 0,
       changed: 0,
       identical: 0,
       errors: 0,
-      notes: []
+      notes: [],
+      items: []
     };
     state.pastes = entry.n;
+
+    if (source) {
+      entry.notes.push({ kind: 'source', text: 'source: ' + source });
+    }
 
     var occurrences = new Map();
     var lastByPath = new Map();
@@ -533,6 +1127,8 @@ var PackerCore = (function () {
         status: status
       });
 
+      entry.items.push({ path: path, status: status, failure: failure, bytes: bytes.length });
+
       if (block.truncated) {
         entry.errors++;
         state.failures.set(path, 'truncated');
@@ -553,6 +1149,10 @@ var PackerCore = (function () {
       }
 
       if (block.content.length === 0) emptyPaths.push(path);
+    });
+
+    entry.items.sort(function (a, b) {
+      return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
     });
 
     occurrences.forEach(function (count, path) {
@@ -591,6 +1191,26 @@ var PackerCore = (function () {
     return entry;
   }
 
+  function ingest(text, source) {
+    if (typeof text !== 'string' || text.length === 0) return null;
+    return applyBlocks(parseBlocks(text), source);
+  }
+
+  // Adds whole files without going through marker parsing (drag and drop).
+  function ingestFiles(files, source) {
+    if (!files || !files.length) return null;
+    var blocks = files.map(function (file) {
+      return {
+        path: file.path,
+        content: file.content,
+        truncated: false,
+        corrupt: false,
+        corruptName: null
+      };
+    });
+    return applyBlocks({ blocks: blocks, outsideChars: 0 }, source || 'files');
+  }
+
   function headerLine(entry) {
     var parts = ['Paste ' + entry.n, entry.time, entry.fresh + ' new'];
     var replaced = entry.changed + entry.identical;
@@ -607,6 +1227,11 @@ var PackerCore = (function () {
     return parts.join(' · ');
   }
 
+  function itemLine(item) {
+    var mark = item.failure ? '!' : item.status === 'new' ? '+' : item.status === 'changed' ? '~' : '=';
+    return '  ' + mark + ' ' + item.path + ' — ' + (item.failure || item.status) + ', ' + fmtInt(item.bytes) + ' B';
+  }
+
   function entryText(entry) {
     var lines = [headerLine(entry)];
     entry.notes.forEach(function (note) {
@@ -614,6 +1239,9 @@ var PackerCore = (function () {
       if (note.excerpt !== null && note.excerpt !== undefined) {
         lines.push('    excerpt: "' + note.excerpt + '"');
       }
+    });
+    entry.items.forEach(function (item) {
+      lines.push(itemLine(item));
     });
     return lines.join('\n');
   }
@@ -631,6 +1259,24 @@ var PackerCore = (function () {
       lines.push(path + ' (' + type + ')');
     });
     return lines.join('\n') + '\n';
+  }
+
+  function snapshot() {
+    return {
+      files: new Map(state.files),
+      failures: new Map(state.failures),
+      log: state.log.slice(),
+      pastes: state.pastes
+    };
+  }
+
+  function restore(snap) {
+    if (!snap) return false;
+    state.files = new Map(snap.files);
+    state.failures = new Map(snap.failures);
+    state.log = snap.log.slice();
+    state.pastes = snap.pastes;
+    return true;
   }
 
   function clearAll() {
@@ -724,12 +1370,17 @@ var PackerCore = (function () {
   return {
     state: state,
     ingest: ingest,
+    ingestFiles: ingestFiles,
     clearAll: clearAll,
     buildZip: buildZip,
     logText: logText,
     resendText: resendText,
     headerLine: headerLine,
     entryText: entryText,
+    itemLine: itemLine,
+    snapshot: snapshot,
+    restore: restore,
+    lineCount: lineCount,
     fmtInt: fmtInt,
     crc32: crc32
   };
@@ -740,16 +1391,53 @@ var PackerCore = (function () {
   'use strict';
 
   var core = window.PackerCore;
-  var box = document.getElementById('paste');
-  var filesEl = document.getElementById('files');
-  var filesMeta = document.getElementById('files-meta');
-  var logEl = document.getElementById('log');
-  var downloadBtn = document.getElementById('download');
-  var copyLogBtn = document.getElementById('copy-log');
-  var copyResendBtn = document.getElementById('copy-resend');
-  var clearBtn = document.getElementById('clear');
-  var toastEl = document.getElementById('toast');
-  var toastTimer = null;
+  var EXAMPLE = '{[[FILE: src/hello.js]]}\nconsole.log("hello from the pack");\n{[[END: src/hello.js]]}\n';
+
+  function $(id) { return document.getElementById(id); }
+
+  var box = $('paste');
+  var dropZone = $('drop-zone');
+  var pasteBtn = $('paste-btn');
+  var downloadBtn = $('download');
+  var copyLogBtn = $('copy-log');
+  var copyResendBtn = $('copy-resend');
+  var clearBtn = $('clear');
+  var helpBtn = $('help-btn');
+  var filesEl = $('files');
+  var filesMeta = $('files-meta');
+  var copyPathsBtn = $('copy-paths');
+  var filterInput = $('filter');
+  var filterClear = $('filter-clear');
+  var failureBanner = $('failure-banner');
+  var failureTitle = $('failure-title');
+  var failureList = $('failure-list');
+  var failureCopy = $('failure-copy');
+  var logEl = $('log');
+  var logCount = $('log-count');
+  var logErrors = $('log-errors');
+  var logErrorsCount = $('log-errors-count');
+  var toastEl = $('toast');
+  var toastMsg = $('toast-msg');
+  var toastAction = $('toast-action');
+  var preview = $('preview');
+  var previewChip = $('preview-chip');
+  var previewTitle = $('preview-title');
+  var previewMeta = $('preview-meta');
+  var previewNote = $('preview-note');
+  var previewBody = $('preview-body');
+  var help = $('help');
+
+  var ui = {
+    filter: '',
+    errorsOnly: false,
+    previewPath: null,
+    undo: null,
+    armTimer: null,
+    toastTimer: null,
+    toastActionFn: null
+  };
+
+  $('example-block').textContent = EXAMPLE;
 
   function make(tag, className, text) {
     var node = document.createElement(tag);
@@ -758,82 +1446,43 @@ var PackerCore = (function () {
     return node;
   }
 
-  function toast(message) {
-    toastEl.textContent = message;
+  function fmtBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
+    return (n / 1048576).toFixed(1) + ' MB';
+  }
+
+  function ageText(at) {
+    var seconds = Math.floor((Date.now() - at) / 1000);
+    if (seconds < 10) return 'just now';
+    if (seconds < 60) return seconds + 's ago';
+    var minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return minutes + 'm ago';
+    var hours = Math.floor(minutes / 60);
+    if (hours < 24) return hours + 'h ago';
+    return Math.floor(hours / 24) + 'd ago';
+  }
+
+  function basename(path) {
+    var at = path.lastIndexOf('/');
+    return at === -1 ? path : path.slice(at + 1);
+  }
+
+  function toast(message, actionLabel, actionFn, duration) {
+    toastMsg.textContent = message;
+    ui.toastActionFn = actionFn || null;
+    if (actionLabel && actionFn) {
+      toastAction.hidden = false;
+      toastAction.textContent = actionLabel;
+    } else {
+      toastAction.hidden = true;
+      toastAction.textContent = '';
+    }
     toastEl.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () {
+    clearTimeout(ui.toastTimer);
+    ui.toastTimer = setTimeout(function () {
       toastEl.classList.remove('show');
-    }, 2200);
-  }
-
-  function renderFiles() {
-    filesEl.textContent = '';
-    var paths = Array.from(core.state.files.keys()).sort();
-    var totalBytes = 0;
-    var failed = 0;
-
-    paths.forEach(function (path) {
-      var file = core.state.files.get(path);
-      totalBytes += file.bytes.length;
-      if (file.failure) failed++;
-
-      var row = make('li', 'file-row');
-      row.appendChild(make('span', 'file-path', path));
-      row.appendChild(make('span', 'chip ' + file.status, file.status));
-      row.appendChild(make('span', 'file-size', core.fmtInt(file.bytes.length) + ' B'));
-      filesEl.appendChild(row);
-    });
-
-    if (!paths.length) {
-      filesEl.appendChild(make('li', 'empty', 'No files yet. Paste a message with FILE/END markers.'));
-    }
-
-    filesMeta.textContent = paths.length
-      ? paths.length + (paths.length === 1 ? ' file' : ' files') +
-        ' · ' + core.fmtInt(totalBytes) + ' B' +
-        (failed ? ' · ' + failed + ' failed' : '')
-      : '0 files';
-  }
-
-  function renderLog() {
-    logEl.textContent = '';
-    if (!core.state.log.length) {
-      logEl.appendChild(make('div', 'empty', 'No pastes yet.'));
-      return;
-    }
-    core.state.log.forEach(function (entry) {
-      var block = make('div', 'log-entry');
-      block.appendChild(make('div', 'log-head', core.headerLine(entry)));
-      entry.notes.forEach(function (note) {
-        var className = 'note';
-        if (note.kind === 'truncated' || note.kind === 'corrupt' || note.kind === 'nomarkers') {
-          className += ' bad';
-        } else if (note.kind === 'outside') {
-          className += ' dim';
-        }
-        block.appendChild(make('div', className, note.text));
-        if (note.excerpt !== null && note.excerpt !== undefined) {
-          block.appendChild(make('div', 'excerpt', 'excerpt: "' + note.excerpt + '"'));
-        }
-      });
-      logEl.appendChild(block);
-    });
-    logEl.scrollTop = 0;
-  }
-
-  function updateControls() {
-    var hasFiles = core.state.files.size > 0;
-    downloadBtn.disabled = !hasFiles;
-    clearBtn.disabled = !hasFiles && core.state.log.length === 0;
-    copyLogBtn.disabled = core.state.log.length === 0;
-    copyResendBtn.disabled = core.state.failures.size === 0;
-  }
-
-  function render() {
-    renderFiles();
-    renderLog();
-    updateControls();
+    }, duration || 2800);
   }
 
   function copyText(text) {
@@ -868,18 +1517,315 @@ var PackerCore = (function () {
     return ok;
   }
 
-  function handlePasteText(text) {
-    if (!text) return false;
-    var entry = core.ingest(text);
+  function summary(entry) {
+    var bits = [];
+    if (entry.fresh) bits.push(entry.fresh + ' new');
+    if (entry.changed) bits.push(entry.changed + ' changed');
+    if (entry.identical) bits.push(entry.identical + ' identical');
+    if (!bits.length) bits.push('nothing to merge');
+    var message = 'Paste ' + entry.n + ' · ' + bits.join(' · ');
+    if (entry.errors) {
+      message += ' · ' + entry.errors + ' error' + (entry.errors === 1 ? '' : 's');
+    }
+    return message;
+  }
+
+  function afterIngest(entry) {
+    renderAll();
+    toast(summary(entry) + (entry.errors ? ' — see the log' : ''), null, null, 3200);
+  }
+
+  function ingestText(text, source) {
+    var entry = core.ingest(text, source);
     if (!entry) return false;
-    render();
+    afterIngest(entry);
     return true;
   }
 
-  // Capture phase on the document: the clipboard payload is read directly and the
-  // browser's default insertion is cancelled, so the textarea never receives text.
+  /* ---------- rendering ---------- */
+  function renderStats() {
+    var bytes = 0;
+    var failed = 0;
+    core.state.files.forEach(function (file) {
+      bytes += file.bytes.length;
+      if (file.failure) failed++;
+    });
+    $('stat-files').textContent = core.fmtInt(core.state.files.size);
+    $('stat-bytes').textContent = fmtBytes(bytes);
+    $('stat-pastes').textContent = core.fmtInt(core.state.pastes);
+    $('stat-failed').textContent = core.fmtInt(failed);
+    $('stat-failed-wrap').classList.toggle('bad', failed > 0);
+  }
+
+  function emptyBlock(title, copy, extra) {
+    var wrap = make('div', 'empty-state');
+    wrap.appendChild(make('div', 'empty-title', title));
+    if (copy) wrap.appendChild(make('p', 'empty-copy', copy));
+    if (extra) wrap.appendChild(extra);
+    return wrap;
+  }
+
+  function renderFiles() {
+    filesEl.textContent = '';
+    var paths = Array.from(core.state.files.keys()).sort();
+    var term = ui.filter.trim().toLowerCase();
+    var visible = term ? paths.filter(function (path) {
+      return path.toLowerCase().indexOf(term) !== -1;
+    }) : paths;
+
+    var totalBytes = 0;
+    var failed = 0;
+    paths.forEach(function (path) {
+      var file = core.state.files.get(path);
+      totalBytes += file.bytes.length;
+      if (file.failure) failed++;
+    });
+
+    if (!paths.length) {
+      var hint = make('div', 'empty-dash');
+      hint.appendChild(document.createTextNode('Paste a message, press '));
+      hint.appendChild(make('span', 'kbd', 'Paste'));
+      hint.appendChild(document.createTextNode(', or drop a .txt file.'));
+      filesEl.appendChild(emptyBlock(
+        'No files yet',
+        'Every FILE/END block you paste lands here. The same path replaces the earlier copy; nothing is discarded until you clear the pack.',
+        hint
+      ));
+    } else if (!visible.length) {
+      var reset = make('button', 'btn small', 'Clear filter');
+      reset.type = 'button';
+      reset.addEventListener('click', function () { setFilter(''); });
+      filesEl.appendChild(emptyBlock(
+        'No files match “' + ui.filter + '”',
+        'Try a shorter path, or clear the filter to see all ' + paths.length + ' files.',
+        reset
+      ));
+    } else {
+      visible.forEach(function (path) {
+        var file = core.state.files.get(path);
+        var lines = core.lineCount(file.content);
+        var row = make('button', 'file-row');
+        row.type = 'button';
+        row.title = 'Preview ' + path;
+        row.appendChild(make('span', 'file-path', path));
+        row.appendChild(make('span', 'file-meta', fmtBytes(file.bytes.length) + ' · ' + core.fmtInt(lines) + (lines === 1 ? ' line' : ' lines')));
+        row.appendChild(make('span', 'chip ' + (file.failure || file.status), file.failure || file.status));
+        row.appendChild(make('span', 'file-open', '›'));
+        row.addEventListener('click', function () { openPreview(path); });
+        filesEl.appendChild(row);
+      });
+    }
+
+    var meta;
+    if (!paths.length) {
+      meta = '0 files';
+    } else if (term) {
+      meta = visible.length + ' of ' + paths.length + ' files';
+    } else {
+      meta = paths.length + (paths.length === 1 ? ' file' : ' files') +
+        ' · ' + fmtBytes(totalBytes) +
+        (failed ? ' · ' + failed + ' failed' : '');
+    }
+    filesMeta.textContent = meta;
+    copyPathsBtn.disabled = paths.length === 0;
+  }
+
+  function renderFailures() {
+    var failed = [];
+    core.state.files.forEach(function (file, path) {
+      if (file.failure) failed.push({ path: path, type: file.failure });
+    });
+    failed.sort(function (a, b) { return a.path < b.path ? -1 : 1; });
+
+    failureBanner.hidden = failed.length === 0;
+    failureCopy.disabled = failed.length === 0;
+    failureList.textContent = '';
+    if (!failed.length) return;
+
+    failureTitle.textContent = failed.length + (failed.length === 1 ? ' file needs' : ' files need') + ' a resend';
+    failed.forEach(function (item) {
+      var row = make('li');
+      row.appendChild(make('code', null, item.path));
+      row.appendChild(make('span', 'chip ' + item.type, item.type));
+      failureList.appendChild(row);
+    });
+  }
+
+  function noteClass(kind) {
+    if (kind === 'truncated' || kind === 'corrupt' || kind === 'nomarkers') return 'note bad';
+    if (kind === 'source') return 'note source';
+    if (kind === 'outside') return 'note dim';
+    return 'note';
+  }
+
+  function markFor(item) {
+    if (item.failure) return '!';
+    if (item.status === 'new') return '+';
+    if (item.status === 'changed') return '~';
+    return '=';
+  }
+
+  function buildEntry(entry) {
+    var block = make('article', 'log-entry' + (entry.errors ? ' has-errors' : ''));
+
+    var head = make('div', 'log-head-row');
+    head.appendChild(make('div', 'log-head', core.headerLine(entry)));
+    var age = make('span', 'log-age', ageText(entry.at));
+    age.dataset.at = String(entry.at);
+    head.appendChild(age);
+    block.appendChild(head);
+
+    entry.notes.forEach(function (note) {
+      block.appendChild(make('div', noteClass(note.kind), note.text));
+      if (note.excerpt !== null && note.excerpt !== undefined) {
+        block.appendChild(make('div', 'excerpt', 'excerpt: "' + note.excerpt + '"'));
+      }
+    });
+
+    if (entry.items.length) {
+      var details = document.createElement('details');
+      details.className = 'entry-details';
+      var sum = document.createElement('summary');
+      sum.textContent = entry.items.length + (entry.items.length === 1 ? ' file' : ' files') + ' in this paste';
+      details.appendChild(sum);
+
+      var list = make('div', 'item-list');
+      entry.items.forEach(function (item) {
+        var row = make('div', 'item ' + (item.failure || item.status));
+        row.appendChild(make('span', 'item-mark', markFor(item)));
+        row.appendChild(make('span', 'item-path', item.path));
+        row.appendChild(make('span', 'item-tag', (item.failure || item.status) + ' · ' + fmtBytes(item.bytes)));
+        list.appendChild(row);
+      });
+      details.appendChild(list);
+      block.appendChild(details);
+    }
+
+    return block;
+  }
+
+  function renderLog() {
+    logEl.textContent = '';
+    var entries = core.state.log;
+    var errorEntries = entries.filter(function (entry) { return entry.errors > 0; });
+    var shown = ui.errorsOnly ? errorEntries : entries;
+
+    logCount.textContent = entries.length + (entries.length === 1 ? ' paste' : ' pastes');
+    logErrorsCount.textContent = String(errorEntries.length);
+    logErrors.setAttribute('aria-pressed', ui.errorsOnly ? 'true' : 'false');
+    logErrors.disabled = entries.length === 0;
+
+    if (!entries.length) {
+      var steps = make('ol', 'steps');
+      [
+        ['Copy a message', ' that contains FILE/END blocks.'],
+        ['Paste anywhere', ' on this page — Ctrl+V, Shift+Insert, right-click, or the Paste button.'],
+        ['Watch it merge', ' — paths update, failures get flagged, then download one .zip.']
+      ].forEach(function (step) {
+        var li = make('li');
+        li.appendChild(make('strong', null, step[0]));
+        li.appendChild(document.createTextNode(step[1]));
+        steps.appendChild(li);
+      });
+      var exampleBtn = make('button', 'btn small ghost', 'Copy example block');
+      exampleBtn.type = 'button';
+      exampleBtn.setAttribute('data-copy-example', '');
+      var extra = make('div');
+      extra.appendChild(steps);
+      extra.appendChild(exampleBtn);
+      extra.style.display = 'grid';
+      extra.style.gap = '10px';
+      extra.style.justifyItems = 'start';
+      logEl.appendChild(emptyBlock(
+        'No pastes yet',
+        'This log records every paste: what was added, replaced, or ignored. It is kept for the whole session and copies out as plain text.',
+        extra
+      ));
+      return;
+    }
+
+    if (!shown.length) {
+      logEl.appendChild(emptyBlock(
+        'No failed pastes',
+        'Every paste so far merged cleanly. Untick “Errors only” to see the full history.'
+      ));
+      return;
+    }
+
+    shown.forEach(function (entry) {
+      logEl.appendChild(buildEntry(entry));
+    });
+    logEl.scrollTop = 0;
+  }
+
+  function updateControls() {
+    var hasFiles = core.state.files.size > 0;
+    var hasLog = core.state.log.length > 0;
+    var hasFailures = core.state.failures.size > 0;
+    downloadBtn.disabled = !hasFiles;
+    downloadBtn.title = hasFiles
+      ? 'Download ' + core.state.files.size + (core.state.files.size === 1 ? ' file' : ' files') + ' as a zip'
+      : 'Paste something first';
+    copyLogBtn.disabled = !hasLog;
+    copyResendBtn.disabled = !hasFailures;
+    copyPathsBtn.disabled = !hasFiles;
+    clearBtn.disabled = !hasFiles && !hasLog;
+    logErrors.disabled = !hasLog;
+  }
+
+  function renderAll() {
+    renderStats();
+    renderFiles();
+    renderFailures();
+    renderLog();
+    updateControls();
+  }
+
+  /* ---------- filter ---------- */
+  function setFilter(value) {
+    ui.filter = value;
+    filterInput.value = value;
+    filterClear.hidden = !value;
+    renderFiles();
+  }
+
+  filterInput.addEventListener('input', function () {
+    ui.filter = filterInput.value;
+    filterClear.hidden = !filterInput.value;
+    renderFiles();
+  });
+
+  filterInput.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      setFilter('');
+      filterInput.blur();
+    }
+  });
+
+  filterClear.addEventListener('click', function () {
+    setFilter('');
+    filterInput.focus();
+  });
+
+  /* ---------- paste interception ---------- */
+  function disarm() {
+    dropZone.classList.remove('armed');
+    clearTimeout(ui.armTimer);
+  }
+
+  function promptManual(reason) {
+    box.focus();
+    dropZone.classList.add('armed');
+    clearTimeout(ui.armTimer);
+    ui.armTimer = setTimeout(function () { dropZone.classList.remove('armed'); }, 9000);
+    toast(reason + ' Press Ctrl+V or Shift+Insert now — the text stays out of the box.', null, null, 5200);
+  }
+
   document.addEventListener('paste', function (event) {
+    if (event.target === filterInput) return;
     event.preventDefault();
+    disarm();
     var data = event.clipboardData || window.clipboardData;
     if (data) {
       var text = '';
@@ -888,14 +1834,14 @@ var PackerCore = (function () {
       } catch (err) {
         text = '';
       }
-      if (text) handlePasteText(text);
-      else toast('Clipboard has no text.');
+      if (text) ingestText(text);
+      else toast('That clipboard had no text — try copying the message again.');
     } else if (navigator.clipboard && navigator.clipboard.readText) {
       navigator.clipboard.readText().then(function (text) {
-        if (text) handlePasteText(text);
-        else toast('Clipboard has no text.');
+        if (text) ingestText(text);
+        else toast('That clipboard had no text.');
       }, function () {
-        toast('Could not read the clipboard.');
+        toast('The browser blocked clipboard access — use the Paste button or Ctrl+V.');
       });
     }
     box.value = '';
@@ -909,63 +1855,342 @@ var PackerCore = (function () {
     if (box.value !== '') {
       var text = box.value;
       box.value = '';
-      handlePasteText(text);
+      ingestText(text);
     }
   });
 
-  box.addEventListener('dragover', function (event) {
-    event.preventDefault();
+  /* ---------- paste button ---------- */
+  function setPasteBusy(busy) {
+    pasteBtn.dataset.busy = busy ? '1' : '0';
+    pasteBtn.textContent = busy ? 'Reading…' : 'Paste';
+    pasteBtn.setAttribute('aria-busy', busy ? 'true' : 'false');
+  }
+
+  pasteBtn.addEventListener('click', function () {
+    if (pasteBtn.dataset.busy === '1') return;
+    if (!navigator.clipboard || !navigator.clipboard.readText) {
+      promptManual('This browser can’t read the clipboard from a button.');
+      return;
+    }
+    setPasteBusy(true);
+    var settled = false;
+    var timer = setTimeout(function () {
+      if (settled) return;
+      settled = true;
+      setPasteBusy(false);
+      promptManual('The browser is waiting for clipboard permission.');
+    }, 2500);
+
+    navigator.clipboard.readText().then(function (text) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      setPasteBusy(false);
+      if (!text) { toast('The clipboard is empty.'); return; }
+      ingestText(text, 'clipboard button');
+    }, function () {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      setPasteBusy(false);
+      promptManual('Clipboard access was blocked.');
+    });
   });
 
-  box.addEventListener('drop', function (event) {
+  /* ---------- drag and drop ---------- */
+  function cleanPath(name) {
+    var cleaned = name.replace(/[\u0000-\u001f\u007f]/g, '').replace(/^\.?\//, '');
+    return cleaned || 'dropped-file.txt';
+  }
+
+  function hasFileMarkers(text) {
+    return /(?:^|\n)\{\[\[FILE:[^\n]*\]\]\}(?:\r?\n|$)/.test(text);
+  }
+
+  function handleDroppedFiles(fileList) {
+    var files = Array.prototype.slice.call(fileList);
+    if (!files.length) return;
+    var readable = [];
+    var skipped = 0;
+    files.forEach(function (file) {
+      var looksText = !file.type || /^text\//i.test(file.type) ||
+        /\.(txt|md|markdown|log|json|js|mjs|cjs|ts|tsx|jsx|css|html|htm|xml|yml|yaml|csv|ini|toml|sh|py|rb|go|rs|java|kt|c|h|cpp|hpp|sql)$/i.test(file.name);
+      if (looksText) readable.push(file);
+      else skipped++;
+    });
+
+    Promise.all(readable.map(function (file) {
+      return file.text().then(function (text) {
+        return { name: file.name, text: text };
+      }, function () {
+        return null;
+      });
+    })).then(function (results) {
+      var raw = [];
+      var unreadable = skipped;
+      results.forEach(function (item) {
+        if (!item || item.text.indexOf('\u0000') !== -1) { unreadable++; return; }
+        if (hasFileMarkers(item.text)) core.ingest(item.text, 'dropped ' + item.name);
+        else raw.push({ path: cleanPath(item.name), content: item.text });
+      });
+      if (raw.length) {
+        core.ingestFiles(raw, 'dropped ' + (raw.length === 1 ? raw[0].path : raw.length + ' files'));
+      }
+      renderAll();
+      var added = raw.length;
+      var parts = [];
+      if (added) parts.push(added + (added === 1 ? ' file' : ' files') + ' added from the drop');
+      if (unreadable) parts.push(unreadable + ' skipped (binary or unreadable)');
+      toast(parts.length ? parts.join(' · ') : 'Nothing usable in that drop.', null, null, 3600);
+    });
+  }
+
+  ['dragenter', 'dragover'].forEach(function (type) {
+    dropZone.addEventListener(type, function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      dropZone.classList.add('dragging');
+    });
+  });
+
+  dropZone.addEventListener('dragleave', function (event) {
+    if (!dropZone.contains(event.relatedTarget)) dropZone.classList.remove('dragging');
+  });
+
+  dropZone.addEventListener('drop', function (event) {
     event.preventDefault();
+    event.stopPropagation();
+    dropZone.classList.remove('dragging');
+    var transfer = event.dataTransfer;
+    if (!transfer) return;
+    var files = transfer.files;
+    if (files && files.length) {
+      handleDroppedFiles(files);
+      return;
+    }
     var text = '';
     try {
-      text = (event.dataTransfer && event.dataTransfer.getData('text/plain')) || '';
+      text = transfer.getData('text/plain') || '';
     } catch (err) {
       text = '';
     }
-    if (text) handlePasteText(text);
-    box.value = '';
+    if (text) ingestText(text, 'dropped text');
+    else toast('That drop had no text or files.');
   });
 
-  downloadBtn.addEventListener('click', function () {
-    if (core.state.files.size === 0) return;
-    var bytes = core.buildZip();
-    var blob = new Blob([bytes], { type: 'application/zip' });
+  document.addEventListener('dragover', function (event) { event.preventDefault(); });
+  document.addEventListener('drop', function (event) { event.preventDefault(); });
+
+  /* ---------- downloads and copies ---------- */
+  function downloadBytes(bytes, filename, type) {
+    var blob = new Blob([bytes], { type: type });
     var url = URL.createObjectURL(blob);
     var link = document.createElement('a');
     link.href = url;
-    link.download = 'project-pack.zip';
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  }
+
+  downloadBtn.addEventListener('click', function () {
+    var count = core.state.files.size;
+    if (!count) return;
+    var bytes = core.buildZip();
+    downloadBytes(bytes, 'project-pack.zip', 'application/zip');
+    var total = 0;
+    core.state.files.forEach(function (file) { total += file.bytes.length; });
+    toast('project-pack.zip · ' + count + (count === 1 ? ' file' : ' files') + ' · ' + fmtBytes(total), null, null, 3200);
   });
 
   copyLogBtn.addEventListener('click', function () {
     if (!core.state.log.length) return;
     copyText(core.logText()).then(function (ok) {
-      toast(ok ? 'Log copied' : 'Copy failed — the log is visible above');
+      toast(ok ? 'Log copied as plain text.' : 'Copy failed — select the log text instead.');
     });
   });
 
-  copyResendBtn.addEventListener('click', function () {
+  copyResendBtn.addEventListener('click', copyResend);
+
+  copyPathsBtn.addEventListener('click', function () {
+    var paths = Array.from(core.state.files.keys()).sort();
+    if (!paths.length) return;
+    copyText(paths.join('\n') + '\n').then(function (ok) {
+      toast(ok ? paths.length + (paths.length === 1 ? ' path' : ' paths') + ' copied.' : 'Copy failed.');
+    });
+  });
+
+  function copyResend() {
     if (!core.state.failures.size) return;
     copyText(core.resendText()).then(function (ok) {
-      toast(ok ? 'Resend request copied' : 'Copy failed');
+      toast(ok ? 'Resend request copied.' : 'Copy failed.');
+    });
+  }
+
+  failureCopy.addEventListener('click', copyResend);
+
+  /* ---------- clear and undo ---------- */
+  clearBtn.addEventListener('click', function () {
+    if (!core.state.files.size && !core.state.log.length) return;
+    var fileCount = core.state.files.size;
+    ui.undo = core.snapshot();
+    core.clearAll();
+    renderAll();
+    box.value = '';
+    box.focus();
+    toast('Cleared ' + fileCount + (fileCount === 1 ? ' file' : ' files') + ' from the pack.', 'Undo', function () {
+      if (core.state.pastes !== 0 || core.state.files.size) {
+        toast('Undo is no longer available — a newer paste arrived.');
+        return;
+      }
+      core.restore(ui.undo);
+      renderAll();
+      toast('Restored ' + core.state.files.size + (core.state.files.size === 1 ? ' file' : ' files') + '.');
+    }, 8000);
+  });
+
+  /* ---------- file preview ---------- */
+  function openPreview(path) {
+    var file = core.state.files.get(path);
+    if (!file) return;
+    ui.previewPath = path;
+    previewTitle.textContent = path;
+    previewChip.className = 'chip ' + (file.failure || file.status);
+    previewChip.textContent = file.failure || file.status;
+    previewMeta.textContent = fmtBytes(file.bytes.length) +
+      ' · ' + core.fmtInt(Array.from(file.content).length) + ' characters' +
+      ' · ' + core.fmtInt(core.lineCount(file.content)) + ' lines';
+    if (file.failure) {
+      previewNote.hidden = false;
+      previewNote.textContent = file.failure === 'truncated'
+        ? 'This block had no END marker. The content below is everything that arrived, and it is already included in the zip.'
+        : 'This block ended with an END marker for another path. The content below is everything up to that marker, and it is already included in the zip.';
+    } else {
+      previewNote.hidden = true;
+      previewNote.textContent = '';
+    }
+    previewBody.textContent = file.content;
+    if (typeof preview.showModal === 'function') preview.showModal();
+    else preview.setAttribute('open', '');
+    previewBody.scrollTop = 0;
+  }
+
+  function closePreview() {
+    if (preview.open) preview.close();
+    preview.removeAttribute('open');
+  }
+
+  $('preview-close').addEventListener('click', closePreview);
+  $('preview-done').addEventListener('click', closePreview);
+
+  preview.addEventListener('click', function (event) {
+    if (event.target === preview) closePreview();
+  });
+
+  $('preview-copy').addEventListener('click', function () {
+    var file = core.state.files.get(ui.previewPath);
+    if (!file) return;
+    copyText(file.content).then(function (ok) {
+      toast(ok ? 'File content copied.' : 'Copy failed.');
     });
   });
 
-  clearBtn.addEventListener('click', function () {
-    core.clearAll();
-    render();
-    toast('Cleared');
-    box.value = '';
-    box.focus();
+  $('preview-path').addEventListener('click', function () {
+    if (!ui.previewPath) return;
+    copyText(ui.previewPath).then(function (ok) {
+      toast(ok ? 'Path copied.' : 'Copy failed.');
+    });
   });
 
-  render();
+  $('preview-save').addEventListener('click', function () {
+    var file = core.state.files.get(ui.previewPath);
+    if (!file) return;
+    var name = basename(ui.previewPath) || 'file.txt';
+    downloadBytes(file.content, name, 'text/plain;charset=utf-8');
+    toast('Saved ' + name);
+  });
+
+  /* ---------- help ---------- */
+  helpBtn.addEventListener('click', function () {
+    if (typeof help.showModal === 'function') help.showModal();
+    else help.setAttribute('open', '');
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-close-dialog]'), function (button) {
+    button.addEventListener('click', function () {
+      if (help.open) help.close();
+      help.removeAttribute('open');
+    });
+  });
+
+  help.addEventListener('click', function (event) {
+    if (event.target === help) help.close();
+  });
+
+  document.addEventListener('click', function (event) {
+    var trigger = event.target.closest ? event.target.closest('[data-copy-example]') : null;
+    if (!trigger) return;
+    event.preventDefault();
+    copyText(EXAMPLE).then(function (ok) {
+      toast(ok ? 'Example block copied — paste it anywhere to try.' : 'Copy failed.');
+    });
+  });
+
+  /* ---------- log controls ---------- */
+  logErrors.addEventListener('click', function () {
+    ui.errorsOnly = !ui.errorsOnly;
+    renderLog();
+  });
+
+  /* ---------- shortcuts ---------- */
+  function isTypingTarget(target) {
+    if (!target) return false;
+    var tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable;
+  }
+
+  document.addEventListener('keydown', function (event) {
+    var mod = event.ctrlKey || event.metaKey;
+    if (mod && (event.key === 's' || event.key === 'S')) {
+      event.preventDefault();
+      if (!downloadBtn.disabled) downloadBtn.click();
+      return;
+    }
+    if (mod && (event.key === 'k' || event.key === 'K')) {
+      event.preventDefault();
+      filterInput.focus();
+      filterInput.select();
+      return;
+    }
+    if (event.key === '/' && !isTypingTarget(event.target) && !preview.open && !help.open) {
+      event.preventDefault();
+      filterInput.focus();
+      return;
+    }
+    if (event.key === '?' && !isTypingTarget(event.target) && !preview.open && !help.open) {
+      event.preventDefault();
+      helpBtn.click();
+    }
+  });
+
+  /* ---------- toast action ---------- */
+  toastAction.addEventListener('click', function () {
+    var fn = ui.toastActionFn;
+    toastEl.classList.remove('show');
+    clearTimeout(ui.toastTimer);
+    ui.toastActionFn = null;
+    if (fn) fn();
+  });
+
+  /* ---------- relative times ---------- */
+  setInterval(function () {
+    Array.prototype.forEach.call(document.querySelectorAll('.log-age'), function (node) {
+      node.textContent = ageText(Number(node.dataset.at));
+    });
+  }, 20000);
+
+  renderAll();
 })();
 </script>
 </body>
