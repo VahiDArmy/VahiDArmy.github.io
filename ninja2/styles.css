@@ -1237,7 +1237,7 @@ kbd {
 .export-textarea:focus { border-color: rgba(var(--accent-rgb), .5); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .12); }
 
 /* ══════════════════════════════════════════════════════════════
-   RESPONSIVE (ONE-LINE HEADER)
+   RESPONSIVE (TWO-LINE HEADER)
    ══════════════════════════════════════════════════════════════ */
 @media (max-width: 1080px) {
     .app { grid-template-columns: 1fr; }
@@ -1251,33 +1251,38 @@ kbd {
     body.side-open .scrim { display: block; position: fixed; inset: 0; z-index: 900; background: rgba(4,4,12,.55); }
     .only-mobile { display: inline-grid; }
 
-    /* Force topbar to be one single row */
+    /* Force topbar to wrap */
     .topbar {
-        flex-wrap: nowrap;
-        padding: 8px 12px;
-        gap: 6px;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        gap: 8px;
     }
-    
-    /* Hide the connect form completely on mobile if connected. 
-       If disconnected, it wraps down gracefully. */
+
+    /* Hide the connect form completely on mobile if connected */
     body[data-connected="true"] .connect-form { display: none !important; }
-    .connect-form { order: 4; width: 100%; flex: 0 0 auto; }
-    
-    /* Pathbar goes inline right after the menu toggle */
-    .pathbar {
+    .connect-form { order: 10; width: 100%; flex: 0 0 auto; }
+
+    /* Topbar right controls (reconnect, help) on the first line */
+    .topbar-right {
         order: 2;
-        width: auto;
-        flex: 1;
+        margin-left: auto;
+    }
+
+    /* Pathbar goes on the second line, full width */
+    .pathbar {
+        order: 3;
+        width: 100%;
+        flex: 1 1 100%;
         padding: 0;
         border-top: none;
+        margin-top: 2px;
     }
     
-    /* Topbar right controls */
-    .topbar-right {
-        order: 3;
-        margin-left: 0;
+    /* Ensure the sidebar toggle stays left */
+    #sidebarToggle {
+        order: 1;
     }
-    
+
     .status { display: none; }
     .jump { display: none; }
 
