@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Project Packer — view-specific styles (Fixed Mobile Layout)
+   Project Packer — view-specific styles
    ========================================================================== */
 
 /* --- Mode Switch --------------------------------------------------------- */
@@ -36,49 +36,114 @@
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* --- Stats Bar ----------------------------------------------------------- */
+/* --- Dashboard Stats Bar (Premium Style) --------------------------------- */
 
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: var(--sp-3);
-  align-items: start; /* Prevents cards from stretching vertically */
+.stats-bar {
+  display: flex;
+  background: linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 80%, transparent), var(--surface));
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  padding: 4px;
+  box-shadow: 0 8px 24px -12px rgba(0,0,0,0.8);
+  overflow: hidden;
 }
 
-.stat {
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border-right: 1px solid var(--line);
+  text-align: center;
   position: relative;
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-2);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
+}
+
+.stat-item:last-child {
+  border-right: none;
+}
+
+.stat-item::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 30%, transparent), transparent);
+  opacity: 0.6;
 }
 
 .stat-label {
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 6px;
+  color: var(--muted);
+  margin-bottom: 4px;
 }
 
 .stat-value {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 600;
   font-family: var(--font-display);
   color: var(--ink);
   line-height: 1.1;
 }
 
-.stat-value.accent { color: var(--accent); }
-.stat-value.bad { color: var(--bad); }
-.stat-value.warn { color: var(--warn); }
+.stat-value.accent { color: var(--accent); text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent); }
+.stat-value.bad { color: var(--bad); text-shadow: 0 0 12px color-mix(in srgb, var(--bad) 40%, transparent); }
+.stat-value.warn { color: var(--warn); text-shadow: 0 0 12px color-mix(in srgb, var(--warn) 40%, transparent); }
+
+/* --- Insights Stat Grid -------------------------------------------------- */
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--sp-3);
+  align-items: start; /* Prevents stretching */
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-1);
+  position: relative;
+  overflow: hidden;
+}
+
+.stat::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--line-2);
+}
+.stat:nth-child(1)::after { background: var(--accent); }
+.stat:nth-child(2)::after { background: var(--accent-2); }
+.stat:nth-child(3)::after { background: var(--accent-3); }
+.stat:nth-child(4)::after { background: var(--warn); }
+
+.stat-label-insights {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.stat-value-insights {
+  font-size: 24px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1.1;
+}
 
 .stat-sub {
   margin-top: 6px;
   font-size: 11px;
-  color: var(--muted);
+  color: var(--faint);
 }
 
 /* --- Tool Cards (Dashboard) ---------------------------------------------- */
@@ -262,7 +327,7 @@
   color: var(--ink);
 }
 
-/* --- File List (Fixed Flexbox) ------------------------------------------- */
+/* --- File List ----------------------------------------------------------- */
 
 .file-list {
   display: flex;
@@ -398,7 +463,8 @@
 @media (max-width: 600px) {
   .file-row { padding: 8px 12px; }
   .file-size { display: none; }
-  .file-actions { display: none; } /* Rely on long-press / context menu for actions */
+  .file-actions { display: none; }
   .file-main { gap: 8px; }
   .file-ext { width: 28px; height: 28px; }
+  .btn-reset { display: none; } /* Hide reset text on tiny screens, rely on menu */
 }

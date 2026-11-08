@@ -1,6 +1,6 @@
 // Project Packer — application bootstrap.
 
-import { loadSettings, restore, subscribe, State, persist, setUI } from './core/state.js';
+import { loadSettings, restore, subscribe, State, persist, setUI, clearAll } from './core/state.js';
 import { initRouter, renderRoute } from './ui/router.js';
 import { initSidebar } from './ui/sidebar.js';
 import { initTopbar } from './ui/topbar.js';
@@ -14,13 +14,14 @@ import { initZipInput, handleZipFile } from './ui/zip-flow.js';
 import { bindShortcuts } from './ui/commands.js';
 import { openPalette } from './ui/palette.js';
 import { buildCommands } from './ui/commands.js';
-import { toastInfo } from './ui/toast.js';
+import { toastInfo, toastOk } from './ui/toast.js';
 import { initPwa } from './ui/pwa.js';
 import { initTooltips } from './ui/tooltip.js';
 import { initContextMenuWiring } from './ui/context-wiring.js';
 import { initShortcutsOverlay } from './ui/shortcuts-overlay.js';
 import { initSearchOverlay } from './ui/search-overlay.js';
 import { initMiscShortcuts } from './ui/misc-shortcuts.js';
+import { confirmDialog } from './ui/modal.js';
 
 function boot() {
   loadSettings();
@@ -50,7 +51,6 @@ function boot() {
   // Mode Switch logic
   const modeSwitch = document.getElementById('mode-switch');
   if (modeSwitch) {
-    // Set initial state
     for (const btn of modeSwitch.children) {
       btn.classList.toggle('active', btn.dataset.mode === State.ui.dashboardMode);
     }
@@ -58,17 +58,29 @@ function boot() {
     modeSwitch.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
       if (!btn || !btn.dataset.mode) return;
-      
       const mode = btn.dataset.mode;
       if (State.ui.dashboardMode === mode) return;
 
-      // Update UI
       for (const child of modeSwitch.children) {
         child.classList.toggle('active', child === btn);
       }
-      
-      // Update State
       setUI({ dashboardMode: mode });
+    });
+  }
+
+  // Reset Button
+  const resetBtn = document.getElementById('btn-reset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      const ok = await confirmDialog(
+        'Clear every packed file and the log? This cannot be undone.',
+        { title: 'Start over', confirmLabel: 'Clear all', variant: 'danger' }
+      );
+      if (!ok) return;
+      
+      clearAll();
+      toastOk('Workspace cleared');
+      renderRoute('dashboard');
     });
   }
 

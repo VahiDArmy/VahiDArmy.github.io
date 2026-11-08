@@ -9,17 +9,16 @@ import { toast, toastOk } from '../ui/toast.js';
 import { handleZipFile } from '../ui/zip-flow.js';
 
 export function mountDashboard(root) {
-  // The parent root needs to be flex to prevent page scrolling and fill height
   const shell = el('div', { class: 'view-inner' });
   root.appendChild(shell);
 
-  // 1. Mode Container (Input or Dropzone)
-  const modeContainer = el('div', { style: { display: 'flex', flexDirection: 'column', flex: '0 0 auto' } });
-  shell.appendChild(modeContainer);
-
-  // 2. Stats Bar
+  // 1. Stats Bar
   const statsContainer = el('div');
   shell.appendChild(statsContainer);
+
+  // 2. Mode Container (Input or Dropzone)
+  const modeContainer = el('div', { style: { display: 'flex', flexDirection: 'column', flex: '0 0 auto' } });
+  shell.appendChild(modeContainer);
 
   // 3. Log Card
   const logCard = buildLogCard();
@@ -27,15 +26,6 @@ export function mountDashboard(root) {
   const logBody = logCard.querySelector('#dash-log-body');
 
   // Render Functions
-  function renderMode() {
-    clear(modeContainer);
-    if (State.ui.dashboardMode === 'pack') {
-      modeContainer.appendChild(buildPackCard());
-    } else {
-      modeContainer.appendChild(buildUnpackCard());
-    }
-  }
-
   function renderStats() {
     clear(statsContainer);
     const stats = getStats();
@@ -43,7 +33,7 @@ export function mountDashboard(root) {
     
     bar.appendChild(el('div', { class: 'stat-item' }, [
       el('div', { class: 'stat-label', text: 'Files' }),
-      el('div', { class: 'stat-value', text: String(stats.fileCount) })
+      el('div', { class: `stat-value ${stats.fileCount ? 'accent' : ''}`, text: String(stats.fileCount) })
     ]));
     
     bar.appendChild(el('div', { class: 'stat-item' }, [
@@ -60,11 +50,20 @@ export function mountDashboard(root) {
       el('div', { class: 'stat-label', text: 'Status' }),
       el('div', { 
         class: `stat-value ${stats.failed ? 'bad' : (stats.fileCount ? 'accent' : '')}`, 
-        text: stats.failed ? `${stats.failed} Failed` : (stats.fileCount ? 'Healthy' : 'Empty')
+        text: stats.failed ? `${stats.failed} Fail` : (stats.fileCount ? 'Healthy' : 'Empty')
       })
     ]));
 
     statsContainer.appendChild(bar);
+  }
+
+  function renderMode() {
+    clear(modeContainer);
+    if (State.ui.dashboardMode === 'pack') {
+      modeContainer.appendChild(buildPackCard());
+    } else {
+      modeContainer.appendChild(buildUnpackCard());
+    }
   }
 
   function renderLog() {
@@ -100,8 +99,8 @@ export function mountDashboard(root) {
   }
 
   // Initial renders
-  renderMode();
   renderStats();
+  renderMode();
   renderLog();
 
   // Subscriptions
@@ -188,20 +187,18 @@ function buildUnpackCard() {
   input.type = 'file';
   input.accept = '.zip';
   input.style.display = 'none';
-  document.body.appendChild(input); // append to body to avoid event bubbling issues
+  document.body.appendChild(input);
 
   card.addEventListener('click', () => input.click());
 
   input.addEventListener('change', () => {
     if (input.files && input.files[0]) {
       handleZipFile(input.files[0]);
-      // Switch back to pack mode after starting the unpack
       import('../core/state.js').then((m) => m.setUI({ dashboardMode: 'pack' }));
     }
     input.value = '';
   });
 
-  // Drag & Drop
   card.addEventListener('dragover', (e) => {
     e.preventDefault();
     card.classList.add('dragover');
