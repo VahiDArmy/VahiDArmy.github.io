@@ -15,8 +15,7 @@ Everything runs in the browser. Nothing leaves your machine.
 1. **Open** `index.html` in any modern browser — no build step, no server required.
    For the PWA and service worker to register you will want a local static server
    (e.g. `python -m http.server`, `npx serve`, `caddy file-server`).
-2. **Paste** a message with `FILE`/`END` markers anywhere on the page
-   (or use the "Try a sample pack" button on the Welcome screen).
+2. **Paste** a message with `FILE`/`END` markers anywhere on the page.
 3. **Download** the resulting `project-pack.zip` from the topbar or the palette.
 4. **Drop** a ZIP back on the page any time to convert it into a pasteable text.
 

@@ -4,6 +4,7 @@ import { el, clear } from '../utils/dom.js';
 import { State, subscribe, getStats } from '../core/state.js';
 import { fmtBytes } from '../utils/format.js';
 import { count as favCount } from '../core/favorites.js';
+import { allTags } from '../core/tags.js';
 
 export const NAV_ITEMS = [
   { id: 'dashboard',  label: 'Dashboard',     icon: '◈', group: 'Workspace' },
@@ -58,11 +59,10 @@ function renderNav() {
       if (item.countKey === 'files') count = stats.fileCount;
       else if (item.countKey === 'log') count = stats.logEntries;
       else if (item.id === 'tags') {
-        const n = (function () {
-          try { return require && require('../core/tags.js') && require('../core/tags.js').allTags().length; }
-          catch (err) { return 0; }
-        })();
-        if (n) count = n;
+        try {
+          const n = allTags().length;
+          if (n) count = n;
+        } catch (e) { /* ignore */ }
       }
 
       const link = el('a', {
