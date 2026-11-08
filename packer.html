@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Packer</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0a0b0d;
+    --panel: #0f1115;
+    --panel-soft: #0d0f13;
+    --ink: #d9dce1;
+    --ink-soft: #a9afb7;
+    --muted: #767d86;
+    --faint: #5d646d;
+    --line: #22262c;
+    --line-soft: #191d22;
+    --accent: #8fc6ad;
+    --warn: #d6b07a;
+    --bad: #d99a9a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 13px/1.55 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    height: 100dvh;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 18px 20px 20px;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(110px, 0.85fr) minmax(150px, 1.15fr);
+    gap: 12px;
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 2px;
+  }
+  .brand {
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #e8eaee;
+  }
+  .brand::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 9px;
+    border: 1px solid #6f9f8b;
+    background: #16241f;
+    vertical-align: 1px;
+  }
+  .tagline {
+    color: var(--faint);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .paste-panel {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    padding: 10px 12px 9px;
+    display: grid;
+    gap: 7px;
+  }
+  .paste-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8a9199;
+  }
+  .hint {
+    font-size: 11px;
+    color: var(--faint);
+    text-align: right;
+  }
+  #paste {
+    display: block;
+    width: 100%;
+    height: 84px;
+    resize: none;
+    padding: 9px 10px;
+    background: #0b0d10;
+    color: var(--ink);
+    border: 1px solid #262b33;
+    border-radius: 5px;
+    font: inherit;
+    line-height: 1.5;
+    outline: none;
+    caret-color: #6f9f8b;
+    overflow: auto;
+  }
+  #paste::placeholder { color: #5a616a; }
+  #paste:focus { border-color: #3a4e46; background: #0c0f12; }
+  .format {
+    font-size: 11px;
+    color: #6a717a;
+    overflow-wrap: anywhere;
+  }
+  .format code {
+    color: #93a09a;
+    background: #12161a;
+    border: 1px solid #1f242a;
+    padding: 0 4px;
+    border-radius: 3px;
+    font: inherit;
+    font-size: 10.5px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn {
+    appearance: none;
+    background: #13161b;
+    color: #cdd1d7;
+    border: 1px solid #292e36;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .btn:hover:not(:disabled) { background: #181c22; border-color: #343b45; }
+  .btn:active:not(:disabled) { background: #101317; }
+  .btn:focus-visible { outline: 1px solid #5c8f7c; outline-offset: 2px; }
+  .btn.primary {
+    background: #152420;
+    border-color: #2f4c41;
+    color: #c6e7d8;
+  }
+  .btn.primary:hover:not(:disabled) { background: #1a2c26; border-color: #3d6354; }
+  .btn.danger {
+    margin-left: auto;
+    background: transparent;
+    color: #c99191;
+    border-color: #352526;
+  }
+  .btn.danger:hover:not(:disabled) { background: #1b1214; border-color: #4a3032; color: #e0a5a5; }
+  .btn:disabled { opacity: .38; cursor: default; }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 12px;
+    border-bottom: 1px solid #1a1e24;
+    background: var(--panel-soft);
+  }
+  .panel-head > span:first-child {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8a9199;
+  }
+  .meta {
+    font-size: 11px;
+    color: #646b74;
+    font-variant-numeric: tabular-nums;
+  }
+  .panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3038 var(--panel);
+  }
+  .panel-body::-webkit-scrollbar { width: 10px; }
+  .panel-body::-webkit-scrollbar-track { background: var(--panel); }
+  .panel-body::-webkit-scrollbar-thumb {
+    background: #232830;
+    border-radius: 6px;
+    border: 3px solid var(--panel);
+  }
+
+  .file-list { list-style: none; margin: 0; padding: 0; }
+  .file-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid #171b20;
+  }
+  .file-row:last-child { border-bottom: 0; }
+  .file-path { overflow-wrap: anywhere; color: var(--ink); }
+  .file-size {
+    color: #717882;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .chip {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 6px;
+    border: 1px solid #2a3038;
+    border-radius: 999px;
+    color: #818892;
+    white-space: nowrap;
+  }
+  .chip.new { color: #9fd0b8; border-color: #2c463c; }
+  .chip.changed { color: var(--warn); border-color: #4a3d29; }
+  .chip.identical { color: #7c848d; }
+  .chip.truncated, .chip.corrupt { color: var(--bad); border-color: #4b2f30; }
+
+  .log-entry {
+    padding: 8px 12px;
+    border-bottom: 1px solid #171b20;
+  }
+  .log-entry:last-child { border-bottom: 0; }
+  .log-head {
+    color: #dfe2e6;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .note {
+    padding-left: 12px;
+    margin-top: 2px;
+    color: #9aa1a9;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .note.bad { color: #d8a1a1; }
+  .note.dim { color: #767d86; }
+  .excerpt {
+    padding-left: 24px;
+    color: #6f767f;
+    font-size: 11.5px;
+    overflow-wrap: anywhere;
+  }
+  .empty {
+    padding: 14px 12px;
+    color: #5f666f;
+    font-size: 12px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translate(-50%, 6px);
+    max-width: calc(100vw - 32px);
+    padding: 6px 12px;
+    background: #161a20;
+    border: 1px solid #2d333c;
+    border-radius: 5px;
+    color: #cfd4da;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 720px) {
+    .app {
+      height: auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 12px 16px;
+    }
+    .tagline { display: none; }
+    .hint { text-align: left; }
+    .panel-body { max-height: 38vh; }
+    .btn.danger { margin-left: 0; }
+  }
+</style>
+</head>
+<body>
+<main class="app">
+  <header class="head">
+    <div class="brand">project packer</div>
+    <div class="tagline">paste blocks · merge files · download one zip</div>
+  </header>
+
+  <section class="paste-panel">
+    <div class="paste-top">
+      <label class="label" for="paste">Paste</label>
+      <div class="hint">Ctrl+V · right-click paste · Shift+Insert — the box stays empty</div>
+    </div>
+    <textarea id="paste" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste a message here. Every FILE/END block is merged into the pack; nothing is discarded until Clear all."></textarea>
+    <div class="format">Format: <code>{[[FILE: path/to/file.ext]]}</code> content <code>{[[END: path/to/file.ext]]}</code> — prose outside blocks is ignored.</div>
+  </section>
+
+  <div class="toolbar">
+    <button id="download" class="btn primary" type="button">Download .zip</button>
+    <button id="copy-log" class="btn" type="button">Copy log</button>
+    <button id="copy-resend" class="btn" type="button">Copy resend request</button>
+    <button id="clear" class="btn danger" type="button">Clear all</button>
+  </div>
+
+  <section class="panel files-panel">
+    <div class="panel-head"><span>Files</span><span id="files-meta" class="meta">0 files</span></div>
+    <div class="panel-body">
+      <ul id="files" class="file-list"></ul>
+    </div>
+  </section>
+
+  <section class="panel log-panel">
+    <div class="panel-head"><span>Log</span><span class="meta">newest first</span></div>
+    <div id="log" class="panel-body" aria-live="polite"></div>
+  </section>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ==== core ==== */
+var PackerCore = (function () {
+  'use strict';
+
+  var FILE_RE = /^\{\[\[FILE:\s?(.+)\]\]\}$/;
+  var END_RE = /^\{\[\[END:\s?(.+)\]\]\}$/;
+  var NOTE_ORDER = { truncated: 0, corrupt: 1, duplicate: 2, nomarkers: 3, outside: 4, empty: 5 };
+  var encoder = new TextEncoder();
+
+  var crcTable = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    }
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
+  function fmtInt(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function nowTime() {
+    var d = new Date();
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+
+  function excerptOf(text, limit) {
+    var max = limit || 120;
+    var chars = Array.from(text);
+    var clipped = chars.length > max;
+    var excerpt = chars.slice(0, max).join('');
+    excerpt = excerpt
+      .replace(/\\/g, '\\\\')
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n')
+      .replace(/\t/g, '\\t');
+    excerpt = excerpt.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, function (ch) {
+      return '\\u' + ('000' + ch.charCodeAt(0).toString(16)).slice(-4);
+    });
+    return excerpt + (clipped ? '…' : '');
+  }
+
+  function splitLines(text) {
+    var lines = [];
+    var start = 0;
+    var len = text.length;
+    while (start < len) {
+      var nl = text.indexOf('\n', start);
+      var end = nl === -1 ? len : nl;
+      lines.push({ start: start, end: end, next: nl === -1 ? len : nl + 1 });
+      start = end + 1;
+      if (nl === -1) break;
+    }
+    return lines;
+  }
+
+  function markerPath(text, line, re) {
+    var raw = text.slice(line.start, line.end);
+    if (raw.charCodeAt(raw.length - 1) === 13) raw = raw.slice(0, -1);
+    var match = re.exec(raw);
+    return match ? match[1] : null;
+  }
+
+  function parseBlocks(text) {
+    var lines = splitLines(text);
+    var blocks = [];
+    var outsideChars = 0;
+    var i = 0;
+    while (i < lines.length) {
+      var filePath = markerPath(text, lines[i], FILE_RE);
+      if (filePath === null) {
+        outsideChars += lines[i].next - lines[i].start;
+        i++;
+        continue;
+      }
+      var contentStart = lines[i].next;
+      var endIndex = -1;
+      var endPath = null;
+      for (var j = i + 1; j < lines.length; j++) {
+        var found = markerPath(text, lines[j], END_RE);
+        if (found !== null) {
+          endIndex = j;
+          endPath = found;
+          break;
+        }
+      }
+      if (endIndex === -1) {
+        blocks.push({
+          path: filePath,
+          content: text.slice(contentStart),
+          truncated: true,
+          corrupt: false,
+          corruptName: null
+        });
+        i = lines.length;
+      } else {
+        var content = text.slice(contentStart, lines[endIndex].start);
+        var corrupt = endPath !== filePath;
+        blocks.push({
+          path: filePath,
+          content: content,
+          truncated: false,
+          corrupt: corrupt,
+          corruptName: corrupt ? endPath : null
+        });
+        i = endIndex + 1;
+      }
+    }
+    return { blocks: blocks, outsideChars: outsideChars };
+  }
+
+  function makeState() {
+    return { files: new Map(), log: [], failures: new Map(), pastes: 0 };
+  }
+
+  var state = makeState();
+
+  function ingest(text) {
+    if (typeof text !== 'string' || text.length === 0) return null;
+
+    var parsed = parseBlocks(text);
+    var entry = {
+      n: state.pastes + 1,
+      time: nowTime(),
+      fresh: 0,
+      changed: 0,
+      identical: 0,
+      errors: 0,
+      notes: []
+    };
+    state.pastes = entry.n;
+
+    var occurrences = new Map();
+    var lastByPath = new Map();
+    parsed.blocks.forEach(function (block) {
+      occurrences.set(block.path, (occurrences.get(block.path) || 0) + 1);
+      lastByPath.set(block.path, block);
+    });
+
+    var emptyPaths = [];
+
+    lastByPath.forEach(function (block, path) {
+      var bytes = encoder.encode(block.content);
+      var prior = state.files.get(path);
+      var same = prior ? bytesEqual(prior.bytes, bytes) : false;
+
+      if (!prior) entry.fresh++;
+      else if (same) entry.identical++;
+      else entry.changed++;
+
+      var failure = block.truncated ? 'truncated' : (block.corrupt ? 'corrupt' : null);
+      var status;
+      if (failure) status = failure;
+      else if (!prior) status = 'new';
+      else status = same ? 'identical' : 'changed';
+
+      state.files.set(path, {
+        path: path,
+        content: block.content,
+        bytes: bytes,
+        failure: failure,
+        status: status
+      });
+
+      if (block.truncated) {
+        entry.errors++;
+        state.failures.set(path, 'truncated');
+        entry.notes.push({
+          kind: 'truncated',
+          text: 'truncated: ' + path + ' — no END marker, content ran to end of paste',
+          excerpt: excerptOf(block.content)
+        });
+      } else if (block.corrupt) {
+        entry.errors++;
+        state.failures.set(path, 'corrupt');
+        entry.notes.push({
+          kind: 'corrupt',
+          text: 'corrupt: ' + path + ' — END marker named ' + block.corruptName
+        });
+      } else {
+        state.failures.delete(path);
+      }
+
+      if (block.content.length === 0) emptyPaths.push(path);
+    });
+
+    occurrences.forEach(function (count, path) {
+      if (count > 1) {
+        entry.notes.push({
+          kind: 'duplicate',
+          text: 'duplicate within paste: ' + path + (count === 2
+            ? ' appeared twice, second kept'
+            : ' appeared ' + count + ' times, last kept')
+        });
+      }
+    });
+
+    if (parsed.blocks.length === 0) {
+      entry.errors++;
+      entry.notes.push({
+        kind: 'nomarkers',
+        text: 'no markers found — this paste contained no FILE markers, check the format'
+      });
+    } else if (parsed.outsideChars > 0) {
+      entry.notes.push({
+        kind: 'outside',
+        text: 'ignored outside markers: ' + fmtInt(parsed.outsideChars) + ' characters of prose skipped'
+      });
+    }
+
+    emptyPaths.forEach(function (path) {
+      entry.notes.push({ kind: 'empty', text: 'empty file: ' + path + ' has zero bytes' });
+    });
+
+    entry.notes.sort(function (a, b) {
+      return NOTE_ORDER[a.kind] - NOTE_ORDER[b.kind];
+    });
+
+    state.log.unshift(entry);
+    return entry;
+  }
+
+  function headerLine(entry) {
+    var parts = ['Paste ' + entry.n, entry.time, entry.fresh + ' new'];
+    var replaced = entry.changed + entry.identical;
+    if (replaced === 0) {
+      parts.push('0 replaced');
+    } else if (entry.changed && entry.identical) {
+      parts.push(replaced + ' replaced (' + entry.changed + ' changed, ' + entry.identical + ' identical)');
+    } else if (entry.changed) {
+      parts.push(replaced + ' replaced (changed)');
+    } else {
+      parts.push(replaced + ' replaced (identical)');
+    }
+    parts.push(entry.errors + ' error' + (entry.errors === 1 ? '' : 's'));
+    return parts.join(' · ');
+  }
+
+  function entryText(entry) {
+    var lines = [headerLine(entry)];
+    entry.notes.forEach(function (note) {
+      lines.push('  ' + note.text);
+      if (note.excerpt !== null && note.excerpt !== undefined) {
+        lines.push('    excerpt: "' + note.excerpt + '"');
+      }
+    });
+    return lines.join('\n');
+  }
+
+  function logText() {
+    if (!state.log.length) return '';
+    var out = [];
+    state.log.forEach(function (entry) { out.push(entryText(entry)); });
+    return out.join('\n') + '\n';
+  }
+
+  function resendText() {
+    var lines = ['Re-send these files complete, using the agreed format:'];
+    state.failures.forEach(function (type, path) {
+      lines.push(path + ' (' + type + ')');
+    });
+    return lines.join('\n') + '\n';
+  }
+
+  function clearAll() {
+    state.files.clear();
+    state.failures.clear();
+    state.log.length = 0;
+    state.pastes = 0;
+  }
+
+  function buildZip() {
+    var paths = Array.from(state.files.keys()).sort();
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+    var centralSize = 0;
+    var dosTime = 0;
+    var dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1;
+
+    paths.forEach(function (path) {
+      var data = state.files.get(path).bytes;
+      var name = encoder.encode(path);
+      var crc = crc32(data);
+
+      var local = new Uint8Array(30 + name.length);
+      var lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(6, 0x0800, true);
+      lv.setUint16(8, 0, true);
+      lv.setUint16(10, dosTime, true);
+      lv.setUint16(12, dosDate, true);
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, data.length, true);
+      lv.setUint32(22, data.length, true);
+      lv.setUint16(26, name.length, true);
+      lv.setUint16(28, 0, true);
+      local.set(name, 30);
+      chunks.push(local, data);
+
+      var centralOffset = offset;
+      offset += local.length + data.length;
+
+      var record = new Uint8Array(46 + name.length);
+      var cv = new DataView(record.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, dosTime, true);
+      cv.setUint16(14, dosDate, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, data.length, true);
+      cv.setUint32(24, data.length, true);
+      cv.setUint16(28, name.length, true);
+      cv.setUint16(30, 0, true);
+      cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true);
+      cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, centralOffset, true);
+      record.set(name, 46);
+      central.push(record);
+      centralSize += record.length;
+    });
+
+    var centralStart = offset;
+    central.forEach(function (record) { chunks.push(record); });
+
+    var end = new Uint8Array(22);
+    var ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, paths.length, true);
+    ev.setUint16(10, paths.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, centralStart, true);
+    ev.setUint16(20, 0, true);
+    chunks.push(end);
+
+    var out = new Uint8Array(centralStart + centralSize + end.length);
+    var pos = 0;
+    chunks.forEach(function (chunk) {
+      out.set(chunk, pos);
+      pos += chunk.length;
+    });
+    return out;
+  }
+
+  return {
+    state: state,
+    ingest: ingest,
+    clearAll: clearAll,
+    buildZip: buildZip,
+    logText: logText,
+    resendText: resendText,
+    headerLine: headerLine,
+    entryText: entryText,
+    fmtInt: fmtInt,
+    crc32: crc32
+  };
+})();
+
+/* ==== ui ==== */
+(function () {
+  'use strict';
+
+  var core = window.PackerCore;
+  var box = document.getElementById('paste');
+  var filesEl = document.getElementById('files');
+  var filesMeta = document.getElementById('files-meta');
+  var logEl = document.getElementById('log');
+  var downloadBtn = document.getElementById('download');
+  var copyLogBtn = document.getElementById('copy-log');
+  var copyResendBtn = document.getElementById('copy-resend');
+  var clearBtn = document.getElementById('clear');
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+
+  function make(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== null && text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function toast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('show');
+    }, 2200);
+  }
+
+  function renderFiles() {
+    filesEl.textContent = '';
+    var paths = Array.from(core.state.files.keys()).sort();
+    var totalBytes = 0;
+    var failed = 0;
+
+    paths.forEach(function (path) {
+      var file = core.state.files.get(path);
+      totalBytes += file.bytes.length;
+      if (file.failure) failed++;
+
+      var row = make('li', 'file-row');
+      row.appendChild(make('span', 'file-path', path));
+      row.appendChild(make('span', 'chip ' + file.status, file.status));
+      row.appendChild(make('span', 'file-size', core.fmtInt(file.bytes.length) + ' B'));
+      filesEl.appendChild(row);
+    });
+
+    if (!paths.length) {
+      filesEl.appendChild(make('li', 'empty', 'No files yet. Paste a message with FILE/END markers.'));
+    }
+
+    filesMeta.textContent = paths.length
+      ? paths.length + (paths.length === 1 ? ' file' : ' files') +
+        ' · ' + core.fmtInt(totalBytes) + ' B' +
+        (failed ? ' · ' + failed + ' failed' : '')
+      : '0 files';
+  }
+
+  function renderLog() {
+    logEl.textContent = '';
+    if (!core.state.log.length) {
+      logEl.appendChild(make('div', 'empty', 'No pastes yet.'));
+      return;
+    }
+    core.state.log.forEach(function (entry) {
+      var block = make('div', 'log-entry');
+      block.appendChild(make('div', 'log-head', core.headerLine(entry)));
+      entry.notes.forEach(function (note) {
+        var className = 'note';
+        if (note.kind === 'truncated' || note.kind === 'corrupt' || note.kind === 'nomarkers') {
+          className += ' bad';
+        } else if (note.kind === 'outside') {
+          className += ' dim';
+        }
+        block.appendChild(make('div', className, note.text));
+        if (note.excerpt !== null && note.excerpt !== undefined) {
+          block.appendChild(make('div', 'excerpt', 'excerpt: "' + note.excerpt + '"'));
+        }
+      });
+      logEl.appendChild(block);
+    });
+    logEl.scrollTop = 0;
+  }
+
+  function updateControls() {
+    var hasFiles = core.state.files.size > 0;
+    downloadBtn.disabled = !hasFiles;
+    clearBtn.disabled = !hasFiles && core.state.log.length === 0;
+    copyLogBtn.disabled = core.state.log.length === 0;
+    copyResendBtn.disabled = core.state.failures.size === 0;
+  }
+
+  function render() {
+    renderFiles();
+    renderLog();
+    updateControls();
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () {
+        return true;
+      }, function () {
+        return legacyCopy(text);
+      });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  function legacyCopy(text) {
+    var helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'fixed';
+    helper.style.top = '0';
+    helper.style.left = '-9999px';
+    helper.style.opacity = '0';
+    document.body.appendChild(helper);
+    helper.select();
+    var ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(helper);
+    box.focus();
+    return ok;
+  }
+
+  function handlePasteText(text) {
+    if (!text) return false;
+    var entry = core.ingest(text);
+    if (!entry) return false;
+    render();
+    return true;
+  }
+
+  // Capture phase on the document: the clipboard payload is read directly and the
+  // browser's default insertion is cancelled, so the textarea never receives text.
+  document.addEventListener('paste', function (event) {
+    event.preventDefault();
+    var data = event.clipboardData || window.clipboardData;
+    if (data) {
+      var text = '';
+      try {
+        text = data.getData('text/plain') || data.getData('Text') || '';
+      } catch (err) {
+        text = '';
+      }
+      if (text) handlePasteText(text);
+      else toast('Clipboard has no text.');
+    } else if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (text) {
+        if (text) handlePasteText(text);
+        else toast('Clipboard has no text.');
+      }, function () {
+        toast('Could not read the clipboard.');
+      });
+    }
+    box.value = '';
+  }, true);
+
+  box.addEventListener('beforeinput', function (event) {
+    event.preventDefault();
+  });
+
+  box.addEventListener('input', function () {
+    if (box.value !== '') {
+      var text = box.value;
+      box.value = '';
+      handlePasteText(text);
+    }
+  });
+
+  box.addEventListener('dragover', function (event) {
+    event.preventDefault();
+  });
+
+  box.addEventListener('drop', function (event) {
+    event.preventDefault();
+    var text = '';
+    try {
+      text = (event.dataTransfer && event.dataTransfer.getData('text/plain')) || '';
+    } catch (err) {
+      text = '';
+    }
+    if (text) handlePasteText(text);
+    box.value = '';
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    if (core.state.files.size === 0) return;
+    var bytes = core.buildZip();
+    var blob = new Blob([bytes], { type: 'application/zip' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'project-pack.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  });
+
+  copyLogBtn.addEventListener('click', function () {
+    if (!core.state.log.length) return;
+    copyText(core.logText()).then(function (ok) {
+      toast(ok ? 'Log copied' : 'Copy failed — the log is visible above');
+    });
+  });
+
+  copyResendBtn.addEventListener('click', function () {
+    if (!core.state.failures.size) return;
+    copyText(core.resendText()).then(function (ok) {
+      toast(ok ? 'Resend request copied' : 'Copy failed');
+    });
+  });
+
+  clearBtn.addEventListener('click', function () {
+    core.clearAll();
+    render();
+    toast('Cleared');
+    box.value = '';
+    box.focus();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
