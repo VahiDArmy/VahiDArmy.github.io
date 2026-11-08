@@ -14,14 +14,16 @@ import { initZipInput, handleZipFile } from './ui/zip-flow.js';
 import { bindShortcuts } from './ui/commands.js';
 import { openPalette } from './ui/palette.js';
 import { buildCommands } from './ui/commands.js';
-import { toastInfo, toastOk } from './ui/toast.js';
+import { toastInfo, toastOk, toast } from './ui/toast.js';
 import { initPwa } from './ui/pwa.js';
 import { initTooltips } from './ui/tooltip.js';
 import { initContextMenuWiring } from './ui/context-wiring.js';
 import { initShortcutsOverlay } from './ui/shortcuts-overlay.js';
 import { initSearchOverlay } from './ui/search-overlay.js';
 import { initMiscShortcuts } from './ui/misc-shortcuts.js';
-import { confirmDialog } from './ui/modal.js';
+import { confirmDialog, openModal } from './ui/modal.js';
+import { copyToClipboard } from './utils/dom.js';
+import { SYSTEM_PROMPT } from './core/prompt.js';
 
 function boot() {
   loadSettings();
@@ -59,7 +61,13 @@ function boot() {
       const btn = e.target.closest('button');
       if (!btn || !btn.dataset.mode) return;
       const mode = btn.dataset.mode;
-      if (State.ui.dashboardMode === mode) return;
+      
+      if (State.ui.dashboardMode === mode) {
+        if (mode === 'pack') {
+          showSystemPrompt();
+        }
+        return;
+      }
 
       for (const child of modeSwitch.children) {
         child.classList.toggle('active', child === btn);
@@ -125,6 +133,37 @@ function boot() {
   } else {
     renderRoute('dashboard');
   }
+}
+
+function showSystemPrompt() {
+  const pre = document.createElement('pre');
+  pre.className = 'code-block';
+  pre.style.whiteSpace = 'pre-wrap';
+  pre.style.maxHeight = '500px';
+  pre.style.overflowY = 'auto';
+  pre.style.userSelect = 'all';
+  pre.style.fontSize = '12px';
+  pre.style.lineHeight = '1.6';
+  pre.textContent = SYSTEM_PROMPT;
+
+  openModal({
+    title: 'AI System Prompt',
+    wide: true,
+    body: pre,
+    buttons: [
+      {
+        label: 'Copy Prompt',
+        variant: 'primary',
+        keepOpen: true,
+        onClick: async () => {
+          const ok = await copyToClipboard(SYSTEM_PROMPT);
+          if (ok) toastOk('Prompt copied to clipboard');
+          else toast('Copy failed');
+        }
+      },
+      { label: 'Close' }
+    ]
+  });
 }
 
 if (document.readyState === 'loading') {
