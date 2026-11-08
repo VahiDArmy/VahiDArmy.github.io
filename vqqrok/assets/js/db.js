@@ -312,8 +312,7 @@ let heartbeatTimer = null;
 let partnerWatchTimer = null;
 let partnerLastSeen = 0;
 
-const HEARTBEAT_MS = 2500;
-const PARTNER_STALE_MS = 8000;
+const HEARTBEAT_MS = 2000;
 const BROADCAST_EVENT = "ayah";
 
 function selfMeta(ayah) {
@@ -330,6 +329,7 @@ function emitPartner(info) {
   partnerHandler?.(info || { online: false });
 }
 
+/** آنلاین بودن فقط از presence — نه از تایمر مصنوعی */
 function partnerFromPresence() {
   if (!readingChannel || !state.user) return null;
   const map = readingChannel.presenceState() || {};
@@ -353,7 +353,8 @@ function onPresenceChange() {
   if (p) {
     partnerLastSeen = Date.now();
     emitPartner(p);
-  } else if (Date.now() - partnerLastSeen > PARTNER_STALE_MS) {
+  } else {
+    // فقط وقتی واقعاً از presence خارج شد آفلاین کن
     emitPartner({ online: false });
   }
 }
@@ -361,6 +362,7 @@ function onPresenceChange() {
 function onBroadcastAyah({ payload }) {
   if (!payload || !state.user) return;
   if (payload.uid && payload.uid === state.user.id) return;
+  // اگر هنوز در presence نیست ولی broadcast می‌آید، آنلاین حساب کن
   partnerLastSeen = Date.now();
   emitPartner({
     online: true,
@@ -384,37 +386,42 @@ function stopHeartbeat() {
 
 function startHeartbeat() {
   stopHeartbeat();
+  // هر ۲ ثانیه: track + broadcast تا presence و آیه زنده بماند
   heartbeatTimer = setInterval(() => {
     if (!readingChannel || !state.user || !state.slot) return;
     const num = lastBroadcastAyah;
     if (num == null) return;
     sendBroadcast(num, true);
   }, HEARTBEAT_MS);
+  // فقط همگام‌سازی با presence — دیگر با تایمر آفلاین جعلی نمی‌سازیم
   partnerWatchTimer = setInterval(() => {
-    if (partnerLastSeen && Date.now() - partnerLastSeen > PARTNER_STALE_MS) {
-      emitPartner({ online: false });
-    }
-  }, 2000);
+    const p = partnerFromPresence();
+    if (p) emitPartner(p);
+  }, 3000);
 }
 
 async function sendBroadcast(ayah, force = false) {
   if (!readingChannel || !state.user || !state.slot) return;
   const num = Math.max(1, Math.min(96, Number(ayah) || 1));
   const now = Date.now();
-  if (!force && num === lastBroadcastAyah && now - lastBroadcastAt < 150) return;
+  if (!force && num === lastBroadcastAyah && now - lastBroadcastAt < 120) return;
   lastBroadcastAyah = num;
   lastBroadcastAt = now;
   const body = selfMeta(num);
   try {
-    // broadcast برای موقعیت؛ presence برای آنلاین ماندن
+    // اول presence (منبع حقیقت آنلاین بودن + آیه)
+    await readingChannel.track(body);
+  } catch (err) {
+    console.warn("[vaqia] presence track", err?.message || err);
+  }
+  try {
     await readingChannel.send({
       type: "broadcast",
       event: BROADCAST_EVENT,
       payload: body,
     });
-    await readingChannel.track(body);
   } catch (err) {
-    console.warn("[vaqia] reading send", err?.message || err);
+    console.warn("[vaqia] broadcast", err?.message || err);
   }
 }
 

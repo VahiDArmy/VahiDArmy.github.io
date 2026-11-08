@@ -76,7 +76,7 @@ let sessionReads = 0;
 let partnerState = { online: false, ayah: null, name: null, slot: null };
 let readingMode = false;
 /** فاصلهٔ زمانی بین آیه‌ها در مود خواندن (میلی‌ثانیه) — سرعت ثابت */
-const READING_PACE_MS = 2000;
+const READING_PACE_MS = 3000;
 let readingTimer = null;
 
 function updateReadbar() {
@@ -372,7 +372,7 @@ function renderHistory() {
           { class: "history__row", dataset: { slot: row.slot } },
           el("span", { class: "history__dot", "aria-hidden": "true" }),
           el("span", { class: "history__who" }, currentUserName(Number(row.slot))),
-          el("span", { class: "history__time" }, `${row.stamp.time} · ${relativeFromNow(row.read_at)}`)
+          el("span", { class: "history__time" }, row.stamp.time || "")
         )
       );
     }

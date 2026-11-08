@@ -384,23 +384,18 @@ function ayahAtViewportLine(ratio = 0.38) {
   return Number.isFinite(ayah) && ayah >= 1 ? ayah : null;
 }
 
-function isAyahOnScreen(ayah) {
-  const node = surahState.nodes.get(Number(ayah));
-  if (!node || node.hidden) return false;
-  const rect = node.getBoundingClientRect();
-  return rect.bottom > 0 && rect.top < window.innerHeight;
-}
-
 /**
- * اولین آیهٔ دیده در بالای viewport (به ترتیب شماره).
- * وقتی ۸ از صفحه خارج شود → ۹/۱۰/...؛ نه مرکز صفحه که به ۲۴ بپرد.
+ * اولین آیه در ناحیهٔ متن (زیر هدر/نوار خواندن).
+ * آیهٔ نصفهٔ بالای صفحه را نادیده می‌گیرد تا ۱۹ نماند وقتی ۲۴ اولِ محتواست.
  */
-function firstVisibleAyah() {
+function firstContentAyah() {
   if (!surahState.nodes.size) return null;
+  const topInset = Math.min(130, Math.round(window.innerHeight * 0.18));
   for (const [num, card] of surahState.nodes) {
     if (card.hidden) continue;
     const rect = card.getBoundingClientRect();
-    if (rect.bottom > 0 && rect.top < window.innerHeight) return num;
+    if (rect.bottom <= topInset) continue;
+    if (rect.top < window.innerHeight) return num;
   }
   return null;
 }
@@ -410,13 +405,8 @@ export function updateProgress() {
 
   if (document.body.classList.contains("is-reading")) {
     const current = surahState.active || surahState.lastAyah || 1;
-    // هنوز روی صفحه است → تایمر مسئول +1 است
-    if (isAyahOnScreen(current)) {
-      surahState.progress = Math.round((current / SITE.ayahCount) * 100);
-      return;
-    }
-    // از صفحه خارج شده → فقط به اولین آیهٔ دیده در بالا (نه وسط صفحه)
-    const top = firstVisibleAyah();
+    const top = firstContentAyah();
+    // اسکرول جلوتر از شمارندهٔ زمانی → هم‌تراز با اولین آیهٔ ناحیهٔ محتوا
     if (top != null && top > current) {
       setTrackedAyah(top);
       return;

@@ -1054,15 +1054,52 @@ html[data-theme="night"] .quranquote { color: var(--gold); background: color-mix
 .history__dayhead b { color: var(--ink); font-size: var(--step-00); }
 .history__dayhead span { margin-inline-start: auto; color: var(--gold); }
 .history__row {
-  display: flex; align-items: center; gap: .6rem;
-  padding: .55rem .7rem; border-radius: var(--r-sm);
-  background: var(--card-solid); border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .4rem .65rem;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  min-inline-size: 0;
 }
-.history__dot { inline-size: 8px; block-size: 8px; border-radius: 50%; }
-.history__row[data-slot="1"] .history__dot { background: var(--accent); }
-.history__row[data-slot="2"] .history__dot { background: var(--accent-2); }
-.history__who { font-size: var(--step-000); font-weight: 700; }
-.history__time { margin-inline-start: auto; font-size: var(--step-000); color: var(--ink-mute); font-variant-numeric: tabular-nums; }
+/* نفر اول = پوستهٔ شبانه (ثابت، مستقل از تم فعلی) */
+.history__row[data-slot="1"] {
+  background: #0d1b2a;
+  border-color: rgba(90, 156, 255, .28);
+  color: #e8f0ff;
+}
+.history__row[data-slot="1"] .history__dot { background: #5a9cff; }
+.history__row[data-slot="1"] .history__time { color: #8598bb; }
+/* نفر دوم = پوستهٔ رُز روشن (ثابت، مستقل از تم فعلی) */
+.history__row[data-slot="2"] {
+  background: #fff5f8;
+  border-color: rgba(224, 68, 127, .28);
+  color: #3c1526;
+}
+.history__row[data-slot="2"] .history__dot { background: #e0447f; }
+.history__row[data-slot="2"] .history__time { color: #98687c; }
+.history__dot {
+  inline-size: 7px;
+  block-size: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.history__who {
+  font-size: .78rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-inline-size: 0;
+}
+.history__time {
+  margin-inline-start: auto;
+  font-size: .7rem;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  letter-spacing: .01em;
+}
 .history__empty { display: grid; place-items: center; gap: .35rem; text-align: center; padding: 2rem 1rem; color: var(--ink-mute); border: 1px dashed var(--line-strong); border-radius: var(--r-md); font-size: var(--step-00); }
 .history__empty svg { inline-size: 30px; block-size: 30px; color: var(--accent-2); }
 
@@ -1145,8 +1182,7 @@ html[data-theme="night"] .quranquote { color: var(--gold); background: color-mix
   .pager__pages { order: 3; inline-size: 100%; }
   .pager { justify-content: center; }
   .hero__actions .btn { flex: 1 1 45%; }
-  .history__row { flex-wrap: wrap; }
-  .history__time { inline-size: 100%; margin-inline-start: 1.1rem; }
+  /* تاریخچه همیشه تک‌ردیفه می‌ماند */
 }
 
 @media print {
