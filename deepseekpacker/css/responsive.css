@@ -1,0 +1,45 @@
+/* AURORA OS — Responsive */
+
+@media (max-width: 1100px){
+  .window{min-width:280px}
+  .notif{width:300px}
+  .palette__box{width:min(560px,calc(100% - var(--sp-4)))}
+}
+
+@media (max-width: 768px){
+  :root{--menubar-h:30px;--dock-h:60px}
+  .brand-name{display:none}
+  .menubar__clock{font-size:var(--fs-xs)}
+  #clock-date{display:none}
+  .dock{bottom:var(--sp-2);height:52px;padding:6px;gap:2px}
+  .dock__item{width:38px;height:38px;font-size:16px}
+  .dock__item:hover{transform:scale(1.08) translateY(-2px)}
+  .desktop-icons{top:var(--sp-2);left:var(--sp-2)}
+  .desktop-icon{width:60px}
+  .desktop-icon__glyph{width:32px;height:32px;font-size:14px}
+  .desktop-icon__label{font-size:10px}
+  .notif{width:calc(100% - var(--sp-4));right:var(--sp-2);left:var(--sp-2)}
+  .window{min-width:100%!important;min-height:100%!important;top:var(--menubar-h)!important;left:0!important;width:100%!important;height:calc(100% - var(--menubar-h) - var(--dock-h))!important;border-radius:0}
+  .palette{padding-top:10vh}
+  .palette__box{width:calc(100% - var(--sp-4))}
+  .palette__input-wrap input{font-size:var(--fs-base)}
+  .toasts{right:var(--sp-2);left:var(--sp-2);bottom:calc(var(--dock-h) + var(--sp-2))}
+  .toast{max-width:100%}
+}
+
+@media (max-width: 480px){
+  .menubar__menus{display:none}
+  .menubar__clock{gap:var(--sp-1);padding:0 var(--sp-1)}
+  .desktop-icons{flex-direction:row;flex-wrap:wrap;max-width:100%;right:var(--sp-2)}
+  .btn--lg{padding:8px 16px;font-size:var(--fs-sm)}
+}
+
+@media (hover: none){
+  .dock__item:hover{transform:none}
+  .dock__tooltip{display:none}
+  .window__control{width:16px;height:16px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:0.01ms!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
+}
