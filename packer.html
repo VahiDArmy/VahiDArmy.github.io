@@ -1,358 +1,972 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Project Packer</title>
 <style>
-:root{--bg:#0c0e14;--panel:#141824;--line:#272d40;--fg:#e8ecf6;--mut:#8e97ad;--vio:#8b6cff;--cya:#3ed6ff;--ok:#5eead4;--warn:#fbbf24;--bad:#fb7185;color-scheme:dark}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:880px;margin:0 auto;padding:32px 16px 64px}
-h1{margin:0 0 4px;font-size:26px;font-weight:650;letter-spacing:-.01em}
-.sub{margin:0 0 24px;color:var(--mut);max-width:64ch}
-.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
-.tab{font:inherit;color:var(--mut);background:none;border:0;border-bottom:2px solid transparent;padding:8px 14px;margin-bottom:-1px;cursor:pointer}
-.tab:hover{color:var(--fg)}
-.tab[aria-selected=true]{color:var(--fg);border-bottom-color:var(--cya)}
-.btn{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 14px;cursor:pointer}
-.btn:hover:not(:disabled){border-color:var(--cya)}
-.btn.pri{background:var(--vio);border-color:var(--vio);color:#0c0e14;font-weight:600}
-.btn:disabled{opacity:.4;cursor:default}
-:focus-visible{outline:2px solid var(--cya);outline-offset:2px}
-.drop{position:relative;display:block;border:2px dashed var(--line);border-radius:12px;padding:34px 16px;text-align:center;color:var(--mut);cursor:pointer;background:var(--panel);transition:border-color .15s,box-shadow .15s}
-.drop:hover,.drop.over,.drop:focus-within{border-color:var(--cya);color:var(--fg);box-shadow:0 0 0 4px rgba(62,214,255,.12),0 0 28px rgba(139,108,255,.25)}
-.drop input{position:absolute;opacity:0;width:1px;height:1px}
-.row{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;margin:14px 0}
-.row label{color:var(--mut);display:flex;align-items:center;gap:8px}
-input[type=file]{font:inherit;color:var(--fg)}
-select{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
-textarea{display:block;width:100%;height:44vh;min-height:240px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:12px;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;resize:vertical;white-space:pre;overflow:auto}
-.msg{min-height:1.5em;margin:12px 0 4px;color:var(--ok)}
-.msg.bad{color:var(--bad)}
-.warn{margin:4px 0;color:var(--warn);font-size:13px}
-[hidden]{display:none!important}
+  :root {
+    color-scheme: dark;
+    --bg: #0a0b0d;
+    --panel: #0f1115;
+    --panel-soft: #0d0f13;
+    --ink: #d9dce1;
+    --ink-soft: #a9afb7;
+    --muted: #767d86;
+    --faint: #5d646d;
+    --line: #22262c;
+    --line-soft: #191d22;
+    --accent: #8fc6ad;
+    --warn: #d6b07a;
+    --bad: #d99a9a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 13px/1.55 ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    height: 100dvh;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 18px 20px 20px;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(110px, 0.85fr) minmax(150px, 1.15fr);
+    gap: 12px;
+  }
+
+  .head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 2px;
+  }
+  .brand {
+    font-size: 14px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #e8eaee;
+  }
+  .brand::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 9px;
+    border: 1px solid #6f9f8b;
+    background: #16241f;
+    vertical-align: 1px;
+  }
+  .tagline {
+    color: var(--faint);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .paste-panel {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    padding: 10px 12px 9px;
+    display: grid;
+    gap: 7px;
+  }
+  .paste-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .label {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8a9199;
+  }
+  .hint {
+    font-size: 11px;
+    color: var(--faint);
+    text-align: right;
+  }
+  #paste {
+    display: block;
+    width: 100%;
+    height: 84px;
+    resize: none;
+    padding: 9px 10px;
+    background: #0b0d10;
+    color: var(--ink);
+    border: 1px solid #262b33;
+    border-radius: 5px;
+    font: inherit;
+    line-height: 1.5;
+    outline: none;
+    caret-color: #6f9f8b;
+    overflow: auto;
+  }
+  #paste::placeholder { color: #5a616a; }
+  #paste:focus { border-color: #3a4e46; background: #0c0f12; }
+  .format {
+    font-size: 11px;
+    color: #6a717a;
+    overflow-wrap: anywhere;
+  }
+  .format code {
+    color: #93a09a;
+    background: #12161a;
+    border: 1px solid #1f242a;
+    padding: 0 4px;
+    border-radius: 3px;
+    font: inherit;
+    font-size: 10.5px;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn {
+    appearance: none;
+    background: #13161b;
+    color: #cdd1d7;
+    border: 1px solid #292e36;
+    border-radius: 5px;
+    padding: 7px 12px;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .btn:hover:not(:disabled) { background: #181c22; border-color: #343b45; }
+  .btn:active:not(:disabled) { background: #101317; }
+  .btn:focus-visible { outline: 1px solid #5c8f7c; outline-offset: 2px; }
+  .btn.primary {
+    background: #152420;
+    border-color: #2f4c41;
+    color: #c6e7d8;
+  }
+  .btn.primary:hover:not(:disabled) { background: #1a2c26; border-color: #3d6354; }
+  .btn.danger {
+    margin-left: auto;
+    background: transparent;
+    color: #c99191;
+    border-color: #352526;
+  }
+  .btn.danger:hover:not(:disabled) { background: #1b1214; border-color: #4a3032; color: #e0a5a5; }
+  .btn:disabled { opacity: .38; cursor: default; }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 12px;
+    border-bottom: 1px solid #1a1e24;
+    background: var(--panel-soft);
+  }
+  .panel-head > span:first-child {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #8a9199;
+  }
+  .meta {
+    font-size: 11px;
+    color: #646b74;
+    font-variant-numeric: tabular-nums;
+  }
+  .panel-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #2a3038 var(--panel);
+  }
+  .panel-body::-webkit-scrollbar { width: 10px; }
+  .panel-body::-webkit-scrollbar-track { background: var(--panel); }
+  .panel-body::-webkit-scrollbar-thumb {
+    background: #232830;
+    border-radius: 6px;
+    border: 3px solid var(--panel);
+  }
+
+  .file-list { list-style: none; margin: 0; padding: 0; }
+  .file-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 12px;
+    border-bottom: 1px solid #171b20;
+  }
+  .file-row:last-child { border-bottom: 0; }
+  .file-path { overflow-wrap: anywhere; color: var(--ink); }
+  .file-size {
+    color: #717882;
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .chip {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 6px;
+    border: 1px solid #2a3038;
+    border-radius: 999px;
+    color: #818892;
+    white-space: nowrap;
+  }
+  .chip.new { color: #9fd0b8; border-color: #2c463c; }
+  .chip.changed { color: var(--warn); border-color: #4a3d29; }
+  .chip.identical { color: #7c848d; }
+  .chip.truncated, .chip.corrupt { color: var(--bad); border-color: #4b2f30; }
+
+  .log-entry {
+    padding: 8px 12px;
+    border-bottom: 1px solid #171b20;
+  }
+  .log-entry:last-child { border-bottom: 0; }
+  .log-head {
+    color: #dfe2e6;
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+  .note {
+    padding-left: 12px;
+    margin-top: 2px;
+    color: #9aa1a9;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+  .note.bad { color: #d8a1a1; }
+  .note.dim { color: #767d86; }
+  .excerpt {
+    padding-left: 24px;
+    color: #6f767f;
+    font-size: 11.5px;
+    overflow-wrap: anywhere;
+  }
+  .empty {
+    padding: 14px 12px;
+    color: #5f666f;
+    font-size: 12px;
+  }
+
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 18px;
+    transform: translate(-50%, 6px);
+    max-width: calc(100vw - 32px);
+    padding: 6px 12px;
+    background: #161a20;
+    border: 1px solid #2d333c;
+    border-radius: 5px;
+    color: #cfd4da;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (max-width: 720px) {
+    .app {
+      height: auto;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 12px 16px;
+    }
+    .tagline { display: none; }
+    .hint { text-align: left; }
+    .panel-body { max-height: 38vh; }
+    .btn.danger { margin-left: 0; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <h1>Project Packer</h1>
-  <p class="sub">Turn a project ZIP into one text file that explains its own format, so an AI can read the whole project. Turn the same format back into a ZIP. Nothing leaves your browser.</p>
+<main class="app">
+  <header class="head">
+    <div class="brand">project packer</div>
+    <div class="tagline">paste blocks · merge files · download one zip</div>
+  </header>
 
-  <div class="tabs" role="tablist">
-    <button class="tab" role="tab" aria-selected="true" data-tab="a">ZIP to text</button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="b">Text to ZIP</button>
+  <section class="paste-panel">
+    <div class="paste-top">
+      <label class="label" for="paste">Paste</label>
+      <div class="hint">Ctrl+V · right-click paste · Shift+Insert — the box stays empty</div>
+    </div>
+    <textarea id="paste" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Paste a message here. Every FILE/END block is merged into the pack; nothing is discarded until Clear all."></textarea>
+    <div class="format">Format: <code>{[[FILE: path/to/file.ext]]}</code> content <code>{[[END: path/to/file.ext]]}</code> — prose outside blocks is ignored.</div>
+  </section>
+
+  <div class="toolbar">
+    <button id="download" class="btn primary" type="button">Download .zip</button>
+    <button id="copy-log" class="btn" type="button">Copy log</button>
+    <button id="copy-resend" class="btn" type="button">Copy resend request</button>
+    <button id="clear" class="btn danger" type="button">Clear all</button>
   </div>
 
-  <section id="a">
-    <label class="drop" id="drop"><input id="zipin" type="file" accept=".zip,application/zip">Drop a project ZIP here, or click to choose one</label>
-    <div class="row">
-      <label>Binary files
-        <select id="bin"><option value="skip">Leave out, list only</option><option value="base64">Embed as base64</option></select>
-      </label>
-      <label><input type="checkbox" id="junk" checked> Skip .DS_Store, __MACOSX and Thumbs.db</label>
-    </div>
-    <p class="msg" id="msgA"></p>
-    <div id="warnA"></div>
-    <textarea id="out" readonly spellcheck="false" placeholder="The packed text appears here"></textarea>
-    <div class="row">
-      <button class="btn pri" id="dl" disabled>Download text file</button>
-      <button class="btn" id="cp" disabled>Copy text</button>
+  <section class="panel files-panel">
+    <div class="panel-head"><span>Files</span><span id="files-meta" class="meta">0 files</span></div>
+    <div class="panel-body">
+      <ul id="files" class="file-list"></ul>
     </div>
   </section>
 
-  <section id="b" hidden>
-    <div class="row">
-      <label>Packed text file <input type="file" id="txtin" accept=".txt,.md,text/plain"></label>
-      <label><input type="checkbox" id="fence" checked> Strip code fences around file contents (AI replies)</label>
-    </div>
-    <textarea id="inp" spellcheck="false" placeholder="Paste packed text here, or an AI reply that uses the same format"></textarea>
-    <div class="row"><button class="btn pri" id="build">Build ZIP</button></div>
-    <p class="msg" id="msgB"></p>
-    <div id="warnB"></div>
+  <section class="panel log-panel">
+    <div class="panel-head"><span>Log</span><span class="meta">newest first</span></div>
+    <div id="log" class="panel-body" aria-live="polite"></div>
   </section>
 </main>
 
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
 <script>
-'use strict';
-/* ---------- Format guide placed at the top of every packed text ---------- */
-const GUIDE = [
-'PROJECT PACK: one text file that holds a whole project (format project-pack/1)',
-'',
-'HOW THIS FILE IS ORGANIZED',
-'Everything before the line "=== PACK START ===" is this explanation. The project itself is everything after it.',
-'',
-'MARKER LINES',
-'A marker is a line that starts in the very first column with "=== " and ends with " ===". Every other line is file',
-'content. The examples below are indented, so they are not real markers.',
-'',
-'  Folder: one line, the path ends with "/".',
-'      === FOLDER: css/ ===',
-'  File: an opening marker with the full path, then the exact content of the file, then a closing marker.',
-'      === FILE: css/reset.css ===',
-'      (file content, line by line, nothing added or removed)',
-'      === END FILE ===',
-'  Binary file left out: one informational line. Nothing can be restored from it.',
-'      === SKIPPED: img/logo.png (binary, 5.2 KB) ===',
-'  Binary file embedded: the opening marker ends with "(base64)" and the content is base64 text.',
-'      === FILE: img/logo.png (base64) ===',
-'',
-'RULES',
-'  - Paths are relative to the project root and use "/" as separator. They never start with "/" and never contain "..".',
-'  - Folders and files appear in alphabetical order of their paths. A folder line comes right before its contents.',
-'  - A file is assumed to end with a newline. If it does not, its closing marker reads "=== END FILE (no newline at end) ===".',
-'  - A content line that itself starts with one of the markers above gets one extra backslash in front of it.',
-'    Remove exactly one leading backslash from such lines when restoring the file.',
-'  - The tree at the end of this explanation is only a summary. The marker blocks are the real content.',
-'',
-'IF YOU ARE AN AI AND ARE ASKED TO CHANGE THIS PROJECT',
-'  - Reply with every file you change or add as a complete block in this same format. Write the full content, never "..." or "unchanged".',
-'  - Leave out files you did not touch, unless the whole project is requested.',
-'  - Do not wrap blocks in code fences and do not put commentary inside a block. Text between blocks is ignored.',
-'  - Keep paths exactly as listed here unless you deliberately move or rename a file.',
-'',
-'PROJECT TREE'
-];
+/* ==== core ==== */
+var PackerCore = (function () {
+  'use strict';
 
-/* ---------- Helpers ---------- */
-const MARK = /^\\*=== (?:FOLDER|FILE|END FILE|SKIPPED|PACK START)\b/;   // marker-like line, escaped or not
-const UNESC = /^\\+=== (?:FOLDER|FILE|END FILE|SKIPPED|PACK START)\b/;  // marker-like line that was escaped
-const fmt = n => n < 1024 ? n + ' B' : n < 1048576 ? (n / 1024).toFixed(1) + ' KB' : (n / 1048576).toFixed(2) + ' MB';
+  var FILE_RE = /^\{\[\[FILE:\s?(.+)\]\]\}$/;
+  var END_RE = /^\{\[\[END:\s?(.+)\]\]\}$/;
+  var NOTE_ORDER = { truncated: 0, corrupt: 1, duplicate: 2, nomarkers: 3, outside: 4, empty: 5 };
+  var encoder = new TextEncoder();
 
-function cleanPath(p) {
-  if (/[\x00-\x1f]/.test(p)) return null;
-  const parts = p.replace(/\\/g, '/').split('/').filter(s => s && s !== '.');
-  return parts.includes('..') ? null : parts.join('/');
-}
-function asText(d) {
-  if (d.includes(0)) return null;
-  try { return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(d); } catch { return null; }
-}
-function toB64(u8) {
-  let s = '';
-  for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
-  return btoa(s).replace(/.{76}/g, '$&\n').replace(/\n$/, '');
-}
-const CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
-function crc32(b) { let c = -1; for (let i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (~c) >>> 0; }
-
-/* ---------- ZIP reader (stored + deflate) ---------- */
-async function inflateRaw(bytes) {
-  const s = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
-  return new Uint8Array(await new Response(s).arrayBuffer());
-}
-async function readZip(buf) {
-  const u8 = new Uint8Array(buf), dv = new DataView(buf), dec = new TextDecoder();
-  let e = -1;
-  for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
-  if (e < 0) throw new Error('This is not a ZIP file. Choose a .zip archive.');
-  const count = dv.getUint16(e + 10, true); let p = dv.getUint32(e + 16, true);
-  if (count === 0xffff || p === 0xffffffff) throw new Error('ZIP64 archives are not supported. Re-zip the project with a standard tool.');
-  const entries = [], warnings = [];
-  for (let n = 0; n < count; n++) {
-    if (p + 46 > u8.length || dv.getUint32(p, true) !== 0x02014b50) throw new Error('The ZIP directory is damaged. Try creating the ZIP again.');
-    const flags = dv.getUint16(p + 8, true), method = dv.getUint16(p + 10, true), crc = dv.getUint32(p + 16, true);
-    const csize = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
-    const name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
-    p += 46 + nl + xl + cl;
-    const path = cleanPath(name);
-    if (path === null) { warnings.push('Skipped an unsafe path: ' + name); continue; }
-    if (!path) continue;
-    if (name.endsWith('/')) { entries.push({ path, data: null }); continue; }
-    if (flags & 1) { warnings.push('Skipped an encrypted file: ' + name); continue; }
-    const start = off + 30 + dv.getUint16(off + 26, true) + dv.getUint16(off + 28, true), raw = u8.subarray(start, start + csize);
-    let data;
-    try {
-      if (method === 0) data = raw.slice();
-      else if (method === 8) data = await inflateRaw(raw);
-      else { warnings.push('Skipped a file with unsupported compression (method ' + method + '): ' + name); continue; }
-    } catch { warnings.push('Could not decompress: ' + name); continue; }
-    if (crc32(data) !== crc) warnings.push('Checksum mismatch, the file may be damaged: ' + name);
-    entries.push({ path, data });
-  }
-  return { entries, warnings };
-}
-
-/* ---------- ZIP writer (stored, UTF-8 names) ---------- */
-function buildZip(list) {
-  const enc = new TextEncoder(), parts = [], cd = [], d = new Date();
-  const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
-  const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
-  let off = 0;
-  for (const f of list) {
-    const name = enc.encode(f.path), data = f.data || new Uint8Array(0), crc = crc32(data);
-    const lh = new DataView(new ArrayBuffer(30));
-    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x800, true);
-    lh.setUint16(10, time, true); lh.setUint16(12, date, true); lh.setUint32(14, crc, true);
-    lh.setUint32(18, data.length, true); lh.setUint32(22, data.length, true); lh.setUint16(26, name.length, true);
-    parts.push(new Uint8Array(lh.buffer), name, data);
-    const ch = new DataView(new ArrayBuffer(46));
-    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x800, true);
-    ch.setUint16(12, time, true); ch.setUint16(14, date, true); ch.setUint32(16, crc, true);
-    ch.setUint32(20, data.length, true); ch.setUint32(24, data.length, true); ch.setUint16(28, name.length, true);
-    ch.setUint32(38, f.data ? 0 : 0x10, true); ch.setUint32(42, off, true);
-    cd.push(new Uint8Array(ch.buffer), name);
-    off += 30 + name.length + data.length;
-  }
-  const cdSize = cd.reduce((s, a) => s + a.length, 0), end = new DataView(new ArrayBuffer(22));
-  end.setUint32(0, 0x06054b50, true); end.setUint16(8, list.length, true); end.setUint16(10, list.length, true);
-  end.setUint32(12, cdSize, true); end.setUint32(16, off, true);
-  return new Blob(parts.concat(cd, [new Uint8Array(end.buffer)]), { type: 'application/zip' });
-}
-
-/* ---------- Pack: entries -> one text ---------- */
-function pack(entries, o) {
-  const warnings = [], dirs = new Set(), files = new Map();
-  const junk = /(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db)(\/|$)/;
-  for (const e of entries) {
-    const path = cleanPath(e.path);
-    if (!path || (o.junk && junk.test(path))) continue;
-    const parts = path.split('/');
-    for (let i = 1; i < parts.length; i++) dirs.add(parts.slice(0, i).join('/') + '/');
-    if (e.data) files.set(path, e.data); else dirs.add(path + '/');
-  }
-  const body = [], tree = [];
-  let nFiles = 0, skipped = 0, bytes = 0;
-  for (const it of [...dirs, ...files.keys()].sort()) {
-    const isDir = it.endsWith('/'), parts = it.replace(/\/$/, '').split('/');
-    const pad = '  '.repeat(parts.length - 1), label = parts[parts.length - 1] + (isDir ? '/' : '');
-    if (isDir) { body.push('=== FOLDER: ' + it + ' ==='); tree.push(pad + label); continue; }
-    const data = files.get(it), s = asText(data);
-    bytes += data.length;
-    if (s !== null) {
-      const noNl = !s.endsWith('\n');
-      body.push('=== FILE: ' + it + ' ===');
-      for (const l of (noNl ? s : s.slice(0, -1)).split('\n')) body.push(MARK.test(l) ? '\\' + l : l);
-      body.push('=== END FILE' + (noNl ? ' (no newline at end)' : '') + ' ===');
-      tree.push(pad + label); nFiles++;
-    } else if (o.binary === 'base64') {
-      body.push('=== FILE: ' + it + ' (base64) ===');
-      for (const l of toB64(data).split('\n')) body.push(l);
-      body.push('=== END FILE ===');
-      tree.push(pad + label + '   (binary, base64)'); nFiles++;
-    } else {
-      body.push('=== SKIPPED: ' + it + ' (binary, ' + fmt(data.length) + ') ===');
-      tree.push(pad + label + '   (binary, not included)'); skipped++;
-    }
-  }
-  const info = 'Source: ' + o.name + ' (' + (nFiles + skipped) + ' files in ' + dirs.size + ' folders, ' + fmt(bytes) + (skipped ? ', ' + skipped + ' binary files not included' : '') + ')';
-  const head = [GUIDE[0], info].concat(GUIDE.slice(1), tree, ['', '=== PACK START ===']);
-  return { text: head.concat(body).join('\n') + '\n', files: nFiles, dirs: dirs.size, skipped, warnings };
-}
-
-/* ---------- Unpack: one text -> entries ---------- */
-function unpack(text, o) {
-  if (!/(^|[^\r])\n/.test(text)) text = text.replace(/\r\n/g, '\n');
-  const warnings = [], dirs = new Set(), files = new Map(), enc = new TextEncoder();
-  const addDirs = p => { const s = p.split('/'); for (let i = 1; i <= s.length; i++) dirs.add(s.slice(0, i).join('/') + '/'); };
-  const put = (raw, data) => {
-    const path = cleanPath(raw);
-    if (!path) { warnings.push('Skipped a file with an unsafe or empty path: ' + raw); return; }
-    const s = path.split('/');
-    if (s.length > 1) addDirs(s.slice(0, -1).join('/'));
-    if (files.has(path)) warnings.push('Duplicate file, the later one wins: ' + path);
-    files.set(path, data);
-  };
-  let cur = null;
-  const close = (noNl, open) => {
-    let L = cur.lines;
-    if (open) warnings.push('Missing "=== END FILE ===" after ' + cur.path);
-    if (cur.b64) {
-      try { const bin = atob(L.join('').replace(/\s+/g, '')); put(cur.path, Uint8Array.from(bin, c => c.charCodeAt(0))); }
-      catch { warnings.push('Invalid base64 in ' + cur.path); }
-    } else {
-      if (o.fences && L.length > 1) {
-        const a = /^(`{3,}|~{3,})[^`]*$/.exec(L[0].trim()), z = L[L.length - 1].trim();
-        if (a && /^(`{3,}|~{3,})$/.test(z) && z[0] === a[1][0] && z.length >= a[1].length) L = L.slice(1, -1);
+  var crcTable = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
       }
-      put(cur.path, enc.encode(L.join('\n') + (noNl ? '' : '\n')));
+      table[n] = c >>> 0;
     }
-    cur = null;
-  };
-  for (const raw of text.split('\n')) {
-    const line = raw.replace(/\r$/, '');
-    let m;
-    if (cur) {
-      if ((m = /^=== END FILE( \(no newline at end\))? ===$/.exec(line))) { close(!!m[1]); continue; }
-      if (/^=== (?:FOLDER|FILE): /.test(line)) close(false, true);
-      else { cur.lines.push(UNESC.test(raw) ? raw.slice(1) : raw); continue; }
-    }
-    if ((m = /^=== FOLDER: (.+) ===$/.exec(line))) {
-      const p = cleanPath(m[1]);
-      if (p) addDirs(p); else warnings.push('Skipped a folder with an unsafe path: ' + m[1]);
-    } else if ((m = /^=== FILE: (.+?)( \(base64\))? ===$/.exec(line))) cur = { path: m[1], b64: !!m[2], lines: [] };
-  }
-  if (cur) close(false, true);
-  const list = [...dirs].sort().map(p => ({ path: p, data: null }));
-  for (const p of [...files.keys()].sort()) list.push({ path: p, data: files.get(p) });
-  return { list, warnings };
-}
+    return table;
+  })();
 
-/* ---------- Page wiring ---------- */
-if (typeof document !== 'undefined') {
-  const $ = s => document.querySelector(s);
-  let zip = null;
-  const say = (el, msg, bad) => { el.className = 'msg' + (bad ? ' bad' : ''); el.textContent = msg; };
-  const save = (blob, name) => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = name; a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  };
-  function warnList(box, arr) {
-    box.replaceChildren();
-    arr.slice(0, 15).concat(arr.length > 15 ? ['and ' + (arr.length - 15) + ' more warnings'] : []).forEach(w => {
-      const p = document.createElement('p'); p.className = 'warn'; p.textContent = w; box.append(p);
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) {
+      c = crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    }
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
+  }
+
+  function fmtInt(n) {
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function nowTime() {
+    var d = new Date();
+    return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+  }
+
+  function excerptOf(text, limit) {
+    var max = limit || 120;
+    var chars = Array.from(text);
+    var clipped = chars.length > max;
+    var excerpt = chars.slice(0, max).join('');
+    excerpt = excerpt
+      .replace(/\\/g, '\\\\')
+      .replace(/\r/g, '\\r')
+      .replace(/\n/g, '\\n')
+      .replace(/\t/g, '\\t');
+    excerpt = excerpt.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, function (ch) {
+      return '\\u' + ('000' + ch.charCodeAt(0).toString(16)).slice(-4);
     });
+    return excerpt + (clipped ? '…' : '');
   }
 
-  document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
-    document.querySelectorAll('.tab').forEach(x => x.setAttribute('aria-selected', x === t));
-    $('#a').hidden = t.dataset.tab !== 'a';
-    $('#b').hidden = t.dataset.tab !== 'b';
+  function splitLines(text) {
+    var lines = [];
+    var start = 0;
+    var len = text.length;
+    while (start < len) {
+      var nl = text.indexOf('\n', start);
+      var end = nl === -1 ? len : nl;
+      lines.push({ start: start, end: end, next: nl === -1 ? len : nl + 1 });
+      start = end + 1;
+      if (nl === -1) break;
+    }
+    return lines;
+  }
+
+  function markerPath(text, line, re) {
+    var raw = text.slice(line.start, line.end);
+    if (raw.charCodeAt(raw.length - 1) === 13) raw = raw.slice(0, -1);
+    var match = re.exec(raw);
+    return match ? match[1] : null;
+  }
+
+  function parseBlocks(text) {
+    var lines = splitLines(text);
+    var blocks = [];
+    var outsideChars = 0;
+    var i = 0;
+    while (i < lines.length) {
+      var filePath = markerPath(text, lines[i], FILE_RE);
+      if (filePath === null) {
+        outsideChars += lines[i].next - lines[i].start;
+        i++;
+        continue;
+      }
+      var contentStart = lines[i].next;
+      var endIndex = -1;
+      var endPath = null;
+      for (var j = i + 1; j < lines.length; j++) {
+        var found = markerPath(text, lines[j], END_RE);
+        if (found !== null) {
+          endIndex = j;
+          endPath = found;
+          break;
+        }
+      }
+      if (endIndex === -1) {
+        blocks.push({
+          path: filePath,
+          content: text.slice(contentStart),
+          truncated: true,
+          corrupt: false,
+          corruptName: null
+        });
+        i = lines.length;
+      } else {
+        var content = text.slice(contentStart, lines[endIndex].start);
+        var corrupt = endPath !== filePath;
+        blocks.push({
+          path: filePath,
+          content: content,
+          truncated: false,
+          corrupt: corrupt,
+          corruptName: corrupt ? endPath : null
+        });
+        i = endIndex + 1;
+      }
+    }
+    return { blocks: blocks, outsideChars: outsideChars };
+  }
+
+  function makeState() {
+    return { files: new Map(), log: [], failures: new Map(), pastes: 0 };
+  }
+
+  var state = makeState();
+
+  function ingest(text) {
+    if (typeof text !== 'string' || text.length === 0) return null;
+
+    var parsed = parseBlocks(text);
+    var entry = {
+      n: state.pastes + 1,
+      time: nowTime(),
+      fresh: 0,
+      changed: 0,
+      identical: 0,
+      errors: 0,
+      notes: []
+    };
+    state.pastes = entry.n;
+
+    var occurrences = new Map();
+    var lastByPath = new Map();
+    parsed.blocks.forEach(function (block) {
+      occurrences.set(block.path, (occurrences.get(block.path) || 0) + 1);
+      lastByPath.set(block.path, block);
+    });
+
+    var emptyPaths = [];
+
+    lastByPath.forEach(function (block, path) {
+      var bytes = encoder.encode(block.content);
+      var prior = state.files.get(path);
+      var same = prior ? bytesEqual(prior.bytes, bytes) : false;
+
+      if (!prior) entry.fresh++;
+      else if (same) entry.identical++;
+      else entry.changed++;
+
+      var failure = block.truncated ? 'truncated' : (block.corrupt ? 'corrupt' : null);
+      var status;
+      if (failure) status = failure;
+      else if (!prior) status = 'new';
+      else status = same ? 'identical' : 'changed';
+
+      state.files.set(path, {
+        path: path,
+        content: block.content,
+        bytes: bytes,
+        failure: failure,
+        status: status
+      });
+
+      if (block.truncated) {
+        entry.errors++;
+        state.failures.set(path, 'truncated');
+        entry.notes.push({
+          kind: 'truncated',
+          text: 'truncated: ' + path + ' — no END marker, content ran to end of paste',
+          excerpt: excerptOf(block.content)
+        });
+      } else if (block.corrupt) {
+        entry.errors++;
+        state.failures.set(path, 'corrupt');
+        entry.notes.push({
+          kind: 'corrupt',
+          text: 'corrupt: ' + path + ' — END marker named ' + block.corruptName
+        });
+      } else {
+        state.failures.delete(path);
+      }
+
+      if (block.content.length === 0) emptyPaths.push(path);
+    });
+
+    occurrences.forEach(function (count, path) {
+      if (count > 1) {
+        entry.notes.push({
+          kind: 'duplicate',
+          text: 'duplicate within paste: ' + path + (count === 2
+            ? ' appeared twice, second kept'
+            : ' appeared ' + count + ' times, last kept')
+        });
+      }
+    });
+
+    if (parsed.blocks.length === 0) {
+      entry.errors++;
+      entry.notes.push({
+        kind: 'nomarkers',
+        text: 'no markers found — this paste contained no FILE markers, check the format'
+      });
+    } else if (parsed.outsideChars > 0) {
+      entry.notes.push({
+        kind: 'outside',
+        text: 'ignored outside markers: ' + fmtInt(parsed.outsideChars) + ' characters of prose skipped'
+      });
+    }
+
+    emptyPaths.forEach(function (path) {
+      entry.notes.push({ kind: 'empty', text: 'empty file: ' + path + ' has zero bytes' });
+    });
+
+    entry.notes.sort(function (a, b) {
+      return NOTE_ORDER[a.kind] - NOTE_ORDER[b.kind];
+    });
+
+    state.log.unshift(entry);
+    return entry;
+  }
+
+  function headerLine(entry) {
+    var parts = ['Paste ' + entry.n, entry.time, entry.fresh + ' new'];
+    var replaced = entry.changed + entry.identical;
+    if (replaced === 0) {
+      parts.push('0 replaced');
+    } else if (entry.changed && entry.identical) {
+      parts.push(replaced + ' replaced (' + entry.changed + ' changed, ' + entry.identical + ' identical)');
+    } else if (entry.changed) {
+      parts.push(replaced + ' replaced (changed)');
+    } else {
+      parts.push(replaced + ' replaced (identical)');
+    }
+    parts.push(entry.errors + ' error' + (entry.errors === 1 ? '' : 's'));
+    return parts.join(' · ');
+  }
+
+  function entryText(entry) {
+    var lines = [headerLine(entry)];
+    entry.notes.forEach(function (note) {
+      lines.push('  ' + note.text);
+      if (note.excerpt !== null && note.excerpt !== undefined) {
+        lines.push('    excerpt: "' + note.excerpt + '"');
+      }
+    });
+    return lines.join('\n');
+  }
+
+  function logText() {
+    if (!state.log.length) return '';
+    var out = [];
+    state.log.forEach(function (entry) { out.push(entryText(entry)); });
+    return out.join('\n') + '\n';
+  }
+
+  function resendText() {
+    var lines = ['Re-send these files complete, using the agreed format:'];
+    state.failures.forEach(function (type, path) {
+      lines.push(path + ' (' + type + ')');
+    });
+    return lines.join('\n') + '\n';
+  }
+
+  function clearAll() {
+    state.files.clear();
+    state.failures.clear();
+    state.log.length = 0;
+    state.pastes = 0;
+  }
+
+  function buildZip() {
+    var paths = Array.from(state.files.keys()).sort();
+    var chunks = [];
+    var central = [];
+    var offset = 0;
+    var centralSize = 0;
+    var dosTime = 0;
+    var dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1;
+
+    paths.forEach(function (path) {
+      var data = state.files.get(path).bytes;
+      var name = encoder.encode(path);
+      var crc = crc32(data);
+
+      var local = new Uint8Array(30 + name.length);
+      var lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(6, 0x0800, true);
+      lv.setUint16(8, 0, true);
+      lv.setUint16(10, dosTime, true);
+      lv.setUint16(12, dosDate, true);
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, data.length, true);
+      lv.setUint32(22, data.length, true);
+      lv.setUint16(26, name.length, true);
+      lv.setUint16(28, 0, true);
+      local.set(name, 30);
+      chunks.push(local, data);
+
+      var centralOffset = offset;
+      offset += local.length + data.length;
+
+      var record = new Uint8Array(46 + name.length);
+      var cv = new DataView(record.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, dosTime, true);
+      cv.setUint16(14, dosDate, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, data.length, true);
+      cv.setUint32(24, data.length, true);
+      cv.setUint16(28, name.length, true);
+      cv.setUint16(30, 0, true);
+      cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true);
+      cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, centralOffset, true);
+      record.set(name, 46);
+      central.push(record);
+      centralSize += record.length;
+    });
+
+    var centralStart = offset;
+    central.forEach(function (record) { chunks.push(record); });
+
+    var end = new Uint8Array(22);
+    var ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, paths.length, true);
+    ev.setUint16(10, paths.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, centralStart, true);
+    ev.setUint16(20, 0, true);
+    chunks.push(end);
+
+    var out = new Uint8Array(centralStart + centralSize + end.length);
+    var pos = 0;
+    chunks.forEach(function (chunk) {
+      out.set(chunk, pos);
+      pos += chunk.length;
+    });
+    return out;
+  }
+
+  return {
+    state: state,
+    ingest: ingest,
+    clearAll: clearAll,
+    buildZip: buildZip,
+    logText: logText,
+    resendText: resendText,
+    headerLine: headerLine,
+    entryText: entryText,
+    fmtInt: fmtInt,
+    crc32: crc32
+  };
+})();
+
+/* ==== ui ==== */
+(function () {
+  'use strict';
+
+  var core = window.PackerCore;
+  var box = document.getElementById('paste');
+  var filesEl = document.getElementById('files');
+  var filesMeta = document.getElementById('files-meta');
+  var logEl = document.getElementById('log');
+  var downloadBtn = document.getElementById('download');
+  var copyLogBtn = document.getElementById('copy-log');
+  var copyResendBtn = document.getElementById('copy-resend');
+  var clearBtn = document.getElementById('clear');
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+
+  function make(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== null && text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function toast(message) {
+    toastEl.textContent = message;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toastEl.classList.remove('show');
+    }, 2200);
+  }
+
+  function renderFiles() {
+    filesEl.textContent = '';
+    var paths = Array.from(core.state.files.keys()).sort();
+    var totalBytes = 0;
+    var failed = 0;
+
+    paths.forEach(function (path) {
+      var file = core.state.files.get(path);
+      totalBytes += file.bytes.length;
+      if (file.failure) failed++;
+
+      var row = make('li', 'file-row');
+      row.appendChild(make('span', 'file-path', path));
+      row.appendChild(make('span', 'chip ' + file.status, file.status));
+      row.appendChild(make('span', 'file-size', core.fmtInt(file.bytes.length) + ' B'));
+      filesEl.appendChild(row);
+    });
+
+    if (!paths.length) {
+      filesEl.appendChild(make('li', 'empty', 'No files yet. Paste a message with FILE/END markers.'));
+    }
+
+    filesMeta.textContent = paths.length
+      ? paths.length + (paths.length === 1 ? ' file' : ' files') +
+        ' · ' + core.fmtInt(totalBytes) + ' B' +
+        (failed ? ' · ' + failed + ' failed' : '')
+      : '0 files';
+  }
+
+  function renderLog() {
+    logEl.textContent = '';
+    if (!core.state.log.length) {
+      logEl.appendChild(make('div', 'empty', 'No pastes yet.'));
+      return;
+    }
+    core.state.log.forEach(function (entry) {
+      var block = make('div', 'log-entry');
+      block.appendChild(make('div', 'log-head', core.headerLine(entry)));
+      entry.notes.forEach(function (note) {
+        var className = 'note';
+        if (note.kind === 'truncated' || note.kind === 'corrupt' || note.kind === 'nomarkers') {
+          className += ' bad';
+        } else if (note.kind === 'outside') {
+          className += ' dim';
+        }
+        block.appendChild(make('div', className, note.text));
+        if (note.excerpt !== null && note.excerpt !== undefined) {
+          block.appendChild(make('div', 'excerpt', 'excerpt: "' + note.excerpt + '"'));
+        }
+      });
+      logEl.appendChild(block);
+    });
+    logEl.scrollTop = 0;
+  }
+
+  function updateControls() {
+    var hasFiles = core.state.files.size > 0;
+    downloadBtn.disabled = !hasFiles;
+    clearBtn.disabled = !hasFiles && core.state.log.length === 0;
+    copyLogBtn.disabled = core.state.log.length === 0;
+    copyResendBtn.disabled = core.state.failures.size === 0;
+  }
+
+  function render() {
+    renderFiles();
+    renderLog();
+    updateControls();
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text).then(function () {
+        return true;
+      }, function () {
+        return legacyCopy(text);
+      });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+  function legacyCopy(text) {
+    var helper = document.createElement('textarea');
+    helper.value = text;
+    helper.setAttribute('readonly', '');
+    helper.style.position = 'fixed';
+    helper.style.top = '0';
+    helper.style.left = '-9999px';
+    helper.style.opacity = '0';
+    document.body.appendChild(helper);
+    helper.select();
+    var ok = false;
+    try {
+      ok = document.execCommand('copy');
+    } catch (err) {
+      ok = false;
+    }
+    document.body.removeChild(helper);
+    box.focus();
+    return ok;
+  }
+
+  function handlePasteText(text) {
+    if (!text) return false;
+    var entry = core.ingest(text);
+    if (!entry) return false;
+    render();
+    return true;
+  }
+
+  // Capture phase on the document: the clipboard payload is read directly and the
+  // browser's default insertion is cancelled, so the textarea never receives text.
+  document.addEventListener('paste', function (event) {
+    event.preventDefault();
+    var data = event.clipboardData || window.clipboardData;
+    if (data) {
+      var text = '';
+      try {
+        text = data.getData('text/plain') || data.getData('Text') || '';
+      } catch (err) {
+        text = '';
+      }
+      if (text) handlePasteText(text);
+      else toast('Clipboard has no text.');
+    } else if (navigator.clipboard && navigator.clipboard.readText) {
+      navigator.clipboard.readText().then(function (text) {
+        if (text) handlePasteText(text);
+        else toast('Clipboard has no text.');
+      }, function () {
+        toast('Could not read the clipboard.');
+      });
+    }
+    box.value = '';
+  }, true);
+
+  box.addEventListener('beforeinput', function (event) {
+    event.preventDefault();
   });
 
-  const refresh = () => {
-    if (!zip) return;
-    const r = pack(zip.entries, { name: zip.name, binary: $('#bin').value, junk: $('#junk').checked });
-    const size = new Blob([r.text]).size;
-    $('#out').value = r.text;
-    $('#dl').disabled = $('#cp').disabled = false;
-    say($('#msgA'), zip.name + ': ' + r.files + ' files in ' + r.dirs + ' folders, packed into ' + fmt(size) +
-      ' of text (about ' + Math.round(size / 4).toLocaleString() + ' tokens)' +
-      (r.skipped ? '. ' + r.skipped + ' binary files are listed but not included.' : '.'));
-    warnList($('#warnA'), zip.warnings.concat(r.warnings));
-  };
-  const load = async f => {
-    if (!f) return;
-    try {
-      const r = await readZip(await f.arrayBuffer());
-      zip = { name: f.name, entries: r.entries, warnings: r.warnings };
-      refresh();
-    } catch (e) { zip = null; say($('#msgA'), e.message, true); }
-  };
-  $('#zipin').onchange = e => load(e.target.files[0]);
-  const drop = $('#drop');
-  ['dragenter', 'dragover'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.add('over'); }));
-  ['dragleave', 'drop'].forEach(n => drop.addEventListener(n, e => { e.preventDefault(); drop.classList.remove('over'); }));
-  drop.addEventListener('drop', e => load(e.dataTransfer.files[0]));
-  $('#bin').onchange = $('#junk').onchange = refresh;
-  $('#dl').onclick = () => save(new Blob([$('#out').value], { type: 'text/plain;charset=utf-8' }), (zip.name.replace(/\.zip$/i, '') || 'project') + '.txt');
-  $('#cp').onclick = async () => {
-    const t = $('#out'), b = $('#cp');
-    try { await navigator.clipboard.writeText(t.value); } catch { t.select(); document.execCommand('copy'); }
-    b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy text', 1500);
-  };
+  box.addEventListener('input', function () {
+    if (box.value !== '') {
+      var text = box.value;
+      box.value = '';
+      handlePasteText(text);
+    }
+  });
 
-  $('#txtin').onchange = async e => { const f = e.target.files[0]; if (f) $('#inp').value = await f.text(); };
-  $('#build').onclick = () => {
-    const r = unpack($('#inp').value, { fences: $('#fence').checked });
-    warnList($('#warnB'), r.warnings);
-    const n = r.list.filter(x => x.data).length;
-    if (!n) return say($('#msgB'), 'No files found. Each file needs an opening line such as "=== FILE: src/app.js ===" and a closing line "=== END FILE ===", both starting in the first column.', true);
-    save(buildZip(r.list), 'project-pack.zip');
-    say($('#msgB'), 'Built project-pack.zip with ' + n + ' files in ' + (r.list.length - n) + ' folders.');
-  };
-}
+  box.addEventListener('dragover', function (event) {
+    event.preventDefault();
+  });
+
+  box.addEventListener('drop', function (event) {
+    event.preventDefault();
+    var text = '';
+    try {
+      text = (event.dataTransfer && event.dataTransfer.getData('text/plain')) || '';
+    } catch (err) {
+      text = '';
+    }
+    if (text) handlePasteText(text);
+    box.value = '';
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    if (core.state.files.size === 0) return;
+    var bytes = core.buildZip();
+    var blob = new Blob([bytes], { type: 'application/zip' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'project-pack.zip';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 30000);
+  });
+
+  copyLogBtn.addEventListener('click', function () {
+    if (!core.state.log.length) return;
+    copyText(core.logText()).then(function (ok) {
+      toast(ok ? 'Log copied' : 'Copy failed — the log is visible above');
+    });
+  });
+
+  copyResendBtn.addEventListener('click', function () {
+    if (!core.state.failures.size) return;
+    copyText(core.resendText()).then(function (ok) {
+      toast(ok ? 'Resend request copied' : 'Copy failed');
+    });
+  });
+
+  clearBtn.addEventListener('click', function () {
+    core.clearAll();
+    render();
+    toast('Cleared');
+    box.value = '';
+    box.focus();
+  });
+
+  render();
+})();
 </script>
 </body>
 </html>
