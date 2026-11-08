@@ -1,4 +1,4 @@
-// Dashboard view — tool-first layout with interactive stats and live file viewer.
+// Dashboard view — Paste textarea + live file viewer + interactive stat popovers.
 
 import { el, clear, copyToClipboard } from '../utils/dom.js';
 import { State, subscribe, getStats, getFileList, sortFiles } from '../core/state.js';
@@ -7,22 +7,26 @@ import { fmtTime, fmtBytes, fmtNum, basename, extLabel, fileKind } from '../util
 import { logText } from '../core/log.js';
 import { toast, toastOk } from '../ui/toast.js';
 import { handleZipFile } from '../ui/zip-flow.js';
-import { openModal } from '../ui/modal.js';
+import { openPopover } from '../ui/popover.js';
 import { navigate } from '../ui/router.js';
 
 export function mountDashboard(root) {
   const shell = el('div', { class: 'view-inner' });
   root.appendChild(shell);
 
-  // 1. Stats Bar (Clickable)
+  // 1. Stats Bar
   const statsContainer = el('div');
   shell.appendChild(statsContainer);
 
-  // 2. Mode Container (File List or Dropzone)
+  // 2. Paste Textarea
+  const pasteCard = buildPasteCard();
+  shell.appendChild(pasteCard);
+
+  // 3. Files List / Unpack
   const modeContainer = el('div', { style: { display: 'flex', flexDirection: 'column', flex: '1 1 auto', minHeight: '200px' } });
   shell.appendChild(modeContainer);
 
-  // 3. Log Card
+  // 4. Log Card
   const logCard = buildLogCard();
   shell.appendChild(logCard);
   const logBody = logCard.querySelector('#dash-log-body');
@@ -34,19 +38,19 @@ export function mountDashboard(root) {
     const bar = el('div', { class: 'stats-row' });
     
     // Files Button
-    bar.appendChild(el('button', { class: 'stat-item', onClick: () => showFilesModal(stats) }, [
+    bar.appendChild(el('button', { class: 'stat-item', onClick: (e) => showPopover(e.currentTarget, () => buildFilesPopover(stats)) }, [
       el('span', { class: 'stat-label', text: 'Files' }),
       el('span', { class: `stat-value ${stats.fileCount ? 'accent' : ''}`, text: String(stats.fileCount) })
     ]));
     
     // Size Button
-    bar.appendChild(el('button', { class: 'stat-item', onClick: () => showSizeModal(stats) }, [
+    bar.appendChild(el('button', { class: 'stat-item', onClick: (e) => showPopover(e.currentTarget, () => buildSizePopover(stats)) }, [
       el('span', { class: 'stat-label', text: 'Size' }),
       el('span', { class: 'stat-value blue', text: fmtBytes(stats.totalBytes) })
     ]));
     
     // Lines Button
-    bar.appendChild(el('button', { class: 'stat-item', onClick: () => showLinesModal(stats) }, [
+    bar.appendChild(el('button', { class: 'stat-item', onClick: (e) => showPopover(e.currentTarget, () => buildLinesPopover(stats)) }, [
       el('span', { class: 'stat-label', text: 'Lines' }),
       el('span', { class: 'stat-value purple', text: fmtNum(stats.totalLines) })
     ]));
@@ -57,7 +61,7 @@ export function mountDashboard(root) {
     const statusCls = isFail ? 'bad' : (isHealthy ? 'ok' : '');
     const statusText = isFail ? 'Failed' : (isHealthy ? 'Healthy' : 'Empty');
     
-    bar.appendChild(el('button', { class: 'stat-item', onClick: () => showStatusModal(stats) }, [
+    bar.appendChild(el('button', { class: 'stat-item', onClick: (e) => showPopover(e.currentTarget, () => buildStatusPopover(stats)) }, [
       el('span', { class: 'stat-label', text: 'Status' }),
       el('span', { class: `stat-value ${statusCls}`, text: statusText })
     ]));
@@ -114,7 +118,7 @@ export function mountDashboard(root) {
     if (type === 'log' || type === 'ingest' || type === 'files') {
       renderLog();
       renderStats();
-      renderMode(); // Re-render files list
+      renderMode();
     }
     if (type === 'ui' && State.ui.dashboardMode) {
       renderMode();
@@ -125,15 +129,73 @@ export function mountDashboard(root) {
 }
 
 /* ==========================================================================
-   File Viewer (Replaces Textarea)
+   Paste Textarea
    ========================================================================== */
 
-function buildFilesCard() {
-  const card = el('section', { class: 'tool-card is-log' }); // reuse is-log flex style
+function buildPasteCard() {
+  const card = el('section', { class: 'tool-card is-input' });
   
   const head = el('div', { class: 'tool-head' });
   head.appendChild(el('div', { class: 'tool-title' }, [
     el('span', { class: 'dot', style: { background: 'var(--accent)' } }),
+    el('span', { text: 'Paste FILE/END Blocks' })
+  ]));
+
+  const actions = el('div', { class: 'tool-actions' });
+  const pasteBtn = el('button', { class: 'btn btn-sm', type: 'button', text: '📋 Paste' });
+  const clearBtn = el('button', { class: 'btn btn-sm btn-ghost', type: 'button', text: 'Clear' });
+  actions.appendChild(pasteBtn);
+  actions.appendChild(clearBtn);
+  head.appendChild(actions);
+
+  const textarea = el('textarea', {
+    class: 'tool-textarea',
+    spellcheck: false,
+    placeholder: 'Press Ctrl+V or click Paste to ingest blocks...'
+  });
+
+  function processText(val, source = 'paste') {
+    if (!val || !val.trim()) return;
+    const entry = ingest(val, { source });
+    textarea.value = '';
+    if (entry) toastOk(`Ingested ${entry.fresh} new file(s)`);
+  }
+
+  textarea.addEventListener('paste', () => {
+    setTimeout(() => processText(textarea.value), 10);
+  });
+
+  pasteBtn.addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text) return toast('Clipboard is empty');
+      processText(text);
+    } catch (err) {
+      toast('Could not read clipboard. Please press Ctrl+V / Cmd+V.');
+      textarea.focus();
+    }
+  });
+
+  clearBtn.addEventListener('click', () => {
+    textarea.value = '';
+    textarea.focus();
+  });
+
+  card.appendChild(head);
+  card.appendChild(textarea);
+  return card;
+}
+
+/* ==========================================================================
+   File Viewer
+   ========================================================================== */
+
+function buildFilesCard() {
+  const card = el('section', { class: 'tool-card is-log' });
+  
+  const head = el('div', { class: 'tool-head' });
+  head.appendChild(el('div', { class: 'tool-title' }, [
+    el('span', { class: 'dot', style: { background: 'var(--accent-2)' } }),
     el('span', { text: 'Workspace Files' })
   ]));
 
@@ -151,7 +213,7 @@ function buildFilesCard() {
     body.appendChild(el('div', { class: 'empty', style: { padding: '30px 20px' } }, [
       el('div', { class: 'empty-icon', html: '▤' }),
       el('div', { class: 'empty-title', text: 'No files packed yet' }),
-      el('div', { class: 'empty-sub', text: 'Paste a message with FILE/END blocks to begin.' })
+      el('div', { class: 'empty-sub', text: 'Paste a message with FILE/END blocks above.' })
     ]));
   } else {
     const files = sortFiles(getFileList());
@@ -201,30 +263,15 @@ function buildUnpackCard() {
     input.value = '';
   });
 
-  card.addEventListener('dragover', (e) => { e.preventDefault(); card.classList.add('dragover'); });
-  card.addEventListener('dragleave', () => card.classList.remove('dragover'));
-  card.addEventListener('drop', (e) => {
-    e.preventDefault();
-    card.classList.remove('dragover');
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.name.endsWith('.zip') || file.type === 'application/zip') {
-        handleZipFile(file);
-        import('../core/state.js').then((m) => m.setUI({ dashboardMode: 'pack' }));
-      } else {
-        toast('Please drop a .zip file');
-      }
-    }
-  });
   return card;
 }
 
 function buildLogCard() {
-  const card = el('section', { class: 'tool-card is-log', style: { flex: '0 1 250px' } }); // Smaller than file list
+  const card = el('section', { class: 'tool-card is-log', style: { flex: '0 1 250px' } });
   
   const head = el('div', { class: 'tool-head' });
   head.appendChild(el('div', { class: 'tool-title' }, [
-    el('span', { class: 'dot', style: { background: 'var(--accent-2)' } }),
+    el('span', { class: 'dot', style: { background: 'var(--accent-3)' } }),
     el('span', { text: 'Activity Log' })
   ]));
 
@@ -247,137 +294,79 @@ function buildLogCard() {
 }
 
 /* ==========================================================================
-   Rich Modals (Stat Popups)
+   Popover Content Builders
    ========================================================================== */
 
-function modalRow(label, value, pct = null, color = 'var(--accent)') {
-  const row = el('div', { style: { display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 0', borderBottom: '1px solid var(--line)' } });
-  row.appendChild(el('div', { style: { flex: '1 1 auto', fontSize: 'var(--fs-sm)', color: 'var(--ink-2)' }, text: label }));
-  
-  if (pct !== null) {
-    const track = el('div', { style: { flex: '0 0 100px', height: '6px', background: 'var(--surface-3)', borderRadius: '3px', overflow: 'hidden' } });
-    track.appendChild(el('div', { style: { height: '100%', width: `${Math.max(2, pct)}%`, background: color, borderRadius: '3px' } }));
-    row.appendChild(track);
-  }
-  
-  row.appendChild(el('div', { style: { flex: '0 0 auto', fontSize: 'var(--fs-sm)', color: 'var(--ink)', fontWeight: '600' }, text: value }));
-  return row;
+function showPopover(anchor, contentFn) {
+  openPopover(anchor, contentFn);
 }
 
-function showFilesModal(stats) {
-  const body = el('div', { class: 'stack', style: { gap: '16px' } });
-  
-  body.appendChild(el('div', { style: { fontSize: '14px', color: 'var(--ink-2)' }, 
-    text: 'Here is how your workspace is distributed by file type.' 
-  }));
+function row(label, value, color = 'var(--ink)') {
+  return el('div', { style: { display: 'flex', justifyContent: 'space-between', gap: '16px', padding: '4px 0', borderBottom: '1px solid var(--line-2)' } }, [
+    el('span', { style: { color: 'var(--muted)' }, text: label }),
+    el('span', { style: { color, fontWeight: '600', textShadow: `0 0 8px color-mix(in srgb, ${color} 40%, transparent)` }, text: value })
+  ]);
+}
 
-  const extList = Object.entries(stats.byExt).sort((a, b) => b[1] - a[1]);
+function buildFilesPopover(stats) {
+  const wrap = el('div');
+  wrap.appendChild(el('div', { style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--faint)', marginBottom: '6px' }, text: 'File Types' }));
+  
+  const extList = Object.entries(stats.byExt).sort((a, b) => b[1] - a[1]).slice(0, 4);
   if (!extList.length) {
-    body.appendChild(el('div', { text: 'No files yet.', style: { color: 'var(--faint)' } }));
+    wrap.appendChild(el('div', { style: { color: 'var(--faint)' }, text: 'No files yet' }));
   } else {
-    const container = el('div');
     for (const [ext, count] of extList) {
-      const pct = (count / stats.fileCount) * 100;
-      container.appendChild(modalRow(`.${ext === 'none' ? '(no extension)' : ext}`, `${count} file${count > 1 ? 's' : ''}`, pct, 'var(--accent)'));
+      wrap.appendChild(row(ext === 'none' ? '(none)' : '.' + ext, String(count)));
     }
-    body.appendChild(container);
   }
-
-  openModal({
-    title: 'File Distribution',
-    body,
-    buttons: [{ label: 'Close', variant: 'primary' }]
-  });
+  return wrap;
 }
 
-function showSizeModal(stats) {
-  const body = el('div', { class: 'stack', style: { gap: '16px' } });
+function buildSizePopover(stats) {
+  const wrap = el('div');
+  wrap.appendChild(el('div', { style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--faint)', marginBottom: '6px' }, text: 'Largest Files' }));
   
-  body.appendChild(el('div', { style: { fontSize: '14px', color: 'var(--ink-2)' }, 
-    text: `Total packed size is ${fmtBytes(stats.totalBytes)}. Here are the heaviest files.` 
-  }));
-
-  const files = sortFiles(getFileList()).sort((a, b) => b.bytes.length - a.bytes.length).slice(0, 5);
+  const files = sortFiles(getFileList()).sort((a, b) => b.bytes.length - a.bytes.length).slice(0, 3);
   if (!files.length) {
-    body.appendChild(el('div', { text: 'No files yet.', style: { color: 'var(--faint)' } }));
+    wrap.appendChild(el('div', { style: { color: 'var(--faint)' }, text: 'No files yet' }));
   } else {
-    const container = el('div');
     for (const f of files) {
-      const pct = stats.totalBytes ? (f.bytes.length / stats.totalBytes) * 100 : 0;
-      container.appendChild(modalRow(basename(f.path), fmtBytes(f.bytes.length), pct, 'var(--accent-2)'));
+      wrap.appendChild(row(basename(f.path), fmtBytes(f.bytes.length), 'var(--accent-2)'));
     }
-    body.appendChild(container);
   }
-
-  openModal({
-    title: 'Storage Breakdown',
-    body,
-    buttons: [{ label: 'Close', variant: 'primary' }]
-  });
+  return wrap;
 }
 
-function showLinesModal(stats) {
-  const body = el('div', { class: 'stack', style: { gap: '16px' } });
+function buildLinesPopover(stats) {
+  const wrap = el('div');
+  wrap.appendChild(el('div', { style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--faint)', marginBottom: '6px' }, text: 'Code Volume' }));
   
-  const pages = Math.max(1, Math.round(stats.totalLines / 50)); // Assuming ~50 lines per page
-  body.appendChild(el('div', { style: { fontSize: '14px', color: 'var(--ink-2)' }, 
-    text: `You have ${fmtNum(stats.totalLines)} lines of code. That is roughly ${pages} printed pages.` 
-  }));
-
-  const files = sortFiles(getFileList()).sort((a, b) => (b.lineCount || 0) - (a.lineCount || 0)).slice(0, 5);
-  if (!files.length) {
-    body.appendChild(el('div', { text: 'No files yet.', style: { color: 'var(--faint)' } }));
-  } else {
-    const container = el('div');
-    for (const f of files) {
-      const pct = stats.totalLines ? ((f.lineCount || 0) / stats.totalLines) * 100 : 0;
-      container.appendChild(modalRow(basename(f.path), `${fmtNum(f.lineCount || 0)} lines`, pct, 'var(--accent-3)'));
-    }
-    body.appendChild(container);
+  const pages = Math.max(1, Math.round(stats.totalLines / 50));
+  wrap.appendChild(el('div', { style: { color: 'var(--ink-2)', marginBottom: '8px' }, text: `~${pages} printed pages` }));
+  
+  const files = sortFiles(getFileList()).sort((a, b) => (b.lineCount || 0) - (a.lineCount || 0)).slice(0, 3);
+  for (const f of files) {
+    wrap.appendChild(row(basename(f.path), `${fmtNum(f.lineCount || 0)} L`, 'var(--accent-3)'));
   }
-
-  openModal({
-    title: 'Code Volume',
-    body,
-    buttons: [{ label: 'Close', variant: 'primary' }]
-  });
+  return wrap;
 }
 
-function showStatusModal(stats) {
-  const body = el('div', { class: 'stack', style: { gap: '16px' } });
-  
+function buildStatusPopover(stats) {
+  const wrap = el('div');
   const isHealthy = !stats.failed && stats.fileCount > 0;
+  const color = stats.failed ? 'var(--bad)' : (isHealthy ? 'var(--ok)' : 'var(--muted)');
   
-  body.appendChild(el('div', { style: { textAlign: 'center', padding: '20px 0' } }, [
-    el('div', { 
-      style: { 
-        fontSize: '32px', 
-        fontWeight: 'bold', 
-        color: stats.failed ? 'var(--bad)' : (isHealthy ? 'var(--ok)' : 'var(--faint)'),
-        textShadow: `0 0 20px color-mix(in srgb, ${stats.failed ? 'var(--bad)' : (isHealthy ? 'var(--ok)' : 'var(--faint)')} 50%, transparent)`
-      },
-      text: stats.failed ? 'Attention Required' : (isHealthy ? 'All Systems Nominal' : 'Workspace Empty')
-    }),
-    el('div', { 
-      style: { fontSize: '13px', color: 'var(--muted)', marginTop: '8px' },
-      text: stats.failed ? `${stats.failed} file(s) have parsing errors.` : (isHealthy ? 'Every file parsed successfully.' : 'Paste some blocks to begin.')
-    })
-  ]));
-
-  const container = el('div');
+  wrap.appendChild(el('div', { style: { fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--faint)', marginBottom: '6px' }, text: 'Workspace Health' }));
+  wrap.appendChild(el('div', { style: { color, fontWeight: '600', fontSize: '14px', textShadow: `0 0 12px color-mix(in srgb, ${color} 60%, transparent)`, marginBottom: '8px' }, text: stats.failed ? 'Attention Required' : (isHealthy ? 'All Systems Nominal' : 'Workspace Empty') }));
+  
   for (const [status, count] of Object.entries(stats.byStatus)) {
     if (count > 0) {
-      const color = status === 'truncated' || status === 'corrupt' ? 'var(--bad)' : 
-                    status === 'changed' ? 'var(--warn)' : 
-                    status === 'new' ? 'var(--ok)' : 'var(--muted)';
-      container.appendChild(modalRow(status.toUpperCase(), String(count), null, color));
+      const c = status === 'truncated' || status === 'corrupt' ? 'var(--bad)' : 
+                status === 'changed' ? 'var(--warn)' : 
+                status === 'new' ? 'var(--ok)' : 'var(--muted)';
+      wrap.appendChild(row(status.toUpperCase(), String(count), c));
     }
   }
-  body.appendChild(container);
-
-  openModal({
-    title: 'Workspace Health',
-    body,
-    buttons: [{ label: 'Close', variant: 'primary' }]
-  });
+  return wrap;
 }

@@ -131,6 +131,12 @@
   overflow: hidden;
 }
 
+.tool-card.is-input {
+  flex: 0 0 auto;
+  min-height: 150px;
+  max-height: 250px;
+}
+
 .tool-card.is-log {
   flex: 1 1 auto;
   min-height: 200px;
@@ -172,6 +178,25 @@
   text-transform: uppercase;
   color: var(--muted);
   font-weight: 500;
+}
+
+.tool-textarea {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  background: var(--bg-2);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  min-height: 100px;
+}
+
+.tool-textarea:focus {
+  background: color-mix(in srgb, var(--accent) 2%, var(--bg-2));
 }
 
 .tool-log-body {
@@ -370,6 +395,57 @@
 .file-row:hover .file-actions,
 .file-row.is-selected .file-actions {
   opacity: 1;
+}
+
+/* --- Popover --- */
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.ui-popover {
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  z-index: 1000;
+  overflow: visible;
+  min-width: 200px;
+  max-width: 300px;
+  transform-origin: top center;
+  animation: popover-in 150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.ui-popover::backdrop {
+  background: transparent;
+}
+
+.popover-arrow {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line-2);
+  border-left: 1px solid var(--line-2);
+  transform: rotate(45deg);
+  top: -6px;
+  left: calc(50% - 5px);
+  z-index: 1;
+}
+
+.popover-body {
+  padding: 10px 12px;
+  position: relative;
+  z-index: 2;
+  background: var(--surface-2);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 /* --- Dropzone Content ---------------------------------------------------- */
