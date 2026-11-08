@@ -1,87 +1,49 @@
 <!doctype html>
-<html lang="en" data-theme="obsidian">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="color-scheme" content="dark light" />
-<meta name="description" content="Project Packer — merge FILE/END paste blocks into a ZIP, or unpack a ZIP back into pasteable text." />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
 <meta name="theme-color" content="#0e1116" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="Packer" />
 <title>Project Packer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230b0e12'/%3E%3Cpath d='M9 21V11h5.6a3.2 3.2 0 0 1 0 6.4H12' stroke='%237dd3a8' stroke-width='2.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
-<link rel="manifest" href="manifest.json" />
-<link rel="stylesheet" href="styles/tokens.css" />
-<link rel="stylesheet" href="styles/base.css" />
-<link rel="stylesheet" href="styles/layout.css" />
-<link rel="stylesheet" href="styles/components.css" />
-<link rel="stylesheet" href="styles/views.css" />
-<link rel="stylesheet" href="styles/overlays.css" />
-<link rel="stylesheet" href="styles/animations.css" />
+<link rel="stylesheet" href="styles/app.css" />
 </head>
 <body>
-<div class="app" id="app">
-  <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></div>
-      <div class="brand-text"><strong>Project</strong><em>Packer</em></div>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">Project Packer</div>
+    <div class="actions">
+      <button id="btn-load-zip" class="btn">Load .zip</button>
+      <button id="btn-download" class="btn btn-primary">Download .zip</button>
+      <input id="zip-input" type="file" accept=".zip" hidden />
     </div>
+  </header>
 
-    <div class="sidebar-search">
-      <button class="cmd-trigger" id="cmd-trigger" type="button" aria-label="Open quick actions">
-        <span class="cmd-trigger-icon" aria-hidden="true">⌘</span>
-        <span class="cmd-trigger-text">Quick actions</span>
-        <kbd>Ctrl K</kbd>
-      </button>
-    </div>
-
-    <nav class="nav" id="nav" aria-label="Sections"></nav>
-
-    <div class="sidebar-panel" id="sidebar-panel"></div>
-
-    <div class="sidebar-foot">
-      <button class="icon-btn" id="theme-btn" type="button" title="Cycle theme" aria-label="Cycle theme">◐</button>
-      <button class="icon-btn" id="help-btn" type="button" title="Format help" aria-label="Format help">?</button>
-      <span class="sidebar-version">v2.0.0</span>
-    </div>
-  </aside>
-
-  <div class="main">
-    <header class="topbar">
-      <div class="topbar-left">
-        <button class="icon-btn menu-btn" id="menu-btn" type="button" aria-label="Toggle navigation">☰</button>
-        <div class="crumb" id="crumb"></div>
-      </div>
-      <div class="topbar-right">
-        <div class="search-field" id="search-field">
-          <span class="search-icon" aria-hidden="true">⌕</span>
-          <input id="global-search" type="search" placeholder="Search files…" autocomplete="off" spellcheck="false" aria-label="Search files" />
-          <kbd>/</kbd>
+  <main class="main-content">
+    <section class="input-section">
+      <div class="input-header">
+        <span class="label">Paste FILE/END blocks</span>
+        <div class="input-actions">
+          <button id="btn-paste" class="btn btn-sm">📋 Paste</button>
+          <button id="btn-clear" class="btn btn-sm">Clear</button>
         </div>
-        <button class="btn btn-ghost" id="btn-load-zip" type="button">Load .zip</button>
-        <button class="btn btn-primary" id="btn-download" type="button">Download .zip</button>
-        <input id="zip-input" type="file" accept=".zip,application/zip,application/x-zip-compressed" hidden />
       </div>
-    </header>
+      <textarea id="paste-area" spellcheck="false" placeholder="Click here or press Ctrl+V to paste your blocks..."></textarea>
+    </section>
 
-    <main class="view" id="view-root" tabindex="-1"></main>
+    <section class="log-section">
+      <div class="log-header">
+        <span class="label">Log</span>
+        <button id="btn-copy-log" class="btn btn-sm">Copy</button>
+      </div>
+      <div id="log-list" class="log-list">
+        <div class="empty-log">No pastes yet.</div>
+      </div>
+    </section>
+  </main>
 
-    <footer class="statusbar" id="statusbar"></footer>
-  </div>
+  <div id="toast" class="toast"></div>
 </div>
-
-<div class="drop-veil" id="drop-veil" aria-hidden="true">
-  <div class="drop-card">
-    <div class="drop-icon">⤓</div>
-    <div class="drop-title">Drop to import</div>
-    <div class="drop-sub">A <code>.zip</code> is unpacked to text · <code>.txt</code> / <code>.md</code> is parsed as paste blocks</div>
-  </div>
-</div>
-
-<div class="overlay-root" id="overlay-root"></div>
-<div class="toast-stack" id="toast-stack" role="status" aria-live="polite"></div>
-<div class="sr-only" id="live-region" aria-live="polite"></div>
 
 <script type="module" src="js/app.js"></script>
 </body>
