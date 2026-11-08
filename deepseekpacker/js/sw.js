@@ -1,11 +1,12 @@
 // Project Packer — service worker.
 // Caches the app shell for offline use; never caches runtime data.
 
-const VERSION = 'pp-v2.1.0';
+const VERSION = 'pp-v2.1.1';
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './README.md',
   './styles/tokens.css',
   './styles/base.css',
   './styles/layout.css',
@@ -40,6 +41,7 @@ const SHELL = [
   './js/core/build-shim.js',
   './js/ui/toast.js',
   './js/ui/modal.js',
+  './js/ui/popover.js',
   './js/ui/palette.js',
   './js/ui/drawer.js',
   './js/ui/dropveil.js',

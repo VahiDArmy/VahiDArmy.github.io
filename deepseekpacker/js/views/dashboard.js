@@ -1,9 +1,9 @@
-// Dashboard view — Paste textarea + live file viewer + interactive stat popovers.
+// Dashboard view — paste button header + rich file viewer + interactive stat popovers.
 
 import { el, clear, copyToClipboard } from '../utils/dom.js';
 import { State, subscribe, getStats, getFileList, sortFiles } from '../core/state.js';
 import { ingest } from '../core/ingest.js';
-import { fmtTime, fmtBytes, fmtNum, basename, extLabel, fileKind } from '../utils/format.js';
+import { fmtTime, fmtBytes, fmtNum, basename, dirname, extLabel, fileKind } from '../utils/format.js';
 import { logText } from '../core/log.js';
 import { toast, toastOk } from '../ui/toast.js';
 import { handleZipFile } from '../ui/zip-flow.js';
@@ -18,7 +18,7 @@ export function mountDashboard(root) {
   const statsContainer = el('div');
   shell.appendChild(statsContainer);
 
-  // 2. Paste Textarea
+  // 2. Paste Header (Textarea removed)
   const pasteCard = buildPasteCard();
   shell.appendChild(pasteCard);
 
@@ -129,41 +129,30 @@ export function mountDashboard(root) {
 }
 
 /* ==========================================================================
-   Paste Textarea
+   Paste Header (No Textarea)
    ========================================================================== */
 
 function buildPasteCard() {
-  const card = el('section', { class: 'tool-card is-input' });
+  const card = el('section', { class: 'tool-card is-paste-header' });
   
-  const head = el('div', { class: 'tool-head' });
+  const head = el('div', { class: 'tool-head', style: { borderBottom: 'none' } });
   head.appendChild(el('div', { class: 'tool-title' }, [
     el('span', { class: 'dot', style: { background: 'var(--accent)' } }),
     el('span', { text: 'Paste FILE/END Blocks' })
   ]));
 
   const actions = el('div', { class: 'tool-actions' });
-  const pasteBtn = el('button', { class: 'btn btn-sm', type: 'button', text: '📋 Paste' });
-  const clearBtn = el('button', { class: 'btn btn-sm btn-ghost', type: 'button', text: 'Clear' });
+  const pasteBtn = el('button', { class: 'btn btn-sm btn-primary', type: 'button', text: '📋 Paste' });
+  const clearBtn = el('button', { class: 'btn btn-sm btn-ghost', type: 'button', text: 'Clear all' });
   actions.appendChild(pasteBtn);
   actions.appendChild(clearBtn);
   head.appendChild(actions);
 
-  const textarea = el('textarea', {
-    class: 'tool-textarea',
-    spellcheck: false,
-    placeholder: 'Press Ctrl+V or click Paste to ingest blocks...'
-  });
-
   function processText(val, source = 'paste') {
     if (!val || !val.trim()) return;
     const entry = ingest(val, { source });
-    textarea.value = '';
     if (entry) toastOk(`Ingested ${entry.fresh} new file(s)`);
   }
-
-  textarea.addEventListener('paste', () => {
-    setTimeout(() => processText(textarea.value), 10);
-  });
 
   pasteBtn.addEventListener('click', async () => {
     try {
@@ -171,23 +160,26 @@ function buildPasteCard() {
       if (!text) return toast('Clipboard is empty');
       processText(text);
     } catch (err) {
-      toast('Could not read clipboard. Please press Ctrl+V / Cmd+V.');
-      textarea.focus();
+      toast('Could not read clipboard. Please press Ctrl+V / Cmd+V anywhere.');
     }
   });
 
-  clearBtn.addEventListener('click', () => {
-    textarea.value = '';
-    textarea.focus();
+  clearBtn.addEventListener('click', async () => {
+    const { confirmDialog } = await import('../ui/modal.js');
+    const ok = await confirmDialog('Clear all files and log?', { confirmLabel: 'Clear', variant: 'danger' });
+    if (ok) {
+      const { clearAll } = await import('../core/state.js');
+      clearAll();
+      toastOk('Workspace cleared');
+    }
   });
 
   card.appendChild(head);
-  card.appendChild(textarea);
   return card;
 }
 
 /* ==========================================================================
-   File Viewer
+   Rich File Viewer
    ========================================================================== */
 
 function buildFilesCard() {
@@ -213,22 +205,34 @@ function buildFilesCard() {
     body.appendChild(el('div', { class: 'empty', style: { padding: '30px 20px' } }, [
       el('div', { class: 'empty-icon', html: '▤' }),
       el('div', { class: 'empty-title', text: 'No files packed yet' }),
-      el('div', { class: 'empty-sub', text: 'Paste a message with FILE/END blocks above.' })
+      el('div', { class: 'empty-sub', text: 'Press Ctrl+V anywhere on this page to ingest blocks.' })
     ]));
   } else {
     const files = sortFiles(getFileList());
     for (const file of files) {
+      const dir = dirname(file.path);
+      
       const row = el('div', { 
-        class: 'file-row', 
-        style: { padding: '8px 14px', cursor: 'pointer' },
+        class: 'file-row rich-row', 
         onClick: () => navigate('editor', { path: file.path })
       }, [
+        // Left: Icon + Name + Dir
         el('div', { class: 'file-main' }, [
           el('span', { class: 'file-ext', dataset: { kind: fileKind(file.path) }, text: extLabel(file.path) }),
-          el('span', { class: 'file-name', text: basename(file.path) })
+          el('div', { class: 'file-path-wrap' }, [
+            el('span', { class: 'file-name', text: basename(file.path) }),
+            dir ? el('span', { class: 'file-dir', text: dir }) : null
+          ])
         ]),
-        el('span', { class: 'chip chip-' + file.status, text: file.status }),
-        el('span', { class: 'file-size', text: fmtBytes(file.bytes.length) })
+        
+        // Middle: Stats
+        el('div', { class: 'file-meta' }, [
+          el('span', { class: 'file-lines', text: `${fmtNum(file.lineCount || 0)} L` }),
+          el('span', { class: 'file-size', text: fmtBytes(file.bytes.length) })
+        ]),
+
+        // Right: Status
+        el('span', { class: 'chip chip-' + file.status, text: file.status })
       ]);
       body.appendChild(row);
     }
