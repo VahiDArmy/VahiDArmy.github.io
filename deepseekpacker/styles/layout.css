@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Project Packer — app shell layout (Mobile Optimized)
+   Project Packer — app shell layout (Mobile Optimized & Fixed)
    ========================================================================== */
 
 :root {
@@ -10,7 +10,7 @@
 
 .app {
   position: relative;
-  z-index: 1;
+  /* Removed z-index: 1 so fixed elements can stack relative to body */
   height: 100dvh;
   display: grid;
   grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
@@ -26,7 +26,7 @@
   background: var(--surface);
   border-right: 1px solid var(--line);
   overflow: hidden;
-  z-index: 50;
+  z-index: 50; /* Ensures sidebar is above scrim */
 }
 
 .brand {
@@ -158,7 +158,7 @@
 .view {
   position: relative;
   min-height: 0;
-  overflow: hidden; /* Let the inner view handle scrolling */
+  overflow: hidden; 
   display: flex;
   flex-direction: column;
 }
@@ -185,12 +185,13 @@
   white-space: nowrap;
 }
 
+/* Scrim Overlay */
 .scrim {
   position: fixed;
   inset: 0;
   z-index: 40;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(2px);
+  /* Removed backdrop-filter blur to fix the mobile glitch */
   opacity: 0;
   pointer-events: none;
   transition: opacity 200ms ease;
@@ -199,18 +200,27 @@
 
 /* --- Mobile --- */
 @media (max-width: 980px) {
-  .app { grid-template-columns: minmax(0, 1fr); }
+  .app { 
+    grid-template-columns: minmax(0, 1fr); 
+  }
 
   .sidebar {
     position: fixed;
     inset: 0 auto 0 0;
     width: 280px;
-    transform: translateX(-102%);
+    transform: translateX(-100%);
     transition: transform 200ms ease-out;
     box-shadow: 4px 0 24px rgba(0,0,0,0.5);
+    z-index: 50; /* Ensure sidebar is on top of scrim */
   }
-  .sidebar.is-open { transform: none; }
-  .menu-btn { display: inline-flex; }
+  
+  .sidebar.is-open { 
+    transform: translateX(0); 
+  }
+  
+  .menu-btn { 
+    display: inline-flex; 
+  }
 }
 
 @media (max-width: 600px) {

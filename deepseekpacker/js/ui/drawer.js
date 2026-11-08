@@ -9,18 +9,30 @@ export function initDrawer() {
   const menuBtn = document.getElementById('menu-btn');
   if (!sidebar || !menuBtn) return;
 
+  // Create scrim and append to body to ensure it covers everything
   scrimEl = el('div', { class: 'scrim', 'aria-hidden': 'true' });
   document.body.appendChild(scrimEl);
 
-  menuBtn.addEventListener('click', () => toggle());
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggle();
+  });
+  
   scrimEl.addEventListener('click', () => close());
 
+  // Handle window resize
   window.addEventListener('resize', () => {
     if (window.innerWidth > 980) close();
   });
 
+  // Handle Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && sidebar.classList.contains('is-open')) close();
+  });
+  
+  // Handle navigation to close drawer
+  window.addEventListener('hashchange', () => {
+    if (window.innerWidth <= 980) close();
   });
 }
 
