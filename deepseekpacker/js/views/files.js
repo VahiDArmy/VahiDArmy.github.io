@@ -15,7 +15,6 @@ import { openModal, confirmDialog } from '../ui/modal.js';
 import { buildFileTree } from '../ui/file-tree.js';
 import { has as hasFavorite, toggle as toggleFavorite } from '../core/favorites.js';
 import { attachContextMenu } from '../ui/context-menu.js';
-import { tagsFor, listTags, tagColor } from '../core/tags.js';
 import { commitDelete } from '../core/undo.js';
 
 export function mountFiles(root) {
@@ -182,7 +181,7 @@ function buildToolbar(onRefresh) {
   }
   bar.appendChild(filterGroup);
 
-  const sortSelect = el('select', { class: 'select', style: { maxWidth: '140px' } });
+  const sortSelect = el('select', { class: 'select', style: { maxWidth: '140px', height: '32px' } });
   for (const opt of [
     { value: 'path', label: 'Sort: Path' },
     { value: 'size', label: 'Sort: Size' },
@@ -199,32 +198,17 @@ function buildToolbar(onRefresh) {
   });
   bar.appendChild(sortSelect);
 
-  const dirBtn = el('button', {
-    class: 'icon-btn',
-    type: 'button',
-    title: 'Toggle sort direction',
-    html: State.ui.sortDir === 'asc' ? '↑' : '↓',
-    onClick: () => {
-      const next = State.ui.sortDir === 'asc' ? 'desc' : 'asc';
-      setUI({ sortDir: next });
-      dirBtn.innerHTML = next === 'asc' ? '↑' : '↓';
-      onRefresh();
-    },
-  });
-  bar.appendChild(dirBtn);
-
   const layoutGroup = el('div', { class: 'segmented', style: { marginLeft: 'auto' } });
   const LAYOUTS = [
-    { id: 'list', icon: '▤', label: 'List view' },
-    { id: 'grid', icon: '▥', label: 'Grid view' },
-    { id: 'tree', icon: '⌗', label: 'Tree view' },
+    { id: 'list', icon: '▤' },
+    { id: 'grid', icon: '▥' },
+    { id: 'tree', icon: '⌗' },
   ];
   for (const layout of LAYOUTS) {
     const btn = el('button', {
       type: 'button',
       class: State.settings.viewMode === layout.id ? 'is-active' : '',
       text: layout.icon,
-      title: layout.label,
       dataset: { layout: layout.id },
       onClick: () => {
         setSettings({ viewMode: layout.id });
@@ -244,7 +228,7 @@ function buildToolbar(onRefresh) {
 function buildBulkBar() {
   return el('div', {
     class: 'toolbar',
-    style: { display: State.ui.selected.size ? 'flex' : 'none' },
+    style: { display: State.ui.selected.size ? 'flex' : 'none', padding: '8px 12px', gap: '10px' },
   });
 }
 
@@ -257,7 +241,7 @@ function updateBulkBar(bar) {
   }
   bar.style.display = 'flex';
   bar.appendChild(el('span', {
-    style: { fontSize: 'var(--fs-sm)', color: 'var(--ink-2)' },
+    style: { fontSize: '12px', color: 'var(--ink-2)', marginRight: 'auto' },
     html: '<b>' + fmtNum(count) + '</b> selected',
   }));
 
@@ -272,21 +256,9 @@ function updateBulkBar(bar) {
         text += '{[[FILE: ' + f.path + ']]}\n' + f.content + '\n{[[END: ' + f.path + ']]}\n\n';
       }
       const ok = await copyToClipboard(text);
-      toastOk(ok ? 'Copied markers for ' + all.length + ' files' : 'Copy failed');
+      toastOk(ok ? 'Copied markers' : 'Copy failed');
     },
-  }, ['⎘ Copy markers']));
-
-  bar.appendChild(el('button', {
-    class: 'btn btn-sm',
-    type: 'button',
-    onClick: () => {
-      const paths = Array.from(State.ui.selected);
-      const bytes = buildZip({ paths });
-      if (!bytes.length) return toastWarn('Nothing to download');
-      downloadBlob(new Blob([bytes], { type: 'application/zip' }), 'project-pack-selected.zip');
-      toastOk('Downloaded selected zip');
-    },
-  }, ['⤓ Download selected']));
+  }, ['⎘ Copy']));
 
   bar.appendChild(el('button', {
     class: 'btn btn-sm btn-danger',
@@ -311,7 +283,7 @@ function updateBulkBar(bar) {
     class: 'btn btn-sm btn-ghost',
     type: 'button',
     onClick: () => clearSelection(),
-  }, ['Clear selection']));
+  }, ['Clear']));
 }
 
 function buildFileRow(file) {
@@ -324,15 +296,7 @@ function buildFileRow(file) {
       if (e.target.closest('.file-actions')) return;
       toggleSelection(file.path);
     },
-    onKeyDown: (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        navigate('editor', { path: file.path });
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        toggleSelection(file.path);
-      }
-    },
+    onDblClick: () => navigate('editor', { path: file.path }),
   });
 
   const main = el('div', { class: 'file-main' });
@@ -365,10 +329,6 @@ function buildFileRow(file) {
     e.stopPropagation();
     navigate('editor', { path: file.path });
   }));
-  actions.appendChild(actionBtn('↺', 'Rename', (e) => {
-    e.stopPropagation();
-    promptRename(file);
-  }));
   actions.appendChild(actionBtn('✕', 'Delete', (e) => {
     e.stopPropagation();
     confirmDelete(file);
@@ -387,7 +347,6 @@ function buildRowMenu(file) {
     { label: 'Copy markers', icon: '⎘', run: () => copyMarkers(file) },
     { label: isFav ? 'Unfavorite' : 'Favorite', icon: isFav ? '★' : '☆', run: () => toggleFavorite(file.path) },
     { type: 'separator' },
-    { label: 'Rename', icon: '↺', run: () => promptRename(file) },
     { label: 'Delete', icon: '✕', danger: true, run: () => confirmDelete(file) },
   ];
 }
@@ -402,26 +361,9 @@ function buildFileCard(file) {
   card.appendChild(el('div', { class: 'fc-name', text: basename(file.path) }));
   const dir = dirname(file.path);
   if (dir) card.appendChild(el('div', { class: 'fc-dir', text: dir }));
-  const tags = tagsFor(file.path);
-  if (tags.length) {
-    const tagRow = el('div', { style: { display: 'flex', gap: '3px', flexWrap: 'wrap' } });
-    for (const t of tags) {
-      tagRow.appendChild(el('span', {
-        style: {
-          display: 'inline-block',
-          width: '6px',
-          height: '6px',
-          borderRadius: '50%',
-          background: tagColor(t),
-        },
-        title: t,
-      }));
-    }
-    card.appendChild(tagRow);
-  }
   card.appendChild(el('div', { class: 'fc-foot' }, [
     el('span', { class: 'chip chip-' + file.status, text: file.status }),
-    el('span', { style: { fontSize: 'var(--fs-2xs)', color: 'var(--muted)' }, text: fmtBytes(file.bytes.length) }),
+    el('span', { style: { fontSize: '11px', color: 'var(--muted)' }, text: fmtBytes(file.bytes.length) }),
   ]));
   return card;
 }
@@ -433,6 +375,7 @@ function actionBtn(icon, title, onClick) {
     title,
     html: icon,
     onClick,
+    style: { width: '26px', height: '26px', fontSize: '12px' }
   });
 }
 
@@ -440,43 +383,6 @@ async function copyMarkers(file) {
   const text = '{[[FILE: ' + file.path + ']]}\n' + file.content + '\n{[[END: ' + file.path + ']]}';
   const ok = await copyToClipboard(text);
   toastOk(ok ? 'Copied ' + basename(file.path) : 'Copy failed');
-}
-
-function promptRename(file) {
-  const input = el('input', {
-    class: 'input',
-    type: 'text',
-    value: file.path,
-    spellcheck: false,
-    autocomplete: 'off',
-  });
-  const body = el('div', { class: 'field' }, [
-    el('label', { class: 'field-label', text: 'New path' }),
-    input,
-    el('span', { class: 'field-hint', text: 'Relative path. Forward slashes. Must not collide with an existing file.' }),
-  ]);
-  const m = openModal({
-    title: 'Rename file',
-    body,
-    buttons: [
-      { label: 'Cancel' },
-      {
-        label: 'Rename',
-        variant: 'primary',
-        keepOpen: true,
-        onClick: () => {
-          const next = input.value.trim();
-          if (!next) { toastWarn('Path is required'); return; }
-          if (next === file.path) { m.close(); return; }
-          const result = renameFile(file.path, next);
-          if (!result) { toastWarn('Rename failed — path may exist'); return; }
-          m.close();
-          toastOk('Renamed to ' + basename(next));
-        },
-      },
-    ],
-  });
-  setTimeout(() => { input.focus(); input.select(); }, 30);
 }
 
 async function confirmDelete(file) {
@@ -494,23 +400,13 @@ function buildEmptyState() {
   return el('div', { class: 'empty' }, [
     el('div', { class: 'empty-icon', html: '▤' }),
     el('div', { class: 'empty-title', text: 'No files packed yet' }),
-    el('div', { class: 'empty-sub', text: 'Copy a message with FILE/END blocks and press Ctrl+V anywhere on this page. Or drop a .zip file.' }),
+    el('div', { class: 'empty-sub', text: 'Go to the Dashboard to paste blocks or load a ZIP.' }),
     el('div', { class: 'empty-actions' }, [
       el('button', {
         class: 'btn btn-primary',
         type: 'button',
-        onClick: () => navigate('help'),
-      }, ['View format']),
-      el('button', {
-        class: 'btn',
-        type: 'button',
-        onClick: () => document.getElementById('zip-input') && document.getElementById('zip-input').click(),
-      }, ['Load .zip']),
-      el('button', {
-        class: 'btn btn-ghost',
-        type: 'button',
-        onClick: () => navigate('templates'),
-      }, ['Templates']),
+        onClick: () => navigate('dashboard'),
+      }, ['Go to Dashboard']),
     ]),
   ]);
 }

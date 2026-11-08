@@ -2,7 +2,7 @@
 
 import { el, clear } from '../utils/dom.js';
 import { State, subscribe, getStats, getFileList, sortFiles } from '../core/state.js';
-import { fmtBytes, fmtNum, formatPercent, extLabel, fileKind, basename, dirname } from '../utils/format.js';
+import { fmtBytes, fmtNum } from '../utils/format.js';
 import { navigate } from '../ui/router.js';
 
 export function mountStats(root) {
@@ -15,9 +15,7 @@ export function mountStats(root) {
     shell.appendChild(buildHead(stats));
     shell.appendChild(buildTiles(stats));
     shell.appendChild(buildBars(stats));
-    shell.appendChild(buildExtBars(stats));
     shell.appendChild(buildLargest(stats));
-    shell.appendChild(buildLogSpark());
   }
 
   render();
@@ -58,9 +56,9 @@ function buildTiles(stats) {
 }
 
 function tile(label, value, variant, sub) {
-  return el('div', { class: ['stat', variant || ''].filter(Boolean).join(' ') }, [
+  return el('div', { class: 'stat' }, [
     el('div', { class: 'stat-label', text: label }),
-    el('div', { class: 'stat-value', text: value }),
+    el('div', { class: `stat-value ${variant}`.trim(), text: value }),
     el('div', { class: 'stat-sub', text: sub }),
   ]);
 }
@@ -91,41 +89,25 @@ function buildBars(stats) {
   return card;
 }
 
-function buildExtBars(stats) {
-  const card = el('section', { class: 'card' });
-  card.appendChild(el('div', { class: 'card-head' }, [
-    el('div', { class: 'card-title' }, [el('span', { class: 'dot', style: { background: 'var(--accent-2)' } }), el('span', { text: 'By extension' })]),
-  ]));
-  const body = el('div', { class: 'card-body' });
-  const chart = el('div', { class: 'bar-chart' });
-
-  const entries = Object.entries(stats.byExt || {}).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  if (!entries.length) {
-    body.appendChild(el('div', { class: 'empty', style: { padding: '20px 0' } }, [
-      el('div', { class: 'empty-title', text: 'No extensions yet' }),
-    ]));
-  } else {
-    const total = Math.max(1, stats.fileCount);
-    for (const [ext, count] of entries) {
-      chart.appendChild(barRow(ext === 'none' ? '(none)' : '.' + ext, count, total, ''));
-    }
-    body.appendChild(chart);
-  }
-  card.appendChild(body);
-  return card;
-}
-
 function barRow(label, value, total, cls) {
   const pct = total ? (value / total) * 100 : 0;
-  const row = el('div', { class: 'bar-row' });
-  row.appendChild(el('div', { class: 'bar-label', text: label }));
-  const track = el('div', { class: 'bar-track' });
+  const row = el('div', { style: { display: 'grid', gridTemplateColumns: '80px 1fr 30px', alignItems: 'center', gap: '12px', fontSize: '12px', marginBottom: '8px' } });
+  
+  row.appendChild(el('div', { style: { color: 'var(--muted)' }, text: label }));
+  
+  const track = el('div', { style: { height: '8px', background: 'var(--surface-3)', borderRadius: '4px', overflow: 'hidden' } });
   track.appendChild(el('div', {
-    class: ['bar-fill', cls || ''].filter(Boolean).join(' '),
-    style: { width: Math.max(1.5, pct) + '%' },
+    style: { 
+      height: '100%', 
+      width: `${Math.max(1.5, pct)}%`, 
+      background: cls === 'bad' ? 'var(--bad)' : cls === 'warn' ? 'var(--warn)' : 'var(--accent)',
+      borderRadius: '4px'
+    },
   }));
   row.appendChild(track);
-  row.appendChild(el('div', { class: 'bar-value', text: String(value) }));
+  
+  row.appendChild(el('div', { style: { textAlign: 'right', color: 'var(--ink-2)' }, text: String(value) }));
+  
   return row;
 }
 
@@ -134,61 +116,22 @@ function buildLargest(stats) {
   card.appendChild(el('div', { class: 'card-head' }, [
     el('div', { class: 'card-title' }, [el('span', { class: 'dot', style: { background: 'var(--accent-3)' } }), el('span', { text: 'Largest files' })]),
   ]));
-  const body = el('div', { class: 'card-body' });
+  const body = el('div', { class: 'card-body flush' });
   const files = sortFiles(getFileList()).sort((a, b) => b.bytes.length - a.bytes.length).slice(0, 8);
+  
   if (!files.length) {
     body.appendChild(el('div', { class: 'empty', style: { padding: '20px 0' } }, [
       el('div', { class: 'empty-title', text: 'No files packed' }),
     ]));
   } else {
-    const list = el('div', { class: 'largest-list' });
+    const list = el('div');
     for (const f of files) {
-      const row = el('div', { class: 'largest-row' });
-      row.appendChild(el('div', { class: 'lr-path', text: f.path }));
-      row.appendChild(el('div', { class: 'lr-size', text: fmtBytes(f.bytes.length) }));
+      const row = el('div', { style: { display: 'flex', justifyContent: 'space-between', padding: '10px 14px', borderBottom: '1px solid var(--line)', fontSize: '13px' } });
+      row.appendChild(el('div', { style: { color: 'var(--ink-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }, text: f.path }));
+      row.appendChild(el('div', { style: { color: 'var(--muted)', flex: '0 0 auto', marginLeft: '12px' }, text: fmtBytes(f.bytes.length) }));
       list.appendChild(row);
     }
     body.appendChild(list);
-  }
-  card.appendChild(body);
-  return card;
-}
-
-function buildLogSpark() {
-  const card = el('section', { class: 'card' });
-  card.appendChild(el('div', { class: 'card-head' }, [
-    el('div', { class: 'card-title' }, [el('span', { class: 'dot' }), el('span', { text: 'Pastes per recent' })]),
-    el('button', {
-      class: 'btn btn-ghost btn-sm',
-      type: 'button',
-      onClick: () => navigate('log'),
-      text: 'Open log →',
-    }),
-  ]));
-  const body = el('div', { class: 'card-body' });
-
-  const entries = State.log.slice(0, 12).reverse();
-  if (!entries.length) {
-    body.appendChild(el('div', { class: 'empty', style: { padding: '20px 0' } }, [
-      el('div', { class: 'empty-title', text: 'No log entries yet' }),
-    ]));
-  } else {
-    const counts = entries.map((e) => (e.fresh || 0) + (e.changed || 0) + (e.identical || 0));
-    const max = Math.max(1, ...counts);
-    const spark = el('div', { class: 'spark' });
-    for (const c of counts) {
-      const h = Math.max(4, Math.round((c / max) * 100));
-      spark.appendChild(el('div', {
-        class: 'spark-bar',
-        style: { height: h + '%' },
-        title: c + ' file' + (c === 1 ? '' : 's'),
-      }));
-    }
-    body.appendChild(spark);
-    body.appendChild(el('div', {
-      style: { marginTop: '8px', fontSize: 'var(--fs-2xs)', color: 'var(--faint)' },
-      text: 'Oldest → newest · bar height = files touched per paste',
-    }));
   }
   card.appendChild(body);
   return card;
