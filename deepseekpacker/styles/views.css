@@ -17,7 +17,7 @@
   background: transparent;
   border: none;
   color: var(--muted);
-  padding: 5px 16px;
+  padding: 5px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-family: inherit;
@@ -37,24 +37,30 @@
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  grid-template-columns: repeat(2, 1fr); /* Force 2 columns on mobile */
   gap: 12px;
   align-items: start;
+}
+
+/* Revert to auto-fit on larger screens */
+@media (min-width: 768px) {
+  .stat-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 .stat {
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: var(--shadow-1);
   position: relative;
   overflow: hidden;
+  min-width: 0; /* Prevents overflow in CSS grid */
 }
 
-/* Add the colored top border */
+/* Colored top border */
 .stat::after {
   content: "";
   position: absolute;
@@ -65,7 +71,6 @@
 .stat.purple::after { background: var(--accent-3); }
 .stat.ok::after { background: var(--ok); }
 .stat.bad::after { background: var(--bad); }
-.stat.warn::after { background: var(--warn); }
 
 .stat-label {
   font-size: 10px;
@@ -73,26 +78,51 @@
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stat-value {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   font-family: var(--font-display);
   color: var(--ink);
   line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stat-value.accent { color: var(--accent); }
-.stat-value.blue { color: var(--accent-2); }
-.stat-value.purple { color: var(--accent-3); }
-.stat-value.ok { color: var(--ok); }
-.stat-value.bad { color: var(--bad); }
+/* Glowing Text */
+.stat-value.accent { 
+  color: var(--accent); 
+  text-shadow: 0 0 16px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.stat-value.blue { 
+  color: var(--accent-2); 
+  text-shadow: 0 0 16px color-mix(in srgb, var(--accent-2) 50%, transparent);
+}
+.stat-value.purple { 
+  color: var(--accent-3); 
+  text-shadow: 0 0 16px color-mix(in srgb, var(--accent-3) 50%, transparent);
+}
+.stat-value.ok { 
+  color: var(--ok); 
+  text-shadow: 0 0 16px color-mix(in srgb, var(--ok) 50%, transparent);
+}
+.stat-value.bad { 
+  color: var(--bad); 
+  text-shadow: 0 0 16px color-mix(in srgb, var(--bad) 50%, transparent);
+}
 
 .stat-sub {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 11px;
   color: var(--faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* --- Tool Cards (Dashboard) ---------------------------------------------- */
@@ -409,13 +439,11 @@
 
 /* --- Mobile Overrides ---------------------------------------------------- */
 
-@media (max-width: 600px) {
+@media (max-width: 400px) {
+  .stat-grid { grid-template-columns: 1fr; }
   .file-row { padding: 8px 12px; }
   .file-size { display: none; }
   .file-actions { display: none; }
   .file-main { gap: 8px; }
   .file-ext { width: 28px; height: 28px; }
-  
-  /* Make Reset button fit nicely */
-  .btn-reset { padding: 6px 10px; font-size: 11px; }
 }
