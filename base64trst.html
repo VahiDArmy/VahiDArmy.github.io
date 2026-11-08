@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project → Base64 ZIP</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 28px 22px 60px;
+    background: #0b0f16;
+    color: #cfe3ff;
+    font: 13px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #7fd6ff;
+  }
+  .sub { margin: 0 0 22px; color: #5d7a9e; font-size: 11px; letter-spacing: 0.08em; }
+  .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  button {
+    font: inherit;
+    font-size: 12px;
+    padding: 7px 15px;
+    border-radius: 7px;
+    border: 1px solid #1e3550;
+    background: #101a2e;
+    color: #9fd8ff;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button:hover { background: #16243c; border-color: #2f527d; }
+  button:active { transform: translateY(1px); }
+  .meta { color: #5d7a9e; font-size: 11px; letter-spacing: 0.06em; }
+  .meta b { color: #7fd6ff; font-weight: 500; }
+  .card {
+    border: 1px solid #17253a;
+    border-radius: 10px;
+    background: #0d1420;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background: #101a2b;
+    border-bottom: 1px solid #17253a;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: #6e8fb5;
+  }
+  .card-head button { padding: 4px 11px; font-size: 11px; }
+  .card textarea {
+    display: block;
+    width: 100%;
+    height: 120px;
+    resize: vertical;
+    border: 0;
+    outline: 0;
+    padding: 10px 12px;
+    background: transparent;
+    color: #8fb6da;
+    font: inherit;
+    font-size: 11px;
+    line-height: 1.5;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  .err { color: #ff8b8b; }
+</style>
+</head>
+<body>
+
+<h1>project &rarr; base64 zip</h1>
+<p class="sub">store method &middot; crc-32 &middot; 100,000-char chunks</p>
+
+<!-- ===== project files (hidden source) ===== -->
+<textarea id="file-index" hidden>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Constellation</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <header class="hud">
+    <h1>constellation</h1>
+    <p>move the mouse &amp;middot; click to burst</p>
+  </header>
+
+  <script src="script.js"></script>
+</body>
+</html>
+</textarea>
+
+<textarea id="file-style" hidden>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(circle at 50% 38%, #101a2e 0%, #070a12 58%, #04060a 100%);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #cfe3ff;
+  cursor: crosshair;
+}
+
+#scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.hud {
+  position: fixed;
+  top: 26px;
+  left: 30px;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.85;
+}
+
+.hud h1 {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.38em;
+  text-transform: uppercase;
+  color: #7fd6ff;
+  text-shadow: 0 0 18px rgba(80, 200, 255, 0.55);
+}
+
+.hud p {
+  margin-top: 9px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #5d7a9e;
+}
+</textarea>
+
+<textarea id="file-script" hidden>
+(() => {
+  "use strict";
+
+  const canvas = document.getElementById("scene");
+  const ctx = canvas.getContext("2d");
+
+  const CONFIG = {
+    count: 90,
+    linkDist: 130,
+    speed: 0.35,
+    mouseRadius: 160,
+    mouseForce: 0.045,
+    dpr: Math.min(window.devicePixelRatio || 1, 2),
+  };
+
+  let width = 0;
+  let height = 0;
+  let particles = [];
+  const mouse = { x: -9999, y: -9999, active: false };
+  const bursts = [];
+
+  const rand = (min, max) => min + Math.random() * (max - min);
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = Math.floor(width * CONFIG.dpr);
+    canvas.height = Math.floor(height * CONFIG.dpr);
+    ctx.setTransform(CONFIG.dpr, 0, 0, CONFIG.dpr, 0, 0);
+  }
+
+  function makeParticle() {
+    const angle = rand(0, Math.PI * 2);
+    const speed = rand(0.3, 1) * CONFIG.speed;
+    return {
+      x: rand(0, width),
+      y: rand(0, height),
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      r: rand(1.1, 2.6),
+      hue: rand(180, 215),
+      pulse: rand(0, Math.PI * 2),
+      pulseSpeed: rand(0.01, 0.03),
+    };
+  }
+
+  function seed() {
+    particles = Array.from({ length: CONFIG.count }, makeParticle);
+  }
+
+  function updateParticles() {
+    for (const p of particles) {
+      p.vx += rand(-0.008, 0.008);
+      p.vy += rand(-0.008, 0.008);
+
+      if (mouse.active) {
+        const dx = p.x - mouse.x;
+        const dy = p.y - mouse.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist < CONFIG.mouseRadius && dist > 0.001) {
+          const strength = (1 - dist / CONFIG.mouseRadius) * CONFIG.mouseForce;
+          p.vx += (dx / dist) * strength * 22;
+          p.vy += (dy / dist) * strength * 22;
+        }
+      }
+
+      const speed = Math.hypot(p.vx, p.vy);
+      const maxSpeed = 2.2;
+      if (speed > maxSpeed) {
+        p.vx = (p.vx / speed) * maxSpeed;
+        p.vy = (p.vy / speed) * maxSpeed;
+      }
+
+      p.x += p.vx;
+      p.y += p.vy;
+      p.pulse += p.pulseSpeed;
+
+      const pad = 20;
+      if (p.x < -pad) p.x = width + pad;
+      if (p.x > width + pad) p.x = -pad;
+      if (p.y < -pad) p.y = height + pad;
+      if (p.y > height + pad) p.y = -pad;
+    }
+  }
+
+  function updateBursts() {
+    for (let i = bursts.length - 1; i >= 0; i--) {
+      const b = bursts[i];
+      b.radius += b.growth;
+      b.growth *= 0.965;
+      b.alpha -= 0.022;
+      if (b.alpha <= 0) bursts.splice(i, 1);
+    }
+  }
+
+  function drawLinks() {
+    const maxDist = CONFIG.linkDist;
+    const maxDistSq = maxDist * maxDist;
+
+    for (let i = 0; i < particles.length; i++) {
+      const a = particles[i];
+      for (let j = i + 1; j < particles.length; j++) {
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq > maxDistSq) continue;
+
+        const t = 1 - Math.sqrt(distSq) / maxDist;
+        ctx.strokeStyle = "hsla(200, 100%, 70%, " + (t * 0.35) + ")";
+        ctx.lineWidth = t * 1.1;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawMouseLinks() {
+    if (!mouse.active) return;
+    const radius = CONFIG.mouseRadius;
+    for (const p of particles) {
+      const dx = p.x - mouse.x;
+      const dy = p.y - mouse.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist > radius) continue;
+      const t = 1 - dist / radius;
+      ctx.strokeStyle = "hsla(190, 100%, 75%, " + (t * 0.55) + ")";
+      ctx.lineWidth = t * 1.4;
+      ctx.beginPath();
+      ctx.moveTo(mouse.x, mouse.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) {
+      const glow = 0.55 + Math.sin(p.pulse) * 0.25;
+      const r = p.r * (0.9 + Math.sin(p.pulse) * 0.18);
+
+      const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 6);
+      grad.addColorStop(0, "hsla(" + p.hue + ", 100%, 78%, " + glow + ")");
+      grad.addColorStop(1, "hsla(" + p.hue + ", 100%, 60%, 0)");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r * 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "hsla(" + p.hue + ", 100%, 92%, " + glow + ")";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawBursts() {
+    for (const b of bursts) {
+      ctx.strokeStyle = "hsla(195, 100%, 72%, " + Math.max(b.alpha, 0) + ")";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  function frame() {
+    ctx.clearRect(0, 0, width, height);
+    updateParticles();
+    updateBursts();
+    drawLinks();
+    drawMouseLinks();
+    drawParticles();
+    drawBursts();
+    requestAnimationFrame(frame);
+  }
+
+  function setMouse(x, y) {
+    mouse.x = x;
+    mouse.y = y;
+    mouse.active = true;
+  }
+
+  window.addEventListener("pointermove", (e) => setMouse(e.clientX, e.clientY));
+
+  window.addEventListener("pointerleave", () => {
+    mouse.active = false;
+  });
+
+  window.addEventListener("pointerdown", (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+    setMouse(x, y);
+    bursts.push({ x, y, radius: 6, growth: 9, alpha: 0.9 });
+
+    for (const p of particles) {
+      const dx = p.x - x;
+      const dy = p.y - y;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < 260) {
+        const force = (1 - dist / 260) * 7;
+        p.vx += (dx / dist) * force;
+        p.vy += (dy / dist) * force;
+      }
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    resize();
+    seed();
+  });
+
+  resize();
+  seed();
+  requestAnimationFrame(frame);
+})();
+</textarea>
+
+<!-- ===== controls ===== -->
+<div class="bar">
+  <button id="build">Rebuild</button>
+  <button id="download">Download .zip</button>
+  <span class="meta" id="meta">building…</span>
+</div>
+
+<div id="out"></div>
+
+<script>
+(() => {
+  "use strict";
+
+  const CHUNK_SIZE = 100000;
+
+  const FILES = [
+    { id: "file-index",  name: "index.html" },
+    { id: "file-style",  name: "style.css"  },
+    { id: "file-script", name: "script.js"  }
+  ];
+
+  /* ---------------- CRC-32 ---------------- */
+
+  const CRC_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let i = 0; i < 256; i++) {
+      let c = i;
+      for (let k = 0; k < 8; k++) {
+        c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      }
+      t[i] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) {
+      crc = (crc >>> 8) ^ CRC_TABLE[(crc ^ bytes[i]) & 0xFF];
+    }
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  /* ---------------- ZIP writer (store) ---------------- */
+
+  function makeZip(entries) {
+    const enc = new TextEncoder();
+
+    // Fixed DOS timestamp: 2024-01-01 00:00:00
+    const dosTime = 0;
+    const dosDate = ((2024 - 1980) << 9) | (1 << 5) | 1;
+
+    const localParts = [];
+    const centralParts = [];
+    let offset = 0;
+
+    for (const entry of entries) {
+      const nameBytes = enc.encode(entry.name);
+      const dataBytes = enc.encode(entry.content);
+      const crc = crc32(dataBytes);
+      const size = dataBytes.length;
+
+      // ---- Local File Header (30 bytes + name) ----
+      const lh = new Uint8Array(30 + nameBytes.length);
+      const lv = new DataView(lh.buffer);
+      lv.setUint32(0,  0x04034b50, true);   // signature
+      lv.setUint16(4,  20,         true);   // version needed
+      lv.setUint16(6,  0x0800,     true);   // flags: UTF-8 names
+      lv.setUint16(8,  0,          true);   // method: store
+      lv.setUint16(10, dosTime,    true);
+      lv.setUint16(12, dosDate,    true);
+      lv.setUint32(14, crc,        true);
+      lv.setUint32(18, size,       true);   // compressed size
+      lv.setUint32(22, size,       true);   // uncompressed size
+      lv.setUint16(26, nameBytes.length, true);
+      lv.setUint16(28, 0,          true);   // extra length
+      lh.set(nameBytes, 30);
+
+      localParts.push(lh, dataBytes);
+
+      // ---- Central Directory Header (46 bytes + name) ----
+      const ch = new Uint8Array(46 + nameBytes.length);
+      const cv = new DataView(ch.buffer);
+      cv.setUint32(0,  0x02014b50, true);   // signature
+      cv.setUint16(4,  20,         true);   // version made by
+      cv.setUint16(6,  20,         true);   // version needed
+      cv.setUint16(8,  0x0800,     true);
+      cv.setUint16(10, 0,          true);
+      cv.setUint16(12, dosTime,    true);
+      cv.setUint16(14, dosDate,    true);
+      cv.setUint32(16, crc,        true);
+      cv.setUint32(20, size,       true);
+      cv.setUint32(24, size,       true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint16(30, 0,          true);   // extra length
+      cv.setUint16(32, 0,          true);   // comment length
+      cv.setUint16(34, 0,          true);   // disk number start
+      cv.setUint16(36, 0,          true);   // internal attrs
+      cv.setUint32(38, 0,          true);   // external attrs
+      cv.setUint32(42, offset,     true);   // local header offset
+      ch.set(nameBytes, 46);
+
+      centralParts.push(ch);
+      offset += lh.length + dataBytes.length;
+    }
+
+    const cdOffset = offset;
+    let cdSize = 0;
+    for (const part of centralParts) cdSize += part.length;
+
+    // ---- End of Central Directory (22 bytes) ----
+    const eocd = new Uint8Array(22);
+    const ev = new DataView(eocd.buffer);
+    ev.setUint32(0,  0x06054b50, true);
+    ev.setUint16(4,  0,          true);   // disk number
+    ev.setUint16(6,  0,          true);   // disk with CD
+    ev.setUint16(8,  entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, cdSize,     true);
+    ev.setUint32(16, cdOffset,   true);
+    ev.setUint16(20, 0,          true);   // comment length
+
+    // ---- assemble ----
+    const total = cdOffset + cdSize + eocd.length;
+    const out = new Uint8Array(total);
+    let p = 0;
+    for (const part of localParts)   { out.set(part, p); p += part.length; }
+    for (const part of centralParts) { out.set(part, p); p += part.length; }
+    out.set(eocd, p);
+    return out;
+  }
+
+  /* ---------------- Base64 ---------------- */
+
+  function bytesToBase64(bytes) {
+    const SLICE = 0x8000;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += SLICE) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + SLICE));
+    }
+    return btoa(binary);
+  }
+
+  /* ---------------- UI ---------------- */
+
+  async function copyText(text, btn) {
+    let ok = true;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.top = "-1000px";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+      } catch (e2) {
+        ok = false;
+      }
+    }
+    const old = btn.textContent;
+    btn.textContent = ok ? "Copied \u2713" : "Failed";
+    setTimeout(() => { btn.textContent = old; }, 1200);
+  }
+
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  let lastZipBytes = null;
+
+  function render(b64, zipBytes) {
+    lastZipBytes = zipBytes;
+
+    const out = document.getElementById("out");
+    out.innerHTML = "";
+
+    const chunks = [];
+    for (let i = 0; i < b64.length; i += CHUNK_SIZE) {
+      chunks.push(b64.slice(i, i + CHUNK_SIZE));
+    }
+
+    const meta = document.getElementById("meta");
+    meta.innerHTML =
+      "zip <b>" + zipBytes.length.toLocaleString() + "</b> bytes &middot; " +
+      "base64 <b>" + b64.length.toLocaleString() + "</b> chars &middot; " +
+      "<b>" + chunks.length + "</b> chunk" + (chunks.length === 1 ? "" : "s");
+
+    chunks.forEach((chunk, i) => {
+      const card = el("div", "card");
+      const head = el("div", "card-head");
+
+      const label = el(
+        "span", null,
+        "chunk " + (i + 1) + " / " + chunks.length +
+        "  \u00b7  " + chunk.length.toLocaleString() + " chars"
+      );
+
+      const btn = el("button", null, "Copy");
+      btn.addEventListener("click", () => copyText(chunk, btn));
+
+      head.appendChild(label);
+      head.appendChild(btn);
+
+      const ta = document.createElement("textarea");
+      ta.readOnly = true;
+      ta.spellcheck = false;
+      ta.value = chunk;
+
+      card.appendChild(head);
+      card.appendChild(ta);
+      out.appendChild(card);
+    });
+  }
+
+  function build() {
+    const meta = document.getElementById("meta");
+    try {
+      const entries = FILES.map((f) => ({
+        name: f.name,
+        content: document.getElementById(f.id).value.replace(/^\n/, "")
+      }));
+
+      const zipBytes = makeZip(entries);
+      const b64 = bytesToBase64(zipBytes);
+      render(b64, zipBytes);
+    } catch (err) {
+      meta.innerHTML = '<span class="err">error: ' + err.message + "</span>";
+      console.error(err);
+    }
+  }
+
+  function download() {
+    if (!lastZipBytes) return;
+    const blob = new Blob([lastZipBytes], { type: "application/zip" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "constellation.zip";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+
+  document.getElementById("build").addEventListener("click", build);
+  document.getElementById("download").addEventListener("click", download);
+
+  build();
+})();
+</script>
+</body>
+</html>
