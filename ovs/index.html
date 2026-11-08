@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0d12">
+<title>AURORA OS</title>
+<link rel="stylesheet" href="css/reset.css">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/apps.css">
+<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+
+<div id="boot" class="boot" aria-hidden="false">
+  <div class="boot__logo">
+    <svg viewBox="0 0 64 64" width="72" height="72" aria-hidden="true">
+      <defs>
+        <linearGradient id="boot-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#7c5cff"/>
+          <stop offset="1" stop-color="#4fc3f7"/>
+        </linearGradient>
+      </defs>
+      <circle cx="32" cy="32" r="28" fill="none" stroke="url(#boot-grad)" stroke-width="2" opacity="0.35"/>
+      <circle cx="32" cy="32" r="20" fill="none" stroke="url(#boot-grad)" stroke-width="2" opacity="0.6"/>
+      <circle cx="32" cy="32" r="12" fill="none" stroke="url(#boot-grad)" stroke-width="2"/>
+      <circle cx="32" cy="32" r="4" fill="url(#boot-grad)"/>
+    </svg>
+  </div>
+  <h1 class="boot__title">AURORA OS</h1>
+  <p class="boot__sub">Initializing workspace</p>
+  <div class="boot__bar" role="progressbar" aria-label="Boot progress">
+    <div class="boot__fill" id="boot-fill"></div>
+  </div>
+  <div class="boot__status" id="boot-status">cold-start</div>
+</div>
+
+<div id="desktop" class="desktop" hidden>
+  <header class="menubar" id="menubar">
+    <div class="menubar__left">
+      <button class="menubar__brand" id="brand-btn" title="System menu" aria-label="System menu">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span class="brand-name">AURORA</span>
+      </button>
+      <nav class="menubar__menus" id="menubar-menus" aria-label="Application menu"></nav>
+    </div>
+    <div class="menubar__right">
+      <button class="menubar__icon" id="btn-search" title="Search" aria-label="Search">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M8 2a6 6 0 0 1 4.9 9.5l4.3 4.3-1.4 1.4-4.3-4.3A6 6 0 1 1 8 2zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill="currentColor"/></svg>
+      </button>
+      <button class="menubar__icon" id="btn-notif" title="Notifications" aria-label="Notifications">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 2a5 5 0 0 1 5 5v3l1.5 3h-13L5 10V7a5 5 0 0 1 5-5zm-2 12a2 2 0 0 0 4 0H8z" fill="currentColor"/></svg>
+        <span class="badge" id="notif-badge" hidden>0</span>
+      </button>
+      <div class="menubar__clock" id="clock" aria-label="Clock">
+        <span id="clock-time">--:--</span>
+        <span id="clock-date">---</span>
+      </div>
+      <button class="menubar__icon" id="btn-settings" title="Settings" aria-label="Settings">
+        <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M10 6a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm0 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4zm8.4 3a8 8 0 0 0 .1-2l-2.3-.5a6 6 0 0 0-.8-1.9l1.3-2a8 8 0 0 0-1.7-1.7l-2 1.3A6 6 0 0 0 11 3.4L10.5 1h-1l-.5 2.4a6 6 0 0 0-1.9.8l-2-1.3a8 8 0 0 0-1.7 1.7l1.3 2a6 6 0 0 0-.8 1.9L1.5 9a8 8 0 0 0 0 2l2.3.5a6 6 0 0 0 .8 1.9l-1.3 2a8 8 0 0 0 1.7 1.7l2-1.3a6 6 0 0 0 1.9.8L9.5 19h1l.5-2.4a6 6 0 0 0 1.9-.8l2 1.3a8 8 0 0 0 1.7-1.7l-1.3-2a6 6 0 0 0 .8-1.9l2.3-.5z" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="workspace" id="workspace" aria-label="Desktop">
+    <div class="desktop-icons" id="desktop-icons" aria-label="Desktop icons"></div>
+  </main>
+
+  <nav class="dock" id="dock" aria-label="Dock"></nav>
+</div>
+
+<div class="palette" id="palette" hidden>
+  <div class="palette__overlay" data-close aria-hidden="true"></div>
+  <div class="palette__box" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="palette__input-wrap">
+      <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M8 2a6 6 0 0 1 4.9 9.5l4.3 4.3-1.4 1.4-4.3-4.3A6 6 0 1 1 8 2zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" fill="currentColor"/></svg>
+      <input id="palette-input" placeholder="Search apps, files, commands" autocomplete="off" spellcheck="false" aria-label="Search">
+      <kbd>esc</kbd>
+    </div>
+    <div class="palette__results" id="palette-results" role="listbox"></div>
+    <footer class="palette__foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span><kbd>↵</kbd> open</span>
+    </footer>
+  </div>
+</div>
+
+<aside class="notif" id="notif-center" hidden aria-label="Notification center">
+  <div class="notif__head">
+    <h2>Notifications</h2>
+    <button class="btn-ghost" id="notif-clear" type="button">Clear all</button>
+  </div>
+  <div class="notif__list" id="notif-list"></div>
+  <div class="notif__empty" id="notif-empty">You're all caught up.</div>
+</aside>
+
+<div class="sysmenu" id="sysmenu" hidden>
+  <button class="sysmenu__item" data-action="about">About AURORA</button>
+  <button class="sysmenu__item" data-action="settings">Settings</button>
+  <div class="sysmenu__sep"></div>
+  <button class="sysmenu__item" data-action="lock">Lock screen</button>
+  <button class="sysmenu__item" data-action="reload">Reload</button>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div class="ctxmenu" id="context-menu" hidden role="menu"></div>
+<div class="modal-root" id="modal-root" hidden></div>
+
+<script type="module" src="js/boot.js"></script>
+</body>
+</html>
