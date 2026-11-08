@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Project Packer — animation utilities & polish
+   ========================================================================== */
+
+@keyframes pp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pp-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pp-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes pp-pop {
+  0% { transform: scale(0.94); opacity: 0; }
+  60% { transform: scale(1.02); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pp-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent),
+      0 0 20px -6px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent),
+      0 0 30px -4px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+}
+
+@keyframes pp-pulse-dot {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.25); }
+}
+
+@keyframes pp-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pp-ripple {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
+@keyframes pp-type-in {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes pp-caret-blink {
+  0%, 49% { border-color: var(--accent); }
+  50%, 100% { border-color: transparent; }
+}
+
+.anim-fade-in { animation: pp-fade-in var(--t-mid) var(--ease) both; }
+.anim-slide-up { animation: pp-slide-up var(--t-mid) var(--ease-out) both; }
+.anim-slide-down { animation: pp-slide-down var(--t-mid) var(--ease-out) both; }
+.anim-pop { animation: pp-pop var(--t-mid) var(--ease-out) both; }
+
+.anim-delay-1 { animation-delay: 40ms; }
+.anim-delay-2 { animation-delay: 80ms; }
+.anim-delay-3 { animation-delay: 120ms; }
+.anim-delay-4 { animation-delay: 160ms; }
+.anim-delay-5 { animation-delay: 200ms; }
+.anim-delay-6 { animation-delay: 240ms; }
+
+/* --- interactive polish ------------------------------------------------- */
+
+.btn {
+  overflow: hidden;
+  position: relative;
+}
+
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    color-mix(in srgb, var(--accent) 30%, transparent), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--t-fast) var(--ease);
+  pointer-events: none;
+}
+
+.btn:active:not(:disabled)::before {
+  opacity: 1;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.btn-primary {
+  animation: pp-glow 4s ease-in-out infinite;
+}
+
+.card {
+  transition: border-color var(--t-mid) var(--ease), box-shadow var(--t-mid) var(--ease);
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent) 12%, var(--line));
+}
+
+.stat {
+  transition: transform var(--t-mid) var(--ease), border-color var(--t-mid) var(--ease);
+}
+
+.stat:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 20%, var(--line));
+}
+
+.nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease);
+}
+
+.nav-link:active::after {
+  opacity: 1;
+  transition: opacity 260ms var(--ease-out);
+}
+
+.file-row {
+  position: relative;
+}
+
+.file-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease);
+}
+
+.file-row:active::before {
+  opacity: 1;
+  transition: opacity 300ms var(--ease-out);
+}
+
+/* --- skeleton loading --------------------------------------------------- */
+
+.skeleton {
+  display: block;
+  height: 1em;
+  border-radius: var(--r-xs);
+  background: linear-gradient(90deg,
+    var(--surface-2) 0%,
+    var(--surface-3) 50%,
+    var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: pp-shimmer 1.6s linear infinite;
+}
+
+.skeleton-line { height: 12px; margin: 6px 0; }
+.skeleton-line.short { width: 40%; }
+.skeleton-line.medium { width: 70%; }
+
+/* --- selection highlight ------------------------------------------------ */
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--ink);
+}
+
+/* --- focus ring polish -------------------------------------------------- */
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.nav-link:focus-visible,
+.theme-swatch:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+/* --- toast stacking ----------------------------------------------------- */
+
+.toast-stack .toast:nth-last-child(2) { opacity: 0.96; }
+.toast-stack .toast:nth-last-child(3) { opacity: 0.92; }
+.toast-stack .toast:nth-last-child(4) { opacity: 0.88; }
+.toast-stack .toast:nth-last-child(5) { opacity: 0.84; }
+
+/* --- reduced motion ----------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in,
+  .anim-slide-up,
+  .anim-slide-down,
+  .anim-pop {
+    animation: none !important;
+  }
+
+  .btn-primary {
+    animation: none !important;
+  }
+
+  .brand-mark i {
+    animation: none !important;
+    opacity: 1;
+  }
+
+  .drop-icon {
+    animation: none !important;
+  }
+
+  .spinner {
+    animation: none !important;
+    border-top-color: transparent;
+  }
+}
+
+/* --- dark theme scrim polish ------------------------------------------- */
+
+[data-theme="paper"] body::before {
+  opacity: 0.55;
+}
+
+[data-theme="paper"] .card {
+  background: var(--surface);
+}
+
+[data-theme="paper"] .sidebar {
+  background: var(--surface);
+}
+
+[data-theme="paper"] .btn::before {
+  background: radial-gradient(circle at var(--ripple-x, 50%) var(--ripple-y, 50%),
+    rgba(47, 127, 93, 0.18), transparent 60%);
+}
+
+/* --- print ------------------------------------------------------------- */
+
+@media print {
+  .sidebar,
+  .topbar,
+  .statusbar,
+  .toast-stack,
+  .overlay-root,
+  .drop-veil {
+    display: none !important;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .app {
+    display: block;
+    height: auto;
+  }
+
+  .view {
+    padding: 0;
+    overflow: visible;
+  }
+}

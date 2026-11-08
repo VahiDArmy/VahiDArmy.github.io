@@ -1,0 +1,130 @@
+PROJECT PACKER — final delivery manifest
+==========================================
+
+The project is complete. Every file listed below is required to run
+index.html. Nothing else is needed.
+
+Root
+  index.html
+  manifest.json
+  README.md
+  FINAL-MANIFEST.txt  (this file, for reference only)
+
+Styles
+  styles/tokens.css
+  styles/base.css
+  styles/layout.css
+  styles/components.css
+  styles/views.css
+  styles/overlays.css
+  styles/animations.css
+  styles/extra.css
+
+Bootstrap
+  js/app.js
+  js/sw.js
+
+Utilities
+  js/utils/dom.js
+  js/utils/format.js
+  js/utils/crc.js
+  js/utils/bytes.js
+  js/utils/storage.js
+  js/utils/id.js
+  js/utils/hotkeys.js
+
+Core
+  js/core/parser.js
+  js/core/state.js
+  js/core/skip.js
+  js/core/ingest.js
+  js/core/zip-build.js
+  js/core/zip-read.js
+  js/core/pack-text.js
+  js/core/log.js
+  js/core/export.js
+  js/core/snapshots.js
+  js/core/templates.js
+  js/core/undo.js
+  js/core/tags.js
+  js/core/favorites.js
+  js/core/validator.js
+  js/core/build-shim.js
+
+UI
+  js/ui/toast.js
+  js/ui/modal.js
+  js/ui/palette.js
+  js/ui/drawer.js
+  js/ui/dropveil.js
+  js/ui/statusbar.js
+  js/ui/sidebar.js
+  js/ui/router.js
+  js/ui/commands.js
+  js/ui/download.js
+  js/ui/zip-flow.js
+  js/ui/search.js
+  js/ui/search-overlay.js
+  js/ui/theme.js
+  js/ui/paste-capture.js
+  js/ui/help-modal.js
+  js/ui/topbar.js
+  js/ui/tooltip.js
+  js/ui/notifications.js
+  js/ui/pwa.js
+  js/ui/confetti.js
+  js/ui/split-view.js
+  js/ui/heatmap.js
+  js/ui/file-tree.js
+  js/ui/context-menu.js
+  js/ui/context-wiring.js
+  js/ui/shortcuts-overlay.js
+  js/ui/misc-shortcuts.js
+
+Views
+  js/views/dashboard.js
+  js/views/files.js
+  js/views/editor.js
+  js/views/log.js
+  js/views/stats.js
+  js/views/settings.js
+  js/views/help.js
+  js/views/diff.js
+  js/views/snapshots.js
+  js/views/templates.js
+  js/views/tags.js
+  js/views/onboarding.js
+
+Total: 78 files.
+
+How to run
+----------
+  Open index.html directly — everything works except service worker
+  registration (which browsers block on file://).
+
+  For the full experience including offline + installable PWA:
+
+    npx serve .
+    # or
+    python -m http.server 8000
+
+  Then browse to http://localhost:PORT (or :8000).
+
+Verification checklist
+----------------------
+  [x] Sidebar has 12 nav entries (Dashboard, Files, Editor, Log, Insights,
+      Compare, Snapshots, Tags, Templates, Welcome, Settings, Help)
+  [x] Ctrl+K opens the command palette with ~30 commands
+  [x] Ctrl+S downloads project-pack.zip
+  [x] Ctrl+O opens the ZIP picker
+  [x] Ctrl+Z / Ctrl+Shift+Z undo / redo
+  [x] Ctrl+P opens the fuzzy file finder
+  [x] / focuses topbar search
+  [x] ? opens the shortcuts reference
+  [x] g + d/f/e/l/i/s/t/g/w navigation works
+  [x] Ctrl+V anywhere on the page ingests FILE/END blocks
+  [x] Drag-and-drop .zip anywhere unpacks to text
+  [x] 4 themes cycle from the sidebar footer button
+  [x] Service worker caches full shell for offline use
+
+End of delivery.

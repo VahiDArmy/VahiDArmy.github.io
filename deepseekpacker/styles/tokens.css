@@ -1,0 +1,195 @@
+/* ==========================================================================
+   Project Packer — design tokens
+   Themes: obsidian (default) · graphite · aurora · paper
+   ========================================================================== */
+
+:root {
+  --font-ui: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-md: 13px;
+  --fs-lg: 15px;
+  --fs-xl: 18px;
+  --fs-2xl: 23px;
+  --fs-3xl: 31px;
+  --fs-4xl: 42px;
+
+  --lh-tight: 1.25;
+  --lh-base: 1.55;
+  --lh-loose: 1.72;
+
+  --r-xs: 4px;
+  --r-sm: 7px;
+  --r-md: 11px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  --t-fast: 120ms;
+  --t-mid: 200ms;
+  --t-slow: 340ms;
+  --ease: cubic-bezier(0.22, 0.72, 0.28, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --z-base: 1;
+  --z-sticky: 20;
+  --z-nav: 40;
+  --z-overlay: 60;
+  --z-toast: 80;
+  --z-palette: 90;
+
+  --sidebar-w: 264px;
+  --topbar-h: 56px;
+  --statusbar-h: 30px;
+
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 28px -16px rgba(0, 0, 0, 0.85);
+  --shadow-2: 0 28px 70px -24px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --shadow-3: 0 2px 0 rgba(255, 255, 255, 0.03) inset, 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   obsidian
+   -------------------------------------------------------------------------- */
+[data-theme="obsidian"] {
+  color-scheme: dark;
+  --bg: #07080a;
+  --bg-2: #0a0c10;
+  --surface: #0e1116;
+  --surface-2: #131820;
+  --surface-3: #1a202a;
+  --surface-hover: #171d25;
+  --line: #1d232b;
+  --line-2: #2a323d;
+  --line-3: #39434f;
+  --ink: #e7eaef;
+  --ink-2: #b6bdc7;
+  --muted: #7e8792;
+  --faint: #5a626c;
+  --accent: #7dd3a8;
+  --accent-2: #59b7e6;
+  --accent-3: #c79bf0;
+  --accent-ink: #04120c;
+  --ok: #7dd3a8;
+  --warn: #e3bb7c;
+  --bad: #e28f8f;
+  --info: #6fb6e8;
+  --glow: 0 0 0 1px rgba(125, 211, 168, 0.2), 0 0 30px -8px rgba(125, 211, 168, 0.45);
+  --grid: rgba(255, 255, 255, 0.022);
+  --scrim: rgba(4, 6, 8, 0.72);
+}
+
+/* --------------------------------------------------------------------------
+   graphite
+   -------------------------------------------------------------------------- */
+[data-theme="graphite"] {
+  color-scheme: dark;
+  --bg: #101113;
+  --bg-2: #141518;
+  --surface: #191b1f;
+  --surface-2: #1f2227;
+  --surface-3: #282c32;
+  --surface-hover: #23262b;
+  --line: #2a2d33;
+  --line-2: #383c44;
+  --line-3: #4a4f59;
+  --ink: #eceef1;
+  --ink-2: #c2c6cc;
+  --muted: #8e939c;
+  --faint: #6b7078;
+  --accent: #b8c7d9;
+  --accent-2: #8fa6c0;
+  --accent-3: #d3bfa8;
+  --accent-ink: #101319;
+  --ok: #9fd2b4;
+  --warn: #ddbe8b;
+  --bad: #dc9b9b;
+  --info: #93b8d8;
+  --glow: 0 0 0 1px rgba(184, 199, 217, 0.22), 0 0 28px -10px rgba(184, 199, 217, 0.45);
+  --grid: rgba(255, 255, 255, 0.024);
+  --scrim: rgba(8, 9, 11, 0.74);
+}
+
+/* --------------------------------------------------------------------------
+   aurora
+   -------------------------------------------------------------------------- */
+[data-theme="aurora"] {
+  color-scheme: dark;
+  --bg: #080a12;
+  --bg-2: #0b0e18;
+  --surface: #10131f;
+  --surface-2: #161a2a;
+  --surface-3: #1d2235;
+  --surface-hover: #191e2e;
+  --line: #212739;
+  --line-2: #2e364c;
+  --line-3: #3f4a66;
+  --ink: #e8ecf8;
+  --ink-2: #b3bcd8;
+  --muted: #7d87a6;
+  --faint: #5b6480;
+  --accent: #9db8ff;
+  --accent-2: #6ee7d0;
+  --accent-3: #d79bf5;
+  --accent-ink: #06091a;
+  --ok: #6ee7d0;
+  --warn: #e9c98d;
+  --bad: #f19ba6;
+  --info: #9db8ff;
+  --glow: 0 0 0 1px rgba(157, 184, 255, 0.22), 0 0 34px -8px rgba(110, 231, 208, 0.45);
+  --grid: rgba(157, 184, 255, 0.03);
+  --scrim: rgba(4, 6, 14, 0.74);
+}
+
+/* --------------------------------------------------------------------------
+   paper (light)
+   -------------------------------------------------------------------------- */
+[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #f4f5f2;
+  --bg-2: #eeefeb;
+  --surface: #ffffff;
+  --surface-2: #f8f9f6;
+  --surface-3: #eceee8;
+  --surface-hover: #f1f3ee;
+  --line: #dfe2d9;
+  --line-2: #cbd0c4;
+  --line-3: #b0b7a7;
+  --ink: #1a1d17;
+  --ink-2: #41463a;
+  --muted: #6d7465;
+  --faint: #8c9384;
+  --accent: #2f7f5d;
+  --accent-2: #2a6c9a;
+  --accent-3: #7a4fa8;
+  --accent-ink: #ffffff;
+  --ok: #2f7f5d;
+  --warn: #9a6f14;
+  --bad: #a63a3a;
+  --info: #2a6c9a;
+  --glow: 0 0 0 1px rgba(47, 127, 93, 0.28), 0 0 26px -10px rgba(47, 127, 93, 0.35);
+  --grid: rgba(0, 0, 0, 0.022);
+  --scrim: rgba(28, 32, 24, 0.42);
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.8) inset, 0 8px 22px -16px rgba(30, 40, 20, 0.35);
+  --shadow-2: 0 24px 60px -24px rgba(30, 40, 20, 0.4), 0 1px 0 rgba(255, 255, 255, 0.9) inset;
+  --shadow-3: 0 1px 0 rgba(255, 255, 255, 0.9) inset, 0 1px 2px rgba(30, 40, 20, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 1ms;
+    --t-mid: 1ms;
+    --t-slow: 1ms;
+  }
+}

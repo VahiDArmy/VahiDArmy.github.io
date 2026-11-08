@@ -1,0 +1,455 @@
+/* ==========================================================================
+   Project Packer — overlays: modal, palette, toast, drop veil
+   ========================================================================== */
+
+.overlay-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+}
+
+.overlay-root > * {
+  pointer-events: auto;
+}
+
+/* --- modal --------------------------------------------------------------- */
+
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  background: var(--scrim);
+  backdrop-filter: blur(6px) saturate(120%);
+  -webkit-backdrop-filter: blur(6px) saturate(120%);
+  animation: scrim-in var(--t-mid) var(--ease) both;
+}
+
+@keyframes scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: min(80dvh, 720px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: modal-in var(--t-mid) var(--ease-out) both;
+}
+
+.modal.modal-wide { width: min(760px, 100%); }
+.modal.modal-narrow { width: min(420px, 100%); }
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+
+.modal-title {
+  flex: 1 1 auto;
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-loose);
+}
+
+.modal-body p + p { margin-top: var(--sp-3); }
+
+.modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
+}
+
+.modal-foot .push { margin-right: auto; }
+
+/* --- command palette ----------------------------------------------------- */
+
+.palette-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-palette);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 12vh var(--sp-4) var(--sp-4);
+  background: var(--scrim);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: scrim-in var(--t-fast) var(--ease) both;
+}
+
+.palette {
+  width: min(620px, 100%);
+  max-height: min(62dvh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-2);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: palette-in var(--t-mid) var(--ease-out) both;
+}
+
+@keyframes palette-in {
+  from { opacity: 0; transform: translateY(-10px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+.palette-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+
+.palette-input-wrap .p-ico {
+  color: var(--accent);
+  font-size: var(--fs-md);
+}
+
+.palette-input {
+  flex: 1 1 auto;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-md);
+  outline: none;
+}
+
+.palette-input::placeholder { color: var(--faint); }
+
+.palette-input-wrap kbd {
+  flex: 0 0 auto;
+}
+
+.palette-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--sp-1);
+}
+
+.palette-group {
+  padding: 8px 10px 4px;
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  text-align: left;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.palette-item .p-ico {
+  flex: 0 0 auto;
+  width: 18px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.palette-item .p-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-item .p-hint {
+  flex: 0 0 auto;
+  font-size: var(--fs-2xs);
+  color: var(--faint);
+}
+
+.palette-item:hover,
+.palette-item.is-active {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface-2));
+  color: var(--ink);
+}
+
+.palette-item.is-active .p-ico {
+  color: var(--accent);
+}
+
+.palette-empty {
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+  color: var(--faint);
+  font-size: var(--fs-sm);
+}
+
+.palette-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
+  font-size: var(--fs-2xs);
+  color: var(--faint);
+}
+
+.palette-foot .pf {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* --- toasts -------------------------------------------------------------- */
+
+.toast-stack {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+  max-width: min(420px, calc(100vw - 32px));
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 220px;
+  padding: 10px 14px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  background: color-mix(in srgb, var(--surface-3) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-2);
+  pointer-events: auto;
+  overflow: hidden;
+  animation: toast-in var(--t-mid) var(--ease-out) both;
+}
+
+.toast.is-leaving {
+  animation: toast-out var(--t-mid) var(--ease) both;
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes toast-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(16px) scale(0.98); }
+}
+
+.toast-ico {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+}
+
+.toast-msg {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  transform-origin: left center;
+  background: var(--accent);
+  opacity: 0.65;
+  animation: toast-bar linear both;
+}
+
+@keyframes toast-bar {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.toast.ok { border-color: color-mix(in srgb, var(--ok) 34%, transparent); }
+.toast.ok .toast-ico { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 34%, transparent); }
+.toast.ok .toast-bar { background: var(--ok); }
+
+.toast.warn { border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+.toast.warn .toast-ico { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+.toast.warn .toast-bar { background: var(--warn); }
+
+.toast.bad { border-color: color-mix(in srgb, var(--bad) 34%, transparent); }
+.toast.bad .toast-ico { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 34%, transparent); }
+.toast.bad .toast-bar { background: var(--bad); }
+
+/* --- drop veil ----------------------------------------------------------- */
+
+.drop-veil {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-palette) - 1);
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-mid) var(--ease);
+}
+
+.drop-veil.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drop-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-6) var(--sp-7);
+  border-radius: var(--r-lg);
+  border: 2px dashed color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: var(--glow), var(--shadow-2);
+  text-align: center;
+}
+
+.drop-icon {
+  font-size: var(--fs-4xl);
+  line-height: 1;
+  color: var(--accent);
+  animation: drop-bob 1.6s var(--ease) infinite;
+}
+
+@keyframes drop-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.drop-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.drop-sub {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.drop-sub code {
+  color: var(--accent);
+}
+
+/* --- paste flash --------------------------------------------------------- */
+
+.paste-flash {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-toast) - 1);
+  pointer-events: none;
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: inset 0 0 90px -30px color-mix(in srgb, var(--accent) 65%, transparent);
+  opacity: 0;
+  animation: flash-fade 620ms var(--ease-out) both;
+}
+
+@keyframes flash-fade {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* --- responsive ---------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .toast-stack {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    align-items: stretch;
+    max-width: none;
+  }
+
+  .toast { min-width: 0; }
+
+  .palette-scrim { padding-top: 8vh; }
+
+  .modal-scrim { padding: var(--sp-2); align-items: flex-end; }
+
+  .modal {
+    width: 100%;
+    max-height: 86dvh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    animation: modal-up var(--t-mid) var(--ease-out) both;
+  }
+
+  @keyframes modal-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .drop-card { padding: var(--sp-5) var(--sp-5); }
+}

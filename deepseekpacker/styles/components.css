@@ -1,0 +1,678 @@
+/* ==========================================================================
+   Project Packer — reusable components
+   ========================================================================== */
+
+/* --- buttons ------------------------------------------------------------- */
+
+.btn {
+  --btn-bg: var(--surface-2);
+  --btn-bg-hover: var(--surface-3);
+  --btn-border: var(--line-2);
+  --btn-ink: var(--ink-2);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 7px 13px;
+  min-height: 32px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-ink);
+  font-size: var(--fs-sm);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: background var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease),
+    color var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--btn-bg-hover);
+  border-color: var(--line-3);
+  color: var(--ink);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.36;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  --btn-bg: color-mix(in srgb, var(--accent) 16%, var(--surface-2));
+  --btn-bg-hover: color-mix(in srgb, var(--accent) 24%, var(--surface-2));
+  --btn-border: color-mix(in srgb, var(--accent) 38%, transparent);
+  --btn-ink: var(--accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 8%, transparent), 0 8px 24px -16px color-mix(in srgb, var(--accent) 80%, transparent);
+}
+
+.btn-primary:hover:not(:disabled) {
+  color: color-mix(in srgb, var(--accent) 92%, white);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent), 0 10px 30px -14px color-mix(in srgb, var(--accent) 85%, transparent);
+}
+
+.btn-ghost {
+  --btn-bg: transparent;
+  --btn-bg-hover: var(--surface-hover);
+  --btn-border: transparent;
+  --btn-ink: var(--muted);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+
+.btn-danger {
+  --btn-bg: transparent;
+  --btn-bg-hover: color-mix(in srgb, var(--bad) 14%, transparent);
+  --btn-border: color-mix(in srgb, var(--bad) 28%, transparent);
+  --btn-ink: var(--bad);
+}
+
+.btn-danger:hover:not(:disabled) {
+  color: color-mix(in srgb, var(--bad) 85%, white);
+  border-color: color-mix(in srgb, var(--bad) 50%, transparent);
+}
+
+.btn-sm {
+  padding: 5px 9px;
+  min-height: 26px;
+  font-size: var(--fs-xs);
+  gap: 5px;
+}
+
+.btn-lg {
+  padding: 10px 18px;
+  min-height: 40px;
+  font-size: var(--fs-md);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn .btn-icon {
+  font-size: var(--fs-md);
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-md);
+  line-height: 1;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+
+.icon-btn:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+  border-color: var(--line-2);
+}
+
+.icon-btn.is-active {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* --- form fields --------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.field-hint {
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 8px 11px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--faint);
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line-2));
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.textarea {
+  min-height: 120px;
+  font-family: var(--font-ui);
+  resize: vertical;
+}
+
+.select {
+  appearance: none;
+  padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 52%, calc(100% - 10px) 52%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 210px;
+}
+
+.search-field .search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--faint);
+  font-size: var(--fs-md);
+  pointer-events: none;
+}
+
+.search-field input {
+  width: 100%;
+  padding: 7px 52px 7px 30px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease), background var(--t-fast) var(--ease);
+}
+
+.search-field input::placeholder {
+  color: var(--faint);
+}
+
+.search-field input:focus {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line-2));
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.search-field kbd {
+  position: absolute;
+  right: 8px;
+  font-size: var(--fs-2xs);
+  color: var(--faint);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-xs);
+  padding: 1px 5px;
+  background: var(--surface-2);
+  pointer-events: none;
+}
+
+/* --- kbd ----------------------------------------------------------------- */
+
+kbd {
+  display: inline-block;
+  font-family: var(--font-ui);
+  font-size: var(--fs-2xs);
+  line-height: 1.4;
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--line-2);
+  border-bottom-width: 2px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+/* --- chips & badges ------------------------------------------------------ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  line-height: 1.7;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.85;
+}
+
+.chip.plain::before { display: none; }
+
+.chip-new { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 34%, transparent); background: color-mix(in srgb, var(--ok) 10%, transparent); }
+.chip-changed { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 34%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.chip-identical { color: var(--muted); border-color: var(--line-2); background: var(--surface-2); }
+.chip-edited { color: var(--accent-2); border-color: color-mix(in srgb, var(--accent-2) 34%, transparent); background: color-mix(in srgb, var(--accent-2) 10%, transparent); }
+.chip-truncated,
+.chip-corrupt { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 36%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+.chip-skipped { color: var(--faint); }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.badge-accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.badge-bad {
+  color: var(--bad);
+  border-color: color-mix(in srgb, var(--bad) 30%, transparent);
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+}
+
+/* --- segmented control --------------------------------------------------- */
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+}
+
+.segmented button {
+  padding: 4px 10px;
+  border-radius: var(--r-xs);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  white-space: nowrap;
+  transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+
+.segmented button:hover {
+  color: var(--ink);
+}
+
+.segmented button.is-active {
+  background: var(--surface-3);
+  color: var(--ink);
+  box-shadow: var(--shadow-3);
+}
+
+/* --- switch -------------------------------------------------------------- */
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-track {
+  position: relative;
+  width: 34px;
+  height: 19px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-2);
+  background: var(--bg-2);
+  transition: background var(--t-mid) var(--ease), border-color var(--t-mid) var(--ease);
+  flex: 0 0 auto;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform var(--t-mid) var(--ease-out), background var(--t-mid) var(--ease);
+}
+
+.switch input:checked + .switch-track {
+  background: color-mix(in srgb, var(--accent) 24%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(15px);
+  background: var(--accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: 2px;
+}
+
+.switch-label {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+/* --- cards --------------------------------------------------------------- */
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.card-title .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.card-body {
+  padding: 14px;
+}
+
+.card-body.flush {
+  padding: 0;
+}
+
+.card-foot {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
+}
+
+/* --- stat tiles ---------------------------------------------------------- */
+
+.stat {
+  position: relative;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--surface-2) 90%, transparent), color-mix(in srgb, var(--surface) 94%, transparent));
+  overflow: hidden;
+}
+
+.stat::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 45%, transparent), transparent);
+  opacity: 0.7;
+}
+
+.stat-label {
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.stat-value small {
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--muted);
+  letter-spacing: 0;
+  margin-left: 4px;
+}
+
+.stat-sub {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--faint);
+}
+
+.stat.accent .stat-value { color: var(--accent); }
+.stat.warn .stat-value { color: var(--warn); }
+.stat.bad .stat-value { color: var(--bad); }
+
+/* --- empty state --------------------------------------------------------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3);
+  padding: var(--sp-8) var(--sp-4);
+  text-align: center;
+  color: var(--muted);
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--line-3);
+  background: var(--surface-2);
+  font-size: var(--fs-xl);
+  color: var(--faint);
+}
+
+.empty-title {
+  font-family: var(--font-display);
+  font-size: var(--fs-lg);
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.empty-sub {
+  font-size: var(--fs-sm);
+  color: var(--faint);
+  max-width: 46ch;
+  line-height: var(--lh-loose);
+}
+
+.empty-actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+}
+
+/* --- progress / meter ---------------------------------------------------- */
+
+.meter {
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+.meter.warn > span { background: linear-gradient(90deg, var(--warn), var(--accent)); }
+.meter.bad > span { background: linear-gradient(90deg, var(--bad), var(--warn)); }
+
+/* --- spinner ------------------------------------------------------------- */
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-top-color: var(--accent);
+  animation: spin 700ms linear infinite;
+  display: inline-block;
+  vertical-align: -2px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- divider ------------------------------------------------------------- */
+
+.divider {
+  height: 1px;
+  background: var(--line);
+  margin: var(--sp-3) 0;
+}
+
+.divider.labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  background: none;
+  height: auto;
+}
+
+.divider.labeled::before,
+.divider.labeled::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--line);
+}
+
+.divider.labeled span {
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* --- inline code --------------------------------------------------------- */
+
+code.inline {
+  padding: 1px 5px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--line-2);
+  background: var(--surface-2);
+  color: color-mix(in srgb, var(--accent) 80%, var(--ink));
+  font-size: 0.92em;
+}
+
+/* --- tooltip ------------------------------------------------------------- */
+
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 4px);
+  padding: 4px 8px;
+  border-radius: var(--r-xs);
+  border: 1px solid var(--line-2);
+  background: var(--surface-3);
+  color: var(--ink);
+  font-size: var(--fs-2xs);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  z-index: var(--z-nav);
+  box-shadow: var(--shadow-2);
+}
+
+[data-tip]:hover::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

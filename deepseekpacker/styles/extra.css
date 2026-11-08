@@ -1,0 +1,173 @@
+/* ==========================================================================
+   Project Packer — extra component polish
+   Loaded after animations.css. Adds styling for components that were
+   introduced after the main stylesheets shipped.
+   ========================================================================== */
+
+/* --- context menu -------------------------------------------------------- */
+
+.context-menu {
+  user-select: none;
+  font-family: var(--font-ui);
+  animation: pp-pop 140ms var(--ease-out) both;
+}
+
+.context-menu button:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 1px;
+}
+
+/* --- rich tooltip host --------------------------------------------------- */
+
+.tip-host {
+  font-family: var(--font-ui);
+  letter-spacing: 0.01em;
+}
+
+/* --- heatmap ------------------------------------------------------------- */
+
+.heatmap-wrap {
+  font-family: var(--font-ui);
+}
+
+.heatmap-cell {
+  box-shadow: 0 0 0 0 transparent;
+}
+
+/* --- file tree ----------------------------------------------------------- */
+
+.file-tree {
+  font-family: var(--font-ui);
+}
+
+.file-tree .tree-caret {
+  transition: transform 120ms var(--ease);
+}
+
+/* --- split view ---------------------------------------------------------- */
+
+.split-view > .split-divider {
+  transition: background 120ms var(--ease);
+}
+
+.split-view > .split-divider::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* --- paste flash --------------------------------------------------------- */
+
+.paste-flash {
+  pointer-events: none;
+}
+
+/* --- notification panel -------------------------------------------------- */
+
+#notif-panel {
+  animation: pp-pop 160ms var(--ease-out) both;
+}
+
+#notif-panel .btn-ghost {
+  padding: 4px 8px;
+  font-size: var(--fs-2xs);
+}
+
+/* --- confetti canvas ----------------------------------------------------- */
+
+body > canvas[aria-hidden="true"] {
+  position: fixed !important;
+  pointer-events: none !important;
+}
+
+/* --- onboarding step cards ---------------------------------------------- */
+
+.view-inner [style*="grid-template-columns: repeat(auto-fit"] .card {
+  min-width: 0;
+}
+
+/* --- readonly field hint ------------------------------------------------- */
+
+.input[readonly] {
+  color: var(--muted);
+  background: var(--surface-2);
+}
+
+/* --- focus ring override for interactive file rows ---------------------- */
+
+.file-row:focus-visible {
+  outline: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  outline-offset: -2px;
+}
+
+/* --- contextual highlight for selected snapshot rows -------------------- */
+
+.snapshot-row.is-active {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* --- drag-and-drop accent state ----------------------------------------- */
+
+.drop-veil.is-active .drop-card {
+  animation: pp-pop 240ms var(--ease-out) both;
+}
+
+/* --- file card in grid mode --------------------------------------------- */
+
+.file-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* --- inline download link styling --------------------------------------- */
+
+a.inline-download {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}
+
+/* --- large file warning -------------------------------------------------- */
+
+.warn-row {
+  background: color-mix(in srgb, var(--warn) 6%, transparent);
+}
+
+/* --- pwa install button ------------------------------------------------- */
+
+#install-btn {
+  animation: pp-glow 3s ease-in-out infinite;
+}
+
+/* --- keyboard hint pills ------------------------------------------------- */
+
+kbd {
+  user-select: none;
+}
+
+/* --- reduced motion for extra components -------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .context-menu,
+  #notif-panel,
+  .drop-veil.is-active .drop-card {
+    animation: none !important;
+  }
+
+  .file-tree .tree-caret {
+    transition: none !important;
+  }
+}
+
+/* --- print: hide extra chrome ------------------------------------------- */
+
+@media print {
+  #notif-panel,
+  .context-menu,
+  .tip-host,
+  body > canvas {
+    display: none !important;
+  }
+}
