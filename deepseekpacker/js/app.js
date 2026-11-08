@@ -1,202 +1,97 @@
-import { State, restore, persist, addLog } from './core/state.js';
-import { ingest } from './core/ingest.js';
-import { buildZip } from './core/zip-build.js';
-import { readZip, summarizeRead } from './core/zip-read.js';
-import { logText } from './core/log.js';
+// Project Packer — application bootstrap.
 
-const els = {
-  textarea: document.getElementById('paste-area'),
-  logList: document.getElementById('log-list'),
-  btnDownload: document.getElementById('btn-download'),
-  btnLoadZip: document.getElementById('btn-load-zip'),
-  btnPaste: document.getElementById('btn-paste'),
-  btnClear: document.getElementById('btn-clear'),
-  btnCopyLog: document.getElementById('btn-copy-log'),
-  zipInput: document.getElementById('zip-input'),
-  toast: document.getElementById('toast')
-};
+import { loadSettings, restore, subscribe, State, persist } from './core/state.js';
+import { initRouter, renderRoute } from './ui/router.js';
+import { initSidebar } from './ui/sidebar.js';
+import { initTopbar } from './ui/topbar.js';
+import { initStatusbar } from './ui/statusbar.js';
+import { initDrawer } from './ui/drawer.js';
+import { initDropVeil } from './ui/dropveil.js';
+import { initPasteCapture } from './ui/paste-capture.js';
+import { initThemeButton } from './ui/theme.js';
+import { initHelpButton } from './ui/help-modal.js';
+import { initZipInput, handleZipFile } from './ui/zip-flow.js';
+import { bindShortcuts } from './ui/commands.js';
+import { openPalette } from './ui/palette.js';
+import { buildCommands } from './ui/commands.js';
+import { toastInfo } from './ui/toast.js';
+import { initPwa } from './ui/pwa.js';
+import { initTooltips } from './ui/tooltip.js';
+import { initContextMenuWiring } from './ui/context-wiring.js';
+import { initShortcutsOverlay } from './ui/shortcuts-overlay.js';
+import { initSearchOverlay } from './ui/search-overlay.js';
+import { initMiscShortcuts } from './ui/misc-shortcuts.js';
 
-let toastTimer;
-function showToast(msg) {
-  els.toast.textContent = msg;
-  els.toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => els.toast.classList.remove('show'), 2500);
-}
-
-// --- Initialization ---
-
-function init() {
+function boot() {
+  loadSettings();
   restore();
-  renderLog();
-  updateButtons();
 
-  // Paste Handler
-  els.textarea.addEventListener('paste', (e) => {
-    // Let the default paste happen, but then auto-process after a tiny delay
-    setTimeout(processText, 10);
+  initSidebar();
+  initTopbar();
+  initStatusbar();
+  initDrawer();
+  initThemeButton();
+  initHelpButton();
+  initZipInput();
+  initPasteCapture();
+  initTooltips();
+  initContextMenuWiring();
+  initShortcutsOverlay();
+  initSearchOverlay();
+  initMiscShortcuts();
+  bindShortcuts();
+  initRouter();
+  initPwa();
+
+  initDropVeil((file) => {
+    handleZipFile(file);
   });
 
-  els.btnPaste.addEventListener('click', async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (!text) return showToast('Clipboard is empty');
-      els.textarea.value = text;
-      processText();
-    } catch (err) {
-      showToast('Could not read clipboard. Please press Ctrl+V / Cmd+V instead.');
-      els.textarea.focus();
-    }
-  });
-
-  els.btnClear.addEventListener('click', () => {
-    els.textarea.value = '';
-    els.textarea.focus();
-  });
-
-  els.btnDownload.addEventListener('click', downloadZip);
-  els.btnLoadZip.addEventListener('click', () => els.zipInput.click());
-  els.zipInput.addEventListener('change', handleZipInput);
-  els.btnCopyLog.addEventListener('click', copyLog);
-
-  // Global Ctrl+V to focus textarea
+  const cmdTrigger = document.getElementById('cmd-trigger');
+  if (cmdTrigger) {
+    cmdTrigger.addEventListener('click', () => openPalette(buildCommands()));
+  }
   document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-      if (document.activeElement !== els.textarea && document.activeElement !== els.zipInput) {
-        els.textarea.focus();
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      openPalette(buildCommands());
+    }
+  });
+
+  subscribe((type, payload) => {
+    if (type === 'ingest' && payload && payload.entry) {
+      const entry = payload.entry;
+      const live = document.getElementById('live-region');
+      if (live) {
+        live.textContent = 'Paste #' + entry.n + ' ingested: ' +
+          entry.fresh + ' new, ' + entry.errors + ' error' +
+          (entry.errors === 1 ? '' : 's');
       }
     }
   });
-}
 
-// --- Core Logic ---
-
-function processText() {
-  const text = els.textarea.value.trim();
-  if (!text) return;
-
-  // Ingest the text
-  const entry = ingest(text, { source: 'paste' });
-  
-  // Clear textarea
-  els.textarea.value = '';
-  
-  // Update UI
-  renderLog();
-  updateButtons();
-
-  if (entry) {
-    const summary = `${entry.fresh} new, ${entry.errors} errors`;
-    showToast(`Pasted: ${summary}`);
-  }
-}
-
-function downloadZip() {
-  if (State.files.size === 0) return showToast('Nothing to download');
-  
-  const bytes = buildZip();
-  const blob = new Blob([bytes], { type: 'application/zip' });
-  const url = URL.createObjectURL(blob);
-  
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'project-pack.zip';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
-  
-  showToast('Downloaded project-pack.zip');
-}
-
-function handleZipInput(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  showToast('Reading ZIP...');
-  const reader = new FileReader();
-  
-  reader.onload = async (ev) => {
-    try {
-      const results = await readZip(ev.target.result);
-      const summary = summarizeRead(results);
-      
-      // Build text archive
-      let text = '';
-      for (const r of results) {
-        if (r.skipped) continue;
-        text += `{[[FILE: ${r.path}]]}\n${r.content}\n{[[END: ${r.path}]]}\n\n`;
-      }
-      
-      // Download it
-      const blob = new Blob([text], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'project-pack.txt';
-      a.click();
-      URL.revokeObjectURL(url);
-      
-      // Add to log
-      addLog({
-        id: Date.now(),
-        n: State.pastes + 1,
-        time: new Date(),
-        fresh: summary.included,
-        errors: 0,
-        source: 'zip',
-        notes: [{ text: `ZIP unpacked: ${summary.included} files extracted, ${summary.skippedNoise + summary.skippedBinary} skipped.` }]
-      });
-      State.pastes++;
-      
-      renderLog();
-      showToast('ZIP unpacked to project-pack.txt');
-    } catch (err) {
-      showToast('ZIP Error: ' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
-  els.zipInput.value = '';
-}
-
-function copyLog() {
-  const text = logText();
-  if (!text) return showToast('Log is empty');
-  navigator.clipboard.writeText(text).then(() => showToast('Log copied to clipboard'));
-}
-
-// --- Rendering ---
-
-function renderLog() {
-  els.logList.innerHTML = '';
-  
-  if (State.log.length === 0) {
-    els.logList.innerHTML = '<div class="empty-log">No pastes yet.</div>';
-    return;
-  }
-  
-  State.log.forEach(entry => {
-    const div = document.createElement('div');
-    div.className = `log-item ${entry.errors > 0 ? 'error' : 'success'}`;
-    
-    const time = entry.time instanceof Date ? entry.time.toLocaleTimeString() : '--:--:--';
-    
-    let msg = '';
-    if (entry.source === 'zip') {
-      msg = `<strong>ZIP:</strong> ${entry.notes[0].text}`;
-    } else {
-      const replaced = entry.changed + entry.identical;
-      msg = `<strong>Paste #${entry.n}:</strong> ${entry.fresh} new, ${replaced} replaced, ${entry.errors} errors.`;
-    }
-    
-    div.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${msg}</span>`;
-    els.logList.appendChild(div);
+  const onHide = () => { try { persist(); } catch (err) { /* ignore */ } };
+  window.addEventListener('pagehide', onHide);
+  window.addEventListener('beforeunload', onHide);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') onHide();
   });
+
+  toastInfo('Ready — paste blocks or load a .zip to start');
+
+  // Default to the dashboard (which is now the tool view)
+  const hash = window.location.hash;
+  if (hash && hash.startsWith('#/')) {
+    const view = hash.replace(/^#\//, '').split('/')[0];
+    renderRoute(view);
+  } else {
+    renderRoute('dashboard');
+  }
 }
 
-function updateButtons() {
-  els.btnDownload.disabled = State.files.size === 0;
-  els.btnCopyLog.disabled = State.log.length === 0;
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
 }
-
-init();
