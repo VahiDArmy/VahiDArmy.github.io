@@ -125,23 +125,23 @@
                         <button type="button" class="field-btn" id="tokenToggle" title="Show / hide token">👁</button>
                     </div>
                     <button type="button" class="btn btn-primary" id="connectBtn">Connect</button>
-                    <button type="button" class="btn" id="disconnectBtn" hidden>Disconnect</button>
                 </form>
+
+                <section class="pathbar">
+                    <button class="icon-btn" id="upBtn" title="Go up one level (Backspace)">⬆</button>
+                    <div class="path" id="path"></div>
+                    <div class="jump">
+                        <input id="jumpInput" placeholder="go to path…" spellcheck="false" />
+                    </div>
+                    <button class="icon-btn" id="refreshBtn" title="Refresh (R)">⟳</button>
+                </section>
 
                 <div class="topbar-right">
                     <div class="status" id="status">Not connected</div>
+                    <button class="icon-btn favicon-3d" id="reconnectBtn" title="Click to Reconnect" hidden>⚡</button>
                     <button class="icon-btn" id="helpBtn" title="Keyboard shortcuts (?)">?</button>
                 </div>
             </header>
-
-            <section class="pathbar">
-                <button class="icon-btn" id="upBtn" title="Go up one level (Backspace)">⬆</button>
-                <div class="path" id="path"></div>
-                <div class="jump">
-                    <input id="jumpInput" placeholder="go to path…" spellcheck="false" />
-                </div>
-                <button class="icon-btn" id="refreshBtn" title="Refresh (R)">⟳</button>
-            </section>
 
             <section class="toolbar" id="toolbar">
                 <div class="btn-wrap">

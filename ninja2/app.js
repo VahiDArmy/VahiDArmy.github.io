@@ -61,7 +61,7 @@ const selection = new Set();
 /* ── DOM references ────────────────────────────────────────── */
 const sidebar = $('sidebar'), scrim = $('scrim');
 const repoInput = $('repo'), tokenInput = $('token'), statusEl = $('status');
-const connectBtn = $('connectBtn'), disconnectBtn = $('disconnectBtn'), tokenToggle = $('tokenToggle');
+const connectBtn = $('connectBtn'), reconnectBtn = $('reconnectBtn'), tokenToggle = $('tokenToggle');
 const repoCard = $('repoCard'), repoIcon = $('repoIcon'), repoName = $('repoName'), repoMeta = $('repoMeta'), repoLink = $('repoLink');
 const branchWrap = $('branchWrap'), branchSelect = $('branchSelect'), branchLabel = $('branchLabel');
 const pathEl = $('path'), jumpInput = $('jumpInput');
@@ -353,7 +353,7 @@ async function connect() {
         store.rawSet('fm_token', token);
         store.rawSet('fm_repo', repoVal);
         document.body.dataset.connected = 'true';
-        disconnectBtn.hidden = false;
+        reconnectBtn.hidden = false;
         tokenInput.value = token;
 
         setStatus(`✓ Connected: ${info.full_name}`, 'ok');
@@ -413,7 +413,7 @@ function disconnect() {
     if ($('packOverlay').classList.contains('open')) closePackOverlay();
     tokenInput.value = '';
     document.body.dataset.connected = 'false';
-    disconnectBtn.hidden = true;
+    reconnectBtn.hidden = true;
     setStatus('Not connected');
     renderRepoCard();
     renderCrumbs();
@@ -3766,13 +3766,11 @@ function wireEvents() {
         tokenInput.type = tokenInput.type === 'password' ? 'text' : 'password';
         tokenToggle.textContent = tokenInput.type === 'password' ? '👁' : '🙈';
     });
-    disconnectBtn.addEventListener('click', async () => {
-        const ok = await uiConfirm({
-            title: 'Disconnect repository?',
-            text: 'The token is removed from this browser. Your files on GitHub are untouched.',
-            ok: 'Disconnect', danger: true, icon: '🔌',
-        });
-        if (ok) disconnect();
+    
+    reconnectBtn.addEventListener('click', () => {
+        if (state.connected) {
+            connect(); // acts as reconnect
+        }
     });
 
     $('sidebarToggle').onclick = openSidebar;
