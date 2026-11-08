@@ -26,79 +26,20 @@
   transition: all 0.15s ease;
 }
 
-.mode-switch button:hover {
-  color: var(--ink);
-}
-
+.mode-switch button:hover { color: var(--ink); }
 .mode-switch button.active {
   background: var(--surface);
   color: var(--accent);
   box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
 
-/* --- Dashboard Stats Bar (Premium Style) --------------------------------- */
-
-.stats-bar {
-  display: flex;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--surface-2) 80%, transparent), var(--surface));
-  border: 1px solid var(--line-2);
-  border-radius: 12px;
-  padding: 4px;
-  box-shadow: 0 8px 24px -12px rgba(0,0,0,0.8);
-  overflow: hidden;
-}
-
-.stat-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 8px;
-  border-right: 1px solid var(--line);
-  text-align: center;
-  position: relative;
-}
-
-.stat-item:last-child {
-  border-right: none;
-}
-
-.stat-item::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 10%; right: 10%; height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 30%, transparent), transparent);
-  opacity: 0.6;
-}
-
-.stat-label {
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 600;
-  font-family: var(--font-display);
-  color: var(--ink);
-  line-height: 1.1;
-}
-
-.stat-value.accent { color: var(--accent); text-shadow: 0 0 12px color-mix(in srgb, var(--accent) 40%, transparent); }
-.stat-value.bad { color: var(--bad); text-shadow: 0 0 12px color-mix(in srgb, var(--bad) 40%, transparent); }
-.stat-value.warn { color: var(--warn); text-shadow: 0 0 12px color-mix(in srgb, var(--warn) 40%, transparent); }
-
-/* --- Insights Stat Grid -------------------------------------------------- */
+/* --- Dashboard Stat Grid (Colorful & Styled) ----------------------------- */
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--sp-3);
-  align-items: start; /* Prevents stretching */
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  align-items: start;
 }
 
 .stat {
@@ -106,39 +47,47 @@
   flex-direction: column;
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface-2);
+  border-radius: 8px;
+  background: var(--surface);
   box-shadow: var(--shadow-1);
   position: relative;
   overflow: hidden;
 }
 
+/* Add the colored top border */
 .stat::after {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; height: 2px;
-  background: var(--line-2);
+  top: 0; left: 0; right: 0; height: 3px;
 }
-.stat:nth-child(1)::after { background: var(--accent); }
-.stat:nth-child(2)::after { background: var(--accent-2); }
-.stat:nth-child(3)::after { background: var(--accent-3); }
-.stat:nth-child(4)::after { background: var(--warn); }
+.stat.accent::after { background: var(--accent); }
+.stat.blue::after { background: var(--accent-2); }
+.stat.purple::after { background: var(--accent-3); }
+.stat.ok::after { background: var(--ok); }
+.stat.bad::after { background: var(--bad); }
+.stat.warn::after { background: var(--warn); }
 
-.stat-label-insights {
+.stat-label {
   font-size: 10px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.stat-value-insights {
-  font-size: 24px;
+.stat-value {
+  font-size: 22px;
   font-weight: 600;
   font-family: var(--font-display);
   color: var(--ink);
   line-height: 1.1;
 }
+
+.stat-value.accent { color: var(--accent); }
+.stat-value.blue { color: var(--accent-2); }
+.stat-value.purple { color: var(--accent-3); }
+.stat-value.ok { color: var(--ok); }
+.stat-value.bad { color: var(--bad); }
 
 .stat-sub {
   margin-top: 6px;
@@ -466,5 +415,7 @@
   .file-actions { display: none; }
   .file-main { gap: 8px; }
   .file-ext { width: 28px; height: 28px; }
-  .btn-reset { display: none; } /* Hide reset text on tiny screens, rely on menu */
+  
+  /* Make Reset button fit nicely */
+  .btn-reset { padding: 6px 10px; font-size: 11px; }
 }
