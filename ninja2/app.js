@@ -3002,15 +3002,27 @@ function openPackOverlay() {
         log: [],
     };
     $('packSubtitle').textContent = '→ /' + (state.path || '');
-    $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    
+    const tree = $('packTree');
+    tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    tree.style.display = 'block'; 
+    tree.style.background = 'rgba(0,0,0,.26)';
+    tree.style.padding = '6px';
+    
     $('packSummary').textContent = '—';
     $('packErrors').textContent = '';
     $('packFootHint').textContent = '';
-    $('packApply').disabled = true;
-    $('packApply').textContent = 'Apply';
+    
+    const btn = $('packApply');
+    btn.disabled = true;
+    btn.textContent = 'Apply';
+    btn.style.background = ''; 
+    btn.style.color = '';
+    
     $('packClear').hidden = true;
     $('packLog').hidden = true;
     $('packLog').innerHTML = '';
+    
     openOverlay($('packOverlay'));
     detectPackOverwrites();
 }
@@ -3224,8 +3236,17 @@ function clearPack() {
         log: [],
     };
     $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    $('packTree').style.display = 'block';
+    $('packTree').style.background = 'rgba(0,0,0,.26)';
+    $('packTree').style.padding = '6px';
+    
     $('packLog').hidden = true;
     $('packLog').innerHTML = '';
+    
+    const btn = $('packApply');
+    btn.style.background = ''; 
+    btn.style.color = '';
+    
     updatePackSummary();
 }
 
@@ -3235,36 +3256,95 @@ async function applyPack() {
     if (!selected.length) return;
 
     const button = $('packApply');
+    const tree = $('packTree');
+    const summary = $('packSummary');
+
     button.disabled = true;
     button.textContent = 'Applying…';
 
+    // Turn the tree into a live terminal
+    tree.innerHTML = '';
+    tree.style.display = 'flex';
+    tree.style.flexDirection = 'column';
+    tree.style.gap = '4px';
+    tree.style.background = '#050510'; // dark terminal background
+    tree.style.borderColor = 'rgba(255,255,255,.1)';
+    tree.style.padding = '10px';
+
+    const log = (msg, type = 'info') => {
+        const el = document.createElement('div');
+        el.style.fontFamily = 'var(--mono)';
+        el.style.fontSize = '11px';
+        el.style.lineHeight = '1.4';
+        el.style.whiteSpace = 'pre-wrap';
+        el.style.wordBreak = 'break-all';
+        
+        if (type === 'err') el.style.color = 'var(--danger)';
+        else if (type === 'ok') el.style.color = 'var(--ok)';
+        else if (type === 'warn') el.style.color = 'var(--warn)';
+        else el.style.color = 'var(--muted)';
+        
+        el.textContent = msg;
+        tree.appendChild(el);
+        tree.scrollTop = tree.scrollHeight;
+    };
+
+    log(`Starting apply of ${selected.length} files...`, 'warn');
+    log(`Target: /${state.path || ''}`, 'info');
+    log(`----------------------------------------`, 'info');
+
     setStatus('Applying pack…', 'loading');
+    
     try {
         const entries = [];
-        let done = 0;
-        for (const [path, file] of selected) {
-            setStatus(`Uploading ${done + 1}/${selected.length}…`, 'loading');
-            const base64 = encodeBase64UTF8(file.content);
-            const blob = await api('POST', '/git/blobs', { content: base64, encoding: 'base64' });
-            entries.push({
-                path: joinPath(state.path, path),
-                mode: '100644', type: 'blob', sha: blob.sha,
-            });
-            done++;
+        for (let i = 0; i < selected.length; i++) {
+            const [path, file] = selected[i];
+            const dest = joinPath(state.path, path);
+            
+            log(`[${i+1}/${selected.length}] Uploading ${path}...`, 'info');
+            summary.textContent = `Uploading ${i+1} of ${selected.length}`;
+            setStatus(`Uploading ${i+1}/${selected.length}…`, 'loading');
+
+            try {
+                const base64 = encodeBase64UTF8(file.content);
+                const blob = await api('POST', '/git/blobs', { content: base64, encoding: 'base64' });
+                entries.push({ path: dest, mode: '100644', type: 'blob', sha: blob.sha });
+                log(`[${i+1}/${selected.length}] ✓ Uploaded (sha: ${blob.sha.slice(0, 7)})`, 'ok');
+            } catch (err) {
+                log(`[${i+1}/${selected.length}] ✕ Failed: ${err.message}`, 'err');
+                throw err;
+            }
         }
 
+        log(`----------------------------------------`, 'info');
+        log(`Creating tree and committing...`, 'warn');
+        summary.textContent = `Committing...`;
         setStatus('Committing…', 'loading');
+
         const ref = await api('GET', `/git/ref/heads/${enc(state.branch)}`);
         await commitTree(entries, `Apply project pack (${selected.length} file${selected.length === 1 ? '' : 's'})`, ref);
+        
+        log(`✓ Commit successful!`, 'ok');
+        log(`Done. Applied ${selected.length} files.`, 'ok');
+        summary.textContent = `Success`;
+        button.textContent = '✓ Done!';
+        button.style.background = 'var(--ok)';
+        button.style.color = '#000';
 
         toast(`Applied ${plural(selected.length, 'file')}`, 'ok');
-        closePackOverlay();
-        await load(true);
+        
+        // Wait a moment so the user can see the success message, then close and reload
+        setTimeout(async () => {
+            closePackOverlay();
+            await load(true);
+        }, 1800);
+
     } catch (err) {
         console.error('Pack apply error:', err);
         toast('Apply failed: ' + err.message, 'err');
+        summary.textContent = `Failed`;
         button.disabled = false;
-        button.textContent = `Apply ${selected.length}`;
+        button.textContent = `Retry Apply`;
         setStatus('✗ ' + err.message, 'err');
     }
 }

@@ -996,6 +996,7 @@ body.select-mode .row .r-actions { display: none; }
     margin: 0 18px; border-radius: 12px; border: 1px solid var(--glass-border);
     background: rgba(0,0,0,.26); overflow-y: auto; min-height: 150px; max-height: min(40vh, 340px);
     padding: 6px; flex-shrink: 1;
+    transition: all 0.2s ease;
 }
 .zip-loading { padding: 40px 16px; text-align: center; color: var(--muted); font-size: 13px; }
 .zt-row {
