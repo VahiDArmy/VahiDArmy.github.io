@@ -7,6 +7,7 @@ import { createEntry, createPerson } from '../db.js';
 import { openShamsiDatepicker } from '../components/datepicker.js';
 
 let draft = null;
+let currentMode = null;
 
 function getDraft() {
   if (draft) return draft;
@@ -36,13 +37,22 @@ export function resetDraft() {
   draft = null;
 }
 
-export function render(container) {
+export function render(container, params = {}) {
+  const mode = params.mode || 'joy';
+  
+  // اگر کاربر بین حالت شادی و کارما سوییچ کرد، فرم ریست شود
+  if (currentMode !== mode) {
+    draft = null; 
+    currentMode = mode;
+  }
+  
   const d = getDraft();
-  container.innerHTML = buildForm(d);
-  attachHandlers(container, d);
+  container.innerHTML = buildForm(d, mode);
+  attachHandlers(container, d, mode);
 }
 
-function buildForm(d) {
+function buildForm(d, mode) {
+  const isKarma = mode === 'karma';
   const currentKarma = getKarma(d.karma_score);
   const joyPercent = ((d.joy_score - 1) / 9) * 100;
   
@@ -52,67 +62,80 @@ function buildForm(d) {
     return `<span class="people-pill">${esc(person.full_name)}<button type="button" data-remove-person="${esc(person.id)}">✕</button></span>`;
   }).join('');
 
+  // بخش عنوان
+  const titleSection = `
+    <div class="add-section">
+      <div class="add-section-title">عنوان</div>
+      <div class="field">
+        <label for="entry-title">${isKarma ? 'چه عملی انجام دادی؟' : 'چه شادی‌ای تجربه کردی؟'}</label>
+        <input type="text" class="input" id="entry-title" name="title" placeholder="${isKarma ? 'مثلاً: به یک دوست کمک کردم' : 'مثلاً: یک قهوه با دوستم'}" value="${esc(d.title)}" maxlength="120" required>
+      </div>
+      <div class="field">
+        <label for="entry-desc">توضیح (اختیاری)</label>
+        <textarea class="textarea" id="entry-desc" name="description" placeholder="${isKarma ? 'جزئیات عمل را بنویس...' : 'چیزی که این لحظه را خاص کرد بنویس...'}">${esc(d.description)}</textarea>
+      </div>
+    </div>
+  `;
+
+  // بخش کارما
+  const karmaSection = `
+    <div class="add-section">
+      <div class="add-section-title">کارما</div>
+      <div class="field">
+        <label>این ${isKarma ? 'عمل' : 'شادی'} چه اثری روی جهان و خودت می‌گذارد؟</label>
+        
+        <div class="karma-selector-row" id="karma-selector">
+          ${KARMA_LEVELS.map(k => `
+            <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
+              <span class="karma-btn-icon">${k.icon}</span>
+              <span class="karma-btn-label">${k.label}</span>
+              <span class="karma-btn-score">${k.shortLabel}</span>
+            </button>
+          `).join('')}
+        </div>
+        
+        <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
+          ${currentKarma.desc}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // بخش شدت شادی
+  const joyScoreSection = `
+    <div class="add-section">
+      <div class="add-section-title">شدت شادی</div>
+      <div class="joy-slider-wrapper" id="joy-slider-wrapper" style="--slider-glow: var(--primary-glow)">
+        <div class="joy-slider-header">
+          <div class="joy-slider-label-text">این ${isKarma ? 'عمل' : 'شادی'} چقدر برایت ارزش داشت؟</div>
+          <div class="joy-slider-value-box">
+            <span class="joy-slider-emoji" id="joy-score-emoji">${JOY_SCORE_EMOJIS[d.joy_score]}</span>
+            <span class="joy-slider-label" id="joy-score-label">${JOY_SCORE_LABELS[d.joy_score]}</span>
+          </div>
+        </div>
+        <div class="joy-slider-track-wrap">
+          <input type="range" min="1" max="10" step="1" value="${d.joy_score}" id="joy-score" name="joy_score" style="--percent: ${joyPercent}">
+        </div>
+        <div class="joy-slider-ticks">
+          <span>${faDigits(1)}</span>
+          <span>${faDigits(10)}</span>
+        </div>
+      </div>
+    </div>
+  `;
+
   return `
     <div class="page-head">
       <div>
-        <div class="page-title">ثبت شادی جدید</div>
-        <div class="page-subtitle">هر لحظه‌ای که برای خودت ساختی، ارزش ثبت دارد.</div>
+        <div class="page-title">${isKarma ? 'ثبت کارما جدید' : 'ثبت شادی جدید'}</div>
+        <div class="page-subtitle">${isKarma ? 'هر عملی که انجام می‌دهی، انرژی‌ای به جهان بازمی‌گرداند.' : 'هر لحظه‌ای که برای خودت ساختی، ارزش ثبت دارد.'}</div>
       </div>
     </div>
 
     <form class="add-form anim-fade-up" id="add-form" novalidate>
-      <div class="add-section">
-        <div class="add-section-title">عنوان</div>
-        <div class="field">
-          <label for="entry-title">چه شادی‌ای تجربه کردی؟</label>
-          <input type="text" class="input" id="entry-title" name="title" placeholder="مثلاً: یک قهوه با دوستم" value="${esc(d.title)}" maxlength="120" required>
-        </div>
-        <div class="field">
-          <label for="entry-desc">توضیح (اختیاری)</label>
-          <textarea class="textarea" id="entry-desc" name="description" placeholder="چیزی که این لحظه را خاص کرد بنویس...">${esc(d.description)}</textarea>
-        </div>
-      </div>
+      ${isKarma ? karmaSection + titleSection : titleSection + karmaSection}
 
-      <div class="add-section">
-        <div class="add-section-title">کارما</div>
-        <div class="field">
-          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟</label>
-          
-          <div class="karma-selector-row" id="karma-selector">
-            ${KARMA_LEVELS.map(k => `
-              <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
-                <span class="karma-btn-icon">${k.icon}</span>
-                <span class="karma-btn-label">${k.label}</span>
-                <span class="karma-btn-score">${k.shortLabel}</span>
-              </button>
-            `).join('')}
-          </div>
-          
-          <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
-            ${currentKarma.desc}
-          </div>
-        </div>
-      </div>
-
-      <div class="add-section">
-        <div class="add-section-title">شدت شادی</div>
-        <div class="joy-slider-wrapper" id="joy-slider-wrapper" style="--slider-glow: var(--primary-glow)">
-          <div class="joy-slider-header">
-            <div class="joy-slider-label-text">این شادی چقدر برایت ارزش داشت؟</div>
-            <div class="joy-slider-value-box">
-              <span class="joy-slider-emoji" id="joy-score-emoji">${JOY_SCORE_EMOJIS[d.joy_score]}</span>
-              <span class="joy-slider-label" id="joy-score-label">${JOY_SCORE_LABELS[d.joy_score]}</span>
-            </div>
-          </div>
-          <div class="joy-slider-track-wrap">
-            <input type="range" min="1" max="10" step="1" value="${d.joy_score}" id="joy-score" name="joy_score" style="--percent: ${joyPercent}">
-          </div>
-          <div class="joy-slider-ticks">
-            <span>${faDigits(1)}</span>
-            <span>${faDigits(10)}</span>
-          </div>
-        </div>
-      </div>
+      ${joyScoreSection}
 
       <div class="add-section">
         <div class="add-section-title">حالت</div>
@@ -209,7 +232,7 @@ function buildForm(d) {
         <label class="settings-row" style="cursor:pointer;padding:.5rem 0;border:none">
           <div class="settings-row-label">
             <div class="settings-row-title">⭐ موردعلاقه</div>
-            <div class="settings-row-desc">این لحظه را در موردعلاقه‌ها نگه دار</div>
+            <div class="settings-row-desc">این ${isKarma ? 'عمل' : 'لحظه'} را در موردعلاقه‌ها نگه دار</div>
           </div>
           <div class="toggle">
             <input type="checkbox" id="entry-favorite" ${d.is_favorite ? 'checked' : ''}>
@@ -219,15 +242,15 @@ function buildForm(d) {
       </div>
 
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;padding-top:.5rem">
-        <button type="submit" class="btn btn-primary btn-lg" id="save-entry">💫 ثبت شادی</button>
+        <button type="submit" class="btn btn-primary btn-lg" id="save-entry">${isKarma ? '☯️ ثبت کارما' : '💫 ثبت شادی'}</button>
         <button type="button" class="btn btn-outline" id="clear-entry">پاک کردن فرم</button>
-        <button type="button" class="btn btn-ghost" data-goto="dashboard">بازگشت</button>
+        <button type="button" class="btn btn-ghost" data-goto="${isKarma ? 'karma' : 'dashboard'}">بازگشت</button>
       </div>
     </form>
   `;
 }
 
-function attachHandlers(container, d) {
+function attachHandlers(container, d, mode) {
   const form = container.querySelector('#add-form');
 
   container.querySelectorAll('.emoji-btn').forEach((btn) => {
@@ -257,7 +280,6 @@ function attachHandlers(container, d) {
     });
   });
 
-  // Enhanced Joy Slider Handler
   const scoreInput = container.querySelector('#joy-score');
   const scoreLabel = container.querySelector('#joy-score-label');
   const scoreEmoji = container.querySelector('#joy-score-emoji');
@@ -267,22 +289,17 @@ function attachHandlers(container, d) {
     const val = clamp(scoreInput.value, 1, 10);
     d.joy_score = val;
     
-    // Update text and emoji
     if (scoreLabel) scoreLabel.textContent = JOY_SCORE_LABELS[val] || '';
     if (scoreEmoji) {
       scoreEmoji.textContent = JOY_SCORE_EMOJIS[val] || '✨';
-      // Tiny pop animation on change
       scoreEmoji.style.transform = 'scale(1.2)';
       setTimeout(() => { scoreEmoji.style.transform = 'scale(1)'; }, 150);
     }
     
-    // Update track fill percentage
     const percent = ((val - 1) / 9) * 100;
     scoreInput.style.setProperty('--percent', percent);
     
-    // Dynamically adjust glow based on intensity
     if (sliderWrapper) {
-      const glowOpacity = 0.1 + (val / 10) * 0.3;
       const glowColor = val >= 8 ? 'rgba(244, 63, 94, 0.4)' : val >= 5 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(148, 163, 184, 0.3)';
       sliderWrapper.style.setProperty('--slider-glow', glowColor);
     }
@@ -315,7 +332,6 @@ function attachHandlers(container, d) {
     }
   });
 
-  // Shamsi Datepicker Logic
   const dateDisplay = container.querySelector('#entry-date-display');
   dateDisplay?.addEventListener('click', () => {
     openShamsiDatepicker(d.entry_date, (newIso) => {
@@ -422,7 +438,7 @@ function attachHandlers(container, d) {
     event.preventDefault();
     const title = (form.querySelector('#entry-title')?.value || '').trim();
     if (!title) {
-      toast('برای شادی‌ات یک عنوان بنویس', 'warning');
+      toast(`برای ${mode === 'karma' ? 'کارما' : 'شادی'}‌ات یک عنوان بنویس`, 'warning');
       form.querySelector('#entry-title')?.focus();
       return;
     }
@@ -453,7 +469,7 @@ function attachHandlers(container, d) {
       const saved = await createEntry(payload);
       state.entries = [saved, ...(state.entries || [])];
       confetti(90);
-      toast('شادی ثبت شد! ✨', 'success');
+      toast(mode === 'karma' ? 'کارما ثبت شد! ☯️' : 'شادی ثبت شد! ✨', 'success');
       resetDraft();
       rerender();
     } catch (err) {
@@ -469,10 +485,6 @@ function attachHandlers(container, d) {
     if (!ok) return;
     resetDraft();
     rerender();
-  });
-
-  container.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => navigate(el.dataset.goto));
   });
 }
 

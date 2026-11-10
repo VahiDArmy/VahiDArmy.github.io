@@ -57,7 +57,7 @@ export function render(container) {
         <div class="dash-date">${esc(formatPersianWeekday(today))} · ${esc(formatPersianDate(today))}</div>
       </div>
       <div class="dash-hero-actions">
-        <button type="button" class="btn btn-primary" data-goto="add">➕ ثبت شادی امروز</button>
+        <button type="button" class="btn btn-primary" data-goto="add" data-mode="joy">➕ ثبت شادی امروز</button>
         <button type="button" class="btn btn-outline" data-goto="journal">📖 دفتر شادی</button>
       </div>
     </div>
@@ -131,7 +131,7 @@ export function render(container) {
           <div class="prompt-label">✨ سؤال امروز</div>
           <div class="prompt-text">${esc(prompt)}</div>
           <div class="prompt-actions">
-            <button type="button" class="btn btn-sm" data-goto="add">جواب می‌دم</button>
+            <button type="button" class="btn btn-sm" data-goto="add" data-mode="joy">جواب می‌دم</button>
             <button type="button" class="btn btn-sm" data-goto="reflections">تأمل</button>
           </div>
         </div>
@@ -166,7 +166,10 @@ export function render(container) {
   });
 
   container.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => navigate(el.dataset.goto));
+    el.addEventListener('click', () => {
+      const mode = el.dataset.mode;
+      navigate(el.dataset.goto, mode ? { mode } : {});
+    });
   });
 }
 

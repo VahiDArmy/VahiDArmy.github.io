@@ -30,7 +30,8 @@ export function initRouter() {
     const goto = event.target.closest('[data-goto]');
     if (goto) {
       event.preventDefault();
-      navigate(goto.dataset.goto);
+      const mode = goto.dataset.mode;
+      navigate(goto.dataset.goto, mode ? { mode } : {});
     }
   });
 
@@ -59,8 +60,10 @@ export function navigate(name, params = {}) {
   $$('.nav-item').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === name));
   
   // Update Topbar Switch State
-  // اگر در صفحه کارما هستیم، دکمه کارما و در بقیه صفحات دکمه شادی فعال می‌شود
-  const switchTarget = name === 'karma' ? 'karma' : 'dashboard';
+  // اگر در صفحه کارما یا فرم ثبت کارما هستیم، دکمه کارما فعال باشد
+  const isKarmaContext = name === 'karma' || (name === 'add' && params.mode === 'karma');
+  const switchTarget = isKarmaContext ? 'karma' : 'dashboard';
+  
   $$('.topbar-switch .switch-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.view === switchTarget);
   });

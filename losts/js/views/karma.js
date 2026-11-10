@@ -68,7 +68,7 @@ export function render(container) {
         <div class="page-subtitle">انرژی بازگشتی اعمال تو به جهان</div>
       </div>
       <div class="page-actions">
-        <button type="button" class="btn btn-primary" data-goto="add">➕ ثبت کارما</button>
+        <button type="button" class="btn btn-primary" data-goto="add" data-mode="karma">➕ ثبت کارما</button>
       </div>
     </div>
 
@@ -197,7 +197,7 @@ export function render(container) {
                 <div class="badge" style="background:${k.color}20;color:${k.color};border:1px solid ${k.color}40">${k.label}</div>
               </div>
             `;
-          }).join('') : emptyState({ emoji: '☯️', title: 'هنوز کارمایی ثبت نشده', desc: 'با ثبت شادی‌ها، انرژی بازگشتی آن‌ها را اینجا خواهید دید.' })}
+          }).join('') : emptyState({ emoji: '☯️', title: 'هنوز کارمایی ثبت نشده', desc: 'با ثبت اعمال خود، انرژی بازگشتی آن‌ها را اینجا خواهید دید.' })}
         </div>
       </div>
     </div>
@@ -230,9 +230,5 @@ export function render(container) {
       const entry = entries.find((e) => e.id === id);
       if (entry) openEntryDetail(entry);
     });
-  });
-
-  container.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => navigate(el.dataset.goto));
   });
 }
