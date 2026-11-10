@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { navigate, rerender } from '../router.js';
-import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS, getKarma } from '../config.js';
+import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, JOY_SCORE_EMOJIS, MOODS, KARMA_LEVELS, getKarma } from '../config.js';
 import { esc, faDigits, todayISO, formatPersianDate, clamp } from '../utils.js';
 import { toast, confetti, setLoading } from '../ui.js';
 import { createEntry, createPerson } from '../db.js';
@@ -14,7 +14,7 @@ function getDraft() {
     title: '',
     description: '',
     emoji: '✨',
-    category: 'other', // Default is now No Category
+    category: 'other',
     joy_score: 7,
     karma_score: 0,
     money_spent: 0,
@@ -44,6 +44,7 @@ export function render(container) {
 
 function buildForm(d) {
   const currentKarma = getKarma(d.karma_score);
+  const joyPercent = ((d.joy_score - 1) / 9) * 100;
   
   const selectedPeopleHTML = d.related_people.map(id => {
     const person = state.people.find(p => p.id === id);
@@ -95,13 +96,21 @@ function buildForm(d) {
 
       <div class="add-section">
         <div class="add-section-title">شدت شادی</div>
-        <div class="joy-score-display">
-          <span>این شادی چقدر برایت ارزش داشت؟</span>
-          <span class="joy-score-value" id="joy-score-label">${esc(JOY_SCORE_LABELS[d.joy_score] || '')}</span>
-        </div>
-        <input type="range" min="1" max="10" step="1" value="${clamp(d.joy_score, 1, 10)}" id="joy-score" name="joy_score">
-        <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);margin-top:.15rem">
-          <span>${faDigits(1)}</span><span>${faDigits(10)}</span>
+        <div class="joy-slider-wrapper" id="joy-slider-wrapper" style="--slider-glow: var(--primary-glow)">
+          <div class="joy-slider-header">
+            <div class="joy-slider-label-text">این شادی چقدر برایت ارزش داشت؟</div>
+            <div class="joy-slider-value-box">
+              <span class="joy-slider-emoji" id="joy-score-emoji">${JOY_SCORE_EMOJIS[d.joy_score]}</span>
+              <span class="joy-slider-label" id="joy-score-label">${JOY_SCORE_LABELS[d.joy_score]}</span>
+            </div>
+          </div>
+          <div class="joy-slider-track-wrap">
+            <input type="range" min="1" max="10" step="1" value="${d.joy_score}" id="joy-score" name="joy_score" style="--percent: ${joyPercent}">
+          </div>
+          <div class="joy-slider-ticks">
+            <span>${faDigits(1)}</span>
+            <span>${faDigits(10)}</span>
+          </div>
         </div>
       </div>
 
@@ -248,11 +257,35 @@ function attachHandlers(container, d) {
     });
   });
 
+  // Enhanced Joy Slider Handler
   const scoreInput = container.querySelector('#joy-score');
   const scoreLabel = container.querySelector('#joy-score-label');
+  const scoreEmoji = container.querySelector('#joy-score-emoji');
+  const sliderWrapper = container.querySelector('#joy-slider-wrapper');
+  
   scoreInput?.addEventListener('input', () => {
-    d.joy_score = clamp(scoreInput.value, 1, 10);
-    if (scoreLabel) scoreLabel.textContent = JOY_SCORE_LABELS[d.joy_score] || '';
+    const val = clamp(scoreInput.value, 1, 10);
+    d.joy_score = val;
+    
+    // Update text and emoji
+    if (scoreLabel) scoreLabel.textContent = JOY_SCORE_LABELS[val] || '';
+    if (scoreEmoji) {
+      scoreEmoji.textContent = JOY_SCORE_EMOJIS[val] || '✨';
+      // Tiny pop animation on change
+      scoreEmoji.style.transform = 'scale(1.2)';
+      setTimeout(() => { scoreEmoji.style.transform = 'scale(1)'; }, 150);
+    }
+    
+    // Update track fill percentage
+    const percent = ((val - 1) / 9) * 100;
+    scoreInput.style.setProperty('--percent', percent);
+    
+    // Dynamically adjust glow based on intensity
+    if (sliderWrapper) {
+      const glowOpacity = 0.1 + (val / 10) * 0.3;
+      const glowColor = val >= 8 ? 'rgba(244, 63, 94, 0.4)' : val >= 5 ? 'rgba(245, 158, 11, 0.4)' : 'rgba(148, 163, 184, 0.3)';
+      sliderWrapper.style.setProperty('--slider-glow', glowColor);
+    }
   });
 
   const tagInput = container.querySelector('#tag-input');
