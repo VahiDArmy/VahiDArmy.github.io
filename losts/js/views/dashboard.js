@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { navigate } from '../router.js';
-import { getCategory } from '../config.js';
+import { getCategory, getKarma } from '../config.js';
 import {
   esc, faDigits, fmtCompactMoney, fmtDurationShort, fmtDuration, fmtNum,
   greetingForHour, pickPrompt, todayISO, addDaysISO, formatPersianDate,
@@ -33,6 +33,13 @@ export function render(container) {
 
   const recent = entries.slice(0, 5);
   const achievements = computeAchievements(entries, weekEntries, monthEntries, streak);
+
+  // Karma computation
+  const totalKarma = sumBy(entries, (e) => e.karma_score || 0);
+  const avgKarma = entries.length ? totalKarma / entries.length : 0;
+  const karmaPercent = Math.round(((avgKarma + 2) / 4) * 100);
+  const karmaData = getKarma(Math.round(avgKarma));
+  const karmaType = avgKarma > 0.3 ? 'positive' : (avgKarma < -0.3 ? 'negative' : 'neutral');
 
   container.innerHTML = `
     <div class="dash-hero anim-fade-up">
@@ -95,13 +102,16 @@ export function render(container) {
       </div>
 
       <div style="display:flex;flex-direction:column;gap:1rem">
-        <div class="prompt-card anim-fade-up">
-          <div class="prompt-label">✨ سؤال امروز</div>
-          <div class="prompt-text">${esc(prompt)}</div>
-          <div class="prompt-actions">
-            <button type="button" class="btn btn-sm" data-goto="add">جواب می‌دم</button>
-            <button type="button" class="btn btn-sm" data-goto="reflections">تأمل</button>
+        <!-- Karma Widget -->
+        <div class="karma-widget anim-fade-up" data-karma="${karmaType}" style="--karma-percent: ${karmaPercent}; --karma-color: ${karmaData.color}; --karma-glow: ${karmaData.glow}">
+          <div class="karma-orb-wrapper">
+            <div class="karma-orb">
+              <div class="karma-orb-inner">${karmaData.icon}</div>
+            </div>
           </div>
+          <div class="karma-title">کارمای کلی</div>
+          <div class="karma-score">${faDigits(Math.round(avgKarma * 10) / 10)} <small>/ ${faDigits(2)}</small></div>
+          <div class="karma-desc">${karmaData.desc}</div>
         </div>
 
         <div class="card anim-fade-up">
@@ -140,6 +150,7 @@ export function render(container) {
 
 function recentItemHTML(entry) {
   const cat = getCategory(entry.category);
+  const karma = getKarma(entry.karma_score || 0);
   return `
     <div class="entry-mini" data-entry-id="${esc(entry.id)}" role="button" tabindex="0">
       <div class="entry-mini-icon">${esc(entry.emoji || cat.emoji)}</div>
@@ -150,6 +161,8 @@ function recentItemHTML(entry) {
           <span>·</span>
           <span>${esc(formatPersianDate(entry.entry_date, { month: 'long', day: 'numeric' }))}</span>
           ${entry.money_spent > 0 ? `<span>·</span><span>${esc(fmtCompactMoney(entry.money_spent))}</span>` : ''}
+          <span>·</span>
+          <span style="color:${karma.color}">${karma.icon}</span>
         </div>
       </div>
       <div class="entry-mini-time">${entry.entry_time ? esc(formatClock(entry.entry_time)) : ''}</div>
@@ -178,6 +191,7 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
   const totalMoney = sumBy(entries, (e) => e.money_spent);
   const totalTime = sumBy(entries, (e) => e.time_spent_minutes);
   const weekCount = weekEntries.length;
+  const positiveKarma = entries.filter(e => e.karma_score > 0).length;
 
   return [
     { icon: '🌱', name: 'اولین قدم', desc: 'اولین شادی را ثبت کن', unlocked: total >= 1 },
@@ -188,5 +202,6 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
     { icon: '💸', name: 'سرمایه‌گذار در خود', desc: 'بیش از ۱ میلیون برای خودت خرج کن', unlocked: totalMoney >= 1000000 },
     { icon: '⏰', name: 'وقت‌شناس', desc: 'بیش از ۶۰ ساعت برای خودت وقت بگذار', unlocked: totalTime >= 3600 },
     { icon: '🎯', name: 'منظم', desc: 'یک هفته پر از شادی بساز', unlocked: weekCount >= 7 },
+    { icon: '🌟', name: 'روح پاک', desc: '۱۰ شادی با کارمای مثبت ثبت کن', unlocked: positiveKarma >= 10 },
   ];
 }

@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { navigate } from '../router.js';
-import { CATEGORIES, getCategory } from '../config.js';
+import { CATEGORIES, getCategory, getKarma } from '../config.js';
 import {
   esc, faDigits, fmtCompactMoney, fmtDurationShort, fmtDuration,
   formatPersianDate, formatClock, todayISO, addDaysISO,
@@ -109,12 +109,17 @@ function applyFilters(entries, f) {
 
 function itemHTML(entry) {
   const cat = getCategory(entry.category);
+  const karma = getKarma(entry.karma_score || 0);
+  const karmaType = entry.karma_score > 0 ? 'positive' : (entry.karma_score < 0 ? 'negative' : 'neutral');
+  
   const meta = [];
   meta.push(`<span class="meta-pill">${esc(cat.emoji)} ${esc(cat.label)}</span>`);
   meta.push(`<span class="meta-pill">${esc(formatPersianDate(entry.entry_date, { month: 'long', day: 'numeric' }))}</span>`);
   if (entry.money_spent > 0) meta.push(`<span class="meta-pill">💰 ${esc(fmtCompactMoney(entry.money_spent))}</span>`);
   if (entry.time_spent_minutes > 0) meta.push(`<span class="meta-pill">⏱ ${esc(fmtDurationShort(entry.time_spent_minutes))}</span>`);
   if (entry.is_favorite) meta.push(`<span class="meta-pill">⭐</span>`);
+  
+  meta.push(`<span class="karma-badge" data-karma="${karmaType}">${karma.icon} ${karma.shortLabel}</span>`);
 
   const tags = Array.isArray(entry.tags) ? entry.tags.slice(0, 4) : [];
   const tagHtml = tags.length

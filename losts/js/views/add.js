@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { navigate, rerender } from '../router.js';
-import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS } from '../config.js';
+import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS } from '../config.js';
 import {
   esc, faDigits, todayISO, formatPersianDate, clamp,
 } from '../utils.js';
@@ -17,6 +17,7 @@ function getDraft() {
     emoji: '✨',
     category: 'fun',
     joy_score: 7,
+    karma_score: 1,
     money_spent: 0,
     time_spent_minutes: 0,
     tags: [],
@@ -88,6 +89,22 @@ function buildForm(d) {
         <input type="range" min="1" max="10" step="1" value="${clamp(d.joy_score, 1, 10)}" id="joy-score" name="joy_score">
         <div style="display:flex;justify-content:space-between;font-size:.7rem;color:var(--text-muted);margin-top:.15rem">
           <span>${faDigits(1)}</span><span>${faDigits(10)}</span>
+        </div>
+      </div>
+
+      <div class="add-section">
+        <div class="add-section-title">کارما (انرژی بازگشتی)</div>
+        <div class="field">
+          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟</label>
+          <div class="karma-selector" id="karma-selector">
+            ${KARMA_LEVELS.map(k => `
+              <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
+                <span class="karma-btn-icon">${k.icon}</span>
+                <span class="karma-btn-label">${k.label}</span>
+              </button>
+            `).join('')}
+          </div>
+          <div class="field-hint" style="text-align:center; margin-top:.5rem; transition:color .3s" id="karma-desc">${KARMA_LEVELS.find(k => k.score === d.karma_score)?.desc || ''}</div>
         </div>
       </div>
 
@@ -202,6 +219,19 @@ function attachHandlers(container, d) {
     });
   });
 
+  container.querySelectorAll('.karma-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      d.karma_score = Number(btn.dataset.karma);
+      container.querySelectorAll('.karma-btn').forEach((b) => b.classList.toggle('active', Number(b.dataset.karma) === d.karma_score));
+      const kInfo = KARMA_LEVELS.find(k => k.score === d.karma_score);
+      const descEl = container.querySelector('#karma-desc');
+      if (descEl && kInfo) {
+        descEl.textContent = kInfo.desc;
+        descEl.style.color = kInfo.color;
+      }
+    });
+  });
+
   const scoreInput = container.querySelector('#joy-score');
   const scoreLabel = container.querySelector('#joy-score-label');
   scoreInput?.addEventListener('input', () => {
@@ -257,6 +287,7 @@ function attachHandlers(container, d) {
       emoji: d.emoji,
       category: d.category,
       joy_score: clamp(Number(form.querySelector('#joy-score')?.value) || 5, 1, 10),
+      karma_score: d.karma_score,
       money_spent: Math.max(0, Number(form.querySelector('#entry-money')?.value) || 0),
       time_spent_minutes: Math.max(0, Math.round(Number(form.querySelector('#entry-time')?.value) || 0)),
       tags: d.tags.slice(),

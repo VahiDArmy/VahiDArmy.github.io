@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { navigate } from '../router.js';
-import { CATEGORIES, getCategory } from '../config.js';
+import { CATEGORIES, getCategory, getKarma, KARMA_LEVELS } from '../config.js';
 import {
   esc, faDigits, fmtCompactMoney, fmtDuration, fmtNum,
   todayISO, addDaysISO, formatPersianDate, isoToUTCDate,
@@ -43,6 +43,18 @@ export function render(container) {
   const topExpensive = [...list].sort((a, b) => Number(b.money_spent) - Number(a.money_spent)).slice(0, 5);
   const joyVsMoney = computeJoyVsMoney(list);
 
+  // Karma Stats
+  const karmaCounts = { positive: 0, neutral: 0, negative: 0 };
+  let totalKarma = 0;
+  list.forEach(e => {
+    const k = Number(e.karma_score) || 0;
+    totalKarma += k;
+    if (k > 0) karmaCounts.positive++;
+    else if (k < 0) karmaCounts.negative++;
+    else karmaCounts.neutral++;
+  });
+  const avgKarma = list.length ? totalKarma / list.length : 0;
+
   container.innerHTML = `
     <div class="page-head">
       <div>
@@ -72,9 +84,9 @@ export function render(container) {
         <div class="stat-trend text-secondary">${freeCount > 0 ? `${faDigits(freeCount)} شادی رایگان` : ''}</div>
       </div>
       <div class="stat">
-        <div class="stat-head"><div class="stat-label">زمان</div><div class="stat-icon">⏳</div></div>
-        <div class="stat-value">${esc(fmtNum(Math.round(totalTime / 60)))}<span class="stat-unit">ساعت</span></div>
-        <div class="stat-trend text-secondary">${faDigits(favorites)} موردعلاقه</div>
+        <div class="stat-head"><div class="stat-label">کارما</div><div class="stat-icon">⚖️</div></div>
+        <div class="stat-value">${faDigits(Math.round(avgKarma * 10) / 10)}<span class="stat-unit">میانگین</span></div>
+        <div class="stat-trend text-secondary">${faDigits(karmaCounts.positive)} مثبت</div>
       </div>
     </div>
 
@@ -102,21 +114,43 @@ export function render(container) {
       <div class="card anim-fade-up">
         <div class="card-header">
           <div>
-            <div class="card-title">هزینه بر اساس دسته</div>
-            <div class="card-subtitle">کجا بیشتر خرج کردی؟</div>
+            <div class="card-title">توزیع کارما</div>
+            <div class="card-subtitle">انرژی اعمال تو</div>
           </div>
         </div>
-        ${catStats.some((c) => c.money > 0) ? barChart(catStats, 'money') : emptyState({ emoji: '💸', title: 'هزینه‌ای ثبت نشده' })}
+        <div style="display:flex;flex-direction:column;gap:1rem;padding-top:1rem">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem">
+              <span style="color:var(--emerald-600)">🌟 کارمای مثبت</span>
+              <span style="font-weight:700">${faDigits(karmaCounts.positive)}</span>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${(karmaCounts.positive/list.length)*100}%;background:var(--emerald-500)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem">
+              <span style="color:var(--text-muted)">⚖️ خنثی</span>
+              <span style="font-weight:700">${faDigits(karmaCounts.neutral)}</span>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${(karmaCounts.neutral/list.length)*100}%;background:var(--gray-400)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem">
+              <span style="color:var(--red-500)">🌑 کارمای منفی</span>
+              <span style="font-weight:700">${faDigits(karmaCounts.negative)}</span>
+            </div>
+            <div class="progress"><div class="progress-fill" style="width:${(karmaCounts.negative/list.length)*100}%;background:var(--red-500)"></div></div>
+          </div>
+        </div>
       </div>
 
       <div class="card anim-fade-up">
         <div class="card-header">
           <div>
-            <div class="card-title">روزهای هفته</div>
-            <div class="card-subtitle">کدام روز شادتر بودی؟</div>
+            <div class="card-title">هزینه بر اساس دسته</div>
+            <div class="card-subtitle">کجا بیشتر خرج کردی؟</div>
           </div>
         </div>
-        ${byWeekday.some((w) => w.count > 0) ? weekdayChart(byWeekday) : emptyState({ emoji: '📆', title: 'داده‌ای نیست' })}
+        ${catStats.some((c) => c.money > 0) ? barChart(catStats, 'money') : emptyState({ emoji: '💸', title: 'هزینه‌ای ثبت نشده' })}
       </div>
     </div>
 
@@ -325,21 +359,6 @@ function barChart(stats, key) {
   `;
 }
 
-function weekdayChart(data) {
-  const max = Math.max(1, ...data.map((d) => d.count));
-  return `
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem;align-items:end;height:150px">
-      ${data.map((d) => `
-        <div style="display:flex;flex-direction:column;align-items:center;gap:.35rem;height:100%;justify-content:flex-end">
-          <span style="font-size:.7rem;color:var(--text-muted);font-weight:700">${faDigits(d.count)}</span>
-          <div style="width:100%;background:linear-gradient(180deg,var(--amber-400),var(--rose-400));border-radius:6px 6px 3px 3px;height:${(d.count / max) * 100}%;min-height:4px;transition:height .4s"></div>
-          <span style="font-size:.7rem;color:var(--text-secondary)">${esc(d.label.slice(0, 2))}</span>
-        </div>
-      `).join('')}
-    </div>
-  `;
-}
-
 function heatmap(entries) {
   const today = todayISO();
   const start = addDaysISO(today, -364);
@@ -381,6 +400,16 @@ function computeJoyVsMoney(list) {
   if (best) {
     insights.push({ icon: '🌟', title: 'شادترین لحظه', desc: `«${best.title}» با امتیاز ${faDigits(best.joy_score)}/${faDigits(10)}.` });
   }
+  
+  const posKarma = list.filter(e => e.karma_score > 0).length;
+  if (posKarma > 0) {
+    insights.push({ icon: '✨', title: 'کارمای مثبت', desc: `${faDigits(posKarma)} شادی با انرژی مثبت و آگاهانه ثبت کردی.` });
+  }
+  const negKarma = list.filter(e => e.karma_score < 0).length;
+  if (negKarma > 0) {
+    insights.push({ icon: '🌑', title: 'درس‌های کارما', desc: `${faDigits(negKarma)} شادی با کارمای منفی داشتی. سعی کن جبران کنی.` });
+  }
+
   if (!insights.length) insights.push({ icon: '🌱', title: 'در حال شکل‌گیری', desc: 'با ثبت شادی‌های بیشتر، بینش‌های دقیق‌تری اینجا ظاهر می‌شود.' });
   return insights;
 }
