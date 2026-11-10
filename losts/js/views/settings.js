@@ -78,7 +78,7 @@ export function render(container) {
 
     <div class="settings-section anim-fade-up">
       <div class="settings-section-title">📊 آمار داده‌های من</div>
-      <div class="dash-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:0">
+      <div class="dash-stats" style="margin-bottom:0">
         <div class="stat"><div class="stat-head"><div class="stat-label">شادی‌ها</div><div class="stat-icon">✨</div></div><div class="stat-value">${faDigits(entries.length)}</div></div>
         <div class="stat"><div class="stat-head"><div class="stat-label">هدف‌ها</div><div class="stat-icon">🎯</div></div><div class="stat-value">${faDigits(goals.length)}</div></div>
         <div class="stat"><div class="stat-head"><div class="stat-label">آرزوها</div><div class="stat-icon">🎁</div></div><div class="stat-value">${faDigits(wishes.length)}</div></div>
@@ -116,7 +116,7 @@ export function render(container) {
       <div class="settings-row">
         <div class="settings-row-label">
           <div class="settings-row-title">نسخه</div>
-          <div class="settings-row-desc">${faDigits('1.0.0')}</div>
+          <div class="settings-row-desc">${faDigits('1.4.0')}</div>
         </div>
       </div>
       <div class="settings-row">
