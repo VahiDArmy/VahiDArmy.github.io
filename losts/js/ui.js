@@ -2,9 +2,15 @@ import { esc, $ } from './utils.js';
 
 /* ---------------- Theme ---------------- */
 export function applyTheme(theme) {
-  const value = theme === 'dark' ? 'dark' : 'light';
+  let value = theme;
+  if (theme === 'system') {
+    localStorage.removeItem('joy-theme');
+    value = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  } else {
+    try { localStorage.setItem('joy-theme', theme); } catch (err) { /* ignore */ }
+  }
+  
   document.documentElement.setAttribute('data-theme', value);
-  try { localStorage.setItem('joy-theme', value); } catch (err) { /* ignore */ }
   const btn = document.getElementById('theme-btn');
   if (btn) btn.textContent = value === 'dark' ? '☀️' : '🌙';
   return value;
@@ -64,9 +70,27 @@ export function openModal({ title = '', body = '', footer = '', size = '', onMou
       <h3 class="modal-title">${esc(title)}</h3>
       <button type="button" class="modal-close" aria-label="بستن">✕</button>
     </div>
-    <div class="modal-body">${body}</div>
-    ${footer ? `<div class="modal-footer">${footer}</div>` : ''}
+    <div class="modal-body"></div>
+    ${footer ? `<div class="modal-footer"></div>` : ''}
   `;
+
+  // Handle body as string or DOM node
+  const bodyContainer = modal.querySelector('.modal-body');
+  if (typeof body === 'string') {
+    bodyContainer.innerHTML = body;
+  } else if (body instanceof Node) {
+    bodyContainer.appendChild(body);
+  }
+
+  // Handle footer as string or DOM node
+  if (footer) {
+    const footerContainer = modal.querySelector('.modal-footer');
+    if (typeof footer === 'string') {
+      footerContainer.innerHTML = footer;
+    } else if (footer instanceof Node) {
+      footerContainer.appendChild(footer);
+    }
+  }
 
   root.appendChild(backdrop);
   root.appendChild(modal);

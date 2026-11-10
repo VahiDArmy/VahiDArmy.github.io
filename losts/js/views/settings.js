@@ -1,6 +1,6 @@
 import { state, resetState } from '../state.js';
 import { navigate } from '../router.js';
-import { applyTheme, currentTheme, toast, confirmDialog, openModal } from '../ui.js';
+import { applyTheme, toast, confirmDialog, openModal } from '../ui.js';
 import { signOut } from '../auth.js';
 import { saveSettings, loadAll, wipeAllData, exportData } from '../db.js';
 import { download, esc, faDigits, fmtNum, todayISO, initials } from '../utils.js';
@@ -12,7 +12,9 @@ export function render(container) {
   const goals = state.goals || [];
   const wishes = state.wishes || [];
   const reflections = state.reflections || [];
-  const theme = currentTheme();
+  
+  const savedTheme = localStorage.getItem('joy-theme');
+  const themeMode = savedTheme || 'system';
 
   container.innerHTML = `
     <div class="page-head">
@@ -51,11 +53,12 @@ export function render(container) {
       <div class="settings-row">
         <div class="settings-row-label">
           <div class="settings-row-title">حالت نمایش</div>
-          <div class="settings-row-desc">روشن یا تاریک</div>
+          <div class="settings-row-desc">روشن، تاریک یا هماهنگ با سیستم</div>
         </div>
         <div class="segmented" id="theme-seg">
-          <button type="button" data-theme-pick="light" class="${theme === 'light' ? 'active' : ''}">☀️ روشن</button>
-          <button type="button" data-theme-pick="dark" class="${theme === 'dark' ? 'active' : ''}">🌙 تاریک</button>
+          <button type="button" data-theme-pick="light" class="${themeMode === 'light' ? 'active' : ''}">☀️ روشن</button>
+          <button type="button" data-theme-pick="dark" class="${themeMode === 'dark' ? 'active' : ''}">🌙 تاریک</button>
+          <button type="button" data-theme-pick="system" class="${themeMode === 'system' ? 'active' : ''}">💻 خودکار</button>
         </div>
       </div>
       <div class="settings-row">
@@ -116,7 +119,7 @@ export function render(container) {
       <div class="settings-row">
         <div class="settings-row-label">
           <div class="settings-row-title">نسخه</div>
-          <div class="settings-row-desc">${faDigits('1.4.0')}</div>
+          <div class="settings-row-desc">${faDigits('1.5.0')}</div>
         </div>
       </div>
       <div class="settings-row">
@@ -138,11 +141,20 @@ export function render(container) {
 function bind(container, settings) {
   container.querySelectorAll('[data-theme-pick]').forEach((btn) => {
     btn.addEventListener('click', async () => {
-      const theme = btn.dataset.themePick;
-      applyTheme(theme);
-      container.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('active', b.dataset.themePick === theme));
-      try { await saveSettings({ theme }); state.settings = { ...state.settings, theme }; } catch (err) { console.warn(err); }
-      toast(theme === 'dark' ? 'حالت شب فعال شد 🌙' : 'حالت روشن فعال شد ☀️', 'info', 1500);
+      const themePick = btn.dataset.themePick;
+      applyTheme(themePick);
+      container.querySelectorAll('[data-theme-pick]').forEach((b) => b.classList.toggle('active', b.dataset.themePick === themePick));
+      
+      try { 
+        await saveSettings({ theme: themePick === 'system' ? null : themePick }); 
+        state.settings = { ...state.settings, theme: themePick === 'system' ? null : themePick }; 
+      } catch (err) { console.warn(err); }
+      
+      if (themePick === 'system') {
+        toast('تم هماهنگ با سیستم فعال شد 💻', 'info', 1500);
+      } else {
+        toast(themePick === 'dark' ? 'حالت شب فعال شد 🌙' : 'حالت روشن فعال شد ☀️', 'info', 1500);
+      }
     });
   });
 

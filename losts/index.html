@@ -13,6 +13,19 @@
 <link rel="stylesheet" href="css/components.css">
 <link rel="stylesheet" href="css/views.css">
 <link rel="stylesheet" href="css/animations.css">
+<script>
+  // جلوگیری از فلش شدن تم اشتباه در هنگام لود (FOUC)
+  (function() {
+    try {
+      const saved = localStorage.getItem('joy-theme');
+      if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  })();
+</script>
 </head>
 <body>
 

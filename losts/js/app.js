@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js';
 import { state, resetState } from './state.js';
 import { toast, applyTheme, closeAllModals } from './ui.js';
-import { loadAll } from './db.js';
+import { loadAll, saveSettings } from './db.js';
 import { registerViews, initRouter, navigate, rerender } from './router.js';
 import { bindAuthForms, showAuthScreen, hideAuthScreen } from './auth.js';
 import { $ } from './utils.js';
@@ -18,16 +18,25 @@ import * as settings from './views/settings.js';
 
 function applyUserTheme() {
   const saved = localStorage.getItem('joy-theme');
-  const preferred = saved || state.settings?.theme || 'light';
+  const dbTheme = state.settings?.theme;
+  
+  let preferred = saved;
+  if (!preferred && dbTheme) preferred = dbTheme;
+  if (!preferred) preferred = 'system';
+
   applyTheme(preferred);
 }
 
 function bindChrome() {
-  $('#theme-btn')?.addEventListener('click', () => {
+  $('#theme-btn')?.addEventListener('click', async () => {
     const current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     const next = current === 'dark' ? 'light' : 'dark';
     applyTheme(next);
     toast(next === 'dark' ? 'حالت شب فعال شد 🌙' : 'حالت روز فعال شد ☀️', 'info', 1800);
+    try {
+      await saveSettings({ theme: next });
+      state.settings = { ...state.settings, theme: next };
+    } catch(err) { /* silent fail */ }
   });
 
   $('#fab')?.addEventListener('click', () => navigate('add'));
@@ -43,6 +52,13 @@ function bindChrome() {
 
   window.addEventListener('online', () => toast('اتصال برقرار شد ✅', 'success', 2000));
   window.addEventListener('offline', () => toast('اتصال قطع شد. حالت آفلاین.', 'warning', 3000));
+  
+  // گوش دادن به تغییرات تم سیستم‌عامل
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('joy-theme')) {
+      applyTheme('system');
+    }
+  });
 }
 
 function updateUserChrome() {
