@@ -1,10 +1,8 @@
 import { state } from '../state.js';
 import { navigate, rerender } from '../router.js';
-import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS } from '../config.js';
-import {
-  esc, faDigits, todayISO, formatPersianDate, clamp,
-} from '../utils.js';
-import { toast, confetti, setLoading, openModal } from '../ui.js';
+import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS, getKarma } from '../config.js';
+import { esc, faDigits, todayISO, formatPersianDate, clamp } from '../utils.js';
+import { toast, confetti, setLoading } from '../ui.js';
 import { createEntry } from '../db.js';
 
 let draft = null;
@@ -43,6 +41,8 @@ export function render(container) {
 }
 
 function buildForm(d) {
+  const currentKarma = getKarma(d.karma_score);
+
   return `
     <div class="page-head">
       <div>
@@ -95,16 +95,21 @@ function buildForm(d) {
       <div class="add-section">
         <div class="add-section-title">کارما (انرژی بازگشتی)</div>
         <div class="field">
-          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟</label>
-          <div class="karma-selector" id="karma-selector">
+          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟ (از -۵ تا +۵)</label>
+          
+          <div class="karma-selector-row" id="karma-selector">
             ${KARMA_LEVELS.map(k => `
               <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
                 <span class="karma-btn-icon">${k.icon}</span>
                 <span class="karma-btn-label">${k.label}</span>
+                <span class="karma-btn-score">${k.shortLabel}</span>
               </button>
             `).join('')}
           </div>
-          <div class="field-hint" style="text-align:center; margin-top:.5rem; transition:color .3s" id="karma-desc">${KARMA_LEVELS.find(k => k.score === d.karma_score)?.desc || ''}</div>
+          
+          <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
+            ${currentKarma.desc}
+          </div>
         </div>
       </div>
 
@@ -223,7 +228,7 @@ function attachHandlers(container, d) {
     btn.addEventListener('click', () => {
       d.karma_score = Number(btn.dataset.karma);
       container.querySelectorAll('.karma-btn').forEach((b) => b.classList.toggle('active', Number(b.dataset.karma) === d.karma_score));
-      const kInfo = KARMA_LEVELS.find(k => k.score === d.karma_score);
+      const kInfo = getKarma(d.karma_score);
       const descEl = container.querySelector('#karma-desc');
       if (descEl && kInfo) {
         descEl.textContent = kInfo.desc;

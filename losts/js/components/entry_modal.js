@@ -30,7 +30,7 @@ export function openEntryDetail(entry) {
 
     <div class="detail-row">
       <span class="detail-label">کارما</span>
-      <span class="detail-value" style="color:${karma.color}">${esc(karma.icon)} ${esc(karma.label)}</span>
+      <span class="detail-value" style="color:${karma.color}">${esc(karma.icon)} ${esc(karma.label)} (${esc(karma.shortLabel)})</span>
     </div>
     <div class="detail-row"><span class="detail-label">سطح شادی</span><span class="detail-value">${esc(JOY_SCORE_LABELS[entry.joy_score] || entry.joy_score)} (${faDigits(entry.joy_score)}/${faDigits(10)})</span></div>
     <div class="detail-row"><span class="detail-label">هزینه</span><span class="detail-value">${entry.money_spent > 0 ? esc(fmtMoney(entry.money_spent)) : 'رایگان'}</span></div>

@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.1.0',
+  version: '1.2.0',
 };
 
 export const TABLES = {
@@ -41,60 +41,27 @@ export function getCategory(id) {
   return CATEGORY_MAP[id] || CATEGORY_MAP.other;
 }
 
+// 11-point Karma scale (-5 to +5)
 export const KARMA_LEVELS = [
-  {
-    score: -2,
-    label: 'آسیب‌زننده',
-    shortLabel: 'منفی',
-    desc: 'شاید بهتر بود این کار را نمی‌کردم.',
-    icon: '🌑',
-    color: '#ef4444',
-    glow: 'rgba(239, 68, 68, 0.4)'
-  },
-  {
-    score: -1,
-    label: 'کمی منفی',
-    shortLabel: 'کمی منفی',
-    desc: 'کمی ناخودآگاهانه بود.',
-    icon: '🌘',
-    color: '#f97316',
-    glow: 'rgba(249, 115, 22, 0.4)'
-  },
-  {
-    score: 0,
-    label: 'خنثی',
-    shortLabel: 'خنثی',
-    desc: 'نه خوب، نه بد. فقط یک لحظه بود.',
-    icon: '⚖️',
-    color: '#94a3b8',
-    glow: 'rgba(148, 163, 184, 0.3)'
-  },
-  {
-    score: 1,
-    label: 'آگاهانه',
-    shortLabel: 'مثبت',
-    desc: 'حالم را خوب کرد و به کسی آسیب نزد.',
-    icon: '🌓',
-    color: '#10b981',
-    glow: 'rgba(16, 185, 129, 0.4)'
-  },
-  {
-    score: 2,
-    label: 'مهربانانه',
-    shortLabel: 'کارمای مثبت',
-    desc: 'شادی عمیق، پاک و پر از انرژی خوب.',
-    icon: '🌟',
-    color: '#8b5cf6',
-    glow: 'rgba(139, 92, 246, 0.5)'
-  },
+  { score: -5, label: 'شیطانی', shortLabel: '-۵', desc: 'فوق‌العاده منفی و آسیب‌زننده', icon: '💀', color: '#7f1d1d', glow: 'rgba(127,29,29,0.4)' },
+  { score: -4, label: 'تاریک', shortLabel: '-۴', desc: 'خیلی منفی و مخرب', icon: '👿', color: '#991b1b', glow: 'rgba(153,27,27,0.4)' },
+  { score: -3, label: 'بد', shortLabel: '-۳', desc: 'منفی و ناپسند', icon: '🌑', color: '#dc2626', glow: 'rgba(220,38,38,0.4)' },
+  { score: -2, label: 'ناپسند', shortLabel: '-۲', desc: 'کمی منفی و ناخوشایند', icon: '🌘', color: '#ea580c', glow: 'rgba(234,88,12,0.4)' },
+  { score: -1, label: 'کم', shortLabel: '-۱', desc: 'خیلی کم منفی', icon: '🌗', color: '#d97706', glow: 'rgba(217,119,6,0.4)' },
+  { score: 0,  label: 'خنثی', shortLabel: '۰', desc: 'نه خوب، نه بد. فقط یک لحظه', icon: '⚖️', color: '#94a3b8', glow: 'rgba(148,163,184,0.3)' },
+  { score: 1,  label: 'خوب', shortLabel: '+۱', desc: 'کمی مثبت و مفید', icon: '🌓', color: '#84cc16', glow: 'rgba(132,204,22,0.4)' },
+  { score: 2,  label: 'رضایت‌بخش', shortLabel: '+۲', desc: 'مثبت و حال‌خوب‌کن', icon: '🌔', color: '#22c55e', glow: 'rgba(34,197,94,0.4)' },
+  { score: 3,  label: 'شادی‌آور', shortLabel: '+۳', desc: 'خیلی مثبت و پرانرژی', icon: '🌕', color: '#10b981', glow: 'rgba(16,185,129,0.4)' },
+  { score: 4,  label: 'روحانی', shortLabel: '+۴', desc: 'فوق‌العاده مثبت و عمیق', icon: '🌟', color: '#8b5cf6', glow: 'rgba(139,92,246,0.5)' },
+  { score: 5,  label: 'نورانی', shortLabel: '+۵', desc: 'الهی، پاک و سرشار از نور', icon: '✨', color: '#f59e0b', glow: 'rgba(245,158,11,0.6)' },
 ];
 
 export const KARMA_MAP = Object.fromEntries(KARMA_LEVELS.map(k => [k.score, k]));
 
 export function getKarma(score) {
-  const s = Number(score);
-  if (s >= 2) return KARMA_MAP[2];
-  if (s <= -2) return KARMA_MAP[-2];
+  const s = Math.round(Number(score));
+  if (s >= 5) return KARMA_MAP[5];
+  if (s <= -5) return KARMA_MAP[-5];
   return KARMA_MAP[s] || KARMA_MAP[0];
 }
 
@@ -109,16 +76,8 @@ export const EMOJIS = [
 ];
 
 export const JOY_SCORE_LABELS = {
-  1: 'خیلی کم',
-  2: 'کم',
-  3: 'کمی',
-  4: 'متوسط',
-  5: 'خوب',
-  6: 'خوب‌تر',
-  7: 'زیاد',
-  8: 'خیلی زیاد',
-  9: 'فوق‌العاده',
-  10: 'بی‌نظیر',
+  1: 'خیلی کم', 2: 'کم', 3: 'کمی', 4: 'متوسط', 5: 'خوب',
+  6: 'خوب‌تر', 7: 'زیاد', 8: 'خیلی زیاد', 9: 'فوق‌العاده', 10: 'بی‌نظیر',
 };
 
 export const MOODS = [
@@ -129,7 +88,7 @@ export const MOODS = [
   { id: 'tired',   label: 'خسته',       emoji: '😴' },
   { id: 'sad',     label: 'غمگین',      emoji: '😔' },
   { id: 'anxious', label: 'مضطرب',      emoji: '😟' },
-  { id: 'angry',   label: 'عصبانی',     emoji: '😤' },
+  { id: 'angry',   label: 'عصبان ��',     emoji: '😤' },
 ];
 
 export const MOOD_MAP = Object.fromEntries(MOODS.map(m => [m.id, m]));

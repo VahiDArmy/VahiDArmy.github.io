@@ -5,7 +5,7 @@ import {
   esc, faDigits, fmtCompactMoney, fmtDuration, fmtNum,
   todayISO, addDaysISO, formatPersianDate, isoToUTCDate,
   persianParts, persianToUTCDate, utcDateToISO,
-  sumBy, groupBy, uniqueBy,
+  sumBy, groupBy, uniqueBy, PERSIAN_MONTHS, persianMonthLength,
 } from '../utils.js';
 import { emptyState } from '../ui.js';
 
@@ -34,18 +34,16 @@ export function render(container) {
   const totalTime = sumBy(list, (e) => e.time_spent_minutes);
   const avgJoy = list.length ? sumBy(list, (e) => e.joy_score) / list.length : 0;
   const freeCount = list.filter((e) => Number(e.money_spent) === 0).length;
-  const favorites = list.filter((e) => e.is_favorite).length;
-
+  
   const catStats = summarizeByCategory(list);
   const byDay = summarizeByDay(list, start, end);
-  const byWeekday = summarizeByWeekday(list);
   const tagStats = summarizeTags(list);
   const topExpensive = [...list].sort((a, b) => Number(b.money_spent) - Number(a.money_spent)).slice(0, 5);
   const joyVsMoney = computeJoyVsMoney(list);
 
-  // Karma Stats
-  const karmaCounts = { positive: 0, neutral: 0, negative: 0 };
+  // Overall Karma Stats
   let totalKarma = 0;
+  const karmaCounts = { positive: 0, neutral: 0, negative: 0 };
   list.forEach(e => {
     const k = Number(e.karma_score) || 0;
     totalKarma += k;
@@ -54,6 +52,35 @@ export function render(container) {
     else karmaCounts.neutral++;
   });
   const avgKarma = list.length ? totalKarma / list.length : 0;
+  const avgKarmaInfo = getKarma(Math.round(avgKarma));
+
+  // Monthly Karma Calculation (for the current Persian Month)
+  const todayParts = persianParts(new Date());
+  const monthLen = persianMonthLength(todayParts.y, todayParts.m);
+  const monthEntries = entries.filter(e => {
+    const p = persianParts(isoToUTCDate(e.entry_date));
+    return p.y === todayParts.y && p.m === todayParts.m;
+  });
+  
+  const dailyKarmaMap = {};
+  monthEntries.forEach(e => {
+    dailyKarmaMap[e.entry_date] = (dailyKarmaMap[e.entry_date] || 0) + (Number(e.karma_score) || 0);
+  });
+  
+  let monthlyKarmaTotal = 0;
+  let bestDay = { date: null, score: -Infinity };
+  let worstDay = { date: null, score: Infinity };
+  
+  for(let i=1; i<=monthLen; i++){
+    const iso = utcDateToISO(persianToUTCDate(todayParts.y, todayParts.m, i));
+    const dayScore = dailyKarmaMap[iso] || 0;
+    if (dailyKarmaMap[iso] !== undefined) {
+      monthlyKarmaTotal += dayScore;
+      if (dayScore > bestDay.score) bestDay = { date: iso, score: dayScore };
+      if (dayScore < worstDay.score) worstDay = { date: iso, score: dayScore };
+    }
+  }
+  const monthAvgKarma = monthEntries.length ? monthlyKarmaTotal / monthEntries.length : 0;
 
   container.innerHTML = `
     <div class="page-head">
@@ -83,10 +110,49 @@ export function render(container) {
         <div class="stat-value">${esc(fmtCompactMoney(totalMoney))}</div>
         <div class="stat-trend text-secondary">${freeCount > 0 ? `${faDigits(freeCount)} شادی رایگان` : ''}</div>
       </div>
-      <div class="stat">
-        <div class="stat-head"><div class="stat-label">کارما</div><div class="stat-icon">⚖️</div></div>
-        <div class="stat-value">${faDigits(Math.round(avgKarma * 10) / 10)}<span class="stat-unit">میانگین</span></div>
-        <div class="stat-trend text-secondary">${faDigits(karmaCounts.positive)} مثبت</div>
+      <div class="stat" style="border-color:${avgKarmaInfo.color}">
+        <div class="stat-head"><div class="stat-label">میانگین کارما</div><div class="stat-icon">${avgKarmaInfo.icon}</div></div>
+        <div class="stat-value" style="color:${avgKarmaInfo.color}">${faDigits(avgKarma.toFixed(1))}<span class="stat-unit">از ۵</span></div>
+        <div class="stat-trend text-secondary">${avgKarmaInfo.label}</div>
+      </div>
+    </div>
+
+    <!-- Monthly Karma Report -->
+    <div class="card anim-fade-up" style="margin-bottom:1rem">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📅 گزارش ماهانه کارما (${esc(PERSIAN_MONTHS[todayParts.m - 1])} ${faDigits(todayParts.y)})</div>
+          <div class="card-subtitle">مجموع کارما: ${faDigits(monthlyKarmaTotal)} | میانگین: ${faDigits(monthAvgKarma.toFixed(1))}</div>
+        </div>
+      </div>
+      
+      <div class="monthly-karma-grid">
+        ${Array.from({length: monthLen}).map((_, i) => {
+          const iso = utcDateToISO(persianToUTCDate(todayParts.y, todayParts.m, i+1));
+          const score = dailyKarmaMap[iso] || 0;
+          return `<div class="karma-day" data-karma="${score}" title="${formatPersianDate(iso)} - کارما: ${faDigits(score)}">${faDigits(i+1)}</div>`;
+        }).join('')}
+      </div>
+
+      <div class="grid grid-2" style="margin-top:1rem;gap:.5rem">
+        ${bestDay.date ? `
+          <div class="achievement" style="margin:0">
+            <div class="achievement-icon" style="color:var(--emerald-500)">🌟</div>
+            <div class="achievement-body">
+              <div class="achievement-name">بهترین روز ماه</div>
+              <div class="achievement-desc">${formatPersianDate(bestDay.date)} (کارما ${faDigits(bestDay.score)})</div>
+            </div>
+          </div>
+        ` : ''}
+        ${worstDay.date ? `
+          <div class="achievement" style="margin:0">
+            <div class="achievement-icon" style="color:var(--rose-500)">🌑</div>
+            <div class="achievement-body">
+              <div class="achievement-name">سخت‌ترین روز ماه</div>
+              <div class="achievement-desc">${formatPersianDate(worstDay.date)} (کارما ${faDigits(worstDay.score)})</div>
+            </div>
+          </div>
+        ` : ''}
       </div>
     </div>
 
@@ -152,16 +218,6 @@ export function render(container) {
         </div>
         ${catStats.some((c) => c.money > 0) ? barChart(catStats, 'money') : emptyState({ emoji: '💸', title: 'هزینه‌ای ثبت نشده' })}
       </div>
-    </div>
-
-    <div class="card anim-fade-up" style="margin-top:1rem">
-      <div class="card-header">
-        <div>
-          <div class="card-title">نقشهٔ حرارتی سال</div>
-          <div class="card-subtitle">۳۶۵ روز گذشته</div>
-        </div>
-      </div>
-      ${heatmap(entries)}
     </div>
 
     <div class="grid grid-2" style="margin-top:1rem">
@@ -251,17 +307,6 @@ function summarizeByDay(list, start, end) {
     guard += 1;
   }
   return result;
-}
-
-function summarizeByWeekday(list) {
-  const labels = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
-  const buckets = labels.map((l) => ({ label: l, count: 0, money: 0 }));
-  list.forEach((e) => {
-    const idx = (isoToUTCDate(e.entry_date).getUTCDay() + 1) % 7;
-    buckets[idx].count += 1;
-    buckets[idx].money += Number(e.money_spent) || 0;
-  });
-  return buckets;
 }
 
 function summarizeTags(list) {
@@ -357,22 +402,6 @@ function barChart(stats, key) {
       `).join('')}
     </div>
   `;
-}
-
-function heatmap(entries) {
-  const today = todayISO();
-  const start = addDaysISO(today, -364);
-  const counts = {};
-  entries.forEach((e) => { counts[e.entry_date] = (counts[e.entry_date] || 0) + 1; });
-  const max = Math.max(1, ...Object.values(counts));
-  const cells = [];
-  for (let i = 0; i < 365; i += 1) {
-    const iso = addDaysISO(start, i);
-    const count = counts[iso] || 0;
-    const level = count === 0 ? 0 : Math.min(4, Math.ceil((count / max) * 4));
-    cells.push(`<div class="heatmap-cell" data-level="${level}" title="${esc(formatPersianDate(iso))} — ${faDigits(count)} شادی"></div>`);
-  }
-  return `<div class="heatmap">${cells.join('')}</div>`;
 }
 
 function computeJoyVsMoney(list) {

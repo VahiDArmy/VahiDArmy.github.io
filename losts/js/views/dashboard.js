@@ -34,12 +34,20 @@ export function render(container) {
   const recent = entries.slice(0, 5);
   const achievements = computeAchievements(entries, weekEntries, monthEntries, streak);
 
-  // Karma computation
-  const totalKarma = sumBy(entries, (e) => e.karma_score || 0);
-  const avgKarma = entries.length ? totalKarma / entries.length : 0;
-  const karmaPercent = Math.round(((avgKarma + 2) / 4) * 100);
-  const karmaData = getKarma(Math.round(avgKarma));
-  const karmaType = avgKarma > 0.3 ? 'positive' : (avgKarma < -0.3 ? 'negative' : 'neutral');
+  // Daily Report Calculation
+  const todayKarmaSum = sumBy(todayEntries, (e) => Number(e.karma_score) || 0);
+  const todayKarmaAvg = todayEntries.length ? todayKarmaSum / todayEntries.length : 0;
+  const dailyKarmaInfo = getKarma(Math.round(todayKarmaAvg));
+  const dailyKarmaPct = Math.max(0, Math.min(100, ((todayKarmaAvg + 5) / 10) * 100));
+
+  let reportMsg = 'امروز هنوز شادی‌ای ثبت نکردی.';
+  if (todayEntries.length > 0) {
+    if (todayKarmaAvg > 2) reportMsg = 'امروز روز فوق‌العاده روشنی داشتی. انرژی مثبتت بهت برمی‌گرده! 🌟';
+    else if (todayKarmaAvg > 0) reportMsg = 'امروز عملکرد خوبی داشتی. تعادلت رو حفظ کردی. 🌿';
+    else if (todayKarmaAvg === 0) reportMsg = 'امروز یک روز خنثی بود. فردا می‌تونی بهتر باشی. ⚖️';
+    else if (todayKarmaAvg < -2) reportMsg = 'امروز خیلی تحت فشار بودی و کارما منفی ثبت کردی. فردا فرصت جبرانه. 🌑';
+    else reportMsg = 'امروز کمی از مسیر مثبت دور شدی. سعی کن جبران کنی. 🌘';
+  }
 
   container.innerHTML = `
     <div class="dash-hero anim-fade-up">
@@ -90,28 +98,42 @@ export function render(container) {
     </div>
 
     <div class="dash-row">
-      <div class="card anim-fade-up">
-        <div class="card-header">
-          <div>
-            <div class="card-title">آخرین شادی‌ها</div>
-            <div class="card-subtitle">۵ شادی اخیر تو</div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <!-- Daily Report Card -->
+        <div class="daily-report-card anim-fade-up" style="--report-color: ${dailyKarmaInfo.color}; --report-glow: ${dailyKarmaInfo.glow}">
+          <div class="daily-report-header">
+            <div>
+              <div class="daily-report-title">📋 کارنامه امروز</div>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">مجموع کارمای ثبت‌شده امروز: ${faDigits(todayKarmaSum)}</div>
+            </div>
+            <div class="daily-report-score" style="color:${dailyKarmaInfo.color}">${dailyKarmaInfo.icon} ${dailyKarmaInfo.label}</div>
           </div>
-          <button type="button" class="btn btn-ghost btn-sm" data-goto="journal">همه →</button>
+          <div class="daily-report-bar">
+            <div class="daily-report-bar-fill" style="width:${dailyKarmaPct}%;background:${dailyKarmaInfo.color}"></div>
+          </div>
+          <div class="daily-report-msg">${reportMsg}</div>
         </div>
-        <div id="dash-recent">${recent.length ? recent.map((e) => recentItemHTML(e)).join('') : emptyState({ emoji: '🌱', title: 'هنوز شادی‌ای ثبت نکردی', desc: 'اولین شادی امروزت را ثبت کن تا اینجا پر شود.', actionLabel: 'ثبت شادی', actionView: 'add' })}</div>
+
+        <div class="card anim-fade-up">
+          <div class="card-header">
+            <div>
+              <div class="card-title">آخرین شادی‌ها</div>
+              <div class="card-subtitle">۵ شادی اخیر تو</div>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" data-goto="journal">همه →</button>
+          </div>
+          <div id="dash-recent">${recent.length ? recent.map((e) => recentItemHTML(e)).join('') : emptyState({ emoji: '🌱', title: 'هنوز شادی‌ای ثبت نکردی', desc: 'اولین شادی امروزت را ثبت کن تا اینجا پر شود.', actionLabel: 'ثبت شادی', actionView: 'add' })}</div>
+        </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:1rem">
-        <!-- Karma Widget -->
-        <div class="karma-widget anim-fade-up" data-karma="${karmaType}" style="--karma-percent: ${karmaPercent}; --karma-color: ${karmaData.color}; --karma-glow: ${karmaData.glow}">
-          <div class="karma-orb-wrapper">
-            <div class="karma-orb">
-              <div class="karma-orb-inner">${karmaData.icon}</div>
-            </div>
+        <div class="prompt-card anim-fade-up">
+          <div class="prompt-label">✨ سؤال امروز</div>
+          <div class="prompt-text">${esc(prompt)}</div>
+          <div class="prompt-actions">
+            <button type="button" class="btn btn-sm" data-goto="add">جواب می‌دم</button>
+            <button type="button" class="btn btn-sm" data-goto="reflections">تأمل</button>
           </div>
-          <div class="karma-title">کارمای کلی</div>
-          <div class="karma-score">${faDigits(Math.round(avgKarma * 10) / 10)} <small>/ ${faDigits(2)}</small></div>
-          <div class="karma-desc">${karmaData.desc}</div>
         </div>
 
         <div class="card anim-fade-up">
@@ -191,7 +213,7 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
   const totalMoney = sumBy(entries, (e) => e.money_spent);
   const totalTime = sumBy(entries, (e) => e.time_spent_minutes);
   const weekCount = weekEntries.length;
-  const positiveKarma = entries.filter(e => e.karma_score > 0).length;
+  const highlySpiritual = entries.filter(e => Number(e.karma_score) >= 4).length;
 
   return [
     { icon: '🌱', name: 'اولین قدم', desc: 'اولین شادی را ثبت کن', unlocked: total >= 1 },
@@ -202,6 +224,6 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
     { icon: '💸', name: 'سرمایه‌گذار در خود', desc: 'بیش از ۱ میلیون برای خودت خرج کن', unlocked: totalMoney >= 1000000 },
     { icon: '⏰', name: 'وقت‌شناس', desc: 'بیش از ۶۰ ساعت برای خودت وقت بگذار', unlocked: totalTime >= 3600 },
     { icon: '🎯', name: 'منظم', desc: 'یک هفته پر از شادی بساز', unlocked: weekCount >= 7 },
-    { icon: '🌟', name: 'روح پاک', desc: '۱۰ شادی با کارمای مثبت ثبت کن', unlocked: positiveKarma >= 10 },
+    { icon: '🌟', name: 'روح پاک', desc: '۵ شادی با کارمای +۴ یا +۵ ثبت کن', unlocked: highlySpiritual >= 5 },
   ];
 }
