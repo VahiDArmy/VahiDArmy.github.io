@@ -239,7 +239,7 @@
 .people-dropdown-item.create { color: var(--primary); font-weight: 700; }
 .people-dropdown-empty { padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); }
 
-/* ---------- Joy Score Slider (Super Enhanced) ---------- */
+/* ---------- Joy Score Slider (Super Enhanced & RTL Fixed) ---------- */
 .joy-slider-wrapper {
   background: linear-gradient(180deg, var(--bg-elevated), var(--bg-card));
   border: 1px solid var(--border);
@@ -303,7 +303,8 @@
   width: 100%;
   height: 14px;
   border-radius: 10px;
-  background: linear-gradient(90deg, var(--amber-300), var(--rose-400) calc(var(--percent, 50) * 1%), var(--bg-muted) calc(var(--percent, 50) * 1%));
+  /* RTL Fix: using 'to left' ensures the gradient starts filling from the right (value 1) towards left (value 10) */
+  background: linear-gradient(to left, var(--amber-300), var(--rose-400) calc(var(--percent, 50) * 1%), var(--bg-muted) calc(var(--percent, 50) * 1%));
   appearance: none;
   -webkit-appearance: none;
   outline: none;
