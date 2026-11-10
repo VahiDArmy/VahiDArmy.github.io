@@ -1,5 +1,5 @@
 import { openModal, confirmDialog, toast } from '../ui.js';
-import { getCategory, JOY_SCORE_LABELS, MOOD_MAP } from '../config.js';
+import { getCategory, JOY_SCORE_LABELS, MOOD_MAP, getKarma } from '../config.js';
 import {
   esc, faDigits, fmtMoney, fmtDuration, formatPersianDate, formatClock,
 } from '../utils.js';
@@ -10,6 +10,7 @@ export function openEntryDetail(entry) {
   const cat = getCategory(entry.category);
   const moodBefore = MOOD_MAP[entry.mood_before];
   const moodAfter = MOOD_MAP[entry.mood_after];
+  const karma = getKarma(entry.karma_score || 0);
 
   const body = `
     <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1.25rem;padding:1rem;background:var(--bg-muted);border-radius:var(--radius-md)">
@@ -27,6 +28,10 @@ export function openEntryDetail(entry) {
 
     ${entry.description ? `<p style="line-height:1.85;margin-bottom:1.25rem;color:var(--text-secondary);font-size:.92rem">${esc(entry.description)}</p>` : ''}
 
+    <div class="detail-row">
+      <span class="detail-label">کارما</span>
+      <span class="detail-value" style="color:${karma.color}">${esc(karma.icon)} ${esc(karma.label)}</span>
+    </div>
     <div class="detail-row"><span class="detail-label">سطح شادی</span><span class="detail-value">${esc(JOY_SCORE_LABELS[entry.joy_score] || entry.joy_score)} (${faDigits(entry.joy_score)}/${faDigits(10)})</span></div>
     <div class="detail-row"><span class="detail-label">هزینه</span><span class="detail-value">${entry.money_spent > 0 ? esc(fmtMoney(entry.money_spent)) : 'رایگان'}</span></div>
     <div class="detail-row"><span class="detail-label">زمان</span><span class="detail-value">${entry.time_spent_minutes > 0 ? esc(fmtDuration(entry.time_spent_minutes)) : '—'}</span></div>

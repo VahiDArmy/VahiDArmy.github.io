@@ -40,6 +40,7 @@ export async function createEntry(payload) {
     emoji: payload.emoji || '✨',
     category: payload.category || 'other',
     joy_score: Number(payload.joy_score) || 5,
+    karma_score: Number(payload.karma_score) || 0,
     money_spent: Number(payload.money_spent) || 0,
     time_spent_minutes: Number(payload.time_spent_minutes) || 0,
     tags: Array.isArray(payload.tags) ? payload.tags : [],

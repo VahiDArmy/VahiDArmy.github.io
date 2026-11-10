@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.0.0',
+  version: '1.1.0',
 };
 
 export const TABLES = {
@@ -39,6 +39,63 @@ export const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
 
 export function getCategory(id) {
   return CATEGORY_MAP[id] || CATEGORY_MAP.other;
+}
+
+export const KARMA_LEVELS = [
+  {
+    score: -2,
+    label: 'آسیب‌زننده',
+    shortLabel: 'منفی',
+    desc: 'شاید بهتر بود این کار را نمی‌کردم.',
+    icon: '🌑',
+    color: '#ef4444',
+    glow: 'rgba(239, 68, 68, 0.4)'
+  },
+  {
+    score: -1,
+    label: 'کمی منفی',
+    shortLabel: 'کمی منفی',
+    desc: 'کمی ناخودآگاهانه بود.',
+    icon: '🌘',
+    color: '#f97316',
+    glow: 'rgba(249, 115, 22, 0.4)'
+  },
+  {
+    score: 0,
+    label: 'خنثی',
+    shortLabel: 'خنثی',
+    desc: 'نه خوب، نه بد. فقط یک لحظه بود.',
+    icon: '⚖️',
+    color: '#94a3b8',
+    glow: 'rgba(148, 163, 184, 0.3)'
+  },
+  {
+    score: 1,
+    label: 'آگاهانه',
+    shortLabel: 'مثبت',
+    desc: 'حالم را خوب کرد و به کسی آسیب نزد.',
+    icon: '🌓',
+    color: '#10b981',
+    glow: 'rgba(16, 185, 129, 0.4)'
+  },
+  {
+    score: 2,
+    label: 'مهربانانه',
+    shortLabel: 'کارمای مثبت',
+    desc: 'شادی عمیق، پاک و پر از انرژی خوب.',
+    icon: '🌟',
+    color: '#8b5cf6',
+    glow: 'rgba(139, 92, 246, 0.5)'
+  },
+];
+
+export const KARMA_MAP = Object.fromEntries(KARMA_LEVELS.map(k => [k.score, k]));
+
+export function getKarma(score) {
+  const s = Number(score);
+  if (s >= 2) return KARMA_MAP[2];
+  if (s <= -2) return KARMA_MAP[-2];
+  return KARMA_MAP[s] || KARMA_MAP[0];
 }
 
 export const EMOJIS = [
