@@ -2939,14 +2939,14 @@ function parsePack(text) {
     const seen = new Map();
     const norm = String(text).replace(/\r\n?/g, '\n');
     const lines = norm.split('\n');
-    const FILE_RE = /^\{\[\[FILE: (.+?)\]\]\}$/;
-    const END_RE  = /^\{\[\[END: (.+?)\]\]\}$/;
+    const FILE_RE = /^\{\[\[FILE:\s*(.+?)\]\]\}$/;
+    const END_RE  = /^\{\[\[END:\s*(.+?)\]\]\}$/;
 
     for (let i = 0; i < lines.length; i++) {
         const fm = lines[i].match(FILE_RE);
         if (!fm) continue;
 
-        const rawPath = fm[1];
+        const rawPath = fm[1].trim();
         const startLine = i;
         let endLine = -1;
         let mismatch = null;
@@ -2954,8 +2954,8 @@ function parsePack(text) {
         for (let j = i + 1; j < lines.length; j++) {
             const em = lines[j].match(END_RE);
             if (em) {
-                if (em[1] === rawPath) endLine = j;
-                else mismatch = em[1];
+                if (em[1].trim() === rawPath) endLine = j;
+                else mismatch = em[1].trim();
                 break;
             }
             if (FILE_RE.test(lines[j])) break;
@@ -3083,10 +3083,46 @@ function ingestPackText(text) {
     renderPackPreview();
 }
 
+async function checkFileDiff(path, content, row, sizeEl, input) {
+    if (!packState) return;
+    const dest = joinPath(state.path, path);
+    try {
+        const res = await fetchRaw(dest);
+        if (!packState) return;
+        const existingText = await res.text();
+        if (!packState) return;
+        
+        const normExisting = existingText.replace(/\r\n/g, '\n');
+        const normNew = content.replace(/\r\n/g, '\n');
+        const kb = new Blob([content]).size;
+        
+        if (normExisting === normNew) {
+            sizeEl.textContent = '✓ identical';
+            sizeEl.title = 'No changes (skipped by default)';
+            sizeEl.style.color = 'var(--muted)';
+            row.style.opacity = '0.6';
+            if (input.checked && packState.selected.has(path)) {
+                input.checked = false;
+                packState.selected.delete(path);
+                updatePackSummary();
+            }
+        } else {
+            sizeEl.textContent = '↻ ' + formatSize(kb);
+            sizeEl.title = 'Modified (will overwrite)';
+            sizeEl.style.color = 'var(--warn)';
+        }
+    } catch (err) {
+        // failed to fetch, keep default
+    }
+}
+
 function renderPackPreview() {
     if (!packState) return;
     const tree = $('packTree');
     tree.innerHTML = '';
+    tree.style.display = 'block';
+    tree.style.background = 'rgba(0,0,0,.26)';
+    tree.style.padding = '6px';
 
     if (packState.errors.length) {
         const errWrap = document.createElement('div');
@@ -3145,11 +3181,13 @@ function renderPackPreview() {
         const kb = new Blob([file.content]).size;
         if (packState.existing && packState.existing.has(dest)) {
             size.textContent = '↻ ' + formatSize(kb);
-            size.title = 'Overwrite';
+            size.title = 'Overwrite (checking diff…)';
             size.style.color = 'var(--warn)';
+            checkFileDiff(path, file.content, row, size, input).catch(() => {});
         } else {
-            size.textContent = formatSize(kb);
+            size.textContent = '+ ' + formatSize(kb);
             size.title = 'New file';
+            size.style.color = 'var(--ok)';
         }
 
         row.append(check, icon, name, size);
