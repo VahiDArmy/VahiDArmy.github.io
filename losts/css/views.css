@@ -98,26 +98,79 @@
 
 /* ---------- Karma Selector (-5 to +5) ---------- */
 .karma-selector-row {
-  display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.5rem; scrollbar-width: thin;
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 1rem 0.5rem; /* فضای کافی برای سایه و هاور */
+  margin: -1rem -0.5rem; /* خنثی کردن پدینگ */
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
-.karma-selector-row::-webkit-scrollbar { height: 6px; }
-.karma-selector-row::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+.karma-selector-row::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
 
 .karma-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-  padding: 0.6rem 0.5rem; min-width: 64px; border-radius: var(--radius-sm);
-  background: var(--bg-muted); border: 2px solid transparent;
-  transition: all 0.2s ease; cursor: pointer; flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.85rem 0.5rem;
+  min-width: 76px;
+  border-radius: var(--radius-md);
+  background: var(--bg-muted);
+  border: 2px solid transparent;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  flex-shrink: 0;
+  scroll-snap-align: center;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
-.karma-btn:hover { background: var(--bg-hover); }
+.karma-btn:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
 .karma-btn.active {
-  background: var(--bg-card-solid); border-color: var(--karma-color);
-  box-shadow: 0 4px 12px var(--karma-glow); transform: translateY(-2px);
+  background: var(--bg-card-solid);
+  border-color: var(--karma-color);
+  box-shadow: 0 0 0 1px var(--karma-color), 0 8px 20px var(--karma-glow);
+  transform: translateY(-2px); /* حرکت بسیار ملایم به بالا */
 }
-.karma-btn-icon { font-size: 1.3rem; filter: drop-shadow(0 2px 4px var(--karma-glow)); }
-.karma-btn-label { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); }
-.karma-btn-score { font-size: 0.65rem; font-weight: 900; color: var(--karma-color); }
-.karma-btn.active .karma-btn-label { color: var(--text); }
+.karma-btn-icon {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 4px var(--karma-glow));
+  transition: transform 0.3s ease;
+}
+.karma-btn.active .karma-btn-icon {
+  transform: scale(1.15);
+}
+.karma-btn-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.karma-btn.active .karma-btn-label {
+  color: var(--text);
+}
+.karma-btn-score {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--karma-color);
+  background: var(--bg-card);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius-xs);
+  margin-top: 0.1rem;
+}
+.karma-btn.active .karma-btn-score {
+  background: var(--karma-color);
+  color: #fff;
+}
 
 /* ---------- Add entry ---------- */
 .add-form{
