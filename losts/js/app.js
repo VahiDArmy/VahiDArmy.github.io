@@ -91,6 +91,7 @@ async function boot() {
   bindAuthForms();
   bindChrome();
 
+  // بررسي وضعيت اوليه
   try {
     const { data } = await supabase.auth.getSession();
     await handleSession(data?.session || null);

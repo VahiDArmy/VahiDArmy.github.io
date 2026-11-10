@@ -65,6 +65,17 @@ export function navigate(name, params = {}) {
     try { history.replaceState(null, '', `#${name}`); } catch (err) { /* ignore */ }
   }
 
+  // مدیریت هوشمند دکمه شناور (FAB)
+  const fab = $('#fab');
+  if (fab) {
+    const hideFabViews = ['add', 'settings', 'reflections'];
+    if (hideFabViews.includes(name)) {
+      fab.classList.add('is-hidden');
+    } else {
+      fab.classList.remove('is-hidden');
+    }
+  }
+
   const section = document.getElementById(`view-${name}`);
   if (section) {
     try {

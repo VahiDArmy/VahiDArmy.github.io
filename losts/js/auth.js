@@ -27,17 +27,21 @@ function switchTab(tab) {
 export function showAuthScreen() {
   const splash = $('#splash');
   splash?.classList.add('hide');
+  
   const auth = $('#auth-screen');
   const app = $('#app');
-  if (auth) auth.hidden = false;
-  if (app) app.hidden = true;
+  
+  if (auth) auth.classList.add('is-active');
+  if (app) app.classList.remove('is-active');
 }
 
 export function hideAuthScreen() {
   const auth = $('#auth-screen');
   const app = $('#app');
-  if (auth) auth.hidden = true;
-  if (app) app.hidden = false;
+  
+  if (auth) auth.classList.remove('is-active');
+  if (app) app.classList.add('is-active');
+  
   document.getElementById('splash')?.classList.add('hide');
 }
 
