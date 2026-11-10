@@ -1,3 +1,31 @@
+/* ---------- Shamsi Datepicker ---------- */
+.shamsi-datepicker { padding: 0.5rem; }
+.sdp-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+  background: var(--bg-muted); padding: 0.5rem; border-radius: var(--radius-sm);
+}
+.sdp-nav {
+  background: transparent; border: none; cursor: pointer; color: var(--text-secondary);
+  font-size: 1.2rem; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-xs); transition: all 0.2s;
+}
+.sdp-nav:hover { background: var(--bg-hover); color: var(--primary); }
+.sdp-title { font-weight: 800; font-size: 1rem; }
+.sdp-weekdays {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;
+  font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.5rem;
+}
+.sdp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.sdp-day {
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-xs); font-size: 0.9rem; font-weight: 600; cursor: pointer;
+  background: transparent; border: none; color: var(--text); transition: all 0.2s;
+}
+.sdp-day:hover:not(.empty) { background: var(--bg-hover); }
+.sdp-day.today { color: var(--primary); border: 1px solid var(--primary-soft); }
+.sdp-day.selected { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
+.sdp-day.empty { pointer-events: none; }
+
 /* ---------- Dashboard ---------- */
 .dash-hero{
   background:linear-gradient(135deg,rgba(251,191,36,.15),rgba(244,63,94,.12),rgba(139,92,246,.1));

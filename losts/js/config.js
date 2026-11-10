@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.3.0',
+  version: '1.4.0',
 };
 
 export const TABLES = {
@@ -17,6 +17,7 @@ export const TABLES = {
 };
 
 export const CATEGORIES = [
+  { id: 'other',     label: 'بدون دسته',     emoji: '📌', color: '#94a3b8' },
   { id: 'food',      label: 'خوراک',        emoji: '🍰', color: '#f59e0b' },
   { id: 'travel',    label: 'سفر',          emoji: '✈️', color: '#0ea5e9' },
   { id: 'shopping',  label: 'خرید',         emoji: '🛍️', color: '#f43f5e' },
@@ -33,7 +34,6 @@ export const CATEGORIES = [
   { id: 'learning',  label: 'یادگیری',      emoji: '🧠', color: '#3b82f6' },
   { id: 'selfcare',  label: 'خودمراقبتی',   emoji: '💆', color: '#f472b6' },
   { id: 'silence',   label: 'سکوت',         emoji: '🤫', color: '#64748b' },
-  { id: 'other',     label: 'دیگر',         emoji: '✨', color: '#94a3b8' },
 ];
 
 export const CATEGORY_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
@@ -88,7 +88,7 @@ export const MOODS = [
   { id: 'tired',   label: 'خسته',       emoji: '😴' },
   { id: 'sad',     label: 'غمگین',      emoji: '😔' },
   { id: 'anxious', label: 'مضطرب',      emoji: '😟' },
-  { id: 'angry',   label: 'عصبان ��',     emoji: '😤' },
+  { id: 'angry',   label: 'عصبانی',     emoji: '😤' },
 ];
 
 export const MOOD_MAP = Object.fromEntries(MOODS.map(m => [m.id, m]));

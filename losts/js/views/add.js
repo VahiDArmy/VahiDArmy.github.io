@@ -4,6 +4,7 @@ import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS, getKarma } f
 import { esc, faDigits, todayISO, formatPersianDate, clamp } from '../utils.js';
 import { toast, confetti, setLoading } from '../ui.js';
 import { createEntry, createPerson } from '../db.js';
+import { openShamsiDatepicker } from '../components/datepicker.js';
 
 let draft = null;
 
@@ -13,9 +14,9 @@ function getDraft() {
     title: '',
     description: '',
     emoji: '✨',
-    category: 'fun',
+    category: 'other', // Default is now No Category
     joy_score: 7,
-    karma_score: 0, // Default is now Neutral
+    karma_score: 0,
     money_spent: 0,
     time_spent_minutes: 0,
     tags: [],
@@ -44,7 +45,6 @@ export function render(container) {
 function buildForm(d) {
   const currentKarma = getKarma(d.karma_score);
   
-  // Create related people pills
   const selectedPeopleHTML = d.related_people.map(id => {
     const person = state.people.find(p => p.id === id);
     if (!person) return '';
@@ -114,7 +114,7 @@ function buildForm(d) {
           </div>
         </div>
         <div class="field">
-          <label>دسته‌بندی</label>
+          <label>دسته‌بندی (اختیاری)</label>
           <div class="journal-filters" id="category-picker">
             ${CATEGORIES.map((cat) => `<button type="button" class="chip ${cat.id === d.category ? 'active' : ''}" data-category="${esc(cat.id)}">${esc(cat.emoji)} ${esc(cat.label)}</button>`).join('')}
           </div>
@@ -145,9 +145,8 @@ function buildForm(d) {
         <div class="add-section-title">حال و مکان</div>
         <div class="add-row">
           <div class="field">
-            <label for="entry-date">تاریخ</label>
-            <input type="date" class="input" id="entry-date" name="entry_date" value="${esc(d.entry_date)}">
-            <div class="field-hint">${esc(formatPersianDate(d.entry_date))}</div>
+            <label>تاریخ</label>
+            <input type="text" class="input" id="entry-date-display" value="${formatPersianDate(d.entry_date)}" readonly style="cursor:pointer" placeholder="انتخاب تاریخ">
           </div>
           <div class="field">
             <label for="entry-clock">ساعت</label>
@@ -256,7 +255,6 @@ function attachHandlers(container, d) {
     if (scoreLabel) scoreLabel.textContent = JOY_SCORE_LABELS[d.joy_score] || '';
   });
 
-  // Tag Handler
   const tagInput = container.querySelector('#tag-input');
   const tagWrap = container.querySelector('#tag-input-wrap');
   tagInput?.addEventListener('keydown', (event) => {
@@ -284,6 +282,15 @@ function attachHandlers(container, d) {
     }
   });
 
+  // Shamsi Datepicker Logic
+  const dateDisplay = container.querySelector('#entry-date-display');
+  dateDisplay?.addEventListener('click', () => {
+    openShamsiDatepicker(d.entry_date, (newIso) => {
+      d.entry_date = newIso;
+      dateDisplay.value = formatPersianDate(newIso);
+    });
+  });
+
   // People Picker Handlers
   const peopleSearch = container.querySelector('#people-search');
   const peopleDropdown = container.querySelector('#people-dropdown');
@@ -293,7 +300,6 @@ function attachHandlers(container, d) {
     const query = peopleSearch.value.trim().toLowerCase();
     const selectedIds = new Set(d.related_people);
     
-    // Filter people
     const matches = state.people.filter(p => 
       !selectedIds.has(p.id) && p.full_name.toLowerCase().includes(query)
     );
@@ -330,7 +336,6 @@ function attachHandlers(container, d) {
 
   peopleSearch?.addEventListener('input', renderDropdown);
 
-  // Close dropdown on click outside
   document.addEventListener('click', (event) => {
     if (!peoplePicker?.contains(event.target) && !peopleDropdown?.contains(event.target)) {
       peopleDropdown.hidden = true;
@@ -380,12 +385,6 @@ function attachHandlers(container, d) {
     }
   });
 
-  container.querySelector('#entry-date')?.addEventListener('change', (event) => {
-    d.entry_date = event.target.value || todayISO();
-    const hint = event.target.parentElement.querySelector('.field-hint');
-    if (hint) hint.textContent = formatPersianDate(d.entry_date);
-  });
-
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
     const title = (form.querySelector('#entry-title')?.value || '').trim();
@@ -405,7 +404,7 @@ function attachHandlers(container, d) {
       money_spent: Math.max(0, Number(form.querySelector('#entry-money')?.value) || 0),
       time_spent_minutes: Math.max(0, Math.round(Number(form.querySelector('#entry-time')?.value) || 0)),
       tags: d.tags.slice(),
-      entry_date: form.querySelector('#entry-date')?.value || todayISO(),
+      entry_date: d.entry_date,
       entry_time: form.querySelector('#entry-clock')?.value || null,
       is_favorite: !!form.querySelector('#entry-favorite')?.checked,
       location: (form.querySelector('#entry-location')?.value || '').trim() || null,
