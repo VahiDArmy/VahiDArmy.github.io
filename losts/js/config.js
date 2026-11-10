@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.7.0',
+  version: '1.7.1',
 };
 
 export const TABLES = {
@@ -94,7 +94,7 @@ export const MOODS = [
   { id: 'tired',   label: 'خسته',       emoji: '😴' },
   { id: 'sad',     label: 'غمگین',      emoji: '😔' },
   { id: 'anxious', label: 'مضطرب',      emoji: '😟' },
-  { id: 'angry',   label: 'عصبان ��',     emoji: '😤' },
+  { id: 'angry',   label: 'عصبانی',     emoji: '😤' },
 ];
 
 export const MOOD_MAP = Object.fromEntries(MOODS.map(m => [m.id, m]));
