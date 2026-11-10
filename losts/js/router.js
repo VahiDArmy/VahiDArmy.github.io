@@ -59,8 +59,10 @@ export function navigate(name, params = {}) {
   $$('.nav-item').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === name));
   
   // Update Topbar Switch State
+  // اگر در صفحه کارما هستیم، دکمه کارما و در بقیه صفحات دکمه شادی فعال می‌شود
+  const switchTarget = name === 'karma' ? 'karma' : 'dashboard';
   $$('.topbar-switch .switch-btn').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.view === name);
+    btn.classList.toggle('active', btn.dataset.view === switchTarget);
   });
 
   const titleEl = $('#topbar-title');
