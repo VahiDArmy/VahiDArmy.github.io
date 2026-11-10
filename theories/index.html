@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080812">
+  <meta name="description" content="نظریه — فضایی برای ثبت، پرورش و روایت نظریه‌ها؛ با اشیا، تصاویر و خطوط فکری.">
+  <title>نظریه | فضای پرورش ایده‌ها</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='%230b0b18'/%3E%3Cpath d='M18 42c8-2 12-7 14-15 2 8 6 13 14 15-8 2-12 7-14 15-2-8-6-13-14-15Z' fill='url(%23g)'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/tokens.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/layout.css">
+  <link rel="stylesheet" href="./css/components.css">
+  <link rel="stylesheet" href="./css/views.css">
+  <link rel="stylesheet" href="./css/responsive.css">
+</head>
+<body data-theme="dark">
+  <a class="skip-link" href="#app">پرش به محتوای اصلی</a>
+  <div class="ambient" aria-hidden="true">
+    <span class="ambient__orb ambient__orb--one"></span>
+    <span class="ambient__orb ambient__orb--two"></span>
+    <span class="ambient__orb ambient__orb--three"></span>
+    <span class="ambient__grid"></span>
+    <span class="ambient__noise"></span>
+  </div>
+
+  <div id="app" class="app-root">
+    <div class="boot-screen" role="status" aria-live="polite">
+      <div class="boot-mark">
+        <span class="boot-mark__star"></span>
+      </div>
+      <p class="boot-screen__title">نظریه</p>
+      <p class="boot-screen__sub">در حال بیدار کردن ایده‌ها…</p>
+      <div class="boot-screen__bar"><span></span></div>
+    </div>
+  </div>
+
+  <div id="modal-root"></div>
+  <div id="toast-root" class="toast-root" role="region" aria-label="اعلان‌ها"></div>
+  <div id="command-root"></div>
+  <div id="live-region" class="sr-only" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
