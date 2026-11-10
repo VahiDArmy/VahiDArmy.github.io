@@ -20,6 +20,27 @@ async function requireUserId() {
   return id;
 }
 
+/* ---------------- People ---------------- */
+export async function listPeople() {
+  const { data, error } = await supabase
+    .from(TABLES.people)
+    .select('id, full_name, job_title, avatar_url')
+    .order('full_name');
+  handleError(error);
+  return data || [];
+}
+
+export async function createPerson(fullName) {
+  const userId = await requireUserId();
+  const { data, error } = await supabase
+    .from(TABLES.people)
+    .insert({ full_name: fullName, created_by: userId })
+    .select('id, full_name, job_title, avatar_url')
+    .single();
+  handleError(error);
+  return data;
+}
+
 /* ---------------- Entries ---------------- */
 export async function listEntries() {
   const { data, error } = await supabase
@@ -49,6 +70,7 @@ export async function createEntry(payload) {
     is_favorite: !!payload.is_favorite,
     location: payload.location || null,
     with_people: payload.with_people || null,
+    related_people: Array.isArray(payload.related_people) ? payload.related_people : [],
     mood_before: payload.mood_before || null,
     mood_after: payload.mood_after || null,
   };
@@ -243,18 +265,20 @@ export async function loadAll() {
   state.loading = true;
   emit('data:loading', true);
   try {
-    const [entries, goals, wishes, reflections, settings] = await Promise.all([
+    const [entries, goals, wishes, reflections, settings, people] = await Promise.all([
       listEntries().catch((e) => { console.warn('entries', e.message); return []; }),
       listGoals().catch((e) => { console.warn('goals', e.message); return []; }),
       listWishes().catch((e) => { console.warn('wishes', e.message); return []; }),
       listReflections().catch((e) => { console.warn('reflections', e.message); return []; }),
       getSettings().catch(() => defaultSettings(state.user?.id || null)),
+      listPeople().catch((e) => { console.warn('people', e.message); return []; }),
     ]);
     state.entries = entries;
     state.goals = goals;
     state.wishes = wishes;
     state.reflections = reflections;
     state.settings = settings;
+    state.people = people;
     state.lastLoadedAt = Date.now();
   } finally {
     state.loading = false;
@@ -287,5 +311,6 @@ export function exportData() {
     goals: state.goals,
     wishes: state.wishes,
     reflections: state.reflections,
+    people: state.people,
   };
 }

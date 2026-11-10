@@ -3,7 +3,7 @@ import { navigate, rerender } from '../router.js';
 import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, MOODS, KARMA_LEVELS, getKarma } from '../config.js';
 import { esc, faDigits, todayISO, formatPersianDate, clamp } from '../utils.js';
 import { toast, confetti, setLoading } from '../ui.js';
-import { createEntry } from '../db.js';
+import { createEntry, createPerson } from '../db.js';
 
 let draft = null;
 
@@ -15,7 +15,7 @@ function getDraft() {
     emoji: '✨',
     category: 'fun',
     joy_score: 7,
-    karma_score: 1,
+    karma_score: 0, // Default is now Neutral
     money_spent: 0,
     time_spent_minutes: 0,
     tags: [],
@@ -24,6 +24,7 @@ function getDraft() {
     is_favorite: false,
     location: '',
     with_people: '',
+    related_people: [],
     mood_before: '',
     mood_after: '',
   };
@@ -42,6 +43,13 @@ export function render(container) {
 
 function buildForm(d) {
   const currentKarma = getKarma(d.karma_score);
+  
+  // Create related people pills
+  const selectedPeopleHTML = d.related_people.map(id => {
+    const person = state.people.find(p => p.id === id);
+    if (!person) return '';
+    return `<span class="people-pill">${esc(person.full_name)}<button type="button" data-remove-person="${esc(person.id)}">✕</button></span>`;
+  }).join('');
 
   return `
     <div class="page-head">
@@ -67,7 +75,7 @@ function buildForm(d) {
       <div class="add-section">
         <div class="add-section-title">کارما</div>
         <div class="field">
-          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟ (از -۵ تا +۵)</label>
+          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟</label>
           
           <div class="karma-selector-row" id="karma-selector">
             ${KARMA_LEVELS.map(k => `
@@ -151,9 +159,13 @@ function buildForm(d) {
             <label for="entry-location">مکان (اختیاری)</label>
             <input type="text" class="input" id="entry-location" name="location" placeholder="مثلاً: کافه محله" value="${esc(d.location)}" maxlength="80">
           </div>
-          <div class="field">
-            <label for="entry-with">همراه با (اختیاری)</label>
-            <input type="text" class="input" id="entry-with" name="with_people" placeholder="مثلاً: دوستم" value="${esc(d.with_people)}" maxlength="80">
+          <div class="field" style="position:relative">
+            <label for="people-search">همراه با (اختیاری)</label>
+            <div class="people-picker" id="people-picker">
+              ${selectedPeopleHTML}
+              <input type="text" id="people-search" class="people-search-input" placeholder="جستجوی نام..." autocomplete="off">
+            </div>
+            <div class="people-dropdown" id="people-dropdown" hidden></div>
           </div>
         </div>
         <div class="add-row">
@@ -244,6 +256,7 @@ function attachHandlers(container, d) {
     if (scoreLabel) scoreLabel.textContent = JOY_SCORE_LABELS[d.joy_score] || '';
   });
 
+  // Tag Handler
   const tagInput = container.querySelector('#tag-input');
   const tagWrap = container.querySelector('#tag-input-wrap');
   tagInput?.addEventListener('keydown', (event) => {
@@ -268,6 +281,102 @@ function attachHandlers(container, d) {
     if (removeBtn) {
       d.tags = d.tags.filter((t) => t !== removeBtn.dataset.removeTag);
       refreshTags(tagWrap, d);
+    }
+  });
+
+  // People Picker Handlers
+  const peopleSearch = container.querySelector('#people-search');
+  const peopleDropdown = container.querySelector('#people-dropdown');
+  const peoplePicker = container.querySelector('#people-picker');
+  
+  const renderDropdown = () => {
+    const query = peopleSearch.value.trim().toLowerCase();
+    const selectedIds = new Set(d.related_people);
+    
+    // Filter people
+    const matches = state.people.filter(p => 
+      !selectedIds.has(p.id) && p.full_name.toLowerCase().includes(query)
+    );
+    
+    let html = '';
+    if (matches.length > 0) {
+      html = matches.slice(0, 10).map(p => `
+        <div class="people-dropdown-item" data-person-id="${esc(p.id)}" data-person-name="${esc(p.full_name)}">
+          <span>${esc(p.full_name)}</span>
+          ${p.job_title ? `<span style="font-size:.7rem;color:var(--text-muted)">${esc(p.job_title)}</span>` : ''}
+        </div>
+      `).join('');
+    }
+    
+    if (query && !state.people.some(p => p.full_name.toLowerCase() === query)) {
+      html += `
+        <div class="people-dropdown-item create" data-create-name="${esc(peopleSearch.value.trim())}">
+          <span>➕ افزودن «${esc(peopleSearch.value.trim())}» به افراد</span>
+        </div>
+      `;
+    }
+    
+    if (!html) {
+      html = `<div class="people-dropdown-empty">نتیجه‌ای یافت نشد</div>`;
+    }
+    
+    peopleDropdown.innerHTML = html;
+    peopleDropdown.hidden = false;
+  };
+
+  peopleSearch?.addEventListener('focus', () => {
+    if (state.people.length > 0 || peopleSearch.value.trim()) renderDropdown();
+  });
+
+  peopleSearch?.addEventListener('input', renderDropdown);
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (event) => {
+    if (!peoplePicker?.contains(event.target) && !peopleDropdown?.contains(event.target)) {
+      peopleDropdown.hidden = true;
+    }
+  });
+
+  peopleDropdown?.addEventListener('click', async (event) => {
+    const item = event.target.closest('.people-dropdown-item');
+    if (!item) return;
+    
+    if (item.dataset.personId) {
+      d.related_people.push(item.dataset.personId);
+      d.with_people = state.people.filter(p => d.related_people.includes(p.id)).map(p => p.full_name).join(', ');
+      peopleSearch.value = '';
+      peopleDropdown.hidden = true;
+      refreshPeoplePills(peoplePicker, peopleSearch, d);
+      peopleSearch.focus();
+    } else if (item.dataset.createName) {
+      const newName = item.dataset.createName;
+      item.innerHTML = '<span style="color:var(--text-muted)">در حال ثبت...</span>';
+      try {
+        const newPerson = await createPerson(newName);
+        state.people.push(newPerson);
+        d.related_people.push(newPerson.id);
+        d.with_people = state.people.filter(p => d.related_people.includes(p.id)).map(p => p.full_name).join(', ');
+        peopleSearch.value = '';
+        peopleDropdown.hidden = true;
+        refreshPeoplePills(peoplePicker, peopleSearch, d);
+        toast('فرد جدید با موفقیت ثبت شد', 'success', 2000);
+        peopleSearch.focus();
+      } catch (err) {
+        toast(err.message || 'خطا در ثبت فرد', 'error');
+        renderDropdown();
+      }
+    }
+  });
+
+  peoplePicker?.addEventListener('click', (event) => {
+    const removeBtn = event.target.closest('[data-remove-person]');
+    if (removeBtn) {
+      const idToRemove = removeBtn.dataset.removePerson;
+      d.related_people = d.related_people.filter(id => id !== idToRemove);
+      d.with_people = state.people.filter(p => d.related_people.includes(p.id)).map(p => p.full_name).join(', ');
+      refreshPeoplePills(peoplePicker, peopleSearch, d);
+    } else if (event.target === peoplePicker) {
+      peopleSearch.focus();
     }
   });
 
@@ -300,7 +409,8 @@ function attachHandlers(container, d) {
       entry_time: form.querySelector('#entry-clock')?.value || null,
       is_favorite: !!form.querySelector('#entry-favorite')?.checked,
       location: (form.querySelector('#entry-location')?.value || '').trim() || null,
-      with_people: (form.querySelector('#entry-with')?.value || '').trim() || null,
+      with_people: d.with_people || null,
+      related_people: d.related_people,
       mood_before: form.querySelector('#mood-before')?.value || null,
       mood_after: form.querySelector('#mood-after')?.value || null,
     };
@@ -348,4 +458,22 @@ function refreshTags(wrap, d) {
   });
   if (input) wrap.insertBefore(frag, input);
   else wrap.appendChild(frag);
+}
+
+function refreshPeoplePills(picker, searchInput, d) {
+  if (!picker || !searchInput) return;
+  picker.querySelectorAll('.people-pill').forEach(p => p.remove());
+  const frag = document.createDocumentFragment();
+  
+  d.related_people.forEach(id => {
+    const person = state.people.find(p => p.id === id);
+    if (person) {
+      const span = document.createElement('span');
+      span.className = 'people-pill';
+      span.innerHTML = `${esc(person.full_name)}<button type="button" data-remove-person="${esc(person.id)}">✕</button>`;
+      frag.appendChild(span);
+    }
+  });
+  
+  picker.insertBefore(frag, searchInput);
 }

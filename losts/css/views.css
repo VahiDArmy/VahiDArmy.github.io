@@ -101,16 +101,16 @@
   display: flex;
   gap: 0.6rem;
   overflow-x: auto;
-  padding: 1rem 0.5rem; /* فضای کافی برای سایه و هاور */
-  margin: -1rem -0.5rem; /* خنثی کردن پدینگ */
+  padding: 1rem 0.5rem;
+  margin: -1rem -0.5rem;
   scroll-snap-type: x mandatory;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
 }
 .karma-selector-row::-webkit-scrollbar {
-  display: none; /* Chrome, Safari and Opera */
+  display: none;
 }
 
 .karma-btn {
@@ -139,7 +139,7 @@
   background: var(--bg-card-solid);
   border-color: var(--karma-color);
   box-shadow: 0 0 0 1px var(--karma-color), 0 8px 20px var(--karma-glow);
-  transform: translateY(-2px); /* حرکت بسیار ملایم به بالا */
+  transform: translateY(-2px);
 }
 .karma-btn-icon {
   font-size: 1.6rem;
@@ -171,6 +171,45 @@
   background: var(--karma-color);
   color: #fff;
 }
+
+/* ---------- People Picker ---------- */
+.people-picker {
+  position: relative;
+  display: flex; flex-wrap: wrap; gap: 0.4rem; padding: 0.5rem;
+  background: var(--bg-input); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); min-height: 44px; align-items: center;
+  transition: all var(--transition-fast);
+}
+.people-picker:focus-within {
+  border-color: var(--primary); background: var(--bg-elevated);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.people-pill {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.6rem;
+  background: var(--primary-soft); color: var(--primary-hover); border-radius: var(--radius-full);
+  font-size: 0.78rem; font-weight: 600;
+}
+.people-pill button { color: inherit; opacity: 0.7; font-size: 0.9rem; }
+.people-pill button:hover { opacity: 1; }
+.people-search-input {
+  flex: 1; min-width: 120px; padding: 0.2rem; font-size: 0.85rem;
+  border: none; background: transparent; outline: none; color: var(--text);
+}
+.people-dropdown {
+  position: absolute; top: 100%; left: 0; right: 0; margin-top: 0.35rem;
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow-lg);
+  max-height: 220px; overflow-y: auto; z-index: 50;
+  padding: 0.25rem;
+}
+.people-dropdown-item {
+  padding: 0.6rem 0.85rem; cursor: pointer; font-size: 0.85rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: var(--radius-xs); transition: background var(--transition-fast);
+}
+.people-dropdown-item:hover { background: var(--bg-hover); }
+.people-dropdown-item.create { color: var(--primary); font-weight: 700; }
+.people-dropdown-empty { padding: 0.75rem; text-align: center; font-size: 0.8rem; color: var(--text-muted); }
 
 /* ---------- Add entry ---------- */
 .add-form{

@@ -9,6 +9,7 @@ export const state = {
   goals: [],
   wishes: [],
   reflections: [],
+  people: [],
   settings: null,
   loading: false,
   lastLoadedAt: null,
@@ -50,6 +51,7 @@ export function resetState() {
   state.goals = [];
   state.wishes = [];
   state.reflections = [];
+  state.people = [];
   state.settings = null;
   state.loading = false;
   state.lastLoadedAt = null;

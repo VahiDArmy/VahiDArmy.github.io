@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.2.0',
+  version: '1.3.0',
 };
 
 export const TABLES = {
@@ -13,6 +13,7 @@ export const TABLES = {
   wishes: 'joy_wishlist',
   reflections: 'joy_reflections',
   settings: 'joy_settings',
+  people: 'people',
 };
 
 export const CATEGORIES = [
@@ -41,7 +42,6 @@ export function getCategory(id) {
   return CATEGORY_MAP[id] || CATEGORY_MAP.other;
 }
 
-// 11-point Karma scale (-5 to +5)
 export const KARMA_LEVELS = [
   { score: -5, label: 'شیطانی', shortLabel: '-۵', desc: 'فوق‌العاده منفی و آسیب‌زننده', icon: '💀', color: '#7f1d1d', glow: 'rgba(127,29,29,0.4)' },
   { score: -4, label: 'تاریک', shortLabel: '-۴', desc: 'خیلی منفی و مخرب', icon: '👿', color: '#991b1b', glow: 'rgba(153,27,27,0.4)' },
