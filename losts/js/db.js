@@ -94,6 +94,10 @@ export async function deleteEntry(id) {
   handleError(error);
 }
 
+export async function toggleEntryFavorite(id, value) {
+  return updateEntry(id, { is_favorite: value });
+}
+
 /* ---------------- Karma Actions ---------------- */
 export async function listKarmaActions() {
   const { data, error } = await supabase
