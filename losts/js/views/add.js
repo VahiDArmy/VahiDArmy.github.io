@@ -1,13 +1,12 @@
 import { state } from '../state.js';
 import { navigate, rerender } from '../router.js';
-import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, JOY_SCORE_EMOJIS, MOODS, KARMA_LEVELS, getKarma } from '../config.js';
+import { CATEGORIES, EMOJIS, JOY_SCORE_LABELS, JOY_SCORE_EMOJIS, MOODS } from '../config.js';
 import { esc, faDigits, todayISO, formatPersianDate, clamp } from '../utils.js';
 import { toast, confetti, setLoading } from '../ui.js';
 import { createEntry, createPerson } from '../db.js';
 import { openShamsiDatepicker } from '../components/datepicker.js';
 
 let draft = null;
-let currentMode = null;
 
 function getDraft() {
   if (draft) return draft;
@@ -17,7 +16,6 @@ function getDraft() {
     emoji: '✨',
     category: 'other',
     joy_score: 7,
-    karma_score: 0,
     money_spent: 0,
     time_spent_minutes: 0,
     tags: [],
@@ -37,23 +35,13 @@ export function resetDraft() {
   draft = null;
 }
 
-export function render(container, params = {}) {
-  const mode = params.mode || 'joy';
-  
-  // اگر کاربر بین حالت شادی و کارما سوییچ کرد، فرم ریست شود
-  if (currentMode !== mode) {
-    draft = null; 
-    currentMode = mode;
-  }
-  
+export function render(container) {
   const d = getDraft();
-  container.innerHTML = buildForm(d, mode);
-  attachHandlers(container, d, mode);
+  container.innerHTML = buildForm(d);
+  attachHandlers(container, d);
 }
 
-function buildForm(d, mode) {
-  const isKarma = mode === 'karma';
-  const currentKarma = getKarma(d.karma_score);
+function buildForm(d) {
   const joyPercent = ((d.joy_score - 1) / 9) * 100;
   
   const selectedPeopleHTML = d.related_people.map(id => {
@@ -62,80 +50,46 @@ function buildForm(d, mode) {
     return `<span class="people-pill">${esc(person.full_name)}<button type="button" data-remove-person="${esc(person.id)}">✕</button></span>`;
   }).join('');
 
-  // بخش عنوان
-  const titleSection = `
-    <div class="add-section">
-      <div class="add-section-title">عنوان</div>
-      <div class="field">
-        <label for="entry-title">${isKarma ? 'چه عملی انجام دادی؟' : 'چه شادی‌ای تجربه کردی؟'}</label>
-        <input type="text" class="input" id="entry-title" name="title" placeholder="${isKarma ? 'مثلاً: به یک دوست کمک کردم' : 'مثلاً: یک قهوه با دوستم'}" value="${esc(d.title)}" maxlength="120" required>
-      </div>
-      <div class="field">
-        <label for="entry-desc">توضیح (اختیاری)</label>
-        <textarea class="textarea" id="entry-desc" name="description" placeholder="${isKarma ? 'جزئیات عمل را بنویس...' : 'چیزی که این لحظه را خاص کرد بنویس...'}">${esc(d.description)}</textarea>
-      </div>
-    </div>
-  `;
-
-  // بخش کارما
-  const karmaSection = `
-    <div class="add-section">
-      <div class="add-section-title">کارما</div>
-      <div class="field">
-        <label>این ${isKarma ? 'عمل' : 'شادی'} چه اثری روی جهان و خودت می‌گذارد؟</label>
-        
-        <div class="karma-selector-row" id="karma-selector">
-          ${KARMA_LEVELS.map(k => `
-            <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
-              <span class="karma-btn-icon">${k.icon}</span>
-              <span class="karma-btn-label">${k.label}</span>
-              <span class="karma-btn-score">${k.shortLabel}</span>
-            </button>
-          `).join('')}
-        </div>
-        
-        <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
-          ${currentKarma.desc}
-        </div>
-      </div>
-    </div>
-  `;
-
-  // بخش شدت شادی
-  const joyScoreSection = `
-    <div class="add-section">
-      <div class="add-section-title">شدت شادی</div>
-      <div class="joy-slider-wrapper" id="joy-slider-wrapper" style="--slider-glow: var(--primary-glow)">
-        <div class="joy-slider-header">
-          <div class="joy-slider-label-text">این ${isKarma ? 'عمل' : 'شادی'} چقدر برایت ارزش داشت؟</div>
-          <div class="joy-slider-value-box">
-            <span class="joy-slider-emoji" id="joy-score-emoji">${JOY_SCORE_EMOJIS[d.joy_score]}</span>
-            <span class="joy-slider-label" id="joy-score-label">${JOY_SCORE_LABELS[d.joy_score]}</span>
-          </div>
-        </div>
-        <div class="joy-slider-track-wrap">
-          <input type="range" min="1" max="10" step="1" value="${d.joy_score}" id="joy-score" name="joy_score" style="--percent: ${joyPercent}">
-        </div>
-        <div class="joy-slider-ticks">
-          <span>${faDigits(1)}</span>
-          <span>${faDigits(10)}</span>
-        </div>
-      </div>
-    </div>
-  `;
-
   return `
     <div class="page-head">
       <div>
-        <div class="page-title">${isKarma ? 'ثبت کارما جدید' : 'ثبت شادی جدید'}</div>
-        <div class="page-subtitle">${isKarma ? 'هر عملی که انجام می‌دهی، انرژی‌ای به جهان بازمی‌گرداند.' : 'هر لحظه‌ای که برای خودت ساختی، ارزش ثبت دارد.'}</div>
+        <div class="page-title">ثبت شادی جدید</div>
+        <div class="page-subtitle">هر لحظه‌ای که برای خودت ساختی، ارزش ثبت دارد.</div>
       </div>
     </div>
 
     <form class="add-form anim-fade-up" id="add-form" novalidate>
-      ${isKarma ? karmaSection + titleSection : titleSection + karmaSection}
+      <div class="add-section">
+        <div class="add-section-title">عنوان</div>
+        <div class="field">
+          <label for="entry-title">چه شادی‌ای تجربه کردی؟</label>
+          <input type="text" class="input" id="entry-title" name="title" placeholder="مثلاً: یک قهوه با دوستم" value="${esc(d.title)}" maxlength="120" required>
+        </div>
+        <div class="field">
+          <label for="entry-desc">توضیح (اختیاری)</label>
+          <textarea class="textarea" id="entry-desc" name="description" placeholder="چیزی که این لحظه را خاص کرد بنویس...">${esc(d.description)}</textarea>
+        </div>
+      </div>
 
-      ${joyScoreSection}
+      <div class="add-section">
+        <div class="add-section-title">شدت شادی</div>
+        <div class="joy-slider-wrapper" id="joy-slider-wrapper" style="--slider-glow: var(--primary-glow)">
+          <div class="joy-slider-header">
+            <div class="joy-slider-label-text">این شادی چقدر برایت ارزش داشت؟</div>
+            <div class="joy-slider-value-box">
+              <span class="joy-slider-emoji" id="joy-score-emoji">${JOY_SCORE_EMOJIS[d.joy_score]}</span>
+              <span class="joy-slider-label" id="joy-score-label">${JOY_SCORE_LABELS[d.joy_score]}</span>
+            </div>
+          </div>
+          <div class="joy-slider-track-wrap">
+            <input type="range" min="1" max="10" step="1" value="${d.joy_score}" id="joy-score" name="joy_score" style="--percent: ${joyPercent}">
+          </div>
+          <div class="joy-slider-ticks">
+            <span>${faDigits(1)}</span>
+            <span>${faDigits(10)}</span>
+          </div>
+        </div>
+      </div>
 
       <div class="add-section">
         <div class="add-section-title">حالت</div>
@@ -232,7 +186,7 @@ function buildForm(d, mode) {
         <label class="settings-row" style="cursor:pointer;padding:.5rem 0;border:none">
           <div class="settings-row-label">
             <div class="settings-row-title">⭐ موردعلاقه</div>
-            <div class="settings-row-desc">این ${isKarma ? 'عمل' : 'لحظه'} را در موردعلاقه‌ها نگه دار</div>
+            <div class="settings-row-desc">این لحظه را در موردعلاقه‌ها نگه دار</div>
           </div>
           <div class="toggle">
             <input type="checkbox" id="entry-favorite" ${d.is_favorite ? 'checked' : ''}>
@@ -242,15 +196,15 @@ function buildForm(d, mode) {
       </div>
 
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;padding-top:.5rem">
-        <button type="submit" class="btn btn-primary btn-lg" id="save-entry">${isKarma ? '☯️ ثبت کارما' : '💫 ثبت شادی'}</button>
+        <button type="submit" class="btn btn-primary btn-lg" id="save-entry">💫 ثبت شادی</button>
         <button type="button" class="btn btn-outline" id="clear-entry">پاک کردن فرم</button>
-        <button type="button" class="btn btn-ghost" data-goto="${isKarma ? 'karma' : 'dashboard'}">بازگشت</button>
+        <button type="button" class="btn btn-ghost" data-goto="dashboard">بازگشت</button>
       </div>
     </form>
   `;
 }
 
-function attachHandlers(container, d, mode) {
+function attachHandlers(container, d) {
   const form = container.querySelector('#add-form');
 
   container.querySelectorAll('.emoji-btn').forEach((btn) => {
@@ -264,19 +218,6 @@ function attachHandlers(container, d, mode) {
     btn.addEventListener('click', () => {
       d.category = btn.dataset.category;
       container.querySelectorAll('[data-category]').forEach((b) => b.classList.toggle('active', b.dataset.category === d.category));
-    });
-  });
-
-  container.querySelectorAll('.karma-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      d.karma_score = Number(btn.dataset.karma);
-      container.querySelectorAll('.karma-btn').forEach((b) => b.classList.toggle('active', Number(b.dataset.karma) === d.karma_score));
-      const kInfo = getKarma(d.karma_score);
-      const descEl = container.querySelector('#karma-desc');
-      if (descEl && kInfo) {
-        descEl.textContent = kInfo.desc;
-        descEl.style.color = kInfo.color;
-      }
     });
   });
 
@@ -340,7 +281,6 @@ function attachHandlers(container, d, mode) {
     });
   });
 
-  // People Picker Handlers
   const peopleSearch = container.querySelector('#people-search');
   const peopleDropdown = container.querySelector('#people-dropdown');
   const peoplePicker = container.querySelector('#people-picker');
@@ -438,7 +378,7 @@ function attachHandlers(container, d, mode) {
     event.preventDefault();
     const title = (form.querySelector('#entry-title')?.value || '').trim();
     if (!title) {
-      toast(`برای ${mode === 'karma' ? 'کارما' : 'شادی'}‌ات یک عنوان بنویس`, 'warning');
+      toast('برای شادی‌ات یک عنوان بنویس', 'warning');
       form.querySelector('#entry-title')?.focus();
       return;
     }
@@ -449,7 +389,6 @@ function attachHandlers(container, d, mode) {
       emoji: d.emoji,
       category: d.category,
       joy_score: clamp(Number(form.querySelector('#joy-score')?.value) || 5, 1, 10),
-      karma_score: d.karma_score,
       money_spent: Math.max(0, Number(form.querySelector('#entry-money')?.value) || 0),
       time_spent_minutes: Math.max(0, Math.round(Number(form.querySelector('#entry-time')?.value) || 0)),
       tags: d.tags.slice(),
@@ -469,7 +408,7 @@ function attachHandlers(container, d, mode) {
       const saved = await createEntry(payload);
       state.entries = [saved, ...(state.entries || [])];
       confetti(90);
-      toast(mode === 'karma' ? 'کارما ثبت شد! ☯️' : 'شادی ثبت شد! ✨', 'success');
+      toast('شادی ثبت شد! ✨', 'success');
       resetDraft();
       rerender();
     } catch (err) {
@@ -485,6 +424,10 @@ function attachHandlers(container, d, mode) {
     if (!ok) return;
     resetDraft();
     rerender();
+  });
+
+  container.querySelectorAll('[data-goto]').forEach((el) => {
+    el.addEventListener('click', () => navigate(el.dataset.goto));
   });
 }
 

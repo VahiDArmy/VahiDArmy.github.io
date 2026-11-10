@@ -4,11 +4,12 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.6.0',
+  version: '1.7.0',
 };
 
 export const TABLES = {
   entries: 'joy_entries',
+  karma_actions: 'joy_karma_actions',
   goals: 'joy_goals',
   wishes: 'joy_wishlist',
   reflections: 'joy_reflections',
@@ -93,7 +94,7 @@ export const MOODS = [
   { id: 'tired',   label: 'خسته',       emoji: '😴' },
   { id: 'sad',     label: 'غمگین',      emoji: '😔' },
   { id: 'anxious', label: 'مضطرب',      emoji: '😟' },
-  { id: 'angry',   label: 'عصبانی',     emoji: '😤' },
+  { id: 'angry',   label: 'عصبان ��',     emoji: '😤' },
 ];
 
 export const MOOD_MAP = Object.fromEntries(MOODS.map(m => [m.id, m]));
@@ -115,6 +116,7 @@ export const VIEW_TITLES = {
   dashboard: 'داشبورد شادی',
   karma: 'حساب کارما',
   add: 'ثبت شادی',
+  karma_add: 'ثبت کارما',
   journal: 'دفتر شادی',
   calendar: 'تقویم',
   analytics: 'تحلیل',

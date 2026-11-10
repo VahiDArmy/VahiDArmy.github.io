@@ -30,8 +30,7 @@ export function initRouter() {
     const goto = event.target.closest('[data-goto]');
     if (goto) {
       event.preventDefault();
-      const mode = goto.dataset.mode;
-      navigate(goto.dataset.goto, mode ? { mode } : {});
+      navigate(goto.dataset.goto);
     }
   });
 
@@ -60,8 +59,7 @@ export function navigate(name, params = {}) {
   $$('.nav-item').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === name));
   
   // Update Topbar Switch State
-  // اگر در صفحه کارما یا فرم ثبت کارما هستیم، دکمه کارما فعال باشد
-  const isKarmaContext = name === 'karma' || (name === 'add' && params.mode === 'karma');
+  const isKarmaContext = name === 'karma' || name === 'karma_add';
   const switchTarget = isKarmaContext ? 'karma' : 'dashboard';
   
   $$('.topbar-switch .switch-btn').forEach((btn) => {
@@ -77,7 +75,7 @@ export function navigate(name, params = {}) {
 
   const fab = $('#fab');
   if (fab) {
-    const hideFabViews = ['add', 'settings', 'reflections', 'karma'];
+    const hideFabViews = ['add', 'karma_add', 'settings', 'reflections', 'karma'];
     if (hideFabViews.includes(name)) {
       fab.classList.add('is-hidden');
     } else {

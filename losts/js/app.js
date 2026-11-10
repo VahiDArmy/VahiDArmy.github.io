@@ -9,6 +9,7 @@ import { $ } from './utils.js';
 import * as dashboard from './views/dashboard.js';
 import * as karma from './views/karma.js';
 import * as add from './views/add.js';
+import * as karma_add from './views/karma_add.js';
 import * as journal from './views/journal.js';
 import * as calendar from './views/calendar.js';
 import * as analytics from './views/analytics.js';
@@ -102,7 +103,7 @@ async function handleSession(session) {
 }
 
 async function boot() {
-  registerViews({ dashboard, karma, add, journal, calendar, analytics, goals, wishlist, reflections, settings });
+  registerViews({ dashboard, karma, add, karma_add, journal, calendar, analytics, goals, wishlist, reflections, settings });
   initRouter();
   bindAuthForms();
   bindChrome();

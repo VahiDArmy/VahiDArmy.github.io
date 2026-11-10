@@ -6,6 +6,7 @@ export const state = {
   displayName: 'کاربر',
   email: '',
   entries: [],
+  karma_actions: [],
   goals: [],
   wishes: [],
   reflections: [],
@@ -48,6 +49,7 @@ export function resetState() {
   state.displayName = 'کاربر';
   state.email = '';
   state.entries = [];
+  state.karma_actions = [];
   state.goals = [];
   state.wishes = [];
   state.reflections = [];

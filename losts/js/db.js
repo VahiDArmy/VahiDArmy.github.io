@@ -41,7 +41,7 @@ export async function createPerson(fullName) {
   return data;
 }
 
-/* ---------------- Entries ---------------- */
+/* ---------------- Entries (Joy) ---------------- */
 export async function listEntries() {
   const { data, error } = await supabase
     .from(TABLES.entries)
@@ -61,7 +61,6 @@ export async function createEntry(payload) {
     emoji: payload.emoji || '✨',
     category: payload.category || 'other',
     joy_score: Number(payload.joy_score) || 5,
-    karma_score: Number(payload.karma_score) || 0,
     money_spent: Number(payload.money_spent) || 0,
     time_spent_minutes: Number(payload.time_spent_minutes) || 0,
     tags: Array.isArray(payload.tags) ? payload.tags : [],
@@ -95,8 +94,37 @@ export async function deleteEntry(id) {
   handleError(error);
 }
 
-export async function toggleEntryFavorite(id, value) {
-  return updateEntry(id, { is_favorite: value });
+/* ---------------- Karma Actions ---------------- */
+export async function listKarmaActions() {
+  const { data, error } = await supabase
+    .from(TABLES.karma_actions)
+    .select('*')
+    .order('action_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  handleError(error);
+  return data || [];
+}
+
+export async function createKarmaAction(payload) {
+  const userId = await requireUserId();
+  const record = {
+    user_id: userId,
+    title: payload.title,
+    description: payload.description || null,
+    karma_score: Number(payload.karma_score) || 0,
+    action_date: payload.action_date || new Date().toISOString().slice(0, 10),
+    action_time: payload.action_time || null,
+    related_people: Array.isArray(payload.related_people) ? payload.related_people : [],
+    tags: Array.isArray(payload.tags) ? payload.tags : [],
+  };
+  const { data, error } = await supabase.from(TABLES.karma_actions).insert(record).select().single();
+  handleError(error);
+  return data;
+}
+
+export async function deleteKarmaAction(id) {
+  const { error } = await supabase.from(TABLES.karma_actions).delete().eq('id', id);
+  handleError(error);
 }
 
 /* ---------------- Goals ---------------- */
@@ -265,8 +293,9 @@ export async function loadAll() {
   state.loading = true;
   emit('data:loading', true);
   try {
-    const [entries, goals, wishes, reflections, settings, people] = await Promise.all([
+    const [entries, karma_actions, goals, wishes, reflections, settings, people] = await Promise.all([
       listEntries().catch((e) => { console.warn('entries', e.message); return []; }),
+      listKarmaActions().catch((e) => { console.warn('karma_actions', e.message); return []; }),
       listGoals().catch((e) => { console.warn('goals', e.message); return []; }),
       listWishes().catch((e) => { console.warn('wishes', e.message); return []; }),
       listReflections().catch((e) => { console.warn('reflections', e.message); return []; }),
@@ -274,6 +303,7 @@ export async function loadAll() {
       listPeople().catch((e) => { console.warn('people', e.message); return []; }),
     ]);
     state.entries = entries;
+    state.karma_actions = karma_actions;
     state.goals = goals;
     state.wishes = wishes;
     state.reflections = reflections;
@@ -292,6 +322,7 @@ export async function wipeAllData() {
   const userId = await requireUserId();
   const results = await Promise.all([
     supabase.from(TABLES.entries).delete().eq('user_id', userId),
+    supabase.from(TABLES.karma_actions).delete().eq('user_id', userId),
     supabase.from(TABLES.goals).delete().eq('user_id', userId),
     supabase.from(TABLES.wishes).delete().eq('user_id', userId),
     supabase.from(TABLES.reflections).delete().eq('user_id', userId),
@@ -308,6 +339,7 @@ export function exportData() {
     user: { id: state.user?.id || null, email: state.email || null, name: state.displayName },
     settings: state.settings,
     entries: state.entries,
+    karma_actions: state.karma_actions,
     goals: state.goals,
     wishes: state.wishes,
     reflections: state.reflections,

@@ -1,31 +1,29 @@
 import { state } from '../state.js';
 import { navigate } from '../router.js';
-import { getKarma, KARMA_LEVELS, getCategory } from '../config.js';
+import { getKarma, KARMA_LEVELS } from '../config.js';
 import {
-  esc, faDigits, todayISO, addDaysISO, formatPersianDate, isoToUTCDate,
-  persianParts, persianToUTCDate, utcDateToISO, sumBy, formatClock, fmtDurationShort, fmtCompactMoney,
+  esc, faDigits, todayISO, formatPersianDate, isoToUTCDate,
+  persianParts, persianToUTCDate, utcDateToISO,
   PERSIAN_MONTHS, persianMonthLength
 } from '../utils.js';
-import { emptyState } from '../ui.js';
-import { openEntryDetail } from '../components/entry_modal.js';
+import { emptyState, confirmDialog, toast } from '../ui.js';
+import { deleteKarmaAction } from '../db.js';
 
 export function render(container) {
-  const entries = Array.isArray(state.entries) ? state.entries : [];
-  const settings = state.settings || {};
-  const today = todayISO();
+  const actions = Array.isArray(state.karma_actions) ? state.karma_actions : [];
 
   // Calculate Overall Karma
   let totalKarma = 0;
   const karmaCounts = { positive: 0, neutral: 0, negative: 0 };
-  entries.forEach(e => {
-    const k = Number(e.karma_score) || 0;
+  actions.forEach(a => {
+    const k = Number(a.karma_score) || 0;
     totalKarma += k;
     if (k > 0) karmaCounts.positive++;
     else if (k < 0) karmaCounts.negative++;
     else karmaCounts.neutral++;
   });
   
-  const avgKarma = entries.length ? totalKarma / entries.length : 0;
+  const avgKarma = actions.length ? totalKarma / actions.length : 0;
   const karmaPercent = Math.max(0, Math.min(100, ((avgKarma + 5) / 10) * 100));
   const karmaData = getKarma(Math.round(avgKarma));
   const karmaType = avgKarma > 0.3 ? 'positive' : (avgKarma < -0.3 ? 'negative' : 'neutral');
@@ -33,14 +31,14 @@ export function render(container) {
   // Monthly Karma Calculation
   const todayParts = persianParts(new Date());
   const monthLen = persianMonthLength(todayParts.y, todayParts.m);
-  const monthEntries = entries.filter(e => {
-    const p = persianParts(isoToUTCDate(e.entry_date));
+  const monthActions = actions.filter(a => {
+    const p = persianParts(isoToUTCDate(a.action_date));
     return p.y === todayParts.y && p.m === todayParts.m;
   });
   
   const dailyKarmaMap = {};
-  monthEntries.forEach(e => {
-    dailyKarmaMap[e.entry_date] = (dailyKarmaMap[e.entry_date] || 0) + (Number(e.karma_score) || 0);
+  monthActions.forEach(a => {
+    dailyKarmaMap[a.action_date] = (dailyKarmaMap[a.action_date] || 0) + (Number(a.karma_score) || 0);
   });
   
   let monthlyKarmaTotal = 0;
@@ -56,10 +54,10 @@ export function render(container) {
       if (dayScore < worstDay.score) worstDay = { date: iso, score: dayScore };
     }
   }
-  const monthAvgKarma = monthEntries.length ? monthlyKarmaTotal / monthEntries.length : 0;
+  const monthAvgKarma = monthActions.length ? monthlyKarmaTotal / monthActions.length : 0;
 
   // Recent Karma actions
-  const recentEntries = entries.filter(e => e.karma_score !== 0).slice(0, 5);
+  const recentActions = actions.slice(0, 5);
 
   container.innerHTML = `
     <div class="page-head">
@@ -68,7 +66,7 @@ export function render(container) {
         <div class="page-subtitle">انرژی بازگشتی اعمال تو به جهان</div>
       </div>
       <div class="page-actions">
-        <button type="button" class="btn btn-primary" data-goto="add" data-mode="karma">➕ ثبت کارما</button>
+        <button type="button" class="btn btn-primary" data-goto="karma_add" style="background:linear-gradient(135deg, var(--violet-500), #4c1d95);box-shadow:0 4px 14px rgba(139,92,246,.4)">➕ ثبت کارما</button>
       </div>
     </div>
 
@@ -152,21 +150,21 @@ export function render(container) {
               <span style="color:var(--emerald-600)">🌟 کارمای مثبت</span>
               <span style="font-weight:700">${faDigits(karmaCounts.positive)}</span>
             </div>
-            <div class="progress"><div class="progress-fill" style="width:${entries.length ? (karmaCounts.positive/entries.length)*100 : 0}%;background:var(--emerald-500)"></div></div>
+            <div class="progress"><div class="progress-fill" style="width:${actions.length ? (karmaCounts.positive/actions.length)*100 : 0}%;background:var(--emerald-500)"></div></div>
           </div>
           <div>
             <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem">
               <span style="color:var(--text-muted)">⚖️ خنثی</span>
               <span style="font-weight:700">${faDigits(karmaCounts.neutral)}</span>
             </div>
-            <div class="progress"><div class="progress-fill" style="width:${entries.length ? (karmaCounts.neutral/entries.length)*100 : 0}%;background:var(--gray-400)"></div></div>
+            <div class="progress"><div class="progress-fill" style="width:${actions.length ? (karmaCounts.neutral/actions.length)*100 : 0}%;background:var(--gray-400)"></div></div>
           </div>
           <div>
             <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.4rem">
               <span style="color:var(--red-500)">🌑 کارمای منفی</span>
               <span style="font-weight:700">${faDigits(karmaCounts.negative)}</span>
             </div>
-            <div class="progress"><div class="progress-fill" style="width:${entries.length ? (karmaCounts.negative/entries.length)*100 : 0}%;background:var(--red-500)"></div></div>
+            <div class="progress"><div class="progress-fill" style="width:${actions.length ? (karmaCounts.negative/actions.length)*100 : 0}%;background:var(--red-500)"></div></div>
           </div>
         </div>
       </div>
@@ -175,29 +173,26 @@ export function render(container) {
         <div class="card-header">
           <div>
             <div class="card-title">📜 آخرین اعمال کارمایی</div>
-            <div class="card-subtitle">۵ شادی که انرژی داشتند</div>
+            <div class="card-subtitle">۵ عمل اخیر تو</div>
           </div>
-          <button type="button" class="btn btn-ghost btn-sm" data-goto="journal">همه →</button>
         </div>
         <div>
-          ${recentEntries.length ? recentEntries.map(e => {
-            const k = getKarma(e.karma_score);
-            const cat = getCategory(e.category);
+          ${recentActions.length ? recentActions.map(a => {
+            const k = getKarma(a.karma_score);
             return `
-              <div class="entry-mini" data-entry-id="${esc(e.id)}" role="button" tabindex="0">
+              <div class="entry-mini" data-karma-id="${esc(a.id)}" role="button" tabindex="0">
                 <div class="entry-mini-icon" style="color:${k.color}">${k.icon}</div>
                 <div class="entry-mini-body">
-                  <div class="entry-mini-title">${esc(e.title)}</div>
+                  <div class="entry-mini-title">${esc(a.title)}</div>
                   <div class="entry-mini-meta">
-                    <span>${esc(cat.label)}</span>
-                    <span>·</span>
-                    <span>${esc(formatPersianDate(e.entry_date, { month: 'long', day: 'numeric' }))}</span>
+                    <span>${esc(formatPersianDate(a.action_date, { month: 'long', day: 'numeric' }))}</span>
                   </div>
                 </div>
                 <div class="badge" style="background:${k.color}20;color:${k.color};border:1px solid ${k.color}40">${k.label}</div>
+                <button type="button" class="icon-btn-sm" data-delete-karma="${esc(a.id)}" title="حذف" style="margin-right:0.5rem">✕</button>
               </div>
             `;
-          }).join('') : emptyState({ emoji: '☯️', title: 'هنوز کارمایی ثبت نشده', desc: 'با ثبت اعمال خود، انرژی بازگشتی آن‌ها را اینجا خواهید دید.' })}
+          }).join('') : emptyState({ emoji: '☯️', title: 'هنوز کارمایی ثبت نشده', desc: 'با ثبت اعمال خود، انرژی بازگشتی آن‌ها را اینجا خواهید دید.', actionLabel: 'ثبت کارما', actionView: 'karma_add' })}
         </div>
       </div>
     </div>
@@ -224,11 +219,23 @@ export function render(container) {
     </div>
   `;
 
-  container.querySelectorAll('[data-entry-id]').forEach((el) => {
-    el.addEventListener('click', () => {
-      const id = el.dataset.entryId;
-      const entry = entries.find((e) => e.id === id);
-      if (entry) openEntryDetail(entry);
+  container.querySelectorAll('[data-goto]').forEach((el) => {
+    el.addEventListener('click', () => navigate(el.dataset.goto));
+  });
+
+  container.querySelectorAll('[data-delete-karma]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const ok = await confirmDialog({ title: 'حذف کارما', message: 'این عمل حذف شود؟', confirmText: 'حذف', danger: true });
+      if (!ok) return;
+      try {
+        await deleteKarmaAction(btn.dataset.deleteKarma);
+        state.karma_actions = state.karma_actions.filter(a => a.id !== btn.dataset.deleteKarma);
+        toast('کارما حذف شد', 'success');
+        render(container);
+      } catch (err) {
+        toast(err.message || 'خطا', 'error');
+      }
     });
   });
 }

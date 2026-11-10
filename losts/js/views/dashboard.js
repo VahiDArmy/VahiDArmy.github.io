@@ -11,6 +11,7 @@ import { openEntryDetail } from '../components/entry_modal.js';
 
 export function render(container) {
   const entries = Array.isArray(state.entries) ? state.entries : [];
+  const karmaActions = Array.isArray(state.karma_actions) ? state.karma_actions : [];
   const settings = state.settings || {};
   const dailyGoal = Number(settings.daily_goal) || 1;
   const today = todayISO();
@@ -34,14 +35,15 @@ export function render(container) {
   const recent = entries.slice(0, 5);
   const achievements = computeAchievements(entries, weekEntries, monthEntries, streak);
 
-  // Daily Report Calculation
-  const todayKarmaSum = sumBy(todayEntries, (e) => Number(e.karma_score) || 0);
-  const todayKarmaAvg = todayEntries.length ? todayKarmaSum / todayEntries.length : 0;
+  // Daily Karma Report (from Karma Actions)
+  const todayKarmaActions = karmaActions.filter((a) => a.action_date === today);
+  const todayKarmaSum = sumBy(todayKarmaActions, (a) => Number(a.karma_score) || 0);
+  const todayKarmaAvg = todayKarmaActions.length ? todayKarmaSum / todayKarmaActions.length : 0;
   const dailyKarmaInfo = getKarma(Math.round(todayKarmaAvg));
   const dailyKarmaPct = Math.max(0, Math.min(100, ((todayKarmaAvg + 5) / 10) * 100));
 
-  let reportMsg = 'امروز هنوز شادی‌ای ثبت نکردی.';
-  if (todayEntries.length > 0) {
+  let reportMsg = 'امروز هنوز کارمایی ثبت نکردی.';
+  if (todayKarmaActions.length > 0) {
     if (todayKarmaAvg > 2) reportMsg = 'امروز روز فوق‌العاده روشنی داشتی. انرژی مثبتت بهت برمی‌گرده! 🌟';
     else if (todayKarmaAvg > 0) reportMsg = 'امروز عملکرد خوبی داشتی. تعادلت رو حفظ کردی. 🌿';
     else if (todayKarmaAvg === 0) reportMsg = 'امروز یک روز خنثی بود. فردا می‌تونی بهتر باشی. ⚖️';
@@ -57,7 +59,7 @@ export function render(container) {
         <div class="dash-date">${esc(formatPersianWeekday(today))} · ${esc(formatPersianDate(today))}</div>
       </div>
       <div class="dash-hero-actions">
-        <button type="button" class="btn btn-primary" data-goto="add" data-mode="joy">➕ ثبت شادی امروز</button>
+        <button type="button" class="btn btn-primary" data-goto="add">➕ ثبت شادی امروز</button>
         <button type="button" class="btn btn-outline" data-goto="journal">📖 دفتر شادی</button>
       </div>
     </div>
@@ -99,11 +101,11 @@ export function render(container) {
 
     <div class="dash-row">
       <div style="display:flex;flex-direction:column;gap:1rem">
-        <!-- Daily Report Card -->
+        <!-- Daily Karma Report Card -->
         <div class="daily-report-card anim-fade-up" style="--report-color: ${dailyKarmaInfo.color}; --report-glow: ${dailyKarmaInfo.glow}">
           <div class="daily-report-header">
             <div>
-              <div class="daily-report-title">📋 کارنامه امروز</div>
+              <div class="daily-report-title">📋 کارنامه کارمای امروز</div>
               <div style="font-size:.75rem;color:var(--text-muted);margin-top:.2rem">مجموع کارمای ثبت‌شده امروز: ${faDigits(todayKarmaSum)}</div>
             </div>
             <div class="daily-report-score" style="color:${dailyKarmaInfo.color}">${dailyKarmaInfo.icon} ${dailyKarmaInfo.label}</div>
@@ -131,7 +133,7 @@ export function render(container) {
           <div class="prompt-label">✨ سؤال امروز</div>
           <div class="prompt-text">${esc(prompt)}</div>
           <div class="prompt-actions">
-            <button type="button" class="btn btn-sm" data-goto="add" data-mode="joy">جواب می‌دم</button>
+            <button type="button" class="btn btn-sm" data-goto="add">جواب می‌دم</button>
             <button type="button" class="btn btn-sm" data-goto="reflections">تأمل</button>
           </div>
         </div>
@@ -166,16 +168,12 @@ export function render(container) {
   });
 
   container.querySelectorAll('[data-goto]').forEach((el) => {
-    el.addEventListener('click', () => {
-      const mode = el.dataset.mode;
-      navigate(el.dataset.goto, mode ? { mode } : {});
-    });
+    el.addEventListener('click', () => navigate(el.dataset.goto));
   });
 }
 
 function recentItemHTML(entry) {
   const cat = getCategory(entry.category);
-  const karma = getKarma(entry.karma_score || 0);
   return `
     <div class="entry-mini" data-entry-id="${esc(entry.id)}" role="button" tabindex="0">
       <div class="entry-mini-icon">${esc(entry.emoji || cat.emoji)}</div>
@@ -186,8 +184,6 @@ function recentItemHTML(entry) {
           <span>·</span>
           <span>${esc(formatPersianDate(entry.entry_date, { month: 'long', day: 'numeric' }))}</span>
           ${entry.money_spent > 0 ? `<span>·</span><span>${esc(fmtCompactMoney(entry.money_spent))}</span>` : ''}
-          <span>·</span>
-          <span style="color:${karma.color}">${karma.icon}</span>
         </div>
       </div>
       <div class="entry-mini-time">${entry.entry_time ? esc(formatClock(entry.entry_time)) : ''}</div>
@@ -216,7 +212,6 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
   const totalMoney = sumBy(entries, (e) => e.money_spent);
   const totalTime = sumBy(entries, (e) => e.time_spent_minutes);
   const weekCount = weekEntries.length;
-  const highlySpiritual = entries.filter(e => Number(e.karma_score) >= 4).length;
 
   return [
     { icon: '🌱', name: 'اولین قدم', desc: 'اولین شادی را ثبت کن', unlocked: total >= 1 },
@@ -227,6 +222,5 @@ function computeAchievements(entries, weekEntries, monthEntries, streak) {
     { icon: '💸', name: 'سرمایه‌گذار در خود', desc: 'بیش از ۱ میلیون برای خودت خرج کن', unlocked: totalMoney >= 1000000 },
     { icon: '⏰', name: 'وقت‌شناس', desc: 'بیش از ۶۰ ساعت برای خودت وقت بگذار', unlocked: totalTime >= 3600 },
     { icon: '🎯', name: 'منظم', desc: 'یک هفته پر از شادی بساز', unlocked: weekCount >= 7 },
-    { icon: '🌟', name: 'روح پاک', desc: '۵ شادی با کارمای +۴ یا +۵ ثبت کن', unlocked: highlySpiritual >= 5 },
   ];
 }
