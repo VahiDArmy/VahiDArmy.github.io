@@ -7,6 +7,7 @@ import { bindAuthForms, showAuthScreen, hideAuthScreen } from './auth.js';
 import { $ } from './utils.js';
 
 import * as dashboard from './views/dashboard.js';
+import * as karma from './views/karma.js';
 import * as add from './views/add.js';
 import * as journal from './views/journal.js';
 import * as calendar from './views/calendar.js';
@@ -53,7 +54,6 @@ function bindChrome() {
   window.addEventListener('online', () => toast('اتصال برقرار شد ✅', 'success', 2000));
   window.addEventListener('offline', () => toast('اتصال قطع شد. حالت آفلاین.', 'warning', 3000));
   
-  // گوش دادن به تغییرات تم سیستم‌عامل
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (!localStorage.getItem('joy-theme')) {
       applyTheme('system');
@@ -102,12 +102,11 @@ async function handleSession(session) {
 }
 
 async function boot() {
-  registerViews({ dashboard, add, journal, calendar, analytics, goals, wishlist, reflections, settings });
+  registerViews({ dashboard, karma, add, journal, calendar, analytics, goals, wishlist, reflections, settings });
   initRouter();
   bindAuthForms();
   bindChrome();
 
-  // بررسي وضعيت اوليه
   try {
     const { data } = await supabase.auth.getSession();
     await handleSession(data?.session || null);

@@ -4,7 +4,7 @@ export const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_AuneSCRLhrKKDeK8q7kJtw_B
 export const APP = {
   name: 'شادی‌یار',
   tagline: 'هر روز، یک شادی کوچک برای خودت',
-  version: '1.5.0',
+  version: '1.6.0',
 };
 
 export const TABLES = {
@@ -93,7 +93,7 @@ export const MOODS = [
   { id: 'tired',   label: 'خسته',       emoji: '😴' },
   { id: 'sad',     label: 'غمگین',      emoji: '😔' },
   { id: 'anxious', label: 'مضطرب',      emoji: '😟' },
-  { id: 'angry',   label: 'عصبان ��',     emoji: '😤' },
+  { id: 'angry',   label: 'عصبانی',     emoji: '😤' },
 ];
 
 export const MOOD_MAP = Object.fromEntries(MOODS.map(m => [m.id, m]));
@@ -112,7 +112,8 @@ export const GOAL_PERIODS = [
 ];
 
 export const VIEW_TITLES = {
-  dashboard: 'داشبورد',
+  dashboard: 'داشبورد شادی',
+  karma: 'حساب کارما',
   add: 'ثبت شادی',
   journal: 'دفتر شادی',
   calendar: 'تقویم',
@@ -134,14 +135,4 @@ export const PROMPTS = [
   'چه کاری برای خودت کردی که به آن افتخار می‌کنی؟',
   'یک طعم، صدا یا بو که امروز خوشحالت کرد؟',
   'امروز چه چیز کوچکی را جشن گرفتی؟',
-  'دلت می‌خواست امروز چه کاری می‌کردی؟',
-  'آخرین شادی‌ای که خریدی چه بود؟',
-  'امروز چه کسی لبخندت را دید؟',
-  'چه زمانی امروز احساس راحتی کامل داشتی؟',
-  'چه چیزی برای خودت آرزو می‌کنی؟',
-  'امروز کدام لحظه را دوست داشتی تکرار کنی؟',
-  'به خودت چه می‌گویی وقتی موفق می‌شوی؟',
-  'یک عادت کوچک که حالت را خوب می‌کند چیست؟',
-  'امروز چقدر برای خودت وقت گذاشتی؟',
-  'چه چیزی در این هفته ارزش جشن گرفتن دارد؟',
 ];

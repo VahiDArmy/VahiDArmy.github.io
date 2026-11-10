@@ -57,6 +57,11 @@ export function navigate(name, params = {}) {
 
   $$('.view').forEach((section) => section.classList.toggle('active', section.dataset.view === name));
   $$('.nav-item').forEach((btn) => btn.classList.toggle('active', btn.dataset.view === name));
+  
+  // Update Topbar Switch State
+  $$('.topbar-switch .switch-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === name);
+  });
 
   const titleEl = $('#topbar-title');
   if (titleEl) titleEl.textContent = VIEW_TITLES[name] || '';
@@ -65,10 +70,9 @@ export function navigate(name, params = {}) {
     try { history.replaceState(null, '', `#${name}`); } catch (err) { /* ignore */ }
   }
 
-  // مدیریت هوشمند دکمه شناور (FAB)
   const fab = $('#fab');
   if (fab) {
-    const hideFabViews = ['add', 'settings', 'reflections'];
+    const hideFabViews = ['add', 'settings', 'reflections', 'karma'];
     if (hideFabViews.includes(name)) {
       fab.classList.add('is-hidden');
     } else {

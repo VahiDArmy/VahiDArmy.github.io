@@ -14,7 +14,6 @@
 <link rel="stylesheet" href="css/views.css">
 <link rel="stylesheet" href="css/animations.css">
 <script>
-  // جلوگیری از فلش شدن تم اشتباه در هنگام لود (FOUC)
   (function() {
     try {
       const saved = localStorage.getItem('joy-theme');
@@ -42,7 +41,6 @@
   <div class="splash-spinner"></div>
 </div>
 
-<!-- کانتینر لاگین: به صورت پیش‌فرض در CSS مخفی است و با کلاس is-active نمایش داده می‌شود -->
 <div id="auth-screen" class="auth-screen">
   <div class="auth-decor" aria-hidden="true">
     <div class="auth-decor-circle auth-decor-1"></div>
@@ -93,7 +91,6 @@
   </div>
 </div>
 
-<!-- کانتینر اپلیکیشن اصلی -->
 <div id="app" class="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
@@ -104,7 +101,8 @@
       </div>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav">
-      <button type="button" class="nav-item active" data-view="dashboard"><span class="nav-icon">🏡</span><span class="nav-label">داشبورد</span></button>
+      <button type="button" class="nav-item active" data-view="dashboard"><span class="nav-icon">🏡</span><span class="nav-label">داشبورد شادی</span></button>
+      <button type="button" class="nav-item" data-view="karma"><span class="nav-icon">⚖️</span><span class="nav-label">حساب کارما</span></button>
       <button type="button" class="nav-item" data-view="add"><span class="nav-icon">➕</span><span class="nav-label">ثبت شادی</span></button>
       <button type="button" class="nav-item" data-view="journal"><span class="nav-icon">📖</span><span class="nav-label">دفتر شادی</span></button>
       <button type="button" class="nav-item" data-view="calendar"><span class="nav-icon">📅</span><span class="nav-label">تقویم</span></button>
@@ -132,18 +130,33 @@
       <button type="button" class="icon-btn menu-btn" id="menu-btn" aria-label="منو">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
       </button>
-      <div class="topbar-title" id="topbar-title">داشبورد</div>
+      
+      <!-- Highly Styled Topbar Switch -->
+      <div class="topbar-switch" id="topbar-switch">
+        <button type="button" class="switch-btn active" data-view="dashboard">
+          <span class="switch-icon">✨</span>
+          <span class="switch-label">شادی</span>
+        </button>
+        <button type="button" class="switch-btn" data-view="karma">
+          <span class="switch-icon">☯️</span>
+          <span class="switch-label">کارما</span>
+        </button>
+      </div>
+
+      <div class="topbar-title" id="topbar-title" style="display:none;">داشبورد</div>
+      
       <div class="topbar-actions">
         <button type="button" class="icon-btn" id="theme-btn" title="تغییر تم" aria-label="تغییر تم">🌙</button>
         <button type="button" class="btn btn-primary topbar-add" data-view="add">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          <span class="hide-sm">ثبت شادی</span>
+          <span class="hide-sm">ثبت</span>
         </button>
       </div>
     </header>
 
     <div class="views" id="views">
       <section class="view active" id="view-dashboard" data-view="dashboard"></section>
+      <section class="view" id="view-karma" data-view="karma"></section>
       <section class="view" id="view-add" data-view="add"></section>
       <section class="view" id="view-journal" data-view="journal"></section>
       <section class="view" id="view-calendar" data-view="calendar"></section>
@@ -155,7 +168,6 @@
     </div>
   </main>
 
-  <!-- دکمه شناور با طراحی جدید و SVG -->
   <button type="button" class="fab" id="fab" data-view="add" title="ثبت شادی جدید" aria-label="ثبت شادی جدید">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
   </button>
