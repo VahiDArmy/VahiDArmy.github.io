@@ -65,17 +65,22 @@ function buildForm(d) {
       </div>
 
       <div class="add-section">
-        <div class="add-section-title">حالت</div>
+        <div class="add-section-title">کارما</div>
         <div class="field">
-          <label>یک ایموجی انتخاب کن</label>
-          <div class="emoji-picker" id="emoji-picker">
-            ${EMOJIS.map((emoji) => `<button type="button" class="emoji-btn ${emoji === d.emoji ? 'active' : ''}" data-emoji="${esc(emoji)}">${esc(emoji)}</button>`).join('')}
+          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟ (از -۵ تا +۵)</label>
+          
+          <div class="karma-selector-row" id="karma-selector">
+            ${KARMA_LEVELS.map(k => `
+              <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
+                <span class="karma-btn-icon">${k.icon}</span>
+                <span class="karma-btn-label">${k.label}</span>
+                <span class="karma-btn-score">${k.shortLabel}</span>
+              </button>
+            `).join('')}
           </div>
-        </div>
-        <div class="field">
-          <label>دسته‌بندی</label>
-          <div class="journal-filters" id="category-picker">
-            ${CATEGORIES.map((cat) => `<button type="button" class="chip ${cat.id === d.category ? 'active' : ''}" data-category="${esc(cat.id)}">${esc(cat.emoji)} ${esc(cat.label)}</button>`).join('')}
+          
+          <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
+            ${currentKarma.desc}
           </div>
         </div>
       </div>
@@ -93,22 +98,17 @@ function buildForm(d) {
       </div>
 
       <div class="add-section">
-        <div class="add-section-title">کارما (انرژی بازگشتی)</div>
+        <div class="add-section-title">حالت</div>
         <div class="field">
-          <label>این شادی چه اثری روی جهان و خودت می‌گذارد؟ (از -۵ تا +۵)</label>
-          
-          <div class="karma-selector-row" id="karma-selector">
-            ${KARMA_LEVELS.map(k => `
-              <button type="button" class="karma-btn ${k.score === d.karma_score ? 'active' : ''}" data-karma="${k.score}" style="--karma-color: ${k.color}; --karma-glow: ${k.glow}">
-                <span class="karma-btn-icon">${k.icon}</span>
-                <span class="karma-btn-label">${k.label}</span>
-                <span class="karma-btn-score">${k.shortLabel}</span>
-              </button>
-            `).join('')}
+          <label>یک ایموجی انتخاب کن</label>
+          <div class="emoji-picker" id="emoji-picker">
+            ${EMOJIS.map((emoji) => `<button type="button" class="emoji-btn ${emoji === d.emoji ? 'active' : ''}" data-emoji="${esc(emoji)}">${esc(emoji)}</button>`).join('')}
           </div>
-          
-          <div class="field-hint" style="text-align:center; margin-top:.75rem; font-weight:600; color:${currentKarma.color}" id="karma-desc">
-            ${currentKarma.desc}
+        </div>
+        <div class="field">
+          <label>دسته‌بندی</label>
+          <div class="journal-filters" id="category-picker">
+            ${CATEGORIES.map((cat) => `<button type="button" class="chip ${cat.id === d.category ? 'active' : ''}" data-category="${esc(cat.id)}">${esc(cat.emoji)} ${esc(cat.label)}</button>`).join('')}
           </div>
         </div>
       </div>
