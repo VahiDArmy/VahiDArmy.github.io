@@ -101,9 +101,9 @@
       </div>
     </div>
     <nav class="sidebar-nav" id="sidebar-nav">
+      <button type="button" class="nav-item" data-view="karma"><span class="nav-icon">☯️</span><span class="nav-label">حساب کارما</span></button>
       <button type="button" class="nav-item active" data-view="dashboard"><span class="nav-icon">🏡</span><span class="nav-label">داشبورد شادی</span></button>
-      <button type="button" class="nav-item" data-view="karma"><span class="nav-icon">⚖️</span><span class="nav-label">حساب کارما</span></button>
-      <button type="button" class="nav-item" data-view="add"><span class="nav-icon">➕</span><span class="nav-label">ثبت شادی</span></button>
+      <button type="button" class="nav-item" data-view="add"><span class="nav-icon">➕</span><span class="nav-label">ثبت جدید</span></button>
       <button type="button" class="nav-item" data-view="journal"><span class="nav-icon">📖</span><span class="nav-label">دفتر شادی</span></button>
       <button type="button" class="nav-item" data-view="calendar"><span class="nav-icon">📅</span><span class="nav-label">تقویم</span></button>
       <button type="button" class="nav-item" data-view="analytics"><span class="nav-icon">📊</span><span class="nav-label">تحلیل</span></button>
@@ -133,13 +133,13 @@
       
       <!-- Highly Styled Topbar Switch -->
       <div class="topbar-switch" id="topbar-switch">
-        <button type="button" class="switch-btn active" data-view="dashboard">
-          <span class="switch-icon">✨</span>
-          <span class="switch-label">شادی</span>
-        </button>
         <button type="button" class="switch-btn" data-view="karma">
           <span class="switch-icon">☯️</span>
           <span class="switch-label">کارما</span>
+        </button>
+        <button type="button" class="switch-btn active" data-view="dashboard">
+          <span class="switch-icon">✨</span>
+          <span class="switch-label">شادی</span>
         </button>
       </div>
 
@@ -155,8 +155,8 @@
     </header>
 
     <div class="views" id="views">
-      <section class="view active" id="view-dashboard" data-view="dashboard"></section>
       <section class="view" id="view-karma" data-view="karma"></section>
+      <section class="view active" id="view-dashboard" data-view="dashboard"></section>
       <section class="view" id="view-add" data-view="add"></section>
       <section class="view" id="view-journal" data-view="journal"></section>
       <section class="view" id="view-calendar" data-view="calendar"></section>

@@ -68,7 +68,7 @@ export function render(container) {
         <div class="page-subtitle">انرژی بازگشتی اعمال تو به جهان</div>
       </div>
       <div class="page-actions">
-        <button type="button" class="btn btn-primary" data-goto="add">➕ ثبت شادی جدید</button>
+        <button type="button" class="btn btn-primary" data-goto="add">➕ ثبت کارما</button>
       </div>
     </div>
 
@@ -199,6 +199,27 @@ export function render(container) {
             `;
           }).join('') : emptyState({ emoji: '☯️', title: 'هنوز کارمایی ثبت نشده', desc: 'با ثبت شادی‌ها، انرژی بازگشتی آن‌ها را اینجا خواهید دید.' })}
         </div>
+      </div>
+    </div>
+
+    <!-- 11 Karma Levels Showcase -->
+    <div class="card anim-fade-up" style="margin-top:1rem">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🌈 راهنمای سطوح کارما</div>
+          <div class="card-subtitle">از تاریکی مطلق (-۵) تا نور مطلق (+۵)</div>
+        </div>
+      </div>
+      <div class="karma-levels-container">
+        ${KARMA_LEVELS.slice().reverse().map(k => `
+          <div class="karma-level-item" style="--k-color: ${k.color}; --k-glow: ${k.glow}">
+            <div class="karma-level-icon">${k.icon}</div>
+            <div class="karma-level-info">
+              <div class="karma-level-name">${k.label} <span class="karma-level-score">${k.shortLabel}</span></div>
+              <div class="karma-level-desc">${k.desc}</div>
+            </div>
+          </div>
+        `).join('')}
       </div>
     </div>
   `;
