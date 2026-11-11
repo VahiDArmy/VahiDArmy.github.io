@@ -1,0 +1,325 @@
+/* ============================================================
+   THEORIES STUDIO — Animations
+   ============================================================ */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+@keyframes splash-rise {
+  from { opacity: 0; transform: translateY(16px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes splash-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.06); }
+}
+
+@keyframes splash-bar {
+  0%   { transform: translateX(120%); }
+  100% { transform: translateX(-320%); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes drawer-in {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes drawer-in-start {
+  from { opacity: 0; transform: translateX(-100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes command-in {
+  from { opacity: 0; transform: translate(-50%, -8px) scale(.98); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(16px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-out {
+  to { opacity: 0; transform: translateY(12px) scale(.96); }
+}
+
+@keyframes toast-progress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+@keyframes loading-bar {
+  0%   { transform: translateX(-100%); }
+  50%  { transform: translateX(180%); }
+  100% { transform: translateX(420%); }
+}
+
+@keyframes aurora-flow {
+  0%   { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
+  25%  { background-position: 100% 100%, 50% 100%, 100% 50%, 50% 100%, 0% 0%; }
+  50%  { background-position: 50% 50%, 100% 50%, 50% 100%, 100% 0%, 0% 0%; }
+  100% { background-position: 0% 0%, 0% 0%, 0% 0%, 0% 0%, 0% 0%; }
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-14px) rotate(2deg); }
+}
+
+@keyframes float-slower {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(18px) rotate(-3deg); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: .5; transform: scale(1); }
+  50%      { opacity: .85; transform: scale(1.08); }
+}
+
+@keyframes progress-stripes {
+  from { background-position: 0 0; }
+  to   { background-position: 24px 0; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pop-in {
+  0%   { opacity: 0; transform: scale(.7); }
+  70%  { opacity: 1; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--accent-ring); }
+  50%      { box-shadow: 0 0 0 8px transparent; }
+}
+
+@keyframes border-dance {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes typewriter-caret {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+@keyframes confetti-fall {
+  0%   { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes ring-expand {
+  0%   { transform: scale(.6); opacity: .7; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ---------- Animation utility classes ---------- */
+.anim-fade-in   { animation: fade-in var(--dur-base) var(--ease-out) both; }
+.anim-slide-up  { animation: slide-up var(--dur-slow) var(--ease-out) both; }
+.anim-pop-in    { animation: pop-in var(--dur-slow) var(--ease-spring) both; }
+.anim-float     { animation: float-slow 8s var(--ease-in-out) infinite; }
+.anim-breathe   { animation: breathe 4s var(--ease-in-out) infinite; }
+.anim-spin      { animation: spin 1s linear infinite; }
+.anim-shake     { animation: shake .4s var(--ease-out); }
+
+.delay-1 { animation-delay: 60ms; }
+.delay-2 { animation-delay: 120ms; }
+.delay-3 { animation-delay: 180ms; }
+.delay-4 { animation-delay: 240ms; }
+.delay-5 { animation-delay: 300ms; }
+.delay-6 { animation-delay: 360ms; }
+.delay-7 { animation-delay: 420ms; }
+.delay-8 { animation-delay: 480ms; }
+
+/* ---------- Stagger helper (used by JS) ---------- */
+.stagger > * {
+  opacity: 0;
+  animation: slide-up var(--dur-slow) var(--ease-out) forwards;
+}
+.stagger > *:nth-child(1)  { animation-delay: 20ms; }
+.stagger > *:nth-child(2)  { animation-delay: 50ms; }
+.stagger > *:nth-child(3)  { animation-delay: 80ms; }
+.stagger > *:nth-child(4)  { animation-delay: 110ms; }
+.stagger > *:nth-child(5)  { animation-delay: 140ms; }
+.stagger > *:nth-child(6)  { animation-delay: 170ms; }
+.stagger > *:nth-child(7)  { animation-delay: 200ms; }
+.stagger > *:nth-child(8)  { animation-delay: 230ms; }
+.stagger > *:nth-child(9)  { animation-delay: 260ms; }
+.stagger > *:nth-child(10) { animation-delay: 290ms; }
+.stagger > *:nth-child(11) { animation-delay: 320ms; }
+.stagger > *:nth-child(12) { animation-delay: 350ms; }
+.stagger > *:nth-child(n+13) { animation-delay: 380ms; }
+
+/* ---------- Hover micro-interactions ---------- */
+.hover-lift {
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+  will-change: transform;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+.hover-scale {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+.hover-scale:hover { transform: scale(1.03); }
+.hover-glow {
+  transition: box-shadow var(--dur-base) var(--ease-out);
+}
+.hover-glow:hover {
+  box-shadow: 0 0 0 1px var(--accent-ring), 0 0 24px var(--accent-ring);
+}
+.press {
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.press:active { transform: scale(.96); }
+
+/* ---------- Animated gradient text ---------- */
+.gradient-text {
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3), var(--accent-1));
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: border-dance 6s linear infinite;
+}
+
+/* ---------- Aurora orb background layer ---------- */
+.aurora-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.aurora-orbs__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: .5;
+  will-change: transform;
+}
+.aurora-orbs__orb--1 {
+  width: 480px;
+  height: 480px;
+  top: -160px;
+  inset-inline-end: -120px;
+  background: radial-gradient(circle, rgba(168, 85, 247, .45), transparent 70%);
+  animation: float-slow 18s var(--ease-in-out) infinite;
+}
+.aurora-orbs__orb--2 {
+  width: 420px;
+  height: 420px;
+  bottom: -140px;
+  inset-inline-start: -100px;
+  background: radial-gradient(circle, rgba(236, 72, 153, .35), transparent 70%);
+  animation: float-slower 22s var(--ease-in-out) infinite;
+}
+.aurora-orbs__orb--3 {
+  width: 360px;
+  height: 360px;
+  top: 40%;
+  inset-inline-start: 45%;
+  background: radial-gradient(circle, rgba(6, 182, 212, .28), transparent 70%);
+  animation: breathe 12s var(--ease-in-out) infinite;
+}
+
+/* ---------- Confetti container ---------- */
+.confetti-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: var(--z-toast);
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: confetti-fall 2.6s var(--ease-out) forwards;
+}
+
+/* ---------- Ripple ---------- */
+.ripple-surface {
+  position: relative;
+  overflow: hidden;
+}
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .5);
+  transform: scale(0);
+  animation: ripple-expand .6s var(--ease-out) forwards;
+  pointer-events: none;
+}
+@keyframes ripple-expand {
+  to { transform: scale(2.6); opacity: 0; }
+}
+
+/* ---------- View transition ---------- */
+::view-transition-old(root) {
+  animation: fade-out 150ms var(--ease-out) both;
+}
+::view-transition-new(root) {
+  animation: fade-in 240ms var(--ease-out) both;
+}

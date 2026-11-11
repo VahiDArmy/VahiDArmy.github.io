@@ -1,0 +1,127 @@
+/* ============================================================
+   THEORIES STUDIO — Quill RTL overrides
+   ============================================================ */
+
+.ql-toolbar.ql-snow {
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-md) var(--r-md) 0 0 !important;
+  background: var(--bg-elev-2);
+  padding: 8px;
+  font-family: var(--font-sans);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.ql-container.ql-snow {
+  border: 1px solid var(--line) !important;
+  border-top: none !important;
+  border-radius: 0 0 var(--r-md) var(--r-md) !important;
+  background: var(--bg-elev);
+  font-family: var(--font-sans);
+  font-size: var(--fs-md);
+  color: var(--ink);
+  direction: rtl;
+}
+.ql-editor {
+  min-height: 220px;
+  line-height: var(--lh-relaxed);
+  padding: var(--s-4);
+  color: var(--ink);
+}
+.ql-editor.ql-blank::before {
+  color: var(--ink-faint);
+  font-style: normal;
+  left: auto;
+  right: var(--s-4);
+}
+.ql-editor h1 { font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); margin: 1em 0 .4em; }
+.ql-editor h2 { font-size: var(--fs-3xl); font-weight: var(--fw-bold); margin: 1em 0 .4em; }
+.ql-editor h3 { font-size: var(--fs-2xl); font-weight: var(--fw-bold); margin: 1em 0 .4em; }
+.ql-editor blockquote {
+  border-inline-start: 3px solid var(--accent-2);
+  padding-inline-start: var(--s-4);
+  margin: 1em 0;
+  color: var(--ink-soft);
+  background: var(--accent-grad-soft);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding-block: var(--s-2);
+}
+.ql-editor code,
+.ql-editor pre {
+  background: var(--bg-code);
+  border-radius: var(--r-xs);
+}
+.ql-editor pre.ql-syntax {
+  background: var(--bg-code);
+  color: var(--ink);
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  border: 1px solid var(--line-soft);
+}
+.ql-editor a {
+  color: var(--accent-1);
+  text-decoration: underline;
+}
+.ql-editor img {
+  border-radius: var(--r-md);
+  max-width: 100%;
+}
+
+.ql-snow .ql-stroke { stroke: var(--ink-soft); }
+.ql-snow .ql-fill { fill: var(--ink-soft); }
+.ql-snow .ql-picker { color: var(--ink-soft); }
+.ql-snow .ql-picker-options {
+  background: var(--bg-elev);
+  border: 1px solid var(--line) !important;
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+}
+.ql-snow .ql-picker-label { border: none; }
+.ql-snow .ql-picker-label:hover { color: var(--accent-1); }
+.ql-snow .ql-picker-label:hover .ql-stroke { stroke: var(--accent-1); }
+.ql-snow.ql-toolbar button {
+  border-radius: var(--r-xs);
+  transition: background-color var(--dur-fast);
+}
+.ql-snow.ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active {
+  background: var(--accent-soft) !important;
+  color: var(--accent-1) !important;
+}
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke { stroke: var(--accent-1) !important; }
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill { fill: var(--accent-1) !important; }
+.ql-snow .ql-tooltip {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+}
+.ql-snow .ql-tooltip input[type=text] {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  color: var(--ink);
+}
+.ql-snow .ql-tooltip a.ql-action,
+.ql-snow .ql-tooltip a.ql-remove { color: var(--accent-1); }
+
+/* Alignment for RTL */
+.ql-editor .ql-align-right { text-align: right; }
+.ql-editor .ql-align-center { text-align: center; }
+.ql-editor .ql-align-left { text-align: left; }
+.ql-editor .ql-align-justify { text-align: justify; }
+.ql-editor .ql-direction-rtl { direction: rtl; text-align: right; }
+.ql-editor .ql-direction-ltr { direction: ltr; text-align: left; }
+
+/* Editor container in forms */
+.editor-shell {
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+.editor-shell .ql-toolbar.ql-snow { border-radius: var(--r-md) var(--r-md) 0 0 !important; }
+.editor-shell .ql-container.ql-snow { border-radius: 0 0 var(--r-md) var(--r-md) !important; }
+.editor-shell.is-error .ql-toolbar.ql-snow,
+.editor-shell.is-error .ql-container.ql-snow { border-color: var(--danger) !important; }
