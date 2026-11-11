@@ -1,18 +1,18 @@
 /*!
  * debug.js — Floating error console for the نظریه app.
  *
- * Loaded FIRST in <body> so it catches every subsequent error
- * (module-load, CDN, syntax, runtime, unhandled rejections).
- *
- * Fixes in this revision:
- *   • Header no longer overflows off-screen: title truncates with
- *     ellipsis and buttons stay pinned (min-width:0 + flex-shrink:0).
- *   • Every error entry has its own "Copy" button.
- *   • Host uses pointer-events:none so it never blocks the app;
- *     only the badge and panel opt back in.
+ * Revision notes:
+ *   • Panel is now hard-capped on all four edges so it can never
+ *     leave the viewport: left/right anchored with max-width, and
+ *     top-safe with a max-height that respects 100dvh (mobile URL bar).
+ *   • Header uses CSS Grid with `minmax(0,1fr) auto` — the title
+ *     truncates with ellipsis and the action buttons stay pinned,
+ *     so header content can no longer overflow horizontally.
+ *   • Every error entry has its own “Copy” button.
+ *   • Uses env(safe-area-inset-*) so it stays clear of notches.
  *
  * To remove: delete this file and the marked <script> in index.html.
- * It does not touch app code, styles, storage keys, or global state
+ * Does not touch app code, styles, storage keys, or global state
  * beyond a read-only `window.__debug` helper and a `console.error`
  * tap that forwards to the original function unchanged.
  */
@@ -181,7 +181,7 @@
     return origError.apply(console, arguments);
   };
 
-  /* ---------- watchdog: did the app actually boot? ---------- */
+  /* ---------- watchdog ---------- */
   function checkBoot() {
     if (watchdogDone) return;
     var boot = document.querySelector("#app .boot-screen");
@@ -214,7 +214,7 @@
     }
   }
 
-  /* ---------- UI helpers ---------- */
+  /* ---------- helpers ---------- */
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
       return {
@@ -262,62 +262,141 @@
     });
   }
 
+  /* ---------- styles ---------- */
   function baseStyles() {
     return [
-      "*{box-sizing:border-box;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}",
+      /* reset inside shadow */
+      "*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;min-width:0}",
 
-      /* collapsed badge */
-      ".badge{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);user-select:none;border:none;color:#fff;transition:transform .15s,filter .15s;pointer-events:auto}",
+      /* ───── collapsed badge ───── */
+      ".badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);border:none;color:#fff;transition:transform .15s,filter .15s;pointer-events:auto;white-space:nowrap;line-height:1.2}",
       ".badge:hover{transform:translateY(-1px);filter:brightness(1.08)}",
       ".badge:active{transform:translateY(0)}",
       ".badge.has-errors{background:#dc2626}",
       ".badge.no-errors{background:#16a34a}",
-      ".badge .count{background:rgba(255,255,255,.25);padding:1px 7px;border-radius:10px;font-size:11px}",
-      ".badge .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:__dbg_pulse 1.5s infinite}",
+      ".badge .count{background:rgba(255,255,255,.25);padding:1px 7px;border-radius:10px;font-size:11px;line-height:1.4}",
+      ".badge .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:__dbg_pulse 1.5s infinite;flex-shrink:0}",
       "@keyframes __dbg_pulse{0%,100%{opacity:1}50%{opacity:.35}}",
 
-      /* panel */
-      ".panel{position:fixed;bottom:16px;left:16px;width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:#0b0b14;color:#e5e5f0;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a3a;pointer-events:auto}",
+      /* ───── panel — hard-capped on all edges ───── */
+      ".panel{",
+      "  position:fixed;",
+      "  bottom:max(12px, env(safe-area-inset-bottom, 0px));",
+      "  left:max(12px, env(safe-area-inset-left, 0px));",
+      "  right:max(12px, env(safe-area-inset-right, 0px));",
+      "  max-width:720px;",
+      "  max-height:min(600px, calc(100vh  - 24px));",
+      "  max-height:min(600px, calc(100dvh - 24px));",
+      "  background:#0b0b14;",
+      "  color:#e5e5f0;",
+      "  border:1px solid #2a2a3a;",
+      "  border-radius:12px;",
+      "  box-shadow:0 20px 60px rgba(0,0,0,.6);",
+      "  display:flex;",
+      "  flex-direction:column;",
+      "  overflow:hidden;",
+      "  pointer-events:auto;",
+      "  direction:ltr;",
+      "  isolation:isolate;",
+      "}",
 
-      /* header — the key fix */
-      ".head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#15151f;border-bottom:1px solid #2a2a3a;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;min-width:0}",
-      ".head .title{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".head .actions{display:flex;align-items:center;gap:6px;flex-shrink:0}",
-      ".head button{flex-shrink:0;background:transparent;border:1px solid #3a3a4a;color:#e5e5f0;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;white-space:nowrap;line-height:1.2}",
+      /* ───── header — grid, cannot overflow ───── */
+      ".head{",
+      "  display:grid;",
+      "  grid-template-columns:minmax(0, 1fr) auto;",
+      "  align-items:center;",
+      "  gap:8px;",
+      "  padding:10px 12px;",
+      "  background:#15151f;",
+      "  border-bottom:1px solid #2a2a3a;",
+      "  font-size:13px;",
+      "  font-weight:600;",
+      "  color:#fff;",
+      "  flex-shrink:0;",
+      "  min-width:0;",
+      "  overflow:hidden;",
+      "}",
+      ".head .title{",
+      "  min-width:0;",
+      "  overflow:hidden;",
+      "  text-overflow:ellipsis;",
+      "  white-space:nowrap;",
+      "}",
+      ".head .actions{",
+      "  display:flex;",
+      "  align-items:center;",
+      "  gap:6px;",
+      "  flex-shrink:0;",
+      "  overflow:visible;",
+      "}",
+      ".head button{",
+      "  flex-shrink:0;",
+      "  background:transparent;",
+      "  border:1px solid #3a3a4a;",
+      "  color:#e5e5f0;",
+      "  padding:4px 10px;",
+      "  border-radius:6px;",
+      "  cursor:pointer;",
+      "  font-size:11px;",
+      "  font-family:inherit;",
+      "  white-space:nowrap;",
+      "  line-height:1.2;",
+      "}",
       ".head button:hover{background:#2a2a3a}",
       ".head button.close{border-color:#7f1d1d;color:#fca5a5}",
       ".head button.close:hover{background:#7f1d1d;color:#fff}",
 
-      /* list */
-      ".list{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}",
-      ".empty{padding:40px 16px;text-align:center;color:#6b6b80;font-size:13px}",
+      /* ───── list ───── */
+      ".list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:10px;display:flex;flex-direction:column;gap:8px}",
+      ".empty{padding:40px 16px;text-align:center;color:#6b6b80;font-size:13px;line-height:1.5}",
 
-      /* item */
-      ".item{background:#15151f;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;border-left:3px solid #dc2626;min-width:0}",
+      /* ───── item ───── */
+      ".item{",
+      "  background:#15151f;",
+      "  border:1px solid #2a2a3a;",
+      "  border-radius:8px;",
+      "  padding:10px 12px;",
+      "  border-left:3px solid #dc2626;",
+      "  overflow:hidden;",
+      "}",
       ".item.type-script-load,.item.type-style-load,.item.type-resource-load{border-left-color:#f59e0b}",
       ".item.type-watchdog{border-left-color:#8b5cf6}",
       ".item.type-console-error{border-left-color:#f97316}",
       ".item.type-promise{border-left-color:#ec4899}",
       ".item-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;min-width:0}",
-      ".item-type{flex-shrink:0;font-size:10px;text-transform:uppercase;color:#a1a1b0;background:#242432;padding:2px 6px;border-radius:4px;letter-spacing:.05em}",
-      ".item-time{flex-shrink:0;font-size:10px;color:#6b6b80}",
-      ".item-copy{margin-inline-start:auto;flex-shrink:0;background:transparent;border:1px solid #3a3a4a;color:#a1a1b0;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit;line-height:1.4;transition:background .15s,border-color .15s,color .15s}",
+      ".item-type{flex-shrink:0;font-size:10px;text-transform:uppercase;color:#a1a1b0;background:#242432;padding:2px 6px;border-radius:4px;letter-spacing:.05em;line-height:1.4}",
+      ".item-time{flex-shrink:0;font-size:10px;color:#6b6b80;line-height:1.4}",
+      ".item-copy{",
+      "  margin-inline-start:auto;",
+      "  flex-shrink:0;",
+      "  background:transparent;",
+      "  border:1px solid #3a3a4a;",
+      "  color:#a1a1b0;",
+      "  padding:2px 8px;",
+      "  border-radius:4px;",
+      "  cursor:pointer;",
+      "  font-size:10px;",
+      "  font-family:inherit;",
+      "  line-height:1.5;",
+      "  transition:background .15s,border-color .15s,color .15s;",
+      "}",
       ".item-copy:hover{background:#2a2a3a;color:#fff;border-color:#4a4a5a}",
       ".item-copy.copied{background:#16a34a;border-color:#16a34a;color:#fff}",
       ".item-copy.failed{background:#dc2626;border-color:#dc2626;color:#fff}",
 
-      ".item-msg{font-size:13px;color:#fff;line-height:1.5;word-break:break-word;white-space:pre-wrap}",
-      ".item-detail{font-size:11px;color:#a1a1b0;margin-top:6px;padding:8px;background:#07070d;border-radius:4px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;line-height:1.5}",
-      ".item-url{font-size:10px;color:#6b6b80;margin-top:4px;word-break:break-all}",
+      /* long content cannot push the panel sideways */
+      ".item-msg{font-size:13px;color:#fff;line-height:1.5;overflow-wrap:anywhere;word-break:break-word;white-space:pre-wrap}",
+      ".item-detail{font-size:11px;color:#a1a1b0;margin-top:6px;padding:8px;background:#07070d;border-radius:4px;max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;line-height:1.5}",
+      ".item-url{font-size:10px;color:#6b6b80;margin-top:4px;overflow-wrap:anywhere;word-break:break-word}",
 
-      /* mobile refinements */
+      /* ───── mobile refinements ───── */
       "@media (max-width:480px){",
-      ".panel{width:calc(100vw - 24px);left:12px;bottom:12px;max-height:calc(100vh - 24px)}",
-      ".head{padding:8px 10px;gap:6px;font-size:12px}",
-      ".head button{padding:3px 7px;font-size:10px}",
-      ".item{padding:8px 10px}",
-      ".item-msg{font-size:12px}",
-      ".item-detail{font-size:10px;max-height:160px}",
+      "  .panel{bottom:max(8px, env(safe-area-inset-bottom, 0px));left:max(8px, env(safe-area-inset-left, 0px));right:max(8px, env(safe-area-inset-right, 0px));max-height:min(80dvh, calc(100dvh - 16px))}",
+      "  .head{padding:8px 10px;gap:6px;font-size:12px}",
+      "  .head button{padding:3px 7px;font-size:10px}",
+      "  .item{padding:8px 10px}",
+      "  .item-msg{font-size:12px}",
+      "  .item-detail{font-size:10px;max-height:140px}",
       "}",
     ].join("");
   }
@@ -346,6 +425,7 @@
     return host;
   }
 
+  /* ---------- panel markup ---------- */
   function panelHTML() {
     var count = errors.length;
     var listHTML = count
@@ -357,34 +437,16 @@
             var ss = String(t.getSeconds()).padStart(2, "0");
             var typeClass = String(e.type).replace(/[^a-z0-9]/gi, "-");
             return (
-              '<div class="item type-' +
-              escapeHtml(typeClass) +
-              '">' +
+              '<div class="item type-' + escapeHtml(typeClass) + '">' +
               '<div class="item-head">' +
-              '<span class="item-type">' +
-              escapeHtml(e.type) +
-              "</span>" +
-              '<span class="item-time">' +
-              hh +
-              ":" +
-              mm +
-              ":" +
-              ss +
-              "</span>" +
-              '<button type="button" class="item-copy" data-copy-index="' +
-              index +
-              '" title="Copy this error">Copy</button>' +
-              "</div>" +
-              '<div class="item-msg">' +
-              escapeHtml(e.message) +
-              "</div>" +
-              (e.detail
-                ? '<div class="item-detail">' + escapeHtml(e.detail) + "</div>"
-                : "") +
-              (e.url
-                ? '<div class="item-url">' + escapeHtml(e.url) + "</div>"
-                : "") +
-              "</div>"
+              '<span class="item-type">' + escapeHtml(e.type) + '</span>' +
+              '<span class="item-time">' + hh + ":" + mm + ":" + ss + '</span>' +
+              '<button type="button" class="item-copy" data-copy-index="' + index + '" title="Copy this error">Copy</button>' +
+              '</div>' +
+              '<div class="item-msg">' + escapeHtml(e.message) + '</div>' +
+              (e.detail ? '<div class="item-detail">' + escapeHtml(e.detail) + '</div>' : "") +
+              (e.url ? '<div class="item-url">' + escapeHtml(e.url) + '</div>' : "") +
+              '</div>'
             );
           })
           .join("")
@@ -393,20 +455,15 @@
     return (
       '<div class="panel" role="dialog" aria-label="Debug console">' +
       '<div class="head">' +
-      '<span class="title">Debug Console · ' +
-      count +
-      (count === 1 ? " error" : " errors") +
-      "</span>" +
+      '<span class="title">Debug Console · ' + count + (count === 1 ? " error" : " errors") + '</span>' +
       '<div class="actions">' +
       '<button type="button" data-action="copy">Copy All</button>' +
       '<button type="button" data-action="clear">Clear</button>' +
       '<button type="button" class="close" data-action="close">✕</button>' +
-      "</div>" +
-      "</div>" +
-      '<div class="list">' +
-      listHTML +
-      "</div>" +
-      "</div>"
+      '</div>' +
+      '</div>' +
+      '<div class="list">' + listHTML + '</div>' +
+      '</div>'
     );
   }
 
@@ -416,16 +473,12 @@
       function () {
         var original = btn.textContent;
         btn.textContent = "Copied!";
-        setTimeout(function () {
-          btn.textContent = original;
-        }, 1400);
+        setTimeout(function () { btn.textContent = original; }, 1400);
       },
       function () {
         var original = btn.textContent;
         btn.textContent = "Failed";
-        setTimeout(function () {
-          btn.textContent = original;
-        }, 1400);
+        setTimeout(function () { btn.textContent = original; }, 1400);
       }
     );
   }
@@ -436,7 +489,7 @@
     if (!entry) return;
     copyText(formatError(entry)).then(
       function () {
-        btn.textContent = "✓";
+        btn.textContent = "✓ Copied";
         btn.classList.add("copied");
         setTimeout(function () {
           btn.textContent = "Copy";
@@ -444,7 +497,7 @@
         }, 1400);
       },
       function () {
-        btn.textContent = "✕";
+        btn.textContent = "✕ Failed";
         btn.classList.add("failed");
         setTimeout(function () {
           btn.textContent = "Copy";
@@ -460,17 +513,11 @@
 
     if (!expanded) {
       shadow.innerHTML =
-        "<style>" +
-        baseStyles() +
-        "</style>" +
-        '<button type="button" class="badge ' +
-        (count > 0 ? "has-errors" : "no-errors") +
-        '" data-badge title="نظریه Debug Console — click to expand">' +
+        "<style>" + baseStyles() + "</style>" +
+        '<button type="button" class="badge ' + (count > 0 ? "has-errors" : "no-errors") + '" data-badge title="نظریه Debug Console — click to expand">' +
         (count > 0 ? '<span class="dot"></span>' : "✓") +
         "<span>Debug</span>" +
-        '<span class="count">' +
-        count +
-        "</span>" +
+        '<span class="count">' + count + "</span>" +
         "</button>";
       var badge = shadow.querySelector("[data-badge]");
       if (badge) {
@@ -530,24 +577,15 @@
 
   /* ---------- public API ---------- */
   window.__debug = {
-    getErrors: function () {
-      return errors.slice();
-    },
+    getErrors: function () { return errors.slice(); },
     clear: function () {
       errors = [];
       lastSeen = {};
       persist();
       render();
     },
-    show: function () {
-      expanded = true;
-      ensureHost();
-      render();
-    },
-    hide: function () {
-      expanded = false;
-      render();
-    },
+    show: function () { expanded = true; ensureHost(); render(); },
+    hide: function () { expanded = false; render(); },
     add: addError,
   };
 })();
