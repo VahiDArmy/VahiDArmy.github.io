@@ -300,3 +300,7 @@ export function debounceAsync(fn, wait = 300) {
     return lastPromise;
   };
 }
+
+/* Re-export date helpers so imports from "./utils.js" keep working.
+   The canonical implementation lives in ./date.js. */
+export { relativeFa } from "./date.js";
