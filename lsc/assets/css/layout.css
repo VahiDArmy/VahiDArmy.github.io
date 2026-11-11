@@ -301,6 +301,7 @@
   height: var(--topbar-h);
   display: flex;
   align-items: center;
+  justify-content: space-between; /* FIX: Ensures start and end are pushed apart even when center is hidden */
   gap: var(--s-4);
   padding: 0 var(--content-pad);
   background: var(--bg-glass-strong);
@@ -359,9 +360,12 @@
   border-radius: var(--r-xs);
   transition: background-color var(--dur-fast), color var(--dur-fast);
 }
-.breadcrumb__item:hover {
-  color: var(--ink);
-  background-color: var(--bg-soft);
+/* FIX: Prevent sticky hover background on touch devices */
+@media (hover: hover) {
+  .breadcrumb__item:not(.is-current):hover {
+    color: var(--ink);
+    background-color: var(--bg-soft);
+  }
 }
 .breadcrumb__item.is-current {
   color: var(--ink);

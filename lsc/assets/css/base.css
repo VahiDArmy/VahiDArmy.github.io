@@ -432,6 +432,10 @@ hr {
   margin: 0 var(--s-3);
 }
 
+/* ---------- Theme Icons Visibility (FIX) ---------- */
+html[data-theme="light"] .theme-icon-dark { display: none !important; }
+html[data-theme="dark"] .theme-icon-light { display: none !important; }
+
 /* ---------- Reduced motion ---------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
