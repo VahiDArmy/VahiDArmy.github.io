@@ -1,0 +1,48 @@
+{
+  "name": "نظریه‌ها — استودیوی ایده‌ها",
+  "short_name": "نظریه‌ها",
+  "description": "پلتفرم ثبت و سازمان‌دهی نظریه‌ها با اشیاء، تصاویر و خط زمان شمسی",
+  "lang": "fa-IR",
+  "dir": "rtl",
+  "start_url": "./index.html#/home",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f8f7ff",
+  "theme_color": "#7c3aed",
+  "categories": ["productivity", "education", "lifestyle"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%237c3aed'/%3E%3Cpath d='M60 132V60h25c19.2 0 30 9.6 30 24.6 0 14.7-10.8 24.6-30 24.6h-10.2V132H60Zm15-24h9.9c9.9 0 15.3-3.6 15.3-10.8s-5.4-10.8-15.3-10.8H75V108Z' fill='%23fff'/%3E%3Ccircle cx='140' cy='62' r='10' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%237c3aed'/%3E%3Cpath d='M160 352V160h66c51 0 80 26 80 65 0 39-29 65-80 65h-27v62h-39Zm39-64h26c26 0 40-9.6 40-28.8s-14-28.8-40-28.8h-26V288Z' fill='%23fff'/%3E%3Ccircle cx='374' cy='164' r='26' fill='%23fff' opacity='.85'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "نظریه جدید",
+      "short_name": "جدید",
+      "url": "./index.html#/theories/new",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%2310b981'/%3E%3Cpath d='M96 60v72M60 96h72' stroke='%23fff' stroke-width='14' stroke-linecap='round'/%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "گالری",
+      "short_name": "گالری",
+      "url": "./index.html#/gallery",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%2306b6d4'/%3E%3Crect x='52' y='52' width='88' height='88' rx='12' stroke='%23fff' stroke-width='10' fill='none'/%3E%3Ccircle cx='76' cy='78' r='10' fill='%23fff'/%3E%3Cpath d='M56 128l24-24 20 20 12-12 24 24' stroke='%23fff' stroke-width='8' fill='none' stroke-linejoin='round'/%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "خط زمان",
+      "short_name": "زمان",
+      "url": "./index.html#/timeline",
+      "icons": [{ "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='44' fill='%23ec4899'/%3E%3Cpath d='M70 56v80' stroke='%23fff' stroke-width='10' stroke-linecap='round'/%3E%3Ccircle cx='70' cy='70' r='8' fill='%23fff'/%3E%3Ccircle cx='70' cy='96' r='8' fill='%23fff'/%3E%3Ccircle cx='70' cy='122' r='8' fill='%23fff'/%3E%3Cpath d='M86 70h46M86 96h46M86 122h46' stroke='%23fff' stroke-width='8' stroke-linecap='round'/%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml" }]
+    }
+  ]
+}
