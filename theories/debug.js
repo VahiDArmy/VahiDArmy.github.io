@@ -1,13 +1,20 @@
 /*!
- * debug.js — Floating error panel for the نظریه app.
+ * debug.js — Floating error console for the نظریه app.
  *
- * Loaded FIRST in <body> so it can catch every subsequent error
- * (including module-load, CDN, syntax, runtime, and unhandled rejections).
+ * Loaded FIRST in <body> so it catches every subsequent error
+ * (module-load, CDN, syntax, runtime, unhandled rejections).
  *
- * To disable: delete this file and the marked <script> tag in index.html.
- * It does not touch app code, UI, styles, storage keys, or global state
- * beyond a read-only `window.__debug` helper and a `console.error` tap
- * that forwards to the original function unchanged.
+ * Fixes in this revision:
+ *   • Header no longer overflows off-screen: title truncates with
+ *     ellipsis and buttons stay pinned (min-width:0 + flex-shrink:0).
+ *   • Every error entry has its own "Copy" button.
+ *   • Host uses pointer-events:none so it never blocks the app;
+ *     only the badge and panel opt back in.
+ *
+ * To remove: delete this file and the marked <script> in index.html.
+ * It does not touch app code, styles, storage keys, or global state
+ * beyond a read-only `window.__debug` helper and a `console.error`
+ * tap that forwards to the original function unchanged.
  */
 (function () {
   "use strict";
@@ -63,15 +70,13 @@
     if (lastSeen[key] && now - lastSeen[key] < 700) return;
     lastSeen[key] = now;
 
-    var entry = {
+    errors.unshift({
       type: type,
       message: message || "(no message)",
       detail: detail || "",
       time: now,
       url: location.href,
-    };
-
-    errors.unshift(entry);
+    });
     if (errors.length > MAX_ERRORS) errors.length = MAX_ERRORS;
     persist();
 
@@ -90,7 +95,6 @@
   window.addEventListener(
     "error",
     function (event) {
-      /* resource load failure (capture phase) */
       if (event.target && event.target !== window && event.target.tagName) {
         var tag = String(event.target.tagName).toLowerCase();
         if (tag === "script") {
@@ -124,7 +128,6 @@
         return;
       }
 
-      /* runtime error */
       var msg = event.message || "Uncaught error";
       var detail = "";
       if (event.error) {
@@ -187,13 +190,21 @@
     if (errors.length > 0) {
       addError(
         "watchdog",
-        "Boot screen still visible after " + Math.round(performance.now()) + "ms (" + errors.length + " prior error" + (errors.length === 1 ? "" : "s") + ").",
+        "Boot screen still visible after " +
+          Math.round(performance.now()) +
+          "ms (" +
+          errors.length +
+          " prior error" +
+          (errors.length === 1 ? "" : "s") +
+          ").",
         "Likely cause: one of the modules in the boot chain threw or failed to import. Scroll up for the first error."
       );
     } else {
       addError(
         "watchdog",
-        "Boot screen still visible after " + Math.round(performance.now()) + "ms but no JS errors were caught.",
+        "Boot screen still visible after " +
+          Math.round(performance.now()) +
+          "ms but no JS errors were caught.",
         "Possible causes:\n" +
           "  • a script failed to load and the error event was suppressed\n" +
           "  • the CDN for Supabase was blocked (network)\n" +
@@ -203,7 +214,7 @@
     }
   }
 
-  /* ---------- UI ---------- */
+  /* ---------- UI helpers ---------- */
   function escapeHtml(str) {
     return String(str == null ? "" : str).replace(/[&<>"']/g, function (c) {
       return {
@@ -216,11 +227,47 @@
     });
   }
 
+  function formatError(e) {
+    if (!e) return "";
+    return (
+      "[" +
+      (e.type || "error") +
+      "] " +
+      (e.message || "") +
+      (e.detail ? "\n" + e.detail : "") +
+      (e.url ? "\nURL: " + e.url : "") +
+      "\nTime: " +
+      new Date(e.time || Date.now()).toISOString()
+    );
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function (resolve, reject) {
+      try {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        resolve();
+      } catch (err) {
+        reject(err);
+      }
+    });
+  }
+
   function baseStyles() {
     return [
-      ":host{all:initial}",
       "*{box-sizing:border-box;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}",
-      ".badge{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);user-select:none;border:none;color:#fff;transition:transform .15s,filter .15s}",
+
+      /* collapsed badge */
+      ".badge{position:relative;display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.35);user-select:none;border:none;color:#fff;transition:transform .15s,filter .15s;pointer-events:auto}",
       ".badge:hover{transform:translateY(-1px);filter:brightness(1.08)}",
       ".badge:active{transform:translateY(0)}",
       ".badge.has-errors{background:#dc2626}",
@@ -228,26 +275,50 @@
       ".badge .count{background:rgba(255,255,255,.25);padding:1px 7px;border-radius:10px;font-size:11px}",
       ".badge .dot{width:8px;height:8px;border-radius:50%;background:#fff;animation:__dbg_pulse 1.5s infinite}",
       "@keyframes __dbg_pulse{0%,100%{opacity:1}50%{opacity:.35}}",
-      ".panel{position:fixed;bottom:16px;left:16px;width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:#0b0b14;color:#e5e5f0;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a3a}",
-      ".head{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#15151f;border-bottom:1px solid #2a2a3a;font-size:13px;font-weight:600;color:#fff}",
-      ".head .title{flex:1}",
-      ".head button{background:transparent;border:1px solid #3a3a4a;color:#e5e5f0;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit}",
+
+      /* panel */
+      ".panel{position:fixed;bottom:16px;left:16px;width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:#0b0b14;color:#e5e5f0;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.6);display:flex;flex-direction:column;overflow:hidden;border:1px solid #2a2a3a;pointer-events:auto}",
+
+      /* header — the key fix */
+      ".head{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#15151f;border-bottom:1px solid #2a2a3a;font-size:13px;font-weight:600;color:#fff;flex-shrink:0;min-width:0}",
+      ".head .title{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".head .actions{display:flex;align-items:center;gap:6px;flex-shrink:0}",
+      ".head button{flex-shrink:0;background:transparent;border:1px solid #3a3a4a;color:#e5e5f0;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-family:inherit;white-space:nowrap;line-height:1.2}",
       ".head button:hover{background:#2a2a3a}",
       ".head button.close{border-color:#7f1d1d;color:#fca5a5}",
       ".head button.close:hover{background:#7f1d1d;color:#fff}",
-      ".list{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}",
+
+      /* list */
+      ".list{flex:1;min-height:0;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:8px}",
       ".empty{padding:40px 16px;text-align:center;color:#6b6b80;font-size:13px}",
-      ".item{background:#15151f;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;border-left:3px solid #dc2626}",
+
+      /* item */
+      ".item{background:#15151f;border:1px solid #2a2a3a;border-radius:8px;padding:10px 12px;border-left:3px solid #dc2626;min-width:0}",
       ".item.type-script-load,.item.type-style-load,.item.type-resource-load{border-left-color:#f59e0b}",
       ".item.type-watchdog{border-left-color:#8b5cf6}",
       ".item.type-console-error{border-left-color:#f97316}",
       ".item.type-promise{border-left-color:#ec4899}",
-      ".item-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}",
-      ".item-type{font-size:10px;text-transform:uppercase;color:#a1a1b0;background:#242432;padding:2px 6px;border-radius:4px;letter-spacing:.05em}",
-      ".item-time{font-size:10px;color:#6b6b80;margin-left:auto}",
-      ".item-msg{font-size:13px;color:#fff;line-height:1.5;word-break:break-word}",
+      ".item-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;min-width:0}",
+      ".item-type{flex-shrink:0;font-size:10px;text-transform:uppercase;color:#a1a1b0;background:#242432;padding:2px 6px;border-radius:4px;letter-spacing:.05em}",
+      ".item-time{flex-shrink:0;font-size:10px;color:#6b6b80}",
+      ".item-copy{margin-inline-start:auto;flex-shrink:0;background:transparent;border:1px solid #3a3a4a;color:#a1a1b0;padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit;line-height:1.4;transition:background .15s,border-color .15s,color .15s}",
+      ".item-copy:hover{background:#2a2a3a;color:#fff;border-color:#4a4a5a}",
+      ".item-copy.copied{background:#16a34a;border-color:#16a34a;color:#fff}",
+      ".item-copy.failed{background:#dc2626;border-color:#dc2626;color:#fff}",
+
+      ".item-msg{font-size:13px;color:#fff;line-height:1.5;word-break:break-word;white-space:pre-wrap}",
       ".item-detail{font-size:11px;color:#a1a1b0;margin-top:6px;padding:8px;background:#07070d;border-radius:4px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-word;line-height:1.5}",
       ".item-url{font-size:10px;color:#6b6b80;margin-top:4px;word-break:break-all}",
+
+      /* mobile refinements */
+      "@media (max-width:480px){",
+      ".panel{width:calc(100vw - 24px);left:12px;bottom:12px;max-height:calc(100vh - 24px)}",
+      ".head{padding:8px 10px;gap:6px;font-size:12px}",
+      ".head button{padding:3px 7px;font-size:10px}",
+      ".item{padding:8px 10px}",
+      ".item-msg{font-size:12px}",
+      ".item-detail{font-size:10px;max-height:160px}",
+      "}",
     ].join("");
   }
 
@@ -256,9 +327,19 @@
     if (!document.body) return null;
     host = document.createElement("div");
     host.id = "__debug_host__";
-    host.style.cssText =
-      "all:initial;position:fixed;bottom:16px;left:16px;z-index:2147483647;" +
-      "font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;";
+    host.style.cssText = [
+      "all:initial",
+      "position:fixed",
+      "bottom:16px",
+      "left:16px",
+      "z-index:2147483647",
+      "display:block",
+      "pointer-events:none",
+      "direction:ltr",
+      "text-align:left",
+      "font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace",
+      "color-scheme:dark",
+    ].join(";");
     document.body.appendChild(host);
     shadow = host.attachShadow({ mode: "open" });
     render();
@@ -269,7 +350,7 @@
     var count = errors.length;
     var listHTML = count
       ? errors
-          .map(function (e) {
+          .map(function (e, index) {
             var t = new Date(e.time);
             var hh = String(t.getHours()).padStart(2, "0");
             var mm = String(t.getMinutes()).padStart(2, "0");
@@ -290,6 +371,9 @@
               ":" +
               ss +
               "</span>" +
+              '<button type="button" class="item-copy" data-copy-index="' +
+              index +
+              '" title="Copy this error">Copy</button>' +
               "</div>" +
               '<div class="item-msg">' +
               escapeHtml(e.message) +
@@ -307,15 +391,17 @@
       : '<div class="empty">✓ No errors captured so far.</div>';
 
     return (
-      '<div class="panel">' +
+      '<div class="panel" role="dialog" aria-label="Debug console">' +
       '<div class="head">' +
       '<span class="title">Debug Console · ' +
       count +
       (count === 1 ? " error" : " errors") +
       "</span>" +
-      '<button type="button" data-action="copy">Copy</button>' +
+      '<div class="actions">' +
+      '<button type="button" data-action="copy">Copy All</button>' +
       '<button type="button" data-action="clear">Clear</button>' +
       '<button type="button" class="close" data-action="close">✕</button>' +
+      "</div>" +
       "</div>" +
       '<div class="list">' +
       listHTML +
@@ -324,48 +410,48 @@
     );
   }
 
-  function copyAll(btn) {
-    var text = errors
-      .map(function (e) {
-        return (
-          "[" +
-          e.type +
-          "] " +
-          e.message +
-          (e.detail ? "\n" + e.detail : "") +
-          (e.url ? "\nURL: " + e.url : "") +
-          "\nTime: " +
-          new Date(e.time).toISOString()
-        );
-      })
-      .join("\n\n---\n\n");
+  function handleCopyAll(btn) {
+    var text = errors.map(formatError).join("\n\n---\n\n");
+    copyText(text).then(
+      function () {
+        var original = btn.textContent;
+        btn.textContent = "Copied!";
+        setTimeout(function () {
+          btn.textContent = original;
+        }, 1400);
+      },
+      function () {
+        var original = btn.textContent;
+        btn.textContent = "Failed";
+        setTimeout(function () {
+          btn.textContent = original;
+        }, 1400);
+      }
+    );
+  }
 
-    var done = function () {
-      btn.textContent = "Copied!";
-      setTimeout(function () {
-        btn.textContent = "Copy";
-      }, 1400);
-    };
-
-    var fallbackCopy = function () {
-      try {
-        var ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.position = "fixed";
-        ta.style.opacity = "0";
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand("copy");
-        document.body.removeChild(ta);
-        done();
-      } catch (e) {}
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(fallbackCopy);
-    } else {
-      fallbackCopy();
-    }
+  function handleCopyOne(btn) {
+    var idx = parseInt(btn.getAttribute("data-copy-index"), 10);
+    var entry = errors[idx];
+    if (!entry) return;
+    copyText(formatError(entry)).then(
+      function () {
+        btn.textContent = "✓";
+        btn.classList.add("copied");
+        setTimeout(function () {
+          btn.textContent = "Copy";
+          btn.classList.remove("copied");
+        }, 1400);
+      },
+      function () {
+        btn.textContent = "✕";
+        btn.classList.add("failed");
+        setTimeout(function () {
+          btn.textContent = "Copy";
+          btn.classList.remove("failed");
+        }, 1400);
+      }
+    );
   }
 
   function render() {
@@ -410,8 +496,15 @@
           persist();
           render();
         } else if (action === "copy") {
-          copyAll(btn);
+          handleCopyAll(btn);
         }
+      });
+    });
+
+    shadow.querySelectorAll("[data-copy-index]").forEach(function (btn) {
+      btn.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        handleCopyOne(btn);
       });
     });
   }
