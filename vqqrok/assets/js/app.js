@@ -34,9 +34,10 @@ import {
   recordRead,
   currentUserName,
   refreshProfile,
-  startPresence,
-  stopPresence,
+  setTogetherHandlers,
+  syncTogether,
   publishReading,
+  publishReadingMode,
 } from "./db.js";
 import {
   loadSurah,
@@ -73,23 +74,42 @@ let authMode = "signin";
 let sessionReads = 0;
 
 /* ---------- حضور هم‌خوان + مود خواندن ---------- */
-let partnerState = { online: false, ayah: null, name: null, slot: null };
+let partnerState = { online: false, ayah: null, name: null, slot: null, hidden: false };
+/** وضعیت اتصال زنده: off (وارد نشده) | connecting | live | error — «آفلاین» فقط وقتی گفته می‌شود که خودمان وصل باشیم */
+let linkStatus = "off";
+let linkErrorToasted = false;
 let readingMode = false;
 /** فاصلهٔ زمانی بین آیه‌ها در مود خواندن (میلی‌ثانیه) — سرعت ثابت */
 const READING_PACE_MS = 3000;
 let readingTimer = null;
 
+function partnerLabel() {
+  if (linkStatus === "off") return db.user ? "—" : "وارد شو";
+  if (linkStatus === "connecting") return "در حال اتصال…";
+  if (linkStatus === "error") return "اتصال برقرار نیست";
+  if (!partnerState.online) return "آفلاین";
+  return partnerState.ayah ? `آیهٔ ${fa(partnerState.ayah)}` : "آنلاین";
+}
+
 function updateReadbar() {
   const me = $("#readbarMe");
   const partner = $("#readbarPartner");
   const partnerName = $("#readbarPartnerName");
+  const box = $("#readbarPartnerBtn");
   const myAyah = surahState.active || surahState.lastAyah || 1;
+  const present = linkStatus === "live" && partnerState.online;
   if (me) me.textContent = `آیهٔ ${fa(myAyah)}`;
-  if (partnerName) partnerName.textContent = partnerState.online ? (partnerState.name || "همراه") : "همراه";
-  if (partner) {
-    partner.textContent = partnerState.online && partnerState.ayah
-      ? `آیهٔ ${fa(partnerState.ayah)}`
-      : "آفلاین";
+  if (partnerName) partnerName.textContent = present ? (partnerState.name || "همراه") : "همراه";
+  if (partner) partner.textContent = partnerLabel();
+  if (box) {
+    const away = present && partnerState.hidden;
+    box.classList.toggle("is-away", away);
+    box.title =
+      linkStatus === "error"
+        ? "اتصال زنده برقرار نمی‌شود؛ اینترنت یا فیلترشکن را نگاه کن. سایت خودش دوباره تلاش می‌کند."
+        : away
+          ? "همراه الان روی صفحه نیست"
+          : "رفتن به آیهٔ همراه";
   }
 }
 
@@ -157,6 +177,7 @@ function setReadingMode(on) {
     const ayah = Math.max(1, Math.min(SITE.ayahCount, surahState.active || surahState.lastAyah || 1));
     setTrackedAyah(ayah);
     publishReading(ayah);
+    publishReadingMode(true);
     updateReadbar();
     syncPresence();
     startReadingTimer();
@@ -166,48 +187,55 @@ function setReadingMode(on) {
     document.body.classList.remove("is-reading");
     if (bar) bar.hidden = true;
     stopReadingTimer();
+    publishReadingMode(false);
     updateReadbar();
   }
 }
 
 function updatePartnerUi() {
-  if (!partnerState.online || !partnerState.ayah) {
+  const both = linkStatus === "live" && partnerState.online;
+  if (!both || !partnerState.ayah) {
     setPartnerAyah(null);
   } else {
     setPartnerAyah(partnerState.ayah, partnerState);
   }
   updateReadbar();
   // قلب هدر وقتی دو نفر وصل‌اند مثل نئون روشن می‌شود
-  const together = Boolean(partnerState.online);
-  document.body.classList.toggle("is-together", together);
-  $("#brand")?.classList.toggle("is-together", together);
+  document.body.classList.toggle("is-together", both);
+  $("#brand")?.classList.toggle("is-together", both);
 }
 
+/** از together.js: null یعنی همراه (در اتصال سالم) آنلاین نیست */
 function onPartnerPresence(info) {
-  if (!info?.online) {
-    partnerState = { online: false, ayah: null, name: null, slot: null };
-    updatePartnerUi();
-    return;
-  }
-  partnerState = {
-    online: true,
-    ayah: Number(info.ayah) || 1,
-    name: info.name || "همراه",
-    slot: info.slot ?? null,
-  };
-  // باگ قبلی: وقتی آنلاین بود UI به‌روز نمی‌شد
+  partnerState = info?.online
+    ? {
+        online: true,
+        ayah: Number(info.ayah) || null,
+        name: info.name || "همراه",
+        slot: info.slot ?? null,
+        hidden: Boolean(info.hidden),
+      }
+    : { online: false, ayah: null, name: null, slot: null, hidden: false };
   updatePartnerUi();
 }
 
-async function syncPresence() {
-  if (db.user && db.slot) {
-    await startPresence(onPartnerPresence);
-    const ayah = surahState.active || surahState.lastAyah || 1;
-    publishReading(ayah);
-  } else {
-    await stopPresence();
-    onPartnerPresence({ online: false });
+function onLinkStatus(status) {
+  linkStatus = status;
+  // وقتی خودمان قطعیم، از همراه چیزی نمی‌دانیم؛ نشان قدیمی را نگه نداریم
+  if (status !== "live") partnerState = { online: false, ayah: null, name: null, slot: null, hidden: false };
+  updatePartnerUi();
+  if (status === "live") linkErrorToasted = false;
+  if (status === "error" && !linkErrorToasted) {
+    linkErrorToasted = true;
+    toast("اتصال زنده به همراه برقرار نمی‌شود؛ سایت خودش دوباره تلاش می‌کند.", "warn", 5200);
   }
+}
+
+/** موقعیت و حالت فعلی را به together.js می‌دهد و آن را با حساب فعلی هماهنگ می‌کند (تکراری‌اش بی‌ضرر است) */
+function syncPresence() {
+  publishReading(surahState.active || surahState.lastAyah || 1);
+  publishReadingMode(readingMode);
+  return syncTogether();
 }
 
 /* ---------- ابزار ---------- */
@@ -1039,6 +1067,7 @@ async function boot() {
   buildJumpGrid();
   setSessionReads(0);
 
+  setTogetherHandlers({ onPartner: onPartnerPresence, onStatus: onLinkStatus });
   await initAuth();
   renderAuthState();
 

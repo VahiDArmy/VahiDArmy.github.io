@@ -6,6 +6,7 @@
   "description": "سایت سورهٔ واقعه برای دو نفر",
   "scripts": {
     "start": "python3 -m http.server 3000",
-    "test": "node tests/parser.test.mjs"
+    "test": "node tests/together.test.mjs && node tests/parser.test.mjs",
+    "test:together": "node tests/together.test.mjs"
   }
 }

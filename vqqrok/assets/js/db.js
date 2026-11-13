@@ -4,6 +4,7 @@
  */
 import { store, toast } from "./core.js";
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, SITE } from "./config.js";
+import { createTogether } from "./together.js";
 
 const RPC = {
   counters: "q56_counter_summary",
@@ -300,198 +301,36 @@ export function translateError(error) {
   return error?.message || "خطای نامشخص";
 }
 
-/* ---------- هم‌خوانی موقعیت خواندن ----------
- * Presence فقط برای آنلاین/آفلاین و نام.
- * Broadcast برای ارسال پیوستهٔ شمارهٔ آیه — ابزار درست برای به‌روزرسانی مکرر است.
+/* ---------- خواندن هم‌زمان ----------
+ * منطقش در together.js است (Presence تنها منبع حقیقت). اینجا فقط به حساب و کلاینت وصل می‌شود.
+ * publishReading / publishReadingMode را می‌شود هر وقت صدا زد، حتی پیش از ورود یا اتصال؛
+ * آخرین مقدار نگه داشته می‌شود و بعد از اتصال خودش فرستاده می‌شود.
  */
-let readingChannel = null;
-let partnerHandler = null;
-let lastBroadcastAyah = null;
-let lastBroadcastAt = 0;
-let heartbeatTimer = null;
-let partnerWatchTimer = null;
-let partnerLastSeen = 0;
+const togetherHandlers = { onPartner: null, onStatus: null };
 
-const HEARTBEAT_MS = 2000;
-const BROADCAST_EVENT = "ayah";
+const together = createTogether({
+  getClient: () => (isOnline() ? client : null),
+  getSelf: () =>
+    state.user && state.slot
+      ? {
+          uid: state.user.id,
+          slot: state.slot,
+          name: state.profile?.display_name || SITE.defaultNames?.[state.slot],
+        }
+      : null,
+  ayahCount: SITE.ayahCount,
+  onPartner: (partner) => togetherHandlers.onPartner?.(partner),
+  onStatus: (status, detail) => togetherHandlers.onStatus?.(status, detail),
+});
 
-function selfMeta(ayah) {
-  return {
-    uid: state.user?.id || null,
-    slot: state.slot,
-    name: state.profile?.display_name || SITE.defaultNames?.[state.slot] || "همراه",
-    ayah: Math.max(1, Math.min(96, Number(ayah) || 1)),
-    at: Date.now(),
-  };
+/** onPartner(null | {online, slot, name, ayah, reading, hidden}) و onStatus('off'|'connecting'|'live'|'error') */
+export function setTogetherHandlers({ onPartner, onStatus } = {}) {
+  togetherHandlers.onPartner = typeof onPartner === "function" ? onPartner : null;
+  togetherHandlers.onStatus = typeof onStatus === "function" ? onStatus : null;
 }
 
-function emitPartner(info) {
-  partnerHandler?.(info || { online: false });
-}
-
-/** آنلاین بودن فقط از presence — نه از تایمر مصنوعی */
-function partnerFromPresence() {
-  if (!readingChannel || !state.user) return null;
-  const map = readingChannel.presenceState() || {};
-  for (const [key, metas] of Object.entries(map)) {
-    if (key === state.user.id) continue;
-    const meta = Array.isArray(metas) ? metas[0] : metas;
-    if (!meta) continue;
-    return {
-      online: true,
-      slot: Number(meta.slot) || null,
-      name: meta.name || SITE.defaultNames?.[meta.slot] || "همراه",
-      ayah: Number(meta.ayah) || 1,
-      at: meta.at || null,
-    };
-  }
-  return null;
-}
-
-function onPresenceChange() {
-  const p = partnerFromPresence();
-  if (p) {
-    partnerLastSeen = Date.now();
-    emitPartner(p);
-  } else {
-    // فقط وقتی واقعاً از presence خارج شد آفلاین کن
-    emitPartner({ online: false });
-  }
-}
-
-function onBroadcastAyah({ payload }) {
-  if (!payload || !state.user) return;
-  if (payload.uid && payload.uid === state.user.id) return;
-  // اگر هنوز در presence نیست ولی broadcast می‌آید، آنلاین حساب کن
-  partnerLastSeen = Date.now();
-  emitPartner({
-    online: true,
-    slot: Number(payload.slot) || null,
-    name: payload.name || SITE.defaultNames?.[payload.slot] || "همراه",
-    ayah: Number(payload.ayah) || 1,
-    at: payload.at || Date.now(),
-  });
-}
-
-function stopHeartbeat() {
-  if (heartbeatTimer != null) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-  if (partnerWatchTimer != null) {
-    clearInterval(partnerWatchTimer);
-    partnerWatchTimer = null;
-  }
-}
-
-function startHeartbeat() {
-  stopHeartbeat();
-  // هر ۲ ثانیه: track + broadcast تا presence و آیه زنده بماند
-  heartbeatTimer = setInterval(() => {
-    if (!readingChannel || !state.user || !state.slot) return;
-    const num = lastBroadcastAyah;
-    if (num == null) return;
-    sendBroadcast(num, true);
-  }, HEARTBEAT_MS);
-  // فقط همگام‌سازی با presence — دیگر با تایمر آفلاین جعلی نمی‌سازیم
-  partnerWatchTimer = setInterval(() => {
-    const p = partnerFromPresence();
-    if (p) emitPartner(p);
-  }, 3000);
-}
-
-async function sendBroadcast(ayah, force = false) {
-  if (!readingChannel || !state.user || !state.slot) return;
-  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
-  const now = Date.now();
-  if (!force && num === lastBroadcastAyah && now - lastBroadcastAt < 120) return;
-  lastBroadcastAyah = num;
-  lastBroadcastAt = now;
-  const body = selfMeta(num);
-  try {
-    // اول presence (منبع حقیقت آنلاین بودن + آیه)
-    await readingChannel.track(body);
-  } catch (err) {
-    console.warn("[vaqia] presence track", err?.message || err);
-  }
-  try {
-    await readingChannel.send({
-      type: "broadcast",
-      event: BROADCAST_EVENT,
-      payload: body,
-    });
-  } catch (err) {
-    console.warn("[vaqia] broadcast", err?.message || err);
-  }
-}
-
-export async function startPresence(onPartner) {
-  partnerHandler = typeof onPartner === "function" ? onPartner : null;
-  if (!client || !state.user || !state.slot) {
-    partnerHandler?.({ online: false });
-    return { ok: false, reason: "auth" };
-  }
-  if (readingChannel) {
-    onPresenceChange();
-    startHeartbeat();
-    return { ok: true, reused: true };
-  }
-
-  const channel = client.channel("q56-reading", {
-    config: {
-      broadcast: { self: false },
-      presence: { key: state.user.id },
-    },
-  });
-  readingChannel = channel;
-
-  channel.on("presence", { event: "sync" }, onPresenceChange);
-  channel.on("presence", { event: "join" }, onPresenceChange);
-  channel.on("presence", { event: "leave" }, onPresenceChange);
-  channel.on("broadcast", { event: BROADCAST_EVENT }, onBroadcastAyah);
-
-  const status = await new Promise((resolve) => {
-    channel.subscribe((s) => {
-      if (s === "SUBSCRIBED" || s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") resolve(s);
-    });
-  });
-
-  if (status !== "SUBSCRIBED" || readingChannel !== channel) {
-    console.warn("[vaqia] reading channel", status);
-    try { await client.removeChannel(channel); } catch (_) {}
-    if (readingChannel === channel) readingChannel = null;
-    partnerHandler?.({ online: false });
-    return { ok: false, reason: status };
-  }
-
-  lastBroadcastAyah = null;
-  partnerLastSeen = 0;
-  onPresenceChange();
-  startHeartbeat();
-  return { ok: true };
-}
-
-/** ارسال آیهٔ فعلی به همراه (broadcast + presence) */
-export function publishReading(ayah) {
-  const num = Math.max(1, Math.min(96, Number(ayah) || 1));
-  if (!readingChannel || !state.user || !state.slot) {
-    lastBroadcastAyah = num;
-    return;
-  }
-  sendBroadcast(num, false);
-}
-
-export async function stopPresence() {
-  stopHeartbeat();
-  const ch = readingChannel;
-  readingChannel = null;
-  lastBroadcastAyah = null;
-  partnerLastSeen = 0;
-  if (ch) {
-    try {
-      await ch.untrack();
-      await client?.removeChannel(ch);
-    } catch (_) {}
-  }
-  partnerHandler?.({ online: false });
-}
+/** با حساب/جایگاه/نام فعلی هماهنگ می‌شود (وصل، قطع یا به‌روزرسانی). تکراری صدا زدنش بی‌ضرر است. */
+export const syncTogether = () => together.sync();
+export const stopTogether = () => together.stop();
+export const publishReading = (ayah) => together.setAyah(ayah);
+export const publishReadingMode = (on) => together.setReading(on);

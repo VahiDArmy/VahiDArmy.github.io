@@ -1239,6 +1239,11 @@ body.is-reading .hero { display: none; }
 }
 .readbar__partner strong { color: #1a7a4c; }
 html[data-theme="night"] .readbar__partner strong { color: #7ddea8; }
+/* متن‌های وضعیت («در حال اتصال…») در جای کم نشکنند */
+.readbar__partner strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* همراه وصل است ولی الان روی صفحه نیست */
+.readbar__partner { transition: opacity .25s ease; }
+.readbar__partner.is-away { opacity: .6; }
 .readbar__exit {
   flex-shrink: 0;
   padding: .35rem .7rem;
