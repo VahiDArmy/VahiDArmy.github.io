@@ -2,7 +2,6 @@
 // main.js — bootstrap: wires modules, loads state, handles global actions
 // ============================================================================
 
-import "./dev/watchdog.js";
 import { store, api, getTheme, getSettings, localDB } from "./store.js";
 import { loadModels } from "./models.js";
 import { initComposer, focusComposer, refreshFooter } from "./composer.js";
@@ -32,11 +31,12 @@ import { sb } from "./supabase.js";
 async function boot() {
   document.documentElement.setAttribute("data-theme", getTheme());
 
-  initRender();
-  initTopbar();
-  initSidebar();
-  initComposer();
-  initInspector();
+  try { initRender(); } catch (e) { console.error("[boot] initRender failed", e); }
+  try { initTopbar(); } catch (e) { console.error("[boot] initTopbar failed", e); }
+  try { initSidebar(); } catch (e) { console.error("[boot] initSidebar failed", e); }
+  try { initComposer(); } catch (e) { console.error("[boot] initComposer failed", e); }
+  try { initInspector(); } catch (e) { console.error("[boot] initInspector failed", e); }
+  
   wireGlobalButtons();
   wireStoreEvents();
   wireMessageActions();
@@ -193,8 +193,6 @@ function wireMessageActions() {
       }
     }
   });
-
-  // Right-click / keyboard shortcuts on messages could be added later
 }
 
 // ---------------------------------------------------------------------------

@@ -13,13 +13,20 @@ const els = {};
 function autoResize() {
   const t = els.input;
   if (!t) return;
-  // Reset height to 0 to get accurate scrollHeight, then apply max constraint
-  t.style.height = "0px"; 
-  const scrollH = t.scrollHeight;
-  const maxH = Math.round(window.innerHeight * 0.46);
   
-  t.style.height = Math.min(scrollH, maxH) + "px";
-  t.style.overflowY = scrollH > maxH ? "auto" : "hidden";
+  // Reset height to auto to correctly calculate scrollHeight
+  t.style.height = "auto";
+  
+  const maxH = Math.round(window.innerHeight * 0.46);
+  const scrollH = t.scrollHeight;
+  
+  if (scrollH > maxH) {
+    t.style.height = maxH + "px";
+    t.style.overflowY = "auto";
+  } else {
+    t.style.height = scrollH + "px";
+    t.style.overflowY = "hidden";
+  }
 }
 
 function updateCount() {
@@ -88,7 +95,6 @@ export function initComposer() {
   });
   
   els.input.addEventListener("keydown", (e) => {
-    // Ctrl+Enter or Cmd+Enter to submit. Enter creates a new line.
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.isComposing) {
       e.preventDefault();
       submit();
@@ -122,8 +128,8 @@ export function initComposer() {
   refreshSendState();
   refreshFooter();
   
-  // Initialize height on load
-  setTimeout(autoResize, 50);
+  // Initialize height exactly on load
+  setTimeout(autoResize, 10);
 }
 
 function refreshSendState() {

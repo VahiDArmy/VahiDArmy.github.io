@@ -184,6 +184,8 @@
   <div style="padding:2rem;font-family:sans-serif">برای استفاده از این برنامه باید جاوااسکریپت فعال باشد.</div>
 </noscript>
 
+<!-- Watchdog must load FIRST as a classic script to catch all module errors -->
+<script src="js/dev/watchdog.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>
