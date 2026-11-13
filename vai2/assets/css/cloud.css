@@ -1,0 +1,79 @@
+/* ============================================================
+   NEXUS CHAT — CLOUD SYNC STYLES
+   Shared polish for cloud-related UI elements across modules.
+   All critical styles are already injected by cloud-sync.js;
+   this file adds refinements and cross-module integrations.
+   ============================================================ */
+
+#nxCloudBtn {
+  position: relative;
+}
+
+.nx-cloud-modal .nx-cloud-stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.nx-cloud-context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 100px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.nx-cloud-context-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.nx-cloud-context-pill .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+}
+.nx-cloud-context-pill .dot.ok { background: var(--success); }
+.nx-cloud-context-pill .dot.pending { background: var(--warning); animation: pulse 1.4s infinite; }
+.nx-cloud-context-pill .dot.error { background: var(--danger); }
+.nx-cloud-context-pill .dot.off { opacity: 0.5; }
+
+.nx-cloud-inline-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: nx-cloud-spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+@keyframes nx-cloud-spin {
+  to { transform: rotate(360deg); }
+}
+
+.nx-cloud-queue-item .att {
+  font-weight: 700;
+}
+
+#nx-cloud-settings-hook .settings-input {
+  transition: all 0.15s;
+}
+#nx-cloud-settings-hook .settings-input:hover {
+  background: var(--accent-secondary) !important;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+
+@media print {
+  #nxCloudBtn,
+  .nx-cloud-overlay,
+  .nx-cloud-context-pill {
+    display: none !important;
+  }
+}

@@ -1,17 +1,6 @@
 /* ============================================================
    NEXUS CHAT — ONBOARDING TOUR
-   First-run tour + replayable guided walkthrough.
-
-   - 8-step tour with tooltip pointers
-   - "Don't show again" via localStorage
-   - Replay from sidebar
-   - Safe if target elements are missing
-   - Auto-loads polish.js so no index.html edit is needed
-
-   Public API:
-     window.Nexus.Onboarding.start()
-     window.Nexus.Onboarding.stop()
-     window.Nexus.Onboarding.reset()
+   First-run guided tour. Auth-gated: only starts once signed in.
    ============================================================ */
 (function () {
   'use strict';
@@ -45,7 +34,7 @@
       selector: '.top-bar-left .logo',
       placement: 'bottom',
       title: 'Welcome to Nexus Chat',
-      body: 'A privacy-first, single-page AI chat. Powered by OpenRouter’s free model pool. No account, no tracking.',
+      body: 'A privacy-first, single-page AI chat. Powered by OpenRouter’s free model pool. Sign in once, sync everywhere.',
     });
     if (q('#modelSelector')) s.push({
       selector: '#modelSelector',
@@ -63,7 +52,7 @@
       selector: '#newChatBtn',
       placement: 'bottom',
       title: 'Start a new chat',
-      body: 'Every conversation is saved locally. Organize them with folders, pin favorites, and archive what you don’t need.',
+      body: 'Every conversation is saved locally and to your account. Organize them with folders, pin favorites, and archive what you don’t need.',
     });
     if (q('#nxSearchBtn')) s.push({
       selector: '#nxSearchBtn',
@@ -89,7 +78,13 @@
       title: 'Tune everything',
       body: 'Temperature, top_p, system prompt, theme, font, density, advanced raw JSON params — all here. Click ⚙ once you’re ready.',
     });
-    if (q('#exactRequestBtn') || q('.top-bar-right .icon-btn[title*="exact"]')) s.push({
+    if (q('#nxCloudBtn')) s.push({
+      selector: '#nxCloudBtn',
+      placement: 'bottom',
+      title: 'Cloud sync',
+      body: 'Your chats, settings, and prompts are backed up to your account. Sign in on another device to see everything.',
+    });
+    if (q('.top-bar-right .icon-btn[title*="exact"]')) s.push({
       selector: '.top-bar-right .icon-btn[title*="exact"]',
       placement: 'bottom',
       title: 'See the exact request',
@@ -105,144 +100,30 @@
   function injectStyles() {
     if (document.getElementById('nx-onboarding-styles')) return;
     const css = `
-.nx-ob-backdrop {
-  position: fixed; inset: 0; z-index: 3100;
-  background: rgba(0, 0, 0, 0.72);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  transition: opacity 0.25s ease;
-  opacity: 0;
-}
-.nx-ob-backdrop.open { opacity: 1; }
-.nx-ob-spotlight {
-  position: absolute;
-  border-radius: 12px;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.72);
-  background: transparent;
-  pointer-events: none;
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 3101;
-}
-.nx-ob-tooltip {
-  position: absolute;
-  max-width: 340px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--accent-primary);
-  border-radius: 12px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 40px var(--accent-glow);
-  padding: 16px 18px;
-  z-index: 3102;
-  font-family: var(--font-sans);
-  color: var(--text-primary);
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-  transform: translateY(6px);
-}
-.nx-ob-tooltip.open {
-  opacity: 1;
-  transform: translateY(0);
-}
-.nx-ob-tooltip::before {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--accent-primary);
-  transform: rotate(45deg);
-}
-.nx-ob-tooltip[data-placement="bottom"]::before {
-  top: -6px; left: 24px;
-  border-right: none; border-bottom: none;
-}
-.nx-ob-tooltip[data-placement="top"]::before {
-  bottom: -6px; left: 24px;
-  border-left: none; border-top: none;
-}
-.nx-ob-tooltip[data-placement="right"]::before {
-  left: -6px; top: 24px;
-  border-right: none; border-top: none;
-}
-.nx-ob-tooltip[data-placement="left"]::before {
-  right: -6px; top: 24px;
-  border-left: none; border-bottom: none;
-}
-.nx-ob-step {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--accent-secondary);
-  margin-bottom: 6px;
-}
-.nx-ob-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  line-height: 1.3;
-}
-.nx-ob-body {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 14px;
-}
-.nx-ob-footer {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-.nx-ob-btn {
-  padding: 6px 14px;
-  border-radius: 7px;
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.nx-ob-btn:hover {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
-}
-.nx-ob-btn.primary {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: #fff;
-}
-.nx-ob-btn.primary:hover { background: var(--accent-secondary); }
-.nx-ob-btn.ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-tertiary);
-  padding: 6px 8px;
-}
-.nx-ob-btn.ghost:hover { color: var(--text-primary); }
-.nx-ob-dots {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  margin-left: auto;
-  margin-right: 6px;
-}
-.nx-ob-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--border-strong);
-  transition: all 0.2s;
-}
-.nx-ob-dot.active {
-  background: var(--accent-primary);
-  width: 18px; border-radius: 3px;
-}
-.nx-ob-dot.done {
-  background: var(--accent-secondary);
-  opacity: 0.6;
-}
+.nx-ob-backdrop{position:fixed;inset:0;z-index:3100;background:rgba(0,0,0,.72);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);transition:opacity .25s ease;opacity:0;}
+.nx-ob-backdrop.open{opacity:1;}
+.nx-ob-spotlight{position:absolute;border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.72);background:transparent;pointer-events:none;transition:all .28s cubic-bezier(.4,0,.2,1);z-index:3101;}
+.nx-ob-tooltip{position:absolute;max-width:340px;background:var(--bg-elevated);border:1px solid var(--accent-primary);border-radius:12px;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 40px var(--accent-glow);padding:16px 18px;z-index:3102;font-family:var(--font-sans);color:var(--text-primary);transition:all .28s cubic-bezier(.4,0,.2,1);opacity:0;transform:translateY(6px);}
+.nx-ob-tooltip.open{opacity:1;transform:translateY(0);}
+.nx-ob-tooltip::before{content:'';position:absolute;width:10px;height:10px;background:var(--bg-elevated);border:1px solid var(--accent-primary);transform:rotate(45deg);}
+.nx-ob-tooltip[data-placement="bottom"]::before{top:-6px;left:24px;border-right:none;border-bottom:none;}
+.nx-ob-tooltip[data-placement="top"]::before{bottom:-6px;left:24px;border-left:none;border-top:none;}
+.nx-ob-tooltip[data-placement="right"]::before{left:-6px;top:24px;border-right:none;border-top:none;}
+.nx-ob-tooltip[data-placement="left"]::before{right:-6px;top:24px;border-left:none;border-bottom:none;}
+.nx-ob-step{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--accent-secondary);margin-bottom:6px;}
+.nx-ob-title{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:8px;line-height:1.3;}
+.nx-ob-body{font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:14px;}
+.nx-ob-footer{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.nx-ob-btn{padding:6px 14px;border-radius:7px;border:1px solid var(--border-subtle);background:var(--bg-tertiary);color:var(--text-primary);font-family:var(--font-sans);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.nx-ob-btn:hover{background:var(--bg-hover);border-color:var(--border-strong);}
+.nx-ob-btn.primary{background:var(--accent-primary);border-color:var(--accent-primary);color:#fff;}
+.nx-ob-btn.primary:hover{background:var(--accent-secondary);}
+.nx-ob-btn.ghost{background:transparent;border-color:transparent;color:var(--text-tertiary);padding:6px 8px;}
+.nx-ob-btn.ghost:hover{color:var(--text-primary);}
+.nx-ob-dots{display:flex;gap:4px;align-items:center;margin-left:auto;margin-right:6px;}
+.nx-ob-dot{width:6px;height:6px;border-radius:50%;background:var(--border-strong);transition:all .2s;}
+.nx-ob-dot.active{background:var(--accent-primary);width:18px;border-radius:3px;}
+.nx-ob-dot.done{background:var(--accent-secondary);opacity:.6;}
 `;
     const style = document.createElement('style');
     style.id = 'nx-onboarding-styles';
@@ -269,7 +150,6 @@
      ============================================================ */
   function buildOverlay() {
     if (state.overlayEl) return;
-
     const backdrop = document.createElement('div');
     backdrop.className = 'nx-ob-backdrop';
     backdrop.id = 'nxObBackdrop';
@@ -290,20 +170,18 @@
   }
 
   /* ============================================================
-     POSITION TOOLTIP + SPOTLIGHT
+     POSITION
      ============================================================ */
   function positionForTarget(target, placement) {
     const pad = 8;
     const rect = target.getBoundingClientRect();
     state.lastRect = { ...rect };
-
     const sRect = {
       top: rect.top - pad,
       left: rect.left - pad,
       width: rect.width + pad * 2,
       height: rect.height + pad * 2,
     };
-
     state.spotlightEl.style.top = sRect.top + 'px';
     state.spotlightEl.style.left = sRect.left + 'px';
     state.spotlightEl.style.width = sRect.width + 'px';
@@ -311,8 +189,6 @@
 
     const tipEl = state.tooltipEl;
     tipEl.dataset.placement = placement || 'bottom';
-
-    // Render once so we can measure
     tipEl.style.visibility = 'hidden';
     tipEl.style.left = '0px';
     tipEl.style.top = '0px';
@@ -322,7 +198,6 @@
       const tipRect = tipEl.getBoundingClientRect();
       const margin = 12;
       let top, left;
-
       switch (placement) {
         case 'top':
           top = sRect.top - tipRect.height - margin;
@@ -336,19 +211,15 @@
           top = sRect.top + sRect.height / 2 - tipRect.height / 2;
           left = sRect.left - tipRect.width - margin;
           break;
-        case 'bottom':
         default:
           top = sRect.top + sRect.height + margin;
           left = sRect.left + sRect.width / 2 - tipRect.width / 2;
-          break;
       }
-
       const vw = window.innerWidth, vh = window.innerHeight;
       if (left < 12) left = 12;
       if (left + tipRect.width > vw - 12) left = vw - tipRect.width - 12;
       if (top < 12) top = 12;
       if (top + tipRect.height > vh - 12) top = vh - tipRect.height - 12;
-
       tipEl.style.left = left + 'px';
       tipEl.style.top = top + 'px';
       tipEl.style.visibility = 'visible';
@@ -362,17 +233,13 @@
     const step = steps[state.stepIndex];
     if (!step) return stop();
 
-    // Find target — could be hidden or missing
     let target = null;
     try { target = document.querySelector(step.selector); } catch (e) {}
     if (!target) {
-      // Skip this step
       state.stepIndex++;
       if (state.stepIndex >= steps.length) return stop({ completed: true });
       return renderStep(steps);
     }
-
-    // Ensure target is visible
     const r = target.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) {
       state.stepIndex++;
@@ -380,7 +247,6 @@
       return renderStep(steps);
     }
 
-    // Render tooltip content
     const tipEl = state.tooltipEl;
     const dotsHtml = steps.map((_, i) => {
       const cls = i === state.stepIndex ? 'active' : i < state.stepIndex ? 'done' : '';
@@ -415,11 +281,8 @@
     });
 
     positionForTarget(target, step.placement);
-
-    // Scroll target into view if off-screen
     if (r.top < 60 || r.bottom > window.innerHeight - 60) {
       target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // Re-position after scroll
       setTimeout(() => positionForTarget(target, step.placement), 350);
     }
   }
@@ -436,20 +299,13 @@
       }
       return;
     }
-
     buildOverlay();
     state.active = true;
     state.stepIndex = 0;
-
     state.overlayEl.classList.add('open');
     state.overlayEl.addEventListener('click', handleBackdropClick);
     document.addEventListener('keydown', handleKey);
-
-    // Reposition on resize / scroll
-    state.resizeHandler = () => {
-      if (!state.active) return;
-      renderStep(steps);
-    };
+    state.resizeHandler = () => { if (state.active) renderStep(steps); };
     window.addEventListener('resize', state.resizeHandler);
     state.scrollHandler = () => {
       if (!state.active) return;
@@ -459,14 +315,12 @@
       if (t) positionForTarget(t, step.placement);
     };
     window.addEventListener('scroll', state.scrollHandler, true);
-
     renderStep(steps);
   }
 
   function stop(opts = {}) {
     if (!state.active) return;
     state.active = false;
-
     if (state.overlayEl) state.overlayEl.classList.remove('open');
     if (state.spotlightEl) {
       state.spotlightEl.style.boxShadow = '0 0 0 0 transparent';
@@ -474,13 +328,11 @@
       state.spotlightEl.style.height = '0';
     }
     if (state.tooltipEl) state.tooltipEl.classList.remove('open');
-
     if (state.resizeHandler) window.removeEventListener('resize', state.resizeHandler);
     if (state.scrollHandler) window.removeEventListener('scroll', state.scrollHandler, true);
     document.removeEventListener('keydown', handleKey);
     state.resizeHandler = null;
     state.scrollHandler = null;
-
     if (opts.completed) {
       const s = loadState();
       s.completed = true;
@@ -514,7 +366,7 @@
   }
 
   /* ============================================================
-     RESET (from sidebar / API)
+     RESET
      ============================================================ */
   function reset() {
     saveState({ completed: false, dontShow: false });
@@ -531,7 +383,7 @@
     const header = document.querySelector('.sidebar-header');
     if (!header || document.getElementById('nxTourBtn')) return;
     const btn = document.createElement('button');
-    btn.className = 'nx-mm-sidebar-browse'; // reuse styles
+    btn.className = 'nx-mm-sidebar-browse';
     btn.id = 'nxTourBtn';
     btn.type = 'button';
     btn.title = 'Replay the guided tour';
@@ -546,7 +398,7 @@
   }
 
   /* ============================================================
-     AUTO-START ON FIRST RUN
+     AUTO-START (auth-gated)
      ============================================================ */
   function ready(fn) {
     if (window.__nexus && window.__nexus.ready) return fn();
@@ -556,10 +408,20 @@
   ready(() => {
     injectStyles();
     mountSidebarButton();
-    const s = loadState();
-    if (!s.completed && !s.dontShow) {
-      // Wait for models + features to mount
-      setTimeout(() => start(), 1400);
+
+    function maybeStart() {
+      const s = loadState();
+      if (s.completed || s.dontShow) return;
+      if (!window.Nexus?.Auth?.isAuthenticated?.()) return;
+      setTimeout(() => start(), 1200);
+    }
+
+    if (window.Nexus?.Auth?.isAuthenticated?.()) {
+      maybeStart();
+    } else {
+      window.addEventListener('nexus:auth-changed', (e) => {
+        if (e.detail?.user) maybeStart();
+      }, { once: true });
     }
   });
 
@@ -573,9 +435,6 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
   }
 
-  /* ============================================================
-     PUBLIC API
-     ============================================================ */
   window.Nexus = window.Nexus || {};
   window.Nexus.Onboarding = { start, stop, reset };
 })();

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenRouter Chat — Nexus</title>
 
+  <!-- Supabase client (must run before app module) -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     window.supabase = createClient(
@@ -14,6 +15,9 @@
   </script>
 
   <style>
+    /* ============================================================
+       BASE STYLES (self-contained — no external CSS required)
+       ============================================================ */
     :root {
       --bg-primary: #0a0a0f;
       --bg-secondary: #12121a;
@@ -654,30 +658,27 @@ function updateChatTitle(chatId, title) {
   }
 }
 
-/* ---------- Supabase ---------- */
+/* ---------- Supabase init (probes our own table only) ---------- */
 async function initSupabase() {
   try {
-    if (window.supabase) {
-      state.supabaseReady = true;
-      const { error } = await window.supabase.from('site_meta').select('id').limit(1);
-      if (error) console.warn('Supabase query error:', error.message);
-      else console.info('Supabase connected.');
+    if (!window.supabase) return;
+    state.supabaseReady = true;
+    // Probe our own table only. RLS returns empty (not error) when
+    // unauthenticated, so this also works before sign-in.
+    const { error } = await window.supabase.from('nexus_kv').select('k').limit(1);
+    if (error) {
+      console.warn('[nexus] cloud not ready:', error.message);
+      showToast(
+        'Cloud tables missing. Run supabase/nexus-auth-migration.sql in your Supabase SQL editor.',
+        'warning',
+        8000
+      );
+    } else {
+      console.info('[nexus] Supabase connected.');
     }
   } catch (e) {
-    console.warn('Supabase init failed (non-fatal):', e);
+    console.warn('[initSupabase] non-fatal:', e);
   }
-}
-async function persistMessageToSupabase(chatId, role, content, model) {
-  if (!state.supabaseReady || !window.supabase) return;
-  try {
-    if (role === 'user') {
-      await window.supabase.from('cinema_conversations').insert({
-        id: uid(), title_context: chatId,
-        prompt: content, response: '', ai_model: model || '',
-        created_at: nowISO(), updated_at: nowISO(),
-      });
-    }
-  } catch (e) { console.debug('Supabase persist skipped:', e.message); }
 }
 
 /* ---------- Model fetching ---------- */
@@ -1005,7 +1006,6 @@ async function sendMessage() {
   dom.chatInput.style.height = 'auto';
   renderActiveChat();
   runHooks('beforeMessageSend', chat, text);
-  persistMessageToSupabase(chat.id, 'user', text, state.activeModel.id);
   await streamAssistantResponse(chat);
   runHooks('afterMessageSend', chat);
 }
@@ -1377,10 +1377,10 @@ init();
    be picked up automatically. Missing files are silently skipped.
    ============================================================ */
 const POTENTIAL_FEATURES = [
+  'auth',
   'search',
   'folders',
   'branching',
-  // future modules can be added here without touching anything else:
   'export', 'voice', 'prompt-library', 'compare', 'attachments',
   'analytics', 'cloud-sync', 'onboarding', 'regenerate', 'templates',
   'shortcuts', 'plugins', 'markdown-extras',
