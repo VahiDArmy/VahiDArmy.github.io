@@ -7,6 +7,90 @@
 <meta name="description" content="معراج — چت هوش مصنوعی با مدل‌های رایگان OpenRouter" />
 <title>معراج · چت هوش مصنوعی</title>
 
+<!-- ============================================================
+     FATAL ERROR HANDLER  ·  must run before anything else
+     If any script fails to load or throws, we render a visible
+     banner at the top of the page with the raw error message.
+     ============================================================ -->
+<script>
+(function(){
+  window.__MIRAJ_BOOT_OK__ = false;
+
+  var errEl = null;
+  function ensureErrorBanner() {
+    if (errEl) return errEl;
+    errEl = document.createElement("div");
+    errEl.id = "__miraj_fatal__";
+    errEl.style.cssText =
+      "position:fixed;top:0;left:0;right:0;max-height:55vh;overflow:auto;" +
+      "background:#b3132b;color:#fff;padding:14px 44px 14px 16px;" +
+      "font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;" +
+      "line-height:1.6;z-index:2147483647;white-space:pre-wrap;" +
+      "word-break:break-word;direction:ltr;text-align:left;" +
+      "border-bottom:2px solid #000;box-shadow:0 8px 24px rgba(0,0,0,.5);";
+    var close = document.createElement("button");
+    close.textContent = "×";
+    close.title = "Dismiss";
+    close.style.cssText =
+      "position:absolute;top:8px;right:8px;background:#fff;color:#b3132b;" +
+      "border:0;border-radius:4px;width:26px;height:26px;cursor:pointer;" +
+      "font-size:16px;font-weight:700;font-family:sans-serif;line-height:1;";
+    close.onclick = function(){ errEl.remove(); errEl = null; };
+    errEl.appendChild(close);
+    var head = document.createElement("div");
+    head.id = "__miraj_fatal_head__";
+    head.style.cssText = "font-weight:700;margin-bottom:8px;color:#ffd2d2;";
+    head.textContent = "● Application Error — please report this";
+    errEl.appendChild(head);
+    var body = document.createElement("div");
+    body.id = "__miraj_fatal_body__";
+    errEl.appendChild(body);
+    document.body.appendChild(errEl);
+    return errEl;
+  }
+
+  function reportLine(text) {
+    var banner = ensureErrorBanner();
+    var body = banner.querySelector("#__miraj_fatal_body__");
+    var line = document.createElement("div");
+    line.style.cssText =
+      "padding:6px 8px;margin:4px 0;background:rgba(0,0,0,.25);border-radius:4px;";
+    line.textContent = text;
+    body.appendChild(line);
+  }
+
+  // Capture resource / script load errors (like 404 on .js files)
+  window.addEventListener("error", function(e){
+    if (e && e.message) {
+      reportLine(
+        "[ERROR] " + e.message +
+        (e.filename ? "  @  " + e.filename.split("/").pop() + ":" + (e.lineno||"?") + ":" + (e.colno||"?") : "")
+      );
+    } else if (e && e.target && e.target.tagName) {
+      var src = e.target.src || e.target.href || "";
+      reportLine("[LOAD] failed to load <" + e.target.tagName.toLowerCase() + ">  " + src);
+    }
+  }, true);
+
+  window.addEventListener("unhandledrejection", function(e){
+    var reason = e && e.reason;
+    var msg = (reason && (reason.message || reason.toString())) || String(reason);
+    var stack = (reason && reason.stack) || "";
+    reportLine("[PROMISE] " + msg + (stack ? "\n" + stack.split("\n").slice(0,4).join("\n") : ""));
+  });
+
+  // Watchdog: verify main.js loaded and booted
+  setTimeout(function(){
+    if (!window.__MIRAJ_BOOT_OK__) {
+      reportLine(
+        "[BOOT] main.js never completed initialization. " +
+        "Check that all /js/*.js files exist and the browser network tab is not showing 404s."
+      );
+    }
+  }, 4000);
+})();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -138,7 +222,7 @@
       </div>
 
       <div class="composer__box" id="composerBox">
-        <textarea id="composerInput" rows="1" spellcheck="false"
+        <textarea id="composerInput" rows="1" spellcheck="false" wrap="soft"
           placeholder="پیام خود را بنویسید…  (Ctrl+Enter ارسال · Enter خط جدید)"></textarea>
 
         <div class="composer__actions">
@@ -184,7 +268,6 @@
   <div style="padding:2rem;font-family:sans-serif">برای استفاده از این برنامه باید جاوااسکریپت فعال باشد.</div>
 </noscript>
 
-<!-- Watchdog must load FIRST as a classic script to catch all module errors -->
 <script src="js/dev/watchdog.js"></script>
 <script type="module" src="js/main.js"></script>
 </body>

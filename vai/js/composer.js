@@ -1,5 +1,10 @@
 // ============================================================================
-// composer.js — input area, edit mode, send / stop
+// composer.js — textarea + edit mode + send / stop
+// The textarea uses a bulletproof resize:
+//   1. set inline height to 'auto'
+//   2. read scrollHeight (content height + padding)
+//   3. clamp to max & assign
+// CSS sets line-height: 22px, padding: 8px 12px → 1 line = 38px exactly.
 // ============================================================================
 
 import { store, getSettings } from "./store.js";
@@ -13,13 +18,16 @@ const els = {};
 function autoResize() {
   const t = els.input;
   if (!t) return;
-  
-  // Reset height to auto to correctly calculate scrollHeight
+
+  // Reset height to 'auto' so we can read the natural content height.
   t.style.height = "auto";
-  
-  const maxH = Math.round(window.innerHeight * 0.46);
+  // Force reflow in some browsers so scrollHeight reflects new value.
+  // (Touching offsetHeight is enough.)
+  void t.offsetHeight;
+
   const scrollH = t.scrollHeight;
-  
+  const maxH = Math.round(window.innerHeight * 0.46);
+
   if (scrollH > maxH) {
     t.style.height = maxH + "px";
     t.style.overflowY = "auto";
@@ -31,7 +39,7 @@ function autoResize() {
 
 function updateCount() {
   const v = els.input?.value || "";
-  els.count.textContent = v ? `${faInt(v.length)}` : "";
+  els.count.textContent = v ? faInt(v.length) : "";
 }
 
 function enterEditMode(id) {
@@ -88,19 +96,25 @@ export function initComposer() {
   els.hint = document.getElementById("composerHint");
   els.ctx = document.getElementById("composerCtx");
 
+  if (!els.input) {
+    console.error("[composer] #composerInput not found in DOM");
+    return;
+  }
+
   els.input.addEventListener("input", () => {
     autoResize();
     updateCount();
     refreshFooter();
   });
-  
+
+  // Ctrl/Cmd + Enter sends. Plain Enter inserts a newline.
   els.input.addEventListener("keydown", (e) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !e.isComposing) {
       e.preventDefault();
       submit();
     }
   });
-  
+
   els.send.addEventListener("click", submit);
   els.stop.addEventListener("click", () => {
     cancelStream();
@@ -127,9 +141,10 @@ export function initComposer() {
 
   refreshSendState();
   refreshFooter();
-  
-  // Initialize height exactly on load
-  setTimeout(autoResize, 10);
+
+  // Force textarea to its correct height as soon as layout settles.
+  requestAnimationFrame(autoResize);
+  setTimeout(autoResize, 30);
 }
 
 function refreshSendState() {

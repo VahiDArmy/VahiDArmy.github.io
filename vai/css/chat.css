@@ -1,5 +1,5 @@
 /* ==========================================================================
-   chat.css — message bubbles, actions, streaming, thinking, code, payload
+   chat.css — messages, streaming, code blocks, payload viewer, composer textarea
    ========================================================================== */
 
 .msg{
@@ -452,39 +452,6 @@ html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
 .msg__status .spinner{ width: 12px; height: 12px; border-width: 1.8px; }
 .msg__status--err{ color: var(--danger); }
 
-.sys-sep{
-  display: flex; align-items: center; gap: 10px;
-  padding: 14px 0 8px;
-  font-size: 10.5px;
-  color: var(--text-4);
-  text-transform: uppercase;
-  letter-spacing: .7px;
-  font-weight: 700;
-}
-.sys-sep::before, .sys-sep::after{
-  content: ""; flex: 1 1 auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-}
-
-.jump-pill{
-  position: absolute;
-  bottom: 12px; inset-inline-start: 50%;
-  transform: translateX(50%);
-  background: var(--bg-3);
-  border: 1px solid var(--border-strong);
-  color: var(--text-2);
-  border-radius: 99px;
-  padding: 6px 12px;
-  font-size: 11px;
-  font-weight: 600;
-  display: inline-flex; align-items: center; gap: 6px;
-  box-shadow: var(--sh-2);
-  z-index: 6;
-  animation: popIn .2s var(--ease-out);
-}
-.jump-pill:hover{ color: var(--text); background: var(--bg-4); }
-
 .usage-row{
   display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin-top: 6px;
@@ -495,23 +462,28 @@ html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
 .usage-row span{ display: inline-flex; align-items: center; gap: 3px; }
 .usage-row b{ color: var(--text-2); font-weight: 600; }
 
+/* ==========================================================================
+   COMPOSER TEXTAREA — bulletproof one-line height.
+   line-height: 22px  ×  1 line  +  padding 8px×2  =  38px exact.
+   JS sets height to scrollHeight after each input.
+   ========================================================================== */
 #composerInput{
+  display: block;
   width: 100%;
+  min-height: 0;
   box-sizing: border-box;
   resize: none;
-  background: none;
   border: 0;
   outline: none;
-  padding: 10px 12px;
+  background: transparent;
+  font-family: inherit;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 22px;
+  padding: 8px 12px;
   color: var(--text);
   overflow-y: hidden;
-  /* 
-    This min-height ensures a single line renders correctly without jumping.
-    1.75 (line-height) * 14px (font-size) = 24.5px. Plus 20px padding = 44.5px.
-  */
-  min-height: 44.5px;
-  max-height: 46vh;
+  overflow-x: hidden;
+  /* 22px line + 8px top pad + 8px bottom pad = 38px */
+  height: 38px;
 }
 #composerInput::placeholder{ color: var(--text-4); }

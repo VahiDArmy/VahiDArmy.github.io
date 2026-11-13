@@ -1,11 +1,11 @@
 // ============================================================================
-// main.js — bootstrap: wires modules, loads state, handles global actions
+// main.js — bootstrap
 // ============================================================================
 
-import { store, api, getTheme, getSettings, localDB } from "./store.js";
+import { store, api, getTheme, getSettings } from "./store.js";
 import { loadModels } from "./models.js";
 import { initComposer, focusComposer, refreshFooter } from "./composer.js";
-import { initSidebar, renderSidebar, startNewChat, openConversation } from "./sidebar.js";
+import { initSidebar, renderSidebar, startNewChat } from "./sidebar.js";
 import { initTopbar } from "./topbar.js";
 import { initInspector } from "./panels/inspector.js";
 import { openSettingsModal } from "./panels/settings.js";
@@ -13,36 +13,47 @@ import { openModelsModal } from "./panels/models.js";
 import { openPayloadModal } from "./ui/payload.js";
 import { initRender, renderThread, patchStreamingMessage, showEmpty, hideEmpty, scrollThreadToMessage } from "./chat/render.js";
 import {
-  sendMessage,
   regenerateFrom,
   deleteMessageById,
   loadMessagesFor,
   setEditing,
-  isStreaming,
 } from "./chat/session.js";
-import { emitter, copyText, debounce } from "./utils.js";
+import { emitter, copyText } from "./utils.js";
 import { toast } from "./ui/toast.js";
 import { confirmDialog } from "./ui/modal.js";
 import { sb } from "./supabase.js";
+
+console.log("[Miraj] main.js module loaded, waiting for DOM ready");
 
 // ---------------------------------------------------------------------------
 // boot
 // ---------------------------------------------------------------------------
 async function boot() {
-  document.documentElement.setAttribute("data-theme", getTheme());
+  console.log("[Miraj] boot starting");
 
-  try { initRender(); } catch (e) { console.error("[boot] initRender failed", e); }
-  try { initTopbar(); } catch (e) { console.error("[boot] initTopbar failed", e); }
-  try { initSidebar(); } catch (e) { console.error("[boot] initSidebar failed", e); }
-  try { initComposer(); } catch (e) { console.error("[boot] initComposer failed", e); }
-  try { initInspector(); } catch (e) { console.error("[boot] initInspector failed", e); }
-  
-  wireGlobalButtons();
-  wireStoreEvents();
-  wireMessageActions();
-  wireKeyboard();
+  try {
+    document.documentElement.setAttribute("data-theme", getTheme());
+  } catch (e) {
+    console.error("[boot] theme init failed", e);
+  }
 
-  showEmpty((prompt) => focusComposer(prompt));
+  const steps = [
+    ["render",     () => initRender()],
+    ["topbar",     () => initTopbar()],
+    ["sidebar",    () => initSidebar()],
+    ["composer",   () => initComposer()],
+    ["inspector",  () => initInspector()],
+    ["buttons",    () => wireGlobalButtons()],
+    ["storeEvents",() => wireStoreEvents()],
+    ["msgActions", () => wireMessageActions()],
+    ["keyboard",   () => wireKeyboard()],
+    ["emptyState", () => showEmpty((p) => focusComposer(p))],
+  ];
+
+  for (const [name, fn] of steps) {
+    try { fn(); console.log("[Miraj] ✓ " + name); }
+    catch (e) { console.error("[Miraj] ✗ " + name + " failed:", e); }
+  }
 
   // Backend status
   setBackendStatus("busy", "در حال اتصال…");
@@ -54,7 +65,7 @@ async function boot() {
     .catch(() => setBackendStatus("warn", "حالت محلی (بدون Supabase)"));
 
   // Models
-  loadModels().catch((e) => toast.err(String(e.message || e), "خطا در دریافت مدل‌ها"));
+  loadModels().catch((e) => console.error("[Miraj] loadModels failed:", e));
 
   // Conversations
   store.set({ convsLoading: true });
@@ -74,10 +85,13 @@ async function boot() {
     }
   } catch (e) {
     store.set({ convsLoading: false, convsError: String(e.message || e) }, "convs:change");
-    toast.err(String(e.message || e), "خطا در بارگذاری گفتگوها");
+    console.error("[Miraj] conversation loading failed:", e);
   }
 
   refreshFooter();
+
+  window.__MIRAJ_BOOT_OK__ = true;
+  console.log("[Miraj] boot complete ✓");
 }
 
 // ---------------------------------------------------------------------------
@@ -175,7 +189,6 @@ function wireMessageActions() {
       return;
     }
 
-    // copy-code inside markdown blocks
     const copyCode = e.target.closest('[data-act="copy-code"]');
     if (copyCode) {
       const block = copyCode.closest(".codeblock");
@@ -223,4 +236,9 @@ function wireKeyboard() {
 // ---------------------------------------------------------------------------
 // go
 // ---------------------------------------------------------------------------
-document.addEventListener("DOMContentLoaded", boot);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  // DOM already parsed (e.g. module loaded after parse)
+  boot();
+}
