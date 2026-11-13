@@ -9,7 +9,7 @@
 
 .app-shell{
   display:grid;grid-template-columns:280px 1fr;
-  height:100vh;width:100vw;background:var(--bg);color:var(--text);overflow:hidden;
+  height:100%;width:100%;background:var(--bg);color:var(--text);overflow:hidden;
 }
 .sidebar{
   display:flex;flex-direction:column;min-height:0;
@@ -49,6 +49,7 @@
   display:flex;align-items:center;gap:10px;padding:10px 16px;height:56px;flex-shrink:0;
   border-bottom:1px solid var(--border);background:var(--bg-elev);
   position:relative;z-index:15;
+  padding-top: max(10px, env(safe-area-inset-top));
 }
 .topbar-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .topbar-right{display:flex;align-items:center;gap:6px}
@@ -65,6 +66,8 @@
     position:fixed;inset:0 auto 0 0;width:min(88vw,300px);
     transform:translateX(-100%);transition:transform var(--duration-slow) var(--ease);
     box-shadow:var(--shadow-lg);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
   }
   .sidebar.open{transform:translateX(0)}
   .mobile-menu-btn{display:inline-flex}
