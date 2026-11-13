@@ -2,7 +2,6 @@
    panels.css — models drawer, settings, inspector, context report, details
    ========================================================================== */
 
-/* ------------------------- models panel ------------------------- */
 .models-panel{
   display: flex;
   flex-direction: column;
@@ -17,6 +16,7 @@
   background: color-mix(in srgb, var(--bg-1) 55%, transparent);
   position: sticky; top: 0; z-index: 3;
   backdrop-filter: blur(10px);
+  flex: 0 0 auto;
 }
 .models-panel__search{
   flex: 1 1 200px; min-width: 160px;
@@ -142,7 +142,6 @@
   font-size: 12px;
 }
 
-/* ------------------------- inspector (context) ------------------------- */
 .ctx-hero{
   display: flex; flex-direction: column; align-items: center;
   padding: 12px 4px 16px;
@@ -283,7 +282,6 @@
 .ctx-msgtable td.role[data-role="assistant"]{ color: var(--accent-2); }
 .ctx-msgtable td.role[data-role="system"]{ color: var(--warn); }
 
-/* ------------------------- settings ------------------------- */
 .settings{
   display: flex; flex-direction: column;
   gap: 18px;
@@ -324,7 +322,6 @@
   display: flex; flex-direction: column; gap: 8px;
 }
 
-/* ------------------------- about / help ------------------------- */
 .about-box{
   padding: 16px;
   border-radius: var(--r-m);
@@ -344,7 +341,6 @@
 .about-box h3{ font-size: 14px; margin-bottom: 2px; }
 .about-box p{ font-size: 11.5px; color: var(--text-3); line-height: 1.75; }
 
-/* ------------------------- payload inspector tabs ------------------------- */
 .raw-tabbar{
   display: flex; align-items: center; gap: 6px;
   padding: 10px 14px;
@@ -353,7 +349,6 @@
 }
 .raw-tabbar__title{ font-size: 12px; font-weight: 700; flex: 1 1 auto; }
 
-/* ------------------------- key value display ------------------------- */
 .kv{
   display: grid;
   grid-template-columns: max-content 1fr;
@@ -363,7 +358,6 @@
 .kv dt{ color: var(--text-4); font-weight: 600; }
 .kv dd{ color: var(--text); margin: 0; font-family: var(--font-mono); word-break: break-all; }
 
-/* ------------------------- confirm dialog ------------------------- */
 .confirm-msg{
   padding: 4px 2px 8px;
   font-size: 13px;

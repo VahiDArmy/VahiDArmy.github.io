@@ -2,21 +2,21 @@
    chat.css — message bubbles, actions, streaming, thinking, code, payload
    ========================================================================== */
 
-/* ------------------------- message layout ------------------------- */
 .msg{
   position: relative;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 11px;
-  padding-block: 11px;
+  display: flex;
+  gap: 12px;
+  width: 100%;
   animation: fadeUp .26s var(--ease-out) both;
   scroll-margin-top: 12px;
 }
-.msg + .msg{ border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent); }
 
-.msg__rail{ display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 2px; }
+.msg__rail{
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 2px;
+  flex: 0 0 auto;
+}
 .msg__avatar{
-  width: 30px; height: 30px; flex: 0 0 30px;
+  width: 32px; height: 32px;
   border-radius: 10px;
   display: grid; place-items: center;
   font-size: 11px; font-weight: 700;
@@ -25,18 +25,10 @@
   overflow: hidden;
   box-shadow: var(--sh-1);
 }
-.msg__avatar--user{
-  background: linear-gradient(135deg, #5b6cff, #7c6cff);
-}
-.msg__avatar--assistant{
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-}
-.msg__avatar--system{
-  background: linear-gradient(135deg, #6d7791, #4b5468);
-}
-.msg__avatar--error{
-  background: linear-gradient(135deg, var(--danger), #ff8a63);
-}
+.msg__avatar--user{ background: linear-gradient(135deg, #5b6cff, #7c6cff); }
+.msg__avatar--assistant{ background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.msg__avatar--system{ background: linear-gradient(135deg, #6d7791, #4b5468); }
+.msg__avatar--error{ background: linear-gradient(135deg, var(--danger), #ff8a63); }
 .msg__avatar svg{ position: relative; z-index: 1; }
 .msg__avatar::after{
   content: "";
@@ -44,7 +36,7 @@
   background: radial-gradient(circle at 30% 20%, rgba(255,255,255,.32), transparent 55%);
 }
 
-.msg__main{ min-width: 0; }
+.msg__main{ min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
 
 .msg__head{
   display: flex; align-items: center; gap: 7px;
@@ -67,6 +59,7 @@
   transition: border-color .18s var(--ease), background .18s var(--ease);
   word-wrap: break-word;
   overflow-wrap: break-word;
+  min-width: 0;
 }
 .msg--user .msg__body{
   background: var(--user-bubble);
@@ -85,21 +78,17 @@
 }
 
 .msg__body:hover{ border-color: var(--border-strong); }
-.msg.is-highlighted .msg__body{
-  animation: highlight-pulse 1.4s var(--ease-out);
-}
+.msg.is-highlighted .msg__body{ animation: highlight-pulse 1.4s var(--ease-out); }
 @keyframes highlight-pulse{
   0%,100%{ box-shadow: none; }
   30%{ box-shadow: 0 0 0 3px rgba(124,108,255,.35); }
 }
 
-/* editing state */
 .msg.is-editing .msg__body{
   border-color: rgba(255,180,84,.6);
   background: color-mix(in srgb, var(--warn) 6%, transparent);
 }
 
-/* streaming caret */
 .msg.is-streaming .msg__body::after{
   content: "";
   display: inline-block;
@@ -111,8 +100,7 @@
   animation: blink 1s steps(1,end) infinite;
 }
 
-/* ------------------------- markdown content ------------------------- */
-.md{ line-height: 1.85; font-size: 14px; color: var(--text); }
+.md{ line-height: 1.85; font-size: 14px; color: var(--text); min-width: 0; }
 .md > :first-child{ margin-top: 0 !important; }
 .md > :last-child{ margin-bottom: 0 !important; }
 .md p{ margin: .55em 0; }
@@ -170,13 +158,15 @@
 .md th{ background: var(--bg-3); font-weight: 700; }
 .md tr:last-child td{ border-bottom: 0; }
 
-/* ------------------------- code block ------------------------- */
 .codeblock{
   margin: .8em 0;
   border-radius: var(--r-s);
   overflow: hidden;
   border: 1px solid var(--border-strong);
   background: var(--bg-1);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 html[data-theme="light"] .codeblock{ background: #f8f9fc; border-color: rgba(16,22,40,.14); }
 
@@ -187,6 +177,7 @@ html[data-theme="light"] .codeblock{ background: #f8f9fc; border-color: rgba(16,
   border-bottom: 1px solid var(--border);
   font-size: 10.5px;
   color: var(--text-3);
+  flex: 0 0 auto;
 }
 .codeblock__lang{
   font-family: var(--font-mono); font-size: 10px; font-weight: 600;
@@ -214,10 +205,10 @@ html[data-theme="light"] .codeblock{ background: #f8f9fc; border-color: rgba(16,
   color: var(--text);
   direction: ltr;
   text-align: start;
+  min-width: 0;
 }
-.codeblock__pre code{ background: none; padding: 0; border: 0; }
+.codeblock__pre code{ background: none; padding: 0; border: 0; white-space: pre; }
 
-/* ------------------------- reasoning / thinking ------------------------- */
 .reasoning{
   margin-bottom: 8px;
   border: 1px solid var(--border);
@@ -256,7 +247,6 @@ html[dir="rtl"] .reasoning.is-open .reasoning__head svg{ transform: scaleX(-1) r
 }
 .reasoning.is-open .reasoning__body{ display: block; }
 
-/* ------------------------- message actions ------------------------- */
 .msg__actions{
   display: flex; gap: 1px; flex-wrap: wrap;
   margin-top: 7px;
@@ -279,7 +269,6 @@ html[dir="rtl"] .reasoning.is-open .reasoning__head svg{ transform: scaleX(-1) r
 .msg__action--danger:hover{ color: var(--danger); background: var(--danger-soft); }
 .msg__action svg{ flex: 0 0 auto; }
 
-/* ------------------------- error block ------------------------- */
 .err{
   border-radius: var(--r-s);
   border: 1px solid rgba(255,93,115,.4);
@@ -346,10 +335,11 @@ html[dir="rtl"] .reasoning.is-open .reasoning__head svg{ transform: scaleX(-1) r
 }
 html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
 
-/* ------------------------- payload viewer ------------------------- */
 .payload{
   width: min(1100px, calc(100vw - 24px));
   max-height: calc(100dvh - 40px);
+  display: flex;
+  flex-direction: column;
 }
 .payload__tabs{
   display: flex;
@@ -417,7 +407,6 @@ html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
   direction: ltr;
   text-align: start;
   tab-size: 2;
-  counter-reset: line;
 }
 .payload__pre--wrap{ white-space: pre-wrap; word-break: break-word; }
 .payload__pre--numbered{ padding-inline-start: 56px; position: relative; }
@@ -437,19 +426,6 @@ html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
   font-size: 10.5px;
 }
 
-/* JSON syntax colors (via span classes) */
-.tok-key{ color: #7ad0ff; }
-.tok-str{ color: #a7f3c9; }
-.tok-num{ color: #ffb454; }
-.tok-bool{ color: #ff7bd5; }
-.tok-null{ color: var(--text-4); }
-.tok-punct{ color: var(--text-3); }
-html[data-theme="light"] .tok-key{ color: #1565c0; }
-html[data-theme="light"] .tok-str{ color: #1b7a4a; }
-html[data-theme="light"] .tok-num{ color: #b26a00; }
-html[data-theme="light"] .tok-bool{ color: #a12ea1; }
-
-/* ------------------------- typing / thinking dots ------------------------- */
 .dots{
   display: inline-flex; align-items: center; gap: 3px;
   padding: 2px 0;
@@ -467,7 +443,6 @@ html[data-theme="light"] .tok-bool{ color: #a12ea1; }
   40%{ transform: translateY(-4px); opacity: 1; }
 }
 
-/* streaming status row */
 .msg__status{
   display: inline-flex; align-items: center; gap: 7px;
   margin-top: 6px;
@@ -477,7 +452,6 @@ html[data-theme="light"] .tok-bool{ color: #a12ea1; }
 .msg__status .spinner{ width: 12px; height: 12px; border-width: 1.8px; }
 .msg__status--err{ color: var(--danger); }
 
-/* ------------------------- system separator ------------------------- */
 .sys-sep{
   display: flex; align-items: center; gap: 10px;
   padding: 14px 0 8px;
@@ -493,7 +467,6 @@ html[data-theme="light"] .tok-bool{ color: #a12ea1; }
   background: linear-gradient(90deg, transparent, var(--border), transparent);
 }
 
-/* ------------------------- jump-to-bottom pill ------------------------- */
 .jump-pill{
   position: absolute;
   bottom: 12px; inset-inline-start: 50%;
@@ -512,7 +485,6 @@ html[data-theme="light"] .tok-bool{ color: #a12ea1; }
 }
 .jump-pill:hover{ color: var(--text); background: var(--bg-4); }
 
-/* ------------------------- usage footer ------------------------- */
 .usage-row{
   display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;
   margin-top: 6px;

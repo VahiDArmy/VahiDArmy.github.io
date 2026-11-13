@@ -23,7 +23,6 @@
 
 <div class="app" id="app">
 
-  <!-- ================= SIDEBAR ================= -->
   <aside class="sidebar" id="sidebar" aria-label="نوار کناری">
     <div class="sidebar__head">
       <button class="brand" id="brandBtn" type="button" title="معراج">
@@ -73,44 +72,45 @@
 
   <div class="scrim" id="scrim" hidden></div>
 
-  <!-- ================= MAIN ================= -->
   <main class="main" id="main">
 
     <header class="topbar" id="topbar">
-      <button class="icon-btn only-mobile" id="menuBtn" type="button" aria-label="منو">
-        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
+      <div class="topbar__left">
+        <button class="icon-btn only-mobile" id="menuBtn" type="button" aria-label="منو">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
 
-      <button class="model-chip" id="modelChip" type="button" title="تغییر مدل">
-        <span class="model-chip__glow" aria-hidden="true"></span>
-        <span class="model-chip__dot" id="modelChipDot"></span>
-        <span class="model-chip__label" id="modelChipLabel">در حال بارگذاری…</span>
-        <span class="model-chip__ctx" id="modelChipCtx"></span>
-        <svg class="model-chip__caret" viewBox="0 0 24 24" width="14" height="14"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
+        <button class="model-chip" id="modelChip" type="button" title="تغییر مدل">
+          <span class="model-chip__glow" aria-hidden="true"></span>
+          <span class="model-chip__dot" id="modelChipDot"></span>
+          <span class="model-chip__label" id="modelChipLabel">در حال بارگذاری…</span>
+          <span class="model-chip__ctx" id="modelChipCtx"></span>
+          <svg class="model-chip__caret" viewBox="0 0 24 24" width="14" height="14"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
 
-      <div class="topbar__spacer"></div>
+      <div class="topbar__right">
+        <button class="ctx-meter" id="ctxMeter" type="button" title="گزارش کانتکست">
+          <span class="ctx-meter__ring" id="ctxRing">
+            <svg viewBox="0 0 36 36" width="26" height="26">
+              <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width="3.4"/>
+              <circle id="ctxRingFill" cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="3.4"
+                      stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                      transform="rotate(-90 18 18)"/>
+            </svg>
+          </span>
+          <span class="ctx-meter__text" id="ctxMeterText">۰٪</span>
+        </button>
 
-      <button class="ctx-meter" id="ctxMeter" type="button" title="گزارش کانتکست">
-        <span class="ctx-meter__ring" id="ctxRing">
-          <svg viewBox="0 0 36 36" width="26" height="26">
-            <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width="3.4"/>
-            <circle id="ctxRingFill" cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="3.4"
-                    stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="94.25"
-                    transform="rotate(-90 18 18)"/>
-          </svg>
-        </span>
-        <span class="ctx-meter__text" id="ctxMeterText">۰٪</span>
-      </button>
+        <button class="icon-btn icon-btn--pill" id="rawBtn" type="button" title="متن دقیق ارسال‌شده به مدل">
+          <svg viewBox="0 0 24 24" width="17" height="17"><path d="m9 7-5 5 5 5M15 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="icon-btn__label">Payload</span>
+        </button>
 
-      <button class="icon-btn icon-btn--pill" id="rawBtn" type="button" title="متن دقیق ارسال‌شده به مدل">
-        <svg viewBox="0 0 24 24" width="17" height="17"><path d="m9 7-5 5 5 5M15 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="icon-btn__label">Payload</span>
-      </button>
-
-      <button class="icon-btn" id="themeBtn" type="button" title="تغییر پوسته">
-        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
-      </button>
+        <button class="icon-btn" id="themeBtn" type="button" title="تغییر پوسته">
+          <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     </header>
 
     <div class="thread-wrap">
@@ -128,7 +128,6 @@
       </button>
     </div>
 
-    <!-- ================= COMPOSER ================= -->
     <footer class="composer" id="composer">
       <div class="composer__banner" id="editBanner" hidden>
         <span class="composer__banner-ico" aria-hidden="true">
@@ -166,7 +165,6 @@
     </footer>
   </main>
 
-  <!-- ================= INSPECTOR (context drawer) ================= -->
   <aside class="inspector" id="inspector" aria-label="گزارش کانتکست">
     <div class="inspector__head">
       <h2>گزارش کانتکست</h2>

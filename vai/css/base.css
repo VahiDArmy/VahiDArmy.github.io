@@ -57,10 +57,6 @@
 
   --ring: 0 0 0 2px var(--bg-1), 0 0 0 4px rgba(124,108,255,.65);
 
-  --sidebar-w: 286px;
-  --inspector-w: 386px;
-  --topbar-h: 60px;
-
   --ease: cubic-bezier(.22,.61,.36,1);
   --ease-out: cubic-bezier(.16,1,.3,1);
   --dur: .22s;
@@ -108,18 +104,22 @@ html[data-theme="light"]{
 
 *, *::before, *::after{ box-sizing: border-box; }
 
-html, body{ height: 100%; }
+html, body{
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
 
 html{ -webkit-text-size-adjust: 100%; }
 
 body{
-  margin: 0;
   font-family: var(--font-ui);
   font-size: 14.5px;
   line-height: 1.75;
   color: var(--text);
   background: var(--bg-0);
-  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -156,7 +156,6 @@ hr{ border: 0; height: 1px; background: var(--border); margin: 1.1em 0; }
 :focus{ outline: none; }
 :focus-visible{ box-shadow: var(--ring); border-radius: var(--r-xs); }
 
-/* ---------- scrollbars ---------- */
 *{ scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
 ::-webkit-scrollbar{ width: 10px; height: 10px; }
 ::-webkit-scrollbar-track{ background: transparent; }
@@ -168,7 +167,6 @@ hr{ border: 0; height: 1px; background: var(--border); margin: 1.1em 0; }
 }
 ::-webkit-scrollbar-thumb:hover{ background: var(--scroll-thumb-hover); background-clip: content-box; }
 
-/* ---------- utilities ---------- */
 .sr-only{
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
@@ -189,7 +187,6 @@ hr{ border: 0; height: 1px; background: var(--border); margin: 1.1em 0; }
 .only-mobile{ display: none; }
 @media (max-width: 900px){ .only-mobile{ display: inline-flex; } }
 
-/* ---------- animations ---------- */
 @keyframes fadeUp{ from{ opacity: 0; transform: translateY(8px); } to{ opacity: 1; transform: none; } }
 @keyframes fadeIn{ from{ opacity: 0 } to{ opacity: 1 } }
 @keyframes popIn{ 0%{ opacity:0; transform: scale(.96) translateY(6px); } 100%{ opacity:1; transform:none; } }
