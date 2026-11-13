@@ -160,7 +160,6 @@ class Store {
     if (!m) return;
     Object.assign(m, patch);
 
-    // Update title dynamically if the first message is edited
     if (chat.messages.length > 0 && chat.messages[0].id === msgId && m.role === 'user') {
       const t = String(m.content || '').replace(/\s+/g, ' ').trim();
       chat.title = t ? (t.length > 60 ? t.slice(0, 57) + '…' : t) : 'New chat';

@@ -382,18 +382,25 @@ function startEditMessage(container, msg) {
     if (!newText) return cancel();
     if (newText === msg.content) return cancel();
 
-    // Truncate everything after this user message and replace
     const idx = chat.messages.findIndex(m => m.id === msg.id);
     if (idx < 0) return cancel();
+    
     chat.messages = chat.messages.slice(0, idx);
+    
+    const newMsg = { 
+      ...msg, 
+      content: newText, 
+      createdAt: Date.now(),
+      payload: null 
+    };
+    chat.messages.push(newMsg);
+
+    if (idx === 0) {
+      const t = newText.replace(/\s+/g, ' ').trim();
+      chat.title = t ? (t.length > 60 ? t.slice(0, 57) + '…' : t) : 'New chat';
+    }
+
     chat.updatedAt = Date.now();
-    store.updateMessage(chat.id, msg.id, { content: newText });
-    // NOTE: updateMessage won't fire after slice; instead do it manually
-    chat.messages.push({
-      ...msg,
-      content: newText,
-      createdAt: Date.now()
-    });
     store.emit();
 
     renderMessages(container);
@@ -415,13 +422,11 @@ function regenerateFrom(container, msgId) {
   const idx = chat.messages.findIndex(m => m.id === msgId);
   if (idx < 0) return;
 
-  // Truncate this assistant message and everything after
   chat.messages = chat.messages.slice(0, idx);
   chat.updatedAt = Date.now();
   store.emit();
   renderMessages(container);
 
-  // Find last user message
   const userMsg = [...chat.messages].reverse().find(m => m.role === 'user');
   if (!userMsg) return;
   sendTurn(container, userMsg.content, { skipAddUser: true });
@@ -456,7 +461,6 @@ function updateContextBar(container) {
 
 export function bindChatEvents() {
   if (bound) {
-    // rebind on new DOM
     bound = false;
   }
   bound = true;
@@ -654,7 +658,6 @@ async function sendTurn(container, userText, opts = {}) {
     ? chat.messages[chat.messages.length - 1]
     : store.addMessage(chat.id, { role: 'user', content: userText });
 
-  // Build the API payload
   const apiMessages = buildApiMessages(chat);
   if (!apiMessages.length || apiMessages[apiMessages.length - 1]?.role !== 'user') {
     if (!opts.skipAddUser) {
@@ -676,7 +679,6 @@ async function sendTurn(container, userText, opts = {}) {
     return;
   }
 
-  // Add placeholder assistant message
   const assistantMsg = store.addMessage(chat.id, {
     role: 'assistant',
     content: '',
@@ -691,7 +693,6 @@ async function sendTurn(container, userText, opts = {}) {
   const scroll = container.querySelector('#chat-scroll');
   if (scroll) scrollToBottom(scroll, true);
 
-  // Prepare abort
   abortCtrl = new AbortController();
   const signal = abortCtrl.signal;
 
@@ -745,7 +746,6 @@ async function sendTurn(container, userText, opts = {}) {
       model: resolvedModel || (modelId === 'openrouter/free' ? null : modelId)
     });
 
-    // If openrouter/free and we resolved a specific model, note it on the chat
     if (modelId === 'openrouter/free' && resolvedModel) {
       store.updateChat(chat.id, { usedModel: resolvedModel });
     }
