@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="dark light" />
+<meta name="description" content="معراج — چت هوش مصنوعی با مدل‌های رایگان OpenRouter" />
+<title>معراج · چت هوش مصنوعی</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/layout.css" />
+<link rel="stylesheet" href="css/components.css" />
+<link rel="stylesheet" href="css/chat.css" />
+<link rel="stylesheet" href="css/panels.css" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237c6cff'/%3E%3Cstop offset='1' stop-color='%2338e0c8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M20 44V20l12 14 12-14v24' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+<div class="app" id="app">
+
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar" id="sidebar" aria-label="نوار کناری">
+    <div class="sidebar__head">
+      <button class="brand" id="brandBtn" type="button" title="معراج">
+        <span class="brand__mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 19V6l7 8 7-8v13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="brand__text">
+          <b>معراج</b>
+          <small>چت هوش مصنوعی</small>
+        </span>
+      </button>
+      <button class="icon-btn icon-btn--accent" id="newChatBtn" type="button" title="گفتگوی جدید (Ctrl+K)">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar__search">
+      <svg class="sidebar__search-ico" viewBox="0 0 24 24" width="16" height="16"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input id="searchInput" type="search" placeholder="جستجو در گفتگوها…" autocomplete="off" />
+      <button class="icon-btn icon-btn--tiny" id="searchClear" type="button" hidden aria-label="پاک کردن">
+        <svg viewBox="0 0 24 24" width="14" height="14"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="sidebar__section">
+      <span class="sidebar__section-title">گفتگوها</span>
+      <span class="sidebar__section-count" id="convCount">۰</span>
+    </div>
+
+    <div class="sidebar__list" id="convList" role="list"></div>
+
+    <div class="sidebar__foot">
+      <button class="side-btn" id="modelsBtn" type="button">
+        <svg viewBox="0 0 24 24" width="17" height="17"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>مدل‌ها</span>
+      </button>
+      <button class="side-btn" id="settingsBtn" type="button">
+        <svg viewBox="0 0 24 24" width="17" height="17"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>تنظیمات</span>
+      </button>
+      <div class="sidebar__status" id="backendStatus" title="وضعیت اتصال">
+        <span class="dot" id="connDot"></span>
+        <span id="connLabel">در حال اتصال…</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <!-- ================= MAIN ================= -->
+  <main class="main" id="main">
+
+    <header class="topbar" id="topbar">
+      <button class="icon-btn only-mobile" id="menuBtn" type="button" aria-label="منو">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+
+      <button class="model-chip" id="modelChip" type="button" title="تغییر مدل">
+        <span class="model-chip__glow" aria-hidden="true"></span>
+        <span class="model-chip__dot" id="modelChipDot"></span>
+        <span class="model-chip__label" id="modelChipLabel">در حال بارگذاری…</span>
+        <span class="model-chip__ctx" id="modelChipCtx"></span>
+        <svg class="model-chip__caret" viewBox="0 0 24 24" width="14" height="14"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div class="topbar__spacer"></div>
+
+      <button class="ctx-meter" id="ctxMeter" type="button" title="گزارش کانتکست">
+        <span class="ctx-meter__ring" id="ctxRing">
+          <svg viewBox="0 0 36 36" width="26" height="26">
+            <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-opacity=".16" stroke-width="3.4"/>
+            <circle id="ctxRingFill" cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="3.4"
+                    stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="94.25"
+                    transform="rotate(-90 18 18)"/>
+          </svg>
+        </span>
+        <span class="ctx-meter__text" id="ctxMeterText">۰٪</span>
+      </button>
+
+      <button class="icon-btn icon-btn--pill" id="rawBtn" type="button" title="متن دقیق ارسال‌شده به مدل">
+        <svg viewBox="0 0 24 24" width="17" height="17"><path d="m9 7-5 5 5 5M15 7l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="icon-btn__label">Payload</span>
+      </button>
+
+      <button class="icon-btn" id="themeBtn" type="button" title="تغییر پوسته">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+      </button>
+    </header>
+
+    <div class="thread-wrap">
+      <section class="thread" id="thread" aria-live="polite"></section>
+
+      <div class="empty" id="threadEmpty">
+        <div class="empty__orb" aria-hidden="true"></div>
+        <h1 class="empty__title">چه چیزی را با هم بررسی کنیم؟</h1>
+        <p class="empty__sub">پیامت را بنویس، مدل را انتخاب کن، و متن دقیقی که به مدل می‌رود را هر لحظه ببین.</p>
+        <div class="empty__cards" id="emptyCards"></div>
+      </div>
+
+      <button class="scroll-down" id="scrollDownBtn" type="button" hidden aria-label="رفتن به پایین">
+        <svg viewBox="0 0 24 24" width="18" height="18"><path d="m6 10 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <!-- ================= COMPOSER ================= -->
+    <footer class="composer" id="composer">
+      <div class="composer__banner" id="editBanner" hidden>
+        <span class="composer__banner-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15"><path d="M4 20h4L20 8l-4-4L4 16v4Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="composer__banner-text" id="editBannerText">در حال ویرایش پیام…</span>
+        <button class="ghost-btn ghost-btn--tiny" id="editCancelBtn" type="button">انصراف</button>
+      </div>
+
+      <div class="composer__box" id="composerBox">
+        <textarea id="composerInput" rows="1" spellcheck="false"
+          placeholder="پیام خود را بنویسید…  (Enter ارسال · Shift+Enter خط جدید)"></textarea>
+
+        <div class="composer__actions">
+          <button class="icon-btn icon-btn--tiny" id="clearInputBtn" type="button" title="پاک‌کردن ورودی">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
+          <span class="composer__spacer"></span>
+          <span class="composer__count" id="composerCount"></span>
+          <button class="send-btn" id="sendBtn" type="button" title="ارسال (Enter)">
+            <svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 12 20 4l-6 16-3.2-6.8L4 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+            <span>ارسال</span>
+          </button>
+          <button class="send-btn send-btn--stop" id="stopBtn" type="button" hidden title="توقف تولید">
+            <svg viewBox="0 0 24 24" width="16" height="16"><rect x="6.5" y="6.5" width="11" height="11" rx="2" fill="currentColor"/></svg>
+            <span>توقف</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="composer__foot">
+        <span id="composerHint">مدل: —</span>
+        <span id="composerCtx">—</span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ================= INSPECTOR (context drawer) ================= -->
+  <aside class="inspector" id="inspector" aria-label="گزارش کانتکست">
+    <div class="inspector__head">
+      <h2>گزارش کانتکست</h2>
+      <button class="icon-btn icon-btn--tiny" id="inspectorClose" type="button" aria-label="بستن">
+        <svg viewBox="0 0 24 24" width="15" height="15"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="inspector__body" id="inspectorBody"></div>
+  </aside>
+
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div class="modal-root" id="modalRoot"></div>
+
+<noscript>
+  <div style="padding:2rem;font-family:sans-serif">برای استفاده از این برنامه باید جاوااسکریپت فعال باشد.</div>
+</noscript>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
