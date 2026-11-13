@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OpenRouter Chat — Nexus</title>
 
-  <!-- Supabase client (must run before app module) -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
     window.supabase = createClient(
@@ -15,9 +14,6 @@
   </script>
 
   <style>
-    /* ============================================================
-       BASE STYLES (self-contained — no external CSS required)
-       ============================================================ */
     :root {
       --bg-primary: #0a0a0f;
       --bg-secondary: #12121a;
@@ -44,7 +40,6 @@
       --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
       --shadow-glow: 0 0 30px rgba(108, 92, 231, 0.15);
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { height: 100%; overflow: hidden; }
     body {
@@ -53,33 +48,23 @@
       color: var(--text-primary);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
     }
-
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-    /* ============================================================
-       TOP BAR
-       ============================================================ */
     .top-bar {
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
       padding: 0 20px;
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-subtle);
-      flex-shrink: 0;
-      z-index: 100;
+      flex-shrink: 0; z-index: 100;
     }
     .top-bar-left { display: flex; align-items: center; gap: 12px; }
     .logo {
-      width: 32px; height: 32px;
-      border-radius: var(--radius-sm);
+      width: 32px; height: 32px; border-radius: var(--radius-sm);
       background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
       display: flex; align-items: center; justify-content: center;
       font-weight: 800; font-size: 14px; color: #fff;
@@ -93,28 +78,17 @@
     .app-subtitle { font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
     .top-bar-right { display: flex; align-items: center; gap: 8px; }
     .icon-btn {
-      width: 36px; height: 36px;
-      border-radius: var(--radius-sm);
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: all 0.2s ease; font-size: 16px;
     }
-    .icon-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-      border-color: var(--border-strong);
-    }
-    .icon-btn.danger:hover {
-      background: var(--danger); color: #fff; border-color: var(--danger);
-    }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-strong); }
+    .icon-btn.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
-    /* ============================================================
-       LAYOUT
-       ============================================================ */
     .main-layout { display: flex; flex: 1; overflow: hidden; }
-
     .sidebar {
       width: 280px; min-width: 280px;
       background: var(--bg-secondary);
@@ -122,12 +96,7 @@
       display: flex; flex-direction: column; overflow: hidden;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease;
     }
-    .sidebar.collapsed {
-      width: 0; min-width: 0;
-      transform: translateX(-100%);
-      border-right: none;
-    }
-
+    .sidebar.collapsed { width: 0; min-width: 0; transform: translateX(-100%); border-right: none; }
     .sidebar-header {
       padding: 16px;
       border-bottom: 1px solid var(--border-subtle);
@@ -137,18 +106,15 @@
       font-size: 10px; font-weight: 700; text-transform: uppercase;
       letter-spacing: 1.2px; color: var(--text-tertiary);
     }
-
     .model-selector {
-      width: 100%;
-      padding: 10px 12px;
+      width: 100%; padding: 10px 12px;
       background: var(--bg-tertiary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       color: var(--text-primary);
-      font-family: var(--font-mono);
-      font-size: 12px; cursor: pointer; outline: none;
-      transition: border-color 0.2s;
-      appearance: none;
+      font-family: var(--font-mono); font-size: 12px;
+      cursor: pointer; outline: none;
+      transition: border-color 0.2s; appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%23a0a0b8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
       background-position: right 10px center;
@@ -156,7 +122,6 @@
     }
     .model-selector:hover, .model-selector:focus { border-color: var(--accent-primary); }
     .model-selector option { background: var(--bg-tertiary); color: var(--text-primary); padding: 8px; }
-
     .model-badge {
       display: flex; align-items: center; gap: 6px;
       margin-top: 8px; padding: 6px 10px;
@@ -164,39 +129,21 @@
       border-radius: var(--radius-sm);
       font-size: 11px; color: var(--text-secondary);
     }
-    .model-badge .dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-    }
-    .model-badge .dot.loading {
-      background: var(--warning);
-      box-shadow: 0 0 8px var(--warning);
-      animation: pulse 1.5s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+    .model-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .model-badge .dot.loading { background: var(--warning); box-shadow: 0 0 8px var(--warning); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
     .chat-list { flex: 1; overflow-y: auto; padding: 8px; }
     .chat-list-item {
-      padding: 10px 12px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      transition: background 0.15s;
+      padding: 10px 12px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: background 0.15s;
       display: flex; align-items: center; gap: 10px;
-      margin-bottom: 2px;
-      border: 1px solid transparent;
+      margin-bottom: 2px; border: 1px solid transparent;
     }
     .chat-list-item:hover { background: var(--bg-tertiary); }
-    .chat-list-item.active {
-      background: var(--bg-elevated);
-      border-color: var(--border-strong);
-    }
+    .chat-list-item.active { background: var(--bg-elevated); border-color: var(--border-strong); }
     .chat-list-item .chat-icon {
-      width: 28px; height: 28px;
-      border-radius: 6px;
+      width: 28px; height: 28px; border-radius: 6px;
       background: var(--bg-hover);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; color: var(--text-secondary); flex-shrink: 0;
@@ -207,119 +154,56 @@
     }
     .chat-list-item .chat-meta { font-size: 10px; color: var(--text-tertiary); }
 
-    /* ============================================================
-       CHAT AREA
-       ============================================================ */
-    .chat-area {
-      flex: 1; display: flex; flex-direction: column; overflow: hidden;
-      background: var(--bg-primary); position: relative;
-    }
-    .chat-messages {
-      flex: 1; overflow-y: auto; padding: 24px 0;
-      scroll-behavior: smooth;
-    }
-    .chat-messages-inner {
-      max-width: 860px; margin: 0 auto; padding: 0 24px;
-      display: flex; flex-direction: column; gap: 20px;
-    }
+    .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg-primary); position: relative; }
+    .chat-messages { flex: 1; overflow-y: auto; padding: 24px 0; scroll-behavior: smooth; }
+    .chat-messages-inner { max-width: 860px; margin: 0 auto; padding: 0 24px; display: flex; flex-direction: column; gap: 20px; }
 
     .message { display: flex; gap: 12px; animation: messageIn 0.3s ease; }
-    @keyframes messageIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes messageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     .message.user { flex-direction: row-reverse; }
-
     .message-avatar {
       width: 32px; height: 32px; border-radius: var(--radius-sm);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700; flex-shrink: 0;
     }
-    .message.user .message-avatar {
-      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-      color: #fff;
-    }
-    .message.assistant .message-avatar {
-      background: var(--bg-elevated);
-      color: var(--accent-secondary);
-      border: 1px solid var(--border-strong);
-    }
+    .message.user .message-avatar { background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: #fff; }
+    .message.assistant .message-avatar { background: var(--bg-elevated); color: var(--accent-secondary); border: 1px solid var(--border-strong); }
     .message-body { max-width: 80%; min-width: 0; }
-    .message.user .message-body {
-      display: flex; flex-direction: column; align-items: flex-end;
-    }
+    .message.user .message-body { display: flex; flex-direction: column; align-items: flex-end; }
     .message-content {
-      padding: 12px 16px;
-      border-radius: var(--radius-md);
+      padding: 12px 16px; border-radius: var(--radius-md);
       font-size: 14px; line-height: 1.65;
       word-wrap: break-word; white-space: pre-wrap;
     }
-    .message.user .message-content {
-      background: var(--accent-primary);
-      color: #fff;
-      border-bottom-right-radius: 4px;
-      white-space: pre-wrap;
-    }
-    .message.assistant .message-content {
-      background: var(--bg-secondary);
-      border: 1px solid var(--border-subtle);
-      border-bottom-left-radius: 4px;
-      color: var(--text-primary);
-      white-space: normal;
-    }
-    .message.assistant .message-content.error {
-      background: rgba(225, 112, 85, 0.08);
-      border-color: rgba(225, 112, 85, 0.3);
-      color: #ffb4a8;
-      white-space: pre-wrap;
-    }
+    .message.user .message-content { background: var(--accent-primary); color: #fff; border-bottom-right-radius: 4px; white-space: pre-wrap; }
+    .message.assistant .message-content { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-bottom-left-radius: 4px; color: var(--text-primary); white-space: normal; }
+    .message.assistant .message-content.error { background: rgba(225, 112, 85, 0.08); border-color: rgba(225, 112, 85, 0.3); color: #ffb4a8; white-space: pre-wrap; }
 
-    .message-actions {
-      display: flex; gap: 4px; margin-top: 6px;
-      opacity: 0; transition: opacity 0.2s;
-    }
+    .message-actions { display: flex; gap: 4px; margin-top: 6px; opacity: 0; transition: opacity 0.2s; }
     .message:hover .message-actions { opacity: 1; }
     .msg-action-btn {
-      padding: 4px 8px;
-      border-radius: 6px;
+      padding: 4px 8px; border-radius: 6px;
       border: 1px solid var(--border-subtle);
       background: var(--bg-tertiary);
       color: var(--text-secondary);
       font-size: 11px; cursor: pointer;
-      transition: all 0.15s;
-      font-family: var(--font-sans);
+      transition: all 0.15s; font-family: var(--font-sans);
       display: flex; align-items: center; gap: 4px;
     }
-    .msg-action-btn:hover {
-      background: var(--bg-hover);
-      color: var(--text-primary);
-      border-color: var(--border-strong);
-    }
-    .msg-action-btn.danger:hover {
-      background: rgba(225, 112, 85, 0.15);
-      color: var(--danger);
-      border-color: var(--danger);
-    }
+    .msg-action-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-strong); }
+    .msg-action-btn.danger:hover { background: rgba(225, 112, 85, 0.15); color: var(--danger); border-color: var(--danger); }
 
     .message-model-tag {
       display: inline-flex; align-items: center; gap: 4px;
       padding: 2px 8px;
       background: var(--bg-tertiary);
-      border-radius: 100px;
-      font-size: 10px;
+      border-radius: 100px; font-size: 10px;
       color: var(--text-tertiary);
       font-family: var(--font-mono);
-      margin-bottom: 6px;
-      border: 1px solid var(--border-subtle);
+      margin-bottom: 6px; border: 1px solid var(--border-subtle);
     }
-    .message-model-tag .dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--success);
-    }
+    .message-model-tag .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--success); }
 
-    /* ============================================================
-       CONTEXT REPORT
-       ============================================================ */
     .context-report {
       display: flex; align-items: center; gap: 12px;
       padding: 8px 16px;
@@ -328,27 +212,11 @@
       font-size: 11px; color: var(--text-tertiary);
       flex-shrink: 0;
     }
-    .context-bar-wrapper {
-      flex: 1; height: 4px;
-      background: var(--bg-tertiary); border-radius: 2px;
-      overflow: hidden;
-    }
-    .context-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--success), var(--accent-primary));
-      border-radius: 2px;
-      transition: width 0.4s ease; width: 0%;
-    }
+    .context-bar-wrapper { flex: 1; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; }
+    .context-bar { height: 100%; background: linear-gradient(90deg, var(--success), var(--accent-primary)); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
     .context-bar.warning { background: linear-gradient(90deg, var(--warning), var(--danger)); }
-    .context-label {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      white-space: nowrap;
-    }
+    .context-label { font-family: var(--font-mono); font-size: 10px; white-space: nowrap; }
 
-    /* ============================================================
-       INPUT AREA
-       ============================================================ */
     .input-area { padding: 16px 24px 24px; background: var(--bg-primary); flex-shrink: 0; }
     .input-wrapper {
       max-width: 860px; margin: 0 auto;
@@ -359,14 +227,9 @@
       transition: border-color 0.2s, box-shadow 0.2s;
       display: flex; align-items: flex-end; padding: 8px;
     }
-    .input-wrapper:focus-within {
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 3px var(--accent-glow);
-    }
+    .input-wrapper:focus-within { border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); }
     .chat-input {
-      flex: 1;
-      background: transparent;
-      border: none; outline: none;
+      flex: 1; background: transparent; border: none; outline: none;
       color: var(--text-primary);
       font-family: var(--font-sans);
       font-size: 14px; line-height: 1.5;
@@ -374,33 +237,23 @@
       max-height: 200px; min-height: 24px;
     }
     .chat-input::placeholder { color: var(--text-tertiary); }
-
     .send-btn {
-      width: 36px; height: 36px;
-      border-radius: var(--radius-sm); border: none;
-      background: var(--accent-primary); color: #fff;
+      width: 36px; height: 36px; border-radius: var(--radius-sm);
+      border: none; background: var(--accent-primary); color: #fff;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; transition: all 0.2s; flex-shrink: 0; font-size: 16px;
     }
-    .send-btn:hover:not(:disabled) {
-      background: var(--accent-secondary);
-      box-shadow: 0 0 20px var(--accent-glow);
-    }
+    .send-btn:hover:not(:disabled) { background: var(--accent-secondary); box-shadow: 0 0 20px var(--accent-glow); }
     .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .send-btn.loading { background: var(--bg-elevated); pointer-events: none; }
     .send-btn.loading::after {
-      content: '';
-      width: 16px; height: 16px;
+      content: ''; width: 16px; height: 16px;
       border: 2px solid var(--text-tertiary);
       border-top-color: var(--accent-primary);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ============================================================
-       WELCOME SCREEN
-       ============================================================ */
     .welcome-screen {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
@@ -414,23 +267,14 @@
       box-shadow: 0 0 60px var(--accent-glow);
       animation: float 6s ease-in-out infinite;
     }
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     .welcome-title {
       font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
       background: linear-gradient(135deg, var(--text-primary), var(--accent-secondary));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .welcome-subtitle {
-      font-size: 14px; color: var(--text-secondary);
-      max-width: 480px; line-height: 1.6;
-    }
-    .suggestion-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 10px; max-width: 520px; width: 100%;
-    }
+    .welcome-subtitle { font-size: 14px; color: var(--text-secondary); max-width: 480px; line-height: 1.6; }
+    .suggestion-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 520px; width: 100%; }
     .suggestion-card {
       padding: 14px 16px;
       background: var(--bg-secondary);
@@ -438,21 +282,10 @@
       border-radius: var(--radius-md);
       cursor: pointer; transition: all 0.2s; text-align: left;
     }
-    .suggestion-card:hover {
-      background: var(--bg-tertiary);
-      border-color: var(--accent-primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-glow);
-    }
-    .suggestion-card .suggestion-title {
-      font-size: 12px; font-weight: 600;
-      margin-bottom: 4px; color: var(--text-primary);
-    }
+    .suggestion-card:hover { background: var(--bg-tertiary); border-color: var(--accent-primary); transform: translateY(-2px); box-shadow: var(--shadow-glow); }
+    .suggestion-card .suggestion-title { font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
     .suggestion-card .suggestion-desc { font-size: 11px; color: var(--text-tertiary); }
 
-    /* ============================================================
-       MODAL
-       ============================================================ */
     .modal-overlay {
       position: fixed; inset: 0;
       background: rgba(0, 0, 0, 0.7);
@@ -468,12 +301,10 @@
       background: var(--bg-secondary);
       border: 1px solid var(--border-strong);
       border-radius: var(--radius-lg);
-      max-width: 800px; width: 100%;
-      max-height: 85vh;
+      max-width: 800px; width: 100%; max-height: 85vh;
       display: flex; flex-direction: column;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      transform: scale(0.95);
-      transition: transform 0.2s;
+      transform: scale(0.95); transition: transform 0.2s;
     }
     .modal-overlay.open .modal { transform: scale(1); }
     .modal-header {
@@ -482,10 +313,7 @@
       display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
-    .modal-title {
-      font-size: 14px; font-weight: 700;
-      display: flex; align-items: center; gap: 8px;
-    }
+    .modal-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     .modal-close {
       width: 30px; height: 30px; border-radius: 6px;
       border: none; background: var(--bg-tertiary);
@@ -506,10 +334,7 @@
       white-space: pre-wrap; word-break: break-word;
       overflow-x: auto;
     }
-    .modal-body .request-meta {
-      display: flex; gap: 16px;
-      margin-bottom: 12px; flex-wrap: wrap;
-    }
+    .modal-body .request-meta { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
     .request-meta-item {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; color: var(--text-tertiary);
@@ -517,9 +342,6 @@
     }
     .request-meta-item .label { color: var(--text-secondary); }
 
-    /* ============================================================
-       TOASTS
-       ============================================================ */
     .toast-container {
       position: fixed; bottom: 24px; right: 24px;
       z-index: 2000;
@@ -540,20 +362,10 @@
     .toast.error { border-color: var(--danger); background: rgba(225, 112, 85, 0.12); }
     .toast.success { border-color: var(--success); background: rgba(0, 184, 148, 0.12); }
     .toast.warning { border-color: var(--warning); background: rgba(253, 203, 110, 0.12); }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateX(20px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
+    @keyframes toastIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
 
-    /* ============================================================
-       RESPONSIVE
-       ============================================================ */
     @media (max-width: 768px) {
-      .sidebar {
-        position: fixed; left: 0; top: 56px; bottom: 0;
-        z-index: 200; width: 280px;
-        transform: translateX(-100%);
-      }
+      .sidebar { position: fixed; left: 0; top: 56px; bottom: 0; z-index: 200; width: 280px; transform: translateX(-100%); }
       .sidebar.mobile-open { transform: translateX(0); }
       .sidebar.collapsed { transform: translateX(-100%); }
       .suggestion-grid { grid-template-columns: 1fr; }
@@ -566,16 +378,13 @@
     .truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   </style>
 
-  <!-- External theme / markdown / extras CSS from the previous message -->
   <link rel="stylesheet" href="assets/css/theme.css" />
   <link rel="stylesheet" href="assets/css/markdown.css" />
   <link rel="stylesheet" href="assets/css/extras.css" />
+  <link rel="stylesheet" href="assets/css/features.css" />
 </head>
 <body>
 
-<!-- ============================================================
-     TOP BAR
-     ============================================================ -->
 <header class="top-bar">
   <div class="top-bar-left">
     <button class="icon-btn" id="sidebarToggle" title="Toggle sidebar" aria-label="Toggle sidebar">
@@ -603,9 +412,6 @@
   </div>
 </header>
 
-<!-- ============================================================
-     LAYOUT
-     ============================================================ -->
 <div class="main-layout">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -666,9 +472,6 @@
   </main>
 </div>
 
-<!-- ============================================================
-     EXACT REQUEST MODAL
-     ============================================================ -->
 <div class="modal-overlay" id="requestModal">
   <div class="modal">
     <div class="modal-header">
@@ -694,25 +497,18 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- ============================================================
-     LIBRARIES (from previous message — drop-in)
-     ============================================================ -->
 <script src="assets/js/lib/markdown.js"></script>
 <script src="assets/js/lib/highlight.js"></script>
 <script src="assets/js/features/settings.js"></script>
 <script>
-  // Boot settings: mount gear icon + apply saved theme
   if (window.Nexus && window.Nexus.Settings) {
     window.Nexus.Settings.init();
   }
 </script>
 
-<!-- ============================================================
-     APP MODULE
-     ============================================================ -->
 <script type="module">
 /* ============================================================
-   NEXUS CHAT — APP
+   NEXUS CHAT — APP (with hooks + public API)
    ============================================================ */
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
@@ -729,6 +525,16 @@ const state = {
   exactRequestLog: null,
   supabaseReady: false,
   editingMessage: null,
+};
+
+/* ---------- Hooks: features subscribe here ---------- */
+const hooks = {
+  afterChatListRender: [],
+  afterMessageElement: [],
+  afterActiveChatRender: [],
+  beforeMessageSend: [],
+  afterMessageSend: [],
+  beforeRequestSent: [],
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -789,6 +595,13 @@ function formatNumber(n) {
 }
 function getSettings() {
   return (window.Nexus && window.Nexus.Settings) ? window.Nexus.Settings.get() : {};
+}
+function runHooks(name, ...args) {
+  const list = hooks[name];
+  if (!list) return;
+  for (const fn of list) {
+    try { fn(...args); } catch (e) { console.warn(`Hook "${name}" error:`, e); }
+  }
 }
 
 /* ---------- Persistence ---------- */
@@ -999,11 +812,13 @@ function renderChatList() {
   dom.chatList.innerHTML = '';
   if (!state.chats.length) {
     dom.chatList.innerHTML = '<div style="padding:16px;text-align:center;font-size:11px;color:var(--text-tertiary);">No conversations yet</div>';
+    runHooks('afterChatListRender', dom.chatList);
     return;
   }
   for (const chat of state.chats) {
     const item = document.createElement('div');
     item.className = `chat-list-item ${chat.id === state.activeChatId ? 'active' : ''}`;
+    item.dataset.chatId = chat.id;
     const last = chat.messages[chat.messages.length - 1];
     const preview = last ? last.content.slice(0, 40) : 'Empty conversation';
     item.innerHTML = `
@@ -1020,6 +835,7 @@ function renderChatList() {
     });
     dom.chatList.appendChild(item);
   }
+  runHooks('afterChatListRender', dom.chatList);
 }
 
 /* ---------- Active chat ---------- */
@@ -1029,6 +845,7 @@ function renderActiveChat() {
     dom.welcomeScreen.classList.remove('hidden');
     dom.chatMessages.classList.add('hidden');
     dom.contextReport.classList.add('hidden');
+    runHooks('afterActiveChatRender', null);
     return;
   }
   if (!chat.messages.length) {
@@ -1047,11 +864,13 @@ function renderActiveChat() {
   }
   updateContextReport();
   renderChatList();
+  runHooks('afterActiveChatRender', chat);
 }
 
 function createMessageElement(msg, index, chat) {
   const wrapper = document.createElement('div');
   wrapper.className = `message ${msg.role}`;
+  wrapper.dataset.messageIndex = String(index);
   const avatar = document.createElement('div');
   avatar.className = 'message-avatar';
   avatar.textContent = msg.role === 'user' ? 'You' : 'AI';
@@ -1068,7 +887,6 @@ function createMessageElement(msg, index, chat) {
   const content = document.createElement('div');
   content.className = `message-content ${msg.error ? 'error' : ''}`;
 
-  // Markdown rendering for assistant messages (unless error — keep raw)
   if (msg.role === 'assistant' && !msg.error && msg.content) {
     content.classList.add('markdown-content');
     content.innerHTML = window.Nexus?.Markdown
@@ -1095,6 +913,7 @@ function createMessageElement(msg, index, chat) {
 
   const actions = document.createElement('div');
   actions.className = 'message-actions';
+  actions.dataset.role = msg.role;
 
   if (msg.role === 'user') {
     const editBtn = document.createElement('button');
@@ -1131,6 +950,9 @@ function createMessageElement(msg, index, chat) {
   body.appendChild(actions);
   wrapper.appendChild(avatar);
   wrapper.appendChild(body);
+
+  runHooks('afterMessageElement', wrapper, msg, index, chat);
+
   return wrapper;
 }
 
@@ -1153,7 +975,7 @@ function cancelEditMode() {
   dom.sendBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 8l12-6-4 12-3-4-5-2z"/></svg>`;
 }
 
-/* ---------- Send message ---------- */
+/* ---------- Send ---------- */
 async function sendMessage() {
   const text = dom.chatInput.value.trim();
   if (!text || state.isStreaming) return;
@@ -1182,8 +1004,10 @@ async function sendMessage() {
   dom.chatInput.value = '';
   dom.chatInput.style.height = 'auto';
   renderActiveChat();
+  runHooks('beforeMessageSend', chat, text);
   persistMessageToSupabase(chat.id, 'user', text, state.activeModel.id);
   await streamAssistantResponse(chat);
+  runHooks('afterMessageSend', chat);
 }
 
 /* ---------- Streaming assistant response ---------- */
@@ -1210,7 +1034,6 @@ async function streamAssistantResponse(chat) {
     .filter(m => !m.streaming && m.content)
     .map(m => ({ role: m.role, content: m.content }));
 
-  // Merge settings into the request body
   const s = getSettings();
   const extra = window.Nexus?.Settings?.getExtraParams?.() || {};
   const sysPrompt = window.Nexus?.Settings?.getSystemPrompt?.();
@@ -1238,6 +1061,8 @@ async function streamAssistantResponse(chat) {
     timestamp: nowISO(),
   };
 
+  runHooks('beforeRequestSent', requestBody, requestHeaders);
+
   try {
     const res = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
@@ -1253,23 +1078,16 @@ async function streamAssistantResponse(chat) {
       throw { type: 'http', status: res.status, statusText: res.statusText, data: errorData };
     }
 
-    /* ---------- Non-streaming path ---------- */
     if (!requestBody.stream) {
       const json = await res.json();
-      if (json.error) {
-        throw { type: 'http', status: res.status, statusText: 'API error', data: json };
-      }
+      if (json.error) throw { type: 'http', status: res.status, statusText: 'API error', data: json };
       const choice = json.choices?.[0];
       if (!choice) throw new Error('No choices in response');
       const text = choice.message?.content || '';
       const providerModel = json.model || state.activeModel.id;
-
       contentEl.classList.add('markdown-content');
-      contentEl.innerHTML = window.Nexus?.Markdown
-        ? window.Nexus.Markdown.render(text)
-        : escapeHtml(text);
+      contentEl.innerHTML = window.Nexus?.Markdown ? window.Nexus.Markdown.render(text) : escapeHtml(text);
       if (window.Nexus?.Markdown) window.Nexus.Markdown.attachCodeCopyButtons(contentEl);
-
       assistantMsg.content = text;
       assistantMsg.model = providerModel;
       assistantMsg.streaming = false;
@@ -1281,7 +1099,6 @@ async function streamAssistantResponse(chat) {
       return;
     }
 
-    /* ---------- Streaming SSE path ---------- */
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
@@ -1295,7 +1112,6 @@ async function streamAssistantResponse(chat) {
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
-
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed || !trimmed.startsWith('data:')) continue;
@@ -1311,9 +1127,7 @@ async function streamAssistantResponse(chat) {
           if (delta) {
             full += delta;
             contentEl.classList.add('markdown-content');
-            contentEl.innerHTML = window.Nexus?.Markdown
-              ? window.Nexus.Markdown.render(full)
-              : escapeHtml(full);
+            contentEl.innerHTML = window.Nexus?.Markdown ? window.Nexus.Markdown.render(full) : escapeHtml(full);
             if (getSettings().autoScroll !== false) {
               dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
             }
@@ -1508,11 +1322,26 @@ document.addEventListener('mousedown', (e) => {
   const panel = document.getElementById('settingsPanel');
   if (panel && panel.classList.contains('open')) {
     if (e.target.closest('#settingsBtn')) return;
-    if (!panel.contains(e.target)) {
-      window.Nexus?.Settings?.close?.();
-    }
+    if (!panel.contains(e.target)) window.Nexus?.Settings?.close?.();
   }
 }, true);
+
+/* ---------- Public API ---------- */
+window.__nexus = {
+  state,
+  hooks,
+  dom,
+  ready: false,
+  uid, nowISO, escapeHtml, showToast, formatNumber, getSettings,
+  createChat, getActiveChat, updateChatTitle,
+  persistChats, loadChats,
+  renderChatList, renderActiveChat, updateContextReport,
+  streamAssistantResponse, sendMessage,
+  openExactRequestViewer,
+  fetchFreeModels,
+  initSupabase,
+  selectModel, renderModelSelector,
+};
 
 /* ---------- Init ---------- */
 async function init() {
@@ -1527,14 +1356,40 @@ async function init() {
   }
   renderChatList();
   updateContextReport();
+
+  // Signal readiness BEFORE models load so features can mount instantly
+  window.__nexus.ready = true;
+  window.dispatchEvent(new Event('nexus:ready'));
+
+  // Background loading
   await fetchFreeModels();
   initSupabase();
   dom.chatInput.focus();
 }
 
 init();
+</script>
 
-window.__nexus = { state, sendMessage, openExactRequestViewer, fetchFreeModels };
+<script type="module">
+/* ============================================================
+   OPTIONAL FEATURE AUTO-LOADER
+   Drop a file into assets/js/features/<name>.js and it will
+   be picked up automatically. Missing files are silently skipped.
+   ============================================================ */
+const POTENTIAL_FEATURES = [
+  'search',
+  'folders',
+  'branching',
+  // future modules can be added here without touching anything else:
+  'export', 'voice', 'prompt-library', 'compare', 'attachments',
+  'analytics', 'cloud-sync', 'onboarding', 'regenerate', 'templates',
+  'shortcuts', 'plugins', 'markdown-extras',
+];
+for (const name of POTENTIAL_FEATURES) {
+  import(`./assets/js/features/${name}.js`).catch(() => {
+    // File not present — silently skip.
+  });
+}
 </script>
 </body>
 </html>
