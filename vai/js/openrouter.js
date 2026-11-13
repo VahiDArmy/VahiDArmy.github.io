@@ -98,7 +98,8 @@ export async function* streamChat({
   temperature,
   maxTokens,
   signal,
-  onModelResolved
+  onModelResolved,
+  onPayload
 }) {
   if (!apiKey) {
     throw new OpenRouterError('OpenRouter API key is missing. Open Settings to add one.', {
@@ -119,6 +120,10 @@ export async function* streamChat({
   }
   if (typeof maxTokens === 'number' && maxTokens > 0) {
     body.max_tokens = maxTokens;
+  }
+
+  if (typeof onPayload === 'function') {
+    try { onPayload(body); } catch {}
   }
 
   let res;

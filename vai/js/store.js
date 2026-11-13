@@ -140,7 +140,8 @@ class Store {
       error: msg.error || null,
       errorDetail: msg.errorDetail || null,
       warning: msg.warning || null,
-      pending: !!msg.pending
+      pending: !!msg.pending,
+      payload: msg.payload || null
     };
     chat.messages.push(message);
     chat.updatedAt = Date.now();
@@ -158,6 +159,13 @@ class Store {
     const m = chat.messages.find(x => x.id === msgId);
     if (!m) return;
     Object.assign(m, patch);
+
+    // Update title dynamically if the first message is edited
+    if (chat.messages.length > 0 && chat.messages[0].id === msgId && m.role === 'user') {
+      const t = String(m.content || '').replace(/\s+/g, ' ').trim();
+      chat.title = t ? (t.length > 60 ? t.slice(0, 57) + '…' : t) : 'New chat';
+    }
+
     chat.updatedAt = Date.now();
     this.emit();
   }

@@ -248,6 +248,10 @@ function renderMessageHtml(m, chat) {
             <button class="msg-action-btn" data-action="regenerate" data-id="${m.id}" title="Regenerate">
               ${icon('refresh', 'icon-sm')}
             </button>
+            ${m.payload ? `
+            <button class="msg-action-btn" data-action="inspect" data-id="${m.id}" title="Inspect raw payload">
+              ${icon('code', 'icon-sm')}
+            </button>` : ''}
           `}
           <button class="msg-action-btn" data-action="copy" data-id="${m.id}" title="Copy">
             ${icon('copy', 'icon-sm')}
@@ -311,6 +315,33 @@ function bindMessageActions(container) {
       renderMessages(container);
       sendTurn(container, userMsg.content, { skipAddUser: true });
     }
+    if (action === 'inspect') {
+      showPayloadModal(msg);
+    }
+  });
+}
+
+function showPayloadModal(msg) {
+  const body = document.createElement('div');
+  const jsonStr = JSON.stringify(msg.payload, null, 2);
+  body.innerHTML = `
+    <div style="margin-bottom:12px;font-size:12px;color:var(--text-muted)">
+      Exact JSON payload sent to OpenRouter API.
+    </div>
+    <pre style="background:var(--code-bg);border:1px solid var(--code-border);border-radius:var(--radius);padding:12px;overflow:auto;max-height:60vh;font-family:var(--font-mono);font-size:12px;white-space:pre-wrap;word-break:break-all;">${escapeHtml(jsonStr)}</pre>
+  `;
+  const footer = document.createElement('div');
+  footer.style.display = 'flex';
+  footer.style.gap = '8px';
+  footer.innerHTML = `
+    <button class="btn btn-ghost" data-close>Close</button>
+    <button class="btn btn-primary" data-copy>Copy JSON</button>
+  `;
+  const modal = openModal({ title: 'API Request Payload', body, footer, size: 'wide' });
+  footer.querySelector('[data-close]').addEventListener('click', () => modal.close());
+  footer.querySelector('[data-copy]').addEventListener('click', async () => {
+    await copyToClipboard(jsonStr);
+    toast({ type: 'success', title: 'Payload copied' });
   });
 }
 
@@ -688,6 +719,9 @@ async function sendTurn(container, userText, opts = {}) {
       onModelResolved: (m) => {
         resolvedModel = m;
         store.updateMessage(chat.id, assistantMsg.id, { model: m });
+      },
+      onPayload: (body) => {
+        store.updateMessage(chat.id, assistantMsg.id, { payload: body });
       }
     });
 
