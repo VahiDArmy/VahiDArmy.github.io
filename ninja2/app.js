@@ -2933,15 +2933,66 @@ async function replaceFolderWithFiles(folderItem, files) {
 }
 
 /* ── project pack (paste formatted text) ───────────────────── */
+
+/**
+ * Parses a pasted project-pack text. Supports two file formats that
+ * may coexist in a single paste:
+ *
+ *   1. Marker blocks:
+ *        {[[FILE: path/to/file.ext]]}
+ *        <content>
+ *        {[[END: path/to/file.ext]]}
+ *
+ *   2. Path line + fenced code block:
+ *        `path/to/file.ext`
+ *        ```lang
+ *        <content>
+ *        ```
+ *
+ * Path must include an extension (.js, .html, .css, …) or the block
+ * is skipped. Prose outside these blocks is ignored.
+ */
 function parsePack(text) {
     const files = [];
     const errors = [];
     const seen = new Map();
     const norm = String(text).replace(/\r\n?/g, '\n');
     const lines = norm.split('\n');
-    const FILE_RE = /^\{\[\[FILE:\s*(.+?)\]\]\}$/;
-    const END_RE  = /^\{\[\[END:\s*(.+?)\]\]\}$/;
+    const consumed = new Array(lines.length).fill(false);
 
+    const FILE_RE        = /^\{\[\[FILE:\s*(.+?)\]\]\}$/;
+    const END_RE         = /^\{\[\[END:\s*(.+?)\]\]\}$/;
+    const PATH_LINE_RE   = /^`([^`\n]+)`$/;
+    const FENCE_OPEN_RE  = /^```[a-zA-Z0-9_+#.\-]*\s*$/;
+    const FENCE_CLOSE_RE = /^```\s*$/;
+
+    /* -- shared: normalize, validate, dedupe -------------------- */
+    const addFile = (rawPath, content) => {
+        const parts = rawPath.split('/').filter(s => s && s !== '.');
+        if (parts.some(s => s === '..')) {
+            errors.push(`Invalid path (contains ..): "${rawPath}"`);
+            return;
+        }
+        const path = parts.join('/');
+        if (!path) {
+            errors.push(`Empty path: "${rawPath}"`);
+            return;
+        }
+        const last = parts[parts.length - 1];
+        if (!/\.[a-zA-Z0-9_]{1,15}$/.test(last)) {
+            errors.push(`Not a file path (missing extension): "${rawPath}"`);
+            return;
+        }
+        if (seen.has(path)) {
+            errors.push(`Duplicate: "${path}" (last wins)`);
+            files[seen.get(path)] = { path, content };
+        } else {
+            seen.set(path, files.length);
+            files.push({ path, content });
+        }
+    };
+
+    /* -- format 1: {[[FILE: …]]} … {[[END: …]]} ---------------- */
     for (let i = 0; i < lines.length; i++) {
         const fm = lines[i].match(FILE_RE);
         if (!fm) continue;
@@ -2972,20 +3023,41 @@ function parsePack(text) {
 
         const content = lines.slice(startLine + 1, endLine).join('\n')
             + (endLine > startLine + 1 ? '\n' : '');
+        for (let k = startLine; k <= endLine; k++) consumed[k] = true;
         i = endLine;
 
-        const parts = rawPath.split('/').filter(s => s && s !== '.');
-        if (parts.some(s => s === '..')) { errors.push(`Invalid path (contains ..): "${rawPath}"`); continue; }
-        const path = parts.join('/');
-        if (!path) { errors.push(`Empty path: "${rawPath}"`); continue; }
+        addFile(rawPath, content);
+    }
 
-        if (seen.has(path)) {
-            errors.push(`Duplicate: "${path}" (last wins)`);
-            files[seen.get(path)] = { path, content };
-        } else {
-            seen.set(path, files.length);
-            files.push({ path, content });
+    /* -- format 2: `path` + fenced block ------------------------ */
+    for (let i = 0; i < lines.length; i++) {
+        if (consumed[i]) continue;
+        const pm = lines[i].match(PATH_LINE_RE);
+        if (!pm) continue;
+
+        const rawPath = pm[1].trim();
+
+        // Next non-blank line must be a fence opening
+        let j = i + 1;
+        while (j < lines.length && !lines[j].trim()) j++;
+        if (j >= lines.length || !FENCE_OPEN_RE.test(lines[j])) continue;
+
+        // Find matching closing fence
+        let endLine = -1;
+        for (let k = j + 1; k < lines.length; k++) {
+            if (FENCE_CLOSE_RE.test(lines[k])) { endLine = k; break; }
         }
+        if (endLine === -1) {
+            errors.push(`Unclosed fenced block for "${rawPath}"`);
+            continue;
+        }
+
+        const content = lines.slice(j + 1, endLine).join('\n')
+            + (endLine > j + 1 ? '\n' : '');
+        for (let k = i; k <= endLine; k++) consumed[k] = true;
+        i = endLine;
+
+        addFile(rawPath, content);
     }
 
     return { files, errors };
@@ -3004,7 +3076,7 @@ function openPackOverlay() {
     $('packSubtitle').textContent = '→ /' + (state.path || '');
     
     const tree = $('packTree');
-    tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt / .md file</div>';
     tree.style.display = 'block'; 
     tree.style.background = 'rgba(0,0,0,.26)';
     tree.style.padding = '6px';
@@ -3065,7 +3137,7 @@ function ingestPackText(text) {
     if (!text || !text.trim()) { toast('Nothing to paste', 'warn'); return; }
     const { files, errors } = parsePack(text);
     if (!files.length && !errors.length) {
-        toast('No {[[FILE: …]]} blocks found', 'warn');
+        toast('No recognizable files found in the pasted text', 'warn');
         return;
     }
 
@@ -3140,7 +3212,7 @@ function renderPackPreview() {
 
     if (!packState.pending.size) {
         if (!packState.errors.length) {
-            tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+            tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt / .md file</div>';
         }
         renderPackLog();
         updatePackSummary();
@@ -3273,7 +3345,7 @@ function clearPack() {
         pasteCount: 0,
         log: [],
     };
-    $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt file</div>';
+    $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt / .md file</div>';
     $('packTree').style.display = 'block';
     $('packTree').style.background = 'rgba(0,0,0,.26)';
     $('packTree').style.padding = '6px';
@@ -4067,8 +4139,8 @@ function wireEvents() {
         e.preventDefault();
         e.stopPropagation();
         if (!packState) return;
-        const files = [...e.dataTransfer.files].filter(f => /\.(txt|pack|text)$/i.test(f.name));
-        if (!files.length) { toast('Drop a .txt file', 'warn'); return; }
+        const files = [...e.dataTransfer.files].filter(f => /\.(txt|md|markdown|pack|text)$/i.test(f.name));
+        if (!files.length) { toast('Drop a .txt or .md file', 'warn'); return; }
         for (const file of files) {
             if (file.size > 20 * 1024 * 1024) {
                 toast(`Skipped ${file.name} — too large (max 20 MB)`, 'err');
@@ -4412,4 +4484,3 @@ function init() {
 
 init();
 })();
-
