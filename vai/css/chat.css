@@ -494,3 +494,19 @@ html[data-theme="light"] .err__pre{ background: rgba(16,22,40,.03); }
 }
 .usage-row span{ display: inline-flex; align-items: center; gap: 3px; }
 .usage-row b{ color: var(--text-2); font-weight: 600; }
+
+#composerInput{
+  width: 100%;
+  max-height: 46vh;
+  min-height: 44px;
+  resize: none;
+  background: none;
+  border: 0;
+  outline: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text);
+  overflow-y: hidden;
+}
+#composerInput::placeholder{ color: var(--text-4); }
