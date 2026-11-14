@@ -1,0 +1,91 @@
+/* ── Hand-written RTL / Persian rules (merged into rtl.css by tools/rtlgen.py) ── */
+
+/* The mobile drawer keeps its closed offset only until it is opened. */
+@media (max-width: 900px) {
+  html[dir="rtl"] .sidebar.is-open {
+    transform: none;
+  }
+}
+
+/* Persian typeface. Vazirmatn is loaded in index.html; the others are fallbacks. */
+html[lang="fa"] {
+  --font-sans: "Vazirmatn", "Noto Kufi Arabic", "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-arabic: "Vazirmatn", "Noto Kufi Arabic", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Vazirmatn", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Arabic-script letters must stay joined: no tracking, no forced capitals. */
+html[lang="fa"] *,
+html[lang="fa"] *::before,
+html[lang="fa"] *::after {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Code, keys, slugs, URLs and numbers stay left-to-right inside right-to-left text. */
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] kbd,
+html[dir="rtl"] .mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Directional icons point the other way. */
+html[dir="rtl"] .icon--arrowRight,
+html[dir="rtl"] .icon--arrowLeft,
+html[dir="rtl"] .icon--chevronRight,
+html[dir="rtl"] .icon--chevronLeft,
+html[dir="rtl"] .icon--send {
+  transform: scaleX(-1);
+}
+
+/* Language switch on the sign-in screen. */
+.auth__panel {
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  inset-block-start: max(14px, env(safe-area-inset-top));
+  inset-inline-end: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lang-toggle:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+/* Mixed-script content (model names, provider text, chat messages) follows its own first strong letter. */
+html[dir="rtl"] .model-card__identity h3,
+html[dir="rtl"] .model-card__slug,
+html[dir="rtl"] .model-card__desc,
+html[dir="rtl"] .model-details__desc,
+html[dir="rtl"] .model-cell strong,
+html[dir="rtl"] .router-list__copy strong,
+html[dir="rtl"] .conv__title,
+html[dir="rtl"] .msg__body :is(p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th),
+html[dir="rtl"] .msg__user-wrap,
+html[dir="rtl"] textarea {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* Select chevron sits on the inline-end side. */
+html[dir="rtl"] select.input {
+  background-position: 11px 50%, 16px 50%;
+}

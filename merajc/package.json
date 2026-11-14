@@ -1,0 +1,9 @@
+{
+  "name": "meraj-ai-chat",
+  "version": "1.0.0",
+  "private": true,
+  "description": "معراج — buildless AI chat SPA on Supabase + OpenRouter (HTML/CSS/JS only)",
+  "scripts": {
+    "start": "python3 -m http.server 3007 --bind 0.0.0.0"
+  }
+}

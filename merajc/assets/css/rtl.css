@@ -1,0 +1,509 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   RTL · generated mirror of every physical left/right rule (see README → Languages)
+   Applies only under <html dir="rtl">. Regenerate with tools/rtlgen.py after CSS edits.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── base.css ── */
+html[dir="rtl"] .eyebrow__line {
+  background: linear-gradient(270deg, transparent, rgba(var(--accent-rgb), 0.8));
+}
+html[dir="rtl"] .switch.is-on .switch__thumb {
+  transform: translateX(-15px);
+}
+
+/* ── layout.css ── */
+html[dir="rtl"] .orbit__core {
+  transform: translate(50%, -50%);
+}
+html[dir="rtl"] .sidebar__top {
+  padding: 0 7px 0 5px;
+}
+html[dir="rtl"] .new-chat-btn {
+  padding: 0 12px 0 10px;
+}
+html[dir="rtl"] .conv__link {
+  padding: 8px 9px 8px 4px;
+}
+
+/* ── components.css ── */
+html[dir="rtl"] .toast__timer {
+  transform-origin: right;
+}
+@media (max-width: 720px) {
+  html[dir="rtl"] .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+}
+
+/* ── chat.css ── */
+html[dir="rtl"] .model-chip {
+  padding: 0 6px 0 9px;
+}
+html[dir="rtl"] .context-chip {
+  padding: 0 5px 0 8px;
+}
+html[dir="rtl"] .welcome__orbit {
+  transform: translateX(50%);
+}
+html[dir="rtl"] .welcome__star {
+  transform: translate(50%, -50%);
+}
+html[dir="rtl"] .welcome__key {
+  padding: 8px 12px 8px 9px;
+}
+html[dir="rtl"] .starter-card__arrow {
+  transform: translateX(3px);
+}
+html[dir="rtl"] .user-bubble {
+  border-radius: var(--radius-md) var(--radius-md) var(--radius-md) 5px;
+}
+html[dir="rtl"] .markdown blockquote,
+html[dir="rtl"] .markdown .md-quote {
+  border-radius: 6px 0 0 6px;
+}
+
+/* ── views.css ── */
+html[dir="rtl"] .field-inline .input {
+  padding: 0 8px 0 28px;
+}
+html[dir="rtl"] .latency-row__track span {
+  background: linear-gradient(270deg, rgba(var(--accent-rgb), 0.5), var(--accent));
+}
+
+/* ── responsive.css ── */
+@media (max-width: 900px) {
+  html[dir="rtl"] .sidebar {
+    transform: translateX(104%);
+  }
+  html[dir="rtl"] .sidebar.is-open {
+    box-shadow: -30px 0 90px rgba(0, 0, 0, 0.55);
+  }
+  html[dir="rtl"] .sidebar.is-collapsed .sidebar__top {
+    padding: 0 7px 0 5px;
+  }
+  html[dir="rtl"] .sidebar.is-collapsed .new-chat-btn {
+    padding: 0 12px 0 10px;
+  }
+  html[dir="rtl"] .sidebar.is-collapsed .conv__link {
+    padding: 8px 9px 8px 4px;
+  }
+}
+
+/* ── Persian: lift tiny font sizes (generated) ── */
+/* base.css */
+html[lang="fa"] .tiny { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .eyebrow { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .field-help { font-size: max(0.64rem, 0.828rem); }
+html[lang="fa"] .switch { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .segmented--small .segmented__item { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .tag { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .role-chip { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .kbd { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .verbatim { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .verbatim--small { font-size: max(0.64rem, 0.780rem); }
+
+/* layout.css */
+html[lang="fa"] .boot-screen__latin { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .boot-screen__detail { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .boot-screen__version { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .auth__brand em { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .auth__features p { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .auth__visual-foot { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .auth__kicker { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .auth-error strong { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .auth-error__meta { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .auth-error__raw summary { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .auth-error__raw pre { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .auth-error--compact strong { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .auth-error--compact p { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .auth__trust { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .auth__fineprint { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .auth__version { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .brand__text em { font-size: max(0.64rem, 0.576rem); }
+html[lang="fa"] .conv-group__label { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .conv-group__label span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .conv__meta { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .conv-empty p { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .side-tool { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .side-tool__count { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .connection-line { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .user-avatar { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .user-card__copy span { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .mobile-nav__item { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .page-footnote { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .fatal-card__details summary { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .fatal-card__details pre { font-size: max(0.64rem, 0.756rem); }
+
+/* components.css */
+html[lang="fa"] .modal__note { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .exact-banner p { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .request-fact dt { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .request-fact dd { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .request-fingerprint { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .request-fingerprint code { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .request-panel__note { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .request-message header { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .request-role { font-size: max(0.64rem, 0.684rem); }
+html[lang="fa"] .header-row { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .header-row span { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .header-row code { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .request-preview-hint { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .context-hero__gauge-label span { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .context-actual > span { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .context-actual dt { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .context-actual dd { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .context-actual p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .context-footnote p { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .context-formula { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .data-table th { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .model-picker__current > span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .model-picker__current p { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .model-pick__orb { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .model-pick__meta { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .model-pick__badges .tag { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .model-picker__hint { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .error-card__eyebrow { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .error-card__facts dt { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .error-card__facts dd { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .error-card__raw-head { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .error-card__raw { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .error-card__empty-body { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .error-card__guidance { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .error-panel__head p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .error-panel__message { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .error-panel__raw { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .error-dialog__head strong { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .error-dialog__head p { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .error-dialog__meta { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .toast__message { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .toast__action { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .menu__item { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .menu__note { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .menu__heading { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .cmdk__hint { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .cmdk__note { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .cmdk__foot { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .model-orb { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .model-orb--small { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .usage-hero__copy p { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .usage-list__row { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .usage-list__row strong { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .system-presets > p { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .system-presets__row .btn { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .param-note { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .edit-branch-note { font-size: max(0.64rem, 0.792rem); }
+
+/* chat.css */
+html[lang="fa"] .chat-subtitle { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .model-chip__orb { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .model-chip__copy strong { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .model-chip__copy span { font-size: max(0.64rem, 0.588rem); }
+html[lang="fa"] .context-chip__label { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .request-btn { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .request-btn__glyph { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .chat-banner { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .chat-banner strong { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .chat-banner code { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .banner-raw summary { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .banner-raw pre { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .thread-signature { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .welcome__latin { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .welcome__stats span { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .welcome__key p { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .welcome__privacy { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .starter-card__copy strong { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .starter-card__copy span { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .persona-strip__label { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .persona-chip { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .msg__rail .model-orb { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .made-with { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .provider-pill { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .msg-time { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .status-chip { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .msg-model-mono { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .msg-usage { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .msg-action { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .msg-action--labelled span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .branch-count { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .reasoning summary { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .thinking__label { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .pending-turn p { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .day-divider { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .composer-status { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .system-chip { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .composer-stream-model { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .composer-model { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .tool-btn { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .composer-meter { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .composer-below { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .composer-count,
+html[lang="fa"] .composer-tokens { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .md-code__lang { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .md-code__copy { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .chat-error-page__detail { font-size: max(0.64rem, 0.852rem); }
+@media (max-width: 1180px) {
+  html[lang="fa"] .request-btn__glyph { font-size: max(0.64rem, 0.840rem); }
+}
+
+/* views.css */
+html[lang="fa"] .stat-card__label { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .stat-card p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .field-inline { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .field-inline .input { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .router-card__meta { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .model-toolbar__bottom .segmented__item span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .model-count { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .model-card__provider { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .model-card__slug { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .model-card__desc { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .model-card__metrics span { font-size: max(0.64rem, 0.588rem); }
+html[lang="fa"] .model-card__metrics strong { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .model-card__actions .btn { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .model-empty p { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .model-bulk p { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .inline-error summary { font-size: max(0.64rem, 0.684rem); }
+html[lang="fa"] .inline-error pre { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .inline-error__head .link-btn { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .model-details__hero code { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .model-details__facts span { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .model-details__facts strong { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .model-details__stats span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .model-details__params h4 { font-size: max(0.64rem, 0.684rem); }
+html[lang="fa"] .model-test__note { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .test-empty { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .test-running { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .test-result__head { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .test-result__head strong { font-size: max(0.64rem, 0.852rem); }
+html[lang="fa"] .test-result__head .mono { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .test-meta { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .kpi-card p { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .kpi-card span { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .analysis-card__head p:not(.eyebrow) { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .analysis-empty { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .chart__legend { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .chart-empty { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .chart-foot { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .donut__center span { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .donut__label { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .donut__row strong { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .mini-facts span { font-size: max(0.64rem, 0.588rem); }
+html[lang="fa"] .mini-facts strong { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .distribution__legend { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .latency-row__head { font-size: max(0.64rem, 0.756rem); }
+html[lang="fa"] .latency-row__head strong { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .route-rank { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .router-list__copy strong { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .router-list__copy code { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .router-list__row > strong { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .error-ledger__count { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .error-ledger__head code { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .error-ledger__head .mono { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .error-ledger__head .muted { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .error-ledger__row p { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .recent-row strong { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .recent-row p { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .model-cell strong { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .model-cell code { font-size: max(0.64rem, 0.612rem); }
+html[lang="fa"] .analytics-table td > strong { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .success-cell > span:last-child { font-size: max(0.64rem, 0.684rem); }
+html[lang="fa"] .prompt-card__desc { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .prompt-card__body { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .prompt-card__foot > span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .prompt-card__foot .btn { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .prompt-empty p { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .prompt-form__preview { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .prompt-picker__label { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .prompt-pick__copy strong { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .prompt-pick__copy span { font-size: max(0.64rem, 0.648rem); }
+html[lang="fa"] .prompt-picker__foot { font-size: max(0.64rem, 0.744rem); }
+
+/* settings.css */
+html[lang="fa"] .settings-nav a { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .settings-nav a > span:first-child { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .settings-nav__foot { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .settings-card__head p:not(.eyebrow) { font-size: max(0.64rem, 0.768rem); }
+html[lang="fa"] .key-status { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .key-status code { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .key-form__row .muted { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .key-link { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .key-test { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .key-test code { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .key-test__head { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .key-test__head .mono { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .key-test__facts span { font-size: max(0.64rem, 0.576rem); }
+html[lang="fa"] .key-test__facts strong { font-size: max(0.64rem, 0.732rem); }
+html[lang="fa"] .key-test__raw-head { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .key-test__raw-head code { font-size: max(0.64rem, 0.600rem); }
+html[lang="fa"] .theme-card__copy strong { font-size: max(0.64rem, 0.780rem); }
+html[lang="fa"] .theme-card__copy span { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .appearance-row__copy strong { font-size: max(0.64rem, 0.840rem); }
+html[lang="fa"] .appearance-row__copy span { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .appearance-block > p { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .appearance-block output { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .setting-row__copy strong { font-size: max(0.64rem, 0.828rem); }
+html[lang="fa"] .setting-row__copy span { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .account-meta { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .account-meta > span { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .account-meta strong,
+html[lang="fa"] .account-meta code { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .data-action strong { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .data-action p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .data-action code { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .danger-zone__label { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .danger-zone__row strong { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .danger-zone__row p { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .diagnostics-idle,
+html[lang="fa"] .diagnostics-loading { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .diagnostic__copy strong { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .diagnostic__copy p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .diagnostic__copy summary { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .diagnostic__copy pre { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .diagnostic__status { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .about-brand p { font-size: max(0.64rem, 0.624rem); }
+html[lang="fa"] .about-grid span { font-size: max(0.64rem, 0.588rem); }
+html[lang="fa"] .about-grid strong { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .about-grid p { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .about-links a { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .about-fineprint { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .setup-user { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-hero__eyebrow { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-step { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-card__head p { font-size: max(0.64rem, 0.744rem); }
+html[lang="fa"] .setup-steps li { font-size: max(0.64rem, 0.816rem); }
+html[lang="fa"] .setup-steps li::before { font-size: max(0.64rem, 0.576rem); }
+html[lang="fa"] .setup-steps li span { font-size: max(0.64rem, 0.672rem); }
+html[lang="fa"] .setup-steps code { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .setup-sql-preview { font-size: max(0.64rem, 0.696rem); }
+html[lang="fa"] .setup-notes strong { font-size: max(0.64rem, 0.792rem); }
+html[lang="fa"] .setup-notes p { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .setup-notes code { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-table code { font-size: max(0.64rem, 0.708rem); }
+html[lang="fa"] .setup-table p { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-table__status { font-size: max(0.64rem, 0.564rem); }
+html[lang="fa"] .setup-statusline { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .setup-errors__head { font-size: max(0.64rem, 0.636rem); }
+html[lang="fa"] .setup-error summary { font-size: max(0.64rem, 0.720rem); }
+html[lang="fa"] .setup-error pre { font-size: max(0.64rem, 0.660rem); }
+html[lang="fa"] .setup-sql > summary { font-size: max(0.64rem, 0.804rem); }
+html[lang="fa"] .setup-sql__pre { font-size: max(0.64rem, 0.708rem); }
+@media (max-width: 900px) {
+  html[lang="fa"] .settings-nav a { font-size: max(0.64rem, 0.744rem); }
+}
+
+/* responsive.css */
+@media (max-width: 900px) {
+  html[lang="fa"] .welcome__stats span { font-size: max(0.64rem, 0.600rem); }
+  html[lang="fa"] .msg__rail .model-orb { font-size: max(0.64rem, 0.648rem); }
+  html[lang="fa"] .page-head .eyebrow { font-size: max(0.64rem, 0.684rem); }
+  html[lang="fa"] .page-footnote { font-size: max(0.64rem, 0.720rem); }
+}
+html[lang="fa"] .auth__mobile-brand em { font-size: max(0.64rem, 0.576rem); }
+@media (max-width: 600px) {
+  html[lang="fa"] .composer-hint { font-size: max(0.64rem, 0.576rem); }
+  html[lang="fa"] .composer-tokens { font-size: max(0.64rem, 0.564rem); }
+  html[lang="fa"] .welcome__stats span { font-size: max(0.64rem, 0.552rem); }
+  html[lang="fa"] .welcome__privacy { font-size: max(0.64rem, 0.660rem); }
+  html[lang="fa"] .chat-banner { font-size: max(0.64rem, 0.768rem); }
+  html[lang="fa"] .chat-banner strong { font-size: max(0.64rem, 0.804rem); }
+  html[lang="fa"] .page-head__copy > p:last-child { font-size: max(0.64rem, 0.816rem); }
+  html[lang="fa"] .page-head__actions .btn { font-size: max(0.64rem, 0.816rem); }
+  html[lang="fa"] .stat-card__label { font-size: max(0.64rem, 0.552rem); }
+  html[lang="fa"] .setup-steps li { font-size: max(0.64rem, 0.756rem); }
+}
+@media (max-width: 390px) {
+  html[lang="fa"] .msg-model-name { font-size: max(0.64rem, 0.816rem); }
+  html[lang="fa"] .welcome__stats span { font-size: max(0.64rem, 0.504rem); }
+  html[lang="fa"] .mobile-nav__item { font-size: max(0.64rem, 0.588rem); }
+}
+
+/* ── Hand-written RTL / Persian rules (merged into rtl.css by tools/rtlgen.py) ── */
+
+/* The mobile drawer keeps its closed offset only until it is opened. */
+@media (max-width: 900px) {
+  html[dir="rtl"] .sidebar.is-open {
+    transform: none;
+  }
+}
+
+/* Persian typeface. Vazirmatn is loaded in index.html; the others are fallbacks. */
+html[lang="fa"] {
+  --font-sans: "Vazirmatn", "Noto Kufi Arabic", "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-arabic: "Vazirmatn", "Noto Kufi Arabic", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Vazirmatn", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Arabic-script letters must stay joined: no tracking, no forced capitals. */
+html[lang="fa"] *,
+html[lang="fa"] *::before,
+html[lang="fa"] *::after {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+/* Code, keys, slugs, URLs and numbers stay left-to-right inside right-to-left text. */
+html[dir="rtl"] code,
+html[dir="rtl"] pre,
+html[dir="rtl"] kbd,
+html[dir="rtl"] .mono {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Directional icons point the other way. */
+html[dir="rtl"] .icon--arrowRight,
+html[dir="rtl"] .icon--arrowLeft,
+html[dir="rtl"] .icon--chevronRight,
+html[dir="rtl"] .icon--chevronLeft,
+html[dir="rtl"] .icon--send {
+  transform: scaleX(-1);
+}
+
+/* Language switch on the sign-in screen. */
+.auth__panel {
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  inset-block-start: max(14px, env(safe-area-inset-top));
+  inset-inline-end: 16px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--panel);
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.lang-toggle:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+/* Mixed-script content (model names, provider text, chat messages) follows its own first strong letter. */
+html[dir="rtl"] .model-card__identity h3,
+html[dir="rtl"] .model-card__slug,
+html[dir="rtl"] .model-card__desc,
+html[dir="rtl"] .model-details__desc,
+html[dir="rtl"] .model-cell strong,
+html[dir="rtl"] .router-list__copy strong,
+html[dir="rtl"] .conv__title,
+html[dir="rtl"] .msg__body :is(p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th),
+html[dir="rtl"] .msg__user-wrap,
+html[dir="rtl"] textarea {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+/* Select chevron sits on the inline-end side. */
+html[dir="rtl"] select.input {
+  background-position: 11px 50%, 16px 50%;
+}
