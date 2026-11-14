@@ -104,7 +104,8 @@ function inline(text) {
 
 /**
  * Fence info: ```html, ```html index.html, ```css:styles.css, ```javascript app.js
- * Also peeks at the first line for filename comments: <!-- index.html -->, /* app.js */, // main.js
+ * Also peeks at the first line for filename comments (HTML comment, CSS block
+ * comment, or // / # line comment naming the file).
  */
 function parseFenceMeta(langRaw, code) {
   const raw = String(langRaw || '').trim();
