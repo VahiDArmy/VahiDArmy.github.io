@@ -1785,7 +1785,7 @@ html[data-theme="dawn"] .send-btn.is-ready {
 .md-code__actions {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex: none;
 }
 
@@ -1794,27 +1794,55 @@ html[data-theme="dawn"] .send-btn.is-ready {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 5px;
-  border-radius: 4px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
   color: var(--faint);
   font-family: var(--font-mono);
-  font-size: 0.52rem;
-  opacity: 0;
+  font-size: 0.58rem;
+  line-height: 1;
   transition:
-    opacity 0.15s,
     background 0.15s,
-    color 0.15s;
+    color 0.15s,
+    border-color 0.15s,
+    opacity 0.15s;
 }
 
-.md-code:hover .md-code__copy,
-.md-code:hover .md-code__preview,
-.md-code__copy:focus-visible,
-.md-code__preview:focus-visible {
+/* Preview is a primary action — always visible when the fence supports it. */
+.md-code__preview {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--accent-rgb), 0.08);
   opacity: 1;
 }
 
+.md-code__preview:hover,
+.md-code__preview:focus-visible {
+  background: rgba(var(--accent-rgb), 0.16);
+  border-color: rgba(var(--accent-rgb), 0.45);
+  color: var(--accent);
+}
+
+/* Copy always visible on touch devices; hover-reveal only for fine pointers. */
+.md-code__copy {
+  opacity: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .md-code__copy {
+    opacity: 0;
+  }
+
+  .md-code:hover .md-code__copy,
+  .md-code__copy:focus-visible,
+  .md-code__copy.is-copied {
+    opacity: 1;
+  }
+}
+
 .md-code__copy:hover,
-.md-code__preview:hover {
+.md-code__copy:focus-visible {
   background: var(--panel-3);
   color: var(--text);
 }
@@ -1822,10 +1850,6 @@ html[data-theme="dawn"] .send-btn.is-ready {
 .md-code__copy.is-copied {
   color: var(--ok);
   opacity: 1;
-}
-
-.md-code__preview {
-  color: var(--accent);
 }
 
 .markdown .md-code pre {
