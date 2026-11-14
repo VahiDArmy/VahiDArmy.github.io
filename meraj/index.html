@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="nocturne" data-density="comfortable" data-motion="on">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#080910">
+  <meta name="description" content="معراج — a free-model AI observatory. Exact request inspection, branching prompt edits, per-model provenance, and raw provider errors. Built with HTML, CSS, vanilla JS, Supabase and OpenRouter.">
+  <meta name="application-name" content="معراج">
+  <title>معراج · MI'RAJ</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Kufi+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/chat.css">
+  <link rel="stylesheet" href="assets/css/views.css">
+  <link rel="stylesheet" href="assets/css/settings.css">
+  <link rel="stylesheet" href="assets/css/animations.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+</head>
+<body>
+  <noscript>
+    <div class="noscript">
+      <h1>معراج needs JavaScript.</h1>
+      <p>This is a client-side application. Enable JavaScript to sign in, stream free models, and inspect requests.</p>
+    </div>
+  </noscript>
+
+  <div class="boot-screen" id="boot-screen">
+    <div class="boot-screen__atmosphere" aria-hidden="true">
+      <span class="boot-screen__glow boot-screen__glow--one"></span>
+      <span class="boot-screen__glow boot-screen__glow--two"></span>
+      <span class="boot-screen__stars"></span>
+    </div>
+    <div class="boot-screen__inner">
+      <svg class="boot-logo" width="92" height="92" viewBox="0 0 64 64" role="img" aria-label="معراج">
+        <defs>
+          <linearGradient id="boot-gradient" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#e7c27d"></stop>
+            <stop offset="1" stop-color="#f6e3ba"></stop>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="28" fill="none" stroke="#e7c27d" stroke-opacity=".14"></circle>
+        <circle cx="32" cy="32" r="21" fill="none" stroke="#e7c27d" stroke-opacity=".1" stroke-dasharray="1 5"></circle>
+        <path d="M32 9 L50 45 H14 Z" fill="none" stroke="url(#boot-gradient)" stroke-width="1.7" stroke-linejoin="round"></path>
+        <path d="M32 19 L41.5 38 H22.5 Z" fill="#e7c27d" fill-opacity=".12" stroke="#e7c27d" stroke-width="1.2"></path>
+        <circle cx="32" cy="45" r="2.4" fill="#e7c27d"></circle>
+        <circle cx="32" cy="9" r="1.5" fill="#f6e3ba"></circle>
+      </svg>
+      <p class="boot-screen__name" lang="ar">معراج</p>
+      <p class="boot-screen__latin">MI'RAJ</p>
+      <div class="boot-screen__status">
+        <span class="boot-spinner" aria-hidden="true"></span>
+        <p id="boot-status">Opening the observatory…</p>
+      </div>
+      <p class="boot-screen__detail" id="boot-detail">Restoring your Supabase session.</p>
+      <p class="boot-screen__version">v1.0.0 · exact requests · free models</p>
+    </div>
+  </div>
+
+  <div id="root"></div>
+  <div id="toast-root" class="toast-root" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Supabase UMD is vendored so the app stays dependency-free at runtime. -->
+  <script src="src/vendor/supabase.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

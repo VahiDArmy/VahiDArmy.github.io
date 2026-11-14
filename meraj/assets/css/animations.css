@@ -1,0 +1,188 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Motion · sparse, purposeful, and removable
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes boot-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes boot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes menu-in {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes menu-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.99);
+  }
+}
+
+@keyframes message-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes thinking-dot {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  40% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+@keyframes cursor-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes logo-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.08));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px rgba(var(--accent-rgb), 0.24));
+  }
+}
+
+@keyframes subtle-shimmer {
+  from {
+    background-position: -220% 0;
+  }
+  to {
+    background-position: 220% 0;
+  }
+}
+
+/* ── Attached effects ────────────────────────────────────────────────────── */
+.boot-logo {
+  animation: boot-float 6s ease-in-out infinite;
+}
+
+.boot-logo circle:nth-of-type(2) {
+  transform-origin: 32px 32px;
+  animation: orbit-spin 36s linear infinite;
+}
+
+.logo-mark--animate {
+  animation: logo-glow 5.5s ease-in-out infinite;
+}
+
+.page {
+  animation: page-in 0.35s var(--ease-out) both;
+}
+
+.auth__panel > * {
+  animation: page-in 0.4s var(--ease-out) both;
+}
+
+.auth__panel > *:nth-child(2) {
+  animation-delay: 0.03s;
+}
+
+.auth__panel > *:nth-child(3) {
+  animation-delay: 0.06s;
+}
+
+.auth__panel > *:nth-child(4) {
+  animation-delay: 0.09s;
+}
+
+.chat-view {
+  animation: page-in 0.3s var(--ease-out) both;
+}
+
+.model-card,
+.prompt-card,
+.analysis-card {
+  animation: page-in 0.32s var(--ease-out) both;
+}
+
+.model-card:nth-child(2n),
+.prompt-card:nth-child(2n) {
+  animation-delay: 0.02s;
+}
+
+.model-card:nth-child(3n),
+.prompt-card:nth-child(3n) {
+  animation-delay: 0.04s;
+}

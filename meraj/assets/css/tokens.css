@@ -1,0 +1,301 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   معراج · design tokens
+   Four observatory themes, one gilded geometry. Every surface, line, glow and
+   text tone is expressed here so themes can change without touching layout.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --font-sans: "Manrope", "Noto Kufi Arabic", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-arabic: "Noto Kufi Arabic", "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --accent: #e7c27d;
+  --accent-soft: #f3d9a6;
+  --accent-rgb: 231 194 125;
+  --ui-radius: 18px;
+  --font-scale: 1;
+
+  --radius-xs: 8px;
+  --radius-sm: 11px;
+  --radius-md: 15px;
+  --radius-lg: 21px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  --ok: #6ee7b7;
+  --ok-rgb: 110 231 183;
+  --warn: #f5b86b;
+  --warn-rgb: 245 184 107;
+  --danger: #f2869d;
+  --danger-rgb: 242 134 157;
+  --info: #8db5ff;
+  --info-rgb: 141 181 255;
+  --violet: #bda5ff;
+  --jade: #61dcc4;
+  --rose: #f0a8c4;
+  --azure: #8db5ff;
+  --amber: #f5b86b;
+
+  --sidebar-width: 304px;
+  --sidebar-collapsed: 82px;
+  --topbar-height: 74px;
+  --mobile-nav-height: 66px;
+  --content-wide: 1240px;
+  --thread-width: 880px;
+  --composer-width: 900px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 56px;
+  --space-10: 72px;
+
+  --msg-gap: 30px;
+  --card-pad: 22px;
+  --control-height: 40px;
+  --row-height: 38px;
+}
+
+/* ── Nocturne · indigo night, gilded instruments ─────────────────────────── */
+html[data-theme="nocturne"] {
+  color-scheme: dark;
+  --bg: #080910;
+  --bg-deep: #05060b;
+  --bg-elev: #0c0e17;
+  --bg-wash: #0f111b;
+  --panel: rgba(20, 23, 35, 0.68);
+  --panel-solid: #121520;
+  --panel-2: #171b28;
+  --panel-3: #1e2332;
+  --panel-hover: #1b2030;
+  --sidebar: rgba(8, 10, 17, 0.78);
+  --sidebar-solid: #090b13;
+  --topbar: rgba(8, 10, 17, 0.66);
+  --user-bubble: linear-gradient(145deg, rgba(231, 194, 125, 0.15), rgba(231, 194, 125, 0.055));
+  --assistant-bubble: transparent;
+  --code-bg: #0a0c13;
+  --code-inline: rgba(231, 194, 125, 0.09);
+  --quote: rgba(231, 194, 125, 0.06);
+
+  --text: #f0eee7;
+  --text-strong: #fbf9f4;
+  --text-soft: #c8c7cc;
+  --muted: #9296a7;
+  --faint: #666b7d;
+
+  --line: rgba(255, 255, 255, 0.075);
+  --line-soft: rgba(255, 255, 255, 0.045);
+  --line-strong: rgba(255, 255, 255, 0.135);
+
+  --glow: rgba(231, 194, 125, 0.13);
+  --glow-strong: rgba(231, 194, 125, 0.24);
+  --shadow: 0 30px 90px -24px rgba(0, 0, 0, 0.82);
+  --shadow-soft: 0 14px 40px -18px rgba(0, 0, 0, 0.65);
+  --glass-blur: 24px;
+
+  --sky-1: rgba(72, 55, 128, 0.4);
+  --sky-2: rgba(26, 92, 92, 0.22);
+  --sky-3: rgba(154, 107, 52, 0.12);
+  --sky-line: rgba(255, 255, 255, 0.055);
+  --star-opacity: 0.42;
+  --star-color: rgba(255, 255, 255, 0.82);
+  --grain-opacity: 0.035;
+}
+
+/* ── Mihrab · deep jade, brushed brass ───────────────────────────────────── */
+html[data-theme="mihrab"] {
+  color-scheme: dark;
+  --bg: #06100d;
+  --bg-deep: #030a08;
+  --bg-elev: #0a1512;
+  --bg-wash: #0c1915;
+  --panel: rgba(16, 31, 26, 0.72);
+  --panel-solid: #0f1e19;
+  --panel-2: #14251f;
+  --panel-3: #1b3029;
+  --panel-hover: #172a23;
+  --sidebar: rgba(5, 15, 12, 0.8);
+  --sidebar-solid: #07120f;
+  --topbar: rgba(5, 14, 11, 0.7);
+  --user-bubble: linear-gradient(145deg, rgba(216, 182, 95, 0.16), rgba(97, 220, 196, 0.055));
+  --assistant-bubble: transparent;
+  --code-bg: #07110e;
+  --code-inline: rgba(216, 182, 95, 0.1);
+  --quote: rgba(97, 220, 196, 0.055);
+
+  --text: #edf1e9;
+  --text-strong: #f8fbf4;
+  --text-soft: #c4ccc3;
+  --muted: #8da198;
+  --faint: #60766c;
+
+  --line: rgba(214, 245, 232, 0.08);
+  --line-soft: rgba(214, 245, 232, 0.045);
+  --line-strong: rgba(214, 245, 232, 0.15);
+
+  --glow: rgba(216, 182, 95, 0.13);
+  --glow-strong: rgba(216, 182, 95, 0.23);
+  --shadow: 0 30px 90px -24px rgba(0, 12, 8, 0.86);
+  --shadow-soft: 0 14px 40px -18px rgba(0, 12, 8, 0.7);
+
+  --sky-1: rgba(22, 98, 80, 0.32);
+  --sky-2: rgba(155, 129, 52, 0.15);
+  --sky-3: rgba(33, 74, 92, 0.18);
+  --sky-line: rgba(211, 248, 236, 0.055);
+  --star-opacity: 0.3;
+  --star-color: rgba(219, 255, 242, 0.8);
+  --grain-opacity: 0.04;
+}
+
+/* ── Nebula · violet void, rose gold ─────────────────────────────────────── */
+html[data-theme="nebula"] {
+  color-scheme: dark;
+  --bg: #0b0612;
+  --bg-deep: #06030a;
+  --bg-elev: #110a1c;
+  --bg-wash: #150d22;
+  --panel: rgba(27, 17, 42, 0.7);
+  --panel-solid: #191025;
+  --panel-2: #20152f;
+  --panel-3: #291c3b;
+  --panel-hover: #241831;
+  --sidebar: rgba(8, 4, 14, 0.8);
+  --sidebar-solid: #0a0610;
+  --topbar: rgba(9, 4, 15, 0.7);
+  --user-bubble: linear-gradient(145deg, rgba(230, 166, 199, 0.17), rgba(189, 165, 255, 0.07));
+  --assistant-bubble: transparent;
+  --code-bg: #0a0611;
+  --code-inline: rgba(230, 166, 199, 0.1);
+  --quote: rgba(189, 165, 255, 0.06);
+
+  --text: #f2edf4;
+  --text-strong: #fcf8fd;
+  --text-soft: #cdc3d4;
+  --muted: #a08fa9;
+  --faint: #74647e;
+
+  --line: rgba(255, 231, 248, 0.08);
+  --line-soft: rgba(255, 231, 248, 0.045);
+  --line-strong: rgba(255, 231, 248, 0.15);
+
+  --glow: rgba(230, 166, 199, 0.13);
+  --glow-strong: rgba(230, 166, 199, 0.24);
+  --shadow: 0 30px 90px -24px rgba(3, 0, 8, 0.86);
+  --shadow-soft: 0 14px 40px -18px rgba(3, 0, 8, 0.7);
+
+  --sky-1: rgba(104, 48, 134, 0.38);
+  --sky-2: rgba(184, 70, 121, 0.16);
+  --sky-3: rgba(55, 46, 145, 0.18);
+  --sky-line: rgba(255, 231, 248, 0.055);
+  --star-opacity: 0.5;
+  --star-color: rgba(255, 236, 250, 0.85);
+  --grain-opacity: 0.035;
+}
+
+/* ── Dawn · warm parchment, fired clay ───────────────────────────────────── */
+html[data-theme="dawn"] {
+  color-scheme: light;
+  --bg: #f4ecdd;
+  --bg-deep: #ede2d0;
+  --bg-elev: #f8f2e7;
+  --bg-wash: #f7efe2;
+  --panel: rgba(255, 251, 244, 0.74);
+  --panel-solid: #fffaf1;
+  --panel-2: #f7eddd;
+  --panel-3: #efe0ca;
+  --panel-hover: #f6e9d5;
+  --sidebar: rgba(242, 231, 213, 0.82);
+  --sidebar-solid: #f1e6d3;
+  --topbar: rgba(246, 237, 222, 0.72);
+  --user-bubble: linear-gradient(145deg, rgba(162, 84, 58, 0.13), rgba(162, 84, 58, 0.045));
+  --assistant-bubble: transparent;
+  --code-bg: #fdf8ee;
+  --code-inline: rgba(162, 84, 58, 0.09);
+  --quote: rgba(162, 84, 58, 0.055);
+
+  --text: #2f2720;
+  --text-strong: #201a14;
+  --text-soft: #5e5245;
+  --muted: #877767;
+  --faint: #a5947f;
+
+  --line: rgba(61, 42, 25, 0.1);
+  --line-soft: rgba(61, 42, 25, 0.06);
+  --line-strong: rgba(61, 42, 25, 0.17);
+
+  --glow: rgba(162, 84, 58, 0.1);
+  --glow-strong: rgba(162, 84, 58, 0.17);
+  --shadow: 0 30px 80px -28px rgba(74, 49, 24, 0.25);
+  --shadow-soft: 0 14px 36px -20px rgba(74, 49, 24, 0.2);
+
+  --sky-1: rgba(202, 158, 107, 0.3);
+  --sky-2: rgba(143, 168, 143, 0.16);
+  --sky-3: rgba(190, 120, 91, 0.12);
+  --sky-line: rgba(84, 54, 28, 0.05);
+  --star-opacity: 0.16;
+  --star-color: rgba(96, 61, 28, 0.5);
+  --grain-opacity: 0.045;
+
+  --ok: #2f7d5e;
+  --ok-rgb: 47 125 94;
+  --warn: #a26a1c;
+  --warn-rgb: 162 106 28;
+  --danger: #a5384f;
+  --danger-rgb: 165 56 79;
+  --info: #39699c;
+  --info-rgb: 57 105 156;
+  --violet: #7257a8;
+  --jade: #237e6d;
+  --rose: #a64f70;
+  --azure: #39699c;
+  --amber: #a26a1c;
+}
+
+/* Accent's soft counterpart is injected by JS; these fallbacks keep a native
+   browser paint correct before the first frame. */
+html[data-theme="dawn"] {
+  --accent-soft: #c07a5e;
+}
+
+/* ── Density ─────────────────────────────────────────────────────────────── */
+html[data-density="compact"] {
+  --msg-gap: 20px;
+  --card-pad: 16px;
+  --control-height: 36px;
+  --row-height: 33px;
+  --space-7: 26px;
+  --space-8: 32px;
+  --space-9: 44px;
+  --space-10: 56px;
+}
+
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+html[data-motion="off"] * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ease-out: linear;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
