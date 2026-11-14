@@ -1,0 +1,21 @@
+{
+  "name": "معراج · MI'RAJ",
+  "short_name": "معراج",
+  "description": "A free-model AI observatory with exact request inspection and branching prompt edits.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080910",
+  "theme_color": "#080910",
+  "lang": "en",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
