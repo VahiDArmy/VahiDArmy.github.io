@@ -39,7 +39,7 @@ import { openModal, promptDialog, confirmDialog } from '../ui/modal.js';
 import { openMenu } from '../ui/menu.js';
 import { toast, toastError } from '../ui/toast.js';
 import { icon, logoMark } from '../ui/icons.js';
-import { renderMarkdown, bindCodeCopy } from '../ui/markdown.js';
+import { renderMarkdown, bindCodeCopy, bindCodePreview } from '../ui/markdown.js';
 import { reportError, openErrorDialog } from '../ui/errorDialog.js';
 import {
   autoGrow,
@@ -357,6 +357,7 @@ function renderThread({ forceBottom = false, scrollToId = null } = {}) {
   bindCodeCopy(threadEl, (code) => {
     if (code) toast({ title: 'Code copied', message: `${code.length.toLocaleString()} characters`, type: 'success', duration: 1800 });
   });
+  bindCodePreview(threadEl);
 
   requestAnimationFrame(() => {
     if (!scrollEl) return;
