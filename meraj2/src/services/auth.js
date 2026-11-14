@@ -8,10 +8,12 @@ export function authRedirectUrl() {
 
 export async function getSession() {
   try {
+    // Prefer getSession (local storage). If the client is mid-refresh, this
+    // still resolves; callers should race it with a timeout so boot cannot hang.
     const { data, error } = await supabase.auth.getSession();
     return { data, error: normalizeError(error) };
   } catch (error) {
-    return { data: null, error: normalizeError(error) };
+    return { data: { session: null }, error: normalizeError(error) };
   }
 }
 

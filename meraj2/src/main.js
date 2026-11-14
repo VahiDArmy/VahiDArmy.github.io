@@ -75,6 +75,25 @@ function showBoot() {
   bootScreen?.classList.remove('is-hidden');
 }
 
+/**
+ * Never let a hung network/storage promise keep the boot screen forever.
+ * Mobile Chrome + Supabase auth locks are a common source of silent stalls.
+ */
+function withTimeout(promise, ms, label = 'Operation') {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => {
+      const error = new Error(`${label} timed out after ${Math.round(ms / 1000)}s. Check your network or try again.`);
+      error.name = 'TimeoutError';
+      error.code = 'timeout';
+      reject(error);
+    }, ms);
+  });
+  return Promise.race([Promise.resolve(promise), timeout]).finally(() => {
+    if (timer) window.clearTimeout(timer);
+  });
+}
+
 function setDocumentTitle(title) {
   document.title = title ? `${title} · معراج` : 'معراج · MI\'RAJ';
 }
@@ -164,7 +183,7 @@ async function startWorkspace(session, { force = false } = {}) {
   bootMessage('Opening معراج…', 'Checking your Supabase session and the six meraj_ tables.');
 
   try {
-    const schema = await checkSchema();
+    const schema = await withTimeout(checkSchema(), 12000, 'Schema check');
     setState({ schema: { ...schema, checkedAt: new Date().toISOString() } }, 'schema-checked');
     if (schema.status !== 'ready') {
       booting = false;
@@ -178,11 +197,15 @@ async function startWorkspace(session, { force = false } = {}) {
 
     bootMessage('Reading your observatory…', 'Profile, conversations, archived branches, and the stored model catalogue.');
 
-    const [profileResult, activeConversations, archivedConversations] = await Promise.all([
-      db.getProfile(session.user.id),
-      db.listConversations({ archived: false }),
-      db.listConversations({ archived: true }),
-    ]);
+    const [profileResult, activeConversations, archivedConversations] = await withTimeout(
+      Promise.all([
+        db.getProfile(session.user.id),
+        db.listConversations({ archived: false }),
+        db.listConversations({ archived: true }),
+      ]),
+      20000,
+      'Workspace data load',
+    );
 
     let profile = profileResult.data || null;
     if (profileResult.error) {
@@ -194,10 +217,14 @@ async function startWorkspace(session, { force = false } = {}) {
         session.user.user_metadata?.full_name ||
         session.user.email?.split('@')[0] ||
         'Traveller';
-      const created = await db.upsertProfile(session.user.id, {
-        display_name: displayName,
-        avatar_seed: displayName,
-      });
+      const created = await withTimeout(
+        db.upsertProfile(session.user.id, {
+          display_name: displayName,
+          avatar_seed: displayName,
+        }),
+        12000,
+        'Profile create',
+      );
       if (created.error) reportError('Could not create your profile row', created.error);
       else profile = created.data;
     }
@@ -207,18 +234,31 @@ async function startWorkspace(session, { force = false } = {}) {
     else if (archivedConversations.error) conversationError = archivedConversations.error;
 
     bootMessage('Fetching free models…', 'Reading OpenRouter’s public catalogue and storing free text models for your account.');
-    let modelsResult = await db.listModels();
+    let modelsResult = await withTimeout(db.listModels(), 15000, 'Model catalogue read');
     let models = modelsResult.data || [];
     let modelsError = modelsResult.error;
     if (!modelsError && (!models.length || modelsAreStale(models))) {
-      const sync = await syncFreeModels(session.user.id, { currentModels: models });
-      if (sync.error) {
-        modelsError = sync.error;
-        bootMessage('Catalogue unavailable', 'The workspace will open with the models already stored.');
-      } else {
-        modelsResult = await db.listModels();
-        models = modelsResult.data || [];
-        modelsError = modelsResult.error;
+      try {
+        const sync = await withTimeout(
+          syncFreeModels(session.user.id, { currentModels: models }),
+          25000,
+          'OpenRouter catalogue sync',
+        );
+        if (sync.error) {
+          modelsError = sync.error;
+          bootMessage('Catalogue unavailable', 'The workspace will open with the models already stored.');
+        } else {
+          modelsResult = await withTimeout(db.listModels(), 15000, 'Model catalogue re-read');
+          models = modelsResult.data || [];
+          modelsError = modelsResult.error;
+        }
+      } catch (syncError) {
+        modelsError = {
+          message: syncError?.message || String(syncError),
+          code: syncError?.code || 'sync-timeout',
+          name: syncError?.name || 'Error',
+        };
+        bootMessage('Catalogue unavailable', 'Continuing with models already stored on this account.');
       }
     }
 
@@ -274,27 +314,49 @@ function renderSetupOnly() {
 
 function renderFatalBootError(error) {
   hideBoot();
+  const isTimeout = error?.name === 'TimeoutError' || error?.code === 'timeout';
   root.innerHTML = `<div class="fatal-page">
     <div class="fatal-card">
       <span class="fatal-card__mark">${logoMark({ size: 52 })}</span>
       <p class="eyebrow">Startup interrupted</p>
-      <h1>معراج could not open.</h1>
+      <h1>${isTimeout ? 'Session restore took too long.' : 'معراج could not open.'}</h1>
       <p class="fatal-card__message">${escapeHtml(error?.message || String(error))}</p>
       <details class="fatal-card__details"><summary>Exact error and stack</summary><pre>${escapeHtml(`${error?.name || 'Error'}: ${error?.message || error}\n\n${error?.stack || ''}`)}</pre></details>
       <div class="fatal-card__actions">
         <button type="button" class="btn btn--primary" data-fatal-retry>${icon('refresh', { size: 16 })}<span>Retry</span></button>
         <button type="button" class="btn btn--ghost" data-fatal-signout>${icon('logout', { size: 16 })}<span>Sign out</span></button>
+        <button type="button" class="btn btn--ghost" data-fatal-auth>${icon('user', { size: 16 })}<span>Sign-in screen</span></button>
       </div>
-      <p class="field-help">If this is a network error, reconnecting may be enough. The raw message above is unchanged.</p>
+      <p class="field-help">${
+        isTimeout
+          ? 'On mobile this often means the auth storage lock stalled. Retry, or sign out and sign in again. A weak network to Supabase can also cause it.'
+          : 'If this is a network error, reconnecting may be enough. The raw message above is unchanged.'
+      }</p>
     </div>
   </div>`;
   root.querySelector('[data-fatal-retry]')?.addEventListener('click', async () => {
-    const { data } = await getSession();
-    if (data?.session) startWorkspace(data.session, { force: true });
-    else renderAuthScreen();
+    showBoot();
+    bootMessage('Retrying…', 'Restoring your Supabase session.');
+    try {
+      const { data, error: sessionError } = await withTimeout(getSession(), 10000, 'Supabase session restore');
+      hideBoot();
+      if (data?.session) startWorkspace(data.session, { force: true });
+      else if (sessionError) renderFatalBootError(sessionError);
+      else renderAuthScreen();
+    } catch (retryError) {
+      hideBoot();
+      renderFatalBootError(retryError);
+    }
   });
   root.querySelector('[data-fatal-signout]')?.addEventListener('click', async () => {
-    await signOut();
+    try {
+      await withTimeout(signOut(), 8000, 'Sign out');
+    } catch {
+      /* still leave the workspace */
+    }
+    teardownToAuth();
+  });
+  root.querySelector('[data-fatal-auth]')?.addEventListener('click', () => {
     teardownToAuth();
   });
   document.body.classList.remove('is-auth', 'is-workspace', 'is-setup', 'is-booting');
@@ -799,16 +861,23 @@ async function init() {
   bootMessage('Opening معراج…', 'Restoring your Supabase session.');
   let session = null;
   try {
-    const result = await getSession();
-    session = result.data?.session || null;
-    if (result.error && !session) {
+    // Supabase getSession can hang on mobile when the auth storage lock never
+    // releases. Race it so the boot screen cannot stay up indefinitely.
+    const result = await withTimeout(getSession(), 10000, 'Supabase session restore');
+    session = result?.data?.session || null;
+    if (result?.error && !session) {
       authError = {
         ...result.error,
         message: result.error.message || 'The Supabase session could not be restored.',
       };
     }
   } catch (error) {
-    authError = { message: error.message || String(error), code: 'session-restore', name: error.name || 'Error' };
+    authError = {
+      message: error.message || String(error),
+      code: error.code || 'session-restore',
+      name: error.name || 'Error',
+    };
+    console.warn('[معراج] session restore failed', error);
   }
 
   document.body.classList.remove('is-booting');
@@ -816,6 +885,16 @@ async function init() {
 
   if (session) {
     await startWorkspace(session);
+  } else if (authError?.code === 'timeout') {
+    // Timed out while a session may still exist in storage — show recovery UI
+    // instead of a blank auth form that looks like a silent failure.
+    renderFatalBootError(
+      Object.assign(new Error(authError.message), {
+        name: 'TimeoutError',
+        code: 'timeout',
+        stack: authError.message,
+      }),
+    );
   } else {
     renderAuthScreen();
   }
@@ -823,6 +902,8 @@ async function init() {
 
 init().catch((error) => {
   console.error('[معراج] boot failed', error);
+  booting = false;
+  hideBoot();
   renderFatalBootError(error);
 });
 
