@@ -50,10 +50,21 @@ function usageBits(message) {
   return bits;
 }
 
+function canResume(message) {
+  if (message.role !== 'assistant' || message.status === 'streaming') return false;
+  return (
+    message.status === 'error' ||
+    message.status === 'stopped' ||
+    message.status === 'interrupted' ||
+    message.response_meta?.finish_reason === 'length'
+  );
+}
+
 function assistantActions(message, isStreaming) {
   if (isStreaming) return '';
   return `<div class="msg-actions">
     <button type="button" class="msg-action" data-action="copy-message" data-id="${message.id}" title="Copy message text" aria-label="Copy message text">${icon('copy', { size: 15 })}</button>
+    ${canResume(message) ? `<button type="button" class="msg-action msg-action--labelled msg-action--resume" data-action="resume-message" data-id="${message.id}" title="Continue this reply from where it stopped">${icon('arrowRight', { size: 15 })}<span>Resume</span></button>` : ''}
     <button type="button" class="msg-action" data-action="retry-message" data-id="${message.id}" title="Regenerate this reply" aria-label="Regenerate this reply">${icon('refresh', { size: 15 })}</button>
     <button type="button" class="msg-action msg-action--labelled" data-action="message-request" data-id="${message.id}" title="Show the exact request body">${icon('code', { size: 15 })}<span>Request</span></button>
     <button type="button" class="msg-action" data-action="message-menu" data-id="${message.id}" title="More actions" aria-label="More actions">${icon('more', { size: 16 })}</button>

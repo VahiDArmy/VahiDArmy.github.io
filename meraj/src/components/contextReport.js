@@ -60,12 +60,12 @@ export function openContextReport({ conversation, path = [], draft = '', model, 
         </div>
         <div class="context-hero__copy">
           <p class="eyebrow">Projected request</p>
-          <h3>${formatTokens(report.totalInput)} input + ${formatTokens(report.maxOut)} reply reserve</h3>
-          <p>${report.contextLength ? `Against a ${formatContext(report.contextLength)} token context window.` : 'This model does not publish a context window.'} ${report.remainingAfterReserve === null ? '' : report.remainingAfterReserve >= 0 ? `${formatTokens(report.remainingAfterReserve)} tokens remain after the reserve.` : `${formatTokens(Math.abs(report.remainingAfterReserve))} tokens over budget.`}</p>
+          <h3>${formatTokens(report.totalInput)} input + ${report.maxOut ? `${formatTokens(report.maxOut)} reply reserve` : 'provider-chosen reply'}</h3>
+          <p>${report.contextLength ? `Against a ${formatContext(report.contextLength)} token context window.` : 'This model does not publish a context window.'} ${report.remainingAfterReserve === null ? '' : report.remainingAfterReserve >= 0 ? `${formatTokens(report.remainingAfterReserve)} tokens remain after the reserve.` : `${formatTokens(Math.abs(report.remainingAfterReserve))} tokens over budget.`}${report.maxOutUnknown ? ' This model does not publish a completion maximum, so the request omits max_tokens and lets the provider choose.' : ''}</p>
           <div class="context-hero__badges">
             <span class="tag">${formatTokens(report.totalInput)} input</span>
             <span class="tag">${formatNumber(report.messageCount)} messages</span>
-            <span class="tag">${formatTokens(report.maxOut)} max reply</span>
+            <span class="tag">${report.maxOut ? `${formatTokens(report.maxOut)} ${report.maxOutAuto ? 'auto max reply' : 'max reply'}` : 'no output cap requested'}</span>
             ${report.systemTokens ? `<span class="tag tag--accent">system prompt ${formatTokens(report.systemTokens)}</span>` : ''}
           </div>
         </div>

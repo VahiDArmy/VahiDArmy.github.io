@@ -54,6 +54,8 @@ Free models are fetched from OpenRouter's public `/models` endpoint and stored p
 
 ### Chat and branching
 - Streaming responses with a stop control and persisted partial output.
+- **Automatic output budget**: leave max reply tokens blank and the request asks for the selected model's published maximum completion size, capped to the remaining context; if a provider publishes no maximum, the field is omitted so the provider chooses. A numeric value is still honoured as an explicit cap.
+- **Resume**: failed, stopped, interrupted and length-truncated replies expose a Resume action. It creates a continuation branch that includes the partial assistant text and asks the model to finish from that exact point. Retry remains available separately.
 - **Edit a sent prompt** by creating a sibling branch: the original branch is preserved, the edited prompt becomes a new branch, and arrow controls move between siblings.
 - Branch paths are stored as a message tree (`parent_id`), so switching branches never destroys earlier prompts.
 - Regenerate, delete a branch, fork, pin, archive, rename, and delete conversations.
@@ -104,6 +106,7 @@ Free models are fetched from OpenRouter's public `/models` endpoint and stored p
 - Keyboard shortcuts, focus composer, mobile drawer, collapsible desktop sidebar.
 - Export a conversation as Markdown or JSON; export the whole workspace as JSON.
 - Four themes, accent colours, density, font scale and reduced-motion support.
+- Mobile settings tabs wrap into a complete grid instead of being clipped, and the closed drawer no longer casts a shadow over the page.
 - PWA manifest, responsive layout and touch-friendly controls.
 
 ### Data and privacy

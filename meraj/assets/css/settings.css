@@ -526,24 +526,33 @@
   display: flex;
   flex-direction: column;
   gap: 7px;
+  min-width: 0;
 }
 
 .appearance-block > p {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   color: var(--text-soft);
   font-size: 0.67rem;
 }
 
 .appearance-block output {
+  flex: none;
   color: var(--accent);
   font-family: var(--font-mono);
   font-size: 0.6rem;
 }
 
 .appearance-block input[type="range"] {
+  display: block;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
   accent-color: var(--accent);
 }
 

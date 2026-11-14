@@ -27,12 +27,31 @@ function supports(supported, name) {
 export function effectiveParams(conversation, settings) {
   const defaults = { ...CONFIG.defaults.params, ...(settings?.params || {}) };
   const params = { ...defaults, ...(conversation?.params || {}) };
+  const requestedMax = Number(params.max_tokens);
   return {
     temperature: clampNumber(params.temperature, 0, 2, 0.7),
     top_p: clampNumber(params.top_p, 0.01, 1, 1),
-    max_tokens: Math.round(clampNumber(params.max_tokens, 16, 262144, 2048)),
+    max_tokens:
+      Number.isFinite(requestedMax) && requestedMax > 0
+        ? Math.round(clampNumber(requestedMax, 16, 262144, 2048))
+        : null,
     reasoning: ['off', 'low', 'medium', 'high'].includes(params.reasoning) ? params.reasoning : 'off',
   };
+}
+
+/**
+ * Automatic output budget. When the user has not chosen a cap, ask for the
+ * model's advertised maximum completion size, never beyond the context room
+ * left by the actual input. If the provider publishes no maximum, omit the
+ * field entirely and let that provider decide.
+ */
+function automaticMaxTokens(model, messages) {
+  const ceiling = Number(model?.max_completion_tokens);
+  if (!Number.isFinite(ceiling) || ceiling <= 0) return null;
+  const context = Number(model?.context_length || model?.top_provider?.context_length);
+  const inputTokens = estimateRequestInput(messages, '');
+  const room = Number.isFinite(context) && context > 0 ? Math.max(16, context - inputTokens - 64) : ceiling;
+  return Math.round(Math.min(ceiling, room));
 }
 
 function clampNumber(value, min, max, fallback) {
@@ -41,11 +60,11 @@ function clampNumber(value, min, max, fallback) {
   return Math.min(max, Math.max(min, number));
 }
 
-export function selectableHistory(path = []) {
+export function selectableHistory(path = [], { includeErrorContent = false } = {}) {
   return (path || []).filter((message) => {
     if (!message) return false;
     if (message.role !== 'user' && message.role !== 'assistant') return false;
-    if (message.status === 'error') return false;
+    if (message.status === 'error' && !includeErrorContent) return false;
     return String(message.content || '').trim().length > 0;
   });
 }
@@ -59,7 +78,7 @@ export function selectableHistory(path = []) {
  * @param {object} options.settings
  * @param {boolean} options.stream
  */
-export function buildChatRequest({ conversation, model, path = [], draft = '', settings, stream = true }) {
+export function buildChatRequest({ conversation, model, path = [], draft = '', settings, stream = true, includeErrorContent = false }) {
   const modelSlug = model?.slug || conversation?.model_slug || CONFIG.defaults.model;
   const supported = model?.supported_parameters || [];
   const params = effectiveParams(conversation, settings);
@@ -68,7 +87,7 @@ export function buildChatRequest({ conversation, model, path = [], draft = '', s
   const system = normalizeText(conversation?.system_prompt || '').trim();
   if (system) messages.push({ role: 'system', content: conversation.system_prompt });
 
-  for (const message of selectableHistory(path)) {
+  for (const message of selectableHistory(path, { includeErrorContent })) {
     messages.push({ role: message.role, content: message.content });
   }
 
@@ -84,12 +103,15 @@ export function buildChatRequest({ conversation, model, path = [], draft = '', s
 
   if (supports(supported, 'temperature')) body.temperature = params.temperature;
   if (supports(supported, 'top_p')) body.top_p = params.top_p;
-  if (supports(supported, 'max_tokens')) {
-    body.max_tokens = params.max_tokens;
-  } else if (supports(supported, 'max_completion_tokens')) {
-    body.max_completion_tokens = params.max_tokens;
-  } else {
-    body.max_tokens = params.max_tokens;
+  const outputLimit = params.max_tokens || automaticMaxTokens(model, messages);
+  if (outputLimit) {
+    if (supports(supported, 'max_tokens')) {
+      body.max_tokens = outputLimit;
+    } else if (supports(supported, 'max_completion_tokens')) {
+      body.max_completion_tokens = outputLimit;
+    } else {
+      body.max_tokens = outputLimit;
+    }
   }
   if (supports(supported, 'top_k')) body.top_k = 40;
   if (supports(supported, 'frequency_penalty')) body.frequency_penalty = 0;
@@ -113,8 +135,8 @@ export function buildChatRequest({ conversation, model, path = [], draft = '', s
   };
 }
 
-export async function createRequestSnapshot({ conversation, model, path, draft = '', settings, stream = true }) {
-  const built = buildChatRequest({ conversation, model, path, draft, settings, stream });
+export async function createRequestSnapshot({ conversation, model, path, draft = '', settings, stream = true, includeErrorContent = false }) {
+  const built = buildChatRequest({ conversation, model, path, draft, settings, stream, includeErrorContent });
   const createdAt = new Date().toISOString();
   const estimatedInput = estimateRequestInput(
     built.messages.filter((message) => message.role !== 'system'),

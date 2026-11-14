@@ -977,6 +977,15 @@
   font-size: 0.52rem;
 }
 
+.msg-action--resume {
+  color: var(--accent);
+}
+
+.msg-action--resume:hover {
+  background: rgba(var(--accent-rgb), 0.09);
+  color: var(--accent-soft);
+}
+
 /* User message */
 .msg--user .msg__user-wrap {
   display: flex;

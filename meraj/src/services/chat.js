@@ -51,6 +51,7 @@ export async function runAssistantTurn({
   parentId,
   model,
   path,
+  includeErrorContent = false,
   settings,
   apiKey,
   signal,
@@ -96,6 +97,7 @@ export async function runAssistantTurn({
       conversation,
       model,
       path,
+      includeErrorContent,
       settings,
       stream: settings?.stream !== false,
     });

@@ -58,6 +58,7 @@ export const CONFIG = {
   },
 
   defaults: {
+    settingsVersion: 2,
     model: 'openrouter/free',
     systemPrompt: '',
     theme: 'nocturne',
@@ -76,7 +77,8 @@ export const CONFIG = {
     params: {
       temperature: 0.7,
       top_p: 1,
-      max_tokens: 2048,
+      // null means automatic: use the model's maximum completion size.
+      max_tokens: null,
       reasoning: 'off',
     },
   },

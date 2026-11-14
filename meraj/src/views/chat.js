@@ -164,6 +164,14 @@ async function loadConversation(routeId) {
       return;
     }
     conversation = found;
+    // Older conversations stored the v1 hard cap. Migrate that hidden default
+    // to automatic output sizing when the conversation is opened.
+    if (Number(conversation.params?.max_tokens) === 2048) {
+      conversation.params = { ...(conversation.params || {}), max_tokens: null };
+      db.updateConversation(conversation.id, { params: conversation.params }).then(({ error }) => {
+        if (error) console.warn('[معراج] Could not migrate the legacy token cap', error);
+      });
+    }
     const messageResult = await db.listMessages(routeId);
     if (token !== loadToken) return;
     if (messageResult.error) {
@@ -440,7 +448,7 @@ function updateComposerMeta() {
   if (gauge) {
     gauge.innerHTML = `${contextGaugeSvg(pct ?? 0, { size: 28, stroke: 3 })}<span class="${over ? 'is-over' : ''}">${report.percent === null ? '—' : `${report.percent.toFixed(0)}%`}</span>`;
     gauge.title = report.contextLength
-      ? `~${formatNumber(report.totalInput)} input tokens + ${formatNumber(report.maxOut)} reply reserve of ${formatContext(report.contextLength)}`
+      ? `~${formatNumber(report.totalInput)} input tokens + ${report.maxOut ? `${formatNumber(report.maxOut)} reply reserve` : 'provider-chosen reply'} of ${formatContext(report.contextLength)}`
       : 'Context window unknown';
     gauge.classList.toggle('is-over', over);
   }
@@ -538,7 +546,7 @@ function finalizeConversationPatch(finalMessage) {
   });
 }
 
-async function startTurn({ pathForRequest, parentId, userMessage = null }) {
+async function startTurn({ pathForRequest, parentId, userMessage = null, includeErrorContent = false }) {
   if (!conversation || streaming) return;
   const model = currentModel();
   const requestedModel = model?.slug || selectedModelSlug;
@@ -562,6 +570,7 @@ async function startTurn({ pathForRequest, parentId, userMessage = null }) {
     parentId,
     model,
     path: requestPath,
+    includeErrorContent,
     settings: settings(),
     apiKey,
     signal: controller.signal,
@@ -942,6 +951,72 @@ async function openEditModal(message) {
   input?.setSelectionRange(input.value.length, input.value.length);
 }
 
+async function resumeMessage(message) {
+  if (!message || message.role !== 'assistant') return;
+  if (streaming) {
+    toast({ title: 'A reply is streaming', message: 'Stop the current reply before resuming another.', type: 'warning' });
+    return;
+  }
+  if (!hasKey()) {
+    toast({
+      title: 'OpenRouter key required',
+      message: 'Add a key before resuming a reply.',
+      type: 'warning',
+      actions: [{ label: 'Open settings', onClick: () => ctx?.navigate?.('/settings') }],
+    });
+    return;
+  }
+  if (!conversation) return;
+
+  // A failed turn with no partial text has nothing to continue: retry it.
+  if (!String(message.content || '').trim()) {
+    await regenerate(message);
+    return;
+  }
+
+  const instruction =
+    'Continue the previous assistant reply from the exact point where it stopped. Do not repeat, restart, or summarize the existing text. Complete the remaining answer only.';
+  const { data, error } = await db.createMessage({
+    conversation_id: conversation.id,
+    user_id: state.user.id,
+    parent_id: message.id,
+    role: 'user',
+    content: instruction,
+    model_slug: selectedModelSlug,
+    requested_model: selectedModelSlug,
+    status: 'complete',
+  });
+  if (error || !data) {
+    reportError('Supabase could not save the continuation prompt', error || { message: 'No message returned.' });
+    return;
+  }
+
+  messages.push(data);
+  path = pathToLeaf(messages, data.id);
+  conversation.active_leaf_id = data.id;
+  updateConversationInState(conversation);
+  db.updateConversation(conversation.id, {
+    active_leaf_id: data.id,
+    last_message_at: new Date().toISOString(),
+    message_count: messages.length,
+  }).then(({ error: updateError }) => {
+    if (updateError) reportError('Could not switch to the resumed branch', updateError);
+  });
+
+  renderHeader();
+  renderAlerts();
+  renderThread({ forceBottom: true, scrollToId: data.id });
+  updateComposerMeta();
+  toast({ title: 'Resuming reply', message: 'The partial text is included in the request context.', type: 'info', duration: 3400 });
+
+  await startTurn({
+    pathForRequest: path,
+    parentId: data.id,
+    includeErrorContent: message.status === 'error',
+  });
+  if (mounted) setState({ conversations: [...state.conversations] }, 'conversation-touched');
+}
+
 async function regenerate(message) {
   if (streaming) {
     toast({ title: 'A reply is streaming', message: 'Stop it before regenerating.', type: 'warning' });
@@ -1210,7 +1285,7 @@ function openParamsModal() {
         <p class="field-help">Nucleus sampling threshold.</p>
       </div>
       <div class="param-grid">
-        <label class="field"><span>Max reply tokens</span><input id="param-max-tokens" class="input" type="number" min="16" max="262144" step="16" value="${Number(params.max_tokens)}" ${support('max_tokens') || support('max_completion_tokens') ? '' : 'disabled'}></label>
+        <label class="field"><span>Max reply tokens <em>auto if blank</em></span><input id="param-max-tokens" class="input" type="number" min="16" max="262144" step="16" placeholder="Automatic — model maximum" value="${params.max_tokens ?? ''}" ${support('max_tokens') || support('max_completion_tokens') ? '' : 'disabled'}><span class="field-help">Blank asks for the model's maximum completion size; a number sets an explicit cap.</span></label>
         <label class="field"><span>Reasoning effort</span><select id="param-reasoning" class="input" ${support('reasoning') ? '' : 'disabled'}>
           ${['off', 'low', 'medium', 'high'].map((value) => `<option value="${value}" ${params.reasoning === value ? 'selected' : ''}>${value}</option>`).join('')}
         </select></label>
@@ -1227,12 +1302,13 @@ function openParamsModal() {
         onClick: () => {
           const temperature = Number(paramsModal.body.querySelector('#param-temperature')?.value);
           const topP = Number(paramsModal.body.querySelector('#param-top-p')?.value);
-          const maxTokens = Math.round(Number(paramsModal.body.querySelector('#param-max-tokens')?.value));
+          const maxRaw = String(paramsModal.body.querySelector('#param-max-tokens')?.value ?? '').trim();
+          const maxTokens = maxRaw ? Math.round(Number(maxRaw)) : null;
           const reasoning = paramsModal.body.querySelector('#param-reasoning')?.value || 'off';
           const next = {
             temperature: Math.min(2, Math.max(0, Number.isFinite(temperature) ? temperature : 0.7)),
             top_p: Math.min(1, Math.max(0.01, Number.isFinite(topP) ? topP : 1)),
-            max_tokens: Math.min(262144, Math.max(16, Number.isFinite(maxTokens) ? maxTokens : 2048)),
+            max_tokens: maxTokens === null ? null : Number.isFinite(maxTokens) ? Math.min(262144, Math.max(16, maxTokens)) : null,
             reasoning,
           };
           if (conversation) {
@@ -1573,6 +1649,14 @@ async function openMessageMenu(anchor, message) {
     items.push({ label: 'Copy prompt', icon: 'copy', action: () => copyMessage(message) });
   } else {
     items.push({ label: 'Regenerate reply', icon: 'refresh', action: () => regenerate(message) });
+    if (
+      message.status === 'error' ||
+      message.status === 'stopped' ||
+      message.status === 'interrupted' ||
+      message.response_meta?.finish_reason === 'length'
+    ) {
+      items.push({ label: 'Resume / continue reply', icon: 'arrowRight', action: () => resumeMessage(message) });
+    }
     items.push({ label: 'Exact request body', icon: 'code', action: () => openArchivedRequest(message) });
     items.push({ label: 'Usage & provenance', icon: 'activity', action: () => openMessageUsage(message) });
     items.push({ label: 'Copy reply', icon: 'copy', action: () => copyMessage(message) });
@@ -1774,6 +1858,11 @@ async function handleRootClick(event) {
         if (message.role === 'assistant') await regenerate(message);
         else toast({ title: 'Not a reply', message: 'Retry is available on assistant replies and error cards.', type: 'info' });
       }
+      break;
+    }
+    case 'resume-message': {
+      const message = messages.find((item) => item.id === id);
+      if (message) await resumeMessage(message);
       break;
     }
     case 'message-menu': {

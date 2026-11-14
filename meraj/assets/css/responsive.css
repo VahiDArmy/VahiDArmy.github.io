@@ -89,13 +89,16 @@
     padding: max(16px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom));
     border-right: 1px solid var(--line-strong);
     background: var(--sidebar-solid);
-    box-shadow: 30px 0 90px rgba(0, 0, 0, 0.55);
+    box-shadow: none;
     transform: translateX(-104%);
-    transition: transform 0.32s var(--ease-out);
+    transition:
+      transform 0.32s var(--ease-out),
+      box-shadow 0.32s var(--ease-out);
   }
 
   .sidebar.is-open {
     transform: none;
+    box-shadow: 30px 0 90px rgba(0, 0, 0, 0.55);
   }
 
   .sidebar__collapse {
@@ -426,7 +429,7 @@
   }
 
   .page {
-    padding: 22px 15px 62px;
+    padding: 22px 15px calc(96px + env(safe-area-inset-bottom, 0px));
   }
 
   .page-head {
@@ -790,18 +793,17 @@
   }
 
   .settings-nav {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-  }
-
-  .settings-nav::-webkit-scrollbar {
-    display: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+    padding-bottom: 0;
   }
 
   .settings-nav a {
-    flex: none;
+    justify-content: flex-start;
+    min-width: 0;
+    width: 100%;
   }
 
   .theme-grid {

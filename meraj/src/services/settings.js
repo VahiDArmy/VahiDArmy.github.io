@@ -35,9 +35,16 @@ function remove(key) {
 
 export function loadSettings() {
   const stored = readJson(CONFIG.keys.settings, {});
+  // v1 shipped a hard 2048-token cap. Treat that old default as automatic
+  // once, while preserving any other explicit value the user chose.
+  if ((Number(stored.settingsVersion) || 1) < 2 && Number(stored.params?.max_tokens) === 2048) {
+    stored.params = { ...(stored.params || {}), max_tokens: null };
+    stored.settingsVersion = 2;
+  }
   const merged = {
     ...CONFIG.defaults,
     ...stored,
+    settingsVersion: 2,
     params: { ...CONFIG.defaults.params, ...(stored.params || {}) },
   };
   if (!['nocturne', 'mihrab', 'nebula', 'dawn'].includes(merged.theme)) merged.theme = CONFIG.defaults.theme;

@@ -159,7 +159,7 @@ function render() {
               <div class="param-head"><label for="default-temperature">Default temperature</label><output id="out-default-temp">${Number(settings.params?.temperature ?? 0.7).toFixed(2)}</output></div>
               <input type="range" id="default-temperature" min="0" max="2" step="0.05" value="${Number(settings.params?.temperature ?? 0.7)}">
             </div>
-            <label class="field"><span>Default max reply tokens</span><input id="default-max-tokens" class="input" type="number" min="16" max="262144" step="16" value="${Number(settings.params?.max_tokens ?? 2048)}"></label>
+            <label class="field"><span>Default max reply tokens <em>auto if blank</em></span><input id="default-max-tokens" class="input" type="number" min="16" max="262144" step="16" placeholder="Automatic — model maximum" value="${settings.params?.max_tokens ?? ''}"><span class="field-help">Blank asks for the model's maximum completion size. Set a number only when you want a smaller cap.</span></label>
             <label class="field"><span>Reasoning effort</span><select id="default-reasoning" class="input">${['off', 'low', 'medium', 'high'].map((value) => `<option value="${value}" ${(settings.params?.reasoning || 'off') === value ? 'selected' : ''}>${value}</option>`).join('')}</select><span class="field-help">Sent only when the selected model advertises reasoning support.</span></label>
           </div>
           <div class="settings-actions"><button type="button" class="btn btn--primary" data-save-defaults>${icon('check', { size: 15 })}<span>Save defaults</span></button></div>
@@ -359,14 +359,15 @@ function bind() {
     const model = page.querySelector('#default-model')?.value || CONFIG.defaults.model;
     const systemPrompt = page.querySelector('#default-system')?.value || '';
     const temperature = Number(page.querySelector('#default-temperature')?.value);
-    const maxTokens = Math.round(Number(page.querySelector('#default-max-tokens')?.value));
+    const maxRaw = String(page.querySelector('#default-max-tokens')?.value ?? '').trim();
+    const maxTokens = maxRaw ? Math.round(Number(maxRaw)) : null;
     const reasoning = page.querySelector('#default-reasoning')?.value || 'off';
     const next = saveSettings({
       defaultModel: model,
       systemPrompt,
       params: {
         temperature: Number.isFinite(temperature) ? Math.min(2, Math.max(0, temperature)) : 0.7,
-        max_tokens: Number.isFinite(maxTokens) ? Math.min(262144, Math.max(16, maxTokens)) : 2048,
+        max_tokens: maxTokens === null ? null : Number.isFinite(maxTokens) ? Math.min(262144, Math.max(16, maxTokens)) : null,
         reasoning,
       },
     });

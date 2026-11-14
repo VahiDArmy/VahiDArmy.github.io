@@ -112,6 +112,7 @@ export function renderErrorCard(error, { messageId = null, canRetry = true } = {
     <div class="error-card__actions">
       <button type="button" class="btn btn--small btn--ghost" data-action="copy-error" ${messageId ? `data-id="${messageId}"` : ''}>${icon('copy', { size: 14 })}<span>Copy raw</span></button>
       ${messageId ? `<button type="button" class="btn btn--small btn--ghost" data-action="message-request" data-id="${messageId}">${icon('code', { size: 14 })}<span>Exact request</span></button>` : ''}
+      ${messageId && canRetry ? `<button type="button" class="btn btn--small btn--ghost" data-action="resume-message" data-id="${messageId}">${icon('arrowRight', { size: 14 })}<span>Resume</span></button>` : ''}
       ${messageId && canRetry ? `<button type="button" class="btn btn--small btn--ghost" data-action="retry-message" data-id="${messageId}">${icon('refresh', { size: 14 })}<span>Retry</span></button>` : ''}
     </div>
   </section>`;

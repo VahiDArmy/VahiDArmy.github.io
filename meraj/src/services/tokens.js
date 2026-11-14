@@ -100,8 +100,11 @@ export function buildContextReport({
     });
   }
 
-  const maxOut = Math.max(0, Number(params?.max_tokens) || 0);
   const totalInput = systemTokens + historyTokens + draftTokens;
+  const explicitMax = Math.max(0, Number(params?.max_tokens) || 0);
+  const modelMax = Math.max(0, Number(model?.max_completion_tokens) || 0);
+  const contextRoom = contextLength ? Math.max(0, contextLength - totalInput) : modelMax;
+  const maxOut = explicitMax || (modelMax ? Math.min(modelMax, contextRoom || modelMax) : 0);
   const projected = totalInput + maxOut;
   const percentRaw = contextLength ? (projected / contextLength) * 100 : null;
   const percent = percentRaw === null ? null : Math.min(999, Math.max(0, percentRaw));
@@ -136,6 +139,8 @@ export function buildContextReport({
     draftTokens,
     totalInput,
     maxOut,
+    maxOutAuto: !explicitMax && Boolean(modelMax),
+    maxOutUnknown: !explicitMax && !modelMax,
     projected,
     percent,
     inputPercent,
