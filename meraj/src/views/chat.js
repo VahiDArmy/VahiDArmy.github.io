@@ -255,7 +255,7 @@ function renderHeader() {
     </div>`;
 }
 
-function alertsMarkup() {
+function renderAlerts() {
   const bits = [];
   if (!state.online) {
     bits.push(`<div class="chat-banner chat-banner--warn">${icon('wifiOff', { size: 17 })}<div><strong>You are offline</strong><p>The browser reports no network connection. Requests cannot reach OpenRouter until it returns.</p></div></div>`);
