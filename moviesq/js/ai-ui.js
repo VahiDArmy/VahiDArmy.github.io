@@ -230,6 +230,7 @@ window.AIUI = (function () {
       children.push(Utils.el('span', { class: 'ai-model-badge-via' }, [
         'via ' + (info.requested_label || info.requested_id)
       ]));
+      children.push(Utils.el('span', { class: 'ai-model-badge-routed' }, ['auto-routed']));
     }
     const wrap = Utils.el('div', { class: 'ai-model-badge' }, children);
     /* مدل واقعی در لیست نیست → دکمه افزودن */
@@ -379,7 +380,14 @@ window.AIUI = (function () {
       const badge = buildModelBadge(info);
       if (badge) foot.appendChild(badge);
     }
-    function hide() { panel.hidden = true; }
+    function onModelResolved() { setModelBadge(); }
+    try {
+      document.addEventListener('cinema:model-resolved', onModelResolved);
+    } catch (e) {}
+    function hide() {
+      try { document.removeEventListener('cinema:model-resolved', onModelResolved); } catch (e2) {}
+      panel.hidden = true;
+    }
 
     return {
       panel: panel, body: body,

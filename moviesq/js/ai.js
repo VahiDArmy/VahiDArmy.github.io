@@ -273,19 +273,28 @@ window.AI = (function () {
     const requested = requestedId ? String(requestedId).trim() : '';
     const meta = modelMetaById(id) || {};
     const reqMeta = requested ? (modelMetaById(requested) || {}) : {};
+    var pretty = meta.label || id;
+    if (!meta.label && id && id.indexOf('/') >= 0) {
+      /* openrouter/free → keep; vendor/model:free → readable */
+      pretty = id.replace(/:free$/i, ' (free)');
+    }
     lastUsedModel = {
       id: id,
-      label: meta.label || id,
-      vendor: meta.vendor || '',
+      label: pretty,
+      vendor: meta.vendor || (id.indexOf('/') >= 0 ? id.split('/')[0] : ''),
       provider: meta.provider || resolveProvider(id),
       meta: { size: meta.size, context: meta.context, speed: meta.speed },
       requested_id: requested || (lastUsedModel && lastUsedModel.id) || '',
       requested_label: reqMeta.label || requested || '',
+      auto_routed: !!(requested && id && requested !== id),
       at: new Date().toISOString()
     };
     if (requested && id !== requested) {
       aiLog('info', '↳ مدل واقعی: ' + id + (reqMeta.label || requested ? ' (درخواست: ' + (reqMeta.label || requested) + ')' : ''));
     }
+    try {
+      document.dispatchEvent(new CustomEvent('cinema:model-resolved', { detail: lastUsedModel }));
+    } catch (e) {}
   }
 
 
@@ -384,7 +393,9 @@ window.AI = (function () {
       throw err;
     }
 
-    const model = resolveModel(opts.model);
+    const requestedModel = resolveModel(opts.model);
+    let model = requestedModel;
+    applyResolvedModel(requestedModel, requestedModel);
     const temperature = opts.temperature != null ? opts.temperature : 0.5;
     const max_tokens = opts.max_tokens != null ? opts.max_tokens : undefined;
     const messages = opts.messages || [];
@@ -440,10 +451,16 @@ window.AI = (function () {
       const msg = (json.choices && json.choices[0] && json.choices[0].message) || {};
       const text = textFromContent(msg.content) || json.content || json.text || '';
       const think = reasoningFromDelta(msg) || (typeof msg.reasoning === 'string' ? msg.reasoning : '');
+      if (json.model) {
+        model = String(json.model).trim();
+        applyResolvedModel(model, requestedModel);
+      }
       if (think && opts.onThinking) opts.onThinking(think, think);
       if (text) onToken(text);
-      onDone(text, { reasoning: think || null, finishReason: 'stop' });
-      aiLog('success', '✓ پاسخ یک‌جا (direct) · ' + text.length + ' کاراکتر' + (think ? ' · reasoning ' + think.length : ''));
+      onDone(text, { reasoning: think || null, finishReason: 'stop', model: model });
+      aiLog('success', '✓ پاسخ یک‌جا (direct) · ' + text.length + ' کاراکتر' +
+        (think ? ' · reasoning ' + think.length : '') +
+        (model && model !== requestedModel ? ' · ' + model : ''));
       return text;
     }
 
@@ -477,6 +494,13 @@ window.AI = (function () {
             aiLog('error', '✗ ' + msg);
             throw new Error(msg);
           }
+          if (obj.model && String(obj.model).trim()) {
+            model = String(obj.model).trim();
+            applyResolvedModel(model, requestedModel);
+          }
+          if (obj.provider) {
+            /* keep provider note on lastUsedModel via applyResolvedModel meta if needed */
+          }
           const choice = obj.choices && obj.choices[0];
           if (!choice) continue;
           if (choice.finish_reason) finishReason = choice.finish_reason;
@@ -506,9 +530,16 @@ window.AI = (function () {
       }
     }
 
+    if (model && model !== requestedModel) {
+      applyResolvedModel(model, requestedModel);
+      aiLog('info', '↳ مدل واقعی: ' + model + ' (درخواست: ' + requestedModel + ')');
+    } else if (model) {
+      applyResolvedModel(model, requestedModel);
+    }
     aiLog('success', '✓ استریم direct · ' + full.length + ' کاراکتر' +
-      (finishReason ? ' · ' + finishReason : ''));
-    onDone(full, { reasoning: reasoning || null, finishReason: finishReason });
+      (finishReason ? ' · ' + finishReason : '') +
+      (model ? ' · ' + model : ''));
+    onDone(full, { reasoning: reasoning || null, finishReason: finishReason, model: model });
     return full;
   }
 

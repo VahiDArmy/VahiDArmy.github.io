@@ -1688,3 +1688,83 @@
   overscroll-behavior: contain;
   touch-action: pan-y;
 }
+
+
+/* ── Viewport scroll lock fix for personality stream ─────────────────────── */
+.app[data-page="personality"] .main-content {
+  overflow: hidden;
+}
+.personality-page.is-active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.personality-page .pers-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+.personality-page .pers-stream-wrap {
+  min-height: 0;
+  height: auto;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.personality-page #pers-stream-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.personality-page #pers-stream-host .ai-stream-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.personality-page #pers-stream-host .ai-stream-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow-y: scroll !important; /* force scrollable region */
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  /* critical on mobile: give the box a real height budget */
+  height: 0; /* flex item grows from 0 via flex:1 */
+}
+.personality-page #pers-stream-host .ai-stream-head,
+.personality-page #pers-stream-host .ai-stream-foot {
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .personality-page .pers-layout {
+    grid-template-rows: minmax(0, 1fr) minmax(160px, 32vh);
+    overflow: hidden;
+  }
+  .personality-page .pers-history {
+    max-height: 32vh;
+  }
+}
+
+.ai-model-badge-routed {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--accent);
+}

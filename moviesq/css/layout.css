@@ -14,21 +14,29 @@
    ========================================================= */
 .app {
   display: grid;
-  min-height: 100vh;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   position: relative;
   z-index: 1;
+  overflow: hidden;
 }
 
 .app-header {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: var(--z-header);
+  flex-shrink: 0;
 }
 
 .app-body {
   display: grid;
+  grid-template-columns: var(--sidebar-w, 232px) minmax(0, 1fr);
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   position: relative;
+  overflow: hidden;
 }
 
 .main-content {
@@ -36,6 +44,8 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   overflow: hidden;
 }
 
