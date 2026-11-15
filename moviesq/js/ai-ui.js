@@ -526,9 +526,9 @@ window.AIUI = (function () {
       defaults.max_tokens === 'max' ||
       defaults.max_tokens === 0
     );
-    /* Higher ceiling so values before unlimited are larger; rightmost = 0 (free) */
+    /* Left end = 0 (free/unlimited). Moving right increases value up to HARD_MAX. */
     const HARD_MAX = 32768;
-    const m0 = useMaxDefault ? HARD_MAX : Number(defaults.max_tokens);
+    const m0 = useMaxDefault ? 0 : Number(defaults.max_tokens);
 
     const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [Number(t0).toFixed(2)]);
     const tempRange = Utils.el('input', {
@@ -544,19 +544,20 @@ window.AIUI = (function () {
       title: useMaxDefault ? 'آزاد (بدون محدودیت مشخص)' : ''
     }, [useMaxDefault ? '0' : String(m0)]);
     const maxRange = Utils.el('input', {
-      type: 'range', min: '256', max: String(HARD_MAX), step: '256',
+      type: 'range', min: '0', max: String(HARD_MAX), step: '256',
       value: String(m0),
       class: 'ai-param-range', id: 'ai-param-max',
       dataset: { isMax: useMaxDefault ? '1' : '0' }
     });
     function refreshMaxLabel() {
-      if (Number(maxRange.value) >= HARD_MAX) {
+      const v = Number(maxRange.value);
+      if (v === 0) {
         maxVal.textContent = '0';
         maxVal.classList.add('is-unlimited');
         maxVal.title = 'آزاد (بدون محدودیت مشخص)';
         maxRange.dataset.isMax = '1';
       } else {
-        maxVal.textContent = maxRange.value;
+        maxVal.textContent = String(v);
         maxVal.classList.remove('is-unlimited');
         maxVal.title = '';
         maxRange.dataset.isMax = '0';
@@ -582,7 +583,7 @@ window.AIUI = (function () {
       getTemperature: function () { return Number(tempRange.value); },
       /* null => omit max_tokens in request body (true model max / free) */
       getMaxTokens: function () {
-        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) >= HARD_MAX) return null;
+        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) === 0) return null;
         return Number(maxRange.value);
       },
       setDisabled: function (v) {

@@ -2087,17 +2087,19 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 1px solid var(--border-1);
   border-radius: 12px;
   background: var(--bg-1);
   margin: 0;
+  overflow: hidden; /* keep value boxes inside the frame */
+  box-sizing: border-box;
 }
 .personality-page .ai-params-bar .ai-param {
-  display: grid;
-  grid-template-columns: auto 1fr minmax(3.4rem, auto);
+  display: flex;
+  flex-direction: row; /* in RTL this puts first DOM child (label) on the right */
   align-items: center;
-  gap: 8px 10px;
+  gap: 10px;
   flex: none;
   min-width: 0;
   width: 100%;
@@ -2108,16 +2110,21 @@
   color: var(--text-3);
   white-space: nowrap;
   min-width: 4.2rem;
+  flex: none;
+  order: 3; /* force label to the far right */
 }
 .personality-page .ai-params-bar .ai-param-range {
-  width: 100%;
+  flex: 1 1 auto;
   min-width: 0;
+  width: auto;
   max-width: none;
-  flex: none;
+  order: 2;
 }
 .personality-page .ai-params-bar .ai-param-val {
-  min-width: 3.4rem;
-  width: 3.4rem;
+  flex: none;
+  order: 1; /* value box on the left, same as tokens */
+  min-width: 3.6rem;
+  width: 3.6rem;
   max-width: 3.8rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
