@@ -6,6 +6,41 @@ window.AIUI = (function () {
   let activeAbort = null;
 
   /* =========================================================
+     Bidi helpers (must be in outer AIUI scope)
+     ========================================================= */
+  function detectTextDir(raw) {
+    var s = String(raw || '').replace(/<[^>]+>/g, '');
+    if (!s.trim()) return '';
+    var rtl = 0;
+    var ltr = 0;
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (
+        (c >= 0x0590 && c <= 0x08FF) ||
+        (c >= 0xFB1D && c <= 0xFDFF) ||
+        (c >= 0xFE70 && c <= 0xFEFF)
+      ) {
+        rtl++;
+      } else if (
+        (c >= 0x0041 && c <= 0x005A) ||
+        (c >= 0x0061 && c <= 0x007A) ||
+        (c >= 0x00C0 && c <= 0x024F) ||
+        (c >= 0x1E00 && c <= 0x1EFF)
+      ) {
+        ltr++;
+      }
+    }
+    if (rtl === 0 && ltr === 0) return '';
+    return rtl >= ltr ? 'rtl' : 'ltr';
+  }
+
+  function withDir(tag, inner, forceDir) {
+    var dir = forceDir || detectTextDir(inner);
+    if (!dir) return '<' + tag + '>' + inner + '</' + tag + '>';
+    return '<' + tag + ' dir="' + dir + '" class="ai-dir-' + dir + '">' + inner + '</' + tag + '>';
+  }
+
+  /* =========================================================
      Markdown renderer
      ========================================================= */
   function renderMarkdown(text) {
@@ -26,12 +61,24 @@ window.AIUI = (function () {
       function (_, block) { return '\n\n' + parseMarkdownTable(block) + '\n\n'; }
     );
 
-    s = s.replace(/^######[ \t]+(.+?)[ \t]*$/gm, '<h6>$1</h6>');
-    s = s.replace(/^#####[ \t]+(.+?)[ \t]*$/gm, '<h5>$1</h5>');
-    s = s.replace(/^####[ \t]+(.+?)[ \t]*$/gm, '<h4>$1</h4>');
-    s = s.replace(/^###[ \t]+(.+?)[ \t]*$/gm, '<h3>$1</h3>');
-    s = s.replace(/^##[ \t]+(.+?)[ \t]*$/gm, '<h2>$1</h2>');
-    s = s.replace(/^#[ \t]+(.+?)[ \t]*$/gm, '<h1>$1</h1>');
+    s = s.replace(/^######[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h6', title);
+    });
+    s = s.replace(/^#####[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h5', title);
+    });
+    s = s.replace(/^####[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h4', title);
+    });
+    s = s.replace(/^###[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h3', title);
+    });
+    s = s.replace(/^##[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h2', title);
+    });
+    s = s.replace(/^#[ \t]+(.+?)[ \t]*$/gm, function (_, title) {
+      return withDir('h1', title);
+    });
 
     s = s.replace(/^[ \t]*(?:-{3,}|\*{3,}|_{3,})[ \t]*$/gm, '<hr>');
 
@@ -50,14 +97,20 @@ window.AIUI = (function () {
       const items = block.trim().split('\n').map(function (l) {
         return l.replace(/^[ \t]*[-*+][ \t]+/, '');
       });
-      return '\n<ul>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ul>\n';
+      return '\n<ul>' + items.map(function (i) {
+        var d = detectTextDir(i);
+        return d ? '<li dir="' + d + '" class="ai-dir-' + d + '">' + i + '</li>' : '<li>' + i + '</li>';
+      }).join('') + '</ul>\n';
     });
 
     s = s.replace(/(?:^|\n)((?:[ \t]*\d+\.[ \t]+[^\n]+(?:\n|$))+)/g, function (_, block) {
       const items = block.trim().split('\n').map(function (l) {
         return l.replace(/^[ \t]*\d+\.[ \t]+/, '');
       });
-      return '\n<ol>' + items.map(function (i) { return '<li>' + i + '</li>'; }).join('') + '</ol>\n';
+      return '\n<ol>' + items.map(function (i) {
+        var d = detectTextDir(i);
+        return d ? '<li dir="' + d + '" class="ai-dir-' + d + '">' + i + '</li>' : '<li>' + i + '</li>';
+      }).join('') + '</ol>\n';
     });
 
     s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
