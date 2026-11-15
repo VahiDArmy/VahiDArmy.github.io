@@ -1830,3 +1830,72 @@
 .personality-page .pers-stream-wrap > .pers-continue-bar {
   flex: 0 0 auto;
 }
+
+/* ── Bidi: per-block direction + table overflow ──────────────────────────── */
+.ai-stream-content .ai-dir-rtl,
+.ai-stream-body .ai-dir-rtl,
+.pers-history-full .ai-dir-rtl {
+  direction: rtl;
+  text-align: right;
+}
+.ai-stream-content .ai-dir-ltr,
+.ai-stream-body .ai-dir-ltr,
+.pers-history-full .ai-dir-ltr {
+  direction: ltr;
+  text-align: left;
+}
+/* Lists: keep marker on the correct side */
+.ai-stream-body ul > li.ai-dir-rtl,
+.ai-stream-body ol > li.ai-dir-rtl {
+  text-align: right;
+}
+.ai-stream-body ul > li.ai-dir-ltr,
+.ai-stream-body ol > li.ai-dir-ltr {
+  text-align: left;
+}
+
+.ai-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  margin: 0.75em 0;
+  border-radius: 10px;
+  border: 1px solid var(--border-1);
+  background: color-mix(in srgb, var(--bg-0) 80%, transparent);
+}
+.ai-table-wrap .ai-table {
+  margin: 0;
+  border: 0;
+  width: max-content;
+  min-width: 100%;
+  border-collapse: collapse;
+}
+.ai-table-wrap .ai-table th,
+.ai-table-wrap .ai-table td {
+  white-space: nowrap;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-1);
+  vertical-align: top;
+  font-size: 12px;
+}
+.ai-table-wrap .ai-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-2);
+  font-weight: 700;
+  color: var(--text-1);
+}
+.ai-table-wrap .ai-table tr:last-child td {
+  border-bottom: 0;
+}
+/* long Persian cells may wrap if user prefers — keep nowrap for fit-scroll */
+@media (min-width: 900px) {
+  .ai-table-wrap .ai-table th,
+  .ai-table-wrap .ai-table td {
+    white-space: normal;
+    max-width: 28rem;
+  }
+}

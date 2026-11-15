@@ -39,7 +39,11 @@ window.AIUI = (function () {
       const lines = block.trim().split('\n').map(function (l) {
         return l.replace(/^&gt;[ \t]?/, '');
       });
-      return '\n<blockquote>' + lines.join('<br>') + '</blockquote>\n';
+      var bqInner = lines.join('<br>');
+      var bqDir = detectTextDir(bqInner);
+      return bqDir
+        ? '\n<blockquote dir="' + bqDir + '" class="ai-dir-' + bqDir + '">' + bqInner + '</blockquote>\n'
+        : '\n<blockquote>' + bqInner + '</blockquote>\n';
     });
 
     s = s.replace(/(?:^|\n)((?:[ \t]*[-*+][ \t]+[^\n]+(?:\n|$))+)/g, function (_, block) {
@@ -78,7 +82,8 @@ window.AIUI = (function () {
       if (/^<(h\d|ul|ol|pre|hr|blockquote|div|table|thead|tbody|tr|td|th|p)/i.test(trimmed)) {
         return trimmed;
       }
-      return '<p>' + trimmed.replace(/\n/g, '<br>') + '</p>';
+      var body = trimmed.replace(/\n/g, '<br>');
+      return withDir('p', body);
     }).join('');
 
     return s;
@@ -110,11 +115,21 @@ window.AIUI = (function () {
     const aligns = sepCells.map(alignOf);
     const bodyRows = lines.slice(2).map(splitRow);
 
-    let html = '<table class="ai-table">';
+    function cellAttrs(text, i) {
+      var parts = [];
+      if (aligns[i]) parts.push('style="text-align:' + aligns[i] + '"');
+      var d = detectTextDir(text);
+      if (d) {
+        parts.push('dir="' + d + '"');
+        parts.push('class="ai-dir-' + d + '"');
+      }
+      return parts.length ? ' ' + parts.join(' ') : '';
+    }
+
+    let html = '<div class="ai-table-wrap"><table class="ai-table">';
     html += '<thead><tr>';
     headerCells.forEach(function (c, i) {
-      const align = aligns[i] ? ' style="text-align:' + aligns[i] + '"' : '';
-      html += '<th' + align + '>' + c + '</th>';
+      html += '<th' + cellAttrs(c, i) + '>' + c + '</th>';
     });
     html += '</tr></thead>';
 
@@ -123,15 +138,15 @@ window.AIUI = (function () {
       bodyRows.forEach(function (row) {
         html += '<tr>';
         for (let i = 0; i < headerCells.length; i++) {
-          const align = aligns[i] ? ' style="text-align:' + aligns[i] + '"' : '';
-          html += '<td' + align + '>' + (row[i] != null ? row[i] : '') + '</td>';
+          const cell = row[i] != null ? row[i] : '';
+          html += '<td' + cellAttrs(cell, i) + '>' + cell + '</td>';
         }
         html += '</tr>';
       });
       html += '</tbody>';
     }
 
-    html += '</table>';
+    html += '</table></div>';
     return html;
   }
 
