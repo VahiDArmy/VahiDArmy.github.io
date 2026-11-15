@@ -289,14 +289,41 @@ window.AI = (function () {
   }
 
 
-  /* ── Direct OpenRouter helpers ───────────────────────────────────────── */
+  /* ── Direct OpenRouter helpers (aligned with meraj request shape) ────── */
+  /**
+   * Browser fetch rejects header values outside ISO-8859-1.
+   * Never put Persian / emoji / non-Latin-1 text in headers.
+   */
+  function asciiHeader(value, fallback) {
+    var s = value == null ? '' : String(value);
+    if (!s) return fallback || '';
+    /* strip anything outside Latin-1 */
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charCodeAt(i);
+      if (c <= 0xff) out += s.charAt(i);
+    }
+    out = out.replace(/[\r\n]/g, ' ').trim();
+    return out || (fallback || '');
+  }
+
   function directHeaders(apiKey) {
-    return {
+    var referer = 'https://localhost';
+    try {
+      if (typeof location !== 'undefined' && location.origin) referer = location.origin;
+    } catch (e) {}
+    /* OpenRouter expects these two identity headers; keep them ASCII like meraj. */
+    var title = 'Cinema';
+    try {
+      if (CONFIG.AI && CONFIG.AI.OPENROUTER_TITLE) title = CONFIG.AI.OPENROUTER_TITLE;
+    } catch (e2) {}
+    var headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey,
-      'HTTP-Referer': (typeof location !== 'undefined' ? location.origin : 'https://localhost'),
-      'X-Title': (CONFIG.APP_NAME || 'Cinema')
+      'HTTP-Referer': asciiHeader(referer, 'https://localhost'),
+      'X-Title': asciiHeader(title, 'Cinema')
     };
+    if (apiKey) headers['Authorization'] = 'Bearer ' + asciiHeader(apiKey, '');
+    return headers;
   }
 
   function shouldUseDirect(provider, opts) {

@@ -22,9 +22,10 @@ window.CONFIG = {
   },
 
   AI: {
-    /* AI حالا از طریق Edge Function اجرا می‌شود، نه مستقیم از مرورگر.
-       دو سکرت روی سرور: GEM_MALI (Google) و OPENROUTER_API_KEY (OpenRouter). */
+    /* دو مسیر: edge (سکرت سرور) و direct (کلید محلی OpenRouter).
+       هدرهای HTTP فقط ASCII — مثل meraj (X-Title هرگز فارسی نباشد). */
     API_URL: 'https://openrouter.ai/api/v1/chat/completions',
+    OPENROUTER_TITLE: 'Cinema', /* Latin-1 only — used in X-Title header */
     STORAGE_KEY: 'cinema_openrouter_key',
     MODEL_STORAGE_KEY: 'cinema_openrouter_model',
     DEFAULT_MODEL: 'gemini-3.8-flash',
