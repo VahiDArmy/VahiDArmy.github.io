@@ -519,7 +519,7 @@ window.Events = (function () {
     } catch (e) {
       Toast.error('نمایش نتیجه ممکن نشد؛ صفحه را دوباره باز کن');
       persRunning = false;
-      if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'اجرای تحلیل جدید ◀'; }
       return;
     }
 
@@ -659,7 +659,7 @@ window.Events = (function () {
       }
     } finally {
       persRunning = false;
-      if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
+      if (btn) { btn.disabled = false; btn.textContent = 'اجرای تحلیل جدید ◀'; }
       if (paramsBar) paramsBar.setDisabled(false);
       if (abortBtn) abortBtn.classList.remove('is-visible');
       if (pageEl) pageEl.classList.remove('is-streaming');
@@ -682,7 +682,7 @@ window.Events = (function () {
         type: 'button',
         class: 'pa-continue-btn side-action',
         id: 'btn-pers-continue'
-      }, ['▶ ادامه تحلیل'])
+      }, ['ادامه تحلیل ◀'])
     ]);
 
     /* Insert after stream host, before history, never overlapping */
