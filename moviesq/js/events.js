@@ -313,7 +313,7 @@ window.Events = (function () {
     } catch (e) { items = []; }
 
     if (!items.length) {
-      list.appendChild(Utils.el('div', { class: 'pers-history-empty' }, [
+      list.appendChild(Utils.el('div', { class: 'pa-history-empty' }, [
         'هنوز تحلیلی ذخیره نشده. یک تحلیل جدید اجرا کن.'
       ]));
       return;
@@ -327,39 +327,37 @@ window.Events = (function () {
 
       var pinBtn = Utils.el('button', {
         type: 'button',
-        class: 'pers-pin-btn' + (pinned ? ' is-on' : ''),
-        title: pinned ? 'برداشتن سنجاق (دیگر دائمی نیست)' : 'سنجاق دائمی',
+        class: 'btn btn-ghost btn-sm' + (pinned ? ' is-on' : ''),
+        title: pinned ? 'برداشتن سنجاق' : 'سنجاق دائمی',
         dataset: { id: item.id }
-      }, [pinned ? '📌' : '📍']);
+      }, [pinned ? '📌 برداشتن' : '📍 سنجاق']);
 
       var openBtn = Utils.el('button', {
         type: 'button',
-        class: 'btn btn-ghost btn-sm pers-open-btn'
+        class: 'btn btn-ghost btn-sm'
       }, ['نمایش در پنل']);
 
       var card = Utils.el('details', {
-        class: 'pers-history-card' + (activeId && item.id === activeId ? ' is-active' : '') + (pinned ? ' is-pinned' : ''),
+        class: 'pa-card' + (activeId && item.id === activeId ? ' is-active' : '') + (pinned ? ' is-pinned' : ''),
         dataset: { id: item.id }
       }, [
-        Utils.el('summary', { class: 'pers-history-card-summary' }, [
-          Utils.el('div', { class: 'pers-history-card-top' }, [
-            Utils.el('span', { class: 'pers-history-idx' }, [pinned ? '📌' : ('#' + (idx + 1))]),
-            Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)]),
-            pinBtn
+        Utils.el('summary', { class: 'pa-card-summary' }, [
+          Utils.el('div', { class: 'pa-card-top' }, [
+            Utils.el('span', { class: 'pa-card-idx' }, [pinned ? '📌' : ('#' + (idx + 1))]),
+            Utils.el('span', { class: 'pa-card-date' }, [formatPersDate(item.created_at)])
           ]),
-          Utils.el('div', { class: 'pers-history-model' }, [item.ai_model || '—']),
-          Utils.el('div', { class: 'pers-history-preview' }, [preview || '(خالی)'])
+          Utils.el('div', { class: 'pa-card-model' }, [item.ai_model || '—']),
+          Utils.el('div', { class: 'pa-card-preview' }, [preview || '(خالی)'])
         ]),
-        Utils.el('div', { class: 'pers-history-card-body' }, [
-          Utils.el('div', { class: 'pers-history-full' }, []),
-          Utils.el('div', { class: 'pers-history-card-actions' }, [openBtn])
+        Utils.el('div', { class: 'pa-card-body' }, [
+          Utils.el('div', { class: 'pa-card-full' }, []),
+          Utils.el('div', { class: 'pa-card-actions' }, [openBtn, pinBtn])
         ])
       ]);
 
-      /* render markdown only when first expanded */
       card.addEventListener('toggle', function () {
         if (!card.open) return;
-        var full = card.querySelector('.pers-history-full');
+        var full = card.querySelector('.pa-card-full');
         if (full && !full.dataset.ready) {
           full.dataset.ready = '1';
           if (typeof AIUI !== 'undefined' && AIUI.renderMarkdown) {
@@ -499,9 +497,7 @@ window.Events = (function () {
 
     var pageEl = document.getElementById('personality-page');
     if (pageEl) pageEl.classList.add('is-streaming');
-    var streamWrap = document.getElementById('pers-stream-wrap');
-    if (streamWrap) streamWrap.classList.add('is-active');
-    /* collapse history while streaming so stream owns the screen */
+    /* collapse history while streaming */
     var hist = document.getElementById('pers-history');
     if (hist) hist.open = false;
 
@@ -509,6 +505,12 @@ window.Events = (function () {
     var host = document.getElementById('pers-stream-host');
     if (empty) empty.hidden = true;
     if (host) host.innerHTML = '';
+
+    /* remove previous continue / suggest if any */
+    var oldCont = document.getElementById('pers-continue-bar');
+    if (oldCont) oldCont.remove();
+    var oldSug = document.getElementById('pers-suggest-actions');
+    if (oldSug) oldSug.remove();
 
     var panel = null;
     try {
@@ -524,7 +526,7 @@ window.Events = (function () {
     panel.setContent('');
     panel.setStatus('در حال تحلیل…', 'loading');
 
-    /* Params bar (temp / max_tokens) — reuse the page bar if present */
+    /* Params bar — build once into the clean host */
     var paramsHost = document.getElementById('pers-params-host');
     var paramsBar = (paramsHost && paramsHost._paramsBar) || null;
     if (!paramsBar && paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar) {
@@ -538,7 +540,7 @@ window.Events = (function () {
 
     var abortBtn = document.getElementById('btn-abort-personality');
     if (abortBtn) {
-      abortBtn.hidden = false;
+      abortBtn.classList.add('is-visible');
       abortBtn.onclick = function () {
         try { if (typeof AI !== 'undefined' && AI.abort) AI.abort(); } catch (e) {}
       };
@@ -565,15 +567,11 @@ window.Events = (function () {
       if (panel.finishThinking) panel.finishThinking();
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
-      /* Keep result visible: host must stay expanded; scroll answer into view */
-      if (streamWrap) streamWrap.classList.add('is-active');
       try {
-        if (panel.body) {
-          /* show the beginning of the analysis after chrome returns */
-          panel.body.scrollTop = 0;
-        }
-        if (streamWrap && streamWrap.scrollIntoView) {
-          streamWrap.scrollIntoView({ block: 'nearest', behavior: 'instant' in window ? 'instant' : 'auto' });
+        if (panel.body) panel.body.scrollTop = 0;
+        var hostEl = document.getElementById('pers-stream-host');
+        if (hostEl && hostEl.scrollIntoView) {
+          hostEl.scrollIntoView({ block: 'nearest', behavior: 'instant' in window ? 'instant' : 'auto' });
         }
       } catch (eScroll) {}
       try {
@@ -663,38 +661,40 @@ window.Events = (function () {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
       if (paramsBar) paramsBar.setDisabled(false);
-      if (abortBtn) abortBtn.hidden = true;
+      if (abortBtn) abortBtn.classList.remove('is-visible');
       if (pageEl) pageEl.classList.remove('is-streaming');
     }
   }
 
 
   function showPersonalityContinueBar(panel) {
-    var wrap = document.getElementById('pers-stream-wrap');
+    var body = document.getElementById('pa-body');
     var host = document.getElementById('pers-stream-host');
-    if (!wrap && !host) return;
+    if (!body && !host) return;
     var old = document.getElementById('pers-continue-bar');
     if (old) old.remove();
 
-    var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
-      Utils.el('div', { class: 'pers-continue-note' }, [
+    var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pa-continue' }, [
+      Utils.el('p', { class: 'pa-continue-note' }, [
         'پاسخ ممکن است ناقص باشد — می‌توانی از همین‌جا ادامه بدهی.'
       ]),
       Utils.el('button', {
         type: 'button',
-        class: 'btn btn-primary',
+        class: 'pa-continue-btn side-action',
         id: 'btn-pers-continue'
       }, ['▶ ادامه تحلیل'])
     ]);
 
-    /* Always in stream wrap flow, after host, before suggest — never over content */
-    var parent = wrap || host.parentNode;
+    /* Insert after stream host, before history, never overlapping */
+    var parent = body || host.parentNode;
     var suggest = document.getElementById('pers-suggest-actions');
+    var history = document.getElementById('pers-history');
     if (suggest && suggest.parentNode === parent) {
       parent.insertBefore(bar, suggest);
-    } else if (host && host.parentNode === parent) {
-      if (host.nextSibling) parent.insertBefore(bar, host.nextSibling);
-      else parent.appendChild(bar);
+    } else if (history && history.parentNode === parent) {
+      parent.insertBefore(bar, history);
+    } else if (host && host.nextSibling) {
+      parent.insertBefore(bar, host.nextSibling);
     } else {
       parent.appendChild(bar);
     }
@@ -731,8 +731,6 @@ window.Events = (function () {
     persRunning = true;
     var pageEl = document.getElementById('personality-page');
     if (pageEl) pageEl.classList.add('is-streaming');
-    var streamWrap = document.getElementById('pers-stream-wrap');
-    if (streamWrap) streamWrap.classList.add('is-active');
     var hist = document.getElementById('pers-history');
     if (hist) hist.open = false;
     var btn = document.getElementById('btn-pers-continue');
@@ -750,7 +748,7 @@ window.Events = (function () {
         temperature = Number(paramsHost.querySelector('#ai-param-temp').value) || temperature;
         var maxEl = paramsHost.querySelector('#ai-param-max');
         if (maxEl) {
-          if (maxEl.dataset.isMax === '1' || Number(maxEl.value) >= 16384) max_tokens = null;
+          if (maxEl.dataset.isMax === '1' || Number(maxEl.value) === 0) max_tokens = null;
           else max_tokens = Number(maxEl.value) || max_tokens;
         }
       }
@@ -823,9 +821,9 @@ window.Events = (function () {
   }
 
   function showPersonalitySuggestionActions(resultText, kind) {
+    var body = document.getElementById('pa-body');
     var host = document.getElementById('pers-stream-host');
-    var wrap = document.getElementById('pers-stream-wrap') || host;
-    if (!wrap) return;
+    if (!body && !host) return;
     var old = document.getElementById('pers-suggest-actions');
     if (old) old.remove();
 
@@ -846,15 +844,23 @@ window.Events = (function () {
       Utils.el('option', { value: 'series', selected: (parsed.type || kind) === 'series' }, ['سریال'])
     ]);
 
-    var box = Utils.el('div', { id: 'pers-suggest-actions', class: 'pers-suggest-actions' }, [
-      Utils.el('div', { class: 'pers-suggest-title' }, ['افزودن پیشنهاد AI به لیست']),
-      Utils.el('div', { class: 'pers-suggest-fields' }, [titleInput, yearInput, typeSelect]),
-      Utils.el('div', { class: 'pers-suggest-btns' }, [
+    var box = Utils.el('div', { id: 'pers-suggest-actions', class: 'pa-suggest' }, [
+      Utils.el('h3', { class: 'pa-suggest-title' }, ['افزودن پیشنهاد AI به لیست']),
+      Utils.el('div', { class: 'pa-suggest-fields' }, [titleInput, yearInput, typeSelect]),
+      Utils.el('div', { class: 'pa-suggest-btns' }, [
         Utils.el('button', { class: 'btn btn-primary', type: 'button', id: 'pers-add-archive' }, ['➕ افزودن به آرشیو']),
         Utils.el('button', { class: 'btn btn-ghost', type: 'button', id: 'pers-add-will' }, ['👀 خواهم دید'])
       ])
     ]);
-    wrap.appendChild(box);
+
+    /* Always after continue bar (if any), before history — pure document flow */
+    var parent = body || host.parentNode;
+    var history = document.getElementById('pers-history');
+    if (history && history.parentNode === parent) {
+      parent.insertBefore(box, history);
+    } else {
+      parent.appendChild(box);
+    }
 
     function alreadyExists(title) {
       return DB.getAllTitles().some(function (t) {
@@ -918,15 +924,15 @@ window.Events = (function () {
   }
 
   function bindPersonalityPage() {
-    document.querySelectorAll('.pers-kind-btn').forEach(function (b) {
+    document.querySelectorAll('.pa-kind-btn').forEach(function (b) {
       b.addEventListener('click', function () {
         persSelectedKind = b.dataset.kind === 'series' ? 'series' : 'movie';
-        document.querySelectorAll('.pers-kind-btn').forEach(function (x) {
+        document.querySelectorAll('.pa-kind-btn').forEach(function (x) {
           x.classList.toggle('is-active', x === b);
         });
       });
     });
-    /* Always show params (temp / max tokens / mode) on this page */
+    /* Always show params on this page */
     var paramsHost = document.getElementById('pers-params-host');
     if (paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar && !paramsHost.dataset.ready) {
       var bar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: null });
