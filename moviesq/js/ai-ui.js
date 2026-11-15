@@ -310,13 +310,25 @@ window.AIUI = (function () {
       Utils.el('span', { class: 'ai-status-text' }, ['آماده'])
     ]);
     const foot = Utils.el('div', { class: 'ai-stream-foot', hidden: true });
+    const readBtn = Utils.el('button', {
+      type: 'button',
+      class: 'btn btn-ghost btn-sm ai-read-mode-btn',
+      title: 'حالت مطالعه — تمام‌صفحه'
+    }, ['مطالعه']);
     const panel = Utils.el('div', { class: 'ai-stream-panel' }, [
       Utils.el('div', { class: 'ai-stream-head' }, [
         Utils.el('div', { class: 'ai-stream-title' }, [titleText]),
-        status
+        Utils.el('div', { class: 'ai-stream-head-actions' }, [readBtn, status])
       ]),
       body, foot
     ]);
+    readBtn.addEventListener('click', function () {
+      var page = document.getElementById('personality-page') || document.body;
+      var on = page.classList.toggle('is-reading');
+      panel.classList.toggle('is-reading', on);
+      readBtn.textContent = on ? 'بستن مطالعه' : 'مطالعه';
+      readBtn.classList.toggle('is-on', on);
+    });
 
     let pendingText = '';
     let pendingThinking = '';
@@ -329,11 +341,21 @@ window.AIUI = (function () {
       stickBottom = dist < 80;
     }, { passive: true });
 
+    function applyRootDir(el, text) {
+      if (!el) return;
+      var d = detectTextDir(text);
+      if (d) {
+        el.setAttribute('dir', d);
+        el.classList.add('ai-dir-' + d);
+        el.classList.remove(d === 'rtl' ? 'ai-dir-ltr' : 'ai-dir-rtl');
+      }
+    }
     function flushRender() {
       rafScheduled = false;
       if (pendingText === lastRendered) return;
       var prevStick = stickBottom;
       contentEl.innerHTML = renderMarkdown(pendingText);
+      applyRootDir(contentEl, pendingText);
       lastRendered = pendingText;
       if (prevStick) {
         body.scrollTop = body.scrollHeight;
@@ -356,7 +378,10 @@ window.AIUI = (function () {
       thinkingLive.hidden = false;
       thinkingEl.hidden = false;
       const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
-      if (bodyNode) bodyNode.textContent = pendingThinking;
+      if (bodyNode) {
+        bodyNode.textContent = pendingThinking;
+        applyRootDir(bodyNode, pendingThinking);
+      }
       const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
       if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
       if (stickBottom) body.scrollTop = body.scrollHeight;
@@ -420,7 +445,14 @@ window.AIUI = (function () {
   function buildParamsBar(defaults) {
     defaults = defaults || {};
     const t0 = defaults.temperature != null ? Number(defaults.temperature) : 0.55;
-    const m0 = defaults.max_tokens != null ? Number(defaults.max_tokens) : 4096;
+    /* null / undefined / 'max' => do not send max_tokens (provider maximum) */
+    const useMaxDefault = (
+      defaults.max_tokens == null ||
+      defaults.max_tokens === 'max' ||
+      defaults.max_tokens === 0
+    );
+    const HARD_MAX = 16384;
+    const m0 = useMaxDefault ? HARD_MAX : Number(defaults.max_tokens);
 
     const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [String(t0)]);
     const tempRange = Utils.el('input', {
@@ -431,14 +463,23 @@ window.AIUI = (function () {
       tempVal.textContent = Number(tempRange.value).toFixed(2);
     });
 
-    const maxVal = Utils.el('span', { class: 'ai-param-val num' }, [String(m0)]);
+    const maxVal = Utils.el('span', { class: 'ai-param-val num' }, [useMaxDefault ? 'max' : String(m0)]);
     const maxRange = Utils.el('input', {
-      type: 'range', min: '256', max: '16384', step: '256', value: String(m0),
-      class: 'ai-param-range', id: 'ai-param-max'
+      type: 'range', min: '256', max: String(HARD_MAX), step: '256',
+      value: String(m0),
+      class: 'ai-param-range', id: 'ai-param-max',
+      dataset: { isMax: useMaxDefault ? '1' : '0' }
     });
-    maxRange.addEventListener('input', function () {
-      maxVal.textContent = maxRange.value;
-    });
+    function refreshMaxLabel() {
+      if (Number(maxRange.value) >= HARD_MAX) {
+        maxVal.textContent = 'max';
+        maxRange.dataset.isMax = '1';
+      } else {
+        maxVal.textContent = maxRange.value;
+        maxRange.dataset.isMax = '0';
+      }
+    }
+    maxRange.addEventListener('input', refreshMaxLabel);
 
     const modeHint = Utils.el('span', {
       class: 'ai-param-mode muted tiny'
@@ -461,7 +502,11 @@ window.AIUI = (function () {
     return {
       el: el,
       getTemperature: function () { return Number(tempRange.value); },
-      getMaxTokens: function () { return Number(maxRange.value); },
+      /* null => omit max_tokens in request body (true model max) */
+      getMaxTokens: function () {
+        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) >= HARD_MAX) return null;
+        return Number(maxRange.value);
+      },
       setDisabled: function (v) {
         tempRange.disabled = !!v;
         maxRange.disabled = !!v;

@@ -528,7 +528,7 @@ window.Events = (function () {
     var paramsHost = document.getElementById('pers-params-host');
     var paramsBar = (paramsHost && paramsHost._paramsBar) || null;
     if (!paramsBar && paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar) {
-      paramsBar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: 8192 });
+      paramsBar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: null });
       paramsHost.innerHTML = '';
       paramsHost.appendChild(paramsBar.el);
       paramsHost._paramsBar = paramsBar;
@@ -546,7 +546,7 @@ window.Events = (function () {
 
     try {
       var temperature = paramsBar ? paramsBar.getTemperature() : 0.55;
-      var max_tokens = paramsBar ? paramsBar.getMaxTokens() : 8192;
+      var max_tokens = paramsBar ? paramsBar.getMaxTokens() : null;
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
         messages: messages,
@@ -689,12 +689,16 @@ window.Events = (function () {
 
     var before = String(persLastContext.result || '');
     var temperature = (persLastContext.temperature != null) ? persLastContext.temperature : 0.55;
-    var max_tokens = (persLastContext.max_tokens != null) ? persLastContext.max_tokens : 8192;
+    var max_tokens = (persLastContext.max_tokens != null) ? persLastContext.max_tokens : null;
     try {
       var paramsHost = document.getElementById('pers-params-host');
       if (paramsHost && paramsHost.querySelector('#ai-param-temp')) {
         temperature = Number(paramsHost.querySelector('#ai-param-temp').value) || temperature;
-        max_tokens = Number(paramsHost.querySelector('#ai-param-max').value) || max_tokens;
+        var maxEl = paramsHost.querySelector('#ai-param-max');
+        if (maxEl) {
+          if (maxEl.dataset.isMax === '1' || Number(maxEl.value) >= 16384) max_tokens = null;
+          else max_tokens = Number(maxEl.value) || max_tokens;
+        }
       }
     } catch (eP) {}
     try {
@@ -871,7 +875,7 @@ window.Events = (function () {
     /* Always show params (temp / max tokens / mode) on this page */
     var paramsHost = document.getElementById('pers-params-host');
     if (paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar && !paramsHost.dataset.ready) {
-      var bar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: 8192 });
+      var bar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: null });
       paramsHost.innerHTML = '';
       paramsHost.appendChild(bar.el);
       paramsHost.dataset.ready = '1';

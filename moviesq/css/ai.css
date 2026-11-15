@@ -1899,3 +1899,85 @@
     max-width: 28rem;
   }
 }
+
+
+/* ── Strong bidi for AI content under site-wide dir=rtl ───────────────────── */
+.ai-stream-content[dir="ltr"],
+.ai-stream-content.ai-dir-ltr,
+.ai-reasoning-body[dir="ltr"],
+.ai-reasoning-body.ai-dir-ltr {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+}
+.ai-stream-content[dir="rtl"],
+.ai-stream-content.ai-dir-rtl,
+.ai-reasoning-body[dir="rtl"],
+.ai-reasoning-body.ai-dir-rtl {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: isolate;
+}
+.ai-stream-content [dir="ltr"],
+.ai-stream-body [dir="ltr"],
+.pers-history-full [dir="ltr"] {
+  direction: ltr !important;
+  text-align: left !important;
+  unicode-bidi: isolate;
+}
+.ai-stream-content [dir="rtl"],
+.ai-stream-body [dir="rtl"],
+.pers-history-full [dir="rtl"] {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: isolate;
+}
+.ai-reasoning-body {
+  white-space: pre-wrap;
+  unicode-bidi: plaintext; /* fallback until dir applied */
+}
+
+/* ── Reading mode: near full-height focus on answer ─────────────────────── */
+.personality-page.is-reading .pers-head,
+.personality-page.is-reading .pers-params-host,
+.personality-page.is-reading .pers-history,
+.personality-page.is-reading .pers-suggest-actions,
+.personality-page.is-reading .pers-continue-bar {
+  display: none !important;
+}
+.personality-page.is-reading .pers-layout {
+  padding: 8px;
+  overflow: hidden;
+}
+.personality-page.is-reading .pers-stream-wrap,
+.personality-page.is-reading .pers-stream-wrap.is-active {
+  min-height: 0;
+  height: calc(100dvh - var(--header-h, 56px) - 24px);
+  max-height: calc(100dvh - var(--header-h, 56px) - 24px);
+  flex: 1 1 auto;
+  border-radius: 0;
+}
+.personality-page.is-reading #pers-stream-host,
+.personality-page.is-reading #pers-stream-host .ai-stream-panel,
+.personality-page.is-reading #pers-stream-host .ai-stream-body {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: none !important;
+}
+.personality-page.is-reading .ai-stream-body {
+  font-size: 13px;
+  line-height: 1.8;
+  padding: 16px 14px 40px;
+}
+.ai-stream-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ai-read-mode-btn.is-on {
+  background: var(--accent);
+  color: #000;
+  border-color: var(--accent);
+  font-weight: 700;
+}
