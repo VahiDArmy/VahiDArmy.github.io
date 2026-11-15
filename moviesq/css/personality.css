@@ -3,7 +3,7 @@
    Clean, flow-based, no overlapping, no hidden content
    ========================================================= */
 
-/* Kill old broken layout rules that targeted this page */
+/* Neutralize old broken rules */
 .personality-page .pers-head,
 .personality-page .pers-layout,
 .personality-page .pers-stream-wrap,
@@ -16,7 +16,6 @@
 .personality-page {
   display: none;
   flex-direction: column;
-  gap: 0;
   min-height: 0;
   flex: 1;
   overflow: hidden;
@@ -27,6 +26,20 @@
 
 .personality-page.is-active {
   display: flex;
+}
+
+/* ── ONE scroll surface: header + controls + content all scroll together ── */
+.pa-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-bottom: 28px;
 }
 
 /* ── Header ─────────────────────────────────────────────── */
@@ -123,7 +136,7 @@
   accent-color: var(--accent, #f5c542);
 }
 
-/* Params — styles the injected ai-params-bar cleanly */
+/* Params — styles the injected ai-params-bar */
 .pa-params {
   display: flex;
   flex-direction: column;
@@ -220,14 +233,8 @@
   transition: filter 0.15s, transform 0.1s;
 }
 
-.pa-run:active {
-  transform: scale(0.98);
-}
-
-.pa-run:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
+.pa-run:active { transform: scale(0.98); }
+.pa-run:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .pa-abort {
   appearance: none;
@@ -248,14 +255,10 @@
   align-items: center;
 }
 
-/* ── Main scroll area ───────────────────────────────────── */
+/* ── Content area (inside the same scroll) ──────────────── */
 .pa-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  -webkit-overflow-scrolling: touch;
-  padding: 12px 12px 28px;
+  flex: none;
+  padding: 12px 12px 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -277,14 +280,12 @@
   display: none !important;
 }
 
-/* Stream host — just a container, no forced heights */
+/* Stream host */
 .pa-stream-host {
   flex: none;
   min-width: 0;
 }
 
-/* The injected stream panel from AIUI will live here.
-   We only ensure it doesn't fight the page scroll. */
 .pa-stream-host .ai-stream-panel {
   border-radius: 12px;
   border: 1px solid var(--border-1, #2a2a32);
@@ -400,13 +401,16 @@
 /* ── History ────────────────────────────────────────────── */
 .pa-history {
   flex: none;
+  margin: 0 12px;
   border-radius: 12px;
   border: 1px solid var(--border-1, #2a2a32);
   background: var(--bg-1, #121218);
   overflow: hidden;
 }
 
-.pa-history-summary {
+/* RTL-friendly disclosure triangle: left side, points left when closed */
+.pa-history-summary,
+.pa-card-summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -419,10 +423,38 @@
   font-weight: 700;
   color: var(--text-2, #b0b0be);
   letter-spacing: 0.03em;
+  position: relative;
 }
 
-.pa-history-summary::-webkit-details-marker {
+.pa-history-summary::-webkit-details-marker,
+.pa-card-summary::-webkit-details-marker {
   display: none;
+}
+
+.pa-history-summary::marker,
+.pa-card-summary::marker {
+  content: '';
+  display: none;
+}
+
+/* Custom triangle on the LEFT (RTL start), points left when closed */
+.pa-history-summary::before,
+.pa-card-summary::before {
+  content: '';
+  flex: none;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 5px 7px 5px 0;
+  border-color: transparent var(--text-3, #8b8b9a) transparent transparent;
+  margin-inline-end: 8px;
+  transition: transform 0.15s ease;
+  order: -1; /* force to the visual start (left in RTL) */
+}
+
+.pa-history[open] > .pa-history-summary::before,
+.pa-card[open] > .pa-card-summary::before {
+  transform: rotate(-90deg); /* points down when open */
 }
 
 .pa-history-hint {
@@ -430,6 +462,7 @@
   font-weight: 500;
   color: var(--text-4, #6b6b7a);
   font-family: "JetBrains Mono", ui-monospace, monospace;
+  margin-inline-start: auto;
 }
 
 .pa-history[open] .pa-history-hint {
@@ -467,22 +500,13 @@
   border-color: color-mix(in srgb, var(--accent, #f5c542) 55%, transparent);
 }
 
-.pa-card-summary {
-  display: block;
-  padding: 10px 12px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.pa-card-summary::-webkit-details-marker {
-  display: none;
-}
-
 .pa-card-top {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
+  flex: 1;
+  min-width: 0;
 }
 
 .pa-card-idx {
@@ -545,7 +569,7 @@
   font-family: inherit;
 }
 
-/* Streaming state tweaks */
+/* Streaming state */
 .personality-page.is-streaming .pa-history:not([open]) {
   opacity: 0.7;
 }
@@ -554,10 +578,65 @@
   opacity: 0.6;
 }
 
-/* Smaller text on very narrow screens */
+/* ── Reading mode (مطالعه) — full-page result ───────────── */
+.personality-page.is-reading .pa-header,
+.personality-page.is-reading .pa-controls,
+.personality-page.is-reading .pa-history,
+.personality-page.is-reading .pa-continue,
+.personality-page.is-reading .pa-suggest,
+.personality-page.is-reading .pa-empty {
+  display: none !important;
+}
+
+.personality-page.is-reading .pa-scroll {
+  padding: 0;
+}
+
+.personality-page.is-reading .pa-body {
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.personality-page.is-reading .pa-stream-host {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.personality-page.is-reading .pa-stream-host .ai-stream-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  border-radius: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.personality-page.is-reading .pa-stream-host .ai-stream-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  padding: 16px 16px 40px;
+}
+
+.personality-page.is-reading .ai-read-mode-btn.is-on {
+  background: var(--accent, #f5c542);
+  color: #111;
+  border-color: var(--accent, #f5c542);
+  font-weight: 700;
+}
+
+/* Narrow screens */
 @media (max-width: 380px) {
   .pa-title { font-size: 1.1rem; }
-  .pa-param-label { width: 4.6rem; font-size: 0.7rem; }
-  .pa-param-val { min-width: 3.1rem; width: 3.1rem; font-size: 0.72rem; }
+  .pa-params .ai-param label { width: 4.6rem; font-size: 0.7rem; }
+  .pa-params .ai-param-val { min-width: 3.1rem; width: 3.1rem; font-size: 0.72rem; }
   .pa-kind-btn { padding: 7px 10px; font-size: 0.75rem; }
 }

@@ -262,53 +262,54 @@
       <!-- ========== PAGE: PERSONALITY (rewritten from zero) ========== -->
       <div class="personality-page" id="personality-page">
 
-        <header class="pa-header">
-          <h2 class="pa-title brand-title">
-            <span class="pa-title-icon">🧠</span>
-            تحلیل عمیق شخصیت
-          </h2>
-          <p class="pa-sub">بر اساس آثار امتیازدار · تحلیل سلیقه + پیشنهاد دقیق</p>
-        </header>
+        <div class="pa-scroll" id="pa-scroll">
 
-        <section class="pa-controls" id="pa-controls">
-          <div class="pa-row">
-            <div class="pa-kind" role="group" aria-label="نوع پیشنهاد">
-              <button type="button" class="pa-kind-btn is-active" data-kind="movie" id="pers-kind-movie">پیشنهاد فیلم</button>
-              <button type="button" class="pa-kind-btn" data-kind="series" id="pers-kind-series">پیشنهاد سریال</button>
+          <header class="pa-header">
+            <h2 class="pa-title brand-title">
+              <span class="pa-title-icon">🧠</span>
+              تحلیل عمیق شخصیت
+            </h2>
+            <p class="pa-sub">بر اساس آثار امتیازدار · تحلیل سلیقه + پیشنهاد دقیق</p>
+          </header>
+
+          <section class="pa-controls" id="pa-controls">
+            <div class="pa-row">
+              <div class="pa-kind" role="group" aria-label="نوع پیشنهاد">
+                <button type="button" class="pa-kind-btn is-active" data-kind="movie" id="pers-kind-movie">پیشنهاد فیلم</button>
+                <button type="button" class="pa-kind-btn" data-kind="series" id="pers-kind-series">پیشنهاد سریال</button>
+              </div>
+              <label class="pa-opt" title="اگر خاموش باشد، تگ‌های آثار در پرامپت نمی‌آید">
+                <input type="checkbox" id="pers-include-tags" checked>
+                <span>تگ‌ها در پرامپت</span>
+              </label>
             </div>
-            <label class="pa-opt" title="اگر خاموش باشد، تگ‌های آثار در پرامپت نمی‌آید">
-              <input type="checkbox" id="pers-include-tags" checked>
-              <span>تگ‌ها در پرامپت</span>
-            </label>
+
+            <div class="pa-params" id="pers-params-host"></div>
+
+            <div class="pa-actions">
+              <button class="pa-run side-action" type="button" id="btn-run-personality">▶ اجرای تحلیل جدید</button>
+              <button class="pa-abort" type="button" id="btn-abort-personality">⏹ توقف</button>
+            </div>
+          </section>
+
+          <div class="pa-body" id="pa-body">
+            <div class="pa-empty" id="pers-stream-empty">
+              برای شروع، «اجرای تحلیل جدید» را بزن.
+            </div>
+
+            <div class="pa-stream-host" id="pers-stream-host"></div>
+
+            <!-- Continue + Suggest injected by JS after result -->
+            <details class="pa-history" id="pers-history">
+              <summary class="pa-history-summary">
+                <span>سنجاق‌شده + ۵ اخیر</span>
+                <span class="pa-history-hint">برای باز کردن بزن</span>
+              </summary>
+              <div class="pa-history-list" id="pers-history-list"></div>
+            </details>
           </div>
 
-          <div class="pa-params" id="pers-params-host"></div>
-
-          <div class="pa-actions">
-            <button class="pa-run side-action" type="button" id="btn-run-personality">▶ اجرای تحلیل جدید</button>
-            <button class="pa-abort" type="button" id="btn-abort-personality">⏹ توقف</button>
-          </div>
-        </section>
-
-        <div class="pa-body" id="pa-body">
-          <div class="pa-empty" id="pers-stream-empty">
-            برای شروع، «اجرای تحلیل جدید» را بزن.
-          </div>
-
-          <!-- Stream panel is injected here -->
-          <div class="pa-stream-host" id="pers-stream-host"></div>
-
-          <!-- Continue + Suggest are injected by JS after result -->
-          <!-- History stays at the bottom in document flow -->
-          <details class="pa-history" id="pers-history">
-            <summary class="pa-history-summary">
-              <span>سنجاق‌شده + ۵ اخیر</span>
-              <span class="pa-history-hint">برای باز کردن بزن</span>
-            </summary>
-            <div class="pa-history-list" id="pers-history-list"></div>
-          </details>
         </div>
-
       </div>
 
       <!-- ========== PAGE 2: LIBRARY ========== -->
