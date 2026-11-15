@@ -520,16 +520,17 @@ window.AIUI = (function () {
   function buildParamsBar(defaults) {
     defaults = defaults || {};
     const t0 = defaults.temperature != null ? Number(defaults.temperature) : 0.55;
-    /* null / undefined / 'max' => do not send max_tokens (provider maximum) */
+    /* null / undefined / 'max' / 0 => do not send max_tokens (provider maximum / free) */
     const useMaxDefault = (
       defaults.max_tokens == null ||
       defaults.max_tokens === 'max' ||
       defaults.max_tokens === 0
     );
-    const HARD_MAX = 16384;
+    /* Higher ceiling so values before unlimited are larger; rightmost = 0 (free) */
+    const HARD_MAX = 32768;
     const m0 = useMaxDefault ? HARD_MAX : Number(defaults.max_tokens);
 
-    const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [String(t0)]);
+    const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [Number(t0).toFixed(2)]);
     const tempRange = Utils.el('input', {
       type: 'range', min: '0', max: '1.5', step: '0.05', value: String(t0),
       class: 'ai-param-range', id: 'ai-param-temp'
@@ -538,7 +539,10 @@ window.AIUI = (function () {
       tempVal.textContent = Number(tempRange.value).toFixed(2);
     });
 
-    const maxVal = Utils.el('span', { class: 'ai-param-val num' }, [useMaxDefault ? 'max' : String(m0)]);
+    const maxVal = Utils.el('span', {
+      class: 'ai-param-val num' + (useMaxDefault ? ' is-unlimited' : ''),
+      title: useMaxDefault ? 'آزاد (بدون محدودیت مشخص)' : ''
+    }, [useMaxDefault ? '0' : String(m0)]);
     const maxRange = Utils.el('input', {
       type: 'range', min: '256', max: String(HARD_MAX), step: '256',
       value: String(m0),
@@ -547,10 +551,14 @@ window.AIUI = (function () {
     });
     function refreshMaxLabel() {
       if (Number(maxRange.value) >= HARD_MAX) {
-        maxVal.textContent = 'max';
+        maxVal.textContent = '0';
+        maxVal.classList.add('is-unlimited');
+        maxVal.title = 'آزاد (بدون محدودیت مشخص)';
         maxRange.dataset.isMax = '1';
       } else {
         maxVal.textContent = maxRange.value;
+        maxVal.classList.remove('is-unlimited');
+        maxVal.title = '';
         maxRange.dataset.isMax = '0';
       }
     }
@@ -572,7 +580,7 @@ window.AIUI = (function () {
     return {
       el: el,
       getTemperature: function () { return Number(tempRange.value); },
-      /* null => omit max_tokens in request body (true model max) */
+      /* null => omit max_tokens in request body (true model max / free) */
       getMaxTokens: function () {
         if (maxRange.dataset.isMax === '1' || Number(maxRange.value) >= HARD_MAX) return null;
         return Number(maxRange.value);

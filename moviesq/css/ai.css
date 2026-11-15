@@ -420,12 +420,12 @@
 .ai-stream-foot[hidden] { display: none; }
 
 .ai-model-badge {
-  padding: 7px 14px;
+  padding: 5px 10px;
   background: linear-gradient(135deg, rgba(139,92,255,0.10), rgba(139,92,255,0.02));
   border: 1px solid rgba(139, 92, 255, 0.28);
   border-radius: var(--radius-pill);
-  font-size: 11.5px;
-  line-height: 1.4;
+  font-size: 10px;
+  line-height: 1.35;
   color: var(--text-3);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
@@ -433,11 +433,11 @@
   max-width: 100%;
 }
 .ai-model-badge-icon {
-  font-size: 13px;
+  font-size: 11px;
   filter: drop-shadow(0 0 6px rgba(139, 92, 255, 0.9));
   flex-shrink: 0;
 }
-.ai-model-badge-label { color: var(--text-4); font-weight: 500; flex-shrink: 0; }
+.ai-model-badge-label { color: var(--text-4); font-weight: 500; flex-shrink: 0; font-size: 9.5px; }
 .ai-model-badge-value {
   color: var(--accent-2);
   font-weight: 700;
@@ -445,12 +445,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 240px;
+  max-width: 200px;
+  font-size: 10px;
 }
 .ai-model-badge-vendor {
   color: var(--text-4);
-  font-size: 10px;
-  padding: 1px 7px;
+  font-size: 9px;
+  padding: 1px 6px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-pill);
   white-space: nowrap;
@@ -975,6 +976,9 @@
   background: var(--bg-1);
   padding: 0;
   overflow: hidden;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
 }
 .pers-history-summary {
   display: flex;
@@ -1072,12 +1076,15 @@
 
 .pers-suggest-actions {
   margin-top: 12px;
+  margin-bottom: 12px;
   padding: 12px 14px;
   border: 1px solid var(--border-1);
   background: var(--bg-2);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  position: relative;
+  z-index: 3;
 }
 .pers-suggest-title {
   font-size: var(--fs-md);
@@ -1196,14 +1203,16 @@
 
 .ai-model-badge {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 6px 10px;
+  gap: 4px 6px;
+  white-space: nowrap;
 }
 .ai-model-badge-via {
-  font-size: var(--fs-xs);
+  font-size: 9px;
   color: var(--text-3);
   opacity: 0.85;
+  white-space: nowrap;
 }
 .ai-model-add-btn {
   margin-inline-start: 4px;
@@ -1343,6 +1352,10 @@
   color: var(--accent);
   font-weight: 650;
   flex: none;
+}
+.ai-param-val.is-unlimited {
+  color: #7dd3fc;
+  font-weight: 800;
 }
 /* DIRECT / EDGE mode badge removed */
 .ai-param-mode { display: none !important; }
@@ -1581,16 +1594,18 @@
 .ai-reasoning-summary {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 8px 10px;
   cursor: pointer;
   list-style: none;
   user-select: none;
   color: var(--info);
-  font-size: 12.5px;
+  font-size: 11px;
   font-weight: 650;
   direction: ltr;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .ai-reasoning-summary::-webkit-details-marker { display: none; }
 .ai-reasoning-summary::marker { content: ''; }
@@ -2080,12 +2095,13 @@
 }
 .personality-page .ai-params-bar .ai-param {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr minmax(3.4rem, auto);
   align-items: center;
   gap: 8px 10px;
   flex: none;
   min-width: 0;
   width: 100%;
+  box-sizing: border-box;
 }
 .personality-page .ai-params-bar .ai-param label {
   font-size: 12px;
@@ -2100,17 +2116,31 @@
   flex: none;
 }
 .personality-page .ai-params-bar .ai-param-val {
-  min-width: 3rem;
+  min-width: 3.4rem;
+  width: 3.4rem;
+  max-width: 3.8rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
   color: var(--accent);
-  padding: 3px 7px;
+  padding: 3px 6px;
   border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+}
+/* Special style when max tokens = 0 (unlimited / free) */
+.personality-page .ai-params-bar .ai-param-val.is-unlimited {
+  color: #7dd3fc;
+  background: color-mix(in srgb, #0ea5e9 18%, transparent);
+  border-color: color-mix(in srgb, #0ea5e9 40%, transparent);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 0 10px -2px rgba(14, 165, 233, 0.45);
 }
 .personality-page .ai-params-bar .ai-param-meta,
 .personality-page .ai-params-bar .ai-param-mode {
@@ -2133,10 +2163,11 @@
   z-index: 1;
 }
 .personality-page #pers-stream-host .ai-model-badge {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   max-width: 100%;
-  gap: 6px 8px;
-  overflow: visible;
+  gap: 4px 6px;
+  overflow: hidden;
+  font-size: 10px;
 }
 
 /* Continue: full-width strip under stream, never floating over text */
@@ -2168,11 +2199,14 @@
 
 .pers-suggest-actions {
   margin-top: 10px;
+  margin-bottom: 14px;
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid var(--border-1);
   background: var(--bg-1);
   flex: 0 0 auto;
+  position: relative;
+  z-index: 3;
 }
 
 /* Layout: page scrolls; stream has room; bottom actions in flow */
