@@ -903,30 +903,33 @@
 .pers-run { flex: 1 1 160px; justify-content: center; min-height: 40px; white-space: nowrap; }
 
 .pers-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 14px;
-  padding: 18px var(--pers-gutter) 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px var(--pers-gutter) 28px;
   min-height: 0;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   box-sizing: border-box;
-}
-@media (max-width: 900px) {
-  .pers-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(180px, 40vh);
-    overflow-y: auto;
-  }
 }
 
 .pers-stream-wrap {
+  order: 1;
   min-width: 0;
-  min-height: 0;
-  overflow: hidden;
+  min-height: min(58vh, 640px);
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-1);
+}
+.pers-stream-wrap.is-active {
+  min-height: min(72vh, 820px);
 }
 .pers-stream-wrap .ai-stream-panel {
   flex: 1;
@@ -935,57 +938,78 @@
   flex-direction: column;
   height: 100%;
   max-height: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
 }
 .pers-stream-wrap .ai-stream-body {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
   max-height: none !important;
   overflow-y: auto !important;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   touch-action: pan-y;
+  height: 0;
 }
 .pers-stream-empty {
-  padding: 32px 16px;
+  padding: 28px 16px;
   text-align: center;
   color: var(--text-3);
   font-size: var(--fs-md);
-  border: 1px dashed var(--border-1);
-  background: var(--bg-1);
 }
 
+/* History: accordion in document flow — not a forced side/bottom pane */
 .pers-history {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 0;
-  overflow: hidden;
+  order: 2;
+  flex: 0 0 auto;
   border: 1px solid var(--border-1);
+  border-radius: 12px;
   background: var(--bg-1);
-  padding: 12px;
+  padding: 0;
+  overflow: hidden;
 }
+.pers-history-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  background: var(--bg-2);
+}
+.pers-history-summary::-webkit-details-marker { display: none; }
+.pers-history-summary::marker { content: ''; }
 .pers-history-title {
   margin: 0;
   font-size: var(--fs-xs);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--text-4);
+  color: var(--text-3);
 }
+.pers-history-hint {
+  font-size: 11px;
+  color: var(--text-4);
+  font-family: var(--font-mono);
+}
+.pers-history[open] .pers-history-hint { display: none; }
 .pers-history-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: auto;
-  min-height: 0;
-  flex: 1;
+  padding: 10px 12px 12px;
+  max-height: none;
+  overflow: visible;
 }
 .pers-history-empty {
   padding: 16px 8px;
   text-align: center;
   color: var(--text-4);
-  font-size: var(--fs-sm);
 }
 .pers-history-card {
   display: flex;
@@ -1767,4 +1791,64 @@
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
   color: var(--accent);
+}
+
+
+/* During stream: focus on answer — collapse chrome */
+.personality-page.is-streaming .pers-title .page-sub,
+.personality-page.is-streaming .pers-kind,
+.personality-page.is-streaming .pers-opt,
+.personality-page.is-streaming .pers-run,
+.personality-page.is-streaming .pers-params-host {
+  display: none !important;
+}
+.personality-page.is-streaming .pers-head {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  gap: 8px;
+}
+.personality-page.is-streaming .pers-abort {
+  display: inline-flex !important;
+}
+.personality-page.is-streaming .pers-history:not([open]) {
+  opacity: 0.72;
+}
+.personality-page.is-streaming .pers-stream-wrap {
+  min-height: min(78vh, 900px);
+}
+
+.pers-history-card {
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--bg-0);
+  overflow: hidden;
+}
+.pers-history-card.is-pinned {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-2));
+}
+.pers-history-card-summary {
+  display: block;
+  padding: 10px 12px;
+  cursor: pointer;
+  list-style: none;
+}
+.pers-history-card-summary::-webkit-details-marker { display: none; }
+.pers-history-card-body {
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--border-1);
+}
+.pers-history-full {
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--text-2);
+  max-height: 420px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-top: 10px;
+}
+.pers-history-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
 }

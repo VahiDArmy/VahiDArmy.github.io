@@ -322,45 +322,72 @@ window.Events = (function () {
     items.forEach(function (item, idx) {
       var pinned = (typeof AIAnalysis !== 'undefined' && AIAnalysis.isPinnedAnalysis)
         ? AIAnalysis.isPinnedAnalysis(item) : false;
-      var preview = String(item.response || '').replace(/\s+/g, ' ').trim().slice(0, 90);
-      var card = Utils.el('div', {
+      var preview = String(item.response || '').replace(/\s+/g, ' ').trim().slice(0, 110);
+      var fullText = String(item.response || '');
+
+      var pinBtn = Utils.el('button', {
+        type: 'button',
+        class: 'pers-pin-btn' + (pinned ? ' is-on' : ''),
+        title: pinned ? 'برداشتن سنجاق (دیگر دائمی نیست)' : 'سنجاق دائمی',
+        dataset: { id: item.id }
+      }, [pinned ? '📌' : '📍']);
+
+      var openBtn = Utils.el('button', {
+        type: 'button',
+        class: 'btn btn-ghost btn-sm pers-open-btn'
+      }, ['نمایش در پنل']);
+
+      var card = Utils.el('details', {
         class: 'pers-history-card' + (activeId && item.id === activeId ? ' is-active' : '') + (pinned ? ' is-pinned' : ''),
         dataset: { id: item.id }
       }, [
-        Utils.el('div', { class: 'pers-history-card-top' }, [
-          Utils.el('span', { class: 'pers-history-idx' }, [pinned ? '📌' : ('#' + (idx + 1))]),
-          Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)]),
-          Utils.el('button', {
-            type: 'button',
-            class: 'pers-pin-btn' + (pinned ? ' is-on' : ''),
-            title: pinned ? 'برداشتن سنجاق (دیگر دائمی نیست)' : 'سنجاق دائمی',
-            dataset: { id: item.id }
-          }, [pinned ? '📌' : '📍'])
+        Utils.el('summary', { class: 'pers-history-card-summary' }, [
+          Utils.el('div', { class: 'pers-history-card-top' }, [
+            Utils.el('span', { class: 'pers-history-idx' }, [pinned ? '📌' : ('#' + (idx + 1))]),
+            Utils.el('span', { class: 'pers-history-date' }, [formatPersDate(item.created_at)]),
+            pinBtn
+          ]),
+          Utils.el('div', { class: 'pers-history-model' }, [item.ai_model || '—']),
+          Utils.el('div', { class: 'pers-history-preview' }, [preview || '(خالی)'])
         ]),
-        Utils.el('div', { class: 'pers-history-model' }, [item.ai_model || '—']),
-        Utils.el('div', { class: 'pers-history-preview' }, [preview || '(خالی)'])
+        Utils.el('div', { class: 'pers-history-card-body' }, [
+          Utils.el('div', { class: 'pers-history-full' }, []),
+          Utils.el('div', { class: 'pers-history-card-actions' }, [openBtn])
+        ])
       ]);
-      card.addEventListener('click', function (ev) {
-        if (ev.target.closest && ev.target.closest('.pers-pin-btn')) return;
+
+      /* render markdown only when first expanded */
+      card.addEventListener('toggle', function () {
+        if (!card.open) return;
+        var full = card.querySelector('.pers-history-full');
+        if (full && !full.dataset.ready) {
+          full.dataset.ready = '1';
+          if (typeof AIUI !== 'undefined' && AIUI.renderMarkdown) {
+            full.innerHTML = AIUI.renderMarkdown(fullText);
+          } else {
+            full.textContent = fullText;
+          }
+        }
+      });
+
+      openBtn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
         var fresh = DB.getConversation(item.id) || item;
         showPersonalityResult(fresh);
-        renderPersonalityHistory(item.id);
       });
-      var pinBtn = card.querySelector('.pers-pin-btn');
-      if (pinBtn) {
-        pinBtn.addEventListener('click', function (ev) {
-          ev.preventDefault();
-          ev.stopPropagation();
-          try {
+
+      pinBtn.addEventListener('click', function (ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        try {
+          if (typeof AIAnalysis !== 'undefined' && AIAnalysis.togglePinTasteAnalysis) {
             AIAnalysis.togglePinTasteAnalysis(item.id);
-            var nowPinned = AIAnalysis.isPinnedAnalysis(DB.getConversation(item.id) || item);
-            Toast.success(nowPinned ? 'تحلیل سنجاق شد — دائمی نگه داشته می‌شود' : 'سنجاق برداشته شد');
             renderPersonalityHistory(item.id);
-          } catch (err) {
-            Toast.error(err.message || 'خطا');
           }
-        });
-      }
+        } catch (ePin) { console.error(ePin); }
+      });
+
       list.appendChild(card);
     });
   }
@@ -470,6 +497,14 @@ window.Events = (function () {
     var btn = document.getElementById('btn-run-personality');
     if (btn) { btn.disabled = true; btn.textContent = 'در حال تحلیل…'; }
 
+    var pageEl = document.getElementById('personality-page');
+    if (pageEl) pageEl.classList.add('is-streaming');
+    var streamWrap = document.getElementById('pers-stream-wrap');
+    if (streamWrap) streamWrap.classList.add('is-active');
+    /* collapse history while streaming so stream owns the screen */
+    var hist = document.getElementById('pers-history');
+    if (hist) hist.open = false;
+
     var empty = document.getElementById('pers-stream-empty');
     var host = document.getElementById('pers-stream-host');
     if (empty) empty.hidden = true;
@@ -569,6 +604,7 @@ window.Events = (function () {
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
       if (paramsBar) paramsBar.setDisabled(false);
       if (abortBtn) abortBtn.hidden = true;
+      if (pageEl) pageEl.classList.remove('is-streaming');
     }
   }
 
@@ -628,6 +664,12 @@ window.Events = (function () {
     var modelToUse = (typeof AI !== 'undefined' && AI.getModel) ? AI.getModel() : (persLastContext.model || '');
 
     persRunning = true;
+    var pageEl = document.getElementById('personality-page');
+    if (pageEl) pageEl.classList.add('is-streaming');
+    var streamWrap = document.getElementById('pers-stream-wrap');
+    if (streamWrap) streamWrap.classList.add('is-active');
+    var hist = document.getElementById('pers-history');
+    if (hist) hist.open = false;
     var btn = document.getElementById('btn-pers-continue');
     var runBtn = document.getElementById('btn-run-personality');
     if (btn) { btn.disabled = true; btn.textContent = '…'; }
@@ -707,6 +749,7 @@ window.Events = (function () {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = 'ادامه'; }
       if (runBtn) runBtn.disabled = false;
+      if (pageEl) pageEl.classList.remove('is-streaming');
     }
   }
 
