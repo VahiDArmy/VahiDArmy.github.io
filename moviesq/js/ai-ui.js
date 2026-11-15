@@ -331,7 +331,7 @@ window.AIUI = (function () {
   }
 
   function createStreamPanel(titleText) {
-    const body = Utils.el('div', { class: 'ai-stream-body', style: 'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;min-height:0;' });
+    const body = Utils.el('div', { class: 'ai-stream-body', style: 'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;min-height:0;' });
     /* Meraj-style reasoning block: collapsible, token estimate */
     const thinkingEl = Utils.el('details', {
       class: 'ai-reasoning',
@@ -342,7 +342,7 @@ window.AIUI = (function () {
         Utils.el('span', { class: 'ai-reasoning-label' }, ['Reasoning returned by the model']),
         Utils.el('em', { class: 'ai-reasoning-tokens' }, [''])
       ]),
-      Utils.el('div', { class: 'ai-reasoning-body mono' })
+      Utils.el('div', { class: 'ai-reasoning-body mono', dir: 'ltr' })
     ]);
     const thinkingLive = Utils.el('div', {
       class: 'ai-thinking-live',
@@ -394,6 +394,22 @@ window.AIUI = (function () {
       stickBottom = dist < 80;
     }, { passive: true });
 
+    /* Nested scroll chaining: when content does not overflow, disable inner
+       overflow so the parent (.pers-layout) can scroll; when it overflows,
+       enable auto + allow overscroll to chain to parent at boundaries. */
+    function updateBodyOverflow() {
+      if (!body) return;
+      var needs = body.scrollHeight > body.clientHeight + 2;
+      body.style.overflowY = needs ? 'auto' : 'hidden';
+      body.style.overscrollBehaviorY = 'auto';
+    }
+    /* When user expands/collapses reasoning, re-check overflow */
+    thinkingEl.addEventListener('toggle', function () {
+      requestAnimationFrame(updateBodyOverflow);
+    });
+    /* Initial: empty body should not trap scroll */
+    updateBodyOverflow();
+
     function applyRootDir(el, text) {
       if (!el) return;
       var d = detectTextDir(text);
@@ -414,6 +430,7 @@ window.AIUI = (function () {
         body.scrollTop = body.scrollHeight;
         stickBottom = true;
       }
+      updateBodyOverflow();
     }
     function appendText(acc) {
       pendingText = acc;
@@ -433,11 +450,14 @@ window.AIUI = (function () {
       const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
       if (bodyNode) {
         bodyNode.textContent = pendingThinking;
-        applyRootDir(bodyNode, pendingThinking);
+        bodyNode.setAttribute('dir', 'ltr');
+        bodyNode.classList.add('ai-dir-ltr');
+        bodyNode.classList.remove('ai-dir-rtl');
       }
       const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
       if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
       if (stickBottom) body.scrollTop = body.scrollHeight;
+      updateBodyOverflow();
     }
     function finishThinking() {
       thinkingLive.hidden = true;
@@ -446,6 +466,7 @@ window.AIUI = (function () {
         /* leave details closed by default — user can expand */
         thinkingEl.open = false;
       }
+      updateBodyOverflow();
     }
     function setContent(html) {
       pendingText = '';
@@ -460,6 +481,7 @@ window.AIUI = (function () {
       contentEl.innerHTML = html;
       stickBottom = true;
       body.scrollTop = 0;
+      updateBodyOverflow();
     }
     function setStatus(text, state) {
       status.querySelector('.ai-status-text').textContent = text;
@@ -534,10 +556,6 @@ window.AIUI = (function () {
     }
     maxRange.addEventListener('input', refreshMaxLabel);
 
-    const modeHint = Utils.el('span', {
-      class: 'ai-param-mode'
-    }, [(AI.getMode && AI.getMode() === 'direct') ? 'DIRECT' : 'EDGE']);
-
     const el = Utils.el('div', { class: 'ai-params-bar' }, [
       Utils.el('div', { class: 'ai-param ai-param-temp' }, [
         Utils.el('label', {}, ['دما']),
@@ -548,8 +566,7 @@ window.AIUI = (function () {
         Utils.el('label', {}, ['حداکثر توکن']),
         maxRange,
         maxVal
-      ]),
-      Utils.el('div', { class: 'ai-param-meta' }, [modeHint])
+      ])
     ]);
 
     return {
