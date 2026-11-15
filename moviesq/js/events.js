@@ -748,7 +748,7 @@ window.Events = (function () {
         temperature = Number(paramsHost.querySelector('#ai-param-temp').value) || temperature;
         var maxEl = paramsHost.querySelector('#ai-param-max');
         if (maxEl) {
-          if (maxEl.dataset.isMax === '1' || Number(maxEl.value) === 0) max_tokens = null;
+          if (maxEl.dataset.isMax === '1') max_tokens = null;
           else max_tokens = Number(maxEl.value) || max_tokens;
         }
       }

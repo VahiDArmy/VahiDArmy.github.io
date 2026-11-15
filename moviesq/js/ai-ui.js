@@ -519,15 +519,24 @@ window.AIUI = (function () {
   function buildParamsBar(defaults) {
     defaults = defaults || {};
     const t0 = defaults.temperature != null ? Number(defaults.temperature) : 0.55;
-    /* null / undefined / 'max' / 0 => do not send max_tokens (provider maximum / free) */
+    /* null / undefined / 'max' / 0 => omit max_tokens (model / provider maximum) */
     const useMaxDefault = (
       defaults.max_tokens == null ||
       defaults.max_tokens === 'max' ||
       defaults.max_tokens === 0
     );
-    /* Left end = 0 (free/unlimited). Moving right increases value up to HARD_MAX. */
-    const HARD_MAX = 32768;
-    const m0 = useMaxDefault ? 0 : Number(defaults.max_tokens);
+    /*
+     * Slider: 512 … 100000, then one extra step (gap) = max.
+     * OpenRouter: max_tokens optional, integer ≥ 1. For model maximum, OMIT the field
+     * (do not send 0). Official range is [1, context_length). Anthropic requires the
+     * field natively; omitting via OpenRouter lets the router apply provider defaults.
+     */
+    const HARD_MAX = 100000;
+    const STEP = 512;
+    const SLIDER_MAX = HARD_MAX + STEP; /* last notch after gap = max */
+    const m0 = useMaxDefault
+      ? SLIDER_MAX
+      : Math.min(HARD_MAX, Math.max(STEP, Number(defaults.max_tokens) || STEP));
 
     const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [Number(t0).toFixed(2)]);
     const tempRange = Utils.el('input', {
@@ -540,20 +549,20 @@ window.AIUI = (function () {
 
     const maxVal = Utils.el('span', {
       class: 'ai-param-val num' + (useMaxDefault ? ' is-unlimited' : ''),
-      title: useMaxDefault ? 'آزاد (بدون محدودیت مشخص)' : ''
-    }, [useMaxDefault ? '0' : String(m0)]);
+      title: useMaxDefault ? 'حداکثر مدل (max_tokens ارسال نمی‌شود)' : ''
+    }, [useMaxDefault ? 'max' : String(m0)]);
     const maxRange = Utils.el('input', {
-      type: 'range', min: '0', max: String(HARD_MAX), step: '256',
+      type: 'range', min: String(STEP), max: String(SLIDER_MAX), step: String(STEP),
       value: String(m0),
       class: 'ai-param-range', id: 'ai-param-max',
       dataset: { isMax: useMaxDefault ? '1' : '0' }
     });
     function refreshMaxLabel() {
       const v = Number(maxRange.value);
-      if (v === 0) {
-        maxVal.textContent = '0';
+      if (v >= SLIDER_MAX) {
+        maxVal.textContent = 'max';
         maxVal.classList.add('is-unlimited');
-        maxVal.title = 'آزاد (بدون محدودیت مشخص)';
+        maxVal.title = 'حداکثر مدل (پارامتر max_tokens ارسال نمی‌شود)';
         maxRange.dataset.isMax = '1';
       } else {
         maxVal.textContent = String(v);
@@ -580,9 +589,9 @@ window.AIUI = (function () {
     return {
       el: el,
       getTemperature: function () { return Number(tempRange.value); },
-      /* null => omit max_tokens in request body (true model max / free) */
+      /* null => omit max_tokens in request body (model / provider maximum) */
       getMaxTokens: function () {
-        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) === 0) return null;
+        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) >= SLIDER_MAX) return null;
         return Number(maxRange.value);
       },
       setDisabled: function (v) {
