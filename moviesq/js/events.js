@@ -489,13 +489,41 @@ window.Events = (function () {
     panel.setContent('');
     panel.setStatus('در حال تحلیل…', 'loading');
 
+    /* Params bar (temp / max_tokens) — reuse the page bar if present */
+    var paramsHost = document.getElementById('pers-params-host');
+    var paramsBar = (paramsHost && paramsHost._paramsBar) || null;
+    if (!paramsBar && paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar) {
+      paramsBar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: 8192 });
+      paramsHost.innerHTML = '';
+      paramsHost.appendChild(paramsBar.el);
+      paramsHost._paramsBar = paramsBar;
+      paramsHost.dataset.ready = '1';
+    }
+    if (paramsBar) paramsBar.setDisabled(true);
+
+    var abortBtn = document.getElementById('btn-abort-personality');
+    if (abortBtn) {
+      abortBtn.hidden = false;
+      abortBtn.onclick = function () {
+        try { if (typeof AI !== 'undefined' && AI.abort) AI.abort(); } catch (e) {}
+      };
+    }
+
     try {
+      var temperature = paramsBar ? paramsBar.getTemperature() : 0.55;
+      var max_tokens = paramsBar ? paramsBar.getMaxTokens() : 8192;
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
         messages: messages,
-        onToken: function (_c, full) { panel.appendText(full); }
+        temperature: temperature,
+        max_tokens: max_tokens,
+        onToken: function (_c, full) { panel.appendText(full); },
+        onThinking: function (delta, full) {
+          if (panel.appendThinking) panel.appendThinking(delta, full);
+        }
       });
       panel.appendText(result || '');
+      if (panel.finishThinking) panel.finishThinking();
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
       try {
@@ -516,7 +544,9 @@ window.Events = (function () {
         messages: messages,
         result: result || '',
         kind: persSelectedKind,
-        model: used || ''
+        model: used || '',
+        temperature: temperature,
+        max_tokens: max_tokens
       };
       renderPersonalityHistory();
       showPersonalitySuggestionActions(result || '', persSelectedKind);
@@ -526,6 +556,9 @@ window.Events = (function () {
       if (err && err.code === 'PROMPT_CANCELLED') {
         panel.setStatus('لغو شد', 'done');
         Toast.info('ارسال لغو شد');
+      } else if (err && err.name === 'AbortError') {
+        panel.setStatus('متوقف شد', 'done');
+        Toast.info('تحلیل متوقف شد');
       } else {
         panel.setStatus('خطا', 'error');
         panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
@@ -534,9 +567,10 @@ window.Events = (function () {
     } finally {
       persRunning = false;
       if (btn) { btn.disabled = false; btn.textContent = '▶ اجرای تحلیل جدید'; }
+      if (paramsBar) paramsBar.setDisabled(false);
+      if (abortBtn) abortBtn.hidden = true;
     }
   }
-
 
 
   function showPersonalityContinueBar(panel) {
@@ -601,11 +635,22 @@ window.Events = (function () {
     if (panel && panel.setStatus) panel.setStatus('ادامه…', 'loading');
 
     var before = String(persLastContext.result || '');
+    var temperature = (persLastContext.temperature != null) ? persLastContext.temperature : 0.55;
+    var max_tokens = (persLastContext.max_tokens != null) ? persLastContext.max_tokens : 8192;
+    try {
+      var paramsHost = document.getElementById('pers-params-host');
+      if (paramsHost && paramsHost.querySelector('#ai-param-temp')) {
+        temperature = Number(paramsHost.querySelector('#ai-param-temp').value) || temperature;
+        max_tokens = Number(paramsHost.querySelector('#ai-param-max').value) || max_tokens;
+      }
+    } catch (eP) {}
     try {
       var more = await AIAnalysis.continueTasteAnalysis({
         messages: messages,
         partial: before,
         model: modelToUse || undefined,
+        temperature: temperature,
+        max_tokens: max_tokens,
         onToken: function (_c, full) {
           if (panel && panel.appendText) {
             panel.appendText(before + '\n\n' + full);
@@ -616,6 +661,9 @@ window.Events = (function () {
               content.innerHTML = AIUI.renderMarkdown(before + '\n\n' + full);
             }
           }
+        },
+        onThinking: function (delta, full) {
+          if (panel && panel.appendThinking) panel.appendThinking(delta, full);
         }
       });
       var combined = before;
@@ -625,6 +673,7 @@ window.Events = (function () {
       persLastContext.result = combined;
       persLastContext.messages = messages;
       if (panel && panel.appendText) panel.appendText(combined);
+      if (panel && panel.finishThinking) panel.finishThinking();
       if (panel && panel.setStatus) panel.setStatus('آماده', 'done');
       if (panel && panel.setModelBadge) panel.setModelBadge();
 
@@ -765,6 +814,15 @@ window.Events = (function () {
         });
       });
     });
+    /* Always show params (temp / max tokens / mode) on this page */
+    var paramsHost = document.getElementById('pers-params-host');
+    if (paramsHost && typeof AIUI !== 'undefined' && AIUI.buildParamsBar && !paramsHost.dataset.ready) {
+      var bar = AIUI.buildParamsBar({ temperature: 0.55, max_tokens: 8192 });
+      paramsHost.innerHTML = '';
+      paramsHost.appendChild(bar.el);
+      paramsHost.dataset.ready = '1';
+      paramsHost._paramsBar = bar;
+    }
     var btn = document.getElementById('btn-run-personality');
     if (btn) btn.addEventListener('click', function () { runPersonalityAnalysis(); });
     var tagsOpt = document.getElementById('pers-include-tags');

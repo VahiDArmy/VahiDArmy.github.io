@@ -926,6 +926,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 100%;
 }
 .pers-stream-wrap .ai-stream-panel {
   flex: 1;
@@ -933,11 +934,17 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
 }
 .pers-stream-wrap .ai-stream-body {
-  flex: 1;
-  min-height: 200px;
-  max-height: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
 }
 .pers-stream-empty {
   padding: 32px 16px;
@@ -1607,3 +1614,77 @@
 }
 .ai-thinking-live .ai-thinking-dots span:nth-child(2) { animation-delay: 0.15s; }
 .ai-thinking-live .ai-thinking-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+
+/* ── Personality analysis: dense specialist typography ──────────────────── */
+.personality-page .pers-params-host {
+  padding: 0 var(--pers-gutter, 18px) 10px;
+}
+.personality-page .pers-params-host .ai-params-bar {
+  margin: 0;
+}
+.personality-page .pers-abort {
+  min-height: 40px;
+}
+.pers-stream-wrap .ai-stream-content {
+  font-size: 12px;
+  line-height: 1.72;
+  letter-spacing: -0.005em;
+  color: var(--text-2);
+}
+.pers-stream-wrap .ai-stream-content h1,
+.pers-stream-wrap .ai-stream-content h2,
+.pers-stream-wrap .ai-stream-content h3,
+.pers-stream-wrap .ai-stream-content h4 {
+  color: var(--text-1);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+  margin: 1.1em 0 0.45em;
+}
+.pers-stream-wrap .ai-stream-content h1 { font-size: 1.2em; }
+.pers-stream-wrap .ai-stream-content h2 { font-size: 1.12em; }
+.pers-stream-wrap .ai-stream-content h3 { font-size: 1.05em; }
+.pers-stream-wrap .ai-stream-content h4 { font-size: 1em; }
+.pers-stream-wrap .ai-stream-content p {
+  margin: 0.55em 0;
+  font-size: 12px;
+}
+.pers-stream-wrap .ai-stream-content li {
+  font-size: 12px;
+  margin: 0.2em 0;
+}
+.pers-stream-wrap .ai-stream-content ul,
+.pers-stream-wrap .ai-stream-content ol {
+  padding-inline-start: 1.2em;
+  margin: 0.4em 0;
+}
+.pers-stream-wrap .ai-stream-content strong {
+  color: var(--text-1);
+  font-weight: 700;
+}
+.pers-stream-wrap .ai-stream-content code,
+.pers-stream-wrap .ai-stream-content pre {
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.pers-stream-wrap .ai-stream-content blockquote {
+  margin: 0.6em 0;
+  padding: 0.4em 0.8em;
+  border-inline-start: 2px solid var(--border-2);
+  color: var(--text-3);
+  font-size: 11.5px;
+}
+.pers-stream-wrap .ai-reasoning-body {
+  font-size: 11px;
+  line-height: 1.55;
+  max-height: 220px;
+}
+
+/* Ensure stream body always scrolls on all AI panels when content overflows */
+.ai-stream-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}

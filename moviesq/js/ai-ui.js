@@ -262,7 +262,7 @@ window.AIUI = (function () {
   }
 
   function createStreamPanel(titleText) {
-    const body = Utils.el('div', { class: 'ai-stream-body' });
+    const body = Utils.el('div', { class: 'ai-stream-body', style: 'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;min-height:0;' });
     /* Meraj-style reasoning block: collapsible, token estimate */
     const thinkingEl = Utils.el('details', {
       class: 'ai-reasoning',
