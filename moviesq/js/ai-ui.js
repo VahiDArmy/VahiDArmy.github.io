@@ -286,7 +286,6 @@ window.AIUI = (function () {
     if (!info) return null;
     const children = [
       Utils.el('span', { class: 'ai-model-badge-icon' }, ['🪄']),
-      Utils.el('span', { class: 'ai-model-badge-label' }, ['تولید شده با:']),
       Utils.el('span', { class: 'ai-model-badge-value' }, [info.label || info.id])
     ];
     if (info.vendor) children.push(Utils.el('span', { class: 'ai-model-badge-vendor' }, [info.vendor]));

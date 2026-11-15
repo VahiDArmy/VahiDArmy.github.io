@@ -420,41 +420,66 @@
 .ai-stream-foot[hidden] { display: none; }
 
 .ai-model-badge {
-  padding: 5px 10px;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 6px 12px;
   background: linear-gradient(135deg, rgba(139,92,255,0.10), rgba(139,92,255,0.02));
   border: 1px solid rgba(139, 92, 255, 0.28);
   border-radius: var(--radius-pill);
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 11px;
+  line-height: 1.4;
   color: var(--text-3);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     0 0 18px -8px rgba(139, 92, 255, 0.7);
   max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  white-space: nowrap;
+}
+.ai-model-badge::-webkit-scrollbar {
+  height: 3px;
+}
+.ai-model-badge::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 255, 0.45);
+  border-radius: 3px;
 }
 .ai-model-badge-icon {
-  font-size: 11px;
+  font-size: 12px;
   filter: drop-shadow(0 0 6px rgba(139, 92, 255, 0.9));
   flex-shrink: 0;
 }
-.ai-model-badge-label { color: var(--text-4); font-weight: 500; flex-shrink: 0; font-size: 9.5px; }
+.ai-model-badge-label { display: none; } /* «تولید شده با» removed */
 .ai-model-badge-value {
   color: var(--accent-2);
   font-weight: 700;
   text-shadow: 0 0 8px rgba(139, 92, 255, 0.6);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-  font-size: 10px;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: none;
+  font-size: 11px;
+  flex-shrink: 0;
 }
 .ai-model-badge-vendor {
   color: var(--text-4);
-  font-size: 9px;
-  padding: 1px 6px;
+  font-size: 10px;
+  padding: 2px 7px;
   background: rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-pill);
   white-space: nowrap;
+  flex-shrink: 0;
+}
+.ai-model-badge-speed,
+.ai-model-badge-via,
+.ai-model-badge-routed {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 10px;
 }
 
 /* =========================================================
@@ -625,13 +650,13 @@
   .ai-stream-foot { padding: 8px 14px; }
   .ai-result-row { grid-template-columns: 100px 1fr; }
   .ai-model-badge {
-    font-size: 10px;
-    padding: 5px 10px;
+    font-size: 11px;
+    padding: 6px 10px;
     gap: 6px;
   }
   .ai-model-badge-value {
-    max-width: 140px;
-    font-size: 10.5px;
+    max-width: none;
+    font-size: 11px;
   }
 
   .ai-table th,
@@ -1201,15 +1226,8 @@
   margin-right: auto;
 }
 
-.ai-model-badge {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 4px 6px;
-  white-space: nowrap;
-}
 .ai-model-badge-via {
-  font-size: 9px;
+  font-size: 10px;
   color: var(--text-3);
   opacity: 0.85;
   white-space: nowrap;
@@ -2172,9 +2190,11 @@
 .personality-page #pers-stream-host .ai-model-badge {
   flex-wrap: nowrap;
   max-width: 100%;
-  gap: 4px 6px;
-  overflow: hidden;
-  font-size: 10px;
+  gap: 6px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  font-size: 11px;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Continue: full-width strip under stream, never floating over text */
