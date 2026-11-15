@@ -110,6 +110,7 @@ window.AIFreePrompt = (function () {
             if (panel.appendThinking) panel.appendThinking(delta);
           }
         });
+        if (panel.finishThinking) panel.finishThinking();
         panel.setStatus('done', 'انجام شد ✓');
         lastModel = (AI.getLastUsedModel && AI.getLastUsedModel()) || null;
 
@@ -261,16 +262,23 @@ window.AIFreePrompt = (function () {
      ========================================================= */
   function buildPanel() {
     const body = Utils.el('div', { class: 'ai-stream-body freeprompt-stream' });
-    const thinking = Utils.el('div', { class: 'ai-thinking-block', hidden: true }, [
-      Utils.el('div', { class: 'ai-thinking-head' }, [
-        Utils.el('span', { class: 'ai-thinking-label' }, ['تفکر داخلی']),
-        Utils.el('span', { class: 'ai-thinking-dots' }, [
-          Utils.el('span'), Utils.el('span'), Utils.el('span')
-        ])
+    const thinkingLive = Utils.el('div', { class: 'ai-thinking-live', hidden: true }, [
+      Utils.el('span', { class: 'ai-thinking-orb' }, ['✨']),
+      Utils.el('span', { class: 'ai-thinking-label' }, ['در حال تفکر…']),
+      Utils.el('span', { class: 'ai-thinking-dots' }, [
+        Utils.el('span'), Utils.el('span'), Utils.el('span')
+      ])
+    ]);
+    const thinking = Utils.el('details', { class: 'ai-reasoning', hidden: true }, [
+      Utils.el('summary', { class: 'ai-reasoning-summary' }, [
+        Utils.el('span', { class: 'ai-reasoning-icon' }, ['🧠']),
+        Utils.el('span', { class: 'ai-reasoning-label' }, ['Reasoning returned by the model']),
+        Utils.el('em', { class: 'ai-reasoning-tokens' }, [''])
       ]),
-      Utils.el('div', { class: 'ai-thinking-body mono' })
+      Utils.el('div', { class: 'ai-reasoning-body mono' })
     ]);
     const content = Utils.el('div', { class: 'ai-stream-content' });
+    body.appendChild(thinkingLive);
     body.appendChild(thinking);
     body.appendChild(content);
 
@@ -292,6 +300,9 @@ window.AIFreePrompt = (function () {
     let raf = false;
     let last = '';
 
+    function estimateTokens(str) {
+      return Math.max(0, Math.ceil(String(str || '').length / 4));
+    }
     function flush() {
       raf = false;
       if (pendingText === last) return;
@@ -306,21 +317,35 @@ window.AIFreePrompt = (function () {
       raf = true;
       requestAnimationFrame(flush);
     }
-    function appendThinking(delta) {
-      if (!delta) return;
-      pendingThinking += delta;
+    function appendThinking(delta, full) {
+      if (!delta && !full) return;
+      if (full != null) pendingThinking = String(full);
+      else pendingThinking += (delta || '');
+      thinkingLive.hidden = false;
       thinking.hidden = false;
-      const tb = thinking.querySelector('.ai-thinking-body');
+      const tb = thinking.querySelector('.ai-reasoning-body');
       if (tb) tb.textContent = pendingThinking;
+      const tok = thinking.querySelector('.ai-reasoning-tokens');
+      if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
       body.scrollTop = body.scrollHeight;
+    }
+    function finishThinking() {
+      thinkingLive.hidden = true;
+      if (pendingThinking && pendingThinking.trim()) {
+        thinking.hidden = false;
+        thinking.open = false;
+      }
     }
     function setContent(html) {
       pendingText = '';
       pendingThinking = '';
       last = '';
       thinking.hidden = true;
-      const tb = thinking.querySelector('.ai-thinking-body');
+      thinkingLive.hidden = true;
+      const tb = thinking.querySelector('.ai-reasoning-body');
       if (tb) tb.textContent = '';
+      const tok = thinking.querySelector('.ai-reasoning-tokens');
+      if (tok) tok.textContent = '';
       content.innerHTML = html;
     }
     function setStatus(state, text) {
@@ -331,6 +356,7 @@ window.AIFreePrompt = (function () {
     return {
       el: panel, body: body,
       appendText: appendText, appendThinking: appendThinking,
+      finishThinking: finishThinking,
       setContent: setContent, setStatus: setStatus
     };
   }

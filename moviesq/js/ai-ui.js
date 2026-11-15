@@ -263,19 +263,30 @@ window.AIUI = (function () {
 
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body' });
-    const thinkingEl = Utils.el('div', {
-      class: 'ai-thinking-block',
+    /* Meraj-style reasoning block: collapsible, token estimate */
+    const thinkingEl = Utils.el('details', {
+      class: 'ai-reasoning',
       hidden: true
     }, [
-      Utils.el('div', { class: 'ai-thinking-head' }, [
-        Utils.el('span', { class: 'ai-thinking-label' }, ['تفکر داخلی']),
-        Utils.el('span', { class: 'ai-thinking-dots' }, [
-          Utils.el('span'), Utils.el('span'), Utils.el('span')
-        ])
+      Utils.el('summary', { class: 'ai-reasoning-summary' }, [
+        Utils.el('span', { class: 'ai-reasoning-icon' }, ['🧠']),
+        Utils.el('span', { class: 'ai-reasoning-label' }, ['Reasoning returned by the model']),
+        Utils.el('em', { class: 'ai-reasoning-tokens' }, [''])
       ]),
-      Utils.el('div', { class: 'ai-thinking-body mono' })
+      Utils.el('div', { class: 'ai-reasoning-body mono' })
+    ]);
+    const thinkingLive = Utils.el('div', {
+      class: 'ai-thinking-live',
+      hidden: true
+    }, [
+      Utils.el('span', { class: 'ai-thinking-orb' }, ['✨']),
+      Utils.el('span', { class: 'ai-thinking-label' }, ['در حال تفکر…']),
+      Utils.el('span', { class: 'ai-thinking-dots' }, [
+        Utils.el('span'), Utils.el('span'), Utils.el('span')
+      ])
     ]);
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
+    body.appendChild(thinkingLive);
     body.appendChild(thinkingEl);
     body.appendChild(contentEl);
     const status = Utils.el('div', { class: 'ai-stream-status' }, [
@@ -319,21 +330,39 @@ window.AIUI = (function () {
       rafScheduled = true;
       requestAnimationFrame(flushRender);
     }
-    function appendThinking(delta) {
-      if (!delta) return;
-      pendingThinking += delta;
+    function estimateTokens(str) {
+      return Math.max(0, Math.ceil(String(str || '').length / 4));
+    }
+    function appendThinking(delta, full) {
+      if (!delta && !full) return;
+      if (full != null) pendingThinking = String(full);
+      else pendingThinking += (delta || '');
+      thinkingLive.hidden = false;
       thinkingEl.hidden = false;
-      const bodyNode = thinkingEl.querySelector('.ai-thinking-body');
+      const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
       if (bodyNode) bodyNode.textContent = pendingThinking;
+      const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
+      if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
       if (stickBottom) body.scrollTop = body.scrollHeight;
+    }
+    function finishThinking() {
+      thinkingLive.hidden = true;
+      if (pendingThinking && pendingThinking.trim()) {
+        thinkingEl.hidden = false;
+        /* leave details closed by default — user can expand */
+        thinkingEl.open = false;
+      }
     }
     function setContent(html) {
       pendingText = '';
       pendingThinking = '';
       lastRendered = '';
       thinkingEl.hidden = true;
-      const bodyNode = thinkingEl.querySelector('.ai-thinking-body');
+      thinkingLive.hidden = true;
+      const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
       if (bodyNode) bodyNode.textContent = '';
+      const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
+      if (tok) tok.textContent = '';
       contentEl.innerHTML = html;
       stickBottom = true;
       body.scrollTop = 0;
@@ -356,6 +385,7 @@ window.AIUI = (function () {
       panel: panel, body: body,
       setStatus: setStatus, setContent: setContent,
       appendText: appendText, appendThinking: appendThinking,
+      finishThinking: finishThinking,
       setModelBadge: setModelBadge, hide: hide
     };
   }
@@ -1264,6 +1294,7 @@ window.AIUI = (function () {
           }
         });
         panel.appendText(result || '');
+        if (panel.finishThinking) panel.finishThinking();
         panel.setModelBadge();
         panel.setStatus('تحلیل سلیقه آماده شد', 'done');
         try {
@@ -1299,6 +1330,7 @@ window.AIUI = (function () {
           }
         });
         panel.appendText(resultText || '');
+        if (panel.finishThinking) panel.finishThinking();
         panel.setModelBadge();
         panel.setStatus('پیشنهاد آماده شد', 'done');
         showActions(parseSuggestion(resultText || ''));

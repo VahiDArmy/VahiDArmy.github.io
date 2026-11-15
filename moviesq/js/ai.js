@@ -335,8 +335,46 @@ window.AI = (function () {
   }
 
   /**
+   * Extract reasoning text from an OpenRouter/OpenAI delta (meraj-compatible).
+   * Models may send: string, reasoning_details[], or reasoning[].
+   */
+  function reasoningFromDelta(delta) {
+    if (!delta) return '';
+    if (typeof delta.reasoning === 'string' && delta.reasoning) return delta.reasoning;
+    if (typeof delta.reasoning_content === 'string' && delta.reasoning_content) return delta.reasoning_content;
+    if (Array.isArray(delta.reasoning_details)) {
+      return delta.reasoning_details
+        .map(function (d) { return (d && (d.text || d.summary || d.content)) || ''; })
+        .filter(Boolean)
+        .join('');
+    }
+    if (Array.isArray(delta.reasoning)) {
+      return delta.reasoning
+        .map(function (item) { return (item && (item.text || item.content)) || ''; })
+        .filter(Boolean)
+        .join('');
+    }
+    return '';
+  }
+
+  function textFromContent(content) {
+    if (content == null) return '';
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      return content.map(function (part) {
+        if (typeof part === 'string') return part;
+        if (part && typeof part.text === 'string') return part.text;
+        if (part && part.type === 'text' && typeof part.text === 'string') return part.text;
+        return '';
+      }).join('');
+    }
+    return '';
+  }
+
+  /**
    * OpenAI-compatible SSE stream against OpenRouter.
    * Supports onToken, onThinking, temperature, max_tokens, abort.
+   * Reasoning: meraj-style extraction + optional include_reasoning.
    */
   async function streamOpenRouter(opts) {
     const apiKey = getKey();
@@ -361,8 +399,9 @@ window.AI = (function () {
       stream: true
     };
     if (max_tokens != null && max_tokens > 0) body.max_tokens = max_tokens;
-    if (opts.reasoning) body.reasoning = opts.reasoning;
-    if (opts.include_reasoning) body.include_reasoning = true;
+    /* Ask providers that support it to return reasoning (OpenRouter / o-series style). */
+    if (opts.reasoning != null) body.reasoning = opts.reasoning;
+    if (opts.include_reasoning !== false) body.include_reasoning = true;
 
     aiLog('info', '▸ Direct · ' + model +
       (temperature != null ? ' · T=' + temperature : '') +
@@ -398,12 +437,13 @@ window.AI = (function () {
     const ctype = (res.headers.get('content-type') || '').toLowerCase();
     if (!ctype.includes('text/event-stream') && !ctype.includes('stream')) {
       const json = await res.json().catch(function () { return {}; });
-      const text =
-        (json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content) ||
-        json.content || json.text || '';
+      const msg = (json.choices && json.choices[0] && json.choices[0].message) || {};
+      const text = textFromContent(msg.content) || json.content || json.text || '';
+      const think = reasoningFromDelta(msg) || (typeof msg.reasoning === 'string' ? msg.reasoning : '');
+      if (think && opts.onThinking) opts.onThinking(think, think);
       if (text) onToken(text);
-      onDone(text, { finishReason: 'stop' });
-      aiLog('success', '✓ پاسخ یک‌جا (direct) · ' + text.length + ' کاراکتر');
+      onDone(text, { reasoning: think || null, finishReason: 'stop' });
+      aiLog('success', '✓ پاسخ یک‌جا (direct) · ' + text.length + ' کاراکتر' + (think ? ' · reasoning ' + think.length : ''));
       return text;
     }
 
@@ -440,18 +480,25 @@ window.AI = (function () {
           const choice = obj.choices && obj.choices[0];
           if (!choice) continue;
           if (choice.finish_reason) finishReason = choice.finish_reason;
-          const delta = choice.delta || {};
-          if (typeof delta.content === 'string' && delta.content) {
-            full += delta.content;
-            onToken(delta.content);
+          const delta = choice.delta || choice.message || {};
+          const piece = textFromContent(delta.content);
+          if (piece) {
+            full += piece;
+            onToken(piece);
           }
-          if (typeof delta.reasoning === 'string' && delta.reasoning) {
-            reasoning += delta.reasoning;
-            if (opts.onThinking) opts.onThinking(delta.reasoning);
+          const think = reasoningFromDelta(delta);
+          if (think) {
+            reasoning += think;
+            if (opts.onThinking) opts.onThinking(think, reasoning);
           }
-          if (typeof delta.reasoning_content === 'string' && delta.reasoning_content) {
-            reasoning += delta.reasoning_content;
-            if (opts.onThinking) opts.onThinking(delta.reasoning_content);
+          /* Some providers put final reasoning on the message, not only deltas */
+          if (choice.message) {
+            const endThink = reasoningFromDelta(choice.message);
+            if (endThink && endThink.length > reasoning.length) {
+              const extra = endThink.slice(reasoning.length);
+              reasoning = endThink;
+              if (extra && opts.onThinking) opts.onThinking(extra, reasoning);
+            }
           }
         } catch (parseErr) {
           if (parseErr.message && !/JSON|Unexpected/.test(parseErr.message)) throw parseErr;
