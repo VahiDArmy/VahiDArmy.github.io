@@ -331,7 +331,7 @@ window.AIUI = (function () {
 
   function createStreamPanel(titleText) {
     const body = Utils.el('div', { class: 'ai-stream-body', style: 'overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:auto;touch-action:pan-y;min-height:0;' });
-    /* Meraj-style reasoning block: collapsible, token estimate */
+    /* Meraj-style reasoning block: collapsible, token estimate, markdown */
     const thinkingEl = Utils.el('details', {
       class: 'ai-reasoning',
       hidden: true
@@ -341,7 +341,7 @@ window.AIUI = (function () {
         Utils.el('span', { class: 'ai-reasoning-label' }, ['Reasoning returned by the model']),
         Utils.el('em', { class: 'ai-reasoning-tokens' }, [''])
       ]),
-      Utils.el('div', { class: 'ai-reasoning-body mono', dir: 'ltr' })
+      Utils.el('div', { class: 'ai-reasoning-body', dir: 'auto' })
     ]);
     const thinkingLive = Utils.el('div', {
       class: 'ai-thinking-live',
@@ -354,9 +354,14 @@ window.AIUI = (function () {
       ])
     ]);
     const contentEl = Utils.el('div', { class: 'ai-stream-content' });
+    const bodyMeta = Utils.el('div', { class: 'ai-stream-body-meta', hidden: true }, [
+      Utils.el('span', { class: 'ai-body-tokens' }, ['']),
+      Utils.el('span', { class: 'ai-body-finish' }, [''])
+    ]);
     body.appendChild(thinkingLive);
     body.appendChild(thinkingEl);
     body.appendChild(contentEl);
+    body.appendChild(bodyMeta);
     const status = Utils.el('div', { class: 'ai-stream-status' }, [
       Utils.el('span', { class: 'ai-status-dot' }),
       Utils.el('span', { class: 'ai-status-text' }, ['آماده'])
@@ -387,26 +392,22 @@ window.AIUI = (function () {
     let rafScheduled = false;
     let lastRendered = '';
     let stickBottom = true;
+    let lastFinishReason = null;
 
     body.addEventListener('scroll', function () {
       var dist = body.scrollHeight - body.scrollTop - body.clientHeight;
       stickBottom = dist < 80;
     }, { passive: true });
 
-    /* Nested scroll chaining: when content does not overflow, disable inner
-       overflow so the parent (.pers-layout) can scroll; when it overflows,
-       enable auto + allow overscroll to chain to parent at boundaries. */
     function updateBodyOverflow() {
       if (!body) return;
       var needs = body.scrollHeight > body.clientHeight + 2;
       body.style.overflowY = needs ? 'auto' : 'hidden';
       body.style.overscrollBehaviorY = 'auto';
     }
-    /* When user expands/collapses reasoning, re-check overflow */
     thinkingEl.addEventListener('toggle', function () {
       requestAnimationFrame(updateBodyOverflow);
     });
-    /* Initial: empty body should not trap scroll */
     updateBodyOverflow();
 
     function applyRootDir(el, text) {
@@ -418,6 +419,45 @@ window.AIUI = (function () {
         el.classList.remove(d === 'rtl' ? 'ai-dir-ltr' : 'ai-dir-rtl');
       }
     }
+    function estimateTokens(str) {
+      return Math.max(0, Math.ceil(String(str || '').length / 4));
+    }
+    function updateBodyMeta(finishReason) {
+      if (finishReason != null) lastFinishReason = finishReason;
+      var tokEl = bodyMeta.querySelector('.ai-body-tokens');
+      var finEl = bodyMeta.querySelector('.ai-body-finish');
+      var n = estimateTokens(pendingText);
+      if (tokEl) tokEl.textContent = n ? (n + ' tokens') : '';
+      bodyMeta.hidden = !pendingText.trim() && !lastFinishReason;
+      if (!finEl) return;
+      var fr = lastFinishReason;
+      var truncated = false;
+      try {
+        if (typeof AIAnalysis !== 'undefined' && AIAnalysis.looksTruncated) {
+          truncated = AIAnalysis.looksTruncated(pendingText);
+        }
+      } catch (e0) {}
+      if (fr === 'length' || fr === 'max_tokens') {
+        finEl.textContent = 'قطع‌شده (سقف توکن)';
+        finEl.dataset.state = 'truncated';
+        truncated = true;
+      } else if (fr === 'stop' || fr === 'end_turn' || fr === 'stop_sequence') {
+        finEl.textContent = truncated ? 'احتمالاً ناقص' : 'کامل';
+        finEl.dataset.state = truncated ? 'warn' : 'ok';
+      } else if (fr) {
+        finEl.textContent = String(fr);
+        finEl.dataset.state = truncated ? 'warn' : 'idle';
+      } else if (truncated) {
+        finEl.textContent = 'احتمالاً ناقص';
+        finEl.dataset.state = 'warn';
+      } else if (pendingText.trim()) {
+        finEl.textContent = 'پایان';
+        finEl.dataset.state = 'ok';
+      } else {
+        finEl.textContent = '';
+        finEl.dataset.state = '';
+      }
+    }
     function flushRender() {
       rafScheduled = false;
       if (pendingText === lastRendered) return;
@@ -425,6 +465,7 @@ window.AIUI = (function () {
       contentEl.innerHTML = renderMarkdown(pendingText);
       applyRootDir(contentEl, pendingText);
       lastRendered = pendingText;
+      updateBodyMeta(lastFinishReason);
       if (prevStick) {
         body.scrollTop = body.scrollHeight;
         stickBottom = true;
@@ -437,9 +478,6 @@ window.AIUI = (function () {
       rafScheduled = true;
       requestAnimationFrame(flushRender);
     }
-    function estimateTokens(str) {
-      return Math.max(0, Math.ceil(String(str || '').length / 4));
-    }
     function appendThinking(delta, full) {
       if (!delta && !full) return;
       if (full != null) pendingThinking = String(full);
@@ -448,10 +486,13 @@ window.AIUI = (function () {
       thinkingEl.hidden = false;
       const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
       if (bodyNode) {
-        bodyNode.textContent = pendingThinking;
-        bodyNode.setAttribute('dir', 'ltr');
-        bodyNode.classList.add('ai-dir-ltr');
-        bodyNode.classList.remove('ai-dir-rtl');
+        /* Render markdown so **bold** etc. are visible as markup */
+        try {
+          bodyNode.innerHTML = renderMarkdown(pendingThinking);
+        } catch (eMd) {
+          bodyNode.textContent = pendingThinking;
+        }
+        bodyNode.setAttribute('dir', 'auto');
       }
       const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
       if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
@@ -462,8 +503,14 @@ window.AIUI = (function () {
       thinkingLive.hidden = true;
       if (pendingThinking && pendingThinking.trim()) {
         thinkingEl.hidden = false;
-        /* leave details closed by default — user can expand */
         thinkingEl.open = false;
+        const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
+        if (bodyNode) {
+          try { bodyNode.innerHTML = renderMarkdown(pendingThinking); }
+          catch (e2) { bodyNode.textContent = pendingThinking; }
+        }
+        const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
+        if (tok) tok.textContent = estimateTokens(pendingThinking) + ' tokens';
       }
       updateBodyOverflow();
     }
@@ -471,13 +518,15 @@ window.AIUI = (function () {
       pendingText = '';
       pendingThinking = '';
       lastRendered = '';
+      lastFinishReason = null;
       thinkingEl.hidden = true;
       thinkingLive.hidden = true;
       const bodyNode = thinkingEl.querySelector('.ai-reasoning-body');
-      if (bodyNode) bodyNode.textContent = '';
+      if (bodyNode) bodyNode.innerHTML = '';
       const tok = thinkingEl.querySelector('.ai-reasoning-tokens');
       if (tok) tok.textContent = '';
       contentEl.innerHTML = html;
+      bodyMeta.hidden = true;
       stickBottom = true;
       body.scrollTop = 0;
       updateBodyOverflow();
@@ -485,6 +534,10 @@ window.AIUI = (function () {
     function setStatus(text, state) {
       status.querySelector('.ai-status-text').textContent = text;
       status.dataset.state = state || 'idle';
+    }
+    function setFinishInfo(finishReason) {
+      lastFinishReason = finishReason || null;
+      updateBodyMeta(lastFinishReason);
     }
     function setModelBadge() {
       const info = AI.getLastUsedModel && AI.getLastUsedModel();
@@ -508,35 +561,37 @@ window.AIUI = (function () {
       setStatus: setStatus, setContent: setContent,
       appendText: appendText, appendThinking: appendThinking,
       finishThinking: finishThinking,
-      setModelBadge: setModelBadge, hide: hide
+      setFinishInfo: setFinishInfo,
+      setModelBadge: setModelBadge, hide: hide,
+      getPendingText: function () { return pendingText; },
+      getPendingThinking: function () { return pendingThinking; }
     };
   }
 
-  /**
-   * Shared temperature / max_tokens controls shown before send.
-   * Returns { el, getTemperature, getMaxTokens, setDisabled }.
-   */
   function buildParamsBar(defaults) {
     defaults = defaults || {};
     const t0 = defaults.temperature != null ? Number(defaults.temperature) : 0.55;
-    /* null / undefined / 'max' / 0 => omit max_tokens (model / provider maximum) */
-    const useMaxDefault = (
+    /*
+     * RTL-aware max_tokens slider (range input itself is LTR: min=left, max=right):
+     *   Visual RIGHT (range max) = 0  → omit max_tokens (nothing sent)
+     *   Visual LEFT  (range min) = max → send HARD_MAX as max_tokens
+     * Values increase as you move left from the right end.
+     * OpenRouter: omit field for provider/model ceiling; integer ≥ 1 when set.
+     */
+    const useOmitDefault = (
       defaults.max_tokens == null ||
       defaults.max_tokens === 'max' ||
       defaults.max_tokens === 0
     );
-    /*
-     * Slider: 512 … 100000, then one extra step (gap) = max.
-     * OpenRouter: max_tokens optional, integer ≥ 1. For model maximum, OMIT the field
-     * (do not send 0). Official range is [1, context_length). Anthropic requires the
-     * field natively; omitting via OpenRouter lets the router apply provider defaults.
-     */
     const HARD_MAX = 100000;
-    const STEP = 512;
-    const SLIDER_MAX = HARD_MAX + STEP; /* last notch after gap = max */
-    const m0 = useMaxDefault
-      ? SLIDER_MAX
-      : Math.min(HARD_MAX, Math.max(STEP, Number(defaults.max_tokens) || STEP));
+    const STEP = 500;
+    /* range value 0 = omit; STEP..HARD_MAX = send that number */
+    const rangeMin = 0;
+    const rangeMax = HARD_MAX;
+    let initial = useOmitDefault ? 0 : Number(defaults.max_tokens);
+    if (!useOmitDefault) {
+      initial = Math.min(HARD_MAX, Math.max(STEP, Math.round(initial / STEP) * STEP || STEP));
+    }
 
     const tempVal = Utils.el('span', { class: 'ai-param-val num' }, [Number(t0).toFixed(2)]);
     const tempRange = Utils.el('input', {
@@ -548,30 +603,49 @@ window.AIUI = (function () {
     });
 
     const maxVal = Utils.el('span', {
-      class: 'ai-param-val num' + (useMaxDefault ? ' is-unlimited' : ''),
-      title: useMaxDefault ? 'حداکثر مدل (max_tokens ارسال نمی‌شود)' : ''
-    }, [useMaxDefault ? 'max' : String(m0)]);
+      class: 'ai-param-val num' + (useOmitDefault ? ' is-unlimited' : ''),
+      title: useOmitDefault ? '۰ — چیزی ارسال نمی‌شود' : ''
+    }, [useOmitDefault ? '0' : String(initial)]);
+
+    /* Invert fill: we store "how much from the right". Display mapping:
+       range value 0 (right) → label 0 omit
+       range value V > 0 → label V, send V
+       To put high values on the LEFT, invert: internal = HARD_MAX - userValue for non-zero?
+       Simpler approach: min=0 max=HARD_MAX, value 0 at left physically...
+       User wants RIGHT=0, LEFT=max. Standard range has LEFT=min RIGHT=max.
+       So invert: physicalValue 0 (left) means HARD_MAX sent; physicalValue HARD_MAX (right) means omit.
+    */
+    const physicalInitial = useOmitDefault ? HARD_MAX : (HARD_MAX - initial);
     const maxRange = Utils.el('input', {
-      type: 'range', min: String(STEP), max: String(SLIDER_MAX), step: String(STEP),
-      value: String(m0),
+      type: 'range', min: '0', max: String(HARD_MAX), step: String(STEP),
+      value: String(physicalInitial),
       class: 'ai-param-range', id: 'ai-param-max',
-      dataset: { isMax: useMaxDefault ? '1' : '0' }
+      dataset: { isMax: useOmitDefault ? '1' : '0' }
     });
+
+    function physicalToLogical(p) {
+      /* p=HARD_MAX (right) → logical 0 omit; p=0 (left) → logical HARD_MAX */
+      const inv = HARD_MAX - Number(p);
+      if (inv <= 0) return 0;
+      return inv;
+    }
+
     function refreshMaxLabel() {
-      const v = Number(maxRange.value);
-      if (v >= SLIDER_MAX) {
-        maxVal.textContent = 'max';
+      const logical = physicalToLogical(maxRange.value);
+      if (logical === 0) {
+        maxVal.textContent = '0';
         maxVal.classList.add('is-unlimited');
-        maxVal.title = 'حداکثر مدل (پارامتر max_tokens ارسال نمی‌شود)';
+        maxVal.title = '۰ — max_tokens ارسال نمی‌شود';
         maxRange.dataset.isMax = '1';
       } else {
-        maxVal.textContent = String(v);
+        maxVal.textContent = String(logical);
         maxVal.classList.remove('is-unlimited');
-        maxVal.title = '';
+        maxVal.title = 'ارسال max_tokens=' + logical;
         maxRange.dataset.isMax = '0';
       }
     }
     maxRange.addEventListener('input', refreshMaxLabel);
+    refreshMaxLabel();
 
     const el = Utils.el('div', { class: 'ai-params-bar' }, [
       Utils.el('div', { class: 'ai-param ai-param-temp' }, [
@@ -589,10 +663,10 @@ window.AIUI = (function () {
     return {
       el: el,
       getTemperature: function () { return Number(tempRange.value); },
-      /* null => omit max_tokens in request body (model / provider maximum) */
       getMaxTokens: function () {
-        if (maxRange.dataset.isMax === '1' || Number(maxRange.value) >= SLIDER_MAX) return null;
-        return Number(maxRange.value);
+        const logical = physicalToLogical(maxRange.value);
+        if (logical === 0) return null; /* omit */
+        return logical;
       },
       setDisabled: function (v) {
         tempRange.disabled = !!v;

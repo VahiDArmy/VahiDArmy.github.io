@@ -209,7 +209,9 @@ window.AIAnalysis = (function () {
         if (options.onToken) options.onToken(t, full);
       },
       onThinking: options.onThinking,
-      onDone: function () {}
+      onDone: function (_text, info) {
+        if (options.onDone) options.onDone(_text, info || {});
+      }
     });
     return full;
   }
@@ -265,7 +267,9 @@ window.AIAnalysis = (function () {
         if (options.onToken) options.onToken(t, full);
       },
       onThinking: options.onThinking,
-      onDone: function () {}
+      onDone: function (_text, info) {
+        if (options.onDone) options.onDone(_text, info || {});
+      }
     });
     return full;
   }

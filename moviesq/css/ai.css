@@ -1646,15 +1646,67 @@
 .ai-reasoning-body {
   padding: 12px 14px;
   font-size: 12px;
-  line-height: 1.6;
+  line-height: 1.65;
   color: color-mix(in srgb, var(--text-2) 90%, var(--info));
-  white-space: pre-wrap;
-  max-height: 280px;
+  white-space: normal;
+  max-height: 320px;
   overflow: auto;
-  direction: ltr;
-  text-align: left;
+  direction: auto;
+  text-align: start;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: auto;
+}
+.ai-reasoning-body p { margin: 0 0 0.55em; }
+.ai-reasoning-body p:last-child { margin-bottom: 0; }
+.ai-reasoning-body strong { color: var(--text-1); font-weight: 700; }
+.ai-reasoning-body code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--info) 10%, transparent);
+}
+
+/* Main body token + finish badge (under stream content) */
+.ai-stream-body-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+}
+.ai-body-tokens {
+  font-style: normal;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent) 85%, var(--text-3));
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.ai-body-finish {
+  font-weight: 650;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-1);
+  color: var(--text-3);
+}
+.ai-body-finish[data-state="ok"] {
+  color: var(--success, #4ade80);
+  border-color: color-mix(in srgb, var(--success, #4ade80) 35%, transparent);
+  background: color-mix(in srgb, var(--success, #4ade80) 10%, transparent);
+}
+.ai-body-finish[data-state="warn"],
+.ai-body-finish[data-state="truncated"] {
+  color: #fbbf24;
+  border-color: color-mix(in srgb, #fbbf24 40%, transparent);
+  background: color-mix(in srgb, #fbbf24 12%, transparent);
+}
+.ai-stream-status[data-state="warn"] .ai-status-text { color: #fbbf24; }
+.ai-stream-status[data-state="warn"] .ai-status-dot {
+  background: #fbbf24;
 }
 .ai-reasoning-body[dir="ltr"],
 .ai-reasoning-body.ai-dir-ltr {

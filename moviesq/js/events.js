@@ -550,6 +550,7 @@ window.Events = (function () {
       var temperature = paramsBar ? paramsBar.getTemperature() : 0.55;
       var max_tokens = paramsBar ? paramsBar.getMaxTokens() : null;
       var lastFull = '';
+      var finishReason = null;
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
         messages: messages,
@@ -561,12 +562,26 @@ window.Events = (function () {
         },
         onThinking: function (delta, full) {
           if (panel.appendThinking) panel.appendThinking(delta, full);
+        },
+        onDone: function (_text, info) {
+          finishReason = (info && info.finishReason) || null;
         }
       });
       panel.appendText(result || '');
       if (panel.finishThinking) panel.finishThinking();
+      if (panel.setFinishInfo) panel.setFinishInfo(finishReason);
       panel.setModelBadge();
-      panel.setStatus('آماده', 'done');
+      var truncated = (finishReason === 'length' || finishReason === 'max_tokens');
+      try {
+        if (!truncated && typeof AIAnalysis !== 'undefined' && AIAnalysis.looksTruncated) {
+          truncated = AIAnalysis.looksTruncated(result || '');
+        }
+      } catch (eT) {}
+      if (truncated) {
+        panel.setStatus('ناقص — قابل ادامه', 'warn');
+      } else {
+        panel.setStatus('کامل', 'done');
+      }
       try {
         if (panel.body) panel.body.scrollTop = 0;
         var hostEl = document.getElementById('pers-stream-host');
@@ -598,8 +613,12 @@ window.Events = (function () {
       };
       renderPersonalityHistory();
       showPersonalitySuggestionActions(result || '', persSelectedKind);
-      showPersonalityContinueBar(panel);
-      Toast.success('تحلیل ذخیره شد');
+      if (truncated) showPersonalityContinueBar(panel);
+      else {
+        var oldBar = document.getElementById('pers-continue-bar');
+        if (oldBar) oldBar.remove();
+      }
+      Toast.success(truncated ? 'تحلیل ذخیره شد (ناقص)' : 'تحلیل ذخیره شد');
     } catch (err) {
       var partial = (err && err.partial) ? String(err.partial) : (lastFull || '');
       if (partial && panel && panel.appendText) {
