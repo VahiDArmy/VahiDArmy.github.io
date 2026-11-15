@@ -381,9 +381,100 @@ window.AI = (function () {
   }
 
   /**
+   * reader.read() can hang forever when the phone sleeps / tab backgrounds /
+   * network drops without closing the socket. Race each read against a stall timer.
+   */
+  function readChunkWithStall(reader, stallMs, signal) {
+    stallMs = stallMs || 120000;
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        var err = new Error('اتصال استریم قطع شد یا خیلی طول کشید (بدون دادهٔ جدید).');
+        err.code = 'STREAM_STALL';
+        try { reader.cancel(); } catch (e) {}
+        reject(err);
+      }, stallMs);
+
+      function finish(fn, arg) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        fn(arg);
+      }
+
+      reader.read().then(
+        function (v) { finish(resolve, v); },
+        function (e) { finish(reject, e); }
+      );
+
+      if (signal) {
+        var onAbort = function () {
+          var err = new Error('لغو شد');
+          err.name = 'AbortError';
+          err.code = 'ABORTED';
+          try { reader.cancel(); } catch (e2) {}
+          finish(reject, err);
+        };
+        if (signal.aborted) onAbort();
+        else signal.addEventListener('abort', onAbort, { once: true });
+      }
+    });
+  }
+
+  function installDisconnectGuards(abortCtrl) {
+    if (!abortCtrl || typeof document === 'undefined') return function () {};
+    var hiddenTimer = null;
+    var cleaned = false;
+
+    function abortWith(code, message) {
+      if (cleaned || abortCtrl.signal.aborted) return;
+      try {
+        aiLog('warn', '⚠ ' + message);
+      } catch (e) {}
+      try {
+        abortCtrl.abort();
+      } catch (e2) {}
+    }
+
+    function onVisibility() {
+      if (document.hidden) {
+        /* Mobile Chrome often freezes the network after ~30–60s in background */
+        hiddenTimer = setTimeout(function () {
+          abortWith('BACKGROUND', 'صفحه در پس‌زمینه ماند؛ استریم قطع شد. دوباره اجرا یا «ادامه» بزن.');
+        }, 45000);
+      } else if (hiddenTimer) {
+        clearTimeout(hiddenTimer);
+        hiddenTimer = null;
+      }
+    }
+    function onOffline() {
+      abortWith('OFFLINE', 'اتصال اینترنت قطع شد.');
+    }
+    function onPageHide() {
+      abortWith('PAGEHIDE', 'صفحه بسته یا معلق شد؛ استریم قطع شد.');
+    }
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('offline', onOffline);
+    window.addEventListener('pagehide', onPageHide);
+
+    return function cleanupGuards() {
+      if (cleaned) return;
+      cleaned = true;
+      if (hiddenTimer) clearTimeout(hiddenTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('offline', onOffline);
+      window.removeEventListener('pagehide', onPageHide);
+    };
+  }
+
+  /**
    * OpenAI-compatible SSE stream against OpenRouter.
    * Supports onToken, onThinking, temperature, max_tokens, abort.
    * Reasoning: meraj-style extraction + optional include_reasoning.
+   * Disconnect / background / stall recovery built-in.
    */
   async function streamOpenRouter(opts) {
     const apiKey = getKey();
@@ -470,9 +561,17 @@ window.AI = (function () {
     let full = '';
     let reasoning = '';
     let finishReason = null;
+    const stallMs = (opts.stallMs != null) ? opts.stallMs : 150000;
+    /* Ensure we own an AbortController so background guards can stop the stream */
+    if (!abortController || abortController.signal.aborted) {
+      abortController = new AbortController();
+    }
+    const guardSignal = combined || abortController.signal;
+    const cleanupGuards = installDisconnectGuards(abortController);
 
+    try {
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await readChunkWithStall(reader, stallMs, guardSignal);
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
@@ -541,6 +640,17 @@ window.AI = (function () {
       (model ? ' · ' + model : ''));
     onDone(full, { reasoning: reasoning || null, finishReason: finishReason, model: model });
     return full;
+    } catch (streamErr) {
+      if (streamErr && streamErr.name === 'AbortError') throw streamErr;
+      if (streamErr && (streamErr.code === 'STREAM_STALL' || streamErr.code === 'BACKGROUND' || streamErr.code === 'OFFLINE' || streamErr.code === 'PAGEHIDE')) {
+        streamErr.partial = full;
+        streamErr.partialReasoning = reasoning;
+        aiLog('warn', '⚠ قطع استریم · متن جزئی: ' + (full ? full.length + ' کاراکتر' : 'خالی'));
+      }
+      throw streamErr;
+    } finally {
+      try { cleanupGuards(); } catch (e) {}
+    }
   }
 
   async function chatStream(opts) {
@@ -666,9 +776,15 @@ window.AI = (function () {
     let buffer = '';
     let full = '';
     let streamError = null;
+    const stallMs = (opts.stallMs != null) ? opts.stallMs : 150000;
+    if (!abortController || abortController.signal.aborted) {
+      abortController = new AbortController();
+    }
+    const cleanupGuards = installDisconnectGuards(abortController);
 
+    try {
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await readChunkWithStall(reader, stallMs, combined);
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
       const parts = buffer.split('\n');
@@ -714,6 +830,16 @@ window.AI = (function () {
     onDone(full);
     aiAutoHide();
     return full;
+    } catch (streamErr) {
+      if (streamErr && streamErr.name === 'AbortError') throw streamErr;
+      if (streamErr && streamErr.code === 'STREAM_STALL') {
+        streamErr.partial = full;
+        aiLog('warn', '⚠ قطع استریم edge · جزئی: ' + (full ? full.length + ' کاراکتر' : 'خالی'));
+      }
+      throw streamErr;
+    } finally {
+      try { cleanupGuards(); } catch (e) {}
+    }
   }
 
   async function chat(opts) {

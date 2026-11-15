@@ -547,12 +547,16 @@ window.Events = (function () {
     try {
       var temperature = paramsBar ? paramsBar.getTemperature() : 0.55;
       var max_tokens = paramsBar ? paramsBar.getMaxTokens() : null;
+      var lastFull = '';
       var result = await AIAnalysis.analyzeTaste({
         kind: persSelectedKind,
         messages: messages,
         temperature: temperature,
         max_tokens: max_tokens,
-        onToken: function (_c, full) { panel.appendText(full); },
+        onToken: function (_c, full) {
+          lastFull = full || lastFull;
+          panel.appendText(full);
+        },
         onThinking: function (delta, full) {
           if (panel.appendThinking) panel.appendThinking(delta, full);
         }
@@ -599,16 +603,61 @@ window.Events = (function () {
       showPersonalityContinueBar(panel);
       Toast.success('تحلیل ذخیره شد');
     } catch (err) {
+      var partial = (err && err.partial) ? String(err.partial) : (lastFull || '');
+      if (partial && panel && panel.appendText) {
+        panel.appendText(partial);
+        if (panel.finishThinking) panel.finishThinking();
+      }
       if (err && err.code === 'PROMPT_CANCELLED') {
         panel.setStatus('لغو شد', 'done');
         Toast.info('ارسال لغو شد');
       } else if (err && err.name === 'AbortError') {
         panel.setStatus('متوقف شد', 'done');
         Toast.info('تحلیل متوقف شد');
+        if (partial) {
+          persLastContext = {
+            id: null,
+            messages: messages,
+            result: partial,
+            kind: persSelectedKind,
+            model: (AI.getLastUsedModel && AI.getLastUsedModel()) ? AI.getLastUsedModel().id : '',
+            temperature: temperature,
+            max_tokens: max_tokens
+          };
+          showPersonalityContinueBar(panel);
+        }
+      } else if (err && (err.code === 'STREAM_STALL' || err.code === 'BACKGROUND' || err.code === 'OFFLINE' || err.code === 'PAGEHIDE')) {
+        panel.setStatus('قطع شد', 'error');
+        Toast.warning(err.message || 'اتصال قطع شد');
+        if (partial) {
+          persLastContext = {
+            id: null,
+            messages: messages,
+            result: partial,
+            kind: persSelectedKind,
+            model: (AI.getLastUsedModel && AI.getLastUsedModel()) ? AI.getLastUsedModel().id : '',
+            temperature: temperature,
+            max_tokens: max_tokens
+          };
+          showPersonalityContinueBar(panel);
+          try {
+            var promptText = (messages || []).map(function (m) {
+              return '## ' + m.role + '\n' + m.content;
+            }).join('\n\n');
+            var used = (AI.getLastUsedModel && AI.getLastUsedModel()) ? AI.getLastUsedModel().id : '';
+            var savedId = AIAnalysis.saveTasteAnalysis(promptText, partial, used);
+            if (savedId) persLastContext.id = savedId;
+            renderPersonalityHistory(savedId || null);
+          } catch (eSave) {}
+        }
       } else {
         panel.setStatus('خطا', 'error');
-        panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
-        Toast.error(err.message || 'خطا در تحلیل');
+        if (!partial) {
+          panel.setContent('<div class="ai-error">' + Utils.esc(err.message || String(err)) + '</div>');
+        } else {
+          Toast.error(err.message || 'خطا در تحلیل');
+        }
+        if (!partial) Toast.error(err.message || 'خطا در تحلیل');
       }
     } finally {
       persRunning = false;
