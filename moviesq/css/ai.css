@@ -2043,3 +2043,141 @@
   min-height: 50vh !important;
   overflow: hidden !important;
 }
+
+/* ── Params bar: no overlap (DIRECT vs max) ──────────────────────────────── */
+.personality-page .pers-params-host {
+  padding: 0 var(--pers-gutter, 16px) 12px;
+}
+.personality-page .ai-params-bar {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-1);
+  border-radius: 12px;
+  background: var(--bg-1);
+}
+.personality-page .ai-params-bar .ai-param {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px 12px;
+  flex: none;
+  min-width: 0;
+  width: 100%;
+}
+.personality-page .ai-params-bar .ai-param label {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+  min-width: 4.5rem;
+}
+.personality-page .ai-params-bar .ai-param-range {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  flex: none;
+}
+.personality-page .ai-params-bar .ai-param-val {
+  min-width: 3.2rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.personality-page .ai-params-bar .ai-param-meta {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 2px;
+}
+.personality-page .ai-params-bar .ai-param-mode {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--border-2);
+  color: var(--text-3);
+  background: var(--bg-2);
+}
+
+/* ── Stream bottom: content not covered by badge / actions ───────────────── */
+.personality-page #pers-stream-host .ai-stream-body {
+  padding-bottom: 1.5rem !important;
+}
+.personality-page #pers-stream-host .ai-stream-content {
+  padding-bottom: 1.25rem;
+}
+.personality-page #pers-stream-host .ai-stream-foot {
+  position: relative;
+  flex-shrink: 0;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--border-1);
+  background: color-mix(in srgb, var(--bg-1) 92%, transparent);
+  z-index: 1;
+}
+.personality-page #pers-stream-host .ai-model-badge {
+  flex-wrap: wrap;
+  max-width: 100%;
+  gap: 6px 8px;
+  overflow: visible;
+}
+
+/* Continue: full-width strip under stream, never floating over text */
+.pers-continue-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border-1));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-1));
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto !important;
+}
+.pers-continue-note {
+  font-size: 12px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+.pers-continue-bar .btn {
+  width: 100%;
+  min-height: 44px;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.pers-suggest-actions {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-1);
+  background: var(--bg-1);
+  flex: 0 0 auto;
+}
+
+/* Layout: page scrolls; stream has room; bottom actions in flow */
+.personality-page .pers-layout {
+  padding-bottom: 32px !important;
+}
+.personality-page .pers-stream-wrap {
+  overflow: visible !important; /* let page scroll show footer actions */
+  min-height: min(52vh, 560px) !important;
+}
+.personality-page .pers-stream-wrap.is-active {
+  min-height: min(60vh, 720px) !important;
+}
+.personality-page #pers-stream-host {
+  overflow: hidden !important; /* only inner body scrolls */
+}

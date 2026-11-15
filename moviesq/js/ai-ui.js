@@ -535,21 +535,21 @@ window.AIUI = (function () {
     maxRange.addEventListener('input', refreshMaxLabel);
 
     const modeHint = Utils.el('span', {
-      class: 'ai-param-mode muted tiny'
-    }, [(AI.getMode && AI.getMode() === 'direct') ? 'Direct' : 'Edge']);
+      class: 'ai-param-mode'
+    }, [(AI.getMode && AI.getMode() === 'direct') ? 'DIRECT' : 'EDGE']);
 
     const el = Utils.el('div', { class: 'ai-params-bar' }, [
-      Utils.el('div', { class: 'ai-param' }, [
+      Utils.el('div', { class: 'ai-param ai-param-temp' }, [
         Utils.el('label', {}, ['دما']),
         tempRange,
         tempVal
       ]),
-      Utils.el('div', { class: 'ai-param' }, [
+      Utils.el('div', { class: 'ai-param ai-param-tokens' }, [
         Utils.el('label', {}, ['حداکثر توکن']),
         maxRange,
         maxVal
       ]),
-      modeHint
+      Utils.el('div', { class: 'ai-param-meta' }, [modeHint])
     ]);
 
     return {

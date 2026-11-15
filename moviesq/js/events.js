@@ -670,28 +670,33 @@ window.Events = (function () {
 
 
   function showPersonalityContinueBar(panel) {
+    var wrap = document.getElementById('pers-stream-wrap');
     var host = document.getElementById('pers-stream-host');
-    if (!host) return;
+    if (!wrap && !host) return;
     var old = document.getElementById('pers-continue-bar');
     if (old) old.remove();
 
     var bar = Utils.el('div', { id: 'pers-continue-bar', class: 'pers-continue-bar' }, [
+      Utils.el('div', { class: 'pers-continue-note' }, [
+        'پاسخ ممکن است ناقص باشد — می‌توانی از همین‌جا ادامه بدهی.'
+      ]),
       Utils.el('button', {
         type: 'button',
-        class: 'btn btn-ghost btn-sm',
+        class: 'btn btn-primary',
         id: 'btn-pers-continue'
-      }, ['ادامه'])
+      }, ['▶ ادامه تحلیل'])
     ]);
 
+    /* Always in stream wrap flow, after host, before suggest — never over content */
+    var parent = wrap || host.parentNode;
     var suggest = document.getElementById('pers-suggest-actions');
-    if (suggest && suggest.parentNode) {
-      suggest.parentNode.insertBefore(bar, suggest);
-    } else if (panel && panel.panel && panel.panel.parentNode) {
-      panel.panel.parentNode.insertBefore(bar, panel.panel.nextSibling);
-    } else if (panel && panel.parentNode) {
-      panel.parentNode.insertBefore(bar, panel.nextSibling);
+    if (suggest && suggest.parentNode === parent) {
+      parent.insertBefore(bar, suggest);
+    } else if (host && host.parentNode === parent) {
+      if (host.nextSibling) parent.insertBefore(bar, host.nextSibling);
+      else parent.appendChild(bar);
     } else {
-      host.appendChild(bar);
+      parent.appendChild(bar);
     }
 
     document.getElementById('btn-pers-continue').addEventListener('click', function () {
