@@ -561,6 +561,17 @@ window.Events = (function () {
       if (panel.finishThinking) panel.finishThinking();
       panel.setModelBadge();
       panel.setStatus('آماده', 'done');
+      /* Keep result visible: host must stay expanded; scroll answer into view */
+      if (streamWrap) streamWrap.classList.add('is-active');
+      try {
+        if (panel.body) {
+          /* show the beginning of the analysis after chrome returns */
+          panel.body.scrollTop = 0;
+        }
+        if (streamWrap && streamWrap.scrollIntoView) {
+          streamWrap.scrollIntoView({ block: 'nearest', behavior: 'instant' in window ? 'instant' : 'auto' });
+        }
+      } catch (eScroll) {}
       try {
         var promptText = (messages || []).map(function (m) {
           return '## ' + m.role + '\n' + m.content;
