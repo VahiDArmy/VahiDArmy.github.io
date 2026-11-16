@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="بازارچی - بررسی و امتیازدهی فروشگاه‌های آنلاین سوپرمارکت و فروشگاه‌ها. از خرید بد جلوگیری کن." />
+  <title>بازارچی | بررسی فروشگاه‌های آنلاین</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Vazirmatn', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
+              400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
+              800: '#075985', 900: '#0c4a6e', 950: '#082f49'
+            },
+            accent: {
+              400: '#f472b6', 500: '#ec4899', 600: '#db2777'
+            }
+          },
+          boxShadow: {
+            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+            'glow': '0 0 40px rgba(14, 165, 233, 0.25)',
+            'card': '0 4px 24px -4px rgba(0,0,0,0.08), 0 2px 8px -2px rgba(0,0,0,0.04)'
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.45s cubic-bezier(0.16,1,0.3,1)',
+            'scale-in': 'scaleIn 0.3s ease-out',
+            'pulse-soft': 'pulseSoft 2s infinite',
+            'float': 'float 6s ease-in-out infinite'
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            slideUp: { '0%': { opacity: 0, transform: 'translateY(24px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            scaleIn: { '0%': { opacity: 0, transform: 'scale(0.92)' }, '100%': { opacity: 1, transform: 'scale(1)' } },
+            pulseSoft: { '0%,100%': { opacity: 1 }, '50%': { opacity: 0.7 } },
+            float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* ============================================================
+       بازارچی – Custom Styles (extensive for polish)
+       ============================================================ */
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f1f5f9;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --brand: #0ea5e9;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --glass: rgba(255,255,255,0.72);
+      --glass-border: rgba(255,255,255,0.35);
+    }
+    .dark {
+      --bg-primary: #0b1120;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --border: #1e293b;
+      --glass: rgba(15,23,42,0.75);
+      --glass-border: rgba(148,163,184,0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Vazirmatn', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 99px; }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* Glass card */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid var(--glass-border);
+    }
+
+    /* Gradient text */
+    .text-gradient {
+      background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #ec4899 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Rating pills */
+    .rating-shit { background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; }
+    .rating-mid { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+    .rating-good { background: linear-gradient(135deg, #22c55e, #16a34a); color: white; }
+
+    /* Animated background mesh */
+    .mesh-bg {
+      background-color: var(--bg-primary);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(14,165,233,0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(139,92,246,0.1) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236,72,153,0.08) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(34,197,94,0.08) 0px, transparent 50%);
+    }
+    .dark .mesh-bg {
+      background-image:
+        radial-gradient(at 0% 0%, rgba(14,165,233,0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 0%, rgba(139,92,246,0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(236,72,153,0.1) 0px, transparent 50%),
+        radial-gradient(at 0% 100%, rgba(34,197,94,0.08) 0px, transparent 50%);
+    }
+
+    /* Cards */
+    .shop-card {
+      transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    .shop-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 40px -12px rgba(14,165,233,0.25);
+    }
+    .dark .shop-card:hover {
+      box-shadow: 0 20px 40px -12px rgba(14,165,233,0.15);
+    }
+
+    /* Skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-tertiary) 25%, var(--border) 50%, var(--bg-tertiary) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 12px;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Toast */
+    .toast-enter { animation: slideUp 0.35s ease-out; }
+    .toast-leave { animation: fadeOut 0.3s ease-in forwards; }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-12px); } }
+
+    /* Modal overlay */
+    .modal-overlay {
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Rating selector big buttons */
+    .rate-btn {
+      transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+      border: 3px solid transparent;
+    }
+    .rate-btn:hover { transform: scale(1.06); }
+    .rate-btn.active-shit { border-color: #ef4444; box-shadow: 0 0 0 4px rgba(239,68,68,0.25); transform: scale(1.05); }
+    .rate-btn.active-mid { border-color: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,0.25); transform: scale(1.05); }
+    .rate-btn.active-good { border-color: #22c55e; box-shadow: 0 0 0 4px rgba(34,197,94,0.25); transform: scale(1.05); }
+
+    /* Bottom nav mobile */
+    .bottom-nav {
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+    }
+    .dark .bottom-nav { box-shadow: 0 -4px 24px rgba(0,0,0,0.4); }
+
+    /* Filter chip */
+    .chip {
+      transition: all 0.2s;
+    }
+    .chip.active {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      border-color: transparent;
+    }
+
+    /* Progress bar for rating distribution */
+    .bar-fill {
+      transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+    }
+
+    /* Input focus ring */
+    .input-focus:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(14,165,233,0.35);
+      border-color: #0ea5e9;
+    }
+
+    /* Floating action */
+    .fab {
+      box-shadow: 0 8px 24px rgba(14,165,233,0.4);
+    }
+    .fab:hover { transform: scale(1.08); }
+
+    /* Page transition */
+    .page { animation: fadeIn 0.35s ease-out; }
+
+    /* Persian number helper */
+    .num-fa { font-feature-settings: "ss01"; }
+
+    /* Hero pattern */
+    .hero-pattern {
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230ea5e9' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    /* Safe area for mobile */
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom, 0); }
+
+    /* Line clamp */
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Custom select */
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 0.75rem center;
+      background-size: 1.25rem;
+      padding-left: 2.5rem;
+    }
+
+    /* Loading spinner */
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(14,165,233,0.2);
+      border-top-color: #0ea5e9;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state illustration container */
+    .empty-illust {
+      opacity: 0.7;
+    }
+
+    /* Sticky header blur */
+    .header-blur {
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+    }
+
+    /* Badge pulse */
+    .badge-live {
+      position: relative;
+    }
+    .badge-live::after {
+      content: '';
+      position: absolute;
+      top: -2px; right: -2px;
+      width: 8px; height: 8px;
+      background: #22c55e;
+      border-radius: 50%;
+      animation: pulseSoft 1.5s infinite;
+    }
+
+    /* Vendor color dots */
+    .vendor-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Review card left accent */
+    .review-accent-shit { border-right: 4px solid #ef4444; }
+    .review-accent-mid { border-right: 4px solid #f59e0b; }
+    .review-accent-good { border-right: 4px solid #22c55e; }
+
+    /* Mobile menu drawer */
+    .drawer {
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+    }
+    .drawer.open { transform: translateX(0); }
+
+    /* Tooltip */
+    [data-tip] { position: relative; }
+    [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 125%;
+      right: 50%;
+      transform: translateX(50%);
+      background: #0f172a;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      z-index: 50;
+    }
+    [data-tip]:hover::after { opacity: 1; }
+
+    /* Print hide */
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="mesh-bg antialiased">
+
+  <!-- ========== APP ROOT ========== -->
+  <div id="app" class="min-h-screen flex flex-col">
+
+    <!-- ===== HEADER ===== -->
+    <header id="main-header" class="sticky top-0 z-40 header-blur bg-white/70 dark:bg-slate-900/70 border-b border-slate-200/60 dark:border-slate-800/60 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-16 gap-3">
+          <!-- Logo -->
+          <a href="#/" class="flex items-center gap-2.5 group" data-nav="home">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/30 group-hover:scale-105 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </div>
+            <div class="hidden sm:block">
+              <div class="font-bold text-lg leading-tight text-gradient">بازارچی</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400 -mt-0.5">بررسی فروشگاه‌های آنلاین</div>
+            </div>
+          </a>
+
+          <!-- Desktop Search -->
+          <div class="hidden md:flex flex-1 max-w-xl mx-6">
+            <div class="relative w-full">
+              <input id="global-search" type="search" placeholder="جستجوی فروشگاه، محصول یا پلتفرم..." 
+                class="w-full h-11 pr-11 pl-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-sky-500 input-focus text-sm transition-all" />
+              <svg class="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <button id="btn-theme" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="تغییر تم">
+              <svg id="icon-sun" class="w-5 h-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              <svg id="icon-moon" class="w-5 h-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            </button>
+
+            <button id="btn-auth" class="hidden sm:flex items-center gap-2 h-10 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium transition-colors shadow-md shadow-sky-500/25">
+              <span id="auth-label">ورود</span>
+            </button>
+
+            <button id="btn-menu" class="md:hidden w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main id="main-content" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 pb-28 md:pb-10">
+      <!-- Dynamic pages injected here -->
+    </main>
+
+    <!-- ===== MOBILE BOTTOM NAV ===== -->
+    <nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bottom-nav bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 safe-bottom no-print">
+      <div class="flex items-center justify-around h-16">
+        <a href="#/" data-nav="home" class="nav-item flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-sky-500 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>خانه</span>
+        </a>
+        <a href="#/search" data-nav="search" class="nav-item flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-sky-500 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <span>جستجو</span>
+        </a>
+        <a href="#/add" data-nav="add" class="nav-item flex flex-col items-center -mt-5">
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/40 fab">
+            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
+          </div>
+        </a>
+        <a href="#/my" data-nav="my" class="nav-item flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-sky-500 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          <span>من</span>
+        </a>
+        <a href="#/vendors" data-nav="vendors" class="nav-item flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-sky-500 transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          <span>پلتفرم</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div id="toast-container" class="fixed top-20 left-4 right-4 sm:left-auto sm:right-6 z-[100] flex flex-col gap-2 max-w-sm pointer-events-none"></div>
+
+    <!-- ===== MODAL ROOT ===== -->
+    <div id="modal-root"></div>
+
+    <!-- ===== MOBILE DRAWER ===== -->
+    <div id="drawer-overlay" class="fixed inset-0 z-50 bg-black/50 hidden" onclick="App.closeDrawer()"></div>
+    <aside id="drawer" class="drawer fixed top-0 right-0 z-50 h-full w-80 max-w-[85vw] bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto">
+      <div class="flex items-center justify-between mb-8">
+        <div class="font-bold text-lg">منو</div>
+        <button onclick="App.closeDrawer()" class="w-9 h-9 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <nav class="space-y-1" id="drawer-nav">
+        <!-- filled by JS -->
+      </nav>
+      <div class="mt-10 pt-6 border-t border-slate-200 dark:border-slate-800">
+        <button id="drawer-auth" class="w-full h-12 rounded-2xl bg-sky-500 text-white font-medium">ورود / ثبت‌نام</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ========== APP SCRIPT ========== -->
+  <script>
+    // ============================================================
+    // بازارچی – SPA Application
+    // Supabase + Vanilla JS + Tailwind
+    // ============================================================
+
+    const SUPABASE_URL = 'https://ummhohozmpwltbgeczsf.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
+
+    const { createClient } = supabase;
+    const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // -------------------- State --------------------
+    const State = {
+      user: null,
+      session: null,
+      theme: localStorage.getItem('smr_theme') || 'light',
+      page: 'home',
+      params: {},
+      vendors: [],
+      shopsCache: {},
+      searchQuery: '',
+      filters: {
+        category: '',
+        city: '',
+        rating: '',
+        vendorId: '',
+        sort: 'newest'
+      },
+      loading: false
+    };
+
+    // -------------------- Utils --------------------
+    const Utils = {
+      toFa(n) {
+        if (n == null) return '—';
+        const fa = '۰۱۲۳۴۵۶۷۸۹';
+        return String(n).replace(/\d/g, d => fa[d]);
+      },
+      formatDate(iso) {
+        if (!iso) return '';
+        try {
+          const d = new Date(iso);
+          return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'short', day: 'numeric' }).format(d);
+        } catch { return iso; }
+      },
+      formatRelative(iso) {
+        if (!iso) return '';
+        const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+        if (diff < 60) return 'همین الان';
+        if (diff < 3600) return Utils.toFa(Math.floor(diff / 60)) + ' دقیقه پیش';
+        if (diff < 86400) return Utils.toFa(Math.floor(diff / 3600)) + ' ساعت پیش';
+        if (diff < 604800) return Utils.toFa(Math.floor(diff / 86400)) + ' روز پیش';
+        return Utils.formatDate(iso);
+      },
+      ratingLabel(r) {
+        if (r === -1) return { text: 'گند', emoji: '💩', cls: 'rating-shit', accent: 'review-accent-shit' };
+        if (r === 0) return { text: 'معمولی', emoji: '😐', cls: 'rating-mid', accent: 'review-accent-mid' };
+        return { text: 'خوب', emoji: '👍', cls: 'rating-good', accent: 'review-accent-good' };
+      },
+      avgRating(reviews) {
+        if (!reviews || !reviews.length) return null;
+        const sum = reviews.reduce((a, r) => a + r.rating, 0);
+        return sum / reviews.length;
+      },
+      ratingScore(avg) {
+        // map -1..1 to 0..100 for display
+        if (avg == null) return null;
+        return Math.round(((avg + 1) / 2) * 100);
+      },
+      slugify(str) {
+        return (str || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u0600-\u06FF-]/g, '').slice(0, 60);
+      },
+      debounce(fn, ms = 300) {
+        let t;
+        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+      },
+      escape(html) {
+        const div = document.createElement('div');
+        div.textContent = html;
+        return div.innerHTML;
+      },
+      uuid() {
+        return crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+          const r = Math.random() * 16 | 0;
+          return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+        });
+      }
+    };
+
+    // -------------------- Toast --------------------
+    const Toast = {
+      show(msg, type = 'info', duration = 3200) {
+        const el = document.createElement('div');
+        const colors = {
+          info: 'bg-slate-800 text-white',
+          success: 'bg-emerald-600 text-white',
+          error: 'bg-red-600 text-white',
+          warn: 'bg-amber-500 text-white'
+        };
+        el.className = `toast-enter pointer-events-auto rounded-2xl px-4 py-3 shadow-xl text-sm font-medium ${colors[type] || colors.info}`;
+        el.textContent = msg;
+        document.getElementById('toast-container').appendChild(el);
+        setTimeout(() => {
+          el.classList.add('toast-leave');
+          setTimeout(() => el.remove(), 300);
+        }, duration);
+      }
+    };
+
+    // -------------------- Modal --------------------
+    const Modal = {
+      open(html, opts = {}) {
+        const root = document.getElementById('modal-root');
+        root.innerHTML = `
+          <div class="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4 modal-overlay" id="modal-backdrop">
+            <div class="bg-white dark:bg-slate-900 w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl max-h-[92vh] overflow-hidden flex flex-col animate-slide-up" onclick="event.stopPropagation()">
+              ${opts.title ? `<div class="px-5 pt-5 pb-3 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">
+                <h3 class="font-bold text-lg">${opts.title}</h3>
+                <button onclick="Modal.close()" class="w-9 h-9 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>` : ''}
+              <div class="overflow-y-auto flex-1 p-5">${html}</div>
+            </div>
+          </div>`;
+        document.getElementById('modal-backdrop').addEventListener('click', (e) => {
+          if (e.target.id === 'modal-backdrop') Modal.close();
+        });
+        document.body.style.overflow = 'hidden';
+      },
+      close() {
+        document.getElementById('modal-root').innerHTML = '';
+        document.body.style.overflow = '';
+      }
+    };
+
+    // -------------------- API Layer --------------------
+    const API = {
+      async getVendors() {
+        const { data, error } = await sb.from('smr_vendors').select('*').eq('is_active', true).order('name');
+        if (error) throw error;
+        return data || [];
+      },
+      async searchShops({ q = '', category = '', city = '', vendorId = '', limit = 24, offset = 0 } = {}) {
+        let query = sb.from('smr_shops').select(`
+          *,
+          smr_shop_vendors ( vendor_id, external_url, smr_vendors ( id, name, color_hex, slug ) ),
+          smr_reviews ( rating )
+        `, { count: 'exact' });
+
+        if (q) query = query.ilike('name', `%${q}%`);
+        if (category) query = query.eq('category', category);
+        if (city) query = query.eq('city', city);
+        query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        // client-side vendor filter if needed
+        let result = data || [];
+        if (vendorId) {
+          result = result.filter(s => (s.smr_shop_vendors || []).some(sv => sv.vendor_id === vendorId));
+        }
+        return { data: result, count };
+      },
+      async getShop(id) {
+        const { data, error } = await sb.from('smr_shops').select(`
+          *,
+          smr_shop_vendors ( id, external_url, is_active, smr_vendors ( id, name, color_hex, slug, logo_url ) ),
+          smr_products ( id, name, category, image_url, is_active ),
+          smr_reviews ( id, rating, title, content, is_anonymous, helpful_count, created_at, user_id, product_id, vendor_id )
+        `).eq('id', id).single();
+        if (error) throw error;
+        return data;
+      },
+      async createShop(payload) {
+        const { data, error } = await sb.from('smr_shops').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async createProduct(payload) {
+        const { data, error } = await sb.from('smr_products').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async createVendor(payload) {
+        const { data, error } = await sb.from('smr_vendors').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async linkShopVendor(shopId, vendorId, url = '') {
+        const { data, error } = await sb.from('smr_shop_vendors').upsert({
+          shop_id: shopId,
+          vendor_id: vendorId,
+          external_url: url
+        }, { onConflict: 'shop_id,vendor_id' }).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async createReview(payload) {
+        const { data, error } = await sb.from('smr_reviews').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async getMyReviews() {
+        if (!State.user) return [];
+        const { data, error } = await sb.from('smr_reviews').select(`
+          *, smr_shops ( id, name, category, image_url )
+        `).eq('user_id', State.user.id).order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+      },
+      async getBookmarks() {
+        if (!State.user) return [];
+        const { data, error } = await sb.from('smr_bookmarks').select(`
+          *, smr_shops ( *, smr_reviews ( rating ) )
+        `).eq('user_id', State.user.id).order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+      },
+      async toggleBookmark(shopId) {
+        if (!State.user) throw new Error('login required');
+        const { data: existing } = await sb.from('smr_bookmarks').select('id').eq('user_id', State.user.id).eq('shop_id', shopId).maybeSingle();
+        if (existing) {
+          await sb.from('smr_bookmarks').delete().eq('id', existing.id);
+          return false;
+        } else {
+          await sb.from('smr_bookmarks').insert({ shop_id: shopId });
+          return true;
+        }
+      },
+      async searchExistingShops(q) {
+        if (!q || q.length < 2) return [];
+        const { data } = await sb.from('smr_shops').select('id, name, category, city').ilike('name', `%${q}%`).limit(8);
+        return data || [];
+      },
+      async searchExistingProducts(shopId, q) {
+        if (!shopId) return [];
+        let query = sb.from('smr_products').select('id, name, category').eq('shop_id', shopId).limit(10);
+        if (q && q.length >= 1) query = query.ilike('name', `%${q}%`);
+        const { data } = await query;
+        return data || [];
+      },
+      async getRecentReviews(limit = 12) {
+        const { data, error } = await sb.from('smr_reviews').select(`
+          id, rating, title, content, created_at, is_anonymous,
+          smr_shops ( id, name, category ),
+          smr_vendors ( name )
+        `).order('created_at', { ascending: false }).limit(limit);
+        if (error) throw error;
+        return data || [];
+      },
+      async getStats() {
+        const [shops, reviews, vendors] = await Promise.all([
+          sb.from('smr_shops').select('id', { count: 'exact', head: true }),
+          sb.from('smr_reviews').select('id', { count: 'exact', head: true }),
+          sb.from('smr_vendors').select('id', { count: 'exact', head: true })
+        ]);
+        return {
+          shops: shops.count || 0,
+          reviews: reviews.count || 0,
+          vendors: vendors.count || 0
+        };
+      },
+      async addComment(reviewId, content, guestName) {
+        const payload = { review_id: reviewId, content };
+        if (State.user) payload.user_id = State.user.id;
+        else payload.guest_name = guestName || 'ناشناس';
+        const { data, error } = await sb.from('smr_comments').insert(payload).select().single();
+        if (error) throw error;
+        return data;
+      },
+      async getComments(reviewId) {
+        const { data, error } = await sb.from('smr_comments').select('*').eq('review_id', reviewId).order('created_at', { ascending: true });
+        if (error) throw error;
+        return data || [];
+      }
+    };
+
+    // -------------------- Auth --------------------
+    const Auth = {
+      async init() {
+        const { data: { session } } = await sb.auth.getSession();
+        State.session = session;
+        State.user = session?.user || null;
+        this.updateUI();
+        sb.auth.onAuthStateChange((_event, session) => {
+          State.session = session;
+          State.user = session?.user || null;
+          this.updateUI();
+          if (State.page === 'my' || State.page === 'add') Router.render();
+        });
+      },
+      updateUI() {
+        const label = document.getElementById('auth-label');
+        const drawerBtn = document.getElementById('drawer-auth');
+        if (State.user) {
+          const name = State.user.user_metadata?.full_name || State.user.email?.split('@')[0] || 'کاربر';
+          if (label) label.textContent = name;
+          if (drawerBtn) drawerBtn.textContent = 'خروج';
+        } else {
+          if (label) label.textContent = 'ورود';
+          if (drawerBtn) drawerBtn.textContent = 'ورود / ثبت‌نام';
+        }
+      },
+      async openModal() {
+        if (State.user) {
+          await sb.auth.signOut();
+          Toast.show('با موفقیت خارج شدید', 'success');
+          return;
+        }
+        Modal.open(`
+          <div class="space-y-5">
+            <div class="text-center mb-2">
+              <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center mb-3">
+                <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              </div>
+              <p class="text-slate-500 text-sm">برای ثبت امتیاز و نظر وارد شوید</p>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">ایمیل</label>
+              <input id="auth-email" type="email" dir="ltr" class="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus" placeholder="you@example.com" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">رمز عبور</label>
+              <input id="auth-pass" type="password" dir="ltr" class="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus" placeholder="••••••••" />
+            </div>
+            <div class="flex gap-2">
+              <button onclick="Auth.signIn()" class="flex-1 h-12 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-medium transition-colors">ورود</button>
+              <button onclick="Auth.signUp()" class="flex-1 h-12 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium transition-colors">ثبت‌نام</button>
+            </div>
+            <p class="text-xs text-center text-slate-400">با ورود، قوانین استفاده را می‌پذیرید.</p>
+          </div>
+        `, { title: 'ورود به بازارچی' });
+      },
+      async signIn() {
+        const email = document.getElementById('auth-email')?.value?.trim();
+        const pass = document.getElementById('auth-pass')?.value;
+        if (!email || !pass) return Toast.show('ایمیل و رمز را وارد کنید', 'warn');
+        try {
+          const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+          if (error) throw error;
+          Modal.close();
+          Toast.show('خوش آمدید!', 'success');
+        } catch (e) {
+          Toast.show(e.message || 'خطا در ورود', 'error');
+        }
+      },
+      async signUp() {
+        const email = document.getElementById('auth-email')?.value?.trim();
+        const pass = document.getElementById('auth-pass')?.value;
+        if (!email || !pass) return Toast.show('ایمیل و رمز را وارد کنید', 'warn');
+        if (pass.length < 6) return Toast.show('رمز حداقل ۶ کاراکتر', 'warn');
+        try {
+          const { error } = await sb.auth.signUp({ email, password: pass });
+          if (error) throw error;
+          Modal.close();
+          Toast.show('ثبت‌نام انجام شد. ایمیل را تایید کنید.', 'success');
+        } catch (e) {
+          Toast.show(e.message || 'خطا در ثبت‌نام', 'error');
+        }
+      }
+    };
+
+    // -------------------- Router --------------------
+    const Router = {
+      routes: {
+        '/': 'home',
+        '/search': 'search',
+        '/shop/:id': 'shop',
+        '/add': 'add',
+        '/my': 'my',
+        '/vendors': 'vendors',
+        '/vendor/:id': 'vendor'
+      },
+      init() {
+        window.addEventListener('hashchange', () => this.handle());
+        this.handle();
+      },
+      handle() {
+        const hash = location.hash.slice(1) || '/';
+        const parts = hash.split('/').filter(Boolean);
+        let page = 'home';
+        let params = {};
+
+        if (parts[0] === 'shop' && parts[1]) {
+          page = 'shop';
+          params.id = parts[1];
+        } else if (parts[0] === 'vendor' && parts[1]) {
+          page = 'vendor';
+          params.id = parts[1];
+        } else if (parts[0] === 'search') {
+          page = 'search';
+        } else if (parts[0] === 'add') {
+          page = 'add';
+        } else if (parts[0] === 'my') {
+          page = 'my';
+        } else if (parts[0] === 'vendors') {
+          page = 'vendors';
+        }
+
+        State.page = page;
+        State.params = params;
+        this.updateNav();
+        this.render();
+      },
+      updateNav() {
+        document.querySelectorAll('[data-nav]').forEach(el => {
+          const nav = el.getAttribute('data-nav');
+          if (nav === State.page || (State.page === 'shop' && nav === 'search')) {
+            el.classList.add('text-sky-500');
+            el.classList.remove('text-slate-500');
+          } else {
+            el.classList.remove('text-sky-500');
+            el.classList.add('text-slate-500');
+          }
+        });
+      },
+      async render() {
+        const main = document.getElementById('main-content');
+        main.innerHTML = `<div class="flex justify-center py-20"><div class="spinner"></div></div>`;
+        try {
+          let html = '';
+          switch (State.page) {
+            case 'home': html = await Pages.home(); break;
+            case 'search': html = await Pages.search(); break;
+            case 'shop': html = await Pages.shop(State.params.id); break;
+            case 'add': html = await Pages.add(); break;
+            case 'my': html = await Pages.my(); break;
+            case 'vendors': html = await Pages.vendors(); break;
+            case 'vendor': html = await Pages.vendor(State.params.id); break;
+            default: html = await Pages.home();
+          }
+          main.innerHTML = `<div class="page">${html}</div>`;
+          // re-bind events after render
+          Pages.afterRender(State.page);
+        } catch (e) {
+          console.error(e);
+          main.innerHTML = `<div class="text-center py-20 text-red-500">خطا در بارگذاری: ${Utils.escape(e.message)}</div>`;
+        }
+      }
+    };
+
+    // -------------------- Pages --------------------
+    const Pages = {
+      async home() {
+        const [stats, recent, vendors] = await Promise.all([
+          API.getStats().catch(() => ({ shops: 0, reviews: 0, vendors: 0 })),
+          API.getRecentReviews(8).catch(() => []),
+          API.getVendors().catch(() => [])
+        ]);
+        State.vendors = vendors;
+
+        const topShops = await API.searchShops({ limit: 6 }).catch(() => ({ data: [] }));
+
+        return `
+          <!-- Hero -->
+          <section class="relative rounded-3xl overflow-hidden mb-10 hero-pattern bg-gradient-to-br from-sky-500/10 via-indigo-500/5 to-pink-500/10 border border-slate-200/60 dark:border-slate-800/60 p-6 sm:p-10">
+            <div class="relative z-10 max-w-2xl">
+              <h1 class="text-3xl sm:text-4xl font-extrabold leading-tight mb-3">
+                از خرید <span class="text-gradient">گند</span> جلوگیری کن
+              </h1>
+              <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg mb-6 leading-relaxed">
+                امتیاز بده به فروشگاه‌های آنلاین سوپرمارکت، ساندویچی، میوه‌فروشی و ... 
+                تا همه بدونن کجا خوبه و کجا نباید رفت.
+              </p>
+              <div class="flex flex-wrap gap-3">
+                <a href="#/search" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/30 transition-all">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  جستجوی فروشگاه
+                </a>
+                <a href="#/add" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                  ثبت امتیاز جدید
+                </a>
+              </div>
+            </div>
+            <div class="absolute left-6 bottom-6 hidden lg:flex gap-4 opacity-80">
+              <div class="w-20 h-20 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur flex items-center justify-center text-3xl animate-float">🛒</div>
+              <div class="w-16 h-16 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur flex items-center justify-center text-2xl animate-float" style="animation-delay:1s">⭐</div>
+            </div>
+          </section>
+
+          <!-- Stats -->
+          <section class="grid grid-cols-3 gap-3 sm:gap-4 mb-10">
+            <div class="glass rounded-2xl p-4 sm:p-5 text-center">
+              <div class="text-2xl sm:text-3xl font-bold text-sky-500">${Utils.toFa(stats.shops)}</div>
+              <div class="text-xs sm:text-sm text-slate-500 mt-1">فروشگاه</div>
+            </div>
+            <div class="glass rounded-2xl p-4 sm:p-5 text-center">
+              <div class="text-2xl sm:text-3xl font-bold text-indigo-500">${Utils.toFa(stats.reviews)}</div>
+              <div class="text-xs sm:text-sm text-slate-500 mt-1">امتیاز</div>
+            </div>
+            <div class="glass rounded-2xl p-4 sm:p-5 text-center">
+              <div class="text-2xl sm:text-3xl font-bold text-pink-500">${Utils.toFa(stats.vendors)}</div>
+              <div class="text-xs sm:text-sm text-slate-500 mt-1">پلتفرم</div>
+            </div>
+          </section>
+
+          <!-- Vendors strip -->
+          <section class="mb-10">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-bold text-lg">پلتفرم‌ها</h2>
+              <a href="#/vendors" class="text-sm text-sky-500 hover:underline">همه</a>
+            </div>
+            <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+              ${vendors.slice(0, 10).map(v => `
+                <a href="#/vendor/${v.id}" class="flex-shrink-0 flex flex-col items-center gap-2 w-20 group">
+                  <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform" style="background:${v.color_hex || '#0ea5e9'}">
+                    ${v.name.charAt(0)}
+                  </div>
+                  <span class="text-xs text-center line-clamp-2 leading-tight">${Utils.escape(v.name)}</span>
+                </a>
+              `).join('')}
+            </div>
+          </section>
+
+          <!-- Recent shops -->
+          <section class="mb-10">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-bold text-lg">فروشگاه‌های اخیر</h2>
+              <a href="#/search" class="text-sm text-sky-500 hover:underline">مشاهده همه</a>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              ${(topShops.data || []).map(s => Components.shopCard(s)).join('') || Components.empty('هنوز فروشگاهی ثبت نشده')}
+            </div>
+          </section>
+
+          <!-- Recent reviews -->
+          <section>
+            <h2 class="font-bold text-lg mb-4">آخرین امتیازها</h2>
+            <div class="space-y-3">
+              ${recent.map(r => Components.reviewMini(r)).join('') || Components.empty('هنوز امتیازی ثبت نشده')}
+            </div>
+          </section>
+        `;
+      },
+
+      async search() {
+        const { data, count } = await API.searchShops({
+          q: State.searchQuery,
+          category: State.filters.category,
+          city: State.filters.city,
+          vendorId: State.filters.vendorId,
+          limit: 30
+        });
+
+        const categories = ['سوپرمارکت','میوه‌فروشی','نانوایی','گوشت و پروتئین','لبنیات','آجیل و خشکبار','شیرینی و شکلات','فست‌فود و ساندویچ','رستوران','داروخانه','عمومی','سایر'];
+        const cities = ['تهران','اصفهان','مشهد','شیراز','تبریز','کرج','اهواز','قم','کرمان','رشت'];
+
+        return `
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold mb-1">جستجو و فیلتر</h1>
+            <p class="text-slate-500 text-sm">فروشگاه مورد نظرت رو پیدا کن یا فیلتر بزن</p>
+          </div>
+
+          <!-- Mobile search -->
+          <div class="md:hidden mb-4">
+            <div class="relative">
+              <input id="mobile-search" type="search" value="${Utils.escape(State.searchQuery)}" placeholder="نام فروشگاه..." 
+                class="w-full h-12 pr-11 pl-4 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-transparent focus:border-sky-500 input-focus text-sm" />
+              <svg class="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="glass rounded-2xl p-4 mb-6 space-y-4">
+            <div class="flex flex-wrap gap-2">
+              <span class="text-sm text-slate-500 self-center ml-1">دسته‌بندی:</span>
+              <button data-filter="category" data-value="" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${!State.filters.category ? 'active' : ''}">همه</button>
+              ${categories.map(c => `
+                <button data-filter="category" data-value="${c}" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${State.filters.category === c ? 'active' : ''}">${c}</button>
+              `).join('')}
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span class="text-sm text-slate-500 self-center ml-1">شهر:</span>
+              <button data-filter="city" data-value="" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${!State.filters.city ? 'active' : ''}">همه</button>
+              ${cities.map(c => `
+                <button data-filter="city" data-value="${c}" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${State.filters.city === c ? 'active' : ''}">${c}</button>
+              `).join('')}
+            </div>
+            ${State.vendors.length ? `
+            <div class="flex flex-wrap gap-2">
+              <span class="text-sm text-slate-500 self-center ml-1">پلتفرم:</span>
+              <button data-filter="vendorId" data-value="" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${!State.filters.vendorId ? 'active' : ''}">همه</button>
+              ${State.vendors.slice(0,8).map(v => `
+                <button data-filter="vendorId" data-value="${v.id}" class="chip px-3 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 ${State.filters.vendorId === v.id ? 'active' : ''}">${Utils.escape(v.name)}</button>
+              `).join('')}
+            </div>` : ''}
+          </div>
+
+          <div class="flex items-center justify-between mb-4">
+            <div class="text-sm text-slate-500">${Utils.toFa(count || data.length)} نتیجه</div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="search-results">
+            ${data.map(s => Components.shopCard(s)).join('') || Components.empty('نتیجه‌ای یافت نشد. فیلترها را تغییر دهید یا فروشگاه جدید ثبت کنید.')}
+          </div>
+        `;
+      },
+
+      async shop(id) {
+        const shop = await API.getShop(id);
+        if (!shop) return Components.empty('فروشگاه پیدا نشد');
+
+        const reviews = shop.smr_reviews || [];
+        const products = (shop.smr_products || []).filter(p => p.is_active !== false);
+        const platforms = shop.smr_shop_vendors || [];
+        const avg = Utils.avgRating(reviews);
+        const score = Utils.ratingScore(avg);
+        const dist = { shit: 0, mid: 0, good: 0 };
+        reviews.forEach(r => {
+          if (r.rating === -1) dist.shit++;
+          else if (r.rating === 0) dist.mid++;
+          else dist.good++;
+        });
+        const total = reviews.length || 1;
+
+        return `
+          <div class="mb-6">
+            <a href="#/search" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-sky-500 mb-4">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+              بازگشت
+            </a>
+
+            <div class="glass rounded-3xl p-6 sm:p-8">
+              <div class="flex flex-col sm:flex-row sm:items-start gap-5">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-3xl text-white font-bold shadow-lg flex-shrink-0">
+                  ${shop.name.charAt(0)}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h1 class="text-2xl sm:text-3xl font-bold">${Utils.escape(shop.name)}</h1>
+                      <div class="flex flex-wrap items-center gap-2 mt-2 text-sm text-slate-500">
+                        <span class="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800">${Utils.escape(shop.category)}</span>
+                        ${shop.city ? `<span>${Utils.escape(shop.city)}</span>` : ''}
+                        ${shop.area ? `<span>• ${Utils.escape(shop.area)}</span>` : ''}
+                      </div>
+                    </div>
+                    <div class="flex gap-2">
+                      <button onclick="Pages.toggleBookmark('${shop.id}')" id="btn-bookmark" class="h-10 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                        ذخیره
+                      </button>
+                      <button onclick="Pages.openRateModal('${shop.id}')" class="h-10 px-5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-sm font-medium shadow-md shadow-sky-500/25">
+                        امتیاز بده
+                      </button>
+                    </div>
+                  </div>
+
+                  ${shop.description ? `<p class="mt-4 text-slate-600 dark:text-slate-300 leading-relaxed">${Utils.escape(shop.description)}</p>` : ''}
+
+                  <!-- Platforms -->
+                  ${platforms.length ? `
+                  <div class="mt-5 flex flex-wrap gap-2">
+                    ${platforms.map(p => {
+                      const v = p.smr_vendors;
+                      if (!v) return '';
+                      return `<a href="${p.external_url || '#'}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 h-9 px-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <span class="vendor-dot" style="background:${v.color_hex}"></span>
+                        ${Utils.escape(v.name)}
+                      </a>`;
+                    }).join('')}
+                  </div>` : ''}
+                </div>
+              </div>
+
+              <!-- Rating summary -->
+              <div class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div class="text-center sm:text-right">
+                  <div class="text-5xl font-black ${score >= 70 ? 'text-emerald-500' : score >= 40 ? 'text-amber-500' : 'text-red-500'}">
+                    ${score != null ? Utils.toFa(score) : '—'}
+                  </div>
+                  <div class="text-sm text-slate-500 mt-1">امتیاز کلی از ۱۰۰</div>
+                  <div class="text-xs text-slate-400 mt-0.5">${Utils.toFa(reviews.length)} نظر</div>
+                </div>
+                <div class="sm:col-span-2 space-y-2.5">
+                  <div class="flex items-center gap-3">
+                    <span class="w-16 text-xs">👍 خوب</span>
+                    <div class="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div class="bar-fill h-full rounded-full bg-emerald-500" style="width:${(dist.good/total*100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="w-8 text-xs text-left">${Utils.toFa(dist.good)}</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-16 text-xs">😐 معمولی</span>
+                    <div class="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div class="bar-fill h-full rounded-full bg-amber-500" style="width:${(dist.mid/total*100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="w-8 text-xs text-left">${Utils.toFa(dist.mid)}</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="w-16 text-xs">💩 گند</span>
+                    <div class="flex-1 h-2.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div class="bar-fill h-full rounded-full bg-red-500" style="width:${(dist.shit/total*100).toFixed(0)}%"></div>
+                    </div>
+                    <span class="w-8 text-xs text-left">${Utils.toFa(dist.shit)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products -->
+          <section class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-bold text-lg">محصولات (${Utils.toFa(products.length)})</h2>
+              <button onclick="Pages.openAddProduct('${shop.id}')" class="text-sm text-sky-500 hover:underline">+ افزودن محصول</button>
+            </div>
+            ${products.length ? `
+              <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                ${products.map(p => `
+                  <div class="glass rounded-2xl p-3 hover:shadow-md transition-shadow">
+                    <div class="text-sm font-medium line-clamp-2">${Utils.escape(p.name)}</div>
+                    <div class="text-xs text-slate-400 mt-1">${Utils.escape(p.category || '')}</div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : `<div class="text-sm text-slate-400 py-4">هنوز محصولی ثبت نشده. اولین نفر باش!</div>`}
+          </section>
+
+          <!-- Reviews -->
+          <section>
+            <h2 class="font-bold text-lg mb-4">نظرات کاربران</h2>
+            <div class="space-y-4">
+              ${reviews.length ? reviews.map(r => Components.reviewCard(r, shop)).join('') : Components.empty('اولین نفری باش که امتیاز می‌ده')}
+            </div>
+          </section>
+        `;
+      },
+
+      async add() {
+        if (!State.user) {
+          return `
+            <div class="text-center py-16">
+              <div class="w-20 h-20 mx-auto rounded-3xl bg-sky-100 dark:bg-sky-900/30 flex items-center justify-center mb-5 text-4xl">🔐</div>
+              <h2 class="text-xl font-bold mb-2">برای ثبت امتیاز وارد شوید</h2>
+              <p class="text-slate-500 mb-6">ورود فقط چند ثانیه طول می‌کشه</p>
+              <button onclick="Auth.openModal()" class="h-12 px-8 rounded-2xl bg-sky-500 text-white font-medium">ورود / ثبت‌نام</button>
+            </div>
+          `;
+        }
+
+        const vendors = State.vendors.length ? State.vendors : await API.getVendors();
+        State.vendors = vendors;
+
+        return `
+          <div class="max-w-xl mx-auto">
+            <h1 class="text-2xl font-bold mb-1">ثبت امتیاز جدید</h1>
+            <p class="text-slate-500 text-sm mb-8">اول فروشگاه رو پیدا کن یا بساز، بعد امتیاز بده</p>
+
+            <!-- Step 1: Shop picker -->
+            <div class="glass rounded-3xl p-6 mb-6">
+              <h3 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-sm flex items-center justify-center">۱</span>
+                فروشگاه
+              </h3>
+              <div class="relative mb-3">
+                <input id="shop-search-input" type="text" placeholder="نام فروشگاه را بنویس تا پیشنهاد بیاد..." 
+                  class="w-full h-12 pr-4 pl-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 input-focus text-sm" />
+                <div id="shop-suggestions" class="absolute z-20 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl hidden max-h-60 overflow-y-auto"></div>
+              </div>
+              <div id="selected-shop" class="hidden p-3 rounded-xl bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 mb-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="font-medium" id="sel-shop-name"></div>
+                    <div class="text-xs text-slate-500" id="sel-shop-meta"></div>
+                  </div>
+                  <button onclick="Pages.clearSelectedShop()" class="text-xs text-red-500">حذف</button>
+                </div>
+              </div>
+              <button onclick="Pages.openCreateShop()" class="text-sm text-sky-500 hover:underline">فروشگاه در لیست نیست؟ بساز</button>
+            </div>
+
+            <!-- Step 2: Optional product & vendor -->
+            <div class="glass rounded-3xl p-6 mb-6">
+              <h3 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full bg-indigo-500 text-white text-sm flex items-center justify-center">۲</span>
+                جزئیات (اختیاری)
+              </h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm mb-1.5">محصول (اگر مربوط به محصول خاصه)</label>
+                  <input id="product-search-input" type="text" placeholder="نام محصول..." disabled
+                    class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm opacity-60" />
+                  <div id="product-suggestions" class="mt-1 hidden"></div>
+                  <input type="hidden" id="selected-product-id" />
+                </div>
+                <div>
+                  <label class="block text-sm mb-1.5">پلتفرم (کجا خرید کردی؟)</label>
+                  <select id="review-vendor" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm">
+                    <option value="">— انتخاب پلتفرم —</option>
+                    ${vendors.map(v => `<option value="${v.id}">${Utils.escape(v.name)}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 3: Rating -->
+            <div class="glass rounded-3xl p-6 mb-6">
+              <h3 class="font-semibold mb-4 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full bg-pink-500 text-white text-sm flex items-center justify-center">۳</span>
+                امتیازت چیه؟
+              </h3>
+              <div class="grid grid-cols-3 gap-3 mb-5">
+                <button type="button" data-rate="-1" class="rate-btn flex flex-col items-center gap-2 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30">
+                  <span class="text-3xl">💩</span>
+                  <span class="text-sm font-medium text-red-600 dark:text-red-400">گند</span>
+                </button>
+                <button type="button" data-rate="0" class="rate-btn flex flex-col items-center gap-2 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30">
+                  <span class="text-3xl">😐</span>
+                  <span class="text-sm font-medium text-amber-600 dark:text-amber-400">معمولی</span>
+                </button>
+                <button type="button" data-rate="1" class="rate-btn flex flex-col items-center gap-2 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30">
+                  <span class="text-3xl">👍</span>
+                  <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">خوب</span>
+                </button>
+              </div>
+              <input type="hidden" id="selected-rating" value="" />
+              <div class="space-y-3">
+                <input id="review-title" type="text" placeholder="عنوان کوتاه (اختیاری)" maxlength="80"
+                  class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm input-focus" />
+                <textarea id="review-content" rows="4" placeholder="توضیح بده چرا این امتیاز رو دادی... (حداکثر ۲۰۰۰ کاراکتر)" maxlength="2000"
+                  class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm input-focus resize-none"></textarea>
+                <label class="flex items-center gap-2 text-sm text-slate-500 cursor-pointer">
+                  <input type="checkbox" id="review-anon" class="rounded" />
+                  ناشناس ثبت شود
+                </label>
+              </div>
+            </div>
+
+            <button onclick="Pages.submitReview()" id="btn-submit-review" class="w-full h-14 rounded-2xl bg-gradient-to-l from-sky-500 to-indigo-600 text-white font-bold text-lg shadow-lg shadow-sky-500/30 hover:opacity-95 transition-opacity disabled:opacity-50" disabled>
+              ثبت امتیاز
+            </button>
+          </div>
+        `;
+      },
+
+      async my() {
+        if (!State.user) {
+          return `
+            <div class="text-center py-16">
+              <div class="text-5xl mb-4">👤</div>
+              <h2 class="text-xl font-bold mb-2">پروفایل شما</h2>
+              <p class="text-slate-500 mb-6">برای دیدن امتیازها و ذخیره‌ها وارد شوید</p>
+              <button onclick="Auth.openModal()" class="h-12 px-8 rounded-2xl bg-sky-500 text-white font-medium">ورود</button>
+            </div>
+          `;
+        }
+
+        const [reviews, bookmarks] = await Promise.all([
+          API.getMyReviews().catch(() => []),
+          API.getBookmarks().catch(() => [])
+        ]);
+
+        return `
+          <div class="mb-8">
+            <div class="flex items-center gap-4 mb-6">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-2xl text-white font-bold">
+                ${(State.user.email || 'U').charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <div class="font-bold text-lg">${Utils.escape(State.user.user_metadata?.full_name || State.user.email?.split('@')[0] || 'کاربر')}</div>
+                <div class="text-sm text-slate-500" dir="ltr">${Utils.escape(State.user.email || '')}</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-sky-500">${Utils.toFa(reviews.length)}</div>
+                <div class="text-xs text-slate-500">امتیاز من</div>
+              </div>
+              <div class="glass rounded-2xl p-4 text-center">
+                <div class="text-2xl font-bold text-indigo-500">${Utils.toFa(bookmarks.length)}</div>
+                <div class="text-xs text-slate-500">ذخیره‌ها</div>
+              </div>
+            </div>
+          </div>
+
+          <section class="mb-8">
+            <h2 class="font-bold text-lg mb-4">امتیازهای من</h2>
+            <div class="space-y-3">
+              ${reviews.length ? reviews.map(r => `
+                <a href="#/shop/${r.smr_shops?.id}" class="block glass rounded-2xl p-4 hover:shadow-md transition-shadow ${Utils.ratingLabel(r.rating).accent}">
+                  <div class="flex items-start justify-between gap-3">
+                    <div>
+                      <div class="font-medium">${Utils.escape(r.smr_shops?.name || 'فروشگاه')}</div>
+                      <div class="text-xs text-slate-400 mt-0.5">${Utils.formatRelative(r.created_at)}</div>
+                      ${r.content ? `<p class="text-sm text-slate-600 dark:text-slate-300 mt-2 line-clamp-2">${Utils.escape(r.content)}</p>` : ''}
+                    </div>
+                    <span class="text-2xl">${Utils.ratingLabel(r.rating).emoji}</span>
+                  </div>
+                </a>
+              `).join('') : Components.empty('هنوز امتیازی ثبت نکرده‌اید')}
+            </div>
+          </section>
+
+          <section>
+            <h2 class="font-bold text-lg mb-4">فروشگاه‌های ذخیره‌شده</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              ${bookmarks.length ? bookmarks.map(b => Components.shopCard(b.smr_shops)).join('') : Components.empty('هنوز چیزی ذخیره نکرده‌اید')}
+            </div>
+          </section>
+
+          <div class="mt-10 text-center">
+            <button onclick="Auth.openModal()" class="text-sm text-red-500 hover:underline">خروج از حساب</button>
+          </div>
+        `;
+      },
+
+      async vendors() {
+        const vendors = await API.getVendors();
+        State.vendors = vendors;
+        return `
+          <h1 class="text-2xl font-bold mb-2">پلتفرم‌ها و فروشگاه‌های آنلاین</h1>
+          <p class="text-slate-500 text-sm mb-8">پلتفرم‌هایی که فروشگاه‌ها روی آن‌ها فعالیت دارند</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${vendors.map(v => `
+              <a href="#/vendor/${v.id}" class="glass rounded-2xl p-5 shop-card flex items-center gap-4">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-md" style="background:${v.color_hex || '#0ea5e9'}">
+                  ${v.name.charAt(0)}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold truncate">${Utils.escape(v.name)}</div>
+                  <div class="text-xs text-slate-400 line-clamp-1 mt-0.5">${Utils.escape(v.description || '')}</div>
+                </div>
+              </a>
+            `).join('')}
+          </div>
+          <div class="mt-8 text-center">
+            <button onclick="Pages.openCreateVendor()" class="text-sm text-sky-500 hover:underline">+ پلتفرم جدید اضافه کن</button>
+          </div>
+        `;
+      },
+
+      async vendor(id) {
+        const vendors = State.vendors.length ? State.vendors : await API.getVendors();
+        const vendor = vendors.find(v => v.id === id);
+        if (!vendor) return Components.empty('پلتفرم پیدا نشد');
+
+        const { data: shops } = await API.searchShops({ vendorId: id, limit: 40 });
+
+        return `
+          <a href="#/vendors" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-sky-500 mb-4">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            همه پلتفرم‌ها
+          </a>
+          <div class="glass rounded-3xl p-6 mb-8 flex items-center gap-5">
+            <div class="w-16 h-16 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shadow-lg" style="background:${vendor.color_hex}">
+              ${vendor.name.charAt(0)}
+            </div>
+            <div>
+              <h1 class="text-2xl font-bold">${Utils.escape(vendor.name)}</h1>
+              <p class="text-sm text-slate-500 mt-1">${Utils.escape(vendor.description || '')}</p>
+            </div>
+          </div>
+          <h2 class="font-bold text-lg mb-4">فروشگاه‌های این پلتفرم</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            ${shops.map(s => Components.shopCard(s)).join('') || Components.empty('هنوز فروشگاهی برای این پلتفرم ثبت نشده')}
+          </div>
+        `;
+      },
+
+      // ---------- Helpers inside Pages ----------
+      afterRender(page) {
+        // Global search
+        const gSearch = document.getElementById('global-search');
+        if (gSearch) {
+          gSearch.oninput = Utils.debounce((e) => {
+            State.searchQuery = e.target.value.trim();
+            if (State.page !== 'search') location.hash = '#/search';
+            else Router.render();
+          }, 400);
+        }
+        const mSearch = document.getElementById('mobile-search');
+        if (mSearch) {
+          mSearch.oninput = Utils.debounce((e) => {
+            State.searchQuery = e.target.value.trim();
+            Router.render();
+          }, 400);
+        }
+
+        // Filter chips
+        document.querySelectorAll('[data-filter]').forEach(btn => {
+          btn.onclick = () => {
+            const key = btn.getAttribute('data-filter');
+            const val = btn.getAttribute('data-value');
+            State.filters[key] = val;
+            Router.render();
+          };
+        });
+
+        // Rate buttons on add page
+        if (page === 'add') {
+          document.querySelectorAll('.rate-btn').forEach(btn => {
+            btn.onclick = () => {
+              document.querySelectorAll('.rate-btn').forEach(b => {
+                b.classList.remove('active-shit', 'active-mid', 'active-good');
+              });
+              const r = btn.getAttribute('data-rate');
+              document.getElementById('selected-rating').value = r;
+              if (r === '-1') btn.classList.add('active-shit');
+              else if (r === '0') btn.classList.add('active-mid');
+              else btn.classList.add('active-good');
+              document.getElementById('btn-submit-review').disabled = !document.getElementById('selected-shop')?.classList.contains('hidden') === false && r !== '';
+              // enable if shop selected
+              const hasShop = !document.getElementById('selected-shop').classList.contains('hidden');
+              document.getElementById('btn-submit-review').disabled = !(hasShop && r !== '');
+            };
+          });
+
+          // Shop search suggestions
+          const shopInput = document.getElementById('shop-search-input');
+          if (shopInput) {
+            shopInput.oninput = Utils.debounce(async (e) => {
+              const q = e.target.value.trim();
+              const box = document.getElementById('shop-suggestions');
+              if (q.length < 2) { box.classList.add('hidden'); return; }
+              const list = await API.searchExistingShops(q);
+              if (!list.length) {
+                box.innerHTML = `<div class="p-3 text-sm text-slate-400">چیزی پیدا نشد. می‌تونی جدید بسازی.</div>`;
+              } else {
+                box.innerHTML = list.map(s => `
+                  <button type="button" class="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                    onclick="Pages.selectShop('${s.id}', '${Utils.escape(s.name).replace(/'/g, "\\'")}', '${Utils.escape(s.category || '')}', '${Utils.escape(s.city || '')}')">
+                    <div class="font-medium">${Utils.escape(s.name)}</div>
+                    <div class="text-xs text-slate-400">${Utils.escape(s.category || '')} ${s.city ? '• ' + Utils.escape(s.city) : ''}</div>
+                  </button>
+                `).join('');
+              }
+              box.classList.remove('hidden');
+            }, 280);
+          }
+        }
+      },
+
+      selectShop(id, name, category, city) {
+        document.getElementById('selected-shop').classList.remove('hidden');
+        document.getElementById('sel-shop-name').textContent = name;
+        document.getElementById('sel-shop-meta').textContent = [category, city].filter(Boolean).join(' • ');
+        document.getElementById('selected-shop').dataset.id = id;
+        document.getElementById('shop-suggestions').classList.add('hidden');
+        document.getElementById('shop-search-input').value = name;
+        document.getElementById('product-search-input').disabled = false;
+        document.getElementById('product-search-input').classList.remove('opacity-60');
+        // enable submit if rating chosen
+        const r = document.getElementById('selected-rating').value;
+        document.getElementById('btn-submit-review').disabled = !r;
+      },
+
+      clearSelectedShop() {
+        document.getElementById('selected-shop').classList.add('hidden');
+        document.getElementById('selected-shop').dataset.id = '';
+        document.getElementById('shop-search-input').value = '';
+        document.getElementById('product-search-input').disabled = true;
+        document.getElementById('product-search-input').classList.add('opacity-60');
+        document.getElementById('btn-submit-review').disabled = true;
+      },
+
+      openCreateShop() {
+        Modal.open(`
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">نام فروشگاه *</label>
+              <input id="new-shop-name" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus text-sm" placeholder="مثلاً سوپرمارکت فلان" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">دسته‌بندی</label>
+              <select id="new-shop-cat" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm">
+                <option>سوپرمارکت</option><option>میوه‌فروشی</option><option>نانوایی</option>
+                <option>گوشت و پروتئین</option><option>لبنیات</option><option>آجیل و خشکبار</option>
+                <option>شیرینی و شکلات</option><option>فست‌فود و ساندویچ</option><option>رستوران</option>
+                <option>داروخانه</option><option>عمومی</option><option>سایر</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium mb-1.5">شهر</label>
+                <input id="new-shop-city" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm" value="تهران" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1.5">محله / منطقه</label>
+                <input id="new-shop-area" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">توضیح کوتاه</label>
+              <textarea id="new-shop-desc" rows="2" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2 text-sm input-focus"></textarea>
+            </div>
+            <button onclick="Pages.createShopSubmit()" class="w-full h-12 rounded-xl bg-sky-500 text-white font-medium">ایجاد فروشگاه</button>
+          </div>
+        `, { title: 'ایجاد فروشگاه جدید' });
+      },
+
+      async createShopSubmit() {
+        const name = document.getElementById('new-shop-name')?.value?.trim();
+        if (!name || name.length < 2) return Toast.show('نام فروشگاه را وارد کنید', 'warn');
+        try {
+          const shop = await API.createShop({
+            name,
+            category: document.getElementById('new-shop-cat')?.value || 'عمومی',
+            city: document.getElementById('new-shop-city')?.value || 'تهران',
+            area: document.getElementById('new-shop-area')?.value || '',
+            description: document.getElementById('new-shop-desc')?.value || '',
+            slug: Utils.slugify(name)
+          });
+          Modal.close();
+          Toast.show('فروشگاه ساخته شد', 'success');
+          Pages.selectShop(shop.id, shop.name, shop.category, shop.city);
+        } catch (e) {
+          Toast.show(e.message || 'خطا در ایجاد', 'error');
+        }
+      },
+
+      openCreateVendor() {
+        Modal.open(`
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">نام پلتفرم *</label>
+              <input id="new-vendor-name" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">توضیح</label>
+              <input id="new-vendor-desc" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">رنگ (hex)</label>
+              <input id="new-vendor-color" type="color" value="#0ea5e9" class="w-full h-11 rounded-xl" />
+            </div>
+            <button onclick="Pages.createVendorSubmit()" class="w-full h-12 rounded-xl bg-sky-500 text-white font-medium">ایجاد</button>
+          </div>
+        `, { title: 'پلتفرم جدید' });
+      },
+
+      async createVendorSubmit() {
+        const name = document.getElementById('new-vendor-name')?.value?.trim();
+        if (!name) return Toast.show('نام لازم است', 'warn');
+        try {
+          await API.createVendor({
+            name,
+            slug: Utils.slugify(name),
+            description: document.getElementById('new-vendor-desc')?.value || '',
+            color_hex: document.getElementById('new-vendor-color')?.value || '#0ea5e9'
+          });
+          Modal.close();
+          Toast.show('پلتفرم اضافه شد', 'success');
+          Router.render();
+        } catch (e) {
+          Toast.show(e.message || 'خطا', 'error');
+        }
+      },
+
+      openAddProduct(shopId) {
+        if (!State.user) return Auth.openModal();
+        Modal.open(`
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">نام محصول *</label>
+              <input id="new-prod-name" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus text-sm" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">دسته</label>
+              <input id="new-prod-cat" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm" value="عمومی" />
+            </div>
+            <button onclick="Pages.createProductSubmit('${shopId}')" class="w-full h-12 rounded-xl bg-sky-500 text-white font-medium">افزودن</button>
+          </div>
+        `, { title: 'محصول جدید' });
+      },
+
+      async createProductSubmit(shopId) {
+        const name = document.getElementById('new-prod-name')?.value?.trim();
+        if (!name) return Toast.show('نام محصول لازم است', 'warn');
+        try {
+          await API.createProduct({
+            shop_id: shopId,
+            name,
+            category: document.getElementById('new-prod-cat')?.value || 'عمومی'
+          });
+          Modal.close();
+          Toast.show('محصول اضافه شد', 'success');
+          Router.render();
+        } catch (e) {
+          Toast.show(e.message || 'خطا', 'error');
+        }
+      },
+
+      openRateModal(shopId) {
+        if (!State.user) return Auth.openModal();
+        location.hash = '#/add';
+        // after navigation, try to preselect – simplified: user goes to add page
+        setTimeout(async () => {
+          try {
+            const shop = await API.getShop(shopId);
+            if (shop) Pages.selectShop(shop.id, shop.name, shop.category, shop.city);
+          } catch {}
+        }, 600);
+      },
+
+      async toggleBookmark(shopId) {
+        if (!State.user) return Auth.openModal();
+        try {
+          const added = await API.toggleBookmark(shopId);
+          Toast.show(added ? 'ذخیره شد' : 'از ذخیره‌ها حذف شد', 'success');
+        } catch (e) {
+          Toast.show(e.message || 'خطا', 'error');
+        }
+      },
+
+      async submitReview() {
+        const shopId = document.getElementById('selected-shop')?.dataset?.id;
+        const rating = parseInt(document.getElementById('selected-rating')?.value, 10);
+        if (!shopId) return Toast.show('فروشگاه را انتخاب کنید', 'warn');
+        if (isNaN(rating)) return Toast.show('امتیاز را انتخاب کنید', 'warn');
+
+        const payload = {
+          shop_id: shopId,
+          rating,
+          title: document.getElementById('review-title')?.value?.trim() || '',
+          content: document.getElementById('review-content')?.value?.trim() || '',
+          is_anonymous: document.getElementById('review-anon')?.checked || false,
+          product_id: document.getElementById('selected-product-id')?.value || null,
+          vendor_id: document.getElementById('review-vendor')?.value || null
+        };
+        if (!payload.product_id) delete payload.product_id;
+        if (!payload.vendor_id) delete payload.vendor_id;
+
+        try {
+          document.getElementById('btn-submit-review').disabled = true;
+          await API.createReview(payload);
+          Toast.show('امتیاز شما ثبت شد. ممنون!', 'success');
+          location.hash = `#/shop/${shopId}`;
+        } catch (e) {
+          console.error(e);
+          Toast.show(e.message || 'خطا در ثبت امتیاز (شاید امروز قبلاً برای این فروشگاه امتیاز داده‌اید)', 'error');
+          document.getElementById('btn-submit-review').disabled = false;
+        }
+      }
+    };
+
+    // -------------------- Components --------------------
+    const Components = {
+      shopCard(s) {
+        if (!s) return '';
+        const reviews = s.smr_reviews || [];
+        const avg = Utils.avgRating(reviews);
+        const score = Utils.ratingScore(avg);
+        const platforms = (s.smr_shop_vendors || []).slice(0, 3);
+        return `
+          <a href="#/shop/${s.id}" class="shop-card glass rounded-2xl p-5 block">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                ${s.name.charAt(0)}
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-semibold truncate">${Utils.escape(s.name)}</div>
+                <div class="text-xs text-slate-400 mt-0.5">${Utils.escape(s.category || '')}${s.city ? ' • ' + Utils.escape(s.city) : ''}</div>
+              </div>
+              ${score != null ? `
+                <div class="text-lg font-bold ${score >= 70 ? 'text-emerald-500' : score >= 40 ? 'text-amber-500' : 'text-red-500'}">
+                  ${Utils.toFa(score)}
+                </div>` : '<div class="text-xs text-slate-400">جدید</div>'}
+            </div>
+            ${platforms.length ? `
+              <div class="flex gap-1.5 mt-3">
+                ${platforms.map(p => {
+                  const v = p.smr_vendors;
+                  return v ? `<span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${Utils.escape(v.name)}</span>` : '';
+                }).join('')}
+              </div>` : ''}
+            <div class="mt-3 text-xs text-slate-400">${Utils.toFa(reviews.length)} امتیاز</div>
+          </a>
+        `;
+      },
+      reviewMini(r) {
+        const label = Utils.ratingLabel(r.rating);
+        return `
+          <a href="#/shop/${r.smr_shops?.id}" class="flex items-start gap-3 glass rounded-2xl p-4 hover:shadow-md transition-shadow ${label.accent}">
+            <span class="text-2xl">${label.emoji}</span>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm">${Utils.escape(r.smr_shops?.name || '')}</div>
+              <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">${Utils.escape(r.content || r.title || label.text)}</p>
+              <div class="text-[11px] text-slate-400 mt-1">${Utils.formatRelative(r.created_at)}</div>
+            </div>
+          </a>
+        `;
+      },
+      reviewCard(r, shop) {
+        const label = Utils.ratingLabel(r.rating);
+        return `
+          <div class="glass rounded-2xl p-5 ${label.accent}">
+            <div class="flex items-start justify-between gap-3 mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">${label.emoji}</span>
+                <div>
+                  <div class="font-medium text-sm">${label.text}</div>
+                  <div class="text-xs text-slate-400">${Utils.formatRelative(r.created_at)} ${r.is_anonymous ? '• ناشناس' : ''}</div>
+                </div>
+              </div>
+            </div>
+            ${r.title ? `<div class="font-medium mb-1">${Utils.escape(r.title)}</div>` : ''}
+            ${r.content ? `<p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">${Utils.escape(r.content)}</p>` : ''}
+          </div>
+        `;
+      },
+      empty(msg) {
+        return `
+          <div class="col-span-full text-center py-12 text-slate-400">
+            <div class="text-4xl mb-3 empty-illust">📭</div>
+            <p class="text-sm">${msg || 'موردی یافت نشد'}</p>
+          </div>
+        `;
+      }
+    };
+
+    // -------------------- App Init --------------------
+    const App = {
+      async init() {
+        // Theme
+        if (State.theme === 'dark' || (!localStorage.getItem('smr_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+          State.theme = 'dark';
+        }
+        document.getElementById('btn-theme').onclick = () => {
+          document.documentElement.classList.toggle('dark');
+          State.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+          localStorage.setItem('smr_theme', State.theme);
+        };
+
+        // Auth buttons
+        document.getElementById('btn-auth').onclick = () => Auth.openModal();
+        document.getElementById('drawer-auth').onclick = () => { App.closeDrawer(); Auth.openModal(); };
+        document.getElementById('btn-menu').onclick = () => App.openDrawer();
+
+        // Drawer nav
+        document.getElementById('drawer-nav').innerHTML = [
+          { href: '#/', label: 'خانه', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
+          { href: '#/search', label: 'جستجو و فیلتر', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
+          { href: '#/add', label: 'ثبت امتیاز', icon: 'M12 4v16m8-8H4' },
+          { href: '#/vendors', label: 'پلتفرم‌ها', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+          { href: '#/my', label: 'پروفایل من', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
+        ].map(i => `
+          <a href="${i.href}" onclick="App.closeDrawer()" class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+            <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="${i.icon}"/></svg>
+            ${i.label}
+          </a>
+        `).join('');
+
+        await Auth.init();
+        try {
+          State.vendors = await API.getVendors();
+        } catch (e) {
+          console.warn('Vendors load failed (tables may not exist yet)', e);
+        }
+        Router.init();
+      },
+      openDrawer() {
+        document.getElementById('drawer').classList.add('open');
+        document.getElementById('drawer-overlay').classList.remove('hidden');
+      },
+      closeDrawer() {
+        document.getElementById('drawer').classList.remove('open');
+        document.getElementById('drawer-overlay').classList.add('hidden');
+      }
+    };
+
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>
