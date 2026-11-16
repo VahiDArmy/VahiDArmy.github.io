@@ -1,0 +1,157 @@
+/* ============================================================
+   Design tokens — dark, premium, RTL-first
+   ============================================================ */
+:root {
+  color-scheme: dark;
+
+  /* backgrounds */
+  --bg-0: #07070d;
+  --bg-1: #0b0b14;
+  --bg-2: #11111c;
+  --bg-3: #171725;
+
+  /* surfaces */
+  --surface-1: rgba(255, 255, 255, 0.035);
+  --surface-2: rgba(255, 255, 255, 0.06);
+  --surface-3: rgba(255, 255, 255, 0.09);
+  --surface-4: rgba(255, 255, 255, 0.12);
+  --surface-hover: rgba(255, 255, 255, 0.055);
+
+  /* borders */
+  --border-1: rgba(255, 255, 255, 0.06);
+  --border-2: rgba(255, 255, 255, 0.10);
+  --border-3: rgba(255, 255, 255, 0.16);
+  --border-brand: rgba(139, 92, 246, 0.38);
+  --border-brand-soft: rgba(139, 92, 246, 0.20);
+
+  /* text */
+  --text-1: #f3f4ff;
+  --text-2: rgba(243, 244, 255, 0.74);
+  --text-3: rgba(243, 244, 255, 0.50);
+  --text-4: rgba(243, 244, 255, 0.32);
+  --text-5: rgba(243, 244, 255, 0.18);
+  --text-inverse: #0a0a12;
+
+  /* brand */
+  --violet-1: #a78bfa;
+  --violet-2: #8b5cf6;
+  --violet-3: #7c3aed;
+  --indigo-1: #818cf8;
+  --indigo-2: #6366f1;
+  --cyan-1: #67e8f9;
+  --cyan-2: #22d3ee;
+
+  --brand: #8b5cf6;
+  --brand-2: #6366f1;
+  --brand-soft: rgba(139, 92, 246, 0.14);
+  --brand-soft-2: rgba(139, 92, 246, 0.22);
+  --brand-grad: linear-gradient(135deg, #8b5cf6 0%, #6366f1 45%, #22d3ee 100%);
+  --brand-grad-soft: linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(34,211,238,0.14) 100%);
+  --brand-grad-text: linear-gradient(135deg, #c4b5fd 0%, #a5b4fc 45%, #67e8f9 100%);
+
+  /* semantic */
+  --good: #10b981;
+  --good-2: #34d399;
+  --good-soft: rgba(16, 185, 129, 0.14);
+  --good-border: rgba(16, 185, 129, 0.32);
+
+  --bad: #f59e0b;
+  --bad-2: #fbbf24;
+  --bad-soft: rgba(245, 158, 11, 0.14);
+  --bad-border: rgba(245, 158, 11, 0.32);
+
+  --shit: #ef4444;
+  --shit-2: #f87171;
+  --shit-soft: rgba(239, 68, 68, 0.14);
+  --shit-border: rgba(239, 68, 68, 0.34);
+
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --warn: #f59e0b;
+  --ok: #22d3ee;
+
+  /* radius */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+  --r-3xl: 32px;
+  --r-full: 9999px;
+
+  /* shadows */
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.40);
+  --sh-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --sh-md: 0 8px 24px rgba(0, 0, 0, 0.42);
+  --sh-lg: 0 24px 56px rgba(0, 0, 0, 0.55);
+  --sh-xl: 0 40px 80px rgba(0, 0, 0, 0.65);
+  --sh-glow-brand: 0 0 40px rgba(139, 92, 246, 0.35);
+  --sh-glow-good: 0 0 32px rgba(16, 185, 129, 0.30);
+  --sh-glow-shit: 0 0 32px rgba(239, 68, 68, 0.30);
+
+  /* spacing */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 32px;
+  --s-8: 40px;
+  --s-9: 48px;
+  --s-10: 64px;
+  --s-11: 80px;
+  --s-12: 96px;
+
+  /* typography */
+  --font-sans: "Vazirmatn", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-xxs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12px;
+  --fs-base: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 28px;
+  --fs-4xl: 36px;
+  --fs-5xl: 48px;
+  --fs-6xl: 64px;
+
+  --lh-tight: 1.15;
+  --lh-normal: 1.55;
+  --lh-loose: 1.75;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+  --fw-black: 900;
+
+  --ls-tight: -0.02em;
+  --ls-normal: 0;
+  --ls-wide: 0.02em;
+
+  /* transitions */
+  --t-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
+  --t-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* z-index */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-header: 200;
+  --z-drawer: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+
+  /* layout */
+  --container-max: 1400px;
+  --container-pad: clamp(16px, 3vw, 40px);
+  --header-h: 68px;
+}
