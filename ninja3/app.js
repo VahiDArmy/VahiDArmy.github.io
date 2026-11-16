@@ -651,6 +651,7 @@ function quickActions(item, context) {
     html += button('download', '⬇', isDir ? 'Download folder as .zip' : 'Download file');
     html += button('replace', '🔄', isDir ? 'Replace folder contents' : 'Replace file');
     html += button('newtab', '🌐', isDir ? 'Open live folder on the site' : 'Open live page on the site');
+    if (isDir) html += button('structure', '🗂', 'Show folder structure');
     if (!isDir && isTextFile(item.name)) html += button('copy', '📋', 'Copy file contents', ' copy');
     html += button('menu', '⋯', 'More actions', ' kebab');
     wrap.innerHTML = html;
@@ -1636,6 +1637,168 @@ async function downloadFolder(item) {
         flashStatus(`Downloaded ${item.name || state.repo}.zip (${plural(blobs.length, 'file')})`, 'ok');
     } catch (err) {
         toast('Folder download failed: ' + err.message, 'err');
+    }
+}
+
+
+/* ── folder structure preview ──────────────────────────────── */
+async function showFolderStructure(folderItem) {
+    if (!folderItem || folderItem.type !== 'dir') return;
+
+    setStatus(`Loading structure of “${folderItem.name}”…`, 'loading');
+    try {
+        const entries = await getRepoTree();
+        const prefix = folderItem.path ? folderItem.path + '/' : '';
+        const children = entries
+            .filter(e => e.path.startsWith(prefix) && e.path !== folderItem.path)
+            .map(e => ({
+                path: e.path,
+                rel: e.path.slice(prefix.length),
+                type: e.type,          // 'blob' | 'tree'
+                size: e.size || 0
+            }))
+            .filter(e => e.rel);       // safety
+
+        if (!children.length) {
+            toast(`“${folderItem.name}” is empty`, 'info');
+            flashStatus('Empty folder', 'ok');
+            return;
+        }
+
+        // Build a simple nested tree
+        const root = { name: folderItem.name, path: folderItem.path, type: 'tree', children: {} };
+        for (const c of children) {
+            const parts = c.rel.split('/');
+            let node = root;
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i];
+                const isLast = i === parts.length - 1;
+                if (!node.children[part]) {
+                    node.children[part] = {
+                        name: part,
+                        path: (node.path ? node.path + '/' : '') + part,
+                        type: isLast ? c.type : 'tree',
+                        size: isLast ? c.size : 0,
+                        children: {}
+                    };
+                }
+                node = node.children[part];
+            }
+        }
+
+        function renderNode(node, depth) {
+            const indent = '  '.repeat(depth);
+            const icon = node.type === 'tree' ? '📁' : getFileIcon(node.name, false);
+            const size = node.type === 'blob' ? `  (${formatSize(node.size)})` : '';
+            let out = `${indent}${icon} ${node.name}${size}\n`;
+            const kids = Object.values(node.children).sort((a, b) => {
+                if (a.type !== b.type) return a.type === 'tree' ? -1 : 1;
+                return a.name.localeCompare(b.name);
+            });
+            for (const k of kids) out += renderNode(k, depth + 1);
+            return out;
+        }
+
+        const treeText = renderNode(root, 0);
+        const fileCount = children.filter(c => c.type === 'blob').length;
+        const dirCount  = children.filter(c => c.type === 'tree').length;
+
+        // Re-use the pack overlay as a simple read-only viewer
+        const overlay = $('packOverlay');
+        if (!overlay) {
+            // Fallback: open in a new window / alert
+            const w = window.open('', '_blank', 'noopener,width=640,height=720');
+            if (w) {
+                w.document.write(`<pre style="font:13px/1.45 ui-monospace,monospace;padding:16px;white-space:pre-wrap">${escapeHtml(treeText)}</pre>`);
+                w.document.title = `Structure · ${folderItem.name}`;
+            } else {
+                alert(treeText);
+            }
+            flashStatus(`Structure of “${folderItem.name}”`, 'ok');
+            return;
+        }
+
+        // Prefer a lightweight custom modal if the pack overlay is too heavy;
+        // for now we show it via a simple toast + copy-friendly panel.
+        // Create a temporary modal-like panel.
+        let panel = document.getElementById('structurePanel');
+        if (!panel) {
+            panel = document.createElement('div');
+            panel.id = 'structurePanel';
+            panel.className = 'structure-panel';
+            panel.innerHTML = `
+                <div class="structure-panel__head">
+                    <strong id="structureTitle"></strong>
+                    <div class="structure-panel__actions">
+                        <button type="button" id="structureCopy" class="btn ghost sm">Copy</button>
+                        <button type="button" id="structureClose" class="btn ghost sm">Close</button>
+                    </div>
+                </div>
+                <pre id="structureBody" class="structure-panel__body"></pre>
+                <div class="structure-panel__foot" id="structureFoot"></div>`;
+            document.body.appendChild(panel);
+
+            // minimal styles injected once
+            if (!document.getElementById('structurePanelStyle')) {
+                const style = document.createElement('style');
+                style.id = 'structurePanelStyle';
+                style.textContent = `
+                    .structure-panel {
+                        position: fixed; inset: 0; z-index: 9999;
+                        background: rgba(0,0,0,.55); display: flex;
+                        align-items: center; justify-content: center;
+                        padding: 24px;
+                    }
+                    .structure-panel > * { pointer-events: auto; }
+                    .structure-panel__head, .structure-panel__body, .structure-panel__foot {
+                        background: var(--bg, #0b0b14); color: var(--text, #ecebff);
+                    }
+                    .structure-panel__head {
+                        display: flex; align-items: center; justify-content: space-between;
+                        gap: 12px; padding: 12px 16px; border-radius: 12px 12px 0 0;
+                        border: 1px solid rgba(255,255,255,.08); border-bottom: 0;
+                        max-width: 720px; width: 100%;
+                    }
+                    .structure-panel__body {
+                        margin: 0; padding: 16px; max-height: min(70vh, 640px);
+                        overflow: auto; font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+                        border: 1px solid rgba(255,255,255,.08); border-top: 0; border-bottom: 0;
+                        max-width: 720px; width: 100%; white-space: pre; background: #08080f;
+                    }
+                    .structure-panel__foot {
+                        padding: 10px 16px; border-radius: 0 0 12px 12px;
+                        border: 1px solid rgba(255,255,255,.08); border-top: 0;
+                        font-size: 12px; color: rgba(236,235,255,.55);
+                        max-width: 720px; width: 100%;
+                    }
+                    .structure-panel__actions { display: flex; gap: 6px; }
+                `;
+                document.head.appendChild(style);
+            }
+
+            panel.addEventListener('click', e => {
+                if (e.target === panel || e.target.id === 'structureClose') {
+                    panel.remove();
+                }
+            });
+            document.getElementById('structureCopy').addEventListener('click', () => {
+                const body = document.getElementById('structureBody');
+                navigator.clipboard.writeText(body.textContent).then(
+                    () => toast('Structure copied', 'ok'),
+                    () => toast('Copy failed', 'err')
+                );
+            });
+        }
+
+        document.getElementById('structureTitle').textContent = `Structure · ${folderItem.name}`;
+        document.getElementById('structureBody').textContent = treeText;
+        document.getElementById('structureFoot').textContent =
+            `${dirCount} folder${dirCount === 1 ? '' : 's'} · ${fileCount} file${fileCount === 1 ? '' : 's'}`;
+        panel.style.display = 'flex';
+
+        flashStatus(`Structure of “${folderItem.name}”`, 'ok');
+    } catch (err) {
+        toast('Could not load structure: ' + (err.message || err), 'err');
     }
 }
 
@@ -4326,6 +4489,7 @@ function wireEvents() {
             if (action === 'download') (item.type === 'dir' ? downloadFolder(item) : downloadItem(item)).catch(() => {});
             else if (action === 'replace') startReplace(item);
             else if (action === 'newtab') openInNewTab(item);
+            else if (action === 'structure') showFolderStructure(item).catch(err => toast(err.message || String(err), 'err'));
             else if (action === 'copy') copyFileContent(item);
             else {
                 const rect = quick.getBoundingClientRect();
