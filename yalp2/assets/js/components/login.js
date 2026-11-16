@@ -1,26 +1,25 @@
 /* ============================================================
-   Login / Signup screen
+   Login / Signup screen with forgot password link
    ============================================================ */
 import { el } from '../utils.js';
 import { icon } from './icons.js';
 import { signInWithPassword, signUpWithPassword } from '../api.js';
 import { notify } from './toast.js';
 import { CONFIG } from '../config.js';
+import { openForgotPasswordModal } from './password-reset.js';
 
-let currentMode = 'login'; // 'login' | 'signup'
+let currentMode = 'login';
 
 export function renderLogin(root) {
   root.innerHTML = '';
   const page = el('div', { class: 'login-page' });
 
-  // Background blobs
   const bg = el('div', { class: 'login-page__bg' }, [
     el('div', { class: 'login-page__blob' }),
     el('div', { class: 'login-page__blob' }),
     el('div', { class: 'login-page__blob' }),
   ]);
 
-  // Hero panel
   const hero = el('div', { class: 'login-pane' }, [
     el('div', { class: 'login-hero' }, [
       el('div', { class: 'login-hero__tag', html: `${icon('sparkles', 14)}<span>دفترچهٔ خرید شخصی</span>` }),
@@ -36,7 +35,6 @@ export function renderLogin(root) {
     ]),
   ]);
 
-  // Form panel
   const card = el('div', { class: 'login-pane' }, [
     el('div', { class: 'login-card' }, [
       el('div', { class: 'login-card__brand' }, [
@@ -54,27 +52,22 @@ export function renderLogin(root) {
       el('div', { class: 'login-tabs', id: 'login-tabs' }, [
         el('button', {
           class: 'login-tabs__btn is-active',
-          dataset: { mode: 'login' },
-          type: 'button',
-          text: 'ورود',
+          dataset: { mode: 'login' }, type: 'button', text: 'ورود',
         }),
         el('button', {
           class: 'login-tabs__btn',
-          dataset: { mode: 'signup' },
-          type: 'button',
-          text: 'ثبت‌نام',
+          dataset: { mode: 'signup' }, type: 'button', text: 'ثبت‌نام',
         }),
       ]),
       renderForm(),
       el('p', { class: 'login-footnote',
-        text: 'با ورود، داده‌های قبلی حسابت به‌طور خودکار بارگذاری می‌شوند. تمام اطلاعات خصوصی است.' }),
+        text: 'با ورود، داده‌های قبلی حسابت به‌طور خودکار بارگذاری می‌شوند.' }),
     ]),
   ]);
 
   page.append(bg, hero, card);
   root.appendChild(page);
 
-  // Wire tabs
   page.querySelectorAll('.login-tabs__btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const mode = btn.dataset.mode;
@@ -89,11 +82,9 @@ export function renderLogin(root) {
     });
   });
 
-  // Wire form
   const form = page.querySelector('#login-form');
   form.addEventListener('submit', handleSubmit);
 
-  // Password toggle
   const toggle = page.querySelector('#password-toggle');
   const pwdInput = page.querySelector('#password');
   toggle.addEventListener('click', () => {
@@ -102,7 +93,15 @@ export function renderLogin(root) {
     toggle.innerHTML = icon(isPwd ? 'eyeOff' : 'eye', 16);
   });
 
-  // Autofocus
+  const forgotBtn = page.querySelector('#forgot-password-link');
+  if (forgotBtn) {
+    forgotBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const email = String(document.getElementById('email')?.value || '').trim();
+      openForgotPasswordModal({ defaultEmail: email });
+    });
+  }
+
   setTimeout(() => page.querySelector('#email')?.focus(), 80);
 }
 
@@ -123,36 +122,22 @@ function brandSvg() {
 
 function renderForm() {
   const email = el('input', {
-    class: 'input',
-    type: 'email',
-    id: 'email',
-    name: 'email',
-    required: 'required',
-    autocomplete: 'email',
-    placeholder: 'name@example.com',
-    dir: 'ltr',
-    style: { textAlign: 'left' },
+    class: 'input', type: 'email', id: 'email', name: 'email',
+    required: 'required', autocomplete: 'email',
+    placeholder: 'name@example.com', dir: 'ltr', style: { textAlign: 'left' },
   });
 
   const password = el('input', {
-    class: 'input',
-    type: 'password',
-    id: 'password',
-    name: 'password',
-    required: 'required',
-    autocomplete: 'current-password',
-    placeholder: '••••••••',
-    minlength: '6',
-    dir: 'ltr',
-    style: { textAlign: 'left', paddingInlineEnd: '40px' },
+    class: 'input', type: 'password', id: 'password', name: 'password',
+    required: 'required', autocomplete: 'current-password',
+    placeholder: '••••••••', minlength: '6',
+    dir: 'ltr', style: { textAlign: 'left', paddingInlineEnd: '40px' },
   });
 
   const toggle = el('button', {
-    type: 'button',
-    id: 'password-toggle',
+    type: 'button', id: 'password-toggle',
     class: 'login-password-toggle',
-    'aria-label': 'نمایش رمز',
-    html: icon('eye', 16),
+    'aria-label': 'نمایش رمز', html: icon('eye', 16),
   });
 
   return el('form', { class: 'login-form', id: 'login-form', novalidate: 'novalidate' }, [
@@ -161,17 +146,22 @@ function renderForm() {
       email,
     ]),
     el('div', { class: 'field' }, [
-      el('label', { class: 'field__label', for: 'password', text: 'رمز عبور' }),
+      el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, [
+        el('label', { class: 'field__label', for: 'password', text: 'رمز عبور' }),
+        el('a', {
+          href: '#', id: 'forgot-password-link',
+          style: { fontSize: 'var(--fs-xs)', color: 'var(--violet-1)', fontWeight: 'var(--fw-semibold)' },
+          text: 'فراموش کردی؟',
+        }),
+      ]),
       el('div', { class: 'login-field-wrap' }, [password, toggle]),
       el('div', { class: 'field__hint', text: 'حداقل ۶ کاراکتر' }),
     ]),
     el('div', { class: 'login-form__error', id: 'login-error' }),
     el('div', { class: 'login-form__success', id: 'login-success' }),
     el('button', {
-      type: 'submit',
-      class: 'btn btn--primary btn--lg btn--block',
-      id: 'login-submit',
-      text: 'ورود',
+      type: 'submit', class: 'btn btn--primary btn--lg btn--block',
+      id: 'login-submit', text: 'ورود',
     }),
   ]);
 }
@@ -179,13 +169,16 @@ function renderForm() {
 function updateHeadings(mode) {
   const t = document.getElementById('login-title');
   const s = document.getElementById('login-subtitle');
+  const f = document.getElementById('forgot-password-link');
   if (!t || !s) return;
   if (mode === 'login') {
     t.textContent = 'خوش برگشتی';
     s.textContent = 'برای دیدن دفترچهٔ خریدت وارد شو';
+    if (f) f.style.display = '';
   } else {
     t.textContent = 'حساب تازه بساز';
     s.textContent = 'در چند ثانیه ثبت‌نام کن و شروع کن';
+    if (f) f.style.display = 'none';
   }
 }
 
@@ -241,13 +234,12 @@ async function handleSubmit(e) {
     if (currentMode === 'login') {
       await signInWithPassword(email, password);
       notify.success('خوش آمدی 👋');
-      // onAuthStateChange handles the rest
     } else {
       const data = await signUpWithPassword(email, password);
       if (data?.session) {
         notify.success('حساب ساخته شد. خوش آمدی!');
       } else {
-        showSuccess('ثبت‌نام انجام شد. لطفاً ایمیلت را برای تأیید بررسی کن، سپس وارد شو.');
+        showSuccess('ثبت‌نام انجام شد. لطفاً ایمیلت را برای تأیید بررسی کن.');
         currentMode = 'login';
         document.querySelectorAll('.login-tabs__btn').forEach((b) => {
           b.classList.toggle('is-active', b.dataset.mode === 'login');

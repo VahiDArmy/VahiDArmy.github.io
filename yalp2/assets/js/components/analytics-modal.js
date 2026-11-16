@@ -1,13 +1,14 @@
 /* ============================================================
-   Analytics modal — extended with day-of-week, trend, avg price
+   Analytics modal — charts + period comparison
    ============================================================ */
 import { store } from '../state.js';
-import { el, formatNumber, formatPrice, formatRelative } from '../utils.js';
+import { el, formatNumber, formatPrice } from '../utils.js';
 import { icon } from './icons.js';
 import { mountModal } from './modal-shell.js';
 import { hBarChart, vBarChart, donutChart, pickColor } from './charts.js';
 import { purchaseStats } from '../api.js';
 import { openReportModal } from './report-modal.js';
+import { mountPeriodCompare } from './period-compare.js';
 
 const FA_DAYS = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
 
@@ -41,8 +42,7 @@ export function openAnalyticsModal() {
       bodyHost.appendChild(el('div', { class: 'empty-state' }, [
         el('div', { class: 'empty-state__icon', html: icon('barChart', 32) }),
         el('div', { class: 'empty-state__title', text: 'داده‌ای برای تحلیل نیست' }),
-        el('div', { class: 'empty-state__desc',
-          text: 'چند خرید ثبت کن تا نمودارها اینجا ظاهر شوند.' }),
+        el('div', { class: 'empty-state__desc', text: 'چند خرید ثبت کن تا نمودارها ظاهر شوند.' }),
       ]));
       return;
     }
@@ -53,7 +53,6 @@ export function openAnalyticsModal() {
     const bestDay = computeBestDay(purchases);
     const trend = computeSpendTrend(purchases);
 
-    // Summary — 6 cards
     bodyHost.appendChild(el('div', { class: 'analytics-summary analytics-summary--six' }, [
       summaryCard('کل خریدها', formatNumber(stats.total), 'brand'),
       summaryCard('خرید خوب', `${formatNumber(stats.good)} (${formatNumber(goodPct)}٪)`, 'good'),
@@ -63,12 +62,24 @@ export function openAnalyticsModal() {
       summaryCard('بهترین روز', bestDay || '—', 'good'),
     ]));
 
-    // Trend strip
-    if (trend) {
-      bodyHost.appendChild(renderTrendCard(trend));
-    }
+    if (trend) bodyHost.appendChild(renderTrendCard(trend));
 
-    // Grid of charts
+    // Period comparison
+    bodyHost.appendChild(el('div', { class: 'analytics-panel analytics-panel--wide' }, [
+      el('div', { class: 'analytics-panel__header' }, [
+        el('div', { class: 'analytics-panel__icon', html: icon('clock', 16) }),
+        el('div', {}, [
+          el('div', { class: 'analytics-panel__title', text: 'مقایسهٔ دوره‌ای' }),
+          el('div', { class: 'analytics-panel__sub', text: 'این دوره در برابر دورهٔ قبل' }),
+        ]),
+      ]),
+      (() => {
+        const b = el('div', { class: 'analytics-panel__body' });
+        b.appendChild(mountPeriodCompare());
+        return b;
+      })(),
+    ]));
+
     const grid = el('div', { class: 'analytics-grid' });
 
     grid.appendChild(renderPanel({
@@ -77,35 +88,30 @@ export function openAnalyticsModal() {
       icon: 'calendar',
       content: buildDayOfWeekChart(purchases),
     }));
-
     grid.appendChild(renderPanel({
       title: 'بهترین فروشگاه‌ها',
       subtitle: 'بر اساس تعداد خریدهای خوب',
       icon: 'star',
       content: buildTopShops(purchases, 'good', 5, 'good'),
     }));
-
     grid.appendChild(renderPanel({
       title: 'فروشگاه‌های مشکل‌دار',
-      subtitle: 'بر اساس تعداد خریدهای افتضاح',
+      subtitle: 'بر اساس خریدهای افتضاح',
       icon: 'alert',
       content: buildTopShops(purchases, 'shit', 5, 'shit'),
     }));
-
     grid.appendChild(renderPanel({
       title: 'روند ماهانه',
       subtitle: 'تعداد خرید در ۶ ماه اخیر',
       icon: 'barChart',
       content: buildMonthlyTimeline(purchases),
     }));
-
     grid.appendChild(renderPanel({
       title: 'پلتفرم‌ها',
       subtitle: 'توزیع خرید بر اساس پلتفرم',
       icon: 'layers',
       content: buildPlatformDistribution(purchases),
     }));
-
     grid.appendChild(renderPanel({
       title: 'پرتکرارترین محصولات',
       subtitle: 'محصولاتی که بیش از همه خریدی',
@@ -117,7 +123,6 @@ export function openAnalyticsModal() {
     bodyHost.appendChild(grid);
   }
 
-  /* ---------- summary ---------- */
   function summaryCard(label, value, tone) {
     return el('div', { class: `analytics-stat analytics-stat--${tone}` }, [
       el('div', { class: 'analytics-stat__label', text: label }),
@@ -125,47 +130,35 @@ export function openAnalyticsModal() {
     ]);
   }
 
-  /* ---------- trend card ---------- */
   function renderTrendCard(trend) {
     const up = trend.delta >= 0;
-    const card = el('div', { class: `trend-card ${up ? 'trend-card--up' : 'trend-card--down'}` }, [
+    return el('div', { class: `trend-card ${up ? 'trend-card--up' : 'trend-card--down'}` }, [
       el('div', { class: 'trend-card__icon', html: icon(up ? 'arrowUp' : 'arrowDown', 20) }),
       el('div', { class: 'trend-card__body' }, [
         el('div', { class: 'trend-card__title',
           text: up ? 'هزینهٔ این ماه بیشتر از ماه قبل' : 'هزینهٔ این ماه کمتر از ماه قبل' }),
-        el('div', { class: 'trend-card__desc' }, [
-          el('span', { text: `${formatPrice(trend.thisMonth)} در برابر ${formatPrice(trend.lastMonth)}` }),
-        ]),
+        el('div', { class: 'trend-card__desc',
+          text: `${formatPrice(trend.thisMonth)} در برابر ${formatPrice(trend.lastMonth)}` }),
       ]),
       el('div', { class: 'trend-card__delta' }, [
         el('span', { class: 'trend-card__delta-num',
           text: (up ? '+' : '−') + formatNumber(Math.abs(trend.pct)) + '٪' }),
       ]),
     ]);
-    return card;
   }
-
-  /* ---------- computation helpers ---------- */
 
   function computeAvgPrice(purchases) {
     let sum = 0, n = 0;
-    for (const p of purchases) {
-      if (p.price != null) { sum += Number(p.price) * (Number(p.quantity) || 1); n++; }
-    }
+    for (const p of purchases) if (p.price != null) { sum += Number(p.price) * (Number(p.quantity) || 1); n++; }
     return n ? Math.round(sum / n) : 0;
   }
 
   function computeBestDay(purchases) {
     if (!purchases.length) return null;
     const counts = new Array(7).fill(0);
-    for (const p of purchases) {
-      const d = new Date(p.purchased_at || p.created_at);
-      counts[d.getDay()] += 1;
-    }
+    for (const p of purchases) counts[new Date(p.purchased_at || p.created_at).getDay()]++;
     let best = 0, bestIdx = 0;
-    for (let i = 0; i < 7; i++) {
-      if (counts[i] > best) { best = counts[i]; bestIdx = i; }
-    }
+    for (let i = 0; i < 7; i++) if (counts[i] > best) { best = counts[i]; bestIdx = i; }
     return FA_DAYS[bestIdx] || null;
   }
 
@@ -183,13 +176,11 @@ export function openAnalyticsModal() {
       if (key === thisKey) thisSpent += amt;
       else if (key === lastKey) lastSpent += amt;
     }
-    if (thisSpent === 0 && lastSpent === 0) return null;
+    if (!thisSpent && !lastSpent) return null;
     const delta = thisSpent - lastSpent;
     const pct = lastSpent > 0 ? Math.round((delta / lastSpent) * 100) : 100;
     return { thisMonth: thisSpent, lastMonth: lastSpent, delta, pct };
   }
-
-  /* ---------- panels ---------- */
 
   function renderPanel({ title, subtitle, icon: iconName, content, wide }) {
     const panel = el('div', { class: 'analytics-panel' + (wide ? ' analytics-panel--wide' : '') });
@@ -200,28 +191,18 @@ export function openAnalyticsModal() {
         subtitle ? el('div', { class: 'analytics-panel__sub', text: subtitle }) : null,
       ].filter(Boolean)),
     ]));
-    const body = el('div', { class: 'analytics-panel__body' });
-    if (content && content.nodeType) body.appendChild(content);
-    else body.innerHTML = content;
-    panel.appendChild(body);
+    const b = el('div', { class: 'analytics-panel__body' });
+    if (content && content.nodeType) b.appendChild(content);
+    else b.innerHTML = content;
+    panel.appendChild(b);
     return panel;
   }
 
   function buildDayOfWeekChart(purchases) {
     const counts = new Array(7).fill(0);
-    for (const p of purchases) {
-      const d = new Date(p.purchased_at || p.created_at);
-      counts[d.getDay()] += 1;
-    }
-    // Reorder so Saturday (6) is first (Persian week)
+    for (const p of purchases) counts[new Date(p.purchased_at || p.created_at).getDay()]++;
     const order = [6, 0, 1, 2, 3, 4, 5];
-    const labels = order.map((i) => FA_DAYS[i]);
-    const values = order.map((i) => counts[i]);
-    const items = labels.map((label, i) => ({
-      label,
-      value: values[i],
-      color: 'var(--brand-grad)',
-    }));
+    const items = order.map((i) => ({ label: FA_DAYS[i], value: counts[i], color: 'var(--brand-grad)' }));
     return vBarChart(items, { height: 180 });
   }
 
@@ -243,9 +224,7 @@ export function openAnalyticsModal() {
     }
     const color = tone === 'good'
       ? 'linear-gradient(90deg, #10b981, #34d399)'
-      : tone === 'shit'
-        ? 'linear-gradient(90deg, #ef4444, #f87171)'
-        : 'var(--brand-grad)';
+      : 'linear-gradient(90deg, #ef4444, #f87171)';
     return hBarChart(items.map((i) => ({ ...i, color })));
   }
 
@@ -268,9 +247,8 @@ export function openAnalyticsModal() {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       let label = '';
-      try {
-        label = new Intl.DateTimeFormat('fa-IR', { month: 'short' }).format(d);
-      } catch { label = `${d.getMonth() + 1}`; }
+      try { label = new Intl.DateTimeFormat('fa-IR', { month: 'short' }).format(d); }
+      catch { label = `${d.getMonth() + 1}`; }
       const total = purchases.filter((p) => {
         const pd = new Date(p.purchased_at || p.created_at);
         return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();

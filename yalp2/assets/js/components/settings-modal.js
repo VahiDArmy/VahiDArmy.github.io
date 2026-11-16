@@ -1,5 +1,5 @@
 /* ============================================================
-   Settings modal — tabs: platforms, shops, products, data, account
+   Settings modal — tabs with CSV import added to data tab
    ============================================================ */
 import { store } from '../state.js';
 import { el, escapeHtml, formatNumber } from '../utils.js';
@@ -8,20 +8,14 @@ import { mountModal } from './modal-shell.js';
 import { confirmDialog } from './confirm.js';
 import { notify } from './toast.js';
 import {
-  createPlatform,
-  updatePlatform,
-  deletePlatform,
-  createShop,
-  updateShop,
-  deleteShop,
-  createProduct,
-  updateProduct,
-  deleteProduct,
-  refreshPurchases,
-  signOut,
+  createPlatform, updatePlatform, deletePlatform,
+  createShop, updateShop, deleteShop,
+  createProduct, updateProduct, deleteProduct,
+  refreshPurchases, signOut,
 } from '../api.js';
 import { downloadSnapshot, importSnapshot, readJsonFile } from '../utils/import-export.js';
 import { seedDemoData } from './seed-demo.js';
+import { openCsvImportModal } from './csv-import.js';
 
 const TABS = [
   { key: 'platforms', label: 'پلتفرم‌ها', icon: 'layers' },
@@ -33,7 +27,6 @@ const TABS = [
 
 export function openSettingsModal({ initialTab = 'platforms' } = {}) {
   let activeTab = initialTab;
-
   const bodyHost = el('div', { class: 'settings-body' });
 
   const { close } = mountModal({
@@ -43,9 +36,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     body: [bodyHost],
     footer: [
       el('button', {
-        type: 'button',
-        class: 'btn btn--ghost btn--lg',
-        text: 'بستن',
+        type: 'button', class: 'btn btn--ghost btn--lg', text: 'بستن',
         onclick: () => close(),
       }),
     ],
@@ -61,18 +52,14 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     const tabs = el('div', { class: 'settings-tabs' });
     for (const t of TABS) {
       const isActive = t.key === activeTab;
-      const btn = el('button', {
+      tabs.appendChild(el('button', {
         type: 'button',
         class: 'settings-tab' + (isActive ? ' is-active' : ''),
-        onclick: () => {
-          activeTab = t.key;
-          refresh();
-        },
+        onclick: () => { activeTab = t.key; refresh(); },
       }, [
         el('span', { class: 'settings-tab__icon', html: icon(t.icon, 16) }),
         el('span', { class: 'settings-tab__label', text: t.label }),
-      ]);
-      tabs.appendChild(btn);
+      ]));
     }
     return tabs;
   }
@@ -88,20 +75,16 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     }
   }
 
-  /* ==================== PLATFORMS ==================== */
-
   function renderPlatformsTab() {
     const wrap = el('div', { class: 'settings-section' });
     const items = store.platforms.get();
-
     wrap.appendChild(renderSectionHeader({
       title: 'پلتفرم‌ها',
       subtitle: 'دیجی‌کالا، اسنپ‌فود، اکالا و ...',
       count: items.length,
       onAdd: async () => {
         const values = await promptEntity({
-          title: 'پلتفرم جدید',
-          submitLabel: 'ساخت',
+          title: 'پلتفرم جدید', submitLabel: 'ساخت',
           fields: [
             { key: 'name', label: 'نام', required: true, placeholder: 'مثلاً دیجی‌کالا' },
             { key: 'color', label: 'رنگ (hex)', placeholder: '#8b5cf6', default: '#8b5cf6' },
@@ -118,20 +101,13 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
         } catch (err) { notify.error(err?.message || 'خطا'); }
       },
     }));
-
-    if (!items.length) {
-      wrap.appendChild(renderEmpty('هنوز پلتفرمی نیست'));
-      return wrap;
-    }
-
+    if (!items.length) { wrap.appendChild(renderEmpty('هنوز پلتفرمی نیست')); return wrap; }
     const list = el('div', { class: 'settings-list' });
     for (const p of items) {
       list.appendChild(el('div', { class: 'settings-row' }, [
         el('div', { class: 'settings-row__icon' }, [
-          el('span', {
-            class: 'settings-row__dot',
-            style: { background: p.color || '#6366f1', boxShadow: `0 0 12px ${p.color || '#6366f1'}` },
-          }),
+          el('span', { class: 'settings-row__dot',
+            style: { background: p.color || '#6366f1', boxShadow: `0 0 12px ${p.color || '#6366f1'}` } }),
         ]),
         el('div', { class: 'settings-row__main' }, [
           el('div', { class: 'settings-row__title', text: p.name }),
@@ -143,9 +119,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             html: icon('edit', 14),
             onclick: async () => {
               const values = await promptEntity({
-                title: 'ویرایش پلتفرم',
-                submitLabel: 'ذخیره',
-                initial: p,
+                title: 'ویرایش پلتفرم', submitLabel: 'ذخیره', initial: p,
                 fields: [
                   { key: 'name', label: 'نام', required: true },
                   { key: 'color', label: 'رنگ (hex)' },
@@ -168,17 +142,15 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             onclick: async () => {
               const ok = await confirmDialog({
                 title: 'حذف پلتفرم',
-                message: `پلتفرم «${p.name}» حذف شود؟ خریدها حفظ می‌شوند ولی پلتفرم‌شان خالی می‌شود.`,
-                confirmLabel: 'حذف',
-                danger: true,
+                message: `«${p.name}» حذف شود؟ خریدها حفظ می‌شوند ولی پلتفرم‌شان خالی می‌شود.`,
+                confirmLabel: 'حذف', danger: true,
               });
               if (!ok) return;
               try {
                 await deletePlatform(p.id);
                 store.platforms.set(store.platforms.get().filter((x) => x.id !== p.id));
                 store.purchases.set(store.purchases.get().map((pu) =>
-                  pu.platform_id === p.id ? { ...pu, platform_id: null, platform: null } : pu
-                ));
+                  pu.platform_id === p.id ? { ...pu, platform_id: null, platform: null } : pu));
                 notify.success('حذف شد');
                 refresh();
               } catch (err) { notify.error(err?.message || 'خطا'); }
@@ -191,20 +163,16 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     return wrap;
   }
 
-  /* ==================== SHOPS ==================== */
-
   function renderShopsTab() {
     const wrap = el('div', { class: 'settings-section' });
     const items = store.shops.get();
-
     wrap.appendChild(renderSectionHeader({
       title: 'فروشگاه‌ها',
       subtitle: 'ساندویچی علی، رستوران باغ و ...',
       count: items.length,
       onAdd: async () => {
         const values = await promptEntity({
-          title: 'فروشگاه جدید',
-          submitLabel: 'ساخت',
+          title: 'فروشگاه جدید', submitLabel: 'ساخت',
           fields: [
             { key: 'name', label: 'نام', required: true, placeholder: 'مثلاً ساندویچی علی' },
             { key: 'category', label: 'دسته', placeholder: 'فست‌فود، رستوران، ...' },
@@ -220,12 +188,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
         } catch (err) { notify.error(err?.message || 'خطا'); }
       },
     }));
-
-    if (!items.length) {
-      wrap.appendChild(renderEmpty('هنوز فروشگاهی نیست'));
-      return wrap;
-    }
-
+    if (!items.length) { wrap.appendChild(renderEmpty('هنوز فروشگاهی نیست')); return wrap; }
     const purchases = store.purchases.get();
     const list = el('div', { class: 'settings-list' });
     for (const s of items.slice().sort((a, b) => a.name.localeCompare(b.name, 'fa'))) {
@@ -245,9 +208,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             html: icon('edit', 14),
             onclick: async () => {
               const values = await promptEntity({
-                title: 'ویرایش فروشگاه',
-                submitLabel: 'ذخیره',
-                initial: s,
+                title: 'ویرایش فروشگاه', submitLabel: 'ذخیره', initial: s,
                 fields: [
                   { key: 'name', label: 'نام', required: true },
                   { key: 'category', label: 'دسته' },
@@ -269,9 +230,8 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             onclick: async () => {
               const ok = await confirmDialog({
                 title: 'حذف فروشگاه',
-                message: `«${s.name}» و همهٔ ${formatNumber(count)} خرید مرتبط حذف شوند؟`,
-                confirmLabel: 'حذف',
-                danger: true,
+                message: `«${s.name}» و ${formatNumber(count)} خرید مرتبط حذف شوند؟`,
+                confirmLabel: 'حذف', danger: true,
               });
               if (!ok) return;
               try {
@@ -290,20 +250,16 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     return wrap;
   }
 
-  /* ==================== PRODUCTS ==================== */
-
   function renderProductsTab() {
     const wrap = el('div', { class: 'settings-section' });
     const items = store.products.get();
-
     wrap.appendChild(renderSectionHeader({
       title: 'محصولات',
       subtitle: 'محصولاتی که تا حالا خریدی',
       count: items.length,
       onAdd: async () => {
         const values = await promptEntity({
-          title: 'محصول جدید',
-          submitLabel: 'ساخت',
+          title: 'محصول جدید', submitLabel: 'ساخت',
           fields: [
             { key: 'name', label: 'نام', required: true, placeholder: 'مثلاً ساندویچ مرغ' },
             { key: 'category', label: 'دسته', placeholder: 'غذا، نوشیدنی، ...' },
@@ -320,19 +276,15 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
         } catch (err) { notify.error(err?.message || 'خطا'); }
       },
     }));
-
-    if (!items.length) {
-      wrap.appendChild(renderEmpty('هنوز محصولی نیست'));
-      return wrap;
-    }
-
+    if (!items.length) { wrap.appendChild(renderEmpty('هنوز محصولی نیست')); return wrap; }
     const purchases = store.purchases.get();
     const list = el('div', { class: 'settings-list' });
     for (const p of items.slice().sort((a, b) => a.name.localeCompare(b.name, 'fa'))) {
       const count = purchases.filter((pu) => pu.product_id === p.id).length;
       list.appendChild(el('div', { class: 'settings-row' }, [
         el('div', { class: 'settings-row__icon' }, [
-          el('span', { class: 'avatar', 'data-size': 'sm', style: { '--_size': '32px', fontSize: '12px' },
+          el('span', { class: 'avatar',
+            style: { '--_size': '32px', fontSize: '12px' },
             text: (p.name?.[0] || '؟').toUpperCase() }),
         ]),
         el('div', { class: 'settings-row__main' }, [
@@ -346,9 +298,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             html: icon('edit', 14),
             onclick: async () => {
               const values = await promptEntity({
-                title: 'ویرایش محصول',
-                submitLabel: 'ذخیره',
-                initial: p,
+                title: 'ویرایش محصول', submitLabel: 'ذخیره', initial: p,
                 fields: [
                   { key: 'name', label: 'نام', required: true },
                   { key: 'category', label: 'دسته' },
@@ -371,9 +321,8 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
             onclick: async () => {
               const ok = await confirmDialog({
                 title: 'حذف محصول',
-                message: `«${p.name}» و همهٔ ${formatNumber(count)} خرید مرتبط حذف شوند؟`,
-                confirmLabel: 'حذف',
-                danger: true,
+                message: `«${p.name}» و ${formatNumber(count)} خرید مرتبط حذف شوند؟`,
+                confirmLabel: 'حذف', danger: true,
               });
               if (!ok) return;
               try {
@@ -392,22 +341,18 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     return wrap;
   }
 
-  /* ==================== DATA ==================== */
-
   function renderDataTab() {
     const wrap = el('div', { class: 'settings-section' });
 
-    // export card
     const exportCard = el('div', { class: 'settings-card' }, [
       el('div', { class: 'settings-card__icon settings-card__icon--brand', html: icon('external', 20) }),
       el('div', { class: 'settings-card__body' }, [
         el('div', { class: 'settings-card__title', text: 'خروجی JSON' }),
         el('div', { class: 'settings-card__desc',
-          text: 'یک فایل JSON از کل داده‌هایت (پلتفرم‌ها، فروشگاه‌ها، محصولات، خریدها) دانلود کن.' }),
+          text: 'یک فایل JSON از کل داده‌هایت دانلود کن.' }),
         el('button', {
-          type: 'button',
-          class: 'btn btn--outline btn--sm',
-          html: `${icon('external', 14)}<span>دانلود فایل</span>`,
+          type: 'button', class: 'btn btn--outline btn--sm',
+          html: `${icon('external', 14)}<span>دانلود</span>`,
           style: { marginTop: 'var(--s-3)' },
           onclick: () => {
             try {
@@ -419,42 +364,56 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
       ]),
     ]);
 
-    // import card
-    const fileInput = el('input', { type: 'file', accept: '.json,application/json', hidden: 'hidden' });
-    fileInput.addEventListener('change', async () => {
-      const file = fileInput.files?.[0];
-      fileInput.value = '';
-      if (!file) return;
-      await handleImportFile(file);
-    });
-    const importCard = el('div', { class: 'settings-card' }, [
+    const importJsonCard = el('div', { class: 'settings-card' }, [
       el('div', { class: 'settings-card__icon settings-card__icon--warn', html: icon('arrowDown', 20) }),
       el('div', { class: 'settings-card__body' }, [
-        el('div', { class: 'settings-card__title', text: 'ورود از فایل JSON' }),
+        el('div', { class: 'settings-card__title', text: 'ورود از JSON' }),
         el('div', { class: 'settings-card__desc',
-          text: 'داده‌های فعلی پاک و با محتوای فایل جایگزین می‌شوند. برای بکاپ گرفتن اول از دکمهٔ بالا استفاده کن.' }),
-        el('button', {
-          type: 'button',
-          class: 'btn btn--outline btn--sm',
-          html: `${icon('arrowUp', 14)}<span>انتخاب فایل</span>`,
-          style: { marginTop: 'var(--s-3)' },
-          onclick: () => fileInput.click(),
-        }),
-        fileInput,
+          text: 'داده‌های فعلی پاک و با فایل جایگزین می‌شوند.' }),
+        (() => {
+          const fi = el('input', { type: 'file', accept: '.json,application/json', hidden: 'hidden' });
+          fi.addEventListener('change', async () => {
+            const file = fi.files?.[0];
+            fi.value = '';
+            if (file) await handleImportJson(file);
+          });
+          return el('div', {}, [
+            el('button', {
+              type: 'button', class: 'btn btn--outline btn--sm',
+              html: `${icon('arrowUp', 14)}<span>انتخاب فایل</span>`,
+              style: { marginTop: 'var(--s-3)' },
+              onclick: () => fi.click(),
+            }),
+            fi,
+          ]);
+        })(),
       ]),
     ]);
 
-    // seed demo card
+    const importCsvCard = el('div', { class: 'settings-card' }, [
+      el('div', { class: 'settings-card__icon settings-card__icon--cyan', html: icon('plus', 20) }),
+      el('div', { class: 'settings-card__body' }, [
+        el('div', { class: 'settings-card__title', text: 'ورود از CSV' }),
+        el('div', { class: 'settings-card__desc',
+          text: 'خریدها را به‌صورت انبوه از فایل CSV اضافه کن (بدون پاک کردن داده‌های فعلی).' }),
+        el('button', {
+          type: 'button', class: 'btn btn--outline btn--sm',
+          html: `${icon('arrowUp', 14)}<span>انتخاب فایل CSV</span>`,
+          style: { marginTop: 'var(--s-3)' },
+          onclick: () => openCsvImportModal(),
+        }),
+      ]),
+    ]);
+
     const seedCard = el('div', { class: 'settings-card' }, [
       el('div', { class: 'settings-card__icon settings-card__icon--cyan', html: icon('sparkles', 20) }),
       el('div', { class: 'settings-card__body' }, [
         el('div', { class: 'settings-card__title', text: 'دادهٔ نمونه' }),
         el('div', { class: 'settings-card__desc',
-          text: 'چند فروشگاه، محصول و خرید تصادفی برای تست اضافه می‌شود. داده‌های فعلی حفظ می‌شوند.' }),
+          text: 'چند فروشگاه، محصول و خرید تصادفی برای تست اضافه می‌شود.' }),
         el('button', {
-          type: 'button',
-          class: 'btn btn--outline btn--sm',
-          html: `${icon('sparkles', 14)}<span>افزودن دادهٔ نمونه</span>`,
+          type: 'button', class: 'btn btn--outline btn--sm',
+          html: `${icon('sparkles', 14)}<span>افزودن نمونه</span>`,
           style: { marginTop: 'var(--s-3)' },
           onclick: async (e) => {
             const btn = e.currentTarget;
@@ -466,7 +425,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
               notify.success(`${formatNumber(result.purchases)} خرید نمونه اضافه شد`);
               refresh();
             } catch (err) {
-              notify.error(err?.message || 'خطا در افزودن دادهٔ نمونه');
+              notify.error(err?.message || 'خطا');
             } finally {
               btn.classList.remove('is-loading');
               btn.disabled = false;
@@ -476,30 +435,27 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
       ]),
     ]);
 
-    // danger zone — delete all
     const dangerCard = el('div', { class: 'settings-card settings-card--danger' }, [
       el('div', { class: 'settings-card__icon settings-card__icon--danger', html: icon('alert', 20) }),
       el('div', { class: 'settings-card__body' }, [
         el('div', { class: 'settings-card__title', text: 'پاک کردن همهٔ داده‌ها' }),
         el('div', { class: 'settings-card__desc',
-          text: 'تمام پلتفرم‌ها، فروشگاه‌ها، محصولات و خریدها حذف می‌شوند. این عمل قابل بازگشت نیست.' }),
+          text: 'تمام داده‌ها حذف می‌شوند. غیرقابل بازگشت.' }),
         el('button', {
-          type: 'button',
-          class: 'btn btn--danger btn--sm',
+          type: 'button', class: 'btn btn--danger btn--sm',
           html: `${icon('trash', 14)}<span>پاک کردن همه</span>`,
           style: { marginTop: 'var(--s-3)' },
           onclick: async () => {
             const ok = await confirmDialog({
               title: 'پاک کردن همهٔ داده‌ها',
               message: 'مطمئنی؟ همهٔ داده‌ها برای همیشه از بین می‌روند.',
-              confirmLabel: 'بله، پاک کن',
-              danger: true,
+              confirmLabel: 'بله، پاک کن', danger: true,
             });
             if (!ok) return;
             try {
-              for (const t of ['purchases', 'comments', 'products', 'shops', 'platforms']) {
+              for (const tbl of ['purchases', 'comments', 'products', 'shops', 'platforms']) {
                 const { sb, Tables } = await import('../supabase.js');
-                await sb.from(Tables[t]).delete().eq('user_id', store.user.get().id);
+                await sb.from(Tables[tbl]).delete().eq('user_id', store.user.get().id);
               }
               store.platforms.set([]);
               store.shops.set([]);
@@ -508,33 +464,32 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
               store.comments.set([]);
               notify.success('همهٔ داده‌ها پاک شدند');
               refresh();
-            } catch (err) { notify.error(err?.message || 'خطا در پاک کردن'); }
+            } catch (err) { notify.error(err?.message || 'خطا'); }
           },
         }),
       ]),
     ]);
 
     wrap.append(
-      el('div', { class: 'settings-cards-grid' }, [exportCard, importCard, seedCard]),
-      dangerCard
+      el('div', { class: 'settings-cards-grid' }, [exportCard, importJsonCard, importCsvCard]),
+      el('div', { class: 'settings-cards-grid', style: { marginTop: 'var(--s-3)' } }, [seedCard]),
+      dangerCard,
     );
     return wrap;
   }
 
-  async function handleImportFile(file) {
+  async function handleImportJson(file) {
     try {
       const json = await readJsonFile(file);
       const ok = await confirmDialog({
         title: 'جایگزینی داده‌ها',
-        message: `داده‌های فعلی پاک می‌شوند و محتوای فایل («${file.name}») جایگزین می‌شود. ادامه بدهم؟`,
-        confirmLabel: 'بله، وارد کن',
-        danger: true,
+        message: `داده‌های فعلی پاک و محتوای فایل («${file.name}») جایگزین می‌شود. ادامه؟`,
+        confirmLabel: 'بله، وارد کن', danger: true,
       });
       if (!ok) return;
       notify.info('در حال وارد کردن…');
       const result = await importSnapshot(json);
       await refreshPurchases();
-      // Reload other slices
       const { listPlatforms, listShops, listProducts, listComments } = await import('../api.js');
       const [platforms, shops, products, comments] = await Promise.all([
         listPlatforms(), listShops(), listProducts(), listComments(),
@@ -543,16 +498,12 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
       store.shops.set(shops);
       store.products.set(products);
       store.comments.set(comments);
-      notify.success(
-        `وارد شد: ${formatNumber(result.platforms)} پلتفرم، ${formatNumber(result.shops)} فروشگاه، ${formatNumber(result.products)} محصول، ${formatNumber(result.purchases)} خرید`
-      );
+      notify.success(`وارد شد: ${formatNumber(result.purchases)} خرید`);
       refresh();
     } catch (err) {
-      notify.error(err?.message || 'خطا در ورود داده');
+      notify.error(err?.message || 'خطا در ورود');
     }
   }
-
-  /* ==================== ACCOUNT ==================== */
 
   function renderAccountTab() {
     const wrap = el('div', { class: 'settings-section' });
@@ -570,22 +521,17 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     ]);
 
     const logoutBtn = el('button', {
-      type: 'button',
-      class: 'btn btn--danger btn--lg',
+      type: 'button', class: 'btn btn--danger btn--lg',
       html: `${icon('logout', 16)}<span>خروج از حساب</span>`,
       onclick: async () => {
         const ok = await confirmDialog({
           title: 'خروج از حساب',
-          message: 'از حسابت خارج می‌شوی. داده‌هایت در سرور امن می‌مانند.',
-          confirmLabel: 'خروج',
-          danger: true,
+          message: 'از حسابت خارج می‌شوی.',
+          confirmLabel: 'خروج', danger: true,
         });
         if (!ok) return;
-        try {
-          await signOut();
-          close();
-          notify.info('خارج شدی');
-        } catch (err) { notify.error(err?.message || 'خطا'); }
+        try { await signOut(); close(); notify.info('خارج شدی'); }
+        catch (err) { notify.error(err?.message || 'خطا'); }
       },
     });
 
@@ -608,8 +554,6 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
     return wrap;
   }
 
-  /* ==================== shared ==================== */
-
   function renderSectionHeader({ title, subtitle, count, onAdd }) {
     return el('div', { class: 'settings-header' }, [
       el('div', {}, [
@@ -620,8 +564,7 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
         subtitle ? el('div', { class: 'settings-header__sub', text: subtitle }) : null,
       ].filter(Boolean)),
       el('button', {
-        type: 'button',
-        class: 'btn btn--primary btn--sm',
+        type: 'button', class: 'btn btn--primary btn--sm',
         html: `${icon('plus', 14)}<span>افزودن</span>`,
         onclick: onAdd,
       }),
@@ -635,31 +578,19 @@ export function openSettingsModal({ initialTab = 'platforms' } = {}) {
   refresh();
 }
 
-/* ---------- generic entity form modal ---------- */
-
 function promptEntity({ title, fields, initial = {}, submitLabel = 'ذخیره' }) {
   return new Promise((resolve) => {
     const values = {};
-    for (const f of fields) {
-      values[f.key] = initial[f.key] ?? f.default ?? '';
-    }
-
+    for (const f of fields) values[f.key] = initial[f.key] ?? f.default ?? '';
     const inputs = {};
     const body = el('div', { class: 'entity-form' });
-
     for (const f of fields) {
       const input = f.multiline
         ? el('textarea', { class: 'textarea', rows: '3', placeholder: f.placeholder || '' })
-        : el('input', {
-            type: 'text',
-            class: 'input',
-            placeholder: f.placeholder || '',
-            value: values[f.key],
-          });
+        : el('input', { type: 'text', class: 'input', placeholder: f.placeholder || '', value: values[f.key] });
       input.value = values[f.key] ?? '';
       input.addEventListener('input', () => { values[f.key] = input.value; });
       inputs[f.key] = input;
-
       body.appendChild(el('div', { class: 'field' }, [
         el('label', { class: 'field__label' }, [
           document.createTextNode(f.label),
@@ -668,49 +599,31 @@ function promptEntity({ title, fields, initial = {}, submitLabel = 'ذخیره' 
         input,
       ]));
     }
-
     let resolved = false;
-    function finish(v) { if (!resolved) { resolved = true; resolve(v); } }
-
-    const cancelBtn = el('button', {
-      type: 'button', class: 'btn btn--ghost btn--lg', text: 'انصراف',
-    });
-    const saveBtn = el('button', {
-      type: 'submit', class: 'btn btn--primary btn--lg', text: submitLabel,
-    });
-
+    const finish = (v) => { if (!resolved) { resolved = true; resolve(v); } };
+    const cancelBtn = el('button', { type: 'button', class: 'btn btn--ghost btn--lg', text: 'انصراف' });
+    const saveBtn = el('button', { type: 'button', class: 'btn btn--primary btn--lg', text: submitLabel });
     const { close } = mountModal({
-      title,
-      size: 'sm',
-      body,
-      footer: [cancelBtn, saveBtn],
+      title, size: 'sm', body, footer: [cancelBtn, saveBtn],
       onClose: () => finish(null),
     });
-
     cancelBtn.addEventListener('click', () => { finish(null); close(); });
-
-    // Submit via footer button
     saveBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      // Validate
       for (const f of fields) {
         if (f.required && !String(values[f.key] || '').trim()) {
-          const el_ = inputs[f.key];
-          el_.focus();
-          el_.style.borderColor = 'var(--shit-border)';
-          setTimeout(() => { el_.style.borderColor = ''; }, 1200);
+          inputs[f.key].focus();
+          inputs[f.key].style.borderColor = 'var(--shit-border)';
+          setTimeout(() => { inputs[f.key].style.borderColor = ''; }, 1200);
           return;
         }
       }
-      // Trim
       for (const k of Object.keys(values)) {
-        values[k] = typeof values[k] === 'string' ? values[k].trim() : values[k];
+        if (typeof values[k] === 'string') values[k] = values[k].trim();
       }
       finish(values);
       close();
     });
-
-    // Focus first input
     setTimeout(() => {
       const first = Object.values(inputs)[0];
       if (first) first.focus();
