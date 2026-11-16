@@ -143,9 +143,7 @@ export const reviewsView = {
         ${pageHead({
           eyebrow: 'بدون فیلتر',
           title: 'جریان نقدها',
-          sub: `هر نقد یک تجربهٔ واقعی است؛ ${toFa(comments.length)} یادداشت عمومی از ${toFa(
-            stats.contributors,
-          )} خریدار. می‌توانی بر اساس نوع و سطح فیلتر کنی.`,
+          sub: `${toFa(comments.length)} نقد`,
           actions: `
             <a class="btn btn--outline btn--sm" href="#/compare" data-link>${icon('columns', 15)} مقایسه</a>
             <a class="btn btn--primary btn--sm" href="#/new" data-link>${icon('plus', 15)} ثبت تجربه</a>`,

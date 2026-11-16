@@ -265,7 +265,7 @@ export const insightsView = {
         ${pageHead({
           eyebrow: 'تحلیل جمعی',
           title: 'بینش بازار',
-          sub: 'همهٔ امتیازها و نقدها را کنار هم گذاشتیم تا الگوهای خرید بهتر دیده شوند.',
+          sub: '',
           actions: `<a class="btn btn--outline btn--sm" href="#/vendors" data-link>${icon('store', 15)} فهرست فروشنده‌ها</a>
                     <a class="btn btn--ghost btn--sm" href="#/guide#score" data-link>${icon('help', 15)} شاخص چطور حساب می‌شود؟</a>`,
         })}
@@ -292,9 +292,7 @@ export const insightsView = {
                 }
               </h2>
               <p class="insight-hero__text">
-                از ${toFa(overallTotal)} رأی ثبت‌شده، ${fmtPercent(stats.goodRate)} «خوب» و
-                ${fmtPercent(stats.badRate)} «افتضاح» بوده است. این عدد میانگین کل بازار است، نه
-                قضاوت دربارهٔ یک فروشندهٔ خاص.
+                ${toFa(overallTotal)} رأی · ${fmtPercent(stats.goodRate)} خوب · ${fmtPercent(stats.badRate)} افتضاح
               </p>
               <div class="chips-row">
                 <span class="chip chip--good">${toFa(stats.good)} خوب</span>
@@ -364,13 +362,13 @@ export const insightsView = {
 
         <section class="insight-grid insight-grid--2">
           <div class="card card--pad">
-            ${sectionHead('بهترین تجربه‌ها', 'موجودیت‌هایی با بیشترین شاخص رضایت و حداقل دو رأی.')}
+            ${sectionHead('بهترین تجربه‌ها')}
             <div class="insight-list">
               ${best.length ? best.map((row, index) => entityRow(row, { rank: index + 1 })).join('') : emptyState({ iconName: 'star', title: 'هنوز رأی کافی نیست', text: 'با ثبت تجربه‌ها، این فهرست شکل می‌گیرد.' })}
             </div>
           </div>
           <div class="card card--pad">
-            ${sectionHead('هشدارها', 'موجودیت‌هایی که بیشترین رأی منفی را دارند.')}
+            ${sectionHead('هشدارها')}
             <div class="insight-list">
               ${worst.length ? worst.map((row, index) => entityRow(row, { rank: index + 1 })).join('') : emptyState({ iconName: 'shield', title: 'هشدار فعالی نیست', text: 'وقتی تجربه‌های منفی ثبت شوند، این‌جا دیده می‌شوند.' })}
             </div>
@@ -379,7 +377,7 @@ export const insightsView = {
 
         <section class="insight-grid insight-grid--2">
           <div class="card card--pad">
-            ${sectionHead('دسته‌بندی‌ها', 'کدام قفسه‌ها بهتر جواب داده‌اند؟')}
+            ${sectionHead('دسته‌بندی‌ها')}
             <div class="table-wrap">
               <table class="table insight-table">
                 <thead><tr><th>دسته</th><th>محصول</th><th>رأی</th><th>شاخص</th></tr></thead>
@@ -405,7 +403,7 @@ export const insightsView = {
           </div>
 
           <div class="card card--pad">
-            ${sectionHead('شهرها', 'بر اساس شعبه‌های ثبت‌شده و امتیازشان.')}
+            ${sectionHead('شهرها')}
             <div class="insight-list insight-list--compact">
               ${cities
                 .map(
@@ -428,7 +426,7 @@ export const insightsView = {
 
         <section class="insight-grid insight-grid--3">
           <div class="card card--pad insight-span-2">
-            ${sectionHead('بهترین خریدها', 'محصولات دارای قیمت، با حداقل دو رأی و بالاترین شاخص.')}
+            ${sectionHead('بهترین خریدها')}
             <div class="insight-list">
               ${
                 priced.length
@@ -452,7 +450,7 @@ export const insightsView = {
           </div>
 
           <div class="card card--pad">
-            ${sectionHead('ریسک‌ها', 'حداقل سه رأی و شاخص زیر آستانه.')}
+            ${sectionHead('ریسک‌ها')}
             <div class="insight-list insight-list--compact">
               ${
                 risky.length
@@ -476,7 +474,7 @@ export const insightsView = {
 
         <section class="insight-grid insight-grid--2">
           <div class="card card--pad">
-            ${sectionHead('تازگی نقدها', 'تعداد نقدها و امتیازهای ۱۴ روز اخیر.')}
+            ${sectionHead('تازگی نقدها')}
             ${columnChart({
               data: days.map((day) => ({
                 label: new Intl.DateTimeFormat('fa-IR', { day: 'numeric' }).format(day.date),
@@ -492,7 +490,7 @@ export const insightsView = {
           </div>
 
           <div class="card card--pad">
-            ${sectionHead('فعال‌ترین خریداران', 'بر اساس نقد، امتیاز و رأی‌های مفید.')}
+            ${sectionHead('فعال‌ترین خریداران')}
             <div class="insight-list insight-list--compact">
               ${
                 contributors.length
@@ -515,23 +513,9 @@ export const insightsView = {
           </div>
         </section>
 
-        <section class="insight-note">
-          <span class="insight-note__icon">${icon('info', 18)}</span>
-          <div>
-            <b>این اعداد چه معنایی دارند؟</b>
-            شاخص هر موجودیت از فرمول (خوب − افتضاح) ÷ کل رأی‌ها × ۱۰۰ محاسبه می‌شود؛ بنابراین
-            بین ۱۰۰− و ۱۰۰+ است. شاخص کل، میانگین وزن‌دار همهٔ رأی‌هاست. تعداد کم رأی می‌تواند
-            شاخص را غیرقابل‌اعتماد کند؛ در جدول‌ها همیشه ستون «رأی» را ببین.
-          </div>
-        </section>
-
         <div class="cta-band" style="margin-top:var(--sp-10)">
           <div class="cta-band__main">
-            <h2 class="cta-band__title">این تصویر با هر تجربهٔ تو دقیق‌تر می‌شود</h2>
-            <p class="cta-band__text">
-              اگر از جایی خرید کردی، سه ثانیه وقت بگذار: خوب، نه‌خوب یا افتضاح. همین سه سطح،
-              تفاوت بین خرید بعدی و پشیمانی بعدی است.
-            </p>
+            <h2 class="cta-band__title">تجربه‌ات را ثبت کن</h2>
           </div>
           <div class="cta-band__actions">
             <a class="btn btn--primary btn--lg" href="#/new" data-link>${icon('plus', 16)} ثبت تجربه</a>

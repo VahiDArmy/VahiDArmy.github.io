@@ -93,7 +93,7 @@ export const vendorsView = {
         ${pageHead({
           eyebrow: 'فهرست زندهٔ بازار',
           title: 'فروشنده‌ها را بشناس',
-          sub: `پلتفرم‌ها، مارکت‌پلیس‌ها و زنجیره‌ها با شاخص رضایت واقعی. ${toFa(all.length)} فروشنده ثبت شده و ${toFa(scored)} مورد رأی دارد.`,
+          sub: `${toFa(all.length)} فروشنده`,
           actions: `
             <a class="btn btn--outline btn--sm" href="#/compare" data-link>${icon('columns', 15)} مقایسه</a>
             <a class="btn btn--primary btn--sm" href="#/new?type=vendor" data-link>${icon('plus', 15)} فروشندهٔ جدید</a>`,

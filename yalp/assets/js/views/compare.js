@@ -273,7 +273,7 @@ function winnerCard(entries) {
         <h2 style="font-size:var(--fs-lg)">${esc(store.entityName(best.type, best.entity))} با شاخص ${toFa(
           best.score.score > 0 ? `+${best.score.score}` : best.score.score,
         )}</h2>
-        <p class="hint mt-2">بر اساس ${toFa(best.score.total)} رأی ثبت‌شده. این یک پیشنهاد الگوریتمی است، نه توصیهٔ قطعی.</p>
+        <p class="hint mt-2">${toFa(best.score.total)} رأی</p>
       </div>
       <a class="btn btn--primary btn--sm" href="${attr(store.entityHref(best.type, best.entity))}" data-link>
         دیدن پرونده ${icon('arrow-left', 14)}
@@ -409,11 +409,7 @@ export const compareView = {
                   </section>`
                 : ''
             }
-
-            <p class="hint mt-8">
-              ${icon('info', 12)} شاخص رضایت از تفاضل درصد «خوب» و «افتضاح» ساخته می‌شود و بین ۱۰۰- تا ۱۰۰+ است.
-              ردیف سبز یعنی بهترین مقدار آن ستون.
-            </p>`
+`
         }
       </div>
     </div>`;

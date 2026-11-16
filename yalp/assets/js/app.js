@@ -196,7 +196,7 @@ function updateTopline() {
   if (state.mode === 'live') {
     meta.innerHTML = `<span class="dot dot--good"></span> متصل · ${toFa(stats.ratings)} رأی`;
   } else if (state.mode === 'demo') {
-    meta.innerHTML = `<span class="dot dot--meh"></span> حالت نمایشی · ${toFa(stats.ratings)} رأی`;
+    meta.innerHTML = `<span class="dot dot--meh"></span> حالت محلی · ${toFa(stats.ratings)} رأی`;
   } else {
     meta.textContent = 'در حال اتصال…';
   }
@@ -325,7 +325,7 @@ function openMobileDrawer() {
           stats.comments,
         )} نقد
         <div style="margin-top:6px">
-          ${state.mode === 'live' ? '<span class="dot dot--good"></span> داده از Supabase' : '<span class="dot dot--meh"></span> دادهٔ نمایشی محلی'}
+          ${state.mode === 'live' ? '<span class="dot dot--good"></span> داده از Supabase' : '<span class="dot dot--meh"></span> داده‌های محلی'}
         </div>
       </div>`,
     footer: `<a class="btn btn--primary btn--block" href="#/new" data-link data-close-drawer>${icon('plus', 16)} ثبت تجربه</a>`,
@@ -577,9 +577,9 @@ function openAuthModal({ reason = 'rate' } = {}) {
         </form>
         ${
           demo
-            ? `<div class="divider-text">حالت نمایشی</div>
+            ? `<div class="divider-text">حالت محلی</div>
                <button class="btn btn--outline btn--sm btn--block" type="button" data-demo-login>
-                 ${icon('zap', 14)} ورود سریع نمایشی
+                 ${icon('zap', 14)} ورود سریع محلی
                </button>
                <p class="hint center" style="margin-top:var(--sp-3)">یک حساب محلی ساخته می‌شود؛ هیچ رمزی ذخیره نمی‌شود.</p>`
             : ''
@@ -628,7 +628,7 @@ function openAuthModal({ reason = 'rate' } = {}) {
       await store.signIn({ email: `guest${Math.floor(Math.random() * 900 + 100)}@bazaarban.local`, password: 'demo1234' });
       success();
     } catch (error) {
-      showError(error.message || 'ورود نمایشی ناموفق بود.');
+      showError(error.message || 'ورود محلی ناموفق بود.');
     } finally {
       submitting = false;
     }
@@ -1067,9 +1067,9 @@ async function boot() {
     storage.set(CONFIG.LS.onboarded, true);
     window.setTimeout(() => {
       if (!store.currentUser() && state.mode === 'demo') {
-        toast('به بازاربان خوش آمدی. برای ثبت تجربه، یک حساب نمایشی بساز.', {
+        toast('برای ثبت تجربه، یک حساب محلی بساز.', {
           type: 'brand',
-          title: 'حالت نمایشی',
+          title: 'حالت محلی',
           duration: 6000,
           action: { label: 'ورود سریع', onClick: () => openAuthModal({ reason: 'onboarding' }) },
         });

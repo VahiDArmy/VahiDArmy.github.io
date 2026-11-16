@@ -93,13 +93,9 @@ export const authView = {
           ${visualSide()}
           <div class="auth-card">
             <div class="auth-card__head">
-              <h1 class="auth-card__title">${mode === 'signup' ? 'به بازاربان بپیوند' : 'خوش برگشتی'}</h1>
+              <h1 class="auth-card__title">${mode === 'signup' ? 'ثبت‌نام' : 'ورود'}</h1>
               <p class="auth-card__sub">
-                ${
-                  demo
-                    ? 'در حالت نمایشی، یک حساب محلی با هر ایمیل و رمز ۶ کاراکتری ساخته می‌شود. داده‌ها فقط در همین مرورگر می‌مانند.'
-                    : 'با همان حساب Supabase پروژه وارد شو؛ نقدها و امتیازها به نام خودت ذخیره می‌شوند.'
-                }
+                ${demo ? 'حساب محلی با هر ایمیل و رمز ۶ کاراکتری.' : 'با حساب Supabase پروژه وارد شو.'}
               </p>
             </div>
 

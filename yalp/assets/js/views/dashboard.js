@@ -57,37 +57,16 @@ function guestState() {
     ${pageHead({
       eyebrow: 'حساب من',
       title: 'داشبورد من',
-      sub: 'اینجا امتیازها، نقدها و لیست خرید بعدی‌ات جمع می‌شود.',
     })}
     <div class="auth-page" style="grid-template-columns:minmax(0,1fr) minmax(0,0.9fr)">
       <div class="card card--pad">
         ${emptyState({
           iconName: 'lock',
-          title: 'هنوز وارد نشده‌ای',
-          text:
-            'برای دیدن داشبورد و ذخیرهٔ تجربه‌ها وارد شو. در حالت نمایشی می‌توانی با هر ایمیل و رمز ۶ کاراکتری وارد شوی.',
+          title: 'وارد نشده‌ای',
           actions: `
             <a class="btn btn--primary btn--sm" href="#/login" data-link>${icon('user', 14)} ورود / ثبت‌نام</a>
-            <a class="btn btn--outline btn--sm" href="#/vendors" data-link>گشتن در بازار</a>`,
+            <a class="btn btn--outline btn--sm" href="#/vendors" data-link>دیدن بازار</a>`,
         })}
-      </div>
-      <div class="card card--pad card--glass">
-        <h3 style="font-size:var(--fs-md);margin-bottom:var(--sp-4)">بدون حساب هم می‌توانی:</h3>
-        <div class="stack stack--sm">
-          ${[
-            { icon: 'search', text: 'همهٔ فروشنده‌ها و شعبه‌ها را ببینی و امتیازشان را بخوانی.' },
-            { icon: 'message', text: 'در حالت نمایشی نقد بنویسی (فقط در مرورگر خودت).' },
-            { icon: 'columns', text: 'مقایسه بسازی؛ مقایسه در همین مرورگر می‌ماند.' },
-            { icon: 'bookmark', text: 'لیست خرید بعدی را با یک حساب محلی بسازی.' },
-          ]
-            .map(
-              (row) => `<div class="row" style="align-items:flex-start;gap:var(--sp-3)">
-                <span class="callout__icon">${icon(row.icon, 14)}</span>
-                <span class="hint" style="font-size:var(--fs-xs)">${row.text}</span>
-              </div>`,
-            )
-            .join('')}
-        </div>
       </div>
     </div>
   </div>`;
@@ -119,7 +98,7 @@ function overviewPanel(user) {
             ${icon('mail', 12)} ${esc(user.email || '—')}
             ${store.getState().profile?.city ? `<span class="divider-dot"></span>${icon('map-pin', 12)} ${esc(store.getState().profile.city)}` : ''}
             <span class="divider-dot"></span>
-            ${user.isDemo ? '<span class="badge badge--meh">حساب نمایشی</span>' : '<span class="badge badge--good">حساب Supabase</span>'}
+            ${user.isDemo ? '<span class="badge badge--meh">حساب محلی</span>' : '<span class="badge badge--good">حساب Supabase</span>'}
           </div>
         </div>
         <button class="btn btn--outline btn--sm" type="button" data-dash-tab="settings">${icon('edit', 14)} ویرایش نمایه</button>
@@ -512,13 +491,13 @@ function settingsPanel(user) {
       <div class="card card--pad">
         <h3 style="font-size:var(--fs-sm);margin-bottom:var(--sp-4)">${icon('database', 15)} داده‌ها</h3>
         <p class="hint" style="margin-bottom:var(--sp-4)">
-          ${user.isDemo ? 'در حالت نمایشی داده‌ها در localStorage همین مرورگر ذخیره می‌شوند.' : 'داده‌های این حساب در Supabase شما ذخیره می‌شود.'}
+          ${user.isDemo ? 'ذخیره در localStorage همین مرورگر' : 'ذخیره در Supabase'}
         </p>
         <div class="stack stack--sm">
           <button class="btn btn--outline btn--sm btn--block" type="button" data-export-data>${icon('download', 14)} خروجی JSON از داده‌ها</button>
           ${
             store.getState().mode === 'demo'
-              ? `<button class="btn btn--ghost btn--sm btn--block" type="button" data-reset-demo style="color:var(--bad)">${icon('refresh', 14)} بازنشانی دادهٔ نمایشی</button>`
+              ? `<button class="btn btn--ghost btn--sm btn--block" type="button" data-reset-demo style="color:var(--bad)">${icon('refresh', 14)} پاک‌کردن داده‌های محلی</button>`
               : ''
           }
           <button class="btn btn--ghost btn--sm btn--block" type="button" data-sign-out style="color:var(--bad)">${icon('logout', 14)} خروج از حساب</button>
@@ -710,14 +689,14 @@ export const dashboardView = {
 
       if (event.target.closest('[data-reset-demo]')) {
         const ok = await confirmDialog({
-          title: 'دادهٔ نمایشی بازنشانی شود؟',
+          title: 'داده‌های محلی پاک شوند؟',
           text: 'همهٔ نقدها و امتیازهای محلی پاک می‌شوند و دادهٔ نمونه دوباره ساخته می‌شود.',
           confirmLabel: 'بازنشانی',
           tone: 'danger',
         });
         if (!ok) return;
         store.resetDemoData();
-        toast('دادهٔ نمایشی بازنشانی شد.', { type: 'good' });
+        toast('داده‌های محلی پاک شد.', { type: 'good' });
         window.location.hash = '#/';
         return;
       }

@@ -23,7 +23,6 @@ import {
   uniqBy,
   sortBy,
 } from './utils.js';
-import { buildSeed } from './seed.js';
 import {
   getSupabase,
   probeBackend,
@@ -833,6 +832,7 @@ const persistDemo = debounce(() => {
   if (state.mode !== 'demo') return;
   storage.set(CONFIG.LS.demoState, {
     version: CONFIG.STORE_VERSION,
+    clean: true,
     savedAt: new Date().toISOString(),
     vendors: state.vendors,
     shops: state.shops,
@@ -1613,33 +1613,25 @@ async function fetchAllLive() {
 }
 
 function hydrateDemo() {
+  // هیچ دادهٔ ساختگی بارگذاری نمی‌شود. فقط داده‌هایی که خود کاربر در حالت
+  // محلی ساخته است (نسخهٔ جدید و با نشانهٔ clean) بازگردانده می‌شوند.
   const cached = storage.get(CONFIG.LS.demoState, null);
-  const seed = buildSeed();
+  const usable = cached && cached.version === CONFIG.STORE_VERSION && cached.clean === true;
 
-  if (cached && cached.version === CONFIG.STORE_VERSION && Array.isArray(cached.vendors)) {
-    state.vendors = cached.vendors;
-    state.shops = cached.shops || [];
-    state.products = cached.products || [];
-    state.comments = cached.comments || [];
-    state.ratings = cached.ratings || [];
-    state.votes = cached.votes || [];
-    state.lists = cached.lists || [];
-    state.listItems = cached.listItems || [];
-    state.profiles = cached.profiles || seed.profiles;
-    state.reports = cached.reports || [];
-    state.activity = cached.activity || [];
-  } else {
-    state.vendors = seed.vendors;
-    state.shops = seed.shops;
-    state.products = seed.products;
-    state.comments = seed.comments;
-    state.ratings = seed.ratings;
-    state.votes = seed.votes;
-    state.lists = seed.lists;
-    state.listItems = seed.listItems;
-    state.profiles = seed.profiles;
-    state.reports = seed.reports;
-    state.activity = seed.activity;
+  state.vendors = usable ? cached.vendors || [] : [];
+  state.shops = usable ? cached.shops || [] : [];
+  state.products = usable ? cached.products || [] : [];
+  state.comments = usable ? cached.comments || [] : [];
+  state.ratings = usable ? cached.ratings || [] : [];
+  state.votes = usable ? cached.votes || [] : [];
+  state.lists = usable ? cached.lists || [] : [];
+  state.listItems = usable ? cached.listItems || [] : [];
+  state.profiles = usable ? cached.profiles || [] : [];
+  state.reports = usable ? cached.reports || [] : [];
+  state.activity = usable ? cached.activity || [] : [];
+
+  if (!usable) {
+    storage.remove(CONFIG.LS.demoState);
     persistDemo.flush();
   }
 

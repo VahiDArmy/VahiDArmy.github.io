@@ -457,7 +457,7 @@ export const createView = {
         ${pageHead({
           eyebrow: 'سه سطح، یک دقیقه',
           title: 'تجربه‌ات را ثبت کن',
-          sub: 'اول مورد را از فهرست انتخاب کن؛ اگر نبود بساز. بعد فقط بگو خوب بود، نه‌خوب یا افتضاح.',
+          sub: 'اول از فهرست انتخاب کن؛ اگر نبود بساز.',
           actions: `<a class="btn btn--ghost btn--sm" href="#/guide" data-link>${icon('help', 15)} راهنما</a>`,
         })}
         <div class="wizard">

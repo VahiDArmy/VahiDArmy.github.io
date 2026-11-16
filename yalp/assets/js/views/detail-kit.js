@@ -246,7 +246,6 @@ export function commentComposer(type, entity) {
     <div class="row row--between" style="align-items:flex-start">
       <div>
         <h3 style="font-size:var(--fs-md)">${icon('message-plus', 16)} نقد خودت را بنویس</h3>
-        <p class="hint mt-2">کوتاه و دقیق بنویس؛ چیزی که برای خودت مهم بود، برای بقیه هم مهم است.</p>
       </div>
       <span class="badge badge--outline">${icon('shield', 11)} بدون تبلیغ</span>
     </div>
@@ -289,10 +288,7 @@ export function commentComposer(type, entity) {
     </div>
 
     <div class="row row--between" style="gap:var(--sp-4);flex-wrap:wrap">
-      <span class="hint" style="max-width:44ch">
-        ${icon('info', 12)} نقد باید دربارهٔ همین ${esc(CONFIG.ENTITY_MAP[type].label)} باشد.
-        از توهین و اطلاعات شخصی پرهیز کن.
-      </span>
+      <span class="hint" style="max-width:44ch">${icon('info', 12)} دربارهٔ همین ${esc(CONFIG.ENTITY_MAP[type].label)} بنویس.</span>
       <button class="btn btn--primary" type="submit">${icon('send', 15)} ثبت نقد</button>
     </div>
   </form>`;
@@ -553,17 +549,8 @@ export function statsPanel(type, entity) {
 
     <div class="card card--pad">
       <h3 style="font-size:var(--fs-sm);margin-bottom:var(--sp-5)">${icon('info', 15)} جمع‌بندی</h3>
-      <p class="hint" style="font-size:var(--fs-xs);line-height:1.95">
-        ${esc(store.scoreLabel(score.verdict))} — بر اساس ${toFa(score.total)} رأی.
-        ${
-          score.total === 0
-            ? 'هنوز داده‌ای برای قضاوت نیست؛ اولین تجربه را ثبت کن.'
-            : score.verdict === 'good'
-              ? 'اکثریت خریداران این مورد را «خوب» ارزیابی کرده‌اند.'
-              : score.verdict === 'bad'
-                ? 'بیشتر تجربه‌ها منفی بوده؛ با احتیاط تصمیم بگیر.'
-                : 'نظرها یکدست نیست؛ جزئیات نقدها را بخوان و خودت قضاوت کن.'
-        }
+      <p class="hint" style="font-size:var(--fs-xs)">
+        ${esc(store.scoreLabel(score.verdict))} · ${toFa(score.total)} رأی
       </p>
       <div class="chips-row mt-4">${scoreLegend()}</div>
       <button class="btn btn--outline btn--sm mt-6" type="button" data-action="report-entity" data-type="${type}" data-id="${entity.id}">
@@ -627,7 +614,7 @@ export function buyRoute(type, entity) {
   const vendor = store.getVendor(entity.vendorId);
   const shop = entity.shopId ? store.getShop(entity.shopId) : null;
   return `<div class="card card--pad">
-    <h3 style="font-size:var(--fs-sm);margin-bottom:var(--sp-4)">${icon('compass', 15)} این محصول را از کجا بخرم؟</h3>
+    <h3 style="font-size:var(--fs-sm);margin-bottom:var(--sp-4)">${icon('compass', 15)} فروشنده و شعبه</h3>
     <div class="stack stack--sm">
       ${
         vendor
@@ -651,7 +638,7 @@ export function buyRoute(type, entity) {
               </span>
               ${scoreBadge('shop', shop)}
             </a>`
-          : `<p class="hint">این محصول به شعبهٔ خاصی وصل نیست؛ در همهٔ شعبه‌های فروشنده قابل سفارش فرض می‌شود.</p>`
+          : ''
       }
     </div>
     <button class="btn btn--outline btn--sm btn--block mt-6" type="button" data-action="save-entity" data-type="${type}" data-id="${entity.id}">

@@ -14,7 +14,7 @@ export const CONFIG = Object.freeze({
   APP_NAME_EN: 'BazaarBan',
   TAGLINE: 'حافظهٔ جمعی خرید آنلاین',
   VERSION: '1.0.0',
-  STORE_VERSION: 4,
+  STORE_VERSION: 5,
 
   SUPABASE_URL: 'https://ummhohozmpwltbgeczsf.supabase.co',
   SUPABASE_KEY: 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6',
@@ -285,7 +285,7 @@ export const CONFIG = Object.freeze({
     levelQuestion: 'تجربه‌ات چطور بود؟',
     levelHelp: 'یک انتخاب کافی است؛ بدون ستاره، بدون عدد.',
     loginNeeded: 'برای ثبت امتیاز و نظر باید وارد شوی.',
-    demoNotice: 'حالت نمایشی: داده‌ها فقط در همین مرورگر ذخیره می‌شوند.',
+    demoNotice: 'حالت محلی: داده‌ها فقط در همین مرورگر ذخیره می‌شوند.',
   }),
 });
 
