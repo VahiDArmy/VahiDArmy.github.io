@@ -1,11 +1,11 @@
 /* ============================================================
    Service Worker — cache shell, network-first for data
    ============================================================ */
-const VERSION = 'smyar-v1';
+const VERSION = 'smyar-v2'; // bumped version to clear old broken caches
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 
-// مسیرها به نسبی تغییر کردند تا در ساب‌پث گیت‌هاب هم کار کنند
+// Use relative paths so it works in subfolders like /yalp2/
 const SHELL_ASSETS = [
   './',
   './index.html',
@@ -51,6 +51,9 @@ const SHELL_ASSETS = [
   './assets/js/components/command-palette.js',
   './assets/js/components/grouped-view.js',
   './assets/js/components/onboarding.js',
+  './assets/js/utils/import-export.js',
+  './assets/js/utils/share.js',
+  './assets/js/utils/csv.js',
   './assets/js/components/reminders.js',
   './assets/js/components/report-modal.js',
   './assets/js/components/share-modal.js',
@@ -61,10 +64,7 @@ const SHELL_ASSETS = [
   './assets/js/components/qr-code.js',
   './assets/js/components/period-compare.js',
   './assets/js/components/error-boundary.js',
-  './assets/js/components/fab.js',
-  './assets/js/utils/import-export.js',
-  './assets/js/utils/share.js',
-  './assets/js/utils/csv.js'
+  './assets/js/components/fab.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -92,14 +92,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
 
+  // Skip Supabase and non-GET
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  
-  // Skip Supabase
   if (url.hostname.endsWith('supabase.co')) return;
-  
-  // Network-first for fonts / CDN
   if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com') || url.hostname.includes('jsdelivr.net')) {
+    // network-first for fonts / CDN, cache fallback
     event.respondWith(
       caches.open(RUNTIME_CACHE).then((cache) =>
         fetch(req).then((res) => { cache.put(req, res.clone()); return res; }).catch(() => cache.match(req))
@@ -119,6 +117,7 @@ self.addEventListener('fetch', (event) => {
         }
         return res;
       }).catch(() => {
+        // fallback for navigation requests
         if (req.mode === 'navigate') return caches.match('./index.html');
       });
     })

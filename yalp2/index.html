@@ -4,32 +4,78 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#07070d" />
-  <title>سوپرمارکت‌یار — دفترچهٔ خرید و امتیاز فروشگاه‌ها</title>
-  <meta name="description" content="دفترچهٔ شخصی خرید و امتیازدهی به فروشگاه‌ها و محصولات آنلاین" />
+  <title>سوپرمارکت‌یار</title>
+  
+  <!-- Base href ensures relative paths work in subfolders -->
+  <base href="./">
 
-  <link rel="manifest" href="./manifest.json" />
+  <!-- INLINE DEBUGGER: Catches errors before any external files load -->
+  <script>
+    (function() {
+      var showError = function(title, msg) {
+        var id = 'inline-error-catcher';
+        var existing = document.getElementById(id);
+        if (existing) { existing.remove(); }
+        var el = document.createElement('div');
+        el.id = id;
+        el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7f1d1d;color:#fff;padding:20px;z-index:2147483647;font-family:monospace;direction:ltr;text-align:left;max-height:80vh;overflow:auto;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.8);';
+        el.innerHTML = '<h3 style="margin:0 0 8px;color:#fca5a5;">🚨 ' + title + '</h3><pre style="white-space:pre-wrap;word-break:break-all;margin:0;font-family:inherit;">' + msg + '</pre>';
+        document.body ? document.body.appendChild(el) : document.documentElement.appendChild(el);
+      };
+
+      window.addEventListener('error', function(e) {
+        if (e.target && e.target.tagName) {
+          // Resource load error (CSS, JS, Image 404)
+          if (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK') {
+             showError('Resource Load Error', 'Failed to load: ' + (e.target.src || e.target.href));
+          }
+        } else {
+          // JavaScript Error
+          showError('JavaScript Error', e.message + '\nFile: ' + (e.filename || 'unknown') + '\nLine: ' + e.lineno + '\n\n' + (e.error && e.error.stack ? e.error.stack : ''));
+        }
+      }, true);
+
+      window.addEventListener('unhandledrejection', function(e) {
+        var reason = e.reason ? (e.reason.message || e.reason) : 'Unknown Promise Rejection';
+        var stack = e.reason && e.reason.stack ? '\n\n' + e.reason.stack : '';
+        showError('Unhandled Promise Rejection', reason + stack);
+      });
+
+      // Watchdog: If app doesn't boot in 3 seconds, show why
+      setTimeout(function() {
+        var isStillSplash = document.body && document.body.innerText.indexOf('در حال آماده‌سازی') > -1;
+        if (isStillSplash) {
+          if (window.location.protocol === 'file:') {
+            showError('Boot Timeout', 'You are opening this file directly (file://).\n\nJavaScript Modules (ESM) are blocked by browsers when opened via file://.\n\nYou MUST run a local server or upload to a host (like Netlify, Vercel, or GitHub Pages).');
+          } else if (!window.supabase) {
+            showError('Boot Timeout', 'The Supabase CDN script failed to load. Check your internet connection or ad-blocker.');
+          } else {
+            showError('Boot Timeout', 'main.js failed to load or execute. Check if assets/js/main.js exists.');
+          }
+        }
+      }, 3000);
+    })();
+  </script>
+
+  <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M9 12h14l-2 11H11L9 12z' stroke='white' stroke-width='1.8' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M12.5 12a3.5 3.5 0 0 1 7 0' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="سوپرمارکت‌یار" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
 
-  <!-- مسیرها به نسبی تغییر کردند -->
-  <link rel="stylesheet" href="./assets/css/tokens.css" />
-  <link rel="stylesheet" href="./assets/css/base.css" />
-  <link rel="stylesheet" href="./assets/css/layout.css" />
-  <link rel="stylesheet" href="./assets/css/components.css" />
-  <link rel="stylesheet" href="./assets/css/table.css" />
-  <link rel="stylesheet" href="./assets/css/modals.css" />
-  <link rel="stylesheet" href="./assets/css/pages.css" />
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/table.css" />
+  <link rel="stylesheet" href="assets/css/modals.css" />
+  <link rel="stylesheet" href="assets/css/pages.css" />
 
-  <!-- DEBUG WATCHDOG — remove this line + /assets/js/debug.js to disable -->
-  <script src="./assets/js/debug.js"></script>
+  <script src="assets/js/debug.js"></script>
 
-  <!-- Supabase UMD (sets window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -60,6 +106,6 @@
     <div style="padding:24px;text-align:center">برای استفاده از سایت، جاوااسکریپت باید فعال باشد.</div>
   </noscript>
 
-  <script type="module" src="./assets/js/main.js"></script>
+  <script type="module" src="assets/js/main.js"></script>
 </body>
 </html>

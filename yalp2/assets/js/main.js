@@ -10,7 +10,7 @@ initTheme();
 // Register Service Worker (PWA)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // مسیر SW هم باید نسبی باشد
+    // Use relative path to support subfolder deployments (e.g. /yalp2/)
     navigator.serviceWorker.register('./sw.js')
       .then((reg) => console.log('[SW] registered', reg.scope))
       .catch((err) => console.warn('[SW] registration failed', err));
