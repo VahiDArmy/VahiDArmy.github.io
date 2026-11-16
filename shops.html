@@ -1035,14 +1035,6 @@
             <div id="table-search-count" class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hidden sm:block"></div>
           </div>
 
-          <!-- Quick filter chips -->
-          <div class="flex flex-wrap gap-2 mb-5">
-            <button data-rate-filter="" class="rate-filter-chip chip active px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">همه</button>
-            <button data-rate-filter="1" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">👍 خوب</button>
-            <button data-rate-filter="0" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">😐 معمولی</button>
-            <button data-rate-filter="-1" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">💩 گند</button>
-          </div>
-
           <!-- Main table -->
           <div class="rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm">
             <div class="overflow-x-auto">
@@ -1564,8 +1556,6 @@
           const tbody = document.getElementById('reviews-tbody');
           const emptyEl = document.getElementById('table-empty-filter');
           const countEl = document.getElementById('table-search-count');
-          let currentRate = '';
-
           const applyFilter = () => {
             if (!tbody) return;
             const q = (input?.value || '').trim().toLowerCase();
@@ -1573,17 +1563,15 @@
             let visible = 0;
             rows.forEach(row => {
               const text = (row.getAttribute('data-search') || '').toLowerCase();
-              const rowRating = row.getAttribute('data-rating');
-              const ratingOk = currentRate === '' || rowRating === currentRate;
               const textOk = !q || text.includes(q);
-              const show = textOk && ratingOk;
+              const show = textOk;
               row.style.display = show ? '' : 'none';
               if (show) visible++;
             });
             if (emptyEl) emptyEl.classList.toggle('hidden', visible > 0 || rows.length === 0);
             if (tbody) tbody.style.display = (visible === 0 && rows.length > 0) ? 'none' : '';
             if (countEl) {
-              countEl.textContent = (q || currentRate) ? `${Utils.toFa(visible)} نتیجه` : '';
+              countEl.textContent = q ? `${Utils.toFa(visible)} نتیجه` : '';
             }
           };
 
@@ -1592,15 +1580,6 @@
             // Focus for better UX
             setTimeout(() => input.focus(), 300);
           }
-
-          document.querySelectorAll('.rate-filter-chip').forEach(btn => {
-            btn.addEventListener('click', () => {
-              document.querySelectorAll('.rate-filter-chip').forEach(b => b.classList.remove('active'));
-              btn.classList.add('active');
-              currentRate = btn.getAttribute('data-rate-filter') || '';
-              applyFilter();
-            });
-          });
         }
 
         // Global search (header)
@@ -1655,7 +1634,12 @@
               if (q.length < 2) { box.classList.add('hidden'); return; }
               const list = await API.searchExistingShops(q);
               if (!list.length) {
-                box.innerHTML = `<div class="p-3 text-sm text-slate-400">چیزی پیدا نشد. می‌تونی جدید بسازی.</div>`;
+                box.innerHTML = `
+                  <div class="p-3 text-sm text-slate-400 border-b border-slate-100 dark:border-slate-800">چیزی پیدا نشد.</div>
+                  <button type="button" class="w-full text-right px-4 py-3 hover:bg-sky-50 dark:hover:bg-sky-900/30 text-sm text-sky-600 dark:text-sky-400 font-medium"
+                    onclick="document.getElementById('shop-suggestions').classList.add('hidden'); Pages.openCreateShop();">
+                    + فروشگاه جدید بساز
+                  </button>`;
               } else {
                 box.innerHTML = list.map(s => `
                   <button type="button" class="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
@@ -1693,9 +1677,15 @@
           const box = document.getElementById('product-suggestions');
           const shopId = document.getElementById('selected-shop')?.dataset?.id;
           if (!shopId) return;
+          if (q.length < 1) { box.classList.add('hidden'); return; }
           const list = await API.searchExistingProducts(shopId, q);
           if (!list.length) {
-            box.innerHTML = `<div class="p-3 text-sm text-slate-400">محصولی پیدا نشد. می‌تونی جدید بسازی.</div>`;
+            box.innerHTML = `
+              <div class="p-3 text-sm text-slate-400 border-b border-slate-100 dark:border-slate-800">محصولی پیدا نشد.</div>
+              <button type="button" class="w-full text-right px-4 py-3 hover:bg-sky-50 dark:hover:bg-sky-900/30 text-sm text-sky-600 dark:text-sky-400 font-medium"
+                onclick="document.getElementById('product-suggestions').classList.add('hidden'); Pages.openCreateProductFromAdd();">
+                + محصول جدید بساز
+              </button>`;
           } else {
             box.innerHTML = list.map(p => `
               <button type="button" class="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
