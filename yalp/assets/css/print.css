@@ -1,0 +1,333 @@
+/**
+ * بازاربان — سبک چاپ
+ * ---------------------------------------------------------------------------
+ * فقط با media="print" بارگذاری می‌شود. هدف: چاپ تمیز مقایسه، صفحهٔ فروشنده و
+ * فهرست‌ها روی کاغذ A4، بدون منو، انیمیشن یا پس‌زمینهٔ تیره.
+ */
+
+@page {
+  size: A4;
+  margin: 14mm 12mm 16mm;
+}
+
+@media print {
+  :root,
+  html[data-theme="dark"],
+  html[data-theme="light"] {
+    color-scheme: light !important;
+    --bg: #fff !important;
+    --surface-1: #fff !important;
+    --surface-2: #f6f7f5 !important;
+    --surface-3: #eef0ec !important;
+    --surface-solid-2: #fff !important;
+    --text-strong: #111814 !important;
+    --text: #1c2620 !important;
+    --text-soft: #34403a !important;
+    --text-mute: #4a574f !important;
+    --text-faint: #6b7770 !important;
+    --line: #d9ded8 !important;
+    --line-strong: #b9c1ba !important;
+    --brand-300: #0f7a56 !important;
+    --brand-400: #0b6b4b !important;
+    --brand-500: #075c40 !important;
+    --good: #0a7a45 !important;
+    --meh: #8a6100 !important;
+    --bad: #b3261e !important;
+    --violet: #5b3fb8 !important;
+    --shadow-sm: none !important;
+    --shadow-md: none !important;
+    --shadow-lg: none !important;
+    --shadow-xl: none !important;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #111814 !important;
+    font-size: 10.5pt;
+    line-height: 1.65;
+  }
+
+  body {
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* پنهان‌کردن پوستهٔ تعاملی */
+  .ambient,
+  .site-header,
+  .site-footer,
+  .mobile-nav,
+  .scroll-progress,
+  .skip-link,
+  .toast-stack,
+  .drawer-root,
+  .modal-root,
+  .palette-root,
+  .tooltip-root,
+  .lightbox,
+  .compare-tray,
+  .header-actions,
+  .menu--floating,
+  .filter-panel,
+  .filters,
+  .filter-bar,
+  .view-toggle,
+  .tabs,
+  .nav,
+  .breadcrumbs,
+  .page-head__actions,
+  .btn,
+  .icon-btn,
+  .chip[data-action],
+  .pagination,
+  .cta-band,
+  .banner--demo,
+  .empty__actions,
+  .entity-card__actions,
+  .share-row,
+  .reaction-bar {
+    display: none !important;
+  }
+
+  .app-main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .container {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .page {
+    padding: 0 !important;
+  }
+
+  /* سربرگ چاپی */
+  body::before {
+    content: "بازاربان — دفترچهٔ تجربهٔ خرید آنلاین";
+    display: block;
+    margin-bottom: 8mm;
+    padding-bottom: 3mm;
+    border-bottom: 2px solid #075c40;
+    font-size: 14pt;
+    font-weight: 800;
+    color: #075c40;
+  }
+
+  body::after {
+    content: "این برگه از بازاربان چاپ شده است. امتیازها ممکن است بعد از چاپ تغییر کنند.";
+    display: block;
+    margin-top: 8mm;
+    padding-top: 3mm;
+    border-top: 1px solid #d9ded8;
+    font-size: 8pt;
+    color: #6b7770;
+  }
+
+  /* کارت‌ها و سطح‌ها */
+  .card,
+  .entity-card,
+  .surface,
+  .insight-stat,
+  .insight-hero,
+  .panel {
+    background: #fff !important;
+    border: 1px solid #d9ded8 !important;
+    border-radius: 3mm !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .entity-card {
+    padding: 4mm;
+  }
+
+  .entity-card:hover {
+    transform: none !important;
+  }
+
+  .entity-card__media,
+  .entity-card__foot .link {
+    display: none !important;
+  }
+
+  .badge,
+  .chip,
+  .score-badge {
+    border: 1px solid #b9c1ba !important;
+    background: #fff !important;
+    color: #111814 !important;
+    box-shadow: none !important;
+  }
+
+  .score-badge__dot,
+  .dot {
+    border: 1px solid currentColor;
+  }
+
+  /* گرید فهرست‌ها */
+  .grid,
+  .entity-grid,
+  .card-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4mm !important;
+  }
+
+  /* جدول‌ها */
+  .table,
+  .compare-table,
+  .insight-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9pt !important;
+  }
+
+  .table th,
+  .table td,
+  .compare-table th,
+  .compare-table td {
+    border: 1px solid #d9ded8 !important;
+    padding: 2mm 2.5mm !important;
+    background: #fff !important;
+    color: #111814 !important;
+  }
+
+  .table thead th,
+  .compare-table thead th {
+    background: #f1f4ef !important;
+    font-weight: 700 !important;
+  }
+
+  .table-wrap,
+  .table-scroll {
+    overflow: visible !important;
+  }
+
+  tr,
+  img,
+  svg {
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* تیترها */
+  h1,
+  h2,
+  h3,
+  .page-head__title,
+  .section__title {
+    color: #111814 !important;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  h1,
+  .page-head__title {
+    font-size: 20pt !important;
+    margin-bottom: 3mm !important;
+  }
+
+  h2,
+  .section__title {
+    font-size: 14pt !important;
+    margin-block: 6mm 3mm !important;
+  }
+
+  h3 {
+    font-size: 11.5pt !important;
+  }
+
+  a {
+    color: #075c40 !important;
+    text-decoration: none !important;
+  }
+
+  a[href^="#/"]::after {
+    content: "";
+  }
+
+  /* نمودارها */
+  .score-ring,
+  .donut svg,
+  .sparkline,
+  .col-chart,
+  .hist-row {
+    break-inside: avoid;
+  }
+
+  .score-ring__value {
+    filter: none !important;
+  }
+
+  /* صفحهٔ مقایسه */
+  .compare-header,
+  .compare-row,
+  .compare-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .compare-table {
+    page-break-inside: auto;
+  }
+
+  .compare-table tr {
+    page-break-inside: avoid;
+  }
+
+  /* جزئیات موجودیت */
+  .entity-hero {
+    display: block !important;
+    padding: 5mm !important;
+    margin-bottom: 5mm !important;
+  }
+
+  .entity-hero__media {
+    display: none !important;
+  }
+
+  .rate-widget,
+  .comment-composer,
+  .comments__actions {
+    display: none !important;
+  }
+
+  .comment {
+    break-inside: avoid;
+    border-bottom: 1px solid #e6e9e4 !important;
+    padding-block: 3mm !important;
+  }
+
+  /* لینک‌های طولانی */
+  .url,
+  .mono {
+    word-break: break-all;
+  }
+
+  /* حذف انیمیشن‌ها */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .sr-only,
+  .visually-hidden {
+    display: none !important;
+  }
+}
