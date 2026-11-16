@@ -390,6 +390,10 @@
 
           <!-- Actions -->
           <div class="flex items-center gap-1.5 sm:gap-2">
+            <a href="#/add" id="btn-add-header" class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/30 hover:scale-105 transition-transform" title="ثبت امتیاز جدید">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            </a>
+
             <button id="btn-theme" class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="تغییر تم">
               <svg id="icon-sun" class="w-5 h-5 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               <svg id="icon-moon" class="w-5 h-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
@@ -1018,22 +1022,6 @@
         }).join('');
 
         return `
-          <!-- Compact header -->
-          <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-              <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                لیست <span class="text-gradient">خریدها و امتیازها</span>
-              </h1>
-              <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                همه محصولاتی که کاربران خریده‌اند و امتیاز داده‌اند
-              </p>
-            </div>
-            <a href="#/add" class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-gradient-to-l from-sky-500 to-indigo-600 text-white text-sm font-semibold shadow-lg shadow-sky-500/25 hover:opacity-95 transition-all">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
-              ثبت امتیاز جدید
-            </a>
-          </div>
-
           <!-- Powerful live search -->
           <div class="relative mb-5">
             <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -1345,17 +1333,17 @@
 
         return `
           <div class="max-w-xl mx-auto">
-            <h1 class="text-2xl font-bold mb-1">ثبت امتیاز جدید</h1>
-            <p class="text-slate-500 text-sm mb-8">اول فروشگاه رو پیدا کن یا بساز، بعد امتیاز بده</p>
+            <h1 class="text-2xl font-bold mb-1">ثبت امتیاز</h1>
+            <p class="text-slate-500 text-sm mb-8">امتیاز به <strong>محصول یک فروشگاه</strong> داده می‌شود (مثلاً ساندویچ مرغ از فروشگاه فلان در اسنپ‌فود)</p>
 
-            <!-- Step 1: Shop picker -->
-            <div class="glass rounded-3xl p-6 mb-6">
+            <!-- Step 1: Shop -->
+            <div class="glass rounded-3xl p-6 mb-5">
               <h3 class="font-semibold mb-3 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-sky-500 text-white text-sm flex items-center justify-center">۱</span>
                 فروشگاه
               </h3>
               <div class="relative mb-3">
-                <input id="shop-search-input" type="text" placeholder="نام فروشگاه را بنویس تا پیشنهاد بیاد..." 
+                <input id="shop-search-input" type="text" placeholder="نام فروشگاه را جستجو کن..." 
                   class="w-full h-12 pr-4 pl-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 input-focus text-sm" />
                 <div id="shop-suggestions" class="absolute z-20 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl hidden max-h-60 overflow-y-auto"></div>
               </div>
@@ -1368,38 +1356,47 @@
                   <button onclick="Pages.clearSelectedShop()" class="text-xs text-red-500">حذف</button>
                 </div>
               </div>
-              <button onclick="Pages.openCreateShop()" class="text-sm text-sky-500 hover:underline">فروشگاه در لیست نیست؟ بساز</button>
+              <button onclick="Pages.openCreateShop()" class="text-sm text-sky-500 hover:underline">فروشگاه جدید بساز</button>
             </div>
 
-            <!-- Step 2: Optional product & vendor -->
-            <div class="glass rounded-3xl p-6 mb-6">
+            <!-- Step 2: Product (required) -->
+            <div class="glass rounded-3xl p-6 mb-5">
               <h3 class="font-semibold mb-3 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full bg-indigo-500 text-white text-sm flex items-center justify-center">۲</span>
-                جزئیات (اختیاری)
+                محصول <span class="text-xs font-normal text-red-500">(الزامی)</span>
               </h3>
-              <div class="space-y-4">
-                <div>
-                  <label class="block text-sm mb-1.5">محصول (اگر مربوط به محصول خاصه)</label>
-                  <input id="product-search-input" type="text" placeholder="نام محصول..." disabled
-                    class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm opacity-60" />
-                  <div id="product-suggestions" class="mt-1 hidden"></div>
-                  <input type="hidden" id="selected-product-id" />
-                </div>
-                <div>
-                  <label class="block text-sm mb-1.5">پلتفرم (کجا خرید کردی؟)</label>
-                  <select id="review-vendor" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm">
-                    <option value="">— انتخاب پلتفرم —</option>
-                    ${vendors.map(v => `<option value="${v.id}">${Utils.escape(v.name)}</option>`).join('')}
-                  </select>
+              <div class="relative mb-2">
+                <input id="product-search-input" type="text" placeholder="اول فروشگاه را انتخاب کن..." disabled
+                  class="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm opacity-60 input-focus" />
+                <div id="product-suggestions" class="absolute z-20 left-0 right-0 top-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl hidden max-h-60 overflow-y-auto"></div>
+              </div>
+              <div id="selected-product" class="hidden p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 mb-2">
+                <div class="flex items-center justify-between">
+                  <div class="font-medium" id="sel-product-name"></div>
+                  <button onclick="Pages.clearSelectedProduct()" class="text-xs text-red-500">حذف</button>
                 </div>
               </div>
+              <input type="hidden" id="selected-product-id" />
+              <button id="btn-create-product" onclick="Pages.openCreateProductFromAdd()" class="text-sm text-sky-500 hover:underline hidden">محصول در لیست نیست؟ بساز</button>
             </div>
 
-            <!-- Step 3: Rating -->
+            <!-- Step 3: Platform (optional) -->
+            <div class="glass rounded-3xl p-6 mb-5">
+              <h3 class="font-semibold mb-3 flex items-center gap-2">
+                <span class="w-7 h-7 rounded-full bg-violet-500 text-white text-sm flex items-center justify-center">۳</span>
+                پلتفرم <span class="text-xs font-normal text-slate-400">(اختیاری)</span>
+              </h3>
+              <select id="review-vendor" class="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm">
+                <option value="">— کجا خرید کردی؟ —</option>
+                ${vendors.map(v => `<option value="${v.id}">${Utils.escape(v.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <!-- Step 4: Rating -->
             <div class="glass rounded-3xl p-6 mb-6">
               <h3 class="font-semibold mb-4 flex items-center gap-2">
-                <span class="w-7 h-7 rounded-full bg-pink-500 text-white text-sm flex items-center justify-center">۳</span>
-                امتیازت چیه؟
+                <span class="w-7 h-7 rounded-full bg-pink-500 text-white text-sm flex items-center justify-center">۴</span>
+                امتیاز این محصول
               </h3>
               <div class="grid grid-cols-3 gap-3 mb-5">
                 <button type="button" data-rate="-1" class="rate-btn flex flex-col items-center gap-2 p-4 rounded-2xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30">
@@ -1645,10 +1642,7 @@
               if (r === '-1') btn.classList.add('active-shit');
               else if (r === '0') btn.classList.add('active-mid');
               else btn.classList.add('active-good');
-              document.getElementById('btn-submit-review').disabled = !document.getElementById('selected-shop')?.classList.contains('hidden') === false && r !== '';
-              // enable if shop selected
-              const hasShop = !document.getElementById('selected-shop').classList.contains('hidden');
-              document.getElementById('btn-submit-review').disabled = !(hasShop && r !== '');
+              Pages.updateSubmitBtn();
             };
           });
 
@@ -1684,20 +1678,109 @@
         document.getElementById('selected-shop').dataset.id = id;
         document.getElementById('shop-suggestions').classList.add('hidden');
         document.getElementById('shop-search-input').value = name;
-        document.getElementById('product-search-input').disabled = false;
-        document.getElementById('product-search-input').classList.remove('opacity-60');
-        // enable submit if rating chosen
-        const r = document.getElementById('selected-rating').value;
-        document.getElementById('btn-submit-review').disabled = !r;
+        // Enable product search
+        const prodInput = document.getElementById('product-search-input');
+        prodInput.disabled = false;
+        prodInput.classList.remove('opacity-60');
+        prodInput.placeholder = 'نام محصول را جستجو کن یا بنویس...';
+        document.getElementById('btn-create-product')?.classList.remove('hidden');
+        // Clear previous product
+        Pages.clearSelectedProduct();
+        Pages.updateSubmitBtn();
+        // Bind product search
+        prodInput.oninput = Utils.debounce(async (e) => {
+          const q = e.target.value.trim();
+          const box = document.getElementById('product-suggestions');
+          const shopId = document.getElementById('selected-shop')?.dataset?.id;
+          if (!shopId) return;
+          const list = await API.searchExistingProducts(shopId, q);
+          if (!list.length) {
+            box.innerHTML = `<div class="p-3 text-sm text-slate-400">محصولی پیدا نشد. می‌تونی جدید بسازی.</div>`;
+          } else {
+            box.innerHTML = list.map(p => `
+              <button type="button" class="w-full text-right px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm border-b border-slate-100 dark:border-slate-800 last:border-0"
+                onclick="Pages.selectProduct('${p.id}', '${Utils.escape(p.name).replace(/'/g, "\\'")}')">
+                <div class="font-medium">${Utils.escape(p.name)}</div>
+                <div class="text-xs text-slate-400">${Utils.escape(p.category || '')}</div>
+              </button>
+            `).join('');
+          }
+          box.classList.remove('hidden');
+        }, 280);
       },
 
       clearSelectedShop() {
         document.getElementById('selected-shop').classList.add('hidden');
         document.getElementById('selected-shop').dataset.id = '';
         document.getElementById('shop-search-input').value = '';
-        document.getElementById('product-search-input').disabled = true;
-        document.getElementById('product-search-input').classList.add('opacity-60');
-        document.getElementById('btn-submit-review').disabled = true;
+        const prodInput = document.getElementById('product-search-input');
+        prodInput.disabled = true;
+        prodInput.classList.add('opacity-60');
+        prodInput.placeholder = 'اول فروشگاه را انتخاب کن...';
+        prodInput.value = '';
+        document.getElementById('btn-create-product')?.classList.add('hidden');
+        Pages.clearSelectedProduct();
+        Pages.updateSubmitBtn();
+      },
+
+      selectProduct(id, name) {
+        document.getElementById('selected-product').classList.remove('hidden');
+        document.getElementById('sel-product-name').textContent = name;
+        document.getElementById('selected-product-id').value = id;
+        document.getElementById('product-suggestions').classList.add('hidden');
+        document.getElementById('product-search-input').value = name;
+        Pages.updateSubmitBtn();
+      },
+
+      clearSelectedProduct() {
+        document.getElementById('selected-product')?.classList.add('hidden');
+        document.getElementById('selected-product-id').value = '';
+        const inp = document.getElementById('product-search-input');
+        if (inp && !inp.disabled) inp.value = '';
+        Pages.updateSubmitBtn();
+      },
+
+      updateSubmitBtn() {
+        const shopId = document.getElementById('selected-shop')?.dataset?.id;
+        const productId = document.getElementById('selected-product-id')?.value;
+        const rating = document.getElementById('selected-rating')?.value;
+        const btn = document.getElementById('btn-submit-review');
+        if (btn) btn.disabled = !(shopId && productId && rating !== '');
+      },
+
+      openCreateProductFromAdd() {
+        const shopId = document.getElementById('selected-shop')?.dataset?.id;
+        if (!shopId) return Toast.show('اول فروشگاه را انتخاب کن', 'warn');
+        Modal.open(`
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1.5">نام محصول *</label>
+              <input id="new-prod-name" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 input-focus text-sm" placeholder="مثلاً ساندویچ مرغ" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1.5">دسته</label>
+              <input id="new-prod-cat" class="w-full h-11 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm" value="عمومی" />
+            </div>
+            <button onclick="Pages.createProductFromAdd('${shopId}')" class="w-full h-12 rounded-xl bg-sky-500 text-white font-medium">ایجاد و انتخاب</button>
+          </div>
+        `, { title: 'محصول جدید برای این فروشگاه' });
+      },
+
+      async createProductFromAdd(shopId) {
+        const name = document.getElementById('new-prod-name')?.value?.trim();
+        if (!name) return Toast.show('نام محصول لازم است', 'warn');
+        try {
+          const prod = await API.createProduct({
+            shop_id: shopId,
+            name,
+            category: document.getElementById('new-prod-cat')?.value || 'عمومی'
+          });
+          Modal.close();
+          Toast.show('محصول ساخته شد', 'success');
+          Pages.selectProduct(prod.id, prod.name);
+        } catch (e) {
+          Toast.show(e.message || 'خطا', 'error');
+        }
       },
 
       openCreateShop() {
@@ -1851,20 +1934,21 @@
 
       async submitReview() {
         const shopId = document.getElementById('selected-shop')?.dataset?.id;
+        const productId = document.getElementById('selected-product-id')?.value;
         const rating = parseInt(document.getElementById('selected-rating')?.value, 10);
         if (!shopId) return Toast.show('فروشگاه را انتخاب کنید', 'warn');
+        if (!productId) return Toast.show('محصول را انتخاب کنید (امتیاز به محصولِ فروشگاه داده می‌شود)', 'warn');
         if (isNaN(rating)) return Toast.show('امتیاز را انتخاب کنید', 'warn');
 
         const payload = {
           shop_id: shopId,
+          product_id: productId,
           rating,
           title: document.getElementById('review-title')?.value?.trim() || '',
           content: document.getElementById('review-content')?.value?.trim() || '',
           is_anonymous: document.getElementById('review-anon')?.checked || false,
-          product_id: document.getElementById('selected-product-id')?.value || null,
           vendor_id: document.getElementById('review-vendor')?.value || null
         };
-        if (!payload.product_id) delete payload.product_id;
         if (!payload.vendor_id) delete payload.vendor_id;
 
         try {
