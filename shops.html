@@ -706,6 +706,16 @@
         if (error) throw error;
         return data || [];
       },
+      async getReviewsForTable(limit = 500) {
+        const { data, error } = await sb.from('smr_reviews').select(`
+          id, rating, title, content, created_at, is_anonymous, product_id, vendor_id, shop_id,
+          smr_shops ( id, name, category, city ),
+          smr_products ( id, name ),
+          smr_vendors ( id, name, color_hex )
+        `).order('created_at', { ascending: false }).limit(limit);
+        if (error) throw error;
+        return data || [];
+      },
       async getStats() {
         const [shops, reviews, vendors] = await Promise.all([
           sb.from('smr_shops').select('id', { count: 'exact', head: true }),
@@ -900,51 +910,129 @@
     // -------------------- Pages --------------------
     const Pages = {
       async home() {
-        const [stats, recent, vendors] = await Promise.all([
+        const [stats, reviews, vendors] = await Promise.all([
           API.getStats().catch(() => ({ shops: 0, reviews: 0, vendors: 0 })),
-          API.getRecentReviews(8).catch(() => []),
+          API.getReviewsForTable(400).catch(() => []),
           API.getVendors().catch(() => [])
         ]);
         State.vendors = vendors;
+        State.tableReviews = reviews; // keep for live filter
 
-        const topShops = await API.searchShops({ limit: 6 }).catch(() => ({ data: [] }));
+        const ratingBadge = (r) => {
+          if (r === -1) return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold rating-shit">💩 گند</span>`;
+          if (r === 0) return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold rating-mid">😐 معمولی</span>`;
+          return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold rating-good">👍 خوب</span>`;
+        };
+
+        const rows = reviews.map(r => {
+          const shopName = r.smr_shops?.name || '—';
+          const productName = r.smr_products?.name || '—';
+          const platformName = r.smr_vendors?.name || '—';
+          const platformColor = r.smr_vendors?.color_hex || '#94a3b8';
+          const ratingWord = r.rating === -1 ? 'گند shit' : r.rating === 0 ? 'معمولی notgood' : 'خوب good';
+          const searchText = [
+            shopName, productName, platformName, ratingWord,
+            r.title || '', r.content || '',
+            r.smr_shops?.category || '', r.smr_shops?.city || ''
+          ].join(' ').toLowerCase();
+
+          return `
+            <tr class="table-row border-b border-slate-100 dark:border-slate-800/80 hover:bg-sky-50/60 dark:hover:bg-sky-900/20 transition-colors cursor-pointer"
+                data-search="${Utils.escape(searchText)}"
+                data-rating="${r.rating}"
+                onclick="location.hash='#/shop/${r.shop_id}'">
+              <td class="px-4 py-3.5">
+                <div class="font-medium text-slate-800 dark:text-slate-100">${Utils.escape(shopName)}</div>
+                ${r.smr_shops?.city ? `<div class="text-[11px] text-slate-400 mt-0.5">${Utils.escape(r.smr_shops.city)}</div>` : ''}
+              </td>
+              <td class="px-4 py-3.5 text-slate-600 dark:text-slate-300">${Utils.escape(productName)}</td>
+              <td class="px-4 py-3.5">${ratingBadge(r.rating)}</td>
+              <td class="px-4 py-3.5">
+                <span class="inline-flex items-center gap-1.5 text-sm">
+                  <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${platformColor}"></span>
+                  ${Utils.escape(platformName)}
+                </span>
+              </td>
+            </tr>`;
+        }).join('');
 
         return `
-          <!-- Hero -->
-          <section class="relative rounded-3xl overflow-hidden mb-10 hero-pattern bg-gradient-to-br from-sky-500/10 via-indigo-500/5 to-pink-500/10 border border-slate-200/60 dark:border-slate-800/60 p-6 sm:p-10">
-            <div class="relative z-10 max-w-2xl">
-              <h1 class="text-3xl sm:text-4xl font-extrabold leading-tight mb-3">
-                از خرید <span class="text-gradient">گند</span> جلوگیری کن
+          <!-- Compact header -->
+          <div class="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                لیست <span class="text-gradient">خریدها و امتیازها</span>
               </h1>
-              <p class="text-slate-600 dark:text-slate-300 text-base sm:text-lg mb-6 leading-relaxed">
-                امتیاز بده به فروشگاه‌های آنلاین سوپرمارکت، ساندویچی، میوه‌فروشی و ... 
-                تا همه بدونن کجا خوبه و کجا نباید رفت.
+              <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                همه محصولاتی که کاربران خریده‌اند و امتیاز داده‌اند
               </p>
-              <div class="flex flex-wrap gap-3">
-                <a href="#/search" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/30 transition-all">
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                  جستجوی فروشگاه
-                </a>
-                <a href="#/add" class="inline-flex items-center gap-2 h-12 px-6 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
-                  ثبت امتیاز جدید
-                </a>
-              </div>
             </div>
-            <div class="absolute left-6 bottom-6 hidden lg:flex gap-4 opacity-80">
-              <div class="w-20 h-20 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur flex items-center justify-center text-3xl animate-float">🛒</div>
-              <div class="w-16 h-16 rounded-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur flex items-center justify-center text-2xl animate-float" style="animation-delay:1s">⭐</div>
-            </div>
-          </section>
+            <a href="#/add" class="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-2xl bg-gradient-to-l from-sky-500 to-indigo-600 text-white text-sm font-semibold shadow-lg shadow-sky-500/25 hover:opacity-95 transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M12 4v16m8-8H4"/></svg>
+              ثبت امتیاز جدید
+            </a>
+          </div>
 
-          <!-- Stats -->
-          <section class="grid grid-cols-3 gap-3 sm:gap-4 mb-10">
+          <!-- Powerful live search -->
+          <div class="relative mb-5">
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+              <svg class="w-5 h-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+            </div>
+            <input id="table-live-search" type="search" autocomplete="off"
+              placeholder="جستجو در فروشگاه، محصول، امتیاز، پلتفرم، شهر، توضیحات..."
+              class="w-full h-14 pr-12 pl-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm text-base input-focus transition-all placeholder:text-slate-400" />
+            <div id="table-search-count" class="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-400 hidden sm:block"></div>
+          </div>
+
+          <!-- Quick filter chips -->
+          <div class="flex flex-wrap gap-2 mb-5">
+            <button data-rate-filter="" class="rate-filter-chip chip active px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">همه</button>
+            <button data-rate-filter="1" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">👍 خوب</button>
+            <button data-rate-filter="0" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">😐 معمولی</button>
+            <button data-rate-filter="-1" class="rate-filter-chip chip px-3.5 py-1.5 rounded-full text-xs border border-slate-200 dark:border-slate-700 font-medium">💩 گند</button>
+          </div>
+
+          <!-- Main table -->
+          <div class="glass rounded-2xl overflow-hidden border border-slate-200/70 dark:border-slate-800 shadow-card">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-right" id="reviews-table">
+                <thead>
+                  <tr class="bg-slate-50/80 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider">
+                    <th class="px-4 py-3.5 font-semibold whitespace-nowrap">فروشگاه</th>
+                    <th class="px-4 py-3.5 font-semibold whitespace-nowrap">محصول خریداری‌شده</th>
+                    <th class="px-4 py-3.5 font-semibold whitespace-nowrap">امتیاز</th>
+                    <th class="px-4 py-3.5 font-semibold whitespace-nowrap">پلتفرم</th>
+                  </tr>
+                </thead>
+                <tbody id="reviews-tbody">
+                  ${rows || `
+                    <tr>
+                      <td colspan="4" class="px-4 py-16 text-center text-slate-400">
+                        <div class="text-4xl mb-3">📭</div>
+                        <div class="text-sm">هنوز هیچ خریدی ثبت نشده</div>
+                        <a href="#/add" class="inline-block mt-4 text-sky-500 hover:underline text-sm">اولین امتیاز را ثبت کنید</a>
+                      </td>
+                    </tr>`}
+                </tbody>
+              </table>
+            </div>
+            <div id="table-empty-filter" class="hidden px-4 py-14 text-center text-slate-400">
+              <div class="text-3xl mb-2">🔍</div>
+              <div class="text-sm">نتیجه‌ای با این فیلتر پیدا نشد</div>
+            </div>
+          </div>
+
+          <!-- Stats strip after table -->
+          <section class="grid grid-cols-3 gap-3 sm:gap-4 mt-8 mb-8">
             <div class="glass rounded-2xl p-4 sm:p-5 text-center">
               <div class="text-2xl sm:text-3xl font-bold text-sky-500">${Utils.toFa(stats.shops)}</div>
               <div class="text-xs sm:text-sm text-slate-500 mt-1">فروشگاه</div>
             </div>
             <div class="glass rounded-2xl p-4 sm:p-5 text-center">
               <div class="text-2xl sm:text-3xl font-bold text-indigo-500">${Utils.toFa(stats.reviews)}</div>
-              <div class="text-xs sm:text-sm text-slate-500 mt-1">امتیاز</div>
+              <div class="text-xs sm:text-sm text-slate-500 mt-1">امتیاز ثبت‌شده</div>
             </div>
             <div class="glass rounded-2xl p-4 sm:p-5 text-center">
               <div class="text-2xl sm:text-3xl font-bold text-pink-500">${Utils.toFa(stats.vendors)}</div>
@@ -952,13 +1040,13 @@
             </div>
           </section>
 
-          <!-- Vendors strip -->
-          <section class="mb-10">
+          <!-- Platforms quick access -->
+          <section class="mb-6">
             <div class="flex items-center justify-between mb-4">
               <h2 class="font-bold text-lg">پلتفرم‌ها</h2>
-              <a href="#/vendors" class="text-sm text-sky-500 hover:underline">همه</a>
+              <a href="#/vendors" class="text-sm text-sky-500 hover:underline">مشاهده همه</a>
             </div>
-            <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 scrollbar-hide">
+            <div class="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
               ${vendors.slice(0, 10).map(v => `
                 <a href="#/vendor/${v.id}" class="flex-shrink-0 flex flex-col items-center gap-2 w-20 group">
                   <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-md group-hover:scale-105 transition-transform" style="background:${v.color_hex || '#0ea5e9'}">
@@ -967,25 +1055,6 @@
                   <span class="text-xs text-center line-clamp-2 leading-tight">${Utils.escape(v.name)}</span>
                 </a>
               `).join('')}
-            </div>
-          </section>
-
-          <!-- Recent shops -->
-          <section class="mb-10">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="font-bold text-lg">فروشگاه‌های اخیر</h2>
-              <a href="#/search" class="text-sm text-sky-500 hover:underline">مشاهده همه</a>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              ${(topShops.data || []).map(s => Components.shopCard(s)).join('') || Components.empty('هنوز فروشگاهی ثبت نشده')}
-            </div>
-          </section>
-
-          <!-- Recent reviews -->
-          <section>
-            <h2 class="font-bold text-lg mb-4">آخرین امتیازها</h2>
-            <div class="space-y-3">
-              ${recent.map(r => Components.reviewMini(r)).join('') || Components.empty('هنوز امتیازی ثبت نشده')}
             </div>
           </section>
         `;
@@ -1418,7 +1487,52 @@
 
       // ---------- Helpers inside Pages ----------
       afterRender(page) {
-        // Global search
+        // ===== Live table search + rating filter (Home) =====
+        if (page === 'home') {
+          const input = document.getElementById('table-live-search');
+          const tbody = document.getElementById('reviews-tbody');
+          const emptyEl = document.getElementById('table-empty-filter');
+          const countEl = document.getElementById('table-search-count');
+          let currentRate = '';
+
+          const applyFilter = () => {
+            if (!tbody) return;
+            const q = (input?.value || '').trim().toLowerCase();
+            const rows = tbody.querySelectorAll('tr.table-row');
+            let visible = 0;
+            rows.forEach(row => {
+              const text = (row.getAttribute('data-search') || '').toLowerCase();
+              const rowRating = row.getAttribute('data-rating');
+              const ratingOk = currentRate === '' || rowRating === currentRate;
+              const textOk = !q || text.includes(q);
+              const show = textOk && ratingOk;
+              row.style.display = show ? '' : 'none';
+              if (show) visible++;
+            });
+            if (emptyEl) emptyEl.classList.toggle('hidden', visible > 0 || rows.length === 0);
+            if (tbody) tbody.style.display = (visible === 0 && rows.length > 0) ? 'none' : '';
+            if (countEl) {
+              countEl.textContent = (q || currentRate) ? `${Utils.toFa(visible)} نتیجه` : '';
+            }
+          };
+
+          if (input) {
+            input.addEventListener('input', Utils.debounce(applyFilter, 180));
+            // Focus for better UX
+            setTimeout(() => input.focus(), 300);
+          }
+
+          document.querySelectorAll('.rate-filter-chip').forEach(btn => {
+            btn.addEventListener('click', () => {
+              document.querySelectorAll('.rate-filter-chip').forEach(b => b.classList.remove('active'));
+              btn.classList.add('active');
+              currentRate = btn.getAttribute('data-rate-filter') || '';
+              applyFilter();
+            });
+          });
+        }
+
+        // Global search (header)
         const gSearch = document.getElementById('global-search');
         if (gSearch) {
           gSearch.oninput = Utils.debounce((e) => {
@@ -1435,7 +1549,7 @@
           }, 400);
         }
 
-        // Filter chips
+        // Filter chips (search page)
         document.querySelectorAll('[data-filter]').forEach(btn => {
           btn.onclick = () => {
             const key = btn.getAttribute('data-filter');
