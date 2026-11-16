@@ -2,6 +2,20 @@
    Entry point
    ============================================================ */
 import { bootApp } from './app.js';
+import { initTheme } from './components/theme.js';
+
+// Theme must be applied before any rendering to avoid flash
+initTheme();
+
+// Register Service Worker (PWA)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // مسیر SW هم باید نسبی باشد
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => console.log('[SW] registered', reg.scope))
+      .catch((err) => console.warn('[SW] registration failed', err));
+  });
+}
 
 bootApp().catch((err) => {
   console.error('[boot]', err);

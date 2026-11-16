@@ -10,7 +10,6 @@ export function generateSlug(n = 10) {
   return out;
 }
 
-/** Build a denormalized, portable snapshot for a shop */
 export function buildShopSnapshot(shopId, purchases) {
   const shop = store.shops.get().find((s) => s.id === shopId);
   if (!shop) throw new Error('فروشگاه یافت نشد');
@@ -57,11 +56,7 @@ export function buildShopSnapshot(shopId, purchases) {
 
   return {
     type: 'shop',
-    shop: {
-      name: shop.name,
-      category: shop.category || '',
-      note: shop.note || '',
-    },
+    shop: { name: shop.name, category: shop.category || '', note: shop.note || '' },
     stats: { total: items.length, good, bad, shit, spent },
     recent,
     products,
@@ -69,7 +64,6 @@ export function buildShopSnapshot(shopId, purchases) {
   };
 }
 
-/** Build a denormalized snapshot for a product */
 export function buildProductSnapshot(productId, purchases) {
   const product = store.products.get().find((p) => p.id === productId);
   if (!product) throw new Error('محصول یافت نشد');
@@ -85,7 +79,6 @@ export function buildProductSnapshot(productId, purchases) {
     if (p.price != null) spent += Number(p.price) * (Number(p.quantity) || 1);
   }
 
-  // Shops that sold this product + their stats
   const shopMap = new Map();
   for (const p of items) {
     const key = p.shop_id;
@@ -128,19 +121,22 @@ export function buildProductSnapshot(productId, purchases) {
   };
 }
 
-/** Build public URL for a slug */
 export function shareUrl(slug) {
-  const base = `${window.location.origin}${window.location.pathname}`.replace(/\/+$/, '');
-  return `${base || window.location.origin}/?share=${slug}`;
+  const url = new URL(window.location.href);
+  url.search = ''; // پاک کردن کوئری‌های قبلی
+  url.hash = '';
+  // حذف index.html از انتهای مسیر اگر وجود داشت
+  url.pathname = url.pathname.replace(/index\.html$/, '');
+  url.searchParams.set('share', slug);
+  return url.toString();
 }
 
-/** Read slug from current URL if this is a share page */
 export function readShareSlugFromUrl() {
   try {
     const u = new URL(window.location.href);
     const fromQuery = u.searchParams.get('share');
     if (fromQuery) return fromQuery;
-    const m = u.pathname.match(/^\/s\/([a-z0-9]+)$/i);
+    const m = u.pathname.match(/\/s\/([a-z0-9]+)$/i);
     if (m) return m[1];
   } catch {}
   return null;
