@@ -1,89 +1,186 @@
 /* ============================================================
-   App bootstrap + minimal shell (this file grows in next messages)
+   App bootstrap + routing (login ↔ home)
    ============================================================ */
 import { sb } from './supabase.js';
 import { CONFIG } from './config.js';
 import { store, restoreFiltersFromStorage } from './state.js';
-import { $, escapeHtml } from './utils.js';
+import { loadAllData } from './api.js';
+import { el, escapeHtml } from './utils.js';
+import { mountHeader } from './components/header.js';
+import { renderLogin } from './components/login.js';
+import { initToast, notify } from './components/toast.js';
+import { icon } from './components/icons.js';
+
+let currentRoute = null; // 'login' | 'home'
+let headerEl = null;
+let mainEl = null;
 
 export async function bootApp() {
   const root = document.getElementById('app');
   if (!root) return;
 
   restoreFiltersFromStorage();
+  initToast();
 
-  // 1) initial shell (placeholder)
-  root.innerHTML = renderShell();
-
-  // 2) auth
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    store.user.set(session.user);
-    store.session.set(session);
-    // TODO: load data — next messages
-    setStatus('در حال آماده‌سازی داده‌ها…');
-  } else {
-    setStatus('لطفاً وارد حساب کاربری خود شوید');
-    // TODO: login screen — next messages
+  // initial session check
+  let session = null;
+  try {
+    const res = await sb.auth.getSession();
+    session = res?.data?.session ?? null;
+  } catch (err) {
+    console.error('[auth.getSession]', err);
   }
 
-  // 3) listen to auth changes
-  sb.auth.onAuthStateChange((_event, sess) => {
-    store.user.set(sess?.user ?? null);
-    store.session.set(sess ?? null);
-    // TODO: reload data or navigate to login
+  await route(root, session);
+
+  sb.auth.onAuthStateChange(async (event, sess) => {
+    if (event === 'SIGNED_IN' && sess) await route(root, sess);
+    else if (event === 'SIGNED_OUT') await route(root, null);
+    else if (event === 'USER_UPDATED' && sess) {
+      store.user.set(sess.user);
+      store.session.set(sess);
+    }
   });
 }
 
-function setStatus(text) {
-  const el = document.getElementById('shell-status');
-  if (el) el.textContent = text;
+/* ---------- routing ---------- */
+
+async function route(root, session) {
+  if (!session?.user) {
+    if (currentRoute === 'login') return;
+    currentRoute = 'login';
+    headerEl = null;
+    mainEl = null;
+    renderLogin(root);
+    return;
+  }
+
+  // already in the app
+  if (currentRoute === 'home' && store.user.get()?.id === session.user.id) {
+    store.user.set(session.user);
+    store.session.set(session);
+    return;
+  }
+
+  currentRoute = 'home';
+  store.user.set(session.user);
+  store.session.set(session);
+
+  await enterApp(root);
 }
 
-/* ---------- minimal shell HTML ---------- */
+/* ---------- enter app ---------- */
 
-function renderShell() {
-  return `
-    <header class="site-header">
-      <div class="container site-header__inner">
-        <a class="brand" href="/" aria-label="خانه">
-          <span class="brand__mark">
-            <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <path d="M6 10h20l-2.5 15h-15L6 10z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M11 10a5 5 0 0 1 10 0" stroke="white" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </span>
-          <span class="brand__text">
-            <span class="brand__title">${escapeHtml(CONFIG.appName)}</span>
-            <span class="brand__sub">${escapeHtml(CONFIG.appTagline)}</span>
-          </span>
-        </a>
-        <div class="header-actions">
-          <span id="shell-status" style="color:var(--text-3);font-size:var(--fs-sm)">
-            در حال راه‌اندازی…
-          </span>
-        </div>
-      </div>
-    </header>
+async function enterApp(root) {
+  root.innerHTML = '';
+  root.appendChild(renderBootLoading());
 
-    <main class="container page">
-      <div style="
-        border:1px dashed var(--border-2);
-        border-radius:var(--r-xl);
-        padding:var(--s-8);
-        text-align:center;
-        color:var(--text-3);
-        background:var(--surface-1);
-      ">
-        <div style="font-size:28px;margin-bottom:var(--s-3)">🛒</div>
-        <div style="font-size:var(--fs-lg);font-weight:var(--fw-bold);color:var(--text-1);margin-bottom:var(--s-2)">
-          اسکلت اولیه آماده است
-        </div>
-        <div style="font-size:var(--fs-sm);max-width:520px;margin-inline:auto;line-height:1.7">
-          در پیام‌های بعدی لایهٔ جستجوی زنده، فیلترها، جدول خریدها،
-          مودال افزودن خرید، و صفحهٔ ورود تکمیل می‌شود.
-        </div>
-      </div>
-    </main>
-  `;
+  try {
+    await loadAllData();
+  } catch (err) {
+    console.error('[loadAllData]', err);
+    root.innerHTML = '';
+    root.appendChild(renderLoadError(err));
+    return;
+  }
+
+  root.innerHTML = '';
+  headerEl = mountHeader({
+    onSearch: handleSearch,
+    onAdd: handleAddPurchase,
+    onOpenSettings: () => notify.info('تنظیمات در پیام بعدی می‌آید'),
+  });
+  mainEl = el('main', { class: 'container page', id: 'app-main' });
+  mainEl.appendChild(renderHomeShell());
+  root.append(headerEl, mainEl);
+
+  store.ready.set(true);
+}
+
+function renderBootLoading() {
+  return el('div', { class: 'boot-loading' }, [
+    el('div', { class: 'boot-loading__ring' }),
+    el('div', { class: 'boot-loading__text', text: 'در حال بارگذاری داده‌ها…' }),
+  ]);
+}
+
+function renderLoadError(err) {
+  return el('div', { class: 'error-page' }, [
+    el('div', {}, [
+      el('div', { class: 'error-page__icon', html: icon('alert', 32) }),
+      el('div', { class: 'error-page__title', text: 'بارگذاری ناموفق بود' }),
+      el('div', { class: 'error-page__msg', text: String(err?.message || err) }),
+      el('button', {
+        class: 'btn btn--primary btn--lg',
+        type: 'button',
+        html: `${icon('refresh', 16)}<span>تلاش دوباره</span>`,
+        onclick: () => location.reload(),
+      }),
+    ]),
+  ]);
+}
+
+/* ---------- home shell (placeholder until table component lands) ---------- */
+
+function renderHomeShell() {
+  const wrap = el('div', { id: 'home-shell', style: { display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' } });
+
+  const platforms = store.platforms.get();
+  const shops = store.shops.get();
+  const products = store.products.get();
+  const purchases = store.purchases.get();
+
+  // stats strip
+  const good = purchases.filter((p) => p.rating === 'good').length;
+  const bad = purchases.filter((p) => p.rating === 'bad').length;
+  const shit = purchases.filter((p) => p.rating === 'shit').length;
+
+  const stats = el('div', { class: 'stats-strip' }, [
+    statCard('کل خریدها', purchases.length, ''),
+    statCard('خرید خوب', good, 'var(--good-2)'),
+    statCard('نچندان خوب', bad, 'var(--bad-2)'),
+    statCard('افتضاح', shit, 'var(--shit-2)'),
+    statCard('فروشگاه‌ها', shops.length, ''),
+    statCard('محصولات', products.length, ''),
+    statCard('پلتفرم‌ها', platforms.length, ''),
+  ]);
+
+  const empty = el('div', { class: 'empty-state' }, [
+    el('div', { class: 'empty-state__icon', html: icon('cart', 32) }),
+    el('div', { class: 'empty-state__title', text: 'اولین خریدت را ثبت کن' }),
+    el('div', { class: 'empty-state__desc',
+      text: 'روی «ثبت خرید» بزن، فروشگاه، پلتفرم و محصول را انتخاب کن و امتیاز بده. جدول خریدها با جستجوی زنده در همین صفحه نمایش داده می‌شود.' }),
+    el('button', {
+      class: 'btn btn--primary btn--lg', type: 'button',
+      html: `${icon('plus', 16)}<span>ثبت خرید</span>`,
+      onclick: handleAddPurchase,
+    }),
+  ]);
+
+  wrap.append(stats, empty);
+  return wrap;
+}
+
+function statCard(label, value, color) {
+  return el('div', { class: 'stat-card' }, [
+    el('div', { class: 'stat-card__label', text: label }),
+    el('div', {
+      class: 'stat-card__value',
+      style: color ? { color } : {},
+      text: String(value).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]),
+    }),
+  ]);
+}
+
+/* ---------- handlers ---------- */
+
+function handleSearch(query) {
+  // Placeholder — the real table filtering will land in the next message.
+  // We keep this hook so the table picks up store.filters on its own.
+  // console.debug('[search]', query);
+}
+
+function handleAddPurchase() {
+  // Will open the purchase modal in the next message.
+  notify.info('مودال ثبت خرید در پیام بعدی اضافه می‌شود');
 }
