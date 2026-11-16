@@ -7,6 +7,12 @@
   <title>سوپرمارکت‌یار — دفترچهٔ خرید و امتیاز فروشگاه‌ها</title>
   <meta name="description" content="دفترچهٔ شخصی خرید و امتیازدهی به فروشگاه‌ها و محصولات آنلاین" />
 
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%2322d3ee'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M9 12h14l-2 11H11L9 12z' stroke='white' stroke-width='1.8' fill='none' stroke-linejoin='round'/%3E%3Cpath d='M12.5 12a3.5 3.5 0 0 1 7 0' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="سوپرمارکت‌یار" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" />
@@ -19,12 +25,14 @@
   <link rel="stylesheet" href="/assets/css/modals.css" />
   <link rel="stylesheet" href="/assets/css/pages.css" />
 
+  <!-- DEBUG WATCHDOG — remove this line + /assets/js/debug.js to disable -->
+  <script src="/assets/js/debug.js"></script>
+
   <!-- Supabase UMD (sets window.supabase) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div id="app" class="app-root" aria-live="polite">
-    <!-- Initial minimal splash so the user sees something before JS boots -->
     <div class="boot-splash">
       <div class="boot-splash__mark">
         <svg viewBox="0 0 64 64" width="56" height="56" fill="none" aria-hidden="true">
