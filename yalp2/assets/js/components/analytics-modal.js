@@ -1,0 +1,197 @@
+/* ============================================================
+   Analytics modal — summary + charts
+   ============================================================ */
+import { store } from '../state.js';
+import { el, formatNumber, formatPrice, escapeHtml } from '../utils.js';
+import { icon } from './icons.js';
+import { mountModal } from './modal-shell.js';
+import { hBarChart, vBarChart, donutChart, pickColor } from './charts.js';
+import { purchaseStats } from '../api.js';
+
+export function openAnalyticsModal() {
+  const bodyHost = el('div', { class: 'analytics-body' });
+
+  const { close } = mountModal({
+    title: 'تحلیل خریدها',
+    subtitle: 'نگاه عمیق به عادت‌های خریدت',
+    size: 'xl',
+    body: [bodyHost],
+    footer: [
+      el('button', {
+        type: 'button', class: 'btn btn--ghost btn--lg', text: 'بستن',
+        onclick: () => close(),
+      }),
+    ],
+  });
+
+  function render() {
+    bodyHost.innerHTML = '';
+    const purchases = store.purchases.get();
+    const stats = purchaseStats(purchases);
+
+    if (!purchases.length) {
+      bodyHost.appendChild(el('div', { class: 'empty-state' }, [
+        el('div', { class: 'empty-state__icon', html: icon('barChart', 32) }),
+        el('div', { class: 'empty-state__title', text: 'داده‌ای برای تحلیل نیست' }),
+        el('div', { class: 'empty-state__desc',
+          text: 'چند خرید ثبت کن تا نمودارها اینجا ظاهر شوند.' }),
+      ]));
+      return;
+    }
+
+    // 1) summary cards
+    const goodPct = Math.round((stats.good / stats.total) * 100);
+    const shitPct = Math.round((stats.shit / stats.total) * 100);
+    bodyHost.appendChild(el('div', { class: 'analytics-summary' }, [
+      summaryCard('کل خریدها', formatNumber(stats.total), 'brand'),
+      summaryCard('خرید خوب', `${formatNumber(stats.good)} (${formatNumber(goodPct)}٪)`, 'good'),
+      summaryCard('افتضاح', `${formatNumber(stats.shit)} (${formatNumber(shitPct)}٪)`, 'shit'),
+      summaryCard('مجموع هزینه', formatPrice(stats.totalSpent), 'cyan'),
+    ]));
+
+    // 2) grid of charts
+    const grid = el('div', { class: 'analytics-grid' });
+
+    // --- top good shops ---
+    grid.appendChild(renderPanel({
+      title: 'بهترین فروشگاه‌ها',
+      subtitle: 'بر اساس تعداد خریدهای خوب',
+      icon: 'star',
+      content: buildTopShops(purchases, 'good', 5, 'good'),
+    }));
+
+    // --- top shit shops ---
+    grid.appendChild(renderPanel({
+      title: 'فروشگاه‌های مشکل‌دار',
+      subtitle: 'بر اساس تعداد خریدهای افتضاح',
+      icon: 'alert',
+      content: buildTopShops(purchases, 'shit', 5, 'shit'),
+    }));
+
+    // --- monthly timeline ---
+    grid.appendChild(renderPanel({
+      title: 'روند ماهانه',
+      subtitle: 'تعداد خرید در ۶ ماه اخیر',
+      icon: 'calendar',
+      content: buildMonthlyTimeline(purchases),
+      wide: false,
+    }));
+
+    // --- platform distribution ---
+    grid.appendChild(renderPanel({
+      title: 'پلتفرم‌ها',
+      subtitle: 'توزیع خرید بر اساس پلتفرم',
+      icon: 'layers',
+      content: buildPlatformDistribution(purchases),
+    }));
+
+    // --- top products (full-width) ---
+    grid.appendChild(renderPanel({
+      title: 'پرتکرارترین محصولات',
+      subtitle: 'محصولاتی که بیش از همه خریدی',
+      icon: 'package',
+      content: buildTopProducts(purchases, 8),
+      wide: true,
+    }));
+
+    bodyHost.appendChild(grid);
+  }
+
+  function summaryCard(label, value, tone) {
+    return el('div', { class: `analytics-stat analytics-stat--${tone}` }, [
+      el('div', { class: 'analytics-stat__label', text: label }),
+      el('div', { class: 'analytics-stat__value', text: value }),
+    ]);
+  }
+
+  function renderPanel({ title, subtitle, icon: iconName, content, wide }) {
+    const panel = el('div', { class: 'analytics-panel' + (wide ? ' analytics-panel--wide' : '') });
+    panel.appendChild(el('div', { class: 'analytics-panel__header' }, [
+      el('div', { class: 'analytics-panel__icon', html: icon(iconName, 16) }),
+      el('div', {}, [
+        el('div', { class: 'analytics-panel__title', text: title }),
+        subtitle ? el('div', { class: 'analytics-panel__sub', text: subtitle }) : null,
+      ].filter(Boolean)),
+    ]));
+    const body = el('div', { class: 'analytics-panel__body' });
+    if (content && content.nodeType) body.appendChild(content);
+    else body.innerHTML = content;
+    panel.appendChild(body);
+    return panel;
+  }
+
+  function buildTopShops(purchases, ratingKey, limit, tone) {
+    const counts = new Map();
+    for (const p of purchases) {
+      if (p.rating !== ratingKey) continue;
+      const k = p.shop_id;
+      const name = p.shop?.name || '—';
+      const cur = counts.get(k) || { label: name, value: 0 };
+      cur.value++;
+      counts.set(k, cur);
+    }
+    const items = [...counts.values()]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, limit);
+    if (!items.length) {
+      return `<div class="chart-empty">${
+        ratingKey === 'good' ? 'هنوز خرید خوبی ثبت نکردی' : 'خوشبختانه خرید افتضاحی نداشتی'
+      }</div>`;
+    }
+    const color = tone === 'good' ? 'linear-gradient(90deg, #10b981, #34d399)' :
+                  tone === 'shit' ? 'linear-gradient(90deg, #ef4444, #f87171)' :
+                  'var(--brand-grad)';
+    return hBarChart(items.map((i) => ({ ...i, color })));
+  }
+
+  function buildTopProducts(purchases, limit) {
+    const counts = new Map();
+    for (const p of purchases) {
+      const k = p.product_id;
+      const name = p.product?.name || '—';
+      const cur = counts.get(k) || { label: name, value: 0 };
+      cur.value++;
+      counts.set(k, cur);
+    }
+    const items = [...counts.values()].sort((a, b) => b.value - a.value).slice(0, limit);
+    return hBarChart(items.map((i, idx) => ({ ...i, color: pickColor(idx) })));
+  }
+
+  function buildMonthlyTimeline(purchases) {
+    const now = new Date();
+    const months = [];
+    const monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+      'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    // Use Gregorian month mapping to Persian calendar approximately
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = new Intl.DateTimeFormat('fa-IR', { month: 'short' }).format(d);
+      const total = purchases.filter((p) => {
+        const pd = new Date(p.purchased_at || p.created_at);
+        return pd.getFullYear() === d.getFullYear() && pd.getMonth() === d.getMonth();
+      }).length;
+      months.push({ label, value: total, color: 'var(--brand-grad)' });
+    }
+    return vBarChart(months, { height: 200 });
+  }
+
+  function buildPlatformDistribution(purchases) {
+    const counts = new Map();
+    let unassigned = 0;
+    for (const p of purchases) {
+      if (!p.platform_id) { unassigned++; continue; }
+      const k = p.platform_id;
+      const name = p.platform?.name || '—';
+      const color = p.platform?.color || pickColor(counts.size);
+      const cur = counts.get(k) || { label: name, value: 0, color };
+      cur.value++;
+      counts.set(k, cur);
+    }
+    const items = [...counts.values()].sort((a, b) => b.value - a.value);
+    if (unassigned) items.push({ label: 'بدون پلتفرم', value: unassigned, color: '#4b5563' });
+    return donutChart(items, { size: 190 });
+  }
+
+  store.purchases.subscribe(render);
+  render();
+}

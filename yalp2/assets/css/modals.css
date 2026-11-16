@@ -1,223 +1,252 @@
 
 /* ============================================================
-   APPEND — Picker, Purchase Form, Rating Selector, Confirm
+   APPEND #2 — Settings modal
    ============================================================ */
 
-/* ---------- Picker ---------- */
-.picker { position: relative; width: 100%; }
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-4);
+}
 
-.picker__trigger {
+.settings-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  border-radius: var(--r-lg);
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.settings-tabs::-webkit-scrollbar { display: none; }
+
+.settings-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: calc(var(--r-lg) - 4px);
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  transition: all var(--t-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.settings-tab:hover { color: var(--text-1); background: var(--surface-2); }
+.settings-tab.is-active {
+  background: var(--brand-soft);
+  color: var(--violet-1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+.settings-tab__icon { display: grid; place-items: center; }
+.settings-tab__icon svg { width: 15px; height: 15px; }
+
+.settings-section { display: flex; flex-direction: column; gap: var(--s-4); }
+
+.settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-4);
+}
+.settings-header__title {
   display: flex;
   align-items: center;
   gap: var(--s-2);
-  width: 100%;
-  height: 40px;
-  padding: 0 var(--s-3);
-  border-radius: var(--r-md);
-  border: 1px solid var(--border-2);
-  background: var(--surface-1);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-bold);
   color: var(--text-1);
-  font-size: var(--fs-md);
-  text-align: right;
-  transition: all var(--t-fast);
 }
-.picker__trigger:hover { border-color: var(--border-3); background: var(--surface-2); }
-.picker.is-open .picker__trigger {
-  border-color: var(--border-brand);
-  background: var(--surface-2);
-  box-shadow: 0 0 0 4px var(--brand-soft);
+.settings-header__sub {
+  font-size: var(--fs-sm);
+  color: var(--text-3);
+  margin-top: var(--s-1);
 }
-.picker__value { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.picker__value.is-placeholder { color: var(--text-4); }
-.picker__chevron { width: 14px; height: 14px; color: var(--text-3); display: grid; place-items: center; flex-shrink: 0; transition: transform var(--t-fast); }
-.picker.is-open .picker__chevron { transform: rotate(180deg); }
 
-.picker__popover {
-  position: fixed;
-  display: none;
+.settings-list {
+  display: flex;
   flex-direction: column;
-  background: #0f0f1a;
-  border: 1px solid var(--border-2);
-  border-radius: var(--r-lg);
-  box-shadow: var(--sh-lg);
-  z-index: 9999;
-  max-height: 360px;
-  overflow: hidden;
-  animation: menu-pop 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 4px;
 }
-.picker__search {
+.settings-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border-1);
+  gap: var(--s-3);
+  padding: var(--s-3);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  transition: background var(--t-fast), border-color var(--t-fast);
+}
+.settings-row:hover { background: var(--surface-2); border-color: var(--border-2); }
+
+.settings-row__icon { flex-shrink: 0; }
+.settings-row__dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin: 6px;
+}
+.settings-row__main { flex: 1; min-width: 0; }
+.settings-row__title {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-semibold);
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.settings-row__sub {
+  font-size: var(--fs-xs);
+  color: var(--text-4);
+  margin-top: 2px;
+}
+.settings-row__actions {
+  display: flex;
+  gap: 2px;
   flex-shrink: 0;
 }
-.picker__search svg { width: 14px; height: 14px; color: var(--text-3); flex-shrink: 0; }
-.picker__search-input {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  outline: none;
-  font-size: var(--fs-sm);
-  color: var(--text-1);
-  font-family: inherit;
-  min-width: 0;
+.settings-row__actions .btn--icon {
+  width: 30px; height: 30px;
+  color: var(--text-3);
 }
-.picker__search-input::placeholder { color: var(--text-4); }
+.settings-row__actions .btn--icon:hover { color: var(--text-1); background: var(--surface-3); }
+.settings-row__actions .btn--icon.is-danger:hover { color: var(--shit-2); background: var(--shit-soft); }
 
-.picker__list {
-  overflow-y: auto;
-  max-height: 240px;
-  padding: 4px;
-}
-.picker__item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
-  text-align: right;
-  color: var(--text-2);
-  font-size: var(--fs-sm);
-  transition: background var(--t-fast), color var(--t-fast);
-}
-.picker__item:hover { background: var(--surface-2); color: var(--text-1); }
-.picker__item.is-selected { background: var(--brand-soft); color: var(--violet-1); }
-
-.picker__empty {
-  padding: 24px 12px;
+.settings-empty {
+  padding: var(--s-8) var(--s-4);
   text-align: center;
   color: var(--text-4);
   font-size: var(--fs-sm);
-}
-
-.picker__create-btn {
-  border-top: 1px solid var(--border-1);
-  padding: 10px 12px;
-  text-align: center;
-  color: var(--violet-1);
-  font-size: var(--fs-sm);
-  font-weight: var(--fw-semibold);
-  width: 100%;
-  transition: background var(--t-fast);
-}
-.picker__create-btn:hover { background: var(--surface-2); }
-
-.picker__create-form {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-top: 1px solid var(--border-1);
-  overflow-y: auto;
-}
-.picker__create-form .input { height: 34px; font-size: var(--fs-sm); }
-.picker__create-actions { display: flex; gap: 8px; justify-content: flex-end; }
-
-/* Picker item internals */
-.picker-item-row { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; }
-.picker-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.picker-item-meta { font-size: var(--fs-xxs); color: var(--text-4); flex-shrink: 0; }
-.picker-item-avatar {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: var(--brand-grad);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  font-weight: var(--fw-bold);
-  flex-shrink: 0;
-}
-.picker-item-avatar--indigo { background: linear-gradient(135deg, #6366f1, #3b82f6); }
-.picker-item-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 6px currentColor; }
-
-/* ---------- Purchase form ---------- */
-.purchase-form { display: flex; flex-direction: column; gap: var(--s-4); }
-.purchase-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); }
-@media (max-width: 600px) {
-  .purchase-form__row { grid-template-columns: 1fr; }
-}
-
-/* ---------- Rating selector ---------- */
-.rating-selector {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--s-2);
-}
-.rating-selector__opt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: var(--s-3);
+  border: 1px dashed var(--border-2);
   border-radius: var(--r-md);
-  border: 1px solid var(--border-2);
-  background: var(--surface-1);
-  color: var(--text-2);
-  transition: all var(--t-fast);
-  cursor: pointer;
 }
-.rating-selector__opt:hover { border-color: var(--border-3); background: var(--surface-2); }
-.rating-selector__icon {
-  font-size: 18px;
-  font-weight: var(--fw-bold);
+
+.settings-cards-grid {
   display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  margin-bottom: 4px;
-}
-.rating-selector__label { font-size: var(--fs-sm); font-weight: var(--fw-bold); }
-.rating-selector__desc { font-size: var(--fs-xxs); color: var(--text-4); font-weight: var(--fw-normal); }
-
-.rating-selector__opt--good .rating-selector__icon { background: var(--good-soft); color: var(--good-2); }
-.rating-selector__opt--bad  .rating-selector__icon { background: var(--bad-soft);  color: var(--bad-2);  }
-.rating-selector__opt--shit .rating-selector__icon { background: var(--shit-soft); color: var(--shit-2); }
-
-.rating-selector__opt--good.is-active { border-color: var(--good-border); background: var(--good-soft); color: var(--good-2); }
-.rating-selector__opt--bad.is-active  { border-color: var(--bad-border);  background: var(--bad-soft);  color: var(--bad-2);  }
-.rating-selector__opt--shit.is-active { border-color: var(--shit-border); background: var(--shit-soft); color: var(--shit-2); }
-
-/* ---------- Confirm dialog (append-safe) ---------- */
-.confirm-dialog .modal__body {
-  text-align: center;
-  padding-top: var(--s-6);
-  padding-bottom: var(--s-2);
-}
-.confirm-dialog__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  grid-template-columns: 1fr;
   gap: var(--s-3);
 }
-.confirm-dialog__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+@media (min-width: 720px) {
+  .settings-cards-grid { grid-template-columns: 1fr 1fr 1fr; }
+}
+
+.settings-card {
+  display: flex;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  transition: border-color var(--t-fast);
+}
+.settings-card:hover { border-color: var(--border-2); }
+.settings-card--danger {
+  border-color: var(--shit-border);
+  background: linear-gradient(180deg, var(--shit-soft), transparent 60%);
+  margin-top: var(--s-3);
+}
+.settings-card__icon {
+  width: 40px; height: 40px;
+  border-radius: var(--r-md);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+}
+.settings-card__icon--brand {
   background: var(--brand-soft);
   color: var(--violet-1);
-  border: 1px solid var(--border-brand-soft);
-  margin-bottom: var(--s-1);
+  border-color: var(--border-brand-soft);
 }
-.confirm-dialog__icon.is-danger {
+.settings-card__icon--warn {
+  background: var(--bad-soft);
+  color: var(--bad-2);
+  border-color: var(--bad-border);
+}
+.settings-card__icon--cyan {
+  background: rgba(34, 211, 238, 0.14);
+  color: var(--cyan-1);
+  border-color: rgba(34, 211, 238, 0.30);
+}
+.settings-card__icon--danger {
   background: var(--shit-soft);
   color: var(--shit-2);
   border-color: var(--shit-border);
 }
-.confirm-dialog__title {
-  font-size: var(--fs-xl);
+.settings-card__body { flex: 1; min-width: 0; }
+.settings-card__title {
+  font-size: var(--fs-md);
   font-weight: var(--fw-bold);
   color: var(--text-1);
+  margin-bottom: 4px;
 }
-.confirm-dialog__msg {
-  font-size: var(--fs-sm);
+.settings-card__desc {
+  font-size: var(--fs-xs);
   color: var(--text-3);
-  line-height: 1.6;
+  line-height: 1.65;
 }
+
+.account-card {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  padding: var(--s-5);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+}
+.account-card__avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--brand-grad);
+  color: white;
+  font-size: 22px;
+  font-weight: var(--fw-black);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+  box-shadow: var(--sh-glow-brand);
+}
+.account-card__email {
+  font-size: var(--fs-md);
+  font-weight: var(--fw-bold);
+  color: var(--text-1);
+  word-break: break-all;
+}
+.account-card__meta {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+.account-stat {
+  padding: var(--s-4);
+  border-radius: var(--r-md);
+  background: var(--surface-1);
+  border: 1px solid var(--border-1);
+  text-align: center;
+}
+.account-stat__value {
+  font-size: var(--fs-2xl);
+  font-weight: var(--fw-black);
+  color: var(--text-1);
+  font-feature-settings: "tnum" 1;
+}
+.account-stat__label {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  margin-top: 2px;
+}
+
+.entity-form { display: flex; flex-direction: column; gap: var(--s-4); }
+.entity-form .textarea { min-height: 72px; }
