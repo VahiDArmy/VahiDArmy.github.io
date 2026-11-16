@@ -1,17 +1,20 @@
 /* ============================================================
-   App bootstrap + routing (login ↔ home)
+   App bootstrap + routing + home wiring
    ============================================================ */
 import { sb } from './supabase.js';
 import { CONFIG } from './config.js';
 import { store, restoreFiltersFromStorage } from './state.js';
-import { loadAllData } from './api.js';
-import { el, escapeHtml } from './utils.js';
+import { loadAllData, purchaseStats } from './api.js';
+import { el, formatNumber } from './utils.js';
 import { mountHeader } from './components/header.js';
 import { renderLogin } from './components/login.js';
 import { initToast, notify } from './components/toast.js';
 import { icon } from './components/icons.js';
+import { mountFilters } from './components/filters.js';
+import { mountPurchasesTable } from './components/purchases-table.js';
+import { openPurchaseModal } from './components/purchase-modal.js';
 
-let currentRoute = null; // 'login' | 'home'
+let currentRoute = null;
 let headerEl = null;
 let mainEl = null;
 
@@ -22,7 +25,6 @@ export async function bootApp() {
   restoreFiltersFromStorage();
   initToast();
 
-  // initial session check
   let session = null;
   try {
     const res = await sb.auth.getSession();
@@ -43,33 +45,25 @@ export async function bootApp() {
   });
 }
 
-/* ---------- routing ---------- */
-
 async function route(root, session) {
   if (!session?.user) {
     if (currentRoute === 'login') return;
     currentRoute = 'login';
-    headerEl = null;
-    mainEl = null;
+    headerEl = null; mainEl = null;
+    store.ready.set(false);
     renderLogin(root);
     return;
   }
-
-  // already in the app
   if (currentRoute === 'home' && store.user.get()?.id === session.user.id) {
     store.user.set(session.user);
     store.session.set(session);
     return;
   }
-
   currentRoute = 'home';
   store.user.set(session.user);
   store.session.set(session);
-
   await enterApp(root);
 }
-
-/* ---------- enter app ---------- */
 
 async function enterApp(root) {
   root.innerHTML = '';
@@ -86,14 +80,13 @@ async function enterApp(root) {
 
   root.innerHTML = '';
   headerEl = mountHeader({
-    onSearch: handleSearch,
+    onSearch: () => {},
     onAdd: handleAddPurchase,
-    onOpenSettings: () => notify.info('تنظیمات در پیام بعدی می‌آید'),
+    onOpenSettings: () => notify.info('تنظیمات در پیام‌های بعدی'),
   });
   mainEl = el('main', { class: 'container page', id: 'app-main' });
   mainEl.appendChild(renderHomeShell());
   root.append(headerEl, mainEl);
-
   store.ready.set(true);
 }
 
@@ -120,45 +113,36 @@ function renderLoadError(err) {
   ]);
 }
 
-/* ---------- home shell (placeholder until table component lands) ---------- */
+/* ---------- home shell ---------- */
 
 function renderHomeShell() {
-  const wrap = el('div', { id: 'home-shell', style: { display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' } });
+  const shell = el('div', { id: 'home-shell', style: { display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' } });
 
-  const platforms = store.platforms.get();
-  const shops = store.shops.get();
-  const products = store.products.get();
-  const purchases = store.purchases.get();
+  // Stats strip
+  const statsStrip = el('div', { class: 'stats-strip' });
+  const updateStats = () => {
+    const s = purchaseStats(store.purchases.get());
+    statsStrip.innerHTML = '';
+    statsStrip.append(
+      statCard('کل خریدها', s.total, ''),
+      statCard('خرید خوب', s.good, 'var(--good-2)'),
+      statCard('نچندان خوب', s.bad, 'var(--bad-2)'),
+      statCard('افتضاح', s.shit, 'var(--shit-2)'),
+      statCard('فروشگاه‌ها', s.shops, ''),
+      statCard('محصولات', s.products, ''),
+    );
+  };
+  updateStats();
+  store.purchases.subscribe(updateStats);
 
-  // stats strip
-  const good = purchases.filter((p) => p.rating === 'good').length;
-  const bad = purchases.filter((p) => p.rating === 'bad').length;
-  const shit = purchases.filter((p) => p.rating === 'shit').length;
+  // Filters
+  const filters = mountFilters();
 
-  const stats = el('div', { class: 'stats-strip' }, [
-    statCard('کل خریدها', purchases.length, ''),
-    statCard('خرید خوب', good, 'var(--good-2)'),
-    statCard('نچندان خوب', bad, 'var(--bad-2)'),
-    statCard('افتضاح', shit, 'var(--shit-2)'),
-    statCard('فروشگاه‌ها', shops.length, ''),
-    statCard('محصولات', products.length, ''),
-    statCard('پلتفرم‌ها', platforms.length, ''),
-  ]);
+  // Table
+  const table = mountPurchasesTable();
 
-  const empty = el('div', { class: 'empty-state' }, [
-    el('div', { class: 'empty-state__icon', html: icon('cart', 32) }),
-    el('div', { class: 'empty-state__title', text: 'اولین خریدت را ثبت کن' }),
-    el('div', { class: 'empty-state__desc',
-      text: 'روی «ثبت خرید» بزن، فروشگاه، پلتفرم و محصول را انتخاب کن و امتیاز بده. جدول خریدها با جستجوی زنده در همین صفحه نمایش داده می‌شود.' }),
-    el('button', {
-      class: 'btn btn--primary btn--lg', type: 'button',
-      html: `${icon('plus', 16)}<span>ثبت خرید</span>`,
-      onclick: handleAddPurchase,
-    }),
-  ]);
-
-  wrap.append(stats, empty);
-  return wrap;
+  shell.append(statsStrip, filters, table);
+  return shell;
 }
 
 function statCard(label, value, color) {
@@ -167,20 +151,12 @@ function statCard(label, value, color) {
     el('div', {
       class: 'stat-card__value',
       style: color ? { color } : {},
-      text: String(value).replace(/[0-9]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[+d]),
+      text: formatNumber(value),
     }),
   ]);
 }
 
-/* ---------- handlers ---------- */
-
-function handleSearch(query) {
-  // Placeholder — the real table filtering will land in the next message.
-  // We keep this hook so the table picks up store.filters on its own.
-  // console.debug('[search]', query);
-}
-
-function handleAddPurchase() {
-  // Will open the purchase modal in the next message.
-  notify.info('مودال ثبت خرید در پیام بعدی اضافه می‌شود');
+async function handleAddPurchase() {
+  await openPurchaseModal({ mode: 'create' });
+  // table updates automatically via store.purchases subscription
 }
