@@ -73,12 +73,6 @@ function heroSection() {
           <span class="dot dot--live"></span>
           ${toFa(stats.vendors)} فروشنده · ${toFa(stats.ratings)} رأی
         </span>
-        <h1 class="hero__title">
-          قبل از خرید،<br />
-          <span class="gradient-text">بازار</span> را ببین.
-        </h1>
-        <p class="hero__lead">تجربه‌ات را در سه سطح ثبت کن: خوب، نه‌خوب، افتضاح.</p>
-
         <form class="hero-search" data-hero-search role="search">
           <span class="hero-search__icon">${icon('search', 20)}</span>
           <input class="hero-search__input" type="search" name="q" placeholder="فروشنده، شعبه یا محصول…"
@@ -129,30 +123,7 @@ function heroSection() {
           <span class="hero-orbit__node hero-orbit__node--3">${icon('package', 18)}</span>
           <span class="hero-orbit__node hero-orbit__node--4">${icon('message', 18)}</span>
         </div>
-        <div class="hero-sticker hero-sticker--good">${icon('check-circle', 14)} بررسی کن</div>
-        <div class="hero-sticker hero-sticker--bad">${icon('alert-triangle', 14)} پشیمانی ممنوع</div>
         ${heroVerdictCard()}
-      </div>
-    </div>
-  </section>`;
-}
-
-function levelsSection() {
-  return `<section class="section section--tight">
-    <div class="container">
-      ${sectionHead({
-        eyebrow: 'مدل امتیاز',
-        title: 'سه سطح',
-        actions: `<a class="btn btn--outline btn--sm" href="#/guide" data-link>${icon('help', 15)} راهنما</a>`,
-      })}
-      <div class="level-legend">
-        ${LEVELS.map(
-          (level) => `<article class="level-card level-card--${level.className} reveal">
-            <span class="level-card__icon">${icon(level.icon, 24)}</span>
-            <h3 class="level-card__title">${esc(level.label)}</h3>
-            <p class="level-card__text">${esc(level.hint.split('؛')[0])}</p>
-          </article>`,
-        ).join('')}
       </div>
     </div>
   </section>`;
@@ -284,32 +255,15 @@ function categoriesSection() {
   </section>`;
 }
 
-function ctaSection() {
-  return `<section class="section section--tight">
-    <div class="container">
-      <div class="cta-band">
-        <div class="cta-band__main">
-          <h2 class="cta-band__title">تجربه‌ای داری؟</h2>
-        </div>
-        <div class="cta-band__actions">
-          <a class="btn btn--primary btn--lg" href="#/new" data-link>${icon('plus', 17)} ثبت تجربه</a>
-        </div>
-      </div>
-    </div>
-  </section>`;
-}
-
 export const homeView = {
   title: 'خانه',
   render() {
     return `<div class="page page--flush">
       ${modeBanner()}
       ${heroSection()}
-      ${levelsSection()}
       ${leaderboardSection()}
       ${latestReviewsSection()}
       ${categoriesSection()}
-      ${ctaSection()}
     </div>`;
   },
   mount(ctx, root) {
@@ -340,7 +294,7 @@ export function modeBanner(state = store.getState()) {
     return `<div class="container" style="padding-top:var(--sp-4)">
       <div class="banner banner--demo">
         <span class="banner__icon">${icon('database', 15)}</span>
-        <div>حالت محلی — داده‌ها فقط در همین مرورگر ذخیره می‌شوند.</div>
+        <div>حالت محلی</div>
         <div class="banner__actions">
           <a class="btn btn--outline btn--xs" href="#/guide#data" data-link>اتصال</a>
         </div>

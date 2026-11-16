@@ -19,15 +19,6 @@ function visualSide() {
     <div class="auth-visual__levels">
       ${LEVELS.map((level) => levelChip(level.id, { size: 'lg' })).join('')}
     </div>
-    <blockquote class="auth-visual__quote">
-      «قبل از خرید، ببین چه کسی از این‌جا راضی بوده — و چه کسی نه.»
-    </blockquote>
-    <p class="auth-visual__caption">بازاربان، دفترچهٔ عمومی تجربهٔ خرید</p>
-    <div class="chips-row" style="margin-top:var(--sp-10);z-index:1">
-      <span class="chip chip--soft">${icon('shield', 12)} بدون تبلیغ</span>
-      <span class="chip chip--soft">${icon('user', 12)} بدون داده‌فروشی</span>
-      <span class="chip chip--soft">${icon('zap', 12)} ثبت در ۱۰ ثانیه</span>
-    </div>
   </div>`;
 }
 

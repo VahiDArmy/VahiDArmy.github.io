@@ -275,7 +275,7 @@ function openMobileDrawer() {
 
   openDrawer({
     title: 'بازاربان',
-    side: 'end',
+    side: 'start',
     body: `
       <div class="row" style="gap:var(--sp-4);padding-bottom:var(--sp-5);border-bottom:1px solid var(--line);margin-bottom:var(--sp-5)">
         ${

@@ -50,10 +50,6 @@ const typeHints = {
 
 function typeStep() {
   return `<div class="wizard__title">چه چیزی را می‌خواهی ثبت کنی؟</div>
-    <p class="wizard__sub">
-      تجربه‌ات را به دقیق‌ترین سطح وصل کن. اگر می‌خواهی دربارهٔ «شعبهٔ ونک» نظر بدهی،
-      «فروشگاه» را انتخاب کن؛ اگر دربارهٔ کل برند است، «فروشنده».
-    </p>
     <div class="type-picker" data-type-picker>
       ${CONFIG.ENTITY_TYPES.map(
         (entity) => `<button class="type-card" type="button" data-type="${entity.id}" aria-pressed="false">
@@ -139,15 +135,6 @@ function pickStep(state) {
               — ولی اول مطمئن شو با نام دیگری ثبت نشده است.
             </span>
           </div>`
-    }
-
-    ${
-      state.type === 'shop' && !state.createMode
-        ? `<div class="callout callout--meh" style="margin-top:var(--sp-5)">
-            <span class="callout__icon">${icon('building', 14)}</span>
-            <div>شعبه را با نام کامل (مثلاً «افق کوروش — شعبهٔ پونک») انتخاب کن تا با شعبه‌های دیگر اشتباه نشود.</div>
-          </div>`
-        : ''
     }
 
     <div class="wizard__foot">

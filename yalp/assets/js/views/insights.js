@@ -280,25 +280,10 @@ export const insightsView = {
               label: `${overallScore > 0 ? '+' : ''}${toFa(overallScore)}`,
               caption: 'شاخص کل',
             })}
-            <div>
-              <div class="insight-hero__eyebrow">${icon('activity', 13)} تصویر لحظه‌ای</div>
-              <h2 class="insight-hero__title">
-                ${
-                  overallScore > 20
-                    ? 'خریدارها بیشتر راضی‌اند'
-                    : overallScore < -20
-                      ? 'تجربه‌های منفی پررنگ‌ترند'
-                      : 'نظرها دو دسته‌اند'
-                }
-              </h2>
-              <p class="insight-hero__text">
-                ${toFa(overallTotal)} رأی · ${fmtPercent(stats.goodRate)} خوب · ${fmtPercent(stats.badRate)} افتضاح
-              </p>
-              <div class="chips-row">
-                <span class="chip chip--good">${toFa(stats.good)} خوب</span>
-                <span class="chip chip--meh">${toFa(stats.meh)} نه‌خوب</span>
-                <span class="chip chip--bad">${toFa(stats.bad)} افتضاح</span>
-              </div>
+            <div class="chips-row">
+              <span class="chip chip--good">${toFa(stats.good)} خوب</span>
+              <span class="chip chip--meh">${toFa(stats.meh)} نه‌خوب</span>
+              <span class="chip chip--bad">${toFa(stats.bad)} افتضاح</span>
             </div>
           </div>
           <div class="insight-hero__chart">
@@ -513,15 +498,6 @@ export const insightsView = {
           </div>
         </section>
 
-        <div class="cta-band" style="margin-top:var(--sp-10)">
-          <div class="cta-band__main">
-            <h2 class="cta-band__title">تجربه‌ات را ثبت کن</h2>
-          </div>
-          <div class="cta-band__actions">
-            <a class="btn btn--primary btn--lg" href="#/new" data-link>${icon('plus', 16)} ثبت تجربه</a>
-            <a class="btn btn--outline btn--lg" href="#/reviews" data-link>${icon('message', 16)} خواندن نقدها</a>
-          </div>
-        </div>
       </div>
     </div>`;
   },
