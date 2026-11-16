@@ -1,16 +1,17 @@
 /* ============================================================
-   Purchases table — filtered, sortable, with row actions
+   Purchases table — with bulk actions, sortable headers, actions
    ============================================================ */
 import { store } from '../state.js';
-import { el, formatDate, formatPrice, toFaDigits, escapeHtml } from '../utils.js';
+import { el, formatDate, formatPrice, formatNumber, escapeHtml } from '../utils.js';
 import { icon } from './icons.js';
 import { RATINGS } from '../state.js';
-import { computeFilteredPurchases, hasActiveFilters } from '../selectors.js';
+import { computeFilteredPurchases } from '../selectors.js';
 import { deletePurchase, refreshPurchases } from '../api.js';
 import { openPurchaseModal } from './purchase-modal.js';
 import { confirmDialog } from './confirm.js';
 import { notify } from './toast.js';
 import { openShopDrawer, openProductDrawer } from './details-drawer.js';
+import { downloadPurchasesCsv } from '../utils/csv.js';
 
 const SHOP_AVATAR_CLASSES = ['violet', 'cyan', 'rose', 'amber', 'emerald', 'indigo'];
 function shopAvatarClass(id) {
@@ -21,31 +22,152 @@ function shopAvatarClass(id) {
 
 export function mountPurchasesTable() {
   const wrap = el('div', { class: 'purchases-table-host' });
+  const selection = new Set();       // selected purchase ids
+  let lastVisible = [];
 
   function render() {
     const purchases = store.purchases.get();
     const filters = store.filters.get();
+    wrap.innerHTML = '';
 
     if (!purchases.length) {
-      wrap.innerHTML = '';
       wrap.appendChild(renderGlobalEmpty());
       return;
     }
 
     const filtered = computeFilteredPurchases(purchases, filters);
+    lastVisible = filtered;
 
-    wrap.innerHTML = '';
+    // Prune selection that fell out of filtered set
+    for (const id of [...selection]) {
+      if (!filtered.some((p) => p.id === id)) selection.delete(id);
+    }
+
+    wrap.appendChild(renderToolbar(filtered));
+
     if (!filtered.length) {
       wrap.appendChild(renderFilterEmpty());
       return;
     }
 
+    wrap.appendChild(renderTable(filtered));
+  }
+
+  /* ---------- Bulk toolbar ---------- */
+
+  function renderToolbar(filtered) {
+    const n = selection.size;
+    const bar = el('div', { class: 'bulk-bar' + (n ? ' is-active' : '') });
+
+    if (n === 0) {
+      bar.appendChild(el('div', { class: 'bulk-bar__hint' }, [
+        el('span', { html: icon('info', 14) }),
+        el('span', { text: 'برای انتخاب چند خرید، از ستون سمت راست تیک بزن.' }),
+      ]));
+      // Export all visible
+      const exportBtn = el('button', {
+        type: 'button',
+        class: 'btn btn--ghost btn--sm',
+        html: `${icon('arrowUp', 14)}<span>خروجی CSV (${formatNumber(filtered.length)})</span>`,
+        onclick: () => {
+          try {
+            downloadPurchasesCsv(filtered);
+            notify.success('فایل CSV آماده شد');
+          } catch (err) {
+            notify.error(err?.message || 'خطا در ساخت CSV');
+          }
+        },
+      });
+      bar.appendChild(exportBtn);
+      return bar;
+    }
+
+    // Selection summary
+    bar.appendChild(el('div', { class: 'bulk-bar__count' }, [
+      el('span', { class: 'bulk-bar__count-num', text: formatNumber(n) }),
+      el('span', { class: 'bulk-bar__count-label', text: 'خرید انتخاب شده' }),
+    ]));
+
+    const selectedItems = filtered.filter((p) => selection.has(p.id));
+
+    // Export selected CSV
+    bar.appendChild(el('button', {
+      type: 'button', class: 'btn btn--ghost btn--sm',
+      html: `${icon('arrowUp', 14)}<span>CSV انتخاب‌شده</span>`,
+      onclick: () => {
+        try {
+          downloadPurchasesCsv(selectedItems);
+          notify.success('CSV انتخاب‌شده آماده شد');
+        } catch (err) {
+          notify.error(err?.message || 'خطا');
+        }
+      },
+    }));
+
+    // Bulk delete
+    bar.appendChild(el('button', {
+      type: 'button', class: 'btn btn--danger btn--sm',
+      html: `${icon('trash', 14)}<span>حذف</span>`,
+      onclick: async () => {
+        const ok = await confirmDialog({
+          title: `حذف ${formatNumber(n)} خرید`,
+          message: 'این خریدها برای همیشه حذف شوند؟',
+          confirmLabel: 'حذف همه',
+          danger: true,
+        });
+        if (!ok) return;
+        try {
+          await Promise.all([...selection].map((id) => deletePurchase(id)));
+          store.purchases.set(store.purchases.get().filter((p) => !selection.has(p.id)));
+          selection.clear();
+          notify.success(`${formatNumber(n)} خرید حذف شد`);
+        } catch (err) {
+          notify.error(err?.message || 'خطا در حذف');
+        }
+      },
+    }));
+
+    // Clear selection
+    bar.appendChild(el('button', {
+      type: 'button', class: 'btn btn--ghost btn--icon btn--sm',
+      'aria-label': 'لغو انتخاب',
+      html: icon('close', 14),
+      onclick: () => { selection.clear(); render(); },
+    }));
+
+    return bar;
+  }
+
+  /* ---------- Table ---------- */
+
+  function renderTable(filtered) {
     const tableWrap = el('div', { class: 'data-table-wrap' });
     const scroll = el('div', { class: 'data-table-scroll' });
     const table = el('table', { class: 'data-table' });
 
-    table.appendChild(el('thead', {}, [
+    // Header
+    const allSelected = filtered.every((p) => selection.has(p.id));
+    const someSelected = !allSelected && filtered.some((p) => selection.has(p.id));
+
+    const masterCb = el('input', {
+      type: 'checkbox',
+      class: 'cb',
+      'aria-label': 'انتخاب همه',
+    });
+    masterCb.checked = allSelected;
+    masterCb.indeterminate = someSelected;
+    masterCb.addEventListener('change', () => {
+      if (masterCb.checked) {
+        for (const p of filtered) selection.add(p.id);
+      } else {
+        for (const p of filtered) selection.delete(p.id);
+      }
+      render();
+    });
+
+    const thead = el('thead', {}, [
       el('tr', {}, [
+        el('th', { class: 'col-select' }, [masterCb]),
         th('تاریخ', 'col-date'),
         th('فروشگاه', 'col-shop'),
         th('محصول', 'col-product'),
@@ -54,16 +176,15 @@ export function mountPurchasesTable() {
         th('قیمت', 'col-price'),
         th('', 'col-actions'),
       ]),
-    ]));
+    ]);
 
     const tbody = el('tbody');
-    for (const p of filtered) {
-      tbody.appendChild(renderRow(p));
-    }
-    table.appendChild(tbody);
+    for (const p of filtered) tbody.appendChild(renderRow(p));
+
+    table.append(thead, tbody);
     scroll.appendChild(table);
     tableWrap.appendChild(scroll);
-    wrap.appendChild(tableWrap);
+    return tableWrap;
   }
 
   function th(label, cls) {
@@ -75,6 +196,20 @@ export function mountPurchasesTable() {
     const product = p.product || {};
     const platform = p.platform || null;
     const rating = RATINGS[p.rating] || { label: '—' };
+    const isSelected = selection.has(p.id);
+
+    const cb = el('input', {
+      type: 'checkbox',
+      class: 'cb',
+      'aria-label': 'انتخاب',
+    });
+    cb.checked = isSelected;
+    cb.addEventListener('click', (e) => e.stopPropagation());
+    cb.addEventListener('change', () => {
+      if (cb.checked) selection.add(p.id);
+      else selection.delete(p.id);
+      render();
+    });
 
     const shopCell = el('td', { class: 'col-shop' }, [
       el('div', {
@@ -147,7 +282,8 @@ export function mountPurchasesTable() {
       ]),
     ]);
 
-    return el('tr', {}, [
+    const tr = el('tr', { class: isSelected ? 'is-selected' : '' }, [
+      el('td', { class: 'col-select' }, [cb]),
       el('td', { class: 'col-date', text: formatDate(p.purchased_at || p.created_at) }),
       shopCell,
       productCell,
@@ -156,6 +292,7 @@ export function mountPurchasesTable() {
       priceCell,
       actionsCell,
     ]);
+    return tr;
   }
 
   function renderGlobalEmpty() {
@@ -163,7 +300,7 @@ export function mountPurchasesTable() {
       el('div', { class: 'empty-state__icon', html: icon('cart', 32) }),
       el('div', { class: 'empty-state__title', text: 'هنوز خریدی ثبت نکردی' }),
       el('div', { class: 'empty-state__desc',
-        text: 'روی «ثبت خرید» بزن، فروشگاه، محصول، پلتفرم و امتیاز را وارد کن. جدول خریدها با جستجوی زنده همین‌جا نمایش داده می‌شود.' }),
+        text: 'روی «ثبت خرید» بزن، فروشگاه، محصول، پلتفرم و امتیاز را وارد کن.' }),
       el('button', {
         type: 'button', class: 'btn btn--primary btn--lg',
         html: `${icon('plus', 16)}<span>ثبت اولین خرید</span>`,
@@ -176,8 +313,6 @@ export function mountPurchasesTable() {
     return el('div', { class: 'empty-state' }, [
       el('div', { class: 'empty-state__icon', html: icon('search', 32) }),
       el('div', { class: 'empty-state__title', text: 'چیزی مطابق فیلترها پیدا نشد' }),
-      el('div', { class: 'empty-state__desc',
-        text: 'فیلترها را تغییر بده یا جستجو را پاک کن.' }),
       el('button', {
         type: 'button', class: 'btn btn--outline btn--lg',
         html: `${icon('refresh', 16)}<span>پاک کردن فیلترها</span>`,
@@ -210,6 +345,7 @@ export function mountPurchasesTable() {
     try {
       await deletePurchase(p.id);
       store.purchases.set(store.purchases.get().filter((x) => x.id !== p.id));
+      selection.delete(p.id);
       notify.success('خرید حذف شد');
     } catch (err) {
       notify.error(err?.message || 'خطا در حذف');

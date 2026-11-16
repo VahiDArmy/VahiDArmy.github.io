@@ -1,13 +1,12 @@
 /* ============================================================
-   Details drawer — shop or product profile with stats, purchases,
-   comments, and CRUD actions.
+   Details drawer — shop / product with stats, comparison, purchases
    ============================================================ */
 import { store } from '../state.js';
-import { el, formatDate, formatPrice, formatRelative, formatNumber, escapeHtml } from '../utils.js';
+import { el, formatDate, formatPrice, formatRelative, formatNumber } from '../utils.js';
 import { icon } from './icons.js';
 import { RATINGS } from '../state.js';
 import { buildShopStats, buildProductStats } from '../selectors.js';
-import { deleteShop, deleteProduct, refreshPurchases } from '../api.js';
+import { deleteShop, deleteProduct } from '../api.js';
 import { confirmDialog } from './confirm.js';
 import { notify } from './toast.js';
 import { mountComments } from './comments.js';
@@ -44,10 +43,10 @@ function openDrawer({ type, entity }) {
   const backdrop = el('div', { class: 'drawer-backdrop' });
   const drawer = el('aside', { class: 'drawer', role: 'dialog', 'aria-modal': 'true' });
 
-  const body = el('div', { class: 'drawer__body' });
   const header = el('div', { class: 'drawer__header' });
-
+  const body = el('div', { class: 'drawer__body' });
   drawer.append(header, body);
+
   const portal = document.getElementById('portal-root') || document.body;
   portal.appendChild(backdrop);
   portal.appendChild(drawer);
@@ -130,7 +129,6 @@ function openDrawer({ type, entity }) {
       statBox('افتضاح', stats.shit, 'shit'),
     ]);
 
-    // spend
     const spend = el('div', { class: 'details-row' }, [
       el('span', { class: 'details-row__label', text: 'مجموع هزینه' }),
       el('span', { class: 'details-row__value', text: formatPrice(stats.spent) }),
@@ -140,6 +138,9 @@ function openDrawer({ type, entity }) {
       el('span', { class: 'details-row__value',
         text: stats.lastAt ? formatRelative(new Date(stats.lastAt).toISOString()) : '—' }),
     ]);
+
+    // Product: shop comparison
+    const comparison = type === 'product' ? renderShopComparison(purchases, entity.id) : null;
 
     // purchases list
     const purchasesBlock = renderPurchasesList(stats.items);
@@ -159,6 +160,16 @@ function openDrawer({ type, entity }) {
         spend,
         last,
       ]),
+    );
+
+    if (comparison) {
+      body.appendChild(el('div', { class: 'details-section' }, [
+        el('div', { class: 'details-section__title', text: 'مقایسه فروشگاه‌ها' }),
+        comparison,
+      ]));
+    }
+
+    body.append(
       el('div', { class: 'details-section' }, [
         el('div', { class: 'details-section__title', text: 'خریدهای مرتبط' }),
         purchasesBlock,
@@ -176,6 +187,90 @@ function openDrawer({ type, entity }) {
       el('div', { class: 'details-stat__label', text: label }),
     ]);
   }
+
+  /* ---------- Product → shop comparison ---------- */
+
+  function renderShopComparison(purchases, productId) {
+    const byShop = new Map();
+    for (const p of purchases) {
+      if (p.product_id !== productId) continue;
+      const k = p.shop_id;
+      if (!byShop.has(k)) {
+        byShop.set(k, {
+          shop: p.shop,
+          good: 0, bad: 0, shit: 0, total: 0,
+          lastAt: 0,
+          prices: [],
+        });
+      }
+      const acc = byShop.get(k);
+      acc[p.rating] = (acc[p.rating] || 0) + 1;
+      acc.total++;
+      const t = new Date(p.purchased_at || p.created_at).getTime();
+      if (t > acc.lastAt) acc.lastAt = t;
+      if (p.price != null) acc.prices.push(Number(p.price));
+    }
+
+    if (byShop.size < 2) {
+      return el('div', { class: 'details-empty',
+        text: 'این محصول فقط از یک فروشگاه خریداری شده. با خرید از فروشگاه‌های دیگر، مقایسه نمایش داده می‌شود.' });
+    }
+
+    const arr = [...byShop.values()]
+      .map((x) => ({
+        ...x,
+        score: x.good * 3 + x.bad * 1 - x.shit * 2,
+        avgPrice: x.prices.length ? x.prices.reduce((a, b) => a + b, 0) / x.prices.length : null,
+      }))
+      .sort((a, b) => b.score - a.score || b.total - a.total);
+
+    const wrap = el('div', { class: 'shop-compare' });
+    arr.forEach((x, idx) => {
+      const isBest = idx === 0 && x.score > 0;
+      const total = x.total || 1;
+      const goodPct = Math.round((x.good / total) * 100);
+      const badPct = Math.round((x.bad / total) * 100);
+      const shitPct = Math.round((x.shit / total) * 100);
+
+      const row = el('button', {
+        type: 'button',
+        class: 'shop-compare__row' + (isBest ? ' is-best' : ''),
+        onclick: () => {
+          // open the shop drawer
+          const shopId = x.shop?.id;
+          if (shopId) { close(); setTimeout(() => openShopDrawer(shopId), 80); }
+        },
+      }, [
+        el('span', {
+          class: `avatar-shop avatar-shop--${shopAvatarClass(x.shop?.id || 'x')}`,
+          style: { '--_size': '32px', fontSize: '12px' },
+          text: (x.shop?.name?.[0] || '؟').toUpperCase(),
+        }),
+        el('div', { class: 'shop-compare__body' }, [
+          el('div', { class: 'shop-compare__name' }, [
+            document.createTextNode(x.shop?.name || '—'),
+            isBest ? el('span', { class: 'shop-compare__best', text: 'بهترین' }) : null,
+          ].filter(Boolean)),
+          el('div', { class: 'shop-compare__bar' }, [
+            goodPct ? el('span', { class: 'shop-compare__seg shop-compare__seg--good', style: { flex: String(goodPct) } }) : null,
+            badPct  ? el('span', { class: 'shop-compare__seg shop-compare__seg--bad',  style: { flex: String(badPct) } })  : null,
+            shitPct ? el('span', { class: 'shop-compare__seg shop-compare__seg--shit', style: { flex: String(shitPct) } }) : null,
+          ].filter(Boolean)),
+          el('div', { class: 'shop-compare__meta' }, [
+            el('span', { text: `${formatNumber(x.good)} خوب · ${formatNumber(x.bad)} بد · ${formatNumber(x.shit)} افتضاح` }),
+            x.avgPrice != null
+              ? el('span', { text: 'میانگین ' + formatPrice(Math.round(x.avgPrice)) })
+              : null,
+          ].filter(Boolean)),
+        ]),
+        el('span', { class: 'shop-compare__chevron', html: icon('chevronLeft', 14) }),
+      ]);
+      wrap.appendChild(row);
+    });
+    return wrap;
+  }
+
+  /* ---------- Purchases list ---------- */
 
   function renderPurchasesList(items) {
     if (!items.length) {
