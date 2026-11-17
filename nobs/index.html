@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-theme="dark" data-density="cozy">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="theme-color" content="#05070a" />
+  <meta name="description" content="فروشگاه‌یار — تجربه خریدت از هر محصول در هر فروشگاه و هر پلتفرم را ثبت کن، امتیاز بده و یادت بماند از کجا بخر." />
+  <meta name="robots" content="noindex" />
+  <title>فروشگاه‌یار · دفترچه تجربه خرید آنلاین</title>
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2335e0a1'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='%23070a0d'/%3E%3Cpath d='M20 22h6l4 20 4-14 4 14 4-20h6' fill='none' stroke='url(%23g)' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preload" href="assets/fonts/Vazirmatn.woff2" as="font" type="font/woff2" crossorigin />
+
+  <link rel="stylesheet" href="assets/css/tokens.css" />
+  <link rel="stylesheet" href="assets/css/base.css" />
+  <link rel="stylesheet" href="assets/css/layout.css" />
+  <link rel="stylesheet" href="assets/css/components.css" />
+  <link rel="stylesheet" href="assets/css/forms.css" />
+  <link rel="stylesheet" href="assets/css/views.css" />
+  <link rel="stylesheet" href="assets/css/charts.css" />
+  <link rel="stylesheet" href="assets/css/animations.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main-content">پرش به محتوای اصلی</a>
+
+  <div class="boot" id="boot" role="status" aria-live="polite">
+    <div class="boot__aura" aria-hidden="true"></div>
+    <div class="boot__inner">
+      <div class="boot__mark" aria-hidden="true">
+        <svg viewBox="0 0 48 48" width="46" height="46" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 16h6l3.4 17L22 22l4 11 3.4-17H36" />
+          <circle cx="38" cy="34" r="2.4" fill="currentColor" stroke="none" />
+        </svg>
+      </div>
+      <p class="boot__title">فروشگاه‌یار</p>
+      <p class="boot__sub">دفترچه تجربه خرید آنلاین</p>
+      <div class="boot__bar"><span></span></div>
+      <p class="boot__hint" id="boot-hint">در حال آماده‌سازی…</p>
+    </div>
+  </div>
+
+  <div id="app" class="app-root" aria-live="polite"></div>
+  <div id="overlay-root"></div>
+  <div id="palette-root"></div>
+  <div id="toast-root" class="toasts" role="status" aria-live="polite" aria-atomic="false"></div>
+
+  <noscript>
+    <div class="noscript">
+      <h1>جاوااسکریپت لازم است</h1>
+      <p>برای استفاده از فروشگاه‌یار، جاوااسکریپت مرورگر را فعال کنید.</p>
+    </div>
+  </noscript>
+
+  <script src="vendor/supabase.js"></script>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

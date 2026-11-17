@@ -1,0 +1,132 @@
+/* ==========================================================================
+   Charts — دونات، میله‌های افقی، اسپارک‌لاین، رینگ امتیاز، هیت‌مپ
+   ========================================================================== */
+
+.chart {
+  display: grid;
+  gap: 14px;
+}
+
+.chart__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.chart__title { font-size: var(--fs-xs); font-weight: var(--fw-semi); display: flex; align-items: center; gap: 7px; }
+.chart__title svg { width: 15px; height: 15px; color: var(--acc); }
+.chart__sub { font-size: 10px; color: var(--txt-4); margin-top: 2px; }
+
+.chart__body { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+/* --------------------------------- دونات --------------------------------- */
+.donut {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.donut svg { display: block; overflow: visible; }
+.donut__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.donut__value { font-size: 24px; font-weight: var(--fw-black); line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.donut__label { font-size: 9.5px; color: var(--txt-4); }
+
+.donut__seg { transition: opacity var(--t-fast); cursor: default; }
+.donut__seg:hover { opacity: 0.75; }
+
+.donut-legend { display: grid; gap: 7px; flex: 1; min-width: 130px; }
+.donut-legend__row { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 8px; font-size: 10.5px; color: var(--txt-2); }
+.donut-legend__dot { width: 8px; height: 8px; border-radius: 3px; }
+.donut-legend__val { color: var(--txt-4); font-variant-numeric: tabular-nums; }
+.donut-legend__pct { font-size: 9.5px; color: var(--txt-4); margin-inline-start: 4px; }
+
+/* ------------------------------ میله‌های افقی ---------------------------- */
+.barlist { display: grid; gap: 11px; }
+
+.bar-row { display: grid; gap: 5px; }
+.bar-row__top { display: flex; align-items: center; gap: 7px; font-size: 10.5px; color: var(--txt-2); }
+.bar-row__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-row__val { font-variant-numeric: tabular-nums; color: var(--txt-3); font-size: 10px; }
+.bar-row__track { height: 6px; border-radius: 99px; background: rgba(255, 255, 255, 0.055); overflow: hidden; }
+.bar-row__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(53, 224, 161, 0.55), var(--acc));
+  transition: width var(--t-slow) var(--ease-out);
+  min-width: 2px;
+}
+.bar-row__fill--meh { background: linear-gradient(90deg, rgba(255, 194, 75, 0.5), var(--meh)); }
+.bar-row__fill--bad { background: linear-gradient(90deg, rgba(255, 93, 122, 0.5), var(--bad)); }
+.bar-row__fill--violet { background: linear-gradient(90deg, rgba(139, 92, 246, 0.5), #a685ff); }
+.bar-row__fill--cyan { background: linear-gradient(90deg, rgba(34, 201, 219, 0.5), var(--acc-2)); }
+
+/* ------------------------------- اسپارک‌لاین ----------------------------- */
+.spark { width: 100%; height: auto; overflow: visible; display: block; }
+.spark__line { fill: none; stroke: var(--acc); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.spark__area { fill: url(#sparkGrad); opacity: 0.55; }
+.spark__dot { fill: var(--acc); }
+.spark--violet .spark__line { stroke: #a685ff; }
+.spark--violet .spark__dot { fill: #a685ff; }
+
+/* --------------------------------- رینگ --------------------------------- */
+.ring { display: grid; place-items: center; position: relative; }
+.ring__track { stroke: rgba(255, 255, 255, 0.07); fill: none; }
+.ring__bar { fill: none; stroke-linecap: round; transition: stroke-dashoffset var(--t-slow) var(--ease-out); }
+
+/* ------------------------------- هیت‌مپ -------------------------------- */
+.heat-legend { display: flex; align-items: center; gap: 6px; font-size: 9.5px; color: var(--txt-4); }
+.heat-legend i { width: 12px; height: 10px; border-radius: 3px; display: block; }
+
+.heat-months {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  font-size: 8.5px;
+  color: var(--txt-4);
+  text-align: center;
+  margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+  .heat-months { grid-template-columns: repeat(6, 1fr); }
+  .chart__body { gap: 14px; }
+}
+
+/* ----------------------------- عملکرد وندور ----------------------------- */
+.vendor-perf { display: grid; gap: 10px; }
+
+.vp-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-1);
+  background: rgba(255, 255, 255, 0.018);
+  transition: border-color var(--t-fast);
+}
+
+.vp-row:hover { border-color: var(--line-2); }
+.vp-row__name { font-size: var(--fs-2xs); color: var(--txt-1); font-weight: var(--fw-med); }
+.vp-row__meta { font-size: 9.5px; color: var(--txt-4); margin-top: 2px; }
+.vp-row__score { text-align: end; }
+.vp-row__score b { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.vp-row__score span { display: block; font-size: 9px; color: var(--txt-4); }
+
+/* ------------------------------ نوار پیشرفت ----------------------------- */
+.budget-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+  gap: 2px;
+}
+
+.budget-bar i { display: block; height: 100%; min-width: 2px; }

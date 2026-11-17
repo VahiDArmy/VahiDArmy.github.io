@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-5px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(8px) scale(0.97); }
+}
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulseDot {
+  0% { box-shadow: 0 0 0 0 currentColor; opacity: 1; }
+  70% { box-shadow: 0 0 0 7px transparent; opacity: 0.85; }
+  100% { box-shadow: 0 0 0 0 transparent; opacity: 1; }
+}
+
+@keyframes bootSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes bootBar {
+  0% { transform: translateX(-110%); }
+  60% { transform: translateX(70%); }
+  100% { transform: translateX(240%); }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: translateY(0); box-shadow: 0 18px 50px -26px rgba(53, 224, 161, 0.6); }
+  50% { transform: translateY(-4px); box-shadow: 0 26px 60px -24px rgba(53, 224, 161, 0.85); }
+}
+
+@keyframes slideInDrawer {
+  from { transform: translateX(-102%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
+}
+
+/* ظهور تدریجی کارت‌ها؛ عدد با --i در استایل درون‌خطی داده می‌شود */
+.stagger > * {
+  animation: riseIn 420ms var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+.reveal { animation: riseIn 480ms var(--ease-out) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stagger > *,
+  .reveal { animation: none; }
+}

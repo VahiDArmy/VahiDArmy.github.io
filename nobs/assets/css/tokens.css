@@ -1,0 +1,166 @@
+/* ==========================================================================
+   فروشگاه‌یار — Design tokens
+   یک زبان طراحی تاریک، شیشه‌ای و نعنایی/بنفش با اصول RTL
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn.woff2') format('woff2-variations'),
+       url('../fonts/Vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ---------- رنگ‌های پایه ---------- */
+  --bg-0: #05070a;
+  --bg-1: #070a0e;
+  --bg-2: #0a0f14;
+  --bg-3: #0e141a;
+
+  --surface-1: rgba(255, 255, 255, 0.032);
+  --surface-2: rgba(255, 255, 255, 0.055);
+  --surface-3: rgba(255, 255, 255, 0.085);
+  --surface-solid: #0d1319;
+  --surface-raised: #111922;
+
+  --line-1: rgba(255, 255, 255, 0.065);
+  --line-2: rgba(255, 255, 255, 0.11);
+  --line-3: rgba(255, 255, 255, 0.18);
+
+  --txt-1: #eef5f2;
+  --txt-2: #a7b5b3;
+  --txt-3: #74827f;
+  --txt-4: #4d5a58;
+
+  /* ---------- برند ---------- */
+  --acc: #35e0a1;
+  --acc-soft: rgba(53, 224, 161, 0.12);
+  --acc-soft-2: rgba(53, 224, 161, 0.22);
+  --acc-ink: #041410;
+  --acc-deep: #0f9d75;
+
+  --acc-2: #22c9db;
+  --acc-3: #8b5cf6;
+  --acc-3-soft: rgba(139, 92, 246, 0.14);
+  --acc-4: #f472b6;
+
+  /* ---------- امتیازها ---------- */
+  --good: #35e0a1;
+  --good-soft: rgba(53, 224, 161, 0.13);
+  --good-line: rgba(53, 224, 161, 0.32);
+
+  --meh: #ffc24b;
+  --meh-soft: rgba(255, 194, 75, 0.13);
+  --meh-line: rgba(255, 194, 75, 0.3);
+
+  --bad: #ff5d7a;
+  --bad-soft: rgba(255, 93, 122, 0.13);
+  --bad-line: rgba(255, 93, 122, 0.32);
+
+  --info: #66a3ff;
+  --info-soft: rgba(102, 163, 255, 0.13);
+
+  /* ---------- گرادیان‌ها ---------- */
+  --grad-brand: linear-gradient(135deg, #35e0a1 0%, #22c9db 48%, #8b5cf6 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(53, 224, 161, 0.16), rgba(139, 92, 246, 0.14));
+  --grad-good: linear-gradient(135deg, #35e0a1, #16b98a);
+  --grad-meh: linear-gradient(135deg, #ffd479, #f5a623);
+  --grad-bad: linear-gradient(135deg, #ff7d93, #e0304f);
+  --grad-ink: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  --grad-sheen: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 50%, transparent 80%);
+
+  /* ---------- سایه‌ها ---------- */
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sh-sm: 0 4px 12px -4px rgba(0, 0, 0, 0.45);
+  --sh-md: 0 16px 34px -18px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --sh-lg: 0 34px 70px -32px rgba(0, 0, 0, 0.9), 0 8px 22px -12px rgba(0, 0, 0, 0.6);
+  --sh-glow: 0 0 0 1px rgba(53, 224, 161, 0.22), 0 18px 50px -24px rgba(53, 224, 161, 0.5);
+  --sh-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+  /* ---------- فاصله‌ها ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 56px;
+  --sp-10: 72px;
+
+  /* ---------- شعاع گوشه ---------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+  --r-2xl: 34px;
+  --r-full: 999px;
+
+  /* ---------- تایپوگرافی ---------- */
+  --font: 'Vazirmatn', 'Segoe UI', Tahoma, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --fs-3xs: 10px;
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 28px;
+  --fs-4xl: 36px;
+  --fs-5xl: 46px;
+  --fs-6xl: 60px;
+
+  --lh-tight: 1.25;
+  --lh-snug: 1.45;
+  --lh-normal: 1.65;
+  --lh-loose: 1.9;
+
+  --fw-reg: 400;
+  --fw-med: 500;
+  --fw-semi: 600;
+  --fw-bold: 700;
+  --fw-black: 800;
+
+  /* ---------- حرکت ---------- */
+  --ease: cubic-bezier(0.22, 0.71, 0.28, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --t-fast: 130ms;
+  --t-base: 220ms;
+  --t-slow: 420ms;
+
+  /* ---------- چیدمان ---------- */
+  --sidebar-w: 268px;
+  --topbar-h: 66px;
+  --page-max: 1480px;
+  --page-pad: clamp(16px, 2.4vw, 36px);
+
+  /* ---------- لایه‌ها ---------- */
+  --z-nav: 40;
+  --z-mobile-nav: 45;
+  --z-topbar: 50;
+  --z-drawer: 80;
+  --z-overlay: 90;
+  --z-modal: 95;
+  --z-palette: 100;
+  --z-toast: 110;
+
+  /* ---------- نویز ---------- */
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* چگالی جمع‌وجور برای کسانی که جدول بزرگ‌تر می‌خواهند */
+:root[data-density='compact'] {
+  --topbar-h: 58px;
+  --page-pad: clamp(12px, 1.6vw, 24px);
+}
