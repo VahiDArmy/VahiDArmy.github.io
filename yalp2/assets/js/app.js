@@ -1,21 +1,19 @@
 /* ============================================================
    App bootstrap + routing (login ↔ home ↔ share ↔ reset)
+   MINIMAL HOMEPAGE: Header + Search + Table ONLY
    ============================================================ */
 import { sb } from './supabase.js';
 import { CONFIG } from './config.js';
 import { store, restoreFiltersFromStorage } from './state.js';
-import { loadAllData, purchaseStats } from './api.js';
-import { el, formatNumber } from './utils.js';
+import { loadAllData } from './api.js';
+import { el } from './utils.js';
 import { mountHeader } from './components/header.js';
 import { renderLogin } from './components/login.js';
 import { initToast, notify } from './components/toast.js';
 import { icon } from './components/icons.js';
-import { mountFilters } from './components/filters.js';
 import { mountPurchasesTable } from './components/purchases-table.js';
-import { mountGroupedView } from './components/grouped-view.js';
 import { openPurchaseModal } from './components/purchase-modal.js';
 import { openCommandPalette } from './components/command-palette.js';
-import { maybeStartOnboarding } from './components/onboarding.js';
 import { readShareSlugFromUrl } from './utils/share.js';
 import {
   isRecoveryCallback,
@@ -92,10 +90,6 @@ function installGlobalKeys() {
       openCommandPalette();
       return;
     }
-    if (e.key === '?' && !typing) {
-      e.preventDefault();
-      maybeStartOnboarding();
-    }
   });
 }
 
@@ -110,7 +104,7 @@ async function route(root, session) {
   }
   if (currentRoute === 'home' && store.user.get()?.id === session.user.id) {
     store.user.set(session.user);
-    store.session.set(session);
+    store.session.set(sess);
     return;
   }
   currentRoute = 'home';
@@ -133,17 +127,20 @@ async function enterApp(root) {
   }
 
   root.innerHTML = '';
+  
+  // Header (includes Search Bar)
   headerEl = mountHeader({
     onSearch: () => {},
     onAdd: handleAddPurchase,
     onOpenSettings: () => import('./components/settings-modal.js').then((m) => m.openSettingsModal()),
   });
+  
+  // Main Content (Table ONLY)
   mainEl = el('main', { class: 'container page', id: 'app-main' });
-  mainEl.appendChild(renderHomeShell());
+  mainEl.appendChild(mountPurchasesTable());
+  
   root.append(headerEl, mainEl);
   store.ready.set(true);
-
-  maybeStartOnboarding();
 }
 
 function renderBootLoading() {
@@ -165,71 +162,6 @@ function renderLoadError(err) {
         onclick: () => location.reload(),
       }),
     ]),
-  ]);
-}
-
-function renderHomeShell() {
-  const shell = el('div', { id: 'home-shell', style: { display: 'flex', flexDirection: 'column', gap: 'var(--s-5)' } });
-
-  const statsStrip = el('div', { class: 'stats-strip' });
-  const updateStats = () => {
-    const s = purchaseStats(store.purchases.get());
-    statsStrip.innerHTML = '';
-    statsStrip.append(
-      statCard('کل خریدها', s.total, ''),
-      statCard('خرید خوب', s.good, 'var(--good-2)'),
-      statCard('نچندان خوب', s.bad, 'var(--bad-2)'),
-      statCard('افتضاح', s.shit, 'var(--shit-2)'),
-      statCard('فروشگاه‌ها', s.shops, ''),
-      statCard('محصولات', s.products, ''),
-    );
-  };
-  updateStats();
-  store.purchases.subscribe(updateStats);
-
-  const filters = mountFilters();
-  const viewToggle = el('div', { class: 'view-toggle', role: 'tablist' });
-  const tableWrap = mountPurchasesTable();
-  const groupedWrap = mountGroupedView();
-
-  function renderView() {
-    const v = store.filters.get().view || 'table';
-    viewToggle.innerHTML = '';
-    viewToggle.append(
-      el('button', {
-        type: 'button', role: 'tab',
-        class: 'view-toggle__btn' + (v === 'table' ? ' is-active' : ''),
-        onclick: () => { store.filters.set({ ...store.filters.get(), view: 'table' }); },
-      }, [el('span', { html: icon('list', 14) }), el('span', { text: 'جدول' })]),
-      el('button', {
-        type: 'button', role: 'tab',
-        class: 'view-toggle__btn' + (v === 'grouped' ? ' is-active' : ''),
-        onclick: () => { store.filters.set({ ...store.filters.get(), view: 'grouped' }); },
-      }, [el('span', { html: icon('calendar', 14) }), el('span', { text: 'گروهی' })]),
-    );
-    tableWrap.style.display = v === 'table' ? '' : 'none';
-    groupedWrap.style.display = v === 'grouped' ? '' : 'none';
-  }
-  renderView();
-  store.filters.subscribe(renderView);
-
-  import('./components/reminders.js').then(({ mountReminders }) => {
-    const reminders = mountReminders();
-    shell.prepend(reminders);
-  }).catch(() => {});
-
-  shell.append(statsStrip, filters, viewToggle, tableWrap, groupedWrap);
-  return shell;
-}
-
-function statCard(label, value, color) {
-  return el('div', { class: 'stat-card' }, [
-    el('div', { class: 'stat-card__label', text: label }),
-    el('div', {
-      class: 'stat-card__value',
-      style: color ? { color } : {},
-      text: formatNumber(value),
-    }),
   ]);
 }
 
