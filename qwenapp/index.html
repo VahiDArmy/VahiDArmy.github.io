@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qwen Workspace — M0 Spikes</title>
+<style>
+:root{--bg:#0f1419;--card:#1a2129;--line:#2c3742;--tx:#e6edf3;--dim:#8b98a5;--ok:#3fb950;--bad:#f85149;--warn:#d29922;--acc:#4493f8}
+*{box-sizing:border-box}body{margin:0;font:15px/1.45 system-ui,sans-serif;background:var(--bg);color:var(--tx)}
+header{padding:12px 14px;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:17px}header small{color:var(--dim)}
+nav{display:flex;position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
+nav button{flex:1;padding:12px 2px;background:none;border:none;color:var(--dim);font-size:13px;border-bottom:2px solid transparent}
+nav button.on{color:var(--tx);border-bottom-color:var(--acc)}
+main{padding:12px;max-width:760px;margin:0 auto}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}
+.card h2{margin:0 0 6px;font-size:15px}.card p{margin:4px 0 10px;color:var(--dim);font-size:13px}
+button.act{display:block;width:100%;min-height:46px;margin:6px 0;padding:10px;border-radius:8px;border:1px solid var(--line);background:#232c36;color:var(--tx);font-size:15px}
+button.act:disabled{opacity:.5}button.act.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.log{background:#0b0f13;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:8px;max-height:240px;overflow:auto;font:12px/1.5 ui-monospace,monospace;white-space:pre-wrap;word-break:break-word}
+.log .ok{color:var(--ok)}.log .bad{color:var(--bad)}.log .warn{color:var(--warn)}.log .dim{color:var(--dim)}
+.chip{display:inline-block;padding:2px 10px;border-radius:20px;font-size:12px;border:1px solid var(--line);color:var(--dim)}
+.chip.pass{color:var(--ok);border-color:var(--ok)}.chip.fail{color:var(--bad);border-color:var(--bad)}.chip.warn{color:var(--warn);border-color:var(--warn)}
+input,select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:#0b0f13;color:var(--tx);font-size:14px;margin:4px 0}
+iframe{width:100%;height:110px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:8px}
+.banner{padding:8px 12px;font-size:13px;background:#3a2a10;color:var(--warn);display:none}
+.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Qwen Workspace — M0 Validation Kit</h1>
+  <small id="env">checking environment…</small>
+</header>
+<div class="banner" id="banner">⚠ Not a secure context. These tests require HTTPS hosting — see setup instructions.</div>
+<nav>
+  <button data-t="files" class="on">1 Files</button>
+  <button data-t="model">2 Model</button>
+  <button data-t="python">3 Python</button>
+  <button data-t="preview">4 Preview</button>
+  <button data-t="report">Report</button>
+</nav>
+<main>
+
+<section id="t-files" class="on">
+  <div class="card">
+    <h2>Browser workspace (OPFS) <span class="chip" id="c-opfs">not run</span></h2>
+    <p>Writes, reads, verifies, renames, deletes files in browser storage. This is where the agent will work.</p>
+    <button class="act primary" id="b-opfs">Test browser workspace</button>
+    <div class="log" id="l-opfs"></div>
+  </div>
+  <div class="card">
+    <h2>Device folder link <span class="chip" id="c-folder">not run</span></h2>
+    <p>Links a real folder on your phone. Pick an empty folder (e.g. Documents/qwen-test). The screen may switch to the system file picker — that's normal.</p>
+    <button class="act primary" id="b-link">1 · Link folder &amp; write test file</button>
+    <button class="act" id="b-reload">2 · Reload page (simulates closing the app)</button>
+    <button class="act primary" id="b-restore">3 · Reconnect folder &amp; verify</button>
+    <div class="log" id="l-folder"></div>
+  </div>
+  <div class="card">
+    <h2>ZIP import/export <span class="chip" id="c-zip">not run</span></h2>
+    <p>Creates and extracts a ZIP in memory, verifies contents, and offers a download.</p>
+    <button class="act primary" id="b-zip">Test ZIP round-trip</button>
+    <button class="act" id="b-zipdl">Download test ZIP</button>
+    <div class="log" id="l-zip"></div>
+  </div>
+</section>
+
+<section id="t-model">
+  <div class="card">
+    <h2>OpenRouter connection <span class="chip" id="c-conn">not run</span></h2>
+    <p>Paste your OpenRouter API key (openrouter.ai → Keys). It is stored only on this device and sent only to OpenRouter. Uses ~4–8 of your 50 daily free requests.</p>
+    <input id="key" type="password" placeholder="sk-or-v1-…" autocomplete="off">
+    <button class="act" id="b-models">Load free models + check quota</button>
+    <select id="model" size="1"></select>
+    <div class="log" id="l-conn"></div>
+  </div>
+  <div class="card">
+    <h2>Agent loop test <span class="chip" id="c-loop">not run</span></h2>
+    <p>The model must create 3 files via batched JSON actions, read them back to verify, then finish. The app independently checks the results — the model's word is not trusted.</p>
+    <button class="act primary" id="b-loop">Run agent loop test</button>
+    <div class="log" id="l-loop"></div>
+  </div>
+</section>
+
+<section id="t-python">
+  <div class="card">
+    <h2>Python runtime (Pyodide) <span class="chip" id="c-py">not run</span></h2>
+    <p>Downloads Python (~10 MB, one time, then cached) into a background worker. Then runs a syntax check and real pytest — including one intentionally failing test, to prove it detects failures honestly.</p>
+    <button class="act primary" id="b-pyinit">1 · Load Python runtime</button>
+    <button class="act" id="b-pyast">2 · Run syntax checks</button>
+    <button class="act primary" id="b-pytest">3 · Install pytest &amp; run tests</button>
+    <div class="log" id="l-py"></div>
+  </div>
+</section>
+
+<section id="t-preview">
+  <div class="card">
+    <h2>Web build &amp; sandboxed preview <span class="chip" id="c-prev">not run</span></h2>
+    <p>Bundles a 2-file JS project with esbuild (WebAssembly), runs it in a locked-down iframe, and checks the rendered output. Then runs a broken variant to prove errors are captured.</p>
+    <button class="act primary" id="b-prev">Build &amp; run working project</button>
+    <button class="act" id="b-prevbad">Run broken variant (error capture)</button>
+    <iframe id="frame" sandbox="allow-scripts" title="preview"></iframe>
+    <div class="log" id="l-prev"></div>
+  </div>
+</section>
+
+<section id="t-report">
+  <div class="card">
+    <h2>Results</h2>
+    <div id="summary"></div>
+    <button class="act primary" id="b-copy">Copy report (send this back)</button>
+    <button class="act" id="b-reset">Reset all results</button>
+    <textarea id="report" rows="10" readonly></textarea>
+  </div>
+</section>
+
+</main>
+
+<script type="text/worker" id="py-worker">
+let py = null;
+const send = (m) => postMessage(m);
+self.onmessage = async (e) => {
+  const { id, cmd, payload } = e.data;
+  try {
+    if (cmd === 'init') {
+      const t0 = Date.now();
+      importScripts('https://cdn.jsdelivr.net/pyodide/v314.0.8/full/pyodide.js');
+      py = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v314.0.8/full/' });
+      py.setStdout({ batched: (s) => send({ event: 'stdout', line: s }) });
+      py.setStderr({ batched: (s) => send({ event: 'stderr', line: s }) });
+      const version = py.runPython('import sys\nsys.version');
+      send({ id, ok: true, ms: Date.now() - t0, version });
+    } else if (cmd === 'ast') {
+      py.globals.set('src', payload.code);
+      const result = py.runPython('import ast\ntry:\n    ast.parse(src)\n    r = "OK"\nexcept SyntaxError as e:\n    r = f"SYNTAX ERROR line {e.lineno}: {e.msg}"\nr');
+      send({ id, ok: true, result });
+    } else if (cmd === 'pytest') {
+      const t0 = Date.now();
+      await py.loadPackage('micropip');
+      await py.runPythonAsync('import micropip\nawait micropip.install("pytest")');
+      const installMs = Date.now() - t0;
+      py.FS.writeFile('calc.py', payload.module);
+      py.FS.writeFile('test_calc.py', payload.tests);
+      const t1 = Date.now();
+      const rc = py.runPython('import pytest\nint(pytest.main(["-q", "test_calc.py"]))');
+      send({ id, ok: true, rc, installMs, runMs: Date.now() - t1 });
+    }
+  } catch (err) {
+    send({ id, ok: false, error: String((err && err.message) || err) });
+  }
+};
+</script>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const now = () => performance.now();
+const RESULTS_KEY = 'qwen_spike_results';
+let results = {};
+try { results = JSON.parse(localStorage.getItem(RESULTS_KEY) || '{}'); } catch {}
+
+function log(id, msg, cls) {
+  const el = $(id); const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.appendChild(line); el.scrollTop = el.scrollHeight;
+}
+function setResult(key, status, details) {
+  results[key] = { status, details, at: new Date().toISOString() };
+  localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+  const chip = $({ opfs:'c-opfs', folder:'c-folder', zip:'c-zip', conn:'c-conn', loop:'c-loop', py:'c-py', preview:'c-prev' }[key]);
+  if (chip) { chip.textContent = status; chip.className = 'chip ' + (status === 'PASS' ? 'pass' : status === 'FAIL' ? 'fail' : 'warn'); }
+  renderReport();
+}
+function renderReport() {
+  const names = { opfs:'Browser workspace (OPFS)', folder:'Device folder link + restore', zip:'ZIP round-trip', conn:'OpenRouter connection', loop:'Agent loop (weak model)', py:'Python runtime + pytest', preview:'Web build + sandbox preview' };
+  $('summary').innerHTML = Object.keys(names).map(k => {
+    const r = results[k];
+    const st = r ? r.status : 'not run';
+    const cls = st === 'PASS' ? 'pass' : st === 'FAIL' ? 'fail' : '';
+    return `<div class="row"><span>${names[k]}</span><span class="chip ${cls}">${st}</span></div>`;
+  }).join('');
+  $('report').value = JSON.stringify({ device: navigator.userAgent, secureContext: window.isSecureContext, results }, null, 1);
+}
+async function guarded(btn, fn) {
+  btn.disabled = true;
+  try { await fn(); } catch (e) { log(btn.dataset.log || 'l-opfs', 'ERROR: ' + (e.message || e), 'bad'); }
+  btn.disabled = false;
+}
+async function sha256(str) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+function idb() { return new Promise((res, rej) => { const r = indexedDB.open('qwen_spike', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function idbSet(k, v) { const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = () => res(); tx.onerror = () => rej(tx.error); }); }
+async function idbGet(k) { const db = await idb(); return new Promise((res, rej) => { const rq = db.transaction('kv').objectStore('kv').get(k); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); }); }
+
+// ---------- tabs ----------
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('main section').forEach(s => s.classList.toggle('on', s.id === 't-' + b.dataset.t));
+}));
+
+// ---------- environment ----------
+(async () => {
+  const feats = {
+    secure: window.isSecureContext,
+    fsa: 'showDirectoryPicker' in window,
+    opfs: !!(navigator.storage && navigator.storage.getDirectory),
+    worker: typeof Worker !== 'undefined',
+    wasm: typeof WebAssembly !== 'undefined'
+  };
+  $('env').textContent = `secure:${feats.secure} · folderAPI:${feats.fsa} · OPFS:${feats.opfs} · worker:${feats.worker} · wasm:${feats.wasm}`;
+  if (!feats.secure) $('banner').style.display = 'block';
+  renderReport();
+})();
+
+// ---------- SPIKE 1: OPFS ----------
+$('b-opfs').dataset.log = 'l-opfs';
+$('b-opfs').addEventListener('click', () => guarded($('b-opfs'), async () => {
+  const L = 'l-opfs';
+  const root = await navigator.storage.getDirectory();
+  const dir = await root.getDirectoryHandle('spikeproj', { create: true });
+  const content = 'hello ' + Date.now();
+  const fh = await dir.getFileHandle('hello.txt', { create: true });
+  let w = await fh.createWritable(); await w.write(content); await w.close();
+  const back = await (await fh.getFile()).text();
+  const h1 = await sha256(content), h2 = await sha256(back);
+  if (h1 !== h2) throw new Error('hash mismatch after write/read');
+  log(L, 'write + read + SHA-256 verify: OK', 'ok');
+  const src = await dir.getDirectoryHandle('src', { create: true });
+  const jf = await src.getFileHandle('app.js', { create: true });
+  w = await jf.createWritable(); await w.write('console.log(1)'); await w.close();
+  log(L, 'nested directory create/write: OK', 'ok');
+  let moveWorks = false;
+  try { await jf.move('main.js'); moveWorks = true; log(L, 'native rename (move): OK', 'ok'); }
+  catch { log(L, 'native rename unavailable → will use copy+delete', 'warn'); }
+  const t0 = now(); const N = 30; const payload = 'x'.repeat(2048);
+  for (let i = 0; i < N; i++) { const f = await dir.getFileHandle(`bulk_${i}.txt`, { create: true }); const ww = await f.createWritable(); await ww.write(payload); await ww.close(); }
+  const writeMs = Math.round(now() - t0);
+  const t1 = now(); let count = 0;
+  for await (const [name, h] of dir.entries()) { if (name.startsWith('bulk_')) { await (await h.getFile()).text(); count++; } }
+  const readMs = Math.round(now() - t1);
+  log(L, `bulk: ${N} files × 2KB → write ${writeMs}ms, read ${readMs}ms (${count} verified)`, 'ok');
+  await dir.removeEntry('hello.txt');
+  let gone = false; try { await dir.getFileHandle('hello.txt'); } catch { gone = true; }
+  if (!gone) throw new Error('delete did not take effect');
+  log(L, 'delete + verify: OK', 'ok');
+  const est = navigator.storage.estimate ? await navigator.storage.estimate() : null;
+  if (est) log(L, `storage quota ≈ ${Math.round(est.quota / 1e6)} MB, used ≈ ${Math.round(est.usage / 1e6)} MB`, 'dim');
+  setResult('opfs', 'PASS', { writeMs, readMs, moveWorks, quotaMB: est ? Math.round(est.quota / 1e6) : null });
+}));
+
+// ---------- SPIKE 1: folder ----------
+$('b-link').dataset.log = 'l-folder';
+$('b-link').addEventListener('click', () => guarded($('b-link'), async () => {
+  const L = 'l-folder';
+  if (!('showDirectoryPicker' in window)) { setResult('folder', 'FAIL', { reason: 'no File System Access API' }); throw new Error('This browser lacks folder access. Use Chrome 132+ on Android.'); }
+  const dir = await showDirectoryPicker({ mode: 'readwrite', id: 'qwen-spike' });
+  const token = 'token-' + Date.now();
+  const fh = await dir.getFileHandle('qwen-spike.txt', { create: true });
+  const w = await fh.createWritable(); await w.write(token); await w.close();
+  const back = await (await fh.getFile()).text();
+  if (back !== token) throw new Error('folder write verification failed');
+  await idbSet('dir', dir);
+  localStorage.setItem('qwen_spike_token', token);
+  localStorage.setItem('qwen_spike_folder', dir.name);
+  let n = 0; for await (const e of dir.values()) n++;
+  log(L, `linked "${dir.name}", wrote + verified test file (${n} entries visible)`, 'ok');
+  log(L, 'now tap button 2 (reload), then button 3 (reconnect)', 'dim');
+  setResult('folder', 'PASS', { folder: dir.name, entries: n, restored: false });
+}));
+$('b-reload').addEventListener('click', () => location.reload());
+$('b-restore').dataset.log = 'l-folder';
+$('b-restore').addEventListener('click', () => guarded($('b-restore'), async () => {
+  const L = 'l-folder';
+  const dir = await idbGet('dir');
+  if (!dir) throw new Error('No saved folder handle. Run button 1 first.');
+  let perm = await dir.queryPermission({ mode: 'readwrite' });
+  log(L, `permission after reload: ${perm}`, 'dim');
+  if (perm !== 'granted') { perm = await dir.requestPermission({ mode: 'readwrite' }); log(L, `after requestPermission (your tap): ${perm}`, 'dim'); }
+  if (perm !== 'granted') { setResult('folder', 'WARN', { reason: 'permission not granted', perm }); return; }
+  const token = localStorage.getItem('qwen_spike_token');
+  const back = await (await (await dir.getFileHandle('qwen-spike.txt')).getFile()).text();
+  if (back !== token) throw new Error('saved file content mismatch after restore');
+  const fh = await dir.getFileHandle('qwen-spike-2.txt', { create: true });
+  const w = await fh.createWritable(); await w.write('second write after restore'); await w.close();
+  log(L, 'reconnected, original file verified, second write OK', 'ok');
+  const prev = results.folder ? results.folder.details : {};
+  setResult('folder', 'PASS', { ...prev, restored: true, permAfterReload: perm });
+}));
+
+// ---------- SPIKE 1: ZIP ----------
+let lastZip = null;
+$('b-zip').dataset.log = 'l-zip';
+$('b-zip').addEventListener('click', () => guarded($('b-zip'), async () => {
+  const L = 'l-zip';
+  const { zipSync, unzipSync, strToU8, strFromU8 } = await import('https://cdn.jsdelivr.net/npm/fflate@0.8.3/esm/browser.js');
+  const files = { 'a.txt': strToU8('alpha ' + Date.now()), 'src/b.js': strToU8('export const x = 1;') };
+  const t0 = now(); const zipped = zipSync(files, { level: 6 }); const zipMs = Math.round(now() - t0);
+  const t1 = now(); const out = unzipSync(zipped); const unzipMs = Math.round(now() - t1);
+  for (const k of Object.keys(files)) { if (strFromU8(out[k]) !== strFromU8(files[k])) throw new Error('ZIP content mismatch: ' + k); }
+  lastZip = zipped;
+  log(L, `zip ${zipped.length} bytes in ${zipMs}ms, unzip verified in ${unzipMs}ms`, 'ok');
+  setResult('zip', 'PASS', { zipMs, unzipMs, bytes: zipped.length });
+}));
+$('b-zipdl').dataset.log = 'l-zip';
+$('b-zipdl').addEventListener('click', () => guarded($('b-zipdl'), async () => {
+  if (!lastZip) throw new Error('Run the ZIP round-trip first.');
+  const url = URL.createObjectURL(new Blob([lastZip], { type: 'application/zip' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'qwen-spike.zip'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  log('l-zip', 'download triggered — check your Downloads folder', 'dim');
+}));
+
+// ---------- SPIKE 2: OpenRouter ----------
+const OR = 'https://openrouter.ai/api/v1';
+$('key').value = localStorage.getItem('qwen_spike_key') || '';
+$('key').addEventListener('change', () => localStorage.setItem('qwen_spike_key', $('key').value.trim()));
+function getKey() { const k = $('key').value.trim(); if (!k) throw new Error('Paste your OpenRouter API key first.'); localStorage.setItem('qwen_spike_key', k); return k; }
+
+$('b-models').dataset.log = 'l-conn';
+$('b-models').addEventListener('click', () => guarded($('b-models'), async () => {
+  const L = 'l-conn'; const key = getKey();
+  const t0 = now();
+  const mr = await fetch(OR + '/models');
+  if (!mr.ok) throw new Error('models HTTP ' + mr.status);
+  const models = (await mr.json()).data.filter(m => m.id.endsWith(':free'));
+  models.sort((a, b) => ((b.supported_parameters || []).includes('tools') - (a.supported_parameters || []).includes('tools')) || (b.context_length - a.context_length));
+  $('model').innerHTML = models.slice(0, 40).map(m => `<option value="${m.id}">${m.id} · ${Math.round((m.context_length || 0) / 1000)}k ctx${(m.supported_parameters || []).includes('tools') ? ' · tools' : ''}</option>`).join('');
+  log(L, `CORS OK — ${models.length} free models loaded in ${Math.round(now() - t0)}ms`, 'ok');
+  const kr = await fetch(OR + '/key', { headers: { Authorization: 'Bearer ' + key } });
+  if (!kr.ok) throw new Error('key check HTTP ' + kr.status + ' — is the key valid?');
+  const kd = (await kr.json()).data;
+  const q = kd.free_model_daily_requests;
+  log(L, q ? `free quota today: ${q.remaining}/${q.limit} remaining (${q.used} used)` : 'quota field not present on this account tier', 'dim');
+  setResult('conn', 'PASS', { freeModels: models.length, quota: q || null });
+}));
+
+function extractJSON(text) {
+  if (!text) return null;
+  let t = String(text).trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  try { return JSON.parse(t); } catch {}
+  const s = t.indexOf('{'); if (s < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = s; i < t.length; i++) {
+    const c = t[i];
+    if (inStr) { if (esc) esc = false; else if (c === '\\') esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) { try { return JSON.parse(t.slice(s, i + 1)); } catch { return null; } } }
+  }
+  return null;
+}
+async function chat(key, model, messages) {
+  const res = await fetch(OR + '/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model, messages, temperature: 0, max_tokens: 1600 })
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    if (res.status === 429) log('l-loop', 'rate limited (429). Retry-After: ' + (res.headers.get('Retry-After') || '?') + 's', 'warn');
+    throw new Error('HTTP ' + res.status + ': ' + body.slice(0, 180));
+  }
+  return res.json();
+}
+const SYS = 'You are a coding agent controlling a virtual file system through JSON actions.\nReply with ONLY one JSON object. No markdown, no text outside the JSON.\nSchema:\n{"thought":"short reasoning","actions":[{"tool":"write_file","path":"index.html","content":"..."},{"tool":"read_file","path":"app.js"},{"tool":"list_files"},{"tool":"done","summary":"what was accomplished"}]}\nRules:\n- Batch several actions in one reply to save requests.\n- After writing files, verify them with read_file before calling done.\n- Only call done when the task is fully complete.\nTask: create three files: index.html (loads style.css and app.js, contains <div id="msg"></div>), style.css (makes #msg blue), app.js (sets the #msg text to exactly "Hello").';
+
+$('b-loop').dataset.log = 'l-loop';
+$('b-loop').addEventListener('click', () => guarded($('b-loop'), async () => {
+  const L = 'l-loop'; const key = getKey(); const model = $('model').value;
+  if (!model) throw new Error('Load models first.');
+  const vfs = new Map();
+  const messages = [{ role: 'system', content: SYS }, { role: 'user', content: 'Begin. Create the files now.' }];
+  let calls = 0, malformed = 0, tokens = 0, finished = false;
+  const t0 = now();
+  for (let turn = 0; turn < 6 && !finished; turn++) {
+    calls++;
+    let resp = await chat(key, model, messages);
+    tokens += (resp.usage && resp.usage.total_tokens) || 0;
+    let content = (resp.choices && resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || '';
+    let obj = extractJSON(content);
+    if (!obj || !Array.isArray(obj.actions)) {
+      malformed++;
+      log(L, `turn ${turn + 1}: malformed output → local repair failed, sending one corrective retry`, 'warn');
+      messages.push({ role: 'assistant', content }, { role: 'user', content: 'Invalid JSON. Reply again with ONLY the JSON object using the schema.' });
+      calls++;
+      resp = await chat(key, model, messages);
+      tokens += (resp.usage && resp.usage.total_tokens) || 0;
+      content = (resp.choices && resp.choices[0] && resp.choices[0].message && resp.choices[0].message.content) || '';
+      obj = extractJSON(content);
+      if (!obj || !Array.isArray(obj.actions)) { log(L, 'second malformed reply — stopping', 'bad'); break; }
+    }
+    const out = []; let summary = '';
+    for (const a of obj.actions) {
+      if (a.tool === 'write_file') { vfs.set(a.path, String(a.content ?? '')); out.push({ path: a.path, written: true, bytes: String(a.content ?? '').length }); }
+      else if (a.tool === 'read_file') { out.push({ path: a.path, content: vfs.has(a.path) ? vfs.get(a.path) : null, error: vfs.has(a.path) ? undefined : 'not found' }); }
+      else if (a.tool === 'list_files') { out.push({ files: [...vfs.keys()] }); }
+      else if (a.tool === 'done') { finished = true; summary = a.summary || ''; out.push({ done: true }); }
+      else out.push({ error: 'unknown tool: ' + a.tool });
+    }
+    log(L, `turn ${turn + 1}: ${(obj.thought || '').slice(0, 70)} → ${obj.actions.map(a => a.tool).join(', ')}`, 'dim');
+    if (!finished) messages.push({ role: 'assistant', content: JSON.stringify(obj) }, { role: 'user', content: 'Tool results: ' + JSON.stringify(out) + '. Continue.' });
+    else log(L, 'model declared done: ' + summary.slice(0, 100), 'dim');
+  }
+  const secs = Math.round((now() - t0) / 1000);
+  const hasAll = ['index.html', 'style.css', 'app.js'].every(p => vfs.has(p));
+  const contentOK = (vfs.get('app.js') || '').includes('Hello') && (vfs.get('style.css') || '').includes('blue');
+  const pass = finished && hasAll && contentOK;
+  log(L, `independent check: files ${hasAll ? 'OK' : 'MISSING'}, content ${contentOK ? 'OK' : 'WRONG'} · ${calls} calls, ${malformed} malformed, ${tokens} tokens, ${secs}s`, pass ? 'ok' : 'bad');
+  setResult('loop', pass ? 'PASS' : 'FAIL', { model, calls, malformed, tokens, secs, hasAll, contentOK, finished });
+}));
+
+// ---------- SPIKE 3: Python ----------
+let pyWorker = null, pySeq = 0; const pyPending = new Map();
+function ensureWorker() {
+  if (pyWorker) return pyWorker;
+  const src = $('py-worker').textContent;
+  pyWorker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  pyWorker.onmessage = (e) => {
+    const m = e.data;
+    if (m.event === 'stdout' || m.event === 'stderr') { log('l-py', m.line, m.event === 'stderr' ? 'warn' : 'dim'); return; }
+    const p = pyPending.get(m.id); if (p) { pyPending.delete(m.id); m.ok ? p.resolve(m) : p.reject(new Error(m.error)); }
+  };
+  return pyWorker;
+}
+function pyCall(cmd, payload, timeoutMs) {
+  const w = ensureWorker(); const id = ++pySeq;
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => { pyPending.delete(id); reject(new Error('timeout after ' + timeoutMs / 1000 + 's')); }, timeoutMs);
+    pyPending.set(id, { resolve: (m) => { clearTimeout(timer); resolve(m); }, reject: (e) => { clearTimeout(timer); reject(e); } });
+    w.postMessage({ id, cmd, payload });
+  });
+}
+$('b-pyinit').dataset.log = 'l-py';
+$('b-pyinit').addEventListener('click', () => guarded($('b-pyinit'), async () => {
+  log('l-py', 'downloading Python runtime (~10 MB, one time)…', 'dim');
+  const m = await pyCall('init', {}, 180000);
+  log('l-py', `Python ready in ${(m.ms / 1000).toFixed(1)}s — ${m.version.split('\n')[0]}`, 'ok');
+  results.pyInit = { ms: m.ms, version: m.version.split('\n')[0] };
+  localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+}));
+$('b-pyast').dataset.log = 'l-py';
+$('b-pyast').addEventListener('click', () => guarded($('b-pyast'), async () => {
+  const good = await pyCall('ast', { code: 'def add(a, b):\n    return a + b\n' }, 30000);
+  const bad = await pyCall('ast', { code: 'def add(a, b)\n    return a + b\n' }, 30000);
+  const ok = good.result === 'OK' && bad.result.startsWith('SYNTAX ERROR');
+  log('l-py', `valid code → ${good.result}; broken code → ${bad.result}`, ok ? 'ok' : 'bad');
+  results.pyAst = ok; localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+}));
+$('b-pytest').dataset.log = 'l-py';
+$('b-pytest').addEventListener('click', () => guarded($('b-pytest'), async () => {
+  log('l-py', 'installing pytest via micropip…', 'dim');
+  const m = await pyCall('pytest', {
+    module: 'def add(a, b):\n    return a + b\n',
+    tests: 'from calc import add\n\ndef test_add_correct():\n    assert add(2, 3) == 5\n\ndef test_add_wrong_on_purpose():\n    assert add(2, 2) == 5\n'
+  }, 180000);
+  const detected = m.rc !== 0;
+  log('l-py', `pytest exit code ${m.rc} (install ${(m.installMs / 1000).toFixed(1)}s, run ${m.runMs}ms) — ${detected ? 'failing test correctly detected' : 'WARNING: failure not detected'}`, detected ? 'ok' : 'bad');
+  const pass = detected && results.pyAst === true;
+  setResult('py', pass ? 'PASS' : 'FAIL', { initMs: results.pyInit ? results.pyInit.ms : null, installMs: m.installMs, runMs: m.runMs, rc: m.rc, astChecks: results.pyAst === true });
+}));
+
+// ---------- SPIKE 4: preview ----------
+let esbuildReady = null;
+function ensureEsbuild() {
+  if (!esbuildReady) esbuildReady = (async () => {
+    const esbuild = await import('https://cdn.jsdelivr.net/npm/esbuild-wasm@0.28.2/esm/browser.js');
+    await esbuild.initialize({ wasmURL: 'https://cdn.jsdelivr.net/npm/esbuild-wasm@0.28.2/esbuild.wasm', worker: false });
+    return esbuild;
+  })();
+  return esbuildReady;
+}
+function normPath(p) { const out = []; for (const part of p.split('/')) { if (!part || part === '.') continue; if (part === '..') out.pop(); else out.push(part); } return '/' + out.join('/'); }
+function vfsPlugin(files) {
+  return { name: 'vfs', setup(build) {
+    build.onResolve({ filter: /.*/ }, (args) => {
+      let p = args.path;
+      if (p.startsWith('.')) { const base = args.importer ? args.importer.split('/').slice(0, -1).join('/') : ''; p = normPath(base + '/' + p); }
+      if (!p.startsWith('/')) p = '/' + p;
+      if (!(p in files) && (p + '.js') in files) p += '.js';
+      return { path: p, namespace: 'vfs' };
+    });
+    build.onLoad({ filter: /.*/, namespace: 'vfs' }, (args) => {
+      if (!(args.path in files)) throw new Error('Missing file: ' + args.path);
+      return { contents: files[args.path], loader: 'js' };
+    });
+  } };
+}
+function harness(bundle, token, expect) {
+  const safe = bundle.replace(/<\/script/gi, '<\\/script');
+  return '<!doctype html><html><head><meta charset="utf-8"></head><body><div id="msg"></div>'
+    + '<script>window.onerror=function(m){parent.postMessage({token:' + JSON.stringify(token) + ',ok:false,error:String(m)},"*")};<\/script>'
+    + '<script>' + safe + '<\/script>'
+    + '<script>setTimeout(function(){var el=document.getElementById("msg");var t=el?el.textContent:"";parent.postMessage({token:' + JSON.stringify(token) + ',ok:t===' + JSON.stringify(expect) + ',text:t},"*")},300);<\/script>'
+    + '</body></html>';
+}
+function runFrame(html, token, timeoutMs) {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => { window.removeEventListener('message', h); resolve({ ok: false, error: 'timeout' }); }, timeoutMs);
+    function h(e) { const d = e.data; if (!d || d.token !== token) return; clearTimeout(timer); window.removeEventListener('message', h); resolve(d); }
+    window.addEventListener('message', h);
+    $('frame').srcdoc = html;
+  });
+}
+async function buildProject(broken) {
+  const L = 'l-prev';
+  const esbuild = await ensureEsbuild();
+  const files = {
+    '/app.js': 'import { message } from "./util.js";\ndocument.getElementById("msg").textContent = message;\n',
+    '/util.js': broken ? 'throw new Error("intentional boom");\nexport const message = "Hello";\n' : 'export const message = "Hello";\n'
+  };
+  const t0 = now();
+  const r = await esbuild.build({ stdin: { contents: files['/app.js'], resolveDir: '/', sourcefile: 'app.js' }, bundle: true, write: false, format: 'iife', plugins: [vfsPlugin(files)] });
+  const buildMs = Math.round(now() - t0);
+  const token = 't' + Math.random().toString(36).slice(2);
+  const res = await runFrame(harness(r.outputFiles[0].text, token, 'Hello'), token, 5000);
+  return { buildMs, res };
+}
+$('b-prev').dataset.log = 'l-prev';
+$('b-prev').addEventListener('click', () => guarded($('b-prev'), async () => {
+  log('l-prev', 'loading esbuild-wasm (~13 MB, one time)…', 'dim');
+  const { buildMs, res } = await buildProject(false);
+  const ok = res.ok === true && res.text === 'Hello';
+  log('l-prev', `bundle ${buildMs}ms · sandbox rendered "${res.text || ''}" · assertion ${ok ? 'PASS' : 'FAIL'}`, ok ? 'ok' : 'bad');
+  results.prevGood = { ok, buildMs }; localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+  if (results.prevBad) setResult('preview', ok && results.prevBad.ok ? 'PASS' : 'FAIL', { buildMs, rendered: res.text, errorCapture: results.prevBad.ok });
+}));
+$('b-prevbad').dataset.log = 'l-prev';
+$('b-prevbad').addEventListener('click', () => guarded($('b-prevbad'), async () => {
+  const { buildMs, res } = await buildProject(true);
+  const captured = res.ok === false && !!res.error;
+  log('l-prev', `broken variant → ${captured ? 'error captured: ' + res.error : 'NOT captured'}`, captured ? 'ok' : 'bad');
+  results.prevBad = { ok: captured, error: res.error || null }; localStorage.setItem(RESULTS_KEY, JSON.stringify(results));
+  if (results.prevGood) setResult('preview', results.prevGood.ok && captured ? 'PASS' : 'FAIL', { buildMs: results.prevGood.buildMs, errorCapture: captured });
+}));
+
+// ---------- report ----------
+$('b-copy').addEventListener('click', async () => {
+  renderReport();
+  const txt = $('report').value;
+  try { await navigator.clipboard.writeText(txt); $('b-copy').textContent = 'Copied ✓'; }
+  catch { $('report').select(); document.execCommand('copy'); $('b-copy').textContent = 'Copied ✓ (fallback)'; }
+  setTimeout(() => $('b-copy').textContent = 'Copy report (send this back)', 2000);
+});
+$('b-reset').addEventListener('click', () => { localStorage.removeItem(RESULTS_KEY); results = {}; document.querySelectorAll('.chip').forEach(c => { c.textContent = 'not run'; c.className = 'chip'; }); renderReport(); });
+</script>
+</body>
+</html>
