@@ -2,8 +2,19 @@
  * Tool definitions the agent can call.
  * Every tool returns a structured result that is verified by the app,
  * never trusted solely from the model.
+ *
+ * Some tools need project context (memory/roadmap). The app injects
+ * a ProjectContext via setProjectContext before each agent run.
  */
 import * as fs from '../files/fs-adapter.js';
+import { updateProject } from '../projects/store.js';
+
+/** @type {{ projectId: string, project: object, onProjectPatch?: (p: object) => void } | null} */
+let ctx = null;
+
+export function setProjectContext(next) {
+  ctx = next;
+}
 
 export const TOOL_DEFS = [
   {
@@ -69,7 +80,7 @@ export const TOOL_DEFS = [
     type: 'function',
     function: {
       name: 'delete_path',
-      description: 'Delete a file or an empty directory.',
+      description: 'Delete a file or an empty directory. Prefer confirming intent with the user for important files.',
       parameters: {
         type: 'object',
         properties: {
@@ -97,7 +108,7 @@ export const TOOL_DEFS = [
     type: 'function',
     function: {
       name: 'search_files',
-      description: 'Search file contents for a substring or simple pattern. Returns matching paths and short snippets.',
+      description: 'Search file contents for a substring. Returns matching paths and short snippets.',
       parameters: {
         type: 'object',
         properties: {
@@ -121,6 +132,70 @@ export const TOOL_DEFS = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'update_memory',
+      description:
+        'Update the persistent project memory (purpose, architecture, constraints, known issues, next steps). ' +
+        'Merge fields you provide; omit fields you do not want to change. Actual source files remain the source of truth.',
+      parameters: {
+        type: 'object',
+        properties: {
+          purpose: { type: 'string' },
+          architecture: { type: 'string' },
+          constraints: { type: 'array', items: { type: 'string' } },
+          known_issues: { type: 'array', items: { type: 'string' } },
+          next_steps: { type: 'array', items: { type: 'string' } },
+          notes: { type: 'string' },
+        },
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'update_roadmap',
+      description:
+        'Replace or set the project roadmap. Pass phases with tasks. ' +
+        'Each task status should be one of: pending, in_progress, done, blocked, failed.',
+      parameters: {
+        type: 'object',
+        properties: {
+          phases: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                tasks: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      title: { type: 'string' },
+                      status: { type: 'string' },
+                    },
+                    required: ['title'],
+                  },
+                },
+              },
+              required: ['title'],
+            },
+          },
+        },
+        required: ['phases'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_memory',
+      description: 'Read the current project memory and roadmap summary.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
 ];
 
 /**
@@ -137,7 +212,6 @@ export async function executeTool(name, args = {}) {
       case 'read_file': {
         const content = await fs.readFile(args.path);
         if (content == null) return { ok: false, error: `File not found: ${args.path}` };
-        // Truncate very large files for the model
         if (content.length > 80_000) {
           return {
             ok: true,
@@ -148,7 +222,6 @@ export async function executeTool(name, args = {}) {
       }
       case 'write_file': {
         await fs.writeFile(args.path, args.content);
-        // Verify
         const written = await fs.readFile(args.path);
         if (written !== String(args.content ?? '')) {
           return { ok: false, error: 'Write verification failed — content mismatch' };
@@ -172,8 +245,13 @@ export async function executeTool(name, args = {}) {
         return { ok: true, result: { path: args.path, changed: true } };
       }
       case 'delete_path': {
-        await fs.deletePath(args.path);
-        return { ok: true, result: { deleted: args.path } };
+        // Soft safeguard: refuse deleting broad roots
+        const p = String(args.path || '').replace(/^\/+|\/+$/g, '');
+        if (!p || p === '.' || p === '..') {
+          return { ok: false, error: 'Refusing to delete project root or invalid path' };
+        }
+        await fs.deletePath(p);
+        return { ok: true, result: { deleted: p } };
       }
       case 'mkdir': {
         await fs.mkdir(args.path);
@@ -198,10 +276,56 @@ export async function executeTool(name, args = {}) {
       case 'get_project_tree': {
         return { ok: true, result: fs.getTreeSummary(args.max_depth || 4) };
       }
+      case 'get_memory': {
+        if (!ctx?.project) return { ok: false, error: 'No project context' };
+        return {
+          ok: true,
+          result: {
+            memory: ctx.project.memory || {},
+            roadmap: ctx.project.roadmap || { phases: [] },
+          },
+        };
+      }
+      case 'update_memory': {
+        if (!ctx?.projectId) return { ok: false, error: 'No project context' };
+        const prev = ctx.project.memory || {};
+        const next = { ...prev };
+        for (const key of ['purpose', 'architecture', 'notes']) {
+          if (args[key] != null) next[key] = String(args[key]);
+        }
+        for (const key of ['constraints', 'known_issues', 'next_steps']) {
+          if (Array.isArray(args[key])) next[key] = args[key].map(String);
+        }
+        const updated = await updateProject(ctx.projectId, { memory: next });
+        ctx.project = updated;
+        ctx.onProjectPatch?.(updated);
+        return { ok: true, result: { memory: next } };
+      }
+      case 'update_roadmap': {
+        if (!ctx?.projectId) return { ok: false, error: 'No project context' };
+        const phases = (args.phases || []).map((ph) => ({
+          title: String(ph.title || 'Phase'),
+          tasks: (ph.tasks || []).map((t) => ({
+            title: String(t.title || ''),
+            status: normalizeStatus(t.status),
+          })),
+        }));
+        const roadmap = { phases };
+        const updated = await updateProject(ctx.projectId, { roadmap });
+        ctx.project = updated;
+        ctx.onProjectPatch?.(updated);
+        return { ok: true, result: { roadmap } };
+      }
       default:
         return { ok: false, error: `Unknown tool: ${name}` };
     }
   } catch (err) {
     return { ok: false, error: err.message || String(err) };
   }
+}
+
+function normalizeStatus(s) {
+  const v = String(s || 'pending').toLowerCase().replace(/\s+/g, '_');
+  const allowed = new Set(['pending', 'in_progress', 'done', 'blocked', 'failed']);
+  return allowed.has(v) ? v : 'pending';
 }

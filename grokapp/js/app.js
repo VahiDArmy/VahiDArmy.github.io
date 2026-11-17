@@ -249,13 +249,25 @@ async function openProject(id) {
     // Restore virtual files from IndexedDB (survives reload when no native folder)
     try {
       const n = await fs.restoreTree(id);
-      if (n > 0) chat.addSystemNote(`Restored ${n} files from local cache`);
+      if (n > 0) {
+        chat.addSystemNote(`Restored ${n} files from local cache`);
+      } else if (fs.listAllFiles().length === 0) {
+        chat.addSystemNote(
+          'No local files yet. Use Files → Import ZIP, or Connect Folder on desktop Chrome. ' +
+          'On another device, files do not sync automatically — re-import or reconnect the folder.'
+        );
+      }
     } catch (e) {
       console.warn('restoreTree', e);
     }
 
     // Load recent messages
     const msgs = await projects.getMessages(id, 40);
+    if (!msgs.length) {
+      chat.addSystemNote(
+        'Try: “Examine the project and summarize how it works” · “Create a simple README” · “Plan the next features”'
+      );
+    }
     for (const m of msgs) {
       if (m.role === 'user' || m.role === 'assistant') {
         chat.addMessage(m.role, m.content);
@@ -443,10 +455,16 @@ async function handleUserMessage(text) {
       project: currentProject,
       userMessage: text,
       signal: abortController.signal,
+      onProjectUpdate: (p) => {
+        currentProject = p;
+        renderRoadmap();
+      },
       onEvent: (ev) => {
         pushActivity(ev);
         if (ev.type === 'tool_start') {
           chat.setAgentStatus(true, `Running ${ev.name}…`);
+        } else if (ev.type === 'tool_retry') {
+          chat.setAgentStatus(true, `Retrying ${ev.name}…`);
         } else if (ev.type === 'model_request') {
           chat.setAgentStatus(true, 'Waiting for model…');
         } else if (ev.type === 'assistant_text') {
@@ -454,6 +472,7 @@ async function handleUserMessage(text) {
         }
       },
     });
+    if (result?.project) currentProject = result.project;
 
     if (result?.text) {
       chat.addMessage('assistant', result.text);
