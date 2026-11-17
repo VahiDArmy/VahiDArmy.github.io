@@ -1,0 +1,11 @@
+{
+  "name": "DevSpace",
+  "short_name": "DevSpace",
+  "description": "AI-powered local development workspace",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1419",
+  "theme_color": "#0f1419",
+  "orientation": "any",
+  "icons": []
+}

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#0f1419" />
+  <meta name="description" content="AI-powered local development workspace" />
+  <title>DevSpace — AI Development Workspace</title>
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
+</head>
+<body>
+  <div id="app">
+    <!-- Auth screen (shown when not signed in) -->
+    <section id="auth-screen" class="screen hidden">
+      <div class="auth-card">
+        <div class="logo">⚡ DevSpace</div>
+        <p class="tagline">Persistent AI development workspace</p>
+        <div id="auth-form">
+          <input type="email" id="auth-email" placeholder="Email" autocomplete="email" />
+          <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password" />
+          <div class="auth-actions">
+            <button id="btn-signin" class="btn primary">Sign In</button>
+            <button id="btn-signup" class="btn">Sign Up</button>
+          </div>
+          <p id="auth-error" class="error hidden"></p>
+        </div>
+        <p class="hint">Requires a Supabase project. Configure in Settings after first load if needed.</p>
+      </div>
+    </section>
+
+    <!-- Main app shell -->
+    <section id="main-screen" class="screen hidden">
+      <!-- Top bar -->
+      <header id="topbar">
+        <button id="btn-menu" class="icon-btn" aria-label="Menu">☰</button>
+        <div class="project-title" id="current-project-name">No project</div>
+        <div class="top-actions">
+          <button id="btn-activity" class="icon-btn" aria-label="Activity" title="AI Activity">⟳</button>
+          <button id="btn-settings" class="icon-btn" aria-label="Settings">⚙</button>
+        </div>
+      </header>
+
+      <!-- Side navigation (drawer on mobile) -->
+      <nav id="drawer" class="drawer">
+        <div class="drawer-header">
+          <span class="logo-sm">⚡ DevSpace</span>
+          <button id="btn-close-drawer" class="icon-btn">✕</button>
+        </div>
+        <ul class="nav-list">
+          <li data-panel="projects" class="active">Projects</li>
+          <li data-panel="files">Files</li>
+          <li data-panel="roadmap">Roadmap</li>
+          <li data-panel="activity">Activity</li>
+          <li data-panel="models">Models</li>
+          <li data-panel="settings">Settings</li>
+        </ul>
+        <div class="drawer-footer">
+          <button id="btn-signout" class="btn small">Sign Out</button>
+        </div>
+      </nav>
+      <div id="drawer-overlay" class="overlay hidden"></div>
+
+      <!-- Content area -->
+      <main id="content">
+        <!-- Chat is the primary surface -->
+        <div id="chat-panel" class="panel active">
+          <div id="chat-messages" class="messages"></div>
+          <div id="agent-status" class="agent-status hidden">
+            <span class="status-dot"></span>
+            <span id="agent-status-text">Thinking…</span>
+            <button type="button" id="btn-stop-agent" class="btn small" style="margin-left:auto">Stop</button>
+          </div>
+          <form id="chat-form" class="composer">
+            <textarea id="chat-input" rows="1" placeholder="Describe what you want to build or change…" enterkeyhint="send"></textarea>
+            <button type="submit" id="btn-send" class="btn primary icon" aria-label="Send">➤</button>
+          </form>
+        </div>
+
+        <!-- Secondary panels -->
+        <div id="projects-panel" class="panel">
+          <div class="panel-header">
+            <h2>Projects</h2>
+            <button id="btn-new-project" class="btn primary small">+ New</button>
+          </div>
+          <div id="project-list" class="list"></div>
+        </div>
+
+        <div id="files-panel" class="panel">
+          <div class="panel-header">
+            <h2>Files</h2>
+            <div class="panel-actions">
+              <button id="btn-import-zip" class="btn small">Import ZIP</button>
+              <button id="btn-export-zip" class="btn small">Export ZIP</button>
+              <button id="btn-connect-dir" class="btn small">Connect Folder</button>
+            </div>
+          </div>
+          <div id="file-tree" class="file-tree"></div>
+          <div id="file-viewer" class="file-viewer hidden">
+            <div class="viewer-header">
+              <span id="viewer-path"></span>
+              <button id="btn-close-viewer" class="icon-btn">✕</button>
+            </div>
+            <pre id="viewer-content"></pre>
+          </div>
+        </div>
+
+        <div id="roadmap-panel" class="panel">
+          <div class="panel-header">
+            <h2>Roadmap</h2>
+          </div>
+          <div id="roadmap-content" class="roadmap"></div>
+        </div>
+
+        <div id="activity-panel" class="panel">
+          <div class="panel-header">
+            <h2>AI Activity</h2>
+            <button id="btn-clear-activity" class="btn small">Clear</button>
+          </div>
+          <div id="activity-log" class="activity-log"></div>
+        </div>
+
+        <div id="models-panel" class="panel">
+          <div class="panel-header">
+            <h2>Model Registry</h2>
+            <button id="btn-sync-models" class="btn small">Sync</button>
+          </div>
+          <div id="model-filters" class="filters">
+            <label><input type="checkbox" id="filter-free" checked /> Free only</label>
+            <label><input type="checkbox" id="filter-tools" /> Tool calling</label>
+          </div>
+          <div id="model-list" class="list"></div>
+        </div>
+
+        <div id="settings-panel" class="panel">
+          <div class="panel-header"><h2>Settings</h2></div>
+          <div class="settings-form">
+            <label>Supabase URL
+              <input type="url" id="cfg-supabase-url" placeholder="https://xxxx.supabase.co" />
+            </label>
+            <label>Supabase Anon Key
+              <input type="password" id="cfg-supabase-key" placeholder="eyJ..." />
+            </label>
+            <label>OpenRouter API Key
+              <input type="password" id="cfg-openrouter-key" placeholder="sk-or-..." />
+            </label>
+            <label>Default Model
+              <select id="cfg-default-model"></select>
+            </label>
+            <button id="btn-save-settings" class="btn primary">Save Settings</button>
+            <p id="settings-status" class="hint"></p>
+          </div>
+        </div>
+      </main>
+    </section>
+  </div>
+
+  <!-- Lightweight toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
