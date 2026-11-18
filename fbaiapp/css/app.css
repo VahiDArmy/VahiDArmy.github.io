@@ -308,6 +308,9 @@ body.mode-workspace .view { padding: 0; max-width: none; height: 100%; }
 .page-head p { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
 
 .section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -315,6 +318,19 @@ body.mode-workspace .view { padding: 0; max-width: none; height: 100%; }
   font-weight: 680;
   margin-bottom: 9px;
 }
+
+/* ---------- icon sizing ----------
+   icon() renders a 20x20 svg by default; contexts with smaller glyphs
+   override it here. Without these rules an svg fills its container. */
+svg { flex: none; }
+.section-title svg { width: 14px; height: 14px; }
+.ws-tabs button svg { width: 15px; height: 15px; }
+.msg .who svg { width: 12px; height: 12px; }
+.callout svg { width: 16px; height: 16px; }
+.outcome-head svg { width: 14px; height: 14px; }
+.activity-line svg { width: 14px; height: 14px; }
+.run-head > svg { width: 14px; height: 14px; }
+.empty svg.big { width: 30px; height: 30px; }
 
 .empty {
   display: flex;
