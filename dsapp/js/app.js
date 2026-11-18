@@ -71,20 +71,31 @@ async function onAuthenticated(session) {
   setState({ user });
 
   try {
-    if (shouldSyncModels()) syncModels().catch(() => {});
     const { models, prefs } = await loadModelsAndPrefs();
     setState({ models, modelPrefs: prefs });
+
+    if (models.length === 0) {
+      // First-time load or empty registry: synchronously wait for the models.
+      toast('Downloading model registry…', 'info', 3000);
+      await syncModels();
+      const reloaded = await loadModelsAndPrefs();
+      setState({ models: reloaded.models, modelPrefs: reloaded.prefs });
+    } else if (shouldSyncModels()) {
+      // Background sync
+      syncModels().then(async () => {
+        const reloaded = await loadModelsAndPrefs();
+        setState({ models: reloaded.models, modelPrefs: reloaded.prefs });
+        window.dispatchEvent(new CustomEvent('devspace:models-updated'));
+      }).catch(err => console.warn('Background sync failed:', err.message));
+    }
   } catch (err) {
     console.warn('Model load failed:', err.message);
+    toast(`Model sync failed: ${err.message}`, 'error', 6000);
   }
 
   let projects = [];
   try { projects = await listProjects(); } catch (err) { console.warn(err); }
   setState({ projects });
-
-  if (!getOpenRouterKey()) {
-    // App still loads; the user will be prompted to add the key in Settings.
-  }
 
   const lastId = localStorage.getItem(STORAGE.lastProjectId);
   if (lastId && projects.find((p) => p.id === lastId)) {

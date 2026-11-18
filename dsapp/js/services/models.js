@@ -13,48 +13,60 @@ export function setOpenRouterKey(key) {
 }
 
 export async function syncModels() {
-  const res = await fetch(`${OPENROUTER_BASE}/models`, {
-    headers: { 'Accept': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`Model sync failed: HTTP ${res.status}`);
-  const json = await res.json();
-  const models = json.data || [];
-  const rows = models.map((m) => {
-    const params = m.supported_parameters || [];
-    const prompt = Number(m.pricing?.prompt ?? 0);
-    const completion = Number(m.pricing?.completion ?? 0);
-    return {
-      id: m.id,
-      name: m.name || m.id,
-      provider: m.id.split('/')[0],
-      description: m.description || '',
-      context_length: m.context_length ?? null,
-      max_output: m.top_provider?.max_completion_tokens ?? null,
-      pricing_prompt: Number.isFinite(prompt) ? prompt : 0,
-      pricing_completion: Number.isFinite(completion) ? completion : 0,
-      supports_tools: params.includes('tools') || params.includes('tool_choice'),
-      supports_vision: (m.architecture?.input_modalities || []).includes('image'),
-      is_free: prompt === 0 && completion === 0,
-      is_available: true,
-      raw: m,
-      last_synced_at: new Date().toISOString(),
-    };
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
 
-  if (rows.length === 0) return { synced: 0 };
+  try {
+    const res = await fetch(`${OPENROUTER_BASE}/models`, {
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-  const { error } = await supabase.from('ds_models').upsert(rows, { onConflict: 'id' });
-  if (error) throw error;
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`OpenRouter returned ${res.status}: ${text.slice(0, 100)}`);
+    }
 
-  // Mark models that disappeared as unavailable, without deleting rows.
-  const ids = rows.map((r) => r.id);
-  await supabase
-    .from('ds_models')
-    .update({ is_available: false })
-    .not('id', 'in', `(${ids.map((i) => `"${i}"`).join(',')})`);
+    const json = await res.json();
+    const models = json.data || [];
+    if (models.length === 0) throw new Error('OpenRouter returned an empty model list.');
 
-  localStorage.setItem(STORAGE.lastModelSync, String(Date.now()));
-  return { synced: rows.length };
+    const rows = models.map((m) => {
+      const params = m.supported_parameters || [];
+      const prompt = Number(m.pricing?.prompt ?? 0);
+      const completion = Number(m.pricing?.completion ?? 0);
+      return {
+        id: m.id,
+        name: m.name || m.id,
+        provider: m.id.split('/')[0],
+        description: m.description || '',
+        context_length: m.context_length ?? null,
+        max_output: m.top_provider?.max_completion_tokens ?? null,
+        pricing_prompt: Number.isFinite(prompt) ? prompt : 0,
+        pricing_completion: Number.isFinite(completion) ? completion : 0,
+        supports_tools: params.includes('tools') || params.includes('tool_choice'),
+        supports_vision: (m.architecture?.input_modalities || []).includes('image'),
+        is_free: prompt === 0 && completion === 0,
+        is_available: true,
+        raw: m,
+        last_synced_at: new Date().toISOString(),
+      };
+    });
+
+    // Perform the upsert. Supabase handles array insertions efficiently.
+    const { error } = await supabase.from('ds_models').upsert(rows, { onConflict: 'id' });
+    if (error) throw new Error(`Database sync failed: ${error.message}`);
+
+    localStorage.setItem(STORAGE.lastModelSync, String(Date.now()));
+    return { synced: rows.length };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('Model sync timed out. Please check your internet connection or VPN.');
+    }
+    throw err;
+  }
 }
 
 export function shouldSyncModels() {
@@ -110,9 +122,6 @@ export function modelSupportsTools(modelId, models) {
   return !!m?.supports_tools;
 }
 
-// ---------------------------------------------------------------------------
-// Low-level model call
-// ---------------------------------------------------------------------------
 export async function callChatCompletion({
   model, messages, tools = null, signal, useJsonProtocol = false,
 }) {

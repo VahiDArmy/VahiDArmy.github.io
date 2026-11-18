@@ -35,7 +35,7 @@ export async function renderModels(root, ctx) {
       return true;
     });
     if (!models.length) {
-      list.appendChild(el('div', { class: 'empty' }, 'No matching models.'));
+      list.appendChild(el('div', { class: 'empty' }, 'No matching models. Try clicking Sync.'));
       return;
     }
     for (const m of models) {
@@ -74,14 +74,15 @@ export async function renderModels(root, ctx) {
 
 async function doSync(root, ctx) {
   try {
-    toast('Syncing models…');
+    toast('Syncing models from OpenRouter…', 'info', 5000);
     await syncModels();
     const { models, prefs } = await loadModelsAndPrefs();
     state.models = models;
     state.modelPrefs = prefs;
-    toast(`Synced ${models.length} models`, 'success');
+    toast(`Successfully synced ${models.length} models!`, 'success');
     renderModels(root, ctx);
   } catch (err) {
-    toast(err.message, 'error');
+    console.error('Sync error:', err);
+    toast(`Sync failed: ${err.message}`, 'error', 6000);
   }
 }
