@@ -1,19 +1,18 @@
 import { getSession, onAuthStateChange, signInWithPassword, signUp, signInWithMagicLink } from './services/auth.js';
 import {
-  listProjects, getProject, getAppState, setAppState, updateProject,
+  listProjects, getProject, getAppState, updateProject,
 } from './services/db.js';
 import {
-  shouldSyncModels, syncModels, loadModelsAndPrefs, getOpenRouterKey, setOpenRouterKey,
-  pickDefaultModel,
+  shouldSyncModels, syncModels, loadModelsAndPrefs, getOpenRouterKey,
 } from './services/models.js';
 import { openProjectFS } from './services/fs.js';
 import { state, setState, resetProjectState } from './state.js';
 import { el, clear } from './ui/dom.js';
 import { toast } from './ui/toast.js';
-import { mountShell, setActivePanel, renderActive } from './ui/shell.js';
+import { mountShell, setActivePanel } from './ui/shell.js';
 import { renderProjects } from './ui/panels/projects.js';
 import { renderChat } from './ui/panels/chat.js';
-import { renderFiles } from './ui/panels/files.js';
+import { renderFiles, resetFilesPanel } from './ui/panels/files.js';
 import { renderRoadmap } from './ui/panels/roadmap.js';
 import { renderMemory } from './ui/panels/memory.js';
 import { renderModels } from './ui/panels/models.js';
@@ -50,16 +49,14 @@ const shellCtx = buildCtx();
 async function boot() {
   try {
     const session = await getSession();
-    if (session) {
-      await onAuthenticated(session);
-    } else {
-      renderAuth();
-    }
+    if (session) await onAuthenticated(session);
+    else renderAuth();
+
     onAuthStateChange(async (s) => {
-      if (s?.user) {
-        await onAuthenticated(s);
-      } else {
+      if (s?.user) await onAuthenticated(s);
+      else {
         resetProjectState();
+        resetFilesPanel();
         renderAuth();
       }
     });
@@ -73,25 +70,20 @@ async function onAuthenticated(session) {
   const user = session.user;
   setState({ user });
 
-  // Ensure model registry is populated.
   try {
-    if (shouldSyncModels() || true) {
-      // Attempt a refresh but never block boot on it.
-      syncModels().catch(() => {});
-    }
+    if (shouldSyncModels()) syncModels().catch(() => {});
     const { models, prefs } = await loadModelsAndPrefs();
     setState({ models, modelPrefs: prefs });
   } catch (err) {
     console.warn('Model load failed:', err.message);
   }
 
-  // Pick or restore project.
   let projects = [];
   try { projects = await listProjects(); } catch (err) { console.warn(err); }
   setState({ projects });
 
   if (!getOpenRouterKey()) {
-    // Still allow the app to load; user can set key later.
+    // App still loads; the user will be prompted to add the key in Settings.
   }
 
   const lastId = localStorage.getItem(STORAGE.lastProjectId);
@@ -103,7 +95,6 @@ async function onAuthenticated(session) {
     await openProject(projects[0].id, { silent: true });
     return;
   }
-  // Otherwise show project picker.
   renderShell();
   setActivePanel('projects');
 }
@@ -112,10 +103,10 @@ async function openProject(projectId, { silent = false } = {}) {
   try {
     const project = await getProject(projectId);
     const fs = await openProjectFS(project);
+    resetFilesPanel();
     setState({ currentProject: project, fs });
     localStorage.setItem(STORAGE.lastProjectId, project.id);
 
-    // Hydrate state from server.
     const appState = await getAppState(project.id).catch(() => null);
     state.appState = appState;
 
@@ -124,7 +115,6 @@ async function openProject(projectId, { silent = false } = {}) {
 
     if (!silent) toast(`Opened ${project.name}`, 'success');
 
-    // Detect missing local folder permission.
     if (project.fs_mode === 'fsa' && fs.mode !== 'fsa') {
       toast('Local folder unavailable — using virtual workspace. Reconnect in Files → ⋯.', 'error', 5000);
     } else if (fs.needsPermission) {
@@ -139,13 +129,9 @@ async function openProject(projectId, { silent = false } = {}) {
 
 function renderShell() {
   mountShell(appRoot, { user: state.user, ctx: shellCtx, renderers: panelRenderers });
-  // Enable file change refresh for panels that listen.
   window._devspaceShellCtx = shellCtx;
 }
 
-// ---------------------------------------------------------------------------
-// Auth screen
-// ---------------------------------------------------------------------------
 function renderAuth() {
   clear(appRoot);
   const container = el('div', { class: 'auth' });

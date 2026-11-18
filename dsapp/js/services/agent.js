@@ -1,9 +1,7 @@
 import { AGENT_LIMITS } from '../config.js';
 import { getToolDefinitions, executeTool } from './tools.js';
 import { callModelWithReliability, modelSupportsTools } from './models.js';
-import {
-  updateTask, logOperation, setAppState, addMemory,
-} from './db.js';
+import { updateTask, logOperation, setAppState, addMemory } from './db.js';
 import { state } from '../state.js';
 import { truncate } from './context.js';
 
@@ -29,9 +27,7 @@ function parseProtocol(text) {
   return null;
 }
 
-export async function runAgent({
-  project, fs, task, initialMessages, onEvent, signal,
-}) {
+export async function runAgent({ project, fs, task, initialMessages, onEvent, signal }) {
   const tools = getToolDefinitions();
   const nativeTools = modelSupportsTools(task.model, state.models);
   const messages = [...initialMessages];
@@ -59,29 +55,20 @@ export async function runAgent({
         useJsonProtocol: !nativeTools,
       });
 
-      if (nativeTools) {
-        messages.push(response.message);
-      } else {
-        messages.push({ role: 'assistant', content: response.content });
-      }
+      if (nativeTools) messages.push(response.message);
+      else messages.push({ role: 'assistant', content: response.content });
 
       let toolCalls = response.toolCalls || [];
 
       if (!nativeTools) {
         const parsed = parseProtocol(response.content);
-        if (parsed?.final !== undefined) {
-          finalText = parsed.final;
-          break;
-        }
+        if (parsed?.final !== undefined) { finalText = parsed.final; break; }
         if (parsed?.tool) {
           toolCalls = [{ id: `json-${iteration}`, name: parsed.tool, arguments: parsed.args }];
         }
       }
 
-      if (!toolCalls.length) {
-        finalText = response.content || '';
-        break;
-      }
+      if (!toolCalls.length) { finalText = response.content || ''; break; }
 
       onEvent({ type: 'status', status: 'executing_tools', count: toolCalls.length });
 
@@ -92,10 +79,12 @@ export async function runAgent({
         seen.set(key, count);
 
         if (count > 3) {
-          const note =
-            `You have called ${call.name} with identical arguments ${count} times. ` +
-            `Stop repeating it and try a different approach or finish.`;
-          messages.push({ role: 'system', content: note });
+          messages.push({
+            role: 'system',
+            content:
+              `You have called ${call.name} with identical arguments ${count} times. ` +
+              `Stop repeating it and try a different approach or finish.`,
+          });
           continue;
         }
 
@@ -109,11 +98,20 @@ export async function runAgent({
 
         if (result.awaiting_user) {
           onEvent({ type: 'awaiting_user', question: result.question, call, result });
+          // Mark as blocked, not running: the user is the one who must answer.
+          await updateTask(task.id, {
+            status: 'blocked',
+            result_summary: `Awaiting user: ${result.question}`,
+          }).catch(() => {});
           await setAppState(project.id, {
-            current_task_id: task.id,
+            current_task_id: null,
             state: { status: 'awaiting_user', question: result.question },
           }).catch(() => {});
-          return { content: `Waiting for user: ${result.question}`, messages, awaitingUser: true };
+          return {
+            content: `**Waiting for your input**\n\n${result.question}`,
+            messages,
+            awaitingUser: true,
+          };
         }
 
         onEvent({ type: 'tool_end', call, result });

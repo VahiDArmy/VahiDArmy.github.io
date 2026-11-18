@@ -44,19 +44,28 @@ export async function renderMemory(root, ctx) {
     body.textContent = m.content;
     card.appendChild(body);
     card.appendChild(el('div', { class: 'row mt-16' },
-      el('button', { class: 'btn btn-sm btn-ghost', onclick: async () => {
-        const ok = await confirmDialog({ title: 'Delete note?', message: 'This note will be removed.', confirmLabel: 'Delete', danger: true });
-        if (!ok) return;
-        try { await deleteMemory(m.id); renderMemory(document.querySelector('.shell-main'), ctx); }
-        catch (err) { toast(err.message, 'error'); }
-      } }, 'Delete')
+      el('button', {
+        class: 'btn btn-sm btn-ghost',
+        onclick: async () => {
+          const ok = await confirmDialog({
+            title: 'Delete note?',
+            message: 'This note will be removed.',
+            confirmLabel: 'Delete',
+            danger: true,
+          });
+          if (!ok) return;
+          try {
+            await deleteMemory(m.id);
+            renderMemory(document.querySelector('.shell-main'), ctx);
+          } catch (err) { toast(err.message, 'error'); }
+        },
+      }, 'Delete')
     ));
     scroll.appendChild(card);
   }
 }
 
 async function createNote(ctx) {
-  const kind = prompt;
   const content = await promptDialog({
     title: 'Add memory note',
     label: 'Content',

@@ -5,7 +5,7 @@ import { state } from '../../state.js';
 import { promptDialog } from '../modal.js';
 import {
   listMessages, addMessage, createTask, listRoadmap, listMemory,
-  findInterruptedTasks, updateTask, getAppState, setAppState,
+  findInterruptedTasks, updateTask,
 } from '../../services/db.js';
 import { selectRelevantFiles, buildContext, buildInitialAgentMessages } from '../../services/context.js';
 import { runAgent } from '../../services/agent.js';
@@ -21,6 +21,7 @@ let modelSelect = null;
 let activityToggleEl = null;
 let activityListEl = null;
 let activityExpanded = false;
+let activityCounter = 0;
 
 export async function renderChat(root, ctx) {
   clear(root);
@@ -32,16 +33,13 @@ export async function renderChat(root, ctx) {
 
   const chat = el('div', { class: 'chat' });
 
-  // --- messages
   const scroll = el('div', { class: 'chat-scroll' });
   messageListEl = scroll;
   chat.appendChild(scroll);
 
-  // --- status
   statusEl = el('div', { class: 'chat-status hidden' });
   chat.appendChild(statusEl);
 
-  // --- input area
   const inputArea = el('div', { class: 'chat-input-area' });
   const inputRow = el('div', { class: 'chat-input-row' });
   inputEl = el('textarea', {
@@ -51,7 +49,7 @@ export async function renderChat(root, ctx) {
     onkeydown: (e) => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
         e.preventDefault();
-        onSend(ctx);
+        if (!state.running) onSend(ctx);
       }
     },
     oninput: () => {
@@ -69,28 +67,37 @@ export async function renderChat(root, ctx) {
   inputArea.appendChild(inputRow);
 
   const controls = el('div', { class: 'chat-input-controls' });
-  modelSelect = el('select', { class: 'select', onchange: () => {
-    state.selectedModelId = modelSelect.value;
-  } });
+  modelSelect = el('select', {
+    class: 'select',
+    onchange: (e) => { state.selectedModelId = e.target.value; },
+  });
   populateModelSelect();
   controls.appendChild(modelSelect);
   controls.appendChild(el('div', { class: 'spacer' }));
-  activityToggleEl = el('button', { class: 'btn btn-ghost btn-sm', onclick: () => {
-    activityExpanded = !activityExpanded;
-    activityListEl.classList.toggle('hidden', !activityExpanded);
-    activityToggleEl.textContent = activityExpanded ? 'Hide activity' : 'Show activity';
-  } }, 'Show activity');
+  activityToggleEl = el('button', {
+    class: 'btn btn-ghost btn-sm',
+    onclick: () => {
+      activityExpanded = !activityExpanded;
+      activityListEl.classList.toggle('hidden', !activityExpanded);
+      activityToggleEl.textContent = activityExpanded ? 'Hide activity' : 'Show activity';
+    },
+  }, activityExpanded ? 'Hide activity' : 'Show activity');
   controls.appendChild(activityToggleEl);
   inputArea.appendChild(controls);
 
-  activityListEl = el('div', { class: 'activity-list hidden' });
+  activityListEl = el('div', { class: `activity-list ${activityExpanded ? '' : 'hidden'}` });
   inputArea.appendChild(activityListEl);
   initActivity(activityListEl);
 
   chat.appendChild(inputArea);
   root.appendChild(chat);
 
-  // --- load history
+  // Preserve running state across panel switches.
+  if (state.running) {
+    setRunningUI(true);
+    setStatus('Agent is running…');
+  }
+
   await loadMessages();
   await detectInterrupted(ctx);
 }
@@ -153,24 +160,25 @@ function setStatus(text, active = true) {
 }
 
 async function detectInterrupted(ctx) {
+  if (state.running) return; // agent is active in this tab; nothing is "interrupted".
   const project = state.currentProject;
   if (!project) return;
   try {
     const interrupted = await findInterruptedTasks(project.id);
     if (!interrupted.length) return;
     const t = interrupted[0];
-    const shouldResume = await promptDialog({
+    const answer = await promptDialog({
       title: 'Interrupted task detected',
-      label: `A previous task was interrupted: "${t.title}". Describe how to proceed (or leave blank to mark it as failed).`,
+      label: `A previous task was interrupted: "${t.title}". Describe how to proceed (leave blank to mark it as failed).`,
       multiline: true,
     });
-    if (shouldResume === null) return;
-    if (!shouldResume) {
+    if (answer === null) return;
+    if (!answer) {
       await updateTask(t.id, { status: 'failed', result_summary: 'Marked as failed after interruption' });
       return;
     }
     await updateTask(t.id, { status: 'failed', result_summary: 'Superseded by new instruction' });
-    inputEl.value = shouldResume;
+    inputEl.value = answer;
     inputEl.focus();
   } catch (err) {
     console.warn('interrupted check failed', err);
@@ -191,16 +199,15 @@ async function onSend(ctx) {
 
   inputEl.value = '';
   inputEl.style.height = 'auto';
-  setRunning(true);
+  setRunningUI(true);
+  state.running = true;
 
   try {
-    // Persist user message.
     const userMsg = await addMessage(project.id, { role: 'user', content: text });
     state.messages.push(userMsg);
     renderMessage(userMsg);
     scrollToBottom();
 
-    // Create task.
     const task = await createTask(project.id, {
       title: text.slice(0, 120),
       description: text,
@@ -210,11 +217,11 @@ async function onSend(ctx) {
 
     setStatus('Preparing context…');
     clearActivity();
+    activityCounter = 0;
 
     const fs = state.fs;
     if (!fs) throw new Error('Filesystem not ready. Reload the project.');
 
-    // Build context.
     const tree = await fs.tree();
     const roadmap = state.roadmap.length ? state.roadmap : await listRoadmap(project.id);
     const memory = state.memory.length ? state.memory : await listMemory(project.id);
@@ -260,7 +267,6 @@ async function onSend(ctx) {
       onEvent: (evt) => handleAgentEvent(evt, ctx),
     });
 
-    // Persist assistant message.
     const assistantMsg = await addMessage(project.id, { role: 'assistant', content: result.content });
     state.messages.push(assistantMsg);
     renderMessage(assistantMsg);
@@ -268,11 +274,11 @@ async function onSend(ctx) {
 
     if (result.awaitingUser) {
       setStatus('Awaiting your input', false);
+      toast('Agent is waiting for your answer — type it below.', 'info', 5000);
     } else {
       setStatus('');
     }
 
-    // Refresh memory and roadmap from server.
     await refreshSideData(project.id);
   } catch (err) {
     if (err.name === 'AbortError') {
@@ -292,22 +298,21 @@ async function onSend(ctx) {
       }
     }
   } finally {
-    setRunning(false);
+    state.running = false;
+    setRunningUI(false);
     abortController = null;
   }
 }
 
-function setRunning(running) {
-  state.running = running;
+function setRunningUI(running) {
   if (sendBtn) {
     sendBtn.textContent = running ? '■' : '➤';
     sendBtn.classList.toggle('btn-primary', !running);
     sendBtn.classList.toggle('btn-danger', running);
+    sendBtn.title = running ? 'Stop' : 'Send';
   }
   if (inputEl) inputEl.disabled = running;
 }
-
-let activityCounter = 0;
 
 function handleAgentEvent(evt, ctx) {
   switch (evt.type) {
@@ -332,8 +337,6 @@ function handleAgentEvent(evt, ctx) {
     }
     case 'file_changed':
       ctx.notifyFileChanged?.(evt.path);
-      break;
-    case 'awaiting_user':
       break;
   }
 }

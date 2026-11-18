@@ -5,6 +5,11 @@ export function el(tag, props = {}, ...children) {
     else if (k === 'dataset') Object.assign(node.dataset, v);
     else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2).toLowerCase(), v);
     else if (k === 'html') node.innerHTML = v;
+    else if (k === 'checked' || k === 'disabled' || k === 'selected' || k === 'value') {
+      // These are properties, not attributes. setAttribute('checked', false) would
+      // still mark a checkbox as checked, because attribute presence is what counts.
+      node[k] = v;
+    }
     else if (v !== null && v !== undefined) node.setAttribute(k, v);
   }
   for (const c of children.flat()) {
