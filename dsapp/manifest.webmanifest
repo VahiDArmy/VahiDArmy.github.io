@@ -1,0 +1,19 @@
+{
+  "name": "DevSpace",
+  "short_name": "DevSpace",
+  "description": "AI-powered local development workspace",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%230b0f17'/><text x='50%25' y='55%25' font-family='ui-monospace,monospace' font-size='34' fill='%2360a5fa' text-anchor='middle' dominant-baseline='middle'>&lt;/&gt;</text></svg>",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
