@@ -14,7 +14,7 @@ export function setOpenRouterKey(key) {
 
 export async function syncModels() {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 20000); 
 
   try {
     const res = await fetch(`${OPENROUTER_BASE}/models`, {
@@ -54,7 +54,6 @@ export async function syncModels() {
       };
     });
 
-    // Perform the upsert. Supabase handles array insertions efficiently.
     const { error } = await supabase.from('ds_models').upsert(rows, { onConflict: 'id' });
     if (error) throw new Error(`Database sync failed: ${error.message}`);
 
@@ -113,8 +112,18 @@ export function activeModels(models, prefs) {
 
 export function pickDefaultModel(models, prefs) {
   const active = activeModels(models, prefs);
-  const preferred = active.find((m) => m.is_free && m.supports_tools && (m.context_length || 0) >= 32000);
-  return preferred || active.find((m) => m.supports_tools) || active[0] || null;
+  // Prioritize free models that support tools and have a decent context window.
+  const preferred = active
+    .filter((m) => m.is_free && m.supports_tools && (m.context_length || 0) >= 32000)
+    .sort((a, b) => {
+      const aIsTop = a.id.startsWith('openrouter/') || a.id.includes(':free');
+      const bIsTop = b.id.startsWith('openrouter/') || b.id.includes(':free');
+      if (aIsTop && !bIsTop) return -1;
+      if (!aIsTop && bIsTop) return 1;
+      return 0;
+    });
+  
+  return preferred[0] || active.find((m) => m.is_free) || active.find((m) => m.supports_tools) || active[0] || null;
 }
 
 export function modelSupportsTools(modelId, models) {

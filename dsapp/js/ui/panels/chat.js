@@ -92,7 +92,6 @@ export async function renderChat(root, ctx) {
   chat.appendChild(inputArea);
   root.appendChild(chat);
 
-  // Preserve running state across panel switches.
   if (state.running) {
     setRunningUI(true);
     setStatus('Agent is running…');
@@ -105,18 +104,37 @@ export async function renderChat(root, ctx) {
 function populateModelSelect() {
   if (!modelSelect) return;
   clear(modelSelect);
-  const active = activeModels(state.models, state.modelPrefs);
-  if (!state.selectedModelId) {
+  
+  // Filter to show only FREE models that are enabled by the user.
+  const freeModels = state.models.filter((m) => {
+    const pref = state.modelPrefs.get(m.id);
+    const enabled = pref ? pref.enabled !== false : true;
+    return m.is_free && enabled;
+  });
+
+  // Sort: OpenRouter / :free models first, then by context length.
+  freeModels.sort((a, b) => {
+    const aIsTop = a.id.startsWith('openrouter/') || a.id.includes(':free');
+    const bIsTop = b.id.startsWith('openrouter/') || b.id.includes(':free');
+    if (aIsTop && !bIsTop) return -1;
+    if (!aIsTop && bIsTop) return 1;
+    return (b.context_length || 0) - (a.context_length || 0);
+  });
+
+  if (!state.selectedModelId || !freeModels.find(m => m.id === state.selectedModelId)) {
     const pick = pickDefaultModel(state.models, state.modelPrefs);
-    state.selectedModelId = pick?.id || '';
+    state.selectedModelId = pick?.id || (freeModels[0]?.id || '');
   }
-  for (const m of active) {
-    const opt = el('option', { value: m.id }, `${m.name}${m.is_free ? ' · free' : ''}`);
+
+  for (const m of freeModels) {
+    const toolsIcon = m.supports_tools ? ' 🛠' : '';
+    const opt = el('option', { value: m.id }, `${m.name}${toolsIcon}`);
     if (m.id === state.selectedModelId) opt.selected = true;
     modelSelect.appendChild(opt);
   }
-  if (!active.length) {
-    modelSelect.appendChild(el('option', { value: '' }, 'No models available'));
+
+  if (!freeModels.length) {
+    modelSelect.appendChild(el('option', { value: '' }, 'No free models available (Check Models tab)'));
   }
 }
 
@@ -160,7 +178,7 @@ function setStatus(text, active = true) {
 }
 
 async function detectInterrupted(ctx) {
-  if (state.running) return; // agent is active in this tab; nothing is "interrupted".
+  if (state.running) return; 
   const project = state.currentProject;
   if (!project) return;
   try {
