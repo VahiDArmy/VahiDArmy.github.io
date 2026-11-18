@@ -1,6 +1,4 @@
-// js/services/context.js
 import { AGENT_LIMITS } from '../config.js';
-import { escapeHtml } from '../lib/markdown.js';
 
 export function estimateTokens(text) {
   return Math.ceil(String(text || '').length / 4);
@@ -54,16 +52,22 @@ export function buildContext({
   }
 
   if (memory.length) {
-    const lines = memory.slice(0, 25).map((m) => `- (${m.kind}, importance ${m.importance}) ${truncate(m.content, 600)}`);
+    const lines = memory.slice(0, 25).map((m) =>
+      `- (${m.kind}, importance ${m.importance}) ${truncate(m.content, 600)}`
+    );
     parts.push(`## PROJECT MEMORY\n${lines.join('\n')}`);
   }
 
   if (fileIndex.length) {
-    parts.push(`## FILE INDEX (${fileIndex.length} files)\n${fileIndex.slice(0, 300).map((f) => f.path).join('\n')}`);
+    parts.push(
+      `## FILE INDEX (${fileIndex.length} files)\n${fileIndex.slice(0, 300).map((f) => f.path).join('\n')}`
+    );
   }
 
   if (relevantFiles.length) {
-    const blocks = relevantFiles.map((f) => `### ${f.path}\n\`\`\`\n${truncate(f.content, AGENT_LIMITS.maxFileReadChars)}\n\`\`\``);
+    const blocks = relevantFiles.map(
+      (f) => `### ${f.path}\n\`\`\`\n${truncate(f.content, AGENT_LIMITS.maxFileReadChars)}\n\`\`\``
+    );
     parts.push(`## RELEVANT FILE CONTENTS\n${blocks.join('\n\n')}`);
   }
 
@@ -97,7 +101,9 @@ export function selectRelevantFiles({ task, messages, tree, limit = 6 }) {
 
 export function buildInitialAgentMessages({ project, task, contextBlock, toolsAvailable }) {
   const system = buildSystemPrompt(project) +
-    (toolsAvailable ? '' : '\n\nIMPORTANT: Native tool calling is unavailable for this model. You MUST use the JSON protocol described above.');
+    (toolsAvailable
+      ? ''
+      : '\n\nIMPORTANT: Native tool calling is unavailable for this model. You MUST use the JSON protocol described above.');
   return [
     { role: 'system', content: system },
     { role: 'user', content: contextBlock },

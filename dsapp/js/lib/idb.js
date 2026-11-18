@@ -1,4 +1,3 @@
-// js/lib/idb.js
 const DB_NAME = 'devspace';
 const DB_VERSION = 1;
 let dbPromise = null;
@@ -26,25 +25,6 @@ export function openDB() {
     req.onerror = () => reject(req.error);
   });
   return dbPromise;
-}
-
-function tx(storeName, mode, fn) {
-  return openDB().then((db) => new Promise((resolve, reject) => {
-    const t = db.transaction(storeName, mode);
-    const store = t.objectStore(storeName);
-    let result;
-    try { result = fn(store); } catch (err) { reject(err); return; }
-    t.oncomplete = () => resolve(result);
-    t.onerror = () => reject(t.error);
-    t.onabort = () => reject(t.error || new Error('Transaction aborted'));
-  }));
-}
-
-function requestToPromise(req) {
-  return new Promise((resolve, reject) => {
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
 }
 
 export async function idbGet(store, key) {

@@ -1,4 +1,3 @@
-// js/services/fs.js
 import { idbGet, idbSet, idbDelete, idbGetAll } from '../lib/idb.js';
 import { FS_SKIP_DIRS } from '../config.js';
 
@@ -25,12 +24,6 @@ export function dirname(p) {
 export function basename(p) {
   const n = normalizePath(p);
   return n.slice(n.lastIndexOf('/') + 1);
-}
-
-function isBinaryBuffer(u8) {
-  const len = Math.min(u8.length, 8000);
-  for (let i = 0; i < len; i++) if (u8[i] === 0) return true;
-  return false;
 }
 
 function u8ToBase64(u8) {
@@ -91,7 +84,7 @@ export class VirtualProjectFS {
     const p = normalizePath(path);
     const rec = await idbGet('virtual_files', [this.projectId, p]);
     if (!rec) throw new Error(`File not found: ${p}`);
-    return rec.binary ? rec.content : rec.content;
+    return rec.content;
   }
 
   async readBinary(path) {
@@ -112,11 +105,12 @@ export class VirtualProjectFS {
       path: p,
       content: stored,
       binary: !!binary,
-      size: binary ? (content instanceof Uint8Array ? content.length : atob(content).length) : new TextEncoder().encode(String(content)).length,
+      size: binary
+        ? (content instanceof Uint8Array ? content.length : atob(content).length)
+        : new TextEncoder().encode(String(content)).length,
       updatedAt: Date.now(),
     };
     await idbSet('virtual_files', rec);
-    // remove stale directory marker if any
     return { path: p, bytes: rec.size, existed: !!existing };
   }
 

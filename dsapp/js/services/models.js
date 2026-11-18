@@ -1,4 +1,3 @@
-// js/services/models.js
 import { supabase } from '../lib/supabase.js';
 import { OPENROUTER_BASE, STORAGE, AGENT_LIMITS } from '../config.js';
 
@@ -49,7 +48,10 @@ export async function syncModels() {
 
   // Mark models that disappeared as unavailable, without deleting rows.
   const ids = rows.map((r) => r.id);
-  await supabase.from('ds_models').update({ is_available: false }).not('id', 'in', `(${ids.map((i) => `"${i}"`).join(',')})`);
+  await supabase
+    .from('ds_models')
+    .update({ is_available: false })
+    .not('id', 'in', `(${ids.map((i) => `"${i}"`).join(',')})`);
 
   localStorage.setItem(STORAGE.lastModelSync, String(Date.now()));
   return { synced: rows.length };
@@ -109,7 +111,7 @@ export function modelSupportsTools(modelId, models) {
 }
 
 // ---------------------------------------------------------------------------
-// Low-level model call (with retry, fallback, and dual protocol support)
+// Low-level model call
 // ---------------------------------------------------------------------------
 export async function callChatCompletion({
   model, messages, tools = null, signal, useJsonProtocol = false,

@@ -1,4 +1,3 @@
-// js/services/zip.js
 import JSZip from 'jszip';
 
 export async function importZipToFS(file, fs) {

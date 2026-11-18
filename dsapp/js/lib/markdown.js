@@ -1,4 +1,3 @@
-// js/lib/markdown.js
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
 

@@ -1,4 +1,3 @@
-// js/services/checkpoints.js
 import { idbSet, idbGet, idbGetAll, idbDelete } from '../lib/idb.js';
 import { createCheckpointRow } from './db.js';
 

@@ -1,4 +1,3 @@
-// js/ui/toast.js
 import { el } from './dom.js';
 
 let root;

@@ -1,4 +1,3 @@
-// js/config.js
 export const SUPABASE_URL = 'https://kehylspimkjheqlsvepd.supabase.co';
 export const SUPABASE_ANON_KEY = 'sb_publishable__KcpgRwSLxHi3OpcQCghMQ_n_JpfGxI';
 

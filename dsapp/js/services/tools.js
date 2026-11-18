@@ -1,6 +1,5 @@
-// js/services/tools.js
 import { AGENT_LIMITS } from '../config.js';
-import { normalizePath, dirname } from './fs.js';
+import { normalizePath } from './fs.js';
 import { upsertRoadmapItem, addMemory, listMemory } from './db.js';
 import { createCheckpoint } from './checkpoints.js';
 
@@ -199,20 +198,29 @@ export async function executeTool(name, args, ctx) {
         const path = normalizePath(a.path);
         const content = await fs.read(path);
         const truncated = content.length > AGENT_LIMITS.maxFileReadChars;
-        return ok({ path, content: truncated ? content.slice(0, AGENT_LIMITS.maxFileReadChars) : content, truncated, size: content.length });
+        return ok({
+          path,
+          content: truncated ? content.slice(0, AGENT_LIMITS.maxFileReadChars) : content,
+          truncated,
+          size: content.length,
+        });
       }
       case 'write_file': {
         const path = normalizePath(a.path);
         if (!path) return fail('Invalid path');
         const existed = await fs.exists(path);
-        if (existed) await createCheckpoint(fs, project.id, `Before writing ${path}`, [path]).catch(() => {});
+        if (existed) {
+          await createCheckpoint(fs, project.id, `Before writing ${path}`, [path]).catch(() => {});
+        }
         const writeResult = await fs.write(path, String(a.content ?? ''));
         // Verify by reading back.
         const readBack = await fs.read(path);
         const expected = String(a.content ?? '');
         const verified = readBack === expected;
         if (!verified) {
-          return fail(`Verification failed for ${path}: wrote ${expected.length} chars, read back ${readBack.length}`);
+          return fail(
+            `Verification failed for ${path}: wrote ${expected.length} chars, read back ${readBack.length}`
+          );
         }
         onEvent?.({ type: 'file_changed', path });
         return ok({ path, bytes: writeResult.bytes, existed, verified: true });

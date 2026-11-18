@@ -1,4 +1,3 @@
-// js/services/auth.js
 import { supabase } from '../lib/supabase.js';
 
 export async function getSession() {

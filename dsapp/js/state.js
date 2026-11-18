@@ -1,4 +1,3 @@
-// js/state.js
 export const state = {
   user: null,
   projects: [],

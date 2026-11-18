@@ -1,4 +1,3 @@
-// js/ui/dom.js
 export function el(tag, props = {}, ...children) {
   const node = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
@@ -40,9 +39,15 @@ export function timeAgo(iso) {
 
 export function statusBadge(status) {
   const map = {
-    pending: 'badge-pending', in_progress: 'badge-progress', running: 'badge-progress',
-    completed: 'badge-done', success: 'badge-done', blocked: 'badge-blocked',
-    failed: 'badge-failed', error: 'badge-failed', interrupted: 'badge-blocked',
+    pending: 'badge-pending',
+    in_progress: 'badge-progress',
+    running: 'badge-progress',
+    completed: 'badge-done',
+    success: 'badge-done',
+    blocked: 'badge-blocked',
+    failed: 'badge-failed',
+    error: 'badge-failed',
+    interrupted: 'badge-blocked',
   };
   return el('span', { class: `badge ${map[status] || 'badge-pending'}` }, status);
 }

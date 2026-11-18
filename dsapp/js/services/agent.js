@@ -1,9 +1,8 @@
-// js/services/agent.js
 import { AGENT_LIMITS } from '../config.js';
 import { getToolDefinitions, executeTool } from './tools.js';
 import { callModelWithReliability, modelSupportsTools } from './models.js';
 import {
-  addMessage, updateTask, logOperation, setAppState, addMemory,
+  updateTask, logOperation, setAppState, addMemory,
 } from './db.js';
 import { state } from '../state.js';
 import { truncate } from './context.js';
@@ -40,7 +39,10 @@ export async function runAgent({
   let iteration = 0;
   let finalText = '';
 
-  await setAppState(project.id, { current_task_id: task.id, state: { status: 'running' } }).catch(() => {});
+  await setAppState(project.id, {
+    current_task_id: task.id,
+    state: { status: 'running' },
+  }).catch(() => {});
 
   try {
     while (iteration < AGENT_LIMITS.maxIterations) {
@@ -90,7 +92,9 @@ export async function runAgent({
         seen.set(key, count);
 
         if (count > 3) {
-          const note = `You have called ${call.name} with identical arguments ${count} times. Stop repeating it and try a different approach or finish.`;
+          const note =
+            `You have called ${call.name} with identical arguments ${count} times. ` +
+            `Stop repeating it and try a different approach or finish.`;
           messages.push({ role: 'system', content: note });
           continue;
         }
@@ -135,7 +139,10 @@ export async function runAgent({
 
     if (!finalText) finalText = 'Task reached the iteration limit without a final answer.';
     await updateTask(task.id, { status: 'completed', result_summary: truncate(finalText, 4000) });
-    await setAppState(project.id, { current_task_id: null, state: { status: 'idle' } }).catch(() => {});
+    await setAppState(project.id, {
+      current_task_id: null,
+      state: { status: 'idle' },
+    }).catch(() => {});
     await addMemory(project.id, {
       kind: 'task_log',
       content: `Task: ${task.title}\nResult: ${truncate(finalText, 2000)}`,
@@ -146,11 +153,17 @@ export async function runAgent({
   } catch (err) {
     if (err.name === 'AbortError') {
       await updateTask(task.id, { status: 'interrupted', result_summary: 'Aborted by user' }).catch(() => {});
-      await setAppState(project.id, { current_task_id: null, state: { status: 'interrupted' } }).catch(() => {});
+      await setAppState(project.id, {
+        current_task_id: null,
+        state: { status: 'interrupted' },
+      }).catch(() => {});
       throw err;
     }
     await updateTask(task.id, { status: 'failed', result_summary: String(err?.message || err) }).catch(() => {});
-    await setAppState(project.id, { current_task_id: null, state: { status: 'failed', error: String(err) } }).catch(() => {});
+    await setAppState(project.id, {
+      current_task_id: null,
+      state: { status: 'failed', error: String(err) },
+    }).catch(() => {});
     throw err;
   }
 }
