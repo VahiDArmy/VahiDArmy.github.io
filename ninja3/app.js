@@ -1654,10 +1654,10 @@ async function showFolderStructure(folderItem) {
             .map(e => ({
                 path: e.path,
                 rel: e.path.slice(prefix.length),
-                type: e.type,          // 'blob' | 'tree'
+                type: e.type,
                 size: e.size || 0
             }))
-            .filter(e => e.rel);       // safety
+            .filter(e => e.rel);
 
         if (!children.length) {
             toast(`“${folderItem.name}” is empty`, 'info');
@@ -1665,7 +1665,7 @@ async function showFolderStructure(folderItem) {
             return;
         }
 
-        // Build a simple nested tree
+        // Build nested tree
         const root = { name: folderItem.name, path: folderItem.path, type: 'tree', children: {} };
         for (const c of children) {
             const parts = c.rel.split('/');
@@ -1703,98 +1703,119 @@ async function showFolderStructure(folderItem) {
         const fileCount = children.filter(c => c.type === 'blob').length;
         const dirCount  = children.filter(c => c.type === 'tree').length;
 
-        // Re-use the pack overlay as a simple read-only viewer
-        const overlay = $('packOverlay');
-        if (!overlay) {
-            // Fallback: open in a new window / alert
-            const w = window.open('', '_blank', 'noopener,width=640,height=720');
-            if (w) {
-                w.document.write(`<pre style="font:13px/1.45 ui-monospace,monospace;padding:16px;white-space:pre-wrap">${escapeHtml(treeText)}</pre>`);
-                w.document.title = `Structure · ${folderItem.name}`;
-            } else {
-                alert(treeText);
-            }
-            flashStatus(`Structure of “${folderItem.name}”`, 'ok');
-            return;
-        }
+        // Remove any previous panel
+        const old = document.getElementById('structurePanel');
+        if (old) old.remove();
 
-        // Prefer a lightweight custom modal if the pack overlay is too heavy;
-        // for now we show it via a simple toast + copy-friendly panel.
-        // Create a temporary modal-like panel.
-        let panel = document.getElementById('structurePanel');
-        if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'structurePanel';
-            panel.className = 'structure-panel';
-            panel.innerHTML = `
-                <div class="structure-panel__head">
-                    <strong id="structureTitle"></strong>
-                    <div class="structure-panel__actions">
+        // Build a proper centered modal card
+        const panel = document.createElement('div');
+        panel.id = 'structurePanel';
+        panel.className = 'structure-overlay';
+        panel.innerHTML = `
+            <div class="structure-card" role="dialog" aria-modal="true" aria-labelledby="structureTitle">
+                <div class="structure-card__head">
+                    <strong id="structureTitle">Structure · ${escapeHtml(folderItem.name)}</strong>
+                    <div class="structure-card__actions">
                         <button type="button" id="structureCopy" class="btn ghost sm">Copy</button>
                         <button type="button" id="structureClose" class="btn ghost sm">Close</button>
                     </div>
                 </div>
-                <pre id="structureBody" class="structure-panel__body"></pre>
-                <div class="structure-panel__foot" id="structureFoot"></div>`;
-            document.body.appendChild(panel);
+                <pre id="structureBody" class="structure-card__body"></pre>
+                <div class="structure-card__foot">${dirCount} folder${dirCount === 1 ? '' : 's'} · ${fileCount} file${fileCount === 1 ? '' : 's'}</div>
+            </div>`;
+        document.body.appendChild(panel);
 
-            // minimal styles injected once
-            if (!document.getElementById('structurePanelStyle')) {
-                const style = document.createElement('style');
-                style.id = 'structurePanelStyle';
-                style.textContent = `
-                    .structure-panel {
-                        position: fixed; inset: 0; z-index: 9999;
-                        background: rgba(0,0,0,.55); display: flex;
-                        align-items: center; justify-content: center;
-                        padding: 24px;
-                    }
-                    .structure-panel > * { pointer-events: auto; }
-                    .structure-panel__head, .structure-panel__body, .structure-panel__foot {
-                        background: var(--bg, #0b0b14); color: var(--text, #ecebff);
-                    }
-                    .structure-panel__head {
-                        display: flex; align-items: center; justify-content: space-between;
-                        gap: 12px; padding: 12px 16px; border-radius: 12px 12px 0 0;
-                        border: 1px solid rgba(255,255,255,.08); border-bottom: 0;
-                        max-width: 720px; width: 100%;
-                    }
-                    .structure-panel__body {
-                        margin: 0; padding: 16px; max-height: min(70vh, 640px);
-                        overflow: auto; font: 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
-                        border: 1px solid rgba(255,255,255,.08); border-top: 0; border-bottom: 0;
-                        max-width: 720px; width: 100%; white-space: pre; background: #08080f;
-                    }
-                    .structure-panel__foot {
-                        padding: 10px 16px; border-radius: 0 0 12px 12px;
-                        border: 1px solid rgba(255,255,255,.08); border-top: 0;
-                        font-size: 12px; color: rgba(236,235,255,.55);
-                        max-width: 720px; width: 100%;
-                    }
-                    .structure-panel__actions { display: flex; gap: 6px; }
-                `;
-                document.head.appendChild(style);
-            }
-
-            panel.addEventListener('click', e => {
-                if (e.target === panel || e.target.id === 'structureClose') {
-                    panel.remove();
+        // Inject styles once
+        if (!document.getElementById('structurePanelStyle')) {
+            const style = document.createElement('style');
+            style.id = 'structurePanelStyle';
+            style.textContent = `
+                .structure-overlay {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 10000;
+                    background: rgba(0,0,0,.62);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 16px;
+                    box-sizing: border-box;
                 }
-            });
-            document.getElementById('structureCopy').addEventListener('click', () => {
-                const body = document.getElementById('structureBody');
-                navigator.clipboard.writeText(body.textContent).then(
-                    () => toast('Structure copied', 'ok'),
-                    () => toast('Copy failed', 'err')
-                );
-            });
+                .structure-card {
+                    display: flex;
+                    flex-direction: column;
+                    width: min(720px, 100%);
+                    max-height: min(80vh, 640px);
+                    background: #0b0b14;
+                    color: #ecebff;
+                    border: 1px solid rgba(255,255,255,.10);
+                    border-radius: 14px;
+                    box-shadow: 0 24px 64px rgba(0,0,0,.55);
+                    overflow: hidden;
+                }
+                .structure-card__head {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 12px 14px;
+                    border-bottom: 1px solid rgba(255,255,255,.08);
+                    flex-shrink: 0;
+                }
+                .structure-card__head strong {
+                    font-size: 14px;
+                    font-weight: 600;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+                .structure-card__actions {
+                    display: flex;
+                    gap: 6px;
+                    flex-shrink: 0;
+                }
+                .structure-card__body {
+                    margin: 0;
+                    padding: 14px 16px;
+                    overflow: auto;
+                    flex: 1 1 auto;
+                    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                    white-space: pre;
+                    background: #08080f;
+                    color: #d8d7f0;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .structure-card__foot {
+                    padding: 10px 14px;
+                    border-top: 1px solid rgba(255,255,255,.08);
+                    font-size: 12px;
+                    color: rgba(236,235,255,.55);
+                    flex-shrink: 0;
+                }
+                @media (max-width: 480px) {
+                    .structure-overlay { padding: 10px; align-items: flex-end; }
+                    .structure-card { max-height: 85vh; border-radius: 14px 14px 0 0; width: 100%; }
+                }
+            `;
+            document.head.appendChild(style);
         }
 
-        document.getElementById('structureTitle').textContent = `Structure · ${folderItem.name}`;
-        document.getElementById('structureBody').textContent = treeText;
-        document.getElementById('structureFoot').textContent =
-            `${dirCount} folder${dirCount === 1 ? '' : 's'} · ${fileCount} file${fileCount === 1 ? '' : 's'}`;
-        panel.style.display = 'flex';
+        const bodyEl = panel.querySelector('#structureBody');
+        bodyEl.textContent = treeText;
+
+        const close = () => panel.remove();
+        panel.addEventListener('click', e => { if (e.target === panel) close(); });
+        panel.querySelector('#structureClose').addEventListener('click', close);
+        panel.querySelector('#structureCopy').addEventListener('click', () => {
+            navigator.clipboard.writeText(treeText).then(
+                () => toast('Structure copied', 'ok'),
+                () => toast('Copy failed', 'err')
+            );
+        });
+
+        // Escape key
+        const onKey = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+        document.addEventListener('keydown', onKey);
 
         flashStatus(`Structure of “${folderItem.name}”`, 'ok');
     } catch (err) {
