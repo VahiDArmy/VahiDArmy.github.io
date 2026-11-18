@@ -1,7 +1,14 @@
 import { el, clear } from './dom.js';
 
 function getRoot() {
-  return document.getElementById('modal-root');
+  let root = document.getElementById('modal-root');
+  // If the root element is missing, create it dynamically.
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'modal-root';
+    document.body.appendChild(root);
+  }
+  return root;
 }
 
 export function closeModal() {
@@ -39,6 +46,8 @@ export function openModal({ title, body, actions = [], dismissible = true }) {
             if (shouldClose !== false) closeModal();
           } catch (err) {
             console.error(err);
+            // Import toast dynamically to avoid circular deps if needed, 
+            // or just log. The caller handles its own toasts usually.
           }
         },
       }, a.label);
