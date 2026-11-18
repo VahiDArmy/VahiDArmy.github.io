@@ -1,0 +1,11 @@
+{
+  "name": "forgebook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser-only AI development workspace: vanilla JS SPA, Supabase backend, OpenRouter models.",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs"
+  }
+}
