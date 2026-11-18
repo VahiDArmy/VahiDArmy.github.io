@@ -1,280 +1,284 @@
-/**
- * بازاربان — ورود و ثبت‌نام
- * ---------------------------------------------------------------------------
- * دو مسیر: رمز عبور و لینک ایمیل (در حالت واقعی). در حالت نمایشی، حساب محلی
- * ساخته می‌شود تا همهٔ قابلیت‌ها بدون اجرای SQL هم قابل امتحان باشند.
- */
+/* ==========================================================================
+   auth.js — صفحه ورود / ثبت‌نام / لینک جادویی
+   ========================================================================== */
 
-import { icon } from '../icons.js';
-import { CONFIG, LEVELS, CITIES } from '../config.js';
-import { esc, attr, toFa, isValidEmail, isStrongEnough } from '../utils.js';
-import * as store from '../store.js';
-import { breadcrumbs, toast, levelChip } from '../ui.js';
-import { modeBanner } from './home.js';
+import * as auth from '../lib/auth.js';
+import { toast, setBusy } from '../lib/ui.js';
+import { icon } from '../lib/icons.js';
+import { esc, faNum } from '../lib/utils.js';
+import { enterDemo } from '../lib/repo.js';
 
-const NEXT_FALLBACK = '#/me';
+const MODES = {
+  login: { label: 'ورود', title: 'خوش برگشتی', sub: 'برای دیدن دفترچه تجربه‌هایت وارد شو.' },
+  signup: { label: 'ثبت‌نام', title: 'شروع کن', sub: 'یک حساب بساز و اولین خریدت را ثبت کن.' },
+  magic: { label: 'لینک جادویی', title: 'ورود بدون رمز', sub: 'لینک ورود یک‌بارمصرف به ایمیلت می‌فرستیم.' },
+};
 
-function visualSide() {
-  return `<div class="auth-visual">
-    <div class="auth-visual__levels">
-      ${LEVELS.map((level) => levelChip(level.id, { size: 'lg' })).join('')}
-    </div>
-  </div>`;
-}
+export function mount(container, ctx = {}) {
+  let mode = 'login';
+  let busy = false;
 
-function formFields(mode) {
-  if (mode === 'magic') {
-    return `<div class="field">
-      <label class="label" for="auth-email">ایمیل</label>
-      <input class="input input--lg" id="auth-email" name="email" type="email" autocomplete="email" dir="ltr"
-        placeholder="you@example.com" required />
-      <span class="hint">یک لینک ورود یک‌بارمصرف برایت ایمیل می‌شود.</span>
-    </div>`;
-  }
-
-  return `<div class="field">
-      <label class="label" for="auth-email">ایمیل</label>
-      <input class="input input--lg" id="auth-email" name="email" type="email" autocomplete="email" dir="ltr"
-        placeholder="you@example.com" required />
-    </div>
-    <div class="field">
-      <label class="label" for="auth-password">رمز عبور
-        <span class="label__hint">حداقل ۶ کاراکتر</span>
-      </label>
-      <div class="input-group">
-        <input class="input input--lg" id="auth-password" name="password" type="password"
-          autocomplete="${mode === 'signup' ? 'new-password' : 'current-password'}" placeholder="••••••••" required minlength="6" />
-        <span class="input-group__suffix">
-          <button class="icon-btn" type="button" data-toggle-password aria-label="نمایش رمز">${icon('eye', 17)}</button>
-        </span>
-      </div>
-    </div>
-    ${
-      mode === 'signup'
-        ? `<div class="form-grid form-grid--2">
-            <div class="field">
-              <label class="label" for="auth-name">نام نمایشی</label>
-              <input class="input" id="auth-name" name="displayName" maxlength="40" placeholder="مثلاً نگار" />
+  container.innerHTML = `
+    <div class="auth">
+      <aside class="auth__art">
+        <div class="auth__art-content">
+          <div class="brand">
+            <span class="brand__mark">${icon('cart', 22)}</span>
+            <span>
+              <span class="brand__name">فروشگاه‌یار</span>
+              <span class="brand__tag">دفترچه تجربه خرید آنلاین</span>
+            </span>
+          </div>
+          <h1 class="auth__art-title">هر خرید یک درس است.<br />درس‌ها را یادداشت کن.</h1>
+          <p class="auth__art-sub">
+            یک محصول را از یک فروشگاه در یک پلتفرم خریدی؟ همان ترکیب را یک بار برای همیشه امتیاز بده:
+            خوب، نه‌خوب یا افتضاح. دفعه بعد فقط کافی است نگاه کنی.
+          </p>
+          <div class="auth__points">
+            <div class="auth__point">
+              <span class="auth__point-ico">${icon('target', 14)}</span>
+              <span><b>امتیاز روی ترکیب، نه فقط محصول.</b> ساندویچ از یک فروشگاه در اسنپ‌فود با همان ساندویچ در دیجی‌کالا یکی نیست.</span>
             </div>
-            <div class="field">
-              <label class="label" for="auth-city">شهر</label>
-              <select class="select" id="auth-city" name="city">
-                <option value="">انتخاب کن</option>
-                ${CITIES.map((city) => `<option value="${attr(city)}">${esc(city)}</option>`).join('')}
-              </select>
+            <div class="auth__point">
+              <span class="auth__point-ico">${icon('shield', 14)}</span>
+              <span><b>دیگر دوبار امتیاز نمی‌دهی.</b> هر ترکیب یکتا است و همیشه قابل ویرایش؛ بدون داده تکراری.</span>
             </div>
-          </div>`
-        : ''
-    }`;
-}
-
-export const authView = {
-  title: 'ورود',
-  render(ctx) {
-    const mode = ['login', 'signup', 'magic'].includes(ctx.query.mode) ? ctx.query.mode : 'login';
-    const next = ctx.query.next || NEXT_FALLBACK;
-    const state = store.getState();
-    const demo = state.mode === 'demo';
-
-    return `<div class="page">
-      ${modeBanner(state)}
-      <div class="container">
-        ${breadcrumbs([{ label: 'خانه', href: '#/' }, { label: mode === 'signup' ? 'ثبت‌نام' : 'ورود' }])}
-        <div class="auth-page">
-          ${visualSide()}
-          <div class="auth-card">
-            <div class="auth-card__head">
-              <h1 class="auth-card__title">${mode === 'signup' ? 'ثبت‌نام' : 'ورود'}</h1>
-              <p class="auth-card__sub">
-                ${demo ? 'حساب محلی با هر ایمیل و رمز ۶ کاراکتری.' : 'با حساب Supabase پروژه وارد شو.'}
-              </p>
+            <div class="auth__point">
+              <span class="auth__point-ico">${icon('chart', 14)}</span>
+              <span><b>تحلیل واقعی از پول و کیفیت.</b> بهترین پلتفرم، بدترین فروشگاه و هزینه ماهانه‌ات را ببین.</span>
             </div>
-
-            ${
-              store.currentUser()
-                ? `<div class="card card--pad center">
-                    <div class="empty__icon" style="margin-inline:auto">${icon('check-circle', 24)}</div>
-                    <p style="font-weight:600;margin-top:var(--sp-4)">تو با ${esc(store.currentUser().email || '')} وارد شده‌ای.</p>
-                    <div class="cluster" style="justify-content:center;margin-top:var(--sp-5)">
-                      <a class="btn btn--primary btn--sm" href="#/me" data-link>داشبورد من</a>
-                      <button class="btn btn--outline btn--sm" type="button" data-auth-signout>خروج</button>
-                    </div>
-                  </div>`
-                : `
-            <div class="auth-switch" role="tablist">
-              <button class="auth-switch__btn" type="button" data-auth-mode="login" data-active="${mode === 'login'}">ورود</button>
-              <button class="auth-switch__btn" type="button" data-auth-mode="signup" data-active="${mode === 'signup'}">ثبت‌نام</button>
-            </div>
-
-            <form class="auth-form" data-auth-form data-mode="${mode}" data-next="${attr(next)}" novalidate>
-              <div data-auth-error></div>
-              ${formFields(mode)}
-
-              ${
-                mode === 'login'
-                  ? `<div class="row row--between" style="font-size:var(--fs-2xs)">
-                      <label class="check" style="font-size:var(--fs-2xs)">
-                        <input type="checkbox" name="remember" checked />
-                        <span class="check__box">${icon('check', 11)}</span>
-                        <span class="check__text">مرا به خاطر بسپار</span>
-                      </label>
-                      <button class="link" type="button" data-auth-mode="magic" style="font-size:var(--fs-2xs)">ورود با لینک ایمیل</button>
-                    </div>`
-                  : ''
-              }
-
-              ${
-                mode !== 'magic'
-                  ? `<button class="btn btn--primary btn--lg btn--block" type="submit">
-                      ${icon(mode === 'signup' ? 'user' : 'logout', 17)}
-                      ${mode === 'signup' ? 'ساختن حساب' : 'ورود'}
-                    </button>`
-                  : `<button class="btn btn--primary btn--lg btn--block" type="submit">
-                      ${icon('mail', 17)} ارسال لینک ورود
-                    </button>`
-              }
-            </form>
-
-            ${
-              mode === 'magic'
-                ? `<div class="auth-card__foot">
-                    <button class="link" type="button" data-auth-mode="login">بازگشت به ورود با رمز</button>
-                  </div>`
-                : `<div class="divider-text">یا</div>
-                   <button class="btn btn--outline btn--block" type="button" data-auth-mode="magic">
-                     ${icon('mail', 16)} ورود با لینک ایمیل (بدون رمز)
-                   </button>
-                   <div class="auth-card__foot">
-                     ${mode === 'signup' ? 'حساب داری؟' : 'حساب نداری؟'}
-                     <button class="link" type="button" data-auth-mode="${mode === 'signup' ? 'login' : 'signup'}">
-                       ${mode === 'signup' ? 'وارد شو' : 'ثبت‌نام کن'}
-                     </button>
-                   </div>`
-            }
-
-            <div class="auth-note">
-              ${icon('info', 14)}
-              <span>
-                ${demo ? 'این حساب فقط برای نمایش است و رمز عبور ذخیره نمی‌شود. ' : ''}
-                با ورود، قواعد استفاده و حریم خصوصی بازاربان را می‌پذیری. هیچ سفارشی ثبت نمی‌شود و بازاربان فروشنده نیست.
-              </span>
-            </div>`
-            }
           </div>
         </div>
-      </div>
-    </div>`;
-  },
 
-  mount(ctx, root) {
-    const form = root.querySelector('[data-auth-form]');
-    if (!form) {
-      root.querySelector('[data-auth-signout]')?.addEventListener('click', async () => {
-        await store.signOut();
-        store.persistDemoSession();
-        toast('خارج شدی.', { type: 'info' });
-        window.location.hash = '#/';
-      });
+        <div class="auth__demo-card">
+          <div class="auth__demo-head">${icon('sparkles', 15)} یک نگاه به داده‌های نمونه</div>
+          <div class="auth__demo-bars">
+            <div class="auth__demo-bar"><span>خوب</span><i style="width:62%;background:var(--good)"></i><b class="u-xs u-num">۶۲٪</b></div>
+            <div class="auth__demo-bar"><span>نه‌خوب</span><i style="width:25%;background:var(--meh)"></i><b class="u-xs u-num">۲۵٪</b></div>
+            <div class="auth__demo-bar"><span>افتضاح</span><i style="width:13%;background:var(--bad)"></i><b class="u-xs u-num">۱۳٪</b></div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="auth__panel">
+        <div class="auth__card">
+          <div>
+            <div class="auth__brand">
+              <span class="brand__mark" style="width:38px;height:38px;border-radius:11px">${icon('cart', 19)}</span>
+              <span class="brand__name">فروشگاه‌یار</span>
+            </div>
+            <h2 class="auth__title u-mt-4" data-auth-title>${esc(MODES[mode].title)}</h2>
+            <p class="auth__sub" data-auth-sub>${esc(MODES[mode].sub)}</p>
+          </div>
+
+          <div class="auth-seg" role="tablist">
+            ${Object.entries(MODES)
+              .map(
+                ([key, meta]) =>
+                  `<button type="button" class="auth-seg__btn ${key === mode ? 'is-active' : ''}" role="tab" aria-selected="${key === mode}" data-mode="${key}">${esc(meta.label)}</button>`,
+              )
+              .join('')}
+          </div>
+
+          <form class="auth-form" data-auth-form novalidate>
+            <div class="field" data-name-field hidden>
+              <label class="field__label" for="af-name">نام نمایشی</label>
+              <input class="input" id="af-name" name="display_name" autocomplete="name" maxlength="60" placeholder="مثلاً علی" />
+            </div>
+            <div class="field">
+              <label class="field__label" for="af-email">ایمیل</label>
+              <div class="input-wrap">
+                <span class="input__icon">${icon('mail', 16)}</span>
+                <input class="input" id="af-email" name="email" type="email" dir="ltr" autocomplete="email" placeholder="you@example.com" required />
+              </div>
+            </div>
+            <div class="field" data-password-field>
+              <label class="field__label" for="af-password">رمز عبور</label>
+              <div class="pw-wrap">
+                <input class="input" id="af-password" name="password" type="password" dir="ltr" autocomplete="current-password" placeholder="••••••••" minlength="6" />
+                <button type="button" class="pw-toggle" data-toggle-pw aria-label="نمایش رمز">${icon('eye', 15)}</button>
+              </div>
+              <div class="strength" data-strength hidden>
+                <i></i><i></i><i></i><i></i>
+              </div>
+              <div class="strength-label" data-strength-label hidden></div>
+            </div>
+
+            <div data-auth-error></div>
+
+            <button type="submit" class="btn btn--primary btn--lg btn--block" data-submit>
+              ${icon('lock', 17)} <span data-submit-label>${mode === 'signup' ? 'ساخت حساب' : mode === 'magic' ? 'ارسال لینک ورود' : 'ورود به حساب'}</span>
+            </button>
+
+            <div class="u-between u-xs">
+              <button type="button" class="u-dim" data-forgot>رمز را فراموش کردم</button>
+              <span class="u-faint">${faNum(150)}+ خرید قابل ثبت</span>
+            </div>
+          </form>
+
+          <div class="auth__divider">یا</div>
+
+          <button type="button" class="btn btn--soft btn--block" data-demo>
+            ${icon('sparkles', 16)} ورود به حالت نمایشی بدون حساب
+          </button>
+
+          <p class="auth__notice">
+            ورود با حساب Supabase خودتان انجام می‌شود. داده‌ها با قواعد امنیتی سطح‌سطر (RLS) فقط برای شما قابل خواندن و نوشتن هستند.
+          </p>
+          <p class="auth__foot">
+            با ورود، قوانین استفاده و حفظ حریم خصوصی را می‌پذیرید.
+            <a href="${esc('https://supabase.com')}" target="_blank" rel="noopener">قدرت‌گرفته از Supabase</a>
+          </p>
+        </div>
+      </main>
+    </div>
+  `;
+
+  const form = container.querySelector('[data-auth-form]');
+  const emailInput = container.querySelector('#af-email');
+  const passwordInput = container.querySelector('#af-password');
+  const nameField = container.querySelector('[data-name-field]');
+  const passwordField = container.querySelector('[data-password-field]');
+  const strengthBars = container.querySelector('[data-strength]');
+  const strengthLabel = container.querySelector('[data-strength-label]');
+  const errorBox = container.querySelector('[data-auth-error]');
+
+  function setMode(next) {
+    mode = next;
+    container.querySelectorAll('[data-mode]').forEach((btn) => {
+      const active = btn.dataset.mode === mode;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+    container.querySelector('[data-auth-title]').textContent = MODES[mode].title;
+    container.querySelector('[data-auth-sub]').textContent = MODES[mode].sub;
+    container.querySelector('[data-submit-label]').textContent =
+      mode === 'signup' ? 'ساخت حساب' : mode === 'magic' ? 'ارسال لینک ورود' : 'ورود به حساب';
+    nameField.hidden = mode !== 'signup';
+    passwordField.hidden = mode === 'magic';
+    strengthBars.hidden = mode !== 'signup';
+    strengthLabel.hidden = mode !== 'signup';
+    passwordInput.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+    errorBox.innerHTML = '';
+  }
+
+  function showError(message) {
+    errorBox.innerHTML = `<div class="callout callout--danger">${icon('alert', 16)}<div class="u-grow"><div class="callout__text">${esc(message)}</div></div></div>`;
+  }
+
+  function showSuccess(message) {
+    errorBox.innerHTML = `<div class="callout callout--success">${icon('check-circle', 16)}<div class="u-grow"><div class="callout__text">${esc(message)}</div></div></div>`;
+  }
+
+  function scorePassword(value) {
+    let score = 0;
+    if (value.length >= 6) score += 1;
+    if (value.length >= 10) score += 1;
+    if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
+    if (/\d/.test(value) || /[^A-Za-z0-9]/.test(value)) score += 1;
+    return score;
+  }
+
+  container.addEventListener('click', (event) => {
+    const target = event.target;
+
+    const modeBtn = target.closest('[data-mode]');
+    if (modeBtn) {
+      setMode(modeBtn.dataset.mode);
       return;
     }
 
-    const mode = form.dataset.mode;
-    const errorBox = form.querySelector('[data-auth-error]');
+    if (target.closest('[data-toggle-pw]')) {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      target.closest('[data-toggle-pw]').innerHTML = icon(isPassword ? 'eye-off' : 'eye', 15);
+      return;
+    }
 
-    root.querySelectorAll('[data-auth-mode]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const nextMode = button.dataset.authMode;
-        const url = new URL(window.location.href);
-        const hash = url.hash.replace(/^#/, '');
-        const [path, search] = hash.split('?');
-        const params = new URLSearchParams(search || '');
-        if (nextMode === 'login') params.delete('mode');
-        else params.set('mode', nextMode);
-        const qs = params.toString();
-        window.location.href = `#${path}${qs ? `?${qs}` : ''}`;
-      });
-    });
-
-    root.querySelector('[data-toggle-password]')?.addEventListener('click', (event) => {
-      const input = form.querySelector('input[name="password"]');
-      if (!input) return;
-      const show = input.type === 'password';
-      input.type = show ? 'text' : 'password';
-      event.currentTarget.innerHTML = icon(show ? 'eye-off' : 'eye', 17);
-    });
-
-    const showError = (message) => {
-      errorBox.innerHTML = `<div class="callout callout--bad" style="margin-bottom:var(--sp-2)">
-        <span class="callout__icon">${icon('alert-circle', 14)}</span>
-        <div>${esc(message)}</div>
-      </div>`;
-    };
-
-    let submitting = false;
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (submitting) return;
-      errorBox.innerHTML = '';
-
-      const data = new FormData(form);
-      const email = String(data.get('email') || '').trim();
-      const password = String(data.get('password') || '');
-
-      if (!isValidEmail(email)) {
-        showError('ایمیل معتبر وارد کن.');
+    if (target.closest('[data-forgot]')) {
+      const email = emailInput.value.trim();
+      if (!email) {
+        showError('اول ایمیل را وارد کن.');
+        emailInput.focus();
         return;
       }
-      if (mode !== 'magic' && !isStrongEnough(password)) {
-        showError('رمز عبور باید حداقل ۶ کاراکتر باشد.');
-        return;
-      }
+      setBusy(target.closest('[data-forgot]'), true);
+      auth
+        .resetPassword(email)
+        .then(() => showSuccess('لینک بازیابی رمز به ایمیلت ارسال شد.'))
+        .catch((error) => showError(error.message))
+        .finally(() => setBusy(target.closest('[data-forgot]'), false));
+      return;
+    }
 
-      submitting = true;
-      const submit = form.querySelector('button[type="submit"]');
-      const original = submit.innerHTML;
-      submit.disabled = true;
-      submit.innerHTML = `<span class="btn__spinner"></span> لطفاً صبر کن…`;
+    if (target.closest('[data-demo]')) {
+      enterDemo();
+      toast.success('وارد حالت نمایشی شدی.');
+      ctx.onAuthed?.({ demo: true });
+    }
+  });
 
-      try {
-        if (mode === 'magic') {
-          await store.magicLink(email);
-          toast('لینک ورود به ایمیلت فرستاده شد.', {
-            type: 'good',
-            title: 'ایمیل را چک کن',
-            duration: 7000,
-          });
-          form.reset();
-        } else if (mode === 'signup') {
-          const result = await store.signUp({
-            email,
-            password,
-            displayName: String(data.get('displayName') || '').trim(),
-            city: String(data.get('city') || ''),
-          });
-          if (result?.pendingConfirmation) {
-            toast('حساب ساخته شد؛ لینک تأیید را در ایمیلت ببین.', {
-              type: 'good',
-              title: 'تأیید ایمیل',
-              duration: 8000,
-            });
-          } else {
-            store.persistDemoSession();
-            toast('خوش آمدی! حسابت ساخته شد.', { type: 'good' });
-            window.location.hash = form.dataset.next || NEXT_FALLBACK;
-          }
+  passwordInput.addEventListener('input', () => {
+    if (mode !== 'signup') return;
+    const score = scorePassword(passwordInput.value);
+    const bars = strengthBars.querySelectorAll('i');
+    const labels = ['خیلی ضعیف', 'ضعیف', 'متوسط', 'خوب', 'قوی'];
+    const classes = ['on-weak', 'on-weak', 'on-meh', 'on-good', 'on-good'];
+    bars.forEach((bar, index) => {
+      bar.className = index < score ? classes[score] : '';
+    });
+    strengthLabel.textContent = passwordInput.value ? labels[score] : '';
+  });
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    if (busy) return;
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const displayName = container.querySelector('#af-name')?.value.trim() || '';
+
+    if (!email || !email.includes('@')) {
+      showError('ایمیل معتبر وارد کن.');
+      emailInput.focus();
+      return;
+    }
+    if (mode !== 'magic' && password.length < 6) {
+      showError('رمز عبور باید حداقل ۶ حرف باشد.');
+      passwordInput.focus();
+      return;
+    }
+
+    const submit = container.querySelector('[data-submit]');
+    busy = true;
+    setBusy(submit, true);
+    errorBox.innerHTML = '';
+
+    try {
+      if (mode === 'login') {
+        await auth.signIn(email, password);
+        toast.success('خوش آمدی!');
+        ctx.onAuthed?.();
+      } else if (mode === 'signup') {
+        const result = await auth.signUp(email, password, displayName);
+        if (result?.user && !result.session) {
+          showSuccess('حساب ساخته شد. برای فعال‌سازی، لینک تایید را در ایمیلت باز کن.');
         } else {
-          await store.signIn({ email, password });
-          store.persistDemoSession();
-          toast('خوش برگشتی.', { type: 'good' });
-          window.location.hash = form.dataset.next || NEXT_FALLBACK;
+          toast.success('حساب ساخته شد.');
+          ctx.onAuthed?.();
         }
-      } catch (error) {
-        showError(error.message || 'انجام این کار ممکن نشد.');
-      } finally {
-        submitting = false;
-        submit.disabled = false;
-        submit.innerHTML = original;
+      } else {
+        await auth.magicLink(email);
+        showSuccess('لینک ورود به ایمیلت ارسال شد. صندوق ورودی را بررسی کن.');
       }
-    });
-  },
-};
+    } catch (error) {
+      showError(error.message || 'ورود ناموفق بود.');
+    } finally {
+      busy = false;
+      setBusy(submit, false);
+    }
+  });
+
+  return {
+    destroy() {},
+  };
+}

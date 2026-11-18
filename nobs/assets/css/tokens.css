@@ -1,471 +1,166 @@
 /* ==========================================================================
-   بازاربان — Design Tokens
-   یک لایهٔ کامل از متغیرهای طراحی: رنگ، تایپوگرافی، فاصله، شعاع، سایه، حرکت.
-   همهٔ اجزای رابط فقط از این توکن‌ها استفاده می‌کنند تا تم روشن/تاریک
-   و «حالت فشرده» بدون بازنویسی اجزا کار کند.
+   فروشگاه‌یار — Design tokens
+   یک زبان طراحی تاریک، شیشه‌ای و نعنایی/بنفش با اصول RTL
    ========================================================================== */
 
-/* --------------------------------------------------------------------------
-   ۱) پالت پایه — تاریک (پیش‌فرض)
-   -------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn.woff2') format('woff2-variations'),
+       url('../fonts/Vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: dark;
 
-  /* جوهرها: از سیاهِ سرد تا لایه‌های شیشه‌ای */
-  --ink-1000: #030507;
-  --ink-950: #05080b;
-  --ink-900: #070b10;
-  --ink-880: #090e14;
-  --ink-850: #0b1119;
-  --ink-800: #0e1620;
-  --ink-780: #111a25;
-  --ink-750: #14202d;
-  --ink-700: #182533;
-  --ink-650: #1d2c3c;
-  --ink-600: #243446;
-  --ink-550: #2b3d51;
+  /* ---------- رنگ‌های پایه ---------- */
+  --bg-0: #05070a;
+  --bg-1: #070a0e;
+  --bg-2: #0a0f14;
+  --bg-3: #0e141a;
 
-  /* متن */
-  --text-strong: #f2f8fb;
-  --text: #e3edf3;
-  --text-soft: #b6c6d3;
-  --text-mute: #8497a7;
-  --text-faint: #607382;
-  --text-inverse: #05100c;
-
-  /* سطوح شیشه‌ای */
-  --surface-0: rgba(255, 255, 255, 0.018);
-  --surface-1: rgba(255, 255, 255, 0.036);
+  --surface-1: rgba(255, 255, 255, 0.032);
   --surface-2: rgba(255, 255, 255, 0.055);
-  --surface-3: rgba(255, 255, 255, 0.075);
-  --surface-4: rgba(255, 255, 255, 0.1);
-  --surface-sunken: rgba(0, 0, 0, 0.28);
-  --surface-solid: #0b1119;
-  --surface-solid-2: #0e1620;
-  --surface-raised: #111b26;
+  --surface-3: rgba(255, 255, 255, 0.085);
+  --surface-solid: #0d1319;
+  --surface-raised: #111922;
 
-  /* خطوط و حاشیه‌ها */
-  --line: rgba(255, 255, 255, 0.075);
-  --line-soft: rgba(255, 255, 255, 0.045);
-  --line-strong: rgba(255, 255, 255, 0.13);
-  --line-bright: rgba(255, 255, 255, 0.22);
-  --line-inverse: rgba(0, 0, 0, 0.35);
+  --line-1: rgba(255, 255, 255, 0.065);
+  --line-2: rgba(255, 255, 255, 0.11);
+  --line-3: rgba(255, 255, 255, 0.18);
 
-  /* رنگ برند: نعنایی الکتریک */
-  --brand-100: #d6fff1;
-  --brand-200: #a8fbdb;
-  --brand-300: #74f3c4;
-  --brand-400: #3ee6a8;
-  --brand-500: #17cf8b;
-  --brand-600: #0aa873;
-  --brand-700: #0a8159;
-  --brand-800: #0a5d42;
-  --brand-900: #073b2b;
-  --brand: var(--brand-400);
-  --brand-ink: #04231a;
-  --brand-tint: rgba(62, 230, 168, 0.1);
-  --brand-tint-strong: rgba(62, 230, 168, 0.18);
-  --brand-glow: rgba(62, 230, 168, 0.32);
+  --txt-1: #eef5f2;
+  --txt-2: #a7b5b3;
+  --txt-3: #74827f;
+  --txt-4: #4d5a58;
 
-  /* رنگ مکمل: بنفشهٔ برقی */
-  --violet-200: #ddd2ff;
-  --violet-300: #c4b3ff;
-  --violet-400: #a78bfa;
-  --violet-500: #8b5cf6;
-  --violet-600: #7343e0;
-  --violet: var(--violet-400);
-  --violet-tint: rgba(167, 139, 250, 0.12);
-  --violet-glow: rgba(139, 92, 246, 0.3);
+  /* ---------- برند ---------- */
+  --acc: #35e0a1;
+  --acc-soft: rgba(53, 224, 161, 0.12);
+  --acc-soft-2: rgba(53, 224, 161, 0.22);
+  --acc-ink: #041410;
+  --acc-deep: #0f9d75;
 
-  /* رنگ مکمل: فیروزه */
-  --cyan-300: #7de8f7;
-  --cyan-400: #38d6ec;
-  --cyan-500: #0fb5cf;
-  --cyan: var(--cyan-400);
-  --cyan-tint: rgba(56, 214, 236, 0.11);
-  --cyan-glow: rgba(56, 214, 236, 0.28);
+  --acc-2: #22c9db;
+  --acc-3: #8b5cf6;
+  --acc-3-soft: rgba(139, 92, 246, 0.14);
+  --acc-4: #f472b6;
 
-  /* سه سطح امتیاز — ستون فقرات محصول */
-  --good: #34e0a1;
-  --good-soft: #8cf5cd;
-  --good-deep: #0c8a63;
-  --good-tint: rgba(52, 224, 161, 0.13);
-  --good-line: rgba(52, 224, 161, 0.34);
-  --good-glow: rgba(52, 224, 161, 0.34);
+  /* ---------- امتیازها ---------- */
+  --good: #35e0a1;
+  --good-soft: rgba(53, 224, 161, 0.13);
+  --good-line: rgba(53, 224, 161, 0.32);
 
-  --meh: #ffc857;
-  --meh-soft: #ffe0a3;
-  --meh-deep: #a87613;
-  --meh-tint: rgba(255, 200, 87, 0.13);
-  --meh-line: rgba(255, 200, 87, 0.34);
-  --meh-glow: rgba(255, 200, 87, 0.3);
+  --meh: #ffc24b;
+  --meh-soft: rgba(255, 194, 75, 0.13);
+  --meh-line: rgba(255, 194, 75, 0.3);
 
-  --bad: #ff6b8a;
-  --bad-soft: #ffb3c3;
-  --bad-deep: #b62b4b;
-  --bad-tint: rgba(255, 107, 138, 0.13);
-  --bad-line: rgba(255, 107, 138, 0.34);
-  --bad-glow: rgba(255, 107, 138, 0.3);
+  --bad: #ff5d7a;
+  --bad-soft: rgba(255, 93, 122, 0.13);
+  --bad-line: rgba(255, 93, 122, 0.32);
 
-  /* وضعیت‌های عمومی */
-  --info: #6cb6ff;
-  --info-tint: rgba(108, 182, 255, 0.13);
-  --warn: #ffb020;
-  --warn-tint: rgba(255, 176, 32, 0.13);
-  --danger: #ff5f7a;
-  --danger-tint: rgba(255, 95, 122, 0.13);
-  --success: var(--good);
-  --success-tint: var(--good-tint);
+  --info: #66a3ff;
+  --info-soft: rgba(102, 163, 255, 0.13);
 
-  /* رنگ دسته‌بندی‌ها (برای نشان‌ها و نمودارها) */
-  --cat-produce: #5bdb8a;
-  --cat-dairy: #7cc7ff;
-  --cat-bakery: #ffc978;
-  --cat-protein: #ff8d8d;
-  --cat-pantry: #c9a7ff;
-  --cat-drinks: #63e6e2;
-  --cat-snacks: #ffa46b;
-  --cat-household: #9fb4ff;
-  --cat-personal: #ff9bd0;
-  --cat-frozen: #8fe3ff;
-  --cat-other: #a8b7c4;
+  /* ---------- گرادیان‌ها ---------- */
+  --grad-brand: linear-gradient(135deg, #35e0a1 0%, #22c9db 48%, #8b5cf6 100%);
+  --grad-brand-soft: linear-gradient(135deg, rgba(53, 224, 161, 0.16), rgba(139, 92, 246, 0.14));
+  --grad-good: linear-gradient(135deg, #35e0a1, #16b98a);
+  --grad-meh: linear-gradient(135deg, #ffd479, #f5a623);
+  --grad-bad: linear-gradient(135deg, #ff7d93, #e0304f);
+  --grad-ink: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012));
+  --grad-sheen: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 50%, transparent 80%);
 
-  /* گرادیان‌ها */
-  --grad-brand: linear-gradient(115deg, #34e0a1 0%, #22d3ee 48%, #a78bfa 100%);
-  --grad-brand-soft: linear-gradient(115deg, rgba(52, 224, 161, 0.18), rgba(34, 211, 238, 0.12) 50%, rgba(167, 139, 250, 0.18));
-  --grad-good: linear-gradient(135deg, #63f0bc, #16b985);
-  --grad-meh: linear-gradient(135deg, #ffe08a, #f0a91c);
-  --grad-bad: linear-gradient(135deg, #ffa1b4, #e3325c);
-  --grad-ink: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.012));
-  --grad-sheen: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.16) 45%, transparent 70%);
-  --grad-halo: radial-gradient(60% 60% at 50% 0%, rgba(62, 230, 168, 0.16), transparent 70%);
+  /* ---------- سایه‌ها ---------- */
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --sh-sm: 0 4px 12px -4px rgba(0, 0, 0, 0.45);
+  --sh-md: 0 16px 34px -18px rgba(0, 0, 0, 0.8), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --sh-lg: 0 34px 70px -32px rgba(0, 0, 0, 0.9), 0 8px 22px -12px rgba(0, 0, 0, 0.6);
+  --sh-glow: 0 0 0 1px rgba(53, 224, 161, 0.22), 0 18px 50px -24px rgba(53, 224, 161, 0.5);
+  --sh-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-  /* تایپوگرافی */
-  --font-sans: "Vazirmatn", "IRANSansX", "Segoe UI", system-ui, -apple-system, "Noto Sans Arabic", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  --font-display: "Vazirmatn", "IRANSansX", system-ui, sans-serif;
+  /* ---------- فاصله‌ها ---------- */
+  --sp-0: 0;
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-7: 32px;
+  --sp-8: 40px;
+  --sp-9: 56px;
+  --sp-10: 72px;
 
-  --fs-3xs: 0.625rem;
-  --fs-2xs: 0.6875rem;
-  --fs-xs: 0.75rem;
-  --fs-sm: 0.8125rem;
-  --fs-base: 0.9375rem;
-  --fs-md: 1rem;
-  --fs-lg: 1.125rem;
-  --fs-xl: 1.25rem;
-  --fs-2xl: 1.5rem;
-  --fs-3xl: clamp(1.6rem, 1.1rem + 1.5vw, 2.15rem);
-  --fs-4xl: clamp(2rem, 1.2rem + 2.6vw, 3rem);
-  --fs-5xl: clamp(2.5rem, 1.2rem + 4.6vw, 4.4rem);
-  --fs-6xl: clamp(3rem, 1rem + 7vw, 6rem);
+  /* ---------- شعاع گوشه ---------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 26px;
+  --r-2xl: 34px;
+  --r-full: 999px;
 
-  --lh-tight: 1.18;
-  --lh-snug: 1.38;
+  /* ---------- تایپوگرافی ---------- */
+  --font: 'Vazirmatn', 'Segoe UI', Tahoma, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --fs-3xs: 10px;
+  --fs-2xs: 11px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --fs-xl: 18px;
+  --fs-2xl: 22px;
+  --fs-3xl: 28px;
+  --fs-4xl: 36px;
+  --fs-5xl: 46px;
+  --fs-6xl: 60px;
+
+  --lh-tight: 1.25;
+  --lh-snug: 1.45;
   --lh-normal: 1.65;
   --lh-loose: 1.9;
 
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0;
-  --tracking-wide: 0.04em;
-  --tracking-wider: 0.12em;
-
-  --fw-thin: 200;
-  --fw-light: 300;
-  --fw-regular: 400;
-  --fw-medium: 500;
+  --fw-reg: 400;
+  --fw-med: 500;
   --fw-semi: 600;
   --fw-bold: 700;
-  --fw-extra: 800;
-  --fw-black: 900;
+  --fw-black: 800;
 
-  /* فاصله‌گذاری — مقیاس ۲ نخی */
-  --sp-0: 0;
-  --sp-1: 0.125rem;
-  --sp-2: 0.25rem;
-  --sp-3: 0.375rem;
-  --sp-4: 0.5rem;
-  --sp-5: 0.625rem;
-  --sp-6: 0.75rem;
-  --sp-7: 0.875rem;
-  --sp-8: 1rem;
-  --sp-9: 1.125rem;
-  --sp-10: 1.25rem;
-  --sp-11: 1.375rem;
-  --sp-12: 1.5rem;
-  --sp-14: 1.75rem;
-  --sp-16: 2rem;
-  --sp-20: 2.5rem;
-  --sp-24: 3rem;
-  --sp-28: 3.5rem;
-  --sp-32: 4rem;
-  --sp-40: 5rem;
-  --sp-48: 6rem;
-  --sp-56: 7rem;
-  --sp-64: 8rem;
-
-  /* شعاع گوشه‌ها */
-  --r-2xs: 4px;
-  --r-xs: 6px;
-  --r-sm: 9px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 20px;
-  --r-2xl: 26px;
-  --r-3xl: 34px;
-  --r-4xl: 44px;
-  --r-pill: 999px;
-  --r-circle: 50%;
-
-  /* سایه‌ها */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
-  --shadow-sm: 0 2px 6px -1px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 10px 24px -12px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 24px 60px -24px rgba(0, 0, 0, 0.7), 0 6px 18px -8px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 40px 100px -40px rgba(0, 0, 0, 0.85), 0 12px 28px -12px rgba(0, 0, 0, 0.5);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --shadow-glow-good: 0 0 0 1px var(--good-line), 0 12px 36px -14px var(--good-glow);
-  --shadow-glow-meh: 0 0 0 1px var(--meh-line), 0 12px 36px -14px var(--meh-glow);
-  --shadow-glow-bad: 0 0 0 1px var(--bad-line), 0 12px 36px -14px var(--bad-glow);
-  --shadow-glow-brand: 0 0 0 1px var(--brand-tint-strong), 0 16px 44px -18px var(--brand-glow);
-
-  /* شیشه‌گونگی */
-  --glass-blur: 18px;
-  --glass-blur-lg: 30px;
-  --glass-bg: rgba(11, 17, 25, 0.72);
-  --glass-bg-strong: rgba(9, 14, 20, 0.88);
-  --glass-border: rgba(255, 255, 255, 0.085);
-  --glass-shadow: 0 20px 50px -30px rgba(0, 0, 0, 0.9);
-
-  /* حرکت */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* ---------- حرکت ---------- */
+  --ease: cubic-bezier(0.22, 0.71, 0.28, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-linear: linear;
-  --dur-instant: 90ms;
-  --dur-fast: 160ms;
-  --dur-base: 240ms;
-  --dur-slow: 420ms;
-  --dur-slower: 700ms;
+  --t-fast: 130ms;
+  --t-base: 220ms;
+  --t-slow: 420ms;
 
-  /* چیدمان */
-  --container-max: 1320px;
-  --container-narrow: 860px;
-  --container-wide: 1560px;
-  --gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
-  --header-h: 68px;
-  --topline-h: 32px;
-  --mobile-nav-h: 64px;
+  /* ---------- چیدمان ---------- */
+  --sidebar-w: 268px;
+  --topbar-h: 66px;
+  --page-max: 1480px;
+  --page-pad: clamp(16px, 2.4vw, 36px);
 
-  /* لایه‌ها */
-  --z-base: 1;
-  --z-sticky: 20;
-  --z-header: 40;
-  --z-drawer: 60;
-  --z-mobile-nav: 55;
-  --z-modal: 80;
-  --z-palette: 90;
-  --z-toast: 100;
-  --z-tooltip: 110;
+  /* ---------- لایه‌ها ---------- */
+  --z-nav: 40;
+  --z-mobile-nav: 45;
+  --z-topbar: 50;
+  --z-drawer: 80;
+  --z-overlay: 90;
+  --z-modal: 95;
+  --z-palette: 100;
+  --z-toast: 110;
 
-  /* بافت‌ها */
-  --noise-url: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  --grid-line: rgba(255, 255, 255, 0.03);
-  --grid-size: 44px;
-  --focus-ring: 0 0 0 2px var(--ink-900), 0 0 0 4px var(--brand-400);
-
-  /* اندازه‌های رایج اجزا */
-  --control-h-sm: 32px;
-  --control-h: 40px;
-  --control-h-lg: 48px;
-  --icon-sm: 15px;
-  --icon-md: 18px;
-  --icon-lg: 22px;
-  --avatar-sm: 26px;
-  --avatar-md: 36px;
-  --avatar-lg: 52px;
-  --avatar-xl: 76px;
-  --card-pad: var(--sp-10);
-  --section-gap: clamp(2.5rem, 5vw, 5rem);
+  /* ---------- نویز ---------- */
+  --noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
 }
 
-/* --------------------------------------------------------------------------
-   ۲) تم روشن — «کاغذ صبح»
-   -------------------------------------------------------------------------- */
-[data-theme="light"] {
-  color-scheme: light;
-
-  --ink-1000: #ffffff;
-  --ink-950: #fbfcf9;
-  --ink-900: #f5f7f1;
-  --ink-880: #f2f5ee;
-  --ink-850: #eef2e9;
-  --ink-800: #e8eee2;
-  --ink-780: #e2e9db;
-  --ink-750: #dce4d4;
-  --ink-700: #d3ddca;
-  --ink-650: #c9d4bf;
-  --ink-600: #bcc8b1;
-  --ink-550: #a9b69d;
-
-  --text-strong: #0d1a13;
-  --text: #17251c;
-  --text-soft: #3f5246;
-  --text-mute: #6a7d70;
-  --text-faint: #8b9b90;
-  --text-inverse: #f5fff9;
-
-  --surface-0: rgba(15, 35, 22, 0.02);
-  --surface-1: rgba(15, 35, 22, 0.035);
-  --surface-2: rgba(15, 35, 22, 0.055);
-  --surface-3: rgba(15, 35, 22, 0.075);
-  --surface-4: rgba(15, 35, 22, 0.1);
-  --surface-sunken: rgba(15, 35, 22, 0.045);
-  --surface-solid: #ffffff;
-  --surface-solid-2: #fbfcf8;
-  --surface-raised: #ffffff;
-
-  --line: rgba(13, 35, 21, 0.1);
-  --line-soft: rgba(13, 35, 21, 0.06);
-  --line-strong: rgba(13, 35, 21, 0.16);
-  --line-bright: rgba(13, 35, 21, 0.26);
-  --line-inverse: rgba(255, 255, 255, 0.5);
-
-  --brand-400: #0aa873;
-  --brand-500: #079066;
-  --brand: #079066;
-  --brand-ink: #f2fffa;
-  --brand-tint: rgba(10, 168, 115, 0.1);
-  --brand-tint-strong: rgba(10, 168, 115, 0.17);
-  --brand-glow: rgba(10, 168, 115, 0.24);
-
-  --violet-400: #7c4fe0;
-  --violet: #7c4fe0;
-  --violet-tint: rgba(124, 79, 224, 0.1);
-
-  --good: #06a06d;
-  --good-soft: #067a54;
-  --good-deep: #045c3f;
-  --good-tint: rgba(6, 160, 109, 0.1);
-  --good-line: rgba(6, 160, 109, 0.28);
-  --good-glow: rgba(6, 160, 109, 0.2);
-
-  --meh: #b8790a;
-  --meh-soft: #8f5e06;
-  --meh-deep: #6d4804;
-  --meh-tint: rgba(184, 121, 10, 0.11);
-  --meh-line: rgba(184, 121, 10, 0.3);
-  --meh-glow: rgba(184, 121, 10, 0.18);
-
-  --bad: #d6224a;
-  --bad-soft: #a91839;
-  --bad-deep: #82112c;
-  --bad-tint: rgba(214, 34, 74, 0.09);
-  --bad-line: rgba(214, 34, 74, 0.26);
-  --bad-glow: rgba(214, 34, 74, 0.16);
-
-  --info: #1668c9;
-  --info-tint: rgba(22, 104, 201, 0.1);
-  --warn: #a56a00;
-  --warn-tint: rgba(165, 106, 0, 0.1);
-  --danger: #d6224a;
-  --danger-tint: rgba(214, 34, 74, 0.09);
-
-  --cat-produce: #129a58;
-  --cat-dairy: #1f7dc4;
-  --cat-bakery: #b87b12;
-  --cat-protein: #c44a4a;
-  --cat-pantry: #7a4fd0;
-  --cat-drinks: #0b8f97;
-  --cat-snacks: #c46a1d;
-  --cat-household: #475fbe;
-  --cat-personal: #b3387f;
-  --cat-frozen: #1f7f9f;
-  --cat-other: #6a7d70;
-
-  --grad-ink: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.55));
-  --grad-sheen: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.7) 45%, transparent 70%);
-
-  --shadow-xs: 0 1px 2px rgba(24, 45, 30, 0.07);
-  --shadow-sm: 0 2px 6px -1px rgba(24, 45, 30, 0.09), 0 1px 2px rgba(24, 45, 30, 0.05);
-  --shadow-md: 0 12px 26px -16px rgba(24, 45, 30, 0.24), 0 2px 6px rgba(24, 45, 30, 0.06);
-  --shadow-lg: 0 28px 60px -30px rgba(24, 45, 30, 0.28), 0 8px 18px -12px rgba(24, 45, 30, 0.12);
-  --shadow-xl: 0 44px 100px -44px rgba(24, 45, 30, 0.32), 0 14px 30px -14px rgba(24, 45, 30, 0.14);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-
-  --glass-bg: rgba(255, 255, 255, 0.78);
-  --glass-bg-strong: rgba(255, 255, 255, 0.94);
-  --glass-border: rgba(13, 35, 21, 0.08);
-  --glass-shadow: 0 24px 60px -40px rgba(24, 45, 30, 0.5);
-
-  --grid-line: rgba(13, 35, 21, 0.045);
-  --focus-ring: 0 0 0 2px #ffffff, 0 0 0 4px var(--brand-500);
-}
-
-/* --------------------------------------------------------------------------
-   ۳) تنظیمات رفتاری کاربر
-   -------------------------------------------------------------------------- */
-@media (prefers-reduced-motion: reduce) {
-  :root {
-    --dur-instant: 0ms;
-    --dur-fast: 0ms;
-    --dur-base: 0ms;
-    --dur-slow: 0ms;
-    --dur-slower: 0ms;
-  }
-}
-
-@media (prefers-contrast: more) {
-  :root {
-    --line: rgba(255, 255, 255, 0.22);
-    --line-strong: rgba(255, 255, 255, 0.34);
-    --text-soft: #d7e3ea;
-    --text-mute: #b3c2cd;
-  }
-  [data-theme="light"] {
-    --line: rgba(13, 35, 21, 0.26);
-    --line-strong: rgba(13, 35, 21, 0.4);
-    --text-soft: #24352a;
-    --text-mute: #465a4c;
-  }
-}
-
-/* حالت فشرده — برای کاربرانی که محتوای بیشتر در صفحه می‌خواهند */
-[data-density="compact"] {
-  --sp-8: 0.75rem;
-  --sp-10: 0.875rem;
-  --sp-12: 1rem;
-  --sp-16: 1.25rem;
-  --sp-20: 1.75rem;
-  --card-pad: 0.875rem;
-  --header-h: 58px;
-  --fs-base: 0.875rem;
-}
-
-/* حالت بزرگ‌تر برای خوانایی */
-[data-font-scale="lg"] {
-  --fs-base: 1rem;
-  --fs-sm: 0.875rem;
-  --fs-xs: 0.8125rem;
-  --lh-normal: 1.75;
-}
-
-[data-font-scale="sm"] {
-  --fs-base: 0.875rem;
-  --fs-sm: 0.78rem;
-  --fs-xs: 0.72rem;
-}
-
-/* --------------------------------------------------------------------------
-   ۴) توکن‌های متحرک و بافت‌های ویژه
-   -------------------------------------------------------------------------- */
-:root {
-  --aurora-1: rgba(52, 224, 161, 0.17);
-  --aurora-2: rgba(139, 92, 246, 0.15);
-  --aurora-3: rgba(255, 200, 87, 0.08);
-}
-
-[data-theme="light"] {
-  --aurora-1: rgba(52, 190, 140, 0.2);
-  --aurora-2: rgba(150, 120, 240, 0.16);
-  --aurora-3: rgba(255, 200, 87, 0.16);
+/* چگالی جمع‌وجور برای کسانی که جدول بزرگ‌تر می‌خواهند */
+:root[data-density='compact'] {
+  --topbar-h: 58px;
+  --page-pad: clamp(12px, 1.6vw, 24px);
 }
