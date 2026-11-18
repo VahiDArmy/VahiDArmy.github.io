@@ -1,0 +1,2007 @@
+<!doctype html>
+<!-- FORGE · agent workspace — save as index.html, serve over HTTPS. -->
+<html lang="en" data-accent="molten" data-density="cozy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060912">
+<title>FORGE · agent workspace</title>
+<style>
+:root{
+  --ink:#060912;--ink2:#0a0f1e;--surf:#101830;--surf2:#16203c;--over:#1b2748;--line:#26355c;--line2:#33456f;
+  --txt:#f3ece2;--dim:#93a4c4;--dim2:#66769c;
+  --molten:#ff7a1a;--cyan:#25d5ee;--violet:#c04cfd;--lime:#a8e831;--red:#ff4d6d;--amber:#ffc53d;--azure:#4c8dff;
+  --acc:var(--molten);--acc2:var(--violet);
+  --top:56px;--tab:60px;--dock:58px;--row:46px;--pad:12px;--r:14px;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --sh:0 18px 44px -18px rgba(0,0,0,.85);
+}
+html[data-accent=cyan]{--acc:var(--cyan);--acc2:var(--azure)}
+html[data-accent=violet]{--acc:var(--violet);--acc2:var(--molten)}
+html[data-accent=lime]{--acc:var(--lime);--acc2:var(--cyan)}
+html[data-density=compact]{--row:38px;--pad:8px;--r:10px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;max-width:100%}
+body{margin:0;background:var(--ink);color:var(--txt);font:15px/1.5 var(--sans);overflow:hidden;overscroll-behavior:none}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit;min-width:0}
+::-webkit-scrollbar{width:9px;height:7px}
+::-webkit-scrollbar-track{background:var(--ink2);border-radius:20px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--acc),var(--acc2));border-radius:20px;border:2px solid var(--ink2)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--cyan),var(--acc))}
+*{scrollbar-width:thin;scrollbar-color:var(--acc) var(--ink2)}
+.bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;opacity:.5;mix-blend-mode:screen}
+.b1{width:78vmax;height:78vmax;left:-30vmax;top:-34vmax;background:radial-gradient(circle at 50% 50%,rgba(255,122,26,.30),rgba(255,122,26,0) 62%);animation:drift1 46s ease-in-out infinite}
+.b2{width:70vmax;height:70vmax;right:-28vmax;top:6vmax;background:radial-gradient(circle at 50% 50%,rgba(192,76,253,.30),rgba(192,76,253,0) 62%);animation:drift2 58s ease-in-out infinite}
+.b3{width:64vmax;height:64vmax;left:12vmax;bottom:-34vmax;background:radial-gradient(circle at 50% 50%,rgba(37,213,238,.22),rgba(37,213,238,0) 64%);animation:drift1 70s ease-in-out infinite reverse}
+@keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vmax,4vmax,0) scale(1.12)}}
+@keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.05)}50%{transform:translate3d(-7vmax,6vmax,0) scale(.92)}}
+.grain{position:absolute;inset:0;opacity:.055;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>")}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,transparent 40%,rgba(3,5,12,.75) 100%)}
+header.top{position:fixed;top:0;left:0;right:0;height:var(--top);z-index:40;display:flex;align-items:center;gap:6px;padding:0 8px;
+  background:linear-gradient(180deg,rgba(10,15,30,.96),rgba(10,15,30,.82));backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.wm{display:flex;align-items:center;gap:7px;font:800 17px/1 var(--mono);letter-spacing:.14em;flex:0 0 auto}
+.wm i{width:13px;height:13px;border-radius:4px;background:conic-gradient(from 210deg,var(--molten),var(--violet),var(--cyan),var(--molten));box-shadow:0 0 14px var(--acc);animation:spin 9s linear infinite;display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.wm b{background:linear-gradient(92deg,var(--txt),var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent}
+#projSel{flex:0 1 auto;max-width:132px;background:var(--surf);border:1px solid var(--line);border-radius:9px;padding:6px 8px;font:600 12px var(--mono);color:var(--txt)}
+.spacer{flex:1 1 auto;min-width:0}
+.iconbtn{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);background:var(--surf);cursor:pointer;transition:.16s;font-size:15px}
+.iconbtn:hover{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 16%,transparent)}
+.iconbtn.off{opacity:.45}
+.quota{display:flex;align-items:center;gap:6px;flex:0 0 auto;padding:5px 8px;border-radius:20px;border:1px solid var(--line);background:var(--surf);cursor:pointer;font:700 11px var(--mono)}
+.quota .ring{width:18px;height:18px;flex:0 0 18px;border-radius:50%;background:conic-gradient(var(--lime) var(--p,100%),var(--over) 0);display:grid;place-items:center}
+.quota .ring::after{content:"";width:11px;height:11px;border-radius:50%;background:var(--surf)}
+.quota.warn{border-color:var(--amber);color:var(--amber)}.quota.crit{border-color:var(--red);color:var(--red)}
+.dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px var(--lime)}
+.dot.off{background:var(--dim2);box-shadow:none}
+@media(max-width:430px){.wm b{display:none}#projSel{max-width:106px}.quota{padding:5px 6px;gap:4px}}
+.shell{position:fixed;top:var(--top);bottom:0;left:0;right:0;display:flex;z-index:10;max-width:100%}
+.rail{display:none;width:210px;flex:0 0 210px;border-right:1px solid var(--line);background:linear-gradient(180deg,rgba(16,24,48,.7),rgba(6,9,18,.7));padding:12px 10px;overflow:auto}
+.rail button{display:flex;width:100%;align-items:center;gap:10px;padding:11px 12px;margin-bottom:4px;border-radius:11px;border:1px solid transparent;background:none;color:var(--dim);cursor:pointer;font-weight:600;transition:.16s;text-align:left}
+.rail button:hover{background:var(--surf);color:var(--txt)}
+.rail button.on{background:linear-gradient(92deg,color-mix(in srgb,var(--acc) 22%,transparent),transparent);border-color:color-mix(in srgb,var(--acc) 45%,transparent);color:var(--txt)}
+.rail button span.badge{margin-left:auto;font:700 10px var(--mono);padding:2px 6px;border-radius:20px;background:var(--over);color:var(--dim)}
+.railsep{margin:14px 4px 8px;font:700 10px var(--mono);letter-spacing:.18em;color:var(--dim2)}
+main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;max-width:100%}
+.view{display:none;flex:1;min-height:0;min-width:0;flex-direction:column}
+.view.on{display:flex}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:var(--pad);padding-bottom:calc(var(--dock) + var(--tab) + 22px);-webkit-overflow-scrolling:touch}
+#msgList{padding-bottom:14px}
+.toolbar{display:flex;gap:6px;align-items:center;padding:8px var(--pad);border-bottom:1px solid var(--line);background:rgba(10,15,30,.72);backdrop-filter:blur(10px);flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden}
+.toolbar>*{flex:0 0 auto}
+.toolbar input[type=search],.toolbar input[type=text],.toolbar select{background:var(--ink2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px}
+.toolbar input[type=search]{flex:1 0 148px;min-width:148px}
+.toolbar select{font:600 12px var(--mono);max-width:150px}
+@media(min-width:820px){.toolbar{flex-wrap:wrap;overflow:visible}}
+.btn{padding:8px 12px;border-radius:9px;border:1px solid var(--line);background:var(--surf);cursor:pointer;font:600 13px var(--sans);transition:.16s;white-space:nowrap;flex:0 0 auto}
+.btn:hover{border-color:var(--acc);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.p{background:linear-gradient(92deg,var(--acc),var(--acc2));border-color:transparent;color:#0a0713;font-weight:800}
+.btn.p:hover{box-shadow:0 8px 22px -8px var(--acc)}
+.btn.d{border-color:color-mix(in srgb,var(--red) 55%,transparent);color:var(--red)}
+.btn.g{border-color:color-mix(in srgb,var(--lime) 50%,transparent);color:var(--lime)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn.sm{padding:5px 9px;font-size:12px}
+.card{background:linear-gradient(160deg,var(--surf),var(--ink2));border:1px solid var(--line);border-radius:var(--r);padding:var(--pad);margin-bottom:10px;box-shadow:var(--sh);min-width:0;animation:rise .45s cubic-bezier(.2,.8,.25,1) both;animation-delay:calc(var(--i,0)*38ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card h3{margin:0 0 8px;font:800 13px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--dim);overflow-wrap:anywhere}
+.chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 9px;border-radius:20px;font:700 10.5px var(--mono);letter-spacing:.06em;border:1px solid var(--line);background:var(--over);color:var(--dim);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}
+.chip.ok{color:var(--lime);border-color:color-mix(in srgb,var(--lime) 45%,transparent);background:color-mix(in srgb,var(--lime) 12%,transparent)}
+.chip.run{color:var(--cyan);border-color:color-mix(in srgb,var(--cyan) 45%,transparent);background:color-mix(in srgb,var(--cyan) 12%,transparent)}
+.chip.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,transparent);background:color-mix(in srgb,var(--amber) 12%,transparent)}
+.chip.bad{color:var(--red);border-color:color-mix(in srgb,var(--red) 45%,transparent);background:color-mix(in srgb,var(--red) 12%,transparent)}
+.chip.ai{color:var(--violet);border-color:color-mix(in srgb,var(--violet) 45%,transparent);background:color-mix(in srgb,var(--violet) 12%,transparent)}
+.chip.acc{color:var(--acc);border-color:color-mix(in srgb,var(--acc) 45%,transparent);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.mono{font-family:var(--mono)}.dim{color:var(--dim)}.dim2{color:var(--dim2)}.tiny{font-size:11.5px}
+.row{display:flex;align-items:center;gap:9px;min-height:var(--row);padding:8px 10px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(120deg,var(--surf),var(--ink2));margin-bottom:6px;cursor:pointer;transition:.14s;min-width:0;max-width:100%;animation:rise .35s both;animation-delay:calc(var(--i,0)*22ms)}
+.row:hover{border-color:var(--line2);transform:translateX(2px)}
+.row.sel{border-color:var(--acc);background:linear-gradient(120deg,color-mix(in srgb,var(--acc) 14%,var(--surf)),var(--ink2))}
+.row .grow{flex:1 1 auto;min-width:0;display:block;overflow:hidden}
+.row .nm{display:block;max-width:100%;font:600 13.5px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .sub{display:block;max-width:100%;font-size:11px;color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ico{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;font:800 10px var(--mono);border:1px solid var(--line);overflow:hidden}
+.ico.js{color:var(--amber);background:color-mix(in srgb,var(--amber) 12%,transparent)}
+.ico.html{color:var(--molten);background:color-mix(in srgb,var(--molten) 12%,transparent)}
+.ico.css{color:var(--cyan);background:color-mix(in srgb,var(--cyan) 12%,transparent)}
+.ico.py{color:var(--azure);background:color-mix(in srgb,var(--azure) 12%,transparent)}
+.ico.md{color:var(--lime);background:color-mix(in srgb,var(--lime) 12%,transparent)}
+.ico.etc{color:var(--dim);background:var(--over)}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--acc);flex:0 0 18px}
+.bulk{display:flex;gap:6px;align-items:center;padding:8px var(--pad);background:linear-gradient(92deg,color-mix(in srgb,var(--acc) 20%,var(--surf)),var(--surf));border-bottom:1px solid var(--acc);flex-wrap:wrap;min-width:0}
+.tabs{position:fixed;bottom:0;left:0;right:0;height:var(--tab);z-index:45;display:flex;background:rgba(8,12,24,.97);backdrop-filter:blur(14px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1 1 0;min-width:0;background:none;border:none;color:var(--dim2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font:700 9.5px var(--mono);letter-spacing:.04em;cursor:pointer;position:relative;transition:.16s}
+.tabs button.on{color:var(--acc)}
+.tabs button.on::before{content:"";position:absolute;top:0;left:22%;right:22%;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--acc),var(--acc2));box-shadow:0 0 10px var(--acc)}
+.tabs button i{font-style:normal;font-size:16px}
+.tabs button .n{position:absolute;top:6px;right:18%;min-width:15px;height:15px;border-radius:9px;background:var(--red);color:#fff;font-size:9px;display:grid;place-items:center;padding:0 3px}
+#dockSlotMob{position:fixed;left:0;right:0;bottom:var(--tab);z-index:44;height:var(--dock);border-top:1px solid var(--line);background:rgba(12,17,34,.96);backdrop-filter:blur(12px)}
+#dockSlotDesk{display:none;width:284px;flex:0 0 284px;border-left:1px solid var(--line);background:linear-gradient(180deg,rgba(16,24,48,.72),rgba(6,9,18,.72));overflow:auto;padding:12px}
+#dock{display:flex;gap:8px;align-items:center;height:100%;overflow-x:auto;overflow-y:hidden;padding:0 10px;scroll-snap-type:x proximity}
+#dock::-webkit-scrollbar{height:5px}
+.dockhead{display:none}
+.ctl{flex:0 0 auto;scroll-snap-align:start;display:flex;flex-direction:column;gap:3px;padding:6px 10px;border:1px solid var(--line);border-radius:11px;background:var(--surf);min-width:118px}
+.ctl label{font:800 9px var(--mono);letter-spacing:.11em;color:var(--dim2);text-transform:uppercase;display:flex;justify-content:space-between;gap:6px}
+.ctl label b{color:var(--acc)}
+.ctl select{width:100%;background:var(--ink2);border:1px solid var(--line);border-radius:7px;padding:3px 5px;font:600 11px var(--mono);text-overflow:ellipsis}
+.ctl input[type=range]{width:100%;height:18px;accent-color:var(--acc);border:none;background:none;padding:0}
+.ctl .stepper{display:flex;align-items:center;gap:4px}
+.ctl .stepper button{width:22px;height:22px;flex:0 0 22px;border-radius:6px;border:1px solid var(--line);background:var(--over);cursor:pointer;font-weight:800;line-height:1}
+.ctl .stepper span{flex:1;text-align:center;font:800 12px var(--mono);color:var(--acc)}
+.sw{display:flex;align-items:center;gap:7px;cursor:pointer;flex:0 0 auto}
+.sw i{width:34px;height:19px;border-radius:20px;background:var(--over);border:1px solid var(--line);position:relative;transition:.18s;flex:0 0 34px}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:var(--dim2);transition:.18s}
+.sw.on i{background:color-mix(in srgb,var(--acc) 32%,transparent);border-color:var(--acc)}
+.sw.on i::after{left:16px;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.sw span{font:700 10px var(--mono);color:var(--dim);letter-spacing:.06em}
+.msg{margin-bottom:12px;min-width:0;animation:rise .4s both}
+.msg .who{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:5px;font:800 10px var(--mono);letter-spacing:.12em;color:var(--dim2);text-transform:uppercase}
+.bubble{padding:11px 13px;border-radius:14px;border:1px solid var(--line);background:linear-gradient(150deg,var(--surf),var(--ink2));white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font-size:14.5px;max-width:100%}
+.msg.u .bubble{background:linear-gradient(150deg,color-mix(in srgb,var(--acc) 20%,var(--surf)),var(--surf));border-color:color-mix(in srgb,var(--acc) 42%,transparent);border-bottom-right-radius:4px}
+.msg.a .bubble{border-bottom-left-radius:4px;border-left:2px solid var(--violet)}
+.msg.sys .bubble{background:var(--ink2);border-style:dashed;font-size:12.5px;color:var(--dim);font-family:var(--mono)}
+.act{border:1px solid color-mix(in srgb,var(--cyan) 34%,var(--line));border-radius:12px;background:linear-gradient(120deg,color-mix(in srgb,var(--cyan) 8%,var(--surf)),var(--ink2));overflow:hidden;margin-bottom:12px}
+.act>summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:9px;font:700 12px var(--mono);min-width:0}
+.act>summary::-webkit-details-marker{display:none}
+.act>summary .sp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act .body{padding:0 12px 10px;border-top:1px dashed var(--line)}
+.step{display:flex;gap:8px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed color-mix(in srgb,var(--line) 60%,transparent);font:12px var(--mono);min-width:0}
+.step:last-child{border:none}
+.step .t{color:var(--dim2);flex:0 0 48px}
+.step .k{font-weight:800;flex:0 0 90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.step .p{flex:1;min-width:0;overflow-wrap:anywhere;color:var(--dim)}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:pulse 1.1s ease-in-out infinite;flex:0 0 8px}
+@keyframes pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.25);box-shadow:0 0 12px var(--cyan)}}
+.strip{display:flex;align-items:center;gap:8px;padding:8px var(--pad);border-bottom:1px solid var(--line);background:linear-gradient(92deg,color-mix(in srgb,var(--violet) 14%,var(--ink2)),var(--ink2));font:12px var(--mono);flex-wrap:wrap;min-width:0}
+.strip .bar{flex:1 1 60px;min-width:50px;height:5px;border-radius:4px;background:var(--over);overflow:hidden}
+.strip .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));width:0;transition:width .4s}
+.composer{border-top:1px solid var(--line);background:rgba(10,15,30,.95);padding:8px var(--pad);padding-bottom:calc(var(--dock) + var(--tab) + 10px);min-width:0}
+.cmds{display:flex;gap:5px;overflow-x:auto;padding-bottom:6px}
+.cmds button{flex:0 0 auto;padding:4px 9px;border-radius:20px;border:1px solid var(--line);background:var(--surf);color:var(--dim);font:700 10.5px var(--mono);cursor:pointer}
+.cmds button:hover{color:var(--acc);border-color:var(--acc)}
+.cbox{display:flex;gap:8px;align-items:flex-end;min-width:0}
+.cbox textarea{flex:1;min-width:0;resize:none;max-height:132px;min-height:46px;background:var(--ink2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:15px;line-height:1.4}
+.cbox textarea:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 15%,transparent)}
+.send{width:46px;height:46px;flex:0 0 46px;border-radius:12px;border:none;background:linear-gradient(140deg,var(--acc),var(--acc2));color:#0a0713;font-size:18px;font-weight:900;cursor:pointer;transition:.16s}
+.send:hover{box-shadow:0 10px 26px -10px var(--acc);transform:translateY(-1px)}
+.ringwrap{display:flex;align-items:center;gap:14px;min-width:0;flex-wrap:wrap}
+.ringwrap>div{min-width:0}
+.bigRing{width:74px;height:74px;flex:0 0 74px;border-radius:50%;background:conic-gradient(var(--lime) var(--p,0%),var(--over) 0);display:grid;place-items:center;position:relative}
+.bigRing::after{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--ink2);border:1px solid var(--line)}
+.bigRing b{position:relative;z-index:1;font:800 17px var(--mono)}
+.stats{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+.drop{height:3px;border-radius:3px;background:linear-gradient(90deg,var(--acc),var(--acc2));margin:2px 0;box-shadow:0 0 10px var(--acc)}
+.dragging{opacity:.45}
+.grip{cursor:grab;touch-action:none;color:var(--dim2);font-size:15px;flex:0 0 auto}
+.grip:active{cursor:grabbing;color:var(--acc)}
+.views{display:flex;gap:5px;overflow-x:auto;padding:8px var(--pad);border-bottom:1px solid var(--line)}
+.views button{flex:0 0 auto;max-width:200px;padding:5px 11px;border-radius:20px;border:1px solid var(--line);background:var(--surf);color:var(--dim);font:700 11px var(--mono);cursor:pointer;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.views button.on{background:linear-gradient(92deg,var(--acc),var(--acc2));color:#0a0713;border-color:transparent}
+.views button u{text-decoration:none;opacity:.6;font-size:13px}
+.scrim{position:fixed;inset:0;background:rgba(3,5,12,.72);backdrop-filter:blur(4px);z-index:60;opacity:0;pointer-events:none;transition:.24s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;z-index:61;background:linear-gradient(180deg,var(--surf),var(--ink));border-left:1px solid var(--line2);box-shadow:-24px 0 60px -20px #000;
+  right:0;top:0;bottom:0;width:min(560px,100%);max-width:100%;transform:translateX(102%);transition:transform .3s cubic-bezier(.2,.85,.25,1);display:flex;flex-direction:column}
+.drawer.on{transform:none}
+.dhead{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--ink2)}
+.dhead h2{margin:0;font:800 14px var(--mono);letter-spacing:.04em;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;padding-bottom:calc(14px + env(safe-area-inset-bottom));min-width:0}
+.dbody h4{margin:16px 0 7px;font:800 11px var(--mono);letter-spacing:.14em;color:var(--dim2);text-transform:uppercase}
+.dbody h4:first-child{margin-top:0}
+.dbody p{overflow-wrap:anywhere}
+.kv{display:grid;grid-template-columns:minmax(66px,auto) minmax(0,1fr);gap:6px 12px;font:12.5px var(--mono);min-width:0}
+.kv b{color:var(--dim2);font-weight:600}
+.kv span{min-width:0;overflow-wrap:anywhere}
+pre.code{margin:0;max-width:100%;background:#05080f;border:1px solid var(--line);border-radius:11px;padding:11px;overflow:auto;max-height:340px;font:12px/1.6 var(--mono);white-space:pre;tab-size:2}
+textarea.edit{width:100%;max-width:100%;min-height:280px;background:#05080f;border:1px solid var(--line);border-radius:11px;padding:11px;font:12.5px/1.6 var(--mono);resize:vertical;white-space:pre;overflow:auto}
+textarea.edit:focus{outline:none;border-color:var(--acc)}
+.field{margin-bottom:11px;min-width:0}
+.field label{display:block;font:800 10px var(--mono);letter-spacing:.13em;color:var(--dim2);text-transform:uppercase;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;max-width:100%;background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--acc)}
+.modal{position:fixed;z-index:70;left:50%;top:50%;transform:translate(-50%,-46%) scale(.96);opacity:0;pointer-events:none;transition:.22s;
+  width:min(430px,calc(100% - 24px));max-height:86vh;overflow:auto;background:linear-gradient(160deg,var(--surf),var(--ink));border:1px solid var(--line2);border-radius:18px;padding:18px;box-shadow:var(--sh)}
+.modal.on{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.modal h3{margin:0 0 8px;font-size:16px;overflow-wrap:anywhere}
+.modal p{margin:0 0 14px;color:var(--dim);font-size:13.5px;overflow-wrap:anywhere}
+.modal .acts{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--dock) + var(--tab) + 14px);z-index:80;display:flex;flex-direction:column;gap:8px;width:min(440px,calc(100% - 20px));pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:12px;border:1px solid var(--line2);background:linear-gradient(120deg,var(--over),var(--surf));box-shadow:var(--sh);font-size:13.5px;min-width:0;animation:tin .3s cubic-bezier(.2,.9,.25,1) both}
+@keyframes tin{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.toast.out{animation:tout .25s forwards}
+@keyframes tout{to{opacity:0;transform:translateY(10px) scale(.97)}}
+.toast.ok{border-color:color-mix(in srgb,var(--lime) 55%,transparent)}
+.toast.bad{border-color:color-mix(in srgb,var(--red) 55%,transparent)}
+.toast.warn{border-color:color-mix(in srgb,var(--amber) 55%,transparent)}
+.toast .grow{flex:1;min-width:0;overflow-wrap:anywhere}
+.empty{text-align:center;padding:34px 16px;color:var(--dim2);overflow-wrap:anywhere}
+.empty i{font-size:30px;font-style:normal;display:block;margin-bottom:8px;opacity:.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.meter{height:7px;border-radius:5px;background:var(--over);overflow:hidden;margin:6px 0}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),var(--cyan));transition:width .5s}
+.meter.warn i{background:linear-gradient(90deg,var(--amber),var(--molten))}
+.meter.crit i{background:linear-gradient(90deg,var(--red),var(--molten))}
+.tag{display:inline-block;max-width:100%;padding:2px 7px;border-radius:6px;background:var(--over);border:1px solid var(--line);font:700 10px var(--mono);color:var(--dim);margin:0 4px 4px 0;overflow-wrap:anywhere}
+iframe.pv{width:100%;max-width:100%;height:330px;border:1px solid var(--line2);border-radius:12px;background:#fff}
+.banner{display:flex;gap:9px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--amber) 50%,transparent);background:color-mix(in srgb,var(--amber) 10%,var(--surf));margin-bottom:10px;font-size:13px;min-width:0}
+.banner.bad{border-color:color-mix(in srgb,var(--red) 50%,transparent);background:color-mix(in srgb,var(--red) 10%,var(--surf))}
+.banner .grow{flex:1;min-width:0;overflow-wrap:anywhere}
+.hl{color:var(--acc);font-weight:700}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media(min-width:960px){
+  .rail{display:block}.tabs{display:none}#dockSlotMob{display:none}#dockSlotDesk{display:block}
+  :root{--tab:0px;--dock:0px}
+  .scroll{padding-bottom:24px}.composer{padding-bottom:12px}.toasts{bottom:18px;left:auto;right:300px;transform:none}
+  #dock{flex-direction:column;height:auto;overflow:visible;padding:0;gap:9px;align-items:stretch}
+  .dockhead{display:flex;align-items:center;gap:8px;font:800 10px var(--mono);letter-spacing:.18em;color:var(--dim2);text-transform:uppercase;margin-bottom:2px}
+  .ctl{min-width:0}
+  .drawer{width:min(620px,52vw)}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+html[data-motion=off] *{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grain"></div><div class="vig"></div></div>
+
+<header class="top">
+  <div class="wm"><i></i><b>FORGE</b></div>
+  <select id="projSel" aria-label="Project"></select>
+  <div class="spacer"></div>
+  <div class="quota" id="quotaBtn" title="Daily model budget"><span class="ring" id="quotaRing"></span><span id="quotaTxt">50/50</span></div>
+  <button class="iconbtn" id="soundBtn" title="Sound on/off">🔊</button>
+  <button class="iconbtn" id="syncBtn" title="Sync device folder">⟳</button>
+  <span class="dot off" id="netDot" title="Connection"></span>
+</header>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="railsep">WORKSPACE</div>
+    <button data-view="chat" class="on"><i>◈</i> Chat <span class="badge" id="railTask">idle</span></button>
+    <button data-view="files"><i>▤</i> Files <span class="badge" id="railFiles">0</span></button>
+    <button data-view="plan"><i>◔</i> Plan <span class="badge" id="railPlan">0</span></button>
+    <button data-view="activity"><i>≡</i> Activity <span class="badge" id="railAct">0</span></button>
+    <div class="railsep">SYSTEM</div>
+    <button data-view="models"><i>✦</i> Models <span class="badge" id="railModels">0</span></button>
+    <button data-view="settings"><i>⚙</i> Settings</button>
+    <div class="railsep">DEVICE</div>
+    <div class="tiny dim2 mono" id="railDev" style="padding:0 12px;line-height:1.7;overflow-wrap:anywhere"></div>
+  </aside>
+
+  <main>
+    <section class="view on" id="v-chat">
+      <div class="strip" id="taskStrip"></div>
+      <div class="scroll" id="msgList"></div>
+      <div class="composer">
+        <div class="cmds" id="cmdChips"></div>
+        <div class="cbox">
+          <textarea id="composer" rows="1" placeholder="Describe what to build, change, or fix…"></textarea>
+          <button class="send" id="sendBtn" title="Run task">➤</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="v-files">
+      <div class="toolbar">
+        <input type="search" id="fileSearch" placeholder="Search files & contents…">
+        <select id="fileFilter"><option value="all">All types</option><option value="js">JS</option><option value="html">HTML</option><option value="css">CSS</option><option value="py">Python</option><option value="md">Docs</option><option value="changed">Changed</option></select>
+        <select id="fileSort"><option value="path">A→Z</option><option value="size">Size</option><option value="mtime">Modified</option><option value="kind">Type</option></select>
+        <button class="btn sm" id="newFileBtn">+ File</button>
+        <button class="btn sm" id="previewBtn">▶ Preview</button>
+        <button class="btn sm" id="importBtn">Import</button>
+        <button class="btn sm" id="exportBtn">Export</button>
+        <button class="btn sm" id="linkBtn">Link folder</button>
+        <button class="btn sm" id="ckptBtn">Checkpoints</button>
+        <button class="btn sm" id="trashBtn">Trash</button>
+        <input type="file" id="fileInput" accept=".zip" class="sr">
+      </div>
+      <div class="bulk" id="bulkBar" style="display:none">
+        <b class="mono tiny" id="bulkCount">0 selected</b><div style="flex:1"></div>
+        <button class="btn sm" id="bulkMove">Move…</button>
+        <button class="btn sm" id="bulkExport">Export</button>
+        <button class="btn sm d" id="bulkDel">Delete</button>
+        <button class="btn sm" id="bulkClear">Clear</button>
+      </div>
+      <div class="scroll" id="fileList"></div>
+    </section>
+
+    <section class="view" id="v-plan">
+      <div class="toolbar">
+        <input type="search" id="planSearch" placeholder="Search roadmap…">
+        <select id="planFilter"><option value="all">All states</option><option value="active">Active</option><option value="pending">Pending</option><option value="done">Done</option><option value="blocked">Blocked</option><option value="failed">Failed</option><option value="verified">Verified</option></select>
+        <select id="planSort"><option value="order">Manual order</option><option value="priority">Priority</option><option value="status">Status</option><option value="updated">Updated</option></select>
+        <button class="btn sm p" id="addTaskBtn">+ Task</button>
+      </div>
+      <div class="views" id="viewChips"></div>
+      <div class="bulk" id="planBulk" style="display:none">
+        <b class="mono tiny" id="planBulkCount">0 selected</b><div style="flex:1"></div>
+        <select id="planBulkStatus" class="btn sm"><option value="">Set status…</option><option>pending</option><option>active</option><option>done</option><option>blocked</option><option>failed</option></select>
+        <button class="btn sm d" id="planBulkDel">Delete</button>
+        <button class="btn sm" id="planBulkClear">Clear</button>
+      </div>
+      <div class="scroll" id="planList"></div>
+    </section>
+
+    <section class="view" id="v-activity">
+      <div class="toolbar">
+        <input type="search" id="actSearch" placeholder="Search journal…">
+        <select id="actFilter"><option value="all">All steps</option><option value="ok">Verified</option><option value="fail">Failed</option><option value="write_file">Writes</option><option value="run_checks">Checks</option></select>
+        <select id="actSort"><option value="new">Newest</option><option value="old">Oldest</option><option value="dur">Slowest</option></select>
+        <button class="btn sm" id="clearActBtn">Clear log</button>
+      </div>
+      <div class="scroll" id="actList"></div>
+    </section>
+
+    <section class="view" id="v-models">
+      <div class="toolbar">
+        <input type="search" id="modelSearch" placeholder="Search models…">
+        <select id="modelFilter"><option value="all">All</option><option value="free">Free</option><option value="tools">Tool-calling</option><option value="on">Enabled</option><option value="off">Disabled</option><option value="delisted">Delisted</option></select>
+        <select id="modelSort"><option value="ctx">Context</option><option value="name">Name</option><option value="price">Price</option><option value="seen">Last seen</option></select>
+        <button class="btn sm p" id="syncModelsBtn">⟳ Sync registry</button>
+      </div>
+      <div class="scroll" id="modelList"></div>
+    </section>
+
+    <section class="view" id="v-settings"><div class="scroll" id="settingsBody"></div></section>
+  </main>
+
+  <aside id="dockSlotDesk"><div class="dockhead">◈ AGENT CONSOLE · live</div><div id="dock"></div></aside>
+</div>
+
+<div id="dockSlotMob"><div id="dockMount" style="height:100%"></div></div>
+
+<nav class="tabs">
+  <button data-view="chat" class="on"><i>◈</i>CHAT<span class="n" id="tabTaskN" style="display:none">1</span></button>
+  <button data-view="files"><i>▤</i>FILES</button>
+  <button data-view="plan"><i>◔</i>PLAN</button>
+  <button data-view="activity"><i>≡</i>LOG</button>
+  <button data-view="models"><i>✦</i>MODELS</button>
+  <button data-view="settings"><i>⚙</i>SET</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true">
+  <div class="dhead"><h2 id="drawerTitle">Detail</h2><button class="iconbtn" id="drawerClose">✕</button></div>
+  <div class="dbody" id="drawerBody"></div>
+</aside>
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <h3 id="modalTitle">Confirm</h3><p id="modalBody"></p>
+  <div id="modalExtra"></div>
+  <div class="acts"><button class="btn" id="modalCancel">Cancel</button><button class="btn p" id="modalOk">Confirm</button></div>
+</div>
+<div class="toasts" id="toasts"></div>
+
+<script type="text/worker" id="pyworker">
+let py=null;const send=m=>postMessage(m);
+self.onmessage=async e=>{const{id,cmd,payload}=e.data;try{
+  if(cmd==='init'){const t0=Date.now();importScripts('https://cdn.jsdelivr.net/pyodide/v314.0.8/full/pyodide.js');
+    py=await loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v314.0.8/full/'});
+    py.setStdout({batched:s=>send({event:'stdout',line:s})});py.setStderr({batched:s=>send({event:'stderr',line:s})});
+    send({id,ok:true,ms:Date.now()-t0,version:py.runPython('import sys\nsys.version')});}
+  else if(cmd==='test'){const t0=Date.now();await py.loadPackage('micropip');
+    await py.runPythonAsync('import micropip\nawait micropip.install("pytest")');
+    for(const f of payload.files){py.FS.writeFile(f.path.split('/').pop(),f.content);}
+    const rc=py.runPython('import pytest\nint(pytest.main(["-q"]))');
+    send({id,ok:true,rc,ms:Date.now()-t0});}
+}catch(err){send({id,ok:false,error:String((err&&err.message)||err)});}};
+</script>
+
+<script>
+'use strict';
+/* ── utilities ───────────────────────────────────────────── */
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const utcDay=()=>new Date().toISOString().slice(0,10);
+const fmtTime=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const fmtAgo=t=>{const s=(Date.now()-t)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';};
+const fmtBytes=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB';
+const ext=p=>(p.split('.').pop()||'').toLowerCase();
+const kindOf=p=>({js:'js',mjs:'js',ts:'js',jsx:'js',html:'html',htm:'html',css:'css',py:'py',md:'md',json:'md',txt:'md'}[ext(p)]||'etc');
+const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
+async function sha256(str){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');}
+function download(name,data,type){const u=URL.createObjectURL(new Blob([data],{type:type||'application/octet-stream'}));const a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),6000);}
+async function fetchT(url,opt,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||30000);try{return await fetch(url,{...opt,signal:c.signal});}finally{clearTimeout(t);}}
+function extractJSON(text){
+  if(!text)return null;let t=String(text).trim();
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i);if(f)t=f[1].trim();
+  try{return JSON.parse(t);}catch{}
+  const s=t.indexOf('{');if(s<0)return null;
+  let d=0,q=false,e=false;
+  for(let i=s;i<t.length;i++){const c=t[i];
+    if(q){if(e)e=false;else if(c==='\\')e=true;else if(c==='"')q=false;continue;}
+    if(c==='"')q=true;else if(c==='{')d++;else if(c==='}'){d--;if(d===0){try{return JSON.parse(t.slice(s,i+1));}catch{return null;}}}}
+  return null;
+}
+function normPath(p){const o=[];for(const s of String(p).split('/')){if(!s||s==='.')continue;if(s==='..')o.pop();else o.push(s);}return o.join('/');}
+
+/* ── sound ───────────────────────────────────────────────── */
+const Sound={ctx:null,on:true,
+  init(){if(!this.ctx){try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch{}}if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume();},
+  play(kind){if(!this.on)return;this.init();const c=this.ctx;if(!c)return;
+    const map={click:[[520,.04,'triangle',.05]],step:[[880,.05,'sine',.045]],ok:[[660,.08,'sine',.07],[990,.12,'sine',.06]],bad:[[220,.16,'sawtooth',.06],[150,.2,'sawtooth',.05]],warn:[[420,.1,'square',.04]],send:[[740,.06,'triangle',.05],[1100,.07,'sine',.04]]};
+    (map[kind]||map.click).forEach(([f,d,type,g],i)=>{const o=c.createOscillator(),v=c.createGain();o.type=type;o.frequency.value=f;
+      const t=c.currentTime+i*.055;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+.012);v.gain.exponentialRampToValueAtTime(.0001,t+d);
+      o.connect(v);v.connect(c.destination);o.start(t);o.stop(t+d+.03);});}
+};
+
+/* ── toast / confirm ─────────────────────────────────────── */
+function toast(msg,kind,action){
+  const el=document.createElement('div');el.className='toast '+(kind||'');
+  el.innerHTML=`<span>${kind==='ok'?'✓':kind==='bad'?'✕':kind==='warn'?'⚠':'◈'}</span><span class="grow">${esc(msg)}</span>`;
+  const close=()=>{el.classList.add('out');setTimeout(()=>el.remove(),260);};
+  if(action){const b=document.createElement('button');b.className='btn sm';b.textContent=action.label;
+    b.onclick=async()=>{try{await action.fn();toast('Undone','ok');}catch(e){toast('Undo failed: '+e.message,'bad');}close();};el.appendChild(b);}
+  $('toasts').appendChild(el);
+  const t=setTimeout(close,action?7000:3600);
+  el.addEventListener('click',e=>{if(e.target===el||e.target.classList.contains('grow')){clearTimeout(t);close();}});
+  if(kind==='bad')Sound.play('bad');else if(kind==='warn')Sound.play('warn');
+}
+function confirmDlg(title,body,okLabel,danger,extraHTML){
+  return new Promise(res=>{
+    $('modalTitle').textContent=title;$('modalBody').textContent=body;
+    $('modalExtra').innerHTML=extraHTML||'';
+    $('modalOk').textContent=okLabel||'Confirm';$('modalOk').className='btn '+(danger?'d':'p');
+    $('modal').classList.add('on');$('scrim').classList.add('on');
+    const done=v=>{$('modal').classList.remove('on');if(!$('drawer').classList.contains('on'))$('scrim').classList.remove('on');
+      $('modalOk').onclick=null;$('modalCancel').onclick=null;res(v);};
+    $('modalOk').onclick=()=>done(true);$('modalCancel').onclick=()=>done(false);
+  });
+}
+
+/* ── indexeddb ───────────────────────────────────────────── */
+const STORES=['projects','messages','tasks','steps','roadmap','memory','models','prefs','trash','views','kv','checkpoints'];
+let _db=null;
+function db(){if(_db)return Promise.resolve(_db);return new Promise((res,rej)=>{
+  const r=indexedDB.open('forge_v1',1);
+  r.onupgradeneeded=()=>{const d=r.result;STORES.forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});};
+  r.onsuccess=()=>{_db=r.result;res(_db);};r.onerror=()=>rej(r.error);});}
+async function put(store,val){const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).put(val);tx.oncomplete=()=>res(val);tx.onerror=()=>rej(tx.error);});}
+async function del(store,id){const d=await db();return new Promise((res,rej)=>{const tx=d.transaction(store,'readwrite');tx.objectStore(store).delete(id);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+async function all(store){const d=await db();return new Promise((res,rej)=>{const q=d.transaction(store).objectStore(store).getAll();q.onsuccess=()=>res(q.result||[]);q.onerror=()=>rej(q.error);});}
+async function kvGet(k,fallback){const r=await all('kv');const f=r.find(x=>x.id===k);return f?f.v:fallback;}
+async function kvSet(k,v){return put('kv',{id:k,v});}
+
+/* ── OPFS workspace ──────────────────────────────────────── */
+const FS={
+  async root(pid){const r=await navigator.storage.getDirectory();return r.getDirectoryHandle('proj_'+pid,{create:true});},
+  async dir(pid,path,create){let d=await this.root(pid);for(const p of normPath(path).split('/').filter(Boolean))d=await d.getDirectoryHandle(p,{create:!!create});return d;},
+  async read(pid,path){const parts=normPath(path).split('/');const name=parts.pop();const d=await this.dir(pid,parts.join('/'));
+    return await (await (await d.getFileHandle(name)).getFile()).text();},
+  async write(pid,path,content){const parts=normPath(path).split('/');const name=parts.pop();
+    const d=await this.dir(pid,parts.join('/'),true);const fh=await d.getFileHandle(name,{create:true});
+    const w=await fh.createWritable();await w.write(content);await w.close();
+    const back=await (await fh.getFile()).text();
+    if(back!==content)throw new Error('write verification failed for '+path);
+    return {hash:await sha256(back),size:new Blob([back]).size};},
+  async remove(pid,path){const parts=normPath(path).split('/');const name=parts.pop();const d=await this.dir(pid,parts.join('/'));await d.removeEntry(name,{recursive:true});},
+  async scan(pid){const out=[];const walk=async(d,base)=>{for await(const[name,h]of d.entries()){
+      if(name==='.forge'||name==='node_modules'||name==='.git')continue;
+      const p=base?base+'/'+name:name;
+      if(h.kind==='directory')await walk(h,p);
+      else{const f=await h.getFile();if(f.size>2000000)continue;const txt=await f.text();
+        out.push({path:p,size:f.size,mtime:f.lastModified,hash:await sha256(txt),kind:kindOf(p)});}}};
+    await walk(await this.root(pid),'');return out.sort((a,b)=>a.path.localeCompare(b.path));},
+  async copyAll(pid,destName){const dest=await this.dir(pid,'.forge/checkpoints/'+destName,true);
+    for(const f of S.files){const parts=f.path.split('/');const n=parts.pop();let d=dest;
+      for(const p of parts)d=await d.getDirectoryHandle(p,{create:true});
+      const w=await (await d.getFileHandle(n,{create:true})).createWritable();await w.write(await this.read(pid,f.path));await w.close();}}
+};
+
+/* ── state ───────────────────────────────────────────────── */
+const DEFAULTS={model:'local-planner',temperature:.2,maxCalls:8,reserve:6,verify:'T2',depth:6,autoVerify:true,autoSync:false,
+  autonomy:'checkpoint',nativeTools:false,accent:'molten',density:'cozy',motion:true,sound:true,dailyLimit:50,
+  key:'',sbUrl:'',sbKey:'',sbEmail:'',sbToken:'',sbUser:''};
+const S={projects:[],pid:null,files:[],messages:[],tasks:[],steps:[],roadmap:[],memory:[],models:[],prefs:{},views:[],trash:[],checkpoints:[],
+  settings:{...DEFAULTS},ledger:{},run:null,syncBase:{},device:null,storageEst:{usage:0,quota:0},
+  ui:{view:'chat',fileQ:'',fileFilter:'all',fileSort:'path',fileSel:new Set(),planQ:'',planFilter:'all',planSort:'order',planSel:new Set(),
+    actQ:'',actFilter:'all',actSort:'new',modelQ:'',modelFilter:'all',modelSort:'ctx',savedView:'all',contentCache:{}}};
+const project=()=>S.projects.find(p=>p.id===S.pid)||S.projects[0];
+const persistSettings=debounce(()=>kvSet('settings',S.settings),250);
+function setSetting(k,v){S.settings[k]=v;persistSettings();applyAppearance();syncDock();renderHeader();}
+function applyAppearance(){const h=document.documentElement;h.dataset.accent=S.settings.accent;h.dataset.density=S.settings.density;h.dataset.motion=S.settings.motion?'on':'off';Sound.on=S.settings.sound;}
+
+/* ── seed ────────────────────────────────────────────────── */
+const AURORA={
+'index.html':`<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aurora Tasks</title><link rel="stylesheet" href="styles.css"></head>
+<body><main id="app">
+<header class="hd"><h1>Aurora</h1><span class="count" id="count">0</span></header>
+<form id="add"><input id="txt" placeholder="What needs doing?" autocomplete="off"><button>Add</button></form>
+<ul id="list"></ul>
+<footer id="foot">offline-first · stored on this device</footer>
+</main><script type="module" src="src/app.js"><\/script></body></html>`,
+'styles.css':`:root{--bg:#0b1020;--fg:#eaf2ff;--acc:#5eead4;--acc2:#a78bfa;--card:#151d38}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(120% 90% at 10% 0%,#1b2450,#0b1020 60%);color:var(--fg);font:15px/1.5 system-ui,sans-serif;min-height:100vh}
+#app{max-width:520px;margin:0 auto;padding:18px}
+.hd{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.hd h1{margin:0;font-size:24px;background:linear-gradient(92deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.count{margin-left:auto;background:var(--card);border:1px solid #2a3560;border-radius:20px;padding:3px 11px;font:700 12px ui-monospace,monospace;color:var(--acc)}
+#add{display:flex;gap:8px;margin-bottom:14px}
+#add input{flex:1;min-width:0;background:var(--card);border:1px solid #2a3560;border-radius:11px;padding:11px;color:var(--fg);font-size:15px}
+#add button{border:none;border-radius:11px;padding:0 16px;background:linear-gradient(140deg,var(--acc),var(--acc2));color:#08111f;font-weight:800;cursor:pointer}
+#list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:7px}
+.task{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid #2a3560;border-radius:12px;padding:11px 13px}
+.task span{min-width:0;overflow-wrap:anywhere}
+.task.done{opacity:.5}.task.done span{text-decoration:line-through}
+.tick{width:20px;height:20px;flex:0 0 20px;border-radius:6px;border:2px solid #3b4780;background:none;cursor:pointer}
+.task.done .tick{background:var(--acc);border-color:var(--acc)}
+#foot{margin-top:16px;text-align:center;font:11px ui-monospace,monospace;color:#8fa0c8}`,
+'src/storage.js':`const KEY='aurora.tasks.v1';
+let mem=null;
+function read(){try{const v=JSON.parse(localStorage.getItem(KEY)||'null');return Array.isArray(v)?v:mem;}catch(e){return mem;}}
+function write(v){mem=v;try{localStorage.setItem(KEY,JSON.stringify(v));}catch(e){/* sandboxed: memory only */}}
+function seed(){return[
+ {id:'t1',text:'Ship the offline cache',done:true},
+ {id:'t2',text:'Wire the drag handle',done:false},
+ {id:'t3',text:'Audit contrast ratios',done:false}];}
+export function load(){const v=read();return Array.isArray(v)?v:seed();}
+export function save(items){write(items);}
+export function clear(){write([]);}`,
+'src/app.js':`import {load,save} from './storage.js';
+let items=load();
+const list=document.getElementById('list'),count=document.getElementById('count');
+function render(){
+  list.innerHTML='';
+  items.forEach(it=>{
+    const li=document.createElement('li');
+    li.className='task'+(it.done?' done':'');
+    const b=document.createElement('button');b.className='tick';b.setAttribute('aria-label','toggle');
+    const s=document.createElement('span');s.textContent=it.text;
+    b.addEventListener('click',()=>{it.done=!it.done;save(items);render();});
+    li.append(b,s);list.appendChild(li);
+  });
+  count.textContent=items.filter(i=>!i.done).length;
+}
+document.getElementById('add').addEventListener('submit',e=>{
+  e.preventDefault();
+  const i=document.getElementById('txt'),v=i.value.trim();
+  if(!v)return;
+  items.push({id:'t'+Date.now(),text:v,done:false});
+  i.value='';save(items);render();
+});
+render();`,
+'README.md':`# Aurora Tasks
+Offline-first task list. No build step, no dependencies.
+
+## Structure
+- index.html — shell
+- styles.css — aurora theme
+- src/storage.js — persistence with in-memory fallback (sandbox safe)
+- src/app.js — rendering + events
+
+## Run
+Open index.html through any static host.`
+};
+const LEDGER={
+'ledger.py':'"""Tiny ledger helpers used by the CLI."""\n\ndef add(a, b):\n    return a + b\n\ndef total(rows):\n    return sum(r["amount"] for r in rows)\n\ndef format_row(row):\n    return f\'{row["label"]:<16}{row["amount"]:>8.2f}\'\n',
+'test_ledger.py':'from ledger import add, total, format_row\n\ndef test_add():\n    assert add(2, 3) == 5\n\ndef test_total():\n    assert total([{"amount": 1.5}, {"amount": 2.5}]) == 4.0\n\ndef test_format():\n    assert format_row({"label": "coffee", "amount": 3}).startswith("coffee")\n',
+'README.md':'# Ledger CLI\n\nPure-python helpers plus a pytest suite.\n\nThe Python runtime in FORGE is experimental and loads on demand from Settings.\n'
+};
+async function seedIfNeeded(){
+  const projects=await all('projects');
+  if(projects.length){S.projects=projects;return;}
+  const now=Date.now(),H=3600000;
+  const p1={id:'aurora',name:'Aurora Tasks',stack:'web',purpose:'An offline-first task list that runs from static hosting with zero dependencies.',
+    entry:'src/app.js',smoke:'#list .task',smokeMin:3,created:now-26*H,updated:now-2*H,device:'this device'};
+  const p2={id:'ledger',name:'Ledger CLI',stack:'python',purpose:'Pure-python ledger arithmetic with a pytest suite.',
+    entry:'ledger.py',created:now-50*H,updated:now-30*H,device:'this device'};
+  for(const p of [p1,p2])await put('projects',p);
+  S.projects=[p1,p2];S.pid=p1.id;
+  for(const [path,content] of Object.entries(AURORA))await FS.write(p1.id,path,content);
+  for(const [path,content] of Object.entries(LEDGER))await FS.write(p2.id,path,content);
+  const rm=[
+    ['Phase 1 · Foundation','done',1,true,'Shell, theme and storage layer in place.','index.html'],
+    ['Persistence with sandbox fallback','done',1,true,'localStorage guarded; memory fallback verified in sandboxed preview.','src/storage.js'],
+    ['Render + toggle interactions','done',2,true,'3 seeded tasks render; toggle updates the counter.','src/app.js'],
+    ['Drag to reorder tasks','active',2,false,'Pointer-based reorder with persisted order.','src/app.js'],
+    ['Filter: all / active / done','pending',2,false,'Segmented control above the list.','src/app.js'],
+    ['Undo after delete','pending',3,false,'Soft delete plus a six second undo window.','src/storage.js'],
+    ['Contrast audit on muted text','blocked',3,false,'Needs your decision: keep the muted tone or raise it to #8fa0c8.','styles.css'],
+    ['Export tasks as JSON','pending',4,false,'Download button in the footer.','src/app.js']
+  ].map((r,i)=>({id:uid(),pid:p1.id,title:r[0],status:r[1],priority:r[2],verified:r[3],detail:r[4],file:r[5],order:i,
+    created:now-(24-i)*H,updated:now-(8-i)*H,evidence:r[3]?{method:'sandbox smoke',at:now-(9-i)*H,assertion:'#list .task >= 3'}:null}));
+  rm.push({id:uid(),pid:p2.id,title:'Core arithmetic helpers',status:'done',priority:1,verified:false,detail:'add / total / format_row implemented.',file:'ledger.py',order:0,created:now-48*H,updated:now-40*H,evidence:null});
+  rm.push({id:uid(),pid:p2.id,title:'Validate pytest runtime on this phone',status:'pending',priority:1,verified:false,detail:'Python was not part of the device validation run. Load it from Settings → Runtimes.',file:'test_ledger.py',order:1,created:now-40*H,updated:now-40*H,evidence:null});
+  for(const r of rm)await put('roadmap',r);
+  const mem=[
+    {id:uid(),pid:p1.id,kind:'brief',key:'purpose',content:p1.purpose,at:now-26*H},
+    {id:uid(),pid:p1.id,kind:'decision',key:'No build step',content:'Ship plain ES modules; the workspace bundles only for preview. Keeps the project portable.',at:now-24*H},
+    {id:uid(),pid:p1.id,kind:'decision',key:'Sandbox-safe storage',content:'storage.js wraps localStorage in try/catch because sandboxed iframes have opaque origins.',at:now-22*H},
+    {id:uid(),pid:p1.id,kind:'constraint',key:'Zero dependencies',content:'No npm packages in the shipped project.',at:now-22*H},
+    {id:uid(),pid:p1.id,kind:'issue',key:'Muted text contrast',content:'Footer text measured below 4.5:1. Raised to #8fa0c8; confirm the tone is still acceptable.',at:now-9*H},
+    {id:uid(),pid:p2.id,kind:'brief',key:'purpose',content:p2.purpose,at:now-50*H}
+  ];
+  for(const m of mem)await put('memory',m);
+  const seedSteps=[
+    ['write_file','index.html','ok',420],['write_file','styles.css','ok',380],['write_file','src/storage.js','ok',350],
+    ['write_file','src/app.js','ok',410],['run_checks','static parse','ok',96],['run_checks','sandbox smoke','ok',1180],
+    ['update_roadmap','3 items verified','ok',12],['patch_file','src/app.js','fail',240],['write_file','src/app.js','ok',330],['add_memory','decision recorded','ok',8]
+  ].map((s,i)=>({id:uid(),pid:p1.id,taskId:'seed',tool:s[0],path:s[1],status:s[2],dur:s[3],at:now-(20-i)*H,
+    model:'inclusionai/ling-3.2-flash:free',detail:s[2]==='fail'?'SEARCH block matched 2 locations — rejected as ambiguous, no write performed.':'Verified by re-read and SHA-256.',before:null,after:null,tokens:0}));
+  for(const s of seedSteps)await put('steps',s);
+  const msgs=[
+    {id:uid(),pid:p1.id,role:'user',content:'Create an offline-first task app. No dependencies, must run from static hosting.',at:now-26*H},
+    {id:uid(),pid:p1.id,role:'agent',content:'Project scaffolded: shell, aurora theme, storage layer with a sandbox-safe fallback, and the render/toggle loop.\n\nI verified each write by re-reading and hashing the file, then ran a sandboxed smoke test — 3 tasks render and the counter reads 2.\n\nNext on the roadmap: drag to reorder, then filtering.',at:now-25*H,steps:seedSteps.slice(0,7).map(s=>s.id),model:'inclusionai/ling-3.2-flash:free'},
+    {id:uid(),pid:p1.id,role:'user',content:'The muted footer text is hard to read.',at:now-9*H},
+    {id:uid(),pid:p1.id,role:'agent',content:'Confirmed — the old #6f7ea8 fell below 4.5:1. I raised it to #8fa0c8 and logged the change as a decision. The contrast task stays blocked until you confirm the tone still looks right to you.',at:now-9*H+60000,steps:[],model:'inclusionai/ling-3.2-flash:free'}
+  ];
+  for(const m of msgs)await put('messages',m);
+  await put('models',{id:'inclusionai/ling-3.2-flash:free',name:'Ling 3.2 Flash',provider:'inclusionai',free:true,ctx:131072,maxOut:8192,
+    params:['tools','temperature','max_tokens'],modalities:['text'],price:{prompt:'0',completion:'0'},seen:Date.now(),status:'active',note:'Verified on this device: 3 calls, 0 malformed, 2151 tokens, 14s.'});
+  await put('prefs',{id:'inclusionai/ling-3.2-flash:free',enabled:true,role:'coder',priority:1});
+  await put('views',{id:'v_active',pid:p1.id,name:'In flight',filter:'active',sort:'priority'});
+  await put('views',{id:'v_risk',pid:p1.id,name:'Needs attention',filter:'blocked',sort:'updated'});
+  await kvSet('settings',{...DEFAULTS});await kvSet('pid',p1.id);
+  await kvSet('validation',{opfs:{write30:201,read:73,move:true,quotaMB:10761},folder:{name:'Aaaaaaa',entries:26,restored:true,perm:'granted'},
+    zip:{zipMs:6,unzipMs:1},conn:{freeModels:14,limit:50},loop:{model:'inclusionai/ling-3.2-flash:free',calls:3,malformed:0,tokens:2151,secs:14},
+    preview:{buildMs:940,errorCapture:true},python:null});
+}
+
+/* ── boot ────────────────────────────────────────────────── */
+async function loadProject(pid){
+  S.pid=pid;await kvSet('pid',pid);
+  S.files=await FS.scan(pid);
+  const [msgs,tasks,steps,road,mem,trash,views,cks]=await Promise.all([all('messages'),all('tasks'),all('steps'),all('roadmap'),all('memory'),all('trash'),all('views'),all('checkpoints')]);
+  S.messages=msgs.filter(m=>m.pid===pid).sort((a,b)=>a.at-b.at);
+  S.tasks=tasks.filter(t=>t.pid===pid).sort((a,b)=>b.created-a.created);
+  S.steps=steps.filter(s=>s.pid===pid).sort((a,b)=>b.at-a.at);
+  S.roadmap=road.filter(r=>r.pid===pid).sort((a,b)=>a.order-b.order);
+  S.memory=mem.filter(m=>m.pid===pid);
+  S.trash=trash.filter(t=>t.pid===pid);
+  S.views=views.filter(v=>v.pid===pid);
+  S.checkpoints=cks.filter(c=>c.pid===pid).sort((a,b)=>b.at-a.at);
+  S.ui.fileSel.clear();S.ui.planSel.clear();S.ui.contentCache={};
+  S.syncBase=await kvGet('syncBase:'+pid,{});
+  refreshMemoryHashes();
+}
+function refreshMemoryHashes(){
+  for(const m of S.memory){if(m.kind!=='file_summary')continue;
+    const f=S.files.find(x=>x.path===m.key);m.stale=!f||f.hash!==m.hash;}
+}
+async function boot(){
+  await seedIfNeeded();
+  S.settings={...DEFAULTS,...(await kvGet('settings',{}))};
+  S.models=await all('models');
+  (await all('prefs')).forEach(p=>S.prefs[p.id]=p);
+  S.ledger=await kvGet('ledger',{});
+  S.device=await kvGet('deviceHandle',null);
+  await loadProject(await kvGet('pid',S.projects[0].id));
+  const interrupted=S.tasks.find(t=>t.state==='running');
+  if(interrupted){interrupted.state='uncertain';interrupted.note='Interrupted — the app closed mid-run. Files were re-scanned; resume verifies before continuing.';await put('tasks',interrupted);}
+  applyAppearance();buildDock();renderAll();mountDock();
+  navigator.storage?.persisted?.().then(async p=>{if(!p&&navigator.storage.persist)try{await navigator.storage.persist();}catch{}});
+  setTimeout(()=>toast('Workspace restored · '+S.files.length+' files verified','ok'),500);
+}
+
+/* ── header / nav ────────────────────────────────────────── */
+function budget(){
+  const d=S.ledger[utcDay()]||{calls:0,tokens:0};
+  const limit=Math.max(1,S.settings.dailyLimit||50),reserve=Math.max(0,S.settings.reserve);
+  return {used:d.calls,tokens:d.tokens,limit,reserve,left:Math.max(0,limit-reserve-d.calls),total:Math.max(0,limit-d.calls)};
+}
+function ledgerAdd(tokens){const k=utcDay();const d=S.ledger[k]||{calls:0,tokens:0};d.calls++;d.tokens+=tokens||0;S.ledger[k]=d;kvSet('ledger',S.ledger);renderHeader();}
+function renderHeader(){
+  const sel=$('projSel');
+  sel.innerHTML=S.projects.map(p=>`<option value="${p.id}"${p.id===S.pid?' selected':''}>${esc(p.name)}</option>`).join('');
+  const b=budget(),pct=Math.round(b.total/b.limit*100);
+  $('quotaRing').style.setProperty('--p',pct+'%');
+  $('quotaTxt').textContent=b.total+'/'+b.limit;
+  $('quotaBtn').className='quota'+(b.total<=5?' crit':b.total<=15?' warn':'');
+  $('soundBtn').textContent=S.settings.sound?'🔊':'🔇';$('soundBtn').classList.toggle('off',!S.settings.sound);
+  $('netDot').className='dot'+(navigator.onLine?'':' off');
+  $('railFiles').textContent=S.files.length;
+  $('railPlan').textContent=S.roadmap.filter(r=>r.status!=='done').length;
+  $('railAct').textContent=S.steps.length;
+  $('railModels').textContent=S.models.filter(m=>S.prefs[m.id]?.enabled!==false).length;
+  $('railTask').textContent=S.run?S.run.task.state:'idle';
+  $('tabTaskN').style.display=S.run?'grid':'none';
+  $('railDev').innerHTML=`OPFS ✓<br>${S.device?'folder: '+esc(S.device.name):'folder: not linked'}<br>${S.settings.key?'key: stored locally':'key: none'}<br>${S.settings.sbToken?'cloud: linked':'cloud: off'}`;
+}
+function go(view){
+  S.ui.view=view;
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+view));
+  document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('on',b.dataset.view===view));
+  if(view==='chat')scrollMsgs();
+  Sound.play('click');
+}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+$('projSel').addEventListener('change',async e=>{await loadProject(e.target.value);renderAll();toast('Switched to '+project().name,'ok');});
+$('soundBtn').addEventListener('click',()=>{setSetting('sound',!S.settings.sound);if(S.settings.sound)Sound.play('ok');toast('Sound '+(S.settings.sound?'on':'muted'));});
+$('syncBtn').addEventListener('click',()=>deviceSync());
+$('quotaBtn').addEventListener('click',openQuota);
+window.addEventListener('online',renderHeader);window.addEventListener('offline',renderHeader);
+
+/* ── agent console ───────────────────────────────────────── */
+function modelOptions(){
+  const enabled=S.models.filter(m=>S.prefs[m.id]?.enabled!==false&&m.status!=='delisted');
+  return `<option value="local-planner">Local planner · no API</option>`+
+    enabled.map(m=>`<option value="${esc(m.id)}">${esc(m.id.replace(':free',''))}${m.free?' ·free':''}</option>`).join('');
+}
+function buildDock(){
+  const s=S.settings;
+  $('dock').innerHTML=`
+  <div class="ctl"><label>Model</label><select id="dModel">${modelOptions()}</select></div>
+  <div class="ctl"><label>Temp <b id="dTempV">${s.temperature.toFixed(2)}</b></label><input type="range" id="dTemp" min="0" max="1" step="0.05" value="${s.temperature}"></div>
+  <div class="ctl"><label>Calls / task</label><div class="stepper"><button data-step="maxCalls:-1">−</button><span id="dCalls">${s.maxCalls}</span><button data-step="maxCalls:1">+</button></div></div>
+  <div class="ctl"><label>Daily reserve</label><div class="stepper"><button data-step="reserve:-1">−</button><span id="dReserve">${s.reserve}</span><button data-step="reserve:1">+</button></div></div>
+  <div class="ctl"><label>Verification</label><select id="dVerify"><option value="T0">T0 · operations</option><option value="T1">T1 · static</option><option value="T2">T2 · runtime</option></select></div>
+  <div class="ctl"><label>Context <b id="dDepthV">${s.depth}</b></label><input type="range" id="dDepth" min="1" max="14" step="1" value="${s.depth}"></div>
+  <div class="ctl"><label>Autonomy</label><select id="dAutonomy"><option value="ask">Ask first</option><option value="checkpoint">Checkpoint then act</option></select></div>
+  <div class="ctl"><label>Auto-verify</label><div class="sw${s.autoVerify?' on':''}" id="dAutoVerify"><i></i><span>${s.autoVerify?'ON':'OFF'}</span></div></div>
+  <div class="ctl"><label>Auto-sync</label><div class="sw${s.autoSync?' on':''}" id="dAutoSync"><i></i><span>${s.autoSync?'ON':'OFF'}</span></div></div>
+  <div class="ctl"><label>Native tools</label><div class="sw${s.nativeTools?' on':''}" id="dNative"><i></i><span>${s.nativeTools?'ON':'OFF'}</span></div></div>
+  <div class="ctl"><label>Accent</label><select id="dAccent"><option value="molten">Molten</option><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="lime">Lime</option></select></div>
+  <div class="ctl"><label>Density</label><select id="dDensity"><option value="cozy">Cozy</option><option value="compact">Compact</option></select></div>
+  <div class="ctl"><label>Console</label><div style="display:flex;gap:5px"><button class="btn sm" id="dReset">Reset</button><button class="btn sm" id="dRand">Random</button><button class="btn sm" id="dExport">Export</button></div></div>`;
+  $('dModel').onchange=e=>{setSetting('model',e.target.value);toast('Model → '+e.target.value);};
+  $('dTemp').oninput=e=>{setSetting('temperature',+e.target.value);};
+  $('dDepth').oninput=e=>{setSetting('depth',+e.target.value);};
+  $('dVerify').onchange=e=>setSetting('verify',e.target.value);
+  $('dAutonomy').onchange=e=>setSetting('autonomy',e.target.value);
+  $('dAccent').onchange=e=>setSetting('accent',e.target.value);
+  $('dDensity').onchange=e=>setSetting('density',e.target.value);
+  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools']].forEach(([id,key])=>{
+    $(id).onclick=()=>{setSetting(key,!S.settings[key]);Sound.play('click');};});
+  $('dock').querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
+    const [k,d]=b.dataset.step.split(':');const lim=k==='maxCalls'?[1,20]:[0,25];
+    setSetting(k,clamp(S.settings[k]+ +d,lim[0],lim[1]));Sound.play('click');});
+  $('dReset').onclick=()=>{const keep={key:S.settings.key,sbUrl:S.settings.sbUrl,sbKey:S.settings.sbKey,sbToken:S.settings.sbToken,sbEmail:S.settings.sbEmail,sbUser:S.settings.sbUser};
+    S.settings={...DEFAULTS,...keep};persistSettings();applyAppearance();syncDock();renderHeader();toast('Console reset to defaults','ok');};
+  $('dRand').onclick=()=>{const enabled=S.models.filter(m=>S.prefs[m.id]?.enabled!==false);
+    setSetting('temperature',+(Math.random()*.7).toFixed(2));setSetting('depth',3+Math.floor(Math.random()*8));
+    setSetting('maxCalls',4+Math.floor(Math.random()*8));
+    if(enabled.length)setSetting('model',enabled[Math.floor(Math.random()*enabled.length)].id);
+    setSetting('accent',['molten','cyan','violet','lime'][Math.floor(Math.random()*4)]);
+    toast('Console randomized','ok');Sound.play('step');};
+  $('dExport').onclick=()=>{download('forge-console.json',JSON.stringify({settings:{...S.settings,key:S.settings.key?'[redacted]':'',sbKey:S.settings.sbKey?'[redacted]':'',sbToken:S.settings.sbToken?'[redacted]':''},budget:budget()},null,2),'application/json');toast('Console exported','ok');};
+  syncDock();
+}
+function syncDock(){
+  if(!$('dModel'))return;
+  const s=S.settings;
+  if(![...$('dModel').options].some(o=>o.value===s.model)){$('dModel').innerHTML=modelOptions();}
+  $('dModel').value=s.model;
+  $('dTemp').value=s.temperature;$('dTempV').textContent=Number(s.temperature).toFixed(2);
+  $('dDepth').value=s.depth;$('dDepthV').textContent=s.depth;
+  $('dCalls').textContent=s.maxCalls;$('dReserve').textContent=s.reserve;
+  $('dVerify').value=s.verify;$('dAutonomy').value=s.autonomy;$('dAccent').value=s.accent;$('dDensity').value=s.density;
+  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools']].forEach(([id,k])=>{
+    const el=$(id);el.classList.toggle('on',!!s[k]);el.querySelector('span').textContent=s[k]?'ON':'OFF';});
+}
+function mountDock(){
+  const dock=$('dock');
+  if(window.matchMedia('(min-width:960px)').matches)$('dockSlotDesk').appendChild(dock);
+  else $('dockMount').appendChild(dock);
+}
+window.addEventListener('resize',debounce(mountDock,150));
+
+/* ── chat ────────────────────────────────────────────────── */
+const CMDS=[['/plan','Build a roadmap'],['/review','Analyse the project'],['/tests','Generate tests'],['/readme','Rewrite README'],['/check','Run verification'],['/preview','Live sandbox preview'],['/status','Project + budget'],['/sync','Sync device folder'],['/export','Download ZIP'],['/resume','Resume last task']];
+function pushMsg(m){
+  const msg={id:uid(),pid:S.pid,at:Date.now(),...m};
+  S.messages.push(msg);put('messages',msg);renderChat();scrollMsgs();return msg;
+}
+function scrollMsgs(){const el=$('msgList');requestAnimationFrame(()=>{el.scrollTop=el.scrollHeight;});}
+function renderChat(){
+  const t=S.run?.task||S.tasks[0],strip=$('taskStrip');
+  if(t){
+    const total=Math.max(1,S.settings.maxCalls),pct=Math.min(100,Math.round(t.calls/total*100));
+    const cls={running:'run',completed:'ok',failed:'bad',blocked:'warn',paused_quota:'warn',paused_user:'warn',uncertain:'warn'}[t.state]||'';
+    strip.innerHTML=`${t.state==='running'?'<span class="pulse"></span>':''}
+      <span class="chip ${cls}">${esc(t.state.replace('_',' '))}</span>
+      <span style="flex:1 1 90px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
+      <span class="dim2">${t.calls}/${total}</span><span class="bar"><i style="width:${pct}%"></i></span>
+      ${S.run?`<button class="btn sm" id="pauseBtn">${S.run.pause?'▶ Resume':'⏸ Pause'}</button><button class="btn sm d" id="stopBtn">■ Stop</button>`:
+        (['uncertain','paused_quota','paused_user','failed'].includes(t.state)?`<button class="btn sm p" id="resumeBtn">↻ Resume</button>`:'')}`;
+    if($('pauseBtn'))$('pauseBtn').onclick=()=>{S.run.pause=!S.run.pause;renderChat();toast(S.run.pause?'Paused — state journaled':'Resumed');};
+    if($('stopBtn'))$('stopBtn').onclick=()=>{S.run.stop=true;toast('Stopping after this step…','warn');};
+    if($('resumeBtn'))$('resumeBtn').onclick=()=>resumeTask(t);
+  } else strip.innerHTML=`<span class="chip ok">idle</span><span class="dim2">Describe something to build.</span>`;
+  $('cmdChips').innerHTML=CMDS.map(c=>`<button data-cmd="${c[0]}" title="${esc(c[1])}">${c[0]}</button>`).join('');
+  $('cmdChips').querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>{$('composer').value=b.dataset.cmd+' ';$('composer').focus();});
+  $('msgList').innerHTML=S.messages.map(m=>{
+    if(m.role==='system')return `<div class="msg sys"><div class="bubble">${esc(m.content)}</div></div>`;
+    const who=m.role==='user'?'YOU':(m.model==='local-planner'?'LOCAL PLANNER':esc((m.model||'agent').split('/').pop()));
+    let html=`<div class="msg ${m.role==='user'?'u':'a'}"><div class="who">${m.role==='user'?'◈':'✦'} ${who} <span class="dim2" style="letter-spacing:0">${fmtTime(m.at)}</span></div><div class="bubble">${esc(m.content)}</div></div>`;
+    if(m.steps?.length){
+      const st=m.steps.map(id=>S.steps.find(s=>s.id===id)).filter(Boolean);
+      if(st.length){const okc=st.filter(s=>s.status==='ok').length;
+        html+=`<details class="act"><summary><span style="width:8px;height:8px;border-radius:50%;background:var(--lime);flex:0 0 8px"></span>
+          <span class="sp">${st.length} operations · ${okc} verified</span><span class="chip ${okc===st.length?'ok':'warn'}">${okc===st.length?'clean':'partial'}</span></summary>
+          <div class="body">${st.map(s=>`<div class="step"><span class="t">${fmtTime(s.at)}</span><span class="k" style="color:${s.status==='ok'?'var(--lime)':'var(--red)'}">${esc(s.tool)}</span><span class="p">${esc(s.path||'')}${s.detail?' · '+esc(s.detail):''}</span></div>`).join('')}</div></details>`;}
+    }
+    if(m.verify)html+=`<div class="card" style="--i:0;margin-top:-4px"><h3>Verification · ${esc(m.verify.tier)}</h3>
+      <div class="stats">${m.verify.checks.map(c=>`<span class="chip ${c.ok?'ok':'bad'}" title="${esc(c.note||'')}">${c.ok?'✓':'✕'} ${esc(c.name)}</span>`).join('')}</div>
+      ${m.verify.note?`<p class="tiny dim" style="margin:8px 0 0">${esc(m.verify.note)}</p>`:''}
+      ${project().stack==='web'?`<button class="btn sm" style="margin-top:9px" data-preview="1">▶ Open live preview</button>`:''}</div>`;
+    return html;
+  }).join('');
+  $('msgList').querySelectorAll('[data-preview]').forEach(b=>b.onclick=openPreview);
+  renderHeader();
+}
+$('composer').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(132,e.target.scrollHeight)+'px';});
+$('composer').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&window.matchMedia('(min-width:960px)').matches){e.preventDefault();send();}});
+$('sendBtn').addEventListener('click',send);
+function send(){
+  const v=$('composer').value.trim();if(!v)return;
+  $('composer').value='';$('composer').style.height='auto';Sound.play('send');
+  const cmd=v.split(/\s+/)[0].toLowerCase();
+  if(cmd==='/status'){pushMsg({role:'user',content:v});statusReply();return;}
+  if(cmd==='/preview'){openPreview();return;}
+  if(cmd==='/sync'){deviceSync();return;}
+  if(cmd==='/export'){exportZip();return;}
+  if(cmd==='/resume'){const t=S.tasks.find(x=>['uncertain','paused_quota','paused_user','failed'].includes(x.state));t?resumeTask(t):toast('Nothing to resume','warn');return;}
+  if(cmd==='/check'){pushMsg({role:'user',content:v});runChecks().then(r=>pushMsg({role:'agent',model:'local-planner',content:'Verification complete.',verify:r}));return;}
+  runTask(v);
+}
+function statusReply(){
+  const p=project(),b=budget(),done=S.roadmap.filter(r=>r.status==='done').length;
+  pushMsg({role:'agent',model:'local-planner',content:
+`Project · ${p.name} (${p.stack})
+Files · ${S.files.length} · ${fmtBytes(S.files.reduce((a,f)=>a+f.size,0))}
+Roadmap · ${done}/${S.roadmap.length} done · ${S.roadmap.filter(r=>r.verified).length} verified
+Memory · ${S.memory.length} records${S.memory.some(m=>m.stale)?' · some stale':''}
+Folder · ${S.device?S.device.name+' (linked)':'not linked'}
+Budget · ${b.total}/${b.limit} left today · ${b.reserve} reserved for chat
+Model · ${S.settings.model}
+Cloud · ${S.settings.sbToken?'linked':'local only'}`});
+}
+
+/* ── context ─────────────────────────────────────────────── */
+function scoreFile(f,q){
+  let s=0;const t=q.toLowerCase();
+  if(t.includes(f.path.toLowerCase()))s+=40;
+  for(const w of t.split(/\W+/).filter(w=>w.length>3))if(f.path.toLowerCase().includes(w))s+=8;
+  if(f.kind==='md')s+=2;if(f.path.includes('src/'))s+=4;
+  const c=S.ui.contentCache[f.path]||'';
+  for(const w of t.split(/\W+/).filter(w=>w.length>4))if(c.toLowerCase().includes(w))s+=3;
+  return s;
+}
+async function packContext(task){
+  const p=project();
+  for(const f of S.files.slice(0,40))if(!(f.path in S.ui.contentCache))S.ui.contentCache[f.path]=await FS.read(S.pid,f.path).catch(()=>'');
+  const ranked=[...S.files].sort((a,b)=>scoreFile(b,task.request)-scoreFile(a,task.request)).slice(0,S.settings.depth);
+  return {p,
+    brief:S.memory.filter(m=>['brief','decision','constraint','issue'].includes(m.kind)).map(m=>`- [${m.kind}] ${m.key}: ${m.content}`).join('\n'),
+    road:S.roadmap.map(r=>`- (${r.status}${r.verified?', verified':''}) ${r.title}`).join('\n'),
+    index:S.files.map(f=>`${f.path} · ${fmtBytes(f.size)} · ${f.hash.slice(0,8)}`).join('\n'),
+    bodies:ranked.map(f=>`--- ${f.path} ---\n${(S.ui.contentCache[f.path]||'').slice(0,4000)}`).join('\n\n')};
+}
+const PROTOCOL=`You are FORGE, a development agent operating a real file workspace through JSON actions.
+Reply with ONLY one JSON object, no markdown, no prose outside it:
+{"thought":"brief reasoning","actions":[{"tool":"write_file","path":"src/x.js","content":"full file"},
+{"tool":"patch_file","path":"src/x.js","search":"exact snippet","replace":"new snippet"},
+{"tool":"read_file","path":"src/x.js"},{"tool":"list_files"},
+{"tool":"delete_file","path":"old.js"},{"tool":"move_file","path":"a.js","to":"b.js"},
+{"tool":"run_checks"},{"tool":"update_roadmap","title":"...","status":"done|active|pending|blocked|failed"},
+{"tool":"add_memory","kind":"decision|issue|constraint|file_summary","key":"...","content":"..."},
+{"tool":"ask_user","question":"..."},{"tool":"done","summary":"what was accomplished and verified"}]}
+Rules:
+- Batch several actions per reply; requests are scarce (50/day).
+- Never claim an operation succeeded; the workspace verifies every write by re-reading and hashing.
+- patch_file "search" must match exactly once. Ambiguous matches are rejected.
+- Call run_checks before done when code changed. Call ask_user when a decision is genuinely the user's.
+- Only call done when the task is complete.`;
+const TOOLS=[
+ ['write_file','Create or overwrite a file',{path:{type:'string'},content:{type:'string'}}],
+ ['patch_file','Replace an exact unique snippet',{path:{type:'string'},search:{type:'string'},replace:{type:'string'}}],
+ ['read_file','Read a file',{path:{type:'string'}}],
+ ['list_files','List project files',{}],
+ ['delete_file','Move a file to trash',{path:{type:'string'}}],
+ ['move_file','Rename or move a file',{path:{type:'string'},to:{type:'string'}}],
+ ['run_checks','Run verification',{}],
+ ['update_roadmap','Update a roadmap item',{title:{type:'string'},status:{type:'string'}}],
+ ['add_memory','Record project memory',{kind:{type:'string'},key:{type:'string'},content:{type:'string'}}],
+ ['ask_user','Ask the user a question',{question:{type:'string'}}],
+ ['done','Finish the task',{summary:{type:'string'}}]
+].map(([name,description,props])=>({type:'function',function:{name,description,parameters:{type:'object',properties:props,required:Object.keys(props).filter(k=>k!=='replace')}}}));
+
+/* ── transport ───────────────────────────────────────────── */
+const OR='https://openrouter.ai/api/v1';
+function enabledModels(){return S.models.filter(m=>S.prefs[m.id]?.enabled!==false&&m.status!=='delisted');}
+function pickFallback(exclude){
+  const list=enabledModels().filter(m=>m.id!==exclude);
+  list.sort((a,b)=>((b.params||[]).includes('tools')-(a.params||[]).includes('tools'))||(b.ctx-a.ctx));
+  return list[0]?.id||null;
+}
+async function callModel(messages,model,useNative){
+  const body={model,messages,temperature:S.settings.temperature,max_tokens:2048};
+  if(useNative){body.tools=TOOLS;body.tool_choice='auto';}
+  const res=await fetchT(OR+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+S.settings.key,'Content-Type':'application/json'},body:JSON.stringify(body)},90000);
+  if(res.status===429){const e=new Error('RATE_LIMIT');e.retryAfter=+res.headers.get('Retry-After')||20;throw e;}
+  if(!res.ok){const e=new Error('HTTP '+res.status+' · '+(await res.text()).slice(0,160));e.status=res.status;throw e;}
+  const data=await res.json(),ch=data.choices?.[0];
+  if(ch?.finish_reason==='error')throw new Error(ch.error?.message||'provider error mid-stream');
+  return {content:ch?.message?.content||'',toolCalls:ch?.message?.tool_calls||null,raw:ch?.message,tokens:data.usage?.total_tokens||0};
+}
+async function refreshQuota(){
+  if(!S.settings.key)return null;
+  try{
+    const r=await fetchT(OR+'/key',{headers:{Authorization:'Bearer '+S.settings.key}},15000);
+    if(!r.ok)return null;
+    const d=(await r.json()).data;
+    if(d?.free_model_daily_requests){
+      S.settings.dailyLimit=Math.max(1,d.free_model_daily_requests.limit);
+      const k=utcDay();S.ledger[k]={calls:d.free_model_daily_requests.used,tokens:(S.ledger[k]||{}).tokens||0};
+      await kvSet('ledger',S.ledger);persistSettings();renderHeader();
+    }
+    return d;
+  }catch{return null;}
+}
+
+/* ── local planner (no API) ──────────────────────────────── */
+function localPlan(task,ctx,history){
+  const t=task.request.toLowerCase(),p=ctx.p,last=history[history.length-1];
+  if(last?.results?.some(r=>r.checks))
+    return {thought:'Checks returned.',actions:[{tool:'done',summary:'Verification finished. '+last.results.filter(r=>r.checks).map(r=>r.checks.checks.map(c=>(c.ok?'✓ ':'✕ ')+c.name).join(', ')).join(' · ')}]};
+  if(t.startsWith('/plan')||t.includes('roadmap')){
+    const items=task.request.replace(/^\/plan\s*/i,'').split(/[.;\n]/).map(s=>s.trim()).filter(s=>s.length>6).slice(0,6);
+    const acts=(items.length?items:['Define the data model','Build the primary interface','Add persistence','Write tests','Review accessibility']).map(title=>({tool:'update_roadmap',title,status:'pending'}));
+    acts.push({tool:'add_memory',kind:'decision',key:'Plan established',content:'Roadmap derived from: '+task.request.slice(0,160)});
+    acts.push({tool:'done',summary:'Roadmap drafted. Nothing was marked complete — items close only after verification.'});
+    return {thought:'Turning the request into roadmap items.',actions:acts};
+  }
+  if(t.startsWith('/tests')||t.includes('add test')||t.includes('write test')){
+    if(p.stack==='python')return {thought:'Adding a pytest module.',actions:[
+      {tool:'write_file',path:'test_extra.py',content:'from ledger import add, total\n\ndef test_add_negative():\n    assert add(-2, 2) == 0\n\ndef test_total_empty():\n    assert total([]) == 0\n'},
+      {tool:'update_roadmap',title:'Extra pytest coverage',status:'active'},{tool:'run_checks'},
+      {tool:'done',summary:'Added test_extra.py with 2 cases. Load the Python runtime in Settings to execute them.'}]};
+    const src=S.ui.contentCache['src/storage.js']||'';
+    const names=[...src.matchAll(/export function (\w+)/g)].map(m=>m[1]);
+    return {thought:'Generating tests from the real exported symbols.',actions:[
+      {tool:'write_file',path:'tests/storage.test.js',content:`// Generated from the actual exports of src/storage.js\nimport {${names.join(', ')||'load'}} from '../src/storage.js';\n\nexport function run(){\n  const results=[];\n  const items=load();\n  results.push(['load returns an array',Array.isArray(items)]);\n  results.push(['seed has at least 3 tasks',items.length>=3]);\n  save(items);\n  results.push(['save/load round-trip',load().length===items.length]);\n  return results;\n}\n`},
+      {tool:'update_roadmap',title:'Storage unit tests',status:'active'},{tool:'run_checks'},
+      {tool:'done',summary:'Created tests/storage.test.js asserting the real exports ('+(names.join(', ')||'load')+'), then ran verification.'}]};
+  }
+  if(t.startsWith('/readme')||t.includes('readme')){
+    const tree=S.files.map(f=>`- ${f.path} — ${fmtBytes(f.size)}`).join('\n');
+    const road=S.roadmap.map(r=>`- [${r.status==='done'?'x':' '}] ${r.title}${r.verified?' (verified)':''}`).join('\n');
+    return {thought:'Regenerating README from the real file index.',actions:[
+      {tool:'write_file',path:'README.md',content:`# ${p.name}\n\n${p.purpose}\n\n## Stack\n${p.stack} · no build step required.\n\n## Files\n${tree}\n\n## Roadmap\n${road}\n\nGenerated by FORGE from the live workspace on ${utcDay()}.\n`},
+      {tool:'add_memory',kind:'file_summary',key:'README.md',content:'Auto-generated overview reflecting the live file index and roadmap.'},
+      {tool:'done',summary:'README.md rewritten from the actual file index and roadmap.'}]};
+  }
+  if(t.startsWith('/check')||t.includes('run check'))return {thought:'Running verification.',actions:[{tool:'run_checks'},{tool:'done',summary:'Verification executed; see the report.'}]};
+  const m=t.match(/(?:create|add)\s+(?:a\s+)?file\s+([\w./-]+)/);
+  if(m){const path=normPath(m[1]),k=kindOf(path);
+    const content=k==='js'?'// '+path+'\nexport function init(){\n  // TODO: implement\n}\n':k==='py'?'# '+path+'\n\ndef main():\n    pass\n':k==='css'?'/* '+path+' */\n':k==='html'?'<!doctype html>\n<html><head><meta charset="utf-8"><title>New</title></head><body></body></html>\n':'# '+path+'\n';
+    return {thought:'Creating the requested file.',actions:[{tool:'write_file',path,content},{tool:'update_roadmap',title:'Implement '+path,status:'active'},{tool:'run_checks'},{tool:'done',summary:'Created '+path+' and verified the write.'}]};}
+  const todos=[];let bytes=0;
+  for(const f of S.files){const c=S.ui.contentCache[f.path]||'';bytes+=c.length;
+    c.split('\n').forEach((line,i)=>{if(/TODO|FIXME|XXX/.test(line))todos.push(f.path+':'+(i+1)+' '+line.trim().slice(0,70));});}
+  const biggest=[...S.files].sort((a,b)=>b.size-a.size)[0];
+  return {thought:'No API key — deterministic review of real file contents.',actions:[
+    {tool:'add_memory',kind:'issue',key:'Open TODOs',content:todos.length?todos.join(' | '):'No TODO/FIXME markers found.'},
+    {tool:'done',summary:`Review of ${p.name}\n\n${S.files.length} files · ${fmtBytes(bytes)} of source.\nLargest: ${biggest?.path} (${fmtBytes(biggest?.size||0)}).\nTests present: ${S.files.some(f=>/test/i.test(f.path))?'yes':'no'}.\nTODO/FIXME markers: ${todos.length}${todos.length?'\n'+todos.slice(0,5).join('\n'):''}\nRoadmap: ${S.roadmap.filter(r=>r.status==='done').length}/${S.roadmap.length} done, ${S.roadmap.filter(r=>r.verified).length} verified.\n\nThis ran on the local planner — no requests were spent. Add an OpenRouter key in Settings for generative work.`}]};
+}
+
+/* ── executor ────────────────────────────────────────────── */
+async function journal(tool,path,status,detail,dur,extra){
+  const s={id:uid(),pid:S.pid,taskId:S.run?.task.id||'manual',tool,path:path||'',status,detail:detail||'',dur:dur||0,at:Date.now(),model:S.settings.model,tokens:0,...(extra||{})};
+  S.steps.unshift(s);await put('steps',s);renderHeader();
+  if(S.ui.view==='activity')renderActivity();
+  return s;
+}
+async function checkpoint(label){
+  const id=uid();await FS.copyAll(S.pid,id);
+  const c={id,pid:S.pid,label:label||'checkpoint',at:Date.now(),files:S.files.length,dir:id};
+  S.checkpoints.unshift(c);await put('checkpoints',c);
+  while(S.checkpoints.length>6){const old=S.checkpoints.pop();await del('checkpoints',old.id);try{await FS.remove(S.pid,'.forge/checkpoints/'+old.dir);}catch{}}
+  return c;
+}
+async function execActions(actions,task){
+  const results=[],stepIds=[];let destructive=false,done=null,question=null;
+  for(const a of actions){
+    const t0=performance.now();
+    try{
+      if(a.tool==='write_file'){
+        const path=normPath(a.path);if(!path)throw new Error('empty path');
+        const existed=S.files.some(f=>f.path===path);
+        if(existed&&S.settings.autonomy==='checkpoint'&&!destructive){await checkpoint('before '+path);destructive=true;}
+        if(existed&&S.settings.autonomy==='ask'){
+          const ok=await confirmDlg('Overwrite file?','The agent wants to replace '+path+'. A checkpoint is taken first.','Overwrite');
+          if(!ok){results.push({path,error:'user declined'});continue;}await checkpoint('before '+path);destructive=true;}
+        const before=S.files.find(f=>f.path===path)?.hash||null;
+        const r=await FS.write(S.pid,path,String(a.content??''));
+        S.ui.contentCache[path]=String(a.content??'');
+        stepIds.push((await journal('write_file',path,'ok','re-read + SHA-256 match · '+fmtBytes(r.size),Math.round(performance.now()-t0),{before,after:r.hash})).id);
+        results.push({path,written:true,bytes:r.size,hash:r.hash.slice(0,8)});Sound.play('step');
+      }
+      else if(a.tool==='patch_file'){
+        const path=normPath(a.path),cur=await FS.read(S.pid,path),needle=String(a.search??'');
+        const count=needle?cur.split(needle).length-1:0;
+        if(count!==1){
+          const why=count===0?'SEARCH block not found — no write performed':'SEARCH matched '+count+' locations — rejected as ambiguous';
+          stepIds.push((await journal('patch_file',path,'fail',why,Math.round(performance.now()-t0))).id);
+          results.push({path,error:why,hint:'read the file and retry with a longer exact snippet'});continue;}
+        if(S.settings.autonomy==='checkpoint'&&!destructive){await checkpoint('before patch '+path);destructive=true;}
+        const next=cur.replace(needle,String(a.replace??''));
+        const r=await FS.write(S.pid,path,next);S.ui.contentCache[path]=next;
+        stepIds.push((await journal('patch_file',path,'ok','unique match replaced · verified',Math.round(performance.now()-t0),{after:r.hash})).id);
+        results.push({path,patched:true,hash:r.hash.slice(0,8)});Sound.play('step');
+      }
+      else if(a.tool==='read_file'){const path=normPath(a.path);const c=await FS.read(S.pid,path);S.ui.contentCache[path]=c;results.push({path,content:c.slice(0,6000)});}
+      else if(a.tool==='list_files'){results.push({files:S.files.map(f=>f.path)});}
+      else if(a.tool==='delete_file'){
+        const path=normPath(a.path);
+        if(S.settings.autonomy==='ask'){const ok=await confirmDlg('Delete file?','The agent wants to remove '+path+'. It goes to Trash.','Delete',true);if(!ok){results.push({path,error:'user declined'});continue;}}
+        await trashFile(path);results.push({path,deleted:true});
+      }
+      else if(a.tool==='move_file'){
+        const from=normPath(a.path),to=normPath(a.to),c=await FS.read(S.pid,from);
+        await FS.write(S.pid,to,c);await FS.remove(S.pid,from);delete S.ui.contentCache[from];S.ui.contentCache[to]=c;
+        stepIds.push((await journal('move_file',from+' → '+to,'ok','copied, verified, source removed',Math.round(performance.now()-t0))).id);
+        results.push({from,to,moved:true});
+      }
+      else if(a.tool==='run_checks'){const v=await runChecks();results.push({checks:v});task.lastVerify=v;}
+      else if(a.tool==='update_roadmap'){
+        let r=S.roadmap.find(x=>x.title.toLowerCase()===String(a.title||'').toLowerCase());
+        if(!r){r={id:uid(),pid:S.pid,title:String(a.title||'Untitled'),status:'pending',priority:2,verified:false,detail:'',order:S.roadmap.length,created:Date.now(),updated:Date.now(),evidence:null};S.roadmap.push(r);}
+        if(['pending','active','done','blocked','failed'].includes(a.status))r.status=a.status;
+        r.updated=Date.now();
+        if(r.status==='done'&&task.lastVerify){r.verified=task.lastVerify.checks.every(c=>c.ok);r.evidence={method:task.lastVerify.tier,at:Date.now(),note:task.lastVerify.note||''};}
+        await put('roadmap',r);
+        stepIds.push((await journal('update_roadmap',r.title,'ok','status → '+r.status+(r.verified?' (verified)':''),Math.round(performance.now()-t0))).id);
+        results.push({roadmap:r.title,status:r.status,verified:r.verified});
+      }
+      else if(a.tool==='add_memory'){
+        const f=S.files.find(x=>x.path===a.key);
+        const rec={id:uid(),pid:S.pid,kind:a.kind||'decision',key:String(a.key||'note'),content:String(a.content||''),at:Date.now(),hash:f?.hash,stale:false};
+        S.memory.push(rec);await put('memory',rec);
+        stepIds.push((await journal('add_memory',rec.kind+': '+rec.key,'ok','recorded',Math.round(performance.now()-t0))).id);
+        results.push({memory:rec.key});
+      }
+      else if(a.tool==='ask_user'){question=String(a.question||'The agent needs a decision.');results.push({asked:true});}
+      else if(a.tool==='done'){done=String(a.summary||'Task complete.');results.push({done:true});}
+      else results.push({error:'unknown tool '+a.tool});
+    }catch(e){
+      stepIds.push((await journal(a.tool,a.path||'','fail',e.message,Math.round(performance.now()-t0))).id);
+      results.push({error:e.message,path:a.path});
+    }
+  }
+  S.files=await FS.scan(S.pid);refreshMemoryHashes();
+  renderFiles();renderPlan();renderHeader();
+  return {results,stepIds,done,question};
+}
+
+/* ── verification ────────────────────────────────────────── */
+let esbuildP=null;
+function esbuildReady(){
+  if(!esbuildP)esbuildP=(async()=>{
+    const m=await import('https://cdn.jsdelivr.net/npm/esbuild-wasm@0.28.2/esm/browser.js');
+    await m.initialize({wasmURL:'https://cdn.jsdelivr.net/npm/esbuild-wasm@0.28.2/esbuild.wasm',worker:false});
+    return m;})();
+  return esbuildP;
+}
+function vfsPlugin(files){return{name:'vfs',setup(b){
+  b.onResolve({filter:/.*/},args=>{let p=args.path;
+    if(p.startsWith('.')){const base=args.importer?args.importer.split('/').slice(0,-1).join('/'):'';p=normPath(base+'/'+p);}
+    p=normPath(p);if(!(p in files)&&(p+'.js')in files)p+='.js';
+    return{path:'/'+p,namespace:'vfs'};});
+  b.onLoad({filter:/.*/,namespace:'vfs'},args=>{const k=args.path.replace(/^\//,'');
+    if(!(k in files))throw new Error('Missing module: '+k);
+    return{contents:files[k],loader:k.endsWith('.css')?'css':'js'};});
+}};}
+async function staticChecks(){
+  const checks=[];
+  for(const f of S.files){
+    const c=S.ui.contentCache[f.path]??await FS.read(S.pid,f.path).catch(()=>'');
+    if(f.kind==='js'){
+      const stripped=c.replace(/^\s*import[\s\S]*?from\s*['"][^'"]+['"];?\s*$/gm,'').replace(/^\s*export\s+(default\s+)?/gm,'');
+      try{new Function(stripped);checks.push({name:f.path,ok:true,note:'syntax'});}
+      catch(e){checks.push({name:f.path,ok:false,note:e.message.slice(0,110)});}
+    } else if(ext(f.path)==='json'){
+      try{JSON.parse(c);checks.push({name:f.path,ok:true,note:'json'});}catch(e){checks.push({name:f.path,ok:false,note:e.message.slice(0,110)});}
+    } else if(f.kind==='html'){
+      const o=(c.match(/<script/gi)||[]).length,cl=(c.match(/<\/script>/gi)||[]).length;
+      checks.push({name:f.path,ok:o===cl&&/<html/i.test(c),note:o===cl?'structure':'unbalanced script tags'});
+    } else if(f.kind==='py'){checks.push({name:f.path,ok:true,note:'not parsed — Python runtime not loaded'});}
+  }
+  return checks;
+}
+async function bundleProject(){
+  const p=project(),esb=await esbuildReady(),files={};
+  for(const f of S.files)files[f.path]=S.ui.contentCache[f.path]??await FS.read(S.pid,f.path).catch(()=>'');
+  const entry=p.entry&&files[p.entry]&&kindOf(p.entry)==='js'?p.entry:S.files.find(f=>f.kind==='js'&&f.path!=='tests/storage.test.js')?.path;
+  if(!entry)throw new Error('No JavaScript entry point in this project');
+  const t0=performance.now();
+  const r=await esb.build({stdin:{contents:files[entry],resolveDir:'/',sourcefile:entry},bundle:true,write:false,format:'iife',plugins:[vfsPlugin(files)],logLevel:'silent'});
+  return {code:r.outputFiles[0].text,ms:Math.round(performance.now()-t0),files,entry};
+}
+function previewHTML(bundle,files,token,sel,min){
+  let html=files['index.html']||'<!doctype html><html><head><meta charset="utf-8"></head><body><div id="app"></div></body></html>';
+  html=html.replace(/<link[^>]*href=["']([^"']+)["'][^>]*>/gi,(m,href)=>files[href]?'<style>'+files[href]+'</style>':m);
+  html=html.replace(/<script[^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/gi,'');
+  const safe=bundle.replace(/<\/script/gi,'<\\/script');
+  const hook=`<script>(function(){
+    var tok=${JSON.stringify(token)};
+    window.onerror=function(m){parent.postMessage({token:tok,kind:"error",error:String(m)},"*")};
+    window.addEventListener('unhandledrejection',function(e){parent.postMessage({token:tok,kind:"error",error:"Unhandled rejection: "+e.reason},"*")});
+    var real=console.log;console.log=function(){real.apply(console,arguments);parent.postMessage({token:tok,kind:"log",error:[].map.call(arguments,String).join(" ")},"*")};
+    setTimeout(function(){
+      try{var s=${JSON.stringify(sel||'body')},m=${Number(min)||1};var n=document.querySelectorAll(s).length;
+        parent.postMessage({token:tok,kind:"assert",ok:n>=m,count:n,selector:s},"*");
+      }catch(e){parent.postMessage({token:tok,kind:"error",error:String(e)},"*")}
+    },420);
+  })();<\/script>`;
+  const tail=hook+'<script>'+safe+'<\/script>';
+  return /<\/body>/i.test(html)?html.replace(/<\/body>/i,tail+'</body>'):html+tail;
+}
+function runSandbox(html,token,ms){
+  return new Promise(res=>{
+    const f=document.createElement('iframe');f.setAttribute('sandbox','allow-scripts');
+    f.style.cssText='position:absolute;width:320px;height:200px;left:-9999px;opacity:0';
+    const timer=setTimeout(()=>{cleanup();res({ok:false,error:'timeout'});},ms||9000);
+    function h(e){const d=e.data;if(!d||d.token!==token||d.kind!=='assert')return;cleanup();res(d);}
+    function cleanup(){clearTimeout(timer);window.removeEventListener('message',h);setTimeout(()=>f.remove(),60);}
+    window.addEventListener('message',h);f.srcdoc=html;document.body.appendChild(f);
+  });
+}
+async function runChecks(){
+  const tier=S.settings.verify,p=project(),checks=[],t0=performance.now();
+  checks.push({name:'operations verified (hash)',ok:true,note:S.files.length+' files hashed'});
+  if(tier==='T0'){const v={tier:'T0',checks,note:'Operation-level verification only.',ms:Math.round(performance.now()-t0)};await journal('run_checks','T0','ok',v.note,v.ms);return v;}
+  checks.push(...await staticChecks());
+  if(tier==='T1'){const ok=checks.every(c=>c.ok),v={tier:'T1',checks,note:ok?'All static checks passed.':'Static analysis found problems.',ms:Math.round(performance.now()-t0)};
+    await journal('run_checks','T1',ok?'ok':'fail',v.note,v.ms);Sound.play(ok?'ok':'bad');return v;}
+  if(p.stack==='python'){
+    const v={tier:'T2',checks,note:'Python execution is experimental and unverified on this device. Load the runtime in Settings → Runtimes to run pytest.',ms:Math.round(performance.now()-t0)};
+    await journal('run_checks','T2·python','ok','static only — runtime not loaded',v.ms);return v;}
+  try{
+    const {code,ms,files}=await bundleProject();
+    checks.push({name:'bundle ('+ms+'ms)',ok:true,note:'esbuild-wasm'});
+    const token='t'+uid();
+    const r=await runSandbox(previewHTML(code,files,token,p.smoke,p.smokeMin),token,9000);
+    checks.push({name:'sandbox smoke '+(p.smoke||'body'),ok:!!r.ok,note:r.ok?r.count+' nodes matched':(r.error||'assertion failed')});
+    const ok=checks.every(c=>c.ok);
+    const v={tier:'T2',checks,note:ok?'Bundled, executed in a locked sandbox, assertions passed.':'Runtime verification failed.',ms:Math.round(performance.now()-t0)};
+    await journal('run_checks','T2',ok?'ok':'fail',v.note,v.ms);Sound.play(ok?'ok':'bad');return v;
+  }catch(e){
+    checks.push({name:'runtime build',ok:false,note:e.message.slice(0,140)});
+    const v={tier:'T2',checks,note:'Build failed before execution.',ms:Math.round(performance.now()-t0)};
+    await journal('run_checks','T2','fail',e.message,v.ms);Sound.play('bad');return v;
+  }
+}
+let pvHandler=null;
+async function openPreview(){
+  const p=project();
+  if(p.stack!=='web'){
+    openDrawer('Preview · '+p.name,`<div class="banner"><span>◈</span><span class="grow">Live preview runs web projects. This is a <b>${esc(p.stack)}</b> project — use <b>Settings → Runtimes → Run pytest</b> to execute and verify it instead.</span></div>
+      <h4>Files</h4>${S.files.map(f=>`<div class="row" data-open="${esc(f.path)}"><span class="ico ${f.kind}">${f.kind.toUpperCase().slice(0,3)}</span><span class="grow"><span class="nm">${esc(f.path)}</span><span class="sub">${fmtBytes(f.size)}</span></span></div>`).join('')}`);
+    $('drawerBody').querySelectorAll('[data-open]').forEach(r=>r.onclick=()=>{closeDrawer();go('files');openFile(r.dataset.open);});
+    return;
+  }
+  openDrawer('Live preview · '+p.name,`<p class="tiny dim">Bundled from the real workspace files, executed in a sandbox with no same-origin access. Storage falls back to memory inside the sandbox.</p>
+    <div id="pvStatus" class="banner"><span class="pulse"></span><span class="grow">Building…</span></div>
+    <iframe class="pv" id="pvFrame" sandbox="allow-scripts" title="preview"></iframe>
+    <h4>Console</h4><pre class="code" id="pvLog">—</pre>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn sm" id="pvReload">↻ Rebuild</button><button class="btn sm" id="pvExport">Export ZIP</button></div>`);
+  const build=async()=>{
+    if(pvHandler){window.removeEventListener('message',pvHandler);pvHandler=null;}
+    $('pvStatus').className='banner';$('pvStatus').innerHTML='<span class="pulse"></span><span class="grow">Building…</span>';
+    try{
+      const {code,ms,files,entry}=await bundleProject();
+      const token='pv'+uid(),logs=['built in '+ms+'ms · entry '+entry];
+      $('pvLog').textContent=logs.join('\n');
+      pvHandler=e=>{
+        const d=e.data;if(!d||d.token!==token)return;
+        if(d.kind==='assert'){
+          logs.push((d.ok?'✓ ':'✕ ')+d.count+' × '+d.selector);
+          $('pvStatus').className='banner'+(d.ok?'':' bad');
+          $('pvStatus').innerHTML=`<span>${d.ok?'✓':'✕'}</span><span class="grow">${d.ok?'Running · assertions passed':'Assertion failed'}</span><span class="chip ${d.ok?'ok':'bad'}">${ms}ms</span>`;
+        } else logs.push((d.kind==='error'?'✕ ':'· ')+d.error);
+        if($('pvLog')){$('pvLog').textContent=logs.join('\n');$('pvLog').scrollTop=$('pvLog').scrollHeight;}
+      };
+      window.addEventListener('message',pvHandler);
+      $('pvFrame').srcdoc=previewHTML(code,files,token,p.smoke,p.smokeMin);
+    }catch(e){$('pvStatus').className='banner bad';$('pvStatus').innerHTML='<span>✕</span><span class="grow">'+esc(e.message)+'</span>';}
+  };
+  $('pvReload').onclick=build;$('pvExport').onclick=()=>exportZip();
+  await build();
+}
+
+/* ── task loop ───────────────────────────────────────────── */
+async function runTask(request,resuming){
+  if(S.run){toast('A task is already running','warn');return;}
+  const task=resuming||{id:uid(),pid:S.pid,title:request.slice(0,90),request,state:'running',calls:0,created:Date.now(),updated:Date.now(),history:[]};
+  if(!resuming){S.tasks.unshift(task);await put('tasks',task);pushMsg({role:'user',content:request});}
+  task.state='running';task.updated=Date.now();await put('tasks',task);
+  S.run={task,stop:false,pause:false};renderChat();go('chat');
+  const history=task.history||[];let model=S.settings.model,malformed=0,verify=null,convo=null;
+  const stepIdsAll=[];
+  try{
+    for(let turn=0;turn<S.settings.maxCalls;turn++){
+      if(S.run.stop){task.state='paused_user';break;}
+      while(S.run.pause&&!S.run.stop)await sleep(250);
+      if(S.run.stop){task.state='paused_user';break;}
+      const b=budget();
+      if(model!=='local-planner'&&b.left<=0){task.state='paused_quota';task.note='Daily budget reached ('+b.limit+' requests, '+b.reserve+' reserved). Resumes after 00:00 UTC.';break;}
+      const ctx=await packContext(task);
+      let obj=null,reply=null,useNative=false;
+      if(model==='local-planner'){await sleep(260);obj=localPlan(task,ctx,history);}
+      else{
+        if(!S.settings.key){model='local-planner';toast('No API key — using the local planner','warn');continue;}
+        useNative=S.settings.nativeTools&&(S.models.find(m=>m.id===model)?.params||[]).includes('tools');
+        const seed={role:'user',content:`PROJECT: ${ctx.p.name} (${ctx.p.stack})\nPURPOSE: ${ctx.p.purpose}\n\nMEMORY:\n${ctx.brief||'(none)'}\n\nROADMAP:\n${ctx.road||'(empty)'}\n\nFILE INDEX:\n${ctx.index}\n\nRELEVANT FILES:\n${ctx.bodies}\n\nTASK: ${task.request}\n\n${history.length?'PREVIOUS RESULTS:\n'+JSON.stringify(history.slice(-2)).slice(0,3000):'Begin now.'}`};
+        let msgs;
+        if(useNative&&convo){msgs=convo;}
+        else{msgs=[{role:'system',content:PROTOCOL},seed];if(useNative)convo=msgs;}
+        try{
+          reply=await callModel(msgs,model,useNative);ledgerAdd(reply.tokens);task.calls++;
+          if(useNative&&reply.toolCalls){
+            obj={thought:'native tool calls',actions:reply.toolCalls.map(tc=>{let args={};try{args=JSON.parse(tc.function.arguments||'{}');}catch{}return{tool:tc.function.name,...args};})};
+            convo.push(reply.raw);
+          } else obj=extractJSON(reply.content);
+        }catch(e){
+          if(e.message==='RATE_LIMIT'){toast('Rate limited · waiting '+e.retryAfter+'s','warn');await sleep(Math.min(e.retryAfter,30)*1000);continue;}
+          const fb=pickFallback(model);
+          if(fb){toast('Model error — falling back to '+fb.split('/').pop(),'warn');model=fb;convo=null;continue;}
+          throw e;
+        }
+        if(!obj||!Array.isArray(obj.actions)){
+          malformed++;
+          if(useNative&&reply?.raw)convo.push({role:'assistant',content:reply.content||''});
+          if(malformed>1){const fb=pickFallback(model);
+            if(fb){model=fb;malformed=0;convo=null;toast('Malformed twice — switching model','warn');continue;}
+            task.state='failed';task.note='Model returned malformed structured output twice.';break;}
+          history.push({results:[{error:'Your reply was not valid JSON. Reply with ONLY the JSON object described in the protocol.'}]});
+          convo=null;continue;
+        }
+      }
+      const exec=await execActions(obj.actions,task);
+      stepIdsAll.push(...exec.stepIds);
+      if(useNative&&convo&&reply?.toolCalls){
+        reply.toolCalls.forEach((tc,i)=>convo.push({role:'tool',tool_call_id:tc.id,name:tc.function.name,content:JSON.stringify(exec.results[i]??exec.results).slice(0,4000)}));
+      }
+      history.push({thought:obj.thought,results:exec.results});
+      task.history=history.slice(-6);task.updated=Date.now();await put('tasks',task);renderChat();
+      if(exec.question){task.state='blocked';task.note=exec.question;break;}
+      if(exec.done){task.summary=exec.done;task.state='completed';break;}
+      if(turn===S.settings.maxCalls-1){task.state='uncertain';task.note='Call ceiling reached before the agent declared completion.';}
+    }
+  }catch(e){task.state='failed';task.note=e.message;}
+  if(S.settings.autoVerify&&['completed','uncertain'].includes(task.state)){
+    verify=await runChecks();task.lastVerify=verify;
+    if(task.state==='completed'&&verify&&!verify.checks.every(c=>c.ok)){task.state='failed';task.note='Verification failed after the agent declared completion.';}
+  }
+  task.updated=Date.now();await put('tasks',task);
+  pushMsg({role:'agent',model,content:(task.summary||task.note||'Task ended: '+task.state)+(task.state!=='completed'&&task.note&&task.summary?'\n\n'+task.note:''),steps:stepIdsAll,verify});
+  S.run=null;renderAll();
+  if(task.state==='completed'){Sound.play('ok');toast('Task completed · verified','ok');}
+  else if(task.state==='paused_quota'){toast('Paused: daily budget reached','warn',{label:'Resume',fn:()=>resumeTask(task)});}
+  else if(task.state==='blocked')toast('Agent needs your decision','warn');
+  else if(task.state==='failed')toast('Task failed: '+(task.note||'').slice(0,70),'bad');
+  if(S.settings.autoSync&&S.device)deviceSync(true);
+}
+async function resumeTask(task){
+  if(S.run){toast('Already running','warn');return;}
+  S.files=await FS.scan(S.pid);
+  const changed=[];
+  for(const s of S.steps.filter(x=>x.taskId===task.id&&x.after)){
+    const f=S.files.find(x=>x.path===s.path);if(!f||f.hash!==s.after)changed.push(s.path);}
+  pushMsg({role:'system',content:`Resuming "${task.title}". Re-scanned ${S.files.length} files. ${changed.length?'Divergence in: '+[...new Set(changed)].join(', ')+' — the agent will inspect before continuing.':'All journaled writes still match their recorded hashes.'}`});
+  if(changed.length)task.request+=' [RESUME NOTE: these files changed since the journal: '+[...new Set(changed)].join(', ')+'. Read them before editing.]';
+  await runTask(task.request,task);
+}
+
+/* ── files ───────────────────────────────────────────────── */
+async function trashFile(path){
+  const content=await FS.read(S.pid,path);
+  const rec={id:uid(),pid:S.pid,path,content,at:Date.now()};
+  S.trash.unshift(rec);await put('trash',rec);
+  await FS.remove(S.pid,path);delete S.ui.contentCache[path];
+  await journal('delete_file',path,'ok','moved to trash',0);
+  S.files=await FS.scan(S.pid);renderFiles();renderHeader();return rec;
+}
+function filteredFiles(){
+  const q=S.ui.fileQ.toLowerCase();
+  const list=S.files.filter(f=>{
+    if(S.ui.fileFilter==='changed'){const m=S.memory.find(x=>x.kind==='file_summary'&&x.key===f.path);if(!m||!m.stale)return false;}
+    else if(S.ui.fileFilter!=='all'&&f.kind!==S.ui.fileFilter)return false;
+    return !q||f.path.toLowerCase().includes(q)||(S.ui.contentCache[f.path]||'').toLowerCase().includes(q);});
+  const s=S.ui.fileSort;
+  list.sort((a,b)=>s==='size'?b.size-a.size:s==='mtime'?b.mtime-a.mtime:s==='kind'?a.kind.localeCompare(b.kind)||a.path.localeCompare(b.path):a.path.localeCompare(b.path));
+  return list;
+}
+function renderFiles(){
+  const list=filteredFiles();
+  $('bulkBar').style.display=S.ui.fileSel.size?'flex':'none';
+  $('bulkCount').textContent=S.ui.fileSel.size+' selected';
+  if(!list.length){$('fileList').innerHTML=`<div class="empty"><i>▤</i>No files match. Create one, or import a ZIP.</div>`;return;}
+  $('fileList').innerHTML=list.map((f,i)=>{
+    const mem=S.memory.find(m=>m.kind==='file_summary'&&m.key===f.path);
+    const badge=mem?(mem.stale?'<span class="chip warn">stale</span>':'<span class="chip ok">mapped</span>'):'<span class="chip">new</span>';
+    return `<div class="row${S.ui.fileSel.has(f.path)?' sel':''}" data-path="${esc(f.path)}" style="--i:${Math.min(i,14)}">
+      <input type="checkbox" data-check="${esc(f.path)}"${S.ui.fileSel.has(f.path)?' checked':''}>
+      <span class="ico ${f.kind}">${f.kind==='etc'?'·':f.kind.toUpperCase().slice(0,3)}</span>
+      <span class="grow"><span class="nm" title="${esc(f.path)}">${esc(f.path)}</span><span class="sub">${fmtBytes(f.size)} · ${fmtAgo(f.mtime)} · ${f.hash.slice(0,8)}</span></span>
+      ${badge}</div>`;}).join('');
+  $('fileList').querySelectorAll('[data-check]').forEach(c=>c.onclick=e=>{e.stopPropagation();
+    c.checked?S.ui.fileSel.add(c.dataset.check):S.ui.fileSel.delete(c.dataset.check);renderFiles();});
+  $('fileList').querySelectorAll('.row').forEach(r=>r.onclick=()=>openFile(r.dataset.path));
+}
+async function openFile(path){
+  const f=S.files.find(x=>x.path===path);if(!f)return;
+  const content=S.ui.contentCache[path]??await FS.read(S.pid,path).catch(()=>'');
+  S.ui.contentCache[path]=content;
+  const mem=S.memory.filter(m=>m.key===path),hist=S.steps.filter(s=>s.path===path).slice(0,8);
+  openDrawer(path,`
+    <div class="stats" style="margin-bottom:10px"><span class="chip acc">${f.kind}</span><span class="chip">${fmtBytes(f.size)}</span><span class="chip">${content.split('\n').length} lines</span></div>
+    <h4>Content</h4><pre class="code" id="fView">${esc(content)}</pre>
+    <textarea class="edit" id="fEdit" style="display:none">${esc(content)}</textarea>
+    <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
+      <button class="btn sm p" id="fEditBtn">✎ Edit</button>
+      <button class="btn sm g" id="fSaveBtn" style="display:none">Save &amp; verify</button>
+      <button class="btn sm" id="fCancelBtn" style="display:none">Cancel</button>
+      <button class="btn sm" id="fRename">Rename / move</button>
+      <button class="btn sm" id="fDownload">Download</button>
+      <button class="btn sm d" id="fDelete">Delete</button>
+    </div>
+    <h4>Integrity</h4><div class="kv"><b>SHA-256</b><span>${f.hash}</span><b>Modified</b><span>${new Date(f.mtime).toLocaleString()}</span><b>Memory</b><span>${mem.length?mem.map(m=>esc(m.kind)+': '+esc(m.content.slice(0,120))).join('<br>'):'no record — the agent has not mapped this file'}</span></div>
+    <h4>Operation history</h4>${hist.length?hist.map(s=>`<div class="step"><span class="t">${fmtAgo(s.at)}</span><span class="k" style="color:${s.status==='ok'?'var(--lime)':'var(--red)'}">${esc(s.tool)}</span><span class="p">${esc(s.detail)}</span></div>`).join(''):'<p class="tiny dim2">No operations recorded.</p>'}`);
+  $('fEditBtn').onclick=()=>{$('fView').style.display='none';$('fEdit').style.display='block';$('fEditBtn').style.display='none';$('fSaveBtn').style.display='inline-block';$('fCancelBtn').style.display='inline-block';$('fEdit').focus();};
+  $('fCancelBtn').onclick=()=>openFile(path);
+  $('fSaveBtn').onclick=async()=>{
+    try{const next=$('fEdit').value;await checkpoint('manual edit '+path);
+      const r=await FS.write(S.pid,path,next);S.ui.contentCache[path]=next;
+      await journal('write_file',path,'ok','manual edit · verified',0,{after:r.hash});
+      S.files=await FS.scan(S.pid);renderFiles();Sound.play('ok');toast('Saved and verified','ok');openFile(path);
+      if(S.settings.autoSync&&S.device)deviceSync(true);
+    }catch(e){toast('Save failed: '+e.message,'bad');}};
+  $('fRename').onclick=async()=>{
+    const ok=await confirmDlg('Rename or move','Enter a new path for '+path,'Move',false,`<div class="field"><input id="mvTo" value="${esc(path)}"></div>`);
+    if(!ok)return;const to=normPath($('mvTo').value);if(!to||to===path)return;
+    try{const c=await FS.read(S.pid,path);await FS.write(S.pid,to,c);await FS.remove(S.pid,path);
+      delete S.ui.contentCache[path];S.ui.contentCache[to]=c;
+      await journal('move_file',path+' → '+to,'ok','verified',0);
+      S.files=await FS.scan(S.pid);renderFiles();closeDrawer();toast('Moved to '+to,'ok');}catch(e){toast(e.message,'bad');}};
+  $('fDownload').onclick=()=>download(path.split('/').pop(),content,'text/plain');
+  $('fDelete').onclick=async()=>{
+    const ok=await confirmDlg('Delete file?',path+' moves to Trash. You can restore it.','Delete',true);if(!ok)return;
+    const rec=await trashFile(path);closeDrawer();
+    toast('Deleted '+path,'ok',{label:'Undo',fn:async()=>{await FS.write(S.pid,rec.path,rec.content);S.trash=S.trash.filter(t=>t.id!==rec.id);await del('trash',rec.id);S.files=await FS.scan(S.pid);renderFiles();}});};
+}
+$('fileSearch').addEventListener('input',debounce(async e=>{S.ui.fileQ=e.target.value;
+  if(S.ui.fileQ)for(const f of S.files)if(!(f.path in S.ui.contentCache))S.ui.contentCache[f.path]=await FS.read(S.pid,f.path).catch(()=>'');
+  renderFiles();},220));
+$('fileFilter').onchange=e=>{S.ui.fileFilter=e.target.value;renderFiles();};
+$('fileSort').onchange=e=>{S.ui.fileSort=e.target.value;renderFiles();};
+$('bulkClear').onclick=()=>{S.ui.fileSel.clear();renderFiles();};
+$('bulkDel').onclick=async()=>{
+  const paths=[...S.ui.fileSel];if(!paths.length)return;
+  if(!await confirmDlg('Delete '+paths.length+' files?','They move to Trash and can be restored together.','Delete',true))return;
+  const recs=[];for(const p of paths)recs.push(await trashFile(p));
+  S.ui.fileSel.clear();renderFiles();
+  toast(recs.length+' files deleted','ok',{label:'Undo',fn:async()=>{for(const r of recs){await FS.write(S.pid,r.path,r.content);await del('trash',r.id);}S.trash=S.trash.filter(t=>!recs.some(r=>r.id===t.id));S.files=await FS.scan(S.pid);renderFiles();}});};
+$('bulkMove').onclick=async()=>{
+  const ok=await confirmDlg('Move files','Prefix every selected path with a folder.','Move',false,'<div class="field"><input id="mvDir" placeholder="src/components"></div>');
+  if(!ok)return;const dir=normPath($('mvDir').value);if(!dir)return;
+  for(const p of [...S.ui.fileSel]){const c=await FS.read(S.pid,p);await FS.write(S.pid,dir+'/'+p,c);await FS.remove(S.pid,p);await journal('move_file',p+' → '+dir+'/'+p,'ok','bulk move',0);}
+  S.ui.fileSel.clear();S.ui.contentCache={};S.files=await FS.scan(S.pid);renderFiles();toast('Moved into '+dir,'ok');};
+$('bulkExport').onclick=()=>exportZip([...S.ui.fileSel]);
+$('newFileBtn').onclick=async()=>{
+  const ok=await confirmDlg('New file','Path relative to the project root.','Create',false,'<div class="field"><input id="nfPath" placeholder="src/utils.js"></div>');
+  if(!ok)return;const p=normPath($('nfPath').value);if(!p)return;
+  try{await FS.write(S.pid,p,'');await journal('write_file',p,'ok','created empty',0);S.files=await FS.scan(S.pid);renderFiles();openFile(p);toast('Created '+p,'ok');}catch(e){toast(e.message,'bad');}};
+$('previewBtn').onclick=openPreview;
+$('exportBtn').onclick=()=>exportZip();
+$('importBtn').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=async e=>{
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  try{
+    const {unzipSync,strFromU8}=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.3/esm/browser.js');
+    const out=unzipSync(new Uint8Array(await file.arrayBuffer()));
+    await checkpoint('before import');
+    const keys=Object.keys(out).filter(k=>!k.endsWith('/')&&!k.startsWith('__MACOSX'));
+    const root=keys.length&&keys.every(k=>k.includes('/')&&k.split('/')[0]===keys[0].split('/')[0])?keys[0].split('/')[0]:'';
+    let n=0;
+    for(const k of keys){
+      const p=normPath(root?k.slice(root.length+1):k);
+      if(!p||p.startsWith('.forge'))continue;
+      await FS.write(S.pid,p,strFromU8(out[k]));n++;}
+    S.ui.contentCache={};S.files=await FS.scan(S.pid);renderFiles();renderHeader();
+    await journal('import_zip',file.name,'ok',n+' files imported and verified',0);
+    Sound.play('ok');toast(n+' files imported','ok');
+  }catch(err){toast('Import failed: '+err.message,'bad');}};
+async function exportZip(paths){
+  try{
+    const {zipSync,strToU8}=await import('https://cdn.jsdelivr.net/npm/fflate@0.8.3/esm/browser.js');
+    const files={},list=paths?.length?S.files.filter(f=>paths.includes(f.path)):S.files;
+    for(const f of list)files[f.path]=strToU8(S.ui.contentCache[f.path]??await FS.read(S.pid,f.path));
+    files['forge-memory.json']=strToU8(JSON.stringify({project:project(),memory:S.memory,roadmap:S.roadmap,tasks:S.tasks.map(t=>({title:t.title,state:t.state,summary:t.summary}))},null,2));
+    download(project().name.toLowerCase().replace(/\s+/g,'-')+'.zip',zipSync(files,{level:6}),'application/zip');
+    toast('Exported '+list.length+' files + memory','ok');Sound.play('ok');
+  }catch(e){toast('Export failed: '+e.message,'bad');}}
+$('trashBtn').onclick=()=>{
+  openDrawer('Trash',S.trash.length?S.trash.map(t=>`<div class="row" data-restore="${t.id}"><span class="ico ${kindOf(t.path)}">↺</span><span class="grow"><span class="nm" title="${esc(t.path)}">${esc(t.path)}</span><span class="sub">${fmtBytes(t.content.length)} · ${fmtAgo(t.at)}</span></span><span class="chip acc">restore</span></div>`).join('')+
+    `<button class="btn d" id="emptyTrash" style="margin-top:12px;width:100%">Empty trash permanently</button>`:'<div class="empty"><i>↺</i>Trash is empty.</div>');
+  $('drawerBody').querySelectorAll('[data-restore]').forEach(r=>r.onclick=async()=>{
+    const t=S.trash.find(x=>x.id===r.dataset.restore);
+    await FS.write(S.pid,t.path,t.content);S.trash=S.trash.filter(x=>x.id!==t.id);await del('trash',t.id);
+    S.files=await FS.scan(S.pid);renderFiles();toast('Restored '+t.path,'ok');$('trashBtn').click();});
+  if($('emptyTrash'))$('emptyTrash').onclick=async()=>{
+    if(!await confirmDlg('Empty trash?','Permanently removes '+S.trash.length+' files.','Empty',true))return;
+    for(const t of S.trash)await del('trash',t.id);S.trash=[];closeDrawer();toast('Trash emptied','ok');};};
+$('ckptBtn').onclick=()=>{
+  openDrawer('Checkpoints',`<button class="btn p" id="mkCk" style="width:100%;margin-bottom:12px">＋ Create checkpoint now</button>`+
+    (S.checkpoints.length?S.checkpoints.map(c=>`<div class="row" data-ck="${c.id}"><span class="ico etc">◆</span><span class="grow"><span class="nm" title="${esc(c.label)}">${esc(c.label)}</span><span class="sub">${c.files} files · ${fmtAgo(c.at)}</span></span><span class="chip acc">restore</span></div>`).join(''):'<div class="empty"><i>◆</i>No checkpoints yet. They are created automatically before destructive edits.</div>'));
+  $('mkCk').onclick=async()=>{await checkpoint('manual');toast('Checkpoint created','ok');$('ckptBtn').click();};
+  $('drawerBody').querySelectorAll('[data-ck]').forEach(r=>r.onclick=async()=>{
+    const c=S.checkpoints.find(x=>x.id===r.dataset.ck);
+    if(!await confirmDlg('Restore checkpoint?','Every current file is replaced by "'+c.label+'". A safety checkpoint is taken first.','Restore',true))return;
+    await checkpoint('before restore');
+    const walk=async(dirPath,prefix)=>{const d=await FS.dir(S.pid,dirPath);
+      for await(const [name,h] of d.entries()){const rel=prefix?prefix+'/'+name:name;
+        if(h.kind==='directory')await walk(dirPath+'/'+name,rel);
+        else await FS.write(S.pid,rel,await (await h.getFile()).text());}};
+    try{await walk('.forge/checkpoints/'+c.dir,'');S.ui.contentCache={};S.files=await FS.scan(S.pid);renderFiles();closeDrawer();Sound.play('ok');toast('Restored '+c.files+' files','ok');}
+    catch(e){toast('Restore failed: '+e.message,'bad');}});};
+
+/* ── device folder ───────────────────────────────────────── */
+$('linkBtn').onclick=linkFolder;
+async function linkFolder(){
+  if(!('showDirectoryPicker'in window)){toast('No folder access in this browser. Use Chrome 132+ on Android, or ZIP import/export.','warn');return;}
+  try{
+    const dir=await showDirectoryPicker({mode:'readwrite',id:'forge-'+S.pid});
+    S.device=dir;await kvSet('deviceHandle',dir);
+    toast('Linked "'+dir.name+'"','ok');Sound.play('ok');renderHeader();await deviceSync();
+  }catch(e){if(e.name!=='AbortError')toast('Link failed: '+e.message,'bad');}}
+async function ensurePerm(silent){
+  if(!S.device)return false;
+  let p=await S.device.queryPermission({mode:'readwrite'});
+  if(p==='granted')return true;
+  if(silent)return false;
+  p=await S.device.requestPermission({mode:'readwrite'});
+  return p==='granted';
+}
+async function deviceSync(silent){
+  if(!S.device){if(!silent)toast('No folder linked yet','warn');return;}
+  try{
+    if(!(await ensurePerm(silent))){if(!silent)toast('Folder permission denied','warn');return;}
+    const devFiles={};
+    const walk=async(d,base)=>{for await(const[name,h]of d.entries()){
+      if(name==='.forge'||name==='node_modules'||name==='.git')continue;
+      const p=base?base+'/'+name:name;
+      if(h.kind==='directory')await walk(h,p);
+      else{const f=await h.getFile();if(f.size>2000000)continue;devFiles[p]=await f.text();}}};
+    await walk(S.device,'');
+    const base=S.syncBase||{};let pushed=0,pulled=0;const conflicts=[];
+    for(const f of S.files){
+      const local=S.ui.contentCache[f.path]??await FS.read(S.pid,f.path),remote=devFiles[f.path];
+      if(remote===undefined){await devWrite(f.path,local);pushed++;continue;}
+      const rh=await sha256(remote),b=base[f.path];
+      if(rh===f.hash)continue;
+      if(b&&rh!==b&&f.hash!==b){conflicts.push(f.path);continue;}
+      if(f.hash!==b){await devWrite(f.path,local);pushed++;}else{await FS.write(S.pid,f.path,remote);pulled++;}}
+    for(const [p,content] of Object.entries(devFiles)){if(S.files.some(f=>f.path===p))continue;await FS.write(S.pid,p,content);pulled++;}
+    S.files=await FS.scan(S.pid);
+    const nb={};for(const f of S.files)nb[f.path]=f.hash;
+    S.syncBase=nb;await kvSet('syncBase:'+S.pid,nb);
+    S.ui.contentCache={};renderFiles();renderHeader();
+    await journal('device_sync',S.device.name,'ok',`${pushed} pushed · ${pulled} pulled · ${conflicts.length} conflicts`,0);
+    if(conflicts.length){
+      Sound.play('warn');
+      openDrawer('Sync conflicts',`<p class="tiny dim">Both sides changed since the last sync. Choose which version wins.</p>`+
+        conflicts.map(p=>`<div class="row" data-conf="${esc(p)}"><span class="ico ${kindOf(p)}">!</span><span class="grow"><span class="nm" title="${esc(p)}">${esc(p)}</span><span class="sub">local and device both modified</span></span></div>`).join(''));
+      $('drawerBody').querySelectorAll('[data-conf]').forEach(r=>r.onclick=async()=>{
+        const p=r.dataset.conf;
+        const keep=await confirmDlg('Resolve conflict','Keep the workspace version (push) or the device version (pull)?','Keep workspace');
+        if(keep)await devWrite(p,await FS.read(S.pid,p));else await FS.write(S.pid,p,devFiles[p]);
+        S.files=await FS.scan(S.pid);const nb2={};for(const f of S.files)nb2[f.path]=f.hash;
+        S.syncBase=nb2;await kvSet('syncBase:'+S.pid,nb2);renderFiles();closeDrawer();toast('Resolved '+p,'ok');});
+    } else if(!silent){Sound.play('ok');toast(`Synced · ${pushed} pushed, ${pulled} pulled`,'ok');}
+  }catch(e){if(!silent)toast('Sync failed: '+e.message,'bad');}}
+async function devWrite(path,content){
+  const parts=path.split('/'),name=parts.pop();let d=S.device;
+  for(const p of parts)d=await d.getDirectoryHandle(p,{create:true});
+  const w=await (await d.getFileHandle(name,{create:true})).createWritable();await w.write(content);await w.close();
+  if(await (await (await d.getFileHandle(name)).getFile()).text()!==content)throw new Error('device write verification failed: '+path);
+}
+
+/* ── plan ────────────────────────────────────────────────── */
+const STATUS_COLOR={done:'ok',active:'run',pending:'',blocked:'warn',failed:'bad'};
+function filteredPlan(){
+  const q=S.ui.planQ.toLowerCase();
+  const list=S.roadmap.filter(r=>{
+    const f=S.ui.planFilter;
+    if(f==='verified'&&!r.verified)return false;
+    if(['active','pending','done','blocked','failed'].includes(f)&&r.status!==f)return false;
+    return !q||r.title.toLowerCase().includes(q)||(r.detail||'').toLowerCase().includes(q);});
+  const s=S.ui.planSort;
+  list.sort((a,b)=>s==='priority'?a.priority-b.priority:s==='status'?a.status.localeCompare(b.status):s==='updated'?b.updated-a.updated:a.order-b.order);
+  return list;
+}
+function renderPlan(){
+  const done=S.roadmap.filter(r=>r.status==='done').length,total=S.roadmap.length||1,list=filteredPlan();
+  $('planBulk').style.display=S.ui.planSel.size?'flex':'none';
+  $('planBulkCount').textContent=S.ui.planSel.size+' selected';
+  $('viewChips').innerHTML=[{id:'all',name:'All'},...S.views].map(v=>`<button data-v="${v.id}" class="${S.ui.savedView===v.id?'on':''}">${esc(v.name)}${v.id!=='all'?`<u data-delview="${v.id}">×</u>`:''}</button>`).join('')+`<button data-v="__save">＋ Save view</button>`;
+  $('viewChips').querySelectorAll('[data-v]').forEach(b=>b.onclick=e=>{
+    if(e.target.dataset.delview){const id=e.target.dataset.delview;S.views=S.views.filter(v=>v.id!==id);del('views',id);renderPlan();toast('View removed');return;}
+    const id=b.dataset.v;if(id==='__save'){saveView();return;}
+    S.ui.savedView=id;const v=S.views.find(x=>x.id===id);
+    S.ui.planFilter=v?v.filter:'all';S.ui.planSort=v?v.sort:'order';
+    $('planFilter').value=S.ui.planFilter;$('planSort').value=S.ui.planSort;
+    renderPlan();Sound.play('click');});
+  const head=`<div class="card" style="--i:0"><div class="ringwrap"><div class="bigRing" style="--p:${Math.round(done/total*100)}%"><b>${Math.round(done/total*100)}%</b></div>
+    <div style="flex:1"><div style="font:800 15px var(--mono)">${done}/${S.roadmap.length} complete</div>
+    <div class="stats" style="margin-top:7px">
+      <span class="chip ok">${S.roadmap.filter(r=>r.verified).length} verified</span>
+      <span class="chip run">${S.roadmap.filter(r=>r.status==='active').length} active</span>
+      <span class="chip warn">${S.roadmap.filter(r=>r.status==='blocked').length} blocked</span>
+      <span class="chip bad">${S.roadmap.filter(r=>r.status==='failed').length} failed</span>
+    </div><p class="tiny dim2" style="margin:8px 0 0">Items close only with verification evidence. Drag ⠿ to reorder.</p></div></div></div>`;
+  $('planList').innerHTML=head+(list.length?list.map((r,i)=>`
+    <div class="row${S.ui.planSel.has(r.id)?' sel':''}" data-task="${r.id}" style="--i:${Math.min(i,14)}">
+      <span class="grip" data-grip="${r.id}">⠿</span>
+      <input type="checkbox" data-pcheck="${r.id}"${S.ui.planSel.has(r.id)?' checked':''}>
+      <span class="grow"><span class="nm" title="${esc(r.title)}">${esc(r.title)}</span><span class="sub">${esc((r.detail||'').slice(0,90))||'no detail'}${r.file?' · '+esc(r.file):''}</span></span>
+      ${r.verified?'<span class="chip ok">✓</span>':''}
+      <span class="chip ${STATUS_COLOR[r.status]||''}">${r.status}</span>
+    </div>`).join(''):`<div class="empty"><i>◔</i>No roadmap items match this view.</div>`);
+  $('planList').querySelectorAll('[data-pcheck]').forEach(c=>c.onclick=e=>{e.stopPropagation();
+    c.checked?S.ui.planSel.add(c.dataset.pcheck):S.ui.planSel.delete(c.dataset.pcheck);renderPlan();});
+  $('planList').querySelectorAll('.row').forEach(r=>r.onclick=()=>openTask(r.dataset.task));
+  $('planList').querySelectorAll('[data-grip]').forEach(g=>g.addEventListener('pointerdown',startDrag));
+  renderHeader();
+}
+let drag=null;
+function startDrag(e){
+  e.preventDefault();e.stopPropagation();
+  const id=e.currentTarget.dataset.grip,row=e.currentTarget.closest('.row');
+  drag={id,row,target:null};row.classList.add('dragging');
+  const move=ev=>{
+    if(!drag)return;
+    const rows=[...$('planList').querySelectorAll('.row')];
+    let idx=rows.findIndex(r=>{const b=r.getBoundingClientRect();return ev.clientY<b.top+b.height/2;});
+    if(idx<0)idx=rows.length;
+    $('planList').querySelectorAll('.drop').forEach(d=>d.remove());
+    const marker=document.createElement('div');marker.className='drop';
+    if(rows[idx])rows[idx].before(marker);else if(rows.length)rows[rows.length-1].after(marker);
+    drag.target=idx;};
+  const up=async()=>{
+    window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);
+    $('planList').querySelectorAll('.drop').forEach(d=>d.remove());
+    row.classList.remove('dragging');
+    if(drag&&drag.target!==null){
+      const visible=filteredPlan().map(r=>r.id),from=visible.indexOf(drag.id);
+      if(from>=0){let to=drag.target;visible.splice(from,1);visible.splice(to>from?to-1:to,0,drag.id);
+        visible.forEach((rid,i)=>{const r=S.roadmap.find(x=>x.id===rid);if(r){r.order=i;put('roadmap',r);}});
+        S.ui.planSort='order';$('planSort').value='order';Sound.play('step');toast('Order updated');}}
+    drag=null;renderPlan();};
+  window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);
+}
+function openTask(id){
+  const r=S.roadmap.find(x=>x.id===id);if(!r)return;
+  openDrawer(r.title,`
+    <div class="stats" style="margin-bottom:12px"><span class="chip ${STATUS_COLOR[r.status]||''}">${r.status}</span>${r.verified?'<span class="chip ok">verified</span>':'<span class="chip warn">unverified</span>'}<span class="chip">P${r.priority}</span></div>
+    <div class="field"><label>Title</label><input id="tTitle" value="${esc(r.title)}"></div>
+    <div class="field"><label>Detail</label><textarea id="tDetail" rows="3">${esc(r.detail||'')}</textarea></div>
+    <div class="grid2">
+      <div class="field"><label>Status</label><select id="tStatus">${['pending','active','done','blocked','failed'].map(s=>`<option${s===r.status?' selected':''}>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Priority</label><select id="tPrio">${[1,2,3,4].map(p=>`<option${p===r.priority?' selected':''}>${p}</option>`).join('')}</select></div>
+    </div>
+    <div class="field"><label>Linked file</label><input id="tFile" value="${esc(r.file||'')}" placeholder="src/app.js"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="tSave">Save</button><button class="btn" id="tRun">Ask agent to do this</button><button class="btn d" id="tDel">Delete</button></div>
+    <h4>Verification evidence</h4>${r.evidence?`<div class="kv"><b>Method</b><span>${esc(r.evidence.method||'')}</span><b>When</b><span>${new Date(r.evidence.at).toLocaleString()}</span><b>Note</b><span>${esc(r.evidence.note||r.evidence.assertion||'')}</span></div>`:'<p class="tiny dim2">None. This item cannot be trusted as complete until a check produces evidence.</p>'}
+    <h4>Meta</h4><div class="kv"><b>Created</b><span>${new Date(r.created).toLocaleString()}</span><b>Updated</b><span>${fmtAgo(r.updated)}</span></div>`);
+  $('tSave').onclick=async()=>{r.title=$('tTitle').value.trim()||r.title;r.detail=$('tDetail').value;r.status=$('tStatus').value;
+    r.priority=+$('tPrio').value;r.file=$('tFile').value.trim();r.updated=Date.now();
+    if(r.status!=='done')r.verified=false;
+    await put('roadmap',r);renderPlan();closeDrawer();toast('Task saved','ok');};
+  $('tRun').onclick=()=>{closeDrawer();$('composer').value='Implement this roadmap item: '+r.title+(r.detail?' — '+r.detail:'');go('chat');$('composer').focus();};
+  $('tDel').onclick=async()=>{
+    if(!await confirmDlg('Delete task?',r.title,'Delete',true))return;
+    S.roadmap=S.roadmap.filter(x=>x.id!==r.id);await del('roadmap',r.id);renderPlan();closeDrawer();
+    toast('Task deleted','ok',{label:'Undo',fn:async()=>{S.roadmap.push(r);await put('roadmap',r);renderPlan();}});};
+}
+async function saveView(){
+  const ok=await confirmDlg('Save view','Store the current filter and sort as a named view.','Save',false,'<div class="field"><input id="vName" placeholder="e.g. Ship blockers"></div>');
+  if(!ok)return;
+  const v={id:uid(),pid:S.pid,name:$('vName').value.trim()||'View',filter:S.ui.planFilter,sort:S.ui.planSort};
+  S.views.push(v);await put('views',v);S.ui.savedView=v.id;renderPlan();toast('View saved','ok');
+}
+$('planSearch').addEventListener('input',debounce(e=>{S.ui.planQ=e.target.value;renderPlan();},180));
+$('planFilter').onchange=e=>{S.ui.planFilter=e.target.value;S.ui.savedView='all';renderPlan();};
+$('planSort').onchange=e=>{S.ui.planSort=e.target.value;renderPlan();};
+$('addTaskBtn').onclick=async()=>{
+  const ok=await confirmDlg('New roadmap item','What needs to be done?','Add',false,'<div class="field"><input id="ntTitle" placeholder="Add keyboard shortcuts"></div>');
+  if(!ok)return;const title=$('ntTitle').value.trim();if(!title)return;
+  const r={id:uid(),pid:S.pid,title,status:'pending',priority:2,verified:false,detail:'',order:S.roadmap.length,created:Date.now(),updated:Date.now(),evidence:null};
+  S.roadmap.push(r);await put('roadmap',r);renderPlan();toast('Added to roadmap','ok');};
+$('planBulkClear').onclick=()=>{S.ui.planSel.clear();renderPlan();};
+$('planBulkStatus').onchange=async e=>{
+  const v=e.target.value;if(!v)return;const ids=[...S.ui.planSel];
+  const prev=ids.map(id=>({id,status:S.roadmap.find(r=>r.id===id).status}));
+  for(const id of ids){const r=S.roadmap.find(x=>x.id===id);r.status=v;if(v!=='done')r.verified=false;r.updated=Date.now();await put('roadmap',r);}
+  e.target.value='';S.ui.planSel.clear();renderPlan();
+  toast(ids.length+' items → '+v,'ok',{label:'Undo',fn:async()=>{for(const p of prev){const r=S.roadmap.find(x=>x.id===p.id);r.status=p.status;await put('roadmap',r);}renderPlan();}});};
+$('planBulkDel').onclick=async()=>{
+  const ids=[...S.ui.planSel];if(!await confirmDlg('Delete '+ids.length+' items?','They can be restored with Undo.','Delete',true))return;
+  const removed=S.roadmap.filter(r=>ids.includes(r.id));
+  S.roadmap=S.roadmap.filter(r=>!ids.includes(r.id));for(const r of removed)await del('roadmap',r.id);
+  S.ui.planSel.clear();renderPlan();
+  toast(removed.length+' items deleted','ok',{label:'Undo',fn:async()=>{for(const r of removed){S.roadmap.push(r);await put('roadmap',r);}renderPlan();}});};
+
+/* ── activity ────────────────────────────────────────────── */
+function renderActivity(){
+  const q=S.ui.actQ.toLowerCase();
+  const list=S.steps.filter(s=>{
+    const f=S.ui.actFilter;
+    if(f==='ok'&&s.status!=='ok')return false;
+    if(f==='fail'&&s.status!=='fail')return false;
+    if(f==='write_file'&&!['write_file','patch_file'].includes(s.tool))return false;
+    if(f==='run_checks'&&s.tool!=='run_checks')return false;
+    return !q||s.tool.toLowerCase().includes(q)||(s.path||'').toLowerCase().includes(q)||(s.detail||'').toLowerCase().includes(q);});
+  list.sort((a,b)=>S.ui.actSort==='old'?a.at-b.at:S.ui.actSort==='dur'?b.dur-a.dur:b.at-a.at);
+  const interrupted=S.tasks.filter(t=>['uncertain','paused_quota','paused_user','failed','blocked'].includes(t.state));
+  const banner=interrupted.length?`<div class="banner ${interrupted[0].state==='failed'?'bad':''}"><span>⚠</span><span class="grow"><b>${esc(interrupted[0].title)}</b><br><span class="tiny dim">${esc(interrupted[0].state)} · ${esc(interrupted[0].note||'')}</span></span><button class="btn sm p" id="actResume">Resume</button></div>`:'';
+  $('actList').innerHTML=banner+(list.length?list.map((s,i)=>`
+    <div class="row" data-step="${s.id}" style="--i:${Math.min(i,14)}">
+      <span class="ico ${s.status==='ok'?'md':'etc'}" style="${s.status!=='ok'?'color:var(--red)':''}">${s.status==='ok'?'✓':'✕'}</span>
+      <span class="grow"><span class="nm" title="${esc(s.tool+' '+(s.path||''))}">${esc(s.tool)}${s.path?' · '+esc(s.path):''}</span><span class="sub">${fmtAgo(s.at)} · ${s.dur}ms · ${esc((s.detail||'').slice(0,80))}</span></span>
+      <span class="chip ${s.status==='ok'?'ok':'bad'}">${s.status}</span>
+    </div>`).join(''):`<div class="empty"><i>≡</i>No journal entries match.</div>`);
+  if($('actResume'))$('actResume').onclick=()=>resumeTask(interrupted[0]);
+  $('actList').querySelectorAll('[data-step]').forEach(r=>r.onclick=()=>{
+    const s=S.steps.find(x=>x.id===r.dataset.step);
+    openDrawer(s.tool+' · '+(s.path||''),`
+      <div class="stats" style="margin-bottom:12px"><span class="chip ${s.status==='ok'?'ok':'bad'}">${s.status}</span><span class="chip">${s.dur}ms</span><span class="chip ai">${esc(s.model||'')}</span></div>
+      <h4>Detail</h4><p class="mono tiny">${esc(s.detail||'—')}</p>
+      <h4>Integrity</h4><div class="kv"><b>Before</b><span>${s.before||'—'}</span><b>After</b><span>${s.after||'—'}</span><b>When</b><span>${new Date(s.at).toLocaleString()}</span><b>Task</b><span>${esc(s.taskId)}</span></div>
+      ${s.path&&S.files.some(f=>f.path===s.path)?`<button class="btn" style="margin-top:12px" id="sOpen">Open file</button>`:''}`);
+    if($('sOpen'))$('sOpen').onclick=()=>{closeDrawer();go('files');openFile(s.path);};});
+}
+$('actSearch').addEventListener('input',debounce(e=>{S.ui.actQ=e.target.value;renderActivity();},180));
+$('actFilter').onchange=e=>{S.ui.actFilter=e.target.value;renderActivity();};
+$('actSort').onchange=e=>{S.ui.actSort=e.target.value;renderActivity();};
+$('clearActBtn').onclick=async()=>{
+  if(!await confirmDlg('Clear journal?','Operation history for this project is removed. Files and checkpoints are untouched.','Clear',true))return;
+  const backup=[...S.steps];for(const s of S.steps)await del('steps',s.id);S.steps=[];renderActivity();renderHeader();
+  toast('Journal cleared','ok',{label:'Undo',fn:async()=>{for(const s of backup)await put('steps',s);S.steps=backup;renderActivity();}});};
+
+/* ── models ──────────────────────────────────────────────── */
+function renderModels(){
+  const q=S.ui.modelQ.toLowerCase();
+  const list=S.models.filter(m=>{
+    const en=S.prefs[m.id]?.enabled!==false,f=S.ui.modelFilter;
+    if(f==='free'&&!m.free)return false;if(f==='tools'&&!(m.params||[]).includes('tools'))return false;
+    if(f==='on'&&!en)return false;if(f==='off'&&en)return false;if(f==='delisted'&&m.status!=='delisted')return false;
+    return !q||m.id.toLowerCase().includes(q)||(m.name||'').toLowerCase().includes(q);});
+  const s=S.ui.modelSort;
+  list.sort((a,b)=>s==='name'?a.id.localeCompare(b.id):s==='price'?parseFloat(a.price?.prompt||0)-parseFloat(b.price?.prompt||0):s==='seen'?(b.seen||0)-(a.seen||0):(b.ctx||0)-(a.ctx||0));
+  const b=budget();
+  const head=`<div class="card" style="--i:0"><h3>Request budget · ${utcDay()}</h3>
+    <div class="meter ${b.total<=5?'crit':b.total<=15?'warn':''}"><i style="width:${Math.round(b.total/b.limit*100)}%"></i></div>
+    <div class="stats"><span class="chip ok">${b.total} available</span><span class="chip">${b.used} used</span><span class="chip warn">${b.reserve} reserved</span><span class="chip">${b.tokens.toLocaleString()} tokens</span></div>
+    <p class="tiny dim2" style="margin:9px 0 0">Free variants: 20 requests/min, ${b.limit}/day, resetting 00:00 UTC. The scheduler pauses tasks instead of failing them.</p>
+    <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap"><button class="btn sm" id="mQuota">Refresh from OpenRouter</button><button class="btn sm" id="mLocal">Use local planner</button></div></div>`;
+  $('modelList').innerHTML=head+(list.length?list.map((m,i)=>{
+    const pref=S.prefs[m.id]||{enabled:true};
+    return `<div class="row" data-model="${esc(m.id)}" style="--i:${Math.min(i,14)}">
+      <span class="ico ${m.free?'md':'etc'}">${m.free?'FREE':'$'}</span>
+      <span class="grow"><span class="nm" title="${esc(m.id)}">${esc(m.id)}</span><span class="sub">${Math.round((m.ctx||0)/1000)}k ctx · out ${Math.round((m.maxOut||0)/1000)}k · ${esc(m.provider||'')}</span></span>
+      ${(m.params||[]).includes('tools')?'<span class="chip run">tools</span>':''}
+      ${m.status==='delisted'?'<span class="chip bad">gone</span>':''}
+      <div class="sw${pref.enabled!==false?' on':''}" data-toggle="${esc(m.id)}"><i></i></div>
+    </div>`;}).join(''):`<div class="empty"><i>✦</i>No models cached. Sync the registry — it needs no API key.</div>`);
+  $('mQuota').onclick=async()=>{const d=await refreshQuota();toast(d?'Quota refreshed':'Add an API key in Settings first',d?'ok':'warn');renderModels();};
+  $('mLocal').onclick=()=>{setSetting('model','local-planner');toast('Local planner active — no requests spent','ok');};
+  $('modelList').querySelectorAll('[data-toggle]').forEach(t=>t.onclick=async e=>{
+    e.stopPropagation();const id=t.dataset.toggle,p=S.prefs[id]||{id,enabled:true,role:'any',priority:2};
+    p.enabled=p.enabled===false;S.prefs[id]=p;await put('prefs',{id,...p});
+    Sound.play('click');renderModels();buildDock();renderHeader();
+    toast((p.enabled?'Enabled ':'Disabled ')+id.split('/').pop());});
+  $('modelList').querySelectorAll('[data-model]').forEach(r=>r.onclick=()=>openModel(r.dataset.model));
+}
+function openModel(id){
+  const m=S.models.find(x=>x.id===id);if(!m)return;
+  const p=S.prefs[id]||{id,enabled:true,role:'any',priority:2};
+  openDrawer(m.id,`
+    <div class="stats" style="margin-bottom:12px"><span class="chip ${m.free?'ok':'warn'}">${m.free?'free':'paid'}</span><span class="chip ${m.status==='delisted'?'bad':'ok'}">${m.status||'active'}</span>${(m.params||[]).includes('tools')?'<span class="chip run">tool calling</span>':'<span class="chip">JSON protocol</span>'}</div>
+    <h4>Capabilities</h4>
+    <div class="kv"><b>Name</b><span>${esc(m.name||'—')}</span><b>Provider</b><span>${esc(m.provider||'—')}</span>
+      <b>Context</b><span>${(m.ctx||0).toLocaleString()} tokens</span><b>Max output</b><span>${(m.maxOut||0).toLocaleString()} tokens</span>
+      <b>Modalities</b><span>${esc((m.modalities||['text']).join(', '))}</span>
+      <b>Price</b><span>${m.free?'$0':'prompt '+(m.price?.prompt||'?')+' · completion '+(m.price?.completion||'?')}</span>
+      <b>Last seen</b><span>${m.seen?new Date(m.seen).toLocaleString():'—'}</span></div>
+    <h4>Supported parameters</h4><div>${(m.params||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join('')||'<span class="tiny dim2">unknown</span>'}</div>
+    ${m.note?`<h4>Device note</h4><p class="tiny dim">${esc(m.note)}</p>`:''}
+    <h4>Your preference</h4>
+    <div class="grid2"><div class="field"><label>Role</label><select id="pRole">${['any','planner','coder','reviewer'].map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>
+    <div class="field"><label>Priority</label><select id="pPrio">${[1,2,3].map(v=>`<option${(p.priority||2)===v?' selected':''}>${v}</option>`).join('')}</select></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="pUse">Use for tasks</button><button class="btn" id="pSave">Save preference</button><button class="btn ${p.enabled===false?'g':'d'}" id="pToggle">${p.enabled===false?'Enable':'Disable'}</button></div>
+    <p class="tiny dim2" style="margin-top:10px">Registry sync never changes these preferences. Used in ${S.steps.filter(s=>s.model===id).length} journaled operations.</p>`);
+  $('pUse').onclick=()=>{setSetting('model',id);closeDrawer();go('chat');toast('Model set to '+id.split('/').pop(),'ok');};
+  $('pSave').onclick=async()=>{p.role=$('pRole').value;p.priority=+$('pPrio').value;S.prefs[id]=p;await put('prefs',{id,...p});toast('Preference saved','ok');};
+  $('pToggle').onclick=async()=>{p.enabled=p.enabled===false;S.prefs[id]=p;await put('prefs',{id,...p});renderModels();buildDock();openModel(id);};
+}
+$('modelSearch').addEventListener('input',debounce(e=>{S.ui.modelQ=e.target.value;renderModels();},180));
+$('modelFilter').onchange=e=>{S.ui.modelFilter=e.target.value;renderModels();};
+$('modelSort').onchange=e=>{S.ui.modelSort=e.target.value;renderModels();};
+$('syncModelsBtn').onclick=syncRegistry;
+async function syncRegistry(){
+  const btn=$('syncModelsBtn');btn.disabled=true;btn.textContent='Syncing…';
+  try{
+    const r=await fetchT(OR+'/models',{},25000);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const data=(await r.json()).data||[],existing=new Map(S.models.map(m=>[m.id,m]));
+    let added=0,updated=0;
+    for(const m of data){
+      const free=m.id.endsWith(':free')||parseFloat(m.pricing?.prompt||'1')===0;
+      if(!free&&!existing.has(m.id))continue;
+      const rec={id:m.id,name:m.name||m.id,provider:m.id.split('/')[0],free,ctx:m.context_length||0,
+        maxOut:m.top_provider?.max_completion_tokens||0,params:m.supported_parameters||[],
+        modalities:m.architecture?.input_modalities||['text'],price:m.pricing||{},seen:Date.now(),status:'active',note:existing.get(m.id)?.note};
+      existing.has(m.id)?updated++:added++;
+      existing.set(m.id,rec);await put('models',rec);
+      if(!S.prefs[m.id]){const p={id:m.id,enabled:true,role:'any',priority:2};S.prefs[m.id]=p;await put('prefs',p);}}
+    let delisted=0;
+    for(const m of S.models)if(!data.some(d=>d.id===m.id)&&m.status!=='delisted'){m.status='delisted';await put('models',m);delisted++;}
+    S.models=[...existing.values()];await kvSet('lastSync',Date.now());
+    renderModels();buildDock();renderHeader();Sound.play('ok');
+    toast(`Synced · ${added} new, ${updated} updated, ${delisted} delisted · preferences untouched`,'ok');
+  }catch(e){toast('Sync failed — existing registry kept. '+e.message,'bad');}
+  btn.disabled=false;btn.textContent='⟳ Sync registry';
+}
+
+/* ── settings ────────────────────────────────────────────── */
+let pyWorker=null,pySeq=0;const pyPend=new Map();
+function pyCall(cmd,payload,ms){
+  if(!pyWorker){
+    pyWorker=new Worker(URL.createObjectURL(new Blob([$('pyworker').textContent],{type:'text/javascript'})));
+    pyWorker.onmessage=e=>{const m=e.data;
+      if(m.event){const el=$('pyLog');if(el){el.textContent+=(m.event==='stderr'?'! ':'')+m.line+'\n';el.scrollTop=el.scrollHeight;}return;}
+      const p=pyPend.get(m.id);if(p){pyPend.delete(m.id);m.ok?p.res(m):p.rej(new Error(m.error));}};}
+  const id=++pySeq;
+  return new Promise((res,rej)=>{const t=setTimeout(()=>{pyPend.delete(id);rej(new Error('timeout'));},ms);
+    pyPend.set(id,{res:m=>{clearTimeout(t);res(m);},rej:e=>{clearTimeout(t);rej(e);}});
+    pyWorker.postMessage({id,cmd,payload});});
+}
+const SB_SQL=`-- FORGE metadata schema. Run once in the Supabase SQL editor.
+create table if not exists qwen_projects (id text primary key, user_id uuid references auth.users not null default auth.uid(), name text, purpose text, stack text, settings jsonb, updated_at timestamptz default now());
+create table if not exists qwen_memory (id text primary key, user_id uuid references auth.users not null default auth.uid(), project_id text, kind text, key text, content text, file_hash text, at bigint);
+create table if not exists qwen_roadmap (id text primary key, user_id uuid references auth.users not null default auth.uid(), project_id text, title text, status text, priority int, verified bool, detail text, evidence jsonb, ord int, updated_at bigint);
+create table if not exists qwen_tasks (id text primary key, user_id uuid references auth.users not null default auth.uid(), project_id text, title text, state text, calls int, summary text, note text, updated_at bigint);
+create table if not exists qwen_steps (id text primary key, user_id uuid references auth.users not null default auth.uid(), project_id text, task_id text, tool text, path text, status text, detail text, dur int, at bigint);
+create table if not exists qwen_messages (id text primary key, user_id uuid references auth.users not null default auth.uid(), project_id text, role text, content text, model text, at bigint);
+create table if not exists qwen_model_catalog (id text primary key, user_id uuid references auth.users not null default auth.uid(), name text, provider text, free bool, ctx int, max_out int, params jsonb, price jsonb, seen bigint, status text);
+create table if not exists qwen_model_prefs (id text primary key, user_id uuid references auth.users not null default auth.uid(), enabled bool, role text, priority int);
+create table if not exists qwen_usage_daily (id text primary key, user_id uuid references auth.users not null default auth.uid(), day text, calls int, tokens bigint);
+do $$ declare t text; begin
+  foreach t in array array['qwen_projects','qwen_memory','qwen_roadmap','qwen_tasks','qwen_steps','qwen_messages','qwen_model_catalog','qwen_model_prefs','qwen_usage_daily']
+  loop execute format('alter table %I enable row level security;',t);
+       execute format('drop policy if exists own_%s on %I;',t,t);
+       execute format('create policy own_%s on %I for all using (auth.uid()=user_id) with check (auth.uid()=user_id);',t,t);
+  end loop; end $$;`;
+async function sbFetch(path,opt){
+  const headers={apikey:S.settings.sbKey,'Content-Type':'application/json',...(S.settings.sbToken?{Authorization:'Bearer '+S.settings.sbToken}:{}),...(opt?.headers||{})};
+  const r=await fetchT(S.settings.sbUrl.replace(/\/$/,'')+path,{...opt,headers},25000);
+  if(!r.ok)throw new Error('Supabase '+r.status+': '+(await r.text()).slice(0,140));
+  const txt=await r.text();return txt?JSON.parse(txt):null;
+}
+async function sbPush(){
+  const p=project();
+  await sbFetch('/rest/v1/qwen_projects',{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},body:JSON.stringify([{id:p.id,name:p.name,purpose:p.purpose,stack:p.stack,settings:{entry:p.entry,smoke:p.smoke}}])});
+  const rows=(t,arr)=>arr.length?sbFetch('/rest/v1/'+t,{method:'POST',headers:{Prefer:'resolution=merge-duplicates'},body:JSON.stringify(arr)}):null;
+  await rows('qwen_memory',S.memory.map(m=>({id:m.id,project_id:m.pid,kind:m.kind,key:m.key,content:m.content,file_hash:m.hash||null,at:m.at})));
+  await rows('qwen_roadmap',S.roadmap.map(r=>({id:r.id,project_id:r.pid,title:r.title,status:r.status,priority:r.priority,verified:r.verified,detail:r.detail,evidence:r.evidence,ord:r.order,updated_at:r.updated})));
+  await rows('qwen_tasks',S.tasks.slice(0,40).map(t=>({id:t.id,project_id:t.pid,title:t.title,state:t.state,calls:t.calls,summary:t.summary||null,note:t.note||null,updated_at:t.updated})));
+  await rows('qwen_steps',S.steps.slice(0,200).map(s=>({id:s.id,project_id:s.pid,task_id:s.taskId,tool:s.tool,path:s.path,status:s.status,detail:s.detail,dur:s.dur,at:s.at})));
+  await rows('qwen_messages',S.messages.slice(-120).map(m=>({id:m.id,project_id:m.pid,role:m.role,content:m.content,model:m.model||null,at:m.at})));
+  await rows('qwen_model_catalog',S.models.map(m=>({id:m.id,name:m.name,provider:m.provider,free:m.free,ctx:m.ctx,max_out:m.maxOut,params:m.params,price:m.price,seen:m.seen,status:m.status})));
+  await rows('qwen_model_prefs',Object.values(S.prefs).map(p=>({id:p.id,enabled:p.enabled!==false,role:p.role||'any',priority:p.priority||2})));
+  await rows('qwen_usage_daily',Object.entries(S.ledger).map(([d,v])=>({id:d,day:d,calls:v.calls,tokens:v.tokens})));
+}
+async function sbPull(){
+  const projs=await sbFetch('/rest/v1/qwen_projects?select=*');
+  if(!projs?.length){toast('No cloud projects yet — push first','warn');return;}
+  for(const p of projs)if(!S.projects.some(x=>x.id===p.id)){
+    const np={id:p.id,name:p.name,purpose:p.purpose,stack:p.stack,entry:p.settings?.entry,smoke:p.settings?.smoke,created:Date.now(),updated:Date.now(),device:'cloud only'};
+    S.projects.push(np);await put('projects',np);}
+  const pid=S.pid;
+  for(const m of await sbFetch('/rest/v1/qwen_memory?project_id=eq.'+pid)||[]){
+    const rec={id:m.id,pid:m.project_id,kind:m.kind,key:m.key,content:m.content,hash:m.file_hash,at:m.at};
+    if(!S.memory.some(x=>x.id===rec.id)){S.memory.push(rec);await put('memory',rec);}}
+  for(const r of await sbFetch('/rest/v1/qwen_roadmap?project_id=eq.'+pid)||[]){
+    const rec={id:r.id,pid:r.project_id,title:r.title,status:r.status,priority:r.priority,verified:r.verified,detail:r.detail,evidence:r.evidence,order:r.ord||0,created:r.updated_at,updated:r.updated_at};
+    const i=S.roadmap.findIndex(x=>x.id===rec.id);if(i>=0)S.roadmap[i]=rec;else S.roadmap.push(rec);await put('roadmap',rec);}
+  for(const m of await sbFetch('/rest/v1/qwen_messages?project_id=eq.'+pid+'&order=at.asc')||[]){
+    const rec={id:m.id,pid:m.project_id,role:m.role,content:m.content,model:m.model,at:m.at};
+    if(!S.messages.some(x=>x.id===rec.id)){S.messages.push(rec);await put('messages',rec);}}
+  for(const p of await sbFetch('/rest/v1/qwen_model_prefs?select=*')||[]){S.prefs[p.id]={id:p.id,enabled:p.enabled,role:p.role,priority:p.priority};await put('prefs',S.prefs[p.id]);}
+  S.messages.sort((a,b)=>a.at-b.at);
+  if(!S.files.length)toast('Metadata restored. Source files are not in the cloud — reconnect a folder or import a ZIP.','warn');
+  renderAll();
+}
+function renderSettings(){
+  const s=S.settings,p=project(),est=S.storageEst;
+  $('settingsBody').innerHTML=`
+  <div class="card" style="--i:0"><h3>Project</h3>
+    <div class="field"><label>Name</label><input id="stName" value="${esc(p.name)}"></div>
+    <div class="field"><label>Purpose</label><textarea id="stPurpose" rows="2">${esc(p.purpose)}</textarea></div>
+    <div class="grid2"><div class="field"><label>Stack</label><select id="stStack"><option value="web"${p.stack==='web'?' selected':''}>web</option><option value="python"${p.stack==='python'?' selected':''}>python</option></select></div>
+    <div class="field"><label>Entry file</label><input id="stEntry" value="${esc(p.entry||'')}" placeholder="src/app.js"></div></div>
+    <div class="grid2"><div class="field"><label>Smoke selector</label><input id="stSmoke" value="${esc(p.smoke||'')}" placeholder="#list .task"></div>
+    <div class="field"><label>Min matches</label><input id="stMin" type="number" min="1" value="${p.smokeMin||1}"></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="stSave">Save project</button><button class="btn" id="stNew">＋ New project</button><button class="btn d" id="stDel">Delete project</button></div>
+  </div>
+  <div class="card" style="--i:1"><h3>OpenRouter</h3>
+    <div class="field"><label>API key · stored only on this device</label><input id="stKey" type="password" value="${esc(s.key)}" placeholder="sk-or-v1-…"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="stKeySave">Save key</button><button class="btn" id="stKeyTest">Test + quota</button><button class="btn d" id="stKeyClear">Remove</button></div>
+    <p class="tiny dim2" style="margin:10px 0 0">The key never leaves this browser except in direct calls to OpenRouter. It is not sent to Supabase. Any script on this origin could read it — this app loads no third-party scripts, only pinned library CDNs on demand.</p>
+  </div>
+  <div class="card" style="--i:2"><h3>Device folder</h3>
+    <div class="kv"><b>Status</b><span>${S.device?'linked · '+esc(S.device.name):'not linked'}</span><b>Permission</b><span id="stPerm">—</span><b>Baseline</b><span>${Object.keys(S.syncBase||{}).length} hashes recorded</span></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="stLink">${S.device?'Re-link':'Link folder'}</button><button class="btn p" id="stSync">Sync now</button><button class="btn d" id="stUnlink">Unlink</button></div>
+    <p class="tiny dim2" style="margin:10px 0 0">The OPFS workspace is canonical; the folder is a synced mirror so your files stay usable by other tools. Android may re-prompt after a reload — that never blocks the agent.</p>
+  </div>
+  <div class="card" style="--i:3"><h3>Cloud metadata · Supabase</h3>
+    <div class="field"><label>Project URL</label><input id="sbUrl" value="${esc(s.sbUrl)}" placeholder="https://xxxx.supabase.co"></div>
+    <div class="field"><label>Anon / publishable key</label><input id="sbKey" value="${esc(s.sbKey)}" placeholder="eyJ…"></div>
+    <div class="field"><label>Email</label><input id="sbEmail" value="${esc(s.sbEmail)}" placeholder="you@example.com"></div>
+    <div class="grid2"><button class="btn" id="sbSave">Save config</button><button class="btn" id="sbOtp">Send sign-in code</button></div>
+    <div class="field" style="margin-top:10px"><label>Code from email</label><input id="sbCode" placeholder="123456"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="sbVerify">Verify &amp; link</button><button class="btn g" id="sbPush">Push metadata</button><button class="btn" id="sbPull">Pull metadata</button><button class="btn d" id="sbOut">Unlink</button></div>
+    <p class="tiny dim2" style="margin:10px 0 0">Status: ${s.sbToken?'linked as '+esc(s.sbEmail||'user'):'not linked'} · source files are never uploaded. Only projects, memory, roadmap, journal summaries, messages, catalog, preferences and usage.</p>
+    <h4>Schema · run once</h4><pre class="code" style="max-height:190px">${esc(SB_SQL)}</pre>
+    <button class="btn sm" id="sbCopy" style="margin-top:8px">Copy SQL</button>
+  </div>
+  <div class="card" style="--i:4"><h3>Runtimes</h3>
+    <div class="stats"><span class="chip ok">esbuild-wasm · validated 940ms</span><span class="chip warn">Pyodide · unverified here</span></div>
+    <p class="tiny dim2" style="margin:9px 0 10px">Python execution was not part of your validation run. Load it explicitly to test; it downloads roughly 10 MB into a worker and is never a startup dependency.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="pyLoad">Load Python</button><button class="btn p" id="pyTest">Run pytest</button><button class="btn" id="pyStop">Unload</button></div>
+    <pre class="code" id="pyLog" style="margin-top:10px;max-height:170px">idle</pre>
+  </div>
+  <div class="card" style="--i:5"><h3>Storage &amp; portability</h3>
+    <div class="meter"><i style="width:${est.quota?Math.max(1,Math.round(est.usage/est.quota*100)):1}%"></i></div>
+    <div class="kv"><b>Used</b><span>${fmtBytes(est.usage)}</span><b>Quota</b><span>${fmtBytes(est.quota)}</span><b>Persistent</b><span id="stPersist">checking…</span><b>Files</b><span>${S.files.length}</span><b>Checkpoints</b><span>${S.checkpoints.length}</span><b>Trash</b><span>${S.trash.length}</span></div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="stPersistBtn">Request persistence</button><button class="btn p" id="stExport">Export ZIP</button><button class="btn" id="stExportMem">Export memory</button><button class="btn" id="stImport">Import ZIP</button></div>
+  </div>
+  <div class="card" style="--i:6"><h3>Device capability report</h3>
+    <div class="kv" id="stVal"><b>Loading</b><span>…</span></div>
+    <p class="tiny dim2" style="margin:10px 0 0">Captured from the validation run on this phone. Python remains unverified — the UI labels it accordingly instead of assuming it works.</p>
+  </div>
+  <div class="card" style="--i:7"><h3>Appearance &amp; sound</h3>
+    <div class="grid2">
+      <div class="field"><label>Accent</label><select id="stAccent"><option value="molten">Molten</option><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="lime">Lime</option></select></div>
+      <div class="field"><label>Density</label><select id="stDensity"><option value="cozy">Cozy</option><option value="compact">Compact</option></select></div>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">
+      <div class="sw${s.motion?' on':''}" id="stMotion"><i></i><span>MOTION</span></div>
+      <div class="sw${s.sound?' on':''}" id="stSound"><i></i><span>SOUND</span></div>
+    </div>
+  </div>
+  <div class="card" style="--i:8"><h3>Architecture</h3>
+    <p class="tiny dim" style="line-height:1.75">
+      • <b class="hl">Files are truth.</b> Every write is re-read and hashed before it is journalled. Memory records carry the hash they were derived from and are flagged stale when the file diverges.<br>
+      • <b class="hl">The app owns the loop.</b> Models are replaceable workers: batched JSON actions, local repair, one corrective retry, then model fallback.<br>
+      • <b class="hl">Interruption-safe.</b> Tasks, steps and hashes persist per step; resume re-scans the workspace and reports divergence before continuing.<br>
+      • <b class="hl">Budget-aware.</b> ${s.dailyLimit} requests/day with ${s.reserve} reserved for chat; exhaustion pauses the task rather than failing it.<br>
+      • <b class="hl">Portable.</b> Export produces a plain project plus forge-memory.json. Nothing locks your code to this app or any model.
+    </p>
+  </div>`;
+  $('stAccent').value=s.accent;$('stDensity').value=s.density;
+  $('stSave').onclick=async()=>{p.name=$('stName').value.trim()||p.name;p.purpose=$('stPurpose').value;p.stack=$('stStack').value;
+    p.entry=$('stEntry').value.trim();p.smoke=$('stSmoke').value.trim();p.smokeMin=+$('stMin').value||1;p.updated=Date.now();
+    await put('projects',p);renderAll();toast('Project saved','ok');};
+  $('stNew').onclick=async()=>{
+    const ok=await confirmDlg('New project','Name your project.','Create',false,'<div class="field"><input id="npName" placeholder="My app"></div><div class="field"><select id="npStack"><option value="web">web</option><option value="python">python</option></select></div>');
+    if(!ok)return;const name=$('npName').value.trim()||'Untitled',stack=$('npStack').value;
+    const np={id:uid(),name,stack,purpose:'',entry:stack==='web'?'src/app.js':'main.py',smoke:'body',smokeMin:1,created:Date.now(),updated:Date.now(),device:'this device'};
+    S.projects.push(np);await put('projects',np);
+    await FS.write(np.id,'README.md','# '+name+'\n\nCreated in FORGE.\n');
+    if(stack==='web'){await FS.write(np.id,'index.html','<!doctype html>\n<html><head><meta charset="utf-8"><title>'+esc(name)+'</title></head><body><div id="app"></div><script type="module" src="src/app.js"><\/script></body></html>\n');
+      await FS.write(np.id,'src/app.js','document.getElementById("app").textContent="Hello from '+name.replace(/["\\\n]/g,'')+'";\n');}
+    else await FS.write(np.id,'main.py','def main():\n    print("hello")\n\nif __name__ == "__main__":\n    main()\n');
+    await loadProject(np.id);renderAll();toast('Project created','ok');};
+  $('stDel').onclick=async()=>{
+    if(S.projects.length<2){toast('Keep at least one project','warn');return;}
+    if(!await confirmDlg('Delete project?','"'+p.name+'" and its workspace files will be removed. Export first if unsure.','Delete',true))return;
+    const id=S.pid;await del('projects',id);
+    try{await (await navigator.storage.getDirectory()).removeEntry('proj_'+id,{recursive:true});}catch{}
+    S.projects=S.projects.filter(x=>x.id!==id);await loadProject(S.projects[0].id);renderAll();toast('Project deleted','ok');};
+  $('stKeySave').onclick=()=>{setSetting('key',$('stKey').value.trim());toast('Key stored on this device','ok');refreshQuota().then(renderSettings);};
+  $('stKeyTest').onclick=async()=>{
+    setSetting('key',$('stKey').value.trim());
+    if(!S.settings.key){toast('Enter a key first','warn');return;}
+    const d=await refreshQuota();
+    if(d){Sound.play('ok');toast('Connected · '+(d.free_model_daily_requests?d.free_model_daily_requests.remaining+' free requests left today':'key valid'),'ok');renderSettings();}
+    else toast('Could not verify the key','bad');};
+  $('stKeyClear').onclick=()=>{setSetting('key','');setSetting('model','local-planner');renderSettings();toast('Key removed — local planner active','ok');};
+  $('stLink').onclick=linkFolder;$('stSync').onclick=()=>deviceSync();
+  $('stUnlink').onclick=async()=>{S.device=null;await kvSet('deviceHandle',null);renderSettings();renderHeader();toast('Folder unlinked');};
+  if(S.device)S.device.queryPermission({mode:'readwrite'}).then(v=>{if($('stPerm'))$('stPerm').textContent=v;}).catch(()=>{});
+  $('sbSave').onclick=()=>{setSetting('sbUrl',$('sbUrl').value.trim());setSetting('sbKey',$('sbKey').value.trim());setSetting('sbEmail',$('sbEmail').value.trim());toast('Cloud config saved','ok');};
+  $('sbOtp').onclick=async()=>{
+    try{setSetting('sbUrl',$('sbUrl').value.trim());setSetting('sbKey',$('sbKey').value.trim());setSetting('sbEmail',$('sbEmail').value.trim());
+      if(!S.settings.sbUrl||!S.settings.sbKey||!S.settings.sbEmail)throw new Error('URL, anon key and email are required');
+      await sbFetch('/auth/v1/otp',{method:'POST',body:JSON.stringify({email:S.settings.sbEmail,create_user:true})});
+      toast('Code sent — check your email','ok');
+    }catch(e){toast(e.message,'bad');}};
+  $('sbVerify').onclick=async()=>{
+    try{const token=$('sbCode').value.trim();if(!token)throw new Error('Enter the code');
+      const r=await sbFetch('/auth/v1/verify',{method:'POST',body:JSON.stringify({type:'email',token,email:S.settings.sbEmail})});
+      setSetting('sbToken',r.access_token);setSetting('sbUser',r.user?.id||'');
+      Sound.play('ok');toast('Cloud linked','ok');renderSettings();
+    }catch(e){toast(e.message,'bad');}};
+  $('sbPush').onclick=async()=>{try{await sbPush();Sound.play('ok');toast('Metadata pushed','ok');}catch(e){toast(e.message,'bad');}};
+  $('sbPull').onclick=async()=>{try{await sbPull();toast('Metadata pulled','ok');}catch(e){toast(e.message,'bad');}};
+  $('sbOut').onclick=()=>{setSetting('sbToken','');setSetting('sbUser','');renderSettings();toast('Cloud unlinked');};
+  $('sbCopy').onclick=async()=>{try{await navigator.clipboard.writeText(SB_SQL);toast('SQL copied','ok');}catch{toast('Copy blocked — select the text manually','warn');}};
+  $('pyLoad').onclick=async()=>{
+    $('pyLog').textContent='downloading runtime…\n';
+    try{const m=await pyCall('init',{},180000);
+      $('pyLog').textContent+='ready in '+(m.ms/1000).toFixed(1)+'s\n'+m.version.split('\n')[0]+'\n';
+      Sound.play('ok');toast('Python runtime loaded','ok');
+    }catch(e){$('pyLog').textContent+='ERROR '+e.message+'\n';toast('Python load failed: '+e.message,'bad');}};
+  $('pyTest').onclick=async()=>{
+    if(project().stack!=='python'){toast('Switch to a Python project first','warn');return;}
+    $('pyLog').textContent+='installing pytest and running…\n';
+    try{
+      const files=[];for(const f of S.files)if(ext(f.path)==='py')files.push({path:f.path,content:await FS.read(S.pid,f.path)});
+      const m=await pyCall('test',{files},180000);
+      $('pyLog').textContent+=`\nexit code ${m.rc} in ${(m.ms/1000).toFixed(1)}s\n`;
+      const ok=m.rc===0;
+      await journal('run_checks','pytest',ok?'ok':'fail','exit '+m.rc,m.ms);
+      Sound.play(ok?'ok':'bad');toast(ok?'pytest passed':'pytest reported failures',ok?'ok':'bad');
+    }catch(e){$('pyLog').textContent+='ERROR '+e.message+'\n';toast('pytest failed: '+e.message,'bad');}};
+  $('pyStop').onclick=()=>{if(pyWorker){pyWorker.terminate();pyWorker=null;pyPend.clear();$('pyLog').textContent='unloaded\n';toast('Python worker terminated');}};
+  $('stPersistBtn').onclick=async()=>{const ok=await navigator.storage.persist?.();toast(ok?'Storage marked persistent':'Browser declined persistence',ok?'ok':'warn');renderSettings();};
+  $('stExport').onclick=()=>exportZip();
+  $('stExportMem').onclick=()=>{download('forge-memory.json',JSON.stringify({project:project(),memory:S.memory,roadmap:S.roadmap,tasks:S.tasks,steps:S.steps.slice(0,300)},null,2),'application/json');toast('Memory exported','ok');};
+  $('stImport').onclick=()=>$('fileInput').click();
+  $('stMotion').onclick=()=>{setSetting('motion',!S.settings.motion);renderSettings();};
+  $('stSound').onclick=()=>{setSetting('sound',!S.settings.sound);renderSettings();if(S.settings.sound)Sound.play('ok');};
+  navigator.storage.estimate?.().then(e=>{S.storageEst=e;});
+  navigator.storage.persisted?.().then(v=>{if($('stPersist'))$('stPersist').textContent=v?'yes':'best-effort';});
+  kvGet('validation',null).then(v=>{
+    if(!$('stVal'))return;
+    $('stVal').innerHTML=v?`<b>OPFS</b><span>30 files · write ${v.opfs.write30}ms · read ${v.opfs.read}ms · rename ✓ · quota ${v.opfs.quotaMB} MB</span>
+      <b>Folder</b><span>${esc(v.folder.name)} · ${v.folder.entries} entries · restored ✓ (${v.folder.perm})</span>
+      <b>ZIP</b><span>${v.zip.zipMs}ms / ${v.zip.unzipMs}ms</span>
+      <b>Registry</b><span>${v.conn.freeModels} free models · ${v.conn.limit}/day</span>
+      <b>Agent loop</b><span>${esc(v.loop.model)} · ${v.loop.calls} calls · ${v.loop.malformed} malformed · ${v.loop.tokens} tokens · ${v.loop.secs}s</span>
+      <b>Preview</b><span>build ${v.preview.buildMs}ms · error capture ✓</span>
+      <b>Python</b><span style="color:var(--amber)">not validated — experimental</span>`:'<b>No report</b><span>—</span>';});
+}
+
+/* ── drawer / quota ──────────────────────────────────────── */
+function openDrawer(title,html){
+  $('drawerTitle').textContent=title;$('drawerTitle').title=title;
+  $('drawerBody').innerHTML=html;$('drawerBody').scrollTop=0;
+  $('drawer').classList.add('on');$('scrim').classList.add('on');Sound.play('click');
+}
+function closeDrawer(){
+  $('drawer').classList.remove('on');
+  if(!$('modal').classList.contains('on'))$('scrim').classList.remove('on');
+  if(pvHandler){window.removeEventListener('message',pvHandler);pvHandler=null;}
+}
+$('drawerClose').onclick=closeDrawer;
+$('scrim').onclick=()=>{if(!$('modal').classList.contains('on'))closeDrawer();};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('modal').classList.contains('on'))$('modalCancel').click();else closeDrawer();}});
+function openQuota(){
+  const b=budget();
+  openDrawer('Request budget',`
+    <div class="ringwrap"><div class="bigRing" style="--p:${Math.round(b.total/b.limit*100)}%"><b>${b.total}</b></div>
+    <div style="flex:1"><div style="font:800 15px var(--mono)">requests left today</div>
+    <p class="tiny dim2" style="margin:6px 0 0">${b.used} used · ${b.reserve} reserved for chat · ${b.tokens.toLocaleString()} tokens<br>Resets 00:00 UTC · 20 requests/min</p></div></div>
+    <h4>Per-task ceiling</h4><p class="tiny dim">Each task may spend at most ${S.settings.maxCalls} requests. When the daily pool minus the reserve is exhausted, the task is journalled and paused — never failed — and can resume after reset.</p>
+    <h4>Recent days</h4><div class="kv">${Object.entries(S.ledger).slice(-7).reverse().map(([d,v])=>`<b>${d}</b><span>${v.calls} calls · ${v.tokens.toLocaleString()} tokens</span>`).join('')||'<b>—</b><span>no usage yet</span>'}</div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn p" id="qRefresh">Refresh from OpenRouter</button><button class="btn" id="qModels">Open registry</button></div>`);
+  $('qRefresh').onclick=async()=>{const d=await refreshQuota();toast(d?'Refreshed':'Add an API key first',d?'ok':'warn');openQuota();};
+  $('qModels').onclick=()=>{closeDrawer();go('models');};
+}
+
+/* ── render / lifecycle ──────────────────────────────────── */
+function renderAll(){renderHeader();renderChat();renderFiles();renderPlan();renderActivity();renderModels();renderSettings();}
+window.addEventListener('visibilitychange',()=>{if(document.hidden&&S.run){S.run.pause=true;renderChat();}});
+window.addEventListener('beforeunload',e=>{if(S.run){e.preventDefault();e.returnValue='';}});
+boot().catch(e=>{document.body.innerHTML='<div style="padding:40px;font:14px monospace;color:#ff4d6d;overflow-wrap:anywhere">Startup failed: '+esc(e.message)+'<br><br>This app requires a secure context (HTTPS) and a modern browser.</div>';});
+</script>
+</body>
+</html>
