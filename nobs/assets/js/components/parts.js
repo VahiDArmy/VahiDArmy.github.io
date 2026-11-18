@@ -193,6 +193,33 @@ export function reviewRowHTML(review, { selected = false, tokens = [] } = {}) {
   </tr>`;
 }
 
+export function reviewListHTML(review, { selected = false, tokens = [] } = {}) {
+  const meta = ratingInfo(review.rating);
+  const productMeta = [review.product?.category, ...(review.tags || []).slice(0, 2).map((tag) => `#${tag}`)].filter(Boolean);
+  return `<div class="list-item ${selected ? 'is-selected' : ''}" data-review-id="${esc(review.id)}" tabindex="0" role="button" aria-label="${esc(review.productName)}">
+    <div class="list-item__avatar">
+      ${avatar({ name: review.productName, emoji: review.product?.emoji || '📦', size: 'sm' })}
+      <span class="status-dot"></span>
+    </div>
+    <div class="list-item__details">
+      <div class="list-item__product-name u-truncate">${highlight(review.productName, tokens)}</div>
+      <div class="list-item__shop-vendor">
+        <div>${highlight(review.shopName, tokens)}</div>
+        <div class="u-faint">${esc(review.shop?.city || review.shop?.category || '')}</div>
+      </div>
+      <div class="list-item__rating">
+        ${ratingPill(review.rating)}
+        <span class="u-faint">${purchaseAgo(review.purchased_at)}</span>
+      </div>
+    </div>
+    <div class="list-item__actions">
+      <span class="list-item__rating-summary">${ratingPill(review.rating)}</span>
+      <a href="#" class="list-item__action" data-row-edit aria-label="ویرایش" title="ویرایش">${icon('edit', 12)}</a>
+      <a href="#" class="list-item__action" data-row-menu aria-label="گزینه‌ها" title="گزینه‌ها">${icon('more-horizontal', 12)}</a>
+    </div>
+  </div>`;
+}
+
 export function tableHeadHTML({ sort = 'newest', tokens = [] } = {}) {
   const sortIcon = (key) => {
     if (sort === key) return icon('arrow-up', 12);

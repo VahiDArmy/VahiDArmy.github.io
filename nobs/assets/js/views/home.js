@@ -1,5 +1,5 @@
 /* ==========================================================================
-   home.js — صفحه اصلی: جست‌وجوی زنده روی جدول خریدها
+   home.js — صفحه اصلی: جست‌وجوی زنده روی لیست خریدها (پیش‌فرض)
    ========================================================================== */
 
 import { getState, subscribe } from '../lib/store.js';
@@ -66,8 +66,8 @@ export function mount(container, ctx = {}) {
       </div>
     </div>
 
-    <section class="home-table" aria-label="جدول خریدها">
-      <div data-home-table>${skeletonRows(7)}</div>
+    <section class="home-list" aria-label="لیست خریدها">
+      <div data-home-list></div>
       <div data-home-pager></div>
     </section>
 
@@ -105,7 +105,7 @@ export function mount(container, ctx = {}) {
   </div>`;
 
   const body = container.querySelector('.page__inner');
-  const tableSlot = container.querySelector('[data-home-table]');
+  const listSlot = container.querySelector('[data-home-list]');
   const pagerSlot = container.querySelector('[data-home-pager]');
   const resultsLine = container.querySelector('[data-results-line]');
   const totalBadge = container.querySelector('[data-total-badge]');
@@ -143,7 +143,7 @@ export function mount(container, ctx = {}) {
       ${RATING_LIST.map(
         (meta) => `<button type="button" class="chip chip--${meta.tone} ${view.filters.ratings.includes(meta.key) ? 'is-active' : ''}" data-rating-filter="${meta.key}">
           <span class="dot" style="color:${meta.color}"></span>${esc(meta.label)} <span class="chip__count">${faNum(counts[meta.key])}</span>
-        </button>`,
+        </button>`
       ).join('')}
     `;
 
@@ -159,17 +159,14 @@ export function mount(container, ctx = {}) {
       </button>
       ${vendors
         .map(
-          (row) => `<button type="button" class="chip ${view.filters.vendorIds.includes(row.vendor.id) ? 'is-active' : ''}" data-vendor-filter="${esc(row.vendor.id)}">
+          (row) => `<button type="button" class="${view.filters.vendorIds.includes(row.vendor.id) ? 'is-active' : ''}" data-vendor-filter="${esc(row.vendor.id)}">
             <span class="dot" style="color:${esc(row.vendor.color)}"></span>${esc(row.vendor.name)}
             <span class="chip__count">${faNum(row.count)}</span>
-          </button>`,
-        )
-        .join('')}
-      ${
-        state.data.vendors.length > 6
-          ? `<button type="button" class="chip chip--dashed" data-open-filters>+${faNum(state.data.vendors.length - 6)} دیگر</button>`
-          : ''
-      }
+          </button>`
+        ).join('')}
+      ${state.data.vendors.length > 6
+        ? `<button type="button" class="chip chip--dashed" data-open-filters>+${faNum(state.data.vendors.length - 6)} دیگر</button>`
+        : ''}
     `;
 
     const count = activeFilterCount(view.filters);
@@ -221,28 +218,22 @@ export function mount(container, ctx = {}) {
       <span class="u-row u-gap-1">${icon('filter', 13)} فیلتر فعال:</span>
       ${chips
         .map(
-          (chip) =>
-            `<button type="button" class="chip chip--static" style="cursor:pointer" data-clear-filter="${chip.kind}" data-value="${esc(chip.value || '')}">
-              ${chip.color ? `<i class="vendor-dot" style="background:${chip.color}"></i>` : ''}
-              ${esc(chip.label)}
-              <span class="chip-remove">${icon('x', 10)}</span>
-            </button>`,
-        )
-        .join('')}
+          (chip) => `\n        <button type="button" class="chip chip--static" style="cursor:pointer" data-clear-filter="${chip.kind}" data-value="${esc(chip.value || '')}">
+            ${chip.color ? `<i class="vendor-dot" style="background:${chip.color}"></i>` : ''}
+            ${esc(chip.label)}
+            <span class="chip-remove">${icon('x', 10)}</span>
+          </button>`
+        ).join('')}
       <button type="button" class="chip chip--dashed" data-clear-all>پاک کردن همه</button>
     `;
   }
 
-  /* ------------------------------ جدول -------------------------------- */
+  /* ------------------------------ لیست -------------------------------- */
 
-  function renderTable() {
+  function renderList() {
     const { state, index, result } = compute();
     const total = result.total;
     const tokens = highlightTokens(view.query);
-    const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-    if (view.page > pages) view.page = pages;
-    const start = (view.page - 1) * PAGE_SIZE;
-    const pageItems = result.items.slice(start, start + PAGE_SIZE);
 
     resultsLine.innerHTML = view.query
       ? `نتیجه جست‌وجو برای «<b>${esc(view.query)}</b>» — <b>${faNum(total)}</b> مورد`
@@ -250,30 +241,30 @@ export function mount(container, ctx = {}) {
     totalBadge.textContent = `${faNum(total)} مورد`;
 
     if (!state.data.reviews.length) {
-      tableSlot.innerHTML = firstRunHTML();
+      listSlot.innerHTML = firstRunHTML();
       pagerSlot.innerHTML = '';
       summarySlot.innerHTML = '';
       return;
     }
 
     if (!total) {
-      tableSlot.innerHTML = emptyState({
+      listSlot.innerHTML = emptyState({
         iconName: 'search',
         title: 'چیزی با این جست‌وجو پیدا نشد',
         text: 'املای عبارت را بررسی کن، فیلترها را بردار یا از جست‌وجوی ساده‌تری استفاده کن.',
-        actions: `
-          <button type="button" class="btn btn--soft btn--sm" data-clear-all>پاک کردن جست‌وجو و فیلترها</button>
-          <button type="button" class="btn btn--ghost btn--sm" data-new-review>ثبت خرید جدید</button>
-        `,
+        actions: `\n          <button type="button" class="btn btn--soft btn--sm" data-clear-all>پاک کردن جست‌وجو و فیلترها</button>\n          <button type="button" class="btn btn--ghost btn--sm" data-new-review>ثبت خرید جدید</button>\n        `,
       });
       pagerSlot.innerHTML = '';
       summarySlot.innerHTML = '';
       return;
     }
 
-    tableSlot.innerHTML = `<div class="table-scroll">
-      <table class="table table--reviews table--stack">
-        ${tableHeadHTML({ sort: view.sort })}
+    const start = (view.page - 1) * PAGE_SIZE;
+    const pageItems = result.items.slice(start, start + PAGE_SIZE);
+
+    listSlot.innerHTML = `<div class="table-scroll">
+      <table class="table table--reviews">
+        ${tableHeadHTML({ sort: view.sort, tokens })}
         <tbody>
           ${pageItems.map((review) => reviewRowHTML(review, { selected: view.selection.has(review.id), tokens })).join('')}
         </tbody>
@@ -292,15 +283,13 @@ export function mount(container, ctx = {}) {
       <code class="tag">-کلمه حذف</code>
       ${parsed.tokens.length ? `<span>· ${faNum(parsed.tokens.length)} شرط فعال</span>` : ''}
     `;
-
-    updateBulkBar();
   }
 
   function firstRunHTML() {
     return `<div class="first-run" style="margin:16px">
       <div class="empty__ico" style="margin:0">${icon('cart', 26)}</div>
       <h2>اولین خریدت را ثبت کن</h2>
-      <p>هنوز هیچ تجربه‌ای ذخیره نشده. با ثبت اولین خرید، جدول و تحلیل‌ها ساخته می‌شوند.
+      <p>هنوز هیچ تجربه‌ای ذخیره نشده. با ثبت اولین خرید، لیست و تحلیل‌ها ساخته می‌شوند.
       هر ترکیب محصول × فروشگاه × پلتفرم فقط یک بار امتیاز می‌گیرد.</p>
       <div class="first-run__steps">
         <span class="first-run__step">۱. محصول را انتخاب کن</span>
@@ -331,7 +320,7 @@ export function mount(container, ctx = {}) {
     body.appendChild(bar);
   }
 
-  /* ------------------------------ رویدادها ----------------------------- */
+  /* ------------------------------ رویداها ----------------------------- */
 
   function setQuery(value) {
     view.query = value;
@@ -345,7 +334,7 @@ export function mount(container, ctx = {}) {
   }
 
   const debouncedRender = debounce(() => {
-    renderTable();
+    renderList();
     renderChips();
     updateQuery({ q: view.query });
   }, 130);
@@ -359,7 +348,7 @@ export function mount(container, ctx = {}) {
       view.filters.ratings = Array.from(set);
     }
     view.page = 1;
-    renderTable();
+    renderList();
     renderChips();
     updateQuery({ rating: view.filters.ratings.join(',') });
   }
@@ -373,7 +362,7 @@ export function mount(container, ctx = {}) {
       view.filters.vendorIds = Array.from(set);
     }
     view.page = 1;
-    renderTable();
+    renderList();
     renderChips();
   }
 
@@ -383,14 +372,14 @@ export function mount(container, ctx = {}) {
     view.page = 1;
     view.selection.clear();
     searchInput.value = '';
-    renderTable();
+    renderList();
     renderChips();
     updateQuery({ q: '' });
   }
 
   container.addEventListener('input', (event) => {
     const target = event.target;
-    if (target.matches('[data-home-search], [data-home-search-secondary]')) {
+    if (target.matches('[data-home-search]')) {
       setQuery(target.value);
     }
   });
@@ -447,7 +436,7 @@ export function mount(container, ctx = {}) {
       if (kind === 'again') view.filters.buyAgainOnly = false;
       if (kind === 'nobad') view.filters.noBad = false;
       view.page = 1;
-      renderTable();
+      renderList();
       renderChips();
       return;
     }
@@ -476,7 +465,7 @@ export function mount(container, ctx = {}) {
       try {
         await repo.reload();
         renderAll();
-        toast.success('جدول به‌روزرسانی شد.');
+        toast.success('لیست به‌روزرسانی شد.');
       } catch (error) {
         toast.error(error.message);
       }
@@ -493,7 +482,7 @@ export function mount(container, ctx = {}) {
       view.page = 1;
       container.querySelector('[data-sort].select').value = view.sort;
       updateQuery({ sort: view.sort });
-      renderTable();
+      renderList();
       return;
     }
 
@@ -504,14 +493,14 @@ export function mount(container, ctx = {}) {
       if (value === 'prev') view.page = Math.max(1, view.page - 1);
       else if (value === 'next') view.page = Math.min(pages, view.page + 1);
       else view.page = Number(value);
-      renderTable();
-      tableSlot.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      renderList();
+      listSlot.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
     if (target.closest('[data-bulk-clear]')) {
       view.selection.clear();
-      renderTable();
+      renderList();
       return;
     }
 
@@ -541,13 +530,13 @@ export function mount(container, ctx = {}) {
       const ids = result.items.slice(start, start + PAGE_SIZE).map((review) => review.id);
       if (view.selection.size >= ids.length && ids.every((id) => view.selection.has(id))) ids.forEach((id) => view.selection.delete(id));
       else ids.forEach((id) => view.selection.add(id));
-      renderTable();
+      renderList();
       return;
     }
 
     const check = target.closest('[data-row-check]');
     if (check) {
-      const row = check.closest('tr');
+      const row = check.closest('.list-item, tr[data-review-id]');
       const id = row?.dataset.reviewId;
       if (id) {
         if (check.checked) view.selection.add(id);
@@ -560,7 +549,7 @@ export function mount(container, ctx = {}) {
 
     const editBtn = target.closest('[data-row-edit]');
     if (editBtn) {
-      const id = editBtn.closest('tr')?.dataset.reviewId;
+      const id = editBtn.closest('.list-item, tr[data-review-id]')?.dataset.reviewId;
       if (id) openReviewForm({ reviewId: id, onSaved: () => renderAll() });
       return;
     }
@@ -568,7 +557,7 @@ export function mount(container, ctx = {}) {
     const menuBtn = target.closest('[data-row-menu]');
     if (menuBtn) {
       event.stopPropagation();
-      const id = menuBtn.closest('tr')?.dataset.reviewId;
+      const id = menuBtn.closest('.list-item, tr[data-review-id]')?.dataset.reviewId;
       const review = getState().data.reviews.find((row) => row.id === id);
       if (!review) return;
       const index = buildIndex(getState().data);
@@ -603,9 +592,9 @@ export function mount(container, ctx = {}) {
       return;
     }
 
-    const row = target.closest('tr[data-review-id]');
-    if (row && !target.closest('button') && !target.closest('input')) {
-      openReviewSheet(row.dataset.reviewId);
+    const listItem = target.closest('.list-item, tr[data-review-id]');
+    if (listItem && !target.closest('button') && !target.closest('input')) {
+      openReviewSheet(listItem.dataset.reviewId);
     }
   });
 
@@ -614,16 +603,16 @@ export function mount(container, ctx = {}) {
       view.sort = event.target.value;
       view.page = 1;
       updateQuery({ sort: view.sort });
-      renderTable();
+      renderList();
     }
   });
 
   container.addEventListener('keydown', (event) => {
-    const row = event.target.closest('tr[data-review-id]');
-    if (row && (event.key === 'Enter' || event.key === ' ')) {
+    const listItem = event.target.closest('.list-item, tr[data-review-id]');
+    if (listItem && (event.key === 'Enter' || event.key === ' ')) {
       if (event.target.closest('button, input')) return;
       event.preventDefault();
-      openReviewSheet(row.dataset.reviewId);
+      openReviewSheet(listItem.dataset.reviewId);
     }
   });
 
@@ -653,10 +642,10 @@ export function mount(container, ctx = {}) {
               <label class="field__label">امتیاز</label>
               <div class="chips">
                 ${RATING_LIST.map(
-                  (meta) =>
-                    `<button type="button" class="chip chip--${meta.tone} ${view.filters.ratings.includes(meta.key) ? 'is-active' : ''}" data-modal-rating="${meta.key}">${esc(meta.label)}</button>`,
-                ).join('')}
-              </div>
+                  (meta) => `
+                    <button type="button" class="chip chip--${meta.tone} ${view.filters.ratings.includes(meta.key) ? 'is-active' : ''}" data-modal-rating="${meta.key}">${esc(meta.label)}</button>
+                  `).join('')}
+                </div>
             </div>
           </div>
 
@@ -711,7 +700,7 @@ export function mount(container, ctx = {}) {
             <label class="switch-row">
               <span class="switch-row__text">
                 <span class="switch-row__title">بدون موارد افتضاح</span>
-                <span class="switch-row__sub">فقط تجربه‌های خوب و نه‌خوب</span>
+                <span class="switch-row__sub">فقط تجربه‌های خوب و nah‑khab</span>
               </span>
               <button type="button" class="switch" role="switch" aria-checked="${view.filters.noBad}" data-switch="noBad"></button>
             </label>
@@ -793,7 +782,7 @@ export function mount(container, ctx = {}) {
           };
           view.page = 1;
           close();
-          renderTable();
+          renderList();
           renderChips();
           toast.success('فیلتر اعمال شد.');
         });
@@ -807,7 +796,7 @@ export function mount(container, ctx = {}) {
 
   function renderAll() {
     renderChips();
-    renderTable();
+    renderList();
   }
 
   const unsubscribe = subscribe((state, keys) => {
