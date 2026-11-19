@@ -23,6 +23,13 @@ let activityListEl = null;
 let activityExpanded = false;
 let activityCounter = 0;
 
+// Streaming DOM elements
+let currentMsgEl = null;
+let currentContentEl = null;
+let currentReasoningEl = null;
+let currentRawContent = '';
+let currentRawReasoning = '';
+
 export async function renderChat(root, ctx) {
   clear(root);
   const project = state.currentProject;
@@ -105,14 +112,12 @@ function populateModelSelect() {
   if (!modelSelect) return;
   clear(modelSelect);
   
-  // Filter to show only FREE models that are enabled by the user.
   const freeModels = state.models.filter((m) => {
     const pref = state.modelPrefs.get(m.id);
     const enabled = pref ? pref.enabled !== false : true;
     return m.is_free && enabled;
   });
 
-  // Sort: OpenRouter / :free models first, then by context length.
   freeModels.sort((a, b) => {
     const aIsTop = a.id.startsWith('openrouter/') || a.id.includes(':free');
     const bIsTop = b.id.startsWith('openrouter/') || b.id.includes(':free');
@@ -219,6 +224,7 @@ async function onSend(ctx) {
   inputEl.style.height = 'auto';
   setRunningUI(true);
   state.running = true;
+  currentMsgEl = null; // Reset streaming state
 
   try {
     const userMsg = await addMessage(project.id, { role: 'user', content: text });
@@ -285,10 +291,8 @@ async function onSend(ctx) {
       onEvent: (evt) => handleAgentEvent(evt, ctx),
     });
 
-    const assistantMsg = await addMessage(project.id, { role: 'assistant', content: result.content });
-    state.messages.push(assistantMsg);
-    renderMessage(assistantMsg);
-    scrollToBottom();
+    // Refresh messages from DB to ensure consistent view after all tools and streams
+    await loadMessages();
 
     if (result.awaitingUser) {
       setStatus('Awaiting your input', false);
@@ -302,23 +306,17 @@ async function onSend(ctx) {
     if (err.name === 'AbortError') {
       toast('Stopped', 'info');
       setStatus('Stopped', false);
+      await loadMessages();
     } else {
       toast(err.message || String(err), 'error');
       setStatus(`Error: ${err.message || err}`, false);
-      const assistantMsg = await addMessage(project.id, {
-        role: 'assistant',
-        content: `⚠️ ${err.message || err}`,
-      }).catch(() => null);
-      if (assistantMsg) {
-        state.messages.push(assistantMsg);
-        renderMessage(assistantMsg);
-        scrollToBottom();
-      }
+      await loadMessages();
     }
   } finally {
     state.running = false;
     setRunningUI(false);
     abortController = null;
+    currentMsgEl = null;
   }
 }
 
@@ -338,12 +336,47 @@ function handleAgentEvent(evt, ctx) {
       if (evt.status === 'thinking') setStatus(`Thinking (step ${evt.iteration})…`);
       else if (evt.status === 'executing_tools') setStatus(`Running ${evt.count} tool(s)…`);
       break;
+      
+    case 'stream': {
+      if (!currentMsgEl) {
+        currentMsgEl = el('div', { class: 'msg msg-assistant' });
+        currentReasoningEl = el('div', { class: 'reasoning-box hidden' });
+        currentContentEl = el('div', { class: 'content-box' });
+        currentMsgEl.appendChild(currentReasoningEl);
+        currentMsgEl.appendChild(currentContentEl);
+        messageListEl.appendChild(currentMsgEl);
+        currentRawContent = '';
+        currentRawReasoning = '';
+      }
+      
+      if (evt.streamType === 'reasoning') {
+        currentRawReasoning += evt.text;
+        currentReasoningEl.classList.remove('hidden');
+        if (!currentReasoningEl.querySelector('.reasoning-content')) {
+          currentReasoningEl.innerHTML = '<details open><summary>Thinking...</summary><div class="reasoning-content"></div></details>';
+        }
+        currentReasoningEl.querySelector('.reasoning-content').textContent = currentRawReasoning;
+      } else if (evt.streamType === 'text') {
+        currentRawContent += evt.text;
+        currentContentEl.textContent = currentRawContent;
+      }
+      scrollToBottom();
+      break;
+    }
+
     case 'tool_start': {
+      if (currentMsgEl) {
+        if (currentRawContent) {
+           currentContentEl.innerHTML = renderMarkdown(currentRawContent);
+        }
+        currentMsgEl = null; // Finalize current stream bubble before tools run
+      }
       const id = ++activityCounter;
       evt.call._activityId = id;
       pushActivity({ id, status: 'pending', label: `${evt.call.name}(${shortArgs(evt.call.arguments)})` });
       break;
     }
+    
     case 'tool_end': {
       const id = evt.call._activityId;
       if (!id) return;
@@ -353,6 +386,7 @@ function handleAgentEvent(evt, ctx) {
       });
       break;
     }
+    
     case 'file_changed':
       ctx.notifyFileChanged?.(evt.path);
       break;

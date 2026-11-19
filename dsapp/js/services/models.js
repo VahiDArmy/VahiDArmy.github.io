@@ -112,7 +112,6 @@ export function activeModels(models, prefs) {
 
 export function pickDefaultModel(models, prefs) {
   const active = activeModels(models, prefs);
-  // Prioritize free models that support tools and have a decent context window.
   const preferred = active
     .filter((m) => m.is_free && m.supports_tools && (m.context_length || 0) >= 32000)
     .sort((a, b) => {
@@ -122,7 +121,6 @@ export function pickDefaultModel(models, prefs) {
       if (!aIsTop && bIsTop) return 1;
       return 0;
     });
-  
   return preferred[0] || active.find((m) => m.is_free) || active.find((m) => m.supports_tools) || active[0] || null;
 }
 
@@ -132,7 +130,7 @@ export function modelSupportsTools(modelId, models) {
 }
 
 export async function callChatCompletion({
-  model, messages, tools = null, signal, useJsonProtocol = false,
+  model, messages, tools = null, signal, useJsonProtocol = false, onStream
 }) {
   const key = getOpenRouterKey();
   if (!key) throw new Error('OpenRouter API key is missing. Add it in Settings.');
@@ -142,6 +140,7 @@ export async function callChatCompletion({
     messages,
     temperature: 0.2,
     max_tokens: 8192,
+    stream: true,
   };
   if (tools && !useJsonProtocol) {
     body.tools = tools;
@@ -166,21 +165,89 @@ export async function callChatCompletion({
     err.status = res.status;
     throw err;
   }
-  const json = await res.json();
-  const msg = json.choices?.[0]?.message;
-  if (!msg) throw new Error('OpenRouter returned no message');
 
-  const toolCalls = (msg.tool_calls || []).map((tc) => {
+  if (!res.body) throw new Error('Response body is missing');
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let accumulatedContent = '';
+  let accumulatedReasoning = '';
+  let accumulatedToolCalls = [];
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || !trimmed.startsWith('data: ')) continue;
+      const data = trimmed.slice(6);
+      if (data === '[DONE]') break;
+
+      try {
+        const parsed = JSON.parse(data);
+        const delta = parsed.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.reasoning_content || delta.reasoning) {
+          const rText = delta.reasoning_content || delta.reasoning;
+          accumulatedReasoning += rText;
+          onStream?.({ type: 'reasoning', text: rText });
+        }
+
+        if (delta.content) {
+          accumulatedContent += delta.content;
+          onStream?.({ type: 'text', text: delta.content });
+        }
+
+        if (delta.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            const idx = tc.index ?? 0;
+            if (!accumulatedToolCalls[idx]) {
+              accumulatedToolCalls[idx] = { 
+                id: tc.id || `call_${idx}`, 
+                name: tc.function?.name || '', 
+                arguments: '' 
+              };
+            }
+            if (tc.function?.arguments) {
+              accumulatedToolCalls[idx].arguments += tc.function.arguments;
+            }
+          }
+        }
+      } catch (e) {
+        // Ignore incomplete JSON chunks
+      }
+    }
+  }
+
+  const toolCalls = accumulatedToolCalls.filter(Boolean).map(tc => {
     let args = {};
-    try { args = JSON.parse(tc.function?.arguments || '{}'); } catch { args = {}; }
-    return { id: tc.id, name: tc.function?.name, arguments: args };
+    try { args = JSON.parse(tc.arguments || '{}'); } catch { args = {}; }
+    return { id: tc.id, name: tc.name, arguments: args };
   });
 
-  return { message: msg, content: msg.content || '', toolCalls, raw: json };
+  const message = {
+    role: 'assistant',
+    content: accumulatedContent || null,
+    ...(toolCalls.length ? { 
+      tool_calls: toolCalls.map(tc => ({ 
+        id: tc.id, 
+        type: 'function', 
+        function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } 
+      })) 
+    } : {})
+  };
+
+  return { message, content: accumulatedContent, toolCalls, reasoning: accumulatedReasoning };
 }
 
 export async function callModelWithReliability({
-  modelId, messages, tools, signal, models, prefs, useJsonProtocol = false,
+  modelId, messages, tools, signal, models, prefs, useJsonProtocol = false, onStream
 }) {
   const candidates = [];
   const primary = models.find((m) => m.id === modelId);
@@ -205,7 +272,7 @@ export async function callModelWithReliability({
         signal?.addEventListener('abort', onAbort);
         try {
           return await callChatCompletion({
-            model: model.id, messages, tools, signal: timeout.signal, useJsonProtocol,
+            model: model.id, messages, tools, signal: timeout.signal, useJsonProtocol, onStream
           });
         } finally {
           clearTimeout(timer);

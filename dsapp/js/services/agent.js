@@ -1,7 +1,7 @@
 import { AGENT_LIMITS } from '../config.js';
 import { getToolDefinitions, executeTool } from './tools.js';
 import { callModelWithReliability, modelSupportsTools } from './models.js';
-import { updateTask, logOperation, setAppState, addMemory } from './db.js';
+import { updateTask, logOperation, setAppState, addMemory, addMessage } from './db.js';
 import { state } from '../state.js';
 import { truncate } from './context.js';
 
@@ -53,10 +53,18 @@ export async function runAgent({ project, fs, task, initialMessages, onEvent, si
         prefs: state.modelPrefs,
         signal,
         useJsonProtocol: !nativeTools,
+        onStream: (streamEvt) => {
+          onEvent({ type: 'stream', streamType: streamEvt.type, text: streamEvt.text });
+        }
       });
 
       if (nativeTools) messages.push(response.message);
       else messages.push({ role: 'assistant', content: response.content });
+
+      // Save intermediate assistant thoughts to DB so they aren't lost on refresh
+      if (response.content) {
+        await addMessage(project.id, { role: 'assistant', content: response.content }).catch(() => {});
+      }
 
       let toolCalls = response.toolCalls || [];
 
@@ -98,7 +106,6 @@ export async function runAgent({ project, fs, task, initialMessages, onEvent, si
 
         if (result.awaiting_user) {
           onEvent({ type: 'awaiting_user', question: result.question, call, result });
-          // Mark as blocked, not running: the user is the one who must answer.
           await updateTask(task.id, {
             status: 'blocked',
             result_summary: `Awaiting user: ${result.question}`,
