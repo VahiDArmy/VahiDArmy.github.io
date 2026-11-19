@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase.js';
-import { OPENROUTER_BASE, STORAGE, AGENT_LIMITS } from '../config.js';
+import { OPENROUTER_BASE, STORAGE, AGENT_LIMITS, DEFAULT_SETTINGS } from '../config.js';
+import { state } from '../state.js';
 
 const OPENROUTER_KEY_LABEL = 'devspace.openrouter_key';
 
@@ -74,16 +75,10 @@ export function shouldSyncModels() {
 }
 
 export async function loadModelsAndPrefs() {
-  const { data: models, error } = await supabase
-    .from('ds_models')
-    .select('*')
-    .eq('is_available', true)
-    .order('name');
+  const { data: models, error } = await supabase.from('ds_models').select('*').eq('is_available', true).order('name');
   if (error) throw error;
 
-  const { data: prefs, error: prefErr } = await supabase
-    .from('ds_user_model_prefs')
-    .select('*');
+  const { data: prefs, error: prefErr } = await supabase.from('ds_user_model_prefs').select('*');
   if (prefErr) throw prefErr;
 
   const prefMap = new Map((prefs || []).map((p) => [p.model_id, p]));
@@ -135,11 +130,12 @@ export async function callChatCompletion({
   const key = getOpenRouterKey();
   if (!key) throw new Error('OpenRouter API key is missing. Add it in Settings.');
 
+  const settings = state.settings || DEFAULT_SETTINGS;
   const body = {
     model,
     messages,
-    temperature: 0.2,
-    max_tokens: 8192,
+    temperature: settings.temperature,
+    max_tokens: settings.maxTokens,
     stream: true,
   };
   if (tools && !useJsonProtocol) {
@@ -208,20 +204,12 @@ export async function callChatCompletion({
           for (const tc of delta.tool_calls) {
             const idx = tc.index ?? 0;
             if (!accumulatedToolCalls[idx]) {
-              accumulatedToolCalls[idx] = { 
-                id: tc.id || `call_${idx}`, 
-                name: tc.function?.name || '', 
-                arguments: '' 
-              };
+              accumulatedToolCalls[idx] = { id: tc.id || `call_${idx}`, name: tc.function?.name || '', arguments: '' };
             }
-            if (tc.function?.arguments) {
-              accumulatedToolCalls[idx].arguments += tc.function.arguments;
-            }
+            if (tc.function?.arguments) accumulatedToolCalls[idx].arguments += tc.function.arguments;
           }
         }
-      } catch (e) {
-        // Ignore incomplete JSON chunks
-      }
+      } catch (e) { /* Ignore incomplete JSON chunks */ }
     }
   }
 
@@ -235,11 +223,7 @@ export async function callChatCompletion({
     role: 'assistant',
     content: accumulatedContent || null,
     ...(toolCalls.length ? { 
-      tool_calls: toolCalls.map(tc => ({ 
-        id: tc.id, 
-        type: 'function', 
-        function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } 
-      })) 
+      tool_calls: toolCalls.map(tc => ({ id: tc.id, type: 'function', function: { name: tc.name, arguments: JSON.stringify(tc.arguments) } })) 
     } : {})
   };
 

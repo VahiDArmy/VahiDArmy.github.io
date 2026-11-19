@@ -1,3 +1,13 @@
+import { DEFAULT_SETTINGS, STORAGE } from './config.js';
+
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE.settings);
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return { ...DEFAULT_SETTINGS };
+}
+
 export const state = {
   user: null,
   projects: [],
@@ -14,10 +24,16 @@ export const state = {
   selectedModelId: null,
   running: false,
   pendingQuestion: null,
+  settings: loadSettings(),
 };
 
 export function setState(patch) {
   Object.assign(state, patch);
+}
+
+export function saveSettings(patch) {
+  state.settings = { ...state.settings, ...patch };
+  localStorage.setItem(STORAGE.settings, JSON.stringify(state.settings));
 }
 
 export function resetProjectState() {

@@ -1,11 +1,11 @@
 import { el, clear, timeAgo } from '../dom.js';
 import { renderMarkdown } from '../../lib/markdown.js';
 import { toast } from '../toast.js';
-import { state } from '../../state.js';
-import { promptDialog } from '../modal.js';
+import { state, saveSettings } from '../../state.js';
+import { promptDialog, openModal } from '../modal.js';
 import {
   listMessages, addMessage, createTask, listRoadmap, listMemory,
-  findInterruptedTasks, updateTask,
+  findInterruptedTasks, updateTask, deleteMessagesByIds, updateMessage
 } from '../../services/db.js';
 import { selectRelevantFiles, buildContext, buildInitialAgentMessages } from '../../services/context.js';
 import { runAgent } from '../../services/agent.js';
@@ -80,7 +80,15 @@ export async function renderChat(root, ctx) {
   });
   populateModelSelect();
   controls.appendChild(modelSelect);
+
+  controls.appendChild(el('button', {
+    class: 'btn btn-sm btn-ghost',
+    title: 'Generation Settings',
+    onclick: () => showSettingsModal(),
+  }, '⚙️'));
+
   controls.appendChild(el('div', { class: 'spacer' }));
+  
   activityToggleEl = el('button', {
     class: 'btn btn-ghost btn-sm',
     onclick: () => {
@@ -106,6 +114,38 @@ export async function renderChat(root, ctx) {
 
   await loadMessages();
   await detectInterrupted(ctx);
+}
+
+function showSettingsModal() {
+  const tempInput = el('input', { class: 'input', type: 'number', step: '0.1', min: '0', max: '2' });
+  tempInput.value = state.settings.temperature;
+  
+  const tokenInput = el('input', { class: 'input', type: 'number', step: '256', min: '256', max: '32768' });
+  tokenInput.value = state.settings.maxTokens;
+
+  openModal({
+    title: 'Generation Settings',
+    body: el('div', {},
+      el('div', { class: 'form-group' },
+        el('label', { class: 'label' }, 'Temperature (0.0 = precise, 2.0 = creative)'),
+        tempInput
+      ),
+      el('div', { class: 'form-group' },
+        el('label', { class: 'label' }, 'Max Tokens (Max output length)'),
+        tokenInput
+      )
+    ),
+    actions: [
+      { label: 'Cancel' },
+      { label: 'Save', variant: 'primary', onClick: () => {
+        saveSettings({
+          temperature: parseFloat(tempInput.value) || 0.2,
+          maxTokens: parseInt(tokenInput.value, 10) || 8192
+        });
+        toast('Settings saved', 'success');
+      } }
+    ]
+  });
 }
 
 function populateModelSelect() {
@@ -139,7 +179,7 @@ function populateModelSelect() {
   }
 
   if (!freeModels.length) {
-    modelSelect.appendChild(el('option', { value: '' }, 'No free models available (Check Models tab)'));
+    modelSelect.appendChild(el('option', { value: '' }, 'No free models available'));
   }
 }
 
@@ -150,22 +190,40 @@ async function loadMessages() {
   try {
     const msgs = await listMessages(project.id, 200);
     state.messages = msgs;
-    for (const m of msgs) renderMessage(m);
+    for (const m of msgs) renderMessage(m, project);
     scrollToBottom();
   } catch (err) {
     messageListEl.appendChild(el('div', { class: 'empty' }, `Failed to load messages: ${err.message}`));
   }
 }
 
-function renderMessage(m) {
+function renderMessage(m, project) {
   if (!messageListEl) return;
   if (m.role === 'tool' || m.role === 'system') return;
+  
   const cls = m.role === 'user' ? 'msg msg-user' : 'msg msg-assistant';
+  const isError = m.role === 'assistant' && m.content.startsWith('⚠️');
+  
   const body = m.role === 'assistant'
     ? el('div', { html: renderMarkdown(m.content) })
     : el('div', {}, m.content);
+
   const node = el('div', { class: cls }, body);
-  if (m.created_at) node.appendChild(el('div', { class: 'msg-meta' }, timeAgo(m.created_at)));
+
+  const metaRow = el('div', { class: 'msg-meta row', style: 'justify-content: space-between;' });
+  metaRow.appendChild(el('span', {}, timeAgo(m.created_at)));
+  
+  const actions = el('div', { class: 'row gap-sm' });
+  if (!state.running) {
+    if (m.role === 'user') {
+      actions.appendChild(el('button', { class: 'btn btn-ghost btn-sm', onclick: () => onEditMessage(m, project) }, 'Edit'));
+    } else if (m.role === 'assistant') {
+      actions.appendChild(el('button', { class: 'btn btn-ghost btn-sm', onclick: () => onRetryMessage(m, project) }, 'Retry'));
+    }
+  }
+  metaRow.appendChild(actions);
+  node.appendChild(metaRow);
+
   messageListEl.appendChild(node);
 }
 
@@ -212,24 +270,88 @@ function onStop() {
   if (abortController) abortController.abort();
 }
 
+async function onEditMessage(m, project) {
+  const newText = await promptDialog({
+    title: 'Edit Message',
+    label: 'Editing will delete all subsequent messages in this branch and start a new one.',
+    defaultValue: m.content,
+    multiline: true,
+  });
+  
+  if (!newText || newText === m.content) return;
+
+  try {
+    // 1. Truncate history in DB (find all messages after this one)
+    const index = state.messages.findIndex(x => x.id === m.id);
+    if (index !== -1) {
+      const toDelete = state.messages.slice(index + 1).map(x => x.id);
+      await deleteMessagesByIds(toDelete);
+      await updateMessage(m.id, newText);
+      
+      // 2. Refresh UI
+      await loadMessages();
+      
+      // 3. Trigger new run
+      await triggerAgent(project, newText, state.selectedModelId);
+    }
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+async function onRetryMessage(m, project) {
+  try {
+    // Find the preceding user message to retry
+    const index = state.messages.findIndex(x => x.id === m.id);
+    if (index === -1) return;
+    
+    let userMsg = null;
+    for (let i = index - 1; i >= 0; i--) {
+      if (state.messages[i].role === 'user') {
+        userMsg = state.messages[i];
+        break;
+      }
+    }
+    
+    if (!userMsg) {
+      toast('Could not find the original prompt to retry.', 'error');
+      return;
+    }
+
+    // Delete messages from the assistant response onwards
+    const toDelete = state.messages.slice(index).map(x => x.id);
+    await deleteMessagesByIds(toDelete);
+    
+    await loadMessages();
+    await triggerAgent(project, userMsg.content, state.selectedModelId);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
 async function onSend(ctx) {
   const project = state.currentProject;
   if (!project || !inputEl) return;
   const text = inputEl.value.trim();
   if (!text) return;
-  const modelId = state.selectedModelId;
-  if (!modelId) { toast('Select a model first', 'error'); return; }
-
+  
   inputEl.value = '';
   inputEl.style.height = 'auto';
+  
+  await triggerAgent(project, text, state.selectedModelId);
+}
+
+async function triggerAgent(project, text, modelId) {
+  if (!modelId) { toast('Select a model first', 'error'); return; }
+  
   setRunningUI(true);
   state.running = true;
-  currentMsgEl = null; // Reset streaming state
+  currentMsgEl = null;
 
   try {
     const userMsg = await addMessage(project.id, { role: 'user', content: text });
     state.messages.push(userMsg);
-    renderMessage(userMsg);
+    renderMessage(userMsg, project);
     scrollToBottom();
 
     const task = await createTask(project.id, {
@@ -291,7 +413,6 @@ async function onSend(ctx) {
       onEvent: (evt) => handleAgentEvent(evt, ctx),
     });
 
-    // Refresh messages from DB to ensure consistent view after all tools and streams
     await loadMessages();
 
     if (result.awaitingUser) {
@@ -310,6 +431,7 @@ async function onSend(ctx) {
     } else {
       toast(err.message || String(err), 'error');
       setStatus(`Error: ${err.message || err}`, false);
+      await addMessage(project.id, { role: 'assistant', content: `⚠️ ${err.message || err}` });
       await loadMessages();
     }
   } finally {

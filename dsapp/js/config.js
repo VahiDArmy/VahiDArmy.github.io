@@ -9,6 +9,7 @@ export const STORAGE = {
   lastModelSync: 'devspace.last_model_sync',
   lastProjectId: 'devspace.last_project',
   theme: 'devspace.theme',
+  settings: 'devspace.generation_settings',
 };
 
 export const FS_SKIP_DIRS = new Set([
@@ -23,4 +24,9 @@ export const AGENT_LIMITS = {
   maxContextChars: 90000,
   modelTimeoutMs: 120000,
   maxRetries: 3,
+};
+
+export const DEFAULT_SETTINGS = {
+  temperature: 0.2,
+  maxTokens: 8192,
 };
