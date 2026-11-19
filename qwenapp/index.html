@@ -244,6 +244,68 @@ iframe.pv{width:100%;max-width:100%;height:330px;border:1px solid var(--line2);b
 .banner .grow{flex:1;min-width:0;overflow-wrap:anywhere}
 .hl{color:var(--acc);font-weight:700}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ── live run theatre ────────────────────────────────────── */
+.live{position:fixed;inset:0;z-index:55;display:none;flex-direction:column;background:var(--ink);opacity:0;transform:scale(.985);transition:opacity .26s ease,transform .26s cubic-bezier(.2,.85,.25,1)}
+.live.on{display:flex;opacity:1;transform:none}
+.live-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.live-bg .orb{position:absolute;border-radius:50%;mix-blend-mode:screen;opacity:.55}
+.live-bg .o1{width:70vmax;height:70vmax;left:-26vmax;top:-30vmax;background:radial-gradient(circle,rgba(192,76,253,.34),transparent 62%);animation:drift2 40s ease-in-out infinite}
+.live-bg .o2{width:64vmax;height:64vmax;right:-24vmax;bottom:-28vmax;background:radial-gradient(circle,rgba(255,122,26,.30),transparent 62%);animation:drift1 52s ease-in-out infinite}
+.live-bg .o3{width:48vmax;height:48vmax;left:30%;top:35%;background:radial-gradient(circle,rgba(37,213,238,.18),transparent 64%);animation:drift1 64s ease-in-out infinite reverse}
+.live-bg .scan{position:absolute;left:0;right:0;height:180px;background:linear-gradient(180deg,transparent,rgba(37,213,238,.055),transparent);animation:scan 9s linear infinite}
+@keyframes scan{0%{transform:translateY(-200px)}100%{transform:translateY(105vh)}}
+.live-top{position:relative;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;border-bottom:1px solid var(--line);background:rgba(8,12,24,.72);backdrop-filter:blur(16px)}
+.live-id{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.lpulse{width:11px;height:11px;flex:0 0 11px;border-radius:50%;background:var(--cyan);box-shadow:0 0 0 0 color-mix(in srgb,var(--cyan) 70%,transparent);animation:ring 1.6s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--cyan) 60%,transparent)}70%{box-shadow:0 0 0 12px rgba(0,0,0,0)}100%{box-shadow:0 0 0 0 rgba(0,0,0,0)}}
+.lpulse.done{background:var(--lime);animation:none}
+.lpulse.bad{background:var(--red);animation:none}
+.live-id .txt{min-width:0;flex:1}
+.live-id b{display:block;font:800 13.5px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-id span{display:block;font:600 10.5px var(--mono);color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-meter{position:relative;padding:9px 12px;border-bottom:1px solid var(--line);background:rgba(10,15,30,.55);backdrop-filter:blur(10px)}
+.lm-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:700 10.5px var(--mono);color:var(--dim2);letter-spacing:.05em}
+.lm-row b{color:var(--txt);font-weight:800}
+.lm-bar{height:4px;border-radius:4px;background:var(--over);overflow:hidden;margin-top:8px;position:relative}
+.lm-bar i{display:block;height:100%;width:0;border-radius:4px;background:linear-gradient(90deg,var(--violet),var(--molten),var(--cyan));transition:width .5s ease}
+.lm-bar::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-100%);animation:sheen 2.2s ease-in-out infinite}
+@keyframes sheen{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
+.live-stream{position:relative;flex:1;overflow-y:auto;overflow-x:hidden;padding:14px 12px 22px;-webkit-overflow-scrolling:touch}
+.lb{margin-bottom:12px;min-width:0;animation:lbin .3s ease both}
+@keyframes lbin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.lb .lab{display:flex;align-items:center;gap:7px;font:800 9.5px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--dim2);margin-bottom:5px}
+.lb .lab i{font-style:normal}
+.lb .txt{font:12.8px/1.7 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(10,15,30,.66);max-height:none}
+.lb.reasoning .txt{border-left:2px solid var(--violet);color:#c9b8e8;background:linear-gradient(120deg,rgba(192,76,253,.09),rgba(10,15,30,.7))}
+.lb.reasoning .lab{color:var(--violet)}
+.lb.content .txt{border-left:2px solid var(--molten);background:linear-gradient(120deg,rgba(255,122,26,.07),rgba(10,15,30,.72))}
+.lb.content .lab{color:var(--molten)}
+.lb .cmd{color:var(--cyan);font-weight:800}
+.lb .arg{color:var(--amber);font-style:normal}
+.lb .caret{display:inline-block;width:7px;height:14px;vertical-align:-2px;background:var(--acc);animation:blink .9s steps(2) infinite;margin-left:2px}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.lb.turn{display:flex;align-items:center;gap:10px;margin:16px 0 12px}
+.lb.turn .ln{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line2),transparent)}
+.lb.turn span{font:800 9.5px var(--mono);letter-spacing:.2em;color:var(--dim2);text-transform:uppercase;white-space:nowrap}
+.lcard{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(120deg,var(--surf),rgba(10,15,30,.8));min-width:0}
+.lcard.ok{border-color:color-mix(in srgb,var(--lime) 40%,var(--line))}
+.lcard.bad{border-color:color-mix(in srgb,var(--red) 45%,var(--line))}
+.lcard.warn{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.lcard .dot{width:26px;height:26px;flex:0 0 26px;border-radius:8px;display:grid;place-items:center;font:800 12px var(--mono);border:1px solid var(--line);background:var(--over)}
+.lcard.ok .dot{color:var(--lime)}.lcard.bad .dot{color:var(--red)}.lcard.warn .dot{color:var(--amber)}
+.lcard .grow{flex:1;min-width:0}
+.lcard .k{display:block;font:800 12px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lcard .p{display:block;font:11px var(--mono);color:var(--dim2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lverify{border:1px solid color-mix(in srgb,var(--cyan) 34%,var(--line));border-radius:12px;padding:10px 11px;background:linear-gradient(120deg,rgba(37,213,238,.08),rgba(10,15,30,.8))}
+.lverify h5{margin:0 0 7px;font:800 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--cyan)}
+.lnote{font:11.5px/1.6 var(--mono);color:var(--dim);padding:7px 11px;border-left:2px dashed var(--line2);overflow-wrap:anywhere}
+.lnote.bad{color:var(--red);border-left-color:var(--red)}
+.lnote.warn{color:var(--amber);border-left-color:var(--amber)}
+.live-foot{position:relative;display:flex;gap:7px;align-items:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(8,12,24,.86);backdrop-filter:blur(16px);overflow-x:auto}
+.live-foot .btn{flex:0 0 auto}
+#livePill{position:fixed;right:12px;bottom:calc(var(--dock) + var(--tab) + 14px);z-index:46;display:none;align-items:center;gap:7px;padding:9px 13px;border-radius:24px;border:1px solid color-mix(in srgb,var(--cyan) 50%,transparent);background:linear-gradient(120deg,var(--over),var(--surf));box-shadow:var(--sh);cursor:pointer;font:800 10.5px var(--mono);letter-spacing:.14em;color:var(--txt)}
+#livePill.on{display:flex;animation:tin .3s both}
 @media(min-width:960px){
   .rail{display:block}.tabs{display:none}#dockSlotMob{display:none}#dockSlotDesk{display:block}
   :root{--tab:0px;--dock:0px}
@@ -252,6 +314,9 @@ iframe.pv{width:100%;max-width:100%;height:330px;border:1px solid var(--line2);b
   .dockhead{display:flex;align-items:center;gap:8px;font:800 10px var(--mono);letter-spacing:.18em;color:var(--dim2);text-transform:uppercase;margin-bottom:2px}
   .ctl{min-width:0}
   .drawer{width:min(660px,54vw)}
+  .live-stream{padding:20px max(20px,calc(50% - 460px)) 30px}
+  .live-top,.live-meter,.live-foot{padding-left:max(16px,calc(50% - 470px));padding-right:max(16px,calc(50% - 470px))}
+  #livePill{bottom:18px;right:306px}
 }
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 html[data-motion=off] *{animation:none!important;transition:none!important}
@@ -385,6 +450,36 @@ html[data-motion=off] *{animation:none!important;transition:none!important}
   <button data-view="settings"><i>⚙</i>SET</button>
 </nav>
 
+<div class="live" id="live" role="dialog" aria-modal="true" aria-label="Live agent run">
+  <div class="live-bg"><span class="orb o1"></span><span class="orb o2"></span><span class="orb o3"></span><div class="scan"></div><div class="grain"></div></div>
+  <div class="live-top">
+    <div class="live-id">
+      <span class="lpulse" id="livePulse"></span>
+      <div class="txt"><b id="liveTitle">Agent run</b><span id="liveModel">—</span></div>
+    </div>
+    <button class="iconbtn" id="liveMin" title="Minimize (keeps running)">⤡</button>
+    <button class="iconbtn" id="liveStop" title="Stop task">■</button>
+  </div>
+  <div class="live-meter">
+    <div class="lm-row">
+      <span class="chip run" id="livePhase">idle</span>
+      <span>turn <b id="liveTurn">0/0</b></span>
+      <span>calls <b id="liveCalls">0</b></span>
+      <span>elapsed <b id="liveTime">0:00</b></span>
+      <span><b id="liveTps">0</b> tok/s</span>
+    </div>
+    <div class="lm-bar"><i id="liveBar"></i></div>
+  </div>
+  <div class="live-stream" id="liveStream"></div>
+  <div class="live-foot">
+    <button class="btn p" id="livePause">⏸ Pause</button>
+    <button class="btn" id="liveFollow">↧ Follow</button>
+    <button class="btn" id="liveCopy">Copy</button>
+    <button class="btn" id="liveWire">⌁ Wire</button>
+  </div>
+</div>
+<div id="livePill"><span class="pulse"></span>LIVE</div>
+
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true">
   <div class="dhead"><h2 id="drawerTitle">Detail</h2><button class="iconbtn" id="drawerClose">✕</button></div>
@@ -408,6 +503,7 @@ const utcDay=()=>new Date().toISOString().slice(0,10);
 const fmtTime=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 const fmtAgo=t=>{const s=(Date.now()-t)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';};
 const fmtBytes=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(2)+' MB';
+const mmss=ms=>{const s=Math.max(0,Math.floor(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');};
 const ext=p=>(p.split('.').pop()||'').toLowerCase();
 const kindOf=p=>({js:'js',mjs:'js',ts:'js',jsx:'js',html:'html',htm:'html',css:'css',py:'py',md:'md',json:'md',txt:'md'}[ext(p)]||'etc');
 const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};};
@@ -417,6 +513,7 @@ function download(name,data,type){const u=URL.createObjectURL(new Blob([data],{t
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true;}catch{const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch{}ta.remove();return ok;}}
 async function fetchT(url,opt,ms){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms||30000);try{return await fetch(url,{...opt,signal:c.signal});}finally{clearTimeout(t);}}
 function normPath(p){const o=[];for(const s of String(p).split('/')){if(!s||s==='.')continue;if(s==='..')o.pop();else o.push(s);}return o.join('/');}
+function hiBlock(t){return esc(t).replace(/^(@@[A-Za-z]+)([^\n]*)$/gm,(m,c,rest)=>`<b class="cmd">${c}</b><i class="arg">${rest}</i>`);}
 
 /* ── sound ───────────────────────────────────────────────── */
 const Sound={ctx:null,on:true,
@@ -446,7 +543,7 @@ function confirmDlg(title,body,okLabel,danger,extraHTML){
     $('modalExtra').innerHTML=extraHTML||'';
     $('modalOk').textContent=okLabel||'Confirm';$('modalOk').className='btn '+(danger?'d':'p');
     $('modal').classList.add('on');$('scrim').classList.add('on');
-    const done=v=>{$('modal').classList.remove('on');if(!$('drawer').classList.contains('on'))$('scrim').classList.remove('on');
+    const done=v=>{$('modal').classList.remove('on');if(!$('drawer').classList.contains('on')&&!LIVE.open)$('scrim').classList.remove('on');
       $('modalOk').onclick=null;$('modalCancel').onclick=null;res(v);};
     $('modalOk').onclick=()=>done(true);$('modalCancel').onclick=()=>done(false);
   });
@@ -493,7 +590,7 @@ const FS={
 
 /* ── state ───────────────────────────────────────────────── */
 const DEFAULTS={model:'local-planner',temperature:.2,maxCalls:8,reserve:6,verify:'T2',depth:6,autoVerify:true,autoSync:false,
-  autonomy:'checkpoint',nativeTools:false,stepMode:false,wirePersist:false,wireMax:40,
+  autonomy:'checkpoint',nativeTools:false,stepMode:false,liveOverlay:true,wirePersist:true,wireDefaultV1:true,wireMax:40,
   accent:'molten',density:'cozy',motion:true,sound:true,dailyLimit:50,
   key:'',sbUrl:'',sbKey:'',sbEmail:'',sbToken:'',sbRefresh:'',sbExpires:0,sbUser:''};
 const S={projects:[],pid:null,files:[],messages:[],tasks:[],steps:[],roadmap:[],memory:[],models:[],prefs:{},views:[],trash:[],checkpoints:[],
@@ -505,6 +602,174 @@ const project=()=>S.projects.find(p=>p.id===S.pid)||S.projects[0];
 const persistSettings=debounce(()=>kvSet('settings',S.settings),250);
 function setSetting(k,v){S.settings[k]=v;persistSettings();applyAppearance();syncDock();renderHeader();}
 function applyAppearance(){const h=document.documentElement;h.dataset.accent=S.settings.accent;h.dataset.density=S.settings.density;h.dataset.motion=S.settings.motion?'on':'off';Sound.on=S.settings.sound;}
+
+/* ── live run theatre ────────────────────────────────────── */
+const LIVE={
+  items:[],open:false,follow:true,phase:'idle',turn:0,max:1,t0:0,tok:0,tokT:0,timer:null,
+  cur:null,curEl:null,curTxt:null,pend:'',raf:0,task:null,ended:false,
+  reset(task){
+    this.endStream();this.items=[];this.task=task;this.turn=0;this.max=Math.max(1,S.settings.maxCalls);
+    this.t0=Date.now();this.tok=0;this.tokT=Date.now();this.ended=false;this.follow=true;
+    $('liveStream').innerHTML='';$('liveTitle').textContent=task.title||'Agent run';
+    $('liveModel').textContent=S.settings.model;
+    $('livePulse').className='lpulse';$('liveStop').style.display='';
+    $('livePause').textContent='⏸ Pause';$('livePause').className='btn p';
+    this.setPhase('planning');this.meta();
+  },
+  show(){if(this.open)return;this.open=true;$('live').classList.add('on');$('livePill').classList.remove('on');
+    this.paint();this.startTimer();Sound.play('click');},
+  hide(){if(!this.open)return;this.endStream();this.open=false;$('live').classList.remove('on');
+    if(S.run&&!this.ended)$('livePill').classList.add('on');this.stopTimer();},
+  startTimer(){this.stopTimer();this.timer=setInterval(()=>this.meta(),500);},
+  stopTimer(){if(this.timer){clearInterval(this.timer);this.timer=null;}},
+  setPhase(p){this.phase=p;const el=$('livePhase');if(!el)return;
+    const map={planning:'run',thinking:'ai',writing:'acc',executing:'run',verifying:'run',paused:'warn',blocked:'warn',done:'ok',failed:'bad',idle:''};
+    el.className='chip '+(map[p]||'');el.textContent=p;this.meta();},
+  meta(){
+    if(!$('liveTurn'))return;
+    const b=budget();
+    $('liveTurn').textContent=this.turn+'/'+this.max;
+    $('liveCalls').textContent=(this.task?.calls||0)+' · '+b.total+' left';
+    $('liveTime').textContent=mmss(Date.now()-this.t0);
+    const secs=Math.max(.5,(Date.now()-this.tokT)/1000);
+    $('liveTps').textContent=this.tok?Math.round(this.tok/secs):0;
+    const frac=this.ended?1:clamp((this.turn-1+Math.min(.9,this.tok/2200))/this.max,0,1);
+    $('liveBar').style.width=Math.round(frac*100)+'%';
+  },
+  turnStart(n,model){
+    this.endStream();this.turn=n;this.tok=0;this.tokT=Date.now();
+    $('liveModel').textContent=model;
+    this.push({kind:'turn',n,model});this.setPhase('thinking');
+  },
+  push(item){
+    this.items.push(item);
+    while(this.items.length>200)this.items.shift();
+    if(this.open)this.mount(item,true);
+  },
+  note(text,tone){this.push({kind:'note',text,tone:tone||''});},
+  op(s){this.push({kind:'op',tool:s.tool,path:s.path,status:s.status,detail:s.detail,dur:s.dur});},
+  verify(v){this.push({kind:'verify',tier:v.tier,checks:v.checks,note:v.note});},
+  stream(kind,text){
+    if(!text)return;
+    if(!this.cur||this.cur.kind!==kind){this.endStream();
+      this.cur={kind,text:''};this.items.push(this.cur);
+      while(this.items.length>200)this.items.shift();
+      if(this.open)this.mount(this.cur,true);}
+    this.cur.text+=text;
+    this.tok+=Math.max(1,Math.round(text.length/4));
+    if(this.cur.text.length>90000){this.cur.text=this.cur.text.slice(0,90000)+'\n…[display truncated]';}
+    if(this.open){this.pend+=text;this.schedule();}
+    this.setPhase(kind==='reasoning'?'thinking':'writing');
+  },
+  schedule(){if(this.raf)return;this.raf=requestAnimationFrame(()=>{this.raf=0;this.flush();});},
+  flush(){
+    if(!this.pend||!this.curTxt){this.pend='';return;}
+    this.curTxt.appendData(this.pend);this.pend='';
+    if(this.follow)this.toBottom();
+  },
+  endStream(){
+    if(this.raf){cancelAnimationFrame(this.raf);this.raf=0;}
+    this.flush();
+    if(this.cur&&this.curEl){
+      const body=this.curEl.querySelector('.txt');
+      if(body)body.innerHTML=this.cur.kind==='content'?hiBlock(this.cur.text):esc(this.cur.text);
+    }
+    this.cur=null;this.curEl=null;this.curTxt=null;
+  },
+  toBottom(){const el=$('liveStream');el.scrollTop=el.scrollHeight;},
+  mount(item,scroll){
+    const el=this.node(item);if(!el)return;
+    const box=$('liveStream');box.appendChild(el);
+    while(box.children.length>200)box.removeChild(box.firstChild);
+    if(item===this.cur){this.curEl=el;this.curTxt=el.querySelector('.txt').firstChild;}
+    if(scroll&&this.follow)this.toBottom();
+  },
+  node(item){
+    const d=document.createElement('div');
+    if(item.kind==='reasoning'||item.kind==='content'){
+      d.className='lb '+item.kind;
+      d.innerHTML=`<div class="lab"><i>${item.kind==='reasoning'?'◈':'✦'}</i>${item.kind==='reasoning'?'reasoning':'response'}</div><div class="txt"></div>`;
+      const body=d.querySelector('.txt');
+      body.appendChild(document.createTextNode(item.text||''));
+      if(item===this.cur){const c=document.createElement('span');c.className='caret';body.appendChild(c);}
+      return d;
+    }
+    if(item.kind==='turn'){
+      d.className='lb turn';
+      d.innerHTML=`<span class="ln"></span><span>turn ${item.n} · ${esc(String(item.model||'').split('/').pop())}</span><span class="ln"></span>`;
+      return d;
+    }
+    if(item.kind==='op'){
+      const ok=item.status==='ok';
+      d.className='lb';
+      d.innerHTML=`<div class="lcard ${ok?'ok':'bad'}"><span class="dot">${ok?'✓':'✕'}</span>
+        <span class="grow"><span class="k">${esc(item.tool)}</span><span class="p">${esc(item.path||'')}${item.detail?' · '+esc(item.detail):''}</span></span>
+        <span class="chip ${ok?'ok':'bad'}">${item.dur||0}ms</span></div>`;
+      return d;
+    }
+    if(item.kind==='verify'){
+      d.className='lb';
+      d.innerHTML=`<div class="lverify"><h5>verification · ${esc(item.tier)}</h5>
+        <div class="stats">${(item.checks||[]).map(c=>`<span class="chip ${c.ok?'ok':'bad'}" title="${esc(c.note||'')}">${c.ok?'✓':'✕'} ${esc(c.name)}</span>`).join('')}</div>
+        ${item.note?`<p class="tiny dim" style="margin:7px 0 0">${esc(item.note)}</p>`:''}</div>`;
+      return d;
+    }
+    if(item.kind==='done'){
+      d.className='lb';
+      d.innerHTML=`<div class="lcard ok"><span class="dot">✓</span><span class="grow"><span class="k">task ${esc(item.state)}</span><span class="p">${esc(String(item.text||'').slice(0,180))}</span></span></div>`;
+      return d;
+    }
+    d.className='lb';
+    d.innerHTML=`<div class="lnote ${item.tone||''}">${esc(item.text||'')}</div>`;
+    return d;
+  },
+  paint(){
+    const box=$('liveStream');box.innerHTML='';this.curEl=null;this.curTxt=null;
+    for(const it of this.items){const el=this.node(it);if(el){box.appendChild(el);if(it===this.cur){this.curEl=el;this.curTxt=el.querySelector('.txt').firstChild;}}}
+    this.meta();if(this.follow)this.toBottom();
+  },
+  finish(task,verify){
+    this.endStream();this.ended=true;
+    const good=task.state==='completed';
+    $('livePulse').className='lpulse '+(good?'done':'bad');
+    this.setPhase(good?'done':task.state);
+    this.push({kind:'done',state:task.state,text:task.summary||task.note||''});
+    if(verify)this.verify(verify);
+    $('liveStop').style.display='none';
+    $('livePause').textContent='✓ Close';$('livePause').className='btn g';
+    $('livePill').classList.remove('on');
+    this.meta();
+    if(!this.open&&S.settings.liveOverlay)this.show();
+  },
+  transcript(){
+    return this.items.map(i=>{
+      if(i.kind==='turn')return `\n── turn ${i.n} · ${i.model} ──`;
+      if(i.kind==='reasoning')return `[reasoning]\n${i.text}`;
+      if(i.kind==='content')return `[response]\n${i.text}`;
+      if(i.kind==='op')return `  ${i.status==='ok'?'✓':'✕'} ${i.tool} ${i.path||''} · ${i.detail||''} (${i.dur}ms)`;
+      if(i.kind==='verify')return `  verification ${i.tier}: `+(i.checks||[]).map(c=>(c.ok?'✓ ':'✕ ')+c.name).join(', ');
+      return `  ${i.text||i.state||''}`;
+    }).join('\n');
+  }
+};
+$('liveMin').onclick=()=>LIVE.hide();
+$('livePill').onclick=()=>LIVE.show();
+$('liveStop').onclick=()=>{if(S.run){S.run.stop=true;try{S.run.abort?.abort();}catch{}LIVE.note('Stop requested — cancelling the in-flight request','warn');toast('Stopping…','warn');}};
+$('livePause').onclick=()=>{
+  if(LIVE.ended){LIVE.hide();return;}
+  if(!S.run)return;
+  S.run.pause=!S.run.pause;
+  $('livePause').textContent=S.run.pause?'▶ Resume':'⏸ Pause';
+  LIVE.setPhase(S.run.pause?'paused':(LIVE.cur?'writing':'thinking'));
+  LIVE.note(S.run.pause?'Paused by you — state is journaled':'Resumed','warn');renderChat();
+};
+$('liveFollow').onclick=()=>{LIVE.follow=true;LIVE.toBottom();$('liveFollow').classList.add('g');setTimeout(()=>$('liveFollow').classList.remove('g'),900);};
+$('liveCopy').onclick=async()=>{const ok=await copyText(LIVE.transcript());toast(ok?'Live transcript copied':'Copy blocked',ok?'ok':'warn');};
+$('liveWire').onclick=()=>{LIVE.hide();openWireFor(LIVE.task?.id||null);};
+$('liveStream').addEventListener('scroll',()=>{
+  const el=$('liveStream');
+  LIVE.follow=el.scrollHeight-el.scrollTop-el.clientHeight<70;
+},{passive:true});
 
 /* ── wire: passive transcript capture ────────────────────── */
 function wirePush(rec){
@@ -528,7 +793,7 @@ function wireText(list){
   return list.map((r,i)=>{
     const head=`\n${'='.repeat(70)}\nEXCHANGE ${i+1} · ${new Date(r.at).toISOString()} · ${r.model}\nstatus ${r.ok?'OK':'ERROR'} · http ${r.http||'—'} · ${r.ms}ms · ${r.tokens||0} tokens · finish ${r.response?.finish_reason||'—'}\nparse: ${r.parse?(r.parse.ok?'ok → '+r.parse.actions.join(', '):'FAILED'):r.error?'transport error':'—'}\n`;
     const req=(r.request?.messages||[]).map(m=>`\n--- REQUEST · role=${m.role} ---\n${typeof m.content==='string'?m.content:JSON.stringify(m.content)}`).join('\n');
-    const params=`\n--- PARAMS ---\ntemperature=${r.request?.temperature} max_tokens=${r.request?.max_tokens} tools=${r.request?.tools?'yes':'no'}`;
+    const params=`\n--- PARAMS ---\ntemperature=${r.request?.temperature} max_tokens=${r.request?.max_tokens} stream=${r.request?.stream?'yes':'no'} tools=${r.request?.tools?'yes':'no'}`;
     const res=r.error?`\n--- ERROR ---\n${r.error}`:`\n--- RESPONSE ---\n${r.response?.content||'(empty)'}${r.response?.reasoning?'\n--- REASONING ---\n'+r.response.reasoning:''}${r.response?.tool_calls?'\n--- TOOL CALLS ---\n'+JSON.stringify(r.response.tool_calls,null,1):''}`;
     return head+params+req+res;
   }).join('\n');
@@ -689,7 +954,9 @@ function refreshMemoryHashes(){
 }
 async function boot(){
   await seedIfNeeded();
-  S.settings={...DEFAULTS,...(await kvGet('settings',{}))};
+  const saved=await kvGet('settings',{});
+  S.settings={...DEFAULTS,...saved};
+  if(!saved.wireDefaultV1){S.settings.wirePersist=true;S.settings.wireDefaultV1=true;await kvSet('settings',S.settings);}
   S.models=await all('models');
   (await all('prefs')).forEach(p=>S.prefs[p.id]=p);
   S.ledger=await kvGet('ledger',{});
@@ -761,6 +1028,7 @@ function buildDock(){
   <div class="ctl slider" id="pillDepth"><label>Context <b id="dDepthV">${s.depth}</b></label>
     <div class="slot"><input type="range" id="dDepth" min="1" max="14" step="1" value="${s.depth}"><button class="arm" type="button" data-arm="pillDepth">TAP TO ADJUST</button></div></div>
   <div class="ctl"><label>Autonomy</label><select id="dAutonomy"><option value="ask">Ask first</option><option value="checkpoint">Checkpoint then act</option></select></div>
+  <div class="ctl"><label>Live window</label><div class="sw${s.liveOverlay?' on':''}" id="dLive"><i></i><span>${s.liveOverlay?'ON':'OFF'}</span></div></div>
   <div class="ctl"><label>Step-by-step</label><div class="sw${s.stepMode?' on':''}" id="dStep"><i></i><span>${s.stepMode?'ON':'OFF'}</span></div></div>
   <div class="ctl"><label>Auto-verify</label><div class="sw${s.autoVerify?' on':''}" id="dAutoVerify"><i></i><span>${s.autoVerify?'ON':'OFF'}</span></div></div>
   <div class="ctl"><label>Auto-sync</label><div class="sw${s.autoSync?' on':''}" id="dAutoSync"><i></i><span>${s.autoSync?'ON':'OFF'}</span></div></div>
@@ -776,9 +1044,10 @@ function buildDock(){
   $('dAccent').onchange=e=>setSetting('accent',e.target.value);
   $('dDensity').onchange=e=>setSetting('density',e.target.value);
   $('dock').querySelectorAll('[data-arm]').forEach(b=>b.onclick=()=>armPill($(b.dataset.arm)));
-  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools'],['dStep','stepMode']].forEach(([id,key])=>{
+  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools'],['dStep','stepMode'],['dLive','liveOverlay']].forEach(([id,key])=>{
     $(id).onclick=()=>{setSetting(key,!S.settings[key]);Sound.play('click');
-      if(key==='stepMode')toast(S.settings.stepMode?'Step-by-step on — pauses after every turn':'Step-by-step off');};});
+      if(key==='stepMode')toast(S.settings.stepMode?'Step-by-step on — pauses after every turn':'Step-by-step off');
+      if(key==='liveOverlay')toast(S.settings.liveOverlay?'Live window will open on run':'Live window auto-open off');};});
   $('dock').querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{
     const [k,d]=b.dataset.step.split(':');const lim=k==='maxCalls'?[1,20]:[0,25];
     setSetting(k,clamp(S.settings[k]+ +d,lim[0],lim[1]));Sound.play('click');});
@@ -801,7 +1070,7 @@ function syncDock(){
   $('dDepth').value=s.depth;$('dDepthV').textContent=s.depth;
   $('dCalls').textContent=s.maxCalls;$('dReserve').textContent=s.reserve;
   $('dVerify').value=s.verify;$('dAutonomy').value=s.autonomy;$('dAccent').value=s.accent;$('dDensity').value=s.density;
-  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools'],['dStep','stepMode']].forEach(([id,k])=>{
+  [['dAutoVerify','autoVerify'],['dAutoSync','autoSync'],['dNative','nativeTools'],['dStep','stepMode'],['dLive','liveOverlay']].forEach(([id,k])=>{
     const el=$(id);if(!el)return;el.classList.toggle('on',!!s[k]);el.querySelector('span').textContent=s[k]?'ON':'OFF';});
 }
 function armPill(p){
@@ -832,7 +1101,7 @@ function mountDock(){
 window.addEventListener('resize',debounce(mountDock,150));
 
 /* ── chat ────────────────────────────────────────────────── */
-const CMDS=[['/plan','Build a roadmap'],['/review','Analyse the project'],['/tests','Generate tests'],['/readme','Rewrite README'],['/check','Run verification'],['/preview','Live sandbox preview'],['/status','Project + budget'],['/wire','Show prompts & replies'],['/sync','Sync device folder'],['/export','Download ZIP'],['/resume','Resume last task']];
+const CMDS=[['/plan','Build a roadmap'],['/review','Analyse the project'],['/tests','Generate tests'],['/readme','Rewrite README'],['/check','Run verification'],['/preview','Live sandbox preview'],['/status','Project + budget'],['/live','Open live window'],['/wire','Show prompts & replies'],['/sync','Sync device folder'],['/export','Download ZIP'],['/resume','Resume last task']];
 function pushMsg(m){
   const msg={id:uid(),pid:S.pid,at:Date.now(),...m};
   S.messages.push(msg);put('messages',msg);renderChat();scrollMsgs();return msg;
@@ -851,15 +1120,19 @@ function renderChat(){
       <span class="chip ${cls}">${esc(t.state.replace('_',' '))}</span>
       <span style="flex:1 1 90px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.title)}</span>
       <span class="dim2">${t.calls}/${total}</span><span class="bar"><i style="width:${pct}%"></i></span>
+      <button class="btn sm" id="liveJump">⛶ Live</button>
       <button class="btn sm" id="wireJump">⌁ wire</button>
       ${S.run?`<button class="btn sm" id="pauseBtn">${S.run.pause?'▶ Resume':'⏸ Pause'}</button><button class="btn sm d" id="stopBtn">■ Stop</button>`:
         (['uncertain','paused_quota','paused_user','failed','blocked'].includes(t.state)?`<button class="btn sm p" id="resumeBtn">↻ Retry</button>`:'')}`;
+    $('liveJump').onclick=()=>LIVE.show();
     $('wireJump').onclick=()=>openWireFor(t.id);
     if($('pauseBtn'))$('pauseBtn').onclick=()=>{S.run.pause=!S.run.pause;renderChat();toast(S.run.pause?'Paused — state journaled':'Resumed');};
-    if($('stopBtn'))$('stopBtn').onclick=()=>{S.run.stop=true;toast('Stopping after this step…','warn');};
+    if($('stopBtn'))$('stopBtn').onclick=()=>{S.run.stop=true;try{S.run.abort?.abort();}catch{}toast('Stopping…','warn');};
     if($('resumeBtn'))$('resumeBtn').onclick=()=>resumeTask(t);
-  } else strip.innerHTML=`<span class="chip ok">idle</span><span class="dim2">Describe something to build.</span><button class="btn sm" id="wireJump">⌁ wire</button>`;
-  if($('wireJump')&&!t)$('wireJump').onclick=()=>openWireFor(null);
+  } else {
+    strip.innerHTML=`<span class="chip ok">idle</span><span class="dim2">Describe something to build.</span><button class="btn sm" id="wireJump">⌁ wire</button>`;
+    $('wireJump').onclick=()=>openWireFor(null);
+  }
   $('cmdChips').innerHTML=CMDS.map(c=>`<button data-cmd="${c[0]}" title="${esc(c[1])}">${c[0]}</button>`).join('');
   $('cmdChips').querySelectorAll('[data-cmd]').forEach(b=>b.onclick=()=>{$('composer').value=b.dataset.cmd+' ';$('composer').focus();});
   $('msgList').innerHTML=S.messages.map(m=>{
@@ -893,6 +1166,7 @@ function send(){
   $('composer').value='';$('composer').style.height='auto';Sound.play('send');
   const cmd=v.split(/\s+/)[0].toLowerCase();
   if(cmd==='/status'){pushMsg({role:'user',content:v});statusReply();return;}
+  if(cmd==='/live'){LIVE.show();return;}
   if(cmd==='/wire'){openWireFor(S.tasks[0]?.id||null);return;}
   if(cmd==='/preview'){openPreview();return;}
   if(cmd==='/sync'){deviceSync();return;}
@@ -910,7 +1184,8 @@ Roadmap · ${done}/${S.roadmap.length} done · ${S.roadmap.filter(r=>r.verified)
 Memory · ${S.memory.length} records${S.memory.some(m=>m.stale)?' · some stale':''}
 Folder · ${S.device?S.device.name+' (linked)':'not linked'}
 Budget · ${b.total}/${b.limit} left today · ${b.reserve} reserved for chat
-Model · ${S.settings.model}
+Model · ${S.settings.model} · streaming on
+Live window · ${S.settings.liveOverlay?'auto-open':'manual'}
 Transcripts · ${S.wire.length} captured · ${S.settings.wirePersist?'kept on device':'memory only'}
 Step-by-step · ${S.settings.stepMode?'on':'off'}
 Cloud · ${S.settings.sbToken?'linked':'local only'}
@@ -1070,7 +1345,7 @@ function parseReply(reply){
   return null;
 }
 
-/* ── transport (with passive wire capture) ───────────────── */
+/* ── transport: streaming + passive wire capture ─────────── */
 const OR='https://openrouter.ai/api/v1';
 const NON_CHAT=/lyria|imagen|veo|whisper|tts|speech|music|audio|image|embed|rerank|moderation/i;
 function isChatModel(m){
@@ -1096,14 +1371,23 @@ async function markReliability(id,good){
 async function callModel(messages,model,useNative){
   const meta=S.models.find(m=>m.id===model);
   const maxTok=clamp(meta?.maxOut||4096,1024,8192);
-  const body={model,messages,temperature:S.settings.temperature,max_tokens:maxTok};
+  const body={model,messages,temperature:S.settings.temperature,max_tokens:maxTok,stream:true};
   if(useNative){body.tools=TOOLS;body.tool_choice='auto';}
   const rec={id:uid(),at:Date.now(),taskId:S.run?.task.id||null,model,http:0,ms:0,ok:false,tokens:0,
     request:JSON.parse(JSON.stringify(body)),response:null,error:null,parse:null};
+  const ctrl=new AbortController();
+  if(S.run)S.run.abort=ctrl;
+  let timedOut=false,watchdog=null;
+  const arm=ms=>{clearTimeout(watchdog);watchdog=setTimeout(()=>{timedOut=true;ctrl.abort();},ms);};
   const t0=performance.now();
+  let content='',reasoning='',finish=null,usage=null,provider=null,errMsg=null;
+  const tcMap=new Map();
   try{
-    const res=await fetchT(OR+'/chat/completions',{method:'POST',headers:{Authorization:'Bearer '+S.settings.key,'Content-Type':'application/json'},body:JSON.stringify(body)},120000);
-    rec.http=res.status;rec.ms=Math.round(performance.now()-t0);
+    arm(90000);
+    const res=await fetch(OR+'/chat/completions',{method:'POST',
+      headers:{Authorization:'Bearer '+S.settings.key,'Content-Type':'application/json',Accept:'text/event-stream'},
+      body:JSON.stringify(body),signal:ctrl.signal});
+    rec.http=res.status;
     if(res.status===429){
       const ra=+res.headers.get('Retry-After')||20;
       rec.error='429 rate limited · Retry-After '+ra+'s';wirePush(rec);
@@ -1111,17 +1395,78 @@ async function callModel(messages,model,useNative){
     if(!res.ok){
       const txt=await res.text();rec.error='HTTP '+res.status+' · '+txt.slice(0,4000);wirePush(rec);
       const e=new Error('HTTP '+res.status+' · '+txt.slice(0,180));e.status=res.status;throw e;}
-    const data=await res.json(),ch=data.choices?.[0];
-    rec.response={content:ch?.message?.content||'',reasoning:ch?.message?.reasoning||'',tool_calls:ch?.message?.tool_calls||null,
-      finish_reason:ch?.finish_reason||null,usage:data.usage||null,provider:data.provider||null};
-    rec.tokens=data.usage?.total_tokens||0;
-    if(ch?.finish_reason==='error'){rec.error=ch.error?.message||'provider error mid-stream';wirePush(rec);throw new Error(rec.error);}
+    if(!res.body){
+      const data=await res.json();const ch=data.choices?.[0];
+      content=ch?.message?.content||'';reasoning=ch?.message?.reasoning||'';
+      finish=ch?.finish_reason||'stop';usage=data.usage||null;
+      if(content)LIVE.stream('content',content);
+    } else {
+      const reader=res.body.getReader(),dec=new TextDecoder();
+      let buf='',done=false;
+      const handle=payload=>{
+        if(payload==='[DONE]'){done=true;return;}
+        let j;try{j=JSON.parse(payload);}catch{return;}
+        if(j.error){errMsg=j.error.message||'provider error';return;}
+        if(j.usage)usage=j.usage;
+        if(j.provider)provider=j.provider;
+        const ch=j.choices?.[0];if(!ch)return;
+        const d=ch.delta||ch.message||{};
+        if(d.reasoning){reasoning+=d.reasoning;LIVE.stream('reasoning',d.reasoning);}
+        if(d.content){content+=d.content;LIVE.stream('content',d.content);}
+        if(Array.isArray(d.tool_calls)){
+          for(const tc of d.tool_calls){
+            const i=tc.index??0;
+            const cur=tcMap.get(i)||{id:'',type:'function',function:{name:'',arguments:''}};
+            if(tc.id)cur.id=tc.id;
+            if(tc.function?.name&&!cur.function.name)cur.function.name=tc.function.name;
+            if(tc.function?.arguments){cur.function.arguments+=tc.function.arguments;LIVE.stream('content',tc.function.arguments);}
+            tcMap.set(i,cur);
+          }
+        }
+        if(ch.finish_reason)finish=ch.finish_reason;
+        if(ch.error)errMsg=ch.error.message||'provider error mid-stream';
+      };
+      while(!done){
+        const {done:rd,value}=await reader.read();
+        if(rd)break;
+        arm(60000);
+        buf+=dec.decode(value,{stream:true});
+        let nl;
+        while((nl=buf.indexOf('\n'))>=0){
+          const line=buf.slice(0,nl).trim();buf=buf.slice(nl+1);
+          if(!line||line.startsWith(':'))continue;
+          if(!line.startsWith('data:'))continue;
+          handle(line.slice(5).trim());
+          if(done)break;
+        }
+      }
+      const tail=buf.trim();
+      if(tail.startsWith('data:'))handle(tail.slice(5).trim());
+      try{reader.cancel();}catch{}
+    }
+    LIVE.endStream();
+    rec.ms=Math.round(performance.now()-t0);
+    const toolCalls=tcMap.size?[...tcMap.values()]:null;
+    rec.response={content,reasoning,tool_calls:toolCalls,finish_reason:finish,usage,provider};
+    rec.tokens=usage?.total_tokens||Math.round((content.length+reasoning.length)/4);
+    if(errMsg||finish==='error'){rec.error=errMsg||'provider error mid-stream';wirePush(rec);throw new Error(rec.error);}
     rec.ok=true;wirePush(rec);
-    return {content:rec.response.content,reasoning:rec.response.reasoning,toolCalls:rec.response.tool_calls,
-      raw:ch?.message||{role:'assistant',content:''},finish:ch?.finish_reason||'stop',tokens:rec.tokens,maxTok,wireId:rec.id};
+    return {content,reasoning,toolCalls,raw:{role:'assistant',content,...(toolCalls?{tool_calls:toolCalls}:{})},
+      finish:finish||'stop',tokens:rec.tokens,maxTok,wireId:rec.id};
   }catch(e){
-    if(!rec.pushed){rec.ms=Math.round(performance.now()-t0);rec.error=rec.error||e.message;wirePush(rec);}
+    LIVE.endStream();
+    if(!rec.pushed){
+      rec.ms=Math.round(performance.now()-t0);
+      if(e.name==='AbortError')rec.error=timedOut?'stream stalled — no data for 60s':'aborted by user';
+      else rec.error=rec.error||e.message;
+      if(content||reasoning)rec.response={content,reasoning,tool_calls:tcMap.size?[...tcMap.values()]:null,finish_reason:finish,usage,provider};
+      wirePush(rec);
+    }
+    if(e.name==='AbortError'){const er=new Error(timedOut?'STREAM_TIMEOUT':'ABORTED');er.status=timedOut?504:0;throw er;}
     throw e;
+  }finally{
+    clearTimeout(watchdog);
+    if(S.run&&S.run.abort===ctrl)S.run.abort=null;
   }
 }
 async function refreshQuota(){
@@ -1201,6 +1546,7 @@ function localPlan(task,ctx,history){
 async function journal(tool,path,status,detail,dur,extra){
   const s={id:uid(),pid:S.pid,taskId:S.run?.task.id||'manual',tool,path:path||'',status,detail:detail||'',dur:dur||0,at:Date.now(),model:S.settings.model,tokens:0,...(extra||{})};
   S.steps.unshift(s);await put('steps',s);renderHeader();
+  if(S.run)LIVE.op(s);
   if(S.ui.view==='activity'&&S.ui.actMode==='ops')renderActivity();
   return s;
 }
@@ -1209,10 +1555,12 @@ async function checkpoint(label){
   const c={id,pid:S.pid,label:label||'checkpoint',at:Date.now(),files:S.files.length,dir:id};
   S.checkpoints.unshift(c);await put('checkpoints',c);
   while(S.checkpoints.length>6){const old=S.checkpoints.pop();await del('checkpoints',old.id);try{await FS.remove(S.pid,'.forge/checkpoints/'+old.dir);}catch{}}
+  if(S.run)LIVE.note('Checkpoint saved · '+S.files.length+' files');
   return c;
 }
 async function execActions(actions,task){
   const results=[],stepIds=[];let destructive=false,done=null,question=null;
+  LIVE.endStream();LIVE.setPhase('executing');
   for(const a of actions){
     const t0=performance.now();
     try{
@@ -1242,7 +1590,8 @@ async function execActions(actions,task){
         stepIds.push((await journal('patch_file',path,'ok','unique match replaced · verified',Math.round(performance.now()-t0),{after:r.hash})).id);
         results.push({path,patched:true,hash:r.hash.slice(0,8)});Sound.play('step');
       }
-      else if(a.tool==='read_file'){const path=normPath(a.path);const c=await FS.read(S.pid,path);S.ui.contentCache[path]=c;results.push({path,content:c.slice(0,6000)});}
+      else if(a.tool==='read_file'){const path=normPath(a.path);const c=await FS.read(S.pid,path);S.ui.contentCache[path]=c;
+        LIVE.note('Read '+path+' · '+fmtBytes(c.length));results.push({path,content:c.slice(0,6000)});}
       else if(a.tool==='list_files'){results.push({files:S.files.map(f=>f.path)});}
       else if(a.tool==='delete_file'){
         const path=normPath(a.path);
@@ -1255,7 +1604,7 @@ async function execActions(actions,task){
         stepIds.push((await journal('move_file',from+' → '+to,'ok','copied, verified, source removed',Math.round(performance.now()-t0))).id);
         results.push({from,to,moved:true});
       }
-      else if(a.tool==='run_checks'){const v=await runChecks();results.push({checks:v});task.lastVerify=v;}
+      else if(a.tool==='run_checks'){LIVE.setPhase('verifying');const v=await runChecks();LIVE.verify(v);results.push({checks:v});task.lastVerify=v;}
       else if(a.tool==='update_roadmap'){
         let r=S.roadmap.find(x=>x.title.toLowerCase()===String(a.title||'').toLowerCase());
         if(!r){r={id:uid(),pid:S.pid,title:String(a.title||'Untitled'),status:'pending',priority:2,verified:false,detail:'',order:S.roadmap.length,created:Date.now(),updated:Date.now(),evidence:null};S.roadmap.push(r);}
@@ -1273,7 +1622,7 @@ async function execActions(actions,task){
         stepIds.push((await journal('add_memory',rec.kind+': '+rec.key,'ok','recorded',Math.round(performance.now()-t0))).id);
         results.push({memory:rec.key});
       }
-      else if(a.tool==='ask_user'){question=String(a.question||'The agent needs a decision.');results.push({asked:true});}
+      else if(a.tool==='ask_user'){question=String(a.question||'The agent needs a decision.');LIVE.note('Agent asks: '+question,'warn');results.push({asked:true});}
       else if(a.tool==='done'){done=String(a.summary||'Task complete.');results.push({done:true});}
       else results.push({error:'unknown tool '+a.tool});
     }catch(e){
@@ -1458,58 +1807,73 @@ async function runTask(request,resuming){
   const task=resuming||{id:uid(),pid:S.pid,title:request.slice(0,90),request,state:'running',calls:0,created:Date.now(),updated:Date.now(),history:[]};
   if(!resuming){S.tasks.unshift(task);await put('tasks',task);pushMsg({role:'user',content:request});}
   task.state='running';task.note='';task.updated=Date.now();await put('tasks',task);
-  S.run={task,stop:false,pause:false};renderChat();go('chat');
+  S.run={task,stop:false,pause:false,abort:null};
+  LIVE.reset(task);
+  if(S.settings.liveOverlay)LIVE.show();
+  renderChat();go('chat');
   const history=task.history||[];let model=S.settings.model,malformed=0,verify=null,convo=null,syncedOnce=false,transient=0;
   const stepIdsAll=[];
   try{
     for(let turn=0;turn<S.settings.maxCalls;turn++){
       if(S.run.stop){task.state='paused_user';break;}
-      while(S.run.pause&&!S.run.stop)await sleep(250);
+      while(S.run.pause&&!S.run.stop){LIVE.setPhase('paused');await sleep(250);}
       if(S.run.stop){task.state='paused_user';break;}
       const b=budget();
-      if(model!=='local-planner'&&b.left<=0){task.state='paused_quota';task.note='Daily budget reached ('+b.limit+' requests, '+b.reserve+' reserved). Resumes after 00:00 UTC.';break;}
+      if(model!=='local-planner'&&b.left<=0){task.state='paused_quota';task.note='Daily budget reached ('+b.limit+' requests, '+b.reserve+' reserved). Resumes after 00:00 UTC.';LIVE.note(task.note,'warn');break;}
+      LIVE.setPhase('planning');
       const ctx=await packContext(task);
+      LIVE.turnStart(turn+1,model);
       let obj=null,reply=null,useNative=false;
-      if(model==='local-planner'){await sleep(260);obj=localPlan(task,ctx,history);}
+      if(model==='local-planner'){
+        await sleep(240);obj=localPlan(task,ctx,history);
+        LIVE.stream('content',obj.actions.map(a=>'@@'+String(a.tool).toUpperCase()+' '+(a.path||a.title||a.key||'')).join('\n')+'\n');
+        LIVE.endStream();
+      }
       else{
-        if(!S.settings.key){model='local-planner';toast('No API key — using the local planner','warn');continue;}
+        if(!S.settings.key){model='local-planner';LIVE.note('No API key — using the local planner','warn');continue;}
         useNative=S.settings.nativeTools&&(S.models.find(m=>m.id===model)?.params||[]).includes('tools');
         if(!convo)convo=[{role:'system',content:PROTOCOL},contextMessage(ctx,task,history)];
         try{
           reply=await callModel(convo,model,useNative);ledgerAdd(reply.tokens);task.calls++;transient=0;
           obj=parseReply(reply);
           wirePatch(reply.wireId,{taskId:task.id,parse:obj?{ok:true,actions:obj.actions.map(a=>a.tool),truncated:!!obj.truncated}:{ok:false,actions:[]}});
+          LIVE.meta();
         }catch(e){
-          if(e.message==='RATE_LIMIT'){toast('Rate limited · waiting '+e.retryAfter+'s','warn');await sleep(Math.min(e.retryAfter,30)*1000);continue;}
+          if(e.message==='ABORTED'){task.state='paused_user';task.note='Stopped by you.';LIVE.note(task.note,'warn');break;}
+          if(e.message==='RATE_LIMIT'){LIVE.note('Rate limited — waiting '+e.retryAfter+'s','warn');toast('Rate limited · waiting '+e.retryAfter+'s','warn');await sleep(Math.min(e.retryAfter,30)*1000);continue;}
           await markReliability(model,false);
           await journal('model_error',model,'fail',e.message,0);
-          const busy=[500,502,503,504].includes(e.status)||/high demand|overloaded|temporarily|unavailable/i.test(e.message);
-          if(busy&&transient<1){transient++;toast('Provider busy — retrying in 4s','warn');await sleep(4000);continue;}
+          const busy=[500,502,503,504].includes(e.status)||/high demand|overloaded|temporarily|unavailable|STREAM_TIMEOUT/i.test(e.message);
+          if(busy&&transient<1){transient++;LIVE.note('Provider busy — retrying in 4s','warn');await sleep(4000);continue;}
           const fb=pickFallback(model);
-          if(fb){toast('Switching to '+fb.split('/').pop(),'warn');model=fb;convo=null;malformed=0;transient=0;continue;}
+          if(fb){LIVE.note('Switching model → '+fb,'warn');toast('Switching to '+fb.split('/').pop(),'warn');model=fb;convo=null;malformed=0;transient=0;continue;}
           throw e;
         }
         convo.push(reply.raw&&reply.raw.role?reply.raw:{role:'assistant',content:reply.content||''});
         if(!obj||!Array.isArray(obj.actions)||!obj.actions.length){
           malformed++;await markReliability(model,false);
           const reason=!reply.content?'empty response (possibly all budget spent on reasoning)':(reply.finish==='length'?'response truncated at '+reply.maxTok+' tokens':'unparseable reply');
+          LIVE.note('Parse failed: '+reason,'bad');
           stepIdsAll.push((await journal('model_reply',model,'fail',reason,0,{raw:(reply.content||reply.reasoning||'(empty)').slice(0,6000),finish:reply.finish})).id);
           const fb=pickFallback(model);
-          if(malformed>=2&&fb){model=fb;convo=null;malformed=0;toast('Two bad replies — switching to '+fb.split('/').pop(),'warn');continue;}
+          if(malformed>=2&&fb){model=fb;convo=null;malformed=0;LIVE.note('Two bad replies — switching to '+fb,'warn');continue;}
           if(malformed>=2&&!fb){
-            if(!syncedOnce){syncedOnce=true;toast('Looking for a fallback model…');await syncRegistry(true);
+            if(!syncedOnce){syncedOnce=true;LIVE.note('Searching the registry for a fallback model…');await syncRegistry(true);
               const fb2=pickFallback(model);
-              if(fb2){model=fb2;convo=null;malformed=0;toast('Fallback found: '+fb2.split('/').pop(),'ok');continue;}}
+              if(fb2){model=fb2;convo=null;malformed=0;LIVE.note('Fallback found: '+fb2);continue;}}
             task.state='blocked';
             task.note='The model could not produce a usable reply twice, and no alternative model is enabled. Open Models → Sync registry, enable another model, then retry. Full prompts and replies are in Activity → Prompts & replies.';
-            break;
+            LIVE.note(task.note,'bad');break;
           }
+          LIVE.note('Sending a corrective example…','warn');
           convo.push({role:'user',content:CORRECTION});
           continue;
         }
         await markReliability(model,true);
-        if(obj.truncated||reply.finish==='length')
-          stepIdsAll.push((await journal('model_reply',model,'ok','partial reply — truncated actions dropped',0,{raw:(reply.content||'').slice(0,6000),finish:reply.finish})).id);
+        LIVE.note('Parsed '+obj.actions.length+' action'+(obj.actions.length===1?'':'s')+': '+obj.actions.map(a=>a.tool).join(', '));
+        if(obj.truncated||reply.finish==='length'){
+          LIVE.note('Reply was truncated — incomplete actions dropped','warn');
+          stepIdsAll.push((await journal('model_reply',model,'ok','partial reply — truncated actions dropped',0,{raw:(reply.content||'').slice(0,6000),finish:reply.finish})).id);}
       }
       const exec=await execActions(obj.actions,task);
       stepIdsAll.push(...exec.stepIds);
@@ -1524,19 +1888,22 @@ async function runTask(request,resuming){
       if(exec.question){task.state='blocked';task.note=exec.question;break;}
       if(exec.done){task.summary=exec.done;task.state='completed';break;}
       if(turn===S.settings.maxCalls-1){task.state='uncertain';task.note='Call ceiling reached before the agent declared completion.';}
-      else if(S.settings.stepMode){S.run.pause=true;renderChat();toast('Step complete — inspect, then Resume','warn',{label:'Wire',fn:()=>openWireFor(task.id)});}
+      else if(S.settings.stepMode){S.run.pause=true;renderChat();LIVE.note('Step-by-step: paused for your review','warn');toast('Step complete — inspect, then Resume','warn',{label:'Resume',fn:()=>{if(S.run){S.run.pause=false;$('livePause').textContent='⏸ Pause';renderChat();}}});}
     }
-  }catch(e){task.state='failed';task.note=e.message;}
+  }catch(e){task.state=e.message==='ABORTED'?'paused_user':'failed';task.note=e.message==='ABORTED'?'Stopped by you.':e.message;LIVE.note(task.note,'bad');}
   if(S.settings.autoVerify&&['completed','uncertain'].includes(task.state)){
-    verify=await runChecks();task.lastVerify=verify;
+    LIVE.setPhase('verifying');
+    verify=await runChecks();task.lastVerify=verify;LIVE.verify(verify);
     if(task.state==='completed'&&verify&&!verify.checks.every(c=>c.ok)){task.state='failed';task.note='Verification failed after the agent declared completion.';}
   }
   task.updated=Date.now();await put('tasks',task);
   pushMsg({role:'agent',model,taskId:task.id,content:(task.summary||task.note||'Task ended: '+task.state)+(task.summary&&task.note&&task.state!=='completed'?'\n\n'+task.note:''),steps:stepIdsAll,verify});
-  S.run=null;renderAll();
+  S.run=null;
+  LIVE.finish(task,verify);
+  renderAll();
   if(task.state==='completed'){Sound.play('ok');toast('Task completed · verified','ok');}
   else if(task.state==='paused_quota')toast('Paused: daily budget reached','warn',{label:'Resume',fn:()=>resumeTask(task)});
-  else if(task.state==='blocked')toast(task.note.slice(0,90),'warn',{label:'Models',fn:()=>{go('models');}});
+  else if(task.state==='blocked')toast(task.note.slice(0,90),'warn',{label:'Models',fn:()=>{LIVE.hide();go('models');}});
   else if(task.state==='failed')toast('Task failed: '+(task.note||'').slice(0,70),'bad');
   if(S.settings.autoSync&&S.device)deviceSync(true);
 }
@@ -1969,7 +2336,8 @@ function openWire(id){
     </div>
     <div class="kv"><b>Model</b><span>${esc(r.model)}</span><b>When</b><span>${new Date(r.at).toLocaleString()}</span>
       <b>Task</b><span>${esc(r.taskId||'—')}</span><b>Temp</b><span>${r.request?.temperature}</span>
-      <b>Max out</b><span>${r.request?.max_tokens}</span><b>Tools</b><span>${r.request?.tools?'native':'block protocol'}</span>
+      <b>Max out</b><span>${r.request?.max_tokens}</span><b>Stream</b><span>${r.request?.stream?'yes':'no'}</span>
+      <b>Tools</b><span>${r.request?.tools?'native':'block protocol'}</span>
       ${r.parse?`<b>Actions</b><span>${esc(r.parse.actions.join(', ')||'none')}${r.parse.truncated?' · truncated':''}</span>`:''}</div>
     <h4>Prompt sent · ${msgs.length} messages</h4>${reqHTML}
     ${r.error?`<h4>Transport error</h4><pre class="code">${esc(r.error)}</pre>`:''}
@@ -1983,12 +2351,12 @@ function openWire(id){
       <button class="btn sm p" id="wCopyAll">Copy exchange</button>
     </div>
     <p class="tiny dim2" style="margin-top:10px">Captured passively. Nothing here is sent anywhere. API keys live in request headers and are never recorded.</p>`);
-  $('wCopyPrompt').onclick=async()=>toast(await copyText(msgs.map(m=>`[${m.role}]\n${typeof m.content==='string'?m.content:JSON.stringify(m.content)}`).join('\n\n'))?'Prompt copied':'Copy blocked',await copyText('x')?'ok':'warn');
+  $('wCopyPrompt').onclick=async()=>{const ok=await copyText(msgs.map(m=>`[${m.role}]\n${typeof m.content==='string'?m.content:JSON.stringify(m.content)}`).join('\n\n'));toast(ok?'Prompt copied':'Copy blocked',ok?'ok':'warn');};
   $('wCopyReply').onclick=async()=>{const ok=await copyText(r.error||r.response?.content||'');toast(ok?'Reply copied':'Copy blocked',ok?'ok':'warn');};
   $('wCopyAll').onclick=async()=>{const ok=await copyText(wireText([r]));toast(ok?'Exchange copied':'Copy blocked',ok?'ok':'warn');};
 }
 $('actTabs').querySelectorAll('[data-am]').forEach(b=>b.onclick=()=>{
-  S.ui.actMode=b.dataset.am;if(b.dataset.am==='ops'){S.ui.wireTask=null;}
+  S.ui.actMode=b.dataset.am;if(b.dataset.am==='ops')S.ui.wireTask=null;
   renderActivity();Sound.play('click');});
 $('actSearch').addEventListener('input',debounce(e=>{S.ui.actQ=e.target.value;renderActivity();},180));
 $('actFilter').onchange=e=>{S.ui.actFilter=e.target.value;renderActivity();};
@@ -2029,7 +2397,7 @@ function renderModels(){
   const head=`<div class="card" style="--i:0"><h3>Request budget · ${utcDay()}</h3>
     <div class="meter ${b.total<=5?'crit':b.total<=15?'warn':''}"><i style="width:${Math.round(b.total/b.limit*100)}%"></i></div>
     <div class="stats"><span class="chip ok">${b.total} available</span><span class="chip">${b.used} used</span><span class="chip warn">${b.reserve} reserved</span><span class="chip">${b.tokens.toLocaleString()} tokens</span></div>
-    <p class="tiny dim2" style="margin:9px 0 0">Only text-in / text-out chat models are listed. Music, image and router entries are excluded automatically. Reliability counts both bad replies and provider errors.</p>
+    <p class="tiny dim2" style="margin:9px 0 0">Only text-in / text-out chat models are listed. Responses stream live into the run window. Reliability counts both bad replies and provider errors.</p>
     <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap"><button class="btn sm" id="mQuota">Refresh quota</button><button class="btn sm" id="mLocal">Use local planner</button></div></div>`;
   $('modelList').innerHTML=head+(list.length?list.map((m,i)=>{
     const pref=S.prefs[m.id]||{enabled:true},ok=pref.ok||0,bad=pref.fail||0;
@@ -2165,6 +2533,7 @@ const PY={mode:null,worker:null,api:null,seq:0,pend:new Map(),
     S.pyLog.push(String(line));
     while(S.pyLog.length>400)S.pyLog.shift();
     const el=$('pyLog');if(el){el.textContent=S.pyLog.join('\n');el.scrollTop=el.scrollHeight;}
+    if(S.run)LIVE.note(String(line).slice(0,200));
     kvSet('pyLog',S.pyLog.slice(-200)).catch(()=>{});
   },
   async load(){
@@ -2328,7 +2697,7 @@ function diagnosticsText(){
   return JSON.stringify({
     when:new Date().toISOString(),app:appUrl(),ua:navigator.userAgent,
     project:{name:project().name,stack:project().stack,files:S.files.length},
-    settings:{model:S.settings.model,verify:S.settings.verify,maxCalls:S.settings.maxCalls,temperature:S.settings.temperature,nativeTools:S.settings.nativeTools,stepMode:S.settings.stepMode,depth:S.settings.depth},
+    settings:{model:S.settings.model,verify:S.settings.verify,maxCalls:S.settings.maxCalls,temperature:S.settings.temperature,nativeTools:S.settings.nativeTools,stepMode:S.settings.stepMode,liveOverlay:S.settings.liveOverlay,wirePersist:S.settings.wirePersist,depth:S.settings.depth},
     budget:b,
     models:S.models.filter(m=>m.status!=='unsupported').map(m=>({id:m.id,enabled:S.prefs[m.id]?.enabled!==false,ok:S.prefs[m.id]?.ok||0,fail:S.prefs[m.id]?.fail||0,maxOut:m.maxOut})),
     python:S.pyStatus,pythonLogTail:S.pyLog.slice(-25),
@@ -2344,18 +2713,29 @@ function renderSettings(){
   const s=S.settings,p=project(),est=S.storageEst;
   const pyChip=S.pyStatus?(S.pyStatus.loaded?`<span class="chip ${S.pyStatus.rc===0||S.pyStatus.rc===undefined?'ok':'warn'}">Python loaded${S.pyStatus.rc!==undefined?' · '+S.pyStatus.rc+' '+(PY_RC[S.pyStatus.rc]||''):''}</span>`:`<span class="chip bad">Python failed</span>`):'<span class="chip warn">Python not loaded</span>';
   $('settingsBody').innerHTML=`
-  <div class="card" style="--i:0"><h3>Transcripts · prompts &amp; replies</h3>
+  <div class="card" style="--i:0"><h3>Live run window</h3>
+    <div class="kv"><b>Auto-open</b><span>${s.liveOverlay?'yes — opens when a task starts':'no — open manually'}</span>
+      <b>Streaming</b><span>always on · reasoning + response channels</span>
+      <b>Interleaved</b><span>operations, checkpoints and verification appear inline</span>
+      <b>Minimize</b><span>task keeps running · LIVE pill reopens it</span></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin:10px 0">
+      <div class="sw${s.liveOverlay?' on':''}" id="stLive"><i></i><span>AUTO-OPEN</span></div>
+      <div class="sw${s.stepMode?' on':''}" id="stStep"><i></i><span>STEP-BY-STEP</span></div>
+    </div>
+    <button class="btn p" id="stLiveOpen" style="width:100%">Open live window</button>
+    <p class="tiny dim2" style="margin:10px 0 0">Stop cancels the in-flight stream immediately. A stream with no data for 60 seconds is treated as stalled and retried or handed to another model.</p>
+  </div>
+  <div class="card" style="--i:1"><h3>Transcripts · prompts &amp; replies</h3>
     <div class="kv"><b>Captured</b><span>${S.wire.length} exchanges (max ${s.wireMax})</span>
-      <b>Storage</b><span>${s.wirePersist?'kept on this device':'memory only — cleared on reload'}</span>
+      <b>Storage</b><span>${s.wirePersist?'kept on this device (default)':'memory only — cleared on reload'}</span>
       <b>Cloud</b><span>never uploaded</span><b>Keys</b><span>never recorded</span></div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;margin:10px 0">
       <div class="sw${s.wirePersist?' on':''}" id="stWirePersist"><i></i><span>KEEP ON DEVICE</span></div>
-      <div class="sw${s.stepMode?' on':''}" id="stStep"><i></i><span>STEP-BY-STEP</span></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="stWireOpen">Open transcripts</button><button class="btn" id="stWireCopy">Copy recent</button><button class="btn d" id="stWireClear">Clear</button></div>
-    <p class="tiny dim2" style="margin:10px 0 0">Capture is passive — it records what was already sent and received, and never alters a request. Turning persistence on writes to this browser's local database only; Supabase sync never includes transcripts.</p>
+    <p class="tiny dim2" style="margin:10px 0 0">Capture is passive — it records what was already sent and received, and never alters a request. Persistence writes to this browser's local database only; Supabase sync never includes transcripts.</p>
   </div>
-  <div class="card" style="--i:1"><h3>Project</h3>
+  <div class="card" style="--i:2"><h3>Project</h3>
     <div class="field"><label>Name</label><input id="stName" value="${esc(p.name)}"></div>
     <div class="field"><label>Purpose</label><textarea id="stPurpose" rows="2">${esc(p.purpose)}</textarea></div>
     <div class="grid2"><div class="field"><label>Stack</label><select id="stStack"><option value="web"${p.stack==='web'?' selected':''}>web</option><option value="python"${p.stack==='python'?' selected':''}>python</option></select></div>
@@ -2364,16 +2744,16 @@ function renderSettings(){
     <div class="field"><label>Min matches</label><input id="stMin" type="number" min="1" value="${p.smokeMin||1}"></div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="stSave">Save project</button><button class="btn" id="stNew">＋ New project</button><button class="btn d" id="stDel">Delete project</button></div>
   </div>
-  <div class="card" style="--i:2"><h3>OpenRouter</h3>
+  <div class="card" style="--i:3"><h3>OpenRouter</h3>
     <div class="field"><label>API key · stored only on this device</label><input id="stKey" type="password" value="${esc(s.key)}" placeholder="sk-or-v1-…"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn p" id="stKeySave">Save key</button><button class="btn" id="stKeyTest">Test + quota</button><button class="btn d" id="stKeyClear">Remove</button></div>
     <p class="tiny dim2" style="margin:10px 0 0">Saving a key also syncs the registry so fallback models exist.</p>
   </div>
-  <div class="card" style="--i:3"><h3>Device folder</h3>
+  <div class="card" style="--i:4"><h3>Device folder</h3>
     <div class="kv"><b>Status</b><span>${S.device?'linked · '+esc(S.device.name):'not linked'}</span><b>Permission</b><span id="stPerm">—</span><b>Baseline</b><span>${Object.keys(S.syncBase||{}).length} hashes recorded</span></div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="stLink">${S.device?'Re-link':'Link folder'}</button><button class="btn p" id="stSync">Sync now</button><button class="btn d" id="stUnlink">Unlink</button></div>
   </div>
-  <div class="card" style="--i:4"><h3>Cloud metadata · Supabase</h3>
+  <div class="card" style="--i:5"><h3>Cloud metadata · Supabase</h3>
     <div class="banner"><span>◈</span><span class="grow">Set <b>Site URL</b> to <b>${esc(appUrl())}</b> and add it under Redirect URLs in Supabase → Authentication → URL Configuration.</span></div>
     <div class="field"><label>Project URL</label><input id="sbUrl" value="${esc(s.sbUrl)}" placeholder="https://xxxx.supabase.co"></div>
     <div class="field"><label>Anon / publishable key</label><input id="sbKey" value="${esc(s.sbKey)}" placeholder="eyJ…"></div>
@@ -2390,23 +2770,23 @@ function renderSettings(){
     <h4>Schema · run once</h4><pre class="code raw" style="max-height:190px">${esc(SB_SQL)}</pre>
     <button class="btn sm" id="sbCopy" style="margin-top:8px">Copy SQL</button>
   </div>
-  <div class="card" style="--i:5"><h3>Runtimes</h3>
+  <div class="card" style="--i:6"><h3>Runtimes</h3>
     <div class="stats"><span class="chip ok">esbuild-wasm · validated</span>${pyChip}</div>
     <p class="tiny dim2" style="margin:9px 0 10px">Python runs in a module worker with three CDN mirrors and a main-thread fallback. Tests execute in an isolated project directory with importlib mode.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="pyLoad">Load Python</button><button class="btn p" id="pyTest">Run pytest</button><button class="btn" id="pyStop">Unload</button><button class="btn sm" id="pyLogClear">Clear log</button></div>
     <pre class="code" id="pyLog" style="margin-top:10px;max-height:220px">${esc(S.pyLog.join('\n')||'idle')}</pre>
   </div>
-  <div class="card" style="--i:6"><h3>Diagnostics</h3>
+  <div class="card" style="--i:7"><h3>Diagnostics</h3>
     <p class="tiny dim2">Recent failures, runtime log tail, model reliability and last exchanges — as text. No API keys included.</p>
     <button class="btn p" id="dgCopy" style="width:100%">Copy diagnostics</button>
     <pre class="code" id="dgOut" style="margin-top:9px;max-height:200px">${esc(diagnosticsText().slice(0,1200))}…</pre>
   </div>
-  <div class="card" style="--i:7"><h3>Storage &amp; portability</h3>
+  <div class="card" style="--i:8"><h3>Storage &amp; portability</h3>
     <div class="meter"><i style="width:${est.quota?Math.max(1,Math.round(est.usage/est.quota*100)):1}%"></i></div>
     <div class="kv"><b>Used</b><span>${fmtBytes(est.usage)}</span><b>Quota</b><span>${fmtBytes(est.quota)}</span><b>Persistent</b><span id="stPersist">checking…</span><b>Files</b><span>${S.files.length}</span><b>Checkpoints</b><span>${S.checkpoints.length}</span><b>Trash</b><span>${S.trash.length}</span></div>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn" id="stPersistBtn">Request persistence</button><button class="btn p" id="stExport">Export ZIP</button><button class="btn" id="stExportMem">Export memory</button><button class="btn" id="stImport">Import ZIP</button></div>
   </div>
-  <div class="card" style="--i:8"><h3>Appearance &amp; sound</h3>
+  <div class="card" style="--i:9"><h3>Appearance &amp; sound</h3>
     <div class="grid2">
       <div class="field"><label>Accent</label><select id="stAccent"><option value="molten">Molten</option><option value="cyan">Cyan</option><option value="violet">Violet</option><option value="lime">Lime</option></select></div>
       <div class="field"><label>Density</label><select id="stDensity"><option value="cozy">Cozy</option><option value="compact">Compact</option></select></div>
@@ -2417,12 +2797,14 @@ function renderSettings(){
     </div>
   </div>`;
   $('stAccent').value=s.accent;$('stDensity').value=s.density;
+  $('stLive').onclick=()=>{setSetting('liveOverlay',!S.settings.liveOverlay);renderSettings();toast(S.settings.liveOverlay?'Live window auto-opens':'Live window manual');};
+  $('stLiveOpen').onclick=()=>LIVE.show();
+  $('stStep').onclick=()=>{setSetting('stepMode',!S.settings.stepMode);renderSettings();toast(S.settings.stepMode?'Step-by-step on':'Step-by-step off');};
   $('stWirePersist').onclick=async()=>{
     const next=!S.settings.wirePersist;setSetting('wirePersist',next);
     if(next){for(const r of S.wire)await put('wire',r);}
     else{for(const r of await all('wire'))await del('wire',r.id);}
     toast(next?'Transcripts will survive reloads (local only)':'Transcripts are memory-only again','ok');renderSettings();renderHeader();};
-  $('stStep').onclick=()=>{setSetting('stepMode',!S.settings.stepMode);renderSettings();toast(S.settings.stepMode?'Step-by-step on':'Step-by-step off');};
   $('stWireOpen').onclick=()=>openWireFor(null);
   $('stWireCopy').onclick=async()=>{const ok=await copyText(wireText(S.wire.slice(0,12)));toast(ok?'Transcripts copied':'Nothing to copy',ok?'ok':'warn');};
   $('stWireClear').onclick=async()=>{
@@ -2549,7 +2931,12 @@ function closeDrawer(){
 }
 $('drawerClose').onclick=closeDrawer;
 $('scrim').onclick=()=>{if(!$('modal').classList.contains('on'))closeDrawer();};
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if($('modal').classList.contains('on'))$('modalCancel').click();else closeDrawer();}});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if($('modal').classList.contains('on')){$('modalCancel').click();return;}
+  if($('drawer').classList.contains('on')){closeDrawer();return;}
+  if(LIVE.open)LIVE.hide();
+});
 function openQuota(){
   const b=budget();
   openDrawer('Request budget',`
@@ -2565,7 +2952,7 @@ function openQuota(){
 
 /* ── render / lifecycle ──────────────────────────────────── */
 function renderAll(){renderHeader();renderChat();renderFiles();renderPlan();renderActivity();renderModels();renderSettings();}
-window.addEventListener('visibilitychange',()=>{if(document.hidden&&S.run){S.run.pause=true;renderChat();}});
+window.addEventListener('visibilitychange',()=>{if(document.hidden&&S.run){S.run.pause=true;LIVE.setPhase('paused');renderChat();}});
 window.addEventListener('beforeunload',e=>{if(S.run){e.preventDefault();e.returnValue='';}});
 boot().catch(e=>{document.body.innerHTML='<div style="padding:40px;font:14px monospace;color:#ff4d6d;overflow-wrap:anywhere">Startup failed: '+esc(e.message)+'<br><br>This app requires a secure context (HTTPS) and a modern browser.</div>';});
 </script>
