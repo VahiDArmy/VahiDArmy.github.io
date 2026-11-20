@@ -1,24 +1,22 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="midnight" data-arfont="amiri">
+<html lang="en" data-theme="midnight" data-arfont="amiri" data-build="1.3">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Nūr · The Grand Istighfār</title>
-<meta name="description" content="A luminous reader for the Grand Istighfār — Arabic, English & Persian, with cloud sync.">
+<meta name="description" content="A luminous reader for the Grand Istighfār — tap any verse to unfold its meaning. Arabic, English & Persian.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Sora:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=13">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>۞</text></svg>">
 </head>
 <body>
 
-<!-- ══════════ SVG SPRITE + DEFS ══════════ -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
   <defs>
     <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" style="stop-color:var(--acc)"/>
-      <stop offset="1" style="stop-color:var(--acc2)"/>
+      <stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/>
     </linearGradient>
   </defs>
   <symbol id="i-flourish" viewBox="0 0 220 20"><path d="M0 10h82M138 10h82"/><path d="M110 3l7 7-7 7-7-7z"/><circle cx="92" cy="10" r="2"/><circle cx="128" cy="10" r="2"/><path d="M99 10h4M117 10h4"/></symbol>
@@ -46,11 +44,8 @@
   <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></symbol>
   <symbol id="i-sync" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
   <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></symbol>
-  <symbol id="i-kbd" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></symbol>
   <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
-  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
   <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -59,12 +54,10 @@
   <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
   <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
-  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
   <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8L2 22M17.5 15H9"/></symbol>
   <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
   <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></symbol>
   <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
   <symbol id="i-scroll" viewBox="0 0 24 24"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></symbol>
   <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
@@ -72,6 +65,9 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
   <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-tap" viewBox="0 0 24 24"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V9.5a1.8 1.8 0 0 1 3.6 0V11"/><path d="M16.6 11.4a1.7 1.7 0 0 1 3.4 0V16a6 6 0 0 1-6 6h-1.6a5 5 0 0 1-3.9-1.9L5 15.4a1.8 1.8 0 0 1 2.7-2.3L9 14.4"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M3 5h12M9 3v2M11.5 5c0 5-4 9-8.5 10"/><path d="M6 9c0 3 3.5 5.5 7 6.5"/><path d="M13 21l4.5-11L22 21M14.8 17h5.4"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
 </svg>
 
 <div class="aurora a1"></div>
@@ -81,7 +77,6 @@
 <div id="progress-line"></div>
 
 <div id="app">
-  <!-- ══════════ SIDE RAIL · Reader first ══════════ -->
   <aside id="rail">
     <button class="logo" data-action="nav" data-view="read">
       <span class="logo-mark">۞</span>
@@ -95,15 +90,11 @@
       <button class="rail-btn" data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
     </nav>
     <div class="rail-foot">
-      <button class="icon-btn" id="btn-sound" data-action="toggle-sound" data-tip="Sound (M)">
-        <svg class="ic ic-on"><use href="#i-vol"/></svg><svg class="ic ic-off"><use href="#i-volx"/></svg>
-      </button>
       <button class="icon-btn" data-action="open-settings" data-tip="Settings"><svg class="ic"><use href="#i-set"/></svg></button>
       <button class="icon-btn" data-action="open-about" data-tip="About & keys (?)"><svg class="ic"><use href="#i-info"/></svg></button>
     </div>
   </aside>
 
-  <!-- ══════════ MAIN ══════════ -->
   <div id="main">
     <header id="topbar">
       <div class="tb-left"><span class="tb-orn">۞</span><h1 id="view-title">Reader</h1></div>
@@ -111,9 +102,12 @@
         <button class="hud-chip" data-action="nav" data-view="stats" data-tip="Reading streak">
           <svg class="ic"><use href="#i-flame"/></svg><b id="hud-streak-n">0</b>
         </button>
+        <button class="icon-btn" id="btn-sound" data-action="toggle-sound" data-tip="Sound (M)" aria-pressed="true">
+          <svg class="ic ic-on"><use href="#i-vol"/></svg><svg class="ic ic-off"><use href="#i-volx"/></svg>
+        </button>
         <button class="icon-btn" data-action="open-search" data-tip="Search (/)"><svg class="ic"><use href="#i-search"/></svg></button>
         <button class="icon-btn hide-sm" data-action="open-palette" data-tip="Commands (Ctrl+K)"><svg class="ic"><use href="#i-cmd"/></svg></button>
-        <button class="sync-chip off" id="sync-dot" data-action="sync-now" data-tip="Cloud sync"><svg class="ic"><use href="#i-sync"/></svg></button>
+        <button class="sync-chip off" id="sync-dot" data-action="sync-info" data-tip="Cloud sync"><svg class="ic"><use href="#i-sync"/></svg></button>
         <button class="avatar-btn" id="btn-account" data-action="account" data-tip="Account"><svg class="ic"><use href="#i-user"/></svg></button>
       </div>
     </header>
@@ -130,6 +124,12 @@
 </nav>
 
 <button id="focus-exit" data-action="focus"><svg class="ic"><use href="#i-x"/></svg>Exit focus</button>
+
+<!-- ══════════ READING CONTROLS SHEET ══════════ -->
+<div id="controls" class="overlay sheet-overlay">
+  <div class="ov-backdrop" data-action="close-controls"></div>
+  <div class="sheet" id="controls-sheet"></div>
+</div>
 
 <!-- ══════════ SETTINGS DRAWER ══════════ -->
 <div id="drawer-backdrop" data-action="close-settings"></div>
@@ -154,10 +154,10 @@
       </div>
       <div class="set-row"><label>Arabic size</label><input type="range" data-set="fontScale" min="0.8" max="1.6" step="0.05"></div>
       <div class="set-row"><label>Line height</label><input type="range" data-set="lineHeight" min="1.7" max="2.7" step="0.1"></div>
-      <div class="set-row"><label>Translation</label>
-        <select data-set="trans"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option><option value="none">Arabic only</option></select>
+      <div class="set-row"><label>Meaning language</label>
+        <select data-set="trans"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option></select>
       </div>
-      <div class="set-row"><label>Tap verse to reveal</label><label class="switch"><input type="checkbox" data-set="tapReveal"><i></i></label></div>
+      <p class="set-note"><svg class="ic"><use href="#i-tap"/></svg>Meanings stay folded until you tap a verse.</p>
     </section>
 
     <section class="set-sec"><h3>Sound & motion</h3>
@@ -176,11 +176,11 @@
       <div class="btn-col">
         <button class="btn" data-action="export"><svg class="ic"><use href="#i-dl"/></svg>Export my data</button>
         <button class="btn" data-action="import"><svg class="ic"><use href="#i-ul"/></svg>Import data</button>
-        <button class="btn" data-action="sync-now"><svg class="ic"><use href="#i-sync"/></svg>Sync now</button>
+        <button class="btn" data-action="sync-info"><svg class="ic"><use href="#i-db"/></svg>Cloud sync status</button>
         <button class="btn danger" data-action="reset-data"><svg class="ic"><use href="#i-trash"/></svg>Reset progress</button>
       </div>
     </section>
-    <p class="drawer-foot">Nūr · v1.2 — crafted with vanilla JS</p>
+    <p class="drawer-foot">Nūr · v1.3 — vanilla JS, no frameworks</p>
   </div>
 </aside>
 
@@ -189,8 +189,7 @@
   <div class="ov-backdrop" data-action="close-search"></div>
   <div class="ov-panel">
     <div class="ov-input"><svg class="ic"><use href="#i-search"/></svg>
-      <input id="search-input" type="text" placeholder="Search Arabic · English · فارسی …" autocomplete="off">
-      <kbd>Esc</kbd>
+      <input id="search-input" type="text" placeholder="Search Arabic · English · فارسی …" autocomplete="off"><kbd>Esc</kbd>
     </div>
     <div id="search-results" class="ov-list"></div>
   </div>
@@ -201,8 +200,7 @@
   <div class="ov-backdrop" data-action="close-palette"></div>
   <div class="ov-panel">
     <div class="ov-input"><svg class="ic"><use href="#i-cmd"/></svg>
-      <input id="palette-input" type="text" placeholder="Type a command…" autocomplete="off">
-      <kbd>Esc</kbd>
+      <input id="palette-input" type="text" placeholder="Type a command…" autocomplete="off"><kbd>Esc</kbd>
     </div>
     <div id="palette-list" class="ov-list"></div>
   </div>
@@ -248,7 +246,7 @@
         <button class="linklike" data-action="auth-back">Back to sign in</button>
       </div>
     </div>
-    <p class="auth-fine"><svg class="ic"><use href="#i-shield"/></svg>Secured by Supabase · row-level security · you can also continue as a guest.</p>
+    <p class="auth-fine"><svg class="ic"><use href="#i-shield"/></svg>Secured by Supabase · row-level security · guest mode always works.</p>
   </div>
 </div>
 
@@ -257,7 +255,6 @@
 <div id="toasts"></div>
 <canvas id="confetti"></canvas>
 
-<!-- ══════════ BOOT ══════════ -->
 <div id="boot">
   <div class="boot-inner">
     <div class="boot-mark">۞</div>
@@ -268,6 +265,6 @@
 </div>
 
 <input type="file" id="import-file" accept="application/json" hidden>
-<script src="app.js"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>
