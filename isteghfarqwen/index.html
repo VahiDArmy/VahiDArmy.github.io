@@ -1,270 +1,1362 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="midnight" data-arfont="amiri" data-build="1.3">
+<html lang="en" data-theme="lapis" data-arfont="amiri">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Nūr · The Grand Istighfār</title>
-<meta name="description" content="A luminous reader for the Grand Istighfār — tap any verse to unfold its meaning. Arabic, English & Persian.">
+<meta name="description" content="The Grand Istighfār — tap any verse to open its meaning.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Sora:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=13">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>۞</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Vazirmatn:wght@300;400;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='78' font-size='78'>۞</text></svg>">
+<style>
+/* ══════════ NŪR · lapis & gold illumination ══════════ */
+:root{
+  --ui:'Sora',system-ui,sans-serif; --fa:'Vazirmatn',sans-serif;
+  --ars:1; --arlh:2.05; --r:20px; --rs:13px;
+  --e:cubic-bezier(.22,1,.36,1); --top:58px; --strip:48px;
+}
+[data-arfont="amiri"]{--ar:'Amiri',serif}
+[data-arfont="scheherazade"]{--ar:'Scheherazade New',serif}
+[data-arfont="naskh"]{--ar:'Noto Naskh Arabic',serif}
+
+[data-theme="lapis"]{
+  --bg:#05091a; --bg2:#0a1228; --surf:#101c3c; --surf2:#17285a; --raise:#1d3268;
+  --line:rgba(227,178,60,.20); --line2:rgba(255,255,255,.075);
+  --tx:#f4ecdb; --mu:#93a4c9;
+  --gold:#e3b23c; --goldl:#f7d992; --goldd:#9d7212; --ongold:#1a1204;
+  --lapis:#3a6fe0; --turq:#2ee6c5; --pom:#f04a63; --saff:#ff9f45;
+  --ok:#3ddc97; --info:#5aa9ff;
+  --g1:rgba(58,111,224,.30); --g2:rgba(227,178,60,.20); --g3:rgba(46,230,197,.16);
+  --shadow:0 26px 70px rgba(0,0,0,.62); --scrim:rgba(3,6,16,.76);
+}
+[data-theme="parchment"]{
+  --bg:#f3e8d2; --bg2:#fbf4e4; --surf:#fffaee; --surf2:#f7ecd6; --raise:#fff;
+  --line:rgba(150,105,25,.26); --line2:rgba(90,60,15,.12);
+  --tx:#2f2413; --mu:#7d6a4c;
+  --gold:#a9761a; --goldl:#c99a34; --goldd:#7a5410; --ongold:#fff8e8;
+  --lapis:#26509e; --turq:#0f8f7e; --pom:#c02a41; --saff:#c96a12;
+  --ok:#1c8a5e; --info:#2a6fc4;
+  --g1:rgba(38,80,158,.14); --g2:rgba(169,118,26,.18); --g3:rgba(15,143,126,.12);
+  --shadow:0 22px 54px rgba(120,85,25,.20); --scrim:rgba(60,42,14,.44);
+}
+[data-theme="shrine"]{
+  --bg:#03130f; --bg2:#07211a; --surf:#0b2e24; --surf2:#114034; --raise:#155040;
+  --line:rgba(231,201,120,.22); --line2:rgba(255,255,255,.08);
+  --tx:#e9f5ec; --mu:#8fb3a4;
+  --gold:#e7c978; --goldl:#f7e3ab; --goldd:#a4832c; --ongold:#1c1608;
+  --lapis:#37b39a; --turq:#4ff0c0; --pom:#ff5f70; --saff:#ffb45c;
+  --ok:#4ff0c0; --info:#63c9ff;
+  --g1:rgba(55,179,154,.26); --g2:rgba(231,201,120,.18); --g3:rgba(79,240,192,.16);
+  --shadow:0 26px 70px rgba(0,0,0,.6); --scrim:rgba(2,12,9,.78);
+}
+[data-theme="plum"]{
+  --bg:#120616; --bg2:#1d0b24; --surf:#2a1033; --surf2:#3a1746; --raise:#4a1f58;
+  --line:rgba(240,180,110,.22); --line2:rgba(255,255,255,.08);
+  --tx:#f6e9f2; --mu:#b294b8;
+  --gold:#f0b46e; --goldl:#ffd7a3; --goldd:#b0762f; --ongold:#2a1405;
+  --lapis:#a濃; --lapis:#a06cf0; --turq:#43e8d8; --pom:#ff4d7e; --saff:#ffb04d;
+  --ok:#46dc9a; --info:#79b6ff;
+  --g1:rgba(160,108,240,.28); --g2:rgba(240,180,110,.18); --g3:rgba(67,232,216,.14);
+  --shadow:0 26px 70px rgba(0,0,0,.62); --scrim:rgba(10,3,14,.78);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:var(--ui);background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;transition:background .5s,color .5s}
+body.lock{overflow:hidden}
+::selection{background:var(--gold);color:var(--ongold)}
+:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+input,select,textarea{font:inherit;color:var(--tx)}
+.ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+kbd{font:600 11px var(--ui);background:var(--surf2);border:1px solid var(--line2);border-radius:6px;padding:3px 7px;color:var(--mu)}
+mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
+.fl{width:210px;height:18px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;color:var(--gold);opacity:.9}
+
+/* scrollbars in the artifact's own language */
+*{scrollbar-width:thin;scrollbar-color:var(--goldd) transparent}
+::-webkit-scrollbar{width:11px;height:11px}
+::-webkit-scrollbar-track{background:color-mix(in srgb,var(--bg2) 70%,transparent);border-radius:9px}
+::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--gold),var(--goldd));border-radius:9px;border:3px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--goldl),var(--gold))}
+
+/* atmosphere */
+.atmo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(95px);opacity:.55}
+.b1{width:66vmax;height:66vmax;top:-26vmax;right:-18vmax;background:radial-gradient(circle,var(--g1),transparent 66%);animation:dr1 52s ease-in-out infinite alternate}
+.b2{width:56vmax;height:56vmax;bottom:-24vmax;left:-16vmax;background:radial-gradient(circle,var(--g2),transparent 66%);animation:dr2 64s ease-in-out infinite alternate}
+.b3{width:44vmax;height:44vmax;top:36%;left:44%;background:radial-gradient(circle,var(--g3),transparent 68%);animation:dr3 46s ease-in-out infinite alternate}
+#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+.grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.055;mix-blend-mode:overlay;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
+.lattice{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.045;
+ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84'%3E%3Cg fill='none' stroke='%23e3b23c' stroke-width='1'%3E%3Cpath d='M42 4l10 28 28 10-28 10-10 28-10-28-28-10 28-10z'/%3E%3Ccircle cx='42' cy='42' r='7'/%3E%3C/g%3E%3C/svg%3E")}
+
+/* shell */
+#shell{position:relative;z-index:1;display:flex;min-height:100vh}
+#rail{width:236px;flex:none;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:6px;
+ border-right:1px solid var(--line);background:color-mix(in srgb,var(--bg2) 78%,transparent);backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:12px;padding:8px 10px 20px;text-align:left}
+.brand .mark{font-size:30px;color:var(--gold);text-shadow:0 0 26px var(--g2);animation:spin 30s linear infinite}
+.brand b{display:block;font-size:19px;font-weight:800;letter-spacing:.4px;line-height:1.1}
+.brand small{font-family:var(--ar);font-size:13px;color:var(--turq)}
+.nav{display:flex;flex-direction:column;gap:5px;flex:1}
+.nav button{display:flex;align-items:center;gap:13px;padding:12px 14px;border-radius:var(--rs);color:var(--mu);font-weight:600;font-size:14px;border:1px solid transparent;transition:.25s var(--e)}
+.nav button:hover{color:var(--tx);background:var(--surf);transform:translateX(3px)}
+.nav button.on{color:var(--gold);background:linear-gradient(90deg,var(--g2),transparent);border-color:var(--line);box-shadow:inset 3px 0 0 var(--gold)}
+.railfoot{display:flex;gap:8px;justify-content:center;padding-top:12px;border-top:1px solid var(--line)}
+#main{flex:1;min-width:0;display:flex;flex-direction:column}
+
+#top{position:fixed;top:0;left:0;right:0;height:var(--top);z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px 0 250px;
+ border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(20px)}
+#top .ttl{display:flex;align-items:center;gap:9px;min-width:0}
+#top .ttl span{color:var(--gold);font-size:17px}
+#top h1{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;align-items:center;gap:7px}
+.ib{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:var(--mu);border:1px solid transparent;transition:.2s var(--e);position:relative}
+.ib:hover{color:var(--gold);background:var(--surf);border-color:var(--line)}
+.ib:active{transform:scale(.9)}
+.soundpill{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 13px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--line);transition:.2s var(--e)}
+.soundpill.on{color:var(--ongold);background:linear-gradient(135deg,var(--gold),var(--goldl));box-shadow:0 0 18px var(--g2)}
+.soundpill.off{color:var(--mu);background:var(--surf)}
+.soundpill .ic{width:17px;height:17px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:99px;background:var(--surf);border:1px solid var(--line);color:var(--gold);font-weight:700;font-size:12.5px;transition:.2s}
+.chip:hover{box-shadow:0 0 16px var(--g2)}
+.chip .ic{width:15px;height:15px}
+.syncb{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surf);color:var(--mu);transition:.3s}
+.syncb.ok{color:var(--ok)} .syncb.busy{color:var(--gold)} .syncb.busy .ic{animation:spin 1.1s linear infinite}
+.syncb.err{color:var(--pom);border-color:color-mix(in srgb,var(--pom) 45%,transparent);animation:blip 2.4s ease-in-out infinite}
+.av{width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;
+ background:linear-gradient(135deg,var(--gold),var(--turq));color:var(--ongold);border:2px solid var(--line);transition:.2s}
+.av:hover{transform:scale(1.07)} .av .ic{stroke:var(--ongold)}
+
+#view{flex:1;width:100%;max-width:1080px;margin:0 auto;padding:calc(var(--top) + 20px) 22px 100px}
+.page{animation:up .5s var(--e)}
+#tabs{display:none}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 17px;border-radius:var(--rs);font-weight:600;font-size:13.5px;
+ border:1px solid var(--line);background:var(--surf);transition:.22s var(--e);position:relative;overflow:hidden}
+.btn:hover{background:var(--surf2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--goldl));color:var(--ongold);border-color:transparent;box-shadow:0 10px 28px var(--g2)}
+.btn.gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 34%,rgba(255,255,255,.45) 50%,transparent 66%);transform:translateX(-130%);transition:transform .7s var(--e)}
+.btn.gold:hover::after{transform:translateX(130%)}
+.btn.turq{background:linear-gradient(135deg,var(--turq),var(--lapis));color:#04121a;border-color:transparent}
+.btn.ghost{background:transparent}
+.btn.bad{color:var(--pom);border-color:color-mix(in srgb,var(--pom) 40%,transparent)}
+.btn.wide{width:100%}
+.btn.sm{padding:8px 12px;font-size:12.5px;border-radius:11px}
+.btn.busy{pointer-events:none;opacity:.75}
+.btn.busy::after{content:"";width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;background:none;transform:none}
+.link{color:var(--turq);font-size:12.5px;font-weight:600;padding:6px;text-decoration:underline dotted;text-underline-offset:4px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:var(--surf);font-size:12.5px;font-weight:600;color:var(--mu);transition:.2s var(--e)}
+.pill:hover{color:var(--tx);transform:translateY(-1px)}
+.pill.on{color:var(--gold);border-color:var(--gold);background:var(--g2);box-shadow:0 0 16px var(--g2)}
+.stack{display:flex;flex-direction:column;gap:9px}
+
+/* cards */
+.card{position:relative;background:linear-gradient(160deg,var(--surf),color-mix(in srgb,var(--surf) 70%,var(--bg2)));border:1px solid var(--line2);border-radius:var(--r);padding:22px;transition:.28s var(--e)}
+.card::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;pointer-events:none;opacity:0;transition:.3s;
+ background:linear-gradient(140deg,var(--gold),transparent 42%,transparent 58%,var(--turq));
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.card:hover{transform:translateY(-3px);border-color:var(--line)}
+.card:hover::before{opacity:.85}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+.hd{display:flex;align-items:center;gap:11px;margin:32px 0 14px;font-size:12.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--mu)}
+.hd::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.mu{color:var(--mu)}
+.big{font-size:33px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.lbl{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:1.4px;margin-top:5px}
+.sic{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:var(--g2);color:var(--gold);margin-bottom:13px}
+.sic.t{background:var(--g3);color:var(--turq)}
+.chd{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;margin-bottom:12px}
+.chd .ic{color:var(--gold);width:18px;height:18px}
+.meta{font-size:10.5px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:7px}
+.snip{font-family:var(--ar);direction:rtl;font-size:20px;line-height:1.95;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.snipe{font-size:12.5px;color:var(--mu);margin-top:8px;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* rings */
+.ring{transform:rotate(-90deg)}
+.ring .bgc{stroke:var(--surf2);fill:none}
+.ring .fgc{stroke:url(#gr);fill:none;stroke-linecap:round;transition:stroke-dashoffset .85s var(--e)}
+.rbox{position:relative;width:116px;height:116px;flex:none}
+.rtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.rtxt b{font-size:25px;font-weight:800} .rtxt small{font-size:10px;color:var(--mu);letter-spacing:1px;text-transform:uppercase}
+.rrow{display:flex;align-items:center;gap:18px}
+
+/* hero */
+.hero{text-align:center;padding:34px 14px 30px;position:relative}
+.hero .orn{color:var(--gold);font-size:22px;letter-spacing:16px;opacity:.85;transform:translateY(calc(var(--par,0) * -14px))}
+.heroar{font-family:var(--ar);direction:rtl;font-size:clamp(34px,7vw,66px);line-height:1.75;margin:12px 0 8px;
+ background:linear-gradient(110deg,var(--tx) 26%,var(--goldl) 48%,var(--tx) 72%);background-size:230% 100%;
+ -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shim 8s linear infinite;filter:drop-shadow(0 0 30px var(--g2))}
+.hero p{color:var(--mu);font-size:14px;max-width:540px;margin:0 auto 6px;line-height:1.7}
+.herofa{font-family:var(--fa);direction:rtl;color:var(--turq);font-size:14px;margin-bottom:22px}
+.cta{display:flex;gap:11px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.hchips{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+.greet{font-size:12.5px;font-weight:600;color:var(--mu)} .greet b{color:var(--gold)}
+.dline{font-size:11.5px;color:var(--mu);margin-top:3px}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.quick button{display:flex;flex-direction:column;align-items:center;gap:9px;padding:17px 8px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--surf);font-size:11.5px;font-weight:600;color:var(--mu);transition:.24s var(--e)}
+.quick button:hover{color:var(--gold);transform:translateY(-3px);border-color:var(--gold);box-shadow:var(--shadow)}
+
+/* ══════════ READER ══════════ */
+.bism{text-align:center;font-family:var(--ar);color:var(--gold);font-size:24px;margin:0 0 14px;text-shadow:0 0 26px var(--g2)}
+.strip{position:sticky;top:var(--top);z-index:35;display:flex;align-items:center;gap:10px;height:var(--strip);padding:0 12px;margin-bottom:20px;
+ border-radius:14px;border:1px solid var(--line);background:color-mix(in srgb,var(--bg2) 92%,transparent);backdrop-filter:blur(20px);box-shadow:0 8px 26px rgba(0,0,0,.28)}
+.strip select{flex:1;min-width:0;background:transparent;border:none;outline:none;font-size:13px;font-weight:600;color:var(--tx);padding:6px 2px;cursor:pointer}
+.strip select option{background:var(--bg2);color:var(--tx)}
+.strip .cnt{font-size:12px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;white-space:nowrap}
+.strip .bar{width:64px;height:5px;border-radius:4px;background:var(--surf2);overflow:hidden;flex:none}
+.strip .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--turq));transition:width .6s var(--e)}
+.sbtn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--gold);font-size:12px;font-weight:700;white-space:nowrap;transition:.2s}
+.sbtn:hover{background:var(--surf2)}
+.sbtn .ic{width:16px;height:16px}
+
+.chapter{margin:40px 0 18px;text-align:center;scroll-margin-top:calc(var(--top) + var(--strip) + 22px)}
+.chapter h2{font-size:20px;font-weight:800;margin:8px 0 3px}
+.chapter .cfa{font-family:var(--fa);direction:rtl;color:var(--turq);font-size:14px}
+.chapter .cm{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:10px;font-size:11.5px;color:var(--mu);flex-wrap:wrap}
+.seal{display:inline-flex;align-items:center;gap:5px;color:var(--ongold);background:linear-gradient(135deg,var(--gold),var(--turq));padding:3px 11px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.6px}
+.seal .ic{width:11px;height:11px;stroke-width:3}
+
+.verse{position:relative;display:block;width:100%;text-align:right;border:1px solid var(--line2);border-radius:var(--r);cursor:pointer;
+ background:linear-gradient(165deg,var(--surf),color-mix(in srgb,var(--surf) 62%,var(--bg2)));
+ padding:20px 22px 0;margin-bottom:16px;transition:.28s var(--e);scroll-margin-top:calc(var(--top) + var(--strip) + 22px);overflow:hidden}
+.verse::before,.verse::after{content:"";position:absolute;width:16px;height:16px;opacity:.4;transition:.3s;pointer-events:none}
+.verse::before{top:9px;left:9px;border-top:1.5px solid var(--gold);border-left:1.5px solid var(--gold);border-radius:4px 0 0 0}
+.verse::after{top:9px;right:9px;border-top:1.5px solid var(--gold);border-right:1.5px solid var(--gold);border-radius:0 4px 0 0}
+.verse:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 18px 44px rgba(0,0,0,.3),0 0 0 1px var(--g2)}
+.verse:hover::before,.verse:hover::after{opacity:1;width:24px;height:24px}
+.verse:active{transform:scale(.994)}
+.verse.read{border-left:3px solid var(--turq)}
+.verse.flash{animation:flash 1.7s var(--e)}
+.vhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;direction:ltr}
+.star{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:var(--gold);
+ background:var(--g2);border:1px solid var(--line);clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%)}
+.verse.read .star{background:linear-gradient(135deg,var(--turq),var(--lapis));color:#04121a;border-color:transparent}
+.vflags{display:flex;align-items:center;gap:5px}
+.vflag{width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;color:var(--mu);transition:.2s}
+.vflag .ic{width:16px;height:16px}
+.vflag:hover{color:var(--gold);background:var(--surf2)}
+.vflag.on{color:var(--gold)} .vflag.done{color:var(--turq)}
+.vflag.note.on{color:var(--turq)}
+.var{font-family:var(--ar);direction:rtl;text-align:right;font-size:calc(26px * var(--ars));line-height:var(--arlh);color:var(--tx);padding-bottom:14px}
+.vfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;direction:ltr;border-top:1px dashed var(--line);padding:11px 0 13px;
+ font-size:11px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;color:var(--mu);transition:.25s}
+.verse:hover .vfoot{color:var(--gold)}
+.vfoot .go{display:inline-flex;align-items:center;gap:8px}
+.vfoot .ic{width:15px;height:15px;transition:transform .3s var(--e)}
+.verse:hover .vfoot .ic{transform:translateX(4px)}
+.vnote{direction:ltr;text-align:left;display:flex;gap:8px;align-items:flex-start;margin:0 0 13px;padding:9px 12px;border-radius:11px;background:var(--g3);font-size:12.5px;color:var(--tx);font-weight:400;letter-spacing:0;text-transform:none}
+.vnote .ic{width:14px;height:14px;color:var(--turq);margin-top:2px}
+.vend{text-align:center;padding:34px 18px;border:1px dashed var(--line);border-radius:var(--r);margin-top:26px}
+.vend p{color:var(--mu);font-size:13.5px;margin:10px 0 16px;line-height:1.7}
+
+/* ══════════ THE POP-UP ══════════ */
+#pop{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:18px}
+#pop.open{display:flex}
+#pop .scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(9px) saturate(.85);animation:fade .3s}
+.popcard{position:relative;width:min(720px,100%);max-height:min(88vh,860px);display:flex;flex-direction:column;border-radius:26px;overflow:hidden;
+ background:linear-gradient(168deg,var(--surf2),var(--bg2) 62%);border:1px solid var(--gold);box-shadow:var(--shadow),0 0 0 1px var(--g2),0 0 90px var(--g2);
+ animation:popin .42s var(--e)}
+.popcard::before{content:"";position:absolute;inset:7px;border:1px solid var(--line);border-radius:19px;pointer-events:none;z-index:2}
+.popcard::after{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--goldl),var(--turq),var(--goldl),transparent);
+ animation:sweep 3.4s ease-in-out infinite;z-index:3}
+.poptop{position:relative;z-index:4;display:flex;align-items:center;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.poptop .star{width:42px;height:42px;font-size:14px;background:linear-gradient(135deg,var(--gold),var(--goldl));color:var(--ongold);border-color:transparent;box-shadow:0 0 22px var(--g2)}
+.poptop .who{flex:1;min-width:0}
+.poptop .who b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poptop .who span{font-size:11px;color:var(--mu);letter-spacing:1.2px;text-transform:uppercase;font-weight:700}
+.popbody{position:relative;z-index:4;flex:1;overflow-y:auto;padding:22px 24px 8px}
+.popar{font-family:var(--ar);direction:rtl;text-align:right;font-size:calc(29px * var(--ars));line-height:calc(var(--arlh) + .1);color:var(--tx);text-shadow:0 0 40px var(--g2)}
+.popdiv{display:flex;align-items:center;justify-content:center;margin:20px 0 16px;color:var(--gold);opacity:.85}
+.langs{display:flex;gap:7px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.lang{padding:7px 16px;border-radius:99px;border:1px solid var(--line);background:var(--surf);font-size:12.5px;font-weight:700;color:var(--mu);transition:.22s var(--e)}
+.lang:hover{color:var(--tx)}
+.lang.on{background:linear-gradient(135deg,var(--gold),var(--goldl));color:var(--ongold);border-color:transparent;box-shadow:0 6px 20px var(--g2)}
+.tr{animation:up .35s var(--e)}
+.tr.en{font-size:15.5px;line-height:1.85;color:var(--tx);opacity:.94}
+.tr.fa{font-family:var(--fa);direction:rtl;text-align:right;font-size:15.5px;line-height:2.15;color:var(--tx);opacity:.94}
+.tr + .tr{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.popnote{margin:16px 0 6px;padding:13px 15px;border-radius:14px;background:var(--g3);border:1px solid color-mix(in srgb,var(--turq) 28%,transparent);font-size:13.5px;line-height:1.7;white-space:pre-wrap}
+.popnote .nh{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--turq);margin-bottom:7px}
+.popnote .nh .ic{width:13px;height:13px}
+.popfoot{position:relative;z-index:4;border-top:1px solid var(--line);padding:14px 18px calc(14px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg2) 60%,transparent)}
+.pactions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.pa{display:inline-flex;align-items:center;gap:7px;padding:9px 13px;border-radius:11px;border:1px solid var(--line);background:var(--surf);font-size:12.5px;font-weight:700;color:var(--mu);transition:.2s var(--e)}
+.pa:hover{color:var(--gold);background:var(--surf2);transform:translateY(-2px)}
+.pa .ic{width:16px;height:16px}
+.pa.on{color:var(--gold);border-color:var(--gold);background:var(--g2)}
+.pa.done{color:var(--turq);border-color:color-mix(in srgb,var(--turq) 50%,transparent);background:var(--g3)}
+.pa.play{color:var(--ongold);background:linear-gradient(135deg,var(--turq),var(--lapis));border-color:transparent}
+.pnav{display:flex;align-items:center;gap:12px}
+.pnav .nb{display:inline-flex;align-items:center;gap:7px;padding:10px 15px;border-radius:12px;border:1px solid var(--line);background:var(--surf);font-size:12.5px;font-weight:700;transition:.2s var(--e)}
+.pnav .nb:hover:not(:disabled){background:var(--surf2);color:var(--gold)}
+.pnav .nb:disabled{opacity:.32;cursor:not-allowed}
+.pnav .mid{flex:1;text-align:center}
+.pnav .mid b{font-size:12px;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums}
+.pnav .track{height:4px;border-radius:3px;background:var(--surf2);overflow:hidden;margin-top:6px}
+.pnav .track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--turq));transition:width .5s var(--e)}
+.popx{position:absolute;top:14px;right:14px;z-index:6;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+ background:var(--surf);border:1px solid var(--line);color:var(--mu);transition:.2s}
+.popx:hover{color:var(--pom);border-color:var(--pom);transform:rotate(90deg)}
+.swipehint{text-align:center;font-size:10.5px;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-top:9px;opacity:.7}
+
+/* library */
+.libitem{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surf);margin-bottom:11px;transition:.24s var(--e);cursor:pointer}
+.libitem:hover{transform:translateX(4px);border-color:var(--gold)}
+.libitem .body{flex:1;min-width:0}
+.libnote{font-size:13px;background:var(--g3);border-radius:11px;padding:9px 12px;margin-top:8px;white-space:pre-wrap;line-height:1.6}
+.empty{text-align:center;padding:60px 18px;color:var(--mu)}
+.empty .ic{width:44px;height:44px;stroke-width:1.3;color:var(--gold);opacity:.7;margin-bottom:13px}
+.empty h3{color:var(--tx);margin-bottom:6px} .empty p{font-size:13.5px;margin-bottom:18px;line-height:1.6}
+
+/* tasbih */
+.tas{display:flex;flex-direction:column;align-items:center;gap:20px;padding-top:6px}
+.trow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tphrase{font-family:var(--ar);direction:rtl;font-size:clamp(25px,4.6vw,36px);color:var(--gold);text-align:center;line-height:1.9;text-shadow:0 0 34px var(--g2)}
+.tsub{font-size:12.5px;color:var(--mu);text-align:center;margin-top:-12px}
+.tbtn{position:relative;width:min(292px,76vw);height:min(292px,76vw);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .1s;user-select:none}
+.tbtn::before{content:"";position:absolute;inset:-18px;border-radius:50%;background:radial-gradient(circle,var(--g2),transparent 70%);animation:pulse 3.8s ease-in-out infinite}
+.tbtn:active{transform:scale(.955)}
+.tbtn .ring{position:absolute;inset:0;width:100%;height:100%}
+.tcore{width:78%;height:78%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+ background:radial-gradient(circle at 32% 26%,var(--raise),var(--surf));border:1px solid var(--line);box-shadow:inset 0 0 44px rgba(0,0,0,.28),0 0 50px var(--g2)}
+.tcore b{font-size:clamp(46px,10vw,66px);font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums}
+.tcore small{font-size:10px;color:var(--mu);text-transform:uppercase;letter-spacing:2px}
+.tcore .left{font-size:11.5px;color:var(--turq);font-weight:700;margin-top:6px}
+.tbtn.bump .tcore{animation:bump .2s var(--e)}
+.tstats{display:flex;gap:24px;font-size:12.5px;color:var(--mu);flex-wrap:wrap;justify-content:center}
+.tstats b{color:var(--tx);font-variant-numeric:tabular-nums}
+
+/* journey */
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,14px);gap:4px;overflow-x:auto;padding:6px 2px}
+.heat i{width:14px;height:14px;border-radius:4px;background:var(--surf2);border:1px solid var(--line2)}
+.heat i.l1{background:color-mix(in srgb,var(--turq) 28%,var(--surf2))}
+.heat i.l2{background:color-mix(in srgb,var(--turq) 52%,var(--surf2))}
+.heat i.l3{background:color-mix(in srgb,var(--turq) 76%,var(--surf2))}
+.heat i.l4{background:var(--turq);box-shadow:0 0 9px var(--g3)}
+.heat i.fut{opacity:.22}
+.hleg{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--mu);margin-top:9px;justify-content:flex-end}
+.hleg i{width:11px;height:11px;border-radius:3px}
+.achs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ach{display:flex;gap:12px;align-items:flex-start;padding:15px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--surf)}
+.ach .ic{width:24px;height:24px;color:var(--mu);margin-top:2px}
+.ach h4{font-size:13px;margin-bottom:3px} .ach p{font-size:11px;color:var(--mu);line-height:1.5}
+.ach.lock{opacity:.42;filter:grayscale(1)}
+.ach.won{border-color:var(--gold);background:linear-gradient(140deg,var(--g2),var(--surf))}
+.ach.won .ic{color:var(--gold);filter:drop-shadow(0 0 9px var(--g2))}
+.ach small{display:block;margin-top:5px;font-size:9.5px;color:var(--turq);font-weight:800}
+
+/* overlays */
+.ov{position:fixed;inset:0;z-index:110;display:none;align-items:flex-start;justify-content:center;padding:11vh 16px 16px}
+.ov.open{display:flex}
+.ov .scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(7px);animation:fade .25s}
+.panel{position:relative;width:min(640px,100%);background:var(--bg2);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;animation:popin .32s var(--e)}
+.pin{display:flex;align-items:center;gap:12px;padding:16px 19px;border-bottom:1px solid var(--line)}
+.pin .ic{color:var(--gold)}
+.pin input{flex:1;min-width:0;background:none;border:none;outline:none;font-size:15.5px;font-weight:500}
+.plist{max-height:54vh;overflow-y:auto;padding:8px}
+.pi{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:11px 13px;border-radius:12px;border:1px solid transparent;transition:.15s}
+.pi .ic{color:var(--mu);width:17px;height:17px}
+.pi:hover,.pi.k{background:var(--surf);border-color:var(--line)}
+.pi.k{border-color:var(--gold)}
+.pi .t{flex:1;min-width:0}
+.pi .t b{display:block;font-size:13px;font-weight:600}
+.pi .t span{display:block;font-size:11.5px;color:var(--mu);margin-top:2px;line-height:1.55;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pi .t span[dir="rtl"]{font-family:var(--fa)}
+.pi .t span.ars{font-family:var(--ar);font-size:13.5px}
+.pempty{padding:32px;text-align:center;color:var(--mu);font-size:13.5px}
+
+/* drawer */
+#dback{position:fixed;inset:0;z-index:100;background:var(--scrim);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:.3s}
+#drawer{position:fixed;top:0;right:0;bottom:0;z-index:101;width:min(392px,94vw);display:flex;flex-direction:column;
+ background:var(--bg2);border-left:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(106%);transition:transform .42s var(--e)}
+body.drawer #drawer{transform:none} body.drawer #dback{opacity:1;pointer-events:auto}
+.dhead{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
+.dhead h2{display:flex;align-items:center;gap:9px;font-size:15.5px} .dhead .ic{color:var(--gold)}
+.dbody{flex:1;overflow-y:auto;padding:18px}
+.sec{margin-bottom:24px}
+.sec h3{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--gold);margin-bottom:12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:13px;padding:8px 0}
+.row label{font-size:13px;font-weight:500}
+.row select{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:7px 9px;font-size:12.5px}
+.num{width:72px;background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:13.5px;text-align:center}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--gold)}
+.step button:hover{background:var(--surf2)}
+.step b{min-width:44px;text-align:center;font-size:12.5px;font-variant-numeric:tabular-nums}
+.themes{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
+.th{display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 4px;border-radius:11px;border:1px solid var(--line2);background:var(--surf);font-size:10px;font-weight:700;color:var(--mu);transition:.2s}
+.th i{width:24px;height:24px;border-radius:50%;background:var(--sw);border:3px solid var(--sw2)}
+.th.on{border-color:var(--gold);color:var(--gold);box-shadow:0 0 14px var(--g2)}
+.sw{position:relative;width:44px;height:25px;flex:none;cursor:pointer}
+.sw input{position:absolute;inset:0;opacity:0;z-index:1;cursor:pointer}
+.sw i{position:absolute;inset:0;border-radius:99px;background:var(--surf2);border:1px solid var(--line);transition:.25s}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:19px;height:19px;border-radius:50%;background:var(--mu);transition:.25s var(--e)}
+.sw input:checked + i{background:linear-gradient(135deg,var(--gold),var(--goldl));border-color:transparent}
+.sw input:checked + i::after{left:21px;background:var(--ongold)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:146px;height:5px;border-radius:4px;background:var(--surf2);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--goldl));cursor:pointer;box-shadow:0 0 11px var(--g2)}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border:none;border-radius:50%;background:var(--gold);cursor:pointer}
+.acct{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surf);margin-bottom:10px}
+.acct .av{pointer-events:none}
+.acct .who{flex:1;min-width:0}
+.acct .who b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct .who span{font-size:11px;color:var(--mu);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* auth + modal */
+.authcard{position:relative;width:min(420px,100%);max-height:88vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--line);border-radius:24px;padding:30px 26px 22px;text-align:center;box-shadow:var(--shadow);animation:popin .35s var(--e)}
+.authcard .mark{font-size:36px;color:var(--gold);animation:spin 26s linear infinite;text-shadow:0 0 26px var(--g2)}
+.authcard h2{font-size:18px;margin:9px 0 4px}
+.authcard .sub{font-size:12.5px;color:var(--mu);margin-bottom:18px}
+.atabs{display:flex;gap:4px;background:var(--surf);border:1px solid var(--line);border-radius:13px;padding:4px;margin-bottom:16px}
+.atabs button{flex:1;padding:9px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--mu);transition:.2s}
+.atabs button.on{background:linear-gradient(135deg,var(--gold),var(--goldl));color:var(--ongold)}
+.aform{display:flex;flex-direction:column;gap:11px;text-align:left}
+.field{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:0 13px;transition:.2s}
+.field:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px var(--g2)}
+.field .ic{width:16px;height:16px;color:var(--mu)}
+.field input{flex:1;min-width:0;background:none;border:none;outline:none;padding:12px 0;font-size:13.5px}
+.field .eye{color:var(--mu);display:flex;padding:4px}
+.aerr{background:color-mix(in srgb,var(--pom) 14%,transparent);border:1px solid color-mix(in srgb,var(--pom) 42%,transparent);color:var(--pom);font-size:12.5px;border-radius:11px;padding:10px 13px;margin-bottom:13px;text-align:left;animation:shake .4s}
+.afine{display:flex;align-items:center;justify-content:center;gap:7px;font-size:10.5px;color:var(--mu);margin-top:18px;line-height:1.5}
+.afine .ic{width:13px;height:13px;flex:none}
+.verify{padding:8px 0}
+.verify .ic.big{width:40px;height:40px;color:var(--turq);margin-bottom:10px}
+.verify p{font-size:13px;color:var(--mu);margin:8px 0 16px;line-height:1.65}
+.verify b{color:var(--gold)}
+
+#mroot .ov{display:flex;padding:0;align-items:center}
+.mcard{position:relative;width:min(540px,93vw);max-height:86vh;overflow-y:auto;background:var(--bg2);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:var(--shadow);animation:popin .3s var(--e)}
+.mcard h2{display:flex;align-items:center;gap:10px;font-size:16.5px;margin-bottom:13px}
+.mcard h2 .ic{color:var(--gold)}
+.mbody{font-size:13.5px;color:var(--mu);line-height:1.75}
+.macts{display:flex;gap:9px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+.mx{position:absolute;top:13px;right:13px}
+#nta{width:100%;min-height:148px;background:var(--surf);border:1px solid var(--line);border-radius:13px;padding:13px;font-size:13.5px;line-height:1.7;resize:vertical;outline:none}
+#nta:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--g2)}
+.sqlbox{width:100%;max-height:190px;overflow:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;font:11.5px/1.6 ui-monospace,Menlo,Consolas,monospace;color:var(--turq);white-space:pre;margin-top:12px}
+.keys{display:grid;grid-template-columns:1fr 1fr;gap:7px 18px;margin-top:12px}
+.keys div{display:flex;justify-content:space-between;align-items:center;gap:9px;font-size:12.5px;color:var(--mu);padding:5px 0;border-bottom:1px dashed var(--line)}
+
+.pop-menu{position:fixed;z-index:115;width:246px;background:var(--bg2);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:8px;animation:popin .22s var(--e)}
+.pop-menu .ph{padding:9px 12px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.pop-menu .ph b{display:block;font-size:13px} .pop-menu .ph span{font-size:11px;color:var(--mu)}
+.pm{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:600;transition:.15s}
+.pm:hover{background:var(--surf);color:var(--gold)} .pm .ic{width:16px;height:16px;color:var(--mu)}
+.pm.bad:hover{color:var(--pom)}
+
+#toasts{position:fixed;bottom:20px;right:20px;z-index:140;display:flex;flex-direction:column;gap:9px;max-width:min(350px,90vw)}
+.toast{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--turq);border-radius:14px;padding:12px 15px;font-size:13px;font-weight:600;box-shadow:var(--shadow);animation:tin .35s var(--e);cursor:pointer;line-height:1.45}
+.toast .ic{width:17px;height:17px;color:var(--turq)}
+.toast.warn{border-left-color:var(--saff)} .toast.warn .ic{color:var(--saff)}
+.toast.err{border-left-color:var(--pom)} .toast.err .ic{color:var(--pom)}
+.toast.gold{border-left-color:var(--gold);background:linear-gradient(135deg,var(--bg2),var(--g2))} .toast.gold .ic{color:var(--gold)}
+.toast.bye{animation:tout .3s var(--e) forwards}
+#conf{position:fixed;inset:0;z-index:150;pointer-events:none}
+
+#boot{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .6s}
+#boot.done{opacity:0;pointer-events:none}
+.bootin{text-align:center;padding:20px}
+.bootin .mark{font-size:54px;color:var(--gold);animation:spin 9s linear infinite;text-shadow:0 0 44px var(--g2)}
+.bootin h2{font-size:21px;font-weight:800;letter-spacing:7px;margin:14px 0 18px;text-transform:uppercase}
+.bbar{width:200px;height:4px;border-radius:4px;background:var(--surf2);overflow:hidden;margin:0 auto 14px}
+.bbar i{display:block;height:100%;width:40%;background:linear-gradient(90deg,var(--gold),var(--turq));animation:load 1.2s ease-in-out infinite}
+#bmsg{font-size:12.5px;color:var(--mu);max-width:290px;margin:0 auto;line-height:1.6}
+
+.stg>*{animation:up .55s var(--e) backwards}
+.stg>*:nth-child(1){animation-delay:.04s} .stg>*:nth-child(2){animation-delay:.1s}
+.stg>*:nth-child(3){animation-delay:.16s} .stg>*:nth-child(4){animation-delay:.22s}
+.stg>*:nth-child(5){animation-delay:.28s} .stg>*:nth-child(6){animation-delay:.34s}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes up{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes popin{from{opacity:0;transform:scale(.93) translateY(14px)}to{opacity:1;transform:none}}
+@keyframes shim{to{background-position:-230% 0}}
+@keyframes sweep{0%,100%{opacity:.35}50%{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes bump{0%{transform:scale(1)}50%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes flash{0%{box-shadow:0 0 0 2px var(--gold),0 0 50px var(--g2)}100%{box-shadow:none}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes load{0%{transform:translateX(-110%)}100%{transform:translateX(280%)}}
+@keyframes tin{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0;transform:translateX(40px)}}
+@keyframes dr1{to{transform:translate(-9vmax,11vmax) scale(1.18)}}
+@keyframes dr2{to{transform:translate(10vmax,-9vmax) scale(1.12)}}
+@keyframes dr3{to{transform:translate(-12vmax,7vmax) scale(1.2)}}
+body.calm *,body.calm *::before,body.calm *::after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media (max-width:1040px){.g4{grid-template-columns:repeat(2,1fr)}.achs{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:920px){
+  :root{--top:54px;--strip:46px}
+  #rail{display:none}
+  #top{padding:0 12px}
+  #top h1{font-size:14.5px}
+  #view{padding:calc(var(--top) + 16px) 14px 108px}
+  #tabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+   background:color-mix(in srgb,var(--bg2) 93%,transparent);backdrop-filter:blur(20px);border-top:1px solid var(--line)}
+  #tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;font-size:9.5px;font-weight:700;color:var(--mu);border-radius:10px}
+  #tabs button.on{color:var(--gold)}
+  #tabs .ic{width:21px;height:21px}
+  .g2,.g3{grid-template-columns:1fr}
+  .quick{grid-template-columns:repeat(2,1fr)}
+  .hidesm{display:none}
+  .verse{padding:16px 15px 0}
+  .var{font-size:calc(24px * var(--ars))}
+  #pop{padding:10px}
+  .popcard{max-height:92vh;border-radius:22px}
+  .popbody{padding:18px 17px 6px}
+  .popar{font-size:calc(25px * var(--ars))}
+  .pactions{gap:6px}
+  .pa{padding:8px 11px;font-size:11.5px}
+  #toasts{bottom:82px;right:12px;left:12px;max-width:none}
+  .blob{opacity:.4}
+  .hero{padding:20px 4px 24px}
+}
+@media (max-width:560px){.achs{grid-template-columns:1fr}.keys{grid-template-columns:1fr}.chip.streak{display:none}.soundpill span{display:none}.soundpill{padding:0 11px}}
+</style>
 </head>
 <body>
 
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
-  <defs>
-    <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/>
-    </linearGradient>
-  </defs>
-  <symbol id="i-flourish" viewBox="0 0 220 20"><path d="M0 10h82M138 10h82"/><path d="M110 3l7 7-7 7-7-7z"/><circle cx="92" cy="10" r="2"/><circle cx="128" cy="10" r="2"/><path d="M99 10h4M117 10h4"/></symbol>
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
-  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
-  <symbol id="i-bm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
-  <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
-  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
-  <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol>
-  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
-  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
-  <symbol id="i-volx" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></symbol>
-  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21" fill="currentColor" stroke="none"/></symbol>
-  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
-  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
-  <symbol id="i-cl" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
-  <symbol id="i-cr" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
-  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="currentColor" stroke="none"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z" fill="currentColor" stroke="none"/></symbol>
-  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3-2-5-3.5-6.5C14 7.5 13 5.5 13 2c-3 2-5 5-5 8-1-1-1.5-2-1.5-3.5C4.5 8.5 5 12 5 15.5 5 19.2 7.6 22 12 22z"/></symbol>
-  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
-  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></symbol>
-  <symbol id="i-ul" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
-  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></symbol>
-  <symbol id="i-sync" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
-  <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></symbol>
-  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
-  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
-  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></symbol>
-  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
-  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><path d="M3 3l18 18"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
-  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
-  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
-  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
-  <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8L2 22M17.5 15H9"/></symbol>
-  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
-  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
-  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
-  <symbol id="i-scroll" viewBox="0 0 24 24"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></symbol>
-  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
-  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9"/></symbol>
-  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
-  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
-  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
-  <symbol id="i-tap" viewBox="0 0 24 24"><path d="M9 11V6a2 2 0 1 1 4 0v5"/><path d="M13 11V9.5a1.8 1.8 0 0 1 3.6 0V11"/><path d="M16.6 11.4a1.7 1.7 0 0 1 3.4 0V16a6 6 0 0 1-6 6h-1.6a5 5 0 0 1-3.9-1.9L5 15.4a1.8 1.8 0 0 1 2.7-2.3L9 14.4"/></symbol>
-  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M3 5h12M9 3v2M11.5 5c0 5-4 9-8.5 10"/><path d="M6 9c0 3 3.5 5.5 7 6.5"/><path d="M13 21l4.5-11L22 21M14.8 17h5.4"/></symbol>
-  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+<defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--gold)"/><stop offset="1" style="stop-color:var(--turq)"/></linearGradient></defs>
+<symbol id="fl" viewBox="0 0 220 20"><path d="M0 10h80M140 10h80"/><path d="M110 3l7 7-7 7-7-7z"/><circle cx="90" cy="10" r="2"/><circle cx="130" cy="10" r="2"/><path d="M97 10h5M118 10h5"/></symbol>
+<symbol id="book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+<symbol id="home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+<symbol id="bm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
+<symbol id="set" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol>
+<symbol id="user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+<symbol id="vol" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></symbol>
+<symbol id="mute" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></symbol>
+<symbol id="play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21" fill="currentColor" stroke="none"/></symbol>
+<symbol id="stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></symbol>
+<symbol id="check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+<symbol id="copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+<symbol id="x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+<symbol id="l" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+<symbol id="r" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+<symbol id="spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="currentColor" stroke="none"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z" fill="currentColor" stroke="none"/></symbol>
+<symbol id="flame" viewBox="0 0 24 24"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3-2-5-3.5-6.5C14 7.5 13 5.5 13 2c-3 2-5 5-5 8-1-1-1.5-2-1.5-3.5C4.5 8.5 5 12 5 15.5 5 19.2 7.6 22 12 22z"/></symbol>
+<symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+<symbol id="dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></symbol>
+<symbol id="ul" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+<symbol id="out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></symbol>
+<symbol id="sync" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/></symbol>
+<symbol id="cmd" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></symbol>
+<symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+<symbol id="mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></symbol>
+<symbol id="eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="eyeoff" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><path d="M3 3l18 18"/></symbol>
+<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+<symbol id="award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.2 13.9 7 23 12 20 17 23 15.8 13.9"/></symbol>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
+<symbol id="feather" viewBox="0 0 24 24"><path d="M20.2 12.2a6 6 0 0 0-8.5-8.5L5 10.5V19h8.5z"/><path d="M16 8L2 22M17.5 15H9"/></symbol>
+<symbol id="zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
+<symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+<symbol id="trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+<symbol id="focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></symbol>
+<symbol id="send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9"/></symbol>
+<symbol id="alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+<symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+<symbol id="rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></symbol>
+<symbol id="open" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></symbol>
+<symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol>
 </svg>
 
-<div class="aurora a1"></div>
-<div class="aurora a2"></div>
-<canvas id="fx"></canvas>
-<div class="grain"></div>
-<div id="progress-line"></div>
+<div class="atmo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="stars"></canvas><div class="lattice"></div><div class="grain"></div>
 
-<div id="app">
+<div id="shell">
   <aside id="rail">
-    <button class="logo" data-action="nav" data-view="read">
-      <span class="logo-mark">۞</span>
-      <span class="logo-t">Nūr<small>الاستغفار</small></span>
-    </button>
-    <nav class="rail-nav">
-      <button class="rail-btn" data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Reader</span></button>
-      <button class="rail-btn" data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></button>
-      <button class="rail-btn" data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
-      <button class="rail-btn" data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
-      <button class="rail-btn" data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
+    <button class="brand" data-a="go" data-v="read"><span class="mark">۞</span><span><b>Nūr</b><small>الاستغفار</small></span></button>
+    <nav class="nav">
+      <button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Reader</button>
+      <button data-a="go" data-v="home"><svg class="ic"><use href="#home"/></svg>Overview</button>
+      <button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
+      <button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
+      <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
     </nav>
-    <div class="rail-foot">
-      <button class="icon-btn" data-action="open-settings" data-tip="Settings"><svg class="ic"><use href="#i-set"/></svg></button>
-      <button class="icon-btn" data-action="open-about" data-tip="About & keys (?)"><svg class="ic"><use href="#i-info"/></svg></button>
+    <div class="railfoot">
+      <button class="ib" data-a="drawer" title="Settings"><svg class="ic"><use href="#set"/></svg></button>
+      <button class="ib" data-a="about" title="About & keys"><svg class="ic"><use href="#info"/></svg></button>
     </div>
   </aside>
-
   <div id="main">
-    <header id="topbar">
-      <div class="tb-left"><span class="tb-orn">۞</span><h1 id="view-title">Reader</h1></div>
-      <div class="tb-right">
-        <button class="hud-chip" data-action="nav" data-view="stats" data-tip="Reading streak">
-          <svg class="ic"><use href="#i-flame"/></svg><b id="hud-streak-n">0</b>
-        </button>
-        <button class="icon-btn" id="btn-sound" data-action="toggle-sound" data-tip="Sound (M)" aria-pressed="true">
-          <svg class="ic ic-on"><use href="#i-vol"/></svg><svg class="ic ic-off"><use href="#i-volx"/></svg>
-        </button>
-        <button class="icon-btn" data-action="open-search" data-tip="Search (/)"><svg class="ic"><use href="#i-search"/></svg></button>
-        <button class="icon-btn hide-sm" data-action="open-palette" data-tip="Commands (Ctrl+K)"><svg class="ic"><use href="#i-cmd"/></svg></button>
-        <button class="sync-chip off" id="sync-dot" data-action="sync-info" data-tip="Cloud sync"><svg class="ic"><use href="#i-sync"/></svg></button>
-        <button class="avatar-btn" id="btn-account" data-action="account" data-tip="Account"><svg class="ic"><use href="#i-user"/></svg></button>
+    <header id="top">
+      <div class="ttl"><span>۞</span><h1 id="ttl">The Grand Istighfār</h1></div>
+      <div class="tools">
+        <button class="chip streak hidesm" data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg><b id="streakN">0</b></button>
+        <button class="soundpill on" id="sndBtn" data-a="sound"><svg class="ic"><use href="#vol"/></svg><span>Sound on</span></button>
+        <button class="ib" data-a="search" title="Search"><svg class="ic"><use href="#search"/></svg></button>
+        <button class="ib hidesm" data-a="pal" title="Commands"><svg class="ic"><use href="#cmd"/></svg></button>
+        <button class="syncb" id="syncBtn" data-a="sync" title="Cloud sync"><svg class="ic"><use href="#sync"/></svg></button>
+        <button class="av" id="avBtn" data-a="acct"><svg class="ic"><use href="#user"/></svg></button>
       </div>
     </header>
     <main id="view"></main>
   </div>
 </div>
 
-<nav id="tabbar">
-  <button data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Read</span></button>
-  <button data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></button>
-  <button data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
-  <button data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
-  <button data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
+<nav id="tabs">
+  <button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Read</button>
+  <button data-a="go" data-v="home"><svg class="ic"><use href="#home"/></svg>Overview</button>
+  <button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
+  <button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
+  <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
 </nav>
 
-<button id="focus-exit" data-action="focus"><svg class="ic"><use href="#i-x"/></svg>Exit focus</button>
-
-<!-- ══════════ READING CONTROLS SHEET ══════════ -->
-<div id="controls" class="overlay sheet-overlay">
-  <div class="ov-backdrop" data-action="close-controls"></div>
-  <div class="sheet" id="controls-sheet"></div>
+<!-- THE POP-UP WINDOW -->
+<div id="pop" role="dialog" aria-modal="true" aria-labelledby="popTitle">
+  <div class="scrim" data-a="popclose"></div>
+  <div class="popcard" id="popcard">
+    <button class="popx" data-a="popclose" aria-label="Close"><svg class="ic"><use href="#x"/></svg></button>
+    <div class="poptop">
+      <span class="star" id="popNum">1</span>
+      <div class="who"><b id="popTitle">Passage</b><span id="popChap">Chapter</span></div>
+    </div>
+    <div class="popbody" id="popBody">
+      <p class="popar" id="popAr" dir="rtl" lang="ar"></p>
+      <div class="popdiv"><svg class="fl" viewBox="0 0 220 20"><use href="#fl"/></svg></div>
+      <div class="langs">
+        <button class="lang" data-a="lang" data-v="en">English</button>
+        <button class="lang" data-a="lang" data-v="fa">فارسی</button>
+        <button class="lang" data-a="lang" data-v="both">Both</button>
+      </div>
+      <div id="popTr"></div>
+      <div id="popNote"></div>
+    </div>
+    <div class="popfoot">
+      <div class="pactions">
+        <button class="pa play" id="paPlay" data-a="popplay"><svg class="ic"><use href="#play"/></svg><span>Listen</span></button>
+        <button class="pa" id="paRead" data-a="popread"><svg class="ic"><use href="#check"/></svg><span>Mark read</span></button>
+        <button class="pa" id="paBm" data-a="popbm"><svg class="ic"><use href="#bm"/></svg><span>Bookmark</span></button>
+        <button class="pa" id="paNote" data-a="popnote"><svg class="ic"><use href="#note"/></svg><span>Note</span></button>
+        <button class="pa" data-a="popcopy"><svg class="ic"><use href="#copy"/></svg><span>Copy</span></button>
+      </div>
+      <div class="pnav">
+        <button class="nb" id="popPrev" data-a="popprev"><svg class="ic"><use href="#l"/></svg>Prev</button>
+        <div class="mid"><b id="popCount">1 / 43</b><div class="track"><i id="popTrack"></i></div></div>
+        <button class="nb" id="popNext" data-a="popnext">Next<svg class="ic"><use href="#r"/></svg></button>
+      </div>
+      <div class="swipehint">Swipe or use ← → · Esc closes</div>
+    </div>
+  </div>
 </div>
 
-<!-- ══════════ SETTINGS DRAWER ══════════ -->
-<div id="drawer-backdrop" data-action="close-settings"></div>
+<!-- drawer -->
+<div id="dback" data-a="closedr"></div>
 <aside id="drawer">
-  <div class="drawer-head">
-    <h2><svg class="ic"><use href="#i-set"/></svg> Settings</h2>
-    <button class="icon-btn" data-action="close-settings"><svg class="ic"><use href="#i-x"/></svg></button>
-  </div>
-  <div class="drawer-body">
-    <section class="set-sec"><h3>Account</h3><div id="drawer-account"></div></section>
-
-    <section class="set-sec"><h3>Appearance</h3>
-      <div class="theme-grid">
-        <button class="theme-chip" data-action="theme" data-v="midnight"><i style="--sw:#0a1120;--sw2:#d4af37"></i>Midnight</button>
-        <button class="theme-chip" data-action="theme" data-v="dawn"><i style="--sw:#f5f2ea;--sw2:#a8761a"></i>Dawn</button>
-        <button class="theme-chip" data-action="theme" data-v="sepia"><i style="--sw:#efe3cb;--sw2:#9a5b2b"></i>Sepia</button>
-        <button class="theme-chip" data-action="theme" data-v="emerald"><i style="--sw:#06180f;--sw2:#e3c878"></i>Emerald</button>
-        <button class="theme-chip" data-action="theme" data-v="royal"><i style="--sw:#120a20;--sw2:#c9a2ff"></i>Royal</button>
-      </div>
-      <div class="set-row"><label>Arabic typeface</label>
-        <select data-set="arFont"><option value="amiri">Amiri</option><option value="scheherazade">Scheherazade New</option><option value="naskh">Noto Naskh Arabic</option></select>
-      </div>
-      <div class="set-row"><label>Arabic size</label><input type="range" data-set="fontScale" min="0.8" max="1.6" step="0.05"></div>
-      <div class="set-row"><label>Line height</label><input type="range" data-set="lineHeight" min="1.7" max="2.7" step="0.1"></div>
-      <div class="set-row"><label>Meaning language</label>
-        <select data-set="trans"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option></select>
-      </div>
-      <p class="set-note"><svg class="ic"><use href="#i-tap"/></svg>Meanings stay folded until you tap a verse.</p>
+  <div class="dhead"><h2><svg class="ic"><use href="#set"/></svg>Settings</h2><button class="ib" data-a="closedr"><svg class="ic"><use href="#x"/></svg></button></div>
+  <div class="dbody">
+    <section class="sec"><h3>Account</h3><div id="drAcct"></div></section>
+    <section class="sec"><h3>Reading</h3>
+      <div class="row"><label>Arabic size</label><div class="step"><button data-a="fs" data-v="-1"><svg class="ic"><use href="#minus"/></svg></button><b id="fsVal">100%</b><button data-a="fs" data-v="1"><svg class="ic"><use href="#plus"/></svg></button></div></div>
+      <div class="row"><label>Line height</label><input type="range" data-s="lh" min="1.7" max="2.7" step="0.05"></div>
+      <div class="row"><label>Typeface</label><select data-s="arFont"><option value="amiri">Amiri</option><option value="scheherazade">Scheherazade</option><option value="naskh">Noto Naskh</option></select></div>
+      <div class="row"><label>Meaning language</label><select data-s="lang"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option></select></div>
+      <div class="row"><label>Auto-scroll</label><label class="sw"><input type="checkbox" data-s="auto"><i></i></label></div>
+      <div class="row"><label>Scroll speed</label><input type="range" data-s="speed" min="1" max="10" step="1"></div>
+      <div class="row"><label>Focus mode</label><label class="sw"><input type="checkbox" data-s="focus"><i></i></label></div>
     </section>
-
-    <section class="set-sec"><h3>Sound & motion</h3>
-      <div class="set-row"><label>UI sounds</label><label class="switch"><input type="checkbox" data-set="sound"><i></i></label></div>
-      <div class="set-row"><label>Volume</label><input type="range" data-set="volume" min="0" max="1" step="0.05"></div>
-      <div class="set-row"><label>Ambient drone</label><label class="switch"><input type="checkbox" data-set="ambient"><i></i></label></div>
-      <div class="set-row"><label>Animations</label><label class="switch"><input type="checkbox" data-set="motion"><i></i></label></div>
-      <div class="set-row"><label>Recitation speed</label><input type="range" data-set="ttsRate" min="0.5" max="1.3" step="0.05"></div>
+    <section class="sec"><h3>Appearance</h3>
+      <div class="themes">
+        <button class="th" data-a="theme" data-v="lapis"><i style="--sw:#0a1228;--sw2:#e3b23c"></i>Lapis</button>
+        <button class="th" data-a="theme" data-v="parchment"><i style="--sw:#f3e8d2;--sw2:#a9761a"></i>Paper</button>
+        <button class="th" data-a="theme" data-v="shrine"><i style="--sw:#07211a;--sw2:#e7c978"></i>Shrine</button>
+        <button class="th" data-a="theme" data-v="plum"><i style="--sw:#1d0b24;--sw2:#f0b46e"></i>Plum</button>
+      </div>
+      <div class="row"><label>Animations</label><label class="sw"><input type="checkbox" data-s="motion"><i></i></label></div>
     </section>
-
-    <section class="set-sec"><h3>Practice</h3>
-      <div class="set-row"><label>Daily passage goal</label><input type="number" data-set="goal" min="1" max="43" class="num-in"></div>
+    <section class="sec"><h3>Sound</h3>
+      <div class="row"><label>Interface sound</label><label class="sw"><input type="checkbox" data-s="sound"><i></i></label></div>
+      <div class="row"><label>Volume</label><input type="range" data-s="vol" min="0" max="1" step="0.05"></div>
+      <div class="row"><label>Ambient drone</label><label class="sw"><input type="checkbox" data-s="amb"><i></i></label></div>
+      <div class="row"><label>Recitation speed</label><input type="range" data-s="rate" min="0.5" max="1.3" step="0.05"></div>
     </section>
-
-    <section class="set-sec"><h3>Data</h3>
-      <div class="btn-col">
-        <button class="btn" data-action="export"><svg class="ic"><use href="#i-dl"/></svg>Export my data</button>
-        <button class="btn" data-action="import"><svg class="ic"><use href="#i-ul"/></svg>Import data</button>
-        <button class="btn" data-action="sync-info"><svg class="ic"><use href="#i-db"/></svg>Cloud sync status</button>
-        <button class="btn danger" data-action="reset-data"><svg class="ic"><use href="#i-trash"/></svg>Reset progress</button>
+    <section class="sec"><h3>Practice</h3>
+      <div class="row"><label>Daily passage goal</label><input type="number" class="num" data-s="goal" min="1" max="43"></div>
+    </section>
+    <section class="sec"><h3>Data</h3>
+      <div class="stack">
+        <button class="btn" data-a="export"><svg class="ic"><use href="#dl"/></svg>Export my data</button>
+        <button class="btn" data-a="import"><svg class="ic"><use href="#ul"/></svg>Import data</button>
+        <button class="btn" data-a="sql"><svg class="ic"><use href="#db"/></svg>Cloud setup SQL</button>
+        <button class="btn bad" data-a="reset"><svg class="ic"><use href="#trash"/></svg>Reset progress</button>
       </div>
     </section>
-    <p class="drawer-foot">Nūr · v1.3 — vanilla JS, no frameworks</p>
+    <p class="mu" style="text-align:center;font-size:10.5px;padding:6px 0 10px">Nūr · one file · vanilla JS</p>
   </div>
 </aside>
 
-<!-- ══════════ SEARCH ══════════ -->
-<div id="search-overlay" class="overlay">
-  <div class="ov-backdrop" data-action="close-search"></div>
-  <div class="ov-panel">
-    <div class="ov-input"><svg class="ic"><use href="#i-search"/></svg>
-      <input id="search-input" type="text" placeholder="Search Arabic · English · فارسی …" autocomplete="off"><kbd>Esc</kbd>
-    </div>
-    <div id="search-results" class="ov-list"></div>
+<!-- search -->
+<div id="search" class="ov"><div class="scrim" data-a="closesearch"></div>
+  <div class="panel"><div class="pin"><svg class="ic"><use href="#search"/></svg><input id="sIn" placeholder="Search Arabic · English · فارسی…" autocomplete="off"><kbd>Esc</kbd></div><div id="sOut" class="plist"></div></div>
+</div>
+<!-- palette -->
+<div id="pal" class="ov"><div class="scrim" data-a="closepal"></div>
+  <div class="panel"><div class="pin"><svg class="ic"><use href="#cmd"/></svg><input id="pIn" placeholder="Type a command…" autocomplete="off"><kbd>Esc</kbd></div><div id="pOut" class="plist"></div></div>
+</div>
+<!-- auth -->
+<div id="auth" class="ov"><div class="scrim" data-a="closeauth"></div>
+  <div class="authcard">
+    <button class="ib mx" data-a="closeauth"><svg class="ic"><use href="#x"/></svg></button>
+    <div class="mark">۞</div><h2>Keep your light in the cloud</h2><p class="sub">Progress, notes & tasbīḥ across devices.</p>
+    <div class="atabs"><button class="on" data-a="atab" data-v="in">Sign in</button><button data-a="atab" data-v="up">Create account</button></div>
+    <div id="aErr" class="aerr" hidden></div>
+    <form id="fIn" class="aform">
+      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="inE" type="email" placeholder="Email" required autocomplete="email"></div>
+      <div class="field"><svg class="ic"><use href="#lock"/></svg><input id="inP" type="password" placeholder="Password" required autocomplete="current-password"><button type="button" class="eye" data-a="eye" data-t="inP"><svg class="ic"><use href="#eye"/></svg></button></div>
+      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#out"/></svg>Sign in</button>
+      <button type="button" class="link" data-a="forgot">Forgot password?</button>
+    </form>
+    <form id="fUp" class="aform" hidden>
+      <div class="field"><svg class="ic"><use href="#user"/></svg><input id="upN" placeholder="Your name" required autocomplete="name"></div>
+      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="upE" type="email" placeholder="Email" required autocomplete="email"></div>
+      <div class="field"><svg class="ic"><use href="#lock"/></svg><input id="upP" type="password" placeholder="Password (min 6)" required minlength="6" autocomplete="new-password"><button type="button" class="eye" data-a="eye" data-t="upP"><svg class="ic"><use href="#eye"/></svg></button></div>
+      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#spark"/></svg>Create account</button>
+    </form>
+    <form id="fFg" class="aform" hidden>
+      <p class="mu" style="font-size:12.5px">We'll email you a reset link.</p>
+      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="fgE" type="email" placeholder="Email" required></div>
+      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#send"/></svg>Send link</button>
+      <button type="button" class="link" data-a="atab" data-v="in">Back to sign in</button>
+    </form>
+    <div id="aVer" hidden><div class="verify"><svg class="ic big"><use href="#mail"/></svg><h3>Verify your email</h3><p>We sent a link to <b id="verE"></b>. Confirm it, then sign in.</p><button class="btn wide" data-a="resend"><svg class="ic"><use href="#sync"/></svg>Resend</button><button class="link" data-a="atab" data-v="in">Back to sign in</button></div></div>
+    <p class="afine"><svg class="ic"><use href="#shield"/></svg>Supabase · row-level security · guest mode always works.</p>
   </div>
 </div>
 
-<!-- ══════════ COMMAND PALETTE ══════════ -->
-<div id="palette" class="overlay">
-  <div class="ov-backdrop" data-action="close-palette"></div>
-  <div class="ov-panel">
-    <div class="ov-input"><svg class="ic"><use href="#i-cmd"/></svg>
-      <input id="palette-input" type="text" placeholder="Type a command…" autocomplete="off"><kbd>Esc</kbd>
-    </div>
-    <div id="palette-list" class="ov-list"></div>
-  </div>
-</div>
-
-<!-- ══════════ AUTH ══════════ -->
-<div id="auth-modal" class="overlay">
-  <div class="ov-backdrop" data-action="close-auth"></div>
-  <div class="auth-card">
-    <button class="icon-btn auth-x" data-action="close-auth"><svg class="ic"><use href="#i-x"/></svg></button>
-    <div class="auth-mark">۞</div>
-    <h2>Keep your light in the cloud</h2>
-    <p class="auth-sub">Progress, notes & tasbīḥ — synced across devices.</p>
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-action="auth-tab" data-v="in">Sign in</button>
-      <button class="auth-tab" data-action="auth-tab" data-v="up">Create account</button>
-    </div>
-    <div id="auth-err" class="auth-err" hidden></div>
-    <form id="form-in" class="auth-form">
-      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="in-email" type="email" placeholder="Email" required autocomplete="email"></div>
-      <div class="field"><svg class="ic"><use href="#i-lock"/></svg><input id="in-pass" type="password" placeholder="Password" required autocomplete="current-password"><button type="button" class="eye" data-action="eye" data-t="in-pass"><svg class="ic"><use href="#i-eye"/></svg></button></div>
-      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-out"/></svg>Sign in</button>
-      <button type="button" class="linklike" data-action="auth-forgot">Forgot password?</button>
-    </form>
-    <form id="form-up" class="auth-form" hidden>
-      <div class="field"><svg class="ic"><use href="#i-user"/></svg><input id="up-name" type="text" placeholder="Your name" required autocomplete="name"></div>
-      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="up-email" type="email" placeholder="Email" required autocomplete="email"></div>
-      <div class="field"><svg class="ic"><use href="#i-lock"/></svg><input id="up-pass" type="password" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password"><button type="button" class="eye" data-action="eye" data-t="up-pass"><svg class="ic"><use href="#i-eye"/></svg></button></div>
-      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-spark"/></svg>Create account</button>
-    </form>
-    <form id="form-forgot" class="auth-form" hidden>
-      <p class="auth-note">Enter your email and we'll send a reset link.</p>
-      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="fg-email" type="email" placeholder="Email" required></div>
-      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-send"/></svg>Send reset link</button>
-      <button type="button" class="linklike" data-action="auth-back">Back to sign in</button>
-    </form>
-    <div id="auth-verify" hidden>
-      <div class="verify-box">
-        <svg class="ic big"><use href="#i-mail"/></svg>
-        <h3>Verify your email</h3>
-        <p>We sent a confirmation link to <b id="verify-email"></b>. Confirm it, then sign in.</p>
-        <button class="btn wide" data-action="resend"><svg class="ic"><use href="#i-sync"/></svg>Resend email</button>
-        <button class="linklike" data-action="auth-back">Back to sign in</button>
-      </div>
-    </div>
-    <p class="auth-fine"><svg class="ic"><use href="#i-shield"/></svg>Secured by Supabase · row-level security · guest mode always works.</p>
-  </div>
-</div>
-
-<div id="modal-root"></div>
-<div id="account-menu" class="popover" hidden></div>
+<div id="mroot"></div>
+<div id="acctMenu" class="pop-menu" hidden></div>
 <div id="toasts"></div>
-<canvas id="confetti"></canvas>
+<canvas id="conf"></canvas>
+<div id="boot"><div class="bootin"><div class="mark">۞</div><h2>Nūr</h2><div class="bbar"><i></i></div><p id="bmsg">Illuminating the manuscript…</p></div></div>
+<input type="file" id="impFile" accept="application/json" hidden>
 
-<div id="boot">
-  <div class="boot-inner">
-    <div class="boot-mark">۞</div>
-    <h2>Nūr</h2>
-    <div class="boot-bar"><i></i></div>
-    <p id="boot-msg">Preparing the manuscript…</p>
-  </div>
-</div>
+<script>
+'use strict';
+(()=>{
+/* ═══════════ THE BOOK (embedded · always available) ═══════════ */
+const BOOK={meta:{title:{en:"The Grand Istighfār",fa:"استغفار بزرگ"},attribution:{en:"Transmitted from Imam ʿAlī ibn Abī Ṭālib (peace be upon him)",fa:"منقول از امیرالمؤمنین علی بن ابی‌طالب علیه‌السلام"},source:"Mawsūʿat al-Imām ʿAlī — Bāqir Sharīf al-Qurashī"},sections:[
+{id:"c1",en:"Sins Born of Strength & Blessing",fa:"گناهانِ برخاسته از نیرو و نعمت",v:[
+{id:1,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ مِنْ كُلِّ ذَنْبٍ قَوِيَ عَلَيْهِ بَدَنِي بِعَافِيَتِكَ، أَوْ نَالَتْهُ قُدْرَتِي بِفَضْلِ نِعْمَتِكَ، أَوْ بَسَطْتُ إِلَيْهِ يَدِي بِسَابِغِ رِزْقِكَ،",en:"O God, I seek Your forgiveness for every sin my body grew strong enough to commit through the health You gave me, that my power reached through the abundance of Your blessing, or that I stretched my hand toward through Your overflowing provision.",fa:"خدایا، از هر گناهی که تنم به نیروی عافیتی که تو دادی بر آن توانا شد، یا دستم به فضل نعمتت بدان رسید، یا با روزیِ فراوانت بدان دراز شد، از تو آمرزش می‌خواهم."},
+{id:2,ar:"أَوِ اتَّكَلْتُ فِيهِ عِنْدَ خَوْفِي مِنْهُ عَلَى أَنَاتِكَ، أَوِ احْتَجَبْتُ فِيهِ مِنَ النَّاسِ بِسَتْرِكَ، أَوْ وَثِقْتُ مِنْ سَطْوَتِكَ عَلَيَّ فِيهِ بِحِلْمِكَ، أَوْ عَوَّلْتُ فِيهِ عَلَى كَرَمِ عَفْوِكَ.",en:"Or for which, when I feared its consequences, I leaned upon Your patience; or hid it from people behind Your veil; or felt safe from Your seizure because of Your forbearance; or relied upon the generosity of Your pardon.",fa:"یا هنگام ترس از کیفرش بر شکیبایی تو تکیه کردم، یا به پرده‌پوشی‌ات آن را از مردم پنهان ساختم، یا به حلمت از گرفتِ سختت ایمن شدم، یا بر کرمِ گذشتت حساب کردم."}]},
+{id:"c2",en:"Betrayed Trust & Cunning",fa:"خیانت در امانت و چاره‌گری",v:[
+{id:3,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ مِنْ كُلِّ ذَنْبٍ خُنْتُ فِيهِ أَمَانَتِي، أَوْ بَخَسْتُ بِفِعْلِهِ نَفْسِي، أَوِ احْتَطَبْتُ بِهِ عَلَى بَدَنِي،",en:"O God, I seek Your forgiveness for every sin in which I betrayed my trust, or wronged my own soul by doing it, or gathered its firewood upon my own back.",fa:"خدایا، از هر گناهی که در آن به امانت خیانت کردم، یا با انجامش به خویشتن ستم روا داشتم، یا هیزمِ آتشش را بر دوش خود کشیدم، آمرزش می‌خواهم."},
+{id:4,ar:"أَوْ قَدَّمْتُ فِيهِ لَذَّتِي، أَوْ آثَرْتُ فِيهِ شَهْوَتِي، أَوْ سَعَيْتُ فِيهِ لِغَيْرِي،",en:"Or in which I put my pleasure first, preferred my appetite, or labored at it for someone other than You.",fa:"یا لذتم را پیش انداختم، یا خواهش نفسم را برگزیدم، یا برای غیر تو در آن کوشیدم."},
+{id:5,ar:"أَوِ اسْتَغْوَيْتُ إِلَيْهِ مَنْ تَبِعَنِي، أَوْ كَايَدْتُ فِيهِ مَنْ مَنَعَنِي، أَوْ قَهَرْتُ عَلَيْهِ مَنْ عَادَانِي، أَوْ غَلَبْتُ عَلَيْهِ بِفَضْلِ حِيلَتِي،",en:"Or seduced into it those who followed me, schemed against those who would stop me, overpowered those who opposed me, or won my way through superior cunning.",fa:"یا پیروانم را به آن فریفتَم، یا بر بازدارنده‌ام نیرنگ زدم، یا بر دشمنم در آن چیره شدم، یا با برتریِ حیله‌ام پیروز گشتم."},
+{id:6,ar:"أَوْ أَحَلْتُ عَلَيْكَ مَوْلَايَ فَلَمْ تَغْلِبْنِي عَلَى فِعْلِي، إِذْ كُنْتَ كَارِهًا لِمَعْصِيَتِي فَحَلُمْتَ عَنِّي، لَكِنْ سَبَقَ عِلْمُكَ فِيَّ بِفِعْلِي ذَلِكَ،",en:"Or I cast my affair upon You, my Master, and You did not overpower me in my deed: though You detested my disobedience, You were forbearing with me — yet Your knowledge had already encompassed that I would do it.",fa:"یا کار را به تو واگذاشتم ای مولای من، و تو مرا بر کارم به جبر نگرفتی؛ با آنکه از نافرمانی‌ام ناخشنود بودی، بر من شکیبایی کردی، ولی علم پیشینت می‌دانست که من چنین خواهم کرد."},
+{id:7,ar:"لَمْ تُدْخِلْنِي يَا رَبِّ فِيهِ جَبْرًا، وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا، وَلَمْ تَظْلِمْ نِي فِيهِ شَيْئًا، فَأَسْتَغْفِرُكَ لَهُ وَلِجَمِيعِ ذُنُوبِي.",en:"You did not drive me into it by compulsion, my Lord, nor force me to bear it, nor wrong me in it in the least — so I seek Your forgiveness for it and for all my sins.",fa:"مرا به جبر در آن وارد نکردی ای پروردگار من، به قهر بر آن وانداشتی، و کمترین ستمی به من روا نداشتی؛ پس از تو برای آن و برای همهٔ گناهانم آمرزش می‌خواهم."}]},
+{id:"c3",en:"Broken Repentance & Tainted Devotion",fa:"توبهٔ شکسته و نیّتِ آمیخته",v:[
+{id:8,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تُبْتُ إِلَيْكَ مِنْهُ وَأَقْدَمْتُ عَلَى فِعْلِهِ، فَاسْتَحْيَيْتُ مِنْكَ وَأَنَا عَلَيْهِ، وَرَهِبْتُكَ وَأَنَا فِيهِ تَعَاطَيْتُهُ وَعُدْتُ إِلَيْهِ.",en:"O God, I seek forgiveness for every sin I repented of to You, then rushed to commit — feeling shame before You even as I did it, and dread of You even as I indulged in it and returned to it.",fa:"خدایا، از هر گناهی که از آن به سوی تو توبه کردم و باز بر انجامش شتافتم؛ همان‌گاه که بر آن بودم از تو شرم داشتم و در همان حال از تو بیمناک بودم، با این همه بدان پرداختم و بازگشتم."},
+{id:9,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ بِسَبَبِ خَيْرٍ أَرَدْتُ بِهِ وَجْهَكَ فَخَالَطَنِي فِيهِ سِوَاكَ، وَشَارَكَكَ فِعْلِي مَا لَا يَخْلُصُ لَكَ، أَوْ وَجَبَ عَلَيَّ مَا أَرَدْتُ بِهِ سِوَاكَ، وَكَثِيرٌ مِنْ فِعْلِي مَا يَكُونُ كَذَلِكَ.",en:"O God, I seek forgiveness for every sin recorded against me on account of a good deed I meant for Your Face, but something other than You crept into it — my act shared with You what was not purely Yours, or what settled upon me was meant for another; and much of my doing is like this.",fa:"خدایا، از هر گناهی که به سبب کارِ خیری که برای رویِ تو خواستم بر من نوشته شد، اما غیرِ تو در آن آمیخت و آنچه خالص برای تو نبود در عملم با تو شریک شد، یا آنچه بر من لازم آمد مقصودم غیر تو بود؛ و بسیاری از کارهایم چنین است."}]},
+{id:"c4",en:"Shattered Covenants & Misplaced Fear",fa:"پیمان‌های شکسته و ترسِ نابجا",v:[
+{id:10,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تَوَرَّكَ عَلَيَّ بِسَبَبِ عَهْدٍ عَاهَدْتُكَ عَلَيْهِ، أَوْ عَقْدٍ عَقَدْتُهُ لَكَ، أَوْ ذِمَّةٍ وَاثَقْتُ بِهَا مِنْ أَجْلِكَ لِأَحَدٍ مِنْ خَلْقِكَ، ثُمَّ نَقَضْتُ ذَلِكَ مِنْ غَيْرِ ضَرُورَةٍ لَزِمَتْنِي فِيهِ، بَلِ اسْتَزَلَّنِي إِلَيْهِ عَنِ الْوَفَاءِ بِهِ الْأَشَرُ، وَمَنَعَنِي عَنْ رِعَايَتِهِ الْبَطَرُ.",en:"O God, I seek forgiveness for every sin that fastened upon me through a covenant I made with You, a bond I tied for You, or a pledge I secured for one of Your creatures for Your sake — then broke without any compelling need; rather, arrogance lured me from fidelity, and self-exultance kept me from honoring it.",fa:"خدایا، از هر گناهی که به سبب عهدی که با تو بستم، یا پیمانی که برای تو نوشتم، یا ذمّه‌ای که به خاطر تو برای بنده‌ای از بندگانت گردن گرفتم بر من چیره شد، آنگاه بی‌هیچ ضرورتی آن را شکستم؛ بلکه سرمستی مرا از وفا لغزانید و غرور از رعایتش بازداشت."},
+{id:11,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ رَهِبْتُ فِيهِ مِنْ عِبَادِكَ، وَخِفْتُ فِيهِ غَيْرَكَ، وَاسْتَحْيَيْتُ فِيهِ مِنْ خَلْقِكَ، ثُمَّ أَفْضَيْتُ بِهِ فِعْلِي إِلَيْكَ.",en:"O God, I seek forgiveness for every sin in which I stood in awe of Your servants, feared someone other than You, and felt shame before Your creatures — then brought the doing of it openly before You.",fa:"خدایا، از هر گناهی که در آن از بندگانت هراسیدم، از غیر تو ترسیدم، از آفریدگانت شرم کردم، سپس با انجام آن آشکارا به پیشگاه تو آمدم."},
+{id:12,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ أَقْدَمْتُ عَلَيْهِ وَأَنَا مُسْتَيْقِنٌ أَنَّكَ تُعَاقِبُ عَلَى ارْتِكَابِهِ فَارْتَكَبْتُهُ.",en:"O God, I seek forgiveness for every sin I dared to commit while certain that You punish its commission — and still I committed it.",fa:"خدایا، از هر گناهی که بر آن جسارت کردم در حالی که یقین داشتم بر انجامش کیفر می‌دهی، و با این همه مرتکبش شدم."}]},
+{id:"c5",en:"Desire Over Obedience",fa:"هوس، پیش از فرمان",v:[
+{id:13,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ قَدَّمْتُ فِيهِ شَهْوَتِي عَلَى طَاعَتِكَ، وَآثَرْتُ مَحَبَّتِي عَلَى أَمْرِكَ، وَأَرْضَيْتُ فِيهِ نَفْسِي بِسَخَطِكَ، وَقَدْ نَهَيْتَنِي عَنْهُ بِنَهْيِكَ، وَتَقَدَّمْتَ إِلَيَّ فِيهِ بِإِعْذَارِكَ، وَاحْتَجَجْتَ عَلَيَّ فِيهِ بِوَعِيدِكَ.",en:"O God, I seek forgiveness for every sin in which I placed my desire before obedience to You, chose what I love over what You command, and pleased my soul with what angers You — though You had forbidden it, warned me in advance leaving no excuse, and completed the proof against me with Your threat of punishment.",fa:"خدایا، از هر گناهی که خواهشم را بر طاعتت پیش داشتم، دوست‌داشتِ خود را بر فرمانت برگزیدم، و نفسم را با خشم تو خشنود ساختم؛ حال آنکه مرا از آن نهی کرده بودی، پیش‌تر هشدارم داده و راه عذر را بسته بودی، و با وعیدت حجت را بر من تمام کرده بودی."},
+{id:14,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ عَلِمْتُهُ مِنْ نَفْسِي، أَوْ ذَهَلْتُهُ، أَوْ نَسِيتُهُ، أَوْ تَعَمَّدْتُهُ، أَوْ أَخْطَأْتُهُ، مِمَّا لَا أَشُكُّ أَنَّكَ سَائِلِي عَنْهُ، وَأَنَّ نَفْسِي مُرْتَهَنَةٌ بِهِ لَدَيْكَ، وَإِنْ كُنْتُ قَدْ نَسِيتُهُ أَوْ غَفَلْتُ نَفْسِي عَنْهُ.",en:"O God, I seek forgiveness for every sin I knew of in myself or overlooked, forgot, did deliberately, or fell into by mistake — of which I have no doubt You will question me, and my soul is held in pledge for it with You, even if I have forgotten it or let it slip from my mind.",fa:"خدایا، از هر گناهی که خود بدان آگاه بودم یا از آن غافل ماندم، فراموشش کردم، عمدی ساختم یا به خطا رفتم؛ گناهی که شک ندارم از آن بازخواستم می‌کنی و جانم نزد تو در گروِ آن است، هرچند فراموشش کرده یا از آن غافل شده باشم."},
+{id:15,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ وَاجَهْتُكَ بِهِ وَقَدْ أَيْقَنْتُ أَنَّكَ تَرَانِي، وَأَغْفَلْتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ، أَوْ نَسِيتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ، أَوْ نَسِيتُ أَنْ أَسْتَغْفِرَكَ لَهُ.",en:"O God, I seek forgiveness for every sin I committed facing You, certain that You see me — yet I neglected to repent of it, or forgot to turn back to You, or forgot to ask Your forgiveness for it.",fa:"خدایا، از هر گناهی که در برابر تو مرتکب شدم با یقین به اینکه مرا می‌بینی، و از توبهٔ آن غافل ماندم، یا فراموش کردم به سویت بازگردم، یا فراموش کردم برایش آمرزش بخواهم."}]},
+{id:"c6",en:"Presumption & Prayers Unanswered",fa:"غرورِ بخشش و دعایِ بازمانده",v:[
+{id:16,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ دَخَلْتُ فِيهِ وَأَحْسَنْتُ ظَنِّي بِكَ أَنْ لَا تُعَذِّبَنِي عَلَيْهِ وَأَنَّكَ تَكْفِينِي مِنْهُ.",en:"O God, I seek forgiveness for every sin I entered while thinking well of You — that You would not punish me for it and would shield me from its consequence.",fa:"خدایا، از هر گناهی که بدان درآمدم در حالی که گمانم به تو نیکو بود که مرا بر آن عذاب نکنی و از کیفرش نگاهم داری."},
+{id:17,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَوْجَبْتُ بِهِ مِنْكَ رَدَّ الدُّعَاءِ، وَحِرْمَانَ الْإِجَابَةِ، وَخَيْبَةَ الطَّمَعِ، وَانْفِسَاخَ الرَّجَاءِ.",en:"O God, I seek forgiveness for every sin by which I earned from You the turning back of my prayer, deprivation of response, the failure of my hopes, and the collapse of my expectation.",fa:"خدایا، از هر گناهی که به سببش از سوی تو سزاوارِ بازپس‌فرستادن دعا، محرومیت از اجابت، ناکامیِ طمع و گسستنِ رشتهٔ امید شدم."},
+{id:18,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ يُعَقِّبُ الْحَسْرَةَ، وَيُورِثُ النَّدَامَةَ، وَيَحْبِسُ الرِّزْقَ، وَيَرُدُّ الدُّعَاءَ.",en:"O God, I seek forgiveness for every sin that trails regret behind it, bequeaths remorse, withholds provision, and turns back prayer.",fa:"خدایا، از هر گناهی که حسرت می‌آورد، پشیمانی به ارث می‌گذارد، روزی را می‌بندد و دعا را بازمی‌گرداند."},
+{id:19,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ يُورِثُ الْأَسْقَامَ، وَيُعَقِّبُ الضَّنَى، وَيُوجِبُ النِّقَمَ، وَيَكُونُ آخِرُهُ حَسْرَةً وَنَدَامَةً.",en:"O God, I seek forgiveness for every sin that breeds sickness, brings wasting of the body, calls down affliction, and ends at last in grief and remorse.",fa:"خدایا، از هر گناهی که بیماری می‌آرد، تن را به رنجوری و لاغری می‌کشاند، بلا فرود می‌آورد و پایانش حسرت و پشیمانی است."}]},
+{id:"c7",en:"Sins in Solitude",fa:"گناهانِ خلوت",v:[
+{id:20,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَدَحْتُهُ بِلِسَانِي، أَوْ هَشَّتْ إِلَيْهِ نَفْسِي، أَوِ اكْتَسَبْتُهُ بِيَدِي وَهُوَ عِنْدَكَ قَبِيحٌ تُعَاقِبُ عَلَى مِثْلِهِ، وَتَمْقُتُ مَنْ عَمِلَهُ.",en:"O God, I seek forgiveness for every sin I praised with my tongue, or my soul welcomed eagerly, or I earned with my own hand — while with You it is ugly: You punish its like and detest the one who does it.",fa:"خدایا، از هر گناهی که با زبان ستایشش کردم، یا نفسم بدان شادمانه گرایید، یا با دست خویش فراهمش آوردم؛ حال آنکه نزد تو زشت است، بر مانندش کیفر می‌دهی و انجام‌دهنده‌اش را دشمن می‌داری."},
+{id:21,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ خَلَوْتُ بِهِ فِي لَيْلٍ أَوْ نَهَارٍ حَيْثُ لَا يَرَانِي أَحَدٌ مِنْ خَلْقِكَ، فَمِلْتُ فِيهِ مِنْ تَرْكِهِ بِخَوْفِكَ إِلَى ارْتِكَابِهِ بِحُسْنِ الظَّنِّ بِكَ، فَسَوَّلَتْ لِي نَفْسِي الْإِقْدَامَ عَلَيْهِ فَوَاقَعْتُهُ وَأَنَا عَارِفٌ بِمَعْصِيَتِي لَكَ فِيهِ.",en:"O God, I seek forgiveness for every sin I committed alone, by night or day, where none of Your creation saw me — when I turned from leaving it out of fear of You to committing it in hopeful reliance on You; my soul made the leap seem sweet, so I did it, fully aware that in it I was disobeying You.",fa:"خدایا، از هر گناهی که در شب یا روز بدان خلوت کردم آنجا که هیچ آفریده‌ای مرا نمی‌دید؛ پس از ترکِ آن به بیمِ تو، به ارتکابش به خوش‌گمانی به تو گراییدم؛ نفسم جسارت بر آن را در نظرم آراست و بدان درافتادم، در حالی که می‌دانستم در آن نافرمانی تو می‌کنم."},
+{id:22,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَقْلَلْتُهُ أَوِ اسْتَصْغَرْتُهُ، أَوِ اسْتَعْظَمْتُهُ وَتَوَرَّطْتُ فِيهِ.",en:"O God, I seek forgiveness for every sin I counted small or thought trivial — or knew to be grave, yet plunged into anyway.",fa:"خدایا، از هر گناهی که اندکش شمردم یا خُردش پنداشتم، یا بزرگی‌اش را دانستم و با این همه در گردابش افتادم."}]},
+{id:"c8",en:"Aiding & Adorning Sin",fa:"یاری و آراستنِ گناه",v:[
+{id:23,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَالَأْتُ فِيهِ عَلَى أَحَدٍ مِنْ بَرِيَّتِكَ،",en:"O God, I seek forgiveness for every sin in which I lent my backing against one of Your creatures,",fa:"خدایا، از هر گناهی که در آن بر ضدّ یکی از آفریدگانت کسی را یاری دادم،"},
+{id:24,ar:"أَوْ زَيَّنْتُهُ لِنَفْسِي، أَوْ أَوْمَأْتُ بِهِ إِلَى غَيْرِي وَدَلَلْتُ عَلَيْهِ سِوَايَ، أَوْ أَصْرَرْتُ عَلَيْهِ بِعَمْدِي، أَوْ أَقَمْتُ عَلَيْهِ بِحِيلَتِي.",en:"Or adorned it for my own soul, or signaled it to another and guided someone else to it, or willfully persisted in it, or kept it standing by my contrivance.",fa:"یا آن را برای نفسم بیاراستم، یا با اشاره دیگری را بدان فراخواندم و غیر خود را بدان راهنمایی کردم، یا آگاهانه بر آن پافشاری نمودم، یا با چاره‌اندیشی‌ام برپایش داشتم."},
+{id:25,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَعَنْتُ عَلَيْهِ بِحِيلَتِي بِشَيْءٍ مِمَّا يُرَادُ بِهِ وَجْهُكَ، أَوْ يُسْتَظْهَرُ بِمِثْلِهِ عَلَى طَاعَتِكَ، أَوْ يُتَقَرَّبُ بِمِثْلِهِ إِلَيْكَ، وَوَارَيْتُ عَنِ النَّاسِ وَلَبَّسْتُ فِيهِ كَأَنِّي أُرِيدُكَ بِحِيلَتِي، وَالْمُرَادُ بِهِ مَعْصِيَتُكَ، وَالْهَوَى فِيهِ مُتَصَرِّفٌ عَلَى غَيْرِ طَاعَتِكَ.",en:"O God, I seek forgiveness for every sin I abetted with my cunning — using things meant for Your Face, things whose like strengthens obedience to You or draws one near to You — hiding it from people and dressing it up as if my scheme were for You, while its true aim was disobeying You, with desire steering it far from Your obedience.",fa:"خدایا، از هر گناهی که با حیله‌ام در آن یاری جستم از چیزی که بدان روی تو خواسته می‌شود، یا مانندش بر طاعتت پشت می‌گرم، یا بدان به تو نزدیک می‌شوند؛ و آن را از مردم پنهان کردم و چنان وانمودم که گویی آهنگم تویی، حال آنکه مقصودم نافرمانی تو بود و هوای نفس در آن فرمان می‌راند، نه طاعت تو."}]},
+{id:"c9",en:"Diseases of the Heart",fa:"بیماری‌های دل",v:[
+{id:26,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ بِسَبَبِ عُجْبٍ كَانَ بِنَفْسِي، أَوْ رِيَاءٍ، أَوْ سُمْعَةٍ، أَوْ خُيَلَاءَ، أَوْ فَرَحٍ، أَوْ مَرَحٍ، أَوْ أَشَرٍ،",en:"O God, I seek forgiveness for every sin recorded against me because of self-admiration within me, showing off, seeking reputation, vanity, giddy joy, insolent mirth, or exultance,",fa:"خدایا، از هر گناهی که به سبب خودپسندیِ درونم، یا ریا، یا شهرت‌طلبی، یا تکبر، یا شادیِ سرمست، یا خوشیِ ناسپاس، یا سرمستی بر من نوشته شد،"},
+{id:27,ar:"أَوْ بَطَرٍ، أَوْ حِقْدٍ، أَوْ حَمِيَّةٍ، أَوْ غَضَبٍ، أَوْ رِضًى، أَوْ شُحٍّ، أَوْ بُخْلٍ، أَوْ ظُلْمٍ، أَوْ خِيَانَةٍ، أَوْ سِرْقَةٍ، أَوْ كِذْبٍ،",en:"Or reckless arrogance, rancor, partisan zeal, anger, self-satisfaction, greed, miserliness, oppression, treachery, theft, or lying,",fa:"یا طغیانِ نعمت، یا کینه، یا تعصبِ جاهلی، یا خشم، یا خشنودیِ نفس، یا آزمندی، یا بخل، یا ستم، یا خیانت، یا دزدی، یا دروغ،"},
+{id:28,ar:"أَوْ لَهْوٍ، أَوْ لَعِبٍ، أَوْ نَوْعٍ مِنْ أَنْوَاعِ مَا يُكْتَسَبُ بِمِثْلِهِ الذُّنُوبُ وَيَكُونُ بِاجْتِرَاحِهِ الْعَطَبُ.",en:"Or idle diversion, or play, or any manner of thing by whose like sins are earned and by whose commission comes ruin.",fa:"یا سرگرمیِ بیهوده، یا بازی، یا هر گونه کاری که مانندش گناه می‌آفریند و ارتکابش مایهٔ هلاکت است."}]},
+{id:"c10",en:"Foreknowledge & Free Will",fa:"علمِ پیشین و اختیار",v:[
+{id:29,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ سَبَقَ فِي عِلْمِكَ أَنِّي فَاعِلُهُ، فَدَخَلْتُ فِيهِ بِشَهْوَتِي، وَاجْتَرَحْتُهُ بِإِرَادَتِي، وَقَارَفْتُهُ بِمَحَبَّتِي وَلَذَّتِي وَمَشِيَّتِي، وَشِئْتُهُ إِذْ شِئْتَ أَنْ أَشَاءَهُ، وَأَرَدْتُهُ إِذْ أَرَدْتَ أَنْ أُرِيدَهُ، فَعَمِلْتُهُ إِذْ كَانَ فِي قَدِيمِ تَقْدِيرِكَ وَنَافِذِ عِلْمِكَ أَنِّي فَاعِلُهُ، لَمْ تُدْخِلْنِي فِيهِ جَبْرًا، وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا،",en:"O God, I seek forgiveness for every sin Your knowledge foreknew I would do: I entered it by my desire, earned it by my will, and committed it with my love, my pleasure, my own choosing. I willed it because You willed that I will it; I intended it because You intended that I intend it; and I did it as it lay in Your ancient decree and unerring knowledge — yet You never drove me to it by compulsion nor forced me to bear it.",fa:"خدایا، از هر گناهی که در علم پیشینت بود که من انجامش می‌دهم؛ با خواهش خود بدان درآمدم، با ارادهٔ خویش فراهمش آوردم، با دوست‌داشتن و لذت و خواستِ خود مرتکبش شدم؛ خواستم چون تو خواستی که بخواهم، اراده کردم چون تو اراده کردی که اراده کنم، و انجامش دادم چنان‌که در تقدیرِ دیرین و علمِ نافذت بود؛ با این همه مرا به جبر در آن نبردی و به قهر بر آن وانداشتی."},
+{id:30,ar:"وَلَمْ تَظْلِمْ نِي فِيهِ شَيْئًا، فَأَسْتَغْفِرُكَ لَهُ وَلِكُلِّ ذَنْبٍ جَرَى بِهِ عِلْمُكَ عَلَيَّ وَفِيَّ إِلَى آخِرِ عُمْرِي.",en:"Nor did You wrong me in it in the least. So I seek Your forgiveness for it, and for every sin Your knowledge has encompassed against me and within me, to the very end of my life.",fa:"و کمترین ستمی در آن به من نرساندی؛ پس برای آن و برای هر گناهی که علمت بر من و در من بدان جاری شده، تا پایان عمرم، از تو آمرزش می‌خواهم."}]},
+{id:"c11",en:"Allegiance, Promises & Blessings Misused",fa:"دوستی، پیمان و نعمتِ ناسپاس",v:[
+{id:31,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَالَ بِسَخَطِي فِيهِ عَنْ رِضَاكَ، وَمَالَتْ نَفْسِي إِلَى رِضَاكَ فَسَخِطْتُهُ، أَوْ رَهِبْتُ فِيهِ سِوَاكَ،",en:"O God, I seek forgiveness for every sin by which my displeasure leaned away from what pleases You — while my soul inclined toward what pleases You, yet I resented it — or in which I feared someone other than You,",fa:"خدایا، از هر گناهی که ناخشنودی‌ام در آن از خشنودی تو دور افتاد، و نفسم به خشنودی تو گرایید ولی من آن را ناخوش داشتم، یا در آن از غیر تو هراسیدم،"},
+{id:32,ar:"أَوْ عَادَيْتُ فِيهِ أَوْلِيَاءَكَ، أَوْ وَالَيْتُ فِيهِ أَعْدَاءَكَ، أَوِ اخْتَرْتُهُمْ عَلَى أَصْفِيَائِكَ، أَوْ خَذَلْتُ فِيهِ أَحِبَّاءَكَ، أَوْ قَصَّرْتُ فِيهِ عَنْ رِضَاكَ يَا خَيْرَ الْغَافِرِينَ.",en:"Or made enemies of Your friends, or befriended Your enemies, or preferred them over Your chosen ones, or forsook those who love You, or fell short of seeking Your pleasure — O Best of Forgivers.",fa:"یا به سببش با دوستانت دشمنی کردم، یا با دشمنانت دوستی، یا آنان را بر برگزیدگانت ترجیح دادم، یا دوست‌دارانت را تنها گذاشتم، یا از خشنودی تو کوتاهی کردم، ای بهترینِ آمرزندگان."},
+{id:33,ar:"اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تُبْتُ إِلَيْكَ مِنْهُ ثُمَّ عُدْتُ فِيهِ.",en:"O God, I seek forgiveness for every sin I repented of to You — then went back to.",fa:"خدایا، از هر گناهی که از آن به درگاهت توبه کردم و سپس بدان بازگشتم، آمرزش می‌خواهم."},
+{id:34,ar:"وَأَسْتَغْفِرُكَ لِمَا أَعْطَيْتُكَ مِنْ نَفْسِي ثُمَّ لَمْ أَفِ بِهِ.",en:"And I seek forgiveness for every promise I gave You of myself, then failed to keep.",fa:"و از هر عهدی که از سرِ جان با تو بستم و بدان وفا نکردم."},
+{id:35,ar:"وَأَسْتَغْفِرُكَ لِلنِّعْمَةِ الَّتِي أَنْعَمْتَ بِهَا عَلَيَّ فَقَوِيتُ بِهَا عَلَى مَعْصِيَتِكَ.",en:"And I seek forgiveness for the blessing You bestowed on me, which I turned into strength for disobeying You.",fa:"و برای نعمتی که بر من ارزانی داشتی و من با آن بر نافرمانی‌ات نیرو گرفتم."}]},
+{id:"c12",en:"Hidden Sins & the Rights of Others",fa:"گناهانِ پنهان و حقّ‌الناس",v:[
+{id:36,ar:"وَأَسْتَغْفِرُكَ لِكُلِّ خَيْرٍ أَرَدْتُ بِهِ وَجْهَكَ فَخَالَطَنِي مَا لَيْسَ لَكَ.",en:"And I seek forgiveness for every good I meant for Your Face, in which something not for You mingled.",fa:"و برای هر کار نیکی که برای روی تو خواستم و آنچه برای تو نبود در آن آمیخت."},
+{id:37,ar:"وَأَسْتَغْفِرُكَ لِمَا دَعَانِي إِلَيْهِ الرُّخَصُ فِيمَا اشْتَبَهَ عَلَيَّ مِمَّا هُوَ عِنْدَكَ حَرَامٌ.",en:"And I seek forgiveness for what lax concessions lured me into, amid matters doubtful to me that are, with You, forbidden.",fa:"و برای آنچه رخصت‌جویی مرا بدان کشاند، در امور مشتبهی که نزد تو حرام است."},
+{id:38,ar:"وَأَسْتَغْفِرُكَ لِلذُّنُوبِ الَّتِي لَا يَعْلَمُهَا غَيْرُكَ، وَلَا يَطَّلِعُ عَلَيْهَا سِوَاكَ، وَلَا يَحْتَمِلُهَا إِلَّا حِلْمُكَ، وَلَا يَسَعُهَا إِلَّا عَفْوُكَ.",en:"And I seek forgiveness for sins none but You knows, that none but You perceives — that nothing but Your forbearance could bear, and nothing but Your pardon could contain.",fa:"و برای گناهانی که جز تو کسی نمی‌داند و جز تو کسی بدان آگاه نیست؛ چیزی جز حلم تو تابشان نمی‌آرد و چیزی جز گذشت تو دربرشان نمی‌گیرد."},
+{id:39,ar:"وَأَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ مِنْ مَظَالِمَ كَثِيرَةٍ لِعِبَادِكَ قِبَلِي يَا رَبِّ، فَلَمْ أَسْتَطِعْ رَدَّهَا عَلَيْهِمْ وَتَحْلِيلَهَا مِنْهُمْ، أَوْ شَهِدُوا فَاسْتَحْيَيْتُ مِنِ اسْتِحْلَالِهِمْ وَالطَّلَبِ إِلَيْهِمْ وَإِعْلَامِهِمْ ذَلِكَ،",en:"And I seek Your forgiveness and turn to You from the many wrongs Your servants hold against me, my Lord: I could not restore their rights nor win their release — or they stood before me and I was too ashamed to ask their pardon, to plead with them, or to let them know.",fa:"و از بسیاری حق‌هایی که بندگانت بر گردن من دارند به سوی تو توبه می‌کنم و آمرزش می‌خواهم، ای پروردگار من؛ نتوانستم آن‌ها را بازگردانم و حلالیت بطلبم، یا آنان حاضر بودند و من از حلالیت‌طلبیدن و التماس و آشکار کردنِ آن، شرم کردم."},
+{id:40,ar:"وَأَنْتَ الْقَادِرُ عَلَى أَنْ تَسْتَوْهِبَنِي مِنْهُمْ وَتُرْضِيَهُمْ عَنِّي كَيْفَ شِئْتَ وَبِمَا شِئْتَ، يَا أَرْحَمَ الرَّاحِمِينَ، وَأَحْكَمَ الْحَاكِمِينَ، وَخَيْرَ الْغَافِرِينَ.",en:"Yet You are able to obtain their gift of pardon for me and make them pleased with me — however You will and by whatever You will — O Most Merciful of the merciful, Wisest of judges, Best of forgivers.",fa:"و تو توانایی که بخششِ مرا از آنان بستانی و ایشان را از من خشنود سازی، هرگونه که بخواهی و با هرچه بخواهی؛ ای مهربان‌ترینِ مهربانان، داناترینِ داوران و بهترینِ آمرزندگان."}]},
+{id:"c13",en:"Between Hope & Awe",fa:"میانِ بیم و امید",v:[
+{id:41,ar:"اللَّهُمَّ إِنَّ اسْتِغْفَارِي إِيَّاكَ مَعَ الْإِصْرَارِ لُؤْمٌ، وَتَرْكِيَ الِاسْتِغْفَارَ مَعَ مَعْرِفَتِي بِسَعَةِ جُودِكَ وَرَحْمَتِكَ عَجْزٌ.",en:"O God, to ask Your forgiveness while insisting on sin is baseness; and to abandon asking, knowing the vastness of Your generosity and mercy, is helpless folly.",fa:"خدایا، آمرزش‌خواستنم از تو همراه با پافشاری بر گناه، پستی است؛ و ترکِ استغفار با آنکه گستردگیِ جود و رحمتت را می‌شناسم، ناتوانی است."},
+{id:42,ar:"فَكَمْ تَتَحَبَّبُ إِلَيَّ يَا رَبِّ وَأَنْتَ الْغَنِيُّ عَنِّي، وَكَمْ أَتَبَغَّضُ إِلَيْكَ وَأَنَا الْفَقِيرُ إِلَيْكَ وَإِلَى رَحْمَتِكَ.",en:"How often You court my love, my Lord, though You have no need of me — and how often I make myself hateful to You, though I am utterly poor before You and before Your mercy.",fa:"چه بسیار که تو ای پروردگار من با من مهر می‌ورزی و از من بی‌نیازی، و چه بسیار که من خود را نزد تو منفور می‌سازم، حال آنکه سخت نیازمندِ تو و رحمتِ توأم."},
+{id:43,ar:"فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا، اغْفِرْ لِي خَطَايَايَ، وَاغْفِرْ وَارْحَمْ وَأَنْتَ خَيْرُ الرَّاحِمِينَ.",en:"O You who promises and fulfills, who warns and then pardons: forgive me my wrongs; forgive and have mercy — for You are the Best of those who show mercy.",fa:"پس ای آن‌که وعده داد و وفا کرد، و بیم داد و بخشید: خطاهایم را بیامرز، ببخش و رحم کن، که تو بهترینِ رحم‌کنندگانی."}]}
+]};
 
-<input type="file" id="import-file" accept="application/json" hidden>
-<script src="app.js?v=13"></script>
+/* ═══════════ helpers ═══════════ */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ic=(n,c='')=>`<svg class="ic ${c}"><use href="#${n}"/></svg>`;
+const fl=()=>`<svg class="fl" viewBox="0 0 220 20"><use href="#fl"/></svg>`;
+const cl=(v,a,b)=>Math.min(b,Math.max(a,v));
+const copy=o=>JSON.parse(JSON.stringify(o));
+const dk=(d=new Date())=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmt=n=>new Intl.NumberFormat('en').format(n);
+const buzz=m=>{try{navigator.vibrate&&navigator.vibrate(m)}catch{}};
+const deb=(f,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms)}};
+const lj=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
+
+const SB='https://ummhohozmpwltbgeczsf.supabase.co',KEY='sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
+const T1='istigfarqwen_user_state',T2='istigfarqwen_daily_activity',LS='nur.v3',LSS='nur.session.v3';
+const SQL=`create table if not exists public.istigfarqwen_user_state (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  state jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now());
+create table if not exists public.istigfarqwen_daily_activity (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  day date not null, reads int default 0, tasbih int default 0, seconds int default 0,
+  primary key (user_id, day));
+alter table public.istigfarqwen_user_state enable row level security;
+alter table public.istigfarqwen_daily_activity enable row level security;
+drop policy if exists s_sel on public.istigfarqwen_user_state;
+drop policy if exists s_ins on public.istigfarqwen_user_state;
+drop policy if exists s_upd on public.istigfarqwen_user_state;
+create policy s_sel on public.istigfarqwen_user_state for select using (auth.uid()=user_id);
+create policy s_ins on public.istigfarqwen_user_state for insert with check (auth.uid()=user_id);
+create policy s_upd on public.istigfarqwen_user_state for update using (auth.uid()=user_id) with check (auth.uid()=user_id);
+drop policy if exists a_sel on public.istigfarqwen_daily_activity;
+drop policy if exists a_ins on public.istigfarqwen_daily_activity;
+drop policy if exists a_upd on public.istigfarqwen_daily_activity;
+create policy a_sel on public.istigfarqwen_daily_activity for select using (auth.uid()=user_id);
+create policy a_ins on public.istigfarqwen_daily_activity for insert with check (auth.uid()=user_id);
+create policy a_upd on public.istigfarqwen_daily_activity for update using (auth.uid()=user_id) with check (auth.uid()=user_id);`;
+
+const PHRASES=[{ar:'أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ',en:'I seek God’s forgiveness and turn to Him',n:'Istighfār'},{ar:'سُبْحَانَ اللهِ وَبِحَمْدِهِ',en:'Glory and praise be to God',n:'Taḥmīd'},{ar:'لَا إِلَهَ إِلَّا اللهُ',en:'There is no god but God',n:'Tahlīl'},{ar:'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَآلِ مُحَمَّدٍ',en:'O God, bless Muhammad and his family',n:'Ṣalawāt'}];
+const TARGETS=[33,99,100,313,1000];
+const DEF={v:3,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.05,lang:'en',sound:true,vol:.7,amb:false,motion:true,rate:.85,goal:5,auto:false,speed:3,focus:false},
+ read:{},last:null,bm:{},notes:{},tas:{total:0,session:0,target:100,phrase:0},ach:{},act:{}};
+function wd(s){const d=copy(DEF);if(!s||s.v!==3)return d;return{...d,...s,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}}}
+let S=wd(lj(LS)),SES=lj(LSS);
+let V=[],IX={},CH={},NC={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastTouch=Date.now();
+const day=()=>(S.act[dk()]||={r:0,t:0,s:0});
+const nread=()=>Object.keys(S.read).length;
+function streak(){let n=0,d=new Date();const has=k=>{const a=S.act[k];return a&&(a.r>0||a.t>0||a.s>=60)};if(!has(dk(d)))d.setDate(d.getDate()-1);while(has(dk(d))){n++;d.setDate(d.getDate()-1)}return n}
+function tidy(){const ok=i=>!!IX[+i];for(const k of Object.keys(S.read))if(!ok(k))delete S.read[k];for(const k of Object.keys(S.bm))if(!ok(k))delete S.bm[k];for(const k of Object.keys(S.notes))if(!ok(k)||!S.notes[k]?.t)delete S.notes[k];if(S.last!=null&&!ok(S.last))S.last=null;
+ const t=S.set;if(!['lapis','parchment','shrine','plum'].includes(t.theme))t.theme='lapis';if(!['amiri','scheherazade','naskh'].includes(t.arFont))t.arFont='amiri';if(!['en','fa','both'].includes(t.lang))t.lang='en';
+ t.fs=cl(+t.fs||1,.8,1.7);t.lh=cl(+t.lh||2.05,1.7,2.7);t.vol=cl(+t.vol||0,0,1);t.rate=cl(+t.rate||.85,.5,1.3);t.goal=cl(Math.round(+t.goal)||5,1,43);t.speed=cl(Math.round(+t.speed)||3,1,10);
+ t.sound=!!t.sound;t.amb=!!t.amb;t.motion=!!t.motion;t.auto=!!t.auto;t.focus=!!t.focus;
+ S.tas.total=Math.max(0,Math.round(+S.tas.total)||0);S.tas.session=Math.max(0,Math.round(+S.tas.session)||0);
+ if(!TARGETS.includes(S.tas.target))S.tas.target=100;S.tas.phrase=cl(Math.round(+S.tas.phrase)||0,0,3)}
+function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch{}}
+function save(){saveLocal();hud();syncSoon()}
+
+/* ═══════════ sound ═══════════ */
+const Snd={c:null,g:null,
+ ready(){if(!S.set.sound)return null;if(!this.c){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.c=new A();this.g=this.c.createGain();this.g.connect(this.c.destination)}if(this.c.state==='suspended')this.c.resume().catch(()=>{});this.g.gain.value=S.set.vol;return this.c},
+ t(f,d,ty='sine',v=.13,at=0,f2){const c=this.c,t=c.currentTime+at,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(this.g);o.start(t);o.stop(t+d+.05)},
+ p(n){if(n==='hover'&&(!this.c||this.c.state!=='running'))return;if(!this.ready())return;const T=this.t.bind(this);
+  ({tap:()=>T(340,.06,'sine',.08),hover:()=>T(560,.025,'sine',.022),
+    open:()=>{T(392,.16,'sine',.09,0,588);T(784,.22,'sine',.035,.05)},
+    close:()=>{T(588,.14,'sine',.07,0,330)},
+    page:()=>{T(660,.05,'triangle',.07);T(495,.08,'sine',.05,.04)},
+    on:()=>{T(440,.05,'triangle',.1);T(660,.08,'triangle',.1,.06)},
+    off:()=>{T(660,.05,'triangle',.08);T(330,.09,'triangle',.08,.06)},
+    ok:()=>{T(523,.09,'sine',.1);T(659,.09,'sine',.1,.08);T(784,.17,'sine',.1,.16)},
+    err:()=>{T(190,.16,'sawtooth',.06);T(150,.2,'sawtooth',.05,.1)},
+    bm:()=>{T(660,.06,'triangle',.1);T(880,.11,'triangle',.09,.06)},
+    tick:()=>{T(900,.03,'triangle',.12);T(180,.05,'sine',.09)},
+    chime:()=>{T(523,.9,'sine',.11);T(1046,.9,'sine',.05,.02);T(1568,1.1,'sine',.03,.05)},
+    fan:()=>{[523,659,784,1046].forEach((f,i)=>T(f,.22,'triangle',.1,i*.11));T(1568,.7,'sine',.04,.5)},
+    pop:()=>T(760,.05,'sine',.08,0,980)}[n]||(()=>{}))()}
+};
+const Amb={n:null,
+ start(){if(this.n)return;const c=Snd.ready();if(!c)return;const g=c.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.045*S.set.vol,c.currentTime+3);
+  const a=c.createOscillator(),b=c.createOscillator(),l=c.createOscillator(),lg=c.createGain();a.frequency.value=110;b.frequency.value=110.7;l.frequency.value=.07;lg.gain.value=.018*S.set.vol;
+  l.connect(lg);lg.connect(g.gain);a.connect(g);b.connect(g);g.connect(c.destination);a.start();b.start();l.start();this.n={a,b,l,g}},
+ stop(){if(!this.n)return;const{a,b,l,g}=this.n;try{g.gain.linearRampToValueAtTime(0,Snd.c.currentTime+1)}catch{};setTimeout(()=>{try{a.stop();b.stop();l.stop()}catch{}},1200);this.n=null},
+ sync(){if(!S.set.sound||!S.set.amb){this.stop();return}if(this.n){try{this.n.g.gain.linearRampToValueAtTime(.045*S.set.vol,Snd.c.currentTime+.3)}catch{}}else this.start()}
+};
+
+/* ═══════════ supabase ═══════════ */
+const emsg=j=>(j&&(j.msg||j.error_description||j.message||(typeof j.error==='string'&&j.error)||j.hint))||'Something went wrong';
+function setSes(j){SES={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:j.user};try{localStorage.setItem(LSS,JSON.stringify(SES))}catch{};sched();acctUI()}
+function clearSes(){SES=null;localStorage.removeItem(LSS);clearTimeout(rt);acctUI();syncState('off')}
+async function sb(p,o={}){const{method='GET',body,auth=true,prefer,_r=false}=o;const h={apikey:KEY,'Content-Type':'application/json',Authorization:'Bearer '+(auth&&SES?SES.access_token:KEY)};if(prefer)h.Prefer=prefer;
+ let r;try{r=await fetch(SB+p,{method,headers:h,body:body?JSON.stringify(body):undefined})}catch{const e=new Error('No connection to the cloud. Your reading is saved on this device.');e.net=1;throw e}
+ let j=null;try{j=await r.json()}catch{}
+ if(!r.ok){if(r.status===401&&SES&&p.startsWith('/rest')&&!_r&&await refresh())return sb(p,{...o,_r:true});const e=new Error(emsg(j)||'HTTP '+r.status);e.code=r.status;throw e}return j}
+async function refresh(){if(!SES?.refresh_token)return false;try{setSes(await sb('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:SES.refresh_token}}));return true}catch(e){if(e.net){syncState('err');return false}clearSes();return false}}
+function sched(){clearTimeout(rt);if(!SES)return;rt=setTimeout(async()=>{if(await refresh())syncState('ok')},Math.max(5000,SES.expires_at*1000-Date.now()-60000))}
+function syncState(s){const b=$('#syncBtn');b.className='syncb '+(SES?s:'off');b.title={off:'Guest mode — sign in to sync',ok:'Synced',busy:'Syncing…',err:'Sync problem — tap for details'}[s]||'Cloud sync'}
+const uMin=(a={},b={})=>{const o={...a};for(const k in b)o[k]=Math.min(o[k]??Infinity,b[k]);return o};
+function merge(l,c){if(!c||c.v!==3)return l;const C=wd(c),m=wd(l);m.read=uMin(C.read,m.read);m.bm=uMin(C.bm,m.bm);m.ach=uMin(C.ach,m.ach);
+ m.notes={...C.notes};for(const k in l.notes)if(l.notes[k]?.t&&(!m.notes[k]||l.notes[k].ts>m.notes[k].ts))m.notes[k]=l.notes[k];
+ m.tas={...m.tas,total:Math.max(m.tas.total,C.tas.total)};m.act={...C.act};
+ for(const d in l.act){const a=l.act[d],b=m.act[d]||{r:0,t:0,s:0};m.act[d]={r:Math.max(a.r,b.r),t:Math.max(a.t,b.t),s:Math.max(a.s,b.s)}}
+ m.last=l.last??C.last;return m}
+async function push(){if(!SES)return;syncState('busy');
+ await sb(`/rest/v1/${T1}?on_conflict=user_id`,{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{user_id:SES.user.id,state:S,updated_at:new Date().toISOString()}});
+ const a=day();await sb(`/rest/v1/${T2}?on_conflict=user_id,day`,{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{user_id:SES.user.id,day:dk(),reads:a.r,tasbih:a.t,seconds:a.s}});syncState('ok');syncErr=''}
+async function pull(){if(!SES)return;const r=await sb(`/rest/v1/${T1}?user_id=eq.${SES.user.id}&select=state`);if(r?.[0]?.state){S=merge(S,r[0].state);tidy();saveLocal();apply();render({keep:true})}}
+async function afterAuth(){try{await pull();await push()}catch(e){syncErr=e.message;syncState('err')}}
+const syncSoon=deb(()=>{if(SES)push().catch(e=>{syncErr=e.message;syncState('err')})},3000);
+async function syncNow(){if(!SES){openAuth();return}try{await afterAuth();Snd.p('ok');toast('Everything is in sync','ok','sync')}catch(e){syncErr=e.message;syncState('err');Snd.p('err');syncHelp()}}
+function syncHelp(){modal(`<h2>${ic('db')}Cloud sync</h2><div class="mbody">${SES?`Signed in as <b style="color:var(--gold)">${esc(SES.user.email||'')}</b>.<br><br>${syncErr?`<span style="color:var(--pom)">${esc(syncErr)}</span>`:'No problems recorded.'}<br><br>If the error mentions a missing table or policy, run this once in Supabase → SQL Editor:`:'Sign in to sync your progress across devices.'}</div>${SES?`<div class="sqlbox" id="sqlTxt">${esc(SQL)}</div>`:''}<div class="macts">${SES?`<button class="btn" data-a="copysql">${ic('copy')}Copy SQL</button><button class="btn" data-a="sync">${ic('sync')}Retry sync</button>`:`<button class="btn gold" data-a="openauth">${ic('user')}Sign in</button>`}<button class="btn ghost" data-a="mclose">Close</button></div>`)}
+
+/* ═══════════ toast / modal ═══════════ */
+function toast(m,t='ok',i='check'){const b=$('#toasts');while(b.children.length>=4)b.firstChild.remove();const e=document.createElement('div');e.className='toast '+(t==='ok'?'':t);e.innerHTML=ic(i)+`<span>${esc(m)}</span>`;e.onclick=()=>e.remove();b.appendChild(e);setTimeout(()=>{e.classList.add('bye');setTimeout(()=>e.remove(),320)},3800)}
+let mres=null;
+function modal(html){$('#mroot').innerHTML=`<div class="ov open"><div class="scrim" data-a="mclose"></div><div class="mcard">${html}</div></div>`;Snd.p('open');const f=$('#mroot textarea,#mroot input,#mroot .btn');f&&setTimeout(()=>f.focus(),60)}
+function mclose(){if(!$('#mroot').innerHTML)return;$('#mroot').innerHTML='';Snd.p('close');if(mres){const r=mres;mres=null;r(false)}}
+function confirmBox(o){return new Promise(r=>{mres=r;modal(`<h2>${ic(o.danger?'alert':'info')}${esc(o.title)}</h2><div class="mbody">${esc(o.body)}</div><div class="macts"><button class="btn ghost" data-a="mclose">Cancel</button><button class="btn ${o.danger?'bad':'gold'}" data-a="mok">${esc(o.ok||'Confirm')}</button></div>`)})}
+
+/* ═══════════ settings ═══════════ */
+function apply(){const t=S.set,r=document.documentElement;r.dataset.theme=t.theme;r.dataset.arfont=t.arFont;r.style.setProperty('--ars',t.fs);r.style.setProperty('--arlh',t.lh);
+ document.body.classList.toggle('calm',!t.motion);document.body.classList.toggle('focuson',t.focus);
+ const sb2=$('#sndBtn');sb2.className='soundpill '+(t.sound?'on':'off');sb2.innerHTML=ic(t.sound?'vol':'mute')+`<span>Sound ${t.sound?'on':'off'}</span>`;
+ $$('.th').forEach(c=>c.classList.toggle('on',c.dataset.v===t.theme));
+ $('#fsVal').textContent=Math.round(t.fs*100)+'%';
+ Amb.sync();Sky.refresh();Sky.sync();AS.sync()}
+function fillDrawer(){$$('#drawer [data-s]').forEach(e=>{const v=S.set[e.dataset.s];if(e.type==='checkbox')e.checked=!!v;else e.value=v})}
+const openDr=()=>{fillDrawer();acctUI();document.body.classList.add('drawer');Snd.p('open')};
+const closeDr=()=>{document.body.classList.remove('drawer');Snd.p('close')};
+
+/* ═══════════ account ═══════════ */
+const uname=()=>SES?.user?.user_metadata?.name||SES?.user?.email?.split('@')[0]||'Seeker';
+function acctUI(){$('#avBtn').innerHTML=SES?esc(uname()[0].toUpperCase()):ic('user');
+ $('#drAcct').innerHTML=SES?`<div class="acct"><span class="av">${esc(uname()[0].toUpperCase())}</span><div class="who"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div></div><div class="stack"><button class="btn" data-a="sync">${ic('sync')}Sync now</button><button class="btn bad" data-a="logout">${ic('out')}Sign out</button></div>`
+ :`<p class="mu" style="font-size:12.5px;line-height:1.65;margin-bottom:11px">Reading as a guest. Everything is saved on this device; sign in to carry it across devices.</p><button class="btn gold wide" data-a="openauth">${ic('user')}Sign in / Create account</button>`}
+function acctMenu(){if(!SES){openAuth();return}const m=$('#acctMenu');if(!m.hidden){m.hidden=true;return}
+ const r=$('#avBtn').getBoundingClientRect();m.style.top=(r.bottom+9)+'px';m.style.right=Math.max(10,innerWidth-r.right)+'px';
+ m.innerHTML=`<div class="ph"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div><button class="pm" data-a="sync">${ic('sync')}Sync now</button><button class="pm" data-a="drawer">${ic('set')}Settings</button><button class="pm" data-a="export">${ic('dl')}Export data</button><button class="pm bad" data-a="logout">${ic('out')}Sign out</button>`;m.hidden=false;Snd.p('pop')}
+
+/* ═══════════ auth ═══════════ */
+function openAuth(){closePal(1);closeSearch(1);$('#auth').classList.add('open');atab('in');Snd.p('open');setTimeout(()=>$('#inE').focus(),80)}
+function closeAuth(){$('#auth').classList.remove('open');Snd.p('close')}
+function atab(v){$$('.atabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));$('#fIn').hidden=v!=='in';$('#fUp').hidden=v!=='up';$('#fFg').hidden=true;$('#aVer').hidden=true;$('#aErr').hidden=true}
+function aerr(m){const e=$('#aErr');e.textContent=m;e.hidden=false;Snd.p('err')}
+function bindAuth(){const w=(f,fn)=>f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('[type=submit]');b.classList.add('busy');$('#aErr').hidden=true;try{await fn()}catch(x){aerr(x.message)}finally{b.classList.remove('busy')}});
+ w($('#fIn'),async()=>{setSes(await sb('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email:$('#inE').value.trim(),password:$('#inP').value}}));await afterAuth();closeAuth();Snd.p('ok');toast(`Welcome back, ${uname()}`,'gold','spark')});
+ w($('#fUp'),async()=>{const j=await sb('/auth/v1/signup',{method:'POST',auth:false,body:{email:$('#upE').value.trim(),password:$('#upP').value,data:{name:$('#upN').value.trim()}}});
+  if(j.access_token){setSes(j);await afterAuth();closeAuth();Snd.p('fan');toast(`Ahlan, ${uname()}! Synced.`,'gold','spark')}
+  else{$('#fUp').hidden=true;$('#aVer').hidden=false;const e=$('#upE').value.trim();$('#verE').textContent=e;$('#aVer').dataset.e=e;Snd.p('ok')}});
+ w($('#fFg'),async()=>{await sb('/auth/v1/recover',{method:'POST',auth:false,body:{email:$('#fgE').value.trim()}});toast('Reset link sent','ok','mail');Snd.p('ok');atab('in')})}
+
+/* ═══════════ data ═══════════ */
+function norm(s){let n='',map=[];for(let i=0;i<s.length;i++){let c=s[i];if(/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED\u200c]/.test(c))continue;
+ if('أإآٱ'.includes(c))c='ا';else if(c==='ة'||c==='ۀ')c='ه';else if(c==='ى'||c==='ی')c='ي';else if(c==='ک')c='ك';else if(c==='ؤ')c='و';else if(c==='ئ')c='ي';n+=c;map.push(i)}return{n,map}}
+function index(){V=[];IX={};CH={};NC={};BOOK.sections.forEach(s=>s.v.forEach(p=>{V.push(p);IX[p.id]=p;CH[p.id]=s;NC[p.id]={ar:norm(p.ar),fa:norm(p.fa),en:{n:p.en.toLowerCase(),map:null}}}))}
+async function loadData(){index();
+ try{const r=await fetch('data/estighfar.json',{cache:'no-store'});if(r.ok){const j=await r.json();
+  if(Array.isArray(j.sections)&&j.sections.length){const secs=j.sections.map(s=>({id:s.id,en:s.en,fa:s.fa,v:(s.segments||s.v||[]).filter(p=>p&&p.id!=null&&p.ar).map(p=>({id:p.id,ar:p.ar,en:p.en||'',fa:p.fa||''}))})).filter(s=>s.v.length);
+   if(secs.length){BOOK.sections=secs;if(j.meta)BOOK.meta={...BOOK.meta,...j.meta};index()}}}}catch{}}
+
+/* ═══════════ router ═══════════ */
+const TITLES={read:'The Grand Istighfār',home:'Overview',lib:'Library',tas:'Tasbīḥ',jour:'Your Journey'};
+const ORDER=['read','home','lib','tas','jour'];
+function go(v,p){Snd.p('tap');const h='#/'+v+(p!=null?'/'+p:'');if(location.hash===h)render();else location.hash=h}
+function route(){const a=location.hash.replace(/^#\/?/,'').split('/');return{v:TITLES[a[0]]?a[0]:'read',p:a[1]||null}}
+function render(o={}){const keep=!!o.keep,y=scrollY;AS.stop();TTS.stop();const{v,p}=route();VIEW=v;
+ $('#ttl').textContent=TITLES[v];document.title='Nūr · '+TITLES[v];
+ $$('.nav button,#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+ if(io){io.disconnect();io=null}
+ $('#view').innerHTML=({read:vRead,home:vHome,lib:vLib,tas:vTas,jour:vJour})[v](p);
+ if(v==='read')afterRead(p,keep);
+ if(v==='tas')tasUI();
+ hud();if(keep)scrollTo(0,y);else if(!p)scrollTo(0,0)}
+function hud(){$('#streakN').textContent=streak()}
+
+/* ═══════════ overview ═══════════ */
+function ring(pct,size=116,r=49,w=9){const C=2*Math.PI*r;return`<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle class="bgc" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${w}"/><circle class="fgc" cx="${size/2}" cy="${size/2}" r="${r}" stroke-width="${w}" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-cl(pct,0,1))}"/></svg>`}
+function vHome(){const h=new Date().getHours(),g=h<5?'Blessed night':h<12?'Blessed morning':h<17?'Blessed afternoon':h<21?'Blessed evening':'Blessed night';
+ let pd='';try{pd=' · '+new Intl.DateTimeFormat('fa-IR-u-ca-persian',{dateStyle:'full'}).format(new Date())}catch{}
+ const total=V.length,rc=nread(),a=day(),goal=S.set.goal,last=S.last!=null&&IX[S.last]?IX[S.last]:null,c=last||V[0],d=V[Math.floor(Date.now()/864e5)%total];
+ return`<div class="page"><div class="hero stg">
+ <div><div class="greet">${g}, <b>${esc(uname())}</b></div><div class="dline">${esc(new Intl.DateTimeFormat('en',{dateStyle:'full'}).format(new Date()))}${esc(pd)}</div></div>
+ <div class="orn" style="margin-top:20px">۞ ۞ ۞</div>
+ <div class="heroar">اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ</div>
+ <p>${esc(BOOK.meta.attribution.en)}. ${total} passages — <b style="color:var(--gold)">touch any verse to open its meaning</b>.</p>
+ <div class="herofa">${esc(BOOK.meta.attribution.fa)}</div>
+ <div class="cta"><button class="btn gold" data-a="${last?'resume':'begin'}">${ic('book')}${last?'Continue reading':'Begin the duʿāʾ'}</button><button class="btn" data-a="go" data-v="tas">${ic('target')}Open tasbīḥ</button></div>
+ <div class="hchips"><span class="pill on">${ic('book')}${rc}/${total} read</span><span class="pill">${ic('flame')}${streak()}-day streak</span><span class="pill">${ic('target')}${fmt(S.tas.total)} tasbīḥ</span></div></div>
+ <div class="grid g3">
+ <div class="card"><div class="chd">${ic('clock')}${last?'Where you left off':'Start here'}</div><div class="meta">${esc(CH[c.id].en)} · № ${c.id}</div><div class="snip">${esc(c.ar)}</div><div class="snipe">${esc(c.en)}</div><button class="btn wide" style="margin-top:13px" data-a="pop" data-id="${c.id}">${ic('open')}Open the meaning</button></div>
+ <div class="card"><div class="chd">${ic('target')}Today's goal</div><div class="rrow"><div class="rbox">${ring(a.r/goal)}<div class="rtxt"><b>${a.r}</b><small>of ${goal}</small></div></div><div><div class="big">${Math.min(100,Math.round(a.r/goal*100))}%</div><div class="lbl">passages today</div><p class="mu" style="font-size:12px;margin-top:9px;line-height:1.6">${a.r>=goal?'Fulfilled — may it be accepted.':`${goal-a.r} more to fulfil today's intention.`}</p></div></div></div>
+ <div class="card"><div class="chd">${ic('spark')}Passage of the day</div><div class="meta">${esc(CH[d.id].en)} · № ${d.id}</div><div class="snip">${esc(d.ar)}</div><div class="snipe">${esc(d.en)}</div><button class="btn wide" style="margin-top:13px" data-a="pop" data-id="${d.id}">${ic('open')}Reflect on it</button></div></div>
+ <div class="hd">Quick paths</div>
+ <div class="quick"><button data-a="search">${ic('search')}Search the text</button><button data-a="go" data-v="lib">${ic('bm')}Bookmarks & notes</button><button data-a="go" data-v="jour">${ic('flame')}Streaks & awards</button><button data-a="drawer">${ic('set')}Personalise</button></div></div>`}
+
+/* ═══════════ reader ═══════════ */
+function verseHTML(p){const cls=[S.read[p.id]?'read':''].filter(Boolean).join(' ');
+ return`<article class="verse ${cls}" id="v-${p.id}" data-id="${p.id}" tabindex="0" role="button" aria-label="Open meaning of passage ${p.id}">
+ <div class="vhead"><span class="star">${p.id}</span><div class="vflags">
+  <span class="vflag ${S.read[p.id]?'done':''}" title="Read">${ic('check')}</span>
+  <span class="vflag note ${S.notes[p.id]?'on':''}" title="Has note">${ic('note')}</span>
+  <button class="vflag ${S.bm[p.id]?'on':''}" data-a="bm" data-id="${p.id}" title="Bookmark">${ic('bm')}</button></div></div>
+ <p class="var" dir="rtl" lang="ar">${p.ar}</p>
+ ${S.notes[p.id]?`<div class="vnote">${ic('note')}<span>${esc(S.notes[p.id].t)}</span></div>`:''}
+ <div class="vfoot"><span class="go">${ic('open')}Touch to open the meaning</span>${ic('r')}</div></article>`}
+function vRead(){const rc=nread(),total=V.length;
+ const opts=BOOK.sections.map(s=>`<option value="${s.id}">${esc(s.en)}</option>`).join('');
+ const chaps=BOOK.sections.map((s,i)=>{const done=s.v.filter(x=>S.read[x.id]).length;
+  return`<div class="chapter" id="${s.id}">${fl()}<h2>${i+1}. ${esc(s.en)}</h2><div class="cfa">${esc(s.fa)}</div>
+  <div class="cm"><span class="cdone">${done}/${s.v.length} read</span><span class="seal" ${done<s.v.length?'hidden':''}>${ic('check')}COMPLETE</span><button class="pill" style="padding:4px 11px;font-size:11px" data-a="markch" data-c="${s.id}">${ic('check')}Mark chapter</button></div></div>`+s.v.map(verseHTML).join('')}).join('');
+ return`<div class="page"><div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+ <div class="strip"><select id="chSel" aria-label="Chapter">${opts}</select><span class="cnt" id="rCount">${rc}/${total}</span><div class="bar"><i id="rBar" style="width:${rc/total*100}%"></i></div><button class="sbtn" data-a="drawer">${ic('set')}<span class="hidesm">Options</span></button></div>
+ ${chaps}
+ <div class="vend">${fl()}<p>${rc===total?'You have read the entire duʿāʾ. May every word be a light for you.':'“How often You court my love, though You have no need of me…”'}</p><button class="btn" data-a="go" data-v="jour">${ic('flame')}See your journey</button> <button class="btn gold" data-a="go" data-v="tas">${ic('target')}Seal it with tasbīḥ</button></div></div>`}
+function afterRead(p,keep){io=new IntersectionObserver(es=>{let best=null;es.forEach(e=>{if(e.isIntersecting&&(!best||e.intersectionRatio>best.intersectionRatio))best=e});
+ if(best){const id=+best.target.dataset.id;if(S.last!==id){S.last=id;saveLocal();syncSoon()}const sel=$('#chSel');if(sel&&CH[id]&&sel.value!==CH[id].id)sel.value=CH[id].id}},{threshold:[.1,.35,.6]});
+ $$('.verse').forEach(e=>io.observe(e));
+ const t=p&&IX[p]?IX[p]:(S.last!=null&&IX[S.last]?IX[S.last]:null),sel=$('#chSel');
+ if(sel&&t)sel.value=CH[t.id].id;
+ if(t&&!keep)setTimeout(()=>{const e=$('#v-'+t.id);if(e){e.scrollIntoView({block:'center',behavior:'auto'});if(p){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),1700)}}},40)}
+function refreshVerse(id){const e=$('#v-'+id);if(e){e.classList.toggle('read',!!S.read[id]);
+  e.querySelector('.vflag').classList.toggle('done',!!S.read[id]);
+  e.querySelector('[data-a=bm]').classList.toggle('on',!!S.bm[id]);
+  e.querySelector('.vflag.note').classList.toggle('on',!!S.notes[id]);
+  e.querySelector('.vnote')?.remove();
+  if(S.notes[id])e.querySelector('.vfoot').insertAdjacentHTML('beforebegin',`<div class="vnote">${ic('note')}<span>${esc(S.notes[id].t)}</span></div>`)}
+ const rc=nread(),c=$('#rCount'),b=$('#rBar');if(c)c.textContent=`${rc}/${V.length}`;if(b)b.style.width=(rc/V.length*100)+'%';
+ const s=CH[id];if(s){const el=$('#'+s.id);if(el){const d=s.v.filter(x=>S.read[x.id]).length;el.querySelector('.cdone').textContent=`${d}/${s.v.length} read`;el.querySelector('.seal').hidden=d<s.v.length}}}
+function setRead(id,on){id=+id;if(!IX[id])return;if(on&&!S.read[id]){S.read[id]=Date.now();day().r++}else if(!on&&S.read[id])delete S.read[id];
+ save();refreshVerse(id);Snd.p(on?'ok':'tap');if(on){checkAch();if(nread()===V.length){celebrate();render({keep:true})}}}
+function toggleBm(id){id=+id;if(!IX[id])return;if(S.bm[id]){delete S.bm[id];Snd.p('tap')}else{S.bm[id]=Date.now();Snd.p('bm');buzz(12);toast('Passage bookmarked','ok','bm')}save();refreshVerse(id);checkAch()}
+function markCh(cid){const s=BOOK.sections.find(x=>x.id===cid);if(!s)return;let n=0;s.v.forEach(p=>{if(!S.read[p.id]){S.read[p.id]=Date.now();n++;refreshVerse(p.id)}});
+ if(n){day().r+=n;save();Snd.p('ok');toast(`Chapter marked — ${n} passage${n>1?'s':''}`,'ok','check');checkAch();if(nread()===V.length){celebrate();render({keep:true})}}else toast('Chapter already complete','ok','check')}
+function noteModal(id){id=+id;const n=S.notes[id];
+ modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('note')}Note on passage ${id}</h2>
+ <p style="font-family:var(--ar);direction:rtl;text-align:right;font-size:18px;color:var(--tx);margin-bottom:12px;line-height:1.9">${esc(IX[id].ar.slice(0,90))}…</p>
+ <textarea id="nta" placeholder="Your reflection…">${esc(n?.t||'')}</textarea>
+ <div class="macts">${n?`<button class="btn bad" data-a="ndel" data-id="${id}">${ic('trash')}Delete</button>`:''}<button class="btn gold" data-a="nsave" data-id="${id}">${ic('check')}Save note</button></div>`)}
+function saveNote(id){id=+id;const t=$('#nta').value.trim();if(t)S.notes[id]={t,ts:Date.now()};else delete S.notes[id];
+ save();refreshVerse(id);mclose();Snd.p('ok');toast(t?'Note saved':'Note removed','ok','note');checkAch();if(Pop.id===id)Pop.paint();if(VIEW==='lib')render({keep:true})}
+async function copyVerse(id){const p=IX[+id];if(!p)return;const txt=`${p.ar}\n\n${p.en}\n\n${p.fa}\n\n— ${BOOK.meta.title.en}, № ${p.id}`;
+ try{await navigator.clipboard.writeText(txt)}catch{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}
+ Snd.p('pop');toast('Passage copied','ok','copy')}
+
+/* ═══════════ THE POP-UP WINDOW ═══════════ */
+const Pop={id:null,lang:'en',open:false,
+ show(id){id=+id;if(!IX[id])return;this.id=id;this.lang=S.set.lang;this.open=true;
+  AS.stop();const sw=innerWidth-document.documentElement.clientWidth;document.body.classList.add('lock');if(sw>0)document.body.style.paddingRight=sw+'px';
+  $('#pop').classList.add('open');this.paint();Snd.p('open');buzz(8);$('#popcard').focus?.()},
+ paint(){const p=IX[this.id];if(!p)return;const i=V.findIndex(x=>x.id===this.id),s=CH[this.id];
+  $('#popNum').textContent=p.id;$('#popTitle').textContent='Passage '+p.id;$('#popChap').textContent=s.en;
+  $('#popAr').textContent=p.ar;
+  $$('.lang').forEach(b=>b.classList.toggle('on',b.dataset.v===this.lang));
+  let h='';if(this.lang==='en'||this.lang==='both')h+=`<div class="tr en">${esc(p.en)}</div>`;
+  if(this.lang==='fa'||this.lang==='both')h+=`<div class="tr fa" dir="rtl" lang="fa">${esc(p.fa)}</div>`;
+  $('#popTr').innerHTML=h;
+  const n=S.notes[this.id];
+  $('#popNote').innerHTML=n?`<div class="popnote"><div class="nh">${ic('note')}Your note</div>${esc(n.t)}</div>`:'';
+  const rd=!!S.read[this.id],bm=!!S.bm[this.id];
+  const pr=$('#paRead');pr.classList.toggle('done',rd);pr.querySelector('span').textContent=rd?'Read ✓':'Mark read';
+  const pb=$('#paBm');pb.classList.toggle('on',bm);pb.querySelector('span').textContent=bm?'Bookmarked':'Bookmark';
+  const pn=$('#paNote');pn.classList.toggle('on',!!n);pn.querySelector('span').textContent=n?'Edit note':'Note';
+  const pl=$('#paPlay');pl.classList.toggle('playing',TTS.id===this.id);pl.innerHTML=ic(TTS.id===this.id?'stop':'play')+`<span>${TTS.id===this.id?'Stop':'Listen'}</span>`;
+  $('#popCount').textContent=`${i+1} / ${V.length}`;$('#popTrack').style.width=((i+1)/V.length*100)+'%';
+  $('#popPrev').disabled=i<=0;$('#popNext').disabled=i>=V.length-1;
+  $('#popBody').scrollTop=0},
+ step(d){const i=V.findIndex(x=>x.id===this.id),j=i+d;if(j<0||j>=V.length)return;TTS.stop();this.id=V[j].id;S.last=this.id;saveLocal();this.paint();Snd.p('page');buzz(5);
+  const el=$('#v-'+this.id);if(el&&VIEW==='read')el.scrollIntoView({block:'center',behavior:'smooth'})},
+ setLang(v){this.lang=v;S.set.lang=v;save();this.paint();Snd.p('pop')},
+ close(){if(!this.open)return;this.open=false;TTS.stop();$('#pop').classList.remove('open');document.body.classList.remove('lock');document.body.style.paddingRight='';Snd.p('close');
+  if(VIEW==='read'&&this.id!=null){const e=$('#v-'+this.id);if(e){const r=e.getBoundingClientRect();if(r.top<80||r.bottom>innerHeight-40)e.scrollIntoView({block:'center',behavior:'smooth'})}}
+  if(VIEW==='lib')render({keep:true})}
+};
+
+/* ═══════════ TTS ═══════════ */
+const TTS={id:null,t:null,warned:false,
+ play(id){id=+id;if(!('speechSynthesis'in window)){toast('Speech is not available in this browser','warn','alert');return}
+  this.stop();const u=new SpeechSynthesisUtterance(IX[id].ar);u.lang='ar-SA';u.rate=S.set.rate;
+  const v=speechSynthesis.getVoices().find(v=>/^ar/i.test(v.lang));if(v)u.voice=v;else if(!this.warned){this.warned=true;toast('No Arabic voice installed — using the default voice','warn','info')}
+  u.onend=u.onerror=()=>{this.clear();if(Pop.open)Pop.paint()};this.id=id;speechSynthesis.speak(u);
+  this.t=setInterval(()=>{if(speechSynthesis.speaking)speechSynthesis.resume()},9000);if(Pop.open)Pop.paint()},
+ clear(){this.id=null;clearInterval(this.t);this.t=null},
+ stop(){if('speechSynthesis'in window)speechSynthesis.cancel();this.clear()}};
+
+/* ═══════════ auto-scroll ═══════════ */
+const AS={raf:0,on:false,
+ tick(){if(!AS.on)return;scrollBy(0,S.set.speed*.55);AS.raf=requestAnimationFrame(AS.tick)},
+ sync(){const want=S.set.auto&&VIEW==='read'&&!Pop.open&&!document.hidden;if(want&&!this.on){this.on=true;this.tick()}else if(!want&&this.on)this.stop()},
+ stop(){this.on=false;cancelAnimationFrame(this.raf)}};
+addEventListener('wheel',()=>{if(AS.on){S.set.auto=false;AS.stop();fillDrawer()}},{passive:true});
+addEventListener('touchstart',()=>{if(AS.on){S.set.auto=false;AS.stop();fillDrawer()}},{passive:true});
+
+/* ═══════════ library ═══════════ */
+function vLib(){const bs=Object.keys(S.bm).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b),ns=Object.keys(S.notes).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b);
+ const list=libTab==='bm'?bs:ns;
+ const items=list.map(id=>{const p=IX[id];return`<div class="libitem" data-a="pop" data-id="${id}"><span class="star">${id}</span><div class="body"><div class="meta">${esc(CH[id].en)}</div><div class="snip">${esc(p.ar)}</div><div class="snipe">${esc(p.en)}</div>${libTab==='notes'?`<div class="libnote">${esc(S.notes[id].t)}</div>`:''}</div>
+ <div style="display:flex;flex-direction:column;gap:6px">${libTab==='notes'?`<button class="ib" data-a="nedit" data-id="${id}" title="Edit">${ic('note')}</button>`:''}<button class="ib" data-a="${libTab==='bm'?'bmdel':'ndellib'}" data-id="${id}" title="Remove">${ic('trash')}</button></div></div>`}).join('');
+ const empty=`<div class="empty">${ic(libTab==='bm'?'bm':'feather')}<h3>${libTab==='bm'?'No bookmarks yet':'No notes yet'}</h3><p>${libTab==='bm'?'Tap the ribbon on any verse, or bookmark it inside the meaning window.':'Open a verse and write a reflection — it will be kept here.'}</p><button class="btn gold" data-a="go" data-v="read">${ic('book')}Go to the reader</button></div>`;
+ return`<div class="page"><div style="display:flex;gap:9px;margin-bottom:20px;flex-wrap:wrap"><button class="pill ${libTab==='bm'?'on':''}" data-a="libtab" data-v="bm">${ic('bm')}Bookmarks · ${bs.length}</button><button class="pill ${libTab==='notes'?'on':''}" data-a="libtab" data-v="notes">${ic('note')}Notes · ${ns.length}</button></div>${list.length?items:empty}</div>`}
+
+/* ═══════════ tasbih ═══════════ */
+function vTas(){const t=S.tas,p=PHRASES[t.phrase];
+ return`<div class="page"><div class="tas">
+ <div class="trow">${PHRASES.map((x,i)=>`<button class="pill ${i===t.phrase?'on':''}" data-a="tphrase" data-v="${i}">${x.n}</button>`).join('')}</div>
+ <div class="tphrase">${p.ar}</div><div class="tsub">${esc(p.en)}</div>
+ <button class="tbtn" id="tBtn" data-a="tinc" aria-label="Count"><svg class="ring" viewBox="0 0 300 300"><circle class="bgc" cx="150" cy="150" r="140" stroke-width="10"/><circle class="fgc" id="tRing" cx="150" cy="150" r="140" stroke-width="10" stroke-dasharray="${2*Math.PI*140}" stroke-dashoffset="${2*Math.PI*140}"/></svg>
+ <div class="tcore"><small>tap or press space</small><b id="tCount">0</b><div class="left" id="tLeft"></div></div></button>
+ <div class="trow">${TARGETS.map(v=>`<button class="pill ${v===t.target?'on':''}" data-a="ttarget" data-v="${v}">${v}</button>`).join('')}</div>
+ <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:center"><button class="btn" data-a="tdec">${ic('minus')}Undo</button><button class="btn bad" data-a="treset">${ic('rotate')}Reset round</button></div>
+ <div class="tstats"><span>Round <b id="tSess">0</b> / ${t.target}</span><span>Lifetime <b id="tTot">${fmt(t.total)}</b></span><span>Today <b id="tDay">${fmt(day().t)}</b></span></div>
+ </div></div>`}
+function tasUI(){const t=S.tas,C=2*Math.PI*140,r=$('#tRing');if(!r)return;r.style.strokeDashoffset=C*(1-Math.min(1,t.session/t.target));
+ $('#tCount').textContent=fmt(t.session);$('#tLeft').textContent=t.session>=t.target?'✦ target reached ✦':`${t.target-t.session} to go`;
+ $('#tSess').textContent=fmt(t.session);$('#tTot').textContent=fmt(t.total);$('#tDay').textContent=fmt(day().t)}
+function tInc(){const t=S.tas;t.session++;t.total++;day().t++;save();tasUI();Snd.p('tick');buzz(8);
+ const b=$('#tBtn');if(b){b.classList.remove('bump');void b.offsetWidth;b.classList.add('bump')}
+ if(t.session===t.target){Snd.p('chime');buzz([20,40,20]);confetti(90);toast(`Target of ${t.target} reached — may it be accepted`,'gold','spark')}checkAch()}
+function tDec(){const t=S.tas;if(t.session>0){t.session--;t.total=Math.max(0,t.total-1);day().t=Math.max(0,day().t-1);save();tasUI();Snd.p('tap')}}
+
+/* ═══════════ journey ═══════════ */
+const ACH=[{k:'first',i:'spark',t:'First Light',d:'Mark your first passage as read',f:()=>nread()>=1},
+{k:'ten',i:'book',t:'Devoted Reader',d:'Read 10 passages',f:()=>nread()>=10},
+{k:'all',i:'award',t:'The Full Surrender',d:'Read every passage',f:()=>nread()>=V.length},
+{k:'bm5',i:'bm',t:'Keeper of Verses',d:'Bookmark 5 passages',f:()=>Object.keys(S.bm).length>=5},
+{k:'note',i:'feather',t:'The Scribe',d:'Write your first reflection',f:()=>Object.keys(S.notes).length>=1},
+{k:'d100',i:'target',t:'The Remembering',d:'100 tasbīḥ counted',f:()=>S.tas.total>=100},
+{k:'d1000',i:'zap',t:'Thousandfold',d:'1,000 tasbīḥ counted',f:()=>S.tas.total>=1000},
+{k:'s3',i:'flame',t:'Three Dawns',d:'A 3-day streak',f:()=>streak()>=3},
+{k:'s7',i:'sun',t:'A Week of Light',d:'A 7-day streak',f:()=>streak()>=7}];
+function checkAch(){ACH.forEach(a=>{if(!S.ach[a.k]&&a.f()){S.ach[a.k]=Date.now();save();Snd.p('fan');confetti(70);toast('Achievement — '+a.t,'gold','award')}})}
+function celebrate(){Snd.p('fan');confetti(220);toast('The entire duʿāʾ is read. Taqabbal Allāh!','gold','spark')}
+function heat(){const t=new Date();t.setHours(0,0,0,0);const s=new Date(t);s.setDate(s.getDate()-s.getDay()-77);let c='';
+ for(let w=0;w<12;w++)for(let d=0;d<7;d++){const dt=new Date(s);dt.setDate(s.getDate()+w*7+d);const k=dk(dt),a=S.act[k],v=a?a.r+a.t:0,l=v===0?0:v<5?1:v<15?2:v<40?3:4;
+  c+=`<i class="${dt>t?'fut':l?'l'+l:''}" title="${k} · ${a?`${a.r} read, ${a.t} tasbīḥ`:'rest'}"></i>`}
+ return`<div class="heat">${c}</div><div class="hleg">less <i style="background:var(--surf2)"></i><i style="background:color-mix(in srgb,var(--turq) 28%,var(--surf2))"></i><i style="background:color-mix(in srgb,var(--turq) 52%,var(--surf2))"></i><i style="background:color-mix(in srgb,var(--turq) 76%,var(--surf2))"></i><i style="background:var(--turq)"></i> more</div>`}
+function vJour(){const rc=nread(),mins=Math.round(Object.values(S.act).reduce((s,a)=>s+(a.s||0),0)/60),a=day(),g=S.set.goal;
+ return`<div class="page"><div class="grid g4">
+ <div class="card"><div class="sic">${ic('flame')}</div><div class="big">${streak()}</div><div class="lbl">day streak</div></div>
+ <div class="card"><div class="sic t">${ic('book')}</div><div class="big">${rc}<span class="mu" style="font-size:17px">/${V.length}</span></div><div class="lbl">passages read</div></div>
+ <div class="card"><div class="sic">${ic('target')}</div><div class="big">${fmt(S.tas.total)}</div><div class="lbl">lifetime tasbīḥ</div></div>
+ <div class="card"><div class="sic t">${ic('clock')}</div><div class="big">${fmt(mins)}</div><div class="lbl">minutes reading</div></div></div>
+ <div class="grid g2" style="margin-top:16px">
+ <div class="card"><div class="chd">${ic('target')}Today's intention</div><div class="rrow"><div class="rbox">${ring(a.r/g)}<div class="rtxt"><b>${a.r}</b><small>of ${g}</small></div></div>
+ <div><p class="mu" style="font-size:13px;line-height:1.7">${a.r>=g?'Fulfilled. Extra passages are extra light.':`Read ${g-a.r} more passage${g-a.r>1?'s':''} today.`}<br>Today: <b style="color:var(--tx)">${a.t}</b> tasbīḥ · <b style="color:var(--tx)">${Math.round(a.s/60)}</b> min.</p><button class="btn" style="margin-top:11px" data-a="go" data-v="read">${ic('book')}Continue</button></div></div></div>
+ <div class="card"><div class="chd">${ic('cal')}Last 12 weeks</div>${heat()}</div></div>
+ <div class="hd">Achievements · ${Object.keys(S.ach).length}/${ACH.length}</div>
+ <div class="achs">${ACH.map(x=>{const w=S.ach[x.k];return`<div class="ach ${w?'won':'lock'}">${ic(x.i)}<div><h4>${esc(x.t)}</h4><p>${esc(x.d)}</p>${w?`<small>${new Date(w).toLocaleDateString()}</small>`:''}</div></div>`}).join('')}</div>
+ <div class="hd">Data</div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn" data-a="export">${ic('dl')}Export</button><button class="btn" data-a="import">${ic('ul')}Import</button><button class="btn" data-a="sync">${ic('sync')}Sync</button><button class="btn" data-a="sql">${ic('db')}Setup SQL</button></div></div>`}
+
+/* ═══════════ search ═══════════ */
+function hl(str,c,q){const i=c.n.indexOf(q);if(i<0)return esc(str.slice(0,100))+(str.length>100?'…':'');
+ const s=c.map?c.map[i]:i,e=c.map?c.map[i+q.length-1]+1:i+q.length,a=Math.max(0,s-32),b=Math.min(str.length,e+64);
+ return(a>0?'…':'')+esc(str.slice(a,s))+'<mark>'+esc(str.slice(s,e))+'</mark>'+esc(str.slice(e,b))+(b<str.length?'…':'')}
+function doSearch(q){const box=$('#sOut');q=q.trim();if(q.length<2){box.innerHTML=`<div class="pempty">Type two letters — Arabic diacritics are ignored.</div>`;return}
+ const ar=/[\u0600-\u06FF]/.test(q),qn=ar?norm(q).n:q.toLowerCase();if(!qn){box.innerHTML=`<div class="pempty">Keep typing…</div>`;return}
+ const out=[];for(const p of V){const c=NC[p.id];let f=null,cc=null;
+  if(ar){if(c.ar.n.includes(qn)){f='ar';cc=c.ar}else if(c.fa.n.includes(qn)){f='fa';cc=c.fa}}else if(c.en.n.includes(qn)){f='en';cc=c.en}
+  if(f)out.push({p,f,cc});if(out.length>=30)break}
+ box.innerHTML=out.length?out.map((r,i)=>`<button class="pi ${i===0?'k':''}" data-a="pop" data-id="${r.p.id}"><span class="star">${r.p.id}</span><div class="t"><b>${esc(CH[r.p.id].en)}</b><span dir="${r.f==='en'?'ltr':'rtl'}" class="${r.f==='ar'?'ars':''}">${hl(r.p[r.f],r.cc,qn)}</span></div>${ic('open')}</button>`).join(''):`<div class="pempty">Nothing found for “${esc(q)}”.</div>`}
+function openSearch(){closePal(1);$('#search').classList.add('open');$('#sIn').value='';doSearch('');Snd.p('open');setTimeout(()=>$('#sIn').focus(),60)}
+function closeSearch(s){const o=$('#search');if(!o.classList.contains('open'))return;o.classList.remove('open');if(!s)Snd.p('close')}
+
+/* ═══════════ palette ═══════════ */
+let pIdx=0,pItems=[];
+function cmds(){const c=[{t:'Reader · resume',i:'book',r:()=>go('read')},{t:'Reader · from the beginning',i:'play',r:()=>go('read',V[0].id)},
+ {t:'Overview',i:'home',r:()=>go('home')},{t:'Library',i:'bm',r:()=>go('lib')},{t:'Tasbīḥ',i:'target',r:()=>go('tas')},{t:'Journey',i:'flame',r:()=>go('jour')},
+ {t:'Search the text',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},{t:'Focus mode',i:'focus',r:()=>{S.set.focus=!S.set.focus;save();apply();fillDrawer()}},
+ {t:'Settings',i:'set',r:openDr},{t:'Export data',i:'dl',r:exportData},{t:'Cloud sync',i:'sync',r:syncNow},{t:'Cloud setup SQL',i:'db',r:()=>sqlModal()},
+ {t:SES?'Sign out':'Sign in',i:SES?'out':'user',r:()=>SES?logout():openAuth()},{t:'About & shortcuts',i:'info',r:about}];
+ BOOK.sections.forEach((s,i)=>c.push({t:`Chapter ${i+1} · ${s.en}`,i:'fl',r:()=>{go('read');setTimeout(()=>$('#'+s.id)?.scrollIntoView({block:'start',behavior:'smooth'}),180)}}));return c}
+function palRender(q=''){pItems=cmds().filter(c=>c.t.toLowerCase().includes(q.toLowerCase()));pIdx=0;
+ $('#pOut').innerHTML=pItems.length?pItems.map((c,i)=>`<button class="pi ${i===0?'k':''}" data-p="${i}">${ic(c.i)}<div class="t"><b>${esc(c.t)}</b></div></button>`).join(''):`<div class="pempty">No matching command.</div>`}
+function openPal(){closeSearch(1);$('#pal').classList.add('open');$('#pIn').value='';palRender();Snd.p('open');setTimeout(()=>$('#pIn').focus(),60)}
+function closePal(s){const o=$('#pal');if(!o.classList.contains('open'))return;o.classList.remove('open');if(!s)Snd.p('close')}
+function palMove(d){if(!pItems.length)return;pIdx=cl(pIdx+d,0,pItems.length-1);$$('#pOut .pi').forEach((e,i)=>e.classList.toggle('k',i===pIdx));$('#pOut .k')?.scrollIntoView({block:'nearest'})}
+function palRun(i=pIdx){const c=pItems[i];if(c){closePal();c.r()}}
+
+/* ═══════════ about / sql ═══════════ */
+function about(){const keys=[['Touch a verse','Open its meaning'],['← / →','Prev / next passage'],['Esc','Close window'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch views'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B','Bookmark current'],['R','Mark current read'],['?','This panel']];
+ modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('info')}About Nūr</h2>
+ <div style="font-family:var(--ar);direction:rtl;text-align:center;font-size:23px;color:var(--gold);line-height:2;margin:6px 0 14px">فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا</div>
+ <div class="mbody">${esc(BOOK.meta.attribution.en)}. Arabic vocalised from published editions (${esc(BOOK.meta.source)}); English and Persian translations composed for this reader. ${V.length} passages · ${BOOK.sections.length} chapters. Touch any verse to open its meaning in a window.</div>
+ <div class="hd" style="margin:20px 0 4px">Keys & touch</div><div class="keys">${keys.map(k=>`<div><span>${esc(k[1])}</span><kbd>${esc(k[0])}</kbd></div>`).join('')}</div>`)}
+function sqlModal(){modal(`<h2>${ic('db')}Cloud setup SQL</h2><div class="mbody">Run this once in Supabase → SQL Editor to create the two prefixed tables and their row-level security policies.</div><div class="sqlbox">${esc(SQL)}</div><div class="macts"><button class="btn gold" data-a="copysql">${ic('copy')}Copy SQL</button><button class="btn ghost" data-a="mclose">Close</button></div>`)}
+async function copySQL(){try{await navigator.clipboard.writeText(SQL)}catch{const a=document.createElement('textarea');a.value=SQL;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}Snd.p('ok');toast('SQL copied — paste it in Supabase','ok','copy')}
+
+/* ═══════════ data i/o ═══════════ */
+function exportData(){const b=new Blob([JSON.stringify({...S,exported_at:new Date().toISOString()},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`nur-istighfar-${dk()}.json`;a.click();URL.revokeObjectURL(a.href);Snd.p('ok');toast('Data exported','ok','dl')}
+function bindImport(){$('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
+ try{const j=JSON.parse(await f.text());if(j.v!==3)throw new Error('Not a Nūr v3 backup');S=merge(S,j);tidy();saveLocal();apply();save();render({keep:true});Snd.p('ok');toast('Data imported & merged','ok','ul')}
+ catch(x){Snd.p('err');toast('Import failed: '+x.message,'err','alert')}e.target.value=''})}
+async function resetAll(){if(!await confirmBox({title:'Reset all progress?',body:'Read marks, bookmarks, notes, tasbīḥ and streaks will be cleared on this device'+(SES?' and in the cloud.':'.'),ok:'Reset everything',danger:true}))return;
+ const keep=S.set;S=copy(DEF);S.set=keep;save();render();Snd.p('off');toast('A clean page. Begin again.','ok','rotate')}
+async function logout(){try{await sb('/auth/v1/logout',{method:'POST'})}catch{}clearSes();toast('Signed out — data stays on this device','ok','out')}
+
+/* ═══════════ sky + confetti ═══════════ */
+const Sky={cv:null,cx:null,ps:[],raf:0,run:false,cols:['#e3b23c','#2ee6c5'],
+ init(){this.cv=$('#stars');this.cx=this.cv.getContext('2d');this.refresh();this.resize();addEventListener('resize',()=>this.resize());document.addEventListener('visibilitychange',()=>document.hidden?this.stop():this.sync());this.sync()},
+ refresh(){const c=getComputedStyle(document.documentElement);this.cols=[c.getPropertyValue('--gold').trim()||'#e3b23c',c.getPropertyValue('--turq').trim()||'#2ee6c5']},
+ resize(){if(!this.cx)return;const d=Math.min(2,devicePixelRatio||1);this.cv.width=innerWidth*d;this.cv.height=innerHeight*d;this.cx.setTransform(d,0,0,d,0,0);
+  const n=Math.min(120,Math.floor(innerWidth*innerHeight/17000));this.ps=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.6+.4,v:Math.random()*.15+.03,p:Math.random()*6.28,g:Math.random()>.45}));this.sync()},
+ draw(t){if(!this.cx)return;const[a,b]=this.cols;this.cx.clearRect(0,0,innerWidth,innerHeight);
+  for(const p of this.ps){this.cx.globalAlpha=(.35+.65*Math.abs(Math.sin(t/1700+p.p)))*.5;this.cx.fillStyle=p.g?a:b;this.cx.beginPath();this.cx.arc(p.x,p.y,p.r,0,7);this.cx.fill()}this.cx.globalAlpha=1},
+ loop(){if(!this.cx||this.run)return;this.run=true;const step=t=>{if(!this.run)return;this.draw(t);for(const p of this.ps){p.y-=p.v;if(p.y<-4){p.y=innerHeight+4;p.x=Math.random()*innerWidth}}this.raf=requestAnimationFrame(step)};this.raf=requestAnimationFrame(step)},
+ stop(){this.run=false;cancelAnimationFrame(this.raf)},
+ sync(){if(!this.cx)return;S.set.motion&&!document.hidden?this.loop():(this.stop(),this.draw(1200))}};
+function confetti(n=120){if(!S.set.motion)return;const cv=$('#conf'),cx=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
+ const cols=['#e3b23c','#2ee6c5','#f7d992','#3a6fe0','#ff9f45'],ps=Array.from({length:n},()=>({x:innerWidth/2+(Math.random()-.5)*innerWidth*.5,y:innerHeight*.36,vx:(Math.random()-.5)*11,vy:-Math.random()*11-3,s:Math.random()*7+4,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)],l:1}));
+ let f=0;(function tick(){cx.clearRect(0,0,cv.width,cv.height);let alive=false;
+  for(const p of ps){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l-=.008;if(p.l>0&&p.y<cv.height+30){alive=true;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.globalAlpha=Math.max(0,p.l);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore()}}
+  if(alive&&++f<300)requestAnimationFrame(tick);else cx.clearRect(0,0,cv.width,cv.height)})()}
+
+/* ═══════════ actions ═══════════ */
+const A={
+ go:t=>go(t.dataset.v),
+ pop:t=>{closeSearch(1);closePal(1);Pop.show(t.dataset.id)},
+ popclose:()=>Pop.close(),
+ popprev:()=>Pop.step(-1),popnext:()=>Pop.step(1),
+ lang:t=>Pop.setLang(t.dataset.v),
+ popread:()=>{setRead(Pop.id,!S.read[Pop.id]);Pop.paint()},
+ popbm:()=>{toggleBm(Pop.id);Pop.paint()},
+ popnote:()=>noteModal(Pop.id),
+ popcopy:()=>copyVerse(Pop.id),
+ popplay:()=>{if(TTS.id===Pop.id){TTS.stop();Pop.paint();Snd.p('tap')}else TTS.play(Pop.id)},
+ bm:t=>toggleBm(t.dataset.id),bmdel:t=>{toggleBm(t.dataset.id);render({keep:true})},
+ markch:t=>markCh(t.dataset.c),
+ nedit:t=>noteModal(t.dataset.id),nsave:t=>saveNote(t.dataset.id),
+ ndel:t=>{delete S.notes[+t.dataset.id];save();refreshVerse(+t.dataset.id);mclose();Snd.p('tap');toast('Note removed','ok','trash');if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true})},
+ ndellib:t=>{delete S.notes[+t.dataset.id];save();render({keep:true});Snd.p('tap');toast('Note removed','ok','trash')},
+ libtab:t=>{libTab=t.dataset.v;render({keep:true});Snd.p('tap')},
+ begin:()=>go('read',V[0].id),resume:()=>go('read',S.last!=null?S.last:V[0].id),
+ tinc:()=>tInc(),tdec:()=>tDec(),
+ treset:async()=>{if(await confirmBox({title:'Reset this round?',body:`The round counter returns to 0. Lifetime total (${fmt(S.tas.total)}) is kept.`,ok:'Reset round'})){S.tas.session=0;save();tasUI();Snd.p('off')}},
+ ttarget:t=>{S.tas.target=+t.dataset.v;save();render({keep:true});Snd.p('pop')},
+ tphrase:t=>{S.tas.phrase=+t.dataset.v;save();render({keep:true});Snd.p('pop')},
+ fs:t=>{S.set.fs=cl(+(S.set.fs+(+t.dataset.v)*.1).toFixed(2),.8,1.7);apply();save();Snd.p('tick');if(Pop.open)Pop.paint()},
+ theme:t=>{S.set.theme=t.dataset.v;apply();save();Snd.p('pop')},
+ sound:()=>{S.set.sound=!S.set.sound;apply();save();fillDrawer();Snd.p(S.set.sound?'on':'off');toast(S.set.sound?'Sound on':'Sound muted','ok',S.set.sound?'vol':'mute')},
+ drawer:()=>{$('#acctMenu').hidden=true;openDr()},closedr:()=>closeDr(),
+ search:()=>openSearch(),closesearch:()=>closeSearch(),
+ pal:()=>openPal(),closepal:()=>closePal(),
+ about:()=>about(),sql:()=>sqlModal(),copysql:()=>copySQL(),
+ acct:()=>acctMenu(),openauth:()=>{closeDr();mclose();openAuth()},closeauth:()=>closeAuth(),
+ atab:t=>{atab(t.dataset.v);Snd.p('tap')},
+ forgot:()=>{$('#fIn').hidden=true;$('#fFg').hidden=false;$('#fgE').value=$('#inE').value},
+ eye:t=>{const i=$('#'+t.dataset.t);i.type=i.type==='password'?'text':'password';t.innerHTML=ic(i.type==='password'?'eye':'eyeoff');Snd.p('tick')},
+ resend:async()=>{try{await sb('/auth/v1/resend',{method:'POST',auth:false,body:{type:'signup',email:$('#aVer').dataset.e}});toast('Verification email resent','ok','mail');Snd.p('ok')}catch(e){aerr(e.message)}},
+ logout:()=>{$('#acctMenu').hidden=true;closeDr();logout()},
+ sync:()=>{$('#acctMenu').hidden=true;if(SES&&syncErr)syncHelp();else syncNow()},
+ export:()=>{$('#acctMenu').hidden=true;exportData()},import:()=>$('#impFile').click(),reset:()=>resetAll(),
+ mclose:()=>mclose(),mok:()=>{const r=mres;mres=null;$('#mroot').innerHTML='';Snd.p('close');r&&r(true)},
+ retry:()=>location.reload()
+};
+const QUIET=new Set(Object.keys(A));
+
+/* ═══════════ events ═══════════ */
+document.addEventListener('click',e=>{
+ const pb=e.target.closest('[data-p]');if(pb){palRun(+pb.dataset.p);return}
+ const t=e.target.closest('[data-a]');
+ if(t){const a=t.dataset.a;if(!QUIET.has(a))Snd.p('tap');A[a]&&A[a](t,e);return}
+ if(!e.target.closest('#acctMenu')&&!e.target.closest('#avBtn'))$('#acctMenu').hidden=true;
+ const v=e.target.closest('.verse');
+ if(v&&!String(window.getSelection?.()||'')){Pop.show(v.dataset.id);return}
+});
+let hv=0;
+document.addEventListener('mouseover',e=>{if(!e.target.closest('.btn,.ib,.pill,.nav button,.quick button,.verse,.pa,.nb,.lang'))return;const n=Date.now();if(n-hv>90){hv=n;Snd.p('hover')}});
+document.addEventListener('input',e=>{const t=e.target;
+ if(t.id==='sIn'){doSearch(t.value);return}if(t.id==='pIn'){palRender(t.value);return}
+ const k=t.dataset.s;if(!k)return;
+ S.set[k]=t.type==='checkbox'?t.checked:(t.type==='range'||t.type==='number')?parseFloat(t.value):t.value;
+ tidy();apply();save();
+ if(k==='vol')Snd.p('tick');if(k==='sound')Snd.p(S.set.sound?'on':'off');
+ if(k==='lang'&&Pop.open){Pop.lang=S.set.lang;Pop.paint()}
+ if(k==='goal'&&(VIEW==='home'||VIEW==='jour'))render({keep:true})});
+document.addEventListener('change',e=>{if(e.target.id==='chSel')$('#'+e.target.value)?.scrollIntoView({block:'start',behavior:'smooth'})});
+['pointerdown','keydown'].forEach(ev=>document.addEventListener(ev,()=>{lastTouch=Date.now()},{passive:true}));
+document.addEventListener('pointerdown',()=>{if(S.set.amb&&S.set.sound)Amb.sync()},{once:true});
+addEventListener('pagehide',saveLocal);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLocal();AS.sync()});
+let par=0;
+addEventListener('scroll',()=>{if(par)return;par=requestAnimationFrame(()=>{par=0;const o=$('.hero .orn');if(o)o.style.setProperty('--par',Math.min(1,scrollY/400))})},{passive:true});
+
+/* pop swipe */
+let sx=0,sy=0,sw=false;
+$('#popcard').addEventListener('touchstart',e=>{if(e.target.closest('.popbody')&&e.touches.length>1)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;sw=true},{passive:true});
+$('#popcard').addEventListener('touchend',e=>{if(!sw)return;sw=false;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;
+ if(Math.abs(dx)>62&&Math.abs(dx)>Math.abs(dy)*1.7)Pop.step(dx<0?1:-1)},{passive:true});
+
+document.addEventListener('keydown',e=>{
+ const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#pal').classList.contains('open')?closePal():openPal();return}
+ if(e.key==='Escape'){
+  if($('#mroot').innerHTML)mclose();else if(Pop.open)Pop.close();else if($('#pal').classList.contains('open'))closePal();
+  else if($('#search').classList.contains('open'))closeSearch();else if($('#auth').classList.contains('open'))closeAuth();
+  else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;
+  else if(S.set.focus){S.set.focus=false;apply();save();fillDrawer()}return}
+ if($('#pal').classList.contains('open')){if(e.key==='ArrowDown'){e.preventDefault();palMove(1)}if(e.key==='ArrowUp'){e.preventDefault();palMove(-1)}if(e.key==='Enter'){e.preventDefault();palRun()}return}
+ if($('#search').classList.contains('open')){
+  if(e.key==='Enter'){e.preventDefault();$('#sOut .pi')?.click()}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const it=$$('#sOut .pi');if(!it.length)return;let i=it.findIndex(x=>x.classList.contains('k'));i=cl(i+(e.key==='ArrowDown'?1:-1),0,it.length-1);it.forEach((x,j)=>x.classList.toggle('k',j===i));it[i].scrollIntoView({block:'nearest'})}return}
+ if(Pop.open){
+  if(e.key==='ArrowRight'){e.preventDefault();Pop.step(1)}
+  if(e.key==='ArrowLeft'){e.preventDefault();Pop.step(-1)}
+  if(!typing&&e.key===' '){e.preventDefault();A.popplay()}
+  if(!typing&&e.key.toLowerCase()==='b')A.popbm();
+  if(!typing&&e.key.toLowerCase()==='r')A.popread();
+  return}
+ if(typing)return;
+ const k=e.key;
+ if(k==='/'){e.preventDefault();openSearch();return}
+ if(k==='?'){about();return}
+ if(k.toLowerCase()==='m'){A.sound();return}
+ if(['1','2','3','4','5'].includes(k)){go(ORDER[+k-1]);return}
+ if(VIEW==='tas'&&k===' '){e.preventDefault();tInc();return}
+ if(VIEW==='read'){
+  if((k==='Enter'||k===' ')&&e.target.classList?.contains('verse')){e.preventDefault();Pop.show(e.target.dataset.id);return}
+  if(k==='+'||k==='='){S.set.fs=cl(+(S.set.fs+.1).toFixed(2),.8,1.7);apply();save();fillDrawer();Snd.p('tick')}
+  if(k==='-'){S.set.fs=cl(+(S.set.fs-.1).toFixed(2),.8,1.7);apply();save();fillDrawer();Snd.p('tick')}
+  if(k.toLowerCase()==='b'&&S.last!=null)toggleBm(S.last);
+  if(k.toLowerCase()==='r'&&S.last!=null)setRead(S.last,!S.read[S.last]);
+  if(k==='ArrowRight'||k==='ArrowLeft'){e.preventDefault();const ids=V.map(x=>x.id),c=S.last!=null?ids.indexOf(S.last):0,i=cl((c<0?0:c)+(k==='ArrowRight'?1:-1),0,ids.length-1);$('#v-'+ids[i])?.scrollIntoView({block:'center',behavior:'smooth'})}
+ }
+});
+
+/* focus mode css injected via class */
+const st=document.createElement('style');
+st.textContent='body.focuson #rail,body.focuson #tabs{display:none}body.focuson #top{padding-left:16px}body.focuson #view{max-width:820px}';
+document.head.appendChild(st);
+
+/* reading timer */
+let tt=0;
+setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.now()-lastTouch<90000){day().s+=5;saveLocal();if(++tt%12===0)syncSoon()}},5000);
+
+/* ═══════════ boot ═══════════ */
+(async function init(){
+ tidy();apply();Sky.init();bindAuth();bindImport();
+ addEventListener('hashchange',()=>render());
+ if('speechSynthesis'in window)speechSynthesis.getVoices();
+ await loadData();tidy();
+ if(!location.hash)history.replaceState(null,'','#/read');
+ render();acctUI();
+ $('#boot').classList.add('done');setTimeout(()=>$('#boot')?.remove(),700);
+ if(SES){if(SES.expires_at*1000<Date.now()+60000)await refresh();if(SES){sched();afterAuth()}}else syncState('off');
+ checkAch();
+ setTimeout(()=>{if(!localStorage.getItem('nur.hint')){localStorage.setItem('nur.hint','1');toast('Touch any verse to open its meaning','gold','open')}},1400);
+})();
+})();
+</script>
 </body>
 </html>
