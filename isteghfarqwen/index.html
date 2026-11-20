@@ -13,8 +13,15 @@
 </head>
 <body>
 
-<!-- ══════════ ICON SPRITE ══════════ -->
+<!-- ══════════ SVG SPRITE + DEFS ══════════ -->
 <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <defs>
+    <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" style="stop-color:var(--acc)"/>
+      <stop offset="1" style="stop-color:var(--acc2)"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-flourish" viewBox="0 0 220 20"><path d="M0 10h82M138 10h82"/><path d="M110 3l7 7-7 7-7-7z"/><circle cx="92" cy="10" r="2"/><circle cx="128" cy="10" r="2"/><path d="M99 10h4M117 10h4"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
   <symbol id="i-bm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
@@ -67,19 +74,22 @@
   <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
 </svg>
 
+<div class="aurora a1"></div>
+<div class="aurora a2"></div>
 <canvas id="fx"></canvas>
+<div class="grain"></div>
 <div id="progress-line"></div>
 
 <div id="app">
-  <!-- ══════════ SIDE RAIL ══════════ -->
+  <!-- ══════════ SIDE RAIL · Reader first ══════════ -->
   <aside id="rail">
-    <button class="logo" data-action="nav" data-view="home">
+    <button class="logo" data-action="nav" data-view="read">
       <span class="logo-mark">۞</span>
       <span class="logo-t">Nūr<small>الاستغفار</small></span>
     </button>
     <nav class="rail-nav">
-      <button class="rail-btn" data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></button>
       <button class="rail-btn" data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Reader</span></button>
+      <button class="rail-btn" data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></button>
       <button class="rail-btn" data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
       <button class="rail-btn" data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
       <button class="rail-btn" data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
@@ -96,7 +106,7 @@
   <!-- ══════════ MAIN ══════════ -->
   <div id="main">
     <header id="topbar">
-      <div class="tb-left"><span class="tb-orn">۞</span><h1 id="view-title">Home</h1></div>
+      <div class="tb-left"><span class="tb-orn">۞</span><h1 id="view-title">Reader</h1></div>
       <div class="tb-right">
         <button class="hud-chip" data-action="nav" data-view="stats" data-tip="Reading streak">
           <svg class="ic"><use href="#i-flame"/></svg><b id="hud-streak-n">0</b>
@@ -111,10 +121,9 @@
   </div>
 </div>
 
-<!-- mobile tab bar -->
 <nav id="tabbar">
-  <button data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></button>
   <button data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Read</span></button>
+  <button data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Overview</span></button>
   <button data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
   <button data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
   <button data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
@@ -148,6 +157,7 @@
       <div class="set-row"><label>Translation</label>
         <select data-set="trans"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option><option value="none">Arabic only</option></select>
       </div>
+      <div class="set-row"><label>Tap verse to reveal</label><label class="switch"><input type="checkbox" data-set="tapReveal"><i></i></label></div>
     </section>
 
     <section class="set-sec"><h3>Sound & motion</h3>
@@ -170,7 +180,7 @@
         <button class="btn danger" data-action="reset-data"><svg class="ic"><use href="#i-trash"/></svg>Reset progress</button>
       </div>
     </section>
-    <p class="drawer-foot">Nūr · v1.0 — crafted with vanilla JS</p>
+    <p class="drawer-foot">Nūr · v1.2 — crafted with vanilla JS</p>
   </div>
 </aside>
 

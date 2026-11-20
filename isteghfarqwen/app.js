@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════
-   NŪR · The Grand Istighfār — pure vanilla JS SPA
-   Supabase auth + sync via REST (no SDK). WebAudio UI sounds.
+   NŪR v1.2 · The Grand Istighfār — pure vanilla JS SPA
+   Reader-first · tap a verse to reveal its translation.
+   Supabase REST auth + sync (no SDK). WebAudio UI sounds.
 ═══════════════════════════════════════════════════════════════ */
 'use strict';
 (() => {
@@ -8,6 +9,8 @@
 /* ── config ── */
 const SB_URL = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
+const T_STATE = 'istigfarqwen_user_state';
+const T_ACT   = 'istigfarqwen_daily_activity';
 const LS_STATE = 'nur.state.v1', LS_SESSION = 'nur.session.v1';
 
 /* ── helpers ── */
@@ -15,28 +18,55 @@ const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic = (n, cls='') => `<svg class="ic ${cls}"><use href="#i-${n}"/></svg>`;
+const flourish = () => `<svg class="flourish" viewBox="0 0 220 20"><use href="#i-flourish"/></svg>`;
 const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+const deepCopy = o => (typeof structuredClone === 'function' ? structuredClone(o) : JSON.parse(JSON.stringify(o)));
 const dayKey = (d=new Date()) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch{} };
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const fmt = n => new Intl.NumberFormat('en').format(n);
+const loadJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
 
 /* ── state ── */
 const DEFAULTS = {
   v: 1,
   settings: { theme:'midnight', arFont:'amiri', fontScale:1, lineHeight:2.1, trans:'en',
-              sound:true, volume:.7, ambient:false, motion:true, ttsRate:.85, goal:5 },
+              sound:true, volume:.7, ambient:false, motion:true, ttsRate:.85, goal:5, tapReveal:true },
   read: {}, last: null, bookmarks: {}, notes: {},
   tasbih: { total:0, session:0, target:100, phrase:0 },
   ach: {}, activity: {}
 };
-const loadJSON = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
-let S = Object.assign({}, DEFAULTS, loadJSON(LS_STATE) || {});
-S.settings = Object.assign({}, DEFAULTS.settings, S.settings);
-S.tasbih   = Object.assign({}, DEFAULTS.tasbih, S.tasbih);
+function withDefaults(s) {
+  const d = deepCopy(DEFAULTS);
+  if (!s || s.v !== 1) return d;
+  return { ...d, ...s,
+    settings: { ...d.settings, ...(s.settings || {}) },
+    tasbih:   { ...d.tasbih,   ...(s.tasbih   || {}) },
+    read: s.read || {}, bookmarks: s.bookmarks || {}, notes: s.notes || {},
+    ach: s.ach || {}, activity: s.activity || {}
+  };
+}
+const THEMES = ['midnight','dawn','sepia','emerald','royal'];
+const ARFONTS = ['amiri','scheherazade','naskh'];
+const TRANSS = ['en','fa','both','none'];
+function clampSettings() {
+  const st = S.settings;
+  if (!THEMES.includes(st.theme)) st.theme = 'midnight';
+  if (!ARFONTS.includes(st.arFont)) st.arFont = 'amiri';
+  if (!TRANSS.includes(st.trans)) st.trans = 'en';
+  st.fontScale = clamp(+st.fontScale || 1, .8, 1.6);
+  st.lineHeight = clamp(+st.lineHeight || 2.1, 1.7, 2.7);
+  st.volume = clamp(+st.volume || 0, 0, 1);
+  st.ttsRate = clamp(+st.ttsRate || .85, .5, 1.3);
+  st.goal = clamp(Math.round(+st.goal) || 5, 1, 43);
+  st.sound = !!st.sound; st.ambient = !!st.ambient; st.motion = !!st.motion; st.tapReveal = !!st.tapReveal;
+}
+let S = withDefaults(loadJSON(LS_STATE));
+clampSettings();
 let session = loadJSON(LS_SESSION);
-let DATA = null, SEGS = [], IDX = {}, SEC_OF = {}, VIEW = 'home', libTab = 'bm';
-let lastActive = Date.now(), io = null, refreshTimer = null, syncTimer = null;
+let DATA = null, SEGS = [], IDX = {}, SEC_OF = {}, VIEW = 'read', libTab = 'bm';
+let lastActive = Date.now(), io = null, refreshTimer = null;
+const normCache = {};
 
 const act = () => (S.activity[dayKey()] ||= { r:0, t:0, s:0 });
 const readCount = () => Object.keys(S.read).length;
@@ -47,10 +77,21 @@ function streak() {
   while (has(dayKey(d))) { n++; d.setDate(d.getDate() - 1); }
   return n;
 }
+function sanitize() {
+  const ok = id => !!IDX[+id];
+  for (const k of Object.keys(S.read))      if (!ok(k)) delete S.read[k];
+  for (const k of Object.keys(S.bookmarks)) if (!ok(k)) delete S.bookmarks[k];
+  for (const k of Object.keys(S.notes))     if (!ok(k) || !S.notes[k]?.t) delete S.notes[k];
+  if (S.last != null && !ok(S.last)) S.last = null;
+  S.tasbih.total = Math.max(0, Math.round(+S.tasbih.total) || 0);
+  S.tasbih.session = Math.max(0, Math.round(+S.tasbih.session) || 0);
+  if (!TARGETS.includes(S.tasbih.target)) S.tasbih.target = 100;
+  S.tasbih.phrase = clamp(Math.round(+S.tasbih.phrase) || 0, 0, PHRASES.length - 1);
+}
 function persistLocal() { try { localStorage.setItem(LS_STATE, JSON.stringify(S)); } catch{} }
 function persist() { persistLocal(); updateHUD(); syncSoon(); }
 
-/* ═══════════ SOUND ENGINE (WebAudio, synthesized) ═══════════ */
+/* ═══════════ SOUND ENGINE ═══════════ */
 const Sound = {
   ctx: null, master: null,
   ensure() {
@@ -62,7 +103,7 @@ const Sound = {
       this.master = this.ctx.createGain();
       this.master.connect(this.ctx.destination);
     }
-    if (this.ctx.state === 'suspended') this.ctx.resume();
+    if (this.ctx.state === 'suspended') this.ctx.resume().catch(() => {});
     this.master.gain.value = S.settings.volume;
     return this.ctx;
   },
@@ -78,6 +119,7 @@ const Sound = {
     o.start(t); o.stop(t + dur + .05);
   },
   play(name) {
+    if (name === 'hover' && (!this.ctx || this.ctx.state !== 'running')) return;
     if (!this.ensure()) return;
     const T = this.tone.bind(this);
     switch (name) {
@@ -94,13 +136,15 @@ const Sound = {
       case 'chime':    T(523,.9,'sine',.12); T(1046,.9,'sine',.06,.02); T(1568,1.1,'sine',.04,.05); break;
       case 'fanfare':  [523,659,784,1046].forEach((f,i)=>T(f,.22,'triangle',.11,i*.11)); T(1568,.7,'sine',.05,.5); break;
       case 'pop':      T(760,.045,'sine',.09,0,980); break;
+      case 'reveal':   T(520,.07,'sine',.08,0,780); T(1040,.09,'sine',.035,.05); break;
+      case 'fold':     T(700,.07,'sine',.06,0,420); break;
     }
   }
 };
 const Ambient = {
   nodes: null,
   start() {
-    if (this.nodes || !S.settings.ambient || !S.settings.sound) return;
+    if (this.nodes) return;
     const c = Sound.ensure(); if (!c) return;
     const g = c.createGain(); g.gain.value = 0;
     g.gain.linearRampToValueAtTime(.05 * S.settings.volume, c.currentTime + 3);
@@ -115,36 +159,45 @@ const Ambient = {
   stop() {
     if (!this.nodes) return;
     const { o1, o2, lfo, g } = this.nodes, c = Sound.ctx;
-    g.gain.linearRampToValueAtTime(0, c.currentTime + 1);
+    try { g.gain.linearRampToValueAtTime(0, c.currentTime + 1); } catch{}
     setTimeout(() => { try { o1.stop(); o2.stop(); lfo.stop(); } catch{} }, 1200);
     this.nodes = null;
+  },
+  sync() {
+    if (!S.settings.sound || !S.settings.ambient) { this.stop(); return; }
+    if (this.nodes) {
+      try { this.nodes.g.gain.linearRampToValueAtTime(.05 * S.settings.volume, Sound.ctx.currentTime + .3); } catch{}
+    } else this.start();
   }
 };
 
-/* ═══════════ SUPABASE (pure REST) ═══════════ */
-const errMsg = j => j && (j.msg || j.error_description || j.message || j.error || j.hint) || 'Something went wrong';
+/* ═══════════ SUPABASE (pure REST, prefixed tables) ═══════════ */
+const errMsg = j => (j && (j.msg || j.error_description || j.message || (typeof j.error === 'string' && j.error) || j.hint)) || 'Something went wrong';
 function setSession(j) {
   session = {
     access_token: j.access_token, refresh_token: j.refresh_token,
     expires_at: j.expires_at || Math.floor(Date.now()/1000) + (j.expires_in || 3600),
     user: j.user
   };
-  localStorage.setItem(LS_SESSION, JSON.stringify(session));
+  try { localStorage.setItem(LS_SESSION, JSON.stringify(session)); } catch{}
   scheduleRefresh(); updateAccountUI();
 }
 function clearSession() {
   session = null; localStorage.removeItem(LS_SESSION);
   clearTimeout(refreshTimer); updateAccountUI(); setSync('off');
 }
-async function sb(path, { method='GET', body, auth=true, prefer } = {}) {
+async function sb(path, opts = {}) {
+  const { method='GET', body, auth=true, prefer, _retried=false } = opts;
   const headers = { apikey: SB_KEY, 'Content-Type': 'application/json' };
   headers.Authorization = 'Bearer ' + (auth && session ? session.access_token : SB_KEY);
   if (prefer) headers.Prefer = prefer;
-  const r = await fetch(SB_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  let r;
+  try { r = await fetch(SB_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch { const e = new Error('Network error — check your connection'); e.network = true; throw e; }
   let j = null; try { j = await r.json(); } catch {}
   if (!r.ok) {
-    if (r.status === 401 && session && path.startsWith('/rest')) {
-      if (await tryRefresh()) return sb(path, { method, body, auth, prefer });
+    if (r.status === 401 && session && path.startsWith('/rest') && !_retried) {
+      if (await tryRefresh()) return sb(path, { ...opts, _retried:true });
     }
     throw new Error(errMsg(j) || 'HTTP ' + r.status);
   }
@@ -155,7 +208,10 @@ async function tryRefresh() {
   try {
     const j = await sb('/auth/v1/token?grant_type=refresh_token', { method:'POST', auth:false, body:{ refresh_token: session.refresh_token } });
     setSession(j); return true;
-  } catch { clearSession(); return false; }
+  } catch (e) {
+    if (e.network) { setSync('err'); return false; }
+    clearSession(); return false;
+  }
 }
 function scheduleRefresh() {
   clearTimeout(refreshTimer);
@@ -170,11 +226,11 @@ async function signIn(email, password) {
 async function signUp(name, email, password) {
   const j = await sb('/auth/v1/signup', { method:'POST', auth:false, body:{ email, password, data:{ name } } });
   if (j.access_token) { setSession(j); await afterAuth(); return true; }
-  return false; // email confirmation required
+  return false;
 }
 async function signOut() {
   try { await sb('/auth/v1/logout', { method:'POST' }); } catch {}
-  clearSession(); toast('Signed out — your data stays on this device', 'info', 'out');
+  clearSession(); toast('Signed out — your data stays on this device', 'ok', 'out');
 }
 
 /* ── cloud sync ── */
@@ -186,48 +242,50 @@ function setSync(state) {
 const unionMin = (a={}, b={}) => { const o = { ...a }; for (const k in b) o[k] = Math.min(o[k] ?? Infinity, b[k]); return o; };
 function mergeState(local, cloud) {
   if (!cloud || cloud.v !== 1) return local;
-  const m = { ...local };
-  m.read = unionMin(cloud.read, local.read);
-  m.bookmarks = unionMin(cloud.bookmarks, local.bookmarks);
-  m.ach = unionMin(cloud.ach, local.ach);
-  m.notes = { ...(cloud.notes || {}) };
-  for (const k in (local.notes || {})) if (!m.notes[k] || local.notes[k].ts > m.notes[k].ts) m.notes[k] = local.notes[k];
-  m.tasbih = { ...local.tasbih, total: Math.max(local.tasbih.total || 0, cloud.tasbih?.total || 0) };
-  m.activity = { ...(cloud.activity || {}) };
-  for (const d in (local.activity || {})) {
+  const c = withDefaults(cloud), m = withDefaults(local);
+  m.read = unionMin(c.read, m.read);
+  m.bookmarks = unionMin(c.bookmarks, m.bookmarks);
+  m.ach = unionMin(c.ach, m.ach);
+  m.notes = { ...c.notes };
+  for (const k in m.notes) if (!m.notes[k]?.t) delete m.notes[k];
+  for (const k in local.notes) if (local.notes[k]?.t && (!m.notes[k] || local.notes[k].ts > m.notes[k].ts)) m.notes[k] = local.notes[k];
+  m.tasbih = { ...m.tasbih, total: Math.max(m.tasbih.total || 0, c.tasbih.total || 0) };
+  m.activity = { ...c.activity };
+  for (const d in local.activity) {
     const a = local.activity[d], b = m.activity[d] || { r:0, t:0, s:0 };
     m.activity[d] = { r: Math.max(a.r,b.r), t: Math.max(a.t,b.t), s: Math.max(a.s,b.s) };
   }
-  m.last = local.last || cloud.last;
+  m.last = local.last ?? c.last;
   return m;
 }
 async function push() {
   if (!session) return;
   setSync('sync');
-  await sb('/rest/v1/user_state?on_conflict=user_id', { method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
+  await sb(`/rest/v1/${T_STATE}?on_conflict=user_id`, { method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
     body:{ user_id: session.user.id, state: S, updated_at: new Date().toISOString() } });
   const a = act();
-  await sb('/rest/v1/daily_activity?on_conflict=user_id,day', { method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
+  await sb(`/rest/v1/${T_ACT}?on_conflict=user_id,day`, { method:'POST', prefer:'resolution=merge-duplicates,return=minimal',
     body:{ user_id: session.user.id, day: dayKey(), reads: a.r, tasbih: a.t, seconds: a.s } });
   setSync('ok');
 }
 async function pull() {
   if (!session) return;
-  const rows = await sb(`/rest/v1/user_state?user_id=eq.${session.user.id}&select=state`);
+  const rows = await sb(`/rest/v1/${T_STATE}?user_id=eq.${session.user.id}&select=state`);
   if (rows?.[0]?.state) {
     S = mergeState(S, rows[0].state);
-    persistLocal(); applySettings(); render(); updateHUD();
+    clampSettings(); sanitize();
+    persistLocal(); applySettings(); render({ keepScroll:true }); updateHUD();
   }
 }
 async function afterAuth() {
   try { setSync('sync'); await pull(); await push(); }
-  catch (e) { setSync('err'); toast('Sync: ' + e.message, 'err', 'alert'); }
+  catch (e) { setSync('err'); if (!e.network) toast('Sync: ' + e.message, 'err', 'alert'); }
 }
-const syncSoon = debounce(() => { if (session) push().catch(() => setSync('err')); }, 2500);
+const syncSoon = debounce(() => { if (session) push().catch(() => setSync('err')); }, 3000);
 async function syncNow() {
   if (!session) { openAuth(); return; }
   try { await afterAuth(); toast('Everything is in sync', 'ok', 'sync'); Sound.play('success'); }
-  catch (e) { setSync('err'); toast('Sync failed: ' + e.message, 'err', 'alert'); }
+  catch (e) { setSync('err'); toast('Sync failed: ' + e.message, 'err', 'alert'); Sound.play('error'); }
 }
 
 /* ═══════════ TOASTS / MODALS ═══════════ */
@@ -252,7 +310,7 @@ function openModal(html) {
 function closeModal() {
   if (!$('#modal-root').innerHTML) return;
   $('#modal-root').innerHTML = ''; Sound.play('close');
-  if (modalResolve) { modalResolve(false); modalResolve = null; }
+  if (modalResolve) { const r = modalResolve; modalResolve = null; r(false); }
 }
 function confirmBox({ title, body, ok='Confirm', danger=false }) {
   return new Promise(res => {
@@ -271,9 +329,10 @@ function applySettings() {
   root.style.setProperty('--ar-lh', st.lineHeight);
   document.body.classList.toggle('no-motion', !st.motion);
   document.body.classList.toggle('muted', !st.sound);
+  document.body.classList.toggle('always-trans', !st.tapReveal);
   $$('.theme-chip').forEach(c => c.classList.toggle('active', c.dataset.v === st.theme));
-  if (!st.sound || !st.ambient) Ambient.stop(); else Ambient.start();
-  if (!st.motion) FX.static();
+  Ambient.sync();
+  FX.refresh(); FX.sync();
 }
 function syncDrawerInputs() {
   $$('#drawer [data-set]').forEach(el => {
@@ -287,15 +346,14 @@ const closeSettings = () => { document.body.classList.remove('drawer-open'); Sou
 /* ═══════════ ACCOUNT UI ═══════════ */
 const userName = () => session?.user?.user_metadata?.name || session?.user?.email?.split('@')[0] || 'Seeker';
 function updateAccountUI() {
-  const b = $('#btn-account');
-  b.innerHTML = session ? esc(userName()[0].toUpperCase()) : ic('user');
+  $('#btn-account').innerHTML = session ? esc(userName()[0].toUpperCase()) : ic('user');
   renderDrawerAccount();
 }
 function renderDrawerAccount() {
   const el = $('#drawer-account'); if (!el) return;
   el.innerHTML = session
     ? `<div class="acct-box"><span class="avatar-btn">${esc(userName()[0].toUpperCase())}</span>
-       <div class="who"><b>${esc(userName())}</b><span>${esc(session.user.email)}</span></div></div>
+       <div class="who"><b>${esc(userName())}</b><span>${esc(session.user.email || '')}</span></div></div>
        <div class="btn-col"><button class="btn" data-action="sync-now">${ic('sync')}Sync now</button>
        <button class="btn danger" data-action="logout">${ic('out')}Sign out</button></div>`
     : `<p class="mut" style="font-size:13px;margin-bottom:12px;line-height:1.6">You're reading as a guest. Sign in to sync progress, notes & tasbīḥ across devices.</p>
@@ -308,7 +366,7 @@ function toggleAccountMenu() {
   const r = $('#btn-account').getBoundingClientRect();
   m.style.top = (r.bottom + 10) + 'px';
   m.style.right = Math.max(10, innerWidth - r.right) + 'px';
-  m.innerHTML = `<div class="p-head"><b>${esc(userName())}</b><span>${esc(session.user.email)}</span></div>
+  m.innerHTML = `<div class="p-head"><b>${esc(userName())}</b><span>${esc(session.user.email || '')}</span></div>
     <button class="p-item" data-action="sync-now">${ic('sync')}Sync now</button>
     <button class="p-item" data-action="open-settings">${ic('set')}Settings</button>
     <button class="p-item" data-action="export">${ic('dl')}Export data</button>
@@ -317,7 +375,7 @@ function toggleAccountMenu() {
 }
 
 /* ═══════════ AUTH MODAL ═══════════ */
-function openAuth() { $('#auth-modal').classList.add('open'); authTab('in'); Sound.play('open'); setTimeout(() => $('#in-email').focus(), 80); }
+function openAuth() { closePalette(true); closeSearch(true); $('#auth-modal').classList.add('open'); authTab('in'); Sound.play('open'); setTimeout(() => $('#in-email').focus(), 80); }
 function closeAuth() { $('#auth-modal').classList.remove('open'); Sound.play('close'); }
 function authTab(v) {
   $$('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.v === v));
@@ -342,8 +400,8 @@ function bindAuthForms() {
     if (ok) { closeAuth(); Sound.play('fanfare'); toast(`Ahlan, ${userName()}! Your journey is now synced`, 'gold', 'spark'); }
     else {
       $('#form-up').hidden = true; $('#auth-verify').hidden = false;
-      $('#verify-email').textContent = $('#up-email').value.trim();
-      $('#auth-verify').dataset.email = $('#up-email').value.trim();
+      const em = $('#up-email').value.trim();
+      $('#verify-email').textContent = em; $('#auth-verify').dataset.email = em;
       Sound.play('success');
     }
   });
@@ -354,39 +412,58 @@ function bindAuthForms() {
 }
 
 /* ═══════════ DATA ═══════════ */
-const normCache = {};
 function normAr(str) {
   let n = '', map = [];
   for (let i = 0; i < str.length; i++) {
     let c = str[i];
-    if (/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED]/.test(c)) continue;
-    if ('أإآٱ'.includes(c)) c = 'ا'; else if (c === 'ة') c = 'ه'; else if (c === 'ى') c = 'ي'; else if (c === 'ؤ') c = 'و'; else if (c === 'ئ') c = 'ي';
+    if (/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED\u200c]/.test(c)) continue;
+    if ('أإآٱ'.includes(c)) c = 'ا';
+    else if (c === 'ة' || c === 'ۀ') c = 'ه';
+    else if (c === 'ى' || c === 'ی') c = 'ي';
+    else if (c === 'ک') c = 'ك';
+    else if (c === 'ؤ') c = 'و';
+    else if (c === 'ئ') c = 'ي';
     n += c; map.push(i);
   }
   return { n, map };
 }
 async function loadData() {
-  const r = await fetch('data/estighfar.json');
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  DATA = await r.json();
-  if (!DATA.sections) throw new Error('Bad JSON shape');
+  const paths = ['data/estighfar.json', 'estighfar.json', 'dara/estighfar.json'];
+  let lastErr;
+  for (const p of paths) {
+    try {
+      const r = await fetch(p);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      if (!Array.isArray(j.sections)) throw new Error('Bad JSON shape');
+      DATA = j; break;
+    } catch (e) { lastErr = e; }
+  }
+  if (!DATA) throw lastErr || new Error('Not found');
   SEGS = []; IDX = {}; SEC_OF = {};
   DATA.sections.forEach(sec => sec.segments.forEach(sg => {
+    if (!sg || sg.id == null || !sg.ar) return;
+    sg.en = sg.en || ''; sg.fa = sg.fa || '';
     SEGS.push(sg); IDX[sg.id] = sg; SEC_OF[sg.id] = sec;
     normCache[sg.id] = { ar: normAr(sg.ar), fa: normAr(sg.fa), en: { n: sg.en.toLowerCase(), map: null } };
   }));
+  if (!SEGS.length) throw new Error('No passages in JSON');
 }
 
-/* ═══════════ ROUTER ═══════════ */
-const TITLES = { home:'Home', read:'The Grand Istighfār', library:'Library', tasbih:'Tasbīḥ', stats:'Your Journey' };
+/* ═══════════ ROUTER · reader-first ═══════════ */
+const TITLES = { read:'The Grand Istighfār', home:'Overview', library:'Library', tasbih:'Tasbīḥ', stats:'Your Journey' };
+const NAV_ORDER = ['read','home','library','tasbih','stats'];
 function navigate(view, param) {
-  location.hash = '#/' + view + (param != null ? '/' + param : '');
+  Sound.play('tap');
+  const h = '#/' + view + (param != null ? '/' + param : '');
+  if (location.hash === h) render(); else location.hash = h;
 }
 function parseHash() {
   const p = location.hash.replace(/^#\/?/, '').split('/');
-  return { view: TITLES[p[0]] ? p[0] : 'home', param: p[1] || null };
+  return { view: TITLES[p[0]] ? p[0] : 'read', param: p[1] || null };
 }
-function render() {
+function render(opts = {}) {
+  const keepScroll = !!opts.keepScroll, y = scrollY;
   stopAutoScroll(); TTS.stop();
   const { view, param } = parseHash();
   VIEW = view;
@@ -396,17 +473,18 @@ function render() {
   if (view !== 'read') document.body.classList.remove('focus');
   if (io) { io.disconnect(); io = null; }
   $('#view').innerHTML = ({ home:vHome, read:vRead, library:vLibrary, tasbih:vTasbih, stats:vStats })[view](param);
-  if (view === 'read') initReader(param);
+  if (view === 'read') initReader(param, keepScroll);
   if (view === 'tasbih') updateTasbihUI();
   updateHUD();
-  if (!param) scrollTo({ top: 0 });
+  if (keepScroll) scrollTo(0, y);
+  else if (!param) scrollTo(0, 0);
 }
 function updateHUD() {
   $('#hud-streak-n').textContent = streak();
   $('#progress-line').style.width = (SEGS.length ? readCount() / SEGS.length * 100 : 0) + '%';
 }
 
-/* ═══════════ VIEW · HOME ═══════════ */
+/* ═══════════ VIEW · OVERVIEW ═══════════ */
 function ringSVG(pct, size=118, r=50, w=9) {
   const C = 2 * Math.PI * r;
   return `<svg class="ring" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
@@ -420,7 +498,7 @@ function vHome() {
   let pDate = ''; try { pDate = ' · ' + new Intl.DateTimeFormat('fa-IR-u-ca-persian', { dateStyle:'full' }).format(new Date()); } catch {}
   const gDate = new Intl.DateTimeFormat('en', { dateStyle:'full' }).format(new Date());
   const total = SEGS.length, rc = readCount(), a = act(), goal = S.settings.goal;
-  const last = S.last && IDX[S.last];
+  const last = (S.last != null && IDX[S.last]) ? IDX[S.last] : null;
   const daily = SEGS[Math.floor(Date.now() / 864e5) % total];
   const cont = last || SEGS[0];
   return `<div class="page">
@@ -429,10 +507,10 @@ function vHome() {
     <div class="date-line">${esc(gDate)}${esc(pDate)}</div>
     <div class="hero-orn" style="margin-top:22px">۞ ۞ ۞</div>
     <div class="hero-ar">اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ</div>
-    <p class="hero-sub">${esc(DATA.meta.attribution.en)} — ${total} passages of repentance, in Arabic with fresh English & Persian translations.</p>
+    <p class="hero-sub">${esc(DATA.meta.attribution.en)} — ${total} passages of repentance. Tap any verse in the reader to unfold its translation.</p>
     <p class="hero-fa">${esc(DATA.meta.attribution.fa)}</p>
     <div class="hero-cta">
-      <button class="btn primary" data-action="${last ? 'continue' : 'begin'}">${ic(last ? 'play' : 'book')}${last ? 'Continue reading' : 'Begin the duʿāʾ'}</button>
+      <button class="btn primary" data-action="${last ? 'continue' : 'begin'}">${ic('book')}${last ? 'Continue reading' : 'Begin the duʿāʾ'}</button>
       <button class="btn" data-action="nav" data-view="tasbih">${ic('target')}Open tasbīḥ</button>
     </div>
     <div class="hero-chips">
@@ -475,7 +553,8 @@ function vHome() {
   </div></div>`;
 }
 
-/* ═══════════ VIEW · READER ═══════════ */
+/* ═══════════ VIEW · READER (default) ═══════════ */
+const TRANS_LABEL = { en:'English', fa:'فارسی', both:'Both', none:'Arabic only' };
 function transHTML(sg) {
   const m = S.settings.trans; let h = '';
   if (m === 'en' || m === 'both') h += `<p class="t-en">${esc(sg.en)}</p>`;
@@ -488,7 +567,11 @@ function noteHTML(id) {
 }
 function segHTML(sg) {
   const cls = [S.read[sg.id] && 'read', S.bookmarks[sg.id] && 'bm'].filter(Boolean).join(' ');
-  return `<article class="seg ${cls}" id="seg-${sg.id}" data-id="${sg.id}">
+  const th = transHTML(sg);
+  const hint = (S.settings.trans !== 'none' && th)
+    ? `<div class="seg-hint">${ic('scroll')}<span class="h-shut">Tap for translation</span><span class="h-opened">Hide translation</span></div>` : '';
+  return `<article class="seg ${cls}" id="seg-${sg.id}" data-id="${sg.id}" tabindex="0" aria-expanded="false">
+    <i class="ribbon"></i>
     <div class="seg-head"><span class="seg-num">${sg.id}</span>
       <div class="seg-tools">
         <button class="icon-btn ${S.read[sg.id] ? 'on green' : ''}" data-action="seg-read" data-id="${sg.id}" data-tip="Mark read (R)">${ic('check')}</button>
@@ -498,7 +581,8 @@ function segHTML(sg) {
         <button class="icon-btn" data-action="seg-play" data-id="${sg.id}" data-tip="Listen">${ic('play','ic-play')}${ic('stop','ic-stop')}</button>
       </div></div>
     <p class="ar" dir="rtl" lang="ar">${sg.ar}</p>
-    ${transHTML(sg)}${noteHTML(sg.id)}
+    <div class="trans-wrap"><div class="trans-in">${th}</div></div>
+    ${hint}${noteHTML(sg.id)}
   </article>`;
 }
 function vRead() {
@@ -507,81 +591,114 @@ function vRead() {
   const chapters = DATA.sections.map((sec, i) => {
     const done = sec.segments.filter(x => S.read[x.id]).length;
     return `<div class="chapter" id="${sec.id}">
-      <div class="orn">۞</div>
+      ${flourish()}
       <h2>${i + 1}. ${esc(sec.en)}</h2>
       <div class="fa-t">${esc(sec.fa)}</div>
-      <div class="ch-meta"><span>${done}/${sec.segments.length} read</span>
+      <div class="ch-meta"><span class="ch-done">${done}/${sec.segments.length} read</span>
+        <span class="seal" ${done < sec.segments.length ? 'hidden' : ''}>${ic('check')}COMPLETE</span>
         <button class="chip mini" data-action="sec-read" data-sec="${sec.id}">${ic('check')}Mark chapter</button></div>
     </div>` + sec.segments.map(segHTML).join('');
   }).join('');
   return `<div class="page">
+    <div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
     <div class="reader-tools">
       <select id="reader-sec" title="Chapters">${opts}</select>
       <span class="rt-count" id="reader-count">${rc}/${total}</span>
       <div class="rt-bar"><i id="reader-bar" style="width:${rc/total*100}%"></i></div>
       <button class="tool-btn" data-action="font-down" data-tip="Smaller (−)">${ic('minus')}</button>
       <button class="tool-btn" data-action="font-up" data-tip="Larger (+)">${ic('plus')}</button>
-      <button class="tool-btn" data-action="trans-cycle" data-tip="Translation">${ic('list')}</button>
+      <button class="tool-btn" data-action="trans-cycle" data-tip="Translation: ${TRANS_LABEL[S.settings.trans]}">${ic('list')}</button>
+      <button class="tool-btn" data-action="trans-all" data-tip="Reveal / hide all">${ic('eye')}</button>
       <button class="tool-btn" id="as-btn" data-action="autoscroll" data-tip="Auto-scroll (A)">${ic('scroll')}</button>
       <input type="range" class="rt-speed" id="as-speed" min="1" max="10" step="1" value="3" title="Scroll speed">
       <button class="tool-btn" data-action="focus" data-tip="Focus mode (F)">${ic('focus')}</button>
     </div>
     ${chapters}
     <div class="reader-end">
-      <div class="orn">۞ ۞ ۞</div>
+      ${flourish()}
       <p>${rc === total ? 'You have read the entire duʿāʾ. May every word be a light for you.' : '“How often You court my love, though You have no need of me…”'}</p>
       <button class="btn" data-action="nav" data-view="stats">${ic('flame')}See your journey</button>
       <button class="btn primary" data-action="nav" data-view="tasbih">${ic('target')}Seal it with tasbīḥ</button>
     </div></div>`;
 }
-function initReader(param) {
+function initReader(param, keepScroll) {
   io = new IntersectionObserver(es => {
     let best = null;
     es.forEach(e => { if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e; });
     if (best) {
       const id = +best.target.dataset.id;
       if (S.last !== id) { S.last = id; persistLocal(); syncSoon(); }
-      const sec = SEC_OF[id], sel = $('#reader-sec');
-      if (sel && sel.value !== sec.id) sel.value = sec.id;
+      const sel = $('#reader-sec');
+      if (sel && SEC_OF[id] && sel.value !== SEC_OF[id].id) sel.value = SEC_OF[id].id;
     }
-  }, { threshold: [.55] });
+  }, { threshold: [.12, .4, .65] });
   $$('.seg').forEach(el => io.observe(el));
-  const target = param ? IDX[param] : (S.last ? IDX[S.last] : null);
-  if (target) setTimeout(() => {
+  const target = (param && IDX[param]) ? IDX[param] : ((S.last != null && IDX[S.last]) ? IDX[S.last] : null);
+  const sel = $('#reader-sec');
+  if (sel && target) sel.value = SEC_OF[target.id].id;
+  if (target && !keepScroll) setTimeout(() => {
     const el = $('#seg-' + target.id);
-    if (el) { el.scrollIntoView({ block:'center', behavior:'auto' }); if (param) { el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1700); } }
+    if (el) {
+      el.scrollIntoView({ block:'center', behavior:'auto' });
+      if (param) { el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1700); }
+    }
   }, 40);
 }
+function toggleSegTrans(seg) {
+  if (!seg || S.settings.trans === 'none') return;
+  const open = seg.classList.toggle('open');
+  seg.setAttribute('aria-expanded', String(open));
+  Sound.play(open ? 'reveal' : 'fold');
+  buzz(6);
+}
+function revealAll() {
+  const segs = $$('.seg');
+  if (!segs.length) return;
+  const anyClosed = segs.some(s => !s.classList.contains('open'));
+  segs.forEach(s => { s.classList.toggle('open', anyClosed); s.setAttribute('aria-expanded', String(anyClosed)); });
+  Sound.play(anyClosed ? 'reveal' : 'fold');
+  toast(anyClosed ? 'All translations revealed' : 'All translations hidden', 'ok', 'eye');
+}
+function refreshChapter(secId) {
+  const sec = DATA.sections.find(s => s.id === secId); const el = $('#' + secId);
+  if (!sec || !el) return;
+  const done = sec.segments.filter(x => S.read[x.id]).length;
+  el.querySelector('.ch-done').textContent = `${done}/${sec.segments.length} read`;
+  el.querySelector('.seal').hidden = done < sec.segments.length;
+}
 function refreshSeg(id) {
-  const el = $('#seg-' + id); if (!el) return;
-  el.classList.toggle('read', !!S.read[id]);
-  el.classList.toggle('bm', !!S.bookmarks[id]);
-  el.querySelector('[data-action=seg-read]').classList.toggle('on', !!S.read[id]);
-  el.querySelector('[data-action=seg-read]').classList.toggle('green', !!S.read[id]);
-  el.querySelector('[data-action=seg-bm]').classList.toggle('on', !!S.bookmarks[id]);
-  el.querySelector('[data-action=seg-note]').classList.toggle('on', !!S.notes[id]);
-  const old = el.querySelector('.seg-note'); old && old.remove();
-  el.insertAdjacentHTML('beforeend', noteHTML(id));
+  const el = $('#seg-' + id);
+  if (el) {
+    el.classList.toggle('read', !!S.read[id]);
+    el.classList.toggle('bm', !!S.bookmarks[id]);
+    el.querySelector('[data-action=seg-read]').classList.toggle('on', !!S.read[id]);
+    el.querySelector('[data-action=seg-read]').classList.toggle('green', !!S.read[id]);
+    el.querySelector('[data-action=seg-bm]').classList.toggle('on', !!S.bookmarks[id]);
+    el.querySelector('[data-action=seg-note]').classList.toggle('on', !!S.notes[id]);
+    el.querySelector('.seg-note')?.remove();
+    el.insertAdjacentHTML('beforeend', noteHTML(id));
+  }
   const rc = readCount(), c = $('#reader-count'), b = $('#reader-bar');
   if (c) c.textContent = `${rc}/${SEGS.length}`;
   if (b) b.style.width = (rc / SEGS.length * 100) + '%';
+  if (SEC_OF[id]) refreshChapter(SEC_OF[id].id);
 }
 function setRead(id, on, silent) {
-  id = +id;
+  id = +id; if (!IDX[id]) return;
   if (on && !S.read[id]) { S.read[id] = Date.now(); act().r++; }
   else if (!on && S.read[id]) delete S.read[id];
   persist(); refreshSeg(id);
   if (!silent) Sound.play(on ? 'success' : 'tap');
-  if (on) { checkAch(); if (readCount() === SEGS.length) celebrate(); }
+  if (on) { checkAch(); if (readCount() === SEGS.length) { celebrate(); render({ keepScroll:true }); } }
 }
 function toggleBookmark(id) {
-  id = +id;
+  id = +id; if (!IDX[id]) return;
   if (S.bookmarks[id]) { delete S.bookmarks[id]; Sound.play('tap'); }
   else { S.bookmarks[id] = Date.now(); Sound.play('bookmark'); buzz(12); toast('Passage bookmarked', 'ok', 'bm'); }
   persist(); refreshSeg(id); checkAch();
 }
 function openNote(id) {
-  id = +id;
+  id = +id; if (!IDX[id]) return;
   const n = S.notes[id];
   openModal(`<button class="icon-btn modal-x" data-action="modal-close">${ic('x')}</button>
     <h2>${ic('note')}Note on passage ${id}</h2>
@@ -596,14 +713,15 @@ function saveNote(id) {
   if (t) S.notes[id] = { t, ts: Date.now() }; else delete S.notes[id];
   persist(); refreshSeg(id); closeModal();
   Sound.play('success'); toast(t ? 'Note saved' : 'Note removed', 'ok', 'note'); checkAch();
+  if (VIEW === 'library') render({ keepScroll:true });
 }
 async function copySeg(id) {
-  const s = IDX[+id];
+  const s = IDX[+id]; if (!s) return;
   const txt = `${s.ar}\n\n${s.en}\n\n${s.fa}\n\n— ${DATA.meta.title.en}, № ${s.id}`;
   try { await navigator.clipboard.writeText(txt); }
   catch {
     const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy'); ta.remove();
+    ta.select(); try { document.execCommand('copy'); } catch{} ta.remove();
   }
   Sound.play('pop'); toast('Passage copied to clipboard', 'ok', 'copy');
 }
@@ -611,13 +729,17 @@ function markSection(secId) {
   const sec = DATA.sections.find(s => s.id === secId); if (!sec) return;
   let added = 0;
   sec.segments.forEach(sg => { if (!S.read[sg.id]) { S.read[sg.id] = Date.now(); added++; refreshSeg(sg.id); } });
-  if (added) { act().r += added; persist(); Sound.play('success'); toast(`Chapter marked — ${added} passage${added>1?'s':''}`, 'ok', 'check'); checkAch(); if (readCount() === SEGS.length) celebrate(); }
-  else toast('Chapter already complete', 'ok', 'check');
+  if (added) {
+    act().r += added; persist(); Sound.play('success');
+    toast(`Chapter marked — ${added} passage${added>1?'s':''}`, 'ok', 'check');
+    checkAch();
+    if (readCount() === SEGS.length) { celebrate(); render({ keepScroll:true }); }
+  } else toast('Chapter already complete', 'ok', 'check');
 }
 
-/* ── TTS ── */
+/* ── TTS (with Chrome keep-alive) ── */
 const TTS = {
-  id: null, warned: false,
+  id: null, warned: false, timer: null,
   speak(id) {
     id = +id;
     if (!('speechSynthesis' in window)) { toast('Speech not supported in this browser', 'warn', 'alert'); return; }
@@ -631,11 +753,14 @@ const TTS = {
     this.id = id;
     $('#seg-' + id)?.classList.add('playing');
     speechSynthesis.speak(u);
+    this.timer = setInterval(() => { if (speechSynthesis.speaking) speechSynthesis.resume(); }, 9000);
   },
-  clear() { if (this.id != null) $('#seg-' + this.id)?.classList.remove('playing'); this.id = null; },
+  clear() {
+    if (this.id != null) $('#seg-' + this.id)?.classList.remove('playing');
+    this.id = null; clearInterval(this.timer); this.timer = null;
+  },
   stop() { if ('speechSynthesis' in window) speechSynthesis.cancel(); this.clear(); }
 };
-if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => {};
 
 /* ── auto-scroll ── */
 const AS = { on:false, raf:0, speed:3 };
@@ -652,11 +777,11 @@ addEventListener('touchstart', () => AS.on && stopAutoScroll(), { passive:true }
 
 /* ═══════════ VIEW · LIBRARY ═══════════ */
 function vLibrary() {
-  const bmIds = Object.keys(S.bookmarks).map(Number).sort((a,b) => a-b);
-  const noteIds = Object.keys(S.notes).map(Number).sort((a,b) => a-b);
+  const bmIds = Object.keys(S.bookmarks).map(Number).filter(id => IDX[id]).sort((a,b) => a-b);
+  const noteIds = Object.keys(S.notes).map(Number).filter(id => IDX[id]).sort((a,b) => a-b);
   const list = libTab === 'bm' ? bmIds : noteIds;
   const items = list.map(id => {
-    const s = IDX[id]; if (!s) return '';
+    const s = IDX[id];
     return `<div class="lib-item">
       <span class="seg-num">${id}</span>
       <div class="body" data-action="jump" data-id="${id}">
@@ -716,10 +841,9 @@ function vTasbih() {
 function updateTasbihUI() {
   const t = S.tasbih, C = 2 * Math.PI * 140;
   const ring = $('#tasbih-ring'); if (!ring) return;
-  ring.style.strokeDashoffset = C * (1 - (t.session % (t.target + 1)) / t.target);
-  if (t.session >= t.target && t.session % t.target === 0 && t.session > 0) ring.style.strokeDashoffset = 0;
+  ring.style.strokeDashoffset = C * (1 - Math.min(1, t.session / t.target));
   $('#tasbih-count').textContent = fmt(t.session);
-  $('#tasbih-left').textContent = t.session >= t.target ? '✦ target reached ✦' : `${t.target - t.session} to go`;
+  $('#tasbih-left').textContent = t.session >= t.target ? '✦ target reached — keep going ✦' : `${t.target - t.session} to go`;
   $('#tasbih-session').textContent = fmt(t.session);
   $('#tasbih-total').textContent = fmt(t.total);
   $('#tasbih-today').textContent = fmt(act().t);
@@ -729,7 +853,7 @@ function tasbihInc() {
   t.session++; t.total++; act().t++;
   persist(); updateTasbihUI();
   Sound.play('tick'); buzz(8);
-  const b = $('#tasbih-btn'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
+  const b = $('#tasbih-btn'); if (b) { b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); }
   if (t.session === t.target) { Sound.play('chime'); buzz([20,40,20]); confetti(90); toast(`Target of ${t.target} reached — may it be accepted`, 'gold', 'spark'); }
   checkAch();
 }
@@ -742,7 +866,7 @@ function tasbihDec() {
 const ACH = [
   { k:'first',  ic:'spark',  t:'First Light',       d:'Mark your first passage as read',        f:() => readCount() >= 1 },
   { k:'ten',    ic:'book',   t:'Devoted Reader',    d:'Read 10 passages',                        f:() => readCount() >= 10 },
-  { k:'all',    ic:'award',  t:'The Full Surrender',d:'Read all 43 passages',                    f:() => readCount() >= SEGS.length },
+  { k:'all',    ic:'award',  t:'The Full Surrender',d:'Read every passage of the duʿāʾ',         f:() => readCount() >= SEGS.length },
   { k:'bm5',    ic:'bm',     t:'Keeper of Verses',  d:'Bookmark 5 passages',                     f:() => Object.keys(S.bookmarks).length >= 5 },
   { k:'note',   ic:'feather',t:'The Scribe',        d:'Write your first reflection',             f:() => Object.keys(S.notes).length >= 1 },
   { k:'d100',   ic:'target', t:'The Remembering',   d:'100 tasbīḥ counted',                      f:() => S.tasbih.total >= 100 },
@@ -771,10 +895,10 @@ function heatHTML() {
     cells += `<i class="${dt > today ? 'future' : lvl ? 'l'+lvl : ''}" title="${k} · ${a ? `${a.r} read, ${a.t} tasbīḥ` : 'rest'}"></i>`;
   }
   return `<div class="heat">${cells}</div>
-    <div class="heat-legend">less <i style="background:var(--panel2)"></i><i class="l1" style="background:color-mix(in srgb,var(--acc2) 30%,var(--panel2))"></i><i style="background:color-mix(in srgb,var(--acc2) 55%,var(--panel2))"></i><i style="background:color-mix(in srgb,var(--acc2) 78%,var(--panel2))"></i><i style="background:var(--acc2)"></i> more</div>`;
+    <div class="heat-legend">less <i style="background:var(--panel2)"></i><i style="background:color-mix(in srgb,var(--acc2) 30%,var(--panel2))"></i><i style="background:color-mix(in srgb,var(--acc2) 55%,var(--panel2))"></i><i style="background:color-mix(in srgb,var(--acc2) 78%,var(--panel2))"></i><i style="background:var(--acc2)"></i> more</div>`;
 }
 function vStats() {
-  const rc = readCount(), mins = Math.round(Object.values(S.activity).reduce((s,a) => s + a.s, 0) / 60);
+  const rc = readCount(), mins = Math.round(Object.values(S.activity).reduce((s,a) => s + (a.s||0), 0) / 60);
   const a = act(), goal = S.settings.goal;
   return `<div class="page">
   <div class="grid g4">
@@ -822,9 +946,10 @@ function highlight(str, cache, qn) {
 function doSearch(q) {
   const box = $('#search-results');
   q = q.trim();
-  if (q.length < 2) { box.innerHTML = `<div class="ov-empty">Type at least two letters — Arabic diacritics are ignored.</div>`; return; }
+  if (q.length < 2) { box.innerHTML = `<div class="ov-empty">Type at least two letters — diacritics & ZWNJ are ignored.</div>`; return; }
   const isAr = /[\u0600-\u06FF]/.test(q);
   const qn = isAr ? normAr(q).n : q.toLowerCase();
+  if (!qn) { box.innerHTML = `<div class="ov-empty">Keep typing…</div>`; return; }
   const out = [];
   for (const sg of SEGS) {
     const c = normCache[sg.id]; let field = null, cache = null;
@@ -841,28 +966,30 @@ function doSearch(q) {
     <span dir="${r.field==='en'?'ltr':'rtl'}" class="${r.field==='ar'?'ar-snip':''}">${highlight(r.sg[r.field], r.cache, qn)}</span></div>${ic('cr')}</button>`).join('')
     : `<div class="ov-empty">Nothing found for “${esc(q)}”.</div>`;
 }
-function openSearch() { $('#search-overlay').classList.add('open'); $('#search-input').value=''; doSearch(''); Sound.play('open'); setTimeout(() => $('#search-input').focus(), 60); }
-function closeSearch() { $('#search-overlay').classList.remove('open'); Sound.play('close'); }
+function openSearch() { closePalette(true); $('#search-overlay').classList.add('open'); $('#search-input').value=''; doSearch(''); Sound.play('open'); setTimeout(() => $('#search-input').focus(), 60); }
+function closeSearch(silent) { const o = $('#search-overlay'); if (!o.classList.contains('open')) return; o.classList.remove('open'); if (!silent) Sound.play('close'); }
 
 /* ═══════════ COMMAND PALETTE ═══════════ */
 let palIdx = 0, palItems = [];
 function commands() {
   const c = [
-    { t:'Go · Home', ic:'home', run:() => navigate('home') },
-    { t:'Go · Reader', ic:'book', run:() => navigate('read') },
+    { t:'Reader · resume where you left off', ic:'book', run:() => navigate('read') },
+    { t:'Reader · start from the beginning', ic:'play', run:() => navigate('read', SEGS[0].id) },
+    { t:'Reader · reveal all translations', ic:'eye', run:() => { navigate('read'); setTimeout(revealAll, 180); } },
+    { t:'Go · Overview', ic:'home', run:() => navigate('home') },
     { t:'Go · Library', ic:'bm', run:() => navigate('library') },
     { t:'Go · Tasbīḥ', ic:'target', run:() => navigate('tasbih') },
     { t:'Go · Journey (stats)', ic:'flame', run:() => navigate('stats') },
     { t:'Search the text', ic:'search', run:openSearch },
     { t:'Toggle UI sounds', ic:'vol', run:() => H['toggle-sound']() },
-    { t:'Toggle focus mode', ic:'focus', run:() => { navigate('read'); setTimeout(() => H.focus(), 120); } },
+    { t:'Toggle focus mode', ic:'focus', run:() => H.focus() },
     { t:'Open settings', ic:'set', run:openSettings },
     { t:'Export my data', ic:'dl', run:exportData },
     { t:'Sync now', ic:'sync', run:syncNow },
     { t: session ? 'Sign out' : 'Sign in / Create account', ic: session ? 'out' : 'user', run:() => session ? signOut() : openAuth() },
     { t:'About & keyboard shortcuts', ic:'info', run:openAbout }
   ];
-  if (DATA) DATA.sections.forEach((s, i) => c.push({ t:`Chapter ${i+1} · ${s.en}`, ic:'list', run:() => { navigate('read'); setTimeout(() => $('#' + s.id)?.scrollIntoView({ block:'start' }), 150); } }));
+  if (DATA) DATA.sections.forEach((s, i) => c.push({ t:`Chapter ${i+1} · ${s.en}`, ic:'list', run:() => { navigate('read'); setTimeout(() => $('#' + s.id)?.scrollIntoView({ block:'start', behavior:'smooth' }), 180); } }));
   return c;
 }
 function renderPalette(q='') {
@@ -872,9 +999,10 @@ function renderPalette(q='') {
     ? palItems.map((c, i) => `<button class="ov-item ${i===0?'kactive':''}" data-pal="${i}">${ic(c.ic)}<div class="t"><b>${esc(c.t)}</b></div></button>`).join('')
     : `<div class="ov-empty">No matching command.</div>`;
 }
-function openPalette() { $('#palette').classList.add('open'); $('#palette-input').value=''; renderPalette(); Sound.play('open'); setTimeout(() => $('#palette-input').focus(), 60); }
-function closePalette() { $('#palette').classList.remove('open'); Sound.play('close'); }
+function openPalette() { closeSearch(true); $('#palette').classList.add('open'); $('#palette-input').value=''; renderPalette(); Sound.play('open'); setTimeout(() => $('#palette-input').focus(), 60); }
+function closePalette(silent) { const o = $('#palette'); if (!o.classList.contains('open')) return; o.classList.remove('open'); if (!silent) Sound.play('close'); }
 function palMove(d) {
+  if (!palItems.length) return;
   palIdx = clamp(palIdx + d, 0, palItems.length - 1);
   $$('#palette-list .ov-item').forEach((el, i) => el.classList.toggle('kactive', i === palIdx));
   $('#palette-list .kactive')?.scrollIntoView({ block:'nearest' });
@@ -883,20 +1011,22 @@ function palRun(i = palIdx) { const c = palItems[i]; if (c) { closePalette(); c.
 
 /* ═══════════ ABOUT ═══════════ */
 function openAbout() {
-  const keys = [['/','Search'],['Ctrl / ⌘ + K','Command palette'],['1 – 5','Switch views'],['M','Mute / unmute'],
-    ['F','Focus mode (reader)'],['A','Auto-scroll (reader)'],['+ / −','Arabic size'],['B','Bookmark current passage'],
-    ['R','Mark current read'],['Space','Count tasbīḥ'],['Esc','Close / exit'],['?','This panel']];
+  const keys = [['/','Search'],['Ctrl / ⌘ + K','Command palette'],['1 – 5','Reader · Overview · Library · Tasbīḥ · Journey'],
+    ['Tap verse','Reveal / hide translation'],['T','Reveal current translation'],['Enter / Space','Toggle focused verse'],
+    ['M','Mute / unmute'],['F','Focus mode (reader)'],['A','Auto-scroll (reader)'],['+ / −','Arabic size'],
+    ['B','Bookmark current passage'],['R','Mark current read'],['← / →','Previous / next passage'],['Space','Count tasbīḥ'],
+    ['Esc','Close / exit'],['?','This panel']];
   openModal(`<button class="icon-btn modal-x" data-action="modal-close">${ic('x')}</button>
     <h2>${ic('info')}About Nūr</h2>
     <div class="about-ar">فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا</div>
     <div class="m-body">A luminous home for the Grand Istighfār — ${esc(DATA.meta.attribution.en)}.
     Arabic reconstructed & fully vocalized from published editions (${esc(DATA.meta.source)}); English and Persian translations freshly composed for this app.
-    43 passages · 13 chapters · guest mode with optional Supabase cloud sync.</div>
-    <div class="sec-title" style="margin:22px 0 4px">Keyboard</div>
+    ${SEGS.length} passages · ${DATA.sections.length} chapters · tap any verse to unfold its meaning · guest mode with optional Supabase cloud sync.</div>
+    <div class="sec-title" style="margin:22px 0 4px">Keyboard & touch</div>
     <div class="keys-grid">${keys.map(k => `<div><span>${esc(k[1])}</span><kbd>${esc(k[0])}</kbd></div>`).join('')}</div>`);
 }
 
-/* ═══════════ DATA EXPORT / IMPORT / RESET ═══════════ */
+/* ═══════════ EXPORT / IMPORT / RESET ═══════════ */
 function exportData() {
   const blob = new Blob([JSON.stringify({ ...S, exported_at: new Date().toISOString() }, null, 2)], { type:'application/json' });
   const a = document.createElement('a');
@@ -910,7 +1040,8 @@ function bindImport() {
     try {
       const j = JSON.parse(await f.text());
       if (j.v !== 1) throw new Error('Not a Nūr backup file');
-      S = mergeState(S, j); persistLocal(); applySettings(); persist(); render();
+      S = mergeState(S, j); clampSettings(); sanitize();
+      persistLocal(); applySettings(); persist(); render({ keepScroll:true });
       Sound.play('success'); toast('Data imported & merged', 'ok', 'ul');
     } catch (err) { Sound.play('error'); toast('Import failed: ' + err.message, 'err', 'alert'); }
     e.target.value = '';
@@ -919,20 +1050,27 @@ function bindImport() {
 async function resetData() {
   const ok = await confirmBox({ title:'Reset all progress?', body:'Read marks, bookmarks, notes, tasbīḥ and streaks will be cleared on this device' + (session ? ' and in the cloud.' : '.'), ok:'Reset everything', danger:true });
   if (!ok) return;
-  S = { ...structuredClone(DEFAULTS), settings: S.settings };
+  const keep = S.settings;
+  S = deepCopy(DEFAULTS); S.settings = keep;
   persist(); render(); Sound.play('off'); toast('A clean page. Begin again.', 'ok', 'rotate');
 }
 
 /* ═══════════ FX · starfield & confetti ═══════════ */
 const FX = {
-  cv: $('#fx'), cx: null, ps: [], raf: 0,
+  cv: null, cx: null, ps: [], raf: 0, running: false, cols: ['#d4af37','#2dd4a7'],
   init() {
-    this.cx = this.cv.getContext('2d');
-    this.resize(); addEventListener('resize', () => this.resize());
-    document.addEventListener('visibilitychange', () => document.hidden ? cancelAnimationFrame(this.raf) : this.loop());
-    this.loop();
+    this.cv = $('#fx'); this.cx = this.cv.getContext('2d');
+    this.refresh(); this.resize();
+    addEventListener('resize', () => this.resize());
+    document.addEventListener('visibilitychange', () => document.hidden ? this.stop() : this.sync());
+    this.sync();
+  },
+  refresh() {
+    const cs = getComputedStyle(document.documentElement);
+    this.cols = [cs.getPropertyValue('--acc').trim() || '#d4af37', cs.getPropertyValue('--acc2').trim() || '#2dd4a7'];
   },
   resize() {
+    if (!this.cx) return;
     const dpr = Math.min(2, devicePixelRatio || 1);
     this.cv.width = innerWidth * dpr; this.cv.height = innerHeight * dpr;
     this.cx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -942,33 +1080,33 @@ const FX = {
       r: Math.random() * 1.7 + .4, v: Math.random() * .16 + .04,
       p: Math.random() * Math.PI * 2, gold: Math.random() > .45
     }));
-    if (!S.settings.motion) this.static();
-  },
-  colors() {
-    const cs = getComputedStyle(document.documentElement);
-    return [cs.getPropertyValue('--acc').trim() || '#d4af37', cs.getPropertyValue('--acc2').trim() || '#2dd4a7'];
+    this.sync();
   },
   draw(t) {
-    const [a, b] = this.colors();
+    if (!this.cx) return;
+    const [a, b] = this.cols;
     this.cx.clearRect(0, 0, innerWidth, innerHeight);
     for (const p of this.ps) {
-      const tw = .35 + .65 * Math.abs(Math.sin(t / 1700 + p.p));
-      this.cx.globalAlpha = tw * .55;
+      this.cx.globalAlpha = (.35 + .65 * Math.abs(Math.sin(t / 1700 + p.p))) * .55;
       this.cx.fillStyle = p.gold ? a : b;
       this.cx.beginPath(); this.cx.arc(p.x, p.y, p.r, 0, 7); this.cx.fill();
     }
     this.cx.globalAlpha = 1;
   },
   loop() {
-    if (!S.settings.motion) { this.static(); return; }
+    if (!this.cx || this.running) return;
+    this.running = true;
     const step = t => {
+      if (!this.running) return;
       this.draw(t);
       for (const p of this.ps) { p.y -= p.v; if (p.y < -4) { p.y = innerHeight + 4; p.x = Math.random() * innerWidth; } }
       this.raf = requestAnimationFrame(step);
     };
-    cancelAnimationFrame(this.raf); this.raf = requestAnimationFrame(step);
+    this.raf = requestAnimationFrame(step);
   },
-  static() { cancelAnimationFrame(this.raf); this.draw(1200); }
+  stop() { this.running = false; cancelAnimationFrame(this.raf); },
+  static() { this.stop(); this.draw(1200); },
+  sync() { if (!this.cx) return; S.settings.motion ? this.loop() : this.static(); }
 };
 function confetti(n = 120) {
   if (!S.settings.motion) return;
@@ -1002,9 +1140,9 @@ function confetti(n = 120) {
 /* ═══════════ ACTION HANDLERS ═══════════ */
 const H = {
   'nav': t => navigate(t.dataset.view),
-  'jump': t => { closeSearch(); closePalette(); navigate('read', t.dataset.id); },
+  'jump': t => { closeSearch(true); closePalette(true); navigate('read', t.dataset.id); },
   'begin': () => navigate('read', SEGS[0].id),
-  'continue': () => navigate('read', S.last || SEGS[0].id),
+  'continue': () => navigate('read', S.last != null ? S.last : SEGS[0].id),
   'daily': () => navigate('read', SEGS[Math.floor(Date.now()/864e5) % SEGS.length].id),
   'account': () => toggleAccountMenu(),
   'open-auth': () => { closeSettings(); openAuth(); },
@@ -1018,7 +1156,7 @@ const H = {
       toast('Verification email resent', 'ok', 'mail'); Sound.play('success');
     } catch (e) { authError(e.message); }
   },
-  'eye': t => { const i = $('#' + t.dataset.t); i.type = i.type === 'password' ? 'text' : 'password'; t.innerHTML = ic(i.type === 'password' ? 'eye' : 'eyeoff'); },
+  'eye': t => { const i = $('#' + t.dataset.t); i.type = i.type === 'password' ? 'text' : 'password'; t.innerHTML = ic(i.type === 'password' ? 'eye' : 'eyeoff'); Sound.play('tick'); },
   'logout': () => { $('#account-menu').hidden = true; closeSettings(); signOut(); },
   'sync-now': () => { $('#account-menu').hidden = true; syncNow(); },
   'toggle-sound': () => { S.settings.sound = !S.settings.sound; applySettings(); persist(); syncDrawerInputs(); Sound.play(S.settings.sound ? 'on' : 'off'); toast(S.settings.sound ? 'Sounds on' : 'Sounds muted', 'ok', S.settings.sound ? 'vol' : 'volx'); },
@@ -1029,11 +1167,16 @@ const H = {
   'open-palette': () => openPalette(),
   'close-palette': () => closePalette(),
   'open-about': () => openAbout(),
-  'theme': t => { S.settings.theme = t.dataset.v; applySettings(); persist(); Sound.play('pop'); FX.static(); if (S.settings.motion) FX.loop(); },
-  'font-up':   () => { S.settings.fontScale = clamp(+(S.settings.fontScale + .1).toFixed(2), .8, 1.6); applySettings(); persist(); },
-  'font-down': () => { S.settings.fontScale = clamp(+(S.settings.fontScale - .1).toFixed(2), .8, 1.6); applySettings(); persist(); },
-  'trans-cycle': () => { const o = ['en','fa','both','none']; S.settings.trans = o[(o.indexOf(S.settings.trans) + 1) % 4]; persist(); render(); toast('Translation: ' + { en:'English', fa:'فارسی', both:'Both', none:'Arabic only' }[S.settings.trans], 'ok', 'list'); },
-  'focus': () => { document.body.classList.toggle('focus'); Sound.play(document.body.classList.contains('focus') ? 'open' : 'close'); },
+  'theme': t => { S.settings.theme = t.dataset.v; applySettings(); persist(); Sound.play('pop'); },
+  'font-up':   () => { S.settings.fontScale = clamp(+(S.settings.fontScale + .1).toFixed(2), .8, 1.6); applySettings(); persist(); Sound.play('tick'); },
+  'font-down': () => { S.settings.fontScale = clamp(+(S.settings.fontScale - .1).toFixed(2), .8, 1.6); applySettings(); persist(); Sound.play('tick'); },
+  'trans-cycle': () => { const o = TRANSS; S.settings.trans = o[(o.indexOf(S.settings.trans) + 1) % 4]; persist(); render({ keepScroll:true }); Sound.play('pop'); toast('Translation: ' + TRANS_LABEL[S.settings.trans], 'ok', 'list'); },
+  'trans-all': () => revealAll(),
+  'focus': () => {
+    if (VIEW !== 'read') { navigate('read'); setTimeout(() => H.focus(), 180); return; }
+    document.body.classList.toggle('focus');
+    Sound.play(document.body.classList.contains('focus') ? 'open' : 'close');
+  },
   'autoscroll': () => toggleAutoScroll(),
   'seg-read': t => setRead(t.dataset.id, !S.read[+t.dataset.id]),
   'seg-bm': t => toggleBookmark(t.dataset.id),
@@ -1041,32 +1184,37 @@ const H = {
   'seg-copy': t => copySeg(t.dataset.id),
   'seg-play': t => { const id = +t.dataset.id; if (TTS.id === id) { TTS.stop(); Sound.play('tap'); } else TTS.speak(id); },
   'sec-read': t => markSection(t.dataset.sec),
-  'lib-tab': t => { libTab = t.dataset.v; render(); Sound.play('tap'); },
-  'bm-remove': t => { toggleBookmark(t.dataset.id); render(); },
+  'lib-tab': t => { libTab = t.dataset.v; render({ keepScroll:true }); Sound.play('tap'); },
+  'bm-remove': t => { toggleBookmark(t.dataset.id); render({ keepScroll:true }); },
   'note-edit': t => openNote(t.dataset.id),
-  'note-del-lib': t => { delete S.notes[+t.dataset.id]; persist(); render(); Sound.play('tap'); toast('Note removed', 'ok', 'trash'); },
+  'note-del-lib': t => { delete S.notes[+t.dataset.id]; persist(); render({ keepScroll:true }); Sound.play('tap'); toast('Note removed', 'ok', 'trash'); },
   'note-save': t => saveNote(t.dataset.id),
-  'note-del': t => { delete S.notes[+t.dataset.id]; persist(); refreshSeg(+t.dataset.id); closeModal(); Sound.play('tap'); toast('Note removed', 'ok', 'trash'); },
+  'note-del': t => { delete S.notes[+t.dataset.id]; persist(); refreshSeg(+t.dataset.id); closeModal(); Sound.play('tap'); toast('Note removed', 'ok', 'trash'); if (VIEW === 'library') render({ keepScroll:true }); },
   'tasbih-inc': () => tasbihInc(),
   'tasbih-dec': () => tasbihDec(),
   'tasbih-reset': async () => { if (await confirmBox({ title:'Reset this round?', body:`The round counter returns to 0. Lifetime total (${fmt(S.tasbih.total)}) is kept.`, ok:'Reset round' })) { S.tasbih.session = 0; persist(); updateTasbihUI(); Sound.play('off'); } },
-  'tasbih-target': t => { S.tasbih.target = +t.dataset.v; persist(); render(); Sound.play('pop'); },
-  'tasbih-phrase': t => { S.tasbih.phrase = +t.dataset.v; persist(); render(); Sound.play('pop'); },
+  'tasbih-target': t => { S.tasbih.target = +t.dataset.v; persist(); render({ keepScroll:true }); Sound.play('pop'); },
+  'tasbih-phrase': t => { S.tasbih.phrase = +t.dataset.v; persist(); render({ keepScroll:true }); Sound.play('pop'); },
   'export': () => { $('#account-menu').hidden = true; exportData(); },
   'import': () => $('#import-file').click(),
   'reset-data': () => resetData(),
   'modal-close': () => closeModal(),
-  'confirm-ok': () => { const r = modalResolve; modalResolve = null; closeModal(); r && r(true); },
+  'confirm-ok': () => { const r = modalResolve; modalResolve = null; $('#modal-root').innerHTML = ''; Sound.play('close'); r && r(true); },
   'retry': () => location.reload()
 };
-const SELF_SOUND = new Set(['seg-read','seg-bm','seg-play','toggle-sound','theme','tasbih-inc','tasbih-dec','tasbih-target','tasbih-phrase','font-up','font-down','trans-cycle','focus','autoscroll','modal-close','close-search','close-palette','close-settings','close-auth','open-search','open-palette','open-settings','open-about','open-auth','lib-tab','seg-copy','note-save','note-del','bm-remove','note-del-lib','export','resend','auth-tab','eye','seg-note','note-edit','sec-read','account','continue','begin','daily','jump','nav']);
+const SELF_SOUND = new Set(['seg-read','seg-bm','seg-play','toggle-sound','theme','tasbih-inc','tasbih-dec','tasbih-target','tasbih-phrase','tasbih-reset','font-up','font-down','trans-cycle','trans-all','focus','autoscroll','modal-close','confirm-ok','close-search','close-palette','close-settings','close-auth','open-search','open-palette','open-settings','open-about','open-auth','lib-tab','seg-copy','note-save','note-del','bm-remove','note-del-lib','export','resend','auth-tab','eye','seg-note','note-edit','sec-read','account','continue','begin','daily','jump','nav','reset-data']);
 
 /* ═══════════ GLOBAL EVENTS ═══════════ */
 document.addEventListener('click', e => {
   const pal = e.target.closest('[data-pal]');
   if (pal) { palRun(+pal.dataset.pal); return; }
   const t = e.target.closest('[data-action]');
-  if (!t) { if (!e.target.closest('#account-menu') && !e.target.closest('#btn-account')) $('#account-menu').hidden = true; return; }
+  if (!t) {
+    if (!e.target.closest('#account-menu') && !e.target.closest('#btn-account')) $('#account-menu').hidden = true;
+    const seg = e.target.closest('.seg');
+    if (seg && VIEW === 'read' && S.settings.tapReveal && !String(window.getSelection?.() || '')) toggleSegTrans(seg);
+    return;
+  }
   const a = t.dataset.action;
   if (!SELF_SOUND.has(a)) Sound.play('tap');
   H[a] && H[a](t, e);
@@ -1084,20 +1232,19 @@ document.addEventListener('input', e => {
   if (t.id === 'palette-input') { renderPalette(t.value); return; }
   const k = t.dataset.set; if (!k) return;
   const v = t.type === 'checkbox' ? t.checked : (t.type === 'range' || t.type === 'number') ? parseFloat(t.value) : t.value;
-  S.settings[k] = k === 'goal' ? clamp(Math.round(v) || 5, 1, 43) : v;
+  S.settings[k] = v; clampSettings();
   applySettings(); persist();
   if (k === 'volume') Sound.play('tick');
-  if (k === 'sound') Sound.play(v ? 'on' : 'off');
-  if ((k === 'trans' && VIEW === 'read') || k === 'goal') render();
+  if (k === 'sound') Sound.play(S.settings.sound ? 'on' : 'off');
+  if ((k === 'trans' && VIEW === 'read') || k === 'goal') render({ keepScroll:true });
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'reader-sec') $('#' + e.target.value)?.scrollIntoView({ block:'start', behavior:'smooth' });
 });
 ['pointerdown','keydown'].forEach(ev => document.addEventListener(ev, () => { lastActive = Date.now(); }, { passive:true }));
-document.addEventListener('pointerdown', function once() {
-  document.removeEventListener('pointerdown', once);
-  if (S.settings.ambient && S.settings.sound) Ambient.start();
-}, { once:true });
+document.addEventListener('pointerdown', () => { if (S.settings.ambient && S.settings.sound) Ambient.sync(); }, { once:true });
+addEventListener('pagehide', persistLocal);
+document.addEventListener('visibilitychange', () => { if (document.hidden) persistLocal(); });
 
 document.addEventListener('keydown', e => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
@@ -1135,28 +1282,33 @@ document.addEventListener('keydown', e => {
   if (k === '/') { e.preventDefault(); openSearch(); return; }
   if (k === '?') { openAbout(); return; }
   if (k.toLowerCase() === 'm') { H['toggle-sound'](); return; }
-  if (['1','2','3','4','5'].includes(k)) { navigate(['home','read','library','tasbih','stats'][+k - 1]); return; }
+  if (['1','2','3','4','5'].includes(k)) { navigate(NAV_ORDER[+k - 1]); return; }
   if (VIEW === 'tasbih' && k === ' ') { e.preventDefault(); tasbihInc(); return; }
   if (VIEW === 'read') {
+    if ((k === 'Enter' || k === ' ') && e.target.classList?.contains('seg')) { e.preventDefault(); toggleSegTrans(e.target); return; }
+    if (k.toLowerCase() === 't' && S.last != null) toggleSegTrans($('#seg-' + S.last));
     if (k.toLowerCase() === 'f') H.focus();
     if (k.toLowerCase() === 'a') toggleAutoScroll();
     if (k === '+' || k === '=') H['font-up']();
     if (k === '-') H['font-down']();
-    if (k.toLowerCase() === 'b' && S.last) toggleBookmark(S.last);
-    if (k.toLowerCase() === 'r' && S.last) setRead(S.last, !S.read[S.last]);
+    if (k.toLowerCase() === 'b' && S.last != null) toggleBookmark(S.last);
+    if (k.toLowerCase() === 'r' && S.last != null) setRead(S.last, !S.read[S.last]);
     if (k === 'ArrowRight' || k === 'ArrowLeft') {
       e.preventDefault();
       const ids = SEGS.map(s => s.id);
-      const i = clamp(ids.indexOf(S.last || ids[0]) + (k === 'ArrowRight' ? 1 : -1), 0, ids.length - 1);
+      const cur = S.last != null ? ids.indexOf(S.last) : 0;
+      const i = clamp((cur < 0 ? 0 : cur) + (k === 'ArrowRight' ? 1 : -1), 0, ids.length - 1);
       $('#seg-' + ids[i])?.scrollIntoView({ block:'center', behavior:'smooth' });
     }
   }
 });
 
-/* reading-time tracker */
+/* reading-time tracker · local ticks, periodic sync */
+let timeTick = 0;
 setInterval(() => {
   if (VIEW === 'read' && document.visibilityState === 'visible' && Date.now() - lastActive < 90000) {
-    act().s += 5; persistLocal(); syncSoon();
+    act().s += 5; persistLocal();
+    if (++timeTick % 12 === 0) syncSoon();
   }
 }, 5000);
 
@@ -1165,7 +1317,8 @@ async function init() {
   applySettings();
   FX.init();
   bindAuthForms(); bindImport();
-  addEventListener('hashchange', render);
+  addEventListener('hashchange', () => render());
+  if ('speechSynthesis' in window) speechSynthesis.getVoices();
   try {
     await loadData();
   } catch (err) {
@@ -1174,16 +1327,17 @@ async function init() {
     $('.boot-inner').insertAdjacentHTML('beforeend', `<button class="btn primary" data-action="retry">${ic('rotate')}Retry</button>`);
     return;
   }
-  if (!location.hash) history.replaceState(null, '', '#/home');
+  sanitize();
+  if (!location.hash) history.replaceState(null, '', '#/read');
   render(); updateAccountUI();
   $('#boot').classList.add('done');
-  setTimeout(() => $('#boot').remove(), 700);
+  setTimeout(() => $('#boot')?.remove(), 700);
   if (session) {
     if (session.expires_at * 1000 < Date.now() + 60000) await tryRefresh();
     if (session) { scheduleRefresh(); afterAuth(); }
   } else setSync('off');
   checkAch();
-  console.log('%c۞ Nūr · The Grand Istighfār — vanilla JS, no frameworks.', 'color:#d4af37;font-size:13px');
+  console.log('%c۞ Nūr v1.2 · tap a verse to reveal its translation.', 'color:#d4af37;font-size:13px');
 }
 init();
 
