@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="midnight" data-arfont="amiri">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Nūr · The Grand Istighfār</title>
+<meta name="description" content="A luminous reader for the Grand Istighfār — Arabic, English & Persian, with cloud sync.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Sora:wght@300;400;500;600;700;800&family=Vazirmatn:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>۞</text></svg>">
+</head>
+<body>
+
+<!-- ══════════ ICON SPRITE ══════════ -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-bm" viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></symbol>
+  <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-vol" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="i-volx" viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M23 9l-6 6M17 9l6 6"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="i-cl" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-cr" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="currentColor" stroke="none"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3-2-5-3.5-6.5C14 7.5 13 5.5 13 2c-3 2-5 5-5 8-1-1-1.5-2-1.5-3.5C4.5 8.5 5 12 5 15.5 5 19.2 7.6 22 12 22z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-ul" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+  <symbol id="i-cmd" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/></symbol>
+  <symbol id="i-kbd" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M8 14h8"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22 6 12 13 2 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><path d="M3 3l18 18"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-award" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8L2 22M17.5 15H9"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5"/><polyline points="5 12 12 5 19 12"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+</svg>
+
+<canvas id="fx"></canvas>
+<div id="progress-line"></div>
+
+<div id="app">
+  <!-- ══════════ SIDE RAIL ══════════ -->
+  <aside id="rail">
+    <button class="logo" data-action="nav" data-view="home">
+      <span class="logo-mark">۞</span>
+      <span class="logo-t">Nūr<small>الاستغفار</small></span>
+    </button>
+    <nav class="rail-nav">
+      <button class="rail-btn" data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></button>
+      <button class="rail-btn" data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Reader</span></button>
+      <button class="rail-btn" data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
+      <button class="rail-btn" data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
+      <button class="rail-btn" data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
+    </nav>
+    <div class="rail-foot">
+      <button class="icon-btn" id="btn-sound" data-action="toggle-sound" data-tip="Sound (M)">
+        <svg class="ic ic-on"><use href="#i-vol"/></svg><svg class="ic ic-off"><use href="#i-volx"/></svg>
+      </button>
+      <button class="icon-btn" data-action="open-settings" data-tip="Settings"><svg class="ic"><use href="#i-set"/></svg></button>
+      <button class="icon-btn" data-action="open-about" data-tip="About & keys (?)"><svg class="ic"><use href="#i-info"/></svg></button>
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div id="main">
+    <header id="topbar">
+      <div class="tb-left"><span class="tb-orn">۞</span><h1 id="view-title">Home</h1></div>
+      <div class="tb-right">
+        <button class="hud-chip" data-action="nav" data-view="stats" data-tip="Reading streak">
+          <svg class="ic"><use href="#i-flame"/></svg><b id="hud-streak-n">0</b>
+        </button>
+        <button class="icon-btn" data-action="open-search" data-tip="Search (/)"><svg class="ic"><use href="#i-search"/></svg></button>
+        <button class="icon-btn hide-sm" data-action="open-palette" data-tip="Commands (Ctrl+K)"><svg class="ic"><use href="#i-cmd"/></svg></button>
+        <button class="sync-chip off" id="sync-dot" data-action="sync-now" data-tip="Cloud sync"><svg class="ic"><use href="#i-sync"/></svg></button>
+        <button class="avatar-btn" id="btn-account" data-action="account" data-tip="Account"><svg class="ic"><use href="#i-user"/></svg></button>
+      </div>
+    </header>
+    <main id="view"></main>
+  </div>
+</div>
+
+<!-- mobile tab bar -->
+<nav id="tabbar">
+  <button data-action="nav" data-view="home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></button>
+  <button data-action="nav" data-view="read"><svg class="ic"><use href="#i-book"/></svg><span>Read</span></button>
+  <button data-action="nav" data-view="library"><svg class="ic"><use href="#i-bm"/></svg><span>Library</span></button>
+  <button data-action="nav" data-view="tasbih"><svg class="ic"><use href="#i-target"/></svg><span>Tasbīḥ</span></button>
+  <button data-action="nav" data-view="stats"><svg class="ic"><use href="#i-flame"/></svg><span>Journey</span></button>
+</nav>
+
+<button id="focus-exit" data-action="focus"><svg class="ic"><use href="#i-x"/></svg>Exit focus</button>
+
+<!-- ══════════ SETTINGS DRAWER ══════════ -->
+<div id="drawer-backdrop" data-action="close-settings"></div>
+<aside id="drawer">
+  <div class="drawer-head">
+    <h2><svg class="ic"><use href="#i-set"/></svg> Settings</h2>
+    <button class="icon-btn" data-action="close-settings"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <div class="drawer-body">
+    <section class="set-sec"><h3>Account</h3><div id="drawer-account"></div></section>
+
+    <section class="set-sec"><h3>Appearance</h3>
+      <div class="theme-grid">
+        <button class="theme-chip" data-action="theme" data-v="midnight"><i style="--sw:#0a1120;--sw2:#d4af37"></i>Midnight</button>
+        <button class="theme-chip" data-action="theme" data-v="dawn"><i style="--sw:#f5f2ea;--sw2:#a8761a"></i>Dawn</button>
+        <button class="theme-chip" data-action="theme" data-v="sepia"><i style="--sw:#efe3cb;--sw2:#9a5b2b"></i>Sepia</button>
+        <button class="theme-chip" data-action="theme" data-v="emerald"><i style="--sw:#06180f;--sw2:#e3c878"></i>Emerald</button>
+        <button class="theme-chip" data-action="theme" data-v="royal"><i style="--sw:#120a20;--sw2:#c9a2ff"></i>Royal</button>
+      </div>
+      <div class="set-row"><label>Arabic typeface</label>
+        <select data-set="arFont"><option value="amiri">Amiri</option><option value="scheherazade">Scheherazade New</option><option value="naskh">Noto Naskh Arabic</option></select>
+      </div>
+      <div class="set-row"><label>Arabic size</label><input type="range" data-set="fontScale" min="0.8" max="1.6" step="0.05"></div>
+      <div class="set-row"><label>Line height</label><input type="range" data-set="lineHeight" min="1.7" max="2.7" step="0.1"></div>
+      <div class="set-row"><label>Translation</label>
+        <select data-set="trans"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option><option value="none">Arabic only</option></select>
+      </div>
+    </section>
+
+    <section class="set-sec"><h3>Sound & motion</h3>
+      <div class="set-row"><label>UI sounds</label><label class="switch"><input type="checkbox" data-set="sound"><i></i></label></div>
+      <div class="set-row"><label>Volume</label><input type="range" data-set="volume" min="0" max="1" step="0.05"></div>
+      <div class="set-row"><label>Ambient drone</label><label class="switch"><input type="checkbox" data-set="ambient"><i></i></label></div>
+      <div class="set-row"><label>Animations</label><label class="switch"><input type="checkbox" data-set="motion"><i></i></label></div>
+      <div class="set-row"><label>Recitation speed</label><input type="range" data-set="ttsRate" min="0.5" max="1.3" step="0.05"></div>
+    </section>
+
+    <section class="set-sec"><h3>Practice</h3>
+      <div class="set-row"><label>Daily passage goal</label><input type="number" data-set="goal" min="1" max="43" class="num-in"></div>
+    </section>
+
+    <section class="set-sec"><h3>Data</h3>
+      <div class="btn-col">
+        <button class="btn" data-action="export"><svg class="ic"><use href="#i-dl"/></svg>Export my data</button>
+        <button class="btn" data-action="import"><svg class="ic"><use href="#i-ul"/></svg>Import data</button>
+        <button class="btn" data-action="sync-now"><svg class="ic"><use href="#i-sync"/></svg>Sync now</button>
+        <button class="btn danger" data-action="reset-data"><svg class="ic"><use href="#i-trash"/></svg>Reset progress</button>
+      </div>
+    </section>
+    <p class="drawer-foot">Nūr · v1.0 — crafted with vanilla JS</p>
+  </div>
+</aside>
+
+<!-- ══════════ SEARCH ══════════ -->
+<div id="search-overlay" class="overlay">
+  <div class="ov-backdrop" data-action="close-search"></div>
+  <div class="ov-panel">
+    <div class="ov-input"><svg class="ic"><use href="#i-search"/></svg>
+      <input id="search-input" type="text" placeholder="Search Arabic · English · فارسی …" autocomplete="off">
+      <kbd>Esc</kbd>
+    </div>
+    <div id="search-results" class="ov-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ COMMAND PALETTE ══════════ -->
+<div id="palette" class="overlay">
+  <div class="ov-backdrop" data-action="close-palette"></div>
+  <div class="ov-panel">
+    <div class="ov-input"><svg class="ic"><use href="#i-cmd"/></svg>
+      <input id="palette-input" type="text" placeholder="Type a command…" autocomplete="off">
+      <kbd>Esc</kbd>
+    </div>
+    <div id="palette-list" class="ov-list"></div>
+  </div>
+</div>
+
+<!-- ══════════ AUTH ══════════ -->
+<div id="auth-modal" class="overlay">
+  <div class="ov-backdrop" data-action="close-auth"></div>
+  <div class="auth-card">
+    <button class="icon-btn auth-x" data-action="close-auth"><svg class="ic"><use href="#i-x"/></svg></button>
+    <div class="auth-mark">۞</div>
+    <h2>Keep your light in the cloud</h2>
+    <p class="auth-sub">Progress, notes & tasbīḥ — synced across devices.</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-action="auth-tab" data-v="in">Sign in</button>
+      <button class="auth-tab" data-action="auth-tab" data-v="up">Create account</button>
+    </div>
+    <div id="auth-err" class="auth-err" hidden></div>
+    <form id="form-in" class="auth-form">
+      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="in-email" type="email" placeholder="Email" required autocomplete="email"></div>
+      <div class="field"><svg class="ic"><use href="#i-lock"/></svg><input id="in-pass" type="password" placeholder="Password" required autocomplete="current-password"><button type="button" class="eye" data-action="eye" data-t="in-pass"><svg class="ic"><use href="#i-eye"/></svg></button></div>
+      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-out"/></svg>Sign in</button>
+      <button type="button" class="linklike" data-action="auth-forgot">Forgot password?</button>
+    </form>
+    <form id="form-up" class="auth-form" hidden>
+      <div class="field"><svg class="ic"><use href="#i-user"/></svg><input id="up-name" type="text" placeholder="Your name" required autocomplete="name"></div>
+      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="up-email" type="email" placeholder="Email" required autocomplete="email"></div>
+      <div class="field"><svg class="ic"><use href="#i-lock"/></svg><input id="up-pass" type="password" placeholder="Password (min 6 chars)" required minlength="6" autocomplete="new-password"><button type="button" class="eye" data-action="eye" data-t="up-pass"><svg class="ic"><use href="#i-eye"/></svg></button></div>
+      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-spark"/></svg>Create account</button>
+    </form>
+    <form id="form-forgot" class="auth-form" hidden>
+      <p class="auth-note">Enter your email and we'll send a reset link.</p>
+      <div class="field"><svg class="ic"><use href="#i-mail"/></svg><input id="fg-email" type="email" placeholder="Email" required></div>
+      <button class="btn primary wide" type="submit"><svg class="ic"><use href="#i-send"/></svg>Send reset link</button>
+      <button type="button" class="linklike" data-action="auth-back">Back to sign in</button>
+    </form>
+    <div id="auth-verify" hidden>
+      <div class="verify-box">
+        <svg class="ic big"><use href="#i-mail"/></svg>
+        <h3>Verify your email</h3>
+        <p>We sent a confirmation link to <b id="verify-email"></b>. Confirm it, then sign in.</p>
+        <button class="btn wide" data-action="resend"><svg class="ic"><use href="#i-sync"/></svg>Resend email</button>
+        <button class="linklike" data-action="auth-back">Back to sign in</button>
+      </div>
+    </div>
+    <p class="auth-fine"><svg class="ic"><use href="#i-shield"/></svg>Secured by Supabase · row-level security · you can also continue as a guest.</p>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div id="account-menu" class="popover" hidden></div>
+<div id="toasts"></div>
+<canvas id="confetti"></canvas>
+
+<!-- ══════════ BOOT ══════════ -->
+<div id="boot">
+  <div class="boot-inner">
+    <div class="boot-mark">۞</div>
+    <h2>Nūr</h2>
+    <div class="boot-bar"><i></i></div>
+    <p id="boot-msg">Preparing the manuscript…</p>
+  </div>
+</div>
+
+<input type="file" id="import-file" accept="application/json" hidden>
+<script src="app.js"></script>
+</body>
+</html>

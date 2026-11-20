@@ -1,0 +1,32 @@
+
+---
+
+## 1) `supabase.sql` — run this first (Supabase Dashboard → SQL Editor)
+
+```sql
+-- Nūr · Istighfār backend (run once)
+create table if not exists public.user_state (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  state jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.daily_activity (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  day date not null,
+  reads int not null default 0,
+  tasbih int not null default 0,
+  seconds int not null default 0,
+  primary key (user_id, day)
+);
+
+alter table public.user_state enable row level security;
+alter table public.daily_activity enable row level security;
+
+create policy "state_select" on public.user_state for select using (auth.uid() = user_id);
+create policy "state_insert" on public.user_state for insert with check (auth.uid() = user_id);
+create policy "state_update" on public.user_state for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create policy "act_select" on public.daily_activity for select using (auth.uid() = user_id);
+create policy "act_insert" on public.daily_activity for insert with check (auth.uid() = user_id);
+create policy "act_update" on public.daily_activity for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
