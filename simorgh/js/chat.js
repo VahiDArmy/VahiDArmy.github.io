@@ -299,7 +299,7 @@ function messageEl(m,conv){
   }
   /* actions */
   const acts=el('div',{class:'msg-actions'});
-  const ib=(act,ic,title,on)=>el('button',{class:'ibtn sm'+(on?' on':''),dataset:{act,mid:m.id},title,html:icon(ic,15)});
+  const ib=(act,ic,title,on)=>el('button',{class:'ibtn sm'+(on?' on':''),dataset:{act,mid:m.id},title,'aria-label':title,html:icon(ic,15)});
   if(!streaming){
     acts.append(ib('copy','copy',t('chat.copy')));
     acts.append(ib('edit','edit',t('chat.edit')));
@@ -309,14 +309,27 @@ function messageEl(m,conv){
         acts.append(el('button',{class:'btn soft sm',dataset:{act:'continue',mid:m.id},html:icon('play',13)+'<span>'+t('chat.continue')+'</span>'}));
       acts.append(ib('thumb-up','thumbUp','👍',m.feedback===1));
       acts.append(ib('thumb-down','thumbDown','👎',m.feedback===-1));
-      acts.append(ib('tts',speakingId===m.id?'stop':'play',t(speakingId===m.id?'chat.stopSpeak':'chat.speak'),speakingId===m.id));
-      if(m.request_json) acts.append(ib('req','terminal',t('chat.viewRequest')));
+      /* read aloud — direct handler + visible feedback (TTS is silent on many devices) */
+      const ttsBtn=ib('tts',speakingId===m.id?'stop':'play',t(speakingId===m.id?'chat.stopSpeak':'chat.speak'),speakingId===m.id);
+      ttsBtn.addEventListener('click',e=>{ e.stopPropagation(); speak(m); });
+      acts.append(ttsBtn);
+      /* request inspector — labeled so it's discoverable on touch, direct handler */
+      if(m.request_json){
+        const reqBtn=el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},title:t('chat.viewRequest'),
+          html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'});
+        reqBtn.addEventListener('click',e=>{ e.stopPropagation(); openRequestViewer(m); });
+        acts.append(reqBtn);
+      }
     }
     acts.append(ib('fork','fork',t('chat.fork')));
     acts.append(ib('del','trash',t('chat.delete')));
   } else {
     acts.append(el('button',{class:'btn danger sm',dataset:{act:'stop',mid:m.id},html:icon('stop',13)+'<span>'+t('chat.stop')+'</span>'}));
-    if(m.request_json) acts.append(ib('req','terminal',t('chat.viewRequest')));
+    if(m.request_json){
+      const reqBtn=el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'});
+      reqBtn.addEventListener('click',e=>{ e.stopPropagation(); openRequestViewer(m); });
+      acts.append(reqBtn);
+    }
   }
   body.append(acts);
 
@@ -879,15 +892,30 @@ function startMic(btn){
   recognition.onerror=()=>{ btn.classList.remove('active'); recognition=null; };
   recognition.start();
 }
+
+/* read aloud — hardened: voices load async on Android; fa often missing → fallback + feedback */
+if(window.speechSynthesis){
+  try{ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged=()=>{ try{ window.speechSynthesis.getVoices(); }catch{} }; }catch{}
+}
 function speak(m){
   if(!window.speechSynthesis){ toast(t('chat.ttsUnsupported'),'warn'); return; }
   if(speakingId===m.id){ speechSynthesis.cancel(); speakingId=null; emit('messages'); return; }
   speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(stripMd(m.content));
-  u.lang=dirOf(m.content)==='rtl'?'fa-IR':'en-US';
+  const text=stripMd(m.content);
+  if(!text){ toast(t('toast.error'),'warn'); return; }
+  const u=new SpeechSynthesisUtterance(text);
+  const want=dirOf(m.content)==='rtl'?'fa':'en';
+  let voices=[];
+  try{ voices=speechSynthesis.getVoices()||[]; }catch{}
+  const v=voices.find(x=>x.lang&&x.lang.toLowerCase().startsWith(want))
+        || voices.find(x=>x.default) || voices[0];
+  if(v){ u.voice=v; u.lang=v.lang; } else { u.lang=want==='fa'?'fa-IR':'en-US'; }
+  u.onstart=()=>toast(t('chat.speak'),'info',1500);
+  u.onerror=()=>{ speakingId=null; toast(t('chat.ttsUnsupported'),'err'); if(S.activeConvId) emit('messages'); };
   u.onend=()=>{ speakingId=null; if(S.activeConvId) emit('messages'); };
   speakingId=m.id;
-  speechSynthesis.speak(u);
+  try{ speechSynthesis.speak(u); }
+  catch{ speakingId=null; toast(t('chat.ttsUnsupported'),'err'); }
   emit('messages');
 }
 export function copyLast(){
