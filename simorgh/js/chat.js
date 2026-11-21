@@ -4,7 +4,7 @@ import { icon, toast, menu, confirmDlg, lightbox, htmlPreview, copyWithToast } f
 import { S, on, emit, getKey, activeConv, effectiveModel, modelInfo, resolveParam, buildPath, cleanBranchMap, trimContext, getDraft, setDraft, displayName, toggleSidebar, saveSettings } from './state.js?v=4';
 import { DB, OR } from './api.js?v=4';
 import { renderMarkdown, setMathCallback } from './markdown.js?v=4';
-import { openSettings, openRequestViewer, openModelPicker, openChatSettings, exportConversation } from './settings.js?v=4';
+import { openSettings, openRequestViewer, openModelPicker, openChatSettings, exportConversation } from './settings.js?v=5';
 
 const FENCE='```';
 let root=null, scroller=null, msgsEl=null, headerEl=null, composerEl=null, inputEl=null, sendBtn=null, chipsRow=null, tokenEst=null, emptyEl=null, pill=null;
@@ -316,14 +316,13 @@ function messageEl(m,conv){
       acts.append(ib('thumb-up','thumbUp','👍',m.feedback===1));
       acts.append(ib('thumb-down','thumbDown','👎',m.feedback===-1));
       acts.append(ib('tts',speakingId===m.id?'stop':'play',t(speakingId===m.id?'chat.stopSpeak':'chat.speak'),speakingId===m.id));
-      acts.append(el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},title:t('chat.viewRequest'),
-        html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'}));
+      acts.append(ib('req','terminal',t('chat.viewRequest')));
     }
     acts.append(ib('fork','fork',t('chat.fork')));
     acts.append(ib('del','trash',t('chat.delete')));
   } else {
     acts.append(el('button',{class:'btn danger sm',dataset:{act:'stop',mid:m.id},html:icon('stop',13)+'<span>'+t('chat.stop')+'</span>'}));
-    acts.append(el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'}));
+    acts.append(ib('req','terminal',t('chat.viewRequest')));
   }
   body.append(acts);
 

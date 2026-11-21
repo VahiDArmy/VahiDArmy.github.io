@@ -3,7 +3,7 @@ import { el, fmtTime, shortModel } from './utils.js?v=4';
 import { icon, toast, menu, confirmDlg, promptDlg, modal, palette } from './ui.js?v=4';
 import { S, on, emit, toggleSidebar, displayName, saveSettings } from './state.js?v=4';
 import { DB, Auth } from './api.js?v=4';
-import { openSettings, exportConversation, exportAll } from './settings.js?v=4';
+import { openSettings, exportConversation, exportAll } from './settings.js?v=5';
 
 let rootEl=null, listEl=null, searchQ='', projOpen=true;
 
@@ -35,7 +35,7 @@ function paint(){
   const foot=el('div',{class:'sb-foot'},
     el('div',{class:'sb-status'},
       el('span',{class:'dot'+(S.online?'':' off')}),
-      el('span',{text:(S.online?t('nav.online'):t('nav.offline'))+' · build '+CFG.BUILD})
+      el('span',{text:(S.online?t('nav.online'):t('nav.offline'))+' · build 5'})
     ),
     el('button',{class:'sb-user',onclick:e=>{
       menu(e.currentTarget,[

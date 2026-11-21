@@ -61,64 +61,82 @@ export function openModelPicker(anchor, { current, onPick, manage=true }){
   return close;
 }
 
+/* ================= DEVELOPER REQUEST WINDOW ================= */
 export function openRequestViewer(msg){
   if(!msg || !msg.request_json){ toast(t('req.noReq'),'warn'); return; }
   const req=msg.request_json, meta=msg.meta_json||{};
-  let tab='payload', revealed=false;
-  const tabsEl=el('div',{class:'req-tabs'});
-  const bodyEl=el('div',{});
-  const tabs=[['payload','req.payload'],['headers','req.headers'],['curl','req.curl'],['response','req.response']];
-  function paint(){
-    tabsEl.innerHTML='';
-    for(const [id,lb] of tabs)
-      tabsEl.append(el('button',{class:'chip'+(tab===id?' on':''),text:t(lb),onclick:()=>{ tab=id; paint(); }}));
-    bodyEl.innerHTML='';
-    if(tab==='payload'){
-      const json=JSON.stringify(req.body,null,2);
-      bodyEl.append(
-        el('div',{class:'row between',style:{marginBottom:'9px'}},
-          el('span',{class:'mono muted small',text:req.method+' '+req.url}),
-          el('button',{class:'btn soft sm',html:icon('copy',14)+'<span>'+t('common.copy')+'</span>',onclick:()=>copyWithToast(json)})),
-        el('div',{class:'req-code',html:highlight(json,'json')}));
-    } else if(tab==='headers'){
+  let tab='payload', revealed=false, cur={text:'',lang:'json'};
+
+  const dots=el('div',{class:'dw-dots'},el('i',{class:'r'}),el('i',{class:'y'}),el('i',{class:'g'}));
+  const methodEl=el('span',{class:'dw-method',text:(req.method||'POST')});
+  const urlEl=el('span',{class:'dw-url',text:req.url||'',title:req.url||''});
+  const barCopy=el('button',{class:'dw-ib',html:icon('copy',14),title:t('common.copy'),onclick:()=>copyWithToast(cur.text)});
+  const tabsEl=el('div',{class:'dw-tabs'});
+  const metaEl=el('div',{class:'dw-meta'});
+  const codeEl=el('div',{class:'dw-code'});
+  const footEl=el('div',{class:'dw-foot'});
+  const bar=el('div',{class:'dw-bar'},dots,methodEl,urlEl,barCopy);
+  const win=el('div',{class:'dw'},bar,tabsEl,metaEl,codeEl,footEl);
+  const m=modal({ title:'', noPad:true, body:win });
+  m.root.classList.add('devwin');
+  bar.append(el('button',{class:'dw-ib',html:icon('x',14),title:t('common.close'),onclick:()=>m.close()}));
+
+  const TABS=[['payload','req.payload','code'],['headers','req.headers','shield'],['curl','req.curl','terminal'],['response','req.response','zap']];
+  function payload(){
+    if(tab==='payload') return { text:JSON.stringify(req.body,null,2), lang:'json' };
+    if(tab==='headers'){
       const h={...req.headers};
       if(revealed) h.Authorization='Bearer '+getKey();
-      const json=JSON.stringify(h,null,2);
-      bodyEl.append(
-        el('div',{class:'row',style:{marginBottom:'9px'}},
-          el('button',{class:'btn soft sm',html:icon(revealed?'eyeOff':'eye',14)+'<span>'+t(revealed?'req.hide':'req.reveal')+'</span>',onclick:()=>{ revealed=!revealed; paint(); }}),
-          el('button',{class:'btn soft sm',html:icon('copy',14)+'<span>'+t('common.copy')+'</span>',onclick:()=>copyWithToast(json)})),
-        el('div',{class:'req-code',html:highlight(json,'json')}));
-    } else if(tab==='curl'){
-      const cmd=OR.curl(req, revealed?getKey():null);
-      bodyEl.append(
-        el('div',{class:'row',style:{marginBottom:'9px'}},
-          el('button',{class:'btn soft sm',html:icon(revealed?'eyeOff':'eye',14)+'<span>'+t(revealed?'req.hide':'req.reveal')+'</span>',onclick:()=>{ revealed=!revealed; paint(); }}),
-          el('button',{class:'btn soft sm',html:icon('copy',14)+'<span>'+t('common.copy')+'</span>',onclick:()=>copyWithToast(cmd)})),
-        el('div',{class:'req-code',html:highlight(cmd,'bash')}));
-    } else {
-      const u=meta.usage||{};
-      const stat=(k,v)=>el('div',{class:'req-stat'},el('div',{class:'k',text:k}),el('div',{class:'v',text:v==null?'—':String(v)}));
-      bodyEl.append(
-        el('div',{class:'req-meta-grid'},
-          stat(t('req.requested'), req.body.model),
-          stat(t('req.model'), msg.model||meta.model),
-          stat(t('req.provider'), meta.provider),
-          stat(t('req.finish'), meta.finish_reason),
-          stat(t('req.latency'), fmtDur(meta.latency_ms)),
-          stat(t('req.tps'), meta.tps),
-          stat(t('req.promptTok'), fmtNum(u.prompt_tokens)),
-          stat(t('req.completionTok'), fmtNum(u.completion_tokens)),
-          stat(t('req.reasoningTok'), fmtNum(u.completion_tokens_details?.reasoning_tokens)),
-          stat(t('req.totalTok'), fmtNum(u.total_tokens)),
-          stat(t('req.cost'), u.cost!=null?'$'+u.cost:'$0'),
-          stat(t('req.sentAt'), fmtTime(req.sent_at, S.settings.lang))
-        ),
-        el('div',{class:'req-code',html:highlight(JSON.stringify(meta,null,2),'json')}));
+      return { text:JSON.stringify(h,null,2), lang:'json' };
     }
+    if(tab==='curl') return { text:OR.curl(req, revealed?getKey():null), lang:'bash' };
+    return { text:JSON.stringify(meta,null,2), lang:'json' };
+  }
+  const stat=(k,v,tone)=>el('div',{class:'dw-stat'+(tone?' '+tone:'')},el('span',{class:'k',text:k}),el('span',{class:'v',text:String(v),title:String(v)}));
+
+  function paint(){
+    tabsEl.innerHTML='';
+    for(const [id,lb,ic] of TABS)
+      tabsEl.append(el('button',{class:'dw-tab'+(tab===id?' on':''),html:icon(ic,13)+'<span>'+t(lb)+'</span>',onclick:()=>{ tab=id; paint(); }}));
+
+    metaEl.innerHTML='';
+    const u=meta.usage||{};
+    const chips=[];
+    if(req.body&&req.body.model) chips.push(stat(t('req.requested'),req.body.model,'vio'));
+    if(msg.model||meta.model) chips.push(stat(t('req.model'),msg.model||meta.model,'cyan'));
+    if(meta.provider) chips.push(stat(t('req.provider'),meta.provider,''));
+    if(meta.finish_reason) chips.push(stat(t('req.finish'),meta.finish_reason,meta.finish_reason==='stop'?'grn':'amb'));
+    if(meta.latency_ms!=null) chips.push(stat(t('req.latency'),fmtDur(meta.latency_ms),''));
+    if(meta.tps) chips.push(stat(t('req.tps'),meta.tps,'cyan'));
+    if(u.prompt_tokens!=null) chips.push(stat('↑ prompt',fmtNum(u.prompt_tokens),''));
+    if(u.completion_tokens!=null) chips.push(stat('↓ output',fmtNum(u.completion_tokens),'grn'));
+    if(u.completion_tokens_details&&u.completion_tokens_details.reasoning_tokens!=null) chips.push(stat('∴ reason',fmtNum(u.completion_tokens_details.reasoning_tokens),'vio'));
+    if(u.total_tokens!=null) chips.push(stat('Σ total',fmtNum(u.total_tokens),''));
+    chips.push(stat(t('req.cost'),u.cost!=null?'$'+u.cost:'$0','amb'));
+    metaEl.append(...chips);
+
+    cur=payload();
+    codeEl.innerHTML='';
+    codeEl.append(el('pre',{class:'dw-pre',html:highlight(cur.text,cur.lang)}));
+
+    const lines=cur.text.split('\n').length;
+    let bytes=cur.text.length;
+    try{ bytes=new Blob([cur.text]).size; }catch{}
+    footEl.innerHTML='';
+    footEl.append(
+      el('span',{class:'dw-dot-ok'}),
+      el('span',{class:'dw-f',text:'UTF-8'}),
+      el('span',{class:'dw-f',text:cur.lang.toUpperCase()}),
+      el('span',{class:'dw-f',text:lines+' ln'}),
+      el('span',{class:'dw-f',text:fmtBytes(bytes)}),
+      el('span',{class:'dw-spacer'}),
+      (tab==='headers'||tab==='curl')
+        ? el('button',{class:'dw-reveal',html:icon(revealed?'eyeOff':'eye',12)+'<span>'+t(revealed?'req.hide':'req.reveal')+'</span>',onclick:()=>{ revealed=!revealed; paint(); }})
+        : null,
+      el('button',{class:'dw-f-btn',html:icon('copy',12)+'<span>'+t('common.copy')+'</span>',onclick:()=>copyWithToast(cur.text)})
+    );
   }
   paint();
-  modal({ title:t('req.title'), size:'wide', body:el('div',{},tabsEl,bodyEl) });
 }
 
 export function openChatSettings(conv){

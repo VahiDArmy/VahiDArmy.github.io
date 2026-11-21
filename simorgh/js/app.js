@@ -4,9 +4,9 @@ import { icon, toast, palette, registerCommands } from './ui.js?v=4';
 import { S, on, emit, initSettings, applyCloudSettings, saveSettings, loadCachedModels, cacheModels, toggleSidebar, applyAppearance, activeConv } from './state.js?v=4';
 import { Auth, DB } from './api.js?v=4';
 import { renderAuth } from './auth-view.js?v=4';
-import { mountSidebar } from './sidebar.js?v=4';
-import { mountChat, openConversation, newChat, stopGeneration, copyLast } from './chat.js?v=4';
-import { openSettings, openShortcuts, refreshModels, exportAll, exportConversation } from './settings.js?v=4';
+import { mountSidebar } from './sidebar.js?v=5';
+import { mountChat, openConversation, newChat, stopGeneration, copyLast } from './chat.js?v=5';
+import { openSettings, openShortcuts, refreshModels, exportAll, exportConversation } from './settings.js?v=5';
 
 const appRoot = document.getElementById('app');
 let booted = false, entering = false, loading = false;
