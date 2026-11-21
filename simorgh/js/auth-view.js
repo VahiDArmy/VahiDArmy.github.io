@@ -1,5 +1,5 @@
 import { CFG, t, THEMES } from './config.js';
-import { el, icon as _u } from './utils.js';
+import { el } from './utils.js';
 import { icon, toast } from './ui.js';
 import { Auth } from './api.js';
 import { S, saveSettings } from './state.js';

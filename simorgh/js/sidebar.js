@@ -1,5 +1,5 @@
 import { t, CFG } from './config.js';
-import { el, icon as _noop, fmtTime } from './utils.js';
+import { el, fmtTime } from './utils.js';
 import { icon, toast, menu, confirmDlg, promptDlg, modal, palette } from './ui.js';
 import { S, on, emit, toggleSidebar, displayName, saveSettings } from './state.js';
 import { DB, Auth } from './api.js';
