@@ -133,6 +133,8 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
  border:1px solid var(--line2);background:var(--surf);transition:.22s var(--e);position:relative;overflow:hidden}
 .btn:hover{background:var(--surf2);transform:translateY(-2px)}
 .btn:active{transform:scale(.97)}
+.btn.sm{padding:8px 12px;font-size:12px;border-radius:10px;gap:7px}
+.btn.sm .ic{width:15px;height:15px}
 .btn.gold{background:linear-gradient(135deg,var(--gold),var(--goldl));color:var(--ongold);border-color:transparent}
 .btn.gold::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 34%,rgba(255,255,255,.4) 50%,transparent 66%);transform:translateX(-130%);transition:transform .7s var(--e)}
 .btn.gold:hover::after{transform:translateX(130%)}
@@ -187,7 +189,7 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .quick button{display:flex;flex-direction:column;align-items:center;gap:9px;padding:16px 8px;border-radius:var(--rs);border:1px solid var(--line2);background:var(--surf);font-size:11.5px;font-weight:600;color:var(--mu);transition:.24s var(--e)}
 .quick button:hover{color:var(--gold);border-color:var(--line);transform:translateY(-2px)}
 
-/* ══════════ READER · minimal ══════════ */
+/* ══════════ READER ══════════ */
 .bism{text-align:center;font-family:var(--ar);color:var(--gold);font-size:22px;margin:0 0 16px;opacity:.9}
 .strip{position:sticky;top:var(--top);z-index:35;display:flex;align-items:center;gap:10px;height:var(--strip);padding:0 12px;margin-bottom:22px;
  border-radius:12px;border:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 93%,transparent);backdrop-filter:blur(20px)}
@@ -228,7 +230,7 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .vend{text-align:center;padding:30px 18px;border:1px dashed var(--line2);border-radius:var(--r);margin-top:24px}
 .vend p{color:var(--mu);font-size:13px;margin:10px 0 15px;line-height:1.7}
 
-/* ══════════ MEANING WINDOW · one touch closes ══════════ */
+/* ══════════ MEANING WINDOW ══════════ */
 #pop{position:fixed;inset:0;z-index:120;display:none;align-items:center;justify-content:center;padding:20px}
 #pop.open{display:flex}
 #pop .scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(10px);animation:fade .25s}
@@ -340,6 +342,8 @@ body.drawer #drawer{transform:none} body.drawer #dback{opacity:1;pointer-events:
 .step button{width:30px;height:30px;border-radius:9px;border:1px solid var(--line2);background:var(--surf);display:flex;align-items:center;justify-content:center;color:var(--gold)}
 .step button:hover{background:var(--surf2)}
 .step b{min-width:44px;text-align:center;font-size:12.5px;font-variant-numeric:tabular-nums}
+.syncnote{font-size:11px;line-height:1.55;color:var(--mu);padding:2px 0 4px}
+.syncnote.ok{color:var(--ok)} .syncnote.err{color:var(--pom)}
 .themes{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
 .th{display:flex;flex-direction:column;align-items:center;gap:6px;padding:9px 4px;border-radius:11px;border:1px solid var(--line2);background:var(--surf);font-size:10px;font-weight:700;color:var(--mu);transition:.2s}
 .th i{width:22px;height:22px;border-radius:50%;background:var(--sw);border:3px solid var(--sw2)}
@@ -400,9 +404,12 @@ input[type=range]::-moz-range-thumb{width:17px;height:17px;border:none;border-ra
 .pm:hover{background:var(--surf);color:var(--gold)} .pm .ic{width:16px;height:16px;color:var(--mu)}
 .pm.bad:hover{color:var(--pom)}
 
-#toasts{position:fixed;bottom:20px;right:20px;z-index:140;display:flex;flex-direction:column;gap:9px;max-width:min(340px,90vw)}
+#toasts{position:fixed;bottom:20px;right:20px;z-index:140;display:flex;flex-direction:column;gap:9px;max-width:min(360px,92vw)}
 .toast{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--line2);border-left:3px solid var(--turq);border-radius:13px;padding:12px 15px;font-size:13px;font-weight:600;box-shadow:var(--shadow);animation:tin .32s var(--e);cursor:pointer;line-height:1.45}
 .toast .ic{width:17px;height:17px;color:var(--turq)}
+.toast span{flex:1;min-width:0}
+.toast .undo{flex:none;padding:6px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surf);font-size:11.5px;font-weight:800;color:var(--gold)}
+.toast .undo:hover{background:var(--surf2)}
 .toast.warn{border-left-color:var(--saff)} .toast.warn .ic{color:var(--saff)}
 .toast.err{border-left-color:var(--pom)} .toast.err .ic{color:var(--pom)}
 .toast.gold{border-left-color:var(--gold);background:linear-gradient(135deg,var(--bg2),var(--g2))} .toast.gold .ic{color:var(--gold)}
@@ -510,7 +517,6 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
 <symbol id="zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10"/></symbol>
 <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
 <symbol id="trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
-<symbol id="focus" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M16 21h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></symbol>
 <symbol id="send" viewBox="0 0 24 24"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9"/></symbol>
 <symbol id="alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
 <symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
@@ -560,7 +566,6 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
   <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
 </nav>
 
-<!-- meaning window · one touch anywhere closes it -->
 <div id="pop" role="dialog" aria-modal="true" aria-labelledby="popTitle">
   <div class="scrim" data-a="popclose"></div>
   <div class="popcard" id="popcard" tabindex="-1">
@@ -592,7 +597,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
       <div class="row"><label>Meaning language</label><select data-s="lang"><option value="en">English</option><option value="fa">فارسی</option><option value="both">Both</option></select></div>
       <div class="row"><label>Auto-scroll</label><label class="sw"><input type="checkbox" data-s="auto"><i></i></label></div>
       <div class="row"><label>Scroll speed</label><input type="range" data-s="speed" min="1" max="10" step="1"></div>
-      <div class="row"><label>Focus mode</label><label class="sw"><input type="checkbox" data-s="focus"><i></i></label></div>
+      <div class="row"><label>Cloud sync</label><button class="btn sm" id="drSyncBtn" data-a="sync"><svg class="ic"><use href="#sync"/></svg><span>Sync now</span></button></div>
+      <p class="syncnote" id="drSyncState">Guest — everything is saved on this device.</p>
     </section>
     <section class="sec"><h3>Appearance</h3>
       <div class="themes">
@@ -773,23 +779,31 @@ create policy a_upd on public.istigfarqwen_daily_activity for update using (auth
 const PHRASES=[{ar:'أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ',en:'I seek God’s forgiveness and turn to Him',n:'Istighfār'},{ar:'سُبْحَانَ اللهِ وَبِحَمْدِهِ',en:'Glory and praise be to God',n:'Taḥmīd'},{ar:'لَا إِلَهَ إِلَّا اللهُ',en:'There is no god but God',n:'Tahlīl'},{ar:'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَآلِ مُحَمَّدٍ',en:'O God, bless Muhammad and his family',n:'Ṣalawāt'}];
 const TARGETS=[33,99,100,313,1000];
 const LANGS=['en','fa','both'],LANG_SHORT={en:'EN',fa:'فا',both:'EN+فا'},LANG_NAME={en:'English',fa:'فارسی',both:'English + فارسی'};
-const DEF={v:4,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.05,lang:'en',sound:true,vol:.7,amb:false,motion:true,rate:.85,goal:5,auto:false,speed:3,focus:false},
+const DEF={v:4,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.05,lang:'en',sound:true,vol:.7,amb:false,motion:true,rate:.85,goal:5,auto:false,speed:3},
  read:{},last:null,bm:{},notes:{},tas:{total:0,session:0,target:100,phrase:0},ach:{},act:{}};
 function wd(s){const d=copy(DEF);if(!s||(s.v!==4&&s.v!==3))return d;
  return{...d,...s,v:4,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}}}
 let S=wd(lj(LS)||lj('nur.v3')),SES=lj(LSS)||lj('nur.session.v3');
-let V=[],IX={},CH={},NC={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastTouch=Date.now(),swipeGuard=0;
+let V=[],IX={},CH={},NC={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastSync=0,lastTouch=Date.now(),swipeGuard=0;
 const day=()=>(S.act[dk()]||={r:0,t:0,s:0});
 const nread=()=>Object.keys(S.read).length;
 function streak(){let n=0,d=new Date();const has=k=>{const a=S.act[k];return a&&(a.r>0||a.t>0||a.s>=60)};if(!has(dk(d)))d.setDate(d.getDate()-1);while(has(dk(d))){n++;d.setDate(d.getDate()-1)}return n}
-function tidy(){const ok=i=>!!IX[+i];for(const k of Object.keys(S.read))if(!ok(k))delete S.read[k];for(const k of Object.keys(S.bm))if(!ok(k))delete S.bm[k];
- for(const k of Object.keys(S.notes))if(!ok(k)||!S.notes[k]?.t)delete S.notes[k];if(S.last!=null&&!ok(S.last))S.last=null;
- const t=S.set;if(!['lapis','parchment','shrine','plum'].includes(t.theme))t.theme='lapis';if(!['amiri','scheherazade','naskh'].includes(t.arFont))t.arFont='amiri';
+function tidy(){
+ const t=S.set;delete t.focus;
+ if(!['lapis','parchment','shrine','plum'].includes(t.theme))t.theme='lapis';
+ if(!['amiri','scheherazade','naskh'].includes(t.arFont))t.arFont='amiri';
  if(!LANGS.includes(t.lang))t.lang='en';
- t.fs=cl(+t.fs||1,.8,1.7);t.lh=cl(+t.lh||2.05,1.7,2.7);t.vol=cl(+t.vol||0,0,1);t.rate=cl(+t.rate||.85,.5,1.3);t.goal=cl(Math.round(+t.goal)||5,1,43);t.speed=cl(Math.round(+t.speed)||3,1,10);
- t.sound=!!t.sound;t.amb=!!t.amb;t.motion=!!t.motion;t.auto=!!t.auto;t.focus=!!t.focus;
+ t.fs=cl(+t.fs||1,.8,1.7);t.lh=cl(+t.lh||2.05,1.7,2.7);t.vol=cl(+t.vol||0,0,1);t.rate=cl(+t.rate||.85,.5,1.3);
+ t.goal=cl(Math.round(+t.goal)||5,1,43);t.speed=cl(Math.round(+t.speed)||3,1,10);
+ t.sound=!!t.sound;t.amb=!!t.amb;t.motion=!!t.motion;t.auto=!!t.auto;
  S.tas.total=Math.max(0,Math.round(+S.tas.total)||0);S.tas.session=Math.max(0,Math.round(+S.tas.session)||0);
- if(!TARGETS.includes(S.tas.target))S.tas.target=100;S.tas.phrase=cl(Math.round(+S.tas.phrase)||0,0,3)}
+ if(!TARGETS.includes(S.tas.target))S.tas.target=100;S.tas.phrase=cl(Math.round(+S.tas.phrase)||0,0,3);
+ if(!V.length)return;
+ const ok=i=>!!IX[+i];
+ for(const k of Object.keys(S.read))if(!ok(k))delete S.read[k];
+ for(const k of Object.keys(S.bm))if(!ok(k))delete S.bm[k];
+ for(const k of Object.keys(S.notes))if(!ok(k)||!S.notes[k]?.t)delete S.notes[k];
+ if(S.last!=null&&!ok(S.last))S.last=null}
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch{}}
 function save(){saveLocal();hud();syncSoon()}
 
@@ -830,7 +844,12 @@ async function sb(p,o={}){const{method='GET',body,auth=true,prefer,_r=false}=o;c
  if(!r.ok){if(r.status===401&&SES&&p.startsWith('/rest')&&!_r&&await refresh())return sb(p,{...o,_r:true});const e=new Error(emsg(j)||'HTTP '+r.status);e.code=r.status;throw e}return j}
 async function refresh(){if(!SES?.refresh_token)return false;try{setSes(await sb('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:SES.refresh_token}}));return true}catch(e){if(e.net){syncState('err');return false}clearSes();return false}}
 function sched(){clearTimeout(rt);if(!SES)return;rt=setTimeout(async()=>{if(await refresh())syncState('ok')},Math.max(5000,SES.expires_at*1000-Date.now()-60000))}
-function syncState(s){const b=$('#syncBtn');b.className='syncb '+(SES?s:'off');b.title={off:'Guest mode — sign in to sync',ok:'Synced',busy:'Syncing…',err:'Sync problem — tap for details'}[s]||'Cloud sync'}
+function syncState(s){const b=$('#syncBtn');b.className='syncb '+(SES?s:'off');b.title={off:'Guest mode — sign in to sync',ok:'Synced',busy:'Syncing…',err:'Sync problem — tap for details'}[s]||'Cloud sync';syncUI()}
+function syncUI(){const b=$('#drSyncBtn'),n=$('#drSyncState');if(!b||!n)return;
+ b.querySelector('span').textContent=SES?'Sync now':'Sign in';
+ const err=SES&&$('#syncBtn').classList.contains('err'),ok=SES&&$('#syncBtn').classList.contains('ok');
+ n.className='syncnote'+(err?' err':ok?' ok':'');
+ n.textContent=!SES?'Guest — everything is saved on this device.':err?(syncErr||'Sync problem — tap for details.'):ok?('Synced'+(lastSync?' at '+new Date(lastSync).toLocaleTimeString():'')+'.'):'Signed in — not synced yet.'}
 const uMin=(a={},b={})=>{const o={...a};for(const k in b)o[k]=Math.min(o[k]??Infinity,b[k]);return o};
 function merge(l,c){if(!c||(c.v!==4&&c.v!==3))return l;const C=wd(c),m=wd(l);m.read=uMin(C.read,m.read);m.bm=uMin(C.bm,m.bm);m.ach=uMin(C.ach,m.ach);
  m.notes={...C.notes};for(const k in l.notes)if(l.notes[k]?.t&&(!m.notes[k]||l.notes[k].ts>m.notes[k].ts))m.notes[k]=l.notes[k];
@@ -839,7 +858,8 @@ function merge(l,c){if(!c||(c.v!==4&&c.v!==3))return l;const C=wd(c),m=wd(l);m.r
  m.last=l.last??C.last;return m}
 async function push(){if(!SES)return;syncState('busy');
  await sb(`/rest/v1/${T1}?on_conflict=user_id`,{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{user_id:SES.user.id,state:S,updated_at:new Date().toISOString()}});
- const a=day();await sb(`/rest/v1/${T2}?on_conflict=user_id,day`,{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{user_id:SES.user.id,day:dk(),reads:a.r,tasbih:a.t,seconds:a.s}});syncState('ok');syncErr=''}
+ const a=day();await sb(`/rest/v1/${T2}?on_conflict=user_id,day`,{method:'POST',prefer:'resolution=merge-duplicates,return=minimal',body:{user_id:SES.user.id,day:dk(),reads:a.r,tasbih:a.t,seconds:a.s}});
+ lastSync=Date.now();syncErr='';syncState('ok')}
 async function pull(){if(!SES)return;const r=await sb(`/rest/v1/${T1}?user_id=eq.${SES.user.id}&select=state`);if(r?.[0]?.state){S=merge(S,r[0].state);tidy();saveLocal();apply();render({keep:true})}}
 async function afterAuth(){try{await pull();await push()}catch(e){syncErr=e.message;syncState('err')}}
 const syncSoon=deb(()=>{if(SES)push().catch(e=>{syncErr=e.message;syncState('err')})},3000);
@@ -847,7 +867,12 @@ async function syncNow(){if(!SES){openAuth();return}try{await afterAuth();if(syn
 function syncHelp(){modal(`<h2>${ic('db')}Cloud sync</h2><div class="mbody">${SES?`Signed in as <b style="color:var(--gold)">${esc(SES.user.email||'')}</b>.<br><br>${syncErr?`<span style="color:var(--pom)">${esc(syncErr)}</span>`:'No problems recorded.'}<br><br>If the error mentions a missing table or policy, run this once in Supabase → SQL Editor:`:'Sign in to sync your progress across devices.'}</div>${SES?`<div class="sqlbox">${esc(SQL)}</div>`:''}<div class="macts">${SES?`<button class="btn" data-a="copysql">${ic('copy')}Copy SQL</button><button class="btn" data-a="sync">${ic('sync')}Retry sync</button>`:`<button class="btn gold" data-a="openauth">${ic('user')}Sign in</button>`}<button class="btn ghost" data-a="mclose">Close</button></div>`)}
 
 /* ═══════════ toast / modal ═══════════ */
-function toast(m,t='ok',i='check'){const b=$('#toasts');while(b.children.length>=4)b.firstChild.remove();const e=document.createElement('div');e.className='toast '+(t==='ok'?'':t);e.innerHTML=ic(i)+`<span>${esc(m)}</span>`;e.onclick=()=>e.remove();b.appendChild(e);setTimeout(()=>{e.classList.add('bye');setTimeout(()=>e.remove(),320)},3600)}
+function toast(m,t='ok',i='check',action){const b=$('#toasts');while(b.children.length>=4)b.firstChild.remove();
+ const e=document.createElement('div');e.className='toast '+(t==='ok'?'':t);e.innerHTML=ic(i)+`<span>${esc(m)}</span>`;
+ e.onclick=()=>e.remove();
+ if(action){const u=document.createElement('button');u.className='undo';u.textContent=action.label;
+  u.onclick=ev=>{ev.stopPropagation();action.fn();e.remove()};e.appendChild(u)}
+ b.appendChild(e);setTimeout(()=>{e.classList.add('bye');setTimeout(()=>e.remove(),320)},action?6500:3600)}
 let mres=null;
 function modal(html){$('#mroot').innerHTML=`<div class="ov open"><div class="scrim" data-a="mclose"></div><div class="mcard">${html}</div></div>`;Snd.p('open');const f=$('#mroot textarea,#mroot input,#mroot .btn');f&&setTimeout(()=>f.focus(),60)}
 function mclose(){if(!$('#mroot').innerHTML)return;$('#mroot').innerHTML='';Snd.p('close');if(mres){const r=mres;mres=null;r(false)}}
@@ -855,20 +880,21 @@ function confirmBox(o){return new Promise(r=>{mres=r;modal(`<h2>${ic(o.danger?'a
 
 /* ═══════════ settings ═══════════ */
 function apply(){const t=S.set,r=document.documentElement;r.dataset.theme=t.theme;r.dataset.arfont=t.arFont;r.style.setProperty('--ars',t.fs);r.style.setProperty('--arlh',t.lh);
- document.body.classList.toggle('calm',!t.motion);document.body.classList.toggle('focuson',t.focus);
+ document.body.classList.toggle('calm',!t.motion);
  const b=$('#sndBtn');b.className='soundpill '+(t.sound?'on':'off');b.innerHTML=ic(t.sound?'vol':'mute')+`<span>Sound ${t.sound?'on':'off'}</span>`;
  $$('.th').forEach(c=>c.classList.toggle('on',c.dataset.v===t.theme));
  $('#fsVal').textContent=Math.round(t.fs*100)+'%';
  Amb.sync();Sky.refresh();Sky.sync();AS.sync()}
-function fillDrawer(){$$('#drawer [data-s]').forEach(e=>{const v=S.set[e.dataset.s];if(e.type==='checkbox')e.checked=!!v;else e.value=v})}
+function fillDrawer(){$$('#drawer [data-s]').forEach(e=>{const v=S.set[e.dataset.s];if(e.type==='checkbox')e.checked=!!v;else e.value=v});syncUI()}
 const openDr=()=>{fillDrawer();acctUI();document.body.classList.add('drawer');Snd.p('open')};
 const closeDr=()=>{document.body.classList.remove('drawer');Snd.p('close')};
 
 /* ═══════════ account ═══════════ */
 const uname=()=>SES?.user?.user_metadata?.name||SES?.user?.email?.split('@')[0]||'Seeker';
 function acctUI(){$('#avBtn').innerHTML=SES?esc(uname()[0].toUpperCase()):ic('user');
- $('#drAcct').innerHTML=SES?`<div class="acct"><span class="av">${esc(uname()[0].toUpperCase())}</span><div class="who"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div></div><div class="stack"><button class="btn" data-a="sync">${ic('sync')}Sync now</button><button class="btn bad" data-a="logout">${ic('out')}Sign out</button></div>`
- :`<p class="mu" style="font-size:12.5px;line-height:1.65;margin-bottom:11px">Reading as a guest. Everything is saved on this device; sign in to carry it across devices.</p><button class="btn gold wide" data-a="openauth">${ic('user')}Sign in / Create account</button>`}
+ $('#drAcct').innerHTML=SES?`<div class="acct"><span class="av">${esc(uname()[0].toUpperCase())}</span><div class="who"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div></div><div class="stack"><button class="btn bad" data-a="logout">${ic('out')}Sign out</button></div>`
+ :`<p class="mu" style="font-size:12.5px;line-height:1.65;margin-bottom:11px">Reading as a guest. Everything is saved on this device; sign in to carry it across devices.</p><button class="btn gold wide" data-a="openauth">${ic('user')}Sign in / Create account</button>`;
+ syncUI()}
 function acctMenu(){if(!SES){openAuth();return}const m=$('#acctMenu');if(!m.hidden){m.hidden=true;return}
  const r=$('#avBtn').getBoundingClientRect();m.style.top=(r.bottom+9)+'px';m.style.right=Math.max(10,innerWidth-r.right)+'px';
  m.innerHTML=`<div class="ph"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div><button class="pm" data-a="sync">${ic('sync')}Sync now</button><button class="pm" data-a="drawer">${ic('set')}Settings</button><button class="pm" data-a="export">${ic('dl')}Export data</button><button class="pm bad" data-a="logout">${ic('out')}Sign out</button>`;m.hidden=false;Snd.p('pop')}
@@ -906,7 +932,7 @@ function render(o={}){const keep=!!o.keep,y=scrollY;AS.stop();TTS.stop();const{v
  $('#view').innerHTML=({read:vRead,home:vHome,lib:vLib,tas:vTas,jour:vJour})[v](p);
  if(v==='read')afterRead(p,keep);
  if(v==='tas')tasUI();
- hud();if(keep)scrollTo(0,y);else if(!p)scrollTo(0,0)}
+ hud();AS.sync();if(keep)scrollTo(0,y);else if(!p)scrollTo(0,0)}
 function hud(){$('#streakN').textContent=streak()}
 
 /* ═══════════ overview ═══════════ */
@@ -929,7 +955,7 @@ function vHome(){const h=new Date().getHours(),g=h<5?'Blessed night':h<12?'Bless
  <div class="hd">Quick paths</div>
  <div class="quick"><button data-a="search">${ic('search')}Search the text</button><button data-a="go" data-v="lib">${ic('bm')}Bookmarks & notes</button><button data-a="go" data-v="jour">${ic('flame')}Streaks & awards</button><button data-a="drawer">${ic('set')}Personalise</button></div></div>`}
 
-/* ═══════════ reader · minimal cards ═══════════ */
+/* ═══════════ reader ═══════════ */
 function verseHTML(p){return`<article class="verse ${S.read[p.id]?'read':''}" id="v-${p.id}" data-id="${p.id}" tabindex="0" role="button" aria-label="Passage ${p.id} — touch for its meaning">
  <div class="vhead"><span class="vnum">${p.id}</span><div class="vacts">
   <button class="vact ${S.read[p.id]?'done':''}" data-a="read" data-id="${p.id}" title="Mark read" aria-label="Mark read">${ic('check')}</button>
@@ -970,6 +996,9 @@ function noteModal(id){id=+id;const n=S.notes[id];
  <div class="macts">${n?`<button class="btn bad" data-a="ndel" data-id="${id}">${ic('trash')}Delete</button>`:''}<button class="btn gold" data-a="nsave" data-id="${id}">${ic('check')}Save note</button></div>`)}
 function saveNote(id){id=+id;const t=$('#nta').value.trim();if(t)S.notes[id]={t,ts:Date.now()};else delete S.notes[id];
  save();refreshVerse(id);mclose();Snd.p('ok');toast(t?'Note saved':'Note removed','ok','note');checkAch();if(Pop.open&&Pop.id===id)Pop.paint();if(VIEW==='lib')render({keep:true})}
+function dropNote(id,from){id=+id;const old=S.notes[id];if(!old)return;delete S.notes[id];save();refreshVerse(id);
+ if(from==='modal')mclose();if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true});Snd.p('tap');
+ toast('Note removed','ok','trash',{label:'Undo',fn:()=>{S.notes[id]=old;save();refreshVerse(id);if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true});Snd.p('ok');toast('Note restored','ok','rotate')}})}
 async function copyVerse(id){const p=IX[+id];if(!p)return;const txt=`${p.ar}\n\n${p.en}\n\n${p.fa}\n\n— ${BOOK.meta.title.en}, № ${p.id}`;
  try{await navigator.clipboard.writeText(txt)}catch{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}
  Snd.p('pop');toast('Passage copied','ok','copy')}
@@ -992,7 +1021,7 @@ const Pop={id:null,open:false,
  step(d){const i=V.findIndex(x=>x.id===this.id),j=i+d;if(j<0||j>=V.length)return;TTS.stop();this.id=V[j].id;S.last=this.id;saveLocal();this.paint();Snd.p('page');buzz(5);
   const el=$('#v-'+this.id);if(el&&VIEW==='read')el.scrollIntoView({block:'center',behavior:'smooth'})},
  cycleLang(){const l=LANGS[(LANGS.indexOf(S.set.lang)+1)%LANGS.length];S.set.lang=l;save();fillDrawer();this.paint();Snd.p('pop');toast(LANG_NAME[l],'ok','book')},
- close(){if(!this.open)return;this.open=false;TTS.stop();$('#pop').classList.remove('open');document.body.classList.remove('lock');document.body.style.paddingRight='';Snd.p('close');
+ close(){if(!this.open)return;this.open=false;TTS.stop();$('#pop').classList.remove('open');document.body.classList.remove('lock');document.body.style.paddingRight='';Snd.p('close');AS.sync();
   if(VIEW==='read'&&this.id!=null){const e=$('#v-'+this.id);if(e){const r=e.getBoundingClientRect();if(r.top<70||r.bottom>innerHeight-30)e.scrollIntoView({block:'center',behavior:'smooth'})}}
   if(VIEW==='lib')render({keep:true})}
 };
@@ -1089,7 +1118,7 @@ function closeSearch(s){const o=$('#search');if(!o.classList.contains('open'))re
 let pIdx=0,pItems=[];
 function cmds(){const c=[{t:'Reader · resume',i:'book',r:()=>go('read')},{t:'Reader · from the beginning',i:'play',r:()=>go('read',V[0].id)},
  {t:'Overview',i:'home',r:()=>go('home')},{t:'Library',i:'bm',r:()=>go('lib')},{t:'Tasbīḥ',i:'target',r:()=>go('tas')},{t:'Journey',i:'flame',r:()=>go('jour')},
- {t:'Search the text',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},{t:'Focus mode',i:'focus',r:()=>{S.set.focus=!S.set.focus;save();apply();fillDrawer()}},
+ {t:'Search the text',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},
  {t:'Settings',i:'set',r:openDr},{t:'Export data',i:'dl',r:exportData},{t:'Cloud sync',i:'sync',r:syncNow},{t:'Cloud setup SQL',i:'db',r:sqlModal},
  {t:SES?'Sign out':'Sign in',i:SES?'out':'user',r:()=>SES?logout():openAuth()},{t:'About & shortcuts',i:'info',r:about}];
  BOOK.sections.forEach((s,i)=>c.push({t:`Chapter ${i+1} · ${s.en}`,i:'fl',r:()=>{go('read');setTimeout(()=>$('#'+s.id)?.scrollIntoView({block:'start',behavior:'smooth'}),180)}}));return c}
@@ -1101,7 +1130,7 @@ function palMove(d){if(!pItems.length)return;pIdx=cl(pIdx+d,0,pItems.length-1);$
 function palRun(i=pIdx){const c=pItems[i];if(c){closePal();c.r()}}
 
 /* ═══════════ about / sql ═══════════ */
-function about(){const keys=[['Touch a verse','Open its meaning'],['Touch the window','Close it'],['Swipe / ← →','Prev / next passage'],['Esc','Close'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch views'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B','Bookmark current'],['R','Mark current read'],['?','This panel']];
+function about(){const keys=[['Touch a verse','Open its meaning'],['Touch the window','Close it'],['Swipe / ← →','Prev / next passage'],['L','Cycle meaning language'],['Esc','Close'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch pages'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B','Bookmark current'],['R','Mark current read'],['?','This panel']];
  modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('info')}About Nūr</h2>
  <div style="font-family:var(--ar);direction:rtl;text-align:center;font-size:22px;color:var(--gold);line-height:2;margin:6px 0 14px">فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا</div>
  <div class="mbody">${esc(BOOK.meta.attribution.en)}. Arabic vocalised from published editions (${esc(BOOK.meta.source)}); English and Persian translations composed for this reader. ${V.length} passages · ${BOOK.sections.length} chapters.</div>
@@ -1149,11 +1178,12 @@ const A={
  read:t=>setRead(t.dataset.id,!S.read[+t.dataset.id]),
  note:t=>noteModal(t.dataset.id),
  bm:t=>toggleBm(t.dataset.id),
- bmdel:t=>{toggleBm(t.dataset.id);render({keep:true})},
+ bmdel:t=>{const id=+t.dataset.id;toggleBm(id);render({keep:true});
+  toast('Bookmark removed','ok','trash',{label:'Undo',fn:()=>{S.bm[id]=Date.now();save();refreshVerse(id);render({keep:true});Snd.p('bm');toast('Bookmark restored','ok','rotate')}})},
  markch:t=>markCh(t.dataset.c),
  nedit:t=>noteModal(t.dataset.id),nsave:t=>saveNote(t.dataset.id),
- ndel:t=>{delete S.notes[+t.dataset.id];save();refreshVerse(+t.dataset.id);mclose();Snd.p('tap');toast('Note removed','ok','trash');if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true})},
- ndellib:t=>{delete S.notes[+t.dataset.id];save();render({keep:true});Snd.p('tap');toast('Note removed','ok','trash')},
+ ndel:t=>dropNote(t.dataset.id,'modal'),
+ ndellib:t=>dropNote(t.dataset.id,'lib'),
  libtab:t=>{libTab=t.dataset.v;render({keep:true});Snd.p('tap')},
  begin:()=>go('read',V[0].id),resume:()=>go('read',S.last!=null?S.last:V[0].id),
  tinc:()=>tInc(),tdec:()=>tDec(),
@@ -1208,7 +1238,6 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLocal()
 let par=0;
 addEventListener('scroll',()=>{if(par)return;par=requestAnimationFrame(()=>{par=0;const o=$('.hero .orn');if(o)o.style.setProperty('--par',Math.min(1,scrollY/400))})},{passive:true});
 
-/* swipe inside the meaning window */
 let sx=0,sy=0,tracking=false;
 $('#popcard').addEventListener('touchstart',e=>{if(e.touches.length!==1){tracking=false;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true});
 $('#popcard').addEventListener('touchend',e=>{if(!tracking)return;tracking=false;
@@ -1221,8 +1250,7 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'){
   if($('#mroot').innerHTML)mclose();else if(Pop.open)Pop.close();else if($('#pal').classList.contains('open'))closePal();
   else if($('#search').classList.contains('open'))closeSearch();else if($('#auth').classList.contains('open'))closeAuth();
-  else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;
-  else if(S.set.focus){S.set.focus=false;apply();save();fillDrawer()}return}
+  else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;return}
  if($('#pal').classList.contains('open')){if(e.key==='ArrowDown'){e.preventDefault();palMove(1)}if(e.key==='ArrowUp'){e.preventDefault();palMove(-1)}if(e.key==='Enter'){e.preventDefault();palRun()}return}
  if($('#search').classList.contains('open')){
   if(e.key==='Enter'){e.preventDefault();$('#sOut .pi')?.click()}
@@ -1252,10 +1280,6 @@ document.addEventListener('keydown',e=>{
  }
 });
 
-const st=document.createElement('style');
-st.textContent='body.focuson #rail,body.focuson #tabs{display:none}body.focuson #top{padding-left:16px}body.focuson #view{max-width:760px}';
-document.head.appendChild(st);
-
 let tt=0;
 setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.now()-lastTouch<90000){day().s+=5;saveLocal();if(++tt%12===0)syncSoon()}},5000);
 
@@ -1270,7 +1294,7 @@ setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.no
  $('#boot').classList.add('done');setTimeout(()=>$('#boot')?.remove(),600);
  if(SES){if(SES.expires_at*1000<Date.now()+60000)await refresh();if(SES){sched();afterAuth()}}else syncState('off');
  checkAch();
- setTimeout(()=>{if(!localStorage.getItem('nur.hint4')){localStorage.setItem('nur.hint4','1');toast('Touch a verse for its meaning · touch again to close','gold','book')}},1200);
+ setTimeout(()=>{if(!localStorage.getItem('nur.hint5')){localStorage.setItem('nur.hint5','1');toast('Touch a verse for its meaning · touch again to close','gold','book')}},1200);
 })();
 })();
 </script>
