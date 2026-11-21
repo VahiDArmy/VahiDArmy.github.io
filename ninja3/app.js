@@ -3119,8 +3119,8 @@ async function replaceFolderWithFiles(folderItem, files) {
 /* ── project pack (paste formatted text) ───────────────────── */
 
 /**
- * Parses a pasted project-pack text. Supports three file formats that
- * may coexist in a single paste:
+ * Parses a pasted project-pack text. Supports three classic formats
+ * plus the common "AI / export" style used by multi-file packs:
  *
  *   1. Marker blocks:
  *        {[[FILE: path/to/file.ext]]}
@@ -3133,27 +3133,21 @@ async function replaceFolderWithFiles(folderItem, files) {
  *        <content>
  *        ```
  *
- *   3. Free-form / AI-response style (most general):
- *        Any line that contains a clear file path (especially inside
- *        backticks or after common labels) followed, within a short
- *        distance, by a fenced code block. Examples that work:
+ *   3. Free-form / AI-response style:
+ *        Any line that contains a clear file path (backticks or bare)
+ *        followed, within a short distance, by a fenced code block.
  *
- *          ### فایل: `/assets/css/base.css`
- *          ```css
- *          ...
- *          ```
+ *   4. Fence-with-path-comment (generalized; used by large packs):
+ *        ````html          (3 or more backticks)
+ *        <!-- index.html -->   or  // js/api.js  or  # path
+ *        <content>
+ *        ````
+ *        Path may also appear on the opening fence line after the lang:
+ *        ```js path/to/file.js
  *
- *          ## File: src/main.js
- *          ```js
- *          ...
- *          ```
- *
- *          path/to/file.ts
- *          ```
- *          ...
- *          ```
- *
- * Path must include an extension (.js, .html, .css, …) or the block
+ * Multiple packs (e.g. a 15-file pack + a 2-file update pack) can be
+ * pasted or dropped sequentially; later files override earlier ones
+ * with the same path. Path must include an extension or the block
  * is skipped. Prose outside these blocks is ignored.
  */
 function parsePack(text) {
@@ -3167,17 +3161,32 @@ function parsePack(text) {
     const FILE_RE        = /^\{\[\[FILE:\s*(.+?)\]\]\}$/;
     const END_RE         = /^\{\[\[END:\s*(.+?)\]\]\}$/;
     const PATH_LINE_RE   = /^`([^`\n]+)`$/;
-    const FENCE_OPEN_RE  = /^```[a-zA-Z0-9_+#.\-]*\s*$/;
-    const FENCE_CLOSE_RE = /^```\s*$/;
 
-    // Path-like string inside backticks (most common in AI responses)
+    // Variable-length fences (3+ backticks). Capture fence length + optional info string.
+    const FENCE_OPEN_RE  = /^(```+)([a-zA-Z0-9_+#.\-\/]*)\s*(.*?)\s*$/;
+    const makeCloseRe = (n) => new RegExp('^`{' + n + '}\\s*$');
+
+    // Path-like string inside backticks
     const BACKTICK_PATH_RE = /`(\/?[\w.\-@]+(?:\/[\w.\-@]+)*\.[a-zA-Z0-9_]{1,15})`/;
-    // Or a bare path that looks like a file (contains / and ends with extension)
+    // Bare path that looks like a file (contains / and ends with extension)
     const BARE_PATH_RE     = /(?:^|[\s:(])(\/?[\w.\-@]+(?:\/[\w.\-@]+)*\.[a-zA-Z0-9_]{1,15})(?:$|[\s)])/;
+
+    // First-line path comments inside a fence: <!-- path -->, // path, # path, /* path */
+    const COMMENT_PATH_RE = /^(?:<!--\s*(.+?)\s*-->|\/\/\s*(.+?)|\/\*\s*(.+?)\s*\*\/|#\s*(.+?)|--\s*(.+?))\s*$/;
+
+    const isPathy = (s) => {
+        if (!s) return false;
+        const t = s.trim().replace(/^["']|["']$/g, '');
+        const last = t.split('/').pop() || '';
+        return /\.[a-zA-Z0-9_]{1,15}$/.test(last) && !/\s/.test(t);
+    };
 
     /* -- shared: normalize, validate, dedupe -------------------- */
     const addFile = (rawPath, content) => {
-        const parts = rawPath.split('/').filter(s => s && s !== '.');
+        let p = String(rawPath || '').trim().replace(/^["']|["']$/g, '');
+        // strip leading ./ and accidental labels
+        p = p.replace(/^\.\//, '').replace(/^(?:file|path|src)\s*[:=]\s*/i, '');
+        const parts = p.split('/').filter(s => s && s !== '.');
         if (parts.some(s => s === '..')) {
             errors.push(`Invalid path (contains ..): "${rawPath}"`);
             return;
@@ -3238,6 +3247,64 @@ function parsePack(text) {
         addFile(rawPath, content);
     }
 
+    /* -- helper: extract content + optional path from a fence ---- */
+    const takeFence = (openIdx) => {
+        const om = lines[openIdx].match(FENCE_OPEN_RE);
+        if (!om) return null;
+        const tickLen = om[1].length;
+        const info = (om[2] || '').trim();          // language or path-like token
+        const trail = (om[3] || '').trim();         // anything after lang on same line
+        const closeRe = makeCloseRe(tickLen);
+
+        let endLine = -1;
+        for (let k = openIdx + 1; k < lines.length; k++) {
+            if (closeRe.test(lines[k])) { endLine = k; break; }
+        }
+        if (endLine === -1) return null;
+
+        let bodyStart = openIdx + 1;
+        let bodyEnd = endLine;
+        let pathFromComment = null;
+
+        // Path on the opening fence line: ```js path/to/file.js  or  ```path/to/file.js
+        if (isPathy(trail)) pathFromComment = trail;
+        else if (isPathy(info) && info.includes('/')) pathFromComment = info;
+        else if (isPathy(info) && !trail) {
+            // bare filename on fence line is ok only if it has an extension
+            pathFromComment = info;
+        }
+
+        // Path as first non-empty line of the body (comment style)
+        if (!pathFromComment) {
+            let j = bodyStart;
+            while (j < bodyEnd && !lines[j].trim()) j++;
+            if (j < bodyEnd) {
+                const cm = lines[j].match(COMMENT_PATH_RE);
+                if (cm) {
+                    const cand = (cm[1] || cm[2] || cm[3] || cm[4] || cm[5] || '').trim();
+                    // Allow "js/api.js — description" → take the path part
+                    const pathPart = cand.split(/\s+[—–\-|:]\s+/)[0].trim();
+                    if (isPathy(pathPart) || isPathy(cand.split(/\s+/)[0])) {
+                        pathFromComment = isPathy(pathPart) ? pathPart : cand.split(/\s+/)[0];
+                        bodyStart = j + 1; // drop the comment line from content
+                    }
+                } else {
+                    // bare path as first line (rare)
+                    const t = lines[j].trim();
+                    if (isPathy(t)) {
+                        pathFromComment = t;
+                        bodyStart = j + 1;
+                    }
+                }
+            }
+        }
+
+        const content = lines.slice(bodyStart, bodyEnd).join('\n')
+            + (bodyEnd > bodyStart ? '\n' : '');
+
+        return { endLine, content, pathFromComment, tickLen };
+    };
+
     /* -- format 2: bare `path` line + fenced block ------------- */
     for (let i = 0; i < lines.length; i++) {
         if (consumed[i]) continue;
@@ -3246,37 +3313,22 @@ function parsePack(text) {
 
         const rawPath = pm[1].trim();
 
-        // Next non-blank line must be a fence opening
         let j = i + 1;
         while (j < lines.length && !lines[j].trim()) j++;
         if (j >= lines.length || !FENCE_OPEN_RE.test(lines[j])) continue;
 
-        // Find matching closing fence
-        let endLine = -1;
-        for (let k = j + 1; k < lines.length; k++) {
-            if (FENCE_CLOSE_RE.test(lines[k])) { endLine = k; break; }
-        }
-        if (endLine === -1) {
+        const fence = takeFence(j);
+        if (!fence) {
             errors.push(`Unclosed fenced block for "${rawPath}"`);
             continue;
         }
 
-        const content = lines.slice(j + 1, endLine).join('\n')
-            + (endLine > j + 1 ? '\n' : '');
-        for (let k = i; k <= endLine; k++) consumed[k] = true;
-        i = endLine;
-
-        addFile(rawPath, content);
+        for (let k = i; k <= fence.endLine; k++) consumed[k] = true;
+        i = fence.endLine;
+        addFile(rawPath, fence.content);
     }
 
-    /* -- format 3: free-form / AI-response style (most general) --
-     * Look for any line that contains a clear file path, then take
-     * the next fenced code block that appears within a few lines.
-     * This catches headings like:
-     *   ### فایل: `/assets/css/base.css`
-     *   ## File: src/utils.js
-     * and similar patterns without requiring a specific label.
-     */
+    /* -- format 3: free-form path line near a fence ------------- */
     for (let i = 0; i < lines.length; i++) {
         if (consumed[i]) continue;
 
@@ -3291,40 +3343,56 @@ function parsePack(text) {
         }
         if (!rawPath) continue;
 
-        // Look ahead a short distance for a fence opening.
-        // Require the fence to appear very soon (blank lines allowed, but
-        // no other content) so we do not steal paths that live inside lists
-        // or structure trees.
         let j = i + 1;
         let foundFence = -1;
         const MAX_LOOKAHEAD = 4;
         while (j < lines.length && j <= i + MAX_LOOKAHEAD) {
             if (consumed[j]) { j++; continue; }
             const t = lines[j].trim();
-            if (!t) { j++; continue; }               // blank line ok
+            if (!t) { j++; continue; }
             if (FENCE_OPEN_RE.test(lines[j])) { foundFence = j; break; }
-            break; // any other non-blank content → not a free-form file header
+            break;
         }
         if (foundFence === -1) continue;
 
-        // Find matching closing fence
-        let endLine = -1;
-        for (let k = foundFence + 1; k < lines.length; k++) {
-            if (FENCE_CLOSE_RE.test(lines[k])) { endLine = k; break; }
-        }
-        if (endLine === -1) {
+        const fence = takeFence(foundFence);
+        if (!fence) {
             errors.push(`Unclosed fenced block for "${rawPath}"`);
             continue;
         }
 
-        const content = lines.slice(foundFence + 1, endLine).join('\n')
-            + (endLine > foundFence + 1 ? '\n' : '');
+        // Prefer an explicit path comment inside the fence (AI/export packs)
+        // over a path that merely appeared in nearby prose.
+        const usePath = fence.pathFromComment || rawPath;
 
-        // Mark everything from the path line through the fence as consumed
-        for (let k = i; k <= endLine; k++) consumed[k] = true;
-        i = endLine;
+        for (let k = i; k <= fence.endLine; k++) consumed[k] = true;
+        i = fence.endLine;
+        addFile(usePath, fence.content);
+    }
 
-        addFile(rawPath, content);
+    /* -- format 4: fence whose first body line is a path comment -
+     * Also catches fences that put the path on the opening line.
+     * Runs last so formats 2/3 (explicit preceding path) win.
+     */
+    for (let i = 0; i < lines.length; i++) {
+        if (consumed[i]) continue;
+        if (!FENCE_OPEN_RE.test(lines[i])) continue;
+
+        const fence = takeFence(i);
+        if (!fence) {
+            // leave unclosed fences alone — may be incomplete paste
+            continue;
+        }
+        if (!fence.pathFromComment) {
+            // still mark consumed so we don't re-scan body lines
+            for (let k = i; k <= fence.endLine; k++) consumed[k] = true;
+            i = fence.endLine;
+            continue;
+        }
+
+        for (let k = i; k <= fence.endLine; k++) consumed[k] = true;
+        i = fence.endLine;
+        addFile(fence.pathFromComment, fence.content);
     }
 
     return { files, errors };
@@ -3343,7 +3411,7 @@ function openPackOverlay() {
     $('packSubtitle').textContent = '→ /' + (state.path || '');
     
     const tree = $('packTree');
-    tree.innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt / .md file</div>';
+    tree.innerHTML = '<div class="zip-loading">Paste, choose, or drop one or more .txt / .md packs</div>';
     tree.style.display = 'block'; 
     tree.style.background = 'rgba(0,0,0,.26)';
     tree.style.padding = '6px';
@@ -3612,7 +3680,7 @@ function clearPack() {
         pasteCount: 0,
         log: [],
     };
-    $('packTree').innerHTML = '<div class="zip-loading">Paste from clipboard or drop a .txt / .md file</div>';
+    $('packTree').innerHTML = '<div class="zip-loading">Paste, choose, or drop one or more .txt / .md packs</div>';
     $('packTree').style.display = 'block';
     $('packTree').style.background = 'rgba(0,0,0,.26)';
     $('packTree').style.padding = '6px';
@@ -4393,6 +4461,24 @@ function wireEvents() {
     $('packClose').onclick = closePackOverlay;
     $('packCancel').onclick = closePackOverlay;
     $('packPaste').onclick = pasteFromPackClipboard;
+    $('packChoose').onclick = () => $('packFileInput').click();
+    $('packFileInput').onchange = async e => {
+        const list = [...(e.target.files || [])];
+        e.target.value = '';
+        if (!packState || !list.length) return;
+        for (const file of list) {
+            if (!/\.(txt|md|markdown|pack|text)$/i.test(file.name) && !/^text\//i.test(file.type || '')) {
+                toast(`Skipped ${file.name} — not a text pack`, 'warn');
+                continue;
+            }
+            if (file.size > 20 * 1024 * 1024) {
+                toast(`Skipped ${file.name} — too large (max 20 MB)`, 'err');
+                continue;
+            }
+            try { ingestPackText(await file.text()); }
+            catch (err) { toast(`Could not read ${file.name}: ${err.message}`, 'err'); }
+        }
+    };
     $('packClear').onclick = clearPack;
     $('packApply').onclick = applyPack;
     onEscape($('packOverlay'), () => closePackOverlay());
@@ -4407,7 +4493,7 @@ function wireEvents() {
         e.stopPropagation();
         if (!packState) return;
         const files = [...e.dataTransfer.files].filter(f => /\.(txt|md|markdown|pack|text)$/i.test(f.name));
-        if (!files.length) { toast('Drop a .txt or .md file', 'warn'); return; }
+        if (!files.length) { toast('Drop one or more .txt / .md packs', 'warn'); return; }
         for (const file of files) {
             if (file.size > 20 * 1024 * 1024) {
                 toast(`Skipped ${file.name} — too large (max 20 MB)`, 'err');

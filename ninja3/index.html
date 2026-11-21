@@ -470,12 +470,14 @@
 
             <div class="zip-tools">
                 <button class="btn btn-primary btn-sm" id="packPaste">📋 Paste from clipboard</button>
+                <button class="btn btn-sm" id="packChoose" title="Attach one or more .txt / .md packs">📎 Choose files…</button>
+                <input type="file" id="packFileInput" accept=".txt,.md,.markdown,.pack,.text,text/plain,text/markdown" multiple hidden />
                 <button class="btn btn-sm" id="packClear" hidden title="Clear all pasted files">🗑 Clear</button>
-                <span class="muted" style="font-size:11px" id="packHint">or drop a .txt here · Ctrl/⌘+V</span>
+                <span class="muted" style="font-size:11px" id="packHint">or drop one or more .txt packs · Ctrl/⌘+V</span>
             </div>
 
             <div class="zip-tree" id="packTree">
-                <div class="zip-loading">Paste from clipboard or drop a .txt file</div>
+                <div class="zip-loading">Paste, choose, or drop one or more .txt / .md packs</div>
             </div>
 
             <div class="pack-log" id="packLog" hidden></div>
