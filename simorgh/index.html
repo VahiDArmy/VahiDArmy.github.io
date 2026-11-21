@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" data-theme="aurora" data-density="cozy" data-width="standard" data-bgfx="aurora">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simurgh — Free AI Chat</title>
+<meta name="description" content="Simurgh: every free OpenRouter model, one beautiful chat. RTL-first, branching, reasoning, request inspector.">
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%237c5cff" d="M20 4c-6 0-12 4-14 10l-2 6 6-2c6-2 10-8 10-14z"/><path fill="%2300d4ff" d="M6 14c4-1 8-4 10-8-1 5-4 9-8 11z"/></svg>'>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+/* pre-paint boot: avoid theme/direction flash */
+try{
+  var s = JSON.parse(localStorage.getItem('simurgh.settings')||'{}');
+  var d = document.documentElement;
+  if(s.theme) d.dataset.theme = s.theme;
+  if(s.lang){ d.lang = s.lang; d.dir = s.lang==='fa' ? 'rtl' : 'ltr'; }
+  if(s.density) d.dataset.density = s.density;
+  if(s.chatWidth) d.dataset.width = s.chatWidth;
+  if(s.bgFx) d.dataset.bgfx = s.bgFx;
+  if(s.fontScale) d.style.setProperty('--fscale', (s.fontScale||100)/100);
+  if(s.bubbles) d.dataset.bubbles = '1';
+}catch(e){}
+</script>
+</head>
+<body>
+<div id="app" aria-busy="true"></div>
+<div id="overlays"></div>
+<noscript><div style="padding:40px;font-family:sans-serif">Simurgh needs JavaScript. / سیمرغ به جاوااسکریپت نیاز دارد.</div></noscript>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
