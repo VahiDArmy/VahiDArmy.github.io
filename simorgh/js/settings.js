@@ -1,11 +1,10 @@
-import { CFG, t, THEMES, LANGS, REASON_OPTS } from './config.js';
-import { el, esc, fmtNum, fmtDur, fmtTime, fmtBytes, shortModel, fuzzy, download, debounce } from './utils.js';
-import { icon, toast, modal, confirmDlg, menu, floatPanel, copyWithToast } from './ui.js';
-import { S, on, emit, saveSettings, getKey, setKey, modelInfo, effectiveModel, cacheModels } from './state.js';
-import { DB, OR } from './api.js';
-import { highlight } from './markdown.js';
+import { CFG, t, THEMES, LANGS, REASON_OPTS } from './config.js?v=4';
+import { el, esc, fmtNum, fmtDur, fmtTime, fmtBytes, shortModel, fuzzy, download, stripMd } from './utils.js?v=4';
+import { icon, toast, modal, confirmDlg, menu, floatPanel, copyWithToast } from './ui.js?v=4';
+import { S, on, emit, saveSettings, getKey, setKey, modelInfo, effectiveModel, cacheModels, buildPath } from './state.js?v=4';
+import { DB, OR } from './api.js?v=4';
+import { highlight } from './markdown.js?v=4';
 
-/* ================= MODEL SYNC ================= */
 export async function refreshModels(btn){
   const old = btn ? btn.innerHTML : null;
   if(btn){ btn.disabled=true; btn.innerHTML='<span class="spinner"></span><span>'+t('settings.refreshing')+'</span>'; }
@@ -22,7 +21,6 @@ export async function refreshModels(btn){
   if(btn){ btn.disabled=false; btn.innerHTML=old; }
 }
 
-/* ================= MODEL PICKER ================= */
 export function openModelPicker(anchor, { current, onPick, manage=true }){
   const panel=el('div',{class:'menu mp-panel'});
   const search=el('input',{class:'input',placeholder:t('settings.searchModels')});
@@ -35,7 +33,6 @@ export function openModelPicker(anchor, { current, onPick, manage=true }){
   function paint(){
     const q=search.value.trim();
     list.innerHTML='';
-    const router=modelInfo(CFG.ROUTER_ID);
     const rItem=el('button',{class:'mp-item mp-router'+(current===CFG.ROUTER_ID?' current':''),
       html:icon('zap',18)+'<span class="grow"><span class="mp-name">'+t('settings.router')+'</span><span class="mp-id" style="display:block">'+t('settings.routerDesc')+' · openrouter/free</span></span>'+(current===CFG.ROUTER_ID?icon('check',16):''),
       onclick:()=>{ close(); onPick(CFG.ROUTER_ID); }});
@@ -60,14 +57,12 @@ export function openModelPicker(anchor, { current, onPick, manage=true }){
   }
   search.addEventListener('input',paint);
   paint();
-  /* only steal focus (and pop the soft keyboard) when a real keyboard exists */
   if(window.matchMedia('(hover:hover) and (pointer:fine)').matches) setTimeout(()=>search.focus(),50);
   return close;
 }
 
-/* ================= REQUEST INSPECTOR ================= */
 export function openRequestViewer(msg){
-  if(!msg.request_json){ toast(t('req.noReq'),'warn'); return; }
+  if(!msg || !msg.request_json){ toast(t('req.noReq'),'warn'); return; }
   const req=msg.request_json, meta=msg.meta_json||{};
   let tab='payload', revealed=false;
   const tabsEl=el('div',{class:'req-tabs'});
@@ -126,7 +121,6 @@ export function openRequestViewer(msg){
   modal({ title:t('req.title'), size:'wide', body:el('div',{},tabsEl,bodyEl) });
 }
 
-/* ================= CHAT SETTINGS ================= */
 export function openChatSettings(conv){
   const params={...(conv.params||{})};
   const sys=el('textarea',{class:'input',rows:4,placeholder:t('settings.systemPromptPh')}); sys.value=conv.system_prompt||'';
@@ -187,7 +181,6 @@ export function openChatSettings(conv){
   });
 }
 
-/* ================= EXPORT / IMPORT ================= */
 export async function exportConversation(conv, fmt){
   try{
     const msgs = S.messages[conv.id] || await DB.convMessages(conv.id);
@@ -198,10 +191,8 @@ export async function exportConversation(conv, fmt){
       download('simurgh_'+safe+'_'+stamp+'.json', JSON.stringify({app:'simurgh',version:1,conversations:[{...conv,messages:msgs}]},null,2),'application/json');
       return;
     }
-    const { buildPath } = await import('./state.js');
     const { path } = buildPath(conv, msgs);
     if(fmt==='txt'){
-      const { stripMd } = await import('./utils.js');
       const txt=path.map(m=>(m.role==='user'?'YOU':'ASSISTANT ('+(m.model||'')+')')+':\n'+stripMd(m.content)).join('\n\n──────────\n\n');
       download(safe+'.txt', conv.title+'\n\n'+txt);
       return;
@@ -267,7 +258,6 @@ export async function importData(file){
   }catch(e){ toast(e.message||t('settings.importBad'),'err'); }
 }
 
-/* ================= SETTINGS MODAL ================= */
 const TABS=[['general','settings.general','sliders'],['appearance','settings.appearance','palette'],['models','settings.models','cpu'],['generation','settings.generation','sparkles'],['connection','settings.connection','key'],['prompts','settings.prompts','book'],['data','settings.data','database'],['about','settings.about','info']];
 
 export function openSettings(tab='general'){
@@ -381,7 +371,7 @@ export function openSettings(tab='general'){
       );
     }
     else if(tab==='about'){
-      pane.append(el('h3',{text:t('app.name')+' · '+t('settings.version')+' '+CFG.VERSION}),
+      pane.append(el('h3',{text:t('app.name')+' · '+t('settings.version')+' '+CFG.VERSION+' (build '+CFG.BUILD+')'}),
         el('p',{class:'muted small',text:t('settings.aboutText')}),
         el('div',{class:'row',style:{margin:'14px 0'}},
           el('a',{class:'btn soft sm',href:'https://openrouter.ai/docs',target:'_blank',rel:'noopener',html:icon('external',14)+'<span>OpenRouter Docs</span>'}),

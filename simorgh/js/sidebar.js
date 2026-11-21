@@ -1,10 +1,9 @@
-import { t, CFG } from './config.js';
-import { el, fmtTime } from './utils.js';
-import { icon, toast, menu, confirmDlg, promptDlg, modal, palette } from './ui.js';
-import { S, on, emit, toggleSidebar, displayName, saveSettings } from './state.js';
-import { DB, Auth } from './api.js';
-import { openSettings, exportConversation, exportAll } from './settings.js';
-import { shortModel } from './utils.js';
+import { t, CFG } from './config.js?v=4';
+import { el, fmtTime, shortModel } from './utils.js?v=4';
+import { icon, toast, menu, confirmDlg, promptDlg, modal, palette } from './ui.js?v=4';
+import { S, on, emit, toggleSidebar, displayName, saveSettings } from './state.js?v=4';
+import { DB, Auth } from './api.js?v=4';
+import { openSettings, exportConversation, exportAll } from './settings.js?v=4';
 
 let rootEl=null, listEl=null, searchQ='', projOpen=true;
 
@@ -36,7 +35,7 @@ function paint(){
   const foot=el('div',{class:'sb-foot'},
     el('div',{class:'sb-status'},
       el('span',{class:'dot'+(S.online?'':' off')}),
-      el('span',{text:S.online?t('nav.online'):t('nav.offline')})
+      el('span',{text:(S.online?t('nav.online'):t('nav.offline'))+' · build '+CFG.BUILD})
     ),
     el('button',{class:'sb-user',onclick:e=>{
       menu(e.currentTarget,[
@@ -72,7 +71,6 @@ function groupLabel(ts){
 function paintList(){
   if(!listEl) return;
   listEl.innerHTML='';
-  /* projects */
   const projSec=el('div',{class:'sb-sec'},
     el('button',{class:'row',style:{gap:'5px',color:'inherit',font:'inherit',textTransform:'inherit',letterSpacing:'inherit'},
       html:(projOpen?icon('chevD',12):icon('chevR',12))+'<span>'+t('nav.projects')+'</span>',
@@ -97,7 +95,6 @@ function paintList(){
     }
     if(!S.projects.length) listEl.append(el('div',{class:'sb-empty',style:{padding:'6px 12px'},text:t('nav.noProjects')}));
   }
-  /* conversations */
   let convs=S.conversations.slice();
   if(S.projectFilter) convs=convs.filter(c=>c.project_id===S.projectFilter);
   if(searchQ) convs=convs.filter(c=>c.title.toLowerCase().includes(searchQ.toLowerCase()));

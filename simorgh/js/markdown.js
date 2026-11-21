@@ -1,7 +1,6 @@
-import { esc } from './utils.js';
+import { esc } from './utils.js?v=4';
 
-/* ---------- KaTeX lazy loading ---------- */
-let katexState = 0; // 0 idle, 1 loading, 2 ready, 3 failed
+let katexState = 0;
 let mathCb = null;
 export function setMathCallback(fn){ mathCb = fn; }
 function ensureKatex(){
@@ -24,7 +23,6 @@ function renderMath(tex, display){
   return '<code class="math-fallback">'+esc(tex)+'</code>';
 }
 
-/* ---------- Syntax highlighter ---------- */
 const KW = {
   js:'const let var function return if else for while do switch case break continue new class extends super this typeof instanceof in of try catch finally throw async await yield import export from default delete void static get set',
   ts:'const let var function return if else for while do switch case break continue new class extends implements interface type enum namespace declare readonly public private protected abstract super this typeof instanceof in of try catch finally throw async await yield import export from default delete void static get set as keyof satisfies',
@@ -125,7 +123,6 @@ export function highlight(code, lang){
   return out;
 }
 
-/* ---------- Markdown renderer ---------- */
 const PH = i => '\u0000'+i+'\u0000';
 
 function inline(src, stash){
@@ -296,7 +293,6 @@ function buildList(items, stash){
   return build(items[0].indent);
 }
 
-/* tiny inline icons used inside generated code headers (kept here to avoid circular imports) */
 function IC(name){
   const p={
     copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',

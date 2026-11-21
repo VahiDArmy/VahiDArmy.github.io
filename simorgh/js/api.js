@@ -1,11 +1,9 @@
-// All tables use the qwenai_ prefix — defined once in T below.
-import { CFG } from './config.js';
+import { CFG } from './config.js?v=4';
 
 export const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY, {
   auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
 });
 
-/* table names — single source of truth */
 const T = {
   profiles:      'qwenai_profiles',
   projects:      'qwenai_projects',
@@ -25,7 +23,6 @@ const uidOf = async () => {
   return data.user.id;
 };
 
-/* ---------------- AUTH ---------------- */
 export const Auth = {
   async session(){ const { data } = await sb.auth.getSession(); return data.session; },
   onChange(cb){ sb.auth.onAuthStateChange((evt, session)=>cb(evt, session)); },
@@ -56,7 +53,6 @@ export const Auth = {
   async signOut(){ await sb.auth.signOut(); }
 };
 
-/* ---------------- DATABASE ---------------- */
 export const DB = {
   async getProfile(){
     const uid = await uidOf();
@@ -98,7 +94,6 @@ export const DB = {
     chk(await sb.from(T.messages).update({ status:'stopped' }).eq('user_id',uid).eq('status','streaming'));
   },
   async listModels(){ return chk(await sb.from(T.models).select('*')); },
-  /* merge fetched models: upsert info only — active/pinned survive, no duplicates */
   async mergeModels(fetched){
     const user_id = await uidOf();
     const existing = await DB.listModels();
@@ -146,7 +141,6 @@ export const DB = {
   }
 };
 
-/* ---------------- OPENROUTER ---------------- */
 async function orError(res){
   let msg='HTTP '+res.status, code=res.status, meta=null;
   try{
@@ -194,7 +188,6 @@ export const OR = {
     const j = await res.json();
     return j.data || j;
   },
-  /* streaming chat — returns {model, provider, usage, finish, id}; throws normalized errors */
   async streamChat({ key, body, signal, onContent, onReasoning }){
     const res = await fetch(CFG.OR_BASE+'/chat/completions', {
       method:'POST', headers:OR.headers(key), body:JSON.stringify(body), signal

@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=4">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 try{
@@ -30,17 +30,87 @@ try{
 <div id="overlays"></div>
 <noscript><div style="padding:40px;font-family:sans-serif">Simurgh needs JavaScript. / سیمرغ به جاوااسکریپت نیاز دارد.</div></noscript>
 <script>
-/* network-first service worker: stale cached modules can never run again */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.addEventListener('message', function(e){
-    if(e.data && e.data.type==='SW_ACTIVE' && !sessionStorage.getItem('simurgh.swReload')){
-      sessionStorage.setItem('simurgh.swReload','1');
-      location.reload();
+/* ---- build-4 safety net: works even if every module fails ---- */
+(function(){
+  var SB_URL='https://ummhohozmpwltbgeczsf.supabase.co';
+  var SB_KEY='sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
+  function storedSession(){
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(/auth-token$/.test(k)){
+        try{
+          var v=JSON.parse(localStorage.getItem(k));
+          if(v && v.access_token && v.user){
+            if(!v.expires_at || (v.expires_at*1000) > Date.now()) return v;
+          }
+        }catch(e){}
+      }
     }
-  });
-  navigator.serviceWorker.register('./sw.js').catch(function(){});
-}
+    return null;
+  }
+  /* login watchdog: valid session + login form still on screen -> enter app */
+  setTimeout(function(){
+    if(sessionStorage.getItem('simurgh.watchdog4')) return;
+    var sess=storedSession();
+    if(sess && document.getElementById('auth') && window.__simurghEnter){
+      sessionStorage.setItem('simurgh.watchdog4','1');
+      window.__simurghEnter(sess);
+    }
+  }, 2200);
+  /* inspector fallback: if modules didn't open a modal within 400ms, open one from REST */
+  function fbInspector(m){
+    var ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(4,6,12,.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:18px;';
+    var box=document.createElement('div');
+    box.style.cssText='background:#141828;border:1px solid #262c45;border-radius:18px;max-width:860px;width:100%;max-height:86vh;display:flex;flex-direction:column;color:#e8ebf7;font-family:Inter,Vazirmatn,sans-serif;';
+    var head=document.createElement('div');
+    head.style.cssText='display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid #262c45;font-weight:700;';
+    head.textContent='Request inspector';
+    var x=document.createElement('button');
+    x.textContent='✕';
+    x.style.cssText='margin-left:auto;background:none;border:none;color:#8b93b5;font-size:16px;cursor:pointer;';
+    x.onclick=function(){ ov.remove(); };
+    head.append(x);
+    var body=document.createElement('div');
+    body.style.cssText='padding:16px 18px;overflow:auto;';
+    function sec(title,obj){
+      var h=document.createElement('div');
+      h.textContent=title;
+      h.style.cssText='font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#8b93b5;margin:10px 0 6px;';
+      var pre=document.createElement('pre');
+      pre.textContent=JSON.stringify(obj,null,2);
+      pre.style.cssText='background:#0d1020;border:1px solid #262c45;border-radius:12px;padding:12px;font-size:12px;line-height:1.55;overflow:auto;direction:ltr;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;font-family:JetBrains Mono,monospace;';
+      var cp=document.createElement('button');
+      cp.textContent='Copy';
+      cp.style.cssText='background:#1a1f33;border:1px solid #262c45;color:#e8ebf7;border-radius:8px;padding:4px 12px;font-size:12px;cursor:pointer;margin-bottom:6px;';
+      cp.onclick=function(){ try{ navigator.clipboard.writeText(pre.textContent); cp.textContent='Copied'; }catch(e){} };
+      body.append(h,cp,pre);
+    }
+    sec('Payload', m.request_json.body);
+    sec('Headers', m.request_json.headers);
+    sec('Response meta', m.meta_json||{});
+    box.append(head,body);
+    ov.append(box);
+    ov.addEventListener('mousedown',function(e){ if(e.target===ov) ov.remove(); });
+    document.body.append(ov);
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var b=(t && t.closest) ? t.closest('[data-act="req"]') : null;
+    if(!b) return;
+    setTimeout(function(){
+      if(document.querySelector('.overlay')) return;
+      var mid=b.dataset.mid; if(!mid) return;
+      var sess=storedSession(); if(!sess) return;
+      fetch(SB_URL+'/rest/v1/qwenai_messages?id=eq.'+encodeURIComponent(mid)+'&select=request_json,meta_json',
+        {headers:{apikey:SB_KEY,Authorization:'Bearer '+sess.access_token}})
+        .then(function(r){ return r.json(); })
+        .then(function(rows){ if(rows && rows[0] && rows[0].request_json) fbInspector(rows[0]); })
+        .catch(function(){});
+    },400);
+  },true);
+})();
 </script>
-<script type="module" src="js/app.js"></script>
+<script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>

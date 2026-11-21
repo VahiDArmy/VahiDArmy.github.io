@@ -5,6 +5,7 @@ export const CFG = {
   ROUTER_ID: 'openrouter/free',
   APP_NAME: 'Simurgh',
   VERSION: '1.0.0',
+  BUILD: 4,
   LS: { settings:'simurgh.settings', key:'simurgh.orkey', models:'simurgh.models', drafts:'simurgh.drafts', sidebar:'simurgh.sidebar', modelsAt:'simurgh.modelsAt' },
   MAX_IMG_MB: 3.5, MAX_TXT_KB: 200, MAX_FILES: 4
 };

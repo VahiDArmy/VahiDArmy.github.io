@@ -1,13 +1,13 @@
-import { CFG, DEFAULTS, setLang, getLang } from './config.js';
-import { DB } from './api.js';
-import { debounce, estimateTokens } from './utils.js';
+import { CFG, DEFAULTS, setLang, getLang } from './config.js?v=4';
+import { DB } from './api.js?v=4';
+import { debounce, estimateTokens } from './utils.js?v=4';
 
 export const S = {
   user:null, profile:null,
   settings:{ ...DEFAULTS },
   conversations:[], messages:{}, activeConvId:null,
   models:[], prompts:[], projects:[],
-  generating:{},           // convId -> {ctrl, msgId, startedAt}
+  generating:{},
   sidebarOpen: window.innerWidth>900,
   online: navigator.onLine,
   projectFilter: null
@@ -17,7 +17,6 @@ const subs = {};
 export function on(evt, fn){ (subs[evt]||(subs[evt]=[])).push(fn); }
 export function emit(evt, data){ for(const fn of (subs[evt]||[])){ try{ fn(data); }catch(e){ console.error(e); } } }
 
-/* ---------- settings ---------- */
 export function initSettings(){
   try{
     const local = JSON.parse(localStorage.getItem(CFG.LS.settings)||'{}');
@@ -65,11 +64,9 @@ export function toggleSidebar(force){
   applyAppearance();
 }
 
-/* ---------- api key (local only) ---------- */
 export function getKey(){ return localStorage.getItem(CFG.LS.key)||''; }
 export function setKey(k){ if(k) localStorage.setItem(CFG.LS.key,k); else localStorage.removeItem(CFG.LS.key); }
 
-/* ---------- models cache ---------- */
 export function cacheModels(){ try{ localStorage.setItem(CFG.LS.models, JSON.stringify(S.models)); }catch{} }
 export function loadCachedModels(){
   try{ S.models = JSON.parse(localStorage.getItem(CFG.LS.models)||'[]'); }catch{ S.models=[]; }
@@ -81,7 +78,6 @@ export function modelInfo(id){
   return null;
 }
 
-/* ---------- conversations / branches ---------- */
 export function activeConv(){ return S.conversations.find(c=>c.id===S.activeConvId)||null; }
 export function effectiveModel(conv){
   if(!conv) return S.settings.defaultModel;
@@ -113,7 +109,6 @@ export function cleanBranchMap(conv, msgs){
   return map;
 }
 
-/* ---------- context trimming ---------- */
 export function trimContext(messages, modelId, maxTokens, limit){
   const sys = messages.filter(m=>m.role==='system');
   let rest = messages.filter(m=>m.role!=='system');
@@ -127,7 +122,6 @@ export function trimContext(messages, modelId, maxTokens, limit){
   return [...sys, ...rest];
 }
 
-/* ---------- drafts ---------- */
 function drafts(){ try{ return JSON.parse(localStorage.getItem(CFG.LS.drafts)||'{}'); }catch{ return {}; } }
 export function getDraft(id){ return drafts()[id]||''; }
 export function setDraft(id, text){

@@ -1,16 +1,15 @@
-import { CFG, t, THEMES } from './config.js';
-import { el, $ } from './utils.js';
-import { icon, toast, palette, registerCommands } from './ui.js';
-import { S, on, emit, initSettings, applyCloudSettings, saveSettings, loadCachedModels, cacheModels, toggleSidebar, applyAppearance } from './state.js';
-import { Auth, DB } from './api.js';
-import { renderAuth } from './auth-view.js';
-import { mountSidebar } from './sidebar.js';
-import { mountChat, openConversation, newChat, stopGeneration, copyLast } from './chat.js';
-import { openSettings, openShortcuts, refreshModels, exportAll, exportConversation } from './settings.js';
-import { activeConv } from './state.js';
+import { CFG, t, THEMES } from './config.js?v=4';
+import { el } from './utils.js?v=4';
+import { icon, toast, palette, registerCommands } from './ui.js?v=4';
+import { S, on, emit, initSettings, applyCloudSettings, saveSettings, loadCachedModels, cacheModels, toggleSidebar, applyAppearance, activeConv } from './state.js?v=4';
+import { Auth, DB } from './api.js?v=4';
+import { renderAuth } from './auth-view.js?v=4';
+import { mountSidebar } from './sidebar.js?v=4';
+import { mountChat, openConversation, newChat, stopGeneration, copyLast } from './chat.js?v=4';
+import { openSettings, openShortcuts, refreshModels, exportAll, exportConversation } from './settings.js?v=4';
 
 const appRoot = document.getElementById('app');
-let booted = false, loading = false;
+let booted = false, entering = false, loading = false;
 
 function splash(){
   appRoot.innerHTML='';
@@ -41,15 +40,26 @@ async function loadAll(){
   loading=false;
 }
 
+async function enterApp(session){
+  if(booted || entering || !session || !session.user) return;
+  entering=true;
+  S.user=session.user;
+  splash();
+  await loadAll();
+  booted=true;
+  entering=false;
+  renderApp();
+}
+window.__simurghEnter = enterApp;
+
 function renderApp(){
   appRoot.innerHTML='';
   appRoot.removeAttribute('aria-busy');
   const sidebar=el('aside',{id:'sidebar'});
   const main=el('main',{id:'main'});
   const backdrop=el('div',{id:'sb-backdrop',onclick:()=>toggleSidebar(false)});
-  const fx=el('div',{id:'bgfx'});
+  if(!document.getElementById('bgfx')) document.body.prepend(el('div',{id:'bgfx'}));
   appRoot.append(sidebar,main,backdrop);
-  if(!document.getElementById('bgfx')) document.body.prepend(fx);
   mountSidebar(sidebar);
   mountChat(main);
   registerCommands([
@@ -102,32 +112,26 @@ async function boot(){
   loadCachedModels();
   bindGlobals();
   splash();
-  const session=await Auth.session().catch(()=>null);
   Auth.onChange(async (evt,session)=>{
     if(evt==='PASSWORD_RECOVERY'){
       S.user=session?.user||null;
+      booted=false; entering=false;
       renderAuth(appRoot,'reset-set');
       return;
     }
-    if(evt==='SIGNED_IN'&&session){
-      if(booted&&S.user?.id===session.user.id) return;
-      S.user=session.user;
-      if(!booted){ splash(); await loadAll(); booted=true; renderApp(); }
+    if((evt==='SIGNED_IN'||evt==='INITIAL_SESSION')&&session){
+      await enterApp(session);
     }
     if(evt==='SIGNED_OUT'){
-      booted=false; S.user=null; S.profile=null;
+      booted=false; entering=false;
+      S.user=null; S.profile=null;
       S.conversations=[]; S.messages={}; S.activeConvId=null; S.prompts=[]; S.projects=[];
       history.replaceState(null,'','#');
       renderAuth(appRoot);
     }
   });
-  if(session){
-    S.user=session.user;
-    await loadAll();
-    booted=true;
-    renderApp();
-  } else {
-    renderAuth(appRoot);
-  }
+  const session=await Auth.session().catch(()=>null);
+  if(session) await enterApp(session);
+  else if(!booted) renderAuth(appRoot);
 }
 boot();

@@ -1,8 +1,8 @@
-import { CFG, t, THEMES } from './config.js';
-import { el } from './utils.js';
-import { icon, toast } from './ui.js';
-import { Auth } from './api.js';
-import { S, saveSettings } from './state.js';
+import { CFG, t, THEMES } from './config.js?v=4';
+import { el } from './utils.js?v=4';
+import { icon, toast } from './ui.js?v=4';
+import { Auth } from './api.js?v=4';
+import { S, saveSettings } from './state.js?v=4';
 
 export function renderAuth(root, mode='in'){
   let busy=false, notice=null, error=null, tab=(mode==='magic')?'magic':(mode==='reset-set')?'reset-set':'in';
@@ -50,12 +50,14 @@ export function renderAuth(root, mode='in'){
       if(tab!=='reset-set' && !em){ return; }
       busy=true; submitBtn.disabled=true;
       submitBtn.textContent = tab==='in'?t('auth.signingIn'):tab==='up'?t('auth.creating'):t('auth.sending');
+      let entered=false;
       try{
         if(tab==='in'){
-          await Auth.signIn(em, pass.value);
+          const data=await Auth.signIn(em, pass.value);
+          if(data.session && window.__simurghEnter){ entered=true; await window.__simurghEnter(data.session); }
         } else if(tab==='up'){
           const data=await Auth.signUp(em, pass.value, name.value.trim());
-          if(data.session){ /* autoconfirmed — app takes over */ }
+          if(data.session && window.__simurghEnter){ entered=true; await window.__simurghEnter(data.session); }
           else { confirmEmail=em; tab='confirm'; }
         } else if(tab==='magic'){
           await Auth.magic(em); notice=t('auth.magicSent')+' '+t('auth.magicHint');
@@ -64,13 +66,16 @@ export function renderAuth(root, mode='in'){
         } else if(tab==='reset-set'){
           await Auth.updatePassword(pass.value);
           toast(t('settings.saved'),'ok');
-          location.hash=''; location.reload();
+          if(window.__simurghEnter){
+            const sess=await Auth.session();
+            if(sess){ entered=true; await window.__simurghEnter(sess); }
+          }
         }
       }catch(err){
         error = err.message==='Invalid login credentials' ? (S.settings.lang==='fa'?'ایمیل یا رمز نادرست است':'Invalid email or password') : (err.message||String(err));
       }
       busy=false;
-      paint();
+      if(!entered) paint();
     }});
 
     const topBar=el('div',{class:'auth-top'},
@@ -111,8 +116,7 @@ export function renderAuth(root, mode='in'){
       if(tab==='in'||tab==='up'||tab==='reset-set'){
         form.append(el('div',{class:'field'}, el('label',{class:'lbl',text:tab==='reset-set'?t('auth.newPassword'):t('auth.password')}), passWrap));
       }
-      if(tab!=='reset-set') form.append(submitBtn);
-      else form.append(submitBtn);
+      form.append(submitBtn);
       if(tab==='in'){
         form.append(el('div',{style:{textAlign:'center',marginTop:'13px'}},
           el('a',{href:'#',class:'small',text:t('auth.forgot'),onclick:e=>{ e.preventDefault(); tab='reset-req'; error=null; notice=null; paint(); }})));
@@ -121,7 +125,7 @@ export function renderAuth(root, mode='in'){
         form.append(el('button',{class:'btn ghost',type:'button',style:{width:'100%',marginTop:'8px'},text:t('auth.back'),onclick:()=>{ tab='in'; notice=null; paint(); }}));
       }
       form.append(el('p',{class:'muted',style:{fontSize:'.7rem',textAlign:'center',margin:'16px 0 0'},
-        text:CFG.APP_NAME+' · Supabase + OpenRouter · '+t('settings.apiKeyHint')}));
+        text:CFG.APP_NAME+' · build '+CFG.BUILD+' · '+t('settings.apiKeyHint')}));
     }
 
     const side=el('div',{class:'auth-side'}, topBar, form);

@@ -1,10 +1,10 @@
-import { CFG, t, REASON_OPTS } from './config.js';
-import { el, esc, uid, dirOf, fmtTime, fmtDur, fmtNum, fmtBytes, shortModel, stripMd, estimateTokens, readImage, readText, fileExt, download, debounce, throttle, clamp } from './utils.js';
-import { icon, toast, menu, confirmDlg, modal, lightbox, htmlPreview, copyWithToast } from './ui.js';
-import { S, on, emit, getKey, activeConv, effectiveModel, modelInfo, resolveParam, buildPath, cleanBranchMap, trimContext, getDraft, setDraft, displayName, toggleSidebar } from './state.js';
-import { DB, OR } from './api.js';
-import { renderMarkdown, setMathCallback } from './markdown.js';
-import { openSettings, openRequestViewer, openModelPicker, openChatSettings, exportConversation } from './settings.js';
+import { CFG, t, REASON_OPTS } from './config.js?v=4';
+import { el, esc, dirOf, fmtTime, fmtDur, fmtNum, shortModel, stripMd, estimateTokens, readImage, readText, fileExt, download, debounce, throttle, clamp } from './utils.js?v=4';
+import { icon, toast, menu, confirmDlg, lightbox, htmlPreview, copyWithToast } from './ui.js?v=4';
+import { S, on, emit, getKey, activeConv, effectiveModel, modelInfo, resolveParam, buildPath, cleanBranchMap, trimContext, getDraft, setDraft, displayName, toggleSidebar, saveSettings } from './state.js?v=4';
+import { DB, OR } from './api.js?v=4';
+import { renderMarkdown, setMathCallback } from './markdown.js?v=4';
+import { openSettings, openRequestViewer, openModelPicker, openChatSettings, exportConversation } from './settings.js?v=4';
 
 const FENCE='```';
 let root=null, scroller=null, msgsEl=null, headerEl=null, composerEl=null, inputEl=null, sendBtn=null, chipsRow=null, tokenEst=null, emptyEl=null, pill=null;
@@ -13,7 +13,6 @@ let pending=[];
 let stick=true;
 let speakingId=null, recognition=null, slashState=null;
 
-/* ================= MOUNT ================= */
 export function mountChat(container){
   root=container;
   root.innerHTML='';
@@ -41,8 +40,6 @@ export function mountChat(container){
 
   scroller.addEventListener('click', onAction);
 
-  /* capture-phase guarantee: inspector + read-aloud fire no matter what
-     any other listener, re-render, or stale delegation does */
   if(!window.__simurghActionGuard){
     window.__simurghActionGuard=true;
     document.addEventListener('click', e=>{
@@ -74,12 +71,11 @@ export function mountChat(container){
   on('delete-conv', id=>deleteConv(id));
   on('reveal-msg', ({convId,msgId})=>revealMessage(convId,msgId));
   on('insert-prompt', text=>{ inputEl.value = inputEl.value ? inputEl.value+'\n'+text : text; autosize(); inputEl.focus(); saveDraftNow(); });
-  on('pick-model-global', id=>{ const c=activeConv(); if(c) setConvModel(c,id); else import('./state.js').then(m=>m.saveSettings({defaultModel:id})); });
+  on('pick-model-global', id=>{ const c=activeConv(); if(c) setConvModel(c,id); else saveSettings({defaultModel:id}); });
   on('model-picker', opts=>openModelPicker(opts.anchor,{current:opts.current,onPick:opts.onPick}));
   paintHeader(); paintMessages(); updateHint();
 }
 
-/* ================= OPEN / NEW / DELETE ================= */
 export async function openConversation(id){
   S.activeConvId=id;
   history.replaceState(null,'','#c/'+id);
@@ -146,7 +142,6 @@ async function ensureConv(){
   return conv;
 }
 
-/* ================= HEADER ================= */
 function paintHeader(){
   if(!headerEl) return;
   headerEl.innerHTML='';
@@ -203,8 +198,7 @@ function paintHeader(){
 }
 async function setConvModel(conv,id){
   try{
-    const patch={ model_id:id, locked_model:null };
-    const row=await DB.updateConversation(conv.id,patch);
+    const row=await DB.updateConversation(conv.id,{ model_id:id, locked_model:null });
     Object.assign(conv,row);
     emit('conversations'); paintHeader();
   }catch(e){ toast(e.message,'err'); }
@@ -226,7 +220,6 @@ async function aiTitle(conv){
   }catch(e){ toast(e.message,'err'); }
 }
 
-/* ================= MESSAGES ================= */
 function paintMessages(){
   if(!msgsEl) return;
   const conv=activeConv();
@@ -288,8 +281,7 @@ function messageEl(m,conv){
     }
     body.append(grid);
   }
-  const showReason=S.settings.showReasoning;
-  if(!isUser && showReason && (m.reasoning||streaming)){
+  if(!isUser && S.settings.showReasoning && (m.reasoning||streaming)){
     const thinking=streaming && !m.content;
     const rMs=meta.reasoning_ms;
     body.append(el('div',{class:'reasoning'+((streaming||!m.content)?' open':'')},
@@ -340,7 +332,6 @@ function messageEl(m,conv){
     el('div',{style:{minWidth:'0'}},head,body));
 }
 
-/* ================= ACTION DELEGATION ================= */
 async function onAction(e){
   const btn=e.target.closest('[data-act],[data-suggest]');
   if(!btn) return;
@@ -357,7 +348,7 @@ async function onAction(e){
   if(act==='code-preview'){ htmlPreview(btn.closest('.codeblock').querySelector('code').textContent); return; }
   if(act==='code-dl'){ const cb=btn.closest('.codeblock'); download('code.'+fileExt(btn.dataset.lang), cb.querySelector('code').textContent); return; }
   if(act==='img'){ lightbox(btn.src||btn.getAttribute('src')); return; }
-  if(act==='req'||act==='tts') return; /* handled by capture guard */
+  if(act==='req'||act==='tts') return;
   if(!conv||!m) return;
 
   switch(act){
@@ -406,7 +397,6 @@ async function onAction(e){
   }
 }
 
-/* ================= BRANCHING ================= */
 async function setBranch(conv,key,msgId){
   conv.branch_map={...(conv.branch_map||{}),[key]:msgId};
   emit('messages');
@@ -490,7 +480,6 @@ export async function revealMessage(convId,msgId){
   },80);
 }
 
-/* ================= CONTEXT & GENERATION ================= */
 function composeContext(conv,uptoId){
   const msgs=S.messages[conv.id]||[];
   const {path}=buildPath(conv,msgs);
@@ -677,7 +666,6 @@ export function stopGeneration(convId){
   if(g) g.ctrl.abort();
 }
 
-/* ================= COMPOSER ================= */
 function buildComposer(){
   inputEl=el('textarea',{id:'input',rows:1,dir:'auto',placeholder:t('chat.placeholder'),'aria-label':t('chat.placeholder')});
   chipsRow=el('div',{id:'chips-row'});
@@ -693,7 +681,7 @@ function buildComposer(){
     const cur=conv?resolveParam(conv,'reasoning'):S.settings.reasoning;
     menu(e.currentTarget,REASON_OPTS.map(r=>({label:t('settings.'+r),checked:cur===r,onClick:async()=>{
       if(conv){ try{ const row=await DB.updateConversation(conv.id,{params:{...(conv.params||{}),reasoning:r}}); Object.assign(conv,row); paintReasonBtn(); }catch(err){ toast(err.message,'err'); } }
-      else import('./state.js').then(mm=>mm.saveSettings({reasoning:r}));
+      else saveSettings({reasoning:r});
     }})));
   }});
   reasonBtn.id='reason-btn';
@@ -783,7 +771,6 @@ async function sendCurrent(){
   }catch(e){ toast(e.message,'err'); }
 }
 
-/* ---------- attachments ---------- */
 async function handleFiles(files){
   for(const f of [...files]){
     if(pending.length>=CFG.MAX_FILES){ toast(t('chat.maxFiles',{n:CFG.MAX_FILES}),'warn'); break; }
@@ -811,7 +798,6 @@ function paintChips(){
   });
 }
 
-/* ---------- slash templates ---------- */
 function maybeSlash(){
   const v=inputEl.value;
   if(v.startsWith('/')&&!v.includes('\n')){
@@ -868,7 +854,6 @@ function closeSlash(){
   document.querySelectorAll('.slash-panel').forEach(n=>n.remove());
 }
 
-/* ---------- voice ---------- */
 function startMic(btn){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){ toast(t('chat.micUnsupported'),'warn'); return; }
@@ -921,7 +906,6 @@ export function copyLast(){
   for(let i=path.length-1;i>=0;i--) if(path[i].role==='assistant'&&path[i].content){ copyWithToast(path[i].content); return; }
 }
 
-/* ---------- scroll ---------- */
 function scrollBottom(smooth){
   requestAnimationFrame(()=>{ scroller.scrollTo({top:scroller.scrollHeight,behavior:smooth?'smooth':'auto'}); });
 }

@@ -1,9 +1,8 @@
-import { t } from './config.js';
-import { $, el, esc, fuzzy, copyText, clamp } from './utils.js';
-import { S, emit } from './state.js';
-import { DB } from './api.js';
+import { t } from './config.js?v=4';
+import { $, el, esc, fuzzy, copyText, clamp } from './utils.js?v=4';
+import { S, emit } from './state.js?v=4';
+import { DB } from './api.js?v=4';
 
-/* ---------------- icons ---------------- */
 const P = {
   logo:'<path d="M20 4c-6 0-12 4-14 10l-2 6 6-2c6-2 10-8 10-14z"/><path d="M6 14c4-1 8-4 10-8"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
@@ -73,7 +72,6 @@ export function icon(name, size=18){
 }
 export function iconEl(name, size=18){ const sp=el('span',{html:icon(name,size),style:{display:'contents'}}); return sp; }
 
-/* ---------------- toasts ---------------- */
 let toastBox=null;
 export function toast(msg, type='info', ms){
   if(!toastBox){ toastBox=el('div',{id:'toasts'}); document.body.append(toastBox); }
@@ -85,7 +83,6 @@ export function toast(msg, type='info', ms){
   setTimeout(()=>{ n.style.opacity='0'; n.style.transition='opacity .3s'; setTimeout(()=>n.remove(),320); }, ms || (type==='err'?5200:3000));
 }
 
-/* ---------------- modal stack ---------------- */
 const modalStack=[];
 const menuStack=[];
 document.addEventListener('keydown', e=>{
@@ -122,8 +119,6 @@ export function modal({ title, body, actions=[], size='', onClose, noPad=false }
     const ix=modalStack.indexOf(entry); if(ix>=0) modalStack.splice(ix,1);
     overlay.remove(); if(onClose) onClose();
   }
-  /* on touch devices, don't auto-focus inputs (pops the keyboard unexpectedly);
-     explicit [autofocus] elements still get focus everywhere */
   setTimeout(()=>{
     const fine=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
     const f=box.querySelector('[autofocus]')||(fine?box.querySelector('input,textarea,select'):null);
@@ -160,7 +155,6 @@ export function promptDlg({ title, label, value='', placeholder='', multiline=fa
   });
 }
 
-/* ---------------- floating menus (touch-safe) ---------------- */
 export function closeAllMenus(){ while(menuStack.length) menuStack.pop()(); }
 export function floatPanel(anchor, node){
   closeAllMenus();
@@ -186,14 +180,11 @@ export function floatPanel(anchor, node){
     window.removeEventListener('resize',place);
     const ix=menuStack.indexOf(close); if(ix>=0) menuStack.splice(ix,1);
   };
-  /* pointerdown covers mouse + touch + pen uniformly */
   const out=e=>{ if(!node.contains(e.target) && !anchor.contains(e.target)) close(); };
-  /* scrolling INSIDE the panel (its own list) must never close it */
   const onScroll=e=>{ if(node.contains(e.target)) return; close(); };
   place();
   setTimeout(()=>{ if(!closed) document.addEventListener('pointerdown',out,true); },0);
   document.addEventListener('scroll',onScroll,true);
-  /* keyboard opening / rotation → reposition, never close */
   window.addEventListener('resize',place);
   menuStack.push(close);
   return close;
@@ -210,7 +201,6 @@ export function menu(anchor, items){
   return floatPanel(anchor, node);
 }
 
-/* ---------------- command palette ---------------- */
 let COMMANDS=[];
 export function registerCommands(list){ COMMANDS=list; }
 export function palette(initialMode){
@@ -281,7 +271,6 @@ export function palette(initialMode){
   return close;
 }
 
-/* ---------------- shared helpers ---------------- */
 export async function copyWithToast(text){
   const ok=await copyText(text);
   toast(ok?t('chat.copied'):t('toast.error'), ok?'ok':'err');
