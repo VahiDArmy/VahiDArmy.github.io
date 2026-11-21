@@ -1,8 +1,19 @@
+// All tables use the qwenai_ prefix — defined once in T below.
 import { CFG } from './config.js';
 
 export const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_KEY, {
   auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
 });
+
+/* table names — single source of truth */
+const T = {
+  profiles:      'qwenai_profiles',
+  projects:      'qwenai_projects',
+  conversations: 'qwenai_conversations',
+  messages:      'qwenai_messages',
+  models:        'qwenai_models',
+  prompts:       'qwenai_prompts'
+};
 
 function chk(res){
   if(res.error) throw new Error(res.error.message || 'Database error');
@@ -49,44 +60,44 @@ export const Auth = {
 export const DB = {
   async getProfile(){
     const uid = await uidOf();
-    const row = chk(await sb.from('profiles').select('*').eq('id',uid).maybeSingle());
+    const row = chk(await sb.from(T.profiles).select('*').eq('id',uid).maybeSingle());
     if(row) return row;
-    return chk(await sb.from('profiles').upsert({ id:uid }).select().single());
+    return chk(await sb.from(T.profiles).upsert({ id:uid }).select().single());
   },
   async saveProfile(patch){
     const uid = await uidOf();
-    chk(await sb.from('profiles').upsert({ id:uid, ...patch, updated_at:new Date().toISOString() }));
+    chk(await sb.from(T.profiles).upsert({ id:uid, ...patch, updated_at:new Date().toISOString() }));
   },
   async listConversations(){
-    return chk(await sb.from('conversations').select('*').order('updated_at',{ascending:false}).limit(500));
+    return chk(await sb.from(T.conversations).select('*').order('updated_at',{ascending:false}).limit(500));
   },
   async createConversation(obj){
     const user_id = await uidOf();
-    return chk(await sb.from('conversations').insert({ user_id, ...obj }).select().single());
+    return chk(await sb.from(T.conversations).insert({ user_id, ...obj }).select().single());
   },
   async updateConversation(id, patch){
-    return chk(await sb.from('conversations').update({ ...patch, updated_at:new Date().toISOString() }).eq('id',id).select().single());
+    return chk(await sb.from(T.conversations).update({ ...patch, updated_at:new Date().toISOString() }).eq('id',id).select().single());
   },
-  async deleteConversation(id){ chk(await sb.from('conversations').delete().eq('id',id)); },
+  async deleteConversation(id){ chk(await sb.from(T.conversations).delete().eq('id',id)); },
   async convMessages(id){
-    return chk(await sb.from('messages').select('*').eq('conversation_id',id).order('created_at',{ascending:true}).limit(4000));
+    return chk(await sb.from(T.messages).select('*').eq('conversation_id',id).order('created_at',{ascending:true}).limit(4000));
   },
   async createMessage(obj){
     const user_id = await uidOf();
-    return chk(await sb.from('messages').insert({ user_id, ...obj }).select().single());
+    return chk(await sb.from(T.messages).insert({ user_id, ...obj }).select().single());
   },
   async updateMessage(id, patch){
-    return chk(await sb.from('messages').update(patch).eq('id',id).select().single());
+    return chk(await sb.from(T.messages).update(patch).eq('id',id).select().single());
   },
-  async deleteMessage(id){ chk(await sb.from('messages').delete().eq('id',id)); },
+  async deleteMessage(id){ chk(await sb.from(T.messages).delete().eq('id',id)); },
   async searchMessages(q){
-    return chk(await sb.from('messages').select('id,conversation_id,content,role,created_at').ilike('content','%'+q+'%').order('created_at',{ascending:false}).limit(25));
+    return chk(await sb.from(T.messages).select('id,conversation_id,content,role,created_at').ilike('content','%'+q+'%').order('created_at',{ascending:false}).limit(25));
   },
   async markOrphansStopped(){
     const uid = await uidOf();
-    chk(await sb.from('messages').update({ status:'stopped' }).eq('user_id',uid).eq('status','streaming'));
+    chk(await sb.from(T.messages).update({ status:'stopped' }).eq('user_id',uid).eq('status','streaming'));
   },
-  async listModels(){ return chk(await sb.from('models').select('*')); },
+  async listModels(){ return chk(await sb.from(T.models).select('*')); },
   /* merge fetched models: upsert info only — active/pinned survive, no duplicates */
   async mergeModels(fetched){
     const user_id = await uidOf();
@@ -94,44 +105,44 @@ export const DB = {
     const fetchedIds = new Set(fetched.map(m=>m.id));
     const now = new Date().toISOString();
     const rows = fetched.map(m=>({ user_id, id:m.id, info:m, stale:false, last_seen:now }));
-    if(rows.length) chk(await sb.from('models').upsert(rows, { onConflict:'user_id,id' }));
+    if(rows.length) chk(await sb.from(T.models).upsert(rows, { onConflict:'user_id,id' }));
     const missing = existing.filter(r=>!fetchedIds.has(r.id) && !r.stale).map(r=>r.id);
-    if(missing.length) chk(await sb.from('models').update({ stale:true }).eq('user_id',user_id).in('id',missing));
+    if(missing.length) chk(await sb.from(T.models).update({ stale:true }).eq('user_id',user_id).in('id',missing));
     return { rows: await DB.listModels(), staleCount: missing.length };
   },
   async setModelFlag(id, patch){
     const user_id = await uidOf();
-    chk(await sb.from('models').update(patch).eq('user_id',user_id).eq('id',id));
+    chk(await sb.from(T.models).update(patch).eq('user_id',user_id).eq('id',id));
   },
   async deleteModels(ids){
     const user_id = await uidOf();
-    if(ids.length) chk(await sb.from('models').delete().eq('user_id',user_id).in('id',ids));
+    if(ids.length) chk(await sb.from(T.models).delete().eq('user_id',user_id).in('id',ids));
   },
-  async listPrompts(){ return chk(await sb.from('prompts').select('*').order('created_at',{ascending:true})); },
+  async listPrompts(){ return chk(await sb.from(T.prompts).select('*').order('created_at',{ascending:true})); },
   async savePrompt(p){
     const user_id = await uidOf();
-    if(p.id) return chk(await sb.from('prompts').update({ title:p.title, body:p.body }).eq('id',p.id).select().single());
-    return chk(await sb.from('prompts').insert({ user_id, title:p.title, body:p.body }).select().single());
+    if(p.id) return chk(await sb.from(T.prompts).update({ title:p.title, body:p.body }).eq('id',p.id).select().single());
+    return chk(await sb.from(T.prompts).insert({ user_id, title:p.title, body:p.body }).select().single());
   },
-  async deletePrompt(id){ chk(await sb.from('prompts').delete().eq('id',id)); },
-  async listProjects(){ return chk(await sb.from('projects').select('*').order('created_at',{ascending:true})); },
+  async deletePrompt(id){ chk(await sb.from(T.prompts).delete().eq('id',id)); },
+  async listProjects(){ return chk(await sb.from(T.projects).select('*').order('created_at',{ascending:true})); },
   async saveProject(p){
     const user_id = await uidOf();
     const fields = { name:p.name, emoji:p.emoji, instructions:p.instructions, model_id:p.model_id };
-    if(p.id) return chk(await sb.from('projects').update({ ...fields, updated_at:new Date().toISOString() }).eq('id',p.id).select().single());
-    return chk(await sb.from('projects').insert({ user_id, ...fields }).select().single());
+    if(p.id) return chk(await sb.from(T.projects).update({ ...fields, updated_at:new Date().toISOString() }).eq('id',p.id).select().single());
+    return chk(await sb.from(T.projects).insert({ user_id, ...fields }).select().single());
   },
-  async deleteProject(id){ chk(await sb.from('projects').delete().eq('id',id)); },
+  async deleteProject(id){ chk(await sb.from(T.projects).delete().eq('id',id)); },
   async wipeChats(){
     const uid = await uidOf();
-    chk(await sb.from('conversations').delete().eq('user_id',uid));
+    chk(await sb.from(T.conversations).delete().eq('user_id',uid));
   },
   async wipeAll(){
     const uid = await uidOf();
-    chk(await sb.from('conversations').delete().eq('user_id',uid));
-    chk(await sb.from('prompts').delete().eq('user_id',uid));
-    chk(await sb.from('projects').delete().eq('user_id',uid));
-    chk(await sb.from('models').delete().eq('user_id',uid));
+    chk(await sb.from(T.conversations).delete().eq('user_id',uid));
+    chk(await sb.from(T.prompts).delete().eq('user_id',uid));
+    chk(await sb.from(T.projects).delete().eq('user_id',uid));
+    chk(await sb.from(T.models).delete().eq('user_id',uid));
   }
 };
 
