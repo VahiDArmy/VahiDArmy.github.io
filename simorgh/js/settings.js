@@ -25,7 +25,7 @@ export async function refreshModels(btn){
 /* ================= MODEL PICKER ================= */
 export function openModelPicker(anchor, { current, onPick, manage=true }){
   const panel=el('div',{class:'menu mp-panel'});
-  const search=el('input',{class:'input',placeholder:t('settings.searchModels'),autofocus:true});
+  const search=el('input',{class:'input',placeholder:t('settings.searchModels')});
   const list=el('div',{class:'mp-list'});
   panel.append(el('div',{class:'mp-search'},search), list);
   if(manage) panel.append(el('div',{class:'mp-foot'},
@@ -60,7 +60,8 @@ export function openModelPicker(anchor, { current, onPick, manage=true }){
   }
   search.addEventListener('input',paint);
   paint();
-  setTimeout(()=>search.focus(),50);
+  /* only steal focus (and pop the soft keyboard) when a real keyboard exists */
+  if(window.matchMedia('(hover:hover) and (pointer:fine)').matches) setTimeout(()=>search.focus(),50);
   return close;
 }
 
@@ -391,7 +392,6 @@ export function openSettings(tab='general'){
     }
   }
   paintTabs(); paintPane();
-  const unsub=()=>{};
   return m;
 }
 

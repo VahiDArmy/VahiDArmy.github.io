@@ -12,7 +12,6 @@ let view={path:[],byParent:{}};
 let pending=[];            // pending attachments
 let stick=true;            // auto-scroll
 let speakingId=null, recognition=null, slashState=null;
-let streamPainters={};     // msgId -> throttled painter
 
 /* ================= MOUNT ================= */
 export function mountChat(container){
@@ -338,7 +337,7 @@ async function onAction(e){
   const msgs=conv?(S.messages[conv.id]||[]):[];
   const m=mid?msgs.find(x=>x.id===mid):null;
 
-  if(act==='code-copy'){ copyWithToast(msgEl.querySelector('.codeblock:not(:has(~ .codeblock))')&&btn.closest('.codeblock').querySelector('code').textContent||''); return; }
+  if(act==='code-copy'){ copyWithToast(btn.closest('.codeblock').querySelector('code').textContent); return; }
   if(act==='code-wrap'){ btn.closest('.codeblock').classList.toggle('wrap'); return; }
   if(act==='code-preview'){ htmlPreview(btn.closest('.codeblock').querySelector('code').textContent); return; }
   if(act==='code-dl'){ const cb=btn.closest('.codeblock'); download('code.'+fileExt(btn.dataset.lang), cb.querySelector('code').textContent); return; }
@@ -427,6 +426,7 @@ function startEdit(m,conv,msgEl){
   );
   contentEl.replaceWith(ta);
   if(actsEl) actsEl.style.display='none';
+  ta.after(btns);
   ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length);
   ta.addEventListener('keydown',e=>{ if(e.key==='Escape') paintMessages(); });
 }
@@ -677,7 +677,7 @@ function buildComposer(){
     onchange:e=>{ handleFiles(e.target.files); e.target.value=''; }});
   const attachBtn=el('button',{class:'ibtn',title:t('chat.attach'),html:icon('paperclip',18),onclick:()=>fileIn.click()});
   const micBtn=el('button',{class:'ibtn',title:t('chat.mic'),html:icon('mic',18),onclick:()=>startMic(micBtn)});
-  const tplBtn=el('button',{class:'ibtn',title:t('chat.templates'),html:icon('book',18),onclick:e=>openSlash(e.currentTarget,'')});
+  const tplBtn=el('button',{class:'ibtn',title:t('chat.templates'),html:icon('book',18),onclick:()=>{ if(slashState) closeSlash(); else openSlash('button'); }});
   const reasonBtn=el('button',{class:'ibtn',title:t('chat.reasoning'),html:icon('brain',18),onclick:e=>{
     const conv=activeConv();
     const cur=conv?resolveParam(conv,'reasoning'):S.settings.reasoning;
@@ -801,20 +801,25 @@ function paintChips(){
   });
 }
 
-/* ---------- slash templates ---------- */
+/* ---------- slash templates (anchored ABOVE the composer, never over it) ---------- */
 function maybeSlash(){
   const v=inputEl.value;
-  if(v.startsWith('/')&&!v.includes('\n')){ openSlash(null,v.slice(1)); }
-  else closeSlash();
+  if(v.startsWith('/')&&!v.includes('\n')){
+    const q=v.slice(1);
+    if(slashState && slashState.mode==='slash') slashState.update(q);
+    else openSlash('slash',q);
+  } else closeSlash();
 }
-function openSlash(anchorEl,q){
+function openSlash(mode,q=''){
   closeSlash();
-  const anchor=anchorEl||document.getElementById('composer-anchor');
+  const anchor=document.getElementById('composer-anchor');
+  const composerBox=document.getElementById('composer');
+  if(!anchor) return;
   const panel=el('div',{class:'slash-panel'});
-  let sel=0, rows=[];
+  let sel=0, rows=[], query=q||'';
   function paint(){
-    const query=(q||'').toLowerCase();
-    rows=S.prompts.filter(p=>!query||p.title.toLowerCase().includes(query)||p.body.toLowerCase().includes(query));
+    const queryL=query.toLowerCase();
+    rows=S.prompts.filter(p=>!queryL||p.title.toLowerCase().includes(queryL)||p.body.toLowerCase().includes(queryL));
     panel.innerHTML='';
     if(!rows.length){
       panel.append(el('div',{class:'sb-empty'},
@@ -824,8 +829,8 @@ function openSlash(anchorEl,q){
     }
     rows.forEach((p,ix)=>{
       panel.append(el('button',{class:'slash-item'+(ix===sel?' sel':''),
-        onmouseenter:()=>{ sel=ix; paint(); },
-        onclick:()=>{ pick(ix); }},
+        onmouseenter:()=>{ sel=ix; panel.querySelectorAll('.slash-item').forEach((n,i)=>n.classList.toggle('sel',i===sel)); },
+        onclick:()=>pick(ix)},
         el('span',{class:'st',dir:'auto',text:p.title}),
         el('span',{class:'sb2',dir:'auto',text:p.body.slice(0,90)})));
     });
@@ -833,18 +838,22 @@ function openSlash(anchorEl,q){
   function pick(ix){
     const p=rows[ix==null?sel:ix];
     if(!p) return;
-    inputEl.value = anchorEl ? (inputEl.value?inputEl.value+'\n'+p.body:p.body) : p.body;
+    inputEl.value = mode==='slash' ? p.body : (inputEl.value?inputEl.value+'\n'+p.body : p.body);
     closeSlash(); autosize(); updateTokenEst(); saveDraftNow(); inputEl.focus();
   }
-  slashState={ move:d=>{ sel=clamp(sel+d,0,Math.max(0,rows.length-1)); paint(); }, pick:()=>pick() };
+  const out=e=>{ if(!panel.contains(e.target) && !(composerBox&&composerBox.contains(e.target))) closeSlash(); };
+  slashState={
+    mode, update:nq=>{ query=nq; sel=0; paint(); },
+    move:d=>{ sel=clamp(sel+d,0,Math.max(0,rows.length-1)); paint(); },
+    pick:()=>pick()
+  };
   anchor.append(panel);
-  if(!anchorEl){
-    const inp=document.getElementById('composer-anchor');
-    setTimeout(()=>document.addEventListener('mousedown',function out(ev){ if(!panel.contains(ev.target)){ closeSlash(); document.removeEventListener('mousedown',out,true); } },true),0);
-  }
+  setTimeout(()=>{ if(slashState) document.addEventListener('pointerdown',out,true); },0);
+  slashState.out=out;
   paint();
 }
 function closeSlash(){
+  if(slashState && slashState.out) document.removeEventListener('pointerdown',slashState.out,true);
   slashState=null;
   document.querySelectorAll('.slash-panel').forEach(n=>n.remove());
 }

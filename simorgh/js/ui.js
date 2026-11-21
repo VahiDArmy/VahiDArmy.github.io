@@ -122,7 +122,13 @@ export function modal({ title, body, actions=[], size='', onClose, noPad=false }
     const ix=modalStack.indexOf(entry); if(ix>=0) modalStack.splice(ix,1);
     overlay.remove(); if(onClose) onClose();
   }
-  setTimeout(()=>{ const f=box.querySelector('[autofocus]')||box.querySelector('input,textarea,select'); if(f) f.focus(); },60);
+  /* on touch devices, don't auto-focus inputs (pops the keyboard unexpectedly);
+     explicit [autofocus] elements still get focus everywhere */
+  setTimeout(()=>{
+    const fine=window.matchMedia('(hover:hover) and (pointer:fine)').matches;
+    const f=box.querySelector('[autofocus]')||(fine?box.querySelector('input,textarea,select'):null);
+    if(f) f.focus();
+  },60);
   return entry;
 }
 export function confirmDlg({ title, message, okText, danger=true }){
@@ -154,24 +160,41 @@ export function promptDlg({ title, label, value='', placeholder='', multiline=fa
   });
 }
 
-/* ---------------- floating menus ---------------- */
+/* ---------------- floating menus (touch-safe) ---------------- */
 export function closeAllMenus(){ while(menuStack.length) menuStack.pop()(); }
 export function floatPanel(anchor, node){
   closeAllMenus();
   node.classList.add('menu');
   document.getElementById('overlays').append(node);
-  const r=anchor.getBoundingClientRect();
-  const nw=node.offsetWidth, nh=node.offsetHeight;
-  const rtl=document.documentElement.dir==='rtl';
-  let left = rtl ? r.right-nw : r.left;
-  left = clamp(left, 8, window.innerWidth-nw-8);
-  let top = r.bottom+6;
-  if(top+nh>window.innerHeight-8) top=Math.max(8, r.top-nh-6);
-  node.style.left=left+'px'; node.style.top=top+'px';
-  const close=()=>{ node.remove(); document.removeEventListener('mousedown',out,true); window.removeEventListener('resize',close); window.removeEventListener('scroll',close,true); };
+  const place=()=>{
+    if(!document.body.contains(anchor)) { close(); return; }
+    const r=anchor.getBoundingClientRect();
+    const nw=node.offsetWidth, nh=node.offsetHeight;
+    const rtl=document.documentElement.dir==='rtl';
+    let left = rtl ? r.right-nw : r.left;
+    left = clamp(left, 8, Math.max(8,window.innerWidth-nw-8));
+    let top = r.bottom+6;
+    if(top+nh>window.innerHeight-8) top=Math.max(8, r.top-nh-6);
+    node.style.left=left+'px'; node.style.top=top+'px';
+  };
+  let closed=false;
+  const close=()=>{
+    if(closed) return; closed=true;
+    node.remove();
+    document.removeEventListener('pointerdown',out,true);
+    document.removeEventListener('scroll',onScroll,true);
+    window.removeEventListener('resize',place);
+    const ix=menuStack.indexOf(close); if(ix>=0) menuStack.splice(ix,1);
+  };
+  /* pointerdown covers mouse + touch + pen uniformly */
   const out=e=>{ if(!node.contains(e.target) && !anchor.contains(e.target)) close(); };
-  setTimeout(()=>document.addEventListener('mousedown',out,true),0);
-  window.addEventListener('resize',close); window.addEventListener('scroll',close,true);
+  /* scrolling INSIDE the panel (its own list) must never close it */
+  const onScroll=e=>{ if(node.contains(e.target)) return; close(); };
+  place();
+  setTimeout(()=>{ if(!closed) document.addEventListener('pointerdown',out,true); },0);
+  document.addEventListener('scroll',onScroll,true);
+  /* keyboard opening / rotation → reposition, never close */
+  window.addEventListener('resize',place);
   menuStack.push(close);
   return close;
 }
