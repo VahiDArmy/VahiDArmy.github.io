@@ -9,8 +9,8 @@ import { openSettings, openRequestViewer, openModelPicker, openChatSettings, exp
 const FENCE='```';
 let root=null, scroller=null, msgsEl=null, headerEl=null, composerEl=null, inputEl=null, sendBtn=null, chipsRow=null, tokenEst=null, emptyEl=null, pill=null;
 let view={path:[],byParent:{}};
-let pending=[];            // pending attachments
-let stick=true;            // auto-scroll
+let pending=[];
+let stick=true;
 let speakingId=null, recognition=null, slashState=null;
 
 /* ================= MOUNT ================= */
@@ -40,6 +40,29 @@ export function mountChat(container){
   root.addEventListener('drop',e=>{ e.preventDefault(); dragDepth=0; dropOv.classList.remove('show'); if(e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files); });
 
   scroller.addEventListener('click', onAction);
+
+  /* capture-phase guarantee: inspector + read-aloud fire no matter what
+     any other listener, re-render, or stale delegation does */
+  if(!window.__simurghActionGuard){
+    window.__simurghActionGuard=true;
+    document.addEventListener('click', e=>{
+      const tgt=e.target;
+      if(!tgt || !tgt.closest) return;
+      const b=tgt.closest('[data-act]');
+      if(!b) return;
+      const act=b.dataset.act;
+      if(act!=='req' && act!=='tts') return;
+      const conv=activeConv();
+      const msgs=conv?(S.messages[conv.id]||[]):[];
+      const m=b.dataset.mid ? msgs.find(x=>x.id===b.dataset.mid) : null;
+      if(!m) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if(act==='req') openRequestViewer(m);
+      else speak(m);
+    }, true);
+  }
+
   setMathCallback(()=>paintMessages());
   on('active', ()=>{ paintHeader(); paintMessages(); loadDraft(); paintChips(); updateComposerMode(); });
   on('messages', ()=>{ paintMessages(); updateComposerMode(); });
@@ -218,7 +241,6 @@ function paintMessages(){
   if(stick) scrollBottom(false);
 }
 function paintEmpty(){
-  const conv=activeConv();
   emptyEl.innerHTML='';
   const suggestions=[['sparkles','chat.suggest1'],['book','chat.suggest2'],['code','chat.suggest3'],['globe','chat.suggest4']];
   emptyEl.append(
@@ -258,7 +280,6 @@ function messageEl(m,conv){
   );
 
   const body=el('div',{class:'msg-body'});
-  /* attachments */
   if(isUser && m.attachments?.length){
     const grid=el('div',{class:'att-grid'});
     for(const a of m.attachments){
@@ -267,69 +288,50 @@ function messageEl(m,conv){
     }
     body.append(grid);
   }
-  /* reasoning */
   const showReason=S.settings.showReasoning;
-  let reasonEl=null;
   if(!isUser && showReason && (m.reasoning||streaming)){
     const thinking=streaming && !m.content;
     const rMs=meta.reasoning_ms;
-    reasonEl=el('div',{class:'reasoning'+((streaming||!m.content)?' open':'')},
+    body.append(el('div',{class:'reasoning'+((streaming||!m.content)?' open':'')},
       el('button',{class:'reason-head',dataset:{act:'reason-toggle',mid:m.id}},
         el('span',{html:icon('brain',15)}),
         el('span',{class:'reason-label'+(thinking?' reason-thinking':''),text:thinking?t('chat.thinking'):(rMs?t('chat.thoughtFor',{s:Math.max(1,Math.round(rMs/1000))}):t('chat.reasoning'))}),
         el('span',{class:'chev',html:icon('chevD',14)})),
-      el('div',{class:'reason-body md',dir:'auto',html:m.reasoning?renderMarkdown(m.reasoning,streaming):''}));
-    body.append(reasonEl);
+      el('div',{class:'reason-body md',dir:'auto',html:m.reasoning?renderMarkdown(m.reasoning,streaming):''})));
   }
-  /* content */
   const content=el('div',{class:'msg-content md',dir:'auto'});
   if(m.content) content.innerHTML=renderMarkdown(m.content,streaming);
   if(streaming) content.append(el('span',{class:'cursor'}));
   body.append(content);
-  /* error */
   if(m.status==='error'&&m.error){
-    const eb=el('div',{class:'err-box'},
+    body.append(el('div',{class:'err-box'},
       el('div',{class:'err-t',html:icon('warn',15)+'<span>'+t('toast.error')+'</span>'}),
       el('div',{class:'err-m',text:m.error}),
       el('div',{class:'row wrap'},
         el('button',{class:'btn soft sm',dataset:{act:'retry',mid:m.id},html:icon('refresh',13)+'<span>'+t('chat.retry')+'</span>'}),
         /404|no longer|not found|unavailable/i.test(m.error)?el('button',{class:'btn soft sm',dataset:{act:'use-router',mid:m.id},html:icon('zap',13)+'<span>'+t('chat.useRouter')+'</span>'}):null,
-        /401|invalid.*key|no auth/i.test(m.error)?el('button',{class:'btn soft sm',html:icon('key',13)+'<span>'+t('settings.connection')+'</span>',onclick:()=>openSettings('connection')}):null));
-    body.append(eb);
+        /401|invalid.*key|no auth/i.test(m.error)?el('button',{class:'btn soft sm',html:icon('key',13)+'<span>'+t('settings.connection')+'</span>',onclick:()=>openSettings('connection')}):null)));
   }
-  /* actions */
   const acts=el('div',{class:'msg-actions'});
-  const ib=(act,ic,title,on)=>el('button',{class:'ibtn sm'+(on?' on':''),dataset:{act,mid:m.id},title,'aria-label':title,html:icon(ic,15)});
+  const ib=(act,ic,label,on)=>el('button',{class:'ibtn sm'+(on?' on':''),dataset:{act,mid:m.id},title:label,'aria-label':label,html:icon(ic,15)});
   if(!streaming){
     acts.append(ib('copy','copy',t('chat.copy')));
     acts.append(ib('edit','edit',t('chat.edit')));
     if(!isUser){
       acts.append(ib('regen','refresh',t('chat.regenerate')));
-      if(m.finish_reason==='length'||m.status==='stopped'||meta.finish_reason==='length')
+      if(m.status==='stopped'||meta.finish_reason==='length')
         acts.append(el('button',{class:'btn soft sm',dataset:{act:'continue',mid:m.id},html:icon('play',13)+'<span>'+t('chat.continue')+'</span>'}));
       acts.append(ib('thumb-up','thumbUp','👍',m.feedback===1));
       acts.append(ib('thumb-down','thumbDown','👎',m.feedback===-1));
-      /* read aloud — direct handler + visible feedback (TTS is silent on many devices) */
-      const ttsBtn=ib('tts',speakingId===m.id?'stop':'play',t(speakingId===m.id?'chat.stopSpeak':'chat.speak'),speakingId===m.id);
-      ttsBtn.addEventListener('click',e=>{ e.stopPropagation(); speak(m); });
-      acts.append(ttsBtn);
-      /* request inspector — labeled so it's discoverable on touch, direct handler */
-      if(m.request_json){
-        const reqBtn=el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},title:t('chat.viewRequest'),
-          html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'});
-        reqBtn.addEventListener('click',e=>{ e.stopPropagation(); openRequestViewer(m); });
-        acts.append(reqBtn);
-      }
+      acts.append(ib('tts',speakingId===m.id?'stop':'play',t(speakingId===m.id?'chat.stopSpeak':'chat.speak'),speakingId===m.id));
+      acts.append(el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},title:t('chat.viewRequest'),
+        html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'}));
     }
     acts.append(ib('fork','fork',t('chat.fork')));
     acts.append(ib('del','trash',t('chat.delete')));
   } else {
     acts.append(el('button',{class:'btn danger sm',dataset:{act:'stop',mid:m.id},html:icon('stop',13)+'<span>'+t('chat.stop')+'</span>'}));
-    if(m.request_json){
-      const reqBtn=el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'});
-      reqBtn.addEventListener('click',e=>{ e.stopPropagation(); openRequestViewer(m); });
-      acts.append(reqBtn);
-    }
+    acts.append(el('button',{class:'btn soft sm',dataset:{act:'req',mid:m.id},html:icon('terminal',13)+'<span>'+t('chat.viewRequest')+'</span>'}));
   }
   body.append(acts);
 
@@ -355,6 +357,7 @@ async function onAction(e){
   if(act==='code-preview'){ htmlPreview(btn.closest('.codeblock').querySelector('code').textContent); return; }
   if(act==='code-dl'){ const cb=btn.closest('.codeblock'); download('code.'+fileExt(btn.dataset.lang), cb.querySelector('code').textContent); return; }
   if(act==='img'){ lightbox(btn.src||btn.getAttribute('src')); return; }
+  if(act==='req'||act==='tts') return; /* handled by capture guard */
   if(!conv||!m) return;
 
   switch(act){
@@ -383,12 +386,10 @@ async function onAction(e){
       if(await confirmDlg({title:t('chat.deleteMsgQ'),message:t('chat.deleteMsgBody')})){
         try{
           await DB.deleteMessage(m.id);
-          S.messages[conv.id]=(S.messages[conv.id]||[]).filter(x=>{
-            let cur=x; const gone=new Set([m.id]);
-            let changed=true;
-            while(changed){ changed=false; for(const mm of S.messages[conv.id]){ if(mm.parent_id&&gone.has(mm.parent_id)&&!gone.has(mm.id)){ gone.add(mm.id); changed=true; } } }
-            return !gone.has(x.id);
-          });
+          const gone=new Set([m.id]);
+          let changed=true;
+          while(changed){ changed=false; for(const mm of S.messages[conv.id]){ if(mm.parent_id&&gone.has(mm.parent_id)&&!gone.has(mm.id)){ gone.add(mm.id); changed=true; } } }
+          S.messages[conv.id]=S.messages[conv.id].filter(x=>!gone.has(x.id));
           conv.branch_map=cleanBranchMap(conv,S.messages[conv.id]);
           DB.updateConversation(conv.id,{branch_map:conv.branch_map}).catch(()=>{});
           emit('messages');
@@ -402,8 +403,6 @@ async function onAction(e){
       try{ const row=await DB.updateMessage(m.id,{feedback:nv}); Object.assign(m,row); emit('messages'); }catch(err){ toast(err.message,'err'); }
       break;
     }
-    case 'req': openRequestViewer(m); break;
-    case 'tts': speak(m); break;
   }
 }
 
@@ -650,7 +649,6 @@ async function runStream(conv,m,body,{mode}){
     Object.assign(m,row);
   }catch(e){ console.warn(e); }
 
-  /* sticky router lock */
   if(result&&conv.model_id===CFG.ROUTER_ID&&conv.router_mode!=='router'&&!conv.locked_model&&result.model&&result.model!==CFG.ROUTER_ID){
     try{
       const row=await DB.updateConversation(conv.id,{locked_model:result.model});
@@ -660,7 +658,6 @@ async function runStream(conv,m,body,{mode}){
   } else {
     DB.updateConversation(conv.id,{}).catch(()=>{});
   }
-  /* auto title */
   if(mode==='fresh'&&S.settings.autoTitle&&conv.title===t('nav.newChat')){
     const first=(S.messages[conv.id]||[]).find(x=>x.role==='user');
     if(first){
@@ -814,7 +811,7 @@ function paintChips(){
   });
 }
 
-/* ---------- slash templates (anchored ABOVE the composer, never over it) ---------- */
+/* ---------- slash templates ---------- */
 function maybeSlash(){
   const v=inputEl.value;
   if(v.startsWith('/')&&!v.includes('\n')){
@@ -893,7 +890,6 @@ function startMic(btn){
   recognition.start();
 }
 
-/* read aloud — hardened: voices load async on Android; fa often missing → fallback + feedback */
 if(window.speechSynthesis){
   try{ window.speechSynthesis.getVoices(); window.speechSynthesis.onvoiceschanged=()=>{ try{ window.speechSynthesis.getVoices(); }catch{} }; }catch{}
 }

@@ -12,7 +12,6 @@
 <link rel="stylesheet" href="styles.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-/* pre-paint boot: avoid theme/direction flash */
 try{
   var s = JSON.parse(localStorage.getItem('simurgh.settings')||'{}');
   var d = document.documentElement;
@@ -30,6 +29,18 @@ try{
 <div id="app" aria-busy="true"></div>
 <div id="overlays"></div>
 <noscript><div style="padding:40px;font-family:sans-serif">Simurgh needs JavaScript. / سیمرغ به جاوااسکریپت نیاز دارد.</div></noscript>
+<script>
+/* network-first service worker: stale cached modules can never run again */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message', function(e){
+    if(e.data && e.data.type==='SW_ACTIVE' && !sessionStorage.getItem('simurgh.swReload')){
+      sessionStorage.setItem('simurgh.swReload','1');
+      location.reload();
+    }
+  });
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+}
+</script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>
