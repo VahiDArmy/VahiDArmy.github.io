@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Nūr · The Grand Istighfār</title>
-<meta name="description" content="The Grand Istighfār — touch a verse for its meaning, touch again to close.">
+<meta name="description" content="The Grand Istighfār — touch a verse for its meaning, hold it for hyper-focus.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Vazirmatn:wght@300;400;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,7 +38,7 @@
   --lapis:#26509e; --turq:#0f8f7e; --pom:#c02a41; --saff:#c96a12;
   --ok:#1c8a5e; --info:#2a6fc4;
   --g1:rgba(38,80,158,.1); --g2:rgba(169,118,26,.13); --g3:rgba(15,143,126,.09);
-  --shadow:0 20px 50px rgba(120,85,25,.18); --scrim:rgba(60,42,14,.46);
+  --shadow:0 20px 50px rgba(120,85,25,.18); --scrim:rgba(60,42,14,.5);
 }
 [data-theme="shrine"]{
   --bg:#03130f; --bg2:#07211a; --surf:#0a2a21; --surf2:#113c31; --raise:#155040;
@@ -48,7 +48,7 @@
   --lapis:#37b39a; --turq:#4ff0c0; --pom:#ff5f70; --saff:#ffb45c;
   --ok:#4ff0c0; --info:#63c9ff;
   --g1:rgba(55,179,154,.2); --g2:rgba(231,201,120,.14); --g3:rgba(79,240,192,.12);
-  --shadow:0 24px 64px rgba(0,0,0,.58); --scrim:rgba(2,12,9,.8);
+  --shadow:0 24px 64px rgba(0,0,0,.58); --scrim:rgba(2,12,9,.82);
 }
 [data-theme="plum"]{
   --bg:#120616; --bg2:#1d0b24; --surf:#260f2e; --surf2:#361642; --raise:#4a1f58;
@@ -58,7 +58,7 @@
   --lapis:#a06cf0; --turq:#43e8d8; --pom:#ff4d7e; --saff:#ffb04d;
   --ok:#46dc9a; --info:#79b6ff;
   --g1:rgba(160,108,240,.22); --g2:rgba(240,180,110,.14); --g3:rgba(67,232,216,.11);
-  --shadow:0 24px 64px rgba(0,0,0,.6); --scrim:rgba(10,3,14,.8);
+  --shadow:0 24px 64px rgba(0,0,0,.6); --scrim:rgba(10,3,14,.82);
 }
 
 *{margin:0;padding:0;box-sizing:border-box}
@@ -210,12 +210,17 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .seal .ic{width:10px;height:10px;stroke-width:3}
 
 .verse{position:relative;display:block;width:100%;border:1px solid var(--line2);border-radius:var(--r);background:var(--surf);
- padding:16px 20px 20px;margin-bottom:14px;cursor:pointer;transition:border-color .25s,transform .2s,background .25s;
+ padding:16px 20px 20px;margin-bottom:14px;cursor:pointer;overflow:hidden;
+ -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+ transition:border-color .25s,transform .2s,background .25s,box-shadow .25s;
  scroll-margin-top:calc(var(--top) + var(--strip) + 20px)}
 .verse:hover{border-color:var(--line);transform:translateY(-2px)}
 .verse:active{transform:scale(.995)}
 .verse.read{border-left:2px solid var(--turq)}
 .verse.flash{animation:flash 1.5s var(--e)}
+.verse::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:0;background:linear-gradient(90deg,var(--gold),var(--turq));box-shadow:0 0 12px var(--g2)}
+.verse.pressing{border-color:var(--gold);box-shadow:0 0 0 1px var(--g2),0 0 34px var(--g2);transform:scale(.99)}
+.verse.pressing::after{width:100%;transition:width .4s linear}
 .vhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .vnum{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800;color:var(--gold)}
 .verse.read .vnum{color:var(--turq);border-color:color-mix(in srgb,var(--turq) 45%,transparent)}
@@ -248,6 +253,8 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .hbtn .ic{width:16px;height:16px}
 .hbtn.lang{font-size:11px;font-weight:800;letter-spacing:.4px;color:var(--gold)}
 .hbtn.playing{color:var(--turq);border-color:color-mix(in srgb,var(--turq) 45%,transparent)}
+.hbtn.on{color:var(--gold);border-color:var(--gold)}
+.hbtn.done{color:var(--turq);border-color:color-mix(in srgb,var(--turq) 45%,transparent)}
 .hbtn.x:hover{color:var(--pom)}
 .popbody{flex:1;overflow-y:auto;padding:26px 26px 22px}
 .tr{animation:up .3s var(--e)}
@@ -257,7 +264,54 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .popnote{margin-top:18px;padding:13px 15px;border-radius:12px;background:var(--g3);font-size:13px;line-height:1.7;white-space:pre-wrap;color:var(--tx)}
 .popnote .nh{display:flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--turq);margin-bottom:6px}
 .popnote .nh .ic{width:12px;height:12px}
-.popfoot{flex:none;padding:9px 16px 12px;text-align:right;font-size:10.5px;color:var(--mu);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.popfoot{flex:none;padding:9px 16px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:10.5px;color:var(--mu);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.popfoot button{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:6px}
+.popfoot button .ic{width:13px;height:13px}
+
+/* ══════════ HYPER-FOCUS · vertical swipe deck ══════════ */
+#hf{position:fixed;inset:0;z-index:132;display:none;flex-direction:column;overflow:hidden}
+#hf.open{display:flex}
+#hf .hf-scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(22px) saturate(.75);animation:fade .22s ease-out}
+#hf .hf-aura{position:absolute;left:50%;top:50%;width:min(760px,120vw);height:min(760px,120vw);transform:translate(-50%,-50%);pointer-events:none;
+ background:radial-gradient(circle,var(--g2),transparent 62%);filter:blur(50px);opacity:.75;transition:opacity .2s ease-out}
+.hf-top{position:relative;z-index:3;flex:none;display:flex;align-items:center;gap:9px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px}
+.hf-top .who{flex:1;min-width:0}
+.hf-top .who b{display:block;font-size:12.5px;font-weight:800;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hf-top .who span{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;color:var(--mu)}
+.hf-stage{position:relative;z-index:2;flex:1;overflow:hidden;touch-action:none}
+.hf-card{position:absolute;top:96px;bottom:16px;left:0;right:0;width:min(680px,92vw);margin:0 auto;
+ border-radius:24px;border:1px solid var(--line2);background:linear-gradient(168deg,var(--surf2),var(--bg2) 72%);
+ will-change:transform,opacity;transition:transform .26s cubic-bezier(.22,1,.36,1),opacity .2s ease-in-out,box-shadow .26s ease,filter .26s ease;
+ cursor:grab;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.hf-card.moving{transition:none;cursor:grabbing}
+.hf-card.removed{pointer-events:none}
+.hf-card.front{border-color:var(--gold);box-shadow:0 0 0 1px var(--g2),0 30px 80px rgba(0,0,0,.55),0 0 90px var(--g2)}
+.hf-card.front::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:24px;
+ background:radial-gradient(120% 70% at 50% 0%,var(--g2),transparent 60%)}
+.hf-card.enter{opacity:0;transform:translateY(40px) scale(.92)}
+.hf-in{position:relative;z-index:1;width:100%;max-height:100%;overflow:hidden;padding:26px 26px;display:flex;flex-direction:column;justify-content:center;gap:0}
+.hf-fa{font-family:var(--fa);direction:rtl;text-align:right;font-size:calc(15.5px * var(--fit,1));line-height:2.05;color:var(--turq);opacity:.95}
+.hf-ar{font-family:var(--ar);direction:rtl;text-align:right;font-size:calc(clamp(25px,4.4vw,34px) * var(--fit,1) * var(--ars));line-height:calc(var(--arlh) + .12);color:var(--tx)}
+.hf-card.front .hf-ar{text-shadow:0 0 42px var(--g2),0 0 90px var(--g3)}
+.hf-en{font-size:calc(15.5px * var(--fit,1));line-height:1.85;color:var(--mu)}
+.hf-sep{display:flex;align-items:center;justify-content:center;margin:calc(16px * var(--fit,1)) 0;color:var(--gold);opacity:.6}
+.hf-sep .fl{width:150px;height:14px}
+.hf-stat{position:absolute;left:0;right:0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;
+ font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;opacity:0;transform:scale(.3);transition:all .18s ease-in-out}
+.hf-stat .ic{width:30px;height:30px;stroke-width:2.4}
+.hf-stat.up{top:34px;color:var(--turq);text-shadow:0 0 20px var(--g3)}
+.hf-stat.down{bottom:26px;color:var(--gold);text-shadow:0 0 20px var(--g2)}
+.hf-stat .ic{filter:drop-shadow(0 0 12px currentColor)}
+#hf.s-up .hf-stat.up,#hf.s-down .hf-stat.down{opacity:.9;transform:scale(1)}
+.hf-hint{position:relative;z-index:3;flex:none;text-align:center;padding:8px 14px calc(12px + env(safe-area-inset-bottom));
+ font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--mu);opacity:.75;transition:opacity .5s}
+.hf-hint.dim{opacity:.22}
+.hf-edge{position:absolute;right:12px;z-index:5;display:flex;flex-direction:column;gap:8px}
+.hf-edge{top:50%;transform:translateY(-50%)}
+.hf-edge button{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--mu);
+ border:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 70%,transparent);backdrop-filter:blur(8px);transition:.18s var(--e)}
+.hf-edge button:hover{color:var(--gold);border-color:var(--gold);box-shadow:0 0 20px var(--g2)}
+.hf-edge button:disabled{opacity:.25;cursor:not-allowed}
 
 /* library */
 .libitem{display:flex;gap:14px;align-items:flex-start;padding:15px 17px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surf);margin-bottom:11px;transition:.22s var(--e);cursor:pointer}
@@ -470,6 +524,10 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
   #toasts{bottom:80px;right:12px;left:12px;max-width:none}
   .blob{opacity:.3}
   .hero{padding:18px 4px 22px}
+  .hf-card{top:78px;bottom:12px;width:94vw}
+  .hf-in{padding:20px 18px}
+  .hf-edge{right:8px}
+  .hf-edge button{width:34px;height:34px}
 }
 @media (max-width:560px){.achs{grid-template-columns:1fr}.keys{grid-template-columns:1fr}.chip.streak{display:none}.soundpill span{display:none}.soundpill{padding:0 10px}}
 </style>
@@ -495,6 +553,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
 <symbol id="x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
 <symbol id="l" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></symbol>
 <symbol id="r" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></symbol>
+<symbol id="up" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+<symbol id="down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
 <symbol id="spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" fill="currentColor" stroke="none"/><path d="M19 14l.9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9z" fill="currentColor" stroke="none"/></symbol>
 <symbol id="flame" viewBox="0 0 24 24"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3-2-5-3.5-6.5C14 7.5 13 5.5 13 2c-3 2-5 5-5 8-1-1-1.5-2-1.5-3.5C4.5 8.5 5 12 5 15.5 5 19.2 7.6 22 12 22z"/></symbol>
 <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
@@ -522,6 +582,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
 <symbol id="shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
 <symbol id="rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></symbol>
 <symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol>
+<symbol id="focus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/></symbol>
 </svg>
 
 <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div></div>
@@ -566,6 +627,7 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
   <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
 </nav>
 
+<!-- meaning window -->
 <div id="pop" role="dialog" aria-modal="true" aria-labelledby="popTitle">
   <div class="scrim" data-a="popclose"></div>
   <div class="popcard" id="popcard" tabindex="-1">
@@ -577,12 +639,32 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
       <button class="hbtn" data-a="popcopy" title="Copy"><svg class="ic"><use href="#copy"/></svg></button>
       <button class="hbtn x" data-a="popclose" title="Close"><svg class="ic"><use href="#x"/></svg></button>
     </div>
-    <div class="popbody" id="popBody">
-      <div id="popTr"></div>
-      <div id="popNote"></div>
-    </div>
-    <div class="popfoot"><span id="popCount">1 / 43</span></div>
+    <div class="popbody" id="popBody"><div id="popTr"></div><div id="popNote"></div></div>
+    <div class="popfoot"><button data-a="pophf"><svg class="ic"><use href="#focus"/></svg>Hyper-focus</button><span id="popCount">1 / 43</span></div>
   </div>
+</div>
+
+<!-- HYPER-FOCUS deck -->
+<div id="hf" role="dialog" aria-modal="true" aria-label="Hyper-focus reading">
+  <div class="hf-scrim" data-a="hfclose"></div>
+  <div class="hf-aura" id="hfAura"></div>
+  <div class="hf-top">
+    <span class="pnum" id="hfNum">1</span>
+    <div class="who"><b id="hfTitle">Passage 1</b><span id="hfChap">Chapter</span></div>
+    <button class="hbtn" id="hfRead" data-a="hfread" title="Mark read"><svg class="ic"><use href="#check"/></svg></button>
+    <button class="hbtn" id="hfBm" data-a="hfbm" title="Bookmark"><svg class="ic"><use href="#bm"/></svg></button>
+    <button class="hbtn" id="hfPlay" data-a="hfplay" title="Listen"><svg class="ic"><use href="#play"/></svg></button>
+    <button class="hbtn x" data-a="hfclose" title="Close"><svg class="ic"><use href="#x"/></svg></button>
+  </div>
+  <div class="hf-stage" id="hfStage">
+    <div class="hf-stat up" id="hfUp"><svg class="ic"><use href="#up"/></svg>Next</div>
+    <div class="hf-stat down" id="hfDown"><svg class="ic"><use href="#down"/></svg>Back</div>
+    <div class="hf-edge">
+      <button data-a="hfprev" id="hfPrev" title="Previous"><svg class="ic"><use href="#up"/></svg></button>
+      <button data-a="hfnext" id="hfNext" title="Next"><svg class="ic"><use href="#down"/></svg></button>
+    </div>
+  </div>
+  <div class="hf-hint" id="hfHint">Swipe up · next &nbsp;—&nbsp; Swipe down · back &nbsp;—&nbsp; Tap to exit</div>
 </div>
 
 <div id="dback" data-a="closedr"></div>
@@ -784,7 +866,7 @@ const DEF={v:4,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.05,lang:'en',sound:tr
 function wd(s){const d=copy(DEF);if(!s||(s.v!==4&&s.v!==3))return d;
  return{...d,...s,v:4,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}}}
 let S=wd(lj(LS)||lj('nur.v3')),SES=lj(LSS)||lj('nur.session.v3');
-let V=[],IX={},CH={},NC={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastSync=0,lastTouch=Date.now(),swipeGuard=0;
+let V=[],IX={},CH={},NC={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastSync=0,lastTouch=Date.now(),swipeGuard=0,pressGuard=0;
 const day=()=>(S.act[dk()]||={r:0,t:0,s:0});
 const nread=()=>Object.keys(S.read).length;
 function streak(){let n=0,d=new Date();const has=k=>{const a=S.act[k];return a&&(a.r>0||a.t>0||a.s>=60)};if(!has(dk(d)))d.setDate(d.getDate()-1);while(has(dk(d))){n++;d.setDate(d.getDate()-1)}return n}
@@ -808,13 +890,22 @@ function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch{}}
 function save(){saveLocal();hud();syncSoon()}
 
 /* ═══════════ sound ═══════════ */
-const Snd={c:null,g:null,
+const Snd={c:null,g:null,noise:null,
  ready(){if(!S.set.sound)return null;if(!this.c){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.c=new A();this.g=this.c.createGain();this.g.connect(this.c.destination)}if(this.c.state==='suspended')this.c.resume().catch(()=>{});this.g.gain.value=S.set.vol;return this.c},
  t(f,d,ty='sine',v=.12,at=0,f2){const c=this.c,t=c.currentTime+at,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(this.g);o.start(t);o.stop(t+d+.05)},
- p(n){if(n==='hover'&&(!this.c||this.c.state!=='running'))return;if(!this.ready())return;const T=this.t.bind(this);
+ whoosh(dir){const c=this.c;if(!this.noise){const n=c.sampleRate*.5,b=c.createBuffer(1,n,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);this.noise=b}
+  const t=c.currentTime,s=c.createBufferSource(),bp=c.createBiquadFilter(),g=c.createGain();
+  s.buffer=this.noise;bp.type='bandpass';bp.Q.value=1.1;
+  bp.frequency.setValueAtTime(dir>0?420:1500,t);bp.frequency.exponentialRampToValueAtTime(dir>0?1900:380,t+.22);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.1,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+.26);
+  s.connect(bp);bp.connect(g);g.connect(this.g);s.start(t);s.stop(t+.3);
+  this.t(dir>0?520:380,.1,'sine',.05,0,dir>0?760:260)},
+ p(n,arg){if(n==='hover'&&(!this.c||this.c.state!=='running'))return;if(!this.ready())return;const T=this.t.bind(this);
+  if(n==='whoosh')return this.whoosh(arg||1);
   ({tap:()=>T(340,.05,'sine',.07),hover:()=>T(560,.02,'sine',.018),
     open:()=>{T(392,.14,'sine',.075,0,588);T(784,.2,'sine',.028,.05)},
     close:()=>T(520,.12,'sine',.06,0,300),
+    deep:()=>{T(196,.3,'sine',.09,0,392);T(588,.34,'sine',.04,.06);T(1176,.4,'sine',.02,.1)},
     page:()=>{T(660,.045,'triangle',.06);T(495,.07,'sine',.04,.035)},
     on:()=>{T(440,.05,'triangle',.09);T(660,.08,'triangle',.09,.06)},
     off:()=>{T(660,.05,'triangle',.07);T(330,.09,'triangle',.07,.06)},
@@ -884,7 +975,7 @@ function apply(){const t=S.set,r=document.documentElement;r.dataset.theme=t.them
  const b=$('#sndBtn');b.className='soundpill '+(t.sound?'on':'off');b.innerHTML=ic(t.sound?'vol':'mute')+`<span>Sound ${t.sound?'on':'off'}</span>`;
  $$('.th').forEach(c=>c.classList.toggle('on',c.dataset.v===t.theme));
  $('#fsVal').textContent=Math.round(t.fs*100)+'%';
- Amb.sync();Sky.refresh();Sky.sync();AS.sync()}
+ Amb.sync();Sky.refresh();Sky.sync();AS.sync();if(HF.open)HF.relayout()}
 function fillDrawer(){$$('#drawer [data-s]').forEach(e=>{const v=S.set[e.dataset.s];if(e.type==='checkbox')e.checked=!!v;else e.value=v});syncUI()}
 const openDr=()=>{fillDrawer();acctUI();document.body.classList.add('drawer');Snd.p('open')};
 const closeDr=()=>{document.body.classList.remove('drawer');Snd.p('close')};
@@ -946,7 +1037,7 @@ function vHome(){const h=new Date().getHours(),g=h<5?'Blessed night':h<12?'Bless
  <div class="heroar">اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ</div>
  <p>${esc(BOOK.meta.attribution.en)}. ${total} passages.</p>
  <div class="herofa">${esc(BOOK.meta.attribution.fa)}</div>
- <div class="cta"><button class="btn gold" data-a="${last?'resume':'begin'}">${ic('book')}${last?'Continue reading':'Begin the duʿāʾ'}</button><button class="btn" data-a="go" data-v="tas">${ic('target')}Open tasbīḥ</button></div>
+ <div class="cta"><button class="btn gold" data-a="${last?'resume':'begin'}">${ic('book')}${last?'Continue reading':'Begin the duʿāʾ'}</button><button class="btn" data-a="hfnow">${ic('focus')}Hyper-focus</button></div>
  <div class="hchips"><span class="pill on">${ic('book')}${rc}/${total} read</span><span class="pill">${ic('flame')}${streak()}-day streak</span><span class="pill">${ic('target')}${fmt(S.tas.total)} tasbīḥ</span></div></div>
  <div class="grid g3">
  <div class="card"><div class="chd">${ic('clock')}${last?'Where you left off':'Start here'}</div><div class="meta">${esc(CH[c.id].en)} · № ${c.id}</div><div class="snip">${esc(c.ar)}</div><div class="snipe">${esc(c.en)}</div><button class="btn wide" style="margin-top:13px" data-a="pop" data-id="${c.id}">${ic('book')}Open the meaning</button></div>
@@ -956,7 +1047,7 @@ function vHome(){const h=new Date().getHours(),g=h<5?'Blessed night':h<12?'Bless
  <div class="quick"><button data-a="search">${ic('search')}Search the text</button><button data-a="go" data-v="lib">${ic('bm')}Bookmarks & notes</button><button data-a="go" data-v="jour">${ic('flame')}Streaks & awards</button><button data-a="drawer">${ic('set')}Personalise</button></div></div>`}
 
 /* ═══════════ reader ═══════════ */
-function verseHTML(p){return`<article class="verse ${S.read[p.id]?'read':''}" id="v-${p.id}" data-id="${p.id}" tabindex="0" role="button" aria-label="Passage ${p.id} — touch for its meaning">
+function verseHTML(p){return`<article class="verse ${S.read[p.id]?'read':''}" id="v-${p.id}" data-id="${p.id}" tabindex="0" role="button" aria-label="Passage ${p.id} — touch for meaning, hold for hyper-focus">
  <div class="vhead"><span class="vnum">${p.id}</span><div class="vacts">
   <button class="vact ${S.read[p.id]?'done':''}" data-a="read" data-id="${p.id}" title="Mark read" aria-label="Mark read">${ic('check')}</button>
   <button class="vact ${S.notes[p.id]?'on':''}" data-a="note" data-id="${p.id}" title="Note" aria-label="Note">${ic('note')}</button>
@@ -969,7 +1060,7 @@ function vRead(){const rc=nread(),total=V.length;
   return`<div class="chapter" id="${s.id}">${fl()}<h2>${i+1}. ${esc(s.en)}</h2><div class="cfa">${esc(s.fa)}</div>
   <div class="cm"><span class="cdone">${done}/${s.v.length} read</span><span class="seal" ${done<s.v.length?'hidden':''}>${ic('check')}COMPLETE</span><button class="pill" style="padding:4px 11px;font-size:11px" data-a="markch" data-c="${s.id}">${ic('check')}Mark chapter</button></div></div>`+s.v.map(verseHTML).join('')}).join('');
  return`<div class="page"><div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
- <div class="strip"><select id="chSel" aria-label="Chapter">${opts}</select><span class="cnt" id="rCount">${rc}/${total}</span><div class="bar"><i id="rBar" style="width:${rc/total*100}%"></i></div><button class="sbtn" data-a="drawer">${ic('set')}<span class="hidesm">Options</span></button></div>
+ <div class="strip"><select id="chSel" aria-label="Chapter">${opts}</select><span class="cnt" id="rCount">${rc}/${total}</span><div class="bar"><i id="rBar" style="width:${rc/total*100}%"></i></div><button class="sbtn" data-a="hfnow" title="Hyper-focus">${ic('focus')}</button><button class="sbtn" data-a="drawer">${ic('set')}<span class="hidesm">Options</span></button></div>
  ${chaps}
  <div class="vend">${fl()}<p>${rc===total?'You have read the entire duʿāʾ. May every word be a light for you.':'“How often You court my love, though You have no need of me…”'}</p><button class="btn" data-a="go" data-v="jour">${ic('flame')}See your journey</button> <button class="btn gold" data-a="go" data-v="tas">${ic('target')}Seal it with tasbīḥ</button></div></div>`}
 function afterRead(p,keep){io=new IntersectionObserver(es=>{let best=null;es.forEach(e=>{if(e.isIntersecting&&(!best||e.intersectionRatio>best.intersectionRatio))best=e});
@@ -999,7 +1090,7 @@ function saveNote(id){id=+id;const t=$('#nta').value.trim();if(t)S.notes[id]={t,
 function dropNote(id,from){id=+id;const old=S.notes[id];if(!old)return;delete S.notes[id];save();refreshVerse(id);
  if(from==='modal')mclose();if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true});Snd.p('tap');
  toast('Note removed','ok','trash',{label:'Undo',fn:()=>{S.notes[id]=old;save();refreshVerse(id);if(Pop.open)Pop.paint();if(VIEW==='lib')render({keep:true});Snd.p('ok');toast('Note restored','ok','rotate')}})}
-async function copyVerse(id){const p=IX[+id];if(!p)return;const txt=`${p.ar}\n\n${p.en}\n\n${p.fa}\n\n— ${BOOK.meta.title.en}, № ${p.id}`;
+async function copyVerse(id){const p=IX[+id];if(!p)return;const txt=`${p.ar}\n\n${p.fa}\n\n${p.en}\n\n— ${BOOK.meta.title.en}, № ${p.id}`;
  try{await navigator.clipboard.writeText(txt)}catch{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}
  Snd.p('pop');toast('Passage copied','ok','copy')}
 
@@ -1026,29 +1117,138 @@ const Pop={id:null,open:false,
   if(VIEW==='lib')render({keep:true})}
 };
 
+/* ═══════════ HYPER-FOCUS · stacked swipe deck ═══════════
+   Mechanics after Rob Vermeer's "Tinder swipe cards", rotated to the
+   vertical axis: depth scale (20-i)/20, translateY -30px per depth,
+   opacity (10-i)/10, .moving = no transition, commit at 80px + velocity,
+   fly-out distance max(|v|*size, size), then re-stack.               */
+const HF={
+ open:false,idx:0,pool:new Map(),drag:false,pid:null,sx:0,sy:0,dx:0,dy:0,vy:0,samples:[],lock:0,
+ stage(){return $('#hfStage')},
+ el(i){return this.pool.get(i)},
+ cardHTML(p){return`<div class="hf-in"><div class="hf-fa" dir="rtl" lang="fa">${esc(p.fa||'')}</div>
+  <div class="hf-sep">${fl()}</div>
+  <p class="hf-ar" dir="rtl" lang="ar">${p.ar}</p>
+  <div class="hf-sep">${fl()}</div>
+  <div class="hf-en">${esc(p.en||'')}</div></div>`},
+ make(i){const p=V[i];if(!p)return null;const d=document.createElement('div');d.className='hf-card enter';d.dataset.i=i;
+  d.innerHTML=this.cardHTML(p);this.stage().appendChild(d);this.pool.set(i,d);return d},
+ show(id){const i=V.findIndex(x=>x.id===+id);if(i<0)return;
+  Pop.close();AS.stop();TTS.stop();closeDr();
+  this.open=true;this.idx=i;this.pool.forEach(e=>e.remove());this.pool.clear();
+  const sw=innerWidth-document.documentElement.clientWidth;document.body.classList.add('lock');if(sw>0)document.body.style.paddingRight=sw+'px';
+  $('#hf').classList.add('open');$('#hfHint').classList.remove('dim');
+  for(let k=i-1;k<=i+3;k++)this.make(k);
+  this.pool.forEach(e=>{e.style.transform='translateY(46px) scale(.9)';e.style.opacity='0'});
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{this.pool.forEach(e=>e.classList.remove('enter'));this.relayout(true)}));
+  this.chrome();Snd.p('deep');buzz([8,30,8]);
+  setTimeout(()=>$('#hfHint').classList.add('dim'),3200)},
+ fit(){const st=this.stage();if(!st)return;const h=st.clientHeight-112;
+  this.pool.forEach(el=>{const inn=el.firstElementChild;if(!inn)return;inn.style.setProperty('--fit',1);
+   const need=inn.scrollHeight,avail=Math.max(120,h-8);
+   if(need>avail)inn.style.setProperty('--fit',Math.max(.5,avail/need))})},
+ relayout(instant){this.fit();this.stack(0,instant);this.chrome()},
+ stack(dy,instant){const st=this.stage();if(!st)return;const H=st.clientHeight||innerHeight;
+  this.pool.forEach((el,i)=>{const o=i-this.idx;
+   if(instant)el.classList.add('moving');else el.classList.remove('moving');
+   el.classList.toggle('front',o===0);
+   if(o===0){el.style.zIndex=40;
+     const rot=(this.dx*0.03)*(dy/80)+dy*0.006;
+     el.style.transform=`translate(${this.dx*.35}px, ${dy}px) rotate(${rot}deg)`;
+     el.style.opacity=String(cl(1-Math.abs(dy)/(H*1.1),0,1));el.style.filter='none';el.classList.remove('removed');return}
+   if(o<0){el.style.zIndex=30+o;el.style.transform=`translate(0px, ${-(H+140)}px) rotate(-3deg) scale(1)`;
+     el.style.opacity='0';el.style.filter='blur(4px)';el.classList.add('removed');return}
+   el.style.zIndex=40-o;
+   el.style.transform=`scale(${(20-o)/20}) translateY(${-30*o}px)`;
+   el.style.opacity=String(cl((10-o)/10,0,1));
+   el.style.filter=`blur(${Math.min(3,o*.9)}px)`;
+   el.classList.toggle('removed',o>3)});
+  if(instant)requestAnimationFrame(()=>this.pool.forEach(e=>e.classList.remove('moving')));
+  const p=cl(Math.abs(dy)/110,0,1);$('#hfAura').style.opacity=String(.6+p*.5)},
+ chrome(){const p=V[this.idx];if(!p)return;const s=CH[p.id];
+  $('#hfNum').textContent=p.id;$('#hfTitle').textContent='Passage '+p.id;$('#hfChap').textContent=s.en;
+  $('#hfRead').classList.toggle('done',!!S.read[p.id]);$('#hfBm').classList.toggle('on',!!S.bm[p.id]);
+  const pl=$('#hfPlay');pl.classList.toggle('playing',TTS.id===p.id);pl.innerHTML=ic(TTS.id===p.id?'stop':'play');
+  $('#hfPrev').disabled=this.idx<=0;$('#hfNext').disabled=this.idx>=V.length-1},
+ status(dir){const r=$('#hf');r.classList.toggle('s-up',dir>0);r.classList.toggle('s-down',dir<0)},
+ /* drag */
+ down(e){if(!this.open||this.lock)return;if(e.target.closest('[data-a]'))return;
+  this.drag=true;this.pid=e.pointerId;this.sx=e.clientX;this.sy=e.clientY;this.dx=0;this.dy=0;this.vy=0;
+  this.samples=[{t:performance.now(),y:e.clientY}];
+  const top=this.el(this.idx);if(top)top.classList.add('moving');
+  try{this.stage().setPointerCapture(e.pointerId)}catch{}},
+ move(e){if(!this.drag||e.pointerId!==this.pid)return;
+  this.dx=e.clientX-this.sx;let dy=e.clientY-this.sy;
+  const noNext=this.idx>=V.length-1,noPrev=this.idx<=0;
+  if((dy<0&&noNext)||(dy>0&&noPrev))dy*=.32;
+  this.dy=dy;
+  const now=performance.now();this.samples.push({t:now,y:e.clientY});
+  while(this.samples.length>6)this.samples.shift();
+  const a=this.samples[0],b=this.samples[this.samples.length-1];
+  this.vy=(b.y-a.y)/Math.max(1,b.t-a.t);
+  this.status(dy<-14?1:dy>14?-1:0);
+  this.stack(dy,true);e.preventDefault()},
+ up(e){if(!this.drag||e.pointerId!==this.pid)return;this.drag=false;
+  try{this.stage().releasePointerCapture(e.pointerId)}catch{}
+  const dy=this.dy,dx=this.dx,v=this.vy,H=this.stage().clientHeight||innerHeight;
+  const moved=Math.abs(dy)>8||Math.abs(dx)>8;
+  this.status(0);
+  const commit=(Math.abs(dy)>=80&&Math.abs(v)>=.5)||Math.abs(dy)>=H*.32;
+  const dir=dy<0?1:-1;
+  const can=dir>0?this.idx<V.length-1:this.idx>0;
+  if(!moved){this.dx=this.dy=0;this.stack(0);this.close();return}
+  if(commit&&can){
+    const top=this.el(this.idx);
+    if(top){const size=Math.max(H,innerHeight);
+     const end=Math.max(Math.abs(v)*size,size)*1.15;
+     const toY=dy<0?-end:end;
+     const rot=(dx*0.03)*(dy/80)+dy*0.006;
+     top.classList.remove('moving');top.classList.add('removed');
+     top.style.transform=`translate(${dx*.6}px, ${toY+dy}px) rotate(${rot}deg)`;top.style.opacity='0'}
+    this.dx=this.dy=0;this.advance(dir);
+  }else{this.dx=this.dy=0;this.stack(0);Snd.p('tap')}},
+ advance(dir){const j=this.idx+dir;if(j<0||j>=V.length)return;
+  this.lock=Date.now()+180;TTS.stop();
+  this.idx=j;
+  for(let k=j-1;k<=j+3;k++)if(!this.pool.has(k))this.make(k);
+  [...this.pool.keys()].forEach(k=>{if(k<j-1||k>j+3){const el=this.pool.get(k);el.remove();this.pool.delete(k)}});
+  this.fit();this.stack(0);this.chrome();
+  const p=V[j];S.last=p.id;saveLocal();syncSoon();refreshVerse(p.id);
+  Snd.p('whoosh',dir);buzz(7);
+  if(VIEW==='read'){const el=$('#v-'+p.id);if(el)el.scrollIntoView({block:'center',behavior:'auto'})}},
+ next(){if(Date.now()<this.lock||this.idx>=V.length-1)return;this.dx=this.dy=0;this.advance(1)},
+ prev(){if(Date.now()<this.lock||this.idx<=0)return;this.dx=this.dy=0;this.advance(-1)},
+ close(){if(!this.open)return;this.open=false;this.drag=false;TTS.stop();
+  $('#hf').classList.remove('open','s-up','s-down');document.body.classList.remove('lock');document.body.style.paddingRight='';
+  const p=V[this.idx];this.pool.forEach(e=>e.remove());this.pool.clear();
+  Snd.p('close');AS.sync();
+  if(p&&VIEW==='read'){const e=$('#v-'+p.id);if(e)e.scrollIntoView({block:'center',behavior:'smooth'})}
+  if(VIEW==='lib')render({keep:true})}
+};
+
 /* ═══════════ TTS ═══════════ */
 const TTS={id:null,t:null,warned:false,
  play(id){id=+id;if(!('speechSynthesis'in window)){toast('Speech is not available in this browser','warn','alert');return}
   this.stop();const u=new SpeechSynthesisUtterance(IX[id].ar);u.lang='ar-SA';u.rate=S.set.rate;
   const v=speechSynthesis.getVoices().find(v=>/^ar/i.test(v.lang));if(v)u.voice=v;else if(!this.warned){this.warned=true;toast('No Arabic voice installed — using the default voice','warn','info')}
-  u.onend=u.onerror=()=>{this.clear();if(Pop.open)Pop.paint()};this.id=id;speechSynthesis.speak(u);
-  this.t=setInterval(()=>{if(speechSynthesis.speaking)speechSynthesis.resume()},9000);if(Pop.open)Pop.paint()},
+  u.onend=u.onerror=()=>{this.clear();if(Pop.open)Pop.paint();if(HF.open)HF.chrome()};this.id=id;speechSynthesis.speak(u);
+  this.t=setInterval(()=>{if(speechSynthesis.speaking)speechSynthesis.resume()},9000);
+  if(Pop.open)Pop.paint();if(HF.open)HF.chrome()},
  clear(){this.id=null;clearInterval(this.t);this.t=null},
  stop(){if('speechSynthesis'in window)speechSynthesis.cancel();this.clear()}};
 
 /* ═══════════ auto-scroll ═══════════ */
 const AS={raf:0,on:false,
  tick(){if(!AS.on)return;scrollBy(0,S.set.speed*.55);AS.raf=requestAnimationFrame(AS.tick)},
- sync(){const want=S.set.auto&&VIEW==='read'&&!Pop.open&&!document.hidden;if(want&&!this.on){this.on=true;this.tick()}else if(!want&&this.on)this.stop()},
+ sync(){const want=S.set.auto&&VIEW==='read'&&!Pop.open&&!HF.open&&!document.hidden;if(want&&!this.on){this.on=true;this.tick()}else if(!want&&this.on)this.stop()},
  stop(){this.on=false;cancelAnimationFrame(this.raf)}};
 addEventListener('wheel',()=>{if(AS.on){S.set.auto=false;AS.stop();fillDrawer()}},{passive:true});
-addEventListener('touchstart',()=>{if(AS.on){S.set.auto=false;AS.stop();fillDrawer()}},{passive:true});
 
 /* ═══════════ library ═══════════ */
 function vLib(){const bs=Object.keys(S.bm).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b),ns=Object.keys(S.notes).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b);
  const list=libTab==='bm'?bs:ns;
  const items=list.map(id=>{const p=IX[id];return`<div class="libitem" data-a="pop" data-id="${id}"><span class="pnumsm">${id}</span><div class="body"><div class="meta">${esc(CH[id].en)}</div><div class="snip">${esc(p.ar)}</div><div class="snipe">${esc(p.en)}</div>${libTab==='notes'?`<div class="libnote">${esc(S.notes[id].t)}</div>`:''}</div>
- <div style="display:flex;flex-direction:column;gap:6px">${libTab==='notes'?`<button class="ib" data-a="nedit" data-id="${id}" title="Edit">${ic('note')}</button>`:''}<button class="ib" data-a="${libTab==='bm'?'bmdel':'ndellib'}" data-id="${id}" title="Remove">${ic('trash')}</button></div></div>`}).join('');
+ <div style="display:flex;flex-direction:column;gap:6px"><button class="ib" data-a="hf" data-id="${id}" title="Hyper-focus">${ic('focus')}</button>${libTab==='notes'?`<button class="ib" data-a="nedit" data-id="${id}" title="Edit">${ic('note')}</button>`:''}<button class="ib" data-a="${libTab==='bm'?'bmdel':'ndellib'}" data-id="${id}" title="Remove">${ic('trash')}</button></div></div>`}).join('');
  const empty=`<div class="empty">${ic(libTab==='bm'?'bm':'feather')}<h3>${libTab==='bm'?'No bookmarks yet':'No notes yet'}</h3><p>${libTab==='bm'?'Tap the ribbon on any verse to keep it here.':'Tap the pen on any verse to write a reflection.'}</p><button class="btn gold" data-a="go" data-v="read">${ic('book')}Go to the reader</button></div>`;
  return`<div class="page"><div style="display:flex;gap:9px;margin-bottom:20px;flex-wrap:wrap"><button class="pill ${libTab==='bm'?'on':''}" data-a="libtab" data-v="bm">${ic('bm')}Bookmarks · ${bs.length}</button><button class="pill ${libTab==='notes'?'on':''}" data-a="libtab" data-v="notes">${ic('note')}Notes · ${ns.length}</button></div>${list.length?items:empty}</div>`}
 
@@ -1117,6 +1317,7 @@ function closeSearch(s){const o=$('#search');if(!o.classList.contains('open'))re
 /* ═══════════ palette ═══════════ */
 let pIdx=0,pItems=[];
 function cmds(){const c=[{t:'Reader · resume',i:'book',r:()=>go('read')},{t:'Reader · from the beginning',i:'play',r:()=>go('read',V[0].id)},
+ {t:'Hyper-focus · current passage',i:'focus',r:()=>HF.show(S.last!=null?S.last:V[0].id)},
  {t:'Overview',i:'home',r:()=>go('home')},{t:'Library',i:'bm',r:()=>go('lib')},{t:'Tasbīḥ',i:'target',r:()=>go('tas')},{t:'Journey',i:'flame',r:()=>go('jour')},
  {t:'Search the text',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},
  {t:'Settings',i:'set',r:openDr},{t:'Export data',i:'dl',r:exportData},{t:'Cloud sync',i:'sync',r:syncNow},{t:'Cloud setup SQL',i:'db',r:sqlModal},
@@ -1130,7 +1331,7 @@ function palMove(d){if(!pItems.length)return;pIdx=cl(pIdx+d,0,pItems.length-1);$
 function palRun(i=pIdx){const c=pItems[i];if(c){closePal();c.r()}}
 
 /* ═══════════ about / sql ═══════════ */
-function about(){const keys=[['Touch a verse','Open its meaning'],['Touch the window','Close it'],['Swipe / ← →','Prev / next passage'],['L','Cycle meaning language'],['Esc','Close'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch pages'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B','Bookmark current'],['R','Mark current read'],['?','This panel']];
+function about(){const keys=[['Touch a verse','Open its meaning'],['Press & hold a verse','Hyper-focus'],['Swipe up / ↓ key','Next passage'],['Swipe down / ↑ key','Previous passage'],['Tap the deck','Exit hyper-focus'],['L','Cycle meaning language'],['Esc','Close'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch pages'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B / R','Bookmark / mark read'],['?','This panel']];
  modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('info')}About Nūr</h2>
  <div style="font-family:var(--ar);direction:rtl;text-align:center;font-size:22px;color:var(--gold);line-height:2;margin:6px 0 14px">فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا</div>
  <div class="mbody">${esc(BOOK.meta.attribution.en)}. Arabic vocalised from published editions (${esc(BOOK.meta.source)}); English and Persian translations composed for this reader. ${V.length} passages · ${BOOK.sections.length} chapters.</div>
@@ -1173,8 +1374,16 @@ const A={
  poplang:()=>Pop.cycleLang(),
  popcopy:()=>copyVerse(Pop.id),
  popplay:()=>{if(TTS.id===Pop.id){TTS.stop();Pop.paint();Snd.p('tap')}else TTS.play(Pop.id)},
+ pophf:()=>{const id=Pop.id;Pop.close();setTimeout(()=>HF.show(id),120)},
  popread:()=>{setRead(Pop.id,!S.read[Pop.id]);Pop.paint()},
  popbm:()=>{toggleBm(Pop.id);Pop.paint()},
+ hf:t=>HF.show(t.dataset.id),
+ hfnow:()=>HF.show(S.last!=null&&IX[S.last]?S.last:V[0].id),
+ hfclose:()=>HF.close(),
+ hfnext:()=>HF.next(),hfprev:()=>HF.prev(),
+ hfread:()=>{const p=V[HF.idx];setRead(p.id,!S.read[p.id]);HF.chrome()},
+ hfbm:()=>{const p=V[HF.idx];toggleBm(p.id);HF.chrome()},
+ hfplay:()=>{const p=V[HF.idx];if(TTS.id===p.id){TTS.stop();HF.chrome();Snd.p('tap')}else TTS.play(p.id)},
  read:t=>setRead(t.dataset.id,!S.read[+t.dataset.id]),
  note:t=>noteModal(t.dataset.id),
  bm:t=>toggleBm(t.dataset.id),
@@ -1212,9 +1421,11 @@ const QUIET=new Set(Object.keys(A));
 
 /* ═══════════ events ═══════════ */
 document.addEventListener('click',e=>{
+ if(Date.now()<pressGuard){e.preventDefault();e.stopPropagation();return}
  const pb=e.target.closest('[data-p]');if(pb){palRun(+pb.dataset.p);return}
  const t=e.target.closest('[data-a]');
  if(t){e.stopPropagation();const a=t.dataset.a;if(!QUIET.has(a))Snd.p('tap');A[a]&&A[a](t,e);return}
+ if(HF.open)return;
  if(Pop.open&&e.target.closest('#pop')){if(Date.now()>swipeGuard&&!selTxt())Pop.close();return}
  if(!e.target.closest('#acctMenu')&&!e.target.closest('#avBtn'))$('#acctMenu').hidden=true;
  const v=e.target.closest('.verse');
@@ -1235,9 +1446,35 @@ document.addEventListener('change',e=>{if(e.target.id==='chSel')$('#'+e.target.v
 document.addEventListener('pointerdown',()=>{if(S.set.amb&&S.set.sound)Amb.sync()},{once:true});
 addEventListener('pagehide',saveLocal);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLocal();AS.sync()});
+addEventListener('resize',()=>{if(HF.open)HF.relayout(true)});
 let par=0;
 addEventListener('scroll',()=>{if(par)return;par=requestAnimationFrame(()=>{par=0;const o=$('.hero .orn');if(o)o.style.setProperty('--par',Math.min(1,scrollY/400))})},{passive:true});
 
+/* ── press & hold on a verse → hyper-focus ── */
+let holdT=null,holdEl=null,hx=0,hy=0;
+function cancelHold(){if(holdT){clearTimeout(holdT);holdT=null}if(holdEl){holdEl.classList.remove('pressing');holdEl=null}}
+document.addEventListener('pointerdown',e=>{
+ if(HF.open||Pop.open)return;
+ const v=e.target.closest('.verse');if(!v||e.target.closest('[data-a]'))return;
+ cancelHold();holdEl=v;hx=e.clientX;hy=e.clientY;v.classList.add('pressing');
+ holdT=setTimeout(()=>{const id=+v.dataset.id;cancelHold();pressGuard=Date.now()+700;
+  if(navigator.vibrate)buzz([10,24,10]);HF.show(id)},400);
+},{passive:true});
+document.addEventListener('pointermove',e=>{if(!holdEl)return;if(Math.abs(e.clientX-hx)>10||Math.abs(e.clientY-hy)>10)cancelHold()},{passive:true});
+['pointerup','pointercancel','scroll','wheel'].forEach(ev=>addEventListener(ev,cancelHold,{passive:true}));
+document.addEventListener('contextmenu',e=>{if(e.target.closest('.verse')||e.target.closest('#hf'))e.preventDefault()});
+
+/* ── deck drag ── */
+const stg=$('#hfStage');
+stg.addEventListener('pointerdown',e=>HF.down(e));
+stg.addEventListener('pointermove',e=>HF.move(e),{passive:false});
+stg.addEventListener('pointerup',e=>HF.up(e));
+stg.addEventListener('pointercancel',e=>{if(HF.drag){HF.drag=false;HF.dx=HF.dy=0;HF.status(0);HF.stack(0)}});
+let wLock=0;
+stg.addEventListener('wheel',e=>{if(!HF.open)return;e.preventDefault();const n=Date.now();if(n<wLock)return;
+ if(Math.abs(e.deltaY)<12)return;wLock=n+260;e.deltaY>0?HF.next():HF.prev()},{passive:false});
+
+/* pop swipe (horizontal) */
 let sx=0,sy=0,tracking=false;
 $('#popcard').addEventListener('touchstart',e=>{if(e.touches.length!==1){tracking=false;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY;tracking=true},{passive:true});
 $('#popcard').addEventListener('touchend',e=>{if(!tracking)return;tracking=false;
@@ -1248,13 +1485,20 @@ document.addEventListener('keydown',e=>{
  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#pal').classList.contains('open')?closePal():openPal();return}
  if(e.key==='Escape'){
-  if($('#mroot').innerHTML)mclose();else if(Pop.open)Pop.close();else if($('#pal').classList.contains('open'))closePal();
+  if($('#mroot').innerHTML)mclose();else if(HF.open)HF.close();else if(Pop.open)Pop.close();else if($('#pal').classList.contains('open'))closePal();
   else if($('#search').classList.contains('open'))closeSearch();else if($('#auth').classList.contains('open'))closeAuth();
   else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;return}
  if($('#pal').classList.contains('open')){if(e.key==='ArrowDown'){e.preventDefault();palMove(1)}if(e.key==='ArrowUp'){e.preventDefault();palMove(-1)}if(e.key==='Enter'){e.preventDefault();palRun()}return}
  if($('#search').classList.contains('open')){
   if(e.key==='Enter'){e.preventDefault();$('#sOut .pi')?.click()}
   if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const it=$$('#sOut .pi');if(!it.length)return;let i=it.findIndex(x=>x.classList.contains('k'));i=cl(i+(e.key==='ArrowDown'?1:-1),0,it.length-1);it.forEach((x,j)=>x.classList.toggle('k',j===i));it[i].scrollIntoView({block:'nearest'})}return}
+ if(HF.open){
+  if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();HF.next()}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();HF.prev()}
+  if(!typing&&e.key===' '){e.preventDefault();A.hfplay()}
+  if(!typing&&e.key.toLowerCase()==='b')A.hfbm();
+  if(!typing&&e.key.toLowerCase()==='r')A.hfread();
+  return}
  if(Pop.open){
   if(e.key==='ArrowRight'){e.preventDefault();Pop.step(1)}
   if(e.key==='ArrowLeft'){e.preventDefault();Pop.step(-1)}
@@ -1262,12 +1506,14 @@ document.addEventListener('keydown',e=>{
   if(!typing&&e.key.toLowerCase()==='b')A.popbm();
   if(!typing&&e.key.toLowerCase()==='r')A.popread();
   if(!typing&&e.key.toLowerCase()==='l')Pop.cycleLang();
+  if(!typing&&e.key.toLowerCase()==='f')A.pophf();
   return}
  if(typing)return;
  const k=e.key;
  if(k==='/'){e.preventDefault();openSearch();return}
  if(k==='?'){about();return}
  if(k.toLowerCase()==='m'){A.sound();return}
+ if(k.toLowerCase()==='f'){A.hfnow();return}
  if(['1','2','3','4','5'].includes(k)){go(ORDER[+k-1]);return}
  if(VIEW==='tas'&&k===' '){e.preventDefault();tInc();return}
  if(VIEW==='read'){
@@ -1281,7 +1527,7 @@ document.addEventListener('keydown',e=>{
 });
 
 let tt=0;
-setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.now()-lastTouch<90000){day().s+=5;saveLocal();if(++tt%12===0)syncSoon()}},5000);
+setInterval(()=>{if(VIEW==='read'&&!HF.open&&document.visibilityState==='visible'&&Date.now()-lastTouch<90000){day().s+=5;saveLocal();if(++tt%12===0)syncSoon()}},5000);
 
 /* ═══════════ boot ═══════════ */
 (async function init(){
@@ -1294,7 +1540,7 @@ setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.no
  $('#boot').classList.add('done');setTimeout(()=>$('#boot')?.remove(),600);
  if(SES){if(SES.expires_at*1000<Date.now()+60000)await refresh();if(SES){sched();afterAuth()}}else syncState('off');
  checkAch();
- setTimeout(()=>{if(!localStorage.getItem('nur.hint5')){localStorage.setItem('nur.hint5','1');toast('Touch a verse for its meaning · touch again to close','gold','book')}},1200);
+ setTimeout(()=>{if(!localStorage.getItem('nur.hint6')){localStorage.setItem('nur.hint6','1');toast('Touch a verse for its meaning · press & hold for hyper-focus','gold','focus')}},1200);
 })();
 })();
 </script>
