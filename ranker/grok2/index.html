@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a0f" />
+  <title>Matrix³</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <!-- Splash / Loading -->
+    <div id="splash" class="screen active">
+      <div class="splash-inner">
+        <div class="logo-3d">
+          <span class="m">M</span><span class="a">³</span>
+        </div>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- Auth -->
+    <div id="auth" class="screen">
+      <div class="auth-card glass">
+        <div class="auth-logo">M³</div>
+        <div class="auth-tabs">
+          <button class="tab active" data-tab="login">In</button>
+          <button class="tab" data-tab="signup">Up</button>
+        </div>
+        <form id="auth-form">
+          <div class="input-group">
+            <input type="email" id="auth-email" placeholder="email" required autocomplete="email" />
+          </div>
+          <div class="input-group">
+            <input type="password" id="auth-pass" placeholder="••••••••" required minlength="6" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn primary full" id="auth-submit">Enter</button>
+        </form>
+        <p class="auth-hint" id="auth-msg"></p>
+      </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main" class="screen">
+      <!-- Top bar -->
+      <header class="topbar glass">
+        <button class="icon-btn" id="btn-menu" aria-label="menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="view-switcher">
+          <button class="view-btn active" data-view="trait" title="Trait stacks"><i class="fa-solid fa-layer-group"></i></button>
+          <button class="view-btn" data-view="ranker" title="Ranker stacks"><i class="fa-solid fa-user-pen"></i></button>
+          <button class="view-btn" data-view="scored" title="Scored stacks"><i class="fa-solid fa-users"></i></button>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" id="btn-ai" aria-label="AI"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+          <button class="icon-btn" id="btn-score" aria-label="Score"><i class="fa-solid fa-plus"></i></button>
+          <button class="icon-btn" id="btn-profile" aria-label="Profile"><i class="fa-solid fa-circle-user"></i></button>
+        </div>
+      </header>
+
+      <!-- Stack container (inspired by Tinder stack) -->
+      <div class="matrix-stage" id="matrix-stage">
+        <div class="tinder" id="tinder">
+          <div class="tinder--status">
+            <i class="fa-solid fa-xmark"></i>
+            <i class="fa-solid fa-heart"></i>
+          </div>
+          <div class="tinder--cards" id="stack-cards">
+            <!-- Dynamic cards injected here -->
+          </div>
+          <div class="stack-nav">
+            <button class="nav-btn" id="prev-stack"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="stack-indicator" id="stack-indicator"></div>
+            <button class="nav-btn" id="next-stack"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom action bar -->
+      <footer class="bottombar glass">
+        <button class="action-btn nope" id="nope"><i class="fa-solid fa-xmark"></i></button>
+        <button class="action-btn info" id="btn-info"><i class="fa-solid fa-circle-info"></i></button>
+        <button class="action-btn love" id="love"><i class="fa-solid fa-heart"></i></button>
+      </footer>
+    </div>
+
+    <!-- Side drawer -->
+    <aside id="drawer" class="drawer">
+      <div class="drawer-header">
+        <span>Matrix³</span>
+        <button class="icon-btn" id="close-drawer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <nav class="drawer-nav">
+        <button data-panel="people"><i class="fa-solid fa-users"></i> People</button>
+        <button data-panel="traits"><i class="fa-solid fa-tags"></i> Traits</button>
+        <button data-panel="scores"><i class="fa-solid fa-table"></i> Scores</button>
+        <button data-panel="insights"><i class="fa-solid fa-chart-network"></i> Insights</button>
+        <button data-panel="ai-chat"><i class="fa-solid fa-robot"></i> AI Chat</button>
+        <button data-panel="settings"><i class="fa-solid fa-gear"></i> Settings</button>
+      </nav>
+      <div class="drawer-footer">
+        <button id="btn-logout" class="btn ghost full">Exit</button>
+      </div>
+    </aside>
+    <div id="drawer-overlay" class="overlay"></div>
+
+    <!-- Panels (modals / full screens) -->
+    <div id="panel" class="panel">
+      <div class="panel-header glass">
+        <button class="icon-btn" id="close-panel"><i class="fa-solid fa-arrow-left"></i></button>
+        <h2 id="panel-title"></h2>
+        <button class="icon-btn" id="panel-action"><i class="fa-solid fa-plus"></i></button>
+      </div>
+      <div class="panel-body" id="panel-body"></div>
+    </div>
+
+    <!-- AI Overlay -->
+    <div id="ai-overlay" class="ai-overlay">
+      <div class="ai-panel glass">
+        <div class="ai-header">
+          <span><i class="fa-solid fa-wand-magic-sparkles"></i> AI</span>
+          <button class="icon-btn" id="close-ai"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="ai-messages" id="ai-messages"></div>
+        <div class="ai-input-row">
+          <input type="text" id="ai-input" placeholder="ask anything..." />
+          <button class="icon-btn primary" id="ai-send"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+        <div class="ai-models" id="ai-models"></div>
+      </div>
+    </div>
+
+    <!-- Score modal -->
+    <div id="score-modal" class="modal">
+      <div class="modal-card glass">
+        <div class="modal-header">
+          <h3>Score</h3>
+          <button class="icon-btn" id="close-score"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body" id="score-form"></div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Particles / FX canvas -->
+    <canvas id="fx-canvas"></canvas>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
