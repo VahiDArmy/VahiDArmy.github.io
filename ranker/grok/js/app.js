@@ -1,13 +1,12 @@
 (() => {
   'use strict';
 
-  // State
   const state = {
     user: null,
     people: [],
     traits: [],
     scores: [],
-    mode: 'people', // people | traits
+    mode: 'people',
     currentRaterId: null,
     selectedTarget: null,
     selectedTrait: null,
@@ -16,19 +15,21 @@
     chart: null
   };
 
-  // DOM
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
-  // Toast
-  function toast(msg, ms = 2200) {
+  const VIEW_TITLES = {
+    rank: 'RANK', people: 'PEOPLE', traits: 'TRAITS',
+    matrix: 'MATRIX', viz: 'VIZ', insights: 'INSIGHTS', settings: 'SETTINGS'
+  };
+
+  function toast(msg, ms = 2000) {
     const t = $('#toast');
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), ms);
   }
 
-  // Modal
   function openModal(html) {
     $('#modal-body').innerHTML = html;
     $('#modal-overlay').classList.add('open');
@@ -37,16 +38,16 @@
     $('#modal-overlay').classList.remove('open');
   }
   $('.modal-close').addEventListener('click', closeModal);
-  $('#modal-overlay').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeModal(); });
+  $('#modal-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) closeModal();
+  });
 
-  // Theme
   function applyTheme() {
     document.documentElement.setAttribute('data-theme', state.theme === 'light' ? 'light' : 'dark');
     const btn = $('#toggle-theme');
     if (btn) btn.textContent = state.theme === 'light' ? 'LIGHT' : 'DARK';
   }
 
-  // Auth UI
   function showAuth() {
     $('#auth-screen').classList.add('active');
     $('#main-screen').classList.remove('active');
@@ -56,7 +57,7 @@
     $('#main-screen').classList.add('active');
   }
 
-  // Auth form
+  // Auth
   let authMode = 'login';
   $$('.auth-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -91,29 +92,55 @@
   });
 
   $('#btn-logout').addEventListener('click', async () => {
+    closeMenu();
     await DB.signOut();
     showAuth();
   });
 
-  // Navigation
-  $$('.nav-btn[data-view]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      $$('.nav-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      $$('.view').forEach(v => v.classList.remove('active'));
-      const view = $(`#view-${btn.dataset.view}`);
-      if (view) view.classList.add('active');
-      if (btn.dataset.view === 'rank') rebuildStacks();
-      if (btn.dataset.view === 'people') renderPeople();
-      if (btn.dataset.view === 'traits') renderTraits();
-      if (btn.dataset.view === 'matrix') renderMatrix();
-      if (btn.dataset.view === 'viz') renderViz();
-      if (btn.dataset.view === 'insights') updateAiBadge();
-      SFX.softTick();
-    });
-  });
+  // Menu
+  function openMenu() {
+    $('#ctx-menu').classList.add('open');
+    $('#ctx-overlay').classList.add('open');
+  }
+  function closeMenu() {
+    $('#ctx-menu').classList.remove('open');
+    $('#ctx-overlay').classList.remove('open');
+  }
+  $('#btn-menu').addEventListener('click', openMenu);
+  $('#ctx-overlay').addEventListener('click', closeMenu);
 
-  // Mode toggle
+  // Navigation
+  function goView(name) {
+    $$('.ctx-item[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $$('.bnav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    $$('.view').forEach(v => v.classList.remove('active'));
+    const view = $(`#view-${name}`);
+    if (view) view.classList.add('active');
+    $('#topbar-title').textContent = VIEW_TITLES[name] || name.toUpperCase();
+    closeMenu();
+    closeScoreSheet();
+
+    if (name === 'rank') rebuildStacks();
+    if (name === 'people') renderPeople();
+    if (name === 'traits') renderTraits();
+    if (name === 'matrix') renderMatrix();
+    if (name === 'viz') renderViz();
+    if (name === 'insights') {
+      updateAiBadge();
+      renderAiChips();
+    }
+    SFX.softTick();
+  }
+
+  $$('.ctx-item[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => goView(btn.dataset.view));
+  });
+  $$('.bnav-btn').forEach(btn => {
+    btn.addEventListener('click', () => goView(btn.dataset.view));
+  });
+  $('#btn-ai-quick').addEventListener('click', () => goView('insights'));
+
+  // Mode
   $$('.mode-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       $$('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -124,13 +151,11 @@
     });
   });
 
-  // Load data
+  // Data
   async function loadAll() {
     try {
       const [people, traits, scores] = await Promise.all([
-        DB.getPeople(),
-        DB.getTraits(),
-        DB.getScores()
+        DB.getPeople(), DB.getTraits(), DB.getScores()
       ]);
       state.people = people;
       state.traits = traits;
@@ -148,7 +173,9 @@
 
   function populateSelects() {
     const raterSel = $('#rater-select');
-    raterSel.innerHTML = state.people.map(p => `<option value="${p.id}">${p.full_name}</option>`).join('');
+    raterSel.innerHTML = state.people.map(p =>
+      `<option value="${p.id}">${escape(p.full_name)}</option>`
+    ).join('');
     if (state.currentRaterId) raterSel.value = state.currentRaterId;
     raterSel.onchange = () => {
       state.currentRaterId = raterSel.value;
@@ -156,13 +183,21 @@
     };
 
     const matrixTrait = $('#matrix-trait-select');
-    matrixTrait.innerHTML = state.traits.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+    matrixTrait.innerHTML = state.traits.map(t =>
+      `<option value="${t.id}">${escape(t.name)}</option>`
+    ).join('');
     matrixTrait.onchange = renderMatrix;
 
     const vizPerson = $('#viz-person-select');
-    vizPerson.innerHTML = state.people.map(p => `<option value="${p.id}">${p.full_name}</option>`).join('');
+    vizPerson.innerHTML = state.people.map(p =>
+      `<option value="${p.id}">${escape(p.full_name)}</option>`
+    ).join('');
     vizPerson.onchange = renderViz;
     $('#viz-type').onchange = renderViz;
+  }
+
+  function escape(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   // STACKS
@@ -170,13 +205,12 @@
     const container = $('#stacks-container');
     CardStacks.clear(container);
     if (!state.people.length || !state.traits.length) {
-      container.innerHTML = '<div style="color:var(--text2);padding:40px;letter-spacing:2px">NEED PEOPLE + TRAITS</div>';
+      container.innerHTML = '<div style="color:var(--text2);padding:40px 20px;letter-spacing:1px;font-size:13px;text-align:center;width:100%">NEED PEOPLE + TRAITS</div>';
       return;
     }
     const raterId = state.currentRaterId || state.people[0].id;
 
     if (state.mode === 'people') {
-      // One stack per ratee (other people). Cards inside = traits to score for that person.
       const others = state.people.filter(p => p.id !== raterId);
       others.forEach(person => {
         const items = state.traits.map(t => ({
@@ -192,14 +226,11 @@
           label: person.full_name,
           items,
           accent: 'var(--accent)',
-          onSwipe: ({ item, direction, scoreHint }) => {
-            openScorePanel(item.personId, item.traitId, scoreHint);
-          },
+          onSwipe: ({ item, scoreHint }) => openScorePanel(item.personId, item.traitId, scoreHint),
           onSelect: ({ item }) => openScorePanel(item.personId, item.traitId, 0)
         });
       });
     } else {
-      // One stack per trait. Cards = people to score on that trait.
       state.traits.forEach(trait => {
         const others = state.people.filter(p => p.id !== raterId);
         const items = others.map(p => ({
@@ -215,9 +246,7 @@
           label: trait.name,
           items,
           accent: trait.color || 'var(--accent)',
-          onSwipe: ({ item, direction, scoreHint }) => {
-            openScorePanel(item.personId, item.traitId, scoreHint);
-          },
+          onSwipe: ({ item, scoreHint }) => openScorePanel(item.personId, item.traitId, scoreHint),
           onSelect: ({ item }) => openScorePanel(item.personId, item.traitId, 0)
         });
       });
@@ -232,12 +261,19 @@
     state.selectedTrait = traitId;
     $('#score-target-name').textContent = person.full_name;
     $('#score-trait-name').textContent = trait.name;
-    const existing = state.scores.find(s => s.rater_id === state.currentRaterId && s.ratee_id === rateeId && s.trait_id === traitId);
+    const existing = state.scores.find(s =>
+      s.rater_id === state.currentRaterId && s.ratee_id === rateeId && s.trait_id === traitId
+    );
     const val = existing ? Number(existing.score) : Number(hint) || 0;
     $('#score-slider').value = val;
     $('#score-value').textContent = (val > 0 ? '+' : '') + val;
     $('#score-note').value = existing?.note || '';
-    SFX.glassClink(0.4);
+    $('#score-sheet').classList.add('open');
+    SFX.glassClink(0.35);
+  }
+
+  function closeScoreSheet() {
+    $('#score-sheet').classList.remove('open');
   }
 
   $('#score-slider').addEventListener('input', (e) => {
@@ -258,13 +294,15 @@
         score,
         note
       });
-      // update local
-      const idx = state.scores.findIndex(s => s.rater_id === row.rater_id && s.ratee_id === row.ratee_id && s.trait_id === row.trait_id);
+      const idx = state.scores.findIndex(s =>
+        s.rater_id === row.rater_id && s.ratee_id === row.ratee_id && s.trait_id === row.trait_id
+      );
       if (idx >= 0) state.scores[idx] = row; else state.scores.push(row);
       SFX.commitPop();
-      SFX.glassClink(1);
+      SFX.glassClink(0.9);
       if (state.vibrate && navigator.vibrate) navigator.vibrate([10, 20, 10]);
       toast('LOCKED');
+      closeScoreSheet();
     } catch (e) {
       console.error(e);
       toast('SAVE FAIL');
@@ -273,27 +311,34 @@
   });
 
   $('#btn-skip').addEventListener('click', () => {
-    state.selectedTarget = null;
-    state.selectedTrait = null;
-    $('#score-target-name').textContent = '—';
-    $('#score-trait-name').textContent = '—';
+    closeScoreSheet();
     SFX.softTick();
+  });
+
+  $('#btn-analyze-score').addEventListener('click', () => {
+    if (!state.selectedTarget || !state.selectedTrait) return;
+    const person = state.people.find(p => p.id === state.selectedTarget);
+    const trait = state.traits.find(t => t.id === state.selectedTrait);
+    const rater = state.people.find(p => p.id === state.currentRaterId);
+    goView('insights');
+    runAi(`Analyze why ${rater?.full_name || 'rater'} would score ${person?.full_name} on ${trait?.name}. Look at all related scores: how others rate ${person?.full_name} on ${trait?.name}, how ${person?.full_name} rates others on it, and mutual patterns. Give a short dense verdict.`);
   });
 
   $('#btn-shuffle').addEventListener('click', () => {
     rebuildStacks();
-    SFX.glassClink(0.5);
+    SFX.glassClink(0.4);
   });
 
-  // Sound toggle
   let soundOn = true;
   $('#btn-sound-toggle').addEventListener('click', () => {
     soundOn = !soundOn;
     SFX.setEnabled(soundOn);
-    $('#btn-sound-toggle').innerHTML = soundOn ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+    $('#btn-sound-toggle').innerHTML = soundOn
+      ? '<i class="fa-solid fa-volume-high"></i>'
+      : '<i class="fa-solid fa-volume-xmark"></i>';
   });
 
-  // PEOPLE
+  // PEOPLE with analyze
   function renderPeople() {
     const grid = $('#people-grid');
     grid.innerHTML = state.people.map(p => `
@@ -301,10 +346,21 @@
         <div class="avatar">${(p.full_name || '?')[0]}</div>
         <h3>${escape(p.full_name)}</h3>
         <p>${escape(p.job_title || p.bio || '—')}</p>
+        <div class="card-actions">
+          <button class="btn-analyze-person" data-id="${p.id}"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</button>
+        </div>
       </div>
     `).join('');
+    grid.querySelectorAll('.btn-analyze-person').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const person = state.people.find(p => p.id === btn.dataset.id);
+        if (!person) return;
+        goView('insights');
+        runAi(`Deep profile of ${person.full_name}. How do others rate them across all traits? How do they rate others? Asymmetries, strengths, polarizing traits, missing data. Dense short analysis.`);
+      });
+    });
   }
-  function escape(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 
   $('#btn-add-person').addEventListener('click', () => {
     openModal(`
@@ -318,7 +374,11 @@
       const full_name = $('#m-name').value.trim();
       if (!full_name) return;
       try {
-        const p = await DB.createPerson({ full_name, job_title: $('#m-title').value.trim(), bio: $('#m-bio').value.trim() });
+        const p = await DB.createPerson({
+          full_name,
+          job_title: $('#m-title').value.trim(),
+          bio: $('#m-bio').value.trim()
+        });
         state.people.push(p);
         populateSelects();
         renderPeople();
@@ -332,15 +392,27 @@
     };
   });
 
-  // TRAITS
+  // TRAITS with analyze
   function renderTraits() {
     const grid = $('#traits-grid');
     grid.innerHTML = state.traits.map(t => `
       <div class="trait-card" data-id="${t.id}">
         <h3><span class="trait-color" style="background:${t.color || '#7c5cff'}"></span>${escape(t.name)}</h3>
         <p>${escape(t.description || '—')}</p>
+        <div class="card-actions">
+          <button class="btn-analyze-trait" data-id="${t.id}"><i class="fa-solid fa-wand-magic-sparkles"></i> AI</button>
+        </div>
       </div>
     `).join('');
+    grid.querySelectorAll('.btn-analyze-trait').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const trait = state.traits.find(t => t.id === btn.dataset.id);
+        if (!trait) return;
+        goView('insights');
+        runAi(`Analyze the trait "${trait.name}" across the whole ranking space. Who is rated highest/lowest? Biggest asymmetries (A rates B high, B rates A low)? Clusters? Who is polarizing on this trait? Short dense read.`);
+      });
+    });
   }
 
   $('#btn-add-trait').addEventListener('click', () => {
@@ -348,14 +420,18 @@
       <h3>NEW TRAIT</h3>
       <div class="input-group"><input id="m-tname" placeholder=" "><label>name</label></div>
       <div class="input-group"><input id="m-tdesc" placeholder=" "><label>desc</label></div>
-      <div class="input-group"><input id="m-tcolor" type="color" value="#7c5cff" style="height:42px;padding:4px"></div>
+      <div class="input-group"><input id="m-tcolor" type="color" value="#7c5cff" style="height:42px;padding:4px;width:100%"></div>
       <button class="btn-primary" id="m-save-trait">ADD</button>
     `);
     $('#m-save-trait').onclick = async () => {
       const name = $('#m-tname').value.trim();
       if (!name) return;
       try {
-        const t = await DB.createTrait({ name, description: $('#m-tdesc').value.trim(), color: $('#m-tcolor').value });
+        const t = await DB.createTrait({
+          name,
+          description: $('#m-tdesc').value.trim(),
+          color: $('#m-tcolor').value
+        });
         state.traits.push(t);
         populateSelects();
         renderTraits();
@@ -369,7 +445,7 @@
     };
   });
 
-  // MATRIX
+  // MATRIX + cell analyze
   function renderMatrix() {
     const traitId = $('#matrix-trait-select').value;
     if (!traitId || !state.people.length) {
@@ -377,19 +453,24 @@
       return;
     }
     const people = state.people;
-    let html = '<thead><tr><th></th>' + people.map(p => `<th>${escape(p.full_name.slice(0, 8))}</th>`).join('') + '</tr></thead><tbody>';
+    let html = '<thead><tr><th></th>' +
+      people.map(p => `<th>${escape(p.full_name.slice(0, 7))}</th>`).join('') +
+      '</tr></thead><tbody>';
     people.forEach(rater => {
-      html += `<tr><td>${escape(rater.full_name.slice(0, 10))}</td>`;
+      html += `<tr><td>${escape(rater.full_name.slice(0, 8))}</td>`;
       people.forEach(ratee => {
         if (rater.id === ratee.id) {
           html += '<td class="cell-zero">·</td>';
         } else {
-          const s = state.scores.find(x => x.rater_id === rater.id && x.ratee_id === ratee.id && x.trait_id === traitId);
-          if (!s) html += '<td class="cell-zero">—</td>';
-          else {
+          const s = state.scores.find(x =>
+            x.rater_id === rater.id && x.ratee_id === ratee.id && x.trait_id === traitId
+          );
+          if (!s) {
+            html += `<td class="cell-zero" data-r="${rater.id}" data-e="${ratee.id}" data-t="${traitId}">—</td>`;
+          } else {
             const v = Number(s.score);
             const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
-            html += `<td class="${cls}">${v > 0 ? '+' : ''}${v}</td>`;
+            html += `<td class="${cls}" data-r="${rater.id}" data-e="${ratee.id}" data-t="${traitId}">${v > 0 ? '+' : ''}${v}</td>`;
           }
         }
       });
@@ -397,7 +478,24 @@
     });
     html += '</tbody>';
     $('#score-matrix').innerHTML = html;
+
+    $('#score-matrix').querySelectorAll('td[data-r]').forEach(td => {
+      td.addEventListener('click', () => {
+        const rater = state.people.find(p => p.id === td.dataset.r);
+        const ratee = state.people.find(p => p.id === td.dataset.e);
+        const trait = state.traits.find(t => t.id === td.dataset.t);
+        goView('insights');
+        runAi(`Cell focus: ${rater?.full_name} → ${ratee?.full_name} on ${trait?.name} (value: ${td.textContent}). Why this score? Compare to reverse direction, to how others rate ${ratee?.full_name} on this trait, and to ${rater?.full_name}'s typical rating style. Short verdict.`);
+      });
+    });
   }
+
+  $('#btn-analyze-matrix')?.addEventListener('click', () => {
+    const trait = state.traits.find(t => t.id === $('#matrix-trait-select').value);
+    if (!trait) return;
+    goView('insights');
+    runAi(`Full matrix analysis for trait "${trait.name}". Rank people by average received and given. Call out strongest mutual pairs, biggest one-way asymmetries, and anyone missing data. Dense.`);
+  });
 
   // VIZ
   function renderViz() {
@@ -408,13 +506,11 @@
     if (!personId || !state.traits.length) return;
 
     const labels = state.traits.map(t => t.name);
-    // received scores (others rating this person)
     const received = state.traits.map(t => {
       const list = state.scores.filter(s => s.ratee_id === personId && s.trait_id === t.id);
       if (!list.length) return 0;
       return list.reduce((a, b) => a + Number(b.score), 0) / list.length;
     });
-    // given scores (this person rating others) average per trait
     const given = state.traits.map(t => {
       const list = state.scores.filter(s => s.rater_id === personId && s.trait_id === t.id);
       if (!list.length) return 0;
@@ -422,56 +518,63 @@
     });
 
     const ctx = canvas.getContext('2d');
-    if (type === 'radar') {
-      state.chart = new Chart(ctx, {
-        type: 'radar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'RECV', data: received, borderColor: '#7c5cff', backgroundColor: 'rgba(124,92,255,0.2)', pointBackgroundColor: '#7c5cff' },
-            { label: 'GIVE', data: given, borderColor: '#ff4d9e', backgroundColor: 'rgba(255,77,158,0.15)', pointBackgroundColor: '#ff4d9e' }
-          ]
-        },
-        options: {
-          scales: { r: { min: -5, max: 5, ticks: { stepSize: 2.5, color: '#8b90a0' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#e8eaf0', font: { size: 11 } } } },
-          plugins: { legend: { labels: { color: '#8b90a0' } } }
-        }
-      });
-    } else if (type === 'bars') {
-      state.chart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'RECV', data: received, backgroundColor: 'rgba(124,92,255,0.7)' },
-            { label: 'GIVE', data: given, backgroundColor: 'rgba(255,77,158,0.7)' }
-          ]
-        },
-        options: {
-          scales: { y: { min: -5, max: 5, ticks: { color: '#8b90a0' }, grid: { color: 'rgba(255,255,255,0.06)' } }, x: { ticks: { color: '#8b90a0' } } },
-          plugins: { legend: { labels: { color: '#8b90a0' } } }
-        }
-      });
-    } else {
-      // heat-like: simple dataset of all pairwise for selected trait? fallback radar
-      state.chart = new Chart(ctx, {
-        type: 'radar',
-        data: { labels, datasets: [{ label: 'RECV', data: received, borderColor: '#3dffb5', backgroundColor: 'rgba(61,255,181,0.2)' }] },
-        options: { scales: { r: { min: -5, max: 5 } }, plugins: { legend: { display: false } } }
-      });
-    }
+    const common = {
+      scales: type === 'radar'
+        ? { r: { min: -5, max: 5, ticks: { stepSize: 2.5, color: '#8b90a0' }, grid: { color: 'rgba(255,255,255,0.06)' }, pointLabels: { color: '#e8eaf0', font: { size: 10 } } } }
+        : { y: { min: -5, max: 5, ticks: { color: '#8b90a0' }, grid: { color: 'rgba(255,255,255,0.06)' } }, x: { ticks: { color: '#8b90a0', font: { size: 10 } } } },
+      plugins: { legend: { labels: { color: '#8b90a0', boxWidth: 12 } } }
+    };
+
+    state.chart = new Chart(ctx, {
+      type: type === 'bars' ? 'bar' : 'radar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'RECV', data: received, borderColor: '#7c5cff', backgroundColor: type === 'bars' ? 'rgba(124,92,255,0.7)' : 'rgba(124,92,255,0.2)', pointBackgroundColor: '#7c5cff' },
+          { label: 'GIVE', data: given, borderColor: '#ff4d9e', backgroundColor: type === 'bars' ? 'rgba(255,77,158,0.7)' : 'rgba(255,77,158,0.15)', pointBackgroundColor: '#ff4d9e' }
+        ]
+      },
+      options: common
+    });
   }
+
+  $('#btn-analyze-viz')?.addEventListener('click', () => {
+    const person = state.people.find(p => p.id === $('#viz-person-select').value);
+    if (!person) return;
+    goView('insights');
+    runAi(`Visual profile of ${person.full_name}: interpret received vs given scores across traits. Where do they over/under-rate relative to how they are perceived? Signature pattern in one short paragraph.`);
+  });
 
   // AI
   function updateAiBadge() {
-    $('#ai-model-badge').textContent = AI.getModel().split('/').pop();
+    const el = $('#ai-model-badge');
+    if (el) el.textContent = AI.getModel().split('/').pop();
+  }
+
+  function renderAiChips() {
+    const chips = [
+      { label: 'ASYMMETRY', prompt: 'Find the biggest mutual ranking asymmetries across all traits. Name the pairs and the gap.' },
+      { label: 'NEW TRAITS', prompt: 'Suggest 5 sharp new personality traits worth ranking in this group.' },
+      { label: 'AUTO SCORE', prompt: 'Propose plausible scores for missing cells based on existing patterns. List only the most confident ones.' },
+      { label: '3D SPACE', prompt: 'Describe the 3D ranking space: clusters, outliers, and the main axes of variance.' },
+      { label: 'POLAR', prompt: 'Who is the most polarizing person and on which traits? Evidence.' },
+      { label: 'KINDNESS', prompt: 'Focus on kindness (or closest trait): who is kind, who is ranked kind, mismatches.' },
+      { label: 'POEM', prompt: 'One cryptic 4-line ranking poem from the current data.' }
+    ];
+    const el = $('#ai-quick');
+    el.innerHTML = chips.map(c =>
+      `<button class="ai-chip" data-prompt="${escape(c.prompt)}">${c.label}</button>`
+    ).join('');
+    el.querySelectorAll('.ai-chip').forEach(chip => {
+      chip.addEventListener('click', () => runAi(chip.dataset.prompt));
+    });
   }
 
   function buildAiContext() {
     return {
       people: state.people.map(p => ({ id: p.id, name: p.full_name })),
       traits: state.traits.map(t => ({ id: t.id, name: t.name })),
-      scores: state.scores.slice(0, 200).map(s => ({
+      scores: state.scores.slice(0, 250).map(s => ({
         rater: state.people.find(p => p.id === s.rater_id)?.full_name,
         ratee: state.people.find(p => p.id === s.ratee_id)?.full_name,
         trait: state.traits.find(t => t.id === s.trait_id)?.name,
@@ -482,6 +585,8 @@
 
   async function runAi(userText) {
     const messagesEl = $('#ai-messages');
+    if (!messagesEl) return;
+
     const userMsg = document.createElement('div');
     userMsg.className = 'ai-msg user';
     userMsg.textContent = userText;
@@ -500,14 +605,13 @@
         { role: 'system', content: AI.systemPrompt(ctx) },
         { role: 'user', content: userText }
       ];
-      const result = await AI.streamChat(messages, ({ content, reasoning }) => {
-        let html = content.replace(/\n/g, '<br>');
+      await AI.streamChat(messages, ({ content, reasoning }) => {
+        let html = (content || '').replace(/\n/g, '<br>');
         if (reasoning) html += `<div class="reasoning">${reasoning}</div>`;
         botMsg.innerHTML = html || '<div class="typing"><span></span><span></span><span></span></div>';
         messagesEl.scrollTop = messagesEl.scrollHeight;
-      }, { temperature: 0.75, max_tokens: 1500 });
-      if (!result.content) botMsg.textContent = '…';
-      SFX.glassClink(0.5);
+      }, { temperature: 0.75, max_tokens: 1600 });
+      SFX.glassClink(0.45);
     } catch (e) {
       botMsg.textContent = e.message === 'NO_KEY' ? 'SET KEY IN SETTINGS' : (e.message || 'AI ERR');
       SFX.errorBuzz();
@@ -523,9 +627,6 @@
   });
   $('#ai-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') $('#ai-send').click();
-  });
-  $$('.ai-chip').forEach(chip => {
-    chip.addEventListener('click', () => runAi(chip.dataset.prompt));
   });
 
   // Settings
@@ -553,7 +654,6 @@
     applyTheme();
   });
 
-  // Seed demo
   $('#btn-seed').addEventListener('click', async () => {
     const demoPeople = [
       { full_name: 'Aria Voss', job_title: 'Architect' },
@@ -570,14 +670,12 @@
     try {
       for (const p of demoPeople) {
         if (!state.people.find(x => x.full_name === p.full_name)) {
-          const created = await DB.createPerson(p);
-          state.people.push(created);
+          state.people.push(await DB.createPerson(p));
         }
       }
       for (const t of demoTraits) {
         if (!state.traits.find(x => x.name === t.name)) {
-          const created = await DB.createTrait(t);
-          state.traits.push(created);
+          state.traits.push(await DB.createTrait(t));
         }
       }
       populateSelects();
@@ -590,16 +688,6 @@
       toast('SEED FAIL · CREATE TABLES');
       console.error(e);
     }
-  });
-
-  // AI Orb opens insights
-  $('#ai-orb').addEventListener('click', () => {
-    $$('.nav-btn').forEach(b => b.classList.remove('active'));
-    $$('.nav-btn[data-view="insights"]')[0]?.classList.add('active');
-    $$('.view').forEach(v => v.classList.remove('active'));
-    $('#view-insights').classList.add('active');
-    updateAiBadge();
-    SFX.glassClink(0.6);
   });
 
   // Boot
@@ -619,7 +707,6 @@
     }
   });
 
-  // Initial session check
   DB.getSession().then(session => {
     if (session) {
       state.user = session.user;
@@ -630,6 +717,5 @@
     }
   });
 
-  // First interaction resume audio
   document.body.addEventListener('pointerdown', () => SFX.ensureCtx(), { once: true });
 })();

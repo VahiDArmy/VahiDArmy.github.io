@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0a0b0f">
   <title>R3D · Rank</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,7 +19,7 @@
 </head>
 <body>
   <div id="app">
-    <!-- Auth Overlay -->
+    <!-- Auth -->
     <div id="auth-screen" class="screen active">
       <div class="auth-bg">
         <div class="orb orb-1"></div>
@@ -52,136 +54,114 @@
       </div>
     </div>
 
-    <!-- Main App -->
+    <!-- Main -->
     <div id="main-screen" class="screen">
-      <nav class="side-nav glass">
-        <div class="nav-logo">R3</div>
-        <button class="nav-btn active" data-view="rank" title="Rank"><i class="fa-solid fa-layer-group"></i></button>
-        <button class="nav-btn" data-view="people" title="People"><i class="fa-solid fa-users"></i></button>
-        <button class="nav-btn" data-view="traits" title="Traits"><i class="fa-solid fa-gem"></i></button>
-        <button class="nav-btn" data-view="matrix" title="Matrix"><i class="fa-solid fa-table-cells"></i></button>
-        <button class="nav-btn" data-view="viz" title="Viz"><i class="fa-solid fa-chart-radar"></i></button>
-        <button class="nav-btn" data-view="insights" title="AI"><i class="fa-solid fa-brain"></i></button>
-        <div class="nav-spacer"></div>
-        <button class="nav-btn" data-view="settings" title="Settings"><i class="fa-solid fa-sliders"></i></button>
-        <button class="nav-btn" id="btn-logout" title="Out"><i class="fa-solid fa-right-from-bracket"></i></button>
+      <!-- Top bar -->
+      <header class="topbar">
+        <button class="topbar-btn" id="btn-menu" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+        <div class="topbar-title" id="topbar-title">RANK</div>
+        <div class="topbar-actions">
+          <button class="topbar-btn" id="btn-sound-toggle" aria-label="Sound"><i class="fa-solid fa-volume-high"></i></button>
+          <button class="topbar-btn" id="btn-ai-quick" aria-label="AI"><i class="fa-solid fa-brain"></i></button>
+        </div>
+      </header>
+
+      <!-- Context menu (slides from left) -->
+      <div id="ctx-overlay" class="ctx-overlay"></div>
+      <nav id="ctx-menu" class="ctx-menu">
+        <div class="ctx-brand">R3</div>
+        <button class="ctx-item active" data-view="rank"><i class="fa-solid fa-layer-group"></i><span>Rank</span></button>
+        <button class="ctx-item" data-view="people"><i class="fa-solid fa-users"></i><span>People</span></button>
+        <button class="ctx-item" data-view="traits"><i class="fa-solid fa-gem"></i><span>Traits</span></button>
+        <button class="ctx-item" data-view="matrix"><i class="fa-solid fa-table-cells"></i><span>Matrix</span></button>
+        <button class="ctx-item" data-view="viz"><i class="fa-solid fa-chart-radar"></i><span>Viz</span></button>
+        <button class="ctx-item" data-view="insights"><i class="fa-solid fa-brain"></i><span>Insights</span></button>
+        <div class="ctx-spacer"></div>
+        <button class="ctx-item" data-view="settings"><i class="fa-solid fa-sliders"></i><span>Settings</span></button>
+        <button class="ctx-item" id="btn-logout"><i class="fa-solid fa-right-from-bracket"></i><span>Out</span></button>
       </nav>
 
       <main id="content">
-        <!-- RANK VIEW -->
+        <!-- RANK -->
         <section id="view-rank" class="view active">
-          <header class="view-header">
+          <div class="rank-toolbar">
             <div class="mode-toggle">
               <button class="mode-btn active" data-mode="people">PEOPLE</button>
               <button class="mode-btn" data-mode="traits">TRAITS</button>
             </div>
-            <div class="header-actions">
-              <select id="rater-select" class="glass-select"></select>
-              <button class="icon-btn" id="btn-shuffle" title="Shuffle"><i class="fa-solid fa-shuffle"></i></button>
-              <button class="icon-btn" id="btn-sound-toggle"><i class="fa-solid fa-volume-high"></i></button>
-            </div>
-          </header>
-          <div class="rank-workspace">
-            <div class="stacks-container" id="stacks-container">
-              <!-- Dynamic stacks -->
-            </div>
-            <div class="score-panel glass" id="score-panel">
-              <div class="score-header">
-                <span id="score-target-name">—</span>
-                <span id="score-trait-name">—</span>
-              </div>
-              <div class="score-slider-wrap">
-                <input type="range" id="score-slider" min="-5" max="5" step="0.5" value="0">
-                <div class="score-value" id="score-value">0</div>
-              </div>
-              <div class="score-labels">
-                <span>-5</span><span>0</span><span>+5</span>
-              </div>
-              <textarea id="score-note" placeholder="note..." rows="2"></textarea>
-              <div class="score-actions">
-                <button class="btn-ghost" id="btn-skip">SKIP</button>
-                <button class="btn-primary" id="btn-commit">COMMIT</button>
-              </div>
-            </div>
+            <select id="rater-select" class="glass-select compact"></select>
+            <button class="icon-btn" id="btn-shuffle"><i class="fa-solid fa-shuffle"></i></button>
           </div>
+          <div class="stacks-container" id="stacks-container"></div>
         </section>
 
-        <!-- PEOPLE VIEW -->
+        <!-- PEOPLE -->
         <section id="view-people" class="view">
-          <header class="view-header">
+          <div class="view-toolbar">
             <h2>PEOPLE</h2>
-            <button class="btn-primary" id="btn-add-person"><i class="fa-solid fa-plus"></i></button>
-          </header>
+            <button class="btn-primary sm" id="btn-add-person"><i class="fa-solid fa-plus"></i></button>
+          </div>
           <div class="grid-cards" id="people-grid"></div>
         </section>
 
-        <!-- TRAITS VIEW -->
+        <!-- TRAITS -->
         <section id="view-traits" class="view">
-          <header class="view-header">
+          <div class="view-toolbar">
             <h2>TRAITS</h2>
-            <button class="btn-primary" id="btn-add-trait"><i class="fa-solid fa-plus"></i></button>
-          </header>
+            <button class="btn-primary sm" id="btn-add-trait"><i class="fa-solid fa-plus"></i></button>
+          </div>
           <div class="grid-cards" id="traits-grid"></div>
         </section>
 
-        <!-- MATRIX VIEW -->
+        <!-- MATRIX -->
         <section id="view-matrix" class="view">
-          <header class="view-header">
+          <div class="view-toolbar">
             <h2>MATRIX</h2>
-            <select id="matrix-trait-select" class="glass-select"></select>
-          </header>
+            <select id="matrix-trait-select" class="glass-select compact"></select>
+            <button class="icon-btn" id="btn-analyze-matrix" title="Analyze"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+          </div>
           <div class="matrix-wrap">
             <table id="score-matrix" class="score-matrix"></table>
           </div>
         </section>
 
-        <!-- VIZ VIEW -->
+        <!-- VIZ -->
         <section id="view-viz" class="view">
-          <header class="view-header">
+          <div class="view-toolbar">
             <h2>VIZ</h2>
-            <div class="viz-controls">
-              <select id="viz-person-select" class="glass-select"></select>
-              <select id="viz-type" class="glass-select">
-                <option value="radar">RADAR</option>
-                <option value="bars">BARS</option>
-                <option value="heat">HEAT</option>
-              </select>
-            </div>
-          </header>
+            <select id="viz-person-select" class="glass-select compact"></select>
+            <select id="viz-type" class="glass-select compact">
+              <option value="radar">RADAR</option>
+              <option value="bars">BARS</option>
+            </select>
+            <button class="icon-btn" id="btn-analyze-viz"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+          </div>
           <div class="viz-canvas-wrap">
             <canvas id="viz-canvas"></canvas>
           </div>
-          <div class="viz-legend" id="viz-legend"></div>
         </section>
 
-        <!-- INSIGHTS / AI VIEW -->
+        <!-- INSIGHTS -->
         <section id="view-insights" class="view">
-          <header class="view-header">
+          <div class="view-toolbar">
             <h2>INSIGHTS</h2>
             <div class="ai-model-badge" id="ai-model-badge">—</div>
-          </header>
+          </div>
           <div class="ai-layout">
-            <div class="ai-quick">
-              <button class="ai-chip" data-prompt="analyze mutual rankings and highlight asymmetries">ASYMMETRY</button>
-              <button class="ai-chip" data-prompt="suggest 5 new personality traits that would be interesting to rank">NEW TRAITS</button>
-              <button class="ai-chip" data-prompt="for the current people, propose scores based on typical patterns and explain">AUTO SCORE</button>
-              <button class="ai-chip" data-prompt="describe the 3D ranking space and clusters you see">3D SPACE</button>
-              <button class="ai-chip" data-prompt="who is the most polarizing person and why">POLAR</button>
-              <button class="ai-chip" data-prompt="generate a short ranking poem or cryptic insight">POEM</button>
-            </div>
+            <div class="ai-quick" id="ai-quick"></div>
             <div class="ai-chat glass" id="ai-chat">
               <div class="ai-messages" id="ai-messages"></div>
               <div class="ai-input-row">
-                <input type="text" id="ai-input" placeholder="ask..." autocomplete="off">
+                <input type="text" id="ai-input" placeholder="ask..." autocomplete="off" enterkeyhint="send">
                 <button id="ai-send"><i class="fa-solid fa-paper-plane"></i></button>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- SETTINGS VIEW -->
+        <!-- SETTINGS -->
         <section id="view-settings" class="view">
-          <header class="view-header"><h2>SETTINGS</h2></header>
+          <div class="view-toolbar"><h2>SETTINGS</h2></div>
           <div class="settings-grid">
             <div class="setting-card glass">
               <label>OPENROUTER KEY</label>
@@ -218,14 +198,37 @@
         </section>
       </main>
 
-      <!-- Floating AI Orb -->
-      <div id="ai-orb" class="ai-orb" title="AI">
-        <div class="orb-core"></div>
-        <div class="orb-ring"></div>
+      <!-- Bottom score sheet (mobile) -->
+      <div id="score-sheet" class="score-sheet">
+        <div class="sheet-handle"></div>
+        <div class="score-header">
+          <span id="score-target-name">—</span>
+          <span id="score-trait-name">—</span>
+        </div>
+        <div class="score-slider-wrap">
+          <input type="range" id="score-slider" min="-5" max="5" step="0.5" value="0">
+          <div class="score-value" id="score-value">0</div>
+        </div>
+        <div class="score-labels"><span>-5</span><span>0</span><span>+5</span></div>
+        <textarea id="score-note" placeholder="note..." rows="2"></textarea>
+        <div class="score-actions">
+          <button class="btn-ghost" id="btn-skip">SKIP</button>
+          <button class="btn-ghost" id="btn-analyze-score"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+          <button class="btn-primary" id="btn-commit">COMMIT</button>
+        </div>
       </div>
+
+      <!-- Bottom nav -->
+      <nav class="bottom-nav">
+        <button class="bnav-btn active" data-view="rank"><i class="fa-solid fa-layer-group"></i><span>Rank</span></button>
+        <button class="bnav-btn" data-view="people"><i class="fa-solid fa-users"></i><span>People</span></button>
+        <button class="bnav-btn" data-view="traits"><i class="fa-solid fa-gem"></i><span>Traits</span></button>
+        <button class="bnav-btn" data-view="matrix"><i class="fa-solid fa-table-cells"></i><span>Matrix</span></button>
+        <button class="bnav-btn" data-view="insights"><i class="fa-solid fa-brain"></i><span>AI</span></button>
+      </nav>
     </div>
 
-    <!-- Modals -->
+    <!-- Modal -->
     <div id="modal-overlay" class="modal-overlay">
       <div class="modal glass" id="modal">
         <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
@@ -233,7 +236,6 @@
       </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="toast"></div>
   </div>
 
