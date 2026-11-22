@@ -113,16 +113,22 @@
           <div class="grid-cards" id="traits-grid"></div>
         </section>
 
-        <!-- MATRIX -->
+        <!-- MATRIX: 3D = stack of 2D tables -->
         <section id="view-matrix" class="view">
           <div class="view-toolbar">
-            <h2>MATRIX</h2>
-            <select id="matrix-trait-select" class="glass-select compact"></select>
-            <button class="icon-btn" id="btn-analyze-matrix" title="Analyze"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+            <div class="mode-toggle" id="matrix-mode-toggle">
+              <button class="mode-btn active" data-mmode="traits">TRAITS</button>
+              <button class="mode-btn" data-mmode="people">PEOPLE</button>
+            </div>
+            <button class="icon-btn" id="btn-matrix-prev"><i class="fa-solid fa-chevron-up"></i></button>
+            <span class="matrix-layer-label" id="matrix-layer-label">—</span>
+            <button class="icon-btn" id="btn-matrix-next"><i class="fa-solid fa-chevron-down"></i></button>
+            <button class="icon-btn" id="btn-analyze-matrix"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
           </div>
-          <div class="matrix-wrap">
-            <table id="score-matrix" class="score-matrix"></table>
+          <div class="matrix-stack-scene" id="matrix-stack-scene">
+            <!-- layers injected: each layer is a full 2D table -->
           </div>
+          <div class="matrix-dots" id="matrix-dots"></div>
         </section>
 
         <!-- VIZ -->

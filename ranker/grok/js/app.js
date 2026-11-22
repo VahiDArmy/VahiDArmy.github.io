@@ -7,6 +7,8 @@
     traits: [],
     scores: [],
     mode: 'people',
+    matrixMode: 'traits', // traits | people  → third axis of the stack
+    matrixIndex: 0,
     currentRaterId: null,
     selectedTarget: null,
     selectedTrait: null,
@@ -181,12 +183,6 @@
       state.currentRaterId = raterSel.value;
       rebuildStacks();
     };
-
-    const matrixTrait = $('#matrix-trait-select');
-    matrixTrait.innerHTML = state.traits.map(t =>
-      `<option value="${t.id}">${escape(t.name)}</option>`
-    ).join('');
-    matrixTrait.onchange = renderMatrix;
 
     const vizPerson = $('#viz-person-select');
     vizPerson.innerHTML = state.people.map(p =>
@@ -446,58 +442,228 @@
   });
 
   // MATRIX + cell analyze
-  function renderMatrix() {
-    const traitId = $('#matrix-trait-select').value;
-    if (!traitId || !state.people.length) {
-      $('#score-matrix').innerHTML = '';
-      return;
+  // ===== 3D MATRIX: stack of 2D tables =====
+  function matrixLayers() {
+    if (state.matrixMode === 'traits') {
+      return state.traits.map(t => ({
+        id: t.id,
+        title: t.name,
+        color: t.color || '#7c5cff',
+        kind: 'trait'
+      }));
     }
+    return state.people.map(p => ({
+      id: p.id,
+      title: p.full_name,
+      color: '#7c5cff',
+      kind: 'person'
+    }));
+  }
+
+  function buildTableHtml(layer) {
     const people = state.people;
-    let html = '<thead><tr><th></th>' +
-      people.map(p => `<th>${escape(p.full_name.slice(0, 7))}</th>`).join('') +
-      '</tr></thead><tbody>';
-    people.forEach(rater => {
-      html += `<tr><td>${escape(rater.full_name.slice(0, 8))}</td>`;
-      people.forEach(ratee => {
-        if (rater.id === ratee.id) {
-          html += '<td class="cell-zero">·</td>';
-        } else {
-          const s = state.scores.find(x =>
-            x.rater_id === rater.id && x.ratee_id === ratee.id && x.trait_id === traitId
-          );
-          if (!s) {
-            html += `<td class="cell-zero" data-r="${rater.id}" data-e="${ratee.id}" data-t="${traitId}">—</td>`;
+    if (!people.length) return '<div style="padding:24px;color:var(--text2)">NO PEOPLE</div>';
+
+    if (layer.kind === 'trait') {
+      // Full rater × ratee matrix for this trait
+      let html = '<table><thead><tr><th></th>' +
+        people.map(p => `<th title="${escape(p.full_name)}">${escape(p.full_name.slice(0, 6))}</th>`).join('') +
+        '</tr></thead><tbody>';
+      people.forEach(rater => {
+        html += `<tr><td title="${escape(rater.full_name)}">${escape(rater.full_name.slice(0, 7))}</td>`;
+        people.forEach(ratee => {
+          if (rater.id === ratee.id) {
+            html += '<td class="cell-zero">·</td>';
           } else {
-            const v = Number(s.score);
-            const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
-            html += `<td class="${cls}" data-r="${rater.id}" data-e="${ratee.id}" data-t="${traitId}">${v > 0 ? '+' : ''}${v}</td>`;
+            const s = state.scores.find(x =>
+              x.rater_id === rater.id && x.ratee_id === ratee.id && x.trait_id === layer.id
+            );
+            if (!s) {
+              html += `<td class="cell-zero" data-r="${rater.id}" data-e="${ratee.id}" data-t="${layer.id}">—</td>`;
+            } else {
+              const v = Number(s.score);
+              const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
+              html += `<td class="${cls}" data-r="${rater.id}" data-e="${ratee.id}" data-t="${layer.id}">${v > 0 ? '+' : ''}${v}</td>`;
+            }
           }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+
+    // Person layer: ratee × trait  (this person's outgoing scores) + received row summary
+    // Columns = traits, rows = other people (as ratees)
+    const traits = state.traits;
+    const others = people.filter(p => p.id !== layer.id);
+    let html = '<table><thead><tr><th></th>' +
+      traits.map(t => `<th title="${escape(t.name)}">${escape(t.name.slice(0, 6))}</th>`).join('') +
+      '</tr></thead><tbody>';
+    others.forEach(ratee => {
+      html += `<tr><td title="${escape(ratee.full_name)}">${escape(ratee.full_name.slice(0, 7))}</td>`;
+      traits.forEach(trait => {
+        const s = state.scores.find(x =>
+          x.rater_id === layer.id && x.ratee_id === ratee.id && x.trait_id === trait.id
+        );
+        if (!s) {
+          html += `<td class="cell-zero" data-r="${layer.id}" data-e="${ratee.id}" data-t="${trait.id}">—</td>`;
+        } else {
+          const v = Number(s.score);
+          const cls = v > 0 ? 'cell-pos' : v < 0 ? 'cell-neg' : 'cell-zero';
+          html += `<td class="${cls}" data-r="${layer.id}" data-e="${ratee.id}" data-t="${trait.id}">${v > 0 ? '+' : ''}${v}</td>`;
         }
       });
       html += '</tr>';
     });
-    html += '</tbody>';
-    $('#score-matrix').innerHTML = html;
+    html += '</tbody></table>';
+    return html;
+  }
 
-    $('#score-matrix').querySelectorAll('td[data-r]').forEach(td => {
+  function applyLayerDepth() {
+    const layers = $$('.matrix-layer');
+    const n = layers.length;
+    if (!n) return;
+    const idx = Math.max(0, Math.min(state.matrixIndex, n - 1));
+    state.matrixIndex = idx;
+
+    layers.forEach((el, i) => {
+      const d = i - idx; // 0 = front
+      if (d === 0) {
+        el.style.transform = 'translateY(0) scale(1)';
+        el.style.opacity = '1';
+        el.style.zIndex = '20';
+        el.style.filter = 'none';
+        el.classList.add('is-front');
+        el.classList.remove('is-back');
+      } else if (d > 0) {
+        // behind / below
+        const scale = Math.max(0.82, 1 - d * 0.06);
+        const ty = d * 14;
+        el.style.transform = `translateY(${ty}px) scale(${scale})`;
+        el.style.opacity = String(Math.max(0.15, 0.55 - d * 0.12));
+        el.style.zIndex = String(20 - d);
+        el.style.filter = `brightness(${Math.max(0.55, 1 - d * 0.12)})`;
+        el.classList.remove('is-front');
+        el.classList.add('is-back');
+      } else {
+        // above (already passed) — park off upward
+        const ad = Math.abs(d);
+        el.style.transform = `translateY(${-ad * 28}px) scale(${Math.max(0.9, 1 - ad * 0.04)})`;
+        el.style.opacity = String(Math.max(0, 0.35 - ad * 0.15));
+        el.style.zIndex = String(20 - ad);
+        el.style.filter = 'brightness(0.7)';
+        el.classList.remove('is-front');
+        el.classList.add('is-back');
+      }
+    });
+
+    const list = matrixLayers();
+    const cur = list[idx];
+    $('#matrix-layer-label').textContent = cur ? cur.title : '—';
+
+    const dots = $('#matrix-dots');
+    if (dots) {
+      dots.innerHTML = list.map((_, i) =>
+        `<span class="${i === idx ? 'active' : ''}" data-i="${i}"></span>`
+      ).join('');
+      dots.querySelectorAll('span').forEach(sp => {
+        sp.addEventListener('click', () => {
+          state.matrixIndex = Number(sp.dataset.i);
+          applyLayerDepth();
+          SFX.softTick();
+        });
+      });
+    }
+  }
+
+  function renderMatrix() {
+    const scene = $('#matrix-stack-scene');
+    if (!scene) return;
+    const list = matrixLayers();
+    if (!list.length) {
+      scene.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2);letter-spacing:1px">NEED DATA</div>';
+      $('#matrix-layer-label').textContent = '—';
+      $('#matrix-dots').innerHTML = '';
+      return;
+    }
+    if (state.matrixIndex >= list.length) state.matrixIndex = list.length - 1;
+    if (state.matrixIndex < 0) state.matrixIndex = 0;
+
+    scene.innerHTML = list.map((layer, i) => `
+      <div class="matrix-layer" data-index="${i}" data-id="${layer.id}">
+        <div class="layer-title">
+          <span style="display:flex;align-items:center;gap:8px">
+            <span class="layer-accent" style="background:${layer.color}"></span>
+            ${escape(layer.title)}
+          </span>
+          <span style="font-size:10px;color:var(--text2);letter-spacing:1px">${state.matrixMode === 'traits' ? 'TRAIT LAYER' : 'PERSON LAYER'}</span>
+        </div>
+        <div class="layer-table-wrap">${buildTableHtml(layer)}</div>
+      </div>
+    `).join('');
+
+    applyLayerDepth();
+
+    // cell analyze
+    scene.querySelectorAll('td[data-r]').forEach(td => {
       td.addEventListener('click', () => {
         const rater = state.people.find(p => p.id === td.dataset.r);
         const ratee = state.people.find(p => p.id === td.dataset.e);
         const trait = state.traits.find(t => t.id === td.dataset.t);
         goView('insights');
-        runAi(`Cell focus: ${rater?.full_name} → ${ratee?.full_name} on ${trait?.name} (value: ${td.textContent}). Why this score? Compare to reverse direction, to how others rate ${ratee?.full_name} on this trait, and to ${rater?.full_name}'s typical rating style. Short verdict.`);
+        runAi(`Cell: ${rater?.full_name} → ${ratee?.full_name} on ${trait?.name} (${td.textContent}). Why this value? Reverse direction? Peer context? Short verdict.`);
       });
     });
   }
 
-  $('#btn-analyze-matrix')?.addEventListener('click', () => {
-    const trait = state.traits.find(t => t.id === $('#matrix-trait-select').value);
-    if (!trait) return;
-    goView('insights');
-    runAi(`Full matrix analysis for trait "${trait.name}". Rank people by average received and given. Call out strongest mutual pairs, biggest one-way asymmetries, and anyone missing data. Dense.`);
+  function matrixStep(dir) {
+    const n = matrixLayers().length;
+    if (!n) return;
+    state.matrixIndex = Math.max(0, Math.min(n - 1, state.matrixIndex + dir));
+    applyLayerDepth();
+    SFX.glassClink(0.35);
+    if (state.vibrate && navigator.vibrate) navigator.vibrate(8);
+  }
+
+  $('#btn-matrix-prev')?.addEventListener('click', () => matrixStep(-1));
+  $('#btn-matrix-next')?.addEventListener('click', () => matrixStep(1));
+
+  // matrix mode toggle
+  document.querySelectorAll('#matrix-mode-toggle .mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#matrix-mode-toggle .mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.matrixMode = btn.dataset.mmode;
+      state.matrixIndex = 0;
+      renderMatrix();
+      SFX.softTick();
+    });
   });
 
-  // VIZ
+  // swipe on scene for depth
+  (function bindMatrixSwipe() {
+    const scene = $('#matrix-stack-scene');
+    if (!scene || typeof Hammer === 'undefined') return;
+    const hammertime = new Hammer(scene);
+    hammertime.get('swipe').set({ direction: Hammer.DIRECTION_VERTICAL });
+    hammertime.on('swipeup', () => matrixStep(1));
+    hammertime.on('swipedown', () => matrixStep(-1));
+  })();
+
+  $('#btn-analyze-matrix')?.addEventListener('click', () => {
+    const list = matrixLayers();
+    const cur = list[state.matrixIndex];
+    if (!cur) return;
+    goView('insights');
+    if (state.matrixMode === 'traits') {
+      runAi(`Full 2D layer analysis for trait "${cur.title}" inside the 3D ranking tensor. Rank by average received/given. Mutual pairs, asymmetries, missing cells. Dense.`);
+    } else {
+      runAi(`Person layer: ${cur.title}'s outgoing scores across all traits and ratees. Signature pattern, who they favor/punish, consistency. Dense.`);
+    }
+  });
+
+  // VIZ  // VIZ
   function renderViz() {
     const personId = $('#viz-person-select').value;
     const type = $('#viz-type').value;
