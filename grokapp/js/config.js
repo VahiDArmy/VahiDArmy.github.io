@@ -12,6 +12,8 @@ const defaults = {
   openRouterKey: '',
   defaultModel: 'openrouter/free',
   lastProjectId: null,
+  confirmWrites: false,  // when true, write/edit require UI confirm
+  streamResponses: true,
 };
 
 export function loadConfig() {

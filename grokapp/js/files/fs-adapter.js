@@ -32,6 +32,18 @@ const TEXT_EXT = new Set([
   'editorconfig','prettierrc','eslintrc','babelrc','lock'
 ]);
 
+/** File size policy (bytes) — keep agent context and memory bounded */
+export const FILE_POLICY = {
+  maxImportBytes: 1_500_000,   // skip larger files on native/ZIP import
+  maxReadChars: 80_000,        // truncate for agent read_file
+  maxWriteWarnChars: 200_000,  // warn (still allow) very large writes
+  maxSearchFileChars: 200_000, // skip huge files in search
+};
+
+export function isTextPathPublic(path) {
+  return isTextPath(path);
+}
+
 function isTextPath(path) {
   const name = path.split('/').pop() || '';
   if (name.startsWith('.') && !name.includes('.', 1)) return true; // .gitignore etc
@@ -125,7 +137,7 @@ async function syncFromNative() {
         try {
           const file = await entry.getFile();
           // Cap individual file size to keep memory reasonable
-          if (file.size > 1_500_000) continue;
+          if (file.size > FILE_POLICY.maxImportBytes) continue;
           const content = await file.text();
           writeFileVirtual(path, content);
         } catch (e) {
@@ -325,8 +337,17 @@ export async function importZip(file) {
     if (entry.dir) {
       ensureDir(name.replace(/\/$/, ''));
     } else if (isTextPath(name)) {
-      const content = await entry.async('string');
-      writeFileVirtual(name, content);
+      // Prefer uint8array length check when available
+      try {
+        const u8 = await entry.async('uint8array');
+        if (u8.byteLength > FILE_POLICY.maxImportBytes) continue;
+        const content = new TextDecoder('utf-8', { fatal: false }).decode(u8);
+        writeFileVirtual(name, content);
+      } catch {
+        const content = await entry.async('string');
+        if (content.length > FILE_POLICY.maxImportBytes) continue;
+        writeFileVirtual(name, content);
+      }
     }
   }
   mode = 'virtual';

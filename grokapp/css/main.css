@@ -462,3 +462,97 @@ html, body {
   #btn-close-drawer { display: none; }
   .msg { max-width: 70%; }
 }
+
+
+/* Task state */
+.task-state-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+.task-state-bar.hidden { display: none; }
+.task-badge {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.task-badge.in_progress { border-color: var(--accent); color: var(--accent); }
+.task-badge.verified { border-color: var(--success); color: var(--success); }
+.task-badge.failed { border-color: var(--danger); color: var(--danger); }
+.task-badge.blocked { border-color: var(--warning); color: var(--warning); }
+.task-badge.planned { border-color: var(--text-muted); }
+
+.reconnect-banner {
+  margin: 12px;
+  padding: 14px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+.reconnect-banner.hidden { display: none; }
+.reconnect-banner strong { color: var(--text); }
+
+
+.onboarding {
+  margin: 12px 16px;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.onboarding h3 { font-size: 1rem; margin-bottom: 8px; }
+.onboarding-steps {
+  padding-left: 18px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.onboarding-steps li.done { color: var(--success); text-decoration: line-through; }
+.onboarding-steps li.current { color: var(--text); font-weight: 600; }
+
+
+.diff-view {
+  margin-top: 8px;
+  padding: 10px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--bg);
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-muted);
+}
+.activity-entry.file-diff { border-left-color: #a78bfa; }
+
+
+.check-row {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  color: var(--text) !important;
+}
+.check-row input { width: auto; }
+.msg.streaming::after {
+  content: '▍';
+  animation: blink 1s step-end infinite;
+  color: var(--accent);
+  margin-left: 2px;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}

@@ -20,6 +20,11 @@ const activityLog = [];
 async function boot() {
   bindUI();
   hydrateSettingsForm();
+  renderOnboarding();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW register failed', e));
+  }
 
   if (!isConfigured()) {
     showAuth(false);
@@ -132,6 +137,7 @@ function bindUI() {
           await fs.persistTree(currentProject.id);
         }
         renderFileTree();
+        renderOnboarding();
       } catch (err) {
         toast(err.message);
       }
@@ -168,11 +174,14 @@ function bindUI() {
       supabaseAnonKey: $('#cfg-supabase-key').value.trim(),
       openRouterKey: $('#cfg-openrouter-key').value.trim(),
       defaultModel: $('#cfg-default-model').value,
+      streamResponses: Boolean($('#cfg-stream')?.checked),
+      confirmWrites: Boolean($('#cfg-confirm-writes')?.checked),
     });
     resetSupabaseClient();
     $('#settings-status').textContent = 'Saved. Reloading auth…';
     initAuth();
     toast('Settings saved');
+    renderOnboarding();
   });
 
   // Chat
@@ -188,6 +197,67 @@ function bindUI() {
     activityLog.length = 0;
     $('#activity-log').innerHTML = '';
   });
+
+  // Reconnect banner mirrors Files actions
+  on($('#btn-reconnect-zip'), 'click', () => $('#btn-import-zip')?.click());
+  on($('#btn-reconnect-dir'), 'click', () => $('#btn-connect-dir')?.click());
+}
+
+
+function renderOnboarding() {
+  const box = $('#onboarding');
+  const list = $('#onboarding-steps');
+  if (!box || !list) return;
+  const cfg = loadConfig();
+  const steps = [
+    { id: 'supabase', label: 'Add Supabase URL + anon key', done: Boolean(cfg.supabaseUrl && cfg.supabaseAnonKey) },
+    { id: 'openrouter', label: 'Add OpenRouter API key', done: Boolean(cfg.openRouterKey) },
+    { id: 'auth', label: 'Sign in or create an account', done: Boolean(getUser()) },
+    { id: 'project', label: 'Create or open a project', done: Boolean(currentProject) },
+    { id: 'files', label: 'Import ZIP or connect a folder', done: fs.listAllFiles().length > 0 },
+  ];
+  const allDone = steps.every((s) => s.done);
+  if (allDone) {
+    hide(box);
+    return;
+  }
+  show(box);
+  let foundCurrent = false;
+  list.innerHTML = steps.map((s) => {
+    let cls = '';
+    if (s.done) cls = 'done';
+    else if (!foundCurrent) { cls = 'current'; foundCurrent = true; }
+    return `<li class="${cls}">${s.label}</li>`;
+  }).join('');
+}
+
+function showDiffCard(path, diff, stats) {
+  const log = $('#activity-log');
+  const div = document.createElement('div');
+  div.className = 'activity-entry tool file-diff';
+  const st = stats ? `+${stats.add || 0} / -${stats.del || 0}` : '';
+  div.innerHTML = `<div class="time">${new Date().toLocaleTimeString()} · diff ${escapeHtml(path || '')} ${st}</div>
+    <pre class="diff-view">${escapeHtml(diff || '')}</pre>`;
+  if (log) {
+    log.prepend(div);
+  }
+  // Also a compact note in chat
+  chat.addSystemNote(`Changed ${path}${st ? ' (' + st + ')' : ''} — see Activity for diff`);
+}
+
+function setTaskState(state, label) {
+  const bar = $('#task-state-bar');
+  const badge = $('#task-state-badge');
+  const lab = $('#task-state-label');
+  if (!bar || !badge) return;
+  if (!state || state === 'idle') {
+    bar.classList.add('hidden');
+    return;
+  }
+  bar.classList.remove('hidden');
+  badge.className = 'task-badge ' + state;
+  badge.textContent = state.replace(/_/g, ' ');
+  if (lab) lab.textContent = label || state;
 }
 
 function closeDrawer() {
@@ -281,6 +351,7 @@ async function openProject(id) {
 
     renderFileTree();
     renderRoadmap();
+    renderOnboarding();
     showPanel('chat');
   } catch (err) {
     toast(err.message);
@@ -292,10 +363,14 @@ function renderFileTree() {
   const el = $('#file-tree');
   if (!el) return;
   const entries = flattenTree('', 0);
+  const banner = $('#files-reconnect');
   if (!entries.length) {
+    if (banner && currentProject) show(banner);
+    else if (banner) hide(banner);
     el.innerHTML = `<p class="hint">No files. Import a ZIP or connect a folder${fs.supportsDirectoryPicker() ? '' : ' (ZIP recommended on this browser)'}.</p>`;
     return;
   }
+  if (banner) hide(banner);
   el.innerHTML = entries.map(e => {
     const pad = '&nbsp;'.repeat(e.depth * 4);
     const icon = e.type === 'dir' ? '📁' : '📄';
@@ -461,7 +536,26 @@ async function handleUserMessage(text) {
       },
       onEvent: (ev) => {
         pushActivity(ev);
-        if (ev.type === 'tool_start') {
+        if (ev.type === 'task_state') {
+          setTaskState(ev.state, ev.label);
+        } else if (ev.type === 'stream_fallback') {
+          chat.setAgentStatus(true, 'Retrying without stream…');
+        } else if (ev.type === 'batch_partial') {
+          chat.addSystemNote(`Partial batch: ${ev.applied || 0} applied, ${ev.failed || 0} failed — continuing`);
+        } else if (ev.type === 'assistant_delta') {
+          if (ev.text) {
+            chat.beginStream();
+            chat.appendStream(ev.text);
+          }
+        } else if (ev.type === 'file_diff') {
+          showDiffCard(ev.path, ev.diff, ev.stats);
+        } else if (ev.type === 'model_switch') {
+          chat.setAgentStatus(true, `Switching model → ${ev.to}`);
+          chat.addSystemNote(`Model fallback: ${ev.from} → ${ev.to}`);
+        } else if (ev.type === 'context_packed') {
+          chat.setAgentStatus(true, `Context: ${ev.files?.length || 0} relevant files`);
+        } else if (ev.type === 'tool_start') {
+          chat.endStream();
           chat.setAgentStatus(true, `Running ${ev.name}…`);
         } else if (ev.type === 'tool_retry') {
           chat.setAgentStatus(true, `Retrying ${ev.name}…`);
@@ -475,8 +569,17 @@ async function handleUserMessage(text) {
     if (result?.project) currentProject = result.project;
 
     if (result?.text) {
-      chat.addMessage('assistant', result.text);
+      chat.endStream(result.text);
+      // If stream never started, still show message
+      const msgs = $('#chat-messages');
+      const last = msgs?.lastElementChild;
+      if (!last || last.classList.contains('system') || (last.classList.contains('user'))) {
+        chat.addMessage('assistant', result.text);
+      } else if (last.classList.contains('assistant') && last.textContent !== result.text) {
+        last.textContent = result.text;
+      }
     } else {
+      chat.endStream();
       chat.addSystemNote('Agent finished with no final message (check Activity for details).');
     }
 
@@ -495,6 +598,7 @@ async function handleUserMessage(text) {
   } finally {
     chat.setAgentStatus(false);
     abortController = null;
+    // keep last task state visible briefly; idle after success already set by events
   }
 }
 
@@ -507,6 +611,10 @@ function hydrateSettingsForm() {
   if (url) url.value = cfg.supabaseUrl || '';
   if (key) key.value = cfg.supabaseAnonKey || '';
   if (or) or.value = cfg.openRouterKey || '';
+  const stream = $('#cfg-stream');
+  const conf = $('#cfg-confirm-writes');
+  if (stream) stream.checked = cfg.streamResponses !== false;
+  if (conf) conf.checked = Boolean(cfg.confirmWrites);
 }
 
 // ── Utils ──────────────────────────────────────────────────────────

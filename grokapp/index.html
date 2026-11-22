@@ -67,6 +67,10 @@
         <!-- Chat is the primary surface -->
         <div id="chat-panel" class="panel active">
           <div id="chat-messages" class="messages"></div>
+          <div id="task-state-bar" class="task-state-bar hidden">
+            <span id="task-state-badge" class="task-badge">idle</span>
+            <span id="task-state-label">Ready</span>
+          </div>
           <div id="agent-status" class="agent-status hidden">
             <span class="status-dot"></span>
             <span id="agent-status-text">Thinking…</span>
@@ -94,6 +98,14 @@
               <button id="btn-import-zip" class="btn small">Import ZIP</button>
               <button id="btn-export-zip" class="btn small">Export ZIP</button>
               <button id="btn-connect-dir" class="btn small">Connect Folder</button>
+            </div>
+          </div>
+          <div id="files-reconnect" class="reconnect-banner hidden">
+            <p><strong>Local files not available</strong></p>
+            <p>This project exists in the cloud, but this device has no linked files. Import a ZIP or connect a folder to continue editing.</p>
+            <div class="panel-actions" style="margin-top:8px">
+              <button id="btn-reconnect-zip" class="btn primary small">Import ZIP</button>
+              <button id="btn-reconnect-dir" class="btn small">Connect Folder</button>
             </div>
           </div>
           <div id="file-tree" class="file-tree"></div>
@@ -135,6 +147,10 @@
 
         <div id="settings-panel" class="panel">
           <div class="panel-header"><h2>Settings</h2></div>
+          <div id="onboarding" class="onboarding hidden">
+            <h3>Get started</h3>
+            <ol id="onboarding-steps" class="onboarding-steps"></ol>
+          </div>
           <div class="settings-form">
             <label>Supabase URL
               <input type="url" id="cfg-supabase-url" placeholder="https://xxxx.supabase.co" />
@@ -148,6 +164,8 @@
             <label>Default Model
               <select id="cfg-default-model"></select>
             </label>
+            <label class="check-row"><input type="checkbox" id="cfg-stream" checked /> Stream model responses</label>
+            <label class="check-row"><input type="checkbox" id="cfg-confirm-writes" /> Confirm before file writes/edits</label>
             <button id="btn-save-settings" class="btn primary">Save Settings</button>
             <p id="settings-status" class="hint"></p>
           </div>

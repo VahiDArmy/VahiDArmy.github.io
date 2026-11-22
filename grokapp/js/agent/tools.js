@@ -7,7 +7,9 @@
  * a ProjectContext via setProjectContext before each agent run.
  */
 import * as fs from '../files/fs-adapter.js';
+import { FILE_POLICY } from '../files/fs-adapter.js';
 import { updateProject } from '../projects/store.js';
+import { unifiedDiff, diffStats } from '../utils/diff.js';
 
 /** @type {{ projectId: string, project: object, onProjectPatch?: (p: object) => void } | null} */
 let ctx = null;
@@ -80,11 +82,12 @@ export const TOOL_DEFS = [
     type: 'function',
     function: {
       name: 'delete_path',
-      description: 'Delete a file or an empty directory. Prefer confirming intent with the user for important files.',
+      description: 'Delete a file or an empty directory. The app will ask the user to confirm before deleting. Do not use for routine edits.',
       parameters: {
         type: 'object',
         properties: {
           path: { type: 'string' },
+          confirm: { type: 'boolean', description: 'Set true only after the user clearly requested deletion' },
         },
         required: ['path'],
       },
@@ -191,6 +194,36 @@ export const TOOL_DEFS = [
   {
     type: 'function',
     function: {
+      name: 'apply_files',
+      description:
+        'Apply multiple file writes/edits in one batch. Prefer this when changing several files for one feature. ' +
+        'Each item is either {path, content} for full write or {path, old_string, new_string, replace_all?} for edit. ' +
+        'Returns per-file success/failure so partial batches are visible.',
+      parameters: {
+        type: 'object',
+        properties: {
+          files: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                path: { type: 'string' },
+                content: { type: 'string' },
+                old_string: { type: 'string' },
+                new_string: { type: 'string' },
+                replace_all: { type: 'boolean' },
+              },
+              required: ['path'],
+            },
+          },
+        },
+        required: ['files'],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'get_memory',
       description: 'Read the current project memory and roadmap summary.',
       parameters: { type: 'object', properties: {} },
@@ -202,6 +235,24 @@ export const TOOL_DEFS = [
  * Execute a tool call and return a verified result object.
  * @returns {{ ok: boolean, result?: any, error?: string }}
  */
+
+function confirmWriteIfNeeded(path, summary) {
+  // Prefer project context flag; fall back to config
+  let need = false;
+  try {
+    if (ctx?.confirmWrites) need = true;
+  } catch { /* ignore */ }
+  if (!need) {
+    try {
+      const raw = localStorage.getItem('devspace_config');
+      if (raw) need = Boolean(JSON.parse(raw).confirmWrites);
+    } catch { /* ignore */ }
+  }
+  if (!need) return true;
+  const msg = `Apply write to "${path}"?\n\n${summary || ''}`.slice(0, 500);
+  return typeof window !== 'undefined' ? window.confirm(msg) : false;
+}
+
 export async function executeTool(name, args = {}) {
   try {
     switch (name) {
@@ -212,21 +263,38 @@ export async function executeTool(name, args = {}) {
       case 'read_file': {
         const content = await fs.readFile(args.path);
         if (content == null) return { ok: false, error: `File not found: ${args.path}` };
-        if (content.length > 80_000) {
+        if (content.length > FILE_POLICY.maxReadChars) {
           return {
             ok: true,
-            result: content.slice(0, 80_000) + '\n\n…[truncated: file longer than 80k chars]',
+            result: content.slice(0, FILE_POLICY.maxReadChars) +
+              `\n\n…[truncated: file longer than ${FILE_POLICY.maxReadChars} chars]`,
           };
         }
         return { ok: true, result: content };
       }
       case 'write_file': {
+        const before = (await fs.readFile(args.path)) ?? '';
+        const preview = String(args.content ?? '').slice(0, 200).replace(/\n/g, ' ');
+        if (!confirmWriteIfNeeded(args.path, preview)) {
+          return { ok: false, error: 'Write cancelled by user' };
+        }
         await fs.writeFile(args.path, args.content);
         const written = await fs.readFile(args.path);
         if (written !== String(args.content ?? '')) {
           return { ok: false, error: 'Write verification failed — content mismatch' };
         }
-        return { ok: true, result: { path: args.path, bytes: written.length } };
+        const diff = unifiedDiff(args.path, before, written);
+        const stats = diffStats(before, written);
+        return {
+          ok: true,
+          result: {
+            path: args.path,
+            bytes: written.length,
+            created: before === '',
+            stats,
+            diff,
+          },
+        };
       }
       case 'edit_file': {
         const current = await fs.readFile(args.path);
@@ -241,14 +309,30 @@ export async function executeTool(name, args = {}) {
         } else {
           next = current.replace(oldStr, args.new_string);
         }
+        const preview = `Replace ${Math.min(80, oldStr.length)} chars…`;
+        if (!confirmWriteIfNeeded(args.path, preview)) {
+          return { ok: false, error: 'Edit cancelled by user' };
+        }
         await fs.writeFile(args.path, next);
-        return { ok: true, result: { path: args.path, changed: true } };
+        const diff = unifiedDiff(args.path, current, next);
+        const stats = diffStats(current, next);
+        return { ok: true, result: { path: args.path, changed: true, stats, diff } };
       }
       case 'delete_path': {
         // Soft safeguard: refuse deleting broad roots
         const p = String(args.path || '').replace(/^\/+|\/+$/g, '');
         if (!p || p === '.' || p === '..') {
           return { ok: false, error: 'Refusing to delete project root or invalid path' };
+        }
+        // Explicit user confirmation for destructive ops (browser UI)
+        const confirmed = args.confirm === true || args.confirmed === true;
+        if (!confirmed) {
+          const ok = typeof window !== 'undefined'
+            ? window.confirm(`Delete "${p}"? This cannot be undone from inside DevSpace.`)
+            : false;
+          if (!ok) {
+            return { ok: false, error: 'Delete cancelled by user (or confirm:true not provided)' };
+          }
         }
         await fs.deletePath(p);
         return { ok: true, result: { deleted: p } };
@@ -265,6 +349,7 @@ export async function executeTool(name, args = {}) {
           if (hits.length >= max) break;
           const content = await fs.readFile(path);
           if (!content) continue;
+          if (content.length > FILE_POLICY.maxSearchFileChars) continue;
           const idx = content.toLowerCase().indexOf(q);
           if (idx === -1) continue;
           const start = Math.max(0, idx - 40);
@@ -275,6 +360,75 @@ export async function executeTool(name, args = {}) {
       }
       case 'get_project_tree': {
         return { ok: true, result: fs.getTreeSummary(args.max_depth || 4) };
+      }
+      case 'apply_files': {
+        const items = Array.isArray(args.files) ? args.files : [];
+        if (!items.length) return { ok: false, error: 'files array is empty' };
+        if (items.length > 30) return { ok: false, error: 'Batch limited to 30 files' };
+
+        // One confirm for the whole batch when confirmWrites is on
+        const paths = items.map((f) => f.path).filter(Boolean);
+        if (!confirmWriteIfNeeded(paths.join(', '), `${items.length} file(s) in batch`)) {
+          return { ok: false, error: 'Batch cancelled by user' };
+        }
+
+        const applied = [];
+        const failed = [];
+        for (const item of items) {
+          const path = item.path;
+          if (!path) {
+            failed.push({ path: '?', error: 'missing path' });
+            continue;
+          }
+          try {
+            if (item.content != null && item.old_string == null) {
+              const before = (await fs.readFile(path)) ?? '';
+              await fs.writeFile(path, item.content);
+              const written = await fs.readFile(path);
+              if (written !== String(item.content)) {
+                failed.push({ path, error: 'write verification failed' });
+                continue;
+              }
+              const diff = unifiedDiff(path, before, written);
+              const stats = diffStats(before, written);
+              applied.push({ path, op: 'write', stats, diff: diff.slice(0, 2000) });
+            } else if (item.old_string != null) {
+              const current = await fs.readFile(path);
+              if (current == null) {
+                failed.push({ path, error: 'file not found' });
+                continue;
+              }
+              if (!current.includes(item.old_string)) {
+                failed.push({ path, error: 'old_string not found' });
+                continue;
+              }
+              const next = item.replace_all
+                ? current.split(item.old_string).join(item.new_string ?? '')
+                : current.replace(item.old_string, item.new_string ?? '');
+              await fs.writeFile(path, next);
+              const diff = unifiedDiff(path, current, next);
+              const stats = diffStats(current, next);
+              applied.push({ path, op: 'edit', stats, diff: diff.slice(0, 2000) });
+            } else {
+              failed.push({ path, error: 'need content or old_string/new_string' });
+            }
+          } catch (e) {
+            failed.push({ path, error: e.message || String(e) });
+          }
+        }
+
+        const ok = applied.length > 0;
+        return {
+          ok,
+          error: !ok ? (failed[0]?.error || 'batch failed') : undefined,
+          result: {
+            applied_count: applied.length,
+            failed_count: failed.length,
+            applied,
+            failed,
+            partial: failed.length > 0 && applied.length > 0,
+          },
+        };
       }
       case 'get_memory': {
         if (!ctx?.project) return { ok: false, error: 'No project context' };

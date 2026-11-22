@@ -112,3 +112,27 @@ export function pickModelForTask(models, taskType = 'general') {
   const free = candidates.filter(m => m.is_free);
   return (free.sort((a, b) => (b.context_length || 0) - (a.context_length || 0))[0] || candidates[0])?.id;
 }
+
+
+/**
+ * Ordered fallback candidates: prefer free + tools, then free, then any active.
+ * Excludes the current model id.
+ */
+export async function pickFallbackModels(currentId, { limit = 4 } = {}) {
+  let models = [];
+  try {
+    models = await listModels({ includeInactive: false });
+  } catch {
+    return [];
+  }
+  const rest = models.filter((m) => m.id !== currentId);
+  const rank = (m) => {
+    let s = 0;
+    if (m.is_free) s += 10;
+    if (m.supports_tools) s += 5;
+    if (m.context_length) s += Math.min(3, Math.floor((m.context_length || 0) / 100000));
+    return s;
+  };
+  rest.sort((a, b) => rank(b) - rank(a));
+  return rest.slice(0, limit).map((m) => m.id);
+}

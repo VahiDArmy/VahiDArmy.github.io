@@ -5,9 +5,12 @@ const inputEl = () => $('#chat-input');
 const statusEl = () => $('#agent-status');
 const statusText = () => $('#agent-status-text');
 
+let streamEl = null;
+
 export function clearChat() {
   const el = messagesEl();
   if (el) el.innerHTML = '';
+  streamEl = null;
 }
 
 export function addMessage(role, content, extra = {}) {
@@ -29,6 +32,38 @@ export function addMessage(role, content, extra = {}) {
 
 export function addSystemNote(text) {
   addMessage('system', text);
+}
+
+/** Begin a streaming assistant bubble (or reuse one). */
+export function beginStream() {
+  if (streamEl && streamEl.isConnected) {
+    streamEl.textContent = '';
+    return streamEl;
+  }
+  const el = messagesEl();
+  if (!el) return null;
+  streamEl = document.createElement('div');
+  streamEl.className = 'msg assistant streaming';
+  streamEl.textContent = '';
+  el.appendChild(streamEl);
+  el.scrollTop = el.scrollHeight;
+  return streamEl;
+}
+
+export function appendStream(text) {
+  if (!streamEl || !streamEl.isConnected) beginStream();
+  if (!streamEl) return;
+  streamEl.textContent += text;
+  const el = messagesEl();
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
+export function endStream(finalText) {
+  if (streamEl && streamEl.isConnected) {
+    if (finalText != null) streamEl.textContent = finalText;
+    streamEl.classList.remove('streaming');
+  }
+  streamEl = null;
 }
 
 export function setAgentStatus(visible, text = 'Working…') {
@@ -59,7 +94,6 @@ export function bindComposer(onSubmit) {
     onSubmit(text);
   });
 
-  // Enter to send, Shift+Enter newline (mobile-friendly)
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
       e.preventDefault();
