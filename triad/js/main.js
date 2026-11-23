@@ -14,6 +14,7 @@ import { installAuthBus, openAuth } from './ui/authui.js';
 import { installGlobalActions } from './main-actions.js';
 import { installAiBus, hasKey } from './ui/ai.js';
 import { onAuthChange, currentSession } from './core/auth.js';
+import { startTranslator } from './core/i18n.js';
 
 import { hubView } from './views/hub.js';
 import { matrixView } from './views/matrix.js';
@@ -35,6 +36,8 @@ const BOOT_LINES = [
 ];
 
 async function boot() {
+  // Persian / RTL rendering layer starts before anything is painted
+  startTranslator();
   const bootEl = document.getElementById('boot');
   const lines = document.getElementById('boot-lines');
   let li = 0;
@@ -108,10 +111,20 @@ async function boot() {
   if (session && !store.session) store.setSession(session);
 
   clearInterval(lineTimer);
-  if (lines) lines.textContent = 'ready';
+  if (lines) lines.textContent = 'آماده';
   await new Promise(r => setTimeout(r, 340));
   bootEl?.classList.add('is-done');
   setTimeout(() => bootEl?.remove(), 700);
+
+  // the roster is unreadable when RLS hides `people` from the anon key
+  if (store.mode === 'cloud' && !store.people.length && store.scores.length) {
+    toast({
+      kind: 'warn',
+      title: 'فهرست افراد خوانده نمی‌شود',
+      text: 'خط مشی خواندن جدول people را با اجرای دوباره‌ی supabase/setup.sql فعال کنید.',
+      duration: 12000
+    });
+  }
 
   // first-run affordances
   setTimeout(() => {

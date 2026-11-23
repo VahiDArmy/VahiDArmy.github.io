@@ -222,7 +222,7 @@ export function insightsView() {
           avatar(target, { size: 'sm' }),
           h('div', { class: 'list-row__main' },
             h('b', {}, target?.fullName || '—'),
-            h('span', {}, `${trait?.name} · ${high?.fullName?.split(' ')[0]} ${fmtScore(d.high?.value)} vs ${low?.fullName?.split(' ')[0]} ${fmtScore(d.low?.value)}`)
+            h('span', {}, `${trait?.name || '—'} · ${high?.fullName?.split(' ')[0] || '?'} ${fmtScore(d.high?.value)} ${'در برابر'} ${low?.fullName?.split(' ')[0] || '?'} ${fmtScore(d.low?.value)}`)
           ),
           h('span', { class: 'pill pill--bad' }, `Δ ${fmtScore(d.gap)}`)
         );

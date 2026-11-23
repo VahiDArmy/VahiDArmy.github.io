@@ -160,8 +160,8 @@ p { color: var(--ink-2); }
 .btn[disabled], .btn[aria-disabled='true'] { opacity: 0.4; pointer-events: none; }
 .btn.is-active { border-color: var(--accent-line); color: var(--accent); background: var(--accent-soft); }
 
-.btn-group { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
-.btn-group .btn { height: 26px; border: 0; background: transparent; border-radius: var(--r-pill); padding: 0 11px; font-size: var(--fs-xs); color: var(--ink-3); }
+.btn-group { display: inline-flex; flex: 0 0 auto; flex-wrap: nowrap; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-pill); padding: 3px; gap: 2px; }
+.btn-group .btn { height: 26px; border: 0; background: transparent; border-radius: var(--r-pill); padding: 0 11px; font-size: var(--fs-xs); color: var(--ink-3); flex: 0 0 auto; white-space: nowrap; }
 .btn-group .btn:hover { color: var(--ink); background: var(--panel-2); }
 .btn-group .btn.is-active { background: var(--panel-3); color: var(--ink); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset; }
 

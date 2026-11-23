@@ -579,7 +579,10 @@ class Store {
   }
 
   coverage() {
-    const possible = this.people.length * Math.max(this.people.length - 1, 0) * this.traits.length;
+    const pairs = this.people.length * Math.max(this.people.length - 1, 0);
+    // when the directory is unreadable (RLS) but scores exist, report against
+    // what is actually present rather than showing a nonsensical 0 denominator
+    const possible = Math.max(pairs * this.traits.length, this.scores.length);
     return { possible, actual: this.scores.length, pct: possible ? this.scores.length / possible : 0 };
   }
 

@@ -1,0 +1,139 @@
+/* ==========================================================================
+   rtl.css — right-to-left corrections for the Persian interface.
+   Loaded last so it can nudge physical properties without touching the
+   directional layout that already works through logical flow.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- typography */
+html[dir='rtl'] {
+  --fs-xxs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 12.5px;
+  --fs-md: 14px;
+}
+
+/* Persian is a connected script: tracking breaks the joins, and uppercase is
+   meaningless. Numbers and code keep their monospace tracking. */
+html[dir='rtl'] :where(h1, h2, h3, h4, h5, h6, p, span, b, strong, em, small,
+  label, button, a, li, td, th, dt, dd, summary, figcaption, blockquote,
+  legend, option, div, input, textarea):not(.mono):not(.code-block):not(code):not(kbd) {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+html[dir='rtl'] body {
+  font-feature-settings: 'ss01';
+  font-variant-numeric: tabular-nums;
+}
+html[dir='rtl'] h1,
+html[dir='rtl'] h2,
+html[dir='rtl'] h3,
+html[dir='rtl'] .page-title,
+html[dir='rtl'] .hero__title {
+  line-height: 1.35;
+}
+html[dir='rtl'] .page-title,
+html[dir='rtl'] .hero__title {
+  font-weight: 700;
+  letter-spacing: -0.01em !important;
+}
+html[dir='rtl'] .eyebrow,
+html[dir='rtl'] .kpi__label,
+html[dir='rtl'] .section-head__label,
+html[dir='rtl'] .topbar__crumb {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* numerals and ids stay left-to-right inside a right-to-left sentence */
+html[dir='rtl'] :where(.kpi__value, .cell, .mono, .num, .code-inline, time, .tag--num, .delta) {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+html[dir='rtl'] .kpi__value { justify-content: flex-end; }
+html[dir='rtl'] .matrix .cell { direction: ltr; }
+
+/* ------------------------------------------------------------- rail + shell */
+html[dir='rtl'] .rail { border-right: 0; border-left: 1px solid var(--line); }
+html[dir='rtl'] .rail__link span { font-family: var(--font-ui); font-size: 9.5px; font-weight: 500; }
+html[dir='rtl'] .rail__link.is-active::before {
+  left: auto;
+  right: -8px;
+  border-radius: 3px 0 0 3px;
+}
+html[dir='rtl'] .rail__badge { right: auto; left: 14px; }
+
+html[dir='rtl'] .topbar { padding: 0 16px 0 20px; }
+html[dir='rtl'] .search { padding: 0 12px 0 10px; }
+html[dir='rtl'] .search kbd { direction: ltr; }
+html[dir='rtl'] .kpi__spark { right: auto; left: 0; transform: scaleX(-1); }
+
+/* ------------------------------------------------------------------ matrix */
+html[dir='rtl'] .matrix thead th:first-child { left: auto; right: 0; }
+html[dir='rtl'] .matrix th[scope='row'],
+html[dir='rtl'] .matrix .row-head { position: sticky; right: 0; left: auto; }
+html[dir='rtl'] .matrix tfoot th {
+  left: auto;
+  right: 0;
+  text-align: right;
+  padding-left: 0;
+  padding-right: 10px;
+}
+html[dir='rtl'] .matrix th,
+html[dir='rtl'] .matrix td { text-align: center; }
+html[dir='rtl'] .vs-bar i { inset: 0 0 0 auto; }
+html[dir='rtl'] .matrix-legend { justify-content: flex-start; }
+
+/* ------------------------------------------------------------------- charts */
+html[dir='rtl'] .donut__center,
+html[dir='rtl'] .chart-box__foot { text-align: center; }
+html[dir='rtl'] .bar-row__fill { border-radius: 5px; }
+html[dir='rtl'] .treemap__cell b { direction: rtl; }
+
+/* ------------------------------------------------------------ panels + fx */
+html[dir='rtl'] .drawer {
+  right: auto;
+  left: 0;
+  border-right: 1px solid var(--line-2);
+  border-left: 0;
+  animation-name: drawerInRtl;
+}
+html[dir='rtl'] .drawer--left {
+  left: auto;
+  right: 0;
+  border-left: 1px solid var(--line-2);
+  border-right: 0;
+  animation-name: drawerIn;
+}
+@keyframes drawerInRtl {
+  from { transform: translateX(-32px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+html[dir='rtl'] .toasts { right: auto; left: 18px; align-items: flex-start; }
+html[dir='rtl'] .toast { right: auto; left: 0; }
+html[dir='rtl'] .toast::before { left: auto; right: 0; }
+html[dir='rtl'] .toasts { align-items: flex-start; }
+html[dir='rtl'] .progress-bar i,
+html[dir='rtl'] .meter i { transform-origin: right center; }
+
+/* --------------------------------------------------------------- direction */
+html[dir='rtl'] :where(.icon--arrow, .icon--chevron, [data-icon='arrowRight'], [data-icon='chevronRight']) {
+  transform: scaleX(-1);
+}
+html[dir='rtl'] .boot__word { font-family: var(--font-display); letter-spacing: 0.08em !important; }
+html[dir='rtl'] .statusbar { font-family: var(--font-ui); }
+html[dir='rtl'] .statusbar__item { letter-spacing: 0 !important; }
+html[dir='rtl'] .palette__hint,
+html[dir='rtl'] .kbd { direction: ltr; unicode-bidi: isolate; }
+
+/* long Persian sentences need a little more room */
+html[dir='rtl'] .modal__body p,
+html[dir='rtl'] .empty p,
+html[dir='rtl'] .field__hint,
+html[dir='rtl'] .section-help {
+  line-height: 1.85;
+}
+
+/* scrollbars */
+html[dir='rtl'] ::-webkit-scrollbar { direction: rtl; }

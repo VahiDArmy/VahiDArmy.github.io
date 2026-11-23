@@ -65,9 +65,10 @@
   --s-8: 60px;
 
   /* type */
-  --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-display: 'Vazirmatn', 'Space Grotesk', system-ui, sans-serif;
+  --font-ui: 'Vazirmatn', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Vazirmatn', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-latin: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   --fs-xxs: 9.5px;
   --fs-xs: 10.5px;
   --fs-sm: 12px;

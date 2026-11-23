@@ -1,5 +1,5 @@
 -- ===========================================================================
---  TRIAD /// SETUP (schema + optional demo seed) — paste this whole file once.
+--  TRIAD /// SETUP (schema + demo seed) — paste this whole file once.
 -- ===========================================================================
 
 -- ============================================================================
@@ -312,6 +312,33 @@ as $$
   );
 $$;
 grant execute on function public.mtx_export_cube() to anon, authenticated;
+
+-- ===========================================================================
+-- 12. existing `people` directory
+--   The app reads the roster with the anon key. If RLS is on and only
+--   authenticated users can read it, the cube renders without names even
+--   though scores exist. These policies make the directory readable and let
+--   any signed-in user maintain it. Drop them if your people table is private.
+-- ===========================================================================
+do $$
+begin
+  if exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'people') then
+    execute 'alter table public.people enable row level security';
+
+    execute 'drop policy if exists people_public_read on public.people';
+    execute 'create policy people_public_read on public.people
+               for select to anon, authenticated using (true)';
+    execute 'grant select on public.people to anon, authenticated';
+
+    execute 'drop policy if exists people_auth_write on public.people';
+    execute 'create policy people_auth_write on public.people
+               for all to authenticated using (true) with check (true)';
+    execute 'grant insert, update, delete on public.people to authenticated';
+  end if;
+end $$;
+
+notify pgrst, 'reload schema';
 
 
 -- ============================================================================

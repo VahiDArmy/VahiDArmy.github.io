@@ -213,12 +213,12 @@ export function heatGrid({ rows = [], cols = [], value, cellSize = 26, showLabel
   if (showLabels) wrap.appendChild(h('div'));
   for (const col of cols) {
     wrap.appendChild(h('div', { class: 'heatgrid__label', style: { justifyContent: 'center', fontSize: '8px' }, title: col.fullName || col.name },
-      (col.fullName || col.name || '').slice(0, 8)
+      (col.fullName || col.name || '')
     ));
   }
   for (const row of rows) {
     if (showLabels) wrap.appendChild(h('div', { class: 'heatgrid__label', title: row.fullName || row.name },
-      (row.fullName || row.name || '').slice(0, 14)
+      (row.fullName || row.name || '')
     ));
     for (const col of cols) {
       const v = value(row, col);

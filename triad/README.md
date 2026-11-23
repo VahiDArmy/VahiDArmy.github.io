@@ -1,3 +1,7 @@
+# تریاد /// ماتریس امتیازدهی سه‌بعدی
+
+> رابط کاربری کاملاً فارسی و راست‌به‌چپ (`dir="rtl"`، قلم Vazirmatn). تمام متن‌ها، از جمله نام ویژگی‌ها و دپارتمان‌ها که از پایگاه داده می‌آیند، در لایه‌ی `js/core/i18n.js` ترجمه می‌شوند.
+
 # TRIAD /// 3D SCORING MATRIX
 
 A three-dimensional ranking and scoring matrix. People score people across traits — the
@@ -35,6 +39,20 @@ SQL once in **Supabase → SQL Editor**:
 
 1. `supabase/setup.sql` — schema **and** demo seed in one paste (recommended), or
 2. `supabase/schema.sql` then `supabase/seed.sql` separately.
+
+**If the cube loads with scores but no people**, your existing `people` table is hidden
+from the anon key by RLS. `setup.sql` now includes the fix (section 12):
+
+```sql
+create policy people_public_read on public.people
+  for select to anon, authenticated using (true);
+create policy people_auth_write on public.people
+  for all to authenticated using (true) with check (true);
+```
+
+Run it if you are happy for names to be publicly readable; otherwise sign in first —
+signed-in users can read the roster without changing the policy, and the app will ask
+you to do one of the two.
 
 Inside the app: **Settings → Data → Console** shows live table status, and copies or
 downloads the same SQL.
@@ -120,6 +138,13 @@ on navigation, chimes on save, a riser on explode, ticks while dragging. Haptics
 **Shell** — command palette (⌘K), keyboard map (`?`), inspector dock, source switcher
 (local / cloud / auto), import/export, DB console, accent + density + motion prefs.
 
+**Persian / RTL** — `js/core/i18n.js` holds a phrase book (≈450 entries) plus numeric
+patterns (`۱۲ ویژگی`, `۳ از ۱۰ خانه`). A mutation observer translates text nodes and
+`placeholder`/`title`/`aria-label` as the UI renders, which is why database names,
+trait blurbs and toast bodies are covered too. `styles/rtl.css` handles the connected
+script (no letter-spacing), the rail edge, sticky matrix headers, drawer and toast sides.
+Add a phrase to the map and it appears everywhere at once.
+
 ---
 
 ## 5. Files
@@ -128,7 +153,7 @@ on navigation, chimes on save, a riser on explode, ticks while dragging. Haptics
 index.html            shell markup, boot screen
 server.mjs            zero-dependency static server
 styles/               tokens, base, layout, stack, matrix, charts, deck, panels, chat, fx, responsive
-js/core/              dom, bus, math (cube engine), store, api (supabase), localdb, seed, auth, router, nav, format, config
+js/core/              dom, bus, math (cube engine), store, api (supabase), localdb, seed, auth, router, nav, format, config, i18n (fa-IR)
 js/ui/                icons, sounds, overlay, bits, charts, stack3d, matrix, deck, ai, palette, authui, shell, fx
 js/views/             hub, matrix, deck, people, traits, insights, compare, lab, settings
 data/                 trait library (96), OpenRouter free-model catalogue
