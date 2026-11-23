@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="تحلیل فارسی و راست‌چین گزارش آزمون نئو فرم بلند، شامل پنج عامل اصلی، ۳۰ خرده‌مقیاس، برآورد محتاطانه MBTI و واکنش‌های احتمالی در سناریوهای روزمره.">
+<title>خوانش شخصیتی گزارش نئو | تحلیل جامع</title>
+<style>
+:root{
+  --ink:#202d35;--muted:#627078;--paper:#f5f1e9;--card:#fffdf8;--line:#e6dfd3;
+  --teal:#1f6b68;--teal-soft:#e7f2ef;--coral:#c96e5b;--coral-soft:#f9ece7;
+  --gold:#b58b45;--gold-soft:#f7f0df;--blue:#52738a;--blue-soft:#eaf0f5;
+  --shadow:0 12px 35px rgba(35,47,50,.07);--radius:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:22px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Vazirmatn,IRANSansX,"IRANSans",Tahoma,sans-serif;line-height:1.95;font-size:16px}
+a{color:var(--teal);text-decoration:none;border-bottom:1px solid rgba(31,107,104,.25)}
+a:hover{border-bottom-color:currentColor}
+.container{width:min(1120px,calc(100% - 34px));margin:0 auto}
+.hero{padding:54px 0 32px;background:radial-gradient(circle at 12% 12%,rgba(201,110,91,.15),transparent 25%),radial-gradient(circle at 90% 15%,rgba(31,107,104,.17),transparent 26%),linear-gradient(135deg,#f8f3e8,#edf3ee 65%,#f8eee8);border-bottom:1px solid var(--line)}
+.kicker{display:inline-flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid rgba(31,107,104,.23);border-radius:999px;background:rgba(255,255,255,.55);font-size:13px;color:var(--teal);font-weight:700;letter-spacing:.1px}
+h1{font-size:clamp(28px,4vw,46px);line-height:1.5;margin:17px 0 7px;letter-spacing:-.6px}
+.hero p{max-width:780px;color:#52616a;margin:0;font-size:17px}
+.hero-grid{display:grid;grid-template-columns:1.4fr .8fr;gap:22px;align-items:end;margin-top:26px}
+.hero-note{background:rgba(255,253,248,.75);border:1px solid rgba(255,255,255,.8);border-radius:18px;padding:17px 19px;box-shadow:var(--shadow);font-size:14px;color:#52616a}
+.hero-note strong{color:var(--ink)}
+.layout{display:grid;grid-template-columns:245px minmax(0,1fr);gap:28px;align-items:start;padding:30px 0 70px}
+nav.toc{position:sticky;top:18px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:17px;box-shadow:var(--shadow)}
+.toc h2{font-size:15px;margin:0 0 9px}
+.toc a{display:block;padding:6px 9px;border:0;border-radius:9px;color:#52616a;font-size:13px}
+.toc a:hover{background:var(--teal-soft);color:var(--teal)}
+main{min-width:0}
+section{margin:0 0 24px;scroll-margin-top:20px}
+.section-head{display:flex;align-items:center;gap:11px;margin:0 0 14px}
+.section-no{width:34px;height:34px;border-radius:11px;background:var(--teal-soft);color:var(--teal);display:grid;place-items:center;font-weight:800;font-size:14px;flex:0 0 auto}
+h2{font-size:23px;line-height:1.5;margin:0;letter-spacing:-.25px}
+h3{font-size:17px;line-height:1.6;margin:0 0 8px}
+p{margin:0 0 12px}
+.lead{font-size:17px;color:#40515a}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.card + .card{margin-top:13px}
+.small{font-size:13px;color:var(--muted)}
+.note{border-right:4px solid var(--gold);background:var(--gold-soft);padding:13px 16px;border-radius:12px;color:#51462f;font-size:14px;margin:14px 0}
+.warning{border-right:4px solid var(--coral);background:var(--coral-soft);padding:13px 16px;border-radius:12px;color:#68423a;font-size:14px;margin:14px 0}
+.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 12px;min-height:118px}
+.metric .letter{font-size:13px;color:var(--muted);font-weight:800}
+.metric .score{font-size:25px;font-weight:900;line-height:1.4;margin:3px 0}
+.metric .name{font-size:12px;color:#52616a}
+.level{display:inline-block;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:800;background:var(--blue-soft);color:var(--blue)}
+.level.high{background:var(--coral-soft);color:#a34f40}
+.level.low{background:#edf0f1;color:#58666e}
+.level.mid{background:var(--gold-soft);color:#80612b}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.domain-card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:17px}
+.domain-top{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:8px}
+.domain-top .scoreline{font-weight:800;color:var(--teal);font-size:14px;white-space:nowrap}
+.domain-card p{font-size:14px;color:#53626a;margin:0}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:15px;background:var(--card)}
+table{width:100%;border-collapse:collapse;min-width:570px;font-size:14px}
+th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#f4f2ec;color:#4f5b61;font-weight:800;font-size:13px}
+tr:last-child td{border-bottom:0}
+td.scorecell{font-weight:800;white-space:nowrap}
+.facets{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:12px}
+.facet{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fffefa}
+.facet-head{display:flex;justify-content:space-between;gap:8px;align-items:center;font-weight:800;font-size:13px}
+.facet p{font-size:12px;color:var(--muted);line-height:1.75;margin:5px 0 0}
+.tag{font-size:11px;font-weight:800;color:var(--teal);background:var(--teal-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.tag.warn{color:#a34f40;background:var(--coral-soft)}
+.tag.soft{color:#80612b;background:var(--gold-soft)}
+details{border:1px solid var(--line);border-radius:15px;background:var(--card);margin:10px 0;overflow:hidden}
+summary{cursor:pointer;padding:14px 17px;font-weight:800;list-style:none;display:flex;justify-content:space-between;gap:12px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary:after{content:"＋";font-size:20px;color:var(--teal);font-weight:500}
+details[open] summary:after{content:"−"}
+.detail-body{padding:0 17px 17px;border-top:1px solid var(--line)}
+.detail-body p{font-size:14px;color:#4d5b62;margin:12px 0 0}
+.combo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.combo{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px}
+.combo strong{display:block;color:var(--teal);margin-bottom:5px}
+.combo p{margin:0;font-size:13px;color:#53616a}
+.mbti-box{background:linear-gradient(135deg,#eaf2ef,#f8f0e5);border:1px solid #d8e4dd;border-radius:20px;padding:21px}
+.mbti-type{font-size:clamp(35px,6vw,58px);font-weight:900;letter-spacing:4px;color:var(--teal);line-height:1.3;margin:5px 0}
+.mbti-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:13px 0}
+.mbti-letter{background:rgba(255,255,255,.7);border:1px solid rgba(31,107,104,.14);padding:10px;border-radius:12px;text-align:center}
+.mbti-letter b{display:block;font-size:22px;color:var(--teal)}
+.mbti-letter span{font-size:11px;color:#5e6b70}
+.scenario-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.scenario{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 16px}
+.scenario h3{font-size:15px;margin:0 0 6px;color:#33464e}
+.scenario p{font-size:13px;color:#53616a;margin:0}
+.scenario .signal{display:block;margin-top:8px;font-size:11px;color:var(--teal);font-weight:800}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.pill{display:inline-block;border-radius:999px;background:var(--teal-soft);color:var(--teal);padding:5px 10px;font-size:12px;font-weight:700}
+.pill.coral{background:var(--coral-soft);color:#a34f40}
+.pill.gold{background:var(--gold-soft);color:#80612b}
+.steps{counter-reset:step;display:grid;gap:9px}
+.step{position:relative;padding:12px 48px 12px 13px;border:1px solid var(--line);border-radius:13px;background:#fffefa;font-size:14px;color:#4d5b62}
+.step:before{counter-increment:step;content:counter(step);position:absolute;right:12px;top:12px;width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:var(--teal-soft);color:var(--teal);font-size:12px;font-weight:900}
+.sources li{margin:8px 0;font-size:13px;color:#53616a}
+.footer{border-top:1px solid var(--line);padding:22px 0 35px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.toc{position:static}.toc nav{columns:2}.summary-grid{grid-template-columns:repeat(3,1fr)}.hero-grid{grid-template-columns:1fr}}
+@media(max-width:580px){body{font-size:15px}.container{width:min(100% - 22px,1120px)}.hero{padding:35px 0 25px}.layout{padding-top:18px}.summary-grid{grid-template-columns:repeat(2,1fr)}.two-col,.combo-grid,.scenario-grid,.facets{grid-template-columns:1fr}.card{padding:17px}.mbti-grid{grid-template-columns:repeat(2,1fr)}h2{font-size:20px}}
+@media print{body{background:#fff;font-size:12px}.hero{padding:20px 0;background:#fff}.layout{display:block;padding:15px 0}.toc{display:none}.container{width:100%}.card,.metric,.domain-card,.scenario,.combo{box-shadow:none;break-inside:avoid}.scenario-grid,.combo-grid{grid-template-columns:1fr 1fr}details{break-inside:avoid}details:not([open]) .detail-body{display:block}a{color:inherit}.footer{padding-bottom:0}}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="container">
+    <span class="kicker">گزارش تحلیلی · نئو فرم بلند · خوانش غیرتشخیصی</span>
+    <h1>نقشه‌ی شخصیت؛<br>از حساسیت درونی تا اجرای بیرونی</h1>
+    <p>تحلیل حاضر بر اساس نمره‌ها و تفسیرهایی است که در دو تصویر گزارش ثبت شده‌اند. هدف، ساختن تصویری چندلایه و قابل‌استفاده از گرایش‌های احتمالی است، نه چسباندن یک برچسب قطعی به فرد.</p>
+    <div class="hero-grid">
+      <div class="hero-note"><strong>خلاصه‌ی یک‌خطی:</strong> ذهنی بسیار باز، عاطفی و ایده‌محور؛ انرژی اجتماعی پایین؛ حساسیت هیجانی بالا؛ و ترکیبی نامتعارف از مسئولیت‌پذیری و توانمندی بالا با نظم و خودراه‌بری پایین.</div>
+      <div class="hero-note"><strong>روش خواندن:</strong> نمره‌ها از خود گزارش نقل شده‌اند. پیش‌بینی‌های رفتاری، برداشت‌های احتمالی از ترکیب خرده‌مقیاس‌ها هستند و باید با تجربه‌ی واقعی فرد سنجیده شوند.</div>
+    </div>
+  </div>
+</header>
+<div class="container layout">
+  <aside class="toc">
+    <h2>راهنمای گزارش</h2>
+    <nav>
+      <a href="#overview">۱. نمای کلی</a>
+      <a href="#scores">۲. جدول نمره‌ها</a>
+      <a href="#domains">۳. پنج بُعد شخصیت</a>
+      <a href="#facets">۴. خرده‌مقیاس‌ها</a>
+      <a href="#patterns">۵. ترکیب‌های معنادار</a>
+      <a href="#mbti">۶. نزدیک‌ترین MBTI</a>
+      <a href="#scenarios">۷. واکنش در سناریوها</a>
+      <a href="#strengths">۸. توانمندی‌ها و نقاط آسیب‌پذیر</a>
+      <a href="#tools">۹. راهکارهای کاربردی</a>
+      <a href="#limits">۱۰. محدودیت‌ها و منابع</a>
+    </nav>
+  </aside>
+  <main>
+    <section id="overview">
+      <div class="section-head"><span class="section-no">۱</span><h2>نمای کلی؛ این الگو در یک نگاه چه می‌گوید؟</h2></div>
+      <div class="card">
+        <p class="lead">این پروفایل بیشتر از آن‌که تصویر یک فرد اجتماعی و پرتحرک را نشان دهد، به فردی با جهان درونی پررنگ اشاره می‌کند: ذهنی که زیاد می‌سنجد، احساسات را عمیق تجربه می‌کند، به ایده‌ها و ارزش‌ها حساس است و برای تعامل اجتماعی انرژی محدودی دارد.</p>
+        <p>در عین حال، حساسیت به فشار، نگرانی و ارزیابی دیگران بالاست. در رفتار اجرایی هم یک دوگانگی دیده می‌شود: فرد ممکن است خود را توانا بداند و نسبت به تعهداتش احساس مسئولیت کند، اما در برنامه‌ریزی منظم، شروع مستقل کارهای طولانی و حفظ پیوستگی روزانه مشکل بیشتری داشته باشد.</p>
+        <div class="pills"><span class="pill">درون‌گرایی پررنگ</span><span class="pill">گشودگی ذهنی بالا</span><span class="pill coral">واکنش‌پذیری هیجانی بالا</span><span class="pill gold">اجرای نامنظم</span><span class="pill">رک‌گویی همراه با احتیاط در اعتماد</span></div>
+        <div class="note"><strong>نکته‌ی کلیدی:</strong> «حساس‌بودن» الزاماً به معنای «ضعیف‌بودن» نیست و «درون‌گرا بودن» هم به معنای ناتوانی اجتماعی نیست. این نمره‌ها بیشتر از ترجیح‌ها و هزینه‌ی روانی احتمالی بعضی موقعیت‌ها حرف می‌زنند تا از توانایی مطلق فرد.</div>
+      </div>
+    </section>
+
+    <section id="scores">
+      <div class="section-head"><span class="section-no">۲</span><h2>جدول نمره‌های اصلی</h2></div>
+      <div class="summary-grid">
+        <div class="metric"><div class="letter">N · روان‌رنجوری</div><div class="score">۱۲۰</div><span class="level high">خیلی بالا</span><div class="name">حساسیت به فشار و هیجان منفی</div></div>
+        <div class="metric"><div class="letter">E · برون‌گرایی</div><div class="score">۵۵</div><span class="level low">خیلی پایین</span><div class="name">انرژی اجتماعی و ابرازگری</div></div>
+        <div class="metric"><div class="letter">O · گشودگی</div><div class="score">۱۳۳</div><span class="level high">خیلی بالا</span><div class="name">ایده‌ها، احساسات و ارزش‌ها</div></div>
+        <div class="metric"><div class="letter">A · توافق‌پذیری</div><div class="score">۱۲۱</div><span class="level mid">متوسط</span><div class="name">اعتماد، همکاری و ملاحظه‌ی دیگران</div></div>
+        <div class="metric"><div class="letter">C · باوجدان‌بودن</div><div class="score">۱۰۳</div><span class="level low">پایین</span><div class="name">نظم، پیگیری و خودکنترلی</div></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>بُعد</th><th>نمره‌ی درج‌شده</th><th>تفسیر خود گزارش</th><th>معنای ساده‌تر</th></tr></thead>
+          <tbody>
+            <tr><td>روان‌رنجوری (N)</td><td class="scorecell">۱۲۰</td><td><span class="level high">خیلی بالا</span></td><td>احتمال تجربه‌ی شدیدتر نگرانی، رنجش، شرمندگی یا آشفتگی زیر فشار</td></tr>
+            <tr><td>برون‌گرایی (E)</td><td class="scorecell">۵۵</td><td><span class="level low">خیلی پایین</span></td><td>نیاز بیشتر به خلوت، جمع‌های کوچک‌تر و محرک اجتماعی کمتر</td></tr>
+            <tr><td>گشودگی به تجربه (O)</td><td class="scorecell">۱۳۳</td><td><span class="level high">خیلی بالا</span></td><td>توجه قوی به معنا، تخیل، احساس، زیبایی، ایده‌ها و بازاندیشی ارزشی</td></tr>
+            <tr><td>توافق‌پذیری (A)</td><td class="scorecell">۱۲۱</td><td><span class="level mid">متوسط</span></td><td>نه سازش‌کارِ همیشگی و نه مخالفِ همکاری؛ سبک رابطه به موقعیت و اعتماد بستگی دارد</td></tr>
+            <tr><td>باوجدان‌بودن (C)</td><td class="scorecell">۱۰۳</td><td><span class="level low">پایین</span></td><td>مسئولیت‌پذیری می‌تواند بالا باشد، ولی نظم و استمرار اجرای کارها دشوارتر است</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small" style="margin-top:9px">نمره‌ها عیناً از گزارش تصویری خوانده شده‌اند. آن‌ها را به درصد، رتبه‌ی جمعیتی یا صدک تبدیل نکرده‌ام؛ گزارش مبنای چنین تبدیلی را در تصویر نشان نمی‌دهد.</p>
+    </section>
+
+    <section id="domains">
+      <div class="section-head"><span class="section-no">۳</span><h2>توضیح پنج بُعد، به زبان روشن اما دقیق</h2></div>
+      <div class="two-col">
+        <article class="domain-card"><div class="domain-top"><h3>۱) روان‌رنجوری · خیلی بالا</h3><span class="scoreline">۱۲۰</span></div><p>سامانه‌ی هشدار هیجانی فرد احتمالاً زودتر و شدیدتر فعال می‌شود. ابهام، انتقاد، تعارض یا احساس از دست‌دادن کنترل ممکن است بیش از حد معمول ذهن را درگیر کند. این نمره تشخیص اضطراب یا افسردگی نیست؛ فقط نشان می‌دهد تجربه‌ی هیجان‌های ناخوشایند در پاسخ‌ها پررنگ بوده است.</p></article>
+        <article class="domain-card"><div class="domain-top"><h3>۲) برون‌گرایی · خیلی پایین</h3><span class="scoreline">۵۵</span></div><p>خلوت، زمان فکرکردن و تعامل‌های انتخابی احتمالاً انرژی‌بخش‌تر از معاشرت مداوم و جمع‌های شلوغ‌اند. این نتیجه به‌تنهایی نمی‌گوید فرد خجالتی، ناتوان در صحبت یا فاقد مهارت اجتماعی است؛ فقط میل و کشش طبیعی به محرک اجتماعی در این گزارش پایین ثبت شده است.</p></article>
+        <article class="domain-card"><div class="domain-top"><h3>۳) گشودگی · خیلی بالا</h3><span class="scoreline">۱۳۳</span></div><p>ذهن به سمت ایده‌ها، معنا، زیبایی، تجربه‌ی عاطفی و پرسش درباره‌ی ارزش‌ها کشیده می‌شود. فرد ممکن است از تحلیل مفاهیم، هنر، جهان‌بینی و امکان‌های متفاوت لذت ببرد. با این حال، خرده‌مقیاس «اعمال» بسیار پایین است؛ یعنی استقبال فکری از تازگی، لزوماً به آزمودن عملیِ هر چیز تازه تبدیل نمی‌شود.</p></article>
+        <article class="domain-card"><div class="domain-top"><h3>۴) توافق‌پذیری · متوسط</h3><span class="scoreline">۱۲۱</span></div><p>الگوی رابطه یکدست نیست: رک‌گویی و تواضع بالا هستند، اما اعتماد، نوع‌دوستی، همراهی و دل‌رحمی در محدوده‌ی پایین ثبت شده‌اند. ممکن است فرد مؤدب و کم‌ادعا باشد، اما به‌آسانی اعتماد نکند، با خواسته‌ی دیگران صرفاً برای حفظ آرامش کنار نیاید و حرفش را مستقیم بیان کند.</p></article>
+        <article class="domain-card"><div class="domain-top"><h3>۵) باوجدان‌بودن · پایین</h3><span class="scoreline">۱۰۳</span></div><p>این بُعد در این گزارش از همه پیچیده‌تر است: کفایت و وظیفه‌شناسی بسیار بالا هستند، ولی نظم، تلاش برای پیشرفت و خودکنترلی بسیار پایین‌اند. بنابراین برچسب «بی‌مسئولیت» برداشت درستی نیست. توصیف دقیق‌تر این است: حس مسئولیت و تصور توانستن وجود دارد، اما ساختاردهی و استمرار ممکن است به کمک بیرونی نیاز داشته باشد.</p></article>
+        <article class="domain-card"><div class="domain-top"><h3>جمع‌بندی تعاملی</h3><span class="scoreline">ترکیب پنج بُعد</span></div><p>در ظاهر ممکن است فرد آرام، کم‌حرف یا مستقل دیده شود؛ در درون، پردازش عاطفی و فکری پرحجمی جریان دارد. وقتی فشار بالا می‌رود، این حجم پردازش ممکن است به نگرانی، رنجش یا دشواری در تصمیم و اقدام تبدیل شود. وقتی محیط امن، معنادار و دارای ساختار روشن باشد، احتمالاً بخش خلاق، دقیق و مسئولیت‌پذیر بهتر دیده می‌شود.</p></article>
+      </div>
+    </section>
+
+    <section id="facets">
+      <div class="section-head"><span class="section-no">۴</span><h2>خوانش ۳۰ خرده‌مقیاس؛ جزئیات ریزتر شخصیت</h2></div>
+      <p class="small">برچسب‌های «خیلی بالا، بالا، متوسط، پایین و خیلی پایین» مطابق تفسیر چاپ‌شده در گزارش‌اند. توضیح رفتاری زیر هر مورد، معنای محتمل آن را در زندگی روزمره ساده می‌کند.</p>
+      <details open><summary>روان‌رنجوری N · ۱۲۰ · خیلی بالا</summary><div class="detail-body"><div class="facets">
+        <div class="facet"><div class="facet-head"><span>N1 · اضطراب · ۲۱</span><span class="tag warn">خیلی بالا</span></div><p>نگرانی پیش‌دستانه و دیدن احتمال خطر یا خراب‌شدن امور؛ ممکن است ذهن قبل از وقوع مسئله چندین سناریو بسازد.</p></div>
+        <div class="facet"><div class="facet-head"><span>N2 · پرخاشگری / خشم‌پذیری · ۱۶</span><span class="tag warn">بالا</span></div><p>حساسیت بیشتر به ناکامی و بی‌عدالتی؛ رنجش یا تحریک‌پذیری ممکن است سریع‌تر بالا بیاید. این نمره به معنی رفتار خشونت‌آمیز نیست.</p></div>
+        <div class="facet"><div class="facet-head"><span>N3 · افسردگی · ۲۰</span><span class="tag warn">بالا</span></div><p>آمادگی بیشتر برای تجربه‌ی غم، دل‌سردی یا افت خلق در موقعیت‌های دشوار؛ به‌تنهایی تشخیص افسردگی بالینی نیست.</p></div>
+        <div class="facet"><div class="facet-head"><span>N4 · کمرویی / خودآگاهی اجتماعی · ۲۳</span><span class="tag warn">خیلی بالا</span></div><p>حساسیت به قضاوت، دیده‌شدن و احتمال خجالت‌زدگی؛ ممکن است بعد از یک گفت‌وگو یا اشتباه، صحنه را بارها در ذهن مرور کند.</p></div>
+        <div class="facet"><div class="facet-head"><span>N5 · شتاب‌زدگی · ۲۰</span><span class="tag warn">خیلی بالا</span></div><p>در برابر میل‌ها یا هیجان‌های لحظه‌ای، مکث و مهار پاسخ ممکن است دشوارتر شود؛ به‌ویژه وقتی خسته، ناراحت یا تحت فشار است.</p></div>
+        <div class="facet"><div class="facet-head"><span>N6 · آسیب‌پذیری · ۲۰</span><span class="tag warn">خیلی بالا</span></div><p>هنگام فشار زیاد، احتمال احساس درماندگی یا آشفتگی و نیاز به زمان برای بازیابی بیشتر است؛ تقسیم مسئله به گام‌های کوچک کمک‌کننده است.</p></div>
+      </div></div></details>
+      <details><summary>برون‌گرایی E · ۵۵ · خیلی پایین</summary><div class="detail-body"><div class="facets">
+        <div class="facet"><div class="facet-head"><span>E1 · گرمی · ۱۲</span><span class="tag">خیلی پایین</span></div><p>صمیمیت و گرمای اجتماعی ممکن است در شروع رابطه کم‌ابراز باشد؛ لزوماً به معنی بی‌علاقگی یا بی‌احساسی نیست.</p></div>
+        <div class="facet"><div class="facet-head"><span>E2 · گروه‌گرایی · ۴</span><span class="tag">خیلی پایین</span></div><p>جمع‌های بزرگ و معاشرت پرتعداد احتمالاً جذابیت یا انرژی زیادی ایجاد نمی‌کنند؛ ارتباط محدود و انتخابی ترجیح دارد.</p></div>
+        <div class="facet"><div class="facet-head"><span>E3 · قاطعیت · ۴</span><span class="tag">خیلی پایین</span></div><p>پیش‌قدم‌شدن، رهبری جمع یا بلندکردن صدا برای گرفتن فضا احتمالاً ترجیح طبیعی نیست؛ این موضوع با رک‌گویی بالا تناقض ندارد.</p></div>
+        <div class="facet"><div class="facet-head"><span>E4 · فعالیت · ۷</span><span class="tag">خیلی پایین</span></div><p>تمایل به زندگی پرشتاب، چندکارگی و برنامه‌ی پُر از فعالیت پایین‌تر است؛ ریتم آرام‌تر و فرصت تمرکز ممکن است مطلوب‌تر باشد.</p></div>
+        <div class="facet"><div class="facet-head"><span>E5 · هیجان‌خواهی · ۱۳</span><span class="tag">خیلی پایین</span></div><p>جست‌وجوی محرک شدید، ریسک و هیجان بیرونی ممکن است کم باشد؛ محیط قابل‌پیش‌بینی و کم‌تحریک راحت‌تر است.</p></div>
+        <div class="facet"><div class="facet-head"><span>E6 · هیجان‌های مثبت · ۱۵</span><span class="tag">پایین</span></div><p>شور و سرزندگی ممکن است کمتر و کم‌نمایش‌تر بروز کند؛ این مورد را نباید به‌تنهایی معادل غمگینی دائمی دانست.</p></div>
+      </div></div></details>
+      <details><summary>گشودگی O · ۱۳۳ · خیلی بالا</summary><div class="detail-body"><div class="facets">
+        <div class="facet"><div class="facet-head"><span>O1 · تخیل · ۱۹</span><span class="tag">بالا</span></div><p>توان یا علاقه‌ی پررنگ به تصویرسازی ذهنی، احتمال‌های فرضی و فکرکردن به چیزی فراتر از وضعیت موجود.</p></div>
+        <div class="facet"><div class="facet-head"><span>O2 · زیبایی‌پسندی · ۲۶</span><span class="tag">بالا</span></div><p>توجه به هنر، زیبایی، موسیقی، طراحی یا ظرافت‌های حسی و بصری می‌تواند قابل‌توجه باشد.</p></div>
+        <div class="facet"><div class="facet-head"><span>O3 · احساسات · ۳۳</span><span class="tag warn">خیلی بالا</span></div><p>دسترسی و توجه به ظرافت‌های تجربه‌ی عاطفی؛ احتمالاً احساسات را با دامنه و جزئیات زیادی تجربه یا تحلیل می‌کند.</p></div>
+        <div class="facet"><div class="facet-head"><span>O4 · اعمال / تجربه‌ی عملی تازه · ۹</span><span class="tag">خیلی پایین</span></div><p>با وجود ذهن باز، ممکن است در تغییر عادت‌ها یا امتحان‌کردن رفتار و فعالیت تازه محتاط یا کم‌میل باشد. ایده‌ی جدید را دوست دارد، اما الزاماً اجرای آن را نه.</p></div>
+        <div class="facet"><div class="facet-head"><span>O5 · عقاید / ایده‌ها · ۲۸</span><span class="tag warn">خیلی بالا</span></div><p>کنجکاوی ذهنی و علاقه به مفاهیم انتزاعی، نظریه‌ها، استدلال‌ها و دیدن موضوع از چند زاویه.</p></div>
+        <div class="facet"><div class="facet-head"><span>O6 · ارزش‌ها · ۲۸</span><span class="tag warn">خیلی بالا</span></div><p>تمایل به بازاندیشی درباره‌ی باورها و قواعد پذیرفته‌شده؛ احتمالاً صرفاً به دلیل رایج‌بودن یک دیدگاه آن را نمی‌پذیرد.</p></div>
+      </div></div></details>
+      <details><summary>توافق‌پذیری A · ۱۲۱ · متوسط</summary><div class="detail-body"><div class="facets">
+        <div class="facet"><div class="facet-head"><span>A1 · اعتماد · ۱۷</span><span class="tag">پایین</span></div><p>اعتماد اولیه ممکن است محدود باشد؛ فرد ترجیح می‌دهد نیت و ثبات رفتاری دیگران را در طول زمان بسنجد.</p></div>
+        <div class="facet"><div class="facet-head"><span>A2 · رک‌گویی · ۲۷</span><span class="tag warn">خیلی بالا</span></div><p>بیان مستقیم، صریح و کم‌پیرایه؛ احتمال دارد برای مؤدب‌ماندن، اصل حرف را بیش از حد نرم یا پنهان نکند.</p></div>
+        <div class="facet"><div class="facet-head"><span>A3 · نوع‌دوستی · ۲۱</span><span class="tag">پایین</span></div><p>کمک‌کردن خودجوش و مقدم‌کردن نیاز دیگران بر نیاز خود ممکن است اولویت همیشگی نباشد؛ این نمره مساوی خودخواهی یا بی‌رحمی نیست.</p></div>
+        <div class="facet"><div class="facet-head"><span>A4 · همراهی / سازش · ۱۴</span><span class="tag">پایین</span></div><p>برای جلوگیری از تنش، به‌آسانی از موضع خود عقب‌نشینی نمی‌کند؛ با دستور بی‌منطق یا توافقی که ناعادلانه بداند همراه نمی‌شود.</p></div>
+        <div class="facet"><div class="facet-head"><span>A5 · تواضع · ۲۴</span><span class="tag warn">خیلی بالا</span></div><p>خودنمایی و بزرگ‌کردن دستاوردها احتمالاً خوشایند نیست؛ ممکن است موفقیت خود را کم‌رنگ یا بی‌سروصدا بیان کند.</p></div>
+        <div class="facet"><div class="facet-head"><span>A6 · دل‌رحمی / نرم‌دلی · ۱۸</span><span class="tag">پایین</span></div><p>در پاسخ به مشکل دیگران ممکن است بیشتر واقع‌گرا، مسئله‌محور یا کم‌ابراز باشد تا تسلی‌دهنده و عاطفی؛ به معنای فقدان احساس نیست.</p></div>
+      </div></div></details>
+      <details><summary>باوجدان‌بودن C · ۱۰۳ · پایین</summary><div class="detail-body"><div class="facets">
+        <div class="facet"><div class="facet-head"><span>C1 · کفایت · ۲۵</span><span class="tag warn">خیلی بالا</span></div><p>احساس توانایی برای فهمیدن و از عهده‌ی کار برآمدن؛ فرد ممکن است خودش را در حل مسئله competent بداند.</p></div>
+        <div class="facet"><div class="facet-head"><span>C2 · نظم و ترتیب · ۹</span><span class="tag">خیلی پایین</span></div><p>مرتب‌سازی، برنامه‌ریزی جزئی، نگهداری روال ثابت و مدیریت جزئیات می‌تواند دشوار یا کم‌جاذبه باشد.</p></div>
+        <div class="facet"><div class="facet-head"><span>C3 · وظیفه‌شناسی · ۲۹</span><span class="tag warn">خیلی بالا</span></div><p>تعهد اخلاقی یا احساس «باید انجامش بدهم» قوی است؛ قول و مسئولیت ممکن است حتی وقتی کار دشوار است اهمیت داشته باشد.</p></div>
+        <div class="facet"><div class="facet-head"><span>C4 · توفیق‌گرایی · ۱۰</span><span class="tag">خیلی پایین</span></div><p>رقابت، ارتقای جایگاه یا هدف‌گذاری پرشتاب ممکن است محرک اصلی نباشد؛ شاید معنا و تعهد مهم‌تر از رکورد و عنوان باشند.</p></div>
+        <div class="facet"><div class="facet-head"><span>C5 · خودکنترلی · ۱۱</span><span class="tag">خیلی پایین</span></div><p>شروع‌کردن و ادامه‌دادن کارهای کم‌جذابیت، مقاومت در برابر حواس‌پرتی و حفظ ریتم بدون فشار بیرونی ممکن است دشوارتر باشد.</p></div>
+        <div class="facet"><div class="facet-head"><span>C6 · محتاط‌بودن / سنجیدگی · ۱۹</span><span class="tag soft">متوسط</span></div><p>در فکرکردن پیش از اقدام وضعیت میانه گزارش شده؛ بنابراین نباید همه‌ی رفتارها را عجولانه یا بی‌محابا فرض کرد.</p></div>
+      </div></div></details>
+    </section>
+
+    <section id="patterns">
+      <div class="section-head"><span class="section-no">۵</span><h2>ترکیب‌هایی که از تک‌نمره‌ها مهم‌ترند</h2></div>
+      <div class="combo-grid">
+        <div class="combo"><strong>ذهن باز، رفتار محتاط</strong><p>ایده‌ها، باورها و تجربه‌ی عاطفی جذاب‌اند، اما تجربه‌کردن عملیِ چیزهای تازه چندان مطلوب نیست. ممکن است فرد در ذهنش بسیار نوگرا باشد و در سبک زندگی روزمره محافظه‌کار بماند.</p></div>
+        <div class="combo"><strong>احساس مسئولیت، اما اجرای ناپیوسته</strong><p>وظیفه‌شناسی و کفایت بالا در کنار نظم و خودکنترلی پایین می‌تواند شکاف «می‌دانم باید انجام شود» و «به‌موقع و منظم انجامش می‌دهم» بسازد.</p></div>
+        <div class="combo"><strong>درون‌گرایی، اما رک‌گویی</strong><p>فرد ممکن است آغازگر گفت‌وگو یا رهبر جمع نباشد؛ اما وقتی تصمیم می‌گیرد حرف بزند، ممکن است بی‌پرده و صریح باشد. کم‌حرفی را نباید با موافقت اشتباه گرفت.</p></div>
+        <div class="combo"><strong>عاطفه‌ی عمیق، ابرازِ کم‌گرما</strong><p>احساسات درونی پررنگ‌اند، اما گرمی اجتماعی و نرم‌دلیِ آشکار پایین ثبت شده‌اند. بنابراین ممکن است شدت تجربه‌ی درونی با میزان ابراز بیرونی یکسان نباشد.</p></div>
+        <div class="combo"><strong>تواضع، همراه با اعتمادِ آهسته</strong><p>فرد ممکن است اهل خودنمایی نباشد، اما این به معنای اعتماد سریع به دیگران هم نیست. برای نزدیک‌شدن، ثبات رفتاری و صداقت احتمالاً مهم است.</p></div>
+        <div class="combo"><strong>حساسیت به ارزیابی، همراه با استقلال رأی</strong><p>قضاوت دیگران ممکن است از نظر عاطفی اثر بگذارد، اما فرد لزوماً برای خوشایند آن‌ها نظرش را عوض نمی‌کند. ممکن است دروناً رنجیده و بیروناً مخالف باقی بماند.</p></div>
+        <div class="combo"><strong>ذهن پرکار، انرژی اجتماعی کم</strong><p>بخش زیادی از زمان و انرژی می‌تواند صرف فکرکردن، مرور مکالمه‌ها، سنجیدن معناها و پردازش هیجان‌ها شود. معاشرت طولانی ممکن است فضای کمتری برای بازیابی باقی بگذارد.</p></div>
+        <div class="combo"><strong>تعهد بالا، جاه‌طلبی رقابتی پایین</strong><p>ممکن است فرد کاری را چون وظیفه‌ی اوست انجام دهد، نه برای رقابت، شهرت یا جلو زدن از دیگران. برای انگیزه‌دادن، معنا و مسئولیت می‌تواند مؤثرتر از فشارِ مقایسه‌ای باشد.</p></div>
+      </div>
+    </section>
+
+    <section id="mbti">
+      <div class="section-head"><span class="section-no">۶</span><h2>نزدیک‌ترین MBTI؛ با چه میزان اطمینان؟</h2></div>
+      <div class="mbti-box">
+        <div class="small">برآورد محتاطانه از روی همبستگی‌های مدل پنج‌عاملی، نه نتیجه‌ی آزمون مستقیم MBTI</div>
+        <div class="mbti-type">INxP</div>
+        <p><strong>خانواده‌ی نزدیک‌تر: INxP.</strong> درون‌گرایی (I)، شهودی‌بودن (N) و گرایش به انعطاف و بازماندن گزینه‌ها (P) از این گزارش حمایت نسبی می‌گیرند. اما حرف سوم، یعنی T یا F، روشن نیست؛ توافق‌پذیری کلی متوسط است و خرده‌مقیاس‌های آن نیز دو سوی متفاوتی دارند.</p>
+        <div class="mbti-grid">
+          <div class="mbti-letter"><b>I</b><span>پشتوانه: بسیار قوی</span></div>
+          <div class="mbti-letter"><b>N</b><span>پشتوانه: قوی</span></div>
+          <div class="mbti-letter"><b>T / F</b><span>پشتوانه: نامشخص</span></div>
+          <div class="mbti-letter"><b>P</b><span>پشتوانه: متوسط</span></div>
+        </div>
+        <div class="warning"><strong>اگر مجبور باشیم فقط یک تیپ حدس بزنیم:</strong> INTP را می‌توان اندکی جلوتر از INFP گذاشت، اما این برتری ضعیف است و نباید آن را «تیپ واقعی» فرد تلقی کرد. رک‌گویی بالا، همراهی پایین و نرم‌دلی پایین کمی به سمت T اشاره می‌کنند؛ در مقابل، توافق‌پذیری کلی متوسط، احساسات بسیار بالا و ارزش‌محوری بالا اجازه‌ی نتیجه‌گیری مطمئن نمی‌دهند.</div>
+      </div>
+      <div class="card" style="margin-top:13px">
+        <h3>چرا این تطبیق فقط تقریبی است؟</h3>
+        <p>در پژوهش‌های تطبیقی، برون‌گراییِ مدل پنج‌عاملی با محور E/I، گشودگی با S/N، توافق‌پذیری با T/F و وظیفه‌شناسی با J/P ارتباط دارند. اما این‌ها همبستگی‌اند، نه تبدیل یک‌به‌یک. روان‌رنجوری نیز اصلاً یکی از چهار محور MBTI نیست. در یک فراتحلیل کوچک که در منبع شرکت سازنده خلاصه شده، فقط هفت مطالعه با مجموع ۲۲۴۳ نفر وارد تحلیل شده بود؛ بنابراین این ضرایب برای حدسِ جهت مفیدند، نه تعیین قطعی تیپ. <a href="https://www.themyersbriggs.com/en-US/Support/MBTI-Facts" target="_blank" rel="noopener">شرح همبستگی‌های MBTI و پنج‌عاملی</a>.</p>
+        <p>همچنین پژوهش کلاسیک مک‌کری و کاستا نشان داد که شواهد از تقسیم افراد به تیپ‌های کاملاً مجزا و دوگانه پشتیبانی کافی نمی‌کند و بهتر است این شاخص‌ها را پیوستارهایی از ترجیح‌ها ببینیم. <a href="https://pubmed.ncbi.nlm.nih.gov/2709300/" target="_blank" rel="noopener">مقاله‌ی McCrae & Costa (1989)</a>.</p>
+        <p>در عین حال، پژوهش تجمیعی منتشرشده در ۲۰۲۵ درباره‌ی فرم M، ثبات درونی قابل‌قبولی برای خرده‌مقیاس‌ها گزارش کرد؛ ولی در مجموعه‌ی مطالعات بررسی‌شده، مطالعات ساختار عاملی و بازآزمایی وارد مرور نشده بودند. پس تصویر علمی MBTI نه «بی‌ارزشِ مطلق» است و نه مجوزی برای تشخیص تیپ صرفاً از روی یک آزمون دیگر. <a href="https://onlinelibrary.wiley.com/doi/10.1002/jcad.70006" target="_blank" rel="noopener">مرور روان‌سنجی ۲۰۲۵</a>.</p>
+      </div>
+    </section>
+
+    <section id="scenarios">
+      <div class="section-head"><span class="section-no">۷</span><h2>واکنش‌های احتمالی در موقعیت‌های مختلف</h2></div>
+      <p class="small">این بخش «پیشگویی رفتار» نیست. هر سناریو یک فرضیه‌ی کاربردی است که از کنار هم گذاشتن نمره‌ها ساخته شده؛ شخصیت واقعی، مهارت آموخته‌شده، فرهنگ، تجربه‌های زندگی و شدت موقعیت می‌توانند نتیجه را تغییر دهند.</p>
+      <div class="scenario-grid">
+        <article class="scenario"><h3>۱) وقتی جلوی دیگران از او انتقاد می‌شود</h3><p>ممکن است ابتدا شرمندگی، دلخوری یا حالت دفاعی را تجربه کند؛ بعداً صحنه را چندبار مرور کند. اگر بازخورد خصوصی، دقیق و همراه با مثال باشد، احتمال استفاده‌ی سازنده از آن بیشتر می‌شود.</p><span class="signal">N1 بالا · N4 خیلی بالا · N2 بالا</span></article>
+        <article class="scenario"><h3>۲) وقتی نقد منصفانه و روشن دریافت می‌کند</h3><p>اگر لحن محترمانه و موضوع مشخص باشد، احتمالاً محتوای نقد را بررسی می‌کند؛ اما ممکن است واکنش هیجانی اولیه از پردازش منطقیِ بعدی جلو بزند.</p><span class="signal">N بالا · C1 خیلی بالا · O5 خیلی بالا</span></article>
+        <article class="scenario"><h3>۳) در مهمانی شلوغ یا شبکه‌سازی</h3><p>احتمالاً ابتدا فضا را مشاهده می‌کند، با افراد محدودتر وارد گفت‌وگو می‌شود و پس از مدتی به خلوت نیاز پیدا می‌کند. این رفتار لزوماً نشانه‌ی خصومت یا نداشتن مهارت نیست.</p><span class="signal">E1 تا E5 بسیار پایین</span></article>
+        <article class="scenario"><h3>۴) در گفت‌وگوی دونفره و عمیق</h3><p>اگر موضوع برایش معنادار باشد، ممکن است مشارکت فکری و عاطفی بیشتری نشان دهد. بحث‌های کلیشه‌ای و معاشرتِ صرفاً تشریفاتی احتمالاً کمتر جذبش می‌کنند.</p><span class="signal">O3، O5 و O6 بالا · E پایین</span></article>
+        <article class="scenario"><h3>۵) وقتی با یک ایده‌ی تازه روبه‌رو می‌شود</h3><p>احتمالاً سریع به پیامدها، معناها، فرض‌های پنهان و امکان‌های مختلف فکر می‌کند؛ ولی ممکن است برای تبدیل ایده به آزمایش عملی، زمان و اطمینان بیشتری بخواهد.</p><span class="signal">O5 و O6 خیلی بالا · O4 خیلی پایین</span></article>
+        <article class="scenario"><h3>۶) وقتی برنامه‌ی روزانه به‌هم می‌ریزد</h3><p>تغییر ناگهانی می‌تواند تنش ایجاد کند، به‌خصوص اگر هم‌زمان چند کار نیمه‌تمام وجود داشته باشد. یک برنامه‌ی جایگزین ساده و روشن بهتر از فهرست بلندِ کارهای جدید عمل می‌کند.</p><span class="signal">N1 و N6 بالا · C2 و C5 خیلی پایین</span></article>
+        <article class="scenario"><h3>۷) در پروژه‌ی بلندمدت و بدون ضرب‌الاجل</h3><p>ممکن است شروع کار با علاقه و فکر زیاد همراه باشد، اما استمرار روزانه افت کند. تقسیم پروژه به تحویل‌های کوچک و زمان‌بندی بیرونی می‌تواند فاصله‌ی نیت تا اجرا را کاهش دهد.</p><span class="signal">O بالا · C1/C3 بالا · C2/C5 پایین</span></article>
+        <article class="scenario"><h3>۸) وقتی مسئولیتی را به او می‌سپارند</h3><p>احساس تعهد می‌تواند جدی باشد و ممکن است از زیر بار «باید انجام شود» به‌سادگی کنار نکشد. با این حال، برای مدیریت جزئیات و زمان‌بندی بهتر است انتظارها مکتوب و مرحله‌بندی شوند.</p><span class="signal">C3 خیلی بالا · C2 و C5 خیلی پایین</span></article>
+        <article class="scenario"><h3>۹) وقتی کسی بی‌دلیل دستور می‌دهد</h3><p>ممکن است در ظاهر بحث را آغاز نکند، اما اگر وارد گفت‌وگو شود، مخالفت را مستقیم بیان کند. توضیح منطق تصمیم احتمالاً از دستورِ صرف مؤثرتر است.</p><span class="signal">E3 خیلی پایین · A2 خیلی بالا · A4 پایین · O6 بالا</span></article>
+        <article class="scenario"><h3>۱۰) وقتی احساس بی‌عدالتی می‌کند</h3><p>رنجش و خشم ممکن است سریع بالا بیاید. احتمال دارد موضعش را صریح بیان کند یا از موقعیت فاصله بگیرد؛ بهتر است پیش از پاسخ نهایی، کمی فاصله‌ی زمانی برای تنظیم هیجان داشته باشد.</p><span class="signal">N2 بالا · A2 خیلی بالا · A4 پایین</span></article>
+        <article class="scenario"><h3>۱۱) وقتی به کسی اعتماد اولیه ندارد</h3><p>ممکن است اطلاعات شخصی را دیرتر در میان بگذارد، رفتار طرف مقابل را در طول زمان بسنجد و به تناقض‌های گفتار و عمل حساس باشد. اعتماد احتمالاً با ثبات و شفافیت ساخته می‌شود، نه صرفاً با صمیمیت سریع.</p><span class="signal">A1 پایین · N6 خیلی بالا · E1 پایین</span></article>
+        <article class="scenario"><h3>۱۲) وقتی از او می‌خواهند احساساتش را توضیح دهد</h3><p>احساسات درونی می‌توانند عمیق و پیچیده باشند، اما توضیح‌دادن آن‌ها در لحظه ممکن است سخت شود. نوشتن یا گفت‌وگو پس از کمی زمان احتمالاً بیان دقیق‌تری ایجاد می‌کند.</p><span class="signal">O3 خیلی بالا · E1 خیلی پایین · N4 خیلی بالا</span></article>
+        <article class="scenario"><h3>۱۳) وقتی دو نفر با او اختلاف‌نظر دارند</h3><p>ممکن است به جای حفظ توافق ظاهری، روی استدلال و اصل موضوع بایستد. اگر لحن طرف مقابل تحقیرآمیز باشد، حساسیت هیجانی می‌تواند بحث را از موضوع اصلی دور کند.</p><span class="signal">A2 خیلی بالا · A4 پایین · N2 بالا · O5 بالا</span></article>
+        <article class="scenario"><h3>۱۴) در برابر تعریف و تحسین عمومی</h3><p>ممکن است از مرکز توجه بودن معذب شود یا تعریف را کوتاه و کم‌اهمیت جلوه دهد. تحسین خصوصی، مشخص و بدون اغراق احتمالاً طبیعی‌تر پذیرفته می‌شود.</p><span class="signal">A5 خیلی بالا · E3 و N4</span></article>
+        <article class="scenario"><h3>۱۵) وقتی اشتباه کوچکی مرتکب می‌شود</h3><p>ممکن است اشتباه را بیش از اندازه در ذهن نگه دارد و به قضاوت دیگران فکر کند. بازگشت به این پرسش که «اقدام اصلاحیِ بعدی چیست؟» می‌تواند جلوی نشخوار ذهنی را بگیرد.</p><span class="signal">N1 و N4 خیلی بالا · N3 بالا</span></article>
+        <article class="scenario"><h3>۱۶) وقتی چند کار هم‌زمان روی سرش می‌ریزد</h3><p>احتمال احساس آشفتگی و قفل‌شدن تصمیم‌گیری وجود دارد. انتخاب فقط یک کار بعدی، نوشتن بقیه‌ی کارها و تعیین ترتیب آن‌ها می‌تواند بار ذهنی را کم کند.</p><span class="signal">N6 خیلی بالا · C2 و C5 خیلی پایین</span></article>
+        <article class="scenario"><h3>۱۷) هنگام شروع یک فعالیت اجتماعی تازه</h3><p>ممکن است در ذهن به آن علاقه داشته باشد، ولی در عمل برای ثبت‌نام یا حضور اولیه تعلل کند. همراهی با یک نفر آشنا و شروع کوتاه می‌تواند آستانه‌ی ورود را پایین بیاورد.</p><span class="signal">O بالا · O4 خیلی پایین · E2 خیلی پایین</span></article>
+        <article class="scenario"><h3>۱۸) در کار گروهی</h3><p>احتمالاً ترجیح می‌دهد نقش، مسئولیت و خروجی هر نفر روشن باشد. ممکن است برای جلب توجه یا هدایت جمع پیش‌قدم نشود، ولی درباره‌ی کیفیت کار و منطق تصمیم‌ها نظر صریح داشته باشد.</p><span class="signal">E2/E3 پایین · C1/C3 بالا · A2 بالا</span></article>
+        <article class="scenario"><h3>۱۹) در رابطه‌ی نزدیک و صمیمی</h3><p>ممکن است آهسته‌تر گرم شود و مراقبت را همیشه با ابراز کلامی نشان ندهد. لازم است طرف مقابل کم‌ابرازی را بی‌تفاوتی فرض نکند و فرد نیز نیازها و مرزهایش را روشن‌تر بیان کند.</p><span class="signal">E1 پایین · A1 پایین · A6 پایین · C3 بالا</span></article>
+        <article class="scenario"><h3>۲۰) وقتی از او کمک می‌خواهند</h3><p>احتمال دارد بر اساس انصاف، رابطه و ظرفیت خودش تصمیم بگیرد، نه از روی کمک‌کردن خودکار به همه. اگر درخواست مبهم یا تحمیلی باشد، مقاومت بیشتری نشان می‌دهد.</p><span class="signal">A3 پایین · A4 پایین · A2 بالا</span></article>
+        <article class="scenario"><h3>۲۱) در برابر قانون یا سنتی که قبول ندارد</h3><p>ممکن است مفروضات و ارزش‌های پشت آن را به چالش بکشد. صرفِ قدیمی یا رایج‌بودن یک قاعده برای قانع‌شدن کافی نیست؛ اما تغییر عملیِ سبک زندگی می‌تواند همچنان کند باشد.</p><span class="signal">O6 خیلی بالا · O5 خیلی بالا · O4 خیلی پایین</span></article>
+        <article class="scenario"><h3>۲۲) در کارهای تکراری و اداری</h3><p>احتمالاً تمرکز و پیگیری در کارهای یکنواخت افت می‌کند، به‌خصوص اگر معنای روشنی نداشته باشند. چک‌لیست کوتاه و پایان‌های قابل‌مشاهده کمک می‌کنند.</p><span class="signal">C2، C4 و C5 خیلی پایین</span></article>
+        <article class="scenario"><h3>۲۳) وقتی ناگهان عصبانی یا دلخور می‌شود</h3><p>ممکن است پاسخ سریع، تند یا قطعی بدهد و بعداً از شدت آن پاسخ پشیمان شود. قانون شخصیِ «پاسخ مهم را با تأخیر می‌فرستم» می‌تواند مفید باشد.</p><span class="signal">N2 بالا · N5 خیلی بالا</span></article>
+        <article class="scenario"><h3>۲۴) در شرایط مبهم و نامطمئن</h3><p>ذهن باز می‌تواند چندین توضیح و سناریو بسازد، اما اضطراب بالا ممکن است توجه را به بدترین احتمال‌ها بچسباند. تفکیک «واقعیتِ معلوم» از «حدسِ نگران‌کننده» اهمیت دارد.</p><span class="signal">O5/O6 بالا · N1/N6 خیلی بالا</span></article>
+        <article class="scenario"><h3>۲۵) وقتی باید سریع تصمیم بگیرد</h3><p>اگر فشار زیاد باشد، کشمکش میان تحلیل گزینه‌ها و واکنش هیجانی ممکن است تصمیم را دشوار کند. معیار تصمیم از پیش تعیین‌شده و محدودکردن گزینه‌ها به دو یا سه مورد کمک می‌کند.</p><span class="signal">N بالا · O5 بالا · C6 متوسط</span></article>
+        <article class="scenario"><h3>۲۶) وقتی احساس می‌کند نادیده گرفته شده</h3><p>ممکن است رفتار دیگران را شخصی تعبیر کند، ناراحت شود و در عین حال مستقیماً درخواست توجه نکند. پرسیدن روشن و بی‌اتهام، از تفسیر ذهنی بهتر جواب می‌دهد.</p><span class="signal">N4 خیلی بالا · N1 خیلی بالا · E3 خیلی پایین</span></article>
+        <article class="scenario"><h3>۲۷) هنگام یادگیری یک موضوع دشوار</h3><p>احتمالاً از فهم عمیق، ارتباط‌دادن ایده‌ها و دیدن لایه‌های نظری لذت می‌برد. برای تبدیل دانش به تمرین منظم، نمونه‌ی کوچک و بازخورد مرحله‌ای لازم است.</p><span class="signal">O5 خیلی بالا · C1 خیلی بالا · C5 خیلی پایین</span></article>
+        <article class="scenario"><h3>۲۸) در موقعیت رقابتی یا مقایسه‌شدن</h3><p>ممکن است رقابت و رتبه برایش محرک اصلی نباشد و مقایسه‌ی مستقیم حتی تنش‌زا شود. هدفی که با ارزش شخصی یا مسئولیت واقعی پیوند دارد، احتمالاً انگیزه‌ی پایدارتری می‌سازد.</p><span class="signal">C4 خیلی پایین · N4 خیلی بالا · O6 خیلی بالا</span></article>
+        <article class="scenario"><h3>۲۹) وقتی فرصتی برای هنر، موسیقی یا زیبایی‌شناسی دارد</h3><p>ممکن است نسبت به جزئیات زیبایی‌شناختی واکنش و توجه زیادی نشان دهد و این تجربه به منبعی برای معنا، آرامش یا بیان درونی تبدیل شود.</p><span class="signal">O2 بالا · O3 خیلی بالا</span></article>
+        <article class="scenario"><h3>۳۰) پس از یک روز پرتعامل و پرفشار</h3><p>احتمال نیاز به سکوت، خلوت و بازیابی زیاد است. اگر فرصت استراحت نباشد، حساسیت به صدا، درخواست دیگران یا مسائل کوچک ممکن است بیشتر شود.</p><span class="signal">E بسیار پایین · N بالا</span></article>
+      </div>
+    </section>
+
+    <section id="strengths">
+      <div class="section-head"><span class="section-no">۸</span><h2>توانمندی‌ها، نقاط اصطکاک و برداشت‌های نادرست</h2></div>
+      <div class="two-col">
+        <div class="card">
+          <h3>توانمندی‌هایی که ممکن است پررنگ باشند</h3>
+          <div class="pills"><span class="pill">تفکر مفهومی</span><span class="pill">تخیل و ایده‌پردازی</span><span class="pill">حساسیت زیبایی‌شناختی</span><span class="pill">توجه به معنا و ارزش</span><span class="pill">رک‌گویی</span><span class="pill">تواضع</span><span class="pill">احساس مسئولیت</span><span class="pill">باور به کفایت شخصی</span></div>
+          <p style="margin-top:12px">در محیط مناسب، این ترکیب می‌تواند برای تحلیل عمیق، کار مفهومی، نوشتن، پژوهش، نقد، طراحی ایده، حل مسئله‌های پیچیده و کارهای دارای معنا مفید باشد.</p>
+        </div>
+        <div class="card">
+          <h3>نقاط اصطکاک احتمالی</h3>
+          <div class="pills"><span class="pill coral">نشخوار ذهنی</span><span class="pill coral">حساسیت به انتقاد</span><span class="pill coral">خستگی اجتماعی</span><span class="pill gold">تعلل در اجرا</span><span class="pill gold">بی‌نظمی روزمره</span><span class="pill gold">شروع‌های ناپایدار</span><span class="pill coral">پاسخ تند در فشار</span><span class="pill gold">اعتماد آهسته</span></div>
+          <p style="margin-top:12px">ریسک اصلی احتمالاً کمبود توانایی ذهنی نیست؛ بیشتر شکاف میان ظرفیت فکری، فشار هیجانی و نظام اجرایی روزمره است.</p>
+        </div>
+      </div>
+      <div class="note"><strong>سه برداشت اشتباه که باید کنار گذاشت:</strong> ۱) «درون‌گراست، پس اجتماعی نیست»؛ ۲) «نظم پایین است، پس مسئولیت‌پذیر نیست»؛ ۳) «نرم‌دلی پایین است، پس احساس ندارد». هر سه برداشت با خرده‌مقیاس‌های دیگر این گزارش نقض یا دست‌کم پیچیده می‌شوند.</div>
+    </section>
+
+    <section id="tools">
+      <div class="section-head"><span class="section-no">۹</span><h2>چه چیزهایی این سبک را کارآمدتر می‌کند؟</h2></div>
+      <div class="card">
+        <div class="steps">
+          <div class="step"><strong>کار را از «پروژه» به «اقدام بعدی» تبدیل کن.</strong> به‌جای «گزارش را تمام کنم»، بنویس «فایل را باز کنم و تیترهای بخش اول را وارد کنم». هر مرحله باید آن‌قدر کوچک باشد که شروعش اصطکاک کمی داشته باشد.</div>
+          <div class="step"><strong>به حافظه و انگیزه تکیه نکن؛ ساختار بیرونی بساز.</strong> تقویم، یادآور، چک‌لیست کوتاه و زمان تحویل مشخص برای این الگو احتمالاً مؤثرتر از منتظرماندن برای حال‌وحوصله است.</div>
+          <div class="step"><strong>هم‌زمان فقط یک اولویت اصلی داشته باش.</strong> فهرست‌های طولانی می‌توانند اضطراب و تعلل را بیشتر کنند. سه کار مهم روز کافی است؛ از میان آن‌ها یکی باید «کار بعدی» باشد.</div>
+          <div class="step"><strong>برای پاسخ هیجانی، فاصله‌ی زمانی تعریف کن.</strong> در پیام یا تعارض مهم، پیش‌نویس را بنویس اما بلافاصله نفرست. پس از آرام‌شدن، فقط واقعیت، اثر رفتار و درخواست مشخص را نگه دار.</div>
+          <div class="step"><strong>بازخورد را خصوصی، مشخص و قابل‌اقدام دریافت کن.</strong> به‌جای «تو همیشه بی‌نظمی»، بهتر است گفته شود «این فایل تا ساعت سه لازم است؛ لطفاً بخش دوم را تا آن زمان کامل کن».</div>
+          <div class="step"><strong>برای شروع تجربه‌ی تازه، نسخه‌ی کوچک بساز.</strong> به‌جای تعهد بزرگ، یک جلسه، یک هفته یا یک نمونه‌ی کوتاه را امتحان کن. ذهن می‌تواند باز بماند بی‌آن‌که فرد مجبور شود ناگهان سبک زندگی‌اش را عوض کند.</div>
+          <div class="step"><strong>نیاز به خلوت را شفاف اعلام کن.</strong> بعد از تعامل زیاد، زمان بازیابی را از قبل در برنامه بگذار؛ اما برای رابطه‌های مهم، زمان مشخصی برای ارتباط هم تعیین کن تا خلوت به سوءتفاهم تبدیل نشود.</div>
+          <div class="step"><strong>انگیزه را به معنا وصل کن، نه فقط رقابت.</strong> روشن کن این کار چه ارزشی را حفظ می‌کند، به چه کسی کمک می‌کند یا چه مسئله‌ای را حل می‌کند. سپس آن را به یک تحویل کوچک و قابل‌اندازه‌گیری تبدیل کن.</div>
+          <div class="step"><strong>در گفت‌وگوی صریح، لحن را به‌اندازه‌ی محتوا مدیریت کن.</strong> قالب مفید: «مشاهده‌ی من این است…؛ اثرش این شده…؛ پیشنهادم این است…». رک‌گویی حفظ می‌شود، اما احتمال دفاعی‌شدن طرف مقابل کمتر خواهد شد.</div>
+          <div class="step"><strong>برای نگرانی، احتمال را از واقعیت جدا کن.</strong> سه ستون بنویس: «چه چیزی را می‌دانم؟»، «چه چیزی را حدس می‌زنم؟»، «قدم کوچک بعدی چیست؟». این روش قرار نیست احساس را حذف کند؛ کمک می‌کند احساس تمام فضای تصمیم را نگیرد.</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="limits">
+      <div class="section-head"><span class="section-no">۱۰</span><h2>اعتبار، محدودیت و منابع مطالعه</h2></div>
+      <div class="card">
+        <h3>آنچه در خود برگه دیده می‌شود</h3>
+        <p>این گزارش مربوط به نئو فرم بلند است و برای پنج بُعد اصلی، ۳۰ خرده‌مقیاس را نشان می‌دهد. در جدول کنترل پاسخ، سؤال‌های تکمیلی «معتبر» ثبت شده‌اند و جدول پاسخ‌های دیگر نیز با تفسیر «معتبر» مشخص شده است. این فقط می‌گوید کنترل‌های درج‌شده در همین برگه مشکل آشکاری ثبت نکرده‌اند؛ اعتبار هنجارها، کیفیت اجرای آزمون یا انطباق تفسیر با زندگی واقعی فرد را مستقلاً ثابت نمی‌کند.</p>
+        <h3>مرز تفسیر</h3>
+        <p>نئو یک سنجش صفات شخصیتی است، نه ابزار تشخیص اختلال روانی. نمره‌ی بسیار بالای روان‌رنجوری به‌تنهایی به معنی ابتلا به اضطراب، افسردگی یا هر تشخیص دیگری نیست. اگر فشار هیجانی در زندگی واقعی شدید، مداوم یا مختل‌کننده است، ارزیابی بالینی جداگانه لازم است؛ این برگه جای آن را نمی‌گیرد.</p>
+        <p>همچنین تفسیرهای سناریویی، فرضیه‌اند. برای اطمینان بیشتر باید آن‌ها را با مثال‌های واقعی از محیط کار، رابطه، تصمیم‌گیری و واکنش به فشار بررسی کرد؛ ترجیحاً همراه با مشاهده‌ی فردی که او را در موقعیت‌های مختلف می‌شناسد.</p>
+        <h3>منابع بیرونی برای چارچوب علمی</h3>
+        <ol class="sources">
+          <li><strong>Detrick, P.</strong>، معرفی فنی NEO PI-R در راهنمای غربالگری روان‌شناختی اداره‌ی استانداردها و آموزش پلیس کالیفرنیا؛ شامل پنج عامل، ۳۰ خرده‌مقیاس، توضیح کلی دامنه‌ها و هشدار درباره‌ی تعبیر بالینی نمره‌ی روان‌رنجوری. <a href="https://post.ca.gov/Portals/0/post_docs/publications/psychological-screening-manual/NEO_PI-R.pdf" target="_blank" rel="noopener">مشاهده‌ی منبع</a>.</li>
+          <li><strong>McCrae, R. R. &amp; Costa, P. T. (1989).</strong> بازخوانی MBTI از دیدگاه مدل پنج‌عاملی؛ مقاله‌ای درباره‌ی همپوشانی ابعاد و محدودیت دسته‌بندی تیپ‌ها به گروه‌های کاملاً مجزا. <a href="https://pubmed.ncbi.nlm.nih.gov/2709300/" target="_blank" rel="noopener">PubMed</a>.</li>
+          <li><strong>The Myers-Briggs Company.</strong> صفحه‌ی اطلاعات MBTI و خلاصه‌ی همبستگی‌های گزارش‌شده با پنج عامل؛ منبع مفید برای جهت ارتباط‌ها، با توجه به محدودیت تعداد مطالعات فراتحلیل یادشده. <a href="https://www.themyersbriggs.com/en-US/Support/MBTI-Facts" target="_blank" rel="noopener">مشاهده‌ی منبع</a>.</li>
+          <li><strong>Erford و همکاران (۲۰۲۵).</strong> مرور ۲۵ سال پژوهش درباره‌ی فرم M؛ گزارش ثبات درونی و همگرایی با سنجه‌های دیگر، در کنار اشاره به کمبود مطالعه‌ی بازآزمایی و ساختار در نمونه‌ی مطالعات مرورشده. <a href="https://onlinelibrary.wiley.com/doi/10.1002/jcad.70006" target="_blank" rel="noopener">مقاله در Journal of Counseling &amp; Development</a>.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+</div>
+<footer class="footer"><div class="container">این گزارش برای خودشناسی و گفت‌وگوی دقیق‌تر تهیه شده است؛ نه برای تشخیص، استخدام، قضاوت اخلاقی یا پیش‌بینی قطعی رفتار. <br>نسخه‌ی فارسی راست‌چین · مناسب مطالعه در موبایل و دسکتاپ · دارای چیدمان سازگار با چاپ</div></footer>
+</body>
+</html>
