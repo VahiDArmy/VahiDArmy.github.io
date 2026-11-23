@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>ماتریس ۳بعدی — رتبه‌بندی و امتیازدهی</title>
+<meta name="theme-color" content="#070a12" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23070a12'/%3E%3Cpath d='M12 5 4 9l8 4 8-4-8-4Zm-8 9 8 4 8-4' fill='none' stroke='%2335e0d0' stroke-width='1.8'/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" />
+<link rel="stylesheet" href="css/app.css" />
+<link rel="stylesheet" href="css/matrix.css" />
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5Z"/><path d="m3 13 9 5 9-5"/><path d="m3 17.5 9 5 9-5"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 20v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13A4 4 0 0 1 16 11"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/><path d="m18 15 .9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9L18 15Z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3 14.2H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 7a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9 3.6V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1Z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m20 6-11 11-5-5"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.9 17.9A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.1-5.9M9.9 4.2A10 10 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.2 3.2M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 8l5-5 5 5M12 3v12"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="m6 3 14 9-14 9V3Z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7"/></symbol>
+  <symbol id="i-comment" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-3.8-.8L3 21l1.8-4.2A8.4 8.4 0 0 1 4 11.5 8.4 8.4 0 0 1 12 3h.5A8.4 8.4 0 0 1 21 11.5Z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 22V4M4 4h11l-1 3 1 3H4"/><path d="M4 10h13l-1 3 1 3H4"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 0 0-6 0v.5A3 3 0 0 0 4 8a3 3 0 0 0 1 2.2A3 3 0 0 0 6 16a3 3 0 0 0 6 1.5V5Z"/><path d="M12 5a3 3 0 0 1 6 0v.5A3 3 0 0 1 20 8a3 3 0 0 1-1 2.2A3 3 0 0 1 18 16a3 3 0 0 1-6 1.5V5Z"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.5 12.5 8-8M16 3l5 5-4 4-3-3"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-sort" viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M10 18h4"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M22 3H2l8 10v8l4-2v-6L22 3Z"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 22c4 0 7-2.7 7-6.5 0-4-3-6-4.2-9.5-.4 2-1.3 3-2.8 4.2C10.5 7 9 5 9 3c-1 2.4-4 5-4 9.5C5 19.3 8 22 12 22Z"/></symbol>
+  <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m16 8-2.5 5.5L8 16l2.5-5.5L16 8Z"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M3 7h18M6 7l-3 6h6L6 7ZM18 7l-3 6h6l-3-6Z"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z"/></symbol>
+  <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m3 20 6.5-12 4 6 2-3 5.5 9H3Z"/></symbol>
+  <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M9 15 3 21M14 4c4 1 6 3 6 6 0 0-4 9-11 11l-3-3C8 11 14 4 14 4Z"/><circle cx="15" cy="9" r="1.5"/></symbol>
+  <symbol id="i-diamond" viewBox="0 0 24 24"><path d="M2 9h20l-10 12L2 9ZM6 3h12l4 6H2l4-6Z"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M6 2c0 6 6 6 6 10 0-4 6-4 6-10M6 22c0-6 6-6 6-10 0 4 6 4 6 10"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 12c2.5-5 5-5 7.5 0s5 5 7.5 0 3-3 5-2"/><path d="M2 18c2.5-5 5-5 7.5 0s5 5 7.5 0 3-3 5-2"/></symbol>
+  <symbol id="i-gem" viewBox="0 0 24 24"><path d="m12 2 8 6-8 14L4 8l8-6Z"/><path d="M4 8h16M9 2l3 6 3-6M12 8v14"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M19.1 4.9l-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></symbol>
+  <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M12 2v6M12 16v6M2 12h6M16 12h6"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></symbol>
+</svg>
+
+<div id="auth" class="auth" hidden>
+  <div class="auth__aurora"></div>
+  <div class="auth__card">
+    <div class="auth__brand">
+      <div class="brand__mark"><svg><use href="#i-layers"/></svg></div>
+      <div>
+        <h1>ماتریس ۳بعدی</h1>
+        <p class="muted">رتبه‌بندی و امتیازدهی چندلایه</p>
+      </div>
+    </div>
+    <div class="auth__tabs" role="tablist">
+      <button class="auth__tab is-on" data-authtab="login" role="tab">ورود</button>
+      <button class="auth__tab" data-authtab="signup" role="tab">ثبت‌نام</button>
+    </div>
+    <form id="auth-form" class="auth__form" autocomplete="on">
+      <label class="field auth__name" hidden>
+        <span>نام نمایشی</span>
+        <input id="auth-name" name="name" type="text" placeholder="نام شما" autocomplete="name" />
+      </label>
+      <label class="field">
+        <span>ایمیل</span>
+        <div class="field__wrap"><svg class="field__icon"><use href="#i-mail"/></svg>
+        <input id="auth-email" name="email" type="email" dir="ltr" placeholder="you@example.com" required autocomplete="email" /></div>
+      </label>
+      <label class="field">
+        <span>گذرواژه</span>
+        <div class="field__wrap"><svg class="field__icon"><use href="#i-lock"/></svg>
+        <input id="auth-pass" name="password" type="password" dir="ltr" placeholder="••••••••" required minlength="6" autocomplete="current-password" /></div>
+      </label>
+      <p id="auth-msg" class="auth__msg" hidden></p>
+      <button type="submit" class="btn btn--primary btn--block" id="auth-submit">ورود به ماتریس</button>
+    </form>
+    <div class="auth__or"><span>یا</span></div>
+    <button class="btn btn--ghost btn--block" id="auth-guest">مرور به‌عنوان مهمان <span class="muted">(فقط‌خواندنی)</span></button>
+    <p class="auth__foot muted">Supabase Auth · شنود و امتیازها محلی ذخیره نمی‌شوند</p>
+  </div>
+</div>
+
+<div class="app" id="app" hidden>
+  <aside class="rail" id="rail">
+    <div class="rail__brand" title="ماتریس ۳بعدی">
+      <div class="brand__mark"><svg><use href="#i-layers"/></svg></div>
+      <div class="rail__brandtext"><strong>ماتریس</strong><span class="muted">۳ بعدی</span></div>
+    </div>
+    <nav class="rail__nav" id="nav">
+      <button class="navitem" data-route="dashboard"><svg><use href="#i-grid"/></svg><span>داشبورد</span></button>
+      <button class="navitem is-on" data-route="matrix"><svg><use href="#i-layers"/></svg><span>ماتریس</span></button>
+      <button class="navitem" data-route="people"><svg><use href="#i-users"/></svg><span>افراد</span></button>
+      <button class="navitem" data-route="traits"><svg><use href="#i-sliders"/></svg><span>ویژگی‌ها</span></button>
+      <button class="navitem" data-route="deck"><svg><use href="#i-zap"/></svg><span>دسته کارت</span></button>
+      <button class="navitem" data-route="ai"><svg><use href="#i-brain"/></svg><span>هوش</span></button>
+      <button class="navitem" data-route="admin"><svg><use href="#i-shield"/></svg><span>مدیریت</span></button>
+      <button class="navitem" data-route="settings"><svg><use href="#i-settings"/></svg><span>تنظیمات</span></button>
+    </nav>
+    <div class="rail__foot">
+      <button class="navitem navitem--sm" id="btn-sound" title="صدا">
+        <svg><use href="#i-wave"/></svg><span>صدا</span>
+      </button>
+      <div class="rail__user" id="rail-user">
+        <div class="avatar" id="rail-avatar">؟</div>
+        <div class="rail__usertext"><strong id="rail-name">مهمان</strong><span id="rail-role" class="muted">فقط خواندن</span></div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="shell">
+    <header class="topbar">
+      <button class="iconbtn only-mobile" id="btn-menu" title="منو"><svg><use href="#i-menu"/></svg></button>
+      <button class="searchbox" id="btn-palette">
+        <svg><use href="#i-search"/></svg>
+        <span>جست‌وجوی افراد، ویژگی‌ها، فرمان‌ها…</span>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <div class="topbar__spacer"></div>
+      <div class="syncpill" id="sync-pill" title="وضعیت داده">
+        <i class="dot"></i><span id="sync-text">آماده</span>
+      </div>
+      <button class="iconbtn" id="btn-ai" title="دستیار هوش مصنوعی"><svg><use href="#i-brain"/></svg></button>
+      <button class="iconbtn" id="btn-refresh" title="بارگذاری مجدد"><svg><use href="#i-refresh"/></svg></button>
+      <button class="iconbtn only-guest" id="btn-login" title="ورود" hidden><svg><use href="#i-lock"/></svg></button>
+      <div class="userchip" id="userchip">
+        <div class="avatar avatar--sm" id="top-avatar">؟</div>
+        <div class="userchip__text"><strong id="top-name">مهمان</strong><span class="muted" id="top-mail">—</span></div>
+        <button class="iconbtn iconbtn--xs" id="btn-logout" title="خروج"><svg><use href="#i-logout"/></svg></button>
+      </div>
+    </header>
+
+    <main class="view" id="view" tabindex="-1"></main>
+
+    <footer class="statusbar">
+      <span class="statusbar__item"><svg><use href="#i-db"/></svg><b id="stat-people">۰</b> نفر</span>
+      <span class="statusbar__item"><b id="stat-traits">۰</b> ویژگی</span>
+      <span class="statusbar__item"><b id="stat-scores">۰</b> امتیاز</span>
+      <span class="statusbar__item"><b id="stat-coverage">۰٪</b> پوشش</span>
+      <span class="statusbar__spacer"></span>
+      <span class="statusbar__item" id="stat-stack">لایه ۱ از ۱</span>
+      <span class="statusbar__item" id="stat-sel">—</span>
+      <span class="statusbar__item muted">v1.0</span>
+    </footer>
+  </div>
+</div>
+
+<div id="modal-root"></div>
+<div id="toast-root" class="toasts" aria-live="polite"></div>
+<div id="palette" class="palette" hidden></div>
+<aside id="aidock" class="aidock" hidden></aside>
+
+<script src="vendor/supabase.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

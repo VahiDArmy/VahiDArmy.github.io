@@ -1,0 +1,14 @@
+{
+  "name": "matrix3d-spa",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Persian RTL 3D ranking matrix SPA on Supabase",
+  "scripts": {
+    "start": "npx --yes serve -l 3000 .",
+    "static": "python3 -m http.server 3000 --bind 0.0.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.2"
+  }
+}
