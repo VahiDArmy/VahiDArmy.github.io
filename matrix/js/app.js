@@ -52,9 +52,13 @@ let booted = false;
 })();
 
 function showAuth() {
-  $('#auth').hidden = false;
+  const auth = $('#auth');
+  auth.hidden = false;
   $('#app').hidden = true;
-  $('#auth-email')?.focus();
+  const card = $('.auth__card');
+  if (card) card.scrollTop = 0;
+  auth.scrollTop = 0;
+  $('#auth-email')?.focus({ preventScroll: true });
 }
 
 async function enterApp({ guest = false } = {}) {
@@ -62,20 +66,24 @@ async function enterApp({ guest = false } = {}) {
   $('#app').hidden = false;
   state.guest = guest;
   renderIdentity();
-  if (!guest) await loadUserPrefs();
-  await loadAll({ quiet: true });
+  try {
+    if (!guest) await loadUserPrefs();
+    await loadAll({ quiet: true });
+  } catch (err) {
+    console.warn('[enterApp] load', err);
+  }
   paintStats();
   if (!guest && state.user && state.scores.length && !state.people.length && sessionStorage.getItem('mx3.rlsWarn') !== '1') {
     sessionStorage.setItem('mx3.rlsWarn', '1');
     toast('افراد قابل خواندن نیستند؛ سیاست RLS جدول people را بررسی کنید', 'warn', 5200);
   }
   if (!guest) {
-    subscribeRealtime(debounceRealtime);
+    try { subscribeRealtime(debounceRealtime); } catch (err) { console.warn('[enterApp] realtime', err); }
     logPresence();
   }
   const hash = (location.hash || '').replace('#', '');
   const start = ROUTES[hash] ? hash : 'matrix';
-  navigate(start, { silent: true });
+  try { await navigate(start, { silent: true }); } catch (err) { console.warn('[enterApp] navigate', err); }
 }
 
 function renderIdentity() {
@@ -136,14 +144,22 @@ function previewAuthForm() {
   const form = $('#auth-form');
   const msg = $('#auth-msg');
   const nameWrap = $('.auth__name');
+  const nameInput = $('#auth-name');
   const submit = $('#auth-submit');
+  const syncMode = () => {
+    const login = mode === 'login';
+    nameWrap.hidden = login;
+    nameInput.required = !login;
+    submit.textContent = login ? 'ورود به ماتریس' : 'ساخت حساب';
+    $('#auth-pass').autocomplete = login ? 'current-password' : 'new-password';
+    msg.hidden = true;
+  };
+  syncMode();
   $$('.auth__tab').forEach((tab) => tab.onclick = () => {
     mode = tab.dataset.authtab;
     $$('.auth__tab').forEach((t) => t.classList.toggle('is-on', t === tab));
-    nameWrap.hidden = mode === 'login';
-    submit.textContent = mode === 'login' ? 'ورود به ماتریس' : 'ساخت حساب';
-    $('#auth-pass').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
-    msg.hidden = true;
+    syncMode();
+    $('#auth-form').scrollIntoView?.({ block: 'nearest' });
     play('tap');
   });
   const showMsg = (text, ok = false) => { msg.hidden = false; msg.textContent = text; msg.classList.toggle('is-ok', ok); };
@@ -164,19 +180,32 @@ function previewAuthForm() {
         await signIn(email, pass);
       }
       const sess = (await sb.auth.getSession()).data.session;
-      state.session = sess; state.user = sess?.user || null;
+      if (!sess?.user) throw new Error('نشست ساخته نشد — ایمیل یا گذرواژه را بررسی کنید');
+      state.session = sess; state.user = sess.user;
       await loadProfile();
       play('clink2'); haptic([10, 30, 10]);
       await enterApp();
     } catch (err) {
       showMsg(errMsg(err)); play('err'); haptic(30);
       submit.disabled = false; submit.textContent = old;
+      console.warn('[auth]', err);
     }
   });
-  $('#auth-guest').onclick = async () => {
+  $('#auth-guest').onclick = async (ev) => {
+    const btn = ev.currentTarget;
+    btn.disabled = true;
     sessionStorage.setItem('mx3.guest', '1');
     state.guest = true; play('tap');
-    await enterApp({ guest: true });
+    try {
+      await enterApp({ guest: true });
+    } catch (err) {
+      console.warn('[guest]', err);
+      state.guest = false;
+      sessionStorage.removeItem('mx3.guest');
+      toast('ورود مهمان ممکن نشد — دوباره تلاش کنید', 'err');
+    } finally {
+      btn.disabled = false;
+    }
   };
 }
 
