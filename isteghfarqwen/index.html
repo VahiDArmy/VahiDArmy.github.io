@@ -268,7 +268,7 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .popfoot button{font-size:10.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--gold);display:inline-flex;align-items:center;gap:6px}
 .popfoot button .ic{width:13px;height:13px}
 
-/* ══════════ HYPER-FOCUS · vertical stack ══════════ */
+/* ══════════ HYPER-FOCUS · reversible vertical stack ══════════ */
 body.hf-on #shell,body.hf-on .atmo,body.hf-on #stars,body.hf-on .grain{filter:blur(15px) saturate(.7)}
 #hf{position:fixed;inset:0;z-index:132;display:none;flex-direction:column;overflow:hidden}
 #hf.open{display:flex}
@@ -280,28 +280,29 @@ body.hf-on #shell,body.hf-on .atmo,body.hf-on #stars,body.hf-on .grain{filter:bl
 .hf-top .who b{display:block;font-size:12.5px;font-weight:800;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hf-top .who span{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;color:var(--mu)}
 .hf-stage{position:relative;z-index:2;flex:1;overflow:hidden;touch-action:none}
-.hf-card{position:absolute;top:22px;bottom:52px;left:0;right:0;width:min(680px,92vw);margin:0 auto;
+.hf-card{position:absolute;top:20px;bottom:50px;left:0;right:0;width:min(680px,92vw);margin:0 auto;
  border-radius:24px;border:1px solid var(--line2);background:linear-gradient(168deg,var(--surf2),var(--bg2) 72%);
  backface-visibility:hidden;will-change:transform,opacity;
  transition:transform .28s cubic-bezier(.2,.9,.25,1),opacity .2s linear;
  cursor:grab;overflow:hidden;display:flex;align-items:center;justify-content:center}
 .hf-card.moving{transition:none;cursor:grabbing}
-.hf-card:not(.front)::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 52%,transparent);pointer-events:none}
+.hf-card:not(.front)::after{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 52%,transparent);pointer-events:none;z-index:2}
 .hf-card.front{border-color:var(--gold);box-shadow:0 0 0 1px var(--g2),0 24px 60px rgba(0,0,0,.5),0 0 60px var(--g2)}
 .hf-card.front::before{content:"";position:absolute;inset:0;pointer-events:none;border-radius:24px;
  background:radial-gradient(120% 70% at 50% 0%,var(--g2),transparent 60%)}
-.hf-in{position:relative;z-index:1;width:100%;max-height:100%;overflow:hidden;padding:26px 26px;display:flex;flex-direction:column;justify-content:center}
-.hf-fa{font-family:var(--fa);direction:rtl;text-align:right;font-size:calc(15.5px * var(--fit,1));line-height:2.05;color:var(--turq);opacity:.95}
-.hf-ar{font-family:var(--ar);direction:rtl;text-align:right;font-size:calc(clamp(25px,4.4vw,34px) * var(--fit,1) * var(--ars));line-height:calc(var(--arlh) + .12);color:var(--tx)}
+.hf-in{position:relative;z-index:1;width:100%;max-height:100%;padding:22px 24px;display:flex;flex-direction:column;justify-content:center;
+ overflow:hidden;touch-action:none;overscroll-behavior:contain}
+.hf-fa{font-family:var(--fa);direction:rtl;text-align:right;font-size:calc(15px * var(--fit,1));line-height:1.95;color:var(--turq);opacity:.95}
+.hf-ar{font-family:var(--ar);direction:rtl;text-align:right;font-size:calc(clamp(24px,4.2vw,32px) * var(--fit,1) * var(--ars));line-height:calc(var(--arlh) + .02);color:var(--tx)}
 .hf-card.front .hf-ar{text-shadow:0 0 40px var(--g2)}
-.hf-en{font-size:calc(15.5px * var(--fit,1));line-height:1.85;color:var(--mu)}
-.hf-sep{display:flex;align-items:center;justify-content:center;margin:calc(16px * var(--fit,1)) 0;color:var(--gold);opacity:.6}
+.hf-en{font-size:calc(15px * var(--fit,1));line-height:1.75;color:var(--mu)}
+.hf-sep{display:flex;align-items:center;justify-content:center;margin:calc(13px * var(--fit,1)) 0;color:var(--gold);opacity:.6;flex:none}
 .hf-sep .fl{width:150px;height:14px}
 .hf-stat{position:absolute;left:0;right:0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;
  font-size:10px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;opacity:0;transform:scale(.3);transition:all .16s ease-in-out}
 .hf-stat .ic{width:28px;height:28px;stroke-width:2.4;filter:drop-shadow(0 0 10px currentColor)}
-.hf-stat.up{top:2px;color:var(--turq)}
-.hf-stat.down{bottom:12px;color:var(--gold)}
+.hf-stat.up{top:0;color:var(--turq)}
+.hf-stat.down{bottom:10px;color:var(--gold)}
 #hf.s-up .hf-stat.up,#hf.s-down .hf-stat.down{opacity:.92;transform:scale(1)}
 .hf-hint{position:relative;z-index:3;flex:none;text-align:center;padding:8px 14px calc(12px + env(safe-area-inset-bottom));
  font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--mu);opacity:.75;transition:opacity .5s}
@@ -523,8 +524,8 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
   #toasts{bottom:80px;right:12px;left:12px;max-width:none}
   .blob{opacity:.3}
   .hero{padding:18px 4px 22px}
-  .hf-card{top:16px;bottom:46px;width:94vw}
-  .hf-in{padding:20px 18px}
+  .hf-card{top:14px;bottom:44px;width:94vw}
+  .hf-in{padding:18px 17px}
   .hf-edge{right:8px}
   .hf-edge button{width:34px;height:34px}
 }
@@ -1120,7 +1121,8 @@ const HF={
  stage(){return $('#hfStage')},
  el(i){return this.pool.get(i)},
  H(){return this.stage().clientHeight||innerHeight},
- /* one slot function for every depth — forward and reverse use the same map */
+ inner(){const t=this.el(this.idx);return t?t.firstElementChild:null},
+ scroller(){const inn=this.inner();return inn&&inn.scrollHeight-inn.clientHeight>2?inn:null},
  slot(el,o){const H=this.H();
   el.classList.toggle('front',o===0);
   if(o===0){el.style.zIndex='60';el.style.opacity='1';el.style.transform='translate3d(0,0,0) rotate(0deg) scale(1)';return}
@@ -1135,11 +1137,13 @@ const HF={
    <div class="hf-sep">${fl()}</div><p class="hf-ar" dir="rtl" lang="ar">${p.ar}</p>
    <div class="hf-sep">${fl()}</div><div class="hf-en">${esc(p.en||'')}</div></div>`;
   this.stage().appendChild(d);this.pool.set(i,d);this.slot(d,i-this.idx);return d},
- /* batched measure: one layout pass, never inside the drag loop */
  fit(list){if(!list||!list.length)return;
-  list.forEach(el=>el.firstElementChild.style.setProperty('--fit',1));
-  const m=list.map(el=>({el,a:Math.max(120,el.clientHeight-10),n:el.firstElementChild.scrollHeight}));
-  m.forEach(o=>o.el.firstElementChild.style.setProperty('--fit',o.n>o.a?Math.max(.5,o.a/o.n):1))},
+  list.forEach(el=>{const inn=el.firstElementChild;
+   inn.style.setProperty('--fit',1);inn.style.overflowY='hidden';inn.style.touchAction='none';inn.style.justifyContent='center'});
+  const m=list.map(el=>{const inn=el.firstElementChild;return{inn,a:Math.max(140,el.clientHeight-6),n:inn.scrollHeight}});
+  m.forEach(o=>o.inn.style.setProperty('--fit',Math.max(.44,o.n>o.a?o.a/o.n:1)));
+  m.forEach(o=>{if(o.inn.scrollHeight-o.inn.clientHeight>2){
+   o.inn.style.overflowY='auto';o.inn.style.touchAction='pan-y';o.inn.style.justifyContent='flex-start'}})},
  refitAll(){this.fit([...this.pool.values()])},
  settle(){requestAnimationFrame(()=>requestAnimationFrame(()=>{
   this.pool.forEach(el=>{if(el.__new){el.__new=false;el.classList.remove('moving')}})}))},
@@ -1165,7 +1169,6 @@ const HF={
   Snd.p('deep');buzz([8,26,8]);
   requestAnimationFrame(()=>requestAnimationFrame(()=>{this.stack();this.settle()}));
   setTimeout(()=>{if(this.open)$('#hfHint').classList.add('dim')},3400)},
- /* drag: only three layers touch the compositor, transform + opacity only */
  paint(){const H=this.H(),top=this.el(this.idx),nx=this.el(this.idx+1),pv=this.el(this.idx-1);
   if(top){top.classList.add('moving');
    const rot=(this.dx*.03)*(this.dy/80)+this.dy*.006;
@@ -1179,6 +1182,7 @@ const HF={
   $('#hfAura').style.opacity=String(.6+cl(Math.abs(this.dy)/150,0,1)*.45)},
  down(e){if(!this.open||Date.now()<this.lock||e.isPrimary===false)return;
   if(e.target.closest('[data-a]'))return;
+  if(this.scroller())return;
   this.drag=true;this.pid=e.pointerId;this.sx=e.clientX;this.sy=e.clientY;this.dx=0;this.dy=0;this.vy=0;
   this.samples=[{t:performance.now(),y:e.clientY}];
   try{this.stage().setPointerCapture(e.pointerId)}catch{}},
@@ -1209,8 +1213,6 @@ const HF={
         top.style.opacity='0'}}
     this.dx=this.dy=0;this.advance(dir);
   }else{this.dx=this.dy=0;this.stack();Snd.p('tap')}},
- /* forward: card flies up, deck rises. back: same map in reverse —
-    the departed card descends onto the deck, the front sinks one slot. */
  advance(dir){const j=this.idx+dir;if(j<0||j>=V.length)return;
   this.lock=Date.now()+190;TTS.stop();this.idx=j;
   const made=[];for(let k=j-1;k<=j+3;k++){const el=this.make(k);if(el)made.push(el)}
@@ -1473,9 +1475,13 @@ const stg=$('#hfStage');
 stg.addEventListener('pointerdown',e=>HF.down(e));
 stg.addEventListener('pointermove',e=>HF.move(e),{passive:false});
 stg.addEventListener('pointerup',e=>HF.up(e));
-stg.addEventListener('pointercancel',e=>{if(HF.drag){HF.drag=false;cancelAnimationFrame(HF.raf);HF.raf=0;HF.dx=HF.dy=0;HF.status(0);HF.stack()}});
+stg.addEventListener('pointercancel',()=>{if(HF.drag){HF.drag=false;cancelAnimationFrame(HF.raf);HF.raf=0;HF.dx=HF.dy=0;HF.status(0);HF.stack()}});
 let wLock=0;
-stg.addEventListener('wheel',e=>{if(!HF.open)return;e.preventDefault();const n=Date.now();if(n<wLock||Math.abs(e.deltaY)<12)return;
+stg.addEventListener('wheel',e=>{if(!HF.open)return;
+ const sc=HF.scroller();
+ if(sc){const top=sc.scrollTop<=0,bot=sc.scrollTop+sc.clientHeight>=sc.scrollHeight-1;
+  if(!((e.deltaY>0&&bot)||(e.deltaY<0&&top)))return}
+ e.preventDefault();const n=Date.now();if(n<wLock||Math.abs(e.deltaY)<12)return;
  wLock=n+280;e.deltaY>0?HF.next():HF.prev()},{passive:false});
 
 /* pop horizontal swipe */
@@ -1544,7 +1550,7 @@ setInterval(()=>{if(VIEW==='read'&&!HF.open&&document.visibilityState==='visible
  $('#boot').classList.add('done');setTimeout(()=>$('#boot')?.remove(),600);
  if(SES){if(SES.expires_at*1000<Date.now()+60000)await refresh();if(SES){sched();afterAuth()}}else syncState('off');
  checkAch();
- setTimeout(()=>{if(!localStorage.getItem('nur.hint7')){localStorage.setItem('nur.hint7','1');toast('Touch a verse for its meaning · press & hold for hyper-focus','gold','focus')}},1200);
+ setTimeout(()=>{if(!localStorage.getItem('nur.hint8')){localStorage.setItem('nur.hint8','1');toast('Touch a verse for its meaning · press & hold for hyper-focus','gold','focus')}},1200);
 })();
 })();
 </script>
