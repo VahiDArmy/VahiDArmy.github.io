@@ -12,11 +12,13 @@ Static site — no build step, no dependencies. Just HTML, CSS and vanilla JavaS
 | `analysis-fa.html` | The full study in Persian (RTL) — the default study. |
 | `analysis.html` | The full study in English (LTR). Identical content, unchanged. |
 
-`styles.css` holds the shared styles (including the `.prose-fa` RTL block). `data.js` holds the transcribed scores; `app.js` renders the tables, the SVG chart and the exporters.
+`styles.css` holds the shared styles (including the Persian `.prose-fa` RTL layer). `data.js` holds the transcribed scores; `app.js` renders the tables, the SVG chart and the exporters. `fonts/Vazirmatn-wght.woff2` is the self-hosted Persian typeface, so the pages keep their typography with no external CDN.
+
+`analysis-fa.html` is generated from the `partsfa/` chunks by `python3 build-fa.py` (it also wraps every table in a scroll container for narrow screens). Do not hand-edit the generated file.
 
 ## Deploy on GitHub Pages
 
-1. Create a repository and upload the **contents** of the zip (not the zip itself) to the root of the default branch.
+1. Create a repository and upload the **contents** of the zip (not the zip itself) to the root of the default branch, keeping the `fonts/` folder next to the HTML files.
 2. Repository → **Settings** → **Pages** → *Build and deployment* → Source: **Deploy from a branch** → Branch: `main`, folder `/ (root)` → **Save**.
 3. Wait a minute; the site appears at `https://<user>.github.io/<repo>/` and opens on the Persian raw-data page.
 
