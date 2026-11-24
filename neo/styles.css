@@ -19,7 +19,7 @@ html, body {
   line-height: 1.7;
 }
 
-body[dir="rtl"] { text-align: right; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) { text-align: right; }
 
 a { color: var(--accent); }
 
@@ -215,8 +215,23 @@ svg.chart { display: block; min-width: 900px; width: 100%; height: auto; }
    Persian / RTL edition
    Editorial paper theme — self-hosted Vazirmatn (variable), warm
    paper, terracotta + gold accents, print-style rules.
-   Scoped to body[dir="rtl"] so the English study is untouched.
+   Scoped to the Persian roots (.rtl-page / body[dir="rtl"] / .prose-fa) so the
+   English study is untouched.
    ================================================================= */
+
+/* The Persian direction is stated here, not only through the dir attribute on
+   <html>/<body>: some mobile viewers drop that attribute, and the English
+   `.prose` rule above sets direction:ltr on the same element as .prose-fa.
+   These selectors are the last word for every Persian page. */
+html[lang="fa"],
+body[dir="rtl"],
+.rtl-page,
+.prose-fa,
+.prose.prose-fa {
+  direction: rtl;
+  text-align: right;
+}
+html[lang="fa"] body { background-color: #f7f2e8; }
 
 @font-face {
   font-family: "Vazirmatn";
@@ -226,7 +241,7 @@ svg.chart { display: block; min-width: 900px; width: 100%; height: auto; }
   font-display: swap;
 }
 
-body[dir="rtl"] {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) {
   --paper: #f7f2e8;
   --paper-2: #efe5d3;
   --card: #fffdf8;
@@ -253,7 +268,7 @@ body[dir="rtl"] {
   -webkit-font-smoothing: antialiased;
 }
 
-html:has(body[dir="rtl"]) {
+html:has(.rtl-page), html:has(body[dir="rtl"]) {
   background: #f7f2e8;
   scroll-behavior: smooth;
   /* clip (not hidden) so page-level RTL overflow never scrolls sideways
@@ -263,14 +278,14 @@ html:has(body[dir="rtl"]) {
 
 ::selection { background: #f2dbab; color: #191510; }
 
-body[dir="rtl"] a:focus-visible,
-body[dir="rtl"] button:focus-visible {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) a:focus-visible,
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button:focus-visible {
   outline: 2px solid var(--brand);
   outline-offset: 3px;
 }
 
 /* reading progress hairline (pure CSS, degrades to nothing) */
-body[dir="rtl"]::before {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page))::before {
   content: "";
   position: fixed;
   inset-block-start: 0;
@@ -290,9 +305,9 @@ body[dir="rtl"]::before {
 
 /* ---------------- chrome: masthead, nav, buttons ---------------- */
 
-body[dir="rtl"] .wrap { max-width: 1080px; padding: 26px 22px 96px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .wrap { max-width: 1080px; padding: 26px 22px 96px; }
 
-body[dir="rtl"] header.top {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) header.top {
   position: sticky;
   top: 0;
   z-index: 50;
@@ -310,14 +325,14 @@ body[dir="rtl"] header.top {
   -webkit-backdrop-filter: saturate(1.1) blur(10px);
 }
 
-body[dir="rtl"] header.top h1 {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) header.top h1 {
   font-size: 22px;
   font-weight: 800;
   line-height: 1.5;
   letter-spacing: -.1px;
   color: var(--ink);
 }
-body[dir="rtl"] header.top h1 span {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) header.top h1 span {
   font-size: 12.5px;
   font-weight: 400;
   color: var(--muted);
@@ -325,8 +340,8 @@ body[dir="rtl"] header.top h1 span {
   line-height: 1.9;
 }
 
-body[dir="rtl"] nav.links { gap: 7px; flex-wrap: wrap; font-size: 13px; }
-body[dir="rtl"] nav.links a {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) nav.links { gap: 7px; flex-wrap: wrap; font-size: 13px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) nav.links a {
   display: inline-block;
   padding: 7px 15px;
   border: 1px solid var(--rule-strong);
@@ -337,15 +352,15 @@ body[dir="rtl"] nav.links a {
   line-height: 1.4;
   transition: background .16s ease, color .16s ease, border-color .16s ease;
 }
-body[dir="rtl"] nav.links a:hover { border-color: var(--brand); color: var(--brand); background: #fdf6ea; }
-body[dir="rtl"] nav.links a.active {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) nav.links a:hover { border-color: var(--brand); color: var(--brand); background: #fdf6ea; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) nav.links a.active {
   background: var(--ink);
   border-color: var(--ink);
   color: #fdf7ec;
   font-weight: 600;
 }
 
-body[dir="rtl"] button {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button {
   border-radius: 999px;
   border: 1px solid var(--brand);
   background: var(--brand);
@@ -354,14 +369,14 @@ body[dir="rtl"] button {
   letter-spacing: .02em;
   padding: 8px 18px;
 }
-body[dir="rtl"] button:hover { background: var(--brand-deep); border-color: var(--brand-deep); opacity: 1; }
-body[dir="rtl"] button.ghost { background: transparent; color: var(--brand); }
-body[dir="rtl"] button.ghost:hover { background: #f6e9d5; color: var(--brand-deep); }
-body[dir="rtl"] button.small { padding: 6px 14px; font-size: 12px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button:hover { background: var(--brand-deep); border-color: var(--brand-deep); opacity: 1; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button.ghost { background: transparent; color: var(--brand); }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button.ghost:hover { background: #f6e9d5; color: var(--brand-deep); }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) button.small { padding: 6px 14px; font-size: 12px; }
 
 /* ---------------- raw-data page ---------------- */
 
-body[dir="rtl"] .wrap > h2 {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .wrap > h2 {
   position: relative;
   font-size: 17px;
   font-weight: 800;
@@ -371,7 +386,7 @@ body[dir="rtl"] .wrap > h2 {
   padding-bottom: 11px;
   border-bottom: 1px solid var(--rule-strong);
 }
-body[dir="rtl"] .wrap > h2::after {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .wrap > h2::after {
   content: "";
   position: absolute;
   inset-inline-start: 0;
@@ -380,7 +395,7 @@ body[dir="rtl"] .wrap > h2::after {
   height: 3px;
   background: var(--brand);
 }
-body[dir="rtl"] .wrap > h2 small {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .wrap > h2 small {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 10.5px;
   font-weight: 500;
@@ -389,7 +404,7 @@ body[dir="rtl"] .wrap > h2 small {
   margin-inline-start: 10px;
 }
 
-body[dir="rtl"] .card h3 {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .card h3 {
   position: relative;
   font-size: 14px;
   font-weight: 700;
@@ -397,7 +412,7 @@ body[dir="rtl"] .card h3 {
   margin: 4px 0 12px;
   padding-inline-start: 15px;
 }
-body[dir="rtl"] .card h3::before {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .card h3::before {
   content: "";
   position: absolute;
   inset-inline-start: 0;
@@ -409,7 +424,7 @@ body[dir="rtl"] .card h3::before {
   transform: rotate(45deg);
 }
 
-body[dir="rtl"] .card {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .card {
   background: var(--card);
   border: 1px solid var(--rule);
   border-radius: 8px;
@@ -418,8 +433,8 @@ body[dir="rtl"] .card {
   box-shadow: 0 1px 0 #fff inset, 0 16px 30px -34px rgba(50, 32, 10, .7);
 }
 
-body[dir="rtl"] table { font-size: 13.5px; }
-body[dir="rtl"] th {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) table { font-size: 13.5px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) th {
   background: var(--paper-2);
   color: #4b3b25;
   font-size: 11.5px;
@@ -429,18 +444,18 @@ body[dir="rtl"] th {
   border-bottom: 2px solid var(--rule-strong);
   white-space: normal;
 }
-body[dir="rtl"] th:first-child { border-start-start-radius: 5px; }
-body[dir="rtl"] th:last-child { border-start-end-radius: 5px; }
-body[dir="rtl"] td {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) th:first-child { border-start-start-radius: 5px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) th:last-child { border-start-end-radius: 5px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) td {
   padding: 9px 12px;
   border-bottom: 1px solid var(--rule);
   color: var(--body-text);
 }
-body[dir="rtl"] tbody tr:hover td { background: #fbf3e4; }
-body[dir="rtl"] tbody tr:last-child td { border-bottom: 0; }
-body[dir="rtl"] td:first-child { color: var(--ink); font-weight: 600; }
-body[dir="rtl"] td.num, body[dir="rtl"] th.num { font-variant-numeric: tabular-nums; }
-body[dir="rtl"] td.code {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) tbody tr:hover td { background: #fbf3e4; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) tbody tr:last-child td { border-bottom: 0; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) td:first-child { color: var(--ink); font-weight: 600; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) td.num, :is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) th.num { font-variant-numeric: tabular-nums; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) td.code {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 12px;
   color: var(--muted);
@@ -448,7 +463,7 @@ body[dir="rtl"] td.code {
   text-align: left;
 }
 
-body[dir="rtl"] .grid-meta {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .grid-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 1px;
@@ -457,7 +472,7 @@ body[dir="rtl"] .grid-meta {
   border-radius: 6px;
   overflow: hidden;
 }
-body[dir="rtl"] .grid-meta div {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .grid-meta div {
   flex: 1 1 170px;
   background: var(--card);
   border: 0;
@@ -467,8 +482,8 @@ body[dir="rtl"] .grid-meta div {
   color: var(--ink);
   line-height: 1.7;
 }
-body[dir="rtl"] .grid-meta div:last-child { flex-grow: 4; }
-body[dir="rtl"] .grid-meta span {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .grid-meta div:last-child { flex-grow: 4; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .grid-meta span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 400;
@@ -476,17 +491,17 @@ body[dir="rtl"] .grid-meta span {
   margin-bottom: 2px;
 }
 
-body[dir="rtl"] .facet-block { margin-bottom: 26px; }
-body[dir="rtl"] .facet-block .dom-head {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .facet-block { margin-bottom: 26px; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .facet-block .dom-head {
   gap: 12px;
   padding-bottom: 8px;
   margin-bottom: 10px;
   border-bottom: 1px dashed var(--rule-strong);
 }
-body[dir="rtl"] .facet-block .dom-head strong { font-size: 15px; font-weight: 800; color: var(--brand-deep); }
-body[dir="rtl"] .facet-block .dom-head em { font-size: 11.5px; letter-spacing: .05em; color: var(--muted); }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .facet-block .dom-head strong { font-size: 15px; font-weight: 800; color: var(--brand-deep); }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .facet-block .dom-head em { font-size: 11.5px; letter-spacing: .05em; color: var(--muted); }
 
-body[dir="rtl"] .legend {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .legend {
   font-size: 12.5px;
   color: var(--muted);
   margin-top: 12px;
@@ -495,7 +510,7 @@ body[dir="rtl"] .legend {
   line-height: 1.9;
 }
 
-body[dir="rtl"] .note {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .note {
   background: #f3e9d7;
   border-inline-start: 3px solid var(--gold);
   border-radius: 4px;
@@ -504,9 +519,9 @@ body[dir="rtl"] .note {
   line-height: 1.95;
   padding: 14px 18px;
 }
-body[dir="rtl"] .note strong { color: var(--brand-deep); font-weight: 800; }
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .note strong { color: var(--brand-deep); font-weight: 800; }
 
-body[dir="rtl"] #toast {
+:is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) #toast {
   background: var(--ink);
   color: #fdf7ec;
   border-radius: 999px;
@@ -757,8 +772,8 @@ body[dir="rtl"] #toast {
 .prose-fa .fa { direction: rtl; }
 
 @media (max-width: 820px) {
-  body[dir="rtl"] .wrap { padding: 16px 14px 72px; }
-  body[dir="rtl"] header.top { position: static; padding: 14px 16px; }
+  :is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) .wrap { padding: 16px 14px 72px; }
+  :is(body[dir="rtl"], .rtl-page, html:has(.rtl-page)) header.top { position: static; padding: 14px 16px; }
   .prose.prose-fa { font-size: 16.5px; line-height: 2; }
   .prose-fa h1 { font-size: 26px; }
   .prose-fa h2 { font-size: 21px; margin-top: 52px; }
