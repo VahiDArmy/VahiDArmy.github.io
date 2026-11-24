@@ -3,40 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Nūr · Word-by-Word Istighfār</title>
-<meta name="description" content="The Grand Istighfār — touch any Arabic word for its Persian phrase. Every word aligned, both directions.">
+<title>Nūr · Word to Word</title>
+<meta name="description" content="The Grand Istighfār — every Arabic word bound to its Persian word. Touch a word, see its counterpart.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&family=Vazirmatn:wght@300;400;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='78' font-size='78'>۞</text></svg>">
 <style>
-:root{--ui:'Sora',system-ui,sans-serif;--fa:'Vazirmatn',sans-serif;--ars:1;--arlh:2.15;--glow:1;
- --r:18px;--rs:12px;--e:cubic-bezier(.22,1,.36,1);--top:58px;--strip:48px}
+:root{--ui:'Sora',system-ui,sans-serif;--fa:'Vazirmatn',sans-serif;--ars:1;--arlh:2.2;--glow:1;
+--r:18px;--rs:12px;--e:cubic-bezier(.22,1,.36,1);--top:58px;--strip:48px}
 [data-arfont="amiri"]{--ar:'Amiri',serif}
 [data-arfont="scheherazade"]{--ar:'Scheherazade New',serif}
 [data-arfont="naskh"]{--ar:'Noto Naskh Arabic',serif}
 [data-theme="lapis"]{--bg:#05091a;--bg2:#0a1228;--surf:#0e1832;--surf2:#16234a;--raise:#1d3268;
- --line:rgba(227,178,60,.22);--line2:rgba(255,255,255,.07);--tx:#f4ecdb;--mu:#8fa0c4;
- --gold:#e3b23c;--goldl:#f7d992;--goldd:#9d7212;--ongold:#1a1204;--turq:#2ee6c5;--pom:#f04a63;--saff:#ff9f45;--ok:#3ddc97;--info:#5aa9ff;--lapis:#3a6fe0;
- --g1:rgba(58,111,224,.24);--g2:rgba(227,178,60,.18);--g3:rgba(46,230,197,.14);--shadow:0 24px 64px rgba(0,0,0,.6);--scrim:rgba(3,6,16,.74)}
+--line:rgba(227,178,60,.22);--line2:rgba(255,255,255,.07);--tx:#f4ecdb;--mu:#8fa0c4;
+--gold:#e3b23c;--goldl:#f7d992;--goldd:#9d7212;--ongold:#1a1204;--turq:#2ee6c5;--pom:#f04a63;--saff:#ff9f45;--ok:#3ddc97;--info:#5aa9ff;--lapis:#3a6fe0;
+--g1:rgba(58,111,224,.24);--g2:rgba(227,178,60,.18);--g3:rgba(46,230,197,.14);--shadow:0 24px 64px rgba(0,0,0,.6);--scrim:rgba(3,6,16,.74)}
 [data-theme="parchment"]{--bg:#f4ebd8;--bg2:#fbf5e7;--surf:#fffaef;--surf2:#f6ecd8;--raise:#fff;
- --line:rgba(150,105,25,.3);--line2:rgba(90,60,15,.13);--tx:#2f2413;--mu:#7d6a4c;
- --gold:#a9761a;--goldl:#8a5f10;--goldd:#7a5410;--ongold:#fff8e8;--turq:#0f8f7e;--pom:#c02a41;--saff:#c96a12;--ok:#1c8a5e;--info:#2a6fc4;--lapis:#26509e;
- --g1:rgba(38,80,158,.1);--g2:rgba(169,118,26,.16);--g3:rgba(15,143,126,.1);--shadow:0 20px 50px rgba(120,85,25,.18);--scrim:rgba(60,42,14,.46)}
+--line:rgba(150,105,25,.3);--line2:rgba(90,60,15,.13);--tx:#2f2413;--mu:#7d6a4c;
+--gold:#a9761a;--goldl:#8a5f10;--goldd:#7a5410;--ongold:#fff8e8;--turq:#0f8f7e;--pom:#c02a41;--saff:#c96a12;--ok:#1c8a5e;--info:#2a6fc4;--lapis:#26509e;
+--g1:rgba(38,80,158,.1);--g2:rgba(169,118,26,.16);--g3:rgba(15,143,126,.1);--shadow:0 20px 50px rgba(120,85,25,.18);--scrim:rgba(60,42,14,.46)}
 [data-theme="shrine"]{--bg:#03130f;--bg2:#07211a;--surf:#0a2a21;--surf2:#113c31;--raise:#155040;
- --line:rgba(231,201,120,.24);--line2:rgba(255,255,255,.07);--tx:#e9f5ec;--mu:#8bb0a1;
- --gold:#e7c978;--goldl:#f7e3ab;--goldd:#a4832c;--ongold:#1c1608;--turq:#4ff0c0;--pom:#ff5f70;--saff:#ffb45c;--ok:#4ff0c0;--info:#63c9ff;--lapis:#37b39a;
- --g1:rgba(55,179,154,.2);--g2:rgba(231,201,120,.16);--g3:rgba(79,240,192,.13);--shadow:0 24px 64px rgba(0,0,0,.58);--scrim:rgba(2,12,9,.76)}
+--line:rgba(231,201,120,.24);--line2:rgba(255,255,255,.07);--tx:#e9f5ec;--mu:#8bb0a1;
+--gold:#e7c978;--goldl:#f7e3ab;--goldd:#a4832c;--ongold:#1c1608;--turq:#4ff0c0;--pom:#ff5f70;--saff:#ffb45c;--ok:#4ff0c0;--info:#63c9ff;--lapis:#37b39a;
+--g1:rgba(55,179,154,.2);--g2:rgba(231,201,120,.16);--g3:rgba(79,240,192,.13);--shadow:0 24px 64px rgba(0,0,0,.58);--scrim:rgba(2,12,9,.76)}
 [data-theme="plum"]{--bg:#120616;--bg2:#1d0b24;--surf:#260f2e;--surf2:#361642;--raise:#4a1f58;
- --line:rgba(240,180,110,.24);--line2:rgba(255,255,255,.07);--tx:#f6e9f2;--mu:#ac90b2;
- --gold:#f0b46e;--goldl:#ffd7a3;--goldd:#b0762f;--ongold:#2a1405;--turq:#43e8d8;--pom:#ff4d7e;--saff:#ffb04d;--ok:#46dc9a;--info:#79b6ff;--lapis:#a06cf0;
- --g1:rgba(160,108,240,.22);--g2:rgba(240,180,110,.16);--g3:rgba(67,232,216,.12);--shadow:0 24px 64px rgba(0,0,0,.6);--scrim:rgba(10,3,14,.76)}
-
+--line:rgba(240,180,110,.24);--line2:rgba(255,255,255,.07);--tx:#f6e9f2;--mu:#ac90b2;
+--gold:#f0b46e;--goldl:#ffd7a3;--goldd:#b0762f;--ongold:#2a1405;--turq:#43e8d8;--pom:#ff4d7e;--saff:#ffb04d;--ok:#46dc9a;--info:#79b6ff;--lapis:#a06cf0;
+--g1:rgba(160,108,240,.22);--g2:rgba(240,180,110,.16);--g3:rgba(67,232,216,.12);--shadow:0 24px 64px rgba(0,0,0,.6);--scrim:rgba(10,3,14,.76)}
 *{margin:0;padding:0;box-sizing:border-box}
 [hidden]{display:none!important}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
 body{font-family:var(--ui);background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;transition:background .5s,color .5s}
-body.lock{overflow:hidden}
 ::selection{background:var(--gold);color:var(--ongold)}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -44,24 +42,21 @@ input,select,textarea{font:inherit;color:var(--tx)}
 .ic{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
 kbd{font:600 11px var(--ui);background:var(--surf2);border:1px solid var(--line2);border-radius:6px;padding:3px 7px;color:var(--mu)}
 mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
-.fl{width:180px;height:15px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;color:var(--gold);opacity:.7}
+.fl{width:170px;height:14px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linecap:round;color:var(--gold);opacity:.7}
 *{scrollbar-width:thin;scrollbar-color:var(--goldd) transparent}
 ::-webkit-scrollbar{width:10px;height:10px}
 ::-webkit-scrollbar-track{background:color-mix(in srgb,var(--bg2) 70%,transparent);border-radius:9px}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--goldd),var(--gold));border-radius:9px;border:3px solid var(--bg)}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,var(--gold),var(--goldl))}
-
 .atmo{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
 .blob{position:absolute;border-radius:50%;filter:blur(110px);opacity:.36}
 .b1{width:64vmax;height:64vmax;top:-28vmax;right:-20vmax;background:radial-gradient(circle,var(--g1),transparent 66%);animation:dr1 62s ease-in-out infinite alternate}
 .b2{width:54vmax;height:54vmax;bottom:-26vmax;left:-18vmax;background:radial-gradient(circle,var(--g2),transparent 66%);animation:dr2 74s ease-in-out infinite alternate}
 #stars{position:fixed;inset:0;z-index:0;pointer-events:none}
 .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.035;mix-blend-mode:overlay;
- background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
-
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E")}
 #shell{position:relative;z-index:1;display:flex;min-height:100vh}
-#rail{width:228px;flex:none;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:6px;
- border-right:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 74%,transparent);backdrop-filter:blur(18px)}
+#rail{width:226px;flex:none;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:18px 14px;gap:6px;border-right:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 74%,transparent);backdrop-filter:blur(18px)}
 .brand{display:flex;align-items:center;gap:12px;padding:8px 10px 18px;text-align:left}
 .brand .mark{font-size:27px;color:var(--gold);animation:spin 40s linear infinite}
 .brand b{display:block;font-size:18px;font-weight:800;line-height:1.1}
@@ -73,8 +68,7 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .nav .badge{margin-left:auto;font-size:9.5px;font-weight:800;color:var(--turq);background:var(--g3);padding:2px 7px;border-radius:99px}
 .railfoot{display:flex;gap:8px;justify-content:center;padding-top:12px;border-top:1px solid var(--line2)}
 #main{flex:1;min-width:0;display:flex;flex-direction:column}
-#top{position:fixed;top:0;left:0;right:0;height:var(--top);z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px 0 242px;
- border-bottom:1px solid var(--line2);background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(20px)}
+#top{position:fixed;top:0;left:0;right:0;height:var(--top);z-index:60;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 16px 0 240px;border-bottom:1px solid var(--line2);background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(20px)}
 #top .ttl{display:flex;align-items:center;gap:9px;min-width:0}
 #top .ttl span{color:var(--gold);font-size:16px}
 #top h1{font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -94,7 +88,6 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 #view{flex:1;width:100%;max-width:900px;margin:0 auto;padding:calc(var(--top) + 20px) 22px 100px}
 .page{animation:up .45s var(--e)}
 #tabs{display:none}
-
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:11px 17px;border-radius:var(--rs);font-weight:600;font-size:13.5px;border:1px solid var(--line2);background:var(--surf);transition:.22s var(--e);position:relative;overflow:hidden}
 .btn:hover{background:var(--surf2);transform:translateY(-2px)}
 .btn:active{transform:scale(.97)}
@@ -124,11 +117,8 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .chd{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13.5px;margin-bottom:11px}
 .chd .ic{color:var(--gold);width:17px;height:17px}
 .meta{font-size:10px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1.4px;margin-bottom:7px}
-
-/* ══ READER ══ */
 .bism{text-align:center;font-family:var(--ar);color:var(--gold);font-size:22px;margin:0 0 14px;opacity:.9}
-.strip{position:sticky;top:var(--top);z-index:35;display:flex;align-items:center;gap:8px;height:var(--strip);padding:0 10px;margin-bottom:20px;
- border-radius:12px;border:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(20px)}
+.strip{position:sticky;top:var(--top);z-index:35;display:flex;align-items:center;gap:8px;height:var(--strip);padding:0 10px;margin-bottom:20px;border-radius:12px;border:1px solid var(--line2);background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(20px)}
 .strip select{flex:1;min-width:0;background:transparent;border:none;outline:none;font-size:12.5px;font-weight:600;color:var(--tx);padding:6px 2px;cursor:pointer}
 .strip select option{background:var(--bg2);color:var(--tx)}
 .cov{display:inline-flex;align-items:center;gap:5px;height:30px;padding:0 10px;border-radius:99px;background:var(--g3);border:1px solid color-mix(in srgb,var(--turq) 40%,transparent);color:var(--turq);font-size:11.5px;font-weight:800;white-space:nowrap}
@@ -143,7 +133,6 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .chapter .cm{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:8px;font-size:11px;color:var(--mu);flex-wrap:wrap}
 .seal{display:inline-flex;align-items:center;gap:5px;color:var(--ongold);background:linear-gradient(135deg,var(--gold),var(--turq));padding:3px 10px;border-radius:99px;font-size:9.5px;font-weight:800}
 .seal .ic{width:10px;height:10px;stroke-width:3}
-
 .verse{position:relative;border:1px solid var(--line2);border-radius:var(--r);background:var(--surf);padding:14px 18px 18px;margin-bottom:14px;transition:border-color .25s,box-shadow .25s;scroll-margin-top:calc(var(--top) + var(--strip) + 18px)}
 .verse.read{border-left:2px solid var(--turq)}
 .verse.active{border-color:var(--line);box-shadow:0 0 0 1px var(--g2)}
@@ -157,60 +146,40 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .vact:hover{background:var(--surf2);color:var(--gold);opacity:1}
 .vact:active{transform:scale(.86)}
 .vact.on{color:var(--gold);opacity:1}.vact.done{color:var(--turq);opacity:1}
-
 .line{direction:rtl;text-align:right;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .line.ar{font-family:var(--ar);font-size:calc(27px*var(--ars));line-height:var(--arlh);color:var(--tx)}
-.line.fa{font-family:var(--fa);font-size:calc(15px*var(--ars));line-height:2.05;color:var(--mu);margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2)}
-.w{display:inline;padding:.05em .1em;border-radius:.26em;cursor:pointer;transition:color .16s,background .16s,text-shadow .2s;position:relative}
+.line.fa{font-family:var(--fa);font-size:calc(15px*var(--ars));line-height:2.1;color:var(--mu);margin-top:12px;padding-top:12px;border-top:1px dashed var(--line2)}
+.w{display:inline;padding:.05em .12em;border-radius:.26em;cursor:pointer;transition:color .16s,background .16s,text-shadow .2s}
 .w:hover{background:color-mix(in srgb,var(--gold) 13%,transparent);color:var(--goldl)}
 .line.fa .w:hover{background:color-mix(in srgb,var(--turq) 13%,transparent);color:var(--turq)}
-.w.lit{color:var(--goldl);background:color-mix(in srgb,var(--gold) 20%,transparent);
- text-shadow:0 0 calc(14px*var(--glow)) color-mix(in srgb,var(--gold) 85%,transparent),0 0 calc(30px*var(--glow)) var(--g2);
- box-shadow:0 0 calc(18px*var(--glow)) var(--g2)}
-.line.fa .w.lit{color:var(--turq);background:color-mix(in srgb,var(--turq) 18%,transparent);
- text-shadow:0 0 calc(13px*var(--glow)) color-mix(in srgb,var(--turq) 80%,transparent),0 0 calc(28px*var(--glow)) var(--g3);
- box-shadow:0 0 calc(16px*var(--glow)) var(--g3)}
+.w.lit{color:var(--goldl);background:color-mix(in srgb,var(--gold) 22%,transparent);
+text-shadow:0 0 calc(14px*var(--glow)) color-mix(in srgb,var(--gold) 85%,transparent),0 0 calc(32px*var(--glow)) var(--g2);
+box-shadow:0 0 calc(20px*var(--glow)) var(--g2)}
+.line.fa .w.lit{color:var(--turq);background:color-mix(in srgb,var(--turq) 20%,transparent);
+text-shadow:0 0 calc(13px*var(--glow)) color-mix(in srgb,var(--turq) 80%,transparent),0 0 calc(28px*var(--glow)) var(--g3);
+box-shadow:0 0 calc(18px*var(--glow)) var(--g3)}
 .vnote{display:flex;gap:8px;align-items:flex-start;margin-top:12px;padding:9px 12px;border-radius:11px;background:var(--g3);font-size:12.5px;line-height:1.6}
 .vnote .ic{width:14px;height:14px;color:var(--turq);margin-top:2px}
 .vend{text-align:center;padding:28px 18px;border:1px dashed var(--line2);border-radius:var(--r);margin-top:22px}
 .vend p{color:var(--mu);font-size:13px;margin:10px 0 15px;line-height:1.7}
-
-/* ══ THE WORD POPUP — minimal ══ */
-#tip{position:fixed;top:0;left:0;z-index:170;pointer-events:none;width:max-content;max-width:min(320px,86vw);
- padding:8px 13px;border-radius:12px;border:1px solid var(--gold);
- background:linear-gradient(150deg,var(--surf2),var(--bg2));color:var(--tx);
- box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 26px var(--g2);
- opacity:0;transform-origin:50% 100%;transition:opacity .13s ease,scale .13s var(--e);scale:.94;will-change:transform}
+#tip{position:fixed;top:0;left:0;z-index:170;pointer-events:none;width:max-content;max-width:min(300px,84vw);
+padding:7px 12px;border-radius:11px;border:1px solid var(--gold);background:linear-gradient(150deg,var(--surf2),var(--bg2));color:var(--tx);
+box-shadow:0 10px 28px rgba(0,0,0,.5),0 0 24px var(--g2);opacity:0;transform-origin:50% 100%;transition:opacity .12s ease,scale .12s var(--e);scale:.94;will-change:transform}
 #tip.on{opacity:1;scale:1}
-#tip .t{font-family:var(--fa);direction:rtl;text-align:right;font-size:16px;line-height:1.75}
-#tip.ar .t{font-family:var(--ar);font-size:21px;line-height:1.85}
+#tip .t{font-family:var(--fa);direction:rtl;text-align:right;font-size:16px;line-height:1.7}
+#tip.ar .t{font-family:var(--ar);font-size:22px;line-height:1.8}
 #tip::after{content:"";position:absolute;left:var(--cx,50%);margin-left:-5px;width:10px;height:10px;background:inherit;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold);transform:rotate(45deg)}
 #tip:not(.below)::after{bottom:-6px}
 #tip.below::after{top:-6px;transform:rotate(225deg)}
-
-/* ══ ALIGNMENT ══ */
-.au{display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--surf);margin-bottom:9px;cursor:pointer;transition:.2s var(--e)}
-.au:hover{border-color:var(--gold);transform:translateX(3px)}
-.au .n{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold)}
-.au .b{flex:1;min-width:0}
-.au .t{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bars{display:flex;gap:5px;margin-top:6px}
-.bar{flex:1;height:5px;border-radius:3px;background:var(--surf2);overflow:hidden}
-.bar i{display:block;height:100%;width:100%}
-.bar.a i{background:linear-gradient(90deg,var(--goldd),var(--gold))}
-.bar.f i{background:linear-gradient(90deg,var(--turq),var(--info))}
-.au .pc{font-size:11px;font-weight:800;color:var(--ok);font-variant-numeric:tabular-nums}
-.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 14px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--surf);margin-bottom:8px;cursor:pointer;transition:.18s}
-.pair:hover{border-color:var(--gold)}
-.pair .a{font-family:var(--ar);direction:rtl;text-align:right;font-size:19px;line-height:1.9;color:var(--goldl)}
-.pair .f{font-family:var(--fa);direction:rtl;text-align:right;font-size:13.5px;line-height:1.9;color:var(--tx)}
-.pair .pn{grid-column:1/-1;font-size:9.5px;font-weight:800;letter-spacing:1.2px;color:var(--mu);text-transform:uppercase}
+.wrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--line2);border-radius:var(--rs);background:var(--surf);margin-bottom:7px;cursor:pointer;transition:.16s}
+.wrow:hover{border-color:var(--gold);transform:translateX(3px)}
+.wrow .a{font-family:var(--ar);direction:rtl;text-align:right;font-size:21px;line-height:1.7;color:var(--goldl)}
+.wrow .f{font-family:var(--fa);direction:rtl;text-align:right;font-size:14px;line-height:1.8;color:var(--tx)}
+.wrow .pn{grid-column:1/-1;font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--mu);text-transform:uppercase}
 .srch{display:flex;align-items:center;gap:10px;background:var(--surf);border:1px solid var(--line2);border-radius:12px;padding:0 13px;margin-bottom:14px}
 .srch:focus-within{border-color:var(--gold)}
 .srch .ic{width:16px;height:16px;color:var(--mu)}
 .srch input{flex:1;min-width:0;background:none;border:none;outline:none;padding:12px 0;font-size:14px}
-
-/* library / tasbih / journey */
 .libitem{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line2);border-radius:var(--r);background:var(--surf);margin-bottom:10px;transition:.2s var(--e);cursor:pointer}
 .libitem:hover{border-color:var(--line);transform:translateX(3px)}
 .libitem .body{flex:1;min-width:0}
@@ -252,8 +221,6 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .ach.won{border-color:var(--gold);background:linear-gradient(140deg,var(--g2),var(--surf))}
 .ach.won .ic{color:var(--gold)}
 .ach small{display:block;margin-top:5px;font-size:9.5px;color:var(--turq);font-weight:800}
-
-/* overlays */
 .ov{position:fixed;inset:0;z-index:110;display:none;align-items:flex-start;justify-content:center;padding:11vh 16px 16px}
 .ov.open{display:flex}
 .ov .scrim{position:absolute;inset:0;background:var(--scrim);backdrop-filter:blur(7px);animation:fade .25s}
@@ -269,7 +236,7 @@ mark{background:var(--gold);color:var(--ongold);border-radius:3px;padding:0 2px}
 .pi .t{flex:1;min-width:0}
 .pi .t b{display:block;font-size:13px;font-weight:600}
 .pi .t span{display:block;font-size:12px;color:var(--mu);margin-top:2px;line-height:1.6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pi .t span.ars{font-family:var(--ar);font-size:14px}
+.pi .t span.ars{font-family:var(--ar);font-size:15px;color:var(--goldl)}
 .pi .t span.fas{font-family:var(--fa)}
 .pempty{padding:30px;text-align:center;color:var(--mu);font-size:13.5px}
 .pnumsm{width:28px;height:28px;flex:none;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--gold)}
@@ -380,19 +347,18 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media (max-width:1040px){.g4{grid-template-columns:repeat(2,1fr)}.achs{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:920px){
- :root{--top:54px;--strip:46px}
- #rail{display:none}#top{padding:0 12px}#top h1{font-size:14.5px}
- #view{padding:calc(var(--top) + 14px) 13px 106px}
- #tabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(20px);border-top:1px solid var(--line2)}
- #tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;font-size:9.5px;font-weight:700;color:var(--mu);border-radius:10px}
- #tabs button.on{color:var(--gold)}#tabs .ic{width:20px;height:20px}
- .g2,.g3{grid-template-columns:1fr}.hidesm{display:none}
- .verse{padding:12px 14px 16px}
- .line.ar{font-size:calc(25px*var(--ars))}
- .pair{grid-template-columns:1fr}
- #toasts{bottom:80px;right:12px;left:12px;max-width:none}
- .blob{opacity:.3}
-}
+:root{--top:54px;--strip:46px}
+#rail{display:none}#top{padding:0 12px}#top h1{font-size:14.5px}
+#view{padding:calc(var(--top) + 14px) 13px 106px}
+#tabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;padding:6px 4px calc(6px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--bg2) 94%,transparent);backdrop-filter:blur(20px);border-top:1px solid var(--line2)}
+#tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;font-size:9.5px;font-weight:700;color:var(--mu);border-radius:10px}
+#tabs button.on{color:var(--gold)}#tabs .ic{width:20px;height:20px}
+.g2,.g3{grid-template-columns:1fr}.hidesm{display:none}
+.verse{padding:12px 14px 16px}
+.line.ar{font-size:calc(25px*var(--ars))}
+.wrow{grid-template-columns:1fr;gap:4px}
+#toasts{bottom:80px;right:12px;left:12px;max-width:none}
+.blob{opacity:.3}}
 @media (max-width:560px){.achs{grid-template-columns:1fr}.keys{grid-template-columns:1fr}.soundpill span{display:none}.soundpill{padding:0 10px}.cov span{display:none}}
 </style>
 </head>
@@ -443,204 +409,192 @@ body.calm *,body.calm *::before,body.calm *::after{animation:none!important;tran
 <symbol id="rotate" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.5 15a9 9 0 1 0 2.1-9.4L1 10"/></symbol>
 <symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/></symbol>
 </svg>
-
 <div class="atmo"><div class="blob b1"></div><div class="blob b2"></div></div>
 <canvas id="stars"></canvas><div class="grain"></div>
-
 <div id="shell">
-  <aside id="rail">
-    <button class="brand" data-a="go" data-v="read"><span class="mark">۞</span><span><b>Nūr</b><small>کلمه به کلمه</small></span></button>
-    <nav class="nav">
-      <button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Reader</button>
-      <button data-a="go" data-v="align"><svg class="ic"><use href="#link"/></svg>Alignment<span class="badge" id="navCov">100%</span></button>
-      <button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
-      <button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
-      <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
-    </nav>
-    <div class="railfoot">
-      <button class="ib" data-a="drawer" title="Settings"><svg class="ic"><use href="#set"/></svg></button>
-      <button class="ib" data-a="about" title="About & keys"><svg class="ic"><use href="#info"/></svg></button>
-    </div>
-  </aside>
-  <div id="main">
-    <header id="top">
-      <div class="ttl"><span>۞</span><h1 id="ttl">The Grand Istighfār</h1></div>
-      <div class="tools">
-        <button class="soundpill on" id="sndBtn" data-a="sound"><svg class="ic"><use href="#vol"/></svg><span>Sound on</span></button>
-        <button class="ib" data-a="search" title="Search"><svg class="ic"><use href="#search"/></svg></button>
-        <button class="ib hidesm" data-a="pal" title="Commands"><svg class="ic"><use href="#cmd"/></svg></button>
-        <button class="syncb" id="syncBtn" data-a="sync" title="Cloud sync"><svg class="ic"><use href="#sync"/></svg></button>
-        <button class="av" id="avBtn" data-a="acct"><svg class="ic"><use href="#user"/></svg></button>
-      </div>
-    </header>
-    <main id="view"></main>
-  </div>
-</div>
-
-<nav id="tabs">
-  <button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Read</button>
-  <button data-a="go" data-v="align"><svg class="ic"><use href="#link"/></svg>Align</button>
-  <button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
-  <button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
-  <button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
+<aside id="rail">
+<button class="brand" data-a="go" data-v="read"><span class="mark">۞</span><span><b>Nūr</b><small>کلمه به کلمه</small></span></button>
+<nav class="nav">
+<button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Reader</button>
+<button data-a="go" data-v="words"><svg class="ic"><use href="#link"/></svg>Words<span class="badge" id="navCov">100%</span></button>
+<button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
+<button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
+<button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
 </nav>
-
+<div class="railfoot">
+<button class="ib" data-a="drawer" title="Settings"><svg class="ic"><use href="#set"/></svg></button>
+<button class="ib" data-a="about" title="About & keys"><svg class="ic"><use href="#info"/></svg></button>
+</div>
+</aside>
+<div id="main">
+<header id="top">
+<div class="ttl"><span>۞</span><h1 id="ttl">The Grand Istighfār</h1></div>
+<div class="tools">
+<button class="soundpill on" id="sndBtn" data-a="sound"><svg class="ic"><use href="#vol"/></svg><span>Sound on</span></button>
+<button class="ib" data-a="search" title="Search"><svg class="ic"><use href="#search"/></svg></button>
+<button class="ib hidesm" data-a="pal" title="Commands"><svg class="ic"><use href="#cmd"/></svg></button>
+<button class="syncb" id="syncBtn" data-a="sync" title="Cloud sync"><svg class="ic"><use href="#sync"/></svg></button>
+<button class="av" id="avBtn" data-a="acct"><svg class="ic"><use href="#user"/></svg></button>
+</div>
+</header>
+<main id="view"></main>
+</div>
+</div>
+<nav id="tabs">
+<button data-a="go" data-v="read"><svg class="ic"><use href="#book"/></svg>Read</button>
+<button data-a="go" data-v="words"><svg class="ic"><use href="#link"/></svg>Words</button>
+<button data-a="go" data-v="lib"><svg class="ic"><use href="#bm"/></svg>Library</button>
+<button data-a="go" data-v="tas"><svg class="ic"><use href="#target"/></svg>Tasbīḥ</button>
+<button data-a="go" data-v="jour"><svg class="ic"><use href="#flame"/></svg>Journey</button>
+</nav>
 <div id="tip" role="tooltip"><div class="t"></div></div>
-
 <div id="dback" data-a="closedr"></div>
 <aside id="drawer">
-  <div class="dhead"><h2><svg class="ic"><use href="#set"/></svg>Settings</h2><button class="ib" data-a="closedr"><svg class="ic"><use href="#x"/></svg></button></div>
-  <div class="dbody">
-    <section class="sec"><h3>Account</h3><div id="drAcct"></div></section>
-    <section class="sec"><h3>Word reading</h3>
-      <div class="row"><label>Arabic size</label><div class="step"><button data-a="fs" data-v="-1"><svg class="ic"><use href="#minus"/></svg></button><b id="fsVal">100%</b><button data-a="fs" data-v="1"><svg class="ic"><use href="#plus"/></svg></button></div></div>
-      <div class="row"><label>Line height</label><input type="range" data-s="lh" min="1.8" max="2.8" step="0.05"></div>
-      <div class="row"><label>Glow strength</label><input type="range" data-s="glow" min="0" max="2" step="0.1"></div>
-      <div class="row"><label>Typeface</label><select data-s="arFont"><option value="amiri">Amiri</option><option value="scheherazade">Scheherazade</option><option value="naskh">Noto Naskh</option></select></div>
-      <div class="row"><label>Show Persian line</label><label class="sw"><input type="checkbox" data-s="inter"><i></i></label></div>
-      <div class="row"><label>Tap sound</label><label class="sw"><input type="checkbox" data-s="wordSound"><i></i></label></div>
-    </section>
-    <section class="sec"><h3>Appearance</h3>
-      <div class="themes">
-        <button class="th" data-a="theme" data-v="lapis"><i style="--sw:#0a1228;--sw2:#e3b23c"></i>Lapis</button>
-        <button class="th" data-a="theme" data-v="parchment"><i style="--sw:#f4ebd8;--sw2:#a9761a"></i>Paper</button>
-        <button class="th" data-a="theme" data-v="shrine"><i style="--sw:#07211a;--sw2:#e7c978"></i>Shrine</button>
-        <button class="th" data-a="theme" data-v="plum"><i style="--sw:#1d0b24;--sw2:#f0b46e"></i>Plum</button>
-      </div>
-      <div class="row"><label>Animations</label><label class="sw"><input type="checkbox" data-s="motion"><i></i></label></div>
-    </section>
-    <section class="sec"><h3>Sound</h3>
-      <div class="row"><label>Interface sound</label><label class="sw"><input type="checkbox" data-s="sound"><i></i></label></div>
-      <div class="row"><label>Volume</label><input type="range" data-s="vol" min="0" max="1" step="0.05"></div>
-      <div class="row"><label>Ambient drone</label><label class="sw"><input type="checkbox" data-s="amb"><i></i></label></div>
-    </section>
-    <section class="sec"><h3>Practice</h3>
-      <div class="row"><label>Daily passage goal</label><input type="number" class="num" data-s="goal" min="1" max="43"></div>
-      <div class="row"><label>Cloud sync</label><button class="btn sm" id="drSyncBtn" data-a="sync"><svg class="ic"><use href="#sync"/></svg><span>Sync now</span></button></div>
-      <p class="syncnote" id="drSyncState">Guest — everything is saved on this device.</p>
-    </section>
-    <section class="sec"><h3>Data</h3>
-      <div class="stack">
-        <button class="btn" data-a="export"><svg class="ic"><use href="#dl"/></svg>Export my data</button>
-        <button class="btn" data-a="import"><svg class="ic"><use href="#ul"/></svg>Import data</button>
-        <button class="btn" data-a="sql"><svg class="ic"><use href="#db"/></svg>Cloud setup SQL</button>
-        <button class="btn bad" data-a="reset"><svg class="ic"><use href="#trash"/></svg>Reset progress</button>
-      </div>
-    </section>
-    <p class="mu" style="text-align:center;font-size:10.5px;padding:6px 0 10px">Nūr · one file · vanilla JS</p>
-  </div>
+<div class="dhead"><h2><svg class="ic"><use href="#set"/></svg>Settings</h2><button class="ib" data-a="closedr"><svg class="ic"><use href="#x"/></svg></button></div>
+<div class="dbody">
+<section class="sec"><h3>Account</h3><div id="drAcct"></div></section>
+<section class="sec"><h3>Word reading</h3>
+<div class="row"><label>Arabic size</label><div class="step"><button data-a="fs" data-v="-1"><svg class="ic"><use href="#minus"/></svg></button><b id="fsVal">100%</b><button data-a="fs" data-v="1"><svg class="ic"><use href="#plus"/></svg></button></div></div>
+<div class="row"><label>Line height</label><input type="range" data-s="lh" min="1.8" max="2.9" step="0.05"></div>
+<div class="row"><label>Glow strength</label><input type="range" data-s="glow" min="0" max="2" step="0.1"></div>
+<div class="row"><label>Typeface</label><select data-s="arFont"><option value="amiri">Amiri</option><option value="scheherazade">Scheherazade</option><option value="naskh">Noto Naskh</option></select></div>
+<div class="row"><label>Persian line</label><label class="sw"><input type="checkbox" data-s="inter"><i></i></label></div>
+<div class="row"><label>Word tap sound</label><label class="sw"><input type="checkbox" data-s="wordSound"><i></i></label></div>
+</section>
+<section class="sec"><h3>Appearance</h3>
+<div class="themes">
+<button class="th" data-a="theme" data-v="lapis"><i style="--sw:#0a1228;--sw2:#e3b23c"></i>Lapis</button>
+<button class="th" data-a="theme" data-v="parchment"><i style="--sw:#f4ebd8;--sw2:#a9761a"></i>Paper</button>
+<button class="th" data-a="theme" data-v="shrine"><i style="--sw:#07211a;--sw2:#e7c978"></i>Shrine</button>
+<button class="th" data-a="theme" data-v="plum"><i style="--sw:#1d0b24;--sw2:#f0b46e"></i>Plum</button>
+</div>
+<div class="row"><label>Animations</label><label class="sw"><input type="checkbox" data-s="motion"><i></i></label></div>
+</section>
+<section class="sec"><h3>Sound</h3>
+<div class="row"><label>Interface sound</label><label class="sw"><input type="checkbox" data-s="sound"><i></i></label></div>
+<div class="row"><label>Volume</label><input type="range" data-s="vol" min="0" max="1" step="0.05"></div>
+<div class="row"><label>Ambient drone</label><label class="sw"><input type="checkbox" data-s="amb"><i></i></label></div>
+</section>
+<section class="sec"><h3>Practice</h3>
+<div class="row"><label>Daily passage goal</label><input type="number" class="num" data-s="goal" min="1" max="43"></div>
+<div class="row"><label>Cloud sync</label><button class="btn sm" id="drSyncBtn" data-a="sync"><svg class="ic"><use href="#sync"/></svg><span>Sync now</span></button></div>
+<p class="syncnote" id="drSyncState">Guest — everything is saved on this device.</p>
+</section>
+<section class="sec"><h3>Data</h3>
+<div class="stack">
+<button class="btn" data-a="export"><svg class="ic"><use href="#dl"/></svg>Export my data</button>
+<button class="btn" data-a="import"><svg class="ic"><use href="#ul"/></svg>Import data</button>
+<button class="btn" data-a="sql"><svg class="ic"><use href="#db"/></svg>Cloud setup SQL</button>
+<button class="btn bad" data-a="reset"><svg class="ic"><use href="#trash"/></svg>Reset progress</button>
+</div>
+</section>
+<p class="mu" style="text-align:center;font-size:10.5px;padding:6px 0 10px">Nūr · one file · vanilla JS</p>
+</div>
 </aside>
-
 <div id="search" class="ov"><div class="scrim" data-a="closesearch"></div>
-  <div class="panel"><div class="pin"><svg class="ic"><use href="#search"/></svg><input id="sIn" placeholder="Search any Arabic or Persian word…" autocomplete="off"><kbd>Esc</kbd></div><div id="sOut" class="plist"></div></div>
-</div>
+<div class="panel"><div class="pin"><svg class="ic"><use href="#search"/></svg><input id="sIn" placeholder="Search any Arabic or Persian word…" autocomplete="off"><kbd>Esc</kbd></div><div id="sOut" class="plist"></div></div></div>
 <div id="pal" class="ov"><div class="scrim" data-a="closepal"></div>
-  <div class="panel"><div class="pin"><svg class="ic"><use href="#cmd"/></svg><input id="pIn" placeholder="Type a command…" autocomplete="off"><kbd>Esc</kbd></div><div id="pOut" class="plist"></div></div>
-</div>
+<div class="panel"><div class="pin"><svg class="ic"><use href="#cmd"/></svg><input id="pIn" placeholder="Type a command…" autocomplete="off"><kbd>Esc</kbd></div><div id="pOut" class="plist"></div></div></div>
 <div id="auth" class="ov"><div class="scrim" data-a="closeauth"></div>
-  <div class="authcard">
-    <button class="ib mx" data-a="closeauth"><svg class="ic"><use href="#x"/></svg></button>
-    <div class="mark">۞</div><h2>Keep your light in the cloud</h2><p class="sub">Progress, notes & tasbīḥ across devices.</p>
-    <div class="atabs"><button class="on" data-a="atab" data-v="in">Sign in</button><button data-a="atab" data-v="up">Create account</button></div>
-    <div id="aErr" class="aerr" hidden></div>
-    <form id="fIn" class="aform">
-      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="inE" type="email" placeholder="Email" required autocomplete="email"></div>
-      <div class="field"><svg class="ic"><use href="#lock"/></svg><input id="inP" type="password" placeholder="Password" required autocomplete="current-password"><button type="button" class="eye" data-a="eye" data-t="inP"><svg class="ic"><use href="#eye"/></svg></button></div>
-      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#out"/></svg>Sign in</button>
-      <button type="button" class="link" data-a="forgot">Forgot password?</button>
-    </form>
-    <form id="fUp" class="aform" hidden>
-      <div class="field"><svg class="ic"><use href="#user"/></svg><input id="upN" placeholder="Your name" required autocomplete="name"></div>
-      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="upE" type="email" placeholder="Email" required autocomplete="email"></div>
-      <div class="field"><svg class="ic"><use href="#lock"/></svg><input id="upP" type="password" placeholder="Password (min 6)" required minlength="6" autocomplete="new-password"><button type="button" class="eye" data-a="eye" data-t="upP"><svg class="ic"><use href="#eye"/></svg></button></div>
-      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#spark"/></svg>Create account</button>
-    </form>
-    <form id="fFg" class="aform" hidden>
-      <p class="mu" style="font-size:12.5px">We'll email you a reset link.</p>
-      <div class="field"><svg class="ic"><use href="#mail"/></svg><input id="fgE" type="email" placeholder="Email" required></div>
-      <button class="btn gold wide" type="submit"><svg class="ic"><use href="#send"/></svg>Send link</button>
-      <button type="button" class="link" data-a="atab" data-v="in">Back to sign in</button>
-    </form>
-    <div id="aVer" hidden><div class="verify"><svg class="ic big"><use href="#mail"/></svg><h3>Verify your email</h3><p>We sent a link to <b id="verE"></b>. Confirm it, then sign in.</p><button class="btn wide" data-a="resend"><svg class="ic"><use href="#sync"/></svg>Resend</button><button class="link" data-a="atab" data-v="in">Back to sign in</button></div></div>
-    <p class="afine"><svg class="ic"><use href="#shield"/></svg>Supabase · row-level security · guest mode always works.</p>
-  </div>
-</div>
-
+<div class="authcard">
+<button class="ib mx" data-a="closeauth"><svg class="ic"><use href="#x"/></svg></button>
+<div class="mark">۞</div><h2>Keep your light in the cloud</h2><p class="sub">Progress, notes & tasbīḥ across devices.</p>
+<div class="atabs"><button class="on" data-a="atab" data-v="in">Sign in</button><button data-a="atab" data-v="up">Create account</button></div>
+<div id="aErr" class="aerr" hidden></div>
+<form id="fIn" class="aform">
+<div class="field"><svg class="ic"><use href="#mail"/></svg><input id="inE" type="email" placeholder="Email" required autocomplete="email"></div>
+<div class="field"><svg class="ic"><use href="#lock"/></svg><input id="inP" type="password" placeholder="Password" required autocomplete="current-password"><button type="button" class="eye" data-a="eye" data-t="inP"><svg class="ic"><use href="#eye"/></svg></button></div>
+<button class="btn gold wide" type="submit"><svg class="ic"><use href="#out"/></svg>Sign in</button>
+<button type="button" class="link" data-a="forgot">Forgot password?</button>
+</form>
+<form id="fUp" class="aform" hidden>
+<div class="field"><svg class="ic"><use href="#user"/></svg><input id="upN" placeholder="Your name" required autocomplete="name"></div>
+<div class="field"><svg class="ic"><use href="#mail"/></svg><input id="upE" type="email" placeholder="Email" required autocomplete="email"></div>
+<div class="field"><svg class="ic"><use href="#lock"/></svg><input id="upP" type="password" placeholder="Password (min 6)" required minlength="6" autocomplete="new-password"><button type="button" class="eye" data-a="eye" data-t="upP"><svg class="ic"><use href="#eye"/></svg></button></div>
+<button class="btn gold wide" type="submit"><svg class="ic"><use href="#spark"/></svg>Create account</button>
+</form>
+<form id="fFg" class="aform" hidden>
+<p class="mu" style="font-size:12.5px">We'll email you a reset link.</p>
+<div class="field"><svg class="ic"><use href="#mail"/></svg><input id="fgE" type="email" placeholder="Email" required></div>
+<button class="btn gold wide" type="submit"><svg class="ic"><use href="#send"/></svg>Send link</button>
+<button type="button" class="link" data-a="atab" data-v="in">Back to sign in</button>
+</form>
+<div id="aVer" hidden><div class="verify"><svg class="ic big"><use href="#mail"/></svg><h3>Verify your email</h3><p>We sent a link to <b id="verE"></b>. Confirm it, then sign in.</p><button class="btn wide" data-a="resend"><svg class="ic"><use href="#sync"/></svg>Resend</button><button class="link" data-a="atab" data-v="in">Back to sign in</button></div></div>
+<p class="afine"><svg class="ic"><use href="#shield"/></svg>Supabase · row-level security · guest mode always works.</p>
+</div></div>
 <div id="mroot"></div>
 <div id="acctMenu" class="pop-menu" hidden></div>
 <div id="toasts"></div>
 <canvas id="conf"></canvas>
-<div id="boot"><div class="bootin"><div class="mark">۞</div><h2>Nūr</h2><div class="bbar"><i></i></div><p id="bmsg">Aligning every word…</p></div></div>
+<div id="boot"><div class="bootin"><div class="mark">۞</div><h2>Nūr</h2><div class="bbar"><i></i></div><p id="bmsg">Binding every word…</p></div></div>
 <input type="file" id="impFile" accept="application/json" hidden>
-
 <script>
 'use strict';
 (()=>{
-/* ══════════ ALIGNED CORPUS ══════════
-   Every passage is an ordered list of [Arabic phrase, Persian phrase] units.
-   Arabic text = units joined; Persian text = units joined.
-   Every Arabic word and every Persian word therefore belongs to exactly one
-   unit that has both sides — 100% coverage by construction, verified at boot. */
-const CH=[
-{t:"Sins Born of Strength & Blessing",f:"گناهانِ برخاسته از نیرو و نعمت",p:[
-{n:1,u:[["اللَّهُمَّ","خدایا،"],["إِنِّي أَسْتَغْفِرُكَ","من از تو آمرزش می‌خواهم"],["مِنْ كُلِّ ذَنْبٍ","برای هر گناهی"],["قَوِيَ عَلَيْهِ بَدَنِي","که تنم بر آن توانا شد"],["بِعَافِيَتِكَ،","به نیروی عافیتی که تو دادی،"],["أَوْ نَالَتْهُ قُدْرَتِي","یا توانم بدان رسید"],["بِفَضْلِ نِعْمَتِكَ،","به فضل نعمتت،"],["أَوْ بَسَطْتُ إِلَيْهِ يَدِي","یا دستم بدان دراز شد"],["بِسَابِغِ رِزْقِكَ،","با روزیِ فراوانت."]]},
-{n:2,u:[["أَوِ اتَّكَلْتُ فِيهِ","یا در آن تکیه کردم"],["عِنْدَ خَوْفِي مِنْهُ","هنگام ترسم از کیفرش"],["عَلَى أَنَاتِكَ،","بر شکیبایی تو،"],["أَوِ احْتَجَبْتُ فِيهِ مِنَ النَّاسِ","یا آن را از مردم پنهان ساختم"],["بِسَتْرِكَ،","به پرده‌پوشی‌ات،"],["أَوْ وَثِقْتُ مِنْ سَطْوَتِكَ عَلَيَّ فِيهِ","یا در آن از گرفتِ سختت ایمن شدم"],["بِحِلْمِكَ،","به حلمت،"],["أَوْ عَوَّلْتُ فِيهِ","یا در آن حساب کردم"],["عَلَى كَرَمِ عَفْوِكَ.","بر کرمِ گذشتت."]]}]},
-{t:"Betrayed Trust & Cunning",f:"خیانت در امانت و چاره‌گری",p:[
-{n:3,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["مِنْ كُلِّ ذَنْبٍ","برای هر گناهی"],["خُنْتُ فِيهِ أَمَانَتِي،","که در آن به امانت خیانت کردم،"],["أَوْ بَخَسْتُ بِفِعْلِهِ نَفْسِي،","یا با انجامش به خویشتن ستم روا داشتم،"],["أَوِ احْتَطَبْتُ بِهِ عَلَى بَدَنِي،","یا هیزمِ آتشش را بر دوش خود کشیدم."]]},
-{n:4,u:[["أَوْ قَدَّمْتُ فِيهِ لَذَّتِي،","یا در آن لذتم را پیش انداختم،"],["أَوْ آثَرْتُ فِيهِ شَهْوَتِي،","یا خواهش نفسم را برگزیدم،"],["أَوْ سَعَيْتُ فِيهِ لِغَيْرِي،","یا در آن برای غیر تو کوشیدم."]]},
-{n:5,u:[["أَوِ اسْتَغْوَيْتُ إِلَيْهِ مَنْ تَبِعَنِي،","یا پیروانم را به آن فریفتم،"],["أَوْ كَايَدْتُ فِيهِ مَنْ مَنَعَنِي،","یا بر بازدارنده‌ام نیرنگ زدم،"],["أَوْ قَهَرْتُ عَلَيْهِ مَنْ عَادَانِي،","یا بر دشمنم در آن چیره شدم،"],["أَوْ غَلَبْتُ عَلَيْهِ بِفَضْلِ حِيلَتِي،","یا با برتریِ حیله‌ام پیروز گشتم."]]},
-{n:6,u:[["أَوْ أَحَلْتُ عَلَيْكَ مَوْلَايَ","یا کار را به تو واگذاشتم، ای مولای من،"],["فَلَمْ تَغْلِبْنِي عَلَى فِعْلِي،","و تو مرا بر کارم به جبر نگرفتی؛"],["إِذْ كُنْتَ كَارِهًا لِمَعْصِيَتِي","با آنکه از نافرمانی‌ام ناخشنود بودی،"],["فَحَلُمْتَ عَنِّي،","بر من شکیبایی کردی،"],["لَكِنْ سَبَقَ عِلْمُكَ فِيَّ بِفِعْلِي ذَلِكَ،","ولی علم پیشینت می‌دانست که من چنین خواهم کرد."]]},
-{n:7,u:[["لَمْ تُدْخِلْنِي يَا رَبِّ فِيهِ جَبْرًا،","مرا به جبر در آن وارد نکردی، ای پروردگار من،"],["وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا،","و به قهر بر آن وانداشتی،"],["وَلَمْ تَظْلِمْ نِي فِيهِ شَيْئًا،","و کمترین ستمی به من روا نداشتی؛"],["فَأَسْتَغْفِرُكَ لَهُ","پس از تو برای آن آمرزش می‌خواهم"],["وَلِجَمِيعِ ذُنُوبِي.","و برای همهٔ گناهانم."]]}]},
-{t:"Broken Repentance & Tainted Devotion",f:"توبهٔ شکسته و نیّتِ آمیخته",p:[
-{n:8,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ","برای هر گناهی"],["تُبْتُ إِلَيْكَ مِنْهُ","که از آن به سوی تو توبه کردم"],["وَأَقْدَمْتُ عَلَى فِعْلِهِ،","و باز بر انجامش شتافتم؛"],["فَاسْتَحْيَيْتُ مِنْكَ وَأَنَا عَلَيْهِ،","همان‌گاه که بر آن بودم از تو شرم داشتم،"],["وَرَهِبْتُكَ وَأَنَا فِيهِ","و در همان حال از تو بیمناک بودم،"],["تَعَاطَيْتُهُ وَعُدْتُ إِلَيْهِ.","با این همه بدان پرداختم و بازگشتم."]]},
-{n:9,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ","برای هر گناهی که بر من نوشتی"],["بِسَبَبِ خَيْرٍ أَرَدْتُ بِهِ وَجْهَكَ","به سبب کارِ خیری که برای رویِ تو خواستم،"],["فَخَالَطَنِي فِيهِ سِوَاكَ،","اما غیرِ تو در آن آمیخت،"],["وَشَارَكَكَ فِعْلِي مَا لَا يَخْلُصُ لَكَ،","و آنچه خالص برای تو نبود در عملم با تو شریک شد،"],["أَوْ وَجَبَ عَلَيَّ مَا أَرَدْتُ بِهِ سِوَاكَ،","یا آنچه بر من لازم آمد مقصودم غیر تو بود؛"],["وَكَثِيرٌ مِنْ فِعْلِي مَا يَكُونُ كَذَلِكَ.","و بسیاری از کارهایم چنین است."]]}]},
-{t:"Shattered Covenants & Misplaced Fear",f:"پیمان‌های شکسته و ترسِ نابجا",p:[
-{n:10,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ تَوَرَّكَ عَلَيَّ","برای هر گناهی که بر من چیره شد"],["بِسَبَبِ عَهْدٍ عَاهَدْتُكَ عَلَيْهِ،","به سبب عهدی که با تو بستم،"],["أَوْ عَقْدٍ عَقَدْتُهُ لَكَ،","یا پیمانی که برای تو نوشتم،"],["أَوْ ذِمَّةٍ وَاثَقْتُ بِهَا مِنْ أَجْلِكَ لِأَحَدٍ مِنْ خَلْقِكَ،","یا ذمّه‌ای که به خاطر تو برای بنده‌ای از بندگانت گردن گرفتم،"],["ثُمَّ نَقَضْتُ ذَلِكَ","آنگاه آن را شکستم"],["مِنْ غَيْرِ ضَرُورَةٍ لَزِمَتْنِي فِيهِ،","بی‌هیچ ضرورتی که مرا ناگزیر کند؛"],["بَلِ اسْتَزَلَّنِي إِلَيْهِ عَنِ الْوَفَاءِ بِهِ الْأَشَرُ،","بلکه سرمستی مرا از وفا لغزانید،"],["وَمَنَعَنِي عَنْ رِعَايَتِهِ الْبَطَرُ.","و غرور از رعایتش بازداشت."]]},
-{n:11,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ رَهِبْتُ فِيهِ مِنْ عِبَادِكَ،","برای هر گناهی که در آن از بندگانت هراسیدم،"],["وَخِفْتُ فِيهِ غَيْرَكَ،","و از غیر تو ترسیدم،"],["وَاسْتَحْيَيْتُ فِيهِ مِنْ خَلْقِكَ،","و از آفریدگانت شرم کردم،"],["ثُمَّ أَفْضَيْتُ بِهِ فِعْلِي إِلَيْكَ.","سپس با انجام آن آشکارا به پیشگاه تو آمدم."]]},
-{n:12,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ أَقْدَمْتُ عَلَيْهِ","برای هر گناهی که بر آن جسارت کردم"],["وَأَنَا مُسْتَيْقِنٌ","در حالی که یقین داشتم"],["أَنَّكَ تُعَاقِبُ عَلَى ارْتِكَابِهِ","که بر انجامش کیفر می‌دهی،"],["فَارْتَكَبْتُهُ.","و با این همه مرتکبش شدم."]]}]},
-{t:"Desire Over Obedience",f:"هوس، پیش از فرمان",p:[
-{n:13,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ","برای هر گناهی"],["قَدَّمْتُ فِيهِ شَهْوَتِي عَلَى طَاعَتِكَ،","که در آن خواهشم را بر طاعتت پیش داشتم،"],["وَآثَرْتُ مَحَبَّتِي عَلَى أَمْرِكَ،","و دوست‌داشتِ خود را بر فرمانت برگزیدم،"],["وَأَرْضَيْتُ فِيهِ نَفْسِي بِسَخَطِكَ،","و نفسم را با خشم تو خشنود ساختم؛"],["وَقَدْ نَهَيْتَنِي عَنْهُ بِنَهْيِكَ،","حال آنکه مرا از آن نهی کرده بودی،"],["وَتَقَدَّمْتَ إِلَيَّ فِيهِ بِإِعْذَارِكَ،","و پیش‌تر هشدارم داده و راه عذر را بسته بودی،"],["وَاحْتَجَجْتَ عَلَيَّ فِيهِ بِوَعِيدِكَ.","و با وعیدت حجت را بر من تمام کرده بودی."]]},
-{n:14,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ عَلِمْتُهُ مِنْ نَفْسِي،","برای هر گناهی که خود بدان آگاه بودم،"],["أَوْ ذَهَلْتُهُ، أَوْ نَسِيتُهُ،","یا از آن غافل ماندم یا فراموشش کردم،"],["أَوْ تَعَمَّدْتُهُ، أَوْ أَخْطَأْتُهُ،","یا عمدی ساختم یا به خطا رفتم؛"],["مِمَّا لَا أَشُكُّ أَنَّكَ سَائِلِي عَنْهُ،","گناهی که شک ندارم از آن بازخواستم می‌کنی،"],["وَأَنَّ نَفْسِي مُرْتَهَنَةٌ بِهِ لَدَيْكَ،","و جانم نزد تو در گروِ آن است،"],["وَإِنْ كُنْتُ قَدْ نَسِيتُهُ","هرچند فراموشش کرده"],["أَوْ غَفَلْتُ نَفْسِي عَنْهُ.","یا از آن غافل شده باشم."]]},
-{n:15,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ وَاجَهْتُكَ بِهِ","برای هر گناهی که در برابر تو مرتکب شدم"],["وَقَدْ أَيْقَنْتُ أَنَّكَ تَرَانِي،","با یقین به اینکه مرا می‌بینی،"],["وَأَغْفَلْتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ،","و از توبهٔ آن غافل ماندم،"],["أَوْ نَسِيتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ،","یا فراموش کردم به سویت بازگردم،"],["أَوْ نَسِيتُ أَنْ أَسْتَغْفِرَكَ لَهُ.","یا فراموش کردم برایش آمرزش بخواهم."]]}]},
-{t:"Presumption & Prayers Unanswered",f:"غرورِ بخشش و دعایِ بازمانده",p:[
-{n:16,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ دَخَلْتُ فِيهِ","برای هر گناهی که بدان درآمدم"],["وَأَحْسَنْتُ ظَنِّي بِكَ","در حالی که گمانم به تو نیکو بود"],["أَنْ لَا تُعَذِّبَنِي عَلَيْهِ","که مرا بر آن عذاب نکنی"],["وَأَنَّكَ تَكْفِينِي مِنْهُ.","و از کیفرش نگاهم داری."]]},
-{n:17,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ اسْتَوْجَبْتُ بِهِ مِنْكَ","برای هر گناهی که به سببش از سوی تو سزاوار شدم"],["رَدَّ الدُّعَاءِ،","به بازپس‌فرستادن دعا،"],["وَحِرْمَانَ الْإِجَابَةِ،","و محرومیت از اجابت،"],["وَخَيْبَةَ الطَّمَعِ،","و ناکامیِ طمع،"],["وَانْفِسَاخَ الرَّجَاءِ.","و گسستنِ رشتهٔ امید."]]},
-{n:18,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ يُعَقِّبُ الْحَسْرَةَ،","برای هر گناهی که حسرت می‌آورد،"],["وَيُورِثُ النَّدَامَةَ،","و پشیمانی به ارث می‌گذارد،"],["وَيَحْبِسُ الرِّزْقَ،","و روزی را می‌بندد،"],["وَيَرُدُّ الدُّعَاءَ.","و دعا را بازمی‌گرداند."]]},
-{n:19,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ يُورِثُ الْأَسْقَامَ،","برای هر گناهی که بیماری می‌آرد،"],["وَيُعَقِّبُ الضَّنَى،","و تن را به رنجوری و لاغری می‌کشاند،"],["وَيُوجِبُ النِّقَمَ،","و بلا فرود می‌آورد،"],["وَيَكُونُ آخِرُهُ حَسْرَةً وَنَدَامَةً.","و پایانش حسرت و پشیمانی است."]]}]},
-{t:"Sins in Solitude",f:"گناهانِ خلوت",p:[
-{n:20,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ مَدَحْتُهُ بِلِسَانِي،","برای هر گناهی که با زبان ستایشش کردم،"],["أَوْ هَشَّتْ إِلَيْهِ نَفْسِي،","یا نفسم بدان شادمانه گرایید،"],["أَوِ اكْتَسَبْتُهُ بِيَدِي","یا با دست خویش فراهمش آوردم؛"],["وَهُوَ عِنْدَكَ قَبِيحٌ","حال آنکه نزد تو زشت است،"],["تُعَاقِبُ عَلَى مِثْلِهِ،","بر مانندش کیفر می‌دهی،"],["وَتَمْقُتُ مَنْ عَمِلَهُ.","و انجام‌دهنده‌اش را دشمن می‌داری."]]},
-{n:21,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ خَلَوْتُ بِهِ","برای هر گناهی که بدان خلوت کردم"],["فِي لَيْلٍ أَوْ نَهَارٍ","در شب یا روز،"],["حَيْثُ لَا يَرَانِي أَحَدٌ مِنْ خَلْقِكَ،","آنجا که هیچ آفریده‌ای مرا نمی‌دید؛"],["فَمِلْتُ فِيهِ مِنْ تَرْكِهِ بِخَوْفِكَ","پس از ترکِ آن به بیمِ تو"],["إِلَى ارْتِكَابِهِ بِحُسْنِ الظَّنِّ بِكَ،","به ارتکابش به خوش‌گمانی به تو گراییدم؛"],["فَسَوَّلَتْ لِي نَفْسِي الْإِقْدَامَ عَلَيْهِ","نفسم جسارت بر آن را در نظرم آراست"],["فَوَاقَعْتُهُ","و بدان درافتادم،"],["وَأَنَا عَارِفٌ بِمَعْصِيَتِي لَكَ فِيهِ.","در حالی که می‌دانستم در آن نافرمانی تو می‌کنم."]]},
-{n:22,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ اسْتَقْلَلْتُهُ","برای هر گناهی که اندکش شمردم"],["أَوِ اسْتَصْغَرْتُهُ،","یا خُردش پنداشتم،"],["أَوِ اسْتَعْظَمْتُهُ وَتَوَرَّطْتُ فِيهِ.","یا بزرگی‌اش را دانستم و با این همه در گردابش افتادم."]]}]},
-{t:"Aiding & Adorning Sin",f:"یاری و آراستنِ گناه",p:[
-{n:23,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ مَالَأْتُ فِيهِ","برای هر گناهی که در آن پشتِ کسی را گرفتم"],["عَلَى أَحَدٍ مِنْ بَرِيَّتِكَ،","بر ضدّ یکی از آفریدگانت،"]]},
-{n:24,u:[["أَوْ زَيَّنْتُهُ لِنَفْسِي،","یا آن را برای نفسم بیاراستم،"],["أَوْ أَوْمَأْتُ بِهِ إِلَى غَيْرِي","یا با اشاره دیگری را بدان فراخواندم"],["وَدَلَلْتُ عَلَيْهِ سِوَايَ،","و غیر خود را بدان راهنمایی کردم،"],["أَوْ أَصْرَرْتُ عَلَيْهِ بِعَمْدِي،","یا آگاهانه بر آن پافشاری نمودم،"],["أَوْ أَقَمْتُ عَلَيْهِ بِحِيلَتِي.","یا با چاره‌اندیشی‌ام برپایش داشتم."]]},
-{n:25,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ اسْتَعَنْتُ عَلَيْهِ بِحِيلَتِي","برای هر گناهی که با حیله‌ام در آن یاری جستم"],["بِشَيْءٍ مِمَّا يُرَادُ بِهِ وَجْهُكَ،","از چیزی که بدان روی تو خواسته می‌شود،"],["أَوْ يُسْتَظْهَرُ بِمِثْلِهِ عَلَى طَاعَتِكَ،","یا مانندش بر طاعتت پشت می‌گرم،"],["أَوْ يُتَقَرَّبُ بِمِثْلِهِ إِلَيْكَ،","یا بدان به تو نزدیک می‌شوند؛"],["وَوَارَيْتُ عَنِ النَّاسِ وَلَبَّسْتُ فِيهِ","و آن را از مردم پنهان کردم و چنان وانمودم"],["كَأَنِّي أُرِيدُكَ بِحِيلَتِي،","که گویی آهنگم تویی،"],["وَالْمُرَادُ بِهِ مَعْصِيَتُكَ،","حال آنکه مقصودم نافرمانی تو بود،"],["وَالْهَوَى فِيهِ مُتَصَرِّفٌ عَلَى غَيْرِ طَاعَتِكَ.","و هوای نفس در آن فرمان می‌راند، نه طاعت تو."]]}]},
-{t:"Diseases of the Heart",f:"بیماری‌های دل",p:[
-{n:26,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ","برای هر گناهی که بر من نوشتی"],["بِسَبَبِ عُجْبٍ كَانَ بِنَفْسِي،","به سبب خودپسندیِ درونم،"],["أَوْ رِيَاءٍ، أَوْ سُمْعَةٍ،","یا ریا یا شهرت‌طلبی،"],["أَوْ خُيَلَاءَ، أَوْ فَرَحٍ،","یا تکبر یا شادیِ سرمست،"],["أَوْ مَرَحٍ، أَوْ أَشَرٍ،","یا خوشیِ ناسپاس یا سرمستی،"]]},
-{n:27,u:[["أَوْ بَطَرٍ، أَوْ حِقْدٍ،","یا طغیانِ نعمت یا کینه،"],["أَوْ حَمِيَّةٍ، أَوْ غَضَبٍ،","یا تعصبِ جاهلی یا خشم،"],["أَوْ رِضًى، أَوْ شُحٍّ،","یا خشنودیِ نفس یا آزمندی،"],["أَوْ بُخْلٍ، أَوْ ظُلْمٍ،","یا بخل یا ستم،"],["أَوْ خِيَانَةٍ، أَوْ سِرْقَةٍ،","یا خیانت یا دزدی،"],["أَوْ كِذْبٍ،","یا دروغ،"]]},
-{n:28,u:[["أَوْ لَهْوٍ، أَوْ لَعِبٍ،","یا سرگرمیِ بیهوده یا بازی،"],["أَوْ نَوْعٍ مِنْ أَنْوَاعِ","یا هر گونه کاری"],["مَا يُكْتَسَبُ بِمِثْلِهِ الذُّنُوبُ","که مانندش گناه می‌آفریند"],["وَيَكُونُ بِاجْتِرَاحِهِ الْعَطَبُ.","و ارتکابش مایهٔ هلاکت است."]]}]},
-{t:"Foreknowledge & Free Will",f:"علمِ پیشین و اختیار",p:[
-{n:29,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ سَبَقَ فِي عِلْمِكَ أَنِّي فَاعِلُهُ،","برای هر گناهی که در علم پیشینت بود که من انجامش می‌دهم؛"],["فَدَخَلْتُ فِيهِ بِشَهْوَتِي،","با خواهش خود بدان درآمدم،"],["وَاجْتَرَحْتُهُ بِإِرَادَتِي،","و با ارادهٔ خویش فراهمش آوردم،"],["وَقَارَفْتُهُ بِمَحَبَّتِي وَلَذَّتِي وَمَشِيَّتِي،","و با دوست‌داشتن و لذت و خواستِ خود مرتکبش شدم؛"],["وَشِئْتُهُ إِذْ شِئْتَ أَنْ أَشَاءَهُ،","خواستم چون تو خواستی که بخواهم،"],["وَأَرَدْتُهُ إِذْ أَرَدْتَ أَنْ أُرِيدَهُ،","و اراده کردم چون تو اراده کردی که اراده کنم،"],["فَعَمِلْتُهُ إِذْ كَانَ فِي قَدِيمِ تَقْدِيرِكَ","و انجامش دادم چنان‌که در تقدیرِ دیرینت بود"],["وَنَافِذِ عِلْمِكَ أَنِّي فَاعِلُهُ،","و در علمِ نافذت که من انجامش می‌دهم؛"],["لَمْ تُدْخِلْنِي فِيهِ جَبْرًا،","با این همه مرا به جبر در آن نبردی،"],["وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا،","و به قهر بر آن وانداشتی،"]]},
-{n:30,u:[["وَلَمْ تَظْلِمْ نِي فِيهِ شَيْئًا،","و کمترین ستمی در آن به من نرساندی؛"],["فَأَسْتَغْفِرُكَ لَهُ","پس برای آن از تو آمرزش می‌خواهم"],["وَلِكُلِّ ذَنْبٍ جَرَى بِهِ عِلْمُكَ عَلَيَّ وَفِيَّ","و برای هر گناهی که علمت بر من و در من بدان جاری شده،"],["إِلَى آخِرِ عُمْرِي.","تا پایان عمرم."]]}]},
-{t:"Allegiance, Promises & Blessings Misused",f:"دوستی، پیمان و نعمتِ ناسپاس",p:[
-{n:31,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ مَالَ بِسَخَطِي فِيهِ عَنْ رِضَاكَ،","برای هر گناهی که ناخشنودی‌ام در آن از خشنودی تو دور افتاد،"],["وَمَالَتْ نَفْسِي إِلَى رِضَاكَ فَسَخِطْتُهُ،","و نفسم به خشنودی تو گرایید ولی من آن را ناخوش داشتم،"],["أَوْ رَهِبْتُ فِيهِ سِوَاكَ،","یا در آن از غیر تو هراسیدم،"]]},
-{n:32,u:[["أَوْ عَادَيْتُ فِيهِ أَوْلِيَاءَكَ،","یا به سببش با دوستانت دشمنی کردم،"],["أَوْ وَالَيْتُ فِيهِ أَعْدَاءَكَ،","یا با دشمنانت دوستی،"],["أَوِ اخْتَرْتُهُمْ عَلَى أَصْفِيَائِكَ،","یا آنان را بر برگزیدگانت ترجیح دادم،"],["أَوْ خَذَلْتُ فِيهِ أَحِبَّاءَكَ،","یا دوست‌دارانت را تنها گذاشتم،"],["أَوْ قَصَّرْتُ فِيهِ عَنْ رِضَاكَ","یا از خشنودی تو کوتاهی کردم،"],["يَا خَيْرَ الْغَافِرِينَ.","ای بهترینِ آمرزندگان."]]},
-{n:33,u:[["اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ","خدایا، من از تو آمرزش می‌خواهم"],["لِكُلِّ ذَنْبٍ تُبْتُ إِلَيْكَ مِنْهُ","برای هر گناهی که از آن به درگاهت توبه کردم"],["ثُمَّ عُدْتُ فِيهِ.","و سپس بدان بازگشتم."]]},
-{n:34,u:[["وَأَسْتَغْفِرُكَ","و از تو آمرزش می‌خواهم"],["لِمَا أَعْطَيْتُكَ مِنْ نَفْسِي","برای هر عهدی که از سرِ جان با تو بستم"],["ثُمَّ لَمْ أَفِ بِهِ.","و بدان وفا نکردم."]]},
-{n:35,u:[["وَأَسْتَغْفِرُكَ","و از تو آمرزش می‌خواهم"],["لِلنِّعْمَةِ الَّتِي أَنْعَمْتَ بِهَا عَلَيَّ","برای نعمتی که بر من ارزانی داشتی"],["فَقَوِيتُ بِهَا عَلَى مَعْصِيَتِكَ.","و من با آن بر نافرمانی‌ات نیرو گرفتم."]]}]},
-{t:"Hidden Sins & the Rights of Others",f:"گناهانِ پنهان و حقّ‌الناس",p:[
-{n:36,u:[["وَأَسْتَغْفِرُكَ لِكُلِّ خَيْرٍ","و از تو آمرزش می‌خواهم برای هر کار نیکی"],["أَرَدْتُ بِهِ وَجْهَكَ","که برای روی تو خواستم"],["فَخَالَطَنِي مَا لَيْسَ لَكَ.","و آنچه برای تو نبود در آن آمیخت."]]},
-{n:37,u:[["وَأَسْتَغْفِرُكَ","و از تو آمرزش می‌خواهم"],["لِمَا دَعَانِي إِلَيْهِ الرُّخَصُ","برای آنچه رخصت‌جویی مرا بدان کشاند،"],["فِيمَا اشْتَبَهَ عَلَيَّ","در امور مشتبهی"],["مِمَّا هُوَ عِنْدَكَ حَرَامٌ.","که نزد تو حرام است."]]},
-{n:38,u:[["وَأَسْتَغْفِرُكَ لِلذُّنُوبِ","و از تو آمرزش می‌خواهم برای گناهانی"],["الَّتِي لَا يَعْلَمُهَا غَيْرُكَ،","که جز تو کسی نمی‌داند،"],["وَلَا يَطَّلِعُ عَلَيْهَا سِوَاكَ،","و جز تو کسی بدان آگاه نیست؛"],["وَلَا يَحْتَمِلُهَا إِلَّا حِلْمُكَ،","چیزی جز حلم تو تابشان نمی‌آرد،"],["وَلَا يَسَعُهَا إِلَّا عَفْوُكَ.","و چیزی جز گذشت تو دربرشان نمی‌گیرد."]]},
-{n:39,u:[["وَأَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ","و از تو آمرزش می‌خواهم و به سوی تو توبه می‌کنم"],["مِنْ مَظَالِمَ كَثِيرَةٍ لِعِبَادِكَ قِبَلِي يَا رَبِّ،","از بسیاری حق‌هایی که بندگانت بر گردن من دارند، ای پروردگار من؛"],["فَلَمْ أَسْتَطِعْ رَدَّهَا عَلَيْهِمْ","نتوانستم آن‌ها را بازگردانم"],["وَتَحْلِيلَهَا مِنْهُمْ،","و حلالیت بطلبم،"],["أَوْ شَهِدُوا فَاسْتَحْيَيْتُ","یا آنان حاضر بودند و من شرم کردم"],["مِنِ اسْتِحْلَالِهِمْ وَالطَّلَبِ إِلَيْهِمْ","از حلالیت‌طلبیدن و التماس"],["وَإِعْلَامِهِمْ ذَلِكَ،","و آشکار کردنِ آن،"]]},
-{n:40,u:[["وَأَنْتَ الْقَادِرُ","و تو توانایی"],["عَلَى أَنْ تَسْتَوْهِبَنِي مِنْهُمْ","که بخششِ مرا از آنان بستانی"],["وَتُرْضِيَهُمْ عَنِّي","و ایشان را از من خشنود سازی،"],["كَيْفَ شِئْتَ وَبِمَا شِئْتَ،","هرگونه که بخواهی و با هرچه بخواهی؛"],["يَا أَرْحَمَ الرَّاحِمِينَ،","ای مهربان‌ترینِ مهربانان،"],["وَأَحْكَمَ الْحَاكِمِينَ،","و داناترینِ داوران،"],["وَخَيْرَ الْغَافِرِينَ.","و بهترینِ آمرزندگان."]]}]},
-{t:"Between Hope & Awe",f:"میانِ بیم و امید",p:[
-{n:41,u:[["اللَّهُمَّ إِنَّ اسْتِغْفَارِي إِيَّاكَ","خدایا، آمرزش‌خواستنم از تو"],["مَعَ الْإِصْرَارِ لُؤْمٌ،","همراه با پافشاری بر گناه، پستی است؛"],["وَتَرْكِيَ الِاسْتِغْفَارَ","و ترکِ استغفار"],["مَعَ مَعْرِفَتِي بِسَعَةِ جُودِكَ وَرَحْمَتِكَ","با آنکه گستردگیِ جود و رحمتت را می‌شناسم،"],["عَجْزٌ.","ناتوانی است."]]},
-{n:42,u:[["فَكَمْ تَتَحَبَّبُ إِلَيَّ يَا رَبِّ","چه بسیار که تو با من مهر می‌ورزی، ای پروردگار من،"],["وَأَنْتَ الْغَنِيُّ عَنِّي،","و از من بی‌نیازی،"],["وَكَمْ أَتَبَغَّضُ إِلَيْكَ","و چه بسیار که من خود را نزد تو منفور می‌سازم،"],["وَأَنَا الْفَقِيرُ إِلَيْكَ وَإِلَى رَحْمَتِكَ.","حال آنکه سخت نیازمندِ تو و رحمتِ توأم."]]},
-{n:43,u:[["فَيَا مَنْ وَعَدَ فَوَفَى،","پس ای آن‌که وعده داد و وفا کرد،"],["وَأَوْعَدَ فَعَفَا،","و بیم داد و بخشید:"],["اغْفِرْ لِي خَطَايَايَ،","خطاهایم را بیامرز،"],["وَاغْفِرْ وَارْحَمْ","ببخش و رحم کن،"],["وَأَنْتَ خَيْرُ الرَّاحِمِينَ.","که تو بهترینِ رحم‌کنندگانی."]]}]}
-];
+/* ══════ WORD-TO-WORD CORPUS ══════
+   Flat alternating [arabicWord, persianWord(s), ...] per passage.
+   Every Arabic word carries its own Persian counterpart; every Persian
+   word belongs to exactly one Arabic word. Concatenation of each side
+   reproduces that side's full text. */
+const CH=[["Sins Born of Strength & Blessing","گناهانِ برخاسته از نیرو و نعمت",[1,2]],
+["Betrayed Trust & Cunning","خیانت در امانت و چاره‌گری",[3,4,5,6,7]],
+["Broken Repentance & Tainted Devotion","توبهٔ شکسته و نیّتِ آمیخته",[8,9]],
+["Shattered Covenants & Misplaced Fear","پیمان‌های شکسته و ترسِ نابجا",[10,11,12]],
+["Desire Over Obedience","هوس، پیش از فرمان",[13,14,15]],
+["Presumption & Prayers Unanswered","غرورِ بخشش و دعایِ بازمانده",[16,17,18,19]],
+["Sins in Solitude","گناهانِ خلوت",[20,21,22]],
+["Aiding & Adorning Sin","یاری و آراستنِ گناه",[23,24,25]],
+["Diseases of the Heart","بیماری‌های دل",[26,27,28]],
+["Foreknowledge & Free Will","علمِ پیشین و اختیار",[29,30]],
+["Allegiance, Promises & Blessings Misused","دوستی، پیمان و نعمتِ ناسپاس",[31,32,33,34,35]],
+["Hidden Sins & the Rights of Others","گناهانِ پنهان و حقّ‌الناس",[36,37,38,39,40]],
+["Between Hope & Awe","میانِ بیم و امید",[41,42,43]]];
+const W={
+1:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","مِنْ","از","كُلِّ","هر","ذَنْبٍ","گناهی","قَوِيَ","که نیرومند شد","عَلَيْهِ","بر آن","بَدَنِي","تن من","بِعَافِيَتِكَ،","به تندرستی‌ات،","أَوْ","یا","نَالَتْهُ","بدان رسید","قُدْرَتِي","توان من","بِفَضْلِ","به فزونی","نِعْمَتِكَ،","نعمت تو،","أَوْ","یا","بَسَطْتُ","گشودم","إِلَيْهِ","بدان","يَدِي","دست خود را","بِسَابِغِ","با گستردگی","رِزْقِكَ،","روزی تو،"],
+2:["أَوِ","یا","اتَّكَلْتُ","تکیه کردم","فِيهِ","در آن","عِنْدَ","هنگام","خَوْفِي","ترس من","مِنْهُ","از آن","عَلَى","بر","أَنَاتِكَ،","شکیبایی تو،","أَوِ","یا","احْتَجَبْتُ","پنهان شدم","فِيهِ","در آن","مِنَ","از","النَّاسِ","مردم","بِسَتْرِكَ،","به پرده‌پوشی تو،","أَوْ","یا","وَثِقْتُ","ایمن شدم","مِنْ","از","سَطْوَتِكَ","یورش تو","عَلَيَّ","بر من","فِيهِ","در آن","بِحِلْمِكَ،","به بردباری تو،","أَوْ","یا","عَوَّلْتُ","تکیه زدم","فِيهِ","در آن","عَلَى","بر","كَرَمِ","بزرگواری","عَفْوِكَ.","گذشت تو."],
+3:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","مِنْ","از","كُلِّ","هر","ذَنْبٍ","گناهی","خُنْتُ","خیانت کردم","فِيهِ","در آن","أَمَانَتِي،","امانت خود را،","أَوْ","یا","بَخَسْتُ","کاستم","بِفِعْلِهِ","با انجامش","نَفْسِي،","از نفس خود،","أَوِ","یا","احْتَطَبْتُ","هیزم کشیدم","بِهِ","با آن","عَلَى","بر","بَدَنِي،","تن خود،"],
+4:["أَوْ","یا","قَدَّمْتُ","پیش انداختم","فِيهِ","در آن","لَذَّتِي،","لذت خود را،","أَوْ","یا","آثَرْتُ","برگزیدم","فِيهِ","در آن","شَهْوَتِي،","خواهش خود را،","أَوْ","یا","سَعَيْتُ","کوشیدم","فِيهِ","در آن","لِغَيْرِي،","برای دیگری،"],
+5:["أَوِ","یا","اسْتَغْوَيْتُ","فریفتم","إِلَيْهِ","بدان","مَنْ","کسی را که","تَبِعَنِي،","از من پیروی کرد،","أَوْ","یا","كَايَدْتُ","نیرنگ زدم","فِيهِ","در آن","مَنْ","بر کسی که","مَنَعَنِي،","بازم داشت،","أَوْ","یا","قَهَرْتُ","چیره شدم","عَلَيْهِ","بر او","مَنْ","کسی را که","عَادَانِي،","با من دشمنی کرد،","أَوْ","یا","غَلَبْتُ","پیروز شدم","عَلَيْهِ","بر او","بِفَضْلِ","به برتری","حِيلَتِي،","چاره‌گری من،"],
+6:["أَوْ","یا","أَحَلْتُ","واگذاشتم","عَلَيْكَ","بر تو","مَوْلَايَ","ای مولای من","فَلَمْ","پس","تَغْلِبْنِي","مرا مغلوب نساختی","عَلَى","بر","فِعْلِي،","کار من،","إِذْ","چرا که","كُنْتَ","بودی","كَارِهًا","ناخشنود","لِمَعْصِيَتِي","از نافرمانی من","فَحَلُمْتَ","پس شکیبایی کردی","عَنِّي،","با من،","لَكِنْ","ولی","سَبَقَ","پیشی گرفت","عِلْمُكَ","دانش تو","فِيَّ","درباره من","بِفِعْلِي","به انجام من","ذَلِكَ،","آن را،"],
+7:["لَمْ","نکردی","تُدْخِلْنِي","مرا وارد","يَا","ای","رَبِّ","پروردگار من","فِيهِ","در آن","جَبْرًا،","به جبر،","وَلَمْ","و","تَحْمِلْنِي","وانداشتی مرا","عَلَيْهِ","بر آن","قَهْرًا،","به قهر،","وَلَمْ","و","تَظْلِمْ","ستم نکردی","نِي","به من","فِيهِ","در آن","شَيْئًا،","چیزی،","فَأَسْتَغْفِرُكَ","پس آمرزش می‌خواهم از تو","لَهُ","برای آن","وَلِجَمِيعِ","و برای همه","ذُنُوبِي.","گناهانم."],
+8:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","تُبْتُ","توبه کردم","إِلَيْكَ","به سوی تو","مِنْهُ","از آن","وَأَقْدَمْتُ","و جسارت کردم","عَلَى","بر","فِعْلِهِ،","انجامش،","فَاسْتَحْيَيْتُ","پس شرم کردم","مِنْكَ","از تو","وَأَنَا","در حالی که من","عَلَيْهِ،","بر آن بودم،","وَرَهِبْتُكَ","و از تو ترسیدم","وَأَنَا","در حالی که من","فِيهِ","در آن","تَعَاطَيْتُهُ","بدان پرداختم","وَعُدْتُ","و بازگشتم","إِلَيْهِ.","بدان."],
+9:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","كَتَبْتَهُ","نوشتی‌اش","عَلَيَّ","بر من","بِسَبَبِ","به سبب","خَيْرٍ","کار خیری","أَرَدْتُ","خواستم","بِهِ","بدان","وَجْهَكَ","روی تو را","فَخَالَطَنِي","پس آمیخت مرا","فِيهِ","در آن","سِوَاكَ،","غیر تو،","وَشَارَكَكَ","و شریک شد با تو","فِعْلِي","در کار من","مَا","آنچه","لَا","نه","يَخْلُصُ","خالص می‌شود","لَكَ،","برای تو،","أَوْ","یا","وَجَبَ","لازم آمد","عَلَيَّ","بر من","مَا","آنچه","أَرَدْتُ","خواستم","بِهِ","بدان","سِوَاكَ،","غیر تو را،","وَكَثِيرٌ","و بسیاری","مِنْ","از","فِعْلِي","کار من","مَا","آنچه","يَكُونُ","هست","كَذَلِكَ.","چنین."],
+10:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","تَوَرَّكَ","چیره شد","عَلَيَّ","بر من","بِسَبَبِ","به سبب","عَهْدٍ","عهدی","عَاهَدْتُكَ","که با تو بستم","عَلَيْهِ،","بر آن،","أَوْ","یا","عَقْدٍ","پیمانی","عَقَدْتُهُ","که بستم","لَكَ،","برای تو،","أَوْ","یا","ذِمَّةٍ","ذمّه‌ای","وَاثَقْتُ","استوار کردم","بِهَا","بدان","مِنْ","از","أَجْلِكَ","خاطر تو","لِأَحَدٍ","برای یکی","مِنْ","از","خَلْقِكَ،","آفریدگانت،","ثُمَّ","سپس","نَقَضْتُ","شکستم","ذَلِكَ","آن را","مِنْ","از","غَيْرِ","بدون","ضَرُورَةٍ","ناچاری‌ای","لَزِمَتْنِي","که مرا ناگزیر کند","فِيهِ،","در آن،","بَلِ","بلکه","اسْتَزَلَّنِي","لغزانید مرا","إِلَيْهِ","بدان","عَنِ","از","الْوَفَاءِ","وفا","بِهِ","بدان","الْأَشَرُ،","سرمستی،","وَمَنَعَنِي","و بازداشت مرا","عَنْ","از","رِعَايَتِهِ","رعایتش","الْبَطَرُ.","غرور."],
+11:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","رَهِبْتُ","هراسیدم","فِيهِ","در آن","مِنْ","از","عِبَادِكَ،","بندگانت،","وَخِفْتُ","و ترسیدم","فِيهِ","در آن","غَيْرَكَ،","غیر تو را،","وَاسْتَحْيَيْتُ","و شرم کردم","فِيهِ","در آن","مِنْ","از","خَلْقِكَ","آفریدگانت","ثُمَّ","سپس","أَفْضَيْتُ","آشکارا آوردم","بِهِ","با آن","فِعْلِي","کار خود را","إِلَيْكَ.","به پیشگاه تو."],
+12:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","أَقْدَمْتُ","جسارت کردم","عَلَيْهِ","بر آن","وَأَنَا","در حالی که من","مُسْتَيْقِنٌ","یقین داشتم","أَنَّكَ","که تو","تُعَاقِبُ","کیفر می‌دهی","عَلَى","بر","ارْتِكَابِهِ","ارتکابش","فَارْتَكَبْتُهُ.","پس مرتکبش شدم."],
+13:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","قَدَّمْتُ","پیش داشتم","فِيهِ","در آن","شَهْوَتِي","خواهشم را","عَلَى","بر","طَاعَتِكَ","طاعت تو","وَآثَرْتُ","و برگزیدم","مَحَبَّتِي","دوست‌داشت خود را","عَلَى","بر","أَمْرِكَ،","فرمان تو،","وَأَرْضَيْتُ","و خشنود ساختم","فِيهِ","در آن","نَفْسِي","نفس خود را","بِسَخَطِكَ،","به خشم تو،","وَقَدْ","و همانا","نَهَيْتَنِي","بازداشتی مرا","عَنْهُ","از آن","بِنَهْيِكَ،","به نهی خود،","وَتَقَدَّمْتَ","و پیش‌تر آمدی","إِلَيَّ","به سوی من","فِيهِ","در آن","بِإِعْذَارِكَ،","با هشدارت،","وَاحْتَجَجْتَ","و حجت آوردی","عَلَيَّ","بر من","فِيهِ","در آن","بِوَعِيدِكَ.","با بیم‌دادنت."],
+14:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","عَلِمْتُهُ","دانستمش","مِنْ","از","نَفْسِي،","نفس خود،","أَوْ","یا","ذَهَلْتُهُ،","از آن غافل شدم،","أَوْ","یا","نَسِيتُهُ،","فراموشش کردم،","أَوْ","یا","تَعَمَّدْتُهُ،","عمدش کردم،","أَوْ","یا","أَخْطَأْتُهُ","به خطا رفتم","مِمَّا","از آنچه","لَا","نه","أَشُكُّ","شک دارم","أَنَّكَ","که تو","سَائِلِي","بازخواست‌کننده منی","عَنْهُ،","از آن،","وَأَنَّ","و اینکه","نَفْسِي","جان من","مُرْتَهَنَةٌ","در گرو است","بِهِ","بدان","لَدَيْكَ،","نزد تو،","وَإِنْ","و هرچند","كُنْتُ","بوده‌ام","قَدْ","همانا","نَسِيتُهُ","فراموشش کرده","أَوْ","یا","غَفَلْتُ","غافل شده‌ام","نَفْسِي","نفس من","عَنْهُ.","از آن."],
+15:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","وَاجَهْتُكَ","رو به تو کردم","بِهِ","با آن","وَقَدْ","و همانا","أَيْقَنْتُ","یقین کردم","أَنَّكَ","که تو","تَرَانِي،","مرا می‌بینی،","وَأَغْفَلْتُ","و غافل شدم","أَنْ","که","أَتُوبَ","توبه کنم","إِلَيْكَ","به سوی تو","مِنْهُ،","از آن،","أَوْ","یا","نَسِيتُ","فراموش کردم","أَنْ","که","أَتُوبَ","توبه کنم","إِلَيْكَ","به سوی تو","مِنْهُ،","از آن،","أَوْ","یا","نَسِيتُ","فراموش کردم","أَنْ","که","أَسْتَغْفِرَكَ","آمرزش بخواهم از تو","لَهُ.","برای آن."],
+16:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","دَخَلْتُ","درآمدم","فِيهِ،","بدان،","وَأَحْسَنْتُ","و نیکو داشتم","ظَنِّي","گمان خود را","بِكَ","به تو","أَنْ","که","لَا","نه","تُعَذِّبَنِي","عذابم کنی","عَلَيْهِ،","بر آن،","وَأَنَّكَ","و اینکه تو","تَكْفِينِي","مرا نگاه می‌داری","مِنْهُ.","از آن."],
+17:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","اسْتَوْجَبْتُ","سزاوار شدم","بِهِ","بدان","مِنْكَ","از سوی تو","رَدَّ","بازفرستادن","الدُّعَاءِ،","دعا را،","وَحِرْمَانَ","و محرومیت از","الْإِجَابَةِ،","اجابت،","وَخَيْبَةَ","و ناکامی","الطَّمَعِ،","طمع،","وَانْفِسَاخَ","و گسستن","الرَّجَاءِ.","امید."],
+18:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","يُعَقِّبُ","پی می‌آورد","الْحَسْرَةَ،","حسرت را،","وَيُورِثُ","و به ارث می‌گذارد","النَّدَامَةَ","پشیمانی را","وَيَحْبِسُ","و می‌بندد","الرِّزْقَ","روزی را","وَيَرُدُّ","و بازمی‌گرداند","الدُّعَاءَ.","دعا را."],
+19:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","يُورِثُ","به ارث می‌گذارد","الْأَسْقَامَ","بیماری‌ها را","وَيُعَقِّبُ","و پی می‌آورد","الضَّنَى،","لاغری را،","وَيُوجِبُ","و لازم می‌آورد","النِّقَمَ،","بلاها را،","وَيَكُونُ","و هست","آخِرُهُ","پایانش","حَسْرَةً","حسرتی","وَنَدَامَةً.","و پشیمانی."],
+20:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","مَدَحْتُهُ","ستایشش کردم","بِلِسَانِي،","با زبانم،","أَوْ","یا","هَشَّتْ","شادمانه گرایید","إِلَيْهِ","بدان","نَفْسِي،","نفس من،","أَوِ","یا","اكْتَسَبْتُهُ","فراهمش آوردم","بِيَدِي","با دستم","وَهُوَ","در حالی که آن","عِنْدَكَ","نزد تو","قَبِيحٌ","زشت است","تُعَاقِبُ","کیفر می‌دهی","عَلَى","بر","مِثْلِهِ،","مانندش،","وَتَمْقُتُ","و دشمن می‌داری","مَنْ","کسی را که","عَمِلَهُ.","انجامش داد."],
+21:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","خَلَوْتُ","خلوت کردم","بِهِ","بدان","فِي","در","لَيْلٍ","شبی","أَوْ","یا","نَهَارٍ","روزی","حَيْثُ","آنجا که","لَا","نه","يَرَانِي","مرا می‌بیند","أَحَدٌ","هیچ‌کس","مِنْ","از","خَلْقِكَ،","آفریدگانت،","فَمِلْتُ","پس گراییدم","فِيهِ","در آن","مِنْ","از","تَرْكِهِ","ترکش","بِخَوْفِكَ","به بیم تو","إِلَى","به سوی","ارْتِكَابِهِ","ارتکابش","بِحُسْنِ","به نیکی","الظَّنِّ","گمان","بِكَ،","به تو،","فَسَوَّلَتْ","پس آراست","لِي","برای من","نَفْسِي","نفس من","الْإِقْدَامَ","جسارت","عَلَيْهِ","بر آن","فَوَاقَعْتُهُ","پس بدان درافتادم","وَأَنَا","در حالی که من","عَارِفٌ","آگاهم","بِمَعْصِيَتِي","به نافرمانی خود","لَكَ","تو را","فِيهِ.","در آن."],
+22:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","اسْتَقْلَلْتُهُ","اندکش شمردم","أَوِ","یا","اسْتَصْغَرْتُهُ،","خردش پنداشتم،","أَوِ","یا","اسْتَعْظَمْتُهُ","بزرگش دانستم","وَتَوَرَّطْتُ","و در گرداب افتادم","فِيهِ.","در آن."],
+23:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","مَالَأْتُ","یاری دادم","فِيهِ","در آن","عَلَى","بر ضد","أَحَدٍ","یکی","مِنْ","از","بَرِيَّتِكَ،","آفریدگانت،"],
+24:["أَوْ","یا","زَيَّنْتُهُ","بیاراستمش","لِنَفْسِي","برای نفس خود","أَوْ","یا","أَوْمَأْتُ","اشاره کردم","بِهِ","بدان","إِلَى","به سوی","غَيْرِي","دیگری","وَدَلَلْتُ","و راهنمایی کردم","عَلَيْهِ","بدان","سِوَايَ،","غیر خود را،","أَوْ","یا","أَصْرَرْتُ","پافشاری کردم","عَلَيْهِ","بر آن","بِعَمْدِي،","با قصد خود،","أَوْ","یا","أَقَمْتُ","برپا داشتم","عَلَيْهِ","بر آن","بِحِيلَتِي.","با چاره‌گری‌ام."],
+25:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","اسْتَعَنْتُ","یاری جستم","عَلَيْهِ","بر آن","بِحِيلَتِي","با چاره‌گری‌ام","بِشَيْءٍ","به چیزی","مِمَّا","از آنچه","يُرَادُ","خواسته می‌شود","بِهِ","بدان","وَجْهُكَ،","روی تو،","أَوْ","یا","يُسْتَظْهَرُ","پشتی گرفته می‌شود","بِمِثْلِهِ","به مانندش","عَلَى","بر","طَاعَتِكَ،","طاعت تو،","أَوْ","یا","يُتَقَرَّبُ","نزدیکی جسته می‌شود","بِمِثْلِهِ","به مانندش","إِلَيْكَ،","به تو،","وَوَارَيْتُ","و پنهان کردم","عَنِ","از","النَّاسِ","مردم","وَلَبَّسْتُ","و پوشاندم","فِيهِ،","در آن،","كَأَنِّي","گویی من","أُرِيدُكَ","تو را می‌خواهم","بِحِيلَتِي،","با چاره‌گری‌ام،","وَالْمُرَادُ","و مقصود","بِهِ","بدان","مَعْصِيَتُكَ","نافرمانی تو است","وَالْهَوَى","و هوای نفس","فِيهِ","در آن","مُتَصَرِّفٌ","فرمان می‌راند","عَلَى","بر","غَيْرِ","غیر","طَاعَتِكَ.","طاعت تو."],
+26:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","كَتَبْتَهُ","نوشتی‌اش","عَلَيَّ","بر من","بِسَبَبِ","به سبب","عُجْبٍ","خودپسندی‌ای","كَانَ","که بود","بِنَفْسِي","در نفس من","أَوْ","یا","رِيَاءٍ","ریایی","أَوْ","یا","سُمْعَةٍ،","شهرت‌جویی،","أَوْ","یا","خُيَلَاءَ،","تکبر،","أَوْ","یا","فَرَحٍ،","شادی،","أَوْ","یا","مَرَحٍ،","سرمستی،","أَوْ","یا","أَشَرٍ،","ناسپاسی،"],
+27:["أَوْ","یا","بَطَرٍ،","غرور،","أَوْ","یا","حِقْدٍ،","کینه،","أَوْ","یا","حَمِيَّةٍ،","تعصب،","أَوْ","یا","غَضَبٍ،","خشم،","أَوْ","یا","رِضًى،","خشنودی نفس،","أَوْ","یا","شُحٍّ،","آزمندی،","أَوْ","یا","بُخْلٍ،","بخل،","أَوْ","یا","ظُلْمٍ،","ستم،","أَوْ","یا","خِيَانَةٍ،","خیانت،","أَوْ","یا","سِرْقَةٍ،","دزدی،","أَوْ","یا","كِذْبٍ،","دروغ،"],
+28:["أَوْ","یا","لَهْوٍ،","بیهودگی،","أَوْ","یا","لَعِبٍ،","بازی،","أَوْ","یا","نَوْعٍ","گونه‌ای","مِنْ","از","أَنْوَاعِ","گونه‌های","مَا","آنچه","يُكْتَسَبُ","کسب می‌شود","بِمِثْلِهِ","به مانندش","الذُّنُوبُ","گناهان","وَيَكُونُ","و هست","بِاجْتِرَاحِهِ","به ارتکابش","الْعَطَبُ.","هلاکت."],
+29:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","سَبَقَ","پیشی گرفت","فِي","در","عِلْمِكَ","دانش تو","أَنِّي","که من","فَاعِلُهُ،","انجام‌دهنده‌اش هستم،","فَدَخَلْتُ","پس درآمدم","فِيهِ","بدان","بِشَهْوَتِي،","با خواهشم،","وَاجْتَرَحْتُهُ","و فراهمش آوردم","بِإِرَادَتِي،","با اراده‌ام،","وَقَارَفْتُهُ","و مرتکبش شدم","بِمَحَبَّتِي","با دوست‌داشتنم","وَلَذَّتِي","و لذتم","وَمَشِيَّتِي،","و خواست خود،","وَشِئْتُهُ","و خواستمش","إِذْ","آنگاه که","شِئْتَ","تو خواستی","أَنْ","که","أَشَاءَهُ،","بخواهمش،","وَأَرَدْتُهُ","و اراده‌اش کردم","إِذْ","آنگاه که","أَرَدْتَ","تو اراده کردی","أَنْ","که","أُرِيدَهُ،","اراده‌اش کنم،","فَعَمِلْتُهُ","پس انجامش دادم","إِذْ","آنگاه که","كَانَ","بود","فِي","در","قَدِيمِ","دیرینه","تَقْدِيرِكَ","تقدیر تو","وَنَافِذِ","و نافذ","عِلْمِكَ","دانش تو","أَنِّي","که من","فَاعِلُهُ،","انجام‌دهنده‌اش هستم،","لَمْ","نکردی","تُدْخِلْنِي","مرا وارد","فِيهِ","در آن","جَبْرًا،","به جبر،","وَلَمْ","و","تَحْمِلْنِي","وانداشتی مرا","عَلَيْهِ","بر آن","قَهْرًا،","به قهر،"],
+30:["وَلَمْ","و","تَظْلِمْ","ستم نکردی","نِي","به من","فِيهِ","در آن","شَيْئًا،","چیزی،","فَأَسْتَغْفِرُكَ","پس آمرزش می‌خواهم از تو","لَهُ","برای آن","وَلِكُلِّ","و برای هر","ذَنْبٍ","گناهی","جَرَى","جاری شد","بِهِ","بدان","عِلْمُكَ","دانش تو","عَلَيَّ","بر من","وَفِيَّ","و در من","إِلَى","تا","آخِرِ","پایان","عُمْرِي.","عمرم."],
+31:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","مَالَ","گرایید","بِسَخَطِي","با ناخشنودی من","فِيهِ","در آن","عَنْ","از","رِضَاكَ،","خشنودی تو،","وَمَالَتْ","و گرایید","نَفْسِي","نفس من","إِلَى","به سوی","رِضَاكَ","خشنودی تو","فَسَخِطْتُهُ،","پس ناخوش داشتمش،","أَوْ","یا","رَهِبْتُ","هراسیدم","فِيهِ","در آن","سِوَاكَ،","غیر تو را،"],
+32:["أَوْ","یا","عَادَيْتُ","دشمنی کردم","فِيهِ","در آن","أَوْلِيَاءَكَ،","دوستانت را،","أَوْ","یا","وَالَيْتُ","دوستی کردم","فِيهِ","در آن","أَعْدَاءَكَ،","دشمنانت را،","أَوِ","یا","اخْتَرْتُهُمْ","برگزیدمشان","عَلَى","بر","أَصْفِيَائِكَ،","برگزیدگانت،","أَوْ","یا","خَذَلْتُ","تنها گذاشتم","فِيهِ","در آن","أَحِبَّاءَكَ،","دوست‌دارانت را،","أَوْ","یا","قَصَّرْتُ","کوتاهی کردم","فِيهِ","در آن","عَنْ","از","رِضَاكَ","خشنودی تو","يَا","ای","خَيْرَ","بهترین","الْغَافِرِينَ.","آمرزندگان."],
+33:["اللَّهُمَّ","خدایا","إِنِّي","من","أَسْتَغْفِرُكَ","آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","ذَنْبٍ","گناهی","تُبْتُ","توبه کردم","إِلَيْكَ","به درگاه تو","مِنْهُ","از آن","ثُمَّ","سپس","عُدْتُ","بازگشتم","فِيهِ.","بدان."],
+34:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","لِمَا","برای آنچه","أَعْطَيْتُكَ","به تو دادم","مِنْ","از","نَفْسِي","نفس خود","ثُمَّ","سپس","لَمْ","نه","أَفِ","وفا کردم","بِهِ.","بدان."],
+35:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","لِلنِّعْمَةِ","برای نعمتی","الَّتِي","که","أَنْعَمْتَ","ارزانی داشتی","بِهَا","بدان","عَلَيَّ","بر من","فَقَوِيتُ","پس نیرو گرفتم","بِهَا","بدان","عَلَى","بر","مَعْصِيَتِكَ.","نافرمانی تو."],
+36:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","لِكُلِّ","برای هر","خَيْرٍ","کار نیکی","أَرَدْتُ","خواستم","بِهِ","بدان","وَجْهَكَ","روی تو را","فَخَالَطَنِي","پس آمیخت مرا","مَا","آنچه","لَيْسَ","نیست","لَكَ.","برای تو."],
+37:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","لِمَا","برای آنچه","دَعَانِي","مرا خواند","إِلَيْهِ","بدان","الرُّخَصُ","رخصت‌ها","فِيمَا","در آنچه","اشْتَبَهَ","مشتبه شد","عَلَيَّ","بر من","مِمَّا","از آنچه","هُوَ","آن","عِنْدَكَ","نزد تو","حَرَامٌ.","حرام است."],
+38:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","لِلذُّنُوبِ","برای گناهانی","الَّتِي","که","لَا","نه","يَعْلَمُهَا","می‌داندشان","غَيْرُكَ،","غیر تو،","وَلَا","و","يَطَّلِعُ","آگاه می‌شود","عَلَيْهَا","بدان","سِوَاكَ،","جز تو،","وَلَا","و","يَحْتَمِلُهَا","تابشان می‌آرد","إِلَّا","جز","حِلْمُكَ،","حلم تو،","وَلَا","و","يَسَعُهَا","دربرشان می‌گیرد","إِلَّا","جز","عَفْوُكَ.","گذشت تو."],
+39:["وَأَسْتَغْفِرُكَ","و آمرزش می‌خواهم از تو","وَأَتُوبُ","و توبه می‌کنم","إِلَيْكَ","به سوی تو","مِنْ","از","مَظَالِمَ","ستم‌های","كَثِيرَةٍ","بسیار","لِعِبَادِكَ","بندگانت را","قِبَلِي","بر گردن من","يَا","ای","رَبِّ،","پروردگار من،","فَلَمْ","پس","أَسْتَطِعْ","نتوانستم","رَدَّهَا","بازگردانمشان","عَلَيْهِمْ","به آنان","وَتَحْلِيلَهَا","و حلالیت‌طلبیدنشان","مِنْهُمْ،","از ایشان،","أَوْ","یا","شَهِدُوا","حاضر بودند","فَاسْتَحْيَيْتُ","پس شرم کردم","مِنِ","از","اسْتِحْلَالِهِمْ","حلالیت‌خواستنشان","وَالطَّلَبِ","و التماس","إِلَيْهِمْ","به ایشان","وَإِعْلَامِهِمْ","و آگاه‌کردنشان","ذَلِكَ،","بدان،"],
+40:["وَأَنْتَ","و تو","الْقَادِرُ","توانایی","عَلَى","بر","أَنْ","که","تَسْتَوْهِبَنِي","بخشش مرا بستانی","مِنْهُمْ","از آنان","وَتُرْضِيَهُمْ","و خشنودشان سازی","عَنِّي","از من","كَيْفَ","هرگونه","شِئْتَ","خواستی","وَبِمَا","و با هرچه","شِئْتَ،","خواستی،","يَا","ای","أَرْحَمَ","مهربان‌ترین","الرَّاحِمِينَ،","مهربانان،","وَأَحْكَمَ","و داناترین","الْحَاكِمِينَ،","داوران،","وَخَيْرَ","و بهترین","الْغَافِرِينَ.","آمرزندگان."],
+41:["اللَّهُمَّ","خدایا","إِنَّ","همانا","اسْتِغْفَارِي","آمرزش‌خواستن من","إِيَّاكَ","از تو","مَعَ","همراه","الْإِصْرَارِ","پافشاری بر گناه","لُؤْمٌ،","پستی است،","وَتَرْكِيَ","و ترک کردن","الِاسْتِغْفَارَ","استغفار را","مَعَ","همراه","مَعْرِفَتِي","شناخت من","بِسَعَةِ","به گستردگی","جُودِكَ","بخشش تو","وَرَحْمَتِكَ","و رحمت تو","عَجْزٌ.","ناتوانی است."],
+42:["فَكَمْ","پس چه بسیار","تَتَحَبَّبُ","مهر می‌ورزی","إِلَيَّ","به من","يَا","ای","رَبِّ","پروردگار من","وَأَنْتَ","در حالی که تو","الْغَنِيُّ","بی‌نیازی","عَنِّي،","از من،","وَكَمْ","و چه بسیار","أَتَبَغَّضُ","خود را منفور می‌سازم","إِلَيْكَ","نزد تو","وَأَنَا","در حالی که من","الْفَقِيرُ","نیازمندم","إِلَيْكَ","به تو","وَإِلَى","و به","رَحْمَتِكَ.","رحمت تو."],
+43:["فَيَا","پس ای","مَنْ","آن‌که","وَعَدَ","وعده داد","فَوَفَى،","پس وفا کرد،","وَأَوْعَدَ","و بیم داد","فَعَفَا،","پس بخشید،","اغْفِرْ","بیامرز","لِي","مرا","خَطَايَايَ،","خطاهایم را،","وَاغْفِرْ","و ببخش","وَارْحَمْ","و رحم کن","وَأَنْتَ","که تو","خَيْرُ","بهترین","الرَّاحِمِينَ.","رحم‌کنندگانی."]};
 
-/* ══════════ helpers ══════════ */
+/* ══════ helpers ══════ */
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ic=n=>`<svg class="ic"><use href="#${n}"/></svg>`;
@@ -652,14 +606,13 @@ const fmt=n=>new Intl.NumberFormat('en').format(n);
 const buzz=m=>{try{navigator.vibrate&&navigator.vibrate(m)}catch{}};
 const deb=(f,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),ms)}};
 const lj=k=>{try{return JSON.parse(localStorage.getItem(k))}catch{return null}};
-const words=s=>String(s||'').split(/\s+/).filter(Boolean);
-function norm(s){let n='',map=[];for(let i=0;i<s.length;i++){let c=s[i];
+const wds=s=>String(s||'').split(/\s+/).filter(Boolean);
+function norm(s){let n='';for(const c of String(s||'')){
  if(/[\u064B-\u065F\u0670\u0640\u06D6-\u06ED\u200c]/.test(c))continue;
- if('أإآٱ'.includes(c))c='ا';else if(c==='ة'||c==='ۀ')c='ه';else if(c==='ى'||c==='ی')c='ي';else if(c==='ک')c='ك';else if(c==='ؤ')c='و';else if(c==='ئ')c='ي';
- n+=c;map.push(i)}return{n,map}}
-
+ let x=c;if('أإآٱ'.includes(x))x='ا';else if(x==='ة'||x==='ۀ')x='ه';else if(x==='ى'||x==='ی')x='ي';else if(x==='ک')x='ك';else if(x==='ؤ')x='و';else if(x==='ئ')x='ي';
+ n+=x}return n}
 const SB='https://ummhohozmpwltbgeczsf.supabase.co',KEY='sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
-const T1='istigfarqwen_user_state',T2='istigfarqwen_daily_activity',LS='nur.v5',LSS='nur.session.v4';
+const T1='istigfarqwen_user_state',T2='istigfarqwen_daily_activity',LS='nur.v6',LSS='nur.session.v4';
 const SQL=`create table if not exists public.istigfarqwen_user_state (
   user_id uuid primary key references auth.users(id) on delete cascade,
   state jsonb not null default '{}'::jsonb,
@@ -682,85 +635,83 @@ drop policy if exists a_upd on public.istigfarqwen_daily_activity;
 create policy a_sel on public.istigfarqwen_daily_activity for select using (auth.uid()=user_id);
 create policy a_ins on public.istigfarqwen_daily_activity for insert with check (auth.uid()=user_id);
 create policy a_upd on public.istigfarqwen_daily_activity for update using (auth.uid()=user_id) with check (auth.uid()=user_id);`;
-
 const PHRASES=[{ar:'أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِلَيْهِ',f:'از خدا آمرزش می‌خواهم و به او بازمی‌گردم',n:'Istighfār'},
 {ar:'سُبْحَانَ اللهِ وَبِحَمْدِهِ',f:'پاک و منزه است خدا و ستایش از آنِ اوست',n:'Taḥmīd'},
 {ar:'لَا إِلَهَ إِلَّا اللهُ',f:'هیچ معبودی جز خدا نیست',n:'Tahlīl'},
 {ar:'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَآلِ مُحَمَّدٍ',f:'خدایا بر محمد و خاندان محمد درود فرست',n:'Ṣalawāt'}];
 const TARGETS=[33,99,100,313,1000];
-const DEF={v:5,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.15,glow:1,inter:false,wordSound:true,sound:true,vol:.7,amb:false,motion:true,goal:5},
- read:{},last:null,bm:{},notes:{},tas:{total:0,session:0,target:100,phrase:0},ach:{},act:{}};
-function wd(s){const d=copy(DEF);if(!s||(s.v!==5&&s.v!==4&&s.v!==3))return d;
- const o={...d,...s,v:5,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}};
- delete o.set.lang;delete o.set.auto;delete o.set.speed;delete o.set.rate;delete o.set.focus;return o}
-let S=wd(lj(LS)||lj('nur.v4')||lj('nur.v3')),SES=lj(LSS);
+const DEF={v:6,set:{theme:'lapis',arFont:'amiri',fs:1,lh:2.2,glow:1,inter:false,wordSound:true,sound:true,vol:.7,amb:false,motion:true,goal:5},
+read:{},last:null,bm:{},notes:{},tas:{total:0,session:0,target:100,phrase:0},ach:{},act:{}};
+function wd(s){const d=copy(DEF);if(!s||![3,4,5,6].includes(s.v))return d;
+ const o={...d,...s,v:6,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}};
+ ['lang','auto','speed','rate','focus'].forEach(k=>delete o.set[k]);return o}
+let S=wd(lj(LS)||lj('nur.v5')||lj('nur.v4')),SES=lj(LSS);
 let P=[],IX={},CHOF={},VIEW='read',libTab='bm',io=null,rt=null,syncErr='',lastSync=0,lastTouch=Date.now();
-let SEL=null,alignQ='',tipRaf=0;
+let SEL=null,wordQ='',tipRaf=0,AUD=null;
 const day=()=>(S.act[dk()]||={r:0,t:0,s:0});
 const nread=()=>Object.keys(S.read).length;
 function streak(){let n=0,d=new Date();const has=k=>{const a=S.act[k];return a&&(a.r>0||a.t>0||a.s>=60)};if(!has(dk(d)))d.setDate(d.getDate()-1);while(has(dk(d))){n++;d.setDate(d.getDate()-1)}return n}
 function saveLocal(){try{localStorage.setItem(LS,JSON.stringify(S))}catch{}}
 function save(){saveLocal();hud();syncSoon()}
 
-/* ══════════ build + verify alignment ══════════ */
+/* ══════ build word index + verify ══════ */
 function build(){
  P=[];IX={};CHOF={};
- CH.forEach((c,ci)=>c.p.forEach(p=>{
-  const units=p.u.map((pair,i)=>({i,a:pair[0],f:pair[1],aw:words(pair[0]),fw:words(pair[1])}));
-  const ar=[],fa=[];
-  units.forEach(u=>{u.aw.forEach(w=>ar.push({w,u:u.i}));u.fw.forEach(w=>fa.push({w,u:u.i}))});
-  const o={n:p.n,ch:c.t,chf:c.f,ci,units,ar,fa,
-   arText:units.map(u=>u.a).join(' '),faText:units.map(u=>u.f).join(' '),
-   na:norm(units.map(u=>u.a).join(' ')),nf:norm(units.map(u=>u.f).join(' '))};
-  P.push(o);IX[p.n]=o;CHOF[p.n]=c;
+ CH.forEach((c,ci)=>c[2].forEach(n=>{
+  const raw=W[n]||[],words=[];
+  for(let i=0;i<raw.length;i+=2){
+   const a=raw[i]||'',f=raw[i+1]||'';
+   words.push({i:words.length,a,f,fw:wds(f)});
+  }
+  const o={n,ch:c[0],chf:c[1],ci,words,
+   arText:words.map(w=>w.a).join(' '),faText:words.map(w=>w.f).join(' ')};
+  P.push(o);IX[n]=o;CHOF[n]=c;
  }));
 }
 function audit(){
- let aw=0,fw=0,units=0,badA=0,badF=0,emptyA=0,emptyF=0;
- P.forEach(p=>{units+=p.units.length;
-  p.units.forEach(u=>{if(!u.aw.length)emptyA++;if(!u.fw.length)emptyF++});
-  p.ar.forEach(t=>{aw++;const u=p.units[t.u];if(!u||!u.fw.length)badA++});
-  p.fa.forEach(t=>{fw++;const u=p.units[t.u];if(!u||!u.aw.length)badF++});
- });
- const cov=aw+fw?Math.round(((aw-badA)+(fw-badF))/(aw+fw)*100):100;
- return{passages:P.length,units,aw,fw,badA,badF,emptyA,emptyF,cov,ok:badA===0&&badF===0&&emptyA===0&&emptyF===0};
+ let aw=0,fw=0,noF=0,noA=0,orphanF=0;
+ P.forEach(p=>p.words.forEach(w=>{
+  aw++;fw+=w.fw.length;
+  if(!w.fw.length)noF++;
+  if(!wds(w.a).length)noA++;
+ }));
+ const total=aw+fw,cov=total?Math.round(((aw-noF)+(fw-orphanF))/total*100):100;
+ return{passages:P.length,aw,fw,noF,noA,orphanF,cov,ok:noF===0&&noA===0&&orphanF===0};
 }
-let AUD=null;
 
-/* ══════════ sound ══════════ */
+/* ══════ sound ══════ */
 const Snd={c:null,g:null,
  ready(){if(!S.set.sound)return null;if(!this.c){const A=window.AudioContext||window.webkitAudioContext;if(!A)return null;this.c=new A();this.g=this.c.createGain();this.g.connect(this.c.destination)}if(this.c.state==='suspended')this.c.resume().catch(()=>{});this.g.gain.value=S.set.vol;return this.c},
  t(f,d,ty='sine',v=.12,at=0,f2){const c=this.c,t=c.currentTime+at,o=c.createOscillator(),g=c.createGain();o.type=ty;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(this.g);o.start(t);o.stop(t+d+.05)},
  p(n){if(n==='hover'&&(!this.c||this.c.state!=='running'))return;if(!this.ready())return;const T=this.t.bind(this);
  ({word:()=>{T(880,.05,'sine',.06);T(1320,.07,'sine',.025,.03)},
-   tap:()=>T(340,.05,'sine',.07),hover:()=>T(560,.02,'sine',.016),
-   open:()=>{T(392,.13,'sine',.07,0,588)},close:()=>T(520,.11,'sine',.055,0,300),
-   on:()=>{T(440,.05,'triangle',.09);T(660,.08,'triangle',.09,.06)},
-   off:()=>{T(660,.05,'triangle',.07);T(330,.09,'triangle',.07,.06)},
-   ok:()=>{T(523,.08,'sine',.09);T(659,.08,'sine',.09,.07);T(784,.15,'sine',.09,.14)},
-   err:()=>{T(190,.15,'sawtooth',.05);T(150,.18,'sawtooth',.04,.09)},
-   bm:()=>{T(660,.05,'triangle',.09);T(880,.1,'triangle',.08,.05)},
-   tick:()=>{T(900,.03,'triangle',.11);T(180,.05,'sine',.08)},
-   chime:()=>{T(523,.9,'sine',.1);T(1046,.9,'sine',.045,.02)},
-   fan:()=>{[523,659,784,1046].forEach((f,i)=>T(f,.2,'triangle',.09,i*.1))},
-   pop:()=>T(760,.04,'sine',.07,0,980)}[n]||(()=>{}))()}
-};
+ tap:()=>T(340,.05,'sine',.07),hover:()=>T(560,.02,'sine',.016),
+ open:()=>T(392,.13,'sine',.07,0,588),close:()=>T(520,.11,'sine',.055,0,300),
+ on:()=>{T(440,.05,'triangle',.09);T(660,.08,'triangle',.09,.06)},
+ off:()=>{T(660,.05,'triangle',.07);T(330,.09,'triangle',.07,.06)},
+ ok:()=>{T(523,.08,'sine',.09);T(659,.08,'sine',.09,.07);T(784,.15,'sine',.09,.14)},
+ err:()=>{T(190,.15,'sawtooth',.05);T(150,.18,'sawtooth',.04,.09)},
+ bm:()=>{T(660,.05,'triangle',.09);T(880,.1,'triangle',.08,.05)},
+ tick:()=>{T(900,.03,'triangle',.11);T(180,.05,'sine',.08)},
+ chime:()=>{T(523,.9,'sine',.1);T(1046,.9,'sine',.045,.02)},
+ fan:()=>{[523,659,784,1046].forEach((f,i)=>T(f,.2,'triangle',.09,i*.1))},
+ pop:()=>T(760,.04,'sine',.07,0,980)}[n]||(()=>{}))()}};
 const Amb={n:null,
  start(){if(this.n)return;const c=Snd.ready();if(!c)return;const g=c.createGain();g.gain.value=0;g.gain.linearRampToValueAtTime(.04*S.set.vol,c.currentTime+3);
-  const a=c.createOscillator(),b=c.createOscillator(),l=c.createOscillator(),lg=c.createGain();
-  a.frequency.value=110;b.frequency.value=110.7;l.frequency.value=.07;lg.gain.value=.016*S.set.vol;
-  l.connect(lg);lg.connect(g.gain);a.connect(g);b.connect(g);g.connect(c.destination);a.start();b.start();l.start();this.n={a,b,l,g}},
+ const a=c.createOscillator(),b=c.createOscillator(),l=c.createOscillator(),lg=c.createGain();
+ a.frequency.value=110;b.frequency.value=110.7;l.frequency.value=.07;lg.gain.value=.016*S.set.vol;
+ l.connect(lg);lg.connect(g.gain);a.connect(g);b.connect(g);g.connect(c.destination);a.start();b.start();l.start();this.n={a,b,l,g}},
  stop(){if(!this.n)return;const{a,b,l,g}=this.n;try{g.gain.linearRampToValueAtTime(0,Snd.c.currentTime+1)}catch{};setTimeout(()=>{try{a.stop();b.stop();l.stop()}catch{}},1200);this.n=null},
  sync(){if(!S.set.sound||!S.set.amb){this.stop();return}if(this.n){try{this.n.g.gain.linearRampToValueAtTime(.04*S.set.vol,Snd.c.currentTime+.3)}catch{}}else this.start()}};
 
-/* ══════════ supabase ══════════ */
+/* ══════ supabase ══════ */
 const emsg=j=>(j&&(j.msg||j.error_description||j.message||(typeof j.error==='string'&&j.error)||j.hint))||'Something went wrong';
 function setSes(j){SES={access_token:j.access_token,refresh_token:j.refresh_token,expires_at:j.expires_at||Math.floor(Date.now()/1000)+(j.expires_in||3600),user:j.user};try{localStorage.setItem(LSS,JSON.stringify(SES))}catch{};sched();acctUI()}
 function clearSes(){SES=null;localStorage.removeItem(LSS);clearTimeout(rt);acctUI();syncState('off')}
 async function sb(p,o={}){const{method='GET',body,auth=true,prefer,_r=false}=o;const h={apikey:KEY,'Content-Type':'application/json',Authorization:'Bearer '+(auth&&SES?SES.access_token:KEY)};if(prefer)h.Prefer=prefer;
  let r;try{r=await fetch(SB+p,{method,headers:h,body:body?JSON.stringify(body):undefined})}catch{const e=new Error('No connection to the cloud. Everything stays saved on this device.');e.net=1;throw e}
  let j=null;try{j=await r.json()}catch{}
- if(!r.ok){if(r.status===401&&SES&&p.startsWith('/rest')&&!_r&&await refresh())return sb(p,{...o,_r:true});const e=new Error(emsg(j)||'HTTP '+r.status);throw e}return j}
+ if(!r.ok){if(r.status===401&&SES&&p.startsWith('/rest')&&!_r&&await refresh())return sb(p,{...o,_r:true});throw new Error(emsg(j)||'HTTP '+r.status)}return j}
 async function refresh(){if(!SES?.refresh_token)return false;try{setSes(await sb('/auth/v1/token?grant_type=refresh_token',{method:'POST',auth:false,body:{refresh_token:SES.refresh_token}}));return true}catch(e){if(e.net){syncState('err');return false}clearSes();return false}}
 function sched(){clearTimeout(rt);if(!SES)return;rt=setTimeout(async()=>{if(await refresh())syncState('ok')},Math.max(5000,SES.expires_at*1000-Date.now()-60000))}
 function syncState(s){const b=$('#syncBtn');b.className='syncb '+(SES?s:'off');b.title={off:'Guest mode — sign in to sync',ok:'Synced',busy:'Syncing…',err:'Sync problem — tap for details'}[s]||'Cloud sync';syncUI()}
@@ -785,7 +736,7 @@ const syncSoon=deb(()=>{if(SES)push().catch(e=>{syncErr=e.message;syncState('err
 async function syncNow(){if(!SES){openAuth();return}try{await afterAuth();if(syncErr)throw new Error(syncErr);Snd.p('ok');toast('Everything is in sync','ok','sync')}catch(e){syncErr=e.message;syncState('err');Snd.p('err');syncHelp()}}
 function syncHelp(){modal(`<h2>${ic('db')}Cloud sync</h2><div class="mbody">${SES?`Signed in as <b style="color:var(--gold)">${esc(SES.user.email||'')}</b>.<br><br>${syncErr?`<span style="color:var(--pom)">${esc(syncErr)}</span>`:'No problems recorded.'}<br><br>If the error mentions a missing table or policy, run this once in Supabase → SQL Editor:`:'Sign in to sync your progress across devices.'}</div>${SES?`<div class="sqlbox">${esc(SQL)}</div>`:''}<div class="macts">${SES?`<button class="btn" data-a="copysql">${ic('copy')}Copy SQL</button><button class="btn" data-a="sync">${ic('sync')}Retry</button>`:`<button class="btn gold" data-a="openauth">${ic('user')}Sign in</button>`}<button class="btn ghost" data-a="mclose">Close</button></div>`)}
 
-/* ══════════ toast / modal ══════════ */
+/* ══════ toast / modal ══════ */
 function toast(m,t='ok',i='check',action){const b=$('#toasts');while(b.children.length>=4)b.firstChild.remove();
  const e=document.createElement('div');e.className='toast '+(t==='ok'?'':t);e.innerHTML=ic(i)+`<span>${esc(m)}</span>`;e.onclick=()=>e.remove();
  if(action){const u=document.createElement('button');u.className='undo';u.textContent=action.label;u.onclick=ev=>{ev.stopPropagation();action.fn();e.remove()};e.appendChild(u)}
@@ -795,11 +746,11 @@ function modal(h){$('#mroot').innerHTML=`<div class="ov open"><div class="scrim"
 function mclose(){if(!$('#mroot').innerHTML)return;$('#mroot').innerHTML='';Snd.p('close');if(mres){const r=mres;mres=null;r(false)}}
 function confirmBox(o){return new Promise(r=>{mres=r;modal(`<h2>${ic(o.danger?'alert':'info')}${esc(o.title)}</h2><div class="mbody">${esc(o.body)}</div><div class="macts"><button class="btn ghost" data-a="mclose">Cancel</button><button class="btn ${o.danger?'bad':'gold'}" data-a="mok">${esc(o.ok||'Confirm')}</button></div>`)})}
 
-/* ══════════ settings ══════════ */
+/* ══════ settings ══════ */
 function tidy(){const t=S.set;
  if(!['lapis','parchment','shrine','plum'].includes(t.theme))t.theme='lapis';
  if(!['amiri','scheherazade','naskh'].includes(t.arFont))t.arFont='amiri';
- t.fs=cl(+t.fs||1,.8,1.8);t.lh=cl(+t.lh||2.15,1.8,2.8);t.glow=cl(t.glow==null?1:+t.glow,0,2);
+ t.fs=cl(+t.fs||1,.8,1.8);t.lh=cl(+t.lh||2.2,1.8,2.9);t.glow=cl(t.glow==null?1:+t.glow,0,2);
  t.vol=cl(+t.vol||0,0,1);t.goal=cl(Math.round(+t.goal)||5,1,43);
  t.inter=!!t.inter;t.wordSound=t.wordSound!==false;t.sound=!!t.sound;t.amb=!!t.amb;t.motion=!!t.motion;
  S.tas.total=Math.max(0,Math.round(+S.tas.total)||0);S.tas.session=Math.max(0,Math.round(+S.tas.session)||0);
@@ -821,7 +772,7 @@ function fillDrawer(){$$('#drawer [data-s]').forEach(e=>{const v=S.set[e.dataset
 const openDr=()=>{fillDrawer();acctUI();document.body.classList.add('drawer');Snd.p('open')};
 const closeDr=()=>{document.body.classList.remove('drawer');Snd.p('close')};
 
-/* ══════════ account / auth ══════════ */
+/* ══════ account / auth ══════ */
 const uname=()=>SES?.user?.user_metadata?.name||SES?.user?.email?.split('@')[0]||'Seeker';
 function acctUI(){$('#avBtn').innerHTML=SES?esc(uname()[0].toUpperCase()):ic('user');
  $('#drAcct').innerHTML=SES?`<div class="acct"><span class="av">${esc(uname()[0].toUpperCase())}</span><div class="who"><b>${esc(uname())}</b><span>${esc(SES.user.email||'')}</span></div></div><div class="stack"><button class="btn bad" data-a="logout">${ic('out')}Sign out</button></div>`
@@ -837,123 +788,121 @@ function aerr(m){const e=$('#aErr');e.textContent=m;e.hidden=false;Snd.p('err')}
 function bindAuth(){const w=(f,fn)=>f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('[type=submit]');b.classList.add('busy');$('#aErr').hidden=true;try{await fn()}catch(x){aerr(x.message)}finally{b.classList.remove('busy')}});
  w($('#fIn'),async()=>{setSes(await sb('/auth/v1/token?grant_type=password',{method:'POST',auth:false,body:{email:$('#inE').value.trim(),password:$('#inP').value}}));await afterAuth();closeAuth();Snd.p('ok');toast(`Welcome back, ${uname()}`,'gold','spark')});
  w($('#fUp'),async()=>{const j=await sb('/auth/v1/signup',{method:'POST',auth:false,body:{email:$('#upE').value.trim(),password:$('#upP').value,data:{name:$('#upN').value.trim()}}});
-  if(j.access_token){setSes(j);await afterAuth();closeAuth();Snd.p('fan');toast(`Ahlan, ${uname()}!`,'gold','spark')}
-  else{$('#fUp').hidden=true;$('#aVer').hidden=false;const e=$('#upE').value.trim();$('#verE').textContent=e;$('#aVer').dataset.e=e;Snd.p('ok')}});
+ if(j.access_token){setSes(j);await afterAuth();closeAuth();Snd.p('fan');toast(`Ahlan, ${uname()}!`,'gold','spark')}
+ else{$('#fUp').hidden=true;$('#aVer').hidden=false;const e=$('#upE').value.trim();$('#verE').textContent=e;$('#aVer').dataset.e=e;Snd.p('ok')}});
  w($('#fFg'),async()=>{await sb('/auth/v1/recover',{method:'POST',auth:false,body:{email:$('#fgE').value.trim()}});toast('Reset link sent','ok','mail');Snd.p('ok');atab('in')})}
 
-/* ══════════ router ══════════ */
-const TITLES={read:'The Grand Istighfār',align:'Word Alignment',lib:'Library',tas:'Tasbīḥ',jour:'Your Journey'};
-const ORDER=['read','align','lib','tas','jour'];
+/* ══════ router ══════ */
+const TITLES={read:'The Grand Istighfār',words:'Word to Word',lib:'Library',tas:'Tasbīḥ',jour:'Your Journey'};
+const ORDER=['read','words','lib','tas','jour'];
 function go(v,p){Snd.p('tap');const h='#/'+v+(p!=null?'/'+p:'');if(location.hash===h)render();else location.hash=h}
 function route(){const a=location.hash.replace(/^#\/?/,'').split('/');return{v:TITLES[a[0]]?a[0]:'read',p:a[1]||null}}
 function render(o={}){const keep=!!o.keep,y=scrollY;clearSel();const{v,p}=route();VIEW=v;
  $('#ttl').textContent=TITLES[v];document.title='Nūr · '+TITLES[v];
  $$('.nav button,#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
  if(io){io.disconnect();io=null}
- $('#view').innerHTML=({read:vRead,align:vAlign,lib:vLib,tas:vTas,jour:vJour})[v](p);
+ $('#view').innerHTML=({read:vRead,words:vWords,lib:vLib,tas:vTas,jour:vJour})[v](p);
  if(v==='read')afterRead(p,keep);
  if(v==='tas')tasUI();
- if(v==='align')bindAlign();
+ if(v==='words')bindWords();
  hud();if(keep)scrollTo(0,y);else if(!p)scrollTo(0,0)}
 function hud(){$('#navCov').textContent=(AUD?AUD.cov:100)+'%'}
 
-/* ══════════ READER ══════════ */
+/* ══════ READER ══════ */
 function lineHTML(p,side){
- const toks=side==='a'?p.ar:p.fa;
- return toks.map((t,i)=>`<span class="w" data-p="${p.n}" data-u="${t.u}" data-s="${side}" data-i="${i}">${esc(t.w)}</span>`).join(' ');
-}
+ return p.words.map(w=>{
+  const txt=side==='a'?w.a:w.f;
+  return `<span class="w" data-p="${p.n}" data-w="${w.i}" data-s="${side}">${esc(txt)}</span>`;
+ }).join(' ')}
 function verseHTML(p){
  return`<article class="verse ${S.read[p.n]?'read':''}" id="v-${p.n}" data-p="${p.n}">
  <div class="vhead"><span class="vnum">${p.n}</span><div class="vacts">
-  <button class="vact ${S.read[p.n]?'done':''}" data-a="read" data-id="${p.n}" title="Mark read" aria-label="Mark read">${ic('check')}</button>
-  <button class="vact ${S.notes[p.n]?'on':''}" data-a="note" data-id="${p.n}" title="Note" aria-label="Note">${ic('note')}</button>
-  <button class="vact ${S.bm[p.n]?'on':''}" data-a="bm" data-id="${p.n}" title="Bookmark" aria-label="Bookmark">${ic('bm')}</button>
-  <button class="vact" data-a="copyv" data-id="${p.n}" title="Copy passage" aria-label="Copy">${ic('copy')}</button>
+ <button class="vact ${S.read[p.n]?'done':''}" data-a="read" data-id="${p.n}" title="Mark read">${ic('check')}</button>
+ <button class="vact ${S.notes[p.n]?'on':''}" data-a="note" data-id="${p.n}" title="Note">${ic('note')}</button>
+ <button class="vact ${S.bm[p.n]?'on':''}" data-a="bm" data-id="${p.n}" title="Bookmark">${ic('bm')}</button>
+ <button class="vact" data-a="copyv" data-id="${p.n}" title="Copy passage">${ic('copy')}</button>
  </div></div>
  <p class="line ar" dir="rtl" lang="ar">${lineHTML(p,'a')}</p>
  ${S.set.inter?`<p class="line fa" dir="rtl" lang="fa">${lineHTML(p,'f')}</p>`:''}
  ${S.notes[p.n]?`<div class="vnote">${ic('note')}<span>${esc(S.notes[p.n].t)}</span></div>`:''}
  </article>`}
 function vRead(){
- const rc=nread(),total=P.length;
- const opts=CH.map((c,i)=>`<option value="ch${i}">${esc(c.t)}</option>`).join('');
- let chaps='',ci=-1;
- P.forEach(p=>{if(p.ci!==ci){ci=p.ci;const c=CH[ci],done=c.p.filter(x=>S.read[x.n]).length;
-  chaps+=`<div class="chapter" id="ch${ci}">${fl()}<h2>${ci+1}. ${esc(c.t)}</h2><div class="cfa">${esc(c.f)}</div>
-  <div class="cm"><span class="cdone">${done}/${c.p.length} read</span><span class="seal" ${done<c.p.length?'hidden':''}>${ic('check')}COMPLETE</span><button class="pill" style="padding:4px 11px;font-size:11px" data-a="markch" data-c="${ci}">${ic('check')}Mark chapter</button></div></div>`}
-  chaps+=verseHTML(p)});
+ const rc=nread();
+ const opts=CH.map((c,i)=>`<option value="ch${i}">${esc(c[0])}</option>`).join('');
+ let out='',ci=-1;
+ P.forEach(p=>{if(p.ci!==ci){ci=p.ci;const c=CH[ci],done=c[2].filter(n=>S.read[n]).length;
+  out+=`<div class="chapter" id="ch${ci}">${fl()}<h2>${ci+1}. ${esc(c[0])}</h2><div class="cfa">${esc(c[1])}</div>
+  <div class="cm"><span class="cdone">${done}/${c[2].length} read</span><span class="seal" ${done<c[2].length?'hidden':''}>${ic('check')}COMPLETE</span><button class="pill" style="padding:4px 11px;font-size:11px" data-a="markch" data-c="${ci}">${ic('check')}Mark chapter</button></div></div>`}
+  out+=verseHTML(p)});
  return`<div class="page"><div class="bism">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
- <div class="strip">
-  <select id="chSel" aria-label="Chapter">${opts}</select>
-  <button class="cov" data-a="go" data-v="align" title="Every word is aligned">${ic('shield')}<span>${AUD.cov}%</span></button>
-  <button class="sq ${S.set.inter?'on':''}" data-a="inter" title="Show Persian line">${ic('lines')}</button>
-  <button class="sq" data-a="fs" data-v="-1" title="Smaller">A−</button>
-  <button class="sq" data-a="fs" data-v="1" title="Larger">A+</button>
-  <button class="sq" data-a="drawer" title="Settings">${ic('set')}</button>
- </div>
- ${chaps}
- <div class="vend">${fl()}<p>${rc===total?'You have read the entire duʿāʾ. May every word be a light for you.':'Touch any word — its Persian phrase appears, and both sides glow.'}</p>
- <button class="btn" data-a="go" data-v="align">${ic('link')}See the alignment</button> <button class="btn gold" data-a="go" data-v="tas">${ic('target')}Seal it with tasbīḥ</button></div></div>`}
+ <div class="strip"><select id="chSel" aria-label="Chapter">${opts}</select>
+ <button class="cov" data-a="go" data-v="words" title="Every word bound both ways">${ic('shield')}<span>${AUD.cov}%</span></button>
+ <button class="sq ${S.set.inter?'on':''}" data-a="inter" title="Persian line">${ic('lines')}</button>
+ <button class="sq" data-a="fs" data-v="-1" title="Smaller">A−</button>
+ <button class="sq" data-a="fs" data-v="1" title="Larger">A+</button>
+ <button class="sq" data-a="drawer" title="Settings">${ic('set')}</button></div>
+ ${out}
+ <div class="vend">${fl()}<p>${rc===P.length?'You have read the entire duʿāʾ. May every word be a light for you.':'Touch a word — only its own Persian appears, and both sides glow.'}</p>
+ <button class="btn" data-a="go" data-v="words">${ic('link')}Every word pair</button> <button class="btn gold" data-a="go" data-v="tas">${ic('target')}Seal it with tasbīḥ</button></div></div>`}
 function afterRead(p,keep){
  io=new IntersectionObserver(es=>{let best=null;es.forEach(e=>{if(e.isIntersecting&&(!best||e.intersectionRatio>best.intersectionRatio))best=e});
-  if(best){const id=+best.target.dataset.p;if(S.last!==id){S.last=id;saveLocal();syncSoon()}
-   const sel=$('#chSel');if(sel&&IX[id]&&sel.value!=='ch'+IX[id].ci)sel.value='ch'+IX[id].ci}},{threshold:[.1,.35,.6]});
+ if(best){const id=+best.target.dataset.p;if(S.last!==id){S.last=id;saveLocal();syncSoon()}
+ const sel=$('#chSel');if(sel&&IX[id]&&sel.value!=='ch'+IX[id].ci)sel.value='ch'+IX[id].ci}},{threshold:[.1,.35,.6]});
  $$('.verse').forEach(e=>io.observe(e));
  const t=p&&IX[p]?IX[p]:(S.last!=null&&IX[S.last]?IX[S.last]:null),sel=$('#chSel');
  if(sel&&t)sel.value='ch'+t.ci;
  if(t&&!keep)setTimeout(()=>{const e=$('#v-'+t.n);if(e){e.scrollIntoView({block:'center',behavior:'auto'});if(p){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),1600)}}},40)}
 
-/* ══════════ WORD SELECTION + MINIMAL POPUP ══════════ */
-function clearSel(){
- SEL=null;$$('.w.lit').forEach(e=>e.classList.remove('lit'));$$('.verse.active').forEach(e=>e.classList.remove('active'));
- const t=$('#tip');t.classList.remove('on')}
+/* ══════ WORD SELECTION + MINIMAL POPUP ══════ */
+function clearSel(){SEL=null;$$('.w.lit').forEach(e=>e.classList.remove('lit'));$$('.verse.active').forEach(e=>e.classList.remove('active'));$('#tip').classList.remove('on')}
 function selectWord(el){
- const pn=+el.dataset.p,u=+el.dataset.u,side=el.dataset.s,p=IX[pn];if(!p)return;
- if(SEL&&SEL.p===pn&&SEL.u===u){clearSel();Snd.p('tap');return}
- clearSel();SEL={p:pn,u,side,el};
- $$(`#v-${pn} .w[data-u="${u}"]`).forEach(e=>e.classList.add('lit'));
+ const pn=+el.dataset.p,wi=+el.dataset.w,side=el.dataset.s,p=IX[pn];if(!p)return;
+ if(SEL&&SEL.p===pn&&SEL.w===wi){clearSel();Snd.p('tap');return}
+ clearSel();SEL={p:pn,w:wi,side,el};
+ $$(`#v-${pn} .w[data-w="${wi}"]`).forEach(e=>e.classList.add('lit'));
  $('#v-'+pn)?.classList.add('active');
- const unit=p.units[u];
- const tip=$('#tip');
+ const w=p.words[wi],tip=$('#tip');
  tip.classList.toggle('ar',side==='f');
- tip.firstElementChild.textContent=side==='a'?unit.f:unit.a;
- tip.classList.add('on');
- placeTip();
+ tip.firstElementChild.textContent=side==='a'?w.f:w.a;
+ tip.classList.add('on');placeTip();
  if(S.set.wordSound)Snd.p('word');buzz(5);
- if(S.last!==pn){S.last=pn;saveLocal();syncSoon()}
-}
+ if(S.last!==pn){S.last=pn;saveLocal();syncSoon()}}
 function placeTip(){
  if(!SEL)return;const tip=$('#tip'),el=SEL.el;
  if(!el||!el.isConnected){clearSel();return}
  const r=el.getBoundingClientRect();
  if(r.bottom<0||r.top>innerHeight){tip.classList.remove('on');return}
  tip.classList.add('on');
- const tw=tip.offsetWidth,th=tip.offsetHeight;
- const cx=r.left+r.width/2;
- let x=cl(cx-tw/2,8,Math.max(8,innerWidth-tw-8));
+ const tw=tip.offsetWidth,th=tip.offsetHeight,cx=r.left+r.width/2;
+ const x=cl(cx-tw/2,8,Math.max(8,innerWidth-tw-8));
  let y=r.top-th-11,below=false;
  if(y<8){y=r.bottom+11;below=true}
- if(y+th>innerHeight-8){y=Math.max(8,innerHeight-th-8)}
+ if(y+th>innerHeight-8)y=Math.max(8,innerHeight-th-8);
  tip.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
  tip.classList.toggle('below',below);
- tip.style.setProperty('--cx',cl(cx-x,12,tw-12)+'px');
-}
+ tip.style.setProperty('--cx',cl(cx-x,12,tw-12)+'px')}
 addEventListener('scroll',()=>{if(!SEL||tipRaf)return;tipRaf=requestAnimationFrame(()=>{tipRaf=0;placeTip()})},{passive:true});
 addEventListener('resize',()=>{if(SEL)placeTip()});
+function stepWord(d){
+ if(!SEL)return;const p=IX[SEL.p];let i=SEL.w+d,pn=SEL.p;
+ if(i<0){const k=P.findIndex(x=>x.n===pn)-1;if(k<0)return;pn=P[k].n;i=P[k].words.length-1}
+ else if(i>=p.words.length){const k=P.findIndex(x=>x.n===pn)+1;if(k>=P.length)return;pn=P[k].n;i=0}
+ const el=$(`#v-${pn} .line.ar .w[data-w="${i}"]`);
+ if(el){const r=el.getBoundingClientRect();if(r.top<90||r.bottom>innerHeight-60)el.scrollIntoView({block:'center',behavior:'smooth'});selectWord(el)}}
 
-/* ══════════ verse actions ══════════ */
+/* ══════ verse actions ══════ */
 function refreshVerse(id){const e=$('#v-'+id);if(e){e.classList.toggle('read',!!S.read[id]);
  e.querySelector('[data-a=read]').classList.toggle('done',!!S.read[id]);
  e.querySelector('[data-a=note]').classList.toggle('on',!!S.notes[id]);
  e.querySelector('[data-a=bm]').classList.toggle('on',!!S.bm[id]);
- const old=e.querySelector('.vnote');if(old)old.remove();
+ e.querySelector('.vnote')?.remove();
  if(S.notes[id])e.insertAdjacentHTML('beforeend',`<div class="vnote">${ic('note')}<span>${esc(S.notes[id].t)}</span></div>`)}
- const c=CHOF[id];if(c){const el=$('#ch'+P.find(p=>p.n===id).ci);
-  if(el){const d=c.p.filter(x=>S.read[x.n]).length;el.querySelector('.cdone').textContent=`${d}/${c.p.length} read`;el.querySelector('.seal').hidden=d<c.p.length}}}
+ const c=CHOF[id],p=IX[id];if(c&&p){const el=$('#ch'+p.ci);
+ if(el){const d=c[2].filter(n=>S.read[n]).length;el.querySelector('.cdone').textContent=`${d}/${c[2].length} read`;el.querySelector('.seal').hidden=d<c[2].length}}}
 function setRead(id,on){id=+id;if(!IX[id])return;if(on&&!S.read[id]){S.read[id]=Date.now();day().r++}else if(!on&&S.read[id])delete S.read[id];
  save();refreshVerse(id);Snd.p(on?'ok':'tap');if(on){checkAch();if(nread()===P.length){celebrate();render({keep:true})}}}
 function toggleBm(id){id=+id;if(!IX[id])return;if(S.bm[id]){delete S.bm[id];Snd.p('tap')}else{S.bm[id]=Date.now();Snd.p('bm');buzz(12);toast('Passage bookmarked','ok','bm')}save();refreshVerse(id);checkAch()}
-function markCh(ci){const c=CH[+ci];if(!c)return;let n=0;c.p.forEach(p=>{if(!S.read[p.n]){S.read[p.n]=Date.now();n++;refreshVerse(p.n)}});
+function markCh(ci){const c=CH[+ci];if(!c)return;let n=0;c[2].forEach(pn=>{if(!S.read[pn]){S.read[pn]=Date.now();n++;refreshVerse(pn)}});
  if(n){day().r+=n;save();Snd.p('ok');toast(`Chapter marked — ${n} passage${n>1?'s':''}`,'ok','check');checkAch();if(nread()===P.length){celebrate();render({keep:true})}}else toast('Chapter already complete','ok','check')}
 function noteModal(id){id=+id;const n=S.notes[id];
  modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('note')}Note on passage ${id}</h2>
@@ -970,67 +919,59 @@ async function copyVerse(id){const p=IX[+id];if(!p)return;
  try{await navigator.clipboard.writeText(txt)}catch{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}
  Snd.p('pop');toast('Passage copied — Arabic and Persian','ok','copy')}
 
-/* ══════════ ALIGNMENT PAGE ══════════ */
-function vAlign(){
- const a=AUD;
- const rows=P.map(p=>`<div class="au" data-a="jump" data-id="${p.n}"><span class="n">${p.n}</span><div class="b">
-  <div class="t">${esc(p.ch)}</div><div class="bars"><div class="bar a"><i></i></div><div class="bar f"><i></i></div></div></div>
-  <span class="pc">100%</span></div>`).join('');
+/* ══════ WORDS PAGE ══════ */
+function vWords(){const a=AUD;
  return`<div class="page">
  <div class="grid g4 stg">
-  <div class="card"><div class="sic t">${ic('shield')}</div><div class="big" id="covBig">${a.cov}%</div><div class="lbl">bidirectional coverage</div></div>
-  <div class="card"><div class="sic">${ic('link')}</div><div class="big">${fmt(a.units)}</div><div class="lbl">aligned phrases</div></div>
-  <div class="card"><div class="sic">${ic('book')}</div><div class="big">${fmt(a.aw)}</div><div class="lbl">Arabic words bound</div></div>
-  <div class="card"><div class="sic t">${ic('feather')}</div><div class="big">${fmt(a.fw)}</div><div class="lbl">Persian words bound</div></div>
+ <div class="card"><div class="sic t">${ic('shield')}</div><div class="big">${a.cov}%</div><div class="lbl">word coverage</div></div>
+ <div class="card"><div class="sic">${ic('book')}</div><div class="big">${fmt(a.aw)}</div><div class="lbl">Arabic words</div></div>
+ <div class="card"><div class="sic t">${ic('feather')}</div><div class="big">${fmt(a.fw)}</div><div class="lbl">Persian words</div></div>
+ <div class="card"><div class="sic">${ic('link')}</div><div class="big">${fmt(a.aw)}</div><div class="lbl">live word pairs</div></div>
  </div>
  <div class="card" style="margin-top:15px">
-  <div class="chd">${ic('shield')}Integrity check</div>
-  <div class="mbody">Every Arabic word belongs to a phrase that carries Persian. Every Persian word belongs to a phrase that carries Arabic. Nothing is left over on either side.</div>
-  <div class="grid g4" style="margin-top:14px;gap:10px">
-   <div><div class="big" style="font-size:22px;color:${a.badA?'var(--pom)':'var(--ok)'}">${a.badA}</div><div class="lbl">Arabic without Persian</div></div>
-   <div><div class="big" style="font-size:22px;color:${a.badF?'var(--pom)':'var(--ok)'}">${a.badF}</div><div class="lbl">Persian without Arabic</div></div>
-   <div><div class="big" style="font-size:22px;color:${a.emptyA?'var(--pom)':'var(--ok)'}">${a.emptyA}</div><div class="lbl">empty Arabic side</div></div>
-   <div><div class="big" style="font-size:22px;color:${a.emptyF?'var(--pom)':'var(--ok)'}">${a.emptyF}</div><div class="lbl">empty Persian side</div></div>
-  </div>
-  <div class="macts"><button class="btn" data-a="reaudit">${ic('rotate')}Run check again</button><button class="btn gold" data-a="go" data-v="read">${ic('book')}Back to reading</button></div>
+ <div class="chd">${ic('shield')}Integrity check</div>
+ <div class="mbody">Each Arabic word carries its own Persian counterpart. Each Persian word belongs to exactly one Arabic word. Nothing is left unbound on either side.</div>
+ <div class="grid g3" style="margin-top:14px;gap:10px">
+ <div><div class="big" style="font-size:22px;color:${a.noF?'var(--pom)':'var(--ok)'}">${a.noF}</div><div class="lbl">Arabic without Persian</div></div>
+ <div><div class="big" style="font-size:22px;color:${a.noA?'var(--pom)':'var(--ok)'}">${a.noA}</div><div class="lbl">empty Arabic side</div></div>
+ <div><div class="big" style="font-size:22px;color:${a.orphanF?'var(--pom)':'var(--ok)'}">${a.orphanF}</div><div class="lbl">Persian without Arabic</div></div>
  </div>
- <div class="hd">Browse every aligned phrase</div>
- <div class="srch">${ic('search')}<input id="aq" placeholder="Filter by any Arabic or Persian word…" value="${esc(alignQ)}" autocomplete="off"></div>
- <div id="pairs"></div>
- <div class="hd">Passages · ${P.length}</div>
- ${rows}</div>`}
-function renderPairs(){
- const box=$('#pairs');if(!box)return;
- const q=alignQ.trim();const ar=/[\u0600-\u06FF]/.test(q);const qn=q?(ar?norm(q).n:q.toLowerCase()):'';
+ <div class="macts"><button class="btn" data-a="reaudit">${ic('rotate')}Run check again</button><button class="btn gold" data-a="go" data-v="read">${ic('book')}Back to reading</button></div>
+ </div>
+ <div class="hd">Every word pair</div>
+ <div class="srch">${ic('search')}<input id="wq" placeholder="Filter by any Arabic or Persian word…" value="${esc(wordQ)}" autocomplete="off"></div>
+ <div id="wlist"></div></div>`}
+function renderWords(){
+ const box=$('#wlist');if(!box)return;
+ const q=wordQ.trim(),qn=q?norm(q):'';
  const out=[];
- for(const p of P){for(const u of p.units){
-  if(!qn||norm(u.a).n.includes(qn)||norm(u.f).n.includes(qn)){out.push({p,u});if(out.length>=160)break}}
-  if(out.length>=160)break}
- box.innerHTML=out.length?out.map(o=>`<div class="pair" data-a="jumpu" data-id="${o.p.n}" data-u="${o.u.i}">
-  <div class="a" dir="rtl">${esc(o.u.a)}</div><div class="f" dir="rtl">${esc(o.u.f)}</div>
-  <div class="pn">Passage ${o.p.n} · phrase ${o.u.i+1} of ${o.p.units.length}</div></div>`).join('')
-  :`<div class="pempty">No phrase matches “${esc(q)}”.</div>`;
-}
-function bindAlign(){const q=$('#aq');if(q)q.addEventListener('input',()=>{alignQ=q.value;renderPairs()});renderPairs()}
+ for(const p of P){for(const w of p.words){
+  if(!qn||norm(w.a).includes(qn)||norm(w.f).includes(qn)){out.push({p,w});if(out.length>=180)break}}
+  if(out.length>=180)break}
+ box.innerHTML=out.length?out.map(o=>`<div class="wrow" data-a="jumpw" data-id="${o.p.n}" data-w="${o.w.i}">
+ <div class="a" dir="rtl">${esc(o.w.a)}</div><div class="f" dir="rtl">${esc(o.w.f)}</div>
+ <div class="pn">Passage ${o.p.n} · word ${o.w.i+1} of ${o.p.words.length}</div></div>`).join('')
+ :`<div class="pempty">No word matches “${esc(q)}”.</div>`}
+function bindWords(){const q=$('#wq');if(q)q.addEventListener('input',()=>{wordQ=q.value;renderWords()});renderWords()}
 
-/* ══════════ LIBRARY ══════════ */
+/* ══════ LIBRARY ══════ */
 function vLib(){
  const bs=Object.keys(S.bm).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b),ns=Object.keys(S.notes).map(Number).filter(i=>IX[i]).sort((a,b)=>a-b);
  const list=libTab==='bm'?bs:ns;
  const items=list.map(id=>{const p=IX[id];return`<div class="libitem" data-a="jump" data-id="${id}"><span class="pnumsm">${id}</span><div class="body">
-  <div class="meta">${esc(p.ch)}</div><div class="snip">${esc(p.arText)}</div><div class="snipe">${esc(p.faText)}</div>
-  ${libTab==='notes'?`<div class="libnote">${esc(S.notes[id].t)}</div>`:''}</div>
-  <div style="display:flex;flex-direction:column;gap:6px">${libTab==='notes'?`<button class="ib" data-a="nedit" data-id="${id}" title="Edit">${ic('note')}</button>`:''}
-  <button class="ib" data-a="${libTab==='bm'?'bmdel':'ndellib'}" data-id="${id}" title="Remove">${ic('trash')}</button></div></div>`}).join('');
+ <div class="meta">${esc(p.ch)}</div><div class="snip">${esc(p.arText)}</div><div class="snipe">${esc(p.faText)}</div>
+ ${libTab==='notes'?`<div class="libnote">${esc(S.notes[id].t)}</div>`:''}</div>
+ <div style="display:flex;flex-direction:column;gap:6px">${libTab==='notes'?`<button class="ib" data-a="nedit" data-id="${id}" title="Edit">${ic('note')}</button>`:''}
+ <button class="ib" data-a="${libTab==='bm'?'bmdel':'ndellib'}" data-id="${id}" title="Remove">${ic('trash')}</button></div></div>`}).join('');
  const empty=`<div class="empty">${ic(libTab==='bm'?'bm':'feather')}<h3>${libTab==='bm'?'No bookmarks yet':'No notes yet'}</h3>
-  <p>${libTab==='bm'?'Tap the ribbon on any passage to keep it here.':'Tap the pen on any passage to write a reflection.'}</p>
-  <button class="btn gold" data-a="go" data-v="read">${ic('book')}Go to the reader</button></div>`;
+ <p>${libTab==='bm'?'Tap the ribbon on any passage to keep it here.':'Tap the pen on any passage to write a reflection.'}</p>
+ <button class="btn gold" data-a="go" data-v="read">${ic('book')}Go to the reader</button></div>`;
  return`<div class="page"><div style="display:flex;gap:9px;margin-bottom:18px;flex-wrap:wrap">
-  <button class="pill ${libTab==='bm'?'on':''}" data-a="libtab" data-v="bm">${ic('bm')}Bookmarks · ${bs.length}</button>
-  <button class="pill ${libTab==='notes'?'on':''}" data-a="libtab" data-v="notes">${ic('note')}Notes · ${ns.length}</button></div>
-  ${list.length?items:empty}</div>`}
+ <button class="pill ${libTab==='bm'?'on':''}" data-a="libtab" data-v="bm">${ic('bm')}Bookmarks · ${bs.length}</button>
+ <button class="pill ${libTab==='notes'?'on':''}" data-a="libtab" data-v="notes">${ic('note')}Notes · ${ns.length}</button></div>
+ ${list.length?items:empty}</div>`}
 
-/* ══════════ TASBIH ══════════ */
+/* ══════ TASBIH ══════ */
 function vTas(){const t=S.tas,p=PHRASES[t.phrase];
  return`<div class="page"><div class="tas">
  <div class="trow">${PHRASES.map((x,i)=>`<button class="pill ${i===t.phrase?'on':''}" data-a="tphrase" data-v="${i}">${x.n}</button>`).join('')}</div>
@@ -1049,7 +990,7 @@ function tInc(){const t=S.tas;t.session++;t.total++;day().t++;save();tasUI();Snd
  if(t.session===t.target){Snd.p('chime');buzz([20,40,20]);confetti(90);toast(`Target of ${t.target} reached — may it be accepted`,'gold','spark')}checkAch()}
 function tDec(){const t=S.tas;if(t.session>0){t.session--;t.total=Math.max(0,t.total-1);day().t=Math.max(0,day().t-1);save();tasUI();Snd.p('tap')}}
 
-/* ══════════ JOURNEY ══════════ */
+/* ══════ JOURNEY ══════ */
 const ACH=[{k:'first',i:'spark',t:'First Light',d:'Mark your first passage as read',f:()=>nread()>=1},
 {k:'ten',i:'book',t:'Devoted Reader',d:'Read 10 passages',f:()=>nread()>=10},
 {k:'all',i:'award',t:'The Full Surrender',d:'Read every passage',f:()=>nread()>=P.length},
@@ -1063,7 +1004,7 @@ function checkAch(){ACH.forEach(a=>{if(!S.ach[a.k]&&a.f()){S.ach[a.k]=Date.now()
 function celebrate(){Snd.p('fan');confetti(200);toast('The entire duʿāʾ is read. Taqabbal Allāh!','gold','spark')}
 function heat(){const t=new Date();t.setHours(0,0,0,0);const s=new Date(t);s.setDate(s.getDate()-s.getDay()-77);let c='';
  for(let w=0;w<12;w++)for(let d=0;d<7;d++){const dt=new Date(s);dt.setDate(s.getDate()+w*7+d);const k=dk(dt),a=S.act[k],v=a?a.r+a.t:0,l=v===0?0:v<5?1:v<15?2:v<40?3:4;
-  c+=`<i class="${dt>t?'fut':l?'l'+l:''}" title="${k} · ${a?`${a.r} read, ${a.t} tasbīḥ`:'rest'}"></i>`}
+ c+=`<i class="${dt>t?'fut':l?'l'+l:''}" title="${k} · ${a?`${a.r} read, ${a.t} tasbīḥ`:'rest'}"></i>`}
  return`<div class="heat">${c}</div><div class="hleg">less <i style="background:var(--surf2)"></i><i style="background:color-mix(in srgb,var(--turq) 28%,var(--surf2))"></i><i style="background:color-mix(in srgb,var(--turq) 52%,var(--surf2))"></i><i style="background:color-mix(in srgb,var(--turq) 76%,var(--surf2))"></i><i style="background:var(--turq)"></i> more</div>`}
 function vJour(){const rc=nread(),mins=Math.round(Object.values(S.act).reduce((s,a)=>s+(a.s||0),0)/60),a=day(),g=S.set.goal;
  return`<div class="page"><div class="grid g4 stg">
@@ -1072,44 +1013,42 @@ function vJour(){const rc=nread(),mins=Math.round(Object.values(S.act).reduce((s
  <div class="card"><div class="sic">${ic('target')}</div><div class="big">${fmt(S.tas.total)}</div><div class="lbl">lifetime tasbīḥ</div></div>
  <div class="card"><div class="sic t">${ic('clock')}</div><div class="big">${fmt(mins)}</div><div class="lbl">minutes reading</div></div></div>
  <div class="grid g2" style="margin-top:15px">
-  <div class="card"><div class="chd">${ic('target')}Today's intention</div>
-   <p class="mu" style="font-size:13px;line-height:1.8">${a.r>=g?'Fulfilled. Extra passages are extra light.':`Read ${g-a.r} more passage${g-a.r>1?'s':''} today.`}<br>Today: <b style="color:var(--tx)">${a.r}</b> read · <b style="color:var(--tx)">${a.t}</b> tasbīḥ · <b style="color:var(--tx)">${Math.round(a.s/60)}</b> min.</p>
-   <button class="btn" style="margin-top:12px" data-a="go" data-v="read">${ic('book')}Continue</button></div>
-  <div class="card"><div class="chd">${ic('cal')}Last 12 weeks</div>${heat()}</div></div>
+ <div class="card"><div class="chd">${ic('target')}Today's intention</div>
+ <p class="mu" style="font-size:13px;line-height:1.8">${a.r>=g?'Fulfilled. Extra passages are extra light.':`Read ${g-a.r} more passage${g-a.r>1?'s':''} today.`}<br>Today: <b style="color:var(--tx)">${a.r}</b> read · <b style="color:var(--tx)">${a.t}</b> tasbīḥ · <b style="color:var(--tx)">${Math.round(a.s/60)}</b> min.</p>
+ <button class="btn" style="margin-top:12px" data-a="go" data-v="read">${ic('book')}Continue</button></div>
+ <div class="card"><div class="chd">${ic('cal')}Last 12 weeks</div>${heat()}</div></div>
  <div class="hd">Achievements · ${Object.keys(S.ach).length}/${ACH.length}</div>
  <div class="achs">${ACH.map(x=>{const w=S.ach[x.k];return`<div class="ach ${w?'won':'lock'}">${ic(x.i)}<div><h4>${esc(x.t)}</h4><p>${esc(x.d)}</p>${w?`<small>${new Date(w).toLocaleDateString()}</small>`:''}</div></div>`}).join('')}</div>
  <div class="hd">Data</div><div style="display:flex;gap:9px;flex-wrap:wrap">
  <button class="btn" data-a="export">${ic('dl')}Export</button><button class="btn" data-a="import">${ic('ul')}Import</button>
  <button class="btn" data-a="sync">${ic('sync')}Sync</button><button class="btn" data-a="sql">${ic('db')}Setup SQL</button></div></div>`}
 
-/* ══════════ SEARCH ══════════ */
+/* ══════ SEARCH ══════ */
 function doSearch(q){const box=$('#sOut');q=q.trim();
  if(q.length<2){box.innerHTML=`<div class="pempty">Type two letters — Arabic diacritics are ignored.</div>`;return}
- const ar=/[\u0600-\u06FF]/.test(q),qn=ar?norm(q).n:q.toLowerCase();
- const out=[];
- for(const p of P){for(const u of p.units){
-  const inA=norm(u.a).n.includes(qn),inF=norm(u.f).n.includes(qn);
-  if(inA||inF){out.push({p,u,side:inA?'a':'f'});break}}
+ const qn=norm(q),out=[];
+ for(const p of P){for(const w of p.words){
+  if(norm(w.a).includes(qn)||norm(w.f).includes(qn)){out.push({p,w});if(out.length>=30)break}}
   if(out.length>=30)break}
- box.innerHTML=out.length?out.map((r,i)=>`<button class="pi ${i===0?'k':''}" data-a="jumpu" data-id="${r.p.n}" data-u="${r.u.i}">
-  <span class="pnumsm">${r.p.n}</span><div class="t"><b>${esc(r.p.ch)}</b>
-  <span class="ars" dir="rtl">${esc(r.u.a)}</span><span class="fas" dir="rtl">${esc(r.u.f)}</span></div>${ic('r')}</button>`).join('')
-  :`<div class="pempty">Nothing found for “${esc(q)}”.</div>`}
+ box.innerHTML=out.length?out.map((r,i)=>`<button class="pi ${i===0?'k':''}" data-a="jumpw" data-id="${r.p.n}" data-w="${r.w.i}">
+ <span class="pnumsm">${r.p.n}</span><div class="t"><b>${esc(r.p.ch)}</b>
+ <span class="ars" dir="rtl">${esc(r.w.a)}</span><span class="fas" dir="rtl">${esc(r.w.f)}</span></div>${ic('r')}</button>`).join('')
+ :`<div class="pempty">Nothing found for “${esc(q)}”.</div>`}
 function openSearch(){closePal(1);$('#search').classList.add('open');$('#sIn').value='';doSearch('');Snd.p('open');setTimeout(()=>$('#sIn').focus(),60)}
 function closeSearch(s){const o=$('#search');if(!o.classList.contains('open'))return;o.classList.remove('open');if(!s)Snd.p('close')}
 
-/* ══════════ PALETTE ══════════ */
+/* ══════ PALETTE ══════ */
 let pIdx=0,pItems=[];
 function cmds(){const c=[{t:'Reader · resume',i:'book',r:()=>go('read')},
  {t:'Reader · from the beginning',i:'play',r:()=>go('read',P[0].n)},
  {t:'Toggle Persian line',i:'lines',r:()=>A.inter()},
- {t:'Alignment · verify coverage',i:'shield',r:()=>go('align')},
+ {t:'Words · verify coverage',i:'shield',r:()=>go('words')},
  {t:'Library',i:'bm',r:()=>go('lib')},{t:'Tasbīḥ',i:'target',r:()=>go('tas')},{t:'Journey',i:'flame',r:()=>go('jour')},
- {t:'Search the text',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},
+ {t:'Search a word',i:'search',r:openSearch},{t:'Toggle sound',i:'vol',r:()=>A.sound()},
  {t:'Settings',i:'set',r:openDr},{t:'Export data',i:'dl',r:exportData},{t:'Cloud sync',i:'sync',r:syncNow},
  {t:'Cloud setup SQL',i:'db',r:sqlModal},{t:SES?'Sign out':'Sign in',i:SES?'out':'user',r:()=>SES?logout():openAuth()},
  {t:'About & shortcuts',i:'info',r:about}];
- CH.forEach((s,i)=>c.push({t:`Chapter ${i+1} · ${s.t}`,i:'fl',r:()=>{go('read');setTimeout(()=>$('#ch'+i)?.scrollIntoView({block:'start',behavior:'smooth'}),180)}}));
+ CH.forEach((s,i)=>c.push({t:`Chapter ${i+1} · ${s[0]}`,i:'fl',r:()=>{go('read');setTimeout(()=>$('#ch'+i)?.scrollIntoView({block:'start',behavior:'smooth'}),180)}}));
  return c}
 function palRender(q=''){pItems=cmds().filter(c=>c.t.toLowerCase().includes(q.toLowerCase()));pIdx=0;
  $('#pOut').innerHTML=pItems.length?pItems.map((c,i)=>`<button class="pi ${i===0?'k':''}" data-p="${i}">${ic(c.i)}<div class="t"><b>${esc(c.t)}</b></div></button>`).join(''):`<div class="pempty">No matching command.</div>`}
@@ -1118,64 +1057,63 @@ function closePal(s){const o=$('#pal');if(!o.classList.contains('open'))return;o
 function palMove(d){if(!pItems.length)return;pIdx=cl(pIdx+d,0,pItems.length-1);$$('#pOut .pi').forEach((e,i)=>e.classList.toggle('k',i===pIdx));$('#pOut .k')?.scrollIntoView({block:'nearest'})}
 function palRun(i=pIdx){const c=pItems[i];if(c){closePal();c.r()}}
 
-/* ══════════ about / sql / data ══════════ */
-function about(){const keys=[['Touch a word','Its Persian phrase'],['Touch a Persian word','Its Arabic phrase'],['Touch the same word','Dismiss'],['Esc','Clear selection'],['I','Toggle Persian line'],['/','Search'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch pages'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B / R','Bookmark / mark read'],['?','This panel']];
+/* ══════ about / sql / data ══════ */
+function about(){const keys=[['Touch a word','Only its Persian'],['Touch a Persian word','Only its Arabic'],['Touch the same word','Dismiss'],['← / →','Previous / next word'],['Esc','Clear selection'],['I','Toggle Persian line'],['/','Search a word'],['Ctrl / ⌘ K','Commands'],['1 – 5','Switch pages'],['M','Mute / unmute'],['Space','Count tasbīḥ'],['+ / −','Arabic size'],['B / R','Bookmark / mark read'],['?','This panel']];
  modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button><h2>${ic('info')}About Nūr</h2>
  <div style="font-family:var(--ar);direction:rtl;text-align:center;font-size:22px;color:var(--gold);line-height:2;margin:6px 0 12px">فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا</div>
- <div class="mbody">The Grand Istighfār, transmitted from Imam ʿAlī ibn Abī Ṭālib (peace be upon him). ${P.length} passages · ${AUD.units} aligned phrases · ${fmt(AUD.aw)} Arabic words · ${fmt(AUD.fw)} Persian words — every one bound in both directions. Where a single word has no standalone equivalent, it is carried by its phrase.</div>
+ <div class="mbody">The Grand Istighfār, transmitted from Imam ʿAlī ibn Abī Ṭālib (peace be upon him). ${P.length} passages · ${fmt(AUD.aw)} Arabic words · ${fmt(AUD.fw)} Persian words — every single word bound in both directions. Where Persian needs more than one word to carry an Arabic word, those words travel together.</div>
  <div class="hd" style="margin:20px 0 4px">Keys & touch</div><div class="keys">${keys.map(k=>`<div><span>${esc(k[1])}</span><kbd>${esc(k[0])}</kbd></div>`).join('')}</div>`)}
 function sqlModal(){modal(`<h2>${ic('db')}Cloud setup SQL</h2><div class="mbody">Run this once in Supabase → SQL Editor to create the two prefixed tables and their row-level security policies.</div><div class="sqlbox">${esc(SQL)}</div><div class="macts"><button class="btn gold" data-a="copysql">${ic('copy')}Copy SQL</button><button class="btn ghost" data-a="mclose">Close</button></div>`)}
 async function copySQL(){try{await navigator.clipboard.writeText(SQL)}catch{const a=document.createElement('textarea');a.value=SQL;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch{}a.remove()}Snd.p('ok');toast('SQL copied — paste it in Supabase','ok','copy')}
 function exportData(){const b=new Blob([JSON.stringify({...S,exported_at:new Date().toISOString()},null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`nur-istighfar-${dk()}.json`;a.click();URL.revokeObjectURL(a.href);Snd.p('ok');toast('Data exported','ok','dl')}
 function bindImport(){$('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;
- try{const j=JSON.parse(await f.text());if(!j||![3,4,5].includes(j.v))throw new Error('Not a Nūr backup');S=merge(S,j);tidy();saveLocal();apply();save();render({keep:true});Snd.p('ok');toast('Data imported & merged','ok','ul')}
+ try{const j=JSON.parse(await f.text());if(!j||![3,4,5,6].includes(j.v))throw new Error('Not a Nūr backup');S=merge(S,j);tidy();saveLocal();apply();save();render({keep:true});Snd.p('ok');toast('Data imported & merged','ok','ul')}
  catch(x){Snd.p('err');toast('Import failed: '+x.message,'err','alert')}e.target.value=''})}
 async function resetAll(){if(!await confirmBox({title:'Reset all progress?',body:'Read marks, bookmarks, notes, tasbīḥ and streaks will be cleared on this device'+(SES?' and in the cloud.':'.'),ok:'Reset everything',danger:true}))return;
  const keep=S.set;S=copy(DEF);S.set=keep;save();render();Snd.p('off');toast('A clean page. Begin again.','ok','rotate')}
 async function logout(){try{await sb('/auth/v1/logout',{method:'POST'})}catch{}clearSes();toast('Signed out — data stays on this device','ok','out')}
 
-/* ══════════ sky + confetti ══════════ */
+/* ══════ sky + confetti ══════ */
 const Sky={cv:null,cx:null,ps:[],raf:0,run:false,cols:['#e3b23c','#2ee6c5'],
  init(){this.cv=$('#stars');this.cx=this.cv.getContext('2d');this.refresh();this.resize();addEventListener('resize',()=>this.resize());document.addEventListener('visibilitychange',()=>document.hidden?this.stop():this.sync());this.sync()},
  refresh(){const c=getComputedStyle(document.documentElement);this.cols=[c.getPropertyValue('--gold').trim()||'#e3b23c',c.getPropertyValue('--turq').trim()||'#2ee6c5']},
  resize(){if(!this.cx)return;const d=Math.min(2,devicePixelRatio||1);this.cv.width=innerWidth*d;this.cv.height=innerHeight*d;this.cx.setTransform(d,0,0,d,0,0);
-  const n=Math.min(66,Math.floor(innerWidth*innerHeight/28000));this.ps=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.4+.35,v:Math.random()*.12+.025,p:Math.random()*6.28,g:Math.random()>.5}));this.sync()},
+ const n=Math.min(66,Math.floor(innerWidth*innerHeight/28000));this.ps=Array.from({length:n},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.4+.35,v:Math.random()*.12+.025,p:Math.random()*6.28,g:Math.random()>.5}));this.sync()},
  draw(t){if(!this.cx)return;const[a,b]=this.cols;this.cx.clearRect(0,0,innerWidth,innerHeight);
-  for(const p of this.ps){this.cx.globalAlpha=(.3+.7*Math.abs(Math.sin(t/1900+p.p)))*.36;this.cx.fillStyle=p.g?a:b;this.cx.beginPath();this.cx.arc(p.x,p.y,p.r,0,7);this.cx.fill()}this.cx.globalAlpha=1},
+ for(const p of this.ps){this.cx.globalAlpha=(.3+.7*Math.abs(Math.sin(t/1900+p.p)))*.36;this.cx.fillStyle=p.g?a:b;this.cx.beginPath();this.cx.arc(p.x,p.y,p.r,0,7);this.cx.fill()}this.cx.globalAlpha=1},
  loop(){if(!this.cx||this.run)return;this.run=true;const step=t=>{if(!this.run)return;this.draw(t);for(const p of this.ps){p.y-=p.v;if(p.y<-4){p.y=innerHeight+4;p.x=Math.random()*innerWidth}}this.raf=requestAnimationFrame(step)};this.raf=requestAnimationFrame(step)},
  stop(){this.run=false;cancelAnimationFrame(this.raf)},
  sync(){if(!this.cx)return;S.set.motion&&!document.hidden?this.loop():(this.stop(),this.draw(1200))}};
 function confetti(n=110){if(!S.set.motion)return;const cv=$('#conf'),cx=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
  const cols=['#e3b23c','#2ee6c5','#f7d992','#3a6fe0','#ff9f45'],ps=Array.from({length:n},()=>({x:innerWidth/2+(Math.random()-.5)*innerWidth*.5,y:innerHeight*.36,vx:(Math.random()-.5)*11,vy:-Math.random()*11-3,s:Math.random()*7+4,r:Math.random()*6.28,vr:(Math.random()-.5)*.3,c:cols[Math.floor(Math.random()*cols.length)],l:1}));
  let f=0;(function tick(){cx.clearRect(0,0,cv.width,cv.height);let alive=false;
-  for(const p of ps){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l-=.008;if(p.l>0&&p.y<cv.height+30){alive=true;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.globalAlpha=Math.max(0,p.l);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore()}}
-  if(alive&&++f<300)requestAnimationFrame(tick);else cx.clearRect(0,0,cv.width,cv.height)})()}
+ for(const p of ps){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l-=.008;if(p.l>0&&p.y<cv.height+30){alive=true;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.globalAlpha=Math.max(0,p.l);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);cx.restore()}}
+ if(alive&&++f<300)requestAnimationFrame(tick);else cx.clearRect(0,0,cv.width,cv.height)})()}
 
-/* ══════════ actions ══════════ */
-function jumpTo(id,u){closeSearch(1);closePal(1);
- const id2=+id;
- if(VIEW!=='read'){go('read',id2);setTimeout(()=>{if(u!=null)pickUnit(id2,+u)},260);return}
- const el=$('#v-'+id2);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600)}
- if(u!=null)setTimeout(()=>pickUnit(id2,+u),340)}
-function pickUnit(pn,u){const el=$(`#v-${pn} .line.ar .w[data-u="${u}"]`);if(el)selectWord(el)}
+/* ══════ actions ══════ */
+function jumpTo(id,wi){closeSearch(1);closePal(1);const n=+id;
+ if(VIEW!=='read'){go('read',n);if(wi!=null)setTimeout(()=>pickWord(n,+wi),300);return}
+ const el=$('#v-'+n);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600)}
+ if(wi!=null)setTimeout(()=>pickWord(n,+wi),340)}
+function pickWord(pn,wi){const el=$(`#v-${pn} .line.ar .w[data-w="${wi}"]`);if(el)selectWord(el)}
 const A={
  go:t=>go(t.dataset.v),
  jump:t=>jumpTo(t.dataset.id),
- jumpu:t=>jumpTo(t.dataset.id,t.dataset.u),
- inter:()=>{S.set.inter=!S.set.inter;save();if(VIEW==='read')render({keep:true});fillDrawer();Snd.p('pop');toast(S.set.inter?'Persian line shown — tap it for the Arabic':'Persian line hidden','ok','lines')},
+ jumpw:t=>jumpTo(t.dataset.id,t.dataset.w),
+ inter:()=>{S.set.inter=!S.set.inter;save();if(VIEW==='read')render({keep:true});fillDrawer();Snd.p('pop');toast(S.set.inter?'Persian line shown — touch it for the Arabic':'Persian line hidden','ok','lines')},
  read:t=>setRead(t.dataset.id,!S.read[+t.dataset.id]),
  note:t=>noteModal(t.dataset.id),
  bm:t=>toggleBm(t.dataset.id),
  copyv:t=>copyVerse(t.dataset.id),
  bmdel:t=>{const id=+t.dataset.id;toggleBm(id);render({keep:true});
-  toast('Bookmark removed','ok','trash',{label:'Undo',fn:()=>{S.bm[id]=Date.now();save();refreshVerse(id);render({keep:true});Snd.p('bm')}})},
+ toast('Bookmark removed','ok','trash',{label:'Undo',fn:()=>{S.bm[id]=Date.now();save();refreshVerse(id);render({keep:true});Snd.p('bm')}})},
  markch:t=>markCh(t.dataset.c),
  nedit:t=>noteModal(t.dataset.id),nsave:t=>saveNote(t.dataset.id),
  ndel:t=>dropNote(t.dataset.id),ndellib:t=>dropNote(t.dataset.id),
  libtab:t=>{libTab=t.dataset.v;render({keep:true});Snd.p('tap')},
  reaudit:()=>{AUD=audit();render({keep:true});Snd.p(AUD.ok?'ok':'err');
-  toast(AUD.ok?`Verified — ${fmt(AUD.aw)} Arabic and ${fmt(AUD.fw)} Persian words, all bound`:'Integrity problem found',AUD.ok?'ok':'err',AUD.ok?'shield':'alert')},
+ toast(AUD.ok?`Verified — ${fmt(AUD.aw)} Arabic and ${fmt(AUD.fw)} Persian words, all bound`:'Integrity problem found',AUD.ok?'ok':'err',AUD.ok?'shield':'alert')},
  tinc:()=>tInc(),tdec:()=>tDec(),
  treset:async()=>{if(await confirmBox({title:'Reset this round?',body:`The round counter returns to 0. Lifetime total (${fmt(S.tas.total)}) is kept.`,ok:'Reset round'})){S.tas.session=0;save();tasUI();Snd.p('off')}},
  ttarget:t=>{S.tas.target=+t.dataset.v;save();render({keep:true});Snd.p('pop')},
@@ -1195,20 +1133,18 @@ const A={
  logout:()=>{$('#acctMenu').hidden=true;closeDr();logout()},
  sync:()=>{$('#acctMenu').hidden=true;if(SES&&syncErr)syncHelp();else syncNow()},
  export:()=>{$('#acctMenu').hidden=true;exportData()},import:()=>$('#impFile').click(),reset:()=>resetAll(),
- mclose:()=>mclose(),mok:()=>{const r=mres;mres=null;$('#mroot').innerHTML='';Snd.p('close');r&&r(true)}
-};
+ mclose:()=>mclose(),mok:()=>{const r=mres;mres=null;$('#mroot').innerHTML='';Snd.p('close');r&&r(true)}};
 const QUIET=new Set(Object.keys(A));
 
-/* ══════════ events ══════════ */
+/* ══════ events ══════ */
 document.addEventListener('click',e=>{
- const pb=e.target.closest('[data-p]');if(pb&&!pb.classList.contains('w')){palRun(+pb.dataset.p);return}
+ const pb=e.target.closest('[data-p]');if(pb&&!pb.classList.contains('w')&&!pb.classList.contains('verse')){palRun(+pb.dataset.p);return}
  const t=e.target.closest('[data-a]');
  if(t){e.stopPropagation();const a=t.dataset.a;if(!QUIET.has(a))Snd.p('tap');A[a]&&A[a](t,e);return}
  const w=e.target.closest('.w');
  if(w){selectWord(w);return}
  if(SEL){clearSel();return}
- if(!e.target.closest('#acctMenu')&&!e.target.closest('#avBtn'))$('#acctMenu').hidden=true;
-});
+ if(!e.target.closest('#acctMenu')&&!e.target.closest('#avBtn'))$('#acctMenu').hidden=true});
 let hv=0;
 document.addEventListener('mouseover',e=>{if(!e.target.closest('.btn,.ib,.pill,.nav button,.vact,.sq,.w'))return;const n=Date.now();if(n-hv>110){hv=n;Snd.p('hover')}});
 document.addEventListener('input',e=>{const t=e.target;
@@ -1226,21 +1162,20 @@ document.addEventListener('pointerdown',()=>{if(S.set.amb&&S.set.sound)Amb.sync(
 addEventListener('pagehide',saveLocal);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)saveLocal()});
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(SEL)placeTip()});
-
 document.addEventListener('keydown',e=>{
  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#pal').classList.contains('open')?closePal():openPal();return}
  if(e.key==='Escape'){
-  if($('#mroot').innerHTML)mclose();else if($('#pal').classList.contains('open'))closePal();
-  else if($('#search').classList.contains('open'))closeSearch();else if($('#auth').classList.contains('open'))closeAuth();
-  else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;
-  else if(SEL)clearSel();return}
+ if($('#mroot').innerHTML)mclose();else if($('#pal').classList.contains('open'))closePal();
+ else if($('#search').classList.contains('open'))closeSearch();else if($('#auth').classList.contains('open'))closeAuth();
+ else if(document.body.classList.contains('drawer'))closeDr();else if(!$('#acctMenu').hidden)$('#acctMenu').hidden=true;
+ else if(SEL)clearSel();return}
  if($('#pal').classList.contains('open')){if(e.key==='ArrowDown'){e.preventDefault();palMove(1)}if(e.key==='ArrowUp'){e.preventDefault();palMove(-1)}if(e.key==='Enter'){e.preventDefault();palRun()}return}
  if($('#search').classList.contains('open')){
-  if(e.key==='Enter'){e.preventDefault();$('#sOut .pi')?.click()}
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const it=$$('#sOut .pi');if(!it.length)return;
-   let i=it.findIndex(x=>x.classList.contains('k'));i=cl(i+(e.key==='ArrowDown'?1:-1),0,it.length-1);
-   it.forEach((x,j)=>x.classList.toggle('k',j===i));it[i].scrollIntoView({block:'nearest'})}return}
+ if(e.key==='Enter'){e.preventDefault();$('#sOut .pi')?.click()}
+ if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const it=$$('#sOut .pi');if(!it.length)return;
+ let i=it.findIndex(x=>x.classList.contains('k'));i=cl(i+(e.key==='ArrowDown'?1:-1),0,it.length-1);
+ it.forEach((x,j)=>x.classList.toggle('k',j===i));it[i].scrollIntoView({block:'nearest'})}return}
  if(typing)return;
  const k=e.key;
  if(k==='/'){e.preventDefault();openSearch();return}
@@ -1250,21 +1185,15 @@ document.addEventListener('keydown',e=>{
  if(['1','2','3','4','5'].includes(k)){go(ORDER[+k-1]);return}
  if(VIEW==='tas'&&k===' '){e.preventDefault();tInc();return}
  if(VIEW==='read'){
-  if(SEL&&(k==='ArrowLeft'||k==='ArrowRight')){e.preventDefault();
-   const p=IX[SEL.p],list=p.ar,i=list.findIndex(t=>t.u===SEL.u);
-   const j=cl(i+(k==='ArrowLeft'?1:-1),0,list.length-1);
-   const el=$(`#v-${SEL.p} .line.ar .w[data-i="${j}"]`);if(el)selectWord(el);return}
-  if(k==='+'||k==='='){S.set.fs=cl(+(S.set.fs+.1).toFixed(2),.8,1.8);apply();save();fillDrawer();Snd.p('tick')}
-  if(k==='-'){S.set.fs=cl(+(S.set.fs-.1).toFixed(2),.8,1.8);apply();save();fillDrawer();Snd.p('tick')}
-  if(k.toLowerCase()==='b'&&S.last!=null)toggleBm(S.last);
-  if(k.toLowerCase()==='r'&&S.last!=null)setRead(S.last,!S.read[S.last]);
- }
-});
-
+ if(SEL&&(k==='ArrowLeft'||k==='ArrowRight')){e.preventDefault();stepWord(k==='ArrowLeft'?1:-1);return}
+ if(k==='+'||k==='='){S.set.fs=cl(+(S.set.fs+.1).toFixed(2),.8,1.8);apply();save();fillDrawer();Snd.p('tick')}
+ if(k==='-'){S.set.fs=cl(+(S.set.fs-.1).toFixed(2),.8,1.8);apply();save();fillDrawer();Snd.p('tick')}
+ if(k.toLowerCase()==='b'&&S.last!=null)toggleBm(S.last);
+ if(k.toLowerCase()==='r'&&S.last!=null)setRead(S.last,!S.read[S.last])}});
 let tt=0;
 setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.now()-lastTouch<90000){day().s+=5;saveLocal();if(++tt%12===0)syncSoon()}},5000);
 
-/* ══════════ boot ══════════ */
+/* ══════ boot ══════ */
 (function init(){
  build();AUD=audit();tidy();apply();Sky.init();bindAuth();bindImport();
  addEventListener('hashchange',()=>render());
@@ -1273,9 +1202,9 @@ setInterval(()=>{if(VIEW==='read'&&document.visibilityState==='visible'&&Date.no
  $('#boot').classList.add('done');setTimeout(()=>$('#boot')?.remove(),600);
  if(SES){if(SES.expires_at*1000<Date.now()+60000)refresh().then(()=>{if(SES){sched();afterAuth()}});else{sched();afterAuth()}}else syncState('off');
  checkAch();
- setTimeout(()=>{if(!localStorage.getItem('nur.hintW')){localStorage.setItem('nur.hintW','1');
-  toast('Touch any word — its Persian phrase appears','gold','spark')}},1100);
- if(!AUD.ok)toast('Alignment integrity problem — open Alignment','err','alert');
+ setTimeout(()=>{if(!localStorage.getItem('nur.hintWW')){localStorage.setItem('nur.hintWW','1');
+ toast('Touch any word — only its own Persian appears','gold','spark')}},1100);
+ if(!AUD.ok)toast('Word alignment problem — open Words','err','alert');
 })();
 })();
 </script>
