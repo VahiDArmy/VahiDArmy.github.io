@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEO-PI-R — داده خام</title>
+<link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body dir="rtl">
+<div class="wrap">
+
+  <header class="top">
+    <h1>NEO-PI-R — گزارش آزمون نئو (فرم بلند)
+      <span>داده خام دو برگه · میر وحید ارامیان · شناسه ۸۷</span>
+    </h1>
+    <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-end">
+      <nav class="links">
+        <a href="index.html" class="active">داده خام</a>
+        <a href="analysis-fa.html">تحلیل (فارسی)</a>
+        <a href="analysis.html" lang="en" dir="ltr">Study (English)</a>
+      </nav>
+      <div class="toolbar">
+        <button id="copyBtn" class="ghost small" type="button">Copy</button>
+        <button id="csvBtn" class="ghost small" type="button">CSV</button>
+        <button id="dlBtn" class="small" type="button">Download</button>
+      </div>
+    </div>
+  </header>
+
+  <h2>برگه ۱ — مشخصات <small>sheet 1 · header</small></h2>
+  <div class="card"><div class="grid-meta" id="metaGrid"></div></div>
+
+  <h2>مقیاس‌های اصلی <small>domain scales · raw score / interpretation as printed</small></h2>
+  <div class="card"><table id="domainTable"></table></div>
+
+  <h2>نمرات خرده‌مقیاس‌ها <small>30 facets</small></h2>
+  <div id="facetBlocks"></div>
+
+  <h2>کنترل اعتبار پاسخنامه <small>validity / response style</small></h2>
+  <div class="split">
+    <div class="card">
+      <h3>سوالات اضافه</h3>
+      <table id="extraTable"></table>
+    </div>
+    <div class="card">
+      <h3>پاسخ‌ها (تعداد)</h3>
+      <table id="countTable"></table>
+    </div>
+  </div>
+  <div class="card">
+    <h3>پاسخ‌های تصادفی</h3>
+    <table id="randomTable"></table>
+  </div>
+
+  <h2>جدول «نظریه» <small>second interpretation key, as printed</small></h2>
+  <div class="card"><table id="theoryTable"></table></div>
+
+  <h2>برگه ۲ — نیم‌رخ <small>T-score profile read off the printed chart (±3)</small></h2>
+  <div class="card">
+    <div class="chart-wrap"><svg class="chart" id="chart" viewBox="0 0 1080 460" role="img" aria-label="NEO-PI-R T-score profile"></svg></div>
+    <p class="legend">محور عمودی: نمره T. خطوط ۳۰ و ۷۰ مرزهای پایین/بالا هستند. مقادیر از شبکهٔ نمودار چاپ‌شده خوانده شده‌اند.</p>
+  </div>
+  <div class="card"><table id="profileTable"></table></div>
+
+  <div class="note">
+    <strong>یادداشت‌های ترانویسی</strong>
+    <ul id="notesList"></ul>
+  </div>
+
+</div>
+<div id="toast"></div>
+<script src="data.js"></script>
+<script src="app.js?v=6"></script>
+</body>
+</html>
