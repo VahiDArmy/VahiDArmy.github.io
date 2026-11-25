@@ -15,9 +15,13 @@ const els = {
   modelSelect:   $('#model-select'),
   btnLevel1:     $('#btn-level1'),
   btnLevel2:     $('#btn-level2'),
+  btnUse:        $('#btn-use'),
   paneRefined:   document.querySelector('.pane-refined'),
   modelsList:    $('#models-list'),
-  apiKeyInput:   $('#api-key')
+  apiKeyInput:   $('#api-key'),
+  reasoningPanel:   $('#reasoning-panel'),
+  reasoningContent: $('#reasoning-content'),
+  reasoningMeta:    $('#reasoning-meta')
 };
 
 const state = {
@@ -27,6 +31,8 @@ const state = {
   direction:     'auto',          // 'auto' | 'ltr' | 'rtl'
   busy:          false,
   refinedText:   '',
+  reasoning:     '',
+  usage:         null,
   hideDeletions: false
 };
 
@@ -36,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   bindEvents();
   applyDirectionSetting();
   updateCharCount();
+  updateUseButton();
   await loadModels();
 
   if (!state.apiKey) {
@@ -66,23 +73,32 @@ function bindEvents() {
   els.btnLevel1.addEventListener('click', () => runRefine(1));
   els.btnLevel2.addEventListener('click', () => runRefine(2));
 
-  // Copy / clear / toggle deletions
+  // Copy / clear / toggle deletions / use
   $('#btn-copy').addEventListener('click', copyRefined);
+  els.btnUse.addEventListener('click', useRefinedAsInput);
   $('#btn-clear').addEventListener('click', () => {
     els.textarea.value = '';
-    els.refined.innerHTML = '<div class="placeholder">Your refined prompt will appear here.<br><small>Green glow = added or changed · red = removed</small></div>';
-    els.refined.removeAttribute('dir');
-    els.refined.setAttribute('dir', 'auto');
-    state.refinedText = '';
-    els.diffStats.textContent = '';
-    els.status.textContent = 'Ready';
+    resetRefinedPane();
     updateCharCount();
     applyDirectionSetting();
+    hideReasoning();
     els.textarea.focus();
   });
   $('#btn-toggle-del').addEventListener('click', () => {
     state.hideDeletions = !state.hideDeletions;
     els.refined.classList.toggle('hide-del', state.hideDeletions);
+  });
+
+  // Reasoning panel
+  $('#btn-close-reasoning').addEventListener('click', hideReasoning);
+  $('#btn-copy-reasoning').addEventListener('click', async () => {
+    if (!state.reasoning) return;
+    try {
+      await navigator.clipboard.writeText(state.reasoning);
+      toast('Reasoning copied.', 'success');
+    } catch {
+      toast('Clipboard unavailable.', 'error');
+    }
   });
 
   // Modals
@@ -142,11 +158,7 @@ function applyDirectionSetting() {
     ? `AUTO · ${detected.toUpperCase()}`
     : dir.toUpperCase();
 
-  if (els.refined.dataset.hasContent === 'true') {
-    els.refined.setAttribute('dir', dir);
-  } else {
-    els.refined.setAttribute('dir', dir);
-  }
+  els.refined.setAttribute('dir', dir);
 }
 
 function updateCharCount() {
@@ -169,18 +181,21 @@ async function runRefine(level) {
   els.diffStats.textContent = '';
 
   try {
-    const refined = await refine({
+    const result = await refine({
       apiKey: state.apiKey,
       model: state.selectedId,
       text,
       level
     });
 
-    state.refinedText = refined;
-    const detected = detectDirection(refined);
+    state.refinedText = result.text;
+    state.reasoning = result.reasoning || '';
+    state.usage = result.usage || null;
+
+    const detected = detectDirection(result.text);
     const dir = state.direction === 'auto' ? detected : state.direction;
 
-    const parts = diffWordsWithSpace(els.textarea.value, refined);
+    const parts = diffWordsWithSpace(els.textarea.value, result.text);
     els.refined.setAttribute('dir', dir);
     els.refined.innerHTML = renderDiffLines(parts);
     els.refined.dataset.hasContent = 'true';
@@ -193,6 +208,10 @@ async function runRefine(level) {
     }
     els.diffStats.textContent = `+${added} −${removed} words`;
     els.status.textContent = level === 2 ? 'Deep review complete' : 'Grammar fixed';
+
+    showReasoning(state.reasoning, state.usage);
+    updateUseButton();
+
     toast(level === 2 ? 'Deep review applied.' : 'Grammar applied.', 'success');
   } catch (err) {
     console.error(err);
@@ -208,6 +227,11 @@ function setBusy(busy) {
   els.btnLevel1.disabled = busy;
   els.btnLevel2.disabled = busy;
   els.paneRefined.classList.toggle('loading', busy);
+  updateUseButton();
+}
+
+function updateUseButton() {
+  els.btnUse.disabled = state.busy || !state.refinedText;
 }
 
 async function copyRefined() {
@@ -218,6 +242,53 @@ async function copyRefined() {
   } catch {
     toast('Clipboard unavailable.', 'error');
   }
+}
+
+function useRefinedAsInput() {
+  if (!state.refinedText) { toast('Nothing to use yet.', 'error'); return; }
+  els.textarea.value = state.refinedText;
+  els.textarea.dispatchEvent(new Event('input'));
+
+  resetRefinedPane();
+  hideReasoning();
+  els.status.textContent = 'Applied as new input';
+  toast('Refined prompt moved to input.', 'success');
+  els.textarea.focus();
+}
+
+function resetRefinedPane() {
+  els.refined.innerHTML = '<div class="placeholder">Your refined prompt will appear here.<br><small>Green glow = added or changed · red = removed</small></div>';
+  els.refined.dataset.hasContent = 'false';
+  els.refined.removeAttribute('dir');
+  els.refined.setAttribute('dir', 'auto');
+  state.refinedText = '';
+  state.reasoning = '';
+  state.usage = null;
+  els.diffStats.textContent = '';
+  els.status.textContent = 'Ready';
+  updateUseButton();
+}
+
+/* ---------------- Reasoning ---------------- */
+
+function showReasoning(reasoning, usage) {
+  if (!reasoning || !reasoning.trim()) { hideReasoning(); return; }
+
+  els.reasoningContent.textContent = reasoning;
+  els.reasoningContent.setAttribute('dir', 'auto');
+
+  const bits = [];
+  if (usage?.prompt_tokens)     bits.push(`${usage.prompt_tokens} in`);
+  if (usage?.completion_tokens) bits.push(`${usage.completion_tokens} out`);
+  els.reasoningMeta.textContent = bits.join(' · ');
+
+  els.reasoningPanel.hidden = false;
+}
+
+function hideReasoning() {
+  els.reasoningPanel.hidden = true;
+  els.reasoningContent.textContent = '';
+  els.reasoningMeta.textContent = '';
 }
 
 /* ---------------- Settings ---------------- */

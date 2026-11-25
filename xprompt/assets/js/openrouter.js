@@ -40,10 +40,7 @@ export async function fetchFreeModels(apiKey) {
   }));
 }
 
-/** Send the prompt to OpenRouter and return the refined text. */
-export async function refine({ apiKey, model, text, level }) {
-  const system = level === 2 ? SYSTEM_LEVEL_2 : SYSTEM_LEVEL_1;
-
+async function postChat(apiKey, body) {
   const res = await fetch(OPENROUTER_CHAT_URL, {
     method: 'POST',
     headers: {
@@ -52,27 +49,72 @@ export async function refine({ apiKey, model, text, level }) {
       'HTTP-Referer': location.origin,
       'X-Title': 'PromptForge'
     },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: text }
-      ]
-    })
+    body: JSON.stringify(body)
   });
 
   if (!res.ok) {
     const msg = await res.text();
-    throw new Error(`OpenRouter error ${res.status}: ${msg.slice(0, 280)}`);
+    const err = new Error(`OpenRouter error ${res.status}: ${msg.slice(0, 280)}`);
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+/** Pull reasoning text from any known field shape. */
+function extractReasoning(message) {
+  if (!message) return '';
+
+  if (typeof message.reasoning === 'string' && message.reasoning.trim()) {
+    return message.reasoning.trim();
   }
 
-  const data = await res.json();
-  let out = data?.choices?.[0]?.message?.content?.trim() || '';
+  if (Array.isArray(message.reasoning_details)) {
+    const pieces = message.reasoning_details
+      .map((d) => d?.text || d?.summary || d?.content || '')
+      .filter(Boolean);
+    if (pieces.length) return pieces.join('\n\n').trim();
+  }
 
+  return '';
+}
+
+/** Send the prompt to OpenRouter and return refined text + reasoning + usage. */
+export async function refine({ apiKey, model, text, level }) {
+  const system = level === 2 ? SYSTEM_LEVEL_2 : SYSTEM_LEVEL_1;
+
+  const body = {
+    model,
+    temperature: 0.2,
+    // Ask reasoning-capable models to expose their chain of thought.
+    // Non-reasoning models ignore this, and it is dropped if a 400 comes back.
+    reasoning: { enabled: true },
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: text }
+    ]
+  };
+
+  let data;
+  try {
+    data = await postChat(apiKey, body);
+  } catch (err) {
+    if (err.status === 400) {
+      delete body.reasoning;
+      data = await postChat(apiKey, body);
+    } else {
+      throw err;
+    }
+  }
+
+  const message = data?.choices?.[0]?.message || {};
+  const usage = data?.usage || null;
+  const reasoning = extractReasoning(message);
+
+  let out = (message.content || '').trim();
   // Strip accidental code fences the model may have added.
   out = out.replace(/^```[a-zA-Z]*\s*\n?/, '').replace(/\n?```\s*$/, '').trim();
 
   if (!out) throw new Error('The model returned an empty response.');
-  return out;
+  return { text: out, reasoning, usage };
 }

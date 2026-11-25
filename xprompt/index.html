@@ -79,6 +79,7 @@
           <div class="pane-tools">
             <button class="icon-btn" id="btn-toggle-del" title="Toggle deleted segments">◐</button>
             <button class="icon-btn" id="btn-copy" title="Copy refined text">⧉</button>
+            <button class="icon-btn use-btn" id="btn-use" title="Use refined text as new input">↪ Use</button>
           </div>
         </header>
         <div class="pane-body">
@@ -91,6 +92,18 @@
           <span id="diff-stats"></span>
         </footer>
       </article>
+    </section>
+
+    <section class="reasoning-panel" id="reasoning-panel" hidden>
+      <header>
+        <h3>AI reasoning</h3>
+        <div class="pane-tools">
+          <span id="reasoning-meta" class="reasoning-meta"></span>
+          <button class="icon-btn" id="btn-copy-reasoning" title="Copy reasoning">⧉</button>
+          <button class="icon-btn" id="btn-close-reasoning" title="Hide reasoning">✕</button>
+        </div>
+      </header>
+      <div id="reasoning-content" class="reasoning-content" dir="auto"></div>
     </section>
   </main>
 
