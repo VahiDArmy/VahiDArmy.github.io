@@ -54,13 +54,17 @@ N.vModels=()=>{
 
  <div class="card ai-card-lite" style="margin-top:15px">
   <div class="chd">${ic('key')}OpenRouter key · this browser only</div>
-  <div class="mbody">The key is kept in local storage and sent straight to OpenRouter. It is never written to Supabase. Only free models are ever called.</div>
+  <div class="mbody">Kept in local storage and sent straight to OpenRouter — never to Supabase. Only free models are ever called. <b>openrouter/free</b> is the default row; it is resolved at call time to a live free model from the catalogue, so it keeps working even when individual model ids change.</div>
   <div class="keycard" style="margin-top:13px">
    <div class="field">${ic('lock')}<input id="aiKey2" type="password" placeholder="sk-or-v1-…" value="${esc(k)}" autocomplete="off" spellcheck="false">
     <button type="button" class="eye" data-a="eye" data-t="aiKey2">${ic('eye')}</button></div>
    <button class="btn ai" data-a="keysave2">${ic('check')}Save</button>
    <button class="btn" data-a="keytest2">${ic('zap')}Test</button>
    <a class="btn" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">${ic('out')}Get key</a>
+  </div>
+  <div class="macts" style="justify-content:flex-start">
+   <button class="btn sm ai" data-a="aidiag">${ic('shield')}Run full diagnosis</button>
+   <button class="btn sm" data-a="aiheal">${ic('zap')}Refresh working free models</button>
   </div>
  </div>
 
@@ -76,7 +80,7 @@ N.vModels=()=>{
   <div class="mrow head"><div>model</div><div class="ctx">context</div><div>state</div><div style="text-align:right">actions</div></div>
   ${rows||`<div class="pempty">No models yet — add a free one.</div>`}
  </div>
- <p class="syncnote" style="margin-top:12px">Deactivate keeps a row but skips it. Delete removes it and offers undo. The star sets the default; if a model fails, the next active free model is tried automatically.</p>
+ <p class="syncnote" style="margin-top:12px">Deactivate keeps a row but skips it. Delete removes it and offers undo. The star sets the default. If a model fails, the next active free model is tried automatically, and a 404 deactivates the stale id for you.</p>
  </div>`};
 
 N.bindModels=()=>{};
@@ -96,7 +100,7 @@ N.modelCat=async()=>{
  N.modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button>
   <h2>${ic('dl')}Free catalogue</h2><div class="mbody">Live list from OpenRouter, filtered to zero-cost models.</div>
   <div class="catlist" id="catList"><div class="pempty">Loading…</div></div>`);
- try{const list=await N.ai.catalogue();
+ try{const list=await N.ai.catalogue(true);
   const box=$('#catList');if(!box)return;
   box.innerHTML=list.length?list.map(m=>{const has=!!N.ai.byId(m.id);
    return`<div class="catrow"><div class="n"><b>${esc(m.id)}</b><span>${esc(m.name)}${m.ctx?' · '+fmt(m.ctx)+' ctx':''}</span></div>
@@ -107,13 +111,17 @@ N.modelCat=async()=>{
 N.modelTest=async id=>{
  if(!N.ai.key()){N.toast('Save an OpenRouter key first','warn','key');N.ai.keyModal();return}
  const btn=$(`[data-a=mtest][data-id="${CSS.escape(id)}"]`);btn&&btn.classList.add('busy');
- try{const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',
-  headers:{Authorization:'Bearer '+N.ai.key(),'Content-Type':'application/json',
-   'HTTP-Referer':location.origin||'https://nur.local','X-Title':'Nur'},
-  body:JSON.stringify({model:id,max_tokens:12,messages:[{role:'user',content:'بگو: آماده'}]})});
+ try{
+  let real=id;
+  if(id==='openrouter/free'){const c=await N.ai.catalogue(true);
+   const p=c.find(m=>m.id!==id);if(!p)throw new Error('No free model in catalogue');real=p.id}
+  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',
+   headers:{Authorization:'Bearer '+N.ai.key(),'Content-Type':'application/json',
+    'HTTP-Referer':location.origin||'https://nur.local','X-Title':'Nur'},
+   body:JSON.stringify({model:real,max_tokens:16,messages:[{role:'user',content:'فقط بنویس: آماده'}]})});
   let j=null;try{j=await r.json()}catch{}
   if(!r.ok)throw new Error((j&&(j.error?.message||j.message))||('HTTP '+r.status));
-  N.Snd.p('ok');N.toast(id+' responded','ok','shield')}
+  N.Snd.p('ok');N.toast(real+' responded','ok','shield')}
  catch(e){N.Snd.p('err');N.toast(id+' — '+e.message,'err','alert')}
  finally{btn&&btn.classList.remove('busy')}};
 
@@ -122,4 +130,15 @@ N.sqlAI=()=>N.modal(`<h2>${ic('db')}ai_models — general table</h2>
  <div class="sqlbox">${esc(N.SQL_AI)}</div>
  <div class="macts"><button class="btn gold" data-a="copysqlai">${ic('copy')}Copy SQL</button>
   <button class="btn ghost" data-a="mclose">Close</button></div>`);
+
+/* extra actions, registered without touching app.js */
+document.addEventListener('click',e=>{
+ const t=e.target.closest('[data-a]');if(!t)return;
+ const a=t.dataset.a;
+ if(a==='aidiag'){e.stopPropagation();N.ai.diagnose()}
+ else if(a==='aiheal'){e.stopPropagation();t.classList.add('busy');
+  N.ai.heal().then(n=>{t.classList.remove('busy');
+   N.toast(n?`${n} live free model${n>1?'s':''} added`:'Catalogue unreachable',n?'ai':'warn',n?'cpu':'alert');
+   if(n)N.render({keep:true})})}
+},true);
 })();
