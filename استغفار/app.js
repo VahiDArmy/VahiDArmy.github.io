@@ -5,14 +5,14 @@
 'use strict';
 (() => {
 
-const BUILD = '1.5';
+const BUILD = '1.6';
 const SB_URL  = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY  = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
 const SB_DASH = 'https://supabase.com/dashboard/project/ummhohozmpwltbgeczsf/sql/new';
 const T_STATE = 'istigfarqwen_user_state';
 const T_ACT   = 'istigfarqwen_daily_activity';
 const LS_STATE = 'nur.state.v1', LS_SESSION = 'nur.session.v1';
-const AI_KEY_LS = 'nur.ai.key.v1', AI_CAT_LS = 'nur.ai.catalog.v1', AI_CACHE_LS = 'nur.ai.cache.v1';
+const AI_KEY_LS = 'nur.ai.key.v1', AI_CAT_LS = 'nur.ai.catalog.v1', AI_CACHE_LS = 'nur.ai.cache.v1', AI_BASE_LS = 'nur.ai.base.v1';
 const AI_ENDPOINT = 'https://openrouter.ai/api/v1';
 
 const SQL_TEXT = `create table if not exists public.istigfarqwen_user_state (
@@ -1548,6 +1548,36 @@ const AI = {
     try { v ? localStorage.setItem(AI_KEY_LS, v) : localStorage.removeItem(AI_KEY_LS); return true; }
     catch { return false; }
   },
+  base() {
+    try {
+      const v = (localStorage.getItem(AI_BASE_LS) || '').trim().replace(/\/+$/, '');
+      return /^https?:\/\/[^\s]+$/i.test(v) ? v : AI_ENDPOINT;
+    } catch { return AI_ENDPOINT; }
+  },
+  customBase() {
+    try {
+      const v = (localStorage.getItem(AI_BASE_LS) || '').trim().replace(/\/+$/, '');
+      return /^https?:\/\/[^\s]+$/i.test(v) ? v : '';
+    } catch { return ''; }
+  },
+  setBase(v) {
+    try { v ? localStorage.setItem(AI_BASE_LS, v) : localStorage.removeItem(AI_BASE_LS); return true; }
+    catch { return false; }
+  },
+  host() { try { return new URL(this.base()).host; } catch { return 'OpenRouter'; } },
+  netMsg() {
+    if (navigator.onLine === false) return 'you are offline — reconnect and try again.';
+    return 'the request never left your browser, so your network is filtering ' + this.host() + ', or a VPN, proxy or ad-blocker is stopping it. Try another network, or set a reachable API base in Settings → Word insight.';
+  },
+  async probe() {
+    const t0 = Date.now();
+    try {
+      const r = await fetch(this.base() + '/models', { method: 'GET' });
+      if (!r.ok) return { ok: false, msg: this.host() + ' answered HTTP ' + r.status + '.' };
+      const j = await r.json().catch(() => ({}));
+      return { ok: true, msg: this.host() + ' reachable · ' + (j.data || []).length + ' models · ' + (Date.now() - t0) + ' ms.' };
+    } catch { return { ok: false, msg: 'No connection to ' + this.host() + ' — ' + this.netMsg() }; }
+  },
   list() { return (S.ai.models || []).filter(m => m && m.id); },
   active() {
     const l = this.list();
@@ -1574,7 +1604,7 @@ const AI = {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 60000);
     try {
-      const r = await fetch(AI_ENDPOINT + '/chat/completions', {
+      const r = await fetch(this.base() + '/chat/completions', {
         method: 'POST', signal: ctl.signal,
         headers: {
           'Content-Type': 'application/json',
@@ -1591,7 +1621,7 @@ const AI = {
       return txt;
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('The model took too long. Try again, or pick a smaller model.');
-      if (e instanceof TypeError) throw new Error('Could not reach OpenRouter — the request was blocked (offline, CORS or an extension). Nothing was sent.');
+      if (e instanceof TypeError) throw new Error('Could not reach ' + this.host() + ' — ' + this.netMsg());
       throw e;
     } finally { clearTimeout(timer); }
   }
@@ -1711,6 +1741,16 @@ function renderAIModels() {
   }
   const inp = $('#ai-key');
   if (inp) inp.placeholder = key ? 'Saved — paste a new key to replace' : 'sk-or-v1-…';
+  const bi = $('#ai-base');
+  if (bi && !bi.value) bi.value = AI.customBase();
+  const bl = $('#ai-baseline');
+  if (bl) {
+    const cb = AI.customBase();
+    bl.className = 'ai-keyline' + (cb ? ' ok' : '');
+    bl.innerHTML = cb
+      ? `${ic('check')}Using ${esc(AI.base())}`
+      : `${ic('info')}Default endpoint · openrouter.ai. Change it only if your network blocks OpenRouter.`;
+  }
   const list = AI.list();
   if (!list.length) {
     box.innerHTML = `<div class="ai-empty">No models yet.<br>Add a free one from OpenRouter.</div>`;
@@ -1732,7 +1772,7 @@ function renderAIModels() {
 async function aiCatalog(force) {
   const c = loadJSON(AI_CAT_LS);
   if (!force && c && c.at && Date.now() - c.at < 432e5 && Array.isArray(c.list)) return c.list;
-  const r = await fetch(AI_ENDPOINT + '/models');
+  const r = await fetch(AI.base() + '/models');
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const j = await r.json();
   const list = (j.data || []).map(m => ({
@@ -1775,7 +1815,7 @@ async function openModelPicker() {
   try { PICK = await aiCatalog(); renderPick(''); }
   catch (e) {
     const box = $('#ai-pick-list');
-    if (box) box.innerHTML = `<div class="pick-note">Could not reach OpenRouter (${esc(e.message)}). Paste a model id below instead.</div>`;
+    if (box) box.innerHTML = `<div class="pick-note">Could not load the catalogue from ${esc(AI.host())} (${esc(e.message)}). Paste a model id below instead.</div>`;
   }
 }
 function addModel(m) {
@@ -1922,6 +1962,25 @@ const H = {
     renderAIModels(); Sound.play('tap');
     toast('Key removed', 'ok', 'trash');
   },
+  'ai-base-save': () => {
+    const v = ($('#ai-base')?.value || '').trim().replace(/\/+$/, '');
+    if (v && !/^https?:\/\/[^\s]+$/i.test(v)) { toast('Use a full http(s) URL, e.g. https://openrouter.ai/api/v1', 'warn', 'alert'); return; }
+    if (!AI.setBase(v)) { toast('This browser blocks local storage', 'err', 'alert'); return; }
+    try { localStorage.removeItem(AI_CAT_LS); } catch {}
+    renderAIModels();
+    const line = $('#ai-testline'); if (line) { line.className = ''; line.textContent = ''; }
+    Sound.play('success');
+    toast(v ? 'Using ' + AI.host() : 'Back to the default endpoint', 'ok', 'check');
+  },
+  'ai-test': async () => {
+    const btn = $('#ai-test-btn'), line = $('#ai-testline');
+    if (line) { line.className = ''; line.textContent = 'Testing ' + AI.host() + '…'; }
+    if (btn) btn.disabled = true;
+    const r = await AI.probe();
+    if (btn) btn.disabled = false;
+    if (line) { line.className = r.ok ? 'ok' : 'bad'; line.textContent = r.msg; }
+    Sound.play(r.ok ? 'success' : 'error');
+  },
   'ai-add': () => openModelPicker(),
   'ai-active': () => Sound.play('tap'),
   'ai-activate': t => {
@@ -1970,7 +2029,7 @@ const SELF_SOUND = new Set([
   'lib-tab', 'export', 'resend', 'auth-tab', 'eye', 'sec-read', 'account', 'continue', 'begin', 'daily', 'jump',
   'nav', 'reset-data', 'coach-dismiss', 'copy-sql', 'sync-info', 'sync-now', 'mark-chapter',
   'word-close', 'word-ai', 'ai-add', 'ai-active', 'ai-activate', 'ai-toggle', 'ai-del', 'ai-pick',
-  'ai-key-save', 'ai-key-clear', 'ai-manual-add'
+  'ai-key-save', 'ai-key-clear', 'ai-manual-add', 'ai-base-save', 'ai-test'
 ]);
 
 /* ═══════════ EVENTS ═══════════ */
