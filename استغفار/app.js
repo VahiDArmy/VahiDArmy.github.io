@@ -1781,10 +1781,9 @@ const AI = {
     const body = {
       model: model.id, messages,
       temperature: deep ? 0.3 : 0.2,
-      max_tokens: deep ? 3200 : 900,
+      max_tokens: deep ? 4000 : 2000,
       stream: true
     };
-    if (deep || isReasonModel(model.id)) body.reasoning = { effort: deep ? 'high' : 'medium' };
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), deep ? 180000 : 90000);
     const t0 = Date.now();
