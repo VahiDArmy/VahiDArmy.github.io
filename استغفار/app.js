@@ -5,7 +5,7 @@
 'use strict';
 (() => {
 
-const BUILD = '1.6';
+const BUILD = '1.7';
 const SB_URL  = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY  = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
 const SB_DASH = 'https://supabase.com/dashboard/project/ummhohozmpwltbgeczsf/sql/new';
@@ -1542,10 +1542,21 @@ function priceLabel(m) {
   return `$${f((+m.p || 0) * 1e6)} / $${f((+m.c || 0) * 1e6)} per 1M`;
 }
 
+const AI_KEY_RE = /^sk-or-[A-Za-z0-9._\-]{8,}$/;
+function cleanKey(v) {
+  return String(v == null ? '' : v)
+    .replace(/[\u200B-\u200F\u202A-\u202E\u2060\uFEFF]/g, '')
+    .replace(/\s+/g, '')
+    .replace(/^["'`\u201C\u201D\u2018\u2019]+|[\"'`\u201C\u201D\u2018\u2019]+$/g, '')
+    .replace(/^bearer/i, '')
+    .replace(/["'`\u201C\u201D\u2018\u2019]/g, '');
+}
+let DIAG = null;
 const AI = {
-  key() { try { return localStorage.getItem(AI_KEY_LS) || ''; } catch { return ''; } },
+  key() { try { return cleanKey(localStorage.getItem(AI_KEY_LS) || ''); } catch { return ''; } },
+  keyValid(v) { return AI_KEY_RE.test(v == null ? this.key() : v); },
   setKey(v) {
-    try { v ? localStorage.setItem(AI_KEY_LS, v) : localStorage.removeItem(AI_KEY_LS); return true; }
+    try { const k = cleanKey(v); k ? localStorage.setItem(AI_KEY_LS, k) : localStorage.removeItem(AI_KEY_LS); return true; }
     catch { return false; }
   },
   base() {
@@ -1567,16 +1578,75 @@ const AI = {
   host() { try { return new URL(this.base()).host; } catch { return 'OpenRouter'; } },
   netMsg() {
     if (navigator.onLine === false) return 'you are offline — reconnect and try again.';
-    return 'the request never left your browser, so your network is filtering ' + this.host() + ', or a VPN, proxy or ad-blocker is stopping it. Try another network, or set a reachable API base in Settings → Word insight.';
+    return 'the request never left your browser, so a VPN, proxy, firewall or extension is filtering ' + this.host() + '. Allow this site, or try another network.';
   },
-  async probe() {
-    const t0 = Date.now();
+  /* Checks the same three layers the AI button uses: reachability, the key
+     carrying request (needs a CORS preflight) and — on request — a live reply. */
+  async diag(opts) {
+    const d = { base: this.base(), host: this.host(), at: 0, models: null, auth: null, chat: null };
+    let t = Date.now();
     try {
-      const r = await fetch(this.base() + '/models', { method: 'GET' });
-      if (!r.ok) return { ok: false, msg: this.host() + ' answered HTTP ' + r.status + '.' };
-      const j = await r.json().catch(() => ({}));
-      return { ok: true, msg: this.host() + ' reachable · ' + (j.data || []).length + ' models · ' + (Date.now() - t0) + ' ms.' };
-    } catch { return { ok: false, msg: 'No connection to ' + this.host() + ' — ' + this.netMsg() }; }
+      const r = await fetch(d.base + '/models');
+      const j = await r.json().catch(() => null);
+      d.models = { ok: r.ok, status: r.status, n: (j && j.data ? j.data.length : 0), ms: Date.now() - t };
+    } catch { d.models = { net: true, ms: Date.now() - t }; }
+    const key = this.key();
+    if (!key) d.auth = { none: true };
+    else if (!this.keyValid(key)) d.auth = { invalid: true };
+    else {
+      t = Date.now();
+      try {
+        const r = await fetch(d.base + '/key', { headers: { Authorization: 'Bearer ' + key } });
+        const j = await r.json().catch(() => null);
+        d.auth = { ok: r.ok, status: r.status, ms: Date.now() - t, data: (j && j.data) || null };
+      } catch { d.auth = { net: true, ms: Date.now() - t }; }
+    }
+    const m = this.active();
+    if (opts && opts.chat && d.auth && d.auth.ok && m) {
+      t = Date.now();
+      try {
+        const r = await fetch(d.base + '/chat/completions', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
+          body: JSON.stringify({ model: m.id, messages: [{ role: 'user', content: 'ping' }], max_tokens: 4 })
+        });
+        const j = await r.json().catch(() => null);
+        d.chat = { ok: r.ok, status: r.status, ms: Date.now() - t, model: m.id, msg: this.fixMsg(r.status, (j && j.error && j.error.message) || '') };
+      } catch { d.chat = { net: true, ms: Date.now() - t, model: m.id }; }
+    }
+    d.at = Date.now();
+    DIAG = d;
+    return d;
+  },
+  diagMsg(d) {
+    const p = [], m = d.models || {}, a = d.auth || {}, c = d.chat;
+    if (m.ok) p.push(`${d.host} reachable · ${m.n} models · ${m.ms} ms`);
+    else if (m.net) p.push(`no route to ${d.host} — ${navigator.onLine === false ? 'you are offline' : 'VPN, proxy or extension is blocking it'}`);
+    else p.push(`${d.host} answered HTTP ${m.status}`);
+    if (a.none) p.push('no key saved yet');
+    else if (a.invalid) p.push('saved key has characters a key cannot contain — paste it again on one line');
+    else if (a.net) p.push('key request blocked before it was sent (CORS, VPN or extension)');
+    else if (a.status === 401) p.push('key rejected (401) — check it on OpenRouter');
+    else if (a.ok) p.push('key accepted');
+    else if (a.status === 404) p.push('this base has no /key endpoint');
+    else p.push('key check HTTP ' + a.status);
+    if (c) {
+      if (c.ok) p.push(`test prompt answered in ${c.ms} ms`);
+      else if (c.net) p.push('chat request blocked before it was sent (CORS, VPN or extension)');
+      else p.push('chat failed — ' + (c.msg || 'HTTP ' + c.status));
+    }
+    return p.join(' · ').replace(/[.\s]+$/, '') + '.';
+  },
+  async explain(e) {
+    if (e && e.name === 'AbortError') return 'The model took too long to answer. Try again, or pick a smaller model.';
+    if (!(e instanceof TypeError)) return (e && e.message) || 'Request failed.';
+    const d = await this.diag();
+    const host = d.host;
+    if (!d.models || !d.models.ok) return 'Could not reach ' + host + ' — ' + this.netMsg();
+    if (d.auth && d.auth.invalid) return 'Your saved key contains characters a key cannot have (a line break, a quote or a space). Open Settings → Word insight and paste it again on one line.';
+    if (d.auth && d.auth.net) return host + ' is reachable, but the request that carries your key never left the browser — a VPN, proxy, firewall or extension is blocking authenticated API calls. Allow this site, or try another network.';
+    if (d.auth && d.auth.ok) return host + ' answers your key, but the /chat/completions request was blocked before it was sent — an extension, VPN or proxy is filtering the AI endpoint. Allow this site and retry.';
+    if (d.auth && d.auth.status === 401) return host + ' rejected your key (401), so no AI request could run. Check the key on OpenRouter, then paste it again in Settings → Word insight.';
+    return host + ' is reachable, but the reply to the AI request could not be read — a CORS rejection, usually from an ad-blocker or privacy extension. Disable it for this page and retry.';
   },
   list() { return (S.ai.models || []).filter(m => m && m.id); },
   active() {
@@ -1601,17 +1671,15 @@ const AI = {
   async call(model, messages) {
     const key = this.key();
     if (!key) throw new Error('No OpenRouter key yet — add one in Settings → Word insight.');
+    if (!this.keyValid(key)) throw new Error('Your saved key is not a valid OpenRouter key. Open Settings → Word insight and paste it again on one line.');
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 60000);
     try {
+      /* Only the two headers the API needs: extra custom headers force a wider
+         CORS preflight, which some proxies and extensions reject. */
       const r = await fetch(this.base() + '/chat/completions', {
         method: 'POST', signal: ctl.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + key,
-          'HTTP-Referer': location.origin,
-          'X-Title': 'Nur — The Grand Istighfar'
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key },
         body: JSON.stringify({ model: model.id, messages, temperature: 0.2, max_tokens: 700 })
       });
       const j = await r.json().catch(() => ({}));
@@ -1620,9 +1688,7 @@ const AI = {
       if (!txt) throw new Error('The model returned an empty answer. Try another model.');
       return txt;
     } catch (e) {
-      if (e.name === 'AbortError') throw new Error('The model took too long. Try again, or pick a smaller model.');
-      if (e instanceof TypeError) throw new Error('Could not reach ' + this.host() + ' — ' + this.netMsg());
-      throw e;
+      throw new Error(await this.explain(e));
     } finally { clearTimeout(timer); }
   }
 };
@@ -1732,12 +1798,15 @@ function renderAIModels() {
   const box = $('#ai-models');
   if (!box) return;
   const key = AI.key();
+  const badKey = !!key && !AI.keyValid(key);
   const line = $('#ai-keyline');
   if (line) {
-    line.className = 'ai-keyline' + (key ? ' ok' : '');
-    line.innerHTML = key
-      ? `${ic('lock')}Key saved on this device · ${esc(key.slice(0, 7))}…${esc(key.slice(-4))}`
-      : `${ic('lock')}No key yet — paste your OpenRouter key and save.`;
+    line.className = 'ai-keyline' + (badKey ? ' bad' : key ? ' ok' : '');
+    line.innerHTML = badKey
+      ? `${ic('alert')}Saved key has stray characters — paste it again on one line.`
+      : key
+        ? `${ic('lock')}Key saved on this device · ${esc(key.slice(0, 7))}…${esc(key.slice(-4))}`
+        : `${ic('lock')}No key yet — paste your OpenRouter key and save.`;
   }
   const inp = $('#ai-key');
   if (inp) inp.placeholder = key ? 'Saved — paste a new key to replace' : 'sk-or-v1-…';
@@ -1948,11 +2017,17 @@ const H = {
   'word-close': () => closeWord(),
   'word-ai': () => explainWord(),
   'ai-key-save': () => {
-    const v = ($('#ai-key')?.value || '').trim();
+    const v = cleanKey($('#ai-key')?.value || '');
     if (!v) { toast('Paste your OpenRouter key first', 'warn', 'lock'); return; }
-    if (!/^sk-or-/.test(v)) { toast('That does not look like an OpenRouter key (sk-or-…)', 'warn', 'alert'); return; }
+    if (!AI.keyValid(v)) {
+      toast(/^sk-or-/.test(v)
+        ? 'That key has stray characters (line breaks, quotes, spaces) — copy it again on one line'
+        : 'That does not look like an OpenRouter key (sk-or-…)', 'warn', 'alert');
+      return;
+    }
     if (!AI.setKey(v)) { toast('This browser blocks local storage', 'err', 'alert'); return; }
     $('#ai-key').value = '';
+    DIAG = null;
     renderAIModels(); Sound.play('success');
     toast('Key saved on this device only', 'ok', 'lock');
   },
@@ -1976,10 +2051,11 @@ const H = {
     const btn = $('#ai-test-btn'), line = $('#ai-testline');
     if (line) { line.className = ''; line.textContent = 'Testing ' + AI.host() + '…'; }
     if (btn) btn.disabled = true;
-    const r = await AI.probe();
+    const d = await AI.diag({ chat: true });
+    const ok = !!(d.models && d.models.ok && (!d.auth || d.auth.ok) && (!d.chat || d.chat.ok));
     if (btn) btn.disabled = false;
-    if (line) { line.className = r.ok ? 'ok' : 'bad'; line.textContent = r.msg; }
-    Sound.play(r.ok ? 'success' : 'error');
+    if (line) { line.className = ok ? 'ok' : 'bad'; line.textContent = AI.diagMsg(d); }
+    Sound.play(ok ? 'success' : 'error');
   },
   'ai-add': () => openModelPicker(),
   'ai-active': () => Sound.play('tap'),

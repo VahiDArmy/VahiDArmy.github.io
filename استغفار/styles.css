@@ -793,6 +793,7 @@ body.no-motion *,body.no-motion *::before,body.no-motion *::after{animation:none
 #ai-testline.ok{color:var(--ok)}
 #ai-testline.bad{color:var(--danger)}
 .ai-keyline.ok{color:var(--ok)}
+.ai-keyline.bad{color:var(--danger)}
 .ai-models-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;font-size:12.5px;letter-spacing:.2px}
 .ai-models{display:flex;flex-direction:column;gap:7px;min-width:0}
 .ai-model{min-width:0}
