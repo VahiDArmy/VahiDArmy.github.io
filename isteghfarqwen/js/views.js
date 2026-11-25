@@ -8,7 +8,6 @@ const PHRASES=[{ar:'أَسْتَغْفِرُ اللهَ وَأَتُوبُ إِ�
 const TARGETS=[33,99,100,313,1000];
 let tipRaf=0;
 
-/* ── reader ── */
 const lineHTML=(p,side)=>p.words.map(w=>
  `<span class="w" data-p="${p.n}" data-w="${w.i}" data-s="${side}">${esc(side==='a'?w.a:w.f)}</span>`).join(' ');
 const verseHTML=p=>`<article class="verse ${N.S.read[p.n]?'read':''}" id="v-${p.n}" data-p="${p.n}">
@@ -39,9 +38,10 @@ function vRead(){
   <button class="sq ${N.S.set.inter?'on':''}" data-a="inter" title="Persian line">${ic('lines')}</button>
   <button class="sq" data-a="fs" data-v="-1" title="Smaller">A−</button>
   <button class="sq" data-a="fs" data-v="1" title="Larger">A+</button>
+  <button class="sq" data-a="logs" title="Activity log">${ic('alert')}</button>
   <button class="sq" data-a="drawer" title="Settings">${ic('set')}</button></div>
  ${out}
- <div class="vend">${fl()}<p>${N.nread()===N.P.length?'You have read the entire duʿāʾ. May every word be a light for you.':'Touch a word for its Persian. Touch the violet star for its root and structure.'}</p>
+ <div class="vend">${fl()}<p>${N.nread()===N.P.length?'You have read the entire duʿāʾ. May every word be a light for you.':'Touch a word for its Persian. The violet star in that popup explains its root and structure.'}</p>
   <button class="btn" data-a="go" data-v="words">${ic('link')}Every word pair</button>
   <button class="btn gold" data-a="go" data-v="tas">${ic('target')}Seal it with tasbīḥ</button></div></div>`}
 function afterRead(p,keep){
@@ -56,9 +56,10 @@ function afterRead(p,keep){
  if(t&&!keep)setTimeout(()=>{const e=$('#v-'+t.n);if(e){e.scrollIntoView({block:'center',behavior:'auto'});
   if(p){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),1600)}}},40)}
 
-/* ── word selection + minimal popup ── */
+/* word selection + popup carrying a real action button */
 N.clearSel=()=>{N.SEL=null;$$('.w.lit').forEach(e=>e.classList.remove('lit'));
- $$('.verse.active').forEach(e=>e.classList.remove('active'));$('#tip').classList.remove('on')};
+ $$('.verse.active').forEach(e=>e.classList.remove('active'));
+ const t=$('#tip');if(t)t.classList.remove('on')};
 N.selectWord=el=>{
  const pn=+el.dataset.p,wi=+el.dataset.w,side=el.dataset.s,p=N.IX[pn];if(!p)return;
  if(N.SEL&&N.SEL.p===pn&&N.SEL.w===wi){N.clearSel();N.Snd.p('tap');return}
@@ -67,26 +68,30 @@ N.selectWord=el=>{
  $('#v-'+pn)?.classList.add('active');
  const w=p.words[wi],tip=$('#tip');
  tip.classList.toggle('ar',side==='f');
- tip.firstElementChild.textContent=side==='a'?w.f:w.a;
+ tip.innerHTML=`<div class="t">${esc(side==='a'?w.f:w.a)}</div>
+  <button class="tip-ai" type="button" data-a="tipai" aria-label="تحلیل صرفی این کلمه" title="ریشه و ساختار">${ic('ai')}</button>`;
  tip.classList.add('on');N.placeTip();
  if(N.S.set.wordSound)N.Snd.p('word');buzz(5);
+ N.log('ui','Word selected',{p:pn,w:wi,side});
  if(N.S.last!==pn){N.S.last=pn;N.saveLocal();N.syncSoon()}};
-N.placeTip=()=>{if(!N.SEL)return;const tip=$('#tip'),el=N.SEL.el;
+N.placeTip=()=>{const tip=$('#tip');if(!tip)return;
+ if(!N.SEL||N.overlaysOpen()){tip.classList.remove('on');return}
+ const el=N.SEL.el;
  if(!el||!el.isConnected){N.clearSel();return}
  const r=el.getBoundingClientRect();
- if(r.bottom<0||r.top>innerHeight){tip.classList.remove('on');return}
+ if(r.bottom<70||r.top>innerHeight-70){tip.classList.remove('on');return}
  tip.classList.add('on');
  const tw=tip.offsetWidth,th=tip.offsetHeight,cx=r.left+r.width/2;
  const x=cl(cx-tw/2,8,Math.max(8,innerWidth-tw-8));
  let y=r.top-th-11,below=false;
- if(y<8){y=r.bottom+11;below=true}
- if(y+th>innerHeight-8)y=Math.max(8,innerHeight-th-8);
+ if(y<66){y=r.bottom+11;below=true}
+ if(y+th>innerHeight-70)y=Math.max(66,innerHeight-th-70);
  tip.style.transform=`translate(${Math.round(x)}px,${Math.round(y)}px)`;
  tip.classList.toggle('below',below);
  tip.style.setProperty('--cx',cl(cx-x,12,tw-12)+'px')};
-addEventListener('scroll',()=>{if(!N.SEL||tipRaf)return;
+addEventListener('scroll',()=>{if(tipRaf)return;
  tipRaf=requestAnimationFrame(()=>{tipRaf=0;N.placeTip()})},{passive:true});
-addEventListener('resize',()=>{if(N.SEL)N.placeTip()});
+addEventListener('resize',()=>N.placeTip());
 N.stepWord=d=>{if(!N.SEL)return;const p=N.IX[N.SEL.p];let i=N.SEL.w+d,pn=N.SEL.p;
  if(i<0){const k=N.P.findIndex(x=>x.n===pn)-1;if(k<0)return;pn=N.P[k].n;i=N.P[k].words.length-1}
  else if(i>=p.words.length){const k=N.P.findIndex(x=>x.n===pn)+1;if(k>=N.P.length)return;pn=N.P[k].n;i=0}
@@ -100,7 +105,7 @@ N.jumpTo=(id,wi)=>{N.closeSearch(1);N.closePal(1);const n=+id;
   el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1600)}
  if(wi!=null)setTimeout(()=>N.pickWord(n,+wi),340)};
 
-/* ── verse actions ── */
+/* verse actions */
 N.refreshVerse=id=>{const e=$('#v-'+id);
  if(e){e.classList.toggle('read',!!N.S.read[id]);
   e.querySelector('[data-a=read]').classList.toggle('done',!!N.S.read[id]);
@@ -114,7 +119,7 @@ N.refreshVerse=id=>{const e=$('#v-'+id);
    el.querySelector('.seal').hidden=d<c[2].length}}};
 N.setRead=(id,on)=>{id=+id;if(!N.IX[id])return;
  if(on&&!N.S.read[id]){N.S.read[id]=Date.now();N.day().r++}else if(!on&&N.S.read[id])delete N.S.read[id];
- N.save();N.refreshVerse(id);N.Snd.p(on?'ok':'tap');
+ N.save();N.refreshVerse(id);N.Snd.p(on?'ok':'tap');N.log('ui',on?'Marked read':'Unmarked',{id});
  if(on){N.checkAch();if(N.nread()===N.P.length){N.celebrate();N.render({keep:true})}}};
 N.toggleBm=id=>{id=+id;if(!N.IX[id])return;
  if(N.S.bm[id]){delete N.S.bm[id];N.Snd.p('tap')}
@@ -143,7 +148,7 @@ N.copyVerse=async id=>{const p=N.IX[+id];if(!p)return;
  await N.copyText(p.arText+'\n\n'+p.faText+'\n\n— The Grand Istighfār, № '+p.n);
  N.Snd.p('pop');N.toast('Passage copied — Arabic and Persian','ok','copy')};
 
-/* ── words ── */
+/* words */
 function vWords(){const a=N.AUD;
  return`<div class="page">
  <div class="grid g4 stg">
@@ -154,7 +159,7 @@ function vWords(){const a=N.AUD;
  </div>
  <div class="card" style="margin-top:15px">
   <div class="chd">${ic('shield')}Integrity check</div>
-  <div class="mbody">Each Arabic word carries its own Persian counterpart, and each Persian word belongs to exactly one Arabic word. Nothing is unbound on either side.</div>
+  <div class="mbody">Each Arabic word carries its own Persian counterpart, and each Persian word belongs to exactly one Arabic word.</div>
   <div class="grid g3" style="margin-top:14px;gap:10px">
    <div><div class="big" style="font-size:22px;color:${a.noF?'var(--pom)':'var(--ok)'}">${a.noF}</div><div class="lbl">Arabic without Persian</div></div>
    <div><div class="big" style="font-size:22px;color:${a.noA?'var(--pom)':'var(--ok)'}">${a.noA}</div><div class="lbl">empty Arabic side</div></div>
@@ -163,7 +168,7 @@ function vWords(){const a=N.AUD;
   <div class="macts"><button class="btn" data-a="reaudit">${ic('rotate')}Run check again</button>
    <button class="btn gold" data-a="go" data-v="read">${ic('book')}Back to reading</button></div>
  </div>
- <div class="hd">Every word pair · tap the violet star to explain</div>
+ <div class="hd">Every word pair · violet star explains it</div>
  <div class="srch">${ic('search')}<input id="wq" placeholder="Filter by any Arabic or Persian word…" value="${esc(N.wordQ)}" autocomplete="off"></div>
  <div id="wlist"></div></div>`}
 function renderWords(){const box=$('#wlist');if(!box)return;
@@ -179,7 +184,7 @@ function renderWords(){const box=$('#wlist');if(!box)return;
   :`<div class="pempty">No word matches “${esc(q)}”.</div>`}
 N.bindWords=()=>{const q=$('#wq');if(q)q.addEventListener('input',()=>{N.wordQ=q.value;renderWords()});renderWords()};
 
-/* ── library ── */
+/* library */
 function vLib(){
  const bs=Object.keys(N.S.bm).map(Number).filter(i=>N.IX[i]).sort((a,b)=>a-b);
  const ns=Object.keys(N.S.notes).map(Number).filter(i=>N.IX[i]).sort((a,b)=>a-b);
@@ -202,7 +207,7 @@ function vLib(){
   <button class="pill ${N.libTab==='notes'?'on':''}" data-a="libtab" data-v="notes">${ic('note')}Notes · ${ns.length}</button></div>
   ${list.length?items:empty}</div>`}
 
-/* ── tasbih ── */
+/* tasbih */
 function vTas(){const t=N.S.tas,p=PHRASES[t.phrase];
  return`<div class="page"><div class="tas">
   <div class="trow">${PHRASES.map((x,i)=>`<button class="pill ${i===t.phrase?'on':''}" data-a="tphrase" data-v="${i}">${x.n}</button>`).join('')}</div>
@@ -230,7 +235,7 @@ N.tInc=()=>{const t=N.S.tas;t.session++;t.total++;N.day().t++;N.save();N.tasUI()
 N.tDec=()=>{const t=N.S.tas;if(t.session>0){t.session--;t.total=Math.max(0,t.total-1);
  N.day().t=Math.max(0,N.day().t-1);N.save();N.tasUI();N.Snd.p('tap')}};
 
-/* ── journey ── */
+/* journey */
 const ACH=[{k:'first',i:'spark',t:'First Light',d:'Mark your first passage as read',f:()=>N.nread()>=1},
 {k:'ten',i:'book',t:'Devoted Reader',d:'Read 10 passages',f:()=>N.nread()>=10},
 {k:'all',i:'award',t:'The Full Surrender',d:'Read every passage',f:()=>N.nread()===N.P.length},
@@ -240,7 +245,7 @@ const ACH=[{k:'first',i:'spark',t:'First Light',d:'Mark your first passage as re
 {k:'d1000',i:'zap',t:'Thousandfold',d:'1,000 tasbīḥ counted',f:()=>N.S.tas.total>=1000},
 {k:'s3',i:'flame',t:'Three Dawns',d:'A 3-day streak',f:()=>N.streak()>=3},
 {k:'s7',i:'sun',t:'A Week of Light',d:'A 7-day streak',f:()=>N.streak()>=7},
-{k:'ai1',i:'ai',t:'The Grammarian',d:'Ask the tutor about a word',f:()=>!!N.lj('nur.ai.cache')}];
+{k:'ai1',i:'ai',t:'The Grammarian',d:'Receive one AI analysis',f:()=>!!N.lj('nur.ai.cache')}];
 N.checkAch=()=>ACH.forEach(a=>{if(!N.S.ach[a.k]&&a.f()){N.S.ach[a.k]=Date.now();N.save();
  N.Snd.p('fan');N.confetti(70);N.toast('Achievement — '+a.t,'gold','award')}});
 N.celebrate=()=>{N.Snd.p('fan');N.confetti(200);N.toast('The entire duʿāʾ is read. Taqabbal Allāh!','gold','spark')};
@@ -270,13 +275,13 @@ function vJour(){const rc=N.nread(),mins=Math.round(Object.values(N.S.act).reduc
  <div class="achs">${ACH.map(x=>{const w=N.S.ach[x.k];
   return`<div class="ach ${w?'won':'lock'}">${ic(x.i)}<div><h4>${esc(x.t)}</h4><p>${esc(x.d)}</p>
   ${w?`<small>${new Date(w).toLocaleDateString()}</small>`:''}</div></div>`}).join('')}</div>
- <div class="hd">Data</div><div style="display:flex;gap:9px;flex-wrap:wrap">
+ <div class="hd">Data & diagnostics</div><div style="display:flex;gap:9px;flex-wrap:wrap">
   <button class="btn" data-a="export">${ic('dl')}Export</button>
   <button class="btn" data-a="import">${ic('ul')}Import</button>
   <button class="btn" data-a="sync">${ic('sync')}Sync</button>
-  <button class="btn" data-a="sql">${ic('db')}Setup SQL</button></div></div>`}
+  <button class="btn" data-a="sql">${ic('db')}Setup SQL</button>
+  <button class="btn" data-a="logs">${ic('alert')}Activity log</button></div></div>`}
 
 N.views={read:vRead,words:vWords,lib:vLib,tas:vTas,jour:vJour};
-N.afterRead=afterRead;
-N.PHRASES=PHRASES;N.TARGETS=TARGETS;
+N.afterRead=afterRead;N.PHRASES=PHRASES;N.TARGETS=TARGETS;
 })();

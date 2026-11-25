@@ -1,4 +1,4 @@
-/* Nūr core: helpers · state · sound · atmosphere · UI primitives */
+/* Nūr core: helpers · state · logger · sound · atmosphere · UI primitives */
 (()=>{
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,11 +25,56 @@ function wd(s){const d=copy(DEF);if(!s||![3,4,5,6,7].includes(s.v))return d;
  const o={...d,...s,v:7,set:{...d.set,...(s.set||{})},tas:{...d.tas,...(s.tas||{})},read:s.read||{},bm:s.bm||{},notes:s.notes||{},ach:s.ach||{},act:s.act||{}};
  ['lang','auto','speed','rate','focus'].forEach(k=>delete o.set[k]);return o}
 
-const N={$, $$, esc, ic, fl, cl, copy, dk, fmt, buzz, deb, lj, ls, wds, norm, LS, LSS, DEF, wd,
+const N={$,$$,esc,ic,fl,cl,copy,dk,fmt,buzz,deb,lj,ls,wds,norm,LS,LSS,DEF,wd,
  S:wd(lj(LS)||lj('nur.v6')||lj('nur.v5')), SES:lj(LSS),
  P:[], IX:{}, CHOF:{}, CH:[], AUD:null, VIEW:'read', SEL:null, libTab:'bm', wordQ:'',
  io:null, lastTouch:Date.now(), syncErr:'', lastSync:0};
 window.NUR=N;
+
+/* ══ LOGGER ══ */
+const LOGK='nur.log',LOGMAX=500;
+N.logs=Array.isArray(lj(LOGK))?lj(LOGK):[];
+N.logFilter='all';
+const flushLog=deb(()=>ls(LOGK,N.logs.slice(-LOGMAX)),400);
+N.log=(cat,msg,data,level)=>{
+ const e={t:Date.now(),cat:cat||'app',lv:level||(cat==='err'?'err':'info'),msg:String(msg??'')};
+ if(data!==undefined){try{e.data=typeof data==='string'?data:JSON.stringify(data)}catch{e.data=String(data)}}
+ N.logs.push(e);if(N.logs.length>LOGMAX)N.logs.splice(0,N.logs.length-LOGMAX);
+ flushLog();
+ const tag=`%c[nur:${e.cat}]`;
+ const col=e.lv==='err'?'#f04a63':e.lv==='warn'?'#ff9f45':e.cat==='ai'?'#9b8cff':'#2ee6c5';
+ try{console[level==='err'?'error':'log'](tag,`color:${col};font-weight:700`,e.msg,data!==undefined?data:'')}catch{}
+ const box=$('#logList');if(box&&$('#mroot .log-wrap'))N.renderLog();
+ N.hud&&N.hud();
+ return e};
+N.logClear=()=>{N.logs=[];ls(LOGK,[]);N.renderLog();N.toast('Log cleared','ok','trash')};
+N.logErrors=()=>N.logs.filter(e=>e.lv==='err').length;
+N.renderLog=()=>{const box=$('#logList');if(!box)return;
+ const f=N.logFilter;
+ const rows=N.logs.filter(e=>f==='all'||(f==='err'?e.lv==='err':e.cat===f)).slice(-260).reverse();
+ box.innerHTML=rows.length?rows.map(e=>{
+  const d=new Date(e.t),ts=`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+  return`<div class="log-row ${e.lv}"><span class="lt">${ts}</span><span class="lc ${e.cat}">${esc(e.cat)}</span>
+   <span class="lm">${esc(e.msg)}${e.data?`<em>${esc(e.data.slice(0,400))}</em>`:''}</span></div>`}).join('')
+  :`<div class="pempty">No entries for this filter.</div>`;
+ const c=$('#logCount');if(c)c.textContent=`${N.logs.length} entries · ${N.logErrors()} errors`};
+N.logPanel=()=>{
+ N.modal(`<button class="ib mx" data-a="mclose">${ic('x')}</button>
+  <h2>${ic('alert')}Activity log</h2>
+  <div class="mbody" id="logCount">—</div>
+  <div class="log-wrap">
+   <div class="log-filters">
+    ${['all','ai','net','model','ui','err'].map(f=>`<button class="pill ${N.logFilter===f?'on':''}" data-a="logf" data-v="${f}">${f}</button>`).join('')}
+   </div>
+   <div class="log-list" id="logList"></div>
+  </div>
+  <div class="macts"><button class="btn" data-a="logcopy">${ic('copy')}Copy log</button>
+   <button class="btn bad" data-a="logclear">${ic('trash')}Clear</button>
+   <button class="btn ghost" data-a="mclose">Close</button></div>`);
+ N.renderLog()};
+
+N.overlaysOpen=()=>!!(document.body.classList.contains('drawer')||$('#mroot').innerHTML||
+ $$('.ov.open').length||$('#ai').classList.contains('open'));
 
 N.day=()=>(N.S.act[dk()]||={r:0,t:0,s:0});
 N.nread=()=>Object.keys(N.S.read).length;
@@ -42,7 +87,8 @@ N.build=()=>{const D=window.NUR_DATA;N.CH=D.CH;N.P=[];N.IX={};N.CHOF={};
  D.CH.forEach((c,ci)=>c[2].forEach(n=>{const raw=D.W[n]||[],words=[];
   for(let i=0;i<raw.length;i+=2)words.push({i:words.length,a:raw[i]||'',f:raw[i+1]||'',fw:wds(raw[i+1]||'')});
   const o={n,ch:c[0],chf:c[1],ci,words,arText:words.map(w=>w.a).join(' '),faText:words.map(w=>w.f).join(' ')};
-  N.P.push(o);N.IX[n]=o;N.CHOF[n]=c}))};
+  N.P.push(o);N.IX[n]=o;N.CHOF[n]=c}));
+ N.log('app',`Corpus built · ${N.P.length} passages`)};
 N.audit=()=>{let aw=0,fw=0,noF=0,noA=0;
  N.P.forEach(p=>p.words.forEach(w=>{aw++;fw+=w.fw.length;if(!w.fw.length)noF++;if(!wds(w.a).length)noA++}));
  const t=aw+fw,cov=t?Math.round(((aw-noF)+fw)/t*100):100;
@@ -138,7 +184,8 @@ N.toast=(m,t='ok',i='check',action)=>{const b=$('#toasts');while(b.children.leng
   u.onclick=ev=>{ev.stopPropagation();action.fn();e.remove()};e.appendChild(u)}
  b.appendChild(e);setTimeout(()=>{e.classList.add('bye');setTimeout(()=>e.remove(),320)},action?6500:3400)};
 N.mres=null;
-N.modal=h=>{$('#mroot').innerHTML=`<div class="ov open"><div class="scrim" data-a="mclose"></div><div class="mcard">${h}</div></div>`;
+N.modal=h=>{N.clearSel&&N.clearSel();
+ $('#mroot').innerHTML=`<div class="ov open"><div class="scrim" data-a="mclose"></div><div class="mcard">${h}</div></div>`;
  N.Snd.p('open');const f=$('#mroot textarea,#mroot input,#mroot .btn');f&&setTimeout(()=>f.focus(),60)};
 N.mclose=()=>{if(!$('#mroot').innerHTML)return;$('#mroot').innerHTML='';N.Snd.p('close');
  if(N.mres){const r=N.mres;N.mres=null;r(false)}};
@@ -161,6 +208,6 @@ N.apply=()=>{const t=N.S.set,r=document.documentElement;
  N.Amb.sync();N.Sky.refresh();N.Sky.sync();N.placeTip&&N.placeTip();N.ai&&N.ai.paintKey()};
 N.fillDrawer=()=>{$$('#drawer [data-s]').forEach(e=>{const v=N.S.set[e.dataset.s];
  if(e.type==='checkbox')e.checked=!!v;else e.value=v});N.syncUI&&N.syncUI();N.ai&&N.ai.paintKey()};
-N.openDr=()=>{N.fillDrawer();N.acctUI();document.body.classList.add('drawer');N.Snd.p('open')};
+N.openDr=()=>{N.clearSel&&N.clearSel();N.fillDrawer();N.acctUI();document.body.classList.add('drawer');N.Snd.p('open')};
 N.closeDr=()=>{document.body.classList.remove('drawer');N.Snd.p('close')};
 })();
