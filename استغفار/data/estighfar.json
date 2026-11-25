@@ -1,0 +1,148 @@
+{
+  "meta": {
+    "title": { "en": "The Grand Istighfār", "fa": "استغفار بزرگ" },
+    "attribution": {
+      "en": "Transmitted from Imam ʿAlī ibn Abī Ṭālib (peace be upon him)",
+      "fa": "منقول از امیرالمؤمنین علی بن ابی‌طالب علیه‌السلام"
+    },
+    "source": "Mawsūʿat al-Imām ʿAlī — Bāqir Sharīf al-Qurashī",
+    "note": "Arabic reconstructed and fully vocalized from published editions; OCR errors corrected. English and Persian translations freshly composed for this edition.",
+    "version": 1
+  },
+  "sections": [
+{
+      "id": "sec1",
+      "en": "Sins Born of Strength & Blessing",
+      "fa": "گناهانی که به مدد توان و نعمت مرتکب شدم",
+      "segments": [
+        { "id": 1, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ مِنْ كُلِّ ذَنْبٍ قَوِيَ عَلَيْهِ بَدَنِي بِعَافِيَتِكَ، أَوْ نَالَتْهُ قُدْرَتِي بِفَضْلِ نِعْمَتِكَ، أَوْ بَسَطْتُ إِلَيْهِ يَدِي بِسَابِغِ رِزْقِكَ،", "en": "O God, I seek Your forgiveness for every sin my body grew strong enough to commit through the health You gave me, that my power reached through the abundance of Your blessing, or that I stretched my hand toward through Your overflowing provision.", "fa": "خدایا، از هر گناهی که تنم به برکتِ عافیتی که تو عطا کردی توانِ ارتکابش را یافت، یا با نیرویی که از فضلِ نعمتت به دست آورده بودم بدان دست یافتم، یا با روزیِ فراوانت دست به سویش گشودم، از تو آمرزش می‌خواهم." },
+        { "id": 2, "ar": "أَوِ اتَّكَلْتُ فِيهِ عِنْدَ خَوْفِي مِنْهُ عَلَى أَنَاتِكَ، أَوِ احْتَجَبْتُ فِيهِ مِنَ النَّاسِ بِسَتْرِكَ، أَوْ وَثِقْتُ مِنْ سَطْوَتِكَ عَلَيَّ فِيهِ بِحِلْمِكَ، أَوْ عَوَّلْتُ فِيهِ عَلَى كَرَمِ عَفْوِكَ.", "en": "Or for which, when I feared its consequences, I leaned upon Your patience; or hid it from people behind Your veil; or felt safe from Your seizure because of Your forbearance; or relied upon the generosity of Your pardon.", "fa": "یا هنگامی که از پیامدش بیم داشتم، بر بردباری و مهلت‌دهی تو تکیه کردم؛ یا به پرده‌پوشی‌ات آن را از مردم پنهان داشتم؛ یا به سبب بردباری‌ات خود را از خشم و قهر تو در امان پنداشتم؛ یا به بخشندگیِ عفوت دل بستم." }
+      ]
+    },
+{
+      "id": "sec2",
+      "en": "Betrayed Trust & Cunning",
+      "fa": "خیانت در امانت و چاره‌گری",
+      "segments": [
+        { "id": 3, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ مِنْ كُلِّ ذَنْبٍ خُنْتُ فِيهِ أَمَانَتِي، أَوْ بَخَسْتُ بِفِعْلِهِ نَفْسِي، أَوِ احْتَطَبْتُ بِهِ عَلَى بَدَنِي،", "en": "O God, I seek Your forgiveness for every sin in which I betrayed my trust, or wronged my own soul by doing it, or gathered its firewood upon my own back.", "fa": "خدایا، از هر گناهی که در آن به امانتم خیانت کردم، یا با انجامش به خویشتن ستم روا داشتم، یا با آن، گویی برای سوزاندنِ تن خویش هیزم فراهم آوردم، آمرزش می‌خواهم." },
+        { "id": 4, "ar": "أَوْ قَدَّمْتُ فِيهِ لَذَّتِي، أَوْ آثَرْتُ فِيهِ شَهْوَتِي، أَوْ سَعَيْتُ فِيهِ لِغَيْرِي،", "en": "Or in which I put my pleasure first, preferred my appetite, or labored at it for someone other than You.", "fa": "یا در آن، لذت خود را پیش انداختم، یا خواهش نفسم را برگزیدم، یا برای کسی جز خودم در آن کوشیدم." },
+        { "id": 5, "ar": "أَوِ اسْتَغْوَيْتُ إِلَيْهِ مَنْ تَبِعَنِي، أَوْ كَايَدْتُ فِيهِ مَنْ مَنَعَنِي، أَوْ قَهَرْتُ عَلَيْهِ مَنْ عَادَانِي، أَوْ غَلَبْتُ عَلَيْهِ بِفَضْلِ حِيلَتِي،", "en": "Or seduced into it those who followed me, schemed against those who would stop me, overpowered those who opposed me, or won my way through superior cunning.", "fa": "یا کسانی را که از من پیروی می‌کردند به سوی آن فریفتم، یا با کسی که مرا از آن بازمی‌داشت نیرنگ ورزیدم، یا در آن بر کسی که با من دشمنی می‌کرد چیره شدم، یا با حیله و چاره‌گریِ خود بر آن دست یافتم." },
+        { "id": 6, "ar": "أَوْ أَحَلْتُ عَلَيْكَ مَوْلَايَ فَلَمْ تَغْلِبْنِي عَلَى فِعْلِي، إِذْ كُنْتَ كَارِهًا لِمَعْصِيَتِي فَحَلُمْتَ عَنِّي، لَكِنْ سَبَقَ عِلْمُكَ فِيَّ بِفِعْلِي ذَلِكَ،", "en": "Or I cast my affair upon You, my Master, and You did not overpower me in my deed: though You detested my disobedience, You were forbearing with me — yet Your knowledge had already encompassed that I would do it.", "fa": "یا کار را به تو واگذاشتم، ای مولای من، اما تو مرا در انجام آن به زور بازنداشتی؛ با آنکه از نافرمانی‌ام ناخشنود بودی، در حقم بردباری کردی؛ هرچند از پیش می‌دانستی که آن کار را انجام خواهم داد." },
+        { "id": 7, "ar": "لَمْ تُدْخِلْنِي يَا رَبِّ فِيهِ جَبْرًا، وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا، وَلَمْ تَظْلِمْنِي فِيهِ شَيْئًا، فَأَسْتَغْفِرُكَ لَهُ وَلِجَمِيعِ ذُنُوبِي.", "en": "You did not drive me into it by compulsion, my Lord, nor force me to bear it, nor wrong me in it in the least — so I seek Your forgiveness for it and for all my sins.", "fa": "مرا، ای پروردگارم، به جبر در آن وارد نکردی و به زور به آن واندی؛ و در این باره هیچ ستمی بر من روا نداشتی. پس برای آن و برای همهٔ گناهانم از تو آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec3",
+      "en": "Broken Repentance & Tainted Devotion",
+      "fa": "توبهٔ شکسته و نیتِ آمیخته",
+      "segments": [
+        { "id": 8, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تُبْتُ إِلَيْكَ مِنْهُ وَأَقْدَمْتُ عَلَى فِعْلِهِ، فَاسْتَحْيَيْتُ مِنْكَ وَأَنَا عَلَيْهِ، وَرَهِبْتُكَ وَأَنَا فِيهِ تَعَاطَيْتُهُ وَعُدْتُ إِلَيْهِ.", "en": "O God, I seek forgiveness for every sin I repented of to You, then rushed to commit — feeling shame before You even as I did it, and dread of You even as I indulged in it and returned to it.", "fa": "خدایا، از هر گناهی که از آن به درگاهت توبه کردم، اما دوباره به انجامش روی آوردم، آمرزش می‌خواهم؛ در حالی که هنگام ارتکابش از تو شرم داشتم و از تو بیم می‌بردم، با این همه بدان دست زدم و بار دیگر به سویش بازگشتم." },
+        { "id": 9, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ بِسَبَبِ خَيْرٍ أَرَدْتُ بِهِ وَجْهَكَ فَخَالَطَنِي فِيهِ سِوَاكَ، وَشَارَكَكَ فِعْلِي مَا لَا يَخْلُصُ لَكَ، أَوْ وَجَبَ عَلَيَّ مَا أَرَدْتُ بِهِ سِوَاكَ، وَكَثِيرٌ مِنْ فِعْلِي مَا يَكُونُ كَذَلِكَ.", "en": "O God, I seek forgiveness for every sin recorded against me on account of a good deed I meant for Your Face, but something other than You crept into it — my act shared with You what was not purely Yours, or what settled upon me was meant for another; and much of my doing is like this.", "fa": "خدایا، از هر گناهی که به سببِ کار نیکی که با آن رضای تو را می‌جستم بر من نوشته شد، آمرزش می‌خواهم؛ کاری که در آن، غیرِ تو با نیّتم درآمیخت و چیزی را در کردارم با تو شریک ساختم که خالصانه برای تو نبود؛ یا کاری بر من لازم شد که در انجامش کسی جز تو را قصد کرده بودم. و بسیاری از کارهایم چنین است." }
+      ]
+    },
+{
+      "id": "sec4",
+      "en": "Shattered Covenants & Misplaced Fear",
+      "fa": "پیمان‌های شکسته و ترسِ نابجا",
+      "segments": [
+        { "id": 10, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تَوَرَّكَ عَلَيَّ بِسَبَبِ عَهْدٍ عَاهَدْتُكَ عَلَيْهِ، أَوْ عَقْدٍ عَقَدْتُهُ لَكَ، أَوْ ذِمَّةٍ وَاثَقْتُ بِهَا مِنْ أَجْلِكَ لِأَحَدٍ مِنْ خَلْقِكَ، ثُمَّ نَقَضْتُ ذَلِكَ مِنْ غَيْرِ ضَرُورَةٍ لَزِمَتْنِي فِيهِ، بَلِ اسْتَزَلَّنِي إِلَيْهِ عَنِ الْوَفَاءِ بِهِ الْأَشَرُ، وَمَنَعَنِي عَنْ رِعَايَتِهِ الْبَطَرُ.", "en": "O God, I seek forgiveness for every sin that fastened upon me through a covenant I made with You, a bond I tied for You, or a pledge I secured for one of Your creatures for Your sake — then broke without any compelling need; rather, arrogance lured me from fidelity, and self-exultance kept me from honoring it.", "fa": "خدایا، از هر گناهی که پیامدش به سببِ عهدی که با تو بستم، پیمانی که به خاطر تو منعقد کردم، یا تعهدی که به پاس تو در برابر یکی از آفریدگانت سپردم بر عهده‌ام سنگینی کرد، آمرزش می‌خواهم؛ سپس بی‌آنکه ضرورتی مرا به شکستن آن وادارد، آن را شکستم. سرمستی مرا از وفای به آن لغزاند و غرور و ناسپاسی‌ام از پاسداشتش بازداشت." },
+        { "id": 11, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ رَهِبْتُ فِيهِ مِنْ عِبَادِكَ، وَخِفْتُ فِيهِ غَيْرَكَ، وَاسْتَحْيَيْتُ فِيهِ مِنْ خَلْقِكَ، ثُمَّ أَفْضَيْتُ بِهِ فِعْلِي إِلَيْكَ.", "en": "O God, I seek forgiveness for every sin in which I stood in awe of Your servants, feared someone other than You, and felt shame before Your creatures — then brought the doing of it openly before You.", "fa": "خدایا، از هر گناهی که در آن از بندگانت هراسیدم، از کسی جز تو ترسیدم و از آفریدگانت شرم کردم، سپس آن را با کردار خویش در پیشگاه تو آشکار ساختم، آمرزش می‌خواهم." },
+        { "id": 12, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ أَقْدَمْتُ عَلَيْهِ وَأَنَا مُسْتَيْقِنٌ أَنَّكَ تُعَاقِبُ عَلَى ارْتِكَابِهِ فَارْتَكَبْتُهُ.", "en": "O God, I seek forgiveness for every sin I dared to commit while certain that You punish its commission — and still I committed it.", "fa": "خدایا، از هر گناهی که با آگاهی از اینکه تو به سبب ارتکابش کیفرم می‌دهی، به آن دست یازیدم و با این همه مرتکبش شدم، آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec5",
+      "en": "Desire Over Obedience",
+      "fa": "خواهشِ نفس، پیش از فرمان",
+      "segments": [
+        { "id": 13, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ قَدَّمْتُ فِيهِ شَهْوَتِي عَلَى طَاعَتِكَ، وَآثَرْتُ مَحَبَّتِي عَلَى أَمْرِكَ، وَأَرْضَيْتُ فِيهِ نَفْسِي بِسَخَطِكَ، وَقَدْ نَهَيْتَنِي عَنْهُ بِنَهْيِكَ، وَتَقَدَّمْتَ إِلَيَّ فِيهِ بِإِعْذَارِكَ، وَاحْتَجَجْتَ عَلَيَّ فِيهِ بِوَعِيدِكَ.", "en": "O God, I seek forgiveness for every sin in which I placed my desire before obedience to You, chose what I love over what You command, and pleased my soul with what angers You — though You had forbidden it, warned me in advance leaving no excuse, and completed the proof against me with Your threat of punishment.", "fa": "خدایا، از هر گناهی که در آن خواهش نفسم را بر طاعت تو مقدم داشتم، محبت و خواستِ خود را بر فرمانت ترجیح دادم و با ناخشنودیِ تو، نفسم را خشنود ساختم؛ حال آنکه مرا از آن نهی کرده بودی، از پیش با هشدارهایت جای عذر برایم نگذاشته بودی و با تهدیدت حجت را بر من تمام کرده بودی، آمرزش می‌خواهم." },
+        { "id": 14, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ عَلِمْتُهُ مِنْ نَفْسِي، أَوْ ذَهَلْتُهُ، أَوْ نَسِيتُهُ، أَوْ تَعَمَّدْتُهُ، أَوْ أَخْطَأْتُهُ، مِمَّا لَا أَشُكُّ أَنَّكَ سَائِلِي عَنْهُ، وَأَنَّ نَفْسِي مُرْتَهَنَةٌ بِهِ لَدَيْكَ، وَإِنْ كُنْتُ قَدْ نَسِيتُهُ أَوْ غَفَلْتُ نَفْسِي عَنْهُ.", "en": "O God, I seek forgiveness for every sin I knew of in myself or overlooked, forgot, did deliberately, or fell into by mistake — of which I have no doubt You will question me, and my soul is held in pledge for it with You, even if I have forgotten it or let it slip from my mind.", "fa": "خدایا، از هر گناهی که خود از آن آگاه بودم، یا از آن غفلت کردم، یا فراموشش کردم، یا عمداً مرتکبش شدم، یا سهواً در آن افتادم، آمرزش می‌خواهم؛ گناهی که بی‌گمان درباره‌اش از من بازخواست خواهی کرد و جانم نزد تو در گروِ آن است، هرچند آن را فراموش کرده یا از آن غافل مانده باشم." },
+        { "id": 15, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ وَاجَهْتُكَ بِهِ وَقَدْ أَيْقَنْتُ أَنَّكَ تَرَانِي، وَأَغْفَلْتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ، أَوْ نَسِيتُ أَنْ أَتُوبَ إِلَيْكَ مِنْهُ، أَوْ نَسِيتُ أَنْ أَسْتَغْفِرَكَ لَهُ.", "en": "O God, I seek forgiveness for every sin I committed facing You, certain that You see me — yet I neglected to repent of it, or forgot to turn back to You, or forgot to ask Your forgiveness for it.", "fa": "خدایا، از هر گناهی که با یقین به اینکه تو مرا می‌بینی، آشکارا در برابر تو مرتکب شدم و سپس از توبه کردن از آن غفلت ورزیدم، یا توبه از آن را فراموش کردم، یا از تو آمرزش خواستن برایش را از یاد بردم، آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec6",
+      "en": "Presumption & Prayers Unanswered",
+      "fa": "گمانِ بی‌جا به بخشایش و دعای بی‌پاسخ",
+      "segments": [
+        { "id": 16, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ دَخَلْتُ فِيهِ وَأَحْسَنْتُ ظَنِّي بِكَ أَنْ لَا تُعَذِّبَنِي عَلَيْهِ وَأَنَّكَ تَكْفِينِي مِنْهُ.", "en": "O God, I seek forgiveness for every sin I entered while thinking well of You — that You would not punish me for it and would shield me from its consequence.", "fa": "خدایا، از هر گناهی که مرتکب شدم در حالی که به تو گمان نیک داشتم و می‌پنداشتم مرا به سبب آن عذاب نخواهی کرد و خودت مرا از پیامدش کفایت خواهی کرد، آمرزش می‌خواهم." },
+        { "id": 17, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَوْجَبْتُ بِهِ مِنْكَ رَدَّ الدُّعَاءِ، وَحِرْمَانَ الْإِجَابَةِ، وَخَيْبَةَ الطَّمَعِ، وَانْفِسَاخَ الرَّجَاءِ.", "en": "O God, I seek forgiveness for every sin by which I earned from You the turning back of my prayer, deprivation of response, the failure of my hopes, and the collapse of my expectation.", "fa": "خدایا، از هر گناهی که به سبب آن سزاوارِ بازگردانده‌شدنِ دعایم، محرومیت از اجابت، ناکامیِ امید و گسستنِ رشتهٔ آرزو شدم، آمرزش می‌خواهم." },
+        { "id": 18, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ يُعَقِّبُ الْحَسْرَةَ، وَيُورِثُ النَّدَامَةَ، وَيَحْبِسُ الرِّزْقَ، وَيَرُدُّ الدُّعَاءَ.", "en": "O God, I seek forgiveness for every sin that trails regret behind it, bequeaths remorse, withholds provision, and turns back prayer.", "fa": "خدایا، از هر گناهی که حسرت می‌آورد، پشیمانی به بار می‌آورد، روزی را بازمی‌دارد و دعا را بازمی‌گرداند، آمرزش می‌خواهم." },
+        { "id": 19, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ يُورِثُ الْأَسْقَامَ، وَيُعَقِّبُ الضَّنَى، وَيُوجِبُ النِّقَمَ، وَيَكُونُ آخِرُهُ حَسْرَةً وَنَدَامَةً.", "en": "O God, I seek forgiveness for every sin that breeds sickness, brings wasting of the body, calls down affliction, and ends at last in grief and remorse.", "fa": "خدایا، از هر گناهی که بیماری‌ها را در پی دارد، فرسودگی و رنجوری می‌آورد، موجبِ فرود آمدنِ کیفرها می‌شود و پایانش حسرت و پشیمانی است، آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec7",
+      "en": "Sins in Solitude",
+      "fa": "گناهانِ خلوت",
+      "segments": [
+        { "id": 20, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَدَحْتُهُ بِلِسَانِي، أَوْ هَشَّتْ إِلَيْهِ نَفْسِي، أَوِ اكْتَسَبْتُهُ بِيَدِي وَهُوَ عِنْدَكَ قَبِيحٌ تُعَاقِبُ عَلَى مِثْلِهِ، وَتَمْقُتُ مَنْ عَمِلَهُ.", "en": "O God, I seek forgiveness for every sin I praised with my tongue, or my soul welcomed eagerly, or I earned with my own hand — while with You it is ugly: You punish its like and detest the one who does it.", "fa": "خدایا، از هر گناهی که با زبانم ستایشش کردم، یا جانم مشتاقانه به سویش گرایید، یا با دست خود به آن دست یازیدم، آمرزش می‌خواهم؛ حال آنکه نزد تو زشت است، بر همانندش کیفر می‌دهی و از مرتکبش بیزاری." },
+        { "id": 21, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ خَلَوْتُ بِهِ فِي لَيْلٍ أَوْ نَهَارٍ حَيْثُ لَا يَرَانِي أَحَدٌ مِنْ خَلْقِكَ، فَمِلْتُ فِيهِ مِنْ تَرْكِهِ بِخَوْفِكَ إِلَى ارْتِكَابِهِ بِحُسْنِ الظَّنِّ بِكَ، فَسَوَّلَتْ لِي نَفْسِي الْإِقْدَامَ عَلَيْهِ فَوَاقَعْتُهُ وَأَنَا عَارِفٌ بِمَعْصِيَتِي لَكَ فِيهِ.", "en": "O God, I seek forgiveness for every sin I committed alone, by night or day, where none of Your creation saw me — when I turned from leaving it out of fear of You to committing it in hopeful reliance on You; my soul made the leap seem sweet, so I did it, fully aware that in it I was disobeying You.", "fa": "خدایا، از هر گناهی که در شب یا روز، در خلوت و جایی که هیچ‌یک از آفریدگانت مرا نمی‌دید، مرتکب شدم، آمرزش می‌خواهم؛ گناهی که در آن، به جای ترک آن از بیم تو، به سبب خوش‌گمانی به تو به سوی ارتکابش متمایل شدم؛ نفسم ارتکابش را در نظرم آراست و با آنکه می‌دانستم در آن نافرمانی‌ات می‌کنم، مرتکبش شدم." },
+        { "id": 22, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَقْلَلْتُهُ أَوِ اسْتَصْغَرْتُهُ، أَوِ اسْتَعْظَمْتُهُ وَتَوَرَّطْتُ فِيهِ.", "en": "O God, I seek forgiveness for every sin I counted small or thought trivial — or knew to be grave, yet plunged into anyway.", "fa": "خدایا، از هر گناهی که آن را اندک یا ناچیز شمردم، یا بزرگی‌اش را دریافتم و با این همه در آن گرفتار شدم، آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec8",
+      "en": "Aiding & Adorning Sin",
+      "fa": "همدستی و آراستنِ گناه",
+      "segments": [
+        { "id": 23, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَالَأْتُ فِيهِ عَلَى أَحَدٍ مِنْ بَرِيَّتِكَ،", "en": "O God, I seek forgiveness for every sin in which I lent my backing against one of Your creatures,", "fa": "خدایا، از هر گناهی که در آن با کسی بر ضدّ یکی از آفریدگانت همدست شدم، آمرزش می‌خواهم." },
+        { "id": 24, "ar": "أَوْ زَيَّنْتُهُ لِنَفْسِي، أَوْ أَوْمَأْتُ بِهِ إِلَى غَيْرِي وَدَلَلْتُ عَلَيْهِ سِوَايَ، أَوْ أَصْرَرْتُ عَلَيْهِ بِعَمْدِي، أَوْ أَقَمْتُ عَلَيْهِ بِحِيلَتِي.", "en": "Or adorned it for my own soul, or signaled it to another and guided someone else to it, or willfully persisted in it, or kept it standing by my contrivance.", "fa": "یا آن را در نظر خود آراستم، یا با اشاره آن را به دیگری نشان دادم و کسانی جز خودم را به سویش راهنمایی کردم، یا آگاهانه بر آن پافشاری ورزیدم، یا با چاره‌گریِ خود آن را پابرجا نگه داشتم." },
+        { "id": 25, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ اسْتَعَنْتُ عَلَيْهِ بِحِيلَتِي بِشَيْءٍ مِمَّا يُرَادُ بِهِ وَجْهُكَ، أَوْ يُسْتَظْهَرُ بِمِثْلِهِ عَلَى طَاعَتِكَ، أَوْ يُتَقَرَّبُ بِمِثْلِهِ إِلَيْكَ، وَوَارَيْتُ عَنِ النَّاسِ وَلَبَّسْتُ فِيهِ كَأَنِّي أُرِيدُكَ بِحِيلَتِي، وَالْمُرَادُ بِهِ مَعْصِيَتُكَ، وَالْهَوَى فِيهِ مُتَصَرِّفٌ عَلَى غَيْرِ طَاعَتِكَ.", "en": "O God, I seek forgiveness for every sin I abetted with my cunning — using things meant for Your Face, things whose like strengthens obedience to You or draws one near to You — hiding it from people and dressing it up as if my scheme were for You, while its true aim was disobeying You, with desire steering it far from Your obedience.", "fa": "خدایا، از هر گناهی که برای انجامش با نیرنگِ خود از چیزی مدد گرفتم که با آن رضای تو خواسته می‌شود، یا به یاریِ همانندش برای طاعت تو نیرو می‌گیرند، یا با آن به تو نزدیک می‌شوند، آمرزش می‌خواهم؛ و آن را از مردم پوشاندم و چنان وانمود کردم که گویی با این تدبیر تو را می‌جویم، حال آنکه مقصودم نافرمانیِ تو بود و هوای نفس در آن، نه طاعت تو، فرمان می‌راند." }
+      ]
+    },
+{
+      "id": "sec9",
+      "en": "Diseases of the Heart",
+      "fa": "بیماری‌های دل",
+      "segments": [
+        { "id": 26, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ كَتَبْتَهُ عَلَيَّ بِسَبَبِ عُجْبٍ كَانَ بِنَفْسِي، أَوْ رِيَاءٍ، أَوْ سُمْعَةٍ، أَوْ خُيَلَاءَ، أَوْ فَرَحٍ، أَوْ مَرَحٍ، أَوْ أَشَرٍ،", "en": "O God, I seek forgiveness for every sin recorded against me because of self-admiration within me, showing off, seeking reputation, vanity, giddy joy, insolent mirth, or exultance,", "fa": "خدایا، از هر گناهی که به سببِ خودپسندیِ درونم، ریا، آوازه‌طلبی، تکبّر و خودنمایی، شادمانیِ مغرورانه، سرخوشیِ بی‌مهار، سرمستی یا ناسپاسیِ نعمت بر من نوشته شد، آمرزش می‌خواهم؛" },
+        { "id": 27, "ar": "أَوْ بَطَرٍ، أَوْ حِقْدٍ، أَوْ حَمِيَّةٍ، أَوْ غَضَبٍ، أَوْ رِضًى، أَوْ شُحٍّ، أَوْ بُخْلٍ، أَوْ ظُلْمٍ، أَوْ خِيَانَةٍ، أَوْ سِرْقَةٍ، أَوْ كِذْبٍ،", "en": "Or reckless arrogance, rancor, partisan zeal, anger, self-satisfaction, greed, miserliness, oppression, treachery, theft, or lying,", "fa": "یا به سببِ کینه، تعصب، خشم، خشنودی، آزمندی، بخل، ستم، خیانت، دزدی یا دروغ، آمرزش می‌خواهم؛" },
+        { "id": 28, "ar": "أَوْ لَهْوٍ، أَوْ لَعِبٍ، أَوْ نَوْعٍ مِنْ أَنْوَاعِ مَا يُكْتَسَبُ بِمِثْلِهِ الذُّنُوبُ وَيَكُونُ بِاجْتِرَاحِهِ الْعَطَبُ.", "en": "Or idle diversion, or play, or any manner of thing by whose like sins are earned and by whose commission comes ruin.", "fa": "یا به سببِ سرگرمیِ غافل‌کننده، بازی، یا هر یک از کارهایی که ارتکابِ همانندشان گناه می‌آفریند و مایهٔ هلاکت می‌شود، آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec10",
+      "en": "Foreknowledge & Free Will",
+      "fa": "علمِ پیشین و اختیار",
+      "segments": [
+        { "id": 29, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ سَبَقَ فِي عِلْمِكَ أَنِّي فَاعِلُهُ، فَدَخَلْتُ فِيهِ بِشَهْوَتِي، وَاجْتَرَحْتُهُ بِإِرَادَتِي، وَقَارَفْتُهُ بِمَحَبَّتِي وَلَذَّتِي وَمَشِيَّتِي، وَشِئْتُهُ إِذْ شِئْتَ أَنْ أَشَاءَهُ، وَأَرَدْتُهُ إِذْ أَرَدْتَ أَنْ أُرِيدَهُ، فَعَمِلْتُهُ إِذْ كَانَ فِي قَدِيمِ تَقْدِيرِكَ وَنَافِذِ عِلْمِكَ أَنِّي فَاعِلُهُ، لَمْ تُدْخِلْنِي فِيهِ جَبْرًا، وَلَمْ تَحْمِلْنِي عَلَيْهِ قَهْرًا،", "en": "O God, I seek forgiveness for every sin Your knowledge foreknew I would do: I entered it by my desire, earned it by my will, and committed it with my love, my pleasure, my own choosing. I willed it because You willed that I will it; I intended it because You intended that I intend it; and I did it as it lay in Your ancient decree and unerring knowledge — yet You never drove me to it by compulsion nor forced me to bear it.", "fa": "خدایا، از هر گناهی که در علمِ پیشین تو مقرر بود آن را انجام دهم، آمرزش می‌خواهم؛ با خواهشِ خویش به سویش رفتم، به ارادهٔ خود مرتکبش شدم و از روی محبت و لذت و خواستِ خویش به آن دست زدم. آن را خواستم، آن‌گاه که تو خواسته بودی من آن را بخواهم؛ اراده‌اش کردم، آن‌گاه که تو اراده کرده بودی من اراده‌اش کنم؛ و انجامش دادم، چون در تقدیرِ دیرین و علمِ نافذ تو چنین بود که آن را انجام دهم. با این همه، مرا به جبر وارد آن نکردی و به زور به آن واندی." },
+        { "id": 30, "ar": "وَلَمْ تَظْلِمْنِي فِيهِ شَيْئًا، فَأَسْتَغْفِرُكَ لَهُ وَلِكُلِّ ذَنْبٍ جَرَى بِهِ عِلْمُكَ عَلَيَّ وَفِيَّ إِلَى آخِرِ عُمْرِي.", "en": "Nor did You wrong me in it in the least. So I seek Your forgiveness for it, and for every sin Your knowledge has encompassed against me and within me, to the very end of my life.", "fa": "و در این باره هیچ ستمی بر من روا نداشتی. پس برای آن و برای هر گناهی که علم تو درباره‌ام و در حقم، تا پایان عمرم، به آن تعلق گرفته است، از تو آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec11",
+      "en": "Allegiance, Promises & Blessings Misused",
+      "fa": "دوستی، پیمان و ناسپاسیِ نعمت",
+      "segments": [
+        { "id": 31, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ مَالَ بِسَخَطِي فِيهِ عَنْ رِضَاكَ، وَمَالَتْ نَفْسِي إِلَى رِضَاكَ فَسَخِطْتُهُ، أَوْ رَهِبْتُ فِيهِ سِوَاكَ،", "en": "O God, I seek forgiveness for every sin by which my displeasure leaned away from what pleases You — while my soul inclined toward what pleases You, yet I resented it — or in which I feared someone other than You,", "fa": "خدایا، از هر گناهی که در آن، با ناخشنودیِ خویش از رضای تو روی گرداندم، و نفسم به سوی خشنودیِ تو گرایید ولی من از آن ناخشنود شدم، یا در آن از کسی جز تو ترسیدم، آمرزش می‌خواهم؛" },
+        { "id": 32, "ar": "أَوْ عَادَيْتُ فِيهِ أَوْلِيَاءَكَ، أَوْ وَالَيْتُ فِيهِ أَعْدَاءَكَ، أَوِ اخْتَرْتُهُمْ عَلَى أَصْفِيَائِكَ، أَوْ خَذَلْتُ فِيهِ أَحِبَّاءَكَ، أَوْ قَصَّرْتُ فِيهِ عَنْ رِضَاكَ يَا خَيْرَ الْغَافِرِينَ.", "en": "Or made enemies of Your friends, or befriended Your enemies, or preferred them over Your chosen ones, or forsook those who love You, or fell short of seeking Your pleasure — O Best of Forgivers.", "fa": "یا به سبب آن با دوستانت دشمنی ورزیدم، یا با دشمنانت دوستی کردم، یا آنان را بر برگزیدگانت ترجیح دادم، یا دوستدارانت را تنها گذاشتم، یا از جلبِ خشنودی‌ات کوتاهی کردم، ای بهترینِ آمرزندگان." },
+        { "id": 33, "ar": "اللَّهُمَّ إِنِّي أَسْتَغْفِرُكَ لِكُلِّ ذَنْبٍ تُبْتُ إِلَيْكَ مِنْهُ ثُمَّ عُدْتُ فِيهِ.", "en": "O God, I seek forgiveness for every sin I repented of to You — then went back to.", "fa": "خدایا، از هر گناهی که از آن به درگاهت توبه کردم و سپس دوباره مرتکبش شدم، آمرزش می‌خواهم." },
+        { "id": 34, "ar": "وَأَسْتَغْفِرُكَ لِمَا أَعْطَيْتُكَ مِنْ نَفْسِي ثُمَّ لَمْ أَفِ بِهِ.", "en": "And I seek forgiveness for every promise I gave You of myself, then failed to keep.", "fa": "و برای آنچه از جانبِ خود به تو وعده دادم و سپس به آن وفا نکردم، از تو آمرزش می‌خواهم." },
+        { "id": 35, "ar": "وَأَسْتَغْفِرُكَ لِلنِّعْمَةِ الَّتِي أَنْعَمْتَ بِهَا عَلَيَّ فَقَوِيتُ بِهَا عَلَى مَعْصِيَتِكَ.", "en": "And I seek forgiveness for the blessing You bestowed on me, which I turned into strength for disobeying You.", "fa": "و برای نعمتی که بر من ارزانی داشتی و من با آن بر نافرمانی‌ات نیرو گرفتم، از تو آمرزش می‌خواهم." }
+      ]
+    },
+{
+      "id": "sec12",
+      "en": "Hidden Sins & the Rights of Others",
+      "fa": "گناهانِ پنهان و حقّ‌الناس",
+      "segments": [
+        { "id": 36, "ar": "وَأَسْتَغْفِرُكَ لِكُلِّ خَيْرٍ أَرَدْتُ بِهِ وَجْهَكَ فَخَالَطَنِي مَا لَيْسَ لَكَ.", "en": "And I seek forgiveness for every good I meant for Your Face, in which something not for You mingled.", "fa": "و برای هر کار نیکی که با آن رضای تو را می‌جستم، اما نیتی جز رضای تو در آن با من درآمیخت، از تو آمرزش می‌خواهم." },
+        { "id": 37, "ar": "وَأَسْتَغْفِرُكَ لِمَا دَعَانِي إِلَيْهِ الرُّخَصُ فِيمَا اشْتَبَهَ عَلَيَّ مِمَّا هُوَ عِنْدَكَ حَرَامٌ.", "en": "And I seek forgiveness for what lax concessions lured me into, amid matters doubtful to me that are, with You, forbidden.", "fa": "و از تو آمرزش می‌خواهم برای گناهانی که آسان‌گیری و پیروی از رخصت‌ها مرا به سویشان کشاند، در اموری که برایم مشتبه بود، حال آنکه نزد تو حرام بود." },
+        { "id": 38, "ar": "وَأَسْتَغْفِرُكَ لِلذُّنُوبِ الَّتِي لَا يَعْلَمُهَا غَيْرُكَ، وَلَا يَطَّلِعُ عَلَيْهَا سِوَاكَ، وَلَا يَحْتَمِلُهَا إِلَّا حِلْمُكَ، وَلَا يَسَعُهَا إِلَّا عَفْوُكَ.", "en": "And I seek forgiveness for sins none but You knows, that none but You perceives — that nothing but Your forbearance could bear, and nothing but Your pardon could contain.", "fa": "و از تو آمرزش می‌خواهم برای گناهانی که جز تو کسی از آنها آگاه نیست، جز تو کسی بر آنها اشراف ندارد، جز بردباریِ تو تابِ تحملشان را ندارد و جز عفوِ تو گنجایششان را ندارد." },
+        { "id": 39, "ar": "وَأَسْتَغْفِرُكَ وَأَتُوبُ إِلَيْكَ مِنْ مَظَالِمَ كَثِيرَةٍ لِعِبَادِكَ قِبَلِي يَا رَبِّ، فَلَمْ أَسْتَطِعْ رَدَّهَا عَلَيْهِمْ وَتَحْلِيلَهَا مِنْهُمْ، أَوْ شَهِدُوا فَاسْتَحْيَيْتُ مِنِ اسْتِحْلَالِهِمْ وَالطَّلَبِ إِلَيْهِمْ وَإِعْلَامِهِمْ ذَلِكَ،", "en": "And I seek Your forgiveness and turn to You from the many wrongs Your servants hold against me, my Lord: I could not restore their rights nor win their release — or they stood before me and I was too ashamed to ask their pardon, to plead with them, or to let them know.", "fa": "و از تو آمرزش می‌خواهم و به سوی تو توبه می‌کنم از ستم‌های بسیاری که بر بندگانت روا داشته‌ام، ای پروردگارم؛ نتوانستم حقوقشان را به آنان بازگردانم و از ایشان حلالیت بطلبم؛ یا آنان خود شاهدِ آن بودند و من از اینکه از آنان حلالیت بخواهم، از ایشان درخواستِ گذشت کنم و ماجرا را به آگاهی‌شان برسانم، شرم کردم؛" },
+        { "id": 40, "ar": "وَأَنْتَ الْقَادِرُ عَلَى أَنْ تَسْتَوْهِبَنِي مِنْهُمْ وَتُرْضِيَهُمْ عَنِّي كَيْفَ شِئْتَ وَبِمَا شِئْتَ، يَا أَرْحَمَ الرَّاحِمِينَ، وَأَحْكَمَ الْحَاكِمِينَ، وَخَيْرَ الْغَافِرِينَ.", "en": "Yet You are able to obtain their gift of pardon for me and make them pleased with me — however You will and by whatever You will — O Most Merciful of the merciful, Wisest of judges, Best of forgivers.", "fa": "و تو توانایی که از آنان برایم بخشایش بخواهی و به هرگونه و با هر وسیله که بخواهی، ایشان را از من خشنود سازی؛ ای مهربان‌ترینِ مهربانان، حکیم‌ترینِ داوران و بهترینِ آمرزندگان." }
+      ]
+    },
+{
+      "id": "sec13",
+      "en": "Between Hope & Awe",
+      "fa": "میانِ بیم و امید",
+      "segments": [
+        { "id": 41, "ar": "اللَّهُمَّ إِنَّ اسْتِغْفَارِي إِيَّاكَ مَعَ الْإِصْرَارِ لُؤْمٌ، وَتَرْكِيَ الِاسْتِغْفَارَ مَعَ مَعْرِفَتِي بِسَعَةِ جُودِكَ وَرَحْمَتِكَ عَجْزٌ.", "en": "O God, to ask Your forgiveness while insisting on sin is baseness; and to abandon asking, knowing the vastness of Your generosity and mercy, is helpless folly.", "fa": "خدایا، آمرزش خواستن از تو در حالی که بر گناه پافشاری می‌کنم، فرومایگی است؛ و ترکِ استغفار، با آنکه گستردگیِ جود و رحمتت را می‌شناسم، ناتوانی است." },
+        { "id": 42, "ar": "فَكَمْ تَتَحَبَّبُ إِلَيَّ يَا رَبِّ وَأَنْتَ الْغَنِيُّ عَنِّي، وَكَمْ أَتَبَغَّضُ إِلَيْكَ وَأَنَا الْفَقِيرُ إِلَيْكَ وَإِلَى رَحْمَتِكَ.", "en": "How often You court my love, my Lord, though You have no need of me — and how often I make myself hateful to You, though I am utterly poor before You and before Your mercy.", "fa": "چه بسیار که تو، ای پروردگارم، با من مهر می‌ورزی، در حالی که از من بی‌نیازی؛ و چه بسیار که من خود را نزد تو منفور می‌سازم، با آنکه به تو و رحمتت سخت نیازمندم." },
+        { "id": 43, "ar": "فَيَا مَنْ وَعَدَ فَوَفَى، وَأَوْعَدَ فَعَفَا، اغْفِرْ لِي خَطَايَايَ، وَاغْفِرْ وَارْحَمْ وَأَنْتَ خَيْرُ الرَّاحِمِينَ.", "en": "O You who promises and fulfills, who warns and then pardons: forgive me my wrongs; forgive and have mercy — for You are the Best of those who show mercy.", "fa": "پس ای آن‌که وعده دادی و وفا کردی، و بیم دادی و عفو فرمودی، خطاهایم را بیامرز؛ بیامرز و رحمت آور، که تو بهترینِ رحم‌کنندگانی." }
+      ]
+    }
+  ]
+}
