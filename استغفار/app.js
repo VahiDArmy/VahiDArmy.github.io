@@ -1781,7 +1781,7 @@ const AI = {
     const body = {
       model: model.id, messages,
       temperature: deep ? 0.3 : 0.2,
-      max_tokens: deep ? 4000 : 2000,
+      max_tokens: deep ? 64000 : 64000,
       stream: true
     };
     const ctl = new AbortController();
