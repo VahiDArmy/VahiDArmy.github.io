@@ -1785,7 +1785,7 @@ const AI = {
       stream: true
     };
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), deep ? 180000 : 90000);
+    const timer = setTimeout(() => ctl.abort(), deep ? 600000 : 300000);
     const t0 = Date.now();
     const send = p => fetch(url, {
       method: 'POST', signal: ctl.signal,
