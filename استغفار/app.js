@@ -1911,7 +1911,9 @@ function renderAI(v) {
   const r = v && typeof v === 'object' ? v.r : '';
   out.innerHTML = aiWhyHTML(w) + aiLinesHTML(t || '') + aiByHTML(r, u, p);
   out.hidden = false;
-  out.scrollTop = 0;
+  // preserve existing scroll position; only reset if at top previously
+  const wasAtTop = out.scrollTop === 0;
+  out.scrollTop = wasAtTop ? 0 : out.scrollTop;
   if (WORD) placeWord(WORD.el);
 }
 /* One live answer inside the word popup: loads, streams reasoning, streams text. */
