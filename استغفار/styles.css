@@ -797,6 +797,11 @@ body.no-motion *,body.no-motion *::before,body.no-motion *::after{animation:none
 .ai-why summary{cursor:pointer;letter-spacing:.02em;line-height:1.6}
 .ai-why summary:hover{color:var(--acc)}
 .ai-why-body{margin-top:5px;max-height:140px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6;opacity:.86;font-size:10.5px}
+.ai-by{
+  font-family:var(--ui);font-size:9.5px;color:var(--mut);text-align:left;line-height:1.6;
+  overflow-wrap:anywhere;margin-top:2px;padding-top:6px;border-top:1px dashed var(--line2)
+}
+.ai-by b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:500;color:var(--ink);opacity:.9}
 .ai-caret{display:inline-block;width:5px;height:11px;background:var(--acc);vertical-align:-1px;margin-inline-start:3px;animation:aiBlink 1s steps(1) infinite}
 @keyframes aiBlink{50%{opacity:0}}
 .ai-raw{margin:0 0 13px;font-family:var(--ui)}

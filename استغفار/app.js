@@ -5,7 +5,7 @@
 'use strict';
 (() => {
 
-const BUILD = '1.8';
+const BUILD = '1.9';
 const SB_URL  = 'https://ummhohozmpwltbgeczsf.supabase.co';
 const SB_KEY  = 'sb_publishable_WcK2pmYMMu61z0KUub5jLA_KSxGpQD6';
 const SB_DASH = 'https://supabase.com/dashboard/project/ummhohozmpwltbgeczsf/sql/new';
@@ -1628,6 +1628,7 @@ const AI = {
         const er = (j && j.error) || null;
         d.chat = {
           ok: r.ok, status: r.status, ms: Date.now() - t, model: m.id,
+          used: (j && j.model) || '', provider: (j && j.provider) || '',
           msg: er ? String(er.message || er.code || snip(txt, 200)) : (r.ok ? '' : snip(txt, 200)),
           code: er && er.code != null ? er.code : '',
           provider: (er && er.metadata && er.metadata.provider_name) || '',
@@ -1651,7 +1652,7 @@ const AI = {
     else if (a.ok) p.push('key accepted');
     else p.push(`key check HTTP ${a.status}${a.raw ? ' — ' + snip(a.raw, 90) : ''}`);
     if (c) {
-      if (c.ok) p.push(`test prompt answered in ${fmtMs(c.ms)}`);
+      if (c.ok) p.push(`test prompt answered in ${fmtMs(c.ms)}${c.used && c.used !== c.model ? ' · router chose ' + c.used : c.used ? ' · model ' + c.used : ''}`);
       else if (c.net) p.push('chat request blocked before it was sent (CORS, VPN or extension)');
       else p.push(`chat HTTP ${c.status}${HTTP_NAMES[c.status] ? ' ' + HTTP_NAMES[c.status] : ''} — ${c.msg || 'empty body'}${c.provider ? ' (' + c.provider + ')' : ''}`);
     }
@@ -1766,7 +1767,7 @@ const AI = {
     if (!ans) throw this.emptyErr(model, ch.finish_reason || j.finish_reason || '', why, text);
     if (why && h && h.reason) h.reason(why);
     if (h && h.delta) h.delta(ans);
-    return { text: ans, why, finish: ch.finish_reason || '', ms: 0, model: model.id };
+    return { text: ans, why, finish: ch.finish_reason || '', ms: 0, model: model.id, used: j.model || '', provider: j.provider || '' };
   },
   /* Streams the answer token by token. Falls back to one JSON read when the
      server answers non-streamed, and reports the exact error in every failure. */
@@ -1817,7 +1818,7 @@ const AI = {
       }
       const reader = r.body.getReader();
       const dec = new TextDecoder();
-      let buf = '', ans = '', why = '', finish = '', srvErr = null, done = false, rawHead = '';
+      let buf = '', ans = '', why = '', finish = '', srvErr = null, done = false, rawHead = '', used = '', provider = '';
       while (!done) {
         const step = await reader.read();
         if (step.done) break;
@@ -1833,6 +1834,8 @@ const AI = {
           let j = null; try { j = JSON.parse(data); } catch { continue; }
           if (rawHead.length < 600) rawHead += data + '\n';
           if (j.error) { srvErr = j.error; done = true; break; }
+          if (!used && j.model) used = String(j.model);
+          if (!provider && j.provider) provider = String(j.provider);
           const ch = (j.choices && j.choices[0]) || {};
           const d = ch.delta || ch.message || {};
           const rsn = d.reasoning || d.reasoning_content;
@@ -1843,14 +1846,14 @@ const AI = {
       }
       try { reader.cancel(); } catch {}
       const ms = Date.now() - t0;
-      this.last = { at: Date.now(), url, model: model.id, status: r.status, ct, ms, finish, stream: true, raw: rawHead };
+      this.last = { at: Date.now(), url, model: model.id, used, provider, status: r.status, ct, ms, finish, stream: true, raw: rawHead };
       if (srvErr) {
         const body2 = JSON.stringify({ error: srvErr, choices: ans ? [{ message: { content: ans } }] : [] });
         const st = typeof srvErr.code === 'number' ? srvErr.code : r.status;
         throw this.serverErr({ status: st, ct: 'application/json', ra: '', text: body2 }, model);
       }
       if (!ans.trim()) throw this.emptyErr(model, finish, why, rawHead);
-      return { text: ans.trim(), why: why.trim(), finish, ms, model: model.id };
+      return { text: ans.trim(), why: why.trim(), finish, ms, model: model.id, used, provider };
     } catch (e) {
       throw await this.explain(e);
     } finally { clearTimeout(timer); }
@@ -1872,6 +1875,14 @@ function aiLinesHTML(text, streaming) {
     return `<div class="ai-blk">${t}</div>`;
   }).join('');
   return streaming ? html + '<span class="ai-caret" aria-hidden="true"></span>' : html;
+}
+/* Some ids (openrouter/auto, a router or a preset) are not models of their
+   own: the server picks one and names it in every reply. Show that real model. */
+function aiByHTML(reqId, used, provider) {
+  used = String(used || '');
+  if (!used || used === reqId) return '';
+  const via = reqId ? `<b>${esc(reqId)}</b> → ` : '';
+  return `<div class="ai-by">${via}answered by <b>${esc(used)}</b>${provider ? ' · ' + esc(provider) : ''}</div>`;
 }
 function aiWhyHTML(why) {
   if (!why) return '';
@@ -1895,7 +1906,10 @@ function renderAI(v) {
   if (!out) return;
   const t = v && typeof v === 'object' ? v.t : v;
   const w = v && typeof v === 'object' ? v.w : '';
-  out.innerHTML = aiWhyHTML(w) + aiLinesHTML(t || '');
+  const u = v && typeof v === 'object' ? v.u : '';
+  const p = v && typeof v === 'object' ? v.p : '';
+  const r = v && typeof v === 'object' ? v.r : '';
+  out.innerHTML = aiWhyHTML(w) + aiLinesHTML(t || '') + aiByHTML(r, u, p);
   out.hidden = false;
   out.scrollTop = 0;
   if (WORD) placeWord(WORD.el);
@@ -1906,13 +1920,15 @@ function aiView(out, target, m, deep) {
   out.innerHTML = '<div class="wp-live">' +
     `<div class="wp-load"><i></i><span>${esc(shortName(m.name))} is ${deep ? 'reasoning' : 'thinking'}…</span></div>` +
     '<details class="ai-why" hidden><summary></summary><div class="ai-why-body" dir="auto"></div></details>' +
-    '<div class="ai-body"></div></div>';
+    '<div class="ai-body"></div>' +
+    '<div class="ai-by" hidden></div></div>';
   const live = out.querySelector('.wp-live');
   const load = live.querySelector('.wp-load');
   const whyBox = live.querySelector('.ai-why');
   const whySum = whyBox.querySelector('summary');
   const whyBody = whyBox.querySelector('.ai-why-body');
   const bodyEl = live.querySelector('.ai-body');
+  const byEl = live.querySelector('.ai-by');
   let text = '', why = '', raf = 0, finished = false;
   const paint = () => {
     if (raf) return;
@@ -1935,13 +1951,26 @@ function aiView(out, target, m, deep) {
     delta(t) { text = t; paint(); },
     done(res) {
       finished = true;
+      if (raf) { cancelAnimationFrame(raf); raf = 0; }
       if (res && res.text) text = res.text;
       if (res && res.why) why = res.why;
       load.hidden = true;
+      /* Finish in place: keep the reader's scroll position and any reasoning
+         fold they opened, so the answer never jumps or resets under them. */
+      const st = out.scrollTop;
+      const openWhy = whyBox.open;
       bodyEl.innerHTML = aiLinesHTML(text, false);
-      if (why) { whyBox.hidden = false; whyBox.open = false; whySum.textContent = `Reasoning · ${why.length} chars`; whyBody.textContent = why; }
-      else whyBox.hidden = true;
-      out.scrollTop = 0;
+      if (why) {
+        whyBox.hidden = false; whyBox.open = openWhy;
+        whySum.textContent = `Reasoning · ${why.length} chars`;
+        whyBody.textContent = why;
+      } else whyBox.hidden = true;
+      if (byEl) {
+        const b = aiByHTML(m.id, res && res.used, res && res.provider);
+        byEl.hidden = !b;
+        byEl.innerHTML = b;
+      }
+      out.scrollTop = st;
       placeWord(target.el);
     },
     fail(e) {
@@ -2021,7 +2050,7 @@ async function explainWord() {
   if (WORD) placeWord(WORD.el);
   try {
     const res = await AI.call(m, aiPrompt(target.tok, sg), { deep, delta: view.delta, reason: view.reason });
-    AI.cacheSet(ck, { t: res.text, w: res.why });
+    AI.cacheSet(ck, { t: res.text, w: res.why, u: res.used || '', p: res.provider || '', r: m.id });
     if (WORD !== target) return;
     view.done(res);
     Sound.play('reveal');
